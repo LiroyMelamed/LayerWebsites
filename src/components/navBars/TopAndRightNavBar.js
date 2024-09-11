@@ -4,6 +4,8 @@ import SimpleContainer from '../simpleComponents/SimpleContainer';
 import SimpleButton from '../simpleComponents/SimpleButton';
 import colors from '../../constant/colors';
 import SimpleNav from '../simpleComponents/SimpleNav';
+import SimpleImage from '../simpleComponents/SimpleImage';
+import { images } from '../../assets/images/images';
 
 const TopAndRightNavBar = () => {
   const { isSmallScreen } = useScreenSize();
@@ -12,10 +14,13 @@ const TopAndRightNavBar = () => {
   const toggleMenu = () => setIsMenuOpen(prev => !prev);
 
   const menuItems = [
-    { href: '#home', label: 'Home' },
-    { href: '#about', label: 'About' },
-    { href: '#services', label: 'Services' },
-    { href: '#contact', label: 'Contact' },
+    { href: '#home', label: 'לכל התיקים' },
+    { href: '#about', label: 'תיק חדש' },
+    { href: '#services', label: 'עדכון תיק' },
+    { href: '#contact', label: 'הוספת מנהל' },
+    { href: '#contact', label: 'לכל המנהלים' },
+    { href: '#contact', label: 'הוספת סוג תיק' },
+    { href: '#contact', label: 'לכל סוגי התיקים' },
   ];
 
   return (
@@ -31,6 +36,10 @@ const TopAndRightNavBar = () => {
           >
             {isMenuOpen ? 'X' : '☰'}
           </SimpleButton>
+          <SimpleImage
+            src={images.Logos.FullLogoOriginal}
+            style={styles.logo}
+          />
           <SimpleContainer style={{
             ...styles.menu,
             transform: isMenuOpen ? 'translateX(0)' : 'translateX(100%)',
@@ -53,6 +62,9 @@ const styles = {
     backgroundColor: colors.white,
     padding: '10px 20px',
     position: 'relative',
+    display: 'flex',
+    justifyContent: 'center', // Center horizontally
+    alignItems: 'center', // Center vertically
     boxShadow: '0 4px 8px rgba(0,0,0,0.2)', // Shadow for header
     height: 60,
   },
@@ -64,7 +76,7 @@ const styles = {
     cursor: 'pointer',
     outline: 'none',
     position: 'absolute',
-    zIndex:1001,
+    zIndex: 1001,
     right: '20px',
     transition: 'transform 0.3s, color 0.3s',
     boxShadow: 'none', // No shadow for the button
@@ -86,11 +98,17 @@ const styles = {
   },
   menuNav: {
     listStyleType: 'none',
-    marginTop:32,
+    marginTop: 40,
     padding: 0,
     display: 'flex',
     flexDirection: 'column',
     gap: '20px',
+  },
+  logo: {
+    height: 50,
+    position: 'absolute',
+    left: '50%',
+    transform: 'translateX(-50%)', // Center horizontally within the parent container
   },
   container: {
     display: 'flex',
@@ -105,7 +123,6 @@ const styles = {
     right: '0',
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'center',
     boxShadow: '0 4px 8px rgba(0,0,0,0.2)', // Shadow for sidebar
   },
 };

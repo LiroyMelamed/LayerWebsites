@@ -1,7 +1,6 @@
 import React from 'react';
 
-const SimpleImage = (props) => {
-  const { src, style, ...rest } = props;
+const SimpleImage = ({src, style, props}) => {
 
   const imageStyle = {
     display: 'block',
@@ -14,7 +13,7 @@ const SimpleImage = (props) => {
     <img
       src={src}
       style={imageStyle}
-      {...rest}
+      {...props}
     />
   );
 };
