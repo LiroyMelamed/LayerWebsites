@@ -13,16 +13,6 @@ const TopAndRightNavBar = () => {
 
   const toggleMenu = () => setIsMenuOpen(prev => !prev);
 
-  const menuItems = [
-    { href: '#home', label: 'לכל התיקים' },
-    { href: '#about', label: 'תיק חדש' },
-    { href: '#services', label: 'עדכון תיק' },
-    { href: '#contact', label: 'הוספת מנהל' },
-    { href: '#contact', label: 'לכל המנהלים' },
-    { href: '#contact', label: 'הוספת סוג תיק' },
-    { href: '#contact', label: 'לכל סוגי התיקים' },
-  ];
-
   return (
     <>
       {isSmallScreen ? (
@@ -45,12 +35,12 @@ const TopAndRightNavBar = () => {
             transform: isMenuOpen ? 'translateX(0)' : 'translateX(100%)',
             opacity: isMenuOpen ? 1 : 0,
           }}>
-            <SimpleNav links={menuItems} style={styles.menuNav} />
+            <SimpleNav style={styles.menuNav} />
           </SimpleContainer>
         </SimpleContainer>
       ) : (
-        <SimpleContainer style={styles.container}>
-          <SimpleNav links={menuItems} style={styles.sidebar} />
+        <SimpleContainer style={styles.sidebarContainer}>
+          <SimpleNav style={styles.sidebar} />
         </SimpleContainer>
       )}
     </>
@@ -61,17 +51,19 @@ const styles = {
   headerSmallScreen: {
     backgroundColor: colors.white,
     padding: '10px 20px',
-    position: 'relative',
+    position: 'fixed', // Fixed position to stay at the top
+    top: 0,
+    left: 0,
+    right: 0,
     display: 'flex',
-    justifyContent: 'center', // Center horizontally
-    alignItems: 'center', // Center vertically
+    justifyContent: 'center',
+    alignItems: 'center',
     boxShadow: '0 4px 8px rgba(0,0,0,0.2)', // Shadow for header
     height: 60,
   },
   menuButton: {
     fontSize: '24px',
     background: 'none',
-    border: 'none',
     color: colors.black,
     cursor: 'pointer',
     outline: 'none',
@@ -79,7 +71,7 @@ const styles = {
     zIndex: 1001,
     right: '20px',
     transition: 'transform 0.3s, color 0.3s',
-    boxShadow: 'none', // No shadow for the button
+    boxShadow: 'none',
   },
   menuButtonTransform: (isMenuOpen) => ({
     transform: isMenuOpen ? 'rotate(90deg)' : 'rotate(0deg)',
@@ -90,15 +82,15 @@ const styles = {
     top: 0,
     right: 0,
     height: '100dvh',
-    width: '200px',
+    width: '250px',
     backgroundColor: colors.white,
     transition: 'transform 0.3s ease, opacity 0.3s ease',
-    boxShadow: '0 4px 8px rgba(0,0,0,0.2)', // Shadow for the menu
-    overflowY: 'auto', // Allow scrolling if content overflows
+    boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+    overflowY: 'auto',
   },
   menuNav: {
     listStyleType: 'none',
-    marginTop: 40,
+    marginTop: 80,
     padding: 0,
     display: 'flex',
     flexDirection: 'column',
@@ -108,22 +100,21 @@ const styles = {
     height: 50,
     position: 'absolute',
     left: '50%',
-    transform: 'translateX(-50%)', // Center horizontally within the parent container
+    transform: 'translateX(-50%)',
   },
-  container: {
+  sidebarContainer: {
     display: 'flex',
   },
   sidebar: {
     width: '250px',
-    height: '100vh',
+    height: '100dvh',
     backgroundColor: colors.white,
-    padding: '10px',
     position: 'fixed',
-    top: '0',
-    right: '0',
+    top: 0,
+    right: 0,
     display: 'flex',
     flexDirection: 'column',
-    boxShadow: '0 4px 8px rgba(0,0,0,0.2)', // Shadow for sidebar
+    boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
   },
 };
 

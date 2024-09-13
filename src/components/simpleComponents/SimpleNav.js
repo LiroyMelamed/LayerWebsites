@@ -1,46 +1,68 @@
 import React from 'react';
+import SimpleContainer from './SimpleContainer';
+import SimpleButton from './SimpleButton';
+import { NavBarData } from '../navBars/data/NavBarData';
+import ButtonWithIcons from '../specializedComponents/buttons/ButtonWithIcons';
+import { icons } from '../../assets/icons/icons';
+import Separator from '../styledComponents/separators/Separator';
+import { useScreenSize } from '../../providers/ScreenSizeProvider';
+import SimpleImage from './SimpleImage';
+import { images } from '../../assets/images/images';
+import SimpleScrollView from './SimpleScrollView';
+import TertiaryButton from '../styledComponents/buttons/TertiaryButton';
+// import { useNavigate } from 'react-router-dom';
 
-const SimpleNav = ({ links = [], orientation = 'horizontal', activeLink, style }) => {
-  // Ensure the links prop is an array
-  if (!Array.isArray(links)) {
-    console.error('Invalid prop `links`. Expected an array.');
-    return null;
-  }
+const { NavBarLinks } = NavBarData
 
-  // Container style based on orientation
+const SimpleNav = ({ activeButton, style }) => {
+  // const navigate = useNavigate()
+  const { isSmallScreen } = useScreenSize();
+
   const containerStyle = {
     display: 'flex',
-    flexDirection: orientation === 'vertical' ? 'column' : 'row',
+    flexDirection: 'column',
     listStyleType: 'none',
     margin: 0,
     padding: 0,
     ...style
   };
 
-  // Style for individual links, highlighting active link
-  const linkStyle = (isActive) => ({
-    padding: '10px 20px',
-    textDecoration: 'none',
-    color: isActive ? '#3498db' : '#333',
-    fontWeight: isActive ? 'bold' : 'normal',
-    backgroundColor: isActive ? '#f0f0f0' : 'transparent',
-    borderRadius: '4px',
-    transition: 'background 0.3s',
-  });
-
   return (
-    <nav style={containerStyle}>
-      {links.map((link) => (
-        <a
-          key={link.href}
-          href={link.href}
-          style={linkStyle(link.href === activeLink)}
-        >
-          {link.label}
-        </a>
-      ))}
-    </nav>
+    <SimpleScrollView>
+      <SimpleContainer style={containerStyle}>
+
+        {!isSmallScreen &&
+          <SimpleImage
+            src={images.Logos.FullLogoOriginal}
+            style={styles.logo}
+          />}
+        {NavBarLinks.map((ListOfLinks, index) => (
+          <>
+
+            {index != 0 && <Separator />}
+            {ListOfLinks.map(link => (
+              <TertiaryButton
+                onClick={() => { }}
+                rightIcon={link.icon}
+                iconSize={18}
+              >
+                {link.buttonText}
+              </TertiaryButton>
+            ))}
+          </>
+        ))}
+      </SimpleContainer>
+
+    </SimpleScrollView>
   );
 };
+
+const styles = {
+  logo: {
+    width: 200,
+    alignSelf: 'center',
+    margin: '50px 0px'
+  }
+}
 
 export default SimpleNav;
