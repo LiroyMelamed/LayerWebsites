@@ -1,7 +1,7 @@
 import React from 'react';
 import SimpleImage from './SimpleImage';
 
-const SimpleIcon = ({ src, alt, size = 24, style, ...rest }) => {
+const SimpleIcon = ({ src, alt, size = 24, tintColor, style, ...rest }) => {
   // Define the style for the icon with default size and any custom styles
   const iconStyle = {
     width: size,
@@ -14,6 +14,7 @@ const SimpleIcon = ({ src, alt, size = 24, style, ...rest }) => {
       src={src}
       alt={alt}
       style={iconStyle}
+      tintColor={tintColor}
       {...rest}
     />
   );

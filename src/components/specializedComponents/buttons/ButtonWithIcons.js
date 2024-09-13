@@ -1,13 +1,19 @@
 import React, { useState } from 'react';
 import SimpleButton from '../../simpleComponents/SimpleButton';
 import SimpleIcon from '../../simpleComponents/SimpleIcon';
+import SimpleText from '../../simpleComponents/SimpleText';
 
-const ButtonWithIcons = ({ onMouseDown, onMouseUp, onTouchStart, onTouchEnd, leftIcon, rightIcon, iconStyle, style, children, props }) => {
+const ButtonWithIcons = ({ onMouseDown, onMouseUp, onTouchStart, onTouchEnd, leftIcon, rightIcon, iconStyle, tintColor, textStyle, style, children, props }) => {
 
     const IconStyle = {
         width: 24,
         height: 24,
         ...iconStyle
+    }
+
+    const TextStyle = {
+        flexDirection: 'row',
+        ...textStyle
     }
 
     return (
@@ -17,14 +23,18 @@ const ButtonWithIcons = ({ onMouseDown, onMouseUp, onTouchStart, onTouchEnd, lef
             onMouseUp={onMouseUp}
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
+            textStyle={textStyle}
             {...props}
         >
             {leftIcon && (
-                <SimpleIcon src={leftIcon} style={{ ...IconStyle, marginRight: '8px' }} />
+                <SimpleIcon tintColor={tintColor} src={leftIcon} style={{ ...IconStyle, marginRight: '8px' }} />
             )}
-            {children}
+            <SimpleText textStyle={TextStyle}>
+                {children}
+            </SimpleText>
+
             {rightIcon && (
-                <SimpleIcon src={rightIcon} style={{ ...IconStyle, marginLeft: '8px' }} />
+                <SimpleIcon tintColor={tintColor} src={rightIcon} style={{ ...IconStyle, marginLeft: '8px' }} />
             )}
         </SimpleButton>
     );

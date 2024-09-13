@@ -1,21 +1,42 @@
 import React from 'react';
 
-const SimpleImage = ({src, style, props}) => {
+export default function SimpleImage({ src, style, tintColor, resizeMode = 'contain', ...props }) {
+  const isTinted = !!tintColor;
 
   const imageStyle = {
+    ...style,
+    objectFit: resizeMode,
     display: 'block',
-    maxWidth: '100%',
-    height: 'auto',
-    ...style
+    userSelect: 'none',
+    pointerEvents: 'none',
+    ...(isTinted && {
+      backgroundColor: tintColor || 'black',
+      WebkitMaskImage: `url(${src?.uri || src})`,
+      maskImage: `url(${src?.uri || src})`,
+      WebkitMaskSize: 'contain',
+      maskSize: 'contain',
+      WebkitMaskRepeat: 'no-repeat',
+      maskRepeat: 'no-repeat',
+      WebkitMaskPosition: 'center',
+      maskPosition: 'center',
+    }),
   };
+
+  if (isTinted) {
+    return (
+      <div
+        {...props}
+        style={imageStyle}
+      />
+    );
+  }
 
   return (
     <img
-      src={src}
-      style={imageStyle}
       {...props}
+      src={src?.uri || src}
+      style={imageStyle}
+      alt="SimpleImage"
     />
   );
-};
-
-export default SimpleImage;
+}

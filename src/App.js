@@ -9,6 +9,8 @@ import PrimaryButton from './components/styledComponents/buttons/PrimaryButton';
 import ButtonWithIcons from './components/specializedComponents/buttons/ButtonWithIcons';
 import SecondaryButton from './components/styledComponents/buttons/SecondaryButton';
 import TertiaryButton from './components/styledComponents/buttons/TertiaryButton';
+import SimpleScrollView from './components/simpleComponents/SimpleScrollView';
+import { Text12, Text20 } from './components/specializedComponents/text/AllTextKindFile';
 
 const App = () => {
   const [error, setError] = useState(null);
@@ -36,7 +38,7 @@ const App = () => {
   return (
     <SimpleScreen>
       <TopAndRightNavBar />
-      <SimpleContainer style={layoutStyles.content}>
+      <SimpleScrollView style={layoutStyles.content}>
 
         <h1>Cases</h1>
         <CreateCaseType />
@@ -63,9 +65,10 @@ const App = () => {
             <button onClick={handleCloseError}>Close</button>
           </div>
         )}
+        <Text20>0507299064</Text20>
 
         <PrimaryButton style={{ marginBottom: 20, alignSelf: 'flex-end' }}>לחץ כאן</PrimaryButton>
-      </SimpleContainer>
+      </SimpleScrollView>
     </SimpleScreen>
 
   );

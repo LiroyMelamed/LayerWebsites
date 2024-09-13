@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import ButtonWithIcons from '../../specializedComponents/buttons/ButtonWithIcons';
-import colors from '../../../constant/colors';
+import { buttonStyles } from '../../simpleComponents/SimpleButton';
 
-const PrimaryButton = ({ onClick, children, leftIcon, rightIcon, style, ...props }) => {
+const PrimaryButton = ({ onClick, children, leftIcon, rightIcon, buttonSize = "Medium", style, ...props }) => {
     const [isPressed, setIsPressed] = useState(false);
 
     const handleMouseDown = () => setIsPressed(true);
@@ -29,6 +29,7 @@ const PrimaryButton = ({ onClick, children, leftIcon, rightIcon, style, ...props
             justifyContent: 'center',
             transition: 'all 0.2s ease-in-out',
             boxShadow: '8px 8px 15px #d0d0d0, -8px -8px 15px #ffffff',
+            ...buttonStyles[buttonSize]
         },
         buttonNotPressed: {
             backgroundColor: '#e0e0e0',
@@ -38,20 +39,18 @@ const PrimaryButton = ({ onClick, children, leftIcon, rightIcon, style, ...props
             backgroundColor: '#d0d0d0',
             boxShadow: '4px 4px 8px #d0d0d0, -4px -4px 8px #ffffff',
         },
-        icon: {
-            width: '20px',
-            height: '20px',
-        },
     };
 
-    useEffect(() => {
-        console.log("isPressed", isPressed);
-    }, [isPressed])
+    const IconStyle = {
+        width: buttonStyles[buttonSize].iconSize,
+        height: buttonStyles[buttonSize].iconSize
+    }
 
     return (
         <ButtonWithIcons
             leftIcon={leftIcon}
             rightIcon={rightIcon}
+            iconStyle={IconStyle}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
             onTouchStart={handleTouchStart}

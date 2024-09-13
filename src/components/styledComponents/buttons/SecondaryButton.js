@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import ButtonWithIcons from '../../specializedComponents/buttons/ButtonWithIcons';
-import colors from '../../../constant/colors';
+import { buttonStyles } from '../../simpleComponents/SimpleButton';
 
-const SecondaryButton = ({ onClick, children, leftIcon, rightIcon, style, ...props }) => {
+const SecondaryButton = ({ onClick, children, leftIcon, rightIcon, buttonSize = "Medium", style, ...props }) => {
     const [isPressed, setIsPressed] = useState(false);
 
     const handleMouseDown = () => setIsPressed(true);
@@ -38,16 +38,18 @@ const SecondaryButton = ({ onClick, children, leftIcon, rightIcon, style, ...pro
             backgroundColor: '#e0e0e0',
             boxShadow: '2px 2px 4px #d0d0d0, -2px -2px 4px #ffffff',
         },
-        icon: {
-            width: '20px',
-            height: '20px',
-        },
     };
+
+    const IconStyle = {
+        width: buttonStyles[buttonSize].iconSize,
+        height: buttonStyles[buttonSize].iconSize
+    }
 
     return (
         <ButtonWithIcons
             leftIcon={leftIcon}
             rightIcon={rightIcon}
+            iconStyle={IconStyle}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
             onTouchStart={handleTouchStart}

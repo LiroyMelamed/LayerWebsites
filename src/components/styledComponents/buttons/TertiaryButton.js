@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import ButtonWithIcons from '../../specializedComponents/buttons/ButtonWithIcons';
+import { buttonStyles } from '../../simpleComponents/SimpleButton';
 
-const TertiaryButton = ({ onClick, children, leftIcon, rightIcon, iconSize, style, ...props }) => {
+const TertiaryButton = ({ onClick, children, leftIcon, rightIcon, iconSize, tintColor, buttonSize = "Medium", style, ...props }) => {
     const [isPressed, setIsPressed] = useState(false);
 
     const handleMouseDown = () => setIsPressed(true);
@@ -27,6 +28,7 @@ const TertiaryButton = ({ onClick, children, leftIcon, rightIcon, iconSize, styl
             alignItems: 'center',
             justifyContent: 'center',
             transition: 'all 0.2s ease-in-out',
+            ...buttonStyles[buttonSize]
         },
         buttonNotPressed: {
             backgroundColor: 'transparent', // Transparent background
@@ -36,12 +38,11 @@ const TertiaryButton = ({ onClick, children, leftIcon, rightIcon, iconSize, styl
             backgroundColor: '#f0f0f0',
             borderColor: '#888',
         },
-
     };
 
     const IconStyle = {
-        width: iconSize,
-        height: iconSize
+        width: buttonStyles[buttonSize].iconSize,
+        height: buttonStyles[buttonSize].iconSize
     }
 
     return (
@@ -53,6 +54,7 @@ const TertiaryButton = ({ onClick, children, leftIcon, rightIcon, iconSize, styl
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
             iconStyle={IconStyle}
+            tintColor={tintColor}
             style={{
                 ...styles.button,
                 ...(isPressed ? styles.buttonPressed : styles.buttonNotPressed),

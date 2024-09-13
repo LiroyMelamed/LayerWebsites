@@ -10,6 +10,7 @@ import SimpleImage from './SimpleImage';
 import { images } from '../../assets/images/images';
 import SimpleScrollView from './SimpleScrollView';
 import TertiaryButton from '../styledComponents/buttons/TertiaryButton';
+import colors from '../../constant/colors';
 // import { useNavigate } from 'react-router-dom';
 
 const { NavBarLinks } = NavBarData
@@ -43,8 +44,10 @@ const SimpleNav = ({ activeButton, style }) => {
             {ListOfLinks.map(link => (
               <TertiaryButton
                 onClick={() => { }}
-                rightIcon={link.icon}
+                leftIcon={link.icon}
                 iconSize={18}
+                tintColor={colors.black}
+                style={{ justifyContent: 'flex-end' }}
               >
                 {link.buttonText}
               </TertiaryButton>
