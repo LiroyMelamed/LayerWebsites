@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import ButtonWithIcons from '../../specializedComponents/buttons/ButtonWithIcons';
 import { buttonStyles } from '../../simpleComponents/SimpleButton';
 
-const TertiaryButton = ({ onClick, children, leftIcon, rightIcon, iconSize, tintColor, buttonSize = "Medium", style, ...props }) => {
+const TertiaryButton = ({ onClick, children, leftIcon, rightIcon, iconSize, tintColor, buttonSize = "Medium", textStyle, style, ...props }) => {
     const [isPressed, setIsPressed] = useState(false);
 
     const handleMouseDown = () => setIsPressed(true);
@@ -45,6 +45,10 @@ const TertiaryButton = ({ onClick, children, leftIcon, rightIcon, iconSize, tint
         height: buttonStyles[buttonSize].iconSize
     }
 
+    const TextStyle = {
+        fontSize: buttonStyles[buttonSize].fontSize
+    }
+
     return (
         <ButtonWithIcons
             leftIcon={leftIcon}
@@ -55,6 +59,7 @@ const TertiaryButton = ({ onClick, children, leftIcon, rightIcon, iconSize, tint
             onTouchEnd={handleTouchEnd}
             iconStyle={IconStyle}
             tintColor={tintColor}
+            textStyle={TextStyle}
             style={{
                 ...styles.button,
                 ...(isPressed ? styles.buttonPressed : styles.buttonNotPressed),

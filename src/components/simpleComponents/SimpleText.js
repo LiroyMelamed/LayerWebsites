@@ -10,6 +10,8 @@ const SimpleText = ({ size = 16, bold = false, color = colors.lightText, childre
                 color, // Use the color prop
                 margin: 0,
                 fontFamily: 'Rubik, sans-serif',
+                direction: 'rtl', // Set text direction to RTL
+                textAlign: 'right', // Align text to the right
                 ...style
             }}
             {...props}

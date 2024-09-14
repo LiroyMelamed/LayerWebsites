@@ -1,9 +1,5 @@
 import React from 'react';
-import SimpleContainer from './SimpleContainer';
-import SimpleButton from './SimpleButton';
 import { NavBarData } from '../navBars/data/NavBarData';
-import ButtonWithIcons from '../specializedComponents/buttons/ButtonWithIcons';
-import { icons } from '../../assets/icons/icons';
 import Separator from '../styledComponents/separators/Separator';
 import { useScreenSize } from '../../providers/ScreenSizeProvider';
 import SimpleImage from './SimpleImage';
@@ -11,61 +7,73 @@ import { images } from '../../assets/images/images';
 import SimpleScrollView from './SimpleScrollView';
 import TertiaryButton from '../styledComponents/buttons/TertiaryButton';
 import colors from '../../constant/colors';
-// import { useNavigate } from 'react-router-dom';
+import SimpleContainer from './SimpleContainer';
+import { buttonSize } from './SimpleButton';
 
-const { NavBarLinks } = NavBarData
+const { NavBarLinks } = NavBarData;
 
 const SimpleNav = ({ activeButton, style }) => {
-  // const navigate = useNavigate()
   const { isSmallScreen } = useScreenSize();
 
   const containerStyle = {
     display: 'flex',
-    flexDirection: 'column',
-    listStyleType: 'none',
-    margin: 0,
-    padding: 0,
+    height: '100%',
+    width: '100%',
     ...style
   };
 
   return (
-    <SimpleScrollView>
-      <SimpleContainer style={containerStyle}>
-
-        {!isSmallScreen &&
-          <SimpleImage
-            src={images.Logos.FullLogoOriginal}
-            style={styles.logo}
-          />}
-        {NavBarLinks.map((ListOfLinks, index) => (
-          <>
-
-            {index != 0 && <Separator />}
-            {ListOfLinks.map(link => (
-              <TertiaryButton
-                onClick={() => { }}
-                leftIcon={link.icon}
-                iconSize={18}
-                tintColor={colors.black}
-                style={{ justifyContent: 'flex-end' }}
-              >
-                {link.buttonText}
-              </TertiaryButton>
-            ))}
-          </>
-        ))}
-      </SimpleContainer>
-
-    </SimpleScrollView>
+    <SimpleContainer style={containerStyle}>
+      <SimpleScrollView>
+        <SimpleContainer style={styles.innerContainer(isSmallScreen)}>
+          {!isSmallScreen &&
+            <SimpleImage
+              src={images.Logos.FullLogoOriginal}
+              style={styles.logo}
+            />
+          }
+          {NavBarLinks.map((ListOfLinks, ListIndex) => (
+            <SimpleContainer key={`NavList${ListIndex}`} style={styles.list}>
+              {ListIndex !== 0 && <Separator />}
+              {ListOfLinks.map((link, LinkIndex) => (
+                <TertiaryButton
+                  key={`NavItemNumber[${ListIndex}][${LinkIndex}]`}
+                  onClick={link.onClick}
+                  leftIcon={link.icon}
+                  iconSize={18}
+                  tintColor={colors.black}
+                  style={{ width: '100%', justifyContent: 'flex-end' }}
+                  buttonSize={buttonSize.MEDIUM}
+                >
+                  {link.buttonText}
+                </TertiaryButton>
+              ))}
+            </SimpleContainer>
+          ))}
+        </SimpleContainer>
+      </SimpleScrollView>
+    </SimpleContainer>
   );
 };
 
 const styles = {
   logo: {
     width: 200,
-    alignSelf: 'center',
-    margin: '50px 0px'
-  }
-}
+    alignSelf: 'center', // Ensure the logo is centered within its container
+    margin: '50px 0px',
+  },
+  list: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-end'
+  },
+  innerContainer: (isSmallScreen) => ({
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    marginTop: isSmallScreen ? 60 : 0
+  })
+};
 
 export default SimpleNav;

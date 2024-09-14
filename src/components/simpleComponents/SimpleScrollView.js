@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
 import colors from "../../constant/colors";
+import { useScreenSize } from "../../providers/ScreenSizeProvider";
 
 const SimpleScrollView = React.forwardRef(({
     children,
@@ -9,6 +10,7 @@ const SimpleScrollView = React.forwardRef(({
     onScrollUp,
     onScrollDown,
     onScrollToBottom,
+    style,
     ...props
 }, ref) => {
     const internalScrollRef = useRef();
@@ -99,19 +101,14 @@ const SimpleScrollView = React.forwardRef(({
             onScroll={handleOnScroll}
             ref={scrollRef}
             style={{
-                overflowY: 'auto',
-                overflowX: 'hidden',
-                whiteSpace: 'normal',
                 backgroundColor: colors.transparent,
                 width: '100%',
-                height: '100%',
-                touchAction: 'none',
-                scrollbarWidth: 'none',
+                flex: 1, // Allows the scroll view to expand within its parent
                 msOverflowStyle: 'none',
                 '&::-webkit-scrollbar': {
                     display: 'none',
                 },
-                ...props.style,
+                ...style,
             }}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}

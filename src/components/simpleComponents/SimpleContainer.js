@@ -1,13 +1,11 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 
-const SimpleContainer = (props) => {
-  const { children, style, ...rest } = props;
-
+const SimpleContainer = forwardRef(({ children, style, ...rest }, ref) => {
   return (
-    <div style={style} {...rest}>
+    <div ref={ref} style={{ ...style, boxSizing: 'border-box' }} {...rest}>
       {children}
     </div>
   );
-};
+});
 
 export default SimpleContainer;

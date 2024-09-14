@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useScreenSize } from '../../providers/ScreenSizeProvider';
-import SimpleContainer from '../simpleComponents/SimpleContainer';
 import SimpleButton from '../simpleComponents/SimpleButton';
 import colors from '../../constant/colors';
 import SimpleNav from '../simpleComponents/SimpleNav';
 import SimpleImage from '../simpleComponents/SimpleImage';
 import { images } from '../../assets/images/images';
+import SimpleContainer from '../simpleComponents/SimpleContainer';
 
 const TopAndRightNavBar = () => {
   const { isSmallScreen } = useScreenSize();
@@ -39,8 +39,10 @@ const TopAndRightNavBar = () => {
           </SimpleContainer>
         </SimpleContainer>
       ) : (
-        <SimpleContainer style={styles.sidebarContainer}>
-          <SimpleNav style={styles.sidebar} />
+        <SimpleContainer style={styles.sidebar}>
+          <SimpleContainer style={styles.menuBig}>
+            <SimpleNav style={styles.menuNavBig} />
+          </SimpleContainer>
         </SimpleContainer>
       )}
     </>
@@ -52,26 +54,32 @@ const styles = {
     backgroundColor: colors.white,
     padding: '10px 20px',
     position: 'fixed', // Fixed position to stay at the top
-    top: 0,
-    left: 0,
-    right: 0,
     display: 'flex',
-    justifyContent: 'center',
+    width: '100%',
     alignItems: 'center',
     boxShadow: '0 4px 8px rgba(0,0,0,0.2)', // Shadow for header
     height: 60,
+    zIndex: 1000,
+  },
+  sidebar: {
+    width: '250px',
+    backgroundColor: colors.white,
+    position: 'fixed',
+    right: 0,
+    height: '100vh',
+    display: 'flex',
+    boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+    zIndex: 1000,
   },
   menuButton: {
     fontSize: '24px',
     background: 'none',
     color: colors.black,
     cursor: 'pointer',
-    outline: 'none',
     position: 'absolute',
     zIndex: 1001,
-    right: '20px',
+    right: '50px',
     transition: 'transform 0.3s, color 0.3s',
-    boxShadow: 'none',
   },
   menuButtonTransform: (isMenuOpen) => ({
     transform: isMenuOpen ? 'rotate(90deg)' : 'rotate(0deg)',
@@ -81,20 +89,33 @@ const styles = {
     position: 'fixed',
     top: 0,
     right: 0,
-    height: '100dvh',
+    height: '100vh',
     width: '250px',
     backgroundColor: colors.white,
     transition: 'transform 0.3s ease, opacity 0.3s ease',
     boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-    overflowY: 'auto',
+    display: 'flex',
+  },
+  menuBig: {
+    position: 'fixed',
+    top: 0,
+    right: 0,
+    height: '100vh',
+    width: '250px',
+    backgroundColor: colors.white,
+    transition: 'transform 0.3s ease, opacity 0.3s ease',
+    boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+    display: 'flex',
   },
   menuNav: {
     listStyleType: 'none',
-    marginTop: 80,
-    padding: 0,
     display: 'flex',
     flexDirection: 'column',
-    gap: '20px',
+  },
+  menuNavBig: {
+    listStyleType: 'none',
+    display: 'flex',
+    flexDirection: 'column',
   },
   logo: {
     height: 50,
@@ -102,20 +123,7 @@ const styles = {
     left: '50%',
     transform: 'translateX(-50%)',
   },
-  sidebarContainer: {
-    display: 'flex',
-  },
-  sidebar: {
-    width: '250px',
-    height: '100dvh',
-    backgroundColor: colors.white,
-    position: 'fixed',
-    top: 0,
-    right: 0,
-    display: 'flex',
-    flexDirection: 'column',
-    boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-  },
+
 };
 
 export default TopAndRightNavBar;

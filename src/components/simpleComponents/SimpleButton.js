@@ -16,7 +16,7 @@ export const buttonStyles = {
   Medium: {
     height: 40,
     iconSize: 20,
-    fontSize: 24,
+    fontSize: 20,
     padding: '10px 20px',
   },
 };
@@ -28,7 +28,7 @@ const SimpleButton = ({ children, onClick, onMouseDown, onMouseUp, onTouchStart,
     border: 'none',
     cursor: 'pointer',
     backgroundColor: colors.transparent,
-    WebkitTapHighlightColor: 'transparent', // Remove tap highlight color
+    WebkitTapHighlightColor: 'transparent',
     ...style,
   };
 

@@ -15,7 +15,7 @@ export default function SimpleScreen({ children, imageBackgroundSource, style })
     const childrenContainerStyle = {
         ...style,
         ...styles.childrenContainer,
-        maxWidth: isSmallScreen ? '100dvw' : `calc(100dvw - 250px)`,
+        width: isSmallScreen ? '100%' : `calc(100% - 250px)`,
     };
 
     return (
@@ -30,14 +30,13 @@ export default function SimpleScreen({ children, imageBackgroundSource, style })
 const styles = {
     screen: {
         display: 'flex',
-        height: '100dvh',
+        height: '100%',
+        width: '100%',
         position: 'relative',
-        transition: 'width 0.3s ease', // Smooth transition for resizing
+        transition: 'width 0.3s ease', // Smooth transition for resizing\
     },
     childrenContainer: {
         display: 'flex',
-        justifyContent: 'center', // Center content horizontally inside container
-        alignItems: 'center', // Center content vertically inside container
         position: 'relative',
         zIndex: 1,
     },

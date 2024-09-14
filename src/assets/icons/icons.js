@@ -9,4 +9,9 @@ export const icons = {
         UpdateCase: require("./NavBar/UpdateCase.png"),
     },
 
+    Search: {
+        MagnifyingGlass: require("./Search/MagnifyingGlass.png"),
+
+    }
+
 }

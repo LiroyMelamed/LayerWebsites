@@ -23,13 +23,12 @@ const ButtonWithIcons = ({ onMouseDown, onMouseUp, onTouchStart, onTouchEnd, lef
             onMouseUp={onMouseUp}
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
-            textStyle={textStyle}
             {...props}
         >
             {leftIcon && (
                 <SimpleIcon tintColor={tintColor} src={leftIcon} style={{ ...IconStyle, marginRight: '8px' }} />
             )}
-            <SimpleText textStyle={TextStyle}>
+            <SimpleText style={TextStyle}>
                 {children}
             </SimpleText>
 

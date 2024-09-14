@@ -9,14 +9,20 @@ export const casesApi = {
     return getData(ALL_CASES_DATA_ENDPOINT);
   },
 
-  getCaseById: async (caseId) => {
-    return getData(SPECIFIC_CASE_DATA_ENDPOINT + caseId);
+  getAllTagedCases: async () => {
+    const allCases = await getData(ALL_CASES_DATA_ENDPOINT);
+    return allCases ? Object.values(allCases).filter(caseItem => caseItem.tag === true) : [];
+  },
+
+  getCaseByName: async (caseName) => {
+    return getData(SPECIFIC_CASE_DATA_ENDPOINT + caseName);
   },
 
   updateCaseById: async (caseId, caseData) => {
     return setData(SPECIFIC_CASE_DATA_ENDPOINT + caseId, caseData);
   },
 };
+
 
 
 const CASES_TYPE_DATA_ENDPOINT = 'cases_type/';
