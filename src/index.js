@@ -4,14 +4,17 @@ import App from './App';
 import { ScreenSizeProvider } from './providers/ScreenSizeProvider';
 import { BrowserRouter } from 'react-router-dom';
 import './index.css';
+import { PopupProvider } from './providers/PopUpProvider';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <BrowserRouter>
-      <ScreenSizeProvider>
-        <App />
-      </ScreenSizeProvider>
+      <PopupProvider>
+        <ScreenSizeProvider>
+          <App />
+        </ScreenSizeProvider>
+      </PopupProvider>
     </BrowserRouter>
   </React.StrictMode>
 

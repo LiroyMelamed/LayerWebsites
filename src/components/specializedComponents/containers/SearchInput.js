@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react';
 import SimpleInput from '../../simpleComponents/SimpleInput';
 import SimpleContainer from '../../simpleComponents/SimpleContainer';
-import HoverContainer from '../containers/HoverContainer';
+import HoverContainer from './HoverContainer';
 import { useScreenSize } from '../../../providers/ScreenSizeProvider';
 
-const SearchInput = ({ leftIcon, rightIcon, onSearch, tintColor, IconStyle, textStyle, style, ...props }) => {
+const SearchInput = ({ leftIcon, rightIcon, onSearch, tintColor, IconStyle, textStyle, queryResult, isPerforming, getButtonTextFunction, title, style, ...props }) => {
     const [query, setQuery] = useState('');
     const [showResults, setShowResults] = useState(false);
     const targetRef = useRef(null);
@@ -30,12 +30,14 @@ const SearchInput = ({ leftIcon, rightIcon, onSearch, tintColor, IconStyle, text
     const containerStyle = {
         width: '100%',
         ...style
-    }
+    };
 
     return (
         <SimpleContainer style={containerStyle}>
             <SimpleInput
+                title={title}
                 ref={targetRef}
+                value={query} // Add the value prop here
                 leftIcon={leftIcon}
                 rightIcon={rightIcon}
                 tintColor={tintColor}
@@ -55,6 +57,8 @@ const SearchInput = ({ leftIcon, rightIcon, onSearch, tintColor, IconStyle, text
                         width: '100%', // Align with input
                         zIndex: 1000,
                     }}
+                    queryResult={queryResult}
+                    getButtonTextFunction={getButtonTextFunction}
                 />
             )}
         </SimpleContainer>

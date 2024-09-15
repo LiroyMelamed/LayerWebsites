@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import ButtonWithIcons from '../../specializedComponents/buttons/ButtonWithIcons';
 import { buttonStyles } from '../../simpleComponents/SimpleButton';
 
-const PrimaryButton = ({ onClick, children, leftIcon, rightIcon, buttonSize = "Medium", style, ...props }) => {
+const PrimaryButton = ({ onClick, children, leftIcon, rightIcon, buttonSize = "Medium", textStyle, style, ...props }) => {
     const [isPressed, setIsPressed] = useState(false);
 
     const handleMouseDown = () => setIsPressed(true);
@@ -46,6 +46,11 @@ const PrimaryButton = ({ onClick, children, leftIcon, rightIcon, buttonSize = "M
         height: buttonStyles[buttonSize].iconSize
     }
 
+    const TextStyle = {
+        fontSize: buttonStyles[buttonSize].fontSize,
+        ...textStyle,
+    };
+
     return (
         <ButtonWithIcons
             leftIcon={leftIcon}
@@ -55,6 +60,7 @@ const PrimaryButton = ({ onClick, children, leftIcon, rightIcon, buttonSize = "M
             onMouseUp={handleMouseUp}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
+            textStyle={TextStyle}
             style={{
                 ...styles.button,
                 ...(isPressed ? styles.buttonPressed : styles.buttonNotPressed),

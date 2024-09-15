@@ -1,90 +1,85 @@
 import React from 'react';
 import SimpleContainer from './SimpleContainer';
-import SimpleLoader from './SimpleLoader';
-import colors from '../../constant/colors';
 import { Text20 } from '../specializedComponents/text/AllTextKindFile';
 import Separator from '../styledComponents/separators/Separator';
+import CaseMenuItem from '../specializedComponents/menuItems/CaseMenuItem';
 
-const SimpleTable = ({ titles, data, isLoading, noDataMessage, style, rowStyle, cellStyle, ...props }) => {
-    console.log("tableeee", data);
-
+const SimpleTable = ({ titles, data, isLoading, noDataMessage, rePerformRequest, style, rowStyle, cellStyle, ...props }) => {
     return (
-        <SimpleContainer style={{ ...styles.containerStyle, ...style }}>
-            {isLoading ? (<SimpleLoader />) : (
+        <SimpleContainer style={{ ...styles.container, ...style }}>
+            {data.length === 0 ? (
+                <p style={styles.noDataMessage}>{noDataMessage}</p>
+            ) : (
                 <>
-                    {data.length === 0 ? (
-                        <p style={styles.noDataMessage}>{noDataMessage}</p>
-                    ) :
-                        <>
-                            <SimpleContainer style={styles.titleRow}>
-                                {titles?.map((title, index) => (
-                                    <Text20 style={{ flex: 1 }}>{title}</Text20>
-                                ))}
-                            </SimpleContainer>
-                            <Separator />
+                    <SimpleContainer style={styles.titleRow}>
+                        {titles?.map((title, index) => (
+                            <Text20 key={index} style={{ ...styles.cell }}>
+                                {title}
+                            </Text20>
+                        ))}
+                    </SimpleContainer>
 
+                    {data.map((item, rowIndex) => (
+                        <>
+                            {rowIndex != 0 && <Separator />}
+                            <CaseMenuItem
+                                key={rowIndex}
+                                rePerformRequest={rePerformRequest}
+                                caseNumber={item.Column0} // Assuming Column0 contains the caseNumber
+                                style={{ ...styles.row, ...rowStyle }}
+                            >
+                                {titles.map((_, colIndex) => (
+                                    <div key={colIndex} style={{ ...styles.cell, ...cellStyle }}>
+                                        <Text20 style={{ ...styles.cellText }} title={item[`Column${colIndex}`]}>
+                                            {item[`Column${colIndex}`]}
+                                        </Text20>
+                                    </div>
+                                ))}
+                            </CaseMenuItem>
                         </>
-                        // <table style={styles.tableStyle} {...props}>
-                        //     <thead>
-                        //         <tr>
-                        //             {columns.map((column, index) => (
-                        //                 <th key={index} style={styles.headerCellStyle}>{column}</th>
-                        //             ))}
-                        //         </tr>
-                        //     </thead>
-                        //     <tbody>
-                        //         {data.map((row, rowIndex) => (
-                        //             <tr key={rowIndex} style={rowStyle ? rowStyle(rowIndex) : styles.defaultRowStyle(rowIndex)}>
-                        //                 {columns.map((column, colIndex) => (
-                        //                     <td key={colIndex} style={cellStyle ? cellStyle : styles.defaultCellStyle}>{row[column]}</td>
-                        //                 ))}
-                        //             </tr>
-                        //         ))}
-                        //     </tbody>
-                        // </table>
-                    }
+                    ))}
                 </>
             )}
-
         </SimpleContainer>
     );
 };
 
-// Define all styles in a single object
 const styles = {
-    containerStyle: {
+    container: {
+        maxHeight: '100%', // Prevent overflow by restricting max height
+        overflow: 'hidden', // Hide overflow content
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'flex-start',
-        border: '1px solid #ddd',
-        backgroundColor: '#f8f8f8',
-        borderRadius: '8px',
-        padding: '20px',
-        marginTop: '20px',
-        width: '100%'
     },
     titleRow: {
         display: 'flex',
         flexDirection: 'row-reverse',
-        width: '100%'
-    },
-
-    tableStyle: {
         width: '100%',
-        borderCollapse: 'collapse',
-    },
-    headerCellStyle: {
-        padding: '12px 15px',
-        color: colors.lightText,
         borderBottom: '1px solid #ddd',
+        flexWrap: 'wrap', // Enable wrapping for small screens
     },
-    defaultRowStyle: (index) => ({
-        backgroundColor: index % 2 === 0 ? '#f8f8f8' : 'white',
-    }),
-    defaultCellStyle: {
-        padding: '12px 15px',
-        textAlign: 'right', // Align text to the right for RTL
-        borderBottom: '1px solid #ddd',
+    row: {
+        display: 'flex',
+        flexDirection: 'row-reverse',
+        width: '100%',
+        borderBottom: '1px solid #f0f0f0',
+        padding: '8px 0',
+        flexWrap: 'wrap', // Enable wrapping for small screens
+    },
+    cell: {
+        flex: 1,
+        padding: '8px',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        minWidth: '60px', // Set a minimum width for cells to prevent them from shrinking too much
+    },
+    cellText: {
+        display: 'block',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        width: '100%',
     },
     noDataMessage: {
         textAlign: 'center',

@@ -1,20 +1,15 @@
 import React, { useState } from 'react';
 import ButtonWithIcons from '../../specializedComponents/buttons/ButtonWithIcons';
 import { buttonStyles } from '../../simpleComponents/SimpleButton';
+import SimpleLoader from '../../simpleComponents/SimpleLoader'; // Import SimpleLoader
 
-const SecondaryButton = ({ onClick, children, leftIcon, rightIcon, buttonSize = "Medium", style, ...props }) => {
+const SecondaryButton = ({ onClick, children, leftIcon, rightIcon, buttonSize = "Medium", textStyle, style, isPerforming, ...props }) => {
     const [isPressed, setIsPressed] = useState(false);
 
     const handleMouseDown = () => setIsPressed(true);
-    const handleMouseUp = () => {
-        setIsPressed(false);
-        if (onClick) onClick(); // Call onClick handler when mouse is released
-    };
+    const handleMouseUp = () => setIsPressed(false);
     const handleTouchStart = () => setIsPressed(true);
-    const handleTouchEnd = () => {
-        setIsPressed(false);
-        if (onClick) onClick(); // Call onClick handler on touch end
-    };
+    const handleTouchEnd = () => setIsPressed(false);
 
     const styles = {
         button: {
@@ -29,6 +24,7 @@ const SecondaryButton = ({ onClick, children, leftIcon, rightIcon, buttonSize = 
             justifyContent: 'center',
             transition: 'all 0.2s ease-in-out',
             boxShadow: '4px 4px 8px #d0d0d0, -4px -4px 8px #ffffff',
+            ...buttonStyles[buttonSize],
         },
         buttonNotPressed: {
             backgroundColor: '#f0f0f0', // Lighter background
@@ -42,11 +38,17 @@ const SecondaryButton = ({ onClick, children, leftIcon, rightIcon, buttonSize = 
 
     const IconStyle = {
         width: buttonStyles[buttonSize].iconSize,
-        height: buttonStyles[buttonSize].iconSize
-    }
+        height: buttonStyles[buttonSize].iconSize,
+    };
+
+    const TextStyle = {
+        fontSize: buttonStyles[buttonSize].fontSize,
+        ...textStyle,
+    };
 
     return (
         <ButtonWithIcons
+            onClick={onClick}
             leftIcon={leftIcon}
             rightIcon={rightIcon}
             iconStyle={IconStyle}
@@ -54,6 +56,7 @@ const SecondaryButton = ({ onClick, children, leftIcon, rightIcon, buttonSize = 
             onMouseUp={handleMouseUp}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
+            textStyle={TextStyle}
             style={{
                 ...styles.button,
                 ...(isPressed ? styles.buttonPressed : styles.buttonNotPressed),
@@ -61,7 +64,7 @@ const SecondaryButton = ({ onClick, children, leftIcon, rightIcon, buttonSize = 
             }}
             {...props}
         >
-            {children}
+            {isPerforming ? <SimpleLoader /> : children} {/* Show loader if isPerforming is true */}
         </ButtonWithIcons>
     );
 };

@@ -1,17 +1,18 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 const useHttpRequest = (requestFunction, onSuccess, onFailure) => {
-  const [result, setResult] = useState(null);
-  const [isPerforming, setIsPerforming] = useState(true);
+  const [result, setResult] = useState([]);
+  const [isPerforming, setIsPerforming] = useState(false);
 
   const defaultOnFailure = (error) => {
     alert(`Oops! Something went wrong: ${error.message}`);
   };
 
-  const performRequest = async () => {
+  const performRequest = async (params) => {
+    if (isPerforming) return; // Prevent multiple concurrent requests
     setIsPerforming(true);
     try {
-      const data = await requestFunction();
+      const data = await requestFunction(params);
       setResult(data);
       if (onSuccess) onSuccess(data);
     } catch (err) {
@@ -20,7 +21,7 @@ const useHttpRequest = (requestFunction, onSuccess, onFailure) => {
     } finally {
       setIsPerforming(false);
     }
-  };
+  }
 
   return { result, isPerforming, performRequest };
 };

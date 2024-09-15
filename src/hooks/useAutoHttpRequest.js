@@ -1,14 +1,14 @@
 import { useEffect } from 'react';
 import useHttpRequest from './useHttpRequest';
 
-const useAutoHttpRequest = (requestFunction, dependencies = []) => {
-  const { result, isPerforming, error, performRequest } = useHttpRequest(requestFunction);
+const useAutoHttpRequest = (requestFunction, { body = [], onSuccess = null, onFailure = null } = {}) => {
+  const { result, isPerforming, error, performRequest } = useHttpRequest(requestFunction, onSuccess, onFailure);
 
   useEffect(() => {
-    performRequest();
-  }, dependencies);
+    performRequest(body); // Execute the request on component mount
+  }, []); // Empty dependency array to ensure it only runs once
 
-  return { result, isPerforming, error };
+  return { result, isPerforming, error, performRequest };
 };
 
 export default useAutoHttpRequest;

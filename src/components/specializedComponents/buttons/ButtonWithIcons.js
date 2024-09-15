@@ -3,7 +3,7 @@ import SimpleButton from '../../simpleComponents/SimpleButton';
 import SimpleIcon from '../../simpleComponents/SimpleIcon';
 import SimpleText from '../../simpleComponents/SimpleText';
 
-const ButtonWithIcons = ({ onMouseDown, onMouseUp, onTouchStart, onTouchEnd, leftIcon, rightIcon, iconStyle, tintColor, textStyle, style, children, props }) => {
+const ButtonWithIcons = ({ onClick, onMouseDown, onMouseUp, onTouchStart, onTouchEnd, leftIcon, rightIcon, iconStyle, tintColor, textStyle, style, children, props }) => {
 
     const IconStyle = {
         width: 24,
@@ -19,6 +19,7 @@ const ButtonWithIcons = ({ onMouseDown, onMouseUp, onTouchStart, onTouchEnd, lef
     return (
         <SimpleButton
             style={style}
+            onClick={onClick}
             onMouseDown={onMouseDown}
             onMouseUp={onMouseUp}
             onTouchStart={onTouchStart}

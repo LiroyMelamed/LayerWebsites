@@ -16,7 +16,7 @@ export const buttonStyles = {
   Medium: {
     height: 40,
     iconSize: 20,
-    fontSize: 20,
+    fontSize: 16,
     padding: '10px 20px',
   },
 };

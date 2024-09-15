@@ -38,6 +38,7 @@ const styles = {
     childrenContainer: {
         display: 'flex',
         position: 'relative',
+        height: '100dvh',
         zIndex: 1,
     },
 };

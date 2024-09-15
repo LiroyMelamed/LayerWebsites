@@ -5,6 +5,6 @@ export const images = {
         LogoSlang: require("./logos/logoLM.png")
     },
     Backgrounds: {
-        AppBackground: require("./backgrounds/powerpoint-background-77.jpg")
+        AppBackground: require("./backgrounds/WebSiteBackGround.jpg")
     }
 }

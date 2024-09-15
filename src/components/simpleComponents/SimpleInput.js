@@ -1,65 +1,99 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useState } from 'react';
 import SimpleContainer from './SimpleContainer';
 import SimpleIcon from './SimpleIcon';
+import colors from '../../constant/colors';
 
-const SimpleInput = forwardRef(({ leftIcon, rightIcon, tintColor, IconStyle, textStyle, style, ...props }, ref) => {
+const SimpleInput = forwardRef(
+    ({ title, titleFontSize = 16, leftIcon, rightIcon, tintColor, IconStyle, textStyle, style, value, onChange, ...props }, ref) => {
+        const [isFocused, setIsFocused] = useState(false);
 
-    const TextStyle = {
-        fontFamily: 'Rubik, sans-serif',
-        fontSize: 24,
-        ...textStyle
-    }
+        const TextStyle = {
+            fontFamily: 'Rubik, sans-serif',
+            fontSize: 24,
+            ...textStyle,
+        };
 
-    return (
-        <SimpleContainer
-            ref={ref}
-            style={{
-                display: 'flex',
-                flexDirection: 'row',
-                alignItems: 'center',
-                border: '1px solid #ddd',
-                backgroundColor: '#f8f8f8', // Light background color
-                borderRadius: '25px', // Rounded corners
-                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)', // Soft shadow
-                width: '100%', // Adjust width
-                direction: 'rtl', // Support RTL text direction
-                ...style,
-            }}
-        >
-            {rightIcon && (
-                <SimpleIcon
-                    tintColor={tintColor}
-                    src={rightIcon}
-                    style={{ ...IconStyle, marginRight: '8px' }} // Adjust margin for RTL
-                />
-            )}
-            <input
-                type="text"
+        return (
+            <SimpleContainer
+                ref={ref}
                 style={{
-                    flex: 1,
-                    padding: leftIcon ? '10px 30px 10px 10px' : '10px 15px', // Adjust padding for RTL
-                    paddingRight: rightIcon ? '30px' : '15px',
-                    border: 'none',
-                    backgroundColor: 'transparent',
-                    outline: 'none',
-                    fontSize: '14px', // Font size
-                    color: '#666', // Text color
-                    direction: 'rtl', // Support RTL text direction
-                    textAlign: 'right', // Align text to the right for RTL
-                    ...TextStyle, // Apply text styles from props
+                    position: 'relative',
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    border: '1px solid #ddd',
+                    backgroundColor: '#f8f8f8',
+                    borderRadius: '25px',
+                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                    width: '100%',
+                    direction: 'rtl',
+                    ...style,
                 }}
-                {...props}
-            />
-            {leftIcon && (
-                <SimpleIcon
-                    tintColor={tintColor}
-                    src={leftIcon}
-                    style={{ ...IconStyle, marginLeft: '8px' }} // Adjust margin for RTL
-                />
-            )}
+            >
+                {title && (
+                    <span
+                        style={{
+                            ...styles.floatingLabel,
+                            fontSize: titleFontSize,
+                            right: rightIcon ? '40px' : '15px', // Adjust position based on the presence of rightIcon
+                            transform: value || isFocused ? 'translateY(-20px) scale(0.8)' : 'translateY(10px) scale(1)',
+                            opacity: value || isFocused ? 1 : 0.6,
+                        }}
+                    >
+                        {title}
+                    </span>
+                )}
 
-        </SimpleContainer>
-    );
-});
+                {rightIcon && (
+                    <SimpleIcon
+                        tintColor={tintColor}
+                        src={rightIcon}
+                        style={{ ...IconStyle, marginRight: '8px' }}
+                    />
+                )}
+                <input
+                    type="text"
+                    style={{
+                        flex: 1,
+                        padding: leftIcon ? '20px 30px 10px 10px' : '20px 15px', // Adjust padding for better spacing
+                        paddingRight: rightIcon ? '30px' : '15px',
+                        border: 'none',
+                        backgroundColor: 'transparent',
+                        outline: 'none',
+                        fontSize: '14px',
+                        color: '#666',
+                        direction: 'rtl',
+                        textAlign: 'right',
+                        ...TextStyle,
+                    }}
+                    value={value}
+                    onChange={onChange}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
+                    {...props}
+                />
+                {leftIcon && (
+                    <SimpleIcon
+                        tintColor={tintColor}
+                        src={leftIcon}
+                        style={{ ...IconStyle, marginLeft: '8px' }}
+                    />
+                )}
+            </SimpleContainer>
+        );
+    }
+);
+
+const styles = {
+    floatingLabel: {
+        position: 'absolute',
+        top: '12px', // Adjust to position label correctly when not focused
+        backgroundColor: '#f8f8f8', // Match the container's background
+        padding: '0 5px',
+        pointerEvents: 'none',
+        transition: 'transform 0.2s ease, opacity 0.2s ease',
+        color: colors.lightText,
+    },
+};
 
 export default SimpleInput;
