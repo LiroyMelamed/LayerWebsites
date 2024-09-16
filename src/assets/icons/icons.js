@@ -11,6 +11,10 @@ export const icons = {
 
     Search: {
         MagnifyingGlass: require("./Search/MagnifyingGlass.png"),
+    },
+
+    Button: {
+        DownArrow: require("./Button/DownArrow.png"),
 
     }
 

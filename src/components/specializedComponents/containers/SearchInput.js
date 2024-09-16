@@ -27,13 +27,8 @@ const SearchInput = ({ leftIcon, rightIcon, onSearch, tintColor, IconStyle, text
         }
     };
 
-    const containerStyle = {
-        width: '100%',
-        ...style
-    };
-
     return (
-        <SimpleContainer style={containerStyle}>
+        <SimpleContainer style={style}>
             <SimpleInput
                 title={title}
                 ref={targetRef}
@@ -50,15 +45,14 @@ const SearchInput = ({ leftIcon, rightIcon, onSearch, tintColor, IconStyle, text
             />
             {showResults && (
                 <HoverContainer
-                    query={query}
                     targetRef={targetRef}
                     style={{
                         position: 'absolute',
-                        width: '100%', // Align with input
                         zIndex: 1000,
                     }}
                     queryResult={queryResult}
                     getButtonTextFunction={getButtonTextFunction}
+                    onClose={() => { setShowResults(false) }}
                 />
             )}
         </SimpleContainer>

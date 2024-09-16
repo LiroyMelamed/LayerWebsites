@@ -43,7 +43,7 @@ const SimpleNav = ({ activeButton, style }) => {
                   iconSize={18}
                   tintColor={colors.black}
                   style={{ width: '100%', justifyContent: 'flex-end' }}
-                  buttonSize={buttonSize.MEDIUM}
+                  buttonSize={buttonSize.BIG}
                 >
                   {link.buttonText}
                 </TertiaryButton>

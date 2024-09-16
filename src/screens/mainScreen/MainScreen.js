@@ -13,6 +13,8 @@ import { casesApi } from '../../api/casesApi';
 import useHttpRequest from '../../hooks/useHttpRequest';
 import { images } from '../../assets/images/images';
 import SimpleLoader from '../../components/simpleComponents/SimpleLoader';
+import SimpleContainer from '../../components/simpleComponents/SimpleContainer';
+import ChooseButton from '../../components/styledComponents/buttons/ChooseButton';
 
 export const MainScreenName = "/MainScreen";
 
@@ -26,7 +28,7 @@ export default function MainScreen() {
     };
 
     if (isPerformingTaggedCases) {
-        return <SimpleLoader />
+        return <SimpleLoader />;
     }
 
     const adjustedData = taggedCases.map((caseItem) => {
@@ -43,30 +45,29 @@ export default function MainScreen() {
     return (
         <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
             <SimpleScrollView>
-                <SearchInput
-                    rightIcon={icons.Search.MagnifyingGlass}
-                    onSearch={handleSearch}
-                    tintColor={colors.text}
-                    title={"חיפוש תיק"}
-                    textStyle={{ textAlign: 'center' }}
-                    titleFontSize={20}
-                    isPerforming={isPerformingCasesById}
-                    queryResult={casesByName}
-                    getButtonTextFunction={(item) => item.CaseName}
-                />
+                <SimpleContainer style={styles.responsiveContainer}>
+                    <Text40 style={{ alignSelf: 'center', textAlign: 'center', marginLeft: 20 }}>תיקים נעוצים</Text40>
+                    <SearchInput
+                        onSearch={handleSearch}
+                        title={"חיפוש תיק"}
+                        titleFontSize={20}
+                        isPerforming={isPerformingCasesById}
+                        queryResult={casesByName}
+                        getButtonTextFunction={(item) => item.CaseName}
+                        style={styles.searchInput}
+                    />
+                    <ChooseButton style={styles.chooseButton} />
+                </SimpleContainer>
 
                 <SimpleCard style={{ marginTop: 32 }}>
-                    <Text40 style={{ alignSelf: 'center' }}>תיקים נעוצים</Text40>
                     <SimpleTable
                         titles={columns}
                         data={adjustedData}
                         rePerformRequest={performRequest}
                         noDataMessage={"לא נמצאו תיקים נעוצים"}
-                        style={{ marginTop: 40, width: '100%' }}
+                        style={{ width: '100%' }}
                     />
                 </SimpleCard>
-
-
             </SimpleScrollView>
         </SimpleScreen>
     );
@@ -74,8 +75,28 @@ export default function MainScreen() {
 
 const styles = {
     screenStyle: (isSmallScreen) => ({
-        paddingTop: isSmallScreen ? 80 : 40,
+        paddingTop: isSmallScreen ? 100 : 40,
         paddingRight: 20,
         paddingLeft: 20,
+        boxSizing: 'border-box',
     }),
+    responsiveContainer: {
+        display: 'flex',
+        flexDirection: 'row-reverse',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        maxWidth: '100%',
+        overflow: 'hidden',
+    },
+    searchInput: {
+        margin: "12px 0px",
+        marginLeft: 20,
+        flex: '1 1 200px',
+        maxWidth: '500px',
+    },
+    chooseButton: {
+        margin: "12px 0px",
+        flex: '0 1 auto',
+        minWidth: '100px',
+    }
 };

@@ -1,25 +1,24 @@
-import React, { useState } from 'react';
+import React, { forwardRef } from 'react';
 import SimpleButton from '../../simpleComponents/SimpleButton';
 import SimpleIcon from '../../simpleComponents/SimpleIcon';
 import SimpleText from '../../simpleComponents/SimpleText';
 
-const ButtonWithIcons = ({ onClick, onMouseDown, onMouseUp, onTouchStart, onTouchEnd, leftIcon, rightIcon, iconStyle, tintColor, textStyle, style, children, props }) => {
-
+const ButtonWithIcons = forwardRef(({ onMouseDown, onMouseUp, onTouchStart, onTouchEnd, leftIcon, rightIcon, iconStyle, tintColor, textStyle, style, children, ...props }, ref) => {
     const IconStyle = {
         width: 24,
         height: 24,
-        ...iconStyle
-    }
+        ...iconStyle,
+    };
 
     const TextStyle = {
         flexDirection: 'row',
-        ...textStyle
-    }
+        ...textStyle,
+    };
 
     return (
         <SimpleButton
+            ref={ref} // Pass the ref to SimpleButton
             style={style}
-            onClick={onClick}
             onMouseDown={onMouseDown}
             onMouseUp={onMouseUp}
             onTouchStart={onTouchStart}
@@ -32,12 +31,11 @@ const ButtonWithIcons = ({ onClick, onMouseDown, onMouseUp, onTouchStart, onTouc
             <SimpleText style={TextStyle}>
                 {children}
             </SimpleText>
-
             {rightIcon && (
                 <SimpleIcon tintColor={tintColor} src={rightIcon} style={{ ...IconStyle, marginLeft: '8px' }} />
             )}
         </SimpleButton>
     );
-};
+});
 
 export default ButtonWithIcons;

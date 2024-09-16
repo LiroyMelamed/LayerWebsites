@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import colors from '../../constant/colors';
 
 export const buttonSize = {
   SMALL: "Small",
-  MEDIUM: "Medium"
-}
+  MEDIUM: "Medium",
+  BIG: "Big"
+};
 
 export const buttonStyles = {
   Small: {
@@ -15,25 +16,36 @@ export const buttonStyles = {
   },
   Medium: {
     height: 40,
-    iconSize: 20,
+    iconSize: 16,
     fontSize: 16,
     padding: '10px 20px',
   },
+  Big: {
+    height: 60,
+    iconSize: 24,
+    fontSize: 24,
+    padding: '12px 28px',
+  }
 };
 
-const SimpleButton = ({ children, onClick, onMouseDown, onMouseUp, onTouchStart, onTouchEnd, style, ...props }) => {
+const SimpleButton = forwardRef(({ children, onClick, onMouseDown, onMouseUp, onTouchStart, onTouchEnd, style, size = 'Medium', backgroundColor = colors.transparent, ...props }, ref) => {
+  const currentSizeStyle = buttonStyles[size];
+
   const buttonStyle = {
-    padding: '8px 12px',
+    padding: currentSizeStyle.padding,
     borderRadius: '4px',
     border: 'none',
     cursor: 'pointer',
-    backgroundColor: colors.transparent,
+    backgroundColor: backgroundColor,
     WebkitTapHighlightColor: 'transparent',
+    fontSize: currentSizeStyle.fontSize,
+    height: currentSizeStyle.height,
     ...style,
   };
 
   return (
     <button
+      ref={ref}
       style={buttonStyle}
       onClick={onClick}
       onMouseDown={onMouseDown}
@@ -45,6 +57,6 @@ const SimpleButton = ({ children, onClick, onMouseDown, onMouseUp, onTouchStart,
       {children}
     </button>
   );
-};
+});
 
 export default SimpleButton;

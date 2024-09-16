@@ -30,15 +30,13 @@ export default function SimpleScreen({ children, imageBackgroundSource, style })
 const styles = {
     screen: {
         display: 'flex',
-        height: '100%',
-        width: '100%',
+        height: '100dvh',
+        width: '100dvw',
         position: 'relative',
-        transition: 'width 0.3s ease', // Smooth transition for resizing\
     },
     childrenContainer: {
         display: 'flex',
         position: 'relative',
-        height: '100dvh',
         zIndex: 1,
     },
 };

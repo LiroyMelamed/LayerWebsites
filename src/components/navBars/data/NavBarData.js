@@ -5,20 +5,19 @@ export const NavBarData = {
         {
             buttonText: "לכל התיקים",
             buttonScreen: "",
-            icon: icons.NavBarIcons.Hammer,
+            icon: null, //icons.NavBarIcons.Hammer
             onClick: () => { }
         },
         {
             buttonText: "תיק חדש",
             buttonScreen: "",
-            icon: icons.NavBarIcons.NewCase,
+            icon: null, //icons.NavBarIcons.NewCase
             onClick: () => { }
-
         },
         {
             buttonText: "עדכון תיק",
             buttonScreen: "",
-            icon: icons.NavBarIcons.UpdateCase,
+            icon: null, //icons.NavBarIcons.UpdateCase
             onClick: () => { }
         }
     ],
@@ -26,13 +25,13 @@ export const NavBarData = {
         {
             buttonText: "הוספת מנהל",
             buttonScreen: "",
-            icon: icons.NavBarIcons.Manager,
+            icon: null, //icons.NavBarIcons.Manager
             onClick: () => { }
         },
         {
             buttonText: "לכל המנהלים",
             buttonScreen: "",
-            icon: icons.NavBarIcons.AllManagers,
+            icon: null, //icons.NavBarIcons.AllManagers
             onClick: () => { }
         },
     ],
@@ -40,13 +39,13 @@ export const NavBarData = {
         {
             buttonText: "הוספת סוג תיק",
             buttonScreen: "",
-            icon: icons.NavBarIcons.AddCaseType,
+            icon: null, //icons.NavBarIcons.AddCaseType
             onClick: () => { }
         },
         {
             buttonText: "לכל סוגי התיקים",
             buttonScreen: "",
-            icon: icons.NavBarIcons.AllCasesType,
+            icon: null, //icons.NavBarIcons.AllCasesType
             onClick: () => { }
         },
     ]

@@ -51,19 +51,19 @@ const TopAndRightNavBar = () => {
 
 const styles = {
   headerSmallScreen: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.transparent,
     padding: '10px 20px',
     position: 'fixed', // Fixed position to stay at the top
     display: 'flex',
     width: '100%',
     alignItems: 'center',
     boxShadow: '0 4px 8px rgba(0,0,0,0.2)', // Shadow for header
-    height: 60,
+    height: 80,
     zIndex: 1000,
   },
   sidebar: {
     width: '250px',
-    backgroundColor: colors.white,
+    backgroundColor: colors.transparent,
     position: 'fixed',
     right: 0,
     height: '100vh',
@@ -102,7 +102,7 @@ const styles = {
     right: 0,
     height: '100vh',
     width: '250px',
-    backgroundColor: colors.white,
+    backgroundColor: colors.transparent,
     transition: 'transform 0.3s ease, opacity 0.3s ease',
     boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
     display: 'flex',

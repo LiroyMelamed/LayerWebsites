@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, forwardRef } from 'react';
 import ButtonWithIcons from '../../specializedComponents/buttons/ButtonWithIcons';
 import { buttonStyles } from '../../simpleComponents/SimpleButton';
 import SimpleLoader from '../../simpleComponents/SimpleLoader'; // Import SimpleLoader
 
-const SecondaryButton = ({ onClick, children, leftIcon, rightIcon, buttonSize = "Medium", textStyle, style, isPerforming, ...props }) => {
+const SecondaryButton = forwardRef(({ onClick, children, leftIcon, rightIcon, buttonSize = "Medium", textStyle, style, isPerforming, ...props }, ref) => {
     const [isPressed, setIsPressed] = useState(false);
 
     const handleMouseDown = () => setIsPressed(true);
@@ -14,7 +14,7 @@ const SecondaryButton = ({ onClick, children, leftIcon, rightIcon, buttonSize = 
     const styles = {
         button: {
             padding: '10px 20px',
-            border: '2px solid #ccc', // Lighter border
+            border: '2px solid #ccc',
             borderRadius: '15px',
             cursor: 'pointer',
             fontSize: '16px',
@@ -27,7 +27,7 @@ const SecondaryButton = ({ onClick, children, leftIcon, rightIcon, buttonSize = 
             ...buttonStyles[buttonSize],
         },
         buttonNotPressed: {
-            backgroundColor: '#f0f0f0', // Lighter background
+            backgroundColor: '#f0f0f0',
             color: '#333',
         },
         buttonPressed: {
@@ -48,6 +48,7 @@ const SecondaryButton = ({ onClick, children, leftIcon, rightIcon, buttonSize = 
 
     return (
         <ButtonWithIcons
+            ref={ref} // Pass the ref to ButtonWithIcons
             onClick={onClick}
             leftIcon={leftIcon}
             rightIcon={rightIcon}
@@ -64,9 +65,9 @@ const SecondaryButton = ({ onClick, children, leftIcon, rightIcon, buttonSize = 
             }}
             {...props}
         >
-            {isPerforming ? <SimpleLoader /> : children} {/* Show loader if isPerforming is true */}
+            {isPerforming ? <SimpleLoader /> : children}
         </ButtonWithIcons>
     );
-};
+});
 
 export default SecondaryButton;

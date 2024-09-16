@@ -7,7 +7,6 @@ const SimpleTextArea = forwardRef(({ title, leftIcon, rightIcon, tintColor, Icon
     const [isFocused, setIsFocused] = useState(false);
 
     const TextStyle = {
-        fontFamily: 'Rubik, sans-serif',
         fontSize: 24,
         ...textStyle,
     };
