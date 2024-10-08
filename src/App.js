@@ -1,19 +1,24 @@
 import React from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import TopAndRightNavBar from './components/navBars/TopAndRightNavBar';
 import MainScreen, { MainScreenName } from './screens/mainScreen/MainScreen';
-import SimpleScreen from './components/simpleComponents/SimpleScreen';
+import AllCasesScreen, { AllCasesScreenName } from './screens/mainScreen/allCasesScreen/AllCasesScreen';
+import AllCasesTypeScreen, { AllCasesTypeScreenName } from './screens/mainScreen/allCasesTypeScreen/AllCasesTypeScreen';
+import AllMangerScreen, { AllMangerScreenName } from './screens/mainScreen/allMangerScreen/AllMangerScreen';
+import SideBar from './components/navBars/TopAndRightNavBar';
 
 const App = () => {
   return (
     <>
-      <TopAndRightNavBar />
+      <SideBar>
+        <Routes>
+          <Route path={MainScreenName} element={<MainScreen />} />
+          <Route path={AllCasesScreenName} element={<AllCasesScreen />} />
+          <Route path={AllCasesTypeScreenName} element={<AllCasesTypeScreen />} />
+          <Route path={AllMangerScreenName} element={<AllMangerScreen />} />
 
-      <Routes>
-        <Route path={MainScreenName} element={<MainScreen />} />
-        {/* <Route path="/AnotherScreen" element={<AnotherScreen />} /> */}
-        <Route path="*" element={<Navigate to={MainScreenName} />} />
-      </Routes>
+          <Route path="*" element={<Navigate to={MainScreenName} />} />
+        </Routes>
+      </SideBar>
     </>
   );
 };

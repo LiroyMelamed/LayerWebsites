@@ -1,7 +1,7 @@
 import React, { forwardRef, useState } from 'react';
 import SimpleContainer from './SimpleContainer';
 import SimpleIcon from './SimpleIcon';
-import colors from '../../constant/colors';
+import { colors } from '../../constant/colors';
 
 const SimpleTextArea = forwardRef(({ title, leftIcon, rightIcon, tintColor, IconStyle, textStyle, style, value, onChange, ...props }, ref) => {
     const [isFocused, setIsFocused] = useState(false);
@@ -86,7 +86,7 @@ const styles = {
         top: '12px', // Adjust to position label correctly when not focused
         right: '15px',
         fontSize: '16px',
-        color: colors.lightText,
+        color: colors.text,
         backgroundColor: '#f8f8f8', // Match the container's background
         padding: '0 5px',
         pointerEvents: 'none',

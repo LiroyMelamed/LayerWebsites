@@ -1,7 +1,7 @@
 import React, { forwardRef, useState } from 'react';
 import SimpleContainer from './SimpleContainer';
 import SimpleIcon from './SimpleIcon';
-import colors from '../../constant/colors';
+import { colors } from '../../constant/colors';
 
 const SimpleInput = forwardRef(
     ({ title, titleFontSize = 16, leftIcon, rightIcon, tintColor, IconStyle, textStyle, style, value, onChange, inputSize = 'Medium', ...props }, ref) => {
@@ -89,7 +89,7 @@ const styles = {
         padding: '0 5px',
         pointerEvents: 'none',
         transition: 'top 0.2s ease, transform 0.2s ease, opacity 0.2s ease',
-        color: colors.lightText,
+        color: colors.text,
     },
 };
 

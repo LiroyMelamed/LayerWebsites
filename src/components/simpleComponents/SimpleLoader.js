@@ -1,6 +1,6 @@
 import React from 'react';
 import SimpleContainer from './SimpleContainer';
-import colors from '../../constant/colors';
+import { colors } from '../../constant/colors';
 
 const SimpleLoader = () => {
     // Styles for the loader container

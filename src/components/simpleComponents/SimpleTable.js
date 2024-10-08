@@ -25,7 +25,7 @@ const SimpleTable = ({ titles, data, isLoading, noDataMessage, rePerformRequest,
                             <CaseMenuItem
                                 key={rowIndex}
                                 rePerformRequest={rePerformRequest}
-                                caseNumber={item.Column0} // Assuming Column0 contains the caseNumber
+                                caseNumber={item.Column0}
                                 style={{ ...styles.row, ...rowStyle }}
                             >
                                 {titles.map((_, colIndex) => (

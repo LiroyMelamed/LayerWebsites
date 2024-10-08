@@ -1,129 +1,73 @@
-import React, { useState } from 'react';
-import { useScreenSize } from '../../providers/ScreenSizeProvider';
-import SimpleButton from '../simpleComponents/SimpleButton';
-import colors from '../../constant/colors';
-import SimpleNav from '../simpleComponents/SimpleNav';
-import SimpleImage from '../simpleComponents/SimpleImage';
-import { images } from '../../assets/images/images';
-import SimpleContainer from '../simpleComponents/SimpleContainer';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { usePopup } from "../../providers/PopUpProvider";
+import { getNavBarData } from '../navBars/data/NavBarData';
+import SimpleContainer from "../simpleComponents/SimpleContainer";
+import SideBarMenuItem from "./navBarItems/SideBarMenuItem";
+import { MainScreenName } from "../../screens/mainScreen/MainScreen";
+import { colors } from "../../constant/colors";
+import TopToolbarBigScreen from "./TopToolBarBigScreen.js/TopToolBarBigScreen";
+import { images } from "../../assets/images/images";
+import SimpleImage from "../simpleComponents/SimpleImage";
 
-const TopAndRightNavBar = () => {
-  const { isSmallScreen } = useScreenSize();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+const Logo = images.Logos.LogoSlangWhite;
 
-  const toggleMenu = () => setIsMenuOpen(prev => !prev);
+export default function SideBar({ chosenIndex = 0, children }) {
+  const navigate = useNavigate();
+  const { openPopup } = usePopup();
+  const [currentIndex, setCurrentIndex] = useState(chosenIndex);
+  const { NavBarLinks } = getNavBarData(navigate, openPopup);
+
+  function handlePress(index) {
+    setCurrentIndex(index)
+    handleSideBarPress(index)
+  }
+
+  function handleSideBarPress(index) {
+    navigate(MainScreenName, { state: { pageIndex: index } })
+  }
 
   return (
-    <>
-      {isSmallScreen ? (
-        <SimpleContainer style={styles.headerSmallScreen}>
-          <SimpleButton
-            onClick={toggleMenu}
-            style={{
-              ...styles.menuButton,
-              ...styles.menuButtonTransform(isMenuOpen),
-            }}
-          >
-            {isMenuOpen ? 'X' : '☰'}
-          </SimpleButton>
+    <SimpleContainer>
+      <SimpleContainer style={styles.container}>
+
+        <SimpleContainer style={{ display: 'flex', width: '100%', height: 80, alignItems: 'center', justifyContent: 'center' }}>
           <SimpleImage
-            src={images.Logos.FullLogoOriginal}
-            style={styles.logo}
+            src={Logo}
+            style={{ maxHeight: 60, selfAlign: 'center' }}
           />
-          <SimpleContainer style={{
-            ...styles.menu,
-            transform: isMenuOpen ? 'translateX(0)' : 'translateX(100%)',
-            opacity: isMenuOpen ? 1 : 0,
-          }}>
-            <SimpleNav style={styles.menuNav} />
-          </SimpleContainer>
         </SimpleContainer>
-      ) : (
-        <SimpleContainer style={styles.sidebar}>
-          <SimpleContainer style={styles.menuBig}>
-            <SimpleNav style={styles.menuNavBig} />
-          </SimpleContainer>
+
+
+        <SimpleContainer style={{ marginTop: 40 }}>
+          {NavBarLinks.map((item, index) => (
+            <SideBarMenuItem
+              key={item.text}
+              buttonText={item.buttonText}
+              iconSource={item.icon}
+              size={24}
+              isPressed={currentIndex === index}
+              onPressFunction={handlePress}
+              buttonIndex={index}
+            />
+          ))}
         </SimpleContainer>
-      )}
-    </>
+      </SimpleContainer>
+      <SimpleContainer style={{ flex: 1, maxHeight: '100dvh' }}>
+        <TopToolbarBigScreen />
+        {children}
+      </SimpleContainer>
+    </SimpleContainer>
   );
-};
+}
 
 const styles = {
-  headerSmallScreen: {
-    backgroundColor: colors.transparent,
-    padding: '10px 20px',
-    position: 'fixed', // Fixed position to stay at the top
-    display: 'flex',
-    width: '100%',
-    alignItems: 'center',
-    boxShadow: '0 4px 8px rgba(0,0,0,0.2)', // Shadow for header
-    height: 80,
-    zIndex: 1000,
-  },
-  sidebar: {
-    width: '250px',
-    backgroundColor: colors.transparent,
+  container: {
     position: 'fixed',
+    width: 250,
+    height: '100dvh', // Use calc as a string
     right: 0,
-    height: '100vh',
-    display: 'flex',
-    boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-    zIndex: 1000,
-  },
-  menuButton: {
-    fontSize: '24px',
-    background: 'none',
-    color: colors.black,
-    cursor: 'pointer',
-    position: 'absolute',
-    zIndex: 1001,
-    right: '50px',
-    transition: 'transform 0.3s, color 0.3s',
-  },
-  menuButtonTransform: (isMenuOpen) => ({
-    transform: isMenuOpen ? 'rotate(90deg)' : 'rotate(0deg)',
-    color: isMenuOpen ? colors.black : colors.black,
-  }),
-  menu: {
-    position: 'fixed',
-    top: 0,
-    right: 0,
-    height: '100vh',
-    width: '250px',
-    backgroundColor: colors.white,
-    transition: 'transform 0.3s ease, opacity 0.3s ease',
-    boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-    display: 'flex',
-  },
-  menuBig: {
-    position: 'fixed',
-    top: 0,
-    right: 0,
-    height: '100vh',
-    width: '250px',
-    backgroundColor: colors.transparent,
-    transition: 'transform 0.3s ease, opacity 0.3s ease',
-    boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-    display: 'flex',
-  },
-  menuNav: {
-    listStyleType: 'none',
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  menuNavBig: {
-    listStyleType: 'none',
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  logo: {
-    height: 50,
-    position: 'absolute',
-    left: '50%',
-    transform: 'translateX(-50%)',
-  },
-
-};
-
-export default TopAndRightNavBar;
+    backgroundColor: colors.text,
+    zIndex: 1004
+  }
+}

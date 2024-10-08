@@ -1,19 +1,23 @@
 import React from 'react';
-import { NavBarData } from '../navBars/data/NavBarData';
+import { getNavBarData } from '../navBars/data/NavBarData';
 import Separator from '../styledComponents/separators/Separator';
 import { useScreenSize } from '../../providers/ScreenSizeProvider';
 import SimpleImage from './SimpleImage';
 import { images } from '../../assets/images/images';
 import SimpleScrollView from './SimpleScrollView';
 import TertiaryButton from '../styledComponents/buttons/TertiaryButton';
-import colors from '../../constant/colors';
+import { colors } from '../../constant/colors';
 import SimpleContainer from './SimpleContainer';
-import { buttonSize } from './SimpleButton';
+import { useNavigate } from 'react-router-dom';
+import { usePopup } from '../../providers/PopUpProvider';
+import { buttonSizes } from '../../styles/buttons/buttonSizes';
 
-const { NavBarLinks } = NavBarData;
 
 const SimpleNav = ({ activeButton, style }) => {
   const { isSmallScreen } = useScreenSize();
+  const { openPopup } = usePopup();
+  const navigate = useNavigate()
+  const { NavBarLinks } = getNavBarData(navigate, openPopup);
 
   const containerStyle = {
     display: 'flex',
@@ -43,7 +47,7 @@ const SimpleNav = ({ activeButton, style }) => {
                   iconSize={18}
                   tintColor={colors.black}
                   style={{ width: '100%', justifyContent: 'flex-end' }}
-                  buttonSize={buttonSize.BIG}
+                  buttonSize={buttonSizes.LARGE}
                 >
                   {link.buttonText}
                 </TertiaryButton>

@@ -1,5 +1,5 @@
 import React, { forwardRef } from "react";
-import colors from "../../constant/colors";
+import { colors } from "../../constant/colors";
 
 const SimpleScrollView = forwardRef(({
     children,

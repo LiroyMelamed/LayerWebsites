@@ -1,6 +1,6 @@
 import React from 'react';
-import SimpleImage from './SimpleImage';
-import SimpleButton from './SimpleButton';
+import SimpleButton from '../../simpleComponents/SimpleButton';
+import SimpleImage from '../../simpleComponents/SimpleImage';
 
 const ImageButton = ({ src, alt, width, height, onClick, style, ...rest }) => {
 

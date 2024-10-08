@@ -10,7 +10,7 @@ import { casesApi } from '../../../api/casesApi';
 import SecondaryButton from '../buttons/SecondaryButton';
 import SimpleTextArea from '../../simpleComponents/SimpleTextArea';
 
-export function CaseFullView({ caseName, rePerformRequest, style }) {
+export function CaseFullView({ caseName, rePerformRequest, onFailureFunction, style }) {
     const [caseDetails, setCaseDetails] = useState({
         CaseName: '',
         CaseType: '',
@@ -18,7 +18,7 @@ export function CaseFullView({ caseName, rePerformRequest, style }) {
         PhoneNumber: '',
         Stages: 0,
         CostumerTaz: 0,
-        CurrentStage: 0,
+        CurrentStage: '',
         CustomerName: '',
         Descriptions: [
             {
@@ -48,12 +48,13 @@ export function CaseFullView({ caseName, rePerformRequest, style }) {
                     CurrentStage: data.CurrentStage || 0,
                     CustomerName: data.CustomerName || '',
                     Descriptions: data.Descriptions || [
-                        { Stage: 1, Text: '', IsTagged: false, Timestamp: '' }
+                        { Stage: 1, Text: '', Timestamp: '' }
                     ],
                     IsTagged: data.IsTagged || false,
                 });
             }
         },
+        onFailure: onFailureFunction
     });
 
     const { isPerforming: isSaving, performRequest: saveCase } = useHttpRequest(

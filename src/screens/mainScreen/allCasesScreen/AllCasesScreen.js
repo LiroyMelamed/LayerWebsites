@@ -1,38 +1,34 @@
-import React from 'react';
-import SimpleScreen from '../../components/simpleComponents/SimpleScreen';
-import { Text40 } from '../../components/specializedComponents/text/AllTextKindFile';
-import { icons } from '../../assets/icons/icons';
-import SearchInput from '../../components/specializedComponents/containers/SearchInput';
-import SimpleScrollView from '../../components/simpleComponents/SimpleScrollView';
-import { useScreenSize } from '../../providers/ScreenSizeProvider';
-import colors from '../../constant/colors';
-import SimpleCard from '../../components/simpleComponents/SimpleCard';
-import SimpleTable from '../../components/simpleComponents/SimpleTable';
-import useAutoHttpRequest from '../../hooks/useAutoHttpRequest';
-import { casesApi } from '../../api/casesApi';
-import useHttpRequest from '../../hooks/useHttpRequest';
-import { images } from '../../assets/images/images';
-import SimpleLoader from '../../components/simpleComponents/SimpleLoader';
-import SimpleContainer from '../../components/simpleComponents/SimpleContainer';
-import ChooseButton from '../../components/styledComponents/buttons/ChooseButton';
-import PrimaryButton from '../../components/styledComponents/buttons/PrimaryButton';
+import { casesApi } from "../../../api/casesApi";
+import { images } from "../../../assets/images/images";
+import SimpleCard from "../../../components/simpleComponents/SimpleCard";
+import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
+import SimpleLoader from "../../../components/simpleComponents/SimpleLoader";
+import SimpleScreen from "../../../components/simpleComponents/SimpleScreen";
+import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
+import SimpleTable from "../../../components/simpleComponents/SimpleTable";
+import SearchInput from "../../../components/specializedComponents/containers/SearchInput";
+import { Text40 } from "../../../components/specializedComponents/text/AllTextKindFile";
+import ChooseButton from "../../../components/styledComponents/buttons/ChooseButton";
+import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
+import useHttpRequest from "../../../hooks/useHttpRequest";
+import { useScreenSize } from "../../../providers/ScreenSizeProvider";
 
-export const MainScreenName = "/MainScreen";
+export const AllCasesScreenName = "/AllCases"
 
-export default function MainScreen() {
+export default function AllCasesScreen() {
     const { isSmallScreen } = useScreenSize();
-    const { result: taggedCases, isPerforming: isPerformingTaggedCases, performRequest } = useAutoHttpRequest(casesApi.getAllTagedCases);
+    const { result: allCases, isPerforming: isPerformingAllCases, performRequest } = useAutoHttpRequest(casesApi.getAllCases);
     const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getCaseByName);
 
     const handleSearch = (query) => {
         SearchCaseByName({ caseName: query });
     };
 
-    if (isPerformingTaggedCases) {
+    if (isPerformingAllCases) {
         return <SimpleLoader />;
     }
 
-    const adjustedData = taggedCases.map((caseItem) => {
+    const adjustedData = allCases.map((caseItem) => {
         return {
             Column0: caseItem.CaseName,
             Column1: caseItem.CaseType,
@@ -41,18 +37,17 @@ export default function MainScreen() {
         };
     });
 
-    const columns = ["מס' תיק", 'סוג תיק', 'שם חברה', 'שלב נוכחי'];
+    const columns = ["מס' תיק", 'שם לקוח', 'שם החברה', 'סוג התיק', "מס' שלב", 'פעולות'];
 
     return (
         <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
             <SimpleScrollView>
                 <SimpleContainer style={styles.responsiveContainer}>
+                    <Text40 style={{ alignSelf: 'center', textAlign: 'center', marginLeft: 20 }}>כל התיקים</Text40>
                     <SearchInput
                         onSearch={handleSearch}
                         title={"חיפוש תיק"}
                         titleFontSize={20}
-                        isPerforming={isPerformingCasesById}
-                        queryResult={casesByName}
                         getButtonTextFunction={(item) => item.CaseName}
                         style={styles.searchInput}
                     />
@@ -68,13 +63,9 @@ export default function MainScreen() {
                         style={{ width: '100%' }}
                     />
                 </SimpleCard>
-
-                <SimpleContainer style={{ display: 'flex', justifyContent: 'center' }}>
-                    <PrimaryButton style={{ marginTop: 32, selfAlign: 'center' }} >הוספת תיק חדש</PrimaryButton>
-                </SimpleContainer>
             </SimpleScrollView>
-        </SimpleScreen >
-    );
+        </SimpleScreen>
+    )
 }
 
 const styles = {
@@ -89,7 +80,7 @@ const styles = {
         flexDirection: 'row-reverse',
         alignItems: 'center',
         flexWrap: 'wrap',
-        maxWidth: '100%',
+        width: '100%',
         overflow: 'hidden',
     },
     searchInput: {
@@ -103,4 +94,4 @@ const styles = {
         flex: '0 1 auto',
         minWidth: '100px',
     }
-};
+}

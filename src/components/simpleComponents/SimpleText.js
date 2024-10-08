@@ -1,7 +1,7 @@
 import React from 'react';
-import colors from '../../constant/colors';
+import { colors } from '../../constant/colors';
 
-const SimpleText = ({ size = 16, bold = false, color = colors.lightText, children, style, ...props }) => {
+const SimpleText = ({ size = 16, bold = false, color = colors.text, children, style, ...props }) => {
     return (
         <p
             style={{
