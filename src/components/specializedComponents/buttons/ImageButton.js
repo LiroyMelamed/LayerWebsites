@@ -2,7 +2,7 @@ import React from 'react';
 import SimpleButton from '../../simpleComponents/SimpleButton';
 import SimpleImage from '../../simpleComponents/SimpleImage';
 
-const ImageButton = ({ src, alt, width, height, onClick, style, ...rest }) => {
+const ImageButton = ({ src, alt, width, height, onPress, style, ...rest }) => {
 
   const buttonStyle = {
     padding: 0,
@@ -21,7 +21,7 @@ const ImageButton = ({ src, alt, width, height, onClick, style, ...rest }) => {
 
   return (
     <SimpleButton
-      onClick={onClick}
+    onPress={onPress}
       style={buttonStyle}
       {...rest}
     >

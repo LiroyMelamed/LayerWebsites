@@ -8,11 +8,11 @@ const useHttpRequest = (requestFunction, onSuccess, onFailure) => {
     alert(`Oops! Something went wrong: ${error.message}`);
   };
 
-  const performRequest = async (params) => {
+  const performRequest = async (...args) => { // Accept multiple arguments
     if (isPerforming) return; // Prevent multiple concurrent requests
     setIsPerforming(true);
     try {
-      const data = await requestFunction(params);
+      const data = await requestFunction(...args); // Pass all arguments to requestFunction
       setResult(data);
       if (onSuccess) onSuccess(data);
     } catch (err) {
@@ -21,7 +21,7 @@ const useHttpRequest = (requestFunction, onSuccess, onFailure) => {
     } finally {
       setIsPerforming(false);
     }
-  }
+  };
 
   return { result, isPerforming, performRequest };
 };

@@ -1,10 +1,10 @@
 import React from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import MainScreen, { MainScreenName } from './screens/mainScreen/MainScreen';
-import AllCasesScreen, { AllCasesScreenName } from './screens/mainScreen/allCasesScreen/AllCasesScreen';
-import AllCasesTypeScreen, { AllCasesTypeScreenName } from './screens/mainScreen/allCasesTypeScreen/AllCasesTypeScreen';
-import AllMangerScreen, { AllMangerScreenName } from './screens/mainScreen/allMangerScreen/AllMangerScreen';
 import SideBar from './components/navBars/TopAndRightNavBar';
+import AllCasesScreen, { AllCasesScreenName } from './screens/allCasesScreen/AllCasesScreen';
+import AllCasesTypeScreen, { AllCasesTypeScreenName } from './screens/allCasesTypeScreen/AllCasesTypeScreen';
+import AllMangerScreen, { AllMangerScreenName } from './screens/allMangerScreen/AllMangerScreen';
 
 const App = () => {
   return (

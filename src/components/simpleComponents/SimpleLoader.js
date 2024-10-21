@@ -18,9 +18,9 @@ const SimpleLoader = () => {
 
     // Styles for the dots
     const dotStyle = {
-        width: '8px',
-        height: '8px',
-        backgroundColor: colors.lightText, // Blue color for the dots
+        width:8,
+        height: 8,
+        backgroundColor: colors.text, // Blue color for the dots
         borderRadius: '50%',
         margin: '0 5px',
         opacity: 0,

@@ -16,7 +16,7 @@ const HoverContainer = ({ queryResult = [], isPerforming, getButtonTextFunction,
                 const hoverRect = hoverRef.current.getBoundingClientRect();
 
                 setPosition({
-                    top: targetRect.bottom + window.scrollY + 4, // Align at the bottom
+                    top: targetRect.bottom + window.scrollY + 4,
                     left: targetRect.left + targetRect.width / 2 - hoverRect.width / 2 + window.scrollX, // Align horizontally
                 });
             }
@@ -74,7 +74,7 @@ const HoverContainer = ({ queryResult = [], isPerforming, getButtonTextFunction,
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                     }}
-                                    onClick={() => onPressButtonFunction(getButtonTextFunction?.(result))}
+                                    onPress={() => onPressButtonFunction(getButtonTextFunction?.(result))}
                                 >
                                     <Text20>{getButtonTextFunction?.(result)}</Text20>
                                 </SimpleButton>

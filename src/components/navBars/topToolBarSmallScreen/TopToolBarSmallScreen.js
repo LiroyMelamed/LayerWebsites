@@ -1,20 +1,20 @@
 import React from "react";
-import { images } from "../../../assets/images/images";
 import { colors } from "../../../constant/colors";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import SimpleImage from "../../simpleComponents/SimpleImage";
-import { Text40 } from "../../specializedComponents/text/AllTextKindFile";
+import { images } from "../../../assets/images/images";
 
+const Logo = images.Logos.FullLogoOriginal;
 
-export default function TopToolbarBigScreen({ ChosenButtonText = "תיקים נעוצים" }) {
+export default function TopToolBarSmallScreen({ ChosenButtonText = "תיקים נעוצים" }) {
     return (
         <SimpleContainer
             style={styles.container}
         >
-            <Text40 style={{}}>{ChosenButtonText}</Text40>
-
-
-
+          <SimpleImage
+            src={Logo}
+            style={{ maxHeight: 60, selfAlign: 'center' }}
+          />
         </SimpleContainer >
     );
 }

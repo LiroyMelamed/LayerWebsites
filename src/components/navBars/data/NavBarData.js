@@ -1,8 +1,6 @@
-import { icons } from "../../../assets/icons/icons";
-import { useNavigate } from 'react-router-dom';
-import { AllCasesScreenName } from "../../../screens/mainScreen/allCasesScreen/AllCasesScreen";
-import { AllMangerScreenName } from "../../../screens/mainScreen/allMangerScreen/AllMangerScreen";
-import { AllCasesTypeScreenName } from "../../../screens/mainScreen/allCasesTypeScreen/AllCasesTypeScreen";
+import { AllCasesScreenName } from "../../../screens/allCasesScreen/AllCasesScreen";
+import { AllMangerScreenName } from "../../../screens/allMangerScreen/AllMangerScreen";
+import { AllCasesTypeScreenName } from "../../../screens/allCasesTypeScreen/AllCasesTypeScreen";
 import CaseTypeFullView from "../../styledComponents/cases/CaseTypeFullView";
 import CaseFullView from "../../styledComponents/cases/CaseFullView";
 

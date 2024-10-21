@@ -16,6 +16,7 @@ import SimpleLoader from '../../components/simpleComponents/SimpleLoader';
 import SimpleContainer from '../../components/simpleComponents/SimpleContainer';
 import ChooseButton from '../../components/styledComponents/buttons/ChooseButton';
 import PrimaryButton from '../../components/styledComponents/buttons/PrimaryButton';
+import PinnedCasesCard from './components/PinnedCasesCard';
 
 export const MainScreenName = "/MainScreen";
 
@@ -59,7 +60,7 @@ export default function MainScreen() {
                     <ChooseButton style={styles.chooseButton} />
                 </SimpleContainer>
 
-                <SimpleCard style={{ marginTop: 32 }}>
+                {/* <SimpleCard style={{ marginTop: 32 }}>
                     <SimpleTable
                         titles={columns}
                         data={adjustedData}
@@ -67,7 +68,11 @@ export default function MainScreen() {
                         noDataMessage={"לא נמצאו תיקים נעוצים"}
                         style={{ width: '100%' }}
                     />
-                </SimpleCard>
+                </SimpleCard> */}
+
+                <PinnedCasesCard
+                    taggedCases={taggedCases}
+                />
 
                 <SimpleContainer style={{ display: 'flex', justifyContent: 'center' }}>
                     <PrimaryButton style={{ marginTop: 32, selfAlign: 'center' }} >הוספת תיק חדש</PrimaryButton>
@@ -79,7 +84,7 @@ export default function MainScreen() {
 
 const styles = {
     screenStyle: (isSmallScreen) => ({
-        paddingTop: isSmallScreen ? 100 : 40,
+        paddingTop: 40,
         paddingRight: 20,
         paddingLeft: 20,
         boxSizing: 'border-box',
