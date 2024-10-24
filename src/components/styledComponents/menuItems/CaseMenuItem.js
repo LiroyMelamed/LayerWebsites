@@ -11,6 +11,9 @@ import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 import { casesApi } from "../../../api/casesApi";
 import useHttpRequest from "../../../hooks/useHttpRequest";
 import CaseMenuItemOpen from "./components/CaseMenuItemOpen";
+import SimpleLoader from "../../simpleComponents/SimpleLoader";
+import { usePopup } from "../../../providers/PopUpProvider";
+import CaseFullView from "../cases/CaseFullView";
 
 export default function CaseMenuItem({
     fullCase,
@@ -29,7 +32,17 @@ export default function CaseMenuItem({
     openData,
     style
 }) {
+    const { isPerforming: isPerformingSetCase, performRequest: setCase } = useHttpRequest(casesApi.updateCaseById, () => {setCurrentStage(currentStage+1)});
+    const {openPopup} = usePopup();
+    const [fullCaseListener, setFullCaseListener] = useState(fullCase);
     const [isOpen, setIsOpen] = useState(false);
+    const [currentStage, setCurrentStage] = useState(rightValueSecondLine);
+
+    function updateStage() {        
+        if (currentStage+1 <= fullCaseListener.Stages) {
+            setCase(fullCaseListener.CaseName, {...fullCaseListener, CurrentStage: currentStage+1})
+        }
+    }
 
     return (
         <SimpleContainer style={style}>
@@ -52,7 +65,7 @@ export default function CaseMenuItem({
                     <SimpleContainer style={styles.secondRow}>
                         <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flex: 1 }}>
                             <TextBold12>{rightPreSecondLine}</TextBold12>
-                            <Text12 style={{ marginRight: 4 }}>{rightValueSecondLine}</Text12>
+                            {isPerformingSetCase ? <SimpleLoader style={{ marginRight:4, width:null}}/> : <Text12 style={{ marginRight: 4 }}>{currentStage}</Text12>}
                         </SimpleContainer>
                         <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse' }}>
                             <TextBold12>{leftPreSecondLine}</TextBold12>
@@ -64,8 +77,9 @@ export default function CaseMenuItem({
 
             <CaseMenuItemOpen
                 isOpen={isOpen}
-                fullCase={fullCase}
-                setCurrentStage={() => {}}
+                fullCase={fullCaseListener}
+                updateStage={updateStage}
+                editCase={() => openPopup(<CaseFullView caseName={fullCaseListener.CaseName}/>)}
             />
 
         </SimpleContainer>

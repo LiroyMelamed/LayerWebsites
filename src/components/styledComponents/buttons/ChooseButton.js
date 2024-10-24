@@ -4,6 +4,7 @@ import { Text16 } from "../../specializedComponents/text/AllTextKindFile";
 import { icons } from "../../../assets/icons/icons";
 import HoverContainer from "../../specializedComponents/containers/HoverContainer";
 import SecondaryButton from "./SecondaryButton";
+import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 
 export default function ChooseButton({ buttonText = "סוג תיק", buttonChoices = ["הכל", 'cshhe', "הכל", 'cshhe', "הכל", 'cshhe', "הכל", 'cshhe', "הכל", 'cshhe', "הכל", 'cshhe', "הכל", 'cshhe', "הכל", 'cshhe', "הכל", 'cshhe', "הכל", 'cshhe', "הכל", 'cshhe', "הכל", 'cshhe',], style }) {
     const [chosenChoice, setChosenChoice] = useState("הכל")
@@ -26,7 +27,7 @@ export default function ChooseButton({ buttonText = "סוג תיק", buttonChoic
     return (
         <SimpleContainer style={containerStyle}>
             <Text16>{buttonText + ":"}</Text16>
-            <SecondaryButton ref={buttonRef} leftIcon={icons.Button.DownArrow} onPress={() => { setShowResults(true) }} style={{ marginRight: 8, textAlign: 'center' }} >{chosenChoice}</SecondaryButton>
+            <SecondaryButton ref={buttonRef} leftIcon={icons.Button.DownArrow} onPress={() => { setShowResults(true) }} style={{ marginRight: 8, textAlign: 'center' }} size={buttonSizes.MEDIUM}>{chosenChoice}</SecondaryButton>
             {showResults && (
                 <HoverContainer
                     targetRef={buttonRef}

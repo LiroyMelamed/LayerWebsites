@@ -17,6 +17,7 @@ export default function PinnedCasesCard({taggedCases}) {
                         {index !=0 && <Separator/>}
 
                             <CaseMenuItem
+                                key={`taggedCase${index}`}
                                 fullCase={item}
                                 rightTitle={item.CaseName}
 

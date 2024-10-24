@@ -10,7 +10,7 @@ import useHttpRequest from "../../../../hooks/useHttpRequest";
 import { casesApi } from "../../../../api/casesApi";
 import SimpleLoader from "../../../simpleComponents/SimpleLoader";
 
-export default function CaseMenuItemOpen({fullCase, isOpen, setCurrentStage}) {
+export default function CaseMenuItemOpen({fullCase, isOpen, updateStage, editCase}) {
     const { isPerforming: isPerformingSetCase, performRequest: setCase } = useHttpRequest(casesApi.updateCaseById);
 
     const [IsTagged, setIsTagged] = useState(fullCase.IsTagged)
@@ -20,6 +20,7 @@ export default function CaseMenuItemOpen({fullCase, isOpen, setCurrentStage}) {
         setIsTagged(!IsTagged)        
         setCase(fullCase.CaseName, temp)
     }
+
     return (
         <SimpleContainer
         style={{
@@ -59,8 +60,8 @@ export default function CaseMenuItemOpen({fullCase, isOpen, setCurrentStage}) {
                 <Separator/>
 
         <SimpleContainer style={{display:'flex', flexDirection:'row', marginTop:16}}>
-            <PrimaryButton size={buttonSizes.SMALL} style={{marginRight:8}}>עדכן שלב</PrimaryButton>
-            <SecondaryButton size={buttonSizes.SMALL} style={{marginRight:8}}>עריכה</SecondaryButton>
+            <PrimaryButton size={buttonSizes.SMALL} onPress={updateStage} style={{marginRight:8}}>עדכן שלב</PrimaryButton>
+            <SecondaryButton size={buttonSizes.SMALL} onPress={editCase} style={{marginRight:8}}>עריכה</SecondaryButton>
             <TertiaryButton size={buttonSizes.SMALL} onPress={unTag}>ביטול נעיצה</TertiaryButton>
         </SimpleContainer>
     </SimpleContainer>
