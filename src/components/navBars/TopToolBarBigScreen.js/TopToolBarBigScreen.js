@@ -13,8 +13,6 @@ export default function TopToolbarBigScreen({ ChosenButtonText = "תיקים נ�
         >
             <Text40 style={{}}>{ChosenButtonText}</Text40>
 
-
-
         </SimpleContainer >
     );
 }

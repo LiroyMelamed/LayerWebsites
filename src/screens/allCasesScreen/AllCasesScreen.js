@@ -1,17 +1,17 @@
-import { casesApi } from "../../../api/casesApi";
-import { images } from "../../../assets/images/images";
-import SimpleCard from "../../../components/simpleComponents/SimpleCard";
-import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
-import SimpleLoader from "../../../components/simpleComponents/SimpleLoader";
-import SimpleScreen from "../../../components/simpleComponents/SimpleScreen";
-import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
-import SimpleTable from "../../../components/simpleComponents/SimpleTable";
-import SearchInput from "../../../components/specializedComponents/containers/SearchInput";
-import { Text40 } from "../../../components/specializedComponents/text/AllTextKindFile";
-import ChooseButton from "../../../components/styledComponents/buttons/ChooseButton";
-import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
-import useHttpRequest from "../../../hooks/useHttpRequest";
-import { useScreenSize } from "../../../providers/ScreenSizeProvider";
+import { casesApi } from "../../api/casesApi";
+import { images } from "../../assets/images/images";
+import SimpleCard from "../../components/simpleComponents/SimpleCard";
+import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
+import SimpleLoader from "../../components/simpleComponents/SimpleLoader";
+import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
+import SimpleScrollView from "../../components/simpleComponents/SimpleScrollView";
+import SimpleTable from "../../components/simpleComponents/SimpleTable";
+import SearchInput from "../../components/specializedComponents/containers/SearchInput";
+import { Text40 } from "../../components/specializedComponents/text/AllTextKindFile";
+import ChooseButton from "../../components/styledComponents/buttons/ChooseButton";
+import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
+import useHttpRequest from "../../hooks/useHttpRequest";
+import { useScreenSize } from "../../providers/ScreenSizeProvider";
 
 export const AllCasesScreenName = "/AllCases"
 

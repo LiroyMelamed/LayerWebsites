@@ -78,8 +78,8 @@ export default function MainScreen() {
 }
 
 const styles = {
-    screenStyle: (isSmallScreen) => ({
-        paddingTop: isSmallScreen ? 100 : 40,
+    screenStyle: () => ({
+        paddingTop: 40,
         paddingRight: 20,
         paddingLeft: 20,
         boxSizing: 'border-box',

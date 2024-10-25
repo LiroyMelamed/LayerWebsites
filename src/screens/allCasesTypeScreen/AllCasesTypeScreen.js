@@ -1,20 +1,20 @@
-import { images } from "../../../assets/images/images";
-import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
-import SimpleScreen from "../../../components/simpleComponents/SimpleScreen";
-import SearchInput from "../../../components/specializedComponents/containers/SearchInput";
-import { Text40 } from "../../../components/specializedComponents/text/AllTextKindFile";
-import ChooseButton from "../../../components/styledComponents/buttons/ChooseButton";
-import { useScreenSize } from "../../../providers/ScreenSizeProvider";
+import { images } from "../../assets/images/images";
+import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
+import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
+import SearchInput from "../../components/specializedComponents/containers/SearchInput";
+import { Text40 } from "../../components/specializedComponents/text/AllTextKindFile";
+import ChooseButton from "../../components/styledComponents/buttons/ChooseButton";
+import { useScreenSize } from "../../providers/ScreenSizeProvider";
 
-export const AllMangerScreenName = "/AllManger"
+export const AllCasesTypeScreenName = "/AllCasesType"
 
-export default function AllMangerScreen() {
+export default function AllCasesTypeScreen() {
     const { isSmallScreen } = useScreenSize();
 
     return (
         <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
             <SimpleContainer style={styles.responsiveContainer}>
-                <Text40 style={{ alignSelf: 'center', textAlign: 'center', marginLeft: 20 }}>כל המנהלים</Text40>
+                <Text40 style={{ alignSelf: 'center', textAlign: 'center', marginLeft: 20 }}>כל סוגי התיקים</Text40>
                 <SearchInput
                     title={"חיפוש תיק"}
                     titleFontSize={20}

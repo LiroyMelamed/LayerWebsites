@@ -74,7 +74,7 @@ const HoverContainer = ({ queryResult = [], isPerforming, getButtonTextFunction,
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                     }}
-                                    onClick={() => onPressButtonFunction(getButtonTextFunction?.(result))}
+                                    onPress={() => onPressButtonFunction(getButtonTextFunction?.(result))}
                                 >
                                     <Text20>{getButtonTextFunction?.(result)}</Text20>
                                 </SimpleButton>
