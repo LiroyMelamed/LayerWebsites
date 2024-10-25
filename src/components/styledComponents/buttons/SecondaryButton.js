@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { colors } from '../../../constant/colors';
 import GenericButton from './GenericButton';
 
@@ -14,7 +14,8 @@ const contentColor = {
     disabled: colors.disabledHighlighted,
 };
 
-export default function SecondaryButton({ children, size, rightIcon, leftIcon, ...props }) {
+// Use forwardRef to forward the ref to the GenericButton
+const SecondaryButton = forwardRef(({ children, size, rightIcon, leftIcon, ...props }, ref) => {
     const buttonStyle = {
         ...styles.button,
         ...props.style,
@@ -23,6 +24,7 @@ export default function SecondaryButton({ children, size, rightIcon, leftIcon, .
     return (
         <GenericButton
             {...props}
+            ref={ref} // Forward the ref here
             size={size}
             style={buttonStyle}
             rightIcon={rightIcon}
@@ -38,7 +40,7 @@ export default function SecondaryButton({ children, size, rightIcon, leftIcon, .
             {children}
         </GenericButton>
     );
-}
+});
 
 const styles = {
     button: {
@@ -47,3 +49,5 @@ const styles = {
         background: colors.secondary,
     },
 };
+
+export default SecondaryButton;

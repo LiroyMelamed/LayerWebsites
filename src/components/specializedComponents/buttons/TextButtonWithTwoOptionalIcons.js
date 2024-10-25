@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import SimpleButton from '../../simpleComponents/SimpleButton';
 import SimpleContainer from '../../simpleComponents/SimpleContainer';
 import SimpleIcon from '../../simpleComponents/SimpleIcon';
 import SimpleText from '../../simpleComponents/SimpleText';
 
-export default function TextButtonWithTwoOptionalIcons({
+const TextButtonWithTwoOptionalIcons = forwardRef(({
     children,
     style,
     textStyle,
@@ -15,18 +15,21 @@ export default function TextButtonWithTwoOptionalIcons({
     rightIconSize,
     rightIconTintColor,
     ...props
-}) {
+}, ref) => {
     const buttonStyle = {
         display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         ...style,
     };
 
     return (
         <SimpleButton
             {...props}
+            ref={ref} // Forward the ref to SimpleButton
             style={buttonStyle}
         >
-            <SimpleContainer style={{ flexDirection: 'row', alignItems: 'center', }}>
+            <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center' }}>
                 {rightIcon && (
                     <SimpleIcon
                         src={rightIcon}
@@ -39,6 +42,7 @@ export default function TextButtonWithTwoOptionalIcons({
                 <SimpleText style={textStyle}>
                     {children}
                 </SimpleText>
+
                 {leftIcon && (
                     <SimpleIcon
                         src={leftIcon}
@@ -50,4 +54,6 @@ export default function TextButtonWithTwoOptionalIcons({
             </SimpleContainer>
         </SimpleButton>
     );
-}
+});
+
+export default TextButtonWithTwoOptionalIcons;

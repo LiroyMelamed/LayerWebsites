@@ -1,12 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, forwardRef } from "react";
 import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 import { colors } from "../../../constant/colors";
 import SimpleLoader from "../../simpleComponents/SimpleLoader";
-import TextButtonWithTwoOptionalIcons from "../../specializedComponents/buttons/TextButtonWithTwoOptionalIcons"
+import TextButtonWithTwoOptionalIcons from "../../specializedComponents/buttons/TextButtonWithTwoOptionalIcons";
 
-const ICON_SIZE = 20;
+const ICON_SIZE = 12;
 
-export default function GenericButton({
+const GenericButton = forwardRef(({
     children,
     disabled,
     size = buttonSizes.LARGE,
@@ -32,7 +32,7 @@ export default function GenericButton({
     isProcessing = false,
     style: customStyle = {},
     ...props
-}) {
+}, ref) => {
     const [isPressed, setIsPressed] = useState(false);
 
     function handlePressIn(event) {
@@ -106,6 +106,7 @@ export default function GenericButton({
     return (
         <TextButtonWithTwoOptionalIcons
             {...props}
+            ref={ref} // Forward the ref to TextButtonWithTwoOptionalIcons
             onMouseDown={handlePressIn}
             onMouseUp={handlePressOut}
             onPress={handlePress}
@@ -121,7 +122,7 @@ export default function GenericButton({
             {isProcessing ? <SimpleLoader color={getContentColor()} /> : children}
         </TextButtonWithTwoOptionalIcons>
     );
-}
+});
 
 const styles = {
     button: {
@@ -150,3 +151,5 @@ function getButtonHeightBySize(buttonSize) {
             return 40;
     }
 }
+
+export default GenericButton;

@@ -9,6 +9,7 @@ import useHttpRequest from '../../../hooks/useHttpRequest';
 import { casesApi } from '../../../api/casesApi';
 import SecondaryButton from '../buttons/SecondaryButton';
 import SimpleTextArea from '../../simpleComponents/SimpleTextArea';
+import { buttonSizes } from '../../../styles/buttons/buttonSizes';
 
 export function CaseFullView({ caseName, rePerformRequest, onFailureFunction, style }) {
     const [caseDetails, setCaseDetails] = useState({
@@ -155,13 +156,13 @@ export function CaseFullView({ caseName, rePerformRequest, onFailureFunction, st
 
 
                 <SimpleContainer style={styles.buttonsRowStyle}>
-                    <SecondaryButton onClick={handleSaveCase} isPerforming={isSaving} style={styles.button}>
+                    <SecondaryButton onClick={handleSaveCase} isPerforming={isSaving} style={styles.button} size={buttonSizes.MEDIUM}>
                         שמור שינויים
                     </SecondaryButton>
-                    <SecondaryButton onClick={handleUpdateCase} isPerforming={isSaving} style={styles.button}>
+                    <SecondaryButton onClick={handleUpdateCase} isPerforming={isSaving} style={styles.button} size={buttonSizes.MEDIUM}>
                         קידום שלב
                     </SecondaryButton>
-                    <SecondaryButton onClick={handleIsTagChange} isPerforming={isSaving} style={styles.button}>
+                    <SecondaryButton onClick={handleIsTagChange} isPerforming={isSaving} style={styles.button} size={buttonSizes.MEDIUM}>
                         {caseDetails.IsTagged ? "בטל נעיצה" : "נעץ"}
                     </SecondaryButton>
                 </SimpleContainer>

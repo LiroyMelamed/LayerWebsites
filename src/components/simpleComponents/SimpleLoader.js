@@ -2,7 +2,7 @@ import React from 'react';
 import SimpleContainer from './SimpleContainer';
 import { colors } from '../../constant/colors';
 
-const SimpleLoader = () => {
+const SimpleLoader = ({style}) => {
     // Styles for the loader container
     const loaderStyle = {
         display: 'flex',
@@ -14,13 +14,14 @@ const SimpleLoader = () => {
         top: 0,
         left: 0,
         zIndex: 1000, // Ensure it's above other content
+        ...style
     };
 
     // Styles for the dots
     const dotStyle = {
-        width: '8px',
-        height: '8px',
-        backgroundColor: colors.lightText, // Blue color for the dots
+        width:8,
+        height: 8,
+        backgroundColor: colors.text, // Blue color for the dots
         borderRadius: '50%',
         margin: '0 5px',
         opacity: 0,

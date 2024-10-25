@@ -1,5 +1,3 @@
-import { icons } from "../../../assets/icons/icons";
-import { useNavigate } from 'react-router-dom';
 import { AllCasesScreenName } from "../../../screens/allCasesScreen/AllCasesScreen";
 import { AllMangerScreenName } from "../../../screens/allMangerScreen/AllMangerScreen";
 import { AllCasesTypeScreenName } from "../../../screens/allCasesTypeScreen/AllCasesTypeScreen";
