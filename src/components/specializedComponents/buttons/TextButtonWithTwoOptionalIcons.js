@@ -16,6 +16,7 @@ const TextButtonWithTwoOptionalIcons = forwardRef(({
     rightIconTintColor,
     ...props
 }, ref) => {
+
     const buttonStyle = {
         display: 'flex',
         alignItems: 'center',

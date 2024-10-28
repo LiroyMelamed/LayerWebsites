@@ -1,19 +1,17 @@
 import SimpleCard from "../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
-import { TextBold20 } from "../../../components/specializedComponents/text/AllTextKindFile";
 import CaseMenuItem from "../../../components/styledComponents/menuItems/CaseMenuItem";
 import Separator from "../../../components/styledComponents/separators/Separator";
 
-export default function PinnedCasesCard({ taggedCases, rePerformFunction }) {
+export default function AllCasesCard({ allCases }) {
 
     return (
         <SimpleCard>
-            <TextBold20>תיקים נעוצים</TextBold20>
 
-            <SimpleContainer style={{ marginTop: 16 }}>
-                {taggedCases.map((item, index) => (
+            <SimpleContainer>
+                {allCases.map((item, index) => (
                     <>
-                        {index != 0 && <Separator />}
+                        {index !== 0 && <Separator />}
 
                         <CaseMenuItem
                             key={`taggedCase${index}`}
@@ -29,8 +27,7 @@ export default function PinnedCasesCard({ taggedCases, rePerformFunction }) {
                             leftPreSecondLine={"סוג תיק"}
                             leftValueSecondLine={item.CaseType}
 
-                            openData={getOpenData(taggedCases, index)}
-                            rePerformFunction={rePerformFunction}
+                            openData={getOpenData(allCases, index)}
                         />
                     </>
 

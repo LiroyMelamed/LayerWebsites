@@ -21,7 +21,7 @@ const ImageButton = ({ src, alt, width, height, onPress, style, ...rest }) => {
 
   return (
     <SimpleButton
-    onPress={onPress}
+      onPress={onPress}
       style={buttonStyle}
       {...rest}
     >

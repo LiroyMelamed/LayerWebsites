@@ -1,6 +1,7 @@
 import { images } from "../../assets/images/images";
 import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
+import SimpleScrollView from "../../components/simpleComponents/SimpleScrollView";
 import SearchInput from "../../components/specializedComponents/containers/SearchInput";
 import { Text40 } from "../../components/specializedComponents/text/AllTextKindFile";
 import ChooseButton from "../../components/styledComponents/buttons/ChooseButton";
@@ -13,23 +14,24 @@ export default function AllCasesTypeScreen() {
 
     return (
         <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
-            <SimpleContainer style={styles.responsiveContainer}>
-                <Text40 style={{ alignSelf: 'center', textAlign: 'center', marginLeft: 20 }}>כל סוגי התיקים</Text40>
-                <SearchInput
-                    title={"חיפוש תיק"}
-                    titleFontSize={20}
-                    getButtonTextFunction={(item) => item.CaseName}
-                    style={styles.searchInput}
-                />
-                <ChooseButton style={styles.chooseButton} />
-            </SimpleContainer>
+            <SimpleScrollView>
+                <SimpleContainer style={styles.responsiveContainer}>
+                    <SearchInput
+                        title={"חיפוש סוג תיק"}
+                        titleFontSize={20}
+                        getButtonTextFunction={(item) => item.CaseName}
+                        style={styles.searchInput}
+                    />
+                    <ChooseButton style={styles.chooseButton} buttonText="כמות שלבים" />
+                </SimpleContainer>
+            </SimpleScrollView>
+
         </SimpleScreen>
     )
 }
 
 const styles = {
     screenStyle: (isSmallScreen) => ({
-        paddingTop: isSmallScreen ? 100 : 40,
         paddingRight: 20,
         paddingLeft: 20,
         boxSizing: 'border-box',

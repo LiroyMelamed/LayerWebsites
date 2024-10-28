@@ -29,18 +29,18 @@ export default function CaseMenuItem({
     leftValueSecondLine,
     leftValueColorSecondLine,
 
-    openData,
+    rePerformFunction,
     style
 }) {
-    const { isPerforming: isPerformingSetCase, performRequest: setCase } = useHttpRequest(casesApi.updateCaseById, () => {setCurrentStage(currentStage+1)});
-    const {openPopup} = usePopup();
+    const { isPerforming: isPerformingSetCase, performRequest: setCase } = useHttpRequest(casesApi.updateCaseById, () => { setCurrentStage(currentStage + 1) });
+    const { openPopup } = usePopup();
     const [fullCaseListener, setFullCaseListener] = useState(fullCase);
     const [isOpen, setIsOpen] = useState(false);
     const [currentStage, setCurrentStage] = useState(rightValueSecondLine);
 
-    function updateStage() {        
-        if (currentStage+1 <= fullCaseListener.Stages) {
-            setCase(fullCaseListener.CaseName, {...fullCaseListener, CurrentStage: currentStage+1})
+    function updateStage() {
+        if (currentStage + 1 <= fullCaseListener.Stages) {
+            setCase(fullCaseListener.CaseName, { ...fullCaseListener, CurrentStage: currentStage + 1 })
         }
     }
 
@@ -50,7 +50,7 @@ export default function CaseMenuItem({
                 <ImageButton
                     src={icons.Button.DownArrow}
                     style={styles.dropDownIcon(isOpen)}
-                    onPress={() => setIsOpen(!isOpen)} 
+                    onPress={() => setIsOpen(!isOpen)}
                 />
 
                 <SimpleContainer style={styles.innerContainer}>
@@ -65,7 +65,7 @@ export default function CaseMenuItem({
                     <SimpleContainer style={styles.secondRow}>
                         <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flex: 1 }}>
                             <TextBold12>{rightPreSecondLine}</TextBold12>
-                            {isPerformingSetCase ? <SimpleLoader style={{ marginRight:4, width:null}}/> : <Text12 style={{ marginRight: 4 }}>{currentStage}</Text12>}
+                            {isPerformingSetCase ? <SimpleLoader style={{ marginRight: 4, width: null }} /> : <Text12 style={{ marginRight: 4 }}>{currentStage}</Text12>}
                         </SimpleContainer>
                         <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse' }}>
                             <TextBold12>{leftPreSecondLine}</TextBold12>
@@ -79,7 +79,7 @@ export default function CaseMenuItem({
                 isOpen={isOpen}
                 fullCase={fullCaseListener}
                 updateStage={updateStage}
-                editCase={() => openPopup(<CaseFullView caseName={fullCaseListener.CaseName}/>)}
+                editCase={() => openPopup(<CaseFullView caseName={fullCaseListener.CaseName} rePerformRequest={rePerformFunction} />)}
             />
 
         </SimpleContainer>

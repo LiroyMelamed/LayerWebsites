@@ -6,10 +6,11 @@ import { Text12, Text40 } from '../../specializedComponents/text/AllTextKindFile
 import SimpleScrollView from '../../simpleComponents/SimpleScrollView';
 import useAutoHttpRequest from '../../../hooks/useAutoHttpRequest';
 import useHttpRequest from '../../../hooks/useHttpRequest';
-import { casesApi } from '../../../api/casesApi';
+import { casesApi, casesTypeApi } from '../../../api/casesApi';
 import SecondaryButton from '../buttons/SecondaryButton';
 import SimpleTextArea from '../../simpleComponents/SimpleTextArea';
 import { buttonSizes } from '../../../styles/buttons/buttonSizes';
+import SearchInput from '../../specializedComponents/containers/SearchInput';
 
 export function CaseFullView({ caseName, rePerformRequest, onFailureFunction, style }) {
     const [caseDetails, setCaseDetails] = useState({
@@ -32,12 +33,15 @@ export function CaseFullView({ caseName, rePerformRequest, onFailureFunction, st
         IsTagged: false,
     });
 
-    const { result: casesByName, isPerforming: isPerformingCasesById } = useAutoHttpRequest(casesApi.getCaseByName, {
+    const { result: searchCases, isPerforming: isPerformingSearchCases, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getCaseByName);
+
+    const { result: casesType, isPerforming: isPerformingCasesType, performRequest: SearchCaseTypeByName } = useHttpRequest(casesTypeApi.getCaseTypeByName);
+
+    const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: caseNamePressed } = useAutoHttpRequest(casesApi.getCaseByName, {
         body: { caseName },
         onSuccess: (fetchedData) => {
             if (fetchedData) {
                 const data = fetchedData[0]
-                console.log("hereeeeeeeeee", data);
 
                 setCaseDetails({
                     CaseName: data.CaseName || '',
@@ -86,27 +90,51 @@ export function CaseFullView({ caseName, rePerformRequest, onFailureFunction, st
         rePerformRequest?.()
     };
 
+    const handleSearch = (query) => {
+        setCaseDetails(oldCase => ({ ...oldCase, CaseName: query }));
+        SearchCaseByName({ caseName: query });
+    };
+
+    const handleSearchCaseType = (query) => {
+        SearchCaseTypeByName({ caseTypeName: query });
+    };
+
+    function CaseButtonPressed(caseName) {
+        caseNamePressed({ caseName })
+    }
+
+    function CaseTypeButtonPressed(caseTypeName) {
+        const caseType = casesType.filter(casetype => casetype.CaseTypeName = caseTypeName);
+        setCaseDetails(oldCase => ({ ...oldCase, CaseType: caseTypeName, Descriptions: caseType[0].Descriptions }));
+    }
+
     if (isPerformingCasesById) {
         return <SimpleLoader />;
     }
-
-    console.log("casesByName", casesByName);
 
     return (
         <SimpleContainer style={{ ...style, ...styles.container }}>
             <SimpleScrollView>
                 <SimpleContainer style={styles.rowStyle}>
-                    <SimpleInput
+                    <SearchInput
+                        onSearch={handleSearch}
                         style={styles.inputStyle}
                         title={"מספר תיק"}
                         value={caseDetails.CaseName}
-                        onChange={(e) => handleInputChange('CaseName', e.target.value)}
+                        isPerforming={isPerformingSearchCases}
+                        getButtonTextFunction={(item) => item.CaseName}
+                        buttonPressFunction={CaseButtonPressed}
+                        queryResult={searchCases}
                     />
-                    <SimpleInput
+                    <SearchInput
+                        onSearch={handleSearchCaseType}
                         style={styles.inputStyle}
                         title={"סוג התיק"}
                         value={caseDetails.CaseType}
-                        onChange={(e) => handleInputChange('CaseType', e.target.value)}
+                        isPerforming={isPerformingCasesType}
+                        getButtonTextFunction={(item) => item.CaseTypeName}
+                        buttonPressFunction={CaseTypeButtonPressed}
+                        queryResult={casesType}
                     />
                 </SimpleContainer>
 
@@ -142,12 +170,14 @@ export function CaseFullView({ caseName, rePerformRequest, onFailureFunction, st
 
                 {caseDetails?.Descriptions?.map((descriptions, index) => (
                     <SimpleTextArea
+                        key={`DescriptionNumber${index}`}
                         title={`תיאור מס' ${index + 1}`}
                         value={descriptions?.Text || ''}
+                        style={{ marginTop: 8 }}
                         onChange={(text) =>
                             setCaseDetails((prevDetails) => {
                                 const updatedDescriptions = [...prevDetails.Descriptions];
-                                updatedDescriptions[0].Text = text;
+                                updatedDescriptions[index].Text = text;
                                 return { ...prevDetails, Descriptions: updatedDescriptions };
                             })
                         }
@@ -156,13 +186,13 @@ export function CaseFullView({ caseName, rePerformRequest, onFailureFunction, st
 
 
                 <SimpleContainer style={styles.buttonsRowStyle}>
-                    <SecondaryButton onClick={handleSaveCase} isPerforming={isSaving} style={styles.button} size={buttonSizes.MEDIUM}>
+                    <SecondaryButton onPress={handleSaveCase} isPerforming={isSaving} style={styles.button} size={buttonSizes.MEDIUM}>
                         שמור שינויים
                     </SecondaryButton>
-                    <SecondaryButton onClick={handleUpdateCase} isPerforming={isSaving} style={styles.button} size={buttonSizes.MEDIUM}>
+                    <SecondaryButton onPress={handleUpdateCase} isPerforming={isSaving} style={styles.button} size={buttonSizes.MEDIUM}>
                         קידום שלב
                     </SecondaryButton>
-                    <SecondaryButton onClick={handleIsTagChange} isPerforming={isSaving} style={styles.button} size={buttonSizes.MEDIUM}>
+                    <SecondaryButton onPress={handleIsTagChange} isPerforming={isSaving} style={styles.button} size={buttonSizes.MEDIUM}>
                         {caseDetails.IsTagged ? "בטל נעיצה" : "נעץ"}
                     </SecondaryButton>
                 </SimpleContainer>
@@ -185,7 +215,6 @@ const styles = {
     inputStyle: {
         flex: 1,
         minWidth: '150px', // Minimum width to maintain input size
-        margin: '8px 4px',
     },
     descriptionRowStyle: {
         display: 'flex',

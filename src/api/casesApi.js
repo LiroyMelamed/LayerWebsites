@@ -43,20 +43,26 @@ export const casesApi = {
 const CASES_TYPE_DATA_ENDPOINT = 'casesType/';
 
 export const casesTypeApi = {
+  getAllCasesType: async () => {
+    const allCases = await getData(CASES_TYPE_DATA_ENDPOINT);
+    const casesArray = Object.values(allCases);
+    return casesArray;
+  },
+
+  getCaseTypeByName: async ({ caseTypeName }) => {
+    const allCases = await getData(CASES_TYPE_DATA_ENDPOINT);
+    const casesArray = Object.values(allCases);
+
+    const filteredCases = casesArray.filter((caseItem) =>
+      caseItem.CaseTypeName && caseItem.CaseTypeName.includes(caseTypeName)
+    );
+
+    return filteredCases.length > 0 ? filteredCases : [];
+  },
+
   createOrUpdateCaseType: async ({ caseTypeName, caseTypeData }) => {
     console.log("caseTypeName", caseTypeName, caseTypeData);
 
     return setData(CASES_TYPE_DATA_ENDPOINT + caseTypeName, caseTypeData);
-  },
-
-  getCaseTypeByName: async ({ caseTypeName }) => {
-    console.log("caseTypeName", caseTypeName);
-
-    const allCaseTypes = await getData(CASES_TYPE_DATA_ENDPOINT);
-    const caseTypesArray = Object.values(allCaseTypes);
-    const filteredCaseTypes = caseTypesArray.filter((caseTypeItem) =>
-      caseTypeItem.CaseType && caseTypeItem.CaseType.includes(caseTypeName)
-    );
-    return filteredCaseTypes.length > 0 ? filteredCaseTypes : [];
   },
 };

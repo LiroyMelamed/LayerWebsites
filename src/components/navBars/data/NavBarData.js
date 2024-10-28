@@ -8,45 +8,45 @@ export const getNavBarData = (navigate, openPopup) => ({
     NavBarLinks: [
         {
             buttonText: "לכל התיקים",
-            buttonScreen: "",
+            buttonScreen: "כל התיקים",
             icon: null, // icons.NavBarIcons.Hammer
             onClick: () => navigate(AllCasesScreenName),
         },
         {
             buttonText: "תיק חדש",
-            buttonScreen: "",
+            buttonScreen: null,
             icon: null, // icons.NavBarIcons.NewCase
             onClick: () => openPopup(<CaseFullView onFailureFunction={() => { }} />),
         },
         {
             buttonText: "עדכון תיק",
-            buttonScreen: "",
+            buttonScreen: null,
             icon: null, // icons.NavBarIcons.UpdateCase
-            onClick: () => navigate('/update-case'),
-        },
-        {
-            buttonText: "הוספת מנהל",
-            buttonScreen: "",
-            icon: null, // icons.NavBarIcons.Manager
-            onClick: () => navigate(),
+            onClick: () => openPopup(<CaseFullView onFailureFunction={() => { }} />),
         },
         {
             buttonText: "לכל המנהלים",
-            buttonScreen: "",
+            buttonScreen: "כל המנהלים",
             icon: null, // icons.NavBarIcons.AllManagers
             onClick: () => navigate(AllMangerScreenName),
         },
         {
-            buttonText: "הוספת סוג תיק",
-            buttonScreen: "",
-            icon: null, // icons.NavBarIcons.AddCaseType
-            onClick: () => openPopup(<CaseTypeFullView onFailureFunction={() => { }} />),
+            buttonText: "הוספת מנהל",
+            buttonScreen: null,
+            icon: null, // icons.NavBarIcons.Manager
+            onClick: () => navigate(),
         },
         {
             buttonText: "לכל סוגי התיקים",
-            buttonScreen: "",
+            buttonScreen: "כל סוגי התיקים",
             icon: null, // icons.NavBarIcons.AllCasesType
             onClick: () => navigate(AllCasesTypeScreenName),
+        },
+        {
+            buttonText: "הוספת סוג תיק",
+            buttonScreen: null,
+            icon: null, // icons.NavBarIcons.AddCaseType
+            onClick: () => openPopup(<CaseTypeFullView onFailureFunction={() => { }} />),
         },
     ]
 });

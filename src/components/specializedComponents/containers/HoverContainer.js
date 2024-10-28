@@ -65,7 +65,7 @@ const HoverContainer = ({ queryResult = [], isPerforming, getButtonTextFunction,
                         <SimpleContainer style={{ display: 'flex', flexDirection: 'column' }}>
                             {queryResult.map((result, index) => (
                                 <SimpleButton
-                                    key={index}
+                                    key={`choiceNumber${index}`}
                                     style={{
                                         padding: '12px',
                                         cursor: 'pointer',
@@ -74,10 +74,11 @@ const HoverContainer = ({ queryResult = [], isPerforming, getButtonTextFunction,
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                     }}
-                                    onPress={() => onPressButtonFunction(getButtonTextFunction?.(result))}
+                                    onPress={() => onPressButtonFunction(getButtonTextFunction?.(result))} // ensure this is an arrow function
                                 >
                                     <Text20>{getButtonTextFunction?.(result)}</Text20>
                                 </SimpleButton>
+
                             ))}
                         </SimpleContainer>
                     ) : (

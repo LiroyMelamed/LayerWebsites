@@ -3,8 +3,8 @@ import React from 'react';
 const Separator = ({ orientation = 'horizontal', style = {} }) => {
     const separatorStyle = {
         backgroundColor: '#e0e0e0', // Default color, adjust as needed
-        ...style,
         ...(orientation === 'horizontal' ? styles.horizontal : styles.vertical),
+        ...style,
     };
 
     return <div style={separatorStyle}></div>;

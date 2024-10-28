@@ -4,11 +4,47 @@ import SimpleIcon from './SimpleIcon';
 import { colors } from '../../constant/colors';
 
 const SimpleInput = forwardRef(
-    ({ title, titleFontSize = 16, leftIcon, rightIcon, tintColor, IconStyle, textStyle, style, value, onChange, inputSize = 'Medium', ...props }, ref) => {
+    ({
+        title,
+        titleFontSize = 16,
+        leftIcon,
+        rightIcon,
+        tintColor,
+        IconStyle,
+        textStyle,
+        style,
+        value,
+        onChange,
+        inputSize = 'Medium',
+        disabled = false,
+        onFocus,
+        onBlur,
+        error = '',
+        ...props
+    }, ref) => {
         const [isFocused, setIsFocused] = useState(false);
 
         const sizeStyles = inputStyles[inputSize]; // Select the styles based on inputSize prop
 
+        function getBorderColor() {
+            if (disabled) return colors.disabledHighlighted;
+            if (error) return colors.error;
+            return isFocused ? colors.primaryHighlighted : colors.secondaryHighlighted;
+        }
+
+        function getBackgroundColor() {
+            return disabled ? colors.disabled : colors.white;
+        }
+
+        function handleFocus() {
+            onFocus?.()
+            setIsFocused(true)
+        }
+
+        function handleBlur(event) {
+            onBlur?.(event)
+            setIsFocused(false)
+        }
         return (
             <SimpleContainer
                 ref={ref}
@@ -17,12 +53,13 @@ const SimpleInput = forwardRef(
                     display: 'flex',
                     flexDirection: 'row',
                     alignItems: 'center',
-                    border: '1px solid #ddd',
-                    backgroundColor: '#f8f8f8',
-                    borderRadius: '25px',
-                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                    border: `1px solid ${getBorderColor()}`,
+                    backgroundColor: getBackgroundColor(),
+                    borderRadius: 12,
+                    margin: '8px',
+                    boxShadow: isFocused ? '0 0 4px rgba(0, 0, 0, 0.2)' : 'none',
                     direction: 'rtl',
-                    height: sizeStyles.height, // Apply the height based on inputSize
+                    height: sizeStyles.height,
                     ...style,
                 }}
             >
@@ -31,10 +68,13 @@ const SimpleInput = forwardRef(
                         style={{
                             ...styles.floatingLabel,
                             fontSize: titleFontSize,
-                            right: rightIcon ? '40px' : '15px', // Adjust position based on the presence of rightIcon
-                            top: sizeStyles.labelTop, // Use the top property from inputStyles
-                            transform: isFocused || value ? sizeStyles.transformFocused : 'translateY(-50%)', // Center the label when not focused
+                            fontFamily: 'Fredoka', // Ensures font is Fredoka for the input field
+                            right: rightIcon ? '40px' : '15px',
+                            top: sizeStyles.labelTop,
+                            borderRadius: 10000,
+                            transform: isFocused || value ? sizeStyles.transformFocused : 'translateY(-50%)',
                             opacity: isFocused || value ? 1 : 0.6,
+                            color: error ? colors.error : colors.primaryHighlighted,
                         }}
                     >
                         {title}
@@ -43,11 +83,12 @@ const SimpleInput = forwardRef(
 
                 {rightIcon && (
                     <SimpleIcon
-                        tintColor={tintColor}
+                        tintColor={tintColor || getBorderColor()}
                         src={rightIcon}
                         style={{ ...IconStyle, marginRight: '8px' }}
                     />
                 )}
+
                 <input
                     type="text"
                     style={{
@@ -55,24 +96,27 @@ const SimpleInput = forwardRef(
                         padding: leftIcon ? `20px ${sizeStyles.padding} 10px 10px` : sizeStyles.padding,
                         paddingRight: rightIcon ? '30px' : sizeStyles.padding,
                         border: 'none',
+                        fontFamily: 'Fredoka', // Ensures font is Fredoka for the input field
+
                         backgroundColor: 'transparent',
                         outline: 'none',
-                        fontSize: sizeStyles.fontSize, // Apply fontSize based on inputSize
-                        color: '#666',
-                        direction: 'rtl',
+                        fontSize: sizeStyles.fontSize,
+                        color: disabled ? colors.disabledText : colors.text,
                         textAlign: 'right',
                         minWidth: '0',
                         ...textStyle,
                     }}
                     value={value}
                     onChange={onChange}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
+                    disabled={disabled}
                     {...props}
                 />
+
                 {leftIcon && (
                     <SimpleIcon
-                        tintColor={tintColor}
+                        tintColor={tintColor || getBorderColor()}
                         src={leftIcon}
                         style={{ ...IconStyle, marginLeft: '8px' }}
                     />
@@ -85,16 +129,14 @@ const SimpleInput = forwardRef(
 const styles = {
     floatingLabel: {
         position: 'absolute',
-        backgroundColor: '#f8f8f8',
+        backgroundColor: colors.white,
         padding: '0 5px',
         pointerEvents: 'none',
         transition: 'top 0.2s ease, transform 0.2s ease, opacity 0.2s ease',
-        color: colors.text,
     },
 };
 
 export default SimpleInput;
-
 
 export const inputSize = {
     SMALL: "Small",
@@ -106,22 +148,24 @@ export const inputStyles = {
     Small: {
         height: 24,
         fontSize: 12,
-        padding: '8px 12px',
-        labelTop: '50%', // Vertically center the label
-        transformFocused: 'translateY(-150%) scale(0.8)', // Adjusted transform for focused state
+        padding: '8px',
+        labelTop: '50%',
+        borderStyle: 'solid',
+        transformFocused: 'translateY(-150%) scale(0.8)',
     },
     Medium: {
-        height: 40,
+        height: 32,
         fontSize: 16,
-        padding: '10px 20px',
-        labelTop: '50%', // Vertically center the label
-        transformFocused: 'translateY(-150%) scale(0.8)', // Adjusted transform for focused state
+        padding: '16px',
+        labelTop: '50%',
+        borderStyle: 'solid',
+        transformFocused: 'translateY(-150%) scale(0.8)',
     },
     Big: {
-        height: 60,
+        height: 40,
         fontSize: 24,
-        padding: '12px 28px',
-        labelTop: '50%', // Vertically center the label
-        transformFocused: 'translateY(-150%) scale(0.8)', // Adjusted transform for focused state
+        padding: '16px',
+        labelTop: '50%',
+        transformFocused: 'translateY(-150%) scale(0.8)',
     },
 };

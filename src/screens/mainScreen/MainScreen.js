@@ -1,13 +1,8 @@
 import React from 'react';
 import SimpleScreen from '../../components/simpleComponents/SimpleScreen';
-import { Text40 } from '../../components/specializedComponents/text/AllTextKindFile';
-import { icons } from '../../assets/icons/icons';
 import SearchInput from '../../components/specializedComponents/containers/SearchInput';
 import SimpleScrollView from '../../components/simpleComponents/SimpleScrollView';
 import { useScreenSize } from '../../providers/ScreenSizeProvider';
-import colors from '../../constant/colors';
-import SimpleCard from '../../components/simpleComponents/SimpleCard';
-import SimpleTable from '../../components/simpleComponents/SimpleTable';
 import useAutoHttpRequest from '../../hooks/useAutoHttpRequest';
 import { casesApi } from '../../api/casesApi';
 import useHttpRequest from '../../hooks/useHttpRequest';
@@ -33,17 +28,6 @@ export default function MainScreen() {
         return <SimpleLoader />;
     }
 
-    const adjustedData = taggedCases.map((caseItem) => {
-        return {
-            Column0: caseItem.CaseName,
-            Column1: caseItem.CaseType,
-            Column2: caseItem.CompanyName,
-            Column3: caseItem.CurrentStage,
-        };
-    });
-
-    const columns = ["מס' תיק", 'סוג תיק', 'שם חברה', 'שלב נוכחי'];
-
     return (
         <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
             <SimpleScrollView>
@@ -60,18 +44,9 @@ export default function MainScreen() {
                     <ChooseButton style={styles.chooseButton} />
                 </SimpleContainer>
 
-                {/* <SimpleCard style={{ marginTop: 32 }}>
-                    <SimpleTable
-                        titles={columns}
-                        data={adjustedData}
-                        rePerformRequest={performRequest}
-                        noDataMessage={"לא נמצאו תיקים נעוצים"}
-                        style={{ width: '100%' }}
-                    />
-                </SimpleCard> */}
-
                 <PinnedCasesCard
                     taggedCases={taggedCases}
+                    rePerformFunction={performRequest}
                 />
 
                 <SimpleContainer style={{ display: 'flex', justifyContent: 'center' }}>
@@ -83,8 +58,7 @@ export default function MainScreen() {
 }
 
 const styles = {
-    screenStyle: (isSmallScreen) => ({
-        paddingTop: 40,
+    screenStyle: () => ({
         paddingRight: 20,
         paddingLeft: 20,
         boxSizing: 'border-box',

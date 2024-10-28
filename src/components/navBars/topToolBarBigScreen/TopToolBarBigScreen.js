@@ -1,15 +1,23 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { colors } from "../../../constant/colors";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { Text40 } from "../../specializedComponents/text/AllTextKindFile";
 
 
-export default function TopToolbarBigScreen({ ChosenButtonText = "תיקים נעוצים" }) {
+export default function TopToolbarBigScreen({ ChosenButtonText }) {
+    const [titleTopBar, setTitleTopBar] = useState(ChosenButtonText);
+
+    useEffect(() => {
+        if (ChosenButtonText != null) {
+            setTitleTopBar(ChosenButtonText);
+        }
+    }, [ChosenButtonText]);
+
     return (
         <SimpleContainer
             style={styles.container}
         >
-            <Text40 style={{}}>{ChosenButtonText}</Text40>
+            <Text40 style={{ marginRight: 28 }}>{titleTopBar}</Text40>
 
         </SimpleContainer >
     );
@@ -18,10 +26,10 @@ export default function TopToolbarBigScreen({ ChosenButtonText = "תיקים נ�
 const styles = {
     container: {
         display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
         height: 80,
+        alignItems: 'center',
+        flexDirection: 'row-reverse',
         backgroundColor: colors.white,
+        width: 'calc(100vw - 250px)',
     },
 }

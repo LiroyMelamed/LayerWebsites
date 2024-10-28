@@ -3,91 +3,139 @@ import SimpleContainer from './SimpleContainer';
 import SimpleIcon from './SimpleIcon';
 import { colors } from '../../constant/colors';
 
-const SimpleTextArea = forwardRef(({ title, leftIcon, rightIcon, tintColor, IconStyle, textStyle, style, value, onChange, ...props }, ref) => {
-    const [isFocused, setIsFocused] = useState(false);
+const SimpleTextArea = forwardRef(
+    ({
+        title,
+        leftIcon,
+        rightIcon,
+        tintColor,
+        IconStyle,
+        textStyle,
+        style,
+        value,
+        onChange,
+        disabled = false,
+        error = '',
+        ...props
+    }, ref) => {
+        const [isFocused, setIsFocused] = useState(false);
 
-    const TextStyle = {
-        fontSize: 24,
-        ...textStyle,
-    };
+        // Dynamic styles for text area
+        function getBorderColor() {
+            if (disabled) return colors.disabledHighlighted;
+            if (error) return colors.error;
+            return isFocused ? colors.primaryHighlighted : colors.secondaryHighlighted;
+        }
 
-    return (
-        <SimpleContainer
-            ref={ref}
-            style={{
-                position: 'relative',
-                display: 'flex',
-                flexDirection: 'row',
-                alignItems: 'center',
-                border: '1px solid #ddd',
-                backgroundColor: '#f8f8f8',
-                borderRadius: '25px',
-                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                width: '100%',
-                direction: 'rtl',
-                ...style,
-            }}
-        >
-            {/* Floating label */}
-            {title && (
-                <span
-                    style={{
-                        ...styles.floatingLabel,
-                        transform: value || isFocused ? 'translateY(-20px) scale(0.8)' : 'translateY(10px) scale(1)',
-                        opacity: value || isFocused ? 1 : 0.6,
-                    }}
-                >
-                    {title}
-                </span>
-            )}
+        function getBackgroundColor() {
+            return disabled ? colors.disabled : colors.white;
+        }
 
-            {rightIcon && (
-                <SimpleIcon
-                    tintColor={tintColor}
-                    src={rightIcon}
-                    style={{ ...IconStyle, marginRight: '8px' }}
-                />
-            )}
-            <textarea
-                type="text"
+        return (
+            <SimpleContainer
+                ref={ref}
                 style={{
-                    flex: 1,
-                    padding: leftIcon ? '20px 30px 10px 10px' : '20px 15px', // Adjust padding for better spacing
-                    paddingRight: rightIcon ? '30px' : '15px',
-                    border: 'none',
-                    backgroundColor: 'transparent',
-                    outline: 'none',
-                    fontSize: '14px',
-                    color: '#666',
+                    position: 'relative',
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    border: `1px solid ${getBorderColor()}`,
+                    backgroundColor: getBackgroundColor(),
+                    borderRadius: 12,
+                    padding: '12px',
+                    boxShadow: isFocused ? '0 0 4px rgba(0, 0, 0, 0.2)' : 'none',
                     direction: 'rtl',
-                    textAlign: 'right',
-                    ...TextStyle,
+                    width: '100%',
+                    ...style,
                 }}
-                value={value}
-                onChange={(e) => onChange(e.target.value)} // Directly return the text value
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-                {...props}
-            />
-            {leftIcon && (
-                <SimpleIcon
-                    tintColor={tintColor}
-                    src={leftIcon}
-                    style={{ ...IconStyle, marginLeft: '8px' }}
+            >
+                {/* Floating Label */}
+                {title && (
+                    <span
+                        style={{
+                            ...styles.floatingLabel,
+                            transform: isFocused || value ? 'translateY(-20px) scale(0.8)' : 'translateY(10px) scale(1)',
+                            opacity: isFocused || value ? 1 : 0.6,
+                            color: error ? colors.error : colors.primaryHighlighted,
+                            fontFamily: 'Fredoka', // Ensures font is Fredoka for the input field
+                            borderRadius: 10000,
+                        }}
+                    >
+                        {title}
+                    </span>
+                )}
+
+                {rightIcon && (
+                    <SimpleIcon
+                        tintColor={tintColor || getBorderColor()}
+                        src={rightIcon}
+                        style={{ ...IconStyle, marginRight: '8px' }}
+                    />
+                )}
+
+                <style>
+                    {`
+                        textarea::-webkit-scrollbar {
+                            width: 8px;
+                            height: 8px;
+                        }
+                        textarea::-webkit-scrollbar-thumb {
+                            background-color: rgba(0, 0, 0, 0.4);
+                            border-radius: 8px;
+                        }
+                        textarea::-webkit-scrollbar-thumb:hover {
+                            background-color: rgba(0, 0, 0, 0.6);
+                        }
+                        textarea::-webkit-scrollbar-track {
+                            background-color: rgba(0, 0, 0, 0.1);
+                            border-radius: 8px;
+                        }
+                    `}
+                </style>
+
+                <textarea
+                    style={{
+                        flex: 1,
+                        padding: leftIcon ? '0px 0px 10px 10px' : '0px 15px',
+                        paddingRight: rightIcon ? '30px' : '15px',
+                        border: 'none',
+                        backgroundColor: 'transparent',
+                        outline: 'none',
+                        fontSize: '14px',
+                        fontFamily: 'Fredoka', // Ensures font is Fredoka for the input field
+                        color: disabled ? colors.disabledText : colors.text,
+                        direction: 'rtl',
+                        textAlign: 'right',
+                        ...textStyle,
+                    }}
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
+                    disabled={disabled}
+                    {...props}
                 />
-            )}
-        </SimpleContainer>
-    );
-});
+
+                {leftIcon && (
+                    <SimpleIcon
+                        tintColor={tintColor || getBorderColor()}
+                        src={leftIcon}
+                        style={{ ...IconStyle, marginLeft: '8px' }}
+                    />
+                )}
+            </SimpleContainer>
+        );
+    }
+);
 
 const styles = {
     floatingLabel: {
         position: 'absolute',
-        top: '12px', // Adjust to position label correctly when not focused
+        top: '12px',
         right: '15px',
         fontSize: '16px',
         color: colors.text,
-        backgroundColor: '#f8f8f8', // Match the container's background
+        backgroundColor: colors.white,
         padding: '0 5px',
         pointerEvents: 'none',
         transition: 'transform 0.2s ease, opacity 0.2s ease',

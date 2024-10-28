@@ -4,47 +4,32 @@ import { usePopup } from "../../providers/PopUpProvider";
 import { getNavBarData } from '../navBars/data/NavBarData';
 import SimpleContainer from "../simpleComponents/SimpleContainer";
 import SideBarMenuItem from "./navBarItems/SideBarMenuItem";
-import { MainScreenName } from "../../screens/mainScreen/MainScreen";
 import { colors } from "../../constant/colors";
 import TopToolbarBigScreen from "./topToolBarBigScreen/TopToolBarBigScreen";
-import { images } from "../../assets/images/images";
-import SimpleImage from "../simpleComponents/SimpleImage";
-import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import TopToolBarSmallScreen from "./topToolBarSmallScreen/TopToolBarSmallScreen";
+import { images } from "../../assets/images/images";
+import { useScreenSize } from "../../providers/ScreenSizeProvider";
+import ImageButton from "../specializedComponents/buttons/ImageButton";
+import Separator from "../styledComponents/separators/Separator";
 
 const Logo = images.Logos.LogoSlangWhite;
 
-export default function SideBar({ chosenIndex = 0, children }) {
+export default function SideBar({ chosenIndex = -1, children }) {
   const navigate = useNavigate();
   const { isSmallScreen } = useScreenSize();
   const { openPopup } = usePopup();
   const [currentIndex, setCurrentIndex] = useState(chosenIndex);
   const { NavBarLinks } = getNavBarData(navigate, openPopup);
-  const { isSmallScreen } = useScreenSize()
-
-  function handlePress(index) {
-    setCurrentIndex(index)
-    handleSideBarPress(index)
-  }
-
-  function handleSideBarPress(index) {
-    navigate(MainScreenName, { state: { pageIndex: index } })
-  }
 
   return (
-    <SimpleContainer>
-      {!isSmallScreen &&
-        <SimpleContainer style={styles.container}>
-
-          <SimpleContainer style={{ display: 'flex', width: '100%', height: 80, alignItems: 'center', justifyContent: 'center' }}>
-            <SimpleImage
-              src={Logo}
-              style={{ maxHeight: 60, selfAlign: 'center' }}
-            />
+    <SimpleContainer style={styles.mainContainer}>
+      {!isSmallScreen && (
+        <SimpleContainer style={styles.sidebarContainer}>
+          <SimpleContainer style={styles.logoContainer}>
+            <ImageButton src={Logo} height={60} style={{ maxHeight: 60, alignSelf: 'center' }} onPress={() => { setCurrentIndex(-1); navigate('/') }} />
           </SimpleContainer>
-
-
-          <SimpleContainer style={{ marginTop: 40 }}>
+          <Separator style={{ margin: '20px 0' }} />
+          <SimpleContainer style={{}}>
             {NavBarLinks.map((item, index) => (
               <SideBarMenuItem
                 key={item.text}
@@ -52,32 +37,53 @@ export default function SideBar({ chosenIndex = 0, children }) {
                 iconSource={item.icon}
                 size={24}
                 isPressed={currentIndex === index}
-                onPressFunction={handlePress}
+                onPressFunction={() => { setCurrentIndex(index); item.onClick() }}
                 buttonIndex={index}
               />
             ))}
           </SimpleContainer>
         </SimpleContainer>
-      }
-      <SimpleContainer style={{ maxHeight: '100dvh' }}>
-        {isSmallScreen ?
-          <TopToolBarSmallScreen />
-          :
-          <TopToolbarBigScreen />
-        }
-        {children}
+      )}
+
+      <SimpleContainer style={styles.contentContainer(isSmallScreen)}>
+        <SimpleContainer>
+          {isSmallScreen ? <TopToolBarSmallScreen /> : <TopToolbarBigScreen ChosenButtonText={currentIndex != -1 ? NavBarLinks[currentIndex]?.buttonScreen : "מסך הבית"} />}
+        </SimpleContainer>
+        <SimpleContainer style={styles.childrenContainer}>
+          {children}
+        </SimpleContainer>
       </SimpleContainer>
     </SimpleContainer>
   );
 }
 
 const styles = {
-  container: {
+  mainContainer: {
+    display: 'flex',
+  },
+  sidebarContainer: {
     position: 'fixed',
     width: 250,
-    height: '100dvh', // Use calc as a string
+    height: '100vh',
     right: 0,
     backgroundColor: colors.text,
-    zIndex: 1004
-  }
-}
+    display: 'flex',
+    flexDirection: 'column',
+    paddingTop: 20,
+  },
+  logoContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+  },
+  contentContainer: (isSmallScreen) => ({
+    display: 'flex',
+    flexDirection: 'column',
+    width: isSmallScreen ? '100vw' : 'calc(100vw - 250px)', // Full width minus sidebar width
+    height: '100dvh',
+    overflow: 'hidden',
+  }),
+
+  childrenContainer: {
+    flex: 1, // Take up remaining space
+  },
+};

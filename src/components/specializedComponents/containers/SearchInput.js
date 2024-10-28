@@ -4,8 +4,8 @@ import SimpleContainer from '../../simpleComponents/SimpleContainer';
 import HoverContainer from './HoverContainer';
 import { useScreenSize } from '../../../providers/ScreenSizeProvider';
 
-const SearchInput = ({ leftIcon, rightIcon, onSearch, tintColor, IconStyle, textStyle, queryResult, isPerforming, getButtonTextFunction, title, style, ...props }) => {
-    const [query, setQuery] = useState('');
+const SearchInput = ({ leftIcon, value, rightIcon, onSearch, tintColor, IconStyle, textStyle, queryResult, isPerforming, getButtonTextFunction, buttonPressFunction, title, style, ...props }) => {
+    const [query, setQuery] = useState(value);
     const [showResults, setShowResults] = useState(false);
     const targetRef = useRef(null);
 
@@ -27,6 +27,12 @@ const SearchInput = ({ leftIcon, rightIcon, onSearch, tintColor, IconStyle, text
         }
     };
 
+    function hoverButtonPressed(text) {
+        buttonPressFunction?.(text);
+        setShowResults(false)
+        setQuery(text);
+    }
+
     return (
         <SimpleContainer style={style}>
             <SimpleInput
@@ -40,7 +46,7 @@ const SearchInput = ({ leftIcon, rightIcon, onSearch, tintColor, IconStyle, text
                 textStyle={textStyle}
                 onChange={handleInputChange}
                 onFocus={handleFocus}
-                onBlur={handleBlur}
+                // onBlur={handleBlur}
                 {...props}
             />
             {showResults && (
@@ -48,11 +54,13 @@ const SearchInput = ({ leftIcon, rightIcon, onSearch, tintColor, IconStyle, text
                     targetRef={targetRef}
                     style={{
                         position: 'absolute',
-                        zIndex: 1000,
+                        zIndex: 1005,
                     }}
                     queryResult={queryResult}
                     getButtonTextFunction={getButtonTextFunction}
+                    onPressButtonFunction={hoverButtonPressed}
                     onClose={() => { setShowResults(false) }}
+
                 />
             )}
         </SimpleContainer>
