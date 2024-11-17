@@ -45,14 +45,18 @@ export default function SideBar({ chosenIndex = -1, children }) {
         </SimpleContainer>
       )}
 
-      <SimpleContainer style={styles.contentContainer(isSmallScreen)}>
+      <SimpleContainer style={{ flex: 1 }}>
+        {children}
+      </SimpleContainer>
+
+      {/* <SimpleContainer style={styles.contentContainer(isSmallScreen)}>
         <SimpleContainer>
           {isSmallScreen ? <TopToolBarSmallScreen /> : <TopToolbarBigScreen ChosenButtonText={currentIndex != -1 ? NavBarLinks[currentIndex]?.buttonScreen : "מסך הבית"} />}
         </SimpleContainer>
         <SimpleContainer style={styles.childrenContainer}>
           {children}
         </SimpleContainer>
-      </SimpleContainer>
+      </SimpleContainer> */}
     </SimpleContainer>
   );
 }
@@ -70,6 +74,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     paddingTop: 20,
+    zIndex: 11111
   },
   logoContainer: {
     display: 'flex',

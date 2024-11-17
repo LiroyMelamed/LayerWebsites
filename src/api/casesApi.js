@@ -26,7 +26,7 @@ export const casesApi = {
   },
 
   updateCaseById: async (caseId, caseData) => {
-    return setData(SPECIFIC_CASE_DATA_ENDPOINT + caseId, caseData);
+    return setData(SPECIFIC_CASE_DATA_ENDPOINT + caseId.replace(/[/]/g, '_'), caseData);
   },
 
   createCase: async (caseData) => {

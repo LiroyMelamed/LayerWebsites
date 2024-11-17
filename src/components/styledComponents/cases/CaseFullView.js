@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import SimpleContainer from '../../simpleComponents/SimpleContainer';
 import SimpleInput from '../../simpleComponents/SimpleInput';
 import SimpleLoader from '../../simpleComponents/SimpleLoader';
-import { Text12, Text40 } from '../../specializedComponents/text/AllTextKindFile';
 import SimpleScrollView from '../../simpleComponents/SimpleScrollView';
 import useAutoHttpRequest from '../../../hooks/useAutoHttpRequest';
 import useHttpRequest from '../../../hooks/useHttpRequest';
@@ -14,14 +13,15 @@ import SearchInput from '../../specializedComponents/containers/SearchInput';
 
 export function CaseFullView({ caseName, rePerformRequest, onFailureFunction, style }) {
     const [caseDetails, setCaseDetails] = useState({
+        CaseId: '',
         CaseName: '',
         CaseType: '',
         CompanyName: '',
         PhoneNumber: '',
         Stages: 0,
-        CostumerTaz: 0,
         CurrentStage: '',
         CustomerName: '',
+        CustomerMail: '',
         Descriptions: [
             {
                 Stage: 1,
@@ -44,14 +44,15 @@ export function CaseFullView({ caseName, rePerformRequest, onFailureFunction, st
                 const data = fetchedData[0]
 
                 setCaseDetails({
+                    CaseId: data.CaseId || data.CaseName.replace(/[^a-zA-Z0-9_-]/g, '_') || '',
                     CaseName: data.CaseName || '',
                     CaseType: data.CaseType || '',
                     CompanyName: data.CompanyName || '',
                     PhoneNumber: data.PhoneNumber || '',
                     Stages: data.Stages || 0,
-                    CostumerTaz: data.CostumerTaz || 0,
                     CurrentStage: data.CurrentStage || 0,
                     CustomerName: data.CustomerName || '',
+                    CustomerMail: data.CustomerMail || '',
                     Descriptions: data.Descriptions || [
                         { Stage: 1, Text: '', Timestamp: '' }
                     ],
@@ -67,20 +68,26 @@ export function CaseFullView({ caseName, rePerformRequest, onFailureFunction, st
         () => alert('Case saved successfully!')
     );
 
+    const { isPerforming: isPerformingSetCase, performRequest: setCase } = useHttpRequest(casesApi.updateCaseById);
+
+
     const handleInputChange = (field, value) => {
         setCaseDetails((prevDetails) => ({ ...prevDetails, [field]: value }));
     };
 
     const handleSaveCase = () => {
-        saveCase(caseDetails);
+        saveCase({ ...caseDetails, CaseId: caseDetails.CaseName.replace(/[^a-zA-Z0-9_-]/g, '_') });
         rePerformRequest?.()
     };
 
     const handleUpdateCase = () => {
-        const updatedCase = { ...caseDetails, CurrentStage: Number(caseDetails.CurrentStage) + 1 };
-        setCaseDetails(updatedCase);
-        saveCase(updatedCase);
-        rePerformRequest?.()
+        if (Number(caseDetails.CurrentStage) + 1 <= Number(caseDetails.Stages)) {
+            const tempDescription = caseDetails.Descriptions;
+            tempDescription[caseDetails.CurrentStage].Timestamp = new Date()
+            setCase(caseDetails.CaseName, { ...caseDetails, CurrentStage: Number(caseDetails.CurrentStage + 1) })
+            setCaseDetails(oldCase => ({ ...oldCase, CurrentStage: Number(caseDetails.CurrentStage + 1), Descriptions: tempDescription }));
+            rePerformRequest?.()
+        }
     };
 
     const handleIsTagChange = () => {
@@ -105,7 +112,7 @@ export function CaseFullView({ caseName, rePerformRequest, onFailureFunction, st
 
     function CaseTypeButtonPressed(caseTypeName) {
         const caseType = casesType.filter(casetype => casetype.CaseTypeName = caseTypeName);
-        setCaseDetails(oldCase => ({ ...oldCase, CaseType: caseTypeName, Descriptions: caseType[0].Descriptions }));
+        setCaseDetails(oldCase => ({ ...oldCase, CaseType: caseTypeName, Descriptions: caseType[0].Descriptions, Stages: caseType[0].NumberOfStages }));
     }
 
     if (isPerformingCasesById) {
@@ -165,6 +172,15 @@ export function CaseFullView({ caseName, rePerformRequest, onFailureFunction, st
                         title={"שלב נוכחי"}
                         value={caseDetails.CurrentStage}
                         onChange={(e) => handleInputChange('CurrentStage', e.target.value)}
+                    />
+                </SimpleContainer>
+
+                <SimpleContainer style={styles.rowStyle}>
+                    <SimpleInput
+                        style={styles.inputStyle}
+                        title={"אימייל לקוח"}
+                        value={caseDetails.CustomerMail}
+                        onChange={(e) => handleInputChange('CustomerMail', e.target.value)}
                     />
                 </SimpleContainer>
 

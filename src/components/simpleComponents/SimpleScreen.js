@@ -16,6 +16,7 @@ export default function SimpleScreen({ children, imageBackgroundSource, style })
         ...style,
         ...styles.childrenContainer,
         width: isSmallScreen ? '100%' : `calc(100% - 250px)`,
+
     };
 
     return (
@@ -30,13 +31,12 @@ export default function SimpleScreen({ children, imageBackgroundSource, style })
 const styles = {
     screen: {
         display: 'flex',
+        flexDirection: 'row',
         height: '100dvh',
         width: '100dvw',
         position: 'relative',
     },
     childrenContainer: {
         display: 'flex',
-        position: 'relative',
-        zIndex: 1,
     },
 };

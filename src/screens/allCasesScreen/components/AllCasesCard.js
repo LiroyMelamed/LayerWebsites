@@ -6,9 +6,9 @@ import Separator from "../../../components/styledComponents/separators/Separator
 export default function AllCasesCard({ allCases }) {
 
     return (
-        <SimpleCard>
+        <SimpleCard style={{ overflow: null }}>
 
-            <SimpleContainer>
+            <SimpleContainer style={{ overflow: null }}>
                 {allCases.map((item, index) => (
                     <>
                         {index !== 0 && <Separator />}

@@ -36,16 +36,21 @@ export default function CaseMenuItem({
     const { openPopup } = usePopup();
     const [fullCaseListener, setFullCaseListener] = useState(fullCase);
     const [isOpen, setIsOpen] = useState(false);
-    const [currentStage, setCurrentStage] = useState(rightValueSecondLine);
+    const [currentStage, setCurrentStage] = useState(Number(rightValueSecondLine));
+
+    console.log("fullCase", fullCase);
 
     function updateStage() {
-        if (currentStage + 1 <= fullCaseListener.Stages) {
-            setCase(fullCaseListener.CaseName, { ...fullCaseListener, CurrentStage: currentStage + 1 })
+        if (currentStage + 1 <= Number(fullCaseListener.Stages)) {
+            const tempDescription = fullCaseListener.Descriptions;
+            tempDescription[currentStage].Timestamp = new Date()
+            setCase(fullCaseListener.CaseName, { ...fullCaseListener, CurrentStage: Number(currentStage + 1) })
+            setFullCaseListener(oldCase => ({ ...oldCase, CurrentStage: Number(currentStage + 1), Descriptions: tempDescription }));
         }
     }
 
     return (
-        <SimpleContainer style={style}>
+        <SimpleContainer style={{ overflow: null }}>
             <SimpleContainer style={styles.container}>
                 <ImageButton
                     src={icons.Button.DownArrow}

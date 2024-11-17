@@ -30,6 +30,6 @@ const styles = {
         alignItems: 'center',
         flexDirection: 'row-reverse',
         backgroundColor: colors.white,
-        width: 'calc(100vw - 250px)',
+        width: '100%',
     },
 }

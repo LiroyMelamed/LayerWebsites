@@ -1,5 +1,7 @@
 import { casesApi } from "../../api/casesApi";
 import { images } from "../../assets/images/images";
+import TopToolbarBigScreen from "../../components/navBars/topToolBarBigScreen/TopToolBarBigScreen";
+import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
 import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
 import SimpleLoader from "../../components/simpleComponents/SimpleLoader";
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
@@ -28,6 +30,9 @@ export default function AllCasesScreen() {
 
     return (
         <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
+            <SimpleContainer>
+                {isSmallScreen ? <TopToolBarSmallScreen /> : <TopToolbarBigScreen ChosenButtonText={"מסך הבית"} />}
+            </SimpleContainer>
             <SimpleScrollView>
                 <SimpleContainer style={styles.responsiveContainer}>
                     <SearchInput
@@ -52,9 +57,11 @@ export default function AllCasesScreen() {
 
 const styles = {
     screenStyle: () => ({
-        paddingRight: 20,
-        paddingLeft: 20,
+        // paddingRight: 20,
+        // paddingLeft: 20,
         boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
     }),
     responsiveContainer: {
         display: 'flex',
