@@ -1,70 +1,127 @@
-# Getting Started with Create React App
+# **LayerWebsites** 🏛️  
+A **React + Node.js** based lawyer management system with **Azure SQL Database** integration.  
+Clients can upload necessary files and track their cases efficiently.
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+---
 
-## Available Scripts
+## **📌 Project Structure**
+```
+LayerWebsites/
+│── frontend/       # React-based client
+│── backend/        # Node.js Express API
+│── README.md       # Project documentation
+│── .env            # Environment variables (not committed)
+```
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## **🚀 Features**
+✅ **Authentication & OTP Login** – Secure login using phone number OTP  
+✅ **Case Management** – Create, update, and track cases  
+✅ **Customer Management** – View and manage clients  
+✅ **SQL Azure Integration** – Uses **Microsoft SQL Server** for data persistence  
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+---
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## **🔧 Setup & Installation**
 
-### `npm test`
+### **1️⃣ Clone the repository**
+```bash
+git clone https://github.com/LiroyMelamed/LayerWebsites.git
+cd LayerWebsites
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### **2️⃣ Backend Setup**
+1. Navigate to the backend:
+   ```bash
+   cd backend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Create a `.env` file:
+   ```env
+   PORT=5000
+   DB_USER=your_sql_username
+   DB_PASSWORD=your_sql_password
+   DB_SERVER=your_sql_server.database.windows.net
+   DB_NAME=your_database_name
+   JWT_SECRET=your_secret_key
+   ```
+4. Start the backend server:
+   ```bash
+   node server.js
+   ```
+   ✅ Server should run at `http://localhost:5000`
 
-### `npm run build`
+### **3️⃣ Frontend Setup**
+1. Navigate to the frontend:
+   ```bash
+   cd ../frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Create a `.env` file:
+   ```env
+   REACT_APP_API_BASE_URL=http://localhost:5000
+   ```
+4. Start the frontend:
+   ```bash
+   npm start
+   ```
+   ✅ React app should run at `http://localhost:3000`
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+---
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## **📡 API Endpoints**
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### **🔹 Authentication**
+| Method | Endpoint       | Description |
+|--------|---------------|-------------|
+| `POST` | `/RequestOtp`  | Sends OTP to the user |
+| `POST` | `/VerifyOtp`   | Verifies OTP and returns JWT |
 
-### `npm run eject`
+### **🔹 Cases**
+| Method | Endpoint           | Description |
+|--------|-------------------|-------------|
+| `GET`  | `/GetCases`       | Retrieve all cases |
+| `GET`  | `/GetCase/:caseId` | Retrieve a specific case |
+| `POST` | `/AddCase`        | Create a new case |
+| `PUT`  | `/UpdateCase/:caseId` | Update a case |
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### **🔹 Customers**
+| Method | Endpoint            | Description |
+|--------|--------------------|-------------|
+| `GET`  | `/GetCustomers`     | Retrieve all customers |
+| `POST` | `/AddCustomer`      | Create a new customer |
+| `PUT`  | `/GetCustomer/:customerId` | Update customer details |
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### **🔹 Case Types**
+| Method | Endpoint             | Description |
+|--------|---------------------|-------------|
+| `GET`  | `/GetCasesType`     | Retrieve all case types |
+| `GET`  | `/GetCaseType/:caseTypeId` | Retrieve a specific case type |
+| `POST` | `/AddCaseType`      | Create a new case type |
+| `PUT`  | `/UpdateCaseType/:caseTypeId` | Update case type details |
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### **🔹 Dashboard Data**
+| Method | Endpoint               | Description |
+|--------|-----------------------|-------------|
+| `GET`  | `/GetMainScreenData`   | Retrieve main dashboard data |
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+---
 
-## Learn More
+## **📜 License**
+This project is licensed under the **MIT License**.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+---
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## **💡 Additional Notes**
+- Ensure you **configure the `.env` file** correctly before running the project.
+- Make sure **SQL Azure is accessible** and properly connected.
+- Use **Postman or curl** to test APIs before integrating with the frontend.
 
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+🚀 **Enjoy building with LayerWebsites!**
