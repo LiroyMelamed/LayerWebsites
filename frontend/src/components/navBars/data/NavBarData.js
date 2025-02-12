@@ -4,6 +4,8 @@ import { AllCasesTypeScreenName } from "../../../screens/allCasesTypeScreen/AllC
 import CaseTypeFullView from "../../styledComponents/cases/CaseTypeFullView";
 import CaseFullView from "../../styledComponents/cases/CaseFullView";
 import { TaggedCasesScreenName } from "../../../screens/taggedCasesScreen/TaggedCasesScreen";
+import { AdminStackName } from "../../../navigation/AdminStack";
+import AdminPopup from "../../../screens/allMangerScreen/components/AdminPopup";
 
 export const getNavBarData = (navigate, openPopup) => ({
     NavBarLinks: [
@@ -11,13 +13,13 @@ export const getNavBarData = (navigate, openPopup) => ({
             buttonText: "לתיקים נעוצים",
             buttonScreen: "תיקים נעוצים",
             icon: null, // icons.NavBarIcons.Hammer
-            onClick: () => navigate(TaggedCasesScreenName),
+            onClick: () => navigate(AdminStackName + TaggedCasesScreenName),
         },
         {
             buttonText: "לכל התיקים",
             buttonScreen: "כל התיקים",
             icon: null, // icons.NavBarIcons.Hammer
-            onClick: () => navigate(AllCasesScreenName),
+            onClick: () => navigate(AdminStackName + AllCasesScreenName),
         },
         {
             buttonText: "תיק חדש",
@@ -35,19 +37,19 @@ export const getNavBarData = (navigate, openPopup) => ({
             buttonText: "לכל המנהלים",
             buttonScreen: "כל המנהלים",
             icon: null, // icons.NavBarIcons.AllManagers
-            onClick: () => navigate(AllMangerScreenName),
+            onClick: () => navigate(AdminStackName + AllMangerScreenName),
         },
         {
             buttonText: "הוספת מנהל",
             buttonScreen: null,
             icon: null, // icons.NavBarIcons.Manager
-            onClick: () => navigate(),
+            onClick: () => openPopup(<AdminPopup />),
         },
         {
             buttonText: "לכל סוגי התיקים",
             buttonScreen: "כל סוגי התיקים",
             icon: null, // icons.NavBarIcons.AllCasesType
-            onClick: () => navigate(AllCasesTypeScreenName),
+            onClick: () => navigate(AdminStackName + AllCasesTypeScreenName),
         },
         {
             buttonText: "הוספת סוג תיק",

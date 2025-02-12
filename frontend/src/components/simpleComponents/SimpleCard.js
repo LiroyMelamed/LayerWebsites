@@ -5,6 +5,7 @@ import { colors } from '../../constant/colors';
 const SimpleCard = ({ style, children, ...props }) => {
 
     const cardStyle = {
+        justifyContent: 'flex-end',
         ...styles.card,
         ...style,
     }

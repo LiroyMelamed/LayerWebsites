@@ -10,7 +10,7 @@ export default function CaseTypeMenuItemOpen({ caseType, isOpen, editCaseType })
                 opacity: isOpen ? 1 : 0, // Fade effect
             }}
         >
-            <CaseTypeTimeline stages={caseType?.Descriptions} title={'פירוט שלבים'} />
+            <CaseTypeTimeline stages={caseType?.Descriptions || []} title={'פירוט שלבים'} />
         </SimpleContainer>
     )
 }

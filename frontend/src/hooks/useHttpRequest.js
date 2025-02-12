@@ -1,41 +1,40 @@
 import { useState, useCallback } from 'react';
 
 const useHttpRequest = (requestFunction, onSuccess, onFailure) => {
-  const [result, setResult] = useState(null); // Ensure result is initially null
+  const [result, setResult] = useState(null);
   const [isPerforming, setIsPerforming] = useState(false);
 
   const defaultOnFailure = (error) => {
-    alert(`Oops! Something went wrong: ${error.message}`);
+    alert(`Oops! Something went wrong: ${error?.data?.message}`);
   };
 
-  const performRequest = async (...args) => { // Accept multiple arguments
-    if (isPerforming) return; // Prevent multiple concurrent requests
+  const performRequest = async (...args) => {
+    if (isPerforming) return;
     setIsPerforming(true);
     try {
-      const data = await requestFunction(...args); // Pass all arguments to requestFunction
-      console.log('performRequest data', data);
+      const data = await requestFunction(...args);
 
-      if (data.status !== 200) {
+      if (data.status !== 200 && data.status !== 201) {
         defaultOnFailure(data);
-        setResult([]); // If request fails, ensure result is not null but an empty array
+        setResult([]);
       } else {
-        setResult(data.data || []); // Ensure result is always an array or valid object
+        setResult(data.data || []);
         onSuccess?.(data.data);
       }
     } catch (err) {
-      console.log('performRequest err', err);
-      setResult([]); // Ensure result is an empty array on error
+      setResult([]);
 
       if (onFailure) onFailure(err);
       else defaultOnFailure(err);
+
     } finally {
       setIsPerforming(false);
     }
   };
 
   return {
-    result: result ?? [], // Ensure result is never null
-    isPerforming: isPerforming || result === null, // True if loading OR result is null
+    result: result ?? [],
+    isPerforming: isPerforming,
     performRequest
   };
 };

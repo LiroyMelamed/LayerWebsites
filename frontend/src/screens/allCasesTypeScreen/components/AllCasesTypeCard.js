@@ -7,9 +7,9 @@ import Separator from "../../../components/styledComponents/separators/Separator
 export default function AllCasesTypeCard({ allCasesType, reperformAfterSave }) {
 
     return (
-        <SimpleCard style={{ overflow: null }}>
+        <SimpleCard style={{ overflow: null, flexDirection: 'column' }}>
 
-            <SimpleContainer style={{ overflow: null }}>
+            <SimpleContainer style={{ overflow: null, flexDirection: 'column' }}>
                 {allCasesType.map((item, index) => (
                     <>
                         {index !== 0 && <Separator />}

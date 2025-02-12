@@ -9,6 +9,8 @@ import { images } from "../../assets/images/images";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import ImageButton from "../specializedComponents/buttons/ImageButton";
 import Separator from "../styledComponents/separators/Separator";
+import { AdminStackName } from "../../navigation/AdminStack";
+import { MainScreenName } from "../../screens/mainScreen/MainScreen";
 
 const Logo = images.Logos.LogoSlangWhite;
 
@@ -24,10 +26,10 @@ export default function TopAndRightNavBar({ chosenIndex = -1, children }) {
       {!isSmallScreen && (
         <SimpleContainer style={styles.sidebarContainer}>
           <SimpleContainer style={styles.logoContainer}>
-            <ImageButton src={Logo} height={60} style={{ maxHeight: 60, alignSelf: 'center' }} onPress={() => { setCurrentIndex(-1); navigate('/') }} />
+            <ImageButton src={Logo} height={60} style={{ maxHeight: 60, alignSelf: 'center' }} onPress={() => { setCurrentIndex(-1); navigate(AdminStackName + MainScreenName) }} />
           </SimpleContainer>
           <Separator style={{ margin: '20px 0' }} />
-          <SimpleContainer style={{}}>
+          <SimpleContainer style={{ flexDirection: 'column' }}>
             {NavBarLinks.map((item, index) => (
               <SideBarMenuItem
                 key={item.text}

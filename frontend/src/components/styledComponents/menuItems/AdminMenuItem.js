@@ -1,14 +1,13 @@
-import React from "react";
+import { usePopup } from "../../../providers/PopUpProvider";
+import SimpleButton from "../../simpleComponents/SimpleButton";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { Text14, TextBold14 } from "../../specializedComponents/text/AllTextKindFile";
-import SimpleButton from "../../simpleComponents/SimpleButton";
-import { usePopup } from "../../../providers/PopUpProvider";
 
-export default function ClientMenuItem({
-    clientName = "khru",
-    CompanyName = 'nkns',
-    clientMail = "dsadasdasd@walla.com",
-    clientPhone = "0507299064",
+export default function AdminMenuItem({
+    adminName = "khru",
+    CreatedAt = '12/02/2025',
+    adminMail = "dsadasdasd@walla.com",
+    adminPhone = "0507299064",
     onPress,
     style
 }) {
@@ -27,13 +26,13 @@ export default function ClientMenuItem({
             <SimpleContainer style={{ overflow: null, flexDirection: 'column', ...style }}>
 
                 <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse' }}>
-                    <TextBold14 style={styles.textContainer}>{CompanyName}</TextBold14>
+                    <TextBold14 style={styles.textContainer}>{adminName}</TextBold14>
 
-                    <Text14 style={styles.textContainer}>{clientName}</Text14>
+                    <Text14 style={styles.textContainer}>{CreatedAt}</Text14>
 
-                    <Text14 style={styles.textContainer}>{clientMail}</Text14>
+                    <Text14 style={styles.textContainer}>{adminMail}</Text14>
 
-                    <Text14 style={styles.textContainer}>{clientPhone}</Text14>
+                    <Text14 style={styles.textContainer}>{adminPhone}</Text14>
                 </SimpleContainer>
 
             </SimpleContainer>

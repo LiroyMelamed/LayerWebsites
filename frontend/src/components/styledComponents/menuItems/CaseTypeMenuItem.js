@@ -11,6 +11,7 @@ import CaseTypeFullView from "../cases/CaseTypeFullView";
 import SecondaryButton from "../buttons/SecondaryButton";
 import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 import casesApi from "../../../api/casesApi";
+import { colors } from "../../../constant/colors";
 
 export default function CaseTypeMenuItem({
     fullCase,
@@ -36,7 +37,7 @@ export default function CaseTypeMenuItem({
     const [currentStage, setCurrentStage] = useState(Number(rightValueSecondLine));
 
     return (
-        <SimpleContainer style={{ overflow: null }}>
+        <SimpleContainer style={{ overflow: null, flexDirection: 'column' }}>
             <SimpleContainer style={styles.container}>
                 <ImageButton
                     src={icons.Button.DownArrow}
@@ -85,6 +86,7 @@ const styles = {
     innerContainer: {
         marginRight: 16,
         flex: 1,
+        flexDirection: 'column',
     },
     dropDownIcon: (isOpen) => ({
         width: 12,

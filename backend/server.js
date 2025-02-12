@@ -9,6 +9,8 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const SECRET_KEY = process.env.JWT_SECRET || "supersecretkey";
 
+const companyName = 'MelamedLaw'
+
 app.use(express.json());
 app.use(cors());
 
@@ -21,6 +23,7 @@ const dbConfig = {
     options: {
         encrypt: true,
         trustServerCertificate: true,
+        enableArithAbort: true,
     },
 };
 
@@ -105,14 +108,51 @@ app.get("/GetCases", authMiddleware, async (req, res) => {
 });
 
 app.get("/GetCase/:caseId", authMiddleware, async (req, res) => {
-    const { caseId } = req.params;
     try {
+        const caseId = req.params.caseId;
+
+        if (!caseId) {
+            return res.status(400).json({ message: "Invalid case ID" });
+        }
+
         const result = await sql.query(`SELECT * FROM Cases WHERE CaseId = ${caseId}`);
+
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ message: "Case not found" });
+        }
+
         res.json(result.recordset[0]);
     } catch (error) {
+        console.error("Error retrieving case:", error);
         res.status(500).json({ message: "Error retrieving case by ID" });
     }
 });
+
+app.get("/GetCaseByName", authMiddleware, async (req, res) => {
+    let { caseName } = req.query; // Get caseName from query parameters
+
+    if (!caseName || caseName.trim() === "") {
+        return res.status(400).json({ message: "Case name is required for search" });
+    }
+
+    try {
+        const pool = await sql.connect(dbConfig); // Ensure database connection
+        const result = await pool
+            .request()
+            .input("caseName", sql.NVarChar, `%${caseName}%`) // Pass caseName safely
+            .query("SELECT * FROM Cases WHERE CaseName LIKE @caseName");
+
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ message: "No cases found with this name" });
+        }
+
+        res.json(result.recordset);
+    } catch (error) {
+        console.error("Error retrieving case:", error);
+        res.status(500).json({ message: "Error retrieving case by name" });
+    }
+});
+
 
 app.post("/AddCase", authMiddleware, async (req, res) => {
     const { caseName, caseTypeId, userId, companyName } = req.body;
@@ -127,10 +167,28 @@ app.post("/AddCase", authMiddleware, async (req, res) => {
 app.put("/UpdateCase/:caseId", authMiddleware, async (req, res) => {
     const { caseId } = req.params;
     const { caseName, currentStage, isClosed, isTagged } = req.body;
+
     try {
-        await sql.query(`UPDATE Cases SET CaseName = '${caseName}', CurrentStage = ${currentStage}, IsClosed = ${isClosed}, IsTagged = ${isTagged} WHERE CaseId = ${caseId}`);
+        const pool = await sql.connect(dbConfig);
+        const request = pool.request();
+        request.input("caseId", sql.Int, caseId);
+        request.input("caseName", sql.NVarChar, caseName);
+        request.input("currentStage", sql.Int, currentStage);
+        request.input("isClosed", sql.Bit, isClosed);
+        request.input("isTagged", sql.Bit, isTagged);
+
+        await request.query(`
+            UPDATE Cases 
+            SET CaseName = @caseName, 
+                CurrentStage = @currentStage, 
+                IsClosed = @isClosed, 
+                IsTagged = @isTagged 
+            WHERE CaseId = @caseId
+        `);
+
         res.status(200).json({ message: "Case updated successfully" });
     } catch (error) {
+        console.error("Error updating case:", error);
         res.status(500).json({ message: "Error updating case" });
     }
 });
@@ -144,10 +202,129 @@ app.get("/TaggedCases", authMiddleware, async (req, res) => {
     }
 });
 
+// Admins APIs
+app.get("/GetAdmins", authMiddleware, async (req, res) => {
+    try {
+        const adminUsersResult = await sql.query("SELECT * FROM Users WHERE Role = 'Admin'");
+        res.json(adminUsersResult.recordset);
+    } catch (error) {
+        res.status(500).json({ message: "Error retrieving Admins" });
+    }
+});
+
+app.get("/GetAdminByName", authMiddleware, async (req, res) => {
+    const { name } = req.query;
+
+    if (!name || name.trim() === "") {
+        return res.status(400).json({ message: "Admin name is required for search" });
+    }
+
+    try {
+        const pool = await sql.connect(dbConfig);
+        const result = await pool.request()
+            .input("name", sql.NVarChar, `%${name}%`) // Use NVarChar for Unicode
+            .query("SELECT * FROM Users WHERE Role = 'Admin' AND Name LIKE @name");
+
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ message: "No admin found with this name" });
+        }
+
+        res.json(result.recordset);
+    } catch (error) {
+        console.error("Error retrieving admin:", error);
+        res.status(500).json({ message: "Error retrieving admin by name" });
+    }
+});
+
+app.put("/UpdateAdmin/:adminId", authMiddleware, async (req, res) => {
+    const { adminId } = req.params;
+    const { name, email, phoneNumber, password } = req.body;
+
+    if (!adminId) {
+        return res.status(400).json({ message: "Admin ID is required" });
+    }
+
+    try {
+        const request = sql.request();
+        request.input("adminId", sql.Int, adminId);
+        request.input("name", sql.NVarChar, name);
+        request.input("email", sql.NVarChar, email);
+        request.input("phoneNumber", sql.NVarChar, phoneNumber);
+
+        // Update password only if it's provided
+        if (password) {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            request.input("password", sql.NVarChar, hashedPassword);
+            await request.query(`
+                UPDATE Users 
+                SET Name = @name, Email = @email, PhoneNumber = @phoneNumber, PasswordHash = @password
+                WHERE UserId = @adminId AND Role = 'Admin'
+            `);
+        } else {
+            await request.query(`
+                UPDATE Users 
+                SET Name = @name, Email = @email, PhoneNumber = @phoneNumber
+                WHERE UserId = @adminId AND Role = 'Admin'
+            `);
+        }
+
+        res.status(200).json({ message: "Admin updated successfully" });
+    } catch (error) {
+        console.error("Error updating admin:", error);
+        res.status(500).json({ message: "Error updating admin" });
+    }
+});
+
+app.delete("/DeleteAdmin/:adminId", authMiddleware, async (req, res) => {
+    const { adminId } = req.params;
+
+    if (!adminId) {
+        return res.status(400).json({ message: "Admin ID is required" });
+    }
+
+    try {
+        const result = await sql.query(`DELETE FROM Users WHERE UserId = ${adminId} AND Role = 'Admin'`);
+
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).json({ message: "Admin not found or already deleted" });
+        }
+
+        res.status(200).json({ message: "Admin deleted successfully" });
+    } catch (error) {
+        console.error("Error deleting admin:", error);
+        res.status(500).json({ message: "Error deleting admin" });
+    }
+});
+
+app.post("/AddAdmin", authMiddleware, async (req, res) => {
+    const { name, email, phoneNumber, password } = req.body;
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const pool = await sql.connect(dbConfig);
+        const request = pool.request();
+        request.input("name", sql.NVarChar, name); // ✅ Use NVARCHAR to keep Hebrew encoding
+        request.input("email", sql.NVarChar, email);
+        request.input("phoneNumber", sql.NVarChar, phoneNumber);
+        request.input("password", sql.NVarChar, hashedPassword);
+        request.input("role", sql.NVarChar, "Admin");
+
+        await request.query(`
+            INSERT INTO Users (Name, Email, PhoneNumber, PasswordHash, Role, CreatedAt)
+            VALUES (@name, @email, @phoneNumber, @password, @role, GETDATE())
+        `);
+
+        res.status(201).json({ message: "Admin added successfully" });
+    } catch (error) {
+        console.error("Error adding admin:", error);
+        res.status(500).json({ message: "Error adding admin" });
+    }
+});
+
 // Customer APIs
 app.get("/GetCustomers", authMiddleware, async (req, res) => {
     try {
-        const result = await sql.query("SELECT * FROM Users");
+        const result = await sql.query("SELECT * FROM Users WHERE Role <> 'Admin'");
         res.json(result.recordset);
     } catch (error) {
         res.status(500).json({ message: "Error retrieving customers" });
@@ -176,12 +353,27 @@ app.put("/GetCustomer/:customerId", authMiddleware, async (req, res) => {
     }
 });
 
-// Case Type APIs
+// Case Type APIs - Get Case Types with Associated Descriptions
 app.get("/GetCasesType", authMiddleware, async (req, res) => {
     try {
-        const result = await sql.query("SELECT * FROM CaseTypes");
+        const result = await sql.query(`
+            SELECT 
+                CT.CaseTypeId, 
+                CT.CaseTypeName, 
+                CT.NumberOfStages, 
+                COALESCE(JSON_QUERY((
+                    SELECT CD.DescriptionId, CD.Stage, CD.Text, CD.Timestamp, CD.IsNew
+                    FROM CaseDescriptions CD
+                    INNER JOIN Cases C ON CD.CaseId = C.CaseId
+                    WHERE C.CaseTypeId = CT.CaseTypeId
+                    FOR JSON PATH
+                )), '[]') AS Descriptions
+            FROM CaseTypes CT
+        `);
+
         res.json(result.recordset);
     } catch (error) {
+        console.error("Error retrieving case types:", error);
         res.status(500).json({ message: "Error retrieving case types" });
     }
 });
@@ -196,8 +388,33 @@ app.get("/GetCaseType/:caseTypeId", authMiddleware, async (req, res) => {
     }
 });
 
+app.get("/GetCaseTypeByName", authMiddleware, async (req, res) => {
+    const { caseTypeName } = req.query;
+
+    if (!caseTypeName) {
+        return res.status(400).json({ message: "Case type name is required" });
+    }
+
+    try {
+        const result = await sql.query(`
+            SELECT * FROM CaseTypes WHERE CaseTypeName LIKE '%${caseTypeName}%'
+        `);
+
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ message: "No case type found" });
+        }
+
+        res.status(200).json(result.recordset);
+    } catch (error) {
+        console.error("Error retrieving case type:", error);
+        res.status(500).json({ message: "Error retrieving case type" });
+    }
+});
+
+
 app.post("/AddCaseType", authMiddleware, async (req, res) => {
     const { caseTypeName, numberOfStages } = req.body;
+
     try {
         await sql.query(`INSERT INTO CaseTypes (CaseTypeName, NumberOfStages) VALUES ('${caseTypeName}', ${numberOfStages})`);
         res.status(201).json({ message: "Case type created successfully" });
@@ -223,7 +440,7 @@ app.put("/UpdateCaseType/:caseTypeId", authMiddleware, async (req, res) => {
 app.get("/GetMainScreenData", authMiddleware, async (req, res) => {
     try {
         const casesResult = await sql.query("SELECT * FROM Cases");
-        const customersResult = await sql.query("SELECT * FROM Users");
+        const customersResult = await sql.query("SELECT * FROM Users WHERE LOWER(Role) <> 'admin'");
 
         const casesArray = casesResult.recordset;
         const customersArray = customersResult.recordset;

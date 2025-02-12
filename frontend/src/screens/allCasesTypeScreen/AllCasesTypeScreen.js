@@ -32,6 +32,8 @@ export default function AllCasesTypeScreen() {
         return <SimpleLoader />;
     }
 
+    console.log('allCasesType', allCasesType);
+
     return (
         <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
             {isSmallScreen && <TopToolBarSmallScreen chosenIndex={5} />}
@@ -79,7 +81,6 @@ const styles = {
     searchInput: {
         margin: "12px 0px",
         marginLeft: 20,
-        flex: '1 1 200px',
         maxWidth: '500px',
     },
     chooseButton: {

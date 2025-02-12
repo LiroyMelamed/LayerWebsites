@@ -37,7 +37,7 @@ export function CaseFullView({ caseName, rePerformRequest, onFailureFunction, cl
 
     const { result: searchCases, isPerforming: isPerformingSearchCases, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getCaseByName);
 
-    const { result: casesType, isPerforming: isPerformingCasesType, performRequest: SearchCaseTypeByName } = useHttpRequest(casesTypeApi.getCaseTypeByName);
+    const { result: casesType, isPerforming: isPerformingCasesType, performRequest: SearchCaseTypeByName } = useHttpRequest(casesTypeApi.getCaseTypeById);
 
     const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: caseNamePressed } = useAutoHttpRequest(casesApi.getCaseByName, {
         body: { caseName },
@@ -131,7 +131,7 @@ export function CaseFullView({ caseName, rePerformRequest, onFailureFunction, cl
 
     const handleSearch = (query) => {
         setCaseDetails(oldCase => ({ ...oldCase, CaseName: query }));
-        SearchCaseByName({ caseName: query });
+        SearchCaseByName(query);
     };
 
     const handleSearchCaseType = (query) => {
@@ -139,7 +139,7 @@ export function CaseFullView({ caseName, rePerformRequest, onFailureFunction, cl
     };
 
     function CaseButtonPressed(caseName) {
-        caseNamePressed({ caseName })
+        caseNamePressed(caseName)
     }
 
     function CaseTypeButtonPressed(caseTypeName) {

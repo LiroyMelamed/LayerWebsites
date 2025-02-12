@@ -14,24 +14,24 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 
 const DoughnutChart = ({ data, colors, labels, centerText, subText, style }) => {
     const chartData = {
-        labels: labels, // Labels for the chart segments
+        labels: labels,
         datasets: [
             {
-                data: data, // Values for the segments
-                backgroundColor: colors, // Colors for the segments
-                borderWidth: 0, // Removes borders
+                data: data,
+                backgroundColor: colors,
+                borderWidth: 0,
             },
         ],
     };
 
     const options = {
-        cutout: "70%", // Inner circle size (makes it a doughnut)
+        cutout: "70%",
         plugins: {
             legend: {
-                display: false, // Hides the default legend
+                display: false,
             },
             tooltip: {
-                enabled: false, // Disable tooltips
+                enabled: false,
             },
         },
 
@@ -64,6 +64,7 @@ const styles = {
         transform: "translate(-50%, -50%)",
         zIndex: 1,
         textAlign: "center",
+        flexDirection: 'column'
     },
     mainText: {
         display: 'flex',

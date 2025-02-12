@@ -9,6 +9,9 @@ const SearchInput = ({ leftIcon, value, rightIcon, onSearch, tintColor, IconStyl
     const [showResults, setShowResults] = useState(false);
     const targetRef = useRef(null);
 
+    console.log('queryResult', queryResult);
+
+
     const handleInputChange = (event) => {
         setQuery(event.target.value);
         onSearch(event.target.value); // Trigger search

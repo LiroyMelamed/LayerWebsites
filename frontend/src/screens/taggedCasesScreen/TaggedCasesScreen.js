@@ -21,11 +21,11 @@ export const TaggedCasesScreenName = "/TaggedCasesScreen";
 export default function TaggedCasesScreen() {
     const { openPopup } = usePopup();
     const { isSmallScreen } = useScreenSize();
-    const { result: taggedCases, isPerforming: isPerformingTaggedCases, performRequest } = useAutoHttpRequest(casesApi.getAllTagedCases);
+    const { result: taggedCases, isPerforming: isPerformingTaggedCases, performRequest } = useAutoHttpRequest(casesApi.getAllTaggedCases);
     const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getCaseByName);
 
     const handleSearch = (query) => {
-        SearchCaseByName({ caseName: query });
+        SearchCaseByName(query);
     };
 
     if (isPerformingTaggedCases) {
@@ -79,7 +79,6 @@ const styles = {
     searchInput: {
         margin: "12px 0px",
         marginLeft: 20,
-        flex: '1 1 200px',
         maxWidth: '500px',
     },
     chooseButton: {

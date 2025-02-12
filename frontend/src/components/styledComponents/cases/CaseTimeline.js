@@ -19,7 +19,7 @@ export default function CaseTimeline({ stages, title, style }) {
                 <SimpleContainer style={styles.verticalLine} />
 
                 <SimpleContainer style={styles.dotsContainer}>
-                    {stages.slice().reverse().map((stage, index) => (
+                    {stages?.slice().reverse().map((stage, index) => (
                         <SimpleContainer key={index} style={styles.stageContainer}>
                             <SimpleContainer
                                 style={stage.New ? styles.newDot : styles.defaultDot}

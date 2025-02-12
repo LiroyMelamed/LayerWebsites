@@ -23,10 +23,6 @@ export default function MainScreen() {
         return <SimpleLoader />;
     }
 
-    console.log('mainScreenData', mainScreenData);
-
-
-
     return (
         <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
             {isSmallScreen && <TopToolBarSmallScreen />}

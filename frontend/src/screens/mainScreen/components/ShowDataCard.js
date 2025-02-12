@@ -8,8 +8,8 @@ import addCommasToNumber from "../../../functions/numbers/addCommasToNumber";
 
 export default function ShowDataCard({ title, icon, numberText, comprationNumber, comprationText }) {
     return (
-        <SimpleCard style={{ flex: 1 }}>
-            <TextBold14>{title}</TextBold14>
+        <SimpleCard style={{ flex: 1, flexDirection: 'column' }}>
+            <TextBold14 >{title}</TextBold14>
 
             <TextBold36 style={{ marginTop: 8 }}>{numberText}</TextBold36>
 

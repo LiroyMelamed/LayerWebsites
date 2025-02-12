@@ -4,14 +4,14 @@ export default function SimpleImage({ src, style, tintColor = null, resizeMode =
   const imageStyle = {
     ...style,
     objectFit: resizeMode,
-    display: 'block',  // Ensure the image is a block element to avoid extra space from inline elements
-    userSelect: 'none', // Prevent image selection
-    pointerEvents: 'none', // Ensure the image does not interfere with pointer events
+    display: 'block',
+    userSelect: 'none',
+    pointerEvents: 'none',
   };
 
   const imageWithTintStyle = {
-    width: style?.width || '100%',  // Use natural width if no width is provided
-    height: style?.height || '100px', // Use natural height if no height is provided
+    width: style?.width || '100%',
+    height: style?.height || '100px',
     backgroundColor: tintColor,
     WebkitMaskImage: `url(${src?.uri || src})`,
     maskImage: `url(${src?.uri || src})`,
@@ -19,6 +19,8 @@ export default function SimpleImage({ src, style, tintColor = null, resizeMode =
     maskRepeat: 'no-repeat',
     WebkitMaskPosition: 'center',
     maskPosition: 'center',
+    WebkitMaskSize: 'contain',
+    maskSize: 'contain',
     ...style,
   };
 
@@ -36,7 +38,7 @@ export default function SimpleImage({ src, style, tintColor = null, resizeMode =
       {...props}
       src={src?.uri || src}
       style={imageStyle}
-      alt="SimpleImage"  // Ensure to add a meaningful alt text
+      alt="SimpleImage"
     />
   );
 }

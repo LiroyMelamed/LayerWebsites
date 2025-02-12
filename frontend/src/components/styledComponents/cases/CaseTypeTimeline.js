@@ -3,47 +3,44 @@ import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { Text12, TextBold12 } from "../../specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../constant/colors";
 
-export default function CaseTypeTimeline({ stages, title, style }) {
+export default function CaseTypeTimeline({ stages = [], title, style }) {
     return (
-        <SimpleContainer
-            style={style}
-        >
-            <SimpleContainer
-                style={styles.container}
-            >
+        <SimpleContainer style={{ ...style, width: '100%' }}>
+            <SimpleContainer style={styles.container}>
                 <SimpleContainer style={styles.verticalLine} />
 
                 <SimpleContainer style={styles.dotsContainer}>
-                    {stages.slice().map((stage, index) => (
-                        <SimpleContainer key={index} style={styles.stageContainer}>
-                            <SimpleContainer
-                                style={stage.New ? styles.newDot : styles.defaultDot}
-                            >
-                                {/* Dot */}
-                                <SimpleContainer style={styles.dot} />
-                            </SimpleContainer>
-
-                            <SimpleContainer style={styles.stageDetails(stage.New)}>
-                                <SimpleContainer
-                                    style={{
-                                        backgroundColor: stage.New ? "#CAF1EE" : "#F7F8FF", paddingTop: 4,
-                                        paddingBottom: 4, paddingRight: 4,
-                                        paddingLeft: 4, borderRadius: 4
-                                    }}
-                                >
-                                    {stage.New ?
-                                        <TextBold12>חדש</TextBold12>
-                                        :
-                                        <Text12>{stage.Timestamp || `שלב מס' ${index + 1}`}</Text12>
-                                    }
+                    {Array.isArray(stages) && stages.length > 0 ? (
+                        stages.map((stage, index) => (
+                            <SimpleContainer key={index} style={styles.stageContainer}>
+                                <SimpleContainer style={stage.New ? styles.newDot : styles.defaultDot}>
+                                    <SimpleContainer style={styles.dot} />
                                 </SimpleContainer>
-                                <TextBold12>{stage.Text}</TextBold12>
+
+                                <SimpleContainer style={styles.stageDetails(stage.New)}>
+                                    <SimpleContainer
+                                        style={{
+                                            backgroundColor: stage.New ? "#CAF1EE" : "#F7F8FF",
+                                            padding: 4,
+                                            borderRadius: 4
+                                        }}
+                                    >
+                                        {stage.New ? (
+                                            <TextBold12>חדש</TextBold12>
+                                        ) : (
+                                            <Text12>{stage.Timestamp || `שלב מס' ${index + 1}`}</Text12>
+                                        )}
+                                    </SimpleContainer>
+                                    <TextBold12>{stage.Text}</TextBold12>
+                                </SimpleContainer>
                             </SimpleContainer>
-                        </SimpleContainer>
-                    ))}
+                        ))
+                    ) : (
+                        <TextBold12 style={{ textAlign: 'center', marginTop: 10 }}>
+                            אין שלבים בסוג תיק זה
+                        </TextBold12>
+                    )}
                 </SimpleContainer>
-
-
             </SimpleContainer>
         </SimpleContainer>
     );
@@ -52,10 +49,12 @@ export default function CaseTypeTimeline({ stages, title, style }) {
 
 const styles = {
     container: {
-        flexDirection: 'row',
+        flexDirection: 'row-reverse',
         position: 'relative',
         zIndex: 1000,
-        marginRight: 4
+        marginRight: 4,
+        justifyContent: 'flex-start',
+        width: "100%"
     },
 
     dotsContainer: {

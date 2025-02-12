@@ -12,12 +12,11 @@ export default function TagCasePopup({ rePerformRequest, style }) {
     const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getCaseByName);
 
     const handleSearch = (query) => {
-        SearchCaseByName({ caseName: query });
+        SearchCaseByName(query);
     };
 
     function tagCase() {
-        console.log("casesByName", casesByName);
-        setCase(CaseType?.CaseName, { ...CaseType, IsTagged: true })
+        setCase(CaseType?.CaseId, { ...CaseType, IsTagged: true })
     }
 
     function buttonPressFunction(text, result) {

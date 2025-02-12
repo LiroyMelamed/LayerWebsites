@@ -25,7 +25,7 @@ export default function AllCasesScreen() {
     const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getCaseByName);
 
     const handleSearch = (query) => {
-        SearchCaseByName({ caseName: query });
+        SearchCaseByName(query);
     };
 
     if (isPerformingAllCases) {
@@ -80,7 +80,6 @@ const styles = {
     searchInput: {
         margin: "12px 0px",
         marginLeft: 20,
-        flex: '1 1 200px',
         maxWidth: '500px',
     },
     chooseButton: {

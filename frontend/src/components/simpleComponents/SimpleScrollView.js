@@ -15,13 +15,12 @@ const SimpleScrollView = forwardRef(({
             style={{
                 backgroundColor: colors.transparent,
                 width: '100%',
-                overflowY: 'auto', // Enable vertical scrolling
-                msOverflowStyle: 'none', // Hide scrollbar on Internet Explorer
-                scrollbarWidth: 'none', // Hide scrollbar on Firefox
+                overflowY: 'auto',
+                msOverflowStyle: 'none',
+                scrollbarWidth: 'none',
                 ...style,
             }}
         >
-            {/* Hide scrollbar on Webkit browsers */}
             <style>
                 {`
                     div::-webkit-scrollbar {

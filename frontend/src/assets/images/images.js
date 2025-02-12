@@ -6,7 +6,19 @@ export const images = {
         LogoSlangWhite: require("./logos/logoLMwhite.png")
 
     },
+
     Backgrounds: {
         AppBackground: require("./backgrounds/AppBackground.jpg")
+    },
+
+    Defaults: {
+        DataFlowing: require("./defaults/dataFlowing.png"),
+        SearchingClient: require("./defaults/searchingClient.png"),
+        Analytics: require("./defaults/analytics.png"),
+        Cases: require("./defaults/cases.png"),
+        CasesType: require("./defaults/casesType.png"),
+        TaggedCase: require("./defaults/taggedCase.png"),
+        Managers: require("./defaults/managers.png"),
+
     }
 }

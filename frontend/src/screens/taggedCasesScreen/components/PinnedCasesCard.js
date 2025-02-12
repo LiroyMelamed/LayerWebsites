@@ -1,10 +1,22 @@
+import { images } from "../../../assets/images/images";
 import SimpleCard from "../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
 import { TextBold20 } from "../../../components/specializedComponents/text/AllTextKindFile";
+import DefaultState from "../../../components/styledComponents/defaultState/DefaultState";
 import CaseMenuItem from "../../../components/styledComponents/menuItems/CaseMenuItem";
 import Separator from "../../../components/styledComponents/separators/Separator";
 
 export default function PinnedCasesCard({ taggedCases, rePerformFunction }) {
+    if (taggedCases?.length === 0 || !taggedCases) {
+        return (
+            <DefaultState
+                content={"אין כרגע תיקים נעוצים"}
+                imageStyle={{ height: 156 }}
+                imageSrc={images.Defaults.TaggedCase}
+                style={{ width: null }}
+            />
+        )
+    }
 
     return (
         <SimpleCard>
