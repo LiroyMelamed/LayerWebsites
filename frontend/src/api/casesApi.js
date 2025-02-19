@@ -12,6 +12,7 @@ const GET_ALL_CASES_TYPE = "/GetCasesType";
 const GET_CASE_TYPE_BY_ID = "/GetCaseType/";
 const GET_CASE_TYPE_BY_NAME = "/GetCaseTypeByName?caseTypeName=";
 const ADD_CASE_TYPE = "/AddCaseType";
+const DELETE_CASE_TYPE = "/DeleteCaseType/";
 const UPDATE_CASE_TYPE = "/UpdateCaseType/";
 
 const casesApi = {
@@ -55,6 +56,10 @@ export const casesTypeApi = {
 
   getCaseTypeByName: async (caseTypeName) => {
     return await ApiUtils.get(`${GET_CASE_TYPE_BY_NAME}${encodeURIComponent(caseTypeName)}`);
+  },
+
+  deleteCaseType: async (caseTypeName) => {
+    return await ApiUtils.delete(`${DELETE_CASE_TYPE}${encodeURIComponent(caseTypeName)}`);
   },
 
   addCaseType: async (caseTypeData) => {

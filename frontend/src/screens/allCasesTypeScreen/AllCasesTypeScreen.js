@@ -25,14 +25,16 @@ export default function AllCasesTypeScreen() {
     const { result: casesTypeByName, isPerforming: isPerformingCasesTypeById, performRequest: SearchCaseTypeByName } = useHttpRequest(casesTypeApi.getCaseTypeByName);
 
     const handleSearch = (query) => {
-        SearchCaseTypeByName({ caseName: query });
+        SearchCaseTypeByName(query);
     };
+
+    const handleButtonPress = () => {
+
+    }
 
     if (isPerformingAllCasesType) {
         return <SimpleLoader />;
     }
-
-    console.log('allCasesType', allCasesType);
 
     return (
         <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
@@ -46,8 +48,9 @@ export default function AllCasesTypeScreen() {
                         titleFontSize={20}
                         isPerforming={isPerformingCasesTypeById}
                         queryResult={casesTypeByName}
-                        getButtonTextFunction={(item) => item.CaseName}
+                        getButtonTextFunction={(item) => item.CaseTypeName}
                         style={styles.searchInput}
+                    // buttonPressFunction={ }
                     />
                     <ChooseButton style={styles.chooseButton} buttonText="כמות שלבים" />
                 </SimpleContainer>

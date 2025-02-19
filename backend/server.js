@@ -391,26 +391,81 @@ app.get("/GetCaseType/:caseTypeId", authMiddleware, async (req, res) => {
 app.get("/GetCaseTypeByName", authMiddleware, async (req, res) => {
     const { caseTypeName } = req.query;
 
-    if (!caseTypeName) {
+    if (!caseTypeName || caseTypeName.trim() === "") {
         return res.status(400).json({ message: "Case type name is required" });
     }
 
     try {
-        const result = await sql.query(`
-            SELECT * FROM CaseTypes WHERE CaseTypeName LIKE '%${caseTypeName}%'
-        `);
+        const pool = await sql.connect(dbConfig);
+        const result = await pool.request()
+            .input("caseTypeName", sql.NVarChar, `%${caseTypeName}%`) // Use NVarChar for Hebrew support
+            .query(`
+                SELECT 
+                    ct.CaseTypeId, 
+                    ct.CaseTypeName, 
+                    ct.NumberOfStages, 
+                    cd.DescriptionId, 
+                    cd.CaseId, 
+                    cd.Stage, 
+                    cd.Text, 
+                    cd.Timestamp, 
+                    cd.IsNew
+                FROM CaseTypes ct
+                LEFT JOIN CaseDescriptions cd ON ct.CaseTypeId = cd.CaseId
+                WHERE ct.CaseTypeName LIKE @caseTypeName
+                ORDER BY cd.Stage
+            `);
 
         if (result.recordset.length === 0) {
             return res.status(404).json({ message: "No case type found" });
         }
 
-        res.status(200).json(result.recordset);
+        // **Process Data to Group CaseType with its Descriptions**
+        const caseTypesMap = new Map();
+
+        result.recordset.forEach(row => {
+            if (!caseTypesMap.has(row.CaseTypeId)) {
+                caseTypesMap.set(row.CaseTypeId, {
+                    CaseTypeId: row.CaseTypeId,
+                    CaseTypeName: row.CaseTypeName,
+                    NumberOfStages: row.NumberOfStages,
+                    Descriptions: []
+                });
+            }
+
+            if (row.DescriptionId) {
+                caseTypesMap.get(row.CaseTypeId).Descriptions.push({
+                    DescriptionId: row.DescriptionId,
+                    CaseId: row.CaseId,
+                    Stage: row.Stage,
+                    Text: row.Text,
+                    Timestamp: row.Timestamp,
+                    New: row.IsNew
+                });
+            }
+        });
+
+        res.json(Array.from(caseTypesMap.values()));
     } catch (error) {
         console.error("Error retrieving case type:", error);
         res.status(500).json({ message: "Error retrieving case type" });
     }
 });
 
+
+app.delete("/DeleteCaseType/:caseTypeName", authMiddleware, async (req, res) => {
+    const { caseTypeName } = req.params;
+
+    try {
+        await sql.query(`DELETE FROM CaseTypes WHERE CaseTypeName = @caseTypeName`,
+            { input: { name: "caseTypeName", type: sql.NVarChar, value: caseTypeName } });
+
+        res.status(200).json({ message: "Case type deleted successfully" });
+    } catch (error) {
+        console.error("Error deleting case type:", error);
+        res.status(500).json({ message: "Error deleting case type" });
+    }
+});
 
 app.post("/AddCaseType", authMiddleware, async (req, res) => {
     const { caseTypeName, numberOfStages } = req.body;

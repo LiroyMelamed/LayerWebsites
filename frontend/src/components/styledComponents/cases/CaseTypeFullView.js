@@ -1,104 +1,90 @@
-import React, { useEffect, useState } from 'react';
-import SimpleContainer from '../../simpleComponents/SimpleContainer';
-import SimpleInput from '../../simpleComponents/SimpleInput';
-import SimpleLoader from '../../simpleComponents/SimpleLoader';
-import { Text12, Text40 } from '../../specializedComponents/text/AllTextKindFile';
-import SimpleScrollView from '../../simpleComponents/SimpleScrollView';
-import useAutoHttpRequest from '../../../hooks/useAutoHttpRequest';
-import useHttpRequest from '../../../hooks/useHttpRequest';
-import SecondaryButton from '../buttons/SecondaryButton';
-import SimpleTextArea from '../../simpleComponents/SimpleTextArea';
-import { casesTypeApi } from '../../../api/casesApi';
+import { useEffect, useState } from "react";
+import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
+import SimpleInput from "../../../components/simpleComponents/SimpleInput";
+import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
+import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
+import { buttonSizes } from "../../../styles/buttons/buttonSizes";
+import { casesTypeApi } from "../../../api/casesApi";
+import useHttpRequest from "../../../hooks/useHttpRequest";
+import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryButton";
+import SimpleTextArea from "../../../components/simpleComponents/SimpleTextArea";
+import SimpleLoader from "../../../components/simpleComponents/SimpleLoader";
 
-export function CaseTypeFullView({ caseTypeName, rePerformRequest, onFailureFunction, style }) {
+export default function CaseTypeFullView({ caseTypeName, rePerformRequest, onFailureFunction, closePopUpFunction, style }) {
     const [caseTypeDetails, setCaseTypeDetails] = useState({
-        CaseTypeName: null,
-        NumberOfStages: '',
-        Descriptions: [
-            {
-                Stage: 1,
-                Text: '',
-                Timestamp: '',
-                New: false
-            },
-        ],
+        CaseTypeName: "",
+        NumberOfStages: "",
+        Descriptions: [{ Stage: 1, Text: "", Timestamp: "", New: false }],
     });
 
     useEffect(() => {
-        const numberOfStages = Number(caseTypeDetails.NumberOfStages);
-        setCaseTypeDetails((prevDetails) => {
-            const updatedDescriptions = [...prevDetails.Descriptions];
-            if (updatedDescriptions.length < numberOfStages) {
-                for (let i = updatedDescriptions.length; i < numberOfStages; i++) {
-                    updatedDescriptions.push({ Stage: i + 1, Text: '', Timestamp: '', New: false });
-                }
-            } else if (updatedDescriptions.length > numberOfStages) {
-                updatedDescriptions.splice(numberOfStages);
-            }
-            return { ...prevDetails, Descriptions: updatedDescriptions };
-        });
-    }, [caseTypeDetails.NumberOfStages]);
+        if (caseTypeName) {
+            fetchCaseTypeDetails(caseTypeName);
+        }
+    }, [caseTypeName]);
 
-    const { result: caseTypeByName, isPerforming: isPerformingCaseTypeByName } = useAutoHttpRequest(casesTypeApi.getCaseTypeByName, {
-        body: { caseTypeName: caseTypeDetails.CaseTypeName || caseTypeName },
-        onSuccess: (fetchedData) => {
-            if (fetchedData) {
+    const { isPerforming: isFetching, performRequest: fetchCaseTypeDetails } = useHttpRequest(
+        casesTypeApi.getCaseTypeByName,
+        (fetchedData) => {
+            if (fetchedData?.length > 0) {
                 const data = fetchedData[0];
                 setCaseTypeDetails({
-                    CaseTypeName: data.CaseTypeName || '',
-                    NumberOfStages: data.NumberOfStages || 0,
-                    Descriptions: data.Descriptions || [
-                        { Stage: 1, Text: '', Timestamp: '', New: false },
-                    ],
+                    CaseTypeName: data.CaseTypeName || "",
+                    NumberOfStages: data.NumberOfStages || "1",
+                    Descriptions: data.Descriptions || [{ Stage: 1, Text: "", Timestamp: "", New: false }],
                 });
             }
         },
-        onFailure: onFailureFunction,
-    });
+        onFailureFunction
+    );
 
     const { isPerforming: isSaving, performRequest: saveCaseType } = useHttpRequest(
         casesTypeApi.createOrUpdateCaseType,
-        () => alert('Case type saved successfully!')
+        () => {
+            alert("Case type saved successfully!");
+            rePerformRequest?.();
+        },
+        onFailureFunction
+    );
+
+    const { isPerforming: isDeleting, performRequest: deleteCaseType } = useHttpRequest(
+        casesTypeApi.deleteCaseType,
+        () => {
+            alert("Case type deleted successfully!");
+            rePerformRequest?.();
+            closePopUpFunction?.();
+        },
+        onFailureFunction
     );
 
     const handleInputChange = (field, value) => {
-        setCaseTypeDetails((prevDetails) => ({ ...prevDetails, [field]: value }));
+        setCaseTypeDetails((prev) => ({ ...prev, [field]: value }));
     };
 
     const handleSaveCaseType = () => {
-        saveCaseType({ caseTypeName: caseTypeDetails.CaseTypeName, caseTypeData: caseTypeDetails });
-        rePerformRequest?.();
+        if (!caseTypeDetails.CaseTypeName || !caseTypeDetails.NumberOfStages) {
+            alert("Please provide both case type name and number of stages.");
+            return;
+        }
+        saveCaseType(caseTypeDetails.CaseTypeName, caseTypeDetails);
+    };
+
+    const handleDeleteCaseType = () => {
+        deleteCaseType(caseTypeDetails.CaseTypeName);
     };
 
     const handleAddStage = () => {
-        setCaseTypeDetails((prevDetails) => {
-            const updatedNumberOfStages = Number(prevDetails.NumberOfStages) + 1;
-
-            const updatedDescriptions = [
-                ...prevDetails.Descriptions,
-                {
-                    Stage: updatedNumberOfStages,
-                    Text: '',
-                    Timestamp: '',
-                    New: false
-                },
-            ];
-
-            const updatedCaseType = {
-                ...prevDetails,
-                NumberOfStages: updatedNumberOfStages,
-                Descriptions: updatedDescriptions,
+        setCaseTypeDetails((prev) => {
+            const newStage = prev.Descriptions.length + 1;
+            return {
+                ...prev,
+                NumberOfStages: newStage.toString(),
+                Descriptions: [...prev.Descriptions, { Stage: newStage, Text: "", Timestamp: "", New: false }],
             };
-
-            saveCaseType({ caseTypeName: updatedCaseType.CaseTypeName, caseTypeData: updatedCaseType });
-
-            rePerformRequest?.();
-
-            return updatedCaseType;
         });
     };
 
-    if (isPerformingCaseTypeByName) {
+    if (isFetching) {
         return <SimpleLoader />;
     }
 
@@ -110,39 +96,52 @@ export function CaseTypeFullView({ caseTypeName, rePerformRequest, onFailureFunc
                         style={styles.inputStyle}
                         title={"שם סוג התיק"}
                         value={caseTypeDetails.CaseTypeName}
-                        onChange={(e) => handleInputChange('CaseTypeName', e.target.value)}
+                        onChange={(e) => handleInputChange("CaseTypeName", e.target.value)}
                     />
                     <SimpleInput
                         style={styles.inputStyle}
                         title={"מספר שלבים"}
                         value={caseTypeDetails.NumberOfStages}
-                        onChange={(e) => handleInputChange('NumberOfStages', e.target.value)}
+                        onChange={(e) => handleInputChange("NumberOfStages", e.target.value)}
                     />
                 </SimpleContainer>
 
-                {caseTypeDetails?.Descriptions?.map((description, index) => (
-                    <>
-                        {index != 0 && <SimpleContainer style={{ paddingTop: 16 }} />}
-                        <SimpleTextArea
-                            key={index}
-                            title={`תיאור מס' ${index + 1}`}
-                            value={description?.Text || ''}
-                            onChange={(text) =>
-                                setCaseTypeDetails((prevDetails) => {
-                                    const updatedDescriptions = [...prevDetails.Descriptions];
-                                    updatedDescriptions[index].Text = text;
-                                    return { ...prevDetails, Descriptions: updatedDescriptions };
-                                })
-                            }
-                        />
-                    </>
+                {caseTypeDetails.Descriptions.map((description, index) => (
+                    <SimpleTextArea
+                        key={index}
+                        title={`תיאור מס' ${index + 1}`}
+                        value={description.Text || ""}
+                        onChange={(text) => {
+                            setCaseTypeDetails((prev) => {
+                                const updatedDescriptions = [...prev.Descriptions];
+                                updatedDescriptions[index].Text = text;
+                                return { ...prev, Descriptions: updatedDescriptions };
+                            });
+                        }}
+                    />
                 ))}
 
                 <SimpleContainer style={styles.buttonsRowStyle}>
-                    <SecondaryButton onPress={handleSaveCaseType} isPerforming={isSaving} style={styles.button}>
-                        שמור שינויים
-                    </SecondaryButton>
-                    <SecondaryButton onPress={handleAddStage} isPerforming={isSaving} style={styles.button}>
+                    {caseTypeName && (
+                        <SecondaryButton
+                            onPress={handleDeleteCaseType}
+                            isPerforming={isDeleting}
+                            style={styles.button}
+                        >
+                            {isDeleting ? "מוחק..." : "מחק סוג תיק"}
+                        </SecondaryButton>
+                    )}
+                    <PrimaryButton
+                        onPress={handleSaveCaseType}
+                        isPerforming={isSaving}
+                        style={styles.button}
+                    >
+                        {isSaving ? "שומר..." : caseTypeName ? "עדכן סוג תיק" : "שמור סוג תיק"}
+                    </PrimaryButton>
+                    <SecondaryButton
+                        onPress={handleAddStage}
+                        style={styles.button}
+                    >
                         הוסף שלב
                     </SecondaryButton>
                 </SimpleContainer>
@@ -153,31 +152,28 @@ export function CaseTypeFullView({ caseTypeName, rePerformRequest, onFailureFunc
 
 const styles = {
     container: {
-        width: '100%',
-        margin: '0 auto',
+        width: "100%",
+        margin: "0 auto",
     },
     rowStyle: {
-        display: 'flex',
-        flexDirection: 'row-reverse',
-        marginBottom: '16px',
-        flexWrap: 'wrap',
+        display: "flex",
+        flexDirection: "row-reverse",
+        marginBottom: "16px",
+        flexWrap: "wrap",
     },
     inputStyle: {
         flex: 1,
-        minWidth: '150px',
-        margin: '8px 4px',
+        minWidth: "150px",
     },
     buttonsRowStyle: {
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'center',
-        marginBottom: '16px',
-        marginTop: '16px',
-        flexWrap: 'wrap',
+        display: "flex",
+        flexDirection: "row",
+        justifyContent: "center",
+        marginBottom: "16px",
+        marginTop: "16px",
+        flexWrap: "wrap",
     },
     button: {
-        margin: '8px 8px',
+        margin: "8px 8px",
     },
 };
-
-export default CaseTypeFullView;
