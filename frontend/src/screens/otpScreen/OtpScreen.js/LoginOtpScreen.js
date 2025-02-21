@@ -11,6 +11,8 @@ import { useNavigate } from "react-router-dom";
 import loginApi from "../../../api/loginApi";
 import { AdminStackName } from "../../../navigation/AdminStack";
 import { MainScreenName } from "../../mainScreen/MainScreen";
+import { ClientStackName } from "../../../navigation/ClientStack";
+import { ClientMainScreenName } from "../../client/clientMainScreen/ClientMainScreen";
 
 export const AppRoles = {
     Admin: 'Admin',
@@ -33,7 +35,7 @@ export default function LoginOtpScreen() {
         setOtpNumber('')
         localStorage.setItem("token", data.token);
         if (data.role == AppRoles.Admin) navigate(AdminStackName + MainScreenName)
-        // else navigate(CustomerStackName + CustomerMainScreenName)
+        else navigate(ClientStackName + ClientMainScreenName)
     }
 
     return (

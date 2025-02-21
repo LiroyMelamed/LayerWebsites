@@ -3,27 +3,29 @@ import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { Text14, TextBold14 } from "../../specializedComponents/text/AllTextKindFile";
 import SimpleButton from "../../simpleComponents/SimpleButton";
 import { usePopup } from "../../../providers/PopUpProvider";
+import ClientPopup from "../../../screens/mainScreen/components/ClientPopUp";
 
 export default function ClientMenuItem({
     clientName = "khru",
     CompanyName = 'nkns',
     clientMail = "dsadasdasd@walla.com",
     clientPhone = "0507299064",
+    clientDetails,
     onPress,
     style
 }) {
     const { openPopup } = usePopup();
 
-    // function name(params) { //TODO create Client Popup
-    //     if (onPress) {
-    //         onPress()
-    //     } else {
-    //         openPopup()
-    //     }
-    // }
+    function clientPressHandle() {
+        if (onPress) {
+            onPress()
+        } else {
+            openPopup(<ClientPopup clientDetails={clientDetails} />)
+        }
+    }
 
     return (
-        <SimpleButton onPress={() => onPress?.()}>
+        <SimpleButton onPress={() => clientPressHandle()}>
             <SimpleContainer style={{ overflow: null, flexDirection: 'column', ...style }}>
 
                 <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse' }}>

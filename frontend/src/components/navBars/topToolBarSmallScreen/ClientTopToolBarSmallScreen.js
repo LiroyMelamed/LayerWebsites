@@ -1,19 +1,17 @@
 import React, { useState } from "react";
 import { colors } from "../../../constant/colors";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
-import SimpleImage from "../../simpleComponents/SimpleImage";
 import { images } from "../../../assets/images/images";
 import SimpleButton from "../../simpleComponents/SimpleButton";
 import SideBarMenuItem from "../navBarItems/SideBarMenuItem";
 import { useNavigate } from "react-router-dom";
 import { usePopup } from "../../../providers/PopUpProvider";
-import { getNavBarData } from "../data/NavBarData";
 import ImageButton from "../../specializedComponents/buttons/ImageButton";
-import { MainScreenName } from "../../../screens/mainScreen/MainScreen";
+import { getClientNavBarData } from "../data/ClientNavBarData";
 
 const Logo = images.Logos.FullLogoOriginal;
 
-export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate }) {
+export default function ClientTopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate }) {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
     const [currentIndex, setCurrentIndex] = useState(chosenIndex);
@@ -22,7 +20,7 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate }
 
     const { openPopup } = usePopup();
 
-    const { NavBarLinks } = getNavBarData(navigate, openPopup);
+    const { NavBarLinks } = getClientNavBarData(navigate, openPopup);
 
     const toggleDrawer = () => {
         setIsDrawerOpen(!isDrawerOpen);

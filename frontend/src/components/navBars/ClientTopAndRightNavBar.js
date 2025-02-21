@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePopup } from "../../providers/PopUpProvider";
-import { getNavBarData } from '../navBars/data/NavBarData';
+import { getNavBarData } from './data/NavBarData';
 import SimpleContainer from "../simpleComponents/SimpleContainer";
 import SideBarMenuItem from "./navBarItems/SideBarMenuItem";
 import { colors } from "../../constant/colors";
@@ -9,15 +9,16 @@ import { images } from "../../assets/images/images";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import ImageButton from "../specializedComponents/buttons/ImageButton";
 import Separator from "../styledComponents/separators/Separator";
+import { getClientNavBarData } from "./data/ClientNavBarData";
 
 const Logo = images.Logos.LogoSlangWhite;
 
-export default function TopAndRightNavBar({ chosenIndex = -1, children, LogoNavigate }) {
+export default function ClientTopAndRightNavBar({ chosenIndex = -1, children, LogoNavigate }) {
   const navigate = useNavigate();
   const { isSmallScreen } = useScreenSize();
   const { openPopup } = usePopup();
   const [currentIndex, setCurrentIndex] = useState(chosenIndex);
-  const { NavBarLinks } = getNavBarData(navigate, openPopup);
+  const { NavBarLinks } = getClientNavBarData(navigate, openPopup);
 
   return (
     <SimpleContainer style={styles.mainContainer}>

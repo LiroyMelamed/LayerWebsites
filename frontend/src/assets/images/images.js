@@ -19,6 +19,10 @@ export const images = {
         CasesType: require("./defaults/casesType.png"),
         TaggedCase: require("./defaults/taggedCase.png"),
         Managers: require("./defaults/managers.png"),
+    },
+
+    Updates: {
+        NewUpdates: require("./updates/NewUpdates.png"),
 
     }
 }

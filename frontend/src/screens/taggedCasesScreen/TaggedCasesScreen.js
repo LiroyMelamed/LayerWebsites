@@ -15,6 +15,8 @@ import PinnedCasesCard from './components/PinnedCasesCard';
 import { usePopup } from '../../providers/PopUpProvider';
 import TagCasePopup from './components/TagCasePopup';
 import casesApi from '../../api/casesApi';
+import { MainScreenName } from '../mainScreen/MainScreen';
+import { AdminStackName } from '../../navigation/AdminStack';
 
 export const TaggedCasesScreenName = "/TaggedCasesScreen";
 
@@ -22,7 +24,7 @@ export default function TaggedCasesScreen() {
     const { openPopup } = usePopup();
     const { isSmallScreen } = useScreenSize();
     const { result: taggedCases, isPerforming: isPerformingTaggedCases, performRequest } = useAutoHttpRequest(casesApi.getAllTaggedCases);
-    const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getCaseByName);
+    const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getTaggedCaseByName);
 
     const handleSearch = (query) => {
         SearchCaseByName(query);
@@ -34,13 +36,13 @@ export default function TaggedCasesScreen() {
 
     return (
         <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
-            {isSmallScreen && <TopToolBarSmallScreen chosenIndex={0} />}
+            {isSmallScreen && <TopToolBarSmallScreen chosenIndex={0} LogoNavigate={AdminStackName + MainScreenName} />}
 
             <SimpleScrollView>
                 <SimpleContainer style={styles.responsiveContainer}>
                     <SearchInput
                         onSearch={handleSearch}
-                        title={"חיפוש תיק"}
+                        title={"חיפוש תיק נעוץ"}
                         titleFontSize={20}
                         isPerforming={isPerformingCasesById}
                         queryResult={casesByName}

@@ -20,6 +20,7 @@ export default function DoughnutChartWithDetails({ data, colors, labels, centerT
                 flexDirection: "row",
                 marginTop: 16,
                 justifyContent: 'space-between',
+                flexWrap: 'wrap',
                 gap: 16
             }}
         >

@@ -19,10 +19,10 @@ export default function PinnedCasesCard({ taggedCases, rePerformFunction }) {
     }
 
     return (
-        <SimpleCard>
+        <SimpleCard style={{ overflow: null, flexDirection: 'column' }}>
             <TextBold20>תיקים נעוצים</TextBold20>
 
-            <SimpleContainer style={{ marginTop: 16 }}>
+            <SimpleContainer style={{ overflow: null, flexDirection: 'column', marginTop: 16 }}>
                 {taggedCases.map((item, index) => (
                     <>
                         {index != 0 && <Separator />}
@@ -39,7 +39,7 @@ export default function PinnedCasesCard({ taggedCases, rePerformFunction }) {
                             rightValueSecondLine={item.CurrentStage}
 
                             leftPreSecondLine={"סוג תיק"}
-                            leftValueSecondLine={item.CaseType}
+                            leftValueSecondLine={item.CaseTypeName}
 
                             openData={getOpenData(taggedCases, index)}
                             rePerformFunction={rePerformFunction}

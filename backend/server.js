@@ -33,8 +33,14 @@ sql.connect(dbConfig).then(() => console.log("Connected to Azure SQL Database"))
 const authMiddleware = (req, res, next) => {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) return res.status(401).json({ message: "Unauthorized: No token provided" });
+
     try {
-        req.user = jwt.verify(token, SECRET_KEY);
+        const decoded = jwt.verify(token, SECRET_KEY);
+        req.user = {
+            UserId: decoded.UserId,
+            Role: decoded.role,
+            PhoneNumber: decoded.phoneNumber
+        };
         next();
     } catch (error) {
         res.status(401).json({ message: "Unauthorized: Invalid token" });
@@ -50,18 +56,15 @@ app.post("/RequestOtp", async (req, res) => {
     }
 
     try {
-        // Generate a 6-digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiry
 
-        // Fetch UserId for the given PhoneNumber
         const userResult = await sql.query(`SELECT UserId FROM Users WHERE PhoneNumber = '${phoneNumber}'`);
         if (userResult.recordset.length === 0) {
             return res.status(404).json({ message: "User not found" });
         }
         const userId = userResult.recordset[0].UserId;
 
-        // Store OTP in the database
         await sql.query(`
             MERGE INTO OTPs AS target
             USING (SELECT '${phoneNumber}' AS PhoneNumber, '${otp}' AS OTP, '${expiry.toISOString()}' AS Expiry, ${userId} AS UserId) AS source
@@ -82,16 +85,28 @@ app.post("/RequestOtp", async (req, res) => {
 app.post("/VerifyOtp", async (req, res) => {
     const { phoneNumber, otp } = req.body;
     try {
-        const result = await sql.query(`SELECT Users.Role FROM OTPs JOIN Users ON OTPs.UserId = Users.UserId WHERE OTPs.PhoneNumber = '${phoneNumber}' AND OTPs.OTP = '${otp}' AND OTPs.Expiry > GETDATE()`);
+        const result = await sql.query(`
+            SELECT Users.UserId, Users.Role 
+            FROM OTPs 
+            JOIN Users ON OTPs.UserId = Users.UserId 
+            WHERE OTPs.PhoneNumber = '${phoneNumber}' 
+            AND OTPs.OTP = '${otp}' 
+            AND OTPs.Expiry > GETDATE()
+        `);
 
         if (result.recordset.length === 0) {
             return res.status(401).json({ message: "Invalid or expired OTP" });
         }
 
-        const userRole = result.recordset[0].Role;
-        const token = jwt.sign({ phoneNumber, role: userRole }, SECRET_KEY, { expiresIn: "24h" });
+        const { UserId, Role } = result.recordset[0];
 
-        res.status(200).json({ message: "OTP verified successfully", token, role: userRole });
+        const token = jwt.sign(
+            { UserId, phoneNumber, role: Role },
+            SECRET_KEY,
+            { expiresIn: "2h" }
+        );
+
+        res.status(200).json({ message: "OTP verified successfully", token, role: Role });
     } catch (error) {
         res.status(500).json({ message: "Error verifying OTP" });
     }
@@ -99,10 +114,89 @@ app.post("/VerifyOtp", async (req, res) => {
 
 // Case APIs
 app.get("/GetCases", authMiddleware, async (req, res) => {
+    const userId = req.user?.UserId;
+    const userRole = req.user?.Role;
+
+    if (!userId) {
+        return res.status(401).json({ message: "Unauthorized: User ID missing" });
+    }
+
     try {
-        const result = await sql.query("SELECT * FROM Cases");
-        res.json(result.recordset);
+        const pool = await sql.connect(dbConfig);
+
+        let query = `
+            SELECT 
+                C.CaseId, 
+                C.CaseName, 
+                C.CaseTypeId, 
+                CT.CaseTypeName,
+                C.UserId, 
+                U.Name AS CustomerName,
+                U.Email AS CustomerMail,
+                U.PhoneNumber,
+                C.CompanyName, 
+                C.CurrentStage, 
+                C.IsClosed, 
+                C.IsTagged, 
+                C.CreatedAt, 
+                C.UpdatedAt,
+                CD.DescriptionId, 
+                CD.Stage, 
+                CD.Text, 
+                CD.Timestamp, 
+                CD.IsNew
+            FROM Cases C
+            LEFT JOIN Users U ON C.UserId = U.UserId
+            LEFT JOIN CaseTypes CT ON C.CaseTypeId = CT.CaseTypeId
+            LEFT JOIN CaseDescriptions CD ON C.CaseId = CD.CaseId
+        `;
+
+        if (userRole !== "Admin") {
+            query += " WHERE C.UserId = @userId";
+        }
+
+        query += " ORDER BY C.CaseId, CD.Stage";
+
+        const result = await pool.request().input("userId", sql.Int, userId).query(query);
+
+        const casesMap = new Map();
+
+        result.recordset.forEach(row => {
+            if (!casesMap.has(row.CaseId)) {
+                casesMap.set(row.CaseId, {
+                    CaseId: row.CaseId,
+                    CaseName: row.CaseName,
+                    CaseTypeId: row.CaseTypeId,
+                    CaseTypeName: row.CaseTypeName,
+                    UserId: row.UserId,
+                    CustomerName: row.CustomerName,
+                    CustomerMail: row.CustomerMail,
+                    PhoneNumber: row.PhoneNumber,
+                    CompanyName: row.CompanyName,
+                    CurrentStage: row.CurrentStage,
+                    IsClosed: row.IsClosed,
+                    IsTagged: row.IsTagged,
+                    CreatedAt: row.CreatedAt,
+                    UpdatedAt: row.UpdatedAt,
+                    Descriptions: []
+                });
+            }
+
+            if (row.DescriptionId) {
+                casesMap.get(row.CaseId).Descriptions.push({
+                    DescriptionId: row.DescriptionId,
+                    Stage: row.Stage,
+                    Text: row.Text,
+                    Timestamp: row.Timestamp,
+                    IsNew: row.IsNew
+                });
+            }
+        });
+
+        res.json(Array.from(casesMap.values()));
+
     } catch (error) {
+        console.error("Error retrieving cases:", error);
         res.status(500).json({ message: "Error retrieving cases" });
     }
 });
@@ -129,64 +223,259 @@ app.get("/GetCase/:caseId", authMiddleware, async (req, res) => {
 });
 
 app.get("/GetCaseByName", authMiddleware, async (req, res) => {
-    let { caseName } = req.query; // Get caseName from query parameters
+    let { caseName } = req.query;
 
     if (!caseName || caseName.trim() === "") {
         return res.status(400).json({ message: "Case name is required for search" });
     }
 
+    const userId = req.user?.UserId;
+    const userRole = req.user?.Role;
+
     try {
-        const pool = await sql.connect(dbConfig); // Ensure database connection
-        const result = await pool
-            .request()
-            .input("caseName", sql.NVarChar, `%${caseName}%`) // Pass caseName safely
-            .query("SELECT * FROM Cases WHERE CaseName LIKE @caseName");
+        const pool = await sql.connect(dbConfig);
+        let query = `
+            SELECT 
+                C.CaseId, 
+                C.CaseName, 
+                C.CaseTypeId, 
+                CT.CaseTypeName,
+                C.UserId, 
+                U.Name AS CustomerName,
+                U.Email AS CustomerMail,
+                U.PhoneNumber,
+                C.CompanyName, 
+                C.CurrentStage, 
+                C.IsClosed, 
+                C.IsTagged, 
+                C.CreatedAt, 
+                C.UpdatedAt,
+                CD.DescriptionId, 
+                CD.Stage, 
+                CD.Text, 
+                CD.Timestamp, 
+                CD.IsNew
+            FROM Cases C
+            LEFT JOIN Users U ON C.UserId = U.UserId
+            LEFT JOIN CaseTypes CT ON C.CaseTypeId = CT.CaseTypeId
+            LEFT JOIN CaseDescriptions CD ON C.CaseId = CD.CaseId
+            WHERE C.CaseName LIKE @caseName
+        `;
+
+        if (userRole !== "Admin") {
+            query += " AND C.UserId = @userId"; // Clients only see their own cases
+        }
+
+        query += " ORDER BY C.CaseId, CD.Stage";
+
+        const result = await pool.request()
+            .input("caseName", sql.NVarChar, `%${caseName}%`)
+            .input("userId", sql.Int, userId)
+            .query(query);
 
         if (result.recordset.length === 0) {
             return res.status(404).json({ message: "No cases found with this name" });
         }
 
-        res.json(result.recordset);
+        // **✅ Process Data to Group Case with Descriptions**
+        const casesMap = new Map();
+
+        result.recordset.forEach(row => {
+            if (!casesMap.has(row.CaseId)) {
+                casesMap.set(row.CaseId, {
+                    CaseId: row.CaseId,
+                    CaseName: row.CaseName,
+                    CaseTypeId: row.CaseTypeId,
+                    CaseTypeName: row.CaseTypeName,
+                    UserId: row.UserId,
+                    CustomerName: row.CustomerName,
+                    CustomerMail: row.CustomerMail,
+                    PhoneNumber: row.PhoneNumber,
+                    CompanyName: row.CompanyName,
+                    CurrentStage: row.CurrentStage,
+                    IsClosed: row.IsClosed,
+                    IsTagged: row.IsTagged,
+                    CreatedAt: row.CreatedAt,
+                    UpdatedAt: row.UpdatedAt,
+                    Descriptions: []
+                });
+            }
+
+            if (row.DescriptionId) {
+                casesMap.get(row.CaseId).Descriptions.push({
+                    DescriptionId: row.DescriptionId,
+                    Stage: row.Stage,
+                    Text: row.Text,
+                    Timestamp: row.Timestamp,
+                    IsNew: row.IsNew
+                });
+            }
+        });
+
+        res.json(Array.from(casesMap.values()));
+
     } catch (error) {
         console.error("Error retrieving case:", error);
         res.status(500).json({ message: "Error retrieving case by name" });
     }
 });
 
-
 app.post("/AddCase", authMiddleware, async (req, res) => {
-    const { caseName, caseTypeId, userId, companyName } = req.body;
+    const { CaseName, CaseTypeId, CaseTypeName, UserId, CompanyName, CurrentStage, Descriptions, IsTagged } = req.body;
+
     try {
-        const result = await sql.query(`INSERT INTO Cases (CaseName, CaseTypeId, UserId, CompanyName, CurrentStage, IsClosed, IsTagged) OUTPUT INSERTED.CaseId VALUES ('${caseName}', ${caseTypeId}, ${userId}, '${companyName}', 1, 0, 0)`);
-        res.status(201).json({ message: "Case created successfully", caseId: result.recordset[0].CaseId });
+        const pool = await sql.connect(dbConfig);
+        const transaction = new sql.Transaction(pool);
+        await transaction.begin();
+
+        const caseResult = await pool.request()
+            .input("CaseName", sql.NVarChar, CaseName)
+            .input("CaseTypeId", sql.Int, CaseTypeId)
+            .input("CaseTypeName", sql.NVarChar, CaseTypeName)
+            .input("UserId", sql.Int, UserId)
+            .input("CompanyName", sql.NVarChar, CompanyName)
+            .input("CurrentStage", sql.Int, CurrentStage || 1)
+            .input("IsClosed", sql.Bit, 0)
+            .input("IsTagged", sql.Bit, IsTagged ? 1 : 0)
+            .output("InsertedCaseId", sql.Int)
+            .query(`
+                INSERT INTO Cases (CaseName, CaseTypeId, CaseTypeName, UserId, CompanyName, CurrentStage, IsClosed, IsTagged)
+                OUTPUT INSERTED.CaseId
+                VALUES (@CaseName, @CaseTypeId, @CaseTypeName, @UserId, @CompanyName, @CurrentStage, @IsClosed, @IsTagged)
+            `);
+
+        const caseId = caseResult.recordset[0].CaseId;
+
+        if (Descriptions && Descriptions.length > 0) {
+            for (const [index, desc] of Descriptions.entries()) {
+                await pool.request()
+                    .input("CaseId", sql.Int, caseId)
+                    .input("Stage", sql.Int, desc.Stage)
+                    .input("Text", sql.NVarChar, desc.Text)
+                    .input("Timestamp", sql.DateTime, index === 0 ? new Date() : null)
+                    .input("IsNew", sql.Bit, index === 0 ? 1 : 0)
+                    .query(`
+                INSERT INTO CaseDescriptions (CaseId, Stage, Text, Timestamp, IsNew)
+                VALUES (@CaseId, @Stage, @Text, @Timestamp, @IsNew)
+            `);
+            }
+        }
+
+        await transaction.commit();
+        res.status(201).json({ message: "Case created successfully", caseId });
+
     } catch (error) {
+        console.error("Error creating case:", error);
         res.status(500).json({ message: "Error creating case" });
     }
 });
 
 app.put("/UpdateCase/:caseId", authMiddleware, async (req, res) => {
     const { caseId } = req.params;
-    const { caseName, currentStage, isClosed, isTagged } = req.body;
+    const { CaseName, CurrentStage, IsClosed, IsTagged, Descriptions } = req.body;
+
+    try {
+        const pool = await sql.connect(dbConfig);
+        const transaction = new sql.Transaction(pool);
+
+        await transaction.begin();
+
+        const caseRequest = new sql.Request(transaction);
+        caseRequest.input("CaseId", sql.Int, caseId);
+        caseRequest.input("CaseName", sql.NVarChar, CaseName);
+        caseRequest.input("CurrentStage", sql.Int, CurrentStage);
+        caseRequest.input("IsClosed", sql.Bit, IsClosed);
+        caseRequest.input("IsTagged", sql.Bit, IsTagged);
+
+        await caseRequest.query(`
+            UPDATE Cases 
+            SET CaseName = @CaseName, 
+                CurrentStage = @CurrentStage, 
+                IsClosed = @IsClosed, 
+                IsTagged = @IsTagged 
+            WHERE CaseId = @CaseId
+        `);
+
+        if (Descriptions && Descriptions.length > 0) {
+            for (const desc of Descriptions) {
+                const descRequest = new sql.Request(transaction);
+                descRequest.input("DescriptionId", sql.Int, desc.DescriptionId);
+                descRequest.input("CaseId", sql.Int, caseId);
+                descRequest.input("Stage", sql.Int, desc.Stage);
+                descRequest.input("Text", sql.NVarChar, desc.Text);
+                descRequest.input("Timestamp", sql.DateTime, desc.Timestamp ? new Date(desc.Timestamp) : null);
+                descRequest.input("IsNew", sql.Bit, desc.IsNew ? 1 : 0);
+
+                await descRequest.query(`
+                    UPDATE CaseDescriptions 
+                    SET Stage = @Stage, 
+                        Text = @Text, 
+                        Timestamp = @Timestamp, 
+                        IsNew = @IsNew
+                    WHERE DescriptionId = @DescriptionId AND CaseId = @CaseId
+                `);
+            }
+        }
+
+        await transaction.commit();
+        res.status(200).json({ message: "Case and descriptions updated successfully" });
+
+    } catch (error) {
+        console.error("Error updating case:", error);
+        res.status(500).json({ message: "Error updating case" });
+    }
+});
+
+app.delete("/DeleteCase/:caseId", authMiddleware, async (req, res) => {
+    const { caseId } = req.params;
+
+    try {
+        const pool = await sql.connect(dbConfig);
+        const transaction = new sql.Transaction(pool);
+
+        await transaction.begin();
+
+        // **Step 1: Delete all descriptions associated with the case**
+        await transaction.request()
+            .input("caseId", sql.Int, caseId)
+            .query("DELETE FROM CaseDescriptions WHERE CaseId = @caseId");
+
+        // **Step 2: Delete the case**
+        const result = await transaction.request()
+            .input("caseId", sql.Int, caseId)
+            .query("DELETE FROM Cases WHERE CaseId = @caseId");
+
+        await transaction.commit();
+
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).json({ message: "No case found with this ID" });
+        }
+
+        res.status(200).json({ message: "Case deleted successfully" });
+
+    } catch (error) {
+        console.error("Error deleting case:", error);
+        res.status(500).json({ message: "Error deleting case" });
+    }
+});
+
+app.put("/TagCase/:CaseId", authMiddleware, async (req, res) => {
+    const { CaseId } = req.params;
+    const { IsTagged } = req.body;
 
     try {
         const pool = await sql.connect(dbConfig);
         const request = pool.request();
-        request.input("caseId", sql.Int, caseId);
-        request.input("caseName", sql.NVarChar, caseName);
-        request.input("currentStage", sql.Int, currentStage);
-        request.input("isClosed", sql.Bit, isClosed);
-        request.input("isTagged", sql.Bit, isTagged);
+        request.input("CaseId", sql.Int, CaseId);
+        request.input("IsTagged", sql.Bit, IsTagged);
 
         await request.query(`
             UPDATE Cases 
-            SET CaseName = @caseName, 
-                CurrentStage = @currentStage, 
-                IsClosed = @isClosed, 
-                IsTagged = @isTagged 
-            WHERE CaseId = @caseId
+            SET IsTagged = @IsTagged 
+            WHERE CaseId = @CaseId
         `);
 
-        res.status(200).json({ message: "Case updated successfully" });
+        res.status(200).json({ message: "Case Tagged successfully" });
     } catch (error) {
         console.error("Error updating case:", error);
         res.status(500).json({ message: "Error updating case" });
@@ -195,10 +484,164 @@ app.put("/UpdateCase/:caseId", authMiddleware, async (req, res) => {
 
 app.get("/TaggedCases", authMiddleware, async (req, res) => {
     try {
-        const result = await sql.query("SELECT * FROM Cases WHERE IsTagged = 1");
-        res.json(result.recordset);
+        const pool = await sql.connect(dbConfig);
+        const result = await pool.request().query(`
+                SELECT 
+                    C.CaseId, 
+                    C.CaseName, 
+                    C.CaseTypeId, 
+                    CT.CaseTypeName,
+                    C.UserId, 
+                    U.Name AS CustomerName,
+                    U.Email AS CustomerMail,
+                    U.PhoneNumber,
+                    C.CompanyName, 
+                    C.CurrentStage, 
+                    C.IsClosed, 
+                    C.IsTagged, 
+                    C.CreatedAt, 
+                    C.UpdatedAt,
+                    CD.DescriptionId, 
+                    CD.Stage, 
+                    CD.Text, 
+                    CD.Timestamp, 
+                    CD.IsNew
+                FROM Cases C
+                LEFT JOIN Users U ON C.UserId = U.UserId
+                LEFT JOIN CaseTypes CT ON C.CaseTypeId = CT.CaseTypeId
+                LEFT JOIN CaseDescriptions CD ON C.CaseId = CD.CaseId
+                WHERE C.IsTagged = 1 
+                ORDER BY C.CaseId, CD.Stage;
+        `);
+
+        const casesMap = new Map();
+
+        result.recordset.forEach(row => {
+            if (!casesMap.has(row.CaseId)) {
+                casesMap.set(row.CaseId, {
+                    CaseId: row.CaseId,
+                    CaseName: row.CaseName,
+                    CaseTypeId: row.CaseTypeId,
+                    CaseTypeName: row.CaseTypeName,
+                    UserId: row.UserId,
+                    CustomerName: row.CustomerName,
+                    CustomerMail: row.CustomerMail,
+                    PhoneNumber: row.PhoneNumber,
+                    CompanyName: row.CompanyName,
+                    CurrentStage: row.CurrentStage,
+                    IsClosed: row.IsClosed,
+                    IsTagged: row.IsTagged,
+                    CreatedAt: row.CreatedAt,
+                    UpdatedAt: row.UpdatedAt,
+                    Descriptions: []
+                });
+            }
+
+            if (row.DescriptionId) {
+                casesMap.get(row.CaseId).Descriptions.push({
+                    DescriptionId: row.DescriptionId,
+                    Stage: row.Stage,
+                    Text: row.Text,
+                    Timestamp: row.Timestamp,
+                    IsNew: row.IsNew
+                });
+            }
+        });
+
+        res.json(Array.from(casesMap.values()));
+
     } catch (error) {
-        res.status(500).json({ message: "Error retrieving tagged cases" });
+        console.error("Error retrieving cases:", error);
+        res.status(500).json({ message: "Error retrieving cases" });
+    }
+});
+
+app.get("/TaggedCasesByName", authMiddleware, async (req, res) => {
+    let { caseName } = req.query;
+
+    if (!caseName || caseName.trim() === "") {
+        return res.status(400).json({ message: "Case name is required for search" });
+    }
+
+    try {
+        const pool = await sql.connect(dbConfig);
+        const result = await pool
+            .request()
+            .input("caseName", sql.NVarChar, `%${caseName}%`) // Ensure Hebrew support
+            .query(`
+                SELECT 
+                    C.CaseId, 
+                    C.CaseName, 
+                    C.CaseTypeId, 
+                    CT.CaseTypeName,
+                    C.UserId, 
+                    U.Name AS CustomerName,
+                    U.Email AS CustomerMail,
+                    U.PhoneNumber,
+                    C.CompanyName, 
+                    C.CurrentStage, 
+                    C.IsClosed, 
+                    C.IsTagged, 
+                    C.CreatedAt, 
+                    C.UpdatedAt,
+                    CD.DescriptionId, 
+                    CD.Stage, 
+                    CD.Text, 
+                    CD.Timestamp, 
+                    CD.IsNew
+                FROM Cases C
+                LEFT JOIN Users U ON C.UserId = U.UserId
+                LEFT JOIN CaseTypes CT ON C.CaseTypeId = CT.CaseTypeId
+                LEFT JOIN CaseDescriptions CD ON C.CaseId = CD.CaseId
+                WHERE C.CaseName LIKE @caseName
+                AND C.IsTagged = 1  -- ✅ Only return tagged cases
+                ORDER BY C.CaseId, CD.Stage
+            `);
+
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ message: "No tagged cases found with this name" });
+        }
+
+        // **✅ Process Data to Group Case with Descriptions**
+        const casesMap = new Map();
+
+        result.recordset.forEach(row => {
+            if (!casesMap.has(row.CaseId)) {
+                casesMap.set(row.CaseId, {
+                    CaseId: row.CaseId,
+                    CaseName: row.CaseName,
+                    CaseTypeId: row.CaseTypeId,
+                    CaseTypeName: row.CaseTypeName,
+                    UserId: row.UserId,
+                    CustomerName: row.CustomerName,
+                    CustomerMail: row.CustomerMail,
+                    PhoneNumber: row.PhoneNumber,
+                    CompanyName: row.CompanyName,
+                    CurrentStage: row.CurrentStage,
+                    IsClosed: row.IsClosed,
+                    IsTagged: row.IsTagged,
+                    CreatedAt: row.CreatedAt,
+                    UpdatedAt: row.UpdatedAt,
+                    Descriptions: []
+                });
+            }
+
+            if (row.DescriptionId) {
+                casesMap.get(row.CaseId).Descriptions.push({
+                    DescriptionId: row.DescriptionId,
+                    Stage: row.Stage,
+                    Text: row.Text,
+                    Timestamp: row.Timestamp,
+                    IsNew: row.IsNew
+                });
+            }
+        });
+
+        res.json(Array.from(casesMap.values()));
+
+    } catch (error) {
+        console.error("Error retrieving tagged cases by name:", error);
+        res.status(500).json({ message: "Error retrieving tagged cases by name" });
     }
 });
 
@@ -332,12 +775,29 @@ app.get("/GetCustomers", authMiddleware, async (req, res) => {
 });
 
 app.post("/AddCustomer", authMiddleware, async (req, res) => {
-    const { name, email, phoneNumber, password, role, companyName } = req.body;
+    const { name, email, phoneNumber, companyName } = req.body;
+
     try {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        await sql.query(`INSERT INTO Users (Name, Email, PhoneNumber, PasswordHash, Role, CompanyName, CreatedAt) VALUES ('${name}', '${email}', '${phoneNumber}', '${hashedPassword}', '${role}', '${companyName}', GETDATE())`);
+        const pool = await sql.connect(dbConfig);
+        const request = pool.request();
+
+        request.input("Name", sql.NVarChar, name);
+        request.input("Email", sql.NVarChar, email);
+        request.input("PhoneNumber", sql.NVarChar, phoneNumber);
+        request.input("PasswordHash", sql.NVarChar, null); // Store as NULL
+        request.input("Role", sql.NVarChar, "User");
+        request.input("CompanyName", sql.NVarChar, companyName);
+        request.input("CreatedAt", sql.DateTime, new Date());
+
+        await request.query(`
+            INSERT INTO Users (Name, Email, PhoneNumber, PasswordHash, Role, CompanyName, CreatedAt)
+            VALUES (@Name, @Email, @PhoneNumber, @PasswordHash, @Role, @CompanyName, @CreatedAt)
+        `);
+
         res.status(201).json({ message: "Customer created successfully" });
+
     } catch (error) {
+        console.error("Error creating customer:", error);
         res.status(500).json({ message: "Error creating customer" });
     }
 });
@@ -353,25 +813,160 @@ app.put("/GetCustomer/:customerId", authMiddleware, async (req, res) => {
     }
 });
 
+app.get("/GetCustomerByName", authMiddleware, async (req, res) => {
+    const { userName } = req.query;
+
+    if (!userName || userName.trim() === "") {
+        return res.status(400).json({ message: "User name is required for search" });
+    }
+
+    try {
+        const pool = await sql.connect(dbConfig);
+        const result = await pool.request()
+            .input("userName", sql.NVarChar, `%${userName}%`)
+            .query(`
+                SELECT UserId, Name, Email, PhoneNumber, CompanyName 
+                FROM Users 
+                WHERE Name LIKE @userName
+            `);
+
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ message: "No users found" });
+        }
+
+        res.json(result.recordset);
+    } catch (error) {
+        console.error("Error retrieving users:", error);
+        res.status(500).json({ message: "Error retrieving users" });
+    }
+});
+
+app.put("/UpdateCustomer/:userId", authMiddleware, async (req, res) => {
+    const { userId } = req.params;
+    const { name, email, phoneNumber, companyName } = req.body;
+
+    try {
+        const pool = await sql.connect(dbConfig);
+
+        const existingUser = await pool.request()
+            .input("userId", sql.Int, userId)
+            .query(`SELECT Name, Email, PhoneNumber, CompanyName FROM Users WHERE UserId = @userId`);
+
+        if (existingUser.recordset.length === 0) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const currentUser = existingUser.recordset[0];
+
+        const updatedName = name ?? currentUser.Name;
+        const updatedEmail = email ?? currentUser.Email;
+        const updatedPhoneNumber = phoneNumber ?? currentUser.PhoneNumber;
+        const updatedCompanyName = companyName ?? currentUser.CompanyName;
+
+        await pool.request()
+            .input("userId", sql.Int, userId)
+            .input("name", sql.NVarChar, updatedName)
+            .input("email", sql.NVarChar, updatedEmail)
+            .input("phoneNumber", sql.NVarChar, updatedPhoneNumber)
+            .input("companyName", sql.NVarChar, updatedCompanyName)
+            .query(`
+                UPDATE Users 
+                SET 
+                    Name = @name, 
+                    Email = @email, 
+                    PhoneNumber = @phoneNumber, 
+                    CompanyName = @companyName
+                WHERE UserId = @userId
+            `);
+
+        res.status(200).json({ message: "User updated successfully" });
+    } catch (error) {
+        console.error("Error updating user:", error);
+        res.status(500).json({ message: "Error updating user" });
+    }
+});
+
+app.delete("/DeleteCustomer/:userId", authMiddleware, async (req, res) => {
+    const { userId } = req.params;
+
+    try {
+        const pool = await sql.connect(dbConfig);
+        const transaction = new sql.Transaction(pool);
+
+        await transaction.begin();
+
+        await transaction.request()
+            .input("userId", sql.Int, userId)
+            .query(`
+                DELETE FROM CaseDescriptions
+                WHERE CaseId IN (SELECT CaseId FROM Cases WHERE UserId = @userId)
+            `);
+
+        await transaction.request()
+            .input("userId", sql.Int, userId)
+            .query(`
+                DELETE FROM Cases WHERE UserId = @userId
+            `);
+
+        const deleteResult = await transaction.request()
+            .input("userId", sql.Int, userId)
+            .query("DELETE FROM Users WHERE UserId = @userId");
+
+        await transaction.commit();
+
+        if (deleteResult.rowsAffected[0] === 0) {
+            return res.status(404).json({ message: "Customer not found" });
+        }
+
+        res.status(200).json({ message: "Customer and associated cases deleted successfully" });
+
+    } catch (error) {
+        console.error("Error deleting customer:", error);
+        res.status(500).json({ message: "Error deleting customer" });
+    }
+});
+
 // Case Type APIs - Get Case Types with Associated Descriptions
 app.get("/GetCasesType", authMiddleware, async (req, res) => {
     try {
-        const result = await sql.query(`
+        const pool = await sql.connect(dbConfig);
+        const result = await pool.request().query(`
             SELECT 
                 CT.CaseTypeId, 
                 CT.CaseTypeName, 
                 CT.NumberOfStages, 
-                COALESCE(JSON_QUERY((
-                    SELECT CD.DescriptionId, CD.Stage, CD.Text, CD.Timestamp, CD.IsNew
-                    FROM CaseDescriptions CD
-                    INNER JOIN Cases C ON CD.CaseId = C.CaseId
-                    WHERE C.CaseTypeId = CT.CaseTypeId
-                    FOR JSON PATH
-                )), '[]') AS Descriptions
+                CD.CaseTypeDescriptionId,
+                CD.Stage,
+                CD.Text
             FROM CaseTypes CT
+            LEFT JOIN CaseTypeDescriptions CD ON CT.CaseTypeId = CD.CaseTypeId
+            ORDER BY CT.CaseTypeId, CD.Stage
         `);
 
-        res.json(result.recordset);
+        // ✅ **Process Data to Group CaseType with its Descriptions**
+        const caseTypesMap = new Map();
+
+        result.recordset.forEach(row => {
+            if (!caseTypesMap.has(row.CaseTypeId)) {
+                caseTypesMap.set(row.CaseTypeId, {
+                    CaseTypeId: row.CaseTypeId,
+                    CaseTypeName: row.CaseTypeName,
+                    NumberOfStages: row.NumberOfStages,
+                    Descriptions: []
+                });
+            }
+
+            if (row.CaseTypeDescriptionId) {
+                caseTypesMap.get(row.CaseTypeId).Descriptions.push({
+                    CaseTypeDescriptionId: row.CaseTypeDescriptionId,
+                    Stage: row.Stage,
+                    Text: row.Text
+                });
+            }
+        });
+
+        res.json(Array.from(caseTypesMap.values()));
+
     } catch (error) {
         console.error("Error retrieving case types:", error);
         res.status(500).json({ message: "Error retrieving case types" });
@@ -398,20 +993,17 @@ app.get("/GetCaseTypeByName", authMiddleware, async (req, res) => {
     try {
         const pool = await sql.connect(dbConfig);
         const result = await pool.request()
-            .input("caseTypeName", sql.NVarChar, `%${caseTypeName}%`) // Use NVarChar for Hebrew support
+            .input("caseTypeName", sql.NVarChar, `%${caseTypeName}%`) // ✅ Ensure Hebrew support
             .query(`
                 SELECT 
                     ct.CaseTypeId, 
                     ct.CaseTypeName, 
                     ct.NumberOfStages, 
-                    cd.DescriptionId, 
-                    cd.CaseId, 
+                    cd.CaseTypeDescriptionId, 
                     cd.Stage, 
-                    cd.Text, 
-                    cd.Timestamp, 
-                    cd.IsNew
+                    cd.Text
                 FROM CaseTypes ct
-                LEFT JOIN CaseDescriptions cd ON ct.CaseTypeId = cd.CaseId
+                LEFT JOIN CaseTypeDescriptions cd ON ct.CaseTypeId = cd.CaseTypeId
                 WHERE ct.CaseTypeName LIKE @caseTypeName
                 ORDER BY cd.Stage
             `);
@@ -420,7 +1012,7 @@ app.get("/GetCaseTypeByName", authMiddleware, async (req, res) => {
             return res.status(404).json({ message: "No case type found" });
         }
 
-        // **Process Data to Group CaseType with its Descriptions**
+        // ✅ Grouping descriptions under each case type
         const caseTypesMap = new Map();
 
         result.recordset.forEach(row => {
@@ -433,32 +1025,46 @@ app.get("/GetCaseTypeByName", authMiddleware, async (req, res) => {
                 });
             }
 
-            if (row.DescriptionId) {
+            if (row.CaseTypeDescriptionId) {
                 caseTypesMap.get(row.CaseTypeId).Descriptions.push({
-                    DescriptionId: row.DescriptionId,
-                    CaseId: row.CaseId,
+                    CaseTypeDescriptionId: row.CaseTypeDescriptionId,
                     Stage: row.Stage,
-                    Text: row.Text,
-                    Timestamp: row.Timestamp,
-                    New: row.IsNew
+                    Text: row.Text
                 });
             }
         });
 
-        res.json(Array.from(caseTypesMap.values()));
+        // ✅ Convert the Map to an array and return
+        res.json(Array.from(caseTypesMap.values())); // Return only one object
     } catch (error) {
         console.error("Error retrieving case type:", error);
         res.status(500).json({ message: "Error retrieving case type" });
     }
 });
 
+app.delete("/DeleteCaseType/:CaseTypeId", authMiddleware, async (req, res) => {
+    console.log("req.params", req.params);
 
-app.delete("/DeleteCaseType/:caseTypeName", authMiddleware, async (req, res) => {
-    const { caseTypeName } = req.params;
+    const { CaseTypeId } = req.params;
+
+    console.log("CaseTypeId", CaseTypeId);
+
+    if (!CaseTypeId) {
+        return res.status(400).json({ message: "CaseTypeId is required for deletion" });
+    }
 
     try {
-        await sql.query(`DELETE FROM CaseTypes WHERE CaseTypeName = @caseTypeName`,
-            { input: { name: "caseTypeName", type: sql.NVarChar, value: caseTypeName } });
+        const pool = await sql.connect(dbConfig); // Ensure database connection
+        const request = pool.request();
+
+        // Securely pass CaseTypeId as an input parameter
+        request.input("CaseTypeId", sql.Int, CaseTypeId);
+
+        const result = await request.query("DELETE FROM CaseTypes WHERE CaseTypeId = @CaseTypeId");
+
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).json({ message: "Case type not found" });
+        }
 
         res.status(200).json({ message: "Case type deleted successfully" });
     } catch (error) {
@@ -468,29 +1074,126 @@ app.delete("/DeleteCaseType/:caseTypeName", authMiddleware, async (req, res) => 
 });
 
 app.post("/AddCaseType", authMiddleware, async (req, res) => {
-    const { caseTypeName, numberOfStages } = req.body;
+    const { CaseTypeName, NumberOfStages, Descriptions = [] } = req.body;
+
+    console.log("req.body", req.body);
 
     try {
-        await sql.query(`INSERT INTO CaseTypes (CaseTypeName, NumberOfStages) VALUES ('${caseTypeName}', ${numberOfStages})`);
-        res.status(201).json({ message: "Case type created successfully" });
+        const pool = await sql.connect(dbConfig);
+        const transaction = new sql.Transaction(pool);
+
+        await transaction.begin();
+
+        // 🔹 **Step 1: Insert into CaseTypes**
+        const caseTypeRequest = new sql.Request(transaction);
+        caseTypeRequest.input("CaseTypeName", sql.NVarChar, CaseTypeName);
+        caseTypeRequest.input("NumberOfStages", sql.Int, NumberOfStages);
+
+        const caseTypeResult = await caseTypeRequest.query(`
+            INSERT INTO CaseTypes (CaseTypeName, NumberOfStages) 
+            OUTPUT INSERTED.CaseTypeId
+            VALUES (@CaseTypeName, @NumberOfStages)
+        `);
+
+        const CaseTypeId = caseTypeResult.recordset[0].CaseTypeId;
+
+        console.log(`✅ Created CaseTypeId: ${CaseTypeId}`);
+
+        // 🔹 **Step 2: Insert Descriptions into CaseTypeDescriptions**
+        if (Descriptions.length > 0) {
+            for (const desc of Descriptions) {
+                const descRequest = new sql.Request(transaction);
+                descRequest.input("CaseTypeId", sql.Int, CaseTypeId);
+                descRequest.input("Stage", sql.Int, desc.Stage);
+                descRequest.input("Text", sql.NVarChar, desc.Text);
+
+                await descRequest.query(`
+                    INSERT INTO CaseTypeDescriptions (CaseTypeId, Stage, Text)
+                    VALUES (@CaseTypeId, @Stage, @Text)
+                `);
+            }
+        }
+
+        await transaction.commit();
+
+        res.status(201).json({ message: "Case type created successfully", CaseTypeId });
     } catch (error) {
+        console.error("Error creating case type:", error);
         res.status(500).json({ message: "Error creating case type" });
     }
 });
 
 app.put("/UpdateCaseType/:caseTypeId", authMiddleware, async (req, res) => {
     const { caseTypeId } = req.params;
-    const { caseTypeName, numberOfStages } = req.body;
+    const { CaseTypeName, NumberOfStages, Descriptions = [] } = req.body; // Get descriptions array
+
     try {
-        await sql.query(`UPDATE CaseTypes SET CaseTypeName = '${caseTypeName}', NumberOfStages = ${numberOfStages} WHERE CaseTypeId = ${caseTypeId}`);
+        const pool = await sql.connect(dbConfig);
+        const transaction = new sql.Transaction(pool);
+        await transaction.begin();
+
+        // ✅ **Update CaseType Name & NumberOfStages**
+        const updateCaseTypeRequest = new sql.Request(transaction);
+        updateCaseTypeRequest.input("caseTypeId", sql.Int, caseTypeId);
+        updateCaseTypeRequest.input("CaseTypeName", sql.NVarChar, CaseTypeName);
+        updateCaseTypeRequest.input("NumberOfStages", sql.Int, NumberOfStages);
+
+        await updateCaseTypeRequest.query(`
+            UPDATE CaseTypes 
+            SET CaseTypeName = @CaseTypeName, NumberOfStages = @NumberOfStages 
+            WHERE CaseTypeId = @caseTypeId
+        `);
+
+        // ✅ **Fetch existing descriptions for comparison**
+        const existingDescriptionsResult = await pool.request()
+            .input("caseTypeId", sql.Int, caseTypeId)
+            .query("SELECT CaseTypeDescriptionId, Stage FROM CaseTypeDescriptions WHERE CaseTypeId = @caseTypeId");
+
+        const existingDescriptionsMap = new Map(existingDescriptionsResult.recordset.map(desc => [desc.Stage, desc.CaseTypeDescriptionId]));
+
+        // ✅ **Handle descriptions update**
+        for (const desc of Descriptions) {
+            const descRequest = new sql.Request(transaction);
+            descRequest.input("caseTypeId", sql.Int, caseTypeId);
+            descRequest.input("stage", sql.Int, desc.Stage);
+            descRequest.input("text", sql.NVarChar, desc.Text);
+
+            if (existingDescriptionsMap.has(desc.Stage)) {
+                // ✅ **Update existing description using `CaseTypeDescriptionId`**
+                descRequest.input("CaseTypeDescriptionId", sql.Int, existingDescriptionsMap.get(desc.Stage));
+                await descRequest.query(`
+                    UPDATE CaseTypeDescriptions 
+                    SET Text = @text
+                    WHERE CaseTypeDescriptionId = @CaseTypeDescriptionId
+                `);
+            } else {
+                // ✅ **Insert new description if it doesn't exist**
+                await descRequest.query(`
+                    INSERT INTO CaseTypeDescriptions (CaseTypeId, Stage, Text)
+                    VALUES (@caseTypeId, @stage, @text)
+                `);
+            }
+        }
+
+        // ✅ **Remove extra descriptions if `NumberOfStages` decreased**
+        await pool.request()
+            .input("caseTypeId", sql.Int, caseTypeId)
+            .input("numberOfStages", sql.Int, NumberOfStages)
+            .query(`
+                DELETE FROM CaseTypeDescriptions 
+                WHERE CaseTypeId = @caseTypeId AND Stage > @numberOfStages
+            `);
+
+        await transaction.commit();
         res.status(200).json({ message: "Case type updated successfully" });
+
     } catch (error) {
+        console.error("Error updating case type:", error);
         res.status(500).json({ message: "Error updating case type" });
     }
 });
 
 //FullPagesData
-
 // Get Main Screen Data
 app.get("/GetMainScreenData", authMiddleware, async (req, res) => {
     try {

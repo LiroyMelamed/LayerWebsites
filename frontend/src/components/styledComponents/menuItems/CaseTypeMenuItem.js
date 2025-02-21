@@ -32,7 +32,6 @@ export default function CaseTypeMenuItem({
 }) {
     const { isPerforming: isPerformingSetCase, performRequest: setCase } = useHttpRequest(casesApi.updateCaseById, () => { setCurrentStage(currentStage + 1) });
     const { openPopup, closePopup } = usePopup();
-    const [fullCaseListener, setFullCaseListener] = useState(fullCase);
     const [isOpen, setIsOpen] = useState(false);
     const [currentStage, setCurrentStage] = useState(Number(rightValueSecondLine));
 
@@ -60,7 +59,7 @@ export default function CaseTypeMenuItem({
                             {isPerformingSetCase ? <SimpleLoader style={{ marginRight: 4, width: null }} /> : <Text12 style={{ marginRight: 4 }}>{currentStage}</Text12>}
                         </SimpleContainer>
                         <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse' }}>
-                            <TextBold12>{leftPreSecondLine || <SecondaryButton size={buttonSizes.SMALL} onPress={() => openPopup(<CaseTypeFullView caseTypeName={fullCaseListener.CaseTypeName} rePerformRequest={rePerformFunction} closePopUpFunction={closePopup} />)} style={{ marginRight: 8 }}>עריכה</SecondaryButton>}</TextBold12>
+                            <TextBold12>{leftPreSecondLine || <SecondaryButton size={buttonSizes.SMALL} onPress={() => openPopup(<CaseTypeFullView caseTypeDetails={fullCase} rePerformRequest={rePerformFunction} closePopUpFunction={closePopup} />)} style={{ marginRight: 8 }}>עריכה</SecondaryButton>}</TextBold12>
                             <Text12 style={{ marginRight: 4 }}>{leftValueSecondLine}</Text12>
                         </SimpleContainer>
                     </SimpleContainer>
@@ -69,8 +68,8 @@ export default function CaseTypeMenuItem({
 
             <CaseTypeMenuItemOpen
                 isOpen={isOpen}
-                caseType={fullCaseListener}
-                editCaseType={() => openPopup(<CaseTypeFullView caseTypeName={fullCaseListener.CaseTypeName} rePerformRequest={rePerformFunction} closePopUpFunction={closePopup} />)}
+                caseType={fullCase}
+                editCaseType={() => openPopup(<CaseTypeFullView caseTypeName={fullCase.CaseTypeName} rePerformRequest={rePerformFunction} closePopUpFunction={closePopup} />)}
             />
 
         </SimpleContainer>

@@ -10,7 +10,7 @@ export const AdminStackName = "/AdminStack";
 
 function AdminStack() {
     return (
-        <TopAndRightNavBar>
+        <TopAndRightNavBar LogoNavigate={AdminStackName + MainScreenName}>
             <Routes>
                 <Route path={MainScreenName} element={<MainScreen />} />
                 <Route path={TaggedCasesScreenName} element={<TaggedCasesScreen />} />

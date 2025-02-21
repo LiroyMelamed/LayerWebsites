@@ -14,16 +14,15 @@ import { icons } from "../../../../assets/icons/icons";
 import CaseTimeline from "../../cases/CaseTimeline";
 import casesApi from "../../../../api/casesApi";
 
-export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCase }) {
-    const { isPerforming: isPerformingSetCase, performRequest: setCase } = useHttpRequest(casesApi.updateCaseById);
+export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCase, isClient }) {
+    const { isPerforming: isPerformingTagCase, performRequest: tagCase } = useHttpRequest(casesApi.tagCaseById);
 
     const [isStagesOpen, setIsStagesOpen] = useState(false)
     const [IsTagged, setIsTagged] = useState(fullCase.IsTagged)
 
     function unTag() {
-        const temp = { ...fullCase, IsTagged: !IsTagged }
         setIsTagged(!IsTagged)
-        setCase(fullCase.CaseName, temp)
+        tagCase(fullCase.CaseId, { IsTagged: !IsTagged })
     }
 
     return (
@@ -34,7 +33,7 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
                 opacity: isOpen ? 1 : 0, // Fade effect
             }}
         >
-            <ProgressBar currentStage={fullCase.CurrentStage} totalStages={fullCase.Stages} style={{ marginBottom: 20 }} />
+            <ProgressBar IsClosed={fullCase.IsClosed} currentStage={fullCase.CurrentStage} totalStages={fullCase?.Descriptions?.length} style={{ marginBottom: 20 }} />
             <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flex: 1 }}>
                 <TextBold12 style={{ flex: 1 }}>שם לקוח</TextBold12>
                 <Text12 style={{ flex: 1 }}>{fullCase.CustomerName}</Text12>
@@ -59,7 +58,7 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
             <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flex: 1 }}>
 
                 <TextBold12 style={{ flex: 1 }}>נעוץ</TextBold12>
-                {isPerformingSetCase ? <SimpleLoader /> : <Text12 style={{ flex: 1 }}>{IsTagged ? "כן" : "לא"}</Text12>}
+                {isPerformingTagCase ? <SimpleLoader /> : <Text12 style={{ flex: 1 }}>{IsTagged ? "כן" : "לא"}</Text12>}
 
             </SimpleContainer>
 
@@ -77,12 +76,15 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
 
             {isStagesOpen && <CaseTimeline stages={fullCase.Descriptions} />}
 
-
-            <SimpleContainer style={{ display: 'flex', flexDirection: 'row', marginTop: 16 }}>
-                <PrimaryButton size={buttonSizes.SMALL} onPress={updateStage} style={{ marginRight: 8 }}>עדכן שלב</PrimaryButton>
-                <SecondaryButton size={buttonSizes.SMALL} onPress={editCase} style={{ marginRight: 8 }}>עריכה</SecondaryButton>
-                <TertiaryButton size={buttonSizes.SMALL} onPress={unTag}>{IsTagged ? "ביטול נעיצה" : "נעץ"}</TertiaryButton>
-            </SimpleContainer>
+            {!isClient &&
+                <SimpleContainer style={{ display: 'flex', flexDirection: 'row', marginTop: 16 }}>
+                    {!fullCase.IsClosed &&
+                        <PrimaryButton size={buttonSizes.SMALL} onPress={updateStage} style={{ marginRight: 8 }}>קדם שלב</PrimaryButton>
+                    }
+                    <SecondaryButton size={buttonSizes.SMALL} onPress={editCase} style={{ marginRight: 8 }}>עריכה</SecondaryButton>
+                    <TertiaryButton size={buttonSizes.SMALL} onPress={unTag}>{IsTagged ? "ביטול נעיצה" : "נעץ"}</TertiaryButton>
+                </SimpleContainer>
+            }
         </SimpleContainer>
     )
 }
@@ -102,5 +104,6 @@ const styles = {
         opacity: 0, // Start with 0 opacity
         marginTop: 16,
         marginRight: 28,
+        flexDirection: 'column'
     },
 };

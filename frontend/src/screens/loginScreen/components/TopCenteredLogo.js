@@ -11,7 +11,7 @@ export default function TopCenteredLogo({ logoSrc = images.Logos.FullLogoBlack, 
         display: 'flex',
         flexDirection: 'column',
         width: '100%',
-        marginTop: 40,
+        marginTop: 20,
         ...style,
     };
 
@@ -25,13 +25,6 @@ export default function TopCenteredLogo({ logoSrc = images.Logos.FullLogoBlack, 
 
     return (
         <SimpleContainer style={ContainerStyle}>
-            <TertiaryButton
-                children={'כניסת מנהלים'}
-                style={ButtonStyle}
-                size={buttonSizes.SMALL}
-                innerTextColor={colors.text}
-            />
-
             <SimpleImage
                 src={logoSrc}
                 // tintColor={colors.text}

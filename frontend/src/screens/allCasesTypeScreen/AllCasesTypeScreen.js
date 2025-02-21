@@ -2,24 +2,24 @@ import { casesTypeApi } from "../../api/casesApi";
 import { images } from "../../assets/images/images";
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
 import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
-import SimpleLoader from "../../components/simpleComponents/SimpleLoader";
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
 import SimpleScrollView from "../../components/simpleComponents/SimpleScrollView";
 import SearchInput from "../../components/specializedComponents/containers/SearchInput";
-import { Text40 } from "../../components/specializedComponents/text/AllTextKindFile";
 import ChooseButton from "../../components/styledComponents/buttons/ChooseButton";
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import CaseTypeFullView from "../../components/styledComponents/cases/CaseTypeFullView";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import useHttpRequest from "../../hooks/useHttpRequest";
+import { AdminStackName } from "../../navigation/AdminStack";
 import { usePopup } from "../../providers/PopUpProvider";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
+import { MainScreenName } from "../mainScreen/MainScreen";
 import AllCasesTypeCard from "./components/AllCasesTypeCard";
 
 export const AllCasesTypeScreenName = "/AllCasesType"
 
 export default function AllCasesTypeScreen() {
-    const { openPopup } = usePopup();
+    const { openPopup, closePopup } = usePopup();
     const { isSmallScreen } = useScreenSize();
     const { result: allCasesType, isPerforming: isPerformingAllCasesType, performRequest: reperformAfterSave } = useAutoHttpRequest(casesTypeApi.getAllCasesType);
     const { result: casesTypeByName, isPerforming: isPerformingCasesTypeById, performRequest: SearchCaseTypeByName } = useHttpRequest(casesTypeApi.getCaseTypeByName);
@@ -28,17 +28,14 @@ export default function AllCasesTypeScreen() {
         SearchCaseTypeByName(query);
     };
 
-    const handleButtonPress = () => {
-
-    }
-
-    if (isPerformingAllCasesType) {
-        return <SimpleLoader />;
+    const handleButtonPress = (query) => {
+        const foundItem = casesTypeByName.find(caseType => caseType.CaseTypeName === query);
+        openPopup(<CaseTypeFullView onFailureFunction={() => { }} caseTypeDetails={foundItem} rePerformRequest={reperformAfterSave} closePopUpFunction={closePopup} />)
     }
 
     return (
         <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
-            {isSmallScreen && <TopToolBarSmallScreen chosenIndex={5} />}
+            {isSmallScreen && <TopToolBarSmallScreen chosenIndex={5} LogoNavigate={AdminStackName + MainScreenName} />}
 
             <SimpleScrollView>
                 <SimpleContainer style={styles.responsiveContainer}>
@@ -50,7 +47,7 @@ export default function AllCasesTypeScreen() {
                         queryResult={casesTypeByName}
                         getButtonTextFunction={(item) => item.CaseTypeName}
                         style={styles.searchInput}
-                    // buttonPressFunction={ }
+                        buttonPressFunction={(chosen) => handleButtonPress(chosen)}
                     />
                     <ChooseButton style={styles.chooseButton} buttonText="כמות שלבים" />
                 </SimpleContainer>
@@ -58,6 +55,7 @@ export default function AllCasesTypeScreen() {
                 <AllCasesTypeCard
                     allCasesType={allCasesType}
                     reperformAfterSave={reperformAfterSave}
+                    isPerforming={isPerformingAllCasesType}
                 />
             </SimpleScrollView>
             <SimpleContainer style={{ display: 'flex', justifyContent: 'center' }}>

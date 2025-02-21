@@ -2,6 +2,7 @@ import React from "react";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { Text12, TextBold12 } from "../../specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../constant/colors";
+import { DateDDMMYY } from "../../../functions/date/DateDDMMYY";
 
 export default function CaseTimeline({ stages, title, style }) {
     return (
@@ -19,27 +20,26 @@ export default function CaseTimeline({ stages, title, style }) {
                 <SimpleContainer style={styles.verticalLine} />
 
                 <SimpleContainer style={styles.dotsContainer}>
-                    {stages?.slice().reverse().map((stage, index) => (
+                    {stages?.slice().map((stage, index) => (
                         <SimpleContainer key={index} style={styles.stageContainer}>
                             <SimpleContainer
-                                style={stage.New ? styles.newDot : styles.defaultDot}
+                                style={stage.IsNew ? styles.newDot : styles.defaultDot}
                             >
-                                {/* Dot */}
                                 <SimpleContainer style={styles.dot} />
                             </SimpleContainer>
 
-                            <SimpleContainer style={styles.stageDetails(stage.New)}>
+                            <SimpleContainer style={styles.stageDetails(stage.IsNew)}>
                                 <SimpleContainer
                                     style={{
-                                        backgroundColor: stage.New ? "#CAF1EE" : "#F7F8FF", paddingTop: 4,
+                                        backgroundColor: stage.IsNew ? "#CAF1EE" : "#F7F8FF", paddingTop: 4,
                                         paddingBottom: 4, paddingRight: 4,
                                         paddingLeft: 4, borderRadius: 4
                                     }}
                                 >
-                                    {stage.New ?
+                                    {stage.IsNew ?
                                         <TextBold12>חדש</TextBold12>
                                         :
-                                        <Text12>{stage.Timestamp || "שלב המשך"}</Text12>
+                                        <Text12>{DateDDMMYY(stage.Timestamp) || "שלב המשך"}</Text12>
                                     }
                                 </SimpleContainer>
                                 <TextBold12>{stage.Text}</TextBold12>
@@ -61,7 +61,8 @@ const styles = {
         paddingTop: 16,
         position: 'relative',
         zIndex: 1000,
-        marginRight: 4
+        marginRight: 4,
+        flex: 1
     },
 
     dotsContainer: {
@@ -70,6 +71,7 @@ const styles = {
         justifyContent: 'center',
         zIndex: 1001,
         position: 'relative',
+        flex: 1
     },
 
     verticalLine: {

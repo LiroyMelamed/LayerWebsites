@@ -2,8 +2,9 @@ import { images } from "../../../assets/images/images";
 import SimpleCard from "../../simpleComponents/SimpleCard";
 import SimpleImage from "../../simpleComponents/SimpleImage";
 import { TextBold14 } from "../../specializedComponents/text/AllTextKindFile";
+import PrimaryButton from "../buttons/PrimaryButton";
 
-export default function DefaultState({ imageSrc = images.MainPage.DataFlowing, imageStyle, content, style }) {
+export default function DefaultState({ imageSrc = images.MainPage.DataFlowing, imageStyle, content, actionButton, actionButtonPressFunction, actionButtonLeftIcon, actionButtonRightIcon, actionButtonSize, style }) {
 
     const CardStyle = {
         width: '100%',
@@ -18,6 +19,10 @@ export default function DefaultState({ imageSrc = images.MainPage.DataFlowing, i
             <TextBold14 style={{ marginTop: 8 }}>
                 {content}
             </TextBold14>
+
+            {actionButton &&
+                <PrimaryButton onPress={actionButtonPressFunction} rightIcon={actionButtonRightIcon} leftIcon={actionButtonLeftIcon} size={actionButtonSize}>{actionButton}</PrimaryButton>
+            }
         </SimpleCard>
     );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import SimpleInput from '../../simpleComponents/SimpleInput';
 import SimpleContainer from '../../simpleComponents/SimpleContainer';
 import HoverContainer from './HoverContainer';
@@ -9,8 +9,7 @@ const SearchInput = ({ leftIcon, value, rightIcon, onSearch, tintColor, IconStyl
     const [showResults, setShowResults] = useState(false);
     const targetRef = useRef(null);
 
-    console.log('queryResult', queryResult);
-
+    useEffect(() => { setQuery(value) }, [value])
 
     const handleInputChange = (event) => {
         setQuery(event.target.value);

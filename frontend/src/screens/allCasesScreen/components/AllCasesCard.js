@@ -20,16 +20,16 @@ export default function AllCasesCard({ allCases, reperformAfterSave }) {
     }
 
     return (
-        <SimpleCard style={{ overflow: null }}>
+        <SimpleCard style={{ overflow: null, flexDirection: 'column' }}>
             <TextBold20>כל התיקים</TextBold20>
 
-            <SimpleContainer style={{ overflow: null }}>
+            <SimpleContainer style={{ overflow: null, flexDirection: 'column', marginTop: 16 }}>
                 {allCases.map((item, index) => (
                     <>
                         {index !== 0 && <Separator />}
 
                         <CaseMenuItem
-                            key={`taggedCase${index}`}
+                            key={`case${index}`}
                             fullCase={item}
                             rightTitle={item.CaseName}
 
@@ -40,7 +40,7 @@ export default function AllCasesCard({ allCases, reperformAfterSave }) {
                             rightValueSecondLine={item.CurrentStage}
 
                             leftPreSecondLine={"סוג תיק"}
-                            leftValueSecondLine={item.CaseType}
+                            leftValueSecondLine={item.CaseTypeName}
 
                             openData={getOpenData(allCases, index)}
                             rePerformFunction={reperformAfterSave}
@@ -54,7 +54,7 @@ export default function AllCasesCard({ allCases, reperformAfterSave }) {
 }
 
 //Functions
-function getOpenData(taggedCases, index) {
+export function getOpenData(taggedCases, index) {
     const openData = [
         {
             title: "שם לקוח",

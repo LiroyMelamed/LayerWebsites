@@ -4,8 +4,12 @@ const GET_ALL_CASES = "/GetCases";
 const GET_CASE_BY_ID = "/GetCase/";
 const GET_CASE_BY_NAME = "/GetCaseByName?caseName=";
 const ADD_CASE = "/AddCase";
+const TAG_CASE = "/TagCase/";
+const DELETE_CASE = "/DeleteCase/";
 const UPDATE_CASE = "/UpdateCase/";
 const GET_TAGGED_CASES = "/TaggedCases";
+const GET_TAGGED_CASES_BY_NAME = "/TaggedCasesByName?caseName=";
+
 const GET_MAIN_SCREEN_DATA = "/GetMainScreenData";
 
 const GET_ALL_CASES_TYPE = "/GetCasesType";
@@ -37,11 +41,27 @@ const casesApi = {
   },
 
   addCase: async (caseData) => {
+    console.log('caseData', caseData);
     return await ApiUtils.post(ADD_CASE, caseData);
   },
 
-  updateCaseById: async (caseId, caseData) => {
-    return await ApiUtils.put(`${UPDATE_CASE}${caseId}`, caseData);
+  updateCaseById: async (CaseId, caseData) => {
+    console.log('updateCaseById', CaseId, caseData);
+    return await ApiUtils.put(`${UPDATE_CASE}${CaseId}`, caseData);
+  },
+
+  deleteCaseById: async (CaseId) => {
+    return await ApiUtils.delete(`${DELETE_CASE}${CaseId}`);
+  },
+
+  tagCaseById: async (CaseId, caseData) => {
+    console.log('tagCaseById', CaseId, caseData);
+    return await ApiUtils.put(`${TAG_CASE}${CaseId}`, caseData);
+  },
+
+  getTaggedCaseByName: async (caseName) => {
+    console.log('getTaggedCaseByName', caseName);
+    return await ApiUtils.get(`${GET_TAGGED_CASES_BY_NAME}${encodeURIComponent(caseName)}`);
   }
 };
 
@@ -58,15 +78,20 @@ export const casesTypeApi = {
     return await ApiUtils.get(`${GET_CASE_TYPE_BY_NAME}${encodeURIComponent(caseTypeName)}`);
   },
 
-  deleteCaseType: async (caseTypeName) => {
-    return await ApiUtils.delete(`${DELETE_CASE_TYPE}${encodeURIComponent(caseTypeName)}`);
+  deleteCaseTypeById: async (CaseTypeId) => {
+    console.log('deleteCaseTypeById', CaseTypeId);
+    return await ApiUtils.delete(`${DELETE_CASE_TYPE}${encodeURIComponent(CaseTypeId)}`);
   },
 
   addCaseType: async (caseTypeData) => {
+    console.log('addCaseType', caseTypeData);
+
     return await ApiUtils.post(ADD_CASE_TYPE, caseTypeData);
   },
 
   updateCaseTypeById: async (caseTypeId, caseTypeData) => {
+    console.log('updateCaseTypeById', caseTypeData);
+
     return await ApiUtils.put(`${UPDATE_CASE_TYPE}${caseTypeId}`, caseTypeData);
   }
 };

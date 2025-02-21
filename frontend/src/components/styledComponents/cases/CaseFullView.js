@@ -1,193 +1,166 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import SimpleContainer from '../../simpleComponents/SimpleContainer';
 import SimpleInput from '../../simpleComponents/SimpleInput';
 import SimpleLoader from '../../simpleComponents/SimpleLoader';
 import SimpleScrollView from '../../simpleComponents/SimpleScrollView';
-import useAutoHttpRequest from '../../../hooks/useAutoHttpRequest';
 import useHttpRequest from '../../../hooks/useHttpRequest';
 import SecondaryButton from '../buttons/SecondaryButton';
 import SimpleTextArea from '../../simpleComponents/SimpleTextArea';
-import { buttonSizes } from '../../../styles/buttons/buttonSizes';
+import PrimaryButton from '../buttons/PrimaryButton';
 import SearchInput from '../../specializedComponents/containers/SearchInput';
 import { DateDDMMYY } from '../../../functions/date/DateDDMMYY';
 import { customersApi } from '../../../api/customersApi';
 import casesApi, { casesTypeApi } from '../../../api/casesApi';
+import { buttonSizes } from '../../../styles/buttons/buttonSizes';
 
-export function CaseFullView({ caseName, rePerformRequest, onFailureFunction, closePopUpFunction, style }) {
-    const [caseDetails, setCaseDetails] = useState({
+export default function CaseFullView({ caseDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style }) {
+    const [caseData, setCaseData] = useState({
         CaseId: '',
         CaseName: '',
-        CaseType: '',
+        CaseTypeName: '',
         CompanyName: '',
-        PhoneNumber: '',
-        Stages: 0,
         CurrentStage: '',
-        CustomerName: '',
         CustomerMail: '',
-        Descriptions: [
-            {
-                Stage: 1,
-                Text: '',
-                Timestamp: '',
-                New: false
-            }
-        ],
-        IsTagged: false,
+        CustomerName: '',
+        Descriptions: [{ Stage: 1, Text: '', Timestamp: '', New: false }],
+        PhoneNumber: '',
     });
 
-    const { result: searchCases, isPerforming: isPerformingSearchCases, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getCaseByName);
+    useEffect(() => {
+        if (caseDetails) {
+            setCaseData({
+                CaseId: caseDetails.CaseId || '',
+                CaseName: caseDetails.CaseName || '',
+                CaseTypeName: caseDetails.CaseTypeName || '',
+                CompanyName: caseDetails.CompanyName || '',
+                CurrentStage: caseDetails.CurrentStage || '',
+                CustomerMail: caseDetails.CustomerMail || '',
+                CustomerName: caseDetails.CustomerName || '',
+                Descriptions: caseDetails.Descriptions || [{ Stage: 1, Text: '', Timestamp: '', New: false }],
+                IsClosed: caseDetails.IsClosed || false,
+                IsTagged: caseDetails.IsTagged || false,
+                PhoneNumber: caseDetails.PhoneNumber || '',
+                UserId: caseDetails.UserId,
+            });
+        }
+    }, [caseDetails]);
 
-    const { result: casesType, isPerforming: isPerformingCasesType, performRequest: SearchCaseTypeByName } = useHttpRequest(casesTypeApi.getCaseTypeById);
+    const { result: customers, isPerforming: isPerformingCustomers, performRequest: searchCustomers } = useHttpRequest(customersApi.getCustomersByName);
 
-    const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: caseNamePressed } = useAutoHttpRequest(casesApi.getCaseByName, {
-        body: { caseName },
-        onSuccess: (fetchedData) => {
-            if (fetchedData) {
-                const data = fetchedData[0]
-
-                setCaseDetails({
-                    CaseId: data.CaseId || data.CaseName.replace(/[^a-zA-Z0-9_-]/g, '_') || '',
-                    CaseName: data.CaseName || '',
-                    CaseType: data.CaseType || '',
-                    CompanyName: data.CompanyName || '',
-                    PhoneNumber: data.PhoneNumber || '',
-                    Stages: data.Stages || 0,
-                    CurrentStage: data.CurrentStage || 0,
-                    CustomerName: data.CustomerName || '',
-                    CustomerMail: data.CustomerMail || '',
-                    Descriptions: data.Descriptions || [
-                        { Stage: 1, Text: '', Timestamp: new Date(), New: false }
-                    ],
-                    IsTagged: data.IsTagged || false,
-                });
-            }
-        },
-        onFailure: onFailureFunction
-    });
+    const { result: caseTypes, isPerforming: isPerformingCaseTypes, performRequest: searchCaseTypes } = useHttpRequest(casesTypeApi.getCaseTypeByName);
 
     const { isPerforming: isSaving, performRequest: saveCase } = useHttpRequest(
-        casesApi.createCase,
-        () => onSuccessSaveCase()
+        caseDetails ? casesApi.updateCaseById : casesApi.addCase,
+        () => {
+            rePerformRequest?.();
+            closePopUpFunction?.();
+        },
+        onFailureFunction
     );
 
-    const { isPerforming: isCreatingNewUser, performRequest: createNewUser } = useHttpRequest(
-        customersApi.createNewCustomer,
-        () => alert('Case and Customer successfully!')
+    // Delete Case
+    const { isPerforming: isDeleting, performRequest: deleteCase } = useHttpRequest(
+        casesApi.deleteCaseById,
+        () => {
+            rePerformRequest?.();
+            closePopUpFunction?.();
+        },
+        onFailureFunction
     );
-
-    const { isPerforming: isPerformingSetCase, performRequest: setCase } = useHttpRequest(casesApi.updateCaseById);
-
-    const onSuccessSaveCase = () => {
-        const newUser = {
-            CompanyName: caseDetails.CompanyName,
-            CustomerName: caseDetails.CustomerName,
-            CustomerMail: caseDetails.CustomerMail,
-            PhoneNumber: caseDetails.PhoneNumber,
-        }
-        createNewUser(newUser)
-        rePerformRequest?.()
-        closePopUpFunction?.()
-    };
 
     const handleInputChange = (field, value) => {
-        setCaseDetails((prevDetails) => ({ ...prevDetails, [field]: value }));
+        setCaseData((prevDetails) => ({ ...prevDetails, [field]: value }));
+    };
+
+    const handleCaseTypeSelect = (caseTypeName) => {
+        const selectedCaseType = caseTypes.find(type => type.CaseTypeName === caseTypeName);
+        if (selectedCaseType) {
+            setCaseData((prevDetails) => ({
+                ...prevDetails,
+                CaseTypeName: selectedCaseType.CaseTypeName,
+                Stages: selectedCaseType.NumberOfStages,
+                Descriptions: selectedCaseType.Descriptions || [{ Stage: 1, Text: '', Timestamp: '', New: false }],
+                CaseTypeId: selectedCaseType.CaseTypeId
+            }));
+        }
     };
 
     const handleSaveCase = () => {
-        const tempDescription = caseDetails.Descriptions;
+        console.log('caseData', caseData);
 
-        if (tempDescription[0].Timestamp === '') {
-            tempDescription[0].Timestamp = DateDDMMYY(new Date())
-            if (Number(caseDetails.CurrentStage) <= Number(caseDetails.Stages)) {
-                tempDescription[Number(caseDetails.CurrentStage)].New = true
-            }
+        if (!caseData.CaseName || !caseData.CaseTypeName) {
+            alert("Both Case Name and Case Type are required.");
+            return;
         }
 
-        saveCase({ ...caseDetails, CaseId: caseDetails.CaseName.replace(/[^a-zA-Z0-9_-]/g, '_') });
-        setCaseDetails(oldCase => ({ ...oldCase, Descriptions: tempDescription }));
+        saveCase(caseData);
     };
 
     const handleUpdateCase = () => {
-        if (Number(caseDetails.CurrentStage) + 1 <= Number(caseDetails.Stages)) {
-            const tempDescription = caseDetails.Descriptions;
-            tempDescription[caseDetails.CurrentStage].Timestamp = DateDDMMYY(new Date())
-            tempDescription[caseDetails.CurrentStage].New = false
-            if (Number(caseDetails.CurrentStage) + 2 <= Number(caseDetails.Stages)) {
-                tempDescription[Number(caseDetails.CurrentStage) + 1].New = true
-            }
-            setCaseDetails(oldCase => ({ ...oldCase, CurrentStage: Number(caseDetails.CurrentStage) + 1, Descriptions: tempDescription }));
+        console.log('caseData', caseData);
 
-            setCase(caseDetails.CaseName, { ...caseDetails, CurrentStage: Number(caseDetails.CurrentStage) + 1, Descriptions: tempDescription })
-            rePerformRequest?.()
+        if (!caseData.CaseName || !caseData.CaseTypeName) {
+            alert("Both Case Name and Case Type are required.");
+            return;
+        }
+
+        saveCase(caseData.CaseId, caseData);
+    };
+
+    const handleDeleteCase = () => {
+        deleteCase(caseData.CaseId);
+    };
+
+    const handleCustomerSelect = (userName) => {
+        const selectedUser = customers.find(user => user.Name === userName);
+        if (selectedUser) {
+            setCaseData((prevDetails) => ({
+                ...prevDetails,
+                UserId: selectedUser.UserId,
+                CustomerName: selectedUser.Name,
+                CustomerMail: selectedUser.Email,
+                PhoneNumber: selectedUser.PhoneNumber,
+                CompanyName: selectedUser.CompanyName || '',
+            }));
         }
     };
-
-    const handleIsTagChange = () => {
-        const updatedCase = { ...caseDetails, IsTagged: !caseDetails.IsTagged };
-        setCaseDetails(updatedCase);
-        saveCase(updatedCase);
-        rePerformRequest?.()
-    };
-
-    const handleSearch = (query) => {
-        setCaseDetails(oldCase => ({ ...oldCase, CaseName: query }));
-        SearchCaseByName(query);
-    };
-
-    const handleSearchCaseType = (query) => {
-        SearchCaseTypeByName({ caseTypeName: query });
-    };
-
-    function CaseButtonPressed(caseName) {
-        caseNamePressed(caseName)
-    }
-
-    function CaseTypeButtonPressed(caseTypeName) {
-        const caseType = casesType.filter(casetype => casetype.CaseTypeName === caseTypeName);
-        setCaseDetails(oldCase => ({ ...oldCase, CaseType: caseTypeName, Descriptions: caseType[0].Descriptions, Stages: caseType[0].NumberOfStages }));
-    }
-
-    if (isPerformingCasesById) {
-        return <SimpleLoader />;
-    }
 
     return (
         <SimpleContainer style={{ ...style, ...styles.container }}>
             <SimpleScrollView>
                 <SimpleContainer style={styles.rowStyle}>
-                    <SearchInput
-                        onSearch={handleSearch}
+                    <SimpleInput
                         style={styles.inputStyle}
-                        title={"מספר תיק"}
-                        value={caseDetails.CaseName}
-                        isPerforming={isPerformingSearchCases}
-                        getButtonTextFunction={(item) => item.CaseName}
-                        buttonPressFunction={CaseButtonPressed}
-                        queryResult={searchCases}
+                        title={"שם התיק"}
+                        value={caseData.CaseName}
+                        onChange={(e) => handleInputChange('CaseName', e.target.value)}
                     />
+
                     <SearchInput
-                        onSearch={handleSearchCaseType}
-                        style={styles.inputStyle}
+                        onSearch={searchCaseTypes}
                         title={"סוג התיק"}
-                        value={caseDetails.CaseType}
-                        isPerforming={isPerformingCasesType}
+                        value={caseData.CaseTypeName}
+                        isPerforming={isPerformingCaseTypes}
                         getButtonTextFunction={(item) => item.CaseTypeName}
-                        buttonPressFunction={CaseTypeButtonPressed}
-                        queryResult={casesType}
+                        buttonPressFunction={handleCaseTypeSelect}
+                        queryResult={caseTypes}
                     />
                 </SimpleContainer>
 
                 <SimpleContainer style={styles.rowStyle}>
-                    <SimpleInput
-                        style={styles.inputStyle}
+                    <SearchInput
+                        onSearch={searchCustomers}
                         title={"שם לקוח"}
-                        value={caseDetails.CustomerName}
-                        onChange={(e) => handleInputChange('CustomerName', e.target.value)}
+                        value={caseData.CustomerName}
+                        isPerforming={isPerformingCustomers}
+                        getButtonTextFunction={(item) => item.Name}
+                        buttonPressFunction={handleCustomerSelect}
+                        queryResult={customers}
                     />
                     <SimpleInput
                         style={styles.inputStyle}
                         title={"שם החברה"}
-                        value={caseDetails.CompanyName}
+                        value={caseData.CompanyName}
                         onChange={(e) => handleInputChange('CompanyName', e.target.value)}
                     />
                 </SimpleContainer>
@@ -196,13 +169,13 @@ export function CaseFullView({ caseName, rePerformRequest, onFailureFunction, cl
                     <SimpleInput
                         style={styles.inputStyle}
                         title={"מספר פלאפון"}
-                        value={caseDetails.PhoneNumber}
+                        value={caseData.PhoneNumber}
                         onChange={(e) => handleInputChange('PhoneNumber', e.target.value)}
                     />
                     <SimpleInput
                         style={styles.inputStyle}
                         title={"שלב נוכחי"}
-                        value={caseDetails.CurrentStage}
+                        value={caseData.CurrentStage}
                         onChange={(e) => handleInputChange('CurrentStage', e.target.value)}
                     />
                 </SimpleContainer>
@@ -211,38 +184,46 @@ export function CaseFullView({ caseName, rePerformRequest, onFailureFunction, cl
                     <SimpleInput
                         style={styles.inputStyle}
                         title={"אימייל לקוח"}
-                        value={caseDetails.CustomerMail}
+                        value={caseData.CustomerMail}
                         onChange={(e) => handleInputChange('CustomerMail', e.target.value)}
                     />
                 </SimpleContainer>
 
-                {caseDetails?.Descriptions?.map((descriptions, index) => (
+                {caseData?.Descriptions?.map((description, index) => (
                     <SimpleTextArea
                         key={`DescriptionNumber${index}`}
                         title={`תיאור מס' ${index + 1}`}
-                        value={descriptions?.Text || ''}
+                        value={description?.Text || ''}
                         style={{ marginTop: 8 }}
-                        onChange={(text) =>
-                            setCaseDetails((prevDetails) => {
+                        onChange={(text) => {
+                            setCaseData((prevDetails) => {
                                 const updatedDescriptions = [...prevDetails.Descriptions];
                                 updatedDescriptions[index].Text = text;
                                 return { ...prevDetails, Descriptions: updatedDescriptions };
-                            })
-                        }
+                            });
+                        }}
                     />
                 ))}
 
-
                 <SimpleContainer style={styles.buttonsRowStyle}>
-                    <SecondaryButton onPress={handleSaveCase} isPerforming={isSaving} style={styles.button} size={buttonSizes.MEDIUM}>
-                        שמור שינויים
-                    </SecondaryButton>
-                    <SecondaryButton onPress={handleUpdateCase} isPerforming={isSaving} style={styles.button} size={buttonSizes.MEDIUM}>
-                        קידום שלב
-                    </SecondaryButton>
-                    <SecondaryButton onPress={handleIsTagChange} isPerforming={isSaving} style={styles.button} size={buttonSizes.MEDIUM}>
-                        {caseDetails.IsTagged ? "בטל נעיצה" : "נעץ"}
-                    </SecondaryButton>
+                    {caseDetails && (
+                        <SecondaryButton
+                            onPress={handleDeleteCase}
+                            isPerforming={isDeleting}
+                            style={styles.button}
+                            size={buttonSizes.MEDIUM}
+                        >
+                            {isDeleting ? "מוחק..." : "מחק תיק"}
+                        </SecondaryButton>
+                    )}
+                    <PrimaryButton
+                        onPress={caseDetails ? handleUpdateCase : handleSaveCase}
+                        isPerforming={isSaving}
+                        style={styles.button}
+                        size={buttonSizes.MEDIUM}
+                    >
+                        {isSaving ? "שומר..." : caseDetails ? "עדכן תיק" : "שמור תיק"}
+                    </PrimaryButton>
                 </SimpleContainer>
             </SimpleScrollView>
         </SimpleContainer>
@@ -252,42 +233,27 @@ export function CaseFullView({ caseName, rePerformRequest, onFailureFunction, cl
 const styles = {
     container: {
         width: '100%',
-        margin: '0 auto', // Center container
+        margin: '0 auto',
     },
     rowStyle: {
         display: 'flex',
         flexDirection: 'row-reverse',
         marginBottom: '16px',
-        flexWrap: 'wrap', // Allow wrapping for small screens
+        flexWrap: 'wrap',
     },
     inputStyle: {
         flex: 1,
-        minWidth: '150px', // Minimum width to maintain input size
-    },
-    descriptionRowStyle: {
-        display: 'flex',
-        flexDirection: 'row-reverse',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    textareaStyle: {
-        flex: 1,
-        padding: '10px',
-        margin: '12px 4px',
-        borderRadius: '8px',
-        border: '1px solid #ddd',
+        minWidth: '150px',
     },
     buttonsRowStyle: {
         display: 'flex',
-        flexDirection: 'row', // Stack buttons for small screens
+        flexDirection: 'row',
         justifyContent: 'center',
         marginBottom: '16px',
         marginTop: '16px',
-        flexWrap: 'wrap'
+        flexWrap: 'wrap',
     },
     button: {
         margin: '8px 8px',
     },
 };
-
-export default CaseFullView;

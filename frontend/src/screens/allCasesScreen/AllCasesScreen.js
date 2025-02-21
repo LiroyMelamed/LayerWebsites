@@ -1,6 +1,5 @@
 import casesApi from "../../api/casesApi";
 import { images } from "../../assets/images/images";
-import TopToolbarBigScreen from "../../components/navBars/topToolBarBigScreen/TopToolBarBigScreen";
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
 import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
 import SimpleLoader from "../../components/simpleComponents/SimpleLoader";
@@ -12,14 +11,16 @@ import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButt
 import CaseFullView from "../../components/styledComponents/cases/CaseFullView";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import useHttpRequest from "../../hooks/useHttpRequest";
+import { AdminStackName } from "../../navigation/AdminStack";
 import { usePopup } from "../../providers/PopUpProvider";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
+import { MainScreenName } from "../mainScreen/MainScreen";
 import AllCasesCard from "./components/AllCasesCard";
 
 export const AllCasesScreenName = "/AllCases"
 
 export default function AllCasesScreen() {
-    const { openPopup } = usePopup();
+    const { openPopup, closePopup } = usePopup();
     const { isSmallScreen } = useScreenSize();
     const { result: allCases, isPerforming: isPerformingAllCases, performRequest: reperformAfterSave } = useAutoHttpRequest(casesApi.getAllCases);
     const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getCaseByName);
@@ -34,7 +35,7 @@ export default function AllCasesScreen() {
 
     return (
         <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
-            {isSmallScreen && <TopToolBarSmallScreen chosenIndex={1} />}
+            {isSmallScreen && <TopToolBarSmallScreen chosenIndex={1} LogoNavigate={AdminStackName + MainScreenName} />}
 
             <SimpleScrollView>
                 <SimpleContainer style={styles.responsiveContainer}>
@@ -56,7 +57,7 @@ export default function AllCasesScreen() {
                 />
             </SimpleScrollView>
             <SimpleContainer style={{ display: 'flex', justifyContent: 'center' }}>
-                <PrimaryButton style={{ margin: '8px 0px', selfAlign: 'center' }} onPress={() => openPopup(<CaseFullView onFailureFunction={() => { }} />)}>הוספת תיק חדש</PrimaryButton>
+                <PrimaryButton style={{ margin: '8px 0px', selfAlign: 'center' }} onPress={() => openPopup(<CaseFullView onFailureFunction={() => { }} closePopUpFunction={closePopup} rePerformRequest={reperformAfterSave} />)}>הוספת תיק חדש</PrimaryButton>
             </SimpleContainer>
 
         </SimpleScreen>

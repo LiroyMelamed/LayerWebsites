@@ -26,34 +26,38 @@ export default function CaseMenuItem({
     leftValueColorSecondLine,
 
     rePerformFunction,
+    isClient = false,
     style
 }) {
-    const { isPerforming: isPerformingSetCase, performRequest: setCase } = useHttpRequest(casesApi.updateCaseById, () => { setCurrentStage(currentStage + 1) });
+    const { isPerforming: isPerformingSetCase, performRequest: setCase } = useHttpRequest(casesApi.updateCaseById);
     const { openPopup, closePopup } = usePopup();
     const [fullCaseListener, setFullCaseListener] = useState(fullCase);
     const [isOpen, setIsOpen] = useState(false);
-    const [currentStage, setCurrentStage] = useState(Number(rightValueSecondLine));
 
     function updateStage() {
-        if (currentStage + 1 <= Number(fullCaseListener.Stages)) {
+        if (fullCaseListener.CurrentStage <= fullCaseListener.Descriptions.length) {
             const tempDescription = fullCaseListener.Descriptions;
-            tempDescription[currentStage].Timestamp = DateDDMMYY(new Date())
-            tempDescription[currentStage].New = false
-            if (Number(currentStage) + 2 <= Number(fullCaseListener.Stages)) {
-                tempDescription[Number(currentStage) + 1].New = true
+            tempDescription[fullCaseListener.CurrentStage - 1].Timestamp = new Date();
+            tempDescription[fullCaseListener.CurrentStage - 1].IsNew = false;
+
+            if (fullCaseListener.CurrentStage + 1 <= fullCaseListener.Descriptions.length) {
+                tempDescription[fullCaseListener.CurrentStage].IsNew = true
+                setFullCaseListener(oldCase => ({ ...oldCase, CurrentStage: fullCaseListener.CurrentStage + 1, Descriptions: tempDescription }));
             }
-            if (Number(currentStage) + 1 === Number(fullCaseListener.Stages)) {
-                setCase(fullCaseListener.CaseName, { ...fullCaseListener, CurrentStage: Number(currentStage + 1), IsClosed: true })
+
+            if (fullCaseListener.CurrentStage === fullCaseListener.Descriptions.length) {
+                if (!fullCaseListener.IsClosed) {
+                    setFullCaseListener(oldCase => ({ ...oldCase, CurrentStage: fullCaseListener.CurrentStage, IsClosed: true, Descriptions: tempDescription }));
+                    setCase(fullCaseListener.CaseId, { ...fullCaseListener, CurrentStage: fullCaseListener.CurrentStage, IsClosed: true, Descriptions: tempDescription })
+                }
             } else {
-                setCase(fullCaseListener.CaseName, { ...fullCaseListener, CurrentStage: Number(currentStage + 1) })
+                setCase(fullCaseListener.CaseId, { ...fullCaseListener, CurrentStage: fullCaseListener.CurrentStage + 1, Descriptions: tempDescription })
             }
-            setFullCaseListener(oldCase => ({ ...oldCase, CurrentStage: Number(currentStage + 1), Descriptions: tempDescription }));
-        } else {
         }
     }
 
     return (
-        <SimpleContainer style={{ overflow: null }}>
+        <SimpleContainer style={{ overflow: null, flexDirection: 'column' }}>
             <SimpleContainer style={styles.container}>
                 <ImageButton
                     src={icons.Button.DownArrow}
@@ -73,7 +77,7 @@ export default function CaseMenuItem({
                     <SimpleContainer style={styles.secondRow}>
                         <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flex: 1 }}>
                             <TextBold12>{rightPreSecondLine}</TextBold12>
-                            {isPerformingSetCase ? <SimpleLoader style={{ marginRight: 4, width: null }} /> : <Text12 style={{ marginRight: 4 }}>{currentStage}</Text12>}
+                            {isPerformingSetCase ? <SimpleLoader style={{ marginRight: 4, width: null }} /> : <Text12 style={{ marginRight: 4 }}>{fullCaseListener.CurrentStage}</Text12>}
                         </SimpleContainer>
                         <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse' }}>
                             <TextBold12>{leftPreSecondLine}</TextBold12>
@@ -86,8 +90,9 @@ export default function CaseMenuItem({
             <CaseMenuItemOpen
                 isOpen={isOpen}
                 fullCase={fullCaseListener}
-                updateStage={updateStage}
-                editCase={() => openPopup(<CaseFullView caseName={fullCaseListener.CaseName} rePerformRequest={rePerformFunction} closePopUpFunction={closePopup} />)}
+                updateStage={() => updateStage()}
+                editCase={() => openPopup(<CaseFullView caseDetails={fullCaseListener} rePerformRequest={rePerformFunction} closePopUpFunction={closePopup} />)}
+                isClient={isClient}
             />
 
         </SimpleContainer>
@@ -103,6 +108,7 @@ const styles = {
     innerContainer: {
         marginRight: 16,
         flex: 1,
+        flexDirection: 'column'
     },
     dropDownIcon: (isOpen) => ({
         width: 12,

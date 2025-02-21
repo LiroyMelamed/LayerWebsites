@@ -3,78 +3,69 @@ import SimpleContainer from "../../../components/simpleComponents/SimpleContaine
 import SimpleInput from "../../../components/simpleComponents/SimpleInput";
 import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
 import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
-import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 import { casesTypeApi } from "../../../api/casesApi";
 import useHttpRequest from "../../../hooks/useHttpRequest";
 import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryButton";
 import SimpleTextArea from "../../../components/simpleComponents/SimpleTextArea";
-import SimpleLoader from "../../../components/simpleComponents/SimpleLoader";
 
-export default function CaseTypeFullView({ caseTypeName, rePerformRequest, onFailureFunction, closePopUpFunction, style }) {
-    const [caseTypeDetails, setCaseTypeDetails] = useState({
+export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style }) {
+    const [caseType, setCaseType] = useState({
         CaseTypeName: "",
         NumberOfStages: "",
         Descriptions: [{ Stage: 1, Text: "", Timestamp: "", New: false }],
     });
 
     useEffect(() => {
-        if (caseTypeName) {
-            fetchCaseTypeDetails(caseTypeName);
+        if (caseTypeDetails) {
+            setCaseType({
+                CaseTypeName: caseTypeDetails.CaseTypeName,
+                NumberOfStages: caseTypeDetails.NumberOfStages.toString(),
+                Descriptions: caseTypeDetails.Descriptions || [{ Stage: 1, Text: "", Timestamp: "", New: false }],
+            });
         }
-    }, [caseTypeName]);
+    }, [caseTypeDetails]);
 
-    const { isPerforming: isFetching, performRequest: fetchCaseTypeDetails } = useHttpRequest(
-        casesTypeApi.getCaseTypeByName,
-        (fetchedData) => {
-            if (fetchedData?.length > 0) {
-                const data = fetchedData[0];
-                setCaseTypeDetails({
-                    CaseTypeName: data.CaseTypeName || "",
-                    NumberOfStages: data.NumberOfStages || "1",
-                    Descriptions: data.Descriptions || [{ Stage: 1, Text: "", Timestamp: "", New: false }],
-                });
-            }
-        },
-        onFailureFunction
-    );
-
-    const { isPerforming: isSaving, performRequest: saveCaseType } = useHttpRequest(
-        casesTypeApi.createOrUpdateCaseType,
+    const { isPerforming, performRequest } = useHttpRequest(
+        caseTypeDetails ? casesTypeApi.updateCaseTypeById : casesTypeApi.addCaseType,
         () => {
-            alert("Case type saved successfully!");
+            closePopUpFunction?.();
             rePerformRequest?.();
         },
         onFailureFunction
     );
 
     const { isPerforming: isDeleting, performRequest: deleteCaseType } = useHttpRequest(
-        casesTypeApi.deleteCaseType,
+        casesTypeApi.deleteCaseTypeById,
         () => {
-            alert("Case type deleted successfully!");
-            rePerformRequest?.();
             closePopUpFunction?.();
+            rePerformRequest?.();
         },
         onFailureFunction
     );
 
     const handleInputChange = (field, value) => {
-        setCaseTypeDetails((prev) => ({ ...prev, [field]: value }));
+        setCaseType((prev) => ({ ...prev, [field]: value }));
     };
 
     const handleSaveCaseType = () => {
-        if (!caseTypeDetails.CaseTypeName || !caseTypeDetails.NumberOfStages) {
+        if (!caseType.CaseTypeName || !caseType.NumberOfStages) {
             alert("Please provide both case type name and number of stages.");
             return;
         }
-        saveCaseType(caseTypeDetails.CaseTypeName, caseTypeDetails);
+
+        const apiCall = caseTypeDetails
+            ? performRequest(caseTypeDetails.CaseTypeId, caseType)
+            : performRequest(caseType);
+
+        apiCall.finally(() => closePopUpFunction?.());
     };
 
     const handleDeleteCaseType = () => {
-        deleteCaseType(caseTypeDetails.CaseTypeName);
+        deleteCaseType(caseTypeDetails.CaseTypeId);
     };
 
     const handleAddStage = () => {
-        setCaseTypeDetails((prev) => {
+        setCaseType((prev) => {
             const newStage = prev.Descriptions.length + 1;
             return {
                 ...prev,
@@ -84,9 +75,35 @@ export default function CaseTypeFullView({ caseTypeName, rePerformRequest, onFai
         });
     };
 
-    if (isFetching) {
-        return <SimpleLoader />;
-    }
+    useEffect(() => {
+        setCaseType((prevDetails) => {
+            const currentStages = prevDetails.Descriptions.length;
+            const targetStages = Number(prevDetails.NumberOfStages);
+
+            if (targetStages > currentStages) {
+                // Add new stages without modifying existing ones
+                const newStages = Array.from({ length: targetStages - currentStages }, (_, index) => ({
+                    Stage: currentStages + index + 1,
+                    Text: '',
+                    Timestamp: '',
+                    New: false,
+                }));
+
+                return {
+                    ...prevDetails,
+                    Descriptions: [...prevDetails.Descriptions, ...newStages],
+                };
+            } else if (targetStages < currentStages) {
+                return {
+                    ...prevDetails,
+                    Descriptions: prevDetails.Descriptions.slice(0, targetStages),
+                };
+            }
+
+            return prevDetails;
+        });
+    }, [caseType.NumberOfStages]);
+
 
     return (
         <SimpleContainer style={{ ...style, ...styles.container }}>
@@ -95,24 +112,25 @@ export default function CaseTypeFullView({ caseTypeName, rePerformRequest, onFai
                     <SimpleInput
                         style={styles.inputStyle}
                         title={"שם סוג התיק"}
-                        value={caseTypeDetails.CaseTypeName}
+                        value={caseType.CaseTypeName}
                         onChange={(e) => handleInputChange("CaseTypeName", e.target.value)}
                     />
                     <SimpleInput
                         style={styles.inputStyle}
                         title={"מספר שלבים"}
-                        value={caseTypeDetails.NumberOfStages}
+                        value={caseType.NumberOfStages}
                         onChange={(e) => handleInputChange("NumberOfStages", e.target.value)}
                     />
                 </SimpleContainer>
 
-                {caseTypeDetails.Descriptions.map((description, index) => (
+                {caseType.Descriptions.map((description, index) => (
                     <SimpleTextArea
                         key={index}
                         title={`תיאור מס' ${index + 1}`}
                         value={description.Text || ""}
+                        style={{ marginTop: index != 0 ? 8 : 0 }}
                         onChange={(text) => {
-                            setCaseTypeDetails((prev) => {
+                            setCaseType((prev) => {
                                 const updatedDescriptions = [...prev.Descriptions];
                                 updatedDescriptions[index].Text = text;
                                 return { ...prev, Descriptions: updatedDescriptions };
@@ -122,7 +140,7 @@ export default function CaseTypeFullView({ caseTypeName, rePerformRequest, onFai
                 ))}
 
                 <SimpleContainer style={styles.buttonsRowStyle}>
-                    {caseTypeName && (
+                    {caseTypeDetails && (
                         <SecondaryButton
                             onPress={handleDeleteCaseType}
                             isPerforming={isDeleting}
@@ -133,10 +151,10 @@ export default function CaseTypeFullView({ caseTypeName, rePerformRequest, onFai
                     )}
                     <PrimaryButton
                         onPress={handleSaveCaseType}
-                        isPerforming={isSaving}
+                        isPerforming={isPerforming}
                         style={styles.button}
                     >
-                        {isSaving ? "שומר..." : caseTypeName ? "עדכן סוג תיק" : "שמור סוג תיק"}
+                        {isPerforming ? "שומר..." : caseTypeDetails ? "עדכן סוג תיק" : "שמור סוג תיק"}
                     </PrimaryButton>
                     <SecondaryButton
                         onPress={handleAddStage}

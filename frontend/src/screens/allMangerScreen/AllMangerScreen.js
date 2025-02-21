@@ -10,8 +10,10 @@ import ChooseButton from "../../components/styledComponents/buttons/ChooseButton
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import useHttpRequest from "../../hooks/useHttpRequest";
+import { AdminStackName } from "../../navigation/AdminStack";
 import { usePopup } from "../../providers/PopUpProvider";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
+import { MainScreenName } from "../mainScreen/MainScreen";
 import AdminPopup from "./components/AdminPopup";
 import AdminsCard from "./components/AdminsCard";
 
@@ -40,7 +42,7 @@ export default function AllMangerScreen() {
 
     return (
         <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
-            {isSmallScreen && <TopToolBarSmallScreen chosenIndex={3} />}
+            {isSmallScreen && <TopToolBarSmallScreen chosenIndex={3} LogoNavigate={AdminStackName + MainScreenName} />}
 
             <SimpleScrollView>
                 <SimpleContainer style={styles.responsiveContainer}>

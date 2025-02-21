@@ -2,8 +2,9 @@ import React from "react";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { Text12, TextBold12 } from "../text/AllTextKindFile";
 
-const ProgressBar = ({ currentStage, totalStages, style }) => {
-    const percentage = Math.min(100, (currentStage / totalStages) * 100);
+const ProgressBar = ({ IsClosed, currentStage, totalStages, style }) => {
+    const CurrentStageAccordingToIsClosed = IsClosed ? currentStage : currentStage - 1;
+    const percentage = Math.min(100, (CurrentStageAccordingToIsClosed / totalStages) * 100);
 
     const containerStyles = {
         width: '100%',
@@ -43,8 +44,8 @@ const ProgressBar = ({ currentStage, totalStages, style }) => {
     return (
         <div style={containerStyles}>
             <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', marginBottom: 20 }}>
-                <TextBold12>התקדמות שלבים:</TextBold12>
-                <Text12 style={{ marginRight: 4 }}>{currentStage}/{totalStages}</Text12>
+                <TextBold12>שלבים שהסתיימו:</TextBold12>
+                <Text12 style={{ marginRight: 4 }}>{CurrentStageAccordingToIsClosed}/{totalStages}</Text12>
             </SimpleContainer>
             <div style={barStyles}>
                 <div style={fillStyles}></div>

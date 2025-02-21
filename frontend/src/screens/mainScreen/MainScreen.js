@@ -7,17 +7,17 @@ import SimpleLoader from '../../components/simpleComponents/SimpleLoader';
 import SimpleContainer from '../../components/simpleComponents/SimpleContainer';
 import TopToolBarSmallScreen from '../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen';
 import ShowDataCard from './components/ShowDataCard';
-import { customersApi } from '../../api/customersApi';
 import ComprasionDataCard from './components/ComprasionDataCard';
 import { colors } from '../../constant/colors';
 import ClientsCard from './components/ClientsCard';
 import casesApi from '../../api/casesApi';
+import { AdminStackName } from '../../navigation/AdminStack';
 
 export const MainScreenName = "/MainScreen";
 
 export default function MainScreen() {
     const { isSmallScreen } = useScreenSize();
-    const { result: mainScreenData, isPerforming: isPerformingMainScreenData } = useAutoHttpRequest(casesApi.getMainScreenData);
+    const { result: mainScreenData, isPerforming: isPerformingMainScreenData, performRequest } = useAutoHttpRequest(casesApi.getMainScreenData);
 
     if (isPerformingMainScreenData) {
         return <SimpleLoader />;
@@ -25,9 +25,20 @@ export default function MainScreen() {
 
     return (
         <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
-            {isSmallScreen && <TopToolBarSmallScreen />}
+            {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={AdminStackName + MainScreenName} />}
 
-            <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse' }}>
+            <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flexWrap: 'wrap' }}>
+                <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flex: 1 }}>
+                    <ComprasionDataCard
+                        colors={colors.doughnutChartColorScale}
+                        labels={['תיקים פתוחים', 'תיקים סגורים']}
+                        data={[mainScreenData?.AllCasesData?.length - mainScreenData?.NumberOfClosedCases, mainScreenData?.NumberOfClosedCases]}
+                        title={"סכימת תיקים"}
+                        centerText={`${mainScreenData?.AllCasesData?.length}`}
+                        subText='סה"כ תיקים'
+                        style={{ width: '100%' }}
+                    />
+                </SimpleContainer>
                 <SimpleContainer style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
                     <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', }}>
                         <ShowDataCard
@@ -53,23 +64,13 @@ export default function MainScreen() {
                     </SimpleContainer>
                 </SimpleContainer>
 
-                <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flex: 1 }}>
-                    <ComprasionDataCard
-                        colors={colors.doughnutChartColorScale}
-                        labels={['תיקים פתוחים', 'תיקים סגורים']}
-                        data={[mainScreenData?.AllCasesData?.length - mainScreenData?.NumberOfClosedCases, mainScreenData?.NumberOfClosedCases]}
-                        title={"סכימת תיקים"}
-                        centerText={`${mainScreenData?.AllCasesData?.length}`}
-                        subText='סה"כ תיקים'
-                        style={{ width: '100%' }}
-                    />
-                </SimpleContainer>
             </SimpleContainer>
 
             <SimpleContainer style={{ display: 'flex', height: '100%' }}>
                 <ClientsCard
                     style={{ width: '100%', }}
                     customerList={mainScreenData?.AllCustomersData}
+                    rePerformRequest={performRequest}
                 />
             </SimpleContainer>
 
