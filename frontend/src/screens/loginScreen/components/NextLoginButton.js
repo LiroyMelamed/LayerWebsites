@@ -1,6 +1,6 @@
 import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryButton";
 
-export default function NextLoginButton({ isProcessing, buttonText = 'להתחברות', leftIcon, rightIcon, onPress, style }) {
+export default function NextLoginButton({ isProcessing, buttonText = 'להתחברות', leftIcon, rightIcon, onPress, style, ...props }) {
     const buttonStyle = {
         alignSelf: 'center',
         justifyContent: 'center',
@@ -17,6 +17,7 @@ export default function NextLoginButton({ isProcessing, buttonText = 'להתחב
             rightIcon={rightIcon}
             style={buttonStyle}
             onPress={onPress}
+            {...props}
         />
     );
 }

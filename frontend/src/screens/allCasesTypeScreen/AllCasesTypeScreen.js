@@ -22,7 +22,7 @@ export default function AllCasesTypeScreen() {
     const { openPopup, closePopup } = usePopup();
     const { isSmallScreen } = useScreenSize();
     const { result: allCasesType, isPerforming: isPerformingAllCasesType, performRequest: reperformAfterSave } = useAutoHttpRequest(casesTypeApi.getAllCasesType);
-    const { result: casesTypeByName, isPerforming: isPerformingCasesTypeById, performRequest: SearchCaseTypeByName } = useHttpRequest(casesTypeApi.getCaseTypeByName);
+    const { result: casesTypeByName, isPerforming: isPerformingCasesTypeById, performRequest: SearchCaseTypeByName } = useHttpRequest(casesTypeApi.getCaseTypeByName, null, () => { });
 
     const handleSearch = (query) => {
         SearchCaseTypeByName(query);
@@ -49,7 +49,7 @@ export default function AllCasesTypeScreen() {
                         style={styles.searchInput}
                         buttonPressFunction={(chosen) => handleButtonPress(chosen)}
                     />
-                    <ChooseButton style={styles.chooseButton} buttonText="כמות שלבים" />
+                    <ChooseButton style={styles.chooseButton} buttonText="כמות שלבים" buttonChoices={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]} />
                 </SimpleContainer>
 
                 <AllCasesTypeCard

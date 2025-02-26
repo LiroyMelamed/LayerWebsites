@@ -16,7 +16,8 @@ export default function DefaultText({ controlId, children, shouldApplyClamping =
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             lineHeight: lineHeight || `${size * 1.2}px`,
-            whiteSpace: 'normal',
+            whiteSpace: 'pre-line',
+            overflowWrap: 'break-word',
             wordBreak: 'break-word',
         }),
     };

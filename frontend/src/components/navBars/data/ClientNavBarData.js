@@ -1,35 +1,34 @@
 import { ClientStackName } from "../../../navigation/ClientStack";
-import { UpdatesScreenName } from "../../../screens/client/updates/UpdatesScreen";
+import { UpdatesAndNotificationsScreenName } from "../../../screens/client/updates/UpdatesScreen";
+import { Text12 } from "../../specializedComponents/text/AllTextKindFile";
+import TermsOfConditons from "../../termsAndConditions/TermsOfConditons";
 
 export const getClientNavBarData = (navigate, openPopup) => ({
     NavBarLinks: [
         {
-            buttonText: "עידכונים",
+            buttonText: "עידכונים והתראות",
             buttonScreen: null,
             icon: null, // icons.NavBarIcons.Manager
-            onClick: () => { navigate(ClientStackName + UpdatesScreenName) }
+            onClick: () => { navigate(ClientStackName + UpdatesAndNotificationsScreenName) }
         },
         {
-            buttonText: "לפרופיל שלי",
+            buttonText: "הפרופיל שלי",
             buttonScreen: null,
             icon: null, // icons.NavBarIcons.UpdateCase
+            onClick: () => { openPopup(<Text12>{`שירות הפרופיל שלי יהיה זמין בקרוב`}</Text12>) },
         },
-        {
-            buttonText: "דף הסבר שימוש באתר",
-            buttonScreen: "דף הסבר שימוש באתר",
-            icon: null, // icons.NavBarIcons.AllCasesType
-            onClick: () => { },
-        },
+
         {
             buttonText: "תקנון שימוש",
             buttonScreen: "תקנון שימוש",
             icon: null, // icons.NavBarIcons.AllCasesType
-            onClick: () => { },
+            onClick: () => { openPopup(<TermsOfConditons />) },
         },
         {
-            buttonText: "ליצירת קשר",
+            buttonText: "יצירת קשר",
             buttonScreen: null,
             icon: null, // icons.NavBarIcons.NewCase
+            onClick: () => { openPopup(<Text12>{`שירות יצירת קשר יהיה זמין בקרוב`}</Text12>) },
         },
     ]
 });

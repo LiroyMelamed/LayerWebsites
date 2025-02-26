@@ -7,17 +7,19 @@ const ADD_CASE = "/AddCase";
 const TAG_CASE = "/TagCase/";
 const DELETE_CASE = "/DeleteCase/";
 const UPDATE_CASE = "/UpdateCase/";
+const UPDATE_STAGE = "/UpdateStage/";
 const GET_TAGGED_CASES = "/TaggedCases";
 const GET_TAGGED_CASES_BY_NAME = "/TaggedCasesByName?caseName=";
 
 const GET_MAIN_SCREEN_DATA = "/GetMainScreenData";
 
-const GET_ALL_CASES_TYPE = "/GetCasesType";
-const GET_CASE_TYPE_BY_ID = "/GetCaseType/";
 const GET_CASE_TYPE_BY_NAME = "/GetCaseTypeByName?caseTypeName=";
-const ADD_CASE_TYPE = "/AddCaseType";
 const DELETE_CASE_TYPE = "/DeleteCaseType/";
+const GET_CASE_TYPE_BY_ID = "/GetCaseType/";
 const UPDATE_CASE_TYPE = "/UpdateCaseType/";
+const GET_ALL_CASES_TYPE = "/GetCasesType";
+const GET_ALL_CASES_TYPE_FOR_FILTER = "/GetCasesTypeForFilter";
+const ADD_CASE_TYPE = "/AddCaseType";
 
 const casesApi = {
   getMainScreenData: async () => {
@@ -50,6 +52,11 @@ const casesApi = {
     return await ApiUtils.put(`${UPDATE_CASE}${CaseId}`, caseData);
   },
 
+  updateStageById: async (CaseId, caseData) => {
+    console.log('updateStageById', CaseId, caseData);
+    return await ApiUtils.put(`${UPDATE_STAGE}${CaseId}`, caseData);
+  },
+
   deleteCaseById: async (CaseId) => {
     return await ApiUtils.delete(`${DELETE_CASE}${CaseId}`);
   },
@@ -68,6 +75,10 @@ const casesApi = {
 export const casesTypeApi = {
   getAllCasesType: async () => {
     return await ApiUtils.get(GET_ALL_CASES_TYPE);
+  },
+
+  getAllCasesTypeForFilter: async () => {
+    return await ApiUtils.get(GET_ALL_CASES_TYPE_FOR_FILTER);
   },
 
   getCaseTypeById: async (caseTypeId) => {

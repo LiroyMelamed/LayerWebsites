@@ -6,7 +6,7 @@ import HoverContainer from "../../specializedComponents/containers/HoverContaine
 import SecondaryButton from "./SecondaryButton";
 import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 
-export default function ChooseButton({ buttonText = "סוג תיק", buttonChoices = ["הכל", 'cshhe', "הכל", 'cshhe', "הכל", 'cshhe', "הכל", 'cshhe', "הכל", 'cshhe', "הכל", 'cshhe', "הכל", 'cshhe', "הכל", 'cshhe', "הכל", 'cshhe', "הכל", 'cshhe', "הכל", 'cshhe', "הכל", 'cshhe',], style }) {
+export default function ChooseButton({ buttonText = "סוג תיק", buttonChoices, style }) {
     const [chosenChoice, setChosenChoice] = useState("הכל")
     const [showResults, setShowResults] = useState(false);
     const buttonRef = useRef()
@@ -37,7 +37,7 @@ export default function ChooseButton({ buttonText = "סוג תיק", buttonChoic
                         position: 'absolute',
                         zIndex: 1000,
                     }}
-                    queryResult={buttonChoices}
+                    queryResult={['הכל', ...buttonChoices]}
                     getButtonTextFunction={item => item}
                     onPressButtonFunction={OnPressChoice}
                     onClose={() => { setShowResults(false) }}

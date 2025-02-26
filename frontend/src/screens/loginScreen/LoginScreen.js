@@ -14,7 +14,7 @@ import loginApi from "../../api/loginApi";
 export const LoginScreenName = "/LoginScreen";
 
 export default function LoginScreen() {
-    const { phoneNumber, setPhoneNumber } = useLoginVerifyOtpCodeFieldsProvider();
+    const { phoneNumber, setPhoneNumber, phoneNumberError } = useLoginVerifyOtpCodeFieldsProvider();
     const navigate = useNavigate();
 
     const { isPerforming, performRequest } = useHttpRequest(loginApi.sendOtp, () => navigate(LoginStackName + LoginOtpScreenName));
@@ -22,6 +22,9 @@ export default function LoginScreen() {
     const handleInputChange = (event) => {
         setPhoneNumber(event.target.value);
     };
+
+    console.log('phoneNumberError', phoneNumberError);
+
 
     return (
         <LoginSimpleScreen
@@ -33,6 +36,7 @@ export default function LoginScreen() {
                     isProcessing={isPerforming}
                     buttonText="התחברות"
                     onPress={() => performRequest(phoneNumber)}
+                    disabled={phoneNumberError != null}
                 />
             }
         >
@@ -51,6 +55,8 @@ export default function LoginScreen() {
                     style={{ height: 56, width: "60%" }}
                     value={phoneNumber}
                     onChange={handleInputChange}
+                    error={phoneNumberError}
+                    maxLength={10}
                 />
             </SimpleContainer>
         </LoginSimpleScreen>

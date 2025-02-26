@@ -34,12 +34,11 @@ const DoughnutChart = ({ data, colors, labels, centerText, subText, style }) => 
                 enabled: false,
             },
         },
-
     };
 
     const containerStyle = {
         ...styles.container,
-        style
+        ...style
     }
 
     return (

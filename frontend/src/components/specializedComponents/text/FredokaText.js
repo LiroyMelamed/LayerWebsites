@@ -11,6 +11,7 @@ export default function FredokaText({
     children,
     ...restProps
 }) {
+
     const textStyle = {
         color,
         fontSize: size,
@@ -20,7 +21,6 @@ export default function FredokaText({
         display: 'flex',
         ...style,
     };
-
 
     return (
         <DefaultText style={textStyle} size={size} {...restProps}>

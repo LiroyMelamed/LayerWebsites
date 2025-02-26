@@ -2,7 +2,7 @@ import React from 'react';
 
 const Separator = ({ orientation = 'horizontal', style = {} }) => {
     const separatorStyle = {
-        backgroundColor: '#e0e0e0', // Default color, adjust as needed
+        backgroundColor: '#e0e0e0',
         ...(orientation === 'horizontal' ? styles.horizontal : styles.vertical),
         ...style,
     };
@@ -12,14 +12,14 @@ const Separator = ({ orientation = 'horizontal', style = {} }) => {
 
 const styles = {
     horizontal: {
-        height: '1px', // Thin line for horizontal separator
-        width: '100%', // Full width for horizontal separator
-        margin: '10px 0', // Space above and below
+        height: '1px',
+        width: '100%',
+        margin: '10px 0',
     },
     vertical: {
-        width: '1px', // Thin line for vertical separator
-        height: '100%', // Full height for vertical separator
-        margin: '0 10px', // Space on the left and right
+        width: '1px',
+        height: '100%',
+        margin: '0 10px',
     },
 };
 

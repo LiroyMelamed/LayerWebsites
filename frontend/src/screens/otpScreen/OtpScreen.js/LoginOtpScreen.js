@@ -22,7 +22,7 @@ export const AppRoles = {
 export const LoginOtpScreenName = "/LoginOtpScreen";
 
 export default function LoginOtpScreen() {
-    const { otpNumber, setOtpNumber, phoneNumber } = useLoginVerifyOtpCodeFieldsProvider();
+    const { otpNumber, setOtpNumber, otpError, phoneNumber } = useLoginVerifyOtpCodeFieldsProvider();
     const navigate = useNavigate();
 
     const { isPerforming, performRequest } = useHttpRequest(loginApi.verifyOtp, navigateTo);
@@ -48,6 +48,7 @@ export default function LoginOtpScreen() {
                     isProcessing={isPerforming}
                     buttonText="שליחה"
                     onPress={() => performRequest(phoneNumber, otpNumber)}
+                    disabled={otpError != null}
                 />
             }
         >
@@ -66,6 +67,9 @@ export default function LoginOtpScreen() {
                     style={{ height: 56, width: "60%" }}
                     value={otpNumber}
                     onChange={handleInputChange}
+                    maxLength={6}
+                    textStyle={{ textAlign: 'center', letterSpacing: '8px' }}
+                    error={otpError}
                 />
             </SimpleContainer>
         </LoginSimpleScreen>

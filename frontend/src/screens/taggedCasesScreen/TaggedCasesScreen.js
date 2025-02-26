@@ -14,7 +14,7 @@ import TopToolBarSmallScreen from '../../components/navBars/topToolBarSmallScree
 import PinnedCasesCard from './components/PinnedCasesCard';
 import { usePopup } from '../../providers/PopUpProvider';
 import TagCasePopup from './components/TagCasePopup';
-import casesApi from '../../api/casesApi';
+import casesApi, { casesTypeApi } from '../../api/casesApi';
 import { MainScreenName } from '../mainScreen/MainScreen';
 import { AdminStackName } from '../../navigation/AdminStack';
 
@@ -24,13 +24,14 @@ export default function TaggedCasesScreen() {
     const { openPopup } = usePopup();
     const { isSmallScreen } = useScreenSize();
     const { result: taggedCases, isPerforming: isPerformingTaggedCases, performRequest } = useAutoHttpRequest(casesApi.getAllTaggedCases);
-    const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getTaggedCaseByName);
+    const { result: allCasesTypes, isPerforming: isPerformingAllCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
+    const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getTaggedCaseByName, null, () => { });
 
     const handleSearch = (query) => {
         SearchCaseByName(query);
     };
 
-    if (isPerformingTaggedCases) {
+    if (isPerformingTaggedCases || isPerformingAllCasesTypes) {
         return <SimpleLoader />;
     }
 
@@ -49,7 +50,10 @@ export default function TaggedCasesScreen() {
                         getButtonTextFunction={(item) => item.CaseName}
                         style={styles.searchInput}
                     />
-                    <ChooseButton style={styles.chooseButton} />
+                    <ChooseButton
+                        buttonChoices={allCasesTypes}
+                        style={styles.chooseButton}
+                    />
                 </SimpleContainer>
 
                 <PinnedCasesCard

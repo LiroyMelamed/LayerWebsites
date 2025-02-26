@@ -7,7 +7,7 @@ import { TaggedCasesScreenName } from "../../../screens/taggedCasesScreen/Tagged
 import { AdminStackName } from "../../../navigation/AdminStack";
 import AdminPopup from "../../../screens/allMangerScreen/components/AdminPopup";
 
-export const getNavBarData = (navigate, openPopup) => ({
+export const getNavBarData = (navigate, openPopup, closePopup) => ({
     NavBarLinks: [
         {
             buttonText: "לתיקים נעוצים",
@@ -25,7 +25,7 @@ export const getNavBarData = (navigate, openPopup) => ({
             buttonText: "תיק חדש",
             buttonScreen: null,
             icon: null, // icons.NavBarIcons.NewCase
-            onClick: () => openPopup(<CaseFullView onFailureFunction={() => { }} />),
+            onClick: () => openPopup(<CaseFullView onFailureFunction={() => { }} closePopUpFunction={closePopup} />),
         },
         {
             buttonText: "עדכון תיק",
@@ -55,7 +55,7 @@ export const getNavBarData = (navigate, openPopup) => ({
             buttonText: "הוספת סוג תיק",
             buttonScreen: null,
             icon: null, // icons.NavBarIcons.AddCaseType
-            onClick: () => openPopup(<CaseTypeFullView onFailureFunction={() => { }} caseTypeName={null} />),
+            onClick: () => openPopup(<CaseTypeFullView onFailureFunction={() => { }} closePopUpFunction={closePopup} />),
         },
     ]
 });

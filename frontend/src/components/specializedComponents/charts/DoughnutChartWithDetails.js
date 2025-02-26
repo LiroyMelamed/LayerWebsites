@@ -2,7 +2,7 @@ import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { Text12 } from "../text/AllTextKindFile";
 import DoughnutChart from "./DoughnutChart";
 
-export default function DoughnutChartWithDetails({ data, colors, labels, centerText, subText }) {
+export default function DoughnutChartWithDetails({ data, colors, labels, centerText, subText, doughnutStyle, style }) {
     function calculatePercentages(data) {
         const total = data.reduce((sum, value) => sum + value, 0);
         if (total === 0) {
@@ -20,11 +20,13 @@ export default function DoughnutChartWithDetails({ data, colors, labels, centerT
                 flexDirection: "row",
                 marginTop: 16,
                 justifyContent: 'space-between',
+                alignItems: 'center',
                 flexWrap: 'wrap',
-                gap: 16
+                gap: 16,
+                ...style
             }}
         >
-            <SimpleContainer style={{ display: 'flex', flex: 1, justifyContent: 'center', flexDirection: 'column' }}>
+            <SimpleContainer style={{ display: 'flex', flex: 1, flexDirection: 'column', }}>
                 {percentages && labels?.map((label, index) => (
                     <SimpleContainer
                         key={index}
@@ -55,7 +57,7 @@ export default function DoughnutChartWithDetails({ data, colors, labels, centerT
                 labels={labels}
                 centerText={centerText}
                 subText={subText}
-                style={{ flex: 1 }}
+                style={{ flex: 1, ...doughnutStyle }}
             />
         </SimpleContainer>
     );

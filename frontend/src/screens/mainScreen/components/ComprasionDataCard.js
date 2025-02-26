@@ -1,11 +1,12 @@
 import SimpleCard from "../../../components/simpleComponents/SimpleCard";
 import { TextBold14 } from "../../../components/specializedComponents/text/AllTextKindFile";
 import DoughnutChartWithDetails from "../../../components/specializedComponents/charts/DoughnutChartWithDetails.js";
-import SimpleImage from "../../../components/simpleComponents/SimpleImage.js";
 import { images } from "../../../assets/images/images.js";
 import DefaultState from "../../../components/styledComponents/defaultState/DefaultState.js";
+import { useScreenSize } from "../../../providers/ScreenSizeProvider.js";
 
 export default function ComparisonDataCard({ title, data, colors, labels, centerText, subText, style }) {
+    const { isSmallScreen } = useScreenSize();
 
     if (checkIfAllZeros(data)) {
         return (
@@ -27,6 +28,7 @@ export default function ComparisonDataCard({ title, data, colors, labels, center
                 data={data}
                 colors={colors}
                 subText={subText}
+                doughnutStyle={{ maxWidth: isSmallScreen ? '152px' : '140px' }}
             />
 
         </SimpleCard>

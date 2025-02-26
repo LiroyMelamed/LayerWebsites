@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { colors } from "../../../constant/colors";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
-import SimpleImage from "../../simpleComponents/SimpleImage";
 import { images } from "../../../assets/images/images";
 import SimpleButton from "../../simpleComponents/SimpleButton";
 import SideBarMenuItem from "../navBarItems/SideBarMenuItem";
@@ -9,11 +8,11 @@ import { useNavigate } from "react-router-dom";
 import { usePopup } from "../../../providers/PopUpProvider";
 import { getNavBarData } from "../data/NavBarData";
 import ImageButton from "../../specializedComponents/buttons/ImageButton";
-import { MainScreenName } from "../../../screens/mainScreen/MainScreen";
+import PrimaryButton from "../../styledComponents/buttons/PrimaryButton";
 
 const Logo = images.Logos.FullLogoOriginal;
 
-export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate }) {
+export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, GetNavBarData = getNavBarData }) {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
     const [currentIndex, setCurrentIndex] = useState(chosenIndex);
@@ -22,7 +21,7 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate }
 
     const { openPopup } = usePopup();
 
-    const { NavBarLinks } = getNavBarData(navigate, openPopup);
+    const { NavBarLinks } = GetNavBarData(navigate, openPopup);
 
     const toggleDrawer = () => {
         setIsDrawerOpen(!isDrawerOpen);
@@ -48,17 +47,20 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate }
 
             {isDrawerOpen &&
                 <SimpleContainer style={styles.sidebarContainer}>
-                    {NavBarLinks.map((item, index) => (
-                        <SideBarMenuItem
-                            key={item.text}
-                            buttonText={item.buttonText}
-                            iconSource={item.icon}
-                            size={24}
-                            isPressed={currentIndex === index}
-                            onPressFunction={() => { setCurrentIndex(index); item.onClick(); toggleDrawer() }}
-                            buttonIndex={index}
-                        />
-                    ))}
+                    <SimpleContainer style={{ flex: 1, flexDirection: 'column' }}>
+                        {NavBarLinks.map((item, index) => (
+                            <SideBarMenuItem
+                                key={item.text}
+                                buttonText={item.buttonText}
+                                iconSource={item.icon}
+                                size={24}
+                                isPressed={currentIndex === index}
+                                onPressFunction={() => { setCurrentIndex(index); item.onClick(); toggleDrawer() }}
+                                buttonIndex={index}
+                            />
+                        ))}
+                    </SimpleContainer>
+                    <PrimaryButton style={{ alignSelf: 'center', marginBottom: '24px', backgroundColor: colors.darkRed }} onPress={() => { localStorage.removeItem("token"); navigate('/') }}>התנתק</PrimaryButton>
                 </SimpleContainer>
             }
         </>

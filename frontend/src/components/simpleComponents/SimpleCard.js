@@ -9,6 +9,7 @@ const SimpleCard = ({ style, children, ...props }) => {
         ...styles.card,
         ...style,
     }
+
     return (
         <SimpleContainer
             style={cardStyle}

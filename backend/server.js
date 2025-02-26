@@ -1,15 +1,18 @@
 require("dotenv").config();
-const express = require("express");
-const sql = require("mssql");
-const bcrypt = require("bcrypt");
+
 const jwt = require("jsonwebtoken");
+const express = require("express");
+const twilio = require("twilio");
+const bcrypt = require("bcrypt");
+const sql = require("mssql");
 const cors = require("cors");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const SECRET_KEY = process.env.JWT_SECRET || "supersecretkey";
 
-const companyName = 'MelamedLaw'
+const COMPANY_NAME = 'MelamedLaw';
+const WEBSITE_DOMAIN = 'client.melamedlaw.co.il'
 
 app.use(express.json());
 app.use(cors());
@@ -29,6 +32,11 @@ const dbConfig = {
 
 sql.connect(dbConfig).then(() => console.log("Connected to Azure SQL Database"));
 
+const client = new twilio(
+    process.env.TWILIO_ACCOUNT_SID,
+    process.env.TWILIO_AUTH_TOKEN
+);
+
 // Middleware for JWT Authentication
 const authMiddleware = (req, res, next) => {
     const token = req.headers.authorization?.split(" ")[1];
@@ -47,12 +55,17 @@ const authMiddleware = (req, res, next) => {
     }
 };
 
+const formatPhoneNumber = (phone) => {
+    const cleanedNumber = phone.replace(/\D/g, ""); // Remove non-numeric characters
+    return cleanedNumber.startsWith("0") ? `+972${cleanedNumber.slice(1)}` : `+${cleanedNumber}`;
+};
+
 // OTP APIs
 app.post("/RequestOtp", async (req, res) => {
     const { phoneNumber } = req.body;
 
     if (!phoneNumber) {
-        return res.status(400).json({ message: "Phone number is required" });
+        return res.status(400).json({ message: "נא להזין מספר פלאפון תקין" });
     }
 
     try {
@@ -61,7 +74,7 @@ app.post("/RequestOtp", async (req, res) => {
 
         const userResult = await sql.query(`SELECT UserId FROM Users WHERE PhoneNumber = '${phoneNumber}'`);
         if (userResult.recordset.length === 0) {
-            return res.status(404).json({ message: "User not found" });
+            return res.status(404).json({ message: "משתמש אינו קיים" });
         }
         const userId = userResult.recordset[0].UserId;
 
@@ -73,17 +86,27 @@ app.post("/RequestOtp", async (req, res) => {
             WHEN NOT MATCHED THEN INSERT (PhoneNumber, OTP, Expiry, UserId) VALUES (source.PhoneNumber, source.OTP, source.Expiry, source.UserId);
         `);
 
-        console.log(`OTP for ${phoneNumber}: ${otp}`); // Debugging output
-        res.status(200).json({ message: "OTP sent successfully" });
+        const formattedPhone = formatPhoneNumber(phoneNumber);
+
+        await client.messages.create({
+            body: `קוד האימות הוא: ${otp} \n\n @${WEBSITE_DOMAIN}`,
+            from: process.env.TWILIO_PHONE_NUMBER,
+            to: formattedPhone,
+        });
+
+        console.log(`Your OTP Code is: ${otp}`);
+
+
+        res.status(200).json({ message: "קוד נשלח בהצלחה" });
     } catch (error) {
-        console.error("Error in /request-otp:", error);
-        res.status(500).json({ message: "Error generating OTP", error: error.message });
+        res.status(500).json({ message: "שגיאה בשליחת הקוד", error: error.message });
     }
 });
 
 // Verify OTP and return JWT token with role
 app.post("/VerifyOtp", async (req, res) => {
     const { phoneNumber, otp } = req.body;
+
     try {
         const result = await sql.query(`
             SELECT Users.UserId, Users.Role 
@@ -95,7 +118,7 @@ app.post("/VerifyOtp", async (req, res) => {
         `);
 
         if (result.recordset.length === 0) {
-            return res.status(401).json({ message: "Invalid or expired OTP" });
+            return res.status(401).json({ message: "קוד לא תקין" });
         }
 
         const { UserId, Role } = result.recordset[0];
@@ -106,9 +129,9 @@ app.post("/VerifyOtp", async (req, res) => {
             { expiresIn: "2h" }
         );
 
-        res.status(200).json({ message: "OTP verified successfully", token, role: Role });
+        res.status(200).json({ message: "קוד אומת בהצלחה", token, role: Role });
     } catch (error) {
-        res.status(500).json({ message: "Error verifying OTP" });
+        res.status(500).json({ message: "שגיאה בתהליך האימות" });
     }
 });
 
@@ -321,7 +344,7 @@ app.get("/GetCaseByName", authMiddleware, async (req, res) => {
 });
 
 app.post("/AddCase", authMiddleware, async (req, res) => {
-    const { CaseName, CaseTypeId, CaseTypeName, UserId, CompanyName, CurrentStage, Descriptions, IsTagged } = req.body;
+    const { CaseName, CaseTypeId, CaseTypeName, UserId, CompanyName, CurrentStage, Descriptions, IsTagged, PhoneNumber, CustomerName } = req.body;
 
     try {
         const pool = await sql.connect(dbConfig);
@@ -361,6 +384,17 @@ app.post("/AddCase", authMiddleware, async (req, res) => {
             }
         }
 
+        const formattedPhone = formatPhoneNumber(PhoneNumber);
+
+        await client.messages.create({
+            body: `שלום לקוח יקר,\n\n התיק שלך נוצר במערכת והנך יכול לעקוב אחר התקדמותו בלינק הבא: \n\n ${WEBSITE_DOMAIN}`,
+            from: process.env.TWILIO_PHONE_NUMBER,
+            to: formattedPhone,
+        });
+
+        console.log(`היי ${CustomerName}, \n\n תיק ${CaseName} נוצר, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`);
+
+
         await transaction.commit();
         res.status(201).json({ message: "Case created successfully", caseId });
 
@@ -372,7 +406,7 @@ app.post("/AddCase", authMiddleware, async (req, res) => {
 
 app.put("/UpdateCase/:caseId", authMiddleware, async (req, res) => {
     const { caseId } = req.params;
-    const { CaseName, CurrentStage, IsClosed, IsTagged, Descriptions } = req.body;
+    const { CaseName, CurrentStage, IsClosed, IsTagged, Descriptions, PhoneNumber, CustomerName } = req.body;
 
     try {
         const pool = await sql.connect(dbConfig);
@@ -417,12 +451,74 @@ app.put("/UpdateCase/:caseId", authMiddleware, async (req, res) => {
             }
         }
 
+        const formattedPhone = formatPhoneNumber(PhoneNumber);
+
+        await client.messages.create({
+            body: `היי ${CustomerName}, \n\n תיק ${CaseName} התעדכן, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`,
+            from: process.env.TWILIO_PHONE_NUMBER,
+            to: formattedPhone,
+        });
+
+        console.log(`היי ${CustomerName}, \n\n תיק ${CaseName} התעדכן, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`);
+
+
         await transaction.commit();
         res.status(200).json({ message: "Case and descriptions updated successfully" });
 
     } catch (error) {
         console.error("Error updating case:", error);
         res.status(500).json({ message: "Error updating case" });
+    }
+});
+
+app.put("/UpdateStage/:caseId", authMiddleware, async (req, res) => {
+    const { caseId } = req.params;
+    const { CurrentStage, IsClosed, PhoneNumber, CustomerName, CaseName } = req.body;
+    let notificationMessage = "";
+
+    try {
+        const pool = await sql.connect(dbConfig);
+        const currentData = await pool.request()
+            .input("CaseId", sql.Int, caseId)
+            .query("SELECT CurrentStage, IsClosed FROM Cases WHERE CaseId = @CaseId");
+
+        const currentStage = currentData.recordset[0]?.CurrentStage;
+        const currentlyClosed = currentData.recordset[0]?.IsClosed;
+
+        await pool.request()
+            .input("CaseId", sql.Int, caseId)
+            .input("CurrentStage", sql.Int, CurrentStage)
+            .input("IsClosed", sql.Bit, IsClosed)
+            .query(`
+                UPDATE Cases 
+                SET CurrentStage = @CurrentStage, 
+                    IsClosed = @IsClosed 
+                WHERE CaseId = @CaseId
+            `);
+
+        // Check if a notification needs to be sent
+        if (CurrentStage !== currentStage) {
+            notificationMessage = `היי ${CustomerName}, \n\n בתיק ${CaseName} התעדכן שלב, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`;
+        }
+        if (IsClosed && !currentlyClosed) {
+            notificationMessage = `היי ${CustomerName}, \n\n תיק ${CaseName} הסתיים בהצלחה, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`;
+        }
+
+        if (notificationMessage) {
+            const formattedPhone = formatPhoneNumber(PhoneNumber);
+
+            await client.messages.create({
+                body: notificationMessage,
+                from: process.env.TWILIO_PHONE_NUMBER,
+                to: formattedPhone,
+            });
+        }
+
+        res.status(200).json({ message: "Stage updated successfully" });
+
+    } catch (error) {
+        console.error("Error updating stage:", error);
+        res.status(500).json({ message: "Error updating stage" });
     }
 });
 
@@ -775,18 +871,18 @@ app.get("/GetCustomers", authMiddleware, async (req, res) => {
 });
 
 app.post("/AddCustomer", authMiddleware, async (req, res) => {
-    const { name, email, phoneNumber, companyName } = req.body;
+    const { Name, PhoneNumber, Email, CompanyName } = req.body;
 
     try {
         const pool = await sql.connect(dbConfig);
         const request = pool.request();
 
-        request.input("Name", sql.NVarChar, name);
-        request.input("Email", sql.NVarChar, email);
-        request.input("PhoneNumber", sql.NVarChar, phoneNumber);
+        request.input("Name", sql.NVarChar, Name);
+        request.input("Email", sql.NVarChar, Email);
+        request.input("PhoneNumber", sql.NVarChar, PhoneNumber);
         request.input("PasswordHash", sql.NVarChar, null); // Store as NULL
         request.input("Role", sql.NVarChar, "User");
-        request.input("CompanyName", sql.NVarChar, companyName);
+        request.input("CompanyName", sql.NVarChar, CompanyName);
         request.input("CreatedAt", sql.DateTime, new Date());
 
         await request.query(`
@@ -794,11 +890,20 @@ app.post("/AddCustomer", authMiddleware, async (req, res) => {
             VALUES (@Name, @Email, @PhoneNumber, @PasswordHash, @Role, @CompanyName, @CreatedAt)
         `);
 
-        res.status(201).json({ message: "Customer created successfully" });
+        const formattedPhone = formatPhoneNumber(PhoneNumber);
+
+        await client.messages.create({
+            body: `היי ${Name}, ברוכים הבאים לשירות החדש שלנו.\n\n בלינק הבא תוכל להשלים את ההרשמה לשירות.\n\n בברכה ${COMPANY_NAME}`,
+            from: process.env.TWILIO_PHONE_NUMBER,
+            to: formattedPhone,
+        });
+
+        res.status(201).json({ message: "לקוח הוקם בהצלחה" });
 
     } catch (error) {
-        console.error("Error creating customer:", error);
-        res.status(500).json({ message: "Error creating customer" });
+        console.log('error', error);
+
+        res.status(500).json({ message: "שגיאה ביצירת לקוח" });
     }
 });
 
@@ -929,8 +1034,12 @@ app.delete("/DeleteCustomer/:userId", authMiddleware, async (req, res) => {
 // Case Type APIs - Get Case Types with Associated Descriptions
 app.get("/GetCasesType", authMiddleware, async (req, res) => {
     try {
+        const userId = req.user?.UserId;
+        const userRole = req.user?.Role;
+
         const pool = await sql.connect(dbConfig);
-        const result = await pool.request().query(`
+
+        let query = `
             SELECT 
                 CT.CaseTypeId, 
                 CT.CaseTypeName, 
@@ -940,8 +1049,24 @@ app.get("/GetCasesType", authMiddleware, async (req, res) => {
                 CD.Text
             FROM CaseTypes CT
             LEFT JOIN CaseTypeDescriptions CD ON CT.CaseTypeId = CD.CaseTypeId
-            ORDER BY CT.CaseTypeId, CD.Stage
-        `);
+        `;
+
+        // If the user is **NOT** an Admin, filter case types based on cases associated with the user
+        if (userRole !== "Admin") {
+            query += `
+                WHERE CT.CaseTypeId IN (
+                    SELECT DISTINCT C.CaseTypeId 
+                    FROM Cases C 
+                    WHERE C.UserId = @userId
+                )
+            `;
+        }
+
+        query += " ORDER BY CT.CaseTypeId, CD.Stage"; // Order results
+
+        const result = await pool.request()
+            .input("userId", sql.Int, userId)
+            .query(query);
 
         // ✅ **Process Data to Group CaseType with its Descriptions**
         const caseTypesMap = new Map();
@@ -970,6 +1095,46 @@ app.get("/GetCasesType", authMiddleware, async (req, res) => {
     } catch (error) {
         console.error("Error retrieving case types:", error);
         res.status(500).json({ message: "Error retrieving case types" });
+    }
+});
+
+app.get("/GetCasesTypeForFilter", authMiddleware, async (req, res) => {
+    try {
+        const userId = req.user?.UserId;
+        const userRole = req.user?.Role;
+
+        const pool = await sql.connect(dbConfig);
+
+        let query = `
+            SELECT DISTINCT CT.CaseTypeName
+            FROM CaseTypes CT
+        `;
+
+        // If the user is **NOT** an Admin, filter case types based on cases associated with the user
+        if (userRole !== "Admin") {
+            query += `
+                WHERE CT.CaseTypeId IN (
+                    SELECT DISTINCT C.CaseTypeId 
+                    FROM Cases C 
+                    WHERE C.UserId = @userId
+                )
+            `;
+        }
+
+        query += " ORDER BY CT.CaseTypeName"; // Order alphabetically
+
+        const result = await pool.request()
+            .input("userId", sql.Int, userId)
+            .query(query);
+
+        // ✅ Return only the list of CaseTypeName values
+        const caseTypeNames = result.recordset.map(row => row.CaseTypeName);
+
+        res.json(caseTypeNames);
+
+    } catch (error) {
+        console.error("Error retrieving case type names:", error);
+        res.status(500).json({ message: "Error retrieving case type names" });
     }
 });
 
@@ -1215,8 +1380,7 @@ app.get("/GetMainScreenData", authMiddleware, async (req, res) => {
             AllCustomersData: customersArray
         });
     } catch (error) {
-        console.error("Error fetching main screen data:", error);
-        res.status(500).json({ message: "Error fetching main screen data" });
+        res.status(500).json({ message: "שגיאה בקבלת נתוני מסך הבית" });
     }
 });
 

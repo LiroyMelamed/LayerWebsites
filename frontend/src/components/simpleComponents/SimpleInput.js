@@ -2,6 +2,7 @@ import React, { forwardRef, useState } from 'react';
 import SimpleContainer from './SimpleContainer';
 import SimpleIcon from './SimpleIcon';
 import { colors } from '../../constant/colors';
+import ErrorText from '../styledComponents/text/ErrorText';
 
 const SimpleInput = forwardRef(
     ({
@@ -19,12 +20,12 @@ const SimpleInput = forwardRef(
         disabled = false,
         onFocus,
         onBlur,
-        error = '',
+        error,
         ...props
     }, ref) => {
         const [isFocused, setIsFocused] = useState(false);
 
-        const sizeStyles = inputStyles[inputSize]; // Select the styles based on inputSize prop
+        const sizeStyles = inputStyles[inputSize];
 
         function getBorderColor() {
             if (disabled) return colors.disabledHighlighted;
@@ -47,6 +48,7 @@ const SimpleInput = forwardRef(
         }
 
         return (
+
             <SimpleContainer
                 ref={ref}
                 style={{
@@ -70,7 +72,7 @@ const SimpleInput = forwardRef(
                             ...styles.floatingLabel,
                             fontSize: titleFontSize,
                             fontFamily: 'Fredoka', // Ensures font is Fredoka for the input field
-                            right: rightIcon ? '40px' : '15px',
+                            right: rightIcon ? '40px' : '8px',
                             top: sizeStyles.labelTop,
                             borderRadius: 10000,
                             transform: isFocused || value ? sizeStyles.transformFocused : 'translateY(-50%)',
@@ -78,7 +80,7 @@ const SimpleInput = forwardRef(
                             color: error ? colors.error : colors.primaryHighlighted,
                         }}
                     >
-                        {title}
+                        {error || title}
                     </span>
                 )}
 
@@ -122,7 +124,9 @@ const SimpleInput = forwardRef(
                         style={{ ...IconStyle, marginLeft: '8px' }}
                     />
                 )}
+
             </SimpleContainer>
+
         );
     }
 );
@@ -131,7 +135,7 @@ const styles = {
     floatingLabel: {
         position: 'absolute',
         backgroundColor: colors.white,
-        padding: '0 5px',
+        padding: '0 0px',
         pointerEvents: 'none',
         transition: 'top 0.2s ease, transform 0.2s ease, opacity 0.2s ease',
     },
@@ -152,7 +156,7 @@ export const inputStyles = {
         padding: '8px',
         labelTop: '50%',
         borderStyle: 'solid',
-        transformFocused: 'translateY(-150%) scale(0.8)',
+        transformFocused: 'translateY(-100%) scale(0.7)',
     },
     Medium: {
         height: 32,
@@ -160,13 +164,13 @@ export const inputStyles = {
         padding: '16px',
         labelTop: '50%',
         borderStyle: 'solid',
-        transformFocused: 'translateY(-150%) scale(0.8)',
+        transformFocused: 'translateY(-150%) scale(0.7)',
     },
     Big: {
         height: 40,
         fontSize: 24,
         padding: '16px',
         labelTop: '50%',
-        transformFocused: 'translateY(-150%) scale(0.8)',
+        transformFocused: 'translateY(-150%) scale(0.7)',
     },
 };

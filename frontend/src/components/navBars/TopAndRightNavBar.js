@@ -9,15 +9,16 @@ import { images } from "../../assets/images/images";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import ImageButton from "../specializedComponents/buttons/ImageButton";
 import Separator from "../styledComponents/separators/Separator";
+import PrimaryButton from "../styledComponents/buttons/PrimaryButton";
 
 const Logo = images.Logos.LogoSlangWhite;
 
-export default function TopAndRightNavBar({ chosenIndex = -1, children, LogoNavigate }) {
+export default function TopAndRightNavBar({ chosenIndex = -1, children, LogoNavigate, GetNavBarData = getNavBarData }) {
   const navigate = useNavigate();
   const { isSmallScreen } = useScreenSize();
-  const { openPopup } = usePopup();
+  const { openPopup, closePopup } = usePopup();
   const [currentIndex, setCurrentIndex] = useState(chosenIndex);
-  const { NavBarLinks } = getNavBarData(navigate, openPopup);
+  const { NavBarLinks } = GetNavBarData(navigate, openPopup, closePopup);
 
   return (
     <SimpleContainer style={styles.mainContainer}>
@@ -27,7 +28,7 @@ export default function TopAndRightNavBar({ chosenIndex = -1, children, LogoNavi
             <ImageButton src={Logo} height={60} style={{ maxHeight: 60, alignSelf: 'center' }} onPress={() => { setCurrentIndex(-1); navigate(LogoNavigate) }} />
           </SimpleContainer>
           <Separator style={{ margin: '20px 0' }} />
-          <SimpleContainer style={{ flexDirection: 'column' }}>
+          <SimpleContainer style={{ flexDirection: 'column', flex: 1 }}>
             {NavBarLinks.map((item, index) => (
               <SideBarMenuItem
                 key={item.text}
@@ -41,7 +42,7 @@ export default function TopAndRightNavBar({ chosenIndex = -1, children, LogoNavi
             ))}
           </SimpleContainer>
 
-
+          <PrimaryButton style={{ alignSelf: 'center', marginBottom: '24px', backgroundColor: colors.darkRed }} onPress={() => { localStorage.removeItem("token"); navigate('/') }}>התנתק</PrimaryButton>
         </SimpleContainer>
       )}
 

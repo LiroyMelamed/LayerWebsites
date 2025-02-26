@@ -12,6 +12,7 @@ import { colors } from '../../constant/colors';
 import ClientsCard from './components/ClientsCard';
 import casesApi from '../../api/casesApi';
 import { AdminStackName } from '../../navigation/AdminStack';
+import SimpleScrollView from '../../components/simpleComponents/SimpleScrollView';
 
 export const MainScreenName = "/MainScreen";
 
@@ -27,52 +28,51 @@ export default function MainScreen() {
         <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
             {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={AdminStackName + MainScreenName} />}
 
-            <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flexWrap: 'wrap' }}>
-                <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flex: 1 }}>
-                    <ComprasionDataCard
-                        colors={colors.doughnutChartColorScale}
-                        labels={['תיקים פתוחים', 'תיקים סגורים']}
-                        data={[mainScreenData?.AllCasesData?.length - mainScreenData?.NumberOfClosedCases, mainScreenData?.NumberOfClosedCases]}
-                        title={"סכימת תיקים"}
-                        centerText={`${mainScreenData?.AllCasesData?.length}`}
-                        subText='סה"כ תיקים'
-                        style={{ width: '100%' }}
-                    />
-                </SimpleContainer>
-                <SimpleContainer style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                    <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', }}>
-                        <ShowDataCard
-                            numberText={mainScreenData?.AllCasesData?.length}
-                            title={'סה"כ תיקים'}
-                        />
-
-                        <ShowDataCard
-                            numberText={mainScreenData?.NumberOfClosedCases}
-                            title={"תיקים סגורים"}
+            <SimpleScrollView>
+                <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flexWrap: 'wrap' }}>
+                    <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flex: 1 }}>
+                        <ComprasionDataCard
+                            colors={colors.doughnutChartColorScale}
+                            labels={['תיקים פתוחים', 'תיקים סגורים']}
+                            data={[mainScreenData?.AllCasesData?.length - mainScreenData?.NumberOfClosedCases, mainScreenData?.NumberOfClosedCases]}
+                            title={"סכימת תיקים"}
+                            centerText={`${mainScreenData?.AllCasesData?.length}`}
+                            subText='סה"כ תיקים'
+                            style={{ width: '100%' }}
                         />
                     </SimpleContainer>
+                    <SimpleContainer style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                        <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', }}>
+                            <ShowDataCard
+                                numberText={mainScreenData?.AllCasesData?.length}
+                                title={'סה"כ תיקים'}
+                            />
 
-                    <SimpleContainer style={{ display: 'flex', flexWrap: 'wrap', flexDirection: 'row-reverse', }}>
-                        <ShowDataCard
-                            numberText={mainScreenData?.NumberOfTaggedCases}
-                            title={"תיקים מתוייגים"}
-                        />
-                        <ShowDataCard
-                            numberText={mainScreenData?.AllCustomersData?.length}
-                            title={"לקוחות פעילים"}
-                        />
+                            <ShowDataCard
+                                numberText={mainScreenData?.NumberOfClosedCases}
+                                title={"תיקים סגורים"}
+                            />
+                        </SimpleContainer>
+
+                        <SimpleContainer style={{ display: 'flex', flexWrap: 'wrap', flexDirection: 'row-reverse', }}>
+                            <ShowDataCard
+                                numberText={mainScreenData?.NumberOfTaggedCases}
+                                title={"תיקים מתוייגים"}
+                            />
+                            <ShowDataCard
+                                numberText={mainScreenData?.AllCustomersData?.length}
+                                title={"לקוחות פעילים"}
+                            />
+                        </SimpleContainer>
                     </SimpleContainer>
+
                 </SimpleContainer>
 
-            </SimpleContainer>
-
-            <SimpleContainer style={{ display: 'flex', height: '100%' }}>
                 <ClientsCard
-                    style={{ width: '100%', }}
                     customerList={mainScreenData?.AllCustomersData}
                     rePerformRequest={performRequest}
                 />
-            </SimpleContainer>
+            </SimpleScrollView>
 
         </SimpleScreen >
     );

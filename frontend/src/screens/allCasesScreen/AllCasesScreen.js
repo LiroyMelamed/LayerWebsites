@@ -1,4 +1,4 @@
-import casesApi from "../../api/casesApi";
+import casesApi, { casesTypeApi } from "../../api/casesApi";
 import { images } from "../../assets/images/images";
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
 import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
@@ -22,14 +22,15 @@ export const AllCasesScreenName = "/AllCases"
 export default function AllCasesScreen() {
     const { openPopup, closePopup } = usePopup();
     const { isSmallScreen } = useScreenSize();
+    const { result: allCasesTypes, isPerforming: isPerformingAllCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
     const { result: allCases, isPerforming: isPerformingAllCases, performRequest: reperformAfterSave } = useAutoHttpRequest(casesApi.getAllCases);
-    const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getCaseByName);
+    const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getCaseByName, null, () => { });
 
     const handleSearch = (query) => {
         SearchCaseByName(query);
     };
 
-    if (isPerformingAllCases) {
+    if (isPerformingAllCases || isPerformingAllCasesTypes) {
         return <SimpleLoader />;
     }
 
@@ -48,7 +49,10 @@ export default function AllCasesScreen() {
                         getButtonTextFunction={(item) => item.CaseName}
                         style={styles.searchInput}
                     />
-                    <ChooseButton style={styles.chooseButton} />
+                    <ChooseButton
+                        buttonChoices={allCasesTypes}
+                        style={styles.chooseButton}
+                    />
                 </SimpleContainer>
 
                 <AllCasesCard

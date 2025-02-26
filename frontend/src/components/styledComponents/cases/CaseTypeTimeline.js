@@ -2,10 +2,11 @@ import React from "react";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { Text12, TextBold12 } from "../../specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../constant/colors";
+import SimpleScrollView from "../../simpleComponents/SimpleScrollView";
 
 export default function CaseTypeTimeline({ stages = [], title, style }) {
     return (
-        <SimpleContainer style={{ ...style, width: '100%' }}>
+        <SimpleScrollView style={{ ...style, width: '100%' }}>
             <SimpleContainer style={styles.container}>
                 <SimpleContainer style={styles.verticalLine} />
 
@@ -42,7 +43,7 @@ export default function CaseTypeTimeline({ stages = [], title, style }) {
                     )}
                 </SimpleContainer>
             </SimpleContainer>
-        </SimpleContainer>
+        </SimpleScrollView>
     );
 }
 

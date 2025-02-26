@@ -7,25 +7,26 @@ import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryB
 import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 import { customersApi } from "../../../api/customersApi";
 import useHttpRequest from "../../../hooks/useHttpRequest";
+import useFieldState from "../../../hooks/useFieldState";
+import HebrewCharsValidation from "../../../functions/validation/HebrewCharsValidation";
+import emailValidation from "../../../functions/validation/EmailValidation";
+import IsraeliPhoneNumberValidation from "../../../functions/validation/IsraeliPhoneNumberValidation";
 
 export default function ClientPopup({ clientDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style }) {
-    const [client, setClient] = useState({
-        name: "",
-        phoneNumber: "",
-        email: "",
-        companyName: "",
-    });
+    const [name, setName, nameError] = useFieldState(HebrewCharsValidation, clientDetails?.Name || "");
+    const [companyName, setCompanyName, companyNameError] = useFieldState(HebrewCharsValidation, clientDetails?.CompanyName || "");
+    const [email, setEmail, emailError] = useFieldState(emailValidation, clientDetails?.Email || "");
+    const [phoneNumber, setPhoneNumber, phoneNumberError] = useFieldState(IsraeliPhoneNumberValidation, clientDetails?.PhoneNumber || "");
+
+    const [hasError, setHasError] = useState(false);
 
     useEffect(() => {
-        if (clientDetails) {
-            setClient({
-                name: clientDetails.Name,
-                phoneNumber: clientDetails.PhoneNumber,
-                email: clientDetails.Email,
-                companyName: clientDetails.CompanyName,
-            });
+        if (!name || !phoneNumber || !email || !companyName || nameError || phoneNumberError || emailError || companyNameError) {
+            setHasError(true)
+        } else {
+            setHasError(false)
         }
-    }, [clientDetails]);
+    }, [name, phoneNumber, email, companyName, nameError, phoneNumberError, emailError, companyNameError])
 
     const { isPerforming, performRequest } = useHttpRequest(
         clientDetails ? customersApi.updateCustomerById : customersApi.addCustomer,
@@ -45,19 +46,18 @@ export default function ClientPopup({ clientDetails, rePerformRequest, onFailure
         onFailureFunction
     );
 
-    const handleInputChange = (field, value) => {
-        setClient((prev) => ({ ...prev, [field]: value }));
-    };
-
     const handleSaveClient = () => {
-        if (!client.name || !client.phoneNumber || !client.email || !client.companyName) {
-            alert("All fields are required.");
-            return;
-        }
+        const clientData = {
+            UserId: clientDetails?.UserId,
+            Name: name,
+            PhoneNumber: phoneNumber,
+            Email: email,
+            CompanyName: companyName
+        };
 
         const apiCall = clientDetails
-            ? performRequest(clientDetails.UserId, client)
-            : performRequest(client);
+            ? performRequest(clientDetails.UserId, clientData)
+            : performRequest(clientData);
 
         apiCall.finally(() => closePopUpFunction?.());
     };
@@ -73,14 +73,16 @@ export default function ClientPopup({ clientDetails, rePerformRequest, onFailure
                     <SimpleInput
                         style={styles.inputStyle}
                         title={"שם לקוח"}
-                        value={client.name}
-                        onChange={(e) => handleInputChange("name", e.target.value)}
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        error={nameError}
                     />
                     <SimpleInput
                         style={styles.inputStyle}
                         title={"מספר פלאפון"}
-                        value={client.phoneNumber}
-                        onChange={(e) => handleInputChange("phoneNumber", e.target.value)}
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
+                        error={phoneNumberError}
                     />
                 </SimpleContainer>
 
@@ -88,14 +90,16 @@ export default function ClientPopup({ clientDetails, rePerformRequest, onFailure
                     <SimpleInput
                         style={styles.inputStyle}
                         title={"אימייל"}
-                        value={client.email}
-                        onChange={(e) => handleInputChange("email", e.target.value)}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        error={emailError}
                     />
                     <SimpleInput
                         style={styles.inputStyle}
                         title={"שם החברה"}
-                        value={client.companyName}
-                        onChange={(e) => handleInputChange("companyName", e.target.value)}
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        error={companyNameError}
                     />
                 </SimpleContainer>
 
@@ -113,6 +117,7 @@ export default function ClientPopup({ clientDetails, rePerformRequest, onFailure
                         style={styles.button}
                         size={buttonSizes.MEDIUM}
                         onPress={handleSaveClient}
+                        disabled={hasError}
                     >
                         {isPerforming ? "שומר..." : !clientDetails ? "שמור לקוח" : "עדכן לקוח"}
                     </PrimaryButton>

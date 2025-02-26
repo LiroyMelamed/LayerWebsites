@@ -1,25 +1,63 @@
+import { useNavigate } from "react-router-dom";
 import { images } from "../../../assets/images/images";
+import SimpleCard from "../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
-import SimpleImage from "../../../components/simpleComponents/SimpleImage";
 import SimpleScreen from "../../../components/simpleComponents/SimpleScreen";
 import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
+import UpdatesMenuItem from "../../../components/styledComponents/menuItems/UpdatesMenuItem";
 import { useScreenSize } from "../../../providers/ScreenSizeProvider";
+import { usePopup } from "../../../providers/PopUpProvider";
+import { Text12 } from "../../../components/specializedComponents/text/AllTextKindFile";
+import TopToolBarSmallScreen from "../../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
+import { ClientStackName } from "../../../navigation/ClientStack";
+import { ClientMainScreenName } from "../clientMainScreen/ClientMainScreen";
+import { getClientNavBarData } from "../../../components/navBars/data/ClientNavBarData";
+import SimpleImage from "../../../components/simpleComponents/SimpleImage";
 
-export const UpdatesScreenName = "/UpdatesScreen";
+export const UpdatesAndNotificationsScreenName = "/UpdatesAndNotificationsScreen";
 
-export default function UpdatesScreen() {
+const updatesMenuItems = [
+    {
+        name: 'התראות',
+        screenName: 'MessagesScreenName',
+    },
+    {
+        name: 'עידכונים',
+        screenName: 'MessagesScreenName',
+    },
+    {
+        name: 'הודעות',
+        screenName: 'MessagesScreenName',
+    },
+]
+
+export default function UpdatesAndNotificationsScreen() {
+    const { openPopup, closePopup } = usePopup();
     const { isSmallScreen } = useScreenSize();
+
+    function handleUpdatesMenuItemPress(item) {
+        openPopup(<Text12>{`שירות ${item.name} יהיה זמין בקרוב`}</Text12>)
+    }
 
     return (
         <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
+            {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={ClientStackName + ClientMainScreenName} GetNavBarData={getClientNavBarData} />}
 
-            <SimpleScrollView>
+            <SimpleScrollView style={{ marginTop: 40 }}>
                 <SimpleContainer style={styles.responsiveContainer}>
-
                     <SimpleImage
                         src={images.Updates.NewUpdates}
-                        style={{ width: '320px', alignSelf: 'center', borderRadius: '12px', marginTop: 40 }}
+                        style={{ maxWidth: '500px' }}
                     />
+
+                    <SimpleCard style={{ minWidth: '500px', maxWidth: '600px', flexDirection: 'column', marginTop: 40 }}>
+                        {updatesMenuItems.map(item => (
+                            <UpdatesMenuItem
+                                menuItemName={item.name}
+                                onPress={() => handleUpdatesMenuItemPress(item)}
+                            />
+                        ))}
+                    </SimpleCard>
                 </SimpleContainer>
             </SimpleScrollView>
 
@@ -35,9 +73,8 @@ const styles = {
     }),
     responsiveContainer: {
         display: 'flex',
-        flexDirection: 'row-reverse',
+        flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
         flexWrap: 'wrap',
         width: '100%',
         overflow: 'hidden',

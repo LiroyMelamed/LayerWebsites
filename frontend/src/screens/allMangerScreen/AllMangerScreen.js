@@ -21,7 +21,7 @@ export const AllMangerScreenName = "/AllManger"
 
 export default function AllMangerScreen() {
     const { result: adminsData, isPerforming: isPerformingAdminsData, performRequest: performGetAdmins } = useAutoHttpRequest(adminApi.getAllAdmins);
-    const { result: adminByName, isPerforming: isPerformingAdminById, performRequest: SearchAdminByName } = useHttpRequest(adminApi.getAdminByName);
+    const { result: adminByName, isPerforming: isPerformingAdminById, performRequest: SearchAdminByName } = useHttpRequest(adminApi.getAdminByName, null, () => { });
 
     const { openPopup, closePopup } = usePopup();
 
@@ -56,7 +56,7 @@ export default function AllMangerScreen() {
                         queryResult={adminByName}
                         buttonPressFunction={(chosen) => buttonPressFunction(chosen)}
                     />
-                    <ChooseButton style={styles.chooseButton} buttonText="סוג הרשאות" />
+                    {/* <ChooseButton style={styles.chooseButton} buttonText="סוג הרשאות" /> */}
                 </SimpleContainer>
 
                 <AdminsCard

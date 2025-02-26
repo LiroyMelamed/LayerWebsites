@@ -1,42 +1,39 @@
-import casesApi from "../../../api/casesApi";
-import { images } from "../../../assets/images/images";
-import ClientTopToolBarSmallScreen from "../../../components/navBars/topToolBarSmallScreen/ClientTopToolBarSmallScreen";
+import TopToolBarSmallScreen from "../../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
+import SearchInput from "../../../components/specializedComponents/containers/SearchInput";
+import { getClientNavBarData } from "../../../components/navBars/data/ClientNavBarData";
+import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
+import ChooseButton from "../../../components/styledComponents/buttons/ChooseButton";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
 import SimpleLoader from "../../../components/simpleComponents/SimpleLoader";
 import SimpleScreen from "../../../components/simpleComponents/SimpleScreen";
-import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
-import SearchInput from "../../../components/specializedComponents/containers/SearchInput";
-import ChooseButton from "../../../components/styledComponents/buttons/ChooseButton";
-import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
-import useHttpRequest from "../../../hooks/useHttpRequest";
-import { ClientStackName } from "../../../navigation/ClientStack";
-import { usePopup } from "../../../providers/PopUpProvider";
 import { useScreenSize } from "../../../providers/ScreenSizeProvider";
+import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
+import { ClientStackName } from "../../../navigation/ClientStack";
+import casesApi, { casesTypeApi } from "../../../api/casesApi";
 import ClosedCasesCard from "./components/ClosedCasesCard";
+import useHttpRequest from "../../../hooks/useHttpRequest";
+import { images } from "../../../assets/images/images";
 import OpenCasesCard from "./components/OpenCasesCard";
 
 export const ClientMainScreenName = "/ClientMainScreen";
 
 export default function ClientMainScreen() {
     const { isSmallScreen } = useScreenSize();
-    const { openPopup, closePopup } = usePopup();
-    const { result: allCases, isPerforming: isPerformingAllCases, performRequest: reperformAfterSave } = useAutoHttpRequest(casesApi.getAllCases);
+    const { result: allCases, isPerforming: isPerformingAllCases } = useAutoHttpRequest(casesApi.getAllCases);
+    const { result: allCasesTypes, isPerforming: isPerformingAllCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
     const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getCaseByName);
 
     const handleSearch = (query) => {
         SearchCaseByName(query);
     };
 
-    if (isPerformingAllCases) {
+    if (isPerformingAllCases || isPerformingAllCasesTypes) {
         return <SimpleLoader />;
     }
 
-    console.log('allCases', allCases);
-
-
     return (
         <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
-            {isSmallScreen && <ClientTopToolBarSmallScreen LogoNavigate={ClientStackName + ClientMainScreenName} />}
+            {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={ClientStackName + ClientMainScreenName} GetNavBarData={getClientNavBarData} />}
 
             <SimpleScrollView>
                 <SimpleContainer style={styles.responsiveContainer}>
@@ -49,7 +46,7 @@ export default function ClientMainScreen() {
                         getButtonTextFunction={(item) => item.CaseName}
                         style={styles.searchInput}
                     />
-                    <ChooseButton style={styles.chooseButton} />
+                    <ChooseButton style={styles.chooseButton} buttonChoices={allCasesTypes} />
                 </SimpleContainer>
 
                 <OpenCasesCard

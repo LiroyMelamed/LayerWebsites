@@ -29,7 +29,7 @@ export default function CaseMenuItem({
     isClient = false,
     style
 }) {
-    const { isPerforming: isPerformingSetCase, performRequest: setCase } = useHttpRequest(casesApi.updateCaseById);
+    const { isPerforming: isPerformingSetCase, performRequest: setCase } = useHttpRequest(casesApi.updateStageById);
     const { openPopup, closePopup } = usePopup();
     const [fullCaseListener, setFullCaseListener] = useState(fullCase);
     const [isOpen, setIsOpen] = useState(false);
