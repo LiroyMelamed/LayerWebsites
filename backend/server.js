@@ -14,19 +14,23 @@ const SECRET_KEY = process.env.JWT_SECRET || "supersecretkey";
 const COMPANY_NAME = 'MelamedLaw';
 const WEBSITE_DOMAIN = 'client.melamedlaw.co.il'
 
+app.use(express.json());
+
 const allowedOrigins = [
-    "https://melamedlaw.vercel.app",
-    "https://melamedlaw-3ludyibp6-liroymelamed",
-    "https://melamedlaw-production.up.railway.app",
-    "https://melamedlaw-pjmqm8s0m-liroymelameds-projects.vercel.app/",
-    "https://melamedlaw-jvbr8d9vs-liroymelameds-projects.vercel.app/",
-    "melamedlaw-jvbr8d9vs-liroymelameds-projects.vercel.app/"
+    "https://melamedlaw.vercel.app", // Your final production domain
+    "https://melamedlaw-production.up.railway.app", // Your backend URL
+    "https://melamedlaw-jvbr8d9vs-liroymelameds-projects.vercel.app", // The one Vercel assigned for testing
 ];
 
-app.use(express.json());
 app.use(
     cors({
-        origin: allowedOrigins,
+        origin: function (origin, callback) {
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+            } else {
+                callback(new Error("CORS not allowed for this origin"));
+            }
+        },
         methods: ["GET", "POST", "PUT", "DELETE"],
         credentials: true,
     })
@@ -51,6 +55,14 @@ const client = new twilio(
     process.env.TWILIO_ACCOUNT_SID,
     process.env.TWILIO_AUTH_TOKEN
 );
+
+app.use((req, res, next) => {
+    console.log(`Request: ${req.method} ${req.url}`);
+    console.log("Headers:", req.headers);
+    console.log("Body:", req.body);
+    next();
+});
+
 
 // Middleware for JWT Authentication
 const authMiddleware = (req, res, next) => {
