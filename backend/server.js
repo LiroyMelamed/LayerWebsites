@@ -14,19 +14,21 @@ const SECRET_KEY = process.env.JWT_SECRET || "supersecretkey";
 const COMPANY_NAME = 'MelamedLaw';
 const WEBSITE_DOMAIN = 'client.melamedlaw.co.il'
 
-// Allow requests from your Vercel frontend
 const allowedOrigins = [
-    "https://melamedlaw-pnybxcl55-liroymelameds-projects.vercel.app",
+    "https://melamedlaw.vercel.app",
+    "https://melamedlaw-3ludyibp6-liroymelamed",
+    "https://melamedlaw-production.up.railway.app",
+    "https://melamedlaw-3ludyibp6-liroymelameds-projects.vercel.app/"
 ];
 
 app.use(express.json());
-app.use(cors(
-    {
+app.use(
+    cors({
         origin: allowedOrigins,
         methods: ["GET", "POST", "PUT", "DELETE"],
-        credentials: true, // Allow cookies if needed
-    }
-));
+        credentials: true,
+    })
+);
 
 // Database Connection
 const dbConfig = {

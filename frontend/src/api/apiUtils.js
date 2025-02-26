@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const ApiUtils = axios.create({
-    baseURL: "melamedlaw-production.up.railway.app",
+    baseURL: "https://melamedlaw-production.up.railway.app",
 });
 
 // Add a request interceptor to include the token
