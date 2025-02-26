@@ -64,7 +64,11 @@ const formatPhoneNumber = (phone) => {
 app.post("/RequestOtp", async (req, res) => {
     const { phoneNumber } = req.body;
 
+    console.log('RequestOtp', phoneNumber);
+
+
     if (!phoneNumber) {
+        console.log('RequestOtp-!phoneNumber');
         return res.status(400).json({ message: "נא להזין מספר פלאפון תקין" });
     }
 
@@ -74,6 +78,7 @@ app.post("/RequestOtp", async (req, res) => {
 
         const userResult = await sql.query(`SELECT UserId FROM Users WHERE PhoneNumber = '${phoneNumber}'`);
         if (userResult.recordset.length === 0) {
+            console.log("משתמש אינו קיים");
             return res.status(404).json({ message: "משתמש אינו קיים" });
         }
         const userId = userResult.recordset[0].UserId;
@@ -87,6 +92,8 @@ app.post("/RequestOtp", async (req, res) => {
         `);
 
         const formattedPhone = formatPhoneNumber(phoneNumber);
+        console.log("formattedPhone", formattedPhone);
+
 
         await client.messages.create({
             body: `קוד האימות הוא: ${otp} \n\n @${WEBSITE_DOMAIN}`,
