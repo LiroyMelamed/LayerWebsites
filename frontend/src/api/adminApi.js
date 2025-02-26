@@ -14,8 +14,6 @@ export const adminApi = {
     },
 
     addAdmin: async (adminData) => {
-        console.log("adminData", adminData);
-
         return await ApiUtils.post(ADD_ADMIN_ENDPOINT, adminData);
     },
 

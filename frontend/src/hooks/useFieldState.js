@@ -21,8 +21,6 @@ export default function useFieldState(checkForErrorFunction, defaultValue = null
     }
 
     function errorFunction(currentValue) {
-        console.log('errorFunction', currentValue);
-
         return checkForErrorFunction?.(currentValue)
     }
 

@@ -18,7 +18,7 @@ const allowedOrigins = [
     "https://melamedlaw.vercel.app",
     "https://melamedlaw-3ludyibp6-liroymelamed",
     "https://melamedlaw-production.up.railway.app",
-    "https://melamedlaw-3ludyibp6-liroymelameds-projects.vercel.app/"
+    "https://melamedlaw-pjmqm8s0m-liroymelameds-projects.vercel.app/"
 ];
 
 app.use(express.json());

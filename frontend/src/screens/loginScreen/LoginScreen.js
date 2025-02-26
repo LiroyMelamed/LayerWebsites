@@ -23,8 +23,6 @@ export default function LoginScreen() {
         setPhoneNumber(event.target.value);
     };
 
-    console.log('phoneNumberError', phoneNumberError);
-
 
     return (
         <LoginSimpleScreen
