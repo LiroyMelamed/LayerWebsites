@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const ApiUtils = axios.create({
-    baseURL: "http://localhost:5000",
+    baseURL: "https://railway.com/project/2d09abdf-bf17-4230-87fe-2c575c3d0adf/service/548c481f-e69c-4082-b37f-61680bf5d916?environmentId=3c793587-1a37-44e9-9996-e9c43d53116e&id=5b078e25-bb6a-44bb-b21f-853221c74738#deploy",
 });
 
 // Add a request interceptor to include the token
