@@ -52,7 +52,7 @@ app.use(
 const dbConfig = {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    server: process.env.DB_SERVER,
+    server: process.env.DB_SERVER_NAME,
     database: process.env.DB_NAME,
     options: {
         encrypt: true,
@@ -100,7 +100,6 @@ async function sendMessage(messageBody, formattedPhone) {
         });
     } else {
         console.log('messageBody', messageBody);
-
     }
 }
 
@@ -328,7 +327,7 @@ app.get("/GetCaseByName", authMiddleware, async (req, res) => {
         `;
 
         if (userRole !== "Admin") {
-            query += " AND C.UserId = @userId"; // Clients only see their own cases
+            query += " AND C.UserId = @userId";
         }
 
         query += " ORDER BY C.CaseId, CD.Stage";
@@ -342,7 +341,6 @@ app.get("/GetCaseByName", authMiddleware, async (req, res) => {
             return res.status(404).json({ message: "No cases found with this name" });
         }
 
-        // **✅ Process Data to Group Case with Descriptions**
         const casesMap = new Map();
 
         result.recordset.forEach(row => {
@@ -501,11 +499,16 @@ app.put("/UpdateCase/:caseId", authMiddleware, async (req, res) => {
 
 app.put("/UpdateStage/:caseId", authMiddleware, async (req, res) => {
     const { caseId } = req.params;
-    const { CurrentStage, IsClosed, PhoneNumber, CustomerName, CaseName } = req.body;
+    const { CurrentStage, IsClosed, PhoneNumber, CustomerName, Descriptions, CaseName } = req.body;
     let notificationMessage = "";
 
     try {
         const pool = await sql.connect(dbConfig);
+
+        const transaction = new sql.Transaction(pool);
+
+        await transaction.begin();
+
         const currentData = await pool.request()
             .input("CaseId", sql.Int, caseId)
             .query("SELECT CurrentStage, IsClosed FROM Cases WHERE CaseId = @CaseId");
@@ -524,6 +527,27 @@ app.put("/UpdateStage/:caseId", authMiddleware, async (req, res) => {
                 WHERE CaseId = @CaseId
             `);
 
+        if (Descriptions && Descriptions.length > 0) {
+            for (const desc of Descriptions) {
+                const descRequest = new sql.Request(transaction);
+                descRequest.input("DescriptionId", sql.Int, desc.DescriptionId);
+                descRequest.input("CaseId", sql.Int, caseId);
+                descRequest.input("Stage", sql.Int, desc.Stage);
+                descRequest.input("Text", sql.NVarChar, desc.Text);
+                descRequest.input("Timestamp", sql.DateTime, desc.Timestamp ? new Date(desc.Timestamp) : null);
+                descRequest.input("IsNew", sql.Bit, desc.IsNew ? 1 : 0);
+
+                await descRequest.query(`
+                        UPDATE CaseDescriptions 
+                        SET Stage = @Stage, 
+                            Text = @Text, 
+                            Timestamp = @Timestamp, 
+                            IsNew = @IsNew
+                        WHERE DescriptionId = @DescriptionId AND CaseId = @CaseId
+                    `);
+            }
+        }
+
         // Check if a notification needs to be sent
         if (CurrentStage !== currentStage) {
             notificationMessage = `היי ${CustomerName}, \n\n בתיק ${CaseName} התעדכן שלב, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`;
@@ -537,6 +561,8 @@ app.put("/UpdateStage/:caseId", authMiddleware, async (req, res) => {
 
             sendMessage(notificationMessage, formattedPhone);
         }
+
+        await transaction.commit();
 
         res.status(200).json({ message: "Stage updated successfully" });
 

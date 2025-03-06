@@ -1,10 +1,11 @@
 import React, { forwardRef } from 'react';
 import { colors } from '../../constant/colors';
-import SimpleContainer from './SimpleContainer';
 
-// Forward ref to allow parent component to access the button's DOM node
 const SimpleButton = forwardRef(({ controlId, style, textStyle, onPress, disabled, onPressIn, onPressOut, children, ...props }, ref) => {
+
   function handlePress(event) {
+    console.log('handlePress');
+
     if (!disabled) {
       onPress?.(event);
     }
@@ -25,7 +26,7 @@ const SimpleButton = forwardRef(({ controlId, style, textStyle, onPress, disable
       onMouseDown={onPressIn}
       onMouseUp={onPressOut}
       disabled={disabled}
-      ref={ref} // Attach ref here
+      ref={ref}
     >
       {children}
     </button >

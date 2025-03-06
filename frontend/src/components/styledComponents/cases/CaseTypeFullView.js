@@ -7,27 +7,30 @@ import { casesTypeApi } from "../../../api/casesApi";
 import useHttpRequest from "../../../hooks/useHttpRequest";
 import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryButton";
 import SimpleTextArea from "../../../components/simpleComponents/SimpleTextArea";
+import useFieldState from "../../../hooks/useFieldState";
+import HebrewCharsValidation from "../../../functions/validation/HebrewCharsValidation";
+import { NumberOfStagesValidation } from "../../../functions/validation/NumberOfStagesValidation";
 
 export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style }) {
-    const [caseType, setCaseType] = useState({
-        CaseTypeName: "",
-        NumberOfStages: "",
-        Descriptions: [{ Stage: 1, Text: "", Timestamp: "", New: false }],
-    });
+    const [caseTypeName, setCaseTypeName, caseTypeNameError] = useFieldState(HebrewCharsValidation, caseTypeDetails?.CaseTypeName || "");
+    const [numberOfStages, setNumberOfStages, numberOfStagesError] = useFieldState(NumberOfStagesValidation, caseTypeDetails?.NumberOfStages.toString() || "");
+    const [descriptions, setDescriptions] = useState(caseTypeDetails?.Descriptions || [{ Stage: 1, Text: "", Timestamp: "", New: false }]);
+
+    const [hasError, setHasError] = useState(false);
 
     useEffect(() => {
-        if (caseTypeDetails) {
-            setCaseType({
-                CaseTypeName: caseTypeDetails.CaseTypeName,
-                NumberOfStages: caseTypeDetails.NumberOfStages.toString(),
-                Descriptions: caseTypeDetails.Descriptions || [{ Stage: 1, Text: "", Timestamp: "", New: false }],
-            });
+        if (!caseTypeName || !numberOfStages || caseTypeNameError || numberOfStagesError) {
+            setHasError(true);
+        } else {
+            setHasError(false);
         }
-    }, [caseTypeDetails]);
+    }, [caseTypeName, numberOfStages, caseTypeNameError, numberOfStagesError]);
 
     const { isPerforming, performRequest } = useHttpRequest(
         caseTypeDetails ? casesTypeApi.updateCaseTypeById : casesTypeApi.addCaseType,
         () => {
+            console.log('hereeeeeeeeeeeeeeee');
+
             closePopUpFunction?.();
             rePerformRequest?.();
         },
@@ -43,19 +46,20 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
         onFailureFunction
     );
 
-    const handleInputChange = (field, value) => {
-        setCaseType((prev) => ({ ...prev, [field]: value }));
-    };
-
     const handleSaveCaseType = () => {
-        if (!caseType.CaseTypeName || !caseType.NumberOfStages) {
-            alert("Please provide both case type name and number of stages.");
+        if (!caseTypeName || !numberOfStages) {
             return;
         }
 
+        const caseTypeToSend = {
+            CaseTypeName: caseTypeName,
+            NumberOfStages: numberOfStages,
+            Descriptions: descriptions || [{ Stage: 1, Text: "", Timestamp: "", New: false }],
+        }
+
         const apiCall = caseTypeDetails
-            ? performRequest(caseTypeDetails.CaseTypeId, caseType)
-            : performRequest(caseType);
+            ? performRequest(caseTypeDetails.CaseTypeId, caseTypeToSend)
+            : performRequest(caseTypeToSend);
 
         apiCall.finally(() => closePopUpFunction?.());
     };
@@ -65,44 +69,39 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
     };
 
     const handleAddStage = () => {
-        setCaseType((prev) => {
+        setDescriptions((prev) => {
             const newStage = prev.Descriptions.length + 1;
-            return {
-                ...prev,
-                NumberOfStages: newStage.toString(),
-                Descriptions: [...prev.Descriptions, { Stage: newStage, Text: "", Timestamp: "", New: false }],
-            };
+            return [...prev, { Stage: newStage, Text: "", Timestamp: "", New: false }];
         });
     };
 
     useEffect(() => {
-        setCaseType((prevDetails) => {
-            const currentStages = prevDetails.Descriptions.length;
-            const targetStages = Number(prevDetails.NumberOfStages);
+        if (!numberOfStagesError && numberOfStages) {
+            setDescriptions((prevDescriptions) => {
+                const currentStages = prevDescriptions.length;
+                const targetStages = Number(numberOfStages);
 
-            if (targetStages > currentStages) {
-                // Add new stages without modifying existing ones
-                const newStages = Array.from({ length: targetStages - currentStages }, (_, index) => ({
-                    Stage: currentStages + index + 1,
-                    Text: '',
-                    Timestamp: '',
-                    New: false,
-                }));
+                if (targetStages > currentStages) {
+                    const newStages = Array.from({ length: targetStages - currentStages }, (_, index) => ({
+                        Stage: currentStages + index + 1,
+                        Text: '',
+                        Timestamp: '',
+                        New: false,
+                    }));
 
-                return {
-                    ...prevDetails,
-                    Descriptions: [...prevDetails.Descriptions, ...newStages],
-                };
-            } else if (targetStages < currentStages) {
-                return {
-                    ...prevDetails,
-                    Descriptions: prevDetails.Descriptions.slice(0, targetStages),
-                };
-            }
+                    return [...prevDescriptions, ...newStages];
+                } else if (targetStages < currentStages) {
+                    return [prevDescriptions.slice(0, targetStages)];
+                }
 
-            return prevDetails;
-        });
-    }, [caseType.NumberOfStages]);
+                return prevDescriptions;
+            });
+        }
+    }, [numberOfStages]);
+
+    useEffect(() => {
+        console.log('descriptions', descriptions);
+    }, [descriptions]);
 
 
     return (
@@ -112,28 +111,30 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
                     <SimpleInput
                         style={styles.inputStyle}
                         title={"שם סוג התיק"}
-                        value={caseType.CaseTypeName}
-                        onChange={(e) => handleInputChange("CaseTypeName", e.target.value)}
+                        value={caseTypeName}
+                        onChange={(e) => setCaseTypeName(e.target.value)}
+                        error={caseTypeNameError}
                     />
                     <SimpleInput
                         style={styles.inputStyle}
                         title={"מספר שלבים"}
-                        value={caseType.NumberOfStages}
-                        onChange={(e) => handleInputChange("NumberOfStages", e.target.value)}
+                        value={numberOfStages}
+                        onChange={(e) => setNumberOfStages(e.target.value)}
+                        error={numberOfStagesError}
                     />
                 </SimpleContainer>
 
-                {caseType.Descriptions.map((description, index) => (
+                {descriptions.map((description, index) => (
                     <SimpleTextArea
                         key={index}
                         title={`תיאור מס' ${index + 1}`}
                         value={description.Text || ""}
                         style={{ marginTop: index != 0 ? 8 : 0 }}
                         onChange={(text) => {
-                            setCaseType((prev) => {
-                                const updatedDescriptions = [...prev.Descriptions];
+                            setDescriptions((prev) => {
+                                const updatedDescriptions = [...prev];
                                 updatedDescriptions[index].Text = text;
-                                return { ...prev, Descriptions: updatedDescriptions };
+                                return updatedDescriptions;
                             });
                         }}
                     />
@@ -153,6 +154,7 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
                         onPress={handleSaveCaseType}
                         isPerforming={isPerforming}
                         style={styles.button}
+                        disabled={hasError}
                     >
                         {isPerforming ? "שומר..." : caseTypeDetails ? "עדכן סוג תיק" : "שמור סוג תיק"}
                     </PrimaryButton>

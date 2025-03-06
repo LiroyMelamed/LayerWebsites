@@ -27,7 +27,7 @@ export default function TopCenteredLogo({ logoSrc = images.Logos.FullLogoBlack, 
         <SimpleContainer style={ContainerStyle}>
             <SimpleImage
                 src={logoSrc}
-                // tintColor={colors.text}
+                tintColor={colors.text}
                 style={{ maxHeight: '50px' }}
             />
 

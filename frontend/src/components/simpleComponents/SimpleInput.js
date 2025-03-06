@@ -62,6 +62,7 @@ const SimpleInput = forwardRef(
                     boxShadow: isFocused ? '0 0 4px rgba(0, 0, 0, 0.2)' : 'none',
                     direction: 'rtl',
                     height: sizeStyles.height,
+                    width: '100%',
                     ...style,
                 }}
             >
@@ -104,7 +105,7 @@ const SimpleInput = forwardRef(
                         backgroundColor: 'transparent',
                         outline: 'none',
                         fontSize: sizeStyles.fontSize,
-                        color: disabled ? colors.disabledText : colors.text,
+                        color: disabled ? colors.disabled : colors.text,
                         textAlign: 'right',
                         ...textStyle,
                     }}
@@ -112,7 +113,7 @@ const SimpleInput = forwardRef(
                     value={value}
                     onChange={onChange}
                     onFocus={handleFocus}
-                    onBlur={handleBlur}
+                    // onBlur={handleBlur}
                     disabled={disabled}
                     {...props}
                 />

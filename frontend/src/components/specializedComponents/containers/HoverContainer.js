@@ -24,11 +24,11 @@ const HoverContainer = ({ queryResult = [], isPerforming, getButtonTextFunction,
 
         const handleClickOutside = (event) => {
             if (hoverRef.current && !hoverRef.current.contains(event.target)) {
-                onClose(); // Call onClose when clicking outside
+                onClose();
             }
         };
 
-        adjustPosition(); // Initial adjustment
+        adjustPosition();
         window.addEventListener('resize', adjustPosition);
         window.addEventListener('scroll', adjustPosition);
         document.addEventListener('mousedown', handleClickOutside);
@@ -52,12 +52,12 @@ const HoverContainer = ({ queryResult = [], isPerforming, getButtonTextFunction,
                 boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
                 position: 'absolute',
                 minWidth: 120,
-                maxHeight: "400px", // Ensure maxHeight is set on the container
-                overflow: 'hidden', // Hide overflow for cleaner edges
+                maxHeight: "400px",
+                overflow: 'hidden',
                 zIndex: 1002,
             }}
         >
-            <SimpleScrollView style={{ maxHeight: "400px" }}> {/* Set maxHeight and enable scrolling */}
+            <SimpleScrollView style={{ maxHeight: "400px" }}>
                 {isPerforming ? (
                     <SimpleLoader />
                 ) : (
@@ -74,7 +74,7 @@ const HoverContainer = ({ queryResult = [], isPerforming, getButtonTextFunction,
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                     }}
-                                    onPress={() => onPressButtonFunction(getButtonTextFunction?.(result), result)} // ensure this is an arrow function
+                                    onPress={() => onPressButtonFunction(getButtonTextFunction?.(result), result)}
                                 >
                                     <Text20>{getButtonTextFunction?.(result)}</Text20>
                                 </SimpleButton>

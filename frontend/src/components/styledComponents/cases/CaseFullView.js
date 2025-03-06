@@ -32,7 +32,9 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
 
     const { result: customers, isPerforming: isPerformingCustomers, performRequest: searchCustomers } = useHttpRequest(customersApi.getCustomersByName, null, () => { });
 
-    const { result: caseTypes, isPerforming: isPerformingCaseTypes, performRequest: searchCaseTypes } = useHttpRequest(casesTypeApi.getCaseTypeByName, null, () => { });
+    const { result: caseTypes, isPerforming: isPerformingCaseTypes, performRequest: searchCaseTypes } = useHttpRequest(casesTypeApi.getCaseTypeByName, (data) => {
+        console.log('getCaseTypeByName', data);
+    }, () => { });
 
     const { result: cases, isPerforming: isPerformingCases, performRequest: searchCases } = useHttpRequest(casesApi.getCaseByName, null, () => { });
 
@@ -59,7 +61,12 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
     };
 
     const handleCaseTypeSelect = (caseTypeName) => {
+        console.log('handleCaseTypeSelect', caseTypeName);
+
         const selectedCaseType = caseTypes.find(type => type.CaseTypeName === caseTypeName);
+
+        console.log('selectedCaseType', selectedCaseType);
+
         if (selectedCaseType) {
             setCaseData((prevDetails) => ({
                 ...prevDetails,
@@ -72,6 +79,8 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
     };
 
     const handleSaveCase = () => {
+        console.log('handleSaveCase', caseData);
+
         if (!caseData.CaseName || !caseData.CaseTypeName) {
             alert("Both Case Name and Case Type are required.");
             return;
@@ -110,6 +119,11 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
     };
 
     const handleCaseSelect = (selectedCase) => {
+        setCaseData((prevDetails) => ({
+            ...prevDetails,
+            CaseName: selectedCase
+        }));
+
         const caseDetails = cases.find(c => c.CaseName === selectedCase);
         if (caseDetails) {
             setCaseHasBeenChosen(true);
@@ -143,7 +157,12 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                         />
                         :
                         <SearchInput
-                            onSearch={searchCases}
+                            onSearch={(caseName) => {
+                                searchCases(caseName); setCaseData((prevDetails) => ({
+                                    ...prevDetails,
+                                    CaseName: caseName
+                                }));
+                            }}
                             title={"שם התיק"}
                             value={caseData.CaseName}
                             isPerforming={isPerformingCases}

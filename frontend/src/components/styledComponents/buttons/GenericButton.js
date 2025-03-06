@@ -29,7 +29,7 @@ const GenericButton = forwardRef(({
     onPressOut,
 
     shadowColor = colors.transparent,
-    isProcessing = false,
+    isPerforming = false,
     style: customStyle = {},
     ...props
 }, ref) => {
@@ -57,7 +57,7 @@ const GenericButton = forwardRef(({
     }
 
     function isPressable() {
-        return !disabled && !isProcessing;
+        return !disabled && !isPerforming;
     }
 
     function isButtonPressed() {
@@ -112,14 +112,14 @@ const GenericButton = forwardRef(({
             onPress={handlePress}
             style={buttonStyle}
             textStyle={textStyle}
-            leftIcon={isProcessing ? null : leftIcon}
+            leftIcon={isPerforming ? null : leftIcon}
             leftIconSize={ICON_SIZE}
             leftIconTintColor={getContentColor()}
-            rightIcon={isProcessing ? null : rightIcon}
+            rightIcon={isPerforming ? null : rightIcon}
             rightIconSize={ICON_SIZE}
             rightIconTintColor={getContentColor()}
         >
-            {isProcessing ? <SimpleLoader color={getContentColor()} /> : children}
+            {isPerforming ? <SimpleLoader color={getContentColor()} /> : children}
         </TextButtonWithTwoOptionalIcons>
     );
 });

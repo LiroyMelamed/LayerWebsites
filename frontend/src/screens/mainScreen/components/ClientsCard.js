@@ -68,6 +68,8 @@ export default function ClientsCard({ rePerformRequest, customerList, style }) {
 
 const styles = {
     textContainer: {
-        flex: 1
+        flex: 1,
+        alignText: 'right',
+        margin: '0px 6px',
     }
 };

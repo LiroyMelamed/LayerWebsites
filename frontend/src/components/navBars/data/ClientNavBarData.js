@@ -3,7 +3,7 @@ import { UpdatesAndNotificationsScreenName } from "../../../screens/client/updat
 import { Text12 } from "../../specializedComponents/text/AllTextKindFile";
 import TermsOfConditons from "../../termsAndConditions/TermsOfConditons";
 
-export const getClientNavBarData = (navigate, openPopup) => ({
+export const getClientNavBarData = (navigate, openPopup, closePopup) => ({
     NavBarLinks: [
         {
             buttonText: "עידכונים והתראות",
@@ -22,7 +22,7 @@ export const getClientNavBarData = (navigate, openPopup) => ({
             buttonText: "תקנון שימוש",
             buttonScreen: "תקנון שימוש",
             icon: null, // icons.NavBarIcons.AllCasesType
-            onClick: () => { openPopup(<TermsOfConditons />) },
+            onClick: () => { openPopup(<TermsOfConditons closePopUpFunction={closePopup} />) },
         },
         {
             buttonText: "יצירת קשר",

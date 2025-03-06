@@ -31,7 +31,7 @@ export const getNavBarData = (navigate, openPopup, closePopup) => ({
             buttonText: "עדכון תיק",
             buttonScreen: null,
             icon: null, // icons.NavBarIcons.UpdateCase
-            onClick: () => openPopup(<CaseFullView onFailureFunction={() => { }} />),
+            onClick: () => openPopup(<CaseFullView onFailureFunction={() => { }} closePopUpFunction={closePopup} />),
         },
         {
             buttonText: "לכל המנהלים",
@@ -43,7 +43,7 @@ export const getNavBarData = (navigate, openPopup, closePopup) => ({
             buttonText: "הוספת מנהל",
             buttonScreen: null,
             icon: null, // icons.NavBarIcons.Manager
-            onClick: () => openPopup(<AdminPopup />),
+            onClick: () => openPopup(<AdminPopup closePopUpFunction={closePopup} />),
         },
         {
             buttonText: "לכל סוגי התיקים",
