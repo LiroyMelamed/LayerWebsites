@@ -1,4 +1,4 @@
-const isProduction = false
+const isProduction = true
 
 function selectMode(forProduction, forStage) {
     return isProduction ? forProduction : forStage;
@@ -25,7 +25,7 @@ app.use(express.json());
 const productionOrigin = [
     "https://melamedlaw.vercel.app", // Your final production domain
     "https://melamedlaw-production.up.railway.app", // Your backend URL
-    "https://melamedlaw-jvbr8d9vs-liroymelameds-projects.vercel.app", // The one Vercel assigned for testing
+    "https://melamedlaw-6qb2igkgw-liroymelameds-projects.vercel.app/", // The one Vercel assigned for testing
 ]
 
 const stageOrigin = [
