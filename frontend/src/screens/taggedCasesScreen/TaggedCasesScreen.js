@@ -59,6 +59,7 @@ export default function TaggedCasesScreen() {
                 <PinnedCasesCard
                     taggedCases={taggedCases}
                     rePerformFunction={performRequest}
+                    isPerforming={isPerformingTaggedCases}
                 />
 
             </SimpleScrollView>

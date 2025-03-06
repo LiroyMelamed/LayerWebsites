@@ -58,6 +58,7 @@ export default function AllCasesScreen() {
                 <AllCasesCard
                     allCases={allCases}
                     reperformAfterSave={reperformAfterSave}
+                    isPerforming={isPerformingAllCases}
                 />
             </SimpleScrollView>
             <SimpleContainer style={{ display: 'flex', justifyContent: 'center' }}>

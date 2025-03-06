@@ -1,7 +1,16 @@
 import axios from "axios";
 
+const isProduction = false;
+
+function selectMode(forProduction, forStage) {
+    return isProduction ? forProduction : forStage;
+}
+
+const prodURL = "https://melamedlaw-production.up.railway.app";
+const stageURL = "http://localhost:5000";
+
 const ApiUtils = axios.create({
-    baseURL: "https://melamedlaw-production.up.railway.app",
+    baseURL: selectMode(prodURL, stageURL),
 });
 
 // Add a request interceptor to include the token

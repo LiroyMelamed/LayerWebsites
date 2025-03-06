@@ -1,12 +1,21 @@
 import { images } from "../../../assets/images/images";
 import SimpleCard from "../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
+import SimpleLoader from "../../../components/simpleComponents/SimpleLoader";
 import { TextBold20 } from "../../../components/specializedComponents/text/AllTextKindFile";
 import DefaultState from "../../../components/styledComponents/defaultState/DefaultState";
 import CaseMenuItem from "../../../components/styledComponents/menuItems/CaseMenuItem";
 import Separator from "../../../components/styledComponents/separators/Separator";
 
-export default function AllCasesCard({ allCases, reperformAfterSave }) {
+export default function AllCasesCard({ allCases, isPerforming, reperformAfterSave }) {
+
+    if (isPerforming) {
+        return (
+            <SimpleCard style={{ overflow: null, flexDirection: 'column' }}>
+                <SimpleLoader />
+            </SimpleCard>
+        )
+    }
 
     if (allCases?.length === 0 || !allCases) {
         return (

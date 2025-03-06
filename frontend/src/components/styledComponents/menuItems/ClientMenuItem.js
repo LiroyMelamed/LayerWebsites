@@ -33,7 +33,7 @@ export default function ClientMenuItem({
 
                     <Text14 style={styles.textContainer}>{clientName}</Text14>
 
-                    <Text14 style={styles.textContainer}>{clientMail}</Text14>
+                    <Text14 style={styles.textContainer} shouldApplyClamping>{clientMail}</Text14>
 
                     <Text14 style={styles.textContainer}>{clientPhone}</Text14>
                 </SimpleContainer>

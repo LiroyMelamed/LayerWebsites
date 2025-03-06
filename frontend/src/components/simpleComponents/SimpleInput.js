@@ -48,7 +48,6 @@ const SimpleInput = forwardRef(
         }
 
         return (
-
             <SimpleContainer
                 ref={ref}
                 style={{
@@ -95,20 +94,21 @@ const SimpleInput = forwardRef(
                 <input
                     type="text"
                     style={{
-                        flex: 1,
-                        padding: leftIcon ? `20px ${sizeStyles.padding} 10px 10px` : sizeStyles.padding,
+                        flexGrow: 1, // Allows input to resize inside containers
+                        width: '100%', // Ensures input fills its container
+                        minWidth: '0', // Prevents the input from forcing a larger width
+                        padding: leftIcon ? `8px ${sizeStyles.padding} 8px 10px` : sizeStyles.padding,
                         paddingRight: rightIcon ? '30px' : sizeStyles.padding,
                         border: 'none',
-                        fontFamily: 'Fredoka', // Ensures font is Fredoka for the input field
-
+                        fontFamily: 'Fredoka',
                         backgroundColor: 'transparent',
                         outline: 'none',
                         fontSize: sizeStyles.fontSize,
                         color: disabled ? colors.disabledText : colors.text,
                         textAlign: 'right',
-                        minWidth: '0',
                         ...textStyle,
                     }}
+
                     value={value}
                     onChange={onChange}
                     onFocus={handleFocus}

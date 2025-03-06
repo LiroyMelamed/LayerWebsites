@@ -29,8 +29,8 @@ export default function MainScreen() {
             {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={AdminStackName + MainScreenName} />}
 
             <SimpleScrollView>
-                <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flexWrap: 'wrap' }}>
-                    <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flex: 1 }}>
+                <SimpleContainer style={{ flexDirection: 'row-reverse', flexWrap: 'wrap' }}>
+                    <SimpleContainer style={{ flex: 1, alignItems: 'center', justifyContent: 'center', }}>
                         <ComprasionDataCard
                             colors={colors.doughnutChartColorScale}
                             labels={['תיקים פתוחים', 'תיקים סגורים']}
@@ -41,8 +41,8 @@ export default function MainScreen() {
                             style={{ width: '100%' }}
                         />
                     </SimpleContainer>
-                    <SimpleContainer style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                        <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', }}>
+                    <SimpleContainer style={{ flexDirection: 'column', flex: 1 }}>
+                        <SimpleContainer>
                             <ShowDataCard
                                 numberText={mainScreenData?.AllCasesData?.length}
                                 title={'סה"כ תיקים'}
@@ -54,7 +54,7 @@ export default function MainScreen() {
                             />
                         </SimpleContainer>
 
-                        <SimpleContainer style={{ display: 'flex', flexWrap: 'wrap', flexDirection: 'row-reverse', }}>
+                        <SimpleContainer style={{ flexWrap: 'wrap' }}>
                             <ShowDataCard
                                 numberText={mainScreenData?.NumberOfTaggedCases}
                                 title={"תיקים מתוייגים"}
@@ -83,23 +83,4 @@ const styles = {
         boxSizing: 'border-box',
         flexDirection: 'column',
     }),
-    responsiveContainer: {
-        display: 'flex',
-        flexDirection: 'row-reverse',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        maxWidth: '100%',
-        overflow: 'hidden',
-    },
-    searchInput: {
-        margin: "12px 0px",
-        marginLeft: 20,
-        flex: '1 1 200px',
-        maxWidth: '500px',
-    },
-    chooseButton: {
-        margin: "12px 0px",
-        flex: '0 1 auto',
-        minWidth: '100px',
-    }
 };

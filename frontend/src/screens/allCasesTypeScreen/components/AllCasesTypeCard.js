@@ -1,6 +1,8 @@
+import { images } from "../../../assets/images/images";
 import SimpleCard from "../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
 import SimpleLoader from "../../../components/simpleComponents/SimpleLoader";
+import DefaultState from "../../../components/styledComponents/defaultState/DefaultState";
 import CaseMenuItem from "../../../components/styledComponents/menuItems/CaseMenuItem";
 import CaseTypeMenuItem from "../../../components/styledComponents/menuItems/CaseTypeMenuItem";
 import Separator from "../../../components/styledComponents/separators/Separator";
@@ -12,6 +14,17 @@ export default function AllCasesTypeCard({ allCasesType, reperformAfterSave, isP
             <SimpleCard style={{ overflow: null, flexDirection: 'column' }}>
                 <SimpleLoader />
             </SimpleCard>
+        )
+    }
+
+    if (allCasesType?.length === 0 || !allCasesType) {
+        return (
+            <DefaultState
+                content={"אין כרגע סוגי תיקים"}
+                imageStyle={{ height: 156 }}
+                imageSrc={images.Defaults.Cases}
+                style={{ width: null }}
+            />
         )
     }
 

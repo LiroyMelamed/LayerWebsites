@@ -9,6 +9,7 @@ import { usePopup } from "../../../providers/PopUpProvider";
 import { getNavBarData } from "../data/NavBarData";
 import ImageButton from "../../specializedComponents/buttons/ImageButton";
 import PrimaryButton from "../../styledComponents/buttons/PrimaryButton";
+import SimpleScrollView from "../../simpleComponents/SimpleScrollView";
 
 const Logo = images.Logos.FullLogoOriginal;
 
@@ -47,20 +48,22 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
 
             {isDrawerOpen &&
                 <SimpleContainer style={styles.sidebarContainer}>
-                    <SimpleContainer style={{ flex: 1, flexDirection: 'column' }}>
-                        {NavBarLinks.map((item, index) => (
-                            <SideBarMenuItem
-                                key={item.text}
-                                buttonText={item.buttonText}
-                                iconSource={item.icon}
-                                size={24}
-                                isPressed={currentIndex === index}
-                                onPressFunction={() => { setCurrentIndex(index); item.onClick(); toggleDrawer() }}
-                                buttonIndex={index}
-                            />
-                        ))}
-                    </SimpleContainer>
-                    <PrimaryButton style={{ alignSelf: 'center', marginBottom: '24px', backgroundColor: colors.darkRed }} onPress={() => { localStorage.removeItem("token"); navigate('/') }}>התנתק</PrimaryButton>
+                    <SimpleScrollView>
+                        <SimpleContainer style={{ flex: 1, flexDirection: 'column' }}>
+                            {NavBarLinks.map((item, index) => (
+                                <SideBarMenuItem
+                                    key={item.text}
+                                    buttonText={item.buttonText}
+                                    iconSource={item.icon}
+                                    size={24}
+                                    isPressed={currentIndex === index}
+                                    onPressFunction={() => { setCurrentIndex(index); item.onClick(); toggleDrawer() }}
+                                    buttonIndex={index}
+                                />
+                            ))}
+                        </SimpleContainer>
+                    </SimpleScrollView>
+                    <PrimaryButton style={{ alignSelf: 'center', marginBottom: '20px', marginTop: '8px', backgroundColor: colors.darkRed }} onPress={() => { localStorage.removeItem("token"); navigate('/') }}>התנתק</PrimaryButton>
                 </SimpleContainer>
             }
         </>

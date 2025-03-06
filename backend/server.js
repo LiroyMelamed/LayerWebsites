@@ -1,3 +1,9 @@
+const isProduction = false
+
+function selectMode(forProduction, forStage) {
+    return isProduction ? forProduction : forStage;
+}
+
 require("dotenv").config();
 
 const jwt = require("jsonwebtoken");
@@ -16,11 +22,17 @@ const WEBSITE_DOMAIN = 'client.melamedlaw.co.il'
 
 app.use(express.json());
 
-const allowedOrigins = [
+const productionOrigin = [
     "https://melamedlaw.vercel.app", // Your final production domain
     "https://melamedlaw-production.up.railway.app", // Your backend URL
     "https://melamedlaw-jvbr8d9vs-liroymelameds-projects.vercel.app", // The one Vercel assigned for testing
-];
+]
+
+const stageOrigin = [
+    "http://localhost:3000"
+]
+
+const allowedOrigins = selectMode(productionOrigin, stageOrigin);
 
 app.use(
     cors({
@@ -56,14 +68,6 @@ const client = new twilio(
     process.env.TWILIO_AUTH_TOKEN
 );
 
-app.use((req, res, next) => {
-    console.log(`Request: ${req.method} ${req.url}`);
-    console.log("Headers:", req.headers);
-    console.log("Body:", req.body);
-    next();
-});
-
-
 // Middleware for JWT Authentication
 const authMiddleware = (req, res, next) => {
     const token = req.headers.authorization?.split(" ")[1];
@@ -86,6 +90,19 @@ const formatPhoneNumber = (phone) => {
     const cleanedNumber = phone.replace(/\D/g, ""); // Remove non-numeric characters
     return cleanedNumber.startsWith("0") ? `+972${cleanedNumber.slice(1)}` : `+${cleanedNumber}`;
 };
+
+async function sendMessage(messageBody, formattedPhone) {
+    if (isProduction) {
+        await client.messages.create({
+            body: messageBody,
+            from: process.env.TWILIO_PHONE_NUMBER,
+            to: formattedPhone,
+        });
+    } else {
+        console.log('messageBody', messageBody);
+
+    }
+}
 
 // OTP APIs
 app.post("/RequestOtp", async (req, res) => {
@@ -119,17 +136,8 @@ app.post("/RequestOtp", async (req, res) => {
         `);
 
         const formattedPhone = formatPhoneNumber(phoneNumber);
-        console.log("formattedPhone", formattedPhone);
 
-
-        await client.messages.create({
-            body: `קוד האימות הוא: ${otp} \n\n @${WEBSITE_DOMAIN}`,
-            from: process.env.TWILIO_PHONE_NUMBER,
-            to: formattedPhone,
-        });
-
-        console.log(`Your OTP Code is: ${otp}`);
-
+        sendMessage(`קוד האימות הוא: ${otp} \n\n @${WEBSITE_DOMAIN}`, formattedPhone);
 
         res.status(200).json({ message: "קוד נשלח בהצלחה" });
     } catch (error) {
@@ -420,14 +428,7 @@ app.post("/AddCase", authMiddleware, async (req, res) => {
 
         const formattedPhone = formatPhoneNumber(PhoneNumber);
 
-        await client.messages.create({
-            body: `שלום לקוח יקר,\n\n התיק שלך נוצר במערכת והנך יכול לעקוב אחר התקדמותו בלינק הבא: \n\n ${WEBSITE_DOMAIN}`,
-            from: process.env.TWILIO_PHONE_NUMBER,
-            to: formattedPhone,
-        });
-
-        console.log(`היי ${CustomerName}, \n\n תיק ${CaseName} נוצר, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`);
-
+        sendMessage(`היי ${CustomerName}, \n\n תיק ${CaseName} נוצר, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`, formattedPhone);
 
         await transaction.commit();
         res.status(201).json({ message: "Case created successfully", caseId });
@@ -487,14 +488,7 @@ app.put("/UpdateCase/:caseId", authMiddleware, async (req, res) => {
 
         const formattedPhone = formatPhoneNumber(PhoneNumber);
 
-        await client.messages.create({
-            body: `היי ${CustomerName}, \n\n תיק ${CaseName} התעדכן, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`,
-            from: process.env.TWILIO_PHONE_NUMBER,
-            to: formattedPhone,
-        });
-
-        console.log(`היי ${CustomerName}, \n\n תיק ${CaseName} התעדכן, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`);
-
+        sendMessage(`היי ${CustomerName}, \n\n תיק ${CaseName} התעדכן, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`, formattedPhone);
 
         await transaction.commit();
         res.status(200).json({ message: "Case and descriptions updated successfully" });
@@ -541,11 +535,7 @@ app.put("/UpdateStage/:caseId", authMiddleware, async (req, res) => {
         if (notificationMessage) {
             const formattedPhone = formatPhoneNumber(PhoneNumber);
 
-            await client.messages.create({
-                body: notificationMessage,
-                from: process.env.TWILIO_PHONE_NUMBER,
-                to: formattedPhone,
-            });
+            sendMessage(notificationMessage, formattedPhone);
         }
 
         res.status(200).json({ message: "Stage updated successfully" });
@@ -876,7 +866,7 @@ app.post("/AddAdmin", authMiddleware, async (req, res) => {
 
         const pool = await sql.connect(dbConfig);
         const request = pool.request();
-        request.input("name", sql.NVarChar, name); // ✅ Use NVARCHAR to keep Hebrew encoding
+        request.input("name", sql.NVarChar, name);
         request.input("email", sql.NVarChar, email);
         request.input("phoneNumber", sql.NVarChar, phoneNumber);
         request.input("password", sql.NVarChar, hashedPassword);
@@ -926,11 +916,7 @@ app.post("/AddCustomer", authMiddleware, async (req, res) => {
 
         const formattedPhone = formatPhoneNumber(PhoneNumber);
 
-        await client.messages.create({
-            body: `היי ${Name}, ברוכים הבאים לשירות החדש שלנו.\n\n בלינק הבא תוכל להשלים את ההרשמה לשירות.\n\n בברכה ${COMPANY_NAME}`,
-            from: process.env.TWILIO_PHONE_NUMBER,
-            to: formattedPhone,
-        });
+        sendMessage(`היי ${Name}, ברוכים הבאים לשירות החדש שלנו.\n\n בלינק הבא תוכל להשלים את ההרשמה לשירות.\n\n בברכה ${COMPANY_NAME}`, formattedPhone);
 
         res.status(201).json({ message: "לקוח הוקם בהצלחה" });
 

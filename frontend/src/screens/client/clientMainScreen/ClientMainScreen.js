@@ -55,7 +55,7 @@ export default function ClientMainScreen() {
 
                 <ClosedCasesCard
                     closedCases={allCases.filter(caseItem => caseItem.IsClosed === true)}
-                    style={{ marginTop: 16 }}
+                    style={{ marginTop: '20px', marginBottom: '20px' }}
                 />
             </SimpleScrollView>
 

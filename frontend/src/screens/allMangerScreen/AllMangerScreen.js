@@ -61,6 +61,7 @@ export default function AllMangerScreen() {
 
                 <AdminsCard
                     adminList={adminsData}
+                    isPerforming={isPerformingAdminsData}
                 />
             </SimpleScrollView>
 

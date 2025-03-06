@@ -43,14 +43,14 @@ export default function UpdatesAndNotificationsScreen() {
         <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
             {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={ClientStackName + ClientMainScreenName} GetNavBarData={getClientNavBarData} />}
 
-            <SimpleScrollView style={{ marginTop: 40 }}>
+            <SimpleScrollView style={{ marginTop: 40, }}>
                 <SimpleContainer style={styles.responsiveContainer}>
                     <SimpleImage
                         src={images.Updates.NewUpdates}
-                        style={{ maxWidth: '500px' }}
+                        style={{ maxWidth: '100%', padding: '0px 20px' }}
                     />
 
-                    <SimpleCard style={{ minWidth: '500px', maxWidth: '600px', flexDirection: 'column', marginTop: 40 }}>
+                    <SimpleCard style={{ flexDirection: 'column' }}>
                         {updatesMenuItems.map(item => (
                             <UpdatesMenuItem
                                 menuItemName={item.name}
@@ -72,11 +72,7 @@ const styles = {
         flexDirection: 'column',
     }),
     responsiveContainer: {
-        display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        flexWrap: 'wrap',
         width: '100%',
-        overflow: 'hidden',
     },
 }

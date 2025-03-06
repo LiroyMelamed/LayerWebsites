@@ -14,40 +14,27 @@ import casesApi, { casesTypeApi } from '../../../api/casesApi';
 import { buttonSizes } from '../../../styles/buttons/buttonSizes';
 
 export default function CaseFullView({ caseDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style }) {
+    const [caseHasBeenChosen, setCaseHasBeenChosen] = useState(false)
     const [caseData, setCaseData] = useState({
-        CaseId: '',
-        CaseName: '',
-        CaseTypeName: '',
-        CompanyName: '',
-        CurrentStage: '',
-        CustomerMail: '',
-        CustomerName: '',
-        Descriptions: [{ Stage: 1, Text: '', Timestamp: '', New: false }],
-        PhoneNumber: '',
+        CaseId: caseDetails?.CaseId || '',
+        CaseName: caseDetails?.CaseName || '',
+        CaseTypeName: caseDetails?.CaseTypeName || '',
+        CompanyName: caseDetails?.CompanyName || '',
+        CurrentStage: caseDetails?.CurrentStage || '',
+        CustomerMail: caseDetails?.CustomerMail || '',
+        CustomerName: caseDetails?.CustomerName || '',
+        Descriptions: caseDetails?.Descriptions || [{ Stage: 1, Text: '', Timestamp: '', New: false }],
+        IsClosed: caseDetails?.IsClosed || false,
+        IsTagged: caseDetails?.IsTagged || false,
+        PhoneNumber: caseDetails?.PhoneNumber || '',
+        UserId: caseDetails?.UserId || null,
     });
 
-    useEffect(() => {
-        if (caseDetails) {
-            setCaseData({
-                CaseId: caseDetails.CaseId || '',
-                CaseName: caseDetails.CaseName || '',
-                CaseTypeName: caseDetails.CaseTypeName || '',
-                CompanyName: caseDetails.CompanyName || '',
-                CurrentStage: caseDetails.CurrentStage || '',
-                CustomerMail: caseDetails.CustomerMail || '',
-                CustomerName: caseDetails.CustomerName || '',
-                Descriptions: caseDetails.Descriptions || [{ Stage: 1, Text: '', Timestamp: '', New: false }],
-                IsClosed: caseDetails.IsClosed || false,
-                IsTagged: caseDetails.IsTagged || false,
-                PhoneNumber: caseDetails.PhoneNumber || '',
-                UserId: caseDetails.UserId,
-            });
-        }
-    }, [caseDetails]);
+    const { result: customers, isPerforming: isPerformingCustomers, performRequest: searchCustomers } = useHttpRequest(customersApi.getCustomersByName, null, () => { });
 
-    const { result: customers, isPerforming: isPerformingCustomers, performRequest: searchCustomers } = useHttpRequest(customersApi.getCustomersByName);
+    const { result: caseTypes, isPerforming: isPerformingCaseTypes, performRequest: searchCaseTypes } = useHttpRequest(casesTypeApi.getCaseTypeByName, null, () => { });
 
-    const { result: caseTypes, isPerforming: isPerformingCaseTypes, performRequest: searchCaseTypes } = useHttpRequest(casesTypeApi.getCaseTypeByName);
+    const { result: cases, isPerforming: isPerformingCases, performRequest: searchCases } = useHttpRequest(casesApi.getCaseByName, null, () => { });
 
     const { isPerforming: isSaving, performRequest: saveCase } = useHttpRequest(
         caseDetails ? casesApi.updateCaseById : casesApi.addCase,
@@ -58,7 +45,6 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
         onFailureFunction
     );
 
-    // Delete Case
     const { isPerforming: isDeleting, performRequest: deleteCase } = useHttpRequest(
         casesApi.deleteCaseById,
         () => {
@@ -86,8 +72,6 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
     };
 
     const handleSaveCase = () => {
-        console.log('caseData', caseData);
-
         if (!caseData.CaseName || !caseData.CaseTypeName) {
             alert("Both Case Name and Case Type are required.");
             return;
@@ -125,16 +109,50 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
         }
     };
 
+    const handleCaseSelect = (selectedCase) => {
+        const caseDetails = cases.find(c => c.CaseName === selectedCase);
+        if (caseDetails) {
+            setCaseHasBeenChosen(true);
+            setCaseData({
+                CaseId: caseDetails.CaseId || '',
+                CaseName: caseDetails.CaseName || '',
+                CaseTypeName: caseDetails.CaseTypeName || '',
+                CompanyName: caseDetails.CompanyName || '',
+                CurrentStage: caseDetails.CurrentStage || '',
+                CustomerMail: caseDetails.CustomerMail || '',
+                CustomerName: caseDetails.CustomerName || '',
+                Descriptions: caseDetails.Descriptions || [{ Stage: 1, Text: '', Timestamp: '', New: false }],
+                IsClosed: caseDetails.IsClosed || false,
+                IsTagged: caseDetails.IsTagged || false,
+                PhoneNumber: caseDetails.PhoneNumber || '',
+                UserId: caseDetails.UserId,
+            });
+        }
+    };
+
     return (
         <SimpleContainer style={{ ...style, ...styles.container }}>
             <SimpleScrollView>
                 <SimpleContainer style={styles.rowStyle}>
-                    <SimpleInput
-                        style={styles.inputStyle}
-                        title={"שם התיק"}
-                        value={caseData.CaseName}
-                        onChange={(e) => handleInputChange('CaseName', e.target.value)}
-                    />
+                    {caseDetails ?
+                        <SimpleInput
+                            style={styles.inputStyle}
+                            title={"שם התיק"}
+                            value={caseData.CaseName}
+                            onChange={(e) => handleInputChange('CaseName', e.target.value)}
+                        />
+                        :
+                        <SearchInput
+                            onSearch={searchCases}
+                            title={"שם התיק"}
+                            value={caseData.CaseName}
+                            isPerforming={isPerformingCases}
+                            getButtonTextFunction={(item) => item.CaseName}
+                            buttonPressFunction={handleCaseSelect}
+                            queryResult={cases}
+                            style={styles.inputStyle}
+                        />
+                    }
 
                     <SearchInput
                         onSearch={searchCaseTypes}
@@ -144,6 +162,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                         getButtonTextFunction={(item) => item.CaseTypeName}
                         buttonPressFunction={handleCaseTypeSelect}
                         queryResult={caseTypes}
+                        style={styles.inputStyle}
                     />
                 </SimpleContainer>
 
@@ -156,6 +175,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                         getButtonTextFunction={(item) => item.Name}
                         buttonPressFunction={handleCustomerSelect}
                         queryResult={customers}
+                        style={styles.inputStyle}
                     />
                     <SimpleInput
                         style={styles.inputStyle}
@@ -206,7 +226,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                 ))}
 
                 <SimpleContainer style={styles.buttonsRowStyle}>
-                    {caseDetails && (
+                    {caseDetails || caseHasBeenChosen && (
                         <SecondaryButton
                             onPress={handleDeleteCase}
                             isPerforming={isDeleting}
@@ -222,7 +242,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                         style={styles.button}
                         size={buttonSizes.MEDIUM}
                     >
-                        {isSaving ? "שומר..." : caseDetails ? "עדכן תיק" : "שמור תיק"}
+                        {isSaving ? "שומר..." : caseDetails || caseHasBeenChosen ? "עדכן תיק" : "שמור תיק"}
                     </PrimaryButton>
                 </SimpleContainer>
             </SimpleScrollView>
@@ -232,18 +252,17 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
 
 const styles = {
     container: {
+        display: 'flex',
         width: '100%',
-        margin: '0 auto',
+        boxSizing: 'border-box',
     },
     rowStyle: {
-        display: 'flex',
+        width: '100%',
         flexDirection: 'row-reverse',
         marginBottom: '16px',
-        flexWrap: 'wrap',
     },
     inputStyle: {
         flex: 1,
-        minWidth: '150px',
     },
     buttonsRowStyle: {
         display: 'flex',

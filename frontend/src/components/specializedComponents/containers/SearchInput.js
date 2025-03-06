@@ -1,10 +1,26 @@
-import React, { useState, useRef, useEffect } from 'react';
-import SimpleInput from '../../simpleComponents/SimpleInput';
 import SimpleContainer from '../../simpleComponents/SimpleContainer';
+import SimpleInput from '../../simpleComponents/SimpleInput';
+import React, { useState, useRef, useEffect } from 'react';
 import HoverContainer from './HoverContainer';
-import { useScreenSize } from '../../../providers/ScreenSizeProvider';
 
-const SearchInput = ({ leftIcon, value, rightIcon, onSearch, tintColor, IconStyle, textStyle, queryResult, isPerforming, getButtonTextFunction, buttonPressFunction, title, style, ...props }) => {
+const SearchInput = ({
+    leftIcon,
+    value,
+    rightIcon,
+    onSearch,
+    tintColor,
+    IconStyle,
+    textStyle,
+    queryResult,
+    isPerforming,
+    getButtonTextFunction,
+    buttonPressFunction,
+    title,
+    error,
+    style,
+    ...props
+}) => {
+
     const [query, setQuery] = useState(value);
     const [showResults, setShowResults] = useState(false);
     const targetRef = useRef(null);
@@ -13,8 +29,8 @@ const SearchInput = ({ leftIcon, value, rightIcon, onSearch, tintColor, IconStyl
 
     const handleInputChange = (event) => {
         setQuery(event.target.value);
-        onSearch(event.target.value); // Trigger search
-        setShowResults(true); // Show results
+        onSearch(event.target.value);
+        setShowResults(true);
     };
 
     const handleFocus = () => {
@@ -48,7 +64,8 @@ const SearchInput = ({ leftIcon, value, rightIcon, onSearch, tintColor, IconStyl
                 textStyle={textStyle}
                 onChange={handleInputChange}
                 onFocus={handleFocus}
-                // onBlur={handleBlur}
+                onBlur={handleBlur}
+                error={error}
                 {...props}
             />
             {showResults && (

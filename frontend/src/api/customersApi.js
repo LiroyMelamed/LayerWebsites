@@ -16,8 +16,6 @@ export const customersApi = {
     },
 
     addCustomer: async (customerData) => {
-        console.log('customerData', customerData);
-
         return await ApiUtils.post(ADD_CUSTOMER, customerData);
     },
 

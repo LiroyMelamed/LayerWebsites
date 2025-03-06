@@ -7,7 +7,7 @@ import PrimaryButton from "../buttons/PrimaryButton";
 export default function DefaultState({ imageSrc = images.MainPage.DataFlowing, imageStyle, content, actionButton, actionButtonPressFunction, actionButtonLeftIcon, actionButtonRightIcon, actionButtonSize, style }) {
 
     const CardStyle = {
-        width: '100%',
+        maxWidth: '100%',
         alignItems: "center",
         flexDirection: "column",
         ...style,
@@ -21,7 +21,7 @@ export default function DefaultState({ imageSrc = images.MainPage.DataFlowing, i
             </TextBold14>
 
             {actionButton &&
-                <PrimaryButton onPress={actionButtonPressFunction} rightIcon={actionButtonRightIcon} leftIcon={actionButtonLeftIcon} size={actionButtonSize}>{actionButton}</PrimaryButton>
+                <PrimaryButton onPress={actionButtonPressFunction} rightIcon={actionButtonRightIcon} leftIcon={actionButtonLeftIcon} size={actionButtonSize} style={{ marginTop: 8 }}>{actionButton}</PrimaryButton>
             }
         </SimpleCard>
     );

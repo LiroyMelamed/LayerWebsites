@@ -1,13 +1,22 @@
 import { images } from "../../../assets/images/images";
 import SimpleCard from "../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
+import SimpleLoader from "../../../components/simpleComponents/SimpleLoader";
 import { Text14, TextBold14 } from "../../../components/specializedComponents/text/AllTextKindFile";
 import DefaultState from "../../../components/styledComponents/defaultState/DefaultState";
 import AdminMenuItem from "../../../components/styledComponents/menuItems/AdminMenuItem";
 import Separator from "../../../components/styledComponents/separators/Separator";
 
 
-export default function AdminsCard({ adminList, style }) {
+export default function AdminsCard({ adminList, isPerforming, style }) {
+
+    if (isPerforming) {
+        return (
+            <SimpleCard style={{ overflow: null, flexDirection: 'column' }}>
+                <SimpleLoader />
+            </SimpleCard>
+        )
+    }
 
     if (adminList?.length === 0 || !adminList) {
         return (
@@ -40,6 +49,7 @@ export default function AdminsCard({ adminList, style }) {
                         <Separator />
                     }
                     <AdminMenuItem
+                        admin={customer}
                         adminName={customer.Name}
                         CreatedAt={customer.CreatedAt}
                         adminMail={customer.Email}
@@ -54,6 +64,8 @@ export default function AdminsCard({ adminList, style }) {
 
 const styles = {
     textContainer: {
-        flex: 1
+        flex: 1,
+        textAlign: 'right',
+        margin: '0px 6px',
     }
 };

@@ -10,6 +10,7 @@ import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import ImageButton from "../specializedComponents/buttons/ImageButton";
 import Separator from "../styledComponents/separators/Separator";
 import PrimaryButton from "../styledComponents/buttons/PrimaryButton";
+import SimpleScrollView from "../simpleComponents/SimpleScrollView";
 
 const Logo = images.Logos.LogoSlangWhite;
 
@@ -28,20 +29,22 @@ export default function TopAndRightNavBar({ chosenIndex = -1, children, LogoNavi
             <ImageButton src={Logo} height={60} style={{ maxHeight: 60, alignSelf: 'center' }} onPress={() => { setCurrentIndex(-1); navigate(LogoNavigate) }} />
           </SimpleContainer>
           <Separator style={{ margin: '20px 0' }} />
-          <SimpleContainer style={{ flexDirection: 'column', flex: 1 }}>
-            {NavBarLinks.map((item, index) => (
-              <SideBarMenuItem
-                key={item.text}
-                buttonText={item.buttonText}
-                iconSource={item.icon}
-                size={24}
-                isPressed={currentIndex === index}
-                onPressFunction={() => { setCurrentIndex(index); item.onClick() }}
-                buttonIndex={index}
-              />
-            ))}
-          </SimpleContainer>
+          <SimpleScrollView>
+            <SimpleContainer style={{ flexDirection: 'column', flex: 1 }}>
+              {NavBarLinks.map((item, index) => (
+                <SideBarMenuItem
+                  key={item.text}
+                  buttonText={item.buttonText}
+                  iconSource={item.icon}
+                  size={24}
+                  isPressed={currentIndex === index}
+                  onPressFunction={() => { setCurrentIndex(index); item.onClick() }}
+                  buttonIndex={index}
+                />
+              ))}
+            </SimpleContainer>
 
+          </SimpleScrollView>
           <PrimaryButton style={{ alignSelf: 'center', marginBottom: '24px', backgroundColor: colors.darkRed }} onPress={() => { localStorage.removeItem("token"); navigate('/') }}>התנתק</PrimaryButton>
         </SimpleContainer>
       )}
@@ -75,12 +78,12 @@ const styles = {
   contentContainer: (isSmallScreen) => ({
     display: 'flex',
     flexDirection: 'column',
-    width: isSmallScreen ? '100vw' : 'calc(100vw - 250px)', // Full width minus sidebar width
+    width: isSmallScreen ? '100dvw' : 'calc(100dvw - 250px)', // Full width minus sidebar width
     height: '100dvh',
     overflow: 'hidden',
   }),
 
   childrenContainer: {
-    flex: 1, // Take up remaining space
+    flex: 1,
   },
 };

@@ -28,7 +28,7 @@ export default function ClientsCard({ rePerformRequest, customerList, style }) {
     }
 
     return (
-        <SimpleCard style={{ ...style, flexDirection: 'column', justifyContent: 'flex-start' }}>
+        <SimpleCard style={{ overflow: null, flexDirection: 'column' }}>
             <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse' }}>
                 <TextBold14 style={styles.textContainer}>{'שם חברה'}</TextBold14>
 

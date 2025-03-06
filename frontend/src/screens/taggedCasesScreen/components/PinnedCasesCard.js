@@ -1,12 +1,22 @@
 import { images } from "../../../assets/images/images";
 import SimpleCard from "../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
+import SimpleLoader from "../../../components/simpleComponents/SimpleLoader";
 import { TextBold20 } from "../../../components/specializedComponents/text/AllTextKindFile";
 import DefaultState from "../../../components/styledComponents/defaultState/DefaultState";
 import CaseMenuItem from "../../../components/styledComponents/menuItems/CaseMenuItem";
 import Separator from "../../../components/styledComponents/separators/Separator";
 
-export default function PinnedCasesCard({ taggedCases, rePerformFunction }) {
+export default function PinnedCasesCard({ taggedCases, isPerforming, rePerformFunction }) {
+
+    if (isPerforming) {
+        return (
+            <SimpleCard style={{ overflow: null, flexDirection: 'column' }}>
+                <SimpleLoader />
+            </SimpleCard>
+        )
+    }
+
     if (taggedCases?.length === 0 || !taggedCases) {
         return (
             <DefaultState
