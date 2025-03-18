@@ -25,7 +25,8 @@ app.use(express.json());
 const productionOrigin = [
     "https://melamedlaw.vercel.app", // Your final production domain
     "https://melamedlaw-production.up.railway.app", // Your backend URL
-    "https://melamedlaw-6qb2igkgw-liroymelameds-projects.vercel.app", // The one Vercel assigned for testing
+    "https://melamedlaw-i9wyjomsi-liroymelameds-projects.vercel.app/",
+    "https://melamedlaw-*-liroymelameds-projects.vercel.app/",
 ]
 
 const stageOrigin = [
@@ -55,10 +56,10 @@ const dbConfig = {
     server: process.env.DB_SERVER_NAME,
     database: process.env.DB_NAME,
     options: {
-        encrypt: true,
+        encrypt: false,
         trustServerCertificate: true,
-        enableArithAbort: true,
     },
+    requestTimeout: 50000 // Increase to 30 seconds
 };
 
 sql.connect(dbConfig).then(() => console.log("Connected to Azure SQL Database"));
@@ -71,7 +72,7 @@ const client = new twilio(
 // Middleware for JWT Authentication
 const authMiddleware = (req, res, next) => {
     const token = req.headers.authorization?.split(" ")[1];
-    if (!token) return res.status(401).json({ message: "Unauthorized: No token provided" });
+    if (!token) return res.status(401).json({ message: "נא לבצע התחברות מחדש" });
 
     try {
         const decoded = jwt.verify(token, SECRET_KEY);
@@ -82,7 +83,7 @@ const authMiddleware = (req, res, next) => {
         };
         next();
     } catch (error) {
-        res.status(401).json({ message: "Unauthorized: Invalid token" });
+        res.status(401).json({ message: "נא לבצע התחברות מחדש" });
     }
 };
 
@@ -439,7 +440,7 @@ app.post("/AddCase", authMiddleware, async (req, res) => {
 
 app.put("/UpdateCase/:caseId", authMiddleware, async (req, res) => {
     const { caseId } = req.params;
-    const { CaseName, CurrentStage, IsClosed, IsTagged, Descriptions, PhoneNumber, CustomerName } = req.body;
+    const { CaseName, CurrentStage, IsClosed, IsTagged, Descriptions, PhoneNumber, CustomerName, CompanyName, CaseTypeId, UserId } = req.body;
 
     try {
         const pool = await sql.connect(dbConfig);
@@ -453,13 +454,20 @@ app.put("/UpdateCase/:caseId", authMiddleware, async (req, res) => {
         caseRequest.input("CurrentStage", sql.Int, CurrentStage);
         caseRequest.input("IsClosed", sql.Bit, IsClosed);
         caseRequest.input("IsTagged", sql.Bit, IsTagged);
+        caseRequest.input("CompanyName", sql.NVarChar, CompanyName);
+        caseRequest.input("CaseTypeId", sql.Int, CaseTypeId);
+        caseRequest.input("UserId", sql.Int, UserId);
+
 
         await caseRequest.query(`
             UPDATE Cases 
             SET CaseName = @CaseName, 
                 CurrentStage = @CurrentStage, 
                 IsClosed = @IsClosed, 
-                IsTagged = @IsTagged 
+                IsTagged = @IsTagged, 
+                CompanyName = @CompanyName,
+                CaseTypeId = ISNULL(@CaseTypeId, CaseTypeId),
+                UserId = @UserId
             WHERE CaseId = @CaseId
         `);
 
@@ -489,11 +497,11 @@ app.put("/UpdateCase/:caseId", authMiddleware, async (req, res) => {
         sendMessage(`היי ${CustomerName}, \n\n תיק ${CaseName} התעדכן, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`, formattedPhone);
 
         await transaction.commit();
-        res.status(200).json({ message: "Case and descriptions updated successfully" });
+        res.status(200).json({ message: "לקוח עודכן בהצלחה" });
 
     } catch (error) {
         console.error("Error updating case:", error);
-        res.status(500).json({ message: "Error updating case" });
+        res.status(500).json({ message: "שגיאה בעדכון לקוח" });
     }
 });
 
@@ -994,7 +1002,7 @@ app.get("/GetCustomerByName", authMiddleware, async (req, res) => {
 
 app.put("/UpdateCustomer/:userId", authMiddleware, async (req, res) => {
     const { userId } = req.params;
-    const { name, email, phoneNumber, companyName } = req.body;
+    const { Name, PhoneNumber, Email, CompanyName } = req.body;
 
     try {
         const pool = await sql.connect(dbConfig);
@@ -1009,10 +1017,10 @@ app.put("/UpdateCustomer/:userId", authMiddleware, async (req, res) => {
 
         const currentUser = existingUser.recordset[0];
 
-        const updatedName = name ?? currentUser.Name;
-        const updatedEmail = email ?? currentUser.Email;
-        const updatedPhoneNumber = phoneNumber ?? currentUser.PhoneNumber;
-        const updatedCompanyName = companyName ?? currentUser.CompanyName;
+        const updatedName = Name ?? currentUser.Name;
+        const updatedEmail = Email ?? currentUser.Email;
+        const updatedPhoneNumber = PhoneNumber ?? currentUser.PhoneNumber;
+        const updatedCompanyName = CompanyName;
 
         await pool.request()
             .input("userId", sql.Int, userId)
@@ -1030,10 +1038,10 @@ app.put("/UpdateCustomer/:userId", authMiddleware, async (req, res) => {
                 WHERE UserId = @userId
             `);
 
-        res.status(200).json({ message: "User updated successfully" });
+        res.status(200).json({ message: "עדכון לקוח בוצע בהצלחה" });
     } catch (error) {
         console.error("Error updating user:", error);
-        res.status(500).json({ message: "Error updating user" });
+        res.status(500).json({ message: "שגיאה בתהליך הקמת לקוח" });
     }
 });
 
@@ -1271,10 +1279,20 @@ app.delete("/DeleteCaseType/:CaseTypeId", authMiddleware, async (req, res) => {
         // Securely pass CaseTypeId as an input parameter
         request.input("CaseTypeId", sql.Int, CaseTypeId);
 
+        // Step 1: Delete from child tables that reference CaseTypeId
+        await request.query(`
+            DELETE FROM UploadedFiles WHERE CaseId IN (SELECT CaseId FROM Cases WHERE CaseTypeId = @CaseTypeId);
+            DELETE FROM CaseDescriptions WHERE CaseId IN (SELECT CaseId FROM Cases WHERE CaseTypeId = @CaseTypeId);
+            DELETE FROM CaseTypeDescriptions WHERE CaseTypeId = @CaseTypeId;
+            DELETE FROM Cases WHERE CaseTypeId = @CaseTypeId;
+        `);
+
+        // Step 2: Now delete from the parent table (CaseTypes)
         const result = await request.query("DELETE FROM CaseTypes WHERE CaseTypeId = @CaseTypeId");
 
+        // Step 3: Check if any rows were affected in CaseTypes
         if (result.rowsAffected[0] === 0) {
-            return res.status(404).json({ message: "Case type not found" });
+            return res.status(404).json({ message: "Case type not found or already deleted" });
         }
 
         res.status(200).json({ message: "Case type deleted successfully" });
@@ -1338,14 +1356,21 @@ app.put("/UpdateCaseType/:caseTypeId", authMiddleware, async (req, res) => {
     const { caseTypeId } = req.params;
     const { CaseTypeName, NumberOfStages, Descriptions = [] } = req.body; // Get descriptions array
 
+    const caseTypeIdInt = parseInt(caseTypeId, 10);
+
+    if (isNaN(caseTypeIdInt)) {
+        return res.status(400).json({ message: "Invalid CaseTypeId" });
+    }
+
+    let transaction;
     try {
         const pool = await sql.connect(dbConfig);
-        const transaction = new sql.Transaction(pool);
+        transaction = new sql.Transaction(pool);
         await transaction.begin();
 
         // ✅ **Update CaseType Name & NumberOfStages**
         const updateCaseTypeRequest = new sql.Request(transaction);
-        updateCaseTypeRequest.input("caseTypeId", sql.Int, caseTypeId);
+        updateCaseTypeRequest.input("caseTypeId", sql.Int, caseTypeIdInt); // Pass as Int
         updateCaseTypeRequest.input("CaseTypeName", sql.NVarChar, CaseTypeName);
         updateCaseTypeRequest.input("NumberOfStages", sql.Int, NumberOfStages);
 
@@ -1357,15 +1382,15 @@ app.put("/UpdateCaseType/:caseTypeId", authMiddleware, async (req, res) => {
 
         // ✅ **Fetch existing descriptions for comparison**
         const existingDescriptionsResult = await pool.request()
-            .input("caseTypeId", sql.Int, caseTypeId)
+            .input("caseTypeId", sql.Int, caseTypeIdInt)
             .query("SELECT CaseTypeDescriptionId, Stage FROM CaseTypeDescriptions WHERE CaseTypeId = @caseTypeId");
 
         const existingDescriptionsMap = new Map(existingDescriptionsResult.recordset.map(desc => [desc.Stage, desc.CaseTypeDescriptionId]));
 
-        // ✅ **Handle descriptions update**
+        // ✅ **Handle descriptions update (Insert or Update)**
         for (const desc of Descriptions) {
             const descRequest = new sql.Request(transaction);
-            descRequest.input("caseTypeId", sql.Int, caseTypeId);
+            descRequest.input("caseTypeId", sql.Int, caseTypeIdInt);
             descRequest.input("stage", sql.Int, desc.Stage);
             descRequest.input("text", sql.NVarChar, desc.Text);
 
@@ -1387,19 +1412,30 @@ app.put("/UpdateCaseType/:caseTypeId", authMiddleware, async (req, res) => {
         }
 
         // ✅ **Remove extra descriptions if `NumberOfStages` decreased**
-        await pool.request()
-            .input("caseTypeId", sql.Int, caseTypeId)
+        const deleteUnUsedDescriptions = new sql.Request(transaction);
+        await deleteUnUsedDescriptions
+            .input("caseTypeId", sql.Int, caseTypeIdInt)
             .input("numberOfStages", sql.Int, NumberOfStages)
             .query(`
-                DELETE FROM CaseTypeDescriptions 
-                WHERE CaseTypeId = @caseTypeId AND Stage > @numberOfStages
-            `);
+                    DELETE FROM CaseTypeDescriptions 
+                    WHERE CaseTypeId = @caseTypeId AND Stage > @numberOfStages
+                `);
+
 
         await transaction.commit();
         res.status(200).json({ message: "Case type updated successfully" });
 
     } catch (error) {
         console.error("Error updating case type:", error);
+
+        if (transaction) {
+            try {
+                await transaction.rollback();
+            } catch (rollbackError) {
+                console.error("Error during transaction rollback:", rollbackError);
+            }
+        }
+
         res.status(500).json({ message: "Error updating case type" });
     }
 });

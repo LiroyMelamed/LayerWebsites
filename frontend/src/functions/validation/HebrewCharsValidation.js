@@ -1,6 +1,15 @@
 export default function HebrewCharsValidation(input) {
-    const hebrewPattern = /^[א-ת\s]+$/;
+    console.log('HebrewCharsValidation', input);
+
+    const hebrewPattern = /^[א-ת\s\+\-",'.\/]+$/;
     if (!input) return null;
     if (!hebrewPattern.test(input)) return 'הכנס אותיות בעברית בלבד';
-    return null; // No error
+    return null;
+}
+
+export function HebrewCharsValidationWithNULL(input) {
+    const hebrewPattern = /^[א-ת\s\+\-",'.\/]+$/;
+    if (input == '' || input == "" || input == null) return null;
+    if (!hebrewPattern.test(input)) return 'הכנס אותיות בעברית בלבד';
+    return null;
 }

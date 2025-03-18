@@ -53,6 +53,8 @@ export default function ClientsCard({ rePerformRequest, customerList, style }) {
                             clientMail={customer.Email}
                             clientName={customer.Name}
                             clientPhone={customer.PhoneNumber}
+                            closePopUpFunction={closePopup}
+                            rePerformRequest={rePerformRequest}
                         />
                     </SimpleContainer>
 

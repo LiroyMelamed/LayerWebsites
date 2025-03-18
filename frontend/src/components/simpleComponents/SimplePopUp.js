@@ -2,6 +2,8 @@
 import React, { useRef } from 'react';
 import SimpleContainer from './SimpleContainer';
 import SimpleScrollView from './SimpleScrollView';
+import ImageButton from '../specializedComponents/buttons/ImageButton';
+import { icons } from '../../assets/icons/icons';
 
 const SimplePopUp = ({ isOpen, children, style, onClose, ...props }) => {
     const popupRef = useRef(null); // Ref to keep track of the popup container
@@ -11,13 +13,20 @@ const SimplePopUp = ({ isOpen, children, style, onClose, ...props }) => {
     // Handle click outside the popup container
     const handleOverlayClick = (e) => {
         if (popupRef.current && !popupRef.current.contains(e.target)) {
-            onClose(); // Close the popup
+            // onClose(); // Close the popup
         }
     };
 
     return (
         <SimpleContainer style={styles.overlay} onClick={handleOverlayClick}>
             <SimpleContainer ref={popupRef} style={{ ...styles.popupContainer, ...style }} {...props}>
+                <ImageButton
+                    height={12}
+                    width={12}
+                    onPress={onClose}
+                    style={{ alignSelf: 'flex-start', marginBottom: 8 }}
+                    src={icons.Button.X}
+                />
                 {children}
             </SimpleContainer>
         </SimpleContainer>

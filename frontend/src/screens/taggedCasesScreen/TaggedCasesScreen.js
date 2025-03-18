@@ -31,10 +31,6 @@ export default function TaggedCasesScreen() {
         SearchCaseByName(query);
     };
 
-    if (isPerformingTaggedCases || isPerformingAllCasesTypes) {
-        return <SimpleLoader />;
-    }
-
     return (
         <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
             {isSmallScreen && <TopToolBarSmallScreen chosenIndex={0} LogoNavigate={AdminStackName + MainScreenName} />}
@@ -53,6 +49,7 @@ export default function TaggedCasesScreen() {
                     <ChooseButton
                         buttonChoices={allCasesTypes}
                         style={styles.chooseButton}
+                        isPerforming={isPerformingAllCasesTypes}
                     />
                 </SimpleContainer>
 

@@ -20,9 +20,9 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
 
     const navigate = useNavigate();
 
-    const { openPopup } = usePopup();
+    const { openPopup, closePopup } = usePopup();
 
-    const { NavBarLinks } = GetNavBarData(navigate, openPopup);
+    const { NavBarLinks } = GetNavBarData(navigate, openPopup, closePopup);
 
     const toggleDrawer = () => {
         setIsDrawerOpen(!isDrawerOpen);

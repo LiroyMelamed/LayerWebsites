@@ -15,6 +15,8 @@ export const icons = {
 
     Button: {
         DownArrow: require("./Button/DownArrow.png"),
+        X: require("./Button/X.png"),
+
     }
 
 }

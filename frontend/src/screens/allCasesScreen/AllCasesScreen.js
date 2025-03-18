@@ -62,7 +62,7 @@ export default function AllCasesScreen() {
                 />
             </SimpleScrollView>
             <SimpleContainer style={{ display: 'flex', justifyContent: 'center' }}>
-                <PrimaryButton style={{ margin: '8px 0px', selfAlign: 'center' }} onPress={() => openPopup(<CaseFullView onFailureFunction={() => { }} closePopUpFunction={closePopup} rePerformRequest={reperformAfterSave} />)}>הוספת תיק חדש</PrimaryButton>
+                <PrimaryButton style={{ margin: '8px 0px', selfAlign: 'center' }} onPress={() => openPopup(<CaseFullView closePopUpFunction={closePopup} rePerformRequest={reperformAfterSave} />)}>הוספת תיק חדש</PrimaryButton>
             </SimpleContainer>
 
         </SimpleScreen>

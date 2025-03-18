@@ -6,7 +6,7 @@ import HoverContainer from "../../specializedComponents/containers/HoverContaine
 import SecondaryButton from "./SecondaryButton";
 import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 
-export default function ChooseButton({ buttonText = "סוג תיק", buttonChoices, style }) {
+export default function ChooseButton({ buttonText = "סוג תיק", buttonChoices, style, props }) {
     const [chosenChoice, setChosenChoice] = useState("הכל")
     const [showResults, setShowResults] = useState(false);
     const buttonRef = useRef()
@@ -29,7 +29,7 @@ export default function ChooseButton({ buttonText = "סוג תיק", buttonChoic
     return (
         <SimpleContainer style={containerStyle}>
             <Text16>{buttonText + ":"}</Text16>
-            <SecondaryButton ref={buttonRef} leftIcon={icons.Button.DownArrow} onPress={() => { setShowResults(true) }} style={{ marginRight: 8, textAlign: 'center' }} size={buttonSizes.MEDIUM}>{chosenChoice}</SecondaryButton>
+            <SecondaryButton ref={buttonRef} leftIcon={icons.Button.DownArrow} onPress={() => { setShowResults(true) }} style={{ marginRight: 8, textAlign: 'center' }} size={buttonSizes.MEDIUM} {...props}>{chosenChoice}</SecondaryButton>
             {showResults && (
                 <HoverContainer
                     targetRef={buttonRef}

@@ -31,7 +31,7 @@ export default function LoginScreen() {
             unScrollableTopComponent={<TopCenteredLogo />}
             unScrollableBottomComponent={
                 <NextLoginButton
-                    isProcessing={isPerforming}
+                    isPerforming={isPerforming}
                     buttonText="התחברות"
                     onPress={() => performRequest(phoneNumber)}
                     disabled={phoneNumberError != null}

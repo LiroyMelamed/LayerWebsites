@@ -4,7 +4,7 @@ import { Text12, TextBold12 } from "../../specializedComponents/text/AllTextKind
 import { colors } from "../../../constant/colors";
 import { DateDDMMYY } from "../../../functions/date/DateDDMMYY";
 
-export default function CaseTimeline({ stages, title, style }) {
+export default function CaseTimeline({ stages, currentStage, title, style }) {
     return (
         <SimpleContainer
             style={style}
@@ -23,23 +23,23 @@ export default function CaseTimeline({ stages, title, style }) {
                     {stages?.slice().map((stage, index) => (
                         <SimpleContainer key={index} style={styles.stageContainer}>
                             <SimpleContainer
-                                style={stage.IsNew ? styles.newDot : styles.defaultDot}
+                                style={index == currentStage - 1 ? styles.newDot : styles.defaultDot}
                             >
                                 <SimpleContainer style={styles.dot} />
                             </SimpleContainer>
 
-                            <SimpleContainer style={styles.stageDetails(stage.IsNew)}>
+                            <SimpleContainer style={styles.stageDetails(index == currentStage - 1)}>
                                 <SimpleContainer
                                     style={{
-                                        backgroundColor: stage.IsNew ? "#CAF1EE" : "#F7F8FF", paddingTop: 4,
+                                        backgroundColor: index == currentStage - 1 ? "#CAF1EE" : "#F7F8FF", paddingTop: 4,
                                         paddingBottom: 4, paddingRight: 4,
                                         paddingLeft: 4, borderRadius: 4
                                     }}
                                 >
-                                    {stage.IsNew ?
+                                    {index == currentStage - 1 ?
                                         <TextBold12>חדש</TextBold12>
                                         :
-                                        <Text12>{DateDDMMYY(stage.Timestamp) || "שלב המשך"}</Text12>
+                                        <Text12>{DateDDMMYY(stage.Timestamp) || (index < currentStage - 1 ? "שלב הסתיים" : "שלב המשך")}</Text12>
                                     }
                                 </SimpleContainer>
                                 <TextBold12>{stage.Text}</TextBold12>
@@ -76,8 +76,8 @@ const styles = {
 
     verticalLine: {
         position: 'absolute',
-        top: 54, //TODO
-        bottom: 36, //TODO
+        top: 54,
+        bottom: 36,
         width: 1,
         right: 3,
         backgroundColor: '#CAF1EE',

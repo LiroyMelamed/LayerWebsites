@@ -6,7 +6,7 @@ import Separator from "../separators/Separator";
 
 export default function ErrorPopup({ closePopup, errorText }) {
     return (
-        <SimpleContainer style={{ flexDirection: 'column' }}>
+        <SimpleContainer style={{ flexDirection: 'column', width: '100%' }}>
             <TextBold16>אופס...</TextBold16>
 
             <Separator style={{ margin: '20px 0px' }} />

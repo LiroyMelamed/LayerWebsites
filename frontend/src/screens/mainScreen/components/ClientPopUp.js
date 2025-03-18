@@ -8,20 +8,22 @@ import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 import { customersApi } from "../../../api/customersApi";
 import useHttpRequest from "../../../hooks/useHttpRequest";
 import useFieldState from "../../../hooks/useFieldState";
-import HebrewCharsValidation from "../../../functions/validation/HebrewCharsValidation";
+import HebrewCharsValidation, { HebrewCharsValidationWithNULL } from "../../../functions/validation/HebrewCharsValidation";
 import emailValidation from "../../../functions/validation/EmailValidation";
 import IsraeliPhoneNumberValidation from "../../../functions/validation/IsraeliPhoneNumberValidation";
 
 export default function ClientPopup({ clientDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style }) {
+    console.log('ClientPopup', clientDetails);
+
     const [name, setName, nameError] = useFieldState(HebrewCharsValidation, clientDetails?.Name || "");
-    const [companyName, setCompanyName, companyNameError] = useFieldState(HebrewCharsValidation, clientDetails?.CompanyName || "");
+    const [companyName, setCompanyName, companyNameError] = useFieldState(HebrewCharsValidationWithNULL, clientDetails?.CompanyName || "");
     const [email, setEmail, emailError] = useFieldState(emailValidation, clientDetails?.Email || "");
     const [phoneNumber, setPhoneNumber, phoneNumberError] = useFieldState(IsraeliPhoneNumberValidation, clientDetails?.PhoneNumber || "");
 
     const [hasError, setHasError] = useState(false);
 
     useEffect(() => {
-        if (!name || !phoneNumber || !email || !companyName || nameError || phoneNumberError || emailError || companyNameError) {
+        if (!name || !phoneNumber || !email || nameError || phoneNumberError || emailError) {
             setHasError(true)
         } else {
             setHasError(false)
@@ -31,10 +33,10 @@ export default function ClientPopup({ clientDetails, rePerformRequest, onFailure
     const { isPerforming, performRequest } = useHttpRequest(
         clientDetails ? customersApi.updateCustomerById : customersApi.addCustomer,
         () => {
+
             closePopUpFunction?.();
             rePerformRequest?.();
         },
-        onFailureFunction
     );
 
     const { isPerforming: isPerformingDeleteClient, performRequest: deleteClient } = useHttpRequest(

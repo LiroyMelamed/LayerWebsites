@@ -1,8 +1,7 @@
-import React, { forwardRef, useState } from 'react';
+import React, { forwardRef, useState, useEffect } from 'react';
 import SimpleContainer from './SimpleContainer';
-import SimpleIcon from './SimpleIcon';
 import { colors } from '../../constant/colors';
-import ErrorText from '../styledComponents/text/ErrorText';
+import SimpleIcon from './SimpleIcon';
 
 const SimpleInput = forwardRef(
     ({
@@ -21,9 +20,13 @@ const SimpleInput = forwardRef(
         onFocus,
         onBlur,
         error,
+
+        timeToWaitInMilli = 500,
         ...props
     }, ref) => {
         const [isFocused, setIsFocused] = useState(false);
+        const [delayedValue, setDelayedValue] = useState(value);
+        const [timeoutId, setTimeoutId] = useState(null);
 
         const sizeStyles = inputStyles[inputSize];
 
@@ -38,14 +41,37 @@ const SimpleInput = forwardRef(
         }
 
         function handleFocus() {
-            onFocus?.()
-            setIsFocused(true)
+            onFocus?.();
+            setIsFocused(true);
         }
 
         function handleBlur(event) {
-            onBlur?.(event)
-            setIsFocused(false)
+            onBlur?.(event);
+            setIsFocused(false);
         }
+
+        const handleInputChange = (e) => {
+            const newValue = e.target.value;
+            setDelayedValue(newValue);
+
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+
+            const newTimeoutId = setTimeout(() => {
+                onChange?.(e);
+                setTimeoutId(null);
+            }, timeToWaitInMilli);
+
+            setTimeoutId(newTimeoutId);
+        };
+
+        useEffect(() => {
+            setDelayedValue(value);
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+        }, [value]);
 
         return (
             <SimpleContainer
@@ -71,12 +97,12 @@ const SimpleInput = forwardRef(
                         style={{
                             ...styles.floatingLabel,
                             fontSize: titleFontSize,
-                            fontFamily: 'Fredoka', // Ensures font is Fredoka for the input field
+                            fontFamily: 'Fredoka',
                             right: rightIcon ? '40px' : '8px',
                             top: sizeStyles.labelTop,
                             borderRadius: 10000,
-                            transform: isFocused || value ? sizeStyles.transformFocused : 'translateY(-50%)',
-                            opacity: isFocused || value ? 1 : 0.6,
+                            transform: isFocused || delayedValue ? sizeStyles.transformFocused : 'translateY(-50%)',
+                            opacity: isFocused || delayedValue ? 1 : 0.6,
                             color: error ? colors.error : colors.primaryHighlighted,
                         }}
                     >
@@ -95,9 +121,9 @@ const SimpleInput = forwardRef(
                 <input
                     type="text"
                     style={{
-                        flexGrow: 1, // Allows input to resize inside containers
-                        width: '100%', // Ensures input fills its container
-                        minWidth: '0', // Prevents the input from forcing a larger width
+                        flexGrow: 1,
+                        width: '100%',
+                        minWidth: '0',
                         padding: leftIcon ? `8px ${sizeStyles.padding} 8px 10px` : sizeStyles.padding,
                         paddingRight: rightIcon ? '30px' : sizeStyles.padding,
                         border: 'none',
@@ -109,11 +135,9 @@ const SimpleInput = forwardRef(
                         textAlign: 'right',
                         ...textStyle,
                     }}
-
-                    value={value}
-                    onChange={onChange}
+                    value={delayedValue}
+                    onChange={handleInputChange}
                     onFocus={handleFocus}
-                    // onBlur={handleBlur}
                     disabled={disabled}
                     {...props}
                 />
@@ -125,9 +149,7 @@ const SimpleInput = forwardRef(
                         style={{ ...IconStyle, marginLeft: '8px' }}
                     />
                 )}
-
             </SimpleContainer>
-
         );
     }
 );

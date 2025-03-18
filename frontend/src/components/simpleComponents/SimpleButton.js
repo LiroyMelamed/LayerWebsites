@@ -4,8 +4,6 @@ import { colors } from '../../constant/colors';
 const SimpleButton = forwardRef(({ controlId, style, textStyle, onPress, disabled, onPressIn, onPressOut, children, ...props }, ref) => {
 
   function handlePress(event) {
-    console.log('handlePress');
-
     if (!disabled) {
       onPress?.(event);
     }

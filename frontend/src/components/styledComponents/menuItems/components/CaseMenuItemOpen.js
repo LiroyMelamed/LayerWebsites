@@ -29,7 +29,7 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
         <SimpleContainer
             style={{
                 ...styles.openDataContainer,
-                maxHeight: isOpen ? '700px' : '0', // Adjust maxHeight dynamically
+                maxHeight: isOpen ? '1200px' : '0', // Adjust maxHeight dynamically
                 opacity: isOpen ? 1 : 0, // Fade effect
             }}
         >
@@ -74,7 +74,7 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
                 <TextBold12 style={{ flex: 1, }}>שלבים</TextBold12>
             </SimpleContainer>
 
-            {isStagesOpen && <CaseTimeline stages={fullCase.Descriptions} />}
+            {isStagesOpen && <CaseTimeline stages={fullCase.Descriptions} currentStage={fullCase.CurrentStage} />}
 
             {!isClient &&
                 <SimpleContainer style={{ display: 'flex', flexDirection: 'row', marginTop: 16 }}>

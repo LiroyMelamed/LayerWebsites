@@ -32,9 +32,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
 
     const { result: customers, isPerforming: isPerformingCustomers, performRequest: searchCustomers } = useHttpRequest(customersApi.getCustomersByName, null, () => { });
 
-    const { result: caseTypes, isPerforming: isPerformingCaseTypes, performRequest: searchCaseTypes } = useHttpRequest(casesTypeApi.getCaseTypeByName, (data) => {
-        console.log('getCaseTypeByName', data);
-    }, () => { });
+    const { result: caseTypes, isPerforming: isPerformingCaseTypes, performRequest: searchCaseTypes } = useHttpRequest(casesTypeApi.getCaseTypeByName, null, () => { });
 
     const { result: cases, isPerforming: isPerformingCases, performRequest: searchCases } = useHttpRequest(casesApi.getCaseByName, null, () => { });
 
@@ -61,11 +59,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
     };
 
     const handleCaseTypeSelect = (caseTypeName) => {
-        console.log('handleCaseTypeSelect', caseTypeName);
-
         const selectedCaseType = caseTypes.find(type => type.CaseTypeName === caseTypeName);
-
-        console.log('selectedCaseType', selectedCaseType);
 
         if (selectedCaseType) {
             setCaseData((prevDetails) => ({
@@ -79,24 +73,10 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
     };
 
     const handleSaveCase = () => {
-        console.log('handleSaveCase', caseData);
-
-        if (!caseData.CaseName || !caseData.CaseTypeName) {
-            alert("Both Case Name and Case Type are required.");
-            return;
-        }
-
         saveCase(caseData);
     };
 
     const handleUpdateCase = () => {
-        console.log('caseData', caseData);
-
-        if (!caseData.CaseName || !caseData.CaseTypeName) {
-            alert("Both Case Name and Case Type are required.");
-            return;
-        }
-
         saveCase(caseData.CaseId, caseData);
     };
 
@@ -245,7 +225,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                 ))}
 
                 <SimpleContainer style={styles.buttonsRowStyle}>
-                    {caseDetails || caseHasBeenChosen && (
+                    {((caseDetails != null) || caseHasBeenChosen) && (
                         <SecondaryButton
                             onPress={handleDeleteCase}
                             isPerforming={isDeleting}

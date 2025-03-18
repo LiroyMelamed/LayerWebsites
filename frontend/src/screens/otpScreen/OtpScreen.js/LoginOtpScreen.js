@@ -45,7 +45,7 @@ export default function LoginOtpScreen() {
             unScrollableTopComponent={<TopCenteredLogoOtp />}
             unScrollableBottomComponent={
                 <NextLoginButton
-                    isProcessing={isPerforming}
+                    isPerforming={isPerforming}
                     buttonText="שליחה"
                     onPress={() => performRequest(phoneNumber, otpNumber)}
                     disabled={otpError != null}

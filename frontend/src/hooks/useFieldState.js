@@ -13,11 +13,17 @@ export default function useFieldState(checkForErrorFunction, defaultValue = null
         }
     }, [defaultValue])
 
-    function setValueFunction(value) {
-        setFieldState({
-            value,
-            error: errorFunction(value)
-        })
+    function setValueFunction(valueOrUpdater) {
+        setFieldState(prevState => {
+            const value = typeof valueOrUpdater === 'function'
+                ? valueOrUpdater(prevState.value)
+                : valueOrUpdater;
+
+            return {
+                value,
+                error: errorFunction(value)
+            };
+        });
     }
 
     function errorFunction(currentValue) {

@@ -30,7 +30,9 @@ export default function AllCasesTypeScreen() {
 
     const handleButtonPress = (query) => {
         const foundItem = casesTypeByName.find(caseType => caseType.CaseTypeName === query);
-        openPopup(<CaseTypeFullView onFailureFunction={() => { }} caseTypeDetails={foundItem} rePerformRequest={reperformAfterSave} closePopUpFunction={closePopup} />)
+        console.log(reperformAfterSave, closePopup);
+
+        openPopup(<CaseTypeFullView onFailureFunction={() => { }} caseTypeDetails={foundItem} rePerformRequest={() => reperformAfterSave()} closePopUpFunction={() => closePopup()} />)
     }
 
     return (
@@ -59,7 +61,7 @@ export default function AllCasesTypeScreen() {
                 />
             </SimpleScrollView>
             <SimpleContainer style={{ display: 'flex', justifyContent: 'center' }}>
-                <PrimaryButton style={{ margin: '8px 0px', selfAlign: 'center' }} onPress={() => openPopup(<CaseTypeFullView onFailureFunction={() => { }} caseTypeName={null} />)}>הוספת סוג תיק</PrimaryButton>
+                <PrimaryButton style={{ margin: '8px 0px', selfAlign: 'center' }} onPress={() => openPopup(<CaseTypeFullView onFailureFunction={() => { }} caseTypeName={null} closePopUpFunction={closePopup} rePerformRequest={reperformAfterSave} />)}>הוספת סוג תיק</PrimaryButton>
             </SimpleContainer>
         </SimpleScreen>
     )

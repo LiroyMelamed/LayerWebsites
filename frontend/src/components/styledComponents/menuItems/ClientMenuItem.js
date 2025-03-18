@@ -11,6 +11,8 @@ export default function ClientMenuItem({
     clientMail = "dsadasdasd@walla.com",
     clientPhone = "0507299064",
     clientDetails,
+    closePopUpFunction,
+    rePerformRequest,
     onPress,
     style
 }) {
@@ -20,7 +22,7 @@ export default function ClientMenuItem({
         if (onPress) {
             onPress()
         } else {
-            openPopup(<ClientPopup clientDetails={clientDetails} />)
+            openPopup(<ClientPopup clientDetails={clientDetails} closePopUpFunction={closePopUpFunction} rePerformRequest={rePerformRequest} />)
         }
     }
 
@@ -29,13 +31,13 @@ export default function ClientMenuItem({
             <SimpleContainer style={{ overflow: null, flexDirection: 'column', ...style }}>
 
                 <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse' }}>
-                    <TextBold14 style={styles.textContainer}>{CompanyName}</TextBold14>
+                    <TextBold14 style={styles.textContainer}>{CompanyName || "-"}</TextBold14>
 
-                    <Text14 style={styles.textContainer}>{clientName}</Text14>
+                    <Text14 style={styles.textContainer}>{clientName || "-"}</Text14>
 
-                    <Text14 style={styles.textContainer} shouldApplyClamping>{clientMail}</Text14>
+                    <Text14 style={styles.textContainer} shouldApplyClamping>{clientMail || "-"}</Text14>
 
-                    <Text14 style={styles.textContainer}>{clientPhone}</Text14>
+                    <Text14 style={styles.textContainer}>{clientPhone || "-"}</Text14>
                 </SimpleContainer>
 
             </SimpleContainer>

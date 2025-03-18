@@ -1,19 +1,19 @@
-import { useEffect, useState } from "react";
-import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
-import SimpleInput from "../../../components/simpleComponents/SimpleInput";
-import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
-import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
-import { casesTypeApi } from "../../../api/casesApi";
-import useHttpRequest from "../../../hooks/useHttpRequest";
-import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryButton";
-import SimpleTextArea from "../../../components/simpleComponents/SimpleTextArea";
-import useFieldState from "../../../hooks/useFieldState";
-import HebrewCharsValidation from "../../../functions/validation/HebrewCharsValidation";
 import { NumberOfStagesValidation } from "../../../functions/validation/NumberOfStagesValidation";
+import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
+import HebrewCharsValidation from "../../../functions/validation/HebrewCharsValidation";
+import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryButton";
+import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
+import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
+import SimpleTextArea from "../../../components/simpleComponents/SimpleTextArea";
+import SimpleInput from "../../../components/simpleComponents/SimpleInput";
+import useHttpRequest from "../../../hooks/useHttpRequest";
+import useFieldState from "../../../hooks/useFieldState";
+import { casesTypeApi } from "../../../api/casesApi";
+import { useEffect, useState } from "react";
 
 export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style }) {
     const [caseTypeName, setCaseTypeName, caseTypeNameError] = useFieldState(HebrewCharsValidation, caseTypeDetails?.CaseTypeName || "");
-    const [numberOfStages, setNumberOfStages, numberOfStagesError] = useFieldState(NumberOfStagesValidation, caseTypeDetails?.NumberOfStages.toString() || "");
+    const [numberOfStages, setNumberOfStages, numberOfStagesError] = useFieldState(NumberOfStagesValidation, caseTypeDetails?.NumberOfStages || "");
     const [descriptions, setDescriptions] = useState(caseTypeDetails?.Descriptions || [{ Stage: 1, Text: "", Timestamp: "", New: false }]);
 
     const [hasError, setHasError] = useState(false);
@@ -29,8 +29,6 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
     const { isPerforming, performRequest } = useHttpRequest(
         caseTypeDetails ? casesTypeApi.updateCaseTypeById : casesTypeApi.addCaseType,
         () => {
-            console.log('hereeeeeeeeeeeeeeee');
-
             closePopUpFunction?.();
             rePerformRequest?.();
         },
@@ -58,7 +56,7 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
         }
 
         const apiCall = caseTypeDetails
-            ? performRequest(caseTypeDetails.CaseTypeId, caseTypeToSend)
+            ? performRequest(Number(caseTypeDetails.CaseTypeId), caseTypeToSend)
             : performRequest(caseTypeToSend);
 
         apiCall.finally(() => closePopUpFunction?.());
@@ -69,8 +67,12 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
     };
 
     const handleAddStage = () => {
+        console.log(descriptions);
+
+        setNumberOfStages(prev => prev + 1);
+
         setDescriptions((prev) => {
-            const newStage = prev.Descriptions.length + 1;
+            const newStage = prev.length + 1;
             return [...prev, { Stage: newStage, Text: "", Timestamp: "", New: false }];
         });
     };
@@ -79,10 +81,9 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
         if (!numberOfStagesError && numberOfStages) {
             setDescriptions((prevDescriptions) => {
                 const currentStages = prevDescriptions.length;
-                const targetStages = Number(numberOfStages);
 
-                if (targetStages > currentStages) {
-                    const newStages = Array.from({ length: targetStages - currentStages }, (_, index) => ({
+                if (numberOfStages > currentStages) {
+                    const newStages = Array.from({ length: numberOfStages - currentStages }, (_, index) => ({
                         Stage: currentStages + index + 1,
                         Text: '',
                         Timestamp: '',
@@ -90,18 +91,14 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
                     }));
 
                     return [...prevDescriptions, ...newStages];
-                } else if (targetStages < currentStages) {
-                    return [prevDescriptions.slice(0, targetStages)];
+                } else if (numberOfStages < currentStages) {
+                    return [...prevDescriptions.slice(0, numberOfStages)];
                 }
 
                 return prevDescriptions;
             });
         }
     }, [numberOfStages]);
-
-    useEffect(() => {
-        console.log('descriptions', descriptions);
-    }, [descriptions]);
 
 
     return (
@@ -119,7 +116,7 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
                         style={styles.inputStyle}
                         title={"מספר שלבים"}
                         value={numberOfStages}
-                        onChange={(e) => setNumberOfStages(e.target.value)}
+                        onChange={(e) => setNumberOfStages(Number(e.target.value))}
                         error={numberOfStagesError}
                     />
                 </SimpleContainer>
