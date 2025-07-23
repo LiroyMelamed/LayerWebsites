@@ -22,15 +22,9 @@ export const getNavBarData = (navigate, openPopup, closePopup) => ({
             onClick: () => navigate(AdminStackName + AllCasesScreenName),
         },
         {
-            buttonText: "תיק חדש",
+            buttonText: "תיק חדש / עדכון תיק",
             buttonScreen: null,
             icon: null, // icons.NavBarIcons.NewCase
-            onClick: () => openPopup(<CaseFullView onFailureFunction={() => { }} closePopUpFunction={closePopup} />),
-        },
-        {
-            buttonText: "עדכון תיק",
-            buttonScreen: null,
-            icon: null, // icons.NavBarIcons.UpdateCase
             onClick: () => openPopup(<CaseFullView onFailureFunction={() => { }} closePopUpFunction={closePopup} />),
         },
         {
@@ -38,12 +32,6 @@ export const getNavBarData = (navigate, openPopup, closePopup) => ({
             buttonScreen: "כל המנהלים",
             icon: null, // icons.NavBarIcons.AllManagers
             onClick: () => navigate(AdminStackName + AllMangerScreenName),
-        },
-        {
-            buttonText: "הוספת מנהל",
-            buttonScreen: null,
-            icon: null, // icons.NavBarIcons.Manager
-            onClick: () => openPopup(<AdminPopup closePopUpFunction={closePopup} />),
         },
         {
             buttonText: "לכל סוגי התיקים",

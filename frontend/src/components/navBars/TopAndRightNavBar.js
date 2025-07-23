@@ -45,7 +45,7 @@ export default function TopAndRightNavBar({ chosenIndex = -1, children, LogoNavi
             </SimpleContainer>
 
           </SimpleScrollView>
-          <PrimaryButton style={{ alignSelf: 'center', marginBottom: '24px', backgroundColor: colors.darkRed }} onPress={() => { localStorage.removeItem("token"); navigate('/') }}>התנתק</PrimaryButton>
+          <PrimaryButton style={{ alignSelf: 'center', marginBottom: '24px', marginTop: '12px', backgroundColor: colors.darkRed }} onPress={() => { localStorage.removeItem("token"); navigate('/') }}>התנתק</PrimaryButton>
         </SimpleContainer>
       )}
 
@@ -69,7 +69,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     paddingTop: 20,
-    zIndex: 11111
+    zIndex: 11111,
   },
   logoContainer: {
     display: 'flex',

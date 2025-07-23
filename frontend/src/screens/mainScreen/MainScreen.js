@@ -24,6 +24,9 @@ export default function MainScreen() {
         return <SimpleLoader />;
     }
 
+    console.log('mainScreenData', mainScreenData);
+
+
     return (
         <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
             {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={AdminStackName + MainScreenName} />}
@@ -60,7 +63,7 @@ export default function MainScreen() {
                                 title={"תיקים מתוייגים"}
                             />
                             <ShowDataCard
-                                numberText={mainScreenData?.AllCustomersData?.length}
+                                numberText={mainScreenData?.ActiveCustomers?.length}
                                 title={"לקוחות פעילים"}
                             />
                         </SimpleContainer>

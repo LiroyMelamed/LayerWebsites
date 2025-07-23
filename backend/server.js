@@ -1,4 +1,6 @@
-const isProduction = true
+const axios = require('axios');
+
+const isProduction = false
 
 function selectMode(forProduction, forStage) {
     return isProduction ? forProduction : forStage;
@@ -22,15 +24,26 @@ const WEBSITE_DOMAIN = 'client.melamedlaw.co.il'
 
 app.use(express.json());
 
+async function getPublicIp() {
+    try {
+        const response = await axios.get('https://api.ipify.org?format=json');
+        console.log('Public IP:', response.data.ip);
+    } catch (error) {
+        console.error('Error getting public IP:', error);
+    }
+}
+
 const productionOrigin = [
     "https://melamedlaw.vercel.app", // Your final production domain
     "https://melamedlaw-production.up.railway.app", // Your backend URL
-    "https://melamedlaw-i9wyjomsi-liroymelameds-projects.vercel.app/",
-    "https://melamedlaw-*-liroymelameds-projects.vercel.app/",
+    "https://melamedlaw-i9wyjomsi-liroymelameds-projects.vercel.app",
+    "https://melamedlaw-*-liroymelameds-projects.vercel.app",
 ]
 
 const stageOrigin = [
-    "http://localhost:3000"
+    "http://localhost:3000",
+    "https://1ef2821adfcb.ngrok-free.app",
+    "https://1ef2821adfcb.ngrok-free.app/LoginStack/LoginScreen",
 ]
 
 const allowedOrigins = selectMode(productionOrigin, stageOrigin);
@@ -56,13 +69,31 @@ const dbConfig = {
     server: process.env.DB_SERVER_NAME,
     database: process.env.DB_NAME,
     options: {
-        encrypt: false,
+        encrypt: true,
         trustServerCertificate: true,
+        trustedConnection: false
     },
-    requestTimeout: 50000 // Increase to 30 seconds
 };
 
-sql.connect(dbConfig).then(() => console.log("Connected to Azure SQL Database"));
+let pool; // Declare 'pool' variable in a scope accessible by your routes
+
+// Establish database connection FIRST, then start the server
+sql.connect(dbConfig)
+    .then(connectedPool => {
+        pool = connectedPool; // Assign the connected pool to the globally accessible 'pool' variable
+        console.log("Connected to the database");
+
+        // Now that the database is connected, start your Express server
+        app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+            getPublicIp(); // Call this here, assuming it's a function you defined
+        });
+    })
+    .catch((err) => {
+        console.error("Error connecting to the database:", err);
+        // It's often good practice to exit the process if the database connection fails on startup
+        process.exit(1);
+    });
 
 const client = new twilio(
     process.env.TWILIO_ACCOUNT_SID,
@@ -110,37 +141,59 @@ app.post("/RequestOtp", async (req, res) => {
 
     console.log('RequestOtp', phoneNumber);
 
-
     if (!phoneNumber) {
         console.log('RequestOtp-!phoneNumber');
         return res.status(400).json({ message: "נא להזין מספר פלאפון תקין" });
     }
 
     try {
+        if (!pool) { // Ensure the pool is initialized
+            console.error("Database pool not initialized.");
+            return res.status(500).json({ message: "שגיאה פנימית בשרת: בסיס נתונים אינו זמין." });
+        }
+
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiry
 
-        const userResult = await sql.query(`SELECT UserId FROM Users WHERE PhoneNumber = '${phoneNumber}'`);
+        console.log('Generated OTP for DB:', otp);
+        console.log('Calculated Expiry for DB:', expiry.toISOString()); // Log in ISO format for clarity
+        console.log('Current Time:', new Date().toISOString());
+
+        // 1. Check for user existence using a parameterized query
+        const userRequest = pool.request();
+        userRequest.input('phoneNumber', sql.NVarChar, phoneNumber); // Use NVarChar for phone numbers
+        const userResult = await userRequest.query(`SELECT UserId FROM Users WHERE PhoneNumber = @phoneNumber`);
+
         if (userResult.recordset.length === 0) {
             console.log("משתמש אינו קיים");
             return res.status(404).json({ message: "משתמש אינו קיים" });
         }
         const userId = userResult.recordset[0].UserId;
 
-        await sql.query(`
+        // 2. MERGE INTO OTPs using parameterized query
+        const otpRequest = pool.request();
+        otpRequest.input('phoneNumber', sql.NVarChar, phoneNumber);
+        otpRequest.input('otp', sql.NVarChar, otp);
+        otpRequest.input('expiry', sql.DateTime2, expiry); // Use sql.DateTime2 for date objects
+        otpRequest.input('userId', sql.Int, userId);
+
+        await otpRequest.query(`
             MERGE INTO OTPs AS target
-            USING (SELECT '${phoneNumber}' AS PhoneNumber, '${otp}' AS OTP, '${expiry.toISOString()}' AS Expiry, ${userId} AS UserId) AS source
+            USING (SELECT @phoneNumber AS PhoneNumber, @otp AS OTP, @expiry AS Expiry, @userId AS UserId) AS source
             ON target.PhoneNumber = source.PhoneNumber
             WHEN MATCHED THEN UPDATE SET OTP = source.OTP, Expiry = source.Expiry
             WHEN NOT MATCHED THEN INSERT (PhoneNumber, OTP, Expiry, UserId) VALUES (source.PhoneNumber, source.OTP, source.Expiry, source.UserId);
         `);
 
-        const formattedPhone = formatPhoneNumber(phoneNumber);
+        const formattedPhone = formatPhoneNumber(phoneNumber); // Assuming formatPhoneNumber is defined elsewhere
 
+        // You might want to await this message sending to ensure it completes
+        // before responding, or handle its errors separately.
         sendMessage(`קוד האימות הוא: ${otp} \n\n @${WEBSITE_DOMAIN}`, formattedPhone);
 
         res.status(200).json({ message: "קוד נשלח בהצלחה" });
     } catch (error) {
+        console.error("שגיאה בשליחת הקוד:", error); // Log the full error for debugging
         res.status(500).json({ message: "שגיאה בשליחת הקוד", error: error.message });
     }
 });
@@ -156,7 +209,7 @@ app.post("/VerifyOtp", async (req, res) => {
             JOIN Users ON OTPs.UserId = Users.UserId 
             WHERE OTPs.PhoneNumber = '${phoneNumber}' 
             AND OTPs.OTP = '${otp}' 
-            AND OTPs.Expiry > GETDATE()
+            AND OTPs.Expiry > GETUTCDATE() -- <-- Make sure this is GETUTCDATE()
         `);
 
         if (result.recordset.length === 0) {
@@ -205,6 +258,7 @@ app.get("/GetCases", authMiddleware, async (req, res) => {
                 C.IsTagged, 
                 C.CreatedAt, 
                 C.UpdatedAt,
+                C.WhatsappGroupLink,
                 CD.DescriptionId, 
                 CD.Stage, 
                 CD.Text, 
@@ -238,6 +292,7 @@ app.get("/GetCases", authMiddleware, async (req, res) => {
                     CustomerMail: row.CustomerMail,
                     PhoneNumber: row.PhoneNumber,
                     CompanyName: row.CompanyName,
+                    WhatsappGroupLink: row.WhatsappGroupLink,
                     CurrentStage: row.CurrentStage,
                     IsClosed: row.IsClosed,
                     IsTagged: row.IsTagged,
@@ -315,6 +370,7 @@ app.get("/GetCaseByName", authMiddleware, async (req, res) => {
                 C.IsTagged, 
                 C.CreatedAt, 
                 C.UpdatedAt,
+                C.WhatsappGroupLink,
                 CD.DescriptionId, 
                 CD.Stage, 
                 CD.Text, 
@@ -356,6 +412,7 @@ app.get("/GetCaseByName", authMiddleware, async (req, res) => {
                     CustomerMail: row.CustomerMail,
                     PhoneNumber: row.PhoneNumber,
                     CompanyName: row.CompanyName,
+                    WhatsappGroupLink: row.WhatsappGroupLink,
                     CurrentStage: row.CurrentStage,
                     IsClosed: row.IsClosed,
                     IsTagged: row.IsTagged,
@@ -558,7 +615,7 @@ app.put("/UpdateStage/:caseId", authMiddleware, async (req, res) => {
 
         // Check if a notification needs to be sent
         if (CurrentStage !== currentStage) {
-            notificationMessage = `היי ${CustomerName}, \n\n בתיק ${CaseName} התעדכן שלב, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`;
+            notificationMessage = `היי ${CustomerName}, \n\n בתיק ${CaseName} התעדכן שלב, תיקך נמצא בשלב - ${Descriptions[currentStage - 1]}, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`;
         }
         if (IsClosed && !currentlyClosed) {
             notificationMessage = `היי ${CustomerName}, \n\n תיק ${CaseName} הסתיים בהצלחה, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`;
@@ -655,6 +712,7 @@ app.get("/TaggedCases", authMiddleware, async (req, res) => {
                     C.IsTagged, 
                     C.CreatedAt, 
                     C.UpdatedAt,
+                    C.WhatsappGroupLink,
                     CD.DescriptionId, 
                     CD.Stage, 
                     CD.Text, 
@@ -682,6 +740,7 @@ app.get("/TaggedCases", authMiddleware, async (req, res) => {
                     CustomerMail: row.CustomerMail,
                     PhoneNumber: row.PhoneNumber,
                     CompanyName: row.CompanyName,
+                    WhatsappGroupLink: row.WhatsappGroupLink,
                     CurrentStage: row.CurrentStage,
                     IsClosed: row.IsClosed,
                     IsTagged: row.IsTagged,
@@ -738,6 +797,7 @@ app.get("/TaggedCasesByName", authMiddleware, async (req, res) => {
                     C.IsTagged, 
                     C.CreatedAt, 
                     C.UpdatedAt,
+                    C.WhatsappGroupLink,
                     CD.DescriptionId, 
                     CD.Stage, 
                     CD.Text, 
@@ -772,6 +832,7 @@ app.get("/TaggedCasesByName", authMiddleware, async (req, res) => {
                     PhoneNumber: row.PhoneNumber,
                     CompanyName: row.CompanyName,
                     CurrentStage: row.CurrentStage,
+                    WhatsappGroupLink: row.WhatsappGroupLink,
                     IsClosed: row.IsClosed,
                     IsTagged: row.IsTagged,
                     CreatedAt: row.CreatedAt,
@@ -796,6 +857,39 @@ app.get("/TaggedCasesByName", authMiddleware, async (req, res) => {
     } catch (error) {
         console.error("Error retrieving tagged cases by name:", error);
         res.status(500).json({ message: "Error retrieving tagged cases by name" });
+    }
+});
+
+app.put("/LinkWhatsappGroup/:CaseId", authMiddleware, async (req, res) => {
+
+    const { CaseId } = req.params;
+    const { WhatsappGroupLink } = req.body;
+    console.log('CaseId', CaseId);
+    console.log('WhatsappGroupLink', WhatsappGroupLink);
+
+
+
+    if (!WhatsappGroupLink || !CaseId) {
+        return res.status(400).json({ message: "Missing data" });
+    }
+
+    try {
+        const pool = await sql.connect(dbConfig);
+
+        await pool.request()
+            .input("CaseId", sql.Int, CaseId)
+            .input("WhatsappGroupLink", sql.NVarChar, WhatsappGroupLink)
+            .query(`
+                UPDATE Cases 
+                SET WhatsappGroupLink = @WhatsappGroupLink 
+                WHERE CaseId = @CaseId
+            `);
+
+        res.status(200).json({ message: "WhatsApp group link updated successfully" });
+
+    } catch (error) {
+        console.error("Error updating WhatsApp link:", error);
+        res.status(500).json({ message: "Error updating WhatsApp link" });
     }
 });
 
@@ -1447,8 +1541,16 @@ app.get("/GetMainScreenData", authMiddleware, async (req, res) => {
         const casesResult = await sql.query("SELECT * FROM Cases");
         const customersResult = await sql.query("SELECT * FROM Users WHERE LOWER(Role) <> 'admin'");
 
+        const activeCustomers = await pool.request().query(`
+            SELECT DISTINCT U.* 
+            FROM Users U
+            JOIN Cases C ON C.UserId = U.UserId
+            WHERE C.IsClosed = 0 AND LOWER(U.Role) <> 'admin'
+        `);
+
         const casesArray = casesResult.recordset;
         const customersArray = customersResult.recordset;
+        const activeCustomersArray = activeCustomers.recordset;
 
         const closedCases = casesArray.filter(caseItem => caseItem.IsClosed === true);
         const taggedCases = casesArray.filter(caseItem => caseItem.IsTagged === true);
@@ -1459,11 +1561,13 @@ app.get("/GetMainScreenData", authMiddleware, async (req, res) => {
             TaggedCases: taggedCases,
             NumberOfClosedCases: closedCases.length,
             NumberOfTaggedCases: taggedCases.length,
-            AllCustomersData: customersArray
+            AllCustomersData: customersArray,
+            ActiveCustomers: activeCustomersArray
         });
     } catch (error) {
         res.status(500).json({ message: "שגיאה בקבלת נתוני מסך הבית" });
     }
 });
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+getPublicIp();
+// app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

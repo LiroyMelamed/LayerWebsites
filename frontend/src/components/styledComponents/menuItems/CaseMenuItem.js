@@ -8,7 +8,6 @@ import CaseMenuItemOpen from "./components/CaseMenuItemOpen";
 import SimpleLoader from "../../simpleComponents/SimpleLoader";
 import { usePopup } from "../../../providers/PopUpProvider";
 import CaseFullView from "../cases/CaseFullView";
-import { DateDDMMYY } from "../../../functions/date/DateDDMMYY";
 import casesApi from "../../../api/casesApi";
 
 export default function CaseMenuItem({
@@ -77,7 +76,7 @@ export default function CaseMenuItem({
                     <SimpleContainer style={styles.secondRow}>
                         <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flex: 1 }}>
                             <TextBold12>{rightPreSecondLine}</TextBold12>
-                            {isPerformingSetCase ? <SimpleLoader style={{ marginRight: 4, width: null }} /> : <Text12 style={{ marginRight: 4 }}>{fullCaseListener.CurrentStage}</Text12>}
+                            {isPerformingSetCase ? <SimpleLoader style={{ marginRight: 4, width: null }} /> : <Text12 style={{ marginRight: 4 }}>{fullCaseListener.Descriptions[fullCaseListener.CurrentStage - 1].Text}</Text12>}
                         </SimpleContainer>
                         <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse' }}>
                             <TextBold12>{leftPreSecondLine}</TextBold12>

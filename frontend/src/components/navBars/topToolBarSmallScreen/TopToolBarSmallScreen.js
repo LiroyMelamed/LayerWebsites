@@ -63,7 +63,7 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
                             ))}
                         </SimpleContainer>
                     </SimpleScrollView>
-                    <PrimaryButton style={{ alignSelf: 'center', marginBottom: '20px', marginTop: '8px', backgroundColor: colors.darkRed }} onPress={() => { localStorage.removeItem("token"); navigate('/') }}>התנתק</PrimaryButton>
+                    <PrimaryButton style={{ alignSelf: 'center', marginBottom: '20px', marginTop: '12px', backgroundColor: colors.darkRed }} onPress={() => { localStorage.removeItem("token"); navigate('/') }}>התנתק</PrimaryButton>
                 </SimpleContainer>
             }
         </>

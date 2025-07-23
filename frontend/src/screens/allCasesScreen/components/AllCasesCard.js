@@ -40,7 +40,7 @@ export default function AllCasesCard({ allCases, isPerforming, reperformAfterSav
                         <CaseMenuItem
                             key={`case${index}`}
                             fullCase={item}
-                            rightTitle={item.CaseName}
+                            rightTitle={`${item.CaseName} - ${item.CustomerName}`}
 
                             leftPreFirstLine={"שם חברה"}
                             leftValueFirstLine={item.CompanyName}

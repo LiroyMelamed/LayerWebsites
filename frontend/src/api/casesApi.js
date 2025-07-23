@@ -9,6 +9,7 @@ const DELETE_CASE = "/DeleteCase/";
 const UPDATE_CASE = "/UpdateCase/";
 const UPDATE_STAGE = "/UpdateStage/";
 const GET_TAGGED_CASES = "/TaggedCases";
+const LINK_WHATSAPP_GROUP = "/LinkWhatsappGroup/";
 const GET_TAGGED_CASES_BY_NAME = "/TaggedCasesByName?caseName=";
 
 const GET_MAIN_SCREEN_DATA = "/GetMainScreenData";
@@ -62,14 +63,16 @@ const casesApi = {
   },
 
   tagCaseById: async (CaseId, caseData) => {
-    console.log('tagCaseById', CaseId, caseData);
     return await ApiUtils.put(`${TAG_CASE}${CaseId}`, caseData);
   },
 
   getTaggedCaseByName: async (caseName) => {
-    console.log('getTaggedCaseByName', caseName);
     return await ApiUtils.get(`${GET_TAGGED_CASES_BY_NAME}${encodeURIComponent(caseName)}`);
-  }
+  },
+
+  linkWhatsappGroup: async (CaseId, whatsappLink) => {
+    return await ApiUtils.put(`${LINK_WHATSAPP_GROUP}${CaseId}`, whatsappLink);
+  },
 };
 
 export const casesTypeApi = {

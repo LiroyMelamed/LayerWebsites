@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const isProduction = true;
+const isProduction = false;
 
 function selectMode(forProduction, forStage) {
     return isProduction ? forProduction : forStage;

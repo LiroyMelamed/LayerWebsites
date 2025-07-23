@@ -40,7 +40,7 @@ export default function PinnedCasesCard({ taggedCases, isPerforming, rePerformFu
                         <CaseMenuItem
                             key={`taggedCase${index}`}
                             fullCase={item}
-                            rightTitle={item.CaseName}
+                            rightTitle={`${item.CaseName} - ${item.CustomerName}`}
 
                             leftPreFirstLine={"שם חברה"}
                             leftValueFirstLine={item.CompanyName}

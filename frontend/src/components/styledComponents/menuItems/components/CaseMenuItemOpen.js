@@ -13,16 +13,30 @@ import ImageButton from "../../../specializedComponents/buttons/ImageButton";
 import { icons } from "../../../../assets/icons/icons";
 import CaseTimeline from "../../cases/CaseTimeline";
 import casesApi from "../../../../api/casesApi";
+import SimpleButton from "../../../simpleComponents/SimpleButton";
+import { colors } from "../../../../constant/colors";
+import SimpleInput, { inputStyles } from "../../../simpleComponents/SimpleInput";
 
 export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCase, isClient }) {
     const { isPerforming: isPerformingTagCase, performRequest: tagCase } = useHttpRequest(casesApi.tagCaseById);
+    const { isPerforming: isPerformingLinkCase, performRequest: LinkCase } = useHttpRequest(casesApi.linkWhatsappGroup, onSuccessLink);
 
-    const [isStagesOpen, setIsStagesOpen] = useState(false)
-    const [IsTagged, setIsTagged] = useState(fullCase.IsTagged)
+    const [isStagesOpen, setIsStagesOpen] = useState(false);
+    const [IsTagged, setIsTagged] = useState(fullCase.IsTagged);
+    const [IsPressedLink, setIsPressedLink] = useState(false);
+    const [WhatsappLink, setWhatsappLink] = useState(fullCase.WhatsappGroupLink);
 
     function unTag() {
         setIsTagged(!IsTagged)
         tagCase(fullCase.CaseId, { IsTagged: !IsTagged })
+    }
+
+    function onSuccessLink() {
+        setIsPressedLink(false)
+    }
+
+    function linkWhatsappGroup() {
+        LinkCase(fullCase.CaseId, { WhatsappGroupLink: WhatsappLink })
     }
 
     return (
@@ -50,7 +64,40 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
 
             <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flex: 1 }}>
                 <TextBold12 style={{ flex: 1 }}>מספר פלאפון</TextBold12>
-                <Text12 style={{ flex: 1 }}>{fullCase.PhoneNumber}</Text12>
+                <SimpleButton style={{ flex: 1 }} onPress={() => { window.location.href = `tel:${fullCase.PhoneNumber}` }}>
+                    <Text12 style={{ color: colors.primary }}>{fullCase.PhoneNumber}</Text12>
+                </SimpleButton>
+            </SimpleContainer>
+
+            <Separator />
+
+            <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flex: 1, alignItems: 'center' }}>
+                <TextBold12 style={{ flex: 1 }}>קבוצת וואטספ</TextBold12>
+                {isPerformingLinkCase ?
+                    <SimpleLoader />
+                    :
+                    IsPressedLink && !isClient ?
+                        <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flex: 1, alignItems: 'center' }}>
+                            <SimpleInput
+                                style={styles.inputStyle}
+                                title={"לינק לקבוצת הוואטספ"}
+                                value={WhatsappLink}
+                                onChange={(e) => setWhatsappLink(e.target.value)}
+                                inputSize="Small"
+                            />
+                            <PrimaryButton
+                                size={buttonSizes.SMALL}
+                                onPress={linkWhatsappGroup}
+                            >
+                                שליחה
+                            </PrimaryButton>
+                        </SimpleContainer>
+                        :
+                        <SimpleButton style={{ flex: 1 }} onPress={WhatsappLink ? () => { window.location.href = `${WhatsappLink}` } : () => { !isClient ? setIsPressedLink(true) : window.location.href = `https://wa.me/972522595097?text=יוצר קשר בנוגע לתיק מספר ${fullCase.CaseId}` }}>
+                            <Text12 style={{ color: colors.positive }} >{WhatsappLink ? 'למעבר לקבוצה' : !isClient ? 'לחץ לשיוך' : 'צור קשר'}</Text12>
+                        </SimpleButton>
+
+                }
             </SimpleContainer>
 
             <Separator />
@@ -106,4 +153,8 @@ const styles = {
         marginRight: 28,
         flexDirection: 'column'
     },
+    inputStyle: {
+        margin: 0,
+        marginLeft: 8,
+    }
 };
