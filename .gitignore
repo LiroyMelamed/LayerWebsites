@@ -129,3 +129,6 @@ dist
 
 #FireBase
 .backend/firebase-key.json
+
+/frontend/build
+/frontend/public

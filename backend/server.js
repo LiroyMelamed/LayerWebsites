@@ -34,16 +34,13 @@ async function getPublicIp() {
 }
 
 const productionOrigin = [
-    "https://melamedlaw.vercel.app", // Your final production domain
-    "https://melamedlaw-production.up.railway.app", // Your backend URL
-    "https://melamedlaw-i9wyjomsi-liroymelameds-projects.vercel.app",
-    "https://melamedlaw-*-liroymelameds-projects.vercel.app",
+    "https://client.melamedlaw.co.il/",
+    "https://client.melamedlaw.co.il",
 ]
 
 const stageOrigin = [
     "http://localhost:3000",
-    "https://1ef2821adfcb.ngrok-free.app",
-    "https://1ef2821adfcb.ngrok-free.app/LoginStack/LoginScreen",
+    "https://client.melamedlaw.co.il",
 ]
 
 const allowedOrigins = selectMode(productionOrigin, stageOrigin);
