@@ -33,7 +33,7 @@ export default function AllCasesCard({ allCases, isPerforming, reperformAfterSav
             <TextBold20>כל התיקים</TextBold20>
 
             <SimpleContainer style={{ overflow: null, flexDirection: 'column', marginTop: 16 }}>
-                {allCases.map((item, index) => (
+                {allCases?.map((item, index) => (
                     <>
                         {index !== 0 && <Separator />}
 

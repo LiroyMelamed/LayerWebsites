@@ -11,7 +11,7 @@ export default function NextLoginButton({ isProcessing, buttonText = 'להתחב
     }
     return (
         <PrimaryButton
-            isProcessing={isProcessing}
+            isPerforming={isProcessing}
             children={buttonText}
             leftIcon={leftIcon}
             rightIcon={rightIcon}

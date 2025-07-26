@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const isProduction = false
+const isProduction = false;
 
 function selectMode(forProduction, forStage) {
     return isProduction ? forProduction : forStage;
@@ -47,13 +47,7 @@ const allowedOrigins = selectMode(productionOrigin, stageOrigin);
 
 app.use(
     cors({
-        origin: function (origin, callback) {
-            if (!origin || allowedOrigins.includes(origin)) {
-                callback(null, true);
-            } else {
-                callback(new Error("CORS not allowed for this origin"));
-            }
-        },
+        origin: "https://client.melamedlaw.co.il", // Replace with the allowed domain
         methods: ["GET", "POST", "PUT", "DELETE"],
         credentials: true,
     })
@@ -72,9 +66,8 @@ const dbConfig = {
     },
 };
 
-let pool; // Declare 'pool' variable in a scope accessible by your routes
+let pool;
 
-// Establish database connection FIRST, then start the server
 sql.connect(dbConfig)
     .then(connectedPool => {
         pool = connectedPool; // Assign the connected pool to the globally accessible 'pool' variable

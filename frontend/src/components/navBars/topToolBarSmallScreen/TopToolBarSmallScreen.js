@@ -10,10 +10,12 @@ import { getNavBarData } from "../data/NavBarData";
 import ImageButton from "../../specializedComponents/buttons/ImageButton";
 import PrimaryButton from "../../styledComponents/buttons/PrimaryButton";
 import SimpleScrollView from "../../simpleComponents/SimpleScrollView";
+import { useFromApp } from "../../../providers/FromAppProvider";
 
 const Logo = images.Logos.FullLogoOriginal;
 
 export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, GetNavBarData = getNavBarData }) {
+    const { isFromApp } = useFromApp();
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
     const [currentIndex, setCurrentIndex] = useState(chosenIndex);
@@ -46,7 +48,7 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
                 </SimpleButton>
             </SimpleContainer >
 
-            {isDrawerOpen &&
+            {isDrawerOpen && !isFromApp &&
                 <SimpleContainer style={styles.sidebarContainer}>
                     <SimpleScrollView>
                         <SimpleContainer style={{ flex: 1, flexDirection: 'column' }}>
