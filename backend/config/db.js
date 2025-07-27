@@ -1,4 +1,5 @@
 const sql = require("mssql");
+require("dotenv").config();
 
 const dbConfig = {
     user: process.env.DB_USER,
@@ -8,23 +9,29 @@ const dbConfig = {
     options: {
         encrypt: true,
         trustServerCertificate: true,
+        trustedConnection: false
     },
 };
 
 let pool;
 
-const connectToDatabase = async () => {
-    if (!pool) {
+async function connectDb() {
+    try {
+        if (pool && pool.connected) {
+            console.log("Database pool already connected.");
+            return pool;
+        }
         pool = await sql.connect(dbConfig);
-        console.log("✅ Connected to database");
+        console.log("Connected to the database");
+        return pool;
+    } catch (err) {
+        console.error("Error connecting to the database:", err);
+        process.exit(1);
     }
-    return pool;
-};
-
-const getDbPool = () => pool;
+}
 
 module.exports = {
-    connectToDatabase,
-    getDbPool,
+    connectDb,
     sql,
+    dbConfig
 };

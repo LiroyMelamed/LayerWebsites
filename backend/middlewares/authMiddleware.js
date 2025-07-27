@@ -1,4 +1,6 @@
 const jwt = require("jsonwebtoken");
+require("dotenv").config();
+
 const SECRET_KEY = process.env.JWT_SECRET || "supersecretkey";
 
 const authMiddleware = (req, res, next) => {
@@ -10,11 +12,11 @@ const authMiddleware = (req, res, next) => {
         req.user = {
             UserId: decoded.UserId,
             Role: decoded.role,
-            PhoneNumber: decoded.phoneNumber,
+            PhoneNumber: decoded.phoneNumber
         };
         next();
     } catch (error) {
-        return res.status(401).json({ message: "נא לבצע התחברות מחדש" });
+        res.status(401).json({ message: "נא לבצע התחברות מחדש" });
     }
 };
 

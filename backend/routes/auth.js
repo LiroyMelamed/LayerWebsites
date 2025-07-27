@@ -1,8 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const { requestOtp, verifyOtp } = require("../controllers/authController");
+const authController = require("../controllers/authController"); // Import the auth controller
 
-router.post("/RequestOtp", requestOtp);
-router.post("/VerifyOtp", verifyOtp);
+router.post("/RequestOtp", authController.requestOtp);
+
+router.post("/VerifyOtp", authController.verifyOtp);
 
 module.exports = router;
