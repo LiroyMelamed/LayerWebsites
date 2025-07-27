@@ -1,4 +1,5 @@
 const axios = require('axios');
+const bodyParser = require('body-parser');
 
 const isProduction = false;
 
@@ -16,6 +17,8 @@ const sql = require("mssql");
 const cors = require("cors");
 
 const app = express();
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 const PORT = process.env.PORT || 5000;
 const SECRET_KEY = process.env.JWT_SECRET || "supersecretkey";
 
@@ -1166,6 +1169,88 @@ app.delete("/DeleteCustomer/:userId", authMiddleware, async (req, res) => {
     } catch (error) {
         console.error("Error deleting customer:", error);
         res.status(500).json({ message: "Error deleting customer" });
+    }
+});
+
+app.get("/GetCurrentCustomer", authMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.UserId;
+
+        const pool = await sql.connect(dbConfig);
+        const result = await pool.request()
+            .input("userId", sql.Int, userId)
+            .query(`
+                SELECT 
+                    UserId, 
+                    Name, 
+                    Email, 
+                    PhoneNumber, 
+                    CompanyName,
+                    DateOfBirth, 
+                    ProfilePicUrl
+                FROM Users 
+                WHERE UserId = @userId
+            `);
+
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ message: "לקוח לא נמצא" });
+        }
+
+        res.json(result.recordset[0]); // Return the single user object
+    } catch (error) {
+        console.error("Error retrieving current customer:", error);
+        res.status(500).json({ message: "Error retrieving current customer profile." });
+    }
+});
+
+app.put("/UpdateCurrentCustomer", authMiddleware, async (req, res) => {
+    const userId = req.user.UserId;
+    const { name, phoneNumber, email, companyName, dateOfBirth, profilePicBase64 } = req.body;
+
+    try {
+        const pool = await sql.connect(dbConfig);
+        const request = pool.request();
+
+        const existingUser = await request
+            .input("userIdCheck", sql.Int, userId)
+            .query(`SELECT UserId FROM Users WHERE UserId = @userIdCheck`);
+
+        if (existingUser.recordset.length === 0) {
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        // Common inputs
+        request.input("userId", sql.Int, userId);
+        request.input("name", sql.NVarChar, name);
+        request.input("email", sql.NVarChar, email);
+        request.input("phoneNumber", sql.NVarChar, phoneNumber);
+        request.input("companyName", sql.NVarChar, companyName);
+        request.input("dateOfBirth", sql.Date, dateOfBirth ? new Date(dateOfBirth) : null);
+
+        // Build dynamic query
+        let updateQuery = `
+            UPDATE Users 
+            SET 
+                Name = @name, 
+                Email = @email, 
+                PhoneNumber = @phoneNumber, 
+                CompanyName = @companyName,
+                DateOfBirth = @dateOfBirth`;
+
+        // Conditionally add ProfilePicUrl
+        if (profilePicBase64) {
+            updateQuery += `, ProfilePicUrl = @profilePicUrl`;
+            request.input("profilePicUrl", sql.NVarChar, profilePicBase64);
+        }
+
+        updateQuery += ` WHERE UserId = @userId`;
+
+        await request.query(updateQuery);
+
+        res.status(200).json({ message: "עדכון פרופיל לקוח בוצע בהצלחה" });
+    } catch (error) {
+        console.error("Error updating current customer profile:", error);
+        res.status(500).json({ message: "שגיאה בעדכון פרופיל לקוח" });
     }
 });
 
