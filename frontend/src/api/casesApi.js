@@ -1,26 +1,26 @@
 import ApiUtils from "./apiUtils";
 
-const GET_ALL_CASES = "/GetCases";
-const GET_CASE_BY_ID = "/GetCase/";
-const GET_CASE_BY_NAME = "/GetCaseByName?caseName=";
-const ADD_CASE = "/AddCase";
-const TAG_CASE = "/TagCase/";
-const DELETE_CASE = "/DeleteCase/";
-const UPDATE_CASE = "/UpdateCase/";
-const UPDATE_STAGE = "/UpdateStage/";
-const GET_TAGGED_CASES = "/TaggedCases";
-const LINK_WHATSAPP_GROUP = "/LinkWhatsappGroup/";
-const GET_TAGGED_CASES_BY_NAME = "/TaggedCasesByName?caseName=";
+const GET_ALL_CASES = "Cases/GetCases";
+const GET_CASE_BY_ID = "Cases/GetCase/";
+const GET_CASE_BY_NAME = "Cases/GetCaseByName?caseName=";
+const ADD_CASE = "Cases/AddCase";
+const TAG_CASE = "Cases/TagCase/";
+const DELETE_CASE = "Cases/DeleteCase/";
+const UPDATE_CASE = "Cases/UpdateCase/";
+const UPDATE_STAGE = "Cases/UpdateStage/";
+const GET_TAGGED_CASES = "Cases/TaggedCases";
+const LINK_WHATSAPP_GROUP = "Cases/LinkWhatsappGroup/";
+const GET_TAGGED_CASES_BY_NAME = "Cases/TaggedCasesByName?caseName=";
 
-const GET_MAIN_SCREEN_DATA = "/GetMainScreenData";
+const GET_MAIN_SCREEN_DATA = "Data/GetMainScreenData";
 
-const GET_CASE_TYPE_BY_NAME = "/GetCaseTypeByName?caseTypeName=";
-const DELETE_CASE_TYPE = "/DeleteCaseType/";
-const GET_CASE_TYPE_BY_ID = "/GetCaseType/";
-const UPDATE_CASE_TYPE = "/UpdateCaseType/";
-const GET_ALL_CASES_TYPE = "/GetCasesType";
-const GET_ALL_CASES_TYPE_FOR_FILTER = "/GetCasesTypeForFilter";
-const ADD_CASE_TYPE = "/AddCaseType";
+const GET_CASE_TYPE_BY_NAME = "CaseTypes/GetCaseTypeByName?caseTypeName=";
+const DELETE_CASE_TYPE = "CaseTypes/DeleteCaseType/";
+const GET_CASE_TYPE_BY_ID = "CaseTypes/GetCaseType/";
+const UPDATE_CASE_TYPE = "CaseTypes/UpdateCaseType/";
+const GET_ALL_CASES_TYPE = "CaseTypes/GetCasesType";
+const GET_ALL_CASES_TYPE_FOR_FILTER = "CaseTypes/GetCasesTypeForFilter";
+const ADD_CASE_TYPE = "CaseTypes/AddCaseType";
 
 const casesApi = {
   getMainScreenData: async () => {

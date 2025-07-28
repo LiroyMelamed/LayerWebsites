@@ -1,14 +1,20 @@
 import ApiUtils from "./apiUtils";
 
-const GET_CUSTOMERS_BY_NAME = "/GetCustomerByName";
-const UPDATE_CUSTOMER = "/UpdateCustomer/";
-const DELETE_CUSTOMER = "/DeleteCustomer/";
-const GET_ALL_CUSTOMERS = "/GetCustomers";
-const ADD_CUSTOMER = "/AddCustomer";
+const UPDATE_CURRENT_CUSTOMER = "Customers/UpdateCurrentCustomer/";
+const GET_CUSTOMERS_BY_NAME = "Customers/GetCustomerByName";
+const GET_CURRENT_CUSTOMER = "Customers/GetCurrentCustomer";
+const UPDATE_CUSTOMER = "Customers/UpdateCustomer/";
+const DELETE_CUSTOMER = "Customers/DeleteCustomer/";
+const GET_ALL_CUSTOMERS = "Customers/GetCustomers";
+const ADD_CUSTOMER = "Customers/AddCustomer";
 
 export const customersApi = {
     getAllCustomers: async () => {
         return await ApiUtils.get(GET_ALL_CUSTOMERS);
+    },
+
+    getCurrentCustomer: async () => {
+        return await ApiUtils.get(GET_CURRENT_CUSTOMER);
     },
 
     getCustomersByName: async (userName) => {
@@ -21,6 +27,10 @@ export const customersApi = {
 
     updateCustomerById: async (customerId, customerData) => {
         return await ApiUtils.put(`${UPDATE_CUSTOMER}${customerId}`, customerData);
+    },
+
+    updateCurrentCustomer: async (customerData) => {
+        return await ApiUtils.put(`${UPDATE_CURRENT_CUSTOMER}`, customerData);
     },
 
     deleteCustomerById: async (customerId) => {

@@ -1,12 +1,10 @@
 import ApiUtils from "./apiUtils";
 
-const GET_ADMINS_ENDPOINT = "/GetAdmins";
-const ADD_ADMIN_ENDPOINT = "/AddAdmin";
-const GET_ADMIN_BY_NAME_ENDPOINT = "/GetAdminByName?name=";
-const UPDATE_ADMIN_BY_ID_ENDPOINT = "/UpdateAdmin/";
-const DELETE_ADMIN_BY_ID_ENDPOINT = "/DeleteAdmin/";
-
-
+const GET_ADMINS_ENDPOINT = "Admins/GetAdmins";
+const ADD_ADMIN_ENDPOINT = "Admins/AddAdmin";
+const GET_ADMIN_BY_NAME_ENDPOINT = "Admins/GetAdminByName?name=";
+const UPDATE_ADMIN_BY_ID_ENDPOINT = "Admins/UpdateAdmin/";
+const DELETE_ADMIN_BY_ID_ENDPOINT = "Admins/DeleteAdmin/";
 
 export const adminApi = {
     getAllAdmins: async () => {

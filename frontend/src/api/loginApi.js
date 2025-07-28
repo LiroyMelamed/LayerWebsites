@@ -1,8 +1,8 @@
 import ApiUtils from "./apiUtils";
 
-const REQUEST_API_DATA_ENDPOINT = '/RequestOtp';
-const VERIFY_OTP_DATA_ENDPOINT = '/VerifyOtp';
-const ADMIN_LOGIN_OTP_DATA_ENDPOINT = '/Login';
+const REQUEST_API_DATA_ENDPOINT = 'Auth/RequestOtp';
+const VERIFY_OTP_DATA_ENDPOINT = 'Auth/VerifyOtp';
+const ADMIN_LOGIN_OTP_DATA_ENDPOINT = 'Auth/Login';
 
 const loginApi = {
     sendOtp: async (phoneNumber) => {

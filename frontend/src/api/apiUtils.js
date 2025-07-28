@@ -1,13 +1,13 @@
 import axios from "axios";
 
-const isProduction = true;
+const isProduction = false;
 
 function selectMode(forProduction, forStage) {
     return isProduction ? forProduction : forStage;
 }
 
-const prodURL = "https://modern-beans-sneeze.loca.lt";
-const stageURL = "http://localhost:5000";
+const prodURL = "https://modern-beans-sneeze.loca.lt/api";
+const stageURL = "http://localhost:5000/api";
 
 const ApiUtils = axios.create({
     baseURL: selectMode(prodURL, stageURL),

@@ -1,6 +1,77 @@
 const { sql, connectDb } = require("../config/db");
 const { formatPhoneNumber } = require("../utils/phoneUtils");
 const { sendMessage, WEBSITE_DOMAIN } = require("../utils/sendMessage");
+const sendAndStoreNotification = require("../utils/sendAndStoreNotification"); // Import the new consolidated utility
+
+// --- Internal Helper Functions to reduce code duplication ---
+
+const _buildBaseCaseQuery = () => `
+    SELECT
+        C.CaseId,
+        C.CaseName,
+        C.CaseTypeId,
+        CT.CaseTypeName,
+        C.UserId,
+        U.Name AS CustomerName,
+        U.Email AS CustomerMail,
+        U.PhoneNumber,
+        C.CompanyName,
+        C.CurrentStage,
+        C.IsClosed,
+        C.IsTagged,
+        C.CreatedAt,
+        C.UpdatedAt,
+        C.WhatsappGroupLink,
+        CD.DescriptionId,
+        CD.Stage,
+        CD.Text,
+        CD.Timestamp,
+        CD.IsNew
+    FROM Cases C
+    LEFT JOIN Users U ON C.UserId = U.UserId
+    LEFT JOIN CaseTypes CT ON C.CaseTypeId = CT.CaseTypeId
+    LEFT JOIN CaseDescriptions CD ON C.CaseId = CD.CaseId
+`;
+
+const _mapCaseResults = (recordset) => {
+    const casesMap = new Map();
+
+    recordset.forEach(row => {
+        if (!casesMap.has(row.CaseId)) {
+            casesMap.set(row.CaseId, {
+                CaseId: row.CaseId,
+                CaseName: row.CaseName,
+                CaseTypeId: row.CaseTypeId,
+                CaseTypeName: row.CaseTypeName,
+                UserId: row.UserId,
+                CustomerName: row.CustomerName,
+                CustomerMail: row.CustomerMail,
+                PhoneNumber: row.PhoneNumber,
+                CompanyName: row.CompanyName,
+                WhatsappGroupLink: row.WhatsappGroupLink,
+                CurrentStage: row.CurrentStage,
+                IsClosed: row.IsClosed,
+                IsTagged: row.IsTagged,
+                CreatedAt: row.CreatedAt,
+                UpdatedAt: row.UpdatedAt,
+                Descriptions: []
+            });
+        }
+
+        if (row.DescriptionId) {
+            casesMap.get(row.CaseId).Descriptions.push({
+                DescriptionId: row.DescriptionId,
+                Stage: row.Stage,
+                Text: row.Text,
+                Timestamp: row.Timestamp,
+                IsNew: row.IsNew
+            });
+        }
+    });
+    return Array.from(casesMap.values());
+};
+
+// --- API Controller Functions ---
 
 const getCases = async (req, res) => {
     const userId = req.user?.UserId;
@@ -12,79 +83,15 @@ const getCases = async (req, res) => {
 
     try {
         const pool = await connectDb();
-
-        let query = `
-            SELECT
-                C.CaseId,
-                C.CaseName,
-                C.CaseTypeId,
-                CT.CaseTypeName,
-                C.UserId,
-                U.Name AS CustomerName,
-                U.Email AS CustomerMail,
-                U.PhoneNumber,
-                C.CompanyName,
-                C.CurrentStage,
-                C.IsClosed,
-                C.IsTagged,
-                C.CreatedAt,
-                C.UpdatedAt,
-                C.WhatsappGroupLink,
-                CD.DescriptionId,
-                CD.Stage,
-                CD.Text,
-                CD.Timestamp,
-                CD.IsNew
-            FROM Cases C
-            LEFT JOIN Users U ON C.UserId = U.UserId
-            LEFT JOIN CaseTypes CT ON C.CaseTypeId = CT.CaseTypeId
-            LEFT JOIN CaseDescriptions CD ON C.CaseId = CD.CaseId
-        `;
+        let query = _buildBaseCaseQuery();
 
         if (userRole !== "Admin") {
             query += " WHERE C.UserId = @userId";
         }
-
         query += " ORDER BY C.CaseId, CD.Stage";
 
         const result = await pool.request().input("userId", sql.Int, userId).query(query);
-
-        const casesMap = new Map();
-
-        result.recordset.forEach(row => {
-            if (!casesMap.has(row.CaseId)) {
-                casesMap.set(row.CaseId, {
-                    CaseId: row.CaseId,
-                    CaseName: row.CaseName,
-                    CaseTypeId: row.CaseTypeId,
-                    CaseTypeName: row.CaseTypeName,
-                    UserId: row.UserId,
-                    CustomerName: row.CustomerName,
-                    CustomerMail: row.CustomerMail,
-                    PhoneNumber: row.PhoneNumber,
-                    CompanyName: row.CompanyName,
-                    WhatsappGroupLink: row.WhatsappGroupLink,
-                    CurrentStage: row.CurrentStage,
-                    IsClosed: row.IsClosed,
-                    IsTagged: row.IsTagged,
-                    CreatedAt: row.CreatedAt,
-                    UpdatedAt: row.UpdatedAt,
-                    Descriptions: []
-                });
-            }
-
-            if (row.DescriptionId) {
-                casesMap.get(row.CaseId).Descriptions.push({
-                    DescriptionId: row.DescriptionId,
-                    Stage: row.Stage,
-                    Text: row.Text,
-                    Timestamp: row.Timestamp,
-                    IsNew: row.IsNew
-                });
-            }
-        });
-
-        res.json(Array.from(casesMap.values()));
+        res.json(_mapCaseResults(result.recordset));
 
     } catch (error) {
         console.error("Error retrieving cases:", error);
@@ -95,7 +102,6 @@ const getCases = async (req, res) => {
 const getCaseById = async (req, res) => {
     try {
         const caseId = req.params.caseId;
-
         if (!caseId) {
             return res.status(400).json({ message: "Invalid case ID" });
         }
@@ -108,7 +114,6 @@ const getCaseById = async (req, res) => {
         if (result.recordset.length === 0) {
             return res.status(404).json({ message: "Case not found" });
         }
-
         res.json(result.recordset[0]);
     } catch (error) {
         console.error("Error retrieving case by ID:", error);
@@ -128,39 +133,12 @@ const getCaseByName = async (req, res) => {
 
     try {
         const pool = await connectDb();
-        let query = `
-            SELECT
-                C.CaseId,
-                C.CaseName,
-                C.CaseTypeId,
-                CT.CaseTypeName,
-                C.UserId,
-                U.Name AS CustomerName,
-                U.Email AS CustomerMail,
-                U.PhoneNumber,
-                C.CompanyName,
-                C.CurrentStage,
-                C.IsClosed,
-                C.IsTagged,
-                C.CreatedAt,
-                C.UpdatedAt,
-                C.WhatsappGroupLink,
-                CD.DescriptionId,
-                CD.Stage,
-                CD.Text,
-                CD.Timestamp,
-                CD.IsNew
-            FROM Cases C
-            LEFT JOIN Users U ON C.UserId = U.UserId
-            LEFT JOIN CaseTypes CT ON C.CaseTypeId = CT.CaseTypeId
-            LEFT JOIN CaseDescriptions CD ON C.CaseId = CD.CaseId
-            WHERE C.CaseName LIKE @caseName
-        `;
+        let query = _buildBaseCaseQuery();
+        query += " WHERE C.CaseName LIKE @caseName";
 
         if (userRole !== "Admin") {
             query += " AND C.UserId = @userId";
         }
-
         query += " ORDER BY C.CaseId, CD.Stage";
 
         const result = await pool.request()
@@ -171,43 +149,7 @@ const getCaseByName = async (req, res) => {
         if (result.recordset.length === 0) {
             return res.status(404).json({ message: "No cases found with this name" });
         }
-
-        const casesMap = new Map();
-
-        result.recordset.forEach(row => {
-            if (!casesMap.has(row.CaseId)) {
-                casesMap.set(row.CaseId, {
-                    CaseId: row.CaseId,
-                    CaseName: row.CaseName,
-                    CaseTypeId: row.CaseTypeId,
-                    CaseTypeName: row.CaseTypeName,
-                    UserId: row.UserId,
-                    CustomerName: row.CustomerName,
-                    CustomerMail: row.CustomerMail,
-                    PhoneNumber: row.PhoneNumber,
-                    CompanyName: row.CompanyName,
-                    WhatsappGroupLink: row.WhatsappGroupLink,
-                    CurrentStage: row.CurrentStage,
-                    IsClosed: row.IsClosed,
-                    IsTagged: row.IsTagged,
-                    CreatedAt: row.CreatedAt,
-                    UpdatedAt: row.UpdatedAt,
-                    Descriptions: []
-                });
-            }
-
-            if (row.DescriptionId) {
-                casesMap.get(row.CaseId).Descriptions.push({
-                    DescriptionId: row.DescriptionId,
-                    Stage: row.Stage,
-                    Text: row.Text,
-                    Timestamp: row.Timestamp,
-                    IsNew: row.IsNew
-                });
-            }
-        });
-
-        res.json(Array.from(casesMap.values()));
+        res.json(_mapCaseResults(result.recordset));
 
     } catch (error) {
         console.error("Error retrieving case by name:", error);
@@ -216,7 +158,7 @@ const getCaseByName = async (req, res) => {
 };
 
 const addCase = async (req, res) => {
-    const { CaseName, CaseTypeId, CaseTypeName, UserId, CompanyName, CurrentStage, Descriptions, IsTagged, PhoneNumber, CustomerName } = req.body;
+    const { CaseName, CaseTypeId, CaseTypeName, UserId, CompanyName, CurrentStage, Descriptions, PhoneNumber, CustomerName } = req.body;
 
     try {
         const pool = await connectDb();
@@ -261,6 +203,9 @@ const addCase = async (req, res) => {
         sendMessage(`היי ${CustomerName}, \n\n תיק ${CaseName} נוצר, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`, formattedPhone);
 
         await transaction.commit();
+
+        await sendAndStoreNotification(UserId, "תיק חדש נוצר", `תיק "${CaseName}" נוצר בהצלחה. היכנס לאתר למעקב.`, { caseId: String(caseId) });
+
         res.status(201).json({ message: "Case created successfully", caseId });
 
     } catch (error) {
@@ -328,6 +273,9 @@ const updateCase = async (req, res) => {
         sendMessage(`היי ${CustomerName}, \n\n תיק ${CaseName} התעדכן, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`, formattedPhone);
 
         await transaction.commit();
+
+        await sendAndStoreNotification(UserId, "עדכון תיק", `תיק "${CaseName}" עודכן. היכנס לאתר למעקב.`, { caseId: String(caseId) });
+
         res.status(200).json({ message: "Case updated successfully" });
     } catch (error) {
         console.error("Error updating case:", error);
@@ -339,20 +287,20 @@ const updateStage = async (req, res) => {
     const { caseId } = req.params;
     const { CurrentStage, IsClosed, PhoneNumber, CustomerName, Descriptions, CaseName } = req.body;
     let notificationMessage = "";
+    let notificationTitle = "";
 
     try {
         const pool = await connectDb();
-
         const transaction = new sql.Transaction(pool);
-
         await transaction.begin();
 
         const currentData = await pool.request()
             .input("CaseId", sql.Int, caseId)
-            .query("SELECT CurrentStage, IsClosed FROM Cases WHERE CaseId = @CaseId");
+            .query("SELECT CurrentStage, IsClosed, UserId FROM Cases WHERE CaseId = @CaseId");
 
         const currentStage = currentData.recordset[0]?.CurrentStage;
         const currentlyClosed = currentData.recordset[0]?.IsClosed;
+        const caseUserId = currentData.recordset[0]?.UserId;
 
         await pool.request()
             .input("CaseId", sql.Int, caseId)
@@ -387,15 +335,22 @@ const updateStage = async (req, res) => {
         }
 
         if (CurrentStage !== currentStage) {
-            notificationMessage = `היי ${CustomerName}, \n\n בתיק ${CaseName} התעדכן שלב, תיקך נמצא בשלב - ${Descriptions[currentStage - 1]}, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`;
+            notificationTitle = "עדכון שלב בתיק";
+            notificationMessage = `היי ${CustomerName}, \n\n בתיק "${CaseName}" התעדכן שלב, תיקך נמצא בשלב - ${Descriptions[CurrentStage - 1]?.Text || CurrentStage}, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`;
         }
         if (IsClosed && !currentlyClosed) {
-            notificationMessage = `היי ${CustomerName}, \n\n תיק ${CaseName} הסתיים בהצלחה, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`;
+            notificationTitle = "תיק הסתיים";
+            notificationMessage = `היי ${CustomerName}, \n\n תיק "${CaseName}" הסתיים בהצלחה, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`;
         }
 
         if (notificationMessage) {
             const formattedPhone = formatPhoneNumber(PhoneNumber);
+            // Send Twilio message
             sendMessage(notificationMessage, formattedPhone);
+
+            if (caseUserId) {
+                await sendAndStoreNotification(caseUserId, notificationTitle, notificationMessage, { caseId: String(caseId), stage: String(CurrentStage) });
+            }
         }
 
         await transaction.commit();
@@ -466,72 +421,11 @@ const getTaggedCases = async (req, res) => {
     try {
         const pool = await connectDb();
         const result = await pool.request().query(`
-                SELECT
-                    C.CaseId,
-                    C.CaseName,
-                    C.CaseTypeId,
-                    CT.CaseTypeName,
-                    C.UserId,
-                    U.Name AS CustomerName,
-                    U.Email AS CustomerMail,
-                    U.PhoneNumber,
-                    C.CompanyName,
-                    C.CurrentStage,
-                    C.IsClosed,
-                    C.IsTagged,
-                    C.CreatedAt,
-                    C.UpdatedAt,
-                    C.WhatsappGroupLink,
-                    CD.DescriptionId,
-                    CD.Stage,
-                    CD.Text,
-                    CD.Timestamp,
-                    CD.IsNew
-                FROM Cases C
-                LEFT JOIN Users U ON C.UserId = U.UserId
-                LEFT JOIN CaseTypes CT ON C.CaseTypeId = CT.CaseTypeId
-                LEFT JOIN CaseDescriptions CD ON C.CaseId = CD.CaseId
+                ${_buildBaseCaseQuery()}
                 WHERE C.IsTagged = 1
                 ORDER BY C.CaseId, CD.Stage;
         `);
-
-        const casesMap = new Map();
-
-        result.recordset.forEach(row => {
-            if (!casesMap.has(row.CaseId)) {
-                casesMap.set(row.CaseId, {
-                    CaseId: row.CaseId,
-                    CaseName: row.CaseName,
-                    CaseTypeId: row.CaseTypeId,
-                    CaseTypeName: row.CaseTypeName,
-                    UserId: row.UserId,
-                    CustomerName: row.CustomerName,
-                    CustomerMail: row.CustomerMail,
-                    PhoneNumber: row.PhoneNumber,
-                    CompanyName: row.CompanyName,
-                    WhatsappGroupLink: row.WhatsappGroupLink,
-                    CurrentStage: row.CurrentStage,
-                    IsClosed: row.IsClosed,
-                    IsTagged: row.IsTagged,
-                    CreatedAt: row.CreatedAt,
-                    UpdatedAt: row.UpdatedAt,
-                    Descriptions: []
-                });
-            }
-
-            if (row.DescriptionId) {
-                casesMap.get(row.CaseId).Descriptions.push({
-                    DescriptionId: row.DescriptionId,
-                    Stage: row.Stage,
-                    Text: row.Text,
-                    Timestamp: row.Timestamp,
-                    IsNew: row.IsNew
-                });
-            }
-        });
-
-        res.json(Array.from(casesMap.values()));
-
+        res.json(_mapCaseResults(result.recordset));
     } catch (error) {
         console.error("Error retrieving tagged cases:", error);
         res.status(500).json({ message: "Error retrieving tagged cases" });
@@ -551,31 +445,7 @@ const getTaggedCasesByName = async (req, res) => {
             .request()
             .input("caseName", sql.NVarChar, `%${caseName}%`)
             .query(`
-                SELECT
-                    C.CaseId,
-                    C.CaseName,
-                    C.CaseTypeId,
-                    CT.CaseTypeName,
-                    C.UserId,
-                    U.Name AS CustomerName,
-                    U.Email AS CustomerMail,
-                    U.PhoneNumber,
-                    C.CompanyName,
-                    C.CurrentStage,
-                    C.IsClosed,
-                    C.IsTagged,
-                    C.CreatedAt,
-                    C.UpdatedAt,
-                    C.WhatsappGroupLink,
-                    CD.DescriptionId,
-                    CD.Stage,
-                    CD.Text,
-                    CD.Timestamp,
-                    CD.IsNew
-                FROM Cases C
-                LEFT JOIN Users U ON C.UserId = U.UserId
-                LEFT JOIN CaseTypes CT ON C.CaseTypeId = CT.CaseTypeId
-                LEFT JOIN CaseDescriptions CD ON C.CaseId = CD.CaseId
+                ${_buildBaseCaseQuery()}
                 WHERE C.CaseName LIKE @caseName
                 AND C.IsTagged = 1
                 ORDER BY C.CaseId, CD.Stage
@@ -584,43 +454,7 @@ const getTaggedCasesByName = async (req, res) => {
         if (result.recordset.length === 0) {
             return res.status(404).json({ message: "No tagged cases found with this name" });
         }
-
-        const casesMap = new Map();
-
-        result.recordset.forEach(row => {
-            if (!casesMap.has(row.CaseId)) {
-                casesMap.set(row.CaseId, {
-                    CaseId: row.CaseId,
-                    CaseName: row.CaseName,
-                    CaseTypeId: row.CaseTypeId,
-                    CaseTypeName: row.CaseTypeName,
-                    UserId: row.UserId,
-                    CustomerName: row.CustomerName,
-                    CustomerMail: row.CustomerMail,
-                    PhoneNumber: row.PhoneNumber,
-                    CompanyName: row.CompanyName,
-                    CurrentStage: row.CurrentStage,
-                    WhatsappGroupLink: row.WhatsappGroupLink,
-                    IsClosed: row.IsClosed,
-                    IsTagged: row.IsTagged,
-                    CreatedAt: row.CreatedAt,
-                    UpdatedAt: row.UpdatedAt,
-                    Descriptions: []
-                });
-            }
-
-            if (row.DescriptionId) {
-                casesMap.get(row.CaseId).Descriptions.push({
-                    DescriptionId: row.DescriptionId,
-                    Stage: row.Stage,
-                    Text: row.Text,
-                    Timestamp: row.Timestamp,
-                    IsNew: row.IsNew
-                });
-            }
-        });
-
-        res.json(Array.from(casesMap.values()));
+        res.json(_mapCaseResults(result.recordset));
 
     } catch (error) {
         console.error("Error retrieving tagged cases by name:", error);
@@ -642,11 +476,22 @@ const linkWhatsappGroup = async (req, res) => {
         request.input("CaseId", sql.Int, CaseId);
         request.input("WhatsappGroupLink", sql.NVarChar, WhatsappGroupLink);
 
+        const caseDataResult = await pool.request()
+            .input("CaseIdForNotification", sql.Int, CaseId)
+            .query("SELECT CaseName, UserId FROM Cases WHERE CaseId = @CaseIdForNotification");
+
+        const caseName = caseDataResult.recordset[0]?.CaseName;
+        const caseUserId = caseDataResult.recordset[0]?.UserId;
+
         await request.query(`
             UPDATE Cases
             SET WhatsappGroupLink = @WhatsappGroupLink
             WHERE CaseId = @CaseId
         `);
+
+        if (caseUserId) {
+            await sendAndStoreNotification(caseUserId, "קבוצת וואטסאפ מקושרת", `קבוצת וואטסאפ קושרה לתיק "${caseName}".`, { caseId: String(CaseId) });
+        }
 
         res.status(200).json({ message: "Whatsapp group link updated successfully" });
     } catch (error) {

@@ -18,7 +18,6 @@ let pool;
 async function connectDb() {
     try {
         if (pool && pool.connected) {
-            console.log("Database pool already connected.");
             return pool;
         }
         pool = await sql.connect(dbConfig);

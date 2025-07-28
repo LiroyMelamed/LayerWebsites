@@ -38,6 +38,56 @@ const saveDeviceToken = async (req, res) => {
     }
 };
 
+const getNotifications = async (req, res) => {
+    const userId = req.user.UserId;
+
+    try {
+        const pool = await connectDb();
+        const result = await pool.request()
+            .input("UserId", sql.Int, userId)
+            .query(`
+                SELECT NotificationId, Title, Message, IsRead, CreatedAt
+                FROM UserNotifications
+                WHERE UserId = @UserId
+                ORDER BY CreatedAt DESC
+            `);
+
+        res.json(result.recordset);
+    } catch (error) {
+        console.error("Error fetching notifications:", error);
+        res.status(500).json({ message: "שגיאה בקבלת ההתראות" });
+    }
+};
+
+const markNotificationAsRead = async (req, res) => {
+    const { id } = req.params;
+    const userId = req.user.UserId;
+
+    try {
+        const pool = await connectDb();
+        const result = await pool.request()
+            .input("NotificationId", sql.Int, id)
+            .input("UserId", sql.Int, userId)
+            .query(`
+                UPDATE UserNotifications
+                SET IsRead = 1
+                WHERE NotificationId = @NotificationId AND UserId = @UserId
+            `);
+
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).json({ message: "Notification not found or not authorized to update." });
+        }
+
+        res.sendStatus(200);
+    } catch (error) {
+        console.error("Error marking notification as read:", error);
+        res.status(500).json({ message: "שגיאה בעדכון התראה" });
+    }
+};
+
+
 module.exports = {
     saveDeviceToken,
+    getNotifications,
+    markNotificationAsRead,
 };
