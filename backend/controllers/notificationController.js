@@ -78,13 +78,12 @@ const markNotificationAsRead = async (req, res) => {
             return res.status(404).json({ message: "Notification not found or not authorized to update." });
         }
 
-        res.sendStatus(200);
+        res.status(200).json({ NotificationId: parseInt(id, 10) });
     } catch (error) {
         console.error("Error marking notification as read:", error);
         res.status(500).json({ message: "שגיאה בעדכון התראה" });
     }
 };
-
 
 module.exports = {
     saveDeviceToken,

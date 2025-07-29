@@ -158,7 +158,7 @@ const getCaseByName = async (req, res) => {
 };
 
 const addCase = async (req, res) => {
-    const { CaseName, CaseTypeId, CaseTypeName, UserId, CompanyName, CurrentStage, Descriptions, PhoneNumber, CustomerName } = req.body;
+    const { CaseName, CaseTypeId, CaseTypeName, UserId, CompanyName, CurrentStage, Descriptions, PhoneNumber, CustomerName, IsTagged } = req.body;
 
     try {
         const pool = await connectDb();
@@ -204,7 +204,7 @@ const addCase = async (req, res) => {
 
         await transaction.commit();
 
-        await sendAndStoreNotification(UserId, "תיק חדש נוצר", `תיק "${CaseName}" נוצר בהצלחה. היכנס לאתר למעקב.`, { caseId: String(caseId) });
+        await sendAndStoreNotification(UserId, "תיק חדש נוצר", `תיק "${CaseName}" נוצר בהצלחה. היכנס לאתר או לאפליקציה למעקב.`, { caseId: String(caseId) });
 
         res.status(201).json({ message: "Case created successfully", caseId });
 
@@ -274,7 +274,7 @@ const updateCase = async (req, res) => {
 
         await transaction.commit();
 
-        await sendAndStoreNotification(UserId, "עדכון תיק", `תיק "${CaseName}" עודכן. היכנס לאתר למעקב.`, { caseId: String(caseId) });
+        await sendAndStoreNotification(UserId, "עדכון תיק", `תיק "${CaseName}" עודכן. היכנס לאתר או לאפליקציה למעקב.`, { caseId: String(caseId) });
 
         res.status(200).json({ message: "Case updated successfully" });
     } catch (error) {
@@ -336,11 +336,11 @@ const updateStage = async (req, res) => {
 
         if (CurrentStage !== currentStage) {
             notificationTitle = "עדכון שלב בתיק";
-            notificationMessage = `היי ${CustomerName}, \n\n בתיק "${CaseName}" התעדכן שלב, תיקך נמצא בשלב - ${Descriptions[CurrentStage - 1]?.Text || CurrentStage}, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`;
+            notificationMessage = `היי ${CustomerName}, \n\n בתיק "${CaseName}" התעדכן שלב, תיקך נמצא בשלב - ${Descriptions[CurrentStage - 1]?.Text || CurrentStage}, היכנס לאתר או לאפליקציה למעקב.`;
         }
         if (IsClosed && !currentlyClosed) {
             notificationTitle = "תיק הסתיים";
-            notificationMessage = `היי ${CustomerName}, \n\n תיק "${CaseName}" הסתיים בהצלחה, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`;
+            notificationMessage = `היי ${CustomerName}, \n\n תיק "${CaseName}" הסתיים בהצלחה, היכנס לאתר או לאפליקציה למעקב.`;
         }
 
         if (notificationMessage) {
