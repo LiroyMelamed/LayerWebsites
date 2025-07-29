@@ -11,14 +11,17 @@ async function sendAndStoreNotification(userId, title, message, data = {}) {
 
         const tokens = tokensResult.recordset.map(row => row.FcmToken).filter(Boolean);
 
+        const rtlTitle = `\u200F${title}`;
+        const rtlMessage = `\u200F${message}`;
+
         if (tokens.length > 0) {
             for (const token of tokens) {
                 try {
                     await axios.post("https://exp.host/--/api/v2/push/send", {
                         to: token,
                         sound: "default",
-                        title,
-                        body: message,
+                        title: rtlTitle,
+                        body: rtlMessage,
                         data: data,
                     });
                     console.log(`Push notification sent to token: ${token}`);

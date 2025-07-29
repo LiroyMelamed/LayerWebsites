@@ -336,11 +336,11 @@ const updateStage = async (req, res) => {
 
         if (CurrentStage !== currentStage) {
             notificationTitle = "עדכון שלב בתיק";
-            notificationMessage = `היי ${CustomerName}, \n\n בתיק "${CaseName}" התעדכן שלב, תיקך נמצא בשלב - ${Descriptions[CurrentStage - 1]?.Text || CurrentStage}, היכנס לאתר או לאפליקציה למעקב.`;
+            notificationMessage = `היי ${CustomerName}, \n\nבתיק "${CaseName}" התעדכן שלב, תיקך נמצא בשלב - ${Descriptions[CurrentStage - 1]?.Text || CurrentStage}, היכנס לאתר או לאפליקציה למעקב.`;
         }
         if (IsClosed && !currentlyClosed) {
             notificationTitle = "תיק הסתיים";
-            notificationMessage = `היי ${CustomerName}, \n\n תיק "${CaseName}" הסתיים בהצלחה, היכנס לאתר או לאפליקציה למעקב.`;
+            notificationMessage = `היי ${CustomerName}, \n\nתיק "${CaseName}" הסתיים בהצלחה, היכנס לאתר או לאפליקציה למעקב.`;
         }
 
         if (notificationMessage) {

@@ -150,6 +150,7 @@ const updateCurrentCustomer = async (req, res) => {
             return res.status(404).json({ message: "User not found." });
         }
 
+        // Basic inputs
         request.input("userId", sql.Int, userId);
         request.input("name", sql.NVarChar, Name);
         request.input("email", sql.NVarChar, Email);
@@ -157,25 +158,29 @@ const updateCurrentCustomer = async (req, res) => {
         request.input("companyName", sql.NVarChar, CompanyName);
         request.input("dateOfBirth", sql.Date, dateOfBirth ? new Date(dateOfBirth) : null);
 
-        let profilePicUrlToStore = null;
-        if (profilePicBase64) {
-            profilePicUrlToStore = profilePicBase64;
-        } else {
-            profilePicUrlToStore = null;
-        }
-        request.input("profilePicUrl", sql.NVarChar(sql.MAX), profilePicUrlToStore);
-
-        await request.query(`
+        // Build query string conditionally
+        let updateQuery = `
             UPDATE Users
             SET
                 Name = @name,
                 Email = @email,
                 PhoneNumber = @phoneNumber,
                 CompanyName = @companyName,
-                DateOfBirth = @dateOfBirth,
+                DateOfBirth = @dateOfBirth
+        `;
+
+        if (profilePicBase64 !== null && profilePicBase64 !== undefined) {
+            request.input("profilePicUrl", sql.NVarChar(sql.MAX), profilePicBase64);
+            updateQuery += `,
                 ProfilePicUrl = @profilePicUrl
+            `;
+        }
+
+        updateQuery += `
             WHERE UserId = @userId
-        `);
+        `;
+
+        await request.query(updateQuery);
 
         res.status(200).json({ message: "עדכון פרופיל לקוח בוצע בהצלחה" });
     } catch (error) {
