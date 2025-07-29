@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { createContext, useContext, useState } from 'react';
 
 const FromAppContext = createContext(null);
 
@@ -13,20 +12,10 @@ export const useFromApp = () => {
 
 export const FromAppProvider = ({ children }) => {
     const [isFromApp, setIsFromApp] = useState(false);
-    const location = useLocation();
-
-    useEffect(() => {
-        const params = new URLSearchParams(location.search);
-        const fromAppParam = params.get('fromApp');
-        if (fromAppParam === 'true') {
-            setIsFromApp(true);
-        } else {
-            setIsFromApp(false);
-        }
-    }, [location.search]);
 
     const value = {
         isFromApp,
+        setIsFromApp
     };
 
     return (

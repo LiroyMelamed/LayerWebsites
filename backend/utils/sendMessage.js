@@ -1,7 +1,8 @@
 const twilio = require("twilio");
+const { isProduction } = require("../server");
 require("dotenv").config();
 
-const isProduction = false;
+
 const COMPANY_NAME = 'MelamedLaw';
 const WEBSITE_DOMAIN = 'client.melamedlaw.co.il';
 

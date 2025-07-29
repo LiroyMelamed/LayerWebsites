@@ -20,7 +20,7 @@ export const colors = {
     disclaimerText: "#878787",
 
     positive: "#6E9652",
-    positiveLight: "#EEF5E9",
+    // positiveLight: "#EEF5E9",
     negative: "#B63546",
 
     transparent: "transparent",

@@ -1,7 +1,7 @@
 import { icons } from "../../../assets/icons/icons";
 import SimpleButton from "../../simpleComponents/SimpleButton";
 import SimpleIcon from "../../simpleComponents/SimpleIcon";
-import { TextBold12, TextBold14 } from "../../specializedComponents/text/AllTextKindFile";
+import { TextBold14 } from "../../specializedComponents/text/AllTextKindFile";
 
 export default function UpdatesMenuItem({ menuItemName, onPress, style }) {
 

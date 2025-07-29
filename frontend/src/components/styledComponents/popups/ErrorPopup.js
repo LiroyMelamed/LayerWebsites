@@ -1,5 +1,4 @@
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
-import SimplePopUp from "../../simpleComponents/SimplePopUp";
 import { Text14, TextBold16 } from "../../specializedComponents/text/AllTextKindFile";
 import PrimaryButton from "../buttons/PrimaryButton";
 import Separator from "../separators/Separator";

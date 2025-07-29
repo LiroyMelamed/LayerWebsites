@@ -1,6 +1,6 @@
 import { DateDDMMYY } from "../../functions/date/DateDDMMYY";
 import SimpleContainer from "../simpleComponents/SimpleContainer";
-import { Text12, Text16, Text20, TextBold24, TextBold32, TextBold40 } from "../specializedComponents/text/AllTextKindFile";
+import { Text12, Text16, TextBold24, TextBold32 } from "../specializedComponents/text/AllTextKindFile";
 
 export default function TermsOfConditons() {
     return (

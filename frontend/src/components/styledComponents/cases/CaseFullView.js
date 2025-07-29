@@ -1,14 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import { useState } from 'react';
 import SimpleContainer from '../../simpleComponents/SimpleContainer';
 import SimpleInput from '../../simpleComponents/SimpleInput';
-import SimpleLoader from '../../simpleComponents/SimpleLoader';
 import SimpleScrollView from '../../simpleComponents/SimpleScrollView';
 import useHttpRequest from '../../../hooks/useHttpRequest';
 import SecondaryButton from '../buttons/SecondaryButton';
 import SimpleTextArea from '../../simpleComponents/SimpleTextArea';
 import PrimaryButton from '../buttons/PrimaryButton';
 import SearchInput from '../../specializedComponents/containers/SearchInput';
-import { DateDDMMYY } from '../../../functions/date/DateDDMMYY';
 import { customersApi } from '../../../api/customersApi';
 import casesApi, { casesTypeApi } from '../../../api/casesApi';
 import { buttonSizes } from '../../../styles/buttons/buttonSizes';

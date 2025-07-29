@@ -11,7 +11,6 @@ import CaseTypeFullView from "../cases/CaseTypeFullView";
 import SecondaryButton from "../buttons/SecondaryButton";
 import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 import casesApi from "../../../api/casesApi";
-import { colors } from "../../../constant/colors";
 
 export default function CaseTypeMenuItem({
     fullCase,
@@ -30,7 +29,7 @@ export default function CaseTypeMenuItem({
     rePerformFunction,
     style
 }) {
-    const { isPerforming: isPerformingSetCase, performRequest: setCase } = useHttpRequest(casesApi.updateCaseById, () => { setCurrentStage(currentStage + 1) });
+    const { isPerforming: isPerformingSetCase } = useHttpRequest(casesApi.updateCaseById, () => { setCurrentStage(currentStage + 1) });
     const { openPopup, closePopup } = usePopup();
     const [isOpen, setIsOpen] = useState(false);
     const [currentStage, setCurrentStage] = useState(Number(rightValueSecondLine));

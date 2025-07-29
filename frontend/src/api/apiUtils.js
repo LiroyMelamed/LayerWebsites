@@ -6,7 +6,7 @@ function selectMode(forProduction, forStage) {
     return isProduction ? forProduction : forStage;
 }
 
-const prodURL = "https://modern-beans-sneeze.loca.lt/api";
+const prodURL = "https://wet-kids-cut.loca.lt/api";
 const stageURL = "http://localhost:5000/api";
 
 const ApiUtils = axios.create({

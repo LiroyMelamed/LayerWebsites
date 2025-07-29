@@ -5,7 +5,6 @@ import CaseTypeFullView from "../../styledComponents/cases/CaseTypeFullView";
 import CaseFullView from "../../styledComponents/cases/CaseFullView";
 import { TaggedCasesScreenName } from "../../../screens/taggedCasesScreen/TaggedCasesScreen";
 import { AdminStackName } from "../../../navigation/AdminStack";
-import AdminPopup from "../../../screens/allMangerScreen/components/AdminPopup";
 
 export const getNavBarData = (navigate, openPopup, closePopup) => ({
     NavBarLinks: [

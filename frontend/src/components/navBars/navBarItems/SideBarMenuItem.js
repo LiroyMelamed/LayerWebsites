@@ -1,4 +1,3 @@
-import React from "react";
 import SimpleButton from "../../simpleComponents/SimpleButton";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import SimpleIcon from "../../simpleComponents/SimpleIcon";
@@ -10,12 +9,6 @@ export default function SideBarMenuItem({ onPressFunction, isPressed, size, icon
     function onPress() {
         onPressFunction?.(buttonIndex);
     }
-
-    const ContainerStyle = {
-        height: 56,
-        padding: 0,
-        ...containerStyle
-    };
 
     return (
         <SimpleButton onPress={() => onPress()} style={styles.buttonContainer(isPressed)}>

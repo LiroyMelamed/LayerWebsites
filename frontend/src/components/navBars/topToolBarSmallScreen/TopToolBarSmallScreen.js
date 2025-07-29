@@ -16,6 +16,7 @@ const Logo = images.Logos.FullLogoOriginal;
 
 export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, GetNavBarData = getNavBarData }) {
     const { isFromApp } = useFromApp();
+
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
     const [currentIndex, setCurrentIndex] = useState(chosenIndex);
@@ -29,7 +30,6 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
     const toggleDrawer = () => {
         setIsDrawerOpen(!isDrawerOpen);
     };
-
 
     return (
         <>
@@ -48,24 +48,45 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
                 </SimpleButton>
             </SimpleContainer >
 
-            {isDrawerOpen && !isFromApp &&
+            {isDrawerOpen &&
                 <SimpleContainer style={styles.sidebarContainer}>
                     <SimpleScrollView>
                         <SimpleContainer style={{ flex: 1, flexDirection: 'column' }}>
-                            {NavBarLinks.map((item, index) => (
-                                <SideBarMenuItem
-                                    key={item.text}
-                                    buttonText={item.buttonText}
-                                    iconSource={item.icon}
-                                    size={24}
-                                    isPressed={currentIndex === index}
-                                    onPressFunction={() => { setCurrentIndex(index); item.onClick(); toggleDrawer() }}
-                                    buttonIndex={index}
-                                />
-                            ))}
+                            {NavBarLinks
+                                .filter((_, index) => !isFromApp || index > 1) // hide first two items if from app
+                                .map((item, index) => (
+                                    <SideBarMenuItem
+                                        key={item.buttonText}
+                                        buttonText={item.buttonText}
+                                        iconSource={item.icon}
+                                        size={24}
+                                        isPressed={currentIndex === index}
+                                        onPressFunction={() => {
+                                            setCurrentIndex(index);
+                                            item.onClick();
+                                            toggleDrawer();
+                                        }}
+                                        buttonIndex={index}
+                                    />
+                                ))}
                         </SimpleContainer>
                     </SimpleScrollView>
-                    <PrimaryButton style={{ alignSelf: 'center', marginBottom: '20px', marginTop: '12px', backgroundColor: colors.darkRed }} onPress={() => { localStorage.removeItem("token"); navigate('/') }}>התנתק</PrimaryButton>
+                    {!isFromApp && (
+                        <PrimaryButton
+                            style={{
+                                alignSelf: 'center',
+                                marginBottom: '20px',
+                                marginTop: '12px',
+                                backgroundColor: colors.darkRed
+                            }}
+                            onPress={() => {
+                                localStorage.removeItem("token");
+                                navigate('/');
+                            }}
+                        >
+                            התנתק
+                        </PrimaryButton>
+                    )}
                 </SimpleContainer>
             }
         </>

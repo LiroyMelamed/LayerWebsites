@@ -45,11 +45,6 @@ const SimpleInput = forwardRef(
             setIsFocused(true);
         }
 
-        function handleBlur(event) {
-            onBlur?.(event);
-            setIsFocused(false);
-        }
-
         const handleInputChange = (e) => {
             const newValue = e.target.value;
             setDelayedValue(newValue);

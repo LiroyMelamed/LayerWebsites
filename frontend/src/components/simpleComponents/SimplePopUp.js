@@ -1,7 +1,6 @@
 // SimplePopUp.js
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 import SimpleContainer from './SimpleContainer';
-import SimpleScrollView from './SimpleScrollView';
 import ImageButton from '../specializedComponents/buttons/ImageButton';
 import { icons } from '../../assets/icons/icons';
 

@@ -21,6 +21,8 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 const PORT = process.env.PORT || 5000;
 
 const isProduction = false;
+module.exports.isProduction = isProduction;
+
 function selectMode(forProduction, forStage) {
     return isProduction ? forProduction : forStage;
 }

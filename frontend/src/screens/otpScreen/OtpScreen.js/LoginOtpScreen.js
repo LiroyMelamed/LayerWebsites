@@ -16,7 +16,7 @@ import { ClientMainScreenName } from "../../client/clientMainScreen/ClientMainSc
 
 export const AppRoles = {
     Admin: 'Admin',
-    Customer: 'Customer'
+    Customer: 'User'
 }
 
 export const LoginOtpScreenName = "/LoginOtpScreen";
