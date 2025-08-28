@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import SimpleScreen from '../../components/simpleComponents/SimpleScreen';
 import SearchInput from '../../components/specializedComponents/containers/SearchInput';
 import SimpleScrollView from '../../components/simpleComponents/SimpleScrollView';
@@ -23,6 +23,11 @@ export const TaggedCasesScreenName = "/TaggedCasesScreen";
 export default function TaggedCasesScreen() {
     const { openPopup } = usePopup();
     const { isSmallScreen } = useScreenSize();
+
+    const [selectedCaseType, setSelectedCaseType] = useState("הכל");
+    const [selectedStatus, setSelectedStatus] = useState("הכל");
+    const [filteredTaggedCases, setFilteredTaggedCases] = useState(null);
+
     const { result: taggedCases, isPerforming: isPerformingTaggedCases, performRequest } = useAutoHttpRequest(casesApi.getAllTaggedCases);
     const { result: allCasesTypes, isPerforming: isPerformingAllCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
     const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getTaggedCaseByName, null, () => { });
@@ -30,6 +35,40 @@ export default function TaggedCasesScreen() {
     const handleSearch = (query) => {
         SearchCaseByName(query);
     };
+
+    const applyFilters = (typeFilter, statusFilter) => {
+        let filtered = taggedCases;
+
+        if (typeFilter !== "הכל") {
+            filtered = filtered.filter(item => item.CaseTypeName === typeFilter);
+        }
+
+        if (statusFilter === "תיקים פתוחים") {
+            filtered = filtered.filter(item => item.IsClosed === false);
+        } else if (statusFilter === "תיקים סגורים") {
+            filtered = filtered.filter(item => item.IsClosed === true);
+        }
+
+        if (typeFilter === "הכל" && statusFilter === "הכל") {
+            setFilteredTaggedCases(null);
+        } else {
+            setFilteredTaggedCases(filtered);
+        }
+    };
+
+    const handleFilterByType = (type) => {
+        setSelectedCaseType(type);
+        applyFilters(type, selectedStatus);
+    };
+
+    const handleFilterByStatus = (status) => {
+        setSelectedStatus(status);
+        applyFilters(selectedCaseType, status);
+    };
+
+    if (isPerformingTaggedCases || isPerformingAllCasesTypes) {
+        return <SimpleLoader />;
+    }
 
     return (
         <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
@@ -46,24 +85,38 @@ export default function TaggedCasesScreen() {
                         getButtonTextFunction={(item) => item.CaseName}
                         style={styles.searchInput}
                     />
+                </SimpleContainer>
+
+                <SimpleContainer style={styles.responsiveContainer}>
                     <ChooseButton
                         buttonChoices={allCasesTypes}
                         style={styles.chooseButton}
-                        isPerforming={isPerformingAllCasesTypes}
+                        OnPressChoiceFunction={handleFilterByType}
+                    />
+                    <ChooseButton
+                        buttonChoices={["תיקים סגורים", "תיקים פתוחים"]}
+                        style={styles.chooseButton}
+                        OnPressChoiceFunction={handleFilterByStatus}
+                        buttonText="סגור/פתוח"
                     />
                 </SimpleContainer>
 
                 <PinnedCasesCard
-                    taggedCases={taggedCases}
+                    taggedCases={filteredTaggedCases || taggedCases}
                     rePerformFunction={performRequest}
                     isPerforming={isPerformingTaggedCases}
                 />
-
             </SimpleScrollView>
+
             <SimpleContainer style={{ display: 'flex', justifyContent: 'center' }}>
-                <PrimaryButton style={{ margin: '8px 0px', selfAlign: 'center' }} onPress={() => openPopup(<TagCasePopup rePerformRequest={performRequest} />)}>נעיצת תיק</PrimaryButton>
+                <PrimaryButton
+                    style={{ margin: '8px 0px', selfAlign: 'center' }}
+                    onPress={() => openPopup(<TagCasePopup rePerformRequest={performRequest} />)}
+                >
+                    נעיצת תיק
+                </PrimaryButton>
             </SimpleContainer>
-        </SimpleScreen >
+        </SimpleScreen>
     );
 }
 
@@ -86,8 +139,8 @@ const styles = {
         maxWidth: '500px',
     },
     chooseButton: {
-        margin: "12px 0px",
+        margin: "12px 12px",
         flex: '0 1 auto',
         minWidth: '100px',
-    }
+    },
 };

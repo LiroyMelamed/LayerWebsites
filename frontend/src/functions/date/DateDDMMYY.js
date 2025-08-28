@@ -1,7 +1,10 @@
 export function DateDDMMYY(dateString) {
-    if (dateString === null || dateString === '') {
+    console.log('DateDDMMYY', dateString);
+
+    if (dateString == null || dateString === '') {
         return null;
     }
+
     const date = new Date(dateString);
 
     const day = String(date.getDate()).padStart(2, '0');

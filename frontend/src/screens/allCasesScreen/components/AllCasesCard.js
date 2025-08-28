@@ -6,6 +6,7 @@ import { TextBold20 } from "../../../components/specializedComponents/text/AllTe
 import DefaultState from "../../../components/styledComponents/defaultState/DefaultState";
 import CaseMenuItem from "../../../components/styledComponents/menuItems/CaseMenuItem";
 import Separator from "../../../components/styledComponents/separators/Separator";
+import { DateDDMMYY } from "../../../functions/date/DateDDMMYY";
 
 export default function AllCasesCard({ allCases, isPerforming, reperformAfterSave }) {
 
@@ -63,7 +64,40 @@ export default function AllCasesCard({ allCases, isPerforming, reperformAfterSav
 }
 
 //Functions
-export function getOpenData(taggedCases, index) {
+export function getOpenData(allCases, index) {
+    const caseItem = allCases[index];
+
+    const openData = [
+        {
+            title: "שם לקוח",
+            value: caseItem.CustomerName
+        },
+        {
+            title: "ת.ז לקוח",
+            value: caseItem.CostumerTaz
+        },
+        {
+            title: "מספר פלאפון",
+            value: caseItem.PhoneNumber
+        },
+        {
+            title: "נעוץ",
+            value: caseItem.IsTagged ? "כן" : "לא"
+        },
+        {
+            title: "תאריך סיום משוער",
+            value: DateDDMMYY(caseItem.EstimatedCompletionDate) || 'לא צויין'
+        },
+        {
+            title: "תוקף רישיון",
+            value: DateDDMMYY(caseItem.LicenseExpiryDate) || 'לא צויין'
+        },
+    ];
+
+    return openData;
+}
+
+export function getOpenDataClient(taggedCases, index) {
     const openData = [
         {
             title: "שם לקוח",
@@ -78,8 +112,8 @@ export function getOpenData(taggedCases, index) {
             value: taggedCases[index].PhoneNumber
         },
         {
-            title: "נעוץ",
-            value: taggedCases[index].IsTagged ? "כן" : "לא"
+            title: "מנהל תיק",
+            value: taggedCases[index].CaseManager
         },
     ]
 

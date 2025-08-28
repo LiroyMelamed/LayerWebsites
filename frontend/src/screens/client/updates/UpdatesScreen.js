@@ -12,7 +12,6 @@ import TopToolBarSmallScreen from "../../../components/navBars/topToolBarSmallSc
 import { ClientStackName } from "../../../navigation/ClientStack";
 import { ClientMainScreenName } from "../clientMainScreen/ClientMainScreen";
 import { getClientNavBarData } from "../../../components/navBars/data/ClientNavBarData";
-import SimpleImage from "../../../components/simpleComponents/SimpleImage";
 
 export const UpdatesAndNotificationsScreenName = "/UpdatesAndNotificationsScreen";
 
@@ -45,10 +44,10 @@ export default function UpdatesAndNotificationsScreen() {
 
             <SimpleScrollView style={{ marginTop: 40, }}>
                 <SimpleContainer style={styles.responsiveContainer}>
-                    <SimpleImage
+                    {/* <SimpleImage
                         src={images.Updates.NewUpdates}
                         style={{ maxWidth: '100%', padding: '0px 20px' }}
-                    />
+                    /> */}
 
                     <SimpleCard style={{ flexDirection: 'column' }}>
                         {updatesMenuItems.map(item => (

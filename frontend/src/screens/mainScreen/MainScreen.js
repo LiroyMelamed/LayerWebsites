@@ -13,19 +13,20 @@ import ClientsCard from './components/ClientsCard';
 import casesApi from '../../api/casesApi';
 import { AdminStackName } from '../../navigation/AdminStack';
 import SimpleScrollView from '../../components/simpleComponents/SimpleScrollView';
+import { useNavigate } from 'react-router-dom';
+import { TaggedCasesScreenName } from '../taggedCasesScreen/TaggedCasesScreen';
+import { AllCasesTypeScreenName } from '../allCasesTypeScreen/AllCasesTypeScreen';
 
 export const MainScreenName = "/MainScreen";
 
 export default function MainScreen() {
+    const navigate = useNavigate()
     const { isSmallScreen } = useScreenSize();
     const { result: mainScreenData, isPerforming: isPerformingMainScreenData, performRequest } = useAutoHttpRequest(casesApi.getMainScreenData);
 
     if (isPerformingMainScreenData) {
         return <SimpleLoader />;
     }
-
-    console.log('mainScreenData', mainScreenData);
-
 
     return (
         <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
@@ -49,11 +50,15 @@ export default function MainScreen() {
                             <ShowDataCard
                                 numberText={mainScreenData?.AllCasesData?.length}
                                 title={'סה"כ תיקים'}
+                                optionalOnClick={() => { navigate(AdminStackName + AllCasesTypeScreenName) }}
+                                style={styles.DataCardStyle}
                             />
 
                             <ShowDataCard
                                 numberText={mainScreenData?.NumberOfClosedCases}
                                 title={"תיקים סגורים"}
+                                optionalOnClick={() => { navigate(AdminStackName + AllCasesTypeScreenName) }}
+                                style={styles.DataCardStyle}
                             />
                         </SimpleContainer>
 
@@ -61,6 +66,8 @@ export default function MainScreen() {
                             <ShowDataCard
                                 numberText={mainScreenData?.NumberOfTaggedCases}
                                 title={"תיקים מתוייגים"}
+                                optionalOnClick={() => { navigate(AdminStackName + TaggedCasesScreenName) }}
+                                style={styles.DataCardStyle}
                             />
                             <ShowDataCard
                                 numberText={mainScreenData?.ActiveCustomers?.length}
@@ -86,4 +93,7 @@ const styles = {
         boxSizing: 'border-box',
         flexDirection: 'column',
     }),
+    DataCardStyle: {
+        cursor: 'pointer'
+    }
 };

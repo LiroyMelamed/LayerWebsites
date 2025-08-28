@@ -4,7 +4,6 @@ import { colors } from "../../../constant/colors";
 import SimpleLoader from "../../simpleComponents/SimpleLoader";
 import TextButtonWithTwoOptionalIcons from "../../specializedComponents/buttons/TextButtonWithTwoOptionalIcons";
 
-const ICON_SIZE = 12;
 
 const GenericButton = forwardRef(({
     children,
@@ -33,6 +32,9 @@ const GenericButton = forwardRef(({
     style: customStyle = {},
     ...props
 }, ref) => {
+
+    const ICON_SIZE = size == buttonSizes.SMALL ? 8 : 12;
+
     const [isPressed, setIsPressed] = useState(false);
 
     function handlePressIn(event) {

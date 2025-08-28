@@ -1,12 +1,21 @@
-const { sql, connectDb } = require("../config/db");
+const pool = require("../config/db");
 const { formatPhoneNumber } = require("../utils/phoneUtils");
 const { sendMessage, COMPANY_NAME } = require("../utils/sendMessage");
 
 const getCustomers = async (req, res) => {
     try {
-        const pool = await connectDb();
-        const result = await pool.request().query("SELECT * FROM Users WHERE Role <> 'Admin'");
-        res.json(result.recordset);
+        const result = await pool.query("SELECT * FROM users WHERE role <> 'Admin'");
+        res.json(result.rows.map(row => ({
+            UserId: row.userid,
+            Name: row.name,
+            Email: row.email,
+            PhoneNumber: row.phonenumber,
+            CompanyName: row.companyname,
+            CreatedAt: row.createdat,
+            DateOfBirth: row.dateofbirth,
+            ProfilePicUrl: row.profilepicurl,
+            Role: row.role
+        })));
     } catch (error) {
         console.error("Error retrieving customers:", error);
         res.status(500).json({ message: "Error retrieving customers" });
@@ -14,28 +23,19 @@ const getCustomers = async (req, res) => {
 };
 
 const addCustomer = async (req, res) => {
-    const { Name, PhoneNumber, Email, CompanyName } = req.body;
+    const { name, phoneNumber, email, companyName } = req.body;
 
     try {
-        const pool = await connectDb();
-        const request = pool.request();
+        await pool.query(
+            `
+            INSERT INTO users (name, email, phonenumber, passwordhash, role, companyname, createdat)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            `,
+            [name, email, phoneNumber, null, "User", companyName, new Date()]
+        );
 
-        request.input("Name", sql.NVarChar, Name);
-        request.input("Email", sql.NVarChar, Email);
-        request.input("PhoneNumber", sql.NVarChar, PhoneNumber);
-        request.input("PasswordHash", sql.NVarChar, null);
-        request.input("Role", sql.NVarChar, "User");
-        request.input("CompanyName", sql.NVarChar, CompanyName);
-        request.input("CreatedAt", sql.DateTime, new Date());
-
-        await request.query(`
-            INSERT INTO Users (Name, Email, PhoneNumber, PasswordHash, Role, CompanyName, CreatedAt)
-            VALUES (@Name, @Email, @PhoneNumber, @PasswordHash, @Role, @CompanyName, @CreatedAt)
-        `);
-
-        const formattedPhone = formatPhoneNumber(PhoneNumber);
-
-        sendMessage(`היי ${Name}, ברוכים הבאים לשירות החדש שלנו.\n\n בלינק הבא תוכל להשלים את ההרשמה לשירות.\n\n בברכה ${COMPANY_NAME}`, formattedPhone);
+        const formattedPhone = formatPhoneNumber(phoneNumber);
+        sendMessage(`היי ${name}, ברוכים הבאים לשירות החדש שלנו.\n\n בלינק הבא תוכל להשלים את ההרשמה לשירות.\n\n בברכה ${COMPANY_NAME}`, formattedPhone);
 
         res.status(201).json({ message: "לקוח הוקם בהצלחה" });
 
@@ -47,31 +47,30 @@ const addCustomer = async (req, res) => {
 
 const updateCustomerById = async (req, res) => {
     const { customerId } = req.params;
-    const { name, email, phoneNumber, role, companyName } = req.body;
-    try {
-        const pool = await connectDb();
-        const request = pool.request();
-        request.input("customerId", sql.Int, customerId);
-        request.input("name", sql.NVarChar, name);
-        request.input("email", sql.NVarChar, email);
-        request.input("phoneNumber", sql.NVarChar, phoneNumber);
-        request.input("role", sql.NVarChar, role);
-        request.input("companyName", sql.NVarChar, companyName);
 
-        await request.query(`
-            UPDATE Users
+    const { name, email, phoneNumber, companyName } = req.body;
+    try {
+        const result = await pool.query(
+            `
+            UPDATE users
             SET
-                Name = @name,
-                Email = @email,
-                PhoneNumber = @phoneNumber,
-                Role = @role,
-                CompanyName = @companyName
-            WHERE UserId = @customerId
-        `);
-        res.status(200).json({ message: "Customer updated successfully" });
+                name = $1,
+                email = $2,
+                phonenumber = $3,
+                companyname = $4
+            WHERE userid = $5
+            `,
+            [name, email, phoneNumber, companyName, customerId]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: "לקוח לא נמצא" });
+        }
+
+        res.status(200).json({ message: "לקוח עודכן בהצלחה" });
     } catch (error) {
         console.error("Error updating customer by ID:", error);
-        res.status(500).json({ message: "Error updating customer" });
+        res.status(500).json({ message: "שגיאה בעדכון לקוח" });
     }
 };
 
@@ -83,20 +82,26 @@ const getCustomerByName = async (req, res) => {
     }
 
     try {
-        const pool = await connectDb();
-        const result = await pool.request()
-            .input("userName", sql.NVarChar, `%${userName}%`)
-            .query(`
-                SELECT UserId, Name, Email, PhoneNumber, CompanyName
-                FROM Users
-                WHERE Name LIKE @userName
-            `);
+        const result = await pool.query(
+            `
+            SELECT userid, name, email, phonenumber, companyname
+            FROM users
+            WHERE name ILIKE $1 OR email ILIKE $1 OR phonenumber ILIKE $1 OR companyname ILIKE $1
+            `,
+            [`%${userName}%`]
+        );
 
-        if (result.recordset.length === 0) {
+        if (result.rows.length === 0) {
             return res.status(404).json({ message: "No users found" });
         }
 
-        res.json(result.recordset);
+        res.json(result.rows.map(row => ({
+            UserId: row.userid,
+            Name: row.name,
+            Email: row.email,
+            PhoneNumber: row.phonenumber,
+            CompanyName: row.companyname
+        })));
     } catch (error) {
         console.error("Error retrieving users by name:", error);
         res.status(500).json({ message: "Error retrieving users" });
@@ -107,27 +112,38 @@ const getCurrentCustomer = async (req, res) => {
     try {
         const userId = req.user.UserId;
 
-        const pool = await connectDb();
-        const result = await pool.request()
-            .input("userId", sql.Int, userId)
-            .query(`
-                SELECT
-                    UserId,
-                    Name,
-                    Email,
-                    PhoneNumber,
-                    CompanyName,
-                    DateOfBirth,
-                    ProfilePicUrl
-                FROM Users
-                WHERE UserId = @userId
-            `);
+        const result = await pool.query(
+            `
+            SELECT
+                userid,
+                name,
+                email,
+                phonenumber,
+                companyname,
+                dateofbirth,
+                profilepicurl,
+                role
+            FROM users
+            WHERE userid = $1
+            `,
+            [userId]
+        );
 
-        if (result.recordset.length === 0) {
+        if (result.rows.length === 0) {
             return res.status(404).json({ message: "Current user not found." });
         }
 
-        res.json(result.recordset[0]);
+        const row = result.rows[0];
+        res.json({
+            UserId: row.userid,
+            Name: row.name,
+            Email: row.email,
+            PhoneNumber: row.phonenumber,
+            CompanyName: row.companyname,
+            DateOfBirth: row.dateofbirth,
+            ProfilePicUrl: row.profilepicurl,
+            Role: row.role
+        });
     } catch (error) {
         console.error("Error retrieving current customer:", error);
         res.status(500).json({ message: "Error retrieving current customer profile." });
@@ -136,51 +152,36 @@ const getCurrentCustomer = async (req, res) => {
 
 const updateCurrentCustomer = async (req, res) => {
     const userId = req.user.UserId;
-    const { Name, PhoneNumber, Email, CompanyName, dateOfBirth, profilePicBase64 } = req.body;
+    const { name, phoneNumber, email, companyName, dateOfBirth, profilePicBase64 } = req.body;
 
     try {
-        const pool = await connectDb();
-        const request = pool.request();
+        let updateQuery = `
+            UPDATE users
+            SET
+                name = $1,
+                email = $2,
+                phonenumber = $3,
+                companyname = $4,
+                dateofbirth = $5
+        `;
+        const params = [name, email, phoneNumber, companyName, dateOfBirth ? new Date(dateOfBirth) : null];
+        let paramIndex = params.length;
 
-        const existingUser = await request
-            .input("userIdCheck", sql.Int, userId)
-            .query(`SELECT UserId FROM Users WHERE UserId = @userIdCheck`);
+        if (profilePicBase664 !== null && profilePicBase64 !== undefined) {
+            paramIndex++;
+            updateQuery += `, profilepicurl = $${paramIndex}`;
+            params.push(profilePicBase64);
+        }
 
-        if (existingUser.recordset.length === 0) {
+        paramIndex++;
+        updateQuery += ` WHERE userid = $${paramIndex}`;
+        params.push(userId);
+
+        const result = await pool.query(updateQuery, params);
+
+        if (result.rowCount === 0) {
             return res.status(404).json({ message: "User not found." });
         }
-
-        // Basic inputs
-        request.input("userId", sql.Int, userId);
-        request.input("name", sql.NVarChar, Name);
-        request.input("email", sql.NVarChar, Email);
-        request.input("phoneNumber", sql.NVarChar, PhoneNumber);
-        request.input("companyName", sql.NVarChar, CompanyName);
-        request.input("dateOfBirth", sql.Date, dateOfBirth ? new Date(dateOfBirth) : null);
-
-        // Build query string conditionally
-        let updateQuery = `
-            UPDATE Users
-            SET
-                Name = @name,
-                Email = @email,
-                PhoneNumber = @phoneNumber,
-                CompanyName = @companyName,
-                DateOfBirth = @dateOfBirth
-        `;
-
-        if (profilePicBase64 !== null && profilePicBase64 !== undefined) {
-            request.input("profilePicUrl", sql.NVarChar(sql.MAX), profilePicBase64);
-            updateQuery += `,
-                ProfilePicUrl = @profilePicUrl
-            `;
-        }
-
-        updateQuery += `
-            WHERE UserId = @userId
-        `;
-
-        await request.query(updateQuery);
 
         res.status(200).json({ message: "עדכון פרופיל לקוח בוצע בהצלחה" });
     } catch (error) {
@@ -193,39 +194,46 @@ const deleteCustomer = async (req, res) => {
     const { userId } = req.params;
 
     try {
-        const pool = await connectDb(); // Get the connected pool
-        const transaction = new sql.Transaction(pool);
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
 
-        await transaction.begin();
+            await client.query(
+                `
+                DELETE FROM casedescriptions
+                WHERE caseid IN (SELECT caseid FROM cases WHERE userid = $1)
+                `,
+                [userId]
+            );
 
-        await transaction.request()
-            .input("userId", sql.Int, userId)
-            .query(`
-                DELETE FROM CaseDescriptions
-                WHERE CaseId IN (SELECT CaseId FROM Cases WHERE UserId = @userId)
-            `);
+            await client.query(
+                `
+                DELETE FROM cases WHERE userid = $1
+                `,
+                [userId]
+            );
 
-        await transaction.request()
-            .input("userId", sql.Int, userId)
-            .query(`
-                DELETE FROM Cases WHERE UserId = @userId
-            `);
+            const deleteResult = await client.query(
+                "DELETE FROM users WHERE userid = $1",
+                [userId]
+            );
 
-        const deleteResult = await transaction.request()
-            .input("userId", sql.Int, userId)
-            .query("DELETE FROM Users WHERE UserId = @userId");
+            await client.query('COMMIT');
 
-        await transaction.commit();
+            if (deleteResult.rowCount === 0) {
+                return res.status(404).json({ message: "Customer not found" });
+            }
 
-        if (deleteResult.rowsAffected[0] === 0) {
-            return res.status(404).json({ message: "Customer not found" });
+            res.status(200).json({ message: "לקוח ותיקים משוייכים נמחקו בהצלחה" });
+        } catch (innerError) {
+            await client.query('ROLLBACK');
+            throw innerError;
+        } finally {
+            client.release();
         }
-
-        res.status(200).json({ message: "Customer and associated cases deleted successfully" });
-
     } catch (error) {
         console.error("Error deleting customer:", error);
-        res.status(500).json({ message: "Error deleting customer" });
+        res.status(500).json({ message: "שגיאה במחיקת לקוח" });
     }
 };
 

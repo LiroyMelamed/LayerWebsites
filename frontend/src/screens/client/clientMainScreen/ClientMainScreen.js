@@ -31,12 +31,15 @@ export default function ClientMainScreen() {
         return <SimpleLoader />;
     }
 
+    console.log('allCases', allCases);
+
+
     return (
         <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
             {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={ClientStackName + ClientMainScreenName} GetNavBarData={getClientNavBarData} />}
 
             <SimpleScrollView>
-                <SimpleContainer style={styles.responsiveContainer}>
+                {/* <SimpleContainer style={styles.responsiveContainer}>
                     <SearchInput
                         onSearch={handleSearch}
                         title={"חיפוש תיק"}
@@ -47,7 +50,7 @@ export default function ClientMainScreen() {
                         style={styles.searchInput}
                     />
                     <ChooseButton style={styles.chooseButton} buttonChoices={allCasesTypes} />
-                </SimpleContainer>
+                </SimpleContainer> */}
 
                 <OpenCasesCard
                     openCases={allCases.filter(caseItem => caseItem.IsClosed === false)}

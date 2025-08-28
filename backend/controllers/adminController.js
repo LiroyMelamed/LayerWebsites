@@ -1,18 +1,26 @@
-const { sql, connectDb } = require("../config/db");
+const pool = require("../config/db"); // Direct import of the pg pool
 const bcrypt = require("bcrypt");
 
+/**
+ * Retrieves all users with the 'Admin' role.
+ */
 const getAdmins = async (req, res) => {
     try {
-        const pool = await connectDb();
-        const adminUsersResult = await pool.request().query("SELECT UserId, Name, Email, PhoneNumber, CompanyName, CreatedAt FROM Users WHERE Role = 'Admin'");
-        res.json(adminUsersResult.recordset);
+        // Query uses lowercase column names to match PostgreSQL's default behavior
+        const result = await pool.query("SELECT userid, name, email, phonenumber, companyname, createdat FROM users WHERE role = 'Admin'");
+        // Access rows directly and return them
+        res.json(result.rows);
     } catch (error) {
         console.error("Error retrieving Admins:", error);
         res.status(500).json({ message: "Error retrieving Admins" });
     }
 };
 
+/**
+ * Retrieves an admin by a partial name search (case-insensitive).
+ */
 const getAdminByName = async (req, res) => {
+    // Note: The query parameter is already lowercase
     const { name } = req.query;
 
     if (!name || name.trim() === "") {
@@ -20,22 +28,28 @@ const getAdminByName = async (req, res) => {
     }
 
     try {
-        const pool = await connectDb();
-        const result = await pool.request()
-            .input("name", sql.NVarChar, `%${name}%`)
-            .query("SELECT UserId, Name, Email, PhoneNumber, CompanyName, CreatedAt FROM Users WHERE Role = 'Admin' AND Name LIKE @name");
+        // Use parameterized query with $1 for PostgreSQL and ILIKE for case-insensitive search
+        const result = await pool.query(
+            "SELECT userid, name, email, phonenumber, companyname, createdat FROM users WHERE role = 'Admin' AND name ILIKE $1",
+            [`%${name}%`] // Parameters passed as an array
+        );
 
-        if (result.recordset.length === 0) {
+        // Check if any rows were returned
+        if (result.rows.length === 0) {
             return res.status(404).json({ message: "No admin found with this name" });
         }
 
-        res.json(result.recordset);
+        // Return the found rows
+        res.json(result.rows);
     } catch (error) {
         console.error("Error retrieving admin:", error);
         res.status(500).json({ message: "Error retrieving admin by name" });
     }
 };
 
+/**
+ * Updates an admin's details.
+ */
 const updateAdmin = async (req, res) => {
     const { adminId } = req.params;
     const { name, email, phoneNumber, password } = req.body;
@@ -45,29 +59,30 @@ const updateAdmin = async (req, res) => {
     }
 
     try {
-        const pool = await connectDb();
-        const request = pool.request();
-        request.input("adminId", sql.Int, adminId);
-        request.input("name", sql.NVarChar, name);
-        request.input("email", sql.NVarChar, email);
-        request.input("phoneNumber", sql.NVarChar, phoneNumber);
+        let query;
+        let params;
 
         // Update password only if it's provided
         if (password) {
             const hashedPassword = await bcrypt.hash(password, 10);
-            request.input("password", sql.NVarChar, hashedPassword);
-            await request.query(`
-                UPDATE Users
-                SET Name = @name, Email = @email, PhoneNumber = @phoneNumber, PasswordHash = @password
-                WHERE UserId = @adminId AND Role = 'Admin'
-            `);
+            query = `
+                UPDATE users
+                SET name = $1, email = $2, phonenumber = $3, passwordhash = $4
+                WHERE userid = $5 AND role = 'Admin'
+            `;
+            // Using lowercase column names in the params array as well
+            params = [name, email, phoneNumber, hashedPassword, adminId];
         } else {
-            await request.query(`
-                UPDATE Users
-                SET Name = @name, Email = @email, PhoneNumber = @phoneNumber
-                WHERE UserId = @adminId AND Role = 'Admin'
-            `);
+            query = `
+                UPDATE users
+                SET name = $1, email = $2, phonenumber = $3
+                WHERE userid = $4 AND role = 'Admin'
+            `;
+            // Using lowercase column names in the params array as well
+            params = [name, email, phoneNumber, adminId];
         }
+
+        await pool.query(query, params); // Execute query with parameters
 
         res.status(200).json({ message: "Admin updated successfully" });
     } catch (error) {
@@ -76,6 +91,9 @@ const updateAdmin = async (req, res) => {
     }
 };
 
+/**
+ * Deletes an admin.
+ */
 const deleteAdmin = async (req, res) => {
     const { adminId } = req.params;
 
@@ -84,13 +102,12 @@ const deleteAdmin = async (req, res) => {
     }
 
     try {
-        const pool = await connectDb();
-        const request = pool.request();
-        request.input("adminId", sql.Int, adminId);
+        const result = await pool.query(
+            `DELETE FROM users WHERE userid = $1 AND role = 'Admin'`,
+            [adminId]
+        );
 
-        const result = await request.query(`DELETE FROM Users WHERE UserId = @adminId AND Role = 'Admin'`);
-
-        if (result.rowsAffected[0] === 0) {
+        if (result.rowCount === 0) {
             return res.status(404).json({ message: "Admin not found or already deleted" });
         }
 
@@ -101,23 +118,21 @@ const deleteAdmin = async (req, res) => {
     }
 };
 
+/**
+ * Adds a new admin.
+ */
 const addAdmin = async (req, res) => {
     const { name, email, phoneNumber, password } = req.body;
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const pool = await connectDb();
-        const request = pool.request();
-        request.input("name", sql.NVarChar, name);
-        request.input("email", sql.NVarChar, email);
-        request.input("phoneNumber", sql.NVarChar, phoneNumber);
-        request.input("password", sql.NVarChar, hashedPassword);
-        request.input("role", sql.NVarChar, "Admin");
-
-        await request.query(`
-            INSERT INTO Users (Name, Email, PhoneNumber, PasswordHash, Role, CreatedAt)
-            VALUES (@name, @email, @phoneNumber, @password, @role, GETDATE())
-        `);
+        await pool.query(
+            `
+            INSERT INTO users (name, email, phonenumber, passwordhash, role, createdat)
+            VALUES ($1, $2, $3, $4, $5, NOW())
+            `,
+            [name, email, phoneNumber, hashedPassword, "Admin"]
+        );
 
         res.status(201).json({ message: "Admin added successfully" });
     } catch (error) {

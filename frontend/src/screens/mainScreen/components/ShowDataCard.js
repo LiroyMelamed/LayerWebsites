@@ -6,9 +6,9 @@ import { Text12, TextBold14, TextBold20, TextBold36 } from "../../../components/
 import { colors } from "../../../constant/colors";
 import addCommasToNumber from "../../../functions/numbers/addCommasToNumber";
 
-export default function ShowDataCard({ title, icon, numberText, comprationNumber, comprationText }) {
+export default function ShowDataCard({ title, icon, numberText, comprationNumber, comprationText, optionalOnClick, style }) {
     return (
-        <SimpleCard style={{ flex: 1, flexDirection: 'column' }}>
+        <SimpleCard style={{ flex: 1, flexDirection: 'column', ...style }} onClick={optionalOnClick}>
             <TextBold14 >{title}</TextBold14>
 
             <TextBold36 style={{ marginTop: 8 }}>{numberText}</TextBold36>

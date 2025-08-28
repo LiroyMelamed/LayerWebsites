@@ -49,10 +49,10 @@ export default function ClientsCard({ rePerformRequest, customerList, style }) {
                         }
                         <ClientMenuItem
                             clientDetails={customer}
-                            CompanyName={customer.CompanyName}
-                            clientMail={customer.Email}
-                            clientName={customer.Name}
-                            clientPhone={customer.PhoneNumber}
+                            CompanyName={customer.companyname}
+                            clientMail={customer.email}
+                            clientName={customer.name}
+                            clientPhone={customer.phonenumber}
                             closePopUpFunction={closePopup}
                             rePerformRequest={rePerformRequest}
                         />

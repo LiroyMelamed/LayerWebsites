@@ -8,17 +8,15 @@ import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 import { customersApi } from "../../../api/customersApi";
 import useHttpRequest from "../../../hooks/useHttpRequest";
 import useFieldState from "../../../hooks/useFieldState";
-import HebrewCharsValidation, { HebrewCharsValidationWithNULL } from "../../../functions/validation/HebrewCharsValidation";
+import { HebrewCharsValidationWithNULL, HebrewCharsValidationWithNumbers } from "../../../functions/validation/HebrewCharsValidation";
 import emailValidation from "../../../functions/validation/EmailValidation";
 import IsraeliPhoneNumberValidation from "../../../functions/validation/IsraeliPhoneNumberValidation";
 
 export default function ClientPopup({ clientDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style }) {
-    console.log('ClientPopup', clientDetails);
-
-    const [name, setName, nameError] = useFieldState(HebrewCharsValidation, clientDetails?.Name || "");
-    const [companyName, setCompanyName, companyNameError] = useFieldState(HebrewCharsValidationWithNULL, clientDetails?.CompanyName || "");
-    const [email, setEmail, emailError] = useFieldState(emailValidation, clientDetails?.Email || "");
-    const [phoneNumber, setPhoneNumber, phoneNumberError] = useFieldState(IsraeliPhoneNumberValidation, clientDetails?.PhoneNumber || "");
+    const [name, setName, nameError] = useFieldState(HebrewCharsValidationWithNumbers, clientDetails?.name || "");
+    const [companyName, setCompanyName, companyNameError] = useFieldState(HebrewCharsValidationWithNULL, clientDetails?.companyname || "");
+    const [email, setEmail, emailError] = useFieldState(emailValidation, clientDetails?.email || "");
+    const [phoneNumber, setPhoneNumber, phoneNumberError] = useFieldState(IsraeliPhoneNumberValidation, clientDetails?.phonenumber || "");
 
     const [hasError, setHasError] = useState(false);
 
@@ -50,22 +48,21 @@ export default function ClientPopup({ clientDetails, rePerformRequest, onFailure
 
     const handleSaveClient = () => {
         const clientData = {
-            UserId: clientDetails?.UserId,
-            Name: name,
-            PhoneNumber: phoneNumber,
-            Email: email,
-            CompanyName: companyName
+            name: name,
+            phoneNumber: phoneNumber,
+            email: email,
+            companyName: companyName
         };
 
         const apiCall = clientDetails
-            ? performRequest(clientDetails.UserId, clientData)
+            ? performRequest(clientDetails.userid, clientData)
             : performRequest(clientData);
 
         apiCall.finally(() => closePopUpFunction?.());
     };
 
     const handleDeleteClient = () => {
-        deleteClient(clientDetails.UserId);
+        deleteClient(clientDetails.userid);
     };
 
     return (
@@ -82,6 +79,7 @@ export default function ClientPopup({ clientDetails, rePerformRequest, onFailure
                     <SimpleInput
                         style={styles.inputStyle}
                         title={"מספר פלאפון"}
+                        type="number"
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value)}
                         error={phoneNumberError}
@@ -92,6 +90,7 @@ export default function ClientPopup({ clientDetails, rePerformRequest, onFailure
                     <SimpleInput
                         style={styles.inputStyle}
                         title={"אימייל"}
+                        type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         error={emailError}

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import casesApi, { casesTypeApi } from "../../api/casesApi";
 import { images } from "../../assets/images/images";
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
@@ -22,12 +23,46 @@ export const AllCasesScreenName = "/AllCases"
 export default function AllCasesScreen() {
     const { openPopup, closePopup } = usePopup();
     const { isSmallScreen } = useScreenSize();
+    const [selectedCaseType, setSelectedCaseType] = useState("הכל");
+    const [selectedStatus, setSelectedStatus] = useState("הכל");
+    const [filteredCases, setFilteredCases] = useState(null);
+
     const { result: allCasesTypes, isPerforming: isPerformingAllCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
     const { result: allCases, isPerforming: isPerformingAllCases, performRequest: reperformAfterSave } = useAutoHttpRequest(casesApi.getAllCases);
     const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getCaseByName, null, () => { });
 
     const handleSearch = (query) => {
         SearchCaseByName(query);
+    };
+
+    const applyFilters = (typeFilter, statusFilter) => {
+        let filtered = allCases;
+
+        if (typeFilter !== "הכל") {
+            filtered = filtered.filter(item => item.CaseTypeName === typeFilter);
+        }
+
+        if (statusFilter === "תיקים פתוחים") {
+            filtered = filtered.filter(item => item.IsClosed === false);
+        } else if (statusFilter === "תיקים סגורים") {
+            filtered = filtered.filter(item => item.IsClosed === true);
+        }
+
+        if (typeFilter === "הכל" && statusFilter === "הכל") {
+            setFilteredCases(null);
+        } else {
+            setFilteredCases(filtered);
+        }
+    };
+
+    const handleFilterByType = (type) => {
+        setSelectedCaseType(type);
+        applyFilters(type, selectedStatus);
+    };
+
+    const handleFilterByStatus = (status) => {
+        setSelectedStatus(status);
+        applyFilters(selectedCaseType, status);
     };
 
     if (isPerformingAllCases || isPerformingAllCasesTypes) {
@@ -49,14 +84,24 @@ export default function AllCasesScreen() {
                         getButtonTextFunction={(item) => item.CaseName}
                         style={styles.searchInput}
                     />
+                </SimpleContainer>
+
+                <SimpleContainer style={styles.responsiveContainer}>
                     <ChooseButton
                         buttonChoices={allCasesTypes}
                         style={styles.chooseButton}
+                        OnPressChoiceFunction={handleFilterByType}
+                    />
+                    <ChooseButton
+                        buttonChoices={["תיקים סגורים", "תיקים פתוחים"]}
+                        style={styles.chooseButtonOpenClose}
+                        OnPressChoiceFunction={handleFilterByStatus}
+                        buttonText="סגור/פתוח"
                     />
                 </SimpleContainer>
 
                 <AllCasesCard
-                    allCases={allCases}
+                    allCases={filteredCases || allCases}
                     reperformAfterSave={reperformAfterSave}
                     isPerforming={isPerformingAllCases}
                 />
@@ -84,13 +129,14 @@ const styles = {
         overflow: 'hidden',
     },
     searchInput: {
-        margin: "12px 0px",
-        marginLeft: 20,
+        marginTop: "12px",
         maxWidth: '500px',
     },
     chooseButton: {
-        margin: "12px 0px",
+        margin: "12px 12px",
         flex: '0 1 auto',
-        minWidth: '100px',
+    },
+    chooseButtonOpenClose: {
+        flex: '0 1 auto',
     }
 }

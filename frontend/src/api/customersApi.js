@@ -25,15 +25,15 @@ export const customersApi = {
         return await ApiUtils.post(ADD_CUSTOMER, customerData);
     },
 
-    updateCustomerById: async (customerId, customerData) => {
-        return await ApiUtils.put(`${UPDATE_CUSTOMER}${customerId}`, customerData);
+    updateCustomerById: async (userId, customerData) => {
+        return await ApiUtils.put(`${UPDATE_CUSTOMER}${userId}`, customerData);
     },
 
     updateCurrentCustomer: async (customerData) => {
         return await ApiUtils.put(`${UPDATE_CURRENT_CUSTOMER}`, customerData);
     },
 
-    deleteCustomerById: async (customerId) => {
-        return await ApiUtils.delete(`${DELETE_CUSTOMER}${customerId}`);
+    deleteCustomerById: async (userId) => {
+        return await ApiUtils.delete(`${DELETE_CUSTOMER}${userId}`);
     }
 };

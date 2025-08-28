@@ -50,7 +50,7 @@ export default function AllMangerScreen() {
                         onSearch={handleSearch}
                         title={"חיפוש מנהל"}
                         titleFontSize={20}
-                        getButtonTextFunction={(item) => item.Name}
+                        getButtonTextFunction={(item) => item.name}
                         style={styles.searchInput}
                         isPerforming={isPerformingAdminById}
                         queryResult={adminByName}
@@ -62,6 +62,7 @@ export default function AllMangerScreen() {
                 <AdminsCard
                     adminList={adminsData}
                     isPerforming={isPerformingAdminsData}
+                    performGetAdmins={performGetAdmins}
                 />
             </SimpleScrollView>
 

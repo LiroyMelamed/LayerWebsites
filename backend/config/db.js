@@ -1,36 +1,24 @@
-const sql = require("mssql");
-require("dotenv").config();
+const { Pool } = require('pg');
+const dotenv = require('dotenv');
+dotenv.config(); // Load environment variables from .env
 
-const dbConfig = {
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    server: process.env.DB_SERVER_NAME,
-    database: process.env.DB_NAME,
-    options: {
-        encrypt: true,
-        trustServerCertificate: true,
-        trustedConnection: false
-    },
-};
+const pool = new Pool({
+    user: process.env.DB_USER,        // liroym
+    host: process.env.DB_HOST || 'localhost', // Usually 'localhost' for local dev
+    database: process.env.DB_NAME,    // MelamedLaw
+    password: process.env.DB_PASSWORD, // Lm@@062025!!
+    port: process.env.DB_PORT || 5432,
+    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
+});
 
-let pool;
-
-async function connectDb() {
-    try {
-        if (pool && pool.connected) {
-            return pool;
-        }
-        pool = await sql.connect(dbConfig);
-        console.log("Connected to the database");
-        return pool;
-    } catch (err) {
-        console.error("Error connecting to the database:", err);
-        process.exit(1);
+// Test the connection
+pool.connect((err, client, done) => {
+    if (err) {
+        console.error('Error connecting to PostgreSQL database:', err.message);
+        return;
     }
-}
+    console.log('Connected to PostgreSQL database:', process.env.DB_NAME);
+    client.release();
+});
 
-module.exports = {
-    connectDb,
-    sql,
-    dbConfig
-};
+module.exports = pool;

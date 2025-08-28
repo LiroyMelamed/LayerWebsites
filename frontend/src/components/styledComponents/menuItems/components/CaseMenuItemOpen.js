@@ -16,6 +16,7 @@ import casesApi from "../../../../api/casesApi";
 import SimpleButton from "../../../simpleComponents/SimpleButton";
 import { colors } from "../../../../constant/colors";
 import SimpleInput, { inputStyles } from "../../../simpleComponents/SimpleInput";
+import { DateDDMMYY } from "../../../../functions/date/DateDDMMYY";
 
 export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCase, isClient }) {
     const { isPerforming: isPerformingTagCase, performRequest: tagCase } = useHttpRequest(casesApi.tagCaseById);
@@ -71,6 +72,21 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
 
             <Separator />
 
+            <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flex: 1 }}>
+                <TextBold12 style={{ flex: 1 }}>תאריך סיום משוער</TextBold12>
+                <Text12 style={{ flex: 1 }}>{fullCase.EstimatedCompletionDate ? DateDDMMYY(fullCase.EstimatedCompletionDate) : 'לא צויין'}</Text12>
+            </SimpleContainer>
+
+            <Separator />
+
+
+            <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flex: 1 }}>
+                <TextBold12 style={{ flex: 1 }}>תוקף רישיון</TextBold12>
+                <Text12 style={{ flex: 1 }}>{fullCase.LicenseExpiryDate ? DateDDMMYY(fullCase.LicenseExpiryDate) : 'לא צויין'}</Text12>
+            </SimpleContainer>
+
+            <Separator />
+
             <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flex: 1, alignItems: 'center' }}>
                 <TextBold12 style={{ flex: 1 }}>קבוצת וואטספ</TextBold12>
                 {isPerformingLinkCase ?
@@ -102,14 +118,24 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
 
             <Separator />
 
+            {!isClient &&
+                <>
+                    <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flex: 1 }}>
+                        <TextBold12 style={{ flex: 1 }}>נעוץ</TextBold12>
+                        {isPerformingTagCase ? <SimpleLoader /> : <Text12 style={{ flex: 1 }}>{IsTagged ? "כן" : "לא"}</Text12>}
+                    </SimpleContainer>
+
+                    <Separator />
+                </>
+            }
+
             <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flex: 1 }}>
-
-                <TextBold12 style={{ flex: 1 }}>נעוץ</TextBold12>
-                {isPerformingTagCase ? <SimpleLoader /> : <Text12 style={{ flex: 1 }}>{IsTagged ? "כן" : "לא"}</Text12>}
-
+                <TextBold12 style={{ flex: 1 }}>מנהל תיק</TextBold12>
+                <Text12 style={{ flex: 1 }}>{fullCase.CaseManager ? fullCase.CaseManager : "לא משוייך"}</Text12>
             </SimpleContainer>
 
             <Separator />
+
 
             <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flex: 1 }}>
                 <ImageButton

@@ -67,8 +67,6 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
     };
 
     const handleAddStage = () => {
-        console.log(descriptions);
-
         setNumberOfStages(prev => prev + 1);
 
         setDescriptions((prev) => {

@@ -6,21 +6,22 @@ import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { Text14, TextBold14 } from "../../specializedComponents/text/AllTextKindFile";
 
 export default function AdminMenuItem({
-    adminName = "khru",
-    CreatedAt = '12/02/2025',
-    adminMail = "dsadasdasd@walla.com",
-    adminPhone = "0507299064",
+    adminName,
+    CreatedAt,
+    adminMail,
+    adminPhone,
     admin,
     onPress,
+    performGetAdmins,
     style
 }) {
-    const { openPopup } = usePopup();
+    const { openPopup, closePopup } = usePopup();
 
     function AdminPressed(params) {
         if (onPress) {
             onPress()
         } else {
-            openPopup(<AdminPopup adminDetails={admin} />)
+            openPopup(<AdminPopup adminDetails={admin} closePopUpFunction={() => { closePopup(); performGetAdmins?.(); }} />)
         }
     }
 

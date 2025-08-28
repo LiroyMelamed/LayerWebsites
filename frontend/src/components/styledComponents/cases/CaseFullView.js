@@ -10,6 +10,8 @@ import SearchInput from '../../specializedComponents/containers/SearchInput';
 import { customersApi } from '../../../api/customersApi';
 import casesApi, { casesTypeApi } from '../../../api/casesApi';
 import { buttonSizes } from '../../../styles/buttons/buttonSizes';
+import { adminApi } from '../../../api/adminApi';
+import { formatDateForInput } from '../../../functions/date/formatDateForInput';
 
 export default function CaseFullView({ caseDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style }) {
     const [caseHasBeenChosen, setCaseHasBeenChosen] = useState(false)
@@ -26,11 +28,17 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
         IsTagged: caseDetails?.IsTagged || false,
         PhoneNumber: caseDetails?.PhoneNumber || '',
         UserId: caseDetails?.UserId || null,
+        CaseManager: caseDetails?.CaseManager || '',
+        CaseManagerId: caseDetails?.CaseManagerId || '',
+        EstimatedCompletionDate: caseDetails?.EstimatedCompletionDate || '',
+        LicenseExpiryDate: caseDetails?.LicenseExpiryDate || '',
     });
 
     const { result: customers, isPerforming: isPerformingCustomers, performRequest: searchCustomers } = useHttpRequest(customersApi.getCustomersByName, null, () => { });
 
     const { result: caseTypes, isPerforming: isPerformingCaseTypes, performRequest: searchCaseTypes } = useHttpRequest(casesTypeApi.getCaseTypeByName, null, () => { });
+
+    const { result: adminByName, isPerforming: isPerformingGetAdmin, performRequest: getAdminByName } = useHttpRequest(adminApi.getAdminByName, null, () => { });
 
     const { result: cases, isPerforming: isPerformingCases, performRequest: searchCases } = useHttpRequest(casesApi.getCaseByName, null, () => { });
 
@@ -96,6 +104,18 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
         }
     };
 
+    const handleManagerSelected = (selectedManager) => {
+        const selectedAdmin = adminByName.find(admin => admin.name === selectedManager);
+
+        console.log('selectedAdmin', selectedAdmin);
+
+        setCaseData((prevDetails) => ({
+            ...prevDetails,
+            CaseManager: selectedAdmin.name,
+            CaseManagerId: selectedAdmin.userid
+        }));
+    }
+
     const handleCaseSelect = (selectedCase) => {
         setCaseData((prevDetails) => ({
             ...prevDetails,
@@ -118,6 +138,10 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                 IsTagged: caseDetails.IsTagged || false,
                 PhoneNumber: caseDetails.PhoneNumber || '',
                 UserId: caseDetails.UserId,
+                CaseManager: caseDetails.CaseManager || '',
+                CaseManagerId: caseDetails?.CaseManagerId || '',
+                EstimatedCompletionDate: caseDetails.EstimatedCompletionDate || '',
+                LicenseExpiryDate: caseDetails.LicenseExpiryDate || '',
             });
         }
     };
@@ -129,7 +153,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                     {caseDetails ?
                         <SimpleInput
                             style={styles.inputStyle}
-                            title={"שם התיק"}
+                            title={"מספר התיק"}
                             value={caseData.CaseName}
                             onChange={(e) => handleInputChange('CaseName', e.target.value)}
                         />
@@ -141,7 +165,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                                     CaseName: caseName
                                 }));
                             }}
-                            title={"שם התיק"}
+                            title={"מספר התיק"}
                             value={caseData.CaseName}
                             isPerforming={isPerformingCases}
                             getButtonTextFunction={(item) => item.CaseName}
@@ -201,8 +225,36 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                     <SimpleInput
                         style={styles.inputStyle}
                         title={"אימייל לקוח"}
+                        type="email"
                         value={caseData.CustomerMail}
                         onChange={(e) => handleInputChange('CustomerMail', e.target.value)}
+                    />
+                    <SearchInput
+                        onSearch={getAdminByName}
+                        title={"מנהל התיק"}
+                        value={caseData.CaseManager}
+                        isPerforming={isPerformingGetAdmin}
+                        getButtonTextFunction={(item) => item.name}
+                        buttonPressFunction={handleManagerSelected}
+                        queryResult={adminByName}
+                        style={styles.inputStyle}
+                    />
+                </SimpleContainer>
+
+                <SimpleContainer style={styles.rowStyle}>
+                    <SimpleInput
+                        style={styles.inputStyle}
+                        title={"תאריך סיום משוער"}
+                        type="date"
+                        value={formatDateForInput(caseData.EstimatedCompletionDate)}
+                        onChange={(e) => handleInputChange('EstimatedCompletionDate', e.target.value)}
+                    />
+                    <SimpleInput
+                        style={styles.inputStyle}
+                        title={"תוקף רישיון"}
+                        type="date"
+                        value={formatDateForInput(caseData.LicenseExpiryDate)}
+                        onChange={(e) => handleInputChange('LicenseExpiryDate', e.target.value)}
                     />
                 </SimpleContainer>
 
@@ -257,9 +309,14 @@ const styles = {
         width: '100%',
         flexDirection: 'row-reverse',
         marginBottom: '16px',
+        alignItems: 'center',
+        gap: 8,
+        minWidth: 0,
     },
     inputStyle: {
+        minWidth: 0,
         flex: 1,
+        alignItems: 'center',
     },
     buttonsRowStyle: {
         display: 'flex',

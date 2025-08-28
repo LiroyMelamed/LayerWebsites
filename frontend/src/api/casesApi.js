@@ -44,7 +44,6 @@ const casesApi = {
   },
 
   addCase: async (caseData) => {
-    console.log('caseData', caseData);
     return await ApiUtils.post(ADD_CASE, caseData);
   },
 
@@ -54,7 +53,6 @@ const casesApi = {
   },
 
   updateStageById: async (CaseId, caseData) => {
-    console.log('updateStageById', CaseId, caseData);
     return await ApiUtils.put(`${UPDATE_STAGE}${CaseId}`, caseData);
   },
 
@@ -93,19 +91,14 @@ export const casesTypeApi = {
   },
 
   deleteCaseTypeById: async (CaseTypeId) => {
-    console.log('deleteCaseTypeById', CaseTypeId);
     return await ApiUtils.delete(`${DELETE_CASE_TYPE}${encodeURIComponent(CaseTypeId)}`);
   },
 
   addCaseType: async (caseTypeData) => {
-    console.log('addCaseType', caseTypeData);
-
     return await ApiUtils.post(ADD_CASE_TYPE, caseTypeData);
   },
 
   updateCaseTypeById: async (caseTypeId, caseTypeData) => {
-    console.log('updateCaseTypeById', caseTypeData);
-
     return await ApiUtils.put(`${UPDATE_CASE_TYPE}${caseTypeId}`, caseTypeData);
   }
 };

@@ -46,8 +46,6 @@ const SearchInput = ({
     };
 
     function hoverButtonPressed(text, result) {
-        console.log('hereeeeeeeeeeeeeeeeeeeeeeeee');
-
         buttonPressFunction?.(text, result);
         setShowResults(false)
         setQuery(text);

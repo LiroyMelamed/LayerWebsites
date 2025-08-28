@@ -8,7 +8,7 @@ import AdminMenuItem from "../../../components/styledComponents/menuItems/AdminM
 import Separator from "../../../components/styledComponents/separators/Separator";
 
 
-export default function AdminsCard({ adminList, isPerforming, style }) {
+export default function AdminsCard({ adminList, isPerforming, performGetAdmins, style }) {
 
     if (isPerforming) {
         return (
@@ -50,10 +50,11 @@ export default function AdminsCard({ adminList, isPerforming, style }) {
                     }
                     <AdminMenuItem
                         admin={customer}
-                        adminName={customer.Name}
-                        CreatedAt={customer.CreatedAt}
-                        adminMail={customer.Email}
-                        adminPhone={customer.PhoneNumber}
+                        adminName={customer.name}
+                        CreatedAt={customer.createdat}
+                        adminMail={customer.email}
+                        adminPhone={customer.phonenumber}
+                        performGetAdmins={performGetAdmins}
                     />
                 </>
 

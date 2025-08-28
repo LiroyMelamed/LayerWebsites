@@ -19,9 +19,10 @@ export default function AdminPopup({ adminDetails, rePerformRequest, onFailureFu
     useEffect(() => {
         if (adminDetails) {
             setAdmin({
-                name: adminDetails.Name,
-                phoneNumber: adminDetails.PhoneNumber,
-                email: adminDetails.Email, password: ""
+                name: adminDetails.name,
+                phoneNumber: adminDetails.phonenumber,
+                email: adminDetails.email,
+                password: ""
             });
         }
     }, [adminDetails]);
@@ -53,14 +54,15 @@ export default function AdminPopup({ adminDetails, rePerformRequest, onFailureFu
         }
 
         const apiCall = adminDetails
-            ? performRequest(adminDetails.UserId, admin)
+            ? performRequest(adminDetails.userid, admin)
             : performRequest(admin);
 
         apiCall.finally(() => closePopUpFunction?.());
     };
 
     const handleDeleteAdmin = () => {
-        deleteAdmin(adminDetails.UserId)
+        deleteAdmin(adminDetails.userid);
+        closePopUpFunction?.()
     };
 
     return (
@@ -76,6 +78,7 @@ export default function AdminPopup({ adminDetails, rePerformRequest, onFailureFu
                     <SimpleInput
                         style={styles.inputStyle}
                         title={"מספר פלאפון"}
+                        type="number"
                         value={admin.phoneNumber}
                         onChange={(e) => handleInputChange("phoneNumber", e.target.value)}
                     />
@@ -85,6 +88,7 @@ export default function AdminPopup({ adminDetails, rePerformRequest, onFailureFu
                     <SimpleInput
                         style={styles.inputStyle}
                         title={"אימייל"}
+                        type="email"
                         value={admin.email}
                         onChange={(e) => handleInputChange("email", e.target.value)}
                     />

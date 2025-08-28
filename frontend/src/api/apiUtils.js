@@ -6,8 +6,8 @@ function selectMode(forProduction, forStage) {
     return isProduction ? forProduction : forStage;
 }
 
-const prodURL = "https://wet-kids-cut.loca.lt/api";
-const stageURL = "http://localhost:5000/api";
+const prodURL = "https://fa7a9381a780.ngrok-free.app/api";
+const stageURL = "http://localhost:3000/api";
 
 const ApiUtils = axios.create({
     baseURL: selectMode(prodURL, stageURL),
@@ -19,6 +19,8 @@ ApiUtils.interceptors.request.use((config) => {
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
+    config.headers["ngrok-skip-browser-warning"] = "true";
+
     return config;
 });
 

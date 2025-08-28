@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { casesTypeApi } from "../../api/casesApi";
 import { images } from "../../assets/images/images";
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
@@ -16,13 +17,25 @@ import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import { MainScreenName } from "../mainScreen/MainScreen";
 import AllCasesTypeCard from "./components/AllCasesTypeCard";
 
-export const AllCasesTypeScreenName = "/AllCasesType"
+export const AllCasesTypeScreenName = "/AllCasesType";
 
 export default function AllCasesTypeScreen() {
     const { openPopup, closePopup } = usePopup();
     const { isSmallScreen } = useScreenSize();
-    const { result: allCasesType, isPerforming: isPerformingAllCasesType, performRequest: reperformAfterSave } = useAutoHttpRequest(casesTypeApi.getAllCasesType);
-    const { result: casesTypeByName, isPerforming: isPerformingCasesTypeById, performRequest: SearchCaseTypeByName } = useHttpRequest(casesTypeApi.getCaseTypeByName, null, () => { });
+
+    const [selectedStageCount, setSelectedStageCount] = useState(null);
+
+    const {
+        result: allCasesType,
+        isPerforming: isPerformingAllCasesType,
+        performRequest: reperformAfterSave
+    } = useAutoHttpRequest(casesTypeApi.getAllCasesType);
+
+    const {
+        result: casesTypeByName,
+        isPerforming: isPerformingCasesTypeById,
+        performRequest: SearchCaseTypeByName
+    } = useHttpRequest(casesTypeApi.getCaseTypeByName, null, () => { });
 
     const handleSearch = (query) => {
         SearchCaseTypeByName(query);
@@ -30,14 +43,39 @@ export default function AllCasesTypeScreen() {
 
     const handleButtonPress = (query) => {
         const foundItem = casesTypeByName.find(caseType => caseType.CaseTypeName === query);
-        console.log(reperformAfterSave, closePopup);
+        openPopup(
+            <CaseTypeFullView
+                onFailureFunction={() => { }}
+                caseTypeDetails={foundItem}
+                rePerformRequest={reperformAfterSave}
+                closePopUpFunction={closePopup}
+            />
+        );
+    };
 
-        openPopup(<CaseTypeFullView onFailureFunction={() => { }} caseTypeDetails={foundItem} rePerformRequest={() => reperformAfterSave()} closePopUpFunction={() => closePopup()} />)
-    }
+    const handleStageCountFilter = (stageCount) => {
+        if (stageCount == "הכל") {
+            setSelectedStageCount(null)
+        }
+
+        setSelectedStageCount(stageCount);
+    };
+
+    const filteredCasesType = selectedStageCount
+        ? allCasesType?.filter(item => item?.NumberOfStages === selectedStageCount)
+        : allCasesType;
 
     return (
-        <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
-            {isSmallScreen && <TopToolBarSmallScreen chosenIndex={5} LogoNavigate={AdminStackName + MainScreenName} />}
+        <SimpleScreen
+            style={styles.screenStyle(isSmallScreen)}
+            imageBackgroundSource={images.Backgrounds.AppBackground}
+        >
+            {isSmallScreen && (
+                <TopToolBarSmallScreen
+                    chosenIndex={5}
+                    LogoNavigate={AdminStackName + MainScreenName}
+                />
+            )}
 
             <SimpleScrollView>
                 <SimpleContainer style={styles.responsiveContainer}>
@@ -49,27 +87,47 @@ export default function AllCasesTypeScreen() {
                         queryResult={casesTypeByName}
                         getButtonTextFunction={(item) => item.CaseTypeName}
                         style={styles.searchInput}
-                        buttonPressFunction={(chosen) => handleButtonPress(chosen)}
+                        buttonPressFunction={handleButtonPress}
                     />
-                    <ChooseButton style={styles.chooseButton} buttonText="כמות שלבים" buttonChoices={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]} />
+
+                    <ChooseButton
+                        style={styles.chooseButton}
+                        buttonText="כמות שלבים"
+                        buttonChoices={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]}
+                        OnPressChoiceFunction={handleStageCountFilter}
+                    />
                 </SimpleContainer>
 
                 <AllCasesTypeCard
-                    allCasesType={allCasesType}
+                    allCasesType={filteredCasesType}
                     reperformAfterSave={reperformAfterSave}
                     isPerforming={isPerformingAllCasesType}
                 />
             </SimpleScrollView>
+
             <SimpleContainer style={{ display: 'flex', justifyContent: 'center' }}>
-                <PrimaryButton style={{ margin: '8px 0px', selfAlign: 'center' }} onPress={() => openPopup(<CaseTypeFullView onFailureFunction={() => { }} caseTypeName={null} closePopUpFunction={closePopup} rePerformRequest={reperformAfterSave} />)}>הוספת סוג תיק</PrimaryButton>
+                <PrimaryButton
+                    style={{ margin: '8px 0px', selfAlign: 'center' }}
+                    onPress={() =>
+                        openPopup(
+                            <CaseTypeFullView
+                                onFailureFunction={() => { }}
+                                caseTypeName={null}
+                                closePopUpFunction={closePopup}
+                                rePerformRequest={reperformAfterSave}
+                            />
+                        )
+                    }
+                >
+                    הוספת סוג תיק
+                </PrimaryButton>
             </SimpleContainer>
         </SimpleScreen>
-    )
+    );
 }
 
 const styles = {
     screenStyle: () => ({
-
         boxSizing: 'border-box',
         flexDirection: 'column',
     }),
@@ -91,4 +149,4 @@ const styles = {
         flex: '0 1 auto',
         minWidth: '100px',
     }
-}
+};

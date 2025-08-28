@@ -1,57 +1,56 @@
-const { sql, connectDb } = require("../config/db");
+const pool = require("../config/db");
 
 const getCaseTypes = async (req, res) => {
     try {
         const userId = req.user?.UserId;
         const userRole = req.user?.Role;
 
-        const pool = await connectDb();
-
         let query = `
             SELECT
-                CT.CaseTypeId,
-                CT.CaseTypeName,
-                CT.NumberOfStages,
-                CD.CaseTypeDescriptionId,
-                CD.Stage,
-                CD.Text
-            FROM CaseTypes CT
-            LEFT JOIN CaseTypeDescriptions CD ON CT.CaseTypeId = CD.CaseTypeId
+                ct.casetypeid,
+                ct.casetypename,
+                ct.numberofstages,
+                cd.casetypedescriptionid,
+                cd.stage,
+                cd.text
+            FROM casetypes ct
+            LEFT JOIN casetypedescriptions cd ON ct.casetypeid = cd.casetypeid
         `;
+        const params = [];
 
         if (userRole !== "Admin") {
             query += `
-                WHERE CT.CaseTypeId IN (
-                    SELECT DISTINCT C.CaseTypeId
-                    FROM Cases C
-                    WHERE C.UserId = @userId
+                WHERE ct.casetypeid IN (
+                    SELECT DISTINCT c.casetypeid
+                    FROM cases c
+                    WHERE c.userid = $1
                 )
             `;
+            params.push(userId);
         }
 
-        query += " ORDER BY CT.CaseTypeId, CD.Stage";
+        query += " ORDER BY ct.casetypeid, cd.stage";
 
-        const result = await pool.request()
-            .input("userId", sql.Int, userId)
-            .query(query);
+        const result = await pool.query(query, params);
 
         const caseTypesMap = new Map();
 
-        result.recordset.forEach(row => {
-            if (!caseTypesMap.has(row.CaseTypeId)) {
-                caseTypesMap.set(row.CaseTypeId, {
-                    CaseTypeId: row.CaseTypeId,
-                    CaseTypeName: row.CaseTypeName,
-                    NumberOfStages: row.NumberOfStages,
+        result.rows.forEach(row => {
+            const caseTypeId = row.casetypeid;
+            if (!caseTypesMap.has(caseTypeId)) {
+                caseTypesMap.set(caseTypeId, {
+                    CaseTypeId: caseTypeId,
+                    CaseTypeName: row.casetypename,
+                    NumberOfStages: row.numberofstages,
                     Descriptions: []
                 });
             }
 
-            if (row.CaseTypeDescriptionId) {
-                caseTypesMap.get(row.CaseTypeId).Descriptions.push({
-                    CaseTypeDescriptionId: row.CaseTypeDescriptionId,
-                    Stage: row.Stage,
-                    Text: row.Text
+            if (row.casetypedescriptionid) {
+                caseTypesMap.get(caseTypeId).Descriptions.push({
+                    CaseTypeDescriptionId: row.casetypedescriptionid,
+                    Stage: row.stage,
+                    Text: row.text
                 });
             }
         });
@@ -69,30 +68,28 @@ const getCaseTypesForFilter = async (req, res) => {
         const userId = req.user?.UserId;
         const userRole = req.user?.Role;
 
-        const pool = await connectDb();
-
         let query = `
-            SELECT DISTINCT CT.CaseTypeName
-            FROM CaseTypes CT
+            SELECT DISTINCT ct.casetypename
+            FROM casetypes ct
         `;
+        const params = [];
 
         if (userRole !== "Admin") {
             query += `
-                WHERE CT.CaseTypeId IN (
-                    SELECT DISTINCT C.CaseTypeId
-                    FROM Cases C
-                    WHERE C.UserId = @userId
+                WHERE ct.casetypeid IN (
+                    SELECT DISTINCT c.casetypeid
+                    FROM cases c
+                    WHERE c.userid = $1
                 )
             `;
+            params.push(userId);
         }
 
-        query += " ORDER BY CT.CaseTypeName";
+        query += " ORDER BY ct.casetypename";
 
-        const result = await pool.request()
-            .input("userId", sql.Int, userId)
-            .query(query);
+        const result = await pool.query(query, params);
 
-        const caseTypeNames = result.recordset.map(row => row.CaseTypeName);
+        const caseTypeNames = result.rows.map(row => row.casetypename);
 
         res.json(caseTypeNames);
 
@@ -103,14 +100,13 @@ const getCaseTypesForFilter = async (req, res) => {
 };
 
 const getCaseTypeById = async (req, res) => {
-    const { caseTypeId } = req.params;
+    const { CaseTypeId } = req.params;
     try {
-        const pool = await connectDb();
-        const request = pool.request();
-        request.input("caseTypeId", sql.Int, caseTypeId);
-
-        const result = await request.query(`SELECT * FROM CaseTypes WHERE CaseTypeId = @caseTypeId`);
-        res.json(result.recordset[0]);
+        const result = await pool.query(`SELECT * FROM casetypes WHERE casetypeid = $1`, [CaseTypeId]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "Case type not found" });
+        }
+        res.json(result.rows[0]);
     } catch (error) {
         console.error("Error retrieving case type by ID:", error);
         res.status(500).json({ message: "Error retrieving case type by ID" });
@@ -125,50 +121,50 @@ const getCaseTypeByName = async (req, res) => {
     }
 
     try {
-        const pool = await connectDb();
-        const result = await pool.request()
-            .input("caseTypeName", sql.NVarChar, `%${caseTypeName}%`) // Ensure Hebrew support
-            .query(`
-                SELECT
-                    ct.CaseTypeId,
-                    ct.CaseTypeName,
-                    ct.NumberOfStages,
-                    cd.CaseTypeDescriptionId,
-                    cd.Stage,
-                    cd.Text
-                FROM CaseTypes ct
-                LEFT JOIN CaseTypeDescriptions cd ON ct.CaseTypeId = cd.CaseTypeId
-                WHERE ct.CaseTypeName LIKE @caseTypeName
-                ORDER BY cd.Stage
-            `);
+        const result = await pool.query(
+            `
+            SELECT
+                ct.casetypeid,
+                ct.casetypename,
+                ct.numberofstages,
+                cd.casetypedescriptionid,
+                cd.stage,
+                cd.text
+            FROM casetypes ct
+            LEFT JOIN casetypedescriptions cd ON ct.casetypeid = cd.casetypeid
+            WHERE ct.casetypename ILIKE $1
+            ORDER BY cd.stage
+            `,
+            [`%${caseTypeName}%`]
+        );
 
-        if (result.recordset.length === 0) {
+        if (result.rows.length === 0) {
             return res.status(404).json({ message: "No case type found" });
         }
 
         const caseTypesMap = new Map();
 
-        result.recordset.forEach(row => {
-            if (!caseTypesMap.has(row.CaseTypeId)) {
-                caseTypesMap.set(row.CaseTypeId, {
-                    CaseTypeId: row.CaseTypeId,
-                    CaseTypeName: row.CaseTypeName,
-                    NumberOfStages: row.NumberOfStages,
+        result.rows.forEach(row => {
+            const caseTypeId = row.casetypeid;
+            if (!caseTypesMap.has(caseTypeId)) {
+                caseTypesMap.set(caseTypeId, {
+                    CaseTypeId: caseTypeId,
+                    CaseTypeName: row.casetypename,
+                    NumberOfStages: row.numberofstages,
                     Descriptions: []
                 });
             }
 
-            if (row.CaseTypeDescriptionId) {
-                caseTypesMap.get(row.CaseTypeId).Descriptions.push({
-                    CaseTypeDescriptionId: row.CaseTypeDescriptionId,
-                    Stage: row.Stage,
-                    Text: row.Text
+            if (row.casetypedescriptionid) {
+                caseTypesMap.get(caseTypeId).Descriptions.push({
+                    CaseTypeDescriptionId: row.casetypedescriptionid,
+                    Stage: row.stage,
+                    Text: row.text
                 });
             }
         });
 
-        // Convert the Map to an array and return
-        res.json(Array.from(caseTypesMap.values())); // Return only one object
+        res.json(Array.from(caseTypesMap.values()));
     } catch (error) {
         console.error("Error retrieving case type by name:", error);
         res.status(500).json({ message: "Error retrieving case type" });
@@ -179,76 +175,84 @@ const deleteCaseType = async (req, res) => {
     const { CaseTypeId } = req.params;
 
     if (!CaseTypeId) {
-        return res.status(400).json({ message: "CaseTypeId is required for deletion" });
+        return res.status(400).json({ message: "caseTypeId is required for deletion" });
     }
 
+    let client;
     try {
-        const pool = await connectDb();
-        const request = pool.request();
+        client = await pool.connect();
+        await client.query('BEGIN');
 
-        request.input("CaseTypeId", sql.Int, CaseTypeId);
+        await client.query(`DELETE FROM uploadedfiles WHERE caseid IN (SELECT caseid FROM cases WHERE casetypeid = $1)`, [CaseTypeId]);
+        await client.query(`DELETE FROM casedescriptions WHERE caseid IN (SELECT caseid FROM cases WHERE casetypeid = $1)`, [CaseTypeId]);
+        await client.query(`DELETE FROM cases WHERE casetypeid = $1`, [CaseTypeId]);
+        await client.query(`DELETE FROM casetypedescriptions WHERE casetypeid = $1`, [CaseTypeId]);
+        const result = await client.query("DELETE FROM casetypes WHERE casetypeid = $1", [CaseTypeId]);
 
-        await request.query(`
-            DELETE FROM UploadedFiles WHERE CaseId IN (SELECT CaseId FROM Cases WHERE CaseTypeId = @CaseTypeId);
-            DELETE FROM CaseDescriptions WHERE CaseId IN (SELECT CaseId FROM Cases WHERE CaseTypeId = @CaseTypeId);
-            DELETE FROM CaseTypeDescriptions WHERE CaseTypeId = @CaseTypeId;
-            DELETE FROM Cases WHERE CaseTypeId = @CaseTypeId;
-        `);
+        await client.query('COMMIT');
 
-        const result = await request.query("DELETE FROM CaseTypes WHERE CaseTypeId = @CaseTypeId");
-
-        if (result.rowsAffected[0] === 0) {
+        if (result.rowCount === 0) {
             return res.status(404).json({ message: "Case type not found or already deleted" });
         }
 
         res.status(200).json({ message: "Case type deleted successfully" });
     } catch (error) {
         console.error("Error deleting case type:", error);
+        if (client) {
+            await client.query('ROLLBACK');
+        }
         res.status(500).json({ message: "Error deleting case type" });
+    } finally {
+        if (client) {
+            client.release();
+        }
     }
 };
 
 const addCaseType = async (req, res) => {
     const { CaseTypeName, NumberOfStages, Descriptions = [] } = req.body;
 
+    let client;
     try {
-        const pool = await connectDb();
-        const transaction = new sql.Transaction(pool);
+        client = await pool.connect();
+        await client.query('BEGIN');
 
-        await transaction.begin();
+        const caseTypeResult = await client.query(
+            `
+            INSERT INTO casetypes (casetypename, numberofstages)
+            VALUES ($1, $2)
+            RETURNING casetypeid
+            `,
+            [CaseTypeName, NumberOfStages]
+        );
 
-        const caseTypeRequest = new sql.Request(transaction);
-        caseTypeRequest.input("CaseTypeName", sql.NVarChar, CaseTypeName);
-        caseTypeRequest.input("NumberOfStages", sql.Int, NumberOfStages);
-
-        const caseTypeResult = await caseTypeRequest.query(`
-            INSERT INTO CaseTypes (CaseTypeName, NumberOfStages)
-            OUTPUT INSERTED.CaseTypeId
-            VALUES (@CaseTypeName, @NumberOfStages)
-        `);
-
-        const CaseTypeId = caseTypeResult.recordset[0].CaseTypeId;
+        const caseTypeId = caseTypeResult.rows[0].casetypeid;
 
         if (Descriptions.length > 0) {
             for (const desc of Descriptions) {
-                const descRequest = new sql.Request(transaction);
-                descRequest.input("CaseTypeId", sql.Int, CaseTypeId);
-                descRequest.input("Stage", sql.Int, desc.Stage);
-                descRequest.input("Text", sql.NVarChar, desc.Text);
-
-                await descRequest.query(`
-                    INSERT INTO CaseTypeDescriptions (CaseTypeId, Stage, Text)
-                    VALUES (@CaseTypeId, @Stage, @Text)
-                `);
+                await client.query(
+                    `
+                    INSERT INTO casetypedescriptions (casetypeid, stage, text)
+                    VALUES ($1, $2, $3)
+                    `,
+                    [caseTypeId, desc.Stage, desc.Text]
+                );
             }
         }
 
-        await transaction.commit();
+        await client.query('COMMIT');
 
-        res.status(201).json({ message: "Case type created successfully", CaseTypeId });
+        res.status(201).json({ message: "Case type created successfully", CaseTypeId: caseTypeId });
     } catch (error) {
         console.error("Error creating case type:", error);
+        if (client) {
+            await client.query('ROLLBACK');
+        }
         res.status(500).json({ message: "Error creating case type" });
+    } finally {
+        if (client) {
+            client.release();
+        }
     }
 };
 
@@ -262,75 +266,73 @@ const updateCaseType = async (req, res) => {
         return res.status(400).json({ message: "Invalid CaseTypeId" });
     }
 
-    let transaction;
+    let client;
     try {
-        const pool = await connectDb();
-        transaction = new sql.Transaction(pool);
-        await transaction.begin();
+        client = await pool.connect();
+        await client.query('BEGIN');
 
-        const updateCaseTypeRequest = new sql.Request(transaction);
-        updateCaseTypeRequest.input("caseTypeId", sql.Int, caseTypeIdInt);
-        updateCaseTypeRequest.input("CaseTypeName", sql.NVarChar, CaseTypeName);
-        updateCaseTypeRequest.input("NumberOfStages", sql.Int, NumberOfStages);
+        await client.query(
+            `
+            UPDATE casetypes
+            SET casetypename = $1, numberofstages = $2
+            WHERE casetypeid = $3
+            `,
+            [CaseTypeName, NumberOfStages, caseTypeIdInt]
+        );
 
-        await updateCaseTypeRequest.query(`
-            UPDATE CaseTypes
-            SET CaseTypeName = @CaseTypeName, NumberOfStages = @NumberOfStages
-            WHERE CaseTypeId = @caseTypeId
-        `);
+        const existingDescriptionsResult = await client.query(
+            "SELECT casetypedescriptionid, stage FROM casetypedescriptions WHERE casetypeid = $1",
+            [caseTypeIdInt]
+        );
 
-        const existingDescriptionsResult = await pool.request()
-            .input("caseTypeId", sql.Int, caseTypeIdInt)
-            .query("SELECT CaseTypeDescriptionId, Stage FROM CaseTypeDescriptions WHERE CaseTypeId = @caseTypeId");
-
-        const existingDescriptionsMap = new Map(existingDescriptionsResult.recordset.map(desc => [desc.Stage, desc.CaseTypeDescriptionId]));
+        const existingDescriptionsMap = new Map(existingDescriptionsResult.rows.map(desc => [desc.stage, desc.casetypedescriptionid]));
 
         for (const desc of Descriptions) {
-            const descRequest = new sql.Request(transaction);
-            descRequest.input("caseTypeId", sql.Int, caseTypeIdInt);
-            descRequest.input("stage", sql.Int, desc.Stage);
-            descRequest.input("text", sql.NVarChar, desc.Text);
-
             if (existingDescriptionsMap.has(desc.Stage)) {
-                descRequest.input("CaseTypeDescriptionId", sql.Int, existingDescriptionsMap.get(desc.Stage));
-                await descRequest.query(`
-                    UPDATE CaseTypeDescriptions
-                    SET Text = @text
-                    WHERE CaseTypeDescriptionId = @CaseTypeDescriptionId
-                `);
+                await client.query(
+                    `
+                    UPDATE casetypedescriptions
+                    SET text = $1
+                    WHERE casetypedescriptionid = $2
+                    `,
+                    [desc.Text, existingDescriptionsMap.get(desc.Stage)]
+                );
             } else {
-                await descRequest.query(`
-                    INSERT INTO CaseTypeDescriptions (CaseTypeId, Stage, Text)
-                    VALUES (@caseTypeId, @stage, @text)
-                `);
+                await client.query(
+                    `
+                    INSERT INTO casetypedescriptions (casetypeid, stage, text)
+                    VALUES ($1, $2, $3)
+                    `,
+                    [caseTypeIdInt, desc.Stage, desc.Text]
+                );
             }
         }
 
-        const deleteUnUsedDescriptions = new sql.Request(transaction);
-        await deleteUnUsedDescriptions
-            .input("caseTypeId", sql.Int, caseTypeIdInt)
-            .input("numberOfStages", sql.Int, NumberOfStages)
-            .query(`
-                    DELETE FROM CaseTypeDescriptions
-                    WHERE CaseTypeId = @caseTypeId AND Stage > @numberOfStages
-                `);
+        await client.query(
+            `
+            DELETE FROM casetypedescriptions
+            WHERE casetypeid = $1 AND stage > $2
+            `,
+            [caseTypeIdInt, NumberOfStages]
+        );
 
-
-        await transaction.commit();
+        await client.query('COMMIT');
         res.status(200).json({ message: "Case type updated successfully" });
 
     } catch (error) {
         console.error("Error updating case type:", error);
-
-        if (transaction) {
+        if (client) {
             try {
-                await transaction.rollback();
+                await client.query('ROLLBACK');
             } catch (rollbackError) {
                 console.error("Error during transaction rollback:", rollbackError);
             }
         }
-
         res.status(500).json({ message: "Error updating case type" });
+    } finally {
+        if (client) {
+            client.release();
+        }
     }
 };
 

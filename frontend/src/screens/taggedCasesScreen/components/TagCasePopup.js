@@ -30,7 +30,7 @@ export default function TagCasePopup({ rePerformRequest, style }) {
                 <SimpleContainer style={styles.rowStyle}>
                     <SearchInput
                         style={styles.inputStyle}
-                        title={"שם התיק"}
+                        title={"מספר התיק"}
                         queryResult={casesByName}
                         onSearch={(query) => handleSearch(query)}
                         getButtonTextFunction={(item) => item.CaseName}

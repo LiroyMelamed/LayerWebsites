@@ -79,7 +79,7 @@ const SimpleInput = forwardRef(
                     border: `1px solid ${getBorderColor()}`,
                     backgroundColor: getBackgroundColor(),
                     borderRadius: 12,
-                    margin: '8px',
+                    marginTop: 8,
                     boxShadow: isFocused ? '0 0 4px rgba(0, 0, 0, 0.2)' : 'none',
                     direction: 'rtl',
                     height: sizeStyles.height,
@@ -116,7 +116,6 @@ const SimpleInput = forwardRef(
                 <input
                     type="text"
                     style={{
-                        flexGrow: 1,
                         width: '100%',
                         minWidth: '0',
                         padding: leftIcon ? `8px ${sizeStyles.padding} 8px 10px` : sizeStyles.padding,

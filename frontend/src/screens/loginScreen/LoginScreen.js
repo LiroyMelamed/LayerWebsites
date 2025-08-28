@@ -50,6 +50,7 @@ export default function LoginScreen() {
             >
                 <SimpleInput
                     title={"נא הזן מספר פלאפון"}
+                    type="tel"
                     style={{ height: 56, width: "60%" }}
                     value={phoneNumber}
                     onChange={handleInputChange}
