@@ -14,7 +14,7 @@ import { useFromApp } from "../../../providers/FromAppProvider";
 
 const Logo = images.Logos.FullLogoOriginal;
 
-export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, GetNavBarData = getNavBarData }) {
+export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, GetNavBarData = getNavBarData, isClient = false }) {
     const { isFromApp } = useFromApp();
 
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -53,7 +53,7 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
                     <SimpleScrollView>
                         <SimpleContainer style={{ flex: 1, flexDirection: 'column' }}>
                             {NavBarLinks
-                                .filter((_, index) => !isFromApp || index > 1) // hide first two items if from app
+                                .filter((_, index) => !isFromApp && !isClient || index > 1)
                                 .map((item, index) => (
                                     <SideBarMenuItem
                                         key={item.buttonText}

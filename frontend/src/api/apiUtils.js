@@ -1,12 +1,12 @@
 import axios from "axios";
 
-const isProduction = false;
+const isProduction = true;
 
 function selectMode(forProduction, forStage) {
     return isProduction ? forProduction : forStage;
 }
 
-const prodURL = "https://fa7a9381a780.ngrok-free.app/api";
+const prodURL = "https://4f2352668525.ngrok-free.app/api";
 const stageURL = "http://localhost:3000/api";
 
 const ApiUtils = axios.create({
