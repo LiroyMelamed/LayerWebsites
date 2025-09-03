@@ -1,12 +1,12 @@
 import axios from "axios";
 
-const isProduction = true;
+const isProduction = false;
 
 function selectMode(forProduction, forStage) {
     return isProduction ? forProduction : forStage;
 }
 
-const prodURL = "https://4f2352668525.ngrok-free.app/api";
+const prodURL = "https://api.calls.melamedlaw.co.il/api";
 const stageURL = "http://localhost:3000/api";
 
 const ApiUtils = axios.create({
@@ -19,7 +19,7 @@ ApiUtils.interceptors.request.use((config) => {
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
-    config.headers["ngrok-skip-browser-warning"] = "true";
+    // config.headers["ngrok-skip-browser-warning"] = "true";
 
     return config;
 });
