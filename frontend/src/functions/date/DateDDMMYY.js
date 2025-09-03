@@ -1,6 +1,4 @@
 export function DateDDMMYY(dateString) {
-    console.log('DateDDMMYY', dateString);
-
     if (dateString == null || dateString === '') {
         return null;
     }

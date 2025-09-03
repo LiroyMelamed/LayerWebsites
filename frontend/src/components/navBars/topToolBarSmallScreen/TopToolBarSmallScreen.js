@@ -31,10 +31,6 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
         setIsDrawerOpen(!isDrawerOpen);
     };
 
-    console.log('isFromApp:', isFromApp);
-    console.log('isClient:', isClient);
-    console.log('NavBarLinks length:', NavBarLinks.length);
-
     return (
         <>
             <SimpleContainer

@@ -31,9 +31,6 @@ export default function ClientMainScreen() {
         return <SimpleLoader />;
     }
 
-    console.log('allCases', allCases);
-
-
     return (
         <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
             {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={ClientStackName + ClientMainScreenName} GetNavBarData={getClientNavBarData} isClient={true} />}

@@ -48,7 +48,6 @@ const casesApi = {
   },
 
   updateCaseById: async (CaseId, caseData) => {
-    console.log('updateCaseById', CaseId, caseData);
     return await ApiUtils.put(`${UPDATE_CASE}${CaseId}`, caseData);
   },
 

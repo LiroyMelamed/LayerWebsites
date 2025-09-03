@@ -296,13 +296,13 @@ const updateCase = async (req, res) => {
                 companyname = $5,
                 casetypeid = COALESCE($6, casetypeid),
                 userid = $7,
-                casemanager = $8,       
-                casemanagerid = $9,     
+                casemanager = $8,
+                casemanagerid = $9,
                 casetypename = $10,
                 estimatedcompletiondate = $11,
-                licenseexpirydate = $12,    
+                licenseexpirydate = $12,
                 updatedat = NOW()
-            WHERE caseid = $11
+            WHERE caseid = $13
             `,
             [CaseName, CurrentStage, IsClosed, IsTagged, CompanyName, CaseTypeId, UserId, CaseManager, CaseManagerId, CaseTypeName, EstimatedCompletionDate, LicenseExpiryDate, caseId]
         );
