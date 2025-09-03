@@ -30,8 +30,8 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
         UserId: caseDetails?.UserId || null,
         CaseManager: caseDetails?.CaseManager || '',
         CaseManagerId: caseDetails?.CaseManagerId || '',
-        EstimatedCompletionDate: caseDetails?.EstimatedCompletionDate || '',
-        LicenseExpiryDate: caseDetails?.LicenseExpiryDate || '',
+        EstimatedCompletionDate: caseDetails?.EstimatedCompletionDate,
+        LicenseExpiryDate: caseDetails?.LicenseExpiryDate,
     });
 
     const { result: customers, isPerforming: isPerformingCustomers, performRequest: searchCustomers } = useHttpRequest(customersApi.getCustomersByName, null, () => { });
@@ -140,8 +140,8 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                 UserId: caseDetails.UserId,
                 CaseManager: caseDetails.CaseManager || '',
                 CaseManagerId: caseDetails?.CaseManagerId || '',
-                EstimatedCompletionDate: caseDetails.EstimatedCompletionDate || '',
-                LicenseExpiryDate: caseDetails.LicenseExpiryDate || '',
+                EstimatedCompletionDate: caseDetails.EstimatedCompletionDate,
+                LicenseExpiryDate: caseDetails.LicenseExpiryDate,
             });
         }
     };

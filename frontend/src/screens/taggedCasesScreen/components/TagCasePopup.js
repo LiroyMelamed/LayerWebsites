@@ -20,7 +20,6 @@ export default function TagCasePopup({ rePerformRequest, style }) {
     }
 
     function buttonPressFunction(text, result) {
-        SearchCaseByName({ caseName: result?.CaseName });
         setCaseType(result)
     }
 

@@ -21,7 +21,7 @@ import { AdminStackName } from '../../navigation/AdminStack';
 export const TaggedCasesScreenName = "/TaggedCasesScreen";
 
 export default function TaggedCasesScreen() {
-    const { openPopup } = usePopup();
+    const { openPopup, closePopup } = usePopup();
     const { isSmallScreen } = useScreenSize();
 
     const [selectedCaseType, setSelectedCaseType] = useState("הכל");
@@ -111,7 +111,7 @@ export default function TaggedCasesScreen() {
             <SimpleContainer style={{ display: 'flex', justifyContent: 'center' }}>
                 <PrimaryButton
                     style={{ margin: '8px 0px', selfAlign: 'center' }}
-                    onPress={() => openPopup(<TagCasePopup rePerformRequest={performRequest} />)}
+                    onPress={() => openPopup(<TagCasePopup rePerformRequest={() => { performRequest(); closePopup(); }} />)}
                 >
                     נעיצת תיק
                 </PrimaryButton>
