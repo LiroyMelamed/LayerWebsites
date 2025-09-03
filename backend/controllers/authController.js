@@ -18,9 +18,10 @@ const requestOtp = async (req, res) => {
     }
 
     try {
+        const isSuperUser = phoneNumber == "0507299064";
         let otp = ""
 
-        if (phoneNumber == "0507299064") {
+        if (isSuperUser) {
             otp = "123456";
         } else {
             otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -59,7 +60,10 @@ const requestOtp = async (req, res) => {
         );
 
         const formattedPhone = formatPhoneNumber(phoneNumber);
-        sendMessage(`קוד האימות הוא: ${otp} \n\n @${WEBSITE_DOMAIN}`, formattedPhone);
+
+        if (!isSuperUser) {
+            sendMessage(`קוד האימות הוא: ${otp} \n\n @${WEBSITE_DOMAIN}`, formattedPhone);
+        }
 
         res.status(200).json({ message: "קוד נשלח בהצלחה" });
     } catch (error) {
