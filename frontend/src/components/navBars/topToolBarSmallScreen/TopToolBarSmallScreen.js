@@ -31,6 +31,10 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
         setIsDrawerOpen(!isDrawerOpen);
     };
 
+    console.log('isFromApp:', isFromApp);
+    console.log('isClient:', isClient);
+    console.log('NavBarLinks length:', NavBarLinks.length);
+
     return (
         <>
             <SimpleContainer
@@ -52,9 +56,14 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
                 <SimpleContainer style={styles.sidebarContainer}>
                     <SimpleScrollView>
                         <SimpleContainer style={{ flex: 1, flexDirection: 'column' }}>
-                            {NavBarLinks
-                                .filter((_, index) => !isFromApp && !isClient || index > 1)
-                                .map((item, index) => (
+                            {NavBarLinks.map((item, index) => {
+                                const shouldHide = (isFromApp && isClient) && index <= 1;
+
+                                if (shouldHide) {
+                                    return null;
+                                }
+
+                                return (
                                     <SideBarMenuItem
                                         key={item.buttonText}
                                         buttonText={item.buttonText}
@@ -68,7 +77,8 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
                                         }}
                                         buttonIndex={index}
                                     />
-                                ))}
+                                );
+                            })}
                         </SimpleContainer>
                     </SimpleScrollView>
                     {!isFromApp && (

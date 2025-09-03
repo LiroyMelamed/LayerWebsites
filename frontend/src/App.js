@@ -35,9 +35,9 @@ const App = () => {
       navigate(cleanPath, { replace: true });
 
       if (role === AppRoles.Admin) {
-        navigate(AdminStackName + MainScreenName);
+        navigate(AdminStackName + MainScreenName, { replace: true });
       } else if (role === AppRoles.Customer) {
-        navigate(ClientStackName + ClientMainScreenName);
+        navigate(ClientStackName + ClientMainScreenName, { replace: true });
       }
     }
   }, []);

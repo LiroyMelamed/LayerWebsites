@@ -16,6 +16,7 @@ import SimpleScrollView from '../../components/simpleComponents/SimpleScrollView
 import { useNavigate } from 'react-router-dom';
 import { TaggedCasesScreenName } from '../taggedCasesScreen/TaggedCasesScreen';
 import { AllCasesTypeScreenName } from '../allCasesTypeScreen/AllCasesTypeScreen';
+import { AllCasesScreenName } from '../allCasesScreen/AllCasesScreen';
 
 export const MainScreenName = "/MainScreen";
 
@@ -27,6 +28,9 @@ export default function MainScreen() {
     if (isPerformingMainScreenData) {
         return <SimpleLoader />;
     }
+
+    console.log('mainScreenData', mainScreenData);
+
 
     return (
         <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
@@ -50,14 +54,14 @@ export default function MainScreen() {
                             <ShowDataCard
                                 numberText={mainScreenData?.AllCasesData?.length}
                                 title={'סה"כ תיקים'}
-                                optionalOnClick={() => { navigate(AdminStackName + AllCasesTypeScreenName) }}
+                                optionalOnClick={() => { navigate(AdminStackName + AllCasesScreenName) }}
                                 style={styles.DataCardStyle}
                             />
 
                             <ShowDataCard
                                 numberText={mainScreenData?.NumberOfClosedCases}
                                 title={"תיקים סגורים"}
-                                optionalOnClick={() => { navigate(AdminStackName + AllCasesTypeScreenName) }}
+                                optionalOnClick={() => { navigate(AdminStackName + AllCasesScreenName) }}
                                 style={styles.DataCardStyle}
                             />
                         </SimpleContainer>

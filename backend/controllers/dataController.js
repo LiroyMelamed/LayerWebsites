@@ -30,8 +30,8 @@ const getMainScreenData = async (req, res) => {
         const activeCustomersArray = activeCustomers.rows;
 
         // Filter the cases data to find closed and tagged cases
-        const closedCases = casesArray.filter(caseItem => caseItem.IsClosed === true);
-        const taggedCases = casesArray.filter(caseItem => caseItem.IsTagged === true);
+        const closedCases = casesArray.filter(caseItem => caseItem.isclosed === true);
+        const taggedCases = casesArray.filter(caseItem => caseItem.istagged === true);
 
         // Send a JSON response with all the aggregated data
         res.status(200).json({
