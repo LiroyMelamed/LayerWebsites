@@ -162,12 +162,12 @@ const updateCurrentCustomer = async (req, res) => {
                 email = $2,
                 phonenumber = $3,
                 companyname = $4,
-                dateofbirth = $5
+                dateofbirth = $5,
         `;
         const params = [name, email, phoneNumber, companyName, dateOfBirth ? new Date(dateOfBirth) : null];
         let paramIndex = params.length;
 
-        if (profilePicBase664 !== null && profilePicBase64 !== undefined) {
+        if (profilePicBase64 !== null && profilePicBase64 !== undefined) {
             paramIndex++;
             updateQuery += `, profilepicurl = $${paramIndex}`;
             params.push(profilePicBase64);
