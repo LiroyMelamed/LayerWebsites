@@ -162,7 +162,7 @@ const updateCurrentCustomer = async (req, res) => {
                 email = $2,
                 phonenumber = $3,
                 companyname = $4,
-                dateofbirth = $5,
+                dateofbirth = $5
         `;
         const params = [name, email, phoneNumber, companyName, dateOfBirth ? new Date(dateOfBirth) : null];
         let paramIndex = params.length;
