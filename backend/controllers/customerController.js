@@ -152,7 +152,7 @@ const getCurrentCustomer = async (req, res) => {
 
 const updateCurrentCustomer = async (req, res) => {
     const userId = req.user.UserId;
-    const { name, phoneNumber, email, companyName, dateOfBirth, profilePicBase64 } = req.body;
+    const { Name, PhoneNumber, Email, CompanyName, dateOfBirth, profilePicBase64 } = req.body;
 
     try {
         let updateQuery = `
@@ -164,7 +164,7 @@ const updateCurrentCustomer = async (req, res) => {
                 companyname = $4,
                 dateofbirth = $5
         `;
-        const params = [name, email, phoneNumber, companyName, dateOfBirth ? new Date(dateOfBirth) : null];
+        const params = [Name, Email, PhoneNumber, CompanyName, dateOfBirth ? new Date(dateOfBirth) : null];
         let paramIndex = params.length;
 
         if (profilePicBase64 !== null && profilePicBase64 !== undefined) {
@@ -198,6 +198,16 @@ const deleteCustomer = async (req, res) => {
         try {
             await client.query('BEGIN');
 
+            // 1. מחיקת רשומות קשורות בטבלה userdevices
+            await client.query("DELETE FROM userdevices WHERE userid = $1", [userId]);
+
+            // 2. מחיקת רשומות קשורות בטבלה otps
+            await client.query("DELETE FROM otps WHERE userid = $1", [userId]);
+
+            // 3. מחיקת רשומות קשורות בטבלה usernotifications
+            await client.query("DELETE FROM usernotifications WHERE userid = $1", [userId]);
+
+            // 4. מחיקת תיאורי תיקים
             await client.query(
                 `
                 DELETE FROM casedescriptions
@@ -206,6 +216,7 @@ const deleteCustomer = async (req, res) => {
                 [userId]
             );
 
+            // 5. מחיקת תיקים
             await client.query(
                 `
                 DELETE FROM cases WHERE userid = $1
@@ -213,6 +224,7 @@ const deleteCustomer = async (req, res) => {
                 [userId]
             );
 
+            // 6. לבסוף, מחיקת המשתמש
             const deleteResult = await client.query(
                 "DELETE FROM users WHERE userid = $1",
                 [userId]
@@ -224,7 +236,7 @@ const deleteCustomer = async (req, res) => {
                 return res.status(404).json({ message: "Customer not found" });
             }
 
-            res.status(200).json({ message: "לקוח ותיקים משוייכים נמחקו בהצלחה" });
+            res.status(200).json({ message: "לקוח וכל הנתונים המשוייכים נמחקו בהצלחה" });
         } catch (innerError) {
             await client.query('ROLLBACK');
             throw innerError;

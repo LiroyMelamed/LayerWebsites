@@ -1,13 +1,13 @@
 import axios from "axios";
 
-const isProduction = true;
+const isProduction = false;
 
 function selectMode(forProduction, forStage) {
     return isProduction ? forProduction : forStage;
 }
 
 const prodURL = "https://api.calls.melamedlaw.co.il/api";
-const stageURL = "http://localhost:3000/api";
+const stageURL = "http://localhost:5000/api";
 
 const ApiUtils = axios.create({
     baseURL: selectMode(prodURL, stageURL),
