@@ -1,4 +1,4 @@
-const pool = require("../config/db"); // Direct import of the pg pool
+const pool = require("../config/db"); // pg pool
 const jwt = require("jsonwebtoken");
 const { formatPhoneNumber } = require("../utils/phoneUtils");
 const { sendMessage, WEBSITE_DOMAIN } = require("../utils/sendMessage");
@@ -6,49 +6,34 @@ require("dotenv").config();
 
 const SECRET_KEY = process.env.JWT_SECRET || "supersecretkey";
 
-/**
- * Requests an OTP for a user and stores it in the database.
- */
 const requestOtp = async (req, res) => {
-    const { phoneNumber } = req.body;
+    let { phoneNumber } = req.body;
 
     if (!phoneNumber) {
-        console.log('RequestOtp-!phoneNumber');
+        console.log("RequestOtp-!phoneNumber");
         return res.status(400).json({ message: "נא להזין מספר פלאפון תקין" });
     }
 
     try {
-        const isSuperUser = phoneNumber == "0507299064";
-        let otp = ""
+        phoneNumber = formatPhoneNumber(phoneNumber);
 
-        if (isSuperUser) {
-            otp = "123456";
-        } else {
-            otp = Math.floor(100000 + Math.random() * 900000).toString();
-        }
+        const isSuperUser = phoneNumber === formatPhoneNumber("0507299064");
+        const otp = isSuperUser
+            ? "123456"
+            : Math.floor(100000 + Math.random() * 900000).toString();
 
-        const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiry
+        const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
-        console.log('Generated OTP for DB:', otp);
-        console.log('Calculated Expiry for DB:', expiry.toISOString());
-        console.log('Current Time:', new Date().toISOString());
-
-        // 1. Check for user existence using a parameterized query
         const userResult = await pool.query(
-            // Use lowercase column name 'userid'
             `SELECT userid FROM users WHERE phonenumber = $1`,
             [phoneNumber]
         );
-
-        // Using result.rows for pg
         if (userResult.rows.length === 0) {
             console.log("משתמש אינו קיים");
             return res.status(404).json({ message: "משתמש אינו קיים" });
         }
-        // Access the returned data with the lowercase key 'userid'
         const userId = userResult.rows[0].userid;
 
-        // 2. UPSERT (INSERT OR UPDATE) INTO OTPs using ON CONFLICT DO UPDATE for PostgreSQL
         await pool.query(
             `
             INSERT INTO otps (phonenumber, otp, expiry, userid)
@@ -59,34 +44,35 @@ const requestOtp = async (req, res) => {
             [phoneNumber, otp, expiry, userId]
         );
 
-        const formattedPhone = formatPhoneNumber(phoneNumber);
-
         if (!isSuperUser) {
-            sendMessage(`קוד האימות הוא: ${otp} \n\n @${WEBSITE_DOMAIN}`, formattedPhone);
+            try {
+                sendMessage(`קוד האימות הוא: ${otp} \n\n @${WEBSITE_DOMAIN}`, phoneNumber);
+            } catch (e) {
+                console.warn("SMS send failed:", e?.message);
+            }
         }
 
-        res.status(200).json({ message: "קוד נשלח בהצלחה" });
+        return res.status(200).json({ message: "קוד נשלח בהצלחה", otpSent: true });
     } catch (error) {
         console.error("שגיאה בשליחת הקוד:", error);
-        res.status(500).json({ message: "שגיאה בשליחת הקוד", error: error.message });
+        return res.status(500).json({ message: "שגיאה בשליחת הקוד", error: error.message });
     }
 };
 
-/**
- * Verifies an OTP and generates a JWT.
- */
 const verifyOtp = async (req, res) => {
-    const { phoneNumber, otp } = req.body;
+    let { phoneNumber, otp } = req.body;
 
     try {
+        phoneNumber = formatPhoneNumber(phoneNumber);
+
         const result = await pool.query(
             `
             SELECT U.userid, U.role, U.phonenumber
             FROM otps O
             JOIN users U ON O.userid = U.userid
             WHERE O.phonenumber = $1
-            AND O.otp = $2
-            AND O.expiry > NOW()
+              AND O.otp = $2
+              AND O.expiry > NOW()
             `,
             [phoneNumber, otp]
         );
@@ -95,24 +81,85 @@ const verifyOtp = async (req, res) => {
             return res.status(401).json({ message: "קוד לא תקין" });
         }
 
-        // Access the returned data with the correct lowercase keys
         const { userid, role, phonenumber } = result.rows[0];
-
-        // Create the JWT with lowercase keys to match what authMiddleware expects
         const token = jwt.sign(
-            { userid: userid, phonenumber: phonenumber, role: role },
+            { userid, phonenumber, role },
             SECRET_KEY,
-            { expiresIn: "2h" }
+            { expiresIn: "30d" }
         );
 
-        res.status(200).json({ message: "קוד אומת בהצלחה", token, role: role });
+        return res.status(200).json({ message: "קוד אומת בהצלחה", token, role });
     } catch (error) {
         console.error("שגיאה בתהליך האימות:", error);
-        res.status(500).json({ message: "שגיאה בתהליך האימות" });
+        return res.status(500).json({ message: "שגיאה בתהליך האימות" });
+    }
+};
+
+const register = async (req, res) => {
+    try {
+        let { name, phoneNumber } = req.body || {};
+
+        if (!name || !phoneNumber) {
+            return res.status(400).json({ message: "נא להזין שם ומספר פלאפון" });
+        }
+
+        phoneNumber = formatPhoneNumber(phoneNumber);
+
+        const exists = await pool.query(
+            `SELECT userid FROM users WHERE phonenumber = $1`,
+            [phoneNumber]
+        );
+        if (exists.rows.length > 0) {
+            return res.status(409).json({ message: "משתמש עם המספר הזה כבר קיים" });
+        }
+
+        await pool.query(
+            `
+      INSERT INTO users (name, email, phonenumber, passwordhash, role, companyname, createdat)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `,
+            [name, null, phoneNumber, null, "User", null, new Date()]
+        );
+
+        const isSuperUser = phoneNumber === formatPhoneNumber("0507299064");
+        const otp = isSuperUser
+            ? "123456"
+            : Math.floor(100000 + Math.random() * 900000).toString();
+        const expiry = new Date(Date.now() + 5 * 60 * 1000);
+
+        const ures = await pool.query(
+            `SELECT userid FROM users WHERE phonenumber = $1`,
+            [phoneNumber]
+        );
+        const userId = ures.rows[0]?.userid;
+
+        await pool.query(
+            `
+      INSERT INTO otps (phonenumber, otp, expiry, userid)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (phonenumber) DO UPDATE
+      SET otp = EXCLUDED.otp, expiry = EXCLUDED.expiry, userid = EXCLUDED.userid
+      `,
+            [phoneNumber, otp, expiry, userId]
+        );
+
+        if (!isSuperUser) {
+            try {
+                sendMessage(`קוד האימות הוא: ${otp} \n\n @${WEBSITE_DOMAIN}`, phoneNumber);
+            } catch (e) {
+                console.warn("כשל בשליחת SMS לאחר הרשמה:", e?.message);
+            }
+        }
+
+        return res.status(201).json({ otpSent: true });
+    } catch (error) {
+        console.error("שגיאה בהרשמה:", error);
+        return res.status(500).json({ message: "אירעה שגיאה בהרשמה" });
     }
 };
 
 module.exports = {
     requestOtp,
     verifyOtp,
+    register,
 };

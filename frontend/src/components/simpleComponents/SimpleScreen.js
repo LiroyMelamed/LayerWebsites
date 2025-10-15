@@ -37,6 +37,5 @@ const styles = {
         position: 'relative',
     },
     childrenContainer: {
-        display: 'flex',
     },
 };

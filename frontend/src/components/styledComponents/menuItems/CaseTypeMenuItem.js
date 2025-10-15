@@ -36,11 +36,10 @@ export default function CaseTypeMenuItem({
 
     return (
         <SimpleContainer style={{ overflow: null, flexDirection: 'column' }}>
-            <SimpleContainer style={styles.container}>
+            <SimpleContainer style={styles.container} onPress={() => setIsOpen(!isOpen)}>
                 <ImageButton
                     src={icons.Button.DownArrow}
                     style={styles.dropDownIcon(isOpen)}
-                    onPress={() => setIsOpen(!isOpen)}
                 />
 
                 <SimpleContainer style={styles.innerContainer}>

@@ -6,4 +6,6 @@ router.post("/RequestOtp", authController.requestOtp);
 
 router.post("/VerifyOtp", authController.verifyOtp);
 
+router.post("/Register", authController.register);
+
 module.exports = router;

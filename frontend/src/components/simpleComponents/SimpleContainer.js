@@ -1,6 +1,6 @@
 import React, { forwardRef } from 'react';
 
-const SimpleContainer = forwardRef(({ children, style, ...rest }, ref) => {
+const SimpleContainer = forwardRef(({ children, onPress, style, ...rest }, ref) => {
   return (
     <div
       ref={ref}
@@ -10,6 +10,7 @@ const SimpleContainer = forwardRef(({ children, style, ...rest }, ref) => {
         boxSizing: 'border-box'
       }}
       {...rest}
+      onClick={onPress}
     >
       {children}
     </div>
