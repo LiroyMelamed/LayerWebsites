@@ -32,8 +32,8 @@ const styles = {
     screen: {
         display: 'flex',
         flexDirection: 'row',
-        height: '100dvh',
-        width: '100dvw',
+        height: '100svh',
+        width: '100%',
         position: 'relative',
     },
     childrenContainer: {

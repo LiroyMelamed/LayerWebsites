@@ -78,8 +78,8 @@ const styles = {
   contentContainer: (isSmallScreen) => ({
     display: 'flex',
     flexDirection: 'column',
-    width: isSmallScreen ? '100dvw' : 'calc(100dvw - 250px)', // Full width minus sidebar width
-    height: '100dvh',
+    width: isSmallScreen ? '100%' : 'calc(100% - 250px)', // Full width minus sidebar width
+    minHeight: '100svh',
     overflow: 'hidden',
   }),
 

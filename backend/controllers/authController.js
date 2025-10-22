@@ -15,9 +15,9 @@ const requestOtp = async (req, res) => {
     }
 
     try {
-        phoneNumber = formatPhoneNumber(phoneNumber);
+        let formatedPhoneNumber = formatPhoneNumber(phoneNumber);
 
-        const isSuperUser = phoneNumber === formatPhoneNumber("0507299064");
+        const isSuperUser = formatedPhoneNumber === formatPhoneNumber("0507299064");
         const otp = isSuperUser
             ? "123456"
             : Math.floor(100000 + Math.random() * 900000).toString();
@@ -46,7 +46,7 @@ const requestOtp = async (req, res) => {
 
         if (!isSuperUser) {
             try {
-                sendMessage(`קוד האימות הוא: ${otp} \n\n @${WEBSITE_DOMAIN}`, phoneNumber);
+                sendMessage(`קוד האימות הוא: ${otp} \n\n @${WEBSITE_DOMAIN}`, formatedPhoneNumber);
             } catch (e) {
                 console.warn("SMS send failed:", e?.message);
             }
@@ -63,8 +63,6 @@ const verifyOtp = async (req, res) => {
     let { phoneNumber, otp } = req.body;
 
     try {
-        phoneNumber = formatPhoneNumber(phoneNumber);
-
         const result = await pool.query(
             `
             SELECT U.userid, U.role, U.phonenumber
@@ -103,7 +101,7 @@ const register = async (req, res) => {
             return res.status(400).json({ message: "נא להזין שם ומספר פלאפון" });
         }
 
-        phoneNumber = formatPhoneNumber(phoneNumber);
+        let formatedPhoneNumber = formatPhoneNumber(phoneNumber);
 
         const exists = await pool.query(
             `SELECT userid FROM users WHERE phonenumber = $1`,
@@ -121,7 +119,7 @@ const register = async (req, res) => {
             [name, null, phoneNumber, null, "User", null, new Date()]
         );
 
-        const isSuperUser = phoneNumber === formatPhoneNumber("0507299064");
+        const isSuperUser = formatedPhoneNumber === formatPhoneNumber("0507299064");
         const otp = isSuperUser
             ? "123456"
             : Math.floor(100000 + Math.random() * 900000).toString();
@@ -135,17 +133,17 @@ const register = async (req, res) => {
 
         await pool.query(
             `
-      INSERT INTO otps (phonenumber, otp, expiry, userid)
-      VALUES ($1, $2, $3, $4)
-      ON CONFLICT (phonenumber) DO UPDATE
-      SET otp = EXCLUDED.otp, expiry = EXCLUDED.expiry, userid = EXCLUDED.userid
-      `,
+            INSERT INTO otps (phonenumber, otp, expiry, userid)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (phonenumber) DO UPDATE
+            SET otp = EXCLUDED.otp, expiry = EXCLUDED.expiry, userid = EXCLUDED.userid
+            `,
             [phoneNumber, otp, expiry, userId]
         );
 
         if (!isSuperUser) {
             try {
-                sendMessage(`קוד האימות הוא: ${otp} \n\n @${WEBSITE_DOMAIN}`, phoneNumber);
+                sendMessage(`קוד האימות הוא: ${otp} \n\n @${WEBSITE_DOMAIN}`, formatedPhoneNumber);
             } catch (e) {
                 console.warn("כשל בשליחת SMS לאחר הרשמה:", e?.message);
             }
