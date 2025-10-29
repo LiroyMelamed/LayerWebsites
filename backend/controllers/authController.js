@@ -17,7 +17,11 @@ const requestOtp = async (req, res) => {
     try {
         let formatedPhoneNumber = formatPhoneNumber(phoneNumber);
 
-        const isSuperUser = formatedPhoneNumber === formatPhoneNumber("0507299064") || formatedPhoneNumber === formatPhoneNumber("0501234567");
+        const testUser = phoneNumber === "0501234567";
+        const managerUser = phoneNumber === "0507299064";
+
+        const isSuperUser = testUser || managerUser;
+
         const otp = isSuperUser
             ? "123456"
             : Math.floor(100000 + Math.random() * 900000).toString();
@@ -119,7 +123,11 @@ const register = async (req, res) => {
             [name, null, phoneNumber, null, "User", null, new Date()]
         );
 
-        const isSuperUser = formatedPhoneNumber === formatPhoneNumber("0507299064") || formatedPhoneNumber === formatPhoneNumber("0501234567");
+        const testUser = phoneNumber === "0501234567";
+        const managerUser = phoneNumber === "0507299064";
+
+        const isSuperUser = testUser || managerUser;
+
         const otp = isSuperUser
             ? "123456"
             : Math.floor(100000 + Math.random() * 900000).toString();
