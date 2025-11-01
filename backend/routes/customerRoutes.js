@@ -13,5 +13,6 @@ router.get("/GetCustomerByName", authMiddleware, customerController.getCustomerB
 router.get("/GetCurrentCustomer", authMiddleware, customerController.getCurrentCustomer);
 router.put("/UpdateCurrentCustomer", authMiddleware, customerController.updateCurrentCustomer);
 router.delete("/DeleteCustomer/:userId", authMiddleware, customerController.deleteCustomer);
+router.delete("/DeleteMyAccount", authMiddleware, customerController.deleteMyAccount);
 
 module.exports = router;

@@ -249,6 +249,66 @@ const deleteCustomer = async (req, res) => {
     }
 };
 
+const deleteMyAccount = async (req, res) => {
+    const userId = req.user && (req.user.UserId || req.user.id);
+
+    if (!userId) {
+        return res.status(401).json({ message: "Not authorized" });
+    }
+
+    try {
+        const client = await pool.connect();
+        try {
+            await client.query("BEGIN");
+
+            // Optional: prevent admins from self-deleting via this endpoint
+            const roleRes = await client.query("SELECT role FROM users WHERE userid = $1", [userId]);
+            if (roleRes.rows.length === 0) {
+                await client.query("ROLLBACK");
+                return res.status(404).json({ message: "User not found" });
+            }
+            const userRole = roleRes.rows[0].role;
+            if (userRole && userRole.toLowerCase() === "admin") {
+                await client.query("ROLLBACK");
+                return res.status(403).json({ message: "Admins cannot delete account via this endpoint" });
+            }
+
+            // 1) Related tables
+            await client.query("DELETE FROM userdevices WHERE userid = $1", [userId]);
+            await client.query("DELETE FROM otps WHERE userid = $1", [userId]);
+            await client.query("DELETE FROM usernotifications WHERE userid = $1", [userId]);
+            await client.query(`
+                DELETE FROM casedescriptions
+                WHERE caseid IN (SELECT caseid FROM cases WHERE userid = $1)
+            `, [userId]);
+            await client.query("DELETE FROM cases WHERE userid = $1", [userId]);
+
+            // 2) User
+            const delRes = await client.query("DELETE FROM users WHERE userid = $1", [userId]);
+
+            await client.query("COMMIT");
+
+            if (delRes.rowCount === 0) {
+                return res.status(404).json({ message: "User not found" });
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: "Your account and associated data were permanently deleted. החשבון וכל הנתונים המשויכים נמחקו לצמיתות."
+            });
+        } catch (err) {
+            await client.query("ROLLBACK");
+            throw err;
+        } finally {
+            client.release();
+        }
+    } catch (error) {
+        console.error("Error deleting my account:", error);
+        return res.status(500).json({ message: "Server error while deleting account" });
+    }
+};
+
+
 module.exports = {
     getCustomers,
     addCustomer,
@@ -257,4 +317,5 @@ module.exports = {
     getCurrentCustomer,
     updateCurrentCustomer,
     deleteCustomer,
+    deleteMyAccount,
 };
