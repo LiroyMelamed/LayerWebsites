@@ -8,9 +8,9 @@ import {
     Tooltip,
     Legend,
 } from "chart.js";
+import { colors } from "../../../constant/colors";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
-
 
 const DoughnutChart = ({ data, colors, labels, centerText, subText, style }) => {
     const chartData = {
@@ -70,7 +70,9 @@ const styles = {
         justifyContent: 'center'
     },
     subText: {
-        color: "#888",
+        color: colors.text,
+        textAlign: "center",
+
     },
 };
 
