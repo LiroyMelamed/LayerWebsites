@@ -137,11 +137,10 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
             <Separator />
 
 
-            <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flex: 1 }}>
+            <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flex: 1 }} onPress={() => setIsStagesOpen(!isStagesOpen)}>
                 <ImageButton
                     src={icons.Button.DownArrow}
                     style={styles.dropDownIcon(isStagesOpen)}
-                    onPress={() => setIsStagesOpen(!isStagesOpen)}
                 />
 
                 <TextBold12 style={{ flex: 1, }}>שלבים</TextBold12>

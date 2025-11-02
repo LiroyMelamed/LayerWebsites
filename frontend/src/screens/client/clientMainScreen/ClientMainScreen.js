@@ -36,18 +36,6 @@ export default function ClientMainScreen() {
             {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={ClientStackName + ClientMainScreenName} GetNavBarData={getClientNavBarData} isClient={true} />}
 
             <SimpleScrollView>
-                {/* <SimpleContainer style={styles.responsiveContainer}>
-                    <SearchInput
-                        onSearch={handleSearch}
-                        title={"חיפוש תיק"}
-                        titleFontSize={20}
-                        isPerforming={isPerformingCasesById}
-                        queryResult={casesByName}
-                        getButtonTextFunction={(item) => item.CaseName}
-                        style={styles.searchInput}
-                    />
-                    <ChooseButton style={styles.chooseButton} buttonChoices={allCasesTypes} />
-                </SimpleContainer> */}
 
                 <OpenCasesCard
                     openCases={allCases.filter(caseItem => caseItem.IsClosed === false)}
