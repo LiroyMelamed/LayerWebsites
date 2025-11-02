@@ -2,7 +2,7 @@ import React from 'react';
 import SimpleContainer from './SimpleContainer';
 import { colors } from '../../constant/colors';
 
-const SimpleLoader = ({style}) => {
+const SimpleLoader = ({ style }) => {
     // Styles for the loader container
     const loaderStyle = {
         display: 'flex',
@@ -19,13 +19,14 @@ const SimpleLoader = ({style}) => {
 
     // Styles for the dots
     const dotStyle = {
-        width:8,
-        height: 8,
-        backgroundColor: colors.text, // Blue color for the dots
+        width: 10,
+        height: 10,
+        backgroundColor: colors.primary,
         borderRadius: '50%',
-        margin: '0 5px',
+        margin: '0 6px',
         opacity: 0,
-        animation: 'dotPulse 1.5s infinite ease-in-out',
+        animation: 'dotPulse 1.8s infinite cubic-bezier(0.4, 0, 0.2, 1)',
+        transform: 'scale(0)',
     };
 
     // Keyframes for the dot animation

@@ -520,7 +520,7 @@ const getTaggedCasesByName = async (req, res) => {
         params.push(`%${caseName}%`);
         paramIndex++;
 
-    whereClauses.push(`U.phonenumber ILIKE $${paramIndex}`);
+        whereClauses.push(`U.phonenumber ILIKE $${paramIndex}`);
         params.push(`%${caseName}%`);
         paramIndex++;
 

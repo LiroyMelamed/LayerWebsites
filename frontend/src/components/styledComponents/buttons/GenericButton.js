@@ -88,13 +88,17 @@ const GenericButton = forwardRef(({
 
     const buttonStyle = {
         ...styles.button,
-        padding: size === buttonSizes.SMALL ? '8px' : '16px',
+        padding: size === buttonSizes.SMALL ? '10px 16px' : '14px 24px',
         height: `${getButtonHeightBySize(size)}px`,
         backgroundColor: getBackgroundColor(),
         borderWidth: hasBorder ? '1px' : '0',
         borderStyle: 'solid',
         borderColor: getContentColor(),
-        boxShadow: disabled ? 'none' : '0px 1px 4px rgba(0,0,0,0.1)',
+        boxShadow: disabled ? 'none' : '0 2px 4px rgba(0,0,0,0.1)',
+        transition: 'all 0.2s ease',
+        transform: isButtonPressed() ? 'scale(0.98)' : 'scale(1)',
+        borderRadius: '8px',
+        fontWeight: 500,
         ...customStyle,
     };
 

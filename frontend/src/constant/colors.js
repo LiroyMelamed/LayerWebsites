@@ -1,30 +1,30 @@
 
 export const colors = {
-    primary: "#3B82F6",
-    primaryHighlighted: "#2563EB",
-    SideBarSelected: "#6478F2",
+    primary: "#2A4365", // Deeper, more professional blue
+    primaryHighlighted: "#1A365D", // Darker shade for emphasis
+    SideBarSelected: "#4C6690", // Sophisticated navy
 
     secondary: "#FFFFFF",
-    secondaryHighlighted: "#E5EAFF",
+    secondaryHighlighted: "#EDF2F7", // Softer highlight
 
-    disabled: "#EEEEEE",
-    disabledHighlighted: "#AFAFAF",
+    disabled: "#E2E8F0",
+    disabledHighlighted: "#A0AEC0",
 
-    error: "#FF897D",
+    error: "#E53E3E", // More assertive red
 
     white: "#FFFFFF",
 
-    text: "#444C68",
+    text: "#2D3748", // Darker, more readable text
 
-    positive: "#6E9652",
-    negative: "#B63546",
+    positive: "#38A169", // Fresh green
+    negative: "#C53030", // Strong red
 
     transparent: "transparent",
 
-    winter: "#9AADBD",
+    winter: "#718096", // Warmer gray
 
-    doughnutChartColorScale: ["#3D348B", "#F7B801", "#7678ED", "#F18701", "#F35B04", "#784BD1", "#A1E3F6", "#4ECCC6", "#2B76E5", "#A9BEE8",],
+    doughnutChartColorScale: ["#2C5282", "#B7791F", "#4C51BF", "#C05621", "#C53030", "#5A67D8", "#319795", "#2B6CB0", "#4A5568", "#805AD5"],
 
-    darkRed: "#BB3354",
+    darkRed: "#9B2C2C",
 
 }
