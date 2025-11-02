@@ -94,13 +94,13 @@ const GenericButton = forwardRef(({
         borderWidth: hasBorder ? '1px' : '0',
         borderStyle: 'solid',
         borderColor: getContentColor(),
-        boxShadow: disabled ? 'none' : `0px 2px 6px ${shadowColor}`,
+        boxShadow: disabled ? 'none' : '0px 1px 4px rgba(0,0,0,0.1)',
         ...customStyle,
     };
 
     const textStyle = {
         ...styles.text,
-        fontFamily: 'Fredoka', // Font family
+        fontFamily: 'inherit', // inherit global font
         color: getContentColor(),
         fontSize: size === buttonSizes.SMALL ? '12px' : '14px',
     };
@@ -131,13 +131,13 @@ const styles = {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: '130px',
+        borderRadius: '12px',
         width: 'auto',
     },
     text: {
         textAlign: 'center',
         margin: '0 4px',
-        fontFamily: 'Fredoka-Regular',
+        fontFamily: 'inherit',
     },
 };
 

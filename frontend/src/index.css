@@ -24,3 +24,10 @@ svg {
   max-width: 100%;
   height: auto;
 }
+
+/* Global font stack */
+body {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

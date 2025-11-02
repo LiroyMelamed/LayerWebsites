@@ -2,14 +2,15 @@ import React from 'react';
 import SimpleImage from './SimpleImage';
 import SimpleNav from './SimpleNav';
 import SimpleContainer from './SimpleContainer';
+import { colors } from '../../constant/colors';
 
 const SimpleHeader = ({ logoSrc, logoAlt, navLinks, style }) => {
   const headerStyle = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '10px 20px',
-    backgroundColor: '#f8f8f8',
+    padding: '12px 24px',
+    backgroundColor: colors.greyBackground,
     ...style
   };
 

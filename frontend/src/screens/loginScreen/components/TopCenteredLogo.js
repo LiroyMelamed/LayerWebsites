@@ -1,38 +1,25 @@
-import TertiaryButton from "../../../components/styledComponents/buttons/TertiaryButton";
 import { Text32 } from "../../../components/specializedComponents/text/AllTextKindFile";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
 import SimpleImage from "../../../components/simpleComponents/SimpleImage";
-import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 import { images } from "../../../assets/images/images";
 import { colors } from "../../../constant/colors";
 
-export default function TopCenteredLogo({ logoSrc = images.Logos.FullLogoBlack, logoWidth = 100, style }) {
+export default function TopCenteredLogo({ logoSrc = images.Logos.LogoSlang, logoWidth = 100, style }) {
     const ContainerStyle = {
         display: 'flex',
         flexDirection: 'column',
         width: '100%',
-        marginTop: 20,
+        position: 'relative',
         ...style,
-    };
-
-    const ButtonStyle = {
-        position: 'absolute',
-        top: '12px',
-        left: '12px',
-        border: `1px solid ${colors.disabledHighlighted}`,
-        backgroundColor: colors.disabled
     };
 
     return (
         <SimpleContainer style={ContainerStyle}>
-            <SimpleImage
-                src={logoSrc}
-                tintColor={colors.text}
-                style={{ maxHeight: '50px' }}
-            />
+            <SimpleContainer style={{ position: 'absolute', top: 0, left: 12, }}>
+                <SimpleImage src={logoSrc} tintColor={colors.text} style={{ width: 56, height: 56, color: 'black' }} />
+            </SimpleContainer>
 
-            <Text32 style={{ marginTop: 60, textAlign: 'center', alignSelf: 'center' }}>כל המידע על התיק שלך במקום אחד!</Text32>
-
+            <Text32 style={{ marginTop: 80, textAlign: 'center', alignSelf: 'center', color: colors.text }}>כל המידע על התיק שלך במקום אחד!</Text32>
         </SimpleContainer>
     );
 }

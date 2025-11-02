@@ -11,6 +11,8 @@ const SimpleText = ({ size = 16, bold = false, color = colors.text, children, st
                 margin: 0,
                 direction: 'rtl', // Set text direction to RTL
                 textAlign: 'right', // Align text to the right
+                lineHeight: 1.2,
+                fontFamily: 'inherit',
                 ...style
             }}
             {...props}

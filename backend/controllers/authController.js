@@ -90,6 +90,16 @@ const verifyOtp = async (req, res) => {
             { expiresIn: "30d" }
         );
 
+        // Invalidate the OTP after successful verification to prevent replay
+        try {
+            await pool.query(
+                `DELETE FROM otps WHERE phonenumber = $1 AND otp = $2`,
+                [phoneNumber, otp]
+            );
+        } catch (delErr) {
+            console.warn('Warning: failed to delete OTP after verification', delErr?.message);
+        }
+
         return res.status(200).json({ message: "קוד אומת בהצלחה", token, role });
     } catch (error) {
         console.error("שגיאה בתהליך האימות:", error);

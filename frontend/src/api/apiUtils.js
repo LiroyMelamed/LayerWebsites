@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const isProduction = true;
+const isProduction = false; // Set to true for production environment
 
 function selectMode(forProduction, forStage) {
     return isProduction ? forProduction : forStage;

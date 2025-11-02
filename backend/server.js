@@ -33,7 +33,7 @@ const productionOrigin = [
     "https://client.melamedlaw.co.il",
 ];
 const stageOrigin = [
-    "http://localhost:3001",
+    "http://localhost:3000",
     "https://client.melamedlaw.co.il",
 ];
 
@@ -41,7 +41,15 @@ const allowedOrigins = selectMode(productionOrigin, stageOrigin);
 
 app.use(
     cors({
-        origin: "*",
+        // Allow only configured origins. If no origin (e.g. same-origin or curl), allow it.
+        origin: function (origin, callback) {
+            if (!origin) return callback(null, true);
+            if (allowedOrigins.includes(origin)) {
+                return callback(null, true);
+            }
+            // Reject unknown origin
+            return callback(new Error('Not allowed by CORS'));
+        },
         methods: ["GET", "POST", "PUT", "DELETE"],
         credentials: true,
     })

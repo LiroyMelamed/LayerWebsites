@@ -13,6 +13,10 @@ const SimpleButton = forwardRef(({ controlId, style, textStyle, onPress, disable
     background: colors.transparent,
     border: 'none',
     cursor: disabled ? 'not-allowed' : 'pointer',
+    borderRadius: 8,
+    padding: '8px 12px',
+    fontFamily: 'inherit',
+    transition: 'box-shadow 120ms ease, transform 80ms ease',
     ...style,
   };
 

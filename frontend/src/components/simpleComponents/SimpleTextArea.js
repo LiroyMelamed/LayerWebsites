@@ -57,7 +57,7 @@ const SimpleTextArea = forwardRef(
                             transform: isFocused || value ? 'translateY(-20px) scale(0.8)' : 'translateY(10px) scale(1)',
                             opacity: isFocused || value ? 1 : 0.6,
                             color: error ? colors.error : colors.primaryHighlighted,
-                            fontFamily: 'Fredoka', // Ensures font is Fredoka for the input field
+                            fontFamily: 'inherit', // use global font
                             borderRadius: 10000,
                         }}
                     >
@@ -102,7 +102,7 @@ const SimpleTextArea = forwardRef(
                         backgroundColor: 'transparent',
                         outline: 'none',
                         fontSize: '14px',
-                        fontFamily: 'Fredoka', // Ensures font is Fredoka for the input field
+                        fontFamily: 'inherit', // use global font
                         color: disabled ? colors.disabledText : colors.text,
                         direction: 'rtl',
                         textAlign: 'right',

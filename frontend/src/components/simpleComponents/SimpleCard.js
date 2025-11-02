@@ -23,9 +23,9 @@ const SimpleCard = ({ style, children, ...props }) => {
 const styles = {
     card: {
         backgroundColor: colors.white,
-        borderRadius: 8,
-        padding: 16,
-        boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.3)', // Box shadow for all platforms
+        borderRadius: 12,
+        padding: 18,
+        boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.18)', // softer box shadow
         margin: 8,
     },
 };

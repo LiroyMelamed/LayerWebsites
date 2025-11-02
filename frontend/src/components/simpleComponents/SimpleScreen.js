@@ -2,21 +2,24 @@ import React from 'react';
 import { useScreenSize } from '../../providers/ScreenSizeProvider';
 import SimpleContainer from './SimpleContainer';
 
-export default function SimpleScreen({ children, imageBackgroundSource, style }) {
+export default function SimpleScreen({ children, imageBackgroundSource, style, screenStyle: customScreenStyle }) {
     const { isSmallScreen } = useScreenSize();
 
     const screenStyle = {
         ...styles.screen,
-        backgroundImage: `url(${imageBackgroundSource})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
+        ...customScreenStyle,
+    };
+
+    if (imageBackgroundSource) {
+        screenStyle.backgroundImage = `url(${imageBackgroundSource})`;
+        screenStyle.backgroundSize = 'cover';
+        screenStyle.backgroundPosition = 'center';
     };
 
     const childrenContainerStyle = {
         ...styles.childrenContainer,
         width: isSmallScreen ? '100%' : `calc(100% - 250px)`,
         ...style,
-
     };
 
     return (
