@@ -14,6 +14,8 @@ const adminRoutes = require("./routes/adminRoutes");
 const caseTypeRoutes = require("./routes/caseTypeRoutes");
 const dataRoutes = require("./routes/dataRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const filesRoutes = require("./routes/filesRoutes");
+
 
 const app = express();
 
@@ -74,6 +76,7 @@ app.use("/api/Admins", adminRoutes);
 app.use("/api/CaseTypes", caseTypeRoutes);
 app.use("/api/Data", dataRoutes);
 app.use("/api/Notifications", notificationRoutes);
+app.use("/api/Files", filesRoutes);
 
 app.listen(PORT, async () => {
     console.log(`Server running on port ${PORT}`);

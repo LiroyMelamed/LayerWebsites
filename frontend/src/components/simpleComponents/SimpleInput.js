@@ -33,12 +33,11 @@ const SimpleInput = forwardRef(
         function getBorderColor() {
             if (disabled) return colors.disabledHighlighted;
             if (error) return colors.error;
-            return isFocused ? colors.primary : 'rgba(203, 213, 224, 0.8)';
+            return isFocused ? colors.primaryHighlighted : colors.secondaryHighlighted;
         }
 
         function getBackgroundColor() {
-            if (disabled) return colors.disabled;
-            return isFocused ? 'rgba(237, 242, 247, 0.5)' : colors.white;
+            return disabled ? colors.disabled : colors.white;
         }
 
         function handleFocus() {

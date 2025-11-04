@@ -28,7 +28,7 @@ export default function ComparisonDataCard({ title, data, colors, labels, center
                 data={data}
                 colors={colors}
                 subText={subText}
-                doughnutStyle={{ maxWidth: isSmallScreen ? '152px' : '140px' }}
+                doughnutStyle={{ maxWidth: isSmallScreen ? '160px' : '140px' }}
             />
 
         </SimpleCard>

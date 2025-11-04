@@ -1,6 +1,9 @@
+const { GetObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const pool = require("../config/db");
 const { formatPhoneNumber } = require("../utils/phoneUtils");
 const { sendMessage, COMPANY_NAME } = require("../utils/sendMessage");
+const { BUCKET, r2 } = require("../utils/r2");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 
 const getCustomers = async (req, res) => {
     try {
@@ -134,7 +137,31 @@ const getCurrentCustomer = async (req, res) => {
         }
 
         const row = result.rows[0];
-        res.json({
+
+        const v = row.profilepicurl;
+        let profilePicReadUrl = null;
+        let photoKey = null;
+
+        if (v) {
+            const isR2Key = typeof v === "string" && v.startsWith(`users/${row.userid}/`);
+            const isHttp = typeof v === "string" && /^https?:\/\//i.test(v);
+            const isDataUrl = typeof v === "string" && /^data:image\//i.test(v);
+
+            if (isR2Key) {
+                try {
+                    const cmd = new GetObjectCommand({ Bucket: BUCKET, Key: v });
+                    profilePicReadUrl = await getSignedUrl(r2, cmd, { expiresIn: 600 });
+                    photoKey = v;
+                } catch (e) {
+                }
+            } else if (isHttp || isDataUrl) {
+                profilePicReadUrl = v;
+            } else if (typeof v === "string" && v.length > 200) {
+                profilePicReadUrl = `data:image/jpeg;base64,${v}`;
+            }
+        }
+
+        return res.json({
             UserId: row.userid,
             Name: row.name,
             Email: row.email,
@@ -142,6 +169,8 @@ const getCurrentCustomer = async (req, res) => {
             CompanyName: row.companyname,
             DateOfBirth: row.dateofbirth,
             ProfilePicUrl: row.profilepicurl,
+            ProfilePicReadUrl: profilePicReadUrl,
+            PhotoKey: photoKey,
             Role: row.role
         });
     } catch (error) {
@@ -150,43 +179,79 @@ const getCurrentCustomer = async (req, res) => {
     }
 };
 
+
 const updateCurrentCustomer = async (req, res) => {
     const userId = req.user.UserId;
-    const { Name, PhoneNumber, Email, CompanyName, dateOfBirth, profilePicBase64 } = req.body;
+    const {
+        Name,
+        PhoneNumber,
+        Email,
+        CompanyName,
+        dateOfBirth,
+        PhotoKey,
+        profilePicBase64,
+    } = req.body;
 
     try {
-        let updateQuery = `
-            UPDATE users
-            SET
-                name = $1,
-                email = $2,
-                phonenumber = $3,
-                companyname = $4,
-                dateofbirth = $5
-        `;
-        const params = [Name, Email, PhoneNumber, CompanyName, dateOfBirth ? new Date(dateOfBirth) : null];
-        let paramIndex = params.length;
+        const cur = await pool.query("SELECT profilepicurl FROM users WHERE userid = $1", [userId]);
+        const oldKey = cur.rows?.[0]?.profilepicurl || null;
 
-        if (profilePicBase64 !== null && profilePicBase64 !== undefined) {
-            paramIndex++;
-            updateQuery += `, profilepicurl = $${paramIndex}`;
+        let sql = `
+      UPDATE users
+      SET name=$1,
+          email=$2,
+          phonenumber=$3,
+          companyname=$4,
+          dateofbirth=$5
+    `;
+        const params = [Name, Email, PhoneNumber, CompanyName, dateOfBirth ? new Date(dateOfBirth) : null];
+        let i = params.length;
+
+        if (PhotoKey !== undefined && PhotoKey !== null) {
+            i++; sql += `, profilepicurl=$${i}`;
+            params.push(PhotoKey);
+        } else if (profilePicBase64 !== undefined && profilePicBase64 !== null) {
+            i++; sql += `, profilepicurl=$${i}`;
             params.push(profilePicBase64);
         }
 
-        paramIndex++;
-        updateQuery += ` WHERE userid = $${paramIndex}`;
+        i++; sql += ` WHERE userid=$${i}`;
         params.push(userId);
 
-        const result = await pool.query(updateQuery, params);
-
+        const result = await pool.query(sql, params);
         if (result.rowCount === 0) {
             return res.status(404).json({ message: "User not found." });
         }
 
-        res.status(200).json({ message: "עדכון פרופיל לקוח בוצע בהצלחה" });
+        if (PhotoKey && oldKey && oldKey !== PhotoKey && oldKey.startsWith(`users/${userId}/`)) {
+            try {
+                try { await r2.send(new HeadObjectCommand({ Bucket: BUCKET, Key: oldKey })); } catch { }
+                await r2.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: oldKey }));
+            } catch (e) {
+                console.warn("Failed to delete old profile photo:", e?.message);
+            }
+        }
+
+        let profilePicReadUrl = null;
+        let finalKey = PhotoKey ?? (typeof profilePicBase64 === "string" ? null : null);
+
+        if (PhotoKey) {
+            try {
+                const cmd = new GetObjectCommand({ Bucket: BUCKET, Key: PhotoKey });
+                profilePicReadUrl = await getSignedUrl(r2, cmd, { expiresIn: 600 });
+            } catch { }
+        } else if (profilePicBase64) {
+            profilePicReadUrl = `data:image/jpeg;base64,${profilePicBase64}`;
+        }
+
+        return res.status(200).json({
+            message: "עדכון פרופיל לקוח בוצע בהצלחה",
+            PhotoKey: finalKey || null,
+            ProfilePicReadUrl: profilePicReadUrl,
+        });
     } catch (error) {
         console.error("Error updating current customer profile:", error);
-        res.status(500).json({ message: "שגיאה בעדכון פרופיל לקוח" });
+        return res.status(500).json({ message: "שגיאה בעדכון פרופיל לקוח" });
     }
 };
 

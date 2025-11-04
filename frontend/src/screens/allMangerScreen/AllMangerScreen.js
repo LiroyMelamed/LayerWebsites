@@ -32,7 +32,7 @@ export default function AllMangerScreen() {
     };
 
     const buttonPressFunction = (query) => {
-        const foundItem = adminByName.find(admin => admin.Name === query);
+        const foundItem = adminByName.find(admin => admin.name === query);
         openPopup(<AdminPopup adminDetails={foundItem} rePerformRequest={performGetAdmins} closePopUpFunction={closePopup} />)
     }
 

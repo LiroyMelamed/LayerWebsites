@@ -14,7 +14,6 @@ const contentColor = {
     disabled: colors.disabledHighlighted,
 };
 
-// Use forwardRef to forward the ref to the GenericButton
 const SecondaryButton = forwardRef(({ children, size, rightIcon, leftIcon, ...props }, ref) => {
     const buttonStyle = {
         ...styles.button,
@@ -24,7 +23,7 @@ const SecondaryButton = forwardRef(({ children, size, rightIcon, leftIcon, ...pr
     return (
         <GenericButton
             {...props}
-            ref={ref} // Forward the ref here
+            ref={ref}
             size={size}
             style={buttonStyle}
             rightIcon={rightIcon}
@@ -44,9 +43,9 @@ const SecondaryButton = forwardRef(({ children, size, rightIcon, leftIcon, ...pr
 
 const styles = {
     button: {
-        borderRadius: '130px',
         border: `1px solid ${colors.primaryHighlighted}`,
         background: colors.secondary,
+        shadowColor: colors.primary,
     },
 };
 

@@ -16,6 +16,9 @@ export default function AdminPopup({ adminDetails, rePerformRequest, onFailureFu
         password: null,
     });
 
+    console.log("adminDetails", adminDetails);
+
+
     useEffect(() => {
         if (adminDetails) {
             setAdmin({
@@ -78,7 +81,7 @@ export default function AdminPopup({ adminDetails, rePerformRequest, onFailureFu
                     <SimpleInput
                         style={styles.inputStyle}
                         title={"מספר פלאפון"}
-                        type="number"
+                        type="tel"
                         value={admin.phoneNumber}
                         onChange={(e) => handleInputChange("phoneNumber", e.target.value)}
                     />

@@ -79,7 +79,7 @@ export default function ClientPopup({ clientDetails, rePerformRequest, onFailure
                     <SimpleInput
                         style={styles.inputStyle}
                         title={"מספר פלאפון"}
-                        type="number"
+                        type="tel"
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value)}
                         error={phoneNumberError}

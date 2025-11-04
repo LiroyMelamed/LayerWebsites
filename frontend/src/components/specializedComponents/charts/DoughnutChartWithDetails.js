@@ -17,16 +17,23 @@ export default function DoughnutChartWithDetails({ data, colors, labels, centerT
         <SimpleContainer
             style={{
                 display: "flex",
-                flexDirection: "row",
+                flexDirection: "column",
                 marginTop: 16,
-                justifyContent: 'space-between',
                 alignItems: 'center',
-                flexWrap: 'wrap',
                 gap: 16,
                 ...style
             }}
         >
-            <SimpleContainer style={{ display: 'flex', flex: 1, flexDirection: 'column', }}>
+            <DoughnutChart
+                data={data}
+                colors={colors}
+                labels={labels}
+                centerText={centerText}
+                subText={subText}
+                style={{ flex: 1, ...doughnutStyle }}
+            />
+
+            <SimpleContainer style={{ display: 'flex', flex: 1, flexDirection: 'row-reverse', gap: 20, marginTop: 8 }}>
                 {percentages && labels?.map((label, index) => (
                     <SimpleContainer
                         key={index}
@@ -34,7 +41,6 @@ export default function DoughnutChartWithDetails({ data, colors, labels, centerT
                             display: "flex",
                             flexDirection: "row-reverse",
                             alignItems: "center",
-                            marginBottom: 8,
                         }}
                     >
                         <SimpleContainer
@@ -50,15 +56,6 @@ export default function DoughnutChartWithDetails({ data, colors, labels, centerT
                     </SimpleContainer>
                 ))}
             </SimpleContainer>
-
-            <DoughnutChart
-                data={data}
-                colors={colors}
-                labels={labels}
-                centerText={centerText}
-                subText={subText}
-                style={{ flex: 1, ...doughnutStyle }}
-            />
         </SimpleContainer>
     );
 };

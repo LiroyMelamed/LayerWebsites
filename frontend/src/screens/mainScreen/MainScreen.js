@@ -1,4 +1,3 @@
-import React from 'react';
 import SimpleScreen from '../../components/simpleComponents/SimpleScreen';
 import { useScreenSize } from '../../providers/ScreenSizeProvider';
 import useAutoHttpRequest from '../../hooks/useAutoHttpRequest';
@@ -15,7 +14,6 @@ import { AdminStackName } from '../../navigation/AdminStack';
 import SimpleScrollView from '../../components/simpleComponents/SimpleScrollView';
 import { useNavigate } from 'react-router-dom';
 import { TaggedCasesScreenName } from '../taggedCasesScreen/TaggedCasesScreen';
-import { AllCasesTypeScreenName } from '../allCasesTypeScreen/AllCasesTypeScreen';
 import { AllCasesScreenName } from '../allCasesScreen/AllCasesScreen';
 
 export const MainScreenName = "/MainScreen";
@@ -34,47 +32,46 @@ export default function MainScreen() {
             {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={AdminStackName + MainScreenName} />}
 
             <SimpleScrollView>
-                <SimpleContainer style={{ flexDirection: 'row-reverse', flexWrap: 'wrap' }}>
-                    <SimpleContainer style={{ flex: 1, alignItems: 'center', justifyContent: 'center', }}>
-                        <ComprasionDataCard
-                            colors={colors.doughnutChartColorScale}
-                            labels={['תיקים פתוחים', 'תיקים סגורים']}
-                            data={[mainScreenData?.AllCasesData?.length - mainScreenData?.NumberOfClosedCases, mainScreenData?.NumberOfClosedCases]}
-                            title={"סכימת תיקים"}
-                            centerText={`${mainScreenData?.AllCasesData?.length}`}
-                            subText='סה"כ תיקים'
-                            style={{ width: '100%' }}
+                <SimpleContainer style={{ flex: 1, alignItems: 'center', justifyContent: 'center', }}>
+                    <ComprasionDataCard
+                        colors={colors.doughnutChartColorScale}
+                        labels={['תיקים פתוחים', 'תיקים סגורים']}
+                        data={[mainScreenData?.AllCasesData?.length - mainScreenData?.NumberOfClosedCases, mainScreenData?.NumberOfClosedCases]}
+                        title={"סכימת תיקים"}
+                        centerText={`${mainScreenData?.AllCasesData?.length}`}
+                        subText='סה"כ תיקים'
+                        style={{ width: '100%' }}
+                    />
+                </SimpleContainer>
+
+                <SimpleContainer style={{ flexDirection: 'column', flex: 1 }}>
+                    <SimpleContainer>
+                        <ShowDataCard
+                            numberText={mainScreenData?.AllCasesData?.length}
+                            title={'סה"כ תיקים'}
+                            optionalOnClick={() => { navigate(AdminStackName + AllCasesScreenName) }}
+                            style={styles.DataCardStyle}
+                        />
+
+                        <ShowDataCard
+                            numberText={mainScreenData?.NumberOfClosedCases}
+                            title={"תיקים סגורים"}
+                            optionalOnClick={() => { navigate(AdminStackName + AllCasesScreenName) }}
+                            style={styles.DataCardStyle}
                         />
                     </SimpleContainer>
-                    <SimpleContainer style={{ flexDirection: 'column', flex: 1 }}>
-                        <SimpleContainer>
-                            <ShowDataCard
-                                numberText={mainScreenData?.AllCasesData?.length}
-                                title={'סה"כ תיקים'}
-                                optionalOnClick={() => { navigate(AdminStackName + AllCasesScreenName) }}
-                                style={styles.DataCardStyle}
-                            />
 
-                            <ShowDataCard
-                                numberText={mainScreenData?.NumberOfClosedCases}
-                                title={"תיקים סגורים"}
-                                optionalOnClick={() => { navigate(AdminStackName + AllCasesScreenName) }}
-                                style={styles.DataCardStyle}
-                            />
-                        </SimpleContainer>
-
-                        <SimpleContainer style={{ flexWrap: 'wrap' }}>
-                            <ShowDataCard
-                                numberText={mainScreenData?.NumberOfTaggedCases}
-                                title={"תיקים מתוייגים"}
-                                optionalOnClick={() => { navigate(AdminStackName + TaggedCasesScreenName) }}
-                                style={styles.DataCardStyle}
-                            />
-                            <ShowDataCard
-                                numberText={mainScreenData?.ActiveCustomers?.length}
-                                title={"לקוחות פעילים"}
-                            />
-                        </SimpleContainer>
+                    <SimpleContainer style={{ flexWrap: 'wrap' }}>
+                        <ShowDataCard
+                            numberText={mainScreenData?.NumberOfTaggedCases}
+                            title={"תיקים מתוייגים"}
+                            optionalOnClick={() => { navigate(AdminStackName + TaggedCasesScreenName) }}
+                            style={styles.DataCardStyle}
+                        />
+                        <ShowDataCard
+                            numberText={mainScreenData?.ActiveCustomers?.length}
+                            title={"לקוחות פעילים"}
+                        />
                     </SimpleContainer>
 
                 </SimpleContainer>
