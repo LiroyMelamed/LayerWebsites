@@ -16,6 +16,13 @@ const dataRoutes = require("./routes/dataRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const filesRoutes = require("./routes/filesRoutes");
 
+console.log('===== ENV CHECK START =====');
+console.log('Twilio SID prefix:', (process.env.TWILIO_ACCOUNT_SID || '').slice(0, 10));
+console.log('Twilio token length:', (process.env.TWILIO_AUTH_TOKEN || '').length);
+console.log('DB_NAME:', process.env.DB_NAME);
+console.log('PORT:', process.env.PORT);
+console.log('IS_PRODUCTION:', process.env.IS_PRODUCTION);
+console.log('===== ENV CHECK END =====');
 
 const app = express();
 
