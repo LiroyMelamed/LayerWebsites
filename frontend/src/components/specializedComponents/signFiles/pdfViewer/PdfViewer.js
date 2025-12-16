@@ -1,34 +1,44 @@
-import React from "react";
-import { Document, Page, pdfjs } from "react-pdf";
+import React, { useRef, useState } from "react";
 import SimpleContainer from "../../../simpleComponents/SimpleContainer";
+import SignatureSpotsLayer from "../signatureSpots/SignatureSpotsLayer";
+import PdfPage from "./PdfPage";
 
-// 👇 CRA-compatible worker setup
-pdfjs.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL}/pdf.worker.min.js`;
-
-export default function PdfPage({
+export default function PdfViewer({
     pdfFile,
-    pageNumber,
-    onLoadTotalPages,
+    spots,
+    onUpdateSpot,
+    onRemoveSpot,
 }) {
+    console.log('pdfFile in PdfViewer:', pdfFile);
+
+    const [pageCount, setPageCount] = useState(0);
+    const didInitRef = useRef(false);
+
+    if (!pdfFile) return null;
+
+    const handleLoadTotalPages = (numPages) => {
+        if (!didInitRef.current) {
+            didInitRef.current = true;
+            setPageCount(numPages);
+        }
+    };
+
     return (
-        <SimpleContainer style={{ position: "relative", width: "100%" }}>
-            <Document
-                file={pdfFile}
-                onLoadSuccess={(pdf) => {
-                    if (onLoadTotalPages) {
-                        onLoadTotalPages(pdf.numPages);
-                    }
-                }}
-                loading={<div>טוען PDF…</div>}
-                error={<div>שגיאה בטעינת PDF</div>}
+        <SimpleContainer style={{ width: "100%", position: "relative" }}>
+            <SimpleContainer
+                style={{ position: "relative", marginBottom: 24 }}
             >
-                <Page
-                    pageNumber={pageNumber}
-                    width={800}
-                    renderTextLayer={false}
-                    renderAnnotationLayer={false}
+                <PdfPage
+                    pdfFile={pdfFile}
+                    onLoadTotalPages={handleLoadTotalPages}
                 />
-            </Document>
+
+                <SignatureSpotsLayer
+                    spots={spots}
+                    onUpdateSpot={onUpdateSpot}
+                    onRemoveSpot={onRemoveSpot}
+                />
+            </SimpleContainer>
         </SimpleContainer>
     );
 }
