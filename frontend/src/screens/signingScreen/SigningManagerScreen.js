@@ -15,12 +15,11 @@ import { getNavBarData } from "../../components/navBars/data/NavBarData";
 
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
-import ChooseButton from "../../components/styledComponents/buttons/ChooseButton";
-
 import SearchInput from "../../components/specializedComponents/containers/SearchInput";
-import { Text14, TextBold24 } from "../../components/specializedComponents/text/AllTextKindFile";
 
+import { Text14, TextBold24 } from "../../components/specializedComponents/text/AllTextKindFile";
 import { images } from "../../assets/images/images";
+
 import { AdminStackName } from "../../navigation/AdminStack";
 import { uploadFileForSigningScreenName } from "./UploadFileForSigningScreen";
 
@@ -65,7 +64,7 @@ const styles = {
         color: "#333",
         margin: 0,
     },
-    statusChip: (status) => {
+    chip: (status) => {
         const map = {
             pending: { bg: "#fff3cd", color: "#856404", text: "בהמתנה" },
             signed: { bg: "#d4edda", color: "#155724", text: "חתום" },
@@ -73,12 +72,15 @@ const styles = {
         };
         const s = map[status] || map.pending;
         return {
-            padding: "4px 10px",
-            borderRadius: 16,
-            fontSize: 12,
-            fontWeight: 600,
-            backgroundColor: s.bg,
-            color: s.color,
+            style: {
+                padding: "4px 10px",
+                borderRadius: 16,
+                fontSize: 12,
+                fontWeight: 600,
+                backgroundColor: s.bg,
+                color: s.color,
+            },
+            text: s.text,
         };
     },
     detailRow: {
@@ -107,10 +109,6 @@ const styles = {
         marginTop: 10,
         flexWrap: "wrap",
     },
-    emptyState: {
-        textAlign: "center",
-        marginTop: 24,
-    },
     topRow: {
         flexDirection: "row",
         justifyContent: "space-between",
@@ -123,13 +121,17 @@ const styles = {
         flex: 1,
         minWidth: 260,
     },
+    emptyState: {
+        textAlign: "center",
+        marginTop: 24,
+    },
 };
 
 export default function SigningManagerScreen() {
     const { isSmallScreen } = useScreenSize();
     const navigate = useNavigate();
 
-    const [activeTab, setActiveTab] = useState("pending"); // 'pending' | 'signed'
+    const [activeTab, setActiveTab] = useState("pending");
     const [searchQuery, setSearchQuery] = useState("");
 
     const { result: lawyerFilesData, isPerforming } = useAutoHttpRequest(
@@ -140,30 +142,18 @@ export default function SigningManagerScreen() {
 
     const filteredFiles = useMemo(() => {
         const query = (searchQuery || "").toLowerCase();
-
-        let list = files;
-
-        if (activeTab === "pending") {
-            list = list.filter(
-                (f) => f.Status === "pending" || f.Status === "rejected"
-            );
-        } else {
-            list = list.filter((f) => f.Status === "signed");
-        }
-
+        let list = files.filter((f) =>
+            activeTab === "pending"
+                ? f.Status === "pending" || f.Status === "rejected"
+                : f.Status === "signed"
+        );
         if (!query) return list;
 
         return list.filter((f) => {
-            const text = [
-                f.FileName,
-                f.CaseName,
-                f.ClientName,
-                f.RejectionReason,
-            ]
+            const text = [f.FileName, f.CaseName, f.ClientName, f.RejectionReason]
                 .filter(Boolean)
                 .join(" ")
                 .toLowerCase();
-
             return text.includes(query);
         });
     }, [files, activeTab, searchQuery]);
@@ -180,35 +170,24 @@ export default function SigningManagerScreen() {
         return Math.round((signed / total) * 100);
     };
 
-    const handleSearch = (q) => {
-        setSearchQuery(q || "");
-    };
-
-    const handleGoToUpload = () => {
-        navigate(AdminStackName + uploadFileForSigningScreenName);
-    };
-
     const handleDownload = async (signingFileId, fileName) => {
-        try {
-            const response = await signingFilesApi.downloadSignedFile(signingFileId);
-            // לפי ה־api שלך: response = { downloadUrl, expiresIn } או עטוף
-            const url = response?.downloadUrl || response?.data?.downloadUrl;
-            if (!url) return;
-
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = fileName || "signed_file.pdf";
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-        } catch (err) {
-            console.error("failed to download signed file", err);
-        }
+        const response = await signingFilesApi.downloadSignedFile(signingFileId);
+        const url = response?.data?.downloadUrl;
+        if (!url) return;
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName || "signed_file.pdf";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
     };
 
-    if (isPerforming) {
-        return <SimpleLoader />;
-    }
+    const handleSearch = (q) => setSearchQuery(q || "");
+    const handleGoToUpload = () =>
+        navigate(AdminStackName + uploadFileForSigningScreenName);
+
+    if (isPerforming) return <SimpleLoader />;
+
 
     return (
         <SimpleScreen
@@ -227,24 +206,23 @@ export default function SigningManagerScreen() {
                     <TextBold24>מסמכים לחתימה 📄</TextBold24>
                 </SimpleContainer>
 
-                {/* שורה עליונה – חיפוש + כפתור לשליחת מסמך */}
+                {/* חיפוש + העלאת קובץ */}
                 <SimpleContainer style={styles.topRow}>
                     <SimpleContainer style={styles.searchContainer}>
                         <SearchInput
                             onSearch={handleSearch}
-                            title={"חיפוש מסמך / לקוח"}
+                            title={"חיפוש מסמך / לקוח / תיק"}
                             titleFontSize={18}
                             style={{ width: "100%" }}
-                        // לא משתמשים ב־queryResult כאן, רק חיפוש מקומי
                         />
                     </SimpleContainer>
 
-                    <PrimaryButton
-                        onPress={handleGoToUpload}
-                    >שליחת מסמך חדש לחתימה 📤</PrimaryButton>
+                    <PrimaryButton onPress={handleGoToUpload}>
+                        שליחת מסמך חדש לחתימה 📤
+                    </PrimaryButton>
                 </SimpleContainer>
 
-                {/* טאבים – בהמתנה / חתומים */}
+                {/* טאבים */}
                 <SimpleContainer style={styles.tabsRow}>
                     <TabButton
                         active={activeTab === "pending"}
@@ -258,7 +236,7 @@ export default function SigningManagerScreen() {
                     />
                 </SimpleContainer>
 
-                {/* רשימת מסמכים */}
+                {/* רשימה */}
                 {filteredFiles.length === 0 ? (
                     <Text14 style={styles.emptyState}>
                         {activeTab === "pending"
@@ -266,80 +244,76 @@ export default function SigningManagerScreen() {
                             : "אין מסמכים חתומים להצגה"}
                     </Text14>
                 ) : (
-                    filteredFiles.map((file) => (
-                        <SimpleContainer
-                            key={file.SigningFileId}
-                            style={styles.fileCard}
-                        >
-                            <SimpleContainer style={styles.fileHeaderRow}>
-                                <h3 style={styles.fileName}>{file.FileName}</h3>
-                                <span style={styles.statusChip(file.Status)}>
-                                    {file.Status === "pending"
-                                        ? "בהמתנה"
-                                        : file.Status === "signed"
-                                            ? "חתום"
-                                            : "נדחה"}
-                                </span>
-                            </SimpleContainer>
+                    filteredFiles.map((file) => {
+                        const chip = styles.chip(file.Status);
 
-                            <SimpleContainer style={styles.detailRow}>
-                                <b>תיק:</b> {file.CaseName}
-                            </SimpleContainer>
+                        return (
+                            <SimpleContainer
+                                key={file.SigningFileId}
+                                style={styles.fileCard}
+                            >
+                                <SimpleContainer style={styles.fileHeaderRow}>
+                                    <h3 style={styles.fileName}>{file.FileName}</h3>
+                                    <span style={chip.style}>{chip.text}</span>
+                                </SimpleContainer>
 
-                            <SimpleContainer style={styles.detailRow}>
-                                <b>לקוח:</b> {file.ClientName}
-                            </SimpleContainer>
+                                <SimpleContainer style={styles.detailRow}>
+                                    <b>תיק:</b> {file.CaseName}
+                                </SimpleContainer>
+                                <SimpleContainer style={styles.detailRow}>
+                                    <b>לקוח:</b> {file.ClientName}
+                                </SimpleContainer>
+                                <SimpleContainer style={styles.detailRow}>
+                                    <b>תאריך העלאה:</b>{" "}
+                                    {file.CreatedAt
+                                        ? new Date(file.CreatedAt).toLocaleDateString("he-IL")
+                                        : "-"}
+                                </SimpleContainer>
 
-                            <SimpleContainer style={styles.detailRow}>
-                                <b>תאריך העלאה:</b>{" "}
-                                {file.CreatedAt
-                                    ? new Date(file.CreatedAt).toLocaleDateString("he-IL")
-                                    : "-"}
-                            </SimpleContainer>
+                                {(file.Status === "pending" ||
+                                    file.Status === "rejected") && (
+                                        <>
+                                            <SimpleContainer style={styles.detailRow}>
+                                                <b>חתימות:</b>{" "}
+                                                {file.SignedSpots}/{file.TotalSpots}
+                                            </SimpleContainer>
+                                            <SimpleContainer style={styles.progressBarOuter}>
+                                                <SimpleContainer
+                                                    style={styles.progressBarInner(getProgress(file))}
+                                                />
+                                            </SimpleContainer>
 
-                            {file.Status === "pending" || file.Status === "rejected" ? (
-                                <>
-                                    <SimpleContainer style={styles.detailRow}>
-                                        <b>חתימות:</b>{" "}
-                                        {file.SignedSpots}/{file.TotalSpots}
-                                    </SimpleContainer>
-                                    <SimpleContainer style={styles.progressBarOuter}>
-                                        <SimpleContainer
-                                            style={styles.progressBarInner(getProgress(file))}
-                                        />
-                                    </SimpleContainer>
-
-                                    {file.Status === "rejected" && file.RejectionReason && (
-                                        <SimpleContainer style={styles.detailRow}>
-                                            <b>סיבת דחייה:</b> {file.RejectionReason}
-                                        </SimpleContainer>
+                                            {file.Status === "rejected" &&
+                                                file.RejectionReason && (
+                                                    <SimpleContainer style={styles.detailRow}>
+                                                        <b>סיבת דחייה:</b>{" "}
+                                                        {file.RejectionReason}
+                                                    </SimpleContainer>
+                                                )}
+                                        </>
                                     )}
-                                </>
-                            ) : null}
 
-                            <SimpleContainer style={styles.actionsRow}>
-                                {file.Status === "signed" && (
-                                    <PrimaryButton
-                                        text={"⬇️ הורד קובץ חתום"}
-                                        onClick={() =>
-                                            handleDownload(
-                                                file.SigningFileId,
-                                                file.FileName
-                                            )
+                                <SimpleContainer style={styles.actionsRow}>
+                                    {file.Status === "signed" && (
+                                        <PrimaryButton
+                                            onPress={() =>
+                                                handleDownload(file.SigningFileId, file.FileName)
+                                            }
+                                        >
+                                            ⬇️ הורד קובץ חתום
+                                        </PrimaryButton>
+                                    )}
+                                    <SecondaryButton
+                                        onPress={() =>
+                                            console.log("פרטים על", file.SigningFileId)
                                         }
-                                    />
-                                )}
-                                {/* אפשר להרחיב לעתיד: פתיחת מודל פרטים, פתיחת ה־PDF וכו' */}
-                                <ChooseButton
-                                    text={"👁️ פרטי מסמך"}
-                                    onClick={() => {
-                                        // לעתיד - אפשר לפתוח PopUp / מסך פרטים
-                                        console.log("open details for", file.SigningFileId);
-                                    }}
-                                />
+                                    >
+                                        👁️ פרטי מסמך
+                                    </SecondaryButton>
+                                </SimpleContainer>
                             </SimpleContainer>
-                        </SimpleContainer>
-                    ))
+                        );
+                    })
                 )}
             </SimpleScrollView>
         </SimpleScreen>

@@ -14,13 +14,14 @@ import { Text14, TextBold24 } from "../../components/specializedComponents/text/
 
 import { images } from "../../assets/images/images";
 import signingFilesApi from "../../api/signingFilesApi";
-import SignatureSpotMarker from "../../components/specializedComponents/signFiles/SignatureSpotMarker";
 
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
 import { getNavBarData } from "../../components/navBars/data/NavBarData";
 import { AdminStackName } from "../../navigation/AdminStack";
 import { SigningManagerScreenName } from "./SigningManagerScreen";
+
 import { uploadFileToR2 } from "../../utils/fileUploadUtils";
+import PdfViewer from "../../components/specializedComponents/signFiles/pdfViewer/PdfViewer";
 
 export const uploadFileForSigningScreenName = "/upload-file-for-signing";
 
@@ -35,12 +36,14 @@ const styles = {
         marginBottom: 16,
     },
     formCard: {
-        direction: 'rtl',
+        direction: "rtl",
         flexDirection: "column",
         borderRadius: 8,
         border: "1px solid #e0e0e0",
         padding: 16,
         boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+        width: "100%",
+        maxWidth: 1000,
     },
     formGroup: {
         marginBottom: 16,
@@ -88,28 +91,23 @@ const styles = {
         color: "#155724",
         fontSize: 14,
     },
-    spotsHeaderRow: {
+    viewerHeaderRow: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        marginTop: 8,
-        marginBottom: 8,
-    },
-    spotsContainer: {
-        display: "grid",
-        gap: 12,
-        marginTop: 8,
-    },
-    infoText: {
-        fontSize: 13,
-        color: "#777",
-        marginTop: 4,
+        marginTop: 24,
+        marginBottom: 12,
     },
     actionsRow: {
         flexDirection: "row",
         gap: 8,
         marginTop: 16,
         flexWrap: "wrap",
+    },
+    infoText: {
+        fontSize: 13,
+        color: "#777",
+        marginTop: 8,
     },
     errorMsg: {
         padding: 10,
@@ -146,11 +144,34 @@ export default function UploadFileForSigningScreen() {
 
     const fileInputRef = useRef(null);
 
+    const handleAddSpot = () => {
+        setSignatureSpots((prev) => [
+            ...prev,
+            {
+                pageNum: 1,
+                x: 120,
+                y: 160,
+                width: 140,
+                height: 50,
+                signerName: `חתימה ${prev.length + 1}`,
+                isRequired: true,
+            },
+        ]);
+    };
+
+    const handleUpdateSpot = (index, updates) => {
+        setSignatureSpots((prev) =>
+            prev.map((s, i) => (i === index ? { ...s, ...updates } : s))
+        );
+    };
+
+    const handleRemoveSpot = (index) => {
+        setSignatureSpots((prev) => prev.filter((_, i) => i !== index));
+    };
+
     const handleFileChange = (e) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setSelectedFile(file);
-        }
+        const f = e.target.files?.[0] || null;
+        setSelectedFile(f);
     };
 
     const handleDragEnter = (e) => {
@@ -158,87 +179,44 @@ export default function UploadFileForSigningScreen() {
         e.stopPropagation();
         setIsDragActive(true);
     };
-
     const handleDragLeave = (e) => {
         e.preventDefault();
         e.stopPropagation();
         setIsDragActive(false);
     };
-
     const handleDragOver = (e) => {
         e.preventDefault();
         e.stopPropagation();
     };
-
     const handleDrop = (e) => {
         e.preventDefault();
         e.stopPropagation();
         setIsDragActive(false);
-        const file = e.dataTransfer.files?.[0];
-        if (file) {
-            setSelectedFile(file);
-        }
-    };
-
-    const handleAddSpot = () => {
-        setSignatureSpots((prev) => [
-            ...prev,
-            {
-                pageNum: 1,
-                x: 50,
-                y: 50,
-                width: 150,
-                height: 75,
-                signerName: `חתימה ${prev.length + 1}`,
-                isRequired: true,
-            },
-        ]);
-    };
-
-    const handleRemoveSpot = (index) => {
-        setSignatureSpots((prev) => prev.filter((_, i) => i !== index));
-    };
-
-    const handleUpdateSpot = (index, updates) => {
-        setSignatureSpots((prev) => {
-            const next = [...prev];
-            next[index] = { ...next[index], ...updates };
-            return next;
-        });
-    };
-
-    const validateForm = () => {
-        if (!caseId || !clientId || !selectedFile) {
-            setMessage({
-                type: "error",
-                text: "נא למלא תיק, לקוח ולבחור קובץ.",
-            });
-            return false;
-        }
-
-        if (signatureSpots.length === 0) {
-            setMessage({
-                type: "error",
-                text: "יש להגדיר לפחות מקום חתימה אחד במסמך.",
-            });
-            return false;
-        }
-
-        return true;
+        const f = e.dataTransfer.files?.[0] || null;
+        if (f) setSelectedFile(f);
     };
 
     const handleSubmit = async () => {
         setMessage(null);
 
-        if (!validateForm()) return;
+        if (!caseId || !clientId || !selectedFile || signatureSpots.length === 0) {
+            setMessage({
+                type: "error",
+                text: "יש למלא תיק, לקוח, לבחור קובץ ולהגדיר לפחות חתימה אחת.",
+            });
+            return;
+        }
 
         try {
             setLoading(true);
 
-            // 1) העלאת הקובץ ל-R2
-            const { key } = await uploadFileToR2(selectedFile);
+            const uploadRes = await uploadFileToR2(selectedFile);
+            const key = uploadRes?.key || uploadRes?.data?.key;
 
-            // 2) יצירת רשומת SigningFile + SignatureSpots
+            if (!key) {
+                throw new Error("missing key from uploadFileToR2");
+            }
+
             await signingFilesApi.uploadFileForSigning({
                 caseId: Number(caseId),
                 clientId: Number(clientId),
@@ -248,34 +226,20 @@ export default function UploadFileForSigningScreen() {
                 notes: notes || null,
             });
 
-            setMessage({
-                type: "success",
-                text: "הקובץ נשלח ללקוח לחתימה. הוא יקבל התראה באפליקציה.",
-            });
+            setMessage({ type: "success", text: "הקובץ נשלח ללקוח לחתימה." });
 
-            // איפוס טופס
             setCaseId("");
             setClientId("");
             setNotes("");
             setSelectedFile(null);
             setSignatureSpots([]);
-
-            if (fileInputRef.current) {
-                fileInputRef.current.value = "";
-            }
+            if (fileInputRef.current) fileInputRef.current.value = "";
         } catch (err) {
-            console.error("upload file for signing error", err);
-            setMessage({
-                type: "error",
-                text: "שגיאה בשליחת הקובץ לחתימה. נסה שוב.",
-            });
+            console.error(err);
+            setMessage({ type: "error", text: "שגיאה בשליחת הקובץ לחתימה." });
         } finally {
             setLoading(false);
         }
-    };
-
-    const goBackToManager = () => {
-        navigate(AdminStackName + SigningManagerScreenName);
     };
 
     return (
@@ -298,44 +262,34 @@ export default function UploadFileForSigningScreen() {
                 <SimpleContainer style={styles.formCard}>
                     {message && (
                         <div
-                            style={
-                                message.type === "error"
-                                    ? styles.errorMsg
-                                    : styles.successMsg
-                            }
+                            style={message.type === "error" ? styles.errorMsg : styles.successMsg}
                         >
                             {message.text}
                         </div>
                     )}
 
                     <SimpleContainer style={styles.formGroup}>
-                        <label style={styles.label}>מספר תיק (CaseId) *</label>
+                        <label style={styles.label}>מספר תיק *</label>
                         <input
                             style={styles.input}
                             type="number"
                             value={caseId}
                             onChange={(e) => setCaseId(e.target.value)}
-                            placeholder="למשל: 123"
                         />
-                        <p style={styles.infoText}>
-                            בשלב ראשון נזין לפי מספר תיק. בהמשך אפשר לחבר לבחירת תיק
-                            מתוך רשימת התיקים.
-                        </p>
                     </SimpleContainer>
 
                     <SimpleContainer style={styles.formGroup}>
-                        <label style={styles.label}>מספר לקוח (ClientId) *</label>
+                        <label style={styles.label}>מספר לקוח *</label>
                         <input
                             style={styles.input}
                             type="number"
                             value={clientId}
                             onChange={(e) => setClientId(e.target.value)}
-                            placeholder="למשל: 45"
                         />
                     </SimpleContainer>
 
                     <SimpleContainer style={styles.formGroup}>
-                        <label style={styles.label}>קובץ לחתימה (PDF מומלץ) *</label>
+                        <label style={styles.label}>קובץ PDF *</label>
 
                         <div
                             style={styles.fileBox(isDragActive)}
@@ -347,14 +301,14 @@ export default function UploadFileForSigningScreen() {
                         >
                             <div>📄 גרור קובץ לכאן או לחץ לבחירה</div>
                             <div style={{ fontSize: 12, color: "#777", marginTop: 4 }}>
-                                (PDF, Word, תמונה – עדיף PDF לחתימות מרובות עמודים)
+                                (PDF בלבד בשלב זה)
                             </div>
                             <input
                                 ref={fileInputRef}
                                 type="file"
                                 style={{ display: "none" }}
                                 onChange={handleFileChange}
-                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                accept=".pdf"
                             />
                         </div>
 
@@ -372,48 +326,48 @@ export default function UploadFileForSigningScreen() {
                             style={styles.textarea}
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
-                            placeholder="למשל: נא לחתום בעמודים 2 ו-4 בצד שמאל למטה..."
                         />
                     </SimpleContainer>
 
-                    <SimpleContainer style={styles.formGroup}>
-                        <SimpleContainer style={styles.spotsHeaderRow}>
-                            <TextBold24 style={{ fontSize: 18 }}>
-                                מקומות חתימה במסמך
-                            </TextBold24>
-                            <SecondaryButton onPress={handleAddSpot} >+ הוסף מקום חתימה</SecondaryButton>
-                        </SimpleContainer>
-
-                        {signatureSpots.length === 0 ? (
-                            <Text14 style={{ color: "#777" }}>
-                                עדיין לא הוגדרו מקומות חתימה. לחץ על "הוסף מקום חתימה".
-                            </Text14>
-                        ) : (
-                            <SimpleContainer style={styles.spotsContainer}>
-                                {signatureSpots.map((spot, index) => (
-                                    <SignatureSpotMarker
-                                        key={index}
-                                        spot={spot}
-                                        index={index}
-                                        onUpdate={handleUpdateSpot}
-                                        onRemove={handleRemoveSpot}
-                                    />
-                                ))}
+                    {selectedFile && (
+                        <>
+                            <SimpleContainer style={styles.viewerHeaderRow}>
+                                <TextBold24 style={{ fontSize: 18 }}>
+                                    תצוגת מסמך והגדרת חתימות
+                                </TextBold24>
+                                <SecondaryButton onPress={handleAddSpot}>
+                                    + הוסף חתימה
+                                </SecondaryButton>
                             </SimpleContainer>
-                        )}
 
-                        <Text14 style={styles.infoText}>
-                            הערכים X/Y הם באחוזים ממיקום העמוד (0–100), כך שתוכל למקם
-                            את החתימה בערך במיקום הנכון גם בלי תצוגת PDF מלאה.
-                        </Text14>
-                    </SimpleContainer>
+                            <PdfViewer
+                                pdfFile={selectedFile}
+                                spots={signatureSpots.map((s) => ({
+                                    ...s,
+                                    page: s.pageNum || 1,
+                                }))}
+                                onUpdateSpot={(index, updates) =>
+                                    handleUpdateSpot(index, updates)
+                                }
+                                onRemoveSpot={handleRemoveSpot}
+                            />
+
+                            <Text14 style={styles.infoText}>
+                                גרור את קוביות החתימה למיקום הרצוי או מחק בעזרת ✕
+                            </Text14>
+                        </>
+                    )}
 
                     <SimpleContainer style={styles.actionsRow}>
-                        <PrimaryButton
-                            onPress={handleSubmit}
-                            disabled={loading}
-                        >{loading ? "שולח..." : "📤 שלח מסמך לחתימה"}</PrimaryButton>
-                        <SecondaryButton onPress={goBackToManager}>⬅ חזרה לרשימת המסמכים</SecondaryButton>
+                        <PrimaryButton onPress={handleSubmit} disabled={loading}>
+                            {loading ? "שולח..." : "📤 שלח ללקוח"}
+                        </PrimaryButton>
+
+                        <SecondaryButton
+                            onPress={() => navigate(AdminStackName + SigningManagerScreenName)}
+                        >
+                            ⬅ חזרה
+                        </SecondaryButton>
                     </SimpleContainer>
 
                     {loading && (
@@ -423,6 +377,6 @@ export default function UploadFileForSigningScreen() {
                     )}
                 </SimpleContainer>
             </SimpleScrollView>
-        </SimpleScreen >
+        </SimpleScreen>
     );
 }
