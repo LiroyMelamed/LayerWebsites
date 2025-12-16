@@ -5,6 +5,7 @@ import CaseTypeFullView from "../../styledComponents/cases/CaseTypeFullView";
 import CaseFullView from "../../styledComponents/cases/CaseFullView";
 import { TaggedCasesScreenName } from "../../../screens/taggedCasesScreen/TaggedCasesScreen";
 import { AdminStackName } from "../../../navigation/AdminStack";
+import { SigningManagerScreenName } from "../../../screens/signingScreen/SigningManagerScreen";
 
 export const getNavBarData = (navigate, openPopup, closePopup) => ({
     NavBarLinks: [
@@ -13,6 +14,12 @@ export const getNavBarData = (navigate, openPopup, closePopup) => ({
             buttonScreen: "תיקים נעוצים",
             icon: null, // icons.NavBarIcons.Hammer
             onClick: () => navigate(AdminStackName + TaggedCasesScreenName),
+        },
+        {
+            buttonText: "מסמכים לחתימה",
+            buttonScreen: "מסמכים לחתימה",
+            icon: null,
+            onClick: () => navigate(AdminStackName + SigningManagerScreenName),
         },
         {
             buttonText: "לכל התיקים",

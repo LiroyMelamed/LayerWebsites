@@ -5,6 +5,8 @@ import AllCasesScreen, { AllCasesScreenName } from "../screens/allCasesScreen/Al
 import MainScreen, { MainScreenName } from "../screens/mainScreen/MainScreen";
 import TopAndRightNavBar from "../components/navBars/TopAndRightNavBar";
 import { Route, Routes } from "react-router-dom";
+import SigningManagerScreen, { SigningManagerScreenName } from "../screens/signingScreen/SigningManagerScreen";
+import UploadFileForSigningScreen, { uploadFileForSigningScreenName } from "../screens/signingScreen/UploadFileForSigningScreen";
 
 export const AdminStackName = "/AdminStack";
 
@@ -17,6 +19,9 @@ function AdminStack() {
                 <Route path={AllCasesScreenName} element={<AllCasesScreen />} />
                 <Route path={AllMangerScreenName} element={<AllMangerScreen />} />
                 <Route path={AllCasesTypeScreenName} element={<AllCasesTypeScreen />} />
+                <Route path={SigningManagerScreenName} element={<SigningManagerScreen />} />
+                <Route path={uploadFileForSigningScreenName} element={<UploadFileForSigningScreen />} />
+
             </Routes>
         </TopAndRightNavBar>
     );

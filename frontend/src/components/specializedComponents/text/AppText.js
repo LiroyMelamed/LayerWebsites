@@ -18,7 +18,6 @@ export default function AppText({
         fontFamily,
         fontWeight,
         alignItems: 'flex-end',
-        display: 'flex',
         ...style,
     };
 

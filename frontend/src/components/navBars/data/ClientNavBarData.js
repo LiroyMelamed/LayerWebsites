@@ -1,5 +1,6 @@
 import { ClientStackName } from "../../../navigation/ClientStack";
 import { UpdatesAndNotificationsScreenName } from "../../../screens/client/updates/UpdatesScreen";
+import { SigningScreenName } from "../../../screens/signingScreen/SigningScreen";
 import { Text12 } from "../../specializedComponents/text/AllTextKindFile";
 import TermsOfConditons from "../../termsAndConditions/TermsOfConditons";
 
@@ -10,6 +11,12 @@ export const getClientNavBarData = (navigate, openPopup, closePopup) => ({
             buttonScreen: null,
             icon: null, // icons.NavBarIcons.Manager
             onClick: () => { navigate(ClientStackName + UpdatesAndNotificationsScreenName) }
+        },
+        {
+            buttonText: "מסמכים לחתימה",
+            buttonScreen: null,
+            icon: null,
+            onClick: () => { navigate(ClientStackName + SigningScreenName) }
         },
         {
             buttonText: "הפרופיל שלי",

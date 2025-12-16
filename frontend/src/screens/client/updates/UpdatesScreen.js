@@ -42,7 +42,7 @@ export default function UpdatesAndNotificationsScreen() {
         <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
             {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={ClientStackName + ClientMainScreenName} GetNavBarData={getClientNavBarData} />}
 
-            <SimpleScrollView style={{ marginTop: 40, }}>
+            <SimpleScrollView style={{ marginTop: 40 }}>
                 <SimpleContainer style={styles.responsiveContainer}>
                     {/* <SimpleImage
                         src={images.Updates.NewUpdates}

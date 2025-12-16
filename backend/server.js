@@ -15,6 +15,8 @@ const caseTypeRoutes = require("./routes/caseTypeRoutes");
 const dataRoutes = require("./routes/dataRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const filesRoutes = require("./routes/filesRoutes");
+const signingFileRoutes = require("./routes/signingFileRoutes");
+
 
 
 const app = express();
@@ -77,6 +79,8 @@ app.use("/api/CaseTypes", caseTypeRoutes);
 app.use("/api/Data", dataRoutes);
 app.use("/api/Notifications", notificationRoutes);
 app.use("/api/Files", filesRoutes);
+app.use("/api/SigningFiles", signingFileRoutes);
+
 
 app.listen(PORT, async () => {
     console.log(`Server running on port ${PORT}`);
