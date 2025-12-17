@@ -1,47 +1,43 @@
 // src/api/signingFilesApi.js
 import ApiUtils from "./apiUtils";
 
-const BASE = "SigningFiles";
+const base = "SigningFiles";
 
 const signingFilesApi = {
-    // עו"ד מעלה קובץ לחתימה
     uploadFileForSigning: async (data) => {
-        return await ApiUtils.post(`${BASE}/upload`, data);
+        return await ApiUtils.post(`${base}/upload`, data);
     },
 
-    // כל המסמכים של הלקוח (pending + signed + rejected)
     getClientSigningFiles: async () => {
-        return await ApiUtils.get(`${BASE}/client-files`);
+        return await ApiUtils.get(`${base}/client-files`);
     },
 
-    // כל המסמכים שעו"ד שלח
     getLawyerSigningFiles: async () => {
-        return await ApiUtils.get(`${BASE}/lawyer-files`);
+        return await ApiUtils.get(`${base}/lawyer-files`);
     },
 
-    // פרטי מסמך + מקומות חתימה
     getSigningFileDetails: async (signingFileId) => {
-        return await ApiUtils.get(`${BASE}/${signingFileId}`);
+        return await ApiUtils.get(`${base}/${signingFileId}`);
     },
 
-    // לקוח חותם על מקום אחד
     signFile: async (signingFileId, body) => {
-        return await ApiUtils.post(`${BASE}/${signingFileId}/sign`, body);
+        return await ApiUtils.post(`${base}/${signingFileId}/sign`, body);
     },
 
-    // לקוח דוחה מסמך
     rejectSigning: async (signingFileId, body) => {
-        return await ApiUtils.post(`${BASE}/${signingFileId}/reject`, body);
+        return await ApiUtils.post(`${base}/${signingFileId}/reject`, body);
     },
 
-    // עו"ד מעלה מחדש מסמך שנדחה
     reuploadFile: async (signingFileId, body) => {
-        return await ApiUtils.post(`${BASE}/${signingFileId}/reupload`, body);
+        return await ApiUtils.post(`${base}/${signingFileId}/reupload`, body);
     },
 
-    // הורדת קובץ חתום – מחזיר downloadUrl (לא blob)
     downloadSignedFile: async (signingFileId) => {
-        return await ApiUtils.get(`${BASE}/${signingFileId}/download`);
+        return await ApiUtils.get(`${base}/${signingFileId}/download`);
+    },
+
+    detectSignatureSpots: async (fileKey) => {
+        return await ApiUtils.post(`${base}/detect-spots`, { fileKey });
     },
 };
 

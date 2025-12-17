@@ -39,7 +39,7 @@ export default function UpdatesAndNotificationsScreen() {
     }
 
     return (
-        <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
+        <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
             {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={ClientStackName + ClientMainScreenName} GetNavBarData={getClientNavBarData} />}
 
             <SimpleScrollView style={{ marginTop: 40 }}>
@@ -66,10 +66,6 @@ export default function UpdatesAndNotificationsScreen() {
 }
 
 const styles = {
-    screenStyle: () => ({
-        boxSizing: 'border-box',
-        flexDirection: 'column',
-    }),
     responsiveContainer: {
         flexDirection: 'column',
         width: '100%',

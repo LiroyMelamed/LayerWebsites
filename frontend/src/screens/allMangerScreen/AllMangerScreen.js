@@ -41,7 +41,7 @@ export default function AllMangerScreen() {
     }
 
     return (
-        <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
+        <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
             {isSmallScreen && <TopToolBarSmallScreen chosenIndex={3} LogoNavigate={AdminStackName + MainScreenName} />}
 
             <SimpleScrollView>
@@ -74,10 +74,6 @@ export default function AllMangerScreen() {
 }
 
 const styles = {
-    screenStyle: () => ({
-        boxSizing: 'border-box',
-        flexDirection: 'column',
-    }),
     responsiveContainer: {
         display: 'flex',
         flexDirection: 'row-reverse',

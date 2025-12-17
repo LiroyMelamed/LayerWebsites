@@ -8,6 +8,7 @@ export default function SimpleScreen({ children, imageBackgroundSource, style, s
     const screenStyle = {
         ...styles.screen,
         ...customScreenStyle,
+
     };
 
     if (imageBackgroundSource) {
@@ -19,6 +20,8 @@ export default function SimpleScreen({ children, imageBackgroundSource, style, s
     const childrenContainerStyle = {
         ...styles.childrenContainer,
         width: isSmallScreen ? '100%' : `calc(100% - 250px)`,
+        boxSizing: "border-box",
+        flexDirection: "column",
         ...style,
     };
 

@@ -5,7 +5,7 @@ import SignatureSpot from "./SignatureSpot";
 
 export default function SignatureSpotsLayer({
     pageNumber,
-    spots,
+    spots = [],
     onUpdateSpot,
     onRemoveSpot,
 }) {
@@ -21,12 +21,13 @@ export default function SignatureSpotsLayer({
             }}
         >
             {spots
-                .filter((s) => s.page === pageNumber)
-                .map((spot, index) => (
+                .map((s, originalIndex) => ({ ...s, originalIndex }))
+                .filter((s) => Number(s.pageNum) === Number(pageNumber))
+                .map((spot) => (
                     <SignatureSpot
-                        key={index}
+                        key={spot.originalIndex}
                         spot={spot}
-                        index={index}
+                        index={spot.originalIndex}
                         onUpdateSpot={onUpdateSpot}
                         onRemoveSpot={onRemoveSpot}
                     />

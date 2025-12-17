@@ -32,7 +32,7 @@ export default function ClientMainScreen() {
     }
 
     return (
-        <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
+        <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
             {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={ClientStackName + ClientMainScreenName} GetNavBarData={getClientNavBarData} isClient={true} />}
 
             <SimpleScrollView>
@@ -51,10 +51,6 @@ export default function ClientMainScreen() {
     );
 }
 const styles = {
-    screenStyle: () => ({
-        boxSizing: 'border-box',
-        flexDirection: 'column',
-    }),
     responsiveContainer: {
         display: 'flex',
         flexDirection: 'row-reverse',

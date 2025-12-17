@@ -6,6 +6,7 @@ import { BrowserRouter } from 'react-router-dom';
 import './index.css';
 import { PopupProvider } from './providers/PopUpProvider';
 import { FromAppProvider } from './providers/FromAppProvider';
+import "./utils/pdfjsConfig";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

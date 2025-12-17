@@ -26,11 +26,6 @@ import { uploadFileForSigningScreenName } from "./UploadFileForSigningScreen";
 export const SigningManagerScreenName = "/SigningManagerScreen";
 
 const styles = {
-    screenStyle: (isSmallScreen) => ({
-        boxSizing: "border-box",
-        flexDirection: "column",
-        padding: isSmallScreen ? 0 : 16,
-    }),
     headerRow: {
         alignItems: "center",
         marginBottom: 16,
@@ -191,7 +186,6 @@ export default function SigningManagerScreen() {
 
     return (
         <SimpleScreen
-            style={styles.screenStyle(isSmallScreen)}
             imageBackgroundSource={images.Backgrounds.AppBackground}
         >
             {isSmallScreen && (

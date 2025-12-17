@@ -1,12 +1,11 @@
+// controllers/signingFileController.js
 const pool = require("../config/db");
 const { PutObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const { r2, BUCKET } = require("../utils/r2");
 const sendAndStoreNotification = require("../utils/sendAndStoreNotification");
+const { detectHebrewSignatureSpotsFromPdfBuffer, streamToBuffer } = require("../utils/signatureDetection");
 
-/**
- * עו"ד מעלה קובץ לחתימה
- */
 exports.uploadFileForSigning = async (req, res) => {
     try {
         const {
@@ -27,21 +26,6 @@ exports.uploadFileForSigning = async (req, res) => {
                 .json({ message: "חסרים שדות חובה (תיק, לקוח, שם קובץ, fileKey)" });
         }
 
-        // בדיקה שהעו"ד משויך לתיק (cases.userid = lawyerId)
-        const caseCheck = await pool.query(
-            `select caseid
-             from cases
-             where caseid = $1 and userid = $2`,
-            [caseId, lawyerId]
-        );
-
-        if (caseCheck.rows.length === 0) {
-            return res
-                .status(403)
-                .json({ message: "אין הרשאה להעלות מסמך לתיק זה" });
-        }
-
-        // יצירת רשומת מסמך לחתימה
         const insertFile = await pool.query(
             `insert into signingfiles
              (caseid, lawyerid, clientid, filename, filekey, originalfilekey, status, notes, expiresat)
@@ -52,7 +36,6 @@ exports.uploadFileForSigning = async (req, res) => {
 
         const signingFileId = insertFile.rows[0].SigningFileId;
 
-        // יצירת מקומות החתימה
         if (Array.isArray(signatureLocations)) {
             for (const spot of signatureLocations) {
                 await pool.query(
@@ -73,7 +56,6 @@ exports.uploadFileForSigning = async (req, res) => {
             }
         }
 
-        // התראה ללקוח
         await sendAndStoreNotification(
             clientId,
             "קובץ חדש לחתימה",
@@ -94,9 +76,6 @@ exports.uploadFileForSigning = async (req, res) => {
     }
 };
 
-/**
- * כל המסמכים של הלקוח (בשימוש במסך SigningScreen)
- */
 exports.getClientSigningFiles = async (req, res) => {
     try {
         const clientId = req.user.UserId;
@@ -114,7 +93,7 @@ exports.getClientSigningFiles = async (req, res) => {
                 sf.signedat           as "SignedAt",
                 c.casename            as "CaseName",
                 u.name                as "LawyerName",
-                count(ss.signaturespotid)                                     as "TotalSpots",
+                count(ss.signaturespotid)                                       as "TotalSpots",
                 coalesce(sum(case when ss.issigned = true then 1 else 0 end),0) as "SignedSpots"
              from signingfiles sf
              join cases c  on c.caseid  = sf.caseid
@@ -137,9 +116,6 @@ exports.getClientSigningFiles = async (req, res) => {
     }
 };
 
-/**
- * היסטוריית המסמכים שעו"ד שלח לחתימה
- */
 exports.getLawyerSigningFiles = async (req, res) => {
     try {
         const lawyerId = req.user.UserId;
@@ -154,7 +130,7 @@ exports.getLawyerSigningFiles = async (req, res) => {
                 sf.signedat           as "SignedAt",
                 c.casename            as "CaseName",
                 u.name                as "ClientName",
-                count(ss.signaturespotid)                                     as "TotalSpots",
+                count(ss.signaturespotid)                                       as "TotalSpots",
                 coalesce(sum(case when ss.issigned = true then 1 else 0 end),0) as "SignedSpots"
              from signingfiles sf
              join cases c  on c.caseid  = sf.caseid
@@ -177,9 +153,6 @@ exports.getLawyerSigningFiles = async (req, res) => {
     }
 };
 
-/**
- * מסמכים ממתינים בלבד (אם תרצה API ייעודי)
- */
 exports.getPendingSigningFiles = async (req, res) => {
     try {
         const clientId = req.user.UserId;
@@ -196,7 +169,7 @@ exports.getPendingSigningFiles = async (req, res) => {
                 sf.notes              as "Notes",
                 c.casename            as "CaseName",
                 u.name                as "LawyerName",
-                count(ss.signaturespotid)                                     as "TotalSpots",
+                count(ss.signaturespotid)                                       as "TotalSpots",
                 coalesce(sum(case when ss.issigned = true then 1 else 0 end),0) as "SignedSpots"
              from signingfiles sf
              join cases c  on c.caseid  = sf.caseid
@@ -220,9 +193,6 @@ exports.getPendingSigningFiles = async (req, res) => {
     }
 };
 
-/**
- * פרטי מסמך + מקומות החתימה
- */
 exports.getSigningFileDetails = async (req, res) => {
     try {
         const { signingFileId } = req.params;
@@ -292,9 +262,6 @@ exports.getSigningFileDetails = async (req, res) => {
     }
 };
 
-/**
- * לקוח חותם על מקום חתימה
- */
 exports.signFile = async (req, res) => {
     try {
         const { signingFileId } = req.params;
@@ -316,9 +283,11 @@ exports.signFile = async (req, res) => {
              where signingfileid = $1`,
             [signingFileId]
         );
+
         if (fileResult.rows.length === 0) {
             return res.status(404).json({ message: "המסמך לא נמצא" });
         }
+
         const file = fileResult.rows[0];
 
         if (file.ClientId !== clientId) {
@@ -334,9 +303,11 @@ exports.signFile = async (req, res) => {
              where signaturespotid = $1 and signingfileid = $2`,
             [signatureSpotId, signingFileId]
         );
+
         if (spotResult.rows.length === 0) {
             return res.status(400).json({ message: "מקום חתימה לא תקין" });
         }
+
         const spot = spotResult.rows[0];
         if (spot.IsSigned) {
             return res.status(400).json({ message: "מקום החתימה כבר חתום" });
@@ -408,15 +379,10 @@ exports.signFile = async (req, res) => {
         return res.json({ success: true, message: "החתימה נשמרה בהצלחה" });
     } catch (err) {
         console.error("signFile error:", err);
-        return res
-            .status(500)
-            .json({ message: "שגיאה בשמירת החתימה" });
+        return res.status(500).json({ message: "שגיאה בשמירת החתימה" });
     }
 };
 
-/**
- * לקוח דוחה מסמך לחתימה
- */
 exports.rejectSigning = async (req, res) => {
     try {
         const { signingFileId } = req.params;
@@ -433,9 +399,11 @@ exports.rejectSigning = async (req, res) => {
              where signingfileid = $1`,
             [signingFileId]
         );
+
         if (fileResult.rows.length === 0) {
             return res.status(404).json({ message: "המסמך לא נמצא" });
         }
+
         const file = fileResult.rows[0];
 
         if (file.ClientId !== clientId) {
@@ -469,15 +437,10 @@ exports.rejectSigning = async (req, res) => {
         return res.json({ success: true, message: "המסמך נדחה" });
     } catch (err) {
         console.error("rejectSigning error:", err);
-        return res
-            .status(500)
-            .json({ message: "שגיאה בדחיית המסמך" });
+        return res.status(500).json({ message: "שגיאה בדחיית המסמך" });
     }
 };
 
-/**
- * עו"ד מעלה מחדש קובץ שנדחה
- */
 exports.reuploadFile = async (req, res) => {
     try {
         const { signingFileId } = req.params;
@@ -494,9 +457,11 @@ exports.reuploadFile = async (req, res) => {
              where signingfileid = $1`,
             [signingFileId]
         );
+
         if (fileResult.rows.length === 0) {
             return res.status(404).json({ message: "המסמך לא נמצא" });
         }
+
         const file = fileResult.rows[0];
 
         if (file.LawyerId !== lawyerId) {
@@ -551,15 +516,10 @@ exports.reuploadFile = async (req, res) => {
         return res.json({ success: true, message: "הקובץ הועלה מחדש לחתימה" });
     } catch (err) {
         console.error("reuploadFile error:", err);
-        return res
-            .status(500)
-            .json({ message: "שגיאה בהעלאת קובץ מחדש" });
+        return res.status(500).json({ message: "שגיאה בהעלאת קובץ מחדש" });
     }
 };
 
-/**
- * קבלת קישור להורדת קובץ חתום
- */
 exports.getSignedFileDownload = async (req, res) => {
     try {
         const { signingFileId } = req.params;
@@ -590,9 +550,7 @@ exports.getSignedFileDownload = async (req, res) => {
         }
 
         if (file.Status !== "signed" && !file.SignedFileKey) {
-            return res
-                .status(400)
-                .json({ message: "המסמך עדיין לא חתום" });
+            return res.status(400).json({ message: "המסמך עדיין לא חתום" });
         }
 
         const key = file.SignedFileKey || file.FileKey;
@@ -608,8 +566,24 @@ exports.getSignedFileDownload = async (req, res) => {
         return res.json({ downloadUrl, expiresIn: 600 });
     } catch (err) {
         console.error("getSignedFileDownload error:", err);
-        return res
-            .status(500)
-            .json({ message: "שגיאה ביצירת קישור הורדה" });
+        return res.status(500).json({ message: "שגיאה ביצירת קישור הורדה" });
+    }
+};
+
+exports.detectSignatureSpots = async (req, res) => {
+    try {
+        const { fileKey } = req.body;
+        if (!fileKey) return res.status(400).json({ message: "missing fileKey" });
+
+        const cmd = new GetObjectCommand({ Bucket: BUCKET, Key: fileKey });
+        const obj = await r2.send(cmd);
+        const buffer = await streamToBuffer(obj.Body);
+
+        const spots = await detectHebrewSignatureSpotsFromPdfBuffer(buffer);
+
+        return res.json({ spots });
+    } catch (err) {
+        console.error("detectSignatureSpots error:", err);
+        return res.status(500).json({ message: "failed to detect signature spots" });
     }
 };

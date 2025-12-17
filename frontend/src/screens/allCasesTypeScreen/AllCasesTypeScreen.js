@@ -67,7 +67,6 @@ export default function AllCasesTypeScreen() {
 
     return (
         <SimpleScreen
-            style={styles.screenStyle(isSmallScreen)}
             imageBackgroundSource={images.Backgrounds.AppBackground}
         >
             {isSmallScreen && (
@@ -127,10 +126,6 @@ export default function AllCasesTypeScreen() {
 }
 
 const styles = {
-    screenStyle: () => ({
-        boxSizing: 'border-box',
-        flexDirection: 'column',
-    }),
     responsiveContainer: {
         display: 'flex',
         flexDirection: 'row-reverse',

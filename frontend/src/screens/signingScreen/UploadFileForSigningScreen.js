@@ -22,6 +22,9 @@ import { SigningManagerScreenName } from "./SigningManagerScreen";
 
 import { uploadFileToR2 } from "../../utils/fileUploadUtils";
 import PdfViewer from "../../components/specializedComponents/signFiles/pdfViewer/PdfViewer";
+import SearchInput from "../../components/specializedComponents/containers/SearchInput";
+import casesApi from "../../api/casesApi";
+import useHttpRequest from "../../hooks/useHttpRequest";
 
 export const uploadFileForSigningScreenName = "/upload-file-for-signing";
 
@@ -31,6 +34,10 @@ const styles = {
         flexDirection: "column",
         padding: isSmallScreen ? 0 : 16,
     }),
+    searchInput: {
+        marginTop: "12px",
+        maxWidth: '500px',
+    },
     headerRow: {
         alignItems: "center",
         marginBottom: 16,
@@ -46,6 +53,7 @@ const styles = {
         maxWidth: 1000,
     },
     formGroup: {
+        marginTop: 12,
         marginBottom: 16,
         width: "100%",
     },
@@ -133,22 +141,29 @@ export default function UploadFileForSigningScreen() {
     const { isSmallScreen } = useScreenSize();
     const navigate = useNavigate();
 
+    const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getCaseByName, null, () => { });
+
     const [caseId, setCaseId] = useState("");
     const [clientId, setClientId] = useState("");
     const [notes, setNotes] = useState("");
     const [selectedFile, setSelectedFile] = useState(null);
+
     const [signatureSpots, setSignatureSpots] = useState([]);
     const [isDragActive, setIsDragActive] = useState(false);
+
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState(null);
 
+    const [uploadedFileKey, setUploadedFileKey] = useState(null);
+    const [detecting, setDetecting] = useState(false);
+
     const fileInputRef = useRef(null);
 
-    const handleAddSpot = () => {
+    const handleAddSpotForPage = (pageNumber) => {
         setSignatureSpots((prev) => [
             ...prev,
             {
-                pageNum: 1,
+                pageNum: pageNumber,
                 x: 120,
                 y: 160,
                 width: 140,
@@ -169,7 +184,13 @@ export default function UploadFileForSigningScreen() {
         setSignatureSpots((prev) => prev.filter((_, i) => i !== index));
     };
 
+    const resetFileState = () => {
+        setUploadedFileKey(null);
+        setSignatureSpots([]);
+    };
+
     const handleFileChange = (e) => {
+        resetFileState();
         const f = e.target.files?.[0] || null;
         setSelectedFile(f);
     };
@@ -179,43 +200,93 @@ export default function UploadFileForSigningScreen() {
         e.stopPropagation();
         setIsDragActive(true);
     };
+
     const handleDragLeave = (e) => {
         e.preventDefault();
         e.stopPropagation();
         setIsDragActive(false);
     };
+
     const handleDragOver = (e) => {
         e.preventDefault();
         e.stopPropagation();
     };
+
     const handleDrop = (e) => {
         e.preventDefault();
         e.stopPropagation();
         setIsDragActive(false);
+
+        resetFileState();
+
         const f = e.dataTransfer.files?.[0] || null;
         if (f) setSelectedFile(f);
+    };
+
+    const validateForm = () => {
+        if (!caseId || !clientId || !selectedFile) {
+            setMessage({ type: "error", text: "יש למלא תיק, לקוח ולבחור קובץ." });
+            return false;
+        }
+        if (signatureSpots.length === 0) {
+            setMessage({ type: "error", text: "חייב להיות לפחות מקום חתימה אחד." });
+            return false;
+        }
+        return true;
+    };
+
+    const ensureUploadedKey = async () => {
+        if (uploadedFileKey) return uploadedFileKey;
+
+        const uploadRes = await uploadFileToR2(selectedFile);
+        const key = uploadRes?.key || uploadRes?.data?.key;
+        if (!key) throw new Error("missing key from uploadFileToR2");
+
+        setUploadedFileKey(key);
+        return key;
+    };
+
+    const handleDetectSpots = async () => {
+        if (!selectedFile) return;
+
+        try {
+            setDetecting(true);
+            setMessage(null);
+
+            const key = await ensureUploadedKey();
+
+            const detectRes = await signingFilesApi.detectSignatureSpots(key);
+            console.log('detectRes:', detectRes);
+
+            const spots = detectRes?.data?.spots || detectRes?.spots || [];
+            console.log('spots:', spots);
+
+
+            setSignatureSpots(spots);
+
+            if (!spots.length) {
+                setMessage({
+                    type: "error",
+                    text: "לא נמצאו מקומות חתימה אוטומטית. אפשר להוסיף ידנית.",
+                });
+            }
+        } catch (err) {
+            console.error(err);
+            setMessage({ type: "error", text: "שגיאה בזיהוי חתימות אוטומטי." });
+        } finally {
+            setDetecting(false);
+        }
     };
 
     const handleSubmit = async () => {
         setMessage(null);
 
-        if (!caseId || !clientId || !selectedFile || signatureSpots.length === 0) {
-            setMessage({
-                type: "error",
-                text: "יש למלא תיק, לקוח, לבחור קובץ ולהגדיר לפחות חתימה אחת.",
-            });
-            return;
-        }
+        if (!validateForm()) return;
 
         try {
             setLoading(true);
 
-            const uploadRes = await uploadFileToR2(selectedFile);
-            const key = uploadRes?.key || uploadRes?.data?.key;
-
-            if (!key) {
-                throw new Error("missing key from uploadFileToR2");
-            }
+            const key = await ensureUploadedKey();
 
             await signingFilesApi.uploadFileForSigning({
                 caseId: Number(caseId),
@@ -233,6 +304,8 @@ export default function UploadFileForSigningScreen() {
             setNotes("");
             setSelectedFile(null);
             setSignatureSpots([]);
+            setUploadedFileKey(null);
+
             if (fileInputRef.current) fileInputRef.current.value = "";
         } catch (err) {
             console.error(err);
@@ -240,6 +313,16 @@ export default function UploadFileForSigningScreen() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleSearch = (query) => {
+        SearchCaseByName(query);
+    };
+
+    const handleButtonPress = (query) => {
+        const foundItem = casesByName.find(caseItem => caseItem.CaseName === query);
+        setCaseId(foundItem?.CaseId || "");
+        setClientId(foundItem?.UserId || "");
     };
 
     return (
@@ -261,32 +344,21 @@ export default function UploadFileForSigningScreen() {
 
                 <SimpleContainer style={styles.formCard}>
                     {message && (
-                        <div
-                            style={message.type === "error" ? styles.errorMsg : styles.successMsg}
-                        >
+                        <div style={message.type === "error" ? styles.errorMsg : styles.successMsg}>
                             {message.text}
                         </div>
                     )}
 
-                    <SimpleContainer style={styles.formGroup}>
-                        <label style={styles.label}>מספר תיק *</label>
-                        <input
-                            style={styles.input}
-                            type="number"
-                            value={caseId}
-                            onChange={(e) => setCaseId(e.target.value)}
-                        />
-                    </SimpleContainer>
-
-                    <SimpleContainer style={styles.formGroup}>
-                        <label style={styles.label}>מספר לקוח *</label>
-                        <input
-                            style={styles.input}
-                            type="number"
-                            value={clientId}
-                            onChange={(e) => setClientId(e.target.value)}
-                        />
-                    </SimpleContainer>
+                    <SearchInput
+                        onSearch={handleSearch}
+                        title={"חיפוש תיק"}
+                        titleFontSize={20}
+                        isPerforming={isPerformingCasesById}
+                        queryResult={casesByName}
+                        getButtonTextFunction={(item) => item.CaseName}
+                        style={styles.searchInput}
+                        buttonPressFunction={handleButtonPress}
+                    />
 
                     <SimpleContainer style={styles.formGroup}>
                         <label style={styles.label}>קובץ PDF *</label>
@@ -314,8 +386,7 @@ export default function UploadFileForSigningScreen() {
 
                         {selectedFile && (
                             <div style={styles.fileName}>
-                                ✓ {selectedFile.name} (
-                                {(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                                ✓ {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
                             </div>
                         )}
                     </SimpleContainer>
@@ -335,25 +406,22 @@ export default function UploadFileForSigningScreen() {
                                 <TextBold24 style={{ fontSize: 18 }}>
                                     תצוגת מסמך והגדרת חתימות
                                 </TextBold24>
-                                <SecondaryButton onPress={handleAddSpot}>
-                                    + הוסף חתימה
+
+                                <SecondaryButton onPress={handleDetectSpots} disabled={detecting}>
+                                    {detecting ? "מזהה..." : "🤖 מצא חתימות אוטומטית"}
                                 </SecondaryButton>
                             </SimpleContainer>
 
                             <PdfViewer
                                 pdfFile={selectedFile}
-                                spots={signatureSpots.map((s) => ({
-                                    ...s,
-                                    page: s.pageNum || 1,
-                                }))}
-                                onUpdateSpot={(index, updates) =>
-                                    handleUpdateSpot(index, updates)
-                                }
+                                spots={signatureSpots}
+                                onUpdateSpot={handleUpdateSpot}
                                 onRemoveSpot={handleRemoveSpot}
+                                onAddSpotForPage={handleAddSpotForPage}
                             />
 
                             <Text14 style={styles.infoText}>
-                                גרור את קוביות החתימה למיקום הרצוי או מחק בעזרת ✕
+                                בכל עמוד יש כפתור "+ הוסף חתימה". גרור את הקוביות למיקום הרצוי או מחק בעזרת ✕
                             </Text14>
                         </>
                     )}

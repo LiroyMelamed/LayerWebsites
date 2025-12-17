@@ -70,7 +70,7 @@ export default function AllCasesScreen() {
     }
 
     return (
-        <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
+        <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
             {isSmallScreen && <TopToolBarSmallScreen chosenIndex={1} LogoNavigate={AdminStackName + MainScreenName} />}
 
             <SimpleScrollView>
@@ -115,11 +115,6 @@ export default function AllCasesScreen() {
 }
 
 const styles = {
-    screenStyle: () => ({
-        boxSizing: 'border-box',
-        display: 'flex',
-        flexDirection: 'column',
-    }),
     responsiveContainer: {
         display: 'flex',
         flexDirection: 'row-reverse',

@@ -28,7 +28,7 @@ export default function MainScreen() {
     }
 
     return (
-        <SimpleScreen style={styles.screenStyle(isSmallScreen)} imageBackgroundSource={images.Backgrounds.AppBackground}>
+        <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
             {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={AdminStackName + MainScreenName} />}
 
             <SimpleScrollView>
@@ -87,10 +87,6 @@ export default function MainScreen() {
 }
 
 const styles = {
-    screenStyle: () => ({
-        boxSizing: 'border-box',
-        flexDirection: 'column',
-    }),
     DataCardStyle: {
         cursor: 'pointer'
     }

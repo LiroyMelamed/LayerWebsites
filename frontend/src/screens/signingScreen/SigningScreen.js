@@ -23,10 +23,6 @@ import { ClientMainScreenName } from "../client/clientMainScreen/ClientMainScree
 export const SigningScreenName = "/SigningScreen";
 
 const styles = {
-    screenStyle: () => ({
-        boxSizing: "border-box",
-        flexDirection: "column",
-    }),
     headerRow: {
         alignItems: "center",
     },
@@ -154,7 +150,6 @@ export default function SigningScreen() {
 
     return (
         <SimpleScreen
-            style={styles.screenStyle(isSmallScreen)}
             imageBackgroundSource={images.Backgrounds.AppBackground}
         >
             {isSmallScreen && (
