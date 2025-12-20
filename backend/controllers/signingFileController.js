@@ -16,32 +16,64 @@ exports.uploadFileForSigning = async (req, res) => {
             signatureLocations,
             notes,
             expiresAt,
+            signers, // NEW: array of signer objects [{userId, name}, ...]
         } = req.body;
 
         const lawyerId = req.user.UserId;
 
-        if (!caseId || !clientId || !fileName || !fileKey) {
+        console.log('[controller] ========== UPLOAD FILE FOR SIGNING ==========');
+        console.log('[controller] Request from lawyer:', lawyerId);
+        console.log('[controller] Case ID:', caseId);
+        console.log('[controller] File name:', fileName);
+        console.log('[controller] File key:', fileKey);
+        console.log('[controller] Signers received:', signers);
+        console.log('[controller] Signature locations:', signatureLocations?.length || 0, 'spots');
+
+        // Support both single client (legacy) and multiple signers (new)
+        const signersList = signers && Array.isArray(signers) ? signers :
+            (clientId ? [{ userId: clientId, name: "חתימה ✍️" }] : []);
+
+        console.log('[controller] Final signers list to use:', signersList.map(s => ({ userId: s.userId, name: s.name })));
+
+        if (!caseId || !fileName || !fileKey || signersList.length === 0) {
             return res
                 .status(400)
-                .json({ message: "חסרים שדות חובה (תיק, לקוח, שם קובץ, fileKey)" });
+                .json({ message: "חסרים שדות חובה (תיק, שם קובץ, fileKey, או חתומים)" });
         }
+
+        // For backward compatibility, use first signer as primary clientId
+        const primaryClientId = signersList[0].userId || clientId;
 
         const insertFile = await pool.query(
             `insert into signingfiles
              (caseid, lawyerid, clientid, filename, filekey, originalfilekey, status, notes, expiresat)
              values ($1,$2,$3,$4,$5,$5,'pending',$6,$7)
              returning signingfileid as "SigningFileId"`,
-            [caseId, lawyerId, clientId, fileName, fileKey, notes || null, expiresAt || null]
+            [caseId, lawyerId, primaryClientId, fileName, fileKey, notes || null, expiresAt || null]
         );
 
         const signingFileId = insertFile.rows[0].SigningFileId;
+        console.log('[controller] Created signing file with ID:', signingFileId);
 
         if (Array.isArray(signatureLocations)) {
+            console.log('[controller] Processing', signatureLocations.length, 'signature locations...');
             for (const spot of signatureLocations) {
+                // Try to match spot to a specific signer based on signerName or index
+                let signerName = spot.signerName || "חתימה ✍️";
+                let signerUserId = null;
+
+                // If spot has a signerIndex, use that signer
+                if (spot.signerIndex !== undefined && spot.signerIndex < signersList.length) {
+                    signerUserId = signersList[spot.signerIndex].userId;
+                    signerName = signersList[spot.signerIndex].name;
+                }
+
+                console.log(`[controller]   Spot page ${spot.pageNum}: signerIndex=${spot.signerIndex}, signerName="${signerName}", signerUserId=${signerUserId}`);
+
                 await pool.query(
                     `insert into signaturespots
-                     (signingfileid, pagenumber, x, y, width, height, signername, isrequired)
-                     values ($1,$2,$3,$4,$5,$6,$7,$8)`,
+                     (signingfileid, pagenumber, x, y, width, height, signername, isrequired, signeruserid)
+                     values ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
                     [
                         signingFileId,
                         spot.pageNum || 1,
@@ -49,24 +81,29 @@ exports.uploadFileForSigning = async (req, res) => {
                         spot.y ?? 50,
                         spot.width ?? 150,
                         spot.height ?? 75,
-                        spot.signerName || "חתימה",
+                        signerName,
                         spot.isRequired !== false,
+                        signerUserId || null,
                     ]
                 );
             }
         }
 
-        await sendAndStoreNotification(
-            clientId,
-            "קובץ חדש לחתימה",
-            `יש לך קובץ חדש לחתימה: ${fileName}`,
-            { signingFileId, type: "signing_pending" }
-        );
+        // Send notification to each signer
+        for (const signer of signersList) {
+            await sendAndStoreNotification(
+                signer.userId,
+                "קובץ חדש לחתימה",
+                `יש לך קובץ חדש לחתימה: ${fileName}`,
+                { signingFileId, type: "signing_pending" }
+            );
+        }
 
         return res.json({
             success: true,
             signingFileId,
-            message: "קובץ נשלח ללקוח לחתימה",
+            message: "קובץ נשלח לחתומים לחתימה",
+            signerCount: signersList.length,
         });
     } catch (err) {
         console.error("uploadFileForSigning error:", err);
@@ -572,18 +609,34 @@ exports.getSignedFileDownload = async (req, res) => {
 
 exports.detectSignatureSpots = async (req, res) => {
     try {
-        const { fileKey } = req.body;
+        const { fileKey, signers } = req.body;
+
+        console.log('[controller] ========== DETECT SIGNATURE SPOTS ==========');
+        console.log('[controller] File key:', fileKey);
+        console.log('[controller] Signers received:', signers);
+
         if (!fileKey) return res.status(400).json({ message: "missing fileKey" });
 
         const cmd = new GetObjectCommand({ Bucket: BUCKET, Key: fileKey });
         const obj = await r2.send(cmd);
         const buffer = await streamToBuffer(obj.Body);
 
-        const spots = await detectHebrewSignatureSpotsFromPdfBuffer(buffer);
+        console.log('[controller] Downloaded file buffer, size:', buffer.length, 'bytes');
 
-        return res.json({ spots });
+        let spots = await detectHebrewSignatureSpotsFromPdfBuffer(buffer, signers && Array.isArray(signers) ? signers : null);
+
+        console.log('[controller] Detection complete, found', spots.length, 'spots');
+        console.log('[controller] Returning spots:', spots.map(s => ({
+            pageNum: s.pageNum,
+            signerIndex: s.signerIndex,
+            signerName: s.signerName,
+            x: s.x,
+            y: s.y
+        })));
+
+        return res.json({ spots, signerCount: signers?.length || 1 });
     } catch (err) {
-        console.error("detectSignatureSpots error:", err);
+        console.error('[controller] detectSignatureSpots error:', err);
         return res.status(500).json({ message: "failed to detect signature spots" });
     }
 };

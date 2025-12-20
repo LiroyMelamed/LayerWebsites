@@ -36,8 +36,12 @@ const signingFilesApi = {
         return await ApiUtils.get(`${base}/${signingFileId}/download`);
     },
 
-    detectSignatureSpots: async (fileKey) => {
-        return await ApiUtils.post(`${base}/detect-spots`, { fileKey });
+    detectSignatureSpots: async (fileKey, signers = null) => {
+        const payload = { fileKey };
+        if (signers) {
+            payload.signers = signers;
+        }
+        return await ApiUtils.post(`${base}/detect-spots`, payload);
     },
 };
 

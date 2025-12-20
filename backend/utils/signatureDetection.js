@@ -3,53 +3,113 @@ const FRONTEND_PAGE_RENDER_WIDTH = 800;
 const KEYWORDS = [
     "חתימה",
     "חתום כאן",
-    "שם",
-    "שם ומשפחה",
-    "ת.ז",
-    'ת"ז',
-    "תאריך",
     "חתימת",
 ];
 
-const MAX_KEYWORD_TO_LINE_DX = 260;
-const MAX_KEYWORD_TO_LINE_DY = 28;
 
-const MIN_LINE_LENGTH = 140;
-const MAX_LINE_THICKNESS = 6;
+const MIN_TEXT_UNDERLINE_CHARS = 6;
+const MIN_TEXT_UNDERLINE_WIDTH = 30;
 
 const DEFAULT_SPOT_HEIGHT = 50;
-const SPOT_PADDING_Y = 8;
+
+const SPOT_Y_OFFSET_PDF = 24;
 
 function normalizeHebrew(str) {
-    return (str || "")
+    if (!str) return "";
+    return str
         .replace(/\s+/g, " ")
-        .replace(/[״"]/g, '"')
+        .replace(/[״"״]/g, '"')  // normalize different quote marks
+        .replace(/\u202E/g, "")  // remove RTL override
+        .replace(/\u202D/g, "")  // remove LTR override
         .trim();
 }
 
 function hasHebKeyword(text) {
     const t = normalizeHebrew(text);
-    return KEYWORDS.some((k) => t.includes(k));
+    if (!t) return false;
+
+    // Only match if text is relatively short (likely a field label, not paragraph text)
+    // Field labels are typically under 100 characters
+    if (t.length > 100) return false;
+
+    // Check keywords in order (longest first to avoid substring matches)
+    // This prevents "בדיקה מסמכים" from matching "בדיקה מסמכים 2" or "בדיקה מסמכים 3"
+    for (const k of KEYWORDS) {
+        const normalized = normalizeHebrew(k);
+        // Match keyword as complete word or with colon/punctuation
+        // Create regex pattern that matches: "שם :", "שם", "ת.ז", "ת"ז" etc.
+        const patterns = [
+            normalized + "\\s*:",  // "שם :"
+            "^" + normalized + "$",  // exactly the word
+            normalized + "\\s*" + normalized,  // "שם ומשפחה" style
+        ];
+        if (patterns.some(p => new RegExp(p).test(t))) {
+            return true;
+        }
+        // For short texts, allow substring match as fallback
+        if (t.length < 40 && t.includes(normalized)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function keywordType(text) {
     const t = normalizeHebrew(text);
+    // Check in order (longest first) to avoid substring matches
     if (t.includes("חתום כאן")) return "חתום כאן";
     if (t.includes("חתימה") || t.includes("חתימת")) return "חתימה";
-=    if (t.includes("שם") || t.includes("שם ומשפחה")) return "שם";
+    if (t.includes("שם") || t.includes("שם ומשפחה")) return "שם";
     if (t.includes("ת.ז") || t.includes('ת"ז')) return 'ת"ז';
     if (t.includes("תאריך")) return "תאריך";
     return "חתימה";
 }
 
+function mapSignerName(kind) {
+    if (kind === "חתימה" || kind === "חתום כאן") return "חתימה ✍️";
+    if (kind === "שם") return "שם ✍️";
+    if (kind === 'ת"ז') return 'ת"ז ✍️';
+    if (kind === "תאריך") return "תאריך ✍️";
+    return "חתימה ✍️";
+}
+
 function normalizeTextItem(it) {
+    if (!it || !it.str) return null;
+
     const str = normalizeHebrew(it.str);
+    if (!str) return null;  // Skip empty items
+
     const t = it.transform || [1, 0, 0, 1, 0, 0];
     const x = t[4] || 0;
     const y = t[5] || 0;
-    const width = it.width || 0;
+    const width = Math.abs(it.width || 0);
     const height = Math.abs(t[3] || 10) || 10;
+
     return { str, x, y, width, height };
+}
+
+function isUnderlineText(str) {
+    const s = (str || "").replace(/\s+/g, "");
+    if (s.length < MIN_TEXT_UNDERLINE_CHARS) return false;
+    if (/^_+$/.test(s)) return true;
+    if (/^[\-\u2014]+$/.test(s)) return true;
+    return false;
+}
+
+function makeSpotFromLine(line, pageNum, signerName) {
+    const xOffset = -68;
+
+    return {
+        pageNum,
+        x: line.x + xOffset,
+        y: line.y + SPOT_Y_OFFSET_PDF,
+        width: Math.min(Math.max(line.width, 120), 260),
+        height: DEFAULT_SPOT_HEIGHT,
+        signerName,
+        isRequired: true,
+        confidence: line.source === "text-underline" ? 0.95 : 0.90,
+        source: line.source,
+    };
 }
 
 function toFrontendCoords(rect, viewportWidth, viewportHeight) {
@@ -89,245 +149,601 @@ function dedupe(spots, thresholdPx = 18) {
     return out;
 }
 
-async function extractHorizontalLines(page, viewport) {
-    const opList = await page.getOperatorList();
-    const fnArray = opList.fnArray || [];
-    const argsArray = opList.argsArray || [];
-
-    const OPS = page._pdfjsOps;
-
-    let curX = 0,
-        curY = 0;
-    const segments = [];
-    let pathSegments = [];
-
-    const pushLine = (x1, y1, x2, y2) => {
-        pathSegments.push({ x1, y1, x2, y2 });
-    };
-
-    for (let i = 0; i < fnArray.length; i++) {
-        const fn = fnArray[i];
-        const args = argsArray[i] || [];
-
-        if (fn === OPS.moveTo) {
-            curX = args[0];
-            curY = args[1];
-        } else if (fn === OPS.lineTo) {
-            const x = args[0];
-            const y = args[1];
-            pushLine(curX, curY, x, y);
-            curX = x;
-            curY = y;
-        } else if (fn === OPS.constructPath) {
-            const ops = args[0] || [];
-            const coords = args[1] || [];
-            let ci = 0;
-
-            for (const op of ops) {
-                if (op === 13) {
-                    const x = coords[ci++];
-                    const y = coords[ci++];
-                    curX = x;
-                    curY = y;
-                } else if (op === 14) {
-                    const x = coords[ci++];
-                    const y = coords[ci++];
-                    pushLine(curX, curY, x, y);
-                    curX = x;
-                    curY = y;
-                } else {
-                    if (op === 15) ci += 6;
-                }
-            }
-        } else if (fn === OPS.stroke) {
-            for (const s of pathSegments) segments.push(s);
-            pathSegments = [];
-        } else if (fn === OPS.endPath) {
-            pathSegments = [];
-        }
-    }
-
-    const lines = [];
-    for (const s of segments) {
-        const dx = s.x2 - s.x1;
-        const dy = s.y2 - s.y1;
-        const len = Math.sqrt(dx * dx + dy * dy);
-
-        if (len < MIN_LINE_LENGTH) continue;
-        if (Math.abs(dy) > 2.2) continue;
-
-        const xLeft = Math.min(s.x1, s.x2);
-        const xRight = Math.max(s.x1, s.x2);
-        const y = (s.y1 + s.y2) / 2;
-
-        if (xRight <= 0 || xLeft >= viewport.width) continue;
-        if (y <= 0 || y >= viewport.height) continue;
-
-        lines.push({
-            x: xLeft,
-            y,
-            width: xRight - xLeft,
-            height: DEFAULT_SPOT_HEIGHT,
-        });
-    }
-
-    const out = [];
-    for (const l of lines.sort((a, b) => a.y - b.y)) {
-        const exists = out.some(
-            (o) => Math.abs(o.y - l.y) < 2.5 && Math.abs(o.x - l.x) < 8 && Math.abs(o.width - l.width) < 10
-        );
-        if (!exists) out.push(l);
-    }
-
-    return out;
-}
-
-function findKeywordAnchors(items) {
-    const anchors = [];
-    for (const it of items) {
-        if (!it.str) continue;
-        if (!hasHebKeyword(it.str)) continue;
-
-        anchors.push({
-            x: it.x,
-            y: it.y,
-            width: it.width || 0,
-            height: it.height || 10,
-            text: it.str,
-            kind: keywordType(it.str),
-        });
-    }
-    return anchors;
-}
-
-function pickLineNearAnchor(lines, anchor) {
-    let best = null;
-    let bestScore = Infinity;
-
-    for (const l of lines) {
-        const dy = Math.abs(l.y - anchor.y);
-        if (dy > MAX_KEYWORD_TO_LINE_DY) continue;
-
-        const anchorCenterX = anchor.x + (anchor.width || 0) / 2;
-        const lineCenterX = l.x + l.width / 2;
-        const dx = Math.abs(lineCenterX - anchorCenterX);
-        if (dx > MAX_KEYWORD_TO_LINE_DX) continue;
-
-        const score = dy * 10 + dx;
-        if (score < bestScore) {
-            bestScore = score;
-            best = l;
-        }
-    }
-
-    return best;
-}
-
-function makeSpotFromLine(line, pageNum, signerName) {
-    return {
-        pageNum,
-        x: line.x,
-        y: line.y + SPOT_PADDING_Y,
-        width: Math.min(Math.max(line.width, 120), 260),
-        height: DEFAULT_SPOT_HEIGHT,
-        signerName,
-        isRequired: true,
-        confidence: 0.92,
-        source: "vector-line",
-    };
-}
-
-function mapSignerName(kind) {
-    if (kind === "חתימה" || kind === "חתום כאן") return "חתימה ✍️";
-    if (kind === "שם") return "שם ✍️";
-    if (kind === 'ת"ז') return 'ת"ז ✍️';
-    if (kind === "תאריך") return "תאריך ✍️";
-    return "חתימה ✍️";
-}
-
 async function loadPdfjs() {
+    // works with pdfjs-dist@4.x in Node (ESM)
     const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
     return pdfjs;
 }
 
-async function detectHebrewSignatureSpotsFromPdfBuffer(buffer) {
+async function detectHebrewSignatureSpotsFromPdfBuffer(buffer, signers = null) {
+    if (!buffer || buffer.length === 0) {
+        throw new Error("Invalid PDF buffer: empty or null");
+    }
+
     const pdfjs = await loadPdfjs();
 
     const loadingTask = pdfjs.getDocument({ data: new Uint8Array(buffer) });
     const pdf = await loadingTask.promise;
 
     const allSpots = [];
+    const allPageItems = [];
 
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-        const page = await pdf.getPage(pageNum);
+        try {
+            const page = await pdf.getPage(pageNum);
+            const viewport = page.getViewport({ scale: 1 });
 
-        page._pdfjsOps = pdfjs.OPS;
+            const textContent = await page.getTextContent();
+            const items = (textContent.items || [])
+                .map(normalizeTextItem)
+                .filter((it) => it !== null && it.str);
 
-        const viewport = page.getViewport({ scale: 1 });
-
-        const lines = await extractHorizontalLines(page, viewport);
-
-        if (!lines.length) continue;
-
-        const textContent = await page.getTextContent();
-        const items = (textContent.items || [])
-            .map(normalizeTextItem)
-            .filter((it) => it.str);
-
-        const anchors = findKeywordAnchors(items);
-        if (!anchors.length) continue;
-
-        for (const a of anchors) {
-            const line = pickLineNearAnchor(lines, a);
-            if (!line) continue;
-
-            const spotPdf = makeSpotFromLine(line, pageNum, mapSignerName(a.kind));
-
-            const spotUi = toFrontendCoords(spotPdf, viewport.width, viewport.height);
-
-            const pageWidthPx = FRONTEND_PAGE_RENDER_WIDTH;
-            const pageHeightPx = Math.round(viewport.height * spotUi.scale);
-
-            const clamped = clampToPage(
-                {
+            allPageItems.push(
+                ...items.map((it) => ({
+                    ...it,
                     pageNum,
-                    x: spotUi.x,
-                    y: spotUi.y,
-                    width: spotUi.width,
-                    height: spotUi.height,
-                    signerName: spotPdf.signerName,
-                    isRequired: true,
-                    confidence: spotPdf.confidence,
-                    source: spotPdf.source,
-                },
-                pageWidthPx,
-                pageHeightPx
+                }))
             );
 
-            allSpots.push(clamped);
+            const yMap = {};
+            for (const it of items) {
+                const y = Math.round(it.y * 2) / 2;
+                if (!yMap[y]) yMap[y] = [];
+                yMap[y].push(it);
+            }
+
+            for (const yStr of Object.keys(yMap)) {
+                const y = parseFloat(yStr);
+                const itemsAtY = yMap[yStr];
+
+                const hasKeyword = itemsAtY.some(it => hasHebKeyword(it.str));
+                const hasUnderline = itemsAtY.some(it => isUnderlineText(it.str) && (it.width || 0) >= MIN_TEXT_UNDERLINE_WIDTH);
+
+                const hasShortText = itemsAtY.some(it =>
+                    it.str && it.str.trim().length > 1 && it.str.trim().length < 100 &&
+                    /[\u0590-\u05FF]/.test(it.str)
+                );
+
+                if ((!hasKeyword && !hasShortText) || !hasUnderline) continue;
+
+                const keywordItems = itemsAtY.filter(it => hasHebKeyword(it.str));
+                const shortTextItems = itemsAtY.filter(it =>
+                    it.str && it.str.trim().length > 1 && it.str.trim().length < 100 &&
+                    /[\u0590-\u05FF]/.test(it.str)
+                );
+                const keywords = keywordItems.length > 0 ? keywordItems : shortTextItems;
+                const underlines = itemsAtY.filter(it => isUnderlineText(it.str) && (it.width || 0) >= MIN_TEXT_UNDERLINE_WIDTH);
+
+                console.log(`[sig-detect] page=${pageNum} found signature section at y=${y} with ${keywords.length} keywords and ${underlines.length} underlines`);
+
+                const usedKeywordIndices = new Set();
+
+                for (const ul of underlines) {
+                    let bestKeywordIdx = -1;
+                    let bestDistance = Infinity;
+
+                    for (let i = 0; i < keywords.length; i++) {
+                        if (usedKeywordIndices.has(i)) continue;
+
+                        const kw = keywords[i];
+                        const dx = Math.abs(ul.x + ul.width / 2 - (kw.x + kw.width / 2));
+                        if (dx < bestDistance) {
+                            bestDistance = dx;
+                            bestKeywordIdx = i;
+                        }
+                    }
+
+                    if (bestKeywordIdx >= 0 && bestDistance < 150) {
+                        const bestKeyword = keywords[bestKeywordIdx];
+                        usedKeywordIndices.add(bestKeywordIdx);
+
+                        let signerName = mapSignerName(keywordType(bestKeyword.str));
+                        if (!hasKeyword) {
+                            signerName = (bestKeyword.str || "חתימה").trim() + " ✍️";
+                        }
+
+                        const spotPdf = makeSpotFromLine(ul, pageNum, signerName);
+                        const spotUi = toFrontendCoords(spotPdf, viewport.width, viewport.height);
+
+                        const pageWidthPx = FRONTEND_PAGE_RENDER_WIDTH;
+                        const pageHeightPx = Math.round(viewport.height * spotUi.scale);
+
+                        const clamped = clampToPage(
+                            {
+                                pageNum,
+                                x: spotUi.x,
+                                y: spotUi.y,
+                                width: spotUi.width,
+                                height: spotUi.height,
+                                // Keep original PDF coordinates for accurate matching against PDF text items
+                                pdfX: spotPdf.x,
+                                pdfY: spotPdf.y,
+                                pdfWidth: spotPdf.width,
+                                pdfHeight: spotPdf.height,
+                                // Anchor at the underline position (before we shift the rect down).
+                                // This aligns with signer labels which are typically on the underline baseline.
+                                pdfAnchorX: ul.x + (ul.width || 0) / 2,
+                                pdfAnchorY: ul.y,
+                                signerName: spotPdf.signerName,
+                                isRequired: true,
+                                confidence: 0.95,
+                                source: "signature-section",
+                            },
+                            pageWidthPx,
+                            pageHeightPx
+                        );
+
+                        allSpots.push(clamped);
+                        console.log(`[sig-detect] page=${pageNum} added spot: "${clamped.signerName}" at (${clamped.x}, ${clamped.y})`);
+                    }
+                }
+            }
+        } catch (e) {
+            console.error(`[sig-detect] page=${pageNum} processing error:`, e);
+            continue;
         }
     }
 
     let spots = dedupe(allSpots, 22);
 
-    spots = spots
-        .sort((a, b) => (b.confidence || 0) - (a.confidence || 0) || b.y - a.y)
-        .slice(0, 6);
+    console.log('[sig-detect] ========== ALL EXTRACTED TEXT ITEMS ==========');
+    const itemsByPage = {};
+    for (const item of allPageItems) {
+        if (!itemsByPage[item.pageNum]) itemsByPage[item.pageNum] = [];
+        itemsByPage[item.pageNum].push(item);
+    }
+    for (const page of Object.keys(itemsByPage).sort((a, b) => a - b)) {
+        console.log(`[sig-detect] PAGE ${page}:`);
+        itemsByPage[page].forEach(item => {
+            console.log(`[sig-detect]   "${item.str}" at x=${item.x.toFixed(2)}, y=${item.y.toFixed(2)}`);
+        });
+    }
+    console.log('[sig-detect] ================================================\n');
 
+    spots = spots
+        .sort(
+            (a, b) =>
+                (b.confidence || 0) - (a.confidence || 0) ||
+                a.pageNum - b.pageNum ||
+                b.y - a.y  // Descending Y: highest Y (top of page visually) comes first
+        );
+
+    const spotsByPageAndName = {};
+    spots.forEach(spot => {
+        const key = `${spot.pageNum}-${spot.signerName}`;
+        if (!spotsByPageAndName[key]) {
+            spotsByPageAndName[key] = [];
+        }
+        spotsByPageAndName[key].push(spot);
+    });
+
+    spots = spots.map(spot => {
+        const key = `${spot.pageNum}-${spot.signerName}`;
+        const duplicates = spotsByPageAndName[key];
+        if (duplicates.length > 1) {
+            const sorted = duplicates.sort((a, b) => a.y - b.y);
+            const index = sorted.findIndex(s => s === spot);
+            if (index >= 0) {
+                return {
+                    ...spot,
+                    signerName: `${spot.signerName.replace(' ✍️', '')} ${index + 1} ✍️`,
+                };
+            }
+        }
+        return spot;
+    });
+
+    if (signers && signers.length > 0) {
+        console.log('[sig-detect] ========== CALLING SMART MATCH ASSIGNMENT ==========');
+        console.log('[sig-detect] Signers passed to assignment:', signers.map(s => ({
+            name: typeof s === 'string' ? s : (s.name || s.Name || '?'),
+            userId: typeof s === 'string' ? null : (s.userId || s.UserId || null)
+        })));
+        console.log('[sig-detect] Spots before assignment:', spots.length);
+        spots = assignSignersToSpots(spots, signers, allPageItems);
+        console.log('[sig-detect] Spots after assignment:', spots.length);
+    }
+
+    console.log(`[sig-detect] final result: ${spots.length} spots detected`);
     return spots;
 }
 
 function streamToBuffer(stream) {
     return new Promise((resolve, reject) => {
+        if (!stream) {
+            return reject(new Error("Stream is null or undefined"));
+        }
+
         const chunks = [];
-        stream.on("data", (chunk) => chunks.push(chunk));
-        stream.on("end", () => resolve(Buffer.concat(chunks)));
-        stream.on("error", reject);
+        let totalSize = 0;
+        const MAX_FILE_SIZE = 50 * 1024 * 1024;
+
+        stream.on("data", (chunk) => {
+            if (!chunk) return;
+
+            totalSize += chunk.length;
+            if (totalSize > MAX_FILE_SIZE) {
+                stream.destroy();
+                reject(new Error(`File exceeds maximum size of ${MAX_FILE_SIZE / 1024 / 1024}MB`));
+                return;
+            }
+
+            chunks.push(chunk);
+        });
+
+        stream.on("end", () => {
+            if (chunks.length === 0) {
+                reject(new Error("Stream ended with no data"));
+                return;
+            }
+            try {
+                const buffer = Buffer.concat(chunks);
+                if (buffer.length === 0) {
+                    reject(new Error("Resulting buffer is empty"));
+                    return;
+                }
+                resolve(buffer);
+            } catch (err) {
+                reject(new Error(`Failed to concatenate buffers: ${err.message}`));
+            }
+        });
+
+        stream.on("error", (err) => {
+            reject(new Error(`Stream error: ${err.message}`));
+        });
+
+        // Handle premature close
+        stream.on("close", () => {
+            if (chunks.length > 0) {
+                try {
+                    resolve(Buffer.concat(chunks));
+                } catch (err) {
+                    reject(new Error(`Failed to concatenate buffers on close: ${err.message}`));
+                }
+            } else {
+                reject(new Error("Stream closed with no data"));
+            }
+        });
     });
+}
+
+function assignSignersToSpots(spots, signers, pageItems = null) {
+    if (!signers || signers.length === 0) {
+        return spots;
+    }
+
+    if (pageItems && pageItems.length > 0) {
+        return assignSignersToSpotsSmartMatch(spots, signers, pageItems);
+    }
+
+    return assignSignersToSpotsRoundRobin(spots, signers);
+}
+
+/**
+ * Smart matching: finds signer names near signature spots
+ */
+function assignSignersToSpotsSmartMatch(spots, signers, pageItems) {
+    const normalizeText = (text) => {
+        if (!text) return "";
+        return text
+            .toLowerCase()
+            .replace(/\s+/g, " ")
+            .trim();
+    };
+
+    const signerNameMap = signers.map((signer, idx) => {
+        // Support both 'name' and 'Name' properties (frontend uses 'Name' from API)
+        const name = typeof signer === 'string' ? signer : (signer.name || signer.Name || '');
+        const parts = name
+            .split(/\s+/)
+            .map((p) => normalizeText(p))
+            .filter((p) => p.length > 0);
+
+        return {
+            index: idx,
+            signer,
+            name,
+            normalized: normalizeText(name),
+            parts,
+        };
+    });
+
+    // Build a set of unique tokens across signers (e.g., first names).
+    // This avoids matching on common tokens like "בדיקה" which appear in all names.
+    const tokenFrequency = {};
+    for (const s of signerNameMap) {
+        for (const part of s.parts) {
+            tokenFrequency[part] = (tokenFrequency[part] || 0) + 1;
+        }
+    }
+    const uniqueTokens = new Set(
+        Object.keys(tokenFrequency).filter((t) => tokenFrequency[t] === 1 && t.length > 1)
+    );
+
+    const tokenToSignerIndex = {};
+    for (const s of signerNameMap) {
+        for (const part of s.parts) {
+            if (uniqueTokens.has(part)) {
+                tokenToSignerIndex[part] = s.index;
+            }
+        }
+    }
+
+    // Precompute per-page candidates for signer labels found in the PDF text.
+    // PDFJS sometimes splits a single Hebrew name into multiple items (e.g., "ליא" + "ב").
+    // To handle that, we group items by (page, y) and join them (right-to-left by x).
+    const pageCandidates = {};
+    const itemsByPageAndLine = {};
+
+    const lineKey = (pageNum, y) => {
+        const yKey = Math.round((y || 0) * 2) / 2; // group by half-point
+        return `${pageNum}::${yKey}`;
+    };
+
+    for (const item of pageItems) {
+        if (!item || !item.str || !item.pageNum) continue;
+        const key = lineKey(item.pageNum, item.y);
+        if (!itemsByPageAndLine[key]) itemsByPageAndLine[key] = [];
+        itemsByPageAndLine[key].push(item);
+    }
+
+    for (const key of Object.keys(itemsByPageAndLine)) {
+        const items = itemsByPageAndLine[key];
+        if (!items || items.length === 0) continue;
+
+        const pageNum = items[0].pageNum;
+        const y = items[0].y || 0;
+
+        // Join fragments right-to-left to reconstruct Hebrew words.
+        const joined = normalizeText(
+            items
+                .slice()
+                .sort((a, b) => (b.x || 0) - (a.x || 0))
+                .map((it) => it.str)
+                .join('')
+        );
+
+        for (const token of uniqueTokens) {
+            if (!joined || !joined.includes(token)) continue;
+            const signerIndex = tokenToSignerIndex[token];
+            if (signerIndex === undefined) continue;
+
+            // Use the rightmost x as the label anchor.
+            const rightmostX = items.reduce((mx, it) => Math.max(mx, it.x || 0), 0);
+
+            if (!pageCandidates[pageNum]) pageCandidates[pageNum] = [];
+            pageCandidates[pageNum].push({
+                signerIndex,
+                token,
+                x: rightmostX,
+                y,
+                raw: joined,
+            });
+        }
+    }
+
+    console.log('[smart-match] ========== SMART MATCH START ==========');
+    console.log('[smart-match] Total spots to assign:', spots.length);
+    console.log('[smart-match] Unique tokens used for matching:', Array.from(uniqueTokens));
+
+    const assignedSpots = spots.map((spot) => {
+        const spotPdfX = typeof spot.pdfAnchorX === 'number'
+            ? spot.pdfAnchorX
+            : (typeof spot.pdfX === 'number' ? spot.pdfX : (spot.x || 0));
+        const spotPdfY = typeof spot.pdfAnchorY === 'number'
+            ? spot.pdfAnchorY
+            : (typeof spot.pdfY === 'number' ? spot.pdfY : (spot.y || 0));
+
+        console.log(`\n[smart-match] === SPOT ${spots.indexOf(spot) + 1} === page ${spot.pageNum}, uiY=${(spot.y || 0).toFixed(2)}, pdfAnchorY=${spotPdfY.toFixed(2)}`);
+
+        // 1) Best path: match using signer label tokens found on the same page.
+        const candidates = pageCandidates[spot.pageNum] || [];
+        if (candidates.length > 0) {
+            let best = null;
+            for (const c of candidates) {
+                const vertDist = Math.abs((c.y || 0) - spotPdfY);
+                const horizDist = Math.abs((c.x || 0) - spotPdfX);
+                const score = vertDist * 10 + horizDist;
+
+                if (!best || score < best.score) {
+                    best = { ...c, score, vertDist, horizDist };
+                }
+            }
+
+            // If the closest label is reasonably close vertically, trust it.
+            if (best && best.vertDist < 60) {
+                const signer = signers[best.signerIndex];
+                const signerName = typeof signer === 'string' ? signer : (signer.name || signer.Name || '');
+                console.log(
+                    `[smart-match]   ✓ LABEL MATCH: token="${best.token}" ("${best.raw}") -> signer ${best.signerIndex} "${signerName}" (pdfVertDist=${best.vertDist.toFixed(
+                        1
+                    )}, pdfHorizDist=${best.horizDist.toFixed(1)})`
+                );
+
+                return {
+                    ...spot,
+                    signerIndex: best.signerIndex,
+                    signerName,
+                    signerUserId: typeof signer === 'string' ? null : (signer.userId || signer.UserId || null),
+                };
+            }
+        }
+
+        // FALLBACK: Try to match signer names from nearby text
+        const nearbyItems = pageItems.filter((item) => {
+            if (!item.str || item.pageNum !== spot.pageNum) return false;
+            const verticalDistance = Math.abs((item.y || 0) - spotPdfY);
+            return verticalDistance < 160;  // PDF-space: signer labels are close to their underline
+        });
+
+        console.log(`[smart-match] Found ${nearbyItems.length} nearby items (pdf vertical distance < 160):`);
+        nearbyItems.forEach(item => {
+            const vertDist = Math.abs((item.y || 0) - spotPdfY);
+            console.log(`[smart-match]   "${item.str}" at x=${item.x.toFixed(2)}, y=${item.y.toFixed(2)} (pdfVertDist=${vertDist.toFixed(2)})`);
+        });
+
+        // Strategy: Match signers based on which signer names appear in nearby text
+        // Build a map of which signer indices have names present in nearby items
+        const presentSigners = new Set();  // signerIndex values
+        const signerToClosestDist = {};  // signerIndex -> closest distance to their name
+
+        for (const item of nearbyItems) {
+            const itemText = normalizeText(item.str);
+            const vertDist = Math.abs((item.y || 0) - spotPdfY);
+            const horizDist = Math.abs((item.x || 0) - spotPdfX);
+            const totalDist = vertDist * 10 + horizDist;  // Strongly penalize vertical distance
+
+            for (const signerInfo of signerNameMap) {
+                // Check if this item contains parts of this signer's name  
+                // Prefer matching the first name (most distinctive part) over last name
+                let matched = false;
+                let matchScore = 0;  // Track quality of match: full name > first name > last name
+
+                for (let partIdx = 0; partIdx < signerInfo.parts.length; partIdx++) {
+                    const part = signerInfo.parts[partIdx];
+                    // Prefer unique tokens only; shared tokens (like last name) are allowed but lower quality
+                    if (part.length > 1 && itemText.includes(part)) {
+                        matched = true;
+                        const uniquenessBonus = uniqueTokens.has(part) ? 200 : 0;
+                        const positionScore = 100 / (partIdx + 1);
+                        matchScore = Math.max(matchScore, uniquenessBonus + positionScore);
+                    }
+                }
+
+                if (matched) {
+                    presentSigners.add(signerInfo.index);
+                    // Store the match score along with distance
+                    if (!signerToClosestDist[signerInfo.index]) {
+                        signerToClosestDist[signerInfo.index] = { totalDist, matchScore };
+                    } else {
+                        // Keep the match with better score, and if tied, better distance
+                        const existing = signerToClosestDist[signerInfo.index];
+                        if (matchScore > existing.matchScore ||
+                            (matchScore === existing.matchScore && totalDist < existing.totalDist)) {
+                            signerToClosestDist[signerInfo.index] = { totalDist, matchScore };
+                        }
+                    }
+
+                    const signerName = signers[signerInfo.index].name || signers[signerInfo.index].Name || signers[signerInfo.index];
+                    const matchPart = signerInfo.parts.find(p => p.length > 1 && itemText.includes(p));
+                    console.log(`[smart-match]     ✓ Matched signer ${signerInfo.index} "${signerName}" - found part "${matchPart}" (score=${matchScore.toFixed(0)}) in "${item.str}" at distance ${totalDist.toFixed(0)}pt`);
+                    break;  // Found a match for this signer in this item, move to next signer
+                }
+            }
+        }
+
+        // If we found exactly one signer name nearby, use it
+        if (presentSigners.size === 1) {
+            bestSignerIndex = Array.from(presentSigners)[0];
+            const signerName = signers[bestSignerIndex].name || signers[bestSignerIndex].Name || signers[bestSignerIndex];
+            const distInfo = signerToClosestDist[bestSignerIndex];
+            console.log(`[smart-match]   ✓ UNIQUE MATCH: signer ${bestSignerIndex} "${signerName}" (distance=${distInfo.totalDist.toFixed(2)}, score=${distInfo.matchScore.toFixed(0)})`);
+            return {
+                ...spot,
+                signerIndex: bestSignerIndex,
+                signerName: signerName,
+                signerUserId: typeof signers[bestSignerIndex] === 'string' ? null : (signers[bestSignerIndex].userId || signers[bestSignerIndex].UserId || null),
+            };
+        }
+
+        // If we found multiple signers, pick the one with the best match score, then closest distance
+        if (presentSigners.size > 1) {
+            const signerDistances = Array.from(presentSigners)
+                .map(idx => ({
+                    index: idx,
+                    name: signers[idx].name || signers[idx].Name || signers[idx],
+                    ...signerToClosestDist[idx]
+                }))
+                .sort((a, b) => {
+                    // Sort by match score DESC (higher is better), then by distance ASC (lower is better)
+                    if (b.matchScore !== a.matchScore) {
+                        return b.matchScore - a.matchScore;
+                    }
+                    return a.totalDist - b.totalDist;
+                });
+
+            bestSignerIndex = signerDistances[0].index;
+            console.log(`[smart-match]   Candidates: ${signerDistances.map(s => `signer ${s.index} (score=${s.matchScore.toFixed(0)}, dist=${s.totalDist.toFixed(0)}pt)`).join(', ')} -> chose signer ${bestSignerIndex}`);
+            const signerName = signers[bestSignerIndex].name || signers[bestSignerIndex].Name || signers[bestSignerIndex];
+            const distInfo = signerToClosestDist[bestSignerIndex];
+            console.log(`[smart-match]   ✓ CLOSEST MATCH: signer ${bestSignerIndex} "${signerName}" (score=${distInfo.matchScore.toFixed(0)}, distance=${distInfo.totalDist.toFixed(2)}, from ${presentSigners.size} present)`);
+            return {
+                ...spot,
+                signerIndex: bestSignerIndex,
+                signerName: signerName,
+                signerUserId: typeof signers[bestSignerIndex] === 'string' ? null : (signers[bestSignerIndex].userId || signers[bestSignerIndex].UserId || null),
+            };
+        }
+
+        // No signer name found
+        console.log(`[smart-match]   ❌ UNASSIGNED: spot page ${spot.pageNum} - NO SIGNER NAME FOUND`);
+        return { ...spot, _unassigned: true };
+    });
+
+    let signerIndex = 0;
+    const finalSpots = assignedSpots.map((spot) => {
+        if (spot._unassigned) {
+            const signer = signers[signerIndex % signers.length];
+            const signerName = typeof signer === 'string' ? signer : (signer.name || signer.Name || '');
+            const signerUserId = typeof signer === 'string' ? null : (signer.userId || signer.UserId || null);
+            console.log(`[smart-match]   (ROUND-ROBIN FALLBACK) page ${spot.pageNum} -> signer ${signerIndex % signers.length} "${signerName}"`);
+            const assignment = {
+                ...spot,
+                signerIndex: signerIndex % signers.length,
+                signerName: signerName,
+                signerUserId: signerUserId,
+            };
+            delete assignment._unassigned;
+            signerIndex++;
+            return assignment;
+        }
+        return spot;
+    });
+
+    return finalSpots;
+}
+
+/**
+ * Simple round-robin assignment across signers
+ */
+function assignSignersToSpotsRoundRobin(spots, signers) {
+    const spotsByPage = {};
+    for (const spot of spots) {
+        const pageNum = spot.pageNum || 1;
+        if (!spotsByPage[pageNum]) {
+            spotsByPage[pageNum] = [];
+        }
+        spotsByPage[pageNum].push(spot);
+    }
+
+    let signerIndex = 0;
+    const assignedSpots = [];
+
+    for (const pageNum of Object.keys(spotsByPage).sort((a, b) => a - b)) {
+        // Frontend coords: lower Y is higher on the page
+        const pageSpots = spotsByPage[pageNum].sort((a, b) => (a.y || 0) - (b.y || 0));
+
+        for (const spot of pageSpots) {
+            const signer = signers[signerIndex % signers.length];
+            const signerName = typeof signer === 'string' ? signer : (signer.name || signer.Name || '');
+            const signerUserId = typeof signer === 'string' ? null : (signer.userId || signer.id || null);
+
+            assignedSpots.push({
+                ...spot,
+                signerIndex: signerIndex % signers.length,
+                signerName: signerName,
+                signerUserId: signerUserId,
+            });
+            signerIndex++;
+        }
+    }
+
+    return assignedSpots;
 }
 
 module.exports = {
     detectHebrewSignatureSpotsFromPdfBuffer,
     streamToBuffer,
     FRONTEND_PAGE_RENDER_WIDTH,
+    assignSignersToSpots,
 };

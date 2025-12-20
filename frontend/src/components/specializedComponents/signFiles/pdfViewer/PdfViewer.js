@@ -10,9 +10,11 @@ export default function PdfViewer({
     onUpdateSpot,
     onRemoveSpot,
     onAddSpotForPage,
+    signers = [],
 }) {
 
     console.log('PdfViewer spots:', spots);
+    console.log('PdfViewer signers:', signers);
 
     const [numPages, setNumPages] = useState(0);
     const didInitRef = useRef(false);
@@ -50,12 +52,23 @@ export default function PdfViewer({
                             alignItems: "center",
                         }}
                     >
-                        <SimpleContainer style={{ width: "100%", justifyContent: "flex-end", marginBottom: 8 }}>
-                            <SecondaryButton
-                                onPress={() => onAddSpotForPage(pageNumber)}
-                            >
-                                + הוסף חתימה לעמוד {pageNumber}
-                            </SecondaryButton>
+                        <SimpleContainer style={{ width: "100%", justifyContent: "flex-end", marginBottom: 8, gap: 8, flexWrap: "wrap", display: "flex", flexDirection: "row-reverse" }}>
+                            {signers.length > 0 ? (
+                                signers.map((signer, signerIdx) => (
+                                    <SecondaryButton
+                                        key={signer.UserId}
+                                        onPress={() => onAddSpotForPage(pageNumber, signerIdx)}
+                                    >
+                                        + {signer.Name} - עמוד {pageNumber}
+                                    </SecondaryButton>
+                                ))
+                            ) : (
+                                <SecondaryButton
+                                    onPress={() => onAddSpotForPage(pageNumber)}
+                                >
+                                    + הוסף חתימה לעמוד {pageNumber}
+                                </SecondaryButton>
+                            )}
                         </SimpleContainer>
 
                         <SimpleContainer style={{ width: "100%", position: "relative", justifyContent: "center" }}>
@@ -70,6 +83,7 @@ export default function PdfViewer({
                                 spots={spots}
                                 onUpdateSpot={onUpdateSpot}
                                 onRemoveSpot={onRemoveSpot}
+                                signers={signers}
                             />
                         </SimpleContainer>
                     </SimpleContainer>
