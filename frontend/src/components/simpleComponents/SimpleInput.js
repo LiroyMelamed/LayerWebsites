@@ -15,6 +15,7 @@ const SimpleInput = forwardRef(
         style,
         value,
         onChange,
+        type = 'text',
         inputSize = 'Medium',
         disabled = false,
         onFocus,
@@ -114,7 +115,7 @@ const SimpleInput = forwardRef(
                 )}
 
                 <input
-                    type="text"
+                    type={type}
                     style={{
                         width: '100%',
                         minWidth: '0',

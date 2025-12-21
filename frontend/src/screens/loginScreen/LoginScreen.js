@@ -20,7 +20,16 @@ export default function LoginScreen() {
     const { isPerforming, performRequest } = useHttpRequest(loginApi.sendOtp, () => navigate(LoginStackName + LoginOtpScreenName));
 
     const handleInputChange = (event) => {
-        setPhoneNumber(event.target.value);
+        const raw = event?.target?.value ?? "";
+        const digitsOnly = String(raw).replace(/\D/g, "");
+
+        // Allow pasting +972XXXXXXXXX / 972XXXXXXXXX and normalize to local 0XXXXXXXXX
+        let normalized = digitsOnly;
+        if (normalized.startsWith("972") && normalized.length >= 11) {
+            normalized = "0" + normalized.slice(3);
+        }
+
+        setPhoneNumber(normalized.slice(0, 10));
     };
 
 

@@ -50,7 +50,7 @@ const requestOtp = async (req, res) => {
 
         if (!isSuperUser) {
             try {
-                sendMessage(`קוד האימות הוא: ${otp} \n\n @${WEBSITE_DOMAIN}`, formatedPhoneNumber);
+                sendMessage(`קוד האימות הוא: ${otp}\n\n@${WEBSITE_DOMAIN} #${otp}`, formatedPhoneNumber);
             } catch (e) {
                 console.warn("SMS send failed:", e?.message);
             }
@@ -161,7 +161,7 @@ const register = async (req, res) => {
 
         if (!isSuperUser) {
             try {
-                sendMessage(`קוד האימות הוא: ${otp} \n\n @${WEBSITE_DOMAIN}`, formatedPhoneNumber);
+                sendMessage(`קוד האימות הוא: ${otp}\n\n@${WEBSITE_DOMAIN} #${otp}`, formatedPhoneNumber);
             } catch (e) {
                 console.warn("כשל בשליחת SMS לאחר הרשמה:", e?.message);
             }
