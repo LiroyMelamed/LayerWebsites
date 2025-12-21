@@ -20,6 +20,13 @@ const isProduction = process.env.IS_PRODUCTION === 'true';
  * @param {string} formattedPhone - The phone number to send the message to, in E.164 format.
  */
 async function sendMessage(messageBody, formattedPhone) {
+    const e164Regex = /^\+[1-9]\d{7,14}$/;
+
+    if (!formattedPhone || !e164Regex.test(String(formattedPhone))) {
+        console.error(`Invalid phone for SMS (expected E.164):`, formattedPhone);
+        return;
+    }
+
     if (isProduction) {
         try {
             await client.messages.create({

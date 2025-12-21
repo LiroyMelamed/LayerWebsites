@@ -1,6 +1,37 @@
 const axios = require("axios");
 const pool = require("../config/db"); // Direct import of the pg pool
 
+function isDuplicateNotificationPkError(err) {
+    return (
+        err?.code === "23505" &&
+        (err?.constraint === "usernotifications_pkey" ||
+            String(err?.detail || "").toLowerCase().includes("notificationid"))
+    );
+}
+
+async function repairUserNotificationsSequence() {
+    // Attempt to repair the sequence backing usernotifications.notificationid.
+    const seqRes = await pool.query(
+        "SELECT pg_get_serial_sequence('usernotifications','notificationid') AS seq"
+    );
+    const seqName = seqRes.rows?.[0]?.seq;
+
+    if (!seqName) {
+        throw new Error(
+            "Could not determine sequence for usernotifications.notificationid (no serial/identity default?)"
+        );
+    }
+
+    const maxRes = await pool.query(
+        "SELECT COALESCE(MAX(notificationid), 0) AS max_id FROM usernotifications"
+    );
+    const maxId = Number(maxRes.rows?.[0]?.max_id || 0);
+    const nextId = maxId + 1;
+
+    await pool.query("SELECT setval($1::regclass, $2, false)", [seqName, nextId]);
+    console.log(`Repaired notification sequence ${seqName} -> next id ${nextId}`);
+}
+
 /**
  * Sends a push notification to a user's registered devices and stores the notification
  * in the database for later retrieval.
@@ -45,13 +76,24 @@ async function sendAndStoreNotification(userId, title, message, data = {}) {
         }
 
         // Store the notification in the database
-        await pool.query(
-            `
+        const insertSql = `
             INSERT INTO UserNotifications (UserId, Title, Message, CreatedAt, IsRead)
             VALUES ($1, $2, $3, NOW(), FALSE)
-            `,
-            [userId, title, message]
-        );
+        `;
+
+        try {
+            await pool.query(insertSql, [userId, title, message]);
+        } catch (err) {
+            if (isDuplicateNotificationPkError(err)) {
+                console.warn(
+                    "Duplicate NotificationId detected; attempting to repair sequence and retry insert once..."
+                );
+                await repairUserNotificationsSequence();
+                await pool.query(insertSql, [userId, title, message]);
+            } else {
+                throw err;
+            }
+        }
         console.log(`Notification stored in DB for UserId: ${userId} - Title: ${title}`);
 
     } catch (error) {
