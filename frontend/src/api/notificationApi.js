@@ -1,7 +1,7 @@
 import ApiUtils from "./apiUtils";
 
-const GET_NOTIFICATIONS = "Notifications/notifications";
-const MARK_NOTIFICATION_AS_READ = "Notifications/notifications/";
+const GET_NOTIFICATIONS = "Notifications";
+const MARK_NOTIFICATION_AS_READ = "Notifications/";
 
 export const notificationApi = {
 

@@ -1,0 +1,23 @@
+.lw-topCenteredLogoOtp {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    position: relative;
+}
+
+.lw-topCenteredLogoOtp__cornerLogo {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+}
+
+.lw-topCenteredLogoOtp__logoImage {
+    width: 56px;
+    height: 56px;
+}
+
+.lw-topCenteredLogoOtp__title {
+    margin-top: 80px;
+    text-align: center;
+    align-self: center;
+}

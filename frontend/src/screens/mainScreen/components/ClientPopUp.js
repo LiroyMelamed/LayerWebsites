@@ -12,6 +12,8 @@ import { HebrewCharsValidationWithNULL, HebrewCharsValidationWithNumbers } from 
 import emailValidation from "../../../functions/validation/EmailValidation";
 import IsraeliPhoneNumberValidation from "../../../functions/validation/IsraeliPhoneNumberValidation";
 
+import "./ClientPopUp.scss";
+
 export default function ClientPopup({ clientDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style }) {
     const [name, setName, nameError] = useFieldState(HebrewCharsValidationWithNumbers, clientDetails?.name || "");
     const [companyName, setCompanyName, companyNameError] = useFieldState(HebrewCharsValidationWithNULL, clientDetails?.companyname || "");
@@ -66,18 +68,18 @@ export default function ClientPopup({ clientDetails, rePerformRequest, onFailure
     };
 
     return (
-        <SimpleContainer style={{ ...style, ...styles.container }}>
+        <SimpleContainer className="lw-clientPopup" style={style}>
             <SimpleScrollView>
-                <SimpleContainer style={styles.rowStyle}>
+                <SimpleContainer className="lw-clientPopup__row">
                     <SimpleInput
-                        style={styles.inputStyle}
+                        className="lw-clientPopup__input"
                         title={"שם לקוח"}
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         error={nameError}
                     />
                     <SimpleInput
-                        style={styles.inputStyle}
+                        className="lw-clientPopup__input"
                         title={"מספר פלאפון"}
                         type="tel"
                         value={phoneNumber}
@@ -86,9 +88,9 @@ export default function ClientPopup({ clientDetails, rePerformRequest, onFailure
                     />
                 </SimpleContainer>
 
-                <SimpleContainer style={styles.rowStyle}>
+                <SimpleContainer className="lw-clientPopup__row">
                     <SimpleInput
-                        style={styles.inputStyle}
+                        className="lw-clientPopup__input"
                         title={"אימייל"}
                         type="email"
                         value={email}
@@ -96,7 +98,7 @@ export default function ClientPopup({ clientDetails, rePerformRequest, onFailure
                         error={emailError}
                     />
                     <SimpleInput
-                        style={styles.inputStyle}
+                        className="lw-clientPopup__input"
                         title={"שם החברה"}
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
@@ -104,10 +106,10 @@ export default function ClientPopup({ clientDetails, rePerformRequest, onFailure
                     />
                 </SimpleContainer>
 
-                <SimpleContainer style={styles.buttonsRowStyle}>
+                <SimpleContainer className="lw-clientPopup__actions">
                     {clientDetails && (
                         <SecondaryButton
-                            style={styles.button}
+                            className="lw-clientPopup__actionButton"
                             size={buttonSizes.MEDIUM}
                             onPress={handleDeleteClient}
                         >
@@ -115,7 +117,7 @@ export default function ClientPopup({ clientDetails, rePerformRequest, onFailure
                         </SecondaryButton>
                     )}
                     <PrimaryButton
-                        style={styles.button}
+                        className="lw-clientPopup__actionButton"
                         size={buttonSizes.MEDIUM}
                         onPress={handleSaveClient}
                         disabled={hasError}
@@ -127,31 +129,3 @@ export default function ClientPopup({ clientDetails, rePerformRequest, onFailure
         </SimpleContainer>
     );
 }
-
-const styles = {
-    container: {
-        width: "100%",
-        margin: "0 auto",
-    },
-    rowStyle: {
-        display: "flex",
-        flexDirection: "row-reverse",
-        marginBottom: "16px",
-        flexWrap: "wrap",
-    },
-    inputStyle: {
-        flex: 1,
-        minWidth: "150px",
-    },
-    buttonsRowStyle: {
-        display: "flex",
-        flexDirection: "row",
-        justifyContent: "center",
-        marginBottom: "16px",
-        marginTop: "16px",
-        flexWrap: "wrap",
-    },
-    button: {
-        margin: "8px 8px",
-    },
-};

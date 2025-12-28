@@ -12,11 +12,13 @@ const SIGNER_COLORS = [
     { bg: "rgba(0, 150, 136, 0.15)", border: "#009688", name: "טורקיז" },     // Teal
 ];
 
-export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot, signerIndex = 0, signerName = "חתימה" }) {
+export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot, signerIndex = 0, signerName = "חתימה", scale = 1 }) {
     const ref = useRef(null);
 
     // Get color based on signer index
     const colorScheme = SIGNER_COLORS[signerIndex % SIGNER_COLORS.length];
+
+    const hasSignatureImage = Boolean(spot?.IsSigned && (spot?.SignatureUrl || spot?.signatureUrl));
 
     const startDrag = (e) => {
         e.preventDefault();
@@ -28,8 +30,9 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
             const dy = moveEvent.clientY - startY;
 
             onUpdateSpot(index, {
-                x: spot.x + dx,
-                y: spot.y + dy,
+                // dx/dy are in screen pixels; convert to base coordinate space.
+                x: spot.x + dx / (scale || 1),
+                y: spot.y + dy / (scale || 1),
             });
         };
 
@@ -46,57 +49,37 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
         <SimpleContainer
             ref={ref}
             onMouseDown={startDrag}
+            className="lw-signing-spot"
             style={{
-                position: "absolute",
-                top: spot.y,
-                left: spot.x,
-                width: 130,
-                height: 48,
-                backgroundColor: colorScheme.bg,
-                border: `2.5px solid ${colorScheme.border}`,
-                borderRadius: 5,
-                cursor: "move",
-                pointerEvents: "auto",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 10,
-                fontWeight: 700,
-                flexDirection: "column",
-                color: colorScheme.border,
-                boxShadow: `0 2px 8px ${colorScheme.border}33`,
-                transition: "box-shadow 0.2s ease",
+                top: (spot.y || 0) * (scale || 1),
+                left: (spot.x || 0) * (scale || 1),
+                width: ((spot.width || 130) * (scale || 1)),
+                height: ((spot.height || 48) * (scale || 1)),
+                ...(hasSignatureImage ? { backgroundColor: "transparent" } : null),
+                "--spot-bg": colorScheme.bg,
+                "--spot-border": colorScheme.border,
             }}
             title={`חתום על ידי: ${signerName}`}
         >
-            <div style={{ textAlign: "center", lineHeight: "1.3", padding: "2px 4px" }}>
-                <div style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>
-                    ✍️ {signerName.length > 10 ? signerName.substring(0, 8) + "..." : signerName}
+            {hasSignatureImage ? (
+                <img
+                    src={spot.SignatureUrl || spot.signatureUrl}
+                    alt="signature"
+                    className="lw-signing-spotImg"
+                />
+            ) : (
+                <div className="lw-signing-spotLabel">
+                    <div className="lw-signing-spotLabelText">
+                        ✍️ {signerName.length > 10 ? signerName.substring(0, 8) + "..." : signerName}
+                    </div>
                 </div>
-            </div>
+            )}
             <span
                 onClick={(e) => {
                     e.stopPropagation();
                     onRemoveSpot(index);
                 }}
-                style={{
-                    position: "absolute",
-                    top: -10,
-                    right: -10,
-                    width: 20,
-                    height: 20,
-                    backgroundColor: "#f44336",
-                    color: "#fff",
-                    borderRadius: "50%",
-                    fontSize: 13,
-                    fontWeight: "bold",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    cursor: "pointer",
-                    boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
-                    border: "2px solid white",
-                }}
+                className="lw-signing-spotRemove"
             >
                 ✕
             </span>

@@ -18,6 +18,8 @@ import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import { MainScreenName } from "../mainScreen/MainScreen";
 import AllCasesCard from "./components/AllCasesCard";
 
+import "./AllCasesScreen.scss";
+
 export const AllCasesScreenName = "/AllCases"
 
 export default function AllCasesScreen() {
@@ -33,6 +35,16 @@ export default function AllCasesScreen() {
 
     const handleSearch = (query) => {
         SearchCaseByName(query);
+    };
+
+    const handleSearchSelect = (text, result) => {
+        openPopup(
+            <CaseFullView
+                caseDetails={result}
+                rePerformRequest={reperformAfterSave}
+                closePopUpFunction={closePopup}
+            />
+        );
     };
 
     const applyFilters = (typeFilter, statusFilter) => {
@@ -74,7 +86,7 @@ export default function AllCasesScreen() {
             {isSmallScreen && <TopToolBarSmallScreen chosenIndex={1} LogoNavigate={AdminStackName + MainScreenName} />}
 
             <SimpleScrollView>
-                <SimpleContainer style={styles.responsiveContainer}>
+                <SimpleContainer className="lw-allCasesScreen__row">
                     <SearchInput
                         onSearch={handleSearch}
                         title={"חיפוש תיק"}
@@ -82,19 +94,20 @@ export default function AllCasesScreen() {
                         isPerforming={isPerformingCasesById}
                         queryResult={casesByName}
                         getButtonTextFunction={(item) => item.CaseName}
-                        style={styles.searchInput}
+                        className="lw-allCasesScreen__search"
+                        buttonPressFunction={handleSearchSelect}
                     />
                 </SimpleContainer>
 
-                <SimpleContainer style={styles.responsiveContainer}>
+                <SimpleContainer className="lw-allCasesScreen__row">
                     <ChooseButton
                         buttonChoices={allCasesTypes}
-                        style={styles.chooseButton}
+                        className="lw-allCasesScreen__choose"
                         OnPressChoiceFunction={handleFilterByType}
                     />
                     <ChooseButton
                         buttonChoices={["תיקים סגורים", "תיקים פתוחים"]}
-                        style={styles.chooseButtonOpenClose}
+                        className="lw-allCasesScreen__choose lw-allCasesScreen__choose--openClose"
                         OnPressChoiceFunction={handleFilterByStatus}
                         buttonText="סגור/פתוח"
                     />
@@ -106,32 +119,22 @@ export default function AllCasesScreen() {
                     isPerforming={isPerformingAllCases}
                 />
             </SimpleScrollView>
-            <SimpleContainer style={{ display: 'flex', justifyContent: 'center' }}>
-                <PrimaryButton style={{ margin: '8px 0px', selfAlign: 'center' }} onPress={() => openPopup(<CaseFullView closePopUpFunction={closePopup} rePerformRequest={reperformAfterSave} />)}>הוספת תיק חדש</PrimaryButton>
+            <SimpleContainer className="lw-allCasesScreen__footer">
+                <PrimaryButton
+                    className="lw-allCasesScreen__addButton"
+                    onPress={() =>
+                        openPopup(
+                            <CaseFullView
+                                closePopUpFunction={closePopup}
+                                rePerformRequest={reperformAfterSave}
+                            />
+                        )
+                    }
+                >
+                    הוספת תיק חדש
+                </PrimaryButton>
             </SimpleContainer>
 
         </SimpleScreen>
     )
-}
-
-const styles = {
-    responsiveContainer: {
-        display: 'flex',
-        flexDirection: 'row-reverse',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        width: '100%',
-        overflow: 'hidden',
-    },
-    searchInput: {
-        marginTop: "12px",
-        maxWidth: '500px',
-    },
-    chooseButton: {
-        margin: "12px 12px",
-        flex: '0 1 auto',
-    },
-    chooseButtonOpenClose: {
-        flex: '0 1 auto',
-    }
 }

@@ -17,6 +17,9 @@ import TagCasePopup from './components/TagCasePopup';
 import casesApi, { casesTypeApi } from '../../api/casesApi';
 import { MainScreenName } from '../mainScreen/MainScreen';
 import { AdminStackName } from '../../navigation/AdminStack';
+import CaseFullView from "../../components/styledComponents/cases/CaseFullView";
+
+import "./TaggedCasesScreen.scss";
 
 export const TaggedCasesScreenName = "/TaggedCasesScreen";
 
@@ -34,6 +37,16 @@ export default function TaggedCasesScreen() {
 
     const handleSearch = (query) => {
         SearchCaseByName(query);
+    };
+
+    const handleSearchSelect = (text, result) => {
+        openPopup(
+            <CaseFullView
+                caseDetails={result}
+                rePerformRequest={performRequest}
+                closePopUpFunction={closePopup}
+            />
+        );
     };
 
     const applyFilters = (typeFilter, statusFilter) => {
@@ -75,7 +88,7 @@ export default function TaggedCasesScreen() {
             {isSmallScreen && <TopToolBarSmallScreen chosenIndex={0} LogoNavigate={AdminStackName + MainScreenName} />}
 
             <SimpleScrollView>
-                <SimpleContainer style={styles.responsiveContainer}>
+                <SimpleContainer className="lw-taggedCasesScreen__row">
                     <SearchInput
                         onSearch={handleSearch}
                         title={"חיפוש תיק נעוץ"}
@@ -83,19 +96,20 @@ export default function TaggedCasesScreen() {
                         isPerforming={isPerformingCasesById}
                         queryResult={casesByName}
                         getButtonTextFunction={(item) => item.CaseName}
-                        style={styles.searchInput}
+                        className="lw-taggedCasesScreen__search"
+                        buttonPressFunction={handleSearchSelect}
                     />
                 </SimpleContainer>
 
-                <SimpleContainer style={styles.responsiveContainer}>
+                <SimpleContainer className="lw-taggedCasesScreen__row">
                     <ChooseButton
                         buttonChoices={allCasesTypes}
-                        style={styles.chooseButton}
+                        className="lw-taggedCasesScreen__choose"
                         OnPressChoiceFunction={handleFilterByType}
                     />
                     <ChooseButton
                         buttonChoices={["תיקים סגורים", "תיקים פתוחים"]}
-                        style={styles.chooseButton}
+                        className="lw-taggedCasesScreen__choose"
                         OnPressChoiceFunction={handleFilterByStatus}
                         buttonText="סגור/פתוח"
                     />
@@ -108,9 +122,9 @@ export default function TaggedCasesScreen() {
                 />
             </SimpleScrollView>
 
-            <SimpleContainer style={{ display: 'flex', justifyContent: 'center' }}>
+            <SimpleContainer className="lw-taggedCasesScreen__footer">
                 <PrimaryButton
-                    style={{ margin: '8px 0px', selfAlign: 'center' }}
+                    className="lw-taggedCasesScreen__pinButton"
                     onPress={() => openPopup(<TagCasePopup rePerformRequest={() => { performRequest(); closePopup(); }} />)}
                 >
                     נעיצת תיק
@@ -119,24 +133,3 @@ export default function TaggedCasesScreen() {
         </SimpleScreen>
     );
 }
-
-const styles = {
-    responsiveContainer: {
-        display: 'flex',
-        flexDirection: 'row-reverse',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        maxWidth: '100%',
-        overflow: 'hidden',
-    },
-    searchInput: {
-        margin: "12px 0px",
-        marginLeft: 20,
-        maxWidth: '500px',
-    },
-    chooseButton: {
-        margin: "12px 12px",
-        flex: '0 1 auto',
-        minWidth: '100px',
-    },
-};

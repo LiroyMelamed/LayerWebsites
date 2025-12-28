@@ -1,8 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import SimpleContainer from "../../../simpleComponents/SimpleContainer";
 import PdfPage from "./PdfPage";
 import SignatureSpotsLayer from "../signatureSpots/SignatureSpotsLayer";
 import SecondaryButton from "../../../styledComponents/buttons/SecondaryButton";
+
+const BASE_RENDER_WIDTH = 800;
 
 export default function PdfViewer({
     pdfFile,
@@ -11,13 +13,47 @@ export default function PdfViewer({
     onRemoveSpot,
     onAddSpotForPage,
     signers = [],
+    showAddSpotButtons = true,
 }) {
-
-    console.log('PdfViewer spots:', spots);
-    console.log('PdfViewer signers:', signers);
-
     const [numPages, setNumPages] = useState(0);
     const didInitRef = useRef(false);
+
+    const pageContainerRef = useRef(null);
+    const [containerWidth, setContainerWidth] = useState(BASE_RENDER_WIDTH);
+
+    useEffect(() => {
+        const el = pageContainerRef.current;
+        if (!el) return;
+
+        const update = () => {
+            const w = el.getBoundingClientRect().width;
+            if (w && Number.isFinite(w)) setContainerWidth(w);
+        };
+
+        update();
+
+        let ro;
+        if (typeof ResizeObserver !== "undefined") {
+            ro = new ResizeObserver(() => update());
+            ro.observe(el);
+        } else {
+            window.addEventListener("resize", update);
+        }
+
+        return () => {
+            if (ro) ro.disconnect();
+            else window.removeEventListener("resize", update);
+        };
+    }, []);
+
+    const renderWidth = useMemo(() => {
+        // Keep same coordinate system across app: spots are stored in BASE_RENDER_WIDTH space.
+        // Render PDF at whatever width is available (up to BASE_RENDER_WIDTH), and scale spots accordingly.
+        const safe = Math.max(280, containerWidth || BASE_RENDER_WIDTH);
+        return Math.min(BASE_RENDER_WIDTH, Math.floor(safe));
+    }, [containerWidth]);
+
+    const spotScale = useMemo(() => renderWidth / BASE_RENDER_WIDTH, [renderWidth]);
 
     useEffect(() => {
         didInitRef.current = false;
@@ -36,46 +72,47 @@ export default function PdfViewer({
     if (!pdfFile) return null;
 
     return (
-        <SimpleContainer style={{ width: "100%", position: "relative", flexDirection: "column", alignItems: "center" }}>
+        <SimpleContainer className="lw-signing-pdfViewer">
             {Array.from({ length: pagesToRender }).map((_, i) => {
                 const pageNumber = i + 1;
 
                 return (
                     <SimpleContainer
                         key={pageNumber}
-                        style={{
-                            width: "100%",
-                            maxWidth: 900,
-                            position: "relative",
-                            marginBottom: 24,
-                            flexDirection: "column",
-                            alignItems: "center",
-                        }}
+                        ref={pageNumber === 1 ? pageContainerRef : undefined}
+                        className="lw-signing-pageWrap"
                     >
-                        <SimpleContainer style={{ width: "100%", justifyContent: "flex-end", marginBottom: 8, gap: 8, flexWrap: "wrap", display: "flex", flexDirection: "row-reverse" }}>
-                            {signers.length > 0 ? (
-                                signers.map((signer, signerIdx) => (
+                        {showAddSpotButtons && (
+                            <SimpleContainer className="lw-signing-addSpotRow">
+                                {signers.length > 0 ? (
+                                    signers.map((signer, signerIdx) => (
+                                        <SecondaryButton
+                                            key={signer.UserId}
+                                            onPress={() => onAddSpotForPage(pageNumber, signerIdx)}
+                                        >
+                                            + {signer.Name} - עמוד {pageNumber}
+                                        </SecondaryButton>
+                                    ))
+                                ) : (
                                     <SecondaryButton
-                                        key={signer.UserId}
-                                        onPress={() => onAddSpotForPage(pageNumber, signerIdx)}
+                                        onPress={() => onAddSpotForPage(pageNumber)}
                                     >
-                                        + {signer.Name} - עמוד {pageNumber}
+                                        + הוסף חתימה לעמוד {pageNumber}
                                     </SecondaryButton>
-                                ))
-                            ) : (
-                                <SecondaryButton
-                                    onPress={() => onAddSpotForPage(pageNumber)}
-                                >
-                                    + הוסף חתימה לעמוד {pageNumber}
-                                </SecondaryButton>
-                            )}
-                        </SimpleContainer>
+                                )}
+                            </SimpleContainer>
+                        )}
 
-                        <SimpleContainer style={{ width: "100%", position: "relative", justifyContent: "center" }}>
+                        <SimpleContainer
+                            className="lw-signing-pageInner"
+                            style={{ width: renderWidth }}
+                            data-page-number={pageNumber}
+                        >
                             <PdfPage
                                 pdfFile={pdfFile}
                                 pageNumber={pageNumber}
                                 onLoadTotalPages={handleLoadTotalPages}
+                                renderWidth={renderWidth}
                             />
 
                             <SignatureSpotsLayer
@@ -84,6 +121,7 @@ export default function PdfViewer({
                                 onUpdateSpot={onUpdateSpot}
                                 onRemoveSpot={onRemoveSpot}
                                 signers={signers}
+                                scale={spotScale}
                             />
                         </SimpleContainer>
                     </SimpleContainer>

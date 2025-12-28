@@ -25,126 +25,22 @@ import PdfViewer from "../../components/specializedComponents/signFiles/pdfViewe
 import SearchInput from "../../components/specializedComponents/containers/SearchInput";
 import casesApi from "../../api/casesApi";
 import useHttpRequest from "../../hooks/useHttpRequest";
+import { customersApi } from "../../api/customersApi";
+
+import "./UploadFileForSigningScreen.scss";
 
 export const uploadFileForSigningScreenName = "/upload-file-for-signing";
-
-const styles = {
-    screenStyle: (isSmallScreen) => ({
-        boxSizing: "border-box",
-        flexDirection: "column",
-        padding: isSmallScreen ? 0 : 16,
-    }),
-    searchInput: {
-        marginTop: "12px",
-        maxWidth: '500px',
-    },
-    headerRow: {
-        alignItems: "center",
-        marginBottom: 16,
-    },
-    formCard: {
-        direction: "rtl",
-        flexDirection: "column",
-        borderRadius: 8,
-        border: "1px solid #e0e0e0",
-        padding: 16,
-        boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-        width: "100%",
-        maxWidth: 1000,
-    },
-    formGroup: {
-        marginTop: 12,
-        marginBottom: 16,
-        width: "100%",
-    },
-    label: {
-        display: "block",
-        marginBottom: 6,
-        fontWeight: 600,
-        fontSize: 14,
-        color: "#333",
-    },
-    input: {
-        width: "100%",
-        padding: 8,
-        borderRadius: 4,
-        border: "1px solid #ddd",
-        fontSize: 14,
-        boxSizing: "border-box",
-    },
-    textarea: {
-        width: "100%",
-        minHeight: 80,
-        padding: 8,
-        borderRadius: 4,
-        border: "1px solid #ddd",
-        fontSize: 14,
-        resize: "vertical",
-        boxSizing: "border-box",
-    },
-    fileBox: (isDragActive) => ({
-        border: "2px dashed #1976d2",
-        borderRadius: 4,
-        padding: 24,
-        textAlign: "center",
-        backgroundColor: isDragActive ? "#f0f8ff" : "#fff",
-        cursor: "pointer",
-    }),
-    fileName: {
-        marginTop: 12,
-        padding: 10,
-        borderRadius: 4,
-        backgroundColor: "#d4edda",
-        border: "1px solid #c3e6cb",
-        color: "#155724",
-        fontSize: 14,
-    },
-    viewerHeaderRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginTop: 24,
-        marginBottom: 12,
-    },
-    actionsRow: {
-        flexDirection: "row",
-        gap: 8,
-        marginTop: 16,
-        flexWrap: "wrap",
-    },
-    infoText: {
-        fontSize: 13,
-        color: "#777",
-        marginTop: 8,
-    },
-    errorMsg: {
-        padding: 10,
-        marginBottom: 12,
-        borderRadius: 4,
-        backgroundColor: "#f8d7da",
-        border: "1px solid #f5c6cb",
-        color: "#721c24",
-        fontSize: 14,
-    },
-    successMsg: {
-        padding: 10,
-        marginBottom: 12,
-        borderRadius: 4,
-        backgroundColor: "#d4edda",
-        border: "1px solid #c3e6cb",
-        color: "#155724",
-        fontSize: 14,
-    },
-};
 
 export default function UploadFileForSigningScreen() {
     const { isSmallScreen } = useScreenSize();
     const navigate = useNavigate();
 
     const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getCaseByName, null, () => { });
+    const { result: customersByName, isPerforming: isPerformingCustomersByName, performRequest: SearchCustomersByName } = useHttpRequest(customersApi.getCustomersByName, null, () => { });
 
     const [caseId, setCaseId] = useState("");
     const [clientId, setClientId] = useState("");
+    const [selectedSigners, setSelectedSigners] = useState([]);
     const [notes, setNotes] = useState("");
     const [selectedFile, setSelectedFile] = useState(null);
 
@@ -159,7 +55,10 @@ export default function UploadFileForSigningScreen() {
 
     const fileInputRef = useRef(null);
 
-    const handleAddSpotForPage = (pageNumber) => {
+    const handleAddSpotForPage = (pageNumber, signerIdx = 0) => {
+        const signer = selectedSigners?.[signerIdx] || null;
+        const signerName = signer?.Name || `חותם ${Number(signerIdx) + 1}`;
+
         setSignatureSpots((prev) => [
             ...prev,
             {
@@ -168,7 +67,9 @@ export default function UploadFileForSigningScreen() {
                 y: 160,
                 width: 140,
                 height: 50,
-                signerName: `חתימה ${prev.length + 1}`,
+                signerIndex: signerIdx,
+                signerUserId: signer?.UserId,
+                signerName,
                 isRequired: true,
             },
         ]);
@@ -224,8 +125,12 @@ export default function UploadFileForSigningScreen() {
     };
 
     const validateForm = () => {
-        if (!caseId || !clientId || !selectedFile) {
-            setMessage({ type: "error", text: "יש למלא תיק, לקוח ולבחור קובץ." });
+        if (!selectedFile) {
+            setMessage({ type: "error", text: "יש לבחור קובץ." });
+            return false;
+        }
+        if (!selectedSigners || selectedSigners.length === 0) {
+            setMessage({ type: "error", text: "יש לבחור לפחות חותם אחד." });
             return false;
         }
         if (signatureSpots.length === 0) {
@@ -233,6 +138,22 @@ export default function UploadFileForSigningScreen() {
             return false;
         }
         return true;
+    };
+
+    const addSigner = (customer) => {
+        if (!customer?.UserId) return;
+
+        setSelectedSigners((prev) => {
+            const exists = prev.some((s) => Number(s?.UserId) === Number(customer.UserId));
+            if (exists) return prev;
+            return [...prev, { UserId: customer.UserId, Name: customer.Name || `חותם ${prev.length + 1}` }];
+        });
+    };
+
+    const removeSigner = (userId) => {
+        setSelectedSigners((prev) => prev.filter((s) => Number(s?.UserId) !== Number(userId)));
+        // Also clean up spots assigned to removed signer (simple behavior)
+        setSignatureSpots((prev) => prev.filter((spot) => Number(spot?.signerUserId) !== Number(userId)));
     };
 
     const ensureUploadedKey = async () => {
@@ -255,7 +176,15 @@ export default function UploadFileForSigningScreen() {
 
             const key = await ensureUploadedKey();
 
-            const detectRes = await signingFilesApi.detectSignatureSpots(key);
+            const signersPayload = (selectedSigners || []).map((s) => ({
+                userId: Number(s.UserId),
+                name: s.Name,
+            }));
+
+            const detectRes = await signingFilesApi.detectSignatureSpots(
+                key,
+                signersPayload.length ? signersPayload : null
+            );
             console.log('detectRes:', detectRes);
 
             const spots = detectRes?.data?.spots || detectRes?.spots || [];
@@ -288,19 +217,30 @@ export default function UploadFileForSigningScreen() {
 
             const key = await ensureUploadedKey();
 
+            const signersPayload = (selectedSigners || []).map((s) => ({
+                userId: Number(s.UserId),
+                name: s.Name,
+            }));
+
+            const primaryClientId = signersPayload?.[0]?.userId || Number(clientId) || null;
+
+            const normalizedCaseId = caseId ? Number(caseId) : null;
+
             await signingFilesApi.uploadFileForSigning({
-                caseId: Number(caseId),
-                clientId: Number(clientId),
+                caseId: normalizedCaseId,
+                clientId: primaryClientId,
                 fileName: selectedFile.name,
                 fileKey: key,
                 signatureLocations: signatureSpots,
                 notes: notes || null,
+                signers: signersPayload,
             });
 
             setMessage({ type: "success", text: "הקובץ נשלח ללקוח לחתימה." });
 
             setCaseId("");
             setClientId("");
+            setSelectedSigners([]);
             setNotes("");
             setSelectedFile(null);
             setSignatureSpots([]);
@@ -323,11 +263,30 @@ export default function UploadFileForSigningScreen() {
         const foundItem = casesByName.find(caseItem => caseItem.CaseName === query);
         setCaseId(foundItem?.CaseId || "");
         setClientId(foundItem?.UserId || "");
+
+        // If no signers selected yet, default to the case's client
+        if (foundItem?.UserId) {
+            setSelectedSigners((prev) => {
+                if (prev && prev.length) return prev;
+                return [{
+                    UserId: foundItem.UserId,
+                    Name: foundItem.CustomerName || "חותם 1",
+                }];
+            });
+        }
+    };
+
+    const handleSearchSigner = (query) => {
+        SearchCustomersByName(query);
+    };
+
+    const handleAddSignerFromSearch = (text, customer) => {
+        // SearchInput passes (text, result)
+        addSigner(customer);
     };
 
     return (
         <SimpleScreen
-            style={styles.screenStyle(isSmallScreen)}
             imageBackgroundSource={images.Backgrounds.AppBackground}
         >
             {isSmallScreen && (
@@ -337,114 +296,150 @@ export default function UploadFileForSigningScreen() {
                 />
             )}
 
-            <SimpleScrollView style={{ alignItems: "center", paddingTop: 24 }}>
-                <SimpleContainer style={styles.headerRow}>
-                    <TextBold24>שליחת מסמך לחתימה ✍️</TextBold24>
-                </SimpleContainer>
+            <SimpleContainer className="lw-uploadSigningScreen">
+                <SimpleScrollView className="lw-uploadSigningScreen__scroll">
+                    <SimpleContainer className="lw-uploadSigningScreen__headerRow">
+                        <TextBold24>שליחת מסמך לחתימה ✍️</TextBold24>
+                    </SimpleContainer>
 
-                <SimpleContainer style={styles.formCard}>
-                    {message && (
-                        <div style={message.type === "error" ? styles.errorMsg : styles.successMsg}>
-                            {message.text}
-                        </div>
-                    )}
-
-                    <SearchInput
-                        onSearch={handleSearch}
-                        title={"חיפוש תיק"}
-                        titleFontSize={20}
-                        isPerforming={isPerformingCasesById}
-                        queryResult={casesByName}
-                        getButtonTextFunction={(item) => item.CaseName}
-                        style={styles.searchInput}
-                        buttonPressFunction={handleButtonPress}
-                    />
-
-                    <SimpleContainer style={styles.formGroup}>
-                        <label style={styles.label}>קובץ PDF *</label>
-
-                        <div
-                            style={styles.fileBox(isDragActive)}
-                            onDragEnter={handleDragEnter}
-                            onDragLeave={handleDragLeave}
-                            onDragOver={handleDragOver}
-                            onDrop={handleDrop}
-                            onClick={() => fileInputRef.current?.click()}
-                        >
-                            <div>📄 גרור קובץ לכאן או לחץ לבחירה</div>
-                            <div style={{ fontSize: 12, color: "#777", marginTop: 4 }}>
-                                (PDF בלבד בשלב זה)
-                            </div>
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                style={{ display: "none" }}
-                                onChange={handleFileChange}
-                                accept=".pdf"
-                            />
-                        </div>
-
-                        {selectedFile && (
-                            <div style={styles.fileName}>
-                                ✓ {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                    <SimpleContainer className="lw-uploadSigningScreen__formCard">
+                        {message && (
+                            <div
+                                className={`lw-uploadSigningScreen__message ${message.type === "error" ? "is-error" : "is-success"}`}
+                            >
+                                {message.text}
                             </div>
                         )}
-                    </SimpleContainer>
 
-                    <SimpleContainer style={styles.formGroup}>
-                        <label style={styles.label}>הערות ללקוח (לא חובה)</label>
-                        <textarea
-                            style={styles.textarea}
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                        />
-                    </SimpleContainer>
-
-                    {selectedFile && (
-                        <>
-                            <SimpleContainer style={styles.viewerHeaderRow}>
-                                <TextBold24 style={{ fontSize: 18 }}>
-                                    תצוגת מסמך והגדרת חתימות
-                                </TextBold24>
-
-                                <SecondaryButton onPress={handleDetectSpots} disabled={detecting}>
-                                    {detecting ? "מזהה..." : "🤖 מצא חתימות אוטומטית"}
-                                </SecondaryButton>
-                            </SimpleContainer>
-
-                            <PdfViewer
-                                pdfFile={selectedFile}
-                                spots={signatureSpots}
-                                onUpdateSpot={handleUpdateSpot}
-                                onRemoveSpot={handleRemoveSpot}
-                                onAddSpotForPage={handleAddSpotForPage}
+                        <div className="lw-uploadSigningScreen__searchWrap">
+                            <SearchInput
+                                onSearch={handleSearch}
+                                title={"חיפוש תיק"}
+                                titleFontSize={20}
+                                isPerforming={isPerformingCasesById}
+                                queryResult={casesByName}
+                                getButtonTextFunction={(item) => item.CaseName}
+                                buttonPressFunction={handleButtonPress}
                             />
+                        </div>
 
-                            <Text14 style={styles.infoText}>
-                                בכל עמוד יש כפתור "+ הוסף חתימה". גרור את הקוביות למיקום הרצוי או מחק בעזרת ✕
-                            </Text14>
-                        </>
-                    )}
+                        <div className="lw-uploadSigningScreen__searchWrap">
+                            <SearchInput
+                                onSearch={handleSearchSigner}
+                                title={"חיפוש חותם (לקוח)"}
+                                titleFontSize={20}
+                                isPerforming={isPerformingCustomersByName}
+                                queryResult={customersByName}
+                                getButtonTextFunction={(item) => `${item.Name} (${item.UserId})`}
+                                buttonPressFunction={handleAddSignerFromSearch}
+                            />
+                        </div>
 
-                    <SimpleContainer style={styles.actionsRow}>
-                        <PrimaryButton onPress={handleSubmit} disabled={loading}>
-                            {loading ? "שולח..." : "📤 שלח ללקוח"}
-                        </PrimaryButton>
+                        {selectedSigners?.length > 0 && (
+                            <SimpleContainer className="lw-uploadSigningScreen__formGroup">
+                                <label className="lw-uploadSigningScreen__label">חותמים שנבחרו *</label>
+                                <SimpleContainer className="lw-uploadSigningScreen__selectedSignersRow">
+                                    {selectedSigners.map((s) => (
+                                        <SecondaryButton
+                                            key={s.UserId}
+                                            onPress={() => removeSigner(s.UserId)}
+                                        >
+                                            ✕ {s.Name} ({s.UserId})
+                                        </SecondaryButton>
+                                    ))}
+                                </SimpleContainer>
+                            </SimpleContainer>
+                        )}
 
-                        <SecondaryButton
-                            onPress={() => navigate(AdminStackName + SigningManagerScreenName)}
-                        >
-                            ⬅ חזרה
-                        </SecondaryButton>
-                    </SimpleContainer>
+                        <SimpleContainer className="lw-uploadSigningScreen__formGroup">
+                            <label className="lw-uploadSigningScreen__label">קובץ PDF *</label>
 
-                    {loading && (
-                        <SimpleContainer style={{ marginTop: 12 }}>
-                            <SimpleLoader />
+                            <div
+                                className={`lw-uploadSigningScreen__fileBox${isDragActive ? " is-dragActive" : ""}`}
+                                onDragEnter={handleDragEnter}
+                                onDragLeave={handleDragLeave}
+                                onDragOver={handleDragOver}
+                                onDrop={handleDrop}
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                <div>📄 גרור קובץ לכאן או לחץ לבחירה</div>
+                                <div className="lw-uploadSigningScreen__fileHint">
+                                    (PDF בלבד בשלב זה)
+                                </div>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    className="lw-uploadSigningScreen__fileInput"
+                                    onChange={handleFileChange}
+                                    accept=".pdf"
+                                />
+                            </div>
+
+                            {selectedFile && (
+                                <div className="lw-uploadSigningScreen__fileName">
+                                    ✓ {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                                </div>
+                            )}
                         </SimpleContainer>
-                    )}
-                </SimpleContainer>
-            </SimpleScrollView>
+
+                        <SimpleContainer className="lw-uploadSigningScreen__formGroup">
+                            <label className="lw-uploadSigningScreen__label">הערות ללקוח (לא חובה)</label>
+                            <textarea
+                                className="lw-uploadSigningScreen__textarea"
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                            />
+                        </SimpleContainer>
+
+                        {selectedFile && (
+                            <>
+                                <SimpleContainer className="lw-uploadSigningScreen__viewerHeaderRow">
+                                    <h3 className="lw-uploadSigningScreen__viewerTitle">
+                                        תצוגת מסמך והגדרת חתימות
+                                    </h3>
+
+                                    <SecondaryButton onPress={handleDetectSpots} disabled={detecting}>
+                                        {detecting ? "מזהה..." : "🤖 מצא חתימות אוטומטית"}
+                                    </SecondaryButton>
+                                </SimpleContainer>
+
+                                <PdfViewer
+                                    pdfFile={selectedFile}
+                                    spots={signatureSpots}
+                                    onUpdateSpot={handleUpdateSpot}
+                                    onRemoveSpot={handleRemoveSpot}
+                                    onAddSpotForPage={handleAddSpotForPage}
+                                    signers={selectedSigners}
+                                />
+
+                                <div className="lw-uploadSigningScreen__infoText">
+                                    <Text14>
+                                        בכל עמוד יש כפתור "+ הוסף חתימה". גרור את הקוביות למיקום הרצוי או מחק בעזרת ✕
+                                    </Text14>
+                                </div>
+                            </>
+                        )}
+
+                        <SimpleContainer className="lw-uploadSigningScreen__actionsRow">
+                            <PrimaryButton onPress={handleSubmit} disabled={loading}>
+                                {loading ? "שולח..." : "📤 שלח ללקוח"}
+                            </PrimaryButton>
+
+                            <SecondaryButton
+                                onPress={() => navigate(AdminStackName + SigningManagerScreenName)}
+                            >
+                                ⬅ חזרה
+                            </SecondaryButton>
+                        </SimpleContainer>
+
+                        {loading && (
+                            <SimpleContainer className="lw-uploadSigningScreen__loading">
+                                <SimpleLoader />
+                            </SimpleContainer>
+                        )}
+                    </SimpleContainer>
+                </SimpleScrollView>
+            </SimpleContainer>
         </SimpleScreen>
     );
 }

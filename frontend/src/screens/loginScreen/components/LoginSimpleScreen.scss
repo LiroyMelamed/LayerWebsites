@@ -1,0 +1,20 @@
+.lw-loginSimpleScreen__content {
+    width: 100%;
+    padding: 44px 20px;
+    justify-content: center;
+}
+
+.lw-loginSimpleScreen__scroll {
+    flex: 1;
+}
+
+.lw-loginSimpleScreen__layout {
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.lw-loginSimpleScreen__main {
+    flex: 1;
+}

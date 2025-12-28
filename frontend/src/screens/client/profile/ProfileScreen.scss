@@ -1,0 +1,136 @@
+.lw-profileScreen {
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    direction: rtl;
+}
+
+.lw-profileScreen__scroll {
+    margin-top: 0;
+    overflow-x: hidden;
+}
+
+.lw-profileScreen__header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    padding: 1.5rem 1rem 0.75rem;
+    background: transparent;
+    margin: 0;
+    width: 100%;
+    max-width: 35rem;
+    align-items: center;
+    direction: rtl;
+}
+
+.lw-profileScreen__avatarWrap {
+    position: relative;
+
+    width: 8.75rem;
+    height: 8.75rem;
+    border-radius: 62.4375rem;
+    border: 0.125rem solid var(--lw-color-white);
+
+    overflow: hidden;
+    margin-bottom: 0.625rem;
+}
+
+.lw-profileScreen__avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 62.4375rem;
+}
+
+.lw-profileScreen__avatarEdit {
+    position: absolute;
+    right: 0.5rem;
+    bottom: 0.5rem;
+
+    padding: 0.375rem 0.625rem;
+    border-radius: 0.75rem;
+
+    background: var(--lw-color-white);
+    border: 0.0625rem solid rgba(226, 232, 240, 0.8);
+}
+
+.lw-profileScreen__avatarEditText {
+    color: var(--lw-color-primary);
+}
+
+.lw-profileScreen__fileInput {
+    display: none;
+}
+
+.lw-profileScreen__name {
+    margin-top: 0.625rem;
+    color: var(--lw-color-text);
+    text-align: center;
+}
+
+.lw-profileScreen__content {
+    flex-direction: column;
+    width: 100%;
+    max-width: 35rem;
+    padding: 0 1rem 4.5rem;
+    overflow-x: hidden;
+    align-items: center;
+    direction: rtl;
+}
+
+.lw-profileScreen__card {
+    flex-direction: column;
+    width: 100%;
+    margin: 0;
+    align-items: center;
+}
+
+.lw-profileScreen__sectionTitle {
+    color: var(--lw-color-primary-highlighted);
+    text-align: center;
+    margin-bottom: 1.25rem;
+}
+
+.lw-profileScreen__form {
+    flex-direction: column;
+    width: 100%;
+    align-items: center;
+}
+
+.lw-profileScreen__input {
+    width: 100%;
+    max-width: 26.25rem;
+    margin-bottom: 0.875rem;
+}
+
+.lw-profileScreen__saveButton {
+    margin-top: 1rem;
+    align-self: center;
+}
+
+.lw-profileScreen__back {
+    align-self: center;
+    margin-top: 0.75rem;
+}
+
+.lw-profileScreen__successPopup,
+.lw-profileScreen__errorPopup {
+    flex-direction: column;
+    width: 100%;
+}
+
+.lw-profileScreen__popupSep {
+    margin: 1.25rem 0;
+}
+
+.lw-profileScreen__popupOk {
+    align-self: flex-start;
+}
+
+@media (min-width: 56.25rem) {
+    .lw-profileScreen__content {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+}

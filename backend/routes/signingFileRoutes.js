@@ -18,6 +18,9 @@ router.get("/lawyer-files", authMiddleware, signingFileController.getLawyerSigni
 // (אופציונלי) רק בהמתנה ללקוח
 router.get("/pending", authMiddleware, signingFileController.getPendingSigningFiles);
 
+// Stream original PDF for in-app viewing/signing
+router.get("/:signingFileId/pdf", authMiddleware, signingFileController.getSigningFilePdf);
+
 // פרטי קובץ + מקומות חתימה (גם עו"ד וגם לקוח)
 router.get("/:signingFileId", authMiddleware, signingFileController.getSigningFileDetails);
 

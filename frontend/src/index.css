@@ -27,7 +27,7 @@ svg {
 
 /* Global font stack */
 body {
-  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--lw-font-stack);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

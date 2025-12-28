@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { ScreenSizeProvider } from './providers/ScreenSizeProvider';
 import { BrowserRouter } from 'react-router-dom';
+import './styles/theme.scss';
 import './index.css';
 import { PopupProvider } from './providers/PopUpProvider';
 import { FromAppProvider } from './providers/FromAppProvider';

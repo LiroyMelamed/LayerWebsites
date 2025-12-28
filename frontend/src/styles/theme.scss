@@ -1,0 +1,26 @@
+:root {
+    /* Font stack to match React-Native AppText (System/sans-serif feel) */
+    --lw-font-stack: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+
+    /* Colors mirrored from src/constant/colors.js */
+    --lw-color-primary: #2A4365;
+    --lw-color-primary-highlighted: #1A365D;
+    --lw-color-sidebar-selected: #4C6690;
+
+    --lw-color-secondary: #FFFFFF;
+    --lw-color-secondary-highlighted: #EDF2F7;
+
+    --lw-color-disabled: #E2E8F0;
+    --lw-color-disabled-highlighted: #A0AEC0;
+
+    --lw-color-error: #E53E3E;
+    --lw-color-white: #FFFFFF;
+    --lw-color-text: #2D3748;
+
+    --lw-color-positive: #38A169;
+    --lw-color-negative: #C53030;
+
+    --lw-color-transparent: transparent;
+    --lw-color-winter: #718096;
+    --lw-color-dark-red: #9B2C2C;
+}

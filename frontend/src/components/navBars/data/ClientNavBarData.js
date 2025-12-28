@@ -1,5 +1,6 @@
 import { ClientStackName } from "../../../navigation/ClientStack";
-import { UpdatesAndNotificationsScreenName } from "../../../screens/client/updates/UpdatesScreen";
+import { NotificationsScreenName } from "../../../screens/client/notifications/NotificationsScreen";
+import { ProfileScreenName } from "../../../screens/client/profile/ProfileScreen";
 import { SigningScreenName } from "../../../screens/signingScreen/SigningScreen";
 import { Text12 } from "../../specializedComponents/text/AllTextKindFile";
 import TermsOfConditons from "../../termsAndConditions/TermsOfConditons";
@@ -7,10 +8,10 @@ import TermsOfConditons from "../../termsAndConditions/TermsOfConditons";
 export const getClientNavBarData = (navigate, openPopup, closePopup) => ({
     NavBarLinks: [
         {
-            buttonText: "עידכונים והתראות",
+            buttonText: "התראות",
             buttonScreen: null,
             icon: null, // icons.NavBarIcons.Manager
-            onClick: () => { navigate(ClientStackName + UpdatesAndNotificationsScreenName) }
+            onClick: () => { navigate(ClientStackName + NotificationsScreenName) }
         },
         {
             buttonText: "מסמכים לחתימה",
@@ -22,7 +23,7 @@ export const getClientNavBarData = (navigate, openPopup, closePopup) => ({
             buttonText: "הפרופיל שלי",
             buttonScreen: null,
             icon: null, // icons.NavBarIcons.UpdateCase
-            onClick: () => { openPopup(<Text12>{`שירות הפרופיל שלי יהיה זמין בקרוב`}</Text12>) },
+            onClick: () => { navigate(ClientStackName + ProfileScreenName) },
         },
 
         {

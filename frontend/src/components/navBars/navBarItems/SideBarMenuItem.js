@@ -3,6 +3,7 @@ import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import SimpleIcon from "../../simpleComponents/SimpleIcon";
 import { Text16 } from "../../specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../constant/colors";
+import "./SideBarMenuItem.scss";
 
 export default function SideBarMenuItem({ onPressFunction, isPressed, size, iconColor, iconSource, iconStyle, buttonText, buttonIndex, containerStyle }) {
 
@@ -11,34 +12,21 @@ export default function SideBarMenuItem({ onPressFunction, isPressed, size, icon
     }
 
     return (
-        <SimpleButton onPress={() => onPress()} style={styles.buttonContainer(isPressed)}>
-            <SimpleContainer style={styles.innerContainer}>
+        <SimpleButton
+            onPress={() => onPress()}
+            className={`lw-sideBarMenuItem${isPressed ? " is-pressed" : ""}`}
+        >
+            <SimpleContainer className="lw-sideBarMenuItem__inner">
                 <SimpleIcon
                     size={size || 24}
                     tintColor={iconColor || colors.white}
-                    source={iconSource}
+                    src={iconSource}
                     style={iconStyle}
                 />
-                <Text16 color={colors.white} style={styles.textStyle}>
+                <Text16 color={colors.white} className="lw-sideBarMenuItem__text">
                     {buttonText}
                 </Text16>
             </SimpleContainer>
         </SimpleButton>
     );
 }
-
-const styles = {
-    buttonContainer: (isPressed) => ({
-        width: '100%',
-        backgroundColor: isPressed ? colors.SideBarSelected : colors.transparent,
-        height: 56,
-    }),
-    innerContainer: {
-        display: 'flex',
-        flexDirection: 'row-reverse',
-        alignItems: 'center', // This ensures the icon and text are vertically aligned
-    },
-    textStyle: {
-        display: 'flex',
-    }
-};

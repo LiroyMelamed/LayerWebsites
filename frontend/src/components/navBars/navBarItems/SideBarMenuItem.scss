@@ -1,0 +1,20 @@
+.lw-sideBarMenuItem {
+    width: 100%;
+    height: 3.5rem;
+    background-color: var(--lw-color-transparent);
+}
+
+.lw-sideBarMenuItem.is-pressed {
+    background-color: var(--lw-color-sidebar-selected);
+}
+
+.lw-sideBarMenuItem__inner {
+    flex-direction: row-reverse;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+}
+
+.lw-sideBarMenuItem__text {
+    display: flex;
+}

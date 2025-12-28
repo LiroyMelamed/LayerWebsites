@@ -18,6 +18,7 @@ const SearchInput = ({
     title,
     error,
     style,
+    className,
     ...props
 }) => {
 
@@ -52,7 +53,7 @@ const SearchInput = ({
     }
 
     return (
-        <SimpleContainer style={style}>
+        <SimpleContainer className={className} style={style}>
             <SimpleInput
                 title={title}
                 ref={targetRef}

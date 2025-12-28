@@ -1,6 +1,11 @@
 const axios = require("axios");
 const pool = require("../config/db"); // Direct import of the pg pool
 
+function isExpoPushToken(token) {
+    const t = String(token || "").trim();
+    return /^ExponentPushToken\[[^\]]+\]$/.test(t) || /^ExpoPushToken\[[^\]]+\]$/.test(t);
+}
+
 function isDuplicateNotificationPkError(err) {
     return (
         err?.code === "23505" &&
@@ -50,29 +55,54 @@ async function sendAndStoreNotification(userId, title, message, data = {}) {
 
         // Extract the tokens from the query result
         const tokens = tokensResult.rows.map(row => row.FcmToken).filter(Boolean);
+        const expoTokens = tokens.map(t => String(t).trim()).filter(isExpoPushToken);
 
         // Add a Unicode Right-to-Left marker for proper text display in notifications
         const rtlTitle = `\u200F${title}`;
         const rtlMessage = `\u200F${message}`;
 
         if (tokens.length > 0) {
-            // Send a push notification to each token found
-            for (const token of tokens) {
+            if (expoTokens.length === 0) {
+                console.warn(
+                    `UserId ${userId} has push tokens, but none are valid Expo push tokens. Skipping push send.`
+                );
+            } else {
+                // Expo supports sending an array of messages in a single request.
+                const messages = expoTokens.map((token) => ({
+                    to: token,
+                    sound: "default",
+                    title: rtlTitle,
+                    body: rtlMessage,
+                    data,
+                }));
+
                 try {
-                    await axios.post("https://exp.host/--/api/v2/push/send", {
-                        to: token,
-                        sound: "default",
-                        title: rtlTitle,
-                        body: rtlMessage,
-                        data: data,
-                    });
-                    console.log(`Push notification sent to token: ${token}`);
+                    const resp = await axios.post(
+                        "https://exp.host/--/api/v2/push/send",
+                        messages,
+                        { headers: { "Content-Type": "application/json" } }
+                    );
+                    const dataResp = resp?.data;
+                    if (dataResp?.data?.length) {
+                        const failures = dataResp.data.filter((r) => r?.status !== "ok");
+                        if (failures.length) {
+                            console.error(
+                                `❌ Expo push failures for UserId ${userId}:`,
+                                failures
+                            );
+                        }
+                    }
                 } catch (err) {
-                    console.error("❌ Push error for token:", token, err?.response?.data || err.message, "UserId: ", userId);
+                    console.error(
+                        "❌ Expo push send error:",
+                        err?.response?.data || err.message,
+                        "UserId:",
+                        userId
+                    );
                 }
             }
         } else {
-            console.log(`No FCM tokens found for UserId: ${userId}. Skipping push notification.`);
+            console.log(`No push tokens found for UserId: ${userId}. Skipping push notification.`);
         }
 
         // Store the notification in the database

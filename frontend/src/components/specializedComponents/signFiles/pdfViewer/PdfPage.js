@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Document, Page } from "react-pdf";
 import SimpleContainer from "../../../simpleComponents/SimpleContainer";
 
-export default function PdfPage({ pdfFile, pageNumber = 1, onLoadTotalPages }) {
+export default function PdfPage({ pdfFile, pageNumber = 1, onLoadTotalPages, renderWidth = 800 }) {
     const [objectUrl, setObjectUrl] = useState(null);
 
     useEffect(() => {
@@ -22,7 +22,7 @@ export default function PdfPage({ pdfFile, pageNumber = 1, onLoadTotalPages }) {
     if (!objectUrl) return null;
 
     return (
-        <SimpleContainer style={{ position: "relative", width: "100%" }}>
+        <SimpleContainer className="lw-signing-pdfPage">
             <Document
                 file={objectUrl}
                 loading={<div>טוען PDF…</div>}
@@ -33,7 +33,7 @@ export default function PdfPage({ pdfFile, pageNumber = 1, onLoadTotalPages }) {
             >
                 <Page
                     pageNumber={pageNumber}
-                    width={800}
+                    width={renderWidth}
                     renderTextLayer={false}
                     renderAnnotationLayer={false}
                 />

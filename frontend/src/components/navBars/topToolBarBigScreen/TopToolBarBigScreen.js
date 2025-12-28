@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { colors } from "../../../constant/colors";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { Text40 } from "../../specializedComponents/text/AllTextKindFile";
+import "./TopToolBarBigScreen.scss";
 
 
 export default function TopToolbarBigScreen({ ChosenButtonText }) {
@@ -15,21 +15,10 @@ export default function TopToolbarBigScreen({ ChosenButtonText }) {
 
     return (
         <SimpleContainer
-            style={styles.container}
+            className="lw-topToolBarBigScreen"
         >
-            <Text40 style={{ marginRight: 28 }}>{titleTopBar}</Text40>
+            <Text40 className="lw-topToolBarBigScreen__title">{titleTopBar}</Text40>
 
         </SimpleContainer >
     );
-}
-
-const styles = {
-    container: {
-        display: 'flex',
-        height: 80,
-        alignItems: 'center',
-        flexDirection: 'row-reverse',
-        backgroundColor: colors.white,
-        width: '100%',
-    },
 }

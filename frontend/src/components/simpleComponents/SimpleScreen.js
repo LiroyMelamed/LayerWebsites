@@ -2,7 +2,15 @@ import React from 'react';
 import { useScreenSize } from '../../providers/ScreenSizeProvider';
 import SimpleContainer from './SimpleContainer';
 
-export default function SimpleScreen({ children, imageBackgroundSource, style, screenStyle: customScreenStyle }) {
+export default function SimpleScreen({
+    children,
+    imageBackgroundSource,
+    style,
+    screenStyle: customScreenStyle,
+    className,
+    contentClassName,
+    ...rest
+}) {
     const { isSmallScreen } = useScreenSize();
 
     const screenStyle = {
@@ -26,8 +34,8 @@ export default function SimpleScreen({ children, imageBackgroundSource, style, s
     };
 
     return (
-        <SimpleContainer style={screenStyle}>
-            <SimpleContainer style={childrenContainerStyle}>
+        <SimpleContainer className={className} style={screenStyle} {...rest}>
+            <SimpleContainer className={contentClassName} style={childrenContainerStyle}>
                 {children}
             </SimpleContainer>
         </SimpleContainer>

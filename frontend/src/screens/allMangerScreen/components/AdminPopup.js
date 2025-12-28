@@ -8,6 +8,8 @@ import { adminApi } from "../../../api/adminApi";
 import useHttpRequest from "../../../hooks/useHttpRequest";
 import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryButton";
 
+import "./AdminPopup.scss";
+
 export default function AdminPopup({ adminDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style }) {
     const [admin, setAdmin] = useState({
         name: null,
@@ -15,9 +17,6 @@ export default function AdminPopup({ adminDetails, rePerformRequest, onFailureFu
         email: null,
         password: null,
     });
-
-    console.log("adminDetails", adminDetails);
-
 
     useEffect(() => {
         if (adminDetails) {
@@ -69,17 +68,17 @@ export default function AdminPopup({ adminDetails, rePerformRequest, onFailureFu
     };
 
     return (
-        <SimpleContainer style={{ ...style, ...styles.container }}>
+        <SimpleContainer className="lw-adminPopup" style={style}>
             <SimpleScrollView>
-                <SimpleContainer style={styles.rowStyle}>
+                <SimpleContainer className="lw-adminPopup__row">
                     <SimpleInput
-                        style={styles.inputStyle}
+                        className="lw-adminPopup__input"
                         title={"שם מנהל"}
                         value={admin.name}
                         onChange={(e) => handleInputChange("name", e.target.value)}
                     />
                     <SimpleInput
-                        style={styles.inputStyle}
+                        className="lw-adminPopup__input"
                         title={"מספר פלאפון"}
                         type="tel"
                         value={admin.phoneNumber}
@@ -87,16 +86,16 @@ export default function AdminPopup({ adminDetails, rePerformRequest, onFailureFu
                     />
                 </SimpleContainer>
 
-                <SimpleContainer style={styles.rowStyle}>
+                <SimpleContainer className="lw-adminPopup__row">
                     <SimpleInput
-                        style={styles.inputStyle}
+                        className="lw-adminPopup__input"
                         title={"אימייל"}
                         type="email"
                         value={admin.email}
                         onChange={(e) => handleInputChange("email", e.target.value)}
                     />
                     <SimpleInput
-                        style={styles.inputStyle}
+                        className="lw-adminPopup__input"
                         title={"סיסמא"}
                         value={admin.password}
                         onChange={(e) => handleInputChange("password", e.target.value)}
@@ -104,10 +103,10 @@ export default function AdminPopup({ adminDetails, rePerformRequest, onFailureFu
                     />
                 </SimpleContainer>
 
-                <SimpleContainer style={styles.buttonsRowStyle}>
+                <SimpleContainer className="lw-adminPopup__actions">
                     {adminDetails &&
                         <SecondaryButton
-                            style={styles.button}
+                            className="lw-adminPopup__actionButton"
                             size={buttonSizes.MEDIUM}
                             onPress={handleDeleteAdmin}
                         >
@@ -115,7 +114,7 @@ export default function AdminPopup({ adminDetails, rePerformRequest, onFailureFu
                         </SecondaryButton>
                     }
                     <PrimaryButton
-                        style={styles.button}
+                        className="lw-adminPopup__actionButton"
                         size={buttonSizes.MEDIUM}
                         onPress={handleSaveAdmin}
                     >
@@ -126,31 +125,3 @@ export default function AdminPopup({ adminDetails, rePerformRequest, onFailureFu
         </SimpleContainer>
     );
 }
-
-const styles = {
-    container: {
-        width: "100%",
-        margin: "0 auto",
-    },
-    rowStyle: {
-        display: "flex",
-        flexDirection: "row-reverse",
-        marginBottom: "16px",
-        flexWrap: "wrap",
-    },
-    inputStyle: {
-        flex: 1,
-        minWidth: "150px",
-    },
-    buttonsRowStyle: {
-        display: "flex",
-        flexDirection: "row",
-        justifyContent: "center",
-        marginBottom: "16px",
-        marginTop: "16px",
-        flexWrap: "wrap",
-    },
-    button: {
-        margin: "8px 8px",
-    },
-};

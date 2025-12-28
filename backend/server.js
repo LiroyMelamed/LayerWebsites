@@ -81,7 +81,6 @@ app.use("/api/Notifications", notificationRoutes);
 app.use("/api/Files", filesRoutes);
 app.use("/api/SigningFiles", signingFileRoutes);
 
-
 app.listen(PORT, async () => {
     console.log(`Server running on port ${PORT}`);
     await getPublicIp();

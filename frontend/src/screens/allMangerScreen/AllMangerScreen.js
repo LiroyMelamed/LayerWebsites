@@ -17,6 +17,8 @@ import { MainScreenName } from "../mainScreen/MainScreen";
 import AdminPopup from "./components/AdminPopup";
 import AdminsCard from "./components/AdminsCard";
 
+import "./AllMangerScreen.scss";
+
 export const AllMangerScreenName = "/AllManger"
 
 export default function AllMangerScreen() {
@@ -45,13 +47,13 @@ export default function AllMangerScreen() {
             {isSmallScreen && <TopToolBarSmallScreen chosenIndex={3} LogoNavigate={AdminStackName + MainScreenName} />}
 
             <SimpleScrollView>
-                <SimpleContainer style={styles.responsiveContainer}>
+                <SimpleContainer className="lw-allMangerScreen__row">
                     <SearchInput
                         onSearch={handleSearch}
                         title={"חיפוש מנהל"}
                         titleFontSize={20}
                         getButtonTextFunction={(item) => item.name}
-                        style={styles.searchInput}
+                        className="lw-allMangerScreen__search"
                         isPerforming={isPerformingAdminById}
                         queryResult={adminByName}
                         buttonPressFunction={(chosen) => buttonPressFunction(chosen)}
@@ -66,30 +68,14 @@ export default function AllMangerScreen() {
                 />
             </SimpleScrollView>
 
-            <SimpleContainer style={{ display: 'flex', justifyContent: 'center' }}>
-                <PrimaryButton style={{ margin: '8px 0px', selfAlign: 'center' }} onPress={() => openPopup(<AdminPopup rePerformRequest={performGetAdmins} closePopUpFunction={closePopup} />)}>הוסף מנהל</PrimaryButton>
+            <SimpleContainer className="lw-allMangerScreen__footer">
+                <PrimaryButton
+                    className="lw-allMangerScreen__addButton"
+                    onPress={() => openPopup(<AdminPopup rePerformRequest={performGetAdmins} closePopUpFunction={closePopup} />)}
+                >
+                    הוסף מנהל
+                </PrimaryButton>
             </SimpleContainer>
         </SimpleScreen>
     )
-}
-
-const styles = {
-    responsiveContainer: {
-        display: 'flex',
-        flexDirection: 'row-reverse',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        maxWidth: '100%',
-        overflow: 'hidden',
-    },
-    searchInput: {
-        margin: "12px 0px",
-        marginLeft: 20,
-        maxWidth: '500px',
-    },
-    chooseButton: {
-        margin: "12px 0px",
-        flex: '0 1 auto',
-        minWidth: '100px',
-    }
 }

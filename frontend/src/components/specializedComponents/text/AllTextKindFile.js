@@ -1,5 +1,4 @@
 import React from 'react';
-import FredokaText from './FredokaText';
 import AppText from './AppText';
 
 // Text Components for different sizes

@@ -12,33 +12,48 @@ require("dotenv").config();
  * @param {object} res - The Express response object.
  */
 const saveDeviceToken = async (req, res) => {
-    const { fcmToken, deviceType } = req.body;
+    const { fcmToken, pushToken, expoPushToken, deviceType } = req.body;
     // Assuming the user ID is attached to the request object by a middleware
     const userId = req.user?.UserId;
 
-    if (!userId || !fcmToken) {
-        return res.status(400).json({ message: "Missing user ID or FCM token" });
+    const token = (fcmToken || pushToken || expoPushToken || "").trim();
+
+    if (!userId || !token) {
+        return res.status(400).json({ message: "Missing user ID or push token" });
     }
 
     try {
-        // Check if the token already exists for this user
-        const existing = await pool.query(
+        // If token exists for the same user, update deviceType (if provided)
+        const updateSameUser = await pool.query(
             `
-            SELECT DeviceId FROM UserDevices
+            UPDATE UserDevices
+            SET DeviceType = COALESCE($3, DeviceType)
             WHERE UserId = $1 AND FcmToken = $2
             `,
-            [userId, fcmToken]
+            [userId, token, deviceType || null]
         );
 
-        // If it doesn't exist, insert a new record
-        if (existing.rows.length === 0) {
-            await pool.query(
+        if (updateSameUser.rowCount === 0) {
+            // If the same device token was previously associated to another user,
+            // re-associate it to the current user (common after logout/login).
+            const reassociate = await pool.query(
                 `
-                INSERT INTO UserDevices (UserId, FcmToken, DeviceType)
-                VALUES ($1, $2, $3)
+                UPDATE UserDevices
+                SET UserId = $1, DeviceType = COALESCE($3, DeviceType)
+                WHERE FcmToken = $2
                 `,
-                [userId, fcmToken, deviceType || null]
+                [userId, token, deviceType || null]
             );
+
+            if (reassociate.rowCount === 0) {
+                await pool.query(
+                    `
+                    INSERT INTO UserDevices (UserId, FcmToken, DeviceType)
+                    VALUES ($1, $2, $3)
+                    `,
+                    [userId, token, deviceType || null]
+                );
+            }
         }
 
         res.status(200).json({ message: "Device token saved successfully" });

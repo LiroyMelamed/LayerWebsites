@@ -3,16 +3,19 @@ import SimpleContainer from "../../../components/simpleComponents/SimpleContaine
 import SimpleScreen from "../../../components/simpleComponents/SimpleScreen";
 import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
 
+import "./LoginSimpleScreen.scss";
+
 export default function LoginSimpleScreen({ unScrollableTopComponent, unScrollableBottomComponent, children, style }) {
     return (
         <SimpleScreen
             imageBackgroundSource={images.Backgrounds.AppBackground}
-            style={{ width: "100%", padding: '44px 20px', justifyContent: 'center', ...style }}
+            contentClassName="lw-loginSimpleScreen__content"
+            style={style}
         >
-            <SimpleScrollView style={{ flex: 1 }}>
-                <SimpleContainer style={{ display: 'flex', height: '100%', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <SimpleScrollView className="lw-loginSimpleScreen__scroll">
+                <SimpleContainer className="lw-loginSimpleScreen__layout">
                     {unScrollableTopComponent}
-                    <SimpleContainer style={{ flex: 1 }}>
+                    <SimpleContainer className="lw-loginSimpleScreen__main">
                         {children}
                     </SimpleContainer>
                     {unScrollableBottomComponent}

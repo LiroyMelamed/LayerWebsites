@@ -1,0 +1,84 @@
+.lw-caseMenuItemOpen {
+    overflow: hidden;
+    transition: max-height 0.5s ease, opacity 0.5s ease;
+    max-height: 0;
+    opacity: 0;
+    margin-top: 1rem;
+    margin-right: 1.75rem;
+    display: flex;
+    flex-direction: column;
+
+    &.is-open {
+        max-height: 75rem;
+        opacity: 1;
+    }
+}
+
+.lw-caseMenuItemOpen__progressWrap {
+    margin-bottom: 1.25rem;
+}
+
+.lw-caseMenuItemOpen__row {
+    display: flex;
+    flex-direction: row-reverse;
+    flex: 1;
+}
+
+.lw-caseMenuItemOpen__row.is-centered {
+    align-items: center;
+}
+
+.lw-caseMenuItemOpen__cell {
+    flex: 1;
+}
+
+.lw-caseMenuItemOpen__linkText {
+    color: #2A4365;
+    /* colors.primary */
+}
+
+.lw-caseMenuItemOpen__positiveText {
+    color: #38A169;
+    /* colors.positive */
+}
+
+.lw-caseMenuItemOpen__stagesHeader {
+    display: flex;
+    flex-direction: row-reverse;
+    flex: 1;
+    align-items: center;
+    cursor: pointer;
+}
+
+.lw-caseMenuItemOpen__dropDownBtn {
+    margin-left: 0.5rem;
+    width: 0.75rem;
+    height: 0.75rem;
+    transition: transform 0.3s ease;
+    transform: rotate(0deg);
+
+    &.is-open {
+        transform: rotate(180deg);
+    }
+}
+
+.lw-caseMenuItemOpen__actionsRow {
+    display: flex;
+    flex-direction: row;
+    margin-top: 1rem;
+}
+
+.lw-caseMenuItemOpen__action {
+    margin-right: 0.5rem;
+}
+
+.lw-caseMenuItemOpen__linkInputRow {
+    display: flex;
+    flex-direction: row-reverse;
+    flex: 1;
+    align-items: center;
+}
+
+.lw-caseMenuItemOpen__whatsAppInput {
+    margin-left: 0.5rem;
+}

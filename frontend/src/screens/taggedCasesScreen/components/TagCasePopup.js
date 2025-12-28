@@ -6,6 +6,8 @@ import SecondaryButton from "../../../components/styledComponents/buttons/Second
 import useHttpRequest from "../../../hooks/useHttpRequest";
 import casesApi from "../../../api/casesApi";
 
+import "./TagCasePopup.scss";
+
 export default function TagCasePopup({ rePerformRequest, style }) {
     const [CaseType, setCaseType] = useState();
     const { isPerforming: isPerformingSetCase, performRequest: setCase } = useHttpRequest(casesApi.updateCaseById, () => { rePerformRequest?.() });
@@ -24,11 +26,11 @@ export default function TagCasePopup({ rePerformRequest, style }) {
     }
 
     return (
-        <SimpleContainer style={{ ...style, ...styles.container }}>
+        <SimpleContainer className="lw-tagCasePopup" style={style}>
             <SimpleScrollView>
-                <SimpleContainer style={styles.rowStyle}>
+                <SimpleContainer className="lw-tagCasePopup__row">
                     <SearchInput
-                        style={styles.inputStyle}
+                        className="lw-tagCasePopup__input"
                         title={"מספר התיק"}
                         queryResult={casesByName}
                         onSearch={(query) => handleSearch(query)}
@@ -40,8 +42,12 @@ export default function TagCasePopup({ rePerformRequest, style }) {
                     />
                 </SimpleContainer>
 
-                <SimpleContainer style={styles.buttonsRowStyle}>
-                    <SecondaryButton onPress={tagCase} isPerforming={isPerformingSetCase} style={styles.button}>
+                <SimpleContainer className="lw-tagCasePopup__actions">
+                    <SecondaryButton
+                        onPress={tagCase}
+                        isPerforming={isPerformingSetCase}
+                        className="lw-tagCasePopup__actionButton"
+                    >
                         נעץ
                     </SecondaryButton>
                 </SimpleContainer>
@@ -49,32 +55,3 @@ export default function TagCasePopup({ rePerformRequest, style }) {
         </SimpleContainer>
     );
 }
-
-const styles = {
-    container: {
-        width: '100%',
-        margin: '0 auto',
-    },
-    rowStyle: {
-        display: 'flex',
-        flexDirection: 'row-reverse',
-        marginBottom: '16px',
-        flexWrap: 'wrap',
-    },
-    inputStyle: {
-        flex: 1,
-        minWidth: '150px',
-        margin: '8px 4px',
-    },
-    buttonsRowStyle: {
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'center',
-        marginBottom: '16px',
-        marginTop: '16px',
-        flexWrap: 'wrap',
-    },
-    button: {
-        margin: '8px 8px',
-    },
-};

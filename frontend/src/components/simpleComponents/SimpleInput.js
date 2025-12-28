@@ -9,6 +9,7 @@ const SimpleInput = forwardRef(
         titleFontSize = 16,
         leftIcon,
         rightIcon,
+        className,
         tintColor,
         IconStyle,
         textStyle,
@@ -69,9 +70,12 @@ const SimpleInput = forwardRef(
             }
         }, [value]);
 
+        const shouldFloatLabel = isFocused || !!delayedValue || type === 'date';
+
         return (
             <SimpleContainer
                 ref={ref}
+                className={className}
                 style={{
                     position: 'relative',
                     display: 'flex',
@@ -97,8 +101,8 @@ const SimpleInput = forwardRef(
                             right: rightIcon ? '40px' : '8px',
                             top: sizeStyles.labelTop,
                             borderRadius: 10000,
-                            transform: isFocused || delayedValue ? sizeStyles.transformFocused : 'translateY(-50%)',
-                            opacity: isFocused || delayedValue ? 1 : 0.6,
+                            transform: shouldFloatLabel ? sizeStyles.transformFocused : 'translateY(-50%)',
+                            opacity: shouldFloatLabel ? 1 : 0.6,
                             color: error ? colors.error : colors.primaryHighlighted,
                         }}
                     >

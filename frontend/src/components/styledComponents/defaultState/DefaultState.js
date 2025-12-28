@@ -4,7 +4,21 @@ import SimpleImage from "../../simpleComponents/SimpleImage";
 import { TextBold14 } from "../../specializedComponents/text/AllTextKindFile";
 import PrimaryButton from "../buttons/PrimaryButton";
 
-export default function DefaultState({ imageSrc = images.MainPage.DataFlowing, imageStyle, content, actionButton, actionButtonPressFunction, actionButtonLeftIcon, actionButtonRightIcon, actionButtonSize, style }) {
+export default function DefaultState({
+    imageSrc = images.MainPage.DataFlowing,
+    imageStyle,
+    imageClassName,
+    content,
+    actionButton,
+    actionButtonPressFunction,
+    actionButtonLeftIcon,
+    actionButtonRightIcon,
+    actionButtonSize,
+    style,
+    className,
+    contentClassName,
+    actionButtonClassName,
+}) {
 
     const CardStyle = {
         maxWidth: '100%',
@@ -14,14 +28,23 @@ export default function DefaultState({ imageSrc = images.MainPage.DataFlowing, i
     }
 
     return (
-        <SimpleCard style={CardStyle}>
-            <SimpleImage src={imageSrc} style={imageStyle} />
-            <TextBold14 style={{ marginTop: 8 }}>
+        <SimpleCard className={className} style={CardStyle}>
+            <SimpleImage className={imageClassName} src={imageSrc} style={imageStyle} />
+            <TextBold14 className={contentClassName} style={{ marginTop: 8 }}>
                 {content}
             </TextBold14>
 
             {actionButton &&
-                <PrimaryButton onPress={actionButtonPressFunction} rightIcon={actionButtonRightIcon} leftIcon={actionButtonLeftIcon} size={actionButtonSize} style={{ marginTop: 8 }}>{actionButton}</PrimaryButton>
+                <PrimaryButton
+                    className={actionButtonClassName}
+                    onPress={actionButtonPressFunction}
+                    rightIcon={actionButtonRightIcon}
+                    leftIcon={actionButtonLeftIcon}
+                    size={actionButtonSize}
+                    style={{ marginTop: 8 }}
+                >
+                    {actionButton}
+                </PrimaryButton>
             }
         </SimpleCard>
     );

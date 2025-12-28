@@ -1,0 +1,29 @@
+.lw-tagCasePopup {
+    width: 100%;
+    margin: 0 auto;
+}
+
+.lw-tagCasePopup__row {
+    display: flex;
+    flex-direction: row-reverse;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.lw-tagCasePopup__input {
+    flex: 1;
+    min-width: 150px;
+    margin: 8px 4px;
+}
+
+.lw-tagCasePopup__actions {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    margin: 16px 0;
+    flex-wrap: wrap;
+}
+
+.lw-tagCasePopup__actionButton {
+    margin: 8px;
+}

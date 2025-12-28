@@ -11,6 +11,8 @@ import Separator from "../../../components/styledComponents/separators/Separator
 import { usePopup } from "../../../providers/PopUpProvider";
 import ClientPopup from "./ClientPopUp";
 
+import "./ClientsCard.scss";
+
 export default function ClientsCard({ rePerformRequest, customerList, style }) {
     const { openPopup, closePopup } = usePopup();
 
@@ -20,7 +22,8 @@ export default function ClientsCard({ rePerformRequest, customerList, style }) {
                 content={"כשנוסיף לקוחות הם יוצגו פה"}
                 imageStyle={{ height: 156 }}
                 imageSrc={images.Defaults.SearchingClient}
-                style={{ justifyContent: 'space-evenly' }}
+                className="lw-clientsCard__empty"
+                imageClassName="lw-clientsCard__emptyImage"
                 actionButton={'הוסף לקוח'}
                 actionButtonPressFunction={() => openPopup(<ClientPopup closePopUpFunction={closePopup} rePerformRequest={rePerformRequest} />)}
             />
@@ -28,22 +31,22 @@ export default function ClientsCard({ rePerformRequest, customerList, style }) {
     }
 
     return (
-        <SimpleCard style={{ overflow: null, flexDirection: 'column' }}>
-            <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse' }}>
-                <TextBold14 style={styles.textContainer}>{'שם חברה'}</TextBold14>
+        <SimpleCard className="lw-clientsCard" style={style}>
+            <SimpleContainer className="lw-clientsCard__headerRow">
+                <TextBold14 className="lw-clientsCard__headerCell">{'שם חברה'}</TextBold14>
 
-                <Text14 style={styles.textContainer}>{'שם לקוח'}</Text14>
+                <Text14 className="lw-clientsCard__headerCell">{'שם לקוח'}</Text14>
 
-                <Text14 style={styles.textContainer}>{'מייל'}</Text14>
+                <Text14 className="lw-clientsCard__headerCell">{'מייל'}</Text14>
 
-                <Text14 style={styles.textContainer}>{'טלפון'}</Text14>
+                <Text14 className="lw-clientsCard__headerCell">{'טלפון'}</Text14>
             </SimpleContainer>
 
             <Separator />
 
-            <SimpleScrollView style={{ flex: 1 }}>
+            <SimpleScrollView className="lw-clientsCard__list">
                 {customerList?.map((customer, index) => (
-                    <SimpleContainer style={{ flexDirection: 'column' }}>
+                    <SimpleContainer className="lw-clientsCard__listItem" key={customer?.userid ?? index}>
                         {index !== 0 &&
                             <Separator />
                         }
@@ -61,17 +64,12 @@ export default function ClientsCard({ rePerformRequest, customerList, style }) {
                 ))}
             </SimpleScrollView>
 
-            <PrimaryButton style={{ alignSelf: 'center', marginTop: '20px' }} onPress={() => openPopup(<ClientPopup closePopUpFunction={closePopup} rePerformRequest={rePerformRequest} />)}>
+            <PrimaryButton
+                className="lw-clientsCard__addButton"
+                onPress={() => openPopup(<ClientPopup closePopUpFunction={closePopup} rePerformRequest={rePerformRequest} />)}
+            >
                 הוסף לקוח
             </PrimaryButton>
         </SimpleCard>
     );
 }
-
-const styles = {
-    textContainer: {
-        flex: 1,
-        alignText: 'right',
-        margin: '0px 6px',
-    }
-};

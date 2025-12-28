@@ -1,0 +1,26 @@
+.lw-adminsCard {
+    flex-direction: column;
+}
+
+.lw-adminsCard--loading {
+    flex-direction: column;
+}
+
+.lw-adminsCard__headerRow {
+    display: flex;
+    flex-direction: row-reverse;
+}
+
+.lw-adminsCard__headerCell {
+    flex: 1;
+    text-align: right;
+    margin: 0 6px;
+}
+
+.lw-adminsCard__empty {
+    width: 100%;
+}
+
+.lw-adminsCard__emptyImage {
+    height: 156px;
+}

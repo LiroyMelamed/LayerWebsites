@@ -9,8 +9,9 @@ import { images } from "../../assets/images/images";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import ImageButton from "../specializedComponents/buttons/ImageButton";
 import Separator from "../styledComponents/separators/Separator";
-import PrimaryButton from "../styledComponents/buttons/PrimaryButton";
+import GenericButton from "../styledComponents/buttons/GenericButton";
 import SimpleScrollView from "../simpleComponents/SimpleScrollView";
+import "./TopAndRightNavBar.scss";
 
 const Logo = images.Logos.LogoSlangWhite;
 
@@ -22,15 +23,25 @@ export default function TopAndRightNavBar({ chosenIndex = -1, children, LogoNavi
   const { NavBarLinks } = GetNavBarData(navigate, openPopup, closePopup);
 
   return (
-    <SimpleContainer style={styles.mainContainer}>
+    <SimpleContainer className="lw-topAndRightNavBar">
       {!isSmallScreen && (
-        <SimpleContainer style={styles.sidebarContainer}>
-          <SimpleContainer style={styles.logoContainer}>
-            <ImageButton src={Logo} height={60} style={{ maxHeight: 60, alignSelf: 'center' }} onPress={() => { setCurrentIndex(-1); navigate(LogoNavigate) }} />
+        <SimpleContainer className="lw-topAndRightNavBar__sidebar">
+          <SimpleContainer className="lw-topAndRightNavBar__logoRow">
+            <ImageButton
+              src={Logo}
+              height={60}
+              className="lw-topAndRightNavBar__logoBtn"
+              onPress={() => {
+                setCurrentIndex(-1);
+                navigate(LogoNavigate);
+              }}
+            />
           </SimpleContainer>
-          <Separator style={{ margin: '20px 0' }} />
+          <div className="lw-topAndRightNavBar__separatorWrap">
+            <Separator />
+          </div>
           <SimpleScrollView>
-            <SimpleContainer style={{ flexDirection: 'column', flex: 1 }}>
+            <SimpleContainer className="lw-topAndRightNavBar__navList">
               {NavBarLinks.map((item, index) => (
                 <SideBarMenuItem
                   key={item.text}
@@ -45,45 +56,28 @@ export default function TopAndRightNavBar({ chosenIndex = -1, children, LogoNavi
             </SimpleContainer>
 
           </SimpleScrollView>
-          <PrimaryButton style={{ alignSelf: 'center', marginBottom: '24px', marginTop: '12px', backgroundColor: colors.darkRed }} onPress={() => { localStorage.removeItem("token"); navigate('/') }}>התנתק</PrimaryButton>
+          <div className="lw-topAndRightNavBar__logoutWrap">
+            <GenericButton
+              backgroundColor={colors.darkRed}
+              pressedBackgroundColor={colors.darkRed}
+              disabledBackgroundColor={colors.disabled}
+              contentColor={colors.white}
+              pressedContentColor={colors.white}
+              disabledContentColor={colors.disabledHighlighted}
+              onPress={() => {
+                localStorage.removeItem("token");
+                navigate('/');
+              }}
+            >
+              התנתק
+            </GenericButton>
+          </div>
         </SimpleContainer>
       )}
 
-      <SimpleContainer style={{ flex: 1 }}>
+      <SimpleContainer className="lw-topAndRightNavBar__content">
         {children}
       </SimpleContainer>
     </SimpleContainer>
   );
 }
-
-const styles = {
-  mainContainer: {
-    display: 'flex',
-  },
-  sidebarContainer: {
-    position: 'fixed',
-    width: 250,
-    height: '100vh',
-    right: 0,
-    backgroundColor: colors.text,
-    display: 'flex',
-    flexDirection: 'column',
-    paddingTop: 20,
-    zIndex: 11111,
-  },
-  logoContainer: {
-    display: 'flex',
-    justifyContent: 'center',
-  },
-  contentContainer: (isSmallScreen) => ({
-    display: 'flex',
-    flexDirection: 'column',
-    width: isSmallScreen ? '100%' : 'calc(100% - 250px)', // Full width minus sidebar width
-    minHeight: '100svh',
-    overflow: 'hidden',
-  }),
-
-  childrenContainer: {
-    flex: 1,
-  },
-};

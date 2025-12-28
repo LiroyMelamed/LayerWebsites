@@ -1,0 +1,35 @@
+.lw-clientsCard {
+    flex-direction: column;
+}
+
+.lw-clientsCard__headerRow {
+    display: flex;
+    flex-direction: row-reverse;
+}
+
+.lw-clientsCard__headerCell {
+    flex: 1;
+    text-align: right;
+    margin: 0 6px;
+}
+
+.lw-clientsCard__list {
+    flex: 1;
+}
+
+.lw-clientsCard__listItem {
+    flex-direction: column;
+}
+
+.lw-clientsCard__addButton {
+    align-self: center;
+    margin-top: 20px;
+}
+
+.lw-clientsCard__empty {
+    width: 100%;
+}
+
+.lw-clientsCard__emptyImage {
+    height: 156px;
+}

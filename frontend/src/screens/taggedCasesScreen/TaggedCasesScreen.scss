@@ -1,0 +1,30 @@
+.lw-taggedCasesScreen__row {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    flex-wrap: wrap;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.lw-taggedCasesScreen__search {
+    margin: 12px 0;
+    margin-left: 20px;
+    max-width: 500px;
+}
+
+.lw-taggedCasesScreen__choose {
+    margin: 12px 12px;
+    flex: 0 1 auto;
+    min-width: 100px;
+}
+
+.lw-taggedCasesScreen__footer {
+    display: flex;
+    justify-content: center;
+}
+
+.lw-taggedCasesScreen__pinButton {
+    margin: 8px 0;
+    align-self: center;
+}

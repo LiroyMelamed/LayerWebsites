@@ -17,6 +17,8 @@ import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import { MainScreenName } from "../mainScreen/MainScreen";
 import AllCasesTypeCard from "./components/AllCasesTypeCard";
 
+import "./AllCasesTypeScreen.scss";
+
 export const AllCasesTypeScreenName = "/AllCasesType";
 
 export default function AllCasesTypeScreen() {
@@ -77,7 +79,7 @@ export default function AllCasesTypeScreen() {
             )}
 
             <SimpleScrollView>
-                <SimpleContainer style={styles.responsiveContainer}>
+                <SimpleContainer className="lw-allCasesTypeScreen__row">
                     <SearchInput
                         onSearch={handleSearch}
                         title={"חיפוש סוג תיק"}
@@ -85,12 +87,12 @@ export default function AllCasesTypeScreen() {
                         isPerforming={isPerformingCasesTypeById}
                         queryResult={casesTypeByName}
                         getButtonTextFunction={(item) => item.CaseTypeName}
-                        style={styles.searchInput}
+                        className="lw-allCasesTypeScreen__search"
                         buttonPressFunction={handleButtonPress}
                     />
 
                     <ChooseButton
-                        style={styles.chooseButton}
+                        className="lw-allCasesTypeScreen__choose"
                         buttonText="כמות שלבים"
                         buttonChoices={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]}
                         OnPressChoiceFunction={handleStageCountFilter}
@@ -104,9 +106,9 @@ export default function AllCasesTypeScreen() {
                 />
             </SimpleScrollView>
 
-            <SimpleContainer style={{ display: 'flex', justifyContent: 'center' }}>
+            <SimpleContainer className="lw-allCasesTypeScreen__footer">
                 <PrimaryButton
-                    style={{ margin: '8px 0px', selfAlign: 'center' }}
+                    className="lw-allCasesTypeScreen__addButton"
                     onPress={() =>
                         openPopup(
                             <CaseTypeFullView
@@ -124,24 +126,3 @@ export default function AllCasesTypeScreen() {
         </SimpleScreen>
     );
 }
-
-const styles = {
-    responsiveContainer: {
-        display: 'flex',
-        flexDirection: 'row-reverse',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        maxWidth: '100%',
-        overflow: 'hidden',
-    },
-    searchInput: {
-        margin: "12px 0px",
-        marginLeft: 20,
-        maxWidth: '500px',
-    },
-    chooseButton: {
-        margin: "12px 0px",
-        flex: '0 1 auto',
-        minWidth: '100px',
-    }
-};

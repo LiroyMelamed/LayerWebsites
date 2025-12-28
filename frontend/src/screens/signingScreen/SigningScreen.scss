@@ -1,0 +1,113 @@
+.lw-signingScreen {
+    width: 100%;
+}
+
+.lw-signingScreen__scroll {
+    margin-top: 2.5rem;
+    align-items: center;
+    padding: 0 1rem;
+}
+
+.lw-signingScreen__headerRow {
+    align-items: center;
+}
+
+.lw-signingScreen__tabsRow {
+    margin-top: 1.5rem;
+    flex-direction: row;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 1rem;
+    border-bottom: 0.125rem solid #e0e0e0;
+    padding-bottom: 0.5rem;
+}
+
+.lw-signingScreen__emptyState {
+    text-align: center;
+}
+
+.lw-signingScreen__fileCard {
+    border-radius: 0.5rem;
+    border: 0.0625rem solid #e0e0e0;
+    padding: 1rem;
+    background-color: #fff;
+    margin-bottom: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    flex-direction: column;
+    width: 100%;
+    max-width: 56.25rem;
+}
+
+.lw-signingScreen__fileHeaderRow {
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.625rem;
+    width: 100%;
+}
+
+.lw-signingScreen__fileName {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+}
+
+.lw-signingScreen__chip {
+    padding: 0.25rem 0.625rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.lw-signingScreen__chip--pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.lw-signingScreen__chip--signed {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.lw-signingScreen__chip--rejected {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.lw-signingScreen__detailRow {
+    font-size: 0.8125rem;
+    color: #555;
+    margin-bottom: 0.25rem;
+}
+
+.lw-signingScreen__progress {
+    width: 100%;
+    height: 0.375rem;
+    margin-top: 0.375rem;
+    margin-bottom: 0.375rem;
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+.lw-signingScreen__progress::-webkit-progress-bar {
+    background-color: #e0e0e0;
+    border-radius: 0.25rem;
+}
+
+.lw-signingScreen__progress::-webkit-progress-value {
+    background-color: #1976d2;
+    border-radius: 0.25rem;
+}
+
+.lw-signingScreen__progress::-moz-progress-bar {
+    background-color: #1976d2;
+    border-radius: 0.25rem;
+}
+
+.lw-signingScreen__actionsRow {
+    gap: 0.5rem;
+    margin-top: 0.625rem;
+    flex-wrap: wrap;
+    display: flex;
+    flex-direction: row;
+}

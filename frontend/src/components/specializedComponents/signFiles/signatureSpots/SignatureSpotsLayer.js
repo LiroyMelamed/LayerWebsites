@@ -9,7 +9,30 @@ export default function SignatureSpotsLayer({
     onUpdateSpot,
     onRemoveSpot,
     signers = [],
+    scale = 1,
 }) {
+    const normalizeSpot = (spot) => {
+        if (!spot || typeof spot !== "object") return spot;
+
+        // Backend uses PascalCase (PageNumber/X/Y/SignerName...), upload flow uses camelCase (pageNum/x/y/signerName...)
+        const pageNum = spot.pageNum ?? spot.PageNumber ?? spot.pagenumber;
+        const x = spot.x ?? spot.X;
+        const y = spot.y ?? spot.Y;
+        const width = spot.width ?? spot.Width;
+        const height = spot.height ?? spot.Height;
+        const signerName = spot.signerName ?? spot.SignerName;
+
+        return {
+            ...spot,
+            pageNum,
+            x,
+            y,
+            width,
+            height,
+            signerName,
+        };
+    };
+
     // Helper to get signer info from signerIndex or signerName
     const getSignerInfo = (spot) => {
         const spotSignerUserId = spot?.signerUserId ?? spot?.SignerUserId;
@@ -40,17 +63,10 @@ export default function SignatureSpotsLayer({
 
     return (
         <SimpleContainer
-            style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                pointerEvents: "none",
-            }}
+            className="lw-signing-spotsLayer"
         >
             {spots
-                .map((s, originalIndex) => ({ ...s, originalIndex }))
+                .map((s, originalIndex) => ({ ...normalizeSpot(s), originalIndex }))
                 .filter((s) => Number(s.pageNum) === Number(pageNumber))
                 .sort((a, b) => (a.y || 0) - (b.y || 0))  // Sort by Y ascending (frontend coords: lower Y = top of page)
                 .map((spot) => {
@@ -64,6 +80,7 @@ export default function SignatureSpotsLayer({
                             onRemoveSpot={onRemoveSpot}
                             signerIndex={signerInfo.signerIndex}
                             signerName={signerInfo.signerName}
+                            scale={scale}
                         />
                     );
                 })}

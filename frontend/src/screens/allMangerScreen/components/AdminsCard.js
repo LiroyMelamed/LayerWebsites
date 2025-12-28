@@ -7,12 +7,14 @@ import DefaultState from "../../../components/styledComponents/defaultState/Defa
 import AdminMenuItem from "../../../components/styledComponents/menuItems/AdminMenuItem";
 import Separator from "../../../components/styledComponents/separators/Separator";
 
+import "./AdminsCard.scss";
+
 
 export default function AdminsCard({ adminList, isPerforming, performGetAdmins, style }) {
 
     if (isPerforming) {
         return (
-            <SimpleCard style={{ overflow: null, flexDirection: 'column' }}>
+            <SimpleCard className="lw-adminsCard lw-adminsCard--loading">
                 <SimpleLoader />
             </SimpleCard>
         )
@@ -24,21 +26,22 @@ export default function AdminsCard({ adminList, isPerforming, performGetAdmins, 
                 content={"כשנוסיף מנהלים הם יוצגו פה"}
                 imageStyle={{ height: 156 }}
                 imageSrc={images.Defaults.Managers}
-                style={{ width: null }}
+                className="lw-adminsCard__empty"
+                imageClassName="lw-adminsCard__emptyImage"
             />
         )
     }
 
     return (
-        <SimpleCard style={{ ...style, flexDirection: 'column' }}>
-            <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse' }}>
-                <TextBold14 style={styles.textContainer}>{'שם המנהל'}</TextBold14>
+        <SimpleCard className="lw-adminsCard" style={style}>
+            <SimpleContainer className="lw-adminsCard__headerRow">
+                <TextBold14 className="lw-adminsCard__headerCell">{'שם המנהל'}</TextBold14>
 
-                <Text14 style={styles.textContainer}>{'נוצר בתאריך'}</Text14>
+                <Text14 className="lw-adminsCard__headerCell">{'נוצר בתאריך'}</Text14>
 
-                <Text14 style={styles.textContainer}>{'מייל'}</Text14>
+                <Text14 className="lw-adminsCard__headerCell">{'מייל'}</Text14>
 
-                <Text14 style={styles.textContainer}>{'טלפון'}</Text14>
+                <Text14 className="lw-adminsCard__headerCell">{'טלפון'}</Text14>
             </SimpleContainer>
 
             <Separator />
@@ -62,11 +65,3 @@ export default function AdminsCard({ adminList, isPerforming, performGetAdmins, 
         </SimpleCard>
     );
 }
-
-const styles = {
-    textContainer: {
-        flex: 1,
-        textAlign: 'right',
-        margin: '0px 6px',
-    }
-};

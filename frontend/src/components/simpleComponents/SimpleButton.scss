@@ -1,0 +1,13 @@
+.lw-simpleButton {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-family: inherit;
+    transition: box-shadow 120ms ease, transform 80ms ease;
+}
+
+.lw-simpleButton:disabled {
+    cursor: not-allowed;
+}

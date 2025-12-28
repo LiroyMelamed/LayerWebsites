@@ -12,13 +12,16 @@ import TopToolBarSmallScreen from "../../../components/navBars/topToolBarSmallSc
 import { ClientStackName } from "../../../navigation/ClientStack";
 import { ClientMainScreenName } from "../clientMainScreen/ClientMainScreen";
 import { getClientNavBarData } from "../../../components/navBars/data/ClientNavBarData";
+import { NotificationsScreenName } from "../notifications/NotificationsScreen";
+
+import "./UpdatesScreen.scss";
 
 export const UpdatesAndNotificationsScreenName = "/UpdatesAndNotificationsScreen";
 
 const updatesMenuItems = [
     {
         name: 'התראות',
-        screenName: 'MessagesScreenName',
+        screenName: NotificationsScreenName,
     },
     {
         name: 'עידכונים',
@@ -33,23 +36,29 @@ const updatesMenuItems = [
 export default function UpdatesAndNotificationsScreen() {
     const { openPopup, closePopup } = usePopup();
     const { isSmallScreen } = useScreenSize();
+    const navigate = useNavigate();
 
     function handleUpdatesMenuItemPress(item) {
-        openPopup(<Text12>{`שירות ${item.name} יהיה זמין בקרוב`}</Text12>)
+        if (item.screenName === NotificationsScreenName) {
+            navigate(ClientStackName + NotificationsScreenName);
+            return;
+        }
+
+        openPopup(<Text12>{`שירות ${item.name} יהיה זמין בקרוב`}</Text12>);
     }
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
             {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={ClientStackName + ClientMainScreenName} GetNavBarData={getClientNavBarData} />}
 
-            <SimpleScrollView style={{ marginTop: 40 }}>
-                <SimpleContainer style={styles.responsiveContainer}>
+            <SimpleScrollView className="lw-updatesScreen__scroll">
+                <SimpleContainer className="lw-updatesScreen__container">
                     {/* <SimpleImage
                         src={images.Updates.NewUpdates}
                         style={{ maxWidth: '100%', padding: '0px 20px' }}
                     /> */}
 
-                    <SimpleCard style={{ flexDirection: 'column' }}>
+                    <SimpleCard className="lw-updatesScreen__card">
                         {updatesMenuItems.map(item => (
                             <UpdatesMenuItem
                                 menuItemName={item.name}
@@ -63,11 +72,4 @@ export default function UpdatesAndNotificationsScreen() {
         </SimpleScreen >
 
     );
-}
-
-const styles = {
-    responsiveContainer: {
-        flexDirection: 'column',
-        width: '100%',
-    },
 }
