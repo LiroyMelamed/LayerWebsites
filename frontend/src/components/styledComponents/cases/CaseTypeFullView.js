@@ -11,6 +11,8 @@ import useFieldState from "../../../hooks/useFieldState";
 import { casesTypeApi } from "../../../api/casesApi";
 import { useEffect, useState } from "react";
 
+import "./CaseTypeFullView.scss";
+
 export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style }) {
     const [caseTypeName, setCaseTypeName, caseTypeNameError] = useFieldState(HebrewCharsValidation, caseTypeDetails?.CaseTypeName || "");
     const [numberOfStages, setNumberOfStages, numberOfStagesError] = useFieldState(NumberOfStagesValidation, caseTypeDetails?.NumberOfStages || "");
@@ -100,47 +102,48 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
 
 
     return (
-        <SimpleContainer style={{ ...style, ...styles.container }}>
+        <SimpleContainer className="lw-caseTypeFullView" style={style}>
             <SimpleScrollView>
-                <SimpleContainer style={styles.rowStyle}>
+                <SimpleContainer className="lw-caseTypeFullView__row">
+                    <SimpleContainer className="lw-caseTypeFullView__inputWrap">
                     <SimpleInput
-                        style={styles.inputStyle}
                         title={"שם סוג התיק"}
                         value={caseTypeName}
                         onChange={(e) => setCaseTypeName(e.target.value)}
                         error={caseTypeNameError}
                     />
+                    </SimpleContainer>
+                    <SimpleContainer className="lw-caseTypeFullView__inputWrap">
                     <SimpleInput
-                        style={styles.inputStyle}
                         title={"מספר שלבים"}
                         value={numberOfStages}
                         onChange={(e) => setNumberOfStages(Number(e.target.value))}
                         error={numberOfStagesError}
                     />
+                    </SimpleContainer>
                 </SimpleContainer>
 
                 {descriptions.map((description, index) => (
-                    <SimpleTextArea
-                        key={index}
-                        title={`תיאור מס' ${index + 1}`}
-                        value={description.Text || ""}
-                        style={{ marginTop: index != 0 ? 8 : 0 }}
-                        onChange={(text) => {
-                            setDescriptions((prev) => {
-                                const updatedDescriptions = [...prev];
-                                updatedDescriptions[index].Text = text;
-                                return updatedDescriptions;
-                            });
-                        }}
-                    />
+                    <SimpleContainer key={index} className="lw-caseTypeFullView__textAreaRow">
+                        <SimpleTextArea
+                            title={`תיאור מס' ${index + 1}`}
+                            value={description.Text || ""}
+                            onChange={(text) => {
+                                setDescriptions((prev) => {
+                                    const updatedDescriptions = [...prev];
+                                    updatedDescriptions[index].Text = text;
+                                    return updatedDescriptions;
+                                });
+                            }}
+                        />
+                    </SimpleContainer>
                 ))}
 
-                <SimpleContainer style={styles.buttonsRowStyle}>
+                <SimpleContainer className="lw-caseTypeFullView__buttonsRow">
                     {caseTypeDetails && (
                         <SecondaryButton
                             onPress={handleDeleteCaseType}
                             isPerforming={isDeleting}
-                            style={styles.button}
                         >
                             {isDeleting ? "מוחק..." : "מחק סוג תיק"}
                         </SecondaryButton>
@@ -148,14 +151,12 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
                     <PrimaryButton
                         onPress={handleSaveCaseType}
                         isPerforming={isPerforming}
-                        style={styles.button}
                         disabled={hasError}
                     >
                         {isPerforming ? "שומר..." : caseTypeDetails ? "עדכן סוג תיק" : "שמור סוג תיק"}
                     </PrimaryButton>
                     <SecondaryButton
                         onPress={handleAddStage}
-                        style={styles.button}
                     >
                         הוסף שלב
                     </SecondaryButton>
@@ -164,31 +165,3 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
         </SimpleContainer>
     );
 }
-
-const styles = {
-    container: {
-        width: "100%",
-        margin: "0 auto",
-    },
-    rowStyle: {
-        display: "flex",
-        flexDirection: "row-reverse",
-        marginBottom: "16px",
-        flexWrap: "wrap",
-    },
-    inputStyle: {
-        flex: 1,
-        minWidth: "150px",
-    },
-    buttonsRowStyle: {
-        display: "flex",
-        flexDirection: "row",
-        justifyContent: "center",
-        marginBottom: "16px",
-        marginTop: "16px",
-        flexWrap: "wrap",
-    },
-    button: {
-        margin: "8px 8px",
-    },
-};

@@ -1,0 +1,30 @@
+.lw-caseTypeFullView {
+  width: 100%;
+  margin-inline: auto;
+}
+
+.lw-caseTypeFullView__row {
+  display: flex;
+  flex-direction: row-reverse;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.lw-caseTypeFullView__inputWrap {
+  flex: 1;
+  min-width: 9.375rem;
+}
+
+.lw-caseTypeFullView__textAreaRow + .lw-caseTypeFullView__textAreaRow {
+  margin-top: 0.5rem;
+}
+
+.lw-caseTypeFullView__buttonsRow {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  margin-block: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
