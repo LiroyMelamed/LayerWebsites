@@ -13,6 +13,8 @@ import { buttonSizes } from '../../../styles/buttons/buttonSizes';
 import { adminApi } from '../../../api/adminApi';
 import { formatDateForInput } from '../../../functions/date/formatDateForInput';
 
+import './CaseFullView.scss';
+
 export default function CaseFullView({ caseDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style }) {
     const [caseHasBeenChosen, setCaseHasBeenChosen] = useState(false)
     const [caseData, setCaseData] = useState({
@@ -147,12 +149,12 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
     };
 
     return (
-        <SimpleContainer style={{ ...style, ...styles.container }}>
+        <SimpleContainer className="lw-caseFullView" style={style}>
             <SimpleScrollView>
-                <SimpleContainer style={styles.rowStyle}>
+                <SimpleContainer className="lw-caseFullView__row">
                     {caseDetails ?
                         <SimpleInput
-                            style={styles.inputStyle}
+                            className="lw-caseFullView__field"
                             title={"מספר התיק"}
                             value={caseData.CaseName}
                             onChange={(e) => handleInputChange('CaseName', e.target.value)}
@@ -171,7 +173,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                             getButtonTextFunction={(item) => item.CaseName}
                             buttonPressFunction={handleCaseSelect}
                             queryResult={cases}
-                            style={styles.inputStyle}
+                            className="lw-caseFullView__field"
                         />
                     }
 
@@ -183,11 +185,11 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                         getButtonTextFunction={(item) => item.CaseTypeName}
                         buttonPressFunction={handleCaseTypeSelect}
                         queryResult={caseTypes}
-                        style={styles.inputStyle}
+                        className="lw-caseFullView__field"
                     />
                 </SimpleContainer>
 
-                <SimpleContainer style={styles.rowStyle}>
+                <SimpleContainer className="lw-caseFullView__row">
                     <SearchInput
                         onSearch={searchCustomers}
                         title={"שם לקוח"}
@@ -196,34 +198,34 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                         getButtonTextFunction={(item) => item.Name}
                         buttonPressFunction={handleCustomerSelect}
                         queryResult={customers}
-                        style={styles.inputStyle}
+                        className="lw-caseFullView__field"
                     />
                     <SimpleInput
-                        style={styles.inputStyle}
+                        className="lw-caseFullView__field"
                         title={"שם החברה"}
                         value={caseData.CompanyName}
                         onChange={(e) => handleInputChange('CompanyName', e.target.value)}
                     />
                 </SimpleContainer>
 
-                <SimpleContainer style={styles.rowStyle}>
+                <SimpleContainer className="lw-caseFullView__row">
                     <SimpleInput
-                        style={styles.inputStyle}
+                        className="lw-caseFullView__field"
                         title={"מספר פלאפון"}
                         value={caseData.PhoneNumber}
                         onChange={(e) => handleInputChange('PhoneNumber', e.target.value)}
                     />
                     <SimpleInput
-                        style={styles.inputStyle}
+                        className="lw-caseFullView__field"
                         title={"שלב נוכחי"}
                         value={caseData.CurrentStage}
                         onChange={(e) => handleInputChange('CurrentStage', e.target.value)}
                     />
                 </SimpleContainer>
 
-                <SimpleContainer style={styles.rowStyle}>
+                <SimpleContainer className="lw-caseFullView__row">
                     <SimpleInput
-                        style={styles.inputStyle}
+                        className="lw-caseFullView__field"
                         title={"אימייל לקוח"}
                         type="email"
                         value={caseData.CustomerMail}
@@ -237,20 +239,20 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                         getButtonTextFunction={(item) => item.name}
                         buttonPressFunction={handleManagerSelected}
                         queryResult={adminByName}
-                        style={styles.inputStyle}
+                        className="lw-caseFullView__field"
                     />
                 </SimpleContainer>
 
-                <SimpleContainer style={styles.rowStyle}>
+                <SimpleContainer className="lw-caseFullView__row">
                     <SimpleInput
-                        style={styles.inputStyle}
+                        className="lw-caseFullView__field"
                         title={"תאריך סיום משוער"}
                         type="date"
                         value={formatDateForInput(caseData.EstimatedCompletionDate)}
                         onChange={(e) => handleInputChange('EstimatedCompletionDate', e.target.value)}
                     />
                     <SimpleInput
-                        style={styles.inputStyle}
+                        className="lw-caseFullView__field"
                         title={"תוקף רישיון"}
                         type="date"
                         value={formatDateForInput(caseData.LicenseExpiryDate)}
@@ -259,27 +261,26 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                 </SimpleContainer>
 
                 {caseData?.Descriptions?.map((description, index) => (
-                    <SimpleTextArea
-                        key={`DescriptionNumber${index}`}
-                        title={`תיאור מס' ${index + 1}`}
-                        value={description?.Text || ''}
-                        style={{ marginTop: 8 }}
-                        onChange={(text) => {
-                            setCaseData((prevDetails) => {
-                                const updatedDescriptions = [...prevDetails.Descriptions];
-                                updatedDescriptions[index].Text = text;
-                                return { ...prevDetails, Descriptions: updatedDescriptions };
-                            });
-                        }}
-                    />
+                    <SimpleContainer key={`DescriptionNumber${index}`} className="lw-caseFullView__textAreaRow">
+                        <SimpleTextArea
+                            title={`תיאור מס' ${index + 1}`}
+                            value={description?.Text || ''}
+                            onChange={(text) => {
+                                setCaseData((prevDetails) => {
+                                    const updatedDescriptions = [...prevDetails.Descriptions];
+                                    updatedDescriptions[index].Text = text;
+                                    return { ...prevDetails, Descriptions: updatedDescriptions };
+                                });
+                            }}
+                        />
+                    </SimpleContainer>
                 ))}
 
-                <SimpleContainer style={styles.buttonsRowStyle}>
+                <SimpleContainer className="lw-caseFullView__buttonsRow">
                     {((caseDetails != null) || caseHasBeenChosen) && (
                         <SecondaryButton
                             onPress={handleDeleteCase}
                             isPerforming={isDeleting}
-                            style={styles.button}
                             size={buttonSizes.MEDIUM}
                         >
                             {isDeleting ? "מוחק..." : "מחק תיק"}
@@ -288,7 +289,6 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                     <PrimaryButton
                         onPress={caseDetails ? handleUpdateCase : handleSaveCase}
                         isPerforming={isSaving}
-                        style={styles.button}
                         size={buttonSizes.MEDIUM}
                     >
                         {isSaving ? "שומר..." : caseDetails || caseHasBeenChosen ? "עדכן תיק" : "שמור תיק"}
@@ -298,35 +298,3 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
         </SimpleContainer>
     );
 }
-
-const styles = {
-    container: {
-        display: 'flex',
-        width: '100%',
-        boxSizing: 'border-box',
-    },
-    rowStyle: {
-        width: '100%',
-        flexDirection: 'row-reverse',
-        marginBottom: '16px',
-        alignItems: 'center',
-        gap: 8,
-        minWidth: 0,
-    },
-    inputStyle: {
-        minWidth: 0,
-        flex: 1,
-        alignItems: 'center',
-    },
-    buttonsRowStyle: {
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'center',
-        marginBottom: '16px',
-        marginTop: '16px',
-        flexWrap: 'wrap',
-    },
-    button: {
-        margin: '8px 8px',
-    },
-};
