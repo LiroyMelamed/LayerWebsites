@@ -3,7 +3,12 @@ $ErrorActionPreference = 'Stop'
 
 function Get-ConfigValue([string]$Key) {
   $item = Get-Item -Path "Env:$Key" -ErrorAction SilentlyContinue
-  if ($item -and $item.Value) { return $item.Value }
+  if ($item -and $item.Value) {
+    $v = [string]$item.Value
+    $v = $v.Trim()
+    $v = $v.Trim([char]0xFEFF)
+    if ($v) { return $v }
+  }
 
   $envFile = Join-Path $PSScriptRoot '.env'
   if (Test-Path $envFile) {
@@ -11,6 +16,7 @@ function Get-ConfigValue([string]$Key) {
     $m = [regex]::Match($raw, "(?m)^\s*$([Regex]::Escape($Key))\s*=\s*(.*)$")
     if ($m.Success) {
       $v = $m.Groups[1].Value.Trim()
+      $v = $v.Trim([char]0xFEFF)
       if ((($v.StartsWith('"') -and $v.EndsWith('"')) -or ($v.StartsWith("'") -and $v.EndsWith("'"))) -and $v.Length -ge 2) {
         $v = $v.Substring(1, $v.Length - 2)
       }
@@ -18,6 +24,15 @@ function Get-ConfigValue([string]$Key) {
     }
   }
 
+  return $null
+}
+
+function Normalize-ConfigString([string]$Value) {
+  if (-not $Value) { return $null }
+  # Trim whitespace and strip UTF-8 BOM if present
+  $v = $Value.Trim()
+  $v = $v -replace "^\uFEFF", ''
+  if ($v) { return $v }
   return $null
 }
 
@@ -38,6 +53,12 @@ $adminPhone = Get-ConfigValue 'E2E_ADMIN_PHONE'
 $adminOtp = Get-ConfigValue 'E2E_ADMIN_OTP'
 $userPhone = Get-ConfigValue 'E2E_USER_PHONE'
 $userOtp = Get-ConfigValue 'E2E_USER_OTP'
+
+$baseUrl = Normalize-ConfigString $baseUrl
+$adminPhone = Normalize-ConfigString $adminPhone
+$adminOtp = Normalize-ConfigString $adminOtp
+$userPhone = Normalize-ConfigString $userPhone
+$userOtp = Normalize-ConfigString $userOtp
 
 $envOk = ($baseUrl -and $adminPhone -and $adminOtp -and $userPhone -and $userOtp)
 $results += Set-Result 'Required env vars present' $envOk 'E2E_API_BASE_URL,E2E_ADMIN_*,E2E_USER_* present via env or scripts/e2e/.env'
@@ -63,12 +84,13 @@ $results += Set-Result 'JWT/Twilio env keys present' $jwtTwilioOk $jwtTwilioNote
 $nonProdOk = $false
 $nonProdNote = ''
 if ($baseUrl) {
-  try {
-    $u = [Uri]$baseUrl
-    $host = $u.Host.ToLowerInvariant()
-    $nonProdOk = ($host -eq 'localhost' -or $host -eq '127.0.0.1')
+  $uri = $null
+  $ok = [Uri]::TryCreate($baseUrl, [UriKind]::Absolute, [ref]$uri)
+  if ($ok -and $uri) {
+    $host = $uri.Host.ToLowerInvariant()
+    $nonProdOk = ($host -eq 'localhost' -or $host -eq '127.0.0.1' -or $host -eq '::1')
     $nonProdNote = "host=$host"
-  } catch {
+  } else {
     $nonProdOk = $false
     $nonProdNote = 'E2E_API_BASE_URL is not a valid URL'
   }
@@ -83,8 +105,31 @@ $nodeOk = $false
 $npmOk = $false
 $nodeVer = ''
 $npmVer = ''
-try { $nodeVer = (node -v) } catch { $nodeVer = '' }
-try { $npmVer = (npm -v) } catch { $npmVer = '' }
+    $u = [Uri]($baseUrl)
+
+$npmCmd = Get-Command npm -ErrorAction SilentlyContinue
+if (-not $npmCmd) {
+  $npmCmd = Get-Command npm.cmd -ErrorAction SilentlyContinue
+}
+    $nonProdNote = 'E2E_API_BASE_URL is not a valid URL'
+if ($npmCmd) {
+  try {
+    $npmVer = (& $npmCmd.Source -v 2>$null)
+  } catch {
+    $npmVer = ''
+  }
+} else {
+  $npmVer = ''
+}
+
+if (-not $npmVer) {
+  # Fallback through cmd.exe (some environments only expose npm via cmd shim)
+  try {
+    $npmVer = (cmd /c "npm -v" 2>$null)
+  } catch {
+    $npmVer = ''
+  }
+}
 if ($nodeVer -match '^v(\d+)\.') { $nodeOk = ([int]$Matches[1] -ge 18) }
 if ($npmVer) { $npmOk = $true }
 $results += Set-Result 'Node/npm deps OK' ($nodeOk -and $npmOk) ("node=$nodeVer npm=$npmVer")
@@ -115,9 +160,20 @@ $dbNote = ''
 if ($baseUrl -and $adminPhone) {
   try {
     $body = @{ phoneNumber = $adminPhone } | ConvertTo-Json
-    $r2 = Invoke-WebRequest -UseBasicParsing -Uri "$baseUrl/Auth/RequestOtp" -Method POST -ContentType 'application/json' -Body $body -TimeoutSec 8
+try {
+  $npmCmd = Get-Command npm -ErrorAction SilentlyContinue
+  if ($npmCmd) {
+    $npmVer = (& $npmCmd.Source -v 2>$null)
+    $npmOk = $true
+  } else {
+    $npmVer = ''
+    $npmOk = $false
+  }
+} catch {
+  $npmVer = ''
+  $npmOk = $false
+}
     $dbOk = ($r2.StatusCode -in 200,404,401,400) -and ($r2.StatusCode -lt 500)
-    $dbNote = "POST /Auth/RequestOtp -> $($r2.StatusCode)"
   } catch {
     $resp = $_.Exception.Response
     if ($resp -and $resp.StatusCode) {
