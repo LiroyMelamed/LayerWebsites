@@ -20,7 +20,7 @@
 
 .lw-caseMenuItemOpen__row {
     display: flex;
-    flex-direction: row-reverse;
+    flex-direction: row;
     flex: 1;
 }
 
@@ -44,7 +44,7 @@
 
 .lw-caseMenuItemOpen__stagesHeader {
     display: flex;
-    flex-direction: row-reverse;
+    flex-direction: row;
     flex: 1;
     align-items: center;
     cursor: pointer;
@@ -74,7 +74,7 @@
 
 .lw-caseMenuItemOpen__linkInputRow {
     display: flex;
-    flex-direction: row-reverse;
+    flex-direction: row;
     flex: 1;
     align-items: center;
 }
