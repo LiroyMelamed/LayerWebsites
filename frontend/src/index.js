@@ -8,6 +8,12 @@ import { PopupProvider } from './providers/PopUpProvider';
 import { FromAppProvider } from './providers/FromAppProvider';
 import "./utils/pdfjsConfig";
 
+// Phase E (RTL): frontend/public is gitignored, so enforce RTL at runtime.
+if (typeof document !== 'undefined' && document.documentElement) {
+  document.documentElement.dir = 'rtl';
+  document.documentElement.lang = 'he';
+}
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <BrowserRouter>
