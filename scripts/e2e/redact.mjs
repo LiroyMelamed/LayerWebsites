@@ -37,6 +37,22 @@ export function sanitizeJson(value) {
     const out = {};
     for (const [k, v] of Object.entries(value)) {
       const keyLower = String(k).toLowerCase();
+      const isPiiKey =
+        keyLower.includes('phonenumber') ||
+        keyLower === 'phone' ||
+        keyLower.includes('email') ||
+        keyLower.includes('address') ||
+        keyLower.includes('fullname') ||
+        keyLower.includes('customername') ||
+        keyLower.includes('companyname') ||
+        (keyLower.endsWith('name') && !keyLower.includes('filename'));
+
+      // Preserve synthetic e2e-* identifiers that are useful as evidence
+      if (isPiiKey && typeof v === 'string' && v && !v.startsWith('e2e-')) {
+        out[k] = '<REDACTED>';
+        continue;
+      }
+
       if (keyLower.includes('token') || keyLower.includes('authorization')) {
         out[k] = '<REDACTED>';
         continue;
