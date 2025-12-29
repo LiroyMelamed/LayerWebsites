@@ -1,0 +1,20 @@
+// Shared SCSS primitives (Phase C)
+// Keep these small and composable; prefer CSS custom properties for theme colors.
+
+$rem-base: 16px;
+
+// Spacing scale (rem)
+$space-1: 0.25rem;  // 4px
+$space-2: 0.5rem;   // 8px
+$space-3: 0.75rem;  // 12px
+$space-4: 1rem;     // 16px
+$space-5: 1.25rem;  // 20px
+$space-6: 1.5rem;   // 24px
+$space-8: 2rem;     // 32px
+
+// Typography
+$font-size-base: 1rem; // 16px
+$line-height-base: 1.5;
+
+// Layout
+$container-max: 75rem; // 1200px

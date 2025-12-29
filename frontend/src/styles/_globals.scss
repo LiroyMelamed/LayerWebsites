@@ -1,3 +1,14 @@
+@use 'variables' as v;
+
+html {
+  font-size: 16px; // baseline: 1rem = 16px
+}
+
+body {
+  font-size: v.$font-size-base;
+  line-height: v.$line-height-base;
+}
+
 html,
 body,
 #root {
@@ -5,9 +16,7 @@ body,
   padding: 0;
   width: 100%;
   min-height: 100svh;
-  /* safer than 100vh/100dvh */
   overflow-x: hidden;
-  /* kill horizontal scroll */
   -webkit-text-size-adjust: 100%;
 }
 
@@ -25,7 +34,6 @@ svg {
   height: auto;
 }
 
-/* Global font stack */
 body {
   font-family: var(--lw-font-stack);
   -webkit-font-smoothing: antialiased;

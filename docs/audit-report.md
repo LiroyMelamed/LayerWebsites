@@ -69,3 +69,24 @@ Evidence folder: `scripts/e2e/out/e2e-20251230-0045-/`
 - Add minimal automated API tests (e.g., supertest) for one happy path per resource + one permission test.
 - Validate UI flows end-to-end (screens, state refresh, error surfaces) beyond API-first checks.
 - Continue remaining checklist areas: dashboard data, notifications, signing flow.
+
+---
+
+## Phase C plan — Styling architecture + rem migration
+
+### Current styling architecture (frontend)
+- Global reset/base styles were in `frontend/src/index.css`.
+- Theme tokens are provided as CSS custom properties in `frontend/src/styles/theme.scss` (e.g. `--lw-color-*`, `--lw-font-stack`).
+- Most screen/component styling already uses per-feature `.scss` files co-located with components (e.g. `frontend/src/screens/**`, `frontend/src/components/**`).
+- No CSS Modules were found (no `*.module.css` / `*.module.scss`).
+
+### Phase C approach (execution rules)
+- Introduce shared SCSS foundation under `frontend/src/styles/`:
+  - `_variables.scss` (spacing scale, typography, layout constants)
+  - `_mixins.scss` (rem helper + RTL/media helpers)
+  - `_globals.scss` (reset/base)
+- Convert `index.css` → `index.scss` and wire global imports via `frontend/src/index.js`.
+- Rem strategy: set `html { font-size: 16px; }` so `1rem = 16px`, then migrate typography + spacing from `px` → `rem`.
+  - Borders may remain `px`.
+  - Prefer logical properties when touching direction-sensitive spacing (e.g. `margin-inline-start` instead of `margin-left`).
+- Migrate incrementally by folder/screen group with small commits; after each scoped commit, run `npm --prefix frontend run build`.

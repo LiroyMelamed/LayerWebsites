@@ -1,0 +1,27 @@
+@use 'variables' as v;
+
+@function rem($px) {
+  @if (unitless($px)) {
+    @return ($px / 16) * 1rem;
+  }
+  @return (strip-unit($px) / 16) * 1rem;
+}
+
+@mixin rtl {
+  [dir='rtl'] & {
+    @content;
+  }
+}
+
+@mixin ltr {
+  [dir='ltr'] & {
+    @content;
+  }
+}
+
+// Simple media query helper
+@mixin mq-min($px) {
+  @media (min-width: rem($px)) {
+    @content;
+  }
+}
