@@ -96,7 +96,7 @@
 }
 
 .lw-notificationsScreen__itemContent {
-    flex-direction: row-reverse;
+    flex-direction: row;
     align-items: flex-start;
     width: 100%;
     margin-bottom: 0.625rem;
@@ -120,13 +120,13 @@
 .lw-notificationsScreen__title {
     color: var(--lw-color-primary);
     margin-bottom: 0.3125rem;
-    text-align: right;
+    text-align: start;
 }
 
 .lw-notificationsScreen__message {
     color: var(--lw-color-text);
     margin-bottom: 0.3125rem;
-    text-align: right;
+    text-align: start;
 }
 
 .lw-notificationsScreen__timestamp {
