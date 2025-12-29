@@ -23,22 +23,27 @@ export default function DoughnutChartWithDetails({ data, colors, labels, centerT
                 labels={labels}
                 centerText={centerText}
                 subText={subText}
-                style={{ flex: 1, ...doughnutStyle }}
+                className="lw-doughnutChartWithDetails__chart"
+                style={doughnutStyle}
             />
 
             <SimpleContainer className="lw-doughnutChartWithDetails__legend">
-                {percentages && labels?.map((label, index) => (
-                    <SimpleContainer
-                        key={index}
-                        className="lw-doughnutChartWithDetails__legendItem"
-                    >
+                {percentages && labels?.map((label, index) => {
+                    const swatchStyle = { backgroundColor: colors[index] };
+
+                    return (
                         <SimpleContainer
-                            className="lw-doughnutChartWithDetails__swatch"
-                            style={{ backgroundColor: colors[index] }}
-                        />
-                        <Text12>{`${percentages[index]}% ${label}`}</Text12>
-                    </SimpleContainer>
-                ))}
+                            key={index}
+                            className="lw-doughnutChartWithDetails__legendItem"
+                        >
+                            <SimpleContainer
+                                className="lw-doughnutChartWithDetails__swatch"
+                                style={swatchStyle}
+                            />
+                            <Text12>{`${percentages[index]}% ${label}`}</Text12>
+                        </SimpleContainer>
+                    );
+                })}
             </SimpleContainer>
         </SimpleContainer>
     );

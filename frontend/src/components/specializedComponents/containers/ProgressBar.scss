@@ -12,14 +12,15 @@
 .lw-progressBar__bar {
   position: relative;
   height: 0.625rem;
-  background-color: #e0e0e0;
+  background-color: var(--lw-color-disabled);
   border-radius: 0.3125rem;
   overflow: visible;
 }
 
 .lw-progressBar__fill {
   height: 100%;
-  background-color: #3b82f6;
+  width: var(--lw-progressBar-percent, 0%);
+  background-color: var(--lw-color-primary-highlighted);
   transition: width 0.4s ease;
   border-radius: 0.3125rem;
   position: relative;
@@ -28,8 +29,12 @@
 .lw-progressBar__tooltip {
   position: absolute;
   top: -0.625rem;
-  background-color: #1f2937;
-  color: #fff;
+  left: var(--lw-progressBar-percent, 0%);
+  transform: var(--lw-progressBar-tooltipTransform, translateX(-50%));
+  opacity: var(--lw-progressBar-tooltipOpacity, 0);
+
+  background-color: var(--lw-color-text);
+  color: var(--lw-color-white);
   padding: 0.5rem 0.25rem;
   border-radius: 625rem;
   transition: left 0.4s ease, transform 0.4s ease;

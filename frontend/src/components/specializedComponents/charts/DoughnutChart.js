@@ -12,7 +12,7 @@ import { colors } from "../../../constant/colors";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const DoughnutChart = ({ data, colors, labels, centerText, subText, style }) => {
+const DoughnutChart = ({ data, colors, labels, centerText, subText, style, className }) => {
     const chartData = {
         labels: labels,
         datasets: [
@@ -42,7 +42,7 @@ const DoughnutChart = ({ data, colors, labels, centerText, subText, style }) => 
     }
 
     return (
-        <SimpleContainer style={containerStyle}>
+        <SimpleContainer className={className} style={containerStyle}>
             <SimpleContainer style={styles.centerText}>
                 <TextBold16 style={styles.mainText}>{centerText}</TextBold16>
                 {subText && <Text12 style={styles.subText}>{subText}</Text12>}
