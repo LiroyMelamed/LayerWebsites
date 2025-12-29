@@ -210,6 +210,7 @@ const addCase = async (req, res) => {
         PhoneNumber,
         CustomerName,
         IsTagged,
+        WhatsappGroupLink,
         CaseManager,
         CaseManagerId,
         EstimatedCompletionDate,
@@ -225,10 +226,10 @@ const addCase = async (req, res) => {
             `
             INSERT INTO cases (
                 casename, casetypeid, userid, companyname, currentstage,
-                isclosed, istagged, createdat, updatedat,
+                isclosed, istagged, whatsappgrouplink, createdat, updatedat,
                 casemanager, casemanagerid, estimatedcompletiondate, licenseexpirydate
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW(), $8, $9, $10, $11)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW(), $9, $10, $11, $12)
             RETURNING caseid
             `,
             [
@@ -239,6 +240,7 @@ const addCase = async (req, res) => {
                 CurrentStage || 1,
                 false,
                 IsTagged ? true : false,
+                WhatsappGroupLink || null,
                 CaseManager,
                 CaseManagerId,
                 EstimatedCompletionDate,
@@ -614,8 +616,27 @@ const linkWhatsappGroup = async (req, res) => {
     const { CaseId } = req.params;
     const { WhatsappGroupLink } = req.body;
 
-    if (!WhatsappGroupLink || !CaseId) {
-        return res.status(400).json({ message: "WhatsappGroupLink and CaseId are required" });
+    if (!CaseId) {
+        return res.status(400).json({ message: "CaseId is required" });
+    }
+
+    const raw = WhatsappGroupLink;
+    const normalized = typeof raw === "string" ? raw.trim() : raw;
+    const isEmpty = normalized === null || normalized === undefined || normalized === "";
+
+    // Allow clearing the link by sending empty/null.
+    if (!isEmpty) {
+        // Basic URL validation: accept https? links only.
+        // (We allow WhatsApp invite links like https://chat.whatsapp.com/...)
+        let parsed;
+        try {
+            parsed = new URL(String(normalized));
+        } catch {
+            return res.status(400).json({ message: "WhatsappGroupLink must be a valid URL" });
+        }
+        if (!/^https?:$/.test(parsed.protocol)) {
+            return res.status(400).json({ message: "WhatsappGroupLink must start with http(s)" });
+        }
     }
 
     try {
@@ -633,10 +654,10 @@ const linkWhatsappGroup = async (req, res) => {
             SET whatsappgrouplink = $1, updatedat = NOW()
             WHERE caseid = $2
             `,
-            [WhatsappGroupLink, CaseId]
+            [isEmpty ? null : String(normalized), CaseId]
         );
 
-        if (caseUserId) {
+        if (caseUserId && !isEmpty) {
             await sendAndStoreNotification(caseUserId, "קבוצת וואטסאפ מקושרת", `קבוצת וואטסאפ קושרה לתיק "${caseName}".`, { caseId: String(CaseId) });
         }
 

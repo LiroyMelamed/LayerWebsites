@@ -10,11 +10,16 @@ const pool = require("../config/db");
  */
 const getMainScreenData = async (req, res) => {
     try {
-        // Fetch all cases
-        const casesResult = await pool.query("SELECT * FROM Cases");
+        // Fetch only the columns needed for dashboard aggregates.
+        // (Avoid SELECT * on potentially large tables.)
+        const casesResult = await pool.query(
+            "SELECT caseid, isclosed, istagged FROM Cases"
+        );
 
         // Fetch all customers (users with a role other than 'Admin')
-        const customersResult = await pool.query("SELECT * FROM Users WHERE LOWER(Role) <> 'admin'");
+        const customersResult = await pool.query(
+            "SELECT userid, name, email, phonenumber, companyname, createdat, dateofbirth, profilepicurl FROM Users WHERE LOWER(Role) <> 'admin'"
+        );
 
         // Fetch a list of distinct users who have at least one open case
         const activeCustomers = await pool.query(`

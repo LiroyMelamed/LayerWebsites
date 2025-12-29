@@ -105,21 +105,32 @@ async function sendAndStoreNotification(userId, title, message, data = {}) {
             console.log(`No push tokens found for UserId: ${userId}. Skipping push notification.`);
         }
 
-        // Store the notification in the database
+        // Store the notification in the database.
+        // Guard against accidental double-sends (double-click/retry/concurrency):
+        // atomically skip if an identical notification was stored very recently.
+        const dedupeWindowSeconds = 10;
         const insertSql = `
             INSERT INTO UserNotifications (UserId, Title, Message, CreatedAt, IsRead)
-            VALUES ($1, $2, $3, NOW(), FALSE)
+            SELECT $1, $2, $3, NOW(), FALSE
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM UserNotifications
+                WHERE UserId = $1
+                  AND Title = $2
+                  AND Message = $3
+                  AND CreatedAt > (NOW() - ($4 * INTERVAL '1 second'))
+            )
         `;
 
         try {
-            await pool.query(insertSql, [userId, title, message]);
+            await pool.query(insertSql, [userId, title, message, dedupeWindowSeconds]);
         } catch (err) {
             if (isDuplicateNotificationPkError(err)) {
                 console.warn(
                     "Duplicate NotificationId detected; attempting to repair sequence and retry insert once..."
                 );
                 await repairUserNotificationsSequence();
-                await pool.query(insertSql, [userId, title, message]);
+                await pool.query(insertSql, [userId, title, message, dedupeWindowSeconds]);
             } else {
                 throw err;
             }

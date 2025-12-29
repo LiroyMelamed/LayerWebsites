@@ -71,6 +71,12 @@ const saveDeviceToken = async (req, res) => {
 const getNotifications = async (req, res) => {
     const userId = req.user.UserId;
 
+    const limitRaw = req.query.limit;
+    const offsetRaw = req.query.offset;
+
+    const limit = Math.min(Math.max(parseInt(limitRaw, 10) || 50, 1), 200);
+    const offset = Math.max(parseInt(offsetRaw, 10) || 0, 0);
+
     try {
         const result = await pool.query(
             `
@@ -78,8 +84,10 @@ const getNotifications = async (req, res) => {
             FROM UserNotifications
             WHERE UserId = $1
             ORDER BY CreatedAt DESC
+            LIMIT $2
+            OFFSET $3
             `,
-            [userId]
+            [userId, limit, offset]
         );
 
         res.json(result.rows);
