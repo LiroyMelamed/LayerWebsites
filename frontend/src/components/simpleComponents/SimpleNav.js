@@ -26,6 +26,11 @@ const SimpleNav = ({ activeButton, style }) => {
     ...style
   };
 
+  const navItemStyle = {
+    width: '100%',
+    justifyContent: 'flex-end',
+  };
+
   return (
     <SimpleContainer style={containerStyle}>
       <SimpleScrollView>
@@ -46,7 +51,7 @@ const SimpleNav = ({ activeButton, style }) => {
                   leftIcon={link.icon}
                   iconSize={18}
                   tintColor={colors.black}
-                  style={{ width: '100%', justifyContent: 'flex-end' }}
+                  style={navItemStyle}
                   buttonSize={buttonSizes.LARGE}
                 >
                   {link.buttonText}

@@ -1,0 +1,66 @@
+@use '../../../styles/variables' as v;
+
+.lw-topToolBarSmallScreen {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 5rem; /* 80px */
+  background-color: var(--lw-color-white);
+  box-shadow: -0.125rem 0 0.3125rem rgba(0, 0, 0, 0.1);
+}
+
+.lw-topToolBarSmallScreen__logoButton {
+  align-self: center;
+}
+
+.lw-topToolBarSmallScreen__menuButton {
+  position: absolute;
+  z-index: 11112;
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  inset-block-start: 1.25rem; /* 20px */
+  inset-inline-end: 1.25rem; /* 20px */
+}
+
+.lw-topToolBarSmallScreen__icon {
+  display: block;
+  font-size: 1.5rem; /* 24px */
+  transition: transform 0.3s ease, color 0.3s ease;
+  color: var(--lw-color-text);
+}
+
+.lw-topToolBarSmallScreen__icon--open {
+  transform: rotate(90deg);
+  color: var(--lw-color-white);
+}
+
+.lw-topToolBarSmallScreen__sidebar {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+
+  width: 15.625rem; /* 250px */
+  height: 100%;
+  min-height: 100svh;
+
+  background-color: var(--lw-color-text);
+  flex-direction: column;
+  padding-block-start: 5rem; /* 80px */
+
+  z-index: 11111;
+  box-shadow: -0.125rem 0 0.3125rem rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.lw-topToolBarSmallScreen__sidebarContent {
+  flex: 1;
+  flex-direction: column;
+}
+
+.lw-topToolBarSmallScreen__logout {
+  align-self: center;
+  margin-block: 0.75rem 1.25rem; /* 12px 20px */
+}

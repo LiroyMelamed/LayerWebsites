@@ -12,6 +12,8 @@ import PrimaryButton from "../../styledComponents/buttons/PrimaryButton";
 import SimpleScrollView from "../../simpleComponents/SimpleScrollView";
 import { useFromApp } from "../../../providers/FromAppProvider";
 
+import './TopToolBarSmallScreen.scss';
+
 const Logo = images.Logos.FullLogoOriginal;
 
 export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, GetNavBarData = getNavBarData, isClient = false }) {
@@ -31,27 +33,35 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
         setIsDrawerOpen(!isDrawerOpen);
     };
 
+    const logoutButtonStyle = {
+        backgroundColor: colors.darkRed,
+    };
+
     return (
         <>
-            <SimpleContainer
-                style={styles.container}
-            >
+            <SimpleContainer className="lw-topToolBarSmallScreen">
                 <ImageButton
                     src={Logo}
-                    height={60} style={{ maxHeight: 48, alignSelf: 'center' }}
+                    height={48}
+                    className="lw-topToolBarSmallScreen__logoButton"
                     onPress={() => { navigate(LogoNavigate) }}
                 />
-                <SimpleButton onPress={toggleDrawer} style={styles.menuButton}>
-                    <span style={{ ...styles.icon, ...(isDrawerOpen ? styles.iconOpen : {}) }}>
+                <SimpleButton onPress={toggleDrawer} className="lw-topToolBarSmallScreen__menuButton">
+                    <span
+                        className={[
+                            'lw-topToolBarSmallScreen__icon',
+                            isDrawerOpen ? 'lw-topToolBarSmallScreen__icon--open' : null,
+                        ].filter(Boolean).join(' ')}
+                    >
                         {!isDrawerOpen ? "☰" : "X"}
                     </span>
                 </SimpleButton>
             </SimpleContainer >
 
             {isDrawerOpen &&
-                <SimpleContainer style={styles.sidebarContainer}>
+                <SimpleContainer className="lw-topToolBarSmallScreen__sidebar">
                     <SimpleScrollView>
-                        <SimpleContainer style={{ flex: 1, flexDirection: 'column' }}>
+                        <SimpleContainer className="lw-topToolBarSmallScreen__sidebarContent">
                             {NavBarLinks.map((item, index) => {
                                 const shouldHide = (isFromApp && isClient) && index <= 1;
 
@@ -78,70 +88,20 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
                         </SimpleContainer>
                     </SimpleScrollView>
                     {!isFromApp && (
-                        <PrimaryButton
-                            style={{
-                                alignSelf: 'center',
-                                marginBottom: '20px',
-                                marginTop: '12px',
-                                backgroundColor: colors.darkRed
-                            }}
-                            onPress={() => {
-                                localStorage.removeItem("token");
-                                navigate('/');
-                            }}
-                        >
-                            התנתק
-                        </PrimaryButton>
+                        <div className="lw-topToolBarSmallScreen__logout">
+                            <PrimaryButton
+                                style={logoutButtonStyle}
+                                onPress={() => {
+                                    localStorage.removeItem("token");
+                                    navigate('/');
+                                }}
+                            >
+                                התנתק
+                            </PrimaryButton>
+                        </div>
                     )}
                 </SimpleContainer>
             }
         </>
     );
 }
-
-const styles = {
-    container: {
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: 80,
-        backgroundColor: colors.white,
-        boxShadow: '-2px 0 5px rgba(0,0,0,0.1)',
-    },
-    menuButton: {
-        position: 'absolute',
-        zIndex: 11112,
-        background: 'none',
-        border: 'none',
-        fontSize: 24,
-        cursor: 'pointer',
-        top: 20,
-        right: 20,
-    },
-    icon: {
-        display: 'block',
-        fontSize: 24,
-        transition: 'transform 0.3s ease, color 0.3s ease',
-        color: colors.text,
-    },
-    iconOpen: {
-        transform: 'rotate(90deg)',
-        color: colors.white,
-    },
-    sidebarContainer: {
-        position: 'fixed',
-        top: 0,
-        right: 0,
-        width: 250,
-        height: '100%',
-        minHeight: '100svh',
-        backgroundColor: colors.text,
-        display: 'flex',
-        flexDirection: 'column',
-        paddingTop: 80,
-        zIndex: 11111,
-        boxShadow: '-2px 0 5px rgba(0,0,0,0.1)',
-        transition: 'transform 0.3s ease',
-    },
-};
