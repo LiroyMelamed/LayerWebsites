@@ -3,7 +3,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { loadDotEnvIfPresent, requireEnv, getEnvInt } from './env.mjs';
-import { getJwtToken } from './token.mjs';
 import { createApiClient } from './api.mjs';
 import { sanitizeJson } from './redact.mjs';
 
@@ -45,6 +44,73 @@ function formatRow({ name, status, httpCode, notes }) {
   return `${n} | ${s} | ${c} | ${note}`;
 }
 
+async function fetchJsonWithTimeout(url, { method, body, timeoutMs }) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
+    });
+    const text = await res.text();
+    let json = null;
+    try {
+      json = text ? JSON.parse(text) : null;
+    } catch {
+      json = null;
+    }
+    return {
+      ok: res.ok,
+      status: res.status,
+      responseTextSnippet: String(text || '').slice(0, 1200),
+      responseJson: json,
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function getTokenWithEvidence({ baseUrl, phoneNumber, otp, timeoutMs }) {
+  const requestOtp = await fetchJsonWithTimeout(`${baseUrl}/Auth/RequestOtp`, {
+    method: 'POST',
+    body: { phoneNumber },
+    timeoutMs,
+  });
+
+  const verifyOtp = await fetchJsonWithTimeout(`${baseUrl}/Auth/VerifyOtp`, {
+    method: 'POST',
+    body: { phoneNumber, otp },
+    timeoutMs,
+  });
+
+  const token = verifyOtp?.responseJson?.token;
+  const evidence = {
+    requestOtp: {
+      ok: requestOtp.ok,
+      status: requestOtp.status,
+      responseTextSnippet: requestOtp.responseTextSnippet,
+      responseJson: requestOtp.responseJson,
+    },
+    verifyOtp: {
+      ok: verifyOtp.ok,
+      status: verifyOtp.status,
+      tokenPresent: Boolean(token),
+      role: verifyOtp?.responseJson?.role,
+      message: verifyOtp?.responseJson?.message,
+    },
+  };
+
+  if (!token) {
+    const err = new Error('VerifyOtp response missing token');
+    err.evidence = evidence;
+    throw err;
+  }
+
+  return { token, evidence };
+}
+
 async function main() {
   const repoRoot = repoRootFromHere();
   loadDotEnvIfPresent({ repoRoot });
@@ -66,8 +132,17 @@ async function main() {
   const userOtp = requireEnv('E2E_USER_OTP');
 
   // Acquire tokens once per run; do not log them.
-  const adminToken = await getJwtToken({ baseUrl, phoneNumber: adminPhone, otp: adminOtp, timeoutMs });
-  const userToken = await getJwtToken({ baseUrl, phoneNumber: userPhone, otp: userOtp, timeoutMs });
+  const authEvidence = {};
+  const adminAuth = await getTokenWithEvidence({ baseUrl, phoneNumber: adminPhone, otp: adminOtp, timeoutMs });
+  authEvidence.admin = adminAuth.evidence;
+  const userAuth = await getTokenWithEvidence({ baseUrl, phoneNumber: userPhone, otp: userOtp, timeoutMs });
+  authEvidence.user = userAuth.evidence;
+
+  // Write auth evidence WITHOUT tokens
+  writeJson(path.join(outDir, 'auth.json'), sanitizeJson({ baseUrl, runPrefix, auth: authEvidence }));
+
+  const adminToken = adminAuth.token;
+  const userToken = userAuth.token;
 
   const adminApi = createApiClient({ baseUrl, token: adminToken, timeoutMs });
   const userApi = createApiClient({ baseUrl, token: userToken, timeoutMs });
