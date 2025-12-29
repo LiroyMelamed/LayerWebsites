@@ -12,7 +12,8 @@ import * as notifications from './checks/notifications.mjs';
 import * as signing from './checks/signing.mjs';
 
 function repoRootFromHere() {
-  return path.resolve(fileURLToPath(new URL('../../..', import.meta.url)));
+  // scripts/e2e/run.mjs -> repo root is ../..
+  return path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 }
 
 function pad2(n) {

@@ -4,8 +4,8 @@ import { fileURLToPath } from 'node:url';
 import { loadDotEnvIfPresent, requireEnv, getEnvInt } from './env.mjs';
 
 function repoRootFromHere() {
-  // scripts/e2e/token.mjs -> repo root is ../../..
-  return path.resolve(fileURLToPath(new URL('../../..', import.meta.url)));
+  // scripts/e2e/token.mjs -> repo root is ../..
+  return path.resolve(fileURLToPath(new URL('../..', import.meta.url)));
 }
 
 function normalizeBaseUrl(u) {
