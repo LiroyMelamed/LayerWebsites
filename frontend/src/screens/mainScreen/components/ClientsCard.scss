@@ -4,12 +4,12 @@
 
 .lw-clientsCard__headerRow {
     display: flex;
-    flex-direction: row-reverse;
+    flex-direction: row;
 }
 
 .lw-clientsCard__headerCell {
     flex: 1;
-    text-align: right;
+    text-align: start;
     margin: 0 0.375rem;
 }
 
