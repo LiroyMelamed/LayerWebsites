@@ -1,40 +1,52 @@
 import React from "react";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { Text12, TextBold12 } from "../../specializedComponents/text/AllTextKindFile";
-import { colors } from "../../../constant/colors";
 import { DateDDMMYY } from "../../../functions/date/DateDDMMYY";
+
+import "./CaseTimeline.scss";
 
 export default function CaseTimeline({ stages, currentStage, title, style }) {
     return (
         <SimpleContainer
+            className="lw-caseTimeline"
             style={style}
         >
-            <SimpleContainer>
+            <SimpleContainer className="lw-caseTimeline__title">
                 <TextBold12>
                     {title}
                 </TextBold12>
             </SimpleContainer>
             <SimpleContainer
-                style={styles.container}
+                className="lw-caseTimeline__container"
             >
-                <SimpleContainer style={styles.verticalLine} />
+                <SimpleContainer className="lw-caseTimeline__verticalLine" />
 
-                <SimpleContainer style={styles.dotsContainer}>
+                <SimpleContainer className="lw-caseTimeline__dotsContainer">
                     {stages?.slice().map((stage, index) => (
-                        <SimpleContainer key={index} style={styles.stageContainer}>
+                        <SimpleContainer key={index} className="lw-caseTimeline__stage">
                             <SimpleContainer
-                                style={index == currentStage - 1 ? styles.newDot : styles.defaultDot}
+                                className={
+                                    index == currentStage - 1
+                                        ? "lw-caseTimeline__dotWrap lw-caseTimeline__dotWrap--new"
+                                        : "lw-caseTimeline__dotWrap"
+                                }
                             >
-                                <SimpleContainer style={styles.dot} />
+                                <SimpleContainer className="lw-caseTimeline__dot" />
                             </SimpleContainer>
 
-                            <SimpleContainer style={styles.stageDetails(index == currentStage - 1)}>
+                            <SimpleContainer
+                                className={
+                                    index == currentStage - 1
+                                        ? "lw-caseTimeline__stageDetails lw-caseTimeline__stageDetails--new"
+                                        : "lw-caseTimeline__stageDetails"
+                                }
+                            >
                                 <SimpleContainer
-                                    style={{
-                                        backgroundColor: index == currentStage - 1 ? "#CAF1EE" : "#F7F8FF", paddingTop: 4,
-                                        paddingBottom: 4, paddingRight: 4,
-                                        paddingLeft: 4, borderRadius: 4
-                                    }}
+                                    className={
+                                        index == currentStage - 1
+                                            ? "lw-caseTimeline__timestampBadge lw-caseTimeline__timestampBadge--new"
+                                            : "lw-caseTimeline__timestampBadge"
+                                    }
                                 >
                                     {index == currentStage - 1 ?
                                         <TextBold12>חדש</TextBold12>
@@ -52,86 +64,4 @@ export default function CaseTimeline({ stages, currentStage, title, style }) {
             </SimpleContainer>
         </SimpleContainer>
     );
-}
-
-
-const styles = {
-    container: {
-        flexDirection: 'row',
-        paddingTop: 16,
-        position: 'relative',
-        zIndex: 1000,
-        marginRight: 4,
-        flex: 1
-    },
-
-    dotsContainer: {
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        zIndex: 1001,
-        position: 'relative',
-        flex: 1
-    },
-
-    verticalLine: {
-        position: 'absolute',
-        top: 54,
-        bottom: 36,
-        width: 1,
-        right: 3,
-        backgroundColor: '#CAF1EE',
-        zIndex: 1000
-    },
-
-    back: {
-        backgroundColor: colors.white,
-        borderRadius: 8,
-        width: 16,
-        height: 16,
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1002
-    },
-
-    newDot: {
-        display: 'relative',
-        marginRight: -4,
-        display: 'flex',
-        backgroundColor: '#CAF1EE',
-        borderRadius: 8,
-        width: 16,
-        height: 16,
-        alignItems: 'center',
-        justifyContent: 'center'
-    },
-
-    stageContainer: {
-        display: 'flex',
-        width: '100%',
-        flexDirection: 'row-reverse',
-        alignItems: 'center'
-    },
-
-    dot: {
-        display: 'flex',
-        width: 6,
-        height: 6,
-        borderRadius: 8,
-        backgroundColor: colors.winter,
-    },
-
-    stageDetails: (isNew) => ({
-        display: 'flex',
-        width: '100%',
-        flexDirection: 'column',
-        alignItems: 'flex-end',
-        marginRight: 4,
-        backgroundColor: isNew ? colors.pressed : colors.transparent,
-        paddingTop: 8,
-        paddingBottom: 8,
-        paddingRight: 16,
-        paddingLeft: 16,
-        borderRadius: 8,
-    }),
 }
