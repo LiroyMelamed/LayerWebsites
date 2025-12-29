@@ -16,6 +16,21 @@ Notes:
 - Local backend verified at `GET http://localhost:5000/` → `MelamedLaw API is running!`
 - Local frontend verified at `GET http://localhost:3000/` → HTTP 200
 
+### 0.1 Automated evidence harness (API-first)
+
+- [x] Harness exists: `scripts/e2e/`
+- [x] One-command run: `npm run e2e:api`
+- [ ] Run creates evidence files under `scripts/e2e/out/<runPrefix>/`
+
+Required env vars (do not commit secrets):
+- `E2E_API_BASE_URL` (example: `http://localhost:5000/api`)
+- `E2E_ADMIN_PHONE`, `E2E_ADMIN_OTP`
+- `E2E_USER_PHONE`, `E2E_USER_OTP`
+
+Evidence outputs:
+- `scripts/e2e/out/<runPrefix>/summary.json`
+- `scripts/e2e/out/<runPrefix>/<check>.json`
+
 ---
 
 ## 1) Auth — OTP login
@@ -58,6 +73,8 @@ Notes:
 - [ ] UI: renders correct counts/cards without layout break
 
 Notes:
+
+- Harness evidence: `scripts/e2e/out/<runPrefix>/dashboard.json`
 
 ---
 
@@ -160,6 +177,8 @@ Notes:
 
 Notes:
 
+- Harness evidence: `scripts/e2e/out/<runPrefix>/cases.whatsapp.json`
+
 ---
 
 ## 4) Case types CRUD
@@ -229,6 +248,8 @@ Notes:
 
 Notes:
 
+- Harness evidence: `scripts/e2e/out/<runPrefix>/notifications.json`
+
 ---
 
 ## 8) Signing (R2 + PDF)
@@ -239,6 +260,8 @@ Notes:
 - [ ] Upload succeeds to configured bucket and key is readable
 
 Notes:
+
+- Harness evidence (reachability only for now): `scripts/e2e/out/<runPrefix>/signing.json`
 
 ### 8.2 Admin: detect signature spots
 - [ ] UI: UploadFileForSigningScreen calls detect
