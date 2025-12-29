@@ -10,6 +10,8 @@ import { usePopup } from "../../../providers/PopUpProvider";
 import CaseFullView from "../cases/CaseFullView";
 import casesApi from "../../../api/casesApi";
 
+import "./CaseMenuItem.scss";
+
 export default function CaseMenuItem({
     fullCase,
     rightTitle,
@@ -56,33 +58,42 @@ export default function CaseMenuItem({
     }
 
     return (
-        <SimpleContainer style={{ overflow: null, flexDirection: 'column' }}>
-            <SimpleContainer style={styles.container} onPress={() => setIsOpen(!isOpen)}>
-                <ImageButton
-                    src={icons.Button.DownArrow}
-                    style={styles.dropDownIcon(isOpen)}
-                />
+        <SimpleContainer className="lw-caseMenuItem">
+            <SimpleContainer className="lw-caseMenuItem__header" onPress={() => setIsOpen(!isOpen)}>
+                <SimpleContainer className="lw-caseMenuItem__content">
+                    <SimpleContainer className="lw-caseMenuItem__row lw-caseMenuItem__row--top">
+                        <div className="lw-caseMenuItem__title">
+                            <TextBold14>{rightTitle}</TextBold14>
+                        </div>
 
-                <SimpleContainer style={styles.innerContainer}>
-                    <SimpleContainer style={styles.firstRow}>
-                        <TextBold14 style={{ flex: 1 }}>{rightTitle}</TextBold14>
-                        <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse' }}>
+                        <SimpleContainer className="lw-caseMenuItem__pair">
                             <TextBold12>{leftPreFirstLine}</TextBold12>
-                            <Text12 style={{ marginRight: 4 }}>{leftValueFirstLine}</Text12>
+                            <Text12>{leftValueFirstLine}</Text12>
                         </SimpleContainer>
                     </SimpleContainer>
 
-                    <SimpleContainer style={styles.secondRow}>
-                        <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', flex: 1 }}>
+                    <SimpleContainer className="lw-caseMenuItem__row lw-caseMenuItem__row--bottom">
+                        <SimpleContainer className="lw-caseMenuItem__pair lw-caseMenuItem__pair--grow">
                             <TextBold12>{rightPreSecondLine}</TextBold12>
-                            {isPerformingSetCase ? <SimpleLoader style={{ marginRight: 4, width: null }} /> : <Text12 style={{ marginRight: 4 }}>{fullCaseListener.Descriptions[fullCaseListener.CurrentStage - 1].Text}</Text12>}
+                            {isPerformingSetCase ? (
+                                <SimpleLoader style={{ width: null }} />
+                            ) : (
+                                <Text12>{fullCaseListener.Descriptions[fullCaseListener.CurrentStage - 1].Text}</Text12>
+                            )}
                         </SimpleContainer>
-                        <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse' }}>
+
+                        <SimpleContainer className="lw-caseMenuItem__pair">
                             <TextBold12>{leftPreSecondLine}</TextBold12>
-                            <Text12 style={{ marginRight: 4 }}>{leftValueSecondLine}</Text12>
+                            <Text12>{leftValueSecondLine}</Text12>
                         </SimpleContainer>
                     </SimpleContainer>
                 </SimpleContainer>
+
+                <ImageButton
+                    src={icons.Button.DownArrow}
+                    className="lw-caseMenuItem__toggle"
+                    style={styles.dropDownIcon(isOpen)}
+                />
             </SimpleContainer>
 
             <CaseMenuItemOpen
@@ -98,31 +109,12 @@ export default function CaseMenuItem({
 }
 
 const styles = {
-    container: {
-        display: 'flex',
-        flexDirection: 'row-reverse',
-        alignItems: 'center',
-    },
-    innerContainer: {
-        marginRight: 16,
-        flex: 1,
-        flexDirection: 'column'
-    },
     dropDownIcon: (isOpen) => ({
         width: 12,
         height: 12,
         transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', // Rotate based on isOpen
         transition: 'transform 0.3s ease', // Smooth rotation transition
     }),
-    firstRow: {
-        display: 'flex',
-        flexDirection: 'row-reverse',
-    },
-    secondRow: {
-        display: 'flex',
-        flexDirection: 'row-reverse',
-        marginTop: 8,
-    },
     openDataContainer: {
         overflow: 'hidden', // Hide content when not open
         transition: 'max-height 0.5s ease, opacity 0.5s ease', // Smooth transition for both maxHeight and opacity

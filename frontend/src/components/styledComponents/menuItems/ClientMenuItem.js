@@ -5,6 +5,8 @@ import SimpleButton from "../../simpleComponents/SimpleButton";
 import { usePopup } from "../../../providers/PopUpProvider";
 import ClientPopup from "../../../screens/mainScreen/components/ClientPopUp";
 
+import "./ClientMenuItem.scss";
+
 export default function ClientMenuItem({
     clientName = "khru",
     CompanyName = 'nkns',
@@ -28,27 +30,27 @@ export default function ClientMenuItem({
 
     return (
         <SimpleButton onPress={() => clientPressHandle()}>
-            <SimpleContainer style={{ overflow: null, flexDirection: 'column', ...style }}>
+            <SimpleContainer className="lw-clientMenuItem" style={style}>
 
-                <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse' }}>
-                    <TextBold14 style={styles.textContainer}>{CompanyName || "-"}</TextBold14>
+                <SimpleContainer className="lw-clientMenuItem__row">
+                    <div className="lw-clientMenuItem__cell">
+                        <TextBold14>{CompanyName || "-"}</TextBold14>
+                    </div>
 
-                    <Text14 style={styles.textContainer}>{clientName || "-"}</Text14>
+                    <div className="lw-clientMenuItem__cell">
+                        <Text14>{clientName || "-"}</Text14>
+                    </div>
 
-                    <Text14 style={styles.textContainer} shouldApplyClamping>{clientMail || "-"}</Text14>
+                    <div className="lw-clientMenuItem__cell">
+                        <Text14 shouldApplyClamping>{clientMail || "-"}</Text14>
+                    </div>
 
-                    <Text14 style={styles.textContainer}>{clientPhone || "-"}</Text14>
+                    <div className="lw-clientMenuItem__cell">
+                        <Text14>{clientPhone || "-"}</Text14>
+                    </div>
                 </SimpleContainer>
 
             </SimpleContainer>
         </SimpleButton>
     );
 }
-
-const styles = {
-    textContainer: {
-        flex: 1,
-        alignText: 'right',
-        margin: '0px 6px',
-    }
-};

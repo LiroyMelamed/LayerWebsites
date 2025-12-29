@@ -5,6 +5,8 @@ import SimpleButton from "../../simpleComponents/SimpleButton";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { Text14, TextBold14 } from "../../specializedComponents/text/AllTextKindFile";
 
+import "./AdminMenuItem.scss";
+
 export default function AdminMenuItem({
     adminName,
     CreatedAt,
@@ -27,27 +29,27 @@ export default function AdminMenuItem({
 
     return (
         <SimpleButton onPress={() => AdminPressed()}>
-            <SimpleContainer style={{ overflow: null, flexDirection: 'column', ...style }}>
+            <SimpleContainer className="lw-adminMenuItem" style={style}>
 
-                <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse' }}>
-                    <TextBold14 style={styles.textContainer}>{adminName}</TextBold14>
+                <SimpleContainer className="lw-adminMenuItem__row">
+                    <div className="lw-adminMenuItem__cell">
+                        <TextBold14>{adminName}</TextBold14>
+                    </div>
 
-                    <Text14 style={styles.textContainer} >{DateDDMMYY(CreatedAt)}</Text14>
+                    <div className="lw-adminMenuItem__cell">
+                        <Text14>{DateDDMMYY(CreatedAt)}</Text14>
+                    </div>
 
-                    <Text14 style={styles.textContainer} shouldApplyClamping>{adminMail}</Text14>
+                    <div className="lw-adminMenuItem__cell">
+                        <Text14 shouldApplyClamping>{adminMail}</Text14>
+                    </div>
 
-                    <Text14 style={styles.textContainer}>{adminPhone}</Text14>
+                    <div className="lw-adminMenuItem__cell">
+                        <Text14>{adminPhone}</Text14>
+                    </div>
                 </SimpleContainer>
 
             </SimpleContainer>
         </SimpleButton>
     );
 }
-
-const styles = {
-    textContainer: {
-        flex: 1,
-        alignText: 'right',
-        margin: '0px 6px',
-    }
-};

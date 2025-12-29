@@ -3,19 +3,19 @@ import SimpleButton from "../../simpleComponents/SimpleButton";
 import SimpleIcon from "../../simpleComponents/SimpleIcon";
 import { TextBold14 } from "../../specializedComponents/text/AllTextKindFile";
 
-export default function UpdatesMenuItem({ menuItemName, onPress, style }) {
+import "./UpdatesMenuItem.scss";
 
-    const MenuItemStyle = {
-        ...styles.menuItemStyle,
-        ...style
-    }
+export default function UpdatesMenuItem({ menuItemName, onPress, style }) {
 
     return (
         <SimpleButton
             onPress={onPress}
-            style={MenuItemStyle}
+            className="lw-updatesMenuItem"
+            style={style}
         >
-            <TextBold14 style={{ flex: 1 }}>{menuItemName}</TextBold14>
+            <div className="lw-updatesMenuItem__text">
+                <TextBold14>{menuItemName}</TextBold14>
+            </div>
 
             <SimpleIcon
                 src={icons.Button.DownArrow}
@@ -27,12 +27,6 @@ export default function UpdatesMenuItem({ menuItemName, onPress, style }) {
 }
 
 const styles = {
-    menuItemStyle: {
-        display: 'flex',
-        minHeight: '48px',
-        flexDirection: 'row-reverse',
-        alignItems: 'center',
-    },
     icon: {
         transform: 'rotate(90deg)'
     }

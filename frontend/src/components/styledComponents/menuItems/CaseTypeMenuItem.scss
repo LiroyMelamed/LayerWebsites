@@ -1,0 +1,50 @@
+.lw-caseTypeMenuItem {
+  flex-direction: column;
+}
+
+.lw-caseTypeMenuItem__header {
+  align-items: center;
+  flex-direction: row;
+  gap: 1rem;
+}
+
+.lw-caseTypeMenuItem__content {
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.lw-caseTypeMenuItem__row {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.lw-caseTypeMenuItem__row--bottom {
+  margin-top: 0.5rem;
+}
+
+.lw-caseTypeMenuItem__title {
+  flex: 1;
+  min-width: 0;
+}
+
+.lw-caseTypeMenuItem__pair {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.lw-caseTypeMenuItem__pair--grow {
+  flex: 1;
+}
+
+.lw-caseTypeMenuItem__toggle {
+  flex: 0 0 auto;
+}
+
+.lw-caseTypeMenuItem__editButton {
+  margin-inline-start: 0.5rem;
+}
