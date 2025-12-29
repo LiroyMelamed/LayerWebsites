@@ -5,7 +5,18 @@ import { Text20 } from '../text/AllTextKindFile';
 import SimpleButton from '../../simpleComponents/SimpleButton';
 import SimpleScrollView from '../../simpleComponents/SimpleScrollView';
 
-const HoverContainer = ({ queryResult = [], isPerforming, getButtonTextFunction, onPressButtonFunction, targetRef, onClose, style }) => {
+import './HoverContainer.scss';
+
+const HoverContainer = ({
+    queryResult = [],
+    isPerforming,
+    getButtonTextFunction,
+    onPressButtonFunction,
+    targetRef,
+    onClose,
+    style,
+    className,
+}) => {
     const [position, setPosition] = useState({ top: 0, left: 0 });
     const hoverRef = useRef(null);
 
@@ -40,40 +51,31 @@ const HoverContainer = ({ queryResult = [], isPerforming, getButtonTextFunction,
         };
     }, [targetRef, onClose]);
 
+    const cssVars = {
+        '--lw-hoverContainer-top': `${position.top}px`,
+        '--lw-hoverContainer-left': `${position.left}px`,
+    };
+
+    const mergedStyle = style ? { ...cssVars, ...style } : cssVars;
+
     return (
         <SimpleContainer
             ref={hoverRef}
-            style={{
-                ...style,
-                ...position,
-                border: '1px solid #ddd',
-                backgroundColor: '#fff',
-                borderRadius: '25px',
-                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                position: 'absolute',
-                minWidth: 120,
-                maxHeight: "400px",
-                overflow: 'hidden',
-                zIndex: 1002,
-            }}
+            className={['lw-hoverContainer', className].filter(Boolean).join(' ')}
+            style={mergedStyle}
         >
-            <SimpleScrollView style={{ maxHeight: "400px" }}>
+            <SimpleScrollView className="lw-hoverContainer__scroll">
                 {isPerforming ? (
-                    <SimpleLoader />
+                    <SimpleContainer className="lw-hoverContainer__loading">
+                        <SimpleLoader />
+                    </SimpleContainer>
                 ) : (
                     queryResult?.length > 0 ? (
-                        <SimpleContainer style={{ display: 'flex', flexDirection: 'column' }}>
+                        <SimpleContainer className="lw-hoverContainer__list">
                             {queryResult.map((result, index) => (
                                 <SimpleButton
                                     key={`choiceNumber${index}`}
-                                    style={{
-                                        padding: '12px',
-                                        cursor: 'pointer',
-                                        borderBottom: '1px solid #ddd',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                    }}
+                                    className="lw-hoverContainer__option"
                                     onPress={() => onPressButtonFunction(getButtonTextFunction?.(result), result)}
                                 >
                                     <Text20>{getButtonTextFunction?.(result)}</Text20>
@@ -82,7 +84,9 @@ const HoverContainer = ({ queryResult = [], isPerforming, getButtonTextFunction,
                             ))}
                         </SimpleContainer>
                     ) : (
-                        <Text20 style={{ padding: '12px', textAlign: 'center' }}>לא נמצאו תוצאות</Text20>
+                        <SimpleContainer className="lw-hoverContainer__noResults">
+                            <Text20>לא נמצאו תוצאות</Text20>
+                        </SimpleContainer>
                     )
                 )}
             </SimpleScrollView>

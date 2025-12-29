@@ -1,0 +1,6 @@
+@use '../../../styles/variables' as v;
+
+/* Override the default hover container stacking for search dropdowns */
+.lw-searchInput__hover {
+  z-index: 1005;
+}

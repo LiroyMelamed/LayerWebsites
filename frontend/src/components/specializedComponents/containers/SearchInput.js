@@ -3,6 +3,8 @@ import SimpleInput from '../../simpleComponents/SimpleInput';
 import React, { useState, useRef, useEffect } from 'react';
 import HoverContainer from './HoverContainer';
 
+import './SearchInput.scss';
+
 const SearchInput = ({
     leftIcon,
     value,
@@ -72,10 +74,7 @@ const SearchInput = ({
             {showResults && (
                 <HoverContainer
                     targetRef={targetRef}
-                    style={{
-                        position: 'absolute',
-                        zIndex: 1005,
-                    }}
+                    className="lw-searchInput__hover"
                     queryResult={queryResult}
                     getButtonTextFunction={getButtonTextFunction}
                     onPressButtonFunction={hoverButtonPressed}
