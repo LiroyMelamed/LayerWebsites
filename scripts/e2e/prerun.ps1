@@ -2,8 +2,8 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 function Get-ConfigValue([string]$Key) {
-  $val = (Get-Item -Path "Env:$Key" -ErrorAction SilentlyContinue).Value
-  if ($val) { return $val }
+  $item = Get-Item -Path "Env:$Key" -ErrorAction SilentlyContinue
+  if ($item -and $item.Value) { return $item.Value }
 
   $envFile = Join-Path $PSScriptRoot '.env'
   if (Test-Path $envFile) {
