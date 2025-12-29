@@ -108,11 +108,22 @@ const getCases = async (req, res) => {
 const getCaseById = async (req, res) => {
     try {
         const caseId = req.params.caseId;
+        const userId = req.user?.UserId;
+        const userRole = req.user?.Role;
+
         if (!caseId) {
             return res.status(400).json({ message: "Invalid case ID" });
         }
 
-        const result = await pool.query(`${_buildBaseCaseQuery()} WHERE C.caseid = $1 ORDER BY CD.stage`, [caseId]);
+        // Non-admin users can only access their own cases
+        const query =
+            userRole === "Admin"
+                ? `${_buildBaseCaseQuery()} WHERE C.caseid = $1 ORDER BY CD.stage`
+                : `${_buildBaseCaseQuery()} WHERE C.caseid = $1 AND C.userid = $2 ORDER BY CD.stage`;
+
+        const params = userRole === "Admin" ? [caseId] : [caseId, userId];
+
+        const result = await pool.query(query, params);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ message: "Case not found" });
@@ -256,7 +267,14 @@ const addCase = async (req, res) => {
         }
 
         const formattedPhone = formatPhoneNumber(PhoneNumber);
-        sendMessage(`היי ${CustomerName}, \n\n תיק ${CaseName} נוצר, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`, formattedPhone);
+        try {
+            sendMessage(
+                `היי ${CustomerName}, \n\n תיק ${CaseName} נוצר, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`,
+                formattedPhone
+            );
+        } catch (e) {
+            console.warn('Warning: failed to send SMS for case creation:', e?.message);
+        }
 
         await client.query('COMMIT');
 
@@ -269,7 +287,16 @@ const addCase = async (req, res) => {
         if (client) {
             await client.query('ROLLBACK');
         }
-        res.status(500).json({ message: "Error creating case" });
+        const isProd = String(process.env.NODE_ENV || "").toLowerCase() === "production";
+        res.status(500).json({
+            message: "Error creating case",
+            ...(isProd
+                ? null
+                : {
+                    details: error?.message,
+                    code: error?.code,
+                })
+        });
     } finally {
         if (client) {
             client.release();
@@ -324,7 +351,14 @@ const updateCase = async (req, res) => {
         }
 
         const formattedPhone = formatPhoneNumber(PhoneNumber);
-        sendMessage(`היי ${CustomerName}, \n\n תיק ${CaseName} התעדכן, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`, formattedPhone);
+        try {
+            sendMessage(
+                `היי ${CustomerName}, \n\n תיק ${CaseName} התעדכן, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`,
+                formattedPhone
+            );
+        } catch (e) {
+            console.warn('Warning: failed to send SMS for case update:', e?.message);
+        }
 
         await client.query('COMMIT');
 
@@ -402,7 +436,11 @@ const updateStage = async (req, res) => {
 
         if (notificationMessage) {
             const formattedPhone = formatPhoneNumber(PhoneNumber);
-            sendMessage(notificationMessage, formattedPhone);
+            try {
+                sendMessage(notificationMessage, formattedPhone);
+            } catch (e) {
+                console.warn('Warning: failed to send SMS for stage update:', e?.message);
+            }
 
             if (caseUserId) {
                 await sendAndStoreNotification(caseUserId, notificationTitle, notificationMessage, { caseId: String(caseId), stage: String(CurrentStage) });

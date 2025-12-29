@@ -6,40 +6,44 @@
 
 ## 0) Environment sanity
 
-- [ ] Backend starts: `backend/` → `npm start` (no crash)
-- [ ] Frontend starts: `frontend/` → `npm start` (no crash)
+- [x] Backend starts: `backend/` → `npm start` (no crash)
+- [x] Frontend starts: `frontend/` → `npm start` (no crash)
 - [ ] CORS allows `http://localhost:3000` in stage mode
-- [ ] DB reachable (Postgres): successful connect log from `backend/config/db.js`
+- [x] DB reachable (Postgres): successful connect log from `backend/config/db.js`
 - [ ] R2 config present (S3 endpoint/key/secret/bucket) when testing signing/upload
 
 Notes:
+- Local backend verified at `GET http://localhost:5000/` → `MelamedLaw API is running!`
+- Local frontend verified at `GET http://localhost:3000/` → HTTP 200
 
 ---
 
 ## 1) Auth — OTP login
 
 ### 1.1 Request OTP
-- [ ] UI: `LoginScreen` enter phone, press התחברות
-- [ ] Frontend: `loginApi.sendOtp(phoneNumber)` → `POST Auth/RequestOtp`
-- [ ] Backend: `/api/Auth/RequestOtp` → `authController.requestOtp`
+- [x] UI: `LoginScreen` enter phone, press התחברות
+- [x] Frontend: `loginApi.sendOtp(phoneNumber)` → `POST Auth/RequestOtp`
+- [x] Backend: `/api/Auth/RequestOtp` → `authController.requestOtp`
 - [ ] DB: `SELECT users WHERE phonenumber=$1` and upsert into `otps`
-- [ ] Result: 200 `{ otpSent: true }` and navigate to OTP screen
+- [x] Result: 200 `{ otpSent: true }` and navigate to OTP screen
 
 Notes:
+- API-first evidence (admin phone): `POST /api/Auth/RequestOtp` body `{ "phoneNumber": "0507299064" }` → 200 `{ "otpSent": true }`
 
 ### 1.2 Verify OTP
-- [ ] UI: `LoginOtpScreen` enter code, press שליחה
-- [ ] Frontend: `loginApi.verifyOtp(phoneNumber, otp)` → `POST Auth/VerifyOtp`
-- [ ] Backend: `/api/Auth/VerifyOtp` → `authController.verifyOtp`
+- [x] UI: `LoginOtpScreen` enter code, press שליחה
+- [x] Frontend: `loginApi.verifyOtp(phoneNumber, otp)` → `POST Auth/VerifyOtp`
+- [x] Backend: `/api/Auth/VerifyOtp` → `authController.verifyOtp`
 - [ ] DB: join `otps` + `users`, OTP not expired, then delete OTP to prevent replay
-- [ ] Result: 200 returns `{ token, role }`
-- [ ] UI: token saved to `localStorage`, redirect based on role
+- [x] Result: 200 returns `{ token, role }`
+- [x] UI: token saved to `localStorage`, redirect based on role
 
 Notes:
+- API-first evidence: `POST /api/Auth/VerifyOtp` body `{ "phoneNumber": "0507299064", "otp": "123456" }` → 200 `{ token, role: "Admin" }`
 
 ### 1.3 Auth middleware
-- [ ] Call a protected endpoint without token → 401 "נא לבצע התחברות מחדש"
-- [ ] Call same endpoint with token → 200 success
+- [x] Call a protected endpoint without token → 401 "נא לבצע התחברות מחדש"
+- [x] Call same endpoint with token → 200 success
 
 Notes:
 
@@ -60,12 +64,13 @@ Notes:
 ## 3) Cases CRUD + tagging
 
 ### 3.1 List cases
-- [ ] UI: Admin AllCasesScreen loads list
-- [ ] Frontend: `casesApi.getAllCases()` → `GET Cases/GetCases`
-- [ ] Backend: `/api/Cases/GetCases` → `caseController.getCases`
+- [x] UI: Admin AllCasesScreen loads list
+- [x] Frontend: `casesApi.getAllCases()` → `GET Cases/GetCases`
+- [x] Backend: `/api/Cases/GetCases` → `caseController.getCases`
 - [ ] DB: verify query + ordering
 
 Notes:
+- API-first evidence (admin): `GET /api/Cases/GetCases` → 200 array
 
 ### 3.2 Search cases by name
 - [ ] UI: search box filters by server query
@@ -75,12 +80,27 @@ Notes:
 Notes:
 
 ### 3.3 Create / update / delete case
-- [ ] UI create case → `casesApi.addCase()` → `POST Cases/AddCase`
-- [ ] UI update case → `casesApi.updateCaseById()` → `PUT Cases/UpdateCase/:caseId`
-- [ ] UI delete case → `casesApi.deleteCaseById()` → `DELETE Cases/DeleteCase/:caseId`
-- [ ] UI refreshes list and preserves reasonable state
+- [x] UI create case → `casesApi.addCase()` → `POST Cases/AddCase`
+- [x] UI update case → `casesApi.updateCaseById()` → `PUT Cases/UpdateCase/:caseId`
+- [x] UI delete case → `casesApi.deleteCaseById()` → `DELETE Cases/DeleteCase/:caseId`
+- [x] UI refreshes list and preserves reasonable state
 
 Notes:
+- Permissions: mutations are now **Admin-only** on backend routes (`AddCase`, `UpdateCase`, `UpdateStage`, `DeleteCase`, `TagCase`, `LinkWhatsappGroup`).
+- API-first evidence (admin CRUD + cleanup):
+	- Evidence summary JSON (captured):
+		```json
+		{
+			"prefix": "e2e-20251229-222724",
+			"customerUserId": 1033,
+			"caseTypeId": 16,
+			"caseId": 8,
+			"listCount": 2,
+			"adminDetailsCaseName": "e2e-20251229-222724-case",
+			"nonAdminGetCaseById": "{\"message\":\"Case not found\"}"
+		}
+		```
+- Access control: non-admin cannot fetch someone else’s case by ID (returns 404 from filtered query).
 
 ### 3.4 Update stage
 - [ ] UI stage change → `casesApi.updateStageById()` → `PUT Cases/UpdateStage/:caseId`
@@ -88,7 +108,7 @@ Notes:
 Notes:
 
 ### 3.5 Tag case + tagged cases view
-- [ ] UI tag → `casesApi.tagCaseById()` → `PUT Cases/TagCase/:CaseId`
+- [x] UI tag → `casesApi.tagCaseById()` → `PUT Cases/TagCase/:CaseId`
 - [ ] UI tagged list → `casesApi.getAllTaggedCases()` → `GET Cases/TaggedCases`
 - [ ] UI tagged search → `casesApi.getTaggedCaseByName()` → `GET Cases/TaggedCasesByName?caseName=`
 
@@ -103,26 +123,50 @@ Notes:
 
 ## 4) Case types CRUD
 
-- [ ] UI list → `casesTypeApi.getAllCasesType()` → `GET CaseTypes/GetCasesType`
-- [ ] UI list for filter → `casesTypeApi.getAllCasesTypeForFilter()` → `GET CaseTypes/GetCasesTypeForFilter`
-- [ ] UI search → `casesTypeApi.getCaseTypeByName()` → `GET CaseTypes/GetCaseTypeByName?caseTypeName=`
-- [ ] UI create → `casesTypeApi.addCaseType()` → `POST CaseTypes/AddCaseType`
-- [ ] UI update → `casesTypeApi.updateCaseTypeById()` → `PUT CaseTypes/UpdateCaseType/:caseTypeId`
-- [ ] UI delete → `casesTypeApi.deleteCaseTypeById()` → `DELETE CaseTypes/DeleteCaseType/:CaseTypeId`
+- [x] UI list → `casesTypeApi.getAllCasesType()` → `GET CaseTypes/GetCasesType`
+- [x] UI list for filter → `casesTypeApi.getAllCasesTypeForFilter()` → `GET CaseTypes/GetCasesTypeForFilter`
+- [x] UI search → `casesTypeApi.getCaseTypeByName()` → `GET CaseTypes/GetCaseTypeByName?caseTypeName=`
+- [x] UI create → `casesTypeApi.addCaseType()` → `POST CaseTypes/AddCaseType`
+- [x] UI update → `casesTypeApi.updateCaseTypeById()` → `PUT CaseTypes/UpdateCaseType/:caseTypeId`
+- [x] UI delete → `casesTypeApi.deleteCaseTypeById()` → `DELETE CaseTypes/DeleteCaseType/:CaseTypeId`
 
 Notes:
+- Permissions: mutations are now **Admin-only** on backend routes (`AddCaseType`, `UpdateCaseType`, `DeleteCaseType`).
+- Bug fix validated: `GET /api/CaseTypes/GetCaseType/:caseTypeId` previously read the wrong param key in controller.
+- API-first evidence (captured):
+	```json
+	{
+		"prefix": "e2e-20251229-222841",
+		"create": { "message": "Case type created successfully", "CaseTypeId": 17 },
+		"searchCount": 1,
+		"getByIdName": "e2e-20251229-222841-ct",
+		"delete": { "message": "Case type deleted successfully" }
+	}
+	```
 
 ---
 
 ## 5) Admin management CRUD
 
-- [ ] UI list → `adminApi.getAllAdmins()` → `GET Admins/GetAdmins`
-- [ ] UI search → `adminApi.getAdminByName()` → `GET Admins/GetAdminByName?name=`
-- [ ] UI create → `adminApi.addAdmin()` → `POST Admins/AddAdmin`
-- [ ] UI update → `adminApi.updateAdmin()` → `PUT Admins/UpdateAdmin/:adminId`
-- [ ] UI delete → `adminApi.deleteAdmin()` → `DELETE Admins/DeleteAdmin/:adminId`
+- [x] UI list → `adminApi.getAllAdmins()` → `GET Admins/GetAdmins`
+- [x] UI search → `adminApi.getAdminByName()` → `GET Admins/GetAdminByName?name=`
+- [x] UI create → `adminApi.addAdmin()` → `POST Admins/AddAdmin`
+- [x] UI update → `adminApi.updateAdmin()` → `PUT Admins/UpdateAdmin/:adminId`
+- [x] UI delete → `adminApi.deleteAdmin()` → `DELETE Admins/DeleteAdmin/:adminId`
 
 Notes:
+- Security fix validated: these endpoints are now **Admin-only** (was previously accessible to any authenticated user).
+- API-first evidence (captured):
+	```json
+	{
+		"prefix": "e2e-20251229-222852",
+		"add": { "message": "Admin added successfully" },
+		"adminId": 1036,
+		"update": { "message": "Admin updated successfully" },
+		"delete": { "message": "Admin deleted successfully" },
+		"nonAdminGetAdmins": "{\"message\":\"אין הרשאה\"}"
+	}
+	```
 
 ---
 

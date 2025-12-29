@@ -38,7 +38,14 @@ const addCustomer = async (req, res) => {
         );
 
         const formattedPhone = formatPhoneNumber(phoneNumber);
-        sendMessage(`היי ${name}, ברוכים הבאים לשירות החדש שלנו.\n\n בלינק הבא תוכל להשלים את ההרשמה לשירות.\n\n בברכה ${COMPANY_NAME}`, formattedPhone);
+        try {
+            sendMessage(
+                `היי ${name}, ברוכים הבאים לשירות החדש שלנו.\n\n בלינק הבא תוכל להשלים את ההרשמה לשירות.\n\n בברכה ${COMPANY_NAME}`,
+                formattedPhone
+            );
+        } catch (e) {
+            console.warn('Warning: failed to send welcome SMS:', e?.message);
+        }
 
         res.status(201).json({ message: "לקוח הוקם בהצלחה" });
 

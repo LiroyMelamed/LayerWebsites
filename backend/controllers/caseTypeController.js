@@ -100,9 +100,14 @@ const getCaseTypesForFilter = async (req, res) => {
 };
 
 const getCaseTypeById = async (req, res) => {
-    const { CaseTypeId } = req.params;
+    const CaseTypeId = req.params?.caseTypeId ?? req.params?.CaseTypeId;
+    const caseTypeIdInt = parseInt(CaseTypeId, 10);
+
+    if (!CaseTypeId || Number.isNaN(caseTypeIdInt)) {
+        return res.status(400).json({ message: "Invalid CaseTypeId" });
+    }
     try {
-        const result = await pool.query(`SELECT * FROM casetypes WHERE casetypeid = $1`, [CaseTypeId]);
+        const result = await pool.query(`SELECT * FROM casetypes WHERE casetypeid = $1`, [caseTypeIdInt]);
         if (result.rows.length === 0) {
             return res.status(404).json({ message: "Case type not found" });
         }
