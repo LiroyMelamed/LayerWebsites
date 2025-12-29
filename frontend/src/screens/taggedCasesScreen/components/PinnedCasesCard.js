@@ -7,11 +7,13 @@ import DefaultState from "../../../components/styledComponents/defaultState/Defa
 import CaseMenuItem from "../../../components/styledComponents/menuItems/CaseMenuItem";
 import Separator from "../../../components/styledComponents/separators/Separator";
 
+import './PinnedCasesCard.scss';
+
 export default function PinnedCasesCard({ taggedCases, isPerforming, rePerformFunction }) {
 
     if (isPerforming) {
         return (
-            <SimpleCard style={{ overflow: null, flexDirection: 'column' }}>
+            <SimpleCard className="lw-pinnedCasesCard">
                 <SimpleLoader />
             </SimpleCard>
         )
@@ -21,18 +23,17 @@ export default function PinnedCasesCard({ taggedCases, isPerforming, rePerformFu
         return (
             <DefaultState
                 content={"אין כרגע תיקים נעוצים"}
-                imageStyle={{ height: 156 }}
+                imageClassName="lw-defaultState__image--h156"
                 imageSrc={images.Defaults.TaggedCase}
-                style={{ width: null }}
             />
         )
     }
 
     return (
-        <SimpleCard style={{ overflow: null, flexDirection: 'column' }}>
+        <SimpleCard className="lw-pinnedCasesCard">
             <TextBold20>תיקים נעוצים</TextBold20>
 
-            <SimpleContainer style={{ overflow: null, flexDirection: 'column', marginTop: 16 }}>
+            <SimpleContainer className="lw-pinnedCasesCard__list">
                 {taggedCases.map((item, index) => (
                     <>
                         {index != 0 && <Separator />}

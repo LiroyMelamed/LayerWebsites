@@ -7,24 +7,26 @@ import CaseMenuItem from "../../../../components/styledComponents/menuItems/Case
 import Separator from "../../../../components/styledComponents/separators/Separator";
 import { getOpenData } from "../../../allCasesScreen/components/AllCasesCard";
 
+import './ClosedCasesCard.scss';
+
 export default function ClosedCasesCard({ closedCases, reperformAfterSave, style }) {
 
     if (closedCases?.length === 0 || !closedCases) {
         return (
             <DefaultState
                 content={"אין כרגע תיקים סגורים"}
-                imageStyle={{ height: 156 }}
+                imageClassName="lw-defaultState__image--h156"
                 imageSrc={images.Defaults.Cases}
-                style={{ ...style, width: null }}
+                style={style}
             />
         )
     }
 
     return (
-        <SimpleCard style={{ ...style, overflow: null, flexDirection: 'column' }}>
+        <SimpleCard className="lw-closedCasesCard" style={style}>
             <TextBold20>תיקים סגורים</TextBold20>
 
-            <SimpleContainer style={{ overflow: null, flexDirection: 'column', marginTop: 16 }}>
+            <SimpleContainer className="lw-closedCasesCard__list">
                 {closedCases.map((item, index) => (
                     <>
                         {index !== 0 && <Separator />}

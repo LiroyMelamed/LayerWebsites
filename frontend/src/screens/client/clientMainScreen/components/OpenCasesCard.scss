@@ -1,0 +1,10 @@
+@use '../../../../styles/variables' as v;
+
+.lw-openCasesCard {
+  flex-direction: column;
+}
+
+.lw-openCasesCard__list {
+  flex-direction: column;
+  margin-top: 1rem; /* 16px */
+}

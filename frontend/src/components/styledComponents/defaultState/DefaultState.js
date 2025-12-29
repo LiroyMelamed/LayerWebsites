@@ -4,6 +4,8 @@ import SimpleImage from "../../simpleComponents/SimpleImage";
 import { TextBold14 } from "../../specializedComponents/text/AllTextKindFile";
 import PrimaryButton from "../buttons/PrimaryButton";
 
+import './DefaultState.scss';
+
 export default function DefaultState({
     imageSrc = images.MainPage.DataFlowing,
     imageStyle,
@@ -20,31 +22,29 @@ export default function DefaultState({
     actionButtonClassName,
 }) {
 
-    const CardStyle = {
-        maxWidth: '100%',
-        alignItems: "center",
-        flexDirection: "column",
-        ...style,
-    }
+    const resolvedCardClassName = ['lw-defaultState', className].filter(Boolean).join(' ');
+    const resolvedImageClassName = ['lw-defaultState__image', imageClassName].filter(Boolean).join(' ');
 
     return (
-        <SimpleCard className={className} style={CardStyle}>
-            <SimpleImage className={imageClassName} src={imageSrc} style={imageStyle} />
-            <TextBold14 className={contentClassName} style={{ marginTop: 8 }}>
-                {content}
-            </TextBold14>
+        <SimpleCard className={resolvedCardClassName} style={style}>
+            <SimpleImage className={resolvedImageClassName} src={imageSrc} style={imageStyle} />
+            <div className={['lw-defaultState__content', contentClassName].filter(Boolean).join(' ')}>
+                <TextBold14>
+                    {content}
+                </TextBold14>
+            </div>
 
             {actionButton &&
-                <PrimaryButton
-                    className={actionButtonClassName}
-                    onPress={actionButtonPressFunction}
-                    rightIcon={actionButtonRightIcon}
-                    leftIcon={actionButtonLeftIcon}
-                    size={actionButtonSize}
-                    style={{ marginTop: 8 }}
-                >
-                    {actionButton}
-                </PrimaryButton>
+                <div className={['lw-defaultState__action', actionButtonClassName].filter(Boolean).join(' ')}>
+                    <PrimaryButton
+                        onPress={actionButtonPressFunction}
+                        rightIcon={actionButtonRightIcon}
+                        leftIcon={actionButtonLeftIcon}
+                        size={actionButtonSize}
+                    >
+                        {actionButton}
+                    </PrimaryButton>
+                </div>
             }
         </SimpleCard>
     );

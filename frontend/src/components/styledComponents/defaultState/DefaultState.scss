@@ -1,0 +1,25 @@
+@use '../../../styles/variables' as v;
+
+.lw-defaultState {
+  width: 100%;
+  max-width: 100%;
+  align-items: center;
+  flex-direction: column;
+}
+
+.lw-defaultState__image {
+  display: block;
+}
+
+/* Common fixed-height variants for DefaultState images */
+.lw-defaultState__image--h156 {
+  height: 9.75rem; /* 156px */
+}
+
+.lw-defaultState__content {
+  margin-top: 0.5rem; /* 8px */
+}
+
+.lw-defaultState__action {
+  margin-top: 0.5rem; /* 8px */
+}

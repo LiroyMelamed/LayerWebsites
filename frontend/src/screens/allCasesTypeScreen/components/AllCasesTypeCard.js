@@ -7,11 +7,13 @@ import CaseMenuItem from "../../../components/styledComponents/menuItems/CaseMen
 import CaseTypeMenuItem from "../../../components/styledComponents/menuItems/CaseTypeMenuItem";
 import Separator from "../../../components/styledComponents/separators/Separator";
 
+import './AllCasesTypeCard.scss';
+
 export default function AllCasesTypeCard({ allCasesType, reperformAfterSave, isPerforming }) {
 
     if (isPerforming) {
         return (
-            <SimpleCard style={{ overflow: null, flexDirection: 'column' }}>
+            <SimpleCard className="lw-allCasesTypeCard">
                 <SimpleLoader />
             </SimpleCard>
         )
@@ -21,17 +23,16 @@ export default function AllCasesTypeCard({ allCasesType, reperformAfterSave, isP
         return (
             <DefaultState
                 content={"אין כרגע סוגי תיקים"}
-                imageStyle={{ height: 156 }}
+                imageClassName="lw-defaultState__image--h156"
                 imageSrc={images.Defaults.Cases}
-                style={{ width: null }}
             />
         )
     }
 
     return (
-        <SimpleCard style={{ overflow: null, flexDirection: 'column' }}>
+        <SimpleCard className="lw-allCasesTypeCard">
 
-            <SimpleContainer style={{ overflow: null, flexDirection: 'column' }}>
+            <SimpleContainer className="lw-allCasesTypeCard__list">
                 {allCasesType.map((item, index) => (
                     <>
                         {index !== 0 && <Separator />}
