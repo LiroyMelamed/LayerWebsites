@@ -1,0 +1,15 @@
+.lw-showDataCard {
+  flex: 1;
+  flex-direction: column;
+}
+
+.lw-showDataCard__number {
+  margin-top: 0.5rem;
+}
+
+.lw-showDataCard__comparisonRow {
+  align-items: center;
+  flex-direction: row;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}

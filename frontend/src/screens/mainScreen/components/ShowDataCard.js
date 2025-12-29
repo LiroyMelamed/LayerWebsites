@@ -6,26 +6,27 @@ import { Text12, TextBold14, TextBold20, TextBold36 } from "../../../components/
 import { colors } from "../../../constant/colors";
 import addCommasToNumber from "../../../functions/numbers/addCommasToNumber";
 
+import "./ShowDataCard.scss";
+
 export default function ShowDataCard({ title, icon, numberText, comprationNumber, comprationText, optionalOnClick, style }) {
     return (
-        <SimpleCard style={{ flex: 1, flexDirection: 'column', ...style }} onPress={optionalOnClick}>
+        <SimpleCard className="lw-showDataCard" style={style} onPress={optionalOnClick}>
             <TextBold14 >{title}</TextBold14>
 
-            <TextBold36 style={{ marginTop: 8 }}>{numberText}</TextBold36>
+            <div className="lw-showDataCard__number">
+                <TextBold36>{numberText}</TextBold36>
+            </div>
 
             {comprationNumber && comprationText &&
-                <SimpleContainer style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
+                <SimpleContainer className="lw-showDataCard__comparisonRow">
                     <Text12>{comprationText}</Text12>
-                    <Text12 color={comprationNumber > 0 ? colors.positive : colors.negative} style={{ marginInlineStart: 8 }}>{addCommasToNumber(comprationNumber, null, "%")}</Text12>
+                    <Text12 color={comprationNumber > 0 ? colors.positive : colors.negative}>
+                        {addCommasToNumber(comprationNumber, null, "%")}
+                    </Text12>
                     <SimpleIcon
                         src={icons.Button.DownArrow}
-                        style={{
-                            display: 'flex',
-                            transform: `rotate(${comprationNumber > 0 ? 180 : 0}deg)`,
-                            height: 12,
-                            width: 12,
-                            marginInlineStart: 8
-                        }}
+                        size={12}
+                        style={{ transform: `rotate(${comprationNumber > 0 ? 180 : 0}deg)` }}
                         tintColor={comprationNumber > 0 ? colors.positive : colors.negative}
                     />
                 </SimpleContainer>
