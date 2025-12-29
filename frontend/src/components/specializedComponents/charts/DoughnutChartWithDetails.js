@@ -2,6 +2,8 @@ import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { Text12 } from "../text/AllTextKindFile";
 import DoughnutChart from "./DoughnutChart";
 
+import "./DoughnutChartWithDetails.scss";
+
 export default function DoughnutChartWithDetails({ data, colors, labels, centerText, subText, doughnutStyle, style }) {
     function calculatePercentages(data) {
         const total = data.reduce((sum, value) => sum + value, 0);
@@ -14,16 +16,7 @@ export default function DoughnutChartWithDetails({ data, colors, labels, centerT
     const percentages = calculatePercentages(data);
 
     return (
-        <SimpleContainer
-            style={{
-                display: "flex",
-                flexDirection: "column",
-                marginTop: 16,
-                alignItems: 'center',
-                gap: 16,
-                ...style
-            }}
-        >
+        <SimpleContainer className="lw-doughnutChartWithDetails" style={style}>
             <DoughnutChart
                 data={data}
                 colors={colors}
@@ -33,24 +26,15 @@ export default function DoughnutChartWithDetails({ data, colors, labels, centerT
                 style={{ flex: 1, ...doughnutStyle }}
             />
 
-            <SimpleContainer style={{ display: 'flex', flex: 1, flexDirection: 'row-reverse', gap: 20, marginTop: 8 }}>
+            <SimpleContainer className="lw-doughnutChartWithDetails__legend">
                 {percentages && labels?.map((label, index) => (
                     <SimpleContainer
                         key={index}
-                        style={{
-                            display: "flex",
-                            flexDirection: "row-reverse",
-                            alignItems: "center",
-                        }}
+                        className="lw-doughnutChartWithDetails__legendItem"
                     >
                         <SimpleContainer
-                            style={{
-                                width: 12,
-                                height: 12,
-                                backgroundColor: colors[index],
-                                marginLeft: 8,
-                                borderRadius: 4,
-                            }}
+                            className="lw-doughnutChartWithDetails__swatch"
+                            style={{ backgroundColor: colors[index] }}
                         />
                         <Text12>{`${percentages[index]}% ${label}`}</Text12>
                     </SimpleContainer>

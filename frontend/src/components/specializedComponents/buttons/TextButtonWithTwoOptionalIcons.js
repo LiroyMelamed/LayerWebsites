@@ -4,6 +4,8 @@ import SimpleContainer from '../../simpleComponents/SimpleContainer';
 import SimpleIcon from '../../simpleComponents/SimpleIcon';
 import SimpleText from '../../simpleComponents/SimpleText';
 
+import './TextButtonWithTwoOptionalIcons.scss';
+
 const TextButtonWithTwoOptionalIcons = forwardRef(({
     children,
     style,
@@ -16,27 +18,19 @@ const TextButtonWithTwoOptionalIcons = forwardRef(({
     rightIconTintColor,
     ...props
 }, ref) => {
-
-    const buttonStyle = {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        ...style,
-    };
-
     return (
         <SimpleButton
             {...props}
             ref={ref} // Forward the ref to SimpleButton
-            style={buttonStyle}
+            className="lw-textButtonWithTwoOptionalIcons"
+            style={style}
         >
-            <SimpleContainer style={{ display: 'flex', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center' }}>
+            <SimpleContainer className="lw-textButtonWithTwoOptionalIcons__inner">
                 {rightIcon && (
                     <SimpleIcon
                         src={rightIcon}
                         size={rightIconSize}
                         tintColor={rightIconTintColor}
-                        style={{ marginLeft: 8 }}
                     />
                 )}
 
@@ -49,7 +43,6 @@ const TextButtonWithTwoOptionalIcons = forwardRef(({
                         src={leftIcon}
                         size={leftIconSize}
                         tintColor={leftIconTintColor}
-                        style={{ marginRight: 8 }}
                     />
                 )}
             </SimpleContainer>

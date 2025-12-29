@@ -1,0 +1,26 @@
+.lw-doughnutChartWithDetails {
+  flex-direction: column;
+  margin-top: 1rem;
+  align-items: center;
+  gap: 1rem;
+}
+
+.lw-doughnutChartWithDetails__legend {
+  flex: 1;
+  flex-direction: row;
+  gap: 1.25rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.lw-doughnutChartWithDetails__legendItem {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.lw-doughnutChartWithDetails__swatch {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 0.25rem;
+}
