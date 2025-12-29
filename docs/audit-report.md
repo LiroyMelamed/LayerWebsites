@@ -15,21 +15,27 @@ UI-level verification is tracked in [docs/e2e-checklist.md](docs/e2e-checklist.m
 - Backend: `http://localhost:5000`
 - Frontend: `http://localhost:3000`
 - DB: Postgres via `backend/config/db.js`
-- Auth used for testing:
-  - Admin: phone `0507299064`, OTP `123456`
-  - Non-admin: phone `0501234567`, OTP `123456`
+- Auth used for testing: OTP login using local `scripts/e2e/.env` (not committed)
+
+Canonical harness runPrefix: `e2e-20251230-0045-`
 
 ### Results summary
-- Case Types CRUD: ✅ PASS (create/search/get-by-id/update/delete)
-- Admins CRUD: ✅ PASS (create/list/update/delete)
-- Cases CRUD: ✅ PASS (create/list/get-by-id/update/delete, tag)
-- Authorization hardening: ✅ PASS (non-admin can no longer access admin-management endpoints; non-admin cannot fetch other users’ cases by ID)
+- Harness overall: ✅ PASS (25/25 checks)
+- Dashboard API: ✅ PASS (admin returns expected keys; non-admin denied)
+- Cases WhatsApp link flow: ✅ PASS (read/update/clear; invalid URL rejected)
+- Notifications: ✅ PASS (list + mark read idempotent; unread count non-increasing)
+- Signing: ✅ PASS (reachability only; full upload/detect/sign flow still TODO)
 
 ### Evidence
-Canonical evidence blocks are recorded in [docs/e2e-checklist.md](docs/e2e-checklist.md) under:
-- **4) Case types CRUD**
-- **5) Admin management CRUD**
-- **3) Cases CRUD + tagging**
+Canonical evidence is recorded in [docs/e2e-checklist.md](docs/e2e-checklist.md) under **0.1 Automated evidence harness (API-first)**.
+
+Evidence folder: `scripts/e2e/out/e2e-20251230-0045-/`
+- `summary.json`
+- `dashboard.json`
+- `cases.whatsapp.json`
+- `notifications.json`
+- `signing.json`
+- `auth.json`
 
 ### Fixes applied during Phase B
 
@@ -51,6 +57,13 @@ Canonical evidence blocks are recorded in [docs/e2e-checklist.md](docs/e2e-check
 #### 4) Stability: prevent SMS integration issues from failing CRUD
 - Symptom: missing/invalid SMS provider configuration could break CRUD flows.
 - Fix: wrapped SMS send calls in try/catch (case creation/update/stage update and customer welcome).
+
+#### 5) Notifications: mark-as-read robustness
+- Symptom: E2E harness attempted `PUT /api/Notifications/undefined/read` and received 500.
+- Root cause: list endpoint returns Postgres column names as lowercase (`notificationid`, `isread`, `createdat`), while the harness was reading `NotificationId` and constructed an invalid URL.
+- Fix:
+  - Harness: normalize notification fields before selecting a target.
+  - Backend: validate `:id` is a number and return 400 for invalid IDs (prevents 500).
 
 ### Open items (not completed in Phase B)
 - Add minimal automated API tests (e.g., supertest) for one happy path per resource + one permission test.

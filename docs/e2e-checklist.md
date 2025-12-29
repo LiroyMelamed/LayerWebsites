@@ -20,7 +20,9 @@ Notes:
 
 - [x] Harness exists: `scripts/e2e/`
 - [x] One-command run: `npm run e2e:api`
-- [ ] Run creates evidence files under `scripts/e2e/out/<runPrefix>/`
+- [x] Run creates evidence files under `scripts/e2e/out/<runPrefix>/`
+
+Run prefix (canonical): `e2e-20251230-0045-`
 
 Required env vars (do not commit secrets):
 - `E2E_API_BASE_URL` (example: `http://localhost:5000/api`)
@@ -28,8 +30,12 @@ Required env vars (do not commit secrets):
 - `E2E_USER_PHONE`, `E2E_USER_OTP`
 
 Evidence outputs:
-- `scripts/e2e/out/<runPrefix>/summary.json`
-- `scripts/e2e/out/<runPrefix>/<check>.json`
+- `scripts/e2e/out/e2e-20251230-0045-/summary.json`
+- `scripts/e2e/out/e2e-20251230-0045-/dashboard.json`
+- `scripts/e2e/out/e2e-20251230-0045-/cases.whatsapp.json`
+- `scripts/e2e/out/e2e-20251230-0045-/notifications.json`
+- `scripts/e2e/out/e2e-20251230-0045-/signing.json`
+- `scripts/e2e/out/e2e-20251230-0045-/auth.json`
 
 ---
 
@@ -73,8 +79,7 @@ Notes:
 - [ ] UI: renders correct counts/cards without layout break
 
 Notes:
-
-- Harness evidence: `scripts/e2e/out/<runPrefix>/dashboard.json`
+- API-first evidence (admin has expected keys; non-admin denied): `scripts/e2e/out/e2e-20251230-0045-/dashboard.json`
 
 ---
 
@@ -176,8 +181,7 @@ Notes:
 - [ ] UI add link → `casesApi.linkWhatsappGroup()` → `PUT Cases/LinkWhatsappGroup/:CaseId`
 
 Notes:
-
-- Harness evidence: `scripts/e2e/out/<runPrefix>/cases.whatsapp.json`
+- API-first evidence (create case, read/update/clear link, invalid URL rejected, cleanup): `scripts/e2e/out/e2e-20251230-0045-/cases.whatsapp.json`
 
 ---
 
@@ -247,8 +251,7 @@ Notes:
 - [ ] UI updates read state immediately or after refresh
 
 Notes:
-
-- Harness evidence: `scripts/e2e/out/<runPrefix>/notifications.json`
+- API-first evidence (list, mark read idempotent, unread count non-increasing, cleanup): `scripts/e2e/out/e2e-20251230-0045-/notifications.json`
 
 ---
 
@@ -260,8 +263,7 @@ Notes:
 - [ ] Upload succeeds to configured bucket and key is readable
 
 Notes:
-
-- Harness evidence (reachability only for now): `scripts/e2e/out/<runPrefix>/signing.json`
+- Harness evidence (reachability only for now): `scripts/e2e/out/e2e-20251230-0045-/signing.json`
 
 ### 8.2 Admin: detect signature spots
 - [ ] UI: UploadFileForSigningScreen calls detect
