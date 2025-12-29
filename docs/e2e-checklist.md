@@ -128,7 +128,7 @@ Notes:
 ### 3.5 Tag case + tagged cases view
 - [x] UI tag → `casesApi.tagCaseById()` → `PUT Cases/TagCase/:CaseId`
 - [x] UI tagged list → `casesApi.getAllTaggedCases()` → `GET Cases/TaggedCases`
-- [ ] UI tagged search → `casesApi.getTaggedCaseByName()` → `GET Cases/TaggedCasesByName?caseName=`
+- [x] UI tagged search → `casesApi.getTaggedCaseByName()` → `GET Cases/TaggedCasesByName?caseName=`
 
 Notes:
 - Security fix: `GET /api/Cases/TaggedCases` no longer leaks cross-user cases to non-admins (non-admin is filtered to `C.userid = req.user.UserId`).
@@ -141,6 +141,17 @@ Notes:
 		"caseIdOther": 23,
 		"nonAdminSeesOther": false,
 		"nonAdminTaggedCount": 0
+	}
+	```
+- API-first evidence (TaggedCasesByName access control):
+	```json
+	{
+		"prefix": "e2e-20251229-225025",
+		"tokenUserIdU": 1032,
+		"otherUserId": 1033,
+		"caseIdOther": 26,
+		"adminSearchCount": 1,
+		"nonAdminError": "{\"message\":\"No tagged cases found with this name\"}"
 	}
 	```
 
