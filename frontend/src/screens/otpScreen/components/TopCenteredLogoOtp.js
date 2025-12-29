@@ -14,7 +14,6 @@ export default function TopCenteredLogoOtp({ logoSrc = images.Logos.LogoSlang, l
                     src={logoSrc}
                     tintColor={colors.text}
                     className="lw-topCenteredLogoOtp__logoImage"
-                    style={{ width: 56, height: 56 }}
                 />
             </SimpleContainer>
 

@@ -14,11 +14,10 @@ export default function TopCenteredLogo({ logoSrc = images.Logos.LogoSlang, logo
                     src={logoSrc}
                     tintColor={colors.text}
                     className="lw-topCenteredLogo__logoImage"
-                    style={{ width: 56, height: 56 }}
                 />
             </SimpleContainer>
 
-            <Text32 className="lw-topCenteredLogo__title" style={{ color: colors.text }}>
+            <Text32 className="lw-topCenteredLogo__title">
                 כל המידע על התיק שלך במקום אחד!
             </Text32>
         </SimpleContainer>

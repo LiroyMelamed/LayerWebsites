@@ -48,26 +48,29 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
                 <ProgressBar IsClosed={fullCase.IsClosed} currentStage={fullCase.CurrentStage} totalStages={fullCase?.Descriptions?.length} />
             </div>
 
-            <SimpleContainer className="lw-caseMenuItemOpen__row">
-                <TextBold12 className="lw-caseMenuItemOpen__cell">שם לקוח</TextBold12>
-                <Text12 className="lw-caseMenuItemOpen__cell">{fullCase.CustomerName}</Text12>
-            </SimpleContainer>
+            {!isClient &&
+                <>
+                    <SimpleContainer className="lw-caseMenuItemOpen__row">
+                        <TextBold12 className="lw-caseMenuItemOpen__cell">שם לקוח</TextBold12>
+                        <Text12 className="lw-caseMenuItemOpen__cell">{fullCase.CustomerName}</Text12>
+                    </SimpleContainer>
+                    <Separator />
 
-            <Separator />
+                    <SimpleContainer className="lw-caseMenuItemOpen__row">
+                        <TextBold12 className="lw-caseMenuItemOpen__cell">אימייל לקוח</TextBold12>
+                        <Text12 className="lw-caseMenuItemOpen__cell">{fullCase.CustomerMail}</Text12>
+                    </SimpleContainer>
 
-            <SimpleContainer className="lw-caseMenuItemOpen__row">
-                <TextBold12 className="lw-caseMenuItemOpen__cell">אימייל לקוח</TextBold12>
-                <Text12 className="lw-caseMenuItemOpen__cell">{fullCase.CustomerMail}</Text12>
-            </SimpleContainer>
+                    <Separator />
 
-            <Separator />
-
-            <SimpleContainer className="lw-caseMenuItemOpen__row">
-                <TextBold12 className="lw-caseMenuItemOpen__cell">מספר פלאפון</TextBold12>
-                <SimpleButton className="lw-caseMenuItemOpen__cell" onPress={() => { window.location.href = `tel:${fullCase.PhoneNumber}` }}>
-                    <Text12 className="lw-caseMenuItemOpen__linkText">{fullCase.PhoneNumber}</Text12>
-                </SimpleButton>
-            </SimpleContainer>
+                    <SimpleContainer className="lw-caseMenuItemOpen__row">
+                        <TextBold12 className="lw-caseMenuItemOpen__cell">מספר פלאפון</TextBold12>
+                        <SimpleButton className="lw-caseMenuItemOpen__cell" onPress={() => { window.location.href = `tel:${fullCase.PhoneNumber}` }}>
+                            <Text12 className="lw-caseMenuItemOpen__linkText">{fullCase.PhoneNumber}</Text12>
+                        </SimpleButton>
+                    </SimpleContainer>
+                </>
+            }
 
             <Separator />
 
