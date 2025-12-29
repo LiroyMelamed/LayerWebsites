@@ -1,55 +1,18 @@
 import React from 'react';
 import SimpleContainer from './SimpleContainer';
-import { colors } from '../../constant/colors';
 
-const SimpleLoader = ({ style }) => {
-    // Styles for the loader container
-    const loaderStyle = {
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100%', // Full viewport height
-        width: '100%', // Full width
-        backgroundColor: colors.transparent, // Optional background color
-        top: 0,
-        left: 0,
-        zIndex: 1000, // Ensure it's above other content
-        ...style
-    };
+import './SimpleLoader.scss';
 
-    // Styles for the dots
-    const dotStyle = {
-        width: 10,
-        height: 10,
-        backgroundColor: colors.primary,
-        borderRadius: '50%',
-        margin: '0 6px',
-        opacity: 0,
-        animation: 'dotPulse 1.8s infinite cubic-bezier(0.4, 0, 0.2, 1)',
-        transform: 'scale(0)',
-    };
-
-    // Keyframes for the dot animation
-    const keyframes = `
-        @keyframes dotPulse {
-            0%, 80%, 100% {
-                opacity: 0;
-            }
-            40% {
-                opacity: 1;
-            }
-        }
-    `;
-
+const SimpleLoader = ({ style, className }) => {
     return (
-        <>
-            <style>{keyframes}</style>
-            <SimpleContainer style={loaderStyle}>
-                <SimpleContainer style={{ ...dotStyle, animationDelay: '0s' }} />
-                <SimpleContainer style={{ ...dotStyle, animationDelay: '0.3s' }} />
-                <SimpleContainer style={{ ...dotStyle, animationDelay: '0.6s' }} />
-            </SimpleContainer>
-        </>
+        <SimpleContainer
+            className={['lw-simpleLoader', className].filter(Boolean).join(' ')}
+            style={style}
+        >
+            <SimpleContainer className="lw-simpleLoader__dot lw-simpleLoader__dot--1" />
+            <SimpleContainer className="lw-simpleLoader__dot lw-simpleLoader__dot--2" />
+            <SimpleContainer className="lw-simpleLoader__dot lw-simpleLoader__dot--3" />
+        </SimpleContainer>
     );
 };
 

@@ -1,0 +1,15 @@
+@use '../../styles/variables' as v;
+
+.lw-simpleScrollView {
+  background-color: var(--lw-color-transparent);
+  width: 100%;
+  overflow-y: auto;
+
+  /* Hide scrollbars */
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

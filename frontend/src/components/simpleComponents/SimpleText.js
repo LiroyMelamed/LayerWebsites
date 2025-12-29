@@ -1,20 +1,29 @@
 import React from 'react';
 import { colors } from '../../constant/colors';
 
-const SimpleText = ({ size = 16, bold = false, color = colors.text, children, style, ...props }) => {
+import './SimpleText.scss';
+
+const SimpleText = ({
+    size = 16,
+    bold = false,
+    color = colors.text,
+    children,
+    style,
+    className,
+    ...props
+}) => {
+    const cssVars = {
+        '--lw-simpleText-size': `${size / 16}rem`,
+        '--lw-simpleText-weight': bold ? 700 : 400,
+        '--lw-simpleText-color': color,
+    };
+
+    const mergedStyle = style ? { ...cssVars, ...style } : cssVars;
+
     return (
         <p
-            style={{
-                fontSize: `${size}px`,
-                fontWeight: bold ? 'bold' : 'normal',
-                color, // Use the color prop
-                margin: 0,
-                direction: 'rtl', // Set text direction to RTL
-                textAlign: 'right', // Align text to the right
-                lineHeight: 1.2,
-                fontFamily: 'inherit',
-                ...style
-            }}
+            className={['lw-simpleText', className].filter(Boolean).join(' ')}
+            style={mergedStyle}
             {...props}
         >
             {children}

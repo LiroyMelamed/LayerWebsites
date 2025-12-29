@@ -1,10 +1,12 @@
 import React, { forwardRef } from "react";
-import { colors } from "../../constant/colors";
+
+import './SimpleScrollView.scss';
 
 const SimpleScrollView = forwardRef(({
     children,
     onScroll,
     style,
+    className,
     ...props
 }, ref) => {
     return (
@@ -12,22 +14,9 @@ const SimpleScrollView = forwardRef(({
             {...props}
             onScroll={onScroll}
             ref={ref}
-            style={{
-                backgroundColor: colors.transparent,
-                width: '100%',
-                overflowY: 'auto',
-                msOverflowStyle: 'none',
-                scrollbarWidth: 'none',
-                ...style,
-            }}
+            className={['lw-simpleScrollView', className].filter(Boolean).join(' ')}
+            style={style}
         >
-            <style>
-                {`
-                    div::-webkit-scrollbar {
-                        display: none;
-                    }
-                `}
-            </style>
             {children}
         </div>
     );

@@ -1,14 +1,13 @@
 import React, { forwardRef } from 'react';
 
-const SimpleContainer = forwardRef(({ children, onPress, style, ...rest }, ref) => {
+import './SimpleContainer.scss';
+
+const SimpleContainer = forwardRef(({ children, onPress, style, className, ...rest }, ref) => {
   return (
     <div
       ref={ref}
-      style={{
-        ...style,
-        display: 'flex',
-        boxSizing: 'border-box'
-      }}
+      className={['lw-simpleContainer', className].filter(Boolean).join(' ')}
+      style={style}
       {...rest}
       onClick={onPress}
     >
