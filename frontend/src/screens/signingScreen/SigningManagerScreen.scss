@@ -45,11 +45,11 @@
     margin-bottom: 0.75rem;
     box-shadow: 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.08);
     flex-direction: column;
-    border-left: 0.25rem solid transparent;
+    border-inline-start: 0.25rem solid transparent;
 }
 
 .lw-signingManagerScreen__fileCard.is-fullySigned {
-    border-left-color: #4caf50;
+    border-inline-start-color: #4caf50;
 }
 
 .lw-signingManagerScreen__fileHeaderRow {
