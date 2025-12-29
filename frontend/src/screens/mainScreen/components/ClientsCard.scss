@@ -10,7 +10,7 @@
 .lw-clientsCard__headerCell {
     flex: 1;
     text-align: right;
-    margin: 0 6px;
+    margin: 0 0.375rem;
 }
 
 .lw-clientsCard__list {
@@ -23,7 +23,7 @@
 
 .lw-clientsCard__addButton {
     align-self: center;
-    margin-top: 20px;
+    margin-top: 1.25rem;
 }
 
 .lw-clientsCard__empty {
@@ -31,5 +31,5 @@
 }
 
 .lw-clientsCard__emptyImage {
-    height: 156px;
+    height: 9.75rem;
 }
