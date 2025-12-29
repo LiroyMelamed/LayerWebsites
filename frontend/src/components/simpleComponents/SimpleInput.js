@@ -3,6 +3,8 @@ import SimpleContainer from './SimpleContainer';
 import { colors } from '../../constant/colors';
 import SimpleIcon from './SimpleIcon';
 
+import './SimpleInput.scss';
+
 const SimpleInput = forwardRef(
     ({
         title,
@@ -72,68 +74,58 @@ const SimpleInput = forwardRef(
 
         const shouldFloatLabel = isFocused || !!delayedValue || type === 'date';
 
+        const sizePaddingPx = Number.parseInt(String(sizeStyles.padding).replace('px', ''), 10);
+        const paddingBlock = leftIcon ? 0.5 : sizePaddingPx / 16;
+        const paddingInlineStart = rightIcon ? 30 / 16 : sizePaddingPx / 16;
+        const paddingInlineEnd = leftIcon ? 10 / 16 : sizePaddingPx / 16;
+
+        const containerCssVars = {
+            '--lw-simpleInput-borderColor': getBorderColor(),
+            '--lw-simpleInput-bgColor': getBackgroundColor(),
+            '--lw-simpleInput-shadow': isFocused ? '0 0 0.5rem rgba(59, 130, 246, 0.12)' : 'none',
+            '--lw-simpleInput-height': `${sizeStyles.height / 16}rem`,
+
+            '--lw-simpleInput-labelRight': rightIcon ? `${40 / 16}rem` : `${8 / 16}rem`,
+            '--lw-simpleInput-labelTop': String(sizeStyles.labelTop),
+            '--lw-simpleInput-labelTransform': shouldFloatLabel ? String(sizeStyles.transformFocused) : 'translateY(-50%)',
+            '--lw-simpleInput-labelOpacity': shouldFloatLabel ? 1 : 0.6,
+            '--lw-simpleInput-labelColor': error ? colors.error : colors.primaryHighlighted,
+            '--lw-simpleInput-labelFontSize': `${titleFontSize / 16}rem`,
+
+            '--lw-simpleInput-fontSize': `${sizeStyles.fontSize / 16}rem`,
+            '--lw-simpleInput-paddingBlock': `${paddingBlock}rem`,
+            '--lw-simpleInput-paddingInlineStart': `${paddingInlineStart}rem`,
+            '--lw-simpleInput-paddingInlineEnd': `${paddingInlineEnd}rem`,
+        };
+
+        const mergedContainerStyle = style ? { ...containerCssVars, ...style } : containerCssVars;
+
         return (
             <SimpleContainer
                 ref={ref}
-                className={className}
-                style={{
-                    position: 'relative',
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    border: `1px solid ${getBorderColor()}`,
-                    backgroundColor: getBackgroundColor(),
-                    borderRadius: 12,
-                    marginTop: 8,
-                    boxShadow: isFocused ? '0 0 8px rgba(59,130,246,0.12)' : 'none',
-                    direction: 'rtl',
-                    height: sizeStyles.height,
-                    width: '100%',
-                    ...style,
-                }}
+                className={['lw-simpleInput', className].filter(Boolean).join(' ')}
+                style={mergedContainerStyle}
             >
                 {title && (
-                    <span
-                        style={{
-                            ...styles.floatingLabel,
-                            fontSize: titleFontSize,
-                            fontFamily: 'inherit',
-                            right: rightIcon ? '40px' : '8px',
-                            top: sizeStyles.labelTop,
-                            borderRadius: 10000,
-                            transform: shouldFloatLabel ? sizeStyles.transformFocused : 'translateY(-50%)',
-                            opacity: shouldFloatLabel ? 1 : 0.6,
-                            color: error ? colors.error : colors.primaryHighlighted,
-                        }}
-                    >
+                    <span className="lw-simpleInput__label">
                         {error || title}
                     </span>
                 )}
 
                 {rightIcon && (
-                    <SimpleIcon
-                        tintColor={tintColor || getBorderColor()}
-                        src={rightIcon}
-                        style={{ ...IconStyle, marginRight: '8px' }}
-                    />
+                    <div className="lw-simpleInput__icon lw-simpleInput__icon--right">
+                        <SimpleIcon
+                            tintColor={tintColor || getBorderColor()}
+                            src={rightIcon}
+                            style={IconStyle}
+                        />
+                    </div>
                 )}
 
                 <input
                     type={type}
-                    style={{
-                        width: '100%',
-                        minWidth: '0',
-                        padding: leftIcon ? `8px ${sizeStyles.padding} 8px 10px` : sizeStyles.padding,
-                        paddingRight: rightIcon ? '30px' : sizeStyles.padding,
-                        border: 'none',
-                        fontFamily: 'inherit',
-                        backgroundColor: 'transparent',
-                        outline: 'none',
-                        fontSize: sizeStyles.fontSize,
-                        color: disabled ? colors.disabled : colors.text,
-                        textAlign: 'right',
-                        ...textStyle,
-                    }}
+                    className="lw-simpleInput__field"
+                    style={textStyle}
                     value={delayedValue}
                     onChange={handleInputChange}
                     onFocus={handleFocus}
@@ -142,26 +134,18 @@ const SimpleInput = forwardRef(
                 />
 
                 {leftIcon && (
-                    <SimpleIcon
-                        tintColor={tintColor || getBorderColor()}
-                        src={leftIcon}
-                        style={{ ...IconStyle, marginLeft: '8px' }}
-                    />
+                    <div className="lw-simpleInput__icon lw-simpleInput__icon--left">
+                        <SimpleIcon
+                            tintColor={tintColor || getBorderColor()}
+                            src={leftIcon}
+                            style={IconStyle}
+                        />
+                    </div>
                 )}
             </SimpleContainer>
         );
     }
 );
-
-const styles = {
-    floatingLabel: {
-        position: 'absolute',
-        backgroundColor: colors.white,
-        padding: '0 0px',
-        pointerEvents: 'none',
-        transition: 'top 0.2s ease, transform 0.2s ease, opacity 0.2s ease',
-    },
-};
 
 export default SimpleInput;
 

@@ -3,6 +3,8 @@ import SimpleContainer from './SimpleContainer';
 import SimpleIcon from './SimpleIcon';
 import { colors } from '../../constant/colors';
 
+import './SimpleTextArea.scss';
+
 const SimpleTextArea = forwardRef(
     ({
         title,
@@ -12,6 +14,7 @@ const SimpleTextArea = forwardRef(
         IconStyle,
         textStyle,
         style,
+        className,
         value,
         onChange,
         disabled = false,
@@ -31,83 +34,44 @@ const SimpleTextArea = forwardRef(
             return disabled ? colors.disabled : colors.white;
         }
 
+        const containerCssVars = {
+            '--lw-simpleTextArea-borderColor': getBorderColor(),
+            '--lw-simpleTextArea-bgColor': getBackgroundColor(),
+            '--lw-simpleTextArea-shadow': isFocused ? '0 0 0.25rem rgba(0, 0, 0, 0.2)' : 'none',
+
+            '--lw-simpleTextArea-labelTransform': isFocused || value ? 'translateY(-1.25rem) scale(0.8)' : 'translateY(0.625rem) scale(1)',
+            '--lw-simpleTextArea-labelOpacity': isFocused || value ? 1 : 0.6,
+            '--lw-simpleTextArea-labelColor': error ? colors.error : colors.primaryHighlighted,
+        };
+
+        const mergedContainerStyle = style ? { ...containerCssVars, ...style } : containerCssVars;
+
         return (
             <SimpleContainer
                 ref={ref}
-                style={{
-                    position: 'relative',
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    border: `1px solid ${getBorderColor()}`,
-                    backgroundColor: getBackgroundColor(),
-                    borderRadius: 12,
-                    padding: '12px',
-                    boxShadow: isFocused ? '0 0 4px rgba(0, 0, 0, 0.2)' : 'none',
-                    direction: 'rtl',
-                    width: '100%',
-                    ...style,
-                }}
+                className={['lw-simpleTextArea', className].filter(Boolean).join(' ')}
+                style={mergedContainerStyle}
             >
                 {/* Floating Label */}
                 {title && (
-                    <span
-                        style={{
-                            ...styles.floatingLabel,
-                            transform: isFocused || value ? 'translateY(-20px) scale(0.8)' : 'translateY(10px) scale(1)',
-                            opacity: isFocused || value ? 1 : 0.6,
-                            color: error ? colors.error : colors.primaryHighlighted,
-                            fontFamily: 'inherit', // use global font
-                            borderRadius: 10000,
-                        }}
-                    >
+                    <span className="lw-simpleTextArea__label">
                         {title}
                     </span>
                 )}
 
                 {rightIcon && (
-                    <SimpleIcon
-                        tintColor={tintColor || getBorderColor()}
-                        src={rightIcon}
-                        style={{ ...IconStyle, marginRight: '8px' }}
-                    />
+                    <div className="lw-simpleTextArea__icon lw-simpleTextArea__icon--right">
+                        <SimpleIcon
+                            tintColor={tintColor || getBorderColor()}
+                            src={rightIcon}
+                            style={IconStyle}
+                        />
+                    </div>
                 )}
 
-                <style>
-                    {`
-                        textarea::-webkit-scrollbar {
-                            width: 8px;
-                            height: 8px;
-                        }
-                        textarea::-webkit-scrollbar-thumb {
-                            background-color: rgba(0, 0, 0, 0.4);
-                            border-radius: 8px;
-                        }
-                        textarea::-webkit-scrollbar-thumb:hover {
-                            background-color: rgba(0, 0, 0, 0.6);
-                        }
-                        textarea::-webkit-scrollbar-track {
-                            background-color: rgba(0, 0, 0, 0.1);
-                            border-radius: 8px;
-                        }
-                    `}
-                </style>
-
                 <textarea
-                    style={{
-                        flex: 1,
-                        padding: leftIcon ? '0px 0px 10px 10px' : '0px 15px',
-                        paddingRight: rightIcon ? '30px' : '15px',
-                        border: 'none',
-                        backgroundColor: 'transparent',
-                        outline: 'none',
-                        fontSize: '14px',
-                        fontFamily: 'inherit', // use global font
-                        color: disabled ? colors.disabledText : colors.text,
-                        direction: 'rtl',
-                        textAlign: 'right',
-                        ...textStyle,
-                    }}
+                    className="lw-simpleTextArea__field"
+                    style={textStyle}
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     onFocus={() => setIsFocused(true)}
@@ -117,29 +81,17 @@ const SimpleTextArea = forwardRef(
                 />
 
                 {leftIcon && (
-                    <SimpleIcon
-                        tintColor={tintColor || getBorderColor()}
-                        src={leftIcon}
-                        style={{ ...IconStyle, marginLeft: '8px' }}
-                    />
+                    <div className="lw-simpleTextArea__icon lw-simpleTextArea__icon--left">
+                        <SimpleIcon
+                            tintColor={tintColor || getBorderColor()}
+                            src={leftIcon}
+                            style={IconStyle}
+                        />
+                    </div>
                 )}
             </SimpleContainer>
         );
     }
 );
-
-const styles = {
-    floatingLabel: {
-        position: 'absolute',
-        top: '12px',
-        right: '15px',
-        fontSize: '16px',
-        color: colors.text,
-        backgroundColor: colors.white,
-        padding: '0 5px',
-        pointerEvents: 'none',
-        transition: 'transform 0.2s ease, opacity 0.2s ease',
-    },
-};
 
 export default SimpleTextArea;
