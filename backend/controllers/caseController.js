@@ -519,11 +519,21 @@ const tagCase = async (req, res) => {
 
 const getTaggedCases = async (req, res) => {
     try {
-        const result = await pool.query(`
-            ${_buildBaseCaseQuery()}
-            WHERE C.istagged = true
-            ORDER BY C.caseid, CD.stage;
-        `);
+        const userId = req.user?.UserId;
+        const userRole = req.user?.Role;
+
+        if (!userId) {
+            return res.status(401).json({ message: "Unauthorized: User ID missing" });
+        }
+
+        const query =
+            userRole === "Admin"
+                ? `${_buildBaseCaseQuery()} WHERE C.istagged = true ORDER BY C.caseid, CD.stage;`
+                : `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.userid = $1 ORDER BY C.caseid, CD.stage;`;
+
+        const params = userRole === "Admin" ? [] : [userId];
+
+        const result = await pool.query(query, params);
         res.json(_mapCaseResults(result.rows));
     } catch (error) {
         console.error("Error retrieving tagged cases:", error);
@@ -536,6 +546,13 @@ const getTaggedCasesByName = async (req, res) => {
 
     if (!caseName || caseName.trim() === "") {
         return res.status(400).json({ message: "Case name is required for search" });
+    }
+
+    const userId = req.user?.UserId;
+    const userRole = req.user?.Role;
+
+    if (!userId) {
+        return res.status(401).json({ message: "Unauthorized: User ID missing" });
     }
 
     try {
@@ -566,16 +583,21 @@ const getTaggedCasesByName = async (req, res) => {
         params.push(`%${caseName}%`);
         paramIndex++;
 
-
-        const result = await pool.query(
-            `
+        let query = `
             ${_buildBaseCaseQuery()}
             WHERE (${whereClauses.join(" OR ")})
             AND C.istagged = true
-            ORDER BY C.caseid, CD.stage
-            `,
-            params
-        );
+        `;
+
+        if (userRole !== "Admin") {
+            query += ` AND C.userid = $${paramIndex}`;
+            params.push(userId);
+            paramIndex++;
+        }
+
+        query += " ORDER BY C.caseid, CD.stage";
+
+        const result = await pool.query(query, params);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ message: "No tagged cases found with this name" });

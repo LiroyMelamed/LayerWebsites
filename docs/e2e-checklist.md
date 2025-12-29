@@ -74,10 +74,18 @@ Notes:
 
 ### 3.2 Search cases by name
 - [ ] UI: search box filters by server query
-- [ ] Frontend: `casesApi.getCaseByName(caseName)` → `GET Cases/GetCaseByName?caseName=`
-- [ ] Backend: `/api/Cases/GetCaseByName` → `caseController.getCaseByName`
+- [x] Frontend: `casesApi.getCaseByName(caseName)` → `GET Cases/GetCaseByName?caseName=`
+- [x] Backend: `/api/Cases/GetCaseByName` → `caseController.getCaseByName`
 
 Notes:
+- API-first evidence (admin create+search+cleanup):
+	```json
+	{
+		"prefix": "e2e-20251229-224916",
+		"caseId": 25,
+		"searchCount": 1
+	}
+	```
 
 ### 3.3 Create / update / delete case
 - [x] UI create case → `casesApi.addCase()` → `POST Cases/AddCase`
@@ -103,16 +111,38 @@ Notes:
 - Access control: non-admin cannot fetch someone else’s case by ID (returns 404 from filtered query).
 
 ### 3.4 Update stage
-- [ ] UI stage change → `casesApi.updateStageById()` → `PUT Cases/UpdateStage/:caseId`
+- [x] UI stage change → `casesApi.updateStageById()` → `PUT Cases/UpdateStage/:caseId`
 
 Notes:
+- API-first evidence (admin UpdateStage + cleanup):
+	```json
+	{
+		"prefix": "e2e-20251229-224906",
+		"caseId": 24,
+		"updateStageResponse": {
+			"message": "Stage updated successfully"
+		}
+	}
+	```
 
 ### 3.5 Tag case + tagged cases view
 - [x] UI tag → `casesApi.tagCaseById()` → `PUT Cases/TagCase/:CaseId`
-- [ ] UI tagged list → `casesApi.getAllTaggedCases()` → `GET Cases/TaggedCases`
+- [x] UI tagged list → `casesApi.getAllTaggedCases()` → `GET Cases/TaggedCases`
 - [ ] UI tagged search → `casesApi.getTaggedCaseByName()` → `GET Cases/TaggedCasesByName?caseName=`
 
 Notes:
+- Security fix: `GET /api/Cases/TaggedCases` no longer leaks cross-user cases to non-admins (non-admin is filtered to `C.userid = req.user.UserId`).
+- API-first evidence (non-admin cannot see someone else’s tagged case):
+	```json
+	{
+		"prefix": "e2e-20251229-224842",
+		"tokenUserIdU": 1032,
+		"otherUserId": 1033,
+		"caseIdOther": 23,
+		"nonAdminSeesOther": false,
+		"nonAdminTaggedCount": 0
+	}
+	```
 
 ### 3.6 Link WhatsApp group
 - [ ] UI add link → `casesApi.linkWhatsappGroup()` → `PUT Cases/LinkWhatsappGroup/:CaseId`
