@@ -17,6 +17,8 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const filesRoutes = require("./routes/filesRoutes");
 const signingFileRoutes = require("./routes/signingFileRoutes");
 
+const authMiddleware = require("./middlewares/authMiddleware");
+
 
 
 const app = express();
@@ -80,6 +82,22 @@ app.use("/api/Data", dataRoutes);
 app.use("/api/Notifications", notificationRoutes);
 app.use("/api/Files", filesRoutes);
 app.use("/api/SigningFiles", signingFileRoutes);
+
+// Lightweight health endpoint for prereq checks
+app.get("/health", (req, res) => {
+    res.status(200).json({ ok: true });
+});
+
+// DB-backed endpoint for prereq checks (expects 401/403 when auth fails)
+app.get("/api/cases", authMiddleware, async (req, res) => {
+    try {
+        await pool.query('SELECT 1');
+        return res.status(200).json({ ok: true });
+    } catch (e) {
+        console.error('DB sanity check failed:', e?.message);
+        return res.status(500).json({ ok: false });
+    }
+});
 
 app.listen(PORT, async () => {
     console.log(`Server running on port ${PORT}`);
