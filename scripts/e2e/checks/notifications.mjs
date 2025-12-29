@@ -1,5 +1,17 @@
 export const name = 'notifications';
 
+function normalizeNotification(raw) {
+  const n = raw ?? {};
+  return {
+    raw: n,
+    id: n.NotificationId ?? n.notificationid ?? n.id ?? n.notificationId,
+    title: n.Title ?? n.title ?? '',
+    message: n.Message ?? n.message ?? '',
+    isRead: n.IsRead ?? n.isread ?? n.isRead,
+    createdAt: n.CreatedAt ?? n.createdat ?? n.createdAt,
+  };
+}
+
 function parseDate(value) {
   const d = new Date(value);
   return Number.isFinite(d.getTime()) ? d : null;
@@ -104,15 +116,17 @@ export async function run({ adminApi, userApi, prefix }) {
     return { name, results };
   }
 
-  const recent = list1.responseJson
+  const normalized = list1.responseJson.map(normalizeNotification);
+
+  const recent = normalized
     .filter((n) => {
-      const created = parseDate(n.CreatedAt);
+      const created = parseDate(n.createdAt);
       return created && created >= startedAt;
     })
-    .filter((n) => String(n.Title || '').includes('וואטסאפ') || String(n.Message || '').includes(caseName));
+    .filter((n) => n.title.includes('וואטסאפ') || n.message.includes(caseName));
 
   // Dedupe expectation: only one WhatsApp-linked notification within the window
-  const linked = recent.filter((n) => String(n.Title || '') === 'קבוצת וואטסאפ מקושרת');
+  const linked = recent.filter((n) => n.title === 'קבוצת וואטסאפ מקושרת');
   results.push({
     check: 'notifications.idempotency.noDuplicateInDb',
     status: linked.length <= 1 ? 'PASS' : 'FAIL',
@@ -122,20 +136,21 @@ export async function run({ adminApi, userApi, prefix }) {
   });
 
   // Mark as read (pick newest notification)
-  const target = list1.responseJson[0];
-  const unreadBefore = list1.responseJson.filter((n) => n.IsRead === false).length;
+  const target = normalized[0];
+  const targetId = target?.id;
+  const unreadBefore = normalized.filter((n) => n.isRead === false).length;
 
-  const mark = await userApi.put(`Notifications/${target.NotificationId}/read`, {});
+  const mark = await userApi.put(`Notifications/${targetId}/read`, {});
   results.push({
     check: 'notifications.markRead',
-    status: mark.ok ? 'PASS' : 'FAIL',
+    status: mark.ok && targetId ? 'PASS' : 'FAIL',
     httpCode: mark.status,
-    notes: `NotificationId=${target.NotificationId}`,
+    notes: `NotificationId=${targetId}`,
     evidence: mark,
   });
 
   // Mark again (idempotent)
-  const mark2 = await userApi.put(`Notifications/${target.NotificationId}/read`, {});
+  const mark2 = await userApi.put(`Notifications/${targetId}/read`, {});
   results.push({
     check: 'notifications.markReadTwice',
     status: mark2.ok ? 'PASS' : 'FAIL',

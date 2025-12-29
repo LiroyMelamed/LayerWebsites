@@ -106,6 +106,11 @@ const markNotificationAsRead = async (req, res) => {
     const { id } = req.params;
     const userId = req.user.UserId;
 
+    const notificationId = parseInt(id, 10);
+    if (!Number.isFinite(notificationId)) {
+        return res.status(400).json({ message: "Invalid notification id" });
+    }
+
     try {
         // Update the notification's status in the database
         const result = await pool.query(
@@ -114,14 +119,14 @@ const markNotificationAsRead = async (req, res) => {
             SET IsRead = TRUE
             WHERE NotificationId = $1 AND UserId = $2
             `,
-            [id, userId]
+            [notificationId, userId]
         );
 
         if (result.rowCount === 0) {
             return res.status(404).json({ message: "Notification not found or not authorized to update." });
         }
 
-        res.status(200).json({ NotificationId: parseInt(id, 10) });
+        res.status(200).json({ NotificationId: notificationId });
     } catch (error) {
         console.error("Error marking notification as read:", error);
         res.status(500).json({ message: "שגיאה בעדכון התראה" });
