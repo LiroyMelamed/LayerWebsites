@@ -6,17 +6,12 @@ import HoverContainer from "../../specializedComponents/containers/HoverContaine
 import SecondaryButton from "./SecondaryButton";
 import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 
+import "./ChooseButton.scss";
+
 export default function ChooseButton({ buttonText = "סוג תיק", buttonChoices, OnPressChoiceFunction, style, props }) {
     const [chosenChoice, setChosenChoice] = useState("הכל")
     const [showResults, setShowResults] = useState(false);
     const buttonRef = useRef()
-
-    const containerStyle = {
-        display: 'flex',
-        flexDirection: 'row-reverse',
-        alignItems: 'center',
-        ...style
-    }
 
     function OnPressChoice(text) {
         setShowResults(false)
@@ -28,16 +23,22 @@ export default function ChooseButton({ buttonText = "סוג תיק", buttonChoic
     }, [showResults])
 
     return (
-        <SimpleContainer style={containerStyle}>
+        <SimpleContainer className="lw-chooseButton" style={style}>
             <Text16>{buttonText + ":"}</Text16>
-            <SecondaryButton ref={buttonRef} leftIcon={icons.Button.DownArrow} onPress={() => { setShowResults(true) }} style={{ marginRight: 8, textAlign: 'center' }} size={buttonSizes.SMALL} {...props}>{chosenChoice}</SecondaryButton>
+            <SecondaryButton
+                ref={buttonRef}
+                leftIcon={icons.Button.DownArrow}
+                onPress={() => {
+                    setShowResults(true)
+                }}
+                size={buttonSizes.SMALL}
+                {...props}
+            >
+                {chosenChoice}
+            </SecondaryButton>
             {showResults && (
                 <HoverContainer
                     targetRef={buttonRef}
-                    style={{
-                        position: 'absolute',
-                        zIndex: 1000,
-                    }}
                     queryResult={['הכל', ...buttonChoices]}
                     getButtonTextFunction={item => item}
                     onPressButtonFunction={OnPressChoice}
