@@ -87,9 +87,9 @@ if ($baseUrl) {
   $uri = $null
   $ok = [Uri]::TryCreate($baseUrl, [UriKind]::Absolute, [ref]$uri)
   if ($ok -and $uri) {
-    $host = $uri.Host.ToLowerInvariant()
-    $nonProdOk = ($host -eq 'localhost' -or $host -eq '127.0.0.1' -or $host -eq '::1')
-    $nonProdNote = "host=$host"
+    $apiHost = $uri.Host.ToLowerInvariant()
+    $nonProdOk = ($apiHost -eq 'localhost' -or $apiHost -eq '127.0.0.1' -or $apiHost -eq '::1')
+    $nonProdNote = "host=$apiHost"
   } else {
     $nonProdOk = $false
     $nonProdNote = 'E2E_API_BASE_URL is not a valid URL'
