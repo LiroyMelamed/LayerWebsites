@@ -8,17 +8,17 @@
 }
 
 .lw-allCasesScreen__search {
-    margin-top: 12px;
-    max-width: 500px;
+    margin-top: 0.75rem;
+    max-width: 31.25rem;
 }
 
 .lw-allCasesScreen__choose {
-    margin: 12px 12px;
+    margin: 0.75rem 0.75rem;
     flex: 0 1 auto;
 }
 
 .lw-allCasesScreen__choose--openClose {
-    margin: 12px 0;
+    margin: 0.75rem 0;
 }
 
 .lw-allCasesScreen__footer {
@@ -27,6 +27,6 @@
 }
 
 .lw-allCasesScreen__addButton {
-    margin: 8px 0;
+    margin: 0.5rem 0;
     align-self: center;
 }

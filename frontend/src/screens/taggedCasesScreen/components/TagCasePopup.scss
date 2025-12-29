@@ -6,24 +6,24 @@
 .lw-tagCasePopup__row {
     display: flex;
     flex-direction: row-reverse;
-    margin-bottom: 16px;
+    margin-bottom: 1rem;
     flex-wrap: wrap;
 }
 
 .lw-tagCasePopup__input {
     flex: 1;
-    min-width: 150px;
-    margin: 8px 4px;
+    min-width: 9.375rem;
+    margin: 0.5rem 0.25rem;
 }
 
 .lw-tagCasePopup__actions {
     display: flex;
     flex-direction: row;
     justify-content: center;
-    margin: 16px 0;
+    margin: 1rem 0;
     flex-wrap: wrap;
 }
 
 .lw-tagCasePopup__actionButton {
-    margin: 8px;
+    margin: 0.5rem;
 }

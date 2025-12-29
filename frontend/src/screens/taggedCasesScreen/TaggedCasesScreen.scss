@@ -8,15 +8,15 @@
 }
 
 .lw-taggedCasesScreen__search {
-    margin: 12px 0;
-    margin-left: 20px;
-    max-width: 500px;
+    margin: 0.75rem 0;
+    margin-inline-start: 1.25rem;
+    max-width: 31.25rem;
 }
 
 .lw-taggedCasesScreen__choose {
-    margin: 12px 12px;
+    margin: 0.75rem 0.75rem;
     flex: 0 1 auto;
-    min-width: 100px;
+    min-width: 6.25rem;
 }
 
 .lw-taggedCasesScreen__footer {
@@ -25,6 +25,6 @@
 }
 
 .lw-taggedCasesScreen__pinButton {
-    margin: 8px 0;
+    margin: 0.5rem 0;
     align-self: center;
 }
