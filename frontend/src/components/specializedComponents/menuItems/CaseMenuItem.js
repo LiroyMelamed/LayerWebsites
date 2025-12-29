@@ -3,7 +3,7 @@ import SimpleButton from '../../simpleComponents/SimpleButton';
 import CaseFullView from '../../styledComponents/cases/CaseFullView';
 import { usePopup } from '../../../providers/PopUpProvider';
 
-export default function CaseMenuItem({ optionalOnPress, rePerformRequest, caseNumber, children, style }) {
+export default function CaseMenuItem({ optionalOnPress, rePerformRequest, caseNumber, children, style, className }) {
   const { openPopup } = usePopup(); // Get the openPopup method from the context
 
   const buttonStyle = {
@@ -20,7 +20,7 @@ export default function CaseMenuItem({ optionalOnPress, rePerformRequest, caseNu
   }
 
   return (
-    <SimpleButton style={buttonStyle} onClick={OnPressItem}>
+    <SimpleButton style={buttonStyle} className={className} onClick={OnPressItem}>
       {children}
     </SimpleButton>
   );

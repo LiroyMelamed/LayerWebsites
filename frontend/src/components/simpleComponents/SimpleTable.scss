@@ -1,0 +1,45 @@
+.lw-simpleTable {
+  max-height: 100%;
+  overflow: hidden;
+  flex-direction: column;
+}
+
+.lw-simpleTable__titleRow {
+  flex-direction: row;
+  width: 100%;
+  border-bottom: 1px solid #ddd;
+  flex-wrap: wrap;
+}
+
+.lw-simpleTable__row {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  border-bottom: 1px solid #f0f0f0;
+  padding-block: 0.5rem;
+  padding-inline: 0;
+  flex-wrap: wrap;
+}
+
+.lw-simpleTable__cell {
+  flex: 1;
+  padding: 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 3.75rem;
+}
+
+.lw-simpleTable__cellText {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.lw-simpleTable__noData {
+  text-align: center;
+  color: #888;
+  padding: 1.25rem;
+}
