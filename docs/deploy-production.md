@@ -125,6 +125,9 @@ Uploads/timeouts:
 - Set `client_max_body_size` high enough for your expected signing PDFs.
 - Set `proxy_read_timeout` / `proxy_send_timeout` to tolerate large PDF operations.
 
+See:
+- docs/uploads-signing-production.md
+
 ---
 
 ## 5) Verify after deploy
