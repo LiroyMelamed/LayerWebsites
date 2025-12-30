@@ -54,8 +54,9 @@ const updateAdmin = async (req, res) => {
     const { adminId } = req.params;
     const { name, email, phoneNumber, password } = req.body;
 
-    if (!adminId) {
-        return res.status(400).json({ message: "Admin ID is required" });
+    const adminUserId = parseInt(adminId, 10);
+    if (!Number.isFinite(adminUserId)) {
+        return res.status(400).json({ message: "Invalid admin id" });
     }
 
     try {
@@ -71,7 +72,7 @@ const updateAdmin = async (req, res) => {
                 WHERE userid = $5 AND role = 'Admin'
             `;
             // Using lowercase column names in the params array as well
-            params = [name, email, phoneNumber, hashedPassword, adminId];
+            params = [name, email, phoneNumber, hashedPassword, adminUserId];
         } else {
             query = `
                 UPDATE users
@@ -79,7 +80,7 @@ const updateAdmin = async (req, res) => {
                 WHERE userid = $4 AND role = 'Admin'
             `;
             // Using lowercase column names in the params array as well
-            params = [name, email, phoneNumber, adminId];
+            params = [name, email, phoneNumber, adminUserId];
         }
 
         await pool.query(query, params); // Execute query with parameters
@@ -97,14 +98,15 @@ const updateAdmin = async (req, res) => {
 const deleteAdmin = async (req, res) => {
     const { adminId } = req.params;
 
-    if (!adminId) {
-        return res.status(400).json({ message: "Admin ID is required" });
+    const adminUserId = parseInt(adminId, 10);
+    if (!Number.isFinite(adminUserId)) {
+        return res.status(400).json({ message: "Invalid admin id" });
     }
 
     try {
         const result = await pool.query(
             `DELETE FROM users WHERE userid = $1 AND role = 'Admin'`,
-            [adminId]
+            [adminUserId]
         );
 
         if (result.rowCount === 0) {
