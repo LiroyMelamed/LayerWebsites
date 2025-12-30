@@ -31,11 +31,13 @@
     padding: 1rem;
     border-bottom: 1px solid #e0e0e0;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
+    gap: 0.5rem;
 }
 
 .lw-signing-closeButton {
+    margin-inline-start: auto;
     border: none;
     background: none;
     font-size: 1.375rem;
@@ -329,9 +331,14 @@
 
 .lw-signing-fileCardHeader {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     margin-bottom: 0.625rem;
+    gap: 0.5rem;
+}
+
+.lw-signing-fileCardStatus {
+    margin-inline-start: auto;
 }
 
 .lw-signing-fileCardStatus {
