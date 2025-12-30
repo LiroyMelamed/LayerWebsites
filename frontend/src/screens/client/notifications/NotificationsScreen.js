@@ -99,6 +99,7 @@ export default function NotificationsScreen() {
                     LogoNavigate={ClientStackName + ClientMainScreenName}
                     GetNavBarData={getClientNavBarData}
                     isClient
+                    chosenIndex={0}
                 />
             )}
 

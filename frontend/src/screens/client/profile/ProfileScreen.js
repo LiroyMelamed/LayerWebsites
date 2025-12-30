@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { images } from "../../../assets/images/images";
@@ -31,7 +31,6 @@ import { formatDateForInput } from "../../../functions/date/formatDateForInput";
 import { uploadFileToR2, getFileReadUrl } from "../../../utils/fileUploadUtils";
 
 import "./ProfileScreen.scss";
-import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
 
 export const ProfileScreenName = "/ProfileScreen";
 
@@ -158,6 +157,7 @@ export default function ProfileScreen() {
                 <TopToolBarSmallScreen
                     LogoNavigate={ClientStackName + ClientMainScreenName}
                     GetNavBarData={getClientNavBarData}
+                    chosenIndex={2}
                 />
             )}
 

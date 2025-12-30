@@ -76,7 +76,6 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
                                         size={24}
                                         isPressed={currentIndex === index}
                                         onPressFunction={() => {
-                                            setCurrentIndex(index);
                                             item.onClick();
                                             toggleDrawer();
                                         }}

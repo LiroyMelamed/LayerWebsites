@@ -113,6 +113,7 @@ export default function SigningManagerScreen() {
                 <TopToolBarSmallScreen
                     LogoNavigate={AdminStackName}
                     GetNavBarData={getNavBarData}
+                    chosenIndex={1}
                 />
             )}
 

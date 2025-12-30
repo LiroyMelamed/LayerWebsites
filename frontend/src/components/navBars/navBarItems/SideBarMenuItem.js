@@ -8,8 +8,14 @@ import "./SideBarMenuItem.scss";
 export default function SideBarMenuItem({ onPressFunction, isPressed, size, iconColor, iconSource, iconStyle, buttonText, buttonIndex, containerStyle }) {
 
     function onPress() {
+        console.log('buttonIndex:', buttonIndex);
+
         onPressFunction?.(buttonIndex);
     }
+
+    console.log('buttonIndex:', buttonIndex, 'isPressed:', isPressed);
+
+
 
     return (
         <SimpleButton
