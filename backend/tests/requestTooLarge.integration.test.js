@@ -1,9 +1,10 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-// Keep the test fast: make the JSON limit tiny so we can exceed it with a small payload.
-process.env.API_JSON_LIMIT = process.env.API_JSON_LIMIT || '1kb';
-process.env.API_URLENCODED_LIMIT = process.env.API_URLENCODED_LIMIT || '1kb';
+// Keep the test fast and deterministic: force the JSON limit tiny so we can exceed it with a small payload.
+// (Do not respect existing env values; production servers often set these to 10mb+.)
+process.env.API_JSON_LIMIT = '1kb';
+process.env.API_URLENCODED_LIMIT = '1kb';
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.RATE_LIMIT_IP_WINDOW_MS = process.env.RATE_LIMIT_IP_WINDOW_MS || String(60 * 1000);
@@ -18,6 +19,8 @@ process.env.IS_PRODUCTION = process.env.IS_PRODUCTION || 'false';
 const request = require('supertest');
 
 test('returns REQUEST_TOO_LARGE for oversized JSON', async () => {
+    // Ensure the app picks up the forced env limits even if another test already imported it.
+    delete require.cache[require.resolve('../app')];
     const app = require('../app');
 
     // A JSON string larger than 1kb once stringified.
