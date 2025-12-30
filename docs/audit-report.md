@@ -308,3 +308,17 @@ Fixes:
 Remaining:
 - If we want per-button `className` styling to work reliably, consider a global fix to forward/merge `className` in the button stack (separate change).
 
+#### AllCasesTypeScreen (Admin)
+Findings:
+- Search + stage-count filter row could overflow at ~360px due to fixed min widths and no wrapping.
+- Footer “הוספת סוג תיק” button styling relied on a `className` prop that isn’t forwarded by the current button stack.
+- Case types list card used fragment wrappers (anonymous layout) which makes separator + item alignment brittle.
+
+Fixes:
+- Made the top row wrap and made search/filter shrink-safe (`min-inline-size: 0`).
+- Styled the footer action button via a safe structural selector (`.lw-allCasesTypeScreen__footer > .lw-textButtonWithTwoOptionalIcons`) and enforced `2.75rem` min touch target.
+- Replaced fragment list rows with a keyed structural wrapper per item.
+
+Remaining:
+- Consider a global `className` forwarding fix in the button stack if we want to reliably style individual buttons (separate change).
+

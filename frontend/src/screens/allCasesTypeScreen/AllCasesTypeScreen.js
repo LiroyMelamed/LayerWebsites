@@ -56,11 +56,12 @@ export default function AllCasesTypeScreen() {
     };
 
     const handleStageCountFilter = (stageCount) => {
-        if (stageCount == "הכל") {
-            setSelectedStageCount(null)
+        if (stageCount === "הכל") {
+            setSelectedStageCount(null);
+            return;
         }
 
-        setSelectedStageCount(stageCount);
+        setSelectedStageCount(Number(stageCount));
     };
 
     const filteredCasesType = selectedStageCount
@@ -108,7 +109,6 @@ export default function AllCasesTypeScreen() {
 
             <SimpleContainer className="lw-allCasesTypeScreen__footer">
                 <PrimaryButton
-                    className="lw-allCasesTypeScreen__addButton"
                     onPress={() =>
                         openPopup(
                             <CaseTypeFullView

@@ -1,7 +1,8 @@
 @use '../../styles/mixins' as m;
+@use '../../styles/variables' as v;
 
 .lw-allCasesTypeScreen__row {
-    @include m.row;
+    @include m.row(v.$space-3, wrap);
     max-width: 100%;
 }
 
@@ -9,11 +10,12 @@
     flex: 1 1 20rem;
     min-inline-size: 14rem;
     max-inline-size: 31.25rem;
+    min-inline-size: 0;
 }
 
-.lw-allCasesTypeScreen__choose {
-    flex: 0 0 auto;
-    min-inline-size: 8.5rem;
+.lw-allCasesTypeScreen__row > .lw-chooseButton {
+    flex: 1 1 8.5rem;
+    min-inline-size: 0;
 }
 
 .lw-allCasesTypeScreen__footer {
@@ -21,7 +23,8 @@
     justify-content: center;
 }
 
-.lw-allCasesTypeScreen__addButton {
+.lw-allCasesTypeScreen__footer > .lw-textButtonWithTwoOptionalIcons {
     margin: 0.5rem 0;
     align-self: center;
+    min-block-size: 2.75rem;
 }

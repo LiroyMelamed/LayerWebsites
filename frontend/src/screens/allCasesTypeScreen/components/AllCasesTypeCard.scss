@@ -6,4 +6,10 @@
 
 .lw-allCasesTypeCard__list {
   flex-direction: column;
+  min-inline-size: 0;
+}
+
+.lw-allCasesTypeCard__item {
+  flex-direction: column;
+  min-inline-size: 0;
 }

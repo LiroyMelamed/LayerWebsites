@@ -3,7 +3,6 @@ import SimpleCard from "../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
 import SimpleLoader from "../../../components/simpleComponents/SimpleLoader";
 import DefaultState from "../../../components/styledComponents/defaultState/DefaultState";
-import CaseMenuItem from "../../../components/styledComponents/menuItems/CaseMenuItem";
 import CaseTypeMenuItem from "../../../components/styledComponents/menuItems/CaseTypeMenuItem";
 import Separator from "../../../components/styledComponents/separators/Separator";
 
@@ -34,11 +33,13 @@ export default function AllCasesTypeCard({ allCasesType, reperformAfterSave, isP
 
             <SimpleContainer className="lw-allCasesTypeCard__list">
                 {allCasesType.map((item, index) => (
-                    <>
+                    <SimpleContainer
+                        key={item?.CaseTypeId ?? `caseType${index}`}
+                        className="lw-allCasesTypeCard__item"
+                    >
                         {index !== 0 && <Separator />}
 
                         <CaseTypeMenuItem
-                            key={`taggedCase${index}`}
                             fullCase={item}
                             rightTitle={item.CaseName}
 
@@ -54,8 +55,7 @@ export default function AllCasesTypeCard({ allCasesType, reperformAfterSave, isP
                             openData={getOpenData(allCasesType, index)}
                             rePerformFunction={reperformAfterSave}
                         />
-                    </>
-
+                    </SimpleContainer>
                 ))}
             </SimpleContainer>
         </SimpleCard>
