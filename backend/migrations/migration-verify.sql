@@ -30,6 +30,24 @@ BEGIN
     PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signingfiles' AND column_name='createdat';
     IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.signingfiles.createdat'; END IF;
 
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signingfiles' AND column_name='caseid';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.signingfiles.caseid'; END IF;
+
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signingfiles' AND column_name='notes';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.signingfiles.notes'; END IF;
+
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signingfiles' AND column_name='expiresat';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.signingfiles.expiresat'; END IF;
+
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signingfiles' AND column_name='signedfilekey';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.signingfiles.signedfilekey'; END IF;
+
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signingfiles' AND column_name='signedat';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.signingfiles.signedat'; END IF;
+
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signingfiles' AND column_name='rejectionreason';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.signingfiles.rejectionreason'; END IF;
+
     -- signaturespots columns
     PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signaturespots' AND column_name='signaturespotid';
     IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.signaturespots.signaturespotid'; END IF;
@@ -60,6 +78,19 @@ BEGIN
 
     PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signaturespots' AND column_name='signaturedata';
     IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.signaturespots.signaturedata'; END IF;
+
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signaturespots' AND column_name='signername';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.signaturespots.signername'; END IF;
+
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signaturespots' AND column_name='signedat';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.signaturespots.signedat'; END IF;
+
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signaturespots' AND column_name='createdat';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.signaturespots.createdat'; END IF;
+
+    -- Multi-signer support column (expected in production)
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signaturespots' AND column_name='signeruserid';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.signaturespots.signeruserid'; END IF;
 
     -- notifications tables
     PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='userdevices' AND column_name='userid';
