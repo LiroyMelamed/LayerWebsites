@@ -6,7 +6,6 @@ import SimpleLoader from "../../components/simpleComponents/SimpleLoader";
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
 import SimpleScrollView from "../../components/simpleComponents/SimpleScrollView";
 import SearchInput from "../../components/specializedComponents/containers/SearchInput";
-import ChooseButton from "../../components/styledComponents/buttons/ChooseButton";
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import useHttpRequest from "../../hooks/useHttpRequest";
@@ -70,7 +69,6 @@ export default function AllMangerScreen() {
 
             <SimpleContainer className="lw-allMangerScreen__footer">
                 <PrimaryButton
-                    className="lw-allMangerScreen__addButton"
                     onPress={() => openPopup(<AdminPopup rePerformRequest={performGetAdmins} closePopUpFunction={closePopup} />)}
                 >
                     הוסף מנהל

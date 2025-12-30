@@ -3,6 +3,7 @@
 
 .lw-adminsCard {
     flex-direction: column;
+    min-inline-size: 0;
 }
 
 .lw-adminsCard--loading {
@@ -11,11 +12,16 @@
 
 .lw-adminsCard__headerRow {
     @include m.row(v.$space-2, nowrap, center);
+    min-inline-size: 0;
 }
 
 .lw-adminsCard__headerCell {
     flex: 1;
     text-align: start;
+    min-inline-size: 0;
+}
+
+.lw-adminsCard__item {
     min-inline-size: 0;
 }
 

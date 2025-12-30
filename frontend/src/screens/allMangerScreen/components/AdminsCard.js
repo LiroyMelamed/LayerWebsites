@@ -47,10 +47,11 @@ export default function AdminsCard({ adminList, isPerforming, performGetAdmins, 
             <Separator />
 
             {adminList?.map((customer, index) => (
-                <>
-                    {index !== 0 &&
-                        <Separator />
-                    }
+                <SimpleContainer
+                    key={customer?.userid ?? index}
+                    className="lw-adminsCard__item"
+                >
+                    {index !== 0 && <Separator />}
                     <AdminMenuItem
                         admin={customer}
                         adminName={customer.name}
@@ -59,8 +60,7 @@ export default function AdminsCard({ adminList, isPerforming, performGetAdmins, 
                         adminPhone={customer.phonenumber}
                         performGetAdmins={performGetAdmins}
                     />
-                </>
-
+                </SimpleContainer>
             ))}
         </SimpleCard>
     );

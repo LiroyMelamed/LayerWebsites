@@ -322,3 +322,20 @@ Fixes:
 Remaining:
 - Consider a global `className` forwarding fix in the button stack if we want to reliably style individual buttons (separate change).
 
+#### AllMangerScreen (Admin)
+Findings:
+- Search row could overflow at ~360px due to no guaranteed wrapping/shrink-safety.
+- Footer “הוסף מנהל” button styling relied on a `className` prop that isn’t forwarded by the current button stack.
+- Admin list used fragment wrappers (anonymous layout), and row layout wasn’t fully standardized to the shared `row()` mixin.
+- AdminPopup form rows/actions could overflow on narrow widths; action buttons needed a reliable touch target minimum.
+
+Fixes:
+- Made the top row wrap and ensured the search control can shrink (`min-inline-size: 0`).
+- Styled the footer action button via a safe structural selector (`.lw-allMangerScreen__footer > .lw-textButtonWithTwoOptionalIcons`) and enforced a `2.75rem` min touch target.
+- Replaced fragment list rows with a keyed structural wrapper per admin and added shrink-safety on wrappers.
+- Migrated AdminMenuItem row layout to the shared `row()` mixin and allowed wrapping on small screens (email remains hidden on mobile).
+- Made AdminPopup input rows/actions wrap, removed fixed min widths that can force overflow, and enforced `2.75rem` on rendered action buttons.
+
+Remaining:
+- Quick visual check on 360px: confirm SearchInput result dropdown doesn’t clip and popup actions remain visible without awkward horizontal scroll.
+
