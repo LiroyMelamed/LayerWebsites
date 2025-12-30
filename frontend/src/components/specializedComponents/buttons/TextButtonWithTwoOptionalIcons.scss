@@ -2,6 +2,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  min-inline-size: 0;
+  max-inline-size: 100%;
 }
 
 .lw-textButtonWithTwoOptionalIcons__inner {
@@ -9,4 +11,17 @@
   justify-content: center;
   flex-direction: row;
   gap: 0.5rem;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
+.lw-textButtonWithTwoOptionalIcons__inner .lw-simpleIcon {
+  flex: 0 0 auto;
+}
+
+.lw-textButtonWithTwoOptionalIcons__inner .lw-simpleText {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

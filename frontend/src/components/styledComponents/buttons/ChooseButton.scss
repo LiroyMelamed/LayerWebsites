@@ -2,4 +2,12 @@
   align-items: center;
   flex-direction: row;
   gap: 0.5rem;
+  flex-wrap: wrap;
+  min-inline-size: 0;
+}
+
+.lw-chooseButton .lw-textButtonWithTwoOptionalIcons {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  max-inline-size: 100%;
 }

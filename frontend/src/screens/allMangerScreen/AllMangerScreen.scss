@@ -3,7 +3,6 @@
 .lw-allMangerScreen__row {
     @include m.row;
     max-width: 100%;
-    overflow: hidden;
 }
 
 .lw-allMangerScreen__search {

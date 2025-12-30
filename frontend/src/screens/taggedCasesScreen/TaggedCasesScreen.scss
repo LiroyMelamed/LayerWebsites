@@ -3,7 +3,6 @@
 .lw-taggedCasesScreen__row {
     @include m.row;
     max-width: 100%;
-    overflow: hidden;
 }
 
 .lw-taggedCasesScreen__search {
