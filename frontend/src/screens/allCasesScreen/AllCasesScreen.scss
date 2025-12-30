@@ -1,24 +1,20 @@
+@use '../../styles/mixins' as m;
+
 .lw-allCasesScreen__row {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    flex-wrap: wrap;
+    @include m.row;
     width: 100%;
     overflow: hidden;
 }
 
 .lw-allCasesScreen__search {
-    margin-top: 0.75rem;
-    max-width: 31.25rem;
+    flex: 1 1 20rem;
+    min-inline-size: 14rem;
+    max-inline-size: 31.25rem;
 }
 
 .lw-allCasesScreen__choose {
-    margin: 0.75rem 0.75rem;
-    flex: 0 1 auto;
-}
-
-.lw-allCasesScreen__choose--openClose {
-    margin: 0.75rem 0;
+    flex: 0 0 auto;
+    min-inline-size: 8.5rem;
 }
 
 .lw-allCasesScreen__footer {

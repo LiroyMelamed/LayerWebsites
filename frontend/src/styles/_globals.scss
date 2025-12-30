@@ -1,4 +1,5 @@
 @use 'variables' as v;
+@use 'mixins' as m;
 
 html {
   font-size: 16px; // baseline: 1rem = 16px
@@ -38,4 +39,28 @@ body {
   font-family: var(--lw-font-stack);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Phase F: standard row layout (RTL-safe via gap + logical sizing) */
+.lw-row {
+  --lw-row-gap: #{v.$space-3};
+  @include m.row(var(--lw-row-gap));
+}
+
+.lw-row__grow {
+  flex: 1 1 var(--lw-row-grow-basis, 20rem);
+  min-inline-size: var(--lw-row-grow-min, 14rem);
+}
+
+.lw-row__control {
+  flex: 0 0 auto;
+  min-inline-size: var(--lw-row-control-min, 8.5rem);
+}
+
+@media (max-width: 24rem) {
+  .lw-row__grow,
+  .lw-row__control {
+    flex-basis: 100%;
+    min-inline-size: 100%;
+  }
 }

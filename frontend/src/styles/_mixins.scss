@@ -25,3 +25,14 @@
     @content;
   }
 }
+
+// Phase F: standard responsive row layout for filters/search
+@mixin row($gap: v.$space-3, $wrap: wrap, $align: center, $justify: flex-start) {
+  display: flex;
+  flex-direction: row;
+  align-items: $align;
+  justify-content: $justify;
+  flex-wrap: $wrap;
+  gap: $gap;
+  min-inline-size: 0;
+}

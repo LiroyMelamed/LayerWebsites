@@ -1,16 +1,15 @@
+@use '../../styles/mixins' as m;
+
 .lw-allMangerScreen__row {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    flex-wrap: wrap;
+    @include m.row;
     max-width: 100%;
     overflow: hidden;
 }
 
 .lw-allMangerScreen__search {
-    margin: 0.75rem 0;
-    margin-inline-start: 1.25rem;
-    max-width: 31.25rem;
+    flex: 1 1 20rem;
+    min-inline-size: 14rem;
+    max-inline-size: 31.25rem;
 }
 
 .lw-allMangerScreen__footer {
