@@ -102,3 +102,42 @@ Evidence folder: `scripts/e2e/out/e2e-20251230-0045-/`
   - Dynamic sizing/positioning in signing/PDF flows (e.g. spot bounding boxes, rendered PDF width) where values depend on measurements/scale.
   - Dynamic “token” values expressed as CSS variables (e.g. status chip colors, input focus styles) that are data-driven at runtime.
 
+---
+
+## Phase F — Row layout standardization ("gaps" sweep)
+
+### Phase F complete
+Phase F standardizes app-wide “row-like” wrappers to a single, RTL-safe, wrap-friendly flex-row convention to eliminate awkward whitespace and alignment issues (especially in search/filter rows).
+
+### What was standardized
+- Shared foundation:
+  - `frontend/src/styles/_mixins.scss`: `@mixin row(...)` (gap-based, wrap-friendly, `min-inline-size: 0`, RTL-safe via logical sizing)
+  - `frontend/src/styles/_globals.scss`: `.lw-row`, `.lw-row__grow`, `.lw-row__control` utilities
+- Row wrapper patterns:
+  - `__row`, `__topRow`, `__headerRow`, `__actionsRow`, and other “row wrappers” migrated to `@include row(...)`
+  - Removed all occurrences of `justify-content: space-between` used as a spacing hack; replaced with `gap` + explicit flex rules (including `margin-inline-start: auto` where “push-to-edge” alignment was intended)
+
+### Components restyled (behavior unchanged)
+- `frontend/src/components/specializedComponents/containers/ProgressBar.scss`
+- `frontend/src/components/specializedComponents/charts/DoughnutChartWithDetails.scss`
+
+### Intentionally custom (kept custom) and why
+- Collapse/expand containers that rely on `max-height` transitions and `overflow: hidden` for animation (kept to preserve behavior and avoid layout jank).
+- Signing/PDF viewer and modal layouts that use grid/absolute positioning for interactive overlays (kept because geometry/interaction is not a simple “row gap” problem).
+
+### Overflow audit (mandatory)
+Checked (systematically):
+- Horizontal overflow risks: long Hebrew text, long case names, multiple buttons in rows, narrow widths
+- Vertical overflow risks: modal/popup content scrolling and actions visibility
+- Component-level overflow: tables and “chip/button” layouts
+
+Fixes applied:
+- `frontend/src/components/simpleComponents/SimpleTable.scss`: made tables intentionally horizontally scrollable (`overflow-x: auto`) instead of clipping content.
+
+### Quick manual smoke checklist
+Open these screens and visually confirm (RTL alignment, no awkward gaps, no unexpected x-scroll; popups stay on-screen):
+- Main dashboard: `MainScreen`
+- Case details: `CaseFullView`
+- Signing flow: `SigningScreen`, `SigningManagerScreen`, `UploadFileForSigningScreen`
+- Notifications: `NotificationsScreen`
+
