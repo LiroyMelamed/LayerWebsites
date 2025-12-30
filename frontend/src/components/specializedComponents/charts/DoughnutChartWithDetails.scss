@@ -1,8 +1,11 @@
+@use '../../../styles/variables' as v;
+@use '../../../styles/mixins' as m;
+
 .lw-doughnutChartWithDetails {
   flex-direction: column;
-  margin-top: 1rem;
+  margin-block-start: v.$space-4;
   align-items: center;
-  gap: 1rem;
+  gap: v.$space-4;
 }
 
 .lw-doughnutChartWithDetails__chart {
@@ -11,20 +14,22 @@
 
 .lw-doughnutChartWithDetails__legend {
   flex: 1;
-  flex-direction: row;
-  gap: 1.25rem;
-  margin-top: 0.5rem;
-  flex-wrap: wrap;
+  @include m.row(v.$space-2);
+  justify-content: center;
+  margin-block-start: v.$space-2;
 }
 
 .lw-doughnutChartWithDetails__legendItem {
-  flex-direction: row;
-  align-items: center;
-  gap: 0.5rem;
+  @include m.row(v.$space-2, nowrap);
+  padding-block: v.$space-1;
+  padding-inline: v.$space-2;
+  border-radius: 9999px;
+  background-color: var(--lw-color-secondary-highlighted);
+  border: 0.0625rem solid var(--lw-color-disabled);
 }
 
 .lw-doughnutChartWithDetails__swatch {
-  width: 0.75rem;
-  height: 0.75rem;
-  border-radius: 0.25rem;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 9999px;
 }
