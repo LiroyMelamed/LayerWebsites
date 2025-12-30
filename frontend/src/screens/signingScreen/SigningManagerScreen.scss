@@ -6,7 +6,7 @@
 }
 
 .lw-signingManagerScreen__headerRow {
-    align-items: center;
+    @include m.row(v.$space-3);
     margin-block-end: v.$space-4;
 }
 
@@ -23,10 +23,8 @@
 }
 
 .lw-signingManagerScreen__tabsRow {
+    @include m.row(v.$space-4, wrap, center, center);
     margin-block-start: v.$space-6;
-    flex-direction: row;
-    justify-content: center;
-    gap: v.$space-4;
     margin-block-end: v.$space-4;
     border-bottom: 0.125rem solid #e0e0e0;
     padding-block-end: v.$space-2;
@@ -53,9 +51,12 @@
 }
 
 .lw-signingManagerScreen__fileHeaderRow {
-    justify-content: space-between;
-    align-items: center;
+    @include m.row(v.$space-2);
     margin-bottom: 0.625rem;
+}
+
+.lw-signingManagerScreen__fileHeaderRow .lw-signingManagerScreen__chip {
+    margin-inline-start: auto;
 }
 
 .lw-signingManagerScreen__fileName {

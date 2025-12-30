@@ -20,7 +20,7 @@
 }
 
 .lw-uploadSigningScreen__headerRow {
-    align-items: center;
+    @include m.row(v.$space-3);
     margin-block-end: v.$space-4;
 }
 
@@ -123,9 +123,13 @@
 }
 
 .lw-uploadSigningScreen__viewerHeaderRow {
-    @include m.row(v.$space-3, wrap, center, space-between);
+    @include m.row(v.$space-3);
     margin-block-start: v.$space-6;
     margin-block-end: v.$space-3;
+}
+
+.lw-uploadSigningScreen__viewerHeaderRow > :last-child {
+    margin-inline-start: auto;
 }
 
 .lw-uploadSigningScreen__viewerTitle {
