@@ -1,73 +1,77 @@
 @use '../../styles/variables' as v;
 
 .lw-simpleInput {
-  position: relative;
-  flex-direction: row;
-  align-items: center;
+    position: relative;
+    flex-direction: row;
+    align-items: center;
 
-  width: 100%;
-  height: var(--lw-simpleInput-height, 2rem);
-  margin-top: 0.5rem; /* 8px */
+    // width: 100%;
+    height: var(--lw-simpleInput-height, 2rem);
+    margin-top: 0.5rem;
+    /* 8px */
 
-  border-radius: 0.75rem; /* 12px */
-  border: 0.0625rem solid var(--lw-simpleInput-borderColor, var(--lw-color-secondary-highlighted));
-  background-color: var(--lw-simpleInput-bgColor, var(--lw-color-white));
-  box-shadow: var(--lw-simpleInput-shadow, none);
+    border-radius: 0.75rem;
+    /* 12px */
+    border: 0.0625rem solid var(--lw-simpleInput-borderColor, var(--lw-color-secondary-highlighted));
+    background-color: var(--lw-simpleInput-bgColor, var(--lw-color-white));
+    box-shadow: var(--lw-simpleInput-shadow, none);
 
-  direction: inherit;
+    direction: inherit;
 }
 
 .lw-simpleInput__label {
-  position: absolute;
-  pointer-events: none;
-  background-color: var(--lw-color-white);
+    position: absolute;
+    pointer-events: none;
+    background-color: var(--lw-color-white);
 
-  inset-inline-end: var(--lw-simpleInput-labelRight, 0.5rem);
-  top: var(--lw-simpleInput-labelTop, 50%);
+    inset-inline-start: var(--lw-simpleInput-labelRight, 0.5rem);
+    top: var(--lw-simpleInput-labelTop, 50%);
 
-  transform: var(--lw-simpleInput-labelTransform, translateY(-50%));
-  opacity: var(--lw-simpleInput-labelOpacity, 0.6);
+    transform: var(--lw-simpleInput-labelTransform, translateY(-50%));
+    opacity: var(--lw-simpleInput-labelOpacity, 0.6);
 
-  font-size: var(--lw-simpleInput-labelFontSize, 1rem);
-  font-family: inherit;
-  color: var(--lw-simpleInput-labelColor, var(--lw-color-primary-highlighted));
+    font-size: var(--lw-simpleInput-labelFontSize, 1rem);
+    font-family: inherit;
+    color: var(--lw-simpleInput-labelColor, var(--lw-color-primary-highlighted));
 
-  border-radius: 9999px;
-  transition: top 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+    border-radius: 9999px;
+    transition: top 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
 }
 
 .lw-simpleInput__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .lw-simpleInput__icon--right {
-  margin-inline-end: 0.5rem; /* 8px */
+    margin-inline-end: 0.5rem;
+    /* 8px */
 }
 
 .lw-simpleInput__icon--left {
-  margin-inline-start: 0.5rem; /* 8px */
+    margin-inline-start: 0.5rem;
+    /* 8px */
 }
 
 .lw-simpleInput__field {
-  width: 100%;
-  min-width: 0;
+    width: 100%;
+    min-width: 0;
 
-  padding-block: var(--lw-simpleInput-paddingBlock, 0.5rem);
-  padding-inline-start: var(--lw-simpleInput-paddingInlineStart, 1rem);
-  padding-inline-end: var(--lw-simpleInput-paddingInlineEnd, 1rem);
+    padding-block: var(--lw-simpleInput-paddingBlock, 0.5rem);
+    padding-inline-start: var(--lw-simpleInput-paddingInlineStart, 1rem);
+    padding-inline-end: var(--lw-simpleInput-paddingInlineEnd, 1rem);
 
-  border: none;
-  background-color: transparent;
-  outline: none;
+    border: none;
+    background-color: transparent;
+    outline: none;
 
-  font-family: inherit;
-  font-size: var(--lw-simpleInput-fontSize, 1rem);
-  color: var(--lw-color-text);
-  text-align: start;
+    font-family: inherit;
+    font-size: var(--lw-simpleInput-fontSize, 1rem);
+    color: var(--lw-color-text);
+    text-align: start;
 }
 
 .lw-simpleInput__field:disabled {
-  color: var(--lw-color-disabled);
+    color: var(--lw-color-disabled);
 }
