@@ -18,7 +18,18 @@ const authMiddleware = (req, res, next) => {
 
     // If no token is provided, return a 401 Unauthorized response
     if (!token) {
-        return res.status(401).json({ message: "נא לבצע התחברות מחדש" });
+        console.warn(
+            JSON.stringify({
+                event: 'auth_missing_token',
+                method: req.method,
+                path: req.originalUrl || req.url,
+            })
+        );
+
+        return res.status(401).json({
+            message: "נא לבצע התחברות מחדש",
+            code: 'UNAUTHORIZED',
+        });
     }
 
     try {
@@ -43,14 +54,46 @@ const authMiddleware = (req, res, next) => {
         });
 
         if (!rl.allowed) {
-            return res.status(429).json({ message: "יותר מדי בקשות. נסה שוב מאוחר יותר." });
+            const now = Date.now();
+            const retryAfterSeconds = Math.max(0, Math.ceil((rl.resetMs - now) / 1000));
+
+            res.setHeader('X-RateLimit-Limit', String(max));
+            res.setHeader('X-RateLimit-Remaining', String(rl.remaining));
+            res.setHeader('X-RateLimit-Reset', String(Math.ceil(rl.resetMs / 1000)));
+            res.setHeader('Retry-After', String(retryAfterSeconds));
+
+            console.warn(
+                JSON.stringify({
+                    event: 'rate_limit_block',
+                    limiter: 'user',
+                    method: req.method,
+                    path: req.originalUrl || req.url,
+                })
+            );
+
+            return res.status(429).json({
+                message: "יותר מדי בקשות. נסה שוב מאוחר יותר.",
+                code: 'RATE_LIMITED',
+                retryAfterSeconds,
+            });
         }
 
         // Pass control to the next handler in the middleware chain
         next();
     } catch (error) {
         // If token verification fails (e.g., invalid or expired token), return a 401 Unauthorized response
-        res.status(401).json({ message: "נא לבצע התחברות מחדש" });
+        console.warn(
+            JSON.stringify({
+                event: 'auth_invalid_token',
+                method: req.method,
+                path: req.originalUrl || req.url,
+            })
+        );
+
+        res.status(401).json({
+            message: "נא לבצע התחברות מחדש",
+            code: 'UNAUTHORIZED',
+        });
     }
 };
 

@@ -83,14 +83,36 @@ function createRateLimitMiddleware({
             }
 
             const key = keyFn(req, { trustProxy });
-            const result = consume({ key: `${name}:${key}`, windowMs: resolvedWindowMs, max: resolvedMax });
+            const now = nowMs();
+            const result = consume({
+                key: `${name}:${key}`,
+                windowMs: resolvedWindowMs,
+                max: resolvedMax,
+                currentTimeMs: now,
+            });
 
             res.setHeader('X-RateLimit-Limit', String(resolvedMax));
             res.setHeader('X-RateLimit-Remaining', String(result.remaining));
             res.setHeader('X-RateLimit-Reset', String(Math.ceil(result.resetMs / 1000)));
 
             if (!result.allowed) {
-                return res.status(statusCode).json({ message });
+                const retryAfterSeconds = Math.max(0, Math.ceil((result.resetMs - now) / 1000));
+                res.setHeader('Retry-After', String(retryAfterSeconds));
+
+                console.warn(
+                    JSON.stringify({
+                        event: 'rate_limit_block',
+                        limiter: name,
+                        method: req.method,
+                        path: req.originalUrl || req.url,
+                    })
+                );
+
+                return res.status(statusCode).json({
+                    message,
+                    code: 'RATE_LIMITED',
+                    retryAfterSeconds,
+                });
             }
 
             return next();

@@ -152,12 +152,31 @@ Decision rule:
 - Admin dashboard aggregate caching (short TTL only): `backend/utils/mainScreenDataCache.js`
 - Unit tests for scoping/TTL/invalidation: `backend/tests/cache.caseTypes.test.js`, `backend/tests/cache.mainScreenData.test.js`
 
-### Next
 4) Security/perf pass
-- Rate limit response polish (headers incl. `Retry-After`, consistent JSON error shape)
-- Minimal structured logging for rate-limit blocks/auth failures (no PII)
-- Request size limits per endpoint class + friendly errors
-- Pagination checks on list endpoints + index notes based on observed queries
+- Rate limiting responses include `Retry-After` and a consistent JSON shape (`code`, `message`, `retryAfterSeconds`)
+- Auth failures return a consistent JSON shape (`code`, `message`)
+- Minimal structured logs for auth failures + rate-limit blocks (no IP/user identifiers)
+- Oversized request handler returns `413` with a consistent JSON shape (`code`, `message`)
+
+### Next
+5) Query performance follow-ups
+- Add pagination to high-cardinality list endpoints (where applicable)
+- Add/verify DB indexes for hot paths (see notes below)
+
+---
+
+## Query / index notes (based on observed queries)
+
+These are candidates to verify (and add if missing):
+- `cases(userid)` (used by CaseTypes non-admin scoping and other per-user queries)
+- `cases(casetypeid)` (used by CaseType delete cascades + joins)
+- `cases(isclosed)` and/or composite `cases(userid, isclosed)` (active customers / open case lookups)
+- `cases(istagged)` if tagged views are frequent
+- `casetypedescriptions(casetypeid, stage)` (case type details ordered by stage)
+- `usernotifications(userid, createdat)` (notification listing)
+- `usernotifications(userid, isread)` or composite `(userid, isread, createdat)` if unread counts are hot
+- `signingfiles(clientid)` and `signingfiles(lawyerid)` (signing file lists)
+- `signaturespots(signingfileid)` and (if used) `signaturespots(signeruserid)`
 
 ---
 

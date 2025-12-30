@@ -124,7 +124,7 @@ app.get("/", (req, res) => {
 // Friendly error handler for oversized requests
 app.use((err, req, res, next) => {
     if (err && (err.type === 'entity.too.large' || err.statusCode === 413)) {
-        return res.status(413).json({ message: 'Request too large' });
+        return res.status(413).json({ message: 'Request too large', code: 'REQUEST_TOO_LARGE' });
     }
     return next(err);
 });
