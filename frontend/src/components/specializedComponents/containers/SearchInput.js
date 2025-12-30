@@ -43,7 +43,8 @@ const SearchInput = ({
     };
 
     const handleBlur = (event) => {
-        if (!event.relatedTarget || !targetRef.current.contains(event.relatedTarget)) {
+        const nextFocusTarget = event?.relatedTarget;
+        if (!nextFocusTarget || !targetRef.current?.contains(nextFocusTarget)) {
             setShowResults(false);
         }
     };

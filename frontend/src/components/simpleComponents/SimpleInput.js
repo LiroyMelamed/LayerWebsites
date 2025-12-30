@@ -44,13 +44,13 @@ const SimpleInput = forwardRef(
             return disabled ? colors.disabled : colors.white;
         }
 
-        function handleFocus() {
-            onFocus?.();
+        function handleFocus(e) {
+            onFocus?.(e);
             setIsFocused(true);
         }
 
-        function handleBlur() {
-            onBlur?.();
+        function handleBlur(e) {
+            onBlur?.(e);
             setIsFocused(false);
         }
 
