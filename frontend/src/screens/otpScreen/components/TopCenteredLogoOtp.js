@@ -17,7 +17,7 @@ export default function TopCenteredLogoOtp({ logoSrc = images.Logos.LogoSlang, l
                 />
             </SimpleContainer>
 
-            <Text32 className="lw-topCenteredLogoOtp__title" style={{ color: colors.text }}>
+            <Text32 className="lw-topCenteredLogoOtp__title">
                 הקלד את הקוד שקיבלת בהודעה
             </Text32>
         </SimpleContainer>

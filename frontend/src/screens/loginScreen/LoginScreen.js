@@ -11,6 +11,8 @@ import { images } from "../../assets/images/images";
 import { useNavigate } from "react-router-dom";
 import loginApi from "../../api/loginApi";
 
+import "./LoginScreen.scss";
+
 export const LoginScreenName = "/LoginScreen";
 
 export default function LoginScreen() {
@@ -36,7 +38,6 @@ export default function LoginScreen() {
     return (
         <LoginSimpleScreen
             imageBackgroundSource={images.Backgrounds.AppBackground}
-            style={{ width: "100%" }}
             unScrollableTopComponent={<TopCenteredLogo />}
             unScrollableBottomComponent={
                 <NextLoginButton
@@ -47,20 +48,11 @@ export default function LoginScreen() {
                 />
             }
         >
-            <SimpleContainer
-                style={{
-                    display: "flex",
-                    width: "100%",
-                    height: "100%",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                }}
-            >
+            <SimpleContainer className="lw-loginScreen__center">
                 <SimpleInput
                     title={"נא הזן מספר פלאפון"}
                     type="tel"
-                    style={{ height: 56, width: "60%" }}
+                    className="lw-loginScreen__input"
                     value={phoneNumber}
                     onChange={handleInputChange}
                     error={phoneNumberError}

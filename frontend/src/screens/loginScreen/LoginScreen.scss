@@ -1,0 +1,17 @@
+@use '../../styles/variables' as v;
+
+.lw-loginScreen__center {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    inline-size: 100%;
+    block-size: 100%;
+}
+
+.lw-loginScreen__input {
+    inline-size: 60%;
+    max-inline-size: 26.25rem; /* 420px */
+
+    /* Match previous inline height=56px */
+    --lw-simpleInput-height: 3.5rem;
+}

@@ -14,6 +14,8 @@ import { MainScreenName } from "../../mainScreen/MainScreen";
 import { ClientStackName } from "../../../navigation/ClientStack";
 import { ClientMainScreenName } from "../../client/clientMainScreen/ClientMainScreen";
 
+import "./LoginOtpScreen.scss";
+
 export const AppRoles = {
     Admin: 'Admin',
     Customer: 'User'
@@ -80,7 +82,6 @@ export default function LoginOtpScreen() {
     return (
         <LoginSimpleScreen
             imageBackgroundSource={images.Backgrounds.AppBackground}
-            style={{ width: "100%" }}
             unScrollableTopComponent={<TopCenteredLogoOtp />}
             unScrollableBottomComponent={
                 <NextLoginButton
@@ -91,19 +92,10 @@ export default function LoginOtpScreen() {
                 />
             }
         >
-            <SimpleContainer
-                style={{
-                    display: "flex",
-                    width: "100%",
-                    height: "100%",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                }}
-            >
+            <SimpleContainer className="lw-loginOtpScreen__center">
                 <SimpleInput
                     title={"נא הקלד את הקוד"}
-                    style={{ height: 56, width: "60%" }}
+                    className="lw-loginOtpScreen__input"
                     value={otpNumber}
                     onChange={handleInputChange}
                     timeToWaitInMilli={0}
