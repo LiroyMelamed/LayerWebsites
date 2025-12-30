@@ -113,6 +113,22 @@ const getCaseById = async (req, res) => {
         const userId = req.user?.UserId;
         const userRole = req.user?.Role;
 
+        if (userRole !== "Admin") {
+            const ownership = await pool.query(
+                "SELECT userid FROM cases WHERE caseid = $1",
+                [caseId]
+            );
+
+            if (ownership.rows.length === 0) {
+                return res.status(404).json({ message: "Case not found" });
+            }
+
+            const ownerUserId = ownership.rows[0]?.userid;
+            if (ownerUserId !== userId) {
+                return res.status(403).json({ message: "Forbidden" });
+            }
+        }
+
         // Non-admin users can only access their own cases
         const query =
             userRole === "Admin"

@@ -158,8 +158,14 @@ Decision rule:
 - Minimal structured logs for auth failures + rate-limit blocks (no IP/user identifiers)
 - Oversized request handler returns `413` with a consistent JSON shape (`code`, `message`)
 
+5) Authorization & data-access hardening
+- Cases: `GetCaseById` returns `403` when the case exists but belongs to a different user (non-admin)
+- CaseTypes: `GetCaseTypeById` returns `403` for non-admin users without any matching case using that case type
+- Customers: admin-style endpoints are admin-only (defense-in-depth in routes + controller)
+- Integration tests proving cross-user access is blocked: `backend/tests/authz.integration.test.js`
+
 ### Next
-5) Query performance follow-ups
+6) Query performance follow-ups
 - Add pagination to high-cardinality list endpoints (where applicable)
 - Add/verify DB indexes for hot paths (see notes below)
 

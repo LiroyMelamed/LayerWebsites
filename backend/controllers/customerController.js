@@ -6,7 +6,16 @@ const { BUCKET, r2 } = require("../utils/r2");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const { requireInt } = require("../utils/paramValidation");
 
+function requireAdmin(req, res) {
+    if (req.user?.Role !== 'Admin') {
+        res.status(403).json({ message: "אין הרשאה", code: 'FORBIDDEN' });
+        return false;
+    }
+    return true;
+}
+
 const getCustomers = async (req, res) => {
+    if (!requireAdmin(req, res)) return;
     try {
         const result = await pool.query("SELECT * FROM users WHERE role <> 'Admin'");
         res.json(result.rows.map(row => ({
@@ -27,6 +36,7 @@ const getCustomers = async (req, res) => {
 };
 
 const addCustomer = async (req, res) => {
+    if (!requireAdmin(req, res)) return;
     const { name, phoneNumber, email, companyName } = req.body;
 
     try {
@@ -57,6 +67,7 @@ const addCustomer = async (req, res) => {
 };
 
 const updateCustomerById = async (req, res) => {
+    if (!requireAdmin(req, res)) return;
     const customerId = requireInt(req, res, { source: 'params', name: 'customerId' });
     if (customerId === null) return;
 
@@ -87,6 +98,7 @@ const updateCustomerById = async (req, res) => {
 };
 
 const getCustomerByName = async (req, res) => {
+    if (!requireAdmin(req, res)) return;
     const { userName } = req.query;
 
     if (!userName || userName.trim() === "") {
@@ -265,6 +277,7 @@ const updateCurrentCustomer = async (req, res) => {
 };
 
 const deleteCustomer = async (req, res) => {
+    if (!requireAdmin(req, res)) return;
     const userId = requireInt(req, res, { source: 'params', name: 'userId' });
     if (userId === null) return;
 

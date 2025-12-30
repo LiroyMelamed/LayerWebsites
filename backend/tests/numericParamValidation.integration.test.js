@@ -70,7 +70,7 @@ test('invalid customerId param returns 400', async () => {
   const res = await request(app)
     .put('/api/Customers/UpdateCustomer/0')
     .send({})
-    .set('Authorization', `Bearer ${makeToken({ role: 'User' })}`);
+    .set('Authorization', `Bearer ${makeToken({ role: 'Admin' })}`);
 
   expect400Json(res);
 });

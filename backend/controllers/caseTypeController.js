@@ -113,6 +113,9 @@ const getCaseTypeById = async (req, res) => {
     const caseTypeIdInt = requireInt(req, res, { source: 'params', name: 'caseTypeId', aliases: ['CaseTypeId'] });
     if (caseTypeIdInt === null) return;
     try {
+        const userId = req.user?.UserId;
+        const userRole = req.user?.Role;
+
         const result = await getCaseTypeByIdCached({
             caseTypeId: caseTypeIdInt,
             loader: () => pool.query(`SELECT * FROM casetypes WHERE casetypeid = $1`, [caseTypeIdInt]),
@@ -120,6 +123,22 @@ const getCaseTypeById = async (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ message: "Case type not found" });
         }
+
+        if (userRole !== 'Admin') {
+            const hasAccess = await pool.query(
+                `select 1
+                 from cases
+                 where userid = $1
+                   and casetypeid = $2
+                 limit 1`,
+                [userId, caseTypeIdInt]
+            );
+
+            if (hasAccess.rows.length === 0) {
+                return res.status(403).json({ message: "Forbidden" });
+            }
+        }
+
         res.json(result.rows[0]);
     } catch (error) {
         console.error("Error retrieving case type by ID:", error);
