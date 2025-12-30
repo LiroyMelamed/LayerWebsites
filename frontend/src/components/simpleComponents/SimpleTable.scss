@@ -8,19 +8,24 @@
   --lw-simpleTable-rowGap: 0;
 
   max-height: 100%;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   flex-direction: column;
 }
 
 .lw-simpleTable__titleRow {
   @include m.row(v.$space-2);
   width: 100%;
+  min-width: 100%;
+  width: max-content;
   border-block-end: 0.0625rem solid var(--lw-color-disabled);
 }
 
 .lw-simpleTable__row {
   @include m.row(var(--lw-simpleTable-rowGap));
   width: 100%;
+  min-width: 100%;
+  width: max-content;
   border-block-end: 0.0625rem solid var(--lw-color-secondary-highlighted);
   background-color: var(--lw-color-transparent);
 }
