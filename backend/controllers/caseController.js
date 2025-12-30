@@ -161,7 +161,7 @@ const getCaseById = async (req, res) => {
 
             const ownerUserId = ownership.rows[0]?.userid;
             if (ownerUserId !== userId) {
-                return res.status(403).json({ message: "Forbidden" });
+                return res.status(403).json({ message: "Forbidden", code: 'FORBIDDEN' });
             }
         }
 

@@ -608,7 +608,7 @@ exports.getSigningFileDetails = async (req, res) => {
         }
 
         if (!isLawyer && !isPrimaryClient && !isAssignedSigner) {
-            return res.status(403).json({ message: "אין הרשאה למסמך זה" });
+            return res.status(403).json({ message: "אין הרשאה למסמך זה", code: 'FORBIDDEN' });
         }
 
         // If user is NOT the lawyer (i.e., user is a client), filter spots to only show their assigned spots
@@ -742,7 +742,7 @@ exports.signFile = async (req, res) => {
             : (file.ClientId === userId);
 
         if (!isAuthorized) {
-            return res.status(403).json({ message: "אין הרשאה לחתום על מקום חתימה זה" });
+            return res.status(403).json({ message: "אין הרשאה לחתום על מקום חתימה זה", code: 'FORBIDDEN' });
         }
 
         if (spot.IsSigned) {
@@ -860,7 +860,7 @@ exports.rejectSigning = async (req, res) => {
         }
 
         if (!isAuthorized) {
-            return res.status(403).json({ message: "אין הרשאה למסמך זה" });
+            return res.status(403).json({ message: "אין הרשאה למסמך זה", code: 'FORBIDDEN' });
         }
 
         // Reset all signatures for this file
@@ -922,7 +922,7 @@ exports.reuploadFile = async (req, res) => {
         const file = fileResult.rows[0];
 
         if (file.LawyerId !== lawyerId) {
-            return res.status(403).json({ message: "אין הרשאה למסמך זה" });
+            return res.status(403).json({ message: "אין הרשאה למסמך זה", code: 'FORBIDDEN' });
         }
 
         await pool.query(
@@ -1097,7 +1097,7 @@ exports.getSignedFileDownload = async (req, res) => {
         }
 
         if (!isLawyer && !isPrimaryClient && !isAssignedSigner) {
-            return res.status(403).json({ message: "אין הרשאה להוריד מסמך זה" });
+            return res.status(403).json({ message: "אין הרשאה להוריד מסמך זה", code: 'FORBIDDEN' });
         }
 
         if (file.Status !== "signed" && !file.SignedFileKey) {
@@ -1180,7 +1180,7 @@ exports.getSigningFilePdf = async (req, res) => {
         }
 
         if (!isLawyer && !isPrimaryClient && !isAssignedSigner) {
-            return res.status(403).json({ message: "אין הרשאה למסמך זה" });
+            return res.status(403).json({ message: "אין הרשאה למסמך זה", code: 'FORBIDDEN' });
         }
 
         if (!file.FileKey) {
@@ -1236,6 +1236,13 @@ exports.detectSignatureSpots = async (req, res) => {
         console.log('[controller] Signers received:', signers);
 
         if (!fileKey) return res.status(400).json({ message: "missing fileKey" });
+
+        // Prevent arbitrary reads from the bucket via guessed keys.
+        // Our upload flow uses keys prefixed with `users/<userId>/...`.
+        const userId = req.user?.UserId;
+        if (!userId || !String(fileKey).startsWith(`users/${userId}/`)) {
+            return res.status(403).json({ message: "Forbidden", code: 'FORBIDDEN' });
+        }
 
         const cmd = new GetObjectCommand({ Bucket: BUCKET, Key: fileKey });
         const obj = await r2.send(cmd);

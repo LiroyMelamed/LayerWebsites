@@ -135,7 +135,7 @@ const getCaseTypeById = async (req, res) => {
             );
 
             if (hasAccess.rows.length === 0) {
-                return res.status(403).json({ message: "Forbidden" });
+                return res.status(403).json({ message: "Forbidden", code: 'FORBIDDEN' });
             }
         }
 

@@ -35,7 +35,7 @@ exports.presignRead = async (req, res) => {
 
         // Simple ownership check
         if (!key.startsWith(`users/${req.user.UserId}/`)) {
-            return res.status(403).json({ message: "forbidden" });
+            return res.status(403).json({ message: "Forbidden", code: 'FORBIDDEN' });
         }
 
         const cmd = new GetObjectCommand({

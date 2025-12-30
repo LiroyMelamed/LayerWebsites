@@ -120,6 +120,24 @@ const markNotificationAsRead = async (req, res) => {
     const userId = req.user.UserId;
 
     try {
+        const ownership = await pool.query(
+            `
+            SELECT UserId
+            FROM UserNotifications
+            WHERE NotificationId = $1
+            `,
+            [notificationId]
+        );
+
+        if (ownership.rows.length === 0) {
+            return res.status(404).json({ message: "Notification not found" });
+        }
+
+        const ownerUserId = ownership.rows[0]?.userid;
+        if (ownerUserId !== userId) {
+            return res.status(403).json({ message: "Forbidden", code: 'FORBIDDEN' });
+        }
+
         // Update the notification's status in the database
         const result = await pool.query(
             `
@@ -131,7 +149,7 @@ const markNotificationAsRead = async (req, res) => {
         );
 
         if (result.rowCount === 0) {
-            return res.status(404).json({ message: "Notification not found or not authorized to update." });
+            return res.status(404).json({ message: "Notification not found" });
         }
 
         res.status(200).json({ NotificationId: notificationId });
