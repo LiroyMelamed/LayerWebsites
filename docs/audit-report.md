@@ -133,6 +133,8 @@ Checked (systematically):
 
 Fixes applied:
 - `frontend/src/components/simpleComponents/SimpleTable.scss`: made tables intentionally horizontally scrollable (`overflow-x: auto`) instead of clipping content.
+- Filter/search rows: removed row-level `overflow: hidden` clipping and ensured buttons can shrink safely without forcing x-overflow.
+- Signing modal: made the two-column grid overflow-safe (`minmax(0, fr)` columns) and stack to a single column on narrow screens.
 
 ### Quick manual smoke checklist
 Open these screens and visually confirm (RTL alignment, no awkward gaps, no unexpected x-scroll; popups stay on-screen):

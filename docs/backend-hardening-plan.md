@@ -162,7 +162,12 @@ Decision rule:
 - Cases: `GetCaseById` returns `403` when the case exists but belongs to a different user (non-admin)
 - CaseTypes: `GetCaseTypeById` returns `403` for non-admin users without any matching case using that case type
 - Customers: admin-style endpoints are admin-only (defense-in-depth in routes + controller)
+- Notifications: mark-as-read enforces ownership (404 if missing, 403 if other user's)
+- Signing files: read/write endpoints enforce lawyer/client/signer access and return a standard `403` JSON shape (`code: FORBIDDEN`)
+- Files presign read: enforces key-prefix ownership (`users/<userId>/...`) and returns standard `403` JSON shape
+- Signing detectSignatureSpots: rejects non-owner `fileKey` (key-prefix ownership)
 - Integration tests proving cross-user access is blocked: `backend/tests/authz.integration.test.js`
+- Integration tests proving cross-user signing-file access is blocked: `backend/tests/authz.signingFiles.integration.test.js`
 
 6) Anti-flood refinements
 - Rate limiter IP extraction validates/normalizes IPs (prevents header spoofing from exploding key cardinality)
