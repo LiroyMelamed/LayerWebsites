@@ -1,3 +1,6 @@
+@use '../../../styles/mixins' as m;
+@use '../../../styles/variables' as v;
+
 .lw-adminsCard {
     flex-direction: column;
 }
@@ -7,14 +10,13 @@
 }
 
 .lw-adminsCard__headerRow {
-    display: flex;
-    flex-direction: row;
+    @include m.row(v.$space-2, nowrap, center);
 }
 
 .lw-adminsCard__headerCell {
     flex: 1;
     text-align: start;
-    margin: 0 0.375rem;
+    min-inline-size: 0;
 }
 
 .lw-adminsCard__empty {
