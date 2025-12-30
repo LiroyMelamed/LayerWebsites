@@ -238,3 +238,17 @@ Fixes:
 Remaining:
 - If we see truncated content complaints, consider a “tap to expand” pattern later (out of Phase 1 scope unless requested).
 
+#### SigningManagerScreen (Admin)
+Findings:
+- Search + “upload new signing file” row could force horizontal overflow at ~360px due to no wrapping.
+- Action buttons row could overflow when two buttons are rendered side-by-side.
+- Long file names and long detail strings (e.g., rejection reason) could push layout wider than the viewport.
+
+Fixes:
+- Made the top row and actions row wrap on narrow widths.
+- Added truncation for long file names and ensured all card/header flex children can shrink (`min-inline-size: 0`).
+- Allowed long detail strings to wrap safely (`overflow-wrap: anywhere`).
+
+Remaining:
+- Quick visual check on 360px: confirm the upload button wraps under the search input and all actions remain easy to tap.
+

@@ -11,15 +11,15 @@
 }
 
 .lw-signingManagerScreen__topRow {
-    @include m.row(v.$space-3);
+    @include m.row(v.$space-3, wrap);
     justify-content: flex-start;
     margin-block-start: v.$space-4;
 }
 
 .lw-signingManagerScreen__searchContainer {
-    flex: 1;
-    min-width: 16.25rem;
+    flex: 1 1 16.25rem;
     width: 100%;
+    min-inline-size: 0;
 }
 
 .lw-signingManagerScreen__tabsRow {
@@ -44,6 +44,7 @@
     box-shadow: 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.08);
     flex-direction: column;
     border-inline-start: 0.25rem solid transparent;
+    min-inline-size: 0;
 }
 
 .lw-signingManagerScreen__fileCard.is-fullySigned {
@@ -53,6 +54,7 @@
 .lw-signingManagerScreen__fileHeaderRow {
     @include m.row(v.$space-2);
     margin-bottom: 0.625rem;
+    min-inline-size: 0;
 }
 
 .lw-signingManagerScreen__fileHeaderRow .lw-signingManagerScreen__chip {
@@ -64,6 +66,10 @@
     font-weight: 600;
     color: #333;
     margin: 0;
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .lw-signingManagerScreen__chip {
@@ -92,6 +98,7 @@
     font-size: 0.8125rem;
     color: #555;
     margin-bottom: 0.25rem;
+    overflow-wrap: anywhere;
 }
 
 .lw-signingManagerScreen__progress {
@@ -119,6 +126,22 @@
 }
 
 .lw-signingManagerScreen__actionsRow {
-    @include m.row(v.$space-2);
+    @include m.row(v.$space-2, wrap);
     margin-block-start: v.$space-3;
+}
+
+.lw-signingManagerScreen__actionsRow .lw-textButtonWithTwoOptionalIcons {
+    min-block-size: 2.75rem;
+    flex: 1 1 12rem;
+}
+
+@media (max-width: v.$bp-narrow) {
+    .lw-signingManagerScreen__searchContainer {
+        min-inline-size: 0;
+        flex: 1 1 100%;
+    }
+
+    .lw-signingManagerScreen__topRow > .lw-textButtonWithTwoOptionalIcons {
+        width: 100%;
+    }
 }
