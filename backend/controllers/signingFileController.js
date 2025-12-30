@@ -1,6 +1,6 @@
 // controllers/signingFileController.js
 const pool = require("../config/db");
-const { PutObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
+const { PutObjectCommand, GetObjectCommand, HeadObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const { r2, BUCKET } = require("../utils/r2");
 const sendAndStoreNotification = require("../utils/sendAndStoreNotification");
@@ -11,6 +11,50 @@ const { requireInt, parsePositiveIntStrict } = require("../utils/paramValidation
 const { getPagination } = require("../utils/pagination");
 
 const BASE_RENDER_WIDTH = 800;
+
+const MAX_SIGNING_PDF_BYTES = Number(
+    process.env.MAX_SIGNING_PDF_BYTES || String(25 * 1024 * 1024)
+);
+const MAX_SIGNATURE_IMAGE_BYTES = Number(
+    process.env.MAX_SIGNATURE_IMAGE_BYTES || String(512 * 1024)
+);
+const SIGNING_PDF_OP_TIMEOUT_MS = Number(process.env.SIGNING_PDF_OP_TIMEOUT_MS || 20_000);
+
+function isSigningDebugEnabled() {
+    return process.env.SIGNING_DEBUG_LOGS === 'true' && process.env.IS_PRODUCTION !== 'true';
+}
+
+function safeKeyHint(key) {
+    const s = String(key || '');
+    if (!s) return '';
+    if (s.length <= 16) return s;
+    return `${s.slice(0, 8)}…${s.slice(-6)}`;
+}
+
+function withTimeout(promise, ms, message) {
+    if (!Number.isFinite(ms) || ms <= 0) return promise;
+    let t;
+    const timeout = new Promise((_, reject) => {
+        t = setTimeout(() => reject(new Error(message || 'Operation timed out')), ms);
+    });
+    return Promise.race([
+        promise.finally(() => clearTimeout(t)),
+        timeout,
+    ]);
+}
+
+async function headR2Object({ key }) {
+    const cmd = new HeadObjectCommand({ Bucket: BUCKET, Key: key });
+    return withTimeout(r2.send(cmd), SIGNING_PDF_OP_TIMEOUT_MS, 'R2 head timeout');
+}
+
+function decodeBase64DataUrl(dataUrlOrBase64) {
+    const raw = String(dataUrlOrBase64 || '');
+    const base64 = raw.split(',')[1] || raw;
+    // Buffer.from will throw on malformed base64; let caller handle.
+    const buf = Buffer.from(base64, 'base64');
+    return { buffer: buf, base64 };
+}
 
 async function getR2ObjectBuffer(key) {
     const obj = await r2.send(
@@ -177,25 +221,51 @@ exports.uploadFileForSigning = async (req, res) => {
 
         const lawyerId = req.user.UserId;
 
-        console.log('[controller] ========== UPLOAD FILE FOR SIGNING ==========');
-        console.log('[controller] Request from lawyer:', lawyerId);
-        console.log('[controller] Case ID:', caseId);
-        console.log('[controller] File name:', fileName);
-        console.log('[controller] File key:', fileKey);
-        console.log('[controller] Signers received:', signers);
-        console.log('[controller] Signature locations:', signatureLocations?.length || 0, 'spots');
+        if (isSigningDebugEnabled()) {
+            console.log('[signing] uploadFileForSigning', {
+                lawyerId,
+                caseId: caseId ?? null,
+                fileKeyHint: safeKeyHint(fileKey),
+                signatureSpots: signatureLocations?.length || 0,
+                signerCount: Array.isArray(signers) ? signers.length : undefined,
+            });
+        }
 
         // Support both single client (legacy) and multiple signers (new)
         const signersList = signers && Array.isArray(signers) ? signers :
             (clientId ? [{ userId: clientId, name: "חתימה ✍️" }] : []);
 
-        console.log('[controller] Final signers list to use:', signersList.map(s => ({ userId: s.userId, name: s.name })));
+        if (isSigningDebugEnabled()) {
+            console.log('[signing] signersList', signersList.map(s => ({ userId: s.userId })));
+        }
 
         // caseId is optional: can upload by client only, case only, or both
         if (!fileName || !fileKey || signersList.length === 0) {
             return res
                 .status(400)
                 .json({ message: "חסרים שדות חובה (שם קובץ, fileKey, או חתומים)" });
+        }
+
+        // Enforce max PDF size by verifying object size in R2.
+        // This is the only reliable way when uploads go directly from client -> R2.
+        try {
+            if (!String(fileKey).startsWith(`users/${lawyerId}/`) && !String(fileKey).startsWith(`users/`)) {
+                // We don't hard-block legacy keys, but we also avoid leaking key details.
+                // Ownership of reads is enforced elsewhere.
+            }
+
+            const head = await headR2Object({ key: fileKey });
+            const size = Number(head?.ContentLength || 0);
+            if (Number.isFinite(MAX_SIGNING_PDF_BYTES) && MAX_SIGNING_PDF_BYTES > 0 && size > MAX_SIGNING_PDF_BYTES) {
+                return res.status(413).json({
+                    code: 'REQUEST_TOO_LARGE',
+                    message: 'File is too large',
+                });
+            }
+        } catch (e) {
+            // If HEAD fails (missing key / perms / transient), treat as a safe client error.
+            console.error('uploadFileForSigning headObject failed:', e?.message);
+            return res.status(400).json({ message: 'Invalid fileKey' });
         }
 
         // Normalize caseId: allow null / empty / 0
@@ -754,8 +824,23 @@ exports.signFile = async (req, res) => {
             const ext = isPng ? "png" : "jpg";
             const key = `signatures/${file.LawyerId}/${userId}/${signingFileId}_${signatureSpotId}.${ext}`;
 
-            const base64 = signatureImage.split(",")[1] || signatureImage;
-            const buffer = Buffer.from(base64, "base64");
+            let buffer;
+            try {
+                ({ buffer } = decodeBase64DataUrl(signatureImage));
+            } catch {
+                return res.status(400).json({ message: 'Invalid signature image' });
+            }
+
+            if (
+                Number.isFinite(MAX_SIGNATURE_IMAGE_BYTES) &&
+                MAX_SIGNATURE_IMAGE_BYTES > 0 &&
+                buffer.length > MAX_SIGNATURE_IMAGE_BYTES
+            ) {
+                return res.status(413).json({
+                    code: 'REQUEST_TOO_LARGE',
+                    message: 'Signature image is too large',
+                });
+            }
 
             const cmd = new PutObjectCommand({
                 Bucket: BUCKET,
@@ -1231,9 +1316,13 @@ exports.detectSignatureSpots = async (req, res) => {
     try {
         const { fileKey, signers } = req.body;
 
-        console.log('[controller] ========== DETECT SIGNATURE SPOTS ==========');
-        console.log('[controller] File key:', fileKey);
-        console.log('[controller] Signers received:', signers);
+        if (isSigningDebugEnabled()) {
+            console.log('[signing] detectSignatureSpots', {
+                userId: req.user?.UserId,
+                fileKeyHint: safeKeyHint(fileKey),
+                signerCount: Array.isArray(signers) ? signers.length : undefined,
+            });
+        }
 
         if (!fileKey) return res.status(400).json({ message: "missing fileKey" });
 
@@ -1244,26 +1333,43 @@ exports.detectSignatureSpots = async (req, res) => {
             return res.status(403).json({ message: "Forbidden", code: 'FORBIDDEN' });
         }
 
+
+        // Enforce PDF size before downloading into memory.
+        try {
+            const head = await headR2Object({ key: fileKey });
+            const size = Number(head?.ContentLength || 0);
+            if (Number.isFinite(MAX_SIGNING_PDF_BYTES) && MAX_SIGNING_PDF_BYTES > 0 && size > MAX_SIGNING_PDF_BYTES) {
+                return res.status(413).json({
+                    code: 'REQUEST_TOO_LARGE',
+                    message: 'File is too large',
+                });
+            }
+        } catch (e) {
+            console.error('detectSignatureSpots headObject failed:', e?.message);
+            return res.status(400).json({ message: 'Invalid fileKey' });
+        }
+
         const cmd = new GetObjectCommand({ Bucket: BUCKET, Key: fileKey });
-        const obj = await r2.send(cmd);
-        const buffer = await streamToBuffer(obj.Body);
+        const obj = await withTimeout(r2.send(cmd), SIGNING_PDF_OP_TIMEOUT_MS, 'R2 get timeout');
+        const buffer = await withTimeout(streamToBuffer(obj.Body), SIGNING_PDF_OP_TIMEOUT_MS, 'PDF download timeout');
 
-        console.log('[controller] Downloaded file buffer, size:', buffer.length, 'bytes');
+        const spots = await withTimeout(
+            detectHebrewSignatureSpotsFromPdfBuffer(
+                buffer,
+                signers && Array.isArray(signers) ? signers : null
+            ),
+            SIGNING_PDF_OP_TIMEOUT_MS,
+            'Signature detection timeout'
+        );
 
-        let spots = await detectHebrewSignatureSpotsFromPdfBuffer(buffer, signers && Array.isArray(signers) ? signers : null);
-
-        console.log('[controller] Detection complete, found', spots.length, 'spots');
-        console.log('[controller] Returning spots:', spots.map(s => ({
-            pageNum: s.pageNum,
-            signerIndex: s.signerIndex,
-            signerName: s.signerName,
-            x: s.x,
-            y: s.y
-        })));
-
+        if (req.__aborted) return;
         return res.json({ spots, signerCount: signers?.length || 1 });
     } catch (err) {
-        console.error('[controller] detectSignatureSpots error:', err);
+        const msg = String(err?.message || '');
+        if (msg.toLowerCase().includes('timeout')) {
+            return res.status(504).json({ code: 'REQUEST_TIMEOUT', message: 'Request timed out' });
+        }
+        console.error('[controller] detectSignatureSpots error:', err?.message || err);
         return res.status(500).json({ message: "failed to detect signature spots" });
     }
 };

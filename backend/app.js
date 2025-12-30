@@ -24,8 +24,12 @@ const app = express();
 // Only trust proxy headers when explicitly enabled (prevents spoofing x-forwarded-for)
 app.set('trust proxy', process.env.TRUST_PROXY === 'true');
 
-app.use(bodyParser.json({ limit: '50mb' }));
-app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+const API_JSON_LIMIT = process.env.API_JSON_LIMIT || '50mb';
+const API_URLENCODED_LIMIT = process.env.API_URLENCODED_LIMIT || '50mb';
+const API_REQUEST_TIMEOUT_MS = Number(process.env.API_REQUEST_TIMEOUT_MS || 30_000);
+
+app.use(bodyParser.json({ limit: API_JSON_LIMIT }));
+app.use(bodyParser.urlencoded({ limit: API_URLENCODED_LIMIT, extended: true }));
 
 const isProduction = process.env.IS_PRODUCTION === 'true';
 
@@ -60,7 +64,27 @@ app.use(
     })
 );
 
-app.use(express.json());
+// Request timeout guard (server-side). This protects expensive PDF operations from hanging.
+app.use((req, res, next) => {
+    if (!Number.isFinite(API_REQUEST_TIMEOUT_MS) || API_REQUEST_TIMEOUT_MS <= 0) {
+        return next();
+    }
+
+    res.setTimeout(API_REQUEST_TIMEOUT_MS, () => {
+        if (res.headersSent) return;
+        return res.status(504).json({
+            code: 'REQUEST_TIMEOUT',
+            message: 'Request timed out',
+        });
+    });
+
+    // If the client disconnects (mobile app backgrounded, network lost), avoid extra work.
+    req.on('aborted', () => {
+        req.__aborted = true;
+    });
+
+    return next();
+});
 
 // Backend Phase: anti-flood (per-IP)
 const trustProxy = process.env.TRUST_PROXY === 'true';
@@ -129,9 +153,19 @@ app.use((err, req, res, next) => {
     return next(err);
 });
 
+// Friendly error handler for timeouts / upstream socket issues
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).send('Something broke!');
+    const code = err?.code;
+    if (code === 'ETIMEDOUT' || code === 'ESOCKETTIMEDOUT') {
+        return res.status(504).json({ message: 'Request timed out', code: 'REQUEST_TIMEOUT' });
+    }
+    return next(err);
+});
+
+app.use((err, req, res, next) => {
+    console.error(err?.stack || err);
+    if (res.headersSent) return next(err);
+    return res.status(500).json({ message: 'Internal server error', code: 'INTERNAL_ERROR' });
 });
 
 process.on('SIGINT', async () => {
