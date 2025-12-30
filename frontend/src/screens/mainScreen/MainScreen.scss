@@ -1,4 +1,5 @@
 @use '../../styles/variables' as v;
+@use '../../styles/mixins' as m;
 
 .lw-mainScreen__chartWrap {
     flex: 1;
@@ -16,7 +17,7 @@
 }
 
 .lw-mainScreen__row {
-    flex-direction: row;
+    @include m.row(v.$space-4);
 }
 
 .lw-mainScreen__row--wrap {

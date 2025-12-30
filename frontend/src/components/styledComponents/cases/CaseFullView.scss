@@ -1,3 +1,6 @@
+@use '../../../styles/variables' as v;
+@use '../../../styles/mixins' as m;
+
 .lw-caseFullView {
   display: flex;
   width: 100%;
@@ -6,10 +9,8 @@
 
 .lw-caseFullView__row {
   width: 100%;
-  flex-direction: row;
-  margin-bottom: 1rem;
-  align-items: center;
-  gap: 0.5rem;
+  @include m.row(v.$space-2);
+  margin-block-end: v.$space-4;
   min-width: 0;
 }
 
@@ -20,14 +21,11 @@
 }
 
 .lw-caseFullView__textAreaRow {
-  margin-top: 0.5rem;
+  margin-block-start: v.$space-2;
 }
 
 .lw-caseFullView__buttonsRow {
-  display: flex;
-  flex-direction: row;
+  @include m.row(v.$space-2);
   justify-content: center;
-  margin-block: 1rem;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  margin-block: v.$space-4;
 }
