@@ -1,26 +1,12 @@
 import React from 'react';
 
-const Separator = ({ orientation = 'horizontal', style = {} }) => {
-    const separatorStyle = {
-        backgroundColor: '#e0e0e0',
-        ...(orientation === 'horizontal' ? styles.horizontal : styles.vertical),
-        ...style,
-    };
+import './Separator.scss';
 
-    return <div style={separatorStyle}></div>;
-};
+const Separator = ({ orientation = 'horizontal', className = '', style }) => {
+    const orientationClass = orientation === 'vertical' ? 'lw-separator--vertical' : 'lw-separator--horizontal';
+    const mergedClassName = ['lw-separator', orientationClass, className].filter(Boolean).join(' ');
 
-const styles = {
-    horizontal: {
-        height: '1px',
-        width: '100%',
-        margin: '10px 0',
-    },
-    vertical: {
-        width: '1px',
-        height: '100%',
-        margin: '0 10px',
-    },
+    return <div className={mergedClassName} style={style}></div>;
 };
 
 export default Separator;

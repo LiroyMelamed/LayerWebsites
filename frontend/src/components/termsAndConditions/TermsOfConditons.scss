@@ -1,0 +1,17 @@
+@use '../../styles/variables' as v;
+
+.lw-terms {
+    flex-direction: column;
+}
+
+.lw-terms__mt8 {
+    margin-block-start: 0.5rem; /* 8px */
+}
+
+.lw-terms__mt12 {
+    margin-block-start: 0.75rem; /* 12px */
+}
+
+.lw-terms__mt16 {
+    margin-block-start: 1rem; /* 16px */
+}

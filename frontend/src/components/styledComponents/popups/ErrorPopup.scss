@@ -1,0 +1,18 @@
+@use '../../../styles/variables' as v;
+
+.lw-errorPopup {
+    flex-direction: column;
+    inline-size: 100%;
+}
+
+.lw-errorPopup__separator {
+    --lw-separator-margin-block: 1.25rem; /* 20px */
+}
+
+.lw-errorPopup__message {
+    margin-block: 1.25rem; /* 20px */
+}
+
+.lw-errorPopup__actions {
+    align-self: flex-start;
+}
