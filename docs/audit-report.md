@@ -252,3 +252,17 @@ Fixes:
 Remaining:
 - Quick visual check on 360px: confirm the upload button wraps under the search input and all actions remain easy to tap.
 
+#### UploadFileForSigningScreen (Admin)
+Findings:
+- Selected signer “chips” (buttons) could overflow horizontally when multiple signers are selected.
+- Long selected file names could push the green “file selected” row wider than the viewport.
+- The viewer header row and bottom action buttons could overflow on narrow screens when laid out as a single row.
+
+Fixes:
+- Made selected signers row wrap and ensured it can shrink (`min-inline-size: 0`).
+- Truncated the selected file name row (`ellipsis`) to prevent horizontal overflow.
+- Made viewer header/actions rows wrap and enforced a `2.75rem` minimum touch target for buttons in the actions row.
+
+Remaining:
+- Verify the PDF viewer itself stays within the viewport at 360px (viewer/overlay layout is mostly inside the PdfViewer component).
+

@@ -33,6 +33,7 @@
     box-shadow: 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.08);
     width: 100%;
     max-width: 62.5rem;
+    min-inline-size: 0;
 }
 
 .lw-uploadSigningScreen__message {
@@ -75,7 +76,8 @@
 }
 
 .lw-uploadSigningScreen__selectedSignersRow {
-    @include m.row(v.$space-2);
+    @include m.row(v.$space-2, wrap);
+    min-inline-size: 0;
 }
 
 .lw-uploadSigningScreen__fileBox {
@@ -85,6 +87,7 @@
     text-align: center;
     background-color: #fff;
     cursor: pointer;
+    max-inline-size: 100%;
 }
 
 .lw-uploadSigningScreen__fileBox.is-dragActive {
@@ -109,6 +112,11 @@
     border: 0.0625rem solid #c3e6cb;
     color: #155724;
     font-size: 0.875rem;
+    max-inline-size: 100%;
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .lw-uploadSigningScreen__textarea {
@@ -123,9 +131,10 @@
 }
 
 .lw-uploadSigningScreen__viewerHeaderRow {
-    @include m.row(v.$space-3);
+    @include m.row(v.$space-3, wrap);
     margin-block-start: v.$space-6;
     margin-block-end: v.$space-3;
+    min-inline-size: 0;
 }
 
 .lw-uploadSigningScreen__viewerHeaderRow> :last-child {
@@ -145,8 +154,24 @@
 }
 
 .lw-uploadSigningScreen__actionsRow {
-    @include m.row(v.$space-2);
+    @include m.row(v.$space-2, wrap);
     margin-block-start: v.$space-4;
+}
+
+.lw-uploadSigningScreen__actionsRow .lw-textButtonWithTwoOptionalIcons {
+    min-block-size: 2.75rem;
+    flex: 1 1 12rem;
+}
+
+@media (max-width: v.$bp-narrow) {
+    .lw-uploadSigningScreen__viewerHeaderRow > .lw-textButtonWithTwoOptionalIcons {
+        width: 100%;
+    }
+
+    .lw-uploadSigningScreen__actionsRow .lw-textButtonWithTwoOptionalIcons {
+        width: 100%;
+        flex-basis: 100%;
+    }
 }
 
 .lw-uploadSigningScreen__loading {
