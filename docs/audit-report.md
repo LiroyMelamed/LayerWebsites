@@ -220,6 +220,7 @@ Findings:
 Fixes:
 - Set field flex-basis/min-inline-size so rows wrap to 1-column on narrow widths.
 - Made the container/rows/textareas explicitly overflow-safe (`min-inline-size: 0`, full-width textarea rows).
+- ProgressBar: made the percentage always visible and prevented the tooltip bubble from overlapping the label text on small screens; fill now grows from the RTL logical start.
 
 Remaining:
 - Consider adding explicit padding/gutters inside the popup scroll content if the popup frame feels tight on mobile (defer unless requested).

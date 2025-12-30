@@ -6,12 +6,18 @@ import "./ProgressBar.scss";
 
 const ProgressBar = ({ IsClosed, currentStage, totalStages, style }) => {
     const CurrentStageAccordingToIsClosed = IsClosed ? currentStage : currentStage - 1;
-    const percentage = Math.min(100, (CurrentStageAccordingToIsClosed / totalStages) * 100);
+    const safeTotalStages = Number(totalStages) || 0;
+    const safeCurrentStage = Number(CurrentStageAccordingToIsClosed) || 0;
+    const rawPercentage = safeTotalStages > 0 ? (safeCurrentStage / safeTotalStages) * 100 : 0;
+    const percentage = Math.max(0, Math.min(100, rawPercentage));
 
     const cssVars = {
         '--lw-progressBar-percent': `${percentage}%`,
-        '--lw-progressBar-tooltipTransform': percentage === 100 ? 'translateX(-100%)' : 'translateX(-50%)',
-        '--lw-progressBar-tooltipOpacity': percentage > 0 ? 1 : 0,
+        '--lw-progressBar-tooltipTransform': percentage === 0
+            ? 'translateX(0)'
+            : percentage === 100
+                ? 'translateX(-100%)'
+                : 'translateX(-50%)',
     };
 
     const mergedStyle = style ? { ...cssVars, ...style } : cssVars;

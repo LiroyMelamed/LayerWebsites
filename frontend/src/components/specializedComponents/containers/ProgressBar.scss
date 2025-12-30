@@ -6,11 +6,13 @@
     --lw-progressBar-radius: 0.75rem;
 
     width: 100%;
+    min-inline-size: 0;
 }
 
 .lw-progressBar__labelRow {
     @include m.row(v.$space-2, nowrap);
     margin-block-end: v.$space-3;
+    min-inline-size: 0;
 }
 
 .lw-progressBar__labelRow > :last-child {
@@ -25,11 +27,16 @@
     border: 0.0625rem solid var(--lw-color-disabled);
     border-radius: var(--lw-progressBar-radius);
     overflow: visible;
+    min-inline-size: 0;
 }
 
 .lw-progressBar__fill {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+
     height: 100%;
-    width: var(--lw-progressBar-percent, 0%);
+    inline-size: var(--lw-progressBar-percent, 0%);
     background:
         repeating-linear-gradient(45deg,
             var(--lw-color-primary),
@@ -38,7 +45,7 @@
             var(--lw-color-primary-highlighted) 1rem);
     transition: width 0.4s ease;
     border-radius: var(--lw-progressBar-radius);
-    position: relative;
+    max-inline-size: 100%;
 }
 
 .lw-progressBar__tooltip {
@@ -46,13 +53,16 @@
     inset-block-end: calc(100% + #{v.$space-2});
     inset-inline-start: var(--lw-progressBar-percent, 0%);
     transform: var(--lw-progressBar-tooltipTransform, translateX(-50%));
-    opacity: var(--lw-progressBar-tooltipOpacity, 0);
+    opacity: 1;
 
     background-color: var(--lw-color-primary-highlighted);
     color: var(--lw-color-white);
     padding-block: v.$space-1;
     padding-inline: v.$space-1;
     border-radius: 9999rem;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 1;
     transition: left 0.4s ease, transform 0.4s ease;
 }
 
@@ -64,4 +74,15 @@
     transform: translateX(-50%);
     border: 0.375rem solid transparent;
     border-block-start-color: var(--lw-color-primary-highlighted);
+}
+
+@media (max-width: v.$bp-md) {
+    .lw-progressBar__labelRow {
+        margin-block-end: v.$space-5;
+        flex-wrap: wrap;
+    }
+
+    .lw-progressBar__tooltip {
+        inset-block-end: calc(100% + #{v.$space-1});
+    }
 }
