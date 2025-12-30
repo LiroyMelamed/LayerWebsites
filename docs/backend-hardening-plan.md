@@ -169,8 +169,13 @@ Decision rule:
 - In-memory rate-limit store is pruned periodically (stale keys + size cap)
 - Unit tests: `backend/tests/rateLimiter.test.js`
 
+7) Pagination & robustness (selected list endpoints)
+- Added optional `limit`/`offset` support (validated + capped) to reduce risk of unbounded list queries
+- Backwards-compat: pagination only applies when `limit` or `offset` is provided
+- Endpoints: cases list/tagged list, admin customers list/search, signing file lists
+
 ### Next
-7) Query performance follow-ups
+8) Query performance follow-ups
 - Add pagination to high-cardinality list endpoints (where applicable)
 - Add/verify DB indexes for hot paths (see notes below)
 

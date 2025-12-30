@@ -5,6 +5,7 @@ const { sendMessage, COMPANY_NAME } = require("../utils/sendMessage");
 const { BUCKET, r2 } = require("../utils/r2");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const { requireInt } = require("../utils/paramValidation");
+const { getPagination } = require("../utils/pagination");
 
 function requireAdmin(req, res) {
     if (req.user?.Role !== 'Admin') {
@@ -17,7 +18,15 @@ function requireAdmin(req, res) {
 const getCustomers = async (req, res) => {
     if (!requireAdmin(req, res)) return;
     try {
-        const result = await pool.query("SELECT * FROM users WHERE role <> 'Admin'");
+        const pagination = getPagination(req, res, { defaultLimit: 200, maxLimit: 500 });
+        if (pagination === null) return;
+
+        const query = pagination.enabled
+            ? "SELECT * FROM users WHERE role <> 'Admin' ORDER BY createdat DESC LIMIT $1 OFFSET $2"
+            : "SELECT * FROM users WHERE role <> 'Admin'";
+
+        const params = pagination.enabled ? [pagination.limit, pagination.offset] : [];
+        const result = await pool.query(query, params);
         res.json(result.rows.map(row => ({
             UserId: row.userid,
             Name: row.name,
@@ -106,14 +115,24 @@ const getCustomerByName = async (req, res) => {
     }
 
     try {
-        const result = await pool.query(
-            `
+        const pagination = getPagination(req, res, { defaultLimit: 50, maxLimit: 200 });
+        if (pagination === null) return;
+
+        const baseQuery = `
             SELECT userid, name, email, phonenumber, companyname
             FROM users
             WHERE name ILIKE $1 OR email ILIKE $1 OR phonenumber ILIKE $1 OR companyname ILIKE $1
-            `,
-            [`%${userName}%`]
-        );
+        `;
+
+        const query = pagination.enabled
+            ? `${baseQuery} ORDER BY userid DESC LIMIT $2 OFFSET $3`
+            : baseQuery;
+
+        const params = pagination.enabled
+            ? [`%${userName}%`, pagination.limit, pagination.offset]
+            : [`%${userName}%`];
+
+        const result = await pool.query(query, params);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ message: "No users found" });

@@ -3,6 +3,7 @@ const { formatPhoneNumber } = require("../utils/phoneUtils");
 const { sendMessage, WEBSITE_DOMAIN } = require("../utils/sendMessage");
 const sendAndStoreNotification = require("../utils/sendAndStoreNotification"); // Import the new consolidated utility
 const { requireInt } = require("../utils/paramValidation");
+const { getPagination } = require("../utils/pagination");
 
 const _buildBaseCaseQuery = () => `
     SELECT
@@ -88,17 +89,52 @@ const getCases = async (req, res) => {
     }
 
     try {
-        let query = _buildBaseCaseQuery();
-        const params = [];
+        const pagination = getPagination(req, res, { defaultLimit: 50, maxLimit: 200 });
+        if (pagination === null) return;
 
-        if (userRole !== "Admin") {
-            query += " WHERE C.userid = $1";
-            params.push(userId);
+        if (!pagination.enabled) {
+            let query = _buildBaseCaseQuery();
+            const params = [];
+
+            if (userRole !== "Admin") {
+                query += " WHERE C.userid = $1";
+                params.push(userId);
+            }
+            query += " ORDER BY C.caseid, CD.stage";
+
+            const result = await pool.query(query, params);
+            return res.json(_mapCaseResults(result.rows));
         }
-        query += " ORDER BY C.caseid, CD.stage";
 
-        const result = await pool.query(query, params);
-        res.json(_mapCaseResults(result.rows));
+        const { limit, offset } = pagination;
+
+        // Paginate by caseId (not joined rows) so descriptions aren't truncated.
+        const idsQuery =
+            userRole === 'Admin'
+                ? `SELECT DISTINCT C.caseid
+                   FROM cases C
+                   ORDER BY C.caseid
+                   LIMIT $1 OFFSET $2`
+                : `SELECT DISTINCT C.caseid
+                   FROM cases C
+                   WHERE C.userid = $1
+                   ORDER BY C.caseid
+                   LIMIT $2 OFFSET $3`;
+
+        const idsParams = userRole === 'Admin' ? [limit, offset] : [userId, limit, offset];
+        const idsResult = await pool.query(idsQuery, idsParams);
+        const ids = idsResult.rows.map((r) => r.caseid);
+
+        if (ids.length === 0) return res.json([]);
+
+        const detailsQuery =
+            userRole === 'Admin'
+                ? `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) ORDER BY C.caseid, CD.stage`
+                : `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) AND C.userid = $2 ORDER BY C.caseid, CD.stage`;
+
+        const detailsParams = userRole === 'Admin' ? [ids] : [ids, userId];
+        const result = await pool.query(detailsQuery, detailsParams);
+        return res.json(_mapCaseResults(result.rows));
 
     } catch (error) {
         console.error("Error retrieving cases:", error);
@@ -551,15 +587,50 @@ const getTaggedCases = async (req, res) => {
             return res.status(401).json({ message: "Unauthorized: User ID missing" });
         }
 
-        const query =
-            userRole === "Admin"
-                ? `${_buildBaseCaseQuery()} WHERE C.istagged = true ORDER BY C.caseid, CD.stage;`
-                : `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.userid = $1 ORDER BY C.caseid, CD.stage;`;
+        const pagination = getPagination(req, res, { defaultLimit: 50, maxLimit: 200 });
+        if (pagination === null) return;
 
-        const params = userRole === "Admin" ? [] : [userId];
+        if (!pagination.enabled) {
+            const query =
+                userRole === "Admin"
+                    ? `${_buildBaseCaseQuery()} WHERE C.istagged = true ORDER BY C.caseid, CD.stage;`
+                    : `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.userid = $1 ORDER BY C.caseid, CD.stage;`;
 
-        const result = await pool.query(query, params);
-        res.json(_mapCaseResults(result.rows));
+            const params = userRole === "Admin" ? [] : [userId];
+
+            const result = await pool.query(query, params);
+            return res.json(_mapCaseResults(result.rows));
+        }
+
+        const { limit, offset } = pagination;
+
+        const idsQuery =
+            userRole === 'Admin'
+                ? `SELECT DISTINCT C.caseid
+                   FROM cases C
+                   WHERE C.istagged = true
+                   ORDER BY C.caseid
+                   LIMIT $1 OFFSET $2`
+                : `SELECT DISTINCT C.caseid
+                   FROM cases C
+                   WHERE C.istagged = true AND C.userid = $1
+                   ORDER BY C.caseid
+                   LIMIT $2 OFFSET $3`;
+
+        const idsParams = userRole === 'Admin' ? [limit, offset] : [userId, limit, offset];
+        const idsResult = await pool.query(idsQuery, idsParams);
+        const ids = idsResult.rows.map((r) => r.caseid);
+
+        if (ids.length === 0) return res.json([]);
+
+        const detailsQuery =
+            userRole === 'Admin'
+                ? `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.caseid = ANY($1::int[]) ORDER BY C.caseid, CD.stage`
+                : `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.caseid = ANY($1::int[]) AND C.userid = $2 ORDER BY C.caseid, CD.stage`;
+
+        const detailsParams = userRole === 'Admin' ? [ids] : [ids, userId];
+        const result = await pool.query(detailsQuery, detailsParams);
+        return res.json(_mapCaseResults(result.rows));
     } catch (error) {
         console.error("Error retrieving tagged cases:", error);
         res.status(500).json({ message: "Error retrieving tagged cases" });

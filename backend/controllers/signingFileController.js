@@ -8,6 +8,7 @@ const { detectHebrewSignatureSpotsFromPdfBuffer, streamToBuffer } = require("../
 const { PDFDocument } = require("pdf-lib");
 const { v4: uuid } = require("uuid");
 const { requireInt, parsePositiveIntStrict } = require("../utils/paramValidation");
+const { getPagination } = require("../utils/pagination");
 
 const BASE_RENDER_WIDTH = 800;
 
@@ -327,12 +328,14 @@ exports.uploadFileForSigning = async (req, res) => {
 exports.getClientSigningFiles = async (req, res) => {
     try {
         const clientId = req.user.UserId;
+        const pagination = getPagination(req, res, { defaultLimit: 50, maxLimit: 200 });
+        if (pagination === null) return;
 
         const schemaSupport = await getSchemaSupport();
 
         if (!schemaSupport.signaturespotsSignerUserId) {
             // Legacy DB behavior: only primary client sees their files
-            const legacy = await pool.query(
+            const query =
                 `select
                     sf.signingfileid      as "SigningFileId",
                     sf.caseid             as "CaseId",
@@ -355,14 +358,19 @@ exports.getClientSigningFiles = async (req, res) => {
                  group by sf.signingfileid, sf.caseid, sf.filename, sf.filekey,
                           sf.status, sf.createdat, sf.expiresat, sf.notes, sf.signedat,
                           c.casename, u.name
-                 order by sf.createdat desc`,
-                [clientId]
-            );
+                 order by sf.createdat desc` +
+                (pagination.enabled ? ` limit $2 offset $3` : ``);
+
+            const params = pagination.enabled
+                ? [clientId, pagination.limit, pagination.offset]
+                : [clientId];
+
+            const legacy = await pool.query(query, params);
 
             return res.json({ files: legacy.rows });
         }
 
-        const result = await pool.query(
+        const query =
             `select 
                 sf.signingfileid      as "SigningFileId",
                 sf.caseid             as "CaseId",
@@ -393,9 +401,14 @@ exports.getClientSigningFiles = async (req, res) => {
              group by sf.signingfileid, sf.caseid, sf.filename, sf.filekey,
                       sf.status, sf.createdat, sf.expiresat, sf.notes, sf.signedat,
                       c.casename, u.name
-             order by sf.createdat desc`,
-            [clientId]
-        );
+             order by sf.createdat desc` +
+            (pagination.enabled ? ` limit $2 offset $3` : ``);
+
+        const params = pagination.enabled
+            ? [clientId, pagination.limit, pagination.offset]
+            : [clientId];
+
+        const result = await pool.query(query, params);
 
         return res.json({ files: result.rows });
     } catch (err) {
@@ -409,8 +422,10 @@ exports.getClientSigningFiles = async (req, res) => {
 exports.getLawyerSigningFiles = async (req, res) => {
     try {
         const lawyerId = req.user.UserId;
+        const pagination = getPagination(req, res, { defaultLimit: 50, maxLimit: 200 });
+        if (pagination === null) return;
 
-        const result = await pool.query(
+        const query =
             `select 
                 sf.signingfileid      as "SigningFileId",
                 sf.caseid             as "CaseId",
@@ -430,9 +445,14 @@ exports.getLawyerSigningFiles = async (req, res) => {
              group by sf.signingfileid, sf.caseid, sf.filename,
                       sf.status, sf.createdat, sf.signedat,
                       c.casename, u.name
-             order by sf.createdat desc`,
-            [lawyerId]
-        );
+             order by sf.createdat desc` +
+            (pagination.enabled ? ` limit $2 offset $3` : ``);
+
+        const params = pagination.enabled
+            ? [lawyerId, pagination.limit, pagination.offset]
+            : [lawyerId];
+
+        const result = await pool.query(query, params);
 
         return res.json({ files: result.rows });
     } catch (err) {
@@ -446,11 +466,13 @@ exports.getLawyerSigningFiles = async (req, res) => {
 exports.getPendingSigningFiles = async (req, res) => {
     try {
         const clientId = req.user.UserId;
+        const pagination = getPagination(req, res, { defaultLimit: 50, maxLimit: 200 });
+        if (pagination === null) return;
 
         const schemaSupport = await getSchemaSupport();
 
         if (!schemaSupport.signaturespotsSignerUserId) {
-            const legacy = await pool.query(
+            const query =
                 `select
                     sf.signingfileid      as "SigningFileId",
                     sf.caseid             as "CaseId",
@@ -473,14 +495,19 @@ exports.getPendingSigningFiles = async (req, res) => {
                  group by sf.signingfileid, sf.caseid, sf.filename, sf.filekey,
                           sf.status, sf.createdat, sf.expiresat, sf.notes,
                           c.casename, u.name
-                 order by sf.createdat desc`,
-                [clientId]
-            );
+                 order by sf.createdat desc` +
+                (pagination.enabled ? ` limit $2 offset $3` : ``);
+
+            const params = pagination.enabled
+                ? [clientId, pagination.limit, pagination.offset]
+                : [clientId];
+
+            const legacy = await pool.query(query, params);
 
             return res.json({ files: legacy.rows });
         }
 
-        const result = await pool.query(
+        const query =
             `select 
                 sf.signingfileid      as "SigningFileId",
                 sf.caseid             as "CaseId",
@@ -511,9 +538,14 @@ exports.getPendingSigningFiles = async (req, res) => {
              group by sf.signingfileid, sf.caseid, sf.filename, sf.filekey,
                       sf.status, sf.createdat, sf.expiresat, sf.notes,
                       c.casename, u.name
-             order by sf.createdat desc`,
-            [clientId]
-        );
+             order by sf.createdat desc` +
+            (pagination.enabled ? ` limit $2 offset $3` : ``);
+
+        const params = pagination.enabled
+            ? [clientId, pagination.limit, pagination.offset]
+            : [clientId];
+
+        const result = await pool.query(query, params);
 
         return res.json({ files: result.rows });
     } catch (err) {
