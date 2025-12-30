@@ -25,7 +25,7 @@
   font-family: inherit;
   color: var(--lw-simpleTextArea-labelColor, var(--lw-color-text));
 
-  background-color: var(--lw-color-white);
+  background-color: var(--lw-simpleTextArea-bgColor, var(--lw-color-white));
   padding-inline: 0.3125rem; /* 5px */
   border-radius: 9999px;
 
@@ -84,6 +84,10 @@
     background-color: rgba(0, 0, 0, 0.1);
     border-radius: 0.5rem;
   }
+}
+
+.lw-simpleTextArea__field:focus-visible {
+  outline: none;
 }
 
 .lw-simpleTextArea__field:disabled {
