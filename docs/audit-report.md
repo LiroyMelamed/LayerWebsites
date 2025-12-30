@@ -280,3 +280,17 @@ Fixes:
 Remaining:
 - Quick 360px sweep: confirm tabs/actions collapse to a single column cleanly and SignatureCanvas modal overlays do not clip.
 
+#### ClientsCard + ClientPopUp (Admin)
+Findings:
+- Client rows used a fixed flex row without the shared `row()` mixin; long tokens could force horizontal overflow.
+- Client popup form (2 inputs per row) could get cramped at ~360px; actions could overflow when both buttons are shown.
+- The “Add client” button styling relied on a `className` prop that isn’t applied by the current button component stack.
+
+Fixes:
+- Migrated client row layout to `row()` + `min-inline-size: 0` and allowed long tokens to wrap (`overflow-wrap: anywhere`).
+- Made popup input rows and actions wrap cleanly on narrow widths; enforced `2.75rem` minimum touch targets for action buttons.
+- Styled the “Add client” button via a safe structural selector (`.lw-clientsCard > .lw-textButtonWithTwoOptionalIcons`) so layout rules apply reliably.
+
+Remaining:
+- If we decide to rely on button `className` props app-wide, consider updating `TextButtonWithTwoOptionalIcons` to merge incoming `className` (separate, higher-risk change).
+

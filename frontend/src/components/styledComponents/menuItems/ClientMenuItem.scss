@@ -1,18 +1,21 @@
 @use '../../../styles/variables' as v;
+@use '../../../styles/mixins' as m;
 
 .lw-clientMenuItem {
     flex-direction: column;
 }
 
 .lw-clientMenuItem__row {
-    flex-direction: row;
+    @include m.row(v.$space-2);
     width: 100%;
+    min-inline-size: 0;
 }
 
 .lw-clientMenuItem__cell {
     flex: 1;
     padding-inline: 0.375rem;
-    min-width: 0;
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
 }
 
 @media (max-width: v.$bp-md) {

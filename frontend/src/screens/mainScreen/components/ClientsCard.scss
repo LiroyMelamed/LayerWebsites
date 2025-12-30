@@ -23,9 +23,10 @@
     flex-direction: column;
 }
 
-.lw-clientsCard__addButton {
+.lw-clientsCard > .lw-textButtonWithTwoOptionalIcons {
     align-self: center;
     margin-top: 1.25rem;
+    min-block-size: 2.75rem;
 }
 
 .lw-clientsCard__empty {

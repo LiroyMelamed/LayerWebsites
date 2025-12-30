@@ -7,20 +7,34 @@
 }
 
 .lw-clientPopup__row {
-    @include m.row;
+    @include m.row(v.$space-3, wrap);
     margin-block-end: v.$space-4;
 }
 
 .lw-clientPopup__input {
     flex: 1;
-    min-width: 9.375rem;
+    flex: 1 1 9.375rem;
+    min-inline-size: 0;
 }
 
 .lw-clientPopup__actions {
-    @include m.row(v.$space-2);
+    @include m.row(v.$space-2, wrap, center, center);
     justify-content: center;
     margin-block: v.$space-4;
 }
 
-.lw-clientPopup__actionButton {
+.lw-clientPopup__actions .lw-textButtonWithTwoOptionalIcons {
+    min-block-size: 2.75rem;
+    flex: 1 1 12rem;
+}
+
+@media (max-width: v.$bp-narrow) {
+    .lw-clientPopup__input {
+        flex-basis: 100%;
+    }
+
+    .lw-clientPopup__actions .lw-textButtonWithTwoOptionalIcons {
+        width: 100%;
+        flex-basis: 100%;
+    }
 }
