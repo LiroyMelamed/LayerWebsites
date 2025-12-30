@@ -6,7 +6,7 @@
 }
 
 .lw-notificationsScreen__scroll {
-    margin-top: 2.5rem;
+    margin-top: m.rem(40);
 }
 
 .lw-notificationsScreen__header {
@@ -31,19 +31,20 @@
 .lw-notificationsScreen__content {
     flex-direction: column;
     width: 100%;
-    padding: 0 1.25rem 4.5rem;
+    padding-inline: m.rem(20);
+    padding-block-end: m.rem(72);
 }
 
 .lw-notificationsScreen__loading {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 2.5rem 0;
+    padding-block: m.rem(40);
 }
 
 .lw-notificationsScreen__progress {
     width: 15rem;
-    margin-bottom: 0.625rem;
+    margin-bottom: v.$space-3;
 }
 
 .lw-notificationsScreen__loadingText {
@@ -55,13 +56,13 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 2.5rem 0;
+    padding-block: m.rem(40);
 }
 
 .lw-notificationsScreen__errorText {
     text-align: center;
     color: var(--lw-color-error);
-    margin-bottom: 1rem;
+    margin-bottom: v.$space-4;
 }
 
 .lw-notificationsScreen__retryButton {
@@ -72,7 +73,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 3.125rem 0;
+    padding-block: m.rem(50);
 }
 
 .lw-notificationsScreen__emptyText {
@@ -90,9 +91,9 @@
     justify-content: flex-start;
     gap: v.$space-3;
 
-    padding: 0.9375rem;
-    border-radius: 0.625rem;
-    margin-bottom: 0.75rem;
+    padding: v.$space-4;
+    border-radius: m.rem(10);
+    margin-bottom: v.$space-3;
 }
 
 .lw-notificationsScreen__item.is-read {
@@ -102,7 +103,6 @@
 .lw-notificationsScreen__itemContent {
     @include m.row(v.$space-2, nowrap, flex-start);
     width: 100%;
-    margin-bottom: 0.625rem;
 }
 
 .lw-notificationsScreen__unreadDot {
@@ -111,8 +111,8 @@
     height: 0.5rem;
     border-radius: 0.25rem;
     background: var(--lw-color-primaryHighlighted);
-    margin-inline-start: 0.5rem;
-    margin-top: 0.5rem;
+    margin-inline-start: v.$space-2;
+    margin-top: v.$space-2;
 }
 
 .lw-notificationsScreen__text {
@@ -123,24 +123,25 @@
 
 .lw-notificationsScreen__title {
     color: var(--lw-color-primary);
-    margin-bottom: 0.3125rem;
+    margin-bottom: v.$space-1;
     text-align: start;
 }
 
 .lw-notificationsScreen__message {
     color: var(--lw-color-text);
-    margin-bottom: 0.3125rem;
+    margin-bottom: v.$space-1;
     text-align: start;
 }
 
 .lw-notificationsScreen__timestamp {
     color: var(--lw-color-winter);
     align-self: flex-end;
-    margin-top: 0.3125rem;
+    margin-top: v.$space-1;
 }
 
 .lw-notificationsScreen__markAsRead {
     align-self: flex-start;
+    min-block-size: 2.75rem;
 }
 
 .lw-notificationsScreen__back {

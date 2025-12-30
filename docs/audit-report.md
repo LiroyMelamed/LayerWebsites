@@ -224,3 +224,17 @@ Fixes:
 Remaining:
 - Consider adding explicit padding/gutters inside the popup scroll content if the popup frame feels tight on mobile (defer unless requested).
 
+#### NotificationsScreen (Client)
+Findings:
+- Long titles/messages could produce very tall cards or awkward wrapping on small screens.
+- Mark-as-read button was small on mobile (touch target risk).
+- Spacing mixed literal rem values and token values; some margin-based spacing duplicated `gap` spacing.
+
+Fixes:
+- Clamped title (1 line) and message (3 lines) to stabilize layout.
+- Increased mark-as-read button size on small screens and enforced a minimum block size.
+- Converted key paddings/margins to `m.rem(...)`/spacing tokens and removed redundant margin where `gap` already applies.
+
+Remaining:
+- If we see truncated content complaints, consider a “tap to expand” pattern later (out of Phase 1 scope unless requested).
+

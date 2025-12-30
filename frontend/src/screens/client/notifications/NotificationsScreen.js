@@ -1,5 +1,4 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 import { images } from "../../../assets/images/images";
 import { notificationApi } from "../../../api/notificationApi";
@@ -8,7 +7,7 @@ import SimpleContainer from "../../../components/simpleComponents/SimpleContaine
 import SimpleScreen from "../../../components/simpleComponents/SimpleScreen";
 import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
 import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryButton";
-import { Text12, TextBold14, TextBold24 } from "../../../components/specializedComponents/text/AllTextKindFile";
+import { Text12, TextBold14 } from "../../../components/specializedComponents/text/AllTextKindFile";
 import { useScreenSize } from "../../../providers/ScreenSizeProvider";
 import TopToolBarSmallScreen from "../../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
 import { ClientStackName } from "../../../navigation/ClientStack";
@@ -37,7 +36,6 @@ function formatNotificationDate(createdAt) {
 }
 
 export default function NotificationsScreen() {
-    const navigate = useNavigate();
     const { isSmallScreen } = useScreenSize();
 
     const [notifications, setNotifications] = useState([]);
@@ -92,6 +90,7 @@ export default function NotificationsScreen() {
     );
 
     const hasNotifications = notifications?.length > 0;
+    const markAsReadButtonSize = isSmallScreen ? buttonSizes.MEDIUM : buttonSizes.SMALL;
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground} className="lw-notificationsScreen">
@@ -149,11 +148,19 @@ export default function NotificationsScreen() {
                                             {!isRead && <span className="lw-notificationsScreen__unreadDot" />}
 
                                             <SimpleContainer className="lw-notificationsScreen__text">
-                                                <TextBold14 className="lw-notificationsScreen__title">
+                                                <TextBold14
+                                                    className="lw-notificationsScreen__title lw-textEllipsis"
+                                                    shouldApplyClamping
+                                                    numberOfLines={1}
+                                                >
                                                     {item?.title || "התראה חדשה"}
                                                 </TextBold14>
 
-                                                <Text12 className="lw-notificationsScreen__message">
+                                                <Text12
+                                                    className="lw-notificationsScreen__message"
+                                                    shouldApplyClamping
+                                                    numberOfLines={3}
+                                                >
                                                     {item?.message}
                                                 </Text12>
 
@@ -165,7 +172,7 @@ export default function NotificationsScreen() {
 
                                         {!isRead && (
                                             <PrimaryButton
-                                                size={buttonSizes.SMALL}
+                                                size={markAsReadButtonSize}
                                                 onPress={() => {
                                                     setMarkingId(item.notificationid);
                                                     markAsRead(item.notificationid);
