@@ -35,11 +35,13 @@ export default function PinnedCasesCard({ taggedCases, isPerforming, rePerformFu
 
             <SimpleContainer className="lw-pinnedCasesCard__list">
                 {taggedCases.map((item, index) => (
-                    <>
-                        {index != 0 && <Separator />}
+                    <SimpleContainer
+                        key={item?.CaseId ?? `taggedCase${index}`}
+                        className="lw-pinnedCasesCard__item"
+                    >
+                        {index !== 0 && <Separator />}
 
                         <CaseMenuItem
-                            key={`taggedCase${index}`}
                             fullCase={item}
                             rightTitle={`${item.CaseName} - ${item.CustomerName}`}
 
@@ -55,8 +57,7 @@ export default function PinnedCasesCard({ taggedCases, isPerforming, rePerformFu
                             openData={getOpenData(taggedCases, index)}
                             rePerformFunction={rePerformFunction}
                         />
-                    </>
-
+                    </SimpleContainer>
                 ))}
             </SimpleContainer>
         </SimpleCard>

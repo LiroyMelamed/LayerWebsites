@@ -124,7 +124,6 @@ export default function TaggedCasesScreen() {
 
             <SimpleContainer className="lw-taggedCasesScreen__footer">
                 <PrimaryButton
-                    className="lw-taggedCasesScreen__pinButton"
                     onPress={() => openPopup(<TagCasePopup rePerformRequest={() => { performRequest(); closePopup(); }} />)}
                 >
                     נעיצת תיק

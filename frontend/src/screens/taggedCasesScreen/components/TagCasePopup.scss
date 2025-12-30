@@ -7,20 +7,29 @@
 }
 
 .lw-tagCasePopup__row {
-    @include m.row;
+    @include m.row(v.$space-3, wrap);
     margin-block-end: v.$space-4;
 }
 
 .lw-tagCasePopup__input {
-    flex: 1;
-    min-width: 9.375rem;
+    flex: 1 1 9.375rem;
+    min-inline-size: 0;
 }
 
 .lw-tagCasePopup__actions {
-    @include m.row(v.$space-2);
+    @include m.row(v.$space-2, wrap, center, center);
     justify-content: center;
     margin-block: v.$space-4;
 }
 
-.lw-tagCasePopup__actionButton {
+.lw-tagCasePopup__actions .lw-textButtonWithTwoOptionalIcons {
+    min-block-size: 2.75rem;
+    flex: 1 1 12rem;
+}
+
+@media (max-width: v.$bp-narrow) {
+    .lw-tagCasePopup__actions .lw-textButtonWithTwoOptionalIcons {
+        width: 100%;
+        flex-basis: 100%;
+    }
 }

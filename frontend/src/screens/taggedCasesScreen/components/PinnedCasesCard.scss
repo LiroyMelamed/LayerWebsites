@@ -6,5 +6,11 @@
 
 .lw-pinnedCasesCard__list {
   flex-direction: column;
-  margin-top: 1rem; /* 16px */
+  margin-block-start: v.$space-4;
+  min-inline-size: 0;
+}
+
+.lw-pinnedCasesCard__item {
+  flex-direction: column;
+  min-inline-size: 0;
 }

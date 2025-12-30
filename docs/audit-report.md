@@ -294,3 +294,17 @@ Fixes:
 Remaining:
 - If we decide to rely on button `className` props app-wide, consider updating `TextButtonWithTwoOptionalIcons` to merge incoming `className` (separate, higher-risk change).
 
+#### TaggedCasesScreen (Admin)
+Findings:
+- Search + filters row (two `ChooseButton`s) could overflow at ~360px due to fixed min widths and no guaranteed wrapping.
+- Pinned cases list used an anonymous fragment wrapper and a non-strict inequality check (`!=`).
+- Footer “נעיצת תיק” and TagCasePopup “נעץ” button styling relied on `className` props that are not forwarded by the current button component stack.
+
+Fixes:
+- Made screen rows wrap and ensured search/choose controls are shrink-safe (`min-inline-size: 0`).
+- Replaced fragment list rows with a keyed structural wrapper and switched to strict inequality (`!==`).
+- Enforced `2.75rem` minimum touch target for the footer/popup actions by styling the rendered `.lw-textButtonWithTwoOptionalIcons` element.
+
+Remaining:
+- If we want per-button `className` styling to work reliably, consider a global fix to forward/merge `className` in the button stack (separate change).
+
