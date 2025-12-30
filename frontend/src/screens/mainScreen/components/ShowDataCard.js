@@ -9,6 +9,10 @@ import addCommasToNumber from "../../../functions/numbers/addCommasToNumber";
 import "./ShowDataCard.scss";
 
 export default function ShowDataCard({ title, icon, numberText, comprationNumber, comprationText, optionalOnClick, style }) {
+    const arrowStyle = comprationNumber
+        ? { transform: `rotate(${comprationNumber > 0 ? 180 : 0}deg)` }
+        : undefined;
+
     return (
         <SimpleCard className="lw-showDataCard" style={style} onPress={optionalOnClick}>
             <TextBold14 >{title}</TextBold14>
@@ -26,7 +30,7 @@ export default function ShowDataCard({ title, icon, numberText, comprationNumber
                     <SimpleIcon
                         src={icons.Button.DownArrow}
                         size={12}
-                        style={{ transform: `rotate(${comprationNumber > 0 ? 180 : 0}deg)` }}
+                        style={arrowStyle}
                         tintColor={comprationNumber > 0 ? colors.positive : colors.negative}
                     />
                 </SimpleContainer>

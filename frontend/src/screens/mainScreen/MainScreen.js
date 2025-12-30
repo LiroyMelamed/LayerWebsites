@@ -16,6 +16,8 @@ import { useNavigate } from 'react-router-dom';
 import { TaggedCasesScreenName } from '../taggedCasesScreen/TaggedCasesScreen';
 import { AllCasesScreenName } from '../allCasesScreen/AllCasesScreen';
 
+import "./MainScreen.scss";
+
 export const MainScreenName = "/MainScreen";
 
 export default function MainScreen() {
@@ -32,7 +34,7 @@ export default function MainScreen() {
             {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={AdminStackName + MainScreenName} />}
 
             <SimpleScrollView>
-                <SimpleContainer style={{ flex: 1, alignItems: 'center', justifyContent: 'center', }}>
+                <SimpleContainer className="lw-mainScreen__chartWrap">
                     <ComprasionDataCard
                         colors={colors.doughnutChartColorScale}
                         labels={['תיקים פתוחים', 'תיקים סגורים']}
@@ -40,12 +42,12 @@ export default function MainScreen() {
                         title={"סכימת תיקים"}
                         centerText={`${mainScreenData?.AllCasesData?.length}`}
                         subText='סה"כ תיקים'
-                        style={{ width: '100%' }}
+                        className="lw-mainScreen__comparisonCard"
                     />
                 </SimpleContainer>
 
-                <SimpleContainer style={{ flexDirection: 'column', flex: 1 }}>
-                    <SimpleContainer>
+                <SimpleContainer className="lw-mainScreen__cards">
+                    <SimpleContainer className="lw-mainScreen__row">
                         <ShowDataCard
                             numberText={mainScreenData?.AllCasesData?.length}
                             title={'סה"כ תיקים'}
@@ -61,7 +63,7 @@ export default function MainScreen() {
                         />
                     </SimpleContainer>
 
-                    <SimpleContainer style={{ flexWrap: 'wrap' }}>
+                    <SimpleContainer className="lw-mainScreen__row lw-mainScreen__row--wrap">
                         <ShowDataCard
                             numberText={mainScreenData?.NumberOfTaggedCases}
                             title={"תיקים מתוייגים"}
