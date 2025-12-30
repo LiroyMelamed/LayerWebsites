@@ -3,7 +3,7 @@
 .lw-hoverContainer {
   position: absolute;
   top: var(--lw-hoverContainer-top, 0px);
-  left: var(--lw-hoverContainer-left, 0px);
+  inset-inline-start: var(--lw-hoverContainer-inlineStart, 0px);
 
   min-width: 7.5rem; /* 120px */
   max-height: 25rem; /* 400px */

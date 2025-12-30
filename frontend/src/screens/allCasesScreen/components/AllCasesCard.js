@@ -36,11 +36,13 @@ export default function AllCasesCard({ allCases, isPerforming, reperformAfterSav
 
             <SimpleContainer className="lw-allCasesCard__list">
                 {allCases?.map((item, index) => (
-                    <>
+                    <SimpleContainer
+                        key={item?.CaseId ?? index}
+                        className="lw-allCasesCard__item"
+                    >
                         {index !== 0 && <Separator />}
 
                         <CaseMenuItem
-                            key={`case${index}`}
                             fullCase={item}
                             rightTitle={`${item.CaseName} - ${item.CustomerName}`}
 
@@ -56,7 +58,7 @@ export default function AllCasesCard({ allCases, isPerforming, reperformAfterSav
                             openData={getOpenData(allCases, index)}
                             rePerformFunction={reperformAfterSave}
                         />
-                    </>
+                    </SimpleContainer>
 
                 ))}
             </SimpleContainer>

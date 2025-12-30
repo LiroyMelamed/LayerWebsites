@@ -17,7 +17,7 @@ const HoverContainer = ({
     style,
     className,
 }) => {
-    const [position, setPosition] = useState({ top: 0, left: 0 });
+    const [position, setPosition] = useState({ top: 0, inlineStart: 0 });
     const hoverRef = useRef(null);
 
     useEffect(() => {
@@ -26,9 +26,19 @@ const HoverContainer = ({
                 const targetRect = targetRef.current.getBoundingClientRect();
                 const hoverRect = hoverRef.current.getBoundingClientRect();
 
+                const direction = window.getComputedStyle(document.documentElement).direction;
+                const isRtl = direction === 'rtl';
+
+                const physicalLeft = targetRect.left + targetRect.width / 2 - hoverRect.width / 2 + window.scrollX;
+                const viewportWidth = window.innerWidth;
+
+                const inlineStart = isRtl
+                    ? Math.max(0, viewportWidth - physicalLeft - hoverRect.width)
+                    : Math.max(0, physicalLeft);
+
                 setPosition({
                     top: targetRect.bottom + window.scrollY + 4,
-                    left: targetRect.left + targetRect.width / 2 - hoverRect.width / 2 + window.scrollX, // Align horizontally
+                    inlineStart,
                 });
             }
         };
@@ -53,7 +63,7 @@ const HoverContainer = ({
 
     const cssVars = {
         '--lw-hoverContainer-top': `${position.top}px`,
-        '--lw-hoverContainer-left': `${position.left}px`,
+        '--lw-hoverContainer-inlineStart': `${position.inlineStart}px`,
     };
 
     const mergedStyle = style ? { ...cssVars, ...style } : cssVars;

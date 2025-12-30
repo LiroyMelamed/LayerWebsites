@@ -77,6 +77,18 @@ body {
   min-inline-size: var(--lw-row-control-min, 8.5rem);
 }
 
+/* Utilities: overflow-safe flex/text (RTL-safe) */
+.lw-min0 {
+  min-inline-size: 0;
+}
+
+.lw-textEllipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-inline-size: 0;
+}
+
 @media (max-width: v.$bp-narrow) {
 
   .lw-row__grow,

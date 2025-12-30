@@ -195,3 +195,21 @@ Pattern:
 - Apply the hide-on-mobile pattern to any other dense lists/tables where Email/secondary columns are optional.
 - Continue replacing any remaining fixed pixel sizes or one-off breakpoints with shared tokens where safe.
 
+### Screens audited (Phase 1)
+
+#### AllCasesScreen / AllCasesCard (Cases list)
+Findings:
+- Long case titles could force horizontal overflow without a hard truncation path.
+- List rendering used an unkeyed fragment wrapper, making future layout work brittle.
+- CaseMenuItem spacing relied on a margin-based hack and had no explicit touch-target minimum.
+- Hover dropdown positioning used physical `left`, which is not RTL-logical.
+
+Fixes:
+- Added a keyed structural wrapper per list row to remove anonymous fragments and keep separator + item aligned.
+- Made the case title overflow-safe (`ellipsis` + min-inline-size: 0) and shifted CaseMenuItem spacing to tokenized `gap`/`row()` mixin usage.
+- Added `min-block-size: 2.75rem` and padding to CaseMenuItem header for touch friendliness.
+- Made HoverContainer use logical `inset-inline-start` with direction-aware positioning.
+
+Remaining:
+- Audit CaseFullView (popup) for long-field truncation and 360px overflow.
+

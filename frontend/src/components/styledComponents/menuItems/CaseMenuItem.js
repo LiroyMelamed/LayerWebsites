@@ -63,7 +63,9 @@ export default function CaseMenuItem({
                 <SimpleContainer className="lw-caseMenuItem__content">
                     <SimpleContainer className="lw-caseMenuItem__row lw-caseMenuItem__row--top">
                         <div className="lw-caseMenuItem__title">
-                            <TextBold14>{rightTitle}</TextBold14>
+                            <TextBold14 className="lw-textEllipsis" shouldApplyClamping numberOfLines={1}>
+                                {rightTitle}
+                            </TextBold14>
                         </div>
 
                         <SimpleContainer className="lw-caseMenuItem__pair">
@@ -92,7 +94,7 @@ export default function CaseMenuItem({
                 <ImageButton
                     src={icons.Button.DownArrow}
                     className="lw-caseMenuItem__toggle"
-                    style={styles.dropDownIcon(isOpen)}
+                    style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
                 />
             </SimpleContainer>
 
@@ -108,19 +110,3 @@ export default function CaseMenuItem({
     );
 }
 
-const styles = {
-    dropDownIcon: (isOpen) => ({
-        width: 12,
-        height: 12,
-        transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', // Rotate based on isOpen
-        transition: 'transform 0.3s ease', // Smooth rotation transition
-    }),
-    openDataContainer: {
-        overflow: 'hidden', // Hide content when not open
-        transition: 'max-height 0.5s ease, opacity 0.5s ease', // Smooth transition for both maxHeight and opacity
-        maxHeight: '0', // Start with 0 height
-        opacity: 0, // Start with 0 opacity
-        marginTop: 16,
-        marginRight: 28,
-    },
-};
