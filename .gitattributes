@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Deployment scripts must be LF (Ubuntu bash breaks on CRLF)
+*.sh text eol=lf
+*.sql text eol=lf
