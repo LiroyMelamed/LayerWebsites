@@ -51,10 +51,21 @@ npm ci
 ```
 
 ### 1.4 Configure env vars (NO secrets in git)
-Recommended approach:
-- Create a root-owned env file:
-  - `/etc/melamedlaw/backend.env` (chmod 600)
-- Export variables from it in the service shell, or use PM2 ecosystem env placeholders and `--update-env`.
+We deploy a `backend/.env` file on the server (NOT committed).
+
+Create it from the template:
+```bash
+cd /var/www/melamedlaw/backend
+cp .env.production.example .env
+nano .env
+
+# protect secrets
+chmod 600 .env
+```
+
+Notes:
+- `backend/ecosystem.config.js` is configured with `env_file: '.env'`.
+- Keep Nginx and backend upload/timeouts aligned.
 
 Template:
 - `backend/.env.production.example`
@@ -94,6 +105,8 @@ pm2 save
 ### 1.8 Safe restart / zero downtime
 Fork mode (default here):
 - `pm2 restart melamedlaw-api --update-env`
+
+When you change `backend/.env`, always restart with `--update-env`.
 
 If you later switch to cluster mode:
 - `pm2 reload melamedlaw-api --update-env` (zero-downtime reload)
