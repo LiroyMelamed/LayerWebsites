@@ -8,8 +8,6 @@
 
 .lw-caseMenuItem__header {
     @include m.row(v.$space-4, nowrap, center);
-    padding-block: v.$space-3;
-    padding-inline: v.$space-3;
     min-block-size: 2.75rem;
 }
 

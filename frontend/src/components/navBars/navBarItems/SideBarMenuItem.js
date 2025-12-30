@@ -13,7 +13,7 @@ export default function SideBarMenuItem({ onPressFunction, isPressed, size, icon
 
     return (
         <SimpleButton
-            onPress={() => onPress()}
+            onPress={onPress}
             className={`lw-sideBarMenuItem${isPressed ? " is-pressed" : ""}`}
         >
             <SimpleContainer className="lw-sideBarMenuItem__inner">

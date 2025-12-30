@@ -152,11 +152,11 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
 
             {!isClient &&
                 <SimpleContainer className="lw-caseMenuItemOpen__actionsRow">
+                    <TertiaryButton size={buttonSizes.SMALL} onPress={unTag}>{IsTagged ? "ביטול נעיצה" : "נעץ"}</TertiaryButton>
+                    <SecondaryButton size={buttonSizes.SMALL} onPress={editCase} className="lw-caseMenuItemOpen__action">עריכה</SecondaryButton>
                     {!fullCase.IsClosed &&
                         <PrimaryButton size={buttonSizes.SMALL} onPress={updateStage} className="lw-caseMenuItemOpen__action">קדם שלב</PrimaryButton>
                     }
-                    <SecondaryButton size={buttonSizes.SMALL} onPress={editCase} className="lw-caseMenuItemOpen__action">עריכה</SecondaryButton>
-                    <TertiaryButton size={buttonSizes.SMALL} onPress={unTag}>{IsTagged ? "ביטול נעיצה" : "נעץ"}</TertiaryButton>
                 </SimpleContainer>
             }
         </SimpleContainer>

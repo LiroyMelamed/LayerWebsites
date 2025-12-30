@@ -7,7 +7,7 @@
     max-height: 0;
     opacity: 0;
     margin-top: 1rem;
-    margin-inline-end: 1.75rem;
+    margin-inline-start: 1.75rem;
     display: flex;
     flex-direction: column;
 
@@ -64,16 +64,15 @@
 
 .lw-caseMenuItemOpen__actionsRow {
     @include m.row(v.$space-2);
+    justify-content: flex-end;
     margin-block-start: v.$space-4;
 }
 
-.lw-caseMenuItemOpen__action {
-}
+.lw-caseMenuItemOpen__action {}
 
 .lw-caseMenuItemOpen__linkInputRow {
     @include m.row(v.$space-2, nowrap);
     flex: 1;
 }
 
-.lw-caseMenuItemOpen__whatsAppInput {
-}
+.lw-caseMenuItemOpen__whatsAppInput {}

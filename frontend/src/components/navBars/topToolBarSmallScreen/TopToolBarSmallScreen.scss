@@ -27,9 +27,9 @@
     border: none;
     cursor: pointer;
 
-    inset-block-start: 1.25rem;
+    inset-block-start: 0.75rem;
     /* 20px */
-    inset-inline-end: 1.25rem;
+    inset-inline-start: 0.5rem;
     /* 20px */
 }
 
@@ -49,7 +49,7 @@
 .lw-topToolBarSmallScreen__sidebar {
     position: fixed;
     inset-block-start: 0;
-    inset-inline-end: 0;
+    inset-inline-start: 0;
 
     width: 15.625rem;
     /* 250px */

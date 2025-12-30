@@ -1,5 +1,6 @@
 .lw-caseTimeline {
   width: 100%;
+  flex-direction: column;
 }
 
 .lw-caseTimeline__title {
@@ -20,7 +21,7 @@
   top: 3.375rem;
   bottom: 2.25rem;
   width: 1px;
-  inset-inline-end: 0.1875rem;
+  inset-inline-start: 0.45rem;
   background-color: #caf1ee;
   z-index: 1000;
 }

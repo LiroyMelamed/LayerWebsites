@@ -15,8 +15,9 @@
     min-inline-size: 0;
 }
 
-.lw-progressBar__labelRow > :last-child {
+.lw-progressBar__percent {
     margin-inline-start: auto;
+    white-space: nowrap;
 }
 
 .lw-progressBar__bar {
@@ -48,41 +49,8 @@
     max-inline-size: 100%;
 }
 
-.lw-progressBar__tooltip {
-    position: absolute;
-    inset-block-end: calc(100% + #{v.$space-2});
-    inset-inline-start: var(--lw-progressBar-percent, 0%);
-    transform: var(--lw-progressBar-tooltipTransform, translateX(-50%));
-    opacity: 1;
-
-    background-color: var(--lw-color-primary-highlighted);
-    color: var(--lw-color-white);
-    padding-block: v.$space-1;
-    padding-inline: v.$space-1;
-    border-radius: 9999rem;
-    pointer-events: none;
-    white-space: nowrap;
-    z-index: 1;
-    transition: left 0.4s ease, transform 0.4s ease;
-}
-
-.lw-progressBar__tooltip::after {
-    content: '';
-    position: absolute;
-    inset-block-start: 100%;
-    inset-inline-start: 50%;
-    transform: translateX(-50%);
-    border: 0.375rem solid transparent;
-    border-block-start-color: var(--lw-color-primary-highlighted);
-}
-
 @media (max-width: v.$bp-md) {
     .lw-progressBar__labelRow {
-        margin-block-end: v.$space-5;
         flex-wrap: wrap;
-    }
-
-    .lw-progressBar__tooltip {
-        inset-block-end: calc(100% + #{v.$space-1});
     }
 }

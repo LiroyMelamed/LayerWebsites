@@ -60,6 +60,12 @@ export default function CaseMenuItem({
     return (
         <SimpleContainer className="lw-caseMenuItem">
             <SimpleContainer className="lw-caseMenuItem__header" onPress={() => setIsOpen(!isOpen)}>
+                <ImageButton
+                    src={icons.Button.DownArrow}
+                    className="lw-caseMenuItem__toggle"
+                    style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                />
+
                 <SimpleContainer className="lw-caseMenuItem__content">
                     <SimpleContainer className="lw-caseMenuItem__row lw-caseMenuItem__row--top">
                         <div className="lw-caseMenuItem__title">
@@ -91,11 +97,7 @@ export default function CaseMenuItem({
                     </SimpleContainer>
                 </SimpleContainer>
 
-                <ImageButton
-                    src={icons.Button.DownArrow}
-                    className="lw-caseMenuItem__toggle"
-                    style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
-                />
+
             </SimpleContainer>
 
             <CaseMenuItemOpen

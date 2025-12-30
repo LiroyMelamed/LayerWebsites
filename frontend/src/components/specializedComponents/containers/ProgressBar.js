@@ -13,11 +13,6 @@ const ProgressBar = ({ IsClosed, currentStage, totalStages, style }) => {
 
     const cssVars = {
         '--lw-progressBar-percent': `${percentage}%`,
-        '--lw-progressBar-tooltipTransform': percentage === 0
-            ? 'translateX(0)'
-            : percentage === 100
-                ? 'translateX(-100%)'
-                : 'translateX(-50%)',
     };
 
     const mergedStyle = style ? { ...cssVars, ...style } : cssVars;
@@ -27,13 +22,9 @@ const ProgressBar = ({ IsClosed, currentStage, totalStages, style }) => {
             <SimpleContainer className="lw-progressBar__labelRow">
                 <TextBold12>שלבים שהסתיימו:</TextBold12>
                 <Text12>{CurrentStageAccordingToIsClosed}/{totalStages}</Text12>
+                <Text12 className="lw-progressBar__percent">{Math.round(percentage)}%</Text12>
             </SimpleContainer>
             <div className="lw-progressBar__bar">
-                <Text12
-                    className="lw-progressBar__tooltip"
-                >
-                    {Math.round(percentage)}%
-                </Text12>
                 <div className="lw-progressBar__fill" />
             </div>
         </div>

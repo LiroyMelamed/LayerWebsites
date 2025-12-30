@@ -88,7 +88,7 @@ const GenericButton = forwardRef(({
 
     const buttonStyle = {
         ...styles.button,
-        padding: size === buttonSizes.SMALL ? '10px 16px' : '14px 24px',
+        padding: size === buttonSizes.SMALL ? '0.4rem 0.5rem' : '0.8rem 1rem',
         height: `${getButtonHeightBySize(size)}px`,
         backgroundColor: getBackgroundColor(),
         borderWidth: hasBorder ? '1px' : '0',
