@@ -1,33 +1,53 @@
+@use '../../styles/variables' as v;
+@use '../../styles/mixins' as m;
+
 .lw-simpleTable {
+  --lw-simpleTable-cellMin: 7.5rem;
+  --lw-simpleTable-cellPaddingBlock: #{v.$space-2};
+  --lw-simpleTable-cellPaddingInline: #{v.$space-3};
+  --lw-simpleTable-rowGap: 0;
+
   max-height: 100%;
   overflow: hidden;
   flex-direction: column;
 }
 
 .lw-simpleTable__titleRow {
-  flex-direction: row;
+  @include m.row(v.$space-2);
   width: 100%;
-  border-bottom: 1px solid #ddd;
-  flex-wrap: wrap;
+  border-block-end: 0.0625rem solid var(--lw-color-disabled);
 }
 
 .lw-simpleTable__row {
-  display: flex;
-  flex-direction: row;
+  @include m.row(var(--lw-simpleTable-rowGap));
   width: 100%;
-  border-bottom: 1px solid #f0f0f0;
-  padding-block: 0.5rem;
-  padding-inline: 0;
-  flex-wrap: wrap;
+  border-block-end: 0.0625rem solid var(--lw-color-secondary-highlighted);
+  background-color: var(--lw-color-transparent);
+}
+
+.lw-simpleTable__row:hover {
+  background-color: var(--lw-color-secondary-highlighted);
+}
+
+.lw-simpleTable__row:focus-within {
+  outline: 0.125rem solid var(--lw-color-primary);
+  outline-offset: -0.125rem;
 }
 
 .lw-simpleTable__cell {
   flex: 1;
-  padding: 0.5rem;
+  padding-block: var(--lw-simpleTable-cellPaddingBlock);
+  padding-inline: var(--lw-simpleTable-cellPaddingInline);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  min-width: 3.75rem;
+  min-width: var(--lw-simpleTable-cellMin);
+  text-align: start;
+  font-variant-numeric: tabular-nums;
+}
+
+.lw-simpleTable__cell--header {
+  font-weight: 600;
 }
 
 .lw-simpleTable__cellText {
@@ -38,8 +58,17 @@
   width: 100%;
 }
 
+.lw-simpleTable__body {
+  display: flex;
+  flex-direction: column;
+}
+
+.lw-simpleTable__state {
+  padding: v.$space-6;
+  min-block-size: 7.5rem;
+}
+
 .lw-simpleTable__noData {
   text-align: center;
-  color: #888;
-  padding: 1.25rem;
+  color: var(--lw-color-winter);
 }
