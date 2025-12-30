@@ -18,10 +18,14 @@ const filesRoutes = require("./routes/filesRoutes");
 const signingFileRoutes = require("./routes/signingFileRoutes");
 
 const authMiddleware = require("./middlewares/authMiddleware");
+const { createRateLimitMiddleware, getClientIp } = require("./utils/rateLimiter");
 
 
 
 const app = express();
+
+// Only trust proxy headers when explicitly enabled (prevents spoofing x-forwarded-for)
+app.set('trust proxy', process.env.TRUST_PROXY === 'true');
 
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
@@ -63,6 +67,22 @@ app.use(
 
 app.use(express.json());
 
+// Backend Phase: anti-flood (per-IP)
+const trustProxy = process.env.TRUST_PROXY === 'true';
+app.use(
+    '/api',
+    createRateLimitMiddleware({
+        name: 'ip',
+        windowMs: process.env.RATE_LIMIT_IP_WINDOW_MS,
+        max: process.env.RATE_LIMIT_IP_MAX,
+        message: 'יותר מדי בקשות. נסה שוב מאוחר יותר.',
+        trustProxy,
+        keyFn: (req) => getClientIp(req, { trustProxy }),
+        // allow health checks without consuming budget
+        skip: (req) => req.path === '/health',
+    })
+);
+
 async function getPublicIp() {
     try {
         const response = await axios.get('https://api.ipify.org?format=json');
@@ -73,7 +93,19 @@ async function getPublicIp() {
 }
 
 
-app.use("/api/Auth", authRoutes);
+// Stricter anti-flood for auth endpoints
+app.use(
+    "/api/Auth",
+    createRateLimitMiddleware({
+        name: 'auth-ip',
+        windowMs: process.env.RATE_LIMIT_AUTH_IP_WINDOW_MS || String(10 * 60 * 1000),
+        max: process.env.RATE_LIMIT_AUTH_IP_MAX || '40',
+        message: 'יותר מדי ניסיונות התחברות. נסה שוב מאוחר יותר.',
+        trustProxy,
+        keyFn: (req) => getClientIp(req, { trustProxy }),
+    }),
+    authRoutes
+);
 app.use("/api/Customers", customerRoutes);
 app.use("/api/Cases", caseRoutes);
 app.use("/api/Admins", adminRoutes);

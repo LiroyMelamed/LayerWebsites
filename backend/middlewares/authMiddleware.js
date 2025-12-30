@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
+const { consume } = require("../utils/rateLimiter");
 
 // Define a secret key for JWTs. Use an environment variable in production.
 const SECRET_KEY = process.env.JWT_SECRET || "supersecretkey";
@@ -30,6 +31,20 @@ const authMiddleware = (req, res, next) => {
             Role: decoded.role,
             PhoneNumber: decoded.phoneNumber
         };
+
+        // Backend Phase: anti-flood (per-user)
+        const windowMs = Number.parseInt(process.env.RATE_LIMIT_USER_WINDOW_MS || String(5 * 60 * 1000), 10);
+        const max = Number.parseInt(process.env.RATE_LIMIT_USER_MAX || '600', 10);
+
+        const rl = consume({
+            key: `user:${req.user.UserId}`,
+            windowMs,
+            max,
+        });
+
+        if (!rl.allowed) {
+            return res.status(429).json({ message: "יותר מדי בקשות. נסה שוב מאוחר יותר." });
+        }
 
         // Pass control to the next handler in the middleware chain
         next();
