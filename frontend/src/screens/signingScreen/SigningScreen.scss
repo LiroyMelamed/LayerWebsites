@@ -16,7 +16,7 @@
 }
 
 .lw-signingScreen__tabsRow {
-    @include m.row(v.$space-6);
+    @include m.row(v.$space-4, wrap, center, center);
     justify-content: center;
     margin-block-start: v.$space-6;
     margin-block-end: v.$space-4;
@@ -38,12 +38,14 @@
     flex-direction: column;
     width: 100%;
     max-width: 56.25rem;
+    min-inline-size: 0;
 }
 
 .lw-signingScreen__fileHeaderRow {
     @include m.row(v.$space-2);
     margin-bottom: 0.625rem;
     width: 100%;
+    min-inline-size: 0;
 }
 
 .lw-signingScreen__fileHeaderRow .lw-signingScreen__chip {
@@ -87,6 +89,7 @@
     font-size: 0.8125rem;
     color: #555;
     margin-bottom: 0.25rem;
+    overflow-wrap: anywhere;
 }
 
 .lw-signingScreen__progress {
@@ -114,6 +117,26 @@
 }
 
 .lw-signingScreen__actionsRow {
-    @include m.row(v.$space-2);
+    @include m.row(v.$space-2, wrap);
     margin-block-start: v.$space-3;
+}
+
+.lw-signingScreen__actionsRow .lw-textButtonWithTwoOptionalIcons {
+    min-block-size: 2.75rem;
+    flex: 1 1 12rem;
+}
+
+@media (max-width: v.$bp-narrow) {
+    .lw-signingScreen__tabsRow {
+        gap: v.$space-2;
+    }
+
+    .lw-signingScreen__tabsRow .lw-textButtonWithTwoOptionalIcons {
+        width: 100%;
+    }
+
+    .lw-signingScreen__actionsRow .lw-textButtonWithTwoOptionalIcons {
+        width: 100%;
+        flex-basis: 100%;
+    }
 }

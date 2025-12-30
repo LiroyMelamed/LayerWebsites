@@ -37,9 +37,6 @@ export default function SigningScreen() {
 
     if (isPerforming) return <SimpleLoader />;
 
-    console.log('clientFilesData:', clientFilesData);
-
-
     const files = clientFilesData?.files || [];
 
     const pendingFiles = files.filter(

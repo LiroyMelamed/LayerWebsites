@@ -266,3 +266,17 @@ Fixes:
 Remaining:
 - Verify the PDF viewer itself stays within the viewport at 360px (viewer/overlay layout is mostly inside the PdfViewer component).
 
+#### SigningScreen (Client)
+Findings:
+- Tabs row could overflow at ~360px due to wide button labels + no wrap.
+- Actions row could overflow when “sign/download” + “details” buttons sit side-by-side.
+- Long notes/case names could cause awkward wrapping or x-overflow in detail rows.
+
+Fixes:
+- Made tabs and actions rows wrap on narrow widths and reduced tab-row gap at the narrow breakpoint.
+- Enforced `2.75rem` minimum touch target and flex-basis rules for actions buttons to prevent horizontal overflow.
+- Made detail rows wrap safely (`overflow-wrap: anywhere`) and ensured cards/headers are shrink-safe (`min-inline-size: 0`).
+
+Remaining:
+- Quick 360px sweep: confirm tabs/actions collapse to a single column cleanly and SignatureCanvas modal overlays do not clip.
+
