@@ -164,8 +164,13 @@ Decision rule:
 - Customers: admin-style endpoints are admin-only (defense-in-depth in routes + controller)
 - Integration tests proving cross-user access is blocked: `backend/tests/authz.integration.test.js`
 
+6) Anti-flood refinements
+- Rate limiter IP extraction validates/normalizes IPs (prevents header spoofing from exploding key cardinality)
+- In-memory rate-limit store is pruned periodically (stale keys + size cap)
+- Unit tests: `backend/tests/rateLimiter.test.js`
+
 ### Next
-6) Query performance follow-ups
+7) Query performance follow-ups
 - Add pagination to high-cardinality list endpoints (where applicable)
 - Add/verify DB indexes for hot paths (see notes below)
 
