@@ -2,65 +2,66 @@
 @use '../../../styles/mixins' as m;
 
 .lw-progressBar {
-  --lw-progressBar-height: 0.75rem;
-  --lw-progressBar-radius: 0.75rem;
+    --lw-progressBar-height: 0.75rem;
+    --lw-progressBar-radius: 0.75rem;
 
-  width: 100%;
+    width: 100%;
 }
 
 .lw-progressBar__labelRow {
-  @include m.row(v.$space-2, nowrap);
-  justify-content: space-between;
-  margin-block-end: v.$space-3;
+    @include m.row(v.$space-2, nowrap);
+    margin-block-end: v.$space-3;
+}
+
+.lw-progressBar__labelRow > :last-child {
+    margin-inline-start: auto;
 }
 
 .lw-progressBar__bar {
-  position: relative;
-  height: var(--lw-progressBar-height);
-  background:
-    linear-gradient(180deg, var(--lw-color-secondary-highlighted), var(--lw-color-disabled));
-  border: 0.0625rem solid var(--lw-color-disabled);
-  border-radius: var(--lw-progressBar-radius);
-  overflow: visible;
+    position: relative;
+    height: var(--lw-progressBar-height);
+    background:
+        linear-gradient(180deg, var(--lw-color-secondary-highlighted), var(--lw-color-disabled));
+    border: 0.0625rem solid var(--lw-color-disabled);
+    border-radius: var(--lw-progressBar-radius);
+    overflow: visible;
 }
 
 .lw-progressBar__fill {
-  height: 100%;
-  width: var(--lw-progressBar-percent, 0%);
-  background:
-    repeating-linear-gradient(
-      45deg,
-      var(--lw-color-primary),
-      var(--lw-color-primary) 0.5rem,
-      var(--lw-color-primary-highlighted) 0.5rem,
-      var(--lw-color-primary-highlighted) 1rem
-    );
-  transition: width 0.4s ease;
-  border-radius: var(--lw-progressBar-radius);
-  position: relative;
+    height: 100%;
+    width: var(--lw-progressBar-percent, 0%);
+    background:
+        repeating-linear-gradient(45deg,
+            var(--lw-color-primary),
+            var(--lw-color-primary) 0.5rem,
+            var(--lw-color-primary-highlighted) 0.5rem,
+            var(--lw-color-primary-highlighted) 1rem);
+    transition: width 0.4s ease;
+    border-radius: var(--lw-progressBar-radius);
+    position: relative;
 }
 
 .lw-progressBar__tooltip {
-  position: absolute;
-  inset-block-end: calc(100% + #{v.$space-2});
-  inset-inline-start: var(--lw-progressBar-percent, 0%);
-  transform: var(--lw-progressBar-tooltipTransform, translateX(-50%));
-  opacity: var(--lw-progressBar-tooltipOpacity, 0);
+    position: absolute;
+    inset-block-end: calc(100% + #{v.$space-2});
+    inset-inline-start: var(--lw-progressBar-percent, 0%);
+    transform: var(--lw-progressBar-tooltipTransform, translateX(-50%));
+    opacity: var(--lw-progressBar-tooltipOpacity, 0);
 
-  background-color: var(--lw-color-primary-highlighted);
-  color: var(--lw-color-white);
-  padding-block: v.$space-1;
-  padding-inline: v.$space-2;
-  border-radius: 9999px;
-  transition: left 0.4s ease, transform 0.4s ease;
+    background-color: var(--lw-color-primary-highlighted);
+    color: var(--lw-color-white);
+    padding-block: v.$space-1;
+    padding-inline: v.$space-1;
+    border-radius: 9999rem;
+    transition: left 0.4s ease, transform 0.4s ease;
 }
 
 .lw-progressBar__tooltip::after {
-  content: '';
-  position: absolute;
-  inset-block-start: 100%;
-  inset-inline-start: 50%;
-  transform: translateX(-50%);
-  border: 0.375rem solid transparent;
-  border-block-start-color: var(--lw-color-primary-highlighted);
+    content: '';
+    position: absolute;
+    inset-block-start: 100%;
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+    border: 0.375rem solid transparent;
+    border-block-start-color: var(--lw-color-primary-highlighted);
 }
