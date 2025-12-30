@@ -15,6 +15,10 @@ const getStatusMeta = (status) => {
 
 export default function SigningFileCard({ file, detailsRows = [], children, style }) {
     const statusMeta = getStatusMeta(file.Status);
+    const chipStyle = {
+        "--chip-bg": statusMeta.bg,
+        "--chip-color": statusMeta.color,
+    };
 
     return (
         <SimpleContainer className="lw-signing-fileCard" style={style || undefined}>
@@ -22,10 +26,7 @@ export default function SigningFileCard({ file, detailsRows = [], children, styl
                 <TextBold16>{file.FileName}</TextBold16>
                 <span
                     className="lw-signing-fileCardStatus"
-                    style={{
-                        "--chip-bg": statusMeta.bg,
-                        "--chip-color": statusMeta.color,
-                    }}
+                    style={chipStyle}
                 >
                     {statusMeta.text}
                 </span>

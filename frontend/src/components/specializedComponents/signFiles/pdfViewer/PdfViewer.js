@@ -75,6 +75,7 @@ export default function PdfViewer({
         <SimpleContainer className="lw-signing-pdfViewer">
             {Array.from({ length: pagesToRender }).map((_, i) => {
                 const pageNumber = i + 1;
+                const pageInnerStyle = { width: renderWidth };
 
                 return (
                     <SimpleContainer
@@ -105,7 +106,7 @@ export default function PdfViewer({
 
                         <SimpleContainer
                             className="lw-signing-pageInner"
-                            style={{ width: renderWidth }}
+                            style={pageInnerStyle}
                             data-page-number={pageNumber}
                         >
                             <PdfPage

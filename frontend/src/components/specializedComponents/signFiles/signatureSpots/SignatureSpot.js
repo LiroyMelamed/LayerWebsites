@@ -20,6 +20,16 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
 
     const hasSignatureImage = Boolean(spot?.IsSigned && (spot?.SignatureUrl || spot?.signatureUrl));
 
+    const spotStyle = {
+        top: (spot.y || 0) * (scale || 1),
+        left: (spot.x || 0) * (scale || 1),
+        width: (spot.width || 130) * (scale || 1),
+        height: (spot.height || 48) * (scale || 1),
+        ...(hasSignatureImage ? { backgroundColor: "transparent" } : null),
+        "--spot-bg": colorScheme.bg,
+        "--spot-border": colorScheme.border,
+    };
+
     const startDrag = (e) => {
         e.preventDefault();
         const startX = e.clientX;
@@ -50,15 +60,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
             ref={ref}
             onMouseDown={startDrag}
             className="lw-signing-spot"
-            style={{
-                top: (spot.y || 0) * (scale || 1),
-                left: (spot.x || 0) * (scale || 1),
-                width: ((spot.width || 130) * (scale || 1)),
-                height: ((spot.height || 48) * (scale || 1)),
-                ...(hasSignatureImage ? { backgroundColor: "transparent" } : null),
-                "--spot-bg": colorScheme.bg,
-                "--spot-border": colorScheme.border,
-            }}
+            style={spotStyle}
             title={`חתום על ידי: ${signerName}`}
         >
             {hasSignatureImage ? (
