@@ -76,7 +76,7 @@ export default function CaseMenuItem({
                         <SimpleContainer className="lw-caseMenuItem__pair lw-caseMenuItem__pair--grow">
                             <TextBold12>{rightPreSecondLine}</TextBold12>
                             {isPerformingSetCase ? (
-                                <SimpleLoader style={{ width: null }} />
+                                <SimpleLoader />
                             ) : (
                                 <Text12>{fullCaseListener.Descriptions[fullCaseListener.CurrentStage - 1].Text}</Text12>
                             )}

@@ -55,7 +55,7 @@ export default function CaseTypeMenuItem({
                         <SimpleContainer className="lw-caseTypeMenuItem__pair lw-caseTypeMenuItem__pair--grow">
                             <TextBold12>{rightPreSecondLine}</TextBold12>
                             {isPerformingSetCase ? (
-                                <SimpleLoader style={{ width: null }} />
+                                <SimpleLoader />
                             ) : (
                                 <Text12>{currentStage}</Text12>
                             )}

@@ -1,0 +1,15 @@
+@use '../../../../styles/variables' as v;
+
+.lw-caseTypeMenuItemOpen {
+    overflow: hidden;
+    transition: max-height 0.5s ease, opacity 0.5s ease;
+    max-height: 0;
+    opacity: 0;
+    margin-block-start: 0.5rem; /* 8px */
+    margin-inline-end: 1.75rem; /* 28px */
+}
+
+.lw-caseTypeMenuItemOpen--open {
+    max-height: 43.75rem; /* 700px */
+    opacity: 1;
+}

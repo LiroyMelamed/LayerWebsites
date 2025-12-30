@@ -7,7 +7,7 @@ import "./CaseTypeTimeline.scss";
 
 export default function CaseTypeTimeline({ stages = [], title, style }) {
     return (
-        <SimpleScrollView className="lw-caseTypeTimeline" style={{ ...style, width: "100%" }}>
+        <SimpleScrollView className="lw-caseTypeTimeline" style={style}>
             <SimpleContainer className="lw-caseTypeTimeline__container">
                 <SimpleContainer className="lw-caseTypeTimeline__verticalLine" />
 
