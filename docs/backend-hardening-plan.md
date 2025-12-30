@@ -173,6 +173,7 @@ Decision rule:
 - Added optional `limit`/`offset` support (validated + capped) to reduce risk of unbounded list queries
 - Backwards-compat: pagination only applies when `limit` or `offset` is provided
 - Endpoints: cases list/tagged list, admin customers list/search, signing file lists
+- Integration test added (cases list): `backend/tests/pagination.cases.integration.test.js`
 
 ### Next
 8) Query performance follow-ups
