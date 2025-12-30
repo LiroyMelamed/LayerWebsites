@@ -5,22 +5,25 @@
   display: flex;
   width: 100%;
   box-sizing: border-box;
+  min-inline-size: 0;
 }
 
 .lw-caseFullView__row {
   width: 100%;
   @include m.row(v.$space-2);
   margin-block-end: v.$space-4;
-  min-width: 0;
+  min-inline-size: 0;
 }
 
 .lw-caseFullView__field {
-  min-width: 0;
-  flex: 1;
-  align-items: center;
+  flex: 1 1 20rem;
+  min-inline-size: 14rem;
+  max-inline-size: 100%;
 }
 
 .lw-caseFullView__textAreaRow {
+  width: 100%;
+  min-inline-size: 0;
   margin-block-start: v.$space-2;
 }
 

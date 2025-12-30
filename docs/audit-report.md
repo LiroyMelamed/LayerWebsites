@@ -213,3 +213,14 @@ Fixes:
 Remaining:
 - Audit CaseFullView (popup) for long-field truncation and 360px overflow.
 
+#### CaseFullView (Case details popup)
+Findings:
+- Two-column rows could get too cramped at ~360px widths; needed clearer wrapping behavior.
+
+Fixes:
+- Set field flex-basis/min-inline-size so rows wrap to 1-column on narrow widths.
+- Made the container/rows/textareas explicitly overflow-safe (`min-inline-size: 0`, full-width textarea rows).
+
+Remaining:
+- Consider adding explicit padding/gutters inside the popup scroll content if the popup frame feels tight on mobile (defer unless requested).
+
