@@ -41,6 +41,21 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Phase F+: accessibility quick win — visible keyboard focus */
+:where(
+    a,
+    button,
+    input,
+    select,
+    textarea,
+    summary,
+    [role='button'],
+    [tabindex]:not([tabindex='-1'])
+  ):focus-visible {
+  outline: 0.125rem solid var(--lw-color-primary);
+  outline-offset: 0.125rem;
+}
+
 /* Phase F: standard row layout (RTL-safe via gap + logical sizing) */
 .lw-row {
   --lw-row-gap: #{v.$space-3};
@@ -58,6 +73,7 @@ body {
 }
 
 @media (max-width: 24rem) {
+
   .lw-row__grow,
   .lw-row__control {
     flex-basis: 100%;
