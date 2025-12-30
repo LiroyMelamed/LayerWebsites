@@ -29,7 +29,6 @@ export default function TopAndRightNavBar({ chosenIndex = -1, children, LogoNavi
           <SimpleContainer className="lw-topAndRightNavBar__logoRow">
             <ImageButton
               src={Logo}
-              height={60}
               className="lw-topAndRightNavBar__logoBtn"
               onPress={() => {
                 setCurrentIndex(-1);

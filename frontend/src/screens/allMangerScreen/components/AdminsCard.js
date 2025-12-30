@@ -39,7 +39,7 @@ export default function AdminsCard({ adminList, isPerforming, performGetAdmins, 
 
                 <Text14 className="lw-adminsCard__headerCell">{'נוצר בתאריך'}</Text14>
 
-                <Text14 className="lw-adminsCard__headerCell">{'מייל'}</Text14>
+                <Text14 className="lw-adminsCard__headerCell lw-adminsCard__headerCell--email">{'מייל'}</Text14>
 
                 <Text14 className="lw-adminsCard__headerCell">{'טלפון'}</Text14>
             </SimpleContainer>

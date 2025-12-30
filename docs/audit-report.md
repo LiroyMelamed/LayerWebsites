@@ -151,3 +151,47 @@ Open these screens and visually confirm (RTL alignment, no awkward gaps, no unex
 - Signing flow: `SigningScreen`, `SigningManagerScreen`, `UploadFileForSigningScreen`
 - Notifications: `NotificationsScreen`
 
+---
+
+## Phase 1 — Responsive + RTL + layout audit (batch, 2025-12-30)
+
+### Goals (per requirements)
+- Consistent breakpoints (target: `48rem` / ~768px) and RTL-safe layout conventions.
+- Prefer SCSS (rem + logical properties) and minimize runtime inline layout styles.
+- Establish a repeatable pattern for hiding non-critical table columns on small screens.
+
+### Utilities added/extended
+- `frontend/src/styles/_variables.scss`
+  - Added breakpoint tokens: `$bp-narrow`, `$bp-md`, `$bp-lg`.
+- `frontend/src/styles/_mixins.scss`
+  - Added `@mixin fluid-size($property, $minPx, $preferred, $maxPx)` to standardize `clamp(rem(), ..., rem())` sizing.
+- `frontend/src/styles/_globals.scss`
+  - Added `.lw-hideOnMobile` utility (hides at `max-width: $bp-md`).
+  - Switched the existing narrow breakpoint query to `$bp-narrow`.
+
+Also:
+- Normalized signing-related media queries to the shared `$bp-md` token (replacing literal `48rem`).
+
+### Responsive logo sizing (RTL-safe)
+- Small screen top toolbar logo: moved sizing into SCSS (fluid clamp) and removed inline width/height props.
+- Sidebar logo (TopAndRightNavBar): moved sizing into SCSS and made it fluid.
+- Login + OTP top-corner logos: replaced fixed `3.5rem` size with fluid clamp.
+
+Files touched:
+- `frontend/src/components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen.scss`
+- `frontend/src/components/navBars/TopAndRightNavBar.scss`
+- `frontend/src/screens/loginScreen/components/TopCenteredLogo.scss`
+- `frontend/src/screens/otpScreen/components/TopCenteredLogoOtp.scss`
+
+### Mobile table column hiding (consistent rule)
+- Customers: hide Email on small screens (header + rows).
+- Admins/Managers: hide Email on small screens (header + rows).
+
+Pattern:
+- Add a dedicated `--email` classname on the header cell and the data cell and hide them with a `max-width: $bp-md` media query.
+
+### Remaining (not done yet)
+- Systematically scan all remaining screens/components for anonymous layout elements, physical left/right props, and overflow at 360/768/1280.
+- Apply the hide-on-mobile pattern to any other dense lists/tables where Email/secondary columns are optional.
+- Continue replacing any remaining fixed pixel sizes or one-off breakpoints with shared tokens where safe.
+

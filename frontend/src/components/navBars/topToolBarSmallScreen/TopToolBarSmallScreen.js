@@ -42,7 +42,6 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
             <SimpleContainer className="lw-topToolBarSmallScreen">
                 <ImageButton
                     src={Logo}
-                    height={48}
                     className="lw-topToolBarSmallScreen__logoButton"
                     onPress={() => { navigate(LogoNavigate) }}
                 />

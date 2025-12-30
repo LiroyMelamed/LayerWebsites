@@ -1,3 +1,5 @@
+@use '../../../styles/variables' as v;
+
 .lw-signing-scope {
     direction: rtl;
     text-align: center;
@@ -53,7 +55,7 @@
     overflow-y: auto;
 }
 
-@media (max-width: 48rem) {
+@media (max-width: v.$bp-md) {
     .lw-signing-modalBody {
         grid-template-columns: 1fr;
     }

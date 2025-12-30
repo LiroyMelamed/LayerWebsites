@@ -4,7 +4,15 @@
   @if (unitless($px)) {
     @return ($px / 16) * 1rem;
   }
+
   @return (strip-unit($px) / 16) * 1rem;
+}
+
+// Responsive sizing helper
+// Usage: @include fluid-size(width, 160, 55vw, 320);
+// min/max are px numbers (converted to rem); preferred can be any CSS length (vw/vh/rem/calc()).
+@mixin fluid-size($property, $minPx, $preferred, $maxPx) {
+  #{$property}: clamp(rem($minPx), #{$preferred}, rem($maxPx));
 }
 
 @mixin rtl {

@@ -41,7 +41,7 @@ export default function ClientMenuItem({
                         <Text14>{clientName || "-"}</Text14>
                     </div>
 
-                    <div className="lw-clientMenuItem__cell">
+                    <div className="lw-clientMenuItem__cell lw-clientMenuItem__cell--email">
                         <Text14 shouldApplyClamping>{clientMail || "-"}</Text14>
                     </div>
 

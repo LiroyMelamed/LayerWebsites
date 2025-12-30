@@ -1,3 +1,5 @@
+@use '../../../styles/mixins' as m;
+
 .lw-topCenteredLogo {
     display: flex;
     flex-direction: column;
@@ -5,15 +7,11 @@
     position: relative;
 }
 
-.lw-topCenteredLogo__cornerLogo {
-    position: absolute;
-    top: 0;
-    inset-inline-start: 0.75rem;
-}
+.lw-topCenteredLogo__cornerLogo {}
 
 .lw-topCenteredLogo__logoImage {
-    width: 3.5rem;
-    height: 3.5rem;
+    @include m.fluid-size(width, 48, 12vw, 72);
+    @include m.fluid-size(height, 48, 12vw, 72);
 }
 
 .lw-topCenteredLogo__title {

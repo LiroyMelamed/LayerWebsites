@@ -114,3 +114,27 @@ General pass/fail rule (for every check below)
 - Action: at each screen, visually confirm RTL alignment on rows (icons/text order, edge alignment) while resizing.
 - Expected: logical spacing holds (start/end), and rows wrap without reversing meaning.
 - Pitfalls: margins applied on the wrong side, icons on the wrong edge, ellipsis truncation on the wrong side, focus outline clipped.
+
+---
+
+## UI Responsive + RTL pass (explicit)
+
+Run these checks at 360/768/1280.
+
+1) Toolbars / logos
+- Screens: any page that shows a top toolbar or sidebar nav.
+- Expected:
+	- Logos scale smoothly (no jumping) and never overflow their container.
+	- No horizontal scrollbars introduced by logo images.
+
+2) Auth headers (Login + OTP)
+- Screens: LoginScreen, OtpScreen.
+- Expected:
+	- Top logo scales with viewport width; title spacing remains stable.
+	- Inputs stay RTL-aligned and don’t cause page-level x-scroll.
+
+3) Dense customer/admin lists
+- Screens: MainScreen “לקוחות” (ClientsCard) and Managers/Admins list screens.
+- Expected:
+	- At ~360px: Email column is hidden (header + rows), but Company/Name/Phone remain visible and aligned.
+	- At >=768px: Email column is visible again.

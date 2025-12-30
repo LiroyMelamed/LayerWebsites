@@ -8,7 +8,7 @@
     padding: v.$space-4;
 }
 
-@media (max-width: 48rem) {
+@media (max-width: v.$bp-md) {
     .lw-uploadSigningScreen {
         padding: 0;
     }
@@ -128,7 +128,7 @@
     margin-block-end: v.$space-3;
 }
 
-.lw-uploadSigningScreen__viewerHeaderRow > :last-child {
+.lw-uploadSigningScreen__viewerHeaderRow> :last-child {
     margin-inline-start: auto;
 }
 

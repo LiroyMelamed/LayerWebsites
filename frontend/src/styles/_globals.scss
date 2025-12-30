@@ -42,18 +42,23 @@ body {
 }
 
 /* Phase F+: accessibility quick win — visible keyboard focus */
-:where(
-    a,
-    button,
-    input,
-    select,
-    textarea,
-    summary,
-    [role='button'],
-    [tabindex]:not([tabindex='-1'])
-  ):focus-visible {
+:where(a,
+  button,
+  input,
+  select,
+  textarea,
+  summary,
+  [role='button'],
+  [tabindex]:not([tabindex='-1'])):focus-visible {
   outline: 0.125rem solid var(--lw-color-primary);
   outline-offset: 0.125rem;
+}
+
+/* Shared utility: hide content on small screens (RTL-safe). */
+.lw-hideOnMobile {
+  @media (max-width: v.$bp-md) {
+    display: none !important;
+  }
 }
 
 /* Phase F: standard row layout (RTL-safe via gap + logical sizing) */
@@ -72,7 +77,7 @@ body {
   min-inline-size: var(--lw-row-control-min, 8.5rem);
 }
 
-@media (max-width: 24rem) {
+@media (max-width: v.$bp-narrow) {
 
   .lw-row__grow,
   .lw-row__control {

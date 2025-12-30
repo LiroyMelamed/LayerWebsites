@@ -40,7 +40,7 @@ export default function AdminMenuItem({
                         <Text14>{DateDDMMYY(CreatedAt)}</Text14>
                     </div>
 
-                    <div className="lw-adminMenuItem__cell">
+                    <div className="lw-adminMenuItem__cell lw-adminMenuItem__cell--email">
                         <Text14 shouldApplyClamping>{adminMail}</Text14>
                     </div>
 

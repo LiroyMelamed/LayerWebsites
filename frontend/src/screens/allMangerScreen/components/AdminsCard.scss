@@ -26,3 +26,9 @@
 .lw-adminsCard__emptyImage {
     height: 9.75rem;
 }
+
+@media (max-width: v.$bp-md) {
+    .lw-adminsCard__headerCell--email {
+        display: none;
+    }
+}

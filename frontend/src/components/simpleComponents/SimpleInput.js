@@ -49,6 +49,11 @@ const SimpleInput = forwardRef(
             setIsFocused(true);
         }
 
+        function handleBlur() {
+            onBlur?.();
+            setIsFocused(false);
+        }
+
         const handleInputChange = (e) => {
             const newValue = e.target.value;
             setDelayedValue(newValue);
@@ -74,6 +79,8 @@ const SimpleInput = forwardRef(
 
         const shouldFloatLabel = isFocused || !!delayedValue || type === 'date';
 
+        const resolvedDir = props.dir || 'rtl';
+
         const sizePaddingPx = Number.parseInt(String(sizeStyles.padding).replace('px', ''), 10);
         const paddingBlock = leftIcon ? 0.5 : sizePaddingPx / 16;
         const paddingInlineStart = rightIcon ? 30 / 16 : sizePaddingPx / 16;
@@ -82,8 +89,10 @@ const SimpleInput = forwardRef(
         const containerCssVars = {
             '--lw-simpleInput-borderColor': getBorderColor(),
             '--lw-simpleInput-bgColor': getBackgroundColor(),
-            '--lw-simpleInput-shadow': isFocused ? '0 0 0.5rem rgba(59, 130, 246, 0.12)' : 'none',
+            '--lw-simpleInput-shadow': 'none',
             '--lw-simpleInput-height': `${sizeStyles.height / 16}rem`,
+
+            '--lw-simpleInput-direction': resolvedDir,
 
             '--lw-simpleInput-labelRight': rightIcon ? `${40 / 16}rem` : `${8 / 16}rem`,
             '--lw-simpleInput-labelTop': String(sizeStyles.labelTop),
@@ -125,10 +134,12 @@ const SimpleInput = forwardRef(
                 <input
                     type={type}
                     className="lw-simpleInput__field"
+                    dir={resolvedDir}
                     style={textStyle}
                     value={delayedValue}
                     onChange={handleInputChange}
                     onFocus={handleFocus}
+                    onBlur={handleBlur}
                     disabled={disabled}
                     {...props}
                 />

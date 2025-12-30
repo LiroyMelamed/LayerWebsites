@@ -37,7 +37,7 @@ export default function ClientsCard({ rePerformRequest, customerList, style }) {
 
                 <Text14 className="lw-clientsCard__headerCell">{'שם לקוח'}</Text14>
 
-                <Text14 className="lw-clientsCard__headerCell">{'מייל'}</Text14>
+                <Text14 className="lw-clientsCard__headerCell lw-clientsCard__headerCell--email">{'מייל'}</Text14>
 
                 <Text14 className="lw-clientsCard__headerCell">{'טלפון'}</Text14>
             </SimpleContainer>

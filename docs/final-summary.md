@@ -147,3 +147,17 @@ Evidence output:
 - docs/backend-hardening-plan.md
 - docs/e2e-checklist.md
 - docs/manual-qa-checklist.md
+
+---
+
+## Unreleased UI work (working tree)
+
+If these changes are present but not yet committed, they belong to the next UI batch:
+- Add shared responsive tokens/utilities (breakpoints + fluid clamp sizing + hide-on-mobile).
+- Make toolbar/login/OTP logos responsive without inline sizing props.
+- Hide non-critical Email column on small screens for customers and admins.
+
+After committing, re-run:
+```bash
+npm --prefix frontend run build
+```
