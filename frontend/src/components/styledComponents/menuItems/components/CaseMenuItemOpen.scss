@@ -1,3 +1,6 @@
+@use '../../../../styles/mixins' as m;
+@use '../../../../styles/variables' as v;
+
 .lw-caseMenuItemOpen {
     overflow: hidden;
     transition: max-height 0.5s ease, opacity 0.5s ease;
@@ -19,8 +22,7 @@
 }
 
 .lw-caseMenuItemOpen__row {
-    display: flex;
-    flex-direction: row;
+    @include m.row(v.$space-2, nowrap);
     flex: 1;
 }
 
@@ -43,10 +45,8 @@
 }
 
 .lw-caseMenuItemOpen__stagesHeader {
-    display: flex;
-    flex-direction: row;
+    @include m.row(v.$space-2, nowrap);
     flex: 1;
-    align-items: center;
     cursor: pointer;
 }
 
@@ -63,22 +63,17 @@
 }
 
 .lw-caseMenuItemOpen__actionsRow {
-    display: flex;
-    flex-direction: row;
-    margin-top: 1rem;
+    @include m.row(v.$space-2);
+    margin-block-start: v.$space-4;
 }
 
 .lw-caseMenuItemOpen__action {
-    margin-inline-end: 0.5rem;
 }
 
 .lw-caseMenuItemOpen__linkInputRow {
-    display: flex;
-    flex-direction: row;
+    @include m.row(v.$space-2, nowrap);
     flex: 1;
-    align-items: center;
 }
 
 .lw-caseMenuItemOpen__whatsAppInput {
-    margin-inline-start: 0.5rem;
 }
