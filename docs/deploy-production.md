@@ -56,6 +56,17 @@ Recommended approach:
   - `/etc/melamedlaw/backend.env` (chmod 600)
 - Export variables from it in the service shell, or use PM2 ecosystem env placeholders and `--update-env`.
 
+Template:
+- `backend/.env.production.example`
+
+Uploads/signing limits you must set/confirm (keep aligned with Nginx):
+- `API_JSON_LIMIT`, `API_URLENCODED_LIMIT`
+- `SERVER_REQUEST_TIMEOUT_MS`, `SERVER_HEADERS_TIMEOUT_MS`, `SERVER_KEEPALIVE_TIMEOUT_MS`
+- `MAX_SIGNING_PDF_BYTES`, `MAX_SIGNATURE_IMAGE_BYTES`, `SIGNING_PDF_OP_TIMEOUT_MS`
+
+See:
+- `docs/uploads-signing-production.md`
+
 ### 1.5 Logs directory
 ```bash
 sudo mkdir -p /var/log/melamedlaw-api

@@ -64,6 +64,21 @@ Object storage (Signing files / uploads)
 - `S3_KEY`
 - `S3_SECRET`
 
+Uploads / signing limits + timeouts
+- `API_JSON_LIMIT`
+- `API_URLENCODED_LIMIT`
+- `API_REQUEST_TIMEOUT_MS`
+- `SERVER_REQUEST_TIMEOUT_MS`
+- `SERVER_HEADERS_TIMEOUT_MS`
+- `SERVER_KEEPALIVE_TIMEOUT_MS`
+- `MAX_SIGNING_PDF_BYTES`
+- `MAX_SIGNATURE_IMAGE_BYTES`
+- `SIGNING_PDF_OP_TIMEOUT_MS`
+- `SIGNING_DEBUG_LOGS`
+
+See details + Nginx alignment guidance:
+- `docs/uploads-signing-production.md`
+
 SMS provider (OTP / notifications)
 - `TWILIO_ACCOUNT_SID`
 - `TWILIO_AUTH_TOKEN`
@@ -72,8 +87,8 @@ SMS provider (OTP / notifications)
 ### Frontend (production)
 
 Current state
-- The frontend currently contains a hard-coded API base URL selection in `frontend/src/api/apiUtils.js`.
-- Phase 2 will convert this to a production-ready config (`REACT_APP_API_BASE_URL`) without breaking local development.
+- Frontend API base is configured via `REACT_APP_API_BASE_URL` (CRA build-time env).
+- Ensure the production build sets it to your public API base (example: `https://api.example.com/api`).
 
 ---
 
