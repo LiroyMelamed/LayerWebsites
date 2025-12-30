@@ -4,6 +4,7 @@ const { formatPhoneNumber } = require("../utils/phoneUtils");
 const { sendMessage, COMPANY_NAME } = require("../utils/sendMessage");
 const { BUCKET, r2 } = require("../utils/r2");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+const { requireInt } = require("../utils/paramValidation");
 
 const getCustomers = async (req, res) => {
     try {
@@ -56,7 +57,8 @@ const addCustomer = async (req, res) => {
 };
 
 const updateCustomerById = async (req, res) => {
-    const { customerId } = req.params;
+    const customerId = requireInt(req, res, { source: 'params', name: 'customerId' });
+    if (customerId === null) return;
 
     const { name, email, phoneNumber, companyName } = req.body;
     try {
@@ -263,7 +265,8 @@ const updateCurrentCustomer = async (req, res) => {
 };
 
 const deleteCustomer = async (req, res) => {
-    const { userId } = req.params;
+    const userId = requireInt(req, res, { source: 'params', name: 'userId' });
+    if (userId === null) return;
 
     try {
         const client = await pool.connect();

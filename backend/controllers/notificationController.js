@@ -1,5 +1,6 @@
 // Direct import of the pg pool instance from a local configuration file
 const pool = require("../config/db");
+const { optionalInt, requireInt } = require("../utils/paramValidation");
 
 // Required for authentication logic (if used elsewhere in this file)
 const jwt = require("jsonwebtoken");
@@ -71,11 +72,22 @@ const saveDeviceToken = async (req, res) => {
 const getNotifications = async (req, res) => {
     const userId = req.user.UserId;
 
-    const limitRaw = req.query.limit;
-    const offsetRaw = req.query.offset;
+    const limit = optionalInt(req, res, {
+        source: 'query',
+        name: 'limit',
+        min: 1,
+        max: 200,
+        defaultValue: 50,
+    });
+    if (limit === null) return;
 
-    const limit = Math.min(Math.max(parseInt(limitRaw, 10) || 50, 1), 200);
-    const offset = Math.max(parseInt(offsetRaw, 10) || 0, 0);
+    const offset = optionalInt(req, res, {
+        source: 'query',
+        name: 'offset',
+        min: 0,
+        defaultValue: 0,
+    });
+    if (offset === null) return;
 
     try {
         const result = await pool.query(
@@ -103,13 +115,9 @@ const getNotifications = async (req, res) => {
  * @param {object} res - The Express response object.
  */
 const markNotificationAsRead = async (req, res) => {
-    const { id } = req.params;
+    const notificationId = requireInt(req, res, { source: 'params', name: 'id' });
+    if (notificationId === null) return;
     const userId = req.user.UserId;
-
-    const notificationId = parseInt(id, 10);
-    if (!Number.isFinite(notificationId)) {
-        return res.status(400).json({ message: "Invalid notification id" });
-    }
 
     try {
         // Update the notification's status in the database

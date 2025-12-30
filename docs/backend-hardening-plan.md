@@ -133,6 +133,26 @@ Decision rule:
 
 ---
 
+## Status
+
+### Done
+1) Rate limiting / anti-flood
+- Per-IP limiter for `/api/*` + stricter per-IP limiter for `/api/Auth/*`
+- Per-user limiter applied after JWT validation
+- Unit tests: `backend/tests/rateLimiter.test.js`
+
+2) Input validation hardening
+- Shared strict numeric parsing helper: `backend/utils/paramValidation.js`
+- Controllers updated to return `400` JSON on invalid numeric IDs before DB queries
+- Integration tests (real routes): `backend/tests/numericParamValidation.integration.test.js`
+
+### Next
+3) Caching layer (start safest)
+- CaseTypes list + get-by-id (short TTL + invalidation on writes)
+- One dashboard aggregate endpoint only if it is globally safe or explicitly scoped
+
+---
+
 ## C) Regression coverage (minimal but meaningful)
 - Unit tests for rate limiter window behavior
 - “Key scoping” tests for cache keys (user-scoped vs global)

@@ -2,6 +2,7 @@ const pool = require("../config/db"); // Direct import of the pg pool
 const { formatPhoneNumber } = require("../utils/phoneUtils");
 const { sendMessage, WEBSITE_DOMAIN } = require("../utils/sendMessage");
 const sendAndStoreNotification = require("../utils/sendAndStoreNotification"); // Import the new consolidated utility
+const { requireInt } = require("../utils/paramValidation");
 
 const _buildBaseCaseQuery = () => `
     SELECT
@@ -107,13 +108,10 @@ const getCases = async (req, res) => {
 
 const getCaseById = async (req, res) => {
     try {
-        const caseId = req.params.caseId;
+        const caseId = requireInt(req, res, { source: 'params', name: 'caseId' });
+        if (caseId === null) return;
         const userId = req.user?.UserId;
         const userRole = req.user?.Role;
-
-        if (!caseId) {
-            return res.status(400).json({ message: "Invalid case ID" });
-        }
 
         // Non-admin users can only access their own cases
         const query =
@@ -307,7 +305,8 @@ const addCase = async (req, res) => {
 };
 
 const updateCase = async (req, res) => {
-    const { caseId } = req.params;
+    const caseId = requireInt(req, res, { source: 'params', name: 'caseId' });
+    if (caseId === null) return;
     const { CaseName, CurrentStage, IsClosed, IsTagged, Descriptions, PhoneNumber, CustomerName, CompanyName, CaseTypeId, UserId, CaseManager, CaseManagerId, CaseTypeName, EstimatedCompletionDate, LicenseExpiryDate } = req.body;
 
     let client;
@@ -381,7 +380,8 @@ const updateCase = async (req, res) => {
 };
 
 const updateStage = async (req, res) => {
-    const { caseId } = req.params;
+    const caseId = requireInt(req, res, { source: 'params', name: 'caseId' });
+    if (caseId === null) return;
     const { CurrentStage, IsClosed, PhoneNumber, CustomerName, Descriptions, CaseName } = req.body;
     let notificationMessage = "";
     let notificationTitle = "";
@@ -395,6 +395,11 @@ const updateStage = async (req, res) => {
             "SELECT currentstage, isclosed, userid FROM cases WHERE caseid = $1",
             [caseId]
         );
+
+        if (currentData.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ message: "Case not found" });
+        }
 
         const currentStageValue = currentData.rows[0]?.currentstage;
         const currentlyClosed = currentData.rows[0]?.isclosed;
@@ -467,7 +472,8 @@ const updateStage = async (req, res) => {
 };
 
 const deleteCase = async (req, res) => {
-    const { caseId } = req.params;
+    const caseId = requireInt(req, res, { source: 'params', name: 'caseId' });
+    if (caseId === null) return;
 
     let client;
     try {
@@ -499,7 +505,8 @@ const deleteCase = async (req, res) => {
 };
 
 const tagCase = async (req, res) => {
-    const { CaseId } = req.params;
+    const caseId = requireInt(req, res, { source: 'params', name: 'caseId', aliases: ['CaseId'] });
+    if (caseId === null) return;
     const { IsTagged } = req.body;
 
     try {
@@ -509,7 +516,7 @@ const tagCase = async (req, res) => {
             SET istagged = $1, updatedat = NOW()
             WHERE caseid = $2
             `,
-            [IsTagged ? true : false, CaseId]
+            [IsTagged ? true : false, caseId]
         );
 
         res.status(200).json({ message: "Case Tagged successfully" });
@@ -613,12 +620,9 @@ const getTaggedCasesByName = async (req, res) => {
 };
 
 const linkWhatsappGroup = async (req, res) => {
-    const { CaseId } = req.params;
+    const caseId = requireInt(req, res, { source: 'params', name: 'caseId', aliases: ['CaseId'] });
+    if (caseId === null) return;
     const { WhatsappGroupLink } = req.body;
-
-    if (!CaseId) {
-        return res.status(400).json({ message: "CaseId is required" });
-    }
 
     const raw = WhatsappGroupLink;
     const normalized = typeof raw === "string" ? raw.trim() : raw;
@@ -642,7 +646,7 @@ const linkWhatsappGroup = async (req, res) => {
     try {
         const caseDataResult = await pool.query(
             "SELECT casename, userid FROM cases WHERE caseid = $1",
-            [CaseId]
+            [caseId]
         );
 
         const caseName = caseDataResult.rows[0]?.casename;
@@ -654,11 +658,11 @@ const linkWhatsappGroup = async (req, res) => {
             SET whatsappgrouplink = $1, updatedat = NOW()
             WHERE caseid = $2
             `,
-            [isEmpty ? null : String(normalized), CaseId]
+            [isEmpty ? null : String(normalized), caseId]
         );
 
         if (caseUserId && !isEmpty) {
-            await sendAndStoreNotification(caseUserId, "קבוצת וואטסאפ מקושרת", `קבוצת וואטסאפ קושרה לתיק "${caseName}".`, { caseId: String(CaseId) });
+            await sendAndStoreNotification(caseUserId, "קבוצת וואטסאפ מקושרת", `קבוצת וואטסאפ קושרה לתיק "${caseName}".`, { caseId: String(caseId) });
         }
 
         res.status(200).json({ message: "Whatsapp group link updated successfully" });

@@ -7,6 +7,7 @@ const sendAndStoreNotification = require("../utils/sendAndStoreNotification");
 const { detectHebrewSignatureSpotsFromPdfBuffer, streamToBuffer } = require("../utils/signatureDetection");
 const { PDFDocument } = require("pdf-lib");
 const { v4: uuid } = require("uuid");
+const { requireInt, parsePositiveIntStrict } = require("../utils/paramValidation");
 
 const BASE_RENDER_WIDTH = 800;
 
@@ -200,7 +201,11 @@ exports.uploadFileForSigning = async (req, res) => {
         const normalizedCaseId =
             caseId === undefined || caseId === null || caseId === "" || Number(caseId) === 0
                 ? null
-                : Number(caseId);
+                : parsePositiveIntStrict(caseId, { min: 1 });
+
+        if (caseId !== undefined && caseId !== null && caseId !== '' && Number(caseId) !== 0 && normalizedCaseId === null) {
+            return res.status(400).json({ message: "Invalid parameter: caseId" });
+        }
 
         // If DB doesn't allow NULL caseId, enforce it here with a clear message
         if (normalizedCaseId === null && !schemaSupport.signingfilesCaseIdNullable) {
@@ -521,7 +526,8 @@ exports.getPendingSigningFiles = async (req, res) => {
 
 exports.getSigningFileDetails = async (req, res) => {
     try {
-        const { signingFileId } = req.params;
+        const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
+        if (signingFileId === null) return;
         const userId = req.user.UserId;
 
         const schemaSupport = await getSchemaSupport();
@@ -648,8 +654,13 @@ exports.getSigningFileDetails = async (req, res) => {
 
 exports.signFile = async (req, res) => {
     try {
-        const { signingFileId } = req.params;
-        const { signatureSpotId, signatureImage } = req.body;
+        const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
+        if (signingFileId === null) return;
+
+        const signatureSpotId = requireInt(req, res, { source: 'body', name: 'signatureSpotId' });
+        if (signatureSpotId === null) return;
+
+        const { signatureImage } = req.body;
         const userId = req.user.UserId;
 
         const schemaSupport = await getSchemaSupport();
@@ -778,7 +789,8 @@ exports.signFile = async (req, res) => {
 
 exports.rejectSigning = async (req, res) => {
     try {
-        const { signingFileId } = req.params;
+        const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
+        if (signingFileId === null) return;
         const { rejectionReason } = req.body;
         const userId = req.user.UserId;
 
@@ -853,7 +865,8 @@ exports.rejectSigning = async (req, res) => {
 
 exports.reuploadFile = async (req, res) => {
     try {
-        const { signingFileId } = req.params;
+        const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
+        if (signingFileId === null) return;
         const { fileKey, signatureLocations, signers } = req.body;
         const lawyerId = req.user.UserId;
 
@@ -1010,7 +1023,8 @@ exports.reuploadFile = async (req, res) => {
 
 exports.getSignedFileDownload = async (req, res) => {
     try {
-        const { signingFileId } = req.params;
+        const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
+        if (signingFileId === null) return;
         const userId = req.user.UserId;
 
         const schemaSupport = await getSchemaSupport();
@@ -1094,7 +1108,8 @@ exports.getSignedFileDownload = async (req, res) => {
 // Supports Range requests so pdf.js can efficiently load pages.
 exports.getSigningFilePdf = async (req, res) => {
     try {
-        const { signingFileId } = req.params;
+        const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
+        if (signingFileId === null) return;
         const userId = req.user.UserId;
 
         const schemaSupport = await getSchemaSupport();

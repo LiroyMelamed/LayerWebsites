@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const { requireInt } = require("../utils/paramValidation");
 
 const getCaseTypes = async (req, res) => {
     try {
@@ -100,12 +101,8 @@ const getCaseTypesForFilter = async (req, res) => {
 };
 
 const getCaseTypeById = async (req, res) => {
-    const CaseTypeId = req.params?.caseTypeId ?? req.params?.CaseTypeId;
-    const caseTypeIdInt = parseInt(CaseTypeId, 10);
-
-    if (!CaseTypeId || Number.isNaN(caseTypeIdInt)) {
-        return res.status(400).json({ message: "Invalid CaseTypeId" });
-    }
+    const caseTypeIdInt = requireInt(req, res, { source: 'params', name: 'caseTypeId', aliases: ['CaseTypeId'] });
+    if (caseTypeIdInt === null) return;
     try {
         const result = await pool.query(`SELECT * FROM casetypes WHERE casetypeid = $1`, [caseTypeIdInt]);
         if (result.rows.length === 0) {
@@ -177,11 +174,8 @@ const getCaseTypeByName = async (req, res) => {
 };
 
 const deleteCaseType = async (req, res) => {
-    const { CaseTypeId } = req.params;
-
-    if (!CaseTypeId) {
-        return res.status(400).json({ message: "caseTypeId is required for deletion" });
-    }
+    const CaseTypeId = requireInt(req, res, { source: 'params', name: 'caseTypeId', aliases: ['CaseTypeId'] });
+    if (CaseTypeId === null) return;
 
     let client;
     try {
@@ -262,14 +256,9 @@ const addCaseType = async (req, res) => {
 };
 
 const updateCaseType = async (req, res) => {
-    const { caseTypeId } = req.params;
+    const caseTypeIdInt = requireInt(req, res, { source: 'params', name: 'caseTypeId', aliases: ['CaseTypeId'] });
+    if (caseTypeIdInt === null) return;
     const { CaseTypeName, NumberOfStages, Descriptions = [] } = req.body;
-
-    const caseTypeIdInt = parseInt(caseTypeId, 10);
-
-    if (isNaN(caseTypeIdInt)) {
-        return res.status(400).json({ message: "Invalid CaseTypeId" });
-    }
 
     let client;
     try {

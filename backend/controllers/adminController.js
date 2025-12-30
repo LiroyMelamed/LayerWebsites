@@ -1,5 +1,6 @@
 const pool = require("../config/db"); // Direct import of the pg pool
 const bcrypt = require("bcrypt");
+const { requireInt } = require("../utils/paramValidation");
 
 /**
  * Retrieves all users with the 'Admin' role.
@@ -51,13 +52,9 @@ const getAdminByName = async (req, res) => {
  * Updates an admin's details.
  */
 const updateAdmin = async (req, res) => {
-    const { adminId } = req.params;
+    const adminUserId = requireInt(req, res, { source: 'params', name: 'adminId' });
+    if (adminUserId === null) return;
     const { name, email, phoneNumber, password } = req.body;
-
-    const adminUserId = parseInt(adminId, 10);
-    if (!Number.isFinite(adminUserId)) {
-        return res.status(400).json({ message: "Invalid admin id" });
-    }
 
     try {
         let query;
@@ -96,12 +93,8 @@ const updateAdmin = async (req, res) => {
  * Deletes an admin.
  */
 const deleteAdmin = async (req, res) => {
-    const { adminId } = req.params;
-
-    const adminUserId = parseInt(adminId, 10);
-    if (!Number.isFinite(adminUserId)) {
-        return res.status(400).json({ message: "Invalid admin id" });
-    }
+    const adminUserId = requireInt(req, res, { source: 'params', name: 'adminId' });
+    if (adminUserId === null) return;
 
     try {
         const result = await pool.query(
