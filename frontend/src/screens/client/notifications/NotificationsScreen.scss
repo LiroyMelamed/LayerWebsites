@@ -1,3 +1,6 @@
+@use '../../../styles/mixins' as m;
+@use '../../../styles/variables' as v;
+
 .lw-notificationsScreen {
     width: 100%;
 }
@@ -84,7 +87,8 @@
 .lw-notificationsScreen__item {
     flex-direction: column;
     align-items: flex-start;
-    justify-content: space-between;
+    justify-content: flex-start;
+    gap: v.$space-3;
 
     padding: 0.9375rem;
     border-radius: 0.625rem;
@@ -96,8 +100,7 @@
 }
 
 .lw-notificationsScreen__itemContent {
-    flex-direction: row;
-    align-items: flex-start;
+    @include m.row(v.$space-2, nowrap, flex-start);
     width: 100%;
     margin-bottom: 0.625rem;
 }
@@ -115,6 +118,7 @@
 .lw-notificationsScreen__text {
     flex: 1;
     flex-direction: column;
+    min-inline-size: 0;
 }
 
 .lw-notificationsScreen__title {
