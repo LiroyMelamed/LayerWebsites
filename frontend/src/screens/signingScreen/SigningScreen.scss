@@ -1,3 +1,6 @@
+@use '../../styles/variables' as v;
+@use '../../styles/mixins' as m;
+
 .lw-signingScreen {
     width: 100%;
 }
@@ -13,13 +16,12 @@
 }
 
 .lw-signingScreen__tabsRow {
-    margin-top: 1.5rem;
-    flex-direction: row;
+    @include m.row(v.$space-6);
     justify-content: center;
-    gap: 2rem;
-    margin-bottom: 1rem;
+    margin-block-start: v.$space-6;
+    margin-block-end: v.$space-4;
     border-bottom: 0.125rem solid #e0e0e0;
-    padding-bottom: 0.5rem;
+    padding-block-end: v.$space-2;
 }
 
 .lw-signingScreen__emptyState {
@@ -105,9 +107,6 @@
 }
 
 .lw-signingScreen__actionsRow {
-    gap: 0.5rem;
-    margin-top: 0.625rem;
-    flex-wrap: wrap;
-    display: flex;
-    flex-direction: row;
+    @include m.row(v.$space-2);
+    margin-block-start: v.$space-3;
 }

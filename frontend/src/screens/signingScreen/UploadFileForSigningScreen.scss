@@ -1,8 +1,11 @@
+@use '../../styles/variables' as v;
+@use '../../styles/mixins' as m;
+
 .lw-uploadSigningScreen {
     width: 100%;
     box-sizing: border-box;
     flex-direction: column;
-    padding: 1rem;
+    padding: v.$space-4;
 }
 
 @media (max-width: 48rem) {
@@ -18,7 +21,7 @@
 
 .lw-uploadSigningScreen__headerRow {
     align-items: center;
-    margin-bottom: 1rem;
+    margin-block-end: v.$space-4;
 }
 
 .lw-uploadSigningScreen__formCard {
@@ -52,14 +55,14 @@
 }
 
 .lw-uploadSigningScreen__searchWrap {
-    margin-top: 0.75rem;
+    margin-block-start: v.$space-3;
     max-width: 31.25rem;
     width: 100%;
 }
 
 .lw-uploadSigningScreen__formGroup {
-    margin-top: 0.75rem;
-    margin-bottom: 1rem;
+    margin-block-start: v.$space-3;
+    margin-block-end: v.$space-4;
     width: 100%;
 }
 
@@ -72,9 +75,7 @@
 }
 
 .lw-uploadSigningScreen__selectedSignersRow {
-    flex-direction: row;
-    gap: 0.5rem;
-    flex-wrap: wrap;
+    @include m.row(v.$space-2);
 }
 
 .lw-uploadSigningScreen__fileBox {
@@ -93,7 +94,7 @@
 .lw-uploadSigningScreen__fileHint {
     font-size: 0.75rem;
     color: #777;
-    margin-top: 0.25rem;
+    margin-block-start: v.$space-1;
 }
 
 .lw-uploadSigningScreen__fileInput {
@@ -122,11 +123,9 @@
 }
 
 .lw-uploadSigningScreen__viewerHeaderRow {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 1.5rem;
-    margin-bottom: 0.75rem;
+    @include m.row(v.$space-3, wrap, center, space-between);
+    margin-block-start: v.$space-6;
+    margin-block-end: v.$space-3;
 }
 
 .lw-uploadSigningScreen__viewerTitle {
@@ -142,12 +141,10 @@
 }
 
 .lw-uploadSigningScreen__actionsRow {
-    flex-direction: row;
-    gap: 0.5rem;
-    margin-top: 1rem;
-    flex-wrap: wrap;
+    @include m.row(v.$space-2);
+    margin-block-start: v.$space-4;
 }
 
 .lw-uploadSigningScreen__loading {
-    margin-top: 0.75rem;
+    margin-block-start: v.$space-3;
 }

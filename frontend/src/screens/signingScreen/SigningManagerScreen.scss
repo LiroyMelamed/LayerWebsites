@@ -1,19 +1,19 @@
+@use '../../styles/variables' as v;
+@use '../../styles/mixins' as m;
+
 .lw-signingManagerScreen {
     width: 100%;
 }
 
 .lw-signingManagerScreen__headerRow {
     align-items: center;
-    margin-bottom: 1rem;
+    margin-block-end: v.$space-4;
 }
 
 .lw-signingManagerScreen__topRow {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-    margin-top: 1rem;
-    flex-wrap: wrap;
+    @include m.row(v.$space-3);
+    justify-content: flex-start;
+    margin-block-start: v.$space-4;
 }
 
 .lw-signingManagerScreen__searchContainer {
@@ -23,13 +23,13 @@
 }
 
 .lw-signingManagerScreen__tabsRow {
-    margin-top: 1.5rem;
+    margin-block-start: v.$space-6;
     flex-direction: row;
     justify-content: center;
-    gap: 1rem;
-    margin-bottom: 1rem;
+    gap: v.$space-4;
+    margin-block-end: v.$space-4;
     border-bottom: 0.125rem solid #e0e0e0;
-    padding-bottom: 0.5rem;
+    padding-block-end: v.$space-2;
 }
 
 .lw-signingManagerScreen__emptyState {
@@ -118,8 +118,6 @@
 }
 
 .lw-signingManagerScreen__actionsRow {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 0.625rem;
-    flex-wrap: wrap;
+    @include m.row(v.$space-2);
+    margin-block-start: v.$space-3;
 }
