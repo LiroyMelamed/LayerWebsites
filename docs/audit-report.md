@@ -90,3 +90,15 @@ Evidence folder: `scripts/e2e/out/e2e-20251230-0045-/`
   - Borders may remain `px`.
   - Prefer logical properties when touching direction-sensitive spacing (e.g. `margin-inline-start` instead of `margin-left`).
 - Migrate incrementally by folder/screen group with small commits; after each scoped commit, run `npm --prefix frontend run build`.
+
+---
+
+## Phase D — Inline layout styles sweep
+
+### Phase D complete
+- Verified `git grep "style={{" frontend/src` returns no matches (all JSX style literals removed).
+- Static layout/spacing/typography that previously lived in inline styles was moved into co-located SCSS (rem-based + logical properties where applicable).
+- Inline styling that still exists is limited to truly runtime-dynamic values passed via `style={someObject}` (not JSX literals), mainly:
+  - Dynamic sizing/positioning in signing/PDF flows (e.g. spot bounding boxes, rendered PDF width) where values depend on measurements/scale.
+  - Dynamic “token” values expressed as CSS variables (e.g. status chip colors, input focus styles) that are data-driven at runtime.
+
