@@ -9,7 +9,7 @@ import { getOpenData } from "../../../allCasesScreen/components/AllCasesCard";
 
 import './ClosedCasesCard.scss';
 
-export default function ClosedCasesCard({ closedCases, reperformAfterSave, style }) {
+export default function ClosedCasesCard({ closedCases, reperformAfterSave, style, className }) {
 
     if (closedCases?.length === 0 || !closedCases) {
         return (
@@ -18,12 +18,13 @@ export default function ClosedCasesCard({ closedCases, reperformAfterSave, style
                 imageClassName="lw-defaultState__image--h156"
                 imageSrc={images.Defaults.Cases}
                 style={style}
+                className={className}
             />
         )
     }
 
     return (
-        <SimpleCard className="lw-closedCasesCard" style={style}>
+        <SimpleCard className={["lw-closedCasesCard", className].filter(Boolean).join(' ')} style={style}>
             <TextBold20>תיקים סגורים</TextBold20>
 
             <SimpleContainer className="lw-closedCasesCard__list">

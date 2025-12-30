@@ -169,7 +169,6 @@ export default function ProfileScreen() {
                                 className="lw-profileScreen__avatar"
                                 resizeMode="cover"
                                 src={profile.photoUri || images.Logos.LogoSlangWhite}
-                                style={{ width: "100%", height: "100%" }}
                             />
 
                             <SimpleButton

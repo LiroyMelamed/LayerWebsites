@@ -11,6 +11,8 @@ import ClosedCasesCard from "./components/ClosedCasesCard";
 import { images } from "../../../assets/images/images";
 import OpenCasesCard from "./components/OpenCasesCard";
 
+import "./ClientMainScreen.scss";
+
 export const ClientMainScreenName = "/ClientMainScreen";
 
 export default function ClientMainScreen() {
@@ -34,7 +36,7 @@ export default function ClientMainScreen() {
 
                 <ClosedCasesCard
                     closedCases={allCases.filter(caseItem => caseItem.IsClosed === true)}
-                    style={{ marginTop: '20px', marginBottom: '20px' }}
+                    className="lw-clientMainScreen__closedCard"
                 />
             </SimpleScrollView>
 

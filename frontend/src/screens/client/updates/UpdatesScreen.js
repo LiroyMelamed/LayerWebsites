@@ -53,11 +53,6 @@ export default function UpdatesAndNotificationsScreen() {
 
             <SimpleScrollView className="lw-updatesScreen__scroll">
                 <SimpleContainer className="lw-updatesScreen__container">
-                    {/* <SimpleImage
-                        src={images.Updates.NewUpdates}
-                        style={{ maxWidth: '100%', padding: '0px 20px' }}
-                    /> */}
-
                     <SimpleCard className="lw-updatesScreen__card">
                         {updatesMenuItems.map(item => (
                             <UpdatesMenuItem
