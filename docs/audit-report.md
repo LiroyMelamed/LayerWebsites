@@ -135,6 +135,7 @@ Fixes applied:
 - `frontend/src/components/simpleComponents/SimpleTable.scss`: made tables intentionally horizontally scrollable (`overflow-x: auto`) instead of clipping content.
 - Filter/search rows: removed row-level `overflow: hidden` clipping and ensured buttons can shrink safely without forcing x-overflow.
 - Signing modal: made the two-column grid overflow-safe (`minmax(0, fr)` columns) and stack to a single column on narrow screens.
+- Doughnut chart analytics: made `DoughnutChartWithDetails` wrap-safe (legend chips wrap, no overlap) and constrained the chart center text overlay for small screens.
 
 Done:
 - Removed the main “x-clipping” hacks in filter/search rows.

@@ -63,7 +63,9 @@ const styles = {
         transform: "translate(-50%, -50%)",
         zIndex: 1,
         textAlign: "center",
-        flexDirection: 'column'
+        flexDirection: 'column',
+        pointerEvents: 'none',
+        maxWidth: '90%'
     },
     mainText: {
         display: 'flex',

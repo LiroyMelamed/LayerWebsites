@@ -6,17 +6,25 @@
   margin-block-start: v.$space-4;
   align-items: center;
   gap: v.$space-4;
+  width: 100%;
+  min-inline-size: 0;
 }
 
 .lw-doughnutChartWithDetails__chart {
   flex: 1;
+  display: flex;
+  justify-content: center;
+  max-inline-size: 100%;
+  min-inline-size: 0;
 }
 
 .lw-doughnutChartWithDetails__legend {
   flex: 1;
-  @include m.row(v.$space-2);
+  @include m.row(v.$space-2, wrap);
   justify-content: center;
   margin-block-start: v.$space-2;
+  width: 100%;
+  min-inline-size: 0;
 }
 
 .lw-doughnutChartWithDetails__legendItem {
@@ -26,6 +34,12 @@
   border-radius: 9999px;
   background-color: var(--lw-color-secondary-highlighted);
   border: 0.0625rem solid var(--lw-color-disabled);
+  min-inline-size: 0;
+}
+
+.lw-doughnutChartWithDetails__legendItem > :last-child {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
 }
 
 .lw-doughnutChartWithDetails__swatch {
