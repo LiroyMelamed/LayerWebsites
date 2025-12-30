@@ -1,3 +1,4 @@
+@use '../../../styles/mixins' as m;
 @use '../../../styles/variables' as v;
 
 .lw-errorPopup {
@@ -14,5 +15,6 @@
 }
 
 .lw-errorPopup__actions {
+    @include m.row(v.$space-2);
     align-self: flex-start;
 }

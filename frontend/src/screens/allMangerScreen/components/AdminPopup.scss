@@ -1,13 +1,14 @@
+@use '../../../styles/mixins' as m;
+@use '../../../styles/variables' as v;
+
 .lw-adminPopup {
     width: 100%;
     margin: 0 auto;
 }
 
 .lw-adminPopup__row {
-    display: flex;
-    flex-direction: row;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
+    @include m.row;
+    margin-block-end: v.$space-4;
 }
 
 .lw-adminPopup__input {
@@ -16,13 +17,10 @@
 }
 
 .lw-adminPopup__actions {
-    display: flex;
-    flex-direction: row;
+    @include m.row(v.$space-2);
     justify-content: center;
-    margin: 1rem 0;
-    flex-wrap: wrap;
+    margin-block: v.$space-4;
 }
 
 .lw-adminPopup__actionButton {
-    margin: 0.5rem;
 }
