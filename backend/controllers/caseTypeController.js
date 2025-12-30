@@ -1,5 +1,10 @@
 const pool = require("../config/db");
 const { requireInt } = require("../utils/paramValidation");
+const {
+    getCaseTypesListCached,
+    getCaseTypeByIdCached,
+    invalidateCaseTypes,
+} = require("../utils/caseTypesCache");
 
 const getCaseTypes = async (req, res) => {
     try {
@@ -32,7 +37,11 @@ const getCaseTypes = async (req, res) => {
 
         query += " ORDER BY ct.casetypeid, cd.stage";
 
-        const result = await pool.query(query, params);
+        const result = await getCaseTypesListCached({
+            role: userRole,
+            userId,
+            loader: () => pool.query(query, params),
+        });
 
         const caseTypesMap = new Map();
 
@@ -104,7 +113,10 @@ const getCaseTypeById = async (req, res) => {
     const caseTypeIdInt = requireInt(req, res, { source: 'params', name: 'caseTypeId', aliases: ['CaseTypeId'] });
     if (caseTypeIdInt === null) return;
     try {
-        const result = await pool.query(`SELECT * FROM casetypes WHERE casetypeid = $1`, [caseTypeIdInt]);
+        const result = await getCaseTypeByIdCached({
+            caseTypeId: caseTypeIdInt,
+            loader: () => pool.query(`SELECT * FROM casetypes WHERE casetypeid = $1`, [caseTypeIdInt]),
+        });
         if (result.rows.length === 0) {
             return res.status(404).json({ message: "Case type not found" });
         }
@@ -194,6 +206,8 @@ const deleteCaseType = async (req, res) => {
             return res.status(404).json({ message: "Case type not found or already deleted" });
         }
 
+        invalidateCaseTypes({ caseTypeId: CaseTypeId });
+
         res.status(200).json({ message: "Case type deleted successfully" });
     } catch (error) {
         console.error("Error deleting case type:", error);
@@ -240,6 +254,8 @@ const addCaseType = async (req, res) => {
         }
 
         await client.query('COMMIT');
+
+        invalidateCaseTypes();
 
         res.status(201).json({ message: "Case type created successfully", CaseTypeId: caseTypeId });
     } catch (error) {
@@ -311,6 +327,8 @@ const updateCaseType = async (req, res) => {
         );
 
         await client.query('COMMIT');
+
+        invalidateCaseTypes({ caseTypeId: caseTypeIdInt });
         res.status(200).json({ message: "Case type updated successfully" });
 
     } catch (error) {

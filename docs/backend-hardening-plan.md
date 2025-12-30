@@ -146,10 +146,18 @@ Decision rule:
 - Controllers updated to return `400` JSON on invalid numeric IDs before DB queries
 - Integration tests (real routes): `backend/tests/numericParamValidation.integration.test.js`
 
+3) Safe in-memory caching (conservative)
+- CaseTypes list caching with strict scoping (admin global, non-admin per-user): `backend/utils/caseTypesCache.js`
+- CaseType get-by-id caching (global): `backend/utils/caseTypesCache.js`
+- Admin dashboard aggregate caching (short TTL only): `backend/utils/mainScreenDataCache.js`
+- Unit tests for scoping/TTL/invalidation: `backend/tests/cache.caseTypes.test.js`, `backend/tests/cache.mainScreenData.test.js`
+
 ### Next
-3) Caching layer (start safest)
-- CaseTypes list + get-by-id (short TTL + invalidation on writes)
-- One dashboard aggregate endpoint only if it is globally safe or explicitly scoped
+4) Security/perf pass
+- Rate limit response polish (headers incl. `Retry-After`, consistent JSON error shape)
+- Minimal structured logging for rate-limit blocks/auth failures (no PII)
+- Request size limits per endpoint class + friendly errors
+- Pagination checks on list endpoints + index notes based on observed queries
 
 ---
 
