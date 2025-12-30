@@ -136,6 +136,14 @@ Fixes applied:
 - Filter/search rows: removed row-level `overflow: hidden` clipping and ensured buttons can shrink safely without forcing x-overflow.
 - Signing modal: made the two-column grid overflow-safe (`minmax(0, fr)` columns) and stack to a single column on narrow screens.
 
+Done:
+- Removed the main “x-clipping” hacks in filter/search rows.
+- Ensured long button labels don’t force horizontal overflow.
+- Prevented signing modal grid from overflowing at narrow widths.
+
+Remaining:
+- Quick manual pass on narrow widths (mobile + small desktop) to confirm no horizontal scrollbars/clipping on the listed screens.
+
 ### Quick manual smoke checklist
 Open these screens and visually confirm (RTL alignment, no awkward gaps, no unexpected x-scroll; popups stay on-screen):
 - Main dashboard: `MainScreen`
