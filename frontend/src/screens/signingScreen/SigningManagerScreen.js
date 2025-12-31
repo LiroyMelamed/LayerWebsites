@@ -117,8 +117,8 @@ export default function SigningManagerScreen() {
                 />
             )}
 
-            <SimpleContainer className="lw-signingManagerScreen">
-                <SimpleScrollView>
+            <SimpleScrollView className="lw-signingManagerScreen__scroll">
+                <SimpleContainer className="lw-signingManagerScreen">
                     <SimpleContainer className="lw-signingManagerScreen__headerRow">
                         <TextBold24>מסמכים לחתימה 📄</TextBold24>
                     </SimpleContainer>
@@ -252,8 +252,8 @@ export default function SigningManagerScreen() {
                             );
                         })
                     )}
-                </SimpleScrollView>
-            </SimpleContainer>
+                </SimpleContainer>
+            </SimpleScrollView>
         </SimpleScreen>
     );
 }

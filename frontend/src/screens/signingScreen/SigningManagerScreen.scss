@@ -5,6 +5,12 @@
     width: 100%;
 }
 
+.lw-signingManagerScreen__scroll {
+    margin-top: 2.5rem;
+    align-items: center;
+    padding: 0 1rem;
+}
+
 .lw-signingManagerScreen__headerRow {
     @include m.row(v.$space-3);
     margin-block-end: v.$space-4;

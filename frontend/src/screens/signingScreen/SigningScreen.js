@@ -95,8 +95,8 @@ export default function SigningScreen() {
                 />
             )}
 
-            <SimpleContainer className="lw-signingScreen">
-                <SimpleScrollView className="lw-signingScreen__scroll">
+            <SimpleScrollView className="lw-signingScreen__scroll">
+                <SimpleContainer className="lw-signingScreen">
                     <SimpleContainer className="lw-signingScreen__headerRow">
                         <TextBold24>📄 מסמכים לחתימה</TextBold24>
                     </SimpleContainer>
@@ -202,8 +202,8 @@ export default function SigningScreen() {
                             );
                         })
                     )}
-                </SimpleScrollView>
-            </SimpleContainer>
+                </SimpleContainer>
+            </SimpleScrollView>
 
             {selectedFileId && (
                 <SignatureCanvas
