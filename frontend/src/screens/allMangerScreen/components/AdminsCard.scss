@@ -12,11 +12,13 @@
 
 .lw-adminsCard__headerRow {
     @include m.row(v.$space-2, nowrap, center);
+    width: 100%;
     min-inline-size: 0;
 }
 
 .lw-adminsCard__headerCell {
-    flex: 1;
+    flex: 1 1 0;
+    padding-inline: 0.375rem;
     text-align: start;
     min-inline-size: 0;
 }
@@ -34,6 +36,15 @@
 }
 
 @media (max-width: v.$bp-md) {
+    .lw-adminsCard__headerRow {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .lw-adminsCard__headerCell {
+        flex: 1 1 9.375rem;
+    }
+
     .lw-adminsCard__headerCell--email {
         display: none;
     }
