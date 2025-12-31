@@ -296,8 +296,8 @@ export default function UploadFileForSigningScreen() {
                 />
             )}
 
-            <SimpleContainer className="lw-uploadSigningScreen">
-                <SimpleScrollView className="lw-uploadSigningScreen__scroll">
+            <SimpleScrollView className="lw-uploadSigningScreen__scroll">
+                <SimpleContainer className="lw-uploadSigningScreen">
                     <SimpleContainer className="lw-uploadSigningScreen__headerRow">
                         <TextBold24>שליחת מסמך לחתימה ✍️</TextBold24>
                     </SimpleContainer>
@@ -438,8 +438,8 @@ export default function UploadFileForSigningScreen() {
                             </SimpleContainer>
                         )}
                     </SimpleContainer>
-                </SimpleScrollView>
-            </SimpleContainer>
+                </SimpleContainer>
+            </SimpleScrollView>
         </SimpleScreen>
     );
 }

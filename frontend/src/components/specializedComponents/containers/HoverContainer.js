@@ -86,6 +86,11 @@ const HoverContainer = ({
                                 <SimpleButton
                                     key={`choiceNumber${index}`}
                                     className="lw-hoverContainer__option"
+                                    onPressIn={(e) => {
+                                        // Keep input focused so SearchInput's onBlur doesn't
+                                        // close the results before the click handler runs.
+                                        e.preventDefault();
+                                    }}
                                     onPress={() => onPressButtonFunction(getButtonTextFunction?.(result), result)}
                                 >
                                     <Text20>{getButtonTextFunction?.(result)}</Text20>
