@@ -311,7 +311,7 @@ export default function UploadFileForSigningScreen() {
                             </div>
                         )}
 
-                        <div className="lw-uploadSigningScreen__searchWrap">
+                        <SimpleContainer className="lw-uploadSigningScreen__searchRow">
                             <SearchInput
                                 onSearch={handleSearch}
                                 title={"חיפוש תיק"}
@@ -319,11 +319,10 @@ export default function UploadFileForSigningScreen() {
                                 isPerforming={isPerformingCasesById}
                                 queryResult={casesByName}
                                 getButtonTextFunction={(item) => item.CaseName}
+                                className="lw-uploadSigningScreen__search"
                                 buttonPressFunction={handleButtonPress}
                             />
-                        </div>
 
-                        <div className="lw-uploadSigningScreen__searchWrap">
                             <SearchInput
                                 onSearch={handleSearchSigner}
                                 title={"חיפוש חותם (לקוח)"}
@@ -331,9 +330,10 @@ export default function UploadFileForSigningScreen() {
                                 isPerforming={isPerformingCustomersByName}
                                 queryResult={customersByName}
                                 getButtonTextFunction={(item) => `${item.Name} (${item.UserId})`}
+                                className="lw-uploadSigningScreen__search"
                                 buttonPressFunction={handleAddSignerFromSearch}
                             />
-                        </div>
+                        </SimpleContainer>
 
                         {selectedSigners?.length > 0 && (
                             <SimpleContainer className="lw-uploadSigningScreen__formGroup">
