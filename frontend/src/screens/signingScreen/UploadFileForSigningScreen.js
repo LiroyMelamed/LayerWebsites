@@ -351,9 +351,7 @@ export default function UploadFileForSigningScreen() {
                             </SimpleContainer>
                         )}
 
-                        <SimpleContainer className="lw-uploadSigningScreen__formGroup">
-                            <label className="lw-uploadSigningScreen__label">קובץ PDF *</label>
-
+                        <SimpleContainer className="lw-uploadSigningScreen__formGroup lw-uploadSigningScreen__fileGroup">
                             <div
                                 className={`lw-uploadSigningScreen__fileBox${isDragActive ? " is-dragActive" : ""}`}
                                 onDragEnter={handleDragEnter}
@@ -382,8 +380,8 @@ export default function UploadFileForSigningScreen() {
                             )}
                         </SimpleContainer>
 
-                        <SimpleContainer className="lw-uploadSigningScreen__formGroup">
-                            <label className="lw-uploadSigningScreen__label">הערות ללקוח (לא חובה)</label>
+                        <SimpleContainer className="lw-uploadSigningScreen__formGroup lw-uploadSigningScreen__notesGroup">
+                            <div className="lw-uploadSigningScreen__notesTitle">הערות ללקוח (לא חובה)</div>
                             <textarea
                                 className="lw-uploadSigningScreen__textarea"
                                 value={notes}
