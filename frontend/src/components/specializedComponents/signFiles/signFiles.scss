@@ -250,15 +250,44 @@
     flex-direction: row;
 }
 
+.lw-signing-addSpotRow .lw-textButtonWithTwoOptionalIcons {
+    flex: 1 1 12rem;
+    min-inline-size: 0;
+}
+
 .lw-signing-pageInner {
     position: relative;
     justify-content: flex-start;
     margin-inline: auto;
+    width: 100%;
+    max-width: 100%;
+    min-inline-size: 0;
+    overflow: hidden;
 }
 
 .lw-signing-pdfPage {
     position: relative;
     width: 100%;
+    max-width: 100%;
+    min-inline-size: 0;
+}
+
+/* react-pdf can render a large canvas; ensure it never overflows mobile viewport */
+.lw-signing-pdfViewer .react-pdf__Document,
+.lw-signing-pdfViewer .react-pdf__Page {
+    max-width: 100%;
+}
+
+.lw-signing-pdfViewer canvas {
+    max-width: 100%;
+    height: auto !important;
+}
+
+@media (max-width: 34rem) {
+    .lw-signing-addSpotRow .lw-textButtonWithTwoOptionalIcons {
+        width: 100%;
+        flex-basis: 100%;
+    }
 }
 
 .lw-signing-spotsLayer {
