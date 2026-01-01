@@ -5,7 +5,6 @@ import { Text12, TextBold12 } from "../../../specializedComponents/text/AllTextK
 import PrimaryButton from "../../buttons/PrimaryButton";
 import SecondaryButton from "../../buttons/SecondaryButton";
 import TertiaryButton from "../../buttons/TertiaryButton";
-import Separator from "../../separators/Separator";
 import useHttpRequest from "../../../../hooks/useHttpRequest";
 import SimpleLoader from "../../../simpleComponents/SimpleLoader";
 import ProgressBar from "../../../specializedComponents/containers/ProgressBar";
@@ -16,15 +15,74 @@ import casesApi from "../../../../api/casesApi";
 import SimpleButton from "../../../simpleComponents/SimpleButton";
 import SimpleInput from "../../../simpleComponents/SimpleInput";
 import { DateDDMMYY } from "../../../../functions/date/DateDDMMYY";
+import { usePopup } from "../../../../providers/PopUpProvider";
+import { openExternalUrl } from "../../../../utils/externalNavigation";
 import "./CaseMenuItemOpen.scss";
+
+function WhatsappGroupLinkModal({
+    caseId,
+    initialValue,
+    onClose,
+    onSaved,
+}) {
+    const [value, setValue] = useState(initialValue || "");
+
+    const { isPerforming: isPerformingLinkCase, performRequest: LinkCase } = useHttpRequest(
+        casesApi.linkWhatsappGroup,
+        () => {
+            onSaved?.(value);
+            onClose?.();
+        }
+    );
+
+    const handleSave = () => {
+        LinkCase(caseId, { WhatsappGroupLink: value });
+    };
+
+    return (
+        <SimpleContainer className="lw-caseMenuItemOpen__whatsAppModal">
+            <TextBold12 className="lw-caseMenuItemOpen__modalTitle">שיוך קבוצת וואטספ</TextBold12>
+
+            <SimpleInput
+                className="lw-caseMenuItemOpen__modalInput"
+                title={"לינק לקבוצת הוואטספ"}
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                inputSize="Medium"
+            />
+
+            <SimpleContainer className="lw-caseMenuItemOpen__modalButtons">
+                <SecondaryButton
+                    size={buttonSizes.SMALL}
+                    onPress={onClose}
+                >
+                    ביטול
+                </SecondaryButton>
+
+                <PrimaryButton
+                    size={buttonSizes.SMALL}
+                    onPress={handleSave}
+                    isPerforming={isPerformingLinkCase}
+                >
+                    {isPerformingLinkCase ? "שומר..." : "שמור"}
+                </PrimaryButton>
+            </SimpleContainer>
+
+            {isPerformingLinkCase && (
+                <SimpleContainer className="lw-caseMenuItemOpen__modalLoader">
+                    <SimpleLoader />
+                </SimpleContainer>
+            )}
+        </SimpleContainer>
+    );
+}
 
 export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCase, isClient }) {
     const { isPerforming: isPerformingTagCase, performRequest: tagCase } = useHttpRequest(casesApi.tagCaseById);
-    const { isPerforming: isPerformingLinkCase, performRequest: LinkCase } = useHttpRequest(casesApi.linkWhatsappGroup, onSuccessLink);
+    const { openPopup, closePopup } = usePopup();
 
     const [isStagesOpen, setIsStagesOpen] = useState(false);
     const [IsTagged, setIsTagged] = useState(fullCase.IsTagged);
-    const [IsPressedLink, setIsPressedLink] = useState(false);
     const [WhatsappLink, setWhatsappLink] = useState(fullCase.WhatsappGroupLink);
 
     function unTag() {
@@ -32,133 +90,168 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
         tagCase(fullCase.CaseId, { IsTagged: !IsTagged })
     }
 
-    function onSuccessLink() {
-        setIsPressedLink(false)
+    const totalStages = fullCase?.Descriptions?.length || 0;
+    const statusText = fullCase.IsClosed ? "סגור" : `שלב ${fullCase.CurrentStage}/${totalStages}`;
+
+    function openWhatsappGroupModal() {
+        openPopup(
+            <WhatsappGroupLinkModal
+                caseId={fullCase.CaseId}
+                initialValue={WhatsappLink}
+                onSaved={(newValue) => setWhatsappLink(newValue)}
+                onClose={closePopup}
+            />
+        );
     }
 
-    function linkWhatsappGroup() {
-        LinkCase(fullCase.CaseId, { WhatsappGroupLink: WhatsappLink })
+    function openWhatsappGroupLink() {
+        if (!WhatsappLink) return;
+        openExternalUrl(String(WhatsappLink), { newTab: true });
+    }
+
+    function contactOnWhatsapp() {
+        openExternalUrl(`https://wa.me/972522595097?text=יוצר קשר בנוגע לתיק מספר ${fullCase.CaseId}`, { newTab: true });
     }
 
     return (
         <SimpleContainer
             className={"lw-caseMenuItemOpen" + (isOpen ? " is-open" : "")}
         >
-            <div className="lw-caseMenuItemOpen__progressWrap">
-                <ProgressBar IsClosed={fullCase.IsClosed} currentStage={fullCase.CurrentStage} totalStages={fullCase?.Descriptions?.length} />
-            </div>
+            <SimpleContainer className="lw-caseMenuItemOpen__card">
+                <div className="lw-caseMenuItemOpen__progressWrap">
+                    <ProgressBar IsClosed={fullCase.IsClosed} currentStage={fullCase.CurrentStage} totalStages={totalStages} />
+                </div>
 
-            {!isClient &&
-                <>
-                    <SimpleContainer className="lw-caseMenuItemOpen__row">
-                        <TextBold12 className="lw-caseMenuItemOpen__cell">שם לקוח</TextBold12>
-                        <Text12 className="lw-caseMenuItemOpen__cell">{fullCase.CustomerName}</Text12>
-                    </SimpleContainer>
-                    <Separator />
+                {/* Sections (mobile-first: stack) */}
+                <SimpleContainer className="lw-caseMenuItemOpen__sections">
+                    {!isClient && (
+                        <SimpleContainer className="lw-caseMenuItemOpen__section">
+                            <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">פרטי לקוח</TextBold12>
 
-                    <SimpleContainer className="lw-caseMenuItemOpen__row">
-                        <TextBold12 className="lw-caseMenuItemOpen__cell">אימייל לקוח</TextBold12>
-                        <Text12 className="lw-caseMenuItemOpen__cell">{fullCase.CustomerMail}</Text12>
-                    </SimpleContainer>
+                            <div className="lw-caseMenuItemOpen__items">
+                                <div className="lw-caseMenuItemOpen__item">
+                                    <TextBold12 className="lw-caseMenuItemOpen__itemLabel">שם לקוח:</TextBold12>
+                                    <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.CustomerName}</Text12>
+                                </div>
 
-                    <Separator />
+                                <div className="lw-caseMenuItemOpen__item">
+                                    <TextBold12 className="lw-caseMenuItemOpen__itemLabel">אימייל:</TextBold12>
+                                    <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.CustomerMail}</Text12>
+                                </div>
 
-                    <SimpleContainer className="lw-caseMenuItemOpen__row">
-                        <TextBold12 className="lw-caseMenuItemOpen__cell">מספר פלאפון</TextBold12>
-                        <SimpleButton className="lw-caseMenuItemOpen__cell" onPress={() => { window.location.href = `tel:${fullCase.PhoneNumber}` }}>
-                            <Text12 className="lw-caseMenuItemOpen__linkText">{fullCase.PhoneNumber}</Text12>
-                        </SimpleButton>
-                    </SimpleContainer>
-                </>
-            }
-
-            <Separator />
-
-            <SimpleContainer className="lw-caseMenuItemOpen__row">
-                <TextBold12 className="lw-caseMenuItemOpen__cell">תאריך סיום משוער</TextBold12>
-                <Text12 className="lw-caseMenuItemOpen__cell">{fullCase.EstimatedCompletionDate ? DateDDMMYY(fullCase.EstimatedCompletionDate) : 'לא צויין'}</Text12>
-            </SimpleContainer>
-
-            <Separator />
-
-
-            <SimpleContainer className="lw-caseMenuItemOpen__row">
-                <TextBold12 className="lw-caseMenuItemOpen__cell">תוקף רישיון</TextBold12>
-                <Text12 className="lw-caseMenuItemOpen__cell">{fullCase.LicenseExpiryDate ? DateDDMMYY(fullCase.LicenseExpiryDate) : 'לא צויין'}</Text12>
-            </SimpleContainer>
-
-            <Separator />
-
-            <SimpleContainer className="lw-caseMenuItemOpen__row is-centered">
-                <TextBold12 className="lw-caseMenuItemOpen__cell">קבוצת וואטספ</TextBold12>
-                {isPerformingLinkCase ?
-                    <SimpleLoader />
-                    :
-                    IsPressedLink && !isClient ?
-                        <SimpleContainer className="lw-caseMenuItemOpen__linkInputRow">
-                            <SimpleInput
-                                className="lw-caseMenuItemOpen__whatsAppInput"
-                                title={"לינק לקבוצת הוואטספ"}
-                                value={WhatsappLink}
-                                onChange={(e) => setWhatsappLink(e.target.value)}
-                                inputSize="Small"
-                            />
-                            <PrimaryButton
-                                size={buttonSizes.SMALL}
-                                onPress={linkWhatsappGroup}
-                            >
-                                שליחה
-                            </PrimaryButton>
+                                <div className="lw-caseMenuItemOpen__item">
+                                    <TextBold12 className="lw-caseMenuItemOpen__itemLabel">טלפון:</TextBold12>
+                                    <div className="lw-caseMenuItemOpen__itemValue">
+                                        <SimpleButton
+                                            className="lw-caseMenuItemOpen__linkButton"
+                                            onPress={() => {
+                                                openExternalUrl(`tel:${fullCase.PhoneNumber}`, { newTab: false });
+                                            }}
+                                        >
+                                            <Text12 className="lw-caseMenuItemOpen__linkText">{fullCase.PhoneNumber}</Text12>
+                                        </SimpleButton>
+                                    </div>
+                                </div>
+                            </div>
                         </SimpleContainer>
-                        :
-                        <SimpleButton className="lw-caseMenuItemOpen__cell" onPress={WhatsappLink ? () => { window.location.href = `${WhatsappLink}` } : () => { !isClient ? setIsPressedLink(true) : window.location.href = `https://wa.me/972522595097?text=יוצר קשר בנוגע לתיק מספר ${fullCase.CaseId}` }}>
-                            <Text12 className="lw-caseMenuItemOpen__positiveText" >{WhatsappLink ? 'למעבר לקבוצה' : !isClient ? 'לחץ לשיוך' : 'צור קשר'}</Text12>
-                        </SimpleButton>
+                    )}
 
-                }
-            </SimpleContainer>
+                    <SimpleContainer className="lw-caseMenuItemOpen__section">
+                        <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">תאריכים</TextBold12>
 
-            <Separator />
+                        <div className="lw-caseMenuItemOpen__items">
+                            <div className="lw-caseMenuItemOpen__item">
+                                <TextBold12 className="lw-caseMenuItemOpen__itemLabel">תאריך סיום משוער:</TextBold12>
+                                <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.EstimatedCompletionDate ? DateDDMMYY(fullCase.EstimatedCompletionDate) : "לא צויין"}</Text12>
+                            </div>
 
-            {!isClient &&
-                <>
-                    <SimpleContainer className="lw-caseMenuItemOpen__row">
-                        <TextBold12 className="lw-caseMenuItemOpen__cell">נעוץ</TextBold12>
-                        {isPerformingTagCase ? <SimpleLoader /> : <Text12 className="lw-caseMenuItemOpen__cell">{IsTagged ? "כן" : "לא"}</Text12>}
+                            <div className="lw-caseMenuItemOpen__item">
+                                <TextBold12 className="lw-caseMenuItemOpen__itemLabel">תוקף רישיון:</TextBold12>
+                                <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.LicenseExpiryDate ? DateDDMMYY(fullCase.LicenseExpiryDate) : "לא צויין"}</Text12>
+                            </div>
+                        </div>
                     </SimpleContainer>
 
-                    <Separator />
-                </>
-            }
+                    <SimpleContainer className="lw-caseMenuItemOpen__section">
+                        <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">ניהול</TextBold12>
 
-            <SimpleContainer className="lw-caseMenuItemOpen__row">
-                <TextBold12 className="lw-caseMenuItemOpen__cell">מנהל תיק</TextBold12>
-                <Text12 className="lw-caseMenuItemOpen__cell">{fullCase.CaseManager ? fullCase.CaseManager : "לא משוייך"}</Text12>
-            </SimpleContainer>
+                        <div className="lw-caseMenuItemOpen__items">
+                            <div className="lw-caseMenuItemOpen__item">
+                                <TextBold12 className="lw-caseMenuItemOpen__itemLabel">מנהל תיק:</TextBold12>
+                                <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.CaseManager ? fullCase.CaseManager : "לא משוייך"}</Text12>
+                            </div>
 
-            <Separator />
+                            {!isClient && (
+                                <div className="lw-caseMenuItemOpen__item">
+                                    <TextBold12 className="lw-caseMenuItemOpen__itemLabel">נעוץ:</TextBold12>
+                                    <div className="lw-caseMenuItemOpen__itemValue">
+                                        {isPerformingTagCase ? <SimpleLoader /> : <Text12>{IsTagged ? "כן" : "לא"}</Text12>}
+                                    </div>
+                                </div>
+                            )}
 
+                            <div className="lw-caseMenuItemOpen__item">
+                                <TextBold12 className="lw-caseMenuItemOpen__itemLabel">קבוצת וואטספ</TextBold12>
+                                <div className="lw-caseMenuItemOpen__itemValue">
+                                    {WhatsappLink ? (
+                                        <SimpleContainer className="lw-caseMenuItemOpen__whatsAppActions">
+                                            <PrimaryButton size={buttonSizes.SMALL} onPress={openWhatsappGroupLink}>
+                                                למעבר לקבוצה
+                                            </PrimaryButton>
+                                            {!isClient && (
+                                                <SecondaryButton size={buttonSizes.SMALL} onPress={openWhatsappGroupModal}>
+                                                    עריכת לינק
+                                                </SecondaryButton>
+                                            )}
+                                        </SimpleContainer>
+                                    ) : !isClient ? (
+                                        <SecondaryButton size={buttonSizes.SMALL} onPress={openWhatsappGroupModal}>
+                                            שיוך קבוצת וואטספ
+                                        </SecondaryButton>
+                                    ) : (
+                                        <SimpleButton className="lw-caseMenuItemOpen__linkButton" onPress={contactOnWhatsapp}>
+                                            <Text12 className="lw-caseMenuItemOpen__positiveText">צור קשר</Text12>
+                                        </SimpleButton>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </SimpleContainer>
 
-            <SimpleContainer className="lw-caseMenuItemOpen__stagesHeader" onPress={() => setIsStagesOpen(!isStagesOpen)}>
-                <ImageButton
-                    src={icons.Button.DownArrow}
-                    className={"lw-caseMenuItemOpen__dropDownBtn" + (isStagesOpen ? " is-open" : "")}
-                />
+                    <SimpleContainer className="lw-caseMenuItemOpen__section">
+                        <SimpleContainer className="lw-caseMenuItemOpen__accordionHeader" onPress={() => setIsStagesOpen(!isStagesOpen)}>
+                            <ImageButton
+                                src={icons.Button.DownArrow}
+                                className={"lw-caseMenuItemOpen__dropDownBtn" + (isStagesOpen ? " is-open" : "")}
+                            />
+                            <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">שלבים</TextBold12>
+                        </SimpleContainer>
 
-                <TextBold12 className="lw-caseMenuItemOpen__cell">שלבים</TextBold12>
-            </SimpleContainer>
-
-            {isStagesOpen && <CaseTimeline stages={fullCase.Descriptions} currentStage={fullCase.CurrentStage} />}
-
-            {!isClient &&
-                <SimpleContainer className="lw-caseMenuItemOpen__actionsRow">
-                    <TertiaryButton size={buttonSizes.SMALL} onPress={unTag}>{IsTagged ? "ביטול נעיצה" : "נעץ"}</TertiaryButton>
-                    <SecondaryButton size={buttonSizes.SMALL} onPress={editCase} className="lw-caseMenuItemOpen__action">עריכה</SecondaryButton>
-                    {!fullCase.IsClosed &&
-                        <PrimaryButton size={buttonSizes.SMALL} onPress={updateStage} className="lw-caseMenuItemOpen__action">קדם שלב</PrimaryButton>
-                    }
+                        {isStagesOpen && (
+                            <SimpleContainer className="lw-caseMenuItemOpen__timelineWrap">
+                                <CaseTimeline stages={fullCase.Descriptions} currentStage={fullCase.CurrentStage} />
+                            </SimpleContainer>
+                        )}
+                    </SimpleContainer>
                 </SimpleContainer>
-            }
+
+                {/* Footer actions */}
+                {!isClient && (
+                    <SimpleContainer className="lw-caseMenuItemOpen__footer">
+                        <TertiaryButton size={buttonSizes.SMALL} onPress={unTag}>
+                            {IsTagged ? "ביטול נעיצה" : "נעץ"}
+                        </TertiaryButton>
+                        <SecondaryButton size={buttonSizes.SMALL} onPress={editCase} className="lw-caseMenuItemOpen__action">
+                            עריכה
+                        </SecondaryButton>
+                        {!fullCase.IsClosed && (
+                            <PrimaryButton size={buttonSizes.SMALL} onPress={updateStage} className="lw-caseMenuItemOpen__action">
+                                קדם שלב
+                            </PrimaryButton>
+                        )}
+                    </SimpleContainer>
+                )}
+            </SimpleContainer>
         </SimpleContainer>
     )
 }

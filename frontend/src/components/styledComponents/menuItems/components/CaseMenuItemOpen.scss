@@ -2,14 +2,17 @@
 @use '../../../../styles/variables' as v;
 
 .lw-caseMenuItemOpen {
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: hidden;
     transition: max-height 0.5s ease, opacity 0.5s ease;
     max-height: 0;
     opacity: 0;
-    margin-top: 1rem;
-    margin-inline-start: 1.75rem;
+    // margin-inline-start: clamp(0.5rem, 2vw, 1.75rem);
     display: flex;
     flex-direction: column;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 
     &.is-open {
         max-height: 75rem;
@@ -18,35 +21,156 @@
 }
 
 .lw-caseMenuItemOpen__progressWrap {
-    margin-bottom: 1.25rem;
+    margin-block: v.$space-3 v.$space-4;
+    max-width: 100%;
 }
 
-.lw-caseMenuItemOpen__row {
-    @include m.row(v.$space-2, nowrap);
-    flex: 1;
+.lw-caseMenuItemOpen__card {
+    display: flex;
+    flex-direction: column;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    padding-right: 1.75rem
 }
 
-.lw-caseMenuItemOpen__row.is-centered {
+.lw-caseMenuItemOpen__header {
+    @include m.row(v.$space-3, nowrap);
     align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    min-width: 0;
 }
 
-.lw-caseMenuItemOpen__cell {
-    flex: 1;
+.lw-caseMenuItemOpen__title {
+    color: var(--lw-color-text);
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.lw-caseMenuItemOpen__chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    border-radius: 999px;
+    background: var(--lw-color-secondary-highlighted);
+    border: 1px solid var(--lw-color-disabled);
+    flex: 0 0 auto;
+}
+
+.lw-caseMenuItemOpen__chip.is-closed {
+    background: var(--lw-color-disabled);
+}
+
+.lw-caseMenuItemOpen__chipText {
+    color: var(--lw-color-primary-highlighted);
+    white-space: nowrap;
+}
+
+.lw-caseMenuItemOpen__chip.is-closed .lw-caseMenuItemOpen__chipText {
+    color: var(--lw-color-winter);
+}
+
+.lw-caseMenuItemOpen__sections {
+    display: flex;
+    flex-direction: column;
+    gap: v.$space-4;
+    min-width: 0;
+}
+
+.lw-caseMenuItemOpen__section {
+    display: flex;
+    flex-direction: column;
+    background: var(--lw-color-secondary-highlighted);
+    border: 1px solid var(--lw-color-disabled);
+    border-radius: 0.75rem;
+    padding: v.$space-4;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.lw-caseMenuItemOpen__sectionTitle {
+    color: var(--lw-color-primary-highlighted);
+}
+
+
+.lw-caseMenuItemOpen__items {
+    display: flex;
+    flex-direction: column;
+    gap: v.$space-3;
+    margin-top: v.$space-3;
+    min-width: 0;
+}
+
+.lw-caseMenuItemOpen__item {
+    display: flex;
+    align-items: flex-start;
+    gap: v.$space-2;
+    min-width: 0;
+}
+
+.lw-caseMenuItemOpen__itemLabel {
+    flex: 0 0 auto;
+    color: var(--lw-color-winter);
+}
+
+.lw-caseMenuItemOpen__itemValue {
+    flex: 1 1 auto;
+    min-width: 0;
+    color: var(--lw-color-text);
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+/* MOBILE FIRST: enforce stacked layout and remove side margins */
+@media (max-width: 48rem) {
+    .lw-caseMenuItemOpen {
+        margin-inline-start: 0;
+    }
+
+    .lw-caseMenuItemOpen__sectionGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .lw-caseMenuItemOpen__item {
+        align-items: center;
+        gap: v.$space-2;
+    }
+
+    .lw-caseMenuItemOpen__itemLabel {
+        flex: 0 0 auto;
+    }
+
+    .lw-caseMenuItemOpen__section {
+        padding: v.$space-3;
+    }
+
+    .lw-caseMenuItemOpen__footer {
+        justify-content: stretch;
+    }
+
+    .lw-caseMenuItemOpen__footer>* {
+        flex: 1 1 auto;
+    }
 }
 
 .lw-caseMenuItemOpen__linkText {
-    color: #2A4365;
-    /* colors.primary */
+    color: var(--lw-color-primary);
 }
 
 .lw-caseMenuItemOpen__positiveText {
-    color: #38A169;
-    /* colors.positive */
+    color: var(--lw-color-positive);
 }
 
-.lw-caseMenuItemOpen__stagesHeader {
+.lw-caseMenuItemOpen__accordionHeader {
     @include m.row(v.$space-2, nowrap);
-    flex: 1;
+    align-items: center;
     cursor: pointer;
 }
 
@@ -62,17 +186,86 @@
     }
 }
 
-.lw-caseMenuItemOpen__actionsRow {
-    @include m.row(v.$space-2);
+.lw-caseMenuItemOpen__timelineWrap {
+    margin-top: v.$space-3;
+}
+
+.lw-caseMenuItemOpen__whatsAppActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: v.$space-2;
+    align-items: center;
+}
+
+.lw-caseMenuItemOpen__linkButton {
+    padding: 0;
+    max-width: 100%;
+}
+
+.lw-caseMenuItemOpen__footer {
+    border-top: 1px solid var(--lw-color-secondary-highlighted);
+    margin-top: v.$space-4;
+    padding-top: v.$space-4;
+    display: flex;
     justify-content: flex-end;
-    margin-block-start: v.$space-4;
+    gap: v.$space-2;
+    flex-wrap: wrap;
 }
 
-.lw-caseMenuItemOpen__action {}
-
-.lw-caseMenuItemOpen__linkInputRow {
-    @include m.row(v.$space-2, nowrap);
-    flex: 1;
+.lw-caseMenuItemOpen__whatsAppModal {
+    display: flex;
+    flex-direction: column;
+    gap: v.$space-4;
+    width: min(32rem, 92vw);
+    max-width: 92vw;
 }
 
-.lw-caseMenuItemOpen__whatsAppInput {}
+.lw-caseMenuItemOpen__modalTitle {
+    color: var(--lw-color-primary-highlighted);
+}
+
+.lw-caseMenuItemOpen__modalInput {
+    width: 100%;
+}
+
+.lw-caseMenuItemOpen__modalButtons {
+    display: flex;
+    justify-content: flex-end;
+    gap: v.$space-2;
+}
+
+.lw-caseMenuItemOpen__modalLoader {
+    display: flex;
+    justify-content: center;
+}
+
+/* DESKTOP ONLY: enhance into two columns without affecting mobile */
+@media (min-width: 48.0625rem) {
+    .lw-caseMenuItemOpen__sections {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: v.$space-4;
+    }
+
+    /* Header/progress should span full width */
+    .lw-caseMenuItemOpen__header,
+    .lw-caseMenuItemOpen__progressWrap {
+        grid-column: 1 / -1;
+    }
+
+    /* Stages and footer span full width */
+    .lw-caseMenuItemOpen__section:last-of-type,
+    .lw-caseMenuItemOpen__footer {
+        grid-column: 1 / -1;
+    }
+
+    /* Label/value in a simple two-column row on desktop */
+    .lw-caseMenuItemOpen__item {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .lw-caseMenuItemOpen__itemLabel {
+        flex: 0 0 9rem;
+    }
+}

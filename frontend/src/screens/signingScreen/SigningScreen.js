@@ -97,10 +97,6 @@ export default function SigningScreen() {
 
             <SimpleScrollView className="lw-signingScreen__scroll">
                 <SimpleContainer className="lw-signingScreen">
-                    <SimpleContainer className="lw-signingScreen__headerRow">
-                        <TextBold24>📄 מסמכים לחתימה</TextBold24>
-                    </SimpleContainer>
-
                     <SimpleContainer className="lw-signingScreen__tabsRow">
                         <TabButton
                             active={activeTab === "pending"}
