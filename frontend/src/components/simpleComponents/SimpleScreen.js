@@ -27,7 +27,9 @@ export default function SimpleScreen({
 
     const childrenContainerStyle = {
         ...styles.childrenContainer,
-        width: isSmallScreen ? '100%' : `calc(100% - 250px)`,
+        width: isSmallScreen ? '100%' : 'calc(100% - 250px)',
+        marginRight: isSmallScreen ? '0' : '250px',
+        alignItems: isSmallScreen ? 'center' : 'flex-end',
         boxSizing: "border-box",
         flexDirection: "column",
         ...style,

@@ -1,95 +1,106 @@
 @use '../../styles/variables' as v;
 
 .lw-simpleTextArea {
-  position: relative;
-  flex-direction: row;
-  align-items: center;
+    position: relative;
+    flex-direction: row;
+    align-items: center;
 
-  width: 100%;
+    width: 100%;
 
-  border-radius: 0.75rem; /* 12px */
-  border: 0.0625rem solid var(--lw-simpleTextArea-borderColor, var(--lw-color-secondary-highlighted));
-  background-color: var(--lw-simpleTextArea-bgColor, var(--lw-color-white));
-  box-shadow: var(--lw-simpleTextArea-shadow, none);
+    border-radius: 0.75rem;
+    /* 12px */
+    border: 0.0625rem solid var(--lw-simpleTextArea-borderColor, var(--lw-color-secondary-highlighted));
+    background-color: var(--lw-simpleTextArea-bgColor, var(--lw-color-white));
+    box-shadow: var(--lw-simpleTextArea-shadow, none);
 
-  padding: 0.75rem; /* 12px */
-  direction: inherit;
+    padding: 0.75rem;
+    /* 12px */
+    direction: inherit;
 }
 
 .lw-simpleTextArea__label {
-  position: absolute;
-  inset-block-start: 0.75rem; /* 12px */
-  inset-inline-end: 0.9375rem; /* 15px */
+    position: absolute;
+    inset-block-start: 0.75rem;
+    /* 12px */
+    inset-inline-end: 0.9375rem;
+    /* 15px */
 
-  font-size: 1rem;
-  font-family: inherit;
-  color: var(--lw-simpleTextArea-labelColor, var(--lw-color-text));
+    font-size: 1rem;
+    font-family: inherit;
+    color: var(--lw-simpleTextArea-labelColor, var(--lw-color-text));
 
-  background-color: var(--lw-simpleTextArea-bgColor, var(--lw-color-white));
-  padding-inline: 0.3125rem; /* 5px */
-  border-radius: 9999px;
+    background-color: var(--lw-simpleTextArea-bgColor, var(--lw-color-white));
+    padding-inline: 0.3125rem;
+    /* 5px */
+    border-radius: 9999px;
 
-  pointer-events: none;
-  transform: var(--lw-simpleTextArea-labelTransform, translateY(0.625rem) scale(1));
-  opacity: var(--lw-simpleTextArea-labelOpacity, 0.6);
-  transition: transform 0.2s ease, opacity 0.2s ease;
+    pointer-events: none;
+    transform: var(--lw-simpleTextArea-labelTransform, translateY(0.625rem) scale(1));
+    opacity: var(--lw-simpleTextArea-labelOpacity, 0.6);
+    transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
 .lw-simpleTextArea__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .lw-simpleTextArea__icon--right {
-  margin-inline-end: 0.5rem; /* 8px */
+    margin-inline-end: 0.5rem;
+    /* 8px */
 }
 
 .lw-simpleTextArea__icon--left {
-  margin-inline-start: 0.5rem; /* 8px */
+    margin-inline-start: 0.5rem;
+    /* 8px */
 }
 
 .lw-simpleTextArea__field {
-  flex: 1;
+    flex: 1;
 
-  padding-block: 0;
-  padding-inline: 0.9375rem; /* 15px */
+    padding-block: 0;
+    padding-inline: 0.9375rem;
+    /* 15px */
 
-  border: none;
-  background-color: transparent;
-  outline: none;
+    border: none;
+    background-color: transparent;
+    outline: none;
 
-  font-size: 0.875rem; /* 14px */
-  font-family: inherit;
-  color: var(--lw-color-text);
-  direction: inherit;
-  text-align: start;
+    font-size: 0.875rem;
+    /* 14px */
+    font-family: inherit;
+    color: var(--lw-color-text);
+    direction: inherit;
+    text-align: start;
 
-  /* Scrollbar styling (scoped to this textarea) */
-  &::-webkit-scrollbar {
-    width: 0.5rem; /* 8px */
-    height: 0.5rem; /* 8px */
-  }
+    /* Scrollbar styling (scoped to this textarea) */
+    &::-webkit-scrollbar {
+        width: 0.5rem;
+        /* 8px */
+        height: 0.5rem;
+        /* 8px */
+    }
 
-  &::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.4);
-    border-radius: 0.5rem;
-  }
+    &::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.4);
+        border-radius: 0.5rem;
+    }
 
-  &::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(0, 0, 0, 0.6);
-  }
+    &::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(0, 0, 0, 0.6);
+    }
 
-  &::-webkit-scrollbar-track {
-    background-color: rgba(0, 0, 0, 0.1);
-    border-radius: 0.5rem;
-  }
+    &::-webkit-scrollbar-track {
+        background-color: rgba(0, 0, 0, 0.1);
+        border-radius: 0.5rem;
+    }
 }
 
 .lw-simpleTextArea__field:focus-visible {
-  outline: none;
+    outline: none;
 }
 
 .lw-simpleTextArea__field:disabled {
-  color: var(--lw-color-disabled-highlighted);
+    color: var(--lw-color-disabled-highlighted);
 }

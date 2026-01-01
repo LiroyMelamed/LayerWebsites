@@ -1,12 +1,14 @@
 @use '../../styles/mixins' as m;
+@use '../../styles/variables' as v;
 
 .lw-allCasesScreen__row {
-    @include m.row;
-    width: 100%;
+    @include m.row(v.$space-3, wrap);
+    max-width: 100%;
+    margin: 1rem;
 }
 
 .lw-allCasesScreen__search {
-    flex: 1 1 20rem;
+    flex: 1 1 1 10rem;
     min-inline-size: 14rem;
     max-inline-size: 31.25rem;
 }
@@ -19,6 +21,7 @@
 .lw-allCasesScreen__footer {
     display: flex;
     justify-content: center;
+    align-self: center;
 }
 
 .lw-allCasesScreen__addButton {

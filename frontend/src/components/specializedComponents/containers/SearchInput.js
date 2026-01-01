@@ -17,6 +17,8 @@ const SearchInput = ({
     isPerforming,
     getButtonTextFunction,
     buttonPressFunction,
+    emptyActionText,
+    onEmptyAction,
     title,
     error,
     style,
@@ -77,8 +79,12 @@ const SearchInput = ({
                     targetRef={targetRef}
                     className="lw-searchInput__hover"
                     queryResult={queryResult}
+                    isPerforming={isPerforming}
                     getButtonTextFunction={getButtonTextFunction}
                     onPressButtonFunction={hoverButtonPressed}
+                    query={query}
+                    emptyActionText={emptyActionText}
+                    onEmptyAction={onEmptyAction}
                     onClose={() => { setShowResults(false) }}
 
                 />

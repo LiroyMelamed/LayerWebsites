@@ -81,6 +81,12 @@ const SimpleInput = forwardRef(
 
         const resolvedDir = props.dir || 'rtl';
 
+        const baseLabelInlineStartRem = rightIcon ? 40 / 16 : 8 / 16;
+        const focusShiftRem = 4 / 16;
+        const focusedLabelInlineStartRem = resolvedDir === 'rtl'
+            ? Math.max(0, baseLabelInlineStartRem - focusShiftRem)
+            : baseLabelInlineStartRem + focusShiftRem;
+
         const sizePaddingPx = Number.parseInt(String(sizeStyles.padding).replace('px', ''), 10);
         const paddingBlock = leftIcon ? 0.5 : sizePaddingPx / 16;
         const paddingInlineStart = rightIcon ? 30 / 16 : sizePaddingPx / 16;
@@ -94,7 +100,7 @@ const SimpleInput = forwardRef(
 
             '--lw-simpleInput-direction': resolvedDir,
 
-            '--lw-simpleInput-labelRight': rightIcon ? `${40 / 16}rem` : `${8 / 16}rem`,
+            '--lw-simpleInput-labelRight': `${isFocused ? focusedLabelInlineStartRem : baseLabelInlineStartRem}rem`,
             '--lw-simpleInput-labelTop': String(sizeStyles.labelTop),
             '--lw-simpleInput-labelTransform': shouldFloatLabel ? String(sizeStyles.transformFocused) : 'translateY(-50%)',
             '--lw-simpleInput-labelOpacity': shouldFloatLabel ? 1 : 0.6,
@@ -173,7 +179,7 @@ export const inputStyles = {
         padding: '8px',
         labelTop: '50%',
         borderStyle: 'solid',
-        transformFocused: 'translateY(-100%) scale(0.7)',
+        transformFocused: 'translateY(-85%) scale(0.7)',
     },
     Medium: {
         height: 32,
@@ -181,13 +187,13 @@ export const inputStyles = {
         padding: '16px',
         labelTop: '50%',
         borderStyle: 'solid',
-        transformFocused: 'translateY(-150%) scale(0.7)',
+        transformFocused: 'translateY(-110%) scale(0.7)',
     },
     Big: {
         height: 40,
         fontSize: 24,
         padding: '16px',
         labelTop: '50%',
-        transformFocused: 'translateY(-150%) scale(0.7)',
+        transformFocused: 'translateY(-110%) scale(0.7)',
     },
 };

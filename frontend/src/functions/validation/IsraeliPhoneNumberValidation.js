@@ -10,12 +10,12 @@ export default function IsraeliPhoneNumberValidation(phoneNumber) {
     }
 
     if (normalized.length !== 10) {
-        return "נא להכניס מספר פלאפון תקין";
+        return "מספר פלאפון לא תקין";
     }
 
     // Mobile in Israel typically starts with 05
     if (!/^05\d{8}$/.test(normalized)) {
-        return "נא להכניס מספר פלאפון תקין";
+        return "מספר פלאפון לא תקין";
     }
 
     return null;

@@ -14,8 +14,11 @@ import IsraeliPhoneNumberValidation from "../../../functions/validation/IsraeliP
 
 import "./ClientPopUp.scss";
 
-export default function ClientPopup({ clientDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style }) {
-    const [name, setName, nameError] = useFieldState(HebrewCharsValidationWithNumbers, clientDetails?.name || "");
+export default function ClientPopup({ clientDetails, initialName, rePerformRequest, onFailureFunction, closePopUpFunction, style }) {
+    const [name, setName, nameError] = useFieldState(
+        HebrewCharsValidationWithNumbers,
+        clientDetails?.name || initialName || ""
+    );
     const [companyName, setCompanyName, companyNameError] = useFieldState(HebrewCharsValidationWithNULL, clientDetails?.companyname || "");
     const [email, setEmail, emailError] = useFieldState(emailValidation, clientDetails?.email || "");
     const [phoneNumber, setPhoneNumber, phoneNumberError] = useFieldState(IsraeliPhoneNumberValidation, clientDetails?.phonenumber || "");

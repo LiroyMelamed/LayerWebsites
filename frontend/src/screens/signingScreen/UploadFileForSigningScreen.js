@@ -26,14 +26,18 @@ import SearchInput from "../../components/specializedComponents/containers/Searc
 import casesApi from "../../api/casesApi";
 import useHttpRequest from "../../hooks/useHttpRequest";
 import { customersApi } from "../../api/customersApi";
+import { usePopup } from "../../providers/PopUpProvider";
+import ClientPopup from "../mainScreen/components/ClientPopUp";
 
 import "./UploadFileForSigningScreen.scss";
+import { MainScreenName } from "../mainScreen/MainScreen";
 
 export const uploadFileForSigningScreenName = "/upload-file-for-signing";
 
 export default function UploadFileForSigningScreen() {
     const { isSmallScreen } = useScreenSize();
     const navigate = useNavigate();
+    const { openPopup, closePopup } = usePopup();
 
     const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getCaseByName, null, () => { });
     const { result: customersByName, isPerforming: isPerformingCustomersByName, performRequest: SearchCustomersByName } = useHttpRequest(customersApi.getCustomersByName, null, () => { });
@@ -281,8 +285,17 @@ export default function UploadFileForSigningScreen() {
     };
 
     const handleAddSignerFromSearch = (text, customer) => {
-        // SearchInput passes (text, result)
         addSigner(customer);
+    };
+
+    const handleOpenAddCustomerPopup = (query) => {
+        openPopup(
+            <ClientPopup
+                initialName={query}
+                closePopUpFunction={closePopup}
+                rePerformRequest={() => SearchCustomersByName(query)}
+            />
+        );
     };
 
     return (
@@ -291,7 +304,7 @@ export default function UploadFileForSigningScreen() {
         >
             {isSmallScreen && (
                 <TopToolBarSmallScreen
-                    LogoNavigate={AdminStackName}
+                    LogoNavigate={AdminStackName + MainScreenName}
                     GetNavBarData={getNavBarData}
                 />
             )}
@@ -329,9 +342,11 @@ export default function UploadFileForSigningScreen() {
                                 titleFontSize={20}
                                 isPerforming={isPerformingCustomersByName}
                                 queryResult={customersByName}
-                                getButtonTextFunction={(item) => `${item.Name} (${item.UserId})`}
+                                getButtonTextFunction={(item) => `${item.Name}`}
                                 className="lw-uploadSigningScreen__search"
                                 buttonPressFunction={handleAddSignerFromSearch}
+                                emptyActionText={"הוסף לקוח"}
+                                onEmptyAction={handleOpenAddCustomerPopup}
                             />
                         </SimpleContainer>
 
@@ -419,15 +434,14 @@ export default function UploadFileForSigningScreen() {
                         )}
 
                         <SimpleContainer className="lw-uploadSigningScreen__actionsRow">
-                            <PrimaryButton onPress={handleSubmit} disabled={loading}>
-                                {loading ? "שולח..." : "📤 שלח ללקוח"}
-                            </PrimaryButton>
-
                             <SecondaryButton
                                 onPress={() => navigate(AdminStackName + SigningManagerScreenName)}
                             >
                                 ⬅ חזרה
                             </SecondaryButton>
+                            <PrimaryButton onPress={handleSubmit} disabled={loading}>
+                                {loading ? "שולח..." : "📤 שלח ללקוח"}
+                            </PrimaryButton>
                         </SimpleContainer>
 
                         {loading && (

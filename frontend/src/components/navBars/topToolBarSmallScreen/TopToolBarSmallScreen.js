@@ -62,11 +62,7 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
                     <SimpleScrollView>
                         <SimpleContainer className="lw-topToolBarSmallScreen__sidebarContent">
                             {NavBarLinks.map((item, index) => {
-                                const shouldHide = (isFromApp && isClient) && index <= 1;
 
-                                if (shouldHide) {
-                                    return null;
-                                }
 
                                 return (
                                     <SideBarMenuItem

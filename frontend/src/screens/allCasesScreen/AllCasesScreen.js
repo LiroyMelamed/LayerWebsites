@@ -97,19 +97,18 @@ export default function AllCasesScreen() {
                         className="lw-allCasesScreen__search"
                         buttonPressFunction={handleSearchSelect}
                     />
-                </SimpleContainer>
 
-                <SimpleContainer className="lw-allCasesScreen__row">
-                    <ChooseButton
-                        buttonChoices={allCasesTypes}
-                        className="lw-allCasesScreen__choose"
-                        OnPressChoiceFunction={handleFilterByType}
-                    />
                     <ChooseButton
                         buttonChoices={["תיקים סגורים", "תיקים פתוחים"]}
                         className="lw-allCasesScreen__choose lw-allCasesScreen__choose--openClose"
                         OnPressChoiceFunction={handleFilterByStatus}
                         buttonText="סגור/פתוח"
+                    />
+
+                    <ChooseButton
+                        buttonChoices={allCasesTypes}
+                        className="lw-allCasesScreen__choose"
+                        OnPressChoiceFunction={handleFilterByType}
                     />
                 </SimpleContainer>
 

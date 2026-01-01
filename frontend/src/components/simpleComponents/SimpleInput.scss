@@ -28,11 +28,20 @@
     opacity: var(--lw-simpleInput-labelOpacity, 0.6);
 
     font-size: var(--lw-simpleInput-labelFontSize, 1rem);
+    display: inline-block;
+    max-inline-size: calc(100% - var(--lw-simpleInput-labelRight, 0.5rem) - 0.5rem);
+    white-space: nowrap;
+    overflow-x: hidden;
+    overflow-y: visible;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+    padding-inline: 0.25rem;
+    padding-block: 0.125rem;
     font-family: inherit;
     color: var(--lw-simpleInput-labelColor, var(--lw-color-primary-highlighted));
     border: none;
     border-radius: 9999px;
-    transition: top 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+    transition: top 0.2s ease, transform 0.2s ease, opacity 0.2s ease, inset-inline-start 0.2s ease;
 }
 
 .lw-simpleInput__icon {
@@ -69,7 +78,7 @@
     font-family: inherit;
     font-size: var(--lw-simpleInput-fontSize, 1rem);
     color: var(--lw-color-text);
-    text-align: right;
+    text-align: start;
 }
 
 .lw-simpleInput__field:focus-visible {

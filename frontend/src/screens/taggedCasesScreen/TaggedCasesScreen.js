@@ -99,19 +99,18 @@ export default function TaggedCasesScreen() {
                         className="lw-taggedCasesScreen__search"
                         buttonPressFunction={handleSearchSelect}
                     />
-                </SimpleContainer>
 
-                <SimpleContainer className="lw-taggedCasesScreen__row">
-                    <ChooseButton
-                        buttonChoices={allCasesTypes}
-                        className="lw-taggedCasesScreen__choose"
-                        OnPressChoiceFunction={handleFilterByType}
-                    />
                     <ChooseButton
                         buttonChoices={["תיקים סגורים", "תיקים פתוחים"]}
                         className="lw-taggedCasesScreen__choose"
                         OnPressChoiceFunction={handleFilterByStatus}
                         buttonText="סגור/פתוח"
+                    />
+
+                    <ChooseButton
+                        buttonChoices={allCasesTypes}
+                        className="lw-taggedCasesScreen__choose"
+                        OnPressChoiceFunction={handleFilterByType}
                     />
                 </SimpleContainer>
 

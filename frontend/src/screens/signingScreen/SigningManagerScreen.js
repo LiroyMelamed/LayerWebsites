@@ -118,141 +118,135 @@ export default function SigningManagerScreen() {
             )}
 
             <SimpleScrollView className="lw-signingManagerScreen__scroll">
-                <SimpleContainer className="lw-signingManagerScreen">
-                    <SimpleContainer className="lw-signingManagerScreen__headerRow">
-                        <TextBold24>מסמכים לחתימה 📄</TextBold24>
-                    </SimpleContainer>
 
-                    {/* חיפוש + העלאת קובץ */}
-                    <SimpleContainer className="lw-signingManagerScreen__topRow">
-                        <SimpleContainer className="lw-signingManagerScreen__searchContainer">
-                            <SearchInput
-                                onSearch={handleSearch}
-                                title={"חיפוש מסמך / לקוח / תיק"}
-                                titleFontSize={18}
-                            />
-                        </SimpleContainer>
-
-                        <PrimaryButton onPress={handleGoToUpload}>
-                            שליחת מסמך חדש לחתימה 📤
-                        </PrimaryButton>
-                    </SimpleContainer>
-
-                    {/* טאבים */}
-                    <SimpleContainer className="lw-signingManagerScreen__tabsRow">
-                        <TabButton
-                            active={activeTab === "pending"}
-                            label={`בהמתנה / נדחו (${pendingCount})`}
-                            onPress={() => setActiveTab("pending")}
-                        />
-                        <TabButton
-                            active={activeTab === "signed"}
-                            label={`חתומים (${signedCount})`}
-                            onPress={() => setActiveTab("signed")}
+                <SimpleContainer className="lw-signingManagerScreen__topRow">
+                    <SimpleContainer className="lw-signingManagerScreen__searchContainer">
+                        <SearchInput
+                            onSearch={handleSearch}
+                            title={"חיפוש מסמך / לקוח / תיק"}
+                            titleFontSize={18}
                         />
                     </SimpleContainer>
 
-                    {/* רשימה */}
-                    {filteredFiles.length === 0 ? (
-                        <div className="lw-signingManagerScreen__emptyState">
-                            <Text14>
-                                {activeTab === "pending"
-                                    ? "✨ אין מסמכים ממתינים או נדחים"
-                                    : "📭 אין מסמכים חתומים להצגה"}
-                            </Text14>
-                        </div>
-                    ) : (
-                        filteredFiles.map((file) => {
-                            const chip = getStatusChip(file.Status);
-                            const isFullySigned = file.TotalSpots > 0 && file.SignedSpots === file.TotalSpots;
-                            const totalSpots = Number(file.TotalSpots || 0);
-                            const signedSpots = Number(file.SignedSpots || 0);
-                            const progressMax = totalSpots > 0 ? totalSpots : 1;
-                            const progressValue = totalSpots > 0 ? signedSpots : 0;
-                            const cardClassName = `lw-signingManagerScreen__fileCard${isFullySigned ? " is-fullySigned" : ""}`;
+                    <PrimaryButton onPress={handleGoToUpload}>
+                        שליחת מסמך חדש לחתימה 📤
+                    </PrimaryButton>
+                </SimpleContainer>
 
-                            return (
-                                <SimpleContainer
-                                    key={file.SigningFileId}
-                                    className={cardClassName}
-                                >
-                                    <SimpleContainer className="lw-signingManagerScreen__fileHeaderRow">
-                                        <h3 className="lw-signingManagerScreen__fileName">
-                                            {isFullySigned && "✅ "}{file.FileName}
-                                        </h3>
-                                        <span className={chip.className}>{chip.text}</span>
-                                    </SimpleContainer>
+                {/* טאבים */}
+                <SimpleContainer className="lw-signingManagerScreen__tabsRow">
+                    <TabButton
+                        active={activeTab === "pending"}
+                        label={`בהמתנה / נדחו (${pendingCount})`}
+                        onPress={() => setActiveTab("pending")}
+                    />
+                    <TabButton
+                        active={activeTab === "signed"}
+                        label={`חתומים (${signedCount})`}
+                        onPress={() => setActiveTab("signed")}
+                    />
+                </SimpleContainer>
 
-                                    <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                        <b>📁 תיק:</b> {file.CaseName}
-                                    </SimpleContainer>
-                                    <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                        <b>👤 לקוח:</b> {file.ClientName}
-                                    </SimpleContainer>
-                                    <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                        <b>📅 תאריך העלאה:</b>{" "}
-                                        {file.CreatedAt
-                                            ? new Date(file.CreatedAt).toLocaleDateString("he-IL")
-                                            : "-"}
-                                    </SimpleContainer>
+                {/* רשימה */}
+                {filteredFiles.length === 0 ? (
+                    <div className="lw-signingManagerScreen__emptyState">
+                        <Text14>
+                            {activeTab === "pending"
+                                ? "✨ אין מסמכים ממתינים או נדחים"
+                                : "📭 אין מסמכים חתומים להצגה"}
+                        </Text14>
+                    </div>
+                ) : (
+                    filteredFiles.map((file) => {
+                        const chip = getStatusChip(file.Status);
+                        const isFullySigned = file.TotalSpots > 0 && file.SignedSpots === file.TotalSpots;
+                        const totalSpots = Number(file.TotalSpots || 0);
+                        const signedSpots = Number(file.SignedSpots || 0);
+                        const progressMax = totalSpots > 0 ? totalSpots : 1;
+                        const progressValue = totalSpots > 0 ? signedSpots : 0;
+                        const cardClassName = `lw-signingManagerScreen__fileCard${isFullySigned ? " is-fullySigned" : ""}`;
 
-                                    {(file.Status === "pending" ||
-                                        file.Status === "rejected") && (
-                                            <>
-                                                <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                                    <b>✍️ חתימות:</b>{" "}
-                                                    {signedSpots}/{totalSpots}
-                                                </SimpleContainer>
+                        return (
+                            <SimpleContainer
+                                key={file.SigningFileId}
+                                className={cardClassName}
+                            >
+                                <SimpleContainer className="lw-signingManagerScreen__fileHeaderRow">
+                                    <h3 className="lw-signingManagerScreen__fileName">
+                                        {isFullySigned && "✅ "}{file.FileName}
+                                    </h3>
+                                    <span className={chip.className}>{chip.text}</span>
+                                </SimpleContainer>
 
-                                                <progress
-                                                    className="lw-signingManagerScreen__progress"
-                                                    max={progressMax}
-                                                    value={progressValue}
-                                                    aria-label={`חתימות: ${getProgress(file)}%`}
-                                                />
+                                <SimpleContainer className="lw-signingManagerScreen__detailRow">
+                                    <b>📁 תיק:</b> {file.CaseName}
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-signingManagerScreen__detailRow">
+                                    <b>👤 לקוח:</b> {file.ClientName}
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-signingManagerScreen__detailRow">
+                                    <b>📅 תאריך העלאה:</b>{" "}
+                                    {file.CreatedAt
+                                        ? new Date(file.CreatedAt).toLocaleDateString("he-IL")
+                                        : "-"}
+                                </SimpleContainer>
 
-                                                {file.Status === "rejected" &&
-                                                    file.RejectionReason && (
-                                                        <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                                            <b>❌ סיבת דחייה:</b>{" "}
-                                                            {file.RejectionReason}
-                                                        </SimpleContainer>
-                                                    )}
-                                            </>
-                                        )}
+                                {(file.Status === "pending" ||
+                                    file.Status === "rejected") && (
+                                        <>
+                                            <SimpleContainer className="lw-signingManagerScreen__detailRow">
+                                                <b>✍️ חתימות:</b>{" "}
+                                                {signedSpots}/{totalSpots}
+                                            </SimpleContainer>
 
-                                    {file.Status === "signed" && (
-                                        <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                            <b>✓ חתום בתאריך:</b>{" "}
-                                            {file.SignedAt
-                                                ? new Date(file.SignedAt).toLocaleDateString("he-IL")
-                                                : "-"}
-                                        </SimpleContainer>
+                                            <progress
+                                                className="lw-signingManagerScreen__progress"
+                                                max={progressMax}
+                                                value={progressValue}
+                                                aria-label={`חתימות: ${getProgress(file)}%`}
+                                            />
+
+                                            {file.Status === "rejected" &&
+                                                file.RejectionReason && (
+                                                    <SimpleContainer className="lw-signingManagerScreen__detailRow">
+                                                        <b>❌ סיבת דחייה:</b>{" "}
+                                                        {file.RejectionReason}
+                                                    </SimpleContainer>
+                                                )}
+                                        </>
                                     )}
 
-                                    <SimpleContainer className="lw-signingManagerScreen__actionsRow">
-                                        {file.Status === "signed" && (
-                                            <PrimaryButton
-                                                onPress={() =>
-                                                    handleDownload(file.SigningFileId, file.FileName)
-                                                }
-                                            >
-                                                ⬇️ הורד קובץ חתום
-                                            </PrimaryButton>
-                                        )}
-                                        <SecondaryButton
+                                {file.Status === "signed" && (
+                                    <SimpleContainer className="lw-signingManagerScreen__detailRow">
+                                        <b>✓ חתום בתאריך:</b>{" "}
+                                        {file.SignedAt
+                                            ? new Date(file.SignedAt).toLocaleDateString("he-IL")
+                                            : "-"}
+                                    </SimpleContainer>
+                                )}
+
+                                <SimpleContainer className="lw-signingManagerScreen__actionsRow">
+                                    {file.Status === "signed" && (
+                                        <PrimaryButton
                                             onPress={() =>
-                                                console.log("פרטים על", file.SigningFileId)
+                                                handleDownload(file.SigningFileId, file.FileName)
                                             }
                                         >
-                                            👁️ פרטי מסמך
-                                        </SecondaryButton>
-                                    </SimpleContainer>
+                                            ⬇️ הורד קובץ חתום
+                                        </PrimaryButton>
+                                    )}
+                                    <SecondaryButton
+                                        onPress={() =>
+                                            console.log("פרטים על", file.SigningFileId)
+                                        }
+                                    >
+                                        👁️ פרטי מסמך
+                                    </SecondaryButton>
                                 </SimpleContainer>
-                            );
-                        })
-                    )}
-                </SimpleContainer>
+                            </SimpleContainer>
+                        );
+                    })
+                )}
             </SimpleScrollView>
         </SimpleScreen>
     );

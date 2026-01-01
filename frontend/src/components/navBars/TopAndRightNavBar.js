@@ -48,7 +48,7 @@ export default function TopAndRightNavBar({ chosenIndex = -1, children, LogoNavi
                   iconSource={item.icon}
                   size={24}
                   isPressed={currentIndex === index}
-                  onPressFunction={() => { setCurrentIndex(index); item.onClick() }}
+                  onPressFunction={() => { item.onClick() }}
                   buttonIndex={index}
                 />
               ))}

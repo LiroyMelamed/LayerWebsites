@@ -28,7 +28,7 @@ export default function AdminMenuItem({
     }
 
     return (
-        <SimpleButton onPress={() => AdminPressed()}>
+        <SimpleButton onPress={() => AdminPressed()} className="lw-adminsCard__item">
             <SimpleContainer className="lw-adminMenuItem" style={style}>
 
                 <SimpleContainer className="lw-adminMenuItem__row">

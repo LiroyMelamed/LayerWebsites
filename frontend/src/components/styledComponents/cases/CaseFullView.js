@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import SimpleContainer from '../../simpleComponents/SimpleContainer';
 import SimpleInput from '../../simpleComponents/SimpleInput';
 import SimpleScrollView from '../../simpleComponents/SimpleScrollView';
@@ -12,11 +12,15 @@ import casesApi, { casesTypeApi } from '../../../api/casesApi';
 import { buttonSizes } from '../../../styles/buttons/buttonSizes';
 import { adminApi } from '../../../api/adminApi';
 import { formatDateForInput } from '../../../functions/date/formatDateForInput';
+import IsraeliPhoneNumberValidation from '../../../functions/validation/IsraeliPhoneNumberValidation';
+import emailValidation from '../../../functions/validation/EmailValidation';
 
 import './CaseFullView.scss';
 
 export default function CaseFullView({ caseDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style }) {
     const [caseHasBeenChosen, setCaseHasBeenChosen] = useState(false)
+    const [hasSubmitted, setHasSubmitted] = useState(false);
+    const [fieldErrors, setFieldErrors] = useState({});
     const [caseData, setCaseData] = useState({
         CaseId: caseDetails?.CaseId || '',
         CaseName: caseDetails?.CaseName || '',
@@ -35,6 +39,43 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
         EstimatedCompletionDate: caseDetails?.EstimatedCompletionDate,
         LicenseExpiryDate: caseDetails?.LicenseExpiryDate,
     });
+
+    const validateCaseData = useMemo(() => {
+        return (data) => {
+            const errors = {};
+
+            const caseName = String(data?.CaseName || '').trim();
+            if (!caseName) errors.CaseName = 'חובה';
+
+            const caseTypeName = String(data?.CaseTypeName || '').trim();
+            if (!caseTypeName) errors.CaseTypeName = 'חובה';
+
+            const customerName = String(data?.CustomerName || '').trim();
+            if (!customerName) errors.CustomerName = 'חובה';
+
+            const phoneRequired = true;
+            const phone = String(data?.PhoneNumber || '').trim();
+            if (phoneRequired && !phone) {
+                errors.PhoneNumber = 'חובה';
+            } else {
+                const phoneError = IsraeliPhoneNumberValidation(phone);
+                if (phoneError) errors.PhoneNumber = phoneError;
+            }
+
+            const email = String(data?.CustomerMail || '').trim();
+            const emailErr = emailValidation(email);
+            if (emailErr) errors.CustomerMail = emailErr;
+
+            return errors;
+        };
+    }, []);
+
+    const applyFieldErrorUpdates = (partialUpdates) => {
+        if (!hasSubmitted) return;
+
+        const nextData = { ...caseData, ...partialUpdates };
+        setFieldErrors(validateCaseData(nextData));
+    };
 
     const { result: customers, isPerforming: isPerformingCustomers, performRequest: searchCustomers } = useHttpRequest(customersApi.getCustomersByName, null, () => { });
 
@@ -64,6 +105,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
 
     const handleInputChange = (field, value) => {
         setCaseData((prevDetails) => ({ ...prevDetails, [field]: value }));
+        applyFieldErrorUpdates({ [field]: value });
     };
 
     const handleCaseTypeSelect = (caseTypeName) => {
@@ -77,14 +119,29 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                 Descriptions: selectedCaseType.Descriptions || [{ Stage: 1, Text: '', Timestamp: '', New: false }],
                 CaseTypeId: selectedCaseType.CaseTypeId
             }));
+
+            applyFieldErrorUpdates({
+                CaseTypeName: selectedCaseType.CaseTypeName,
+                CaseTypeId: selectedCaseType.CaseTypeId,
+            });
         }
     };
 
     const handleSaveCase = () => {
+        setHasSubmitted(true);
+        const errors = validateCaseData(caseData);
+        setFieldErrors(errors);
+        if (Object.keys(errors).length) return;
+
         saveCase(caseData);
     };
 
     const handleUpdateCase = () => {
+        setHasSubmitted(true);
+        const errors = validateCaseData(caseData);
+        setFieldErrors(errors);
+        if (Object.keys(errors).length) return;
+
         saveCase(caseData.CaseId, caseData);
     };
 
@@ -103,6 +160,14 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                 PhoneNumber: selectedUser.PhoneNumber,
                 CompanyName: selectedUser.CompanyName || '',
             }));
+
+            applyFieldErrorUpdates({
+                UserId: selectedUser.UserId,
+                CustomerName: selectedUser.Name,
+                CustomerMail: selectedUser.Email,
+                PhoneNumber: selectedUser.PhoneNumber,
+                CompanyName: selectedUser.CompanyName || '',
+            });
         }
     };
 
@@ -123,6 +188,8 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
             ...prevDetails,
             CaseName: selectedCase
         }));
+
+        applyFieldErrorUpdates({ CaseName: selectedCase });
 
         const caseDetails = cases.find(c => c.CaseName === selectedCase);
         if (caseDetails) {
@@ -158,6 +225,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                             title={"מספר התיק"}
                             value={caseData.CaseName}
                             onChange={(e) => handleInputChange('CaseName', e.target.value)}
+                            error={fieldErrors?.CaseName}
                         />
                         :
                         <SearchInput
@@ -166,6 +234,8 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                                     ...prevDetails,
                                     CaseName: caseName
                                 }));
+
+                                applyFieldErrorUpdates({ CaseName: caseName });
                             }}
                             title={"מספר התיק"}
                             value={caseData.CaseName}
@@ -174,6 +244,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                             buttonPressFunction={handleCaseSelect}
                             queryResult={cases}
                             className="lw-caseFullView__field"
+                            error={fieldErrors?.CaseName}
                         />
                     }
 
@@ -186,6 +257,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                         buttonPressFunction={handleCaseTypeSelect}
                         queryResult={caseTypes}
                         className="lw-caseFullView__field"
+                        error={fieldErrors?.CaseTypeName}
                     />
                 </SimpleContainer>
 
@@ -199,6 +271,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                         buttonPressFunction={handleCustomerSelect}
                         queryResult={customers}
                         className="lw-caseFullView__field"
+                        error={fieldErrors?.CustomerName}
                     />
                     <SimpleInput
                         className="lw-caseFullView__field"
@@ -214,6 +287,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                         title={"מספר פלאפון"}
                         value={caseData.PhoneNumber}
                         onChange={(e) => handleInputChange('PhoneNumber', e.target.value)}
+                        error={fieldErrors?.PhoneNumber}
                     />
                     <SimpleInput
                         className="lw-caseFullView__field"
@@ -230,6 +304,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                         type="email"
                         value={caseData.CustomerMail}
                         onChange={(e) => handleInputChange('CustomerMail', e.target.value)}
+                        error={fieldErrors?.CustomerMail}
                     />
                     <SearchInput
                         onSearch={getAdminByName}

@@ -12,6 +12,9 @@ const HoverContainer = ({
     isPerforming,
     getButtonTextFunction,
     onPressButtonFunction,
+    query,
+    emptyActionText,
+    onEmptyAction,
     targetRef,
     onClose,
     style,
@@ -99,9 +102,28 @@ const HoverContainer = ({
                             ))}
                         </SimpleContainer>
                     ) : (
-                        <SimpleContainer className="lw-hoverContainer__noResults">
-                            <Text20>לא נמצאו תוצאות</Text20>
-                        </SimpleContainer>
+                        (query?.trim?.() && emptyActionText && onEmptyAction) ? (
+                            <SimpleContainer className="lw-hoverContainer__list">
+                                <SimpleButton
+                                    className="lw-hoverContainer__option"
+                                    onPressIn={(e) => {
+                                        // Keep input focused so SearchInput's onBlur doesn't
+                                        // close the results before the click handler runs.
+                                        e.preventDefault();
+                                    }}
+                                    onPress={() => {
+                                        onEmptyAction(query);
+                                        onClose?.();
+                                    }}
+                                >
+                                    <Text20>{emptyActionText}</Text20>
+                                </SimpleButton>
+                            </SimpleContainer>
+                        ) : (
+                            <SimpleContainer className="lw-hoverContainer__noResults">
+                                <Text20>לא נמצאו תוצאות</Text20>
+                            </SimpleContainer>
+                        )
                     )
                 )}
             </SimpleScrollView>

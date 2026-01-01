@@ -33,7 +33,9 @@ const SimplePopUp = ({ isOpen, children, style, onClose, className, ...props }) 
                     className="lw-simplePopUp__close"
                     src={icons.Button.X}
                 />
-                {children}
+                <SimpleContainer className="lw-simplePopUp__content">
+                    {children}
+                </SimpleContainer>
             </SimpleContainer>
         </SimpleContainer>
     );

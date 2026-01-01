@@ -4,10 +4,11 @@
 .lw-taggedCasesScreen__row {
     @include m.row(v.$space-3, wrap);
     max-width: 100%;
+    margin: 1rem;
 }
 
 .lw-taggedCasesScreen__search {
-    flex: 1 1 20rem;
+    flex: 1 1 1 10rem;
     min-inline-size: 14rem;
     max-inline-size: 31.25rem;
     min-inline-size: 0;
@@ -21,9 +22,10 @@
 .lw-taggedCasesScreen__footer {
     display: flex;
     justify-content: center;
+    align-self: center;
 }
 
-.lw-taggedCasesScreen__footer > .lw-textButtonWithTwoOptionalIcons {
+.lw-taggedCasesScreen__footer>.lw-textButtonWithTwoOptionalIcons {
     margin: 0.5rem 0;
     align-self: center;
     min-block-size: 2.75rem;
