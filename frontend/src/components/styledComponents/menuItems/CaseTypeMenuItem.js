@@ -41,13 +41,13 @@ export default function CaseTypeMenuItem({
             <SimpleContainer className="lw-caseTypeMenuItem__header" onPress={() => setIsOpen(!isOpen)}>
                 <SimpleContainer className="lw-caseTypeMenuItem__content">
                     <SimpleContainer className="lw-caseTypeMenuItem__row lw-caseTypeMenuItem__row--top">
-                        <div className="lw-caseTypeMenuItem__title">
-                            <TextBold14>{rightTitle}</TextBold14>
-                        </div>
-
                         <SimpleContainer className="lw-caseTypeMenuItem__pair">
                             <TextBold12>{leftPreFirstLine}</TextBold12>
                             <Text12>{leftValueFirstLine}</Text12>
+                        </SimpleContainer>
+
+                        <SimpleContainer className="lw-caseTypeMenuItem__title">
+                            <TextBold14>{rightTitle}</TextBold14>
                         </SimpleContainer>
                     </SimpleContainer>
 

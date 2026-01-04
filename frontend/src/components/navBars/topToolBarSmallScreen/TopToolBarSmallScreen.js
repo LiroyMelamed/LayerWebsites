@@ -8,7 +8,6 @@ import { useNavigate } from "react-router-dom";
 import { usePopup } from "../../../providers/PopUpProvider";
 import { getNavBarData } from "../data/NavBarData";
 import ImageButton from "../../specializedComponents/buttons/ImageButton";
-import PrimaryButton from "../../styledComponents/buttons/PrimaryButton";
 import SimpleScrollView from "../../simpleComponents/SimpleScrollView";
 import { useFromApp } from "../../../providers/FromAppProvider";
 
@@ -27,7 +26,7 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
 
     const { openPopup, closePopup } = usePopup();
 
-    const { NavBarLinks } = GetNavBarData(navigate, openPopup, closePopup);
+    const { NavBarLinks } = GetNavBarData(navigate, openPopup, closePopup, isFromApp);
 
     const toggleDrawer = () => {
         setIsDrawerOpen(!isDrawerOpen);

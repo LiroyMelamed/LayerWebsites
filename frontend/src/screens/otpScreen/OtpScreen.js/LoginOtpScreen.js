@@ -27,6 +27,8 @@ export default function LoginOtpScreen() {
     const { otpNumber, setOtpNumber, otpError, phoneNumber } = useLoginVerifyOtpCodeFieldsProvider();
     const navigate = useNavigate();
 
+    const otpInputRef = useRef(null);
+
     const didAutoSubmitRef = useRef(false);
 
     const { isPerforming, performRequest } = useHttpRequest(loginApi.verifyOtp, navigateTo);
@@ -72,11 +74,21 @@ export default function LoginOtpScreen() {
         };
     }, [phoneNumber, performRequest, setOtpNumber]);
 
+    useEffect(() => {
+        // iOS QuickType “one-time code” suggestion is most reliable when the OTP field is focused.
+        const id = setTimeout(() => {
+            otpInputRef.current?.focus?.();
+        }, 0);
+        return () => clearTimeout(id);
+    }, []);
+
     function navigateTo(data) {
         setOtpNumber('')
         localStorage.setItem("token", data.token);
-        if (data.role == AppRoles.Admin) navigate(AdminStackName + MainScreenName)
-        else navigate(ClientStackName + ClientMainScreenName)
+        localStorage.setItem("role", data.role);
+
+        if (data.role == AppRoles.Admin) navigate(AdminStackName + MainScreenName, { replace: true })
+        else navigate(ClientStackName + ClientMainScreenName, { replace: true })
     }
 
     return (
@@ -103,6 +115,11 @@ export default function LoginOtpScreen() {
                     type="tel"
                     inputMode="numeric"
                     autoComplete="one-time-code"
+                    autoFocus
+                    inputRef={otpInputRef}
+                    autoCorrect="off"
+                    spellCheck={false}
+                    enterKeyHint="done"
                     name="otp"
                     pattern="\\d*"
                     textStyle={{ textAlign: 'center', letterSpacing: '8px' }}

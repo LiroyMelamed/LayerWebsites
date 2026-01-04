@@ -4,12 +4,12 @@ import SimpleContainer from "../../../simpleComponents/SimpleContainer";
 
 // Color scheme for different signers
 const SIGNER_COLORS = [
-    { bg: "rgba(25, 118, 210, 0.15)", border: "#1976d2", name: "כחול" },      // Blue
-    { bg: "rgba(211, 47, 47, 0.15)", border: "#d32f2f", name: "אדום" },       // Red
-    { bg: "rgba(56, 142, 60, 0.15)", border: "#388e3c", name: "ירוק" },       // Green
-    { bg: "rgba(251, 140, 0, 0.15)", border: "#fb8c00", name: "כתום" },       // Orange
-    { bg: "rgba(123, 31, 162, 0.15)", border: "#7b1fa2", name: "סגול" },      // Purple
-    { bg: "rgba(0, 150, 136, 0.15)", border: "#009688", name: "טורקיז" },     // Teal
+    { bg: "rgba(42, 67, 101, 0.14)", border: "#2A4365", name: "ראשי" },       // primary
+    { bg: "rgba(76, 102, 144, 0.14)", border: "#4C6690", name: "משני" },      // sidebar selected
+    { bg: "rgba(56, 161, 105, 0.14)", border: "#38A169", name: "חיובי" },     // positive
+    { bg: "rgba(197, 48, 48, 0.12)", border: "#C53030", name: "שלילי" },      // negative
+    { bg: "rgba(113, 128, 150, 0.14)", border: "#718096", name: "אפור" },     // winter
+    { bg: "rgba(155, 44, 44, 0.12)", border: "#9B2C2C", name: "אדום כהה" },   // darkRed
 ];
 
 export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot, signerIndex = 0, signerName = "חתימה", scale = 1 }) {
@@ -30,35 +30,99 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
         "--spot-border": colorScheme.border,
     };
 
-    const startDrag = (e) => {
-        e.preventDefault();
-        const startX = e.clientX;
-        const startY = e.clientY;
+    const startDragFromClientPoint = (startClientX, startClientY, onEnd) => {
+        const startX = Number(startClientX);
+        const startY = Number(startClientY);
+        const baseX = Number(spot.x || 0);
+        const baseY = Number(spot.y || 0);
+        const safeScale = scale || 1;
 
-        const move = (moveEvent) => {
-            const dx = moveEvent.clientX - startX;
-            const dy = moveEvent.clientY - startY;
+        const moveFromClientPoint = (clientX, clientY) => {
+            const dx = Number(clientX) - startX;
+            const dy = Number(clientY) - startY;
 
-            onUpdateSpot(index, {
+            onUpdateSpot?.(index, {
                 // dx/dy are in screen pixels; convert to base coordinate space.
-                x: spot.x + dx / (scale || 1),
-                y: spot.y + dy / (scale || 1),
+                x: baseX + dx / safeScale,
+                y: baseY + dy / safeScale,
             });
         };
 
-        const stop = () => {
-            document.removeEventListener("mousemove", move);
-            document.removeEventListener("mouseup", stop);
+        return { moveFromClientPoint, onEnd };
+    };
+
+    const startDragPointer = (e) => {
+        // Pointer events support mouse + touch + pen.
+        e.preventDefault();
+        e.stopPropagation();
+
+        const target = e.currentTarget;
+        const pointerId = e.pointerId;
+
+        const { moveFromClientPoint } = startDragFromClientPoint(e.clientX, e.clientY);
+
+        const onPointerMove = (ev) => {
+            if (ev.pointerId !== pointerId) return;
+            ev.preventDefault();
+            moveFromClientPoint(ev.clientX, ev.clientY);
         };
 
-        document.addEventListener("mousemove", move);
-        document.addEventListener("mouseup", stop);
+        const stop = (ev) => {
+            if (ev && ev.pointerId !== pointerId) return;
+            window.removeEventListener("pointermove", onPointerMove);
+            window.removeEventListener("pointerup", stop);
+            window.removeEventListener("pointercancel", stop);
+            try {
+                target?.releasePointerCapture?.(pointerId);
+            } catch {
+                // ignore
+            }
+        };
+
+        try {
+            target?.setPointerCapture?.(pointerId);
+        } catch {
+            // ignore
+        }
+
+        window.addEventListener("pointermove", onPointerMove, { passive: false });
+        window.addEventListener("pointerup", stop);
+        window.addEventListener("pointercancel", stop);
+    };
+
+    const startDragTouchFallback = (e) => {
+        // Fallback for browsers without Pointer Events.
+        e.preventDefault();
+        e.stopPropagation();
+
+        const touch = e.touches?.[0];
+        if (!touch) return;
+
+        const { moveFromClientPoint } = startDragFromClientPoint(touch.clientX, touch.clientY);
+
+        const onTouchMove = (ev) => {
+            const t = ev.touches?.[0];
+            if (!t) return;
+            ev.preventDefault();
+            moveFromClientPoint(t.clientX, t.clientY);
+        };
+
+        const stop = () => {
+            window.removeEventListener("touchmove", onTouchMove);
+            window.removeEventListener("touchend", stop);
+            window.removeEventListener("touchcancel", stop);
+        };
+
+        window.addEventListener("touchmove", onTouchMove, { passive: false });
+        window.addEventListener("touchend", stop);
+        window.addEventListener("touchcancel", stop);
     };
 
     return (
         <SimpleContainer
             ref={ref}
-            onMouseDown={startDrag}
+            onPointerDown={startDragPointer}
+            onTouchStart={typeof window !== "undefined" && !window.PointerEvent ? startDragTouchFallback : undefined}
             className="lw-signing-spot"
             style={spotStyle}
             title={`חתום על ידי: ${signerName}`}

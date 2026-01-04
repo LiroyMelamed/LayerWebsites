@@ -6,6 +6,11 @@ require("dotenv").config();
 
 const SECRET_KEY = process.env.JWT_SECRET || "supersecretkey";
 
+function buildOtpSmsBody(otp) {
+    // Recommended format for iOS QuickType + Android WebOTP: code line, blank line, then "@domain #code".
+    return `קוד האימות הוא: ${otp}\n\n@${WEBSITE_DOMAIN} #${otp}`;
+}
+
 const requestOtp = async (req, res) => {
     let { phoneNumber } = req.body;
 
@@ -50,7 +55,7 @@ const requestOtp = async (req, res) => {
 
         if (!isSuperUser) {
             try {
-                sendMessage(`קוד האימות הוא: ${otp}\n\n@${WEBSITE_DOMAIN} #${otp}`, formatedPhoneNumber);
+                sendMessage(buildOtpSmsBody(otp), formatedPhoneNumber);
             } catch (e) {
                 console.warn("SMS send failed:", e?.message);
             }
@@ -161,7 +166,7 @@ const register = async (req, res) => {
 
         if (!isSuperUser) {
             try {
-                sendMessage(`קוד האימות הוא: ${otp}\n\n@${WEBSITE_DOMAIN} #${otp}`, formatedPhoneNumber);
+                sendMessage(buildOtpSmsBody(otp), formatedPhoneNumber);
             } catch (e) {
                 console.warn("כשל בשליחת SMS לאחר הרשמה:", e?.message);
             }

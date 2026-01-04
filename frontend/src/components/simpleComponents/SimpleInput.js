@@ -25,6 +25,8 @@ const SimpleInput = forwardRef(
         onBlur,
         error,
 
+        inputRef,
+
         timeToWaitInMilli = 500,
         ...props
     }, ref) => {
@@ -147,6 +149,7 @@ const SimpleInput = forwardRef(
                     onFocus={handleFocus}
                     onBlur={handleBlur}
                     disabled={disabled}
+                    ref={inputRef}
                     {...props}
                 />
 

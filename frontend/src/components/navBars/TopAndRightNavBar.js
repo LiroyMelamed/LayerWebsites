@@ -4,13 +4,12 @@ import { usePopup } from "../../providers/PopUpProvider";
 import { getNavBarData } from '../navBars/data/NavBarData';
 import SimpleContainer from "../simpleComponents/SimpleContainer";
 import SideBarMenuItem from "./navBarItems/SideBarMenuItem";
-import { colors } from "../../constant/colors";
 import { images } from "../../assets/images/images";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import ImageButton from "../specializedComponents/buttons/ImageButton";
 import Separator from "../styledComponents/separators/Separator";
-import GenericButton from "../styledComponents/buttons/GenericButton";
 import SimpleScrollView from "../simpleComponents/SimpleScrollView";
+import { useFromApp } from "../../providers/FromAppProvider";
 import "./TopAndRightNavBar.scss";
 
 const Logo = images.Logos.LogoSlangWhite;
@@ -19,8 +18,9 @@ export default function TopAndRightNavBar({ chosenIndex = -1, children, LogoNavi
   const navigate = useNavigate();
   const { isSmallScreen } = useScreenSize();
   const { openPopup, closePopup } = usePopup();
+  const { isFromApp } = useFromApp();
   const [currentIndex, setCurrentIndex] = useState(chosenIndex);
-  const { NavBarLinks } = GetNavBarData(navigate, openPopup, closePopup);
+  const { NavBarLinks } = GetNavBarData(navigate, openPopup, closePopup, isFromApp);
 
   return (
     <SimpleContainer className="lw-topAndRightNavBar">
