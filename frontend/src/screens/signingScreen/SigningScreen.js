@@ -7,7 +7,7 @@ import signingFilesApi from "../../api/signingFilesApi";
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
 import SimpleScrollView from "../../components/simpleComponents/SimpleScrollView";
-import { Text14 } from "../../components/specializedComponents/text/AllTextKindFile";
+import { Text14, TextBold24 } from "../../components/specializedComponents/text/AllTextKindFile";
 import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
@@ -97,6 +97,10 @@ export default function SigningScreen() {
 
             <SimpleScrollView className="lw-signingScreen__scroll">
                 <SimpleContainer className="lw-signingScreen">
+                    <SimpleContainer className="lw-signingScreen__headerRow">
+                        <TextBold24>📄 מסמכים לחתימה</TextBold24>
+                    </SimpleContainer>
+
                     <SimpleContainer className="lw-signingScreen__tabsRow">
                         <TabButton
                             active={activeTab === "pending"}
@@ -111,13 +115,13 @@ export default function SigningScreen() {
                     </SimpleContainer>
 
                     {currentList.length === 0 ? (
-                        <SimpleContainer className="lw-signingScreen__emptyState">
+                        <div className="lw-signingScreen__emptyState">
                             <Text14>
                                 {activeTab === "pending"
                                     ? "✨ אין כרגע מסמכים בהמתנה לחתימתך"
                                     : "📭 אין מסמכים חתומים להצגה"}
                             </Text14>
-                        </SimpleContainer>
+                        </div>
                     ) : (
                         currentList.map((file) => {
                             const chip = getStatusChip(file.Status);
@@ -130,7 +134,7 @@ export default function SigningScreen() {
                                 <SimpleContainer key={file.SigningFileId} className="lw-signingScreen__fileCard">
                                     <SimpleContainer className="lw-signingScreen__fileHeaderRow">
                                         <h3 className="lw-signingScreen__fileName">{file.FileName}</h3>
-                                        <SimpleContainer className={chip.className}>{chip.text}</SimpleContainer>
+                                        <span className={chip.className}>{chip.text}</span>
                                     </SimpleContainer>
 
                                     <SimpleContainer className="lw-signingScreen__detailRow">

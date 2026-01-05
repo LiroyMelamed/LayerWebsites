@@ -379,27 +379,15 @@
 
 .lw-signing-fileCardStatus {
     margin-inline-start: auto;
+}
+
+.lw-signing-fileCardStatus {
     padding: 0.25rem 0.625rem;
     border-radius: 1rem;
     font-size: 0.75rem;
     font-weight: 700;
-    background-color: #fff3cd;
-    color: #856404;
-}
-
-.lw-signing-fileCardStatus.is-signed {
-    background-color: #d4edda;
-    color: #155724;
-}
-
-.lw-signing-fileCardStatus.is-rejected {
-    background-color: #f8d7da;
-    color: #721c24;
-}
-
-.lw-signing-fileCardStatus.is-archived {
-    background-color: #e9ecef;
-    color: #383d41;
+    background-color: var(--chip-bg, #fff3cd);
+    color: var(--chip-color, #856404);
 }
 
 .lw-signing-fileCardDetail {

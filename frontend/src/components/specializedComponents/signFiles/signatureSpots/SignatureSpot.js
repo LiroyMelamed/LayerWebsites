@@ -124,7 +124,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
             onPointerDown={startDragPointer}
             onTouchStart={typeof window !== "undefined" && !window.PointerEvent ? startDragTouchFallback : undefined}
             className="lw-signing-spot"
-            style={spotStyle /* runtime dynamic: spot position/size depends on PDF coordinates + scale */}
+            style={spotStyle}
             title={`חתום על ידי: ${signerName}`}
         >
             {hasSignatureImage ? (
@@ -134,21 +134,21 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                     className="lw-signing-spotImg"
                 />
             ) : (
-                <SimpleContainer className="lw-signing-spotLabel">
-                    <SimpleContainer className="lw-signing-spotLabelText">
+                <div className="lw-signing-spotLabel">
+                    <div className="lw-signing-spotLabelText">
                         ✍️ {signerName.length > 10 ? signerName.substring(0, 8) + "..." : signerName}
-                    </SimpleContainer>
-                </SimpleContainer>
+                    </div>
+                </div>
             )}
-            <SimpleContainer
-                onPress={(e) => {
+            <span
+                onClick={(e) => {
                     e.stopPropagation();
                     onRemoveSpot(index);
                 }}
                 className="lw-signing-spotRemove"
             >
                 ✕
-            </SimpleContainer>
+            </span>
         </SimpleContainer>
     );
 }

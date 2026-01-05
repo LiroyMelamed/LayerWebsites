@@ -2,12 +2,11 @@
 @use '../../styles/mixins' as m;
 
 .lw-signingManagerScreen {
-
     width: 100%;
 }
 
 .lw-signingManagerScreen__scroll {
-    margin-top: 1rem;
+    margin-top: 2.5rem;
     align-items: center;
     padding: 0 1rem;
 }
@@ -20,6 +19,7 @@
 .lw-signingManagerScreen__topRow {
     @include m.row(v.$space-3, wrap);
     justify-content: flex-start;
+    margin-block-start: v.$space-4;
 }
 
 .lw-signingManagerScreen__searchContainer {
@@ -147,7 +147,7 @@
         flex: 1 1 100%;
     }
 
-    .lw-signingManagerScreen__topRow>.lw-textButtonWithTwoOptionalIcons {
+    .lw-signingManagerScreen__topRow > .lw-textButtonWithTwoOptionalIcons {
         width: 100%;
     }
 }
