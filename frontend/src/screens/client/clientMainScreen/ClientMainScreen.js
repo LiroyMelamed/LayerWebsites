@@ -18,7 +18,7 @@ export const ClientMainScreenName = "/ClientMainScreen";
 export default function ClientMainScreen() {
     const { isSmallScreen } = useScreenSize();
     const { result: allCases, isPerforming: isPerformingAllCases } = useAutoHttpRequest(casesApi.getAllCases);
-    const { result: allCasesTypes, isPerforming: isPerformingAllCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
+    const { isPerforming: isPerformingAllCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
 
     if (isPerformingAllCases || isPerformingAllCasesTypes) {
         return <SimpleLoader />;

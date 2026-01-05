@@ -1,7 +1,6 @@
 import { images } from "../../../assets/images/images";
 import SimpleCard from "../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
-import SimpleImage from "../../../components/simpleComponents/SimpleImage";
 import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
 import { Text14, TextBold14 } from "../../../components/specializedComponents/text/AllTextKindFile";
 import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryButton";

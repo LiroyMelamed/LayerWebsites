@@ -17,7 +17,7 @@ import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButt
 import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
 import SearchInput from "../../components/specializedComponents/containers/SearchInput";
 
-import { Text14, TextBold24 } from "../../components/specializedComponents/text/AllTextKindFile";
+import { Text14 } from "../../components/specializedComponents/text/AllTextKindFile";
 import { images } from "../../assets/images/images";
 
 import { AdminStackName } from "../../navigation/AdminStack";

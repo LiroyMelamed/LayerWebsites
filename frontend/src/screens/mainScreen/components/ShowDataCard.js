@@ -2,7 +2,7 @@ import { icons } from "../../../assets/icons/icons";
 import SimpleCard from "../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
 import SimpleIcon from "../../../components/simpleComponents/SimpleIcon";
-import { Text12, TextBold14, TextBold20, TextBold36 } from "../../../components/specializedComponents/text/AllTextKindFile";
+import { Text12, TextBold14, TextBold36 } from "../../../components/specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../constant/colors";
 import addCommasToNumber from "../../../functions/numbers/addCommasToNumber";
 

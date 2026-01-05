@@ -7,7 +7,7 @@ import signingFilesApi from "../../api/signingFilesApi";
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
 import SimpleScrollView from "../../components/simpleComponents/SimpleScrollView";
-import { Text14, TextBold24 } from "../../components/specializedComponents/text/AllTextKindFile";
+import { Text14 } from "../../components/specializedComponents/text/AllTextKindFile";
 import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";

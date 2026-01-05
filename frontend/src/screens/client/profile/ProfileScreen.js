@@ -1,5 +1,4 @@
 import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 import { images } from "../../../assets/images/images";
 import { customersApi } from "../../../api/customersApi";
@@ -35,7 +34,6 @@ import "./ProfileScreen.scss";
 export const ProfileScreenName = "/ProfileScreen";
 
 export default function ProfileScreen() {
-    const navigate = useNavigate();
     const { isSmallScreen } = useScreenSize();
     const { openPopup, closePopup } = usePopup();
 

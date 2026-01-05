@@ -91,7 +91,6 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
     }
 
     const totalStages = fullCase?.Descriptions?.length || 0;
-    const statusText = fullCase.IsClosed ? "סגור" : `שלב ${fullCase.CurrentStage}/${totalStages}`;
 
     function openWhatsappGroupModal() {
         openPopup(

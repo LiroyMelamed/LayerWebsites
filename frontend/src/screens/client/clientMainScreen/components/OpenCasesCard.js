@@ -5,7 +5,7 @@ import { TextBold20 } from "../../../../components/specializedComponents/text/Al
 import DefaultState from "../../../../components/styledComponents/defaultState/DefaultState";
 import CaseMenuItem from "../../../../components/styledComponents/menuItems/CaseMenuItem";
 import Separator from "../../../../components/styledComponents/separators/Separator";
-import { getOpenData, getOpenDataClient } from "../../../allCasesScreen/components/AllCasesCard";
+import { getOpenDataClient } from "../../../allCasesScreen/components/AllCasesCard";
 
 import './OpenCasesCard.scss';
 

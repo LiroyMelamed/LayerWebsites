@@ -20,7 +20,7 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
 
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-    const [currentIndex, setCurrentIndex] = useState(chosenIndex);
+    const [currentIndex] = useState(chosenIndex);
 
     const navigate = useNavigate();
 
