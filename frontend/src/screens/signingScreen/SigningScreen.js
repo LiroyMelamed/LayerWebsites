@@ -1,5 +1,5 @@
 // src/screens/signingScreen/SigningScreen.js
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import SimpleLoader from "../../components/simpleComponents/SimpleLoader";
@@ -16,14 +16,20 @@ import { ClientStackName } from "../../navigation/ClientStack";
 import { ClientMainScreenName } from "../client/clientMainScreen/ClientMainScreen";
 import { getClientNavBarData } from "../../components/navBars/data/ClientNavBarData";
 import SignatureCanvas from "../../components/specializedComponents/signFiles/SignatureCanvas";
+import { useLocation, useNavigate } from "react-router-dom";
+import { LoginStackName } from "../../navigation/LoginStack";
+import { LoginScreenName } from "../loginScreen/LoginScreen";
 import "./SigningScreen.scss";
 
 export const SigningScreenName = "/SigningScreen";
 
 export default function SigningScreen() {
     const { isSmallScreen } = useScreenSize();
+    const location = useLocation();
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState("pending");
     const [selectedFileId, setSelectedFileId] = useState(null);
+    const [isPublicSigningSession, setIsPublicSigningSession] = useState(false);
 
     const { result: clientFilesData, isPerforming, performRequest } = useAutoHttpRequest(
         signingFilesApi.getClientSigningFiles
@@ -34,6 +40,25 @@ export default function SigningScreen() {
         // Re-fetch list so UI reflects updated signatures/status immediately.
         performRequest();
     }, [performRequest]);
+
+    useEffect(() => {
+        const stateOpen = location?.state?.openSigningFileId;
+        const statePublic = Boolean(location?.state?.publicSigning);
+
+        const storedFileId = sessionStorage.getItem("lw_signing_deeplink_fileId");
+        const storedPublic = sessionStorage.getItem("lw_signing_deeplink_public") === "1";
+
+        const openId = stateOpen || storedFileId;
+        const isPublic = statePublic || storedPublic;
+
+        if (openId) {
+            setSelectedFileId(String(openId));
+            setIsPublicSigningSession(isPublic);
+            sessionStorage.removeItem("lw_signing_deeplink_fileId");
+            sessionStorage.removeItem("lw_signing_deeplink_public");
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     if (isPerforming) return <SimpleLoader />;
 
@@ -216,8 +241,15 @@ export default function SigningScreen() {
             {selectedFileId && (
                 <SignatureCanvas
                     signingFileId={selectedFileId}
-
                     onClose={() => {
+                        if (isPublicSigningSession) {
+                            localStorage.removeItem("token");
+                            localStorage.removeItem("role");
+                            setSelectedFileId(null);
+                            navigate(LoginStackName + LoginScreenName, { replace: true });
+                            return;
+                        }
+
                         handleSigningComplete();
                     }}
                 />
