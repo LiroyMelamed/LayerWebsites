@@ -312,7 +312,7 @@ export default function UploadFileForSigningScreen() {
             <SimpleScrollView className="lw-uploadSigningScreen__scroll">
                 <SimpleContainer className="lw-uploadSigningScreen">
                     <SimpleContainer className="lw-uploadSigningScreen__headerRow">
-                        <TextBold24>שליחת מסמך לחתימה ✍️</TextBold24>
+                        <TextBold24>שליחת מסמך לחתימה</TextBold24>
                     </SimpleContainer>
 
                     <SimpleContainer className="lw-uploadSigningScreen__formCard">
@@ -359,7 +359,7 @@ export default function UploadFileForSigningScreen() {
                                             key={s.UserId}
                                             onPress={() => removeSigner(s.UserId)}
                                         >
-                                            ✕ {s.Name} ({s.UserId})
+                                            הסר {s.Name} ({s.UserId})
                                         </SecondaryButton>
                                     ))}
                                 </SimpleContainer>
@@ -375,7 +375,7 @@ export default function UploadFileForSigningScreen() {
                                 onDrop={handleDrop}
                                 onClick={() => fileInputRef.current?.click()}
                             >
-                                <div>📄 גרור קובץ לכאן או לחץ לבחירה</div>
+                                <div>גרור קובץ לכאן או לחץ לבחירה</div>
                                 <div className="lw-uploadSigningScreen__fileHint">
                                     (PDF בלבד בשלב זה)
                                 </div>
@@ -390,7 +390,7 @@ export default function UploadFileForSigningScreen() {
 
                             {selectedFile && (
                                 <div className="lw-uploadSigningScreen__fileName">
-                                    ✓ {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                                    {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
                                 </div>
                             )}
                         </SimpleContainer>
@@ -399,6 +399,7 @@ export default function UploadFileForSigningScreen() {
                             <div className="lw-uploadSigningScreen__notesTitle">הערות ללקוח (לא חובה)</div>
                             <textarea
                                 className="lw-uploadSigningScreen__textarea"
+                                dir="rtl"
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
                             />
@@ -412,7 +413,7 @@ export default function UploadFileForSigningScreen() {
                                     </h3>
 
                                     <SecondaryButton onPress={handleDetectSpots} disabled={detecting}>
-                                        {detecting ? "מזהה..." : "🤖 מצא חתימות אוטומטית"}
+                                        {detecting ? "מזהה..." : "מצא חתימות אוטומטית"}
                                     </SecondaryButton>
                                 </SimpleContainer>
 
@@ -427,7 +428,7 @@ export default function UploadFileForSigningScreen() {
 
                                 <div className="lw-uploadSigningScreen__infoText">
                                     <Text14>
-                                        בכל עמוד יש כפתור "+ הוסף חתימה". גרור את הקוביות למיקום הרצוי או מחק בעזרת ✕
+                                        בכל עמוד יש כפתור "+ הוסף חתימה". גרור את הקוביות למיקום הרצוי או מחק
                                     </Text14>
                                 </div>
                             </>
@@ -437,10 +438,10 @@ export default function UploadFileForSigningScreen() {
                             <SecondaryButton
                                 onPress={() => navigate(AdminStackName + SigningManagerScreenName)}
                             >
-                                ⬅ חזרה
+                                חזרה
                             </SecondaryButton>
                             <PrimaryButton onPress={handleSubmit} disabled={loading}>
-                                {loading ? "שולח..." : "📤 שלח ללקוח"}
+                                {loading ? "שולח..." : "שלח ללקוח"}
                             </PrimaryButton>
                         </SimpleContainer>
 

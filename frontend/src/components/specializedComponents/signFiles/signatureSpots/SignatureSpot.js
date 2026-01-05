@@ -136,7 +136,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
             ) : (
                 <div className="lw-signing-spotLabel">
                     <div className="lw-signing-spotLabelText">
-                        ✍️ {signerName.length > 10 ? signerName.substring(0, 8) + "..." : signerName}
+                        {signerName.length > 10 ? signerName.substring(0, 8) + "..." : signerName}
                     </div>
                 </div>
             )}
@@ -147,7 +147,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                 }}
                 className="lw-signing-spotRemove"
             >
-                ✕
+                מחק
             </span>
         </SimpleContainer>
     );

@@ -16,7 +16,8 @@
 
 .lw-uploadSigningScreen__scroll {
     align-items: center;
-    padding-top: 1.5rem;
+    padding: 0 1rem;
+    margin-top: 1rem;
 }
 
 .lw-uploadSigningScreen__headerRow {
@@ -55,16 +56,38 @@
     color: #155724;
 }
 
-.lw-uploadSigningScreen__searchWrap {
-    margin-block-start: v.$space-3;
-    max-width: 31.25rem;
+.lw-uploadSigningScreen__searchRow {
+    @include m.row(v.$space-3, wrap);
+    max-width: 100%;
+    margin: 1rem;
+    min-inline-size: 0;
+}
+
+.lw-uploadSigningScreen__search {
+    flex: 1 1 10rem;
+    max-inline-size: 31.25rem;
     width: 100%;
+    min-inline-size: 0;
 }
 
 .lw-uploadSigningScreen__formGroup {
     margin-block-start: v.$space-3;
     margin-block-end: v.$space-4;
+    gap: 0.5rem;
     width: 100%;
+    flex-direction: column;
+    min-inline-size: 0;
+}
+
+.lw-uploadSigningScreen__fileGroup {
+    align-items: center;
+}
+
+.lw-uploadSigningScreen__notesTitle {
+    display: block;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #333;
 }
 
 .lw-uploadSigningScreen__label {
@@ -87,7 +110,9 @@
     text-align: center;
     background-color: #fff;
     cursor: pointer;
-    max-inline-size: 100%;
+    width: 100%;
+    max-inline-size: 31.25rem;
+    margin-inline: auto;
 }
 
 .lw-uploadSigningScreen__fileBox.is-dragActive {
@@ -112,7 +137,9 @@
     border: 0.0625rem solid #c3e6cb;
     color: #155724;
     font-size: 0.875rem;
-    max-inline-size: 100%;
+    width: 100%;
+    max-inline-size: 31.25rem;
+    margin-inline: auto;
     min-inline-size: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -164,7 +191,7 @@
 }
 
 @media (max-width: v.$bp-narrow) {
-    .lw-uploadSigningScreen__viewerHeaderRow > .lw-textButtonWithTwoOptionalIcons {
+    .lw-uploadSigningScreen__viewerHeaderRow>.lw-textButtonWithTwoOptionalIcons {
         width: 100%;
     }
 

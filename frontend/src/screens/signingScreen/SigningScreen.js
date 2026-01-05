@@ -7,7 +7,7 @@ import signingFilesApi from "../../api/signingFilesApi";
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
 import SimpleScrollView from "../../components/simpleComponents/SimpleScrollView";
-import { Text14, TextBold24 } from "../../components/specializedComponents/text/AllTextKindFile";
+import { Text14 } from "../../components/specializedComponents/text/AllTextKindFile";
 import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
@@ -51,6 +51,16 @@ export default function SigningScreen() {
         const signed = file.SignedSpots || 0;
         if (!total) return 0;
         return Math.round((signed / total) * 100);
+    };
+
+    const formatDotDate = (dateLike) => {
+        if (!dateLike) return "-";
+        const d = new Date(dateLike);
+        if (Number.isNaN(d.getTime())) return "-";
+        const dd = String(d.getDate()).padStart(2, "0");
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const yyyy = String(d.getFullYear());
+        return `${dd}.${mm}.${yyyy}`;
     };
 
     const getStatusChip = (status) => {
@@ -97,10 +107,6 @@ export default function SigningScreen() {
 
             <SimpleScrollView className="lw-signingScreen__scroll">
                 <SimpleContainer className="lw-signingScreen">
-                    <SimpleContainer className="lw-signingScreen__headerRow">
-                        <TextBold24>📄 מסמכים לחתימה</TextBold24>
-                    </SimpleContainer>
-
                     <SimpleContainer className="lw-signingScreen__tabsRow">
                         <TabButton
                             active={activeTab === "pending"}
@@ -118,8 +124,8 @@ export default function SigningScreen() {
                         <div className="lw-signingScreen__emptyState">
                             <Text14>
                                 {activeTab === "pending"
-                                    ? "✨ אין כרגע מסמכים בהמתנה לחתימתך"
-                                    : "📭 אין מסמכים חתומים להצגה"}
+                                    ? "אין כרגע מסמכים בהמתנה לחתימתך"
+                                    : "אין מסמכים חתומים להצגה"}
                             </Text14>
                         </div>
                     ) : (
@@ -138,24 +144,25 @@ export default function SigningScreen() {
                                     </SimpleContainer>
 
                                     <SimpleContainer className="lw-signingScreen__detailRow">
-                                        <b>תיק:</b> {file.CaseName}
+                                        <div className="lw-signingScreen__detailLabel">תיק:</div>
+                                        <div className="lw-signingScreen__detailValue">{file.CaseName || "-"}</div>
                                     </SimpleContainer>
 
                                     <SimpleContainer className="lw-signingScreen__detailRow">
-                                        <b>עורך דין:</b> {file.LawyerName}
+                                        <div className="lw-signingScreen__detailLabel">עורך דין:</div>
+                                        <div className="lw-signingScreen__detailValue">{file.LawyerName || "-"}</div>
                                     </SimpleContainer>
 
                                     <SimpleContainer className="lw-signingScreen__detailRow">
-                                        <b>📅 תאריך העלאה:</b>{" "}
-                                        {file.CreatedAt
-                                            ? new Date(file.CreatedAt).toLocaleDateString("he-IL")
-                                            : "-"}
+                                        <div className="lw-signingScreen__detailLabel">תאריך העלאה:</div>
+                                        <div className="lw-signingScreen__detailValue">{formatDotDate(file.CreatedAt)}</div>
                                     </SimpleContainer>
 
                                     {(file.Status === "pending" || file.Status === "rejected") && (
                                         <>
                                             <SimpleContainer className="lw-signingScreen__detailRow">
-                                                <b>✍️ חתימות:</b> {signedSpots}/{totalSpots}
+                                                <div className="lw-signingScreen__detailLabel">חתימות:</div>
+                                                <div className="lw-signingScreen__detailValue">{signedSpots}/{totalSpots}</div>
                                             </SimpleContainer>
 
                                             <progress
@@ -167,7 +174,8 @@ export default function SigningScreen() {
 
                                             {file.Notes && (
                                                 <SimpleContainer className="lw-signingScreen__detailRow">
-                                                    <b>💬 הערות עו"ד:</b> {file.Notes}
+                                                    <div className="lw-signingScreen__detailLabel">הערות עו"ד:</div>
+                                                    <div className="lw-signingScreen__detailValue">{file.Notes}</div>
                                                 </SimpleContainer>
                                             )}
                                         </>
@@ -178,7 +186,7 @@ export default function SigningScreen() {
                                             <PrimaryButton
                                                 onPress={() => setSelectedFileId(file.SigningFileId)}
                                             >
-                                                ✍️ חתום על המסמך
+                                                חתום על המסמך
                                             </PrimaryButton>
                                         )}
 
@@ -188,14 +196,14 @@ export default function SigningScreen() {
                                                     handleDownload(file.SigningFileId, file.FileName)
                                                 }
                                             >
-                                                ⬇️ הורד קובץ חתום
+                                                הורד קובץ חתום
                                             </PrimaryButton>
                                         )}
 
                                         <SecondaryButton
                                             onPress={() => setSelectedFileId(file.SigningFileId)}
                                         >
-                                            👁️ פרטים
+                                            פרטים
                                         </SecondaryButton>
                                     </SimpleContainer>
                                 </SimpleContainer>

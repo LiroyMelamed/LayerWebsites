@@ -2,11 +2,12 @@
 @use '../../styles/mixins' as m;
 
 .lw-signingManagerScreen {
+
     width: 100%;
 }
 
 .lw-signingManagerScreen__scroll {
-    margin-top: 2.5rem;
+    margin-top: 1rem;
     align-items: center;
     padding: 0 1rem;
 }
@@ -19,13 +20,21 @@
 .lw-signingManagerScreen__topRow {
     @include m.row(v.$space-3, wrap);
     justify-content: flex-start;
-    margin-block-start: v.$space-4;
+    width: 100%;
 }
 
 .lw-signingManagerScreen__searchContainer {
-    flex: 1 1 16.25rem;
+    flex: 1 1 100%;
     width: 100%;
     min-inline-size: 0;
+}
+
+.lw-signingManagerScreen__searchContainer>* {
+    width: 100%;
+}
+
+.lw-signingManagerScreen__searchContainer .lw-simpleInput {
+    width: 100%;
 }
 
 .lw-signingManagerScreen__tabsRow {
@@ -49,12 +58,7 @@
     margin-bottom: 0.75rem;
     box-shadow: 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.08);
     flex-direction: column;
-    border-inline-start: 0.25rem solid transparent;
     min-inline-size: 0;
-}
-
-.lw-signingManagerScreen__fileCard.is-fullySigned {
-    border-inline-start-color: #4caf50;
 }
 
 .lw-signingManagerScreen__fileHeaderRow {
@@ -103,8 +107,29 @@
 .lw-signingManagerScreen__detailRow {
     font-size: 0.8125rem;
     color: #555;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.75rem;
     overflow-wrap: anywhere;
+    display: flex;
+    flex-direction: row;
+    gap: 0.25rem;
+}
+
+.lw-signingManagerScreen__detailLabel {
+    font-weight: 700;
+}
+
+.lw-signingManagerScreen__detailValue {
+    font-weight: 400;
+}
+
+.lw-signingManagerScreen__detailsPopup {
+    width: 100%;
+    max-width: 44rem;
+    flex-direction: column;
+}
+
+.lw-signingManagerScreen__detailsPopup> :first-child {
+    margin-bottom: v.$space-3;
 }
 
 .lw-signingManagerScreen__progress {
@@ -141,13 +166,27 @@
     flex: 1 1 12rem;
 }
 
+.lw-signingManagerScreen__footer {
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    padding: 0 1rem;
+    margin-block-start: v.$space-4;
+    margin-block-end: v.$space-4;
+}
+
+.lw-signingManagerScreen__addButton {
+    width: 100%;
+    max-width: 20rem;
+}
+
 @media (max-width: v.$bp-narrow) {
     .lw-signingManagerScreen__searchContainer {
         min-inline-size: 0;
         flex: 1 1 100%;
     }
 
-    .lw-signingManagerScreen__topRow > .lw-textButtonWithTwoOptionalIcons {
+    .lw-signingManagerScreen__topRow>.lw-textButtonWithTwoOptionalIcons {
         width: 100%;
     }
 }
