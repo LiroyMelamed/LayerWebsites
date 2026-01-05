@@ -5,6 +5,11 @@ import DoughnutChart from "./DoughnutChart";
 import "./DoughnutChartWithDetails.scss";
 
 export default function DoughnutChartWithDetails({ data, colors, labels, centerText, subText, isCompact = false }) {
+    const getLegendSwatchStyle = (color) => ({
+        // runtime dynamic: legend swatch color comes from chart palette
+        backgroundColor: color,
+    });
+
     function calculatePercentages(data) {
         const total = data.reduce((sum, value) => sum + value, 0);
         if (total === 0) {
@@ -39,7 +44,7 @@ export default function DoughnutChartWithDetails({ data, colors, labels, centerT
                     >
                         <SimpleContainer
                             className="lw-doughnutChartWithDetails__swatch"
-                            style={{ backgroundColor: colors[index] }}
+                            style={getLegendSwatchStyle(colors[index])}
                         />
                         <Text12>{`${percentages[index]}% ${label}`}</Text12>
                     </SimpleContainer>

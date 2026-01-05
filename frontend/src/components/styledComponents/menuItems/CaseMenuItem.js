@@ -62,8 +62,9 @@ export default function CaseMenuItem({
             <SimpleContainer className="lw-caseMenuItem__header" onPress={() => setIsOpen(!isOpen)}>
                 <ImageButton
                     src={icons.Button.DownArrow}
-                    className="lw-caseMenuItem__toggle"
-                    style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                    className={
+                        "lw-caseMenuItem__toggle" + (isOpen ? " is-open" : "")
+                    }
                 />
 
                 <SimpleContainer className="lw-caseMenuItem__content">
