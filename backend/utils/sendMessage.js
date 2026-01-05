@@ -14,6 +14,9 @@ const client = new twilio(
 // Check if the application is running in production mode
 const isProduction = process.env.IS_PRODUCTION === 'true';
 
+// For short-term testing: when true, send real SMS even in dev.
+const FORCE_SEND_SMS_ALL = process.env.FORCE_SEND_SMS_ALL === 'true';
+
 /**
  * Sends an SMS message using the Twilio API. In development, it logs the message instead.
  * @param {string} messageBody - The body of the message to be sent.
@@ -27,7 +30,16 @@ async function sendMessage(messageBody, formattedPhone) {
         return;
     }
 
-    if (isProduction) {
+    const shouldSendRealSms = isProduction || FORCE_SEND_SMS_ALL;
+
+    if (shouldSendRealSms) {
+        if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER) {
+            console.error(
+                "Twilio env vars missing (TWILIO_ACCOUNT_SID/TWILIO_AUTH_TOKEN/TWILIO_PHONE_NUMBER). Cannot send SMS."
+            );
+            return;
+        }
+
         try {
             await client.messages.create({
                 body: messageBody,
@@ -47,4 +59,4 @@ async function sendMessage(messageBody, formattedPhone) {
     }
 }
 
-module.exports = { sendMessage, COMPANY_NAME, WEBSITE_DOMAIN, isProduction };
+module.exports = { sendMessage, COMPANY_NAME, WEBSITE_DOMAIN, isProduction, FORCE_SEND_SMS_ALL };

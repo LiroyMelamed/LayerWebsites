@@ -15,6 +15,7 @@ const SimpleTextArea = forwardRef(
         textStyle: _textStyle,
         style: _style,
         className,
+        dir = 'rtl',
         value,
         onChange,
         disabled = false,

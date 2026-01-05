@@ -45,14 +45,14 @@ export default function PinnedCasesCard({ taggedCases, isPerforming, rePerformFu
                             fullCase={item}
                             rightTitle={`${item.CaseName} - ${item.CustomerName}`}
 
-                            leftPreFirstLine={"שם חברה"}
-                            leftValueFirstLine={item.CompanyName}
+                            leftPreFirstLine={"סוג תיק"}
+                            leftValueFirstLine={item.CaseTypeName}
 
                             rightPreSecondLine={"שלב נוכחי"}
-                            rightValueSecondLine={item.CurrentStage}
+                            rightValueSecondLine={item.IsClosed ? 'הסתיים' : item.CurrentStage}
 
-                            leftPreSecondLine={"סוג תיק"}
-                            leftValueSecondLine={item.CaseTypeName}
+                            leftPreSecondLine={""}
+                            leftValueSecondLine={""}
 
                             openData={getOpenData(taggedCases, index)}
                             rePerformFunction={rePerformFunction}

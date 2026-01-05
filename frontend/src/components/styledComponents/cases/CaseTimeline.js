@@ -5,7 +5,10 @@ import { DateDDMMYY } from "../../../functions/date/DateDDMMYY";
 
 import "./CaseTimeline.scss";
 
-export default function CaseTimeline({ stages, currentStage, title, style: _style }) {
+export default function CaseTimeline({ stages, currentStage, isClosed = false, title, style }) {
+    const safeStages = Array.isArray(stages) ? stages : [];
+    const safeCurrentStage = Number(currentStage) || 0;
+
     return (
         <SimpleContainer
             className="lw-caseTimeline"
@@ -21,11 +24,11 @@ export default function CaseTimeline({ stages, currentStage, title, style: _styl
                 <SimpleContainer className="lw-caseTimeline__verticalLine" />
 
                 <SimpleContainer className="lw-caseTimeline__dotsContainer">
-                    {stages?.slice().map((stage, index) => (
+                    {safeStages.slice().map((stage, index) => (
                         <SimpleContainer key={index} className="lw-caseTimeline__stage">
                             <SimpleContainer
                                 className={
-                                    index == currentStage - 1
+                                    index == safeCurrentStage - 1
                                         ? "lw-caseTimeline__dotWrap lw-caseTimeline__dotWrap--new"
                                         : "lw-caseTimeline__dotWrap"
                                 }
@@ -35,22 +38,22 @@ export default function CaseTimeline({ stages, currentStage, title, style: _styl
 
                             <SimpleContainer
                                 className={
-                                    index == currentStage - 1
+                                    index == safeCurrentStage - 1
                                         ? "lw-caseTimeline__stageDetails lw-caseTimeline__stageDetails--new"
                                         : "lw-caseTimeline__stageDetails"
                                 }
                             >
                                 <SimpleContainer
                                     className={
-                                        index == currentStage - 1
+                                        index == safeCurrentStage - 1
                                             ? "lw-caseTimeline__timestampBadge lw-caseTimeline__timestampBadge--new"
                                             : "lw-caseTimeline__timestampBadge"
                                     }
                                 >
-                                    {index == currentStage - 1 ?
-                                        <TextBold12>חדש</TextBold12>
+                                    {index == safeCurrentStage - 1 ?
+                                        <TextBold12>{isClosed && safeCurrentStage >= safeStages.length ? 'הסתיים' : 'חדש'}</TextBold12>
                                         :
-                                        <Text12>{DateDDMMYY(stage.Timestamp) || (index < currentStage - 1 ? "שלב הסתיים" : "שלב המשך")}</Text12>
+                                        <Text12>{DateDDMMYY(stage.Timestamp) || (index < safeCurrentStage - 1 ? "שלב הסתיים" : "שלב המשך")}</Text12>
                                     }
                                 </SimpleContainer>
                                 <TextBold12>{stage.Text}</TextBold12>

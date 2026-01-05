@@ -20,6 +20,38 @@ const signingFilesApi = {
         return await ApiUtils.get(`${base}/${signingFileId}`);
     },
 
+    createPublicSigningLink: async (signingFileId, signerUserId = null) => {
+        return await ApiUtils.post(`${base}/${signingFileId}/public-link`, signerUserId ? { signerUserId } : {});
+    },
+
+    getPublicSigningFileDetails: async (token) => {
+        return await ApiUtils.get(`${base}/public/${encodeURIComponent(token)}`);
+    },
+
+    publicSignFile: async (token, body) => {
+        return await ApiUtils.post(`${base}/public/${encodeURIComponent(token)}/sign`, body);
+    },
+
+    publicRejectSigning: async (token, body) => {
+        return await ApiUtils.post(`${base}/public/${encodeURIComponent(token)}/reject`, body);
+    },
+
+    getSavedSignature: async () => {
+        return await ApiUtils.get(`${base}/saved-signature`);
+    },
+
+    saveSavedSignature: async (signatureImage) => {
+        return await ApiUtils.post(`${base}/saved-signature`, { signatureImage });
+    },
+
+    getPublicSavedSignature: async (token) => {
+        return await ApiUtils.get(`${base}/public/${encodeURIComponent(token)}/saved-signature`);
+    },
+
+    savePublicSavedSignature: async (token, signatureImage) => {
+        return await ApiUtils.post(`${base}/public/${encodeURIComponent(token)}/saved-signature`, { signatureImage });
+    },
+
     signFile: async (signingFileId, body) => {
         return await ApiUtils.post(`${base}/${signingFileId}/sign`, body);
     },

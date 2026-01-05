@@ -13,6 +13,8 @@ import { useFromApp } from "../../providers/FromAppProvider";
 import GenericButton from "../styledComponents/buttons/GenericButton";
 import { colors } from "../../constant/colors";
 import "./TopAndRightNavBar.scss";
+import { colors } from "../../constant/colors";
+import GenericButton from "../styledComponents/buttons/GenericButton";
 
 const Logo = images.Logos.LogoSlangWhite;
 

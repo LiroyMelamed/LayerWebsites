@@ -5,9 +5,9 @@ const { sendMessage, WEBSITE_DOMAIN } = require("../utils/sendMessage");
 require("dotenv").config();
 
 const SECRET_KEY = process.env.JWT_SECRET || "supersecretkey";
+const FORCE_SEND_SMS_ALL = process.env.FORCE_SEND_SMS_ALL === "true";
 
 function buildOtpSmsBody(otp) {
-    // Recommended format for iOS QuickType + Android WebOTP: code line, blank line, then "@domain #code".
     return `קוד האימות הוא: ${otp}\n\n@${WEBSITE_DOMAIN} #${otp}`;
 }
 
@@ -53,7 +53,7 @@ const requestOtp = async (req, res) => {
             [phoneNumber, otp, expiry, userId]
         );
 
-        if (!isSuperUser) {
+        if (FORCE_SEND_SMS_ALL || !isSuperUser) {
             try {
                 sendMessage(buildOtpSmsBody(otp), formatedPhoneNumber);
             } catch (e) {
@@ -164,7 +164,7 @@ const register = async (req, res) => {
             [phoneNumber, otp, expiry, userId]
         );
 
-        if (!isSuperUser) {
+        if (FORCE_SEND_SMS_ALL || !isSuperUser) {
             try {
                 sendMessage(buildOtpSmsBody(otp), formatedPhoneNumber);
             } catch (e) {

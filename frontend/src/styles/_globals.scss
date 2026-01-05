@@ -41,6 +41,14 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Default RTL for form controls (unless explicitly overridden with dir=...). */
+input:not([dir]),
+textarea:not([dir]),
+select:not([dir]) {
+  direction: rtl;
+  text-align: right;
+}
+
 /* Phase F+: accessibility quick win — visible keyboard focus */
 :where(a,
   button,

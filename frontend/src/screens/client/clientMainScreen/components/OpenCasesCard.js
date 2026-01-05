@@ -35,14 +35,14 @@ export default function OpenCasesCard({ openCases, style }) {
                             fullCase={item}
                             rightTitle={item.CaseName}
 
-                            leftPreFirstLine={"שם חברה"}
-                            leftValueFirstLine={item.CompanyName}
+                            leftPreFirstLine={"סוג תיק"}
+                            leftValueFirstLine={item.CaseTypeName}
 
                             rightPreSecondLine={"שלב נוכחי"}
-                            rightValueSecondLine={item.CurrentStage}
+                            rightValueSecondLine={item.IsClosed ? 'הסתיים' : item.CurrentStage}
 
-                            leftPreSecondLine={"סוג תיק"}
-                            leftValueSecondLine={item.CaseTypeName}
+                            leftPreSecondLine={""}
+                            leftValueSecondLine={""}
 
                             openData={getOpenDataClient(openCases, index)}
                             isClient={true}

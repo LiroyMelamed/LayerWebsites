@@ -228,7 +228,11 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
 
                         {isStagesOpen && (
                             <SimpleContainer className="lw-caseMenuItemOpen__timelineWrap">
-                                <CaseTimeline stages={fullCase.Descriptions} currentStage={fullCase.CurrentStage} />
+                                <CaseTimeline
+                                    stages={fullCase.Descriptions}
+                                    currentStage={fullCase.CurrentStage}
+                                    isClosed={fullCase.IsClosed}
+                                />
                             </SimpleContainer>
                         )}
                     </SimpleContainer>

@@ -46,14 +46,14 @@ export default function AllCasesCard({ allCases, isPerforming, reperformAfterSav
                             fullCase={item}
                             rightTitle={`${item.CaseName} - ${item.CustomerName}`}
 
-                            leftPreFirstLine={"שם חברה"}
-                            leftValueFirstLine={item.CompanyName}
+                            leftPreFirstLine={"סוג תיק"}
+                            leftValueFirstLine={item.CaseTypeName}
 
                             rightPreSecondLine={"שלב נוכחי"}
-                            rightValueSecondLine={item.CurrentStage}
+                            rightValueSecondLine={item.IsClosed ? 'הסתיים' : item.CurrentStage}
 
-                            leftPreSecondLine={"סוג תיק"}
-                            leftValueSecondLine={item.CaseTypeName}
+                            leftPreSecondLine={""}
+                            leftValueSecondLine={""}
 
                             openData={getOpenData(allCases, index)}
                             rePerformFunction={reperformAfterSave}

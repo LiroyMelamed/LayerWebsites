@@ -323,6 +323,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                         className="lw-caseFullView__field"
                         title={"תאריך סיום משוער"}
                         type="date"
+                        lang="he-IL"
                         value={formatDateForInput(caseData.EstimatedCompletionDate)}
                         onChange={(e) => handleInputChange('EstimatedCompletionDate', e.target.value)}
                     />
@@ -330,6 +331,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                         className="lw-caseFullView__field"
                         title={"תוקף רישיון"}
                         type="date"
+                        lang="he-IL"
                         value={formatDateForInput(caseData.LicenseExpiryDate)}
                         onChange={(e) => handleInputChange('LicenseExpiryDate', e.target.value)}
                     />

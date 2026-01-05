@@ -3,8 +3,19 @@ const router = express.Router();
 const authMiddleware = require("../middlewares/authMiddleware");
 const signingFileController = require("../controllers/signingFileController");
 
-// ✅ חייב להיות לפני "/:signingFileId" כדי שלא יתפס כפרמטר
 router.post("/detect-spots", authMiddleware, signingFileController.detectSignatureSpots);
+
+// Public signing (no auth) via signed token
+router.get("/public/:token/pdf", signingFileController.getPublicSigningFilePdf);
+router.get("/public/:token", signingFileController.getPublicSigningFileDetails);
+router.post("/public/:token/sign", signingFileController.publicSignFile);
+router.post("/public/:token/reject", signingFileController.publicRejectSigning);
+router.get("/public/:token/saved-signature", signingFileController.getPublicSavedSignature);
+router.post("/public/:token/saved-signature", signingFileController.savePublicSavedSignature);
+
+// Saved signature for current user (auth)
+router.get("/saved-signature", authMiddleware, signingFileController.getSavedSignature);
+router.post("/saved-signature", authMiddleware, signingFileController.saveSavedSignature);
 
 // עו"ד מעלה קובץ לחתימה
 router.post("/upload", authMiddleware, signingFileController.uploadFileForSigning);
@@ -17,6 +28,9 @@ router.get("/lawyer-files", authMiddleware, signingFileController.getLawyerSigni
 
 // (אופציונלי) רק בהמתנה ללקוח
 router.get("/pending", authMiddleware, signingFileController.getPendingSigningFiles);
+
+// Generate a public signing link token (lawyer/admin)
+router.post("/:signingFileId/public-link", authMiddleware, signingFileController.createPublicSigningLink);
 
 // Stream original PDF for in-app viewing/signing
 router.get("/:signingFileId/pdf", authMiddleware, signingFileController.getSigningFilePdf);

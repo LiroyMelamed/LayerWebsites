@@ -40,7 +40,7 @@ export default function CaseTypeTimeline({ stages = [], title, style: _style }) 
                                         }
                                     >
                                         {stage.New ? (
-                                            <TextBold12>חדש</TextBold12>
+                                            <TextBold12>הסתיים</TextBold12>
                                         ) : (
                                             <Text12>{stage.Timestamp || `שלב מס' ${index + 1}`}</Text12>
                                         )}

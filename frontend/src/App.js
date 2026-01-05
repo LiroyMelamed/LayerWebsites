@@ -2,6 +2,7 @@ import LoginStack, { LoginStackName } from './navigation/LoginStack';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import AdminStack, { AdminStackName } from './navigation/AdminStack';
 import ClientStack, { ClientStackName } from './navigation/ClientStack';
+import PublicSigningScreen, { PublicSigningScreenName } from './screens/signingScreen/PublicSigningScreen';
 import { AppRoles } from './screens/otpScreen/OtpScreen.js/LoginOtpScreen';
 import { useEffect } from 'react';
 import { MainScreenName } from './screens/mainScreen/MainScreen';
@@ -64,6 +65,8 @@ const App = () => {
   return (
     <>
       <Routes>
+        <Route path={PublicSigningScreenName} element={<PublicSigningScreen />} />
+
         <Route path={LoginStackName + STACK_SUFFIX} element={<LoginStack />} />
 
         <Route path={AdminStackName + STACK_SUFFIX} element={<AdminStack />} />

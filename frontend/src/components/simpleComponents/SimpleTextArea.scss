@@ -15,7 +15,7 @@
 
     padding: 0.75rem;
     /* 12px */
-    direction: inherit;
+    direction: var(--lw-simpleTextArea-direction, rtl);
 }
 
 .lw-simpleTextArea.is-focused {
@@ -36,7 +36,7 @@
     position: absolute;
     inset-block-start: 0.75rem;
     /* 12px */
-    inset-inline-end: 0.9375rem;
+    inset-inline-start: 0.9375rem;
     /* 15px */
 
     font-size: 1rem;

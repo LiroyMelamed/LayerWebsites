@@ -87,13 +87,12 @@ export default function CaseMenuItem({
                             {isPerformingSetCase ? (
                                 <SimpleLoader />
                             ) : (
-                                <Text12>{fullCaseListener.Descriptions[fullCaseListener.CurrentStage - 1].Text}</Text12>
+                                <Text12>
+                                    {rightPreSecondLine === 'שלב נוכחי' && fullCaseListener?.IsClosed
+                                        ? 'הסתיים בהצלחה'
+                                        : (fullCaseListener?.Descriptions?.[fullCaseListener?.CurrentStage - 1]?.Text || rightValueSecondLine)}
+                                </Text12>
                             )}
-                        </SimpleContainer>
-
-                        <SimpleContainer className="lw-caseMenuItem__pair">
-                            <TextBold12>{leftPreSecondLine}</TextBold12>
-                            <Text12>{leftValueSecondLine}</Text12>
                         </SimpleContainer>
                     </SimpleContainer>
                 </SimpleContainer>
