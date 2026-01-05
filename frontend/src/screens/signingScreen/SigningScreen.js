@@ -121,13 +121,13 @@ export default function SigningScreen() {
                     </SimpleContainer>
 
                     {currentList.length === 0 ? (
-                        <div className="lw-signingScreen__emptyState">
+                        <SimpleContainer className="lw-signingScreen__emptyState">
                             <Text14>
                                 {activeTab === "pending"
                                     ? "אין כרגע מסמכים בהמתנה לחתימתך"
                                     : "אין מסמכים חתומים להצגה"}
                             </Text14>
-                        </div>
+                        </SimpleContainer>
                     ) : (
                         currentList.map((file) => {
                             const chip = getStatusChip(file.Status);
@@ -140,29 +140,29 @@ export default function SigningScreen() {
                                 <SimpleContainer key={file.SigningFileId} className="lw-signingScreen__fileCard">
                                     <SimpleContainer className="lw-signingScreen__fileHeaderRow">
                                         <h3 className="lw-signingScreen__fileName">{file.FileName}</h3>
-                                        <span className={chip.className}>{chip.text}</span>
+                                        <SimpleContainer className={chip.className}>{chip.text}</SimpleContainer>
                                     </SimpleContainer>
 
                                     <SimpleContainer className="lw-signingScreen__detailRow">
-                                        <div className="lw-signingScreen__detailLabel">תיק:</div>
-                                        <div className="lw-signingScreen__detailValue">{file.CaseName || "-"}</div>
+                                        <SimpleContainer className="lw-signingScreen__detailLabel">תיק:</SimpleContainer>
+                                        <SimpleContainer className="lw-signingScreen__detailValue">{file.CaseName || "-"}</SimpleContainer>
                                     </SimpleContainer>
 
                                     <SimpleContainer className="lw-signingScreen__detailRow">
-                                        <div className="lw-signingScreen__detailLabel">עורך דין:</div>
-                                        <div className="lw-signingScreen__detailValue">{file.LawyerName || "-"}</div>
+                                        <SimpleContainer className="lw-signingScreen__detailLabel">עורך דין:</SimpleContainer>
+                                        <SimpleContainer className="lw-signingScreen__detailValue">{file.LawyerName || "-"}</SimpleContainer>
                                     </SimpleContainer>
 
                                     <SimpleContainer className="lw-signingScreen__detailRow">
-                                        <div className="lw-signingScreen__detailLabel">תאריך העלאה:</div>
-                                        <div className="lw-signingScreen__detailValue">{formatDotDate(file.CreatedAt)}</div>
+                                        <SimpleContainer className="lw-signingScreen__detailLabel">תאריך העלאה:</SimpleContainer>
+                                        <SimpleContainer className="lw-signingScreen__detailValue">{formatDotDate(file.CreatedAt)}</SimpleContainer>
                                     </SimpleContainer>
 
                                     {(file.Status === "pending" || file.Status === "rejected") && (
                                         <>
                                             <SimpleContainer className="lw-signingScreen__detailRow">
-                                                <div className="lw-signingScreen__detailLabel">חתימות:</div>
-                                                <div className="lw-signingScreen__detailValue">{signedSpots}/{totalSpots}</div>
+                                                <SimpleContainer className="lw-signingScreen__detailLabel">חתימות:</SimpleContainer>
+                                                <SimpleContainer className="lw-signingScreen__detailValue">{signedSpots}/{totalSpots}</SimpleContainer>
                                             </SimpleContainer>
 
                                             <progress
@@ -174,8 +174,8 @@ export default function SigningScreen() {
 
                                             {file.Notes && (
                                                 <SimpleContainer className="lw-signingScreen__detailRow">
-                                                    <div className="lw-signingScreen__detailLabel">הערות עו"ד:</div>
-                                                    <div className="lw-signingScreen__detailValue">{file.Notes}</div>
+                                                    <SimpleContainer className="lw-signingScreen__detailLabel">הערות עו"ד:</SimpleContainer>
+                                                    <SimpleContainer className="lw-signingScreen__detailValue">{file.Notes}</SimpleContainer>
                                                 </SimpleContainer>
                                             )}
                                         </>
