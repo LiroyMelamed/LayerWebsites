@@ -5,29 +5,24 @@ import "./signFiles.scss";
 
 const getStatusMeta = (status) => {
     const map = {
-        pending: { bg: "#fff3cd", color: "#856404", text: "בהמתנה" },
-        signed: { bg: "#d4edda", color: "#155724", text: "חתום" },
-        rejected: { bg: "#f8d7da", color: "#721c24", text: "נדחה" },
-        archived: { bg: "#e9ecef", color: "#383d41", text: "ארכיון" },
+        pending: { text: "בהמתנה" },
+        signed: { text: "חתום" },
+        rejected: { text: "נדחה" },
+        archived: { text: "ארכיון" },
     };
     return map[status] || map.pending;
 };
 
-export default function SigningFileCard({ file, detailsRows = [], children, style }) {
+export default function SigningFileCard({ file, detailsRows = [], children }) {
     const statusMeta = getStatusMeta(file.Status);
-    const chipStyle = {
-        "--chip-bg": statusMeta.bg,
-        "--chip-color": statusMeta.color,
-    };
+    const statusKey = (file?.Status || 'pending').toLowerCase();
+    const statusClassName = `lw-signing-fileCardStatus is-${statusKey}`;
 
     return (
-        <SimpleContainer className="lw-signing-fileCard" style={style || undefined}>
+        <SimpleContainer className="lw-signing-fileCard">
             <SimpleContainer className="lw-signing-fileCardHeader">
                 <TextBold16>{file.FileName}</TextBold16>
-                <SimpleContainer
-                    className="lw-signing-fileCardStatus"
-                    style={chipStyle}
-                >
+                <SimpleContainer className={statusClassName}>
                     {statusMeta.text}
                 </SimpleContainer>
             </SimpleContainer>

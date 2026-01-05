@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { colors } from "../../../constant/colors";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { images } from "../../../assets/images/images";
 import SimpleButton from "../../simpleComponents/SimpleButton";
@@ -31,10 +30,6 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
 
     const toggleDrawer = () => {
         setIsDrawerOpen(!isDrawerOpen);
-    };
-
-    const logoutButtonStyle = {
-        backgroundColor: colors.darkRed,
     };
 
     return (
@@ -84,7 +79,7 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
                     {!isFromApp && (
                         <SimpleContainer className="lw-topToolBarSmallScreen__logout">
                             <PrimaryButton
-                                style={logoutButtonStyle}
+                                className="lw-topToolBarSmallScreen__logoutButton"
                                 onPress={() => {
                                     localStorage.removeItem("token");
                                     navigate('/');

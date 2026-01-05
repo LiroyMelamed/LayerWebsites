@@ -1,0 +1,35 @@
+@use '../../styles/variables' as v;
+
+.lw-simpleNav {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+.lw-simpleNav__inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.lw-simpleNav__inner.is-mobile {
+  margin-top: 3.75rem; // 60px
+}
+
+.lw-simpleNav__logo {
+  width: 12.5rem; // 200px
+  align-self: center;
+  margin: 3.125rem 0; // 50px 0
+}
+
+.lw-simpleNav__list {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.lw-simpleNav__navItem {
+  width: 100%;
+  justify-content: flex-end;
+}

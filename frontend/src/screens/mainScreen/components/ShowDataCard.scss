@@ -13,3 +13,11 @@
   gap: 0.5rem;
   margin-top: 0.5rem;
 }
+
+.lw-showDataCard__arrow {
+  transform: rotate(0deg);
+}
+
+.lw-showDataCard__arrow.is-up {
+  transform: rotate(180deg);
+}

@@ -1,0 +1,29 @@
+@use '../../styles/variables' as v;
+
+.lw-simpleScreen {
+  display: flex;
+  flex-direction: row;
+  height: 100svh;
+  width: 100%;
+  position: relative;
+
+  background-size: cover;
+  background-position: center;
+}
+
+.lw-simpleScreen__content {
+  box-sizing: border-box;
+  flex-direction: column;
+
+  width: 100%;
+  margin-right: 0;
+  align-items: center;
+}
+
+@media (min-width: v.$bp-md) {
+  .lw-simpleScreen__content {
+    width: calc(100% - 250px);
+    margin-right: 250px;
+    align-items: flex-end;
+  }
+}

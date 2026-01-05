@@ -1,57 +1,34 @@
 import React from 'react';
-import { useScreenSize } from '../../providers/ScreenSizeProvider';
 import SimpleContainer from './SimpleContainer';
+
+import './SimpleScreen.scss';
 
 export default function SimpleScreen({
     children,
     imageBackgroundSource,
-    style,
     screenStyle: customScreenStyle,
     className,
     contentClassName,
     ...rest
 }) {
-    const { isSmallScreen } = useScreenSize();
 
-    const screenStyle = {
-        ...styles.screen,
-        ...customScreenStyle,
+    // Runtime background image; everything else is handled via SCSS.
+    const backgroundStyle = imageBackgroundSource
+        ? { backgroundImage: `url(${imageBackgroundSource})` }
+        : undefined;
 
-    };
+    const mergedScreenStyle = customScreenStyle
+        ? { ...backgroundStyle, ...customScreenStyle }
+        : backgroundStyle;
 
-    if (imageBackgroundSource) {
-        screenStyle.backgroundImage = `url(${imageBackgroundSource})`;
-        screenStyle.backgroundSize = 'cover';
-        screenStyle.backgroundPosition = 'center';
-    };
-
-    const childrenContainerStyle = {
-        ...styles.childrenContainer,
-        width: isSmallScreen ? '100%' : 'calc(100% - 250px)',
-        marginRight: isSmallScreen ? '0' : '250px',
-        alignItems: isSmallScreen ? 'center' : 'flex-end',
-        boxSizing: "border-box",
-        flexDirection: "column",
-        ...style,
-    };
+    const resolvedScreenClassName = ['lw-simpleScreen', className].filter(Boolean).join(' ');
+    const resolvedContentClassName = ['lw-simpleScreen__content', contentClassName].filter(Boolean).join(' ');
 
     return (
-        <SimpleContainer className={className} style={screenStyle} {...rest}>
-            <SimpleContainer className={contentClassName} style={childrenContainerStyle}>
+        <SimpleContainer className={resolvedScreenClassName} style={mergedScreenStyle} {...rest}>
+            <SimpleContainer className={resolvedContentClassName}>
                 {children}
             </SimpleContainer>
         </SimpleContainer>
     );
 }
-
-const styles = {
-    screen: {
-        display: 'flex',
-        flexDirection: 'row',
-        height: '100svh',
-        width: '100%',
-        position: 'relative',
-    },
-    childrenContainer: {
-    },
-};

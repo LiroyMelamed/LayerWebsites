@@ -18,6 +18,14 @@
     min-inline-size: 0;
 }
 
+.lw-doughnutChartWithDetails__chart {
+    max-inline-size: 8.75rem; // 140px
+}
+
+.lw-doughnutChartWithDetails__chart.is-compact {
+    max-inline-size: 10rem; // 160px
+}
+
 .lw-doughnutChartWithDetails__legend {
     flex: 1;
     @include m.row(v.$space-2, wrap);

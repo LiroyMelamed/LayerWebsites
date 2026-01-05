@@ -6,7 +6,7 @@ import { icons } from '../../assets/icons/icons';
 
 import './SimplePopUp.scss';
 
-const SimplePopUp = ({ isOpen, children, style, onClose, className, ...props }) => {
+const SimplePopUp = ({ isOpen, children, onClose, className, ...props }) => {
     const popupRef = useRef(null); // Ref to keep track of the popup container
 
     if (!isOpen) return null; // Don't render if not open
@@ -23,7 +23,6 @@ const SimplePopUp = ({ isOpen, children, style, onClose, className, ...props }) 
             <SimpleContainer
                 ref={popupRef}
                 className={['lw-simplePopUp__container', className].filter(Boolean).join(' ')}
-                style={style}
                 {...props}
             >
                 <ImageButton

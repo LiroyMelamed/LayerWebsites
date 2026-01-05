@@ -8,13 +8,9 @@ import addCommasToNumber from "../../../functions/numbers/addCommasToNumber";
 
 import "./ShowDataCard.scss";
 
-export default function ShowDataCard({ title, icon, numberText, comprationNumber, comprationText, optionalOnClick, style }) {
-    const arrowStyle = comprationNumber
-        ? { transform: `rotate(${comprationNumber > 0 ? 180 : 0}deg)` }
-        : undefined;
-
+export default function ShowDataCard({ title, icon, numberText, comprationNumber, comprationText, optionalOnClick }) {
     return (
-        <SimpleCard className="lw-showDataCard" style={style} onPress={optionalOnClick}>
+        <SimpleCard className="lw-showDataCard" onPress={optionalOnClick}>
             <TextBold14 >{title}</TextBold14>
 
             <SimpleContainer className="lw-showDataCard__number">
@@ -27,12 +23,20 @@ export default function ShowDataCard({ title, icon, numberText, comprationNumber
                     <Text12 color={comprationNumber > 0 ? colors.positive : colors.negative}>
                         {addCommasToNumber(comprationNumber, null, "%")}
                     </Text12>
-                    <SimpleIcon
-                        src={icons.Button.DownArrow}
-                        size={12}
-                        style={arrowStyle}
-                        tintColor={comprationNumber > 0 ? colors.positive : colors.negative}
-                    />
+                    <SimpleContainer
+                        className={
+                            [
+                                "lw-showDataCard__arrow",
+                                comprationNumber > 0 ? "is-up" : "is-down",
+                            ].join(" ")
+                        }
+                    >
+                        <SimpleIcon
+                            src={icons.Button.DownArrow}
+                            size={12}
+                            tintColor={comprationNumber > 0 ? colors.positive : colors.negative}
+                        />
+                    </SimpleContainer>
                 </SimpleContainer>
             }
         </SimpleCard>

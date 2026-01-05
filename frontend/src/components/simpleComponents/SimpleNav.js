@@ -12,37 +12,26 @@ import { useNavigate } from 'react-router-dom';
 import { usePopup } from '../../providers/PopUpProvider';
 import { buttonSizes } from '../../styles/buttons/buttonSizes';
 
+import './SimpleNav.scss';
 
-const SimpleNav = ({ activeButton, style }) => {
+const SimpleNav = ({ activeButton }) => {
   const { isSmallScreen } = useScreenSize();
   const { openPopup } = usePopup();
   const navigate = useNavigate()
   const { NavBarLinks } = getNavBarData(navigate, openPopup);
 
-  const containerStyle = {
-    display: 'flex',
-    height: '100%',
-    width: '100%',
-    ...style
-  };
-
-  const navItemStyle = {
-    width: '100%',
-    justifyContent: 'flex-end',
-  };
-
   return (
-    <SimpleContainer className="lw-simpleNav" style={containerStyle}>
+    <SimpleContainer className="lw-simpleNav">
       <SimpleScrollView>
-        <SimpleContainer className="lw-simpleNav__inner" style={styles.innerContainer(isSmallScreen)}>
+        <SimpleContainer className={"lw-simpleNav__inner" + (isSmallScreen ? " is-mobile" : "") }>
           {!isSmallScreen &&
             <SimpleImage
               src={images.Logos.FullLogoOriginal}
-              style={styles.logo}
+              className="lw-simpleNav__logo"
             />
           }
           {NavBarLinks.map((ListOfLinks, ListIndex) => (
-            <SimpleContainer className="lw-simpleNav__list" key={`NavList${ListIndex}`} style={styles.list}>
+            <SimpleContainer className="lw-simpleNav__list" key={`NavList${ListIndex}`}>
               {ListIndex !== 0 && <Separator />}
               {ListOfLinks.map((link, LinkIndex) => (
                 <TertiaryButton
@@ -51,7 +40,7 @@ const SimpleNav = ({ activeButton, style }) => {
                   leftIcon={link.icon}
                   iconSize={18}
                   tintColor={colors.black}
-                  style={navItemStyle}
+                  className="lw-simpleNav__navItem"
                   buttonSize={buttonSizes.LARGE}
                 >
                   {link.buttonText}
@@ -63,26 +52,6 @@ const SimpleNav = ({ activeButton, style }) => {
       </SimpleScrollView>
     </SimpleContainer>
   );
-};
-
-const styles = {
-  logo: {
-    width: 200,
-    alignSelf: 'center', // Ensure the logo is centered within its container
-    margin: '50px 0px',
-  },
-  list: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-end'
-  },
-  innerContainer: (isSmallScreen) => ({
-    width: '100%',
-    height: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    marginTop: isSmallScreen ? 60 : 0
-  })
 };
 
 export default SimpleNav;

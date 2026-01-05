@@ -4,7 +4,7 @@ import DoughnutChart from "./DoughnutChart";
 
 import "./DoughnutChartWithDetails.scss";
 
-export default function DoughnutChartWithDetails({ data, colors, labels, centerText, subText, doughnutStyle, style }) {
+export default function DoughnutChartWithDetails({ data, colors, labels, centerText, subText, isCompact = false }) {
     function calculatePercentages(data) {
         const total = data.reduce((sum, value) => sum + value, 0);
         if (total === 0) {
@@ -16,15 +16,20 @@ export default function DoughnutChartWithDetails({ data, colors, labels, centerT
     const percentages = calculatePercentages(data);
 
     return (
-        <SimpleContainer className="lw-doughnutChartWithDetails" style={style}>
-            <DoughnutChart
-                data={data}
-                colors={colors}
-                labels={labels}
-                centerText={centerText}
-                subText={subText}
-                style={{ flex: 1, ...doughnutStyle }}
-            />
+        <SimpleContainer className="lw-doughnutChartWithDetails">
+            <SimpleContainer
+                className={
+                    "lw-doughnutChartWithDetails__chart" + (isCompact ? " is-compact" : "")
+                }
+            >
+                <DoughnutChart
+                    data={data}
+                    colors={colors}
+                    labels={labels}
+                    centerText={centerText}
+                    subText={subText}
+                />
+            </SimpleContainer>
 
             <SimpleContainer className="lw-doughnutChartWithDetails__legend">
                 {percentages && labels?.map((label, index) => (

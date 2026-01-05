@@ -8,11 +8,12 @@ import {
     Tooltip,
     Legend,
 } from "chart.js";
-import { colors } from "../../../constant/colors";
+
+import "./DoughnutChart.scss";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const DoughnutChart = ({ data, colors, labels, centerText, subText, style, className }) => {
+const DoughnutChart = ({ data, colors, labels, centerText, subText, className }) => {
     const chartData = {
         labels: labels,
         datasets: [
@@ -36,48 +37,17 @@ const DoughnutChart = ({ data, colors, labels, centerText, subText, style, class
         },
     };
 
-    const containerStyle = {
-        ...styles.container,
-        ...style
-    }
-
     const mergedClassName = ["lw-doughnutChart", className].filter(Boolean).join(" ");
 
     return (
-        <SimpleContainer className={mergedClassName} style={containerStyle}>
-            <SimpleContainer className="lw-doughnutChart__centerText" style={styles.centerText}>
-                <TextBold16 style={styles.mainText}>{centerText}</TextBold16>
-                {subText && <Text12 style={styles.subText}>{subText}</Text12>}
+        <SimpleContainer className={mergedClassName}>
+            <SimpleContainer className="lw-doughnutChart__centerText">
+                <TextBold16 className="lw-doughnutChart__mainText">{centerText}</TextBold16>
+                {subText && <Text12 className="lw-doughnutChart__subText">{subText}</Text12>}
             </SimpleContainer>
             <Doughnut data={chartData} options={options} />
         </SimpleContainer>
     );
-};
-
-const styles = {
-    container: {
-        position: "relative",
-    },
-    centerText: {
-        position: "absolute",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-        zIndex: 1,
-        textAlign: "center",
-        flexDirection: 'column',
-        pointerEvents: 'none',
-        maxWidth: '90%'
-    },
-    mainText: {
-        display: 'flex',
-        justifyContent: 'center'
-    },
-    subText: {
-        color: colors.text,
-        textAlign: "center",
-
-    },
 };
 
 export default DoughnutChart;
