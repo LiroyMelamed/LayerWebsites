@@ -32,21 +32,21 @@ export default function AdminMenuItem({
             <SimpleContainer className="lw-adminMenuItem" style={style}>
 
                 <SimpleContainer className="lw-adminMenuItem__row">
-                    <div className="lw-adminMenuItem__cell">
+                    <SimpleContainer className="lw-adminMenuItem__cell">
                         <TextBold14>{adminName}</TextBold14>
-                    </div>
+                    </SimpleContainer>
 
-                    <div className="lw-adminMenuItem__cell">
+                    <SimpleContainer className="lw-adminMenuItem__cell">
                         <Text14>{DateDDMMYY(CreatedAt)}</Text14>
-                    </div>
+                    </SimpleContainer>
 
-                    <div className="lw-adminMenuItem__cell lw-adminMenuItem__cell--email">
+                    <SimpleContainer className="lw-adminMenuItem__cell lw-adminMenuItem__cell--email">
                         <Text14 shouldApplyClamping>{adminMail}</Text14>
-                    </div>
+                    </SimpleContainer>
 
-                    <div className="lw-adminMenuItem__cell">
+                    <SimpleContainer className="lw-adminMenuItem__cell">
                         <Text14>{adminPhone}</Text14>
-                    </div>
+                    </SimpleContainer>
                 </SimpleContainer>
 
             </SimpleContainer>

@@ -111,13 +111,13 @@ export default function SigningScreen() {
                     </SimpleContainer>
 
                     {currentList.length === 0 ? (
-                        <div className="lw-signingScreen__emptyState">
+                        <SimpleContainer className="lw-signingScreen__emptyState">
                             <Text14>
                                 {activeTab === "pending"
                                     ? "✨ אין כרגע מסמכים בהמתנה לחתימתך"
                                     : "📭 אין מסמכים חתומים להצגה"}
                             </Text14>
-                        </div>
+                        </SimpleContainer>
                     ) : (
                         currentList.map((file) => {
                             const chip = getStatusChip(file.Status);
@@ -130,7 +130,7 @@ export default function SigningScreen() {
                                 <SimpleContainer key={file.SigningFileId} className="lw-signingScreen__fileCard">
                                     <SimpleContainer className="lw-signingScreen__fileHeaderRow">
                                         <h3 className="lw-signingScreen__fileName">{file.FileName}</h3>
-                                        <span className={chip.className}>{chip.text}</span>
+                                        <SimpleContainer className={chip.className}>{chip.text}</SimpleContainer>
                                     </SimpleContainer>
 
                                     <SimpleContainer className="lw-signingScreen__detailRow">

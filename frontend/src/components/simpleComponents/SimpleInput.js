@@ -124,19 +124,19 @@ const SimpleInput = forwardRef(
                 style={mergedContainerStyle}
             >
                 {title && (
-                    <span className="lw-simpleInput__label">
+                    <SimpleContainer className="lw-simpleInput__label">
                         {error || title}
-                    </span>
+                    </SimpleContainer>
                 )}
 
                 {rightIcon && (
-                    <div className="lw-simpleInput__icon lw-simpleInput__icon--right">
+                    <SimpleContainer className="lw-simpleInput__icon lw-simpleInput__icon--right">
                         <SimpleIcon
                             tintColor={tintColor || getBorderColor()}
                             src={rightIcon}
                             style={IconStyle}
                         />
-                    </div>
+                    </SimpleContainer>
                 )}
 
                 <input
@@ -154,13 +154,13 @@ const SimpleInput = forwardRef(
                 />
 
                 {leftIcon && (
-                    <div className="lw-simpleInput__icon lw-simpleInput__icon--left">
+                    <SimpleContainer className="lw-simpleInput__icon lw-simpleInput__icon--left">
                         <SimpleIcon
                             tintColor={tintColor || getBorderColor()}
                             src={leftIcon}
                             style={IconStyle}
                         />
-                    </div>
+                    </SimpleContainer>
                 )}
             </SimpleContainer>
         );

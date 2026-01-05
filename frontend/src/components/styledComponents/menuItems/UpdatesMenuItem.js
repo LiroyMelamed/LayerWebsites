@@ -1,5 +1,6 @@
 import { icons } from "../../../assets/icons/icons";
 import SimpleButton from "../../simpleComponents/SimpleButton";
+import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import SimpleIcon from "../../simpleComponents/SimpleIcon";
 import { TextBold14 } from "../../specializedComponents/text/AllTextKindFile";
 
@@ -13,9 +14,9 @@ export default function UpdatesMenuItem({ menuItemName, onPress, style }) {
             className="lw-updatesMenuItem"
             style={style}
         >
-            <div className="lw-updatesMenuItem__text">
+            <SimpleContainer className="lw-updatesMenuItem__text">
                 <TextBold14>{menuItemName}</TextBold14>
-            </div>
+            </SimpleContainer>
 
             <SimpleIcon
                 src={icons.Button.DownArrow}

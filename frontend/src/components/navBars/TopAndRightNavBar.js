@@ -38,9 +38,9 @@ export default function TopAndRightNavBar({ chosenIndex = -1, children, LogoNavi
               }}
             />
           </SimpleContainer>
-          <div className="lw-topAndRightNavBar__separatorWrap">
+          <SimpleContainer className="lw-topAndRightNavBar__separatorWrap">
             <Separator />
-          </div>
+          </SimpleContainer>
           <SimpleScrollView>
             <SimpleContainer className="lw-topAndRightNavBar__navList">
               {NavBarLinks.map((item, index) => (
@@ -57,7 +57,7 @@ export default function TopAndRightNavBar({ chosenIndex = -1, children, LogoNavi
             </SimpleContainer>
 
           </SimpleScrollView>
-          <div className="lw-topAndRightNavBar__logoutWrap">
+          <SimpleContainer className="lw-topAndRightNavBar__logoutWrap">
             <GenericButton
               backgroundColor={colors.darkRed}
               pressedBackgroundColor={colors.darkRed}
@@ -72,7 +72,7 @@ export default function TopAndRightNavBar({ chosenIndex = -1, children, LogoNavi
             >
               התנתק
             </GenericButton>
-          </div>
+          </SimpleContainer>
         </SimpleContainer>
       )}
 

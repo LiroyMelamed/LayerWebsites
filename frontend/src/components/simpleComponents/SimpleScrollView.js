@@ -9,16 +9,16 @@ const SimpleScrollView = forwardRef(({
     className,
     ...props
 }, ref) => {
-    return (
-        <div
-            {...props}
-            onScroll={onScroll}
-            ref={ref}
-            className={['lw-simpleScrollView', className].filter(Boolean).join(' ')}
-            style={style}
-        >
-            {children}
-        </div>
+    return React.createElement(
+        'div',
+        {
+            ...props,
+            onScroll,
+            ref,
+            className: ['lw-simpleScrollView', className].filter(Boolean).join(' '),
+            style,
+        },
+        children
     );
 });
 

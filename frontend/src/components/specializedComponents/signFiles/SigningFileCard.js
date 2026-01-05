@@ -24,12 +24,12 @@ export default function SigningFileCard({ file, detailsRows = [], children, styl
         <SimpleContainer className="lw-signing-fileCard" style={style || undefined}>
             <SimpleContainer className="lw-signing-fileCardHeader">
                 <TextBold16>{file.FileName}</TextBold16>
-                <span
+                <SimpleContainer
                     className="lw-signing-fileCardStatus"
                     style={chipStyle}
                 >
                     {statusMeta.text}
-                </span>
+                </SimpleContainer>
             </SimpleContainer>
 
             {detailsRows.map((row, idx) => (

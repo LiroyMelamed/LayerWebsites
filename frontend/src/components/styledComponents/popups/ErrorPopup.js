@@ -16,9 +16,9 @@ export default function ErrorPopup({ closePopup, errorText }) {
 
             <Separator className="lw-errorPopup__separator" />
 
-            <div className="lw-errorPopup__actions">
+            <SimpleContainer className="lw-errorPopup__actions">
                 <PrimaryButton onPress={() => closePopup()}>אישור</PrimaryButton>
-            </div>
+            </SimpleContainer>
         </SimpleContainer>
     );
 }

@@ -17,9 +17,9 @@ export default function ShowDataCard({ title, icon, numberText, comprationNumber
         <SimpleCard className="lw-showDataCard" style={style} onPress={optionalOnClick}>
             <TextBold14 >{title}</TextBold14>
 
-            <div className="lw-showDataCard__number">
+            <SimpleContainer className="lw-showDataCard__number">
                 <TextBold36>{numberText}</TextBold36>
-            </div>
+            </SimpleContainer>
 
             {comprationNumber && comprationText &&
                 <SimpleContainer className="lw-showDataCard__comparisonRow">

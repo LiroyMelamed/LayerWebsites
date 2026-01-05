@@ -33,21 +33,21 @@ export default function ClientMenuItem({
             <SimpleContainer className="lw-clientMenuItem" style={style}>
 
                 <SimpleContainer className="lw-clientMenuItem__row">
-                    <div className="lw-clientMenuItem__cell">
+                    <SimpleContainer className="lw-clientMenuItem__cell">
                         <TextBold14>{CompanyName || "-"}</TextBold14>
-                    </div>
+                    </SimpleContainer>
 
-                    <div className="lw-clientMenuItem__cell">
+                    <SimpleContainer className="lw-clientMenuItem__cell">
                         <Text14>{clientName || "-"}</Text14>
-                    </div>
+                    </SimpleContainer>
 
-                    <div className="lw-clientMenuItem__cell lw-clientMenuItem__cell--email">
+                    <SimpleContainer className="lw-clientMenuItem__cell lw-clientMenuItem__cell--email">
                         <Text14 shouldApplyClamping>{clientMail || "-"}</Text14>
-                    </div>
+                    </SimpleContainer>
 
-                    <div className="lw-clientMenuItem__cell">
+                    <SimpleContainer className="lw-clientMenuItem__cell">
                         <Text14>{clientPhone || "-"}</Text14>
-                    </div>
+                    </SimpleContainer>
                 </SimpleContainer>
 
             </SimpleContainer>

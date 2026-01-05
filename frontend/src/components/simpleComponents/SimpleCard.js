@@ -2,7 +2,9 @@ import React from 'react';
 import SimpleContainer from './SimpleContainer';
 import { colors } from '../../constant/colors';
 
-const SimpleCard = ({ style, children, ...props }) => {
+const SimpleCard = ({ style, className = '', children, ...props }) => {
+
+    const mergedClassName = ['lw-simpleCard', className].filter(Boolean).join(' ');
 
     const cardStyle = {
         justifyContent: 'flex-end',
@@ -13,6 +15,7 @@ const SimpleCard = ({ style, children, ...props }) => {
     return (
         <SimpleContainer
             style={cardStyle}
+            className={mergedClassName}
             {...props}
         >
             {children}

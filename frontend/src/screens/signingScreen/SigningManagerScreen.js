@@ -149,13 +149,13 @@ export default function SigningManagerScreen() {
 
                 {/* רשימה */}
                 {filteredFiles.length === 0 ? (
-                    <div className="lw-signingManagerScreen__emptyState">
+                    <SimpleContainer className="lw-signingManagerScreen__emptyState">
                         <Text14>
                             {activeTab === "pending"
                                 ? "✨ אין מסמכים ממתינים או נדחים"
                                 : "📭 אין מסמכים חתומים להצגה"}
                         </Text14>
-                    </div>
+                    </SimpleContainer>
                 ) : (
                     filteredFiles.map((file) => {
                         const chip = getStatusChip(file.Status);
@@ -175,7 +175,7 @@ export default function SigningManagerScreen() {
                                     <h3 className="lw-signingManagerScreen__fileName">
                                         {isFullySigned && "✅ "}{file.FileName}
                                     </h3>
-                                    <span className={chip.className}>{chip.text}</span>
+                                    <SimpleContainer className={chip.className}>{chip.text}</SimpleContainer>
                                 </SimpleContainer>
 
                                 <SimpleContainer className="lw-signingManagerScreen__detailRow">

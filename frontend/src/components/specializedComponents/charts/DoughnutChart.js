@@ -41,9 +41,11 @@ const DoughnutChart = ({ data, colors, labels, centerText, subText, style, class
         ...style
     }
 
+    const mergedClassName = ["lw-doughnutChart", className].filter(Boolean).join(" ");
+
     return (
-        <SimpleContainer className={className} style={containerStyle}>
-            <SimpleContainer style={styles.centerText}>
+        <SimpleContainer className={mergedClassName} style={containerStyle}>
+            <SimpleContainer className="lw-doughnutChart__centerText" style={styles.centerText}>
                 <TextBold16 style={styles.mainText}>{centerText}</TextBold16>
                 {subText && <Text12 style={styles.subText}>{subText}</Text12>}
             </SimpleContainer>

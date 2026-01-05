@@ -118,9 +118,9 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
             className={"lw-caseMenuItemOpen" + (isOpen ? " is-open" : "")}
         >
             <SimpleContainer className="lw-caseMenuItemOpen__card">
-                <div className="lw-caseMenuItemOpen__progressWrap">
+                <SimpleContainer className="lw-caseMenuItemOpen__progressWrap">
                     <ProgressBar IsClosed={fullCase.IsClosed} currentStage={fullCase.CurrentStage} totalStages={totalStages} />
-                </div>
+                </SimpleContainer>
 
                 {/* Sections (mobile-first: stack) */}
                 <SimpleContainer className="lw-caseMenuItemOpen__sections">
@@ -128,20 +128,20 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
                         <SimpleContainer className="lw-caseMenuItemOpen__section">
                             <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">פרטי לקוח</TextBold12>
 
-                            <div className="lw-caseMenuItemOpen__items">
-                                <div className="lw-caseMenuItemOpen__item">
+                            <SimpleContainer className="lw-caseMenuItemOpen__items">
+                                <SimpleContainer className="lw-caseMenuItemOpen__item">
                                     <TextBold12 className="lw-caseMenuItemOpen__itemLabel">שם לקוח:</TextBold12>
                                     <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.CustomerName}</Text12>
-                                </div>
+                                </SimpleContainer>
 
-                                <div className="lw-caseMenuItemOpen__item">
+                                <SimpleContainer className="lw-caseMenuItemOpen__item">
                                     <TextBold12 className="lw-caseMenuItemOpen__itemLabel">אימייל:</TextBold12>
                                     <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.CustomerMail}</Text12>
-                                </div>
+                                </SimpleContainer>
 
-                                <div className="lw-caseMenuItemOpen__item">
+                                <SimpleContainer className="lw-caseMenuItemOpen__item">
                                     <TextBold12 className="lw-caseMenuItemOpen__itemLabel">טלפון:</TextBold12>
-                                    <div className="lw-caseMenuItemOpen__itemValue">
+                                    <SimpleContainer className="lw-caseMenuItemOpen__itemValue">
                                         <SimpleButton
                                             className="lw-caseMenuItemOpen__linkButton"
                                             onPress={() => {
@@ -150,49 +150,49 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
                                         >
                                             <Text12 className="lw-caseMenuItemOpen__linkText">{fullCase.PhoneNumber}</Text12>
                                         </SimpleButton>
-                                    </div>
-                                </div>
-                            </div>
+                                    </SimpleContainer>
+                                </SimpleContainer>
+                            </SimpleContainer>
                         </SimpleContainer>
                     )}
 
                     <SimpleContainer className="lw-caseMenuItemOpen__section">
                         <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">תאריכים</TextBold12>
 
-                        <div className="lw-caseMenuItemOpen__items">
-                            <div className="lw-caseMenuItemOpen__item">
+                        <SimpleContainer className="lw-caseMenuItemOpen__items">
+                            <SimpleContainer className="lw-caseMenuItemOpen__item">
                                 <TextBold12 className="lw-caseMenuItemOpen__itemLabel">תאריך סיום משוער:</TextBold12>
                                 <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.EstimatedCompletionDate ? DateDDMMYY(fullCase.EstimatedCompletionDate) : "לא צויין"}</Text12>
-                            </div>
+                            </SimpleContainer>
 
-                            <div className="lw-caseMenuItemOpen__item">
+                            <SimpleContainer className="lw-caseMenuItemOpen__item">
                                 <TextBold12 className="lw-caseMenuItemOpen__itemLabel">תוקף רישיון:</TextBold12>
                                 <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.LicenseExpiryDate ? DateDDMMYY(fullCase.LicenseExpiryDate) : "לא צויין"}</Text12>
-                            </div>
-                        </div>
+                            </SimpleContainer>
+                        </SimpleContainer>
                     </SimpleContainer>
 
                     <SimpleContainer className="lw-caseMenuItemOpen__section">
                         <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">ניהול</TextBold12>
 
-                        <div className="lw-caseMenuItemOpen__items">
-                            <div className="lw-caseMenuItemOpen__item">
+                        <SimpleContainer className="lw-caseMenuItemOpen__items">
+                            <SimpleContainer className="lw-caseMenuItemOpen__item">
                                 <TextBold12 className="lw-caseMenuItemOpen__itemLabel">מנהל תיק:</TextBold12>
                                 <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.CaseManager ? fullCase.CaseManager : "לא משוייך"}</Text12>
-                            </div>
+                            </SimpleContainer>
 
                             {!isClient && (
-                                <div className="lw-caseMenuItemOpen__item">
+                                <SimpleContainer className="lw-caseMenuItemOpen__item">
                                     <TextBold12 className="lw-caseMenuItemOpen__itemLabel">נעוץ:</TextBold12>
-                                    <div className="lw-caseMenuItemOpen__itemValue">
+                                    <SimpleContainer className="lw-caseMenuItemOpen__itemValue">
                                         {isPerformingTagCase ? <SimpleLoader /> : <Text12>{IsTagged ? "כן" : "לא"}</Text12>}
-                                    </div>
-                                </div>
+                                    </SimpleContainer>
+                                </SimpleContainer>
                             )}
 
-                            <div className="lw-caseMenuItemOpen__item">
+                            <SimpleContainer className="lw-caseMenuItemOpen__item">
                                 <TextBold12 className="lw-caseMenuItemOpen__itemLabel">קבוצת וואטספ</TextBold12>
-                                <div className="lw-caseMenuItemOpen__itemValue">
+                                <SimpleContainer className="lw-caseMenuItemOpen__itemValue">
                                     {WhatsappLink ? (
                                         <SimpleContainer className="lw-caseMenuItemOpen__whatsAppActions">
                                             <PrimaryButton size={buttonSizes.SMALL} onPress={openWhatsappGroupLink}>
@@ -213,9 +213,9 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
                                             <Text12 className="lw-caseMenuItemOpen__positiveText">צור קשר</Text12>
                                         </SimpleButton>
                                     )}
-                                </div>
-                            </div>
-                        </div>
+                                </SimpleContainer>
+                            </SimpleContainer>
+                        </SimpleContainer>
                     </SimpleContainer>
 
                     <SimpleContainer className="lw-caseMenuItemOpen__section">

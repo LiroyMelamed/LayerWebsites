@@ -1,5 +1,6 @@
 import { images } from "../../../assets/images/images";
 import SimpleCard from "../../simpleComponents/SimpleCard";
+import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import SimpleImage from "../../simpleComponents/SimpleImage";
 import { TextBold14 } from "../../specializedComponents/text/AllTextKindFile";
 import PrimaryButton from "../buttons/PrimaryButton";
@@ -28,14 +29,14 @@ export default function DefaultState({
     return (
         <SimpleCard className={resolvedCardClassName} style={style}>
             <SimpleImage className={resolvedImageClassName} src={imageSrc} style={imageStyle} />
-            <div className={['lw-defaultState__content', contentClassName].filter(Boolean).join(' ')}>
+            <SimpleContainer className={['lw-defaultState__content', contentClassName].filter(Boolean).join(' ')}>
                 <TextBold14>
                     {content}
                 </TextBold14>
-            </div>
+            </SimpleContainer>
 
             {actionButton &&
-                <div className={['lw-defaultState__action', actionButtonClassName].filter(Boolean).join(' ')}>
+                <SimpleContainer className={['lw-defaultState__action', actionButtonClassName].filter(Boolean).join(' ')}>
                     <PrimaryButton
                         onPress={actionButtonPressFunction}
                         rightIcon={actionButtonRightIcon}
@@ -44,7 +45,7 @@ export default function DefaultState({
                     >
                         {actionButton}
                     </PrimaryButton>
-                </div>
+                </SimpleContainer>
             }
         </SimpleCard>
     );

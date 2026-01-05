@@ -68,11 +68,11 @@ export default function CaseMenuItem({
 
                 <SimpleContainer className="lw-caseMenuItem__content">
                     <SimpleContainer className="lw-caseMenuItem__row lw-caseMenuItem__row--top">
-                        <div className="lw-caseMenuItem__title">
+                        <SimpleContainer className="lw-caseMenuItem__title">
                             <TextBold14 className="lw-textEllipsis" shouldApplyClamping numberOfLines={1}>
                                 {rightTitle}
                             </TextBold14>
-                        </div>
+                        </SimpleContainer>
 
                         <SimpleContainer className="lw-caseMenuItem__pair">
                             <TextBold12>{leftPreFirstLine}</TextBold12>

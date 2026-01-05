@@ -317,11 +317,11 @@ export default function UploadFileForSigningScreen() {
 
                     <SimpleContainer className="lw-uploadSigningScreen__formCard">
                         {message && (
-                            <div
+                            <SimpleContainer
                                 className={`lw-uploadSigningScreen__message ${message.type === "error" ? "is-error" : "is-success"}`}
                             >
                                 {message.text}
-                            </div>
+                            </SimpleContainer>
                         )}
 
                         <SimpleContainer className="lw-uploadSigningScreen__searchRow">
@@ -367,18 +367,18 @@ export default function UploadFileForSigningScreen() {
                         )}
 
                         <SimpleContainer className="lw-uploadSigningScreen__formGroup lw-uploadSigningScreen__fileGroup">
-                            <div
+                            <SimpleContainer
                                 className={`lw-uploadSigningScreen__fileBox${isDragActive ? " is-dragActive" : ""}`}
                                 onDragEnter={handleDragEnter}
                                 onDragLeave={handleDragLeave}
                                 onDragOver={handleDragOver}
                                 onDrop={handleDrop}
-                                onClick={() => fileInputRef.current?.click()}
+                                onPress={() => fileInputRef.current?.click()}
                             >
-                                <div>📄 גרור קובץ לכאן או לחץ לבחירה</div>
-                                <div className="lw-uploadSigningScreen__fileHint">
+                                <SimpleContainer className="lw-uploadSigningScreen__filePrompt">📄 גרור קובץ לכאן או לחץ לבחירה</SimpleContainer>
+                                <SimpleContainer className="lw-uploadSigningScreen__fileHint">
                                     (PDF בלבד בשלב זה)
-                                </div>
+                                </SimpleContainer>
                                 <input
                                     ref={fileInputRef}
                                     type="file"
@@ -386,17 +386,17 @@ export default function UploadFileForSigningScreen() {
                                     onChange={handleFileChange}
                                     accept=".pdf"
                                 />
-                            </div>
+                            </SimpleContainer>
 
                             {selectedFile && (
-                                <div className="lw-uploadSigningScreen__fileName">
+                                <SimpleContainer className="lw-uploadSigningScreen__fileName">
                                     ✓ {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
-                                </div>
+                                </SimpleContainer>
                             )}
                         </SimpleContainer>
 
                         <SimpleContainer className="lw-uploadSigningScreen__formGroup lw-uploadSigningScreen__notesGroup">
-                            <div className="lw-uploadSigningScreen__notesTitle">הערות ללקוח (לא חובה)</div>
+                            <SimpleContainer className="lw-uploadSigningScreen__notesTitle">הערות ללקוח (לא חובה)</SimpleContainer>
                             <textarea
                                 className="lw-uploadSigningScreen__textarea"
                                 value={notes}
@@ -425,11 +425,11 @@ export default function UploadFileForSigningScreen() {
                                     signers={selectedSigners}
                                 />
 
-                                <div className="lw-uploadSigningScreen__infoText">
+                                <SimpleContainer className="lw-uploadSigningScreen__infoText">
                                     <Text14>
                                         בכל עמוד יש כפתור "+ הוסף חתימה". גרור את הקוביות למיקום הרצוי או מחק בעזרת ✕
                                     </Text14>
-                                </div>
+                                </SimpleContainer>
                             </>
                         )}
 

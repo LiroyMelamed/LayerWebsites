@@ -54,19 +54,19 @@ const SimpleTextArea = forwardRef(
             >
                 {/* Floating Label */}
                 {title && (
-                    <span className="lw-simpleTextArea__label">
+                    <SimpleContainer className="lw-simpleTextArea__label">
                         {title}
-                    </span>
+                    </SimpleContainer>
                 )}
 
                 {rightIcon && (
-                    <div className="lw-simpleTextArea__icon lw-simpleTextArea__icon--right">
+                    <SimpleContainer className="lw-simpleTextArea__icon lw-simpleTextArea__icon--right">
                         <SimpleIcon
                             tintColor={tintColor || getBorderColor()}
                             src={rightIcon}
                             style={IconStyle}
                         />
-                    </div>
+                    </SimpleContainer>
                 )}
 
                 <textarea
@@ -81,13 +81,13 @@ const SimpleTextArea = forwardRef(
                 />
 
                 {leftIcon && (
-                    <div className="lw-simpleTextArea__icon lw-simpleTextArea__icon--left">
+                    <SimpleContainer className="lw-simpleTextArea__icon lw-simpleTextArea__icon--left">
                         <SimpleIcon
                             tintColor={tintColor || getBorderColor()}
                             src={leftIcon}
                             style={IconStyle}
                         />
-                    </div>
+                    </SimpleContainer>
                 )}
             </SimpleContainer>
         );

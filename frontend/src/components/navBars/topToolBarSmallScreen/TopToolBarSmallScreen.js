@@ -46,14 +46,14 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
                     onPress={() => { navigate(LogoNavigate) }}
                 />
                 <SimpleButton onPress={toggleDrawer} className="lw-topToolBarSmallScreen__menuButton">
-                    <span
+                    <SimpleContainer
                         className={[
                             'lw-topToolBarSmallScreen__icon',
                             isDrawerOpen ? 'lw-topToolBarSmallScreen__icon--open' : null,
                         ].filter(Boolean).join(' ')}
                     >
                         {!isDrawerOpen ? "☰" : "X"}
-                    </span>
+                    </SimpleContainer>
                 </SimpleButton>
             </SimpleContainer >
 
@@ -82,7 +82,7 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
                         </SimpleContainer>
                     </SimpleScrollView>
                     {!isFromApp && (
-                        <div className="lw-topToolBarSmallScreen__logout">
+                        <SimpleContainer className="lw-topToolBarSmallScreen__logout">
                             <PrimaryButton
                                 style={logoutButtonStyle}
                                 onPress={() => {
@@ -92,7 +92,7 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
                             >
                                 התנתק
                             </PrimaryButton>
-                        </div>
+                        </SimpleContainer>
                     )}
                 </SimpleContainer>
             }

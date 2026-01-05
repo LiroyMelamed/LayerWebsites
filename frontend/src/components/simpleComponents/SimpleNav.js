@@ -32,9 +32,9 @@ const SimpleNav = ({ activeButton, style }) => {
   };
 
   return (
-    <SimpleContainer style={containerStyle}>
+    <SimpleContainer className="lw-simpleNav" style={containerStyle}>
       <SimpleScrollView>
-        <SimpleContainer style={styles.innerContainer(isSmallScreen)}>
+        <SimpleContainer className="lw-simpleNav__inner" style={styles.innerContainer(isSmallScreen)}>
           {!isSmallScreen &&
             <SimpleImage
               src={images.Logos.FullLogoOriginal}
@@ -42,7 +42,7 @@ const SimpleNav = ({ activeButton, style }) => {
             />
           }
           {NavBarLinks.map((ListOfLinks, ListIndex) => (
-            <SimpleContainer key={`NavList${ListIndex}`} style={styles.list}>
+            <SimpleContainer className="lw-simpleNav__list" key={`NavList${ListIndex}`} style={styles.list}>
               {ListIndex !== 0 && <Separator />}
               {ListOfLinks.map((link, LinkIndex) => (
                 <TertiaryButton

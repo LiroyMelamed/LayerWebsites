@@ -18,16 +18,16 @@ const ProgressBar = ({ IsClosed, currentStage, totalStages, style }) => {
     const mergedStyle = style ? { ...cssVars, ...style } : cssVars;
 
     return (
-        <div className="lw-progressBar" style={mergedStyle}>
+        <SimpleContainer className="lw-progressBar" style={mergedStyle}>
             <SimpleContainer className="lw-progressBar__labelRow">
                 <TextBold12>שלבים שהסתיימו:</TextBold12>
                 <Text12>{CurrentStageAccordingToIsClosed}/{totalStages}</Text12>
                 <Text12 className="lw-progressBar__percent">{Math.round(percentage)}%</Text12>
             </SimpleContainer>
-            <div className="lw-progressBar__bar">
-                <div className="lw-progressBar__fill" />
-            </div>
-        </div>
+            <SimpleContainer className="lw-progressBar__bar">
+                <SimpleContainer className="lw-progressBar__fill" />
+            </SimpleContainer>
+        </SimpleContainer>
     );
 };
 

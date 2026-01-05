@@ -24,23 +24,23 @@ const SimpleTable = ({
             {titles?.length > 0 && (
                 <SimpleContainer className="lw-simpleTable__titleRow">
                     {titles.map((title, index) => (
-                        <div key={index} className="lw-simpleTable__cell lw-simpleTable__cell--header">
+                        <SimpleContainer key={index} className="lw-simpleTable__cell lw-simpleTable__cell--header">
                             <Text20>{title}</Text20>
-                        </div>
+                        </SimpleContainer>
                     ))}
                 </SimpleContainer>
             )}
 
             {isLoading ? (
-                <div className="lw-simpleTable__state" {...props}>
+                <SimpleContainer className="lw-simpleTable__state" {...props}>
                     <SimpleLoader />
-                </div>
+                </SimpleContainer>
             ) : !hasData ? (
                 <p className="lw-simpleTable__state lw-simpleTable__noData" {...props}>
                     {noDataMessage}
                 </p>
             ) : (
-                <div className="lw-simpleTable__body" {...props}>
+                <SimpleContainer className="lw-simpleTable__body" {...props}>
                     {data.map((item, rowIndex) => (
                         <CaseMenuItem
                             key={item?.Column0 ?? rowIndex}
@@ -50,15 +50,15 @@ const SimpleTable = ({
                             style={rowStyle}
                         >
                             {titles.map((_, colIndex) => (
-                                <div key={colIndex} className="lw-simpleTable__cell" style={cellStyle}>
+                                <SimpleContainer key={colIndex} className="lw-simpleTable__cell" style={cellStyle}>
                                     <Text20 className="lw-simpleTable__cellText" title={item?.[`Column${colIndex}`]}>
                                         {item?.[`Column${colIndex}`]}
                                     </Text20>
-                                </div>
+                                </SimpleContainer>
                             ))}
                         </CaseMenuItem>
                     ))}
-                </div>
+                </SimpleContainer>
             )}
         </SimpleContainer>
     );

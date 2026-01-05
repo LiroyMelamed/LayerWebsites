@@ -146,7 +146,7 @@ export default function NotificationsScreen() {
                                         }
                                     >
                                         <SimpleContainer className="lw-notificationsScreen__itemContent">
-                                            {!isRead && <span className="lw-notificationsScreen__unreadDot" />}
+                                            {!isRead && <SimpleContainer className="lw-notificationsScreen__unreadDot" />}
 
                                             <SimpleContainer className="lw-notificationsScreen__text">
                                                 <TextBold14

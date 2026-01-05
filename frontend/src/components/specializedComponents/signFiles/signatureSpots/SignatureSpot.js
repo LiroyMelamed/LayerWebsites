@@ -134,21 +134,21 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                     className="lw-signing-spotImg"
                 />
             ) : (
-                <div className="lw-signing-spotLabel">
-                    <div className="lw-signing-spotLabelText">
+                <SimpleContainer className="lw-signing-spotLabel">
+                    <SimpleContainer className="lw-signing-spotLabelText">
                         ✍️ {signerName.length > 10 ? signerName.substring(0, 8) + "..." : signerName}
-                    </div>
-                </div>
+                    </SimpleContainer>
+                </SimpleContainer>
             )}
-            <span
-                onClick={(e) => {
+            <SimpleContainer
+                onPress={(e) => {
                     e.stopPropagation();
                     onRemoveSpot(index);
                 }}
                 className="lw-signing-spotRemove"
             >
                 ✕
-            </span>
+            </SimpleContainer>
         </SimpleContainer>
     );
 }
