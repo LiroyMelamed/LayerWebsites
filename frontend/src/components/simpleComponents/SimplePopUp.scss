@@ -12,6 +12,7 @@
 }
 
 .lw-simplePopUp__container {
+    position: relative;
     background-color: var(--lw-color-white);
     border-radius: 1rem;
     /* 16px */
@@ -33,9 +34,9 @@
 }
 
 .lw-simplePopUp__close {
-    align-self: flex-start;
-    margin-bottom: 0.5rem;
-    /* 8px */
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
 }
 
 .lw-simplePopUp__content {

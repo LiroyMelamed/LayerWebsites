@@ -203,13 +203,13 @@ export default function SigningManagerScreen() {
 
                 {/* רשימה */}
                 {filteredFiles.length === 0 ? (
-                    <div className="lw-signingManagerScreen__emptyState">
+                    <SimpleContainer className="lw-signingManagerScreen__emptyState">
                         <Text14>
                             {activeTab === "pending"
                                 ? "אין מסמכים ממתינים או נדחים"
                                 : "אין מסמכים חתומים להצגה"}
                         </Text14>
-                    </div>
+                    </SimpleContainer>
                 ) : (
                     filteredFiles.map((file) => {
                         const chip = getStatusChip(file.Status);
@@ -229,28 +229,28 @@ export default function SigningManagerScreen() {
                                     <h3 className="lw-signingManagerScreen__fileName">
                                         {file.FileName}
                                     </h3>
-                                    <span className={chip.className}>{chip.text}</span>
+                                    <SimpleContainer className={chip.className}>{chip.text}</SimpleContainer>
                                 </SimpleContainer>
 
                                 <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                    <div className="lw-signingManagerScreen__detailLabel">תיק:</div>
-                                    <div className="lw-signingManagerScreen__detailValue">{file.CaseName || "-"}</div>
+                                    <SimpleContainer className="lw-signingManagerScreen__detailLabel">תיק:</SimpleContainer>
+                                    <SimpleContainer className="lw-signingManagerScreen__detailValue">{file.CaseName || "-"}</SimpleContainer>
                                 </SimpleContainer>
                                 <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                    <div className="lw-signingManagerScreen__detailLabel">לקוח:</div>
-                                    <div className="lw-signingManagerScreen__detailValue">{file.ClientName || "-"}</div>
+                                    <SimpleContainer className="lw-signingManagerScreen__detailLabel">לקוח:</SimpleContainer>
+                                    <SimpleContainer className="lw-signingManagerScreen__detailValue">{file.ClientName || "-"}</SimpleContainer>
                                 </SimpleContainer>
                                 <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                    <div className="lw-signingManagerScreen__detailLabel">תאריך העלאה:</div>
-                                    <div className="lw-signingManagerScreen__detailValue">{formatDotDate(file.CreatedAt)}</div>
+                                    <SimpleContainer className="lw-signingManagerScreen__detailLabel">תאריך העלאה:</SimpleContainer>
+                                    <SimpleContainer className="lw-signingManagerScreen__detailValue">{formatDotDate(file.CreatedAt)}</SimpleContainer>
                                 </SimpleContainer>
 
                                 {(file.Status === "pending" ||
                                     file.Status === "rejected") && (
                                         <>
                                             <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                                <div className="lw-signingManagerScreen__detailLabel">חתימות:</div>
-                                                <div className="lw-signingManagerScreen__detailValue">{signedSpots}/{totalSpots}</div>
+                                                <SimpleContainer className="lw-signingManagerScreen__detailLabel">חתימות:</SimpleContainer>
+                                                <SimpleContainer className="lw-signingManagerScreen__detailValue">{signedSpots}/{totalSpots}</SimpleContainer>
                                             </SimpleContainer>
 
                                             <progress
@@ -263,8 +263,8 @@ export default function SigningManagerScreen() {
                                             {file.Status === "rejected" &&
                                                 file.RejectionReason && (
                                                     <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                                        <div className="lw-signingManagerScreen__detailLabel">סיבת דחייה:</div>
-                                                        <div className="lw-signingManagerScreen__detailValue">{file.RejectionReason}</div>
+                                                        <SimpleContainer className="lw-signingManagerScreen__detailLabel">סיבת דחייה:</SimpleContainer>
+                                                        <SimpleContainer className="lw-signingManagerScreen__detailValue">{file.RejectionReason}</SimpleContainer>
                                                     </SimpleContainer>
                                                 )}
                                         </>
@@ -272,8 +272,8 @@ export default function SigningManagerScreen() {
 
                                 {file.Status === "signed" && (
                                     <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                        <div className="lw-signingManagerScreen__detailLabel">חתום בתאריך:</div>
-                                        <div className="lw-signingManagerScreen__detailValue">{formatDotDate(file.SignedAt)}</div>
+                                        <SimpleContainer className="lw-signingManagerScreen__detailLabel">חתום בתאריך:</SimpleContainer>
+                                        <SimpleContainer className="lw-signingManagerScreen__detailValue">{formatDotDate(file.SignedAt)}</SimpleContainer>
                                     </SimpleContainer>
                                 )}
 
@@ -326,41 +326,41 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
             <TextBold24>{file?.FileName || "פרטי מסמך"}</TextBold24>
 
             <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                <div className="lw-signingManagerScreen__detailLabel">תיק:</div>
-                <div className="lw-signingManagerScreen__detailValue">{file?.CaseName || "-"}</div>
+                <SimpleContainer className="lw-signingManagerScreen__detailLabel">תיק:</SimpleContainer>
+                <SimpleContainer className="lw-signingManagerScreen__detailValue">{file?.CaseName || "-"}</SimpleContainer>
             </SimpleContainer>
 
             <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                <div className="lw-signingManagerScreen__detailLabel">לקוח:</div>
-                <div className="lw-signingManagerScreen__detailValue">{file?.ClientName || "-"}</div>
+                <SimpleContainer className="lw-signingManagerScreen__detailLabel">לקוח:</SimpleContainer>
+                <SimpleContainer className="lw-signingManagerScreen__detailValue">{file?.ClientName || "-"}</SimpleContainer>
             </SimpleContainer>
 
             <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                <div className="lw-signingManagerScreen__detailLabel">תאריך העלאה:</div>
-                <div className="lw-signingManagerScreen__detailValue">{formatDotDate?.(file?.CreatedAt)}</div>
+                <SimpleContainer className="lw-signingManagerScreen__detailLabel">תאריך העלאה:</SimpleContainer>
+                <SimpleContainer className="lw-signingManagerScreen__detailValue">{formatDotDate?.(file?.CreatedAt)}</SimpleContainer>
             </SimpleContainer>
 
             <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                <div className="lw-signingManagerScreen__detailLabel">סטטוס:</div>
-                <div className="lw-signingManagerScreen__detailValue">{statusText}</div>
+                <SimpleContainer className="lw-signingManagerScreen__detailLabel">סטטוס:</SimpleContainer>
+                <SimpleContainer className="lw-signingManagerScreen__detailValue">{statusText}</SimpleContainer>
             </SimpleContainer>
 
             <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                <div className="lw-signingManagerScreen__detailLabel">חתימות:</div>
-                <div className="lw-signingManagerScreen__detailValue">{signedSpots}/{totalSpots}</div>
+                <SimpleContainer className="lw-signingManagerScreen__detailLabel">חתימות:</SimpleContainer>
+                <SimpleContainer className="lw-signingManagerScreen__detailValue">{signedSpots}/{totalSpots}</SimpleContainer>
             </SimpleContainer>
 
             {file?.Status === "rejected" && file?.RejectionReason && (
                 <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                    <div className="lw-signingManagerScreen__detailLabel">סיבת דחייה:</div>
-                    <div className="lw-signingManagerScreen__detailValue">{file.RejectionReason}</div>
+                    <SimpleContainer className="lw-signingManagerScreen__detailLabel">סיבת דחייה:</SimpleContainer>
+                    <SimpleContainer className="lw-signingManagerScreen__detailValue">{file.RejectionReason}</SimpleContainer>
                 </SimpleContainer>
             )}
 
             {file?.Status === "signed" && (
                 <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                    <div className="lw-signingManagerScreen__detailLabel">חתום בתאריך:</div>
-                    <div className="lw-signingManagerScreen__detailValue">{formatDotDate?.(file?.SignedAt)}</div>
+                    <SimpleContainer className="lw-signingManagerScreen__detailLabel">חתום בתאריך:</SimpleContainer>
+                    <SimpleContainer className="lw-signingManagerScreen__detailValue">{formatDotDate?.(file?.SignedAt)}</SimpleContainer>
                 </SimpleContainer>
             )}
 
