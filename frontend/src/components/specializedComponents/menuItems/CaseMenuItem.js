@@ -3,13 +3,10 @@ import SimpleButton from '../../simpleComponents/SimpleButton';
 import CaseFullView from '../../styledComponents/cases/CaseFullView';
 import { usePopup } from '../../../providers/PopUpProvider';
 
-export default function CaseMenuItem({ optionalOnPress, rePerformRequest, caseNumber, children, style, className }) {
-  const { openPopup } = usePopup(); // Get the openPopup method from the context
+import './CaseMenuItem.scss';
 
-  const buttonStyle = {
-    width: '100%',
-    ...style
-  };
+export default function CaseMenuItem({ optionalOnPress, rePerformRequest, caseNumber, children, style: _style, className }) {
+  const { openPopup } = usePopup(); // Get the openPopup method from the context
 
   function OnPressItem() {
     if (optionalOnPress) {
@@ -20,7 +17,10 @@ export default function CaseMenuItem({ optionalOnPress, rePerformRequest, caseNu
   }
 
   return (
-    <SimpleButton style={buttonStyle} className={className} onClick={OnPressItem}>
+    <SimpleButton
+      className={['lw-caseMenuItemButton', className].filter(Boolean).join(' ')}
+      onClick={OnPressItem}
+    >
       {children}
     </SimpleButton>
   );

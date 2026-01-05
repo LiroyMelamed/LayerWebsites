@@ -52,14 +52,12 @@ export default function MainScreen() {
                             numberText={mainScreenData?.AllCasesData?.length}
                             title={'סה"כ תיקים'}
                             optionalOnClick={() => { navigate(AdminStackName + AllCasesScreenName) }}
-                            style={styles.DataCardStyle}
                         />
 
                         <ShowDataCard
                             numberText={mainScreenData?.NumberOfClosedCases}
                             title={"תיקים סגורים"}
                             optionalOnClick={() => { navigate(AdminStackName + AllCasesScreenName) }}
-                            style={styles.DataCardStyle}
                         />
                     </SimpleContainer>
 
@@ -68,7 +66,6 @@ export default function MainScreen() {
                             numberText={mainScreenData?.NumberOfTaggedCases}
                             title={"תיקים מתוייגים"}
                             optionalOnClick={() => { navigate(AdminStackName + TaggedCasesScreenName) }}
-                            style={styles.DataCardStyle}
                         />
                         <ShowDataCard
                             numberText={mainScreenData?.ActiveCustomers?.length}
@@ -87,9 +84,3 @@ export default function MainScreen() {
         </SimpleScreen >
     );
 }
-
-const styles = {
-    DataCardStyle: {
-        cursor: 'pointer'
-    }
-};

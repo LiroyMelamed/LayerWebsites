@@ -44,7 +44,7 @@ export default function DoughnutChartWithDetails({ data, colors, labels, centerT
                     >
                         <SimpleContainer
                             className="lw-doughnutChartWithDetails__swatch"
-                            style={getLegendSwatchStyle(colors[index])}
+                            style={getLegendSwatchStyle(colors[index]) /* runtime dynamic: legend swatch color comes from chart palette */}
                         />
                         <Text12>{`${percentages[index]}% ${label}`}</Text12>
                     </SimpleContainer>

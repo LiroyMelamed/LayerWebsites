@@ -7,7 +7,7 @@ import { useScreenSize } from "../../../providers/ScreenSizeProvider.js";
 
 import "./ComprasionDataCard.scss";
 
-export default function ComparisonDataCard({ title, data, colors, labels, centerText, subText, style, className }) {
+export default function ComparisonDataCard({ title, data, colors, labels, centerText, subText, style: _style, className }) {
     const { isSmallScreen } = useScreenSize();
 
     if (checkIfAllZeros(data)) {
@@ -21,7 +21,7 @@ export default function ComparisonDataCard({ title, data, colors, labels, center
     }
 
     return (
-        <SimpleCard className={["lw-comparisonDataCard", className].filter(Boolean).join(' ')} style={style}>
+        <SimpleCard className={["lw-comparisonDataCard", className].filter(Boolean).join(' ')}>
             <TextBold14>{title}</TextBold14>
 
             <DoughnutChartWithDetails

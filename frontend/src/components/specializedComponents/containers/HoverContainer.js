@@ -17,7 +17,7 @@ const HoverContainer = ({
     onEmptyAction,
     targetRef,
     onClose,
-    style,
+    style: _style,
     className,
 }) => {
     const [position, setPosition] = useState({ top: 0, inlineStart: 0 });
@@ -64,18 +64,18 @@ const HoverContainer = ({
         };
     }, [targetRef, onClose]);
 
-    const cssVars = {
-        '--lw-hoverContainer-top': `${position.top}px`,
-        '--lw-hoverContainer-inlineStart': `${position.inlineStart}px`,
-    };
+    useEffect(() => {
+        if (!hoverRef.current) return;
 
-    const mergedStyle = style ? { ...cssVars, ...style } : cssVars;
+        // runtime dynamic: positioned relative to the target element
+        hoverRef.current.style.setProperty('--lw-hoverContainer-top', `${position.top}px`);
+        hoverRef.current.style.setProperty('--lw-hoverContainer-inlineStart', `${position.inlineStart}px`);
+    }, [position]);
 
     return (
         <SimpleContainer
             ref={hoverRef}
             className={['lw-hoverContainer', className].filter(Boolean).join(' ')}
-            style={mergedStyle}
         >
             <SimpleScrollView className="lw-hoverContainer__scroll">
                 {isPerforming ? (

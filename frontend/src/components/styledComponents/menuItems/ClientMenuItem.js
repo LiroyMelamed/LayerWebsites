@@ -16,7 +16,7 @@ export default function ClientMenuItem({
     closePopUpFunction,
     rePerformRequest,
     onPress,
-    style
+    style: _style
 }) {
     const { openPopup } = usePopup();
 
@@ -30,7 +30,7 @@ export default function ClientMenuItem({
 
     return (
         <SimpleButton onPress={() => clientPressHandle()}>
-            <SimpleContainer className="lw-clientMenuItem" style={style}>
+            <SimpleContainer className="lw-clientMenuItem">
 
                 <SimpleContainer className="lw-clientMenuItem__row">
                     <SimpleContainer className="lw-clientMenuItem__cell">

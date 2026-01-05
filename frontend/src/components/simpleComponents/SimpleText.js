@@ -23,7 +23,7 @@ const SimpleText = ({
     return (
         <p
             className={['lw-simpleText', className].filter(Boolean).join(' ')}
-            style={mergedStyle}
+            style={mergedStyle /* runtime dynamic: driven by size/bold/color props (and optional caller overrides) */}
             {...props}
         >
             {children}

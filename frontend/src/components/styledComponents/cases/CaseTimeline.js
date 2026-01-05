@@ -5,11 +5,10 @@ import { DateDDMMYY } from "../../../functions/date/DateDDMMYY";
 
 import "./CaseTimeline.scss";
 
-export default function CaseTimeline({ stages, currentStage, title, style }) {
+export default function CaseTimeline({ stages, currentStage, title, style: _style }) {
     return (
         <SimpleContainer
             className="lw-caseTimeline"
-            style={style}
         >
             <SimpleContainer className="lw-caseTimeline__title">
                 <TextBold12>

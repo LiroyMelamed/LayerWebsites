@@ -8,7 +8,7 @@ import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 
 import "./ChooseButton.scss";
 
-export default function ChooseButton({ buttonText = "סוג תיק", buttonChoices, OnPressChoiceFunction, style, props }) {
+export default function ChooseButton({ buttonText = "סוג תיק", buttonChoices, OnPressChoiceFunction, style: _style, props }) {
     const [chosenChoice, setChosenChoice] = useState("הכל")
     const [showResults, setShowResults] = useState(false);
     const buttonRef = useRef()
@@ -23,7 +23,7 @@ export default function ChooseButton({ buttonText = "סוג תיק", buttonChoic
     }, [showResults])
 
     return (
-        <SimpleContainer className="lw-chooseButton" style={style}>
+        <SimpleContainer className="lw-chooseButton">
             <Text16>{buttonText + ":"}</Text16>
             <SecondaryButton
                 ref={buttonRef}

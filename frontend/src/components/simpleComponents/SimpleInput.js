@@ -8,14 +8,13 @@ import './SimpleInput.scss';
 const SimpleInput = forwardRef(
     ({
         title,
-        titleFontSize = 16,
         leftIcon,
         rightIcon,
         className,
         tintColor,
-        IconStyle,
-        textStyle,
-        style,
+        IconStyle: _iconStyle,
+        textStyle: _textStyle,
+        style: _style,
         value,
         onChange,
         type = 'text',
@@ -34,16 +33,10 @@ const SimpleInput = forwardRef(
         const [delayedValue, setDelayedValue] = useState(value);
         const [timeoutId, setTimeoutId] = useState(null);
 
-        const sizeStyles = inputStyles[inputSize];
-
         function getBorderColor() {
             if (disabled) return colors.disabledHighlighted;
             if (error) return colors.error;
             return isFocused ? colors.primaryHighlighted : colors.secondaryHighlighted;
-        }
-
-        function getBackgroundColor() {
-            return disabled ? colors.disabled : colors.white;
         }
 
         function handleFocus(e) {
@@ -83,45 +76,24 @@ const SimpleInput = forwardRef(
 
         const resolvedDir = props.dir || 'rtl';
 
-        const baseLabelInlineStartRem = rightIcon ? 40 / 16 : 8 / 16;
-        const focusShiftRem = 4 / 16;
-        const focusedLabelInlineStartRem = resolvedDir === 'rtl'
-            ? Math.max(0, baseLabelInlineStartRem - focusShiftRem)
-            : baseLabelInlineStartRem + focusShiftRem;
-
-        const sizePaddingPx = Number.parseInt(String(sizeStyles.padding).replace('px', ''), 10);
-        const paddingBlock = leftIcon ? 0.5 : sizePaddingPx / 16;
-        const paddingInlineStart = rightIcon ? 30 / 16 : sizePaddingPx / 16;
-        const paddingInlineEnd = leftIcon ? 10 / 16 : sizePaddingPx / 16;
-
-        const containerCssVars = {
-            '--lw-simpleInput-borderColor': getBorderColor(),
-            '--lw-simpleInput-bgColor': getBackgroundColor(),
-            '--lw-simpleInput-shadow': 'none',
-            '--lw-simpleInput-height': `${sizeStyles.height / 16}rem`,
-
-            '--lw-simpleInput-direction': resolvedDir,
-
-            '--lw-simpleInput-labelRight': `${isFocused ? focusedLabelInlineStartRem : baseLabelInlineStartRem}rem`,
-            '--lw-simpleInput-labelTop': String(sizeStyles.labelTop),
-            '--lw-simpleInput-labelTransform': shouldFloatLabel ? String(sizeStyles.transformFocused) : 'translateY(-50%)',
-            '--lw-simpleInput-labelOpacity': shouldFloatLabel ? 1 : 0.6,
-            '--lw-simpleInput-labelColor': error ? colors.error : colors.primaryHighlighted,
-            '--lw-simpleInput-labelFontSize': `${titleFontSize / 16}rem`,
-
-            '--lw-simpleInput-fontSize': `${sizeStyles.fontSize / 16}rem`,
-            '--lw-simpleInput-paddingBlock': `${paddingBlock}rem`,
-            '--lw-simpleInput-paddingInlineStart': `${paddingInlineStart}rem`,
-            '--lw-simpleInput-paddingInlineEnd': `${paddingInlineEnd}rem`,
-        };
-
-        const mergedContainerStyle = style ? { ...containerCssVars, ...style } : containerCssVars;
+        const resolvedInputSizeClassName = `lw-simpleInput--${String(inputSize).toLowerCase()}`;
+        const resolvedClassName = [
+            'lw-simpleInput',
+            resolvedInputSizeClassName,
+            className,
+            disabled ? 'is-disabled' : '',
+            error ? 'has-error' : '',
+            isFocused ? 'is-focused' : '',
+            shouldFloatLabel ? 'is-floated' : '',
+            rightIcon ? 'has-rightIcon' : '',
+            leftIcon ? 'has-leftIcon' : '',
+        ].filter(Boolean).join(' ');
 
         return (
             <SimpleContainer
                 ref={ref}
-                className={['lw-simpleInput', className].filter(Boolean).join(' ')}
-                style={mergedContainerStyle}
+                className={resolvedClassName}
+                dir={resolvedDir}
             >
                 {title && (
                     <SimpleContainer className="lw-simpleInput__label">
@@ -134,7 +106,6 @@ const SimpleInput = forwardRef(
                         <SimpleIcon
                             tintColor={tintColor || getBorderColor()}
                             src={rightIcon}
-                            style={IconStyle}
                         />
                     </SimpleContainer>
                 )}
@@ -143,7 +114,6 @@ const SimpleInput = forwardRef(
                     type={type}
                     className="lw-simpleInput__field"
                     dir={resolvedDir}
-                    style={textStyle}
                     value={delayedValue}
                     onChange={handleInputChange}
                     onFocus={handleFocus}
@@ -158,7 +128,6 @@ const SimpleInput = forwardRef(
                         <SimpleIcon
                             tintColor={tintColor || getBorderColor()}
                             src={leftIcon}
-                            style={IconStyle}
                         />
                     </SimpleContainer>
                 )}

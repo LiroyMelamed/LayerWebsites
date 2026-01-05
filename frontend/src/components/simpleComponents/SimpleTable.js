@@ -12,15 +12,15 @@ const SimpleTable = ({
     isLoading,
     noDataMessage,
     rePerformRequest,
-    style,
-    rowStyle,
-    cellStyle,
+    style: _style,
+    rowStyle: _rowStyle,
+    cellStyle: _cellStyle,
     ...props
 }) => {
     const hasData = Array.isArray(data) && data.length > 0;
 
     return (
-        <SimpleContainer className="lw-simpleTable" style={style}>
+        <SimpleContainer className="lw-simpleTable">
             {titles?.length > 0 && (
                 <SimpleContainer className="lw-simpleTable__titleRow">
                     {titles.map((title, index) => (
@@ -47,10 +47,9 @@ const SimpleTable = ({
                             rePerformRequest={rePerformRequest}
                             caseNumber={item?.Column0}
                             className="lw-simpleTable__row"
-                            style={rowStyle}
                         >
                             {titles.map((_, colIndex) => (
-                                <SimpleContainer key={colIndex} className="lw-simpleTable__cell" style={cellStyle}>
+                                <SimpleContainer key={colIndex} className="lw-simpleTable__cell">
                                     <Text20 className="lw-simpleTable__cellText" title={item?.[`Column${colIndex}`]}>
                                         {item?.[`Column${colIndex}`]}
                                     </Text20>

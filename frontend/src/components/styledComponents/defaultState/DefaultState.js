@@ -9,7 +9,7 @@ import './DefaultState.scss';
 
 export default function DefaultState({
     imageSrc = images.MainPage.DataFlowing,
-    imageStyle,
+    imageStyle: _imageStyle,
     imageClassName,
     content,
     actionButton,
@@ -17,7 +17,7 @@ export default function DefaultState({
     actionButtonLeftIcon,
     actionButtonRightIcon,
     actionButtonSize,
-    style,
+    style: _style,
     className,
     contentClassName,
     actionButtonClassName,
@@ -27,8 +27,8 @@ export default function DefaultState({
     const resolvedImageClassName = ['lw-defaultState__image', imageClassName].filter(Boolean).join(' ');
 
     return (
-        <SimpleCard className={resolvedCardClassName} style={style}>
-            <SimpleImage className={resolvedImageClassName} src={imageSrc} style={imageStyle} />
+        <SimpleCard className={resolvedCardClassName}>
+            <SimpleImage className={resolvedImageClassName} src={imageSrc} />
             <SimpleContainer className={['lw-defaultState__content', contentClassName].filter(Boolean).join(' ')}>
                 <TextBold14>
                     {content}

@@ -21,7 +21,7 @@ const SearchInput = ({
     onEmptyAction,
     title,
     error,
-    style,
+    style: _style,
     className,
     ...props
 }) => {
@@ -58,7 +58,7 @@ const SearchInput = ({
     }
 
     return (
-        <SimpleContainer className={className} style={style}>
+        <SimpleContainer className={['lw-searchInput', className].filter(Boolean).join(' ')}>
             <SimpleInput
                 title={title}
                 ref={targetRef}

@@ -36,7 +36,6 @@ export default function AllMangerScreen() {
         const foundItem = adminByName.find(admin => admin.name === query);
         openPopup(<AdminPopup adminDetails={foundItem} rePerformRequest={performGetAdmins} closePopUpFunction={closePopup} />)
     }
-
     if (isPerformingAdminsData) {
         return <SimpleLoader />;
     }
@@ -57,7 +56,6 @@ export default function AllMangerScreen() {
                         queryResult={adminByName}
                         buttonPressFunction={(chosen) => buttonPressFunction(chosen)}
                     />
-                    {/* <ChooseButton style={styles.chooseButton} buttonText="סוג הרשאות" /> */}
                 </SimpleContainer>
 
                 <AdminsCard

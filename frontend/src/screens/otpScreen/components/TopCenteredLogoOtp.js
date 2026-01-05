@@ -6,9 +6,9 @@ import { colors } from "../../../constant/colors";
 
 import "./TopCenteredLogoOtp.scss";
 
-export default function TopCenteredLogoOtp({ logoSrc = images.Logos.LogoSlang, logoWidth = 100, style }) {
+export default function TopCenteredLogoOtp({ logoSrc = images.Logos.LogoSlang, logoWidth = 100, style: _style }) {
     return (
-        <SimpleContainer className="lw-topCenteredLogoOtp" style={style}>
+        <SimpleContainer className="lw-topCenteredLogoOtp">
             <SimpleContainer className="lw-topCenteredLogoOtp__cornerLogo">
                 <SimpleImage
                     src={logoSrc}

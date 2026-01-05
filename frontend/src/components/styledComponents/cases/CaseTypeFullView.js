@@ -13,7 +13,7 @@ import { useEffect, useState } from "react";
 
 import "./CaseTypeFullView.scss";
 
-export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style }) {
+export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style: _style }) {
     const [caseTypeName, setCaseTypeName, caseTypeNameError] = useFieldState(HebrewCharsValidation, caseTypeDetails?.CaseTypeName || "");
     const [numberOfStages, setNumberOfStages, numberOfStagesError] = useFieldState(NumberOfStagesValidation, caseTypeDetails?.NumberOfStages || "");
     const [descriptions, setDescriptions] = useState(caseTypeDetails?.Descriptions || [{ Stage: 1, Text: "", Timestamp: "", New: false }]);
@@ -102,7 +102,7 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
 
 
     return (
-        <SimpleContainer className="lw-caseTypeFullView" style={style}>
+        <SimpleContainer className="lw-caseTypeFullView">
             <SimpleScrollView>
                 <SimpleContainer className="lw-caseTypeFullView__row">
                     <SimpleContainer className="lw-caseTypeFullView__inputWrap">

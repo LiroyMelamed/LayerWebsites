@@ -14,7 +14,7 @@ import IsraeliPhoneNumberValidation from "../../../functions/validation/IsraeliP
 
 import "./ClientPopUp.scss";
 
-export default function ClientPopup({ clientDetails, initialName, rePerformRequest, onFailureFunction, closePopUpFunction, style }) {
+export default function ClientPopup({ clientDetails, initialName, rePerformRequest, onFailureFunction, closePopUpFunction, style: _style }) {
     const [name, setName, nameError] = useFieldState(
         HebrewCharsValidationWithNumbers,
         clientDetails?.name || initialName || ""
@@ -71,7 +71,7 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
     };
 
     return (
-        <SimpleContainer className="lw-clientPopup" style={style}>
+        <SimpleContainer className="lw-clientPopup">
             <SimpleScrollView>
                 <SimpleContainer className="lw-clientPopup__row">
                     <SimpleInput

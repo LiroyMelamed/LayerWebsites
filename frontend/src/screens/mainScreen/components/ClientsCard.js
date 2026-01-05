@@ -13,7 +13,7 @@ import ClientPopup from "./ClientPopUp";
 
 import "./ClientsCard.scss";
 
-export default function ClientsCard({ rePerformRequest, customerList, style }) {
+export default function ClientsCard({ rePerformRequest, customerList, style: _style }) {
     const { openPopup, closePopup } = usePopup();
 
     if (customerList?.length === 0 || !customerList) {
@@ -31,7 +31,7 @@ export default function ClientsCard({ rePerformRequest, customerList, style }) {
     }
 
     return (
-        <SimpleCard className="lw-clientsCard" style={style}>
+        <SimpleCard className="lw-clientsCard">
             <SimpleContainer className="lw-clientsCard__headerRow">
                 <TextBold14 className="lw-clientsCard__headerCell">{'שם חברה'}</TextBold14>
 

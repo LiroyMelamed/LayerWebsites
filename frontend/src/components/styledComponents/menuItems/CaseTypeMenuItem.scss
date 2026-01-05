@@ -43,6 +43,14 @@
 
 .lw-caseTypeMenuItem__toggle {
   flex: 0 0 auto;
+  width: 0.75rem;
+  height: 0.75rem;
+  transform: rotate(0deg);
+  transition: transform 0.3s ease;
+}
+
+.lw-caseTypeMenuItem__toggle.is-open {
+  transform: rotate(180deg);
 }
 
 .lw-caseTypeMenuItem__editButton {

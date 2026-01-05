@@ -15,7 +15,7 @@ export default function AdminMenuItem({
     admin,
     onPress,
     performGetAdmins,
-    style
+    style: _style
 }) {
     const { openPopup, closePopup } = usePopup();
 
@@ -29,7 +29,7 @@ export default function AdminMenuItem({
 
     return (
         <SimpleButton onPress={() => AdminPressed()} className="lw-adminsCard__item">
-            <SimpleContainer className="lw-adminMenuItem" style={style}>
+            <SimpleContainer className="lw-adminMenuItem">
 
                 <SimpleContainer className="lw-adminMenuItem__row">
                     <SimpleContainer className="lw-adminMenuItem__cell">

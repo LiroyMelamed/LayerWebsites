@@ -6,13 +6,12 @@ import { TextBold14 } from "../../specializedComponents/text/AllTextKindFile";
 
 import "./UpdatesMenuItem.scss";
 
-export default function UpdatesMenuItem({ menuItemName, onPress, style }) {
+export default function UpdatesMenuItem({ menuItemName, onPress, style: _style }) {
 
     return (
         <SimpleButton
             onPress={onPress}
             className="lw-updatesMenuItem"
-            style={style}
         >
             <SimpleContainer className="lw-updatesMenuItem__text">
                 <TextBold14>{menuItemName}</TextBold14>
@@ -21,14 +20,8 @@ export default function UpdatesMenuItem({ menuItemName, onPress, style }) {
             <SimpleIcon
                 src={icons.Button.DownArrow}
                 size={14}
-                style={styles.icon}
+                className="lw-updatesMenuItem__icon"
             />
         </SimpleButton>
     );
-}
-
-const styles = {
-    icon: {
-        transform: 'rotate(90deg)'
-    }
 }

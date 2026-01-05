@@ -5,7 +5,7 @@ import { Text16 } from "../../specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../constant/colors";
 import "./SideBarMenuItem.scss";
 
-export default function SideBarMenuItem({ onPressFunction, isPressed, size, iconColor, iconSource, iconStyle, buttonText, buttonIndex, containerStyle }) {
+export default function SideBarMenuItem({ onPressFunction, isPressed, size, iconColor, iconSource, iconStyle: _iconStyle, buttonText, buttonIndex, containerStyle: _containerStyle }) {
 
     function onPress() {
         onPressFunction?.(buttonIndex);
@@ -21,7 +21,6 @@ export default function SideBarMenuItem({ onPressFunction, isPressed, size, icon
                     size={size || 24}
                     tintColor={iconColor || colors.white}
                     src={iconSource}
-                    style={iconStyle}
                 />
                 <Text16 color={colors.white} className="lw-sideBarMenuItem__text">
                     {buttonText}

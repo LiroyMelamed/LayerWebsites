@@ -124,7 +124,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
             onPointerDown={startDragPointer}
             onTouchStart={typeof window !== "undefined" && !window.PointerEvent ? startDragTouchFallback : undefined}
             className="lw-signing-spot"
-            style={spotStyle}
+            style={spotStyle /* runtime dynamic: spot position/size depends on PDF coordinates + scale */}
             title={`חתום על ידי: ${signerName}`}
         >
             {hasSignatureImage ? (

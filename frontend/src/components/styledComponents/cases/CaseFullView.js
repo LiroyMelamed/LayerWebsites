@@ -17,7 +17,7 @@ import emailValidation from '../../../functions/validation/EmailValidation';
 
 import './CaseFullView.scss';
 
-export default function CaseFullView({ caseDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style }) {
+export default function CaseFullView({ caseDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style: _style }) {
     const [caseHasBeenChosen, setCaseHasBeenChosen] = useState(false)
     const [hasSubmitted, setHasSubmitted] = useState(false);
     const [fieldErrors, setFieldErrors] = useState({});
@@ -216,7 +216,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
     };
 
     return (
-        <SimpleContainer className="lw-caseFullView" style={style}>
+        <SimpleContainer className="lw-caseFullView">
             <SimpleScrollView>
                 <SimpleContainer className="lw-caseFullView__row">
                     {caseDetails ?

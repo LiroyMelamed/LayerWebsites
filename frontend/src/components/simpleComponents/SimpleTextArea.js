@@ -11,9 +11,9 @@ const SimpleTextArea = forwardRef(
         leftIcon,
         rightIcon,
         tintColor,
-        IconStyle,
-        textStyle,
-        style,
+        IconStyle: _iconStyle,
+        textStyle: _textStyle,
+        style: _style,
         className,
         value,
         onChange,
@@ -30,27 +30,23 @@ const SimpleTextArea = forwardRef(
             return isFocused ? colors.primaryHighlighted : colors.secondaryHighlighted;
         }
 
-        function getBackgroundColor() {
-            return disabled ? colors.disabled : colors.white;
-        }
+        const shouldFloatLabel = isFocused || !!value;
 
-        const containerCssVars = {
-            '--lw-simpleTextArea-borderColor': getBorderColor(),
-            '--lw-simpleTextArea-bgColor': getBackgroundColor(),
-            '--lw-simpleTextArea-shadow': isFocused ? '0 0 0.25rem rgba(0, 0, 0, 0.2)' : 'none',
-
-            '--lw-simpleTextArea-labelTransform': isFocused || value ? 'translateY(-1.25rem) scale(0.8)' : 'translateY(0.625rem) scale(1)',
-            '--lw-simpleTextArea-labelOpacity': isFocused || value ? 1 : 0.6,
-            '--lw-simpleTextArea-labelColor': error ? colors.error : colors.primaryHighlighted,
-        };
-
-        const mergedContainerStyle = style ? { ...containerCssVars, ...style } : containerCssVars;
+        const resolvedClassName = [
+            'lw-simpleTextArea',
+            className,
+            disabled ? 'is-disabled' : '',
+            error ? 'has-error' : '',
+            isFocused ? 'is-focused' : '',
+            shouldFloatLabel ? 'is-floated' : '',
+            rightIcon ? 'has-rightIcon' : '',
+            leftIcon ? 'has-leftIcon' : '',
+        ].filter(Boolean).join(' ');
 
         return (
             <SimpleContainer
                 ref={ref}
-                className={['lw-simpleTextArea', className].filter(Boolean).join(' ')}
-                style={mergedContainerStyle}
+                className={resolvedClassName}
             >
                 {/* Floating Label */}
                 {title && (
@@ -64,14 +60,12 @@ const SimpleTextArea = forwardRef(
                         <SimpleIcon
                             tintColor={tintColor || getBorderColor()}
                             src={rightIcon}
-                            style={IconStyle}
                         />
                     </SimpleContainer>
                 )}
 
                 <textarea
                     className="lw-simpleTextArea__field"
-                    style={textStyle}
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     onFocus={() => setIsFocused(true)}
@@ -85,7 +79,6 @@ const SimpleTextArea = forwardRef(
                         <SimpleIcon
                             tintColor={tintColor || getBorderColor()}
                             src={leftIcon}
-                            style={IconStyle}
                         />
                     </SimpleContainer>
                 )}

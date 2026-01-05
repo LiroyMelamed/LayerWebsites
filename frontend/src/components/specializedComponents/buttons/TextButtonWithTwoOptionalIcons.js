@@ -8,8 +8,12 @@ import './TextButtonWithTwoOptionalIcons.scss';
 
 const TextButtonWithTwoOptionalIcons = forwardRef(({
     children,
-    style,
-    textStyle,
+    style: _style,
+    textStyle: _textStyle,
+    className,
+    textColor,
+    textSize,
+    textBold,
     leftIcon,
     leftIconSize,
     leftIconTintColor,
@@ -18,12 +22,13 @@ const TextButtonWithTwoOptionalIcons = forwardRef(({
     rightIconTintColor,
     ...props
 }, ref) => {
+    const resolvedClassName = ['lw-textButtonWithTwoOptionalIcons', className].filter(Boolean).join(' ');
+
     return (
         <SimpleButton
             {...props}
             ref={ref} // Forward the ref to SimpleButton
-            className="lw-textButtonWithTwoOptionalIcons"
-            style={style}
+            className={resolvedClassName}
         >
             <SimpleContainer className="lw-textButtonWithTwoOptionalIcons__inner">
                 {rightIcon && (
@@ -34,7 +39,7 @@ const TextButtonWithTwoOptionalIcons = forwardRef(({
                     />
                 )}
 
-                <SimpleText style={textStyle}>
+                <SimpleText color={textColor} size={textSize} bold={textBold}>
                     {children}
                 </SimpleText>
 

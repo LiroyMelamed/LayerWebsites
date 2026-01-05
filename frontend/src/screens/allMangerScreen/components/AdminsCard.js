@@ -10,7 +10,7 @@ import Separator from "../../../components/styledComponents/separators/Separator
 import "./AdminsCard.scss";
 
 
-export default function AdminsCard({ adminList, isPerforming, performGetAdmins, style }) {
+export default function AdminsCard({ adminList, isPerforming, performGetAdmins, style: _style }) {
 
     if (isPerforming) {
         return (
@@ -33,7 +33,7 @@ export default function AdminsCard({ adminList, isPerforming, performGetAdmins, 
     }
 
     return (
-        <SimpleCard className="lw-adminsCard" style={style}>
+        <SimpleCard className="lw-adminsCard">
             <SimpleContainer className="lw-adminsCard__headerRow">
                 <TextBold14 className="lw-adminsCard__headerCell">{'שם המנהל'}</TextBold14>
 

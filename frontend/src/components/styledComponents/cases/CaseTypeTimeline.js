@@ -5,9 +5,9 @@ import SimpleScrollView from "../../simpleComponents/SimpleScrollView";
 
 import "./CaseTypeTimeline.scss";
 
-export default function CaseTypeTimeline({ stages = [], title, style }) {
+export default function CaseTypeTimeline({ stages = [], title, style: _style }) {
     return (
-        <SimpleScrollView className="lw-caseTypeTimeline" style={style}>
+        <SimpleScrollView className="lw-caseTypeTimeline">
             <SimpleContainer className="lw-caseTypeTimeline__container">
                 <SimpleContainer className="lw-caseTypeTimeline__verticalLine" />
 

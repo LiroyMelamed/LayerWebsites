@@ -5,15 +5,36 @@
     flex-direction: row;
     align-items: center;
 
-    height: var(--lw-simpleInput-height, 2rem);
+    height: 2rem;
     margin-top: 0.5rem;
 
     border-radius: 0.75rem;
-    border: 0.0625rem solid var(--lw-simpleInput-borderColor, var(--lw-color-secondary-highlighted));
-    background-color: var(--lw-simpleInput-bgColor, var(--lw-color-white));
-    box-shadow: var(--lw-simpleInput-shadow, none);
+    border: 0.0625rem solid var(--lw-color-secondary-highlighted);
+    background-color: var(--lw-color-white);
+    box-shadow: none;
 
-    direction: var(--lw-simpleInput-direction, inherit);
+    direction: inherit;
+}
+
+.lw-simpleInput.is-focused {
+    border-color: var(--lw-color-primary-highlighted);
+}
+
+.lw-simpleInput.has-error {
+    border-color: var(--lw-color-error);
+}
+
+.lw-simpleInput.is-disabled {
+    border-color: var(--lw-color-disabled-highlighted);
+    background-color: var(--lw-color-disabled);
+}
+
+.lw-simpleInput--small {
+    height: 1.5rem;
+}
+
+.lw-simpleInput--big {
+    height: 2.5rem;
 }
 
 .lw-simpleInput__label {
@@ -21,15 +42,15 @@
     pointer-events: none;
     background-color: var(--lw-color-white);
 
-    inset-inline-start: var(--lw-simpleInput-labelRight, 0.5rem);
-    top: var(--lw-simpleInput-labelTop, 50%);
+    inset-inline-start: 0.5rem;
+    top: 50%;
 
-    transform: var(--lw-simpleInput-labelTransform, translateY(-50%));
-    opacity: var(--lw-simpleInput-labelOpacity, 0.6);
+    transform: translateY(-50%);
+    opacity: 0.6;
 
-    font-size: var(--lw-simpleInput-labelFontSize, 1rem);
+    font-size: 1rem;
     display: inline-block;
-    max-inline-size: calc(100% - var(--lw-simpleInput-labelRight, 0.5rem) - 0.5rem);
+    max-inline-size: calc(100% - 0.5rem - 0.5rem);
     white-space: nowrap;
     overflow-x: hidden;
     overflow-y: visible;
@@ -38,10 +59,37 @@
     padding-inline: 0.25rem;
     padding-block: 0.125rem;
     font-family: inherit;
-    color: var(--lw-simpleInput-labelColor, var(--lw-color-primary-highlighted));
+    color: var(--lw-color-primary-highlighted);
     border: none;
     border-radius: 9999px;
-    transition: top 0.2s ease, transform 0.2s ease, opacity 0.2s ease, inset-inline-start 0.2s ease;
+    transition: transform 0.2s ease, opacity 0.2s ease, inset-inline-start 0.2s ease;
+}
+
+.lw-simpleInput.has-rightIcon .lw-simpleInput__label {
+    inset-inline-start: 2.5rem;
+    max-inline-size: calc(100% - 2.5rem - 0.5rem);
+}
+
+.lw-simpleInput.is-floated .lw-simpleInput__label {
+    opacity: 1;
+}
+
+.lw-simpleInput--small.is-floated .lw-simpleInput__label {
+    transform: translateY(-85%) scale(0.7);
+}
+
+.lw-simpleInput--medium.is-floated .lw-simpleInput__label,
+.lw-simpleInput--big.is-floated .lw-simpleInput__label {
+    transform: translateY(-110%) scale(0.7);
+}
+
+.lw-simpleInput.has-error .lw-simpleInput__label {
+    color: var(--lw-color-error);
+}
+
+.lw-simpleInput.is-disabled .lw-simpleInput__label {
+    background-color: var(--lw-color-disabled);
+    color: var(--lw-color-disabled-highlighted);
 }
 
 .lw-simpleInput__icon {
@@ -64,9 +112,9 @@
     width: 100%;
     min-width: 0;
 
-    padding-block: var(--lw-simpleInput-paddingBlock, 0.5rem);
-    padding-inline-start: var(--lw-simpleInput-paddingInlineStart, 1rem);
-    padding-inline-end: var(--lw-simpleInput-paddingInlineEnd, 1rem);
+    padding-block: 0.5rem;
+    padding-inline-start: 1rem;
+    padding-inline-end: 1rem;
 
     border: none;
     background-color: transparent;
@@ -76,9 +124,26 @@
     unicode-bidi: plaintext;
 
     font-family: inherit;
-    font-size: var(--lw-simpleInput-fontSize, 1rem);
+    font-size: 1rem;
     color: var(--lw-color-text);
     text-align: start;
+}
+
+.lw-simpleInput--small .lw-simpleInput__field {
+    padding-block: 0.25rem;
+    font-size: 0.75rem;
+}
+
+.lw-simpleInput--big .lw-simpleInput__field {
+    font-size: 1.5rem;
+}
+
+.lw-simpleInput.has-rightIcon .lw-simpleInput__field {
+    padding-inline-start: 1.875rem;
+}
+
+.lw-simpleInput.has-leftIcon .lw-simpleInput__field {
+    padding-inline-end: 0.625rem;
 }
 
 .lw-simpleInput__field:focus-visible {

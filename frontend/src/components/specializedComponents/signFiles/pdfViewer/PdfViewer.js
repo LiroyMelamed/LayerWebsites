@@ -106,7 +106,7 @@ export default function PdfViewer({
 
                         <SimpleContainer
                             className="lw-signing-pageInner"
-                            style={pageInnerStyle}
+                            style={pageInnerStyle /* runtime dynamic: page sizing/scale depends on viewport + zoom */}
                             data-page-number={pageNumber}
                         >
                             <PdfPage
