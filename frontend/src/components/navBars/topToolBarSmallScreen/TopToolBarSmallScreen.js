@@ -10,6 +10,7 @@ import { getNavBarData } from "../data/NavBarData";
 import ImageButton from "../../specializedComponents/buttons/ImageButton";
 import SimpleScrollView from "../../simpleComponents/SimpleScrollView";
 import { useFromApp } from "../../../providers/FromAppProvider";
+import PrimaryButton from "../../styledComponents/buttons/PrimaryButton";
 
 import './TopToolBarSmallScreen.scss';
 

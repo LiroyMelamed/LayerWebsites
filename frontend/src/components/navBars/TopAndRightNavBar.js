@@ -10,6 +10,8 @@ import ImageButton from "../specializedComponents/buttons/ImageButton";
 import Separator from "../styledComponents/separators/Separator";
 import SimpleScrollView from "../simpleComponents/SimpleScrollView";
 import { useFromApp } from "../../providers/FromAppProvider";
+import GenericButton from "../styledComponents/buttons/GenericButton";
+import { colors } from "../../constant/colors";
 import "./TopAndRightNavBar.scss";
 
 const Logo = images.Logos.LogoSlangWhite;
