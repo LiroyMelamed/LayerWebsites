@@ -20,10 +20,6 @@
 .lw-signingScreen__tabsRow {
     @include m.row(v.$space-4, wrap, center, center);
     justify-content: center;
-    margin-block-start: v.$space-6;
-    margin-block-end: v.$space-4;
-    border-bottom: 0.125rem solid #e0e0e0;
-    padding-block-end: v.$space-2;
 }
 
 .lw-signingScreen__emptyState {
@@ -31,20 +27,11 @@
 }
 
 .lw-signingScreen__fileCard {
-    border-radius: 0.5rem;
-    border: 0.0625rem solid #e0e0e0;
-    padding: 1rem;
-    background-color: #fff;
-    margin-bottom: 0.75rem;
-    box-shadow: 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.08);
     flex-direction: column;
-    width: 100%;
-    max-width: 56.25rem;
-    min-inline-size: 0;
 }
 
 .lw-signingScreen__fileHeaderRow {
-    @include m.row(v.$space-2);
+    @include m.row(v.$space-2, nowrap, flex-start);
     margin-bottom: 0.625rem;
     width: 100%;
     min-inline-size: 0;
@@ -52,6 +39,7 @@
 
 .lw-signingScreen__fileHeaderRow .lw-signingScreen__chip {
     margin-inline-start: auto;
+    flex: 0 0 auto;
 }
 
 .lw-signingScreen__fileName {
@@ -59,10 +47,11 @@
     font-weight: 600;
     color: #333;
     margin: 0;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    flex: 1 1 auto;
+    min-inline-size: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .lw-signingScreen__chip {

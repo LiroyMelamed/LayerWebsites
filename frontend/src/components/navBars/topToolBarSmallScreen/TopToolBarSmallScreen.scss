@@ -74,9 +74,8 @@
 .lw-topToolBarSmallScreen__logout {
     align-self: center;
     margin-block: 0.75rem 1.25rem;
-    /* 12px 20px */
 }
 
 .lw-topToolBarSmallScreen__logoutButton {
-    background-color: var(--lw-color-dark-red);
+    background-color: var(--lw-color-dark-red) !important;
 }

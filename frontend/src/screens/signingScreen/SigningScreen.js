@@ -20,6 +20,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { LoginStackName } from "../../navigation/LoginStack";
 import { LoginScreenName } from "../loginScreen/LoginScreen";
 import "./SigningScreen.scss";
+import SimpleCard from "../../components/simpleComponents/SimpleCard";
+import Separator from "../../components/styledComponents/separators/Separator";
 
 export const SigningScreenName = "/SigningScreen";
 
@@ -145,6 +147,8 @@ export default function SigningScreen() {
                         />
                     </SimpleContainer>
 
+                    <Separator />
+
                     {currentList.length === 0 ? (
                         <SimpleContainer className="lw-signingScreen__emptyState">
                             <Text14>
@@ -162,7 +166,7 @@ export default function SigningScreen() {
                             const progressValue = totalSpots > 0 ? signedSpots : 0;
 
                             return (
-                                <SimpleContainer key={file.SigningFileId} className="lw-signingScreen__fileCard">
+                                <SimpleCard key={file.SigningFileId} className="lw-signingScreen__fileCard">
                                     <SimpleContainer className="lw-signingScreen__fileHeaderRow">
                                         <h3 className="lw-signingScreen__fileName">{file.FileName}</h3>
                                         <SimpleContainer className={chip.className}>{chip.text}</SimpleContainer>
@@ -231,7 +235,7 @@ export default function SigningScreen() {
                                             פרטים
                                         </SecondaryButton>
                                     </SimpleContainer>
-                                </SimpleContainer>
+                                </SimpleCard>
                             );
                         })
                     )}
