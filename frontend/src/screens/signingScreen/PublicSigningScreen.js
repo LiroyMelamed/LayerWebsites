@@ -10,6 +10,8 @@ import { images } from "../../assets/images/images";
 import { LoginStackName } from "../../navigation/LoginStack";
 import { LoginScreenName } from "../loginScreen/LoginScreen";
 
+import "./PublicSigningScreen.scss";
+
 export const PublicSigningScreenName = "/public-sign";
 
 export default function PublicSigningScreen() {
@@ -29,15 +31,15 @@ export default function PublicSigningScreen() {
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
-            <SimpleContainer style={{ width: "100%", padding: "1rem" }}>
+            <SimpleContainer className="lw-publicSigningScreen__container">
                 {!token ? (
-                    <SimpleContainer style={{ width: "100%", flexDirection: "column", gap: "0.75rem" }}>
+                    <SimpleContainer className="lw-publicSigningScreen__stack">
                         <TextBold24>קישור לא תקין</TextBold24>
                         <Text14>חסר פרמטר token בקישור.</Text14>
                         <PrimaryButton onPress={goToLogin}>חזרה</PrimaryButton>
                     </SimpleContainer>
                 ) : closed ? (
-                    <SimpleContainer style={{ width: "100%", flexDirection: "column", gap: "0.75rem" }}>
+                    <SimpleContainer className="lw-publicSigningScreen__stack">
                         <TextBold24>נסגר</TextBold24>
                         <Text14>ניתן לסגור את החלון.</Text14>
                     </SimpleContainer>

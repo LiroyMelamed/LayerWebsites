@@ -15,6 +15,9 @@ const SIGNER_COLORS = [
 export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot, signerIndex = 0, signerName = "חתימה", scale = 1 }) {
     const ref = useRef(null);
 
+    const canEditSpot = typeof onUpdateSpot === "function";
+    const canRemoveSpot = typeof onRemoveSpot === "function";
+
     // Get color based on signer index
     const colorScheme = SIGNER_COLORS[signerIndex % SIGNER_COLORS.length];
 
@@ -121,8 +124,12 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
     return (
         <SimpleContainer
             ref={ref}
-            onPointerDown={startDragPointer}
-            onTouchStart={typeof window !== "undefined" && !window.PointerEvent ? startDragTouchFallback : undefined}
+            onPointerDown={canEditSpot ? startDragPointer : undefined}
+            onTouchStart={
+                canEditSpot && typeof window !== "undefined" && !window.PointerEvent
+                    ? startDragTouchFallback
+                    : undefined
+            }
             className="lw-signing-spot"
             style={spotStyle}
             title={`חתום על ידי: ${signerName}`}
@@ -140,15 +147,17 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                     </div>
                 </div>
             )}
-            <span
-                onClick={(e) => {
-                    e.stopPropagation();
-                    onRemoveSpot(index);
-                }}
-                className="lw-signing-spotRemove"
-            >
-                מחק
-            </span>
+            {canRemoveSpot && (
+                <span
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onRemoveSpot?.(index);
+                    }}
+                    className="lw-signing-spotRemove"
+                >
+                    מחק
+                </span>
+            )}
         </SimpleContainer>
     );
 }

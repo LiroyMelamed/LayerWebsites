@@ -7,7 +7,7 @@ import SimpleContainer from "../../../components/simpleComponents/SimpleContaine
 import SimpleScreen from "../../../components/simpleComponents/SimpleScreen";
 import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
 import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryButton";
-import { Text12, TextBold14 } from "../../../components/specializedComponents/text/AllTextKindFile";
+import { Text12, TextBold12, TextBold14 } from "../../../components/specializedComponents/text/AllTextKindFile";
 import { useScreenSize } from "../../../providers/ScreenSizeProvider";
 import TopToolBarSmallScreen from "../../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
 import { ClientStackName } from "../../../navigation/ClientStack";
@@ -33,6 +33,17 @@ function formatNotificationDate(createdAt) {
         hour: "2-digit",
         minute: "2-digit",
     });
+}
+
+function extractFirstUrl(text) {
+    const raw = String(text ?? "");
+    // Match a URL until whitespace; trim common trailing punctuation.
+    const match = raw.match(/https?:\/\/[^\s]+/i);
+    if (!match) return { message: raw, url: null };
+
+    const url = match[0].replace(/[)\].,;]+$/g, "");
+    const message = raw.replace(match[0], "").replace(/\s{2,}/g, " ").trim();
+    return { message, url };
 }
 
 export default function NotificationsScreen() {
@@ -90,7 +101,6 @@ export default function NotificationsScreen() {
     );
 
     const hasNotifications = notifications?.length > 0;
-    const markAsReadButtonSize = isSmallScreen ? buttonSizes.MEDIUM : buttonSizes.SMALL;
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground} className="lw-notificationsScreen">
@@ -137,6 +147,7 @@ export default function NotificationsScreen() {
                             {notifications.map((item) => {
                                 const isRead = Boolean(item?.isread);
                                 const isMarkingThis = isMarkingAsRead && markingId === item?.notificationid;
+                                const { message: displayMessage, url: signingUrl } = extractFirstUrl(item?.message);
 
                                 return (
                                     <SimpleCard
@@ -162,28 +173,46 @@ export default function NotificationsScreen() {
                                                     shouldApplyClamping
                                                     numberOfLines={3}
                                                 >
-                                                    {item?.message}
+                                                    {displayMessage}
                                                 </Text12>
 
-                                                <Text12 className="lw-notificationsScreen__timestamp">
-                                                    {formatNotificationDate(item?.createdat)}
-                                                </Text12>
+                                                {Boolean(signingUrl) && (
+                                                    <PrimaryButton
+                                                        size={buttonSizes.SMALL}
+                                                        className="lw-notificationsScreen__signLinkButton"
+                                                        onPress={() => {
+                                                            try {
+                                                                window.location.assign(signingUrl);
+                                                            } catch {
+                                                                window.open(signingUrl, "_blank", "noopener,noreferrer");
+                                                            }
+                                                        }}
+                                                    >
+                                                        למעבר לחתימה
+                                                    </PrimaryButton>
+                                                )}
                                             </SimpleContainer>
                                         </SimpleContainer>
 
-                                        {!isRead && (
-                                            <PrimaryButton
-                                                size={markAsReadButtonSize}
-                                                onPress={() => {
-                                                    setMarkingId(item.notificationid);
-                                                    markAsRead(item.notificationid);
-                                                }}
-                                                isPerforming={isMarkingThis}
-                                                className="lw-notificationsScreen__markAsRead"
-                                            >
-                                                סמן כנקרא
-                                            </PrimaryButton>
-                                        )}
+                                        <SimpleContainer className="lw-notificationsScreen__footerRow">
+                                            <TextBold12 className="lw-notificationsScreen__timestamp">
+                                                {formatNotificationDate(item?.createdat)}
+                                            </TextBold12>
+
+                                            {!isRead && (
+                                                <PrimaryButton
+                                                    size={buttonSizes.SMALL}
+                                                    onPress={() => {
+                                                        setMarkingId(item.notificationid);
+                                                        markAsRead(item.notificationid);
+                                                    }}
+                                                    isPerforming={isMarkingThis}
+                                                    className="lw-notificationsScreen__markAsRead"
+                                                >
+                                                    סמן כנקרא
+                                                </PrimaryButton>
+                                            )}
+                                        </SimpleContainer>
                                     </SimpleCard>
                                 );
                             })}

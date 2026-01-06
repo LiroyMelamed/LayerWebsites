@@ -1,0 +1,13 @@
+@use '../../styles/variables' as v;
+@use '../../styles/mixins' as m;
+
+.lw-publicSigningScreen__container {
+    width: 100%;
+    padding: 1rem;
+}
+
+.lw-publicSigningScreen__stack {
+    width: 100%;
+    flex-direction: column;
+    gap: 0.75rem;
+}

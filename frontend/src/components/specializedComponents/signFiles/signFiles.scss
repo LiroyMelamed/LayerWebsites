@@ -38,6 +38,10 @@
     gap: 0.5rem;
 }
 
+.lw-signing-closeButton {
+    margin-inline-start: auto;
+}
+
 .lw-signing-modalBody {
     flex: 1;
     display: grid;
@@ -90,7 +94,7 @@
 .lw-signing-progressHint {
     color: #666;
     font-size: 0.875rem;
-    margin: 0 0 0.5rem;
+    margin: 0;
 }
 
 .lw-signing-savedSigBox {

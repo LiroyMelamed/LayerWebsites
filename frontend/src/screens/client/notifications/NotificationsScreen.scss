@@ -110,7 +110,7 @@
     width: 0.5rem;
     height: 0.5rem;
     border-radius: 0.25rem;
-    background: var(--lw-color-primaryHighlighted);
+    background: var(--lw-color-primary-highlighted);
     margin-inline-start: v.$space-2;
     margin-top: v.$space-2;
 }
@@ -133,15 +133,25 @@
     text-align: start;
 }
 
+.lw-notificationsScreen__signLinkButton {
+    align-self: flex-start;
+    margin-top: v.$space-2;
+}
+
 .lw-notificationsScreen__timestamp {
     color: var(--lw-color-winter);
-    align-self: flex-end;
-    margin-top: v.$space-1;
 }
 
 .lw-notificationsScreen__markAsRead {
-    align-self: flex-start;
-    min-block-size: 2.75rem;
+    flex: 0 0 auto;
+}
+
+.lw-notificationsScreen__footerRow {
+    @include m.row(v.$space-2, wrap, center);
+    justify-content: space-between;
+    width: 100%;
+    margin-top: v.$space-2;
+    min-inline-size: 0;
 }
 
 .lw-notificationsScreen__back {

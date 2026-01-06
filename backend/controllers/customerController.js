@@ -15,6 +15,11 @@ function requireAdmin(req, res) {
     return true;
 }
 
+function normalizePhoneDigits(phone) {
+    const digits = String(phone ?? '').replace(/\D/g, '');
+    return digits || null;
+}
+
 const getCustomers = async (req, res) => {
     if (!requireAdmin(req, res)) return;
     try {
@@ -49,6 +54,19 @@ const addCustomer = async (req, res) => {
     const { name, phoneNumber, email, companyName } = req.body;
 
     try {
+        const phoneDigits = normalizePhoneDigits(phoneNumber);
+        if (!phoneDigits) {
+            return res.status(400).json({ message: "נא להזין מספר פלאפון תקין", code: 'INVALID_PHONE' });
+        }
+
+        const existing = await pool.query(
+            `SELECT userid FROM users WHERE regexp_replace(phonenumber, '\\D', '', 'g') = $1 LIMIT 1`,
+            [phoneDigits]
+        );
+        if (existing.rows.length > 0) {
+            return res.status(409).json({ message: "מספר פלאפון כבר קיים במערכת", code: 'PHONE_ALREADY_EXISTS' });
+        }
+
         await pool.query(
             `
             INSERT INTO users (name, email, phonenumber, passwordhash, role, companyname, createdat)
@@ -71,6 +89,9 @@ const addCustomer = async (req, res) => {
 
     } catch (error) {
         console.error('Error adding customer:', error);
+        if (error?.code === '23505') {
+            return res.status(409).json({ message: "מספר פלאפון כבר קיים במערכת", code: 'PHONE_ALREADY_EXISTS' });
+        }
         res.status(500).json({ message: "שגיאה ביצירת לקוח" });
     }
 };
@@ -82,6 +103,19 @@ const updateCustomerById = async (req, res) => {
 
     const { name, email, phoneNumber, companyName } = req.body;
     try {
+        const phoneDigits = normalizePhoneDigits(phoneNumber);
+        if (!phoneDigits) {
+            return res.status(400).json({ message: "נא להזין מספר פלאפון תקין", code: 'INVALID_PHONE' });
+        }
+
+        const existing = await pool.query(
+            `SELECT userid FROM users WHERE regexp_replace(phonenumber, '\\D', '', 'g') = $1 AND userid <> $2 LIMIT 1`,
+            [phoneDigits, customerId]
+        );
+        if (existing.rows.length > 0) {
+            return res.status(409).json({ message: "מספר פלאפון כבר קיים במערכת", code: 'PHONE_ALREADY_EXISTS' });
+        }
+
         const result = await pool.query(
             `
             UPDATE users
@@ -102,6 +136,9 @@ const updateCustomerById = async (req, res) => {
         res.status(200).json({ message: "לקוח עודכן בהצלחה" });
     } catch (error) {
         console.error("Error updating customer by ID:", error);
+        if (error?.code === '23505') {
+            return res.status(409).json({ message: "מספר פלאפון כבר קיים במערכת", code: 'PHONE_ALREADY_EXISTS' });
+        }
         res.status(500).json({ message: "שגיאה בעדכון לקוח" });
     }
 };

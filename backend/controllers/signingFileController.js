@@ -700,7 +700,7 @@ exports.uploadFileForSigning = async (req, res) => {
             const publicUrl = buildPublicSigningUrl(token);
 
             const message = publicUrl
-                ? `מסמך "${fileName}" מחכה לחתימה.\nלחתימה: ${publicUrl}`
+                ? `מסמך "${fileName}" מחכה לחתימה.\n${publicUrl}`
                 : `מסמך "${fileName}" מחכה לחתימה.`;
 
             await sendAndStoreNotification(
@@ -727,7 +727,7 @@ exports.uploadFileForSigning = async (req, res) => {
                     const formattedPhone = formatPhoneNumber(phoneNumber);
                     if (formattedPhone) {
                         await sendMessage(
-                            `מסמך מחכה לחתימה: ${fileName}\nלחתימה: ${publicUrl}`,
+                            `מסמך מחכה לחתימה: ${fileName}\n${publicUrl}`,
                             formattedPhone
                         );
                     }
@@ -1672,7 +1672,7 @@ exports.reuploadFile = async (req, res) => {
                 const publicUrl = buildPublicSigningUrl(token);
 
                 const message = publicUrl
-                    ? `המסמך "${file.FileName}" הועלה מחדש לחתימה.\nלחתימה: ${publicUrl}`
+                    ? `המסמך "${file.FileName}" הועלה מחדש לחתימה.\n ${publicUrl}`
                     : `המסמך "${file.FileName}" הועלה מחדש לחתימה.`;
 
                 await sendAndStoreNotification(
@@ -1697,7 +1697,7 @@ exports.reuploadFile = async (req, res) => {
                         const formattedPhone = formatPhoneNumber(phoneNumber);
                         if (formattedPhone) {
                             await sendMessage(
-                                `מסמך מחכה לחתימה: ${file.FileName}\nלחתימה: ${publicUrl}`,
+                                `מסמך מחכה לחתימה: ${file.FileName}\n${publicUrl}`,
                                 formattedPhone
                             );
                         }
@@ -1716,7 +1716,7 @@ exports.reuploadFile = async (req, res) => {
             const publicUrl = buildPublicSigningUrl(token);
 
             const message = publicUrl
-                ? `המסמך "${file.FileName}" הועלה מחדש לחתימה.\nלחתימה: ${publicUrl}`
+                ? `המסמך "${file.FileName}" הועלה מחדש לחתימה.\n${publicUrl}`
                 : `המסמך "${file.FileName}" הועלה מחדש לחתימה.`;
 
             await sendAndStoreNotification(

@@ -15,8 +15,6 @@ const ProgressBar = ({ IsClosed, currentStage, totalStages, style: _style }) => 
 
     useEffect(() => {
         if (!rootRef.current) return;
-
-        // runtime dynamic: progress fill depends on current stage
         rootRef.current.style.setProperty('--lw-progressBar-percent', `${percentage}%`);
     }, [percentage]);
 

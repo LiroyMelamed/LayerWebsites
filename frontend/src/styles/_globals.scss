@@ -41,6 +41,31 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Hide native scrollbars globally (keep scroll behavior). */
+html,
+body {
+  -ms-overflow-style: none;
+  /* IE/Edge legacy */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+  /* Chrome/Safari/Edge */
+}
+
+/* Also hide scrollbars for scrollable containers. */
+*::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Default RTL for form controls (unless explicitly overridden with dir=...). */
 input:not([dir]),
 textarea:not([dir]),

@@ -165,8 +165,8 @@ export default function ProfileScreen() {
                         <SimpleContainer className="lw-profileScreen__avatarWrap">
                             <SimpleImage
                                 className="lw-profileScreen__avatar"
-                                resizeMode="cover"
-                                src={profile.photoUri || images.Logos.LogoSlangWhite}
+                                resizeMode="contain"
+                                src={profile.photoUri || images.Logos.FullLogoOriginal}
                             />
 
                             <SimpleButton
