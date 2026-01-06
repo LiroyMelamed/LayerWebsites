@@ -26,6 +26,7 @@ import { AdminStackName } from "../../navigation/AdminStack";
 import { uploadFileForSigningScreenName } from "./UploadFileForSigningScreen";
 import "./SigningManagerScreen.scss";
 import { MainScreenName } from "../mainScreen/MainScreen";
+import SimpleCard from "../../components/simpleComponents/SimpleCard";
 
 export const SigningManagerScreenName = "/SigningManagerScreen";
 
@@ -221,7 +222,7 @@ export default function SigningManagerScreen() {
                         const cardClassName = `lw-signingManagerScreen__fileCard${isFullySigned ? " is-fullySigned" : ""}`;
 
                         return (
-                            <SimpleContainer
+                            <SimpleCard
                                 key={file.SigningFileId}
                                 className={cardClassName}
                             >
@@ -293,7 +294,7 @@ export default function SigningManagerScreen() {
                                         פרטי מסמך
                                     </SecondaryButton>
                                 </SimpleContainer>
-                            </SimpleContainer>
+                            </SimpleCard>
                         );
                     })
                 )}

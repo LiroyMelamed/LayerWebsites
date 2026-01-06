@@ -28,7 +28,7 @@
   align-items: center;
 }
 
-@media (min-width: v.$bp-md) {
+@media (min-width: v.$bp-lg) {
   .lw-simpleScreen__content {
     width: calc(100% - 250px);
     margin-right: 250px;

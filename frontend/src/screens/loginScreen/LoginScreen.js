@@ -25,7 +25,6 @@ export default function LoginScreen() {
         const raw = event?.target?.value ?? "";
         const digitsOnly = String(raw).replace(/\D/g, "");
 
-        // Allow pasting +972XXXXXXXXX / 972XXXXXXXXX and normalize to local 0XXXXXXXXX
         let normalized = digitsOnly;
         if (normalized.startsWith("972") && normalized.length >= 11) {
             normalized = "0" + normalized.slice(3);
@@ -56,6 +55,7 @@ export default function LoginScreen() {
                     value={phoneNumber}
                     onChange={handleInputChange}
                     error={phoneNumberError}
+                    textStyle={{ textAlign: 'center' }}
                     maxLength={10}
                 />
             </SimpleContainer>

@@ -113,21 +113,21 @@ async function sendAndStoreNotification(userId, title, message, data = {}) {
                 SELECT 1
                 FROM UserNotifications
                 WHERE UserId = $1
-                  AND Title = $2::text
-                  AND Message = $3::text
-                  AND CreatedAt > (NOW() - ($4 * INTERVAL '1 second'))
+                  AND Title = $4::text
+                  AND Message = $5::text
+                  AND CreatedAt > (NOW() - ($6 * INTERVAL '1 second'))
             )
         `;
 
         try {
-            await pool.query(insertSql, [userId, title, message, dedupeWindowSeconds]);
+            await pool.query(insertSql, [userId, title, message, title, message, dedupeWindowSeconds]);
         } catch (err) {
             if (isDuplicateNotificationPkError(err)) {
                 console.warn(
                     "Duplicate NotificationId detected; attempting to repair sequence and retry insert once..."
                 );
                 await repairUserNotificationsSequence();
-                await pool.query(insertSql, [userId, title, message, dedupeWindowSeconds]);
+                await pool.query(insertSql, [userId, title, message, title, message, dedupeWindowSeconds]);
             } else {
                 throw err;
             }

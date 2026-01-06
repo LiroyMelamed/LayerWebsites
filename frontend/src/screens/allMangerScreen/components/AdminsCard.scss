@@ -10,11 +10,7 @@
     flex-direction: column;
 }
 
-.lw-adminsCard__headerRow {
-    @include m.row(v.$space-2, nowrap, center);
-    width: 100%;
-    min-inline-size: 0;
-}
+.lw-adminsCard__headerRow {}
 
 .lw-adminsCard__headerCell {
     flex: 1 1 0;
@@ -36,13 +32,22 @@
 }
 
 @media (max-width: v.$bp-md) {
+    .lw-adminsCard {
+        max-inline-size: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+
     .lw-adminsCard__headerRow {
-        flex-wrap: wrap;
-        align-items: flex-start;
+        flex-wrap: nowrap;
+        align-items: center;
+        inline-size: max-content;
+        min-inline-size: 100%;
     }
 
     .lw-adminsCard__headerCell {
-        flex: 1 1 9.375rem;
+        flex: 0 0 9.375rem;
     }
 
     .lw-adminsCard__headerCell--email {

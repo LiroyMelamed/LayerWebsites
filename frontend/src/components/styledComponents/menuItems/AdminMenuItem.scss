@@ -9,24 +9,22 @@
 .lw-adminMenuItem__row {
     @include m.row(v.$space-2, nowrap, center);
     width: 100%;
-    min-inline-size: 0;
 }
 
 .lw-adminMenuItem__cell {
     flex: 1 1 0;
     padding-inline: 0.375rem;
-    min-inline-size: 0;
 }
 
 @media (max-width: v.$bp-md) {
     .lw-adminMenuItem__row {
-        flex-wrap: wrap;
-        align-items: flex-start;
+        flex-wrap: nowrap;
+        align-items: center;
+        inline-size: max-content;
+        inline-size: 100%;
     }
 
-    .lw-adminMenuItem__cell {
-        flex: 1 1 9.375rem;
-    }
+    .lw-adminMenuItem__cell {}
 
     .lw-adminMenuItem__cell--email {
         display: none;

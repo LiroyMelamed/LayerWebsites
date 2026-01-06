@@ -10,8 +10,6 @@
 
 .lw-loginScreen__input {
     inline-size: 60%;
-    max-inline-size: 26.25rem; /* 420px */
-
-    /* Match previous inline height=56px */
+    max-inline-size: 26.25rem;
     --lw-simpleInput-height: 3.5rem;
 }

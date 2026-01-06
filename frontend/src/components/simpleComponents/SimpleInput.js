@@ -86,8 +86,7 @@ const SimpleInput = forwardRef(
 
         const shouldFloatLabel = isFocused || !!delayedValue || type === 'date';
 
-        const inputDir = props.dir || 'rtl';
-        const resolvedContainerDir = containerDir || (type === 'date' ? 'rtl' : inputDir);
+        const resolvedDir = 'rtl';
 
         const sizeKey = String(inputSize || 'Medium');
         const sizeClass =
@@ -110,8 +109,6 @@ const SimpleInput = forwardRef(
         ]
             .filter(Boolean)
             .join(' ');
-
-        const resolvedDir = resolvedContainerDir;
 
         return (
             <SimpleContainer
@@ -148,8 +145,8 @@ const SimpleInput = forwardRef(
                 <input
                     type={type}
                     className="lw-simpleInput__field"
-                    dir={inputDir}
-                    style={textStyle}
+                    dir={resolvedDir}
+                    style={{ textAlign: 'right', ...(textStyle || {}) }}
                     value={delayedValue}
                     onChange={handleInputChange}
                     onFocus={handleFocus}

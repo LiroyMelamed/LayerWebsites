@@ -9,6 +9,8 @@
 .lw-signingScreen__scroll {
     align-items: center;
     padding: 0 1rem;
+    box-sizing: border-box;
+    max-inline-size: 100%;
 }
 
 .lw-signingScreen__headerRow {
