@@ -40,12 +40,20 @@ const signingFilesApi = {
         return await ApiUtils.get(`${base}/saved-signature`);
     },
 
+    getSavedSignatureDataUrl: async () => {
+        return await ApiUtils.get(`${base}/saved-signature/data-url`);
+    },
+
     saveSavedSignature: async (signatureImage) => {
         return await ApiUtils.post(`${base}/saved-signature`, { signatureImage });
     },
 
     getPublicSavedSignature: async (token) => {
         return await ApiUtils.get(`${base}/public/${encodeURIComponent(token)}/saved-signature`);
+    },
+
+    getPublicSavedSignatureDataUrl: async (token) => {
+        return await ApiUtils.get(`${base}/public/${encodeURIComponent(token)}/saved-signature/data-url`);
     },
 
     savePublicSavedSignature: async (token, signatureImage) => {

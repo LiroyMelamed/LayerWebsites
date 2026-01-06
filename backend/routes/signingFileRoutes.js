@@ -11,10 +11,12 @@ router.get("/public/:token", signingFileController.getPublicSigningFileDetails);
 router.post("/public/:token/sign", signingFileController.publicSignFile);
 router.post("/public/:token/reject", signingFileController.publicRejectSigning);
 router.get("/public/:token/saved-signature", signingFileController.getPublicSavedSignature);
+router.get("/public/:token/saved-signature/data-url", signingFileController.getPublicSavedSignatureDataUrl);
 router.post("/public/:token/saved-signature", signingFileController.savePublicSavedSignature);
 
 // Saved signature for current user (auth)
 router.get("/saved-signature", authMiddleware, signingFileController.getSavedSignature);
+router.get("/saved-signature/data-url", authMiddleware, signingFileController.getSavedSignatureDataUrl);
 router.post("/saved-signature", authMiddleware, signingFileController.saveSavedSignature);
 
 // עו"ד מעלה קובץ לחתימה

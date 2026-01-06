@@ -1,14 +1,20 @@
 // src/components/SignatureCanvas.js
-import React, { useRef, useState, useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import signingFilesApi from "../../../api/signingFilesApi";
-import PdfViewer from "./pdfViewer/PdfViewer";
 import ApiUtils from "../../../api/apiUtils";
+import PdfViewer from "./pdfViewer/PdfViewer";
+
+import SimpleContainer from "../../simpleComponents/SimpleContainer";
+import { Text14 } from "../../specializedComponents/text/AllTextKindFile";
+
 import PrimaryButton from "../../styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../styledComponents/buttons/SecondaryButton";
 import TertiaryButton from "../../styledComponents/buttons/TertiaryButton";
 import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 import { colors } from "../../../constant/colors";
+
 import "./signFiles.scss";
+
 const SignatureCanvas = ({ signingFileId, publicToken, onClose }) => {
     const canvasRef = useRef(null);
     const pdfScrollRef = useRef(null);
@@ -31,17 +37,24 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose }) => {
         exists: false,
         url: null,
     });
-
     const [signatureMode, setSignatureMode] = useState("draw"); // 'draw' | 'saved'
-    const [saveAsDefault, setSaveAsDefault] = useState(true);
 
     const isPublic = Boolean(publicToken);
+
     const effectiveSigningFileId = useMemo(() => {
         return fileDetails?.file?.SigningFileId || signingFileId;
     }, [fileDetails, signingFileId]);
 
     const getSpotPage = (spot) => spot?.PageNumber ?? spot?.pageNum ?? spot?.pagenumber ?? 1;
     const getSpotY = (spot) => spot?.Y ?? spot?.y ?? 0;
+    const isSpotRequired = (spot) => spot?.IsRequired !== false;
+
+    const getUnsignedRequiredSpots = (spots) => {
+        const list = Array.isArray(spots) ? spots : [];
+        const required = list.filter((s) => isSpotRequired(s));
+        const effective = required.length > 0 ? required : list;
+        return effective.filter((s) => !s.IsSigned);
+    };
 
     const findScrollableAncestor = (el) => {
         let cur = el;
@@ -54,7 +67,6 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose }) => {
 
     const scrollToSpot = (spot, attempt = 0) => {
         if (!spot) return;
-
         const pageNum = Number(getSpotPage(spot) || 1);
         const hintedContainer = pdfScrollRef.current;
 
@@ -64,9 +76,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose }) => {
             : null;
 
         if (!pageEl) {
-            if (attempt < 15) {
-                setTimeout(() => scrollToSpot(spot, attempt + 1), 100);
-            }
+            if (attempt < 15) setTimeout(() => scrollToSpot(spot, attempt + 1), 100);
             return;
         }
 
@@ -81,7 +91,6 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose }) => {
             : { top: 0 };
 
         const pageTopWithinContainer = pageRect.top - containerRect.top + (container.scrollTop || 0);
-
         const pageWidth = pageRect.width || 800;
         const scale = pageWidth / 800;
         const y = Number(getSpotY(spot) || 0) * scale;
@@ -94,123 +103,19 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose }) => {
         }
     };
 
-    // Load file details and PDF
-    useEffect(() => {
-        let isMounted = true;
-
-        const load = async () => {
-            try {
-                setLoading(true);
-                const res = isPublic
-                    ? await signingFilesApi.getPublicSigningFileDetails(publicToken)
-                    : await signingFilesApi.getSigningFileDetails(signingFileId);
-                const data = res?.data;
-
-                if (!isMounted) return;
-                setFileDetails(data);
-
-                // Find first unsigned spot for this client
-                const spots = data?.signatureSpots || [];
-                const firstUnsigned = spots.find((s) => !s.IsSigned) || null;
-                setCurrentSpot(firstUnsigned || null);
-                if (firstUnsigned) {
-                    setTimeout(() => scrollToSpot(firstUnsigned), 0);
-                }
-
-                // Load PDF from fileKey
-                if (data?.file?.FileKey) {
-                    loadPdfFromFileKey(data.file.FileKey);
-                }
-            } catch (err) {
-                console.error("Failed to fetch file details", err);
-                if (isMounted) {
-                    setMessage({ type: "error", text: "שגיאה בטעינת המסמך" });
-                }
-            } finally {
-                if (isMounted) setLoading(false);
-            }
-        };
-
-        load();
-
-        return () => {
-            isMounted = false;
-        };
-    }, [signingFileId, isPublic, publicToken]);
-
-    // Load saved signature for this user (auth) or token user (public)
-    useEffect(() => {
-        let isMounted = true;
-
-        const loadSaved = async () => {
-            try {
-                setSavedSignature((p) => ({ ...p, loading: true }));
-                const res = isPublic
-                    ? await signingFilesApi.getPublicSavedSignature(publicToken)
-                    : await signingFilesApi.getSavedSignature();
-                const data = res?.data;
-                if (!isMounted) return;
-
-                const exists = Boolean(data?.exists);
-                const url = data?.url || null;
-                setSavedSignature({ loading: false, exists, url });
-
-                // Default UX: if a saved signature exists, offer it first.
-                setSignatureMode(exists ? "saved" : "draw");
-                // If there's no saved signature yet, saving the first draw is usually desired.
-                setSaveAsDefault(!exists);
-            } catch (err) {
-                console.warn("Failed to load saved signature", err);
-                if (!isMounted) return;
-                setSavedSignature({ loading: false, exists: false, url: null });
-                setSignatureMode("draw");
-                setSaveAsDefault(true);
-            }
-        };
-
-        loadSaved();
-        return () => {
-            isMounted = false;
-        };
-    }, [isPublic, publicToken]);
-
-    // Setup canvas when current spot changes
-    useEffect(() => {
-        if (currentSpot && canvasRef.current) {
-            const canvas = canvasRef.current;
-            canvas.width = 400;
-            canvas.height = 180;
-            const ctx = canvas.getContext("2d");
-            // Keep canvas transparent so exported PNG has no white background.
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "#999";
-            ctx.font = "12px Arial";
-            ctx.textAlign = "center";
-            ctx.fillText("חתום כאן", canvas.width / 2, canvas.height / 2);
-            setHasUserDrawn(false);
-            lastPointRef.current = null;
-        }
-    }, [currentSpot]);
-
-    const loadPdfFromFileKey = async (fileKey) => {
+    const loadPdfFromFileKey = async (fileIdForPdf) => {
         try {
-            // PdfPage currently expects a Blob (it calls URL.createObjectURL).
-            // So we fetch the PDF ourselves (with auth) and pass a Blob to PdfViewer/PdfPage.
-            const baseUrl = ApiUtils?.defaults?.baseURL || ""; // e.g. http://localhost:5000/api
+            const baseUrl = ApiUtils?.defaults?.baseURL || "";
             const token = localStorage.getItem("token");
             const url = isPublic
                 ? `${baseUrl}/SigningFiles/public/${encodeURIComponent(publicToken)}/pdf`
-                : `${baseUrl}/SigningFiles/${encodeURIComponent(effectiveSigningFileId)}/pdf`;
+                : `${baseUrl}/SigningFiles/${encodeURIComponent(fileIdForPdf || signingFileId)}/pdf`;
 
             const res = await fetch(url, {
                 method: "GET",
                 headers: !isPublic && token ? { Authorization: `Bearer ${token}` } : {},
             });
-
-            if (!res.ok) {
-                throw new Error(`PDF fetch failed: ${res.status}`);
-            }
-
+            if (!res.ok) throw new Error(`PDF fetch failed: ${res.status}`);
             const blob = await res.blob();
             setPdfFile(blob);
         } catch (err) {
@@ -219,147 +124,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose }) => {
         }
     };
 
-    const startDrawing = (e) => {
-        if (!canvasRef.current || !currentSpot || currentSpot.IsSigned) return;
-
-        // Prevent touch scroll/zoom while drawing (especially in iframes on mobile).
-        if (typeof e?.preventDefault === "function") e.preventDefault();
-
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext("2d");
-
-        setIsDrawing(true);
-
-        // Capture pointer so we keep receiving move/up even if finger leaves the canvas.
-        try {
-            if (typeof canvas.setPointerCapture === "function" && e?.pointerId != null) {
-                canvas.setPointerCapture(e.pointerId);
-            }
-        } catch {
-            // ignore
-        }
-
-        // Clear placeholder text on first stroke so it won't be included in the saved image.
-        if (!hasUserDrawn) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            setHasUserDrawn(true);
-        }
-
-        const rect = canvas.getBoundingClientRect();
-        const clientX = e?.clientX ?? e?.touches?.[0]?.clientX;
-        const clientY = e?.clientY ?? e?.touches?.[0]?.clientY;
-        if (clientX == null || clientY == null) return;
-
-        const x = clientX - rect.left;
-        const y = clientY - rect.top;
-
-        ctx.strokeStyle = "#000";
-        ctx.lineWidth = 2;
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
-
-    const drawMove = (e) => {
-        if (!isDrawing || !canvasRef.current) return;
-        if (typeof e?.preventDefault === "function") e.preventDefault();
-
-    const getPointFromClientXY = useCallback((clientX, clientY) => {
-        const canvas = canvasRef.current;
-        if (!canvas) return null;
-        const rect = canvas.getBoundingClientRect();
-        const clientX = e?.clientX ?? e?.touches?.[0]?.clientX;
-        const clientY = e?.clientY ?? e?.touches?.[0]?.clientY;
-        if (clientX == null || clientY == null) return;
-
-        const x = clientX - rect.left;
-        const y = clientY - rect.top;
-
-    const startStroke = useCallback(
-        (clientX, clientY) => {
-            if (!canvasRef.current || !currentSpot || currentSpot.IsSigned) return;
-            const ready = ensureCanvasReadyForStroke();
-            if (!ready) return;
-            const point = getPointFromClientXY(clientX, clientY);
-            if (!point) return;
-
-            setIsDrawing(true);
-            lastPointRef.current = point;
-            ready.ctx.beginPath();
-            ready.ctx.moveTo(point.x, point.y);
-        },
-        [currentSpot, ensureCanvasReadyForStroke, getPointFromClientXY]
-    );
-
-    const continueStroke = useCallback(
-        (clientX, clientY) => {
-            if (!isDrawing || !canvasRef.current) return;
-            const canvas = canvasRef.current;
-            const ctx = canvas.getContext("2d");
-            if (!ctx) return;
-            const point = getPointFromClientXY(clientX, clientY);
-            if (!point) return;
-
-            ctx.lineTo(point.x, point.y);
-            ctx.stroke();
-            lastPointRef.current = point;
-        },
-        [getPointFromClientXY, isDrawing]
-    );
-
-    const endStroke = useCallback(() => {
-        setIsDrawing(false);
-        lastPointRef.current = null;
-    }, []);
-
-    const handleMouseDown = (e) => startStroke(e.clientX, e.clientY);
-    const handleMouseMove = (e) => continueStroke(e.clientX, e.clientY);
-    const handleMouseUp = () => endStroke();
-
-    const handleTouchStart = (e) => {
-        const touch = e.touches && e.touches[0];
-        if (!touch) return;
-        e.preventDefault();
-        startStroke(touch.clientX, touch.clientY);
-    };
-
-    const endDrawing = () => {
-        setIsDrawing(false);
-    };
-
-    const clearCanvas = () => {
-        if (!canvasRef.current) return;
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext("2d");
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#999";
-        ctx.font = "12px Arial";
-        ctx.textAlign = "center";
-        ctx.fillText("חתום כאן", canvas.width / 2, canvas.height / 2);
-        setHasUserDrawn(false);
-    };
-
-    const fetchUrlAsDataUrl = async (url) => {
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`Failed to fetch saved signature: ${res.status}`);
-        const blob = await res.blob();
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(String(reader.result || ""));
-            reader.onerror = () => reject(new Error("Failed to read signature blob"));
-            reader.readAsDataURL(blob);
-        });
-    };
-
-    const maybeSaveSignatureAsDefault = async (dataUrl) => {
-        if (!saveAsDefault) return;
-        if (!dataUrl) return;
-
-        if (isPublic) {
-            await signingFilesApi.savePublicSavedSignature(publicToken, dataUrl);
-        } else {
-            await signingFilesApi.saveSavedSignature(dataUrl);
-        }
-
-        // Refresh saved signature URL so it can be reused immediately.
+    const refreshSavedSignature = async () => {
         try {
             const res = isPublic
                 ? await signingFilesApi.getPublicSavedSignature(publicToken)
@@ -370,14 +135,169 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose }) => {
                 exists: Boolean(data?.exists),
                 url: data?.url || null,
             });
-        } catch {
-            // ignore refresh errors
+        } catch (err) {
+            console.warn("Failed to refresh saved signature", err);
+            setSavedSignature({ loading: false, exists: false, url: null });
         }
+    };
+
+    useEffect(() => {
+        let isMounted = true;
+        const load = async () => {
+            try {
+                setLoading(true);
+                const res = isPublic
+                    ? await signingFilesApi.getPublicSigningFileDetails(publicToken)
+                    : await signingFilesApi.getSigningFileDetails(signingFileId);
+                const data = res?.data;
+                if (!isMounted) return;
+                setFileDetails(data);
+                // Spec: first interaction jumps to first required spot.
+                setCurrentSpot(null);
+                setHasStartedNextFlow(false);
+                const fileIdForPdf = data?.file?.SigningFileId || signingFileId;
+                await loadPdfFromFileKey(fileIdForPdf);
+            } catch (err) {
+                console.error("Failed to fetch file details", err);
+                if (isMounted) setMessage({ type: "error", text: "שגיאה בטעינת המסמך" });
+            } finally {
+                if (isMounted) setLoading(false);
+            }
+        };
+        load();
+        return () => {
+            isMounted = false;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [signingFileId, isPublic, publicToken]);
+
+    useEffect(() => {
+        setSavedSignature((p) => ({ ...p, loading: true }));
+        refreshSavedSignature().then(() => {
+            // Default UX: if saved exists, offer it first.
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isPublic, publicToken]);
+
+    useEffect(() => {
+        if (!savedSignature.loading) {
+            setSignatureMode(savedSignature.exists ? "saved" : "draw");
+        }
+    }, [savedSignature.exists, savedSignature.loading]);
+
+    useEffect(() => {
+        if (currentSpot && canvasRef.current) {
+            const canvas = canvasRef.current;
+            canvas.width = 400;
+            canvas.height = 180;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#999";
+            ctx.font = "12px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("חתום כאן", canvas.width / 2, canvas.height / 2);
+            setHasUserDrawn(false);
+            lastPointRef.current = null;
+        }
+    }, [currentSpot]);
+
+    const getClientPointOnCanvas = (e) => {
+        const canvas = canvasRef.current;
+        if (!canvas) return null;
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e?.clientX ?? e?.touches?.[0]?.clientX;
+        const clientY = e?.clientY ?? e?.touches?.[0]?.clientY;
+        if (clientX == null || clientY == null) return null;
+        return { x: clientX - rect.left, y: clientY - rect.top };
+    };
+
+    const startDrawing = (e) => {
+        if (!canvasRef.current || !currentSpot || currentSpot.IsSigned) return;
+        if (typeof e?.preventDefault === "function") e.preventDefault();
+
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        setIsDrawing(true);
+        try {
+            if (typeof canvas.setPointerCapture === "function" && e?.pointerId != null) {
+                canvas.setPointerCapture(e.pointerId);
+            }
+        } catch {
+            // ignore
+        }
+
+        if (!hasUserDrawn) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            setHasUserDrawn(true);
+        }
+
+        const point = getClientPointOnCanvas(e);
+        if (!point) return;
+
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = 2;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+
+        lastPointRef.current = point;
+        ctx.beginPath();
+        ctx.moveTo(point.x, point.y);
+    };
+
+    const drawMove = (e) => {
+        if (!isDrawing || !canvasRef.current) return;
+        if (typeof e?.preventDefault === "function") e.preventDefault();
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        const point = getClientPointOnCanvas(e);
+        if (!point) return;
+        ctx.lineTo(point.x, point.y);
+        ctx.stroke();
+        lastPointRef.current = point;
+    };
+
+    const endDrawing = (e) => {
+        setIsDrawing(false);
+        lastPointRef.current = null;
+        try {
+            const canvas = canvasRef.current;
+            if (canvas && typeof canvas.releasePointerCapture === "function" && e?.pointerId != null) {
+                canvas.releasePointerCapture(e.pointerId);
+            }
+        } catch {
+            // ignore
+        }
+    };
+
+    const clearCanvas = () => {
+        if (!canvasRef.current) return;
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#999";
+        ctx.font = "12px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("חתום כאן", canvas.width / 2, canvas.height / 2);
+        setHasUserDrawn(false);
+    };
+
+    const saveSignatureAsDefault = async (dataUrl) => {
+        if (!dataUrl) return;
+        if (isPublic) {
+            await signingFilesApi.savePublicSavedSignature(publicToken, dataUrl);
+        } else {
+            await signingFilesApi.saveSavedSignature(dataUrl);
+        }
+        await refreshSavedSignature();
     };
 
     const signCurrentSpotWithImage = async (dataUrl) => {
         if (!currentSpot || currentSpot.IsSigned) return;
-
         if (isPublic) {
             await signingFilesApi.publicSignFile(publicToken, {
                 signatureSpotId: currentSpot.SignatureSpotId,
@@ -391,81 +311,94 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose }) => {
         }
     };
 
+    const reloadDetailsAndAdvance = async () => {
+        const res = isPublic
+            ? await signingFilesApi.getPublicSigningFileDetails(publicToken)
+            : await signingFilesApi.getSigningFileDetails(effectiveSigningFileId);
+        const data = res?.data;
+        setFileDetails(data);
+
+        const spots = data?.signatureSpots || [];
+        const nextUnsigned = getUnsignedRequiredSpots(spots)[0] || null;
+        setCurrentSpot(nextUnsigned);
+        if (nextUnsigned) {
+            scrollToSpot(nextUnsigned);
+            setHasStartedNextFlow(true);
+        }
+        clearCanvas();
+    };
+
     const saveSignature = async () => {
         if (!canvasRef.current || !currentSpot || currentSpot.IsSigned) return;
         setSaving(true);
         try {
-            const savedSignature = localStorage.getItem(SAVED_SIGNATURE_KEY);
-            const canUseSaved = Boolean(savedSignature);
-
-            if (!hasUserDrawn && !canUseSaved) {
+            if (!hasUserDrawn) {
                 setMessage({ type: "error", text: "נא לחתום לפני השמירה" });
                 return;
             }
 
-            const dataUrl = hasUserDrawn
-                ? canvasRef.current.toDataURL("image/png")
-                : savedSignature;
-
-            if (hasUserDrawn && dataUrl) {
-                localStorage.setItem(SAVED_SIGNATURE_KEY, String(dataUrl));
-            }
-
+            const dataUrl = canvasRef.current.toDataURL("image/png");
             await signCurrentSpotWithImage(dataUrl);
-            await maybeSaveSignatureAsDefault(dataUrl);
+            // Spec: new signature overwrites saved signature
+            await saveSignatureAsDefault(dataUrl);
 
             setMessage({ type: "success", text: "החתימה נשמרה בהצלחה" });
-
-            // Reload file details
-            const res = isPublic
-                ? await signingFilesApi.getPublicSigningFileDetails(publicToken)
-                : await signingFilesApi.getSigningFileDetails(effectiveSigningFileId);
-            const data = res?.data;
-            setFileDetails(data);
-
-            const spots = data?.signatureSpots || [];
-            const nextUnsigned = spots.find((s) => !s.IsSigned) || null;
-            setCurrentSpot(nextUnsigned);
-            if (nextUnsigned) scrollToSpot(nextUnsigned);
-            clearCanvas();
-
-            // Clear message after 2 seconds
+            await reloadDetailsAndAdvance();
             setTimeout(() => setMessage(null), 2000);
         } catch (err) {
             console.error("Failed to save signature", err);
-            setMessage({ type: "error", text: "שגיאה בשמירת החתימה: " + (err?.message || "") });
+            setMessage({ type: "error", text: "שגיאה בשמירת החתימה" });
         } finally {
             setSaving(false);
         }
     };
 
     const useSavedSignatureForNext = async () => {
-        if (!savedSignature?.exists || !savedSignature?.url) {
-            setMessage({ type: "error", text: "אין חתימה שמורה" });
-            return;
-        }
-
-        if (!currentSpot || currentSpot.IsSigned) return;
-
         try {
+            if (!savedSignature?.exists || !savedSignature?.url) {
+                setMessage({ type: "error", text: "אין חתימה שמורה" });
+                return;
+            }
+
+            const allSpots = fileDetails?.signatureSpots || [];
+            const unsigned = getUnsignedRequiredSpots(allSpots);
+            const target = (!currentSpot || currentSpot.IsSigned) ? (unsigned[0] || null) : currentSpot;
+            if (!target) return;
+
+            if (!currentSpot || currentSpot.IsSigned) {
+                setCurrentSpot(target);
+                scrollToSpot(target);
+                setHasStartedNextFlow(true);
+            }
+
             setSaving(true);
-            const dataUrl = await fetchUrlAsDataUrl(savedSignature.url);
-            await signCurrentSpotWithImage(dataUrl);
+            const sigRes = isPublic
+                ? await signingFilesApi.getPublicSavedSignatureDataUrl(publicToken)
+                : await signingFilesApi.getSavedSignatureDataUrl();
+            const dataUrl = sigRes?.data?.dataUrl;
+            if (!dataUrl) {
+                throw new Error("Missing saved signature dataUrl");
+            }
+            // Ensure we sign the selected target
+            if (target?.SignatureSpotId !== currentSpot?.SignatureSpotId) {
+                setCurrentSpot(target);
+            }
+            await (async () => {
+                if (isPublic) {
+                    await signingFilesApi.publicSignFile(publicToken, {
+                        signatureSpotId: target.SignatureSpotId,
+                        signatureImage: dataUrl,
+                    });
+                } else {
+                    await signingFilesApi.signFile(effectiveSigningFileId, {
+                        signatureSpotId: target.SignatureSpotId,
+                        signatureImage: dataUrl,
+                    });
+                }
+            })();
 
             setMessage({ type: "success", text: "החתימה נשמרה בהצלחה" });
-
-            const res = isPublic
-                ? await signingFilesApi.getPublicSigningFileDetails(publicToken)
-                : await signingFilesApi.getSigningFileDetails(effectiveSigningFileId);
-            const data = res?.data;
-            setFileDetails(data);
-
-            const spots = data?.signatureSpots || [];
-            const nextUnsigned = spots.find((s) => !s.IsSigned) || null;
-            setCurrentSpot(nextUnsigned);
-            if (nextUnsigned) scrollToSpot(nextUnsigned);
-            clearCanvas();
-
+            await reloadDetailsAndAdvance();
             setTimeout(() => setMessage(null), 2000);
         } catch (err) {
             console.error("Failed to use saved signature", err);
@@ -478,17 +411,12 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose }) => {
     const rejectFile = async () => {
         const reason = prompt("מה הסיבה לדחיית המסמך?");
         if (reason === null) return;
-
         try {
             setSaving(true);
             if (isPublic) {
-                await signingFilesApi.publicRejectSigning(publicToken, {
-                    rejectionReason: reason,
-                });
+                await signingFilesApi.publicRejectSigning(publicToken, { rejectionReason: reason });
             } else {
-                await signingFilesApi.rejectSigning(effectiveSigningFileId, {
-                    rejectionReason: reason,
-                });
+                await signingFilesApi.rejectSigning(effectiveSigningFileId, { rejectionReason: reason });
             }
             setMessage({ type: "success", text: "המסמך נדחה ונשלחה הודעה לעורך הדין" });
             setTimeout(() => onClose(), 1200);
@@ -507,11 +435,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose }) => {
                     <div className="lw-signing-modalContent" onClick={(e) => e.stopPropagation()}>
                         <div className="lw-signing-modalHeader">
                             <h3>טוען מסמך...</h3>
-                            <TertiaryButton
-                                size={buttonSizes.SMALL}
-                                onPress={onClose}
-                                style={{ marginInlineStart: "auto" }}
-                            >
+                            <TertiaryButton size={buttonSizes.SMALL} onPress={onClose} style={{ marginInlineStart: "auto" }}>
                                 סגור
                             </TertiaryButton>
                         </div>
@@ -528,11 +452,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose }) => {
                     <div className="lw-signing-modalContent" onClick={(e) => e.stopPropagation()}>
                         <div className="lw-signing-modalHeader">
                             <h3>שגיאה בטעינת המסמך</h3>
-                            <TertiaryButton
-                                size={buttonSizes.SMALL}
-                                onPress={onClose}
-                                style={{ marginInlineStart: "auto" }}
-                            >
+                            <TertiaryButton size={buttonSizes.SMALL} onPress={onClose} style={{ marginInlineStart: "auto" }}>
                                 סגור
                             </TertiaryButton>
                         </div>
@@ -543,15 +463,16 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose }) => {
     }
 
     const spots = fileDetails.signatureSpots || [];
-    const allSpotsSignedByUser = spots.every((s) => s.IsSigned);
-    const signedCount = spots.filter((s) => s.IsSigned).length;
-    const remainingCount = Math.max(0, spots.length - signedCount);
+    const requiredSpots = spots.filter((s) => isSpotRequired(s));
+    const effectiveRequiredSpots = requiredSpots.length > 0 ? requiredSpots : spots;
+    const unsignedRequiredSpots = getUnsignedRequiredSpots(spots);
+    const remainingCount = unsignedRequiredSpots.length;
+    const allSpotsSignedByUser = effectiveRequiredSpots.length > 0 && remainingCount === 0;
 
     const goToNextSigningSpot = () => {
-        const unsigned = spots.filter((s) => !s.IsSigned);
+        const unsigned = unsignedRequiredSpots;
         if (unsigned.length === 0) return;
 
-        // First press should *focus* the first signing spot.
         if (!hasStartedNextFlow) {
             const first = unsigned[0];
             setCurrentSpot(first);
@@ -562,10 +483,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose }) => {
 
         const currentId = currentSpot?.SignatureSpotId;
         const currentIdx = unsigned.findIndex((s) => s.SignatureSpotId === currentId);
-        const nextSpot = currentIdx >= 0
-            ? unsigned[Math.min(currentIdx + 1, unsigned.length - 1)]
-            : unsigned[0];
-
+        const nextSpot = currentIdx >= 0 ? unsigned[Math.min(currentIdx + 1, unsigned.length - 1)] : unsigned[0];
         setCurrentSpot(nextSpot);
         scrollToSpot(nextSpot);
     };
@@ -576,11 +494,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose }) => {
                 <div className="lw-signing-modalContent" onClick={(e) => e.stopPropagation()}>
                     <div className="lw-signing-modalHeader">
                         <h3>חתימה על מסמך – {fileDetails.file.FileName}</h3>
-                        <TertiaryButton
-                            size={buttonSizes.SMALL}
-                            onPress={onClose}
-                            style={{ marginInlineStart: "auto" }}
-                        >
+                        <TertiaryButton size={buttonSizes.SMALL} onPress={onClose} style={{ marginInlineStart: "auto" }}>
                             סגור
                         </TertiaryButton>
                     </div>
@@ -609,30 +523,26 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose }) => {
                                 <SimpleContainer
                                     className={
                                         "lw-signing-message " +
-                                        (message.type === "success"
-                                            ? "is-success"
-                                            : message.type === "error"
-                                                ? "is-error"
-                                                : "is-warning")
+                                        (message.type === "success" ? "is-success" : message.type === "error" ? "is-error" : "is-warning")
                                     }
                                 >
                                     {message.text}
                                 </SimpleContainer>
                             )}
 
-                            {/* Spots List */}
                             <div>
                                 <div className="lw-signing-nextHeaderRow">
                                     <PrimaryButton
+                                        className="lw-signing-nextFocus"
                                         size={buttonSizes.SMALL}
-                                        onPress={goToNextSigningSpot}
+                                        onPress={() => goToNextSigningSpot()}
                                         disabled={saving}
                                     >
                                         לחתימה הבאה
                                     </PrimaryButton>
 
                                     <div className="lw-signing-progressHint" style={{ margin: 0 }}>
-                                        {spots.length > 0
+                                        {effectiveRequiredSpots.length > 0
                                             ? remainingCount > 0
                                                 ? `נותרו ${remainingCount} חתימות`
                                                 : "כל החתימות הושלמו"
@@ -642,22 +552,16 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose }) => {
 
                                 {remainingCount > 0 && (
                                     <div className="lw-signing-actionsRow" style={{ marginTop: "0.5rem" }}>
-                                        <TertiaryButton
-                                            size={buttonSizes.SMALL}
-                                            onPress={() => setShowAllSpots((v) => !v)}
-                                        >
-                                            {showAllSpots ? "הסתר את כל המקומות" : "הצג את כל המקומות"}
+                                        <TertiaryButton size={buttonSizes.SMALL} onPress={() => setShowAllSpots((v) => !v)}>
+                                            הצג את כל המקומות
                                         </TertiaryButton>
-
                                     </div>
                                 )}
 
                                 {showAllSpots && (
                                     <div className="lw-signing-spotsList">
                                         {spots.length === 0 ? (
-                                            <div className="lw-signing-emptySpots">
-                                                אין מקומות חתימה להצגה
-                                            </div>
+                                            <div className="lw-signing-emptySpots">אין מקומות חתימה להצגה</div>
                                         ) : (
                                             spots.map((spot) => (
                                                 <div
@@ -672,11 +576,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose }) => {
                                                     onClick={() => {
                                                         setCurrentSpot(spot);
                                                         scrollToSpot(spot);
+                                                        setHasStartedNextFlow(true);
                                                     }}
                                                 >
-                                                    <div className="lw-signing-spotName">
-                                                        {spot.SignerName}
-                                                    </div>
+                                                    <div className="lw-signing-spotName">{spot.SignerName}</div>
                                                     <div className={"lw-signing-spotStatus" + (spot.IsSigned ? " is-signed" : "")}>
                                                         {spot.IsSigned ? "חתום" : "בהמתנה"}
                                                     </div>
@@ -687,115 +590,87 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose }) => {
                                 )}
                             </div>
 
-                            {/* Next signing step */}
-                            {currentSpot && !currentSpot.IsSigned && (
+                            {savedSignature.exists && signatureMode === "saved" && remainingCount > 0 && (
                                 <div className="lw-signing-canvasSection">
-                                    {savedSignature.exists && signatureMode === "saved" ? (
-                                        <div className="lw-signing-savedSigBox">
-                                            {savedSignature.url ? (
-                                                <img
-                                                    className="lw-signing-savedSigPreview"
-                                                    src={savedSignature.url}
-                                                    alt="חתימה שמורה"
-                                                />
-                                            ) : (
-                                                <div className="lw-signing-inlineHint">טוען חתימה שמורה...</div>
-                                            )}
+                                    <div className="lw-signing-savedSigBox">
+                                        <Text14>השתמש בחתימה השמורה או צייר חתימה חדשה</Text14>
 
-                                            <div className="lw-signing-actionsRow">
-                                                <PrimaryButton
-                                                    size={buttonSizes.SMALL}
-                                                    onPress={useSavedSignatureForNext}
-                                                    disabled={saving || !savedSignature.url}
-                                                >
-                                                    {saving ? "שומר..." : "השתמש בחתימה השמורה"}
-                                                </PrimaryButton>
-                                                <SecondaryButton
-                                                    size={buttonSizes.SMALL}
-                                                    onPress={() => {
-                                                        setSignatureMode("draw");
-                                                        setSaveAsDefault(false);
-                                                        clearCanvas();
-                                                    }}
-                                                    disabled={saving}
-                                                >
-                                                    צייר חתימה חדשה
-                                                </SecondaryButton>
-                                            </div>
+                                        {savedSignature.url ? (
+                                            <img className="lw-signing-savedSigPreview" src={savedSignature.url} alt="חתימה שמורה" />
+                                        ) : (
+                                            <div className="lw-signing-inlineHint">טוען חתימה שמורה...</div>
+                                        )}
+
+                                        <div className="lw-signing-actionsRow">
+                                            <PrimaryButton
+                                                size={buttonSizes.SMALL}
+                                                onPress={useSavedSignatureForNext}
+                                                disabled={saving || !savedSignature.url}
+                                            >
+                                                {saving ? "שומר..." : "השתמש בחתימה השמורה"}
+                                            </PrimaryButton>
+                                            <SecondaryButton
+                                                size={buttonSizes.SMALL}
+                                                onPress={() => {
+                                                    setSignatureMode("draw");
+                                                    clearCanvas();
+                                                }}
+                                                disabled={saving}
+                                            >
+                                                צייר חתימה חדשה
+                                            </SecondaryButton>
                                         </div>
-                                    ) : (
-                                        <>
-                                            {savedSignature.exists && (
-                                                <div className="lw-signing-savedSigTopRow">
-                                                    <SecondaryButton
-                                                        size={buttonSizes.SMALL}
-                                                        onPress={() => {
-                                                            setSignatureMode("saved");
-                                                            setSaveAsDefault(false);
-                                                            clearCanvas();
-                                                        }}
-                                                        disabled={saving}
-                                                    >
-                                                        השתמש בחתימה השמורה
-                                                    </SecondaryButton>
-                                                </div>
-                                            )}
+                                    </div>
+                                </div>
+                            )}
 
-                                            <canvas
-                                                ref={canvasRef}
-                                                className="lw-signing-canvas"
-                                                onPointerDown={startDrawing}
-                                                onPointerMove={drawMove}
-                                                onPointerUp={endDrawing}
-                                                onPointerCancel={endDrawing}
-                                                onPointerLeave={endDrawing}
-                                                // Fallback for older browsers that don't fully support Pointer Events
-                                                onTouchStart={startDrawing}
-                                                onTouchMove={drawMove}
-                                                onTouchEnd={endDrawing}
-                                            />
-
-                                            <label className="lw-signing-checkboxRow">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={saveAsDefault}
-                                                    onChange={(e) => setSaveAsDefault(e.target.checked)}
-                                                    disabled={saving}
-                                                />
-                                                שמור חתימה לשימוש חוזר
-                                            </label>
-
-                                            <div className="lw-signing-actionsRow">
-                                                <SecondaryButton
-                                                    size={buttonSizes.SMALL}
-                                                    onPress={clearCanvas}
-                                                    disabled={saving}
-                                                >
-                                                    נקה
-                                                </SecondaryButton>
-                                                <PrimaryButton
-                                                    size={buttonSizes.SMALL}
-                                                    onPress={saveSignature}
-                                                    disabled={saving}
-                                                >
-                                                    {saving ? "שומר..." : "שמור חתימה"}
-                                                </PrimaryButton>
-                                            </div>
-                                        </>
+                            {signatureMode !== "saved" && currentSpot && !currentSpot.IsSigned && (
+                                <div className="lw-signing-canvasSection">
+                                    {savedSignature.exists && (
+                                        <div className="lw-signing-savedSigTopRow">
+                                            <SecondaryButton
+                                                size={buttonSizes.SMALL}
+                                                onPress={() => {
+                                                    setSignatureMode("saved");
+                                                    clearCanvas();
+                                                }}
+                                                disabled={saving}
+                                            >
+                                                השתמש בחתימה השמורה
+                                            </SecondaryButton>
+                                        </div>
                                     )}
+
+                                    <canvas
+                                        ref={canvasRef}
+                                        className="lw-signing-canvas"
+                                        onPointerDown={startDrawing}
+                                        onPointerMove={drawMove}
+                                        onPointerUp={endDrawing}
+                                        onPointerCancel={endDrawing}
+                                        onPointerLeave={endDrawing}
+                                        onTouchStart={startDrawing}
+                                        onTouchMove={drawMove}
+                                        onTouchEnd={endDrawing}
+                                    />
+
+                                    <div className="lw-signing-actionsRow">
+                                        <SecondaryButton size={buttonSizes.SMALL} onPress={clearCanvas} disabled={saving}>
+                                            נקה
+                                        </SecondaryButton>
+                                        <PrimaryButton size={buttonSizes.SMALL} onPress={saveSignature} disabled={saving}>
+                                            {saving ? "שומר..." : "שמור חתימה"}
+                                        </PrimaryButton>
+                                    </div>
                                 </div>
                             )}
 
                             {currentSpot && currentSpot.IsSigned && (
-                                <div className="lw-signing-message is-success">
-                                    מקום החתימה הזה כבר חתום על ידך
-                                </div>
+                                <div className="lw-signing-message is-success">מקום החתימה הזה כבר חתום על ידך</div>
                             )}
 
                             {allSpotsSignedByUser && spots.length > 0 && (
-                                <div className="lw-signing-message is-success">
-                                    השלמת את כל החתימות הנדרשות!
-                                </div>
+                                <div className="lw-signing-message is-success">השלמת את כל החתימות הנדרשות!</div>
                             )}
                         </SimpleContainer>
                     </SimpleContainer>
@@ -812,14 +687,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose }) => {
                                 דחה מסמך
                             </TertiaryButton>
                         )}
-                        <SecondaryButton
-                            size={buttonSizes.SMALL}
-                            onPress={onClose}
-                            disabled={saving}
-                        >
+                        <SecondaryButton size={buttonSizes.SMALL} onPress={onClose} disabled={saving}>
                             סגור
                         </SecondaryButton>
-                    </div>
+                    </SimpleContainer>
                 </div>
             </div>
         </div>

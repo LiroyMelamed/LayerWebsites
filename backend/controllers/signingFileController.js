@@ -106,6 +106,21 @@ async function savedSignatureExists(key) {
     }
 }
 
+async function getSavedSignatureDataUrlByKey(key) {
+    const obj = await r2.send(
+        new GetObjectCommand({
+            Bucket: BUCKET,
+            Key: key,
+        })
+    );
+    if (!obj.Body) throw new Error('R2 object has no body');
+    const buffer = await streamToBuffer(obj.Body);
+    const contentType = String(obj.ContentType || 'image/png').toLowerCase();
+    const safeContentType = contentType.startsWith('image/') ? contentType : 'image/png';
+    const base64 = buffer.toString('base64');
+    return `data:${safeContentType};base64,${base64}`;
+}
+
 // Saved signature (auth)
 exports.getSavedSignature = async (req, res) => {
     try {
@@ -120,6 +135,23 @@ exports.getSavedSignature = async (req, res) => {
         return res.json({ exists: true, url, key });
     } catch (err) {
         console.error('getSavedSignature error:', err);
+        return res.status(500).json({ message: 'שגיאה בשליפת חתימה שמורה' });
+    }
+};
+
+exports.getSavedSignatureDataUrl = async (req, res) => {
+    try {
+        const userId = req.user?.UserId;
+        if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+        const key = getSavedSignatureKey(userId);
+        const exists = await savedSignatureExists(key);
+        if (!exists) return res.json({ exists: false });
+
+        const dataUrl = await getSavedSignatureDataUrlByKey(key);
+        return res.json({ exists: true, dataUrl, key });
+    } catch (err) {
+        console.error('getSavedSignatureDataUrl error:', err);
         return res.status(500).json({ message: 'שגיאה בשליפת חתימה שמורה' });
     }
 };
@@ -171,6 +203,26 @@ exports.getPublicSavedSignature = async (req, res) => {
         return res.json({ exists: true, url, key });
     } catch (err) {
         console.error('getPublicSavedSignature error:', err);
+        return res.status(500).json({ message: 'שגיאה בשליפת חתימה שמורה' });
+    }
+};
+
+exports.getPublicSavedSignatureDataUrl = async (req, res) => {
+    try {
+        const verified = verifyPublicSigningToken(req.params.token);
+        if (!verified.ok) {
+            return res.status(verified.status).json({ message: verified.message });
+        }
+
+        const { signerUserId } = verified;
+        const key = getSavedSignatureKey(signerUserId);
+        const exists = await savedSignatureExists(key);
+        if (!exists) return res.json({ exists: false });
+
+        const dataUrl = await getSavedSignatureDataUrlByKey(key);
+        return res.json({ exists: true, dataUrl, key });
+    } catch (err) {
+        console.error('getPublicSavedSignatureDataUrl error:', err);
         return res.status(500).json({ message: 'שגיאה בשליפת חתימה שמורה' });
     }
 };

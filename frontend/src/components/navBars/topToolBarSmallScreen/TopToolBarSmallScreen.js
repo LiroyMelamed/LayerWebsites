@@ -12,7 +12,6 @@ import { useFromApp } from "../../../providers/FromAppProvider";
 import PrimaryButton from "../../styledComponents/buttons/PrimaryButton";
 
 import './TopToolBarSmallScreen.scss';
-import PrimaryButton from "../../styledComponents/buttons/PrimaryButton";
 
 const Logo = images.Logos.FullLogoOriginal;
 
