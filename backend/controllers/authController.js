@@ -1,14 +1,50 @@
 const pool = require("../config/db"); // pg pool
 const jwt = require("jsonwebtoken");
 const { formatPhoneNumber } = require("../utils/phoneUtils");
-const { sendMessage, WEBSITE_DOMAIN } = require("../utils/sendMessage");
+const { sendMessage } = require("../utils/sendMessage");
 require("dotenv").config();
 
 const SECRET_KEY = process.env.JWT_SECRET || "supersecretkey";
 const FORCE_SEND_SMS_ALL = process.env.FORCE_SEND_SMS_ALL === "true";
 
-function buildOtpSmsBody(otp) {
-    return `קוד האימות הוא: ${otp}\n\n@${WEBSITE_DOMAIN} #${otp}`;
+const ANDROID_SMS_RETRIEVER_HASH = String(process.env.ANDROID_SMS_RETRIEVER_HASH || "").trim();
+const WEBSITE_DOMAIN_FALLBACK = String(process.env.WEBSITE_DOMAIN || "").trim();
+
+function getClientPlatform(req) {
+    const raw = req?.headers?.["x-client-platform"];
+    return String(raw || "").trim().toLowerCase();
+}
+
+function buildOtpSmsBody(otp, options = {}) {
+    const otpStr = String(otp || "").trim();
+    const baseHebrew = `קוד האימות שלך הוא ${otpStr}`;
+
+    const platform = String(options?.platform || "").toLowerCase();
+    const androidHash = String(options?.androidHash || "").trim();
+
+    if (platform === "android" && androidHash) {
+        return `<#> ${baseHebrew}\n${androidHash}`.trimEnd();
+    }
+
+    if (platform === "web") {
+        return `${baseHebrew}\n\n@${WEBSITE_DOMAIN_FALLBACK} #${otpStr}`.trimEnd();
+    }
+
+    return baseHebrew.trimEnd();
+}
+
+function buildOtpSmsBodyForRequest(req, otp) {
+    const platform = getClientPlatform(req);
+    if (platform === "android") {
+
+        return buildOtpSmsBody(otp, { platform: "android", androidHash: ANDROID_SMS_RETRIEVER_HASH });
+    }
+
+    if (platform === "web") {
+        return buildOtpSmsBody(otp, { platform: "web", webDomain: WEBSITE_DOMAIN_FALLBACK });
+    }
+
+    return buildOtpSmsBody(otp);
 }
 
 const requestOtp = async (req, res) => {
@@ -55,7 +91,7 @@ const requestOtp = async (req, res) => {
 
         if (FORCE_SEND_SMS_ALL || !isSuperUser) {
             try {
-                sendMessage(buildOtpSmsBody(otp), formatedPhoneNumber);
+                sendMessage(buildOtpSmsBodyForRequest(req, otp), formatedPhoneNumber);
             } catch (e) {
                 console.warn("SMS send failed:", e?.message);
             }
@@ -166,7 +202,7 @@ const register = async (req, res) => {
 
         if (FORCE_SEND_SMS_ALL || !isSuperUser) {
             try {
-                sendMessage(buildOtpSmsBody(otp), formatedPhoneNumber);
+                sendMessage(buildOtpSmsBodyForRequest(req, otp), formatedPhoneNumber);
             } catch (e) {
                 console.warn("כשל בשליחת SMS לאחר הרשמה:", e?.message);
             }

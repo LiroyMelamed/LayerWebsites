@@ -8,13 +8,9 @@ function normalizeBaseUrl(url) {
 }
 
 function resolveApiBaseUrl() {
-    // CRA exposes REACT_APP_* env vars at build time.
     const fromEnv = normalizeBaseUrl(process.env.REACT_APP_API_BASE_URL);
     if (fromEnv) return fromEnv;
 
-    // Backwards-compatible defaults:
-    // - Dev: localhost backend
-    // - Prod build: production API
     return process.env.NODE_ENV === "production" ? prodURL : stageURL;
 }
 
@@ -29,6 +25,7 @@ ApiUtils.interceptors.request.use((config) => {
         config.headers.Authorization = `Bearer ${token}`;
     }
     // config.headers["ngrok-skip-browser-warning"] = "true";
+    config.headers["x-client-platform"] = "web";
 
     return config;
 });
