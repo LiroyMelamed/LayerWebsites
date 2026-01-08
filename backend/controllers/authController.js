@@ -1,4 +1,5 @@
 const pool = require("../config/db"); // pg pool
+const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const { formatPhoneNumber } = require("../utils/phoneUtils");
 const { sendMessage } = require("../utils/sendMessage");
@@ -7,12 +8,68 @@ require("dotenv").config();
 const SECRET_KEY = process.env.JWT_SECRET || "supersecretkey";
 const FORCE_SEND_SMS_ALL = process.env.FORCE_SEND_SMS_ALL === "true";
 
+const ACCESS_TOKEN_TTL = String(process.env.ACCESS_TOKEN_TTL || "30d");
+
+const REFRESH_TOKEN_TTL_DAYS = Number(process.env.REFRESH_TOKEN_TTL_DAYS || 90);
+const REFRESH_TOKEN_PEPPER = String(process.env.REFRESH_TOKEN_PEPPER || "");
+
 const ANDROID_SMS_RETRIEVER_HASH = String(process.env.ANDROID_SMS_RETRIEVER_HASH || "").trim();
 const WEBSITE_DOMAIN_FALLBACK = String(process.env.WEBSITE_DOMAIN || "").trim();
 
 function getClientPlatform(req) {
     const raw = req?.headers?.["x-client-platform"];
     return String(raw || "").trim().toLowerCase();
+}
+
+function getBearerToken(req) {
+    const auth = String(req?.headers?.authorization || req?.headers?.Authorization || "").trim();
+    if (!auth) return "";
+    const m = auth.match(/^Bearer\s+(.+)$/i);
+    return m ? String(m[1] || "").trim() : "";
+}
+
+function base64UrlFromBuffer(buffer) {
+    return buffer
+        .toString("base64")
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/g, "");
+}
+
+function generateRefreshToken() {
+    // 48 bytes -> 64 chars-ish base64url. High entropy, URL-safe.
+    return base64UrlFromBuffer(crypto.randomBytes(48));
+}
+
+function hashRefreshToken(rawToken) {
+    const token = String(rawToken || "").trim();
+    // Pepper is optional; token is already high entropy.
+    return crypto.createHash("sha256").update(token).update(REFRESH_TOKEN_PEPPER).digest("hex");
+}
+
+function computeRefreshTokenExpiryDate() {
+    const days = Number.isFinite(REFRESH_TOKEN_TTL_DAYS) && REFRESH_TOKEN_TTL_DAYS > 0 ? REFRESH_TOKEN_TTL_DAYS : 90;
+    return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+}
+
+function signAccessToken({ userid, role, phonenumber }) {
+    return jwt.sign({ userid, phonenumber, role }, SECRET_KEY, { expiresIn: ACCESS_TOKEN_TTL });
+}
+
+async function createRefreshTokenRow({ client, userid, userAgent, ipAddress }) {
+    const refreshToken = generateRefreshToken();
+    const tokenHash = hashRefreshToken(refreshToken);
+    const expiresAt = computeRefreshTokenExpiryDate();
+
+    await client.query(
+        `
+        INSERT INTO refresh_tokens (userid, token_hash, expires_at, user_agent, ip_address)
+        VALUES ($1, $2, $3, $4, $5)
+        `,
+        [userid, tokenHash, expiresAt, userAgent || null, ipAddress || null]
+    );
+
+    return { refreshToken, tokenHash, expiresAt };
 }
 
 function buildOtpSmsBody(otp, options = {}) {
@@ -125,11 +182,7 @@ const verifyOtp = async (req, res) => {
         }
 
         const { userid, role, phonenumber } = result.rows[0];
-        const token = jwt.sign(
-            { userid, phonenumber, role },
-            SECRET_KEY,
-            { expiresIn: "30d" }
-        );
+        const token = signAccessToken({ userid, role, phonenumber });
 
         // Invalidate the OTP after successful verification to prevent replay
         try {
@@ -141,11 +194,165 @@ const verifyOtp = async (req, res) => {
             console.warn('Warning: failed to delete OTP after verification', delErr?.message);
         }
 
-        return res.status(200).json({ message: "קוד אומת בהצלחה", token, role });
+        // Issue refresh token (for long-lived sessions / biometrics). If DB migration isn't applied yet,
+        // fall back gracefully to avoid taking login down during rollout.
+        let refreshToken = null;
+        try {
+            const client = await pool.connect();
+            try {
+                const userAgent = String(req?.headers?.['user-agent'] || "").slice(0, 400) || null;
+                const ipAddress = String(req?.ip || "").slice(0, 200) || null;
+                const row = await createRefreshTokenRow({ client, userid, userAgent, ipAddress });
+                refreshToken = row.refreshToken;
+            } finally {
+                client.release();
+            }
+        } catch (rtErr) {
+            // 42P01 = undefined_table (migration not applied yet)
+            if (rtErr?.code === '42P01') {
+                console.warn('refresh_tokens table missing; skipping refresh token issuance');
+            } else {
+                console.warn('failed to issue refresh token:', rtErr?.message);
+            }
+        }
+
+        return res.status(200).json({ message: "קוד אומת בהצלחה", token, role, refreshToken });
     } catch (error) {
         console.error("שגיאה בתהליך האימות:", error);
         return res.status(500).json({ message: "שגיאה בתהליך האימות" });
     }
+};
+
+const refreshToken = async (req, res) => {
+    const rawRefreshToken = String(req?.body?.refreshToken || "").trim();
+    if (!rawRefreshToken) {
+        return res.status(400).json({ message: 'Missing refreshToken' });
+    }
+
+    const tokenHash = hashRefreshToken(rawRefreshToken);
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        const found = await client.query(
+            `
+            SELECT rt.refresh_token_id, rt.userid, rt.expires_at, rt.revoked_at,
+                   u.role, u.phonenumber
+            FROM refresh_tokens rt
+            JOIN users u ON u.userid = rt.userid
+            WHERE rt.token_hash = $1
+            LIMIT 1
+            `,
+            [tokenHash]
+        );
+
+        if (found.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(401).json({ message: 'Invalid refresh token' });
+        }
+
+        const row = found.rows[0];
+
+        if (row.revoked_at) {
+            await client.query('ROLLBACK');
+            return res.status(401).json({ message: 'Refresh token revoked' });
+        }
+
+        if (row.expires_at && new Date(row.expires_at).getTime() <= Date.now()) {
+            await client.query('ROLLBACK');
+            return res.status(401).json({ message: 'Refresh token expired' });
+        }
+
+        // Rotate refresh token on each refresh.
+        const userAgent = String(req?.headers?.['user-agent'] || "").slice(0, 400) || null;
+        const ipAddress = String(req?.ip || "").slice(0, 200) || null;
+        const newTokenRow = await createRefreshTokenRow({ client, userid: row.userid, userAgent, ipAddress });
+
+        await client.query(
+            `
+            UPDATE refresh_tokens
+            SET revoked_at = NOW(), replaced_by_token_hash = $2
+            WHERE refresh_token_id = $1
+            `,
+            [row.refresh_token_id, newTokenRow.tokenHash]
+        );
+
+        await client.query('COMMIT');
+
+        const token = signAccessToken({ userid: row.userid, role: row.role, phonenumber: row.phonenumber });
+        return res.status(200).json({ token, role: row.role, refreshToken: newTokenRow.refreshToken });
+    } catch (error) {
+        try {
+            await client.query('ROLLBACK');
+        } catch {
+            // ignore
+        }
+
+        if (error?.code === '42P01') {
+            return res.status(501).json({ message: 'Refresh tokens not available (migration not applied)' });
+        }
+
+        console.error('refreshToken error:', error);
+        return res.status(500).json({ message: 'Failed to refresh token' });
+    } finally {
+        client.release();
+    }
+};
+
+const logout = async (req, res) => {
+    const rawRefreshToken = String(req?.body?.refreshToken || "").trim();
+
+    // Option A: revoke the provided refresh token.
+    if (rawRefreshToken) {
+        const tokenHash = hashRefreshToken(rawRefreshToken);
+        try {
+            await pool.query(
+                `
+                UPDATE refresh_tokens
+                SET revoked_at = NOW()
+                WHERE token_hash = $1 AND revoked_at IS NULL
+                `,
+                [tokenHash]
+            );
+            return res.status(200).json({ ok: true });
+        } catch (error) {
+            if (error?.code === '42P01') {
+                return res.status(501).json({ message: 'Refresh tokens not available (migration not applied)' });
+            }
+            console.error('logout error:', error);
+            return res.status(500).json({ message: 'Failed to logout' });
+        }
+    }
+
+    // Option B: if caller has an access token, revoke all refresh tokens for that user.
+    const bearer = getBearerToken(req);
+    if (bearer) {
+        try {
+            const decoded = jwt.verify(bearer, SECRET_KEY);
+            const userid = decoded?.userid;
+            if (!userid) {
+                return res.status(401).json({ message: 'Invalid access token' });
+            }
+
+            await pool.query(
+                `
+                UPDATE refresh_tokens
+                SET revoked_at = NOW()
+                WHERE userid = $1 AND revoked_at IS NULL
+                `,
+                [userid]
+            );
+            return res.status(200).json({ ok: true });
+        } catch (error) {
+            if (error?.code === '42P01') {
+                return res.status(501).json({ message: 'Refresh tokens not available (migration not applied)' });
+            }
+            return res.status(401).json({ message: 'Invalid access token' });
+        }
+    }
+
+    return res.status(400).json({ message: 'Provide refreshToken or Authorization bearer token' });
 };
 
 const register = async (req, res) => {
@@ -218,5 +425,7 @@ const register = async (req, res) => {
 module.exports = {
     requestOtp,
     verifyOtp,
+    refreshToken,
+    logout,
     register,
 };
