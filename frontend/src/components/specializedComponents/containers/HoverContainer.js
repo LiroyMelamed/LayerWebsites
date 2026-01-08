@@ -20,7 +20,7 @@ const HoverContainer = ({
     style: _style,
     className,
 }) => {
-    const [position, setPosition] = useState({ top: 0, inlineStart: 0 });
+    const [position, setPosition] = useState({ top: 0, left: 0 });
     const hoverRef = useRef(null);
 
     useEffect(() => {
@@ -29,19 +29,16 @@ const HoverContainer = ({
                 const targetRect = targetRef.current.getBoundingClientRect();
                 const hoverRect = hoverRef.current.getBoundingClientRect();
 
-                const direction = window.getComputedStyle(document.documentElement).direction;
-                const isRtl = direction === 'rtl';
-
-                const physicalLeft = targetRect.left + targetRect.width / 2 - hoverRect.width / 2 + window.scrollX;
                 const viewportWidth = window.innerWidth;
 
-                const inlineStart = isRtl
-                    ? Math.max(0, viewportWidth - physicalLeft - hoverRect.width)
-                    : Math.max(0, physicalLeft);
+                // Use viewport-relative coordinates (pairs with `position: fixed`).
+                const desiredLeft = targetRect.left + targetRect.width / 2 - hoverRect.width / 2;
+                const margin = 8;
+                const left = Math.max(margin, Math.min(desiredLeft, viewportWidth - hoverRect.width - margin));
 
                 setPosition({
-                    top: targetRect.bottom + window.scrollY + 4,
-                    inlineStart,
+                    top: targetRect.bottom + 4,
+                    left,
                 });
             }
         };
@@ -54,12 +51,13 @@ const HoverContainer = ({
 
         adjustPosition();
         window.addEventListener('resize', adjustPosition);
-        window.addEventListener('scroll', adjustPosition);
+        // Capture scroll events from scrollable parents (e.g., popups/modals).
+        window.addEventListener('scroll', adjustPosition, true);
         document.addEventListener('mousedown', handleClickOutside);
 
         return () => {
             window.removeEventListener('resize', adjustPosition);
-            window.removeEventListener('scroll', adjustPosition);
+            window.removeEventListener('scroll', adjustPosition, true);
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [targetRef, onClose]);
@@ -69,7 +67,7 @@ const HoverContainer = ({
 
         // runtime dynamic: positioned relative to the target element
         hoverRef.current.style.setProperty('--lw-hoverContainer-top', `${position.top}px`);
-        hoverRef.current.style.setProperty('--lw-hoverContainer-inlineStart', `${position.inlineStart}px`);
+        hoverRef.current.style.setProperty('--lw-hoverContainer-left', `${position.left}px`);
     }, [position]);
 
     return (
@@ -90,13 +88,12 @@ const HoverContainer = ({
                                     key={`choiceNumber${index}`}
                                     className="lw-hoverContainer__option"
                                     onPressIn={(e) => {
-                                        // Keep input focused so SearchInput's onBlur doesn't
-                                        // close the results before the click handler runs.
+
                                         e.preventDefault();
                                     }}
                                     onPress={() => onPressButtonFunction(getButtonTextFunction?.(result), result)}
                                 >
-                                    <Text20>{getButtonTextFunction?.(result)}</Text20>
+                                    <Text20 className="lw-hoverContainer__optionText">{getButtonTextFunction?.(result)}</Text20>
                                 </SimpleButton>
 
                             ))}
@@ -107,8 +104,6 @@ const HoverContainer = ({
                                 <SimpleButton
                                     className="lw-hoverContainer__option"
                                     onPressIn={(e) => {
-                                        // Keep input focused so SearchInput's onBlur doesn't
-                                        // close the results before the click handler runs.
                                         e.preventDefault();
                                     }}
                                     onPress={() => {
@@ -116,12 +111,12 @@ const HoverContainer = ({
                                         onClose?.();
                                     }}
                                 >
-                                    <Text20>{emptyActionText}</Text20>
+                                    <Text20 className="lw-hoverContainer__optionText">{emptyActionText}</Text20>
                                 </SimpleButton>
                             </SimpleContainer>
                         ) : (
                             <SimpleContainer className="lw-hoverContainer__noResults">
-                                <Text20>לא נמצאו תוצאות</Text20>
+                                <Text20 className="lw-hoverContainer__optionText">לא נמצאו תוצאות</Text20>
                             </SimpleContainer>
                         )
                     )

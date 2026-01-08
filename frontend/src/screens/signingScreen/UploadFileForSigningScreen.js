@@ -355,12 +355,24 @@ export default function UploadFileForSigningScreen() {
                                 <label className="lw-uploadSigningScreen__label">חותמים שנבחרו *</label>
                                 <SimpleContainer className="lw-uploadSigningScreen__selectedSignersRow">
                                     {selectedSigners.map((s) => (
-                                        <SecondaryButton
-                                            key={s.UserId}
-                                            onPress={() => removeSigner(s.UserId)}
-                                        >
-                                            הסר {s.Name} ({s.UserId})
-                                        </SecondaryButton>
+                                        <SimpleContainer key={s.UserId} className="lw-uploadSigningScreen__signerChip">
+                                            <span className="lw-uploadSigningScreen__signerChipName">{s.Name}</span>
+                                            <button
+                                                type="button"
+                                                className="lw-uploadSigningScreen__signerChipRemove"
+                                                onClick={() => removeSigner(s.UserId)}
+                                                aria-label={`הסר ${s.Name}`}
+                                                title={`הסר ${s.Name}`}
+                                            >
+                                                X
+                                            </button>
+                                            <span
+                                                onClick={() => removeSigner(s.UserId)}
+                                                className="lw-signing-spotRemove"
+                                            >
+                                                X
+                                            </span>
+                                        </SimpleContainer>
                                     ))}
                                 </SimpleContainer>
                             </SimpleContainer>

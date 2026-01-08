@@ -30,7 +30,10 @@ const SearchInput = ({
     const [showResults, setShowResults] = useState(false);
     const targetRef = useRef(null);
 
-    useEffect(() => { setQuery(value) }, [value])
+    useEffect(() => {
+        // Avoid persisting accidental trailing spaces from selected values.
+        setQuery(String(value ?? '').trimEnd());
+    }, [value]);
 
     const handleInputChange = (event) => {
         setQuery(event.target.value);
@@ -52,9 +55,10 @@ const SearchInput = ({
     };
 
     function hoverButtonPressed(text, result) {
-        buttonPressFunction?.(text, result);
+        const cleanedText = String(text ?? '').trimEnd();
+        buttonPressFunction?.(cleanedText, result);
         setShowResults(false)
-        setQuery(text);
+        setQuery(cleanedText);
     }
 
     return (

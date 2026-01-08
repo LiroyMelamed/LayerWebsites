@@ -105,6 +105,46 @@
     min-inline-size: 0;
 }
 
+.lw-uploadSigningScreen__signerChip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    background-color: var(--lw-color-white);
+    border: 0.0625rem solid #e0e0e0;
+    min-inline-size: 0;
+}
+
+.lw-uploadSigningScreen__signerChipName {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-inline-size: 16rem;
+}
+
+.lw-uploadSigningScreen__signerChipRemove {
+    position: absolute;
+    top: -0.625rem;
+    inset-inline-end: -0.625rem;
+    width: 1rem;
+    height: 1rem;
+    background-color: var(--lw-color-negative, #C53030);
+    color: #fff;
+    border-radius: 50%;
+    font-size: 0.5rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
+    border: 0.125rem solid #fff;
+    padding: 0;
+    line-height: 1;
+}
+
 .lw-uploadSigningScreen__fileBox {
     border: 0.125rem dashed #1976d2;
     border-radius: 0.25rem;

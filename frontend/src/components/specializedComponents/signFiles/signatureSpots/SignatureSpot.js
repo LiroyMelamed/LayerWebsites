@@ -155,7 +155,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                     }}
                     className="lw-signing-spotRemove"
                 >
-                    מחק
+                    X
                 </span>
             )}
         </SimpleContainer>

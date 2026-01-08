@@ -3,7 +3,9 @@
 
 .lw-publicSigningScreen__container {
     width: 100%;
-    padding: 1rem;
+    height: 100vh;
+    overflow: hidden;
+    padding: 0;
 }
 
 .lw-publicSigningScreen__stack {

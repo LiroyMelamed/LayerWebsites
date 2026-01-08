@@ -9,13 +9,14 @@
 }
 
 .lw-simpleScreen__bg {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   object-fit: cover;
   z-index: 0;
 }
+
 
 .lw-simpleScreen__content {
   box-sizing: border-box;

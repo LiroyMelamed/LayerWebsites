@@ -3,6 +3,7 @@
 .lw-signing-scope {
     direction: rtl;
     text-align: center;
+    width: 100%;
 }
 
 .lw-signing-modal {
@@ -101,6 +102,36 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+}
+
+.lw-signing-savedSigPreviewWrap {
+    position: relative;
+    width: 100%;
+}
+
+.lw-signing-toggleSlot {
+    position: relative;
+    width: 100%;
+}
+
+.lw-signing-modeToggleText {
+    background-color: #fff;
+    text-align: center;
+    white-space: pre-line;
+}
+
+.lw-signing-modeToggleButton {
+    position: absolute;
+    top: 0rem;
+    left: 0rem;
+    z-index: 2;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    line-height: 1.1;
+    text-align: center;
+    white-space: normal;
 }
 
 .lw-signing-savedSigTopRow {
@@ -416,4 +447,41 @@
     font-size: 0.8125rem;
     color: #555;
     margin-bottom: 0.25rem;
+}
+
+/* Screen variant: use the same layout, but not as an overlay modal. */
+.lw-signing-screen {
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+}
+
+.lw-signing-screenContent {
+    width: 100%;
+    max-width: none;
+    max-height: none;
+    height: 100vh;
+    margin: 0;
+
+    /* Remove "card" look */
+    border-radius: 0;
+    box-shadow: none;
+}
+
+/* In screen mode, prevent the body column from scrolling; keep panels stable. */
+.lw-signing-screenContent .lw-signing-modalBody {
+    overflow: hidden;
+}
+
+/* Keep the signature panel always visible (no scroll). */
+.lw-signing-screenContent .lw-signing-sidePanel {
+    overflow: visible;
+}
+
+/* Allow only the PDF pane to scroll. */
+.lw-signing-screenContent .lw-signing-pdfContainer {
+    overflow: auto;
 }

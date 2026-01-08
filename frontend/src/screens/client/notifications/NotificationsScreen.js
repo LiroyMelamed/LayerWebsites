@@ -180,7 +180,9 @@ export default function NotificationsScreen() {
                                                     <PrimaryButton
                                                         size={buttonSizes.SMALL}
                                                         className="lw-notificationsScreen__signLinkButton"
+                                                        disabled={isRead}
                                                         onPress={() => {
+                                                            if (isRead) return;
                                                             try {
                                                                 window.location.assign(signingUrl);
                                                             } catch {

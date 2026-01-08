@@ -13,7 +13,6 @@ export default function SignatureSpotMarker({ spot, index, onUpdate, onRemove })
 
     return (
         <SimpleContainer>
-            {/* כותרת + כפתור הסרה */}
             <SimpleContainer>
                 <TextBold24>📍 מקום חתימה {index + 1}</TextBold24>
 
