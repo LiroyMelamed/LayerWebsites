@@ -97,16 +97,54 @@ const deleteAdmin = async (req, res) => {
     if (adminUserId === null) return;
 
     try {
-        const result = await pool.query(
-            `DELETE FROM users WHERE userid = $1 AND role = 'Admin'`,
-            [adminUserId]
-        );
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
 
-        if (result.rowCount === 0) {
-            return res.status(404).json({ message: "Admin not found or already deleted" });
+            // Ensure the target exists and is an Admin before cascading deletes.
+            const roleRes = await client.query('SELECT role FROM users WHERE userid = $1', [adminUserId]);
+            if (roleRes.rowCount === 0 || roleRes.rows[0]?.role !== 'Admin') {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ message: 'Admin not found or already deleted' });
+            }
+
+            // Mirror customer deletion cascade to satisfy FK constraints.
+            await client.query('DELETE FROM userdevices WHERE userid = $1', [adminUserId]);
+            await client.query('DELETE FROM otps WHERE userid = $1', [adminUserId]);
+            await client.query('DELETE FROM usernotifications WHERE userid = $1', [adminUserId]);
+
+            // Signing: signingfiles has FKs to users (lawyerid/clientid) without ON DELETE CASCADE.
+            // Delete related signingfiles first so deleting the admin user succeeds.
+            await client.query('DELETE FROM signingfiles WHERE lawyerid = $1 OR clientid = $1', [adminUserId]);
+
+            // Cases (defensive): if an admin ever owns cases, remove them too.
+            await client.query(
+                `
+                DELETE FROM casedescriptions
+                WHERE caseid IN (SELECT caseid FROM cases WHERE userid = $1)
+                `,
+                [adminUserId]
+            );
+            await client.query('DELETE FROM cases WHERE userid = $1', [adminUserId]);
+
+            const result = await client.query(
+                `DELETE FROM users WHERE userid = $1 AND role = 'Admin'`,
+                [adminUserId]
+            );
+
+            await client.query('COMMIT');
+
+            if (result.rowCount === 0) {
+                return res.status(404).json({ message: 'Admin not found or already deleted' });
+            }
+
+            return res.status(200).json({ message: 'Admin deleted successfully' });
+        } catch (innerError) {
+            await client.query('ROLLBACK');
+            throw innerError;
+        } finally {
+            client.release();
         }
-
-        res.status(200).json({ message: "Admin deleted successfully" });
     } catch (error) {
         console.error("Error deleting admin:", error);
         res.status(500).json({ message: "Error deleting admin" });
