@@ -351,6 +351,10 @@ const deleteCustomer = async (req, res) => {
             // 3. מחיקת רשומות קשורות בטבלה usernotifications
             await client.query("DELETE FROM usernotifications WHERE userid = $1", [userId]);
 
+            // 3.1 ניתוק מסמכי חתימה משויכים (לא מוחקים היסטוריית חתימות)
+            // דורש שהעמודה signingfiles.clientid תהיה NULLable ו-FK יהיה ON DELETE SET NULL
+            await client.query("UPDATE signingfiles SET clientid = NULL WHERE clientid = $1", [userId]);
+
             // 4. מחיקת תיאורי תיקים
             await client.query(
                 `
@@ -421,6 +425,9 @@ const deleteMyAccount = async (req, res) => {
             await client.query("DELETE FROM userdevices WHERE userid = $1", [userId]);
             await client.query("DELETE FROM otps WHERE userid = $1", [userId]);
             await client.query("DELETE FROM usernotifications WHERE userid = $1", [userId]);
+
+            // Signing: keep signing history, just detach this account from being the client.
+            await client.query("UPDATE signingfiles SET clientid = NULL WHERE clientid = $1", [userId]);
             await client.query(`
                 DELETE FROM casedescriptions
                 WHERE caseid IN (SELECT caseid FROM cases WHERE userid = $1)

@@ -865,7 +865,7 @@ exports.getLawyerSigningFiles = async (req, res) => {
                 coalesce(sum(case when ss.issigned = true then 1 else 0 end),0) as "SignedSpots"
              from signingfiles sf
              left join cases c  on c.caseid  = sf.caseid
-             join users u  on u.userid  = sf.clientid
+             left join users u  on u.userid  = sf.clientid
              left join signaturespots ss on ss.signingfileid = sf.signingfileid
              where sf.lawyerid = $1
              group by sf.signingfileid, sf.caseid, sf.filename,
