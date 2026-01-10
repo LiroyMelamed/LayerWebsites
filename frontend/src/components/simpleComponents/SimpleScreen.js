@@ -7,7 +7,6 @@ import './SimpleScreen.scss';
 export default function SimpleScreen({
     children,
     imageBackgroundSource,
-    screenStyle: _customScreenStyle,
     className,
     contentClassName,
     ...rest
