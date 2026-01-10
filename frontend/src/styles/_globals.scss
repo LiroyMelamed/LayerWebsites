@@ -130,3 +130,49 @@ select:not([dir]) {
     min-inline-size: 100%;
   }
 }
+
+/* Pull-to-refresh indicator (minimal, touch-focused) */
+.lw-pullRefresh {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.lw-pullRefresh__panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: v.$space-2;
+  padding: v.$space-2 v.$space-4;
+  color: var(--lw-color-text);
+  background: var(--lw-color-secondary);
+  border-bottom: 1px solid var(--lw-color-disabled);
+}
+
+.lw-pullRefresh__text {
+  font-size: 0.95rem;
+}
+
+.lw-pullRefresh__spinner {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 999px;
+  border: 2px solid var(--lw-color-disabled);
+  border-top-color: var(--lw-color-primary);
+  animation: lw-spin 0.75s linear infinite;
+}
+
+@keyframes lw-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
