@@ -22,14 +22,16 @@ function makeToken({ userid = 1, role = 'Admin' } = {}) {
   });
 }
 
-function expect400Json(res) {
-  assert.equal(res.status, 400);
+function expect422Json(res) {
+  assert.equal(res.status, 422);
   assert.equal(typeof res.body, 'object');
-  assert.equal(typeof res.body.message, 'string');
-  assert.ok(res.body.message.length > 0);
+  assert.equal(res.body.success, false);
+  assert.equal(res.body.errorCode, 'INVALID_PARAMETER');
+  assert.equal(res.body.code, 'INVALID_PARAMETER');
+  assert.equal(res.body?.errorCode, 'VALIDATION_ERROR');
 }
 
-test('invalid caseId param returns 400', async () => {
+test('invalid caseId param returns 422', async () => {
   resetStore();
   const app = require('../app');
 
@@ -37,10 +39,10 @@ test('invalid caseId param returns 400', async () => {
     .get('/api/Cases/GetCase/not-a-number')
     .set('Authorization', `Bearer ${makeToken({ role: 'User' })}`);
 
-  expect400Json(res);
+  expect422Json(res);
 });
 
-test('invalid CaseId alias param returns 400', async () => {
+test('invalid CaseId alias param returns 422', async () => {
   resetStore();
   const app = require('../app');
 
@@ -49,10 +51,10 @@ test('invalid CaseId alias param returns 400', async () => {
     .send({ Tag: true })
     .set('Authorization', `Bearer ${makeToken({ role: 'Admin' })}`);
 
-  expect400Json(res);
+  expect422Json(res);
 });
 
-test('invalid caseTypeId param returns 400', async () => {
+test('invalid caseTypeId param returns 422', async () => {
   resetStore();
   const app = require('../app');
 
@@ -60,10 +62,10 @@ test('invalid caseTypeId param returns 400', async () => {
     .get('/api/CaseTypes/GetCaseType/abc')
     .set('Authorization', `Bearer ${makeToken({ role: 'User' })}`);
 
-  expect400Json(res);
+  expect422Json(res);
 });
 
-test('invalid customerId param returns 400', async () => {
+test('invalid customerId param returns 422', async () => {
   resetStore();
   const app = require('../app');
 
@@ -72,10 +74,10 @@ test('invalid customerId param returns 400', async () => {
     .send({})
     .set('Authorization', `Bearer ${makeToken({ role: 'Admin' })}`);
 
-  expect400Json(res);
+  expect422Json(res);
 });
 
-test('invalid userId param returns 400', async () => {
+test('invalid userId param returns 422', async () => {
   resetStore();
   const app = require('../app');
 
@@ -83,10 +85,10 @@ test('invalid userId param returns 400', async () => {
     .delete('/api/Customers/DeleteCustomer/zzz')
     .set('Authorization', `Bearer ${makeToken({ role: 'Admin' })}`);
 
-  expect400Json(res);
+  expect422Json(res);
 });
 
-test('invalid notifications pagination returns 400', async () => {
+test('invalid notifications pagination returns 422', async () => {
   resetStore();
   const app = require('../app');
 
@@ -94,10 +96,10 @@ test('invalid notifications pagination returns 400', async () => {
     .get('/api/Notifications?limit=abc')
     .set('Authorization', `Bearer ${makeToken({ role: 'User' })}`);
 
-  expect400Json(res);
+  expect422Json(res);
 });
 
-test('invalid notification id param returns 400', async () => {
+test('invalid notification id param returns 422', async () => {
   resetStore();
   const app = require('../app');
 
@@ -105,10 +107,10 @@ test('invalid notification id param returns 400', async () => {
     .put('/api/Notifications/not-an-int/read')
     .set('Authorization', `Bearer ${makeToken({ role: 'User' })}`);
 
-  expect400Json(res);
+  expect422Json(res);
 });
 
-test('invalid signingFileId param returns 400', async () => {
+test('invalid signingFileId param returns 422', async () => {
   resetStore();
   const app = require('../app');
 
@@ -116,5 +118,5 @@ test('invalid signingFileId param returns 400', async () => {
     .get('/api/SigningFiles/not-a-number')
     .set('Authorization', `Bearer ${makeToken({ role: 'User' })}`);
 
-  expect400Json(res);
+  expect422Json(res);
 });

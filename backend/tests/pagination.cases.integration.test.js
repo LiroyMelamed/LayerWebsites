@@ -167,31 +167,38 @@ test('cases list pagination contract (integration)', async (t) => {
             assert.deepEqual(returnedIds, sortedCaseIds.slice(K, K + N));
         });
 
-        await t.test('caps + validation (400 on invalid values and > cap)', async () => {
+        await t.test('caps + validation (422 on invalid values and > cap)', async () => {
             const tooHigh = await request(app)
                 .get('/api/Cases/GetCases?limit=999')
                 .set('Authorization', authHeader);
-            assert.equal(tooHigh.status, 400);
-            assert.equal(typeof tooHigh.body?.message, 'string');
-            assert.ok(tooHigh.body.message.length > 0);
+            assert.equal(tooHigh.status, 422);
+            assert.equal(tooHigh.body?.success, false);
+            assert.equal(tooHigh.body?.errorCode, 'INVALID_PARAMETER');
+            assert.equal(tooHigh.body?.errorCode, 'VALIDATION_ERROR');
 
             const negativeLimit = await request(app)
                 .get('/api/Cases/GetCases?limit=-1')
                 .set('Authorization', authHeader);
-            assert.equal(negativeLimit.status, 400);
-            assert.equal(typeof negativeLimit.body?.message, 'string');
+            assert.equal(negativeLimit.status, 422);
+            assert.equal(negativeLimit.body?.success, false);
+            assert.equal(negativeLimit.body?.errorCode, 'INVALID_PARAMETER');
+            assert.equal(negativeLimit.body?.errorCode, 'VALIDATION_ERROR');
 
             const negativeOffset = await request(app)
                 .get('/api/Cases/GetCases?limit=2&offset=-1')
                 .set('Authorization', authHeader);
-            assert.equal(negativeOffset.status, 400);
-            assert.equal(typeof negativeOffset.body?.message, 'string');
+            assert.equal(negativeOffset.status, 422);
+            assert.equal(negativeOffset.body?.success, false);
+            assert.equal(negativeOffset.body?.errorCode, 'INVALID_PARAMETER');
+            assert.equal(negativeOffset.body?.errorCode, 'VALIDATION_ERROR');
 
             const nanLimit = await request(app)
                 .get('/api/Cases/GetCases?limit=abc')
                 .set('Authorization', authHeader);
-            assert.equal(nanLimit.status, 400);
-            assert.equal(typeof nanLimit.body?.message, 'string');
+            assert.equal(nanLimit.status, 422);
+            assert.equal(nanLimit.body?.success, false);
+            assert.equal(nanLimit.body?.errorCode, 'INVALID_PARAMETER');
+            assert.equal(nanLimit.body?.errorCode, 'VALIDATION_ERROR');
         });
     } finally {
         await cleanup({ prefix, userId, caseTypeId });

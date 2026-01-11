@@ -32,6 +32,5 @@ test('returns REQUEST_TOO_LARGE for oversized JSON', async () => {
 
     assert.equal(res.status, 413);
     assert.equal(res.body?.code, 'REQUEST_TOO_LARGE');
-    assert.equal(typeof res.body?.message, 'string');
-    assert.ok(res.body.message.length > 0);
+    assert.equal(res.body?.errorCode, 'REQUEST_TOO_LARGE');
 });

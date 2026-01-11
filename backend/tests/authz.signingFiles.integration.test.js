@@ -45,10 +45,13 @@ async function createUser({ prefix, role }) {
 }
 
 async function createSigningFile({ prefix, lawyerId, clientId }) {
+    const supportsPresentedHash = await hasColumn({ table: 'signingfiles', column: 'presentedpdfsha256' });
+    const presentedPdfSha256 = supportsPresentedHash ? '0'.repeat(64) : null;
+
     const res = await pool.query(
         `insert into signingfiles
-         (caseid, lawyerid, clientid, filename, filekey, originalfilekey, status, notes, expiresat)
-         values ($1,$2,$3,$4,$5,$5,'pending',$6,$7)
+         (caseid, lawyerid, clientid, filename, filekey, originalfilekey, status, notes, expiresat${supportsPresentedHash ? ', presentedpdfsha256' : ''})
+         values ($1,$2,$3,$4,$5,$5,'pending',$6,$7${supportsPresentedHash ? ', $8' : ''})
          returning signingfileid`,
         [
             null,
@@ -58,6 +61,7 @@ async function createSigningFile({ prefix, lawyerId, clientId }) {
             `${prefix}/filekey.pdf`,
             null,
             null,
+            ...(supportsPresentedHash ? [presentedPdfSha256] : []),
         ]
     );
 
@@ -91,16 +95,16 @@ async function createSignatureSpot({ signingFileId, signerUserId }) {
 async function cleanup({ signingFileId, userIds }) {
     try {
         if (signingFileId) {
-            await pool.query('delete from signaturespots where signingfileid = $1', [signingFileId]).catch(() => {});
-            await pool.query('delete from signingfiles where signingfileid = $1', [signingFileId]).catch(() => {});
+            await pool.query('delete from signaturespots where signingfileid = $1', [signingFileId]).catch(() => { });
+            await pool.query('delete from signingfiles where signingfileid = $1', [signingFileId]).catch(() => { });
         }
 
         if (Array.isArray(userIds)) {
             for (const uid of userIds) {
-                await pool.query('delete from userdevices where userid = $1', [uid]).catch(() => {});
-                await pool.query('delete from otps where userid = $1', [uid]).catch(() => {});
-                await pool.query('delete from usernotifications where userid = $1', [uid]).catch(() => {});
-                await pool.query('delete from users where userid = $1', [uid]).catch(() => {});
+                await pool.query('delete from userdevices where userid = $1', [uid]).catch(() => { });
+                await pool.query('delete from otps where userid = $1', [uid]).catch(() => { });
+                await pool.query('delete from usernotifications where userid = $1', [uid]).catch(() => { });
+                await pool.query('delete from users where userid = $1', [uid]).catch(() => { });
             }
         }
     } catch {
@@ -127,8 +131,7 @@ test('signing file details returns 403 for other user (and includes code)', asyn
 
         assert.equal(res.status, 403);
         assert.equal(res.body?.code, 'FORBIDDEN');
-        assert.equal(typeof res.body?.message, 'string');
-        assert.ok(res.body.message.length > 0);
+        assert.equal(typeof res.body?.errorCode, 'string');
     } finally {
         await cleanup({ signingFileId, userIds: [lawyerId, clientId, otherUserId] });
     }
@@ -146,17 +149,23 @@ test('signing file sign returns 403 for other user (and includes code)', async (
 
     const signingFileId = await createSigningFile({ prefix, lawyerId, clientId });
     const signatureSpotId = await createSignatureSpot({ signingFileId, signerUserId: clientId });
+    const signingSessionId = '11111111-1111-4111-8111-111111111111';
 
     try {
         const res = await request(app)
             .post(`/api/SigningFiles/${signingFileId}/sign`)
-            .send({ signatureSpotId })
-            .set('Authorization', `Bearer ${makeToken({ userid: otherUserId, role: 'User' })}`);
+            .set('x-signing-session-id', signingSessionId)
+            .set('Authorization', `Bearer ${makeToken({ userid: otherUserId, role: 'User' })}`)
+            .send({
+                signatureSpotId,
+                signingSessionId,
+                consentAccepted: true,
+                consentVersion: process.env.SIGNING_POLICY_VERSION || '2026-01-11',
+            });
 
         assert.equal(res.status, 403);
         assert.equal(res.body?.code, 'FORBIDDEN');
-        assert.equal(typeof res.body?.message, 'string');
-        assert.ok(res.body.message.length > 0);
+        assert.equal(typeof res.body?.errorCode, 'string');
     } finally {
         await cleanup({ signingFileId, userIds: [lawyerId, clientId, otherUserId] });
     }
