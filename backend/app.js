@@ -18,6 +18,8 @@ const signingFileRoutes = require("./routes/signingFileRoutes");
 
 const authMiddleware = require("./middlewares/authMiddleware");
 const { createRateLimitMiddleware, getClientIp } = require("./utils/rateLimiter");
+const errorHandler = require('./middlewares/errorHandler');
+const { sendError } = require('./utils/appError');
 
 const app = express();
 
@@ -72,9 +74,9 @@ app.use((req, res, next) => {
 
     res.setTimeout(API_REQUEST_TIMEOUT_MS, () => {
         if (res.headersSent) return;
-        return res.status(504).json({
-            code: 'REQUEST_TIMEOUT',
-            message: 'Request timed out',
+        return sendError(res, {
+            httpStatus: 504,
+            errorCode: 'REQUEST_TIMEOUT',
         });
     });
 
@@ -137,7 +139,12 @@ app.get("/api/cases", authMiddleware, async (req, res) => {
         return res.status(200).json({ ok: true });
     } catch (e) {
         console.error('DB sanity check failed:', e?.message);
-        return res.status(500).json({ ok: false });
+        return sendError(res, {
+            httpStatus: 500,
+            errorCode: 'INTERNAL_ERROR',
+            details: { check: 'db_sanity' },
+            legacyAliases: { ok: false },
+        });
     }
 });
 
@@ -145,28 +152,8 @@ app.get("/", (req, res) => {
     res.send("MelamedLaw API is running!");
 });
 
-// Friendly error handler for oversized requests
-app.use((err, req, res, next) => {
-    if (err && (err.type === 'entity.too.large' || err.statusCode === 413)) {
-        return res.status(413).json({ message: 'Request too large', code: 'REQUEST_TOO_LARGE' });
-    }
-    return next(err);
-});
-
-// Friendly error handler for timeouts / upstream socket issues
-app.use((err, req, res, next) => {
-    const code = err?.code;
-    if (code === 'ETIMEDOUT' || code === 'ESOCKETTIMEDOUT') {
-        return res.status(504).json({ message: 'Request timed out', code: 'REQUEST_TIMEOUT' });
-    }
-    return next(err);
-});
-
-app.use((err, req, res, next) => {
-    console.error(err?.stack || err);
-    if (res.headersSent) return next(err);
-    return res.status(500).json({ message: 'Internal server error', code: 'INTERNAL_ERROR' });
-});
+// Centralized error handler (must be last)
+app.use(errorHandler);
 
 process.on('SIGINT', async () => {
     console.log('Shutting down server...');

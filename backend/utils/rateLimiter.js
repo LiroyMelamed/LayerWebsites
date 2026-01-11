@@ -1,4 +1,6 @@
 const net = require('node:net');
+const { createAppError } = require('./appError');
+const { getHebrewMessage } = require('./errors.he');
 
 function toInt(value, fallback) {
     const parsed = Number.parseInt(value, 10);
@@ -198,11 +200,17 @@ function createRateLimitMiddleware({
                     })
                 );
 
-                return res.status(statusCode).json({
-                    message,
-                    code: 'RATE_LIMITED',
-                    retryAfterSeconds,
-                });
+                return next(
+                    createAppError(
+                        'RATE_LIMITED',
+                        statusCode,
+                        // Ignore custom message text; enforce Hebrew catalog.
+                        getHebrewMessage('RATE_LIMITED'),
+                        { retryAfterSeconds },
+                        { retryAfterSeconds },
+                        { retryAfterSeconds }
+                    )
+                );
             }
 
             return next();

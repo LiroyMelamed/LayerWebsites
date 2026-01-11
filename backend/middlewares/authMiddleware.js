@@ -1,6 +1,8 @@
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const { consume } = require("../utils/rateLimiter");
+const { createAppError } = require('../utils/appError');
+const { getHebrewMessage } = require('../utils/errors.he');
 
 // Define a secret key for JWTs. Use an environment variable in production.
 const SECRET_KEY = process.env.JWT_SECRET || "supersecretkey";
@@ -26,10 +28,7 @@ const authMiddleware = (req, res, next) => {
             })
         );
 
-        return res.status(401).json({
-            message: "נא לבצע התחברות מחדש",
-            code: 'UNAUTHORIZED',
-        });
+        return next(createAppError('UNAUTHORIZED', 401, getHebrewMessage('AUTH_REQUIRED')));
     }
 
     try {
@@ -71,11 +70,16 @@ const authMiddleware = (req, res, next) => {
                 })
             );
 
-            return res.status(429).json({
-                message: "יותר מדי בקשות. נסה שוב מאוחר יותר.",
-                code: 'RATE_LIMITED',
-                retryAfterSeconds,
-            });
+            return next(
+                createAppError(
+                    'RATE_LIMITED',
+                    429,
+                    getHebrewMessage('RATE_LIMITED'),
+                    { retryAfterSeconds },
+                    { retryAfterSeconds },
+                    { retryAfterSeconds }
+                )
+            );
         }
 
         // Pass control to the next handler in the middleware chain
@@ -90,10 +94,7 @@ const authMiddleware = (req, res, next) => {
             })
         );
 
-        res.status(401).json({
-            message: "נא לבצע התחברות מחדש",
-            code: 'UNAUTHORIZED',
-        });
+        return next(createAppError('UNAUTHORIZED', 401, getHebrewMessage('UNAUTHORIZED')));
     }
 };
 

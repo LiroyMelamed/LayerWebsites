@@ -4,7 +4,9 @@
  */
 module.exports = function requireAdmin(req, res, next) {
     if (req.user?.Role !== 'Admin') {
-        return res.status(403).json({ message: "אין הרשאה" });
+        const { createAppError } = require('../utils/appError');
+        const { getHebrewMessage } = require('../utils/errors.he');
+        return next(createAppError('FORBIDDEN', 403, getHebrewMessage('FORBIDDEN')));
     }
     return next();
 };

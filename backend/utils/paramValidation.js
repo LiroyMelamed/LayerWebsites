@@ -42,7 +42,14 @@ function requireInt(req, res, {
 
     const parsed = parsePositiveIntStrict(raw, { min, max });
     if (parsed === null) {
-        res.status(400).json({ message: message || `Invalid parameter: ${name}` });
+        const { sendError } = require('./appError');
+        const { getHebrewMessage } = require('./errors.he');
+        sendError(res, {
+            httpStatus: 422,
+            errorCode: 'INVALID_PARAMETER',
+            message: getHebrewMessage('INVALID_PARAMETER'),
+            details: { name },
+        });
         return null;
     }
 
@@ -73,7 +80,14 @@ function optionalInt(req, res, {
 
     const parsed = parsePositiveIntStrict(raw, { min, max });
     if (parsed === null) {
-        res.status(400).json({ message: message || `Invalid parameter: ${name}` });
+        const { sendError } = require('./appError');
+        const { getHebrewMessage } = require('./errors.he');
+        sendError(res, {
+            httpStatus: 422,
+            errorCode: 'INVALID_PARAMETER',
+            message: getHebrewMessage('INVALID_PARAMETER'),
+            details: { name },
+        });
         return null;
     }
 
