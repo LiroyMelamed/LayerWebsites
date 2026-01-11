@@ -10,8 +10,11 @@ const { sendMessage, WEBSITE_DOMAIN } = require("../utils/sendMessage");
 const { detectHebrewSignatureSpotsFromPdfBuffer, streamToBuffer } = require("../utils/signatureDetection");
 const { PDFDocument } = require("pdf-lib");
 const { v4: uuid } = require("uuid");
+const crypto = require('crypto');
 const { requireInt, parsePositiveIntStrict } = require("../utils/paramValidation");
 const { getPagination } = require("../utils/pagination");
+const { createAppError } = require('../utils/appError');
+const { getHebrewMessage } = require('../utils/errors.he');
 
 const BASE_RENDER_WIDTH = 800;
 
@@ -22,6 +25,181 @@ const MAX_SIGNATURE_IMAGE_BYTES = Number(
     process.env.MAX_SIGNATURE_IMAGE_BYTES || String(512 * 1024)
 );
 const SIGNING_PDF_OP_TIMEOUT_MS = Number(process.env.SIGNING_PDF_OP_TIMEOUT_MS || 20_000);
+const SIGNING_OTP_TTL_SECONDS = Number(process.env.SIGNING_OTP_TTL_SECONDS || 10 * 60);
+const SIGNING_OTP_MAX_ATTEMPTS = Number(process.env.SIGNING_OTP_MAX_ATTEMPTS || 5);
+const SIGNING_OTP_LOCK_MINUTES = Number(process.env.SIGNING_OTP_LOCK_MINUTES || 10);
+
+function appError(errorCode, httpStatus, { message, meta, extras, legacyAliases } = {}) {
+    return createAppError(
+        String(errorCode),
+        Number(httpStatus) || 500,
+        message || getHebrewMessage(errorCode),
+        meta,
+        extras,
+        legacyAliases
+    );
+}
+
+function fail(next, errorCode, httpStatus, options) {
+    return next(appError(errorCode, httpStatus, options));
+}
+
+function getSigningOtpPepper() {
+    const p = String(process.env.SIGNING_OTP_PEPPER || '').trim();
+    if (!p) throw new Error('SIGNING_OTP_PEPPER is not set');
+    return p;
+}
+
+// Legally relevant: this version is persisted on each signing request and surfaced in evidence packages.
+const SIGNING_POLICY_VERSION = String(process.env.SIGNING_POLICY_VERSION || '2026-01-11');
+
+// Legally relevant: the exact consent text presented in the UI must match this version.
+// If the consent text changes materially, bump SIGNING_POLICY_VERSION.
+const SIGNING_CONSENT_TEXT = String(
+    process.env.SIGNING_CONSENT_TEXT ||
+    'אני מאשר/ת כי קראתי את המסמך המוצג, ואני נותן/ת הסכמה לחתום עליו באופן אלקטרוני. ידוע לי כי חתימה ללא אימות OTP עשויה להפחית את חוזק הראיות במקרה של מחלוקת.'
+);
+
+function sha256Hex(buffer) {
+    return crypto.createHash('sha256').update(buffer).digest('hex');
+}
+
+function isUuid(v) {
+    return typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+}
+
+function normalizeUuidOrNull(v) {
+    const s = String(v || '').trim();
+    return isUuid(s) ? s : null;
+}
+
+function getRequestUserAgent(req) {
+    return String(req?.headers?.['user-agent'] || '').slice(0, 512) || null;
+}
+
+function getRequestIp(req) {
+    const xff = String(req?.headers?.['x-forwarded-for'] || '').split(',')[0]?.trim();
+    const ip = xff || req?.ip || null;
+    return ip ? String(ip) : null;
+}
+
+function getRequestIdFromReq(req) {
+    const h = String(req?.headers?.['x-request-id'] || '').trim();
+    return normalizeUuidOrNull(h);
+}
+
+function getSigningSessionIdFromReq(req) {
+    const header = String(req?.headers?.['x-signing-session-id'] || '').trim();
+    const body = String(req?.body?.signingSessionId || '').trim();
+    return normalizeUuidOrNull(body || header);
+}
+
+function safeJson(obj) {
+    try {
+        return JSON.stringify(obj ?? {});
+    } catch {
+        return '{}';
+    }
+}
+
+async function insertAuditEvent({
+    req,
+    eventType,
+    signingFileId = null,
+    signatureSpotId = null,
+    actorUserId = null,
+    actorType = null,
+    signingSessionId = null,
+    requestId = null,
+    success = true,
+    metadata = {},
+}) {
+    // Legally relevant: append-only event log supports reliability/chain-of-custody arguments.
+    const eventId = uuid();
+    const occurredAtUtc = new Date().toISOString();
+    const ip = req ? getRequestIp(req) : null;
+    const userAgent = req ? getRequestUserAgent(req) : null;
+    const effectiveSessionId = signingSessionId || (req ? getSigningSessionIdFromReq(req) : null);
+    const effectiveRequestId = requestId || (req ? getRequestIdFromReq(req) : null);
+
+    let prevHash = null;
+    if (signingFileId) {
+        try {
+            const prevRes = await pool.query(
+                `select event_hash as "EventHash"
+                 from audit_events
+                 where signingfileid = $1 and event_hash is not null
+                 order by occurred_at_utc desc
+                 limit 1`,
+                [signingFileId]
+            );
+            prevHash = prevRes.rows?.[0]?.EventHash || null;
+        } catch {
+            prevHash = null;
+        }
+    }
+
+    const baseForHash = safeJson({
+        eventId,
+        occurredAtUtc,
+        eventType,
+        signingFileId,
+        signatureSpotId,
+        actorUserId,
+        actorType,
+        ip,
+        userAgent,
+        signingSessionId: effectiveSessionId,
+        requestId: effectiveRequestId,
+        success,
+        metadata,
+        prevHash,
+    });
+    const eventHash = sha256Hex(Buffer.from(baseForHash, 'utf8'));
+
+    try {
+        await pool.query(
+            `insert into audit_events
+             (eventid, occurred_at_utc, event_type, signingfileid, signaturespotid,
+              actor_userid, actor_type, ip, user_agent, signing_session_id, request_id,
+              success, metadata, prev_event_hash, event_hash)
+             values ($1,$2,$3,$4,$5,$6,$7,$8::inet,$9,$10::uuid,$11::uuid,$12,$13::jsonb,$14,$15)`,
+            [
+                eventId,
+                occurredAtUtc,
+                String(eventType),
+                signingFileId,
+                signatureSpotId,
+                actorUserId,
+                actorType,
+                ip,
+                userAgent,
+                effectiveSessionId,
+                effectiveRequestId,
+                Boolean(success),
+                safeJson(metadata),
+                prevHash,
+                eventHash,
+            ]
+        );
+    } catch (err) {
+        const code = String(err?.code || '');
+        const msg = String(err?.message || '').toLowerCase();
+        const isPermissionDenied = code === '42501' || msg.includes('permission denied');
+
+        // For court-ready environments, audit logging should be fail-closed.
+        // In dev/test, allow core flows to work while still emitting a loud warning.
+        const failClosed = String(process.env.IS_PRODUCTION || 'false').toLowerCase() === 'true';
+        if (!failClosed && isPermissionDenied) {
+            console.warn('[audit_events] write failed (permission denied); continuing in non-production');
+            return { eventId, eventHash };
+        }
+
+        throw err;
+    }
+
+    return { eventId, eventHash };
+}
 
 function getJwtSecret() {
     const s = process.env.JWT_SECRET;
@@ -122,10 +300,10 @@ async function getSavedSignatureDataUrlByKey(key) {
 }
 
 // Saved signature (auth)
-exports.getSavedSignature = async (req, res) => {
+exports.getSavedSignature = async (req, res, next) => {
     try {
         const userId = req.user?.UserId;
-        if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+        if (!userId) return fail(next, 'UNAUTHORIZED', 401);
 
         const key = getSavedSignatureKey(userId);
         const exists = await savedSignatureExists(key);
@@ -135,14 +313,14 @@ exports.getSavedSignature = async (req, res) => {
         return res.json({ exists: true, url, key });
     } catch (err) {
         console.error('getSavedSignature error:', err);
-        return res.status(500).json({ message: 'שגיאה בשליפת חתימה שמורה' });
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליפת חתימה שמורה' });
     }
 };
 
-exports.getSavedSignatureDataUrl = async (req, res) => {
+exports.getSavedSignatureDataUrl = async (req, res, next) => {
     try {
         const userId = req.user?.UserId;
-        if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+        if (!userId) return fail(next, 'UNAUTHORIZED', 401);
 
         const key = getSavedSignatureKey(userId);
         const exists = await savedSignatureExists(key);
@@ -152,21 +330,21 @@ exports.getSavedSignatureDataUrl = async (req, res) => {
         return res.json({ exists: true, dataUrl, key });
     } catch (err) {
         console.error('getSavedSignatureDataUrl error:', err);
-        return res.status(500).json({ message: 'שגיאה בשליפת חתימה שמורה' });
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליפת חתימה שמורה' });
     }
 };
 
-exports.saveSavedSignature = async (req, res) => {
+exports.saveSavedSignature = async (req, res, next) => {
     try {
         const userId = req.user?.UserId;
-        if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+        if (!userId) return fail(next, 'UNAUTHORIZED', 401);
 
         const parsed = parseDataUrlImage(req.body?.signatureImage);
         if (!parsed.ok) {
-            return res.status(parsed.code === 'REQUEST_TOO_LARGE' ? 413 : 400).json({
-                message: parsed.message,
-                code: parsed.code,
-            });
+            if (parsed.code === 'REQUEST_TOO_LARGE') {
+                return fail(next, 'REQUEST_TOO_LARGE', 413);
+            }
+            return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'signatureImage' } });
         }
 
         const key = getSavedSignatureKey(userId);
@@ -182,16 +360,16 @@ exports.saveSavedSignature = async (req, res) => {
         return res.json({ success: true, key });
     } catch (err) {
         console.error('saveSavedSignature error:', err);
-        return res.status(500).json({ message: 'שגיאה בשמירת חתימה שמורה' });
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשמירת חתימה שמורה' });
     }
 };
 
 // Saved signature (public token)
-exports.getPublicSavedSignature = async (req, res) => {
+exports.getPublicSavedSignature = async (req, res, next) => {
     try {
         const verified = verifyPublicSigningToken(req.params.token);
         if (!verified.ok) {
-            return res.status(verified.status).json({ message: verified.message });
+            return fail(next, verified.errorCode, verified.httpStatus);
         }
 
         const { signerUserId } = verified;
@@ -203,15 +381,15 @@ exports.getPublicSavedSignature = async (req, res) => {
         return res.json({ exists: true, url, key });
     } catch (err) {
         console.error('getPublicSavedSignature error:', err);
-        return res.status(500).json({ message: 'שגיאה בשליפת חתימה שמורה' });
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליפת חתימה שמורה' });
     }
 };
 
-exports.getPublicSavedSignatureDataUrl = async (req, res) => {
+exports.getPublicSavedSignatureDataUrl = async (req, res, next) => {
     try {
         const verified = verifyPublicSigningToken(req.params.token);
         if (!verified.ok) {
-            return res.status(verified.status).json({ message: verified.message });
+            return fail(next, verified.errorCode, verified.httpStatus);
         }
 
         const { signerUserId } = verified;
@@ -223,24 +401,24 @@ exports.getPublicSavedSignatureDataUrl = async (req, res) => {
         return res.json({ exists: true, dataUrl, key });
     } catch (err) {
         console.error('getPublicSavedSignatureDataUrl error:', err);
-        return res.status(500).json({ message: 'שגיאה בשליפת חתימה שמורה' });
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליפת חתימה שמורה' });
     }
 };
 
-exports.savePublicSavedSignature = async (req, res) => {
+exports.savePublicSavedSignature = async (req, res, next) => {
     try {
         const verified = verifyPublicSigningToken(req.params.token);
         if (!verified.ok) {
-            return res.status(verified.status).json({ message: verified.message });
+            return fail(next, verified.errorCode, verified.httpStatus);
         }
 
         const { signerUserId } = verified;
         const parsed = parseDataUrlImage(req.body?.signatureImage);
         if (!parsed.ok) {
-            return res.status(parsed.code === 'REQUEST_TOO_LARGE' ? 413 : 400).json({
-                message: parsed.message,
-                code: parsed.code,
-            });
+            if (parsed.code === 'REQUEST_TOO_LARGE') {
+                return fail(next, 'REQUEST_TOO_LARGE', 413);
+            }
+            return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'signatureImage' } });
         }
 
         const key = getSavedSignatureKey(signerUserId);
@@ -256,29 +434,32 @@ exports.savePublicSavedSignature = async (req, res) => {
         return res.json({ success: true, key });
     } catch (err) {
         console.error('savePublicSavedSignature error:', err);
-        return res.status(500).json({ message: 'שגיאה בשמירת חתימה שמורה' });
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשמירת חתימה שמורה' });
     }
 };
 
 function verifyPublicSigningToken(rawToken) {
     const token = String(rawToken || '').trim();
-    if (!token) return { ok: false, status: 401, message: 'Missing token' };
+    if (!token) return { ok: false, httpStatus: 401, errorCode: 'INVALID_TOKEN' };
     try {
         const decoded = jwt.verify(token, getJwtSecret());
         if (!decoded || decoded.typ !== 'signing_public') {
-            return { ok: false, status: 401, message: 'Invalid token' };
+            return { ok: false, httpStatus: 401, errorCode: 'INVALID_TOKEN' };
         }
         const signingFileId = Number(decoded.signingFileId);
         const signerUserId = Number(decoded.signerUserId);
         if (!Number.isFinite(signingFileId) || signingFileId <= 0) {
-            return { ok: false, status: 401, message: 'Invalid token' };
+            return { ok: false, httpStatus: 401, errorCode: 'INVALID_TOKEN' };
         }
         if (!Number.isFinite(signerUserId) || signerUserId <= 0) {
-            return { ok: false, status: 401, message: 'Invalid token' };
+            return { ok: false, httpStatus: 401, errorCode: 'INVALID_TOKEN' };
         }
         return { ok: true, signingFileId, signerUserId };
-    } catch {
-        return { ok: false, status: 401, message: 'Invalid token' };
+    } catch (e) {
+        if (e && e.name === 'TokenExpiredError') {
+            return { ok: false, httpStatus: 401, errorCode: 'TOKEN_EXPIRED' };
+        }
+        return { ok: false, httpStatus: 401, errorCode: 'INVALID_TOKEN' };
     }
 }
 
@@ -297,7 +478,20 @@ async function loadSigningFileBase({ signingFileId }) {
             createdat     as "CreatedAt",
             expiresat     as "ExpiresAt",
             rejectionreason as "RejectionReason",
-            notes         as "Notes"
+            notes         as "Notes",
+
+            requireotp    as "RequireOtp",
+            signingpolicyversion as "SigningPolicyVersion",
+            policyselectedbyuserid as "PolicySelectedByUserId",
+            policyselectedatutc as "PolicySelectedAtUtc",
+            otpwaiveracknowledged as "OtpWaiverAcknowledged",
+            otpwaiveracknowledgedatutc as "OtpWaiverAcknowledgedAtUtc",
+            otpwaiveracknowledgedbyuserid as "OtpWaiverAcknowledgedByUserId",
+
+            originalpdfsha256 as "OriginalPdfSha256",
+            presentedpdfsha256 as "PresentedPdfSha256",
+            signedpdfsha256 as "SignedPdfSha256",
+            immutableatutc as "ImmutableAtUtc"
          from signingfiles
          where signingfileid = $1`,
         [signingFileId]
@@ -308,7 +502,7 @@ async function loadSigningFileBase({ signingFileId }) {
 
 async function ensurePublicUserAuthorized({ signingFileId, userId, schemaSupport }) {
     const file = await loadSigningFileBase({ signingFileId });
-    if (!file) return { ok: false, status: 404, message: 'המסמך לא נמצא' };
+    if (!file) return { ok: false, httpStatus: 404, errorCode: 'DOCUMENT_NOT_FOUND' };
 
     const isLawyer = file.LawyerId === userId;
     const isPrimaryClient = file.ClientId === userId;
@@ -326,7 +520,7 @@ async function ensurePublicUserAuthorized({ signingFileId, userId, schemaSupport
     }
 
     if (!isLawyer && !isPrimaryClient && !isAssignedSigner) {
-        return { ok: false, status: 403, message: 'אין הרשאה למסמך זה', code: 'FORBIDDEN' };
+        return { ok: false, httpStatus: 403, errorCode: 'FORBIDDEN' };
     }
 
     return { ok: true, file, isLawyer, isPrimaryClient, isAssignedSigner };
@@ -378,6 +572,269 @@ async function getR2ObjectBuffer(key) {
     if (!obj.Body) throw new Error("R2 object has no body");
     const buffer = await streamToBuffer(obj.Body);
     return { buffer, contentType: obj.ContentType };
+}
+
+async function computeAndPersistUnsignedPdfEvidence({ signingFileId, unsignedPdfKey }) {
+    // Legally relevant: we persist a stable document fingerprint (SHA-256) and storage integrity metadata.
+    if (!signingFileId || !unsignedPdfKey) return;
+
+    const head = await headR2Object({ key: unsignedPdfKey });
+    const { buffer } = await getR2ObjectBuffer(unsignedPdfKey);
+    const pdfSha = sha256Hex(buffer);
+
+    const etag = head?.ETag ? String(head.ETag).replace(/\"/g, '') : null;
+    const versionId = head?.VersionId ? String(head.VersionId) : null;
+
+    // NOTE: the existing schema uses original* columns; in this product, they represent the unsigned PDF presented for signing.
+    await pool.query(
+        `update signingfiles
+         set presentedpdfsha256 = $2,
+             originalpdfsha256 = coalesce(originalpdfsha256, $2),
+             originalstoragebucket = $3,
+             originalstoragekey = $4,
+             originalstorageetag = $5,
+             originalstorageversionid = $6
+         where signingfileid = $1`,
+        [
+            signingFileId,
+            pdfSha,
+            BUCKET,
+            String(unsignedPdfKey),
+            etag,
+            versionId,
+        ]
+    );
+
+    return { pdfSha, etag, versionId };
+}
+
+async function getOrCreateConsent({ signingFileId, signerUserId, signingSessionId, consentVersion, req }) {
+    const failClosed = String(process.env.IS_PRODUCTION || 'false').toLowerCase() === 'true';
+
+    try {
+        const existing = await pool.query(
+            `select consentid as "ConsentId"
+             from signing_consents
+             where signingfileid = $1
+               and signeruserid = $2
+               and signingsessionid = $3
+             limit 1`,
+            [signingFileId, signerUserId, signingSessionId]
+        );
+        if (existing.rows.length > 0) return existing.rows[0].ConsentId;
+
+        const consentId = uuid();
+        const consentTextSha256 = sha256Hex(Buffer.from(`${consentVersion}|${SIGNING_CONSENT_TEXT}`, 'utf8'));
+
+        await pool.query(
+            `insert into signing_consents
+             (consentid, signingfileid, signeruserid, signingsessionid, consentversion, consenttextsha256, acceptedatutc, ip, user_agent)
+             values ($1,$2,$3,$4,$5,$6,now(),$7::inet,$8)
+             on conflict do nothing`,
+            [
+                consentId,
+                signingFileId,
+                signerUserId,
+                signingSessionId,
+                String(consentVersion),
+                consentTextSha256,
+                getRequestIp(req),
+                getRequestUserAgent(req),
+            ]
+        );
+
+        const after = await pool.query(
+            `select consentid as "ConsentId"
+             from signing_consents
+             where signingfileid = $1
+               and signeruserid = $2
+               and signingsessionid = $3
+             limit 1`,
+            [signingFileId, signerUserId, signingSessionId]
+        );
+        if (after.rows.length > 0) return after.rows[0].ConsentId;
+        return consentId;
+    } catch (err) {
+        const code = String(err?.code || '');
+        const msg = String(err?.message || '').toLowerCase();
+        const isPermissionDenied = code === '42501' || msg.includes('permission denied');
+        if (!failClosed && isPermissionDenied) {
+            console.warn('[signing_consents] write/read failed (permission denied); continuing in non-production');
+            return uuid();
+        }
+        throw err;
+    }
+}
+
+async function getVerifiedOtpChallengeIdOrNull({ signingFileId, signerUserId, signingSessionId, presentedPdfSha256 }) {
+    const failClosed = String(process.env.IS_PRODUCTION || 'false').toLowerCase() === 'true';
+
+    try {
+        const res = await pool.query(
+            `select challengeid as "ChallengeId"
+             from signing_otp_challenges
+             where signingfileid = $1
+               and signeruserid = $2
+               and signingsessionid = $3
+               and presentedpdfsha256 = $4
+               and verified = true
+               and verified_at_utc is not null
+               and expires_at_utc > now()
+             order by verified_at_utc desc
+             limit 1`,
+            [signingFileId, signerUserId, signingSessionId, String(presentedPdfSha256 || '')]
+        );
+        return res.rows?.[0]?.ChallengeId || null;
+    } catch (err) {
+        const code = String(err?.code || '');
+        const msg = String(err?.message || '').toLowerCase();
+        const isPermissionDenied = code === '42501' || msg.includes('permission denied');
+        if (!failClosed && isPermissionDenied) {
+            console.warn('[signing_otp_challenges] lookup failed (permission denied); treating as not verified in non-production');
+            return null;
+        }
+        throw err;
+    }
+}
+
+function generateNumericOtp6() {
+    // 6-digit numeric OTP for SMS usability
+    const n = crypto.randomInt(0, 1_000_000);
+    return String(n).padStart(6, '0');
+}
+
+function computeSigningOtpHash({ otp, salt }) {
+    // Legally relevant: OTP must not be stored in plaintext; we store an HMAC-based hash.
+    const pepper = getSigningOtpPepper();
+    return crypto.createHmac('sha256', pepper).update(`${salt}|${String(otp)}`).digest('hex');
+}
+
+async function lookupUserPhoneE164OrNull(userId) {
+    const phoneRes = await pool.query(
+        `select phonenumber as "PhoneNumber"
+         from users
+         where userid = $1`,
+        [userId]
+    );
+    const phoneNumber = phoneRes.rows?.[0]?.PhoneNumber;
+    const formatted = formatPhoneNumber(phoneNumber);
+    return formatted || null;
+}
+
+async function createSigningOtpChallenge({ signingFileId, signerUserId, signingSessionId, presentedPdfSha256, req }) {
+    const phoneE164 = await lookupUserPhoneE164OrNull(signerUserId);
+    if (!phoneE164) {
+        return { ok: false, httpStatus: 422, errorCode: 'MISSING_PHONE' };
+    }
+
+    const otp = generateNumericOtp6();
+    const challengeId = uuid();
+    const salt = uuid();
+    const otpHash = computeSigningOtpHash({ otp, salt });
+    const sentAtUtc = new Date();
+    const expiresAtUtc = new Date(sentAtUtc.getTime() + SIGNING_OTP_TTL_SECONDS * 1000);
+
+    await pool.query(
+        `insert into signing_otp_challenges
+         (challengeid, signingfileid, signeruserid, signingsessionid, phone_e164, presentedpdfsha256,
+          otp_hash, otp_salt, provider_message_id, sent_at_utc, expires_at_utc,
+          attempt_count, locked_until_utc, verified, request_ip, request_user_agent)
+         values
+         ($1,$2,$3,$4::uuid,$5,$6,$7,$8,$9, $10, $11, 0, null, false, $12::inet, $13)`,
+        [
+            challengeId,
+            signingFileId,
+            signerUserId,
+            signingSessionId,
+            phoneE164,
+            String(presentedPdfSha256),
+            otpHash,
+            salt,
+            null,
+            sentAtUtc.toISOString(),
+            expiresAtUtc.toISOString(),
+            getRequestIp(req),
+            getRequestUserAgent(req),
+        ]
+    );
+
+    // Send SMS (provider id is not currently captured by sendMessage); audit log still captures send time.
+    await sendMessage(`קוד אימות לחתימה: ${otp}`, phoneE164);
+
+    return {
+        ok: true,
+        challengeId,
+        phoneE164,
+        expiresAtUtc: expiresAtUtc.toISOString(),
+    };
+}
+
+async function verifySigningOtpChallenge({ signingFileId, signerUserId, signingSessionId, otp, presentedPdfSha256, req }) {
+    const rowRes = await pool.query(
+        `select
+            challengeid as "ChallengeId",
+            otp_hash as "OtpHash",
+            otp_salt as "OtpSalt",
+            expires_at_utc as "ExpiresAtUtc",
+            attempt_count as "AttemptCount",
+            locked_until_utc as "LockedUntilUtc",
+            verified as "Verified"
+         from signing_otp_challenges
+         where signingfileid = $1
+           and signeruserid = $2
+           and signingsessionid = $3
+           and presentedpdfsha256 = $4
+         order by sent_at_utc desc
+         limit 1`,
+        [signingFileId, signerUserId, signingSessionId, String(presentedPdfSha256)]
+    );
+
+    const row = rowRes.rows?.[0];
+    if (!row) return { ok: false, httpStatus: 404, errorCode: 'OTP_NOT_FOUND' };
+    if (row.Verified) return { ok: true, challengeId: row.ChallengeId, alreadyVerified: true };
+
+    const now = new Date();
+    if (row.ExpiresAtUtc && new Date(row.ExpiresAtUtc) <= now) {
+        return { ok: false, httpStatus: 403, errorCode: 'OTP_EXPIRED', challengeId: row.ChallengeId };
+    }
+
+    if (row.LockedUntilUtc && new Date(row.LockedUntilUtc) > now) {
+        return { ok: false, httpStatus: 429, errorCode: 'OTP_LOCKED', challengeId: row.ChallengeId };
+    }
+
+    const expected = String(row.OtpHash);
+    const computed = computeSigningOtpHash({ otp: String(otp), salt: String(row.OtpSalt) });
+    const isMatch = crypto.timingSafeEqual(Buffer.from(expected, 'utf8'), Buffer.from(computed, 'utf8'));
+
+    if (!isMatch) {
+        const attempts = Number(row.AttemptCount || 0) + 1;
+        const shouldLock = attempts >= SIGNING_OTP_MAX_ATTEMPTS;
+        const lockedUntil = shouldLock
+            ? new Date(now.getTime() + SIGNING_OTP_LOCK_MINUTES * 60 * 1000).toISOString()
+            : null;
+
+        await pool.query(
+            `update signing_otp_challenges
+             set attempt_count = $2,
+                 locked_until_utc = $3
+             where challengeid = $1`,
+            [row.ChallengeId, attempts, lockedUntil]
+        );
+
+        return { ok: false, httpStatus: 403, errorCode: 'OTP_INVALID', challengeId: row.ChallengeId };
+    }
+
+    await pool.query(
+        `update signing_otp_challenges
+         set verified = true,
+             verified_at_utc = now(),
+             verify_ip = $2::inet,
+             verify_user_agent = $3
+         where challengeid = $1`,
+        [row.ChallengeId, getRequestIp(req), getRequestUserAgent(req)]
+    );
+
+    return { ok: true, challengeId: row.ChallengeId, alreadyVerified: false };
 }
 
 async function generateSignedPdfBuffer({ pdfKey, spots }) {
@@ -459,7 +916,7 @@ async function ensureSignedPdfKey({ signingFileId, lawyerId, pdfKey }) {
     const signedPdf = await generateSignedPdfBuffer({ pdfKey, spots });
     const signedKey = `signed/${lawyerId}/${signingFileId}/${uuid()}.pdf`;
 
-    await r2.send(
+    const putRes = await r2.send(
         new PutObjectCommand({
             Bucket: BUCKET,
             Key: signedKey,
@@ -468,11 +925,29 @@ async function ensureSignedPdfKey({ signingFileId, lawyerId, pdfKey }) {
         })
     );
 
+    const etag = putRes?.ETag ? String(putRes.ETag).replace(/\"/g, '') : null;
+    const versionId = putRes?.VersionId ? String(putRes.VersionId) : null;
+    const signedSha = sha256Hex(signedPdf);
+
     await pool.query(
         `update signingfiles
-         set signedfilekey = $2
+         set signedfilekey = $2,
+             signedstoragebucket = $3,
+             signedstoragekey = $4,
+             signedstorageetag = $5,
+             signedstorageversionid = $6,
+             signedpdfsha256 = $7,
+             immutableatutc = coalesce(immutableatutc, now())
          where signingfileid = $1`,
-        [signingFileId, signedKey]
+        [
+            signingFileId,
+            signedKey,
+            BUCKET,
+            signedKey,
+            etag,
+            versionId,
+            signedSha,
+        ]
     );
 
     return signedKey;
@@ -517,7 +992,7 @@ async function getSchemaSupport() {
     return value;
 }
 
-exports.uploadFileForSigning = async (req, res) => {
+exports.uploadFileForSigning = async (req, res, next) => {
     try {
         const schemaSupport = await getSchemaSupport();
         const {
@@ -529,9 +1004,13 @@ exports.uploadFileForSigning = async (req, res) => {
             notes,
             expiresAt,
             signers, // NEW: array of signer objects [{userId, name}, ...]
+            signingConfig, // NEW: explicit signing policy selection (OTP required / waived)
         } = req.body;
 
-        const lawyerId = req.user.UserId;
+        const lawyerId = req.user?.UserId;
+        if (!lawyerId) {
+            return fail(next, 'UNAUTHORIZED', 401);
+        }
 
         if (isSigningDebugEnabled()) {
             console.log('[signing] uploadFileForSigning', {
@@ -553,9 +1032,7 @@ exports.uploadFileForSigning = async (req, res) => {
 
         // caseId is optional: can upload by client only, case only, or both
         if (!fileName || !fileKey || signersList.length === 0) {
-            return res
-                .status(400)
-                .json({ message: "חסרים שדות חובה (שם קובץ, fileKey, או חתומים)" });
+            return fail(next, 'VALIDATION_ERROR', 422);
         }
 
         // Enforce max PDF size by verifying object size in R2.
@@ -569,15 +1046,12 @@ exports.uploadFileForSigning = async (req, res) => {
             const head = await headR2Object({ key: fileKey });
             const size = Number(head?.ContentLength || 0);
             if (Number.isFinite(MAX_SIGNING_PDF_BYTES) && MAX_SIGNING_PDF_BYTES > 0 && size > MAX_SIGNING_PDF_BYTES) {
-                return res.status(413).json({
-                    code: 'REQUEST_TOO_LARGE',
-                    message: 'File is too large',
-                });
+                return fail(next, 'REQUEST_TOO_LARGE', 413);
             }
         } catch (e) {
             // If HEAD fails (missing key / perms / transient), treat as a safe client error.
             console.error('uploadFileForSigning headObject failed:', e?.message);
-            return res.status(400).json({ message: 'Invalid fileKey' });
+            return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'fileKey' } });
         }
 
         // Normalize caseId: allow null / empty / 0
@@ -587,29 +1061,76 @@ exports.uploadFileForSigning = async (req, res) => {
                 : parsePositiveIntStrict(caseId, { min: 1 });
 
         if (caseId !== undefined && caseId !== null && caseId !== '' && Number(caseId) !== 0 && normalizedCaseId === null) {
-            return res.status(400).json({ message: "Invalid parameter: caseId" });
+            return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'caseId' } });
         }
 
         // If DB doesn't allow NULL caseId, enforce it here with a clear message
         if (normalizedCaseId === null && !schemaSupport.signingfilesCaseIdNullable) {
-            return res.status(400).json({
-                message: "חובה לבחור תיק (המסד נתונים מוגדר ש-caseId אינו יכול להיות ריק).",
-            });
+            return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'caseId' } });
         }
 
         // For backward compatibility, use first signer as primary clientId
         const primaryClientId = signersList[0].userId || clientId;
 
+        // Court-ready requirement: OTP choice must be explicit and persisted per signing request.
+        const requireOtpRaw = signingConfig?.require_otp ?? signingConfig?.requireOtp;
+        const hasExplicitPolicySelection = requireOtpRaw === true || requireOtpRaw === false || requireOtpRaw === 1 || requireOtpRaw === 0;
+        if (!hasExplicitPolicySelection) {
+            return fail(next, 'SIGNING_POLICY_REQUIRED', 422);
+        }
+
+        const requireOtp = Boolean(requireOtpRaw);
+        const waiverAck = Boolean(signingConfig?.otpWaiverAcknowledged ?? signingConfig?.otp_waiver_acknowledged);
+        if (!requireOtp && !waiverAck) {
+            return fail(next, 'OTP_WAIVER_ACK_REQUIRED', 422);
+        }
+
         const insertFile = await pool.query(
             `insert into signingfiles
-             (caseid, lawyerid, clientid, filename, filekey, originalfilekey, status, notes, expiresat)
-             values ($1,$2,$3,$4,$5,$5,'pending',$6,$7)
+             (caseid, lawyerid, clientid, filename, filekey, originalfilekey, status, notes, expiresat,
+              requireotp, signingpolicyversion, policyselectedbyuserid, policyselectedatutc,
+              otpwaiveracknowledged, otpwaiveracknowledgedatutc, otpwaiveracknowledgedbyuserid)
+             values ($1,$2,$3,$4,$5,$5,'pending',$6,$7,
+              $8,$9,$10,now(),
+              $11,case when $11 = true then now() else null end,$12)
              returning signingfileid as "SigningFileId"`,
-            [normalizedCaseId, lawyerId, primaryClientId, fileName, fileKey, notes || null, expiresAt || null]
+            [
+                normalizedCaseId,
+                lawyerId,
+                primaryClientId,
+                fileName,
+                fileKey,
+                notes || null,
+                expiresAt || null,
+                requireOtp,
+                SIGNING_POLICY_VERSION,
+                lawyerId,
+                waiverAck,
+                waiverAck ? lawyerId : null,
+            ]
         );
 
         const signingFileId = insertFile.rows[0].SigningFileId;
         console.log('[controller] Created signing file with ID:', signingFileId);
+
+        await insertAuditEvent({
+            req,
+            eventType: 'SIGNING_POLICY_SELECTED',
+            signingFileId,
+            actorUserId: lawyerId,
+            actorType: 'lawyer',
+            success: true,
+            metadata: {
+                signingPolicyVersion: SIGNING_POLICY_VERSION,
+                requireOtp,
+                otpWaived: !requireOtp,
+                otpWaiverAcknowledged: waiverAck,
+                selectedByLawyerUserId: lawyerId,
+            },
+        });
+
+        // Compute and persist the unsigned PDF fingerprint now (avoids Range-request hashing issues later).
+        await computeAndPersistUnsignedPdfEvidence({ signingFileId, unsignedPdfKey: fileKey });
 
         if (Array.isArray(signatureLocations)) {
             console.log('[controller] Processing', signatureLocations.length, 'signature locations...');
@@ -699,6 +1220,21 @@ exports.uploadFileForSigning = async (req, res) => {
             });
             const publicUrl = buildPublicSigningUrl(token);
 
+            await insertAuditEvent({
+                req,
+                eventType: 'PUBLIC_LINK_ISSUED',
+                signingFileId,
+                actorUserId: lawyerId,
+                actorType: 'lawyer',
+                success: true,
+                metadata: {
+                    signingPolicyVersion: SIGNING_POLICY_VERSION,
+                    requireOtp,
+                    otpWaived: !requireOtp,
+                    targetSignerUserId: signerUserId,
+                },
+            });
+
             const message = publicUrl
                 ? `מסמך "${fileName}" מחכה לחתימה.\n${publicUrl}`
                 : `מסמך "${fileName}" מחכה לחתימה.`;
@@ -745,15 +1281,14 @@ exports.uploadFileForSigning = async (req, res) => {
         });
     } catch (err) {
         console.error("uploadFileForSigning error:", err);
-        return res
-            .status(500)
-            .json({ message: "שגיאה בהעלאת הקובץ לחתימה" });
+        return fail(next, 'INTERNAL_ERROR', 500, { message: "שגיאה בהעלאת הקובץ לחתימה" });
     }
 };
 
-exports.getClientSigningFiles = async (req, res) => {
+exports.getClientSigningFiles = async (req, res, next) => {
     try {
-        const clientId = req.user.UserId;
+        const clientId = req.user?.UserId;
+        if (!clientId) return fail(next, 'UNAUTHORIZED', 401);
         const pagination = getPagination(req, res, { defaultLimit: 50, maxLimit: 200 });
         if (pagination === null) return;
 
@@ -839,15 +1374,14 @@ exports.getClientSigningFiles = async (req, res) => {
         return res.json({ files: result.rows });
     } catch (err) {
         console.error("getClientSigningFiles error:", err);
-        return res
-            .status(500)
-            .json({ message: "שגיאה בשליפת המסמכים של הלקוח" });
+        return fail(next, 'INTERNAL_ERROR', 500, { message: "שגיאה בשליפת המסמכים של הלקוח" });
     }
 };
 
-exports.getLawyerSigningFiles = async (req, res) => {
+exports.getLawyerSigningFiles = async (req, res, next) => {
     try {
-        const lawyerId = req.user.UserId;
+        const lawyerId = req.user?.UserId;
+        if (!lawyerId) return fail(next, 'UNAUTHORIZED', 401);
         const pagination = getPagination(req, res, { defaultLimit: 50, maxLimit: 200 });
         if (pagination === null) return;
 
@@ -883,13 +1417,11 @@ exports.getLawyerSigningFiles = async (req, res) => {
         return res.json({ files: result.rows });
     } catch (err) {
         console.error("getLawyerSigningFiles error:", err);
-        return res
-            .status(500)
-            .json({ message: "שגיאה בשליפת המסמכים של העו\"ד" });
+        return fail(next, 'INTERNAL_ERROR', 500, { message: "שגיאה בשליפת המסמכים של העו\"ד" });
     }
 };
 
-exports.getPendingSigningFiles = async (req, res) => {
+exports.getPendingSigningFiles = async (req, res, next) => {
     try {
         const clientId = req.user.UserId;
         const pagination = getPagination(req, res, { defaultLimit: 50, maxLimit: 200 });
@@ -976,17 +1508,18 @@ exports.getPendingSigningFiles = async (req, res) => {
         return res.json({ files: result.rows });
     } catch (err) {
         console.error("getPendingSigningFiles error:", err);
-        return res
-            .status(500)
-            .json({ message: "שגיאה בשליפת מסמכים ממתינים" });
+        return fail(next, 'INTERNAL_ERROR', 500, { message: "שגיאה בשליפת מסמכים ממתינים" });
     }
 };
 
-exports.getSigningFileDetails = async (req, res) => {
+exports.getSigningFileDetails = async (req, res, next) => {
     try {
         const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
         if (signingFileId === null) return;
-        const userId = req.user.UserId;
+        const userId = req.user?.UserId;
+        if (!userId) {
+            return fail(next, 'UNAUTHORIZED', 401);
+        }
 
         const schemaSupport = await getSchemaSupport();
 
@@ -1005,14 +1538,25 @@ exports.getSigningFileDetails = async (req, res) => {
                 createdat       as "CreatedAt",
                 expiresat       as "ExpiresAt",
                 rejectionreason as "RejectionReason",
-                notes           as "Notes"
+                notes           as "Notes",
+
+                requireotp      as "RequireOtp",
+                signingpolicyversion as "SigningPolicyVersion",
+                policyselectedbyuserid as "PolicySelectedByUserId",
+                policyselectedatutc as "PolicySelectedAtUtc",
+                otpwaiveracknowledged as "OtpWaiverAcknowledged",
+                otpwaiveracknowledgedatutc as "OtpWaiverAcknowledgedAtUtc",
+                originalpdfsha256 as "OriginalPdfSha256",
+                presentedpdfsha256 as "PresentedPdfSha256",
+                signedpdfsha256 as "SignedPdfSha256",
+                immutableatutc as "ImmutableAtUtc"
              from signingfiles
              where signingfileid = $1`,
             [signingFileId]
         );
 
         if (fileResult.rows.length === 0) {
-            return res.status(404).json({ message: "המסמך לא נמצא" });
+            return fail(next, 'DOCUMENT_NOT_FOUND', 404);
         }
 
         const file = fileResult.rows[0];
@@ -1034,7 +1578,7 @@ exports.getSigningFileDetails = async (req, res) => {
         }
 
         if (!isLawyer && !isPrimaryClient && !isAssignedSigner) {
-            return res.status(403).json({ message: "אין הרשאה למסמך זה", code: 'FORBIDDEN' });
+            return fail(next, 'FORBIDDEN', 403);
         }
 
         // If user is NOT the lawyer (i.e., user is a client), filter spots to only show their assigned spots
@@ -1103,15 +1647,189 @@ exports.getSigningFileDetails = async (req, res) => {
         });
     } catch (err) {
         console.error("getSigningFileDetails error:", err);
-        return res
-            .status(500)
-            .json({ message: "שגיאה בשליפת פרטי המסמך" });
+        return fail(next, 'INTERNAL_ERROR', 500, { message: "שגיאה בשליפת פרטי המסמך" });
+    }
+};
+
+// Evidence package for court (non-PKI): hashes + policy + attribution + consent + OTP metadata + audit log.
+// IMPORTANT: do not return OTP hashes/salts.
+exports.getEvidencePackage = async (req, res, next) => {
+    try {
+        const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
+        if (signingFileId === null) return;
+
+        const requesterId = req.user?.UserId;
+        const role = req.user?.Role;
+
+        const file = await loadSigningPolicyForFile(signingFileId);
+        if (!file) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
+
+        const isOwnerLawyer = Number(file.LawyerId) === Number(requesterId);
+        const isAdmin = role === 'Admin';
+        if (!isOwnerLawyer && !isAdmin) {
+            return fail(next, 'FORBIDDEN', 403);
+        }
+
+        const fileEvidenceRes = await pool.query(
+            `select
+                signingfileid as "SigningFileId",
+                caseid as "CaseId",
+                lawyerid as "LawyerId",
+                clientid as "ClientId",
+                filename as "FileName",
+                filekey as "FileKey",
+                originalfilekey as "OriginalFileKey",
+                status as "Status",
+                createdat as "CreatedAt",
+                signedat as "SignedAt",
+                signedfilekey as "SignedFileKey",
+                immutableatutc as "ImmutableAtUtc",
+
+                requireotp as "RequireOtp",
+                signingpolicyversion as "SigningPolicyVersion",
+                policyselectedbyuserid as "PolicySelectedByUserId",
+                policyselectedatutc as "PolicySelectedAtUtc",
+                otpwaiveracknowledged as "OtpWaiverAcknowledged",
+                otpwaiveracknowledgedatutc as "OtpWaiverAcknowledgedAtUtc",
+                otpwaiveracknowledgedbyuserid as "OtpWaiverAcknowledgedByUserId",
+
+                originalpdfsha256 as "OriginalPdfSha256",
+                presentedpdfsha256 as "PresentedPdfSha256",
+                signedpdfsha256 as "SignedPdfSha256",
+
+                originalstoragebucket as "OriginalStorageBucket",
+                originalstoragekey as "OriginalStorageKey",
+                originalstorageetag as "OriginalStorageEtag",
+                originalstorageversionid as "OriginalStorageVersionId",
+
+                signedstoragebucket as "SignedStorageBucket",
+                signedstoragekey as "SignedStorageKey",
+                signedstorageetag as "SignedStorageEtag",
+                signedstorageversionid as "SignedStorageVersionId"
+             from signingfiles
+             where signingfileid = $1`,
+            [signingFileId]
+        );
+
+        const spotsRes = await pool.query(
+            `select
+                signaturespotid as "SignatureSpotId",
+                pagenumber as "PageNumber",
+                x as "X",
+                y as "Y",
+                width as "Width",
+                height as "Height",
+                signername as "SignerName",
+                signeruserid as "SignerUserId",
+                isrequired as "IsRequired",
+                issigned as "IsSigned",
+                signedat as "SignedAt",
+                signaturedata as "SignatureDataKey",
+
+                signerip as "SignerIp",
+                signeruseragent as "SignerUserAgent",
+                signingsessionid as "SigningSessionId",
+                presentedpdfsha256 as "PresentedPdfSha256",
+                otpverificationid as "OtpVerificationId",
+                consentid as "ConsentId",
+                signatureimagesha256 as "SignatureImageSha256",
+                signaturestorageetag as "SignatureStorageEtag",
+                signaturestorageversionid as "SignatureStorageVersionId"
+             from signaturespots
+             where signingfileid = $1
+             order by pagenumber, y, x`,
+            [signingFileId]
+        );
+
+        const consentRes = await pool.query(
+            `select
+                consentid as "ConsentId",
+                signeruserid as "SignerUserId",
+                signingsessionid as "SigningSessionId",
+                consentversion as "ConsentVersion",
+                consenttextsha256 as "ConsentTextSha256",
+                acceptedatutc as "AcceptedAtUtc",
+                ip as "Ip",
+                user_agent as "UserAgent"
+             from signing_consents
+             where signingfileid = $1
+             order by acceptedatutc asc`,
+            [signingFileId]
+        );
+
+        const otpRes = await pool.query(
+            `select
+                challengeid as "OtpVerificationId",
+                signeruserid as "SignerUserId",
+                signingsessionid as "SigningSessionId",
+                phone_e164 as "PhoneE164",
+                presentedpdfsha256 as "PresentedPdfSha256",
+                sent_at_utc as "SentAtUtc",
+                expires_at_utc as "ExpiresAtUtc",
+                verified as "Verified",
+                verified_at_utc as "VerifiedAtUtc",
+                attempt_count as "AttemptCount",
+                locked_until_utc as "LockedUntilUtc",
+                request_ip as "RequestIp",
+                request_user_agent as "RequestUserAgent",
+                verify_ip as "VerifyIp",
+                verify_user_agent as "VerifyUserAgent"
+             from signing_otp_challenges
+             where signingfileid = $1
+             order by sent_at_utc asc`,
+            [signingFileId]
+        );
+
+        const auditRes = await pool.query(
+            `select
+                eventid as "EventId",
+                occurred_at_utc as "OccurredAtUtc",
+                event_type as "EventType",
+                actor_userid as "ActorUserId",
+                actor_type as "ActorType",
+                ip as "Ip",
+                user_agent as "UserAgent",
+                signing_session_id as "SigningSessionId",
+                request_id as "RequestId",
+                success as "Success",
+                metadata as "Metadata",
+                prev_event_hash as "PrevEventHash",
+                event_hash as "EventHash"
+             from audit_events
+             where signingfileid = $1
+             order by occurred_at_utc asc`,
+            [signingFileId]
+        );
+
+        await insertAuditEvent({
+            req,
+            eventType: 'EVIDENCE_PACKAGE_VIEWED',
+            signingFileId,
+            actorUserId: requesterId,
+            actorType: isAdmin ? 'admin' : 'lawyer',
+            success: true,
+            metadata: {
+                signingPolicyVersion: String(file.SigningPolicyVersion || SIGNING_POLICY_VERSION),
+            },
+        });
+
+        return res.json({
+            generatedAtUtc: new Date().toISOString(),
+            file: fileEvidenceRes.rows?.[0] || null,
+            signatureSpots: spotsRes.rows || [],
+            consents: consentRes.rows || [],
+            otpVerifications: otpRes.rows || [],
+            auditEvents: auditRes.rows || [],
+        });
+    } catch (err) {
+        console.error('getEvidencePackage error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה ביצירת חבילת ראיות' });
     }
 };
 
 // Creates a signed public token that allows a specific user to sign without logging in.
 // Used for shareable links: the token is the only credential.
-exports.createPublicSigningLink = async (req, res) => {
+exports.createPublicSigningLink = async (req, res, next) => {
     try {
         const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
         if (signingFileId === null) return;
@@ -1123,26 +1841,30 @@ exports.createPublicSigningLink = async (req, res) => {
             `select signingfileid as "SigningFileId",
                     lawyerid      as "LawyerId",
                     clientid      as "ClientId",
-                    expiresat     as "ExpiresAt"
+                    expiresat     as "ExpiresAt",
+                    requireotp    as "RequireOtp",
+                    signingpolicyversion as "SigningPolicyVersion",
+                    policyselectedatutc  as "PolicySelectedAtUtc",
+                    otpwaiveracknowledged as "OtpWaiverAcknowledged"
              from signingfiles
              where signingfileid = $1`,
             [signingFileId]
         );
 
         if (fileResult.rows.length === 0) {
-            return res.status(404).json({ message: 'המסמך לא נמצא' });
+            return fail(next, 'DOCUMENT_NOT_FOUND', 404);
         }
 
         const file = fileResult.rows[0];
 
         // Only the owning lawyer can generate a public link.
         if (Number(file.LawyerId) !== Number(requesterId)) {
-            return res.status(403).json({ message: 'אין הרשאה למסמך זה', code: 'FORBIDDEN' });
+            return fail(next, 'FORBIDDEN', 403);
         }
 
         const targetSignerUserId = signerUserId || file.ClientId;
         if (!targetSignerUserId) {
-            return res.status(400).json({ message: 'Missing signerUserId' });
+            return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'signerUserId' } });
         }
 
         // Keep the public-link endpoint behavior consistent with notifications.
@@ -1156,18 +1878,107 @@ exports.createPublicSigningLink = async (req, res) => {
         const nowSeconds = Math.floor(Date.now() / 1000);
         const expiresIn = Math.max(60, Number(decoded?.exp || 0) - nowSeconds);
 
+        await insertAuditEvent({
+            req,
+            eventType: 'PUBLIC_LINK_ISSUED',
+            signingFileId,
+            actorUserId: requesterId,
+            actorType: 'lawyer',
+            success: true,
+            metadata: {
+                signingPolicyVersion: file.SigningPolicyVersion || SIGNING_POLICY_VERSION,
+                requireOtp: Boolean(file.RequireOtp),
+                otpWaived: !Boolean(file.RequireOtp),
+                otpWaiverAcknowledged: Boolean(file.OtpWaiverAcknowledged),
+                policySource: file.PolicySelectedAtUtc ? 'explicit' : 'legacy_default',
+                targetSignerUserId,
+            },
+        });
+
         return res.json({ token, expiresIn });
     } catch (err) {
         console.error('createPublicSigningLink error:', err);
-        return res.status(500).json({ message: 'שגיאה ביצירת קישור לחתימה' });
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה ביצירת קישור לחתימה' });
     }
 };
 
-exports.getPublicSigningFileDetails = async (req, res) => {
+// Explicit per-document signing policy configuration (lawyer-side)
+// Legally relevant: OTP opt-out must be explicit and persisted (no silent defaults).
+exports.updateSigningPolicy = async (req, res, next) => {
+    try {
+        const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
+        if (signingFileId === null) return;
+
+        const requesterId = req.user?.UserId;
+        const role = req.user?.Role;
+
+        const requireOtpRaw = req.body?.require_otp ?? req.body?.requireOtp;
+        const hasExplicitPolicySelection = requireOtpRaw === true || requireOtpRaw === false || requireOtpRaw === 1 || requireOtpRaw === 0;
+        if (!hasExplicitPolicySelection) {
+            return fail(next, 'SIGNING_POLICY_REQUIRED', 422);
+        }
+
+        const requireOtp = Boolean(requireOtpRaw);
+        const waiverAck = Boolean(req.body?.otpWaiverAcknowledged ?? req.body?.otp_waiver_acknowledged);
+        if (!requireOtp && !waiverAck) {
+            return fail(next, 'OTP_WAIVER_ACK_REQUIRED', 422);
+        }
+
+        const file = await loadSigningPolicyForFile(signingFileId);
+        if (!file) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
+
+        const isOwnerLawyer = Number(file.LawyerId) === Number(requesterId);
+        const isAdmin = role === 'Admin';
+        if (!isOwnerLawyer && !isAdmin) {
+            return fail(next, 'FORBIDDEN', 403);
+        }
+
+        await pool.query(
+            `update signingfiles
+             set requireotp = $2,
+                 signingpolicyversion = $3,
+                 policyselectedbyuserid = $4,
+                 policyselectedatutc = now(),
+                 otpwaiveracknowledged = $5,
+                 otpwaiveracknowledgedatutc = case when $5 = true then now() else null end,
+                 otpwaiveracknowledgedbyuserid = case when $5 = true then $4 else null end
+             where signingfileid = $1`,
+            [
+                signingFileId,
+                requireOtp,
+                SIGNING_POLICY_VERSION,
+                requesterId,
+                !requireOtp ? waiverAck : false,
+            ]
+        );
+
+        await insertAuditEvent({
+            req,
+            eventType: 'SIGNING_POLICY_SELECTED',
+            signingFileId,
+            actorUserId: requesterId,
+            actorType: isAdmin ? 'admin' : 'lawyer',
+            success: true,
+            metadata: {
+                signingPolicyVersion: SIGNING_POLICY_VERSION,
+                requireOtp,
+                otpWaived: !requireOtp,
+                otpWaiverAcknowledged: !requireOtp ? waiverAck : false,
+            },
+        });
+
+        return res.json({ success: true });
+    } catch (err) {
+        console.error('updateSigningPolicy error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בעדכון מדיניות חתימה' });
+    }
+};
+
+exports.getPublicSigningFileDetails = async (req, res, next) => {
     try {
         const verified = verifyPublicSigningToken(req.params.token);
         if (!verified.ok) {
-            return res.status(verified.status).json({ message: verified.message });
+            return fail(next, verified.errorCode, verified.httpStatus);
         }
 
         const { signingFileId, signerUserId } = verified;
@@ -1175,7 +1986,7 @@ exports.getPublicSigningFileDetails = async (req, res) => {
 
         const authz = await ensurePublicUserAuthorized({ signingFileId, userId: signerUserId, schemaSupport });
         if (!authz.ok) {
-            return res.status(authz.status).json({ message: authz.message, code: authz.code });
+            return fail(next, authz.errorCode, authz.httpStatus);
         }
 
         const { file, isLawyer } = authz;
@@ -1238,15 +2049,15 @@ exports.getPublicSigningFileDetails = async (req, res) => {
         });
     } catch (err) {
         console.error('getPublicSigningFileDetails error:', err);
-        return res.status(500).json({ message: 'שגיאה בשליפת פרטי המסמך' });
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליפת פרטי המסמך' });
     }
 };
 
-exports.publicSignFile = async (req, res) => {
+exports.publicSignFile = async (req, res, next) => {
     try {
         const verified = verifyPublicSigningToken(req.params.token);
         if (!verified.ok) {
-            return res.status(verified.status).json({ message: verified.message });
+            return fail(next, verified.errorCode, verified.httpStatus);
         }
 
         const { signingFileId, signerUserId } = verified;
@@ -1262,49 +2073,277 @@ exports.publicSignFile = async (req, res) => {
         // Reuse the same signing logic/authorization as the authenticated endpoint.
         req.params.signingFileId = String(signingFileId);
         req.user = { UserId: userId };
-        return exports.signFile(req, res);
+        return exports.signFile(req, res, next);
     } catch (err) {
         console.error('publicSignFile error:', err);
-        return res.status(500).json({ message: 'שגיאה בשמירת החתימה' });
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשמירת החתימה' });
     }
 };
 
-exports.publicRejectSigning = async (req, res) => {
+exports.publicRejectSigning = async (req, res, next) => {
     try {
         const verified = verifyPublicSigningToken(req.params.token);
         if (!verified.ok) {
-            return res.status(verified.status).json({ message: verified.message });
+            return fail(next, verified.errorCode, verified.httpStatus);
         }
 
         const { signingFileId, signerUserId } = verified;
         req.params.signingFileId = String(signingFileId);
         req.user = { UserId: signerUserId };
-        return exports.rejectSigning(req, res);
+        return exports.rejectSigning(req, res, next);
     } catch (err) {
         console.error('publicRejectSigning error:', err);
-        return res.status(500).json({ message: 'שגיאה בדחיית המסמך' });
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בדחיית המסמך' });
     }
 };
 
-exports.getPublicSigningFilePdf = async (req, res) => {
+exports.getPublicSigningFilePdf = async (req, res, next) => {
     try {
         const verified = verifyPublicSigningToken(req.params.token);
         if (!verified.ok) {
-            return res.status(verified.status).json({ message: verified.message });
+            return fail(next, verified.errorCode, verified.httpStatus);
         }
 
         const { signingFileId, signerUserId } = verified;
         req.params.signingFileId = String(signingFileId);
         req.user = { UserId: signerUserId };
-        return exports.getSigningFilePdf(req, res);
+        return exports.getSigningFilePdf(req, res, next);
     } catch (err) {
         console.error('getPublicSigningFilePdf error:', err);
-        return res.status(500).json({ message: 'שגיאה בטעינת PDF' });
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בטעינת PDF' });
+    }
+};
+
+async function ensurePresentedHashOrCompute({ signingFileId, fileKey }) {
+    const fileRes = await pool.query(
+        `select presentedpdfsha256 as "PresentedPdfSha256"
+         from signingfiles
+         where signingfileid = $1`,
+        [signingFileId]
+    );
+    const current = fileRes.rows?.[0]?.PresentedPdfSha256 || null;
+    if (current) return current;
+    await computeAndPersistUnsignedPdfEvidence({ signingFileId, unsignedPdfKey: fileKey });
+    const after = await pool.query(
+        `select presentedpdfsha256 as "PresentedPdfSha256"
+         from signingfiles
+         where signingfileid = $1`,
+        [signingFileId]
+    );
+    return after.rows?.[0]?.PresentedPdfSha256 || null;
+}
+
+async function loadSigningPolicyForFile(signingFileId) {
+    const r = await pool.query(
+        `select
+            signingfileid as "SigningFileId",
+            lawyerid as "LawyerId",
+            clientid as "ClientId",
+            filename as "FileName",
+            filekey as "FileKey",
+            requireotp as "RequireOtp",
+            signingpolicyversion as "SigningPolicyVersion",
+            policyselectedatutc as "PolicySelectedAtUtc",
+            otpwaiveracknowledged as "OtpWaiverAcknowledged",
+            presentedpdfsha256 as "PresentedPdfSha256"
+         from signingfiles
+         where signingfileid = $1`,
+        [signingFileId]
+    );
+    return r.rows?.[0] || null;
+}
+
+async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUserId, actorType }) {
+    const signingSessionId = getSigningSessionIdFromReq(req);
+    if (!signingSessionId) {
+        return fail(next, 'SIGNING_SESSION_REQUIRED', 422);
+    }
+
+    const schemaSupport = await getSchemaSupport();
+    const authz = await ensurePublicUserAuthorized({ signingFileId, userId: signerUserId, schemaSupport });
+    if (!authz.ok) {
+        return fail(next, authz.errorCode, authz.httpStatus);
+    }
+
+    const file = await loadSigningPolicyForFile(signingFileId);
+    if (!file) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
+
+    const presentedPdfSha256 = await ensurePresentedHashOrCompute({ signingFileId, fileKey: file.FileKey });
+    if (!presentedPdfSha256) {
+        return fail(next, 'MISSING_PRESENTED_HASH', 500);
+    }
+
+    const created = await createSigningOtpChallenge({
+        signingFileId,
+        signerUserId,
+        signingSessionId,
+        presentedPdfSha256,
+        req,
+    });
+    if (!created.ok) {
+        await insertAuditEvent({
+            req,
+            eventType: 'OTP_SENT',
+            signingFileId,
+            actorUserId: signerUserId,
+            actorType,
+            signingSessionId,
+            success: false,
+            metadata: { failure: created.errorCode },
+        });
+        return fail(next, created.errorCode, created.httpStatus);
+    }
+
+    await insertAuditEvent({
+        req,
+        eventType: 'OTP_SENT',
+        signingFileId,
+        actorUserId: signerUserId,
+        actorType,
+        signingSessionId,
+        success: true,
+        metadata: {
+            signingPolicyVersion: String(file.SigningPolicyVersion || SIGNING_POLICY_VERSION),
+            requireOtp: Boolean(file.RequireOtp),
+            otpWaived: !Boolean(file.RequireOtp),
+            policySource: file.PolicySelectedAtUtc ? 'explicit' : 'legacy_default',
+            presentedPdfSha256,
+            challengeId: created.challengeId,
+            expiresAtUtc: created.expiresAtUtc,
+        },
+    });
+
+    return res.json({ success: true, expiresAtUtc: created.expiresAtUtc });
+}
+
+async function verifySigningOtpImpl({ req, res, next, signingFileId, signerUserId, actorType }) {
+    const signingSessionId = getSigningSessionIdFromReq(req);
+    if (!signingSessionId) {
+        return fail(next, 'SIGNING_SESSION_REQUIRED', 422);
+    }
+
+    const otp = String(req.body?.otp || '').trim();
+    if (!/^[0-9]{6}$/.test(otp)) {
+        return fail(next, 'OTP_INVALID_FORMAT', 422);
+    }
+
+    const schemaSupport = await getSchemaSupport();
+    const authz = await ensurePublicUserAuthorized({ signingFileId, userId: signerUserId, schemaSupport });
+    if (!authz.ok) {
+        return fail(next, authz.errorCode, authz.httpStatus);
+    }
+
+    const file = await loadSigningPolicyForFile(signingFileId);
+    if (!file) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
+
+    const presentedPdfSha256 = await ensurePresentedHashOrCompute({ signingFileId, fileKey: file.FileKey });
+    if (!presentedPdfSha256) {
+        return fail(next, 'MISSING_PRESENTED_HASH', 500);
+    }
+
+    const verified = await verifySigningOtpChallenge({
+        signingFileId,
+        signerUserId,
+        signingSessionId,
+        otp,
+        presentedPdfSha256,
+        req,
+    });
+
+    await insertAuditEvent({
+        req,
+        eventType: 'OTP_VERIFIED',
+        signingFileId,
+        actorUserId: signerUserId,
+        actorType,
+        signingSessionId,
+        success: Boolean(verified.ok),
+        metadata: {
+            signingPolicyVersion: String(file.SigningPolicyVersion || SIGNING_POLICY_VERSION),
+            requireOtp: Boolean(file.RequireOtp),
+            otpWaived: !Boolean(file.RequireOtp),
+            policySource: file.PolicySelectedAtUtc ? 'explicit' : 'legacy_default',
+            presentedPdfSha256,
+            challengeId: verified.challengeId || null,
+            code: verified.ok ? 'OTP_OK' : verified.errorCode,
+        },
+    });
+
+    if (!verified.ok) {
+        return fail(next, verified.errorCode, verified.httpStatus);
+    }
+
+    return res.json({ success: true, otpVerificationId: verified.challengeId });
+}
+
+// Public OTP endpoints (token-based)
+exports.publicRequestSigningOtp = async (req, res, next) => {
+    try {
+        const verified = verifyPublicSigningToken(req.params.token);
+        if (!verified.ok) {
+            return fail(next, verified.errorCode, verified.httpStatus);
+        }
+        return requestSigningOtpImpl({
+            req,
+            res,
+            next,
+            signingFileId: verified.signingFileId,
+            signerUserId: verified.signerUserId,
+            actorType: 'public_signer',
+        });
+    } catch (err) {
+        console.error('publicRequestSigningOtp error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליחת קוד אימות' });
+    }
+};
+
+exports.publicVerifySigningOtp = async (req, res, next) => {
+    try {
+        const verified = verifyPublicSigningToken(req.params.token);
+        if (!verified.ok) {
+            return fail(next, verified.errorCode, verified.httpStatus);
+        }
+        return verifySigningOtpImpl({
+            req,
+            res,
+            next,
+            signingFileId: verified.signingFileId,
+            signerUserId: verified.signerUserId,
+            actorType: 'public_signer',
+        });
+    } catch (err) {
+        console.error('publicVerifySigningOtp error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה באימות קוד' });
+    }
+};
+
+// Authenticated OTP endpoints (in-app)
+exports.requestSigningOtp = async (req, res, next) => {
+    try {
+        const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
+        if (signingFileId === null) return;
+        const signerUserId = req.user?.UserId;
+        return requestSigningOtpImpl({ req, res, next, signingFileId, signerUserId, actorType: 'signer' });
+    } catch (err) {
+        console.error('requestSigningOtp error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליחת קוד אימות' });
+    }
+};
+
+exports.verifySigningOtp = async (req, res, next) => {
+    try {
+        const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
+        if (signingFileId === null) return;
+        const signerUserId = req.user?.UserId;
+        return verifySigningOtpImpl({ req, res, next, signingFileId, signerUserId, actorType: 'signer' });
+    } catch (err) {
+        console.error('verifySigningOtp error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה באימות קוד' });
     }
 };
 
 
-exports.signFile = async (req, res) => {
+exports.signFile = async (req, res, next) => {
     try {
         const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
         if (signingFileId === null) return;
@@ -1313,7 +2352,18 @@ exports.signFile = async (req, res) => {
         if (signatureSpotId === null) return;
 
         const { signatureImage } = req.body;
-        const userId = req.user.UserId;
+        const userId = req.user?.UserId;
+        if (!userId) {
+            return fail(next, 'UNAUTHORIZED', 401);
+        }
+
+        const signingSessionId = getSigningSessionIdFromReq(req);
+        if (!signingSessionId) {
+            return fail(next, 'SIGNING_SESSION_REQUIRED', 422);
+        }
+
+        const consentAccepted = req.body?.consentAccepted === true;
+        const consentVersion = String(req.body?.consentVersion || '').trim();
 
         const schemaSupport = await getSchemaSupport();
 
@@ -1327,19 +2377,26 @@ exports.signFile = async (req, res) => {
                 filekey       as "FileKey",
                 status        as "Status",
                 signedfilekey as "SignedFileKey",
-                signedat      as "SignedAt"
+                signedat      as "SignedAt",
+
+                requireotp    as "RequireOtp",
+                signingpolicyversion as "SigningPolicyVersion",
+                policyselectedatutc  as "PolicySelectedAtUtc",
+                otpwaiveracknowledged as "OtpWaiverAcknowledged",
+                presentedpdfsha256 as "PresentedPdfSha256"
              from signingfiles
              where signingfileid = $1`,
             [signingFileId]
         );
 
         if (fileResult.rows.length === 0) {
-            return res.status(404).json({ message: "המסמך לא נמצא" });
+            return fail(next, 'DOCUMENT_NOT_FOUND', 404);
         }
 
         const file = fileResult.rows[0];
 
-        // Allow signing if user is the primary client OR if they're assigned as a specific signer
+        // Authorization checks should happen before writing legally-relevant evidence rows.
+        // This avoids creating consent/audit artifacts for unauthorized users.
         const spotResult = await pool.query(
             `select
                 signaturespotid as "SignatureSpotId",
@@ -1351,7 +2408,7 @@ exports.signFile = async (req, res) => {
         );
 
         if (spotResult.rows.length === 0) {
-            return res.status(400).json({ message: "מקום חתימה לא תקין" });
+            return fail(next, 'SIGNATURE_SPOT_INVALID', 422);
         }
 
         const spot = spotResult.rows[0];
@@ -1362,12 +2419,113 @@ exports.signFile = async (req, res) => {
             : (file.ClientId === userId);
 
         if (!isAuthorized) {
-            return res.status(403).json({ message: "אין הרשאה לחתום על מקום חתימה זה", code: 'FORBIDDEN' });
+            return fail(next, 'FORBIDDEN', 403);
         }
 
         if (spot.IsSigned) {
-            return res.status(400).json({ message: "מקום החתימה כבר חתום" });
+            return fail(next, 'SIGNATURE_SPOT_ALREADY_SIGNED', 409);
         }
+
+        const effectivePolicyVersion = String(file.SigningPolicyVersion || SIGNING_POLICY_VERSION);
+        if (!consentAccepted) {
+            await insertAuditEvent({
+                req,
+                eventType: 'SIGN_ATTEMPT',
+                signingFileId,
+                signatureSpotId,
+                actorUserId: userId,
+                actorType: 'signer',
+                signingSessionId,
+                success: false,
+                metadata: {
+                    failure: 'CONSENT_REQUIRED',
+                    requireOtp: Boolean(file.RequireOtp),
+                    otpWaived: !Boolean(file.RequireOtp),
+                    policySource: file.PolicySelectedAtUtc ? 'explicit' : 'legacy_default',
+                },
+            });
+            return fail(next, 'CONSENT_REQUIRED', 403);
+        }
+        if (!consentVersion || consentVersion !== effectivePolicyVersion) {
+            await insertAuditEvent({
+                req,
+                eventType: 'SIGN_ATTEMPT',
+                signingFileId,
+                signatureSpotId,
+                actorUserId: userId,
+                actorType: 'signer',
+                signingSessionId,
+                success: false,
+                metadata: {
+                    failure: 'CONSENT_VERSION_MISMATCH',
+                    consentVersion,
+                    expectedConsentVersion: effectivePolicyVersion,
+                },
+            });
+            return fail(next, 'CONSENT_VERSION_MISMATCH', 422);
+        }
+
+        if (!file.PresentedPdfSha256) {
+            // Without a stable presented document fingerprint, contested admissibility is materially weakened.
+            return fail(next, 'MISSING_PRESENTED_HASH', 500);
+        }
+
+        const otpVerificationId = Boolean(file.RequireOtp)
+            ? await getVerifiedOtpChallengeIdOrNull({
+                signingFileId,
+                signerUserId: userId,
+                signingSessionId,
+                presentedPdfSha256: file.PresentedPdfSha256,
+            })
+            : null;
+
+        if (Boolean(file.RequireOtp) && !otpVerificationId) {
+            await insertAuditEvent({
+                req,
+                eventType: 'SIGN_ATTEMPT',
+                signingFileId,
+                signatureSpotId,
+                actorUserId: userId,
+                actorType: 'signer',
+                signingSessionId,
+                success: false,
+                metadata: {
+                    failure: 'OTP_REQUIRED',
+                    requireOtp: true,
+                    presentedPdfSha256: file.PresentedPdfSha256,
+                },
+            });
+            return fail(next, 'OTP_REQUIRED', 403);
+        }
+
+        const consentId = await getOrCreateConsent({
+            signingFileId,
+            signerUserId: userId,
+            signingSessionId,
+            consentVersion: effectivePolicyVersion,
+            req,
+        });
+
+        await insertAuditEvent({
+            req,
+            eventType: 'SIGN_ATTEMPT',
+            signingFileId,
+            signatureSpotId,
+            actorUserId: userId,
+            actorType: 'signer',
+            signingSessionId,
+            success: true,
+            metadata: {
+                signingPolicyVersion: effectivePolicyVersion,
+                requireOtp: Boolean(file.RequireOtp),
+                otpWaived: !Boolean(file.RequireOtp),
+                otpWaiverAcknowledged: Boolean(file.OtpWaiverAcknowledged),
+                policySource: file.PolicySelectedAtUtc ? 'explicit' : 'legacy_default',
+                presentedPdfSha256: file.PresentedPdfSha256,
+                consentId,
+                otpVerificationId,
+            },
+        });
 
         if (signatureImage) {
             const isPng = signatureImage.includes("png");
@@ -1378,7 +2536,7 @@ exports.signFile = async (req, res) => {
             try {
                 ({ buffer } = decodeBase64DataUrl(signatureImage));
             } catch {
-                return res.status(400).json({ message: 'Invalid signature image' });
+                return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'signatureImage' } });
             }
 
             if (
@@ -1386,10 +2544,7 @@ exports.signFile = async (req, res) => {
                 MAX_SIGNATURE_IMAGE_BYTES > 0 &&
                 buffer.length > MAX_SIGNATURE_IMAGE_BYTES
             ) {
-                return res.status(413).json({
-                    code: 'REQUEST_TOO_LARGE',
-                    message: 'Signature image is too large',
-                });
+                return fail(next, 'REQUEST_TOO_LARGE', 413);
             }
 
             const cmd = new PutObjectCommand({
@@ -1399,25 +2554,82 @@ exports.signFile = async (req, res) => {
                 ContentType: `image/${ext}`,
             });
 
-            await r2.send(cmd);
+            const putRes = await r2.send(cmd);
+            const signatureEtag = putRes?.ETag ? String(putRes.ETag).replace(/\"/g, '') : null;
+            const signatureVersionId = putRes?.VersionId ? String(putRes.VersionId) : null;
+            const signatureSha = sha256Hex(buffer);
 
             await pool.query(
                 `update signaturespots
                  set issigned = true,
                      signedat = now(),
-                     signaturedata = $1
+                     signaturedata = $1,
+                     signerip = $3::inet,
+                     signeruseragent = $4,
+                     signingsessionid = $5::uuid,
+                     presentedpdfsha256 = $6,
+                     otpverificationid = $7::uuid,
+                     consentid = $8::uuid,
+                     signatureimagesha256 = $9,
+                     signaturestorageetag = $10,
+                     signaturestorageversionid = $11
                  where signaturespotid = $2`,
-                [key, signatureSpotId]
+                [
+                    key,
+                    signatureSpotId,
+                    getRequestIp(req),
+                    getRequestUserAgent(req),
+                    signingSessionId,
+                    file.PresentedPdfSha256,
+                    otpVerificationId,
+                    consentId,
+                    signatureSha,
+                    signatureEtag,
+                    signatureVersionId,
+                ]
             );
         } else {
             await pool.query(
                 `update signaturespots
                  set issigned = true,
-                     signedat = now()
+                     signedat = now(),
+                     signerip = $2::inet,
+                     signeruseragent = $3,
+                     signingsessionid = $4::uuid,
+                     presentedpdfsha256 = $5,
+                     otpverificationid = $6::uuid,
+                     consentid = $7::uuid
                  where signaturespotid = $1`,
-                [signatureSpotId]
+                [
+                    signatureSpotId,
+                    getRequestIp(req),
+                    getRequestUserAgent(req),
+                    signingSessionId,
+                    file.PresentedPdfSha256,
+                    otpVerificationId,
+                    consentId,
+                ]
             );
         }
+
+        await insertAuditEvent({
+            req,
+            eventType: 'SIGN_SUCCESS',
+            signingFileId,
+            signatureSpotId,
+            actorUserId: userId,
+            actorType: 'signer',
+            signingSessionId,
+            success: true,
+            metadata: {
+                signingPolicyVersion: effectivePolicyVersion,
+                requireOtp: Boolean(file.RequireOtp),
+                otpWaived: !Boolean(file.RequireOtp),
+                presentedPdfSha256: file.PresentedPdfSha256,
+                consentId,
+                otpVerificationId,
+            },
+        });
 
         const remainingResult = await pool.query(
             `select count(*)::int as "count"
@@ -1439,6 +2651,25 @@ exports.signFile = async (req, res) => {
                 [signingFileId]
             );
 
+            // Court-ready: finalize an immutable signed output and persist its SHA-256 + storage integrity metadata.
+            try {
+                await ensureSignedPdfKey({ signingFileId, lawyerId: file.LawyerId, pdfKey: file.FileKey });
+                await insertAuditEvent({
+                    req,
+                    eventType: 'SIGNED_PDF_GENERATED',
+                    signingFileId,
+                    actorUserId: file.LawyerId,
+                    actorType: 'system',
+                    signingSessionId,
+                    success: true,
+                    metadata: {
+                        signingPolicyVersion: effectivePolicyVersion,
+                    },
+                });
+            } catch (e) {
+                console.error('Failed to generate signed PDF evidence:', e?.message || e);
+            }
+
             await sendAndStoreNotification(
                 file.LawyerId,
                 "✓ קובץ חתום",
@@ -1450,16 +2681,19 @@ exports.signFile = async (req, res) => {
         return res.json({ success: true, message: "✓ החתימה נשמרה בהצלחה" });
     } catch (err) {
         console.error("signFile error:", err);
-        return res.status(500).json({ message: "שגיאה בשמירת החתימה" });
+        return fail(next, 'INTERNAL_ERROR', 500, { message: "שגיאה בשמירת החתימה" });
     }
 };
 
-exports.rejectSigning = async (req, res) => {
+exports.rejectSigning = async (req, res, next) => {
     try {
         const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
         if (signingFileId === null) return;
         const { rejectionReason } = req.body;
-        const userId = req.user.UserId;
+        const userId = req.user?.UserId;
+        if (!userId) {
+            return fail(next, 'UNAUTHORIZED', 401);
+        }
 
         const schemaSupport = await getSchemaSupport();
 
@@ -1475,7 +2709,7 @@ exports.rejectSigning = async (req, res) => {
         );
 
         if (fileResult.rows.length === 0) {
-            return res.status(404).json({ message: "המסמך לא נמצא" });
+            return fail(next, 'DOCUMENT_NOT_FOUND', 404);
         }
 
         const file = fileResult.rows[0];
@@ -1495,7 +2729,7 @@ exports.rejectSigning = async (req, res) => {
         }
 
         if (!isAuthorized) {
-            return res.status(403).json({ message: "אין הרשאה למסמך זה", code: 'FORBIDDEN' });
+            return fail(next, 'FORBIDDEN', 403);
         }
 
         // Reset all signatures for this file
@@ -1526,16 +2760,17 @@ exports.rejectSigning = async (req, res) => {
         return res.json({ success: true, message: "✓ המסמך נדחה בהצלחה" });
     } catch (err) {
         console.error("rejectSigning error:", err);
-        return res.status(500).json({ message: "שגיאה בדחיית המסמך" });
+        return fail(next, 'INTERNAL_ERROR', 500, { message: "שגיאה בדחיית המסמך" });
     }
 };
 
-exports.reuploadFile = async (req, res) => {
+exports.reuploadFile = async (req, res, next) => {
     try {
         const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
         if (signingFileId === null) return;
         const { fileKey, signatureLocations, signers } = req.body;
-        const lawyerId = req.user.UserId;
+        const lawyerId = req.user?.UserId;
+        if (!lawyerId) return fail(next, 'UNAUTHORIZED', 401);
 
         const schemaSupport = await getSchemaSupport();
 
@@ -1544,20 +2779,29 @@ exports.reuploadFile = async (req, res) => {
                 signingfileid as "SigningFileId",
                 lawyerid      as "LawyerId",
                 clientid      as "ClientId",
-                filename      as "FileName"
+                filename      as "FileName",
+                status        as "Status",
+                immutableatutc as "ImmutableAtUtc"
              from signingfiles
              where signingfileid = $1`,
             [signingFileId]
         );
 
         if (fileResult.rows.length === 0) {
-            return res.status(404).json({ message: "המסמך לא נמצא" });
+            return fail(next, 'DOCUMENT_NOT_FOUND', 404);
         }
 
         const file = fileResult.rows[0];
 
         if (file.LawyerId !== lawyerId) {
-            return res.status(403).json({ message: "אין הרשאה למסמך זה", code: 'FORBIDDEN' });
+            return fail(next, 'FORBIDDEN', 403, { message: "אין הרשאה למסמך זה" });
+        }
+
+        // Court-ready: once immutable (signed output finalized), the unsigned document must not be replaced.
+        if (file.ImmutableAtUtc || file.Status === 'signed') {
+            return fail(next, 'IMMUTABLE_DOCUMENT', 409, {
+                message: 'לא ניתן להעלות מחדש מסמך לאחר שהפך לבלתי ניתן לשינוי',
+            });
         }
 
         await pool.query(
@@ -1567,10 +2811,44 @@ exports.reuploadFile = async (req, res) => {
                  status = 'pending',
                  rejectionreason = null,
                  signedfilekey = null,
-                 signedat = null
+                 signedat = null,
+                 immutableatutc = null,
+                 -- Evidence fields are recomputed for the new unsigned version
+                 originalpdfsha256 = null,
+                 presentedpdfsha256 = null,
+                 signedpdfsha256 = null,
+                 originalstoragebucket = null,
+                 originalstoragekey = null,
+                 originalstorageetag = null,
+                 originalstorageversionid = null,
+                 signedstoragebucket = null,
+                 signedstoragekey = null,
+                 signedstorageetag = null,
+                 signedstorageversionid = null
              where signingfileid = $2`,
             [fileKey, signingFileId]
         );
+
+        try {
+            const ev = await computeAndPersistUnsignedPdfEvidence({ signingFileId, unsignedPdfKey: fileKey });
+            await insertAuditEvent({
+                req,
+                eventType: 'DOCUMENT_REUPLOADED',
+                signingFileId,
+                actorUserId: lawyerId,
+                actorType: 'lawyer',
+                success: true,
+                metadata: {
+                    signingPolicyVersion: SIGNING_POLICY_VERSION,
+                    newFileKey: safeKeyHint(fileKey),
+                    presentedPdfSha256: ev?.pdfSha || null,
+                },
+            });
+        } catch (e) {
+            const failClosed = String(process.env.IS_PRODUCTION || 'false').toLowerCase() === 'true';
+            if (failClosed) throw e;
+            console.error('Failed to recompute evidence for reupload:', e?.message || e);
+        }
 
         await pool.query(
             `delete from signaturespots
@@ -1730,15 +3008,16 @@ exports.reuploadFile = async (req, res) => {
         return res.json({ success: true, message: "הקובץ הועלה מחדש לחתימה" });
     } catch (err) {
         console.error("reuploadFile error:", err);
-        return res.status(500).json({ message: "שגיאה בהעלאת קובץ מחדש" });
+        return fail(next, 'INTERNAL_ERROR', 500, { message: "שגיאה בהעלאת קובץ מחדש" });
     }
 };
 
-exports.getSignedFileDownload = async (req, res) => {
+exports.getSignedFileDownload = async (req, res, next) => {
     try {
         const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
         if (signingFileId === null) return;
-        const userId = req.user.UserId;
+        const userId = req.user?.UserId;
+        if (!userId) return fail(next, 'UNAUTHORIZED', 401);
 
         const schemaSupport = await getSchemaSupport();
 
@@ -1757,7 +3036,7 @@ exports.getSignedFileDownload = async (req, res) => {
         );
 
         if (fileResult.rows.length === 0) {
-            return res.status(404).json({ message: "המסמך לא נמצא" });
+            return fail(next, 'DOCUMENT_NOT_FOUND', 404);
         }
 
         const file = fileResult.rows[0];
@@ -1778,11 +3057,11 @@ exports.getSignedFileDownload = async (req, res) => {
         }
 
         if (!isLawyer && !isPrimaryClient && !isAssignedSigner) {
-            return res.status(403).json({ message: "אין הרשאה להוריד מסמך זה", code: 'FORBIDDEN' });
+            return fail(next, 'FORBIDDEN', 403, { message: "אין הרשאה להוריד מסמך זה" });
         }
 
         if (file.Status !== "signed" && !file.SignedFileKey) {
-            return res.status(400).json({ message: "המסמך עדיין לא חתום" });
+            return fail(next, 'DOCUMENT_NOT_SIGNED', 409);
         }
 
         // If the file is signed but we don't yet have a flattened PDF, generate it on-demand.
@@ -1810,20 +3089,33 @@ exports.getSignedFileDownload = async (req, res) => {
 
         const downloadUrl = await getSignedUrl(r2, cmd, { expiresIn: 600 });
 
+        await insertAuditEvent({
+            req,
+            eventType: 'SIGNED_PDF_DOWNLOADED',
+            signingFileId,
+            actorUserId: userId,
+            actorType: isLawyer ? 'lawyer' : 'signer',
+            metadata: {
+                key,
+                isSignedOutput: Boolean(file.SignedFileKey),
+            },
+        });
+
         return res.json({ downloadUrl, expiresIn: 600 });
     } catch (err) {
         console.error("getSignedFileDownload error:", err);
-        return res.status(500).json({ message: "שגיאה ביצירת קישור הורדה" });
+        return fail(next, 'INTERNAL_ERROR', 500, { message: "שגיאה ביצירת קישור הורדה" });
     }
 };
 
 // Streams the original PDF (filekey) for in-app viewing (react-pdf/pdfjs).
 // Supports Range requests so pdf.js can efficiently load pages.
-exports.getSigningFilePdf = async (req, res) => {
+exports.getSigningFilePdf = async (req, res, next) => {
     try {
         const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
         if (signingFileId === null) return;
-        const userId = req.user.UserId;
+        const userId = req.user?.UserId;
+        if (!userId) return fail(next, 'UNAUTHORIZED', 401);
 
         const schemaSupport = await getSchemaSupport();
 
@@ -1840,7 +3132,7 @@ exports.getSigningFilePdf = async (req, res) => {
         );
 
         if (fileResult.rows.length === 0) {
-            return res.status(404).json({ message: "המסמך לא נמצא" });
+            return fail(next, 'DOCUMENT_NOT_FOUND', 404);
         }
 
         const file = fileResult.rows[0];
@@ -1861,11 +3153,22 @@ exports.getSigningFilePdf = async (req, res) => {
         }
 
         if (!isLawyer && !isPrimaryClient && !isAssignedSigner) {
-            return res.status(403).json({ message: "אין הרשאה למסמך זה", code: 'FORBIDDEN' });
+            return fail(next, 'FORBIDDEN', 403, { message: "אין הרשאה למסמך זה" });
         }
 
+        await insertAuditEvent({
+            req,
+            eventType: 'PDF_VIEWED',
+            signingFileId,
+            actorUserId: userId,
+            actorType: isLawyer ? 'lawyer' : 'signer',
+            metadata: {
+                range: req.headers.range || null,
+            },
+        });
+
         if (!file.FileKey) {
-            return res.status(404).json({ message: "לקובץ אין FileKey" });
+            return fail(next, 'FILEKEY_MISSING', 404);
         }
 
         const range = req.headers.range;
@@ -1876,6 +3179,10 @@ exports.getSigningFilePdf = async (req, res) => {
         });
 
         const obj = await r2.send(cmd);
+
+        if (!obj.Body) {
+            return fail(next, 'INTERNAL_ERROR', 500, { message: "שגיאה בקריאת הקובץ" });
+        }
 
         res.setHeader("Content-Type", obj.ContentType || "application/pdf");
         res.setHeader("Accept-Ranges", "bytes");
@@ -1897,18 +3204,14 @@ exports.getSigningFilePdf = async (req, res) => {
             res.setHeader("Content-Range", String(obj.ContentRange));
         }
 
-        if (!obj.Body) {
-            return res.status(500).json({ message: "שגיאה בקריאת הקובץ" });
-        }
-
         obj.Body.pipe(res);
     } catch (err) {
         console.error("getSigningFilePdf error:", err);
-        return res.status(500).json({ message: "שגיאה בטעינת PDF" });
+        return fail(next, 'INTERNAL_ERROR', 500, { message: "שגיאה בטעינת PDF" });
     }
 };
 
-exports.detectSignatureSpots = async (req, res) => {
+exports.detectSignatureSpots = async (req, res, next) => {
     try {
         const { fileKey, signers } = req.body;
 
@@ -1920,13 +3223,14 @@ exports.detectSignatureSpots = async (req, res) => {
             });
         }
 
-        if (!fileKey) return res.status(400).json({ message: "missing fileKey" });
+        if (!fileKey) return fail(next, 'FILEKEY_REQUIRED', 422);
 
         // Prevent arbitrary reads from the bucket via guessed keys.
         // Our upload flow uses keys prefixed with `users/<userId>/...`.
         const userId = req.user?.UserId;
-        if (!userId || !String(fileKey).startsWith(`users/${userId}/`)) {
-            return res.status(403).json({ message: "Forbidden", code: 'FORBIDDEN' });
+        if (!userId) return fail(next, 'UNAUTHORIZED', 401);
+        if (!String(fileKey).startsWith(`users/${userId}/`)) {
+            return fail(next, 'FORBIDDEN', 403);
         }
 
 
@@ -1935,14 +3239,11 @@ exports.detectSignatureSpots = async (req, res) => {
             const head = await headR2Object({ key: fileKey });
             const size = Number(head?.ContentLength || 0);
             if (Number.isFinite(MAX_SIGNING_PDF_BYTES) && MAX_SIGNING_PDF_BYTES > 0 && size > MAX_SIGNING_PDF_BYTES) {
-                return res.status(413).json({
-                    code: 'REQUEST_TOO_LARGE',
-                    message: 'File is too large',
-                });
+                return fail(next, 'REQUEST_TOO_LARGE', 413);
             }
         } catch (e) {
             console.error('detectSignatureSpots headObject failed:', e?.message);
-            return res.status(400).json({ message: 'Invalid fileKey' });
+            return fail(next, 'INVALID_FILE_KEY', 422);
         }
 
         const cmd = new GetObjectCommand({ Bucket: BUCKET, Key: fileKey });
@@ -1963,9 +3264,9 @@ exports.detectSignatureSpots = async (req, res) => {
     } catch (err) {
         const msg = String(err?.message || '');
         if (msg.toLowerCase().includes('timeout')) {
-            return res.status(504).json({ code: 'REQUEST_TIMEOUT', message: 'Request timed out' });
+            return fail(next, 'REQUEST_TIMEOUT', 504);
         }
         console.error('[controller] detectSignatureSpots error:', err?.message || err);
-        return res.status(500).json({ message: "failed to detect signature spots" });
+        return fail(next, 'INTERNAL_ERROR', 500, { message: "שגיאה בזיהוי מקומות חתימה" });
     }
 };

@@ -8,6 +8,8 @@ router.post("/detect-spots", authMiddleware, signingFileController.detectSignatu
 // Public signing (no auth) via signed token
 router.get("/public/:token/pdf", signingFileController.getPublicSigningFilePdf);
 router.get("/public/:token", signingFileController.getPublicSigningFileDetails);
+router.post("/public/:token/otp/request", signingFileController.publicRequestSigningOtp);
+router.post("/public/:token/otp/verify", signingFileController.publicVerifySigningOtp);
 router.post("/public/:token/sign", signingFileController.publicSignFile);
 router.post("/public/:token/reject", signingFileController.publicRejectSigning);
 router.get("/public/:token/saved-signature", signingFileController.getPublicSavedSignature);
@@ -34,11 +36,21 @@ router.get("/pending", authMiddleware, signingFileController.getPendingSigningFi
 // Generate a public signing link token (lawyer/admin)
 router.post("/:signingFileId/public-link", authMiddleware, signingFileController.createPublicSigningLink);
 
+// Lawyer signing policy configuration (explicit OTP on/off + waiver ack)
+router.patch("/:signingFileId/policy", authMiddleware, signingFileController.updateSigningPolicy);
+
 // Stream original PDF for in-app viewing/signing
 router.get("/:signingFileId/pdf", authMiddleware, signingFileController.getSigningFilePdf);
 
 // פרטי קובץ + מקומות חתימה (גם עו"ד וגם לקוח)
 router.get("/:signingFileId", authMiddleware, signingFileController.getSigningFileDetails);
+
+// Evidence package for court (lawyer/admin)
+router.get("/:signingFileId/evidence", authMiddleware, signingFileController.getEvidencePackage);
+
+// OTP for signing (authenticated flows)
+router.post("/:signingFileId/otp/request", authMiddleware, signingFileController.requestSigningOtp);
+router.post("/:signingFileId/otp/verify", authMiddleware, signingFileController.verifySigningOtp);
 
 // לקוח חותם על מקום חתימה אחד
 router.post("/:signingFileId/sign", authMiddleware, signingFileController.signFile);
