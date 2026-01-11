@@ -174,7 +174,7 @@ test('cases list pagination contract (integration)', async (t) => {
             assert.equal(tooHigh.status, 422);
             assert.equal(tooHigh.body?.success, false);
             assert.equal(tooHigh.body?.errorCode, 'INVALID_PARAMETER');
-            assert.equal(tooHigh.body?.errorCode, 'VALIDATION_ERROR');
+            assert.equal(tooHigh.body?.errorCode, 'INVALID_PARAMETER');
 
             const negativeLimit = await request(app)
                 .get('/api/Cases/GetCases?limit=-1')
@@ -182,7 +182,7 @@ test('cases list pagination contract (integration)', async (t) => {
             assert.equal(negativeLimit.status, 422);
             assert.equal(negativeLimit.body?.success, false);
             assert.equal(negativeLimit.body?.errorCode, 'INVALID_PARAMETER');
-            assert.equal(negativeLimit.body?.errorCode, 'VALIDATION_ERROR');
+            assert.equal(negativeLimit.body?.errorCode, 'INVALID_PARAMETER');
 
             const negativeOffset = await request(app)
                 .get('/api/Cases/GetCases?limit=2&offset=-1')
@@ -190,7 +190,7 @@ test('cases list pagination contract (integration)', async (t) => {
             assert.equal(negativeOffset.status, 422);
             assert.equal(negativeOffset.body?.success, false);
             assert.equal(negativeOffset.body?.errorCode, 'INVALID_PARAMETER');
-            assert.equal(negativeOffset.body?.errorCode, 'VALIDATION_ERROR');
+            assert.equal(negativeOffset.body?.errorCode, 'INVALID_PARAMETER');
 
             const nanLimit = await request(app)
                 .get('/api/Cases/GetCases?limit=abc')
@@ -198,7 +198,7 @@ test('cases list pagination contract (integration)', async (t) => {
             assert.equal(nanLimit.status, 422);
             assert.equal(nanLimit.body?.success, false);
             assert.equal(nanLimit.body?.errorCode, 'INVALID_PARAMETER');
-            assert.equal(nanLimit.body?.errorCode, 'VALIDATION_ERROR');
+            assert.equal(nanLimit.body?.errorCode, 'INVALID_PARAMETER');
         });
     } finally {
         await cleanup({ prefix, userId, caseTypeId });

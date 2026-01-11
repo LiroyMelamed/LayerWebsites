@@ -28,7 +28,6 @@ function expect422Json(res) {
   assert.equal(res.body.success, false);
   assert.equal(res.body.errorCode, 'INVALID_PARAMETER');
   assert.equal(res.body.code, 'INVALID_PARAMETER');
-  assert.equal(res.body?.errorCode, 'VALIDATION_ERROR');
 }
 
 test('invalid caseId param returns 422', async () => {
