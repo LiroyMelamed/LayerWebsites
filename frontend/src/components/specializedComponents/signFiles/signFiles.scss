@@ -485,3 +485,63 @@
 .lw-signing-screenContent .lw-signing-pdfContainer {
     overflow: auto;
 }
+
+.lw-signing-legalBox {
+    border: 1px solid #e0e0e0;
+    border-radius: 0.25rem;
+    padding: 0.75rem;
+    background-color: #fff;
+    text-align: right;
+}
+
+.lw-signing-legalRow {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    font-size: 0.875rem;
+    color: #333;
+    line-height: 1.4;
+}
+
+.lw-signing-otpBox {
+    border: 1px solid #e0e0e0;
+    border-radius: 0.25rem;
+    padding: 0.75rem;
+    background-color: #fff;
+    text-align: right;
+}
+
+.lw-signing-otpTitle {
+    font-weight: 700;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.lw-signing-otpRow {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+}
+
+.lw-signing-otpInput {
+    flex: 1 1 8rem;
+    min-width: 8rem;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    border: 1px solid #ddd;
+    font-size: 0.875rem;
+}
+
+.lw-signing-otpVerified {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    background: #d4edda;
+    color: #155724;
+    font-weight: 700;
+    font-size: 0.875rem;
+}

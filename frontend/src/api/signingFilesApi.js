@@ -8,6 +8,13 @@ const signingFilesApi = {
         return await ApiUtils.post(`${base}/upload`, data);
     },
 
+    updateSigningPolicy: async (signingFileId, { requireOtp, otpWaiverAcknowledged }) => {
+        return await ApiUtils.patch(`${base}/${signingFileId}/policy`, {
+            requireOtp,
+            otpWaiverAcknowledged,
+        });
+    },
+
     getClientSigningFiles: async () => {
         return await ApiUtils.get(`${base}/client-files`);
     },
@@ -28,8 +35,24 @@ const signingFilesApi = {
         return await ApiUtils.get(`${base}/public/${encodeURIComponent(token)}`);
     },
 
-    publicSignFile: async (token, body) => {
-        return await ApiUtils.post(`${base}/public/${encodeURIComponent(token)}/sign`, body);
+    publicRequestSigningOtp: async (token, signingSessionId) => {
+        return await ApiUtils.post(
+            `${base}/public/${encodeURIComponent(token)}/otp/request`,
+            {},
+            signingSessionId ? { headers: { "x-signing-session-id": signingSessionId } } : undefined
+        );
+    },
+
+    publicVerifySigningOtp: async (token, otp, signingSessionId) => {
+        return await ApiUtils.post(
+            `${base}/public/${encodeURIComponent(token)}/otp/verify`,
+            { otp },
+            signingSessionId ? { headers: { "x-signing-session-id": signingSessionId } } : undefined
+        );
+    },
+
+    publicSignFile: async (token, body, config = undefined) => {
+        return await ApiUtils.post(`${base}/public/${encodeURIComponent(token)}/sign`, body, config);
     },
 
     publicRejectSigning: async (token, body) => {
@@ -60,8 +83,28 @@ const signingFilesApi = {
         return await ApiUtils.post(`${base}/public/${encodeURIComponent(token)}/saved-signature`, { signatureImage });
     },
 
-    signFile: async (signingFileId, body) => {
-        return await ApiUtils.post(`${base}/${signingFileId}/sign`, body);
+    signFile: async (signingFileId, body, config = undefined) => {
+        return await ApiUtils.post(`${base}/${signingFileId}/sign`, body, config);
+    },
+
+    requestSigningOtp: async (signingFileId, signingSessionId) => {
+        return await ApiUtils.post(
+            `${base}/${signingFileId}/otp/request`,
+            {},
+            signingSessionId ? { headers: { "x-signing-session-id": signingSessionId } } : undefined
+        );
+    },
+
+    verifySigningOtp: async (signingFileId, otp, signingSessionId) => {
+        return await ApiUtils.post(
+            `${base}/${signingFileId}/otp/verify`,
+            { otp },
+            signingSessionId ? { headers: { "x-signing-session-id": signingSessionId } } : undefined
+        );
+    },
+
+    getEvidencePackage: async (signingFileId) => {
+        return await ApiUtils.get(`${base}/${signingFileId}/evidence`);
     },
 
     rejectSigning: async (signingFileId, body) => {

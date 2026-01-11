@@ -51,6 +51,10 @@ export default function UploadFileForSigningScreen() {
     const [signatureSpots, setSignatureSpots] = useState([]);
     const [isDragActive, setIsDragActive] = useState(false);
 
+    // Court-ready policy: OTP is required by default; waiver must be explicit + acknowledged.
+    const [otpPolicy, setOtpPolicy] = useState("require"); // 'waive' | 'require'
+    const [otpWaiverAck, setOtpWaiverAck] = useState(false);
+
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState(null);
 
@@ -139,6 +143,16 @@ export default function UploadFileForSigningScreen() {
         }
         if (signatureSpots.length === 0) {
             setMessage({ type: "error", text: "חייב להיות לפחות מקום חתימה אחד." });
+            return false;
+        }
+
+        if (otpPolicy !== "waive" && otpPolicy !== "require") {
+            setMessage({ type: "error", text: "יש לבחור מדיניות אימות (OTP)." });
+            return false;
+        }
+
+        if (otpPolicy === "waive" && !otpWaiverAck) {
+            setMessage({ type: "error", text: "כדי לשלוח ללא OTP יש לאשר במפורש את ההצהרה." });
             return false;
         }
         return true;
@@ -238,6 +252,8 @@ export default function UploadFileForSigningScreen() {
                 signatureLocations: signatureSpots,
                 notes: notes || null,
                 signers: signersPayload,
+                requireOtp: otpPolicy === "require",
+                otpWaiverAcknowledged: otpPolicy === "waive" ? Boolean(otpWaiverAck) : false,
             });
 
             setMessage({ type: "success", text: "הקובץ נשלח ללקוח לחתימה." });
@@ -249,6 +265,8 @@ export default function UploadFileForSigningScreen() {
             setSelectedFile(null);
             setSignatureSpots([]);
             setUploadedFileKey(null);
+            setOtpPolicy("require");
+            setOtpWaiverAck(false);
 
             if (fileInputRef.current) fileInputRef.current.value = "";
         } catch (err) {
@@ -461,6 +479,50 @@ export default function UploadFileForSigningScreen() {
                             <SimpleContainer className="lw-uploadSigningScreen__loading">
                                 <SimpleLoader />
                             </SimpleContainer>
+                        )}
+                    </SimpleContainer>
+
+                    <SimpleContainer className="lw-uploadSigningScreen__formGroup lw-uploadSigningScreen__otpPolicyGroup">
+                        <label className="lw-uploadSigningScreen__label">מדיניות אימות (OTP) *</label>
+
+                        <div className="lw-uploadSigningScreen__radioRow">
+                            <label className="lw-uploadSigningScreen__radioLabel">
+                                <input
+                                    type="radio"
+                                    name="otpPolicy"
+                                    checked={otpPolicy === "require"}
+                                    onChange={() => setOtpPolicy("require")}
+                                />
+                                דרוש קוד אימות ב-SMS (מומלץ)
+                            </label>
+                        </div>
+
+                        <div className="lw-uploadSigningScreen__radioRow">
+                            <label className="lw-uploadSigningScreen__radioLabel">
+                                <input
+                                    type="radio"
+                                    name="otpPolicy"
+                                    checked={otpPolicy === "waive"}
+                                    onChange={() => setOtpPolicy("waive")}
+                                />
+                                שלח ללא OTP
+                            </label>
+                        </div>
+
+                        {otpPolicy === "waive" && (
+                            <div className="lw-uploadSigningScreen__waiverBox">
+                                <div className="lw-uploadSigningScreen__waiverText">
+                                    שליחה ללא OTP עשויה להפחית את חוזק הראיות במקרה של מחלוקת.
+                                </div>
+                                <label className="lw-uploadSigningScreen__checkboxLabel">
+                                    <input
+                                        type="checkbox"
+                                        checked={otpWaiverAck}
+                                        onChange={(e) => setOtpWaiverAck(Boolean(e.target.checked))}
+                                    />
+                                    אני מאשר/ת במפורש שליחה ללא OTP
+                                </label>
+                            </div>
                         )}
                     </SimpleContainer>
                 </SimpleContainer>

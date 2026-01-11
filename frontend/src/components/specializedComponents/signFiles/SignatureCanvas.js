@@ -15,6 +15,33 @@ import { colors } from "../../../constant/colors";
 
 import "./signFiles.scss";
 
+function uuidv4() {
+    const cryptoObj = window.crypto || window.msCrypto;
+    if (cryptoObj?.randomUUID) return cryptoObj.randomUUID();
+
+    try {
+        const bytes = new Uint8Array(16);
+        if (cryptoObj?.getRandomValues) cryptoObj.getRandomValues(bytes);
+        else {
+            for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+        }
+
+        // RFC4122 v4
+        bytes[6] = (bytes[6] & 0x0f) | 0x40;
+        bytes[8] = (bytes[8] & 0x3f) | 0x80;
+
+        const toHex = (n) => n.toString(16).padStart(2, "0");
+        const hex = Array.from(bytes, toHex).join("");
+        return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+    } catch {
+        const rnd = () => Math.floor(Math.random() * 0xffffffff).toString(16).padStart(8, "0");
+        return `${rnd().slice(0, 8)}-${rnd().slice(0, 4)}-4${rnd().slice(0, 3)}-8${rnd().slice(0, 3)}-${rnd()}${rnd().slice(0, 4)}`;
+    }
+}
+
+const CONSENT_TEXT_HE =
+    "אני מאשר/ת כי קראתי את המסמך המוצג, ואני נותן/ת הסכמה לחתום עליו באופן אלקטרוני. ידוע לי כי חתימה ללא אימות OTP עשויה להפחית את חוזק הראיות במקרה של מחלוקת.";
+
 const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal" }) => {
     const canvasRef = useRef(null);
     const pdfScrollRef = useRef(null);
@@ -38,6 +65,16 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         url: null,
     });
     const [signatureMode, setSignatureMode] = useState("draw"); // 'draw' | 'saved'
+
+    // Court-ready: per-session identifier for audit trail + OTP binding.
+    const signingSessionIdRef = useRef(uuidv4());
+    const signingSessionId = signingSessionIdRef.current;
+
+    const [consentAccepted, setConsentAccepted] = useState(false);
+    const [otpRequested, setOtpRequested] = useState(false);
+    const [otpCode, setOtpCode] = useState("");
+    const [otpVerified, setOtpVerified] = useState(false);
+    const [otpBusy, setOtpBusy] = useState(false);
 
     const isPublic = Boolean(publicToken);
     const isScreen = variant === "screen";
@@ -124,9 +161,16 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 ? `${baseUrl}/SigningFiles/public/${encodeURIComponent(publicToken)}/pdf`
                 : `${baseUrl}/SigningFiles/${encodeURIComponent(fileIdForPdf || signingFileId)}/pdf`;
 
+            const headers = {
+                "x-signing-session-id": signingSessionId,
+            };
+            if (!isPublic && token) {
+                headers.Authorization = `Bearer ${token}`;
+            }
+
             const res = await fetch(url, {
                 method: "GET",
-                headers: !isPublic && token ? { Authorization: `Bearer ${token}` } : {},
+                headers,
             });
             if (!res.ok) throw new Error(`PDF fetch failed: ${res.status}`);
             const blob = await res.blob();
@@ -142,6 +186,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             const res = isPublic
                 ? await signingFilesApi.getPublicSavedSignature(publicToken)
                 : await signingFilesApi.getSavedSignature();
+            unwrapApi(res);
             const data = res?.data;
             setSavedSignature({
                 loading: false,
@@ -159,9 +204,17 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         const load = async () => {
             try {
                 setLoading(true);
+
+                // Fresh session requires explicit consent; OTP state is per session.
+                setConsentAccepted(false);
+                setOtpRequested(false);
+                setOtpCode("");
+                setOtpVerified(false);
+
                 const res = isPublic
                     ? await signingFilesApi.getPublicSigningFileDetails(publicToken)
                     : await signingFilesApi.getSigningFileDetails(signingFileId);
+                unwrapApi(res);
                 const data = res?.data;
                 if (!isMounted) return;
                 setFileDetails(data);
@@ -300,9 +353,18 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     };
 
     const getApiErrorMessage = (err) => {
-        const msg = err?.response?.data?.message || err?.message;
+        const msg = err?.response?.data?.message || err?.data?.message || err?.message;
         if (!msg) return "שגיאה לא צפויה";
         return String(msg);
+    };
+
+    const unwrapApi = (res) => {
+        if (res?.success === false) {
+            const err = new Error(res?.data?.message || res?.message || "שגיאה לא צפויה");
+            err.data = res?.data || null;
+            throw err;
+        }
+        return res;
     };
 
     const normalizeSignatureDataUrl = async (dataUrl) => {
@@ -351,25 +413,60 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         await refreshSavedSignature();
     };
 
-    const signCurrentSpotWithImage = async (dataUrl) => {
-        if (!currentSpot || currentSpot.IsSigned) return;
-        if (isPublic) {
-            await signingFilesApi.publicSignFile(publicToken, {
-                signatureSpotId: currentSpot.SignatureSpotId,
-                signatureImage: dataUrl,
-            });
-        } else {
-            await signingFilesApi.signFile(effectiveSigningFileId, {
-                signatureSpotId: currentSpot.SignatureSpotId,
-                signatureImage: dataUrl,
-            });
+    const signCurrentSpotWithImage = async (dataUrl, spotOverride = null) => {
+        const spot = spotOverride || currentSpot;
+        if (!spot || spot.IsSigned) return false;
+
+        const requireOtp = Boolean(fileDetails?.file?.RequireOtp);
+        const consentVersion = String(fileDetails?.file?.SigningPolicyVersion || "2026-01-11");
+
+        if (!consentAccepted) {
+            setMessage({ type: "warning", text: "יש לאשר הסכמה לחתימה לפני המשך." });
+            return false;
         }
+        if (requireOtp && !otpVerified) {
+            setMessage({ type: "warning", text: "נדרש אימות SMS לפני חתימה." });
+            return false;
+        }
+
+        const config = { headers: { "x-signing-session-id": signingSessionId } };
+
+        if (isPublic) {
+            const res = await signingFilesApi.publicSignFile(
+                publicToken,
+                {
+                    signatureSpotId: spot.SignatureSpotId,
+                    signatureImage: dataUrl,
+                    signingSessionId,
+                    consentAccepted: true,
+                    consentVersion,
+                },
+                config
+            );
+            unwrapApi(res);
+        } else {
+            const res = await signingFilesApi.signFile(
+                effectiveSigningFileId,
+                {
+                    signatureSpotId: spot.SignatureSpotId,
+                    signatureImage: dataUrl,
+                    signingSessionId,
+                    consentAccepted: true,
+                    consentVersion,
+                },
+                config
+            );
+            unwrapApi(res);
+        }
+
+        return true;
     };
 
     const reloadDetailsAndAdvance = async () => {
         const res = isPublic
             ? await signingFilesApi.getPublicSigningFileDetails(publicToken)
             : await signingFilesApi.getSigningFileDetails(effectiveSigningFileId);
+        unwrapApi(res);
         const data = res?.data;
         setFileDetails(data);
 
@@ -393,7 +490,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             }
 
             const dataUrl = canvasRef.current.toDataURL("image/png");
-            await signCurrentSpotWithImage(dataUrl);
+            const didSign = await signCurrentSpotWithImage(dataUrl);
+            if (!didSign) return;
             // Spec: new signature overwrites saved signature
             await saveSignatureAsDefault(dataUrl);
 
@@ -430,28 +528,16 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             const sigRes = isPublic
                 ? await signingFilesApi.getPublicSavedSignatureDataUrl(publicToken)
                 : await signingFilesApi.getSavedSignatureDataUrl();
+            unwrapApi(sigRes);
             const rawDataUrl = sigRes?.data?.dataUrl;
             const dataUrl = await normalizeSignatureDataUrl(rawDataUrl);
             if (!dataUrl) {
                 throw new Error("Missing saved signature dataUrl");
             }
-            // Ensure we sign the selected target
-            if (target?.SignatureSpotId !== currentSpot?.SignatureSpotId) {
-                setCurrentSpot(target);
-            }
-            await (async () => {
-                if (isPublic) {
-                    await signingFilesApi.publicSignFile(publicToken, {
-                        signatureSpotId: target.SignatureSpotId,
-                        signatureImage: dataUrl,
-                    });
-                } else {
-                    await signingFilesApi.signFile(effectiveSigningFileId, {
-                        signatureSpotId: target.SignatureSpotId,
-                        signatureImage: dataUrl,
-                    });
-                }
-            })();
+
+            setCurrentSpot(target);
+            const didSign = await signCurrentSpotWithImage(dataUrl, target);
+            if (!didSign) return;
 
             setMessage({ type: "success", text: "החתימה נשמרה בהצלחה" });
             await reloadDetailsAndAdvance();
@@ -478,6 +564,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 const sigRes = isPublic
                     ? await signingFilesApi.getPublicSavedSignatureDataUrl(publicToken)
                     : await signingFilesApi.getSavedSignatureDataUrl();
+                unwrapApi(sigRes);
                 const rawDataUrl = sigRes?.data?.dataUrl;
                 dataUrl = await normalizeSignatureDataUrl(rawDataUrl);
             } else {
@@ -495,17 +582,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
             // Sign sequentially to avoid overloading the API and keep order predictable.
             for (const spot of unsigned) {
-                if (isPublic) {
-                    await signingFilesApi.publicSignFile(publicToken, {
-                        signatureSpotId: spot.SignatureSpotId,
-                        signatureImage: dataUrl,
-                    });
-                } else {
-                    await signingFilesApi.signFile(effectiveSigningFileId, {
-                        signatureSpotId: spot.SignatureSpotId,
-                        signatureImage: dataUrl,
-                    });
-                }
+                setCurrentSpot(spot);
+                // eslint-disable-next-line no-await-in-loop
+                const didSign = await signCurrentSpotWithImage(dataUrl, spot);
+                if (!didSign) return;
             }
 
             setMessage({ type: "success", text: "נחתמו כל המקומות בהצלחה" });
@@ -519,21 +599,63 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         }
     };
 
+    const requestOtp = async () => {
+        try {
+            setOtpBusy(true);
+            const res = isPublic
+                ? await signingFilesApi.publicRequestSigningOtp(publicToken, signingSessionId)
+                : await signingFilesApi.requestSigningOtp(effectiveSigningFileId, signingSessionId);
+            unwrapApi(res);
+            setOtpRequested(true);
+            setMessage({ type: "success", text: "קוד אימות נשלח ב-SMS" });
+        } catch (err) {
+            console.error("OTP request failed", err);
+            setMessage({ type: "error", text: getApiErrorMessage(err) || "שגיאה בשליחת קוד" });
+        } finally {
+            setOtpBusy(false);
+        }
+    };
+
+    const verifyOtp = async () => {
+        try {
+            const otp = String(otpCode || "").trim();
+            if (!/^[0-9]{6}$/.test(otp)) {
+                setMessage({ type: "error", text: "נא להזין קוד בן 6 ספרות" });
+                return;
+            }
+
+            setOtpBusy(true);
+            const res = isPublic
+                ? await signingFilesApi.publicVerifySigningOtp(publicToken, otp, signingSessionId)
+                : await signingFilesApi.verifySigningOtp(effectiveSigningFileId, otp, signingSessionId);
+            unwrapApi(res);
+            setOtpVerified(true);
+            setMessage({ type: "success", text: "הקוד אומת בהצלחה" });
+        } catch (err) {
+            console.error("OTP verify failed", err);
+            setMessage({ type: "error", text: getApiErrorMessage(err) || "שגיאה באימות קוד" });
+        } finally {
+            setOtpBusy(false);
+        }
+    };
+
     const rejectFile = async () => {
         const reason = prompt("מה הסיבה לדחיית המסמך?");
         if (reason === null) return;
         try {
             setSaving(true);
             if (isPublic) {
-                await signingFilesApi.publicRejectSigning(publicToken, { rejectionReason: reason });
+                const res = await signingFilesApi.publicRejectSigning(publicToken, { rejectionReason: reason, signingSessionId });
+                unwrapApi(res);
             } else {
-                await signingFilesApi.rejectSigning(effectiveSigningFileId, { rejectionReason: reason });
+                const res = await signingFilesApi.rejectSigning(effectiveSigningFileId, { rejectionReason: reason, signingSessionId });
+                unwrapApi(res);
             }
             setMessage({ type: "success", text: "המסמך נדחה ונשלחה הודעה לעורך הדין" });
             setTimeout(() => onClose(), 1200);
         } catch (err) {
             console.error("Failed to reject file", err);
-            setMessage({ type: "error", text: "שגיאה בדחיית המסמך" });
+            setMessage({ type: "error", text: getApiErrorMessage(err) || "שגיאה בדחיית המסמך" });
         } finally {
             setSaving(false);
         }
@@ -643,6 +765,44 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 >
                                     {message.text}
                                 </SimpleContainer>
+                            )}
+
+                            <div className="lw-signing-legalBox">
+                                <label className="lw-signing-legalRow">
+                                    <input
+                                        type="checkbox"
+                                        checked={consentAccepted}
+                                        onChange={(e) => setConsentAccepted(Boolean(e.target.checked))}
+                                        disabled={saving}
+                                    />
+                                    <span>{CONSENT_TEXT_HE}</span>
+                                </label>
+                            </div>
+
+                            {Boolean(fileDetails?.file?.RequireOtp) && (
+                                <div className="lw-signing-otpBox">
+                                    <div className="lw-signing-otpTitle">נדרש אימות SMS (OTP) לפני חתימה</div>
+                                    <div className="lw-signing-otpRow">
+                                        <input
+                                            className="lw-signing-otpInput"
+                                            inputMode="numeric"
+                                            pattern="[0-9]*"
+                                            placeholder="קוד (6 ספרות)"
+                                            value={otpCode}
+                                            onChange={(e) => setOtpCode(e.target.value)}
+                                            disabled={otpBusy || saving}
+                                        />
+                                        <PrimaryButton size={buttonSizes.SMALL} onPress={verifyOtp} disabled={otpBusy || saving}>
+                                            אמת
+                                        </PrimaryButton>
+                                    </div>
+                                    <div className="lw-signing-actionsRow">
+                                        <SecondaryButton size={buttonSizes.SMALL} onPress={requestOtp} disabled={otpBusy || saving}>
+                                            {otpRequested ? "שלח שוב" : "שלח קוד"}
+                                        </SecondaryButton>
+                                        {otpVerified && <div className="lw-signing-otpVerified">אומת</div>}
+                                    </div>
+                                </div>
                             )}
 
                             {!allSpotsSignedByUser && remainingCount > 0 && (

@@ -81,6 +81,50 @@
     min-inline-size: 0;
 }
 
+.lw-uploadSigningScreen__otpPolicyGroup {
+    border: 0.0625rem solid #e0e0e0;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    background-color: #fff;
+}
+
+.lw-uploadSigningScreen__radioRow {
+    display: flex;
+    align-items: center;
+}
+
+.lw-uploadSigningScreen__radioLabel {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #333;
+}
+
+.lw-uploadSigningScreen__waiverBox {
+    margin-top: 0.5rem;
+    border: 0.0625rem solid #f0e0a0;
+    background-color: #fff3cd;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.lw-uploadSigningScreen__waiverText {
+    font-size: 0.875rem;
+    color: #856404;
+}
+
+.lw-uploadSigningScreen__checkboxLabel {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #333;
+}
+
 .lw-uploadSigningScreen__fileGroup {
     align-items: center;
 }
