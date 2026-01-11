@@ -120,6 +120,13 @@ export default function AdminPopup({ adminDetails, rePerformRequest, onFailureFu
                     >
                         {isPerforming ? "שומר..." : !adminDetails ? "שמור מנהל" : "עדכן מנהל"}
                     </PrimaryButton>
+                    <SecondaryButton
+                        className="lw-cancelButton"
+                        size={buttonSizes.MEDIUM}
+                        onPress={() => closePopUpFunction?.()}
+                    >
+                        ביטול
+                    </SecondaryButton>
                 </SimpleContainer>
             </SimpleScrollView>
         </SimpleContainer>

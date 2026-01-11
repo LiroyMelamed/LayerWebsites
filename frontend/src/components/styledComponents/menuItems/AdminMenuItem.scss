@@ -7,13 +7,12 @@
 }
 
 .lw-adminMenuItem__row {
-    @include m.row(v.$space-2, nowrap, center);
+    @include m.row(0, nowrap, center);
     width: 100%;
 }
 
 .lw-adminMenuItem__cell {
-    flex: 1 1 0;
-    padding-inline: 0.375rem;
+    flex: 1;
 }
 
 @media (max-width: v.$bp-md) {

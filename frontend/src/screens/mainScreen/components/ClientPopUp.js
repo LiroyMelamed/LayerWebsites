@@ -127,6 +127,13 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
                     >
                         {isPerforming ? "שומר..." : !clientDetails ? "שמור לקוח" : "עדכן לקוח"}
                     </PrimaryButton>
+                    <SecondaryButton
+                        className="lw-cancelButton"
+                        size={buttonSizes.MEDIUM}
+                        onPress={() => closePopUpFunction?.()}
+                    >
+                        ביטול
+                    </SecondaryButton>
                 </SimpleContainer>
             </SimpleScrollView>
         </SimpleContainer>

@@ -16,6 +16,7 @@ import IsraeliPhoneNumberValidation from '../../../functions/validation/IsraeliP
 import emailValidation from '../../../functions/validation/EmailValidation';
 
 import './CaseFullView.scss';
+import useAutoHttpRequest from '../../../hooks/useAutoHttpRequest';
 
 export default function CaseFullView({ caseDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style: _style }) {
     const [caseHasBeenChosen, setCaseHasBeenChosen] = useState(false)
@@ -79,11 +80,11 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
 
     const { result: customers, isPerforming: isPerformingCustomers, performRequest: searchCustomers } = useHttpRequest(customersApi.getCustomersByName, null, () => { });
 
-    const { result: caseTypes, isPerforming: isPerformingCaseTypes, performRequest: searchCaseTypes } = useHttpRequest(casesTypeApi.getCaseTypeByName, null, () => { });
+    const { result: caseTypes, isPerforming: isPerformingCaseTypes, performRequest: searchCaseTypes } = useAutoHttpRequest(casesTypeApi.getCaseTypeByName);
 
-    const { result: adminByName, isPerforming: isPerformingGetAdmin, performRequest: getAdminByName } = useHttpRequest(adminApi.getAdminByName, null, () => { });
+    const { result: adminByName, isPerforming: isPerformingGetAdmin, performRequest: getAdminByName } = useAutoHttpRequest(adminApi.getAdminByName);
 
-    const { result: cases, isPerforming: isPerformingCases, performRequest: searchCases } = useHttpRequest(casesApi.getCaseByName, null, () => { });
+    const { result: cases, isPerforming: isPerformingCases, performRequest: searchCases } = useAutoHttpRequest(casesApi.getCaseByName);
 
     const { isPerforming: isSaving, performRequest: saveCase } = useHttpRequest(
         caseDetails ? casesApi.updateCaseById : casesApi.addCase,
@@ -370,6 +371,13 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                     >
                         {isSaving ? "שומר..." : caseDetails || caseHasBeenChosen ? "עדכן תיק" : "שמור תיק"}
                     </PrimaryButton>
+                    <SecondaryButton
+                        onPress={() => closePopUpFunction?.()}
+                        size={buttonSizes.MEDIUM}
+                        className="lw-cancelButton"
+                    >
+                        ביטול
+                    </SecondaryButton>
                 </SimpleContainer>
             </SimpleScrollView>
         </SimpleContainer>

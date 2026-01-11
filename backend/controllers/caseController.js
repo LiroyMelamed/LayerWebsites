@@ -188,14 +188,52 @@ const getCaseById = async (req, res) => {
 const getCaseByName = async (req, res) => {
     let { caseName } = req.query;
 
-    if (!caseName || caseName.trim() === "") {
-        return res.status(400).json({ message: "Case name is required for search" });
-    }
+    const normalizedCaseName = typeof caseName === 'string' ? caseName.trim() : '';
 
     const userId = req.user?.UserId;
     const userRole = req.user?.Role;
 
+    if (!userId) {
+        return res.status(401).json({ message: "Unauthorized: User ID missing" });
+    }
+
     try {
+        // If empty query: return a default list so dropdowns can preload.
+        if (!normalizedCaseName) {
+            const pagination = getPagination(req, res, { defaultLimit: 200, maxLimit: 500 });
+            if (pagination === null) return;
+
+            const limit = pagination.enabled ? pagination.limit : 200;
+            const offset = pagination.enabled ? pagination.offset : 0;
+
+            // Paginate by caseId (not joined rows) so descriptions aren't truncated.
+            const idsQuery =
+                userRole === 'Admin'
+                    ? `SELECT DISTINCT C.caseid
+                       FROM cases C
+                       ORDER BY C.caseid
+                       LIMIT $1 OFFSET $2`
+                    : `SELECT DISTINCT C.caseid
+                       FROM cases C
+                       WHERE C.userid = $1
+                       ORDER BY C.caseid
+                       LIMIT $2 OFFSET $3`;
+
+            const idsParams = userRole === 'Admin' ? [limit, offset] : [userId, limit, offset];
+            const idsResult = await pool.query(idsQuery, idsParams);
+            const ids = idsResult.rows.map((r) => r.caseid);
+            if (ids.length === 0) return res.json([]);
+
+            const detailsQuery =
+                userRole === 'Admin'
+                    ? `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) ORDER BY C.caseid, CD.stage`
+                    : `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) AND C.userid = $2 ORDER BY C.caseid, CD.stage`;
+
+            const detailsParams = userRole === 'Admin' ? [ids] : [ids, userId];
+            const result = await pool.query(detailsQuery, detailsParams);
+            return res.json(_mapCaseResults(result.rows));
+        }
+
         let query = _buildBaseCaseQuery();
         const params = [];
         let paramIndex = 1;
@@ -203,27 +241,27 @@ const getCaseByName = async (req, res) => {
         let whereClauses = [];
 
         whereClauses.push(`C.casename ILIKE $${paramIndex}`);
-        params.push(`%${caseName}%`);
+        params.push(`%${normalizedCaseName}%`);
         paramIndex++;
 
         whereClauses.push(`U.name ILIKE $${paramIndex}`);
-        params.push(`%${caseName}%`);
+        params.push(`%${normalizedCaseName}%`);
         paramIndex++;
 
         whereClauses.push(`U.companyname ILIKE $${paramIndex}`);
-        params.push(`%${caseName}%`);
+        params.push(`%${normalizedCaseName}%`);
         paramIndex++;
 
         whereClauses.push(`U.phonenumber ILIKE $${paramIndex}`);
-        params.push(`%${caseName}%`);
+        params.push(`%${normalizedCaseName}%`);
         paramIndex++;
 
         whereClauses.push(`U.email ILIKE $${paramIndex}`);
-        params.push(`%${caseName}%`);
+        params.push(`%${normalizedCaseName}%`);
         paramIndex++;
 
         whereClauses.push(`CT.casetypename ILIKE $${paramIndex}`);
-        params.push(`%${caseName}%`);
+        params.push(`%${normalizedCaseName}%`);
         paramIndex++;
 
         query += ` WHERE (${whereClauses.join(" OR ")})`;
@@ -640,9 +678,7 @@ const getTaggedCases = async (req, res) => {
 const getTaggedCasesByName = async (req, res) => {
     let { caseName } = req.query;
 
-    if (!caseName || caseName.trim() === "") {
-        return res.status(400).json({ message: "Case name is required for search" });
-    }
+    const normalizedCaseName = typeof caseName === 'string' ? caseName.trim() : '';
 
     const userId = req.user?.UserId;
     const userRole = req.user?.Role;
@@ -652,6 +688,42 @@ const getTaggedCasesByName = async (req, res) => {
     }
 
     try {
+        // If empty query: return a default list so dropdowns can preload.
+        if (!normalizedCaseName) {
+            const pagination = getPagination(req, res, { defaultLimit: 200, maxLimit: 500 });
+            if (pagination === null) return;
+
+            const limit = pagination.enabled ? pagination.limit : 200;
+            const offset = pagination.enabled ? pagination.offset : 0;
+
+            const idsQuery =
+                userRole === 'Admin'
+                    ? `SELECT DISTINCT C.caseid
+                       FROM cases C
+                       WHERE C.istagged = true
+                       ORDER BY C.caseid
+                       LIMIT $1 OFFSET $2`
+                    : `SELECT DISTINCT C.caseid
+                       FROM cases C
+                       WHERE C.istagged = true AND C.userid = $1
+                       ORDER BY C.caseid
+                       LIMIT $2 OFFSET $3`;
+
+            const idsParams = userRole === 'Admin' ? [limit, offset] : [userId, limit, offset];
+            const idsResult = await pool.query(idsQuery, idsParams);
+            const ids = idsResult.rows.map((r) => r.caseid);
+            if (ids.length === 0) return res.json([]);
+
+            const detailsQuery =
+                userRole === 'Admin'
+                    ? `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.caseid = ANY($1::int[]) ORDER BY C.caseid, CD.stage`
+                    : `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.caseid = ANY($1::int[]) AND C.userid = $2 ORDER BY C.caseid, CD.stage`;
+
+            const detailsParams = userRole === 'Admin' ? [ids] : [ids, userId];
+            const result = await pool.query(detailsQuery, detailsParams);
+            return res.json(_mapCaseResults(result.rows));
+        }
+
         const params = [];
         let paramIndex = 1;
 
@@ -659,24 +731,24 @@ const getTaggedCasesByName = async (req, res) => {
 
         // Search in case name
         whereClauses.push(`C.casename ILIKE $${paramIndex}`);
-        params.push(`%${caseName}%`);
+        params.push(`%${normalizedCaseName}%`);
         paramIndex++;
 
         // Add more columns for tagged case search
         whereClauses.push(`U.name ILIKE $${paramIndex}`); // Assuming U is the user/customer table alias
-        params.push(`%${caseName}%`);
+        params.push(`%${normalizedCaseName}%`);
         paramIndex++;
 
         whereClauses.push(`U.companyname ILIKE $${paramIndex}`); // Assuming U is the user/customer table alias
-        params.push(`%${caseName}%`);
+        params.push(`%${normalizedCaseName}%`);
         paramIndex++;
 
         whereClauses.push(`U.phonenumber ILIKE $${paramIndex}`);
-        params.push(`%${caseName}%`);
+        params.push(`%${normalizedCaseName}%`);
         paramIndex++;
 
         whereClauses.push(`CT.casetypename ILIKE $${paramIndex}`); // Assuming CT is the case types table alias
-        params.push(`%${caseName}%`);
+        params.push(`%${normalizedCaseName}%`);
         paramIndex++;
 
         let query = `

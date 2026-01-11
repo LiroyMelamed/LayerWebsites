@@ -28,31 +28,61 @@ const SearchInput = ({
 
     const [query, setQuery] = useState(value);
     const [showResults, setShowResults] = useState(false);
+    const [isOpening, setIsOpening] = useState(false);
     const targetRef = useRef(null);
 
+    const hasDropdown =
+        queryResult !== undefined ||
+        isPerforming !== undefined ||
+        Boolean(getButtonTextFunction) ||
+        Boolean(buttonPressFunction) ||
+        (Boolean(emptyActionText) && Boolean(onEmptyAction));
+
     useEffect(() => {
-        // Avoid persisting accidental trailing spaces from selected values.
         setQuery(String(value ?? '').trimEnd());
     }, [value]);
 
     const handleInputChange = (event) => {
         setQuery(event.target.value);
         onSearch(event.target.value);
-        setShowResults(true);
+        if (hasDropdown) {
+            setShowResults(true);
+        }
     };
 
     const handleFocus = () => {
-        if (query) {
-            setShowResults(true);
-        }
+        if (!hasDropdown) return;
+
+        setShowResults(true);
+        setIsOpening(true);
+
+        const q = String(query ?? '');
+        onSearch?.(q.trim() ? q : '');
     };
 
     const handleBlur = (event) => {
         const nextFocusTarget = event?.relatedTarget;
         if (!nextFocusTarget || !targetRef.current?.contains(nextFocusTarget)) {
             setShowResults(false);
+            setIsOpening(false);
         }
     };
+
+    useEffect(() => {
+        if (!hasDropdown || !showResults || !isOpening) return;
+
+        if (isPerforming) {
+            setIsOpening(false);
+            return;
+        }
+        if (Array.isArray(queryResult) && queryResult.length > 0) {
+            setIsOpening(false);
+            return;
+        }
+
+        const id = setTimeout(() => setIsOpening(false), 250);
+        return () => clearTimeout(id);
+    }, [hasDropdown, showResults, isOpening, isPerforming, queryResult]);
 
     function hoverButtonPressed(text, result) {
         const cleanedText = String(text ?? '').trimEnd();
@@ -66,7 +96,7 @@ const SearchInput = ({
             <SimpleInput
                 title={title}
                 ref={targetRef}
-                value={query} // Add the value prop here
+                value={query}
                 leftIcon={leftIcon}
                 rightIcon={rightIcon}
                 tintColor={tintColor}
@@ -78,12 +108,12 @@ const SearchInput = ({
                 error={error}
                 {...props}
             />
-            {showResults && (
+            {hasDropdown && showResults && (
                 <HoverContainer
                     targetRef={targetRef}
                     className="lw-searchInput__hover"
                     queryResult={queryResult}
-                    isPerforming={isPerforming}
+                    isPerforming={Boolean(isPerforming) || isOpening}
                     getButtonTextFunction={getButtonTextFunction}
                     onPressButtonFunction={hoverButtonPressed}
                     query={query}

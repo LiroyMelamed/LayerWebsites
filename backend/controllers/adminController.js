@@ -22,10 +22,20 @@ const getAdmins = async (req, res) => {
  */
 const getAdminByName = async (req, res) => {
     // Note: The query parameter is already lowercase
-    const { name } = req.query;
+    const rawName = req?.query?.name;
+    const name = typeof rawName === 'string' ? rawName.trim() : '';
 
-    if (!name || name.trim() === "") {
-        return res.status(400).json({ message: "Admin name is required for search" });
+    // If empty query: return a default list so dropdowns can preload.
+    if (!name) {
+        try {
+            const result = await pool.query(
+                "SELECT userid, name, email, phonenumber, companyname, createdat FROM users WHERE role = 'Admin' ORDER BY userid DESC"
+            );
+            return res.json(result.rows);
+        } catch (error) {
+            console.error("Error retrieving admins:", error);
+            return res.status(500).json({ message: "Error retrieving Admins" });
+        }
     }
 
     try {

@@ -147,15 +147,14 @@ const getCaseTypeById = async (req, res) => {
 };
 
 const getCaseTypeByName = async (req, res) => {
-    const { caseTypeName } = req.query;
-
-    if (!caseTypeName || caseTypeName.trim() === "") {
-        return res.status(400).json({ message: "Case type name is required" });
-    }
-
     try {
-        const result = await pool.query(
-            `
+        const rawCaseTypeName = req?.query?.caseTypeName;
+        const caseTypeName = typeof rawCaseTypeName === 'string' ? rawCaseTypeName.trim() : '';
+
+        const userId = req.user?.UserId;
+        const userRole = req.user?.Role;
+
+        let query = `
             SELECT
                 ct.casetypeid,
                 ct.casetypename,
@@ -165,14 +164,42 @@ const getCaseTypeByName = async (req, res) => {
                 cd.text
             FROM casetypes ct
             LEFT JOIN casetypedescriptions cd ON ct.casetypeid = cd.casetypeid
-            WHERE ct.casetypename ILIKE $1
-            ORDER BY cd.stage
-            `,
-            [`%${caseTypeName}%`]
-        );
+        `;
+        const params = [];
+        const whereClauses = [];
+        let paramIndex = 1;
+
+        if (caseTypeName) {
+            whereClauses.push(`ct.casetypename ILIKE $${paramIndex}`);
+            params.push(`%${caseTypeName}%`);
+            paramIndex++;
+        }
+
+        if (userRole !== 'Admin') {
+            whereClauses.push(
+                `ct.casetypeid IN (
+                    SELECT DISTINCT c.casetypeid
+                    FROM cases c
+                    WHERE c.userid = $${paramIndex}
+                )`
+            );
+            params.push(userId);
+            paramIndex++;
+        }
+
+        if (whereClauses.length > 0) {
+            query += ` WHERE ${whereClauses.join(' AND ')}`;
+        }
+
+        query += ' ORDER BY ct.casetypeid, cd.stage';
+
+        const result = await pool.query(query, params);
 
         if (result.rows.length === 0) {
-            return res.status(404).json({ message: "No case type found" });
+            if (caseTypeName) {
+                return res.status(404).json({ message: "No case type found" });
+            }
+            return res.json([]);
         }
 
         const caseTypesMap = new Map();

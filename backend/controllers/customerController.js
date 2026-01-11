@@ -145,20 +145,43 @@ const updateCustomerById = async (req, res) => {
 
 const getCustomerByName = async (req, res) => {
     if (!requireAdmin(req, res)) return;
-    const { userName } = req.query;
-
-    if (!userName || userName.trim() === "") {
-        return res.status(400).json({ message: "User name is required for search" });
-    }
+    const rawUserName = req?.query?.userName;
+    const userName = typeof rawUserName === 'string' ? rawUserName.trim() : '';
 
     try {
         const pagination = getPagination(req, res, { defaultLimit: 50, maxLimit: 200 });
         if (pagination === null) return;
 
+        // If empty query: return a default list so dropdowns can preload.
+        if (!userName) {
+            const limit = pagination.enabled ? pagination.limit : 200;
+            const offset = pagination.enabled ? pagination.offset : 0;
+
+            const result = await pool.query(
+                `
+                SELECT userid, name, email, phonenumber, companyname
+                FROM users
+                WHERE role <> 'Admin'
+                ORDER BY userid DESC
+                LIMIT $1 OFFSET $2
+                `,
+                [limit, offset]
+            );
+
+            return res.json(result.rows.map(row => ({
+                UserId: row.userid,
+                Name: row.name,
+                Email: row.email,
+                PhoneNumber: row.phonenumber,
+                CompanyName: row.companyname
+            })));
+        }
+
         const baseQuery = `
             SELECT userid, name, email, phonenumber, companyname
             FROM users
-            WHERE name ILIKE $1 OR email ILIKE $1 OR phonenumber ILIKE $1 OR companyname ILIKE $1
+            WHERE role <> 'Admin'
+              AND (name ILIKE $1 OR email ILIKE $1 OR phonenumber ILIKE $1 OR companyname ILIKE $1)
         `;
 
         const query = pagination.enabled

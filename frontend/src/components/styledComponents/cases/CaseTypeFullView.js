@@ -12,6 +12,7 @@ import { casesTypeApi } from "../../../api/casesApi";
 import { useEffect, useState } from "react";
 
 import "./CaseTypeFullView.scss";
+import TertiaryButton from "../buttons/TertiaryButton";
 
 export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style: _style }) {
     const [caseTypeName, setCaseTypeName, caseTypeNameError] = useFieldState(HebrewCharsValidation, caseTypeDetails?.CaseTypeName || "");
@@ -106,20 +107,20 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
             <SimpleScrollView>
                 <SimpleContainer className="lw-caseTypeFullView__row">
                     <SimpleContainer className="lw-caseTypeFullView__inputWrap">
-                    <SimpleInput
-                        title={"שם סוג התיק"}
-                        value={caseTypeName}
-                        onChange={(e) => setCaseTypeName(e.target.value)}
-                        error={caseTypeNameError}
-                    />
+                        <SimpleInput
+                            title={"שם סוג התיק"}
+                            value={caseTypeName}
+                            onChange={(e) => setCaseTypeName(e.target.value)}
+                            error={caseTypeNameError}
+                        />
                     </SimpleContainer>
                     <SimpleContainer className="lw-caseTypeFullView__inputWrap">
-                    <SimpleInput
-                        title={"מספר שלבים"}
-                        value={numberOfStages}
-                        onChange={(e) => setNumberOfStages(Number(e.target.value))}
-                        error={numberOfStagesError}
-                    />
+                        <SimpleInput
+                            title={"מספר שלבים"}
+                            value={numberOfStages}
+                            onChange={(e) => setNumberOfStages(Number(e.target.value))}
+                            error={numberOfStagesError}
+                        />
                     </SimpleContainer>
                 </SimpleContainer>
 
@@ -141,13 +142,18 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
 
                 <SimpleContainer className="lw-caseTypeFullView__buttonsRow">
                     {caseTypeDetails && (
-                        <SecondaryButton
+                        <TertiaryButton
                             onPress={handleDeleteCaseType}
                             isPerforming={isDeleting}
                         >
                             {isDeleting ? "מוחק..." : "מחק סוג תיק"}
-                        </SecondaryButton>
+                        </TertiaryButton>
                     )}
+                    <SecondaryButton
+                        onPress={handleAddStage}
+                    >
+                        הוסף שלב
+                    </SecondaryButton>
                     <PrimaryButton
                         onPress={handleSaveCaseType}
                         isPerforming={isPerforming}
@@ -156,9 +162,11 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
                         {isPerforming ? "שומר..." : caseTypeDetails ? "עדכן סוג תיק" : "שמור סוג תיק"}
                     </PrimaryButton>
                     <SecondaryButton
-                        onPress={handleAddStage}
+                        onPress={() => closePopUpFunction?.()}
+                        className="lw-cancelButton"
+
                     >
-                        הוסף שלב
+                        ביטול
                     </SecondaryButton>
                 </SimpleContainer>
             </SimpleScrollView>
