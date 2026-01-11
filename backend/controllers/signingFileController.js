@@ -11,6 +11,8 @@ const { detectHebrewSignatureSpotsFromPdfBuffer, streamToBuffer } = require("../
 const { PDFDocument } = require("pdf-lib");
 const { v4: uuid } = require("uuid");
 const crypto = require('crypto');
+const archiver = require('archiver');
+const { Readable } = require('stream');
 const { requireInt, parsePositiveIntStrict } = require("../utils/paramValidation");
 const { getPagination } = require("../utils/pagination");
 const { createAppError } = require('../utils/appError');
@@ -62,6 +64,250 @@ const SIGNING_CONSENT_TEXT = String(
 
 function sha256Hex(buffer) {
     return crypto.createHash('sha256').update(buffer).digest('hex');
+}
+
+function isProductionFailClosed() {
+    return String(process.env.IS_PRODUCTION || '').toLowerCase() === 'true';
+}
+
+function formatUtcZipTimestamp(dateLike = new Date()) {
+    const d = new Date(dateLike);
+    const yyyy = String(d.getUTCFullYear());
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(d.getUTCDate()).padStart(2, '0');
+    const hh = String(d.getUTCHours()).padStart(2, '0');
+    const min = String(d.getUTCMinutes()).padStart(2, '0');
+    return `${yyyy}${mm}${dd}_${hh}${min}`;
+}
+
+function parseSafeFilenameFromContentDisposition(headerValue) {
+    const v = String(headerValue || '');
+    const m = v.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
+    const raw = decodeURIComponent((m?.[1] || m?.[2] || '').trim());
+    return raw ? raw.replace(/[\\/\r\n\t]/g, '_') : null;
+}
+
+function getEvidenceReadmeHebrew() {
+    return [
+        'חבילת ראיות — מסמך חתום (ללא תעודה/PKI)',
+        '',
+        'תכולה:',
+        '1) signed.pdf — המסמך החתום (בדיוק הבייטים כפי שנשמרו)',
+        '2) manifest.json — תקציר משפטי/טכני (מטא-דאטה, מדיניות OTP, ייחוס, גדלים, חותמות זמן)',
+        '3) audit_events.json — לוג אירועים בלתי-ניתן-לשינוי (append-only) עבור המסמך',
+        '4) consent.json — רשומות הסכמה (נוסח + חותמת זמן + IP/UA)',
+        '5) otp.json — מטא-דאטה של אימות OTP (ללא קודים); או הצהרה שה-OTP ויתרו עליו + אישור ויתור',
+        '6) hashes.json — טביעות SHA-256 (PDF מקורי/מוצג/חתום + חתימה לכל נקודת חתימה)',
+        '7) storage.json — ראיות אחסון (bucket/key/etag/versionId) עבור אובייקטים רלוונטיים',
+        '',
+        'איך לאמת שלמות:',
+        '- חשבו SHA-256 ל-signed.pdf והשוו לערך signed_pdf_sha256 ב-manifest.json או hashes.json.',
+        '- ניתן להשתמש בפקודה (דוגמה):',
+        '  Windows PowerShell: Get-FileHash .\\signed.pdf -Algorithm SHA256',
+        '  Linux/macOS: sha256sum signed.pdf',
+        '',
+        'הערה:',
+        '- חבילת ראיות זו מיועדת לשימוש ראייתי בהקשר חתימה אלקטרונית שאינה PKI.',
+        '- אין בחבילה זו פרטי סוד (למשל קודי OTP).',
+        '',
+    ].join('\n');
+}
+
+async function loadEvidenceRowsForZip(signingFileId) {
+    const [fileEvidenceRes, spotsRes, consentRes, otpRes, auditRes] = await Promise.all([
+        pool.query(
+            `select
+                signingfileid as "SigningFileId",
+                caseid as "CaseId",
+                lawyerid as "LawyerId",
+                clientid as "ClientId",
+                filename as "FileName",
+                filekey as "FileKey",
+                originalfilekey as "OriginalFileKey",
+                status as "Status",
+                createdat as "CreatedAt",
+                signedat as "SignedAt",
+                signedfilekey as "SignedFileKey",
+                immutableatutc as "ImmutableAtUtc",
+
+                requireotp as "RequireOtp",
+                signingpolicyversion as "SigningPolicyVersion",
+                policyselectedbyuserid as "PolicySelectedByUserId",
+                policyselectedatutc as "PolicySelectedAtUtc",
+                otpwaiveracknowledged as "OtpWaiverAcknowledged",
+                otpwaiveracknowledgedatutc as "OtpWaiverAcknowledgedAtUtc",
+                otpwaiveracknowledgedbyuserid as "OtpWaiverAcknowledgedByUserId",
+
+                originalpdfsha256 as "OriginalPdfSha256",
+                presentedpdfsha256 as "PresentedPdfSha256",
+                signedpdfsha256 as "SignedPdfSha256",
+
+                originalstoragebucket as "OriginalStorageBucket",
+                originalstoragekey as "OriginalStorageKey",
+                originalstorageetag as "OriginalStorageEtag",
+                originalstorageversionid as "OriginalStorageVersionId",
+
+                signedstoragebucket as "SignedStorageBucket",
+                signedstoragekey as "SignedStorageKey",
+                signedstorageetag as "SignedStorageEtag",
+                signedstorageversionid as "SignedStorageVersionId"
+             from signingfiles
+             where signingfileid = $1`,
+            [signingFileId]
+        ),
+        pool.query(
+            `select
+                signaturespotid as "SignatureSpotId",
+                pagenumber as "PageNumber",
+                x as "X",
+                y as "Y",
+                width as "Width",
+                height as "Height",
+                signername as "SignerName",
+                signeruserid as "SignerUserId",
+                isrequired as "IsRequired",
+                issigned as "IsSigned",
+                signedat as "SignedAt",
+                signaturedata as "SignatureDataKey",
+
+                signerip as "SignerIp",
+                signeruseragent as "SignerUserAgent",
+                signingsessionid as "SigningSessionId",
+                presentedpdfsha256 as "PresentedPdfSha256",
+                otpverificationid as "OtpVerificationId",
+                consentid as "ConsentId",
+                signatureimagesha256 as "SignatureImageSha256",
+                signaturestorageetag as "SignatureStorageEtag",
+                signaturestorageversionid as "SignatureStorageVersionId"
+             from signaturespots
+             where signingfileid = $1
+             order by pagenumber, y, x`,
+            [signingFileId]
+        ),
+        pool.query(
+            `select
+                consentid as "ConsentId",
+                signeruserid as "SignerUserId",
+                signingsessionid as "SigningSessionId",
+                consentversion as "ConsentVersion",
+                consenttextsha256 as "ConsentTextSha256",
+                acceptedatutc as "AcceptedAtUtc",
+                ip as "Ip",
+                user_agent as "UserAgent"
+             from signing_consents
+             where signingfileid = $1
+             order by acceptedatutc asc`,
+            [signingFileId]
+        ),
+        pool.query(
+            `select
+                challengeid as "OtpVerificationId",
+                signeruserid as "SignerUserId",
+                signingsessionid as "SigningSessionId",
+                phone_e164 as "PhoneE164",
+                presentedpdfsha256 as "PresentedPdfSha256",
+                sent_at_utc as "SentAtUtc",
+                expires_at_utc as "ExpiresAtUtc",
+                verified as "Verified",
+                verified_at_utc as "VerifiedAtUtc",
+                attempt_count as "AttemptCount",
+                locked_until_utc as "LockedUntilUtc",
+                request_ip as "RequestIp",
+                request_user_agent as "RequestUserAgent",
+                verify_ip as "VerifyIp",
+                verify_user_agent as "VerifyUserAgent"
+             from signing_otp_challenges
+             where signingfileid = $1
+             order by sent_at_utc asc`,
+            [signingFileId]
+        ),
+        pool.query(
+            `select
+                eventid as "EventId",
+                occurred_at_utc as "OccurredAtUtc",
+                event_type as "EventType",
+                actor_userid as "ActorUserId",
+                actor_type as "ActorType",
+                ip as "Ip",
+                user_agent as "UserAgent",
+                signing_session_id as "SigningSessionId",
+                request_id as "RequestId",
+                success as "Success",
+                metadata as "Metadata",
+                prev_event_hash as "PrevEventHash",
+                event_hash as "EventHash"
+             from audit_events
+             where signingfileid = $1
+             order by occurred_at_utc asc`,
+            [signingFileId]
+        ),
+    ]);
+
+    return {
+        file: fileEvidenceRes.rows?.[0] || null,
+        signatureSpots: spotsRes.rows || [],
+        consents: consentRes.rows || [],
+        otpVerifications: otpRes.rows || [],
+        auditEvents: auditRes.rows || [],
+    };
+}
+
+async function loadSignedPdfStreamOrPlaceholder({ signingFileId, fileRow }) {
+    // Prefer explicit signed-storage key, then signed file key.
+    let key = fileRow?.SignedStorageKey || fileRow?.SignedFileKey;
+
+    // If signed output is missing but the status is signed, try to generate a flattened signed PDF on-demand.
+    if (!key && String(fileRow?.Status || '').toLowerCase() === 'signed') {
+        try {
+            key = await ensureSignedPdfKey({
+                signingFileId,
+                lawyerId: fileRow?.LawyerId,
+                pdfKey: fileRow?.FileKey,
+            });
+        } catch (e) {
+            if (isProductionFailClosed()) throw e;
+        }
+    }
+
+    const bucket = fileRow?.SignedStorageBucket || BUCKET;
+
+    if (key) {
+        try {
+            const head = await r2.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
+            const obj = await r2.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+            const bodyStream = obj?.Body;
+            if (!bodyStream) throw new Error('Signed PDF Body is empty');
+
+            return {
+                stream: bodyStream,
+                storage: {
+                    bucket,
+                    key,
+                    etag: head?.ETag || null,
+                    versionId: head?.VersionId || null,
+                    sizeBytes: Number.isFinite(Number(head?.ContentLength)) ? Number(head?.ContentLength) : null,
+                },
+                isPlaceholder: false,
+            };
+        } catch (e) {
+            if (isProductionFailClosed()) throw e;
+        }
+    }
+
+    // Non-production fallback: include a deterministic placeholder PDF to keep export working in dev/tests.
+    const placeholder = Buffer.from('%PDF-1.4\n% Evidence placeholder\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF\n', 'utf8');
+    return {
+        stream: Readable.from(placeholder),
+        storage: {
+            bucket: bucket || null,
+            key: key || null,
+            etag: null,
+            versionId: null,
+            sizeBytes: placeholder.length,
+        },
+        isPlaceholder: true,
+        placeholderBytes: placeholder,
+    };
 }
 
 function isUuid(v) {
@@ -1391,6 +1637,14 @@ exports.getLawyerSigningFiles = async (req, res, next) => {
                 sf.status             as "Status",
                 sf.createdat          as "CreatedAt",
                 sf.signedat           as "SignedAt",
+                sf.signedfilekey      as "SignedFileKey",
+                sf.requireotp         as "RequireOtp",
+                sf.signingpolicyversion as "SigningPolicyVersion",
+                sf.policyselectedbyuserid as "PolicySelectedByUserId",
+                sf.policyselectedatutc as "PolicySelectedAtUtc",
+                sf.otpwaiveracknowledged as "OtpWaiverAcknowledged",
+                sf.otpwaiveracknowledgedatutc as "OtpWaiverAcknowledgedAtUtc",
+                sf.otpwaiveracknowledgedbyuserid as "OtpWaiverAcknowledgedByUserId",
                 c.casename            as "CaseName",
                 u.name                as "ClientName",
                 count(ss.signaturespotid)                                       as "TotalSpots",
@@ -1402,6 +1656,9 @@ exports.getLawyerSigningFiles = async (req, res, next) => {
              where sf.lawyerid = $1
              group by sf.signingfileid, sf.caseid, sf.filename,
                       sf.status, sf.createdat, sf.signedat,
+                      sf.signedfilekey, sf.requireotp, sf.signingpolicyversion,
+                      sf.policyselectedbyuserid, sf.policyselectedatutc,
+                      sf.otpwaiveracknowledged, sf.otpwaiveracknowledgedatutc, sf.otpwaiveracknowledgedbyuserid,
                       c.casename, u.name
              order by sf.createdat desc` +
             (pagination.enabled ? ` limit $2 offset $3` : ``);
@@ -1824,6 +2081,256 @@ exports.getEvidencePackage = async (req, res, next) => {
         });
     } catch (err) {
         console.error('getEvidencePackage error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה ביצירת חבילת ראיות' });
+    }
+};
+
+// Evidence package ZIP download for court-ready export (lawyer/admin only).
+// Streams ZIP to avoid high memory usage.
+exports.getEvidencePackageZip = async (req, res, next) => {
+    try {
+        const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
+        if (signingFileId === null) return;
+
+        const requesterId = Number(req.user?.UserId);
+        const role = req.user?.Role;
+        if (!Number.isFinite(requesterId) || requesterId <= 0) {
+            return fail(next, 'UNAUTHORIZED', 401);
+        }
+
+        // Authorization first.
+        const filePolicy = await loadSigningPolicyForFile(signingFileId);
+        if (!filePolicy) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
+
+        const isOwnerLawyer = Number(filePolicy.LawyerId) === Number(requesterId);
+        const isAdmin = role === 'Admin';
+        if (!isOwnerLawyer && !isAdmin) {
+            return fail(next, 'FORBIDDEN', 403);
+        }
+
+        const evidence = await loadEvidenceRowsForZip(signingFileId);
+        const fileRow = evidence.file;
+        if (!fileRow) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
+
+        if (String(fileRow.Status || '').toLowerCase() !== 'signed') {
+            return fail(next, 'DOCUMENT_NOT_SIGNED', 409);
+        }
+
+        // Production: fail-closed if legally-relevant evidence is missing.
+        if (isProductionFailClosed()) {
+            if (!Array.isArray(evidence.consents) || evidence.consents.length === 0) {
+                return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה ביצירת חבילת ראיות' });
+            }
+
+            if (Boolean(fileRow.RequireOtp)) {
+                const hasVerified = (evidence.otpVerifications || []).some((v) => v && v.Verified === true);
+                if (!hasVerified) {
+                    return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה ביצירת חבילת ראיות' });
+                }
+            } else {
+                // If OTP was waived, require waiver ack metadata.
+                if (!Boolean(fileRow.OtpWaiverAcknowledged)) {
+                    return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה ביצירת חבילת ראיות' });
+                }
+            }
+        }
+
+        // Signed PDF stream (from storage) or non-prod placeholder.
+        let signedPdf;
+        try {
+            signedPdf = await loadSignedPdfStreamOrPlaceholder({ signingFileId, fileRow });
+        } catch (e) {
+            console.error('evidence zip: failed to load signed PDF', e);
+            return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה ביצירת חבילת ראיות' });
+        }
+
+        const signatureSpots = evidence.signatureSpots || [];
+        const signerAttribution = {
+            signer_user_id: null,
+            signer_phone_e164: null,
+            signer_ip: null,
+            signer_user_agent: null,
+        };
+
+        // Best-effort attribution: first signed spot.
+        const firstSignedSpot = signatureSpots.find((s) => s?.IsSigned);
+        if (firstSignedSpot) {
+            signerAttribution.signer_user_id = firstSignedSpot.SignerUserId || null;
+            signerAttribution.signer_ip = firstSignedSpot.SignerIp || null;
+            signerAttribution.signer_user_agent = firstSignedSpot.SignerUserAgent || null;
+
+            const otpForSession = (evidence.otpVerifications || []).find((o) => o?.SigningSessionId && o.SigningSessionId === firstSignedSpot.SigningSessionId);
+            const otpAny = otpForSession || (evidence.otpVerifications || []).find((o) => o?.PhoneE164);
+            if (otpAny?.PhoneE164) signerAttribution.signer_phone_e164 = otpAny.PhoneE164;
+        }
+
+        // If DB signed hash missing, compute it only for non-prod placeholder export.
+        let signedPdfSha256 = fileRow.SignedPdfSha256 || null;
+        let signedPdfSizeBytes = signedPdf?.storage?.sizeBytes ?? null;
+        if (!signedPdfSha256 && signedPdf?.isPlaceholder && signedPdf?.placeholderBytes) {
+            signedPdfSha256 = sha256Hex(signedPdf.placeholderBytes);
+            signedPdfSizeBytes = signedPdf.placeholderBytes.length;
+        }
+
+        const hashes = {
+            original_pdf_sha256: fileRow.OriginalPdfSha256 || null,
+            presented_pdf_sha256: fileRow.PresentedPdfSha256 || null,
+            signed_pdf_sha256: signedPdfSha256,
+            signature_images: signatureSpots.map((s) => ({
+                signatureSpotId: s.SignatureSpotId,
+                signature_image_sha256: s.SignatureImageSha256 || null,
+            })),
+        };
+
+        const storage = {
+            original: {
+                bucket: fileRow.OriginalStorageBucket || null,
+                key: fileRow.OriginalStorageKey || null,
+                etag: fileRow.OriginalStorageEtag || null,
+                versionId: fileRow.OriginalStorageVersionId || null,
+            },
+            signed: {
+                bucket: signedPdf?.storage?.bucket || (fileRow.SignedStorageBucket || null),
+                key: signedPdf?.storage?.key || (fileRow.SignedStorageKey || fileRow.SignedFileKey || null),
+                etag: signedPdf?.storage?.etag || (fileRow.SignedStorageEtag || null),
+                versionId: signedPdf?.storage?.versionId || (fileRow.SignedStorageVersionId || null),
+            },
+            signature_images: signatureSpots
+                .filter((s) => s?.SignatureDataKey)
+                .map((s) => ({
+                    signatureSpotId: s.SignatureSpotId,
+                    key: s.SignatureDataKey,
+                    etag: s.SignatureStorageEtag || null,
+                    versionId: s.SignatureStorageVersionId || null,
+                })),
+        };
+
+        const generatedAtUtc = new Date().toISOString();
+        const caseId = fileRow.CaseId ?? 'noCase';
+        const zipTs = formatUtcZipTimestamp(new Date());
+        const zipFilename = `evidence_${caseId}_${signingFileId}_${zipTs}.zip`;
+
+        const manifest = {
+            signingFileId,
+            caseId: fileRow.CaseId ?? null,
+            policy: {
+                requireOtp: Boolean(fileRow.RequireOtp),
+                policyVersion: String(fileRow.SigningPolicyVersion || SIGNING_POLICY_VERSION),
+                selectedBy: fileRow.PolicySelectedByUserId ?? null,
+                selectedAtUtc: fileRow.PolicySelectedAtUtc ?? null,
+                otpWaiverAcknowledged: Boolean(fileRow.OtpWaiverAcknowledged),
+                otpWaiverAcknowledgedAtUtc: fileRow.OtpWaiverAcknowledgedAtUtc ?? null,
+                otpWaiverAcknowledgedByUserId: fileRow.OtpWaiverAcknowledgedByUserId ?? null,
+            },
+            timestamps: {
+                createdAtUtc: fileRow.CreatedAt ? new Date(fileRow.CreatedAt).toISOString() : null,
+                immutableAtUtc: fileRow.ImmutableAtUtc || null,
+                signedAtUtc: fileRow.SignedAt ? new Date(fileRow.SignedAt).toISOString() : null,
+            },
+            signerAttribution,
+            integrity: {
+                hashes,
+                byteSizes: {
+                    signed_pdf_bytes: signedPdfSizeBytes,
+                },
+            },
+            retention: {
+                storage,
+            },
+            generation: {
+                generatedAtUtc,
+                generatedByUserId: requesterId,
+            },
+        };
+
+        // Audit event: download (append-only)
+        await insertAuditEvent({
+            req,
+            eventType: 'EVIDENCE_PACKAGE_DOWNLOADED',
+            signingFileId,
+            actorUserId: requesterId,
+            actorType: isAdmin ? 'admin' : 'lawyer',
+            success: true,
+            metadata: {
+                zipFilename,
+                signingPolicyVersion: String(fileRow.SigningPolicyVersion || SIGNING_POLICY_VERSION),
+            },
+        });
+
+        res.status(200);
+        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Disposition', `attachment; filename="${zipFilename}"`);
+
+        const archive = archiver('zip', { zlib: { level: 9 } });
+
+        archive.on('warning', (err) => {
+            console.warn('evidence zip warning:', err);
+        });
+
+        archive.on('error', (err) => {
+            console.error('evidence zip error:', err);
+            try {
+                res.destroy(err);
+            } catch {
+                // ignore
+            }
+        });
+
+        archive.pipe(res);
+
+        // Required content
+        archive.append(JSON.stringify(manifest, null, 2), { name: 'manifest.json' });
+        archive.append(JSON.stringify(evidence.auditEvents || [], null, 2), { name: 'audit_events.json' });
+        archive.append(JSON.stringify(evidence.consents || [], null, 2), { name: 'consent.json' });
+
+        if (Boolean(fileRow.RequireOtp)) {
+            const sanitizedOtp = (evidence.otpVerifications || []).map((o) => ({
+                OtpVerificationId: o.OtpVerificationId,
+                SignerUserId: o.SignerUserId,
+                SigningSessionId: o.SigningSessionId,
+                PhoneE164: o.PhoneE164,
+                PresentedPdfSha256: o.PresentedPdfSha256,
+                SentAtUtc: o.SentAtUtc,
+                ExpiresAtUtc: o.ExpiresAtUtc,
+                Verified: o.Verified,
+                VerifiedAtUtc: o.VerifiedAtUtc,
+                AttemptCount: o.AttemptCount,
+                LockedUntilUtc: o.LockedUntilUtc,
+                RequestIp: o.RequestIp,
+                RequestUserAgent: o.RequestUserAgent,
+                VerifyIp: o.VerifyIp,
+                VerifyUserAgent: o.VerifyUserAgent,
+            }));
+
+            archive.append(JSON.stringify({ otpRequired: true, verifications: sanitizedOtp }, null, 2), { name: 'otp.json' });
+        } else {
+            archive.append(
+                JSON.stringify(
+                    {
+                        otpRequired: false,
+                        waiver: {
+                            otpWaiverAcknowledged: Boolean(fileRow.OtpWaiverAcknowledged),
+                            otpWaiverAcknowledgedAtUtc: fileRow.OtpWaiverAcknowledgedAtUtc ?? null,
+                            otpWaiverAcknowledgedByUserId: fileRow.OtpWaiverAcknowledgedByUserId ?? null,
+                        },
+                    },
+                    null,
+                    2
+                ),
+                { name: 'otp.json' }
+            );
+        }
+
+        archive.append(JSON.stringify(hashes, null, 2), { name: 'hashes.json' });
+        archive.append(JSON.stringify(storage, null, 2), { name: 'storage.json' });
+        archive.append(getEvidenceReadmeHebrew(), { name: 'README.txt' });
+
+        // signed.pdf must be the exact bytes from storage when available.
+        archive.append(signedPdf.stream, { name: 'signed.pdf' });
+
+        await archive.finalize();
+    } catch (err) {
+        console.error('getEvidencePackageZip error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה ביצירת חבילת ראיות' });
     }
 };

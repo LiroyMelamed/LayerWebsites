@@ -48,6 +48,9 @@ router.get("/:signingFileId", authMiddleware, signingFileController.getSigningFi
 // Evidence package for court (lawyer/admin)
 router.get("/:signingFileId/evidence", authMiddleware, signingFileController.getEvidencePackage);
 
+// Evidence package ZIP download (lawyer/admin)
+router.get("/:signingFileId/evidence-package", authMiddleware, signingFileController.getEvidencePackageZip);
+
 // OTP for signing (authenticated flows)
 router.post("/:signingFileId/otp/request", authMiddleware, signingFileController.requestSigningOtp);
 router.post("/:signingFileId/otp/verify", authMiddleware, signingFileController.verifySigningOtp);
