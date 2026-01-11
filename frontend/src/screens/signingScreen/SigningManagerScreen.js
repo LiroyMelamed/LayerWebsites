@@ -21,6 +21,7 @@ import { Text14, TextBold24 } from "../../components/specializedComponents/text/
 import { images } from "../../assets/images/images";
 import ApiUtils from "../../api/apiUtils";
 import { usePopup } from "../../providers/PopUpProvider";
+import ErrorPopup from "../../components/styledComponents/popups/ErrorPopup";
 
 import { AdminStackName } from "../../navigation/AdminStack";
 import { uploadFileForSigningScreenName } from "./UploadFileForSigningScreen";
@@ -117,12 +118,39 @@ export default function SigningManagerScreen() {
         return map[status] || map.pending;
     };
 
+    const showHebrewError = (message) => {
+        openPopup(
+            <ErrorPopup
+                closePopup={closePopup}
+                errorText={message || "שגיאה לא צפויה"}
+            />
+        );
+    };
+
+    const parseFilenameFromContentDisposition = (headerValue) => {
+        const v = String(headerValue || "");
+        const m = v.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
+        const raw = decodeURIComponent((m?.[1] || m?.[2] || "").trim());
+        return raw ? raw.replace(/[\\/\r\n\t]/g, "_") : null;
+    };
+
+    const downloadBlobAsFile = (blob, filename) => {
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = objectUrl;
+        a.download = filename || "evidence.zip";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+    };
+
     const handleDownload = async (signingFileId, fileName) => {
         try {
             const response = await signingFilesApi.downloadSignedFile(signingFileId);
             const url = response?.data?.downloadUrl;
             if (!url) {
-                alert("לא ניתן להוריד את הקובץ החתום");
+                showHebrewError("לא ניתן להוריד את הקובץ החתום");
                 return;
             }
             const a = document.createElement("a");
@@ -133,7 +161,59 @@ export default function SigningManagerScreen() {
             a.remove();
         } catch (err) {
             console.error("Download error:", err);
-            alert("שגיאה בהורדת הקובץ: " + (err?.message || ""));
+            showHebrewError(err?.data?.message || "שגיאה בהורדת הקובץ");
+        }
+    };
+
+    const handleDownloadEvidencePackage = async (file) => {
+        try {
+            const signingFileId = file?.SigningFileId;
+            if (!signingFileId) {
+                showHebrewError("שגיאה: מזהה מסמך חסר");
+                return;
+            }
+
+            // Only allow when signed output exists (strict per requirement).
+            if (!file?.SignedFileKey) {
+                showHebrewError("חבילת ראיות זמינה רק לאחר חתימה מלאה");
+                return;
+            }
+
+            const baseUrl = ApiUtils?.defaults?.baseURL || "";
+            const token = localStorage.getItem("token");
+            const url = `${baseUrl}/SigningFiles/${encodeURIComponent(signingFileId)}/evidence-package`;
+
+            const res = await fetch(url, {
+                method: "GET",
+                headers: {
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+            });
+
+            if (!res.ok) {
+                // Backend uses centralized Hebrew error responses: { success:false, errorCode, message }
+                let payload = null;
+                try {
+                    payload = await res.json();
+                } catch {
+                    payload = null;
+                }
+
+                const message = payload?.message || "שגיאה בהורדת חבילת ראיות";
+                showHebrewError(message);
+                return;
+            }
+
+            const disposition = res.headers.get("content-disposition");
+            const filename =
+                parseFilenameFromContentDisposition(disposition) ||
+                `evidence_${file?.CaseId || "noCase"}_${signingFileId}.zip`;
+
+            const blob = await res.blob();
+            downloadBlobAsFile(blob, filename);
+        } catch (err) {
+            console.error("Evidence package download error:", err);
+            showHebrewError("שגיאה בהורדת חבילת ראיות");
         }
     };
 
@@ -155,6 +235,7 @@ export default function SigningManagerScreen() {
                 onClose={closePopup}
                 onOpenPdf={() => openPdfInNewTab(file.SigningFileId)}
                 onDownloadSigned={() => handleDownload(file.SigningFileId, file.FileName)}
+                onDownloadEvidencePackage={() => handleDownloadEvidencePackage(file)}
                 formatDotDate={formatDotDate}
             />
         );
@@ -312,9 +393,28 @@ export default function SigningManagerScreen() {
     );
 }
 
-function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned, formatDotDate }) {
+function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned, onDownloadEvidencePackage, formatDotDate }) {
     const totalSpots = Number(file?.TotalSpots || 0);
     const signedSpots = Number(file?.SignedSpots || 0);
+
+    const requireOtp = Boolean(file?.RequireOtp);
+    const isOtpWaived = file?.RequireOtp === false;
+    const otpChipText = requireOtp ? "OTP נדרש" : "OTP בוטל ע\"י עו\"ד";
+    const otpChipClassName = requireOtp
+        ? "lw-signingManagerScreen__chip lw-signingManagerScreen__chip--signed"
+        : "lw-signingManagerScreen__chip lw-signingManagerScreen__chip--pending";
+
+    const formatUtcDateTime = (dateLike) => {
+        if (!dateLike) return "-";
+        const d = new Date(dateLike);
+        if (Number.isNaN(d.getTime())) return "-";
+        const dd = String(d.getDate()).padStart(2, "0");
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const yyyy = String(d.getFullYear());
+        const hh = String(d.getHours()).padStart(2, "0");
+        const min = String(d.getMinutes()).padStart(2, "0");
+        return `${dd}.${mm}.${yyyy} ${hh}:${min}`;
+    };
 
     const statusText = file?.Status === "signed"
         ? "חתום"
@@ -325,6 +425,8 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
     return (
         <SimpleContainer className="lw-signingManagerScreen__detailsPopup">
             <TextBold24>{file?.FileName || "פרטי מסמך"}</TextBold24>
+
+            <SimpleContainer className={otpChipClassName}>{otpChipText}</SimpleContainer>
 
             <SimpleContainer className="lw-signingManagerScreen__detailRow">
                 <div className="lw-signingManagerScreen__detailLabel">תיק:</div>
@@ -365,10 +467,26 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                 </SimpleContainer>
             )}
 
+            {isOtpWaived && (
+                <>
+                    <SimpleContainer className="lw-signingManagerScreen__detailRow">
+                        <div className="lw-signingManagerScreen__detailLabel">ויתור OTP נקבע ע\"י:</div>
+                        <div className="lw-signingManagerScreen__detailValue">{file?.PolicySelectedByUserId ?? "-"}</div>
+                    </SimpleContainer>
+                    <SimpleContainer className="lw-signingManagerScreen__detailRow">
+                        <div className="lw-signingManagerScreen__detailLabel">ויתור OTP נקבע בתאריך:</div>
+                        <div className="lw-signingManagerScreen__detailValue">{formatUtcDateTime(file?.PolicySelectedAtUtc)}</div>
+                    </SimpleContainer>
+                </>
+            )}
+
             <SimpleContainer className="lw-signingManagerScreen__actionsRow">
                 <SecondaryButton onPress={onOpenPdf}>פתח PDF</SecondaryButton>
                 {file?.Status === "signed" && (
                     <PrimaryButton onPress={onDownloadSigned}>הורד קובץ חתום</PrimaryButton>
+                )}
+                {Boolean(file?.SignedFileKey) && (
+                    <PrimaryButton onPress={onDownloadEvidencePackage}>הורד חבילת ראיות</PrimaryButton>
                 )}
                 <SecondaryButton onPress={onClose}>סגור</SecondaryButton>
             </SimpleContainer>
