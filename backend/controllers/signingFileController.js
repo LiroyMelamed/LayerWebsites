@@ -1072,14 +1072,11 @@ exports.uploadFileForSigning = async (req, res, next) => {
         // For backward compatibility, use first signer as primary clientId
         const primaryClientId = signersList[0].userId || clientId;
 
-        // Court-ready requirement: OTP choice must be explicit and persisted per signing request.
+        // OTP policy: default is OTP required.
+        // If the lawyer explicitly waives OTP, they must also explicitly acknowledge the waiver.
         const requireOtpRaw = signingConfig?.require_otp ?? signingConfig?.requireOtp;
         const hasExplicitPolicySelection = requireOtpRaw === true || requireOtpRaw === false || requireOtpRaw === 1 || requireOtpRaw === 0;
-        if (!hasExplicitPolicySelection) {
-            return fail(next, 'SIGNING_POLICY_REQUIRED', 422);
-        }
-
-        const requireOtp = Boolean(requireOtpRaw);
+        const requireOtp = hasExplicitPolicySelection ? Boolean(requireOtpRaw) : true;
         const waiverAck = Boolean(signingConfig?.otpWaiverAcknowledged ?? signingConfig?.otp_waiver_acknowledged);
         if (!requireOtp && !waiverAck) {
             return fail(next, 'OTP_WAIVER_ACK_REQUIRED', 422);
@@ -1125,6 +1122,7 @@ exports.uploadFileForSigning = async (req, res, next) => {
                 requireOtp,
                 otpWaived: !requireOtp,
                 otpWaiverAcknowledged: waiverAck,
+                selectionExplicit: hasExplicitPolicySelection,
                 selectedByLawyerUserId: lawyerId,
             },
         });
@@ -1658,8 +1656,11 @@ exports.getEvidencePackage = async (req, res, next) => {
         const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
         if (signingFileId === null) return;
 
-        const requesterId = req.user?.UserId;
+        const requesterId = Number(req.user?.UserId);
         const role = req.user?.Role;
+        if (!Number.isFinite(requesterId) || requesterId <= 0) {
+            return fail(next, 'UNAUTHORIZED', 401);
+        }
 
         const file = await loadSigningPolicyForFile(signingFileId);
         if (!file) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
@@ -1941,7 +1942,7 @@ exports.updateSigningPolicy = async (req, res, next) => {
                  policyselectedatutc = now(),
                  otpwaiveracknowledged = $5,
                  otpwaiveracknowledgedatutc = case when $5 = true then now() else null end,
-                 otpwaiveracknowledgedbyuserid = case when $5 = true then $4 else null end
+                 otpwaiveracknowledgedbyuserid = case when $5 = true then $6::integer else null end
              where signingfileid = $1`,
             [
                 signingFileId,
@@ -1949,6 +1950,7 @@ exports.updateSigningPolicy = async (req, res, next) => {
                 SIGNING_POLICY_VERSION,
                 requesterId,
                 !requireOtp ? waiverAck : false,
+                requesterId,
             ]
         );
 

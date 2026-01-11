@@ -261,3 +261,75 @@ test('Signing requires explicit consent (public token)', async () => {
         await cleanup({ signingFileId, userIds: [lawyerId, clientId] });
     }
 });
+
+test('OTP waiver requires explicit acknowledgement (lawyer policy update)', async () => {
+    resetStore();
+    const app = require('../app');
+
+    const prefix = `e2e-test-otp-waiver-ack-required-${Date.now()}`;
+
+    const lawyerId = await createUser({ prefix, role: 'Admin' });
+    const clientId = await createUser({ prefix, role: 'User' });
+
+    const signingFileId = await createSigningFile({ prefix, lawyerId, clientId });
+
+    try {
+        const res = await request(app)
+            .patch(`/api/SigningFiles/${signingFileId}/policy`)
+            .send({ requireOtp: false })
+            .set('Authorization', `Bearer ${makeAuthToken({ userid: lawyerId, role: 'Admin' })}`);
+
+        assert.equal(res.status, 422);
+        assert.equal(res.body?.errorCode, 'OTP_WAIVER_ACK_REQUIRED');
+    } finally {
+        await cleanup({ signingFileId, userIds: [lawyerId, clientId] });
+    }
+});
+
+test('OTP waived policy allows public signing without OTP (with consent)', async () => {
+    resetStore();
+    const app = require('../app');
+
+    const prefix = `e2e-test-otp-waived-${Date.now()}`;
+
+    const lawyerId = await createUser({ prefix, role: 'Admin' });
+    const clientId = await createUser({ prefix, role: 'User' });
+
+    const signingFileId = await createSigningFile({ prefix, lawyerId, clientId });
+    const signatureSpotId = await createSignatureSpot({ signingFileId, signerUserId: clientId });
+
+    try {
+        const policyRes = await request(app)
+            .patch(`/api/SigningFiles/${signingFileId}/policy`)
+            .send({ requireOtp: false, otpWaiverAcknowledged: true })
+            .set('Authorization', `Bearer ${makeAuthToken({ userid: lawyerId, role: 'Admin' })}`);
+
+        assert.equal(policyRes.status, 200);
+        assert.equal(policyRes.body?.success, true);
+
+        const linkRes = await request(app)
+            .post(`/api/SigningFiles/${signingFileId}/public-link`)
+            .send({ signerUserId: clientId })
+            .set('Authorization', `Bearer ${makeAuthToken({ userid: lawyerId, role: 'Admin' })}`);
+
+        assert.equal(linkRes.status, 200);
+        const token = linkRes.body.token;
+        assert.ok(typeof token === 'string' && token.length > 10);
+
+        const signingSessionId = randomUUID();
+        const signRes = await request(app)
+            .post(`/api/SigningFiles/public/${encodeURIComponent(token)}/sign`)
+            .set('x-signing-session-id', signingSessionId)
+            .send({
+                signatureSpotId,
+                signingSessionId,
+                consentAccepted: true,
+                consentVersion: '2026-01-11',
+            });
+
+        assert.equal(signRes.status, 200);
+        assert.equal(signRes.body?.success, true);
+    } finally {
+        await cleanup({ signingFileId, userIds: [lawyerId, clientId] });
+    }
+});
