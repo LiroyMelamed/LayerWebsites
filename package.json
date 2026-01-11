@@ -1,6 +1,12 @@
 {
   "scripts": {
-    "e2e:api": "node scripts/e2e/run.mjs"
+    "e2e:api": "node scripts/e2e/run.mjs",
+    "e2e:ui": "playwright test",
+    "e2e:ui:headed": "playwright test --headed",
+    "e2e:ui:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0"
   },
   "dependencies": {
     "i18next": "^25.7.3",
