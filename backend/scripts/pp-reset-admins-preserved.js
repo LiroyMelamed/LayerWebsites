@@ -142,8 +142,9 @@ async function main() {
 
         // Truncate data tables first (transactional in Postgres).
         // Use CASCADE to satisfy FK order safely without disabling constraints.
+        // IMPORTANT: Do NOT use RESTART IDENTITY (requires sequence ownership).
         if (existingTables.length > 0) {
-            const truncateSql = `TRUNCATE TABLE ${existingTables.map(t => `public.${t}`).join(', ')} RESTART IDENTITY CASCADE;`;
+            const truncateSql = `TRUNCATE TABLE ${existingTables.map(t => `public.${t}`).join(', ')} CASCADE;`;
             await client.query(truncateSql);
         }
 
