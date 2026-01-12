@@ -154,11 +154,16 @@ test('evidence-package ZIP (lawyer/admin) includes manifest.json + signed.pdf at
         assert.equal(res.status, 200);
         assert.match(String(res.headers['content-type'] || ''), /application\/zip/i);
 
+        assert.ok(Buffer.isBuffer(res.body));
+        assert.ok(res.body.length > 0);
+
         const zip = new AdmZip(res.body);
         const entries = zip.getEntries().map((e) => e.entryName);
 
         assert.ok(entries.includes('manifest.json'));
         assert.ok(entries.includes('signed.pdf'));
+        assert.ok(entries.includes('audit_events.json'));
+        assert.ok(entries.includes('consent.json'));
 
         const manifestText = zip.readAsText('manifest.json');
         const manifest = JSON.parse(manifestText);
