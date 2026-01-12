@@ -44,7 +44,7 @@ async function cleanupUser(userId) {
     await pool.query('delete from users where userid = $1', [userId]).catch(() => { });
 }
 
-test('delete customer keeps signingfiles (clientid set NULL)', async () => {
+test('delete customer is blocked when user has signingfiles (legal data)', async () => {
     resetStore();
     const app = require('../app');
 
@@ -65,17 +65,18 @@ test('delete customer keeps signingfiles (clientid set NULL)', async () => {
             .delete(`/api/Customers/DeleteCustomer/${targetUserId}`)
             .set('Authorization', `Bearer ${makeToken({ userid: actingAdminId, role: 'Admin' })}`);
 
-        assert.equal(res.status, 200);
+        assert.equal(res.status, 409);
+        assert.equal(res.body?.errorCode, 'USER_HAS_LEGAL_DATA');
 
         const userRes = await pool.query('select 1 from users where userid = $1', [targetUserId]);
-        assert.equal(userRes.rowCount, 0);
+        assert.equal(userRes.rowCount, 1);
 
         const keptRes = await pool.query(
             'select clientid from signingfiles where signingfileid = $1',
             [signingFileId]
         );
         assert.equal(keptRes.rowCount, 1);
-        assert.equal(keptRes.rows[0].clientid, null);
+        assert.equal(keptRes.rows[0].clientid, targetUserId);
     } finally {
         await cleanupUser(targetUserId);
         await cleanupUser(actingAdminId);
