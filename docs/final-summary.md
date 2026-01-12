@@ -125,27 +125,11 @@ npm --prefix frontend run build
 npm --prefix backend test
 ```
 
-### API E2E harness (Phase B)
-Prereqs:
-- Backend must be running and reachable (default `http://localhost:5000`)
-- Postgres configured (see backend/config/db.js)
-- OTP credentials provided via env vars or scripts/e2e/.env (not committed)
-
-Run:
-```bash
-npm run e2e:api
-```
-
-Evidence output:
-- scripts/e2e/out/<runPrefix>/summary.json
-- scripts/e2e/out/<runPrefix>/*.json
-
 ---
 
 ## References
 - docs/audit-report.md
 - docs/backend-hardening-plan.md
-- docs/e2e-checklist.md
 - docs/manual-qa-checklist.md
 
 ---

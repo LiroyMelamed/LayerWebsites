@@ -120,9 +120,6 @@ Frontend
 - App loads over HTTPS with correct API base URL (Phase 2)
 - RTL layout: no regressions in critical screens
 
-E2E harness (API-first)
-- Run the harness and keep evidence: `npm run e2e:api`
-
 ---
 
 ## 5) Rollback guidance
