@@ -1,0 +1,415 @@
+{
+    "common": {
+        "language": "Language",
+        "hebrew": "Hebrew",
+        "arabic": "Arabic",
+        "english": "English",
+        "logout": "Log out",
+        "back": "Back",
+        "next": "Next",
+        "ok": "OK",
+        "cancel": "Cancel",
+        "save": "Save",
+        "close": "Close",
+        "search": "Search",
+        "all": "All",
+        "choose": "Choose",
+        "yes": "Yes",
+        "no": "No",
+        "retry": "Try again",
+        "notSpecified": "Not specified",
+        "unassigned": "Unassigned",
+        "refreshPull": "Pull down to refresh",
+        "refreshing": "Refreshing…",
+        "send": "Send",
+        "remove": "Remove",
+        "clear": "Clear",
+        "email": "Email",
+        "password": "Password",
+        "edit": "Edit",
+        "saving": "Saving...",
+        "deleting": "Deleting...",
+        "new": "New",
+        "noResultsFound": "No results found",
+        "submit": "Submit",
+        "simpleImageAlt": "Image"
+    },
+    "auth": {
+        "login": "Log in",
+        "next": "Continue",
+        "enterPhone": "Please enter a phone number",
+        "enterOtp": "Please enter the code",
+        "enterOtpInstruction": "Enter the code you received in the message",
+        "tagline": "All your case information in one place!"
+    },
+    "errors": {
+        "invalidPhone": "Invalid phone number",
+        "invalidOtp": "Invalid code",
+        "invalidEmail": "Invalid email",
+        "hebrewOnly": "Hebrew only",
+        "hebrewAndNumbersOnly": "Hebrew and numbers only",
+        "numbersOnly": "Numbers only",
+        "maxStages15": "Up to 15 stages",
+        "oopsTitle": "Oops…",
+        "unexpected": "Unexpected error",
+        "requiredFieldsExceptPassword": "All fields except password are required",
+        "required": "Required",
+        "errorPrefix": "Error: "
+    },
+    "signingManager": {
+        "searchTitle": "Search document / customer / case",
+        "tabs": {
+            "pending": "Pending / Rejected ({{count}})",
+            "signed": "Signed ({{count}})"
+        },
+        "empty": {
+            "pending": "No pending or rejected documents",
+            "signed": "No signed documents to display"
+        },
+        "labels": {
+            "case": "Case:",
+            "client": "Customer:",
+            "uploadedAt": "Upload date:",
+            "status": "Status:",
+            "signatures": "Signatures:",
+            "rejectionReason": "Rejection reason:",
+            "signedAt": "Signed at:",
+            "otpWaiverBy": "OTP waiver set by:",
+            "otpWaiverAt": "OTP waiver set at:"
+        },
+        "actions": {
+            "downloadSigned": "Download signed file",
+            "details": "Document details",
+            "uploadNew": "Send new document for signing",
+            "openPdf": "Open PDF"
+        },
+        "details": {
+            "titleFallback": "Document details"
+        },
+        "aria": {
+            "signaturesPercent": "Signatures: {{percent}}%"
+        },
+        "errors": {
+            "openPdf": "Error opening the PDF",
+            "downloadSignedMissingUrl": "Unable to download the signed file",
+            "downloadSignedError": "Error downloading the file",
+            "missingDocumentId": "Error: missing document ID",
+            "evidencePackageSignedOnly": "Evidence package is available only after full signature",
+            "evidencePackageDownloadError": "Error downloading evidence package"
+        }
+    },
+    "cases": {
+        "caseType": "Case type",
+        "statusFilter": "Status",
+        "allCases": "All cases",
+        "noCases": "No cases at the moment",
+        "openCases": "Open cases",
+        "closedCases": "Closed cases",
+        "noOpenCases": "No open cases at the moment",
+        "noClosedCases": "No closed cases at the moment",
+        "noCaseTypes": "No case types at the moment",
+        "currentStage": "Current stage",
+        "completedSuccessfully": "Completed successfully",
+        "stageDetailsTitle": "Stage details",
+        "ended": "Ended",
+        "searchCaseTitle": "Search case",
+        "searchCaseTypeTitle": "Search case type",
+        "addNewCase": "Add new case",
+        "addCaseType": "Add case type",
+        "stageCount": "Stage count",
+        "customerName": "Customer name",
+        "customerId": "Customer ID",
+        "phoneNumber": "Phone number",
+        "customerDetails": "Customer details",
+        "dates": "Dates",
+        "estimatedCompletionDate": "Estimated completion date",
+        "licenseExpiryDate": "License expiry date",
+        "management": "Management",
+        "caseManager": "Case manager",
+        "stages": "Stages",
+        "advanceStage": "Advance stage",
+        "caseNumber": "Case number",
+        "companyName": "Company name",
+        "customerEmail": "Customer email",
+        "deleteCase": "Delete case",
+        "updateCase": "Update case",
+        "saveCase": "Save case",
+        "completedStagesLabel": "Completed stages:",
+        "stageCompleted": "Stage completed",
+        "stageContinues": "Stage in progress",
+        "stageNumber": "Stage #{{number}}",
+        "noStagesInCaseType": "No stages in this case type",
+        "descriptionNumber": "Description #{{number}}",
+        "whatsapp": {
+            "group": "WhatsApp group",
+            "linkTitle": "Link WhatsApp group",
+            "groupLink": "WhatsApp group link",
+            "goToGroup": "Go to group",
+            "editLink": "Edit link",
+            "contact": "Contact",
+            "contactText": "Contacting about case number {{caseId}}"
+        }
+    },
+    "caseTypes": {
+        "createCaseType": {
+            "title": "Create or Update Case Type",
+            "caseTypeIdPlaceholder": "Case Type ID",
+            "caseLevelPlaceholder": "Case Level",
+            "caseTypePlaceholder": "Case Type",
+            "descriptionPlaceholder": "Description {{number}}",
+            "success": "Case type created/updated successfully!"
+        },
+        "caseTypeName": "Case type name",
+        "deleteCaseType": "Delete case type",
+        "addStage": "Add stage",
+        "updateCaseType": "Update case type",
+        "saveCaseType": "Save case type"
+    },
+    "taggedCases": {
+        "searchPinnedCaseTitle": "Search pinned case",
+        "pinCase": "Pin case",
+        "caseNumber": "Case number",
+        "pin": "Pin",
+        "unpin": "Unpin",
+        "emptyPinnedCases": "No pinned cases yet",
+        "pinnedCasesTitle": "Pinned cases",
+        "pinned": "Pinned"
+    },
+    "customers": {
+        "addCustomer": "Add customer",
+        "emptyList": "When we add customers, they will appear here",
+        "companyName": "Company name",
+        "saveCustomer": "Save customer",
+        "updateCustomer": "Update customer",
+        "deleteCustomer": "Delete customer"
+    },
+    "admins": {
+        "searchAdmin": "Search admin",
+        "addAdmin": "Add admin",
+        "adminName": "Admin name",
+        "createdAt": "Created at",
+        "emptyList": "When we add admins, they will appear here",
+        "saveAdmin": "Save admin",
+        "updateAdmin": "Update admin",
+        "deleteAdmin": "Delete admin"
+    },
+    "updates": {
+        "notifications": "Notifications",
+        "updates": "Updates",
+        "messages": "Messages",
+        "serviceComingSoon": "{{name}} will be available soon"
+    },
+    "profile": {
+        "successTitle": "Success",
+        "updatedSuccess": "Profile updated successfully",
+        "dateOfBirth": "Date of birth"
+    },
+    "notifications": {
+        "loadError": "Error loading notifications. Please try again.",
+        "loading": "Loading notifications...",
+        "empty": "You have no notifications right now.",
+        "fallbackTitle": "New notification",
+        "goToSigning": "Go to signing",
+        "markAsRead": "Mark as read"
+    },
+    "mainScreen": {
+        "caseSummary": "Case summary",
+        "totalCases": "Total cases",
+        "taggedCases": "Tagged cases",
+        "activeCustomers": "Active customers",
+        "moreDataForAnalytics": "When we have more data, we will show an analytics breakdown"
+    },
+    "terms": {
+        "title": "Terms of Use for {{appName}}",
+        "lastUpdated": "Last updated: {{date}}",
+        "intro": "Welcome to {{appName}}. Your use of the website and our services is subject to your acceptance of the terms of use detailed below.",
+        "section1": {
+            "title": "1. Acceptance of Terms",
+            "body": "• By using the website or our services, you agree to these Terms of Use and our Privacy Policy. If you do not agree, you must refrain from using our services."
+        },
+        "section2": {
+            "title": "2. Services We Provide",
+            "body": "We provide legal case management services, including:\n\n• Creating and managing cases\n• Managing customers\n• Managing case stages and stage descriptions\n• Tagging and filtering cases\n• User roles and security"
+        },
+        "section3": {
+            "title": "3. Registration and User Accounts",
+            "body": "• Using the services requires registration with a phone number and receiving an OTP code for identification.\n• During registration, we may store data such as name, phone number, email address, and company name.\n• Use of the system is limited to users assigned roles (Admins and Users)."
+        },
+        "section4": {
+            "title": "4. Privacy and Data Protection",
+            "body": "• Your information is stored in a secure Azure SQL database.\n• We use JWT authentication to protect user access.\n• Personal information will not be shared with third parties without your consent, except where required by law."
+        },
+        "section5": {
+            "title": "5. Fair Use and Prohibited Activities",
+            "body": "When using our services, you agree:\n\n• Not to use the services for unlawful purposes.\n• Not to disrupt the system or attempt to breach data stores.\n• Not to submit false or misleading information."
+        },
+        "section6": {
+            "title": "6. Liability and Indemnification",
+            "body": "• We strive to provide stable services, but we do not guarantee uninterrupted availability.\n• The company will not be liable for indirect, consequential, or incidental damages resulting from use of the service.\n• Users are responsible for safeguarding their access credentials and the information they enter."
+        },
+        "section7": {
+            "title": "7. Changes and Updates",
+            "body": "• We reserve the right to change these Terms of Use at any time. Updates will be published, and continued use after an update constitutes acceptance of the updated terms."
+        },
+        "section8": {
+            "title": "8. Contact",
+            "body": "• If you have questions regarding these Terms of Use, you can contact us at: {{email}}."
+        }
+    },
+    "nav": {
+        "pinnedCases": "Pinned cases",
+        "signingFiles": "Documents for signing",
+        "allCases": "All cases",
+        "newOrUpdateCase": "New / Update case",
+        "allManagers": "All managers",
+        "allCaseTypes": "All case types",
+        "addCaseType": "Add case type",
+        "notifications": "Notifications",
+        "myProfile": "My profile",
+        "terms": "Terms of use",
+        "contact": "Contact",
+        "contactMessage": "Hi, I'd like to get in touch"
+    },
+    "signing": {
+        "invalidLinkTitle": "Invalid link",
+        "missingToken": "Missing token parameter in the link.",
+        "otpRequiredBadge": "OTP required",
+        "otpWaivedBadge": "OTP waived by lawyer",
+        "evidencePackageDownload": "Download Evidence Package",
+        "signerFallback": "Signer {{index}}",
+        "status": {
+            "pending": "Pending",
+            "signed": "Signed",
+            "rejected": "Rejected"
+        },
+        "public": {
+            "closedTitle": "Closed",
+            "closedHint": "You can close this window."
+        },
+        "pdf": {
+            "loading": "Loading PDF…",
+            "loadError": "Error loading PDF"
+        },
+        "pdfViewer": {
+            "addSpotForSigner": "Add spot for {{name}} on page {{pageNumber}}",
+            "addSpot": "Add spot on page {{pageNumber}}"
+        },
+        "spot": {
+            "defaultSignerName": "Signature",
+            "signedByTitle": "Signed by: {{name}}",
+            "signatureAlt": "Signature"
+        },
+        "spotMarker": {
+            "title": "📍 Signature spot {{index}}",
+            "signerName": "Signer name",
+            "pageNumber": "Page number",
+            "positionX": "X position (% of width)",
+            "positionY": "Y position (% of height)",
+            "widthPx": "Width (px)",
+            "heightPx": "Height (px)",
+            "required": "Required signature"
+        },
+        "canvas": {
+            "loadDocumentError": "Error loading the document",
+            "loadDocumentErrorTitle": "Error loading the document",
+            "loadingDocument": "Loading document...",
+            "previewComingSoon": "Coming soon: document preview",
+            "you": "You",
+            "consentText": "I confirm that I have read the displayed document, and I consent to sign it electronically. I understand that signing without OTP verification may reduce the strength of the evidence in the event of a dispute.",
+            "consentRequired": "You must accept the consent before continuing.",
+            "otpRequired": "SMS verification is required before signing.",
+            "signHere": "Sign here",
+            "pleaseSignBeforeSave": "Please sign before saving",
+            "signatureSavedSuccess": "Signature saved successfully",
+            "signatureSaveError": "Error saving signature",
+            "noSavedSignature": "No saved signature",
+            "missingSavedSignatureData": "Missing saved signature data",
+            "useSavedSignatureError": "Error using saved signature",
+            "signAllRequiresSignature": "To sign all, choose a saved signature or draw a signature",
+            "noSignatureToUse": "No signature found to use",
+            "signedAllSuccess": "All spots were signed successfully",
+            "signAllError": "Error signing all spots",
+            "otpSent": "Verification code sent via SMS",
+            "otpSendError": "Error sending code",
+            "otpInvalidFormat": "Please enter a 6-digit code",
+            "otpVerified": "Code verified successfully",
+            "otpVerifyError": "Error verifying code",
+            "rejectReasonPrompt": "What is the reason for rejecting the document?",
+            "documentRejected": "The document was rejected and the lawyer was notified",
+            "rejectError": "Error rejecting the document",
+            "otpTitle": "SMS verification (OTP) is required before signing",
+            "otpPlaceholder": "Code (6 digits)",
+            "verify": "Verify",
+            "resend": "Resend",
+            "sendCode": "Send code",
+            "verified": "Verified",
+            "nextSignature": "Next signature",
+            "remainingSignatures": "{{count}} signatures remaining",
+            "hideAllSpots": "Hide all spots",
+            "showAllSpots": "Show all spots",
+            "noSpotsToShow": "No signature spots to display",
+            "drawNewSignature": "Draw\nnew signature",
+            "savedSignatureAlt": "Saved signature",
+            "loadingSavedSignature": "Loading saved signature...",
+            "saving": "Saving...",
+            "sign": "Sign",
+            "signAll": "Sign all",
+            "useSavedSignature": "Use\nsaved signature",
+            "saveSignature": "Save signature",
+            "spotAlreadySigned": "This signature spot is already signed by you",
+            "allRequiredCompleted": "You have completed all required signatures!",
+            "rejectDocument": "Reject document",
+            "failedToLoadSignatureImage": "Failed to load signature image"
+        },
+        "screen": {
+            "tabPending": "Pending for signature ({{count}})",
+            "tabSigned": "Signed ({{count}})",
+            "emptyPending": "No documents are currently pending your signature",
+            "emptySigned": "No signed documents to display",
+            "caseLabel": "Case:",
+            "lawyerLabel": "Lawyer:",
+            "uploadedAtLabel": "Upload date:",
+            "signaturesLabel": "Signatures:",
+            "signaturesAria": "Signatures: {{percent}}%",
+            "notesLabel": "Lawyer notes:",
+            "signDocument": "Sign the document",
+            "downloadSigned": "Download signed file",
+            "details": "Details",
+            "downloadMissingUrl": "Unable to download the file",
+            "downloadError": "Error downloading the file"
+        },
+        "upload": {
+            "title": "Send document for signing",
+            "searchSignerTitle": "Search signer (customer)",
+            "selectedSignersLabel": "Selected signers *",
+            "removeSignerAria": "Remove {{name}}",
+            "fileDropPrompt": "Drag a file here or click to choose",
+            "fileHintPdfOnly": "(PDF only for now)",
+            "notesTitle": "Notes to customer (optional)",
+            "viewerTitle": "Document preview & signature setup",
+            "spotHelpText": "Each page has a \"+ Add signature\" button. Drag the boxes to the desired location or delete",
+            "sending": "Sending...",
+            "sendToClient": "Send to customer",
+            "successSent": "The file was sent to the customer for signing.",
+            "errorSending": "Error sending the file for signing.",
+            "otpPolicyLabel": "OTP policy *",
+            "otpRequire": "Require SMS OTP (recommended)",
+            "otpWaive": "Send without OTP",
+            "otpWaiverWarning": "Sending without OTP may reduce evidence strength in case of a dispute.",
+            "otpWaiverAck": "I explicitly approve sending without OTP",
+            "detect": {
+                "button": "Detect signatures automatically",
+                "detecting": "Detecting...",
+                "noneFound": "No automatic signature spots found. You can add manually.",
+                "error": "Error detecting signatures automatically."
+            },
+            "validation": {
+                "selectFile": "Please select a file.",
+                "selectAtLeastOneSigner": "Please select at least one signer.",
+                "atLeastOneSpot": "At least one signature spot is required.",
+                "selectOtpPolicy": "Please choose an OTP policy.",
+                "waiverAckRequired": "To send without OTP, you must explicitly acknowledge the statement."
+            }
+        }
+    }
+}

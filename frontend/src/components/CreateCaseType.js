@@ -1,8 +1,10 @@
 // src/components/CreateCaseType.js
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { casesTypeApi } from '../api/casesApi';
 
 const CreateCaseType = () => {
+  const { t } = useTranslation();
   const [caseTypeId, setCaseTypeId] = useState('');
   const [caseTypeData, setCaseTypeData] = useState({
     case_level: '',
@@ -24,7 +26,7 @@ const CreateCaseType = () => {
   const handleSubmit = async () => {
     try {
       await casesTypeApi.createOrUpdateCaseType(caseTypeId, caseTypeData);
-      alert('Case type created/updated successfully!');
+      alert(t('caseTypes.createCaseType.success'));
     } catch (err) {
       setError(err.message);
     }
@@ -32,24 +34,24 @@ const CreateCaseType = () => {
 
   return (
     <div>
-      <h1>Create or Update Case Type</h1>
+      <h1>{t('caseTypes.createCaseType.title')}</h1>
       <input
         type="text"
         value={caseTypeId}
         onChange={(e) => setCaseTypeId(e.target.value)}
-        placeholder="Case Type ID"
+        placeholder={t('caseTypes.createCaseType.caseTypeIdPlaceholder')}
       />
       <input
         type="text"
         value={caseTypeData.case_level}
         onChange={(e) => setCaseTypeData(prevState => ({ ...prevState, case_level: e.target.value }))}
-        placeholder="Case Level"
+        placeholder={t('caseTypes.createCaseType.caseLevelPlaceholder')}
       />
       <input
         type="text"
         value={caseTypeData.case_type}
         onChange={(e) => setCaseTypeData(prevState => ({ ...prevState, case_type: e.target.value }))}
-        placeholder="Case Type"
+        placeholder={t('caseTypes.createCaseType.caseTypePlaceholder')}
       />
       {[...Array(16)].map((_, i) => (
         <input
@@ -57,11 +59,11 @@ const CreateCaseType = () => {
           type="text"
           value={caseTypeData.discriptions[`discreption${i < 10 ? '0' : ''}${i}`] || ''}
           onChange={(e) => handleDescriptionChange(i + 1, e.target.value)}
-          placeholder={`Description ${i + 1}`}
+          placeholder={t('caseTypes.createCaseType.descriptionPlaceholder', { number: i + 1 })}
         />
       ))}
-      <button onClick={handleSubmit}>Submit</button>
-      {error && <p>Error: {error}</p>}
+      <button onClick={handleSubmit}>{t('common.submit')}</button>
+      {error && <p>{t('errors.errorPrefix')}{error}</p>}
     </div>
   );
 };

@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { Text16 } from "../../specializedComponents/text/AllTextKindFile";
 import { icons } from "../../../assets/icons/icons";
@@ -8,23 +9,40 @@ import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 
 import "./ChooseButton.scss";
 
-export default function ChooseButton({ buttonText = "סוג תיק", buttonChoices, OnPressChoiceFunction, style: _style, props }) {
-    const [chosenChoice, setChosenChoice] = useState("הכל")
+export default function ChooseButton({
+    buttonText,
+    buttonChoices,
+    items,
+    OnPressChoiceFunction,
+    style: _style,
+    props,
+}) {
+    const { t } = useTranslation();
+
+    const computedItems = useMemo(() => {
+        const normalizedChoices = Array.isArray(buttonChoices) ? buttonChoices : [];
+        const normalizedItems = Array.isArray(items)
+            ? items
+            : normalizedChoices.map((c) => ({ value: c, label: String(c) }));
+
+        return [{ value: null, label: t('common.all') }, ...normalizedItems];
+    }, [buttonChoices, items, t]);
+
+    const [chosenValue, setChosenValue] = useState(null);
     const [showResults, setShowResults] = useState(false);
     const buttonRef = useRef()
 
-    function OnPressChoice(text) {
-        setShowResults(false)
-        setChosenChoice(text)
-        OnPressChoiceFunction?.(text)
-    }
+    const chosenItem = computedItems.find((it) => it.value === chosenValue) || computedItems[0];
 
-    useEffect(() => {
-    }, [showResults])
+    function OnPressChoice(item) {
+        setShowResults(false)
+        setChosenValue(item?.value ?? null)
+        OnPressChoiceFunction?.(item?.value ?? null, item)
+    }
 
     return (
         <SimpleContainer className="lw-chooseButton">
-            <Text16>{buttonText + ":"}</Text16>
+            <Text16>{(buttonText ?? t('common.choose')) + ":"}</Text16>
             <SecondaryButton
                 ref={buttonRef}
                 leftIcon={icons.Button.DownArrow}
@@ -34,13 +52,13 @@ export default function ChooseButton({ buttonText = "סוג תיק", buttonChoic
                 size={buttonSizes.SMALL}
                 {...props}
             >
-                {chosenChoice}
+                {chosenItem?.label}
             </SecondaryButton>
             {showResults && (
                 <HoverContainer
                     targetRef={buttonRef}
-                    queryResult={['הכל', ...buttonChoices]}
-                    getButtonTextFunction={item => item}
+                    queryResult={computedItems}
+                    getButtonTextFunction={(item) => item?.label}
                     onPressButtonFunction={OnPressChoice}
                     onClose={() => { setShowResults(false) }}
                 />

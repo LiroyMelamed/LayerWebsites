@@ -6,15 +6,17 @@ import DefaultState from "../../../../components/styledComponents/defaultState/D
 import CaseMenuItem from "../../../../components/styledComponents/menuItems/CaseMenuItem";
 import Separator from "../../../../components/styledComponents/separators/Separator";
 import { getOpenData } from "../../../allCasesScreen/components/AllCasesCard";
+import { useTranslation } from 'react-i18next';
 
 import './ClosedCasesCard.scss';
 
 export default function ClosedCasesCard({ closedCases, reperformAfterSave, style: _style, className }) {
+    const { t } = useTranslation();
 
     if (closedCases?.length === 0 || !closedCases) {
         return (
             <DefaultState
-                content={"אין כרגע תיקים סגורים"}
+                content={t('cases.noClosedCases')}
                 imageClassName="lw-defaultState__image--h156"
                 imageSrc={images.Defaults.Cases}
                 className={className}
@@ -24,7 +26,7 @@ export default function ClosedCasesCard({ closedCases, reperformAfterSave, style
 
     return (
         <SimpleCard className={["lw-closedCasesCard", className].filter(Boolean).join(' ')}>
-            <TextBold20>תיקים סגורים</TextBold20>
+            <TextBold20>{t('cases.closedCases')}</TextBold20>
 
             <SimpleContainer className="lw-closedCasesCard__list">
                 {closedCases.map((item, index) => (
@@ -36,16 +38,16 @@ export default function ClosedCasesCard({ closedCases, reperformAfterSave, style
                             fullCase={item}
                             rightTitle={item.CaseName}
 
-                            leftPreFirstLine={"סוג תיק"}
+                            leftPreFirstLine={t('cases.caseType')}
                             leftValueFirstLine={item.CaseTypeName}
 
-                            rightPreSecondLine={"שלב נוכחי"}
-                            rightValueSecondLine={item.IsClosed ? 'הסתיים' : item.CurrentStage}
+                            rightPreSecondLine={t('cases.currentStage')}
+                            rightValueSecondLine={item.IsClosed ? t('cases.ended') : item.CurrentStage}
 
                             leftPreSecondLine={""}
                             leftValueSecondLine={""}
 
-                            openData={getOpenData(closedCases, index)}
+                            openData={getOpenData(closedCases, index, t)}
                             isClient={true}
                         />
                     </>

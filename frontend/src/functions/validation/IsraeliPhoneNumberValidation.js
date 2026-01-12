@@ -1,3 +1,5 @@
+import i18n from "../../i18n/i18n";
+
 export default function IsraeliPhoneNumberValidation(phoneNumber) {
     if (!phoneNumber) return null;
 
@@ -10,12 +12,12 @@ export default function IsraeliPhoneNumberValidation(phoneNumber) {
     }
 
     if (normalized.length !== 10) {
-        return "מספר פלאפון לא תקין";
+        return i18n.t('errors.invalidPhone');
     }
 
     // Mobile in Israel typically starts with 05
     if (!/^05\d{8}$/.test(normalized)) {
-        return "מספר פלאפון לא תקין";
+        return i18n.t('errors.invalidPhone');
     }
 
     return null;

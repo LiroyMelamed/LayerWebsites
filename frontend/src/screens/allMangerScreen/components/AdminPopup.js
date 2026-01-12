@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
 import SimpleInput from "../../../components/simpleComponents/SimpleInput";
 import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
@@ -11,6 +12,7 @@ import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryB
 import "./AdminPopup.scss";
 
 export default function AdminPopup({ adminDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style }) {
+    const { t } = useTranslation();
     const [admin, setAdmin] = useState({
         name: null,
         phoneNumber: null,
@@ -51,7 +53,7 @@ export default function AdminPopup({ adminDetails, rePerformRequest, onFailureFu
 
     const handleSaveAdmin = () => {
         if (!admin.name || !admin.phoneNumber || !admin.email) {
-            alert("All fields except password are required.");
+            alert(t("errors.requiredFieldsExceptPassword"));
             return;
         }
 
@@ -73,13 +75,13 @@ export default function AdminPopup({ adminDetails, rePerformRequest, onFailureFu
                 <SimpleContainer className="lw-adminPopup__row">
                     <SimpleInput
                         className="lw-adminPopup__input"
-                        title={"שם מנהל"}
+                        title={t("admins.adminName")}
                         value={admin.name}
                         onChange={(e) => handleInputChange("name", e.target.value)}
                     />
                     <SimpleInput
                         className="lw-adminPopup__input"
-                        title={"מספר פלאפון"}
+                        title={t("cases.phoneNumber")}
                         type="tel"
                         value={admin.phoneNumber}
                         onChange={(e) => handleInputChange("phoneNumber", e.target.value)}
@@ -89,14 +91,14 @@ export default function AdminPopup({ adminDetails, rePerformRequest, onFailureFu
                 <SimpleContainer className="lw-adminPopup__row">
                     <SimpleInput
                         className="lw-adminPopup__input"
-                        title={"אימייל"}
+                        title={t("common.email")}
                         type="email"
                         value={admin.email}
                         onChange={(e) => handleInputChange("email", e.target.value)}
                     />
                     <SimpleInput
                         className="lw-adminPopup__input"
-                        title={"סיסמא"}
+                        title={t("common.password")}
                         value={admin.password}
                         onChange={(e) => handleInputChange("password", e.target.value)}
                         type="password"
@@ -110,7 +112,7 @@ export default function AdminPopup({ adminDetails, rePerformRequest, onFailureFu
                             size={buttonSizes.MEDIUM}
                             onPress={handleDeleteAdmin}
                         >
-                            {isPerformingDeleteAdmin ? "מוחק..." : "מחק מנהל"}
+                            {isPerformingDeleteAdmin ? t("common.deleting") : t("admins.deleteAdmin")}
                         </SecondaryButton>
                     }
                     <PrimaryButton
@@ -118,14 +120,14 @@ export default function AdminPopup({ adminDetails, rePerformRequest, onFailureFu
                         size={buttonSizes.MEDIUM}
                         onPress={handleSaveAdmin}
                     >
-                        {isPerforming ? "שומר..." : !adminDetails ? "שמור מנהל" : "עדכן מנהל"}
+                        {isPerforming ? t("common.saving") : !adminDetails ? t("admins.saveAdmin") : t("admins.updateAdmin")}
                     </PrimaryButton>
                     <SecondaryButton
                         className="lw-cancelButton"
                         size={buttonSizes.MEDIUM}
                         onPress={() => closePopUpFunction?.()}
                     >
-                        ביטול
+                        {t("common.cancel")}
                     </SecondaryButton>
                 </SimpleContainer>
             </SimpleScrollView>

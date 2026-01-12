@@ -2,10 +2,12 @@ import React from "react";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { Text12, TextBold12 } from "../../specializedComponents/text/AllTextKindFile";
 import SimpleScrollView from "../../simpleComponents/SimpleScrollView";
+import { useTranslation } from "react-i18next";
 
 import "./CaseTypeTimeline.scss";
 
 export default function CaseTypeTimeline({ stages = [], title, style: _style }) {
+    const { t } = useTranslation();
     return (
         <SimpleScrollView className="lw-caseTypeTimeline">
             <SimpleContainer className="lw-caseTypeTimeline__container">
@@ -40,9 +42,9 @@ export default function CaseTypeTimeline({ stages = [], title, style: _style }) 
                                         }
                                     >
                                         {stage.New ? (
-                                            <TextBold12>הסתיים</TextBold12>
+                                            <TextBold12>{t('cases.ended')}</TextBold12>
                                         ) : (
-                                            <Text12>{stage.Timestamp || `שלב מס' ${index + 1}`}</Text12>
+                                            <Text12>{stage.Timestamp || t('cases.stageNumber', { number: index + 1 })}</Text12>
                                         )}
                                     </SimpleContainer>
                                     <TextBold12>{stage.Text}</TextBold12>
@@ -51,7 +53,7 @@ export default function CaseTypeTimeline({ stages = [], title, style: _style }) 
                         ))
                     ) : (
                         <TextBold12 className="lw-caseTypeTimeline__empty">
-                            אין שלבים בסוג תיק זה
+                            {t('cases.noStagesInCaseType')}
                         </TextBold12>
                     )}
                 </SimpleContainer>

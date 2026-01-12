@@ -12,6 +12,7 @@ import SimpleScrollView from "../simpleComponents/SimpleScrollView";
 import { useFromApp } from "../../providers/FromAppProvider";
 import GenericButton from "../styledComponents/buttons/GenericButton";
 import { colors } from "../../constant/colors";
+import { useTranslation } from 'react-i18next';
 import "./TopAndRightNavBar.scss";
 
 const Logo = images.Logos.LogoSlangWhite;
@@ -21,8 +22,9 @@ export default function TopAndRightNavBar({ chosenIndex = -1, children, LogoNavi
   const { isSmallScreen } = useScreenSize();
   const { openPopup, closePopup } = usePopup();
   const { isFromApp } = useFromApp();
+  const { t } = useTranslation();
   const [currentIndex, setCurrentIndex] = useState(chosenIndex);
-  const { NavBarLinks } = GetNavBarData(navigate, openPopup, closePopup, isFromApp);
+  const { NavBarLinks } = GetNavBarData(navigate, openPopup, closePopup, isFromApp, t);
 
   return (
     <SimpleContainer className="lw-topAndRightNavBar">
@@ -41,6 +43,7 @@ export default function TopAndRightNavBar({ chosenIndex = -1, children, LogoNavi
           <SimpleContainer className="lw-topAndRightNavBar__separatorWrap">
             <Separator />
           </SimpleContainer>
+
           <SimpleScrollView>
             <SimpleContainer className="lw-topAndRightNavBar__navList">
               {NavBarLinks.map((item, index) => (
@@ -70,7 +73,7 @@ export default function TopAndRightNavBar({ chosenIndex = -1, children, LogoNavi
                 navigate('/');
               }}
             >
-              התנתק
+              {t('common.logout')}
             </GenericButton>
           </SimpleContainer>
         </SimpleContainer>

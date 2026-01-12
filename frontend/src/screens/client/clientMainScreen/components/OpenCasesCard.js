@@ -6,15 +6,17 @@ import DefaultState from "../../../../components/styledComponents/defaultState/D
 import CaseMenuItem from "../../../../components/styledComponents/menuItems/CaseMenuItem";
 import Separator from "../../../../components/styledComponents/separators/Separator";
 import { getOpenDataClient } from "../../../allCasesScreen/components/AllCasesCard";
+import { useTranslation } from 'react-i18next';
 
 import './OpenCasesCard.scss';
 
 export default function OpenCasesCard({ openCases, style }) {
+    const { t } = useTranslation();
 
     if (openCases?.length === 0 || !openCases) {
         return (
             <DefaultState
-                content={"אין כרגע תיקים פתוחים"}
+                content={t('cases.noOpenCases')}
                 imageClassName="lw-defaultState__image--h156"
                 imageSrc={images.Defaults.Cases}
             />
@@ -23,7 +25,7 @@ export default function OpenCasesCard({ openCases, style }) {
 
     return (
         <SimpleCard className="lw-openCasesCard">
-            <TextBold20>תיקים פתוחים</TextBold20>
+            <TextBold20>{t('cases.openCases')}</TextBold20>
 
             <SimpleContainer className="lw-openCasesCard__list">
                 {openCases.map((item, index) => (
@@ -35,16 +37,16 @@ export default function OpenCasesCard({ openCases, style }) {
                             fullCase={item}
                             rightTitle={item.CaseName}
 
-                            leftPreFirstLine={"סוג תיק"}
+                            leftPreFirstLine={t('cases.caseType')}
                             leftValueFirstLine={item.CaseTypeName}
 
-                            rightPreSecondLine={"שלב נוכחי"}
-                            rightValueSecondLine={item.IsClosed ? 'הסתיים' : item.CurrentStage}
+                            rightPreSecondLine={t('cases.currentStage')}
+                            rightValueSecondLine={item.IsClosed ? t('cases.ended') : item.CurrentStage}
 
                             leftPreSecondLine={""}
                             leftValueSecondLine={""}
 
-                            openData={getOpenDataClient(openCases, index)}
+                            openData={getOpenDataClient(openCases, index, t)}
                             isClient={true}
                         />
                     </>

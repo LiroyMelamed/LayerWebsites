@@ -5,10 +5,12 @@ import SimpleLoader from "../../../components/simpleComponents/SimpleLoader";
 import DefaultState from "../../../components/styledComponents/defaultState/DefaultState";
 import CaseTypeMenuItem from "../../../components/styledComponents/menuItems/CaseTypeMenuItem";
 import Separator from "../../../components/styledComponents/separators/Separator";
+import { useTranslation } from 'react-i18next';
 
 import './AllCasesTypeCard.scss';
 
 export default function AllCasesTypeCard({ allCasesType, reperformAfterSave, isPerforming }) {
+    const { t } = useTranslation();
 
     if (isPerforming) {
         return (
@@ -21,7 +23,7 @@ export default function AllCasesTypeCard({ allCasesType, reperformAfterSave, isP
     if (allCasesType?.length === 0 || !allCasesType) {
         return (
             <DefaultState
-                content={"אין כרגע סוגי תיקים"}
+                content={t('cases.noCaseTypes')}
                 imageClassName="lw-defaultState__image--h156"
                 imageSrc={images.Defaults.Cases}
             />
@@ -43,16 +45,16 @@ export default function AllCasesTypeCard({ allCasesType, reperformAfterSave, isP
                             fullCase={item}
                             rightTitle={item.CaseName}
 
-                            leftPreFirstLine={"סוג תיק"}
+                            leftPreFirstLine={t('cases.caseType')}
                             leftValueFirstLine={item.CaseTypeName}
 
-                            rightPreSecondLine={"מספר שלבים"}
+                            rightPreSecondLine={t('cases.stageCount')}
                             rightValueSecondLine={item.NumberOfStages}
 
                             leftPreSecondLine={null}
                             leftValueSecondLine={item.CaseType}
 
-                            openData={getOpenData(allCasesType, index)}
+                            openData={getOpenData(allCasesType, index, t)}
                             rePerformFunction={reperformAfterSave}
                         />
                     </SimpleContainer>
@@ -63,23 +65,23 @@ export default function AllCasesTypeCard({ allCasesType, reperformAfterSave, isP
 }
 
 //Functions
-function getOpenData(taggedCases, index) {
+function getOpenData(taggedCases, index, t) {
     const openData = [
         {
-            title: "שם לקוח",
+            title: t('cases.customerName'),
             value: taggedCases[index].CustomerName
         },
         {
-            title: "ת.ז לקוח",
+            title: t('cases.customerId'),
             value: taggedCases[index].CostumerTaz
         },
         {
-            title: "מספר פלאפון",
+            title: t('cases.phoneNumber'),
             value: taggedCases[index].PhoneNumber
         },
         {
-            title: "נעוץ",
-            value: taggedCases[index].IsTagged ? "כן" : "לא"
+            title: t('taggedCases.pinned'),
+            value: taggedCases[index].IsTagged ? t('common.yes') : t('common.no')
         },
     ]
 

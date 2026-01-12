@@ -1,0 +1,419 @@
+{
+    "common": {
+        "language": "שפה",
+        "hebrew": "עברית",
+        "arabic": "العربية",
+        "english": "English",
+        "logout": "התנתק",
+        "back": "חזרה",
+        "next": "הבא",
+        "ok": "אישור",
+        "cancel": "ביטול",
+        "save": "שמור",
+        "close": "סגור",
+        "search": "חיפוש",
+        "all": "הכל",
+        "choose": "בחר",
+        "phoneNumber": "מספר פלאפון",
+        "customerDetails": "פרטי לקוח",
+        "dates": "תאריכים",
+        "estimatedCompletionDate": "תאריך סיום משוער",
+        "licenseExpiryDate": "תוקף רישיון",
+        "management": "ניהול",
+        "caseManager": "מנהל תיק",
+        "stages": "שלבים",
+        "advanceStage": "קדם שלב",
+        "whatsapp": {
+            "group": "קבוצת וואטספ",
+            "linkTitle": "שיוך קבוצת וואטספ",
+            "groupLink": "לינק לקבוצת הוואטספ",
+            "goToGroup": "למעבר לקבוצה",
+            "editLink": "עריכת לינק",
+            "contact": "צור קשר",
+            "contactText": "יוצר קשר בנוגע לתיק מספר {{caseId}}"
+        },
+        "yes": "כן",
+        "no": "לא",
+        "retry": "נסה שוב",
+        "notSpecified": "לא צויין",
+        "unassigned": "לא משוייך",
+        "refreshPull": "משוך למטה כדי לרענן",
+        "refreshing": "מרענן…",
+        "send": "שליחה",
+        "remove": "הסר",
+        "clear": "נקה",
+        "email": "אימייל",
+        "password": "סיסמה",
+        "edit": "ערוך",
+        "saving": "שומר...",
+        "deleting": "מוחק...",
+        "new": "חדש",
+        "noResultsFound": "לא נמצאו תוצאות",
+        "submit": "שלח",
+        "simpleImageAlt": "תמונה"
+    },
+    "auth": {
+        "login": "התחברות",
+        "next": "להתחברות",
+        "enterPhone": "נא הזן מספר פלאפון",
+        "enterOtp": "נא הקלד את הקוד",
+        "enterOtpInstruction": "הקלד את הקוד שקיבלת בהודעה",
+        "tagline": "כל המידע על התיק שלך במקום אחד!"
+    },
+    "errors": {
+        "invalidPhone": "מספר פלאפון לא תקין",
+        "invalidOtp": "קוד לא תקין",
+        "invalidEmail": "אימייל לא תקין",
+        "hebrewOnly": "עברית בלבד",
+        "hebrewAndNumbersOnly": "עברית ומספרים בלבד",
+        "numbersOnly": "מספרים בלבד",
+        "maxStages15": "עד 15 שלבים",
+        "oopsTitle": "אופס…",
+        "unexpected": "שגיאה לא צפויה",
+        "requiredFieldsExceptPassword": "כל השדות מלבד סיסמה הם חובה",
+        "required": "חובה",
+        "errorPrefix": "שגיאה: "
+    },
+    "signingManager": {
+        "searchTitle": "חיפוש מסמך / לקוח / תיק",
+        "tabs": {
+            "pending": "בהמתנה / נדחו ({{count}})",
+            "signed": "חתומים ({{count}})"
+        },
+        "empty": {
+            "pending": "אין מסמכים ממתינים או נדחים",
+            "signed": "אין מסמכים חתומים להצגה"
+        },
+        "labels": {
+            "case": "תיק:",
+            "client": "לקוח:",
+            "uploadedAt": "תאריך העלאה:",
+            "status": "סטטוס:",
+            "signatures": "חתימות:",
+            "rejectionReason": "סיבת דחייה:",
+            "signedAt": "חתום בתאריך:",
+            "otpWaiverBy": "ויתור OTP נקבע ע״י:",
+            "otpWaiverAt": "ויתור OTP נקבע בתאריך:"
+        },
+        "actions": {
+            "downloadSigned": "הורד קובץ חתום",
+            "details": "פרטי מסמך",
+            "uploadNew": "שליחת מסמך חדש לחתימה",
+            "openPdf": "פתח PDF"
+        },
+        "details": {
+            "titleFallback": "פרטי מסמך"
+        },
+        "aria": {
+            "signaturesPercent": "חתימות: {{percent}}%"
+        },
+        "errors": {
+            "openPdf": "שגיאה בפתיחת ה-PDF",
+            "downloadSignedMissingUrl": "לא ניתן להוריד את הקובץ החתום",
+            "downloadSignedError": "שגיאה בהורדת הקובץ",
+            "missingDocumentId": "שגיאה: מזהה מסמך חסר",
+            "evidencePackageSignedOnly": "חבילת ראיות זמינה רק לאחר חתימה מלאה",
+            "evidencePackageDownloadError": "שגיאה בהורדת חבילת ראיות"
+        }
+    },
+    "cases": {
+        "caseType": "סוג תיק",
+        "statusFilter": "סגור/פתוח",
+        "allCases": "כל התיקים",
+        "noCases": "אין כרגע תיקים",
+        "openCases": "תיקים פתוחים",
+        "closedCases": "תיקים סגורים",
+        "noOpenCases": "אין כרגע תיקים פתוחים",
+        "noClosedCases": "אין כרגע תיקים סגורים",
+        "noCaseTypes": "אין כרגע סוגי תיקים",
+        "currentStage": "שלב נוכחי",
+        "completedSuccessfully": "הסתיים בהצלחה",
+        "stageDetailsTitle": "פירוט שלבים",
+        "ended": "הסתיים",
+        "searchCaseTitle": "חיפוש תיק",
+        "searchCaseTypeTitle": "חיפוש סוג תיק",
+        "addNewCase": "הוספת תיק חדש",
+        "addCaseType": "הוספת סוג תיק",
+        "stageCount": "כמות שלבים",
+        "customerName": "שם לקוח",
+        "customerId": "ת.ז לקוח",
+        "phoneNumber": "מספר פלאפון",
+        "estimatedCompletionDate": "תאריך סיום משוער",
+        "licenseExpiryDate": "תוקף רישיון",
+        "caseManager": "מנהל תיק",
+        "caseNumber": "מספר התיק",
+        "companyName": "שם החברה",
+        "customerEmail": "אימייל לקוח",
+        "deleteCase": "מחק תיק",
+        "updateCase": "עדכן תיק",
+        "saveCase": "שמור תיק",
+        "completedStagesLabel": "שלבים שהסתיימו:",
+        "stageCompleted": "שלב הסתיים",
+        "stageContinues": "שלב המשך",
+        "stageNumber": "שלב מס' {{number}}",
+        "noStagesInCaseType": "אין שלבים בסוג תיק זה",
+        "descriptionNumber": "תיאור מס' {{number}}"
+    },
+    "caseTypes": {
+        "createCaseType": {
+            "title": "יצירה או עדכון סוג תיק",
+            "caseTypeIdPlaceholder": "מזהה סוג תיק",
+            "caseLevelPlaceholder": "רמת תיק",
+            "caseTypePlaceholder": "סוג תיק",
+            "descriptionPlaceholder": "תיאור {{number}}",
+            "success": "סוג התיק נוצר/עודכן בהצלחה!"
+        },
+        "caseTypeName": "שם סוג התיק",
+        "deleteCaseType": "מחק סוג תיק",
+        "addStage": "הוסף שלב",
+        "updateCaseType": "עדכן סוג תיק",
+        "saveCaseType": "שמור סוג תיק"
+    },
+    "taggedCases": {
+        "searchPinnedCaseTitle": "חיפוש תיק נעוץ",
+        "pinCase": "נעיצת תיק",
+        "caseNumber": "מספר התיק",
+        "pin": "נעץ",
+        "unpin": "בטל נעיצה",
+        "emptyPinnedCases": "אין כרגע תיקים נעוצים",
+        "pinnedCasesTitle": "תיקים נעוצים",
+        "pinned": "נעוץ"
+    },
+    "customers": {
+        "addCustomer": "הוסף לקוח",
+        "emptyList": "כשנוסיף לקוחות הם יוצגו פה",
+        "companyName": "שם חברה",
+        "saveCustomer": "שמור לקוח",
+        "updateCustomer": "עדכן לקוח",
+        "deleteCustomer": "מחק לקוח"
+    },
+    "admins": {
+        "searchAdmin": "חיפוש מנהל",
+        "addAdmin": "הוסף מנהל",
+        "adminName": "שם מנהל",
+        "createdAt": "נוצר בתאריך",
+        "emptyList": "כשנוסיף מנהלים הם יוצגו פה",
+        "saveAdmin": "שמור מנהל",
+        "updateAdmin": "עדכן מנהל",
+        "deleteAdmin": "מחק מנהל"
+    },
+    "updates": {
+        "notifications": "התראות",
+        "updates": "עידכונים",
+        "messages": "הודעות",
+        "serviceComingSoon": "שירות {{name}} יהיה זמין בקרוב"
+    },
+    "profile": {
+        "successTitle": "הצלחה",
+        "updatedSuccess": "פרופיל התעדכן בהצלחה",
+        "dateOfBirth": "תאריך לידה"
+    },
+    "notifications": {
+        "loadError": "שגיאה בטעינת ההתראות. אנא נסה שוב.",
+        "loading": "טוען התראות...",
+        "empty": "אין לך התראות כרגע.",
+        "fallbackTitle": "התראה חדשה",
+        "goToSigning": "למעבר לחתימה",
+        "markAsRead": "סמן כנקרא"
+    },
+    "mainScreen": {
+        "caseSummary": "סכימת תיקים",
+        "totalCases": "סה\"כ תיקים",
+        "taggedCases": "תיקים מתוייגים",
+        "activeCustomers": "לקוחות פעילים",
+        "moreDataForAnalytics": "כשהיה לנו יותר מידע נציג לך פילוח נתונים"
+    },
+    "terms": {
+        "title": "תנאי שימוש לאפליקציה {{appName}}",
+        "lastUpdated": "תאריך עדכון אחרון: {{date}}",
+        "intro": "ברוכים הבאים לאתר ולשירותי {{appName}}. השימוש באתר ובשירותים שלנו מותנה בקבלתך את תנאי השימוש המפורטים להלן.",
+        "section1": {
+            "title": "1. הסכמה לתנאים",
+            "body": "• על ידי שימוש באתר או בשירותים שלנו, אתה מסכים לתנאי השימוש ולמדיניות הפרטיות שלנו. אם אינך מסכים לתנאים אלו, עליך להימנע משימוש בשירותים שלנו."
+        },
+        "section2": {
+            "title": "2. השירותים שאנו מספקים",
+            "body": "אנו מספקים שירותי ניהול תיקים משפטיים הכוללים:\n\n• יצירה וניהול תיקים\n• ניהול לקוחות\n• ניהול שלבי התיק ותיאורי שלבים\n• תגיות וסינון תיקים\n• הרשאות משתמשים ואבטחה"
+        },
+        "section3": {
+            "title": "3. הרשמה וחשבונות משתמש",
+            "body": "• השימוש בשירותים מחייב הרשמה עם מספר טלפון וקבלת קוד OTP לזיהוי.\n• בעת ההרשמה, ייתכן שנשמור נתונים כמו שם, מספר טלפון, כתובת אימייל ושם חברה.\n• השימוש במערכת מוגבל למשתמשים שהוקצו להם תפקידים (Admins ו-Users)."
+        },
+        "section4": {
+            "title": "4. פרטיות והגנה על מידע",
+            "body": "• המידע שלך נשמר במסד נתונים מאובטח ב-Azure SQL.\n• אנו משתמשים באימות באמצעות JWT כדי להגן על גישת המשתמשים.\n• מידע אישי לא יועבר לגורמים שלישיים ללא הסכמתך, למעט מקרים בהם הדבר נדרש על פי חוק."
+        },
+        "section5": {
+            "title": "5. שימוש הוגן ואיסורים",
+            "body": "בעת שימוש בשירותים שלנו, הנך מתחייב:\n\n• לא להשתמש בשירותים למטרות בלתי חוקיות.\n• לא לשבש את פעילות המערכת או לנסות לפרוץ למאגרי המידע.\n• לא להעביר מידע כוזב או מטעה."
+        },
+        "section6": {
+            "title": "6. אחריות ושיפוי",
+            "body": "• אנו עושים מאמצים לספק שירותים יציבים, אך אין אנו מתחייבים לזמינות רציפה של השירות.\n• החברה לא תהיה אחראית לנזקים עקיפים, תוצאתיים או נלווים כתוצאה מהשימוש בשירות.\n• המשתמש אחראי לשמירה על נתוני הגישה שלו ולאבטחת המידע שהוא מזין."
+        },
+        "section7": {
+            "title": "7. שינויים ועדכונים",
+            "body": "• אנו שומרים לעצמנו את הזכות לשנות את תנאי השימוש בכל עת. עדכונים יפורסמו באתר והשימוש בשירות לאחר עדכון התנאים יהווה הסכמה לתנאים החדשים."
+        },
+        "section8": {
+            "title": "8. יצירת קשר",
+            "body": "• אם יש לך שאלות בנוגע לתנאי השימוש, ניתן ליצור איתנו קשר בכתובת: {{email}}."
+        }
+    },
+    "nav": {
+        "pinnedCases": "לתיקים נעוצים",
+        "signingFiles": "מסמכים לחתימה",
+        "allCases": "לכל התיקים",
+        "newOrUpdateCase": "תיק חדש / עדכון תיק",
+        "allManagers": "לכל המנהלים",
+        "allCaseTypes": "לכל סוגי התיקים",
+        "addCaseType": "הוספת סוג תיק",
+        "notifications": "התראות",
+        "myProfile": "הפרופיל שלי",
+        "terms": "תקנון שימוש",
+        "contact": "יצירת קשר",
+        "contactMessage": "שלום, אשמח ליצירת קשר"
+    },
+    "signing": {
+        "invalidLinkTitle": "קישור לא תקין",
+        "missingToken": "חסר פרמטר token בקישור.",
+        "otpRequiredBadge": "OTP נדרש",
+        "otpWaivedBadge": "OTP בוטל ע״י עו״ד",
+        "evidencePackageDownload": "הורד חבילת ראיות",
+        "signerFallback": "חותם {{index}}",
+        "status": {
+            "pending": "בהמתנה",
+            "signed": "חתום",
+            "rejected": "נדחה"
+        },
+        "public": {
+            "closedTitle": "נסגר",
+            "closedHint": "ניתן לסגור את החלון."
+        },
+        "pdf": {
+            "loading": "טוען PDF…",
+            "loadError": "שגיאה בטעינת PDF"
+        },
+        "pdfViewer": {
+            "addSpotForSigner": "הוסף אזור חתימה עבור {{name}} בעמוד {{pageNumber}}",
+            "addSpot": "הוסף אזור חתימה בעמוד {{pageNumber}}"
+        },
+        "spot": {
+            "defaultSignerName": "חתימה",
+            "signedByTitle": "חתום על ידי: {{name}}",
+            "signatureAlt": "חתימה"
+        },
+        "spotMarker": {
+            "title": "📍 מקום חתימה {{index}}",
+            "signerName": "שם החותם",
+            "pageNumber": "מספר עמוד",
+            "positionX": "מיקום X (באחוזים לרוחב)",
+            "positionY": "מיקום Y (באחוזים לגובה)",
+            "widthPx": "רוחב (px)",
+            "heightPx": "גובה (px)",
+            "required": "חתימה חובה"
+        },
+        "canvas": {
+            "loadDocumentError": "שגיאה בטעינת המסמך",
+            "loadDocumentErrorTitle": "שגיאה בטעינת המסמך",
+            "loadingDocument": "טוען מסמך...",
+            "previewComingSoon": "בקרוב: תצוגה מקדימה של המסמך",
+            "you": "אתה",
+            "consentText": "אני מאשר/ת כי קראתי את המסמך המוצג, ואני נותן/ת הסכמה לחתום עליו באופן אלקטרוני. ידוע לי כי חתימה ללא אימות OTP עשויה להפחית את חוזק הראיות במקרה של מחלוקת.",
+            "consentRequired": "יש לאשר הסכמה לחתימה לפני המשך.",
+            "otpRequired": "נדרש אימות SMS לפני חתימה.",
+            "signHere": "חתום כאן",
+            "pleaseSignBeforeSave": "נא לחתום לפני השמירה",
+            "signatureSavedSuccess": "החתימה נשמרה בהצלחה",
+            "signatureSaveError": "שגיאה בשמירת החתימה",
+            "noSavedSignature": "אין חתימה שמורה",
+            "missingSavedSignatureData": "חסר מידע על חתימה שמורה",
+            "useSavedSignatureError": "שגיאה בשימוש בחתימה שמורה",
+            "signAllRequiresSignature": "כדי לחתום על הכל יש לבחור חתימה שמורה או לצייר חתימה",
+            "noSignatureToUse": "לא נמצאה חתימה לשימוש",
+            "signedAllSuccess": "נחתמו כל המקומות בהצלחה",
+            "signAllError": "שגיאה בחתימה על כל המקומות",
+            "otpSent": "קוד אימות נשלח ב-SMS",
+            "otpSendError": "שגיאה בשליחת קוד",
+            "otpInvalidFormat": "נא להזין קוד בן 6 ספרות",
+            "otpVerified": "הקוד אומת בהצלחה",
+            "otpVerifyError": "שגיאה באימות קוד",
+            "rejectReasonPrompt": "מה הסיבה לדחיית המסמך?",
+            "documentRejected": "המסמך נדחה ונשלחה הודעה לעורך הדין",
+            "rejectError": "שגיאה בדחיית המסמך",
+            "otpTitle": "נדרש אימות SMS (OTP) לפני חתימה",
+            "otpPlaceholder": "קוד (6 ספרות)",
+            "verify": "אמת",
+            "resend": "שלח שוב",
+            "sendCode": "שלח קוד",
+            "verified": "אומת",
+            "nextSignature": "לחתימה הבאה",
+            "remainingSignatures": "נותרו {{count}} חתימות",
+            "hideAllSpots": "הסתר את כל המקומות",
+            "showAllSpots": "הצג את כל המקומות",
+            "noSpotsToShow": "אין מקומות חתימה להצגה",
+            "drawNewSignature": "צייר\nחתימה חדשה",
+            "savedSignatureAlt": "חתימה שמורה",
+            "loadingSavedSignature": "טוען חתימה שמורה...",
+            "saving": "שומר...",
+            "sign": "חתום",
+            "signAll": "חתום על הכל",
+            "useSavedSignature": "השתמש\nבחתימה שמורה",
+            "saveSignature": "שמור חתימה",
+            "spotAlreadySigned": "מקום החתימה הזה כבר חתום על ידך",
+            "allRequiredCompleted": "השלמת את כל החתימות הנדרשות!",
+            "rejectDocument": "דחה מסמך",
+            "failedToLoadSignatureImage": "שגיאה בטעינת תמונת החתימה"
+        },
+        "screen": {
+            "tabPending": "בהמתנה לחתימה ({{count}})",
+            "tabSigned": "חתומים ({{count}})",
+            "emptyPending": "אין כרגע מסמכים בהמתנה לחתימתך",
+            "emptySigned": "אין מסמכים חתומים להצגה",
+            "caseLabel": "תיק:",
+            "lawyerLabel": "עורך דין:",
+            "uploadedAtLabel": "תאריך העלאה:",
+            "signaturesLabel": "חתימות:",
+            "signaturesAria": "חתימות: {{percent}}%",
+            "notesLabel": "הערות עו\"ד:",
+            "signDocument": "חתום על המסמך",
+            "downloadSigned": "הורד קובץ חתום",
+            "details": "פרטים",
+            "downloadMissingUrl": "לא ניתן להוריד את הקובץ",
+            "downloadError": "שגיאה בהורדת הקובץ"
+        },
+        "upload": {
+            "title": "שליחת מסמך לחתימה",
+            "searchSignerTitle": "חיפוש חותם (לקוח)",
+            "selectedSignersLabel": "חותמים שנבחרו *",
+            "removeSignerAria": "הסר {{name}}",
+            "fileDropPrompt": "גרור קובץ לכאן או לחץ לבחירה",
+            "fileHintPdfOnly": "(PDF בלבד בשלב זה)",
+            "notesTitle": "הערות ללקוח (לא חובה)",
+            "viewerTitle": "תצוגת מסמך והגדרת חתימות",
+            "spotHelpText": "בכל עמוד יש כפתור \"+ הוסף חתימה\". גרור את הקוביות למיקום הרצוי או מחק",
+            "sending": "שולח...",
+            "sendToClient": "שלח ללקוח",
+            "successSent": "הקובץ נשלח ללקוח לחתימה.",
+            "errorSending": "שגיאה בשליחת הקובץ לחתימה.",
+            "otpPolicyLabel": "מדיניות אימות (OTP) *",
+            "otpRequire": "דרוש קוד אימות ב-SMS (מומלץ)",
+            "otpWaive": "שלח ללא OTP",
+            "otpWaiverWarning": "שליחה ללא OTP עשויה להפחית את חוזק הראיות במקרה של מחלוקת.",
+            "otpWaiverAck": "אני מאשר/ת במפורש שליחה ללא OTP",
+            "detect": {
+                "button": "מצא חתימות אוטומטית",
+                "detecting": "מזהה...",
+                "noneFound": "לא נמצאו מקומות חתימה אוטומטית. אפשר להוסיף ידנית.",
+                "error": "שגיאה בזיהוי חתימות אוטומטי."
+            },
+            "validation": {
+                "selectFile": "יש לבחור קובץ.",
+                "selectAtLeastOneSigner": "יש לבחור לפחות חותם אחד.",
+                "atLeastOneSpot": "חייב להיות לפחות מקום חתימה אחד.",
+                "selectOtpPolicy": "יש לבחור מדיניות אימות (OTP).",
+                "waiverAckRequired": "כדי לשלוח ללא OTP יש לאשר במפורש את ההצהרה."
+            }
+        }
+    }
+}

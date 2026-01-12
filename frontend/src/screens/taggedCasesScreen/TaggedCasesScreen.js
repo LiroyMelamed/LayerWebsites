@@ -18,17 +18,19 @@ import casesApi, { casesTypeApi } from '../../api/casesApi';
 import { MainScreenName } from '../mainScreen/MainScreen';
 import { AdminStackName } from '../../navigation/AdminStack';
 import CaseFullView from "../../components/styledComponents/cases/CaseFullView";
+import { useTranslation } from 'react-i18next';
 
 import "./TaggedCasesScreen.scss";
 
 export const TaggedCasesScreenName = "/TaggedCasesScreen";
 
 export default function TaggedCasesScreen() {
+    const { t } = useTranslation();
     const { openPopup, closePopup } = usePopup();
     const { isSmallScreen } = useScreenSize();
 
-    const [selectedCaseType, setSelectedCaseType] = useState("הכל");
-    const [selectedStatus, setSelectedStatus] = useState("הכל");
+    const [selectedCaseType, setSelectedCaseType] = useState(null);
+    const [selectedStatus, setSelectedStatus] = useState(null);
     const [filteredTaggedCases, setFilteredTaggedCases] = useState(null);
 
     const { result: taggedCases, isPerforming: isPerformingTaggedCases, performRequest } = useAutoHttpRequest(casesApi.getAllTaggedCases);
@@ -52,17 +54,17 @@ export default function TaggedCasesScreen() {
     const applyFilters = (typeFilter, statusFilter) => {
         let filtered = taggedCases;
 
-        if (typeFilter !== "הכל") {
+        if (typeFilter) {
             filtered = filtered.filter(item => item.CaseTypeName === typeFilter);
         }
 
-        if (statusFilter === "תיקים פתוחים") {
+        if (statusFilter === "open") {
             filtered = filtered.filter(item => item.IsClosed === false);
-        } else if (statusFilter === "תיקים סגורים") {
+        } else if (statusFilter === "closed") {
             filtered = filtered.filter(item => item.IsClosed === true);
         }
 
-        if (typeFilter === "הכל" && statusFilter === "הכל") {
+        if (!typeFilter && !statusFilter) {
             setFilteredTaggedCases(null);
         } else {
             setFilteredTaggedCases(filtered);
@@ -91,7 +93,7 @@ export default function TaggedCasesScreen() {
                 <SimpleContainer className="lw-taggedCasesScreen__row">
                     <SearchInput
                         onSearch={handleSearch}
-                        title={"חיפוש תיק נעוץ"}
+                        title={t('taggedCases.searchPinnedCaseTitle')}
                         titleFontSize={20}
                         isPerforming={isPerformingCasesById}
                         queryResult={casesByName}
@@ -101,14 +103,18 @@ export default function TaggedCasesScreen() {
                     />
 
                     <ChooseButton
-                        buttonChoices={["תיקים סגורים", "תיקים פתוחים"]}
+                        buttonText={t('cases.statusFilter')}
+                        items={[
+                            { value: 'closed', label: t('cases.closedCases') },
+                            { value: 'open', label: t('cases.openCases') },
+                        ]}
                         className="lw-taggedCasesScreen__choose"
                         OnPressChoiceFunction={handleFilterByStatus}
-                        buttonText="סגור/פתוח"
                     />
 
                     <ChooseButton
-                        buttonChoices={allCasesTypes}
+                        buttonText={t('cases.caseType')}
+                        items={(allCasesTypes || []).map((ct) => ({ value: ct, label: ct }))}
                         className="lw-taggedCasesScreen__choose"
                         OnPressChoiceFunction={handleFilterByType}
                     />
@@ -125,7 +131,7 @@ export default function TaggedCasesScreen() {
                 <PrimaryButton
                     onPress={() => openPopup(<TagCasePopup rePerformRequest={() => { performRequest(); closePopup(); }} />)}
                 >
-                    נעיצת תיק
+                    {t('taggedCases.pinCase')}
                 </PrimaryButton>
             </SimpleContainer>
         </SimpleScreen>

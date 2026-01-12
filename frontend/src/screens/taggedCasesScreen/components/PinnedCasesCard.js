@@ -6,10 +6,12 @@ import { TextBold20 } from "../../../components/specializedComponents/text/AllTe
 import DefaultState from "../../../components/styledComponents/defaultState/DefaultState";
 import CaseMenuItem from "../../../components/styledComponents/menuItems/CaseMenuItem";
 import Separator from "../../../components/styledComponents/separators/Separator";
+import { useTranslation } from "react-i18next";
 
 import './PinnedCasesCard.scss';
 
 export default function PinnedCasesCard({ taggedCases, isPerforming, rePerformFunction }) {
+    const { t } = useTranslation();
 
     if (isPerforming) {
         return (
@@ -22,7 +24,7 @@ export default function PinnedCasesCard({ taggedCases, isPerforming, rePerformFu
     if (taggedCases?.length === 0 || !taggedCases) {
         return (
             <DefaultState
-                content={"אין כרגע תיקים נעוצים"}
+                content={t('taggedCases.emptyPinnedCases')}
                 imageClassName="lw-defaultState__image--h156"
                 imageSrc={images.Defaults.TaggedCase}
             />
@@ -31,7 +33,7 @@ export default function PinnedCasesCard({ taggedCases, isPerforming, rePerformFu
 
     return (
         <SimpleCard className="lw-pinnedCasesCard">
-            <TextBold20>תיקים נעוצים</TextBold20>
+            <TextBold20>{t('taggedCases.pinnedCasesTitle')}</TextBold20>
 
             <SimpleContainer className="lw-pinnedCasesCard__list">
                 {taggedCases.map((item, index) => (
@@ -45,16 +47,16 @@ export default function PinnedCasesCard({ taggedCases, isPerforming, rePerformFu
                             fullCase={item}
                             rightTitle={`${item.CaseName} - ${item.CustomerName}`}
 
-                            leftPreFirstLine={"סוג תיק"}
+                            leftPreFirstLine={t('cases.caseType')}
                             leftValueFirstLine={item.CaseTypeName}
 
-                            rightPreSecondLine={"שלב נוכחי"}
-                            rightValueSecondLine={item.IsClosed ? 'הסתיים' : item.CurrentStage}
+                            rightPreSecondLine={t('cases.currentStage')}
+                            rightValueSecondLine={item.IsClosed ? t('cases.ended') : item.CurrentStage}
 
                             leftPreSecondLine={""}
                             leftValueSecondLine={""}
 
-                            openData={getOpenData(taggedCases, index)}
+                            openData={getOpenData(taggedCases, index, t)}
                             rePerformFunction={rePerformFunction}
                         />
                     </SimpleContainer>
@@ -65,23 +67,23 @@ export default function PinnedCasesCard({ taggedCases, isPerforming, rePerformFu
 }
 
 //Functions
-function getOpenData(taggedCases, index) {
+function getOpenData(taggedCases, index, t) {
     const openData = [
         {
-            title: "שם לקוח",
+            title: t('cases.customerName'),
             value: taggedCases[index].CustomerName
         },
         {
-            title: "ת.ז לקוח",
+            title: t('cases.customerId'),
             value: taggedCases[index].CostumerTaz
         },
         {
-            title: "מספר פלאפון",
+            title: t('cases.phoneNumber'),
             value: taggedCases[index].PhoneNumber
         },
         {
-            title: "נעוץ",
-            value: taggedCases[index].IsTagged ? "כן" : "לא"
+            title: t('taggedCases.pinned'),
+            value: taggedCases[index].IsTagged ? t('common.yes') : t('common.no')
         },
     ]
 

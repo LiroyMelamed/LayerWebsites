@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from 'react-i18next';
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { icons } from "../../../assets/icons/icons";
 import ImageButton from "../../specializedComponents/buttons/ImageButton";
@@ -30,6 +31,7 @@ export default function CaseMenuItem({
     isClient = false,
     style
 }) {
+    const { t } = useTranslation();
     const { isPerforming: isPerformingSetCase, performRequest: setCase } = useHttpRequest(casesApi.updateStageById);
     const { openPopup, closePopup } = usePopup();
     const [fullCaseListener, setFullCaseListener] = useState(fullCase);
@@ -88,8 +90,8 @@ export default function CaseMenuItem({
                                 <SimpleLoader />
                             ) : (
                                 <Text12>
-                                    {rightPreSecondLine === 'שלב נוכחי' && fullCaseListener?.IsClosed
-                                        ? 'הסתיים בהצלחה'
+                                    {rightPreSecondLine === t('cases.currentStage') && fullCaseListener?.IsClosed
+                                        ? t('cases.completedSuccessfully')
                                         : (fullCaseListener?.Descriptions?.[fullCaseListener?.CurrentStage - 1]?.Text || rightValueSecondLine)}
                                 </Text12>
                             )}

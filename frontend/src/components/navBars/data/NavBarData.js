@@ -7,46 +7,46 @@ import { TaggedCasesScreenName } from "../../../screens/taggedCasesScreen/Tagged
 import { AdminStackName } from "../../../navigation/AdminStack";
 import { SigningManagerScreenName } from "../../../screens/signingScreen/SigningManagerScreen";
 
-export const getNavBarData = (navigate, openPopup, closePopup) => ({
+export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t) => ({
     NavBarLinks: [
         {
-            buttonText: "לתיקים נעוצים",
-            buttonScreen: "תיקים נעוצים",
+            buttonText: t('nav.pinnedCases'),
+            buttonScreen: t('nav.pinnedCases'),
             icon: null, // icons.NavBarIcons.Hammer
             onClick: () => navigate(AdminStackName + TaggedCasesScreenName),
         },
         {
-            buttonText: "מסמכים לחתימה",
-            buttonScreen: "מסמכים לחתימה",
+            buttonText: t('nav.signingFiles'),
+            buttonScreen: t('nav.signingFiles'),
             icon: null,
             onClick: () => navigate(AdminStackName + SigningManagerScreenName),
         },
         {
-            buttonText: "לכל התיקים",
-            buttonScreen: "כל התיקים",
+            buttonText: t('nav.allCases'),
+            buttonScreen: t('nav.allCases'),
             icon: null, // icons.NavBarIcons.Hammer
             onClick: () => navigate(AdminStackName + AllCasesScreenName),
         },
         {
-            buttonText: "תיק חדש / עדכון תיק",
+            buttonText: t('nav.newOrUpdateCase'),
             buttonScreen: null,
             icon: null, // icons.NavBarIcons.NewCase
             onClick: () => openPopup(<CaseFullView onFailureFunction={() => { }} closePopUpFunction={closePopup} />),
         },
         {
-            buttonText: "לכל המנהלים",
-            buttonScreen: "כל המנהלים",
+            buttonText: t('nav.allManagers'),
+            buttonScreen: t('nav.allManagers'),
             icon: null, // icons.NavBarIcons.AllManagers
             onClick: () => navigate(AdminStackName + AllMangerScreenName),
         },
         {
-            buttonText: "לכל סוגי התיקים",
-            buttonScreen: "כל סוגי התיקים",
+            buttonText: t('nav.allCaseTypes'),
+            buttonScreen: t('nav.allCaseTypes'),
             icon: null, // icons.NavBarIcons.AllCasesType
             onClick: () => navigate(AdminStackName + AllCasesTypeScreenName),
         },
         {
-            buttonText: "הוספת סוג תיק",
+            buttonText: t('nav.addCaseType'),
             buttonScreen: null,
             icon: null, // icons.NavBarIcons.AddCaseType
             onClick: () => openPopup(<CaseTypeFullView onFailureFunction={() => { }} closePopUpFunction={closePopup} />),

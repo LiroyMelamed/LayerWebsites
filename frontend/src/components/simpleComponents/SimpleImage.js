@@ -1,6 +1,8 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function SimpleImage({ src, style, tintColor = null, resizeMode = 'contain', ...props }) {
+  const { t } = useTranslation();
   const imageStyle = {
     ...style,
     objectFit: resizeMode,
@@ -38,7 +40,7 @@ export default function SimpleImage({ src, style, tintColor = null, resizeMode =
       {...props}
       src={src?.uri || src}
       style={imageStyle}
-      alt="SimpleImage"
+      alt={props?.alt ?? t('common.simpleImageAlt')}
     />
   );
 }

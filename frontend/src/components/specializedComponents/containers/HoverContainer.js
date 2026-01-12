@@ -4,6 +4,7 @@ import SimpleLoader from '../../simpleComponents/SimpleLoader';
 import { Text20 } from '../text/AllTextKindFile';
 import SimpleButton from '../../simpleComponents/SimpleButton';
 import SimpleScrollView from '../../simpleComponents/SimpleScrollView';
+import { useTranslation } from 'react-i18next';
 
 import './HoverContainer.scss';
 
@@ -20,6 +21,7 @@ const HoverContainer = ({
     style: _style,
     className,
 }) => {
+    const { t } = useTranslation();
     const [position, setPosition] = useState({ top: 0, left: 0 });
     const hoverRef = useRef(null);
 
@@ -116,7 +118,7 @@ const HoverContainer = ({
                             </SimpleContainer>
                         ) : (
                             <SimpleContainer className="lw-hoverContainer__noResults">
-                                <Text20 className="lw-hoverContainer__optionText">לא נמצאו תוצאות</Text20>
+                                <Text20 className="lw-hoverContainer__optionText">{t('common.noResultsFound')}</Text20>
                             </SimpleContainer>
                         )
                     )

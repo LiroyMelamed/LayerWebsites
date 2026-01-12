@@ -31,10 +31,12 @@ import ClientPopup from "../mainScreen/components/ClientPopUp";
 
 import "./UploadFileForSigningScreen.scss";
 import { MainScreenName } from "../mainScreen/MainScreen";
+import { useTranslation } from "react-i18next";
 
 export const uploadFileForSigningScreenName = "/upload-file-for-signing";
 
 export default function UploadFileForSigningScreen() {
+    const { t } = useTranslation();
     const { isSmallScreen } = useScreenSize();
     const navigate = useNavigate();
     const { openPopup, closePopup } = usePopup();
@@ -65,7 +67,7 @@ export default function UploadFileForSigningScreen() {
 
     const handleAddSpotForPage = (pageNumber, signerIdx = 0) => {
         const signer = selectedSigners?.[signerIdx] || null;
-        const signerName = signer?.Name || `חותם ${Number(signerIdx) + 1}`;
+        const signerName = signer?.Name || t('signing.signerFallback', { index: Number(signerIdx) + 1 });
 
         setSignatureSpots((prev) => [
             ...prev,
@@ -134,25 +136,25 @@ export default function UploadFileForSigningScreen() {
 
     const validateForm = () => {
         if (!selectedFile) {
-            setMessage({ type: "error", text: "יש לבחור קובץ." });
+            setMessage({ type: "error", text: t('signing.upload.validation.selectFile') });
             return false;
         }
         if (!selectedSigners || selectedSigners.length === 0) {
-            setMessage({ type: "error", text: "יש לבחור לפחות חותם אחד." });
+            setMessage({ type: "error", text: t('signing.upload.validation.selectAtLeastOneSigner') });
             return false;
         }
         if (signatureSpots.length === 0) {
-            setMessage({ type: "error", text: "חייב להיות לפחות מקום חתימה אחד." });
+            setMessage({ type: "error", text: t('signing.upload.validation.atLeastOneSpot') });
             return false;
         }
 
         if (otpPolicy !== "waive" && otpPolicy !== "require") {
-            setMessage({ type: "error", text: "יש לבחור מדיניות אימות (OTP)." });
+            setMessage({ type: "error", text: t('signing.upload.validation.selectOtpPolicy') });
             return false;
         }
 
         if (otpPolicy === "waive" && !otpWaiverAck) {
-            setMessage({ type: "error", text: "כדי לשלוח ללא OTP יש לאשר במפורש את ההצהרה." });
+            setMessage({ type: "error", text: t('signing.upload.validation.waiverAckRequired') });
             return false;
         }
         return true;
@@ -164,7 +166,13 @@ export default function UploadFileForSigningScreen() {
         setSelectedSigners((prev) => {
             const exists = prev.some((s) => Number(s?.UserId) === Number(customer.UserId));
             if (exists) return prev;
-            return [...prev, { UserId: customer.UserId, Name: customer.Name || `חותם ${prev.length + 1}` }];
+            return [
+                ...prev,
+                {
+                    UserId: customer.UserId,
+                    Name: customer.Name || t('signing.signerFallback', { index: prev.length + 1 }),
+                },
+            ];
         });
     };
 
@@ -214,12 +222,12 @@ export default function UploadFileForSigningScreen() {
             if (!spots.length) {
                 setMessage({
                     type: "error",
-                    text: "לא נמצאו מקומות חתימה אוטומטית. אפשר להוסיף ידנית.",
+                    text: t('signing.upload.detect.noneFound'),
                 });
             }
         } catch (err) {
             console.error(err);
-            setMessage({ type: "error", text: "שגיאה בזיהוי חתימות אוטומטי." });
+            setMessage({ type: "error", text: t('signing.upload.detect.error') });
         } finally {
             setDetecting(false);
         }
@@ -256,7 +264,7 @@ export default function UploadFileForSigningScreen() {
                 otpWaiverAcknowledged: otpPolicy === "waive" ? Boolean(otpWaiverAck) : false,
             });
 
-            setMessage({ type: "success", text: "הקובץ נשלח ללקוח לחתימה." });
+            setMessage({ type: "success", text: t('signing.upload.successSent') });
 
             setCaseId("");
             setClientId("");
@@ -271,7 +279,7 @@ export default function UploadFileForSigningScreen() {
             if (fileInputRef.current) fileInputRef.current.value = "";
         } catch (err) {
             console.error(err);
-            setMessage({ type: "error", text: "שגיאה בשליחת הקובץ לחתימה." });
+            setMessage({ type: "error", text: t('signing.upload.errorSending') });
         } finally {
             setLoading(false);
         }
@@ -292,7 +300,7 @@ export default function UploadFileForSigningScreen() {
                 if (prev && prev.length) return prev;
                 return [{
                     UserId: foundItem.UserId,
-                    Name: foundItem.CustomerName || "חותם 1",
+                    Name: foundItem.CustomerName || t('signing.signerFallback', { index: 1 }),
                 }];
             });
         }
@@ -330,7 +338,7 @@ export default function UploadFileForSigningScreen() {
             <SimpleScrollView className="lw-uploadSigningScreen__scroll">
                 <SimpleContainer className="lw-uploadSigningScreen">
                     <SimpleContainer className="lw-uploadSigningScreen__headerRow">
-                        <TextBold24>שליחת מסמך לחתימה</TextBold24>
+                        <TextBold24>{t('signing.upload.title')}</TextBold24>
                     </SimpleContainer>
 
                     <SimpleContainer className="lw-uploadSigningScreen__formCard">
@@ -345,7 +353,7 @@ export default function UploadFileForSigningScreen() {
                         <SimpleContainer className="lw-uploadSigningScreen__searchRow">
                             <SearchInput
                                 onSearch={handleSearch}
-                                title={"חיפוש תיק"}
+                                title={t('cases.searchCaseTitle')}
                                 titleFontSize={20}
                                 isPerforming={isPerformingCasesById}
                                 queryResult={casesByName}
@@ -356,21 +364,21 @@ export default function UploadFileForSigningScreen() {
 
                             <SearchInput
                                 onSearch={handleSearchSigner}
-                                title={"חיפוש חותם (לקוח)"}
+                                title={t('signing.upload.searchSignerTitle')}
                                 titleFontSize={20}
                                 isPerforming={isPerformingCustomersByName}
                                 queryResult={customersByName}
                                 getButtonTextFunction={(item) => `${item.Name}`}
                                 className="lw-uploadSigningScreen__search"
                                 buttonPressFunction={handleAddSignerFromSearch}
-                                emptyActionText={"הוסף לקוח"}
+                                emptyActionText={t('customers.addCustomer')}
                                 onEmptyAction={handleOpenAddCustomerPopup}
                             />
                         </SimpleContainer>
 
                         {selectedSigners?.length > 0 && (
                             <SimpleContainer className="lw-uploadSigningScreen__formGroup">
-                                <label className="lw-uploadSigningScreen__label">חותמים שנבחרו *</label>
+                                <label className="lw-uploadSigningScreen__label">{t('signing.upload.selectedSignersLabel')}</label>
                                 <SimpleContainer className="lw-uploadSigningScreen__selectedSignersRow">
                                     {selectedSigners.map((s) => (
                                         <SimpleContainer key={s.UserId} className="lw-uploadSigningScreen__signerChip">
@@ -379,8 +387,8 @@ export default function UploadFileForSigningScreen() {
                                                 type="button"
                                                 className="lw-uploadSigningScreen__signerChipRemove"
                                                 onClick={() => removeSigner(s.UserId)}
-                                                aria-label={`הסר ${s.Name}`}
-                                                title={`הסר ${s.Name}`}
+                                                aria-label={t('signing.upload.removeSignerAria', { name: s.Name })}
+                                                title={t('signing.upload.removeSignerAria', { name: s.Name })}
                                             >
                                                 X
                                             </button>
@@ -405,9 +413,9 @@ export default function UploadFileForSigningScreen() {
                                 onDrop={handleDrop}
                                 onClick={() => fileInputRef.current?.click()}
                             >
-                                <div>גרור קובץ לכאן או לחץ לבחירה</div>
+                                <div>{t('signing.upload.fileDropPrompt')}</div>
                                 <div className="lw-uploadSigningScreen__fileHint">
-                                    (PDF בלבד בשלב זה)
+                                    {t('signing.upload.fileHintPdfOnly')}
                                 </div>
                                 <input
                                     ref={fileInputRef}
@@ -426,7 +434,7 @@ export default function UploadFileForSigningScreen() {
                         </SimpleContainer>
 
                         <SimpleContainer className="lw-uploadSigningScreen__formGroup lw-uploadSigningScreen__notesGroup">
-                            <div className="lw-uploadSigningScreen__notesTitle">הערות ללקוח (לא חובה)</div>
+                            <div className="lw-uploadSigningScreen__notesTitle">{t('signing.upload.notesTitle')}</div>
                             <textarea
                                 className="lw-uploadSigningScreen__textarea"
                                 dir="rtl"
@@ -439,11 +447,11 @@ export default function UploadFileForSigningScreen() {
                             <>
                                 <SimpleContainer className="lw-uploadSigningScreen__viewerHeaderRow">
                                     <h3 className="lw-uploadSigningScreen__viewerTitle">
-                                        תצוגת מסמך והגדרת חתימות
+                                        {t('signing.upload.viewerTitle')}
                                     </h3>
 
                                     <SecondaryButton onPress={handleDetectSpots} disabled={detecting}>
-                                        {detecting ? "מזהה..." : "מצא חתימות אוטומטית"}
+                                        {detecting ? t('signing.upload.detect.detecting') : t('signing.upload.detect.button')}
                                     </SecondaryButton>
                                 </SimpleContainer>
 
@@ -458,7 +466,7 @@ export default function UploadFileForSigningScreen() {
 
                                 <div className="lw-uploadSigningScreen__infoText">
                                     <Text14>
-                                        בכל עמוד יש כפתור "+ הוסף חתימה". גרור את הקוביות למיקום הרצוי או מחק
+                                        {t('signing.upload.spotHelpText')}
                                     </Text14>
                                 </div>
                             </>
@@ -468,10 +476,10 @@ export default function UploadFileForSigningScreen() {
                             <SecondaryButton
                                 onPress={() => navigate(AdminStackName + SigningManagerScreenName)}
                             >
-                                חזרה
+                                {t('common.back')}
                             </SecondaryButton>
                             <PrimaryButton onPress={handleSubmit} disabled={loading}>
-                                {loading ? "שולח..." : "שלח ללקוח"}
+                                {loading ? t('signing.upload.sending') : t('signing.upload.sendToClient')}
                             </PrimaryButton>
                         </SimpleContainer>
 
@@ -483,7 +491,7 @@ export default function UploadFileForSigningScreen() {
                     </SimpleContainer>
 
                     <SimpleContainer className="lw-uploadSigningScreen__formGroup lw-uploadSigningScreen__otpPolicyGroup">
-                        <label className="lw-uploadSigningScreen__label">מדיניות אימות (OTP) *</label>
+                        <label className="lw-uploadSigningScreen__label">{t('signing.upload.otpPolicyLabel')}</label>
 
                         <div className="lw-uploadSigningScreen__radioRow">
                             <label className="lw-uploadSigningScreen__radioLabel">
@@ -493,7 +501,7 @@ export default function UploadFileForSigningScreen() {
                                     checked={otpPolicy === "require"}
                                     onChange={() => setOtpPolicy("require")}
                                 />
-                                דרוש קוד אימות ב-SMS (מומלץ)
+                                {t('signing.upload.otpRequire')}
                             </label>
                         </div>
 
@@ -505,14 +513,14 @@ export default function UploadFileForSigningScreen() {
                                     checked={otpPolicy === "waive"}
                                     onChange={() => setOtpPolicy("waive")}
                                 />
-                                שלח ללא OTP
+                                {t('signing.upload.otpWaive')}
                             </label>
                         </div>
 
                         {otpPolicy === "waive" && (
                             <div className="lw-uploadSigningScreen__waiverBox">
                                 <div className="lw-uploadSigningScreen__waiverText">
-                                    שליחה ללא OTP עשויה להפחית את חוזק הראיות במקרה של מחלוקת.
+                                    {t('signing.upload.otpWaiverWarning')}
                                 </div>
                                 <label className="lw-uploadSigningScreen__checkboxLabel">
                                     <input
@@ -520,7 +528,7 @@ export default function UploadFileForSigningScreen() {
                                         checked={otpWaiverAck}
                                         onChange={(e) => setOtpWaiverAck(Boolean(e.target.checked))}
                                     />
-                                    אני מאשר/ת במפורש שליחה ללא OTP
+                                    {t('signing.upload.otpWaiverAck')}
                                 </label>
                             </div>
                         )}

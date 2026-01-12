@@ -2,8 +2,10 @@ import React from "react";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import SecondaryButton from "../../styledComponents/buttons/SecondaryButton";
 import { Text14, TextBold24 } from "../text/AllTextKindFile";
+import { useTranslation } from "react-i18next";
 
 export default function SignatureSpotMarker({ spot, index, onUpdate, onRemove }) {
+    const { t } = useTranslation();
     const handleNumberChange = (field, fallback) => (e) => {
         const value = parseInt(e.target.value, 10);
         onUpdate(index, {
@@ -14,16 +16,16 @@ export default function SignatureSpotMarker({ spot, index, onUpdate, onRemove })
     return (
         <SimpleContainer>
             <SimpleContainer>
-                <TextBold24>📍 מקום חתימה {index + 1}</TextBold24>
+                <TextBold24>{t("signing.spotMarker.title", { index: index + 1 })}</TextBold24>
 
                 <SecondaryButton onPress={() => onRemove(index)}>
-                    ✖ הסר
+                    ✖ {t("common.remove")}
                 </SecondaryButton>
             </SimpleContainer>
 
-            {/* שם החותם */}
+            {/* Signer name */}
             <SimpleContainer>
-                <Text14>שם החותם</Text14>
+                <Text14>{t("signing.spotMarker.signerName")}</Text14>
                 <input
                     type="text"
                     value={spot.signerName || ""}
@@ -33,9 +35,9 @@ export default function SignatureSpotMarker({ spot, index, onUpdate, onRemove })
                 />
             </SimpleContainer>
 
-            {/* מספר עמוד */}
+            {/* Page number */}
             <SimpleContainer>
-                <Text14>מספר עמוד</Text14>
+                <Text14>{t("signing.spotMarker.pageNumber")}</Text14>
                 <input
                     type="number"
                     min={1}
@@ -44,9 +46,9 @@ export default function SignatureSpotMarker({ spot, index, onUpdate, onRemove })
                 />
             </SimpleContainer>
 
-            {/* X / Y באחוזים */}
+            {/* X / Y in percentages */}
             <SimpleContainer>
-                <Text14>מיקום X (באחוזים לרוחב)</Text14>
+                <Text14>{t("signing.spotMarker.positionX")}</Text14>
                 <input
                     type="number"
                     min={0}
@@ -58,7 +60,7 @@ export default function SignatureSpotMarker({ spot, index, onUpdate, onRemove })
             </SimpleContainer>
 
             <SimpleContainer>
-                <Text14>מיקום Y (באחוזים לגובה)</Text14>
+                <Text14>{t("signing.spotMarker.positionY")}</Text14>
                 <input
                     type="number"
                     min={0}
@@ -69,9 +71,9 @@ export default function SignatureSpotMarker({ spot, index, onUpdate, onRemove })
                 />
             </SimpleContainer>
 
-            {/* רוחב / גובה בפיקסלים */}
+            {/* Width / height in pixels */}
             <SimpleContainer>
-                <Text14>רוחב (px)</Text14>
+                <Text14>{t("signing.spotMarker.widthPx")}</Text14>
                 <input
                     type="number"
                     min={50}
@@ -81,7 +83,7 @@ export default function SignatureSpotMarker({ spot, index, onUpdate, onRemove })
             </SimpleContainer>
 
             <SimpleContainer>
-                <Text14>גובה (px)</Text14>
+                <Text14>{t("signing.spotMarker.heightPx")}</Text14>
                 <input
                     type="number"
                     min={30}
@@ -90,7 +92,7 @@ export default function SignatureSpotMarker({ spot, index, onUpdate, onRemove })
                 />
             </SimpleContainer>
 
-            {/* חתימה חובה */}
+            {/* Required */}
             <SimpleContainer>
                 <label>
                     <input
@@ -100,7 +102,7 @@ export default function SignatureSpotMarker({ spot, index, onUpdate, onRemove })
                             onUpdate(index, { isRequired: e.target.checked })
                         }
                     />{" "}
-                    <Text14>חתימה חובה</Text14>
+                    <Text14>{t("signing.spotMarker.required")}</Text14>
                 </label>
             </SimpleContainer>
         </SimpleContainer>

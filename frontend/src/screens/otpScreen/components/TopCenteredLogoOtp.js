@@ -3,10 +3,13 @@ import SimpleContainer from "../../../components/simpleComponents/SimpleContaine
 import SimpleImage from "../../../components/simpleComponents/SimpleImage";
 import { images } from "../../../assets/images/images";
 import { colors } from "../../../constant/colors";
+import { useTranslation } from "react-i18next";
 
 import "./TopCenteredLogoOtp.scss";
 
 export default function TopCenteredLogoOtp({ logoSrc = images.Logos.LogoSlang, logoWidth = 100, style: _style }) {
+    const { t } = useTranslation();
+
     return (
         <SimpleContainer className="lw-topCenteredLogoOtp">
             <SimpleContainer className="lw-topCenteredLogoOtp__cornerLogo">
@@ -18,7 +21,7 @@ export default function TopCenteredLogoOtp({ logoSrc = images.Logos.LogoSlang, l
             </SimpleContainer>
 
             <Text32 className="lw-topCenteredLogoOtp__title">
-                הקלד את הקוד שקיבלת בהודעה
+                {t('auth.enterOtpInstruction')}
             </Text32>
         </SimpleContainer>
     );

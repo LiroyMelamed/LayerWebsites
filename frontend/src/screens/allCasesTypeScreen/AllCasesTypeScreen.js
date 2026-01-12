@@ -16,12 +16,14 @@ import { usePopup } from "../../providers/PopUpProvider";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import { MainScreenName } from "../mainScreen/MainScreen";
 import AllCasesTypeCard from "./components/AllCasesTypeCard";
+import { useTranslation } from "react-i18next";
 
 import "./AllCasesTypeScreen.scss";
 
 export const AllCasesTypeScreenName = "/AllCasesType";
 
 export default function AllCasesTypeScreen() {
+    const { t } = useTranslation();
     const { openPopup, closePopup } = usePopup();
     const { isSmallScreen } = useScreenSize();
 
@@ -56,7 +58,7 @@ export default function AllCasesTypeScreen() {
     };
 
     const handleStageCountFilter = (stageCount) => {
-        if (stageCount === "הכל") {
+        if (stageCount == null) {
             setSelectedStageCount(null);
             return;
         }
@@ -83,7 +85,7 @@ export default function AllCasesTypeScreen() {
                 <SimpleContainer className="lw-allCasesTypeScreen__row">
                     <SearchInput
                         onSearch={handleSearch}
-                        title={"חיפוש סוג תיק"}
+                        title={t('cases.searchCaseTypeTitle')}
                         titleFontSize={20}
                         isPerforming={isPerformingCasesTypeById}
                         queryResult={casesTypeByName}
@@ -94,8 +96,8 @@ export default function AllCasesTypeScreen() {
 
                     <ChooseButton
                         className="lw-allCasesTypeScreen__choose"
-                        buttonText="כמות שלבים"
-                        buttonChoices={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]}
+                        buttonText={t('cases.stageCount')}
+                        items={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map((n) => ({ value: n, label: String(n) }))}
                         OnPressChoiceFunction={handleStageCountFilter}
                     />
                 </SimpleContainer>
@@ -120,7 +122,7 @@ export default function AllCasesTypeScreen() {
                         )
                     }
                 >
-                    הוספת סוג תיק
+                    {t('cases.addCaseType')}
                 </PrimaryButton>
             </SimpleContainer>
         </SimpleScreen>

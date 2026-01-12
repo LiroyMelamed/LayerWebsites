@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { images } from "../../../assets/images/images";
 import SimpleCard from "../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
@@ -18,25 +19,26 @@ import "./UpdatesScreen.scss";
 
 export const UpdatesAndNotificationsScreenName = "/UpdatesAndNotificationsScreen";
 
-const updatesMenuItems = [
-    {
-        name: 'התראות',
-        screenName: NotificationsScreenName,
-    },
-    {
-        name: 'עידכונים',
-        screenName: 'MessagesScreenName',
-    },
-    {
-        name: 'הודעות',
-        screenName: 'MessagesScreenName',
-    },
-]
-
 export default function UpdatesAndNotificationsScreen() {
+    const { t } = useTranslation();
     const { openPopup, closePopup } = usePopup();
     const { isSmallScreen } = useScreenSize();
     const navigate = useNavigate();
+
+    const updatesMenuItems = [
+        {
+            name: t("updates.notifications"),
+            screenName: NotificationsScreenName,
+        },
+        {
+            name: t("updates.updates"),
+            screenName: 'MessagesScreenName',
+        },
+        {
+            name: t("updates.messages"),
+            screenName: 'MessagesScreenName',
+        },
+    ];
 
     function handleUpdatesMenuItemPress(item) {
         if (item.screenName === NotificationsScreenName) {
@@ -44,7 +46,7 @@ export default function UpdatesAndNotificationsScreen() {
             return;
         }
 
-        openPopup(<Text12>{`שירות ${item.name} יהיה זמין בקרוב`}</Text12>);
+        openPopup(<Text12>{t("updates.serviceComingSoon", { name: item.name })}</Text12>);
     }
 
     return (

@@ -10,6 +10,7 @@ import ImageButton from "../../specializedComponents/buttons/ImageButton";
 import SimpleScrollView from "../../simpleComponents/SimpleScrollView";
 import { useFromApp } from "../../../providers/FromAppProvider";
 import PrimaryButton from "../../styledComponents/buttons/PrimaryButton";
+import { useTranslation } from "react-i18next";
 
 import './TopToolBarSmallScreen.scss';
 
@@ -17,6 +18,7 @@ const Logo = images.Logos.FullLogoOriginal;
 
 export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, GetNavBarData = getNavBarData, isClient = false }) {
     const { isFromApp } = useFromApp();
+    const { t } = useTranslation();
 
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -26,7 +28,7 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
 
     const { openPopup, closePopup } = usePopup();
 
-    const { NavBarLinks } = GetNavBarData(navigate, openPopup, closePopup, isFromApp);
+    const { NavBarLinks } = GetNavBarData(navigate, openPopup, closePopup, isFromApp, t);
 
     const toggleDrawer = () => {
         setIsDrawerOpen(!isDrawerOpen);
@@ -85,7 +87,7 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
                                     navigate('/');
                                 }}
                             >
-                                התנתק
+                                {t('common.logout')}
                             </PrimaryButton>
                         </SimpleContainer>
                     )}

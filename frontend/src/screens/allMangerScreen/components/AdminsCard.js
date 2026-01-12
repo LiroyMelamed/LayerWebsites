@@ -1,4 +1,5 @@
 import { images } from "../../../assets/images/images";
+import { useTranslation } from "react-i18next";
 import SimpleCard from "../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
 import SimpleLoader from "../../../components/simpleComponents/SimpleLoader";
@@ -11,6 +12,7 @@ import "./AdminsCard.scss";
 
 
 export default function AdminsCard({ adminList, isPerforming, performGetAdmins, style: _style }) {
+    const { t } = useTranslation();
 
     if (isPerforming) {
         return (
@@ -23,7 +25,7 @@ export default function AdminsCard({ adminList, isPerforming, performGetAdmins, 
     if (adminList?.length === 0 || !adminList) {
         return (
             <DefaultState
-                content={"כשנוסיף מנהלים הם יוצגו פה"}
+                content={t("admins.emptyList")}
                 imageStyle={{ height: 156 }}
                 imageSrc={images.Defaults.Managers}
                 className="lw-adminsCard__empty"
@@ -35,13 +37,13 @@ export default function AdminsCard({ adminList, isPerforming, performGetAdmins, 
     return (
         <SimpleCard className="lw-adminsCard">
             <SimpleContainer className="lw-adminsCard__headerRow">
-                <TextBold14 className="lw-adminsCard__headerCell">{'שם המנהל'}</TextBold14>
+                <TextBold14 className="lw-adminsCard__headerCell">{t("admins.adminName")}</TextBold14>
 
-                <Text14 className="lw-adminsCard__headerCell">{'נוצר בתאריך'}</Text14>
+                <Text14 className="lw-adminsCard__headerCell">{t("admins.createdAt")}</Text14>
 
-                <Text14 className="lw-adminsCard__headerCell lw-adminsCard__headerCell--email">{'מייל'}</Text14>
+                <Text14 className="lw-adminsCard__headerCell lw-adminsCard__headerCell--email">{t("common.email")}</Text14>
 
-                <Text14 className="lw-adminsCard__headerCell">{'טלפון'}</Text14>
+                <Text14 className="lw-adminsCard__headerCell">{t("cases.phoneNumber")}</Text14>
             </SimpleContainer>
 
             <Separator />

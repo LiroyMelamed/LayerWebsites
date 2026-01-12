@@ -3,10 +3,13 @@ import SimpleContainer from "../../../components/simpleComponents/SimpleContaine
 import SimpleImage from "../../../components/simpleComponents/SimpleImage";
 import { images } from "../../../assets/images/images";
 import { colors } from "../../../constant/colors";
+import { useTranslation } from "react-i18next";
 
 import "./TopCenteredLogo.scss";
 
 export default function TopCenteredLogo({ logoSrc = images.Logos.LogoSlang, logoWidth = 100, style }) {
+    const { t } = useTranslation();
+
     return (
         <SimpleContainer className="lw-topCenteredLogo" style={style}>
             <SimpleContainer className="lw-topCenteredLogo__cornerLogo">
@@ -18,7 +21,7 @@ export default function TopCenteredLogo({ logoSrc = images.Logos.LogoSlang, logo
             </SimpleContainer>
 
             <Text32 className="lw-topCenteredLogo__title">
-                כל המידע על התיק שלך במקום אחד!
+                {t('auth.tagline')}
             </Text32>
         </SimpleContainer>
     );

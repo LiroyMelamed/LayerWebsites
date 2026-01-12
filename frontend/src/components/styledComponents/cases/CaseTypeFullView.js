@@ -10,11 +10,13 @@ import useHttpRequest from "../../../hooks/useHttpRequest";
 import useFieldState from "../../../hooks/useFieldState";
 import { casesTypeApi } from "../../../api/casesApi";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import "./CaseTypeFullView.scss";
 import TertiaryButton from "../buttons/TertiaryButton";
 
 export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style: _style }) {
+    const { t } = useTranslation();
     const [caseTypeName, setCaseTypeName, caseTypeNameError] = useFieldState(HebrewCharsValidation, caseTypeDetails?.CaseTypeName || "");
     const [numberOfStages, setNumberOfStages, numberOfStagesError] = useFieldState(NumberOfStagesValidation, caseTypeDetails?.NumberOfStages || "");
     const [descriptions, setDescriptions] = useState(caseTypeDetails?.Descriptions || [{ Stage: 1, Text: "", Timestamp: "", New: false }]);
@@ -108,7 +110,7 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
                 <SimpleContainer className="lw-caseTypeFullView__row">
                     <SimpleContainer className="lw-caseTypeFullView__inputWrap">
                         <SimpleInput
-                            title={"שם סוג התיק"}
+                            title={t('caseTypes.caseTypeName')}
                             value={caseTypeName}
                             onChange={(e) => setCaseTypeName(e.target.value)}
                             error={caseTypeNameError}
@@ -116,7 +118,7 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
                     </SimpleContainer>
                     <SimpleContainer className="lw-caseTypeFullView__inputWrap">
                         <SimpleInput
-                            title={"מספר שלבים"}
+                            title={t('cases.stageCount')}
                             value={numberOfStages}
                             onChange={(e) => setNumberOfStages(Number(e.target.value))}
                             error={numberOfStagesError}
@@ -127,7 +129,7 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
                 {descriptions.map((description, index) => (
                     <SimpleContainer key={index} className="lw-caseTypeFullView__textAreaRow">
                         <SimpleTextArea
-                            title={`תיאור מס' ${index + 1}`}
+                            title={t('cases.descriptionNumber', { number: index + 1 })}
                             value={description.Text || ""}
                             onChange={(text) => {
                                 setDescriptions((prev) => {
@@ -146,27 +148,27 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
                             onPress={handleDeleteCaseType}
                             isPerforming={isDeleting}
                         >
-                            {isDeleting ? "מוחק..." : "מחק סוג תיק"}
+                            {isDeleting ? t('common.deleting') : t('caseTypes.deleteCaseType')}
                         </TertiaryButton>
                     )}
                     <SecondaryButton
                         onPress={handleAddStage}
                     >
-                        הוסף שלב
+                        {t('caseTypes.addStage')}
                     </SecondaryButton>
                     <PrimaryButton
                         onPress={handleSaveCaseType}
                         isPerforming={isPerforming}
                         disabled={hasError}
                     >
-                        {isPerforming ? "שומר..." : caseTypeDetails ? "עדכן סוג תיק" : "שמור סוג תיק"}
+                        {isPerforming ? t('common.saving') : caseTypeDetails ? t('caseTypes.updateCaseType') : t('caseTypes.saveCaseType')}
                     </PrimaryButton>
                     <SecondaryButton
                         onPress={() => closePopUpFunction?.()}
                         className="lw-cancelButton"
 
                     >
-                        ביטול
+                        {t('common.cancel')}
                     </SecondaryButton>
                 </SimpleContainer>
             </SimpleScrollView>

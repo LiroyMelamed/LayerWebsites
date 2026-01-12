@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { images } from "../../../assets/images/images";
 import { customersApi } from "../../../api/customersApi";
@@ -34,6 +35,7 @@ import "./ProfileScreen.scss";
 export const ProfileScreenName = "/ProfileScreen";
 
 export default function ProfileScreen() {
+    const { t } = useTranslation();
     const { isSmallScreen } = useScreenSize();
     const { openPopup, closePopup } = usePopup();
 
@@ -59,12 +61,12 @@ export default function ProfileScreen() {
 
         openPopup(
             <SimpleContainer className="lw-profileScreen__successPopup">
-                <TextBold16>הצלחה</TextBold16>
+                <TextBold16>{t("profile.successTitle")}</TextBold16>
                 <Separator className="lw-profileScreen__popupSep" />
-                <Text14>פרופיל התעדכן בהצלחה</Text14>
+                <Text14>{t("profile.updatedSuccess")}</Text14>
                 <Separator className="lw-profileScreen__popupSep" />
                 <PrimaryButton className="lw-profileScreen__popupOk" onPress={() => closePopup()}>
-                    אישור
+                    {t("common.ok")}
                 </PrimaryButton>
             </SimpleContainer>
         );
@@ -118,12 +120,12 @@ export default function ProfileScreen() {
             console.error("Failed to upload profile image", err);
             openPopup(
                 <SimpleContainer className="lw-profileScreen__errorPopup">
-                    <TextBold16>אופס...</TextBold16>
+                    <TextBold16>{t("errors.oopsTitle")}</TextBold16>
                     <Separator className="lw-profileScreen__popupSep" />
                     <Text14>{String(err?.message ?? err)}</Text14>
                     <Separator className="lw-profileScreen__popupSep" />
                     <PrimaryButton className="lw-profileScreen__popupOk" onPress={() => closePopup()}>
-                        אישור
+                        {t("common.ok")}
                     </PrimaryButton>
                 </SimpleContainer>
             );
@@ -174,7 +176,7 @@ export default function ProfileScreen() {
                                 onPress={handleChooseImage}
                                 disabled={isSaving}
                             >
-                                <Text12 className="lw-profileScreen__avatarEditText">ערוך</Text12>
+                                <Text12 className="lw-profileScreen__avatarEditText">{t("common.edit")}</Text12>
                             </SimpleButton>
 
                             <input
@@ -195,14 +197,14 @@ export default function ProfileScreen() {
                             <SimpleContainer className="lw-profileScreen__form">
                                 <SimpleInput
                                     className="lw-profileScreen__input"
-                                    title="שם לקוח"
+                                    title={t("cases.customerName")}
                                     value={profile.name}
                                     onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))}
                                 />
 
                                 <SimpleInput
                                     className="lw-profileScreen__input"
-                                    title="מייל"
+                                    title={t("common.email")}
                                     type="email"
                                     value={profile.email}
                                     onChange={(e) => setProfile((p) => ({ ...p, email: e.target.value }))}
@@ -210,7 +212,7 @@ export default function ProfileScreen() {
 
                                 <SimpleInput
                                     className="lw-profileScreen__input"
-                                    title="מספר פלאפון"
+                                    title={t("cases.phoneNumber")}
                                     type="tel"
                                     value={profile.phoneNumber}
                                     onChange={(e) => setProfile((p) => ({ ...p, phoneNumber: e.target.value }))}
@@ -218,14 +220,14 @@ export default function ProfileScreen() {
 
                                 <SimpleInput
                                     className="lw-profileScreen__input"
-                                    title="שם חברה"
+                                    title={t("customers.companyName")}
                                     value={profile.companyName}
                                     onChange={(e) => setProfile((p) => ({ ...p, companyName: e.target.value }))}
                                 />
 
                                 <SimpleInput
                                     className="lw-profileScreen__input"
-                                    title="תאריך לידה"
+                                    title={t("profile.dateOfBirth")}
                                     type="date"
                                     value={profile.dateOfBirth || ""}
                                     onChange={(e) => setProfile((p) => ({ ...p, dateOfBirth: e.target.value }))}
@@ -236,7 +238,7 @@ export default function ProfileScreen() {
                                     onPress={handleSave}
                                     disabled={isSaving}
                                 >
-                                    {isSaving ? "שומר..." : "שמור"}
+                                    {isSaving ? t("common.saving") : t("common.save")}
                                 </PrimaryButton>
                             </SimpleContainer>
                         </SimpleCard>

@@ -2,6 +2,7 @@
 import React from "react";
 import SimpleContainer from "../../../simpleComponents/SimpleContainer";
 import SignatureSpot from "./SignatureSpot";
+import { useTranslation } from 'react-i18next';
 
 export default function SignatureSpotsLayer({
     pageNumber,
@@ -11,6 +12,7 @@ export default function SignatureSpotsLayer({
     signers = [],
     scale = 1,
 }) {
+    const { t } = useTranslation();
     const normalizeSpot = (spot) => {
         if (!spot || typeof spot !== "object") return spot;
 
@@ -57,7 +59,9 @@ export default function SignatureSpotsLayer({
                 spot.signerName ||
                 signer?.Name ||
                 signer?.name ||
-                (signerIndex >= 0 ? `חותם ${signerIndex + 1}` : "חתימה"),
+                (signerIndex >= 0
+                    ? t('signing.signerFallback', { index: signerIndex + 1 })
+                    : t('signing.spot.defaultSignerName')),
         };
     };
 

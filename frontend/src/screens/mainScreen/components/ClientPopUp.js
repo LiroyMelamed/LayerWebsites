@@ -11,10 +11,12 @@ import useFieldState from "../../../hooks/useFieldState";
 import { HebrewCharsValidationWithNULL, HebrewCharsValidationWithNumbers } from "../../../functions/validation/HebrewCharsValidation";
 import emailValidation from "../../../functions/validation/EmailValidation";
 import IsraeliPhoneNumberValidation from "../../../functions/validation/IsraeliPhoneNumberValidation";
+import { useTranslation } from "react-i18next";
 
 import "./ClientPopUp.scss";
 
 export default function ClientPopup({ clientDetails, initialName, rePerformRequest, onFailureFunction, closePopUpFunction, style: _style }) {
+    const { t } = useTranslation();
     const [name, setName, nameError] = useFieldState(
         HebrewCharsValidationWithNumbers,
         clientDetails?.name || initialName || ""
@@ -76,14 +78,14 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
                 <SimpleContainer className="lw-clientPopup__row">
                     <SimpleInput
                         className="lw-clientPopup__input"
-                        title={"שם לקוח"}
+                        title={t("cases.customerName")}
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         error={nameError}
                     />
                     <SimpleInput
                         className="lw-clientPopup__input"
-                        title={"מספר פלאפון"}
+                        title={t("cases.phoneNumber")}
                         type="tel"
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value)}
@@ -94,7 +96,7 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
                 <SimpleContainer className="lw-clientPopup__row">
                     <SimpleInput
                         className="lw-clientPopup__input"
-                        title={"אימייל"}
+                        title={t("common.email")}
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -102,7 +104,7 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
                     />
                     <SimpleInput
                         className="lw-clientPopup__input"
-                        title={"שם החברה"}
+                        title={t("customers.companyName")}
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
                         error={companyNameError}
@@ -116,7 +118,7 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
                             size={buttonSizes.MEDIUM}
                             onPress={handleDeleteClient}
                         >
-                            {isPerformingDeleteClient ? "מוחק..." : "מחק לקוח"}
+                            {isPerformingDeleteClient ? t("common.deleting") : t("customers.deleteCustomer")}
                         </SecondaryButton>
                     )}
                     <PrimaryButton
@@ -125,14 +127,18 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
                         onPress={handleSaveClient}
                         disabled={hasError}
                     >
-                        {isPerforming ? "שומר..." : !clientDetails ? "שמור לקוח" : "עדכן לקוח"}
+                        {isPerforming
+                            ? t("common.saving")
+                            : !clientDetails
+                                ? t("customers.saveCustomer")
+                                : t("customers.updateCustomer")}
                     </PrimaryButton>
                     <SecondaryButton
                         className="lw-cancelButton"
                         size={buttonSizes.MEDIUM}
                         onPress={() => closePopUpFunction?.()}
                     >
-                        ביטול
+                        {t("common.cancel")}
                     </SecondaryButton>
                 </SimpleContainer>
             </SimpleScrollView>

@@ -22,6 +22,7 @@ import { images } from "../../assets/images/images";
 import ApiUtils from "../../api/apiUtils";
 import { usePopup } from "../../providers/PopUpProvider";
 import ErrorPopup from "../../components/styledComponents/popups/ErrorPopup";
+import { useTranslation } from "react-i18next";
 
 import { AdminStackName } from "../../navigation/AdminStack";
 import { uploadFileForSigningScreenName } from "./UploadFileForSigningScreen";
@@ -35,6 +36,7 @@ export default function SigningManagerScreen() {
     const { isSmallScreen } = useScreenSize();
     const navigate = useNavigate();
     const { openPopup, closePopup } = usePopup();
+    const { t } = useTranslation();
 
     const [activeTab, setActiveTab] = useState("pending");
     const [searchQuery, setSearchQuery] = useState("");
@@ -105,24 +107,31 @@ export default function SigningManagerScreen() {
             setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
         } catch (err) {
             console.error("Open PDF error:", err);
-            alert("שגיאה בפתיחת ה-PDF");
+            openPopup(
+                <ErrorPopup
+                    closePopup={closePopup}
+                    messageKey="signingManager.errors.openPdf"
+                />
+            );
         }
     };
 
     const getStatusChip = (status) => {
         const map = {
-            pending: { text: "בהמתנה", className: "lw-signingManagerScreen__chip lw-signingManagerScreen__chip--pending" },
-            signed: { text: "חתום", className: "lw-signingManagerScreen__chip lw-signingManagerScreen__chip--signed" },
-            rejected: { text: "נדחה", className: "lw-signingManagerScreen__chip lw-signingManagerScreen__chip--rejected" },
+            pending: { text: t('signing.status.pending'), className: "lw-signingManagerScreen__chip lw-signingManagerScreen__chip--pending" },
+            signed: { text: t('signing.status.signed'), className: "lw-signingManagerScreen__chip lw-signingManagerScreen__chip--signed" },
+            rejected: { text: t('signing.status.rejected'), className: "lw-signingManagerScreen__chip lw-signingManagerScreen__chip--rejected" },
         };
         return map[status] || map.pending;
     };
 
-    const showHebrewError = (message) => {
+    const showError = ({ messageKey, messageValues, message }) => {
         openPopup(
             <ErrorPopup
                 closePopup={closePopup}
-                errorText={message || "שגיאה לא צפויה"}
+                messageKey={messageKey}
+                messageValues={messageValues}
+                errorText={message}
             />
         );
     };
@@ -150,7 +159,7 @@ export default function SigningManagerScreen() {
             const response = await signingFilesApi.downloadSignedFile(signingFileId);
             const url = response?.data?.downloadUrl;
             if (!url) {
-                showHebrewError("לא ניתן להוריד את הקובץ החתום");
+                showError({ messageKey: 'signingManager.errors.downloadSignedMissingUrl' });
                 return;
             }
             const a = document.createElement("a");
@@ -161,7 +170,11 @@ export default function SigningManagerScreen() {
             a.remove();
         } catch (err) {
             console.error("Download error:", err);
-            showHebrewError(err?.data?.message || "שגיאה בהורדת הקובץ");
+            // If backend sends a localized string, keep it as-is.
+            showError({
+                message: err?.data?.message,
+                messageKey: err?.data?.message ? undefined : 'signingManager.errors.downloadSignedError'
+            });
         }
     };
 
@@ -169,13 +182,13 @@ export default function SigningManagerScreen() {
         try {
             const signingFileId = file?.SigningFileId;
             if (!signingFileId) {
-                showHebrewError("שגיאה: מזהה מסמך חסר");
+                showError({ messageKey: 'signingManager.errors.missingDocumentId' });
                 return;
             }
 
             // Only allow when signed output exists (strict per requirement).
             if (!file?.SignedFileKey) {
-                showHebrewError("חבילת ראיות זמינה רק לאחר חתימה מלאה");
+                showError({ messageKey: 'signingManager.errors.evidencePackageSignedOnly' });
                 return;
             }
 
@@ -198,9 +211,10 @@ export default function SigningManagerScreen() {
                 } catch {
                     payload = null;
                 }
-
-                const message = payload?.message || "שגיאה בהורדת חבילת ראיות";
-                showHebrewError(message);
+                showError({
+                    message: payload?.message,
+                    messageKey: payload?.message ? undefined : 'signingManager.errors.evidencePackageDownloadError'
+                });
                 return;
             }
 
@@ -213,7 +227,7 @@ export default function SigningManagerScreen() {
             downloadBlobAsFile(blob, filename);
         } catch (err) {
             console.error("Evidence package download error:", err);
-            showHebrewError("שגיאה בהורדת חבילת ראיות");
+            showError({ messageKey: 'signingManager.errors.evidencePackageDownloadError' });
         }
     };
 
@@ -263,33 +277,33 @@ export default function SigningManagerScreen() {
                         <SearchInput
                             onSearch={handleSearch}
                             value={searchQuery}
-                            title={"חיפוש מסמך / לקוח / תיק"}
+                            title={t('signingManager.searchTitle')}
                             titleFontSize={18}
                         />
                     </SimpleContainer>
                 </SimpleContainer>
 
-                {/* טאבים */}
+                {/* Tabs */}
                 <SimpleContainer className="lw-signingManagerScreen__tabsRow">
                     <TabButton
                         active={activeTab === "pending"}
-                        label={`בהמתנה / נדחו (${pendingCount})`}
+                        label={t('signingManager.tabs.pending', { count: pendingCount })}
                         onPress={() => setActiveTab("pending")}
                     />
                     <TabButton
                         active={activeTab === "signed"}
-                        label={`חתומים (${signedCount})`}
+                        label={t('signingManager.tabs.signed', { count: signedCount })}
                         onPress={() => setActiveTab("signed")}
                     />
                 </SimpleContainer>
 
-                {/* רשימה */}
+                {/* List */}
                 {filteredFiles.length === 0 ? (
                     <SimpleContainer className="lw-signingManagerScreen__emptyState">
                         <Text14>
                             {activeTab === "pending"
-                                ? "אין מסמכים ממתינים או נדחים"
-                                : "אין מסמכים חתומים להצגה"}
+                                ? t('signingManager.empty.pending')
+                                : t('signingManager.empty.signed')}
                         </Text14>
                     </SimpleContainer>
                 ) : (
@@ -315,15 +329,15 @@ export default function SigningManagerScreen() {
                                 </SimpleContainer>
 
                                 <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                    <div className="lw-signingManagerScreen__detailLabel">תיק:</div>
+                                    <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.case')}</div>
                                     <div className="lw-signingManagerScreen__detailValue">{file.CaseName || "-"}</div>
                                 </SimpleContainer>
                                 <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                    <div className="lw-signingManagerScreen__detailLabel">לקוח:</div>
+                                    <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.client')}</div>
                                     <div className="lw-signingManagerScreen__detailValue">{file.ClientName || "-"}</div>
                                 </SimpleContainer>
                                 <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                    <div className="lw-signingManagerScreen__detailLabel">תאריך העלאה:</div>
+                                    <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.uploadedAt')}</div>
                                     <div className="lw-signingManagerScreen__detailValue">{formatDotDate(file.CreatedAt)}</div>
                                 </SimpleContainer>
 
@@ -331,7 +345,7 @@ export default function SigningManagerScreen() {
                                     file.Status === "rejected") && (
                                         <>
                                             <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                                <div className="lw-signingManagerScreen__detailLabel">חתימות:</div>
+                                                <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.signatures')}</div>
                                                 <div className="lw-signingManagerScreen__detailValue">{signedSpots}/{totalSpots}</div>
                                             </SimpleContainer>
 
@@ -339,13 +353,13 @@ export default function SigningManagerScreen() {
                                                 className="lw-signingManagerScreen__progress"
                                                 max={progressMax}
                                                 value={progressValue}
-                                                aria-label={`חתימות: ${getProgress(file)}%`}
+                                                aria-label={t('signingManager.aria.signaturesPercent', { percent: getProgress(file) })}
                                             />
 
                                             {file.Status === "rejected" &&
                                                 file.RejectionReason && (
                                                     <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                                        <div className="lw-signingManagerScreen__detailLabel">סיבת דחייה:</div>
+                                                        <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.rejectionReason')}</div>
                                                         <div className="lw-signingManagerScreen__detailValue">{file.RejectionReason}</div>
                                                     </SimpleContainer>
                                                 )}
@@ -354,7 +368,7 @@ export default function SigningManagerScreen() {
 
                                 {file.Status === "signed" && (
                                     <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                        <div className="lw-signingManagerScreen__detailLabel">חתום בתאריך:</div>
+                                        <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.signedAt')}</div>
                                         <div className="lw-signingManagerScreen__detailValue">{formatDotDate(file.SignedAt)}</div>
                                     </SimpleContainer>
                                 )}
@@ -366,13 +380,13 @@ export default function SigningManagerScreen() {
                                                 handleDownload(file.SigningFileId, file.FileName)
                                             }
                                         >
-                                            הורד קובץ חתום
+                                            {t('signingManager.actions.downloadSigned')}
                                         </PrimaryButton>
                                     )}
                                     <SecondaryButton
                                         onPress={() => handleOpenDetails(file)}
                                     >
-                                        פרטי מסמך
+                                        {t('signingManager.actions.details')}
                                     </SecondaryButton>
                                 </SimpleContainer>
                             </SimpleCard>
@@ -386,7 +400,7 @@ export default function SigningManagerScreen() {
                     className="lw-signingManagerScreen__addButton"
                     onPress={handleGoToUpload}
                 >
-                    שליחת מסמך חדש לחתימה
+                    {t('signingManager.actions.uploadNew')}
                 </PrimaryButton>
             </SimpleContainer>
         </SimpleScreen>
@@ -394,12 +408,13 @@ export default function SigningManagerScreen() {
 }
 
 function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned, onDownloadEvidencePackage, formatDotDate }) {
+    const { t } = useTranslation();
     const totalSpots = Number(file?.TotalSpots || 0);
     const signedSpots = Number(file?.SignedSpots || 0);
 
     const requireOtp = Boolean(file?.RequireOtp);
     const isOtpWaived = file?.RequireOtp === false;
-    const otpChipText = requireOtp ? "OTP נדרש" : "OTP בוטל ע\"י עו\"ד";
+    const otpChipText = requireOtp ? t('signing.otpRequiredBadge') : t('signing.otpWaivedBadge');
     const otpChipClassName = requireOtp
         ? "lw-signingManagerScreen__chip lw-signingManagerScreen__chip--signed"
         : "lw-signingManagerScreen__chip lw-signingManagerScreen__chip--pending";
@@ -416,53 +431,54 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
         return `${dd}.${mm}.${yyyy} ${hh}:${min}`;
     };
 
-    const statusText = file?.Status === "signed"
-        ? "חתום"
-        : file?.Status === "rejected"
-            ? "נדחה"
-            : "בהמתנה";
+    const statusText =
+        file?.Status === "signed"
+            ? t('signing.status.signed')
+            : file?.Status === "rejected"
+                ? t('signing.status.rejected')
+                : t('signing.status.pending');
 
     return (
         <SimpleContainer className="lw-signingManagerScreen__detailsPopup">
-            <TextBold24>{file?.FileName || "פרטי מסמך"}</TextBold24>
+            <TextBold24>{file?.FileName || t('signingManager.details.titleFallback')}</TextBold24>
 
             <SimpleContainer className={otpChipClassName}>{otpChipText}</SimpleContainer>
 
             <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                <div className="lw-signingManagerScreen__detailLabel">תיק:</div>
+                <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.case')}</div>
                 <div className="lw-signingManagerScreen__detailValue">{file?.CaseName || "-"}</div>
             </SimpleContainer>
 
             <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                <div className="lw-signingManagerScreen__detailLabel">לקוח:</div>
+                <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.client')}</div>
                 <div className="lw-signingManagerScreen__detailValue">{file?.ClientName || "-"}</div>
             </SimpleContainer>
 
             <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                <div className="lw-signingManagerScreen__detailLabel">תאריך העלאה:</div>
+                <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.uploadedAt')}</div>
                 <div className="lw-signingManagerScreen__detailValue">{formatDotDate?.(file?.CreatedAt)}</div>
             </SimpleContainer>
 
             <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                <div className="lw-signingManagerScreen__detailLabel">סטטוס:</div>
+                <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.status')}</div>
                 <div className="lw-signingManagerScreen__detailValue">{statusText}</div>
             </SimpleContainer>
 
             <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                <div className="lw-signingManagerScreen__detailLabel">חתימות:</div>
+                <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.signatures')}</div>
                 <div className="lw-signingManagerScreen__detailValue">{signedSpots}/{totalSpots}</div>
             </SimpleContainer>
 
             {file?.Status === "rejected" && file?.RejectionReason && (
                 <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                    <div className="lw-signingManagerScreen__detailLabel">סיבת דחייה:</div>
+                    <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.rejectionReason')}</div>
                     <div className="lw-signingManagerScreen__detailValue">{file.RejectionReason}</div>
                 </SimpleContainer>
             )}
 
             {file?.Status === "signed" && (
                 <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                    <div className="lw-signingManagerScreen__detailLabel">חתום בתאריך:</div>
+                    <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.signedAt')}</div>
                     <div className="lw-signingManagerScreen__detailValue">{formatDotDate?.(file?.SignedAt)}</div>
                 </SimpleContainer>
             )}
@@ -470,25 +486,25 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
             {isOtpWaived && (
                 <>
                     <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                        <div className="lw-signingManagerScreen__detailLabel">ויתור OTP נקבע ע\"י:</div>
+                        <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.otpWaiverBy')}</div>
                         <div className="lw-signingManagerScreen__detailValue">{file?.PolicySelectedByUserId ?? "-"}</div>
                     </SimpleContainer>
                     <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                        <div className="lw-signingManagerScreen__detailLabel">ויתור OTP נקבע בתאריך:</div>
+                        <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.otpWaiverAt')}</div>
                         <div className="lw-signingManagerScreen__detailValue">{formatUtcDateTime(file?.PolicySelectedAtUtc)}</div>
                     </SimpleContainer>
                 </>
             )}
 
             <SimpleContainer className="lw-signingManagerScreen__actionsRow">
-                <SecondaryButton onPress={onOpenPdf}>פתח PDF</SecondaryButton>
+                <SecondaryButton onPress={onOpenPdf}>{t('signingManager.actions.openPdf')}</SecondaryButton>
                 {file?.Status === "signed" && (
-                    <PrimaryButton onPress={onDownloadSigned}>הורד קובץ חתום</PrimaryButton>
+                    <PrimaryButton onPress={onDownloadSigned}>{t('signingManager.actions.downloadSigned')}</PrimaryButton>
                 )}
                 {Boolean(file?.SignedFileKey) && (
-                    <PrimaryButton onPress={onDownloadEvidencePackage}>הורד חבילת ראיות</PrimaryButton>
+                    <PrimaryButton onPress={onDownloadEvidencePackage}>{t('signing.evidencePackageDownload')}</PrimaryButton>
                 )}
-                <SecondaryButton onPress={onClose}>סגור</SecondaryButton>
+                <SecondaryButton onPress={onClose}>{t('common.close')}</SecondaryButton>
             </SimpleContainer>
         </SimpleContainer>
     );

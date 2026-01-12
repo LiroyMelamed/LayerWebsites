@@ -1,18 +1,20 @@
 // src/components/specializedComponents/signFiles/signatureSpots/SignatureSpot.js
 import React, { useRef } from "react";
 import SimpleContainer from "../../../simpleComponents/SimpleContainer";
+import { useTranslation } from "react-i18next";
 
 // Color scheme for different signers
 const SIGNER_COLORS = [
-    { bg: "rgba(42, 67, 101, 0.14)", border: "#2A4365", name: "ראשי" },       // primary
-    { bg: "rgba(76, 102, 144, 0.14)", border: "#4C6690", name: "משני" },      // sidebar selected
-    { bg: "rgba(56, 161, 105, 0.14)", border: "#38A169", name: "חיובי" },     // positive
-    { bg: "rgba(197, 48, 48, 0.12)", border: "#C53030", name: "שלילי" },      // negative
-    { bg: "rgba(113, 128, 150, 0.14)", border: "#718096", name: "אפור" },     // winter
-    { bg: "rgba(155, 44, 44, 0.12)", border: "#9B2C2C", name: "אדום כהה" },   // darkRed
+    { bg: "rgba(42, 67, 101, 0.14)", border: "#2A4365", name: "Primary" },       // primary
+    { bg: "rgba(76, 102, 144, 0.14)", border: "#4C6690", name: "Secondary" },    // sidebar selected
+    { bg: "rgba(56, 161, 105, 0.14)", border: "#38A169", name: "Positive" },     // positive
+    { bg: "rgba(197, 48, 48, 0.12)", border: "#C53030", name: "Negative" },      // negative
+    { bg: "rgba(113, 128, 150, 0.14)", border: "#718096", name: "Gray" },        // winter
+    { bg: "rgba(155, 44, 44, 0.12)", border: "#9B2C2C", name: "Dark red" },      // darkRed
 ];
 
-export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot, signerIndex = 0, signerName = "חתימה", scale = 1 }) {
+export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot, signerIndex = 0, signerName, scale = 1 }) {
+    const { t } = useTranslation();
     const ref = useRef(null);
 
     const canEditSpot = typeof onUpdateSpot === "function";
@@ -20,6 +22,8 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
 
     // Get color based on signer index
     const colorScheme = SIGNER_COLORS[signerIndex % SIGNER_COLORS.length];
+
+    const signerNameSafe = signerName || t("signing.spot.defaultSignerName");
 
     const hasSignatureImage = Boolean(spot?.IsSigned && (spot?.SignatureUrl || spot?.signatureUrl));
 
@@ -132,18 +136,18 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
             }
             className="lw-signing-spot"
             style={spotStyle}
-            title={`חתום על ידי: ${signerName}`}
+            title={t("signing.spot.signedByTitle", { name: signerNameSafe })}
         >
             {hasSignatureImage ? (
                 <img
                     src={spot.SignatureUrl || spot.signatureUrl}
-                    alt="signature"
+                    alt={t("signing.spot.signatureAlt")}
                     className="lw-signing-spotImg"
                 />
             ) : (
                 <div className="lw-signing-spotLabel">
                     <div className="lw-signing-spotLabelText">
-                        {signerName.length > 10 ? signerName.substring(0, 8) + "..." : signerName}
+                        {signerNameSafe.length > 10 ? signerNameSafe.substring(0, 8) + "..." : signerNameSafe}
                     </div>
                 </div>
             )}

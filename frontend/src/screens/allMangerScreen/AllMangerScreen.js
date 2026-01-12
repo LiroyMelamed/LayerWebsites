@@ -12,6 +12,7 @@ import useHttpRequest from "../../hooks/useHttpRequest";
 import { AdminStackName } from "../../navigation/AdminStack";
 import { usePopup } from "../../providers/PopUpProvider";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
+import { useTranslation } from "react-i18next";
 import { MainScreenName } from "../mainScreen/MainScreen";
 import AdminPopup from "./components/AdminPopup";
 import AdminsCard from "./components/AdminsCard";
@@ -21,6 +22,7 @@ import "./AllMangerScreen.scss";
 export const AllMangerScreenName = "/AllManger"
 
 export default function AllMangerScreen() {
+    const { t } = useTranslation();
     const { result: adminsData, isPerforming: isPerformingAdminsData, performRequest: performGetAdmins } = useAutoHttpRequest(adminApi.getAllAdmins);
     const { result: adminByName, isPerforming: isPerformingAdminById, performRequest: SearchAdminByName } = useHttpRequest(adminApi.getAdminByName, null, () => { });
 
@@ -48,7 +50,7 @@ export default function AllMangerScreen() {
                 <SimpleContainer className="lw-allMangerScreen__row">
                     <SearchInput
                         onSearch={handleSearch}
-                        title={"חיפוש מנהל"}
+                        title={t("admins.searchAdmin")}
                         titleFontSize={20}
                         getButtonTextFunction={(item) => item.name}
                         className="lw-allMangerScreen__search"
@@ -69,7 +71,7 @@ export default function AllMangerScreen() {
                 <PrimaryButton
                     onPress={() => openPopup(<AdminPopup rePerformRequest={performGetAdmins} closePopUpFunction={closePopup} />)}
                 >
-                    הוסף מנהל
+                    {t("admins.addAdmin")}
                 </PrimaryButton>
             </SimpleContainer>
         </SimpleScreen>

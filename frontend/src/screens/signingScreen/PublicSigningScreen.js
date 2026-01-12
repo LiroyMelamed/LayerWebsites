@@ -9,6 +9,7 @@ import SignatureCanvas from "../../components/specializedComponents/signFiles/Si
 import { images } from "../../assets/images/images";
 import { LoginStackName } from "../../navigation/LoginStack";
 import { LoginScreenName } from "../loginScreen/LoginScreen";
+import { useTranslation } from "react-i18next";
 
 import "./PublicSigningScreen.scss";
 
@@ -17,6 +18,7 @@ export const PublicSigningScreenName = "/public-sign";
 export default function PublicSigningScreen() {
     const location = useLocation();
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     const token = useMemo(() => {
         const sp = new URLSearchParams(location.search);
@@ -34,14 +36,14 @@ export default function PublicSigningScreen() {
             <SimpleContainer className="lw-publicSigningScreen__container">
                 {!token ? (
                     <SimpleContainer className="lw-publicSigningScreen__stack">
-                        <TextBold24>קישור לא תקין</TextBold24>
-                        <Text14>חסר פרמטר token בקישור.</Text14>
-                        <PrimaryButton onPress={goToLogin}>חזרה</PrimaryButton>
+                        <TextBold24>{t('signing.invalidLinkTitle')}</TextBold24>
+                        <Text14>{t('signing.missingToken')}</Text14>
+                        <PrimaryButton onPress={goToLogin}>{t('common.back')}</PrimaryButton>
                     </SimpleContainer>
                 ) : closed ? (
                     <SimpleContainer className="lw-publicSigningScreen__stack">
-                        <TextBold24>נסגר</TextBold24>
-                        <Text14>ניתן לסגור את החלון.</Text14>
+                        <TextBold24>{t('signing.public.closedTitle')}</TextBold24>
+                        <Text14>{t('signing.public.closedHint')}</Text14>
                     </SimpleContainer>
                 ) : (
                     <SignatureCanvas

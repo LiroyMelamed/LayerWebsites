@@ -9,21 +9,23 @@ import ClientMenuItem from "../../../components/styledComponents/menuItems/Clien
 import Separator from "../../../components/styledComponents/separators/Separator";
 import { usePopup } from "../../../providers/PopUpProvider";
 import ClientPopup from "./ClientPopUp";
+import { useTranslation } from "react-i18next";
 
 import "./ClientsCard.scss";
 
 export default function ClientsCard({ rePerformRequest, customerList, style: _style }) {
     const { openPopup, closePopup } = usePopup();
+    const { t } = useTranslation();
 
     if (customerList?.length === 0 || !customerList) {
         return (
             <DefaultState
-                content={"כשנוסיף לקוחות הם יוצגו פה"}
+                content={t("customers.emptyList")}
                 imageStyle={{ height: 156 }}
                 imageSrc={images.Defaults.SearchingClient}
                 className="lw-clientsCard__empty"
                 imageClassName="lw-clientsCard__emptyImage"
-                actionButton={'הוסף לקוח'}
+                actionButton={t("customers.addCustomer")}
                 actionButtonPressFunction={() => openPopup(<ClientPopup closePopUpFunction={closePopup} rePerformRequest={rePerformRequest} />)}
             />
         )
@@ -32,13 +34,13 @@ export default function ClientsCard({ rePerformRequest, customerList, style: _st
     return (
         <SimpleCard className="lw-clientsCard">
             <SimpleContainer className="lw-clientsCard__headerRow">
-                <TextBold14 className="lw-clientsCard__headerCell">{'שם חברה'}</TextBold14>
+                <TextBold14 className="lw-clientsCard__headerCell">{t("customers.companyName")}</TextBold14>
 
-                <Text14 className="lw-clientsCard__headerCell">{'שם לקוח'}</Text14>
+                <Text14 className="lw-clientsCard__headerCell">{t("cases.customerName")}</Text14>
 
-                <Text14 className="lw-clientsCard__headerCell lw-clientsCard__headerCell--email">{'מייל'}</Text14>
+                <Text14 className="lw-clientsCard__headerCell lw-clientsCard__headerCell--email">{t("common.email")}</Text14>
 
-                <Text14 className="lw-clientsCard__headerCell">{'טלפון'}</Text14>
+                <Text14 className="lw-clientsCard__headerCell">{t("cases.phoneNumber")}</Text14>
             </SimpleContainer>
 
             <Separator />
@@ -67,7 +69,7 @@ export default function ClientsCard({ rePerformRequest, customerList, style: _st
                 className="lw-clientsCard__addButton"
                 onPress={() => openPopup(<ClientPopup closePopUpFunction={closePopup} rePerformRequest={rePerformRequest} />)}
             >
-                הוסף לקוח
+                {t("customers.addCustomer")}
             </PrimaryButton>
         </SimpleCard>
     );

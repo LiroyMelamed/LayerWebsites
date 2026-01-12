@@ -17,8 +17,10 @@ import emailValidation from '../../../functions/validation/EmailValidation';
 
 import './CaseFullView.scss';
 import useAutoHttpRequest from '../../../hooks/useAutoHttpRequest';
+import { useTranslation } from 'react-i18next';
 
 export default function CaseFullView({ caseDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style: _style }) {
+    const { t } = useTranslation();
     const [caseHasBeenChosen, setCaseHasBeenChosen] = useState(false)
     const [hasSubmitted, setHasSubmitted] = useState(false);
     const [fieldErrors, setFieldErrors] = useState({});
@@ -46,18 +48,18 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
             const errors = {};
 
             const caseName = String(data?.CaseName || '').trim();
-            if (!caseName) errors.CaseName = 'חובה';
+            if (!caseName) errors.CaseName = t('errors.required');
 
             const caseTypeName = String(data?.CaseTypeName || '').trim();
-            if (!caseTypeName) errors.CaseTypeName = 'חובה';
+            if (!caseTypeName) errors.CaseTypeName = t('errors.required');
 
             const customerName = String(data?.CustomerName || '').trim();
-            if (!customerName) errors.CustomerName = 'חובה';
+            if (!customerName) errors.CustomerName = t('errors.required');
 
             const phoneRequired = true;
             const phone = String(data?.PhoneNumber || '').trim();
             if (phoneRequired && !phone) {
-                errors.PhoneNumber = 'חובה';
+                errors.PhoneNumber = t('errors.required');
             } else {
                 const phoneError = IsraeliPhoneNumberValidation(phone);
                 if (phoneError) errors.PhoneNumber = phoneError;
@@ -69,7 +71,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
 
             return errors;
         };
-    }, []);
+    }, [t]);
 
     const applyFieldErrorUpdates = (partialUpdates) => {
         if (!hasSubmitted) return;
@@ -223,7 +225,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                     {caseDetails ?
                         <SimpleInput
                             className="lw-caseFullView__field"
-                            title={"מספר התיק"}
+                            title={t('cases.caseNumber')}
                             value={caseData.CaseName}
                             onChange={(e) => handleInputChange('CaseName', e.target.value)}
                             error={fieldErrors?.CaseName}
@@ -238,7 +240,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
 
                                 applyFieldErrorUpdates({ CaseName: caseName });
                             }}
-                            title={"מספר התיק"}
+                            title={t('cases.caseNumber')}
                             value={caseData.CaseName}
                             isPerforming={isPerformingCases}
                             getButtonTextFunction={(item) => item.CaseName}
@@ -251,7 +253,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
 
                     <SearchInput
                         onSearch={searchCaseTypes}
-                        title={"סוג התיק"}
+                        title={t('cases.caseType')}
                         value={caseData.CaseTypeName}
                         isPerforming={isPerformingCaseTypes}
                         getButtonTextFunction={(item) => item.CaseTypeName}
@@ -265,7 +267,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                 <SimpleContainer className="lw-caseFullView__row">
                     <SearchInput
                         onSearch={searchCustomers}
-                        title={"שם לקוח"}
+                        title={t('cases.customerName')}
                         value={caseData.CustomerName}
                         isPerforming={isPerformingCustomers}
                         getButtonTextFunction={(item) => item.Name}
@@ -276,7 +278,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                     />
                     <SimpleInput
                         className="lw-caseFullView__field"
-                        title={"שם החברה"}
+                        title={t('cases.companyName')}
                         value={caseData.CompanyName}
                         onChange={(e) => handleInputChange('CompanyName', e.target.value)}
                     />
@@ -285,14 +287,14 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                 <SimpleContainer className="lw-caseFullView__row">
                     <SimpleInput
                         className="lw-caseFullView__field"
-                        title={"מספר פלאפון"}
+                        title={t('cases.phoneNumber')}
                         value={caseData.PhoneNumber}
                         onChange={(e) => handleInputChange('PhoneNumber', e.target.value)}
                         error={fieldErrors?.PhoneNumber}
                     />
                     <SimpleInput
                         className="lw-caseFullView__field"
-                        title={"שלב נוכחי"}
+                        title={t('cases.currentStage')}
                         value={caseData.CurrentStage}
                         onChange={(e) => handleInputChange('CurrentStage', e.target.value)}
                     />
@@ -301,7 +303,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                 <SimpleContainer className="lw-caseFullView__row">
                     <SimpleInput
                         className="lw-caseFullView__field"
-                        title={"אימייל לקוח"}
+                        title={t('cases.customerEmail')}
                         type="email"
                         value={caseData.CustomerMail}
                         onChange={(e) => handleInputChange('CustomerMail', e.target.value)}
@@ -309,7 +311,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                     />
                     <SearchInput
                         onSearch={getAdminByName}
-                        title={"מנהל התיק"}
+                        title={t('cases.caseManager')}
                         value={caseData.CaseManager}
                         isPerforming={isPerformingGetAdmin}
                         getButtonTextFunction={(item) => item.name}
@@ -322,7 +324,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                 <SimpleContainer className="lw-caseFullView__row">
                     <SimpleInput
                         className="lw-caseFullView__field"
-                        title={"תאריך סיום משוער"}
+                        title={t('cases.estimatedCompletionDate')}
                         type="date"
                         lang="he-IL"
                         value={formatDateForInput(caseData.EstimatedCompletionDate)}
@@ -330,7 +332,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                     />
                     <SimpleInput
                         className="lw-caseFullView__field"
-                        title={"תוקף רישיון"}
+                        title={t('cases.licenseExpiryDate')}
                         type="date"
                         lang="he-IL"
                         value={formatDateForInput(caseData.LicenseExpiryDate)}
@@ -341,7 +343,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                 {caseData?.Descriptions?.map((description, index) => (
                     <SimpleContainer key={`DescriptionNumber${index}`} className="lw-caseFullView__textAreaRow">
                         <SimpleTextArea
-                            title={`תיאור מס' ${index + 1}`}
+                            title={t('cases.descriptionNumber', { number: index + 1 })}
                             value={description?.Text || ''}
                             onChange={(text) => {
                                 setCaseData((prevDetails) => {
@@ -361,7 +363,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                             isPerforming={isDeleting}
                             size={buttonSizes.MEDIUM}
                         >
-                            {isDeleting ? "מוחק..." : "מחק תיק"}
+                            {isDeleting ? t('common.deleting') : t('cases.deleteCase')}
                         </SecondaryButton>
                     )}
                     <PrimaryButton
@@ -369,14 +371,14 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                         isPerforming={isSaving}
                         size={buttonSizes.MEDIUM}
                     >
-                        {isSaving ? "שומר..." : caseDetails || caseHasBeenChosen ? "עדכן תיק" : "שמור תיק"}
+                        {isSaving ? t('common.saving') : caseDetails || caseHasBeenChosen ? t('cases.updateCase') : t('cases.saveCase')}
                     </PrimaryButton>
                     <SecondaryButton
                         onPress={() => closePopUpFunction?.()}
                         size={buttonSizes.MEDIUM}
                         className="lw-cancelButton"
                     >
-                        ביטול
+                        {t('common.cancel')}
                     </SecondaryButton>
                 </SimpleContainer>
             </SimpleScrollView>

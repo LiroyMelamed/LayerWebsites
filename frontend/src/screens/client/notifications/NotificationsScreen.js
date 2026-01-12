@@ -16,6 +16,7 @@ import { getClientNavBarData } from "../../../components/navBars/data/ClientNavB
 import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
 import useHttpRequest from "../../../hooks/useHttpRequest";
 import { buttonSizes } from "../../../styles/buttons/buttonSizes";
+import { useTranslation } from 'react-i18next';
 
 import "./NotificationsScreen.scss";
 
@@ -47,6 +48,7 @@ function extractFirstUrl(text) {
 }
 
 export default function NotificationsScreen() {
+    const { t } = useTranslation();
     const { isSmallScreen } = useScreenSize();
 
     const [notifications, setNotifications] = useState([]);
@@ -61,7 +63,7 @@ export default function NotificationsScreen() {
     };
 
     const onFailureFetchNotifications = () => {
-        setError("שגיאה בטעינת ההתראות. אנא נסה שוב.");
+        setError(t('notifications.loadError'));
         setNotifications([]);
     };
 
@@ -119,7 +121,7 @@ export default function NotificationsScreen() {
                     {isFetching && !hasNotifications && !error && (
                         <SimpleContainer className="lw-notificationsScreen__loading">
                             <progress className="lw-notificationsScreen__progress" />
-                            <Text12 className="lw-notificationsScreen__loadingText">טוען התראות...</Text12>
+                            <Text12 className="lw-notificationsScreen__loadingText">{t('notifications.loading')}</Text12>
                         </SimpleContainer>
                     )}
 
@@ -131,14 +133,14 @@ export default function NotificationsScreen() {
                                 onPress={refetchNotifications}
                                 className="lw-notificationsScreen__retryButton"
                             >
-                                נסה שוב
+                                {t('common.retry')}
                             </PrimaryButton>
                         </SimpleContainer>
                     )}
 
                     {!error && !isFetching && !hasNotifications && (
                         <SimpleContainer className="lw-notificationsScreen__empty">
-                            <TextBold14 className="lw-notificationsScreen__emptyText">אין לך התראות כרגע.</TextBold14>
+                            <TextBold14 className="lw-notificationsScreen__emptyText">{t('notifications.empty')}</TextBold14>
                         </SimpleContainer>
                     )}
 
@@ -165,7 +167,7 @@ export default function NotificationsScreen() {
                                                     shouldApplyClamping
                                                     numberOfLines={1}
                                                 >
-                                                    {item?.title || "התראה חדשה"}
+                                                    {item?.title || t('notifications.fallbackTitle')}
                                                 </TextBold14>
 
                                                 <Text12
@@ -190,7 +192,7 @@ export default function NotificationsScreen() {
                                                             }
                                                         }}
                                                     >
-                                                        למעבר לחתימה
+                                                        {t('notifications.goToSigning')}
                                                     </PrimaryButton>
                                                 )}
                                             </SimpleContainer>
@@ -211,7 +213,7 @@ export default function NotificationsScreen() {
                                                     isPerforming={isMarkingThis}
                                                     className="lw-notificationsScreen__markAsRead"
                                                 >
-                                                    סמן כנקרא
+                                                    {t('notifications.markAsRead')}
                                                 </PrimaryButton>
                                             )}
                                         </SimpleContainer>

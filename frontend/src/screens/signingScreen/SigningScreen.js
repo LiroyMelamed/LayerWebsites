@@ -19,6 +19,7 @@ import SignatureCanvas from "../../components/specializedComponents/signFiles/Si
 import { useLocation, useNavigate } from "react-router-dom";
 import { LoginStackName } from "../../navigation/LoginStack";
 import { LoginScreenName } from "../loginScreen/LoginScreen";
+import { useTranslation } from "react-i18next";
 import "./SigningScreen.scss";
 import SimpleCard from "../../components/simpleComponents/SimpleCard";
 import Separator from "../../components/styledComponents/separators/Separator";
@@ -26,6 +27,7 @@ import Separator from "../../components/styledComponents/separators/Separator";
 export const SigningScreenName = "/SigningScreen";
 
 export default function SigningScreen() {
+    const { t } = useTranslation();
     const { isSmallScreen } = useScreenSize();
     const location = useLocation();
     const navigate = useNavigate();
@@ -92,9 +94,9 @@ export default function SigningScreen() {
 
     const getStatusChip = (status) => {
         const map = {
-            pending: { text: "בהמתנה", className: "lw-signingScreen__chip lw-signingScreen__chip--pending" },
-            signed: { text: "חתום", className: "lw-signingScreen__chip lw-signingScreen__chip--signed" },
-            rejected: { text: "נדחה", className: "lw-signingScreen__chip lw-signingScreen__chip--rejected" },
+            pending: { text: t('signing.status.pending'), className: "lw-signingScreen__chip lw-signingScreen__chip--pending" },
+            signed: { text: t('signing.status.signed'), className: "lw-signingScreen__chip lw-signingScreen__chip--signed" },
+            rejected: { text: t('signing.status.rejected'), className: "lw-signingScreen__chip lw-signingScreen__chip--rejected" },
         };
         return map[status] || map.pending;
     };
@@ -104,7 +106,7 @@ export default function SigningScreen() {
             const response = await signingFilesApi.downloadSignedFile(signingFileId);
             const url = response?.data?.downloadUrl;
             if (!url) {
-                alert("לא ניתן להוריד את הקובץ");
+                alert(t('signing.screen.downloadMissingUrl'));
                 return;
             }
 
@@ -116,7 +118,7 @@ export default function SigningScreen() {
             a.remove();
         } catch (err) {
             console.error("Download error:", err);
-            alert("שגיאה בהורדת הקובץ");
+            alert(t('signing.screen.downloadError'));
         }
     };
 
@@ -137,12 +139,12 @@ export default function SigningScreen() {
                     <SimpleContainer className="lw-signingScreen__tabsRow">
                         <TabButton
                             active={activeTab === "pending"}
-                            label={`בהמתנה לחתימה (${pendingFiles.length})`}
+                            label={t('signing.screen.tabPending', { count: pendingFiles.length })}
                             onPress={() => setActiveTab("pending")}
                         />
                         <TabButton
                             active={activeTab === "signed"}
-                            label={`חתומים (${signedFiles.length})`}
+                            label={t('signing.screen.tabSigned', { count: signedFiles.length })}
                             onPress={() => setActiveTab("signed")}
                         />
                     </SimpleContainer>
@@ -153,8 +155,8 @@ export default function SigningScreen() {
                         <SimpleContainer className="lw-signingScreen__emptyState">
                             <Text14>
                                 {activeTab === "pending"
-                                    ? "אין כרגע מסמכים בהמתנה לחתימתך"
-                                    : "אין מסמכים חתומים להצגה"}
+                                    ? t('signing.screen.emptyPending')
+                                    : t('signing.screen.emptySigned')}
                             </Text14>
                         </SimpleContainer>
                     ) : (
@@ -173,24 +175,24 @@ export default function SigningScreen() {
                                     </SimpleContainer>
 
                                     <SimpleContainer className="lw-signingScreen__detailRow">
-                                        <div className="lw-signingScreen__detailLabel">תיק:</div>
+                                        <div className="lw-signingScreen__detailLabel">{t('signing.screen.caseLabel')}</div>
                                         <div className="lw-signingScreen__detailValue">{file.CaseName || "-"}</div>
                                     </SimpleContainer>
 
                                     <SimpleContainer className="lw-signingScreen__detailRow">
-                                        <div className="lw-signingScreen__detailLabel">עורך דין:</div>
+                                        <div className="lw-signingScreen__detailLabel">{t('signing.screen.lawyerLabel')}</div>
                                         <div className="lw-signingScreen__detailValue">{file.LawyerName || "-"}</div>
                                     </SimpleContainer>
 
                                     <SimpleContainer className="lw-signingScreen__detailRow">
-                                        <div className="lw-signingScreen__detailLabel">תאריך העלאה:</div>
+                                        <div className="lw-signingScreen__detailLabel">{t('signing.screen.uploadedAtLabel')}</div>
                                         <div className="lw-signingScreen__detailValue">{formatDotDate(file.CreatedAt)}</div>
                                     </SimpleContainer>
 
                                     {(file.Status === "pending" || file.Status === "rejected") && (
                                         <>
                                             <SimpleContainer className="lw-signingScreen__detailRow">
-                                                <div className="lw-signingScreen__detailLabel">חתימות:</div>
+                                                <div className="lw-signingScreen__detailLabel">{t('signing.screen.signaturesLabel')}</div>
                                                 <div className="lw-signingScreen__detailValue">{signedSpots}/{totalSpots}</div>
                                             </SimpleContainer>
 
@@ -198,12 +200,12 @@ export default function SigningScreen() {
                                                 className="lw-signingScreen__progress"
                                                 max={progressMax}
                                                 value={progressValue}
-                                                aria-label={`חתימות: ${getProgress(file)}%`}
+                                                aria-label={t('signing.screen.signaturesAria', { percent: getProgress(file) })}
                                             />
 
                                             {file.Notes && (
                                                 <SimpleContainer className="lw-signingScreen__detailRow">
-                                                    <div className="lw-signingScreen__detailLabel">הערות עו"ד:</div>
+                                                    <div className="lw-signingScreen__detailLabel">{t('signing.screen.notesLabel')}</div>
                                                     <div className="lw-signingScreen__detailValue">{file.Notes}</div>
                                                 </SimpleContainer>
                                             )}
@@ -215,7 +217,7 @@ export default function SigningScreen() {
                                             <PrimaryButton
                                                 onPress={() => setSelectedFileId(file.SigningFileId)}
                                             >
-                                                חתום על המסמך
+                                                {t('signing.screen.signDocument')}
                                             </PrimaryButton>
                                         )}
 
@@ -225,14 +227,14 @@ export default function SigningScreen() {
                                                     handleDownload(file.SigningFileId, file.FileName)
                                                 }
                                             >
-                                                הורד קובץ חתום
+                                                {t('signing.screen.downloadSigned')}
                                             </PrimaryButton>
                                         )}
 
                                         <SecondaryButton
                                             onPress={() => setSelectedFileId(file.SigningFileId)}
                                         >
-                                            פרטים
+                                            {t('signing.screen.details')}
                                         </SecondaryButton>
                                     </SimpleContainer>
                                 </SimpleCard>

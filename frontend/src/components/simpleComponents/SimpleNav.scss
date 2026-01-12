@@ -33,3 +33,12 @@
   width: 100%;
   justify-content: flex-end;
 }
+
+/* LTR support (English) */
+[dir="ltr"] .lw-simpleNav__list {
+  align-items: flex-start;
+}
+
+[dir="ltr"] .lw-simpleNav__navItem {
+  justify-content: flex-start;
+}

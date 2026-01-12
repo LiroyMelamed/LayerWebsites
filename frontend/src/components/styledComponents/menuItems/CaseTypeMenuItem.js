@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { icons } from "../../../assets/icons/icons";
 import ImageButton from "../../specializedComponents/buttons/ImageButton";
@@ -31,6 +32,7 @@ export default function CaseTypeMenuItem({
     rePerformFunction,
     style
 }) {
+    const { t } = useTranslation();
     const { isPerforming: isPerformingSetCase } = useHttpRequest(casesApi.updateCaseById, () => { setCurrentStage(currentStage + 1) });
     const { openPopup, closePopup } = usePopup();
     const [isOpen, setIsOpen] = useState(false);
@@ -77,7 +79,7 @@ export default function CaseTypeMenuItem({
                                         }
                                         className="lw-caseTypeMenuItem__editButton"
                                     >
-                                        עריכה
+                                        {t("common.edit")}
                                     </SecondaryButton>
                                 )}
                             </TextBold12>

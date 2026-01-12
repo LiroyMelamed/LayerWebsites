@@ -2,10 +2,12 @@ import React from "react";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { Text12, TextBold12 } from "../../specializedComponents/text/AllTextKindFile";
 import { DateDDMMYY } from "../../../functions/date/DateDDMMYY";
+import { useTranslation } from "react-i18next";
 
 import "./CaseTimeline.scss";
 
 export default function CaseTimeline({ stages, currentStage, isClosed = false, title, style }) {
+    const { t } = useTranslation();
     const safeStages = Array.isArray(stages) ? stages : [];
     const safeCurrentStage = Number(currentStage) || 0;
 
@@ -51,9 +53,9 @@ export default function CaseTimeline({ stages, currentStage, isClosed = false, t
                                     }
                                 >
                                     {index == safeCurrentStage - 1 ?
-                                        <TextBold12>{isClosed && safeCurrentStage >= safeStages.length ? 'הסתיים' : 'חדש'}</TextBold12>
+                                        <TextBold12>{isClosed && safeCurrentStage >= safeStages.length ? t('cases.ended') : t('common.new')}</TextBold12>
                                         :
-                                        <Text12>{DateDDMMYY(stage.Timestamp) || (index < safeCurrentStage - 1 ? "שלב הסתיים" : "שלב המשך")}</Text12>
+                                        <Text12>{DateDDMMYY(stage.Timestamp) || (index < safeCurrentStage - 1 ? t('cases.stageCompleted') : t('cases.stageContinues'))}</Text12>
                                     }
                                 </SimpleContainer>
                                 <TextBold12>{stage.Text}</TextBold12>

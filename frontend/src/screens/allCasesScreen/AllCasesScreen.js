@@ -17,16 +17,18 @@ import { usePopup } from "../../providers/PopUpProvider";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import { MainScreenName } from "../mainScreen/MainScreen";
 import AllCasesCard from "./components/AllCasesCard";
+import { useTranslation } from "react-i18next";
 
 import "./AllCasesScreen.scss";
 
 export const AllCasesScreenName = "/AllCases"
 
 export default function AllCasesScreen() {
+    const { t } = useTranslation();
     const { openPopup, closePopup } = usePopup();
     const { isSmallScreen } = useScreenSize();
-    const [selectedCaseType, setSelectedCaseType] = useState("הכל");
-    const [selectedStatus, setSelectedStatus] = useState("הכל");
+    const [selectedCaseType, setSelectedCaseType] = useState(null);
+    const [selectedStatus, setSelectedStatus] = useState(null);
     const [filteredCases, setFilteredCases] = useState(null);
 
     const { result: allCasesTypes, isPerforming: isPerformingAllCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
@@ -50,17 +52,17 @@ export default function AllCasesScreen() {
     const applyFilters = (typeFilter, statusFilter) => {
         let filtered = allCases;
 
-        if (typeFilter !== "הכל") {
+        if (typeFilter) {
             filtered = filtered.filter(item => item.CaseTypeName === typeFilter);
         }
 
-        if (statusFilter === "תיקים פתוחים") {
+        if (statusFilter === "open") {
             filtered = filtered.filter(item => item.IsClosed === false);
-        } else if (statusFilter === "תיקים סגורים") {
+        } else if (statusFilter === "closed") {
             filtered = filtered.filter(item => item.IsClosed === true);
         }
 
-        if (typeFilter === "הכל" && statusFilter === "הכל") {
+        if (!typeFilter && !statusFilter) {
             setFilteredCases(null);
         } else {
             setFilteredCases(filtered);
@@ -89,7 +91,7 @@ export default function AllCasesScreen() {
                 <SimpleContainer className="lw-allCasesScreen__row">
                     <SearchInput
                         onSearch={handleSearch}
-                        title={"חיפוש תיק"}
+                        title={t('cases.searchCaseTitle')}
                         titleFontSize={20}
                         isPerforming={isPerformingCasesById}
                         queryResult={casesByName}
@@ -99,14 +101,18 @@ export default function AllCasesScreen() {
                     />
 
                     <ChooseButton
-                        buttonChoices={["תיקים סגורים", "תיקים פתוחים"]}
+                        buttonText={t('cases.statusFilter')}
+                        items={[
+                            { value: 'closed', label: t('cases.closedCases') },
+                            { value: 'open', label: t('cases.openCases') },
+                        ]}
                         className="lw-allCasesScreen__choose lw-allCasesScreen__choose--openClose"
                         OnPressChoiceFunction={handleFilterByStatus}
-                        buttonText="סגור/פתוח"
                     />
 
                     <ChooseButton
-                        buttonChoices={allCasesTypes}
+                        buttonText={t('cases.caseType')}
+                        items={(allCasesTypes || []).map((ct) => ({ value: ct, label: ct }))}
                         className="lw-allCasesScreen__choose"
                         OnPressChoiceFunction={handleFilterByType}
                     />
@@ -130,7 +136,7 @@ export default function AllCasesScreen() {
                         )
                     }
                 >
-                    הוספת תיק חדש
+                    {t('cases.addNewCase')}
                 </PrimaryButton>
             </SimpleContainer>
 

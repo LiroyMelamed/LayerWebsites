@@ -3,6 +3,7 @@ import SimpleContainer from "../../../simpleComponents/SimpleContainer";
 import PdfPage from "./PdfPage";
 import SignatureSpotsLayer from "../signatureSpots/SignatureSpotsLayer";
 import SecondaryButton from "../../../styledComponents/buttons/SecondaryButton";
+import { useTranslation } from 'react-i18next';
 
 const BASE_RENDER_WIDTH = 800;
 
@@ -15,6 +16,7 @@ export default function PdfViewer({
     signers = [],
     showAddSpotButtons = true,
 }) {
+    const { t } = useTranslation();
     const [numPages, setNumPages] = useState(0);
     const didInitRef = useRef(false);
 
@@ -91,14 +93,14 @@ export default function PdfViewer({
                                             key={signer.UserId}
                                             onPress={() => onAddSpotForPage(pageNumber, signerIdx)}
                                         >
-                                            + {signer.Name} - עמוד {pageNumber}
+                                            {t('signing.pdfViewer.addSpotForSigner', { name: signer.Name, pageNumber })}
                                         </SecondaryButton>
                                     ))
                                 ) : (
                                     <SecondaryButton
                                         onPress={() => onAddSpotForPage(pageNumber)}
                                     >
-                                        + הוסף חתימה לעמוד {pageNumber}
+                                        {t('signing.pdfViewer.addSpot', { pageNumber })}
                                     </SecondaryButton>
                                 )}
                             </SimpleContainer>

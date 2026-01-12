@@ -4,16 +4,18 @@ import DoughnutChartWithDetails from "../../../components/specializedComponents/
 import { images } from "../../../assets/images/images.js";
 import DefaultState from "../../../components/styledComponents/defaultState/DefaultState.js";
 import { useScreenSize } from "../../../providers/ScreenSizeProvider.js";
+import { useTranslation } from "react-i18next";
 
 import "./ComprasionDataCard.scss";
 
 export default function ComparisonDataCard({ title, data, colors, labels, centerText, subText, style: _style, className }) {
     const { isSmallScreen } = useScreenSize();
+    const { t } = useTranslation();
 
     if (checkIfAllZeros(data)) {
         return (
             <DefaultState
-                content={"כשהיה לנו יותר מידע נציג לך פילוח נתונים"}
+                content={t("mainScreen.moreDataForAnalytics")}
                 imageClassName="lw-defaultState__image--h156"
                 imageSrc={images.Defaults.Analytics}
             />

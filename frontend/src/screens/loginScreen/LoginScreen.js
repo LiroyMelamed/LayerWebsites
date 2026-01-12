@@ -10,6 +10,7 @@ import useHttpRequest from "../../hooks/useHttpRequest";
 import { images } from "../../assets/images/images";
 import { useNavigate } from "react-router-dom";
 import loginApi from "../../api/loginApi";
+import { useTranslation } from "react-i18next";
 
 import "./LoginScreen.scss";
 
@@ -18,6 +19,7 @@ export const LoginScreenName = "/LoginScreen";
 export default function LoginScreen() {
     const { phoneNumber, setPhoneNumber, phoneNumberError } = useLoginVerifyOtpCodeFieldsProvider();
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     const { isPerforming, performRequest } = useHttpRequest(loginApi.sendOtp, () => navigate(LoginStackName + LoginOtpScreenName));
 
@@ -41,7 +43,7 @@ export default function LoginScreen() {
             unScrollableBottomComponent={
                 <NextLoginButton
                     isPerforming={isPerforming}
-                    buttonText="התחברות"
+                    buttonText={t('auth.login')}
                     onPress={() => performRequest(phoneNumber)}
                     disabled={phoneNumberError != null}
                 />
@@ -49,7 +51,7 @@ export default function LoginScreen() {
         >
             <SimpleContainer className="lw-loginScreen__center">
                 <SimpleInput
-                    title={"נא הזן מספר פלאפון"}
+                    title={t('auth.enterPhone')}
                     type="tel"
                     className="lw-loginScreen__input"
                     value={phoneNumber}

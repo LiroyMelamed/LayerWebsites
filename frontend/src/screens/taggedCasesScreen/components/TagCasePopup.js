@@ -5,10 +5,12 @@ import SearchInput from "../../../components/specializedComponents/containers/Se
 import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
 import useHttpRequest from "../../../hooks/useHttpRequest";
 import casesApi from "../../../api/casesApi";
+import { useTranslation } from "react-i18next";
 
 import "./TagCasePopup.scss";
 
 export default function TagCasePopup({ rePerformRequest, style }) {
+    const { t } = useTranslation();
     const [CaseType, setCaseType] = useState();
     const { isPerforming: isPerformingSetCase, performRequest: setCase } = useHttpRequest(casesApi.updateCaseById, () => { rePerformRequest?.() });
     const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getCaseByName);
@@ -31,7 +33,7 @@ export default function TagCasePopup({ rePerformRequest, style }) {
                 <SimpleContainer className="lw-tagCasePopup__row">
                     <SearchInput
                         className="lw-tagCasePopup__input"
-                        title={"מספר התיק"}
+                        title={t('taggedCases.caseNumber')}
                         queryResult={casesByName}
                         onSearch={(query) => handleSearch(query)}
                         getButtonTextFunction={(item) => item.CaseName}
@@ -48,7 +50,7 @@ export default function TagCasePopup({ rePerformRequest, style }) {
                         isPerforming={isPerformingSetCase}
                         className="lw-tagCasePopup__actionButton"
                     >
-                        נעץ
+                        {t('taggedCases.pin')}
                     </SecondaryButton>
                 </SimpleContainer>
             </SimpleScrollView>

@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import signingFilesApi from "../../../api/signingFilesApi";
 import ApiUtils from "../../../api/apiUtils";
 import PdfViewer from "./pdfViewer/PdfViewer";
+import { useTranslation } from "react-i18next";
 
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { Text12, Text14 } from "../../specializedComponents/text/AllTextKindFile";
@@ -39,10 +40,8 @@ function uuidv4() {
     }
 }
 
-const CONSENT_TEXT_HE =
-    "אני מאשר/ת כי קראתי את המסמך המוצג, ואני נותן/ת הסכמה לחתום עליו באופן אלקטרוני. ידוע לי כי חתימה ללא אימות OTP עשויה להפחית את חוזק הראיות במקרה של מחלוקת.";
-
 const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal" }) => {
+    const { t } = useTranslation();
     const canvasRef = useRef(null);
     const pdfScrollRef = useRef(null);
     const lastPointRef = useRef(null);
@@ -225,7 +224,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 await loadPdfFromFileKey(fileIdForPdf);
             } catch (err) {
                 console.error("Failed to fetch file details", err);
-                if (isMounted) setMessage({ type: "error", text: "שגיאה בטעינת המסמך" });
+                if (isMounted) setMessage({ type: "error", text: t("signing.canvas.loadDocumentError") });
             } finally {
                 if (isMounted) setLoading(false);
             }
@@ -262,7 +261,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             ctx.fillStyle = "#999";
             ctx.font = "12px Arial";
             ctx.textAlign = "center";
-            ctx.fillText("חתום כאן", canvas.width / 2, canvas.height / 2);
+            ctx.fillText(t("signing.canvas.signHere"), canvas.width / 2, canvas.height / 2);
             setHasUserDrawn(false);
             lastPointRef.current = null;
         }
@@ -348,19 +347,19 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         ctx.fillStyle = "#999";
         ctx.font = "12px Arial";
         ctx.textAlign = "center";
-        ctx.fillText("חתום כאן", canvas.width / 2, canvas.height / 2);
+        ctx.fillText(t("signing.canvas.signHere"), canvas.width / 2, canvas.height / 2);
         setHasUserDrawn(false);
     };
 
     const getApiErrorMessage = (err) => {
         const msg = err?.response?.data?.message || err?.data?.message || err?.message;
-        if (!msg) return "שגיאה לא צפויה";
+        if (!msg) return t("errors.unexpected");
         return String(msg);
     };
 
     const unwrapApi = (res) => {
         if (res?.success === false) {
-            const err = new Error(res?.data?.message || res?.message || "שגיאה לא צפויה");
+            const err = new Error(res?.data?.message || res?.message || t("errors.unexpected"));
             err.data = res?.data || null;
             throw err;
         }
@@ -374,7 +373,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         const img = new Image();
         const loaded = new Promise((resolve, reject) => {
             img.onload = () => resolve();
-            img.onerror = () => reject(new Error("Failed to load signature image"));
+            img.onerror = () => reject(new Error(t("signing.canvas.failedToLoadSignatureImage")));
         });
         img.src = raw;
         await loaded;
@@ -421,11 +420,11 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         const consentVersion = String(fileDetails?.file?.SigningPolicyVersion || "2026-01-11");
 
         if (!consentAccepted) {
-            setMessage({ type: "warning", text: "יש לאשר הסכמה לחתימה לפני המשך." });
+            setMessage({ type: "warning", text: t("signing.canvas.consentRequired") });
             return false;
         }
         if (requireOtp && !otpVerified) {
-            setMessage({ type: "warning", text: "נדרש אימות SMS לפני חתימה." });
+            setMessage({ type: "warning", text: t("signing.canvas.otpRequired") });
             return false;
         }
 
@@ -485,7 +484,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         setSaving(true);
         try {
             if (!hasUserDrawn) {
-                setMessage({ type: "error", text: "נא לחתום לפני השמירה" });
+                setMessage({ type: "error", text: t("signing.canvas.pleaseSignBeforeSave") });
                 return;
             }
 
@@ -495,12 +494,12 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             // Spec: new signature overwrites saved signature
             await saveSignatureAsDefault(dataUrl);
 
-            setMessage({ type: "success", text: "החתימה נשמרה בהצלחה" });
+            setMessage({ type: "success", text: t("signing.canvas.signatureSavedSuccess") });
             await reloadDetailsAndAdvance();
             setTimeout(() => setMessage(null), 2000);
         } catch (err) {
             console.error("Failed to save signature", err);
-            setMessage({ type: "error", text: "שגיאה בשמירת החתימה" });
+            setMessage({ type: "error", text: t("signing.canvas.signatureSaveError") });
         } finally {
             setSaving(false);
         }
@@ -509,7 +508,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const useSavedSignatureForNext = async () => {
         try {
             if (!savedSignature?.exists) {
-                setMessage({ type: "error", text: "אין חתימה שמורה" });
+                setMessage({ type: "error", text: t("signing.canvas.noSavedSignature") });
                 return;
             }
 
@@ -532,19 +531,19 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             const rawDataUrl = sigRes?.data?.dataUrl;
             const dataUrl = await normalizeSignatureDataUrl(rawDataUrl);
             if (!dataUrl) {
-                throw new Error("Missing saved signature dataUrl");
+                throw new Error(t("signing.canvas.missingSavedSignatureData"));
             }
 
             setCurrentSpot(target);
             const didSign = await signCurrentSpotWithImage(dataUrl, target);
             if (!didSign) return;
 
-            setMessage({ type: "success", text: "החתימה נשמרה בהצלחה" });
+            setMessage({ type: "success", text: t("signing.canvas.signatureSavedSuccess") });
             await reloadDetailsAndAdvance();
             setTimeout(() => setMessage(null), 2000);
         } catch (err) {
             console.error("Failed to use saved signature", err);
-            setMessage({ type: "error", text: getApiErrorMessage(err) || "שגיאה בשימוש בחתימה שמורה" });
+            setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.useSavedSignatureError") });
         } finally {
             setSaving(false);
         }
@@ -569,14 +568,14 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 dataUrl = await normalizeSignatureDataUrl(rawDataUrl);
             } else {
                 if (!canvasRef.current || !hasUserDrawn) {
-                    setMessage({ type: "error", text: "כדי לחתום על הכל יש לבחור חתימה שמורה או לצייר חתימה" });
+                    setMessage({ type: "error", text: t("signing.canvas.signAllRequiresSignature") });
                     return;
                 }
                 dataUrl = canvasRef.current.toDataURL("image/png");
             }
 
             if (!dataUrl) {
-                setMessage({ type: "error", text: "לא נמצאה חתימה לשימוש" });
+                setMessage({ type: "error", text: t("signing.canvas.noSignatureToUse") });
                 return;
             }
 
@@ -588,12 +587,12 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 if (!didSign) return;
             }
 
-            setMessage({ type: "success", text: "נחתמו כל המקומות בהצלחה" });
+            setMessage({ type: "success", text: t("signing.canvas.signedAllSuccess") });
             await reloadDetailsAndAdvance();
             setTimeout(() => setMessage(null), 2000);
         } catch (err) {
             console.error("Failed to sign all spots", err);
-            setMessage({ type: "error", text: getApiErrorMessage(err) || "שגיאה בחתימה על כל המקומות" });
+            setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.signAllError") });
         } finally {
             setSaving(false);
         }
@@ -607,10 +606,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 : await signingFilesApi.requestSigningOtp(effectiveSigningFileId, signingSessionId);
             unwrapApi(res);
             setOtpRequested(true);
-            setMessage({ type: "success", text: "קוד אימות נשלח ב-SMS" });
+            setMessage({ type: "success", text: t("signing.canvas.otpSent") });
         } catch (err) {
             console.error("OTP request failed", err);
-            setMessage({ type: "error", text: getApiErrorMessage(err) || "שגיאה בשליחת קוד" });
+            setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.otpSendError") });
         } finally {
             setOtpBusy(false);
         }
@@ -620,7 +619,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         try {
             const otp = String(otpCode || "").trim();
             if (!/^[0-9]{6}$/.test(otp)) {
-                setMessage({ type: "error", text: "נא להזין קוד בן 6 ספרות" });
+                setMessage({ type: "error", text: t("signing.canvas.otpInvalidFormat") });
                 return;
             }
 
@@ -630,17 +629,17 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 : await signingFilesApi.verifySigningOtp(effectiveSigningFileId, otp, signingSessionId);
             unwrapApi(res);
             setOtpVerified(true);
-            setMessage({ type: "success", text: "הקוד אומת בהצלחה" });
+            setMessage({ type: "success", text: t("signing.canvas.otpVerified") });
         } catch (err) {
             console.error("OTP verify failed", err);
-            setMessage({ type: "error", text: getApiErrorMessage(err) || "שגיאה באימות קוד" });
+            setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.otpVerifyError") });
         } finally {
             setOtpBusy(false);
         }
     };
 
     const rejectFile = async () => {
-        const reason = prompt("מה הסיבה לדחיית המסמך?");
+        const reason = prompt(t("signing.canvas.rejectReasonPrompt"));
         if (reason === null) return;
         try {
             setSaving(true);
@@ -651,11 +650,11 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 const res = await signingFilesApi.rejectSigning(effectiveSigningFileId, { rejectionReason: reason, signingSessionId });
                 unwrapApi(res);
             }
-            setMessage({ type: "success", text: "המסמך נדחה ונשלחה הודעה לעורך הדין" });
+            setMessage({ type: "success", text: t("signing.canvas.documentRejected") });
             setTimeout(() => onClose(), 1200);
         } catch (err) {
             console.error("Failed to reject file", err);
-            setMessage({ type: "error", text: getApiErrorMessage(err) || "שגיאה בדחיית המסמך" });
+            setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.rejectError") });
         } finally {
             setSaving(false);
         }
@@ -670,9 +669,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         onClick={isScreen ? undefined : (e) => e.stopPropagation()}
                     >
                         <div className="lw-signing-modalHeader">
-                            <h3>טוען מסמך...</h3>
+                            <h3>{t("signing.canvas.loadingDocument")}</h3>
                             <TertiaryButton className="lw-signing-closeButton" size={buttonSizes.SMALL} onPress={onClose}>
-                                סגור
+                                {t("common.close")}
                             </TertiaryButton>
                         </div>
                     </div>
@@ -690,9 +689,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         onClick={isScreen ? undefined : (e) => e.stopPropagation()}
                     >
                         <div className="lw-signing-modalHeader">
-                            <h3>שגיאה בטעינת המסמך</h3>
+                            <h3>{t("signing.canvas.loadDocumentErrorTitle")}</h3>
                             <TertiaryButton className="lw-signing-closeButton" size={buttonSizes.SMALL} onPress={onClose}>
-                                סגור
+                                {t("common.close")}
                             </TertiaryButton>
                         </div>
                     </div>
@@ -742,7 +741,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 <PdfViewer
                                     pdfFile={pdfFile}
                                     spots={spots}
-                                    signers={[{ UserId: fileDetails.file.ClientId, Name: "אתה" }]}
+                                    signers={[{ UserId: fileDetails.file.ClientId, Name: t("signing.canvas.you") }]}
                                     onUpdateSpot={undefined}
                                     onRemoveSpot={undefined}
                                     onAddSpotForPage={undefined}
@@ -750,7 +749,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 />
                             ) : (
                                 <SimpleContainer className="lw-signing-inlineHint">
-                                    <Text14>בקרוב: תצוגה מקדימה של המסמך</Text14>
+                                    <Text14>{t("signing.canvas.previewComingSoon")}</Text14>
                                 </SimpleContainer>
                             )}
                         </SimpleContainer>
@@ -775,32 +774,32 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                         onChange={(e) => setConsentAccepted(Boolean(e.target.checked))}
                                         disabled={saving}
                                     />
-                                    <span>{CONSENT_TEXT_HE}</span>
+                                    <span>{t("signing.canvas.consentText")}</span>
                                 </label>
                             </div>
 
                             {Boolean(fileDetails?.file?.RequireOtp) && (
                                 <div className="lw-signing-otpBox">
-                                    <div className="lw-signing-otpTitle">נדרש אימות SMS (OTP) לפני חתימה</div>
+                                    <div className="lw-signing-otpTitle">{t("signing.canvas.otpTitle")}</div>
                                     <div className="lw-signing-otpRow">
                                         <input
                                             className="lw-signing-otpInput"
                                             inputMode="numeric"
                                             pattern="[0-9]*"
-                                            placeholder="קוד (6 ספרות)"
+                                            placeholder={t("signing.canvas.otpPlaceholder")}
                                             value={otpCode}
                                             onChange={(e) => setOtpCode(e.target.value)}
                                             disabled={otpBusy || saving}
                                         />
                                         <PrimaryButton size={buttonSizes.SMALL} onPress={verifyOtp} disabled={otpBusy || saving}>
-                                            אמת
+                                            {t("signing.canvas.verify")}
                                         </PrimaryButton>
                                     </div>
                                     <div className="lw-signing-actionsRow">
                                         <SecondaryButton size={buttonSizes.SMALL} onPress={requestOtp} disabled={otpBusy || saving}>
-                                            {otpRequested ? "שלח שוב" : "שלח קוד"}
+                                            {otpRequested ? t("signing.canvas.resend") : t("signing.canvas.sendCode")}
                                         </SecondaryButton>
-                                        {otpVerified && <div className="lw-signing-otpVerified">אומת</div>}
+                                        {otpVerified && <div className="lw-signing-otpVerified">{t("signing.canvas.verified")}</div>}
                                     </div>
                                 </div>
                             )}
@@ -814,24 +813,26 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                             onPress={() => goToNextSigningSpot()}
                                             disabled={saving}
                                         >
-                                            לחתימה הבאה
+                                            {t("signing.canvas.nextSignature")}
                                         </PrimaryButton>
 
                                         <div className="lw-signing-progressHint">
-                                            {effectiveRequiredSpots.length > 0 ? `נותרו ${remainingCount} חתימות` : ""}
+                                            {effectiveRequiredSpots.length > 0
+                                                ? t("signing.canvas.remainingSignatures", { count: remainingCount })
+                                                : ""}
                                         </div>
                                     </div>
 
                                     <div className="lw-signing-actionsRow">
                                         <TertiaryButton size={buttonSizes.SMALL} onPress={() => setShowAllSpots((v) => !v)}>
-                                            {showAllSpots ? "הסתר את כל המקומות" : "הצג את כל המקומות"}
+                                            {showAllSpots ? t("signing.canvas.hideAllSpots") : t("signing.canvas.showAllSpots")}
                                         </TertiaryButton>
                                     </div>
 
                                     {showAllSpots && (
                                         <div className="lw-signing-spotsList">
                                             {spots.length === 0 ? (
-                                                <div className="lw-signing-emptySpots">אין מקומות חתימה להצגה</div>
+                                                <div className="lw-signing-emptySpots">{t("signing.canvas.noSpotsToShow")}</div>
                                             ) : (
                                                 spots.map((spot) => (
                                                     <div
@@ -851,7 +852,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                                     >
                                                         <div className="lw-signing-spotName">{spot.SignerName}</div>
                                                         <div className={"lw-signing-spotStatus" + (spot.IsSigned ? " is-signed" : "")}>
-                                                            {spot.IsSigned ? "חתום" : "בהמתנה"}
+                                                            {spot.IsSigned ? t("signing.status.signed") : t("signing.status.pending")}
                                                         </div>
                                                     </div>
                                                 ))
@@ -877,7 +878,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                                 disabled={saving}
                                             >
                                                 <Text12 shouldApplyClamping className="lw-signing-modeToggleText">
-                                                    {"צייר\nחתימה חדשה"}
+                                                    {t("signing.canvas.drawNewSignature")}
                                                 </Text12>
                                             </TertiaryButton>
 
@@ -885,10 +886,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                                 <img
                                                     className="lw-signing-savedSigPreview"
                                                     src={savedSignature.url}
-                                                    alt="חתימה שמורה"
+                                                    alt={t("signing.canvas.savedSignatureAlt")}
                                                 />
                                             ) : (
-                                                <div className="lw-signing-inlineHint">טוען חתימה שמורה...</div>
+                                                <div className="lw-signing-inlineHint">{t("signing.canvas.loadingSavedSignature")}</div>
                                             )}
                                         </div>
 
@@ -898,7 +899,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                                 onPress={useSavedSignatureForNext}
                                                 disabled={saving || !savedSignature.exists}
                                             >
-                                                {saving ? "שומר..." : "חתום"}
+                                                {saving ? t("signing.canvas.saving") : t("signing.canvas.sign")}
                                             </PrimaryButton>
                                             <SecondaryButton
                                                 size={buttonSizes.SMALL}
@@ -909,7 +910,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                                     (!savedSignature?.exists && !(signatureMode !== "saved" && hasUserDrawn))
                                                 }
                                             >
-                                                חתום על הכל
+                                                {t("signing.canvas.signAll")}
                                             </SecondaryButton>
                                         </div>
                                     </div>
@@ -930,7 +931,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                                 disabled={saving}
                                             >
                                                 <Text12 shouldApplyClamping className="lw-signing-modeToggleText">
-                                                    {"השתמש\nבחתימה שמורה"}
+                                                    {t("signing.canvas.useSavedSignature")}
                                                 </Text12>
                                             </TertiaryButton>
                                         </div>
@@ -951,21 +952,21 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
                                     <div className="lw-signing-actionsRow">
                                         <SecondaryButton size={buttonSizes.SMALL} onPress={clearCanvas} disabled={saving}>
-                                            נקה
+                                            {t("common.clear")}
                                         </SecondaryButton>
                                         <PrimaryButton size={buttonSizes.SMALL} onPress={saveSignature} disabled={saving}>
-                                            {saving ? "שומר..." : "שמור חתימה"}
+                                            {saving ? t("signing.canvas.saving") : t("signing.canvas.saveSignature")}
                                         </PrimaryButton>
                                     </div>
                                 </div>
                             )}
 
                             {currentSpot && currentSpot.IsSigned && (
-                                <div className="lw-signing-message is-success">מקום החתימה הזה כבר חתום על ידך</div>
+                                <div className="lw-signing-message is-success">{t("signing.canvas.spotAlreadySigned")}</div>
                             )}
 
                             {allSpotsSignedByUser && spots.length > 0 && (
-                                <div className="lw-signing-message is-success">השלמת את כל החתימות הנדרשות!</div>
+                                <div className="lw-signing-message is-success">{t("signing.canvas.allRequiredCompleted")}</div>
                             )}
                         </SimpleContainer>
                     </SimpleContainer>
@@ -979,11 +980,11 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 hasBorder={true}
                                 innerTextColor={colors.error}
                             >
-                                דחה מסמך
+                                {t("signing.canvas.rejectDocument")}
                             </TertiaryButton>
                         )}
                         <SecondaryButton size={buttonSizes.SMALL} onPress={onClose} disabled={saving}>
-                            סגור
+                            {t("common.close")}
                         </SecondaryButton>
                     </SimpleContainer>
                 </div>

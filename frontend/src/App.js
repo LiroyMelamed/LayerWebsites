@@ -9,6 +9,8 @@ import { MainScreenName } from './screens/mainScreen/MainScreen';
 import { ClientMainScreenName } from './screens/client/clientMainScreen/ClientMainScreen';
 import { useFromApp } from './providers/FromAppProvider';
 import { SigningScreenName } from './screens/signingScreen/SigningScreen';
+import { useTranslation } from 'react-i18next';
+import FloatingLanguageBubble from './components/i18n/FloatingLanguageBubble';
 
 const STACK_SUFFIX = "/*"
 
@@ -16,6 +18,7 @@ const App = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { setIsFromApp } = useFromApp();
+  const { t } = useTranslation();
 
   const [pullRefresh, setPullRefresh] = useState({ state: 'idle', distance: 0 });
   const pullRefreshRafRef = useRef(null);
@@ -179,6 +182,7 @@ const App = () => {
 
   return (
     <>
+      <FloatingLanguageBubble />
       {pullRefresh.state !== 'idle' && (
         <div className="lw-pullRefresh" aria-hidden="true">
           <div
@@ -188,10 +192,10 @@ const App = () => {
             {pullRefresh.state === 'refreshing' ? (
               <>
                 <span className="lw-pullRefresh__spinner" />
-                <span className="lw-pullRefresh__text">מרענן…</span>
+                <span className="lw-pullRefresh__text">{t('common.refreshing')}</span>
               </>
             ) : (
-              <span className="lw-pullRefresh__text">משוך למטה כדי לרענן</span>
+              <span className="lw-pullRefresh__text">{t('common.refreshPull')}</span>
             )}
           </div>
         </div>

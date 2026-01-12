@@ -34,7 +34,7 @@
     max-inline-size: 100%;
 }
 
-/* Cancel button (ביטול) */
+/* Cancel button */
 /* GenericButton applies runtime inline styles, so we override with !important. */
 .lw-cancelButton {
     background-color: var(--lw-color-negative) !important;

@@ -13,6 +13,7 @@ import { AdminStackName } from "../../../navigation/AdminStack";
 import { MainScreenName } from "../../mainScreen/MainScreen";
 import { ClientStackName } from "../../../navigation/ClientStack";
 import { ClientMainScreenName } from "../../client/clientMainScreen/ClientMainScreen";
+import { useTranslation } from "react-i18next";
 
 import "./LoginOtpScreen.scss";
 
@@ -26,6 +27,7 @@ export const LoginOtpScreenName = "/LoginOtpScreen";
 export default function LoginOtpScreen() {
     const { otpNumber, setOtpNumber, otpError, phoneNumber } = useLoginVerifyOtpCodeFieldsProvider();
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     const otpInputRef = useRef(null);
 
@@ -98,7 +100,7 @@ export default function LoginOtpScreen() {
             unScrollableBottomComponent={
                 <NextLoginButton
                     isPerforming={isPerforming}
-                    buttonText="שליחה"
+                    buttonText={t('common.send')}
                     onPress={() => performRequest(phoneNumber, otpNumber)}
                     disabled={otpError != null}
                 />
@@ -106,7 +108,7 @@ export default function LoginOtpScreen() {
         >
             <SimpleContainer className="lw-loginOtpScreen__center">
                 <SimpleInput
-                    title={"נא הקלד את הקוד"}
+                    title={t('auth.enterOtp')}
                     className="lw-loginOtpScreen__input"
                     value={otpNumber}
                     onChange={handleInputChange}
