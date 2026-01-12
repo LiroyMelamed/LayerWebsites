@@ -6,6 +6,9 @@ const { BUCKET, r2 } = require("../utils/r2");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const { requireInt } = require("../utils/paramValidation");
 const { getPagination } = require("../utils/pagination");
+const { createAppError } = require('../utils/appError');
+const { getHebrewMessage } = require('../utils/errors.he');
+const { userHasLegalData } = require('../utils/legalData');
 
 function requireAdmin(req, res) {
     if (req.user?.Role !== 'Admin') {
@@ -355,7 +358,7 @@ const updateCurrentCustomer = async (req, res) => {
     }
 };
 
-const deleteCustomer = async (req, res) => {
+const deleteCustomer = async (req, res, next) => {
     if (!requireAdmin(req, res)) return;
     const userId = requireInt(req, res, { source: 'params', name: 'userId' });
     if (userId === null) return;
@@ -364,6 +367,14 @@ const deleteCustomer = async (req, res) => {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
+
+            // Block deletion if the user has any legal/evidentiary data.
+            // Must run BEFORE any DELETE/UPDATE query.
+            const hasLegalData = await userHasLegalData(client, userId);
+            if (hasLegalData) {
+                await client.query('ROLLBACK');
+                return next(createAppError('USER_HAS_LEGAL_DATA', 409, getHebrewMessage('USER_HAS_LEGAL_DATA')));
+            }
 
             // 1. מחיקת רשומות קשורות בטבלה userdevices
             await client.query("DELETE FROM userdevices WHERE userid = $1", [userId]);
@@ -416,11 +427,11 @@ const deleteCustomer = async (req, res) => {
         }
     } catch (error) {
         console.error("Error deleting customer:", error);
-        res.status(500).json({ message: "שגיאה במחיקת לקוח" });
+        return next(error);
     }
 };
 
-const deleteMyAccount = async (req, res) => {
+const deleteMyAccount = async (req, res, next) => {
     const userId = req.user && (req.user.UserId || req.user.id);
 
     if (!userId) {
@@ -442,6 +453,14 @@ const deleteMyAccount = async (req, res) => {
             if (userRole && userRole.toLowerCase() === "admin") {
                 await client.query("ROLLBACK");
                 return res.status(403).json({ message: "Admins cannot delete account via this endpoint" });
+            }
+
+            // Block deletion if the user has any legal/evidentiary data.
+            // Must run BEFORE any DELETE/UPDATE query.
+            const hasLegalData = await userHasLegalData(client, userId);
+            if (hasLegalData) {
+                await client.query('ROLLBACK');
+                return next(createAppError('USER_HAS_LEGAL_DATA', 409, getHebrewMessage('USER_HAS_LEGAL_DATA')));
             }
 
             // 1) Related tables
@@ -478,7 +497,7 @@ const deleteMyAccount = async (req, res) => {
         }
     } catch (error) {
         console.error("Error deleting my account:", error);
-        return res.status(500).json({ message: "Server error while deleting account" });
+        return next(error);
     }
 };
 

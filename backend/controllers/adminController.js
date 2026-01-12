@@ -1,6 +1,9 @@
 const pool = require("../config/db"); // Direct import of the pg pool
 const bcrypt = require("bcrypt");
 const { requireInt } = require("../utils/paramValidation");
+const { createAppError } = require('../utils/appError');
+const { getHebrewMessage } = require('../utils/errors.he');
+const { userHasLegalData } = require('../utils/legalData');
 
 /**
  * Retrieves all users with the 'Admin' role.
@@ -102,7 +105,7 @@ const updateAdmin = async (req, res) => {
 /**
  * Deletes an admin.
  */
-const deleteAdmin = async (req, res) => {
+const deleteAdmin = async (req, res, next) => {
     const adminUserId = requireInt(req, res, { source: 'params', name: 'adminId' });
     if (adminUserId === null) return;
 
@@ -110,6 +113,14 @@ const deleteAdmin = async (req, res) => {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
+
+            // Block deletion if the user has any legal/evidentiary data.
+            // Must run BEFORE any DELETE/UPDATE query.
+            const hasLegalData = await userHasLegalData(client, adminUserId);
+            if (hasLegalData) {
+                await client.query('ROLLBACK');
+                return next(createAppError('USER_HAS_LEGAL_DATA', 409, getHebrewMessage('USER_HAS_LEGAL_DATA')));
+            }
 
             // Ensure the target exists and is an Admin before cascading deletes.
             const roleRes = await client.query('SELECT role FROM users WHERE userid = $1', [adminUserId]);
