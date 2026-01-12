@@ -132,3 +132,7 @@ dist
 
 /frontend/build
 /frontend/public
+
+# Playwright artifacts
+/playwright-report/
+/test-results/
