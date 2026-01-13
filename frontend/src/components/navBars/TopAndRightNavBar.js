@@ -48,7 +48,7 @@ export default function TopAndRightNavBar({ chosenIndex = -1, children, LogoNavi
             <SimpleContainer className="lw-topAndRightNavBar__navList">
               {NavBarLinks.map((item, index) => (
                 <SideBarMenuItem
-                  key={item.text}
+                  key={item.buttonScreen || item.buttonText || String(index)}
                   buttonText={item.buttonText}
                   iconSource={item.icon}
                   size={24}

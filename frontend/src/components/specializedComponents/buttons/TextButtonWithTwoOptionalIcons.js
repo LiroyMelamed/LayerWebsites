@@ -24,6 +24,8 @@ const TextButtonWithTwoOptionalIcons = forwardRef(({
 }, ref) => {
     const resolvedClassName = ['lw-textButtonWithTwoOptionalIcons', className].filter(Boolean).join(' ');
 
+    const isPrimitiveText = typeof children === 'string' || typeof children === 'number';
+
     return (
         <SimpleButton
             {...props}
@@ -39,9 +41,15 @@ const TextButtonWithTwoOptionalIcons = forwardRef(({
                     />
                 )}
 
-                <SimpleText color={textColor} size={textSize} bold={textBold}>
-                    {children}
-                </SimpleText>
+                {isPrimitiveText ? (
+                    <SimpleText color={textColor} size={textSize} bold={textBold}>
+                        {children}
+                    </SimpleText>
+                ) : (
+                    <SimpleContainer className="lw-textButtonWithTwoOptionalIcons__content">
+                        {children}
+                    </SimpleContainer>
+                )}
 
                 {leftIcon && (
                     <SimpleIcon

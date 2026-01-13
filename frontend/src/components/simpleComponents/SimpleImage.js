@@ -3,6 +3,11 @@ import { useTranslation } from 'react-i18next';
 
 export default function SimpleImage({ src, style, tintColor = null, resizeMode = 'contain', ...props }) {
   const { t } = useTranslation();
+  const resolvedSrc = src?.uri || src;
+
+  if (!resolvedSrc) {
+    return null;
+  }
   const imageStyle = {
     ...style,
     objectFit: resizeMode,
@@ -15,8 +20,8 @@ export default function SimpleImage({ src, style, tintColor = null, resizeMode =
     width: style?.width || '100%',
     height: style?.height || '100px',
     backgroundColor: tintColor,
-    WebkitMaskImage: `url(${src?.uri || src})`,
-    maskImage: `url(${src?.uri || src})`,
+    WebkitMaskImage: `url(${resolvedSrc})`,
+    maskImage: `url(${resolvedSrc})`,
     WebkitMaskRepeat: 'no-repeat',
     maskRepeat: 'no-repeat',
     WebkitMaskPosition: 'center',
@@ -38,7 +43,7 @@ export default function SimpleImage({ src, style, tintColor = null, resizeMode =
   return (
     <img
       {...props}
-      src={src?.uri || src}
+      src={resolvedSrc}
       style={imageStyle}
       alt={props?.alt ?? t('common.simpleImageAlt')}
     />

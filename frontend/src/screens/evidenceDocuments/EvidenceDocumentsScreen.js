@@ -82,15 +82,21 @@ export default function EvidenceDocumentsScreen() {
 
     const handleListSuccess = useCallback(
         (payload) => {
-            // Backend response is expected to be: { success: true, data: { items: [], nextCursor } }
-            if (!payload?.success) {
+            // Backend response is: { items: [], nextCursor }
+            // Tolerate a wrapped shape too (older callers): { success: true, data: { items, nextCursor } }
+            const normalized = payload?.data && (payload?.success === true || payload?.success === false)
+                ? payload.data
+                : payload;
+
+            const hasItemsField = normalized && Object.prototype.hasOwnProperty.call(normalized, 'items');
+            const newItems = Array.isArray(normalized?.items) ? normalized.items : [];
+            const newCursor = normalized?.nextCursor || null;
+
+            if (!hasItemsField) {
                 setHasLoadError(true);
                 showError(payload, "evidenceDocuments.errors.load");
                 return;
             }
-
-            const newItems = Array.isArray(payload?.data?.items) ? payload.data.items : [];
-            const newCursor = payload?.data?.nextCursor || null;
 
             setItems((prev) => (requestModeRef.current.reset ? newItems : [...prev, ...newItems]));
             setNextCursor(newCursor);
