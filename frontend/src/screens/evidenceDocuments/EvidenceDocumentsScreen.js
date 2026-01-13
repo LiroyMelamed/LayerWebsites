@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import evidenceDocumentsApi from "../../api/evidenceDocumentsApi";
@@ -12,7 +12,8 @@ import SimpleLoader from "../../components/simpleComponents/SimpleLoader";
 import SimpleInput from "../../components/simpleComponents/SimpleInput";
 
 import SearchInput from "../../components/specializedComponents/containers/SearchInput";
-import { Text14, TextBold24 } from "../../components/specializedComponents/text/AllTextKindFile";
+import { Text14, TextBold14, TextBold24 } from "../../components/specializedComponents/text/AllTextKindFile";
+import ChooseButton from "../../components/styledComponents/buttons/ChooseButton";
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
 import ErrorPopup from "../../components/styledComponents/popups/ErrorPopup";
@@ -24,6 +25,8 @@ import { useScreenSize } from "../../providers/ScreenSizeProvider";
 
 import { AdminStackName } from "../../navigation/AdminStack";
 import { MainScreenName } from "../mainScreen/MainScreen";
+
+import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 
 import "./EvidenceDocumentsScreen.scss";
 
@@ -60,7 +63,9 @@ export default function EvidenceDocumentsScreen() {
 
     const [items, setItems] = useState([]);
     const [nextCursor, setNextCursor] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const [hasLoadError, setHasLoadError] = useState(false);
+
+    const requestModeRef = useRef({ reset: true });
 
     const showError = useCallback(
         (err, messageKey) => {
@@ -75,43 +80,49 @@ export default function EvidenceDocumentsScreen() {
         [closePopup, openPopup]
     );
 
-    const fetchPage = useCallback(
-        async ({ reset, paramsOverride } = {}) => {
-            if (isLoading) return;
-            setIsLoading(true);
-            try {
-                const cursor = reset ? null : nextCursor;
-                const params = paramsOverride || applied;
-                const res = await evidenceDocumentsApi.list({
-                    q: params.q,
-                    caseId: params.caseId,
-                    from: params.from,
-                    to: params.to,
-                    limit: 50,
-                    cursor,
-                });
-
-                if (!res?.success) {
-                    showError(res, "evidenceDocuments.errors.load");
-                    return;
-                }
-
-                const newItems = Array.isArray(res?.data?.items) ? res.data.items : [];
-                const newCursor = res?.data?.nextCursor || null;
-
-                setItems((prev) => (reset ? newItems : [...prev, ...newItems]));
-                setNextCursor(newCursor);
-            } finally {
-                setIsLoading(false);
+    const handleListSuccess = useCallback(
+        (payload) => {
+            // Backend response is expected to be: { success: true, data: { items: [], nextCursor } }
+            if (!payload?.success) {
+                setHasLoadError(true);
+                showError(payload, "evidenceDocuments.errors.load");
+                return;
             }
+
+            const newItems = Array.isArray(payload?.data?.items) ? payload.data.items : [];
+            const newCursor = payload?.data?.nextCursor || null;
+
+            setItems((prev) => (requestModeRef.current.reset ? newItems : [...prev, ...newItems]));
+            setNextCursor(newCursor);
+            setHasLoadError(false);
         },
-        [applied, isLoading, nextCursor, showError]
+        [showError]
     );
 
-    useEffect(() => {
-        fetchPage({ reset: true });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+    const handleListFailure = useCallback(
+        (err) => {
+            setHasLoadError(true);
+            showError(err, "evidenceDocuments.errors.load");
+        },
+        [showError]
+    );
+
+    const requestEvidenceDocuments = useCallback(async (params) => {
+        return await evidenceDocumentsApi.list(params);
     }, []);
+
+    const { isPerforming: isLoading, performRequest: fetchPage } = useAutoHttpRequest(requestEvidenceDocuments, {
+        body: {
+            q: "",
+            caseId: "",
+            from: "",
+            to: "",
+            limit: 50,
+            cursor: null,
+        },
+        onSuccess: handleListSuccess,
+        onFailure: handleListFailure,
+    });
 
     const onApplySearch = () => {
         const next = {
@@ -123,7 +134,16 @@ export default function EvidenceDocumentsScreen() {
         setApplied(next);
         setItems([]);
         setNextCursor(null);
-        fetchPage({ reset: true, paramsOverride: next });
+
+        requestModeRef.current.reset = true;
+        fetchPage({
+            q: next.q,
+            caseId: next.caseId,
+            from: next.from,
+            to: next.to,
+            limit: 50,
+            cursor: null,
+        });
     };
 
     const onKeyDownSearch = (e) => {
@@ -143,6 +163,41 @@ export default function EvidenceDocumentsScreen() {
             return true;
         });
     }, [items, otpFilter]);
+
+    const searchDropdownItems = useMemo(() => {
+        const q = String(inputQ || "").trim().toLowerCase();
+        const base = filteredItems || [];
+        if (!q) return base;
+
+        return base.filter((it) => {
+            const text = [it.clientDisplayName, it.caseDisplayName, it.documentDisplayName, it.caseId]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase();
+            return text.includes(q);
+        });
+    }, [filteredItems, inputQ]);
+
+    const otpFilterItems = useMemo(
+        () => [
+            { value: "required", label: t("evidenceDocuments.otp.required") },
+            { value: "waived", label: t("evidenceDocuments.otp.waived") },
+        ],
+        [t]
+    );
+
+    const handleLoadMore = () => {
+        if (!nextCursor) return;
+        requestModeRef.current.reset = false;
+        fetchPage({
+            q: applied.q,
+            caseId: applied.caseId,
+            from: applied.from,
+            to: applied.to,
+            limit: 50,
+            cursor: nextCursor,
+        });
+    };
 
     const downloadEvidenceZip = async (signingFileId) => {
         try {
@@ -188,20 +243,33 @@ export default function EvidenceDocumentsScreen() {
                     <TextBold24>{t("evidenceDocuments.pageTitle")}</TextBold24>
                 </SimpleContainer>
 
-                <SimpleContainer className="lw-evidenceDocuments__searchRow">
-                    <SimpleContainer className="lw-evidenceDocuments__searchInput">
-                        <SearchInput
-                            value={inputQ}
-                            onSearch={setInputQ}
-                            title={t("evidenceDocuments.searchTitle")}
-                            titleFontSize={18}
-                            onKeyDown={onKeyDownSearch}
-                        />
-                    </SimpleContainer>
-                    <PrimaryButton onPress={onApplySearch}>{t("common.search")}</PrimaryButton>
+                <SimpleContainer className="lw-evidenceDocuments__row">
+                    <SearchInput
+                        value={inputQ}
+                        onSearch={setInputQ}
+                        title={t("evidenceDocuments.searchTitle")}
+                        titleFontSize={20}
+                        onKeyDown={onKeyDownSearch}
+                        className="lw-evidenceDocuments__search"
+                        queryResult={searchDropdownItems}
+                        isPerforming={isLoading && items.length === 0}
+                        getButtonTextFunction={(it) => {
+                            const client = it?.clientDisplayName || "-";
+                            const cs = it?.caseDisplayName || (it?.caseId ? `${t("evidenceDocuments.casePrefix")}${it.caseId}` : "-");
+                            const doc = it?.documentDisplayName || "-";
+                            return `${client} | ${cs} | ${doc}`;
+                        }}
+                        buttonPressFunction={(_, it) => {
+                            const next = String(it?.documentDisplayName || it?.clientDisplayName || it?.caseDisplayName || "");
+                            setInputQ(next);
+                        }}
+                    />
+                    <PrimaryButton onPress={onApplySearch} isPerforming={isLoading}>
+                        {t("common.search")}
+                    </PrimaryButton>
                 </SimpleContainer>
 
-                <SimpleContainer className="lw-evidenceDocuments__filters">
+                <SimpleContainer className="lw-evidenceDocuments__row">
                     <SimpleInput
                         title={t("evidenceDocuments.filters.caseId")}
                         value={inputCaseId}
@@ -225,66 +293,87 @@ export default function EvidenceDocumentsScreen() {
                         onKeyDown={onKeyDownSearch}
                     />
 
-                    <label className="lw-evidenceDocuments__label">
-                        {t("evidenceDocuments.filters.otp")}
-                        <select
-                            className="lw-evidenceDocuments__select"
-                            value={otpFilter}
-                            onChange={(e) => setOtpFilter(e.target.value)}
-                        >
-                            <option value="">{t("common.all")}</option>
-                            <option value="required">{t("evidenceDocuments.otp.required")}</option>
-                            <option value="waived">{t("evidenceDocuments.otp.waived")}</option>
-                        </select>
-                    </label>
+                    <SimpleContainer className="lw-evidenceDocuments__choose">
+                        <ChooseButton
+                            buttonText={t("evidenceDocuments.filters.otp")}
+                            items={otpFilterItems}
+                            OnPressChoiceFunction={(val) => setOtpFilter(val ?? "")}
+                        />
+                    </SimpleContainer>
                 </SimpleContainer>
 
                 {isLoading && items.length === 0 ? (
                     <SimpleLoader />
+                ) : hasLoadError && items.length === 0 ? (
+                    <SimpleContainer className="lw-evidenceDocuments__state">
+                        <Text14>{t("evidenceDocuments.errors.load")}</Text14>
+                    </SimpleContainer>
                 ) : filteredItems.length === 0 ? (
                     <SimpleContainer className="lw-evidenceDocuments__state">
                         <Text14>{t("evidenceDocuments.empty")}</Text14>
                     </SimpleContainer>
                 ) : (
                     <SimpleContainer className="lw-evidenceDocuments__table">
-                        <div className="lw-evidenceDocuments__row lw-evidenceDocuments__row--header">
-                            <div className="lw-evidenceDocuments__cell">{t("evidenceDocuments.columns.client")}</div>
-                            <div className="lw-evidenceDocuments__cell">{t("evidenceDocuments.columns.case")}</div>
-                            <div className="lw-evidenceDocuments__cell">{t("evidenceDocuments.columns.document")}</div>
-                            <div className="lw-evidenceDocuments__cell">{t("evidenceDocuments.columns.signedAt")}</div>
-                            <div className="lw-evidenceDocuments__cell">{t("evidenceDocuments.columns.otp")}</div>
-                            <div className="lw-evidenceDocuments__cell">{t("evidenceDocuments.columns.actions")}</div>
-                        </div>
+                        <SimpleContainer className="lw-evidenceDocuments__tableRow lw-evidenceDocuments__tableRow--header">
+                            <SimpleContainer className="lw-evidenceDocuments__cell">
+                                <TextBold14>{t("evidenceDocuments.columns.client")}</TextBold14>
+                            </SimpleContainer>
+                            <SimpleContainer className="lw-evidenceDocuments__cell">
+                                <TextBold14>{t("evidenceDocuments.columns.case")}</TextBold14>
+                            </SimpleContainer>
+                            <SimpleContainer className="lw-evidenceDocuments__cell">
+                                <TextBold14>{t("evidenceDocuments.columns.document")}</TextBold14>
+                            </SimpleContainer>
+                            <SimpleContainer className="lw-evidenceDocuments__cell">
+                                <TextBold14>{t("evidenceDocuments.columns.signedAt")}</TextBold14>
+                            </SimpleContainer>
+                            <SimpleContainer className="lw-evidenceDocuments__cell">
+                                <TextBold14>{t("evidenceDocuments.columns.otp")}</TextBold14>
+                            </SimpleContainer>
+                            <SimpleContainer className="lw-evidenceDocuments__cell">
+                                <TextBold14>{t("evidenceDocuments.columns.actions")}</TextBold14>
+                            </SimpleContainer>
+                        </SimpleContainer>
 
                         {filteredItems.map((it) => (
-                            <div key={`${it.signingFileId}_${it.signedAtUtc || ""}`} className="lw-evidenceDocuments__row">
-                                <div className="lw-evidenceDocuments__cell" title={it.clientDisplayName || ""}>
-                                    {it.clientDisplayName || "-"}
-                                </div>
-                                <div className="lw-evidenceDocuments__cell" title={it.caseDisplayName || ""}>
-                                    {it.caseDisplayName || (it.caseId ? `${t("evidenceDocuments.casePrefix")}${it.caseId}` : "-")}
-                                </div>
-                                <div className="lw-evidenceDocuments__cell" title={it.documentDisplayName || ""}>
-                                    {it.documentDisplayName || "-"}
-                                </div>
-                                <div className="lw-evidenceDocuments__cell">{safeToLocalDateTime(it.signedAtUtc)}</div>
-                                <div className="lw-evidenceDocuments__cell">{otpLabel(it, t)}</div>
-                                <div className="lw-evidenceDocuments__cell">
+                            <SimpleContainer
+                                key={`${it.signingFileId}_${it.signedAtUtc || ""}`}
+                                className="lw-evidenceDocuments__tableRow"
+                            >
+                                <SimpleContainer className="lw-evidenceDocuments__cell" title={it.clientDisplayName || ""}>
+                                    <Text14>{it.clientDisplayName || "-"}</Text14>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-evidenceDocuments__cell" title={it.caseDisplayName || ""}>
+                                    <Text14>
+                                        {it.caseDisplayName ||
+                                            (it.caseId ? `${t("evidenceDocuments.casePrefix")}${it.caseId}` : "-")}
+                                    </Text14>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-evidenceDocuments__cell" title={it.documentDisplayName || ""}>
+                                    <Text14>{it.documentDisplayName || "-"}</Text14>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-evidenceDocuments__cell">
+                                    <Text14>{safeToLocalDateTime(it.signedAtUtc)}</Text14>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-evidenceDocuments__cell">
+                                    <Text14>{otpLabel(it, t)}</Text14>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-evidenceDocuments__cell">
                                     <SecondaryButton
                                         onPress={() => downloadEvidenceZip(it.signingFileId)}
                                         disabled={!it.evidenceZipAvailable}
                                     >
                                         {t("evidenceDocuments.actions.downloadZip")}
                                     </SecondaryButton>
-                                </div>
-                            </div>
+                                </SimpleContainer>
+                            </SimpleContainer>
                         ))}
                     </SimpleContainer>
                 )}
 
                 <SimpleContainer className="lw-evidenceDocuments__footer">
                     {nextCursor ? (
-                        <SecondaryButton onPress={() => fetchPage({ reset: false })} disabled={isLoading}>
+                        <SecondaryButton onPress={handleLoadMore} disabled={isLoading}>
                             {t("evidenceDocuments.actions.loadMore")}
                         </SecondaryButton>
                     ) : (
