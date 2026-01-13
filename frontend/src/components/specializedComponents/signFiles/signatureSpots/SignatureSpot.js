@@ -2,16 +2,9 @@
 import React, { useRef } from "react";
 import SimpleContainer from "../../../simpleComponents/SimpleContainer";
 import { useTranslation } from "react-i18next";
+import { signerColorClass } from '../../../../utils/signerColorMap';
 
-// Color scheme for different signers
-const SIGNER_COLORS = [
-    { bg: "rgba(42, 67, 101, 0.14)", border: "#2A4365", name: "Primary" },       // primary
-    { bg: "rgba(76, 102, 144, 0.14)", border: "#4C6690", name: "Secondary" },    // sidebar selected
-    { bg: "rgba(56, 161, 105, 0.14)", border: "#38A169", name: "Positive" },     // positive
-    { bg: "rgba(197, 48, 48, 0.12)", border: "#C53030", name: "Negative" },      // negative
-    { bg: "rgba(113, 128, 150, 0.14)", border: "#718096", name: "Gray" },        // winter
-    { bg: "rgba(155, 44, 44, 0.12)", border: "#9B2C2C", name: "Dark red" },      // darkRed
-];
+// Color classes are defined in SCSS and mapped via signerColorClass
 
 export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot, onRequestRemove, onSelectSpot, signerIndex = 0, signerName, scale = 1 }) {
     const { t } = useTranslation();
@@ -19,9 +12,6 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
 
     const canEditSpot = typeof onUpdateSpot === "function";
     const canRemoveSpot = typeof onRemoveSpot === "function";
-
-    // Get color based on signer index
-    const colorScheme = SIGNER_COLORS[signerIndex % SIGNER_COLORS.length];
 
     const signerNameSafe = signerName || t("signing.spot.defaultSignerName");
 
@@ -33,9 +23,11 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
         width: (spot.width || 130) * (scale || 1),
         height: (spot.height || 48) * (scale || 1),
         ...(hasSignatureImage ? { backgroundColor: "transparent" } : null),
-        "--spot-bg": colorScheme.bg,
-        "--spot-border": colorScheme.border,
     };
+
+    // Determine color class using signerUserId fallback to signerIndex
+    const signerIdForColor = spot?.signerUserId ?? spot?.signerIdx ?? signerIndex;
+    const colorClass = signerColorClass(signerIdForColor);
 
     const startDragFromClientPoint = (startClientX, startClientY, onEnd) => {
         const startX = Number(startClientX);
@@ -134,7 +126,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                     ? startDragTouchFallback
                     : undefined
             }
-            className="lw-signing-spot"
+            className={`lw-signing-spot ${colorClass}`}
             style={spotStyle}
             title={t("signing.spot.signedByTitle", { name: signerNameSafe })}
         >

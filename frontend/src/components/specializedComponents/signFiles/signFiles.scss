@@ -368,9 +368,17 @@
     box-shadow: 0 0.1875rem 0.625rem rgba(0, 0, 0, 0.18);
     transition: box-shadow 0.2s ease;
 
-    background-color: var(--spot-bg, rgba(42, 67, 101, 0.14));
-    border: 1px solid var(--spot-border, var(--lw-color-primary, #2A4365));
-    color: var(--spot-border, var(--lw-color-primary, #2A4365));
+        background-color: var(--spot-bg, rgba(42, 67, 101, 0.14));
+        border: 1px solid var(--spot-border, var(--lw-color-primary, #2A4365));
+        color: var(--spot-border, var(--lw-color-primary, #2A4365));
+}
+
+/* Signer color classes (use theme tokens) */
+@for $i from 0 through 7 {
+    .lw-signer-color-#{$i} {
+        --spot-border: var(--lw-signer-#{$i}-border);
+        --spot-bg: var(--lw-signer-#{$i}-bg);
+    }
 }
 
 .lw-signing-spotImg {
