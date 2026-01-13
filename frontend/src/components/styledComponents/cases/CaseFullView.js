@@ -80,13 +80,13 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
         setFieldErrors(validateCaseData(nextData));
     };
 
-    const { result: customers, isPerforming: isPerformingCustomers, performRequest: searchCustomers } = useHttpRequest(customersApi.getCustomersByName, null, () => { });
+    const { result: customers, isPerforming: isPerformingCustomers, performRequest: searchCustomers } = useAutoHttpRequest(customersApi.getCustomersByName, { onFailure: () => { } });
 
-    const { result: caseTypes, isPerforming: isPerformingCaseTypes, performRequest: searchCaseTypes } = useAutoHttpRequest(casesTypeApi.getCaseTypeByName);
+    const { result: caseTypes, isPerforming: isPerformingCaseTypes, performRequest: searchCaseTypes } = useAutoHttpRequest(casesTypeApi.getCaseTypeByName, { onFailure: () => { } });
 
-    const { result: adminByName, isPerforming: isPerformingGetAdmin, performRequest: getAdminByName } = useAutoHttpRequest(adminApi.getAdminByName);
+    const { result: adminByName, isPerforming: isPerformingGetAdmin, performRequest: getAdminByName } = useAutoHttpRequest(adminApi.getAdminByName, { onFailure: () => { } });
 
-    const { result: cases, isPerforming: isPerformingCases, performRequest: searchCases } = useAutoHttpRequest(casesApi.getCaseByName);
+    const { result: cases, isPerforming: isPerformingCases, performRequest: searchCases } = useAutoHttpRequest(casesApi.getCaseByName, { onFailure: () => { } });
 
     const { isPerforming: isSaving, performRequest: saveCase } = useHttpRequest(
         caseDetails ? casesApi.updateCaseById : casesApi.addCase,

@@ -43,11 +43,11 @@ function WhatsappGroupLinkModal({
 
     return (
         <SimpleContainer className="lw-caseMenuItemOpen__whatsAppModal">
-            <TextBold12 className="lw-caseMenuItemOpen__modalTitle">{t("cases.whatsapp.linkTitle")}</TextBold12>
+            <TextBold12 className="lw-caseMenuItemOpen__modalTitle">{t("common.whatsapp.linkTitle")}</TextBold12>
 
             <SimpleInput
                 className="lw-caseMenuItemOpen__modalInput"
-                title={t("cases.whatsapp.groupLink")}
+                title={t("common.whatsapp.groupLink")}
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 inputSize="Medium"
@@ -113,7 +113,7 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
 
     function contactOnWhatsapp() {
         openExternalUrl(
-            `https://wa.me/972522595097?text=${t("cases.whatsapp.contactText", { caseId: fullCase.CaseId })}`,
+            `https://wa.me/972522595097?text=${t("common.whatsapp.contactText", { caseId: fullCase.CaseId })}`,
             { newTab: true }
         );
     }
@@ -131,7 +131,7 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
                 <SimpleContainer className="lw-caseMenuItemOpen__sections">
                     {!isClient && (
                         <SimpleContainer className="lw-caseMenuItemOpen__section">
-                            <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">{t("cases.customerDetails")}</TextBold12>
+                            <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">{t("common.customerDetails")}</TextBold12>
 
                             <SimpleContainer className="lw-caseMenuItemOpen__items">
                                 <SimpleContainer className="lw-caseMenuItemOpen__item">
@@ -162,7 +162,7 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
                     )}
 
                     <SimpleContainer className="lw-caseMenuItemOpen__section">
-                        <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">{t("cases.dates")}</TextBold12>
+                        <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">{t("common.dates")}</TextBold12>
 
                         <SimpleContainer className="lw-caseMenuItemOpen__items">
                             <SimpleContainer className="lw-caseMenuItemOpen__item">
@@ -178,7 +178,7 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
                     </SimpleContainer>
 
                     <SimpleContainer className="lw-caseMenuItemOpen__section">
-                        <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">{t("cases.management")}</TextBold12>
+                        <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">{t("common.management")}</TextBold12>
 
                         <SimpleContainer className="lw-caseMenuItemOpen__items">
                             <SimpleContainer className="lw-caseMenuItemOpen__item">
@@ -196,26 +196,26 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
                             )}
 
                             <SimpleContainer className="lw-caseMenuItemOpen__item">
-                                <TextBold12 className="lw-caseMenuItemOpen__itemLabel">{t("cases.whatsapp.group")}</TextBold12>
+                                <TextBold12 className="lw-caseMenuItemOpen__itemLabel">{t("common.whatsapp.group")}</TextBold12>
                                 <SimpleContainer className="lw-caseMenuItemOpen__itemValue">
                                     {WhatsappLink ? (
                                         <SimpleContainer className="lw-caseMenuItemOpen__whatsAppActions">
                                             <PrimaryButton size={buttonSizes.SMALL} onPress={openWhatsappGroupLink}>
-                                                {t("cases.whatsapp.goToGroup")}
+                                                {t("common.whatsapp.goToGroup")}
                                             </PrimaryButton>
                                             {!isClient && (
                                                 <SecondaryButton size={buttonSizes.SMALL} onPress={openWhatsappGroupModal}>
-                                                    {t("cases.whatsapp.editLink")}
+                                                    {t("common.whatsapp.editLink")}
                                                 </SecondaryButton>
                                             )}
                                         </SimpleContainer>
                                     ) : !isClient ? (
                                         <SecondaryButton size={buttonSizes.SMALL} onPress={openWhatsappGroupModal}>
-                                            {t("cases.whatsapp.linkTitle")}
+                                            {t("common.whatsapp.linkTitle")}
                                         </SecondaryButton>
                                     ) : (
                                         <SimpleButton className="lw-caseMenuItemOpen__linkButton" onPress={contactOnWhatsapp}>
-                                            <Text12 className="lw-caseMenuItemOpen__positiveText">{t("cases.whatsapp.contact")}</Text12>
+                                            <Text12 className="lw-caseMenuItemOpen__positiveText">{t("common.whatsapp.contact")}</Text12>
                                         </SimpleButton>
                                     )}
                                 </SimpleContainer>
@@ -229,7 +229,7 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
                                 src={icons.Button.DownArrow}
                                 className={"lw-caseMenuItemOpen__dropDownBtn" + (isStagesOpen ? " is-open" : "")}
                             />
-                            <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">{t("cases.stages")}</TextBold12>
+                            <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">{t("common.stages")}</TextBold12>
                         </SimpleContainer>
 
                         {isStagesOpen && (
