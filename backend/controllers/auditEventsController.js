@@ -25,6 +25,15 @@ function parsePositiveIntOrNull(v) {
     return n;
 }
 
+function parseBooleanOrNull(v) {
+    if (v == null) return null;
+    const s = String(v).trim().toLowerCase();
+    if (!s) return null;
+    if (s === 'true' || s === '1' || s === 'yes') return true;
+    if (s === 'false' || s === '0' || s === 'no') return false;
+    return null;
+}
+
 function base64UrlEncode(buf) {
     return Buffer.from(buf)
         .toString('base64')
@@ -86,6 +95,40 @@ function maskEmail(email) {
     return `${prefix}***@${domain}`;
 }
 
+function formatClientDisplayName({ name, phone, email }) {
+    const n = String(name || '').trim();
+    const digits = String(phone || '').replace(/\D/g, '');
+    const last4 = digits.length >= 4 ? digits.slice(-4) : null;
+    if (n && last4) return `${n} • ${last4}`;
+    if (n) return n;
+    return maskPhone(phone) || maskEmail(email) || null;
+}
+
+function formatCaseDisplayName({ caseName, caseId }) {
+    const name = String(caseName || '').trim();
+    const id = Number.isInteger(caseId) && caseId > 0 ? caseId : null;
+    if (name && id) return `${name} (#${id})`;
+    if (name) return name;
+    if (id) return `#${id}`;
+    return null;
+}
+
+function formatDocumentDisplayName({ filename, signingFileId }) {
+    const f = String(filename || '').trim();
+    const id = Number.isInteger(signingFileId) && signingFileId > 0 ? signingFileId : null;
+    if (f && id) return `${f} (#${id})`;
+    if (f) return f;
+    if (id) return `#${id}`;
+    return null;
+}
+
+function toShortUserAgent(userAgent) {
+    const ua = String(userAgent || '').trim();
+    if (!ua) return null;
+    if (ua.length <= 60) return ua;
+    return `${ua.slice(0, 57)}...`;
+}
+
 function sanitizeAuditDetails(value) {
     // Must not expose secrets (tokens, OTP codes, passwords). Keep evidence hashes.
     const DENY_KEYS = new Set([
@@ -142,6 +185,8 @@ async function listAuditEvents(req, res, next) {
         const to = parseIsoDateOrNull(req.query.to);
 
         const search = String(req.query.search || '').trim();
+        const q = String(req.query.q || '').trim();
+        const success = parseBooleanOrNull(req.query.success);
 
         const limitRaw = req.query.limit;
         const limitParsed = Number.parseInt(String(limitRaw || ''), 10);
@@ -174,6 +219,9 @@ async function listAuditEvents(req, res, next) {
         }
         if (from && to && from > to) {
             return next(appError('INVALID_PARAMETER', 400, { meta: { dateRange: 'from_after_to' } }));
+        }
+        if (req.query.success != null && success == null) {
+            return next(appError('INVALID_PARAMETER', 400, { meta: { success: 'invalid' } }));
         }
 
         // Authorization:
@@ -212,13 +260,59 @@ async function listAuditEvents(req, res, next) {
             where.push(`ae.occurred_at_utc <= $${params.length}::timestamptz`);
         }
 
+        if (success != null) {
+            params.push(success);
+            where.push(`ae.success = $${params.length}`);
+        }
+
         if (cursor) {
             params.push(cursor.occurredAtUtc);
             params.push(cursor.id);
             where.push(`(ae.occurred_at_utc, ae.eventid) < ($${params.length - 1}::timestamptz, $${params.length}::uuid)`);
         }
 
-        if (search) {
+        if (q) {
+            const qLike = `%${q}%`;
+            params.push(qLike);
+            const likeParam = `$${params.length}`;
+
+            const qDigits = q.replace(/\D/g, '');
+            const qInt = qDigits && qDigits.length <= 10 ? Number.parseInt(qDigits, 10) : null;
+
+            if (Number.isInteger(qInt) && qInt > 0) {
+                params.push(qInt);
+                const intParam = `$${params.length}`;
+                where.push(
+                    `(
+                        c.casename ilike ${likeParam}
+                        or c.companyname ilike ${likeParam}
+                        or cu.name ilike ${likeParam}
+                        or cu.email ilike ${likeParam}
+                        or cu.phonenumber ilike ${likeParam}
+                        or sf.filename ilike ${likeParam}
+                        or sf.originalfilekey ilike ${likeParam}
+                        or ae.ip::text ilike ${likeParam}
+                        or ae.request_id::text ilike ${likeParam}
+                        or sf.signingfileid = ${intParam}::int
+                        or sf.caseid = ${intParam}::int
+                    )`
+                );
+            } else {
+                where.push(
+                    `(
+                        c.casename ilike ${likeParam}
+                        or c.companyname ilike ${likeParam}
+                        or cu.name ilike ${likeParam}
+                        or cu.email ilike ${likeParam}
+                        or cu.phonenumber ilike ${likeParam}
+                        or sf.filename ilike ${likeParam}
+                        or sf.originalfilekey ilike ${likeParam}
+                        or ae.ip::text ilike ${likeParam}
+                        or ae.request_id::text ilike ${likeParam}
+                    )`
+                );
+            }
+        } else if (search) {
             // Safe text filter. No secrets are returned anyway; this is for UX.
             params.push(`%${search}%`);
             where.push(
@@ -263,10 +357,18 @@ async function listAuditEvents(req, res, next) {
                 ae.request_id as "requestId",
                 ae.metadata as details,
 
+                c.casename as "caseName",
+                cu.name as "clientName",
+                cu.phonenumber as "clientPhone",
+                cu.email as "clientEmail",
+                sf.filename as "documentFilename",
+
                 u.email as "actorEmail",
                 u.phonenumber as "actorPhone"
             from audit_events ae
             left join signingfiles sf on sf.signingfileid = ae.signingfileid
+            left join cases c on c.caseid = sf.caseid
+            left join users cu on cu.userid = c.userid
             left join users u on u.userid = ae.actor_userid
             ${whereSql}
             order by ae.occurred_at_utc desc, ae.eventid desc
@@ -277,6 +379,23 @@ async function listAuditEvents(req, res, next) {
         const items = (result.rows || []).map((row) => {
             const actorLabel = maskPhone(row.actorPhone) || maskEmail(row.actorEmail) || (row.actorUserId ? `User #${row.actorUserId}` : null);
 
+            const normalizedCaseId = row.caseId == null ? null : Number(row.caseId);
+            const normalizedSigningFileId = row.signingFileId == null ? null : Number(row.signingFileId);
+
+            const clientDisplayName = formatClientDisplayName({
+                name: row.clientName,
+                phone: row.clientPhone,
+                email: row.clientEmail,
+            });
+            const caseDisplayName = formatCaseDisplayName({
+                caseName: row.caseName,
+                caseId: normalizedCaseId,
+            });
+            const documentDisplayName = formatDocumentDisplayName({
+                filename: row.documentFilename,
+                signingFileId: normalizedSigningFileId,
+            });
+
             return {
                 id: row.id,
                 occurredAtUtc: new Date(row.occurredAtUtc).toISOString(),
@@ -285,10 +404,18 @@ async function listAuditEvents(req, res, next) {
                 actorType: row.actorType,
                 actorUserId: row.actorUserId == null ? null : Number(row.actorUserId),
                 actorLabel,
-                caseId: row.caseId == null ? null : Number(row.caseId),
-                signingFileId: row.signingFileId == null ? null : Number(row.signingFileId),
+                caseId: normalizedCaseId,
+                signingFileId: normalizedSigningFileId,
+                caseName: row.caseName ? String(row.caseName) : null,
+                clientName: row.clientName ? String(row.clientName) : null,
+                clientPhone: row.clientPhone ? String(row.clientPhone) : null,
+                documentFilename: row.documentFilename ? String(row.documentFilename) : null,
+                clientDisplayName,
+                caseDisplayName,
+                documentDisplayName,
                 ip: row.ip ? String(row.ip) : null,
                 userAgent: row.userAgent ? String(row.userAgent) : null,
+                userAgentShort: toShortUserAgent(row.userAgent),
                 requestId: row.requestId ? String(row.requestId) : null,
                 details: sanitizeAuditDetails(row.details || {}),
             };
