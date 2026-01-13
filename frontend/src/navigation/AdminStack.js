@@ -7,6 +7,7 @@ import TopAndRightNavBar from "../components/navBars/TopAndRightNavBar";
 import { Navigate, Route, Routes } from "react-router-dom";
 import SigningManagerScreen, { SigningManagerScreenName } from "../screens/signingScreen/SigningManagerScreen";
 import UploadFileForSigningScreen, { uploadFileForSigningScreenName } from "../screens/signingScreen/UploadFileForSigningScreen";
+import AuditTrailScreen, { AuditTrailScreenName } from "../screens/auditTrailScreen/AuditTrailScreen";
 import { LoginStackName } from "./LoginStack";
 import { LoginScreenName } from "../screens/loginScreen/LoginScreen";
 
@@ -25,6 +26,7 @@ function AdminStack() {
                 <Route path={AllMangerScreenName} element={<AllMangerScreen />} />
                 <Route path={AllCasesTypeScreenName} element={<AllCasesTypeScreen />} />
                 <Route path={SigningManagerScreenName} element={<SigningManagerScreen />} />
+                <Route path={AuditTrailScreenName} element={<AuditTrailScreen />} />
                 <Route path={uploadFileForSigningScreenName} element={<UploadFileForSigningScreen />} />
 
             </Routes>

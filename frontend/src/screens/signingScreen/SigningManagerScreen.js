@@ -29,7 +29,6 @@ import { uploadFileForSigningScreenName } from "./UploadFileForSigningScreen";
 import "./SigningManagerScreen.scss";
 import { MainScreenName } from "../mainScreen/MainScreen";
 import SimpleCard from "../../components/simpleComponents/SimpleCard";
-import AuditTrailTab from "./AuditTrailTab";
 
 export const SigningManagerScreenName = "/SigningManagerScreen";
 
@@ -410,7 +409,6 @@ export default function SigningManagerScreen() {
 
 function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned, onDownloadEvidencePackage, formatDotDate }) {
     const { t } = useTranslation();
-    const [activeTab, setActiveTab] = useState('details');
     const totalSpots = Number(file?.TotalSpots || 0);
     const signedSpots = Number(file?.SignedSpots || 0);
 
@@ -446,21 +444,7 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
 
             <SimpleContainer className={otpChipClassName}>{otpChipText}</SimpleContainer>
 
-            <SimpleContainer className="lw-signingManagerScreen__detailsTabsRow">
-                <TabButton
-                    active={activeTab === 'details'}
-                    label={t('signingManager.details.tabs.details')}
-                    onPress={() => setActiveTab('details')}
-                />
-                <TabButton
-                    active={activeTab === 'audit'}
-                    label={t('signingManager.details.tabs.auditTrail')}
-                    onPress={() => setActiveTab('audit')}
-                />
-            </SimpleContainer>
-
-            {activeTab === 'details' ? (
-                <>
+            <>
                     <SimpleContainer className="lw-signingManagerScreen__detailRow">
                         <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.case')}</div>
                         <div className="lw-signingManagerScreen__detailValue">{file?.CaseName || "-"}</div>
@@ -524,9 +508,6 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                         <SecondaryButton onPress={onClose}>{t('common.close')}</SecondaryButton>
                     </SimpleContainer>
                 </>
-            ) : (
-                <AuditTrailTab signingFileId={file?.SigningFileId} />
-            )}
         </SimpleContainer>
     );
 }

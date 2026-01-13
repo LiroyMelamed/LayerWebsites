@@ -59,9 +59,11 @@
     "signingManager": {
         "searchTitle": "بحث عن مستند / عميل / قضية",
         "tabs": {
+            "pageTitle": "سجل الإجراءات",
             "pending": "قيد الانتظار / مرفوضة ({{count}})",
             "signed": "موقّعة ({{count}})"
         },
+                "success": "النتيجة",
         "empty": {
             "pending": "لا توجد مستندات قيد الانتظار أو مرفوضة",
             "signed": "لا توجد مستندات موقّعة للعرض"
@@ -71,6 +73,9 @@
             "client": "العميل:",
             "uploadedAt": "تاريخ الرفع:",
             "status": "الحالة:",
+                "client": "العميل",
+                "case": "الملف",
+                "document": "المستند",
             "signatures": "التواقيع:",
             "rejectionReason": "سبب الرفض:",
             "signedAt": "تم التوقيع بتاريخ:",
@@ -316,6 +321,7 @@
     "nav": {
         "pinnedCases": "الملفات المثبتة",
         "signingFiles": "مستندات للتوقيع",
+        "auditTrail": "سجل الإجراءات",
         "allCases": "كل الملفات",
         "newOrUpdateCase": "ملف جديد / تحديث ملف",
         "allManagers": "كل المديرين",

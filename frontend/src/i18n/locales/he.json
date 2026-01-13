@@ -121,9 +121,11 @@
         }
     },
     "audit": {
+        "pageTitle": "יומן פעולות",
         "filters": {
             "eventType": "פעולה",
             "actorType": "סוג מבצע",
+            "success": "תוצאה",
             "from": "מתאריך",
             "to": "עד תאריך",
             "search": "חיפוש"
@@ -133,6 +135,9 @@
             "action": "פעולה",
             "actor": "מבצע",
             "status": "תוצאה",
+            "client": "לקוח",
+            "case": "תיק",
+            "document": "מסמך",
             "ip": "IP",
             "device": "מכשיר",
             "details": "פרטים"
@@ -320,6 +325,7 @@
     "nav": {
         "pinnedCases": "לתיקים נעוצים",
         "signingFiles": "מסמכים לחתימה",
+        "auditTrail": "יומן פעולות",
         "allCases": "לכל התיקים",
         "newOrUpdateCase": "תיק חדש / עדכון תיק",
         "allManagers": "לכל המנהלים",

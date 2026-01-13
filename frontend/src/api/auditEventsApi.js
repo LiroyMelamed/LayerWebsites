@@ -21,12 +21,14 @@ const auditEventsApi = {
         eventType,
         from,
         to,
+        success,
         limit,
         cursor,
         search,
+        q,
     } = {}) => {
         return await ApiUtils.get(
-            `${base}${toQuery({ caseId, signingFileId, actorType, eventType, from, to, limit, cursor, search })}`
+            `${base}${toQuery({ caseId, signingFileId, actorType, eventType, from, to, success, limit, cursor, search, q })}`
         );
     },
 };

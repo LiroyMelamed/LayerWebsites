@@ -103,12 +103,14 @@
         }
     },
     "audit": {
+        "pageTitle": "Audit Trail",
         "filters": {
             "eventType": "Action",
             "actorType": "Actor type",
             "from": "From",
             "to": "To",
-            "search": "Search"
+            "search": "Search",
+            "success": "Result"
         },
         "columns": {
             "dateTime": "Date/time",
@@ -117,7 +119,10 @@
             "status": "Result",
             "ip": "IP",
             "device": "Device",
-            "details": "Details"
+            "details": "Details",
+            "client": "Client",
+            "case": "Case",
+            "document": "Document"
         },
         "actions": {
             "details": "Details",
@@ -319,6 +324,7 @@
         "allCases": "All cases",
         "newOrUpdateCase": "New / Update case",
         "allManagers": "All managers",
+        "auditTrail": "Audit Trail",
         "allCaseTypes": "All case types",
         "addCaseType": "Add case type",
         "notifications": "Notifications",
