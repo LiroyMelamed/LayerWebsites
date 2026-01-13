@@ -10,6 +10,8 @@ export default function PdfViewer({
     spots = [],
     onUpdateSpot,
     onRemoveSpot,
+    onRequestRemove,
+    onSelectSpot,
     onAddSpotForPage,
     signers = [],
 }) {
@@ -101,6 +103,8 @@ export default function PdfViewer({
                                 spots={spots}
                                 onUpdateSpot={onUpdateSpot}
                                 onRemoveSpot={onRemoveSpot}
+                                onRequestRemove={onRequestRemove}
+                                onSelectSpot={onSelectSpot}
                                 signers={signers}
                                 scale={spotScale}
                             />

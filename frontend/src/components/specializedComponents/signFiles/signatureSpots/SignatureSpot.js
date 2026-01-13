@@ -13,7 +13,7 @@ const SIGNER_COLORS = [
     { bg: "rgba(155, 44, 44, 0.12)", border: "#9B2C2C", name: "Dark red" },      // darkRed
 ];
 
-export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot, signerIndex = 0, signerName, scale = 1 }) {
+export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot, onRequestRemove, onSelectSpot, signerIndex = 0, signerName, scale = 1 }) {
     const { t } = useTranslation();
     const ref = useRef(null);
 
@@ -151,17 +151,26 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                     </div>
                 </div>
             )}
-            {canRemoveSpot && (
-                <span
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onRemoveSpot?.(index);
-                    }}
-                    className="lw-signing-spotRemove"
-                >
-                    X
-                </span>
-            )}
+                    {canRemoveSpot && (
+                        <span
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (typeof onRequestRemove === 'function') onRequestRemove(index);
+                                else onRemoveSpot?.(index);
+                            }}
+                            className="lw-signing-spotRemove"
+                        >
+                            X
+                        </span>
+                    )}
+                    {/* allow double-click to open editor */}
+                    <div
+                        onDoubleClick={(e) => {
+                            e.stopPropagation();
+                            if (typeof onSelectSpot === 'function') onSelectSpot(index);
+                        }}
+                        style={{ position: 'absolute', inset: 0 }}
+                    />
         </SimpleContainer>
     );
 }

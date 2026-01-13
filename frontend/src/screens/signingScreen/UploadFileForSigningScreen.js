@@ -30,6 +30,7 @@ import useHttpRequest from "../../hooks/useHttpRequest";
 import { customersApi } from "../../api/customersApi";
 import { usePopup } from "../../providers/PopUpProvider";
 import ClientPopup from "../mainScreen/components/ClientPopUp";
+import SignatureSpotMarker from "../../components/specializedComponents/signFiles/SignatureSpotMarker";
 
 import "./UploadFileForSigningScreen.scss";
 import { MainScreenName } from "../mainScreen/MainScreen";
@@ -42,6 +43,29 @@ export default function UploadFileForSigningScreen() {
     const { isSmallScreen } = useScreenSize();
     const navigate = useNavigate();
     const { openPopup, closePopup } = usePopup();
+
+    const openFieldEditor = (index) => {
+        const spot = signatureSpots[index];
+        if (!spot) return;
+
+        const onUpdate = (i, updates) => {
+            handleUpdateSpot(i, updates);
+        };
+
+        const onRemove = (i) => {
+            const ok = window.confirm(t('signing.spotMarker.confirmDelete') || 'Delete this field?');
+            if (ok) {
+                handleRemoveSpot(i);
+                closePopup();
+            }
+        };
+
+        openPopup(
+            <SimpleContainer>
+                <SignatureSpotMarker spot={spot} index={index} onUpdate={onUpdate} onRemove={onRemove} />
+            </SimpleContainer>
+        );
+    };
 
     const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getCaseByName, null, () => { });
     const { result: customersByName, isPerforming: isPerformingCustomersByName, performRequest: SearchCustomersByName } = useHttpRequest(customersApi.getCustomersByName, null, () => { });
@@ -466,6 +490,11 @@ export default function UploadFileForSigningScreen() {
                                         spots={signatureSpots}
                                         onUpdateSpot={handleUpdateSpot}
                                         onRemoveSpot={handleRemoveSpot}
+                                        onRequestRemove={(i) => {
+                                            const ok = window.confirm(t('signing.spotMarker.confirmDelete') || 'Delete this field?');
+                                            if (ok) handleRemoveSpot(i);
+                                        }}
+                                        onSelectSpot={openFieldEditor}
                                         onAddSpotForPage={handleAddSpotForPage}
                                         signers={selectedSigners}
                                     />
