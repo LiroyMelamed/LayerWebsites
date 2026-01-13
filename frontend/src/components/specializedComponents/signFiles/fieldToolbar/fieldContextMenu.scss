@@ -1,0 +1,15 @@
+.lw-fieldContextMenu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+}
+.lw-fieldContextMenu button {
+  background: var(--lw-color-secondary, #fff);
+  border: 1px solid var(--lw-color-disabled, #E2E8F0);
+  padding: 8px 10px;
+  text-align: left;
+  cursor: pointer;
+}
+.lw-fieldContextMenu__divider { height: 1px; background: var(--lw-color-disabled, #E2E8F0); margin: 6px 0; }
+.lw-fieldContextMenu__groupTitle { font-weight: 700; font-size: 12px; color: var(--lw-color-text); }

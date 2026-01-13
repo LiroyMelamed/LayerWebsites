@@ -11,6 +11,7 @@ export default function SignatureSpotsLayer({
     onRemoveSpot,
     onRequestRemove,
     onSelectSpot,
+    onRequestContext,
     signers = [],
     scale = 1,
 }) {
@@ -86,6 +87,7 @@ export default function SignatureSpotsLayer({
                             onRemoveSpot={onRemoveSpot}
                             onRequestRemove={onRequestRemove}
                             onSelectSpot={onSelectSpot}
+                            onRequestContext={onRequestContext}
                             signerIndex={signerInfo.signerIndex}
                             signerName={signerInfo.signerName}
                             scale={scale}

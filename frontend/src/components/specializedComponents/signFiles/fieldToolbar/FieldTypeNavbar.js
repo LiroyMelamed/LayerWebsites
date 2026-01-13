@@ -1,6 +1,7 @@
 import React from 'react';
 import SimpleContainer from '../../../simpleComponents/SimpleContainer';
 import './fieldToolbar.scss';
+import './fieldContextMenu.scss';
 
 const FIELD_TYPES = [
     { id: 'signature', label: 'Signature' },

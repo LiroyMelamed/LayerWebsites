@@ -67,6 +67,99 @@ export default function UploadFileForSigningScreen() {
         );
     };
 
+    // Helper: check for near-equal spots (type, signer, position/size) to avoid duplicates
+    const spotsEqual = (a, b) => {
+        if (!a || !b) return false;
+        if ((a.type || 'signature') !== (b.type || 'signature')) return false;
+        if ((a.signerUserId || a.signerIndex) !== (b.signerUserId || b.signerIndex)) return false;
+        const tol = 2; // pixels tolerance
+        const keys = ['x', 'y', 'width', 'height'];
+        for (const k of keys) {
+            const va = Number(a[k] || 0);
+            const vb = Number(b[k] || 0);
+            if (Math.abs(va - vb) > tol) return false;
+        }
+        return true;
+    };
+
+    const getPageCount = () => {
+        const container = document.querySelector('.lw-signing-pdfViewer');
+        if (!container) return 1;
+        return container.querySelectorAll('[data-page-number]').length || 1;
+    };
+
+    const duplicateSpotToPages = (index, mode, range) => {
+        const pageCount = getPageCount();
+        const spot = signatureSpots[index];
+        if (!spot) return;
+
+        // Build list of target pages
+        let pages = [];
+        for (let p = 1; p <= pageCount; p++) pages.push(p);
+
+        const currentPage = Number(spot.pageNum) || 1;
+
+        if (mode === 'all') {
+            // keep all except current
+        } else if (mode === 'even') {
+            pages = pages.filter((p) => p % 2 === 0);
+        } else if (mode === 'odd') {
+            pages = pages.filter((p) => p % 2 === 1);
+        } else if (mode === 'range') {
+            const [from, to] = range;
+            pages = pages.filter((p) => p >= from && p <= to);
+        }
+
+        pages = pages.filter((p) => p !== currentPage);
+
+        // For each page, create a new spot with same relative coords
+        const newSpots = [];
+        pages.forEach((p) => {
+            const candidate = { ...spot, pageNum: p };
+            // Skip if identical exists on that page
+            const exists = signatureSpots.some((s) => Number(s.pageNum) === Number(p) && spotsEqual(s, candidate));
+            if (!exists) newSpots.push(candidate);
+        });
+
+        if (!newSpots.length) {
+            alert(t('signing.duplicate.noneAdded') || 'No new fields were added (duplicates skipped)');
+            return;
+        }
+
+        setSignatureSpots((prev) => [...prev, ...newSpots]);
+    };
+
+    const handleSpotContext = (index, ev) => {
+        // open popup menu using popup provider; reuse SimplePopUp as modal menu
+        openPopup(
+            <SimpleContainer className="lw-fieldContextMenu">
+                <button onClick={() => { closePopup(); openFieldEditor(index); }}>
+                    {t('signing.context.edit') || 'Edit field settings'}
+                </button>
+                <div className="lw-fieldContextMenu__divider" />
+                <div className="lw-fieldContextMenu__groupTitle">{t('signing.context.duplicate') || 'Duplicate to'}</div>
+                <button onClick={() => { closePopup(); duplicateSpotToPages(index, 'all'); }}>{t('signing.context.allPages') || 'All pages'}</button>
+                <button onClick={() => { closePopup(); duplicateSpotToPages(index, 'even'); }}>{t('signing.context.evenPages') || 'Even pages'}</button>
+                <button onClick={() => { closePopup(); duplicateSpotToPages(index, 'odd'); }}>{t('signing.context.oddPages') || 'Odd pages'}</button>
+                <button onClick={() => {
+                    const r = window.prompt(t('signing.context.rangePrompt') || 'Enter page range from-to (e.g. 2-5)');
+                    if (!r) return;
+                    const m = r.match(/(\d+)\s*-\s*(\d+)/);
+                    if (m) {
+                        const from = Number(m[1]);
+                        const to = Number(m[2]);
+                        closePopup();
+                        duplicateSpotToPages(index, 'range', [from, to]);
+                    } else {
+                        alert(t('signing.context.rangeInvalid') || 'Invalid range');
+                    }
+                }}>{t('signing.context.pageRange') || 'Page range'}</button>
+                <div className="lw-fieldContextMenu__divider" />
+                <button onClick={() => { closePopup(); const ok = window.confirm(t('signing.spotMarker.confirmDelete') || 'Delete this field?'); if (ok) handleRemoveSpot(index); }}>{t('common.delete') || 'Delete'}</button>
+            </SimpleContainer>
+        );
+    };
+
     const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getCaseByName, null, () => { });
     const { result: customersByName, isPerforming: isPerformingCustomersByName, performRequest: SearchCustomersByName } = useHttpRequest(customersApi.getCustomersByName, null, () => { });
 

@@ -6,7 +6,7 @@ import { signerColorClass } from '../../../../utils/signerColorMap';
 
 // Color classes are defined in SCSS and mapped via signerColorClass
 
-export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot, onRequestRemove, onSelectSpot, signerIndex = 0, signerName, scale = 1 }) {
+export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot, onRequestRemove, onSelectSpot, onRequestContext, signerIndex = 0, signerName, scale = 1 }) {
     const { t } = useTranslation();
     const ref = useRef(null);
 
@@ -161,6 +161,17 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                             e.stopPropagation();
                             if (typeof onSelectSpot === 'function') onSelectSpot(index);
                         }}
+                        style={{ position: 'absolute', inset: 0 }}
+                    />
+                    {/* Right-click context menu */}
+                    <div
+                        onContextMenu={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (typeof onRequestContext === 'function') onRequestContext(index, e);
+                        }}
+                        // invisible full overlay to catch right-click
+                        aria-hidden
                         style={{ position: 'absolute', inset: 0 }}
                     />
         </SimpleContainer>

@@ -12,6 +12,7 @@ export default function PdfViewer({
     onRemoveSpot,
     onRequestRemove,
     onSelectSpot,
+    onRequestContext,
     onAddSpotForPage,
     signers = [],
 }) {
@@ -98,13 +99,14 @@ export default function PdfViewer({
                                 renderWidth={renderWidth}
                             />
 
-                            <SignatureSpotsLayer
+                                <SignatureSpotsLayer
                                 pageNumber={pageNumber}
                                 spots={spots}
                                 onUpdateSpot={onUpdateSpot}
                                 onRemoveSpot={onRemoveSpot}
                                 onRequestRemove={onRequestRemove}
                                 onSelectSpot={onSelectSpot}
+                                onRequestContext={onRequestContext}
                                 signers={signers}
                                 scale={spotScale}
                             />
