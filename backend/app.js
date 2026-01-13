@@ -16,6 +16,7 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const filesRoutes = require("./routes/filesRoutes");
 const signingFileRoutes = require("./routes/signingFileRoutes");
 const auditEventsRoutes = require("./routes/auditEventsRoutes");
+const evidenceDocumentsRoutes = require("./routes/evidenceDocumentsRoutes");
 
 const authMiddleware = require("./middlewares/authMiddleware");
 const { createRateLimitMiddleware, getClientIp } = require("./utils/rateLimiter");
@@ -128,6 +129,7 @@ app.use("/api/Notifications", notificationRoutes);
 app.use("/api/Files", filesRoutes);
 app.use("/api/SigningFiles", signingFileRoutes);
 app.use("/api/audit-events", auditEventsRoutes);
+app.use("/api/evidence-documents", evidenceDocumentsRoutes);
 
 // Lightweight health endpoint for prereq checks
 app.get("/health", (req, res) => {
