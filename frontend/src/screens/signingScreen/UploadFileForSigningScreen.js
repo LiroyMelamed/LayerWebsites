@@ -22,6 +22,8 @@ import { SigningManagerScreenName } from "./SigningManagerScreen";
 
 import { uploadFileToR2 } from "../../utils/fileUploadUtils";
 import PdfViewer from "../../components/specializedComponents/signFiles/pdfViewer/PdfViewer";
+import FieldTypeNavbar from "../../components/specializedComponents/signFiles/fieldToolbar/FieldTypeNavbar";
+import FloatingAddField from "../../components/specializedComponents/signFiles/fieldToolbar/FloatingAddField";
 import SearchInput from "../../components/specializedComponents/containers/SearchInput";
 import casesApi from "../../api/casesApi";
 import useHttpRequest from "../../hooks/useHttpRequest";
@@ -51,6 +53,7 @@ export default function UploadFileForSigningScreen() {
     const [selectedFile, setSelectedFile] = useState(null);
 
     const [signatureSpots, setSignatureSpots] = useState([]);
+    const [selectedFieldType, setSelectedFieldType] = useState('signature');
     const [isDragActive, setIsDragActive] = useState(false);
 
     // Court-ready policy: OTP is required by default; waiver must be explicit + acknowledged.
@@ -65,7 +68,7 @@ export default function UploadFileForSigningScreen() {
 
     const fileInputRef = useRef(null);
 
-    const handleAddSpotForPage = (pageNumber, signerIdx = 0) => {
+    const handleAddSpotForPage = (pageNumber, signerIdx = 0, fieldType = 'signature') => {
         const signer = selectedSigners?.[signerIdx] || null;
         const signerName = signer?.Name || t('signing.signerFallback', { index: Number(signerIdx) + 1 });
 
@@ -81,6 +84,7 @@ export default function UploadFileForSigningScreen() {
                 signerUserId: signer?.UserId,
                 signerName,
                 isRequired: true,
+                type: fieldType,
             },
         ]);
     };
@@ -455,14 +459,21 @@ export default function UploadFileForSigningScreen() {
                                     </SecondaryButton>
                                 </SimpleContainer>
 
-                                <PdfViewer
-                                    pdfFile={selectedFile}
-                                    spots={signatureSpots}
-                                    onUpdateSpot={handleUpdateSpot}
-                                    onRemoveSpot={handleRemoveSpot}
-                                    onAddSpotForPage={handleAddSpotForPage}
-                                    signers={selectedSigners}
-                                />
+                                <SimpleContainer className="lw-signing-pdfViewerWrapper">
+                                    <FieldTypeNavbar selected={selectedFieldType} onSelect={setSelectedFieldType} />
+                                    <PdfViewer
+                                        pdfFile={selectedFile}
+                                        spots={signatureSpots}
+                                        onUpdateSpot={handleUpdateSpot}
+                                        onRemoveSpot={handleRemoveSpot}
+                                        onAddSpotForPage={handleAddSpotForPage}
+                                        signers={selectedSigners}
+                                    />
+                                    <FloatingAddField
+                                        onAdd={(page) => handleAddSpotForPage(page, 0, selectedFieldType)}
+                                        containerSelector=".lw-signing-pdfViewer"
+                                    />
+                                </SimpleContainer>
 
                                 <div className="lw-uploadSigningScreen__infoText">
                                     <Text14>

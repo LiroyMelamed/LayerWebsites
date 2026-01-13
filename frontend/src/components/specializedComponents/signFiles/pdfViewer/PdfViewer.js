@@ -2,8 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import SimpleContainer from "../../../simpleComponents/SimpleContainer";
 import PdfPage from "./PdfPage";
 import SignatureSpotsLayer from "../signatureSpots/SignatureSpotsLayer";
-import SecondaryButton from "../../../styledComponents/buttons/SecondaryButton";
-import { useTranslation } from 'react-i18next';
 
 const BASE_RENDER_WIDTH = 800;
 
@@ -14,9 +12,8 @@ export default function PdfViewer({
     onRemoveSpot,
     onAddSpotForPage,
     signers = [],
-    showAddSpotButtons = true,
 }) {
-    const { t } = useTranslation();
+    // translation not needed in this viewer component for commit (1)
     const [numPages, setNumPages] = useState(0);
     const didInitRef = useRef(false);
 
@@ -85,26 +82,7 @@ export default function PdfViewer({
                         ref={pageNumber === 1 ? pageContainerRef : undefined}
                         className="lw-signing-pageWrap"
                     >
-                        {showAddSpotButtons && (
-                            <SimpleContainer className="lw-signing-addSpotRow">
-                                {signers.length > 0 ? (
-                                    signers.map((signer, signerIdx) => (
-                                        <SecondaryButton
-                                            key={signer.UserId}
-                                            onPress={() => onAddSpotForPage(pageNumber, signerIdx)}
-                                        >
-                                            {t('signing.pdfViewer.addSpotForSigner', { name: signer.Name, pageNumber })}
-                                        </SecondaryButton>
-                                    ))
-                                ) : (
-                                    <SecondaryButton
-                                        onPress={() => onAddSpotForPage(pageNumber)}
-                                    >
-                                        {t('signing.pdfViewer.addSpot', { pageNumber })}
-                                    </SecondaryButton>
-                                )}
-                            </SimpleContainer>
-                        )}
+                        
 
                         <SimpleContainer
                             className="lw-signing-pageInner"
