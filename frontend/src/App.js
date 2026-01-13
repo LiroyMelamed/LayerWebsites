@@ -11,6 +11,7 @@ import { useFromApp } from './providers/FromAppProvider';
 import { SigningScreenName } from './screens/signingScreen/SigningScreen';
 import { useTranslation } from 'react-i18next';
 import FloatingLanguageBubble from './components/i18n/FloatingLanguageBubble';
+import { EvidenceDocumentsScreenName } from './screens/evidenceDocuments/EvidenceDocumentsScreen';
 
 const STACK_SUFFIX = "/*"
 
@@ -203,6 +204,11 @@ const App = () => {
 
       <Routes>
         <Route path={PublicSigningScreenName} element={<PublicSigningScreen />} />
+
+        <Route
+          path="/admin/evidence-documents"
+          element={<Navigate to={AdminStackName + EvidenceDocumentsScreenName} replace />}
+        />
 
         <Route path={LoginStackName + STACK_SUFFIX} element={<LoginStack />} />
 

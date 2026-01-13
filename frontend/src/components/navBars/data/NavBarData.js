@@ -6,7 +6,7 @@ import CaseFullView from "../../styledComponents/cases/CaseFullView";
 import { TaggedCasesScreenName } from "../../../screens/taggedCasesScreen/TaggedCasesScreen";
 import { AdminStackName } from "../../../navigation/AdminStack";
 import { SigningManagerScreenName } from "../../../screens/signingScreen/SigningManagerScreen";
-import { AuditTrailScreenName } from "../../../screens/auditTrailScreen/AuditTrailScreen";
+import { EvidenceDocumentsScreenName } from "../../../screens/evidenceDocuments/EvidenceDocumentsScreen";
 
 export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t) => ({
     NavBarLinks: [
@@ -23,10 +23,10 @@ export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t) =>
             onClick: () => navigate(AdminStackName + SigningManagerScreenName),
         },
         {
-            buttonText: t('nav.auditTrail'),
-            buttonScreen: t('nav.auditTrail'),
+            buttonText: t('nav.evidenceDocuments'),
+            buttonScreen: t('nav.evidenceDocuments'),
             icon: null,
-            onClick: () => navigate(AdminStackName + AuditTrailScreenName),
+            onClick: () => navigate(AdminStackName + EvidenceDocumentsScreenName),
         },
         {
             buttonText: t('nav.allCases'),

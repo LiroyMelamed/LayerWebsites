@@ -102,6 +102,39 @@
             "evidencePackageDownloadError": "Error downloading evidence package"
         }
     },
+    "evidenceDocuments": {
+        "pageTitle": "Evidence documents",
+        "searchTitle": "Search document / customer / case",
+        "filters": {
+            "caseId": "Case ID",
+            "from": "From",
+            "to": "To",
+            "otp": "OTP"
+        },
+        "columns": {
+            "client": "Customer",
+            "case": "Case",
+            "document": "Document",
+            "signedAt": "Signed at",
+            "otp": "OTP",
+            "actions": "Actions"
+        },
+        "otp": {
+            "required": "Required",
+            "waived": "Waived by lawyer"
+        },
+        "actions": {
+            "downloadZip": "Download evidence ZIP",
+            "loadMore": "Load more"
+        },
+        "empty": "No documents found",
+        "end": "No more results",
+        "casePrefix": "Case ",
+        "errors": {
+            "load": "Error loading evidence documents",
+            "downloadZip": "Error downloading evidence ZIP"
+        }
+    },
     "audit": {
         "pageTitle": "Audit Trail",
         "filters": {
@@ -325,6 +358,7 @@
         "newOrUpdateCase": "New / Update case",
         "allManagers": "All managers",
         "auditTrail": "Audit Trail",
+        "evidenceDocuments": "Evidence documents",
         "allCaseTypes": "All case types",
         "addCaseType": "Add case type",
         "notifications": "Notifications",

@@ -326,6 +326,7 @@
         "pinnedCases": "לתיקים נעוצים",
         "signingFiles": "מסמכים לחתימה",
         "auditTrail": "יומן פעולות",
+        "evidenceDocuments": "מסמכי ראיות",
         "allCases": "לכל התיקים",
         "newOrUpdateCase": "תיק חדש / עדכון תיק",
         "allManagers": "לכל המנהלים",
@@ -336,6 +337,39 @@
         "terms": "תקנון שימוש",
         "contact": "יצירת קשר",
         "contactMessage": "שלום, אשמח ליצירת קשר"
+    },
+    "evidenceDocuments": {
+        "pageTitle": "מסמכי ראיות",
+        "searchTitle": "חיפוש מסמך / לקוח / תיק",
+        "filters": {
+            "caseId": "מספר תיק",
+            "from": "מתאריך",
+            "to": "עד תאריך",
+            "otp": "OTP"
+        },
+        "columns": {
+            "client": "לקוח",
+            "case": "תיק",
+            "document": "מסמך",
+            "signedAt": "תאריך חתימה",
+            "otp": "OTP",
+            "actions": "פעולות"
+        },
+        "otp": {
+            "required": "נדרש",
+            "waived": "בוטל ע״י עו״ד"
+        },
+        "actions": {
+            "downloadZip": "הורד ZIP ראיות",
+            "loadMore": "טען עוד"
+        },
+        "empty": "לא נמצאו מסמכים",
+        "end": "אין עוד תוצאות",
+        "casePrefix": "תיק ",
+        "errors": {
+            "load": "שגיאה בטעינת מסמכי ראיות",
+            "downloadZip": "שגיאה בהורדת ZIP ראיות"
+        }
     },
     "signing": {
         "invalidLinkTitle": "קישור לא תקין",

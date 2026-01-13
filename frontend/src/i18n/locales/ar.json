@@ -160,6 +160,39 @@
             "EVIDENCE_ZIP_DOWNLOADED": "تنزيل حزمة الأدلة"
         }
     },
+    "evidenceDocuments": {
+        "pageTitle": "مستندات الأدلة",
+        "searchTitle": "بحث عن مستند / عميل / قضية",
+        "filters": {
+            "caseId": "رقم القضية",
+            "from": "من تاريخ",
+            "to": "إلى تاريخ",
+            "otp": "OTP"
+        },
+        "columns": {
+            "client": "العميل",
+            "case": "القضية",
+            "document": "المستند",
+            "signedAt": "تاريخ التوقيع",
+            "otp": "OTP",
+            "actions": "إجراءات"
+        },
+        "otp": {
+            "required": "مطلوب",
+            "waived": "تم الإلغاء بواسطة محامٍ"
+        },
+        "actions": {
+            "downloadZip": "تنزيل ZIP الأدلة",
+            "loadMore": "تحميل المزيد"
+        },
+        "empty": "لا توجد مستندات",
+        "end": "لا توجد نتائج أخرى",
+        "casePrefix": "قضية ",
+        "errors": {
+            "load": "حدث خطأ أثناء تحميل مستندات الأدلة",
+            "downloadZip": "حدث خطأ أثناء تنزيل ZIP الأدلة"
+        }
+    },
     "cases": {
         "caseType": "نوع الملف",
         "statusFilter": "الحالة",
@@ -322,6 +355,7 @@
         "pinnedCases": "الملفات المثبتة",
         "signingFiles": "مستندات للتوقيع",
         "auditTrail": "سجل الإجراءات",
+        "evidenceDocuments": "مستندات الأدلة",
         "allCases": "كل الملفات",
         "newOrUpdateCase": "ملف جديد / تحديث ملف",
         "allManagers": "كل المديرين",
