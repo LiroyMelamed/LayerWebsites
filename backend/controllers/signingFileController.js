@@ -8,7 +8,7 @@ const sendAndStoreNotification = require("../utils/sendAndStoreNotification");
 const { formatPhoneNumber } = require("../utils/phoneUtils");
 const { sendMessage, WEBSITE_DOMAIN } = require("../utils/sendMessage");
 const { detectHebrewSignatureSpotsFromPdfBuffer, streamToBuffer } = require("../utils/signatureDetection");
-const { PDFDocument } = require("pdf-lib");
+const { PDFDocument, StandardFonts } = require("pdf-lib");
 const { v4: uuid } = require("uuid");
 const crypto = require('crypto');
 const archiver = require('archiver');
@@ -2332,6 +2332,129 @@ exports.getEvidencePackageZip = async (req, res, next) => {
     } catch (err) {
         console.error('getEvidencePackageZip error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה ביצירת חבילת ראיות' });
+    }
+};
+
+// Evidence certificate (human-readable PDF) summarizing evidence for a signing file.
+exports.getEvidenceCertificate = async (req, res, next) => {
+    try {
+        const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
+        if (signingFileId === null) return;
+
+        const requesterId = Number(req.user?.UserId);
+        const role = req.user?.Role;
+        if (!Number.isFinite(requesterId) || requesterId <= 0) {
+            return fail(next, 'UNAUTHORIZED', 401);
+        }
+
+        // Authorization: lawyer owner or admin only
+        const filePolicy = await loadSigningPolicyForFile(signingFileId);
+        if (!filePolicy) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
+
+        const isOwnerLawyer = Number(filePolicy.LawyerId) === Number(requesterId);
+        const isAdmin = role === 'Admin';
+        if (!isOwnerLawyer && !isAdmin) {
+            return fail(next, 'FORBIDDEN', 403);
+        }
+
+        // Gather evidence rows (reuses existing loader)
+        const evidence = await loadEvidenceRowsForZip(signingFileId);
+        const fileRow = evidence.file;
+        if (!fileRow) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
+
+        if (String(fileRow.Status || '').toLowerCase() !== 'signed') {
+            return fail(next, 'DOCUMENT_NOT_SIGNED', 409);
+        }
+
+        // Build a simple PDF summary using pdf-lib
+        const doc = await PDFDocument.create();
+        const page = doc.addPage([595, 842]); // A4-ish
+        const font = await doc.embedFont(StandardFonts.Helvetica);
+        const fontSizeTitle = 16;
+        const fontSize = 11;
+        const marginLeft = 40;
+        let y = 800;
+
+        const pushLine = (text, opts = {}) => {
+            const size = opts.size || fontSize;
+            page.drawText(String(text || ''), {
+                x: marginLeft,
+                y,
+                size,
+                font,
+            });
+            y -= (opts.leading || (size + 6));
+        };
+
+        pushLine(`מסמך ראייה - ${fileRow.FileName || ''}`, { size: fontSizeTitle, leading: 22 });
+        pushLine('');
+
+        pushLine(`Case: ${fileRow.CaseId || '-'}    SigningFileId: ${fileRow.SigningFileId}`);
+        pushLine(`CreatedAt: ${fileRow.CreatedAt || '-'}    SignedAt: ${fileRow.SignedAt || '-'}`);
+        pushLine('');
+
+        pushLine('Signers:', { size: fontSizeTitle, leading: 18 });
+        // Collect unique signers from signatureSpots
+        const spots = evidence.signatureSpots || [];
+        const signersMap = new Map();
+        for (const s of spots) {
+            const key = String(s.SignerUserId || s.SignerName || `idx-${s.SignatureSpotId}`);
+            if (!signersMap.has(key)) {
+                signersMap.set(key, {
+                    name: s.SignerName || '-',
+                    userId: s.SignerUserId || null,
+                    phone: '-',
+                    email: '-',
+                    sampleIp: s.SignerIp || null,
+                    sampleUa: s.SignerUserAgent || null,
+                });
+            }
+        }
+
+        for (const [k, v] of signersMap.entries()) {
+            pushLine(`- ${v.name} (id: ${v.userId || '-'})`);
+            if (v.sampleIp || v.sampleUa) pushLine(`  IP: ${v.sampleIp || '-'}  UA: ${v.sampleUa || '-'}`);
+        }
+
+        pushLine('');
+        pushLine('Fields:', { size: fontSizeTitle, leading: 18 });
+        for (const s of spots) {
+            const type = s.Type || 'signature';
+            pushLine(`- ${type} | page ${s.PageNumber} | ${s.IsRequired ? 'required' : 'optional'} | signer: ${s.SignerName || '-'} | status: ${s.IsSigned ? 'signed' : 'unsigned'}`);
+        }
+
+        pushLine('');
+        pushLine('Evidence summary:', { size: fontSizeTitle, leading: 18 });
+        // IP/UserAgent summary (from audit and consents)
+        const consents = evidence.consents || [];
+        if (consents.length > 0) {
+            pushLine('Consents:');
+            for (const c of consents) {
+                pushLine(`- signerUserId: ${c.SignerUserId || '-'} acceptedAtUtc: ${c.AcceptedAtUtc || '-'} IP: ${c.Ip || '-'} UA: ${c.UserAgent || '-'} `);
+            }
+        }
+
+        pushLine('');
+        pushLine('Disclaimer: מסמך זה הופק ממערכת MelamedLaw לצרכי תיעוד.');
+
+        const pdfBytes = await doc.save();
+
+        // Filename: evidence_<caseId>_<signingFileId>_<YYYYMMDD_HHMM>.pdf (UTC)
+        const now = new Date();
+        const yyyy = String(now.getUTCFullYear());
+        const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(now.getUTCDate()).padStart(2, '0');
+        const hh = String(now.getUTCHours()).padStart(2, '0');
+        const min = String(now.getUTCMinutes()).padStart(2, '0');
+        const caseIdPart = fileRow.CaseId || 'noCase';
+        const filename = `evidence_${caseIdPart}_${signingFileId}_${yyyy}${mm}${dd}_${hh}${min}.pdf`;
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        return res.send(Buffer.from(pdfBytes));
+    } catch (err) {
+        console.error('getEvidenceCertificate error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה ביצירת מסמך ראייה' });
     }
 };
 

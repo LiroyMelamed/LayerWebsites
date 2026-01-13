@@ -50,6 +50,8 @@ router.get("/:signingFileId/evidence", authMiddleware, signingFileController.get
 
 // Evidence package ZIP download (lawyer/admin)
 router.get("/:signingFileId/evidence-package", authMiddleware, signingFileController.getEvidencePackageZip);
+// Evidence certificate (PDF) for quick human-readable record
+router.get("/:signingFileId/evidence-certificate", authMiddleware, signingFileController.getEvidenceCertificate);
 
 // OTP for signing (authenticated flows)
 router.post("/:signingFileId/otp/request", authMiddleware, signingFileController.requestSigningOtp);

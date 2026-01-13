@@ -231,6 +231,51 @@ export default function SigningManagerScreen() {
         }
     };
 
+    const handleDownloadEvidencePdf = async (file) => {
+        try {
+            const signingFileId = file?.SigningFileId;
+            if (!signingFileId) {
+                showError({ messageKey: 'signingManager.errors.missingDocumentId' });
+                return;
+            }
+
+            if (!file?.SignedFileKey) {
+                showError({ messageKey: 'signingManager.errors.evidencePackageSignedOnly' });
+                return;
+            }
+
+            const baseUrl = ApiUtils?.defaults?.baseURL || "";
+            const token = localStorage.getItem("token");
+            const url = `${baseUrl}/SigningFiles/${encodeURIComponent(signingFileId)}/evidence-certificate`;
+
+            const res = await fetch(url, {
+                method: "GET",
+                headers: {
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+            });
+
+            if (!res.ok) {
+                let payload = null;
+                try {
+                    payload = await res.json();
+                } catch {
+                    payload = null;
+                }
+                showError({ message: payload?.message, messageKey: payload?.message ? undefined : 'signingManager.errors.evidencePackageDownloadError' });
+                return;
+            }
+
+            const disposition = res.headers.get("content-disposition");
+            const filename = parseFilenameFromContentDisposition(disposition) || `evidence_${file?.CaseId || "noCase"}_${signingFileId}.pdf`;
+            const blob = await res.blob();
+            downloadBlobAsFile(blob, filename);
+        } catch (err) {
+            console.error("Evidence PDF download error:", err);
+            showError({ messageKey: 'signingManager.errors.evidencePackageDownloadError' });
+        }
+    };
+
     const handleSearch = (qOrEvent) => {
         const next =
             typeof qOrEvent === "string"
@@ -502,9 +547,9 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                         {file?.Status === "signed" && (
                             <PrimaryButton onPress={onDownloadSigned}>{t('signingManager.actions.downloadSigned')}</PrimaryButton>
                         )}
-                        {Boolean(file?.SignedFileKey) && (
-                            <PrimaryButton onPress={onDownloadEvidencePackage}>{t('signing.evidencePackageDownload')}</PrimaryButton>
-                        )}
+                                {Boolean(file?.SignedFileKey) && (
+                                    <PrimaryButton onPress={onDownloadEvidencePdf}>הורד מסמך ראייה (PDF)</PrimaryButton>
+                                )}
                         <SecondaryButton onPress={onClose}>{t('common.close')}</SecondaryButton>
                     </SimpleContainer>
                 </>
