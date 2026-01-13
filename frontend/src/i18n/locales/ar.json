@@ -84,7 +84,11 @@
             "openPdf": "فتح PDF"
         },
         "details": {
-            "titleFallback": "تفاصيل المستند"
+            "titleFallback": "تفاصيل المستند",
+            "tabs": {
+                "details": "تفاصيل",
+                "auditTrail": "سجل التدقيق"
+            }
         },
         "aria": {
             "signaturesPercent": "التواقيع: {{percent}}%"
@@ -96,6 +100,59 @@
             "missingDocumentId": "خطأ: معرف المستند مفقود",
             "evidencePackageSignedOnly": "حزمة الأدلة متاحة فقط بعد اكتمال التوقيع",
             "evidencePackageDownloadError": "حدث خطأ أثناء تنزيل حزمة الأدلة"
+        }
+    },
+    "audit": {
+        "filters": {
+            "eventType": "الإجراء",
+            "actorType": "نوع المنفّذ",
+            "from": "من تاريخ",
+            "to": "إلى تاريخ",
+            "search": "بحث"
+        },
+        "columns": {
+            "dateTime": "التاريخ/الوقت",
+            "action": "الإجراء",
+            "actor": "المنفّذ",
+            "status": "النتيجة",
+            "ip": "IP",
+            "device": "الجهاز",
+            "details": "التفاصيل"
+        },
+        "actions": {
+            "details": "تفاصيل",
+            "loadMore": "تحميل المزيد"
+        },
+        "status": {
+            "success": "نجاح",
+            "fail": "فشل"
+        },
+        "empty": "لا توجد أحداث للعرض",
+        "end": "لا توجد أحداث أخرى",
+        "errors": {
+            "load": "حدث خطأ أثناء تحميل سجل التدقيق"
+        },
+        "details": {
+            "title": "تفاصيل الحدث",
+            "details": "تفاصيل"
+        },
+        "actorTypes": {
+            "LAWYER": "محام",
+            "CLIENT": "عميل",
+            "SYSTEM": "النظام",
+            "PUBLIC": "عام"
+        },
+        "eventTypes": {
+            "PDF_VIEWED": "عرض PDF",
+            "OTP_SENT": "إرسال OTP",
+            "OTP_VERIFIED": "تأكيد OTP",
+            "CONSENT_ACCEPTED": "قبول الموافقة",
+            "SIGN_ATTEMPT": "محاولة توقيع",
+            "SIGN_SUCCESS": "تم التوقيع",
+            "SIGN_REJECTED": "تم رفض التوقيع",
+            "SIGNED_PDF_GENERATED": "إنشاء PDF موقّع",
+            "SIGNED_PDF_DOWNLOADED": "تنزيل PDF موقّع",
+            "EVIDENCE_ZIP_DOWNLOADED": "تنزيل حزمة الأدلة"
         }
     },
     "cases": {

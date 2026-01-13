@@ -84,7 +84,11 @@
             "openPdf": "Open PDF"
         },
         "details": {
-            "titleFallback": "Document details"
+            "titleFallback": "Document details",
+            "tabs": {
+                "details": "Details",
+                "auditTrail": "Audit trail"
+            }
         },
         "aria": {
             "signaturesPercent": "Signatures: {{percent}}%"
@@ -96,6 +100,59 @@
             "missingDocumentId": "Error: missing document ID",
             "evidencePackageSignedOnly": "Evidence package is available only after full signature",
             "evidencePackageDownloadError": "Error downloading evidence package"
+        }
+    },
+    "audit": {
+        "filters": {
+            "eventType": "Action",
+            "actorType": "Actor type",
+            "from": "From",
+            "to": "To",
+            "search": "Search"
+        },
+        "columns": {
+            "dateTime": "Date/time",
+            "action": "Action",
+            "actor": "Actor",
+            "status": "Result",
+            "ip": "IP",
+            "device": "Device",
+            "details": "Details"
+        },
+        "actions": {
+            "details": "Details",
+            "loadMore": "Load more"
+        },
+        "status": {
+            "success": "Success",
+            "fail": "Fail"
+        },
+        "empty": "No events to display",
+        "end": "No more events",
+        "errors": {
+            "load": "Error loading audit trail"
+        },
+        "details": {
+            "title": "Audit event details",
+            "details": "Details"
+        },
+        "actorTypes": {
+            "LAWYER": "Lawyer",
+            "CLIENT": "Client",
+            "SYSTEM": "System",
+            "PUBLIC": "Public"
+        },
+        "eventTypes": {
+            "PDF_VIEWED": "PDF viewed",
+            "OTP_SENT": "OTP sent",
+            "OTP_VERIFIED": "OTP verified",
+            "CONSENT_ACCEPTED": "Consent accepted",
+            "SIGN_ATTEMPT": "Sign attempt",
+            "SIGN_SUCCESS": "Sign success",
+            "SIGN_REJECTED": "Sign rejected",
+            "SIGNED_PDF_GENERATED": "Signed PDF generated",
+            "SIGNED_PDF_DOWNLOADED": "Signed PDF downloaded",
+            "EVIDENCE_ZIP_DOWNLOADED": "Evidence package downloaded"
         }
     },
     "cases": {

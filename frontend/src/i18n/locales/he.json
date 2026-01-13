@@ -102,7 +102,11 @@
             "openPdf": "פתח PDF"
         },
         "details": {
-            "titleFallback": "פרטי מסמך"
+            "titleFallback": "פרטי מסמך",
+            "tabs": {
+                "details": "פרטים",
+                "auditTrail": "יומן פעולות"
+            }
         },
         "aria": {
             "signaturesPercent": "חתימות: {{percent}}%"
@@ -114,6 +118,59 @@
             "missingDocumentId": "שגיאה: מזהה מסמך חסר",
             "evidencePackageSignedOnly": "חבילת ראיות זמינה רק לאחר חתימה מלאה",
             "evidencePackageDownloadError": "שגיאה בהורדת חבילת ראיות"
+        }
+    },
+    "audit": {
+        "filters": {
+            "eventType": "פעולה",
+            "actorType": "סוג מבצע",
+            "from": "מתאריך",
+            "to": "עד תאריך",
+            "search": "חיפוש"
+        },
+        "columns": {
+            "dateTime": "תאריך/שעה",
+            "action": "פעולה",
+            "actor": "מבצע",
+            "status": "תוצאה",
+            "ip": "IP",
+            "device": "מכשיר",
+            "details": "פרטים"
+        },
+        "actions": {
+            "details": "פרטים",
+            "loadMore": "טען עוד"
+        },
+        "status": {
+            "success": "הצלחה",
+            "fail": "כשל"
+        },
+        "empty": "אין אירועים להצגה",
+        "end": "אין אירועים נוספים",
+        "errors": {
+            "load": "שגיאה בטעינת יומן הפעולות"
+        },
+        "details": {
+            "title": "פרטי אירוע",
+            "details": "פרטים"
+        },
+        "actorTypes": {
+            "LAWYER": "עו״ד",
+            "CLIENT": "לקוח",
+            "SYSTEM": "מערכת",
+            "PUBLIC": "ציבורי"
+        },
+        "eventTypes": {
+            "PDF_VIEWED": "צפייה ב-PDF",
+            "OTP_SENT": "שליחת OTP",
+            "OTP_VERIFIED": "אימות OTP",
+            "CONSENT_ACCEPTED": "אישור הסכמה",
+            "SIGN_ATTEMPT": "ניסיון חתימה",
+            "SIGN_SUCCESS": "חתימה הצליחה",
+            "SIGN_REJECTED": "חתימה נדחתה",
+            "SIGNED_PDF_GENERATED": "יצירת PDF חתום",
+            "SIGNED_PDF_DOWNLOADED": "הורדת PDF חתום",
+            "EVIDENCE_ZIP_DOWNLOADED": "הורדת חבילת ראיות"
         }
     },
     "cases": {

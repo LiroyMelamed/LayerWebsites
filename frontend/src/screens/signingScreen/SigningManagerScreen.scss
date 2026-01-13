@@ -132,6 +132,144 @@
     margin-bottom: v.$space-3;
 }
 
+.lw-signingManagerScreen__detailsTabsRow {
+    @include m.row(v.$space-4, wrap, center, flex-start);
+    margin-block-start: v.$space-4;
+    margin-block-end: v.$space-3;
+    border-bottom: 0.125rem solid #e0e0e0;
+    padding-block-end: v.$space-2;
+}
+
+.lw-auditTrail {
+    width: 100%;
+    flex-direction: column;
+}
+
+.lw-auditTrail__filters {
+    @include m.row(v.$space-3, wrap);
+    align-items: flex-end;
+    margin-block-end: v.$space-3;
+}
+
+.lw-auditTrail__filterGroup {
+    flex: 1 1 12rem;
+    min-inline-size: 10rem;
+}
+
+.lw-auditTrail__filterGroup--wide {
+    flex: 2 1 18rem;
+    min-inline-size: 14rem;
+}
+
+.lw-auditTrail__label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    margin-block-end: 0.25rem;
+}
+
+.lw-auditTrail__select {
+    width: 100%;
+    min-block-size: 2.75rem;
+    border-radius: 0.5rem;
+    border: 0.0625rem solid #e0e0e0;
+    padding: 0 0.75rem;
+    background-color: #fff;
+}
+
+.lw-auditTrail__state {
+    width: 100%;
+    padding: v.$space-4 0;
+    text-align: center;
+}
+
+.lw-auditTrail__table {
+    width: 100%;
+    border: 0.0625rem solid #e0e0e0;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.lw-auditTrail__row {
+    display: grid;
+    grid-template-columns: 10rem 1.2fr 1fr 6rem 8rem 1fr 8rem;
+    gap: 0;
+    border-bottom: 0.0625rem solid #e0e0e0;
+    align-items: center;
+}
+
+.lw-auditTrail__row--header {
+    font-weight: 700;
+}
+
+.lw-auditTrail__cell {
+    padding: 0.75rem;
+    font-size: 0.8125rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lw-auditTrail__footer {
+    margin-block-start: v.$space-3;
+    width: 100%;
+    justify-content: center;
+}
+
+.lw-auditTrail__detailsPopup {
+    width: 100%;
+    max-width: 44rem;
+    flex-direction: column;
+}
+
+.lw-auditTrail__kv {
+    @include m.row(v.$space-2);
+    font-size: 0.8125rem;
+    color: #555;
+    margin-bottom: 0.5rem;
+    overflow-wrap: anywhere;
+}
+
+.lw-auditTrail__k {
+    font-weight: 700;
+}
+
+.lw-auditTrail__v {
+    font-weight: 400;
+}
+
+.lw-auditTrail__detailsJson {
+    margin-top: v.$space-3;
+}
+
+.lw-auditTrail__pre {
+    border: 0.0625rem solid #e0e0e0;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    max-height: 18rem;
+    overflow: auto;
+    background-color: #fff;
+}
+
+.lw-auditTrail__actions {
+    @include m.row(v.$space-2, wrap);
+    margin-block-start: v.$space-3;
+}
+
+@media (max-width: v.$bp-narrow) {
+    .lw-auditTrail__row {
+        grid-template-columns: 1fr;
+    }
+
+    .lw-auditTrail__row--header {
+        display: none;
+    }
+
+    .lw-auditTrail__cell {
+        white-space: normal;
+    }
+}
+
 .lw-signingManagerScreen__progress {
     appearance: none;
     -webkit-appearance: none;
