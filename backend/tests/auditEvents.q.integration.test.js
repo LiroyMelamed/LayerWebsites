@@ -11,8 +11,6 @@ process.env.IS_PRODUCTION = process.env.IS_PRODUCTION || 'false';
 const { resetStore } = require('../utils/rateLimiter');
 const pool = require('../config/db');
 
-const ALLOW = String(process.env.ALLOW_DB_DESTRUCTIVE_TESTS || '').toLowerCase() === 'true';
-
 function makeToken({ userid = 1, role = 'Admin' } = {}) {
   return jwt.sign({ userid, role, phoneNumber: '0000000000' }, process.env.JWT_SECRET, {
     expiresIn: '1h',
@@ -27,6 +25,20 @@ async function getAnyCaseTypeIdOrNull() {
   } catch {
     return null;
   }
+}
+
+async function ensureCaseTypeId() {
+  const existing = await getAnyCaseTypeIdOrNull();
+  if (existing !== null) return existing;
+
+  const name = `Test CaseType ${randomUUID()}`;
+  const res = await pool.query(
+    `insert into casetypes (casetypename, numberofstages)
+     values ($1, $2)
+     returning casetypeid`,
+    [name, 1]
+  );
+  return Number(res.rows[0].casetypeid);
 }
 
 async function insertUser({ name, email, phone, role }) {
@@ -66,11 +78,13 @@ async function insertCase({ caseName, caseTypeId, userId }) {
 }
 
 async function insertSigningFile({ caseId, lawyerId, clientId, filename }) {
+  const fileKey = `file_${randomUUID()}`;
+  const originalFileKey = `orig_${randomUUID()}`;
   const res = await pool.query(
-    `insert into signingfiles (caseid, lawyerid, clientid, filename, originalfilekey, status, createdat)
-     values ($1,$2,$3,$4,$5,$6,now())
+    `insert into signingfiles (caseid, lawyerid, clientid, filename, filekey, originalfilekey, status, createdat)
+     values ($1,$2,$3,$4,$5,$6,$7,now())
      returning signingfileid`,
-    [caseId, lawyerId, clientId, filename, `orig_${randomUUID()}`, 'pending']
+    [caseId, lawyerId, clientId, filename, fileKey, originalFileKey, 'pending']
   );
   return Number(res.rows[0].signingfileid);
 }
@@ -106,57 +120,33 @@ const created = {
   signingFileIds: [],
 };
 
-test.before(async () => {
-  if (!ALLOW) return;
-
-  // Ensure a clean slate (audit_events is append-only, so truncate is required).
-  await pool.query('truncate table audit_events');
-});
-
-test.after(async () => {
-  if (!ALLOW) return;
-
-  // Cleanup: audit_events must go first, otherwise deleting signingfiles would attempt ON DELETE SET NULL.
-  await pool.query('truncate table audit_events');
-
-  if (created.signingFileIds.length) {
-    await pool.query(`delete from signingfiles where signingfileid = any($1::int[])`, [created.signingFileIds]);
-  }
-  if (created.caseIds.length) {
-    await pool.query(`delete from cases where caseid = any($1::int[])`, [created.caseIds]);
-  }
-  if (created.userIds.length) {
-    await pool.query(`delete from users where userid = any($1::int[])`, [created.userIds]);
-  }
-});
-
-test('q search matches case/client/document fields (admin)', { skip: !ALLOW }, async () => {
+test('q search matches case/client/document fields (admin)', async () => {
   resetStore();
   delete require.cache[require.resolve('../app')];
   const app = require('../app');
 
-  const suffix = String(Date.now());
-  const caseTypeId = (await getAnyCaseTypeIdOrNull()) || 1;
+  const runTag = `auditq_${randomUUID()}`;
+  const caseTypeId = await ensureCaseTypeId();
 
   const lawyerId = await insertUser({
-    name: `Test Lawyer ${suffix}`,
-    email: `lawyer_${suffix}@example.com`,
-    phone: `050000${suffix.slice(-4)}`,
+    name: `Test Lawyer ${runTag}`,
+    email: `lawyer_${runTag}@example.com`,
+    phone: `050000${String(Date.now()).slice(-4)}`,
     role: 'Lawyer',
   });
   const clientId = await insertUser({
-    name: `Test Client ${suffix}`,
-    email: `client_${suffix}@example.com`,
-    phone: `052000${suffix.slice(-4)}`,
+    name: `Test Client ${runTag}`,
+    email: `client_${runTag}@example.com`,
+    phone: `052000${String(Date.now()).slice(-4)}`,
     role: 'User',
   });
   created.userIds.push(lawyerId, clientId);
 
-  const caseName = `Case Alpha ${suffix}`;
+  const caseName = `Case Alpha ${runTag}`;
   const caseId = await insertCase({ caseName, caseTypeId, userId: clientId });
   created.caseIds.push(caseId);
 
-  const filename = `contract_${suffix}.pdf`;
+  const filename = `contract_${runTag}.pdf`;
   const signingFileId = await insertSigningFile({ caseId, lawyerId, clientId, filename });
   created.signingFileIds.push(signingFileId);
 
@@ -171,7 +161,7 @@ test('q search matches case/client/document fields (admin)', { skip: !ALLOW }, a
   });
 
   const res = await request(app)
-    .get(`/api/audit-events?q=${encodeURIComponent('contract_' + suffix)}&limit=50`)
+    .get(`/api/audit-events?q=${encodeURIComponent('contract_' + runTag)}&limit=50`)
     .set('Authorization', `Bearer ${makeToken({ userid: 9999, role: 'Admin' })}`);
 
   assert.equal(res.status, 200);
@@ -188,43 +178,43 @@ test('q search matches case/client/document fields (admin)', { skip: !ALLOW }, a
   // Enriched fields must be present (may be null in other rows).
   assert.equal(found.caseName, caseName);
   assert.equal(found.documentFilename, filename);
-  assert.equal(found.clientName, `Test Client ${suffix}`);
+  assert.equal(found.clientName, `Test Client ${runTag}`);
 });
 
-test('lawyer scoping still enforced with q', { skip: !ALLOW }, async () => {
+test('lawyer scoping still enforced with q', async () => {
   resetStore();
   delete require.cache[require.resolve('../app')];
   const app = require('../app');
 
-  const suffix = String(Date.now() + 1);
-  const caseTypeId = (await getAnyCaseTypeIdOrNull()) || 1;
+  const runTag = `auditq_${randomUUID()}`;
+  const caseTypeId = await ensureCaseTypeId();
 
   const lawyer1Id = await insertUser({
-    name: `Lawyer1 ${suffix}`,
-    email: `lawyer1_${suffix}@example.com`,
-    phone: `050111${suffix.slice(-4)}`,
+    name: `Lawyer1 ${runTag}`,
+    email: `lawyer1_${runTag}@example.com`,
+    phone: `050111${String(Date.now()).slice(-4)}`,
     role: 'Lawyer',
   });
   const lawyer2Id = await insertUser({
-    name: `Lawyer2 ${suffix}`,
-    email: `lawyer2_${suffix}@example.com`,
-    phone: `050222${suffix.slice(-4)}`,
+    name: `Lawyer2 ${runTag}`,
+    email: `lawyer2_${runTag}@example.com`,
+    phone: `050222${String(Date.now()).slice(-4)}`,
     role: 'Lawyer',
   });
   const clientId = await insertUser({
-    name: `Client ${suffix}`,
-    email: `client2_${suffix}@example.com`,
-    phone: `052333${suffix.slice(-4)}`,
+    name: `Client ${runTag}`,
+    email: `client2_${runTag}@example.com`,
+    phone: `052333${String(Date.now()).slice(-4)}`,
     role: 'User',
   });
   created.userIds.push(lawyer1Id, lawyer2Id, clientId);
 
-  const case1Id = await insertCase({ caseName: `Case1 ${suffix}`, caseTypeId, userId: clientId });
-  const case2Id = await insertCase({ caseName: `Case2 ${suffix}`, caseTypeId, userId: clientId });
+  const case1Id = await insertCase({ caseName: `Case1 ${runTag}`, caseTypeId, userId: clientId });
+  const case2Id = await insertCase({ caseName: `Case2 ${runTag}`, caseTypeId, userId: clientId });
   created.caseIds.push(case1Id, case2Id);
 
-  const signingFile1Id = await insertSigningFile({ caseId: case1Id, lawyerId: lawyer1Id, clientId, filename: `doc_${suffix}_1.pdf` });
-  const signingFile2Id = await insertSigningFile({ caseId: case2Id, lawyerId: lawyer2Id, clientId, filename: `doc_${suffix}_2.pdf` });
+  const signingFile1Id = await insertSigningFile({ caseId: case1Id, lawyerId: lawyer1Id, clientId, filename: `doc_${runTag}_1.pdf` });
+  const signingFile2Id = await insertSigningFile({ caseId: case2Id, lawyerId: lawyer2Id, clientId, filename: `doc_${runTag}_2.pdf` });
   created.signingFileIds.push(signingFile1Id, signingFile2Id);
 
   const visibleEventId = await insertAuditEvent({
@@ -246,7 +236,7 @@ test('lawyer scoping still enforced with q', { skip: !ALLOW }, async () => {
   });
 
   const res = await request(app)
-    .get(`/api/audit-events?q=${encodeURIComponent(suffix)}&limit=100`)
+    .get(`/api/audit-events?q=${encodeURIComponent(runTag)}&limit=100`)
     .set('Authorization', `Bearer ${makeToken({ userid: lawyer1Id, role: 'Lawyer' })}`);
 
   assert.equal(res.status, 200);
