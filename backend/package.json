@@ -22,10 +22,12 @@
     "firebase-admin": "^13.1.0",
     "jsonwebtoken": "^9.0.2",
     "messagebird": "^4.0.1",
-    "pdf-parse": "^2.4.5",
     "pdf-lib": "^1.17.1",
+    "pdf-parse": "^2.4.5",
     "pdfjs-dist": "^4.4.168",
     "pg": "^8.16.3",
+    "puppeteer": "^21.3.0",
+    "qrcode": "^1.5.4",
     "twilio": "^5.4.5",
     "uuid": "^13.0.0"
   },

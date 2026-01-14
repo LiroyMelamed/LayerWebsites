@@ -11,12 +11,16 @@ const { detectHebrewSignatureSpotsFromPdfBuffer, streamToBuffer } = require("../
 const { PDFDocument, StandardFonts } = require("pdf-lib");
 const { v4: uuid } = require("uuid");
 const crypto = require('crypto');
+const { renderEvidencePdf, loadFileAsDataUrl } = require('../lib/renderEvidencePdf');
+const fs = require('fs');
+const path = require('path');
 const archiver = require('archiver');
 const { Readable } = require('stream');
 const { requireInt, parsePositiveIntStrict } = require("../utils/paramValidation");
 const { getPagination } = require("../utils/pagination");
 const { createAppError } = require('../utils/appError');
 const { getHebrewMessage } = require('../utils/errors.he');
+const QRCode = require('qrcode');
 
 const BASE_RENDER_WIDTH = 800;
 
@@ -2366,94 +2370,165 @@ exports.getEvidenceCertificate = async (req, res, next) => {
             return fail(next, 'DOCUMENT_NOT_SIGNED', 409);
         }
 
-        // Build a simple PDF summary using pdf-lib
-        const doc = await PDFDocument.create();
-        const page = doc.addPage([595, 842]); // A4-ish
-        const font = await doc.embedFont(StandardFonts.Helvetica);
-        // Helper: sanitize strings to WinAnsi / ASCII-only to avoid pdf-lib encoding errors
-        const sanitizeForWinAnsi = (input) => {
+        // Build a human-readable evidence certificate using Puppeteer HTML->PDF
+        // Map data according to the requested rules and call renderEvidencePdf
+        const spots = evidence.signatureSpots || [];
+        const auditEvents = evidence.auditEvents || [];
+        const otpVerifications = evidence.otpVerifications || [];
+
+        // Batch-fetch user info for any signer userIds (to get phone/email)
+        const signerUserIds = Array.from(new Set(spots.map(s => s.SignerUserId).filter(id => id)));
+        const usersById = new Map();
+        if (signerUserIds.length > 0) {
+            const usersRes = await pool.query(
+                `select userid as "UserId", name as "Name", email as "Email", phonenumber as "Phone" from users where userid = any($1::int[])`,
+                [signerUserIds]
+            );
+            for (const r of usersRes.rows) usersById.set(String(r.UserId), r);
+        }
+
+        const signersMap = new Map();
+        const colorPalette = ['#1b3a57', '#e53e3e', '#dd6b20', '#2f855a', '#6b46c1', '#b83280', '#319795'];
+        let colorIdx = 0;
+
+        const normalizeUtc = (value) => {
+            if (!value) return '-';
+            const d = new Date(value);
+            if (Number.isNaN(d.getTime())) return String(value);
+            return d.toISOString().replace('T', ' ').slice(0, 19) + 'Z';
+        };
+
+        const parseEventMeta = (event) => {
+            if (!event?.Metadata) return {};
+            if (typeof event.Metadata === 'object') return event.Metadata;
             try {
-                const s = String(input || '');
-                // Replace non-ASCII characters with '?'
-                return s.replace(/[^\x00-\x7F]/g, '?');
+                return JSON.parse(event.Metadata);
             } catch {
-                return '';
+                return {};
             }
         };
-        const fontSizeTitle = 16;
-        const fontSize = 11;
-        const marginLeft = 40;
-        let y = 800;
 
-        const pushLine = (text, opts = {}) => {
-            const size = opts.size || fontSize;
-            const safe = sanitizeForWinAnsi(text);
-            page.drawText(safe, {
-                x: marginLeft,
-                y,
-                size,
-                font,
-            });
-            y -= (opts.leading || (size + 6));
+        const pickUtc = (...values) => {
+            for (const value of values) {
+                const normalized = normalizeUtc(value);
+                if (normalized !== '-') return normalized;
+            }
+            return '-';
         };
 
-        // Use English labels inside the generated PDF to ensure WinAnsi compatibility.
-        pushLine(`Evidence Certificate - ${sanitizeForWinAnsi(fileRow.FileName || '')}`, { size: fontSizeTitle, leading: 22 });
-        pushLine('');
+        const parseDeviceBrowser = (ua) => {
+            if (!ua) return '-';
+            const s = String(ua);
+            const device = /android|iphone|ipad|mobile/i.test(s)
+                ? 'Mobile'
+                : /Windows NT|Macintosh|Linux/i.test(s)
+                    ? 'Desktop'
+                    : 'Unknown';
+            let browser = 'Other';
+            if (/edg/i.test(s)) browser = 'Edge';
+            else if (/chrome/i.test(s)) browser = 'Chrome';
+            else if (/firefox/i.test(s)) browser = 'Firefox';
+            else if (/safari/i.test(s) && !/chrome/i.test(s)) browser = 'Safari';
+            return `${device} / ${browser}`;
+        };
 
-        pushLine(`Case: ${sanitizeForWinAnsi(fileRow.CaseId || '-') }    SigningFileId: ${sanitizeForWinAnsi(fileRow.SigningFileId)}`);
-        pushLine(`CreatedAt: ${sanitizeForWinAnsi(fileRow.CreatedAt || '-') }    SignedAt: ${sanitizeForWinAnsi(fileRow.SignedAt || '-')}`);
-        pushLine('');
-
-        pushLine('Signers:', { size: fontSizeTitle, leading: 18 });
-        // Collect unique signers from signatureSpots
-        const spots = evidence.signatureSpots || [];
-        const signersMap = new Map();
         for (const s of spots) {
-            const key = String(s.SignerUserId || s.SignerName || `idx-${s.SignatureSpotId}`);
+            const key = s.SignerUserId ? `u:${s.SignerUserId}` : `n:${s.SignerName || 'idx' + s.SignatureSpotId}`;
             if (!signersMap.has(key)) {
+                const userInfo = s.SignerUserId ? usersById.get(String(s.SignerUserId)) : null;
+
+                const viewedEvent = auditEvents.find(e => String(e.EventType) === 'PDF_VIEWED' && String(e.SigningSessionId) === String(s.SigningSessionId));
+                const signedEvent = auditEvents.find(e => String(e.EventType) === 'SIGN_SUCCESS' && String(e.SigningSessionId) === String(s.SigningSessionId));
+                const otpRow = otpVerifications.find(o => String(o.SignerUserId) === String(s.SignerUserId) && String(o.SigningSessionId) === String(s.SigningSessionId));
+                const otpSentEvent = auditEvents.find(
+                    e => String(e.EventType) === 'OTP_SENT' && String(e.SigningSessionId) === String(s.SigningSessionId)
+                        && String(e.ActorUserId) === String(s.SignerUserId)
+                );
+                const publicLinkEvent = auditEvents.find(e => {
+                    if (String(e.EventType) !== 'PUBLIC_LINK_ISSUED') return false;
+                    const meta = parseEventMeta(e);
+                    return String(meta?.targetSignerUserId || '') === String(s.SignerUserId || '');
+                });
+
+                const timeSentUtc = pickUtc(
+                    otpRow?.SentAtUtc,
+                    otpSentEvent?.OccurredAtUtc,
+                    publicLinkEvent?.OccurredAtUtc,
+                    fileRow?.CreatedAt
+                );
+
                 signersMap.set(key, {
-                    name: s.SignerName || '-',
-                    userId: s.SignerUserId || null,
-                    phone: '-',
-                    email: '-',
-                    sampleIp: s.SignerIp || null,
-                    sampleUa: s.SignerUserAgent || null,
+                    name: s.SignerName || (userInfo?.Name) || '-',
+                    phone: userInfo?.Phone || '-',
+                    email: userInfo?.Email || '-',
+                    device: parseDeviceBrowser(s.SignerUserAgent || viewedEvent?.UserAgent || otpSentEvent?.UserAgent || '-'),
+                    ip: s.SignerIp || viewedEvent?.Ip || otpSentEvent?.Ip || '-',
+                    otpUsed: Boolean(s.OtpVerificationId || (otpRow && otpRow.Verified)),
+                    timeSentUtc,
+                    timeViewedUtc: normalizeUtc(viewedEvent?.OccurredAtUtc),
+                    timeSignedUtc: normalizeUtc(s.SignedAt || signedEvent?.OccurredAtUtc),
+                    color: colorPalette[(colorIdx++) % colorPalette.length],
                 });
             }
         }
 
-        for (const [k, v] of signersMap.entries()) {
-            pushLine(`- ${sanitizeForWinAnsi(v.name)} (id: ${sanitizeForWinAnsi(v.userId || '-')})`);
-            if (v.sampleIp || v.sampleUa) pushLine(`  IP: ${sanitizeForWinAnsi(v.sampleIp || '-') }  UA: ${sanitizeForWinAnsi(v.sampleUa || '-')}`);
-        }
+        const signers = Array.from(signersMap.values());
 
-        pushLine('');
-        pushLine('Fields:', { size: fontSizeTitle, leading: 18 });
-        for (const s of spots) {
-            const type = sanitizeForWinAnsi(s.Type || 'signature');
-            const pageNum = sanitizeForWinAnsi(s.PageNumber || '-');
-            const requiredText = s.IsRequired ? 'required' : 'optional';
-            const signerText = sanitizeForWinAnsi(s.SignerName || '-');
-            const statusTextField = s.IsSigned ? 'signed' : 'unsigned';
-            pushLine(`- ${type} | page ${pageNum} | ${requiredText} | signer: ${signerText} | status: ${statusTextField}`);
-        }
-
-        pushLine('');
-        pushLine('Evidence summary:', { size: fontSizeTitle, leading: 18 });
-        // IP/UserAgent summary (from audit and consents)
-        const consents = evidence.consents || [];
-        if (consents.length > 0) {
-            pushLine('Consents:');
-            for (const c of consents) {
-                pushLine(`- signerUserId: ${sanitizeForWinAnsi(c.SignerUserId || '-')} acceptedAtUtc: ${sanitizeForWinAnsi(c.AcceptedAtUtc || '-')} IP: ${sanitizeForWinAnsi(c.Ip || '-')} UA: ${sanitizeForWinAnsi(c.UserAgent || '-')}`);
+        // Sender info: try to resolve lawyer/admin user
+        let sender = { name: '-', email: '-' };
+        try {
+            if (fileRow.LawyerId) {
+                const lr = await pool.query('select userid as "UserId", name as "Name", email as "Email" from users where userid = $1', [fileRow.LawyerId]);
+                if (lr.rows.length > 0) {
+                    sender.name = lr.rows[0].Name || sender.name;
+                    sender.email = lr.rows[0].Email || sender.email;
+                }
             }
+        } catch (e) {
+            // ignore
         }
 
-        pushLine('');
-        pushLine('Disclaimer: This document was generated by MelamedLaw for record-keeping purposes.');
+        let signedHashSha256 = fileRow.SignedPdfSha256 || null;
+        if (!signedHashSha256) {
+            const signedPdf = await loadSignedPdfStreamOrPlaceholder({ signingFileId, fileRow });
+            const signedPdfBuffer = await streamToBuffer(signedPdf.stream);
+            signedHashSha256 = sha256Hex(signedPdfBuffer);
+        }
 
-        const pdfBytes = await doc.save();
+        const doc = {
+            documentId: fileRow.SigningFileId || signingFileId,
+            documentName: fileRow.FileName || '-',
+            creationUtc: new Date(fileRow.CreatedAt || new Date()).toISOString().replace('T', ' ').slice(0, 19) + 'Z',
+            signedHashSha256: signedHashSha256 || '-',
+        };
+
+        const logoCandidates = [
+            path.resolve(__dirname, '../../frontend/src/assets/images/logos/logoLM.png'),
+            path.resolve(__dirname, '../../frontend/src/assets/images/logos/logo.png'),
+            path.resolve(__dirname, '../../frontend/src/assets/images/logos/logo2.png'),
+            path.resolve(__dirname, '../../frontend/src/assets/images/logos/logoLMwhite.png'),
+        ];
+        const logoPath = logoCandidates.find(p => fs.existsSync(p)) || null;
+        const logoDataUrl = logoPath ? loadFileAsDataUrl(logoPath, 'image/png') : null;
+
+        const verifyUrl = `https://${WEBSITE_DOMAIN}/verify/evidence/${encodeURIComponent(signingFileId)}`;
+        let qrDataUrl = null;
+        try {
+            qrDataUrl = await QRCode.toDataURL(verifyUrl, { width: 256, margin: 1 });
+        } catch (e) {
+            qrDataUrl = null;
+        }
+
+        const pdfBuffer = await renderEvidencePdf({
+            doc,
+            sender,
+            signers,
+            qrDataUrl,
+            brand: {
+                companyName: 'MelamedLaw',
+                logoDataUrl,
+            },
+        });
 
         // Filename: evidence_<caseId>_<signingFileId>_<YYYYMMDD_HHMM>.pdf (UTC)
         const now = new Date();
@@ -2467,7 +2542,7 @@ exports.getEvidenceCertificate = async (req, res, next) => {
 
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-        return res.send(Buffer.from(pdfBytes));
+        return res.send(Buffer.from(pdfBuffer));
     } catch (err) {
         console.error('getEvidenceCertificate error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה ביצירת מסמך ראייה' });
