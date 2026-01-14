@@ -161,6 +161,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                             e.stopPropagation();
                             if (typeof onSelectSpot === 'function') onSelectSpot(index);
                         }}
+                        className="lw-signing-spotOverlay"
                         style={{ position: 'absolute', inset: 0 }}
                     />
                     {/* Right-click context menu */}
@@ -172,6 +173,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                         }}
                         // invisible full overlay to catch right-click
                         aria-hidden
+                        className="lw-signing-spotOverlay"
                         style={{ position: 'absolute', inset: 0 }}
                     />
         </SimpleContainer>

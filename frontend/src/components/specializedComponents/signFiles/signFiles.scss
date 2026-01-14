@@ -373,6 +373,12 @@
         color: var(--spot-border, var(--lw-color-primary, #2A4365));
 }
 
+    .lw-signing-spotOverlay {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+    }
+
 /* Signer color classes (use theme tokens) */
 @for $i from 0 through 7 {
     .lw-signer-color-#{$i} {
@@ -418,6 +424,7 @@
     cursor: pointer;
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
     border: 2px solid #fff;
+    z-index: 2;
 }
 
 /* Signing file card */
