@@ -182,6 +182,8 @@ export default function UploadFileForSigningScreen() {
 
     const [caseId, setCaseId] = useState("");
     const [clientId, setClientId] = useState("");
+    const [caseSearchQuery, setCaseSearchQuery] = useState("");
+    const [signerSearchQuery, setSignerSearchQuery] = useState("");
     const [selectedSigners, setSelectedSigners] = useState([]);
     const [notes, setNotes] = useState("");
     const [selectedFile, setSelectedFile] = useState(null);
@@ -459,6 +461,7 @@ export default function UploadFileForSigningScreen() {
     };
 
     const handleSearch = (query) => {
+        setCaseSearchQuery(query);
         SearchCaseByName(query);
     };
 
@@ -466,6 +469,7 @@ export default function UploadFileForSigningScreen() {
         const foundItem = casesByName.find(caseItem => caseItem.CaseName === query);
         setCaseId(foundItem?.CaseId || "");
         setClientId(foundItem?.UserId || "");
+        setCaseSearchQuery("");
 
         // If no signers selected yet, default to the case's client
         if (foundItem?.UserId) {
@@ -480,11 +484,13 @@ export default function UploadFileForSigningScreen() {
     };
 
     const handleSearchSigner = (query) => {
+        setSignerSearchQuery(query);
         SearchCustomersByName(query);
     };
 
     const handleAddSignerFromSearch = (text, customer) => {
         addSigner(customer);
+        setSignerSearchQuery("");
     };
 
     const handleOpenAddCustomerPopup = (query) => {
@@ -533,6 +539,7 @@ export default function UploadFileForSigningScreen() {
                                 getButtonTextFunction={(item) => item.CaseName}
                                 className="lw-uploadSigningScreen__search"
                                 buttonPressFunction={handleButtonPress}
+                                value={caseSearchQuery}
                             />
 
                             <SearchInput
@@ -546,6 +553,7 @@ export default function UploadFileForSigningScreen() {
                                 buttonPressFunction={handleAddSignerFromSearch}
                                 emptyActionText={t('customers.addCustomer')}
                                 onEmptyAction={handleOpenAddCustomerPopup}
+                                value={signerSearchQuery}
                             />
                         </SimpleContainer>
 
