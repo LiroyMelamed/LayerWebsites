@@ -548,7 +548,7 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                             <PrimaryButton onPress={onDownloadSigned}>{t('signingManager.actions.downloadSigned')}</PrimaryButton>
                         )}
                                 {Boolean(file?.SignedFileKey) && (
-                                    <PrimaryButton onPress={onDownloadEvidencePdf}>הורד מסמך ראייה (PDF)</PrimaryButton>
+                                    <PrimaryButton onPress={onDownloadEvidencePackage}>הורד מסמך ראייה (PDF)</PrimaryButton>
                                 )}
                         <SecondaryButton onPress={onClose}>{t('common.close')}</SecondaryButton>
                     </SimpleContainer>
