@@ -648,6 +648,7 @@ export default function UploadFileForSigningScreen() {
                                             if (ok) handleRemoveSpot(i);
                                         }}
                                         onSelectSpot={openFieldEditor}
+                                        onRequestContext={handleSpotContext}
                                         onAddSpotForPage={handleAddSpotForPage}
                                         signers={selectedSigners}
                                     />
