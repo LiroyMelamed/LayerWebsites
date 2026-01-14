@@ -5,6 +5,8 @@ import './fieldContextMenu.scss';
 
 const FIELD_TYPES = [
     { id: 'signature', label: 'Signature' },
+    { id: 'email', label: 'Email' },
+    { id: 'phone', label: 'Phone' },
     { id: 'initials', label: 'Initials' },
     { id: 'text', label: 'Text' },
     { id: 'date', label: 'Date' },
