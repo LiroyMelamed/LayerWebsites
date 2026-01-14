@@ -34,6 +34,7 @@ const SIGNING_PDF_OP_TIMEOUT_MS = Number(process.env.SIGNING_PDF_OP_TIMEOUT_MS |
 const SIGNING_OTP_TTL_SECONDS = Number(process.env.SIGNING_OTP_TTL_SECONDS || 10 * 60);
 const SIGNING_OTP_MAX_ATTEMPTS = Number(process.env.SIGNING_OTP_MAX_ATTEMPTS || 5);
 const SIGNING_OTP_LOCK_MINUTES = Number(process.env.SIGNING_OTP_LOCK_MINUTES || 10);
+const SIGNING_REQUIRE_OTP_DEFAULT = String(process.env.SIGNING_REQUIRE_OTP_DEFAULT ?? 'true').toLowerCase() !== 'false';
 
 function appError(errorCode, httpStatus, { message, meta, extras, legacyAliases } = {}) {
     return createAppError(
@@ -119,7 +120,7 @@ function getEvidenceReadmeHebrew() {
 
 async function loadEvidenceRowsForZip(signingFileId) {
     const [fileEvidenceRes, spotsRes, consentRes, otpRes, auditRes] = await Promise.all([
-        pool.query(
+            pool.query(
             `select
                 signingfileid as "SigningFileId",
                 caseid as "CaseId",
@@ -134,7 +135,7 @@ async function loadEvidenceRowsForZip(signingFileId) {
                 signedfilekey as "SignedFileKey",
                 immutableatutc as "ImmutableAtUtc",
 
-                requireotp as "RequireOtp",
+                    requireotp as "RequireOtp",
                 signingpolicyversion as "SigningPolicyVersion",
                 policyselectedbyuserid as "PolicySelectedByUserId",
                 policyselectedatutc as "PolicySelectedAtUtc",
@@ -1322,12 +1323,14 @@ exports.uploadFileForSigning = async (req, res, next) => {
         // For backward compatibility, use first signer as primary clientId
         const primaryClientId = signersList[0].userId || clientId;
 
-        // OTP policy: default is OTP required.
+        // OTP policy: default is controlled by feature flag.
         // If the lawyer explicitly waives OTP, they must also explicitly acknowledge the waiver.
         const requireOtpRaw = signingConfig?.require_otp ?? signingConfig?.requireOtp;
         const hasExplicitPolicySelection = requireOtpRaw === true || requireOtpRaw === false || requireOtpRaw === 1 || requireOtpRaw === 0;
-        const requireOtp = hasExplicitPolicySelection ? Boolean(requireOtpRaw) : true;
-        const waiverAck = Boolean(signingConfig?.otpWaiverAcknowledged ?? signingConfig?.otp_waiver_acknowledged);
+        const requireOtp = hasExplicitPolicySelection ? Boolean(requireOtpRaw) : SIGNING_REQUIRE_OTP_DEFAULT;
+        const waiverAck = hasExplicitPolicySelection
+            ? Boolean(signingConfig?.otpWaiverAcknowledged ?? signingConfig?.otp_waiver_acknowledged)
+            : !SIGNING_REQUIRE_OTP_DEFAULT;
         if (!requireOtp && !waiverAck) {
             return fail(next, 'OTP_WAIVER_ACK_REQUIRED', 422);
         }
@@ -3193,7 +3196,8 @@ exports.signFile = async (req, res, next) => {
             return fail(next, 'MISSING_PRESENTED_HASH', 500);
         }
 
-        const otpVerificationId = Boolean(file.RequireOtp)
+        const requireOtpEffective = Boolean(file.RequireOtp) && SIGNING_REQUIRE_OTP_DEFAULT;
+        const otpVerificationId = requireOtpEffective
             ? await getVerifiedOtpChallengeIdOrNull({
                 signingFileId,
                 signerUserId: userId,
@@ -3202,7 +3206,7 @@ exports.signFile = async (req, res, next) => {
             })
             : null;
 
-        if (Boolean(file.RequireOtp) && !otpVerificationId) {
+        if (requireOtpEffective && !otpVerificationId) {
             await insertAuditEvent({
                 req,
                 eventType: 'SIGN_ATTEMPT',
@@ -3214,7 +3218,7 @@ exports.signFile = async (req, res, next) => {
                 success: false,
                 metadata: {
                     failure: 'OTP_REQUIRED',
-                    requireOtp: true,
+                    requireOtp: requireOtpEffective,
                     presentedPdfSha256: file.PresentedPdfSha256,
                 },
             });
@@ -3240,8 +3244,8 @@ exports.signFile = async (req, res, next) => {
             success: true,
             metadata: {
                 signingPolicyVersion: effectivePolicyVersion,
-                requireOtp: Boolean(file.RequireOtp),
-                otpWaived: !Boolean(file.RequireOtp),
+                requireOtp: requireOtpEffective,
+                otpWaived: !requireOtpEffective,
                 otpWaiverAcknowledged: Boolean(file.OtpWaiverAcknowledged),
                 policySource: file.PolicySelectedAtUtc ? 'explicit' : 'legacy_default',
                 presentedPdfSha256: file.PresentedPdfSha256,

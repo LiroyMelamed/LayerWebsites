@@ -77,6 +77,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const isPublic = Boolean(publicToken);
     const isScreen = variant === "screen";
+    const otpFeatureEnabled = String(process.env.REACT_APP_SIGNING_REQUIRE_OTP_DEFAULT ?? 'true').toLowerCase() !== 'false';
 
     const effectiveSigningFileId = useMemo(() => {
         return fileDetails?.file?.SigningFileId || signingFileId;
@@ -416,7 +417,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         const spot = spotOverride || currentSpot;
         if (!spot || spot.IsSigned) return false;
 
-        const requireOtp = Boolean(fileDetails?.file?.RequireOtp);
+        const requireOtp = Boolean(fileDetails?.file?.RequireOtp) && otpFeatureEnabled;
         const consentVersion = String(fileDetails?.file?.SigningPolicyVersion || "2026-01-11");
 
         if (!consentAccepted) {
@@ -778,7 +779,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 </label>
                             </div>
 
-                            {Boolean(fileDetails?.file?.RequireOtp) && (
+                            {Boolean(fileDetails?.file?.RequireOtp) && otpFeatureEnabled && (
                                 <div className="lw-signing-otpBox">
                                     <div className="lw-signing-otpTitle">{t("signing.canvas.otpTitle")}</div>
                                     <div className="lw-signing-otpRow">

@@ -43,6 +43,7 @@ export default function UploadFileForSigningScreen() {
     const { isSmallScreen } = useScreenSize();
     const navigate = useNavigate();
     const { openPopup, closePopup } = usePopup();
+    const otpFeatureEnabled = String(process.env.REACT_APP_SIGNING_REQUIRE_OTP_DEFAULT ?? 'true').toLowerCase() !== 'false';
 
     const openFieldEditor = (index) => {
         const spot = signatureSpots[index];
@@ -174,8 +175,8 @@ export default function UploadFileForSigningScreen() {
     const [isDragActive, setIsDragActive] = useState(false);
 
     // Court-ready policy: OTP is required by default; waiver must be explicit + acknowledged.
-    const [otpPolicy, setOtpPolicy] = useState("require"); // 'waive' | 'require'
-    const [otpWaiverAck, setOtpWaiverAck] = useState(false);
+    const [otpPolicy, setOtpPolicy] = useState(otpFeatureEnabled ? "require" : "waive"); // 'waive' | 'require'
+    const [otpWaiverAck, setOtpWaiverAck] = useState(!otpFeatureEnabled);
 
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState(null);
@@ -269,12 +270,12 @@ export default function UploadFileForSigningScreen() {
             return false;
         }
 
-        if (otpPolicy !== "waive" && otpPolicy !== "require") {
+        if (otpFeatureEnabled && otpPolicy !== "waive" && otpPolicy !== "require") {
             setMessage({ type: "error", text: t('signing.upload.validation.selectOtpPolicy') });
             return false;
         }
 
-        if (otpPolicy === "waive" && !otpWaiverAck) {
+        if (otpFeatureEnabled && otpPolicy === "waive" && !otpWaiverAck) {
             setMessage({ type: "error", text: t('signing.upload.validation.waiverAckRequired') });
             return false;
         }
@@ -373,6 +374,11 @@ export default function UploadFileForSigningScreen() {
 
             const normalizedCaseId = caseId ? Number(caseId) : null;
 
+            const requireOtp = otpFeatureEnabled ? otpPolicy === "require" : false;
+            const otpWaiverAcknowledged = otpFeatureEnabled
+                ? (otpPolicy === "waive" ? Boolean(otpWaiverAck) : false)
+                : true;
+
             await signingFilesApi.uploadFileForSigning({
                 caseId: normalizedCaseId,
                 clientId: primaryClientId,
@@ -381,8 +387,8 @@ export default function UploadFileForSigningScreen() {
                 signatureLocations: signatureSpots,
                 notes: notes || null,
                 signers: signersPayload,
-                requireOtp: otpPolicy === "require",
-                otpWaiverAcknowledged: otpPolicy === "waive" ? Boolean(otpWaiverAck) : false,
+                requireOtp,
+                otpWaiverAcknowledged,
             });
 
             setMessage({ type: "success", text: t('signing.upload.successSent') });
@@ -394,8 +400,8 @@ export default function UploadFileForSigningScreen() {
             setSelectedFile(null);
             setSignatureSpots([]);
             setUploadedFileKey(null);
-            setOtpPolicy("require");
-            setOtpWaiverAck(false);
+            setOtpPolicy(otpFeatureEnabled ? "require" : "waive");
+            setOtpWaiverAck(!otpFeatureEnabled);
 
             if (fileInputRef.current) fileInputRef.current.value = "";
         } catch (err) {
@@ -623,49 +629,51 @@ export default function UploadFileForSigningScreen() {
                         )}
                     </SimpleContainer>
 
-                    <SimpleContainer className="lw-uploadSigningScreen__formGroup lw-uploadSigningScreen__otpPolicyGroup">
-                        <label className="lw-uploadSigningScreen__label">{t('signing.upload.otpPolicyLabel')}</label>
+                    {otpFeatureEnabled && (
+                        <SimpleContainer className="lw-uploadSigningScreen__formGroup lw-uploadSigningScreen__otpPolicyGroup">
+                            <label className="lw-uploadSigningScreen__label">{t('signing.upload.otpPolicyLabel')}</label>
 
-                        <div className="lw-uploadSigningScreen__radioRow">
-                            <label className="lw-uploadSigningScreen__radioLabel">
-                                <input
-                                    type="radio"
-                                    name="otpPolicy"
-                                    checked={otpPolicy === "require"}
-                                    onChange={() => setOtpPolicy("require")}
-                                />
-                                {t('signing.upload.otpRequire')}
-                            </label>
-                        </div>
-
-                        <div className="lw-uploadSigningScreen__radioRow">
-                            <label className="lw-uploadSigningScreen__radioLabel">
-                                <input
-                                    type="radio"
-                                    name="otpPolicy"
-                                    checked={otpPolicy === "waive"}
-                                    onChange={() => setOtpPolicy("waive")}
-                                />
-                                {t('signing.upload.otpWaive')}
-                            </label>
-                        </div>
-
-                        {otpPolicy === "waive" && (
-                            <div className="lw-uploadSigningScreen__waiverBox">
-                                <div className="lw-uploadSigningScreen__waiverText">
-                                    {t('signing.upload.otpWaiverWarning')}
-                                </div>
-                                <label className="lw-uploadSigningScreen__checkboxLabel">
+                            <div className="lw-uploadSigningScreen__radioRow">
+                                <label className="lw-uploadSigningScreen__radioLabel">
                                     <input
-                                        type="checkbox"
-                                        checked={otpWaiverAck}
-                                        onChange={(e) => setOtpWaiverAck(Boolean(e.target.checked))}
+                                        type="radio"
+                                        name="otpPolicy"
+                                        checked={otpPolicy === "require"}
+                                        onChange={() => setOtpPolicy("require")}
                                     />
-                                    {t('signing.upload.otpWaiverAck')}
+                                    {t('signing.upload.otpRequire')}
                                 </label>
                             </div>
-                        )}
-                    </SimpleContainer>
+
+                            <div className="lw-uploadSigningScreen__radioRow">
+                                <label className="lw-uploadSigningScreen__radioLabel">
+                                    <input
+                                        type="radio"
+                                        name="otpPolicy"
+                                        checked={otpPolicy === "waive"}
+                                        onChange={() => setOtpPolicy("waive")}
+                                    />
+                                    {t('signing.upload.otpWaive')}
+                                </label>
+                            </div>
+
+                            {otpPolicy === "waive" && (
+                                <div className="lw-uploadSigningScreen__waiverBox">
+                                    <div className="lw-uploadSigningScreen__waiverText">
+                                        {t('signing.upload.otpWaiverWarning')}
+                                    </div>
+                                    <label className="lw-uploadSigningScreen__checkboxLabel">
+                                        <input
+                                            type="checkbox"
+                                            checked={otpWaiverAck}
+                                            onChange={(e) => setOtpWaiverAck(Boolean(e.target.checked))}
+                                        />
+                                        {t('signing.upload.otpWaiverAck')}
+                                    </label>
+                                </div>
+                            )}
+                        </SimpleContainer>
+                    )}
                 </SimpleContainer>
             </SimpleScrollView>
         </SimpleScreen>
