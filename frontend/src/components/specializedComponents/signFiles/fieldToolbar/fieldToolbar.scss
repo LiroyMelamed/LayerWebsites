@@ -1,8 +1,7 @@
 @use '../../../../styles/variables' as v;
 
 .lw-fieldTypeNavbar {
-  position: sticky;
-  top: v.$space-2;
+  position: relative;
   width: 100%;
   display: flex;
   flex-wrap: wrap;
@@ -11,8 +10,6 @@
   border: 1px solid var(--lw-color-border, #e2e8f0);
   border-radius: 0.5rem;
   background: var(--lw-color-white);
-  z-index: 4000;
-  box-shadow: 0 0.5rem 1rem rgba(15, 23, 42, 0.08);
 }
 
 .lw-fieldTypeNavbar__signerRow {

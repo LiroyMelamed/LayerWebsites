@@ -18,8 +18,11 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
     const signerNameSafe = signerName || t("signing.spot.defaultSignerName");
 
     const hasSignatureImage = Boolean(spot?.IsSigned && (spot?.SignatureUrl || spot?.signatureUrl));
-    const fieldType = spot?.type || 'signature';
-    const isRequired = spot?.isRequired !== false;
+    const fieldTypeRaw = spot?.type ?? spot?.fieldType ?? spot?.FieldType ?? 'signature';
+    const fieldType = typeof fieldTypeRaw === 'string' ? fieldTypeRaw.toLowerCase() : fieldTypeRaw;
+    const isSignatureLike = fieldType === 'signature' || fieldType === 'initials';
+    const isRequiredRaw = spot?.isRequired ?? spot?.IsRequired;
+    const isRequired = typeof isRequiredRaw === 'boolean' ? isRequiredRaw : isSignatureLike;
 
     const fieldTypeLabels = {
         signature: t('signing.fields.signatureShort'),
@@ -52,7 +55,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
     };
 
     // Determine color class using signerUserId fallback to signerIndex
-    const signerIdForColor = spot?.signerUserId ?? spot?.signerIdx ?? signerIndex;
+    const signerIdForColor = spot?.signerUserId ?? spot?.SignerUserId ?? spot?.signerIndex ?? spot?.signerIdx ?? signerIndex;
     const colorClass = signerPaletteClass(signerIdForColor);
 
     const startDragFromClientPoint = (startClientX, startClientY, onEnd) => {

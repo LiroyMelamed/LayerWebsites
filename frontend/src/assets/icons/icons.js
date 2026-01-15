@@ -29,5 +29,4 @@ export const icons = {
         checkbox: require("./NavBar/NewCase.png"),
         idnumber: require("./NavBar/AllCasesType.png"),
     }
-
 }

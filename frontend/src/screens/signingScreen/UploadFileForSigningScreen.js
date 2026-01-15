@@ -66,6 +66,11 @@ function FieldSettingsPopup({
 
     const typeMeta = fieldTypeOptions.find((opt) => opt.id === (spot?.type || 'signature'));
 
+    const handleDuplicate = (mode, range) => {
+        onDuplicate?.(index, mode, range);
+        onCancel?.();
+    };
+
     const handleApplyRange = () => {
         const from = Number(rangeFrom);
         const to = Number(rangeTo);
@@ -74,16 +79,13 @@ function FieldSettingsPopup({
             return;
         }
         setRangeError("");
-        onDuplicate?.(index, 'range', [from, to]);
+        handleDuplicate('range', [from, to]);
     };
 
     return (
         <SimpleContainer className="lw-fieldSettingsPopup">
             <SimpleContainer className="lw-fieldSettingsPopup__header">
                 <TextBold24>{t('signing.fieldSettings.title')}</TextBold24>
-                <SecondaryButton onPress={onCancel} className="lw-fieldSettingsPopup__close">
-                    {t('common.close')}
-                </SecondaryButton>
             </SimpleContainer>
 
             <SimpleContainer className="lw-fieldSettingsPopup__body">
@@ -109,13 +111,13 @@ function FieldSettingsPopup({
                 <SimpleContainer className="lw-fieldSettingsPopup__section">
                     <Text14 className="lw-fieldSettingsPopup__sectionTitle">{t('signing.fieldSettings.duplicateTitle')}</Text14>
                     <SimpleContainer className="lw-fieldSettingsPopup__actions">
-                        <SecondaryButton onPress={() => onDuplicate?.(index, 'all')}>
+                        <SecondaryButton onPress={() => handleDuplicate('all')}>
                             {t('signing.fieldSettings.duplicateAll')}
                         </SecondaryButton>
-                        <SecondaryButton onPress={() => onDuplicate?.(index, 'even')}>
+                        <SecondaryButton onPress={() => handleDuplicate('even')}>
                             {t('signing.fieldSettings.duplicateEven')}
                         </SecondaryButton>
-                        <SecondaryButton onPress={() => onDuplicate?.(index, 'odd')}>
+                        <SecondaryButton onPress={() => handleDuplicate('odd')}>
                             {t('signing.fieldSettings.duplicateOdd')}
                         </SecondaryButton>
                     </SimpleContainer>
@@ -161,8 +163,7 @@ export default function UploadFileForSigningScreen() {
     const { isSmallScreen } = useScreenSize();
     const navigate = useNavigate();
     const { openPopup, closePopup } = usePopup();
-    const otpFlagRaw = String(process.env.REACT_APP_SIGNING_REQUIRE_OTP_DEFAULT ?? '').toLowerCase().trim();
-    const otpFeatureEnabled = ['true', '1', 'yes', 'on'].includes(otpFlagRaw);
+    const otpFeatureEnabled = false;
 
     const openFieldEditor = (index) => {
         const spot = signatureSpots[index];
@@ -261,17 +262,45 @@ export default function UploadFileForSigningScreen() {
         setSelectedSpotIndex(index);
         openPopup(
             <SimpleContainer className="lw-fieldContextMenu">
-                <button onClick={() => { closePopup(); openFieldEditor(index); }}>
+                <SecondaryButton
+                    className="lw-fieldContextMenu__action"
+                    onPress={() => { closePopup(); openFieldEditor(index); }}
+                >
                     {t('signing.context.edit')}
-                </button>
+                </SecondaryButton>
                 <div className="lw-fieldContextMenu__divider" />
                 <div className="lw-fieldContextMenu__groupTitle">{t('signing.context.duplicate')}</div>
-                <button onClick={() => { closePopup(); duplicateSpotToPages(index, 'all'); }}>{t('signing.context.allPages')}</button>
-                <button onClick={() => { closePopup(); duplicateSpotToPages(index, 'even'); }}>{t('signing.context.evenPages')}</button>
-                <button onClick={() => { closePopup(); duplicateSpotToPages(index, 'odd'); }}>{t('signing.context.oddPages')}</button>
-                <button onClick={() => { closePopup(); openFieldEditor(index); }}>{t('signing.context.pageRange')}</button>
+                <SecondaryButton
+                    className="lw-fieldContextMenu__action"
+                    onPress={() => { closePopup(); duplicateSpotToPages(index, 'all'); }}
+                >
+                    {t('signing.context.allPages')}
+                </SecondaryButton>
+                <SecondaryButton
+                    className="lw-fieldContextMenu__action"
+                    onPress={() => { closePopup(); duplicateSpotToPages(index, 'even'); }}
+                >
+                    {t('signing.context.evenPages')}
+                </SecondaryButton>
+                <SecondaryButton
+                    className="lw-fieldContextMenu__action"
+                    onPress={() => { closePopup(); duplicateSpotToPages(index, 'odd'); }}
+                >
+                    {t('signing.context.oddPages')}
+                </SecondaryButton>
+                <SecondaryButton
+                    className="lw-fieldContextMenu__action"
+                    onPress={() => { closePopup(); openFieldEditor(index); }}
+                >
+                    {t('signing.context.pageRange')}
+                </SecondaryButton>
                 <div className="lw-fieldContextMenu__divider" />
-                <button onClick={() => { closePopup(); openConfirmRemove(index); }}>{t('common.remove')}</button>
+                <SecondaryButton
+                    className="lw-fieldContextMenu__action"
+                    onPress={() => { closePopup(); openConfirmRemove(index); }}
+                >
+                    {t('common.remove')}
+                </SecondaryButton>
             </SimpleContainer>
         );
     };
@@ -280,6 +309,7 @@ export default function UploadFileForSigningScreen() {
     const { result: customersByName, isPerforming: isPerformingCustomersByName, performRequest: SearchCustomersByName } = useHttpRequest(customersApi.getCustomersByName, null, () => { });
 
     const [caseId, setCaseId] = useState("");
+    const [selectedCase, setSelectedCase] = useState(null);
     const [clientId, setClientId] = useState("");
     const [caseSearchQuery, setCaseSearchQuery] = useState("");
     const [signerSearchQuery, setSignerSearchQuery] = useState("");
@@ -383,42 +413,68 @@ export default function UploadFileForSigningScreen() {
         return idx >= 0 ? idx : 0;
     };
 
-    const handleAddSpotForPage = (pageNumber, signerIdx = 0, fieldType = 'signature') => {
+    const handleAddSpotForPage = (pageNumber, signerIdx = 0, fieldType = 'signature', anchor = {}) => {
         const signer = selectedSigners?.[signerIdx] || null;
         const signerName = signer?.Name || t('signing.signerFallback', { index: Number(signerIdx) + 1 });
+        const isRequired = fieldType === 'signature';
+
+        let x = 120;
+        let y = 160;
+        const pageEl = document.querySelector(`.lw-signing-pageInner[data-page-number="${pageNumber}"]`);
+        if (pageEl) {
+            const pageWidth = pageEl.getBoundingClientRect().width || 800;
+            const pageHeight = pageEl.getBoundingClientRect().height || 1000;
+            const scale = pageWidth / 800;
+            const ratio = Number(anchor?.yRatio);
+            if (Number.isFinite(ratio)) {
+                const yPx = Math.max(0, Math.min(pageHeight, ratio * pageHeight));
+                const yBase = yPx / (scale || 1);
+                y = Math.max(20, Math.min(yBase - 30, pageHeight / (scale || 1) - 60));
+            }
+        }
 
         setSignatureSpots((prev) => [
             ...prev,
             {
                 pageNum: pageNumber,
-                x: 120,
-                y: 160,
+                x,
+                y,
                 width: 160,
                 height: 60,
                 signerIndex: signerIdx,
                 signerUserId: signer?.UserId,
                 signerName,
-                isRequired: true,
+                isRequired,
                 type: fieldType,
             },
         ]);
     };
 
-    const openAddFieldMenu = (pageNumber) => {
+    const openAddFieldMenu = (pageNumber, anchor) => {
         const signerIdx = getSelectedSignerIndex();
         openPopup(
-            <SimpleContainer className="lw-fieldContextMenu">
+            <SimpleContainer className="lw-fieldContextMenu lw-fieldContextMenu--floating">
+                <SimpleContainer className="lw-fieldContextMenu__header">
+                    <span className="lw-fieldContextMenu__title">{t('signing.fieldSettings.addFieldTitle')}</span>
+                    <SecondaryButton
+                        onPress={closePopup}
+                        className="lw-fieldContextMenu__close"
+                    >
+                        {t('common.close')}
+                    </SecondaryButton>
+                </SimpleContainer>
                 {fieldTypeOptions.map((option) => (
-                    <button
+                    <SecondaryButton
                         key={option.id}
-                        onClick={() => {
+                        className="lw-fieldContextMenu__action"
+                        onPress={() => {
                             closePopup();
                             setSelectedFieldType(option.id);
-                            handleAddSpotForPage(pageNumber, signerIdx, option.id);
+                            handleAddSpotForPage(pageNumber, signerIdx, option.id, anchor);
                         }}
                     >
                         {option.label}
-                    </button>
+                    </SecondaryButton>
                 ))}
             </SimpleContainer>
         );
@@ -612,6 +668,7 @@ export default function UploadFileForSigningScreen() {
             setMessage({ type: "success", text: t('signing.upload.successSent') });
 
             setCaseId("");
+            setSelectedCase(null);
             setClientId("");
             setSelectedSigners([]);
             setNotes("");
@@ -620,6 +677,7 @@ export default function UploadFileForSigningScreen() {
             setUploadedFileKey(null);
             setOtpPolicy(otpFeatureEnabled ? "require" : "waive");
             setOtpWaiverAck(!otpFeatureEnabled);
+            setCaseSearchQuery("");
 
             if (fileInputRef.current) fileInputRef.current.value = "";
         } catch (err) {
@@ -635,9 +693,10 @@ export default function UploadFileForSigningScreen() {
         SearchCaseByName(query);
     };
 
-    const handleButtonPress = (query) => {
-        const foundItem = casesByName.find(caseItem => caseItem.CaseName === query);
+    const handleButtonPress = (query, result) => {
+        const foundItem = result || casesByName.find(caseItem => caseItem.CaseName === query);
         setCaseId(foundItem?.CaseId || "");
+        setSelectedCase(foundItem || null);
         setClientId(foundItem?.UserId || "");
         setCaseSearchQuery("");
 
@@ -651,6 +710,13 @@ export default function UploadFileForSigningScreen() {
                 }];
             });
         }
+    };
+
+    const handleRemoveSelectedCase = () => {
+        setSelectedCase(null);
+        setCaseId("");
+        setClientId("");
+        setCaseSearchQuery("");
     };
 
     const handleSearchSigner = (query) => {
@@ -729,6 +795,26 @@ export default function UploadFileForSigningScreen() {
                             />
                         </SimpleContainer>
 
+                        {selectedCase && (
+                            <SimpleContainer className="lw-uploadSigningScreen__formGroup">
+                                <label className="lw-uploadSigningScreen__label">{t('signing.upload.selectedCaseLabel')}</label>
+                                <SimpleContainer className="lw-uploadSigningScreen__selectedSignersRow">
+                                    <SimpleContainer className="lw-uploadSigningScreen__signerChip">
+                                        <span className="lw-uploadSigningScreen__signerChipName">{selectedCase.CaseName}</span>
+                                        <button
+                                            type="button"
+                                            className="lw-uploadSigningScreen__signerChipRemove"
+                                            onClick={handleRemoveSelectedCase}
+                                            aria-label={t('signing.upload.removeCaseAria', { name: selectedCase.CaseName })}
+                                            title={t('signing.upload.removeCaseAria', { name: selectedCase.CaseName })}
+                                        >
+                                            X
+                                        </button>
+                                    </SimpleContainer>
+                                </SimpleContainer>
+                            </SimpleContainer>
+                        )}
+
                         {selectedSigners?.length > 0 && (
                             <SimpleContainer className="lw-uploadSigningScreen__formGroup">
                                 <label className="lw-uploadSigningScreen__label">{t('signing.upload.selectedSignersLabel')}</label>
@@ -803,13 +889,32 @@ export default function UploadFileForSigningScreen() {
                                 </SimpleContainer>
 
                                 <SimpleContainer className="lw-signing-pdfViewerWrapper">
+                                    {Array.isArray(selectedSigners) && selectedSigners.length > 1 && (
+                                        <SimpleContainer className="lw-uploadSigningScreen__signerSticky">
+                                            <SimpleContainer className="lw-fieldTypeNavbar__signerRow">
+                                                <span className="lw-fieldTypeNavbar__signerLabel">{t('signing.upload.signerSelectorLabel')}</span>
+                                                <SimpleContainer className="lw-fieldTypeNavbar__signerButtons">
+                                                    {selectedSigners.map((s) => {
+                                                        const isSelected = Number(s?.UserId) === Number(selectedSignerId);
+                                                        const Button = isSelected ? PrimaryButton : SecondaryButton;
+                                                        return (
+                                                            <Button
+                                                                key={s?.UserId}
+                                                                onPress={() => setSelectedSignerId(s?.UserId)}
+                                                                className="lw-fieldTypeNavbar__signerButton"
+                                                            >
+                                                                {s?.Name || t('signing.signerFallback', { index: 1 })}
+                                                            </Button>
+                                                        );
+                                                    })}
+                                                </SimpleContainer>
+                                            </SimpleContainer>
+                                        </SimpleContainer>
+                                    )}
                                     <FieldTypeNavbar
                                         selected={selectedFieldType}
                                         onSelect={setSelectedFieldType}
                                         fieldTypes={fieldTypeOptions}
-                                        signers={selectedSigners}
-                                        selectedSignerId={selectedSignerId}
-                                        onSelectSigner={setSelectedSignerId}
                                     />
                                     <PdfViewer
                                         pdfFile={selectedFile}

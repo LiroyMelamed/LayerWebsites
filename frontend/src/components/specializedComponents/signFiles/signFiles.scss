@@ -399,8 +399,8 @@
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
-    background: var(--spot-border, var(--lw-color-primary, #2A4365));
-    color: #fff;
+    background: var(--spot-badge-bg, var(--spot-border, var(--lw-color-primary, #2A4365)));
+    color: var(--spot-badge-fg, #fff);
     font-size: 0.625rem;
     font-weight: 700;
     padding: 0.1rem 0.35rem;
@@ -615,8 +615,8 @@
     --spot-signature-bg: rgba(30, 58, 138, 0.2);
     --spot-email-border: #1d4ed8;
     --spot-email-bg: rgba(29, 78, 216, 0.2);
-    --spot-phone-border: #0284c7;
-    --spot-phone-bg: rgba(2, 132, 199, 0.2);
+    --spot-phone-border: #0f766e;
+    --spot-phone-bg: rgba(15, 118, 110, 0.2);
     --spot-initials-border: #2563eb;
     --spot-initials-bg: rgba(37, 99, 235, 0.2);
     --spot-text-border: #3b82f6;
@@ -635,8 +635,8 @@
     --spot-signature-bg: rgba(146, 64, 14, 0.2);
     --spot-email-border: #b45309;
     --spot-email-bg: rgba(180, 83, 9, 0.2);
-    --spot-phone-border: #d97706;
-    --spot-phone-bg: rgba(217, 119, 6, 0.2);
+    --spot-phone-border: #7c6f16;
+    --spot-phone-bg: rgba(124, 111, 22, 0.2);
     --spot-initials-border: #f59e0b;
     --spot-initials-bg: rgba(245, 158, 11, 0.2);
     --spot-text-border: #fbbf24;
@@ -655,8 +655,8 @@
     --spot-signature-bg: rgba(153, 27, 27, 0.2);
     --spot-email-border: #b91c1c;
     --spot-email-bg: rgba(185, 28, 28, 0.2);
-    --spot-phone-border: #dc2626;
-    --spot-phone-bg: rgba(220, 38, 38, 0.2);
+    --spot-phone-border: #0f766e;
+    --spot-phone-bg: rgba(15, 118, 110, 0.2);
     --spot-initials-border: #ef4444;
     --spot-initials-bg: rgba(239, 68, 68, 0.2);
     --spot-text-border: #f87171;
@@ -675,8 +675,8 @@
     --spot-signature-bg: rgba(76, 29, 149, 0.2);
     --spot-email-border: #5b21b6;
     --spot-email-bg: rgba(91, 33, 182, 0.2);
-    --spot-phone-border: #7c3aed;
-    --spot-phone-bg: rgba(124, 58, 237, 0.2);
+    --spot-phone-border: #0f766e;
+    --spot-phone-bg: rgba(15, 118, 110, 0.2);
     --spot-initials-border: #8b5cf6;
     --spot-initials-bg: rgba(139, 92, 246, 0.2);
     --spot-text-border: #a78bfa;
@@ -693,39 +693,86 @@
 .lw-signing-spot--type-signature {
     --spot-border: var(--spot-signature-border);
     --spot-bg: var(--spot-signature-bg);
+    --spot-badge-bg: var(--spot-signature-border);
+    --spot-badge-fg: #fff;
 }
 
 .lw-signing-spot--type-email {
     --spot-border: var(--spot-email-border);
     --spot-bg: var(--spot-email-bg);
+    --spot-badge-bg: var(--spot-email-border);
+    --spot-badge-fg: #fff;
 }
 
 .lw-signing-spot--type-phone {
     --spot-border: var(--spot-phone-border);
     --spot-bg: var(--spot-phone-bg);
+    --spot-badge-bg: var(--spot-phone-border);
+    --spot-badge-fg: #fff;
 }
 
 .lw-signing-spot--type-initials {
     --spot-border: var(--spot-initials-border);
     --spot-bg: var(--spot-initials-bg);
+    --spot-badge-bg: var(--spot-initials-border);
+    --spot-badge-fg: #fff;
 }
 
 .lw-signing-spot--type-text {
     --spot-border: var(--spot-text-border);
     --spot-bg: var(--spot-text-bg);
+    --spot-badge-bg: var(--spot-text-border);
+    --spot-badge-fg: #fff;
 }
 
 .lw-signing-spot--type-date {
     --spot-border: var(--spot-date-border);
     --spot-bg: var(--spot-date-bg);
+    --spot-badge-bg: var(--spot-date-border);
+    --spot-badge-fg: #fff;
 }
 
 .lw-signing-spot--type-checkbox {
     --spot-border: var(--spot-checkbox-border);
     --spot-bg: var(--spot-checkbox-bg);
+    --spot-badge-bg: var(--spot-checkbox-border);
+    --spot-badge-fg: #fff;
 }
 
 .lw-signing-spot--type-idnumber {
     --spot-border: var(--spot-idnumber-border);
     --spot-bg: var(--spot-idnumber-bg);
+    --spot-badge-bg: var(--spot-idnumber-border);
+    --spot-badge-fg: #fff;
+}
+
+.lw-signing-fieldInput {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 0.5rem;
+    background: #fff;
+}
+
+.lw-signing-fieldLabel {
+    font-weight: 600;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+.lw-signing-fieldInputControl {
+    border: 1px solid #d9d9d9;
+    border-radius: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.95rem;
+}
+
+.lw-signing-fieldCheckbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #333;
 }

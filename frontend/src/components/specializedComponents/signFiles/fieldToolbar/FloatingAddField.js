@@ -4,52 +4,57 @@ import { useTranslation } from 'react-i18next';
 import './fieldToolbar.scss';
 
 // containerSelector: CSS selector for the pdf viewer container (e.g. .lw-signing-pdfViewer)
-export default function FloatingAddField({ onAdd = () => {}, containerSelector = '.lw-signing-pdfViewer', currentPage }) {
+export default function FloatingAddField({ onAdd = () => { }, containerSelector = '.lw-signing-pdfViewer', currentPage }) {
     const { t } = useTranslation();
-    const [visiblePage, setVisiblePage] = useState(1);
+    const [visiblePage, setVisiblePage] = useState(Number(currentPage) || 1);
 
     useEffect(() => {
         if (Number.isFinite(currentPage)) {
             setVisiblePage(Number(currentPage) || 1);
+        }
+    }, [containerSelector, currentPage]);
+
+    const findScrollParent = (el) => {
+        let cur = el;
+        while (cur && cur !== document.body) {
+            const style = window.getComputedStyle(cur);
+            const overflowY = style?.overflowY;
+            if ((overflowY === 'auto' || overflowY === 'scroll') && cur.scrollHeight > cur.clientHeight + 2) {
+                return cur;
+            }
+            cur = cur.parentElement;
+        }
+        return null;
+    };
+
+    const handleAddClick = () => {
+        const pageNumber = Number(currentPage) || Number(visiblePage) || 1;
+        const container = document.querySelector(containerSelector);
+        const pageEl = container?.querySelector(`[data-page-number="${pageNumber}"]`);
+        if (!container || !pageEl) {
+            onAdd(pageNumber);
             return;
         }
-        const container = document.querySelector(containerSelector);
-        if (!container) return;
 
-        const pages = () => Array.from(container.querySelectorAll('[data-page-number]'));
+        const pageRect = pageEl.getBoundingClientRect();
+        const scrollParent = findScrollParent(container);
+        const viewportRect = scrollParent
+            ? scrollParent.getBoundingClientRect()
+            : { top: 0, height: window.innerHeight || document.documentElement.clientHeight || 0 };
 
-        const update = () => {
-            const els = pages();
-            if (!els.length) return;
-            // Find page whose center is closest to container center
-            const rect = container.getBoundingClientRect();
-            const centerY = rect.top + rect.height / 2;
-            let best = { el: els[0], dist: Infinity };
-            els.forEach((el) => {
-                const r = el.getBoundingClientRect();
-                const elCenter = r.top + r.height / 2;
-                const d = Math.abs(elCenter - centerY);
-                if (d < best.dist) best = { el, dist: d };
-            });
-            const pn = Number(best.el.getAttribute('data-page-number')) || 1;
-            setVisiblePage(pn);
-        };
+        const centerY = viewportRect.top + viewportRect.height / 2;
+        const relativeY = Math.max(0, Math.min(centerY - pageRect.top, pageRect.height));
+        const yRatio = pageRect.height > 0 ? relativeY / pageRect.height : 0.2;
 
-        update();
-        container.addEventListener('scroll', update, { passive: true });
-        window.addEventListener('resize', update);
-        return () => {
-            container.removeEventListener('scroll', update);
-            window.removeEventListener('resize', update);
-        };
-    }, [containerSelector, currentPage]);
+        onAdd(pageNumber, { yRatio });
+    };
 
     return (
         <SimpleContainer className="lw-floatingAddField">
             <button
                 type="button"
                 className="lw-floatingAddField__btn"
-                onClick={() => onAdd(visiblePage || 1)}
+                onClick={handleAddClick}
                 title={t('signing.fieldSettings.addFieldForPage', { page: visiblePage })}
             >
                 +

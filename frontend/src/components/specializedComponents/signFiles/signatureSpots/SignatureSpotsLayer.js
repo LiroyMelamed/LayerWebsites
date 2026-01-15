@@ -26,6 +26,16 @@ export default function SignatureSpotsLayer({
         const width = spot.width ?? spot.Width;
         const height = spot.height ?? spot.Height;
         const signerName = spot.signerName ?? spot.SignerName;
+        const signerUserId = spot.signerUserId ?? spot.SignerUserId;
+        const signerIndex = spot.signerIndex ?? spot.SignerIndex;
+        const typeRaw = spot.type ?? spot.fieldType ?? spot.FieldType ?? spot.fieldtype;
+        const type = typeof typeRaw === 'string' ? typeRaw.toLowerCase() : typeRaw;
+        const isRequiredRaw = spot.isRequired ?? spot.IsRequired;
+        const isRequired = typeof isRequiredRaw === 'boolean'
+            ? isRequiredRaw
+            : (type === 'signature' || type === 'initials');
+        const fieldLabel = spot.fieldLabel ?? spot.FieldLabel ?? spot.fieldlabel;
+        const fieldValue = spot.fieldValue ?? spot.FieldValue ?? spot.fieldvalue;
 
         return {
             ...spot,
@@ -35,6 +45,12 @@ export default function SignatureSpotsLayer({
             width,
             height,
             signerName,
+            signerUserId,
+            signerIndex,
+            type,
+            isRequired,
+            fieldLabel,
+            fieldValue,
         };
     };
 

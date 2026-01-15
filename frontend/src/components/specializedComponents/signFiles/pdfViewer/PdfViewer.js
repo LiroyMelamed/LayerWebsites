@@ -62,7 +62,21 @@ export default function PdfViewer({
 
         let activePage = null;
         const ratios = new Map();
-        const useContainerAsRoot = container.scrollHeight > container.clientHeight + 1;
+
+        const findScrollParent = (el) => {
+            let cur = el;
+            while (cur && cur !== document.body) {
+                const style = window.getComputedStyle(cur);
+                const overflowY = style?.overflowY;
+                if ((overflowY === 'auto' || overflowY === 'scroll') && cur.scrollHeight > cur.clientHeight + 2) {
+                    return cur;
+                }
+                cur = cur.parentElement;
+            }
+            return null;
+        };
+
+        const rootEl = findScrollParent(container);
 
         const observer = new IntersectionObserver(
             (entries) => {
@@ -84,7 +98,8 @@ export default function PdfViewer({
                 }
             },
             {
-                root: useContainerAsRoot ? container : null,
+                root: rootEl || null,
+                rootMargin: '-25% 0px -25% 0px',
                 threshold: [0, 0.25, 0.5, 0.75, 1],
             }
         );

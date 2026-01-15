@@ -19,22 +19,27 @@ const SimplePopUp = ({ isOpen, children, onClose, className, ...props }) => {
     };
 
     const contentClassName = isValidElement(children) ? children.props?.className : '';
-    const isBarePopup = typeof contentClassName === 'string'
-        && (contentClassName.includes('lw-fieldContextMenu') || contentClassName.includes('lw-fieldSettingsPopup'));
+    const isFloatingMenu = typeof contentClassName === 'string' && contentClassName.includes('lw-fieldContextMenu--floating');
 
     return (
         <SimpleContainer
-            className={['lw-simplePopUp__overlay', isBarePopup ? 'lw-simplePopUp__overlay--bare' : null].filter(Boolean).join(' ')}
+            className={['lw-simplePopUp__overlay', isFloatingMenu ? 'lw-simplePopUp__overlay--transparent' : null]
+                .filter(Boolean)
+                .join(' ')}
             onClick={handleOverlayClick}
         >
             <SimpleContainer
                 ref={popupRef}
-                className={['lw-simplePopUp__container', className, isBarePopup ? 'lw-simplePopUp__container--bare' : null]
+                className={[
+                    'lw-simplePopUp__container',
+                    className,
+                    isFloatingMenu ? 'lw-simplePopUp__container--floating' : null,
+                ]
                     .filter(Boolean)
                     .join(' ')}
                 {...props}
             >
-                {!isBarePopup && (
+                {!isFloatingMenu && (
                     <ImageButton
                         height={12}
                         width={12}
@@ -43,9 +48,11 @@ const SimplePopUp = ({ isOpen, children, onClose, className, ...props }) => {
                         src={icons.Button.X}
                     />
                 )}
-                <SimpleContainer className="lw-simplePopUp__content">
-                    {children}
-                </SimpleContainer>
+                {isFloatingMenu ? children : (
+                    <SimpleContainer className="lw-simplePopUp__content">
+                        {children}
+                    </SimpleContainer>
+                )}
             </SimpleContainer>
         </SimpleContainer>
     );

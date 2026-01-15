@@ -35,6 +35,7 @@ const SIGNING_OTP_TTL_SECONDS = Number(process.env.SIGNING_OTP_TTL_SECONDS || 10
 const SIGNING_OTP_MAX_ATTEMPTS = Number(process.env.SIGNING_OTP_MAX_ATTEMPTS || 5);
 const SIGNING_OTP_LOCK_MINUTES = Number(process.env.SIGNING_OTP_LOCK_MINUTES || 10);
 const SIGNING_REQUIRE_OTP_DEFAULT = String(process.env.SIGNING_REQUIRE_OTP_DEFAULT ?? 'true').toLowerCase() !== 'false';
+const SIGNING_OTP_ENABLED = String(process.env.SIGNING_OTP_ENABLED ?? 'false').toLowerCase() === 'true';
 
 function appError(errorCode, httpStatus, { message, meta, extras, legacyAliases } = {}) {
     return createAppError(
@@ -120,7 +121,7 @@ function getEvidenceReadmeHebrew() {
 
 async function loadEvidenceRowsForZip(signingFileId) {
     const [fileEvidenceRes, spotsRes, consentRes, otpRes, auditRes] = await Promise.all([
-            pool.query(
+        pool.query(
             `select
                 signingfileid as "SigningFileId",
                 caseid as "CaseId",
@@ -714,7 +715,13 @@ function verifyPublicSigningToken(rawToken) {
     }
 }
 
-async function loadSigningFileBase({ signingFileId }) {
+async function loadSigningFileBase({ signingFileId, schemaSupport }) {
+    const otpWaivedColumns = schemaSupport?.signingfilesOtpWaivedByUserId || schemaSupport?.signingfilesOtpWaivedAtUtc
+        ? `,
+            otpwaivedatutc as "OtpWaivedAtUtc",
+            otpwaivedbyuserid as "OtpWaivedByUserId"`
+        : '';
+
     const fileResult = await pool.query(
         `select
             signingfileid as "SigningFileId",
@@ -737,7 +744,7 @@ async function loadSigningFileBase({ signingFileId }) {
             policyselectedatutc as "PolicySelectedAtUtc",
             otpwaiveracknowledged as "OtpWaiverAcknowledged",
             otpwaiveracknowledgedatutc as "OtpWaiverAcknowledgedAtUtc",
-            otpwaiveracknowledgedbyuserid as "OtpWaiverAcknowledgedByUserId",
+            otpwaiveracknowledgedbyuserid as "OtpWaiverAcknowledgedByUserId"${otpWaivedColumns},
 
             originalpdfsha256 as "OriginalPdfSha256",
             presentedpdfsha256 as "PresentedPdfSha256",
@@ -752,7 +759,7 @@ async function loadSigningFileBase({ signingFileId }) {
 }
 
 async function ensurePublicUserAuthorized({ signingFileId, userId, schemaSupport }) {
-    const file = await loadSigningFileBase({ signingFileId });
+    const file = await loadSigningFileBase({ signingFileId, schemaSupport });
     if (!file) return { ok: false, httpStatus: 404, errorCode: 'DOCUMENT_NOT_FOUND' };
 
     const isLawyer = file.LawyerId === userId;
@@ -1093,6 +1100,7 @@ async function generateSignedPdfBuffer({ pdfKey, spots }) {
 
     const pdfDoc = await PDFDocument.load(pdfBuffer);
     const pages = pdfDoc.getPages();
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
     // Place each signature image on its page
     for (const spot of spots) {
@@ -1102,16 +1110,8 @@ async function generateSignedPdfBuffer({ pdfKey, spots }) {
         if (!page) continue;
 
         const signatureKey = spot.SignatureData;
-        if (!signatureKey) continue;
-
-        const { buffer: imgBuffer, contentType } = await getR2ObjectBuffer(signatureKey);
-        const isPng =
-            (contentType || "").toLowerCase().includes("png") ||
-            String(signatureKey).toLowerCase().endsWith(".png");
-
-        const embedded = isPng
-            ? await pdfDoc.embedPng(imgBuffer)
-            : await pdfDoc.embedJpg(imgBuffer);
+        const fieldType = String(spot.FieldType || spot.fieldtype || 'signature').toLowerCase();
+        const fieldValue = spot.FieldValue ?? spot.fieldvalue ?? null;
 
         const pageWidth = page.getWidth();
         const pageHeight = page.getHeight();
@@ -1130,12 +1130,44 @@ async function generateSignedPdfBuffer({ pdfKey, spots }) {
         const yTop = yTopPx / scale;
         const y = pageHeight - yTop - h;
 
-        page.drawImage(embedded, {
-            x,
-            y,
-            width: w,
-            height: h,
-        });
+        if (signatureKey) {
+            const { buffer: imgBuffer, contentType } = await getR2ObjectBuffer(signatureKey);
+            const isPng =
+                (contentType || "").toLowerCase().includes("png") ||
+                String(signatureKey).toLowerCase().endsWith(".png");
+
+            const embedded = isPng
+                ? await pdfDoc.embedPng(imgBuffer)
+                : await pdfDoc.embedJpg(imgBuffer);
+
+            page.drawImage(embedded, {
+                x,
+                y,
+                width: w,
+                height: h,
+            });
+        } else if (fieldValue !== null && fieldValue !== undefined && String(fieldValue).length > 0) {
+            const text = String(fieldValue);
+            const fontSize = Math.max(10, Math.min(14, h * 0.6));
+            if (fieldType === 'checkbox') {
+                const checked = text === 'true' || text === '1' || text.toLowerCase() === 'yes' || text === '✓';
+                if (checked) {
+                    page.drawText('✓', {
+                        x: x + 4,
+                        y: y + Math.max(2, h * 0.2),
+                        size: Math.min(16, h * 0.8),
+                        font,
+                    });
+                }
+            } else {
+                page.drawText(text, {
+                    x: x + 4,
+                    y: y + Math.max(2, h - fontSize - 2),
+                    size: fontSize,
+                    font,
+                });
+            }
+        }
     }
 
     const bytes = await pdfDoc.save();
@@ -1151,11 +1183,13 @@ async function ensureSignedPdfKey({ signingFileId, lawyerId, pdfKey }) {
             y             as "Y",
             width         as "Width",
             height        as "Height",
-            signaturedata as "SignatureData"
+            signaturedata as "SignatureData",
+            fieldtype     as "FieldType",
+            fieldvalue    as "FieldValue"
          from signaturespots
          where signingfileid = $1
            and issigned = true
-           and signaturedata is not null`,
+           and (signaturedata is not null or fieldvalue is not null)`,
         [signingFileId]
     );
 
@@ -1224,6 +1258,42 @@ async function getSchemaSupport() {
          limit 1`
     );
 
+    const fieldTypeCol = await pool.query(
+        `select 1
+                 from information_schema.columns
+                 where table_schema = 'public'
+                     and table_name = 'signaturespots'
+                     and column_name = 'fieldtype'
+                 limit 1`
+    );
+
+    const signerIndexCol = await pool.query(
+        `select 1
+                 from information_schema.columns
+                 where table_schema = 'public'
+                     and table_name = 'signaturespots'
+                     and column_name = 'signerindex'
+                 limit 1`
+    );
+
+    const fieldLabelCol = await pool.query(
+        `select 1
+                 from information_schema.columns
+                 where table_schema = 'public'
+                     and table_name = 'signaturespots'
+                     and column_name = 'fieldlabel'
+                 limit 1`
+    );
+
+    const fieldValueCol = await pool.query(
+        `select 1
+                 from information_schema.columns
+                 where table_schema = 'public'
+                     and table_name = 'signaturespots'
+                     and column_name = 'fieldvalue'
+                 limit 1`
+    );
+
     const caseIdNullableRes = await pool.query(
         `select is_nullable
          from information_schema.columns
@@ -1233,9 +1303,33 @@ async function getSchemaSupport() {
          limit 1`
     );
 
+    const otpWaivedByUserIdCol = await pool.query(
+        `select 1
+                 from information_schema.columns
+                 where table_schema = 'public'
+                     and table_name = 'signingfiles'
+                     and column_name = 'otpwaivedbyuserid'
+                 limit 1`
+    );
+
+    const otpWaivedAtUtcCol = await pool.query(
+        `select 1
+                 from information_schema.columns
+                 where table_schema = 'public'
+                     and table_name = 'signingfiles'
+                     and column_name = 'otpwaivedatutc'
+                 limit 1`
+    );
+
     const value = {
         signaturespotsSignerUserId: signerUserIdCol.rows.length > 0,
+        signaturespotsFieldType: fieldTypeCol.rows.length > 0,
+        signaturespotsSignerIndex: signerIndexCol.rows.length > 0,
+        signaturespotsFieldLabel: fieldLabelCol.rows.length > 0,
+        signaturespotsFieldValue: fieldValueCol.rows.length > 0,
         signingfilesCaseIdNullable: (caseIdNullableRes.rows[0]?.is_nullable || 'NO') === 'YES',
+        signingfilesOtpWaivedByUserId: otpWaivedByUserIdCol.rows.length > 0,
+        signingfilesOtpWaivedAtUtc: otpWaivedAtUtcCol.rows.length > 0,
     };
 
     // Cache briefly to avoid repeated information_schema hits, but still adapt to schema changes.
@@ -1327,37 +1421,77 @@ exports.uploadFileForSigning = async (req, res, next) => {
         // If the lawyer explicitly waives OTP, they must also explicitly acknowledge the waiver.
         const requireOtpRaw = signingConfig?.require_otp ?? signingConfig?.requireOtp;
         const hasExplicitPolicySelection = requireOtpRaw === true || requireOtpRaw === false || requireOtpRaw === 1 || requireOtpRaw === 0;
-        const requireOtp = hasExplicitPolicySelection ? Boolean(requireOtpRaw) : SIGNING_REQUIRE_OTP_DEFAULT;
-        const waiverAck = hasExplicitPolicySelection
-            ? Boolean(signingConfig?.otpWaiverAcknowledged ?? signingConfig?.otp_waiver_acknowledged)
-            : !SIGNING_REQUIRE_OTP_DEFAULT;
-        if (!requireOtp && !waiverAck) {
+        const requireOtp = SIGNING_OTP_ENABLED
+            ? (hasExplicitPolicySelection ? Boolean(requireOtpRaw) : SIGNING_REQUIRE_OTP_DEFAULT)
+            : false;
+        const waiverAck = SIGNING_OTP_ENABLED
+            ? (hasExplicitPolicySelection
+                ? Boolean(signingConfig?.otpWaiverAcknowledged ?? signingConfig?.otp_waiver_acknowledged)
+                : !SIGNING_REQUIRE_OTP_DEFAULT)
+            : true;
+        if (SIGNING_OTP_ENABLED && !requireOtp && !waiverAck) {
             return fail(next, 'OTP_WAIVER_ACK_REQUIRED', 422);
         }
 
+        const waiverAckEffective = !requireOtp ? waiverAck : false;
+        const policySelectedAtUtc = new Date();
+
+        const insertColumns = [
+            'caseid',
+            'lawyerid',
+            'clientid',
+            'filename',
+            'filekey',
+            'originalfilekey',
+            'status',
+            'notes',
+            'expiresat',
+            'requireotp',
+            'signingpolicyversion',
+            'policyselectedbyuserid',
+            'policyselectedatutc',
+            'otpwaiveracknowledged',
+            'otpwaiveracknowledgedatutc',
+            'otpwaiveracknowledgedbyuserid',
+        ];
+
+        const insertValues = [
+            normalizedCaseId,
+            lawyerId,
+            primaryClientId,
+            fileName,
+            fileKey,
+            fileKey,
+            'pending',
+            notes || null,
+            expiresAt || null,
+            requireOtp,
+            SIGNING_POLICY_VERSION,
+            lawyerId,
+            policySelectedAtUtc,
+            waiverAckEffective,
+            waiverAckEffective ? policySelectedAtUtc : null,
+            waiverAckEffective ? lawyerId : null,
+        ];
+
+        if (schemaSupport.signingfilesOtpWaivedAtUtc) {
+            insertColumns.push('otpwaivedatutc');
+            insertValues.push(waiverAckEffective ? policySelectedAtUtc : null);
+        }
+
+        if (schemaSupport.signingfilesOtpWaivedByUserId) {
+            insertColumns.push('otpwaivedbyuserid');
+            insertValues.push(waiverAckEffective ? lawyerId : null);
+        }
+
+        const placeholders = insertValues.map((_, idx) => `$${idx + 1}`).join(',');
+
         const insertFile = await pool.query(
             `insert into signingfiles
-             (caseid, lawyerid, clientid, filename, filekey, originalfilekey, status, notes, expiresat,
-              requireotp, signingpolicyversion, policyselectedbyuserid, policyselectedatutc,
-              otpwaiveracknowledged, otpwaiveracknowledgedatutc, otpwaiveracknowledgedbyuserid)
-             values ($1,$2,$3,$4,$5,$5,'pending',$6,$7,
-              $8,$9,$10,now(),
-              $11,case when $11 = true then now() else null end,$12)
+             (${insertColumns.join(', ')})
+             values (${placeholders})
              returning signingfileid as "SigningFileId"`,
-            [
-                normalizedCaseId,
-                lawyerId,
-                primaryClientId,
-                fileName,
-                fileKey,
-                notes || null,
-                expiresAt || null,
-                requireOtp,
-                SIGNING_POLICY_VERSION,
-                lawyerId,
-                waiverAck,
-                waiverAck ? lawyerId : null,
-            ]
+            insertValues
         );
 
         const signingFileId = insertFile.rows[0].SigningFileId;
@@ -1417,22 +1551,60 @@ exports.uploadFileForSigning = async (req, res, next) => {
 
                 console.log(`[controller]   Spot page ${spot.pageNum}: signerIndex=${spot.signerIndex}, signerName="${signerName}", signerUserId=${signerUserId}`);
 
-                if (schemaSupport.signaturespotsSignerUserId) {
+                const spotType = String(spot.fieldType || spot.type || spot.FieldType || 'signature').toLowerCase();
+                const spotLabel = spot.fieldLabel || spot.label || null;
+                const isRequiredEffective = typeof spot.isRequired === 'boolean'
+                    ? spot.isRequired
+                    : (spotType === 'signature' || spotType === 'initials');
+
+                if (schemaSupport.signaturespotsSignerUserId || schemaSupport.signaturespotsFieldType || schemaSupport.signaturespotsSignerIndex || schemaSupport.signaturespotsFieldLabel) {
+                    const insertColumns = [
+                        'signingfileid',
+                        'pagenumber',
+                        'x',
+                        'y',
+                        'width',
+                        'height',
+                        'signername',
+                        'isrequired',
+                    ];
+                    const insertValues = [
+                        signingFileId,
+                        spot.pageNum || 1,
+                        spot.x ?? 50,
+                        spot.y ?? 50,
+                        spot.width ?? 150,
+                        spot.height ?? 75,
+                        signerName,
+                        isRequiredEffective,
+                    ];
+
+                    if (schemaSupport.signaturespotsSignerUserId) {
+                        insertColumns.push('signeruserid');
+                        insertValues.push(signerUserId || null);
+                    }
+
+                    if (schemaSupport.signaturespotsFieldType) {
+                        insertColumns.push('fieldtype');
+                        insertValues.push(spotType);
+                    }
+
+                    if (schemaSupport.signaturespotsSignerIndex) {
+                        insertColumns.push('signerindex');
+                        insertValues.push(spot.signerIndex ?? null);
+                    }
+
+                    if (schemaSupport.signaturespotsFieldLabel) {
+                        insertColumns.push('fieldlabel');
+                        insertValues.push(spotLabel);
+                    }
+
+                    const placeholders = insertValues.map((_, idx) => `$${idx + 1}`).join(',');
                     await pool.query(
                         `insert into signaturespots
-                         (signingfileid, pagenumber, x, y, width, height, signername, isrequired, signeruserid)
-                         values ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-                        [
-                            signingFileId,
-                            spot.pageNum || 1,
-                            spot.x ?? 50,
-                            spot.y ?? 50,
-                            spot.width ?? 150,
-                            spot.height ?? 75,
-                            signerName,
-                            spot.isRequired !== false,
-                            signerUserId || null,
-                        ]
+                         (${insertColumns.join(', ')})
+                         values (${placeholders})`,
+                        insertValues
                     );
                 } else {
                     // Legacy DB: no signeruserid column
@@ -1448,7 +1620,7 @@ exports.uploadFileForSigning = async (req, res, next) => {
                             spot.width ?? 150,
                             spot.height ?? 75,
                             signerName,
-                            spot.isRequired !== false,
+                            isRequiredEffective,
                         ]
                     );
                 }
@@ -1560,8 +1732,8 @@ exports.getClientSigningFiles = async (req, res, next) => {
                     sf.signedat           as "SignedAt",
                     c.casename            as "CaseName",
                     u.name                as "LawyerName",
-                    count(ss.signaturespotid)                                       as "TotalSpots",
-                    coalesce(sum(case when ss.issigned = true then 1 else 0 end),0) as "SignedSpots"
+                    count(case when ss.isrequired = true then ss.signaturespotid end)                                       as "TotalSpots",
+                    coalesce(sum(case when ss.isrequired = true and ss.issigned = true then 1 else 0 end),0) as "SignedSpots"
                  from signingfiles sf
                  join cases c  on c.caseid  = sf.caseid
                  join users u  on u.userid  = sf.lawyerid
@@ -1595,8 +1767,8 @@ exports.getClientSigningFiles = async (req, res, next) => {
                 sf.signedat           as "SignedAt",
                 c.casename            as "CaseName",
                 u.name                as "LawyerName",
-                count(ss.signaturespotid)                                       as "TotalSpots",
-                coalesce(sum(case when ss.issigned = true then 1 else 0 end),0) as "SignedSpots"
+                count(case when ss.isrequired = true then ss.signaturespotid end)                                       as "TotalSpots",
+                coalesce(sum(case when ss.isrequired = true and ss.issigned = true then 1 else 0 end),0) as "SignedSpots"
              from signingfiles sf
              left join cases c  on c.caseid  = sf.caseid
              join users u  on u.userid  = sf.lawyerid
@@ -1654,8 +1826,8 @@ exports.getLawyerSigningFiles = async (req, res, next) => {
                 sf.otpwaiveracknowledgedbyuserid as "OtpWaiverAcknowledgedByUserId",
                 c.casename            as "CaseName",
                 u.name                as "ClientName",
-                count(ss.signaturespotid)                                       as "TotalSpots",
-                coalesce(sum(case when ss.issigned = true then 1 else 0 end),0) as "SignedSpots"
+                count(case when ss.isrequired = true then ss.signaturespotid end)                                       as "TotalSpots",
+                coalesce(sum(case when ss.isrequired = true and ss.issigned = true then 1 else 0 end),0) as "SignedSpots"
              from signingfiles sf
              left join cases c  on c.caseid  = sf.caseid
              left join users u  on u.userid  = sf.clientid
@@ -1704,8 +1876,8 @@ exports.getPendingSigningFiles = async (req, res, next) => {
                     sf.notes              as "Notes",
                     c.casename            as "CaseName",
                     u.name                as "LawyerName",
-                    count(ss.signaturespotid)                                       as "TotalSpots",
-                    coalesce(sum(case when ss.issigned = true then 1 else 0 end),0) as "SignedSpots"
+                    count(case when ss.isrequired = true then ss.signaturespotid end)                                       as "TotalSpots",
+                    coalesce(sum(case when ss.isrequired = true and ss.issigned = true then 1 else 0 end),0) as "SignedSpots"
                  from signingfiles sf
                  join cases c  on c.caseid  = sf.caseid
                  join users u  on u.userid  = sf.lawyerid
@@ -1739,8 +1911,8 @@ exports.getPendingSigningFiles = async (req, res, next) => {
                 sf.notes              as "Notes",
                 c.casename            as "CaseName",
                 u.name                as "LawyerName",
-                count(ss.signaturespotid)                                       as "TotalSpots",
-                coalesce(sum(case when ss.issigned = true then 1 else 0 end),0) as "SignedSpots"
+                count(case when ss.isrequired = true then ss.signaturespotid end)                                       as "TotalSpots",
+                coalesce(sum(case when ss.isrequired = true and ss.issigned = true then 1 else 0 end),0) as "SignedSpots"
              from signingfiles sf
              left join cases c  on c.caseid  = sf.caseid
              join users u  on u.userid  = sf.lawyerid
@@ -1785,6 +1957,10 @@ exports.getSigningFileDetails = async (req, res, next) => {
 
         const schemaSupport = await getSchemaSupport();
 
+        const otpWaivedColumns = schemaSupport.signingfilesOtpWaivedAtUtc || schemaSupport.signingfilesOtpWaivedByUserId
+            ? `,\n                otpwaivedatutc as "OtpWaivedAtUtc",\n                otpwaivedbyuserid as "OtpWaivedByUserId"`
+            : '';
+
         const fileResult = await pool.query(
             `select 
                 signingfileid   as "SigningFileId",
@@ -1807,7 +1983,7 @@ exports.getSigningFileDetails = async (req, res, next) => {
                 policyselectedbyuserid as "PolicySelectedByUserId",
                 policyselectedatutc as "PolicySelectedAtUtc",
                 otpwaiveracknowledged as "OtpWaiverAcknowledged",
-                otpwaiveracknowledgedatutc as "OtpWaiverAcknowledgedAtUtc",
+                otpwaiveracknowledgedatutc as "OtpWaiverAcknowledgedAtUtc"${otpWaivedColumns},
                 originalpdfsha256 as "OriginalPdfSha256",
                 presentedpdfsha256 as "PresentedPdfSha256",
                 signedpdfsha256 as "SignedPdfSha256",
@@ -1822,6 +1998,7 @@ exports.getSigningFileDetails = async (req, res, next) => {
         }
 
         const file = fileResult.rows[0];
+        const requireOtpEffective = SIGNING_OTP_ENABLED && Boolean(file.RequireOtp);
 
         const isLawyer = file.LawyerId === userId;
         const isPrimaryClient = file.ClientId === userId;
@@ -1857,7 +2034,7 @@ exports.getSigningFileDetails = async (req, res, next) => {
                 issigned        as "IsSigned",
                 signaturedata   as "SignatureData",
                 signedat        as "SignedAt",
-            createdat       as "CreatedAt"${schemaSupport.signaturespotsSignerUserId ? ',\n                signeruserid    as "SignerUserId"' : ''}
+                createdat       as "CreatedAt"${schemaSupport.signaturespotsSignerUserId ? ',\n                signeruserid    as "SignerUserId"' : ''}${schemaSupport.signaturespotsFieldType ? ',\n                fieldtype       as "FieldType"' : ''}${schemaSupport.signaturespotsSignerIndex ? ',\n                signerindex     as "SignerIndex"' : ''}${schemaSupport.signaturespotsFieldLabel ? ',\n                fieldlabel      as "FieldLabel"' : ''}${schemaSupport.signaturespotsFieldValue ? ',\n                fieldvalue      as "FieldValue"' : ''}
              from signaturespots
              where signingfileid = $1`;
 
@@ -1903,7 +2080,7 @@ exports.getSigningFileDetails = async (req, res, next) => {
         );
 
         return res.json({
-            file,
+            file: { ...file, OtpEnabled: SIGNING_OTP_ENABLED },
             signatureSpots,
             isLawyer,
         });
@@ -1934,6 +2111,8 @@ exports.getEvidencePackage = async (req, res, next) => {
         if (!isOwnerLawyer && !isAdmin) {
             return fail(next, 'FORBIDDEN', 403);
         }
+
+        const schemaSupport = await getSchemaSupport();
 
         const fileEvidenceRes = await pool.query(
             `select
@@ -1985,11 +2164,14 @@ exports.getEvidencePackage = async (req, res, next) => {
                 width as "Width",
                 height as "Height",
                 signername as "SignerName",
-                signeruserid as "SignerUserId",
+                ${schemaSupport.signaturespotsSignerUserId ? 'signeruserid as "SignerUserId",' : ''}
                 isrequired as "IsRequired",
                 issigned as "IsSigned",
                 signedat as "SignedAt",
                 signaturedata as "SignatureDataKey",
+                ${schemaSupport.signaturespotsFieldType ? 'fieldtype as "FieldType",' : ''}
+                ${schemaSupport.signaturespotsSignerIndex ? 'signerindex as "SignerIndex",' : ''}
+                ${schemaSupport.signaturespotsFieldLabel ? 'fieldlabel as "FieldLabel",' : ''}
 
                 signerip as "SignerIp",
                 signeruseragent as "SignerUserAgent",
@@ -2643,9 +2825,11 @@ exports.updateSigningPolicy = async (req, res, next) => {
             return fail(next, 'SIGNING_POLICY_REQUIRED', 422);
         }
 
-        const requireOtp = Boolean(requireOtpRaw);
-        const waiverAck = Boolean(req.body?.otpWaiverAcknowledged ?? req.body?.otp_waiver_acknowledged);
-        if (!requireOtp && !waiverAck) {
+        const requireOtp = SIGNING_OTP_ENABLED ? Boolean(requireOtpRaw) : false;
+        const waiverAck = SIGNING_OTP_ENABLED
+            ? Boolean(req.body?.otpWaiverAcknowledged ?? req.body?.otp_waiver_acknowledged)
+            : true;
+        if (SIGNING_OTP_ENABLED && !requireOtp && !waiverAck) {
             return fail(next, 'OTP_WAIVER_ACK_REQUIRED', 422);
         }
 
@@ -2658,24 +2842,46 @@ exports.updateSigningPolicy = async (req, res, next) => {
             return fail(next, 'FORBIDDEN', 403);
         }
 
+        const schemaSupport = await getSchemaSupport();
+        const waiverAckEffective = !requireOtp ? waiverAck : false;
+        const policySelectedAtUtc = new Date();
+
+        const updateParts = [
+            'requireotp = $2',
+            'signingpolicyversion = $3',
+            'policyselectedbyuserid = $4',
+            'policyselectedatutc = $5',
+            'otpwaiveracknowledged = $6',
+            'otpwaiveracknowledgedatutc = $7',
+            'otpwaiveracknowledgedbyuserid = $8',
+        ];
+
+        const updateValues = [
+            signingFileId,
+            requireOtp,
+            SIGNING_POLICY_VERSION,
+            requesterId,
+            policySelectedAtUtc,
+            waiverAckEffective,
+            waiverAckEffective ? policySelectedAtUtc : null,
+            waiverAckEffective ? requesterId : null,
+        ];
+
+        if (schemaSupport.signingfilesOtpWaivedAtUtc) {
+            updateParts.push(`otpwaivedatutc = $${updateValues.length + 1}`);
+            updateValues.push(waiverAckEffective ? policySelectedAtUtc : null);
+        }
+
+        if (schemaSupport.signingfilesOtpWaivedByUserId) {
+            updateParts.push(`otpwaivedbyuserid = $${updateValues.length + 1}`);
+            updateValues.push(waiverAckEffective ? requesterId : null);
+        }
+
         await pool.query(
             `update signingfiles
-             set requireotp = $2,
-                 signingpolicyversion = $3,
-                 policyselectedbyuserid = $4,
-                 policyselectedatutc = now(),
-                 otpwaiveracknowledged = $5,
-                 otpwaiveracknowledgedatutc = case when $5 = true then now() else null end,
-                 otpwaiveracknowledgedbyuserid = case when $5 = true then $6::integer else null end
+             set ${updateParts.join(',\n                 ')}
              where signingfileid = $1`,
-            [
-                signingFileId,
-                requireOtp,
-                SIGNING_POLICY_VERSION,
-                requesterId,
-                !requireOtp ? waiverAck : false,
-                requesterId,
-            ]
+            updateValues
         );
 
         await insertAuditEvent({
@@ -2729,8 +2935,8 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
                 isrequired      as "IsRequired",
                 issigned        as "IsSigned",
                 signaturedata   as "SignatureData",
-                signedat        as "SignedAt",
-                createdat       as "CreatedAt"${schemaSupport.signaturespotsSignerUserId ? ',\n                signeruserid    as "SignerUserId"' : ''}
+                     signedat        as "SignedAt",
+                     createdat       as "CreatedAt"${schemaSupport.signaturespotsSignerUserId ? ',\n                signeruserid    as "SignerUserId"' : ''}${schemaSupport.signaturespotsFieldType ? ',\n                fieldtype       as "FieldType"' : ''}${schemaSupport.signaturespotsSignerIndex ? ',\n                signerindex     as "SignerIndex"' : ''}${schemaSupport.signaturespotsFieldLabel ? ',\n                fieldlabel      as "FieldLabel"' : ''}${schemaSupport.signaturespotsFieldValue ? ',\n                fieldvalue      as "FieldValue"' : ''}
              from signaturespots
              where signingfileid = $1`;
 
@@ -2769,7 +2975,7 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
         );
 
         return res.json({
-            file,
+            file: { ...file, OtpEnabled: SIGNING_OTP_ENABLED },
             signatureSpots,
             isLawyer,
         });
@@ -2894,6 +3100,14 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
     const file = await loadSigningPolicyForFile(signingFileId);
     if (!file) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
 
+    const requireOtpEffective = SIGNING_OTP_ENABLED && Boolean(file.RequireOtp);
+    if (!SIGNING_OTP_ENABLED) {
+        return fail(next, 'OTP_DISABLED', 409);
+    }
+    if (!requireOtpEffective) {
+        return fail(next, 'OTP_NOT_REQUIRED', 409);
+    }
+
     const presentedPdfSha256 = await ensurePresentedHashOrCompute({ signingFileId, fileKey: file.FileKey });
     if (!presentedPdfSha256) {
         return fail(next, 'MISSING_PRESENTED_HASH', 500);
@@ -2930,8 +3144,8 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
         success: true,
         metadata: {
             signingPolicyVersion: String(file.SigningPolicyVersion || SIGNING_POLICY_VERSION),
-            requireOtp: Boolean(file.RequireOtp),
-            otpWaived: !Boolean(file.RequireOtp),
+            requireOtp: requireOtpEffective,
+            otpWaived: !requireOtpEffective,
             policySource: file.PolicySelectedAtUtc ? 'explicit' : 'legacy_default',
             presentedPdfSha256,
             challengeId: created.challengeId,
@@ -2962,6 +3176,14 @@ async function verifySigningOtpImpl({ req, res, next, signingFileId, signerUserI
     const file = await loadSigningPolicyForFile(signingFileId);
     if (!file) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
 
+    const requireOtpEffective = SIGNING_OTP_ENABLED && Boolean(file.RequireOtp);
+    if (!SIGNING_OTP_ENABLED) {
+        return fail(next, 'OTP_DISABLED', 409);
+    }
+    if (!requireOtpEffective) {
+        return fail(next, 'OTP_NOT_REQUIRED', 409);
+    }
+
     const presentedPdfSha256 = await ensurePresentedHashOrCompute({ signingFileId, fileKey: file.FileKey });
     if (!presentedPdfSha256) {
         return fail(next, 'MISSING_PRESENTED_HASH', 500);
@@ -2986,8 +3208,8 @@ async function verifySigningOtpImpl({ req, res, next, signingFileId, signerUserI
         success: Boolean(verified.ok),
         metadata: {
             signingPolicyVersion: String(file.SigningPolicyVersion || SIGNING_POLICY_VERSION),
-            requireOtp: Boolean(file.RequireOtp),
-            otpWaived: !Boolean(file.RequireOtp),
+            requireOtp: requireOtpEffective,
+            otpWaived: !requireOtpEffective,
             policySource: file.PolicySelectedAtUtc ? 'explicit' : 'legacy_default',
             presentedPdfSha256,
             challengeId: verified.challengeId || null,
@@ -3127,7 +3349,8 @@ exports.signFile = async (req, res, next) => {
             `select
                 signaturespotid as "SignatureSpotId",
                 signingfileid   as "SigningFileId",
-                issigned        as "IsSigned"${schemaSupport.signaturespotsSignerUserId ? ',\n                signeruserid    as "SignerUserId"' : ''}
+                issigned        as "IsSigned",
+                isrequired      as "IsRequired"${schemaSupport.signaturespotsSignerUserId ? ',\n                signeruserid    as "SignerUserId"' : ''}${schemaSupport.signaturespotsFieldType ? ',\n                fieldtype       as "FieldType"' : ''}${schemaSupport.signaturespotsFieldValue ? ',\n                fieldvalue      as "FieldValue"' : ''}
              from signaturespots
              where signaturespotid = $1 and signingfileid = $2`,
             [signatureSpotId, signingFileId]
@@ -3153,6 +3376,11 @@ exports.signFile = async (req, res, next) => {
         }
 
         const effectivePolicyVersion = String(file.SigningPolicyVersion || SIGNING_POLICY_VERSION);
+        const requireOtpEffective = SIGNING_OTP_ENABLED && Boolean(file.RequireOtp);
+        const spotType = String(spot.FieldType || 'signature').toLowerCase();
+        const isSignatureLike = spotType === 'signature' || spotType === 'initials';
+        const fieldValueRaw = req.body?.fieldValue ?? req.body?.field_value;
+        const fieldValue = fieldValueRaw === undefined || fieldValueRaw === null ? '' : String(fieldValueRaw).trim();
         if (!consentAccepted) {
             await insertAuditEvent({
                 req,
@@ -3165,8 +3393,8 @@ exports.signFile = async (req, res, next) => {
                 success: false,
                 metadata: {
                     failure: 'CONSENT_REQUIRED',
-                    requireOtp: Boolean(file.RequireOtp),
-                    otpWaived: !Boolean(file.RequireOtp),
+                    requireOtp: requireOtpEffective,
+                    otpWaived: !requireOtpEffective,
                     policySource: file.PolicySelectedAtUtc ? 'explicit' : 'legacy_default',
                 },
             });
@@ -3196,7 +3424,6 @@ exports.signFile = async (req, res, next) => {
             return fail(next, 'MISSING_PRESENTED_HASH', 500);
         }
 
-        const requireOtpEffective = Boolean(file.RequireOtp) && SIGNING_REQUIRE_OTP_DEFAULT;
         const otpVerificationId = requireOtpEffective
             ? await getVerifiedOtpChallengeIdOrNull({
                 signingFileId,
@@ -3223,6 +3450,14 @@ exports.signFile = async (req, res, next) => {
                 },
             });
             return fail(next, 'OTP_REQUIRED', 403);
+        }
+
+        if (!isSignatureLike && spot.IsRequired && !fieldValue) {
+            return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'fieldValue' } });
+        }
+
+        if (isSignatureLike && !signatureImage) {
+            return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'signatureImage' } });
         }
 
         const consentId = await getOrCreateConsent({
@@ -3254,7 +3489,7 @@ exports.signFile = async (req, res, next) => {
             },
         });
 
-        if (signatureImage) {
+        if (isSignatureLike && signatureImage) {
             const isPng = signatureImage.includes("png");
             const ext = isPng ? "png" : "jpg";
             const key = `signatures/${file.LawyerId}/${userId}/${signingFileId}_${signatureSpotId}.${ext}`;
@@ -3299,7 +3534,7 @@ exports.signFile = async (req, res, next) => {
                      consentid = $8::uuid,
                      signatureimagesha256 = $9,
                      signaturestorageetag = $10,
-                     signaturestorageversionid = $11
+                     signaturestorageversionid = $11${schemaSupport.signaturespotsFieldValue ? ',\n                     fieldvalue = $12' : ''}
                  where signaturespotid = $2`,
                 [
                     key,
@@ -3313,6 +3548,7 @@ exports.signFile = async (req, res, next) => {
                     signatureSha,
                     signatureEtag,
                     signatureVersionId,
+                    ...(schemaSupport.signaturespotsFieldValue ? [null] : []),
                 ]
             );
         } else {
@@ -3325,7 +3561,7 @@ exports.signFile = async (req, res, next) => {
                      signingsessionid = $4::uuid,
                      presentedpdfsha256 = $5,
                      otpverificationid = $6::uuid,
-                     consentid = $7::uuid
+                     consentid = $7::uuid${schemaSupport.signaturespotsFieldValue ? ',\n                     fieldvalue = $8' : ''}
                  where signaturespotid = $1`,
                 [
                     signatureSpotId,
@@ -3335,6 +3571,7 @@ exports.signFile = async (req, res, next) => {
                     file.PresentedPdfSha256,
                     otpVerificationId,
                     consentId,
+                    ...(schemaSupport.signaturespotsFieldValue ? [fieldValue] : []),
                 ]
             );
         }
@@ -3616,22 +3853,57 @@ exports.reuploadFile = async (req, res, next) => {
 
                 if (Number.isNaN(signerUserId)) signerUserId = null;
 
-                if (schemaSupport.signaturespotsSignerUserId) {
+                const spotType = String(spot.fieldType || spot.type || spot.FieldType || 'signature').toLowerCase();
+                const spotLabel = spot.fieldLabel || spot.label || null;
+
+                if (schemaSupport.signaturespotsSignerUserId || schemaSupport.signaturespotsFieldType || schemaSupport.signaturespotsSignerIndex || schemaSupport.signaturespotsFieldLabel) {
+                    const insertColumns = [
+                        'signingfileid',
+                        'pagenumber',
+                        'x',
+                        'y',
+                        'width',
+                        'height',
+                        'signername',
+                        'isrequired',
+                    ];
+                    const insertValues = [
+                        signingFileId,
+                        spot.pageNum || 1,
+                        spot.x ?? 50,
+                        spot.y ?? 50,
+                        spot.width ?? 150,
+                        spot.height ?? 75,
+                        signerName,
+                        isRequiredEffective,
+                    ];
+
+                    if (schemaSupport.signaturespotsSignerUserId) {
+                        insertColumns.push('signeruserid');
+                        insertValues.push(signerUserId || null);
+                    }
+
+                    if (schemaSupport.signaturespotsFieldType) {
+                        insertColumns.push('fieldtype');
+                        insertValues.push(spotType);
+                    }
+
+                    if (schemaSupport.signaturespotsSignerIndex) {
+                        insertColumns.push('signerindex');
+                        insertValues.push(spot.signerIndex ?? null);
+                    }
+
+                    if (schemaSupport.signaturespotsFieldLabel) {
+                        insertColumns.push('fieldlabel');
+                        insertValues.push(spotLabel);
+                    }
+
+                    const placeholders = insertValues.map((_, idx) => `$${idx + 1}`).join(',');
                     await pool.query(
                         `insert into signaturespots
-                         (signingfileid, pagenumber, x, y, width, height, signername, isrequired, signeruserid)
-                         values ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-                        [
-                            signingFileId,
-                            spot.pageNum || 1,
-                            spot.x ?? 50,
-                            spot.y ?? 50,
-                            spot.width ?? 150,
-                            spot.height ?? 75,
-                            signerName,
-                            spot.isRequired !== false,
-                            signerUserId || null,
-                        ]
+                         (${insertColumns.join(', ')})
+                         values (${placeholders})`,
+                        insertValues
                     );
                 } else {
                     await pool.query(
@@ -3646,7 +3918,7 @@ exports.reuploadFile = async (req, res, next) => {
                             spot.width ?? 150,
                             spot.height ?? 75,
                             signerName,
-                            spot.isRequired !== false,
+                            isRequiredEffective,
                         ]
                     );
                 }

@@ -1,7 +1,17 @@
 .lw-fieldContextMenu {
+  margin-top: 0.5rem;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  padding: 12px;
+  min-width: 14rem;
+}
+
+.lw-fieldContextMenu--floating {
+  position: fixed;
+  inset-inline-end: 1.5rem;
+  bottom: 9.5rem;
+  z-index: 12000;
   padding: 12px;
   background: var(--lw-color-white);
   border: 1px solid var(--lw-color-border, #e2e8f0);
@@ -9,14 +19,40 @@
   min-width: 14rem;
   box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12);
 }
-.lw-fieldContextMenu button {
-  background: var(--lw-color-white);
-  border: 1px solid var(--lw-color-border, #E2E8F0);
-  padding: 8px 10px;
-  text-align: left;
-  cursor: pointer;
-  border-radius: 0.5rem;
-  font: inherit;
+
+.lw-fieldContextMenu__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
-.lw-fieldContextMenu__divider { height: 1px; background: var(--lw-color-disabled, #E2E8F0); margin: 6px 0; }
-.lw-fieldContextMenu__groupTitle { font-weight: 700; font-size: 12px; color: var(--lw-color-text); }
+
+.lw-fieldContextMenu__title {
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: var(--lw-color-text);
+}
+
+.lw-fieldContextMenu__close {
+  min-height: 32px;
+}
+
+.lw-fieldContextMenu__action {
+  width: 100%;
+}
+
+.lw-fieldContextMenu__action .lw-textButtonWithTwoOptionalIcons__inner {
+  justify-content: flex-start;
+}
+
+.lw-fieldContextMenu__divider {
+  height: 1px;
+  background: var(--lw-color-disabled, #E2E8F0);
+  margin: 6px 0;
+}
+
+.lw-fieldContextMenu__groupTitle {
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--lw-color-text);
+}

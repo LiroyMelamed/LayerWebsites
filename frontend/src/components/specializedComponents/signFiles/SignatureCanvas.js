@@ -74,10 +74,14 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const [otpCode, setOtpCode] = useState("");
     const [otpVerified, setOtpVerified] = useState(false);
     const [otpBusy, setOtpBusy] = useState(false);
+    const [fieldValue, setFieldValue] = useState("");
+    const [fieldChecked, setFieldChecked] = useState(false);
 
     const isPublic = Boolean(publicToken);
     const isScreen = variant === "screen";
-    const otpFeatureEnabled = String(process.env.REACT_APP_SIGNING_REQUIRE_OTP_DEFAULT ?? 'true').toLowerCase() !== 'false';
+    const otpGlobalEnabled = false;
+    const otpEnabled = otpGlobalEnabled && Boolean(fileDetails?.file?.OtpEnabled ?? true);
+    const otpRequired = otpEnabled && Boolean(fileDetails?.file?.RequireOtp);
 
     const effectiveSigningFileId = useMemo(() => {
         return fileDetails?.file?.SigningFileId || signingFileId;
@@ -85,7 +89,34 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const getSpotPage = (spot) => spot?.PageNumber ?? spot?.pageNum ?? spot?.pagenumber ?? 1;
     const getSpotY = (spot) => spot?.Y ?? spot?.y ?? 0;
-    const isSpotRequired = (spot) => spot?.IsRequired !== false;
+    const isSpotRequired = (spot) => {
+        const raw = spot?.IsRequired ?? spot?.isRequired;
+        if (typeof raw === 'boolean') return raw;
+        const type = getSpotType(spot);
+        return isSignatureLike(type);
+    };
+    const getInputTypeForField = (type) => {
+        switch (type) {
+            case 'email':
+                return 'email';
+            case 'phone':
+                return 'tel';
+            case 'date':
+                return 'date';
+            default:
+                return 'text';
+        }
+    };
+    const getSpotType = (spot) => String(spot?.FieldType ?? spot?.fieldType ?? spot?.type ?? 'signature').toLowerCase();
+    const getFieldTypeKey = (type) => {
+        switch (type) {
+            case 'idnumber':
+                return 'idNumber';
+            default:
+                return type;
+        }
+    };
+    const isSignatureLike = (spotType) => spotType === 'signature' || spotType === 'initials';
 
     const getUnsignedRequiredSpots = (spots) => {
         const list = Array.isArray(spots) ? spots : [];
@@ -268,6 +299,20 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         }
     }, [currentSpot]);
 
+    useEffect(() => {
+        if (!currentSpot) return;
+        const value = currentSpot?.FieldValue ?? currentSpot?.fieldValue ?? "";
+        const type = getSpotType(currentSpot);
+        if (type === 'checkbox') {
+            const truthy = value === true || value === 'true' || value === 1 || value === '1' || value === 'yes' || value === '✓';
+            setFieldChecked(Boolean(truthy));
+            setFieldValue(truthy ? 'true' : '');
+        } else {
+            setFieldValue(String(value || ""));
+            setFieldChecked(false);
+        }
+    }, [currentSpot]);
+
     const getClientPointOnCanvas = (e) => {
         const canvas = canvasRef.current;
         if (!canvas) return null;
@@ -417,7 +462,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         const spot = spotOverride || currentSpot;
         if (!spot || spot.IsSigned) return false;
 
-        const requireOtp = Boolean(fileDetails?.file?.RequireOtp) && otpFeatureEnabled;
+        const spotType = getSpotType(spot);
+        if (!isSignatureLike(spotType)) return false;
+
+        const requireOtp = otpRequired;
         const consentVersion = String(fileDetails?.file?.SigningPolicyVersion || "2026-01-11");
 
         if (!consentAccepted) {
@@ -450,6 +498,64 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 {
                     signatureSpotId: spot.SignatureSpotId,
                     signatureImage: dataUrl,
+                    signingSessionId,
+                    consentAccepted: true,
+                    consentVersion,
+                },
+                config
+            );
+            unwrapApi(res);
+        }
+
+        return true;
+    };
+
+    const signCurrentSpotWithValue = async (value, spotOverride = null) => {
+        const spot = spotOverride || currentSpot;
+        if (!spot || spot.IsSigned) return false;
+
+        const spotType = getSpotType(spot);
+        if (isSignatureLike(spotType)) return false;
+
+        const requireOtp = otpRequired;
+        const consentVersion = String(fileDetails?.file?.SigningPolicyVersion || "2026-01-11");
+
+        if (!consentAccepted) {
+            setMessage({ type: "warning", text: t("signing.canvas.consentRequired") });
+            return false;
+        }
+        if (requireOtp && !otpVerified) {
+            setMessage({ type: "warning", text: t("signing.canvas.otpRequired") });
+            return false;
+        }
+
+        const cleaned = value == null ? "" : String(value).trim();
+        if (isSpotRequired(spot) && !cleaned) {
+            setMessage({ type: "warning", text: t("signing.canvas.fieldRequired") });
+            return false;
+        }
+
+        const config = { headers: { "x-signing-session-id": signingSessionId } };
+
+        if (isPublic) {
+            const res = await signingFilesApi.publicSignFile(
+                publicToken,
+                {
+                    signatureSpotId: spot.SignatureSpotId,
+                    fieldValue: cleaned,
+                    signingSessionId,
+                    consentAccepted: true,
+                    consentVersion,
+                },
+                config
+            );
+            unwrapApi(res);
+        } else {
+            const res = await signingFilesApi.signFile(
+                effectiveSigningFileId,
+                {
+                    signatureSpotId: spot.SignatureSpotId,
+                    fieldValue: cleaned,
                     signingSessionId,
                     consentAccepted: true,
                     consentVersion,
@@ -506,6 +612,25 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         }
     };
 
+    const saveFieldValue = async () => {
+        if (!currentSpot || currentSpot.IsSigned || currentSpotIsSignature) return;
+        setSaving(true);
+        try {
+            const value = currentSpotType === 'checkbox' ? (fieldChecked ? 'true' : '') : fieldValue;
+            const didSign = await signCurrentSpotWithValue(value);
+            if (!didSign) return;
+
+            setMessage({ type: "success", text: t("signing.canvas.fieldSavedSuccess") });
+            await reloadDetailsAndAdvance();
+            setTimeout(() => setMessage(null), 2000);
+        } catch (err) {
+            console.error("Failed to save field value", err);
+            setMessage({ type: "error", text: t("signing.canvas.fieldSaveError") });
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const useSavedSignatureForNext = async () => {
         try {
             if (!savedSignature?.exists) {
@@ -553,7 +678,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const signAllRemainingSpots = async () => {
         try {
             const allSpots = fileDetails?.signatureSpots || [];
-            const unsigned = getUnsignedRequiredSpots(allSpots);
+            const unsigned = getUnsignedRequiredSpots(allSpots).filter((s) => isSignatureLike(getSpotType(s)));
             if (!unsigned.length) return;
 
             setSaving(true);
@@ -601,6 +726,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const requestOtp = async () => {
         try {
+            if (!otpRequired) return;
             setOtpBusy(true);
             const res = isPublic
                 ? await signingFilesApi.publicRequestSigningOtp(publicToken, signingSessionId)
@@ -618,6 +744,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const verifyOtp = async () => {
         try {
+            if (!otpRequired) return;
             const otp = String(otpCode || "").trim();
             if (!/^[0-9]{6}$/.test(otp)) {
                 setMessage({ type: "error", text: t("signing.canvas.otpInvalidFormat") });
@@ -707,6 +834,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const unsignedRequiredSpots = getUnsignedRequiredSpots(spots);
     const remainingCount = unsignedRequiredSpots.length;
     const allSpotsSignedByUser = effectiveRequiredSpots.length > 0 && remainingCount === 0;
+    const currentSpotType = currentSpot ? getSpotType(currentSpot) : 'signature';
+    const currentSpotIsSignature = currentSpot ? isSignatureLike(currentSpotType) : false;
 
     const goToNextSigningSpot = () => {
         const unsigned = unsignedRequiredSpots;
@@ -779,7 +908,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 </label>
                             </div>
 
-                            {Boolean(fileDetails?.file?.RequireOtp) && otpFeatureEnabled && (
+                            {otpRequired && (
                                 <div className="lw-signing-otpBox">
                                     <div className="lw-signing-otpTitle">{t("signing.canvas.otpTitle")}</div>
                                     <div className="lw-signing-otpRow">
@@ -918,7 +1047,48 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 </div>
                             )}
 
-                            {signatureMode !== "saved" && currentSpot && !currentSpot.IsSigned && (
+                            {currentSpot && !currentSpot.IsSigned && !currentSpotIsSignature && (
+                                <div className="lw-signing-canvasSection">
+                                    <div className="lw-signing-fieldInput">
+                                        <div className="lw-signing-fieldLabel">
+                                            {t("signing.canvas.fieldValueLabel", { type: t(`signing.fields.${getFieldTypeKey(currentSpotType)}`) })}
+                                        </div>
+                                        {currentSpotType === 'checkbox' ? (
+                                            <label className="lw-signing-fieldCheckbox">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={fieldChecked}
+                                                    onChange={(e) => {
+                                                        setFieldChecked(Boolean(e.target.checked));
+                                                        setFieldValue(e.target.checked ? 'true' : '');
+                                                    }}
+                                                    disabled={saving}
+                                                />
+                                                <span>{t("signing.canvas.checkboxLabel")}</span>
+                                            </label>
+                                        ) : (
+                                            <input
+                                                className="lw-signing-fieldInputControl"
+                                                type={getInputTypeForField(currentSpotType)}
+                                                placeholder={t("signing.canvas.fieldValuePlaceholder")}
+                                                value={fieldValue}
+                                                onChange={(e) => setFieldValue(e.target.value)}
+                                                disabled={saving}
+                                            />
+                                        )}
+                                    </div>
+                                    <div className="lw-signing-actionsRow">
+                                        <SecondaryButton size={buttonSizes.SMALL} onPress={() => setFieldValue("")} disabled={saving}>
+                                            {t("common.clear")}
+                                        </SecondaryButton>
+                                        <PrimaryButton size={buttonSizes.SMALL} onPress={saveFieldValue} disabled={saving}>
+                                            {saving ? t("signing.canvas.saving") : t("signing.canvas.saveField")}
+                                        </PrimaryButton>
+                                    </div>
+                                </div>
+                            )}
+
+                            {signatureMode !== "saved" && currentSpot && !currentSpot.IsSigned && currentSpotIsSignature && (
                                 <div className="lw-signing-canvasSection">
                                     {savedSignature.exists && (
                                         <div className="lw-signing-toggleSlot">

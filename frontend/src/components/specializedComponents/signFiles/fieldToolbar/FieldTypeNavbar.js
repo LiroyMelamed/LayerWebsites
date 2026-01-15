@@ -10,9 +10,6 @@ export default function FieldTypeNavbar({
     selected = 'signature',
     onSelect = () => { },
     fieldTypes,
-    signers = [],
-    selectedSignerId = null,
-    onSelectSigner = () => { },
 }) {
     const { t } = useTranslation();
     const resolvedTypes = fieldTypes || [
@@ -28,38 +25,25 @@ export default function FieldTypeNavbar({
 
     return (
         <SimpleContainer className="lw-fieldTypeNavbar">
-            {Array.isArray(signers) && signers.length > 1 && (
-                <SimpleContainer className="lw-fieldTypeNavbar__signerRow">
-                    <span className="lw-fieldTypeNavbar__signerLabel">{t('signing.upload.signerSelectorLabel')}</span>
-                    <SimpleContainer className="lw-fieldTypeNavbar__signerButtons">
-                        {signers.map((s) => {
-                            const isSelected = Number(s?.UserId) === Number(selectedSignerId);
-                            const Button = isSelected ? PrimaryButton : SecondaryButton;
-                            return (
-                                <Button
-                                    key={s?.UserId}
-                                    onPress={() => onSelectSigner(s?.UserId)}
-                                    className="lw-fieldTypeNavbar__signerButton"
-                                >
-                                    {s?.Name || t('signing.signerFallback', { index: 1 })}
-                                </Button>
-                            );
-                        })}
-                    </SimpleContainer>
-                </SimpleContainer>
-            )}
             {resolvedTypes.map((ft) => (
-                <button
+                <div
                     key={ft.id}
-                    type="button"
                     className={`lw-fieldTypeNavbar__btn ${selected === ft.id ? 'is-selected' : ''}`}
                     onClick={() => onSelect(ft.id)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            onSelect(ft.id);
+                        }
+                    }}
+                    role="button"
+                    tabIndex={0}
                     title={ft.label}
                     aria-pressed={selected === ft.id}
                 >
                     <span className="lw-fieldTypeNavbar__icon">{ft.shortLabel || ft.label.charAt(0)}</span>
                     <span className="lw-fieldTypeNavbar__label">{ft.label}</span>
-                </button>
+                </div>
             ))}
         </SimpleContainer>
     );
