@@ -97,6 +97,7 @@
         },
         "actions": {
             "downloadSigned": "הורד קובץ חתום",
+            "downloadEvidencePdf": "הורד PDF ראיות",
             "details": "פרטי מסמך",
             "uploadNew": "שליחת מסמך חדש לחתימה",
             "openPdf": "פתח PDF"
@@ -378,6 +379,58 @@
         "otpWaivedBadge": "OTP בוטל ע״י עו״ד",
         "evidencePackageDownload": "הורד חבילת ראיות",
         "signerFallback": "חותם {{index}}",
+        "fields": {
+            "signature": "חתימה",
+            "signatureShort": "חת",
+            "email": "אימייל",
+            "emailShort": "מייל",
+            "phone": "טלפון",
+            "phoneShort": "טל",
+            "initials": "ראשי תיבות",
+            "initialsShort": "ר״ת",
+            "text": "טקסט",
+            "textShort": "טקסט",
+            "date": "תאריך",
+            "dateShort": "תאריך",
+            "checkbox": "תיבת סימון",
+            "checkboxShort": "✓",
+            "idNumber": "ת.ז / מספר",
+            "idNumberShort": "ת.ז"
+        },
+        "fieldSettings": {
+            "title": "הגדרות שדה",
+            "type": "סוג שדה",
+            "requiredLabel": "חובה",
+            "required": "חובה",
+            "optional": "רשות",
+            "requiredShort": "חובה",
+            "optionalShort": "רשות",
+            "duplicateTitle": "שכפול",
+            "duplicateAll": "כל העמודים",
+            "duplicateEven": "עמודים זוגיים",
+            "duplicateOdd": "עמודים אי-זוגיים",
+            "duplicateRange": "טווח",
+            "rangeFrom": "מ־",
+            "rangeTo": "עד",
+            "rangeInvalid": "נא להזין טווח עמודים תקין",
+            "confirmTitle": "מחיקת שדה",
+            "confirmDelete": "האם למחוק את השדה?",
+            "addFieldForPage": "הוסף שדה לעמוד {{page}}"
+        },
+        "context": {
+            "edit": "עריכת הגדרות שדה",
+            "duplicate": "שכפל ל־",
+            "allPages": "כל העמודים",
+            "evenPages": "עמודים זוגיים",
+            "oddPages": "עמודים אי-זוגיים",
+            "pageRange": "טווח עמודים"
+        },
+        "duplicate": {
+            "noneAdded": "לא נוספו שדות חדשים"
+        },
+        "progress": {
+            "label": "התקדמות חתימות"
+        },
         "status": {
             "pending": "בהמתנה",
             "signed": "חתום",

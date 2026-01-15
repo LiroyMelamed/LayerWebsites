@@ -84,6 +84,7 @@
         },
         "actions": {
             "downloadSigned": "تنزيل الملف الموقّع",
+            "downloadEvidencePdf": "تنزيل PDF الأدلة",
             "details": "تفاصيل المستند",
             "uploadNew": "إرسال مستند جديد للتوقيع",
             "openPdf": "فتح PDF"
@@ -374,6 +375,58 @@
         "otpWaivedBadge": "تم إلغاء OTP بواسطة المحامي",
         "evidencePackageDownload": "تنزيل حزمة الأدلة",
         "signerFallback": "الموقّع {{index}}",
+        "fields": {
+            "signature": "توقيع",
+            "signatureShort": "توقيع",
+            "email": "البريد الإلكتروني",
+            "emailShort": "بريد",
+            "phone": "هاتف",
+            "phoneShort": "هاتف",
+            "initials": "الأحرف الأولى",
+            "initialsShort": "أحرف",
+            "text": "نص",
+            "textShort": "نص",
+            "date": "تاريخ",
+            "dateShort": "تاريخ",
+            "checkbox": "خانة اختيار",
+            "checkboxShort": "✓",
+            "idNumber": "هوية/رقم",
+            "idNumberShort": "هوية"
+        },
+        "fieldSettings": {
+            "title": "إعدادات الحقل",
+            "type": "نوع الحقل",
+            "requiredLabel": "مطلوب",
+            "required": "مطلوب",
+            "optional": "اختياري",
+            "requiredShort": "مطلوب",
+            "optionalShort": "اختياري",
+            "duplicateTitle": "تكرار",
+            "duplicateAll": "كل الصفحات",
+            "duplicateEven": "الصفحات الزوجية",
+            "duplicateOdd": "الصفحات الفردية",
+            "duplicateRange": "نطاق",
+            "rangeFrom": "من",
+            "rangeTo": "إلى",
+            "rangeInvalid": "يرجى إدخال نطاق صفحات صالح",
+            "confirmTitle": "حذف الحقل",
+            "confirmDelete": "هل تريد حذف هذا الحقل؟",
+            "addFieldForPage": "أضف حقلاً إلى الصفحة {{page}}"
+        },
+        "context": {
+            "edit": "تعديل إعدادات الحقل",
+            "duplicate": "تكرار إلى",
+            "allPages": "كل الصفحات",
+            "evenPages": "الصفحات الزوجية",
+            "oddPages": "الصفحات الفردية",
+            "pageRange": "نطاق الصفحات"
+        },
+        "duplicate": {
+            "noneAdded": "لم تتم إضافة حقول جديدة"
+        },
+        "progress": {
+            "label": "تقدّم التواقيع"
+        },
         "status": {
             "pending": "قيد الانتظار",
             "signed": "موقّع",

@@ -79,6 +79,7 @@
         },
         "actions": {
             "downloadSigned": "Download signed file",
+            "downloadEvidencePdf": "Download evidence PDF",
             "details": "Document details",
             "uploadNew": "Send new document for signing",
             "openPdf": "Open PDF"
@@ -374,6 +375,58 @@
         "otpWaivedBadge": "OTP waived by lawyer",
         "evidencePackageDownload": "Download Evidence Package",
         "signerFallback": "Signer {{index}}",
+        "fields": {
+            "signature": "Signature",
+            "signatureShort": "Sig",
+            "email": "Email",
+            "emailShort": "Email",
+            "phone": "Phone",
+            "phoneShort": "Phone",
+            "initials": "Initials",
+            "initialsShort": "Init",
+            "text": "Text",
+            "textShort": "Text",
+            "date": "Date",
+            "dateShort": "Date",
+            "checkbox": "Checkbox",
+            "checkboxShort": "Check",
+            "idNumber": "ID/Number",
+            "idNumberShort": "ID"
+        },
+        "fieldSettings": {
+            "title": "Field settings",
+            "type": "Field type",
+            "requiredLabel": "Required",
+            "required": "Required",
+            "optional": "Optional",
+            "requiredShort": "Req",
+            "optionalShort": "Opt",
+            "duplicateTitle": "Duplicate",
+            "duplicateAll": "All pages",
+            "duplicateEven": "Even pages",
+            "duplicateOdd": "Odd pages",
+            "duplicateRange": "Range",
+            "rangeFrom": "From",
+            "rangeTo": "To",
+            "rangeInvalid": "Enter a valid page range",
+            "confirmTitle": "Remove field",
+            "confirmDelete": "Are you sure you want to remove this field?",
+            "addFieldForPage": "Add field to page {{page}}"
+        },
+        "context": {
+            "edit": "Edit field settings",
+            "duplicate": "Duplicate to",
+            "allPages": "All pages",
+            "evenPages": "Even pages",
+            "oddPages": "Odd pages",
+            "pageRange": "Page range"
+        },
+        "duplicate": {
+            "noneAdded": "No new fields were added"
+        },
+        "progress": {
+            "label": "Signatures progress"
+        },
         "status": {
             "pending": "Pending",
             "signed": "Signed",
