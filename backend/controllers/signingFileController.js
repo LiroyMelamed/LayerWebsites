@@ -2172,6 +2172,7 @@ exports.getEvidencePackage = async (req, res, next) => {
                 ${schemaSupport.signaturespotsFieldType ? 'fieldtype as "FieldType",' : ''}
                 ${schemaSupport.signaturespotsSignerIndex ? 'signerindex as "SignerIndex",' : ''}
                 ${schemaSupport.signaturespotsFieldLabel ? 'fieldlabel as "FieldLabel",' : ''}
+                ${schemaSupport.signaturespotsFieldValue ? 'fieldvalue as "FieldValue",' : ''}
 
                 signerip as "SignerIp",
                 signeruseragent as "SignerUserAgent",

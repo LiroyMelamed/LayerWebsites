@@ -121,13 +121,19 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const getUnsignedRequiredSpots = (spots) => {
         const list = Array.isArray(spots) ? spots : [];
         const required = list.filter((s) => isSpotRequired(s));
-        const effective = required.length > 0 ? required : list;
-        return effective.filter((s) => !s.IsSigned);
+        return required.filter((s) => !s.IsSigned);
+    };
+
+    const getUnsignedOptionalSpots = (spots) => {
+        const list = Array.isArray(spots) ? spots : [];
+        return list.filter((s) => !isSpotRequired(s) && !s.IsSigned);
     };
 
     const focusNextUnsignedSpot = () => {
         const allSpots = fileDetails?.signatureSpots || [];
-        const unsigned = getUnsignedRequiredSpots(allSpots);
+        const unsignedRequired = getUnsignedRequiredSpots(allSpots);
+        const unsignedOptional = getUnsignedOptionalSpots(allSpots);
+        const unsigned = unsignedRequired.length > 0 ? unsignedRequired : unsignedOptional;
         const target = (!currentSpot || currentSpot.IsSigned) ? (unsigned[0] || null) : currentSpot;
         if (target) {
             setCurrentSpot(target);
@@ -577,7 +583,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         setFileDetails(data);
 
         const spots = data?.signatureSpots || [];
-        const nextUnsigned = getUnsignedRequiredSpots(spots)[0] || null;
+        const unsignedRequired = getUnsignedRequiredSpots(spots);
+        const unsignedOptional = getUnsignedOptionalSpots(spots);
+        const nextUnsigned = (unsignedRequired.length > 0 ? unsignedRequired : unsignedOptional)[0] || null;
         setCurrentSpot(nextUnsigned);
         if (nextUnsigned) {
             scrollToSpot(nextUnsigned);
@@ -678,7 +686,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const signAllRemainingSpots = async () => {
         try {
             const allSpots = fileDetails?.signatureSpots || [];
-            const unsigned = getUnsignedRequiredSpots(allSpots).filter((s) => isSignatureLike(getSpotType(s)));
+            const unsignedRequired = getUnsignedRequiredSpots(allSpots);
+            const unsigned = unsignedRequired.filter((s) => isSignatureLike(getSpotType(s)));
             if (!unsigned.length) return;
 
             setSaving(true);
@@ -830,15 +839,17 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const spots = fileDetails.signatureSpots || [];
     const requiredSpots = spots.filter((s) => isSpotRequired(s));
-    const effectiveRequiredSpots = requiredSpots.length > 0 ? requiredSpots : spots;
+    const effectiveRequiredSpots = requiredSpots;
     const unsignedRequiredSpots = getUnsignedRequiredSpots(spots);
+    const unsignedOptionalSpots = getUnsignedOptionalSpots(spots);
     const remainingCount = unsignedRequiredSpots.length;
-    const allSpotsSignedByUser = effectiveRequiredSpots.length > 0 && remainingCount === 0;
+    const optionalRemainingCount = unsignedOptionalSpots.length;
+    const allSpotsSignedByUser = remainingCount === 0;
     const currentSpotType = currentSpot ? getSpotType(currentSpot) : 'signature';
     const currentSpotIsSignature = currentSpot ? isSignatureLike(currentSpotType) : false;
 
     const goToNextSigningSpot = () => {
-        const unsigned = unsignedRequiredSpots;
+        const unsigned = unsignedRequiredSpots.length > 0 ? unsignedRequiredSpots : unsignedOptionalSpots;
         if (unsigned.length === 0) return;
 
         if (!hasStartedNextFlow) {
@@ -934,24 +945,39 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 </div>
                             )}
 
-                            {!allSpotsSignedByUser && remainingCount > 0 && (
+                            {(remainingCount > 0 || optionalRemainingCount > 0) && (
                                 <div>
-                                    <div className="lw-signing-nextHeaderRow">
-                                        <PrimaryButton
-                                            className="lw-signing-nextFocus"
-                                            size={buttonSizes.SMALL}
-                                            onPress={() => goToNextSigningSpot()}
-                                            disabled={saving}
-                                        >
-                                            {t("signing.canvas.nextSignature")}
-                                        </PrimaryButton>
+                                    {remainingCount > 0 && (
+                                        <div className="lw-signing-nextHeaderRow">
+                                            <PrimaryButton
+                                                className="lw-signing-nextFocus"
+                                                size={buttonSizes.SMALL}
+                                                onPress={() => goToNextSigningSpot()}
+                                                disabled={saving}
+                                            >
+                                                {t("signing.canvas.nextSignature")}
+                                            </PrimaryButton>
 
-                                        <div className="lw-signing-progressHint">
-                                            {effectiveRequiredSpots.length > 0
-                                                ? t("signing.canvas.remainingSignatures", { count: remainingCount })
-                                                : ""}
+                                            <div className="lw-signing-progressHint">
+                                                {effectiveRequiredSpots.length > 0
+                                                    ? t("signing.canvas.remainingSignatures", { count: remainingCount })
+                                                    : ""}
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
+
+                                    {optionalRemainingCount > 0 && remainingCount === 0 && (
+                                        <div className="lw-signing-nextHeaderRow">
+                                            <PrimaryButton
+                                                className="lw-signing-nextFocus"
+                                                size={buttonSizes.SMALL}
+                                                onPress={() => goToNextSigningSpot()}
+                                                disabled={saving}
+                                            >
+                                                {t("signing.canvas.nextSignature")}
+                                            </PrimaryButton>
+                                        </div>
+                                    )}
 
                                     <div className="lw-signing-actionsRow">
                                         <TertiaryButton size={buttonSizes.SMALL} onPress={() => setShowAllSpots((v) => !v)}>
