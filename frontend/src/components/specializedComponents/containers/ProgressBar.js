@@ -5,7 +5,14 @@ import { useTranslation } from 'react-i18next';
 
 import "./ProgressBar.scss";
 
-const ProgressBar = ({ IsClosed, currentStage, totalStages, style: _style }) => {
+const ProgressBar = ({
+    IsClosed,
+    currentStage,
+    totalStages,
+    labelKey = 'cases.completedStagesLabel',
+    showPercent = true,
+    style: _style,
+}) => {
     const { t } = useTranslation();
     const rootRef = useRef(null);
 
@@ -23,9 +30,11 @@ const ProgressBar = ({ IsClosed, currentStage, totalStages, style: _style }) => 
     return (
         <SimpleContainer ref={rootRef} className="lw-progressBar">
             <SimpleContainer className="lw-progressBar__labelRow">
-                <TextBold12>{t('cases.completedStagesLabel')}</TextBold12>
+                <TextBold12>{t(labelKey)}</TextBold12>
                 <Text12>{CurrentStageAccordingToIsClosed}/{totalStages}</Text12>
-                <Text12 className="lw-progressBar__percent">{Math.round(percentage)}%</Text12>
+                {showPercent && (
+                    <Text12 className="lw-progressBar__percent">{Math.round(percentage)}%</Text12>
+                )}
             </SimpleContainer>
             <SimpleContainer className="lw-progressBar__bar">
                 <SimpleContainer className="lw-progressBar__fill" />

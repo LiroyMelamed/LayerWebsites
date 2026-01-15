@@ -58,6 +58,11 @@ export default function PdfViewer({
     const spotScale = useMemo(() => renderWidth / BASE_RENDER_WIDTH, [renderWidth]);
 
     useEffect(() => {
+        if (!pageContainerRef.current) return;
+        pageContainerRef.current.style.setProperty('--lw-pdf-render-width', `${renderWidth}px`);
+    }, [renderWidth]);
+
+    useEffect(() => {
         didInitRef.current = false;
         setNumPages(0);
     }, [pdfFile]);
@@ -77,7 +82,6 @@ export default function PdfViewer({
         <SimpleContainer className="lw-signing-pdfViewer">
             {Array.from({ length: pagesToRender }).map((_, i) => {
                 const pageNumber = i + 1;
-                const pageInnerStyle = { width: "100%", maxWidth: renderWidth };
 
                 return (
                     <SimpleContainer
@@ -89,7 +93,6 @@ export default function PdfViewer({
 
                         <SimpleContainer
                             className="lw-signing-pageInner"
-                            style={pageInnerStyle /* runtime dynamic: page sizing/scale depends on viewport + zoom */}
                             data-page-number={pageNumber}
                         >
                             <PdfPage

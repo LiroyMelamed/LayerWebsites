@@ -313,7 +313,7 @@
     justify-content: flex-start;
     margin-inline: auto;
     width: 100%;
-    max-width: 100%;
+    max-width: var(--lw-pdf-render-width, 800px);
     min-inline-size: 0;
     overflow: hidden;
 }

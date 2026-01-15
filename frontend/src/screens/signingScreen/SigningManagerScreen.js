@@ -16,6 +16,7 @@ import { getNavBarData } from "../../components/navBars/data/NavBarData";
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
 import SearchInput from "../../components/specializedComponents/containers/SearchInput";
+import ProgressBar from "../../components/specializedComponents/containers/ProgressBar";
 
 import { Text14, TextBold24 } from "../../components/specializedComponents/text/AllTextKindFile";
 import { images } from "../../assets/images/images";
@@ -69,13 +70,6 @@ export default function SigningManagerScreen() {
         (f) => f.Status === "pending" || f.Status === "rejected"
     ).length;
     const signedCount = files.filter((f) => f.Status === "signed").length;
-
-    const getProgress = (file) => {
-        const total = file.TotalSpots || 0;
-        const signed = file.SignedSpots || 0;
-        if (!total) return 0;
-        return Math.round((signed / total) * 100);
-    };
 
     const formatDotDate = (dateLike) => {
         if (!dateLike) return "-";
@@ -304,8 +298,6 @@ export default function SigningManagerScreen() {
                         const isFullySigned = file.TotalSpots > 0 && file.SignedSpots === file.TotalSpots;
                         const totalSpots = Number(file.TotalSpots || 0);
                         const signedSpots = Number(file.SignedSpots || 0);
-                        const progressMax = totalSpots > 0 ? totalSpots : 1;
-                        const progressValue = totalSpots > 0 ? signedSpots : 0;
                         const cardClassName = `lw-signingManagerScreen__fileCard${isFullySigned ? " is-fullySigned" : ""}`;
 
                         return (
@@ -341,11 +333,11 @@ export default function SigningManagerScreen() {
                                                 <div className="lw-signingManagerScreen__detailValue">{signedSpots}/{totalSpots}</div>
                                             </SimpleContainer>
 
-                                            <progress
-                                                className="lw-signingManagerScreen__progress"
-                                                max={progressMax}
-                                                value={progressValue}
-                                                aria-label={t('signingManager.aria.signaturesPercent', { percent: getProgress(file) })}
+                                            <ProgressBar
+                                                IsClosed
+                                                currentStage={signedSpots}
+                                                totalStages={totalSpots}
+                                                labelKey="signing.progress.label"
                                             />
 
                                             {file.Status === "rejected" &&
@@ -494,7 +486,7 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                         <PrimaryButton onPress={onDownloadSigned}>{t('signingManager.actions.downloadSigned')}</PrimaryButton>
                     )}
                     {Boolean(file?.SignedFileKey) && (
-                        <PrimaryButton onPress={onDownloadEvidencePdf}>הורד מסמך ראייה (PDF)</PrimaryButton>
+                        <PrimaryButton onPress={onDownloadEvidencePdf}>{t('signingManager.actions.downloadEvidencePdf')}</PrimaryButton>
                     )}
                     <SecondaryButton onPress={onClose}>{t('common.close')}</SecondaryButton>
                 </SimpleContainer>

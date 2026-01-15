@@ -1,25 +1,29 @@
+@use '../../../../styles/variables' as v;
+
 .lw-fieldTypeNavbar {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 110px;
+  position: relative;
+  width: 100%;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px;
+  flex-wrap: wrap;
+  gap: v.$space-2;
+  padding: v.$space-2;
+  border: 1px solid var(--lw-color-border, #e2e8f0);
+  border-radius: 0.5rem;
+  background: var(--lw-color-white);
 }
 .lw-fieldTypeNavbar__btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px;
-  border: 1px solid var(--lw-border-color, #e2e8f0);
-  background: var(--lw-bg, #fff);
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--lw-color-border, #e2e8f0);
+  background: var(--lw-color-white);
   cursor: pointer;
+  border-radius: 0.5rem;
+  font: inherit;
 }
 .lw-fieldTypeNavbar__btn.is-selected {
-  border-color: var(--lw-primary, #2a4365);
+  border-color: var(--lw-color-primary, #2a4365);
 }
 .lw-fieldTypeNavbar__icon {
   width: 28px;
@@ -27,19 +31,33 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--lw-border-color, #e2e8f0);
-  border-radius: 4px;
+  background: var(--lw-color-border, #e2e8f0);
+  border-radius: 0.4rem;
+  font-weight: 700;
 }
 .lw-fieldTypeNavbar__label { font-size: 12px; }
 
-.lw-signing-pdfViewerWrapper { position: relative; display: flex; }
+.lw-signing-pdfViewerWrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: v.$space-2;
+  align-items: stretch;
+}
 .lw-floatingAddField {
   position: fixed;
-  right: 24px;
-  bottom: 24px;
-  z-index: 100;
+  inset-inline-end: 1.5rem;
+  bottom: 4.5rem;
+  z-index: 9000;
 }
 .lw-floatingAddField__btn {
-  width: 52px; height: 52px; border-radius: 26px; font-size: 28px;
-  background: var(--lw-primary, #2a4365); color: #fff; border: none; cursor: pointer;
+  width: 52px;
+  height: 52px;
+  border-radius: 26px;
+  font-size: 1.75rem;
+  background: var(--lw-color-primary, #2a4365);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
 }

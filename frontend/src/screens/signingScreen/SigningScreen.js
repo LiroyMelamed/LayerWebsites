@@ -11,6 +11,7 @@ import { Text14 } from "../../components/specializedComponents/text/AllTextKindF
 import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
+import ProgressBar from "../../components/specializedComponents/containers/ProgressBar";
 import { images } from "../../assets/images/images";
 import { ClientStackName } from "../../navigation/ClientStack";
 import { ClientMainScreenName } from "../client/clientMainScreen/ClientMainScreen";
@@ -74,13 +75,6 @@ export default function SigningScreen() {
     const signedFiles = files.filter((f) => f.Status === "signed");
 
     const currentList = activeTab === "pending" ? pendingFiles : signedFiles;
-
-    const getProgress = (file) => {
-        const total = file.TotalSpots || 0;
-        const signed = file.SignedSpots || 0;
-        if (!total) return 0;
-        return Math.round((signed / total) * 100);
-    };
 
     const formatDotDate = (dateLike) => {
         if (!dateLike) return "-";
@@ -164,8 +158,6 @@ export default function SigningScreen() {
                             const chip = getStatusChip(file.Status);
                             const totalSpots = Number(file.TotalSpots || 0);
                             const signedSpots = Number(file.SignedSpots || 0);
-                            const progressMax = totalSpots > 0 ? totalSpots : 1;
-                            const progressValue = totalSpots > 0 ? signedSpots : 0;
 
                             return (
                                 <SimpleCard key={file.SigningFileId} className="lw-signingScreen__fileCard">
@@ -196,11 +188,11 @@ export default function SigningScreen() {
                                                 <div className="lw-signingScreen__detailValue">{signedSpots}/{totalSpots}</div>
                                             </SimpleContainer>
 
-                                            <progress
-                                                className="lw-signingScreen__progress"
-                                                max={progressMax}
-                                                value={progressValue}
-                                                aria-label={t('signing.screen.signaturesAria', { percent: getProgress(file) })}
+                                            <ProgressBar
+                                                IsClosed
+                                                currentStage={signedSpots}
+                                                totalStages={totalSpots}
+                                                labelKey="signing.progress.label"
                                             />
 
                                             {file.Notes && (
