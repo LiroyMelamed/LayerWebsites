@@ -1,5 +1,5 @@
 // SimplePopUp.js
-import { useRef } from 'react';
+import { useRef, isValidElement } from 'react';
 import SimpleContainer from './SimpleContainer';
 import ImageButton from '../specializedComponents/buttons/ImageButton';
 import { icons } from '../../assets/icons/icons';
@@ -18,20 +18,31 @@ const SimplePopUp = ({ isOpen, children, onClose, className, ...props }) => {
         }
     };
 
+    const contentClassName = isValidElement(children) ? children.props?.className : '';
+    const isBarePopup = typeof contentClassName === 'string'
+        && (contentClassName.includes('lw-fieldContextMenu') || contentClassName.includes('lw-fieldSettingsPopup'));
+
     return (
-        <SimpleContainer className="lw-simplePopUp__overlay" onClick={handleOverlayClick}>
+        <SimpleContainer
+            className={['lw-simplePopUp__overlay', isBarePopup ? 'lw-simplePopUp__overlay--bare' : null].filter(Boolean).join(' ')}
+            onClick={handleOverlayClick}
+        >
             <SimpleContainer
                 ref={popupRef}
-                className={['lw-simplePopUp__container', className].filter(Boolean).join(' ')}
+                className={['lw-simplePopUp__container', className, isBarePopup ? 'lw-simplePopUp__container--bare' : null]
+                    .filter(Boolean)
+                    .join(' ')}
                 {...props}
             >
-                <ImageButton
-                    height={12}
-                    width={12}
-                    onPress={onClose}
-                    className="lw-simplePopUp__close"
-                    src={icons.Button.X}
-                />
+                {!isBarePopup && (
+                    <ImageButton
+                        height={12}
+                        width={12}
+                        onPress={onClose}
+                        className="lw-simplePopUp__close"
+                        src={icons.Button.X}
+                    />
+                )}
                 <SimpleContainer className="lw-simplePopUp__content">
                     {children}
                 </SimpleContainer>

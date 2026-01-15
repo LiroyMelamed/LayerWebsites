@@ -610,79 +610,83 @@
 
 /* Signer palette base colors */
 .lw-signer-palette-0 {
-    --spot-signature-border: #1d4ed8; /* blue */
-    --spot-signature-bg: rgba(29, 78, 216, 0.12);
-    --spot-email-border: #3b82f6;
-    --spot-email-bg: rgba(59, 130, 246, 0.12);
-    --spot-phone-border: #0ea5e9;
-    --spot-phone-bg: rgba(14, 165, 233, 0.12);
-    --spot-initials-border: #60a5fa;
-    --spot-initials-bg: rgba(96, 165, 250, 0.12);
-    --spot-text-border: #93c5fd;
-    --spot-text-bg: rgba(147, 197, 253, 0.12);
-    --spot-date-border: #2563eb;
-    --spot-date-bg: rgba(37, 99, 235, 0.12);
-    --spot-checkbox-border: #38bdf8;
-    --spot-checkbox-bg: rgba(56, 189, 248, 0.12);
-    --spot-idnumber-border: #1e40af;
-    --spot-idnumber-bg: rgba(30, 64, 175, 0.12);
+    --spot-signature-border: #1e3a8a;
+    /* blue */
+    --spot-signature-bg: rgba(30, 58, 138, 0.2);
+    --spot-email-border: #1d4ed8;
+    --spot-email-bg: rgba(29, 78, 216, 0.2);
+    --spot-phone-border: #0284c7;
+    --spot-phone-bg: rgba(2, 132, 199, 0.2);
+    --spot-initials-border: #2563eb;
+    --spot-initials-bg: rgba(37, 99, 235, 0.2);
+    --spot-text-border: #3b82f6;
+    --spot-text-bg: rgba(59, 130, 246, 0.2);
+    --spot-date-border: #1e40af;
+    --spot-date-bg: rgba(30, 64, 175, 0.2);
+    --spot-checkbox-border: #0891b2;
+    --spot-checkbox-bg: rgba(8, 145, 178, 0.2);
+    --spot-idnumber-border: #0f172a;
+    --spot-idnumber-bg: rgba(15, 23, 42, 0.2);
 }
 
 .lw-signer-palette-1 {
-    --spot-signature-border: #d97706; /* amber */
-    --spot-signature-bg: rgba(217, 119, 6, 0.12);
-    --spot-email-border: #f59e0b;
-    --spot-email-bg: rgba(245, 158, 11, 0.12);
-    --spot-phone-border: #fbbf24;
-    --spot-phone-bg: rgba(251, 191, 36, 0.12);
-    --spot-initials-border: #fcd34d;
-    --spot-initials-bg: rgba(252, 211, 77, 0.12);
-    --spot-text-border: #fde68a;
-    --spot-text-bg: rgba(253, 230, 138, 0.12);
-    --spot-date-border: #ca8a04;
-    --spot-date-bg: rgba(202, 138, 4, 0.12);
-    --spot-checkbox-border: #fbbf24;
-    --spot-checkbox-bg: rgba(251, 191, 36, 0.12);
-    --spot-idnumber-border: #b45309;
-    --spot-idnumber-bg: rgba(180, 83, 9, 0.12);
+    --spot-signature-border: #92400e;
+    /* amber */
+    --spot-signature-bg: rgba(146, 64, 14, 0.2);
+    --spot-email-border: #b45309;
+    --spot-email-bg: rgba(180, 83, 9, 0.2);
+    --spot-phone-border: #d97706;
+    --spot-phone-bg: rgba(217, 119, 6, 0.2);
+    --spot-initials-border: #f59e0b;
+    --spot-initials-bg: rgba(245, 158, 11, 0.2);
+    --spot-text-border: #fbbf24;
+    --spot-text-bg: rgba(251, 191, 36, 0.2);
+    --spot-date-border: #a16207;
+    --spot-date-bg: rgba(161, 98, 7, 0.2);
+    --spot-checkbox-border: #ca8a04;
+    --spot-checkbox-bg: rgba(202, 138, 4, 0.2);
+    --spot-idnumber-border: #78350f;
+    --spot-idnumber-bg: rgba(120, 53, 15, 0.2);
 }
 
 .lw-signer-palette-2 {
-    --spot-signature-border: #dc2626; /* red */
-    --spot-signature-bg: rgba(220, 38, 38, 0.12);
-    --spot-email-border: #ef4444;
-    --spot-email-bg: rgba(239, 68, 68, 0.12);
-    --spot-phone-border: #f87171;
-    --spot-phone-bg: rgba(248, 113, 113, 0.12);
-    --spot-initials-border: #fca5a5;
-    --spot-initials-bg: rgba(252, 165, 165, 0.12);
-    --spot-text-border: #fecaca;
-    --spot-text-bg: rgba(254, 202, 202, 0.12);
-    --spot-date-border: #b91c1c;
-    --spot-date-bg: rgba(185, 28, 28, 0.12);
-    --spot-checkbox-border: #f87171;
-    --spot-checkbox-bg: rgba(248, 113, 113, 0.12);
-    --spot-idnumber-border: #991b1b;
-    --spot-idnumber-bg: rgba(153, 27, 27, 0.12);
+    --spot-signature-border: #991b1b;
+    /* red */
+    --spot-signature-bg: rgba(153, 27, 27, 0.2);
+    --spot-email-border: #b91c1c;
+    --spot-email-bg: rgba(185, 28, 28, 0.2);
+    --spot-phone-border: #dc2626;
+    --spot-phone-bg: rgba(220, 38, 38, 0.2);
+    --spot-initials-border: #ef4444;
+    --spot-initials-bg: rgba(239, 68, 68, 0.2);
+    --spot-text-border: #f87171;
+    --spot-text-bg: rgba(248, 113, 113, 0.2);
+    --spot-date-border: #7f1d1d;
+    --spot-date-bg: rgba(127, 29, 29, 0.2);
+    --spot-checkbox-border: #e11d48;
+    --spot-checkbox-bg: rgba(225, 29, 72, 0.2);
+    --spot-idnumber-border: #7f1d1d;
+    --spot-idnumber-bg: rgba(127, 29, 29, 0.2);
 }
 
 .lw-signer-palette-3 {
-    --spot-signature-border: #6d28d9; /* purple */
-    --spot-signature-bg: rgba(109, 40, 217, 0.12);
-    --spot-email-border: #8b5cf6;
-    --spot-email-bg: rgba(139, 92, 246, 0.12);
-    --spot-phone-border: #a855f7;
-    --spot-phone-bg: rgba(168, 85, 247, 0.12);
-    --spot-initials-border: #c084fc;
-    --spot-initials-bg: rgba(192, 132, 252, 0.12);
-    --spot-text-border: #d8b4fe;
-    --spot-text-bg: rgba(216, 180, 254, 0.12);
-    --spot-date-border: #7c3aed;
-    --spot-date-bg: rgba(124, 58, 237, 0.12);
-    --spot-checkbox-border: #a855f7;
-    --spot-checkbox-bg: rgba(168, 85, 247, 0.12);
-    --spot-idnumber-border: #5b21b6;
-    --spot-idnumber-bg: rgba(91, 33, 182, 0.12);
+    --spot-signature-border: #4c1d95;
+    /* purple */
+    --spot-signature-bg: rgba(76, 29, 149, 0.2);
+    --spot-email-border: #5b21b6;
+    --spot-email-bg: rgba(91, 33, 182, 0.2);
+    --spot-phone-border: #7c3aed;
+    --spot-phone-bg: rgba(124, 58, 237, 0.2);
+    --spot-initials-border: #8b5cf6;
+    --spot-initials-bg: rgba(139, 92, 246, 0.2);
+    --spot-text-border: #a78bfa;
+    --spot-text-bg: rgba(167, 139, 250, 0.2);
+    --spot-date-border: #6d28d9;
+    --spot-date-bg: rgba(109, 40, 217, 0.2);
+    --spot-checkbox-border: #9333ea;
+    --spot-checkbox-bg: rgba(147, 51, 234, 0.2);
+    --spot-idnumber-border: #3b0764;
+    --spot-idnumber-bg: rgba(59, 7, 100, 0.2);
 }
 
 /* Field type variants (apply palette variables) */

@@ -11,6 +11,11 @@
     z-index: 20000;
 }
 
+.lw-simplePopUp__overlay--bare {
+    background-color: transparent;
+    backdrop-filter: none;
+}
+
 .lw-simplePopUp__container {
     position: relative;
     background-color: var(--lw-color-white);
@@ -33,6 +38,17 @@
     position: relative;
 
     border: 0.0625rem solid rgba(226, 232, 240, 0.8);
+}
+
+.lw-simplePopUp__container--bare {
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    width: auto;
+    max-width: none;
+    max-height: none;
+    overflow: visible;
+    box-shadow: none;
 }
 
 .lw-simplePopUp__close {

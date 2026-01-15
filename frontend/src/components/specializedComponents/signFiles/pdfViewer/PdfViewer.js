@@ -54,35 +54,44 @@ export default function PdfViewer({
         const container = viewerRef.current;
         if (!container || typeof onPageChange !== 'function') return;
 
-        const pages = () => Array.from(container.querySelectorAll('[data-page-number]'));
+        const pages = Array.from(container.querySelectorAll('[data-page-number]'));
+        if (!pages.length) {
+            onPageChange(1);
+            return;
+        }
 
-        const update = () => {
-            const els = pages();
-            if (!els.length) {
-                onPageChange(1);
-                return;
+        let activePage = null;
+        const ratios = new Map();
+        const useContainerAsRoot = container.scrollHeight > container.clientHeight + 1;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    const pageNumber = Number(entry.target.getAttribute('data-page-number')) || 1;
+                    ratios.set(pageNumber, entry.intersectionRatio);
+                });
+
+                let best = null;
+                ratios.forEach((ratio, pageNumber) => {
+                    if (!best || ratio > best.ratio) {
+                        best = { pageNumber, ratio };
+                    }
+                });
+
+                if (best && best.ratio > 0 && best.pageNumber !== activePage) {
+                    activePage = best.pageNumber;
+                    onPageChange(best.pageNumber);
+                }
+            },
+            {
+                root: useContainerAsRoot ? container : null,
+                threshold: [0, 0.25, 0.5, 0.75, 1],
             }
-            const rect = container.getBoundingClientRect();
-            const centerY = rect.top + rect.height / 2;
-            let best = { el: els[0], dist: Infinity };
-            els.forEach((el) => {
-                const r = el.getBoundingClientRect();
-                const elCenter = r.top + r.height / 2;
-                const d = Math.abs(elCenter - centerY);
-                if (d < best.dist) best = { el, dist: d };
-            });
-            const pn = Number(best.el.getAttribute('data-page-number')) || 1;
-            onPageChange(pn);
-        };
+        );
 
-        update();
-        container.addEventListener('scroll', update, { passive: true });
-        window.addEventListener('resize', update);
-        return () => {
-            container.removeEventListener('scroll', update);
-            window.removeEventListener('resize', update);
-        };
-    }, [onPageChange]);
+        pages.forEach((page) => observer.observe(page));
+        return () => observer.disconnect();
+    }, [onPageChange, numPages, pdfFile]);
 
     const renderWidth = useMemo(() => {
         // Keep same coordinate system across app: spots are stored in BASE_RENDER_WIDTH space.
@@ -125,7 +134,7 @@ export default function PdfViewer({
                         ref={pageNumber === 1 ? pageContainerRef : undefined}
                         className="lw-signing-pageWrap"
                     >
-                        
+
 
                         <SimpleContainer
                             className="lw-signing-pageInner"
@@ -138,7 +147,7 @@ export default function PdfViewer({
                                 renderWidth={renderWidth}
                             />
 
-                                <SignatureSpotsLayer
+                            <SignatureSpotsLayer
                                 pageNumber={pageNumber}
                                 spots={spots}
                                 onUpdateSpot={onUpdateSpot}

@@ -8,11 +8,11 @@ import './fieldContextMenu.scss';
 
 export default function FieldTypeNavbar({
     selected = 'signature',
-    onSelect = () => {},
+    onSelect = () => { },
     fieldTypes,
     signers = [],
     selectedSignerId = null,
-    onSelectSigner = () => {},
+    onSelectSigner = () => { },
 }) {
     const { t } = useTranslation();
     const resolvedTypes = fieldTypes || [
@@ -55,6 +55,7 @@ export default function FieldTypeNavbar({
                     className={`lw-fieldTypeNavbar__btn ${selected === ft.id ? 'is-selected' : ''}`}
                     onClick={() => onSelect(ft.id)}
                     title={ft.label}
+                    aria-pressed={selected === ft.id}
                 >
                     <span className="lw-fieldTypeNavbar__icon">{ft.shortLabel || ft.label.charAt(0)}</span>
                     <span className="lw-fieldTypeNavbar__label">{ft.label}</span>
