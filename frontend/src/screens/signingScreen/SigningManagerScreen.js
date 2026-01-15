@@ -242,6 +242,7 @@ export default function SigningManagerScreen() {
                 onOpenPdf={() => openPdfInNewTab(file.SigningFileId)}
                 onDownloadSigned={() => handleDownload(file.SigningFileId, file.FileName)}
                 onDownloadEvidencePdf={() => handleDownloadEvidencePdf(file)}
+                onDownloadEvidencePdf={() => handleDownloadEvidencePdf(file)}
                 formatDotDate={formatDotDate}
             />
         );
@@ -400,94 +401,124 @@ export default function SigningManagerScreen() {
 }
 
 function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned, onDownloadEvidencePdf, formatDotDate }) {
-    const { t } = useTranslation();
-    const totalSpots = Number(file?.TotalSpots || 0);
-    const signedSpots = Number(file?.SignedSpots || 0);
+    function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned, onDownloadEvidencePdf, formatDotDate }) {
+        const { t } = useTranslation();
+        const totalSpots = Number(file?.TotalSpots || 0);
+        const signedSpots = Number(file?.SignedSpots || 0);
 
-    const requireOtp = Boolean(file?.RequireOtp);
-    const isOtpWaived = file?.RequireOtp === false;
-    const otpChipText = requireOtp ? t('signing.otpRequiredBadge') : t('signing.otpWaivedBadge');
-    const otpChipClassName = requireOtp
-        ? "lw-signingManagerScreen__chip lw-signingManagerScreen__chip--signed"
-        : "lw-signingManagerScreen__chip lw-signingManagerScreen__chip--pending";
+        const requireOtp = Boolean(file?.RequireOtp);
+        const isOtpWaived = file?.RequireOtp === false;
+        const otpChipText = requireOtp ? t('signing.otpRequiredBadge') : t('signing.otpWaivedBadge');
+        const otpChipClassName = requireOtp
+            ? "lw-signingManagerScreen__chip lw-signingManagerScreen__chip--signed"
+            : "lw-signingManagerScreen__chip lw-signingManagerScreen__chip--pending";
 
-    const formatUtcDateTime = (dateLike) => {
-        if (!dateLike) return "-";
-        const d = new Date(dateLike);
-        if (Number.isNaN(d.getTime())) return "-";
-        const dd = String(d.getDate()).padStart(2, "0");
-        const mm = String(d.getMonth() + 1).padStart(2, "0");
-        const yyyy = String(d.getFullYear());
-        const hh = String(d.getHours()).padStart(2, "0");
-        const min = String(d.getMinutes()).padStart(2, "0");
-        return `${dd}.${mm}.${yyyy} ${hh}:${min}`;
-    };
+        const formatUtcDateTime = (dateLike) => {
+            if (!dateLike) return "-";
+            const d = new Date(dateLike);
+            if (Number.isNaN(d.getTime())) return "-";
+            const dd = String(d.getDate()).padStart(2, "0");
+            const mm = String(d.getMonth() + 1).padStart(2, "0");
+            const yyyy = String(d.getFullYear());
+            const hh = String(d.getHours()).padStart(2, "0");
+            const min = String(d.getMinutes()).padStart(2, "0");
+            return `${dd}.${mm}.${yyyy} ${hh}:${min}`;
+        };
 
-    const statusText =
-        file?.Status === "signed"
-            ? t('signing.status.signed')
-            : file?.Status === "rejected"
-                ? t('signing.status.rejected')
-                : t('signing.status.pending');
+        const statusText =
+            file?.Status === "signed"
+                ? t('signing.status.signed')
+                : file?.Status === "rejected"
+                    ? t('signing.status.rejected')
+                    : t('signing.status.pending');
 
-    return (
-        <SimpleContainer className="lw-signingManagerScreen__detailsPopup">
-            <TextBold24>{file?.FileName || t('signingManager.details.titleFallback')}</TextBold24>
+        return (
+            <SimpleContainer className="lw-signingManagerScreen__detailsPopup">
+                <TextBold24>{file?.FileName || t('signingManager.details.titleFallback')}</TextBold24>
 
-            <SimpleContainer className={otpChipClassName}>{otpChipText}</SimpleContainer>
+                <SimpleContainer className={otpChipClassName}>{otpChipText}</SimpleContainer>
 
-            <>
-                <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                    <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.case')}</div>
-                    <div className="lw-signingManagerScreen__detailValue">{file?.CaseName || "-"}</div>
-                </SimpleContainer>
-
-                <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                    <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.client')}</div>
-                    <div className="lw-signingManagerScreen__detailValue">{file?.ClientName || "-"}</div>
-                </SimpleContainer>
-
-                <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                    <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.uploadedAt')}</div>
-                    <div className="lw-signingManagerScreen__detailValue">{formatDotDate?.(file?.CreatedAt)}</div>
-                </SimpleContainer>
-
-                <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                    <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.status')}</div>
-                    <div className="lw-signingManagerScreen__detailValue">{statusText}</div>
-                </SimpleContainer>
-
-                <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                    <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.signatures')}</div>
-                    <div className="lw-signingManagerScreen__detailValue">{signedSpots}/{totalSpots}</div>
-                </SimpleContainer>
-
-                {file?.Status === "rejected" && file?.RejectionReason && (
+                <>
                     <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                        <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.rejectionReason')}</div>
-                        <div className="lw-signingManagerScreen__detailValue">{file.RejectionReason}</div>
+                        <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.case')}</div>
+                        <div className="lw-signingManagerScreen__detailValue">{file?.CaseName || "-"}</div>
                     </SimpleContainer>
-                )}
 
-                {file?.Status === "signed" && (
                     <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                        <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.signedAt')}</div>
-                        <div className="lw-signingManagerScreen__detailValue">{formatDotDate?.(file?.SignedAt)}</div>
+                        <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.client')}</div>
+                        <div className="lw-signingManagerScreen__detailValue">{file?.ClientName || "-"}</div>
                     </SimpleContainer>
-                )}
-                {isOtpWaived && (
-                    <>
-                        <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                            <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.otpWaiverBy')}</div>
-                            <div className="lw-signingManagerScreen__detailValue">{file?.PolicySelectedByUserId ?? "-"}</div>
-                        </SimpleContainer>
-                        <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                            <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.otpWaiverAt')}</div>
-                            <div className="lw-signingManagerScreen__detailValue">{formatUtcDateTime(file?.PolicySelectedAtUtc)}</div>
-                        </SimpleContainer>
-                    </>
-                )}
 
+                    <SimpleContainer className="lw-signingManagerScreen__detailRow">
+                        <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.uploadedAt')}</div>
+                        <div className="lw-signingManagerScreen__detailValue">{formatDotDate?.(file?.CreatedAt)}</div>
+                    </SimpleContainer>
+
+                    <SimpleContainer className="lw-signingManagerScreen__detailRow">
+                        <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.status')}</div>
+                        <div className="lw-signingManagerScreen__detailValue">{statusText}</div>
+                    </SimpleContainer>
+
+                    <SimpleContainer className="lw-signingManagerScreen__detailRow">
+                        <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.signatures')}</div>
+                        <div className="lw-signingManagerScreen__detailValue">{signedSpots}/{totalSpots}</div>
+                    </SimpleContainer>
+
+                    {file?.Status === "rejected" && file?.RejectionReason && (
+                        <SimpleContainer className="lw-signingManagerScreen__detailRow">
+                            <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.rejectionReason')}</div>
+                            <div className="lw-signingManagerScreen__detailValue">{file.RejectionReason}</div>
+                        </SimpleContainer>
+                    )}
+
+                    {file?.Status === "signed" && (
+                        <SimpleContainer className="lw-signingManagerScreen__detailRow">
+                            <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.signedAt')}</div>
+                            <div className="lw-signingManagerScreen__detailValue">{formatDotDate?.(file?.SignedAt)}</div>
+                        </SimpleContainer>
+                    )}
+                    {isOtpWaived && (
+                        <>
+                            <SimpleContainer className="lw-signingManagerScreen__detailRow">
+                                <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.otpWaiverBy')}</div>
+                                <div className="lw-signingManagerScreen__detailValue">{file?.PolicySelectedByUserId ?? "-"}</div>
+                            </SimpleContainer>
+                            <SimpleContainer className="lw-signingManagerScreen__detailRow">
+                                <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.otpWaiverAt')}</div>
+                                <div className="lw-signingManagerScreen__detailValue">{formatUtcDateTime(file?.PolicySelectedAtUtc)}</div>
+                            </SimpleContainer>
+                        </>
+                    )}
+                    {file?.Status === "signed" && (
+                        <SimpleContainer className="lw-signingManagerScreen__detailRow">
+                            <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.signedAt')}</div>
+                            <div className="lw-signingManagerScreen__detailValue">{formatDotDate?.(file?.SignedAt)}</div>
+                        </SimpleContainer>
+                    )}
+                    {isOtpWaived && (
+                        <>
+                            <SimpleContainer className="lw-signingManagerScreen__detailRow">
+                                <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.otpWaiverBy')}</div>
+                                <div className="lw-signingManagerScreen__detailValue">{file?.PolicySelectedByUserId ?? "-"}</div>
+                            </SimpleContainer>
+                            <SimpleContainer className="lw-signingManagerScreen__detailRow">
+                                <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.otpWaiverAt')}</div>
+                                <div className="lw-signingManagerScreen__detailValue">{formatUtcDateTime(file?.PolicySelectedAtUtc)}</div>
+                            </SimpleContainer>
+                        </>
+                    )}
+
+                    <SimpleContainer className="lw-signingManagerScreen__actionsRow">
+                        <SecondaryButton onPress={onOpenPdf}>{t('signingManager.actions.openPdf')}</SecondaryButton>
+                        {file?.Status === "signed" && (
+                            <PrimaryButton onPress={onDownloadSigned}>{t('signingManager.actions.downloadSigned')}</PrimaryButton>
+                        )}
+                        {Boolean(file?.SignedFileKey) && (
+                            <PrimaryButton onPress={onDownloadEvidencePdf}>הורד מסמך ראייה (PDF)</PrimaryButton>
+                        )}
+                        <SecondaryButton onPress={onClose}>{t('common.close')}</SecondaryButton>
+                    </SimpleContainer>
+                </>
                 <SimpleContainer className="lw-signingManagerScreen__actionsRow">
                     <SecondaryButton onPress={onOpenPdf}>{t('signingManager.actions.openPdf')}</SecondaryButton>
                     {file?.Status === "signed" && (
@@ -499,14 +530,14 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                     <SecondaryButton onPress={onClose}>{t('common.close')}</SecondaryButton>
                 </SimpleContainer>
             </>
-        </SimpleContainer>
+        </SimpleContainer >
     );
-}
+    }
 
-const TabButton = ({ active, label, onPress }) => {
-    return active ? (
-        <PrimaryButton onPress={onPress}>{label}</PrimaryButton>
-    ) : (
-        <SecondaryButton onPress={onPress}>{label}</SecondaryButton>
-    );
-};
+    const TabButton = ({ active, label, onPress }) => {
+        return active ? (
+            <PrimaryButton onPress={onPress}>{label}</PrimaryButton>
+        ) : (
+            <SecondaryButton onPress={onPress}>{label}</SecondaryButton>
+        );
+    };
