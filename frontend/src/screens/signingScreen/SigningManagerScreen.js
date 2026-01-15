@@ -181,7 +181,8 @@ export default function SigningManagerScreen() {
                 return;
             }
 
-            if (!file?.SignedFileKey) {
+            const isSigned = String(file?.Status || '').toLowerCase() === 'signed';
+            if (!isSigned) {
                 showError({ messageKey: 'signingManager.errors.evidencePackageSignedOnly' });
                 return;
             }
@@ -396,6 +397,7 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
     const { t } = useTranslation();
     const totalSpots = Number(file?.TotalSpots || 0);
     const signedSpots = Number(file?.SignedSpots || 0);
+    const isSigned = String(file?.Status || '').toLowerCase() === 'signed';
 
     const showOtpUi = SIGNING_OTP_ENABLED;
     const requireOtp = showOtpUi && Boolean(file?.RequireOtp);
@@ -489,9 +491,9 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                     {file?.Status === "signed" && (
                         <PrimaryButton onPress={onDownloadSigned}>{t('signingManager.actions.downloadSigned')}</PrimaryButton>
                     )}
-                    {Boolean(file?.SignedFileKey) && (
-                        <PrimaryButton onPress={onDownloadEvidencePdf}>{t('signingManager.actions.downloadEvidencePdf')}</PrimaryButton>
-                    )}
+                    <PrimaryButton onPress={onDownloadEvidencePdf} disabled={!isSigned}>
+                        {t('signingManager.actions.downloadEvidencePdf')}
+                    </PrimaryButton>
                     <SecondaryButton onPress={onClose}>{t('common.close')}</SecondaryButton>
                 </SimpleContainer>
             </>

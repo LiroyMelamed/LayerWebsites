@@ -42,6 +42,18 @@ BEGIN
     PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signingfiles' AND column_name='signedfilekey';
     IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.signingfiles.signedfilekey'; END IF;
 
+    -- New signed output storage (required for new signing docs)
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signingfiles' AND column_name='signedstoragekey';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.signingfiles.signedstoragekey'; END IF;
+
+    -- Evidence/hardening fields (required for evidence certificate/package)
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signingfiles' AND column_name='originalpdfsha256';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.signingfiles.originalpdfsha256'; END IF;
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signingfiles' AND column_name='presentedpdfsha256';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.signingfiles.presentedpdfsha256'; END IF;
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signingfiles' AND column_name='signedpdfsha256';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.signingfiles.signedpdfsha256'; END IF;
+
     PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signingfiles' AND column_name='signedat';
     IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.signingfiles.signedat'; END IF;
 
@@ -91,6 +103,22 @@ BEGIN
     -- Multi-signer support column (expected in production)
     PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signaturespots' AND column_name='signeruserid';
     IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.signaturespots.signeruserid'; END IF;
+
+    -- Evidence fields on signaturespots
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signaturespots' AND column_name='signingsessionid';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.signaturespots.signingsessionid'; END IF;
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signaturespots' AND column_name='presentedpdfsha256';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.signaturespots.presentedpdfsha256'; END IF;
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signaturespots' AND column_name='signatureimagesha256';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.signaturespots.signatureimagesha256'; END IF;
+
+    -- Evidence tables
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='audit_events' AND column_name='eventid';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing table/column: public.audit_events.eventid'; END IF;
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signing_consents' AND column_name='consentid';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing table/column: public.signing_consents.consentid'; END IF;
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signing_otp_challenges' AND column_name='challengeid';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing table/column: public.signing_otp_challenges.challengeid'; END IF;
 
     -- notifications tables
     PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='userdevices' AND column_name='userid';

@@ -1,5 +1,6 @@
 const axios = require('axios');
 const app = require('./app');
+const { signingSchemaStartupCheck } = require('./utils/startupSchemaCheck');
 
 const PORT = process.env.PORT || 5000;
 
@@ -23,6 +24,7 @@ async function getPublicIp() {
 const server = app.listen(PORT, async () => {
     console.log(`Server running on port ${PORT}`);
     await getPublicIp();
+    await signingSchemaStartupCheck();
 });
 
 // Hard timeouts at the Node server layer (useful behind Nginx).

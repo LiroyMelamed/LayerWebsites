@@ -577,5 +577,18 @@
                 "waiverAckRequired": "To send without OTP, you must explicitly acknowledge the statement."
             }
         }
+    },
+    "verifyEvidence": {
+        "title": "Evidence Verification",
+        "subtitle": "This link is referenced by the Evidence Certificate (PDF).",
+        "signingFileIdLabel": "Signing File ID:",
+        "instructions": "To verify the certificate, compare the Signing File ID and the SHA-256 hashes printed in the PDF with the presented document files.",
+        "privacyNote": "For privacy and legal reasons, this page does not display personal data. The full evidence package is available to authorized users.",
+        "actions": {
+            "login": "Log in",
+            "openEvidence": "Open Evidence Documents",
+            "openSigningManager": "Open Signing Manager",
+            "openSigning": "Open My Signing"
+        }
     }
 }

@@ -29,6 +29,10 @@ CREATE INDEX IF NOT EXISTS idx_signaturespots_signingfile_page
 -- 2) signingfiles: OTP policy fields (ensure present)
 ALTER TABLE public.signingfiles
     ADD COLUMN IF NOT EXISTS requireotp boolean NOT NULL DEFAULT false,
+    -- Legacy waiver acknowledgement columns (added in earlier migrations); ensure present
+    ADD COLUMN IF NOT EXISTS otpwaiveracknowledged boolean NOT NULL DEFAULT false,
+    ADD COLUMN IF NOT EXISTS otpwaiveracknowledgedatutc timestamptz NULL,
+    ADD COLUMN IF NOT EXISTS otpwaiveracknowledgedbyuserid integer NULL,
     ADD COLUMN IF NOT EXISTS otpwaivedbyuserid integer NULL,
     ADD COLUMN IF NOT EXISTS otpwaivedatutc timestamptz NULL;
 

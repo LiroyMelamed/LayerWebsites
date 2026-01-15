@@ -13,7 +13,7 @@ function loadFileAsDataUrl(filePath, mimeType) {
   return toDataUrl(fs.readFileSync(filePath), mimeType);
 }
 
-const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand }) => `
+const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, otp, security }) => `
 <!doctype html>
 <html lang="he" dir="rtl">
 <head>
@@ -148,6 +148,7 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand }) => `
     td {
       font-size: 10px;
       color: #111827;
+      white-space: pre-line;
     }
 
     .chip {
@@ -222,8 +223,14 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand }) => `
       <div class="grid">
         <div class="kv"><div class="k">Document ID</div><div class="v mono">${doc.documentId}</div></div>
         <div class="kv"><div class="k">Document Name</div><div class="v">${doc.documentName}</div></div>
+        <div class="kv"><div class="k">Case ID</div><div class="v mono">${doc.caseId || "N/A"}</div></div>
+        <div class="kv"><div class="k">Case Name</div><div class="v">${doc.caseName || "N/A"}</div></div>
+        <div class="kv"><div class="k">Signing Policy Version</div><div class="v mono">${doc.signingPolicyVersion || "N/A"}</div></div>
         <div class="kv"><div class="k">Creation time (UTC)</div><div class="v">${doc.creationUtc}</div></div>
-        <div class="kv"><div class="k">Hash (SHA256)</div><div class="v mono">${doc.signedHashSha256}</div></div>
+        <div class="kv"><div class="k">Signed PDF SHA256</div><div class="v mono">${doc.signedPdfSha256 || doc.signedHashSha256 || "-"}</div></div>
+        <div class="kv"><div class="k">Presented PDF SHA256</div><div class="v mono">${doc.presentedPdfSha256 || "-"}</div></div>
+        <div class="kv"><div class="k">Original PDF SHA256</div><div class="v mono">${doc.originalPdfSha256 || "-"}</div></div>
+        <div class="kv"><div class="k">OTP Policy</div><div class="v">${doc.otpPolicy || "-"}</div></div>
       </div>
     </div>
 
@@ -232,6 +239,10 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand }) => `
       <div class="grid">
         <div class="kv"><div class="k">Name</div><div class="v">${sender.name || "-"}</div></div>
         <div class="kv"><div class="k">E-mail</div><div class="v">${sender.email || "-"}</div></div>
+        <div class="kv"><div class="k">Phone</div><div class="v">${sender.phone || "-"}</div></div>
+        <div class="kv"><div class="k">Sender IP</div><div class="v mono">${sender.ip || "-"}</div></div>
+        <div class="kv"><div class="k">Sent by</div><div class="v">${sender.sentBy || "-"}</div></div>
+        <div class="kv"><div class="k">Sent at (UTC)</div><div class="v">${sender.sentAtUtc || "-"}</div></div>
       </div>
     </div>
 
@@ -240,15 +251,12 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand }) => `
       <table>
         <thead>
           <tr>
-            <th style="width: 14%;">Name</th>
-            <th style="width: 12%;">Phone</th>
-            <th style="width: 16%;">Email</th>
-            <th style="width: 10%;">OTP</th>
-            <th style="width: 12%;">IP</th>
-            <th style="width: 16%;">Device / Browser</th>
-            <th style="width: 10%;">Time Sent (UTC)</th>
-            <th style="width: 10%;">Time Viewed (UTC)</th>
-            <th style="width: 10%;">Time Signed (UTC)</th>
+            <th style="width: 16%;">Signer</th>
+            <th style="width: 16%;">Contact</th>
+            <th style="width: 14%;">Authentication</th>
+            <th style="width: 20%;">Network / Device</th>
+            <th style="width: 17%;">Timeline (UTC)</th>
+            <th style="width: 17%;">Integrity</th>
           </tr>
         </thead>
         <tbody>
@@ -259,19 +267,61 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand }) => `
                   <span class="dot"></span>
                   <span>${s.name || "-"}</span>
                 </span>
+                <div class="mono" style="margin-top:4px;">
+                  UserId: ${s.userId || "-"}\nSession: ${s.signingSessionId || "-"}
+                </div>
               </td>
-              <td>${s.phone || "-"}</td>
-              <td>${s.email || "-"}</td>
-              <td>${s.otpUsed ? "כן" : "לא"}</td>
-              <td>${s.ip || "-"}</td>
-              <td>${s.device || "-"}</td>
-              <td>${s.timeSentUtc || "-"}</td>
-              <td>${s.timeViewedUtc || "-"}</td>
-              <td>${s.timeSignedUtc || "-"}</td>
+              <td>
+                Phone: ${s.phone || "-"}\nOTP Phone: ${s.otpPhoneE164 || "-"}\nEmail: ${s.email || "-"}
+              </td>
+              <td>
+                OTP used: ${typeof s.otpUsed === 'boolean' ? (s.otpUsed ? 'true' : 'false') : (s.otpUsed || "-")}\nOTP verified at: ${s.otpVerifiedAtUtc || "-"}\nProvider: ${s.authProvider || "-"}
+              </td>
+              <td>
+                View IP: ${s.viewIp || "-"}\nSign IP: ${s.signIp || "-"}\nDevice: ${s.device || "-"}
+              </td>
+              <td>
+                Sent: ${s.timeSentUtc || "-"}\nViewed: ${s.timeViewedUtc || "-"}\nSigned: ${s.timeSignedUtc || "-"}
+              </td>
+              <td class="mono">
+                Presented: ${s.presentedPdfSha256 || "-"}\nSig img: ${s.signatureImageSha256 || "-"}
+              </td>
             </tr>
           `).join("")}
         </tbody>
       </table>
+    </div>
+
+    <div class="section">
+      <h3>Consent (הסכמה)</h3>
+      <div class="grid">
+        <div class="kv"><div class="k">Consent required</div><div class="v mono">${consent?.required === true ? 'true' : 'false'}</div></div>
+        <div class="kv"><div class="k">Consent accepted</div><div class="v mono">${consent?.accepted === true ? 'true' : 'false'}</div></div>
+        <div class="kv"><div class="k">Accepted at (UTC)</div><div class="v">${consent?.acceptedAtUtc || 'N/A'}</div></div>
+        <div class="kv"><div class="k">Consent version</div><div class="v mono">${consent?.consentVersion || 'N/A'}</div></div>
+        <div class="kv"><div class="k">Consent text SHA256</div><div class="v mono">${consent?.consentTextSha256 || 'N/A'}</div></div>
+        <div class="kv"><div class="k">Notes</div><div class="v">${consent?.note || (consent?.required ? '-' : 'Consent: Not required')}</div></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>OTP (One-Time Password)</h3>
+      <div class="grid">
+        <div class="kv"><div class="k">OTP system enabled</div><div class="v mono">${otp?.systemEnabled === true ? 'true' : 'false'}</div></div>
+        <div class="kv"><div class="k">OTP required</div><div class="v mono">${otp?.required === true ? 'true' : 'false'}</div></div>
+        <div class="kv"><div class="k">OTP used</div><div class="v mono">${otp?.used === true ? 'true' : 'false'}</div></div>
+        <div class="kv"><div class="k">OTP verified</div><div class="v mono">${otp?.verified === true ? 'true' : 'false'}</div></div>
+        <div class="kv"><div class="k">Provider</div><div class="v">${otp?.provider || 'N/A'}</div></div>
+        <div class="kv"><div class="k">Message ID</div><div class="v mono">${otp?.messageId || 'N/A'}</div></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Security & Integrity</h3>
+      <div class="grid">
+        <div class="kv"><div class="k">Audit hash chain present</div><div class="v mono">${security?.auditHashChainPresent === 'Not available' ? 'Not available' : (security?.auditHashChainPresent === true ? 'true' : 'false')}</div></div>
+        <div class="kv"><div class="k">Audit events count</div><div class="v mono">${Number.isFinite(Number(security?.auditEventCount)) ? Number(security.auditEventCount) : 'N/A'}</div></div>
+      </div>
     </div>
 
     <div class="footer">
@@ -279,6 +329,9 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand }) => `
         This certificate was generated automatically by ${brand.companyName}.
         <br/>
         Generated at (UTC): ${meta.generatedUtc}
+        <br/>
+        Verify URL: <span class="mono">${doc.verifyUrl || "-"}</span>
+        ${doc.missingNotes && doc.missingNotes.length ? `<br/>Missing data: ${doc.missingNotes.join('; ')}` : ``}
       </div>
       ${qrUrl ? `<div class="qr"><img alt="QR" src="${qrUrl}" style="width:100%;height:100%;object-fit:cover"/></div>` : `<div></div>`}
     </div>
@@ -360,6 +413,9 @@ async function renderEvidencePdf({ doc, sender, signers, qrDataUrl, brand }) {
     doc,
     qrUrl: qrDataUrl || null,
     brand: safeBrand,
+    consent: doc?.consent || null,
+    otp: doc?.otp || null,
+    security: doc?.security || null,
   });
 
   return renderHtmlToPdf(html);

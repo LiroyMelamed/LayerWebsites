@@ -142,7 +142,8 @@ exports.listEvidenceDocuments = async (req, res, next) => {
         const params = [];
 
         // Eligibility: only signed output exists.
-        where.push('sf.signedfilekey is not null');
+        // Newer records may use signedstoragekey instead of legacy signedfilekey.
+        where.push('(sf.signedfilekey is not null or sf.signedstoragekey is not null)');
 
         if (signingFileId) {
             params.push(signingFileId);
@@ -220,6 +221,7 @@ exports.listEvidenceDocuments = async (req, res, next) => {
                 sf.lawyerid,
                 sf.filename,
                 sf.signedfilekey,
+                sf.signedstoragekey,
                 sf.signedat,
                 sf.createdat,
                 sf.requireotp,
@@ -270,7 +272,7 @@ exports.listEvidenceDocuments = async (req, res, next) => {
                     waivedBy,
                     waivedAtUtc,
                 },
-                evidenceZipAvailable: Boolean(r.signedfilekey),
+                evidenceZipAvailable: Boolean(r.signedfilekey || r.signedstoragekey),
             };
         });
 

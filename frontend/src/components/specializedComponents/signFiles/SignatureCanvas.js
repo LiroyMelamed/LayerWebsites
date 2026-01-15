@@ -114,25 +114,41 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         return `lw_signing_field_values:${keyPart}`;
     }, [isPublic, publicToken, signingFileId]);
 
+    // Production policy: rely on DB persistence for legal correctness.
+    // Cache is DEV-only as a guardrail during rollout.
+    const FIELD_VALUES_CACHE_ENABLED = process.env.NODE_ENV !== 'production';
+    const FIELD_VALUES_CACHE_TTL_MS = 15 * 60 * 1000;
+
     const readFieldValuesCache = () => {
+        if (!FIELD_VALUES_CACHE_ENABLED) return {};
         try {
             const raw = localStorage.getItem(fieldValuesStorageKey);
             const parsed = raw ? JSON.parse(raw) : null;
-            return parsed && typeof parsed === 'object' ? parsed : {};
+            const envelope = parsed && typeof parsed === 'object' ? parsed : null;
+            const ts = Number(envelope?.ts || 0);
+            if (!Number.isFinite(ts) || ts <= 0) return {};
+            if (Date.now() - ts > FIELD_VALUES_CACHE_TTL_MS) return {};
+            const values = envelope?.values;
+            return values && typeof values === 'object' ? values : {};
         } catch {
             return {};
         }
     };
 
     const writeFieldValuesCache = (nextMap) => {
+        if (!FIELD_VALUES_CACHE_ENABLED) return;
         try {
-            localStorage.setItem(fieldValuesStorageKey, JSON.stringify(nextMap || {}));
+            localStorage.setItem(
+                fieldValuesStorageKey,
+                JSON.stringify({ ts: Date.now(), values: nextMap || {} })
+            );
         } catch {
             // ignore
         }
     };
 
     const mergeFieldValuesFromCache = (details) => {
+        if (!FIELD_VALUES_CACHE_ENABLED) return details;
         const cache = readFieldValuesCache();
         const spots = details?.signatureSpots;
         if (!Array.isArray(spots) || !spots.length) return details;
