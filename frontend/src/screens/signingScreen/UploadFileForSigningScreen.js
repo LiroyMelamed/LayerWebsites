@@ -7,6 +7,7 @@ import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
 import SimpleScrollView from "../../components/simpleComponents/SimpleScrollView";
 import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
 import SimpleLoader from "../../components/simpleComponents/SimpleLoader";
+import SimpleInput from "../../components/simpleComponents/SimpleInput";
 
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
@@ -30,13 +31,130 @@ import useHttpRequest from "../../hooks/useHttpRequest";
 import { customersApi } from "../../api/customersApi";
 import { usePopup } from "../../providers/PopUpProvider";
 import ClientPopup from "../mainScreen/components/ClientPopUp";
-import SignatureSpotMarker from "../../components/specializedComponents/signFiles/SignatureSpotMarker";
 
 import "./UploadFileForSigningScreen.scss";
 import { MainScreenName } from "../mainScreen/MainScreen";
 import { useTranslation } from "react-i18next";
 
 export const uploadFileForSigningScreenName = "/upload-file-for-signing";
+
+const buildFieldTypeOptions = (t) => ([
+    { id: 'signature', label: t('signing.fields.signature'), shortLabel: t('signing.fields.signatureShort') },
+    { id: 'email', label: t('signing.fields.email'), shortLabel: t('signing.fields.emailShort') },
+    { id: 'phone', label: t('signing.fields.phone'), shortLabel: t('signing.fields.phoneShort') },
+    { id: 'initials', label: t('signing.fields.initials'), shortLabel: t('signing.fields.initialsShort') },
+    { id: 'text', label: t('signing.fields.text'), shortLabel: t('signing.fields.textShort') },
+    { id: 'date', label: t('signing.fields.date'), shortLabel: t('signing.fields.dateShort') },
+    { id: 'checkbox', label: t('signing.fields.checkbox'), shortLabel: t('signing.fields.checkboxShort') },
+    { id: 'idnumber', label: t('signing.fields.idNumber'), shortLabel: t('signing.fields.idNumberShort') },
+]);
+
+function FieldSettingsPopup({
+    spot,
+    index,
+    fieldTypeOptions,
+    onSave,
+    onCancel,
+    onDuplicate,
+    onDelete,
+}) {
+    const { t } = useTranslation();
+    const [isRequired, setIsRequired] = useState(spot?.isRequired !== false);
+    const [rangeFrom, setRangeFrom] = useState("");
+    const [rangeTo, setRangeTo] = useState("");
+    const [rangeError, setRangeError] = useState("");
+
+    const typeMeta = fieldTypeOptions.find((opt) => opt.id === (spot?.type || 'signature'));
+
+    const handleApplyRange = () => {
+        const from = Number(rangeFrom);
+        const to = Number(rangeTo);
+        if (!Number.isFinite(from) || !Number.isFinite(to) || from < 1 || to < 1 || from > to) {
+            setRangeError(t('signing.fieldSettings.rangeInvalid'));
+            return;
+        }
+        setRangeError("");
+        onDuplicate?.(index, 'range', [from, to]);
+    };
+
+    return (
+        <SimpleContainer className="lw-fieldSettingsPopup">
+            <SimpleContainer className="lw-fieldSettingsPopup__header">
+                <TextBold24>{t('signing.fieldSettings.title')}</TextBold24>
+                <SecondaryButton onPress={onCancel} className="lw-fieldSettingsPopup__close">
+                    {t('common.close')}
+                </SecondaryButton>
+            </SimpleContainer>
+
+            <SimpleContainer className="lw-fieldSettingsPopup__body">
+                <SimpleContainer className="lw-fieldSettingsPopup__row">
+                    <Text14 className="lw-fieldSettingsPopup__label">{t('signing.fieldSettings.type')}</Text14>
+                    <Text14 className="lw-fieldSettingsPopup__value">{typeMeta?.label || t('signing.fields.signature')}</Text14>
+                </SimpleContainer>
+
+                <SimpleContainer className="lw-fieldSettingsPopup__row">
+                    <Text14 className="lw-fieldSettingsPopup__label">{t('signing.fieldSettings.requiredLabel')}</Text14>
+                    <label className="lw-fieldSettingsPopup__toggle">
+                        <input
+                            type="checkbox"
+                            checked={isRequired}
+                            onChange={(e) => setIsRequired(Boolean(e.target.checked))}
+                        />
+                        <span className="lw-fieldSettingsPopup__toggleText">
+                            {isRequired ? t('signing.fieldSettings.required') : t('signing.fieldSettings.optional')}
+                        </span>
+                    </label>
+                </SimpleContainer>
+
+                <SimpleContainer className="lw-fieldSettingsPopup__section">
+                    <Text14 className="lw-fieldSettingsPopup__sectionTitle">{t('signing.fieldSettings.duplicateTitle')}</Text14>
+                    <SimpleContainer className="lw-fieldSettingsPopup__actions">
+                        <SecondaryButton onPress={() => onDuplicate?.(index, 'all')}>
+                            {t('signing.fieldSettings.duplicateAll')}
+                        </SecondaryButton>
+                        <SecondaryButton onPress={() => onDuplicate?.(index, 'even')}>
+                            {t('signing.fieldSettings.duplicateEven')}
+                        </SecondaryButton>
+                        <SecondaryButton onPress={() => onDuplicate?.(index, 'odd')}>
+                            {t('signing.fieldSettings.duplicateOdd')}
+                        </SecondaryButton>
+                    </SimpleContainer>
+
+                    <SimpleContainer className="lw-fieldSettingsPopup__rangeRow">
+                        <SimpleInput
+                            title={t('signing.fieldSettings.rangeFrom')}
+                            type="number"
+                            value={rangeFrom}
+                            onChange={(e) => setRangeFrom(e.target.value)}
+                            className="lw-fieldSettingsPopup__rangeInput"
+                        />
+                        <SimpleInput
+                            title={t('signing.fieldSettings.rangeTo')}
+                            type="number"
+                            value={rangeTo}
+                            onChange={(e) => setRangeTo(e.target.value)}
+                            className="lw-fieldSettingsPopup__rangeInput"
+                        />
+                        <SecondaryButton onPress={handleApplyRange} className="lw-fieldSettingsPopup__rangeButton">
+                            {t('signing.fieldSettings.duplicateRange')}
+                        </SecondaryButton>
+                    </SimpleContainer>
+                    {rangeError && <Text14 className="lw-fieldSettingsPopup__error">{rangeError}</Text14>}
+                </SimpleContainer>
+            </SimpleContainer>
+
+            <SimpleContainer className="lw-fieldSettingsPopup__footer">
+                <SecondaryButton onPress={onDelete} className="lw-fieldSettingsPopup__delete">
+                    {t('common.remove')}
+                </SecondaryButton>
+                <SimpleContainer className="lw-fieldSettingsPopup__footerActions">
+                    <SecondaryButton onPress={onCancel}>{t('common.cancel')}</SecondaryButton>
+                    <PrimaryButton onPress={() => onSave?.(index, { isRequired })}>{t('common.save')}</PrimaryButton>
+                </SimpleContainer>
+            </SimpleContainer>
+        </SimpleContainer>
+    );
+}
 
 export default function UploadFileForSigningScreen() {
     const { t } = useTranslation();
@@ -48,38 +166,29 @@ export default function UploadFileForSigningScreen() {
     const openFieldEditor = (index) => {
         const spot = signatureSpots[index];
         if (!spot) return;
-
-        const onUpdate = (i, updates) => {
-            handleUpdateSpot(i, updates);
-        };
-
-        const onRemove = (i) => {
-            const ok = window.confirm(t('signing.spotMarker.confirmDelete') || 'Delete this field?');
-            if (ok) {
-                handleRemoveSpot(i);
-                closePopup();
-            }
-        };
-
+        setSelectedSpotIndex(index);
         openPopup(
-            <SimpleContainer>
-                <SignatureSpotMarker spot={spot} index={index} onUpdate={onUpdate} onRemove={onRemove} />
-                <SimpleContainer className="lw-fieldContextMenu">
-                    <div className="lw-fieldContextMenu__groupTitle">{t('signing.context.duplicate') || 'Duplicate to'}</div>
-                    <button onClick={() => { closePopup(); duplicateSpotToPages(index, 'all'); }}>
-                        {t('signing.context.allPages') || 'All pages'}
-                    </button>
-                    <button onClick={() => { closePopup(); duplicateSpotToPages(index, 'even'); }}>
-                        {t('signing.context.evenPages') || 'Even pages'}
-                    </button>
-                    <button onClick={() => { closePopup(); duplicateSpotToPages(index, 'odd'); }}>
-                        {t('signing.context.oddPages') || 'Odd pages'}
-                    </button>
-                    <button onClick={() => handleDuplicateRange(index)}>
-                        {t('signing.context.pageRange') || 'Page range'}
-                    </button>
-                </SimpleContainer>
-            </SimpleContainer>
+            <FieldSettingsPopup
+                spot={spot}
+                index={index}
+                fieldTypeOptions={fieldTypeOptions}
+                onSave={(i, updates) => {
+                    handleUpdateSpot(i, updates);
+                    setSelectedSpotIndex(null);
+                    closePopup();
+                }}
+                onCancel={() => {
+                    setSelectedSpotIndex(null);
+                    closePopup();
+                }}
+                onDuplicate={(i, mode, range) => {
+                    duplicateSpotToPages(i, mode, range);
+                }}
+                onDelete={() => {
+                    closePopup();
+                    openConfirmRemove(index);
+                }}
+            />
         );
     };
 
@@ -122,6 +231,7 @@ export default function UploadFileForSigningScreen() {
         } else if (mode === 'odd') {
             pages = pages.filter((p) => p % 2 === 1);
         } else if (mode === 'range') {
+            if (!Array.isArray(range) || range.length < 2) return;
             const [from, to] = range;
             pages = pages.filter((p) => p >= from && p <= to);
         }
@@ -138,41 +248,29 @@ export default function UploadFileForSigningScreen() {
         });
 
         if (!newSpots.length) {
-            alert(t('signing.duplicate.noneAdded') || 'No new fields were added (duplicates skipped)');
+            openInfoPopup(t('signing.duplicate.noneAdded'));
             return;
         }
 
         setSignatureSpots((prev) => [...prev, ...newSpots]);
     };
 
-    const handleDuplicateRange = (index) => {
-        const r = window.prompt(t('signing.context.rangePrompt') || 'Enter page range from-to (e.g. 2-5)');
-        if (!r) return;
-        const m = r.match(/(\d+)\s*-\s*(\d+)/);
-        if (m) {
-            const from = Number(m[1]);
-            const to = Number(m[2]);
-            duplicateSpotToPages(index, 'range', [from, to]);
-        } else {
-            alert(t('signing.context.rangeInvalid') || 'Invalid range');
-        }
-    };
-
     const handleSpotContext = (index, ev) => {
         // open popup menu using popup provider; reuse SimplePopUp as modal menu
+        setSelectedSpotIndex(index);
         openPopup(
             <SimpleContainer className="lw-fieldContextMenu">
                 <button onClick={() => { closePopup(); openFieldEditor(index); }}>
-                    {t('signing.context.edit') || 'Edit field settings'}
+                    {t('signing.context.edit')}
                 </button>
                 <div className="lw-fieldContextMenu__divider" />
-                <div className="lw-fieldContextMenu__groupTitle">{t('signing.context.duplicate') || 'Duplicate to'}</div>
-                <button onClick={() => { closePopup(); duplicateSpotToPages(index, 'all'); }}>{t('signing.context.allPages') || 'All pages'}</button>
-                <button onClick={() => { closePopup(); duplicateSpotToPages(index, 'even'); }}>{t('signing.context.evenPages') || 'Even pages'}</button>
-                <button onClick={() => { closePopup(); duplicateSpotToPages(index, 'odd'); }}>{t('signing.context.oddPages') || 'Odd pages'}</button>
-                <button onClick={() => { closePopup(); handleDuplicateRange(index); }}>{t('signing.context.pageRange') || 'Page range'}</button>
+                <div className="lw-fieldContextMenu__groupTitle">{t('signing.context.duplicate')}</div>
+                <button onClick={() => { closePopup(); duplicateSpotToPages(index, 'all'); }}>{t('signing.context.allPages')}</button>
+                <button onClick={() => { closePopup(); duplicateSpotToPages(index, 'even'); }}>{t('signing.context.evenPages')}</button>
+                <button onClick={() => { closePopup(); duplicateSpotToPages(index, 'odd'); }}>{t('signing.context.oddPages')}</button>
+                <button onClick={() => { closePopup(); openFieldEditor(index); }}>{t('signing.context.pageRange')}</button>
                 <div className="lw-fieldContextMenu__divider" />
-                <button onClick={() => { closePopup(); const ok = window.confirm(t('signing.spotMarker.confirmDelete') || 'Delete this field?'); if (ok) handleRemoveSpot(index); }}>{t('common.delete') || 'Delete'}</button>
+                <button onClick={() => { closePopup(); openConfirmRemove(index); }}>{t('common.remove')}</button>
             </SimpleContainer>
         );
     };
@@ -190,6 +288,7 @@ export default function UploadFileForSigningScreen() {
 
     const [signatureSpots, setSignatureSpots] = useState([]);
     const [selectedFieldType, setSelectedFieldType] = useState('signature');
+    const [, setSelectedSpotIndex] = useState(null);
     const [isDragActive, setIsDragActive] = useState(false);
 
     // Court-ready policy: OTP is required by default; waiver must be explicit + acknowledged.
@@ -203,6 +302,48 @@ export default function UploadFileForSigningScreen() {
     const [detecting, setDetecting] = useState(false);
 
     const fileInputRef = useRef(null);
+
+    const fieldTypeOptions = buildFieldTypeOptions(t);
+
+    const openInfoPopup = (message) => {
+        if (!message) return;
+        openPopup(
+            <SimpleContainer className="lw-fieldInfoPopup">
+                <Text14 className="lw-fieldInfoPopup__text">{message}</Text14>
+                <SimpleContainer className="lw-fieldInfoPopup__actions">
+                    <PrimaryButton onPress={closePopup}>{t('common.ok')}</PrimaryButton>
+                </SimpleContainer>
+            </SimpleContainer>
+        );
+    };
+
+    const openConfirmRemove = (index) => {
+        openPopup(
+            <SimpleContainer className="lw-fieldConfirmPopup">
+                <TextBold24>{t('signing.fieldSettings.confirmTitle')}</TextBold24>
+                <Text14 className="lw-fieldConfirmPopup__text">{t('signing.fieldSettings.confirmDelete')}</Text14>
+                <SimpleContainer className="lw-fieldConfirmPopup__actions">
+                    <SecondaryButton
+                        onPress={() => {
+                            setSelectedSpotIndex(null);
+                            closePopup();
+                        }}
+                    >
+                        {t('common.cancel')}
+                    </SecondaryButton>
+                    <PrimaryButton
+                        onPress={() => {
+                            handleRemoveSpot(index);
+                            setSelectedSpotIndex(null);
+                            closePopup();
+                        }}
+                    >
+                        {t('common.remove')}
+                    </PrimaryButton>
+                </SimpleContainer>
+            </SimpleContainer>
+        );
+    };
 
     const handleAddSpotForPage = (pageNumber, signerIdx = 0, fieldType = 'signature') => {
         const signer = selectedSigners?.[signerIdx] || null;
@@ -224,17 +365,6 @@ export default function UploadFileForSigningScreen() {
             },
         ]);
     };
-
-    const fieldTypeOptions = [
-        { id: 'signature', label: 'Signature' },
-        { id: 'email', label: 'Email' },
-        { id: 'phone', label: 'Phone' },
-        { id: 'initials', label: 'Initials' },
-        { id: 'text', label: 'Text' },
-        { id: 'date', label: 'Date' },
-        { id: 'checkbox', label: 'Checkbox' },
-        { id: 'idnumber', label: 'ID/Number' },
-    ];
 
     const openAddFieldMenu = (pageNumber) => {
         openPopup(
@@ -263,6 +393,7 @@ export default function UploadFileForSigningScreen() {
 
     const handleRemoveSpot = (index) => {
         setSignatureSpots((prev) => prev.filter((_, i) => i !== index));
+        setSelectedSpotIndex(null);
     };
 
     const resetFileState = () => {
@@ -540,6 +671,7 @@ export default function UploadFileForSigningScreen() {
                                 className="lw-uploadSigningScreen__search"
                                 buttonPressFunction={handleButtonPress}
                                 value={caseSearchQuery}
+                                clearOnSelect
                             />
 
                             <SearchInput
@@ -554,6 +686,7 @@ export default function UploadFileForSigningScreen() {
                                 emptyActionText={t('customers.addCustomer')}
                                 onEmptyAction={handleOpenAddCustomerPopup}
                                 value={signerSearchQuery}
+                                clearOnSelect
                             />
                         </SimpleContainer>
 
@@ -573,12 +706,6 @@ export default function UploadFileForSigningScreen() {
                                             >
                                                 X
                                             </button>
-                                            <span
-                                                onClick={() => removeSigner(s.UserId)}
-                                                className="lw-signing-spotRemove"
-                                            >
-                                                X
-                                            </span>
                                         </SimpleContainer>
                                     ))}
                                 </SimpleContainer>
@@ -637,16 +764,17 @@ export default function UploadFileForSigningScreen() {
                                 </SimpleContainer>
 
                                 <SimpleContainer className="lw-signing-pdfViewerWrapper">
-                                    <FieldTypeNavbar selected={selectedFieldType} onSelect={setSelectedFieldType} />
+                                    <FieldTypeNavbar
+                                        selected={selectedFieldType}
+                                        onSelect={setSelectedFieldType}
+                                        fieldTypes={fieldTypeOptions}
+                                    />
                                     <PdfViewer
                                         pdfFile={selectedFile}
                                         spots={signatureSpots}
                                         onUpdateSpot={handleUpdateSpot}
                                         onRemoveSpot={handleRemoveSpot}
-                                        onRequestRemove={(i) => {
-                                            const ok = window.confirm(t('signing.spotMarker.confirmDelete') || 'Delete this field?');
-                                            if (ok) handleRemoveSpot(i);
-                                        }}
+                                        onRequestRemove={(i) => openConfirmRemove(i)}
                                         onSelectSpot={openFieldEditor}
                                         onRequestContext={handleSpotContext}
                                         onAddSpotForPage={handleAddSpotForPage}

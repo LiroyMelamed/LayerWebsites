@@ -19,6 +19,7 @@ const SearchInput = ({
     buttonPressFunction,
     emptyActionText,
     onEmptyAction,
+    clearOnSelect,
     title,
     error,
     style: _style,
@@ -87,8 +88,13 @@ const SearchInput = ({
     function hoverButtonPressed(text, result) {
         const cleanedText = String(text ?? '').trimEnd();
         buttonPressFunction?.(cleanedText, result);
-        setShowResults(false)
-        setQuery(cleanedText);
+        setShowResults(false);
+        if (clearOnSelect) {
+            setQuery('');
+            onSearch?.('');
+        } else {
+            setQuery(cleanedText);
+        }
     }
 
     return (

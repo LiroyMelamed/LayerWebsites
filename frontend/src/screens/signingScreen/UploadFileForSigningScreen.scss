@@ -88,6 +88,117 @@
     background-color: #fff;
 }
 
+.lw-fieldSettingsPopup,
+.lw-fieldConfirmPopup,
+.lw-fieldInfoPopup {
+    background: var(--lw-color-white);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    min-width: 18rem;
+    max-width: 32rem;
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.lw-fieldSettingsPopup__header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.lw-fieldSettingsPopup__close {
+    margin-inline-start: auto;
+}
+
+.lw-fieldSettingsPopup__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.lw-fieldSettingsPopup__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.lw-fieldSettingsPopup__label {
+    font-weight: 600;
+    color: var(--lw-color-text);
+}
+
+.lw-fieldSettingsPopup__value {
+    color: var(--lw-color-text);
+}
+
+.lw-fieldSettingsPopup__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.lw-fieldSettingsPopup__section {
+    border-top: 1px solid var(--lw-color-border, #e2e8f0);
+    padding-top: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.lw-fieldSettingsPopup__sectionTitle {
+    font-weight: 700;
+}
+
+.lw-fieldSettingsPopup__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.lw-fieldSettingsPopup__rangeRow {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.lw-fieldSettingsPopup__rangeButton {
+    height: fit-content;
+}
+
+.lw-fieldSettingsPopup__error {
+    color: var(--lw-color-negative, #C53030);
+}
+
+.lw-fieldSettingsPopup__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.lw-fieldSettingsPopup__footerActions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.lw-fieldConfirmPopup__actions,
+.lw-fieldInfoPopup__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.lw-fieldInfoPopup__text,
+.lw-fieldConfirmPopup__text {
+    color: var(--lw-color-text);
+}
+
 .lw-uploadSigningScreen__radioRow {
     display: flex;
     align-items: center;

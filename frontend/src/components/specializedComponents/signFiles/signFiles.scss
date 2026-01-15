@@ -368,16 +368,54 @@
     box-shadow: 0 0.1875rem 0.625rem rgba(0, 0, 0, 0.18);
     transition: box-shadow 0.2s ease;
 
-        background-color: var(--spot-bg, rgba(42, 67, 101, 0.14));
-        border: 1px solid var(--spot-border, var(--lw-color-primary, #2A4365));
-        color: var(--spot-border, var(--lw-color-primary, #2A4365));
+    background-color: var(--spot-bg, rgba(42, 67, 101, 0.14));
+    border: 1px solid var(--spot-border, var(--lw-color-primary, #2A4365));
+    color: var(--spot-border, var(--lw-color-primary, #2A4365));
+
+    &.is-optional {
+        border-style: dashed;
+        opacity: 0.85;
+    }
 }
 
-    .lw-signing-spotOverlay {
-        position: absolute;
-        inset: 0;
-        z-index: 1;
+.lw-signing-spotOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: auto;
+}
+
+.lw-signing-spotMeta {
+    position: absolute;
+    top: -0.5rem;
+    inset-inline-start: -0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    z-index: 2;
+}
+
+.lw-signing-spotType {
+    background: var(--spot-border, var(--lw-color-primary, #2A4365));
+    color: #fff;
+    font-size: 0.625rem;
+    font-weight: 700;
+    padding: 0.1rem 0.35rem;
+    border-radius: 0.375rem;
+}
+
+.lw-signing-spotRequired {
+    font-size: 0.625rem;
+    padding: 0.1rem 0.35rem;
+    border-radius: 0.375rem;
+    background: var(--lw-color-white);
+    border: 1px solid var(--spot-border, var(--lw-color-primary, #2A4365));
+    color: var(--spot-border, var(--lw-color-primary, #2A4365));
+
+    &.is-optional {
+        opacity: 0.7;
     }
+}
 
 /* Signer color classes (use theme tokens) */
 @for $i from 0 through 7 {
@@ -457,6 +495,7 @@
     background-color: var(--chip-bg, #fff3cd);
     color: var(--chip-color, #856404);
 }
+
 
 .lw-signing-fileCardDetail {
     font-size: 0.8125rem;

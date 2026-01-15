@@ -16,6 +16,19 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
     const signerNameSafe = signerName || t("signing.spot.defaultSignerName");
 
     const hasSignatureImage = Boolean(spot?.IsSigned && (spot?.SignatureUrl || spot?.signatureUrl));
+    const fieldType = spot?.type || 'signature';
+    const isRequired = spot?.isRequired !== false;
+
+    const fieldTypeLabels = {
+        signature: t('signing.fields.signatureShort'),
+        email: t('signing.fields.emailShort'),
+        phone: t('signing.fields.phoneShort'),
+        initials: t('signing.fields.initialsShort'),
+        text: t('signing.fields.textShort'),
+        date: t('signing.fields.dateShort'),
+        checkbox: t('signing.fields.checkboxShort'),
+        idnumber: t('signing.fields.idNumberShort'),
+    };
 
     const spotStyle = {
         top: (spot.y || 0) * (scale || 1),
@@ -126,10 +139,16 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                     ? startDragTouchFallback
                     : undefined
             }
-            className={`lw-signing-spot ${colorClass}`}
+            className={`lw-signing-spot ${colorClass} lw-signing-spot--type-${fieldType} ${isRequired ? 'is-required' : 'is-optional'}`}
             style={spotStyle}
             title={t("signing.spot.signedByTitle", { name: signerNameSafe })}
         >
+            <div className="lw-signing-spotMeta">
+                <span className="lw-signing-spotType">{fieldTypeLabels[fieldType] || t('signing.fields.signatureShort')}</span>
+                <span className={`lw-signing-spotRequired ${isRequired ? 'is-required' : 'is-optional'}`}>
+                    {isRequired ? t('signing.fieldSettings.requiredShort') : t('signing.fieldSettings.optionalShort')}
+                </span>
+            </div>
             {hasSignatureImage ? (
                 <img
                     src={spot.SignatureUrl || spot.signatureUrl}
@@ -143,39 +162,32 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                     </div>
                 </div>
             )}
-                    {canRemoveSpot && (
-                        <span
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                if (typeof onRequestRemove === 'function') onRequestRemove(index);
-                                else onRemoveSpot?.(index);
-                            }}
-                            className="lw-signing-spotRemove"
-                        >
-                            X
-                        </span>
-                    )}
-                    {/* allow double-click to open editor */}
-                    <div
-                        onDoubleClick={(e) => {
-                            e.stopPropagation();
-                            if (typeof onSelectSpot === 'function') onSelectSpot(index);
-                        }}
-                        className="lw-signing-spotOverlay"
-                        style={{ position: 'absolute', inset: 0 }}
-                    />
-                    {/* Right-click context menu */}
-                    <div
-                        onContextMenu={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            if (typeof onRequestContext === 'function') onRequestContext(index, e);
-                        }}
-                        // invisible full overlay to catch right-click
-                        aria-hidden
-                        className="lw-signing-spotOverlay"
-                        style={{ position: 'absolute', inset: 0 }}
-                    />
+            {canRemoveSpot && (
+                <span
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if (typeof onRequestRemove === 'function') onRequestRemove(index);
+                        else onRemoveSpot?.(index);
+                    }}
+                    className="lw-signing-spotRemove"
+                >
+                    X
+                </span>
+            )}
+            {/* overlay for editor + context menu */}
+            <div
+                onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    if (typeof onSelectSpot === 'function') onSelectSpot(index);
+                }}
+                onContextMenu={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof onRequestContext === 'function') onRequestContext(index, e);
+                }}
+                aria-hidden
+                className="lw-signing-spotOverlay"
+            />
         </SimpleContainer>
     );
 }
