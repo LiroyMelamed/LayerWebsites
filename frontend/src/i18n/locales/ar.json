@@ -372,7 +372,7 @@
         "invalidLinkTitle": "رابط غير صالح",
         "missingToken": "مفقود معامل token في الرابط.",
         "otpRequiredBadge": "OTP مطلوب",
-        "otpWaivedBadge": "تم إلغاء OTP بواسطة المحامي",
+        "otpWaivedBadge": "تم إلغاء OTP",
         "evidencePackageDownload": "تنزيل حزمة الأدلة",
         "signerFallback": "الموقّع {{index}}",
         "fields": {

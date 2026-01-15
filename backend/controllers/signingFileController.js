@@ -9,6 +9,15 @@ const { formatPhoneNumber } = require("../utils/phoneUtils");
 const { sendMessage, WEBSITE_DOMAIN } = require("../utils/sendMessage");
 const { detectHebrewSignatureSpotsFromPdfBuffer, streamToBuffer } = require("../utils/signatureDetection");
 const { PDFDocument, StandardFonts } = require("pdf-lib");
+let fontkit = null;
+try {
+    // Optional: enables embedding TTF fonts (e.g., Hebrew) in pdf-lib.
+    // If not installed, we gracefully fall back to StandardFonts.
+    // eslint-disable-next-line global-require
+    fontkit = require('@pdf-lib/fontkit');
+} catch {
+    fontkit = null;
+}
 const { v4: uuid } = require("uuid");
 const crypto = require('crypto');
 const { renderEvidencePdf, loadFileAsDataUrl } = require('../lib/renderEvidencePdf');
@@ -1099,8 +1108,65 @@ async function generateSignedPdfBuffer({ pdfKey, spots }) {
     const { buffer: pdfBuffer } = await getR2ObjectBuffer(pdfKey);
 
     const pdfDoc = await PDFDocument.load(pdfBuffer);
+    if (fontkit) {
+        try {
+            pdfDoc.registerFontkit(fontkit);
+        } catch {
+            // ignore
+        }
+    }
     const pages = pdfDoc.getPages();
-    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+    const resolveHebrewFontPathOrNull = () => {
+        const candidates = [
+            path.resolve(__dirname, '../assets/fonts/NotoSansHebrew-Regular.ttf'),
+            path.resolve(__dirname, '../assets/fonts/Rubik-Regular.ttf'),
+            path.resolve(__dirname, '../assets/fonts/Assistant-Regular.ttf'),
+        ];
+        const found = candidates.find((p) => {
+            try {
+                return fs.existsSync(p);
+            } catch {
+                return false;
+            }
+        });
+        return found || null;
+    };
+
+    const isLikelyHebrew = (text) => {
+        const s = String(text || '');
+        return /[\u0590-\u05FF]/.test(s);
+    };
+
+    const latinFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    let hebrewFont = null;
+    try {
+        const hebrewPath = resolveHebrewFontPathOrNull();
+        if (hebrewPath && fontkit) {
+            const bytes = fs.readFileSync(hebrewPath);
+            hebrewFont = await pdfDoc.embedFont(bytes);
+        }
+    } catch {
+        hebrewFont = null;
+    }
+
+    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+    const fitTextToWidth = (fontToMeasure, text, fontSize, maxWidth) => {
+        const s = String(text || '');
+        if (!fontToMeasure?.widthOfTextAtSize) return s;
+        if (fontToMeasure.widthOfTextAtSize(s, fontSize) <= maxWidth) return s;
+
+        const ell = '…';
+        let lo = 0;
+        let hi = s.length;
+        while (lo < hi) {
+            const mid = Math.ceil((lo + hi) / 2);
+            const candidate = s.slice(0, mid) + ell;
+            if (fontToMeasure.widthOfTextAtSize(candidate, fontSize) <= maxWidth) lo = mid;
+            else hi = mid - 1;
+        }
+        return (lo <= 0) ? ell : (s.slice(0, lo) + ell);
+    };
 
     // Place each signature image on its page
     for (const spot of spots) {
@@ -1148,7 +1214,8 @@ async function generateSignedPdfBuffer({ pdfKey, spots }) {
             });
         } else if (fieldValue !== null && fieldValue !== undefined && String(fieldValue).length > 0) {
             const text = String(fieldValue);
-            const fontSize = Math.max(10, Math.min(14, h * 0.6));
+            const baseFont = (hebrewFont && isLikelyHebrew(text)) ? hebrewFont : latinFont;
+            const fontSize = clamp(h * 0.6, 8, 14);
             if (fieldType === 'checkbox') {
                 const checked = text === 'true' || text === '1' || text.toLowerCase() === 'yes' || text === '✓';
                 if (checked) {
@@ -1156,15 +1223,17 @@ async function generateSignedPdfBuffer({ pdfKey, spots }) {
                         x: x + 4,
                         y: y + Math.max(2, h * 0.2),
                         size: Math.min(16, h * 0.8),
-                        font,
+                        font: baseFont,
                     });
                 }
             } else {
-                page.drawText(text, {
+                const maxWidth = Math.max(0, w - 8);
+                const fitted = fitTextToWidth(baseFont, text, fontSize, maxWidth);
+                page.drawText(fitted, {
                     x: x + 4,
                     y: y + Math.max(2, h - fontSize - 2),
                     size: fontSize,
-                    font,
+                    font: baseFont,
                 });
             }
         }
@@ -1285,7 +1354,7 @@ async function getSchemaSupport() {
                  limit 1`
     );
 
-    const fieldValueCol = await pool.query(
+    let fieldValueCol = await pool.query(
         `select 1
                  from information_schema.columns
                  where table_schema = 'public'
@@ -1293,6 +1362,17 @@ async function getSchemaSupport() {
                      and column_name = 'fieldvalue'
                  limit 1`
     );
+
+    // Self-heal: if fieldtype exists but fieldvalue is missing, attempt to add it.
+    // This enables non-signature fields (date/text/etc) to persist and show up in the UI and final PDF.
+    if (fieldTypeCol.rows.length > 0 && fieldValueCol.rows.length === 0) {
+        try {
+            await pool.query(`alter table signaturespots add column if not exists fieldvalue text`);
+            fieldValueCol = { rows: [1] };
+        } catch (e) {
+            console.warn('[schema] Unable to auto-add signaturespots.fieldvalue:', e?.message || e);
+        }
+    }
 
     const caseIdNullableRes = await pool.query(
         `select is_nullable
@@ -4029,6 +4109,9 @@ exports.getSignedFileDownload = async (req, res, next) => {
                 filename       as "FileName",
                 status         as "Status",
                 signedfilekey  as "SignedFileKey",
+                signedstoragekey as "SignedStorageKey",
+                signedstoragebucket as "SignedStorageBucket",
+                signedpdfsha256 as "SignedPdfSha256",
                 filekey        as "FileKey"
              from signingfiles
              where signingfileid = $1`,
@@ -4064,9 +4147,31 @@ exports.getSignedFileDownload = async (req, res, next) => {
             return fail(next, 'DOCUMENT_NOT_SIGNED', 409);
         }
 
-        // If the file is signed but we don't yet have a flattened PDF, generate it on-demand.
-        let key = file.SignedFileKey;
-        if (!key) {
+        // Prefer modern signed-storage output when available.
+        // If there are any signed field-value spots, regenerate on-demand to guarantee values are embedded.
+        let key = file.SignedStorageKey || file.SignedFileKey;
+        let hasSignedFieldValues = false;
+        if (schemaSupport.signaturespotsFieldValue) {
+            try {
+                const hasFieldRes = await pool.query(
+                    `select 1
+                     from signaturespots
+                     where signingfileid = $1
+                       and issigned = true
+                       and fieldvalue is not null
+                       and length(trim(fieldvalue::text)) > 0
+                     limit 1`,
+                    [signingFileId]
+                );
+                hasSignedFieldValues = hasFieldRes.rows.length > 0;
+            } catch {
+                hasSignedFieldValues = false;
+            }
+        }
+
+        const shouldRegenerate = schemaSupport.signaturespotsFieldValue && hasSignedFieldValues;
+
+        if (!key || shouldRegenerate) {
             try {
                 key = await ensureSignedPdfKey({
                     signingFileId,

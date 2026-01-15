@@ -28,6 +28,8 @@ import { MainScreenName } from "../mainScreen/MainScreen";
 
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 
+import { SIGNING_OTP_ENABLED } from "../../featureFlags";
+
 import "./EvidenceDocumentsScreen.scss";
 
 export const EvidenceDocumentsScreenName = "/EvidenceDocumentsScreen";
@@ -40,6 +42,7 @@ function safeToLocalDateTime(iso) {
 }
 
 function otpLabel(item, t) {
+    if (!SIGNING_OTP_ENABLED) return "-";
     const requireOtp = Boolean(item?.otpPolicy?.requireOtp);
     const waivedBy = String(item?.otpPolicy?.waivedBy || "").trim();
 
@@ -52,6 +55,8 @@ export default function EvidenceDocumentsScreen() {
     const { t } = useTranslation();
     const { isSmallScreen } = useScreenSize();
     const { openPopup, closePopup } = usePopup();
+
+    const showOtpUi = SIGNING_OTP_ENABLED;
 
     const [inputQ, setInputQ] = useState("");
     const [inputCaseId, setInputCaseId] = useState("");
@@ -160,7 +165,7 @@ export default function EvidenceDocumentsScreen() {
     };
 
     const filteredItems = useMemo(() => {
-        if (!otpFilter) return items;
+        if (!showOtpUi || !otpFilter) return items;
         return items.filter((it) => {
             const requireOtp = Boolean(it?.otpPolicy?.requireOtp);
             const waivedBy = String(it?.otpPolicy?.waivedBy || "").trim();
@@ -168,7 +173,7 @@ export default function EvidenceDocumentsScreen() {
             if (otpFilter === "waived") return requireOtp && Boolean(waivedBy);
             return true;
         });
-    }, [items, otpFilter]);
+    }, [items, otpFilter, showOtpUi]);
 
     const searchDropdownItems = useMemo(() => {
         const q = String(inputQ || "").trim().toLowerCase();
@@ -299,13 +304,15 @@ export default function EvidenceDocumentsScreen() {
                         onKeyDown={onKeyDownSearch}
                     />
 
-                    <SimpleContainer className="lw-evidenceDocuments__choose">
-                        <ChooseButton
-                            buttonText={t("evidenceDocuments.filters.otp")}
-                            items={otpFilterItems}
-                            OnPressChoiceFunction={(val) => setOtpFilter(val ?? "")}
-                        />
-                    </SimpleContainer>
+                    {showOtpUi && (
+                        <SimpleContainer className="lw-evidenceDocuments__choose">
+                            <ChooseButton
+                                buttonText={t("evidenceDocuments.filters.otp")}
+                                items={otpFilterItems}
+                                OnPressChoiceFunction={(val) => setOtpFilter(val ?? "")}
+                            />
+                        </SimpleContainer>
+                    )}
                 </SimpleContainer>
 
                 {isLoading && items.length === 0 ? (
@@ -333,9 +340,11 @@ export default function EvidenceDocumentsScreen() {
                             <SimpleContainer className="lw-evidenceDocuments__cell">
                                 <TextBold14>{t("evidenceDocuments.columns.signedAt")}</TextBold14>
                             </SimpleContainer>
-                            <SimpleContainer className="lw-evidenceDocuments__cell">
-                                <TextBold14>{t("evidenceDocuments.columns.otp")}</TextBold14>
-                            </SimpleContainer>
+                            {showOtpUi && (
+                                <SimpleContainer className="lw-evidenceDocuments__cell">
+                                    <TextBold14>{t("evidenceDocuments.columns.otp")}</TextBold14>
+                                </SimpleContainer>
+                            )}
                             <SimpleContainer className="lw-evidenceDocuments__cell">
                                 <TextBold14>{t("evidenceDocuments.columns.actions")}</TextBold14>
                             </SimpleContainer>
@@ -361,9 +370,11 @@ export default function EvidenceDocumentsScreen() {
                                 <SimpleContainer className="lw-evidenceDocuments__cell">
                                     <Text14>{safeToLocalDateTime(it.signedAtUtc)}</Text14>
                                 </SimpleContainer>
-                                <SimpleContainer className="lw-evidenceDocuments__cell">
-                                    <Text14>{otpLabel(it, t)}</Text14>
-                                </SimpleContainer>
+                                {showOtpUi && (
+                                    <SimpleContainer className="lw-evidenceDocuments__cell">
+                                        <Text14>{otpLabel(it, t)}</Text14>
+                                    </SimpleContainer>
+                                )}
                                 <SimpleContainer className="lw-evidenceDocuments__cell">
                                     <SecondaryButton
                                         onPress={() => downloadEvidenceZip(it.signingFileId)}

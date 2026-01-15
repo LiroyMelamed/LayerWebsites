@@ -19,6 +19,15 @@ export default function SignatureSpotsLayer({
     const normalizeSpot = (spot) => {
         if (!spot || typeof spot !== "object") return spot;
 
+        const pickNonEmpty = (...candidates) => {
+            for (const c of candidates) {
+                if (c === null || c === undefined) continue;
+                const s = String(c);
+                if (s.trim().length > 0) return s;
+            }
+            return undefined;
+        };
+
         // Backend uses PascalCase (PageNumber/X/Y/SignerName...), upload flow uses camelCase (pageNum/x/y/signerName...)
         const pageNum = spot.pageNum ?? spot.PageNumber ?? spot.pagenumber;
         const x = spot.x ?? spot.X;
@@ -35,7 +44,7 @@ export default function SignatureSpotsLayer({
             ? isRequiredRaw
             : (type === 'signature' || type === 'initials');
         const fieldLabel = spot.fieldLabel ?? spot.FieldLabel ?? spot.fieldlabel;
-        const fieldValue = spot.fieldValue ?? spot.FieldValue ?? spot.fieldvalue;
+        const fieldValue = pickNonEmpty(spot.fieldValue, spot.FieldValue, spot.fieldvalue);
 
         return {
             ...spot,

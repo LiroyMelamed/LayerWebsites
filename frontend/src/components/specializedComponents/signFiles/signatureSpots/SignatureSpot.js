@@ -32,6 +32,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
         text: t('signing.fields.textShort'),
         date: t('signing.fields.dateShort'),
         checkbox: t('signing.fields.checkboxShort'),
+        number: '#',
         idnumber: t('signing.fields.idNumberShort'),
     };
 
@@ -43,6 +44,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
         text: icons?.SigningFields?.text,
         date: icons?.SigningFields?.date,
         checkbox: icons?.SigningFields?.checkbox,
+        number: icons?.SigningFields?.idnumber,
         idnumber: icons?.SigningFields?.idnumber,
     };
 
@@ -146,6 +148,34 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
         window.addEventListener("touchcancel", stop);
     };
 
+    // Some API responses include both FieldValue and fieldvalue/fieldValue.
+    // Prefer a non-empty value to avoid empty-string masking.
+    const pickNonEmpty = (...candidates) => {
+        for (const c of candidates) {
+            if (c === null || c === undefined) continue;
+            const s = String(c);
+            if (s.trim().length > 0) return s;
+        }
+        return "";
+    };
+
+    const fieldValue = pickNonEmpty(spot?.fieldValue, spot?.FieldValue, spot?.fieldvalue);
+    const hasFieldValue = fieldValue.length > 0;
+    const showFieldValue = !isSignatureLike && hasFieldValue;
+    const isLtrValueType = fieldType === 'phone' || fieldType === 'email' || fieldType === 'number' || fieldType === 'idnumber' || fieldType === 'date';
+    const formatDateForDisplay = (value) => {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+        const [y, m, d] = value.split('-');
+        return `${d}/${m}/${y}`;
+    };
+
+    const displayFieldValue = (() => {
+        if (!showFieldValue) return "";
+        if (fieldType === 'checkbox') return (fieldValue === 'true' ? '✓' : '');
+        if (fieldType === 'date') return formatDateForDisplay(fieldValue);
+        return fieldValue;
+    })();
+
     return (
         <SimpleContainer
             ref={ref}
@@ -174,6 +204,18 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                     {isRequired ? t('signing.fieldSettings.requiredShort') : t('signing.fieldSettings.optionalShort')}
                 </span>
             </div>
+
+            {/* Value renderer (non-signature fields). Must render above click-capture overlay but not block clicks. */}
+            {showFieldValue && (
+                <div
+                    className={`spotValue${isLtrValueType ? ' is-ltr' : ''}`}
+                    dir={isLtrValueType ? 'ltr' : undefined}
+                    aria-hidden
+                >
+                    {displayFieldValue}
+                </div>
+            )}
+
             {hasSignatureImage ? (
                 <img
                     src={spot.SignatureUrl || spot.signatureUrl}
@@ -210,6 +252,11 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
             )}
             {/* overlay for editor + context menu */}
             <div
+                onClick={(e) => {
+                    if (canEditSpot) return;
+                    e.stopPropagation();
+                    if (typeof onSelectSpot === 'function') onSelectSpot(index);
+                }}
                 onDoubleClick={(e) => {
                     e.stopPropagation();
                     if (typeof onSelectSpot === 'function') onSelectSpot(index);

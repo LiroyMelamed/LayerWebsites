@@ -334,6 +334,8 @@
 .lw-signing-pdfViewer canvas {
     max-width: 100%;
     height: auto !important;
+    position: relative;
+    z-index: 1;
 }
 
 @media (max-width: 34rem) {
@@ -349,6 +351,7 @@
     inset-inline: 0;
     bottom: 0;
     pointer-events: none;
+    z-index: 2;
 }
 
 .lw-signing-spot {
@@ -381,7 +384,7 @@
 .lw-signing-spotOverlay {
     position: absolute;
     inset: 0;
-    z-index: 1;
+    z-index: 3;
     pointer-events: auto;
 }
 
@@ -392,7 +395,34 @@
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
-    z-index: 2;
+    z-index: 5;
+}
+
+/*
+  Value renderer for non-signature fields.
+  Must sit above the spot click-capture overlay while not blocking clicks.
+*/
+.spotValue {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    z-index: 4;
+    pointer-events: none;
+    color: #000;
+    font-weight: 600;
+    padding: 0.125rem 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &.is-ltr {
+        direction: ltr;
+        unicode-bidi: plaintext;
+        text-align: left;
+    }
 }
 
 .lw-signing-spotType {
@@ -437,12 +467,18 @@
     height: 100%;
     object-fit: contain;
     padding: 0.25rem;
+    position: relative;
+    z-index: 2;
+    pointer-events: none;
 }
 
 .lw-signing-spotLabel {
     text-align: center;
     line-height: 1.3;
     padding: 0.125rem 0.25rem;
+    position: relative;
+    z-index: 2;
+    pointer-events: none;
 }
 
 .lw-signing-spotLabelText {
@@ -450,6 +486,12 @@
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
+
+    &.is-ltr {
+        direction: ltr;
+        unicode-bidi: plaintext;
+        text-align: left;
+    }
 }
 
 .lw-signing-spotRemove {
@@ -740,6 +782,13 @@
 }
 
 .lw-signing-spot--type-idnumber {
+    --spot-border: var(--spot-idnumber-border);
+    --spot-bg: var(--spot-idnumber-bg);
+    --spot-badge-bg: var(--spot-idnumber-border);
+    --spot-badge-fg: #fff;
+}
+
+.lw-signing-spot--type-number {
     --spot-border: var(--spot-idnumber-border);
     --spot-bg: var(--spot-idnumber-bg);
     --spot-badge-bg: var(--spot-idnumber-border);

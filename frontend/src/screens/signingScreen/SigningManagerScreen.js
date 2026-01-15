@@ -24,6 +24,7 @@ import ApiUtils from "../../api/apiUtils";
 import { usePopup } from "../../providers/PopUpProvider";
 import ErrorPopup from "../../components/styledComponents/popups/ErrorPopup";
 import { useTranslation } from "react-i18next";
+import { SIGNING_OTP_ENABLED } from "../../featureFlags";
 
 import { AdminStackName } from "../../navigation/AdminStack";
 import { uploadFileForSigningScreenName } from "./UploadFileForSigningScreen";
@@ -396,8 +397,9 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
     const totalSpots = Number(file?.TotalSpots || 0);
     const signedSpots = Number(file?.SignedSpots || 0);
 
-    const requireOtp = Boolean(file?.RequireOtp);
-    const isOtpWaived = file?.RequireOtp === false;
+    const showOtpUi = SIGNING_OTP_ENABLED;
+    const requireOtp = showOtpUi && Boolean(file?.RequireOtp);
+    const isOtpWaived = showOtpUi && file?.RequireOtp === false;
     const otpChipText = requireOtp ? t('signing.otpRequiredBadge') : t('signing.otpWaivedBadge');
     const otpChipClassName = requireOtp
         ? "lw-signingManagerScreen__chip lw-signingManagerScreen__chip--signed"
@@ -426,7 +428,9 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
         <SimpleContainer className="lw-signingManagerScreen__detailsPopup">
             <TextBold24>{file?.FileName || t('signingManager.details.titleFallback')}</TextBold24>
 
-            <SimpleContainer className={otpChipClassName}>{otpChipText}</SimpleContainer>
+            {showOtpUi && (
+                <SimpleContainer className={otpChipClassName}>{otpChipText}</SimpleContainer>
+            )}
 
             <>
                 <SimpleContainer className="lw-signingManagerScreen__detailRow">
@@ -467,7 +471,7 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                         <div className="lw-signingManagerScreen__detailValue">{formatDotDate?.(file?.SignedAt)}</div>
                     </SimpleContainer>
                 )}
-                {isOtpWaived && (
+                {showOtpUi && isOtpWaived && (
                     <>
                         <SimpleContainer className="lw-signingManagerScreen__detailRow">
                             <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.otpWaiverBy')}</div>

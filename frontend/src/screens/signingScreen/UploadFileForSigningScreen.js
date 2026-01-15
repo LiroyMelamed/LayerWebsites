@@ -35,6 +35,7 @@ import ClientPopup from "../mainScreen/components/ClientPopUp";
 import "./UploadFileForSigningScreen.scss";
 import { MainScreenName } from "../mainScreen/MainScreen";
 import { useTranslation } from "react-i18next";
+import { SIGNING_OTP_ENABLED } from "../../featureFlags";
 
 export const uploadFileForSigningScreenName = "/upload-file-for-signing";
 
@@ -163,7 +164,7 @@ export default function UploadFileForSigningScreen() {
     const { isSmallScreen } = useScreenSize();
     const navigate = useNavigate();
     const { openPopup, closePopup } = usePopup();
-    const otpFeatureEnabled = false;
+    const otpFeatureEnabled = SIGNING_OTP_ENABLED;
 
     const openFieldEditor = (index) => {
         const spot = signatureSpots[index];

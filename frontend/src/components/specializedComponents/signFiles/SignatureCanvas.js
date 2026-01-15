@@ -4,6 +4,7 @@ import signingFilesApi from "../../../api/signingFilesApi";
 import ApiUtils from "../../../api/apiUtils";
 import PdfViewer from "./pdfViewer/PdfViewer";
 import { useTranslation } from "react-i18next";
+import { SIGNING_OTP_ENABLED } from "../../../featureFlags";
 
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { Text12, Text14 } from "../../specializedComponents/text/AllTextKindFile";
@@ -77,11 +78,94 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const [fieldValue, setFieldValue] = useState("");
     const [fieldChecked, setFieldChecked] = useState(false);
 
+    const getSignModeForSpotType = (type) => {
+        const t0 = String(type || 'signature').toLowerCase();
+        if (t0 === 'initials') return 'initials';
+        if (t0 === 'signature') return 'signature';
+        return 'field';
+    };
+
+    const getActiveSpotForMode = (details, current) => {
+        if (current) return current;
+        const allSpots = details?.signatureSpots || [];
+        const unsignedRequired = getUnsignedRequiredSpots(allSpots);
+        if (unsignedRequired.length > 0) return unsignedRequired[0];
+        const unsignedOptional = getUnsignedOptionalSpots(allSpots);
+        if (unsignedOptional.length > 0) return unsignedOptional[0];
+        return null;
+    };
+
     const isPublic = Boolean(publicToken);
     const isScreen = variant === "screen";
-    const otpGlobalEnabled = false;
-    const otpEnabled = otpGlobalEnabled && Boolean(fileDetails?.file?.OtpEnabled ?? true);
+    const otpEnabled = SIGNING_OTP_ENABLED && Boolean(fileDetails?.file?.OtpEnabled ?? true);
     const otpRequired = otpEnabled && Boolean(fileDetails?.file?.RequireOtp);
+
+    const consentStorageKey = useMemo(() => {
+        const keyPart = isPublic
+            ? `public:${String(publicToken || "")}`
+            : `file:${String(signingFileId || "")}`;
+        return `lw_signing_consent_accepted:${keyPart}`;
+    }, [isPublic, publicToken, signingFileId]);
+
+    const fieldValuesStorageKey = useMemo(() => {
+        const keyPart = isPublic
+            ? `public:${String(publicToken || "")}`
+            : `file:${String(signingFileId || "")}`;
+        return `lw_signing_field_values:${keyPart}`;
+    }, [isPublic, publicToken, signingFileId]);
+
+    const readFieldValuesCache = () => {
+        try {
+            const raw = localStorage.getItem(fieldValuesStorageKey);
+            const parsed = raw ? JSON.parse(raw) : null;
+            return parsed && typeof parsed === 'object' ? parsed : {};
+        } catch {
+            return {};
+        }
+    };
+
+    const writeFieldValuesCache = (nextMap) => {
+        try {
+            localStorage.setItem(fieldValuesStorageKey, JSON.stringify(nextMap || {}));
+        } catch {
+            // ignore
+        }
+    };
+
+    const mergeFieldValuesFromCache = (details) => {
+        const cache = readFieldValuesCache();
+        const spots = details?.signatureSpots;
+        if (!Array.isArray(spots) || !spots.length) return details;
+
+        const merged = spots.map((s) => {
+            const id = s?.SignatureSpotId ?? s?.signatureSpotId;
+            if (!id) return s;
+            const type = String(s?.FieldType ?? s?.fieldType ?? s?.type ?? 'signature').toLowerCase();
+            const isSig = type === 'signature' || type === 'initials';
+            if (isSig) return s;
+
+            const current = (s?.FieldValue ?? s?.fieldValue ?? s?.fieldvalue ?? '');
+            const hasCurrent = String(current || '').trim().length > 0;
+            if (hasCurrent) return s;
+
+            const cached = cache[String(id)];
+            if (cached == null || String(cached).trim().length === 0) return s;
+
+            return { ...s, FieldValue: String(cached), fieldValue: String(cached) };
+        });
+
+        return { ...details, signatureSpots: merged };
+    };
+
+    useEffect(() => {
+        try {
+            const persisted = localStorage.getItem(consentStorageKey) === "true";
+            setConsentAccepted(persisted);
+        } catch {
+            // ignore (private mode / blocked storage)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [consentStorageKey]);
 
     const effectiveSigningFileId = useMemo(() => {
         return fileDetails?.file?.SigningFileId || signingFileId;
@@ -106,6 +190,46 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             default:
                 return 'text';
         }
+    };
+    const getInputPropsForField = (type) => {
+        switch (type) {
+            case 'phone':
+                return { inputMode: 'numeric', pattern: '[0-9]*' };
+            case 'number':
+                return { inputMode: 'numeric', pattern: '[0-9]*' };
+            case 'idnumber':
+                return { inputMode: 'numeric', pattern: '[0-9]*' };
+            case 'email':
+                return { inputMode: 'email' };
+            default:
+                return {};
+        }
+    };
+    const sanitizeFieldValue = (type, value) => {
+        const raw = value == null ? '' : String(value);
+        if (type === 'phone') {
+            const trimmed = raw.trim();
+            if (trimmed.startsWith('+')) {
+                return `+${trimmed.slice(1).replace(/\D/g, '')}`;
+            }
+            return trimmed.replace(/\D/g, '');
+        }
+        if (type === 'number' || type === 'idnumber') {
+            return raw.replace(/\D/g, '');
+        }
+        return raw.trim();
+    };
+    const validateFieldValue = (type, value) => {
+        if (!value) return { ok: true };
+        if (type === 'email') {
+            const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+            return emailOk ? { ok: true } : { ok: false, message: t('errors.invalidEmail') };
+        }
+        if (type === 'phone' || type === 'number' || type === 'idnumber') {
+            const digitsOnly = /^[0-9]+$/.test(value);
+            return digitsOnly ? { ok: true } : { ok: false, message: t('errors.numbersOnly') };
+        }
+        return { ok: true };
     };
     const getSpotType = (spot) => String(spot?.FieldType ?? spot?.fieldType ?? spot?.type ?? 'signature').toLowerCase();
     const getFieldTypeKey = (type) => {
@@ -254,7 +378,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 unwrapApi(res);
                 const data = res?.data;
                 if (!isMounted) return;
-                setFileDetails(data);
+                setFileDetails(mergeFieldValuesFromCache(data));
                 // Spec: first interaction jumps to first required spot.
                 setCurrentSpot(null);
                 setHasStartedNextFlow(false);
@@ -283,10 +407,21 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     }, [isPublic, publicToken]);
 
     useEffect(() => {
-        if (!savedSignature.loading) {
-            setSignatureMode(savedSignature.exists ? "saved" : "draw");
+        if (savedSignature.loading) return;
+
+        const activeSpot = getActiveSpotForMode(fileDetails, currentSpot);
+        const activeSpotType = activeSpot ? getSpotType(activeSpot) : 'signature';
+        const signMode = getSignModeForSpotType(activeSpotType);
+
+        // Initials must always be a minimal draw-only flow (no saved signature).
+        if (signMode !== 'signature') {
+            setSignatureMode('draw');
+            return;
         }
-    }, [savedSignature.exists, savedSignature.loading]);
+
+        setSignatureMode(savedSignature.exists ? 'saved' : 'draw');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [savedSignature.exists, savedSignature.loading, currentSpot, fileDetails]);
 
     useEffect(() => {
         if (currentSpot && canvasRef.current) {
@@ -535,7 +670,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             return false;
         }
 
-        const cleaned = value == null ? "" : String(value).trim();
+        const cleaned = sanitizeFieldValue(spotType, value);
         if (isSpotRequired(spot) && !cleaned) {
             setMessage({ type: "warning", text: t("signing.canvas.fieldRequired") });
             return false;
@@ -580,9 +715,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             : await signingFilesApi.getSigningFileDetails(effectiveSigningFileId);
         unwrapApi(res);
         const data = res?.data;
-        setFileDetails(data);
+        const mergedData = mergeFieldValuesFromCache(data);
+        setFileDetails(mergedData);
 
-        const spots = data?.signatureSpots || [];
+        const spots = mergedData?.signatureSpots || [];
         const unsignedRequired = getUnsignedRequiredSpots(spots);
         const unsignedOptional = getUnsignedOptionalSpots(spots);
         const nextUnsigned = (unsignedRequired.length > 0 ? unsignedRequired : unsignedOptional)[0] || null;
@@ -599,22 +735,47 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         setSaving(true);
         try {
             if (!hasUserDrawn) {
-                setMessage({ type: "error", text: t("signing.canvas.pleaseSignBeforeSave") });
+                const spotType = getSpotType(currentSpot);
+                const signMode = getSignModeForSpotType(spotType);
+                setMessage({
+                    type: "error",
+                    text: signMode === 'initials'
+                        ? t("signing.canvas.pleaseInitialBeforeSave")
+                        : t("signing.canvas.pleaseSignBeforeSave"),
+                });
                 return;
             }
 
             const dataUrl = canvasRef.current.toDataURL("image/png");
             const didSign = await signCurrentSpotWithImage(dataUrl);
             if (!didSign) return;
-            // Spec: new signature overwrites saved signature
-            await saveSignatureAsDefault(dataUrl);
+            const spotType = getSpotType(currentSpot);
+            const signMode = getSignModeForSpotType(spotType);
 
-            setMessage({ type: "success", text: t("signing.canvas.signatureSavedSuccess") });
+            // Spec: initials are a minimal flow: do NOT touch saved signature library.
+            if (signMode === 'signature') {
+                // Spec: new signature overwrites saved signature
+                await saveSignatureAsDefault(dataUrl);
+            }
+
+            setMessage({
+                type: "success",
+                text: signMode === 'initials'
+                    ? t("signing.canvas.initialsSavedSuccess")
+                    : t("signing.canvas.signatureSavedSuccess"),
+            });
             await reloadDetailsAndAdvance();
             setTimeout(() => setMessage(null), 2000);
         } catch (err) {
             console.error("Failed to save signature", err);
-            setMessage({ type: "error", text: t("signing.canvas.signatureSaveError") });
+            const spotType = currentSpot ? getSpotType(currentSpot) : 'signature';
+            const signMode = getSignModeForSpotType(spotType);
+            setMessage({
+                type: "error",
+                text: signMode === 'initials'
+                    ? t("signing.canvas.initialsSaveError")
+                    : t("signing.canvas.signatureSaveError"),
+            });
         } finally {
             setSaving(false);
         }
@@ -624,12 +785,72 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         if (!currentSpot || currentSpot.IsSigned || currentSpotIsSignature) return;
         setSaving(true);
         try {
-            const value = currentSpotType === 'checkbox' ? (fieldChecked ? 'true' : '') : fieldValue;
-            const didSign = await signCurrentSpotWithValue(value);
+            const rawValue = currentSpotType === 'checkbox' ? (fieldChecked ? 'true' : '') : fieldValue;
+            const sanitized = sanitizeFieldValue(currentSpotType, rawValue);
+            if (sanitized !== rawValue && currentSpotType !== 'checkbox') {
+                setFieldValue(sanitized);
+            }
+            const validation = validateFieldValue(currentSpotType, sanitized);
+            if (!validation.ok) {
+                setMessage({ type: 'error', text: validation.message || t('errors.unexpected') });
+                return;
+            }
+            const didSign = await signCurrentSpotWithValue(sanitized);
             if (!didSign) return;
 
+            // Persist: keep field values visible across refresh even if backend is temporarily missing FieldValue.
+            try {
+                const id = currentSpot?.SignatureSpotId;
+                if (id && sanitized && String(sanitized).trim().length > 0) {
+                    const existing = readFieldValuesCache();
+                    writeFieldValuesCache({
+                        ...existing,
+                        [String(id)]: String(sanitized),
+                    });
+                }
+            } catch {
+                // ignore
+            }
+
+            // Optimistic: update current spot value immediately so overlay shows it even before reload.
+            try {
+                setFileDetails((prev) => {
+                    if (!prev?.signatureSpots || !currentSpot?.SignatureSpotId) return prev;
+                    const updatedSpots = prev.signatureSpots.map((s) => {
+                        if (s?.SignatureSpotId !== currentSpot.SignatureSpotId) return s;
+                        return {
+                            ...s,
+                            IsSigned: true,
+                            FieldValue: sanitized,
+                            fieldValue: sanitized,
+                            fieldvalue: sanitized,
+                        };
+                    });
+
+                    // Advance locally to keep the new value visible even if the backend cannot persist/return it yet.
+                    try {
+                        const unsignedRequired = getUnsignedRequiredSpots(updatedSpots);
+                        const unsignedOptional = getUnsignedOptionalSpots(updatedSpots);
+                        const nextUnsigned = (unsignedRequired.length > 0 ? unsignedRequired : unsignedOptional)[0] || null;
+                        setCurrentSpot(nextUnsigned);
+                        if (nextUnsigned) {
+                            scrollToSpot(nextUnsigned);
+                            setHasStartedNextFlow(true);
+                        }
+                    } catch {
+                        // ignore
+                    }
+
+                    return { ...prev, signatureSpots: updatedSpots };
+                });
+            } catch {
+                // ignore
+            }
+
             setMessage({ type: "success", text: t("signing.canvas.fieldSavedSuccess") });
-            await reloadDetailsAndAdvance();
+            // NOTE: Intentionally no reloadDetailsAndAdvance() here.
+            // If the DB schema lacks signaturespots.fieldvalue, the backend won't return FieldValue,
+            // and an immediate reload would erase the visible value from the overlay.
             setTimeout(() => setMessage(null), 2000);
         } catch (err) {
             console.error("Failed to save field value", err);
@@ -647,9 +868,14 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             }
 
             const allSpots = fileDetails?.signatureSpots || [];
-            const unsigned = getUnsignedRequiredSpots(allSpots);
+            const unsigned = getUnsignedRequiredSpots(allSpots).filter((s) => getSpotType(s) === 'signature');
             const target = (!currentSpot || currentSpot.IsSigned) ? (unsigned[0] || null) : currentSpot;
             if (!target) return;
+
+            if (getSpotType(target) !== 'signature') {
+                setMessage({ type: "error", text: t("signing.canvas.useSavedSignatureSignatureOnly") });
+                return;
+            }
 
             if (!currentSpot || currentSpot.IsSigned) {
                 setCurrentSpot(target);
@@ -687,7 +913,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         try {
             const allSpots = fileDetails?.signatureSpots || [];
             const unsignedRequired = getUnsignedRequiredSpots(allSpots);
-            const unsigned = unsignedRequired.filter((s) => isSignatureLike(getSpotType(s)));
+            const unsigned = unsignedRequired.filter((s) => getSpotType(s) === 'signature');
             if (!unsigned.length) return;
 
             setSaving(true);
@@ -845,8 +1071,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const remainingCount = unsignedRequiredSpots.length;
     const optionalRemainingCount = unsignedOptionalSpots.length;
     const allSpotsSignedByUser = remainingCount === 0;
-    const currentSpotType = currentSpot ? getSpotType(currentSpot) : 'signature';
-    const currentSpotIsSignature = currentSpot ? isSignatureLike(currentSpotType) : false;
+    const activeSpotForMode = getActiveSpotForMode(fileDetails, currentSpot);
+    const currentSpotType = activeSpotForMode ? getSpotType(activeSpotForMode) : 'signature';
+    const currentSpotIsSignature = activeSpotForMode ? isSignatureLike(currentSpotType) : false;
+    const currentSignMode = getSignModeForSpotType(currentSpotType);
 
     const goToNextSigningSpot = () => {
         const unsigned = unsignedRequiredSpots.length > 0 ? unsignedRequiredSpots : unsignedOptionalSpots;
@@ -883,6 +1111,17 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                     pdfFile={pdfFile}
                                     spots={spots}
                                     signers={[{ UserId: fileDetails.file.ClientId, Name: t("signing.canvas.you") }]}
+                                    onSelectSpot={(index) => {
+                                        const spot = spots[index];
+                                        if (!spot) return;
+                                        setCurrentSpot(spot);
+                                        if (isSignatureLike(getSpotType(spot))) {
+                                            setSignatureMode("draw");
+                                            clearCanvas();
+                                        }
+                                        scrollToSpot(spot);
+                                        setHasStartedNextFlow(true);
+                                    }}
                                     onUpdateSpot={undefined}
                                     onRemoveSpot={undefined}
                                     onAddSpotForPage={undefined}
@@ -912,8 +1151,18 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                     <input
                                         type="checkbox"
                                         checked={consentAccepted}
-                                        onChange={(e) => setConsentAccepted(Boolean(e.target.checked))}
-                                        disabled={saving}
+                                        onChange={(e) => {
+                                            const next = Boolean(e.target.checked);
+                                            if (!next) return;
+                                            setConsentAccepted(true);
+                                            try {
+                                                localStorage.setItem(consentStorageKey, "true");
+                                            } catch {
+                                                // ignore
+                                            }
+                                        }}
+                                        // Keep visible; once accepted, prevent accidental uncheck that would block signing.
+                                        disabled={saving || consentAccepted}
                                     />
                                     <span>{t("signing.canvas.consentText")}</span>
                                 </label>
@@ -1002,6 +1251,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                                         }
                                                         onClick={() => {
                                                             setCurrentSpot(spot);
+                                                            if (isSignatureLike(getSpotType(spot))) {
+                                                                setSignatureMode("draw");
+                                                                clearCanvas();
+                                                            }
                                                             scrollToSpot(spot);
                                                             setHasStartedNextFlow(true);
                                                         }}
@@ -1018,7 +1271,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 </div>
                             )}
 
-                            {savedSignature.exists && signatureMode === "saved" && remainingCount > 0 && (
+                            {currentSignMode === 'signature' && savedSignature.exists && signatureMode === "saved" && remainingCount > 0 && (
                                 <div className="lw-signing-canvasSection">
                                     <div className="lw-signing-savedSigBox">
 
@@ -1027,7 +1280,11 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                                 className="lw-signing-modeToggleButton"
                                                 size={buttonSizes.SMALL}
                                                 onPress={() => {
-                                                    focusNextUnsignedSpot();
+                                                    // Don't steal focus from the current spot.
+                                                    // This mattered for initials: user clicks an initials spot, then wants to draw (not jump elsewhere).
+                                                    if (!currentSpot || currentSpot.IsSigned || !currentSpotIsSignature) {
+                                                        focusNextUnsignedSpot();
+                                                    }
                                                     setSignatureMode("draw");
                                                     clearCanvas();
                                                 }}
@@ -1096,6 +1353,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                             <input
                                                 className="lw-signing-fieldInputControl"
                                                 type={getInputTypeForField(currentSpotType)}
+                                                {...getInputPropsForField(currentSpotType)}
                                                 placeholder={t("signing.canvas.fieldValuePlaceholder")}
                                                 value={fieldValue}
                                                 onChange={(e) => setFieldValue(e.target.value)}
@@ -1116,7 +1374,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
                             {signatureMode !== "saved" && currentSpot && !currentSpot.IsSigned && currentSpotIsSignature && (
                                 <div className="lw-signing-canvasSection">
-                                    {savedSignature.exists && (
+                                    {currentSignMode === 'signature' && savedSignature.exists && (
                                         <div className="lw-signing-toggleSlot">
                                             <TertiaryButton
                                                 className="lw-signing-modeToggleButton"
@@ -1152,7 +1410,11 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                             {t("common.clear")}
                                         </SecondaryButton>
                                         <PrimaryButton size={buttonSizes.SMALL} onPress={saveSignature} disabled={saving}>
-                                            {saving ? t("signing.canvas.saving") : t("signing.canvas.saveSignature")}
+                                            {saving
+                                                ? t("signing.canvas.saving")
+                                                : (currentSignMode === 'initials'
+                                                    ? t("signing.canvas.saveInitials")
+                                                    : t("signing.canvas.saveSignature"))}
                                         </PrimaryButton>
                                     </div>
                                 </div>
