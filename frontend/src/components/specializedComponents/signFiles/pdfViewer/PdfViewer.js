@@ -15,12 +15,14 @@ export default function PdfViewer({
     onRequestContext,
     onAddSpotForPage,
     signers = [],
+    onPageChange,
 }) {
     // translation not needed in this viewer component for commit (1)
     const [numPages, setNumPages] = useState(0);
     const didInitRef = useRef(false);
 
     const pageContainerRef = useRef(null);
+    const viewerRef = useRef(null);
     const [containerWidth, setContainerWidth] = useState(BASE_RENDER_WIDTH);
 
     useEffect(() => {
@@ -47,6 +49,40 @@ export default function PdfViewer({
             else window.removeEventListener("resize", update);
         };
     }, []);
+
+    useEffect(() => {
+        const container = viewerRef.current;
+        if (!container || typeof onPageChange !== 'function') return;
+
+        const pages = () => Array.from(container.querySelectorAll('[data-page-number]'));
+
+        const update = () => {
+            const els = pages();
+            if (!els.length) {
+                onPageChange(1);
+                return;
+            }
+            const rect = container.getBoundingClientRect();
+            const centerY = rect.top + rect.height / 2;
+            let best = { el: els[0], dist: Infinity };
+            els.forEach((el) => {
+                const r = el.getBoundingClientRect();
+                const elCenter = r.top + r.height / 2;
+                const d = Math.abs(elCenter - centerY);
+                if (d < best.dist) best = { el, dist: d };
+            });
+            const pn = Number(best.el.getAttribute('data-page-number')) || 1;
+            onPageChange(pn);
+        };
+
+        update();
+        container.addEventListener('scroll', update, { passive: true });
+        window.addEventListener('resize', update);
+        return () => {
+            container.removeEventListener('scroll', update);
+            window.removeEventListener('resize', update);
+        };
+    }, [onPageChange]);
 
     const renderWidth = useMemo(() => {
         // Keep same coordinate system across app: spots are stored in BASE_RENDER_WIDTH space.
@@ -79,7 +115,7 @@ export default function PdfViewer({
     if (!pdfFile) return null;
 
     return (
-        <SimpleContainer className="lw-signing-pdfViewer">
+        <SimpleContainer className="lw-signing-pdfViewer" ref={viewerRef}>
             {Array.from({ length: pagesToRender }).map((_, i) => {
                 const pageNumber = i + 1;
 

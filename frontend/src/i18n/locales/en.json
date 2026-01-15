@@ -529,6 +529,7 @@
             "downloadError": "Error downloading the file"
         },
         "upload": {
+            "signerSelectorLabel": "Signer",
             "title": "Send document for signing",
             "searchSignerTitle": "Search signer (customer)",
             "selectedSignersLabel": "Selected signers *",

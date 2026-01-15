@@ -529,6 +529,7 @@
             "downloadError": "حدث خطأ أثناء تنزيل الملف"
         },
         "upload": {
+            "signerSelectorLabel": "الموقّع",
             "title": "إرسال مستند للتوقيع",
             "searchSignerTitle": "بحث عن الموقّع (عميل)",
             "selectedSignersLabel": "الموقّعون المختارون *",

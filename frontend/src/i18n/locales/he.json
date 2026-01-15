@@ -533,6 +533,7 @@
             "downloadError": "שגיאה בהורדת הקובץ"
         },
         "upload": {
+            "signerSelectorLabel": "חותם",
             "title": "שליחת מסמך לחתימה",
             "searchSignerTitle": "חיפוש חותם (לקוח)",
             "selectedSignersLabel": "חותמים שנבחרו *",

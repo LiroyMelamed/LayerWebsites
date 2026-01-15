@@ -4,11 +4,15 @@ import { useTranslation } from 'react-i18next';
 import './fieldToolbar.scss';
 
 // containerSelector: CSS selector for the pdf viewer container (e.g. .lw-signing-pdfViewer)
-export default function FloatingAddField({ onAdd = () => {}, containerSelector = '.lw-signing-pdfViewer' }) {
+export default function FloatingAddField({ onAdd = () => {}, containerSelector = '.lw-signing-pdfViewer', currentPage }) {
     const { t } = useTranslation();
     const [visiblePage, setVisiblePage] = useState(1);
 
     useEffect(() => {
+        if (Number.isFinite(currentPage)) {
+            setVisiblePage(Number(currentPage) || 1);
+            return;
+        }
         const container = document.querySelector(containerSelector);
         if (!container) return;
 
@@ -38,14 +42,14 @@ export default function FloatingAddField({ onAdd = () => {}, containerSelector =
             container.removeEventListener('scroll', update);
             window.removeEventListener('resize', update);
         };
-    }, [containerSelector]);
+    }, [containerSelector, currentPage]);
 
     return (
         <SimpleContainer className="lw-floatingAddField">
             <button
                 type="button"
                 className="lw-floatingAddField__btn"
-                onClick={() => onAdd(visiblePage)}
+                onClick={() => onAdd(visiblePage || 1)}
                 title={t('signing.fieldSettings.addFieldForPage', { page: visiblePage })}
             >
                 +

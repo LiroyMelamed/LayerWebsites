@@ -284,6 +284,7 @@ export default function UploadFileForSigningScreen() {
     const [caseSearchQuery, setCaseSearchQuery] = useState("");
     const [signerSearchQuery, setSignerSearchQuery] = useState("");
     const [selectedSigners, setSelectedSigners] = useState([]);
+    const [selectedSignerId, setSelectedSignerId] = useState(null);
     const [notes, setNotes] = useState("");
     const [selectedFile, setSelectedFile] = useState(null);
 
@@ -301,12 +302,26 @@ export default function UploadFileForSigningScreen() {
 
     const [uploadedFileKey, setUploadedFileKey] = useState(null);
     const [detecting, setDetecting] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
         if (otpFeatureEnabled) return;
         setOtpPolicy("waive");
         setOtpWaiverAck(true);
     }, [otpFeatureEnabled]);
+
+    useEffect(() => {
+        if (!selectedSigners || selectedSigners.length === 0) {
+            setSelectedSignerId(null);
+            return;
+        }
+        if (selectedSigners.length === 1) {
+            setSelectedSignerId(selectedSigners[0]?.UserId ?? null);
+            return;
+        }
+        const exists = selectedSigners.some((s) => Number(s?.UserId) === Number(selectedSignerId));
+        if (!exists) setSelectedSignerId(selectedSigners[0]?.UserId ?? null);
+    }, [selectedSigners, selectedSignerId]);
 
     const didLogOtpFlagRef = useRef(false);
     useEffect(() => {
@@ -361,6 +376,13 @@ export default function UploadFileForSigningScreen() {
         );
     };
 
+    const getSelectedSignerIndex = () => {
+        if (!selectedSigners || selectedSigners.length === 0) return 0;
+        if (selectedSigners.length === 1) return 0;
+        const idx = selectedSigners.findIndex((s) => Number(s?.UserId) === Number(selectedSignerId));
+        return idx >= 0 ? idx : 0;
+    };
+
     const handleAddSpotForPage = (pageNumber, signerIdx = 0, fieldType = 'signature') => {
         const signer = selectedSigners?.[signerIdx] || null;
         const signerName = signer?.Name || t('signing.signerFallback', { index: Number(signerIdx) + 1 });
@@ -383,6 +405,7 @@ export default function UploadFileForSigningScreen() {
     };
 
     const openAddFieldMenu = (pageNumber) => {
+        const signerIdx = getSelectedSignerIndex();
         openPopup(
             <SimpleContainer className="lw-fieldContextMenu">
                 {fieldTypeOptions.map((option) => (
@@ -391,7 +414,7 @@ export default function UploadFileForSigningScreen() {
                         onClick={() => {
                             closePopup();
                             setSelectedFieldType(option.id);
-                            handleAddSpotForPage(pageNumber, 0, option.id);
+                            handleAddSpotForPage(pageNumber, signerIdx, option.id);
                         }}
                     >
                         {option.label}
@@ -784,6 +807,9 @@ export default function UploadFileForSigningScreen() {
                                         selected={selectedFieldType}
                                         onSelect={setSelectedFieldType}
                                         fieldTypes={fieldTypeOptions}
+                                        signers={selectedSigners}
+                                        selectedSignerId={selectedSignerId}
+                                        onSelectSigner={setSelectedSignerId}
                                     />
                                     <PdfViewer
                                         pdfFile={selectedFile}
@@ -795,10 +821,12 @@ export default function UploadFileForSigningScreen() {
                                         onRequestContext={handleSpotContext}
                                         onAddSpotForPage={handleAddSpotForPage}
                                         signers={selectedSigners}
+                                        onPageChange={setCurrentPage}
                                     />
                                     <FloatingAddField
                                         onAdd={openAddFieldMenu}
                                         containerSelector=".lw-signing-pdfViewer"
+                                        currentPage={currentPage}
                                     />
                                 </SimpleContainer>
 

@@ -1,10 +1,19 @@
 import React from 'react';
 import SimpleContainer from '../../../simpleComponents/SimpleContainer';
 import { useTranslation } from 'react-i18next';
+import PrimaryButton from '../../../styledComponents/buttons/PrimaryButton';
+import SecondaryButton from '../../../styledComponents/buttons/SecondaryButton';
 import './fieldToolbar.scss';
 import './fieldContextMenu.scss';
 
-export default function FieldTypeNavbar({ selected = 'signature', onSelect = () => {}, fieldTypes }) {
+export default function FieldTypeNavbar({
+    selected = 'signature',
+    onSelect = () => {},
+    fieldTypes,
+    signers = [],
+    selectedSignerId = null,
+    onSelectSigner = () => {},
+}) {
     const { t } = useTranslation();
     const resolvedTypes = fieldTypes || [
         { id: 'signature', label: t('signing.fields.signature'), shortLabel: t('signing.fields.signatureShort') },
@@ -19,6 +28,26 @@ export default function FieldTypeNavbar({ selected = 'signature', onSelect = () 
 
     return (
         <SimpleContainer className="lw-fieldTypeNavbar">
+            {Array.isArray(signers) && signers.length > 1 && (
+                <SimpleContainer className="lw-fieldTypeNavbar__signerRow">
+                    <span className="lw-fieldTypeNavbar__signerLabel">{t('signing.upload.signerSelectorLabel')}</span>
+                    <SimpleContainer className="lw-fieldTypeNavbar__signerButtons">
+                        {signers.map((s) => {
+                            const isSelected = Number(s?.UserId) === Number(selectedSignerId);
+                            const Button = isSelected ? PrimaryButton : SecondaryButton;
+                            return (
+                                <Button
+                                    key={s?.UserId}
+                                    onPress={() => onSelectSigner(s?.UserId)}
+                                    className="lw-fieldTypeNavbar__signerButton"
+                                >
+                                    {s?.Name || t('signing.signerFallback', { index: 1 })}
+                                </Button>
+                            );
+                        })}
+                    </SimpleContainer>
+                </SimpleContainer>
+            )}
             {resolvedTypes.map((ft) => (
                 <button
                     key={ft.id}

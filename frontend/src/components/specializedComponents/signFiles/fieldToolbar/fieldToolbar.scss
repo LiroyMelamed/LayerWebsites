@@ -11,6 +11,30 @@
   border-radius: 0.5rem;
   background: var(--lw-color-white);
 }
+
+.lw-fieldTypeNavbar__signerRow {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: v.$space-2;
+  align-items: center;
+}
+
+.lw-fieldTypeNavbar__signerLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--lw-color-text);
+}
+
+.lw-fieldTypeNavbar__signerButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: v.$space-2;
+}
+
+.lw-fieldTypeNavbar__signerButton {
+  white-space: nowrap;
+}
 .lw-fieldTypeNavbar__btn {
   display: flex;
   align-items: center;
