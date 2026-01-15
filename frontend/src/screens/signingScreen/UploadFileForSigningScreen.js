@@ -1,5 +1,5 @@
 // src/screens/signingScreen/UploadFileForSigningScreen.js
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 
@@ -161,7 +161,8 @@ export default function UploadFileForSigningScreen() {
     const { isSmallScreen } = useScreenSize();
     const navigate = useNavigate();
     const { openPopup, closePopup } = usePopup();
-    const otpFeatureEnabled = String(process.env.REACT_APP_SIGNING_REQUIRE_OTP_DEFAULT ?? 'true').toLowerCase() !== 'false';
+    const otpFlagRaw = String(process.env.REACT_APP_SIGNING_REQUIRE_OTP_DEFAULT ?? 'true').toLowerCase().trim();
+    const otpFeatureEnabled = !['false', '0', 'no', 'off'].includes(otpFlagRaw);
 
     const openFieldEditor = (index) => {
         const spot = signatureSpots[index];
@@ -300,6 +301,12 @@ export default function UploadFileForSigningScreen() {
 
     const [uploadedFileKey, setUploadedFileKey] = useState(null);
     const [detecting, setDetecting] = useState(false);
+
+    useEffect(() => {
+        if (otpFeatureEnabled) return;
+        setOtpPolicy("waive");
+        setOtpWaiverAck(true);
+    }, [otpFeatureEnabled]);
 
     const fileInputRef = useRef(null);
 
