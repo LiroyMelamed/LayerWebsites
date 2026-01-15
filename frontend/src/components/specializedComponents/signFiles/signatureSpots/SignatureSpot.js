@@ -1,8 +1,10 @@
 // src/components/specializedComponents/signFiles/signatureSpots/SignatureSpot.js
 import React, { useRef } from "react";
 import SimpleContainer from "../../../simpleComponents/SimpleContainer";
+import SimpleIcon from "../../../simpleComponents/SimpleIcon";
 import { useTranslation } from "react-i18next";
-import { signerColorClass } from '../../../../utils/signerColorMap';
+import { signerPaletteClass } from '../../../../utils/signerColorMap';
+import { icons } from "../../../../assets/icons/icons";
 
 // Color classes are defined in SCSS and mapped via signerColorClass
 
@@ -30,6 +32,17 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
         idnumber: t('signing.fields.idNumberShort'),
     };
 
+    const fieldTypeIcons = {
+        signature: icons?.SigningFields?.signature,
+        email: icons?.SigningFields?.email,
+        phone: icons?.SigningFields?.phone,
+        initials: icons?.SigningFields?.initials,
+        text: icons?.SigningFields?.text,
+        date: icons?.SigningFields?.date,
+        checkbox: icons?.SigningFields?.checkbox,
+        idnumber: icons?.SigningFields?.idnumber,
+    };
+
     const spotStyle = {
         top: (spot.y || 0) * (scale || 1),
         left: (spot.x || 0) * (scale || 1),
@@ -40,7 +53,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
 
     // Determine color class using signerUserId fallback to signerIndex
     const signerIdForColor = spot?.signerUserId ?? spot?.signerIdx ?? signerIndex;
-    const colorClass = signerColorClass(signerIdForColor);
+    const colorClass = signerPaletteClass(signerIdForColor);
 
     const startDragFromClientPoint = (startClientX, startClientY, onEnd) => {
         const startX = Number(startClientX);
@@ -144,7 +157,16 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
             title={t("signing.spot.signedByTitle", { name: signerNameSafe })}
         >
             <div className="lw-signing-spotMeta">
-                <span className="lw-signing-spotType">{fieldTypeLabels[fieldType] || t('signing.fields.signatureShort')}</span>
+                <span className="lw-signing-spotType">
+                    {fieldTypeIcons[fieldType] && (
+                        <SimpleIcon
+                            src={fieldTypeIcons[fieldType]}
+                            alt={fieldTypeLabels[fieldType] || t('signing.fields.signatureShort')}
+                            size={14}
+                        />
+                    )}
+                    <span className="lw-signing-spotTypeLabel">{fieldTypeLabels[fieldType] || t('signing.fields.signatureShort')}</span>
+                </span>
                 <span className={`lw-signing-spotRequired ${isRequired ? 'is-required' : 'is-optional'}`}>
                     {isRequired ? t('signing.fieldSettings.requiredShort') : t('signing.fieldSettings.optionalShort')}
                 </span>
@@ -164,6 +186,15 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
             )}
             {canRemoveSpot && (
                 <span
+                    onPointerDown={(e) => {
+                        e.stopPropagation();
+                    }}
+                    onMouseDown={(e) => {
+                        e.stopPropagation();
+                    }}
+                    onTouchStart={(e) => {
+                        e.stopPropagation();
+                    }}
                     onClick={(e) => {
                         e.stopPropagation();
                         if (typeof onRequestRemove === 'function') onRequestRemove(index);

@@ -17,6 +17,17 @@ export const icons = {
         DownArrow: require("./Button/DownArrow.png"),
         X: require("./Button/X.png"),
 
+    },
+
+    SigningFields: {
+        signature: require("./HammerInAFile.png"),
+        email: require("./OpenBook.png"),
+        phone: require("./PictureCatch.png"),
+        initials: require("./NavBar/Manager.png"),
+        text: require("./Weight.png"),
+        date: require("./NavBar/UpdateCase.png"),
+        checkbox: require("./NavBar/NewCase.png"),
+        idnumber: require("./NavBar/AllCasesType.png"),
     }
 
 }

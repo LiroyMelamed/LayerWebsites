@@ -396,12 +396,19 @@
 }
 
 .lw-signing-spotType {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
     background: var(--spot-border, var(--lw-color-primary, #2A4365));
     color: #fff;
     font-size: 0.625rem;
     font-weight: 700;
     padding: 0.1rem 0.35rem;
     border-radius: 0.375rem;
+}
+
+.lw-signing-spotTypeLabel {
+    line-height: 1;
 }
 
 .lw-signing-spotRequired {
@@ -463,6 +470,7 @@
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
     border: 2px solid #fff;
     z-index: 2;
+    pointer-events: auto;
 }
 
 /* Signing file card */
@@ -598,4 +606,122 @@
     color: #155724;
     font-weight: 700;
     font-size: 0.875rem;
+}
+
+/* Signer palette base colors */
+.lw-signer-palette-0 {
+    --spot-signature-border: #1d4ed8; /* blue */
+    --spot-signature-bg: rgba(29, 78, 216, 0.12);
+    --spot-email-border: #3b82f6;
+    --spot-email-bg: rgba(59, 130, 246, 0.12);
+    --spot-phone-border: #0ea5e9;
+    --spot-phone-bg: rgba(14, 165, 233, 0.12);
+    --spot-initials-border: #60a5fa;
+    --spot-initials-bg: rgba(96, 165, 250, 0.12);
+    --spot-text-border: #93c5fd;
+    --spot-text-bg: rgba(147, 197, 253, 0.12);
+    --spot-date-border: #2563eb;
+    --spot-date-bg: rgba(37, 99, 235, 0.12);
+    --spot-checkbox-border: #38bdf8;
+    --spot-checkbox-bg: rgba(56, 189, 248, 0.12);
+    --spot-idnumber-border: #1e40af;
+    --spot-idnumber-bg: rgba(30, 64, 175, 0.12);
+}
+
+.lw-signer-palette-1 {
+    --spot-signature-border: #d97706; /* amber */
+    --spot-signature-bg: rgba(217, 119, 6, 0.12);
+    --spot-email-border: #f59e0b;
+    --spot-email-bg: rgba(245, 158, 11, 0.12);
+    --spot-phone-border: #fbbf24;
+    --spot-phone-bg: rgba(251, 191, 36, 0.12);
+    --spot-initials-border: #fcd34d;
+    --spot-initials-bg: rgba(252, 211, 77, 0.12);
+    --spot-text-border: #fde68a;
+    --spot-text-bg: rgba(253, 230, 138, 0.12);
+    --spot-date-border: #ca8a04;
+    --spot-date-bg: rgba(202, 138, 4, 0.12);
+    --spot-checkbox-border: #fbbf24;
+    --spot-checkbox-bg: rgba(251, 191, 36, 0.12);
+    --spot-idnumber-border: #b45309;
+    --spot-idnumber-bg: rgba(180, 83, 9, 0.12);
+}
+
+.lw-signer-palette-2 {
+    --spot-signature-border: #dc2626; /* red */
+    --spot-signature-bg: rgba(220, 38, 38, 0.12);
+    --spot-email-border: #ef4444;
+    --spot-email-bg: rgba(239, 68, 68, 0.12);
+    --spot-phone-border: #f87171;
+    --spot-phone-bg: rgba(248, 113, 113, 0.12);
+    --spot-initials-border: #fca5a5;
+    --spot-initials-bg: rgba(252, 165, 165, 0.12);
+    --spot-text-border: #fecaca;
+    --spot-text-bg: rgba(254, 202, 202, 0.12);
+    --spot-date-border: #b91c1c;
+    --spot-date-bg: rgba(185, 28, 28, 0.12);
+    --spot-checkbox-border: #f87171;
+    --spot-checkbox-bg: rgba(248, 113, 113, 0.12);
+    --spot-idnumber-border: #991b1b;
+    --spot-idnumber-bg: rgba(153, 27, 27, 0.12);
+}
+
+.lw-signer-palette-3 {
+    --spot-signature-border: #6d28d9; /* purple */
+    --spot-signature-bg: rgba(109, 40, 217, 0.12);
+    --spot-email-border: #8b5cf6;
+    --spot-email-bg: rgba(139, 92, 246, 0.12);
+    --spot-phone-border: #a855f7;
+    --spot-phone-bg: rgba(168, 85, 247, 0.12);
+    --spot-initials-border: #c084fc;
+    --spot-initials-bg: rgba(192, 132, 252, 0.12);
+    --spot-text-border: #d8b4fe;
+    --spot-text-bg: rgba(216, 180, 254, 0.12);
+    --spot-date-border: #7c3aed;
+    --spot-date-bg: rgba(124, 58, 237, 0.12);
+    --spot-checkbox-border: #a855f7;
+    --spot-checkbox-bg: rgba(168, 85, 247, 0.12);
+    --spot-idnumber-border: #5b21b6;
+    --spot-idnumber-bg: rgba(91, 33, 182, 0.12);
+}
+
+/* Field type variants (apply palette variables) */
+.lw-signing-spot--type-signature {
+    --spot-border: var(--spot-signature-border);
+    --spot-bg: var(--spot-signature-bg);
+}
+
+.lw-signing-spot--type-email {
+    --spot-border: var(--spot-email-border);
+    --spot-bg: var(--spot-email-bg);
+}
+
+.lw-signing-spot--type-phone {
+    --spot-border: var(--spot-phone-border);
+    --spot-bg: var(--spot-phone-bg);
+}
+
+.lw-signing-spot--type-initials {
+    --spot-border: var(--spot-initials-border);
+    --spot-bg: var(--spot-initials-bg);
+}
+
+.lw-signing-spot--type-text {
+    --spot-border: var(--spot-text-border);
+    --spot-bg: var(--spot-text-bg);
+}
+
+.lw-signing-spot--type-date {
+    --spot-border: var(--spot-date-border);
+    --spot-bg: var(--spot-date-bg);
+}
+
+.lw-signing-spot--type-checkbox {
+    --spot-border: var(--spot-checkbox-border);
+    --spot-bg: var(--spot-checkbox-bg);
+}
+
+.lw-signing-spot--type-idnumber {
+    --spot-border: var(--spot-idnumber-border);
+    --spot-bg: var(--spot-idnumber-bg);
 }

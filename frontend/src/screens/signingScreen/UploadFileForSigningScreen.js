@@ -161,8 +161,8 @@ export default function UploadFileForSigningScreen() {
     const { isSmallScreen } = useScreenSize();
     const navigate = useNavigate();
     const { openPopup, closePopup } = usePopup();
-    const otpFlagRaw = String(process.env.REACT_APP_SIGNING_REQUIRE_OTP_DEFAULT ?? 'true').toLowerCase().trim();
-    const otpFeatureEnabled = !['false', '0', 'no', 'off'].includes(otpFlagRaw);
+    const otpFlagRaw = String(process.env.REACT_APP_SIGNING_REQUIRE_OTP_DEFAULT ?? '').toLowerCase().trim();
+    const otpFeatureEnabled = ['true', '1', 'yes', 'on'].includes(otpFlagRaw);
 
     const openFieldEditor = (index) => {
         const spot = signatureSpots[index];
@@ -306,6 +306,15 @@ export default function UploadFileForSigningScreen() {
         if (otpFeatureEnabled) return;
         setOtpPolicy("waive");
         setOtpWaiverAck(true);
+    }, [otpFeatureEnabled]);
+
+    const didLogOtpFlagRef = useRef(false);
+    useEffect(() => {
+        if (didLogOtpFlagRef.current) return;
+        didLogOtpFlagRef.current = true;
+        if (process.env.NODE_ENV !== 'production') {
+            console.info('otpFeatureEnabled', otpFeatureEnabled);
+        }
     }, [otpFeatureEnabled]);
 
     const fileInputRef = useRef(null);
