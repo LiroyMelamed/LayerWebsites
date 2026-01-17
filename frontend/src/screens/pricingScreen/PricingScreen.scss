@@ -1,0 +1,75 @@
+.lw-pricingScreen__scroll {
+    padding: 16px;
+}
+
+.lw-pricingScreen__title {
+    margin: 0 0 6px 0;
+}
+
+.lw-pricingScreen__subtitle {
+    opacity: 0.9;
+    margin: 0 0 14px 0;
+}
+
+.lw-pricingScreen__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+}
+
+.lw-pricingScreen__card {
+    justify-content: flex-start;
+    flex-direction: column;
+}
+
+.lw-pricingScreen__priceLine {
+    margin-top: 6px;
+    font-weight: 700;
+}
+
+.lw-pricingScreen__bullets {
+    margin: 10px 0 0 18px;
+    padding: 0;
+}
+
+.lw-pricingScreen__bullets li {
+    margin: 6px 0;
+}
+
+.lw-pricingScreen__sectionTitle {
+    margin: 18px 0 10px 0;
+}
+
+.lw-pricingScreen__cta {
+    margin-top: 16px;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.lw-pricingScreen__faqCard {
+    flex-direction: column;
+    margin-top: 14px;
+}
+
+.lw-pricingScreen__faqItem {
+    padding: 10px 0;
+}
+
+.lw-pricingScreen__faqHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.lw-pricingScreen__faqAnswer {
+    margin-top: 8px;
+    opacity: 0.9;
+}
+
+.lw-pricingScreen__divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.12);
+    margin: 12px 0;
+}

@@ -387,7 +387,8 @@
         "planName": "Name:",
         "planKey": "Plan key:",
         "price": "Price:",
-        "priceMonthly": "{{amount}} {{currency}} / month",
+        "priceMonthly": "{{currency}}{{amount}} / month",
+        "commercialPricingHint": "Commercial pricing: Core {{currency}}{{coreAmount}}/month (no signatures). Signing + Evidence add-on: {{currency}}{{signingAmount}}/month includes {{included}} signed documents; {{currency}}{{overage}} per additional signed document.",
         "scope": "Scope:",
         "firmId": "Firm ID:",
         "enforcementMode": "Enforcement:",
@@ -423,11 +424,18 @@
     "planPricing": {
         "title": "Plans & pricing",
         "subtitle": "Compare plans and pricing.",
+        "systemPlansTitle": "System Plans (Usage Limits)",
+        "systemPlansSubtitle": "These plans define usage limits only. Monthly pricing is defined by the commercial pricing.",
+        "commercialPricingTitle": "Commercial Pricing (Per Firm)",
+        "commercialPricingSubtitle": "These prices are billed per firm.",
+        "coreCommercialLine": "Core: {{currency}}{{amount}} / month (no signatures).",
+        "signingAddonCommercialLine": "Signing + Evidence add-on: {{currency}}{{amount}} / month (includes {{included}} signed documents; {{currency}}{{overage}} per additional signed document).",
         "noPlans": "No plans available.",
         "currentPlan": "Current plan",
         "planKey": "Plan key: {{planKey}}",
         "price": "Price:",
-        "priceMonthly": "{{amount}} {{currency}} / month",
+        "priceMonthly": "{{currency}}{{amount}} / month",
+        "pricePerCommercial": "per commercial pricing",
         "priceNotAvailable": "N/A",
         "retentionCore": "Core retention:",
         "retentionPii": "PII retention:",
@@ -435,8 +443,64 @@
         "documentsMonthly": "Documents / month:",
         "storageGb": "Storage (GB):",
         "users": "Users:",
+        "systemPlansCardFooter": "This plan defines usage limits only.",
         "unlimited": "Unlimited",
-        "notAvailable": "N/A"
+        "notAvailable": "N/A",
+        "commercial": {
+            "core": {
+                "title": "Core (required)",
+                "description": "A system for case tracking and firm-to-client communication."
+            },
+            "channels": {
+                "title": "Client Channels (optional add-ons)",
+                "portalLine": "Portal: {{currency}}{{amount}} / month — Client portal (website)",
+                "appLine": "Mobile App: {{currency}}{{amount}} / month — Mobile client experience",
+                "bundleLine": "Bundle (Portal + App): {{currency}}{{amount}} / month — Best value"
+            },
+            "signing": {
+                "title": "Signing + Evidence (optional add-on)",
+                "includes": "Includes {{included}} signed documents per month.",
+                "overage": "Overage: {{currency}}{{overage}} per additional signed document.",
+                "noteOtpOptional": "OTP for signing is optional by firm."
+            }
+        }
+    },
+    "pricingPage": {
+        "title": "Pricing",
+        "subtitle": "A system for case tracking and client communication, with an optional Signing + Evidence add-on.",
+        "clarifyingLine": "Every firm starts with the Core plan. Client portal, mobile app, and legal signing are optional add-ons.",
+        "core": {
+            "title": "Core",
+            "b1": "Case tracking and workflow",
+            "b2": "Client communication",
+            "b3": "Updates (Push/Email)",
+            "b4": "No signatures included"
+        },
+        "channels": {
+            "title": "Client channels (add-ons)",
+            "portalTitle": "Portal (Website)",
+            "appTitle": "Mobile app",
+            "bundleTitle": "Bundle (Portal + App)",
+            "b1": "Give clients a simple, secure channel to follow their case",
+            "b2": "Improve responsiveness and reduce back-and-forth"
+        },
+        "signing": {
+            "title": "Signing + Evidence (compliance add-on)",
+            "includes": "Includes {{included}} signed documents per month.",
+            "overage": "Overage: {{currency}}{{overage}} per additional signed document.",
+            "b1": "Court-admissible evidence bundle",
+            "b2": "Audit trail and signing history",
+            "noteOtpOptional": "OTP for signing is optional by firm"
+        },
+        "faq": {
+            "title": "FAQ",
+            "q1": "What is included in Core?",
+            "a1": "Core includes case tracking and client communication (without electronic signatures).",
+            "q2": "Are signatures required?",
+            "a2": "No. Signing is an optional add-on.",
+            "q3": "Is OTP required for signing?",
+            "a3": "OTP can be enabled and required per firm policy (optional)."
+        }
     },
     "signing": {
         "invalidLinkTitle": "Invalid link",

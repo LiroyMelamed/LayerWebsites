@@ -355,22 +355,46 @@
     "planUsage": {
         "title": "תכנית ושימוש",
         "planCardTitle": "התכנית שלך",
-        "upgradeButton": "שדרוג / צפייה בתכניות",
+        "systemPlansTitle": "חבילות מערכת (מגבלות שימוש)",
+        "systemPlansSubtitle": "החבילה קובעת שימור מסמכים, אחסון ומספר משתמשים. המחיר נקבע לפי המחירון המסחרי למטה.",
+        "commercialPricingTitle": "מחירון מסחרי (לפי משרד)",
+        "commercialPricingSubtitle": "המחירים מחויבים לפי משרד.",
         "planName": "שם:",
         "planKey": "מפתח תכנית:",
         "price": "מחיר:",
-        "priceMonthly": "{{amount}} {{currency}} / חודש",
+        "priceMonthly": "{{currency}}{{amount}} / חודש",
+        "commercialPricingHint": "תמחור מסחרי: ליבה {{currency}}{{coreAmount}}/חודש (ללא חתימות). תוסף חתימות + ראיות: {{currency}}{{signingAmount}}/חודש כולל {{included}} מסמכים חתומים; {{currency}}{{overage}} לכל מסמך חתום נוסף.",
         "scope": "היקף:",
         "firmId": "מזהה משרד:",
-        "enforcementMode": "אכיפה:",
+        "pricePerCommercial": "לפי מחירון מסחרי",
+        "priceNotAvailable": "לא זמין",
         "retentionTitle": "שמירה",
         "retentionCore": "מסמכים (ליבה):",
         "retentionPii": "מסמכים (מידע אישי):",
         "days": "ימים",
         "retentionHint": "מדיניות השמירה חלה על מסמכים וראיות. החזקה משפטית (אם מופעלת) עשויה לעקוף שמירה.",
         "usageCardTitle": "שימוש",
+        "systemPlansCardFooter": "החבילה קובעת מגבלות שימוש בלבד.",
         "monthStart": "תחילת חודש:",
-        "loadingUsage": "טוען שימוש…",
+        "notAvailable": "לא זמין",
+        "commercial": {
+            "core": {
+                "title": "Core (חובה)",
+                "description": "מערכת למעקב תיקים ותקשורת עם לקוחות המשרד"
+            },
+            "channels": {
+                "title": "ערוצי לקוח (תוספים אופציונליים)",
+                "portalLine": "Portal: {{currency}}{{amount}} / חודש — פורטל לקוחות (אתר)",
+                "appLine": "App: {{currency}}{{amount}} / חודש — אפליקציה ללקוחות",
+                "bundleLine": "חבילה (Portal + App): {{currency}}{{amount}} / חודש — משתלם יותר"
+            },
+            "signing": {
+                "title": "חתימות + ראיות (תוסף אופציונלי)",
+                "includes": "כולל {{included}} מסמכים חתומים בחודש.",
+                "overage": "חריגה: {{currency}}{{overage}} לכל מסמך חתום נוסף.",
+                "noteOtpOptional": "אימות OTP במעמד חתימה הוא לפי בחירת המשרד."
+            }
+        },
         "used": "בשימוש:",
         "limit": "מגבלה:",
         "quotaUnlimited": "ללא הגבלה",
@@ -393,13 +417,20 @@
         }
     },
     "planPricing": {
-        "title": "תכניות ומחירים",
-        "subtitle": "השוואת תכניות ומחירים.",
+        "title": "חבילות ותמחור",
+        "subtitle": "השוואת חבילות ותמחור.",
+        "systemPlansTitle": "חבילות מערכת (מגבלות שימוש)",
+        "systemPlansSubtitle": "חבילות אלו מגדירות מגבלות שימוש בלבד. המחיר החודשי נקבע לפי המחירון המסחרי.",
+        "commercialPricingTitle": "מחירון מסחרי (לפי משרד)",
+        "commercialPricingSubtitle": "המחירים מחויבים לפי משרד.",
+        "coreCommercialLine": "ליבה: {{currency}}{{amount}} / חודש (ללא חתימות).",
+        "signingAddonCommercialLine": "תוסף חתימות + ראיות: {{currency}}{{amount}} / חודש (כולל {{included}} מסמכים חתומים; {{currency}}{{overage}} לכל מסמך חתום נוסף).",
         "noPlans": "אין תכניות זמינות.",
         "currentPlan": "תכנית נוכחית",
         "planKey": "מפתח תכנית: {{planKey}}",
         "price": "מחיר:",
-        "priceMonthly": "{{amount}} {{currency}} / חודש",
+        "priceMonthly": "{{currency}}{{amount}} / חודש",
+        "pricePerCommercial": "לפי מחירון מסחרי",
         "priceNotAvailable": "לא זמין",
         "retentionCore": "שמירה (ליבה):",
         "retentionPii": "שמירה (מידע אישי):",
@@ -407,8 +438,64 @@
         "documentsMonthly": "מסמכים / חודש:",
         "storageGb": "אחסון (GB):",
         "users": "משתמשים:",
+        "systemPlansCardFooter": "החבילה קובעת מגבלות שימוש בלבד.",
         "unlimited": "ללא הגבלה",
-        "notAvailable": "לא זמין"
+        "notAvailable": "לא זמין",
+        "commercial": {
+            "core": {
+                "title": "Core (חובה)",
+                "description": "מערכת למעקב תיקים ותקשורת עם לקוחות המשרד"
+            },
+            "channels": {
+                "title": "ערוצי לקוח (תוספים אופציונליים)",
+                "portalLine": "Portal: {{currency}}{{amount}} / חודש — פורטל לקוחות (אתר)",
+                "appLine": "App: {{currency}}{{amount}} / חודש — אפליקציה ללקוחות",
+                "bundleLine": "חבילה (Portal + App): {{currency}}{{amount}} / חודש — משתלם יותר"
+            },
+            "signing": {
+                "title": "חתימות + ראיות (תוסף אופציונלי)",
+                "includes": "כולל {{included}} מסמכים חתומים בחודש.",
+                "overage": "חריגה: {{currency}}{{overage}} לכל מסמך חתום נוסף.",
+                "noteOtpOptional": "אימות OTP במעמד חתימה הוא לפי בחירת המשרד."
+            }
+        }
+    },
+    "pricingPage": {
+        "title": "תמחור",
+        "subtitle": "מערכת למעקב תיקים ותקשורת עם לקוחות המשרד, עם אפשרות לחתימות וראיות משפטיות.",
+        "clarifyingLine": "כל משרד מתחיל במנוי Core. ניתן להוסיף פורטל לקוחות, אפליקציה וחתימות משפטיות לפי הצורך.",
+        "core": {
+            "title": "Core",
+            "b1": "מעקב וניהול תיקים",
+            "b2": "תקשורת עם לקוחות",
+            "b3": "עדכונים (Push/Email)",
+            "b4": "ללא חתימות"
+        },
+        "channels": {
+            "title": "ערוצי לקוח (תוספים)",
+            "portalTitle": "Portal (אתר)",
+            "appTitle": "אפליקציה",
+            "bundleTitle": "חבילה (Portal + App)",
+            "b1": "ערוץ נוח ובטוח ללקוח לעקוב אחרי התיק",
+            "b2": "שיפור זמינות וצמצום התכתבויות"
+        },
+        "signing": {
+            "title": "חתימות + ראיות (תוסף תאימות)",
+            "includes": "כולל {{included}} מסמכים חתומים בחודש.",
+            "overage": "חריגה: {{currency}}{{overage}} לכל מסמך חתום נוסף.",
+            "b1": "חבילת ראיות קבילה לבית משפט",
+            "b2": "יומן פעולות ושקיפות חתימה",
+            "noteOtpOptional": "OTP לחתימה הוא אופציונלי לפי מדיניות המשרד"
+        },
+        "faq": {
+            "title": "שאלות נפוצות",
+            "q1": "מה כלול ב-Core?",
+            "a1": "Core כולל מעקב תיקים ותקשורת עם לקוחות (ללא חתימות אלקטרוניות).",
+            "q2": "האם חתימות חובה?",
+            "a2": "לא. חתימות הן תוסף אופציונלי.",
+            "q3": "האם OTP חובה בחתימה?",
+            "a3": "ניתן להפעיל ולחייב OTP לפי מדיניות המשרד (אופציונלי)."
+        }
     },
     "evidenceDocuments": {
         "pageTitle": "מסמכי ראיות",

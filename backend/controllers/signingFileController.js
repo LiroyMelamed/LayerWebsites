@@ -33,8 +33,10 @@ const QRCode = require('qrcode');
 const { resolveTenantPlan } = require('../lib/plan/resolveTenantPlan');
 const { isFirmScopeEnabled } = require('../lib/firm/firmScope');
 const { resolveFirmIdForUserEnsureMembership, resolveFirmIdForSigningFile } = require('../lib/firm/resolveFirmContext');
+const { resolveFirmSigningPolicy } = require('../lib/firm/resolveFirmSigningPolicy');
 const { checkFirmLimitsOrNull, enforcementMode } = require('../lib/limits/enforceFirmLimits');
 const { recordFirmUsage } = require('../lib/usage/recordFirmUsage');
+const { consume } = require('../utils/rateLimiter');
 
 const BASE_RENDER_WIDTH = 800;
 
@@ -84,6 +86,12 @@ const SIGNING_CONSENT_TEXT = String(
 
 function sha256Hex(buffer) {
     return crypto.createHash('sha256').update(buffer).digest('hex');
+}
+
+function hashTokenId(raw) {
+    const token = String(raw || '').trim();
+    if (!token) return null;
+    return sha256Hex(Buffer.from(token, 'utf8')).slice(0, 32);
 }
 
 function isProductionFailClosed() {
@@ -645,6 +653,9 @@ exports.getPublicSavedSignature = async (req, res, next) => {
             return fail(next, verified.errorCode, verified.httpStatus);
         }
 
+        const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId: verified.signingFileId, next });
+        if (!enabledCheck.ok) return;
+
         const { signerUserId } = verified;
         const key = getSavedSignatureKey(signerUserId);
         const exists = await savedSignatureExists(key);
@@ -665,6 +676,9 @@ exports.getPublicSavedSignatureDataUrl = async (req, res, next) => {
             return fail(next, verified.errorCode, verified.httpStatus);
         }
 
+        const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId: verified.signingFileId, next });
+        if (!enabledCheck.ok) return;
+
         const { signerUserId } = verified;
         const key = getSavedSignatureKey(signerUserId);
         const exists = await savedSignatureExists(key);
@@ -684,6 +698,9 @@ exports.savePublicSavedSignature = async (req, res, next) => {
         if (!verified.ok) {
             return fail(next, verified.errorCode, verified.httpStatus);
         }
+
+        const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId: verified.signingFileId, next });
+        if (!enabledCheck.ok) return;
 
         const { signerUserId } = verified;
         const parsed = parseDataUrlImage(req.body?.signatureImage);
@@ -733,6 +750,80 @@ function verifyPublicSigningToken(rawToken) {
             return { ok: false, httpStatus: 401, errorCode: 'TOKEN_EXPIRED' };
         }
         return { ok: false, httpStatus: 401, errorCode: 'INVALID_TOKEN' };
+    }
+}
+
+async function resolveFirmSigningPolicyForSigningFileId(signingFileId) {
+    const firmId = await resolveFirmIdForSigningFile({ signingFileId });
+    return resolveFirmSigningPolicy(firmId);
+}
+
+function computeRequireOtpEffectiveFromFirmPolicy(policy) {
+    return SIGNING_OTP_ENABLED && Boolean(policy?.signingClientOtpRequired);
+}
+
+async function enforceSigningEnabledForSigningFileId({ signingFileId, next, req, genericOk = false }) {
+    const policy = await resolveFirmSigningPolicyForSigningFileId(signingFileId);
+    if (!policy?.signingEnabled) {
+        // Audit before blocking (critical legal requirement)
+        try {
+            await insertAuditEvent({
+                req,
+                eventType: 'SIGNING_BLOCKED_BY_POLICY',
+                signingFileId,
+                success: false,
+                metadata: { source: policy.source || null },
+            });
+        } catch {
+            // ignore
+        }
+
+        if (genericOk) return { ok: false, genericOk: true, policy };
+        fail(next, 'SIGNING_DISABLED', 403);
+        return { ok: false };
+    }
+    return { ok: true, policy };
+}
+
+function isRateLimited(windowMs, max, key) {
+    try {
+        const r = consume({ key, windowMs, max });
+        return !r.allowed;
+    } catch {
+        return false;
+    }
+}
+
+async function auditRateLimited({ req, signingFileId, actorUserId, actorType, metadata }) {
+    try {
+        await insertAuditEvent({
+            req,
+            eventType: 'SIGNING_RATE_LIMITED',
+            signingFileId,
+            actorUserId,
+            actorType,
+            success: false,
+            metadata,
+        });
+    } catch {
+        // ignore
+    }
+}
+
+async function auditOtpBlocked({ req, signingFileId, actorUserId, actorType, signingSessionId, metadata }) {
+    try {
+        await insertAuditEvent({
+            req,
+            eventType: 'SIGNING_OTP_BLOCKED',
+            signingFileId,
+            actorUserId,
+            actorType,
+            signingSessionId,
+            success: false,
+            metadata,
+        });
+    } catch {
+        // ignore
     }
 }
 
@@ -2223,7 +2314,9 @@ exports.getSigningFileDetails = async (req, res, next) => {
         }
 
         const file = fileResult.rows[0];
-        const requireOtpEffective = SIGNING_OTP_ENABLED && Boolean(file.RequireOtp);
+        const policy = await resolveFirmSigningPolicyForSigningFileId(signingFileId);
+        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(policy);
+        file.RequireOtp = requireOtpEffective;
 
         const isLawyer = file.LawyerId === userId;
         const isPrimaryClient = file.ClientId === userId;
@@ -2380,6 +2473,12 @@ exports.getEvidencePackage = async (req, res, next) => {
             [signingFileId]
         );
 
+        const policy = await resolveFirmSigningPolicyForSigningFileId(signingFileId);
+        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(policy);
+        const fileEvidence = fileEvidenceRes.rows?.[0]
+            ? { ...fileEvidenceRes.rows[0], RequireOtp: requireOtpEffective }
+            : null;
+
         const spotsRes = await pool.query(
             `select
                 signaturespotid as "SignatureSpotId",
@@ -2488,7 +2587,7 @@ exports.getEvidencePackage = async (req, res, next) => {
 
         return res.json({
             generatedAtUtc: new Date().toISOString(),
-            file: fileEvidenceRes.rows?.[0] || null,
+            file: fileEvidence,
             signatureSpots: spotsRes.rows || [],
             consents: consentRes.rows || [],
             otpVerifications: otpRes.rows || [],
@@ -3190,6 +3289,9 @@ exports.createPublicSigningLink = async (req, res, next) => {
         const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
         if (signingFileId === null) return;
 
+        const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId, next });
+        if (!enabledCheck.ok) return;
+
         const signerUserId = parsePositiveIntStrict(req?.body?.signerUserId) ?? null;
         const requesterId = req.user?.UserId;
 
@@ -3212,6 +3314,8 @@ exports.createPublicSigningLink = async (req, res, next) => {
         }
 
         const file = fileResult.rows[0];
+
+        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy);
 
         // Only the owning lawyer can generate a public link.
         if (Number(file.LawyerId) !== Number(requesterId)) {
@@ -3243,8 +3347,8 @@ exports.createPublicSigningLink = async (req, res, next) => {
             success: true,
             metadata: {
                 signingPolicyVersion: file.SigningPolicyVersion || SIGNING_POLICY_VERSION,
-                requireOtp: Boolean(file.RequireOtp),
-                otpWaived: !Boolean(file.RequireOtp),
+                requireOtp: requireOtpEffective,
+                otpWaived: !requireOtpEffective,
                 otpWaiverAcknowledged: Boolean(file.OtpWaiverAcknowledged),
                 policySource: file.PolicySelectedAtUtc ? 'explicit' : 'legacy_default',
                 targetSignerUserId,
@@ -3363,6 +3467,9 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
         }
 
         const { signingFileId, signerUserId } = verified;
+
+        const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId, next });
+        if (!enabledCheck.ok) return;
         const schemaSupport = await getSchemaSupport();
 
         const authz = await ensurePublicUserAuthorized({ signingFileId, userId: signerUserId, schemaSupport });
@@ -3423,8 +3530,10 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
             })
         );
 
+        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy);
+
         return res.json({
-            file: { ...file, OtpEnabled: SIGNING_OTP_ENABLED },
+            file: { ...file, RequireOtp: requireOtpEffective, OtpEnabled: SIGNING_OTP_ENABLED },
             signatureSpots,
             isLawyer,
         });
@@ -3443,13 +3552,66 @@ exports.publicSignFile = async (req, res, next) => {
 
         const { signingFileId, signerUserId } = verified;
 
+        const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId, next, req });
+        if (!enabledCheck.ok) return;
+
+        // Dual-scope rate limits (token + signingFileId)
+        const tokenId = hashTokenId(req?.params?.token);
+        const windowMs = 60 * 1000;
+        const max = 30;
+        const hitToken = tokenId ? isRateLimited(windowMs, max, `signing:public_sign:token:${tokenId}`) : false;
+        const hitFile = isRateLimited(windowMs, max, `signing:public_sign:file:${signingFileId}`);
+        if (hitToken || hitFile) {
+            await auditRateLimited({
+                req,
+                signingFileId,
+                actorUserId: signerUserId,
+                actorType: 'public_signer',
+                metadata: {
+                    kind: 'public_sign',
+                    scopes: {
+                        token: Boolean(hitToken),
+                        signingFile: Boolean(hitFile),
+                    },
+                },
+            });
+            return fail(next, 'RATE_LIMITED', 429);
+        }
+
+        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy);
+        if (!requireOtpEffective) {
+            const authUserId = req.user?.UserId;
+            if (!authUserId) {
+                await insertAuditEvent({
+                    req,
+                    eventType: 'SIGNING_AUTH_REQUIRED',
+                    signingFileId,
+                    actorUserId: signerUserId,
+                    actorType: 'public_signer',
+                    success: false,
+                    metadata: { kind: 'public_sign', requireOtp: false },
+                });
+                return fail(next, 'AUTH_REQUIRED', 401);
+            }
+            if (Number(authUserId) !== Number(signerUserId)) {
+                await insertAuditEvent({
+                    req,
+                    eventType: 'SIGNING_FORBIDDEN',
+                    signingFileId,
+                    actorUserId: authUserId,
+                    actorType: 'user',
+                    success: false,
+                    metadata: { kind: 'public_sign', mismatchUserId: signerUserId },
+                });
+                return fail(next, 'FORBIDDEN', 403);
+            }
+        }
+
         const signatureSpotId = requireInt(req, res, { source: 'body', name: 'signatureSpotId' });
         if (signatureSpotId === null) return;
 
         const { signatureImage } = req.body;
         const userId = signerUserId;
-
-        const schemaSupport = await getSchemaSupport();
 
         // Reuse the same signing logic/authorization as the authenticated endpoint.
         req.params.signingFileId = String(signingFileId);
@@ -3469,6 +3631,33 @@ exports.publicRejectSigning = async (req, res, next) => {
         }
 
         const { signingFileId, signerUserId } = verified;
+
+        const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId, next, req });
+        if (!enabledCheck.ok) return;
+
+        // Dual-scope rate limits (token + signingFileId)
+        const tokenId = hashTokenId(req?.params?.token);
+        const windowMs = 60 * 1000;
+        const max = 30;
+        const hitToken = tokenId ? isRateLimited(windowMs, max, `signing:public_reject:token:${tokenId}`) : false;
+        const hitFile = isRateLimited(windowMs, max, `signing:public_reject:file:${signingFileId}`);
+        if (hitToken || hitFile) {
+            await auditRateLimited({
+                req,
+                signingFileId,
+                actorUserId: signerUserId,
+                actorType: 'public_signer',
+                metadata: {
+                    kind: 'public_reject',
+                    scopes: {
+                        token: Boolean(hitToken),
+                        signingFile: Boolean(hitFile),
+                    },
+                },
+            });
+            return fail(next, 'RATE_LIMITED', 429);
+        }
+
         req.params.signingFileId = String(signingFileId);
         req.user = { UserId: signerUserId };
         return exports.rejectSigning(req, res, next);
@@ -3486,6 +3675,10 @@ exports.getPublicSigningFilePdf = async (req, res, next) => {
         }
 
         const { signingFileId, signerUserId } = verified;
+
+        const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId, next });
+        if (!enabledCheck.ok) return;
+
         req.params.signingFileId = String(signingFileId);
         req.user = { UserId: signerUserId };
         return exports.getSigningFilePdf(req, res, next);
@@ -3534,32 +3727,124 @@ async function loadSigningPolicyForFile(signingFileId) {
     return r.rows?.[0] || null;
 }
 
-async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUserId, actorType }) {
+async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUserId, actorType, genericResponse = false }) {
     const signingSessionId = getSigningSessionIdFromReq(req);
     if (!signingSessionId) {
-        return fail(next, 'SIGNING_SESSION_REQUIRED', 422);
+        await auditOtpBlocked({
+            req,
+            signingFileId,
+            actorUserId: signerUserId,
+            actorType,
+            signingSessionId: null,
+            metadata: { kind: 'otp_request', reason: 'SIGNING_SESSION_REQUIRED' },
+        });
+        return res.json({ success: true });
+    }
+
+    const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId, next, req, genericOk: genericResponse });
+    if (!enabledCheck.ok) {
+        await auditOtpBlocked({
+            req,
+            signingFileId,
+            actorUserId: signerUserId,
+            actorType,
+            signingSessionId,
+            metadata: {
+                kind: 'otp_request',
+                reason: 'SIGNING_DISABLED',
+                policySource: enabledCheck.policy?.source || null,
+            },
+        });
+        if (enabledCheck.genericOk) return res.json({ success: true });
+        return;
+    }
+
+    // Dual-scope rate limits (token + signingFileId). Always return generic response.
+    const tokenId = hashTokenId(req?.params?.token);
+    const windowMs = 60 * 60 * 1000;
+    const max = 5;
+    const hitToken = tokenId ? isRateLimited(windowMs, max, `signing:otp_request:token:${tokenId}`) : false;
+    const hitFile = isRateLimited(windowMs, max, `signing:otp_request:file:${signingFileId}`);
+    if (hitToken || hitFile) {
+        await auditRateLimited({
+            req,
+            signingFileId,
+            actorUserId: signerUserId,
+            actorType,
+            metadata: {
+                kind: 'otp_request',
+                scopes: {
+                    token: Boolean(hitToken),
+                    signingFile: Boolean(hitFile),
+                },
+            },
+        });
+        return res.json({ success: true });
     }
 
     const schemaSupport = await getSchemaSupport();
     const authz = await ensurePublicUserAuthorized({ signingFileId, userId: signerUserId, schemaSupport });
     if (!authz.ok) {
-        return fail(next, authz.errorCode, authz.httpStatus);
+        await auditOtpBlocked({
+            req,
+            signingFileId,
+            actorUserId: signerUserId,
+            actorType,
+            signingSessionId,
+            metadata: { kind: 'otp_request', reason: authz.errorCode || 'FORBIDDEN' },
+        });
+        return res.json({ success: true });
     }
 
     const file = await loadSigningPolicyForFile(signingFileId);
-    if (!file) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
-
-    const requireOtpEffective = SIGNING_OTP_ENABLED && Boolean(file.RequireOtp);
-    if (!SIGNING_OTP_ENABLED) {
-        return fail(next, 'OTP_DISABLED', 409);
+    if (!file) {
+        await auditOtpBlocked({
+            req,
+            signingFileId,
+            actorUserId: signerUserId,
+            actorType,
+            signingSessionId,
+            metadata: { kind: 'otp_request', reason: 'DOCUMENT_NOT_FOUND' },
+        });
+        return res.json({ success: true });
     }
+
+    if (!SIGNING_OTP_ENABLED) {
+        await auditOtpBlocked({
+            req,
+            signingFileId,
+            actorUserId: signerUserId,
+            actorType,
+            signingSessionId,
+            metadata: { kind: 'otp_request', reason: 'OTP_DISABLED' },
+        });
+        return res.json({ success: true });
+    }
+
+    const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy);
     if (!requireOtpEffective) {
-        return fail(next, 'OTP_NOT_REQUIRED', 409);
+        await auditOtpBlocked({
+            req,
+            signingFileId,
+            actorUserId: signerUserId,
+            actorType,
+            signingSessionId,
+            metadata: { kind: 'otp_request', reason: 'OTP_NOT_REQUIRED' },
+        });
+        return res.json({ success: true });
     }
 
     const presentedPdfSha256 = await ensurePresentedHashOrCompute({ signingFileId, fileKey: file.FileKey });
     if (!presentedPdfSha256) {
-        return fail(next, 'MISSING_PRESENTED_HASH', 500);
+        await auditOtpBlocked({
+            req,
+            signingFileId,
+            actorUserId: signerUserId,
+            actorType,
+            signingSessionId,
+            metadata: { kind: 'otp_request', reason: 'MISSING_PRESENTED_HASH' },
+        });
+        return res.json({ success: true });
     }
 
     const created = await createSigningOtpChallenge({
@@ -3570,6 +3855,14 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
         req,
     });
     if (!created.ok) {
+        await auditOtpBlocked({
+            req,
+            signingFileId,
+            actorUserId: signerUserId,
+            actorType,
+            signingSessionId,
+            metadata: { kind: 'otp_request', reason: created.errorCode || 'OTP_BLOCKED' },
+        });
         await insertAuditEvent({
             req,
             eventType: 'OTP_SENT',
@@ -3580,7 +3873,8 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
             success: false,
             metadata: { failure: created.errorCode },
         });
-        return fail(next, created.errorCode, created.httpStatus);
+        // Silent failure by design (always generic response)
+        return res.json({ success: true });
     }
 
     await insertAuditEvent({
@@ -3602,40 +3896,135 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
         },
     });
 
-    return res.json({ success: true, expiresAtUtc: created.expiresAtUtc });
+    return res.json({ success: true });
 }
 
-async function verifySigningOtpImpl({ req, res, next, signingFileId, signerUserId, actorType }) {
+async function verifySigningOtpImpl({ req, res, next, signingFileId, signerUserId, actorType, genericResponse = false }) {
     const signingSessionId = getSigningSessionIdFromReq(req);
     if (!signingSessionId) {
-        return fail(next, 'SIGNING_SESSION_REQUIRED', 422);
+        await auditOtpBlocked({
+            req,
+            signingFileId,
+            actorUserId: signerUserId,
+            actorType,
+            signingSessionId: null,
+            metadata: { kind: 'otp_verify', reason: 'SIGNING_SESSION_REQUIRED' },
+        });
+        return res.json({ success: true });
     }
 
     const otp = String(req.body?.otp || '').trim();
     if (!/^[0-9]{6}$/.test(otp)) {
-        return fail(next, 'OTP_INVALID_FORMAT', 422);
+        await auditOtpBlocked({
+            req,
+            signingFileId,
+            actorUserId: signerUserId,
+            actorType,
+            signingSessionId,
+            metadata: { kind: 'otp_verify', reason: 'OTP_INVALID_FORMAT' },
+        });
+        return res.json({ success: true });
     }
 
     const schemaSupport = await getSchemaSupport();
     const authz = await ensurePublicUserAuthorized({ signingFileId, userId: signerUserId, schemaSupport });
     if (!authz.ok) {
-        return fail(next, authz.errorCode, authz.httpStatus);
+        await auditOtpBlocked({
+            req,
+            signingFileId,
+            actorUserId: signerUserId,
+            actorType,
+            signingSessionId,
+            metadata: { kind: 'otp_verify', reason: authz.errorCode || 'FORBIDDEN' },
+        });
+        return res.json({ success: true });
+    }
+
+    const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId, next, req });
+    if (!enabledCheck.ok) {
+        await auditOtpBlocked({
+            req,
+            signingFileId,
+            actorUserId: signerUserId,
+            actorType,
+            signingSessionId,
+            metadata: { kind: 'otp_verify', reason: 'SIGNING_DISABLED' },
+        });
+        return res.json({ success: true });
+    }
+
+    // Dual-scope rate limits (token + signingFileId). Always return generic response.
+    const tokenId = hashTokenId(req?.params?.token);
+    const windowMs = 60 * 60 * 1000;
+    const max = 20;
+    const hitToken = tokenId ? isRateLimited(windowMs, max, `signing:otp_verify:token:${tokenId}`) : false;
+    const hitFile = isRateLimited(windowMs, max, `signing:otp_verify:file:${signingFileId}`);
+    if (hitToken || hitFile) {
+        await auditRateLimited({
+            req,
+            signingFileId,
+            actorUserId: signerUserId,
+            actorType,
+            metadata: {
+                kind: 'otp_verify',
+                scopes: {
+                    token: Boolean(hitToken),
+                    signingFile: Boolean(hitFile),
+                },
+            },
+        });
+        return res.json({ success: true });
     }
 
     const file = await loadSigningPolicyForFile(signingFileId);
-    if (!file) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
-
-    const requireOtpEffective = SIGNING_OTP_ENABLED && Boolean(file.RequireOtp);
-    if (!SIGNING_OTP_ENABLED) {
-        return fail(next, 'OTP_DISABLED', 409);
+    if (!file) {
+        await auditOtpBlocked({
+            req,
+            signingFileId,
+            actorUserId: signerUserId,
+            actorType,
+            signingSessionId,
+            metadata: { kind: 'otp_verify', reason: 'DOCUMENT_NOT_FOUND' },
+        });
+        return res.json({ success: true });
     }
+
+    if (!SIGNING_OTP_ENABLED) {
+        await auditOtpBlocked({
+            req,
+            signingFileId,
+            actorUserId: signerUserId,
+            actorType,
+            signingSessionId,
+            metadata: { kind: 'otp_verify', reason: 'OTP_DISABLED' },
+        });
+        return res.json({ success: true });
+    }
+
+    const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy);
     if (!requireOtpEffective) {
-        return fail(next, 'OTP_NOT_REQUIRED', 409);
+        await auditOtpBlocked({
+            req,
+            signingFileId,
+            actorUserId: signerUserId,
+            actorType,
+            signingSessionId,
+            metadata: { kind: 'otp_verify', reason: 'OTP_NOT_REQUIRED' },
+        });
+        return res.json({ success: true });
     }
 
     const presentedPdfSha256 = await ensurePresentedHashOrCompute({ signingFileId, fileKey: file.FileKey });
     if (!presentedPdfSha256) {
-        return fail(next, 'MISSING_PRESENTED_HASH', 500);
+        await auditOtpBlocked({
+            req,
+            signingFileId,
+            actorUserId: signerUserId,
+            actorType,
+            signingSessionId,
+            metadata: { kind: 'otp_verify', reason: 'MISSING_PRESENTED_HASH' },
+        });
+        return res.json({ success: true });
     }
 
     const verified = await verifySigningOtpChallenge({
@@ -3667,10 +4056,18 @@ async function verifySigningOtpImpl({ req, res, next, signingFileId, signerUserI
     });
 
     if (!verified.ok) {
-        return fail(next, verified.errorCode, verified.httpStatus);
+        await auditOtpBlocked({
+            req,
+            signingFileId,
+            actorUserId: signerUserId,
+            actorType,
+            signingSessionId,
+            metadata: { kind: 'otp_verify', reason: verified.errorCode || 'OTP_INVALID' },
+        });
+        return res.json({ success: true });
     }
 
-    return res.json({ success: true, otpVerificationId: verified.challengeId });
+    return res.json({ success: true });
 }
 
 // Public OTP endpoints (token-based)
@@ -3678,7 +4075,19 @@ exports.publicRequestSigningOtp = async (req, res, next) => {
     try {
         const verified = verifyPublicSigningToken(req.params.token);
         if (!verified.ok) {
-            return fail(next, verified.errorCode, verified.httpStatus);
+            await auditOtpBlocked({
+                req,
+                signingFileId: null,
+                actorUserId: null,
+                actorType: 'public_signer',
+                signingSessionId: getSigningSessionIdFromReq(req),
+                metadata: {
+                    kind: 'otp_request',
+                    reason: verified.errorCode || 'INVALID_TOKEN',
+                    tokenHash: hashTokenId(req.params.token),
+                },
+            });
+            return res.json({ success: true });
         }
         return requestSigningOtpImpl({
             req,
@@ -3687,10 +4096,11 @@ exports.publicRequestSigningOtp = async (req, res, next) => {
             signingFileId: verified.signingFileId,
             signerUserId: verified.signerUserId,
             actorType: 'public_signer',
+            genericResponse: true,
         });
     } catch (err) {
         console.error('publicRequestSigningOtp error:', err);
-        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליחת קוד אימות' });
+        return res.json({ success: true });
     }
 };
 
@@ -3698,7 +4108,19 @@ exports.publicVerifySigningOtp = async (req, res, next) => {
     try {
         const verified = verifyPublicSigningToken(req.params.token);
         if (!verified.ok) {
-            return fail(next, verified.errorCode, verified.httpStatus);
+            await auditOtpBlocked({
+                req,
+                signingFileId: null,
+                actorUserId: null,
+                actorType: 'public_signer',
+                signingSessionId: getSigningSessionIdFromReq(req),
+                metadata: {
+                    kind: 'otp_verify',
+                    reason: verified.errorCode || 'INVALID_TOKEN',
+                    tokenHash: hashTokenId(req.params.token),
+                },
+            });
+            return res.json({ success: true });
         }
         return verifySigningOtpImpl({
             req,
@@ -3707,10 +4129,11 @@ exports.publicVerifySigningOtp = async (req, res, next) => {
             signingFileId: verified.signingFileId,
             signerUserId: verified.signerUserId,
             actorType: 'public_signer',
+            genericResponse: true,
         });
     } catch (err) {
         console.error('publicVerifySigningOtp error:', err);
-        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה באימות קוד' });
+        return res.json({ success: true });
     }
 };
 
@@ -3720,10 +4143,10 @@ exports.requestSigningOtp = async (req, res, next) => {
         const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
         if (signingFileId === null) return;
         const signerUserId = req.user?.UserId;
-        return requestSigningOtpImpl({ req, res, next, signingFileId, signerUserId, actorType: 'signer' });
+        return requestSigningOtpImpl({ req, res, next, signingFileId, signerUserId, actorType: 'signer', genericResponse: true });
     } catch (err) {
         console.error('requestSigningOtp error:', err);
-        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליחת קוד אימות' });
+        return res.json({ success: true });
     }
 };
 
@@ -3732,10 +4155,10 @@ exports.verifySigningOtp = async (req, res, next) => {
         const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
         if (signingFileId === null) return;
         const signerUserId = req.user?.UserId;
-        return verifySigningOtpImpl({ req, res, next, signingFileId, signerUserId, actorType: 'signer' });
+        return verifySigningOtpImpl({ req, res, next, signingFileId, signerUserId, actorType: 'signer', genericResponse: true });
     } catch (err) {
         console.error('verifySigningOtp error:', err);
-        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה באימות קוד' });
+        return res.json({ success: true });
     }
 };
 
@@ -3744,6 +4167,9 @@ exports.signFile = async (req, res, next) => {
     try {
         const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
         if (signingFileId === null) return;
+
+        const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId, next });
+        if (!enabledCheck.ok) return;
 
         const signatureSpotId = requireInt(req, res, { source: 'body', name: 'signatureSpotId' });
         if (signatureSpotId === null) return;
@@ -3825,7 +4251,7 @@ exports.signFile = async (req, res, next) => {
         }
 
         const effectivePolicyVersion = String(file.SigningPolicyVersion || SIGNING_POLICY_VERSION);
-        const requireOtpEffective = SIGNING_OTP_ENABLED && Boolean(file.RequireOtp);
+        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy);
         const spotType = String(spot.FieldType || 'signature').toLowerCase();
         const isSignatureLike = spotType === 'signature' || spotType === 'initials';
         const fieldValueRaw = req.body?.fieldValue ?? req.body?.field_value;
@@ -3883,6 +4309,22 @@ exports.signFile = async (req, res, next) => {
             : null;
 
         if (requireOtpEffective && !otpVerificationId) {
+            await insertAuditEvent({
+                req,
+                eventType: 'SIGNING_OTP_BLOCKED',
+                signingFileId,
+                signatureSpotId,
+                actorUserId: userId,
+                actorType: 'signer',
+                signingSessionId,
+                success: false,
+                metadata: {
+                    kind: 'sign',
+                    reason: 'OTP_REQUIRED',
+                    requireOtp: true,
+                    presentedPdfSha256: file.PresentedPdfSha256,
+                },
+            });
             await insertAuditEvent({
                 req,
                 eventType: 'SIGN_ATTEMPT',

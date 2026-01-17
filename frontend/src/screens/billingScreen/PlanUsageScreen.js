@@ -19,6 +19,7 @@ import ProgressBar from "../../components/specializedComponents/containers/Progr
 
 import billingApi from "../../api/billingApi";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
+import { COMMERCIAL_PRICING, normalizeCurrencySymbol } from "../../constant/commercialPricing";
 
 import { images } from "../../assets/images/images";
 import { AdminStackName } from "../../navigation/AdminStack";
@@ -28,6 +29,8 @@ import { PlansPricingScreenName } from "./PlansPricingScreen";
 import "./PlanUsageScreen.scss";
 
 export const PlanUsageScreenName = "/plan-usage";
+
+const normalizeCurrency = normalizeCurrencySymbol;
 
 function bytesToGb(bytes) {
     const b = Number(bytes || 0);
@@ -154,8 +157,9 @@ export default function PlanUsageScreen() {
     if (isPlanLoading && !plan) return <SimpleLoader />;
 
     const priceAmount = normalized.priceCents != null ? formatMoneyCents(normalized.priceCents) : null;
-    const priceText = priceAmount && normalized.priceCurrency
-        ? t('planUsage.priceMonthly', { amount: priceAmount, currency: normalized.priceCurrency })
+    const priceCurrency = normalizeCurrency(normalized.priceCurrency);
+    const priceText = priceAmount && priceCurrency
+        ? t('planUsage.priceMonthly', { amount: priceAmount, currency: priceCurrency })
         : t('planUsage.quotaNotAvailable');
 
     const coreRetentionText = normalized.retentionCoreDays ?? "-";
@@ -182,6 +186,16 @@ export default function PlanUsageScreen() {
                     {renderRow(t('planUsage.scope'), normalized.scope || '-')}
                     {normalized.firmId != null && renderRow(t('planUsage.firmId'), String(normalized.firmId))}
                     {normalized.enforcementMode && renderRow(t('planUsage.enforcementMode'), String(normalized.enforcementMode))}
+
+                    <Text14 className="lw-planUsageScreen__hint">
+                        {t('planUsage.commercialPricingHint', {
+                            currency: COMMERCIAL_PRICING.currencySymbol,
+                            coreAmount: COMMERCIAL_PRICING.coreMonthlyAmount,
+                            signingAmount: COMMERCIAL_PRICING.signingAddonMonthlyAmount,
+                            included: COMMERCIAL_PRICING.signingIncludedDocs,
+                            overage: COMMERCIAL_PRICING.signingOveragePerDocAmount,
+                        })}
+                    </Text14>
 
                     <SimpleButton
                         className="lw-planUsageScreen__upgradeButton"

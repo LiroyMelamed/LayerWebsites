@@ -11,14 +11,35 @@
     margin: 0 0 14px 0;
 }
 
+.lw-plansPricingScreen__sectionTitle {
+    margin: 18px 0 6px 0;
+}
+
+.lw-plansPricingScreen__sectionTitle--spaced {
+    margin-top: 26px;
+}
+
+.lw-plansPricingScreen__sectionSubtitle {
+    opacity: 0.85;
+    margin: 0 0 14px 0;
+}
+
 .lw-plansPricingScreen__grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 14px;
 }
 
+.lw-plansPricingScreen__commercialGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+    margin-top: 8px;
+}
+
 .lw-plansPricingScreen__card {
     flex-direction: column;
+    justify-content: flex-start;
 }
 
 .lw-plansPricingScreen__card--current {
@@ -54,4 +75,33 @@
 .lw-plansPricingScreen__value {
     font-weight: 600;
     text-align: end;
+}
+
+.lw-plansPricingScreen__planFooter {
+    opacity: 0.8;
+    margin-top: 12px;
+}
+
+.lw-plansPricingScreen__commercialPrice {
+    margin-top: 8px;
+    font-weight: 700;
+}
+
+.lw-plansPricingScreen__commercialDescription {
+    opacity: 0.9;
+    margin-top: 6px;
+}
+
+.lw-plansPricingScreen__commercialNote {
+    opacity: 0.8;
+    margin-top: 10px;
+}
+
+.lw-plansPricingScreen__bullets {
+    margin: 10px 0 0 0;
+    padding-left: 18px;
+}
+
+.lw-plansPricingScreen__bullets li {
+    margin: 6px 0;
 }

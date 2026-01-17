@@ -73,8 +73,6 @@
             "client": "العميل:",
             "uploadedAt": "تاريخ الرفع:",
             "status": "الحالة:",
-            "client": "العميل",
-            "case": "الملف",
             "document": "المستند",
             "signatures": "التواقيع:",
             "rejectionReason": "سبب الرفض:",
@@ -387,7 +385,8 @@
         "planName": "الاسم:",
         "planKey": "مفتاح الخطة:",
         "price": "السعر:",
-        "priceMonthly": "{{amount}} {{currency}} / شهر",
+        "priceMonthly": "{{currency}}{{amount}} / شهر",
+        "commercialPricingHint": "التسعير التجاري: الأساس {{currency}}{{coreAmount}}/شهر (بدون توقيعات). إضافة التوقيع + الأدلة: {{currency}}{{signingAmount}}/شهر تشمل {{included}} مستندات موقعة؛ {{currency}}{{overage}} لكل مستند موقّع إضافي.",
         "scope": "النطاق:",
         "firmId": "معرّف المكتب:",
         "enforcementMode": "وضع التطبيق:",
@@ -423,11 +422,18 @@
     "planPricing": {
         "title": "الخطط والأسعار",
         "subtitle": "قارن الخطط والأسعار.",
+        "systemPlansTitle": "خطط النظام (حدود الاستخدام)",
+        "systemPlansSubtitle": "هذه الخطط تحدد حدود الاستخدام فقط. يتم تحديد التسعير الشهري وفقاً للتسعير التجاري.",
+        "commercialPricingTitle": "التسعير التجاري (لكل مكتب)",
+        "commercialPricingSubtitle": "يتم احتساب هذه الأسعار لكل مكتب.",
+        "coreCommercialLine": "الأساس: {{currency}}{{amount}} / شهر (بدون توقيعات).",
+        "signingAddonCommercialLine": "إضافة التوقيع + الأدلة: {{currency}}{{amount}} / شهر (تشمل {{included}} مستندات موقعة؛ {{currency}}{{overage}} لكل مستند موقّع إضافي).",
         "noPlans": "لا توجد خطط متاحة.",
         "currentPlan": "الخطة الحالية",
         "planKey": "مفتاح الخطة: {{planKey}}",
         "price": "السعر:",
-        "priceMonthly": "{{amount}} {{currency}} / شهر",
+        "priceMonthly": "{{currency}}{{amount}} / شهر",
+        "pricePerCommercial": "وفقاً للتسعير التجاري",
         "priceNotAvailable": "غير متاح",
         "retentionCore": "الاحتفاظ (أساسي):",
         "retentionPii": "الاحتفاظ (بيانات شخصية):",
@@ -435,8 +441,64 @@
         "documentsMonthly": "المستندات / شهر:",
         "storageGb": "التخزين (GB):",
         "users": "المستخدمون:",
+        "systemPlansCardFooter": "تحدد هذه الخطة حدود الاستخدام فقط.",
         "unlimited": "غير محدود",
-        "notAvailable": "غير متاح"
+        "notAvailable": "غير متاح",
+        "commercial": {
+            "core": {
+                "title": "Core (إلزامي)",
+                "description": "نظام لمتابعة القضايا والتواصل بين المكتب والعملاء"
+            },
+            "channels": {
+                "title": "قنوات العميل (إضافات اختيارية)",
+                "portalLine": "Portal: {{currency}}{{amount}} / شهر — بوابة العملاء (موقع)",
+                "appLine": "Mobile App: {{currency}}{{amount}} / شهر — تجربة العملاء عبر الهاتف",
+                "bundleLine": "Bundle (Portal + App): {{currency}}{{amount}} / شهر — أفضل قيمة"
+            },
+            "signing": {
+                "title": "التوقيع + الأدلة (إضافة اختيارية)",
+                "includes": "تشمل {{included}} مستندات موقعة شهرياً.",
+                "overage": "رسوم إضافية: {{currency}}{{overage}} لكل مستند موقّع إضافي.",
+                "noteOtpOptional": "OTP عند التوقيع حسب اختيار المكتب."
+            }
+        }
+    },
+    "pricingPage": {
+        "title": "التسعير",
+        "subtitle": "نظام لمتابعة القضايا والتواصل مع العملاء، مع خيار إضافي للتوقيع والأدلة القانونية.",
+        "clarifyingLine": "يبدأ كل مكتب بخطة Core. بوابة العملاء وتطبيق الهاتف والتوقيع القانوني إضافات اختيارية.",
+        "core": {
+            "title": "Core",
+            "b1": "متابعة القضايا وإدارة سير العمل",
+            "b2": "التواصل مع العملاء",
+            "b3": "التحديثات (Push/Email)",
+            "b4": "بدون توقيعات"
+        },
+        "channels": {
+            "title": "قنوات العميل (إضافات)",
+            "portalTitle": "Portal (الموقع)",
+            "appTitle": "تطبيق الهاتف",
+            "bundleTitle": "حزمة (Portal + App)",
+            "b1": "قناة بسيطة وآمنة للعميل لمتابعة قضيته",
+            "b2": "تحسين الاستجابة وتقليل الرسائل المتبادلة"
+        },
+        "signing": {
+            "title": "التوقيع + الأدلة (إضافة امتثال)",
+            "includes": "تشمل {{included}} مستندات موقعة شهرياً.",
+            "overage": "رسوم إضافية: {{currency}}{{overage}} لكل مستند موقّع إضافي.",
+            "b1": "حزمة أدلة قابلة للاستخدام أمام المحكمة",
+            "b2": "سجل تدقيق وتاريخ التوقيع",
+            "noteOtpOptional": "OTP للتوقيع اختياري حسب سياسة المكتب"
+        },
+        "faq": {
+            "title": "الأسئلة الشائعة",
+            "q1": "ماذا يتضمن Core؟",
+            "a1": "يتضمن Core متابعة القضايا والتواصل مع العملاء (بدون توقيعات إلكترونية).",
+            "q2": "هل التوقيعات إلزامية؟",
+            "a2": "لا. التوقيع إضافة اختيارية.",
+            "q3": "هل OTP إلزامي للتوقيع؟",
+            "a3": "يمكن تفعيل OTP وفرضه حسب سياسة المكتب (اختياري)."
+        }
     },
     "signing": {
         "invalidLinkTitle": "رابط غير صالح",

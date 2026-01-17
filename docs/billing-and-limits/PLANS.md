@@ -2,6 +2,13 @@
 
 This platform uses **platform-owned** subscription plans. Tenants cannot change retention.
 
+## Commercial pricing (display-only)
+- Core: ₪249 / month (no signatures)
+- Signing + Evidence add-on: ₪299 / month includes 100 signed documents
+- Overage: ₪6 per additional signed document
+
+Note: The prices above are intended for UI/docs consistency. They are not necessarily enforced by the current plan/limit implementation.
+
 ## Plan keys
 - `BASIC`
 - `PRO`

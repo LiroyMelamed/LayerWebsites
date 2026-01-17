@@ -17,6 +17,7 @@ import { Text14, TextBold24 } from "../../components/specializedComponents/text/
 
 import billingApi from "../../api/billingApi";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
+import { COMMERCIAL_PRICING } from "../../constant/commercialPricing";
 
 import { images } from "../../assets/images/images";
 import { AdminStackName } from "../../navigation/AdminStack";
@@ -25,12 +26,6 @@ import { MainScreenName } from "../mainScreen/MainScreen";
 import "./PlansPricingScreen.scss";
 
 export const PlansPricingScreenName = "/plans-pricing";
-
-function formatMoneyCents(cents) {
-    const n = Number(cents);
-    if (!Number.isFinite(n)) return null;
-    return (n / 100).toFixed(2);
-}
 
 function safeNumber(value) {
     const n = Number(value);
@@ -84,6 +79,57 @@ export default function PlansPricingScreen() {
                 <h2 className="lw-plansPricingScreen__title"><TextBold24>{t('planPricing.title')}</TextBold24></h2>
                 <Text14 className="lw-plansPricingScreen__subtitle">{t('planPricing.subtitle')}</Text14>
 
+                <h3 className="lw-plansPricingScreen__sectionTitle"><TextBold24>{t('planPricing.commercialPricingTitle')}</TextBold24></h3>
+                <Text14 className="lw-plansPricingScreen__sectionSubtitle">{t('planPricing.commercialPricingSubtitle')}</Text14>
+
+                <div className="lw-plansPricingScreen__commercialGrid">
+                    <SimpleCard className="lw-plansPricingScreen__card">
+                        <TextBold24>{t('planPricing.commercial.core.title')}</TextBold24>
+                        <Text14 className="lw-plansPricingScreen__commercialPrice">{t('planPricing.priceMonthly', {
+                            currency: COMMERCIAL_PRICING.currencySymbol,
+                            amount: COMMERCIAL_PRICING.coreMonthlyAmount,
+                        })}</Text14>
+                        <Text14 className="lw-plansPricingScreen__commercialDescription">{t('planPricing.commercial.core.description')}</Text14>
+                    </SimpleCard>
+
+                    <SimpleCard className="lw-plansPricingScreen__card">
+                        <TextBold24>{t('planPricing.commercial.channels.title')}</TextBold24>
+                        <ul className="lw-plansPricingScreen__bullets">
+                            <li><Text14>{t('planPricing.commercial.channels.portalLine', {
+                                currency: COMMERCIAL_PRICING.currencySymbol,
+                                amount: COMMERCIAL_PRICING.portalMonthlyAmount,
+                            })}</Text14></li>
+                            <li><Text14>{t('planPricing.commercial.channels.appLine', {
+                                currency: COMMERCIAL_PRICING.currencySymbol,
+                                amount: COMMERCIAL_PRICING.appMonthlyAmount,
+                            })}</Text14></li>
+                            <li><Text14>{t('planPricing.commercial.channels.bundleLine', {
+                                currency: COMMERCIAL_PRICING.currencySymbol,
+                                amount: COMMERCIAL_PRICING.channelsBundleMonthlyAmount,
+                            })}</Text14></li>
+                        </ul>
+                    </SimpleCard>
+
+                    <SimpleCard className="lw-plansPricingScreen__card">
+                        <TextBold24>{t('planPricing.commercial.signing.title')}</TextBold24>
+                        <Text14 className="lw-plansPricingScreen__commercialPrice">{t('planPricing.priceMonthly', {
+                            currency: COMMERCIAL_PRICING.currencySymbol,
+                            amount: COMMERCIAL_PRICING.signingAddonMonthlyAmount,
+                        })}</Text14>
+                        <Text14>{t('planPricing.commercial.signing.includes', {
+                            included: COMMERCIAL_PRICING.signingIncludedDocs,
+                        })}</Text14>
+                        <Text14>{t('planPricing.commercial.signing.overage', {
+                            currency: COMMERCIAL_PRICING.currencySymbol,
+                            overage: COMMERCIAL_PRICING.signingOveragePerDocAmount,
+                        })}</Text14>
+                        <Text14 className="lw-plansPricingScreen__commercialNote">{t('planPricing.commercial.signing.noteOtpOptional')}</Text14>
+                    </SimpleCard>
+                </div>
+
+                <h3 className="lw-plansPricingScreen__sectionTitle lw-plansPricingScreen__sectionTitle--spaced"><TextBold24>{t('planPricing.systemPlansTitle')}</TextBold24></h3>
+                <Text14 className="lw-plansPricingScreen__sectionSubtitle">{t('planPricing.systemPlansSubtitle')}</Text14>
+
                 {plans.length === 0 ? (
                     <SimpleCard className="lw-plansPricingScreen__card">
                         <Text14>{t('planPricing.noPlans')}</Text14>
@@ -93,13 +139,7 @@ export default function PlansPricingScreen() {
                         {plans.map((plan) => {
                             const planKey = String(plan?.planKey || "-");
                             const name = plan?.name || "-";
-                            const cents = plan?.priceMonthlyCents;
-                            const currency = plan?.priceCurrency;
-
-                            const amount = cents != null ? formatMoneyCents(cents) : null;
-                            const priceText = amount && currency
-                                ? t('planPricing.priceMonthly', { amount, currency })
-                                : t('planPricing.priceNotAvailable');
+                            const priceText = t('planPricing.pricePerCommercial');
 
                             const retentionCore = plan?.documentsRetentionDaysCore ?? plan?.documentsRetentionDays ?? null;
                             const retentionPii = plan?.documentsRetentionDaysPii ?? plan?.documentsRetentionDays ?? null;
@@ -136,6 +176,8 @@ export default function PlansPricingScreen() {
                                     {renderRow(t('planPricing.documentsMonthly'), docsQuota == null ? t('planPricing.unlimited') : String(docsQuota))}
                                     {renderRow(t('planPricing.storageGb'), storageQuota == null ? t('planPricing.unlimited') : String(storageQuota))}
                                     {renderRow(t('planPricing.users'), usersQuota == null ? t('planPricing.unlimited') : String(usersQuota))}
+
+                                    <Text14 className="lw-plansPricingScreen__planFooter">{t('planPricing.systemPlansCardFooter')}</Text14>
                                 </SimpleCard>
                             );
                         })}
