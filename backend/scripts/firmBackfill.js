@@ -112,7 +112,7 @@ function computeTargetFirmId({ defaultFirmId, userFirmIds }) {
     return { firmId: defaultFirmId, reason: 'no_membership_default' };
 }
 
-function buildValuesUpdate({ table, idColumn, targetColumn, rows }) {
+function buildValuesUpdate({ table, idColumn, targetColumn, idType, targetType, rows }) {
     // UPDATE <table> t SET <targetColumn> = v.<targetColumn>
     // FROM (VALUES ($1,$2),...) v(<idColumn>, <targetColumn>)
     // WHERE t.<idColumn>=v.<idColumn> AND t.<targetColumn> IS NULL
@@ -123,7 +123,9 @@ function buildValuesUpdate({ table, idColumn, targetColumn, rows }) {
     for (const r of rows) {
         params.push(r.id, r.value);
         const i = params.length;
-        values.push(`($${i - 1}, $${i})`);
+        const idCast = idType ? `::${idType}` : '';
+        const targetCast = targetType ? `::${targetType}` : '';
+        values.push(`($${i - 1}${idCast}, $${i}${targetCast})`);
     }
 
     const sql = `update ${table} t
@@ -238,6 +240,8 @@ async function backfillSigningFiles({ defaultFirmId, dryRun, max, sinceIso, verb
             table: 'signingfiles',
             idColumn: 'signingfileid',
             targetColumn: 'firmid',
+            idType: 'int',
+            targetType: 'int',
             rows: updates,
         });
 
