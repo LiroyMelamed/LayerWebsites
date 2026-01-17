@@ -30,6 +30,11 @@ const { getPagination } = require("../utils/pagination");
 const { createAppError } = require('../utils/appError');
 const { getHebrewMessage } = require('../utils/errors.he');
 const QRCode = require('qrcode');
+const { resolveTenantPlan } = require('../lib/plan/resolveTenantPlan');
+const { isFirmScopeEnabled } = require('../lib/firm/firmScope');
+const { resolveFirmIdForUserEnsureMembership, resolveFirmIdForSigningFile } = require('../lib/firm/resolveFirmContext');
+const { checkFirmLimitsOrNull, enforcementMode } = require('../lib/limits/enforceFirmLimits');
+const { recordFirmUsage } = require('../lib/usage/recordFirmUsage');
 
 const BASE_RENDER_WIDTH = 800;
 
@@ -105,6 +110,7 @@ function parseSafeFilenameFromContentDisposition(headerValue) {
 function getEvidenceReadmeHebrew() {
     return [
         'חבילת ראיות — מסמך חתום (ללא תעודה/PKI)',
+        '[REQUIRES LOCAL COUNSEL] החתימה היא חתימה אלקטרונית ואינה חתימה מאושרת/מוסמכת, אינה PKI ואינה חתימה כשירה/מוכרת במדינות מסוימות.',
         '',
         'תכולה:',
         '1) signed.pdf — המסמך החתום (בדיוק הבייטים כפי שנשמרו)',
@@ -124,6 +130,7 @@ function getEvidenceReadmeHebrew() {
         'הערה:',
         '- חבילת ראיות זו מיועדת לשימוש ראייתי בהקשר חתימה אלקטרונית שאינה PKI.',
         '- אין בחבילה זו פרטי סוד (למשל קודי OTP).',
+        '- מדיניות שמירת מסמכים (Retention) עשויה להשתנות לפי חבילת שירות; ראו manifest.json לשדות plan/retention.',
         '',
     ].join('\n');
 }
@@ -144,6 +151,11 @@ async function loadEvidenceRowsForZip(signingFileId) {
                 signedat as "SignedAt",
                 signedfilekey as "SignedFileKey",
                 immutableatutc as "ImmutableAtUtc",
+
+                plan_key_at_signing as "PlanKeyAtSigning",
+                retention_days_core_at_signing as "RetentionDaysCoreAtSigning",
+                retention_days_pii_at_signing as "RetentionDaysPiiAtSigning",
+                retention_policy_hash_at_signing as "RetentionPolicyHashAtSigning",
 
                     requireotp as "RequireOtp",
                 signingpolicyversion as "SigningPolicyVersion",
@@ -989,6 +1001,23 @@ async function lookupUserPhoneE164OrNull(userId) {
 }
 
 async function createSigningOtpChallenge({ signingFileId, signerUserId, signingSessionId, presentedPdfSha256, req }) {
+    const firmId = await resolveFirmIdForSigningFile({ signingFileId });
+    if (firmId) {
+        const check = await checkFirmLimitsOrNull({
+            firmId,
+            action: 'send_otp_sms',
+            increments: { otpSmsThisMonth: 1 },
+        });
+
+        if (check && (check.blocks || []).length > 0) {
+            if (check.enforcementMode === 'block') {
+                return { ok: false, httpStatus: 402, errorCode: 'LIMIT_EXCEEDED' };
+            }
+
+            console.warn('[limits] send_otp_sms warnings:', check.warnings);
+        }
+    }
+
     const phoneE164 = await lookupUserPhoneE164OrNull(signerUserId);
     if (!phoneE164) {
         return { ok: false, httpStatus: 422, errorCode: 'MISSING_PHONE' };
@@ -1027,6 +1056,16 @@ async function createSigningOtpChallenge({ signingFileId, signerUserId, signingS
 
     // Send SMS (provider id is not currently captured by sendMessage); audit log still captures send time.
     await sendMessage(`קוד אימות לחתימה: ${otp}`, phoneE164);
+
+    if (firmId) {
+        await recordFirmUsage({
+            firmId,
+            meterKey: 'otp_sms',
+            quantity: 1,
+            unit: 'count',
+            metadata: { signingFileId, signerUserId, signingSessionId },
+        });
+    }
 
     return {
         ok: true,
@@ -1283,26 +1322,53 @@ async function ensureSignedPdfKey({ signingFileId, lawyerId, pdfKey }) {
     const versionId = putRes?.VersionId ? String(putRes.VersionId) : null;
     const signedSha = sha256Hex(signedPdf);
 
-    await pool.query(
-        `update signingfiles
-         set signedfilekey = $2,
-             signedstoragebucket = $3,
-             signedstoragekey = $4,
-             signedstorageetag = $5,
-             signedstorageversionid = $6,
-             signedpdfsha256 = $7,
-             immutableatutc = coalesce(immutableatutc, now())
-         where signingfileid = $1`,
-        [
-            signingFileId,
-            signedKey,
-            BUCKET,
-            signedKey,
-            etag,
-            versionId,
-            signedSha,
-        ]
-    );
+    const schemaSupport = await getSchemaSupport();
+
+    if (schemaSupport.signingfilesSignedPdfBytes) {
+        await pool.query(
+            `update signingfiles
+             set signedfilekey = $2,
+                 signedstoragebucket = $3,
+                 signedstoragekey = $4,
+                 signedstorageetag = $5,
+                 signedstorageversionid = $6,
+                 signedpdfsha256 = $7,
+                 signedpdfbytes = $8,
+                 immutableatutc = coalesce(immutableatutc, now())
+             where signingfileid = $1`,
+            [
+                signingFileId,
+                signedKey,
+                BUCKET,
+                signedKey,
+                etag,
+                versionId,
+                signedSha,
+                signedPdf.length,
+            ]
+        );
+    } else {
+        await pool.query(
+            `update signingfiles
+             set signedfilekey = $2,
+                 signedstoragebucket = $3,
+                 signedstoragekey = $4,
+                 signedstorageetag = $5,
+                 signedstorageversionid = $6,
+                 signedpdfsha256 = $7,
+                 immutableatutc = coalesce(immutableatutc, now())
+             where signingfileid = $1`,
+            [
+                signingFileId,
+                signedKey,
+                BUCKET,
+                signedKey,
+                etag,
+                versionId,
+                signedSha,
+            ]
+        );
+    }
 
     return signedKey;
 }
@@ -1390,6 +1456,33 @@ async function getSchemaSupport() {
                  limit 1`
     );
 
+    const firmIdCol = await pool.query(
+        `select 1
+                 from information_schema.columns
+                 where table_schema = 'public'
+                     and table_name = 'signingfiles'
+                     and column_name = 'firmid'
+                 limit 1`
+    );
+
+    const unsignedBytesCol = await pool.query(
+        `select 1
+                 from information_schema.columns
+                 where table_schema = 'public'
+                     and table_name = 'signingfiles'
+                     and column_name = 'unsignedpdfbytes'
+                 limit 1`
+    );
+
+    const signedBytesCol = await pool.query(
+        `select 1
+                 from information_schema.columns
+                 where table_schema = 'public'
+                     and table_name = 'signingfiles'
+                     and column_name = 'signedpdfbytes'
+                 limit 1`
+    );
+
     const value = {
         signaturespotsSignerUserId: signerUserIdCol.rows.length > 0,
         signaturespotsFieldType: fieldTypeCol.rows.length > 0,
@@ -1399,6 +1492,9 @@ async function getSchemaSupport() {
         signingfilesCaseIdNullable: (caseIdNullableRes.rows[0]?.is_nullable || 'NO') === 'YES',
         signingfilesOtpWaivedByUserId: otpWaivedByUserIdCol.rows.length > 0,
         signingfilesOtpWaivedAtUtc: otpWaivedAtUtcCol.rows.length > 0,
+        signingfilesFirmId: firmIdCol.rows.length > 0,
+        signingfilesUnsignedPdfBytes: unsignedBytesCol.rows.length > 0,
+        signingfilesSignedPdfBytes: signedBytesCol.rows.length > 0,
     };
 
     // Cache briefly to avoid repeated information_schema hits, but still adapt to schema changes.
@@ -1451,6 +1547,7 @@ exports.uploadFileForSigning = async (req, res, next) => {
 
         // Enforce max PDF size by verifying object size in R2.
         // This is the only reliable way when uploads go directly from client -> R2.
+        let unsignedPdfBytes = null;
         try {
             if (!String(fileKey).startsWith(`users/${lawyerId}/`) && !String(fileKey).startsWith(`users/`)) {
                 // We don't hard-block legacy keys, but we also avoid leaking key details.
@@ -1459,6 +1556,7 @@ exports.uploadFileForSigning = async (req, res, next) => {
 
             const head = await headR2Object({ key: fileKey });
             const size = Number(head?.ContentLength || 0);
+            unsignedPdfBytes = Number.isFinite(size) && size >= 0 ? Math.floor(size) : null;
             if (Number.isFinite(MAX_SIGNING_PDF_BYTES) && MAX_SIGNING_PDF_BYTES > 0 && size > MAX_SIGNING_PDF_BYTES) {
                 return fail(next, 'REQUEST_TOO_LARGE', 413);
             }
@@ -1505,6 +1603,43 @@ exports.uploadFileForSigning = async (req, res, next) => {
         const waiverAckEffective = !requireOtp ? waiverAck : false;
         const policySelectedAtUtc = new Date();
 
+        let firmId = null;
+        if (isFirmScopeEnabled()) {
+            firmId = await resolveFirmIdForUserEnsureMembership({ userId: lawyerId, userRole: req.user?.Role });
+
+            if (firmId) {
+                const check = await checkFirmLimitsOrNull({
+                    firmId,
+                    action: 'upload_signing_file',
+                    increments: {
+                        documentsCreatedThisMonth: 1,
+                        storageBytesTotal: unsignedPdfBytes || 0,
+                    },
+                });
+
+                if (check && (check.blocks || []).length > 0) {
+                    if (check.enforcementMode === 'block') {
+                        return fail(next, 'LIMIT_EXCEEDED', 402, { meta: { mode: 'block', reasons: check.blocks } });
+                    }
+
+                    console.warn('[limits] upload_signing_file warnings:', check.warnings);
+                    await insertAuditEvent({
+                        req,
+                        eventType: 'LIMIT_WARNING',
+                        signingFileId: null,
+                        actorUserId: lawyerId,
+                        actorType: 'lawyer',
+                        success: true,
+                        metadata: {
+                            mode: enforcementMode(),
+                            action: 'upload_signing_file',
+                            warnings: check.warnings,
+                        },
+                    });
+                }
+            }
+        }
+
         const insertColumns = [
             'caseid',
             'lawyerid',
@@ -1543,6 +1678,16 @@ exports.uploadFileForSigning = async (req, res, next) => {
             waiverAckEffective ? lawyerId : null,
         ];
 
+        if (schemaSupport.signingfilesFirmId && firmId) {
+            insertColumns.push('firmid');
+            insertValues.push(firmId);
+        }
+
+        if (schemaSupport.signingfilesUnsignedPdfBytes && unsignedPdfBytes !== null) {
+            insertColumns.push('unsignedpdfbytes');
+            insertValues.push(unsignedPdfBytes);
+        }
+
         if (schemaSupport.signingfilesOtpWaivedAtUtc) {
             insertColumns.push('otpwaivedatutc');
             insertValues.push(waiverAckEffective ? policySelectedAtUtc : null);
@@ -1565,6 +1710,16 @@ exports.uploadFileForSigning = async (req, res, next) => {
 
         const signingFileId = insertFile.rows[0].SigningFileId;
         console.log('[controller] Created signing file with ID:', signingFileId);
+
+        if (firmId) {
+            await recordFirmUsage({
+                firmId,
+                meterKey: 'document_created',
+                quantity: 1,
+                unit: 'count',
+                metadata: { signingFileId, unsignedPdfBytes },
+            });
+        }
 
         await insertAuditEvent({
             req,
@@ -2349,6 +2504,8 @@ exports.getEvidencePackage = async (req, res, next) => {
 // Streams ZIP to avoid high memory usage.
 exports.getEvidencePackageZip = async (req, res, next) => {
     try {
+        const evidenceStart = process.hrtime.bigint();
+
         const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
         if (signingFileId === null) return;
 
@@ -2366,6 +2523,22 @@ exports.getEvidencePackageZip = async (req, res, next) => {
         const isAdmin = role === 'Admin';
         if (!isOwnerLawyer && !isAdmin) {
             return fail(next, 'FORBIDDEN', 403);
+        }
+
+        const firmId = await resolveFirmIdForSigningFile({ signingFileId });
+        if (firmId) {
+            const check = await checkFirmLimitsOrNull({
+                firmId,
+                action: 'generate_evidence',
+                increments: { evidenceGenerationsThisMonth: 1 },
+            });
+
+            if (check && (check.blocks || []).length > 0) {
+                if (check.enforcementMode === 'block') {
+                    return fail(next, 'LIMIT_EXCEEDED', 402, { meta: { reasons: check.blocks } });
+                }
+                console.warn('[limits] generate_evidence warnings:', check.warnings);
+            }
         }
 
         const evidence = await loadEvidenceRowsForZip(signingFileId);
@@ -2473,6 +2646,10 @@ exports.getEvidencePackageZip = async (req, res, next) => {
         const manifest = {
             signingFileId,
             caseId: fileRow.CaseId ?? null,
+            legalDisclosures: {
+                signatureType: '[REQUIRES LOCAL COUNSEL] Electronic signature (not PKI / not qualified / not \"approved\").',
+                notes: 'This evidence package is a technical record; local counsel must confirm legal characterization and admissibility.',
+            },
             policy: {
                 requireOtp: Boolean(fileRow.RequireOtp),
                 policyVersion: String(fileRow.SigningPolicyVersion || SIGNING_POLICY_VERSION),
@@ -2495,6 +2672,12 @@ exports.getEvidencePackageZip = async (req, res, next) => {
                 },
             },
             retention: {
+                policyAtSigning: {
+                    planKey: fileRow.PlanKeyAtSigning || null,
+                    documentsRetentionDaysCore: fileRow.RetentionDaysCoreAtSigning ?? null,
+                    documentsRetentionDaysPii: fileRow.RetentionDaysPiiAtSigning ?? null,
+                    policyHash: fileRow.RetentionPolicyHashAtSigning || null,
+                },
                 storage,
             },
             generation: {
@@ -2540,6 +2723,7 @@ exports.getEvidencePackageZip = async (req, res, next) => {
 
         // Required content
         archive.append(JSON.stringify(manifest, null, 2), { name: 'manifest.json' });
+        archive.append(JSON.stringify(manifest, null, 2), { name: 'evidence_manifest.json' });
         archive.append(JSON.stringify(evidence.auditEvents || [], null, 2), { name: 'audit_events.json' });
         archive.append(JSON.stringify(evidence.consents || [], null, 2), { name: 'consent.json' });
 
@@ -2589,6 +2773,13 @@ exports.getEvidencePackageZip = async (req, res, next) => {
         archive.append(signedPdf.stream, { name: 'signed.pdf' });
 
         await archive.finalize();
+
+        const evidenceEnd = process.hrtime.bigint();
+        const elapsedSeconds = Number(evidenceEnd - evidenceStart) / 1e9;
+        if (firmId) {
+            await recordFirmUsage({ firmId, meterKey: 'evidence_generation', quantity: 1, unit: 'count', metadata: { signingFileId, kind: 'zip' } });
+            await recordFirmUsage({ firmId, meterKey: 'evidence_cpu_seconds', quantity: Math.max(0, elapsedSeconds), unit: 'seconds', metadata: { signingFileId, kind: 'zip' } });
+        }
     } catch (err) {
         console.error('getEvidencePackageZip error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה ביצירת חבילת ראיות' });
@@ -2598,6 +2789,8 @@ exports.getEvidencePackageZip = async (req, res, next) => {
 // Evidence certificate (human-readable PDF) summarizing evidence for a signing file.
 exports.getEvidenceCertificate = async (req, res, next) => {
     try {
+        const evidenceStart = process.hrtime.bigint();
+
         const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
         if (signingFileId === null) return;
 
@@ -2615,6 +2808,22 @@ exports.getEvidenceCertificate = async (req, res, next) => {
         const isAdmin = role === 'Admin';
         if (!isOwnerLawyer && !isAdmin) {
             return fail(next, 'FORBIDDEN', 403);
+        }
+
+        const firmId = await resolveFirmIdForSigningFile({ signingFileId });
+        if (firmId) {
+            const check = await checkFirmLimitsOrNull({
+                firmId,
+                action: 'generate_evidence',
+                increments: { evidenceGenerationsThisMonth: 1 },
+            });
+
+            if (check && (check.blocks || []).length > 0) {
+                if (check.enforcementMode === 'block') {
+                    return fail(next, 'LIMIT_EXCEEDED', 402, { meta: { reasons: check.blocks } });
+                }
+                console.warn('[limits] generate_evidence warnings:', check.warnings);
+            }
         }
 
         // Gather evidence rows (reuses existing loader)
@@ -2674,6 +2883,7 @@ exports.getEvidenceCertificate = async (req, res, next) => {
                 return {};
             }
         };
+
 
         const pickUtc = (...values) => {
             for (const value of values) {
@@ -2902,12 +3112,17 @@ exports.getEvidenceCertificate = async (req, res, next) => {
             caseId: fileRow.CaseId || 'N/A',
             caseName: caseName || 'N/A',
             signingPolicyVersion: signingPolicyVersion || 'N/A',
+            signatureTypeDisclosure: '[REQUIRES LOCAL COUNSEL] Electronic signature (not PKI / not qualified / not "approved").',
             creationUtc: new Date(fileRow.CreatedAt || new Date()).toISOString().replace('T', ' ').slice(0, 19) + 'Z',
             signedHashSha256: signedHashSha256 || '-',
             signedPdfSha256: signedHashSha256 || '-',
             presentedPdfSha256: fileRow.PresentedPdfSha256 || '-',
             originalPdfSha256: fileRow.OriginalPdfSha256 || '-',
             otpPolicy,
+            planKeyAtSigning: fileRow.PlanKeyAtSigning || null,
+            retentionDaysCoreAtSigning: fileRow.RetentionDaysCoreAtSigning ?? null,
+            retentionDaysPiiAtSigning: fileRow.RetentionDaysPiiAtSigning ?? null,
+            retentionPolicyHashAtSigning: fileRow.RetentionPolicyHashAtSigning || null,
             verifyUrl,
             missingNotes,
             consent: consentSummary,
@@ -2951,6 +3166,13 @@ exports.getEvidenceCertificate = async (req, res, next) => {
         const min = String(now.getUTCMinutes()).padStart(2, '0');
         const caseIdPart = fileRow.CaseId || 'noCase';
         const filename = `evidence_${caseIdPart}_${signingFileId}_${yyyy}${mm}${dd}_${hh}${min}.pdf`;
+
+        const evidenceEnd = process.hrtime.bigint();
+        const elapsedSeconds = Number(evidenceEnd - evidenceStart) / 1e9;
+        if (firmId) {
+            await recordFirmUsage({ firmId, meterKey: 'evidence_generation', quantity: 1, unit: 'count', metadata: { signingFileId, kind: 'certificate' } });
+            await recordFirmUsage({ firmId, meterKey: 'evidence_cpu_seconds', quantity: Math.max(0, elapsedSeconds), unit: 'seconds', metadata: { signingFileId, kind: 'certificate' } });
+        }
 
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
@@ -3834,12 +4056,43 @@ exports.signFile = async (req, res, next) => {
         const remaining = remainingResult.rows[0].count;
 
         if (remaining === 0) {
+            // Snapshot plan + retention policy at signing time for evidence.
+            // This avoids retroactively changing evidence if the tenant plan changes later.
+            let planKeyAtSigning = null;
+            let retentionDaysCoreAtSigning = null;
+            let retentionDaysPiiAtSigning = null;
+            let retentionPolicyHashAtSigning = null;
+
+            try {
+                const policy = await resolveTenantPlan(file.LawyerId);
+                planKeyAtSigning = policy?.planKey || null;
+                retentionDaysCoreAtSigning = policy?.effectiveDocumentsRetentionDaysCore ?? null;
+                retentionDaysPiiAtSigning = policy?.effectiveDocumentsRetentionDaysPii ?? null;
+
+                if (planKeyAtSigning && retentionDaysCoreAtSigning && retentionDaysPiiAtSigning) {
+                    const policyBlob = JSON.stringify({
+                        v: 1,
+                        planKey: planKeyAtSigning,
+                        documentsCoreDays: retentionDaysCoreAtSigning,
+                        documentsPiiDays: retentionDaysPiiAtSigning,
+                        platformFloorDays: policy?.platformMinDocumentsRetentionDays ?? null,
+                    });
+                    retentionPolicyHashAtSigning = sha256Hex(Buffer.from(policyBlob, 'utf8'));
+                }
+            } catch {
+                // Best-effort: if plan resolution fails, signing still completes.
+            }
+
             await pool.query(
                 `update signingfiles
                  set status = 'signed',
-                     signedat = now()
+                     signedat = now(),
+                     plan_key_at_signing = $2,
+                     retention_days_core_at_signing = $3,
+                     retention_days_pii_at_signing = $4,
+                     retention_policy_hash_at_signing = $5
                  where signingfileid = $1`,
-                [signingFileId]
+                [signingFileId, planKeyAtSigning, retentionDaysCoreAtSigning, retentionDaysPiiAtSigning, retentionPolicyHashAtSigning]
             );
 
             // Court-ready: finalize an immutable signed output and persist its SHA-256 + storage integrity metadata.

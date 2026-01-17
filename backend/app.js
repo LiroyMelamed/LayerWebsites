@@ -10,6 +10,7 @@ const authRoutes = require("./routes/auth");
 const customerRoutes = require("./routes/customerRoutes");
 const caseRoutes = require("./routes/caseRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const platformAdminRoutes = require("./routes/platformAdminRoutes");
 const caseTypeRoutes = require("./routes/caseTypeRoutes");
 const dataRoutes = require("./routes/dataRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
@@ -17,6 +18,7 @@ const filesRoutes = require("./routes/filesRoutes");
 const signingFileRoutes = require("./routes/signingFileRoutes");
 const auditEventsRoutes = require("./routes/auditEventsRoutes");
 const evidenceDocumentsRoutes = require("./routes/evidenceDocumentsRoutes");
+const billingRoutes = require("./routes/billingRoutes");
 
 const authMiddleware = require("./middlewares/authMiddleware");
 const { createRateLimitMiddleware, getClientIp } = require("./utils/rateLimiter");
@@ -123,11 +125,13 @@ app.use(
 app.use("/api/Customers", customerRoutes);
 app.use("/api/Cases", caseRoutes);
 app.use("/api/Admins", adminRoutes);
+app.use("/api/admin", platformAdminRoutes);
 app.use("/api/CaseTypes", caseTypeRoutes);
 app.use("/api/Data", dataRoutes);
 app.use("/api/Notifications", notificationRoutes);
 app.use("/api/Files", filesRoutes);
 app.use("/api/SigningFiles", signingFileRoutes);
+app.use("/api/billing", billingRoutes);
 app.use("/api/audit-events", auditEventsRoutes);
 app.use("/api/evidence-documents", evidenceDocumentsRoutes);
 

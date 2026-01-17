@@ -15,6 +15,7 @@ import { Text14, TextBold24 } from "../../components/specializedComponents/text/
 
 import { images } from "../../assets/images/images";
 import signingFilesApi from "../../api/signingFilesApi";
+import billingApi from "../../api/billingApi";
 
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
 import { getNavBarData } from "../../components/navBars/data/NavBarData";
@@ -165,6 +166,20 @@ export default function UploadFileForSigningScreen() {
     const navigate = useNavigate();
     const { openPopup, closePopup } = usePopup();
     const otpFeatureEnabled = SIGNING_OTP_ENABLED;
+
+    const RETENTION_NOTICE_ACK_KEY = "lw_retention_notice_ack_v1";
+
+    const { result: billingPlanData, performRequest: loadBillingPlan } = useHttpRequest(
+        billingApi.getPlan,
+        null,
+        () => {
+            // Non-blocking UI; ignore billing failures.
+        }
+    );
+
+    useEffect(() => {
+        loadBillingPlan();
+    }, [loadBillingPlan]);
 
     const openFieldEditor = (index) => {
         const spot = signatureSpots[index];
@@ -377,6 +392,51 @@ export default function UploadFileForSigningScreen() {
                 </SimpleContainer>
             </SimpleContainer>
         );
+    };
+
+    const ensureRetentionNoticeAcknowledged = async () => {
+        try {
+            if (localStorage.getItem(RETENTION_NOTICE_ACK_KEY) === "1") return true;
+
+            const coreDays = billingPlanData?.retention?.documentsCoreDays ?? "-";
+            const piiDays = billingPlanData?.retention?.documentsPiiDays ?? "-";
+
+            return await new Promise((resolve) => {
+                openPopup(
+                    <SimpleContainer className="lw-retentionNoticePopup">
+                        <TextBold24>{t('signing.upload.retentionNotice.title')}</TextBold24>
+                        <Text14 className="lw-retentionNoticePopup__text">
+                            {t('signing.upload.retentionNotice.text', { coreDays, piiDays })}
+                        </Text14>
+                        <SimpleContainer className="lw-retentionNoticePopup__actions">
+                            <SecondaryButton
+                                onPress={() => {
+                                    closePopup();
+                                    resolve(false);
+                                }}
+                            >
+                                {t('common.cancel')}
+                            </SecondaryButton>
+                            <PrimaryButton
+                                onPress={() => {
+                                    try {
+                                        localStorage.setItem(RETENTION_NOTICE_ACK_KEY, "1");
+                                    } catch {
+                                        // ignore
+                                    }
+                                    closePopup();
+                                    resolve(true);
+                                }}
+                            >
+                                {t('signing.upload.retentionNotice.ackButton')}
+                            </PrimaryButton>
+                        </SimpleContainer>
+                    </SimpleContainer>
+                );
+            });
+        } catch {
+            return true;
+        }
     };
 
     const openConfirmRemove = (index) => {
@@ -634,6 +694,9 @@ export default function UploadFileForSigningScreen() {
         setMessage(null);
 
         if (!validateForm()) return;
+
+        const retentionAck = await ensureRetentionNoticeAcknowledged();
+        if (!retentionAck) return;
 
         try {
             setLoading(true);

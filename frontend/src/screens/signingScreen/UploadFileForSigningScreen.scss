@@ -412,3 +412,25 @@
 .lw-uploadSigningScreen__loading {
     margin-block-start: v.$space-3;
 }
+
+.lw-retentionNoticePopup {
+    background: transparent;
+    border-radius: 0;
+    padding: 0;
+    min-width: 18rem;
+    max-width: 36rem;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.lw-retentionNoticePopup__text {
+    color: var(--lw-color-text);
+}
+
+.lw-retentionNoticePopup__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}

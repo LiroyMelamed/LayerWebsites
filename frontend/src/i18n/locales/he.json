@@ -98,9 +98,20 @@
         "actions": {
             "downloadSigned": "הורד קובץ חתום",
             "downloadEvidencePdf": "הורד PDF ראיות",
+            "downloadEvidenceZip": "הורד ZIP ראיות",
             "details": "פרטי מסמך",
             "uploadNew": "שליחת מסמך חדש לחתימה",
             "openPdf": "פתח PDF"
+        },
+        "planAndRetention": {
+            "title": "תכנית ושמירה",
+            "loading": "טוען תכנית…",
+            "unavailable": "פרטי התכנית אינם זמינים כרגע.",
+            "planKey": "תכנית:",
+            "retentionCore": "שמירה (ליבה):",
+            "retentionPii": "שמירה (מידע אישי):",
+            "monthlyDocs": "מסמכים החודש:",
+            "note": "מדיניות השמירה חלה על מסמכים וראיות. החזקה משפטית (אם מופעלת) עשויה לעקוף שמירה."
         },
         "details": {
             "titleFallback": "פרטי מסמך",
@@ -559,6 +570,11 @@
             "viewerTitle": "תצוגת מסמך והגדרת חתימות",
             "spotHelpText": "בכל עמוד יש כפתור \"+ הוסף חתימה\". גרור את הקוביות למיקום הרצוי או מחק",
             "sending": "שולח...",
+            "retentionNotice": {
+                "title": "הודעת שמירה",
+                "text": "מסמכים חתומים וראיות עשויים להישמר למשך {{coreDays}} ימים (ליבה) ו-{{piiDays}} ימים (מידע אישי), בהתאם לתכנית שלך ולמדיניות החזקה משפטית. המשך כדי לאשר שהבנת.",
+                "ackButton": "הבנתי"
+            },
             "sendToClient": "שלח ללקוח",
             "successSent": "הקובץ נשלח ללקוח לחתימה.",
             "errorSending": "שגיאה בשליחת הקובץ לחתימה.",

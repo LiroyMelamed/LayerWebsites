@@ -226,11 +226,16 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
         <div class="kv"><div class="k">Case ID</div><div class="v mono">${doc.caseId || "N/A"}</div></div>
         <div class="kv"><div class="k">Case Name</div><div class="v">${doc.caseName || "N/A"}</div></div>
         <div class="kv"><div class="k">Signing Policy Version</div><div class="v mono">${doc.signingPolicyVersion || "N/A"}</div></div>
+        <div class="kv"><div class="k">Signature Type</div><div class="v">${doc.signatureTypeDisclosure || "[REQUIRES LOCAL COUNSEL] Electronic signature (not PKI / not qualified / not \"approved\")."}</div></div>
         <div class="kv"><div class="k">Creation time (UTC)</div><div class="v">${doc.creationUtc}</div></div>
         <div class="kv"><div class="k">Signed PDF SHA256</div><div class="v mono">${doc.signedPdfSha256 || doc.signedHashSha256 || "-"}</div></div>
         <div class="kv"><div class="k">Presented PDF SHA256</div><div class="v mono">${doc.presentedPdfSha256 || "-"}</div></div>
         <div class="kv"><div class="k">Original PDF SHA256</div><div class="v mono">${doc.originalPdfSha256 || "-"}</div></div>
         <div class="kv"><div class="k">OTP Policy</div><div class="v">${doc.otpPolicy || "-"}</div></div>
+        <div class="kv"><div class="k">Plan (at signing)</div><div class="v mono">${doc.planKeyAtSigning || "-"}</div></div>
+        <div class="kv"><div class="k">Retention Core Days (at signing)</div><div class="v mono">${doc.retentionDaysCoreAtSigning ?? "-"}</div></div>
+        <div class="kv"><div class="k">Retention PII Days (at signing)</div><div class="v mono">${doc.retentionDaysPiiAtSigning ?? "-"}</div></div>
+        <div class="kv"><div class="k">Retention Policy Hash</div><div class="v mono">${doc.retentionPolicyHashAtSigning || "-"}</div></div>
       </div>
     </div>
 

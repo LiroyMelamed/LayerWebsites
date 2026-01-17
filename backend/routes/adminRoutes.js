@@ -10,4 +10,7 @@ router.put("/UpdateAdmin/:adminId", authMiddleware, requireAdmin, adminControlle
 router.delete("/DeleteAdmin/:adminId", authMiddleware, requireAdmin, adminController.deleteAdmin);
 router.post("/AddAdmin", authMiddleware, requireAdmin, adminController.addAdmin);
 
+// Platform-owned plans (tenant = lawyer userId)
+router.post("/tenants/:tenantId/plan", authMiddleware, requireAdmin, adminController.setTenantPlan);
+
 module.exports = router;

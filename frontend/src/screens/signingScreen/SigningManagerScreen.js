@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import signingFilesApi from "../../api/signingFilesApi";
+import billingApi from "../../api/billingApi";
 
 import SimpleLoader from "../../components/simpleComponents/SimpleLoader";
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
@@ -45,6 +46,24 @@ export default function SigningManagerScreen() {
 
     const { result: lawyerFilesData, isPerforming } = useAutoHttpRequest(
         signingFilesApi.getLawyerSigningFiles
+    );
+
+    const { result: billingPlanData, isPerforming: isBillingPlanLoading } = useAutoHttpRequest(
+        billingApi.getPlan,
+        {
+            onFailure: () => {
+                // Non-blocking UI; ignore billing failures.
+            },
+        }
+    );
+
+    const { result: billingUsageData, isPerforming: isBillingUsageLoading } = useAutoHttpRequest(
+        billingApi.getUsage,
+        {
+            onFailure: () => {
+                // Non-blocking UI; ignore billing failures.
+            },
+        }
     );
 
     const files = useMemo(() => lawyerFilesData?.files || [], [lawyerFilesData]);
@@ -149,6 +168,52 @@ export default function SigningManagerScreen() {
         setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
     };
 
+    const handleDownloadEvidenceZip = async (file) => {
+        try {
+            const signingFileId = file?.SigningFileId;
+            if (!signingFileId) {
+                showError({ messageKey: 'signingManager.errors.missingDocumentId' });
+                return;
+            }
+
+            const isSigned = String(file?.Status || '').toLowerCase() === 'signed';
+            if (!isSigned) {
+                showError({ messageKey: 'signingManager.errors.evidencePackageSignedOnly' });
+                return;
+            }
+
+            const baseUrl = ApiUtils?.defaults?.baseURL || "";
+            const token = localStorage.getItem("token");
+            const url = `${baseUrl}/SigningFiles/${encodeURIComponent(signingFileId)}/evidence-package`;
+
+            const res = await fetch(url, {
+                method: "GET",
+                headers: {
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+            });
+
+            if (!res.ok) {
+                let payload = null;
+                try {
+                    payload = await res.json();
+                } catch {
+                    payload = null;
+                }
+                showError({ message: payload?.message, messageKey: payload?.message ? undefined : 'signingManager.errors.evidencePackageDownloadError' });
+                return;
+            }
+
+            const disposition = res.headers.get("content-disposition");
+            const filename = parseFilenameFromContentDisposition(disposition) || `evidence_${file?.CaseId || "noCase"}_${signingFileId}.zip`;
+            const blob = await res.blob();
+            downloadBlobAsFile(blob, filename);
+        } catch (err) {
+            console.error("Evidence ZIP download error:", err);
+            showError({ messageKey: 'signingManager.errors.evidencePackageDownloadError' });
+        }
+    };
+
     const handleDownload = async (signingFileId, fileName) => {
         try {
             const response = await signingFilesApi.downloadSignedFile(signingFileId);
@@ -238,6 +303,7 @@ export default function SigningManagerScreen() {
                 onOpenPdf={() => openPdfInNewTab(file.SigningFileId)}
                 onDownloadSigned={() => handleDownload(file.SigningFileId, file.FileName)}
                 onDownloadEvidencePdf={() => handleDownloadEvidencePdf(file)}
+                onDownloadEvidenceZip={() => handleDownloadEvidenceZip(file)}
                 formatDotDate={formatDotDate}
             />
         );
@@ -259,6 +325,41 @@ export default function SigningManagerScreen() {
             )}
 
             <SimpleScrollView className="lw-signingManagerScreen__scroll">
+
+                <SimpleCard className="lw-signingManagerScreen__planCard">
+                    <h3 className="lw-signingManagerScreen__planTitle">{t('signingManager.planAndRetention.title')}</h3>
+                    {isBillingPlanLoading ? (
+                        <Text14>{t('signingManager.planAndRetention.loading')}</Text14>
+                    ) : billingPlanData?.planKey ? (
+                        <>
+                            <SimpleContainer className="lw-signingManagerScreen__detailRow">
+                                <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.planAndRetention.planKey')}</div>
+                                <div className="lw-signingManagerScreen__detailValue">{billingPlanData.planKey || '-'}</div>
+                            </SimpleContainer>
+                            <SimpleContainer className="lw-signingManagerScreen__detailRow">
+                                <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.planAndRetention.retentionCore')}</div>
+                                <div className="lw-signingManagerScreen__detailValue">{billingPlanData?.retention?.documentsCoreDays ?? '-'}</div>
+                            </SimpleContainer>
+                            <SimpleContainer className="lw-signingManagerScreen__detailRow">
+                                <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.planAndRetention.retentionPii')}</div>
+                                <div className="lw-signingManagerScreen__detailValue">{billingPlanData?.retention?.documentsPiiDays ?? '-'}</div>
+                            </SimpleContainer>
+
+                            {!isBillingUsageLoading && billingUsageData?.documents && billingPlanData?.quotas?.documentsMonthlyQuota != null && (
+                                <SimpleContainer className="lw-signingManagerScreen__detailRow">
+                                    <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.planAndRetention.monthlyDocs')}</div>
+                                    <div className="lw-signingManagerScreen__detailValue">{billingUsageData.documents.createdThisMonth}/{billingPlanData.quotas.documentsMonthlyQuota}</div>
+                                </SimpleContainer>
+                            )}
+
+                            <Text14 className="lw-signingManagerScreen__planNote">
+                                {t('signingManager.planAndRetention.note')}
+                            </Text14>
+                        </>
+                    ) : (
+                        <Text14>{t('signingManager.planAndRetention.unavailable')}</Text14>
+                    )}
+                </SimpleCard>
 
                 <SimpleContainer className="lw-signingManagerScreen__topRow">
                     <SimpleContainer className="lw-signingManagerScreen__searchContainer">
@@ -393,7 +494,7 @@ export default function SigningManagerScreen() {
     );
 }
 
-function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned, onDownloadEvidencePdf, formatDotDate }) {
+function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned, onDownloadEvidencePdf, onDownloadEvidenceZip, formatDotDate }) {
     const { t } = useTranslation();
     const totalSpots = Number(file?.TotalSpots || 0);
     const signedSpots = Number(file?.SignedSpots || 0);
@@ -494,6 +595,9 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                     <PrimaryButton onPress={onDownloadEvidencePdf} disabled={!isSigned}>
                         {t('signingManager.actions.downloadEvidencePdf')}
                     </PrimaryButton>
+                    <SecondaryButton onPress={onDownloadEvidenceZip} disabled={!isSigned}>
+                        {t('signingManager.actions.downloadEvidenceZip')}
+                    </SecondaryButton>
                     <SecondaryButton onPress={onClose}>{t('common.close')}</SecondaryButton>
                 </SimpleContainer>
             </>

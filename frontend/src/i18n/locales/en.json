@@ -80,9 +80,20 @@
         "actions": {
             "downloadSigned": "Download signed file",
             "downloadEvidencePdf": "Download evidence PDF",
+            "downloadEvidenceZip": "Download evidence ZIP",
             "details": "Document details",
             "uploadNew": "Send new document for signing",
             "openPdf": "Open PDF"
+        },
+        "planAndRetention": {
+            "title": "Plan & retention",
+            "loading": "Loading plan…",
+            "unavailable": "Plan info is currently unavailable.",
+            "planKey": "Plan:",
+            "retentionCore": "Retention (core):",
+            "retentionPii": "Retention (PII):",
+            "monthlyDocs": "Docs this month:",
+            "note": "Retention applies to documents and evidence. Legal hold (if enabled) may override retention."
         },
         "details": {
             "titleFallback": "Document details",
@@ -555,6 +566,11 @@
             "viewerTitle": "Document preview & signature setup",
             "spotHelpText": "Each page has a \"+ Add signature\" button. Drag the boxes to the desired location or delete",
             "sending": "Sending...",
+            "retentionNotice": {
+                "title": "Retention notice",
+                "text": "Signed documents and evidence may be retained for {{coreDays}} days (core) and {{piiDays}} days (PII), according to your plan and any legal hold policies. Continue to confirm you understand.",
+                "ackButton": "I understand"
+            },
             "sendToClient": "Send to customer",
             "successSent": "The file was sent to the customer for signing.",
             "errorSending": "Error sending the file for signing.",

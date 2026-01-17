@@ -195,10 +195,51 @@ const addAdmin = async (req, res) => {
     }
 };
 
+// Platform-owned plan assignment (tenant = lawyer userId).
+// Tenants cannot change retention; only platform admins can assign plans.
+const setTenantPlan = async (req, res) => {
+    const tenantId = requireInt(req, res, { source: 'params', name: 'tenantId' });
+    if (tenantId === null) return;
+
+    const planKeyRaw = req?.body?.plan_key ?? req?.body?.planKey;
+    const planKey = String(planKeyRaw || '').trim().toUpperCase();
+    if (!planKey) {
+        return res.status(422).json({ message: 'plan_key is required' });
+    }
+
+    try {
+        const planRes = await pool.query(
+            'SELECT plan_key FROM subscription_plans WHERE plan_key = $1 LIMIT 1',
+            [planKey]
+        );
+        if (planRes.rowCount === 0) {
+            return res.status(404).json({ message: 'Unknown plan_key' });
+        }
+
+        await pool.query(
+            `INSERT INTO tenant_subscriptions(tenant_id, plan_key, status, starts_at, ends_at, updated_at)
+             VALUES ($1, $2, 'active', now(), NULL, now())
+             ON CONFLICT (tenant_id) DO UPDATE
+             SET plan_key = EXCLUDED.plan_key,
+                 status = 'active',
+                 ends_at = NULL,
+                 starts_at = COALESCE(tenant_subscriptions.starts_at, now()),
+                 updated_at = now()`,
+            [tenantId, planKey]
+        );
+
+        return res.status(200).json({ tenantId, plan_key: planKey, status: 'active' });
+    } catch (error) {
+        console.error('Error setting tenant plan:', error);
+        return res.status(500).json({ message: 'Error setting tenant plan' });
+    }
+};
+
 module.exports = {
     getAdmins,
     getAdminByName,
     updateAdmin,
     deleteAdmin,
     addAdmin,
+    setTenantPlan,
 };

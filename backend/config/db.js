@@ -14,14 +14,20 @@ const pool = new Pool({
     connectionTimeoutMillis: Number.parseInt(process.env.DB_POOL_CONN_TIMEOUT_MS || '5000', 10),
 });
 
-// Test the connection
-pool.connect((err, client, done) => {
-    if (err) {
-        console.error('Error connecting to PostgreSQL database:', err.message);
-        return;
-    }
-    console.log('Connected to PostgreSQL database:', process.env.DB_NAME);
-    client.release();
-});
+// Test the connection (skip in tests to avoid noisy timeouts when DB isn't configured)
+const shouldTestConnection =
+    process.env.NODE_ENV !== 'test' &&
+    String(process.env.DB_DISABLE_CONNECT_TEST || '').toLowerCase() !== 'true';
+
+if (shouldTestConnection) {
+    pool.connect((err, client) => {
+        if (err) {
+            console.error('Error connecting to PostgreSQL database:', err.message);
+            return;
+        }
+        console.log('Connected to PostgreSQL database:', process.env.DB_NAME);
+        client.release();
+    });
+}
 
 module.exports = pool;
