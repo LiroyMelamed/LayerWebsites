@@ -7,6 +7,7 @@ import { TaggedCasesScreenName } from "../../../screens/taggedCasesScreen/Tagged
 import { AdminStackName } from "../../../navigation/AdminStack";
 import { SigningManagerScreenName } from "../../../screens/signingScreen/SigningManagerScreen";
 import { EvidenceDocumentsScreenName } from "../../../screens/evidenceDocuments/EvidenceDocumentsScreen";
+import { PlanUsageScreenName } from "../../../screens/billingScreen/PlanUsageScreen";
 
 export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t) => ({
     NavBarLinks: [
@@ -27,6 +28,12 @@ export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t) =>
             buttonScreen: t('nav.evidenceDocuments'),
             icon: null,
             onClick: () => navigate(AdminStackName + EvidenceDocumentsScreenName),
+        },
+        {
+            buttonText: t('nav.planUsage'),
+            buttonScreen: t('nav.planUsage'),
+            icon: null,
+            onClick: () => navigate(AdminStackName + PlanUsageScreenName),
         },
         {
             buttonText: t('nav.allCases'),

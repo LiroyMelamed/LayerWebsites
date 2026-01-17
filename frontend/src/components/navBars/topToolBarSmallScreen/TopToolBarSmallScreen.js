@@ -11,6 +11,7 @@ import SimpleScrollView from "../../simpleComponents/SimpleScrollView";
 import { useFromApp } from "../../../providers/FromAppProvider";
 import PrimaryButton from "../../styledComponents/buttons/PrimaryButton";
 import { useTranslation } from "react-i18next";
+import LanguageSwitcher from '../../i18n/LanguageSwitcher';
 
 import './TopToolBarSmallScreen.scss';
 
@@ -56,7 +57,7 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
 
             {isDrawerOpen &&
                 <SimpleContainer className="lw-topToolBarSmallScreen__sidebar">
-                    <SimpleScrollView>
+                    <SimpleScrollView className="lw-topToolBarSmallScreen__scroll">
                         <SimpleContainer className="lw-topToolBarSmallScreen__sidebarContent">
                             {NavBarLinks.map((item, index) => {
 
@@ -78,6 +79,10 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
                             })}
                         </SimpleContainer>
                     </SimpleScrollView>
+
+                    <SimpleContainer className="lw-topToolBarSmallScreen__languageWrap">
+                        <LanguageSwitcher />
+                    </SimpleContainer>
                     {!isFromApp && (
                         <SimpleContainer className="lw-topToolBarSmallScreen__logout">
                             <PrimaryButton

@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { setLanguage } from '../../i18n/i18n';
 import './LanguageSwitcher.scss';
 
+const ENABLE_ENGLISH_OPTION = false;
+
 export default function LanguageSwitcher() {
     const { i18n, t } = useTranslation();
     const [open, setOpen] = useState(false);
@@ -39,9 +41,11 @@ export default function LanguageSwitcher() {
                     <button type="button" role="menuitem" onClick={() => choose('ar')}>
                         {t('common.arabic')}
                     </button>
-                    <button type="button" role="menuitem" onClick={() => choose('en')}>
-                        {t('common.english')}
-                    </button>
+                    {ENABLE_ENGLISH_OPTION && (
+                        <button type="button" role="menuitem" onClick={() => choose('en')}>
+                            {t('common.english')}
+                        </button>
+                    )}
                 </div>
             )}
         </div>

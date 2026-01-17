@@ -32,9 +32,6 @@ export default function FloatingLanguageBubble() {
         await setLanguage(lng);
     }
 
-    const currentLabel =
-        current === 'he' ? t('common.hebrew') : current === 'ar' ? t('common.arabic') : t('common.english');
-
     return (
         <div className="lw-floatingLanguageBubble">
             <button
@@ -44,7 +41,7 @@ export default function FloatingLanguageBubble() {
                 aria-haspopup="menu"
                 aria-expanded={open}
             >
-                {t('common.language')}: {currentLabel}
+                {t('common.language')}
             </button>
 
             {open && (

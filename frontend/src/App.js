@@ -10,7 +10,6 @@ import { ClientMainScreenName } from './screens/client/clientMainScreen/ClientMa
 import { useFromApp } from './providers/FromAppProvider';
 import { SigningScreenName } from './screens/signingScreen/SigningScreen';
 import { useTranslation } from 'react-i18next';
-import FloatingLanguageBubble from './components/i18n/FloatingLanguageBubble';
 import { EvidenceDocumentsScreenName } from './screens/evidenceDocuments/EvidenceDocumentsScreen';
 import EvidenceVerifyScreen, { EvidenceVerifyScreenName } from './screens/verify/EvidenceVerifyScreen';
 
@@ -184,7 +183,6 @@ const App = () => {
 
   return (
     <>
-      <FloatingLanguageBubble />
       {pullRefresh.state !== 'idle' && (
         <div className="lw-pullRefresh" aria-hidden="true">
           <div

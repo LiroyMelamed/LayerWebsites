@@ -13,6 +13,7 @@ import { useFromApp } from "../../providers/FromAppProvider";
 import GenericButton from "../styledComponents/buttons/GenericButton";
 import { colors } from "../../constant/colors";
 import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '../i18n/LanguageSwitcher';
 import "./TopAndRightNavBar.scss";
 
 const Logo = images.Logos.LogoSlangWhite;
@@ -60,21 +61,26 @@ export default function TopAndRightNavBar({ chosenIndex = -1, children, LogoNavi
             </SimpleContainer>
 
           </SimpleScrollView>
-          <SimpleContainer className="lw-topAndRightNavBar__logoutWrap">
-            <GenericButton
-              backgroundColor={colors.darkRed}
-              pressedBackgroundColor={colors.darkRed}
-              disabledBackgroundColor={colors.disabled}
-              contentColor={colors.white}
-              pressedContentColor={colors.white}
-              disabledContentColor={colors.disabledHighlighted}
-              onPress={() => {
-                localStorage.removeItem("token");
-                navigate('/');
-              }}
-            >
-              {t('common.logout')}
-            </GenericButton>
+          <SimpleContainer className="lw-topAndRightNavBar__bottom">
+            <SimpleContainer className="lw-topAndRightNavBar__languageWrap">
+              <LanguageSwitcher />
+            </SimpleContainer>
+            <SimpleContainer className="lw-topAndRightNavBar__logoutWrap">
+              <GenericButton
+                backgroundColor={colors.darkRed}
+                pressedBackgroundColor={colors.darkRed}
+                disabledBackgroundColor={colors.disabled}
+                contentColor={colors.white}
+                pressedContentColor={colors.white}
+                disabledContentColor={colors.disabledHighlighted}
+                onPress={() => {
+                  localStorage.removeItem("token");
+                  navigate('/');
+                }}
+              >
+                {t('common.logout')}
+              </GenericButton>
+            </SimpleContainer>
           </SimpleContainer>
         </SimpleContainer>
       )}

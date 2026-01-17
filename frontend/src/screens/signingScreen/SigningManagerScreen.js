@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import signingFilesApi from "../../api/signingFilesApi";
-import billingApi from "../../api/billingApi";
 
 import SimpleLoader from "../../components/simpleComponents/SimpleLoader";
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
@@ -46,24 +45,6 @@ export default function SigningManagerScreen() {
 
     const { result: lawyerFilesData, isPerforming } = useAutoHttpRequest(
         signingFilesApi.getLawyerSigningFiles
-    );
-
-    const { result: billingPlanData, isPerforming: isBillingPlanLoading } = useAutoHttpRequest(
-        billingApi.getPlan,
-        {
-            onFailure: () => {
-                // Non-blocking UI; ignore billing failures.
-            },
-        }
-    );
-
-    const { result: billingUsageData, isPerforming: isBillingUsageLoading } = useAutoHttpRequest(
-        billingApi.getUsage,
-        {
-            onFailure: () => {
-                // Non-blocking UI; ignore billing failures.
-            },
-        }
     );
 
     const files = useMemo(() => lawyerFilesData?.files || [], [lawyerFilesData]);
@@ -325,41 +306,6 @@ export default function SigningManagerScreen() {
             )}
 
             <SimpleScrollView className="lw-signingManagerScreen__scroll">
-
-                <SimpleCard className="lw-signingManagerScreen__planCard">
-                    <h3 className="lw-signingManagerScreen__planTitle">{t('signingManager.planAndRetention.title')}</h3>
-                    {isBillingPlanLoading ? (
-                        <Text14>{t('signingManager.planAndRetention.loading')}</Text14>
-                    ) : billingPlanData?.planKey ? (
-                        <>
-                            <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.planAndRetention.planKey')}</div>
-                                <div className="lw-signingManagerScreen__detailValue">{billingPlanData.planKey || '-'}</div>
-                            </SimpleContainer>
-                            <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.planAndRetention.retentionCore')}</div>
-                                <div className="lw-signingManagerScreen__detailValue">{billingPlanData?.retention?.documentsCoreDays ?? '-'}</div>
-                            </SimpleContainer>
-                            <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.planAndRetention.retentionPii')}</div>
-                                <div className="lw-signingManagerScreen__detailValue">{billingPlanData?.retention?.documentsPiiDays ?? '-'}</div>
-                            </SimpleContainer>
-
-                            {!isBillingUsageLoading && billingUsageData?.documents && billingPlanData?.quotas?.documentsMonthlyQuota != null && (
-                                <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                    <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.planAndRetention.monthlyDocs')}</div>
-                                    <div className="lw-signingManagerScreen__detailValue">{billingUsageData.documents.createdThisMonth}/{billingPlanData.quotas.documentsMonthlyQuota}</div>
-                                </SimpleContainer>
-                            )}
-
-                            <Text14 className="lw-signingManagerScreen__planNote">
-                                {t('signingManager.planAndRetention.note')}
-                            </Text14>
-                        </>
-                    ) : (
-                        <Text14>{t('signingManager.planAndRetention.unavailable')}</Text14>
-                    )}
-                </SimpleCard>
 
                 <SimpleContainer className="lw-signingManagerScreen__topRow">
                     <SimpleContainer className="lw-signingManagerScreen__searchContainer">

@@ -66,9 +66,18 @@
     transition: transform 0.3s ease;
 }
 
+.lw-topToolBarSmallScreen__scroll {
+    flex: 1;
+}
+
 .lw-topToolBarSmallScreen__sidebarContent {
     flex: 1;
     flex-direction: column;
+}
+
+.lw-topToolBarSmallScreen__languageWrap {
+    align-self: center;
+    margin-block: 0.75rem;
 }
 
 .lw-topToolBarSmallScreen__logout {

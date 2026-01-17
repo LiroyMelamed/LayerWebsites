@@ -1,0 +1,57 @@
+.lw-plansPricingScreen__scroll {
+    padding: 16px;
+}
+
+.lw-plansPricingScreen__title {
+    margin: 0 0 6px 0;
+}
+
+.lw-plansPricingScreen__subtitle {
+    opacity: 0.85;
+    margin: 0 0 14px 0;
+}
+
+.lw-plansPricingScreen__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+}
+
+.lw-plansPricingScreen__card {
+    flex-direction: column;
+}
+
+.lw-plansPricingScreen__card--current {
+    outline: 2px solid rgba(76, 175, 80, 0.55);
+}
+
+.lw-plansPricingScreen__planKey {
+    opacity: 0.8;
+    margin-top: 4px;
+}
+
+.lw-plansPricingScreen__currentBadge {
+    margin-top: 8px;
+    font-weight: 700;
+}
+
+.lw-plansPricingScreen__divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.12);
+    margin: 12px 0;
+}
+
+.lw-plansPricingScreen__row {
+    display: flex;
+    gap: 1rem;
+    margin: 0.45rem 0;
+}
+
+.lw-plansPricingScreen__label {
+    opacity: 0.8;
+}
+
+.lw-plansPricingScreen__value {
+    font-weight: 600;
+    text-align: end;
+}

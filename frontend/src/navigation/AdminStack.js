@@ -8,6 +8,8 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import SigningManagerScreen, { SigningManagerScreenName } from "../screens/signingScreen/SigningManagerScreen";
 import UploadFileForSigningScreen, { uploadFileForSigningScreenName } from "../screens/signingScreen/UploadFileForSigningScreen";
 import EvidenceDocumentsScreen, { EvidenceDocumentsScreenName } from "../screens/evidenceDocuments/EvidenceDocumentsScreen";
+import PlanUsageScreen, { PlanUsageScreenName } from "../screens/billingScreen/PlanUsageScreen";
+import PlansPricingScreen, { PlansPricingScreenName } from "../screens/billingScreen/PlansPricingScreen";
 import { LoginStackName } from "./LoginStack";
 import { LoginScreenName } from "../screens/loginScreen/LoginScreen";
 
@@ -27,6 +29,8 @@ function AdminStack() {
                 <Route path={AllCasesTypeScreenName} element={<AllCasesTypeScreen />} />
                 <Route path={SigningManagerScreenName} element={<SigningManagerScreen />} />
                 <Route path={EvidenceDocumentsScreenName} element={<EvidenceDocumentsScreen />} />
+                <Route path={PlanUsageScreenName} element={<PlanUsageScreen />} />
+                <Route path={PlansPricingScreenName} element={<PlansPricingScreen />} />
                 <Route path={uploadFileForSigningScreenName} element={<UploadFileForSigningScreen />} />
 
             </Routes>

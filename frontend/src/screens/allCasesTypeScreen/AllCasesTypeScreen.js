@@ -76,7 +76,7 @@ export default function AllCasesTypeScreen() {
         >
             {isSmallScreen && (
                 <TopToolBarSmallScreen
-                    chosenIndex={5}
+                    chosenIndex={7}
                     LogoNavigate={AdminStackName + MainScreenName}
                 />
             )}

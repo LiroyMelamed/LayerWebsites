@@ -7,5 +7,6 @@ const billingController = require('../controllers/billingController');
 // Tenant-visible, read-only.
 router.get('/plan', authMiddleware, billingController.getCurrentPlan);
 router.get('/usage', authMiddleware, billingController.getCurrentUsage);
+router.get('/plans', authMiddleware, billingController.listPlans);
 
 module.exports = router;

@@ -1,0 +1,43 @@
+.lw-planUsageScreen__scroll {
+    padding: 16px;
+}
+
+.lw-planUsageScreen__title {
+    margin: 0 0 12px 0;
+}
+
+.lw-planUsageScreen__card {
+    flex-direction: column;
+    margin-bottom: 16px;
+}
+
+.lw-planUsageScreen__row {
+    display: flex;
+    gap: 1rem;
+    margin: 0.5rem 0;
+}
+
+.lw-planUsageScreen__label {
+    opacity: 0.8;
+}
+
+.lw-planUsageScreen__value {
+    font-weight: 600;
+    text-align: end;
+}
+
+.lw-planUsageScreen__meter {
+    flex-direction: column;
+    margin-top: 1rem;
+}
+
+.lw-planUsageScreen__hint {
+    opacity: 0.85;
+    margin-top: 8px;
+}
+
+.lw-planUsageScreen__upgradeButton {
+    margin-top: 12px;
+    align-self: flex-end;
+    padding: 10px 14px;
+}

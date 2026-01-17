@@ -40,9 +40,20 @@
     flex: 1;
 }
 
-.lw-topAndRightNavBar__logoutWrap {
-    margin-top: 0.75rem;
+.lw-topAndRightNavBar__bottom {
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: auto;
     margin-bottom: 1.5rem;
+}
+
+.lw-topAndRightNavBar__languageWrap {
+    align-self: center;
+}
+
+.lw-topAndRightNavBar__logoutWrap {
     align-self: center;
 }
 
