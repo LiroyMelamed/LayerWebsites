@@ -12,26 +12,32 @@ import PlanUsageScreen, { PlanUsageScreenName } from "../screens/billingScreen/P
 import PlansPricingScreen, { PlansPricingScreenName } from "../screens/billingScreen/PlansPricingScreen";
 import { LoginStackName } from "./LoginStack";
 import { LoginScreenName } from "../screens/loginScreen/LoginScreen";
+import { getDemoModeToken } from "../utils/demoMode";
 
 export const AdminStackName = "/AdminStack";
 
+function toRelativePath(pathname) {
+    const p = String(pathname || "");
+    return p.startsWith("/") ? p.slice(1) : p;
+}
+
 function AdminStack() {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const token = typeof window !== "undefined" ? (getDemoModeToken() || localStorage.getItem("token")) : null;
     if (!token) return <Navigate to={LoginStackName + LoginScreenName} replace />;
 
     return (
         <TopAndRightNavBar LogoNavigate={AdminStackName + MainScreenName}>
             <Routes>
-                <Route path={MainScreenName} element={<MainScreen />} />
-                <Route path={TaggedCasesScreenName} element={<TaggedCasesScreen />} />
-                <Route path={AllCasesScreenName} element={<AllCasesScreen />} />
-                <Route path={AllMangerScreenName} element={<AllMangerScreen />} />
-                <Route path={AllCasesTypeScreenName} element={<AllCasesTypeScreen />} />
-                <Route path={SigningManagerScreenName} element={<SigningManagerScreen />} />
-                <Route path={EvidenceDocumentsScreenName} element={<EvidenceDocumentsScreen />} />
-                <Route path={PlanUsageScreenName} element={<PlanUsageScreen />} />
-                <Route path={PlansPricingScreenName} element={<PlansPricingScreen />} />
-                <Route path={uploadFileForSigningScreenName} element={<UploadFileForSigningScreen />} />
+                <Route path={toRelativePath(MainScreenName)} element={<MainScreen />} />
+                <Route path={toRelativePath(TaggedCasesScreenName)} element={<TaggedCasesScreen />} />
+                <Route path={toRelativePath(AllCasesScreenName)} element={<AllCasesScreen />} />
+                <Route path={toRelativePath(AllMangerScreenName)} element={<AllMangerScreen />} />
+                <Route path={toRelativePath(AllCasesTypeScreenName)} element={<AllCasesTypeScreen />} />
+                <Route path={toRelativePath(SigningManagerScreenName)} element={<SigningManagerScreen />} />
+                <Route path={toRelativePath(EvidenceDocumentsScreenName)} element={<EvidenceDocumentsScreen />} />
+                <Route path={toRelativePath(PlanUsageScreenName)} element={<PlanUsageScreen />} />
+                <Route path={toRelativePath(PlansPricingScreenName)} element={<PlansPricingScreen />} />
+                <Route path={toRelativePath(uploadFileForSigningScreenName)} element={<UploadFileForSigningScreen />} />
 
             </Routes>
         </TopAndRightNavBar>

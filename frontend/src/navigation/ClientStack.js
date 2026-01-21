@@ -7,20 +7,26 @@ import NotificationsScreen, { NotificationsScreenName } from "../screens/client/
 import ProfileScreen, { ProfileScreenName } from "../screens/client/profile/ProfileScreen";
 import { LoginStackName } from "./LoginStack";
 import { LoginScreenName } from "../screens/loginScreen/LoginScreen";
+import { getDemoModeToken } from "../utils/demoMode";
 
 export const ClientStackName = "/ClientStack";
 
+function toRelativePath(pathname) {
+    const p = String(pathname || "");
+    return p.startsWith("/") ? p.slice(1) : p;
+}
+
 function ClientStack() {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const token = typeof window !== "undefined" ? (getDemoModeToken() || localStorage.getItem("token")) : null;
     if (!token) return <Navigate to={LoginStackName + LoginScreenName} replace />;
 
     return (
         <TopAndRightNavBar LogoNavigate={ClientStackName + ClientMainScreenName} GetNavBarData={getClientNavBarData}>
             <Routes>
-                <Route path={ClientMainScreenName} element={<ClientMainScreen />} />
-                <Route path={NotificationsScreenName} element={<NotificationsScreen />} />
-                <Route path={SigningScreenName} element={<SigningScreen />} />
-                <Route path={ProfileScreenName} element={<ProfileScreen />} />
+                <Route path={toRelativePath(ClientMainScreenName)} element={<ClientMainScreen />} />
+                <Route path={toRelativePath(NotificationsScreenName)} element={<NotificationsScreen />} />
+                <Route path={toRelativePath(SigningScreenName)} element={<SigningScreen />} />
+                <Route path={toRelativePath(ProfileScreenName)} element={<ProfileScreen />} />
             </Routes>
         </TopAndRightNavBar>
     );

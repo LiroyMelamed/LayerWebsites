@@ -43,7 +43,7 @@ export default function AllCasesTypeCard({ allCasesType, reperformAfterSave, isP
 
                         <CaseTypeMenuItem
                             fullCase={item}
-                            rightTitle={item.CaseName}
+                            rightTitle={item.CaseTypeName}
 
                             leftPreFirstLine={t('cases.caseType')}
                             leftValueFirstLine={item.CaseTypeName}
@@ -54,7 +54,6 @@ export default function AllCasesTypeCard({ allCasesType, reperformAfterSave, isP
                             leftPreSecondLine={null}
                             leftValueSecondLine={item.CaseType}
 
-                            openData={getOpenData(allCasesType, index, t)}
                             rePerformFunction={reperformAfterSave}
                         />
                     </SimpleContainer>
@@ -62,28 +61,4 @@ export default function AllCasesTypeCard({ allCasesType, reperformAfterSave, isP
             </SimpleContainer>
         </SimpleCard>
     )
-}
-
-//Functions
-function getOpenData(taggedCases, index, t) {
-    const openData = [
-        {
-            title: t('cases.customerName'),
-            value: taggedCases[index].CustomerName
-        },
-        {
-            title: t('cases.customerId'),
-            value: taggedCases[index].CostumerTaz
-        },
-        {
-            title: t('cases.phoneNumber'),
-            value: taggedCases[index].PhoneNumber
-        },
-        {
-            title: t('taggedCases.pinned'),
-            value: taggedCases[index].IsTagged ? t('common.yes') : t('common.no')
-        },
-    ]
-
-    return openData;
 }

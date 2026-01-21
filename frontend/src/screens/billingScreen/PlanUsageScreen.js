@@ -19,7 +19,7 @@ import ProgressBar from "../../components/specializedComponents/containers/Progr
 
 import billingApi from "../../api/billingApi";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
-import { COMMERCIAL_PRICING, normalizeCurrencySymbol } from "../../constant/commercialPricing";
+import { normalizeCurrencySymbol } from "../../constant/commercialPricing";
 
 import { images } from "../../assets/images/images";
 import { AdminStackName } from "../../navigation/AdminStack";
@@ -131,7 +131,8 @@ export default function PlanUsageScreen() {
 
     const renderMeter = ({ title, used, quota, unit, labelKey }) => {
         const usedNum = safeNumber(used);
-        const quotaNum = quota === null || quota === undefined ? null : safeNumber(quota);
+        const rawQuotaNum = quota === null || quota === undefined ? null : safeNumber(quota);
+        const quotaNum = rawQuotaNum === 0 ? null : rawQuotaNum;
 
         const usedText = usedNum === null ? t('planUsage.quotaNotAvailable') : `${usedNum}${unit ? ` ${unit}` : ''}`;
         const quotaText = quotaNum === null ? t('planUsage.quotaUnlimited') : `${quotaNum}${unit ? ` ${unit}` : ''}`;
@@ -141,7 +142,7 @@ export default function PlanUsageScreen() {
                 <TextBold24>{title}</TextBold24>
                 {renderRow(t('planUsage.used'), usedText)}
                 {renderRow(t('planUsage.limit'), quotaText)}
-                {quotaNum !== null && usedNum !== null && (
+                {quotaNum !== null && usedNum !== null && quotaNum > 0 && (
                     <ProgressBar
                         IsClosed
                         currentStage={usedNum}
@@ -165,6 +166,14 @@ export default function PlanUsageScreen() {
     const coreRetentionText = normalized.retentionCoreDays ?? "-";
     const piiRetentionText = normalized.retentionPiiDays ?? "-";
 
+    const scopeText = normalized.scope
+        ? t(`planUsage.scopeValues.${String(normalized.scope).toLowerCase()}`, { defaultValue: String(normalized.scope) })
+        : "-";
+
+    const enforcementModeText = normalized.enforcementMode
+        ? t(`planUsage.enforcementModeValues.${String(normalized.enforcementMode).toLowerCase()}`, { defaultValue: String(normalized.enforcementMode) })
+        : null;
+
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
             {isSmallScreen && (
@@ -176,26 +185,16 @@ export default function PlanUsageScreen() {
             )}
 
             <SimpleScrollView className="lw-planUsageScreen__scroll">
-                <h2 className="lw-planUsageScreen__title"><TextBold24>{t('planUsage.title')}</TextBold24></h2>
+                <TextBold24 className="lw-planUsageScreen__title">{t('planUsage.title')}</TextBold24>
 
                 <SimpleCard className="lw-planUsageScreen__card">
                     <TextBold24>{t('planUsage.planCardTitle')}</TextBold24>
                     {renderRow(t('planUsage.planName'), normalized.planName)}
                     {renderRow(t('planUsage.planKey'), normalized.planKey)}
                     {renderRow(t('planUsage.price'), priceText)}
-                    {renderRow(t('planUsage.scope'), normalized.scope || '-')}
+                    {renderRow(t('planUsage.scope'), scopeText)}
                     {normalized.firmId != null && renderRow(t('planUsage.firmId'), String(normalized.firmId))}
-                    {normalized.enforcementMode && renderRow(t('planUsage.enforcementMode'), String(normalized.enforcementMode))}
-
-                    <Text14 className="lw-planUsageScreen__hint">
-                        {t('planUsage.commercialPricingHint', {
-                            currency: COMMERCIAL_PRICING.currencySymbol,
-                            coreAmount: COMMERCIAL_PRICING.coreMonthlyAmount,
-                            signingAmount: COMMERCIAL_PRICING.signingAddonMonthlyAmount,
-                            included: COMMERCIAL_PRICING.signingIncludedDocs,
-                            overage: COMMERCIAL_PRICING.signingOveragePerDocAmount,
-                        })}
-                    </Text14>
+                    {enforcementModeText && renderRow(t('planUsage.enforcementMode'), enforcementModeText)}
 
                     <SimpleButton
                         className="lw-planUsageScreen__upgradeButton"
@@ -209,7 +208,6 @@ export default function PlanUsageScreen() {
                     <TextBold24>{t('planUsage.retentionTitle')}</TextBold24>
                     {renderRow(t('planUsage.retentionCore'), `${coreRetentionText} ${t('planUsage.days')}`)}
                     {renderRow(t('planUsage.retentionPii'), `${piiRetentionText} ${t('planUsage.days')}`)}
-                    <Text14 className="lw-planUsageScreen__hint">{t('planUsage.retentionHint')}</Text14>
                 </SimpleCard>
 
                 <SimpleCard className="lw-planUsageScreen__card">

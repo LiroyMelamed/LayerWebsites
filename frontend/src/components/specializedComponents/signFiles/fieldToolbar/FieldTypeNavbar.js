@@ -1,8 +1,6 @@
 import React from 'react';
 import SimpleContainer from '../../../simpleComponents/SimpleContainer';
 import { useTranslation } from 'react-i18next';
-import PrimaryButton from '../../../styledComponents/buttons/PrimaryButton';
-import SecondaryButton from '../../../styledComponents/buttons/SecondaryButton';
 import './fieldToolbar.scss';
 import './fieldContextMenu.scss';
 

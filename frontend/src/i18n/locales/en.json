@@ -227,6 +227,7 @@
         "customerName": "Customer name",
         "customerId": "Customer ID",
         "phoneNumber": "Phone number",
+        "createdAt": "Created at",
         "customerDetails": "Customer details",
         "dates": "Dates",
         "estimatedCompletionDate": "Estimated completion date",
@@ -388,10 +389,18 @@
         "planKey": "Plan key:",
         "price": "Price:",
         "priceMonthly": "{{currency}}{{amount}} / month",
-        "commercialPricingHint": "Commercial pricing: Core {{currency}}{{coreAmount}}/month (no signatures). Signing + Evidence add-on: {{currency}}{{signingAmount}}/month includes {{included}} signed documents; {{currency}}{{overage}} per additional signed document.",
+        "commercialPricingHint": "How pricing works (commercial):\n1) Core (required): {{currency}}{{coreAmount}} / month\n2) Client channels (choose at least one): Portal / App / Bundle\n3) Resource package (required): Basic / Pro / Enterprise — sets usage limits (storage, seats, retention)\n4) Signing + Evidence (optional): choose a monthly package (Starter / Pro / Office / Unlimited). Effective per-document price is shown for clarity only (package price ÷ included documents).",
         "scope": "Scope:",
         "firmId": "Firm ID:",
         "enforcementMode": "Enforcement:",
+        "scopeValues": {
+            "firm": "Firm",
+            "tenant": "User"
+        },
+        "enforcementModeValues": {
+            "warn": "Warn",
+            "block": "Block"
+        },
         "retentionTitle": "Retention",
         "retentionCore": "Core documents:",
         "retentionPii": "PII documents:",
@@ -423,19 +432,21 @@
     },
     "planPricing": {
         "title": "Plans & pricing",
-        "subtitle": "Compare plans and pricing.",
-        "systemPlansTitle": "System Plans (Usage Limits)",
-        "systemPlansSubtitle": "These plans define usage limits only. Monthly pricing is defined by the commercial pricing.",
+        "subtitle": "Everything you pay for, explained clearly.",
+        "baseAndChannelsTitle": "Base system + client channels",
+        "baseAndChannelsSubtitle": "Mandatory: Base + at least one client channel.",
+        "systemPlansTitle": "Resource Packages (mandatory)",
+        "systemPlansSubtitle": "Mandatory: choose one Resource Package. It defines system capacity (users, storage, retention, performance). You cannot use the system without at least one client channel.",
         "commercialPricingTitle": "Commercial Pricing (Per Firm)",
         "commercialPricingSubtitle": "These prices are billed per firm.",
         "coreCommercialLine": "Core: {{currency}}{{amount}} / month (no signatures).",
-        "signingAddonCommercialLine": "Signing + Evidence add-on: {{currency}}{{amount}} / month (includes {{included}} signed documents; {{currency}}{{overage}} per additional signed document).",
+        "signingAddonCommercialLine": "Signing + Evidence (optional): choose a monthly package (Starter / Pro / Office / Unlimited). Effective per-document price is shown for clarity (package price ÷ included documents).",
         "noPlans": "No plans available.",
         "currentPlan": "Current plan",
         "planKey": "Plan key: {{planKey}}",
         "price": "Price:",
         "priceMonthly": "{{currency}}{{amount}} / month",
-        "pricePerCommercial": "per commercial pricing",
+        "pricePerCommercial": "defined by commercial pricing",
         "priceNotAvailable": "N/A",
         "retentionCore": "Core retention:",
         "retentionPii": "PII retention:",
@@ -443,63 +454,176 @@
         "documentsMonthly": "Documents / month:",
         "storageGb": "Storage (GB):",
         "users": "Users:",
-        "systemPlansCardFooter": "This plan defines usage limits only.",
+        "systemPlansCardFooter": "This package defines usage limits.",
+        "systemPlansExplanation": {
+            "title": "What are Resource Packages?",
+            "line1": "Resource Packages are paid tiers that define system capacity (users, storage, retention, workload level). They do not include document counts.",
+            "line2": "You must choose one package for your firm (and at least one client channel)."
+        },
+        "resourcePackages": {
+            "includedPrice": "{{currency}}{{amount}} / month (included)",
+            "basicDescription": "Included for small offices and trial usage.",
+            "proDescription": "Recommended for active law firms.",
+            "enterpriseDescription": "For large offices or regulatory-heavy workloads."
+        },
         "unlimited": "Unlimited",
         "notAvailable": "N/A",
+        "howItWorks": {
+            "title": "How pricing works",
+            "s1": "1) Choose the Base system.",
+            "s2": "2) Choose at least one client channel (Portal or App; or Bundle).",
+            "s3": "3) Choose one Resource Package (Basic / Pro / Enterprise).",
+            "s4": "4) Add Signing + Evidence only if needed."
+        },
         "commercial": {
             "core": {
-                "title": "Core (required)",
-                "description": "A system for case tracking and firm-to-client communication."
+                "title": "System Base (required)",
+                "description": "Required for every firm. Must be combined with at least one client channel."
             },
             "channels": {
-                "title": "Client Channels (optional add-ons)",
-                "portalLine": "Portal: {{currency}}{{amount}} / month — Client portal (website)",
+                "title": "Client Channels (choose at least one)",
+                "requiredExplanation": "Required. This is how clients view cases and communicate with the firm.",
+                "portalLine": "Portal (Website): {{currency}}{{amount}} / month — Client portal for updates and documents",
                 "appLine": "Mobile App: {{currency}}{{amount}} / month — Mobile client experience",
                 "bundleLine": "Bundle (Portal + App): {{currency}}{{amount}} / month — Best value"
             },
             "signing": {
                 "title": "Signing + Evidence (optional add-on)",
-                "includes": "Includes {{included}} signed documents per month.",
-                "overage": "Overage: {{currency}}{{overage}} per additional signed document.",
-                "noteOtpOptional": "OTP for signing is optional by firm."
+                "v1": "Legal signing with audit trail",
+                "v2": "Court-admissible evidence package",
+                "v3": "Monthly bundles (Starter / Pro / Office / Unlimited)",
+                "bundlesTitle": "Monthly bundles:",
+                "bundleLine": "Up to {{included}} signed documents/month — {{currency}}{{amount}} / month (effective per-document price is derived from package price ÷ included documents)",
+                "bundlesFooter": "OTP policy is configurable per firm."
             }
+        },
+        "signingSectionTitle": "Signing + Evidence (optional)",
+        "signingSectionSubtitle": "Optional add-on for legal-grade signing and evidence.",
+        "signing": {
+            "title": "Signing packages",
+            "b1": "Court-admissible evidence package",
+            "b2": "Full audit trail",
+            "b3": "Evidence package",
+            "b4": "OTP is optional per firm",
+            "packageLine": "{{packageName}} — {{currency}}{{amount}} / month (up to {{included}} signed documents/month; {{currency}}{{rate}} effective per signed document)",
+            "unlimitedLine": "Signing Unlimited — {{currency}}{{amount}} / month (unlimited signed documents — fair use)",
+            "fairUseExplanation": "Fair use means normal legal-office usage. If your volume is consistently extreme, we’ll help you pick the right tier.",
+            "overageExplanation": "No per-document overage billing. If you consistently exceed your package, upgrade."
         }
     },
     "pricingPage": {
         "title": "Pricing",
-        "subtitle": "A system for case tracking and client communication, with an optional Signing + Evidence add-on.",
-        "clarifyingLine": "Every firm starts with the Core plan. Client portal, mobile app, and legal signing are optional add-ons.",
+        "subtitle": "A clear, explainable pricing model for law firms.",
+        "clarifyingLine": "Core cannot be purchased alone — you must choose: (1) at least one client channel, and (2) one Resource Package.",
+        "howItWorks": {
+            "title": "How pricing works",
+            "s1": "1) Start with the System Base.",
+            "s2": "2) Choose at least one client channel (Portal or App; or Bundle).",
+            "s3": "3) Choose one Resource Package (Basic / Pro / Enterprise).",
+            "s4": "4) Add Signing + Evidence only if needed."
+        },
+        "sections": {
+            "baseAndChannels": "Base system + client channels",
+            "resourcePackages": "Resource packages (mandatory)",
+            "signing": "Signing + Evidence (optional)"
+        },
         "core": {
-            "title": "Core",
+            "title": "System Base (required)",
+            "requiredExplanation": "Required for every firm. Must be combined with at least one client channel.",
             "b1": "Case tracking and workflow",
-            "b2": "Client communication",
-            "b3": "Updates (Push/Email)",
-            "b4": "No signatures included"
+            "b2": "Firm-side management and admin",
+            "b3": "Secure communication foundation",
+            "b4": "No signatures included (add Signing + Evidence if needed)",
+            "b5": "Role-based access for firm users",
+            "b6": "Built to connect with your chosen client channel"
         },
         "channels": {
-            "title": "Client channels (add-ons)",
+            "title": "Client channels (choose at least one)",
+            "requiredExplanation": "Required. Without a client channel, clients can’t view cases or communicate.",
             "portalTitle": "Portal (Website)",
             "appTitle": "Mobile app",
             "bundleTitle": "Bundle (Portal + App)",
-            "b1": "Give clients a simple, secure channel to follow their case",
-            "b2": "Improve responsiveness and reduce back-and-forth"
+            "portalDescription": "Client portal (web) for updates and documents",
+            "appDescription": "Mobile experience for clients on their phone",
+            "bundleDescription": "Portal + App together (best value)",
+            "b1": "Required: choose Portal, App, or Bundle",
+            "b2": "You can add or switch channels later"
+        },
+        "resourcePackages": {
+            "subtitle": "You must choose one package. It defines system capacity (storage, users, retention).",
+            "includedPrice": "{{currency}}{{amount}} / month (included)",
+            "basic": {
+                "title": "Basic (small office)",
+                "description": "Included for small offices and trial usage.",
+                "l1": "Up to 10GB storage",
+                "l2": "Up to 3 users",
+                "l3": "Data retention: 60 days",
+                "l4": "Workload level: Starter"
+            },
+            "pro": {
+                "title": "Pro (active office)",
+                "description": "Recommended for active law firms.",
+                "l1": "Up to 100GB storage",
+                "l2": "Up to 10 users",
+                "l3": "Data retention: 180 days",
+                "l4": "Workload level: Growing firm"
+            },
+            "enterprise": {
+                "title": "Enterprise (large office)",
+                "description": "For large offices or regulatory-heavy workloads.",
+                "l1": "Unlimited storage (fair use)",
+                "l2": "Unlimited users",
+                "l3": "Data retention: 365 days",
+                "l4": "Workload level: Enterprise"
+            }
         },
         "signing": {
-            "title": "Signing + Evidence (compliance add-on)",
-            "includes": "Includes {{included}} signed documents per month.",
-            "overage": "Overage: {{currency}}{{overage}} per additional signed document.",
-            "b1": "Court-admissible evidence bundle",
-            "b2": "Audit trail and signing history",
-            "noteOtpOptional": "OTP for signing is optional by firm"
+            "title": "Signing + Evidence (optional add-on)",
+            "v1": "Legal signing with audit trail",
+            "v2": "Court-admissible evidence package",
+            "v3": "Monthly bundles (Starter / Pro / Office / Unlimited)",
+            "v4": "OTP is optional per firm",
+            "packagesTitle": "Signing packages:",
+            "packageLine": "{{packageName}} — {{currency}}{{amount}} / month (up to {{included}} signed documents/month; {{currency}}{{rate}} effective per signed document)",
+            "unlimitedLine": "Signing Unlimited — {{currency}}{{amount}} / month (unlimited signed documents — fair use)",
+            "fairUseExplanation": "Fair use means normal legal-office usage. If your volume is consistently extreme, we’ll help you pick the right tier.",
+            "overageExplanation": "No per-document overage billing. If you consistently exceed your package, upgrade."
+        },
+        "calculator": {
+            "title": "Pricing calculator",
+            "subtitle": "Build your monthly price: Base + channels + one Resource Package. Signing is optional.",
+            "channelsTitle": "Client channels (choose at least one)",
+            "channelPortal": "Portal",
+            "channelApp": "App",
+            "channelBundle": "Bundle (Portal + App)",
+            "resourceTitle": "Resource Package (required)",
+            "resourceBasic": "Basic",
+            "resourcePro": "Pro",
+            "resourceEnterprise": "Enterprise",
+            "signingTitle": "Signing + Evidence (optional)",
+            "signingNone": "None",
+            "signingStarter": "Signing Starter",
+            "signingPro": "Signing Pro",
+            "signingOffice": "Signing Office",
+            "signingUnlimited": "Signing Unlimited",
+            "summaryTitle": "Summary",
+            "notSelected": "Not selected",
+            "baseLine": "Base system",
+            "channelsLine": "Client channels",
+            "resourceLine": "Resource Package",
+            "signingLine": "Signing + Evidence",
+            "totalLine": "Total monthly"
         },
         "faq": {
             "title": "FAQ",
-            "q1": "What is included in Core?",
-            "a1": "Core includes case tracking and client communication (without electronic signatures).",
-            "q2": "Are signatures required?",
-            "a2": "No. Signing is an optional add-on.",
-            "q3": "Is OTP required for signing?",
-            "a3": "OTP can be enabled and required per firm policy (optional)."
+            "q1": "Can I buy Core alone?",
+            "a1": "No. Core must be combined with at least one client channel and one Resource Package.",
+            "q2": "Is OTP mandatory?",
+            "a2": "No. OTP is optional and configurable per firm.",
+            "q3": "What happens if I exceed limits?",
+            "a3": "If you exceed your Resource Package limits regularly, upgrade your package. For signing, there is no per-document overage billing — if you consistently exceed your tier, upgrade.",
+            "q4": "What is the per-document signing rate?",
+            "a4": "It’s calculated as (package price ÷ included documents). For Signing Starter, that’s {{currency}}{{rate}} per signed document."
         }
     },
     "signing": {

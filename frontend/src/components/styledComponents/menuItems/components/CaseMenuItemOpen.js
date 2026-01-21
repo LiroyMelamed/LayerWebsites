@@ -129,42 +129,45 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
 
                 {/* Sections (mobile-first: stack) */}
                 <SimpleContainer className="lw-caseMenuItemOpen__sections">
-                    {!isClient && (
-                        <SimpleContainer className="lw-caseMenuItemOpen__section">
-                            <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">{t("common.customerDetails")}</TextBold12>
+                    <SimpleContainer className="lw-caseMenuItemOpen__section">
+                        <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">{t("common.customerDetails")}</TextBold12>
 
-                            <SimpleContainer className="lw-caseMenuItemOpen__items">
-                                <SimpleContainer className="lw-caseMenuItemOpen__item">
-                                    <TextBold12 className="lw-caseMenuItemOpen__itemLabel">{t("cases.customerName") + ":"}</TextBold12>
-                                    <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.CustomerName}</Text12>
-                                </SimpleContainer>
+                        <SimpleContainer className="lw-caseMenuItemOpen__items">
+                            <SimpleContainer className="lw-caseMenuItemOpen__item">
+                                <TextBold12 className="lw-caseMenuItemOpen__itemLabel">{t("cases.customerName") + ":"}</TextBold12>
+                                <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.CustomerName}</Text12>
+                            </SimpleContainer>
 
-                                <SimpleContainer className="lw-caseMenuItemOpen__item">
-                                    <TextBold12 className="lw-caseMenuItemOpen__itemLabel">{t("common.email") + ":"}</TextBold12>
-                                    <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.CustomerMail}</Text12>
-                                </SimpleContainer>
+                            <SimpleContainer className="lw-caseMenuItemOpen__item">
+                                <TextBold12 className="lw-caseMenuItemOpen__itemLabel">{t("common.email") + ":"}</TextBold12>
+                                <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.CustomerMail}</Text12>
+                            </SimpleContainer>
 
-                                <SimpleContainer className="lw-caseMenuItemOpen__item">
-                                    <TextBold12 className="lw-caseMenuItemOpen__itemLabel">{t("cases.phoneNumber") + ":"}</TextBold12>
-                                    <SimpleContainer className="lw-caseMenuItemOpen__itemValue">
-                                        <SimpleButton
-                                            className="lw-caseMenuItemOpen__linkButton"
-                                            onPress={() => {
-                                                openExternalUrl(`tel:${fullCase.PhoneNumber}`, { newTab: false });
-                                            }}
-                                        >
-                                            <Text12 className="lw-caseMenuItemOpen__linkText">{fullCase.PhoneNumber}</Text12>
-                                        </SimpleButton>
-                                    </SimpleContainer>
+                            <SimpleContainer className="lw-caseMenuItemOpen__item">
+                                <TextBold12 className="lw-caseMenuItemOpen__itemLabel">{t("cases.phoneNumber") + ":"}</TextBold12>
+                                <SimpleContainer className="lw-caseMenuItemOpen__itemValue">
+                                    <SimpleButton
+                                        className="lw-caseMenuItemOpen__linkButton"
+                                        onPress={() => {
+                                            openExternalUrl(`tel:${fullCase.PhoneNumber}`, { newTab: false });
+                                        }}
+                                    >
+                                        <Text12 className="lw-caseMenuItemOpen__linkText">{fullCase.PhoneNumber}</Text12>
+                                    </SimpleButton>
                                 </SimpleContainer>
                             </SimpleContainer>
                         </SimpleContainer>
-                    )}
+                    </SimpleContainer>
 
                     <SimpleContainer className="lw-caseMenuItemOpen__section">
                         <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">{t("common.dates")}</TextBold12>
 
                         <SimpleContainer className="lw-caseMenuItemOpen__items">
+                            <SimpleContainer className="lw-caseMenuItemOpen__item">
+                                <TextBold12 className="lw-caseMenuItemOpen__itemLabel">{t("cases.createdAt") + ":"}</TextBold12>
+                                <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.CreatedAt ? DateDDMMYY(fullCase.CreatedAt) : t("common.notSpecified")}</Text12>
+                            </SimpleContainer>
+
                             <SimpleContainer className="lw-caseMenuItemOpen__item">
                                 <TextBold12 className="lw-caseMenuItemOpen__itemLabel">{t("cases.estimatedCompletionDate") + ":"}</TextBold12>
                                 <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.EstimatedCompletionDate ? DateDDMMYY(fullCase.EstimatedCompletionDate) : t("common.notSpecified")}</Text12>

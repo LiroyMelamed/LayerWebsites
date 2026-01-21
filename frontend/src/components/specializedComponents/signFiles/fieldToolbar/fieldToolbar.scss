@@ -6,10 +6,10 @@
   display: flex;
   flex-wrap: wrap;
   gap: v.$space-2;
-  padding: v.$space-2;
-  border: 1px solid var(--lw-color-border, #e2e8f0);
+  padding: 0;
+  border: none;
   border-radius: 0.5rem;
-  background: var(--lw-color-white);
+  background: transparent;
 }
 
 .lw-fieldTypeNavbar__signerRow {
@@ -40,16 +40,17 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--lw-color-border, #e2e8f0);
-  background: var(--lw-color-white);
+  padding: 0.25rem 0.25rem;
+  border: none;
+  background: transparent;
   cursor: pointer;
   border-radius: 0.5rem;
   font: inherit;
+  opacity: 0.85;
 }
 
 .lw-fieldTypeNavbar__btn.is-selected {
-  border-color: var(--lw-color-primary, #2a4365);
+  opacity: 1;
 }
 
 .lw-fieldTypeNavbar__icon {
@@ -58,9 +59,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--lw-color-border, #e2e8f0);
+  background: transparent;
   border-radius: 0.4rem;
   font-weight: 700;
+  border-bottom: 2px solid transparent;
+}
+
+.lw-fieldTypeNavbar__btn.is-selected .lw-fieldTypeNavbar__icon {
+  border-bottom-color: var(--lw-color-primary, #2a4365);
 }
 
 .lw-fieldTypeNavbar__label {

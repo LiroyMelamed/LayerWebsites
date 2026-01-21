@@ -11,6 +11,12 @@ function toBool(v) {
     return v === true || v === 1 || v === '1' || String(v).toLowerCase() === 'true';
 }
 
+function readEnvBool(key, fallback) {
+    const raw = process.env[key];
+    if (raw === undefined || raw === null || String(raw).trim() === '') return Boolean(fallback);
+    return toBool(raw);
+}
+
 function pickFlag(featureFlags, keys) {
     for (const k of keys) {
         if (Object.prototype.hasOwnProperty.call(featureFlags || {}, k)) return toBool(featureFlags[k]);
@@ -20,10 +26,12 @@ function pickFlag(featureFlags, keys) {
 
 async function resolveFirmSigningPolicy(firmId) {
     if (!isFirmScopeEnabled()) {
+        // Legacy mode: firm scope disabled (single-tenant / pre-firm-scope deployments).
+        // Keep signing available unless explicitly disabled via env.
         return {
-            signingEnabled: false,
-            signingClientOtpRequired: false,
-            source: 'firm_scope_disabled',
+            signingEnabled: readEnvBool('SIGNING_ENABLED', true),
+            signingClientOtpRequired: readEnvBool('SIGNING_CLIENT_OTP_REQUIRED', false),
+            source: 'legacy_env',
         };
     }
 
@@ -67,7 +75,8 @@ async function resolveFirmSigningPolicy(firmId) {
     const signingClientOtpRequired = pickFlag(flags, ['signing_client_otp_required', 'signingClientOtpRequired']);
 
     return {
-        signingEnabled: signingEnabled === null ? false : signingEnabled,
+        // If plans don't specify the flag yet, keep signing on by default.
+        signingEnabled: signingEnabled === null ? true : signingEnabled,
         signingClientOtpRequired: signingClientOtpRequired === null ? false : signingClientOtpRequired,
         source: 'plan_feature_flags',
     };

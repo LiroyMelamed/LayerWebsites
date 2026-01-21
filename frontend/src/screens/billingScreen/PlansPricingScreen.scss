@@ -1,40 +1,42 @@
+@use '../../styles/variables' as v;
+
 .lw-plansPricingScreen__scroll {
-    padding: 16px;
+    padding: v.$space-4;
 }
 
 .lw-plansPricingScreen__title {
-    margin: 0 0 6px 0;
+    margin: 0 0 v.$space-2 0;
 }
 
 .lw-plansPricingScreen__subtitle {
     opacity: 0.85;
-    margin: 0 0 14px 0;
+    margin: 0 0 v.$space-3 0;
 }
 
 .lw-plansPricingScreen__sectionTitle {
-    margin: 18px 0 6px 0;
+    margin: v.$space-5 0 v.$space-2 0;
 }
 
 .lw-plansPricingScreen__sectionTitle--spaced {
-    margin-top: 26px;
+    margin-top: v.$space-6;
 }
 
 .lw-plansPricingScreen__sectionSubtitle {
     opacity: 0.85;
-    margin: 0 0 14px 0;
+    margin: 0 0 v.$space-3 0;
 }
 
 .lw-plansPricingScreen__grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 14px;
+    gap: v.$space-3;
 }
 
 .lw-plansPricingScreen__commercialGrid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 14px;
-    margin-top: 8px;
+    gap: v.$space-3;
+    margin-top: v.$space-2;
 }
 
 .lw-plansPricingScreen__card {
@@ -48,24 +50,22 @@
 
 .lw-plansPricingScreen__planKey {
     opacity: 0.8;
-    margin-top: 4px;
+    margin-top: v.$space-1;
 }
 
 .lw-plansPricingScreen__currentBadge {
-    margin-top: 8px;
+    margin-top: v.$space-2;
     font-weight: 700;
 }
 
 .lw-plansPricingScreen__divider {
-    height: 1px;
-    background: rgba(255, 255, 255, 0.12);
-    margin: 12px 0;
+    --lw-separator-margin-block: #{v.$space-3};
 }
 
 .lw-plansPricingScreen__row {
     display: flex;
-    gap: 1rem;
-    margin: 0.45rem 0;
+    gap: v.$space-4;
+    margin: v.$space-2 0;
 }
 
 .lw-plansPricingScreen__label {
@@ -79,29 +79,29 @@
 
 .lw-plansPricingScreen__planFooter {
     opacity: 0.8;
-    margin-top: 12px;
+    margin-top: v.$space-3;
 }
 
 .lw-plansPricingScreen__commercialPrice {
-    margin-top: 8px;
+    margin-top: v.$space-2;
     font-weight: 700;
 }
 
 .lw-plansPricingScreen__commercialDescription {
     opacity: 0.9;
-    margin-top: 6px;
+    margin-top: v.$space-2;
 }
 
 .lw-plansPricingScreen__commercialNote {
     opacity: 0.8;
-    margin-top: 10px;
+    margin-top: v.$space-3;
 }
 
 .lw-plansPricingScreen__bullets {
-    margin: 10px 0 0 0;
-    padding-left: 18px;
+    margin: v.$space-3 0 0 0;
+    padding-inline-start: v.$space-4;
 }
 
 .lw-plansPricingScreen__bullets li {
-    margin: 6px 0;
+    margin: v.$space-2 0;
 }

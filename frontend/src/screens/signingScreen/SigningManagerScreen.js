@@ -21,6 +21,8 @@ import ProgressBar from "../../components/specializedComponents/containers/Progr
 import { Text14, TextBold24 } from "../../components/specializedComponents/text/AllTextKindFile";
 import { images } from "../../assets/images/images";
 import ApiUtils from "../../api/apiUtils";
+import { isDemoModeEnabled } from "../../utils/demoMode";
+import { demoGetEvidencePackage, demoGetOrCreateUploadObjectUrl, demoGetSigningFile } from "../../demo/demoStore";
 import { usePopup } from "../../providers/PopUpProvider";
 import ErrorPopup from "../../components/styledComponents/popups/ErrorPopup";
 import { useTranslation } from "react-i18next";
@@ -84,6 +86,16 @@ export default function SigningManagerScreen() {
 
     const openPdfInNewTab = async (signingFileId) => {
         try {
+            if (isDemoModeEnabled()) {
+                const file = demoGetSigningFile(signingFileId);
+                const url = file?.FileKey
+                    ? demoGetOrCreateUploadObjectUrl(file.FileKey)
+                    : (await signingFilesApi.downloadSignedFile(signingFileId))?.data?.downloadUrl;
+                if (!url) throw new Error("missing demo pdf url");
+                window.open(url, "_blank", "noopener,noreferrer");
+                return;
+            }
+
             const baseUrl = ApiUtils?.defaults?.baseURL || "";
             const token = localStorage.getItem("token");
             const url = `${baseUrl}/SigningFiles/${encodeURIComponent(signingFileId)}/pdf`;
@@ -163,6 +175,18 @@ export default function SigningManagerScreen() {
                 return;
             }
 
+            if (isDemoModeEnabled()) {
+                const pkg = demoGetEvidencePackage(signingFileId);
+                const blob = pkg?.evidenceZipBlob;
+                if (!blob) {
+                    showError({ messageKey: 'signingManager.errors.evidencePackageDownloadError' });
+                    return;
+                }
+                const filename = `evidence_${file?.CaseId || "noCase"}_${signingFileId}.zip`;
+                downloadBlobAsFile(blob, filename);
+                return;
+            }
+
             const baseUrl = ApiUtils?.defaults?.baseURL || "";
             const token = localStorage.getItem("token");
             const url = `${baseUrl}/SigningFiles/${encodeURIComponent(signingFileId)}/evidence-package`;
@@ -230,6 +254,18 @@ export default function SigningManagerScreen() {
             const isSigned = String(file?.Status || '').toLowerCase() === 'signed';
             if (!isSigned) {
                 showError({ messageKey: 'signingManager.errors.evidencePackageSignedOnly' });
+                return;
+            }
+
+            if (isDemoModeEnabled()) {
+                const pkg = demoGetEvidencePackage(signingFileId);
+                const blob = pkg?.evidencePdfBlob;
+                if (!blob) {
+                    showError({ messageKey: 'signingManager.errors.evidencePackageDownloadError' });
+                    return;
+                }
+                const filename = `evidence_${file?.CaseId || "noCase"}_${signingFileId}.pdf`;
+                downloadBlobAsFile(blob, filename);
                 return;
             }
 

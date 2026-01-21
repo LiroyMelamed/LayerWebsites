@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getDemoModeToken } from "../utils/demoMode";
 
 const prodURL = "https://api.calls.melamedlaw.co.il/api";
 const stageURL = "http://localhost:5000/api";
@@ -20,12 +21,29 @@ const ApiUtils = axios.create({
 
 // Add a request interceptor to include the token
 ApiUtils.interceptors.request.use((config) => {
-    const token = localStorage.getItem("token");
+    const demoToken = getDemoModeToken();
+    const token = demoToken || localStorage.getItem("token");
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
     // config.headers["ngrok-skip-browser-warning"] = "true";
     config.headers["x-client-platform"] = "web";
+
+    // Dev-only diagnostics (never log secrets)
+    try {
+        if (process.env.NODE_ENV !== 'production') {
+            const url = String(config?.url || '');
+            if (url.includes('SigningFiles/lawyer-files')) {
+                // eslint-disable-next-line no-console
+                console.debug('[api] SigningFiles/lawyer-files', {
+                    hasAuth: Boolean(token),
+                    demoMode: Boolean(demoToken),
+                });
+            }
+        }
+    } catch {
+        // no-op
+    }
 
     return config;
 });

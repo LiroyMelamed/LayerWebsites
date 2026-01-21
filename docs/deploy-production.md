@@ -1,10 +1,10 @@
-# Deploy to production (Ubuntu + Postgres local + PM2 + Nginx)
+# Deploy to production (Ubuntu + Postgres + PM2 + Nginx)
 
-Date: 2025-12-30
+Date: 2026-01-17
 
 This is a step-by-step manual deployment guide (SSH) for:
 - Backend: Node.js/Express managed by PM2
-- DB: Postgres on the same server
+- DB: Postgres (local or managed) accessed via `DATABASE_URL`
 - Frontend: React static build served by Nginx
 
 ---
@@ -12,15 +12,18 @@ This is a step-by-step manual deployment guide (SSH) for:
 ## 0) Assumptions
 
 - You have an Ubuntu server with SSH access.
-- Postgres is installed locally on the server.
+- You have a working Postgres `DATABASE_URL` for production.
 - Nginx is installed and will serve:
   - frontend static files
   - reverse-proxy `/api/*` to the backend
 
 Suggested filesystem layout
-- `/var/www/melamedlaw/`
+- Production (current): `/root/LayerWebsites/`
   - `backend/`
-  - `frontend/` (or just `frontend/build/`)
+  - `frontend/`
+- Alternative: `/var/www/melamedlaw/`
+  - `backend/`
+  - `frontend/`
 
 ---
 
@@ -44,9 +47,15 @@ From your machine:
 - `git pull` on the server, or
 - upload a tarball/zip and extract under `/var/www/melamedlaw/backend`
 
+Example (current production layout):
+```bash
+cd /root/LayerWebsites
+git pull
+```
+
 ### 1.3 Install dependencies
 ```bash
-cd /var/www/melamedlaw/backend
+cd /root/LayerWebsites/backend
 npm ci
 ```
 
@@ -55,7 +64,7 @@ We deploy a `backend/.env` file on the server (NOT committed).
 
 Create it from the template:
 ```bash
-cd /var/www/melamedlaw/backend
+cd /root/LayerWebsites/backend
 cp .env.production.example .env
 nano .env
 
@@ -66,6 +75,7 @@ chmod 600 .env
 Notes:
 - `backend/ecosystem.config.js` is configured with `env_file: '.env'`.
 - Keep Nginx and backend upload/timeouts aligned.
+ - When running scripts manually (migrations/verify), you must load the env vars (see migrations section below).
 
 Template:
 - `backend/.env.production.example`
@@ -90,10 +100,14 @@ Use the committed ecosystem file:
 
 Commands:
 ```bash
-cd /var/www/melamedlaw/backend
+cd /root/LayerWebsites/backend
 pm2 start ecosystem.config.js --env production --update-env
 pm2 status
 ```
+
+Important:
+- The PM2 process name may differ per server (example seen in production: `melamed-backend`).
+- Always run `pm2 status` and use the name shown there for restarts.
 
 ### 1.7 PM2 startup (boot on reboot)
 ```bash
@@ -104,18 +118,47 @@ pm2 save
 
 ### 1.8 Safe restart / zero downtime
 Fork mode (default here):
-- `pm2 restart melamedlaw-api --update-env`
+- `pm2 restart <pm2-app-name> --update-env`
+
+Example (current production):
+```bash
+pm2 restart melamed-backend --update-env
+```
 
 When you change `backend/.env`, always restart with `--update-env`.
 
 If you later switch to cluster mode:
-- `pm2 reload melamedlaw-api --update-env` (zero-downtime reload)
+- `pm2 reload <pm2-app-name> --update-env` (zero-downtime reload)
 
 ---
 
 ## 2) Database migrations
 
 Run migrations before starting traffic.
+
+### 2.1 Apply migrations
+```bash
+cd /root/LayerWebsites/backend
+bash migrations/migration-run.sh
+```
+
+### 2.2 Verify migrations (requires DATABASE_URL)
+If `psql "$DATABASE_URL" ...` fails with `role "root" does not exist`, it usually means `DATABASE_URL` is not set in your current shell (so `psql` falls back to local socket + OS user).
+
+Load the backend env first, then verify:
+```bash
+cd /root/LayerWebsites/backend
+
+# quick sanity
+echo "DATABASE_URL=$DATABASE_URL"
+
+# load env for this shell (so psql uses the correct URL)
+set -a
+source .env
+set +a
+
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f migrations/migration-verify.sql
+```
 
 See:
 - docs/db-migrations.md
@@ -126,7 +169,7 @@ See:
 
 ### 3.1 Build
 ```bash
-cd /var/www/melamedlaw/frontend
+cd /root/LayerWebsites/frontend
 npm ci
 
 # IMPORTANT: set REACT_APP_API_BASE_URL to production API base

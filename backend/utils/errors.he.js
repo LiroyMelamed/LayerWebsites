@@ -23,6 +23,8 @@ const MESSAGES = {
 
     SIGNING_SESSION_REQUIRED: 'נדרש מזהה סשן חתימה.',
 
+    SIGNING_DISABLED: 'מודול החתימות אינו פעיל עבור החשבון שלך. ניתן לפנות לתמיכה להפעלה.',
+
     SIGNING_POLICY_REQUIRED: 'נדרש לבחור מדיניות אימות.',
     OTP_WAIVER_ACK_REQUIRED: 'יש לאשר ויתור על אימות בקוד חד־פעמי.',
 

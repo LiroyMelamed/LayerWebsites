@@ -9,17 +9,26 @@ export const useScreenSize = () => {
 };
 
 // Define a provider component
-export const ScreenSizeProvider = ({ children }) => {
-  const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 1280);
+export const ScreenSizeProvider = ({ children, forceIsSmallScreen = undefined }) => {
+  const isForced = typeof forceIsSmallScreen === 'boolean';
+  const [isSmallScreen, setIsSmallScreen] = useState(
+    isForced ? forceIsSmallScreen : window.innerWidth < 1280
+  );
 
   const handleResize = () => {
+    if (isForced) return;
     setIsSmallScreen(window.innerWidth < 1280);
   };
 
   useEffect(() => {
+    if (isForced) {
+      setIsSmallScreen(forceIsSmallScreen);
+      return undefined;
+    }
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isForced, forceIsSmallScreen]);
 
   return (
     <ScreenSizeContext.Provider value={{ isSmallScreen }}>
