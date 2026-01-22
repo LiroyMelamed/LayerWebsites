@@ -816,6 +816,7 @@
             "retentionNotice": {
                 "title": "Retention notice",
                 "text": "Signed documents and evidence may be retained for {{coreDays}} days (core) and {{piiDays}} days (PII), according to your plan and any legal hold policies. Continue to confirm you understand.",
+                "textFallback": "Signed documents and evidence may be retained according to your plan and any legal hold policies. Continue to confirm you understand.",
                 "ackButton": "I understand"
             },
             "sendToClient": "Send to customer",

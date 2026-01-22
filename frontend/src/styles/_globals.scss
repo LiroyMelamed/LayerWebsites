@@ -122,6 +122,12 @@ select:not([dir]) {
   min-inline-size: 0;
 }
 
+/* Prevent browser pull-to-refresh/overscroll bounce where needed (e.g., signing flows) */
+html.lw-noPullRefresh,
+html.lw-noPullRefresh body {
+  overscroll-behavior-y: contain;
+}
+
 @media (max-width: v.$bp-narrow) {
 
   .lw-row__grow,

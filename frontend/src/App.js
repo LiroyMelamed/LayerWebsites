@@ -31,6 +31,21 @@ const App = () => {
     // Note: this is touch-focused and intentionally minimal (no UI).
     const PULL_THRESHOLD_PX = 80;
 
+    function isPullToRefreshDisabledPath(pathname) {
+      const p = String(pathname || "");
+      // Disable on signing flows to avoid accidental reloads while reviewing/scrolling.
+      return (
+        /(?:^|\/)(SigningScreen|SigningManagerScreen)(?:$|\/)/i.test(p) ||
+        /(?:^|\/)(upload-file-for-signing)(?:$|\/)/i.test(p) ||
+        /(?:^|\/)(public-sign)(?:$|\/)/i.test(p) ||
+        /(?:^|\/)(verify\/evidence)(?:$|\/)/i.test(p)
+      );
+    }
+
+    function isPullToRefreshDisabled() {
+      return isPullToRefreshDisabledPath(window?.location?.pathname);
+    }
+
     const scrollerRef = { current: null };
 
     let startY = null;
@@ -75,6 +90,7 @@ const App = () => {
     }
 
     function onTouchStart(e) {
+      if (isPullToRefreshDisabled()) return;
       const scroller = findScrollableParent(e.target);
       scrollerRef.current = scroller;
       if (!isAtTop(scroller)) return;
@@ -86,6 +102,7 @@ const App = () => {
     }
 
     function onTouchMove(e) {
+      if (isPullToRefreshDisabled()) return;
       if (triggered) return;
       if (startY === null) return;
       const scroller = scrollerRef.current;
@@ -136,6 +153,26 @@ const App = () => {
       }
     };
   }, []);
+
+  useEffect(() => {
+    // On signing flows, disable overscroll-based pull-to-refresh (browser-level)
+    // and our custom pull-to-refresh handler (see route checks above).
+    const p = String(location?.pathname || "");
+    const disable =
+      /(?:^|\/)(SigningScreen|SigningManagerScreen)(?:$|\/)/i.test(p) ||
+      /(?:^|\/)(upload-file-for-signing)(?:$|\/)/i.test(p) ||
+      /(?:^|\/)(public-sign)(?:$|\/)/i.test(p) ||
+      /(?:^|\/)(verify\/evidence)(?:$|\/)/i.test(p);
+
+    const root = document?.documentElement;
+    if (!root) return;
+    if (disable) root.classList.add("lw-noPullRefresh");
+    else root.classList.remove("lw-noPullRefresh");
+
+    return () => {
+      root.classList.remove("lw-noPullRefresh");
+    };
+  }, [location.pathname]);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);

@@ -1,4 +1,40 @@
+const fs = require("fs");
+const path = require("path");
+const { pathToFileURL } = require("url");
+
 const FRONTEND_PAGE_RENDER_WIDTH = 800;
+
+function isTruthyEnv(value) {
+    const v = String(value || "").trim().toLowerCase();
+    return v === "1" || v === "true" || v === "yes" || v === "on";
+}
+
+const SIG_DETECT_VERBOSE = isTruthyEnv(process.env.SIG_DETECT_VERBOSE);
+
+function sigDetectVerboseLog(...args) {
+    if (!SIG_DETECT_VERBOSE) return;
+    console.log(...args);
+}
+
+function resolvePdfjsStandardFontDataUrl() {
+    // Allow override (http(s)://... or file://...)
+    const env = process.env.PDFJS_STANDARD_FONT_DATA_URL;
+    if (env) return String(env);
+
+    try {
+        const pkgJsonPath = require.resolve("pdfjs-dist/package.json");
+        const pkgRoot = path.dirname(pkgJsonPath);
+        const standardFontsDir = path.join(pkgRoot, "standard_fonts");
+
+        if (!fs.existsSync(standardFontsDir)) return null;
+
+        // Ensure trailing slash so PDF.js can append filenames.
+        const url = pathToFileURL(standardFontsDir + path.sep).href;
+        return url;
+    } catch (e) {
+        return null;
+    }
+}
 
 const KEYWORDS = [
     "חתימה",
@@ -162,7 +198,17 @@ async function detectHebrewSignatureSpotsFromPdfBuffer(buffer, signers = null) {
 
     const pdfjs = await loadPdfjs();
 
-    const loadingTask = pdfjs.getDocument({ data: new Uint8Array(buffer) });
+    const standardFontDataUrl = resolvePdfjsStandardFontDataUrl();
+    if (!standardFontDataUrl) {
+        console.warn('[sig-detect] pdfjs standardFontDataUrl is not set; standard font metrics may be degraded');
+    } else {
+        sigDetectVerboseLog('[sig-detect] pdfjs standardFontDataUrl enabled');
+    }
+
+    const loadingTask = pdfjs.getDocument({
+        data: new Uint8Array(buffer),
+        ...(standardFontDataUrl ? { standardFontDataUrl } : {}),
+    });
     const pdf = await loadingTask.promise;
 
     const allSpots = [];
@@ -214,7 +260,7 @@ async function detectHebrewSignatureSpotsFromPdfBuffer(buffer, signers = null) {
                 const keywords = keywordItems.length > 0 ? keywordItems : shortTextItems;
                 const underlines = itemsAtY.filter(it => isUnderlineText(it.str) && (it.width || 0) >= MIN_TEXT_UNDERLINE_WIDTH);
 
-                console.log(`[sig-detect] page=${pageNum} found signature section at y=${y} with ${keywords.length} keywords and ${underlines.length} underlines`);
+                sigDetectVerboseLog(`[sig-detect] page=${pageNum} found signature section at y=${y} with ${keywords.length} keywords and ${underlines.length} underlines`);
 
                 const usedKeywordIndices = new Set();
 
@@ -274,7 +320,7 @@ async function detectHebrewSignatureSpotsFromPdfBuffer(buffer, signers = null) {
                         );
 
                         allSpots.push(clamped);
-                        console.log(`[sig-detect] page=${pageNum} added spot: "${clamped.signerName}" at (${clamped.x}, ${clamped.y})`);
+                        sigDetectVerboseLog(`[sig-detect] page=${pageNum} added spot: "${clamped.signerName}" at (${clamped.x}, ${clamped.y})`);
                     }
                 }
             }
@@ -286,19 +332,25 @@ async function detectHebrewSignatureSpotsFromPdfBuffer(buffer, signers = null) {
 
     let spots = dedupe(allSpots, 22);
 
-    console.log('[sig-detect] ========== ALL EXTRACTED TEXT ITEMS ==========');
-    const itemsByPage = {};
-    for (const item of allPageItems) {
-        if (!itemsByPage[item.pageNum]) itemsByPage[item.pageNum] = [];
-        itemsByPage[item.pageNum].push(item);
+    const extractedChars = allPageItems.reduce((sum, it) => sum + String(it?.str || "").length, 0);
+    const pagesWithText = new Set(allPageItems.map((it) => it.pageNum)).size;
+    console.log(`[sig-detect] extracted text summary: pages=${pdf.numPages} pagesWithText=${pagesWithText} items=${allPageItems.length} chars=${extractedChars}`);
+
+    if (SIG_DETECT_VERBOSE) {
+        console.log('[sig-detect] ========== ALL EXTRACTED TEXT ITEMS ==========');
+        const itemsByPage = {};
+        for (const item of allPageItems) {
+            if (!itemsByPage[item.pageNum]) itemsByPage[item.pageNum] = [];
+            itemsByPage[item.pageNum].push(item);
+        }
+        for (const page of Object.keys(itemsByPage).sort((a, b) => a - b)) {
+            console.log(`[sig-detect] PAGE ${page}:`);
+            itemsByPage[page].forEach(item => {
+                console.log(`[sig-detect]   "${item.str}" at x=${item.x.toFixed(2)}, y=${item.y.toFixed(2)}`);
+            });
+        }
+        console.log('[sig-detect] ================================================\n');
     }
-    for (const page of Object.keys(itemsByPage).sort((a, b) => a - b)) {
-        console.log(`[sig-detect] PAGE ${page}:`);
-        itemsByPage[page].forEach(item => {
-            console.log(`[sig-detect]   "${item.str}" at x=${item.x.toFixed(2)}, y=${item.y.toFixed(2)}`);
-        });
-    }
-    console.log('[sig-detect] ================================================\n');
 
     spots = spots
         .sort(
@@ -334,14 +386,14 @@ async function detectHebrewSignatureSpotsFromPdfBuffer(buffer, signers = null) {
     });
 
     if (signers && signers.length > 0) {
-        console.log('[sig-detect] ========== CALLING SMART MATCH ASSIGNMENT ==========');
-        console.log('[sig-detect] Signers passed to assignment:', signers.map(s => ({
+        console.log(`[sig-detect] smart-match assignment start: signerCount=${signers.length} spotsBefore=${spots.length}`);
+        sigDetectVerboseLog('[sig-detect] ========== CALLING SMART MATCH ASSIGNMENT ==========');
+        sigDetectVerboseLog('[sig-detect] Signers passed to assignment:', signers.map(s => ({
             name: typeof s === 'string' ? s : (s.name || s.Name || '?'),
             userId: typeof s === 'string' ? null : (s.userId || s.UserId || null)
         })));
-        console.log('[sig-detect] Spots before assignment:', spots.length);
         spots = assignSignersToSpots(spots, signers, allPageItems);
-        console.log('[sig-detect] Spots after assignment:', spots.length);
+        console.log(`[sig-detect] smart-match assignment done: spotsAfter=${spots.length}`);
     }
 
     console.log(`[sig-detect] final result: ${spots.length} spots detected`);
@@ -423,6 +475,11 @@ function assignSignersToSpots(spots, signers, pageItems = null) {
  * Smart matching: finds signer names near signature spots
  */
 function assignSignersToSpotsSmartMatch(spots, signers, pageItems) {
+    const smartMatchLog = (...args) => {
+        if (!SIG_DETECT_VERBOSE) return;
+        console.log(...args);
+    };
+
     const normalizeText = (text) => {
         if (!text) return "";
         return text
@@ -522,9 +579,10 @@ function assignSignersToSpotsSmartMatch(spots, signers, pageItems) {
         }
     }
 
-    console.log('[smart-match] ========== SMART MATCH START ==========');
-    console.log('[smart-match] Total spots to assign:', spots.length);
-    console.log('[smart-match] Unique tokens used for matching:', Array.from(uniqueTokens));
+    smartMatchLog('[smart-match] ========== SMART MATCH START ==========');
+    smartMatchLog('[smart-match] Total spots to assign:', spots.length);
+    smartMatchLog('[smart-match] Unique tokens used for matching:', Array.from(uniqueTokens));
+    console.log(`[smart-match] summary: spots=${spots.length} uniqueTokens=${uniqueTokens.size} candidatePages=${Object.keys(pageCandidates).length}`);
 
     const assignedSpots = spots.map((spot) => {
         const spotPdfX = typeof spot.pdfAnchorX === 'number'
@@ -534,7 +592,7 @@ function assignSignersToSpotsSmartMatch(spots, signers, pageItems) {
             ? spot.pdfAnchorY
             : (typeof spot.pdfY === 'number' ? spot.pdfY : (spot.y || 0));
 
-        console.log(`\n[smart-match] === SPOT ${spots.indexOf(spot) + 1} === page ${spot.pageNum}, uiY=${(spot.y || 0).toFixed(2)}, pdfAnchorY=${spotPdfY.toFixed(2)}`);
+        smartMatchLog(`\n[smart-match] === SPOT ${spots.indexOf(spot) + 1} === page ${spot.pageNum}, uiY=${(spot.y || 0).toFixed(2)}, pdfAnchorY=${spotPdfY.toFixed(2)}`);
 
         // 1) Best path: match using signer label tokens found on the same page.
         const candidates = pageCandidates[spot.pageNum] || [];
@@ -554,7 +612,7 @@ function assignSignersToSpotsSmartMatch(spots, signers, pageItems) {
             if (best && best.vertDist < 60) {
                 const signer = signers[best.signerIndex];
                 const signerName = typeof signer === 'string' ? signer : (signer.name || signer.Name || '');
-                console.log(
+                smartMatchLog(
                     `[smart-match]   ✓ LABEL MATCH: token="${best.token}" ("${best.raw}") -> signer ${best.signerIndex} "${signerName}" (pdfVertDist=${best.vertDist.toFixed(
                         1
                     )}, pdfHorizDist=${best.horizDist.toFixed(1)})`
@@ -576,10 +634,10 @@ function assignSignersToSpotsSmartMatch(spots, signers, pageItems) {
             return verticalDistance < 160;  // PDF-space: signer labels are close to their underline
         });
 
-        console.log(`[smart-match] Found ${nearbyItems.length} nearby items (pdf vertical distance < 160):`);
+        smartMatchLog(`[smart-match] Found ${nearbyItems.length} nearby items (pdf vertical distance < 160):`);
         nearbyItems.forEach(item => {
             const vertDist = Math.abs((item.y || 0) - spotPdfY);
-            console.log(`[smart-match]   "${item.str}" at x=${item.x.toFixed(2)}, y=${item.y.toFixed(2)} (pdfVertDist=${vertDist.toFixed(2)})`);
+            smartMatchLog(`[smart-match]   "${item.str}" at x=${item.x.toFixed(2)}, y=${item.y.toFixed(2)} (pdfVertDist=${vertDist.toFixed(2)})`);
         });
 
         // Strategy: Match signers based on which signer names appear in nearby text
@@ -626,7 +684,7 @@ function assignSignersToSpotsSmartMatch(spots, signers, pageItems) {
 
                     const signerName = signers[signerInfo.index].name || signers[signerInfo.index].Name || signers[signerInfo.index];
                     const matchPart = signerInfo.parts.find(p => p.length > 1 && itemText.includes(p));
-                    console.log(`[smart-match]     ✓ Matched signer ${signerInfo.index} "${signerName}" - found part "${matchPart}" (score=${matchScore.toFixed(0)}) in "${item.str}" at distance ${totalDist.toFixed(0)}pt`);
+                    smartMatchLog(`[smart-match]     ✓ Matched signer ${signerInfo.index} "${signerName}" - found part "${matchPart}" (score=${matchScore.toFixed(0)}) in "${item.str}" at distance ${totalDist.toFixed(0)}pt`);
                     break;  // Found a match for this signer in this item, move to next signer
                 }
             }
@@ -637,7 +695,7 @@ function assignSignersToSpotsSmartMatch(spots, signers, pageItems) {
             bestSignerIndex = Array.from(presentSigners)[0];
             const signerName = signers[bestSignerIndex].name || signers[bestSignerIndex].Name || signers[bestSignerIndex];
             const distInfo = signerToClosestDist[bestSignerIndex];
-            console.log(`[smart-match]   ✓ UNIQUE MATCH: signer ${bestSignerIndex} "${signerName}" (distance=${distInfo.totalDist.toFixed(2)}, score=${distInfo.matchScore.toFixed(0)})`);
+            smartMatchLog(`[smart-match]   ✓ UNIQUE MATCH: signer ${bestSignerIndex} "${signerName}" (distance=${distInfo.totalDist.toFixed(2)}, score=${distInfo.matchScore.toFixed(0)})`);
             return {
                 ...spot,
                 signerIndex: bestSignerIndex,
@@ -663,10 +721,10 @@ function assignSignersToSpotsSmartMatch(spots, signers, pageItems) {
                 });
 
             bestSignerIndex = signerDistances[0].index;
-            console.log(`[smart-match]   Candidates: ${signerDistances.map(s => `signer ${s.index} (score=${s.matchScore.toFixed(0)}, dist=${s.totalDist.toFixed(0)}pt)`).join(', ')} -> chose signer ${bestSignerIndex}`);
+            smartMatchLog(`[smart-match]   Candidates: ${signerDistances.map(s => `signer ${s.index} (score=${s.matchScore.toFixed(0)}, dist=${s.totalDist.toFixed(0)}pt)`).join(', ')} -> chose signer ${bestSignerIndex}`);
             const signerName = signers[bestSignerIndex].name || signers[bestSignerIndex].Name || signers[bestSignerIndex];
             const distInfo = signerToClosestDist[bestSignerIndex];
-            console.log(`[smart-match]   ✓ CLOSEST MATCH: signer ${bestSignerIndex} "${signerName}" (score=${distInfo.matchScore.toFixed(0)}, distance=${distInfo.totalDist.toFixed(2)}, from ${presentSigners.size} present)`);
+            smartMatchLog(`[smart-match]   ✓ CLOSEST MATCH: signer ${bestSignerIndex} "${signerName}" (score=${distInfo.matchScore.toFixed(0)}, distance=${distInfo.totalDist.toFixed(2)}, from ${presentSigners.size} present)`);
             return {
                 ...spot,
                 signerIndex: bestSignerIndex,
@@ -676,7 +734,7 @@ function assignSignersToSpotsSmartMatch(spots, signers, pageItems) {
         }
 
         // No signer name found
-        console.log(`[smart-match]   ❌ UNASSIGNED: spot page ${spot.pageNum} - NO SIGNER NAME FOUND`);
+        smartMatchLog(`[smart-match]   ❌ UNASSIGNED: spot page ${spot.pageNum} - NO SIGNER NAME FOUND`);
         return { ...spot, _unassigned: true };
     });
 
@@ -686,7 +744,7 @@ function assignSignersToSpotsSmartMatch(spots, signers, pageItems) {
             const signer = signers[signerIndex % signers.length];
             const signerName = typeof signer === 'string' ? signer : (signer.name || signer.Name || '');
             const signerUserId = typeof signer === 'string' ? null : (signer.userId || signer.UserId || null);
-            console.log(`[smart-match]   (ROUND-ROBIN FALLBACK) page ${spot.pageNum} -> signer ${signerIndex % signers.length} "${signerName}"`);
+            smartMatchLog(`[smart-match]   (ROUND-ROBIN FALLBACK) page ${spot.pageNum} -> signer ${signerIndex % signers.length} "${signerName}"`);
             const assignment = {
                 ...spot,
                 signerIndex: signerIndex % signers.length,

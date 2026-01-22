@@ -398,15 +398,53 @@ export default function UploadFileForSigningScreen() {
         try {
             if (localStorage.getItem(RETENTION_NOTICE_ACK_KEY) === "1") return true;
 
-            const coreDays = billingPlanData?.retention?.documentsCoreDays ?? "-";
-            const piiDays = billingPlanData?.retention?.documentsPiiDays ?? "-";
+            const coercePositiveIntOrNull = (v) => {
+                const n = Number(v);
+                if (!Number.isFinite(n)) return null;
+                const i = Math.floor(n);
+                return i > 0 ? i : null;
+            };
+
+            const resolveRetentionDaysFromPlanLike = (planLike) => {
+                const core =
+                    planLike?.retention?.documentsCoreDays ??
+                    planLike?.effectiveDocumentsRetentionDaysCore ??
+                    null;
+                const pii =
+                    planLike?.retention?.documentsPiiDays ??
+                    planLike?.effectiveDocumentsRetentionDaysPii ??
+                    null;
+                return {
+                    coreDays: coercePositiveIntOrNull(core),
+                    piiDays: coercePositiveIntOrNull(pii),
+                };
+            };
+
+            // Prefer already-loaded billing plan, but if the user hits upload quickly,
+            // fetch once to avoid showing placeholders.
+            let { coreDays, piiDays } = resolveRetentionDaysFromPlanLike(billingPlanData);
+            if (!coreDays || !piiDays) {
+                try {
+                    const res = await billingApi.getPlan();
+                    const fromFetch = resolveRetentionDaysFromPlanLike(res?.data);
+                    coreDays = coreDays || fromFetch.coreDays;
+                    piiDays = piiDays || fromFetch.piiDays;
+                } catch {
+                    // keep nulls
+                }
+            }
+
+            const noticeText =
+                coreDays && piiDays
+                    ? t('signing.upload.retentionNotice.text', { coreDays, piiDays })
+                    : t('signing.upload.retentionNotice.textFallback');
 
             return await new Promise((resolve) => {
                 openPopup(
                     <SimpleContainer className="lw-retentionNoticePopup">
                         <TextBold24>{t('signing.upload.retentionNotice.title')}</TextBold24>
                         <Text14 className="lw-retentionNoticePopup__text">
-                            {t('signing.upload.retentionNotice.text', { coreDays, piiDays })}
+                            {noticeText}
                         </Text14>
                         <SimpleContainer className="lw-retentionNoticePopup__actions">
                             <SecondaryButton
