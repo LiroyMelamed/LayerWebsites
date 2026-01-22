@@ -18,7 +18,10 @@ import { Text14, TextBold14, TextBold24 } from "../../components/specializedComp
 import ChooseButton from "../../components/styledComponents/buttons/ChooseButton";
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
+import TertiaryButton from "../../components/styledComponents/buttons/TertiaryButton";
 import ErrorPopup from "../../components/styledComponents/popups/ErrorPopup";
+import { buttonSizes } from "../../styles/buttons/buttonSizes";
+import { icons } from "../../assets/icons/icons";
 
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
 import { getNavBarData } from "../../components/navBars/data/NavBarData";
@@ -36,11 +39,22 @@ import "./EvidenceDocumentsScreen.scss";
 
 export const EvidenceDocumentsScreenName = "/EvidenceDocumentsScreen";
 
-function safeToLocalDateTime(iso) {
+function clientNameOnly(displayName) {
+    const raw = String(displayName || "").trim();
+    if (!raw) return null;
+    // Backend formats as: "Name (XXX-XXX-1234)" when phone exists.
+    const stripped = raw.replace(/\s*\([^)]*\)\s*$/, "").trim();
+    return stripped || raw;
+}
+
+function formatDateDdMmYy(iso) {
     if (!iso) return "-";
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return "-";
-    return d.toLocaleString();
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yy = String(d.getFullYear()).slice(-2);
+    return `${dd}/${mm}/${yy}`;
 }
 
 function otpLabel(item, t) {
@@ -59,6 +73,16 @@ export default function EvidenceDocumentsScreen() {
     const { openPopup, closePopup } = usePopup();
 
     const showOtpUi = SIGNING_OTP_ENABLED;
+
+    const tableRowClassName = useMemo(() => {
+        return [
+            "lw-evidenceDocuments__tableRow",
+            isSmallScreen ? "lw-evidenceDocuments__tableRow--noCase" : null,
+            showOtpUi ? null : "lw-evidenceDocuments__tableRow--noOtp",
+        ]
+            .filter(Boolean)
+            .join(" ");
+    }, [isSmallScreen, showOtpUi]);
 
     const [inputQ, setInputQ] = useState("");
     const [inputCaseId, setInputCaseId] = useState("");
@@ -283,8 +307,8 @@ export default function EvidenceDocumentsScreen() {
                         queryResult={searchDropdownItems}
                         isPerforming={isLoading && items.length === 0}
                         getButtonTextFunction={(it) => {
-                            const client = it?.clientDisplayName || "-";
-                            const cs = it?.caseDisplayName || (it?.caseId ? `${t("evidenceDocuments.casePrefix")}${it.caseId}` : "-");
+                            const client = clientNameOnly(it?.clientDisplayName) || "-";
+                            const cs = it?.caseId ? String(it.caseId) : "-";
                             const doc = it?.documentDisplayName || "-";
                             return `${client} | ${cs} | ${doc}`;
                         }}
@@ -345,13 +369,15 @@ export default function EvidenceDocumentsScreen() {
                     </SimpleContainer>
                 ) : (
                     <SimpleContainer className="lw-evidenceDocuments__table">
-                        <SimpleContainer className="lw-evidenceDocuments__tableRow lw-evidenceDocuments__tableRow--header">
+                        <SimpleContainer className={`${tableRowClassName} lw-evidenceDocuments__tableRow--header`}>
                             <SimpleContainer className="lw-evidenceDocuments__cell">
                                 <TextBold14>{t("evidenceDocuments.columns.client")}</TextBold14>
                             </SimpleContainer>
-                            <SimpleContainer className="lw-evidenceDocuments__cell">
-                                <TextBold14>{t("evidenceDocuments.columns.case")}</TextBold14>
-                            </SimpleContainer>
+                            {!isSmallScreen && (
+                                <SimpleContainer className="lw-evidenceDocuments__cell lw-evidenceDocuments__cell--case">
+                                    <TextBold14>{t("evidenceDocuments.columns.case")}</TextBold14>
+                                </SimpleContainer>
+                            )}
                             <SimpleContainer className="lw-evidenceDocuments__cell">
                                 <TextBold14>{t("evidenceDocuments.columns.document")}</TextBold14>
                             </SimpleContainer>
@@ -371,35 +397,38 @@ export default function EvidenceDocumentsScreen() {
                         {filteredItems.map((it) => (
                             <SimpleContainer
                                 key={`${it.signingFileId}_${it.signedAtUtc || ""}`}
-                                className="lw-evidenceDocuments__tableRow"
+                                className={tableRowClassName}
                             >
                                 <SimpleContainer className="lw-evidenceDocuments__cell" title={it.clientDisplayName || ""}>
-                                    <Text14>{it.clientDisplayName || "-"}</Text14>
+                                    <Text14>{clientNameOnly(it.clientDisplayName) || "-"}</Text14>
                                 </SimpleContainer>
-                                <SimpleContainer className="lw-evidenceDocuments__cell" title={it.caseDisplayName || ""}>
-                                    <Text14>
-                                        {it.caseDisplayName ||
-                                            (it.caseId ? `${t("evidenceDocuments.casePrefix")}${it.caseId}` : "-")}
-                                    </Text14>
-                                </SimpleContainer>
+                                {!isSmallScreen && (
+                                    <SimpleContainer className="lw-evidenceDocuments__cell lw-evidenceDocuments__cell--case" title={String(it.caseId || "")}>
+                                        <Text14>{it.caseId ? String(it.caseId) : "-"}</Text14>
+                                    </SimpleContainer>
+                                )}
                                 <SimpleContainer className="lw-evidenceDocuments__cell" title={it.documentDisplayName || ""}>
                                     <Text14>{it.documentDisplayName || "-"}</Text14>
                                 </SimpleContainer>
                                 <SimpleContainer className="lw-evidenceDocuments__cell">
-                                    <Text14>{safeToLocalDateTime(it.signedAtUtc)}</Text14>
+                                    <Text14>{formatDateDdMmYy(it.signedAtUtc)}</Text14>
                                 </SimpleContainer>
                                 {showOtpUi && (
                                     <SimpleContainer className="lw-evidenceDocuments__cell">
                                         <Text14>{otpLabel(it, t)}</Text14>
                                     </SimpleContainer>
                                 )}
-                                <SimpleContainer className="lw-evidenceDocuments__cell">
-                                    <SecondaryButton
+                                <SimpleContainer className="lw-evidenceDocuments__cell lw-evidenceDocuments__cell--actions">
+                                    <TertiaryButton
                                         onPress={() => downloadEvidenceZip(it.signingFileId)}
                                         disabled={!it.evidenceZipAvailable}
+                                        title={t("evidenceDocuments.actions.downloadZip")}
+                                        size={buttonSizes.SMALL}
+                                        rightIcon={icons.Button.DownArrow}
+                                        style={{ padding: '0.35rem 0.45rem', minWidth: 'unset' }}
                                     >
-                                        {t("evidenceDocuments.actions.downloadZip")}
-                                    </SecondaryButton>
+                                        {""}
+                                    </TertiaryButton>
                                 </SimpleContainer>
                             </SimpleContainer>
                         ))}

@@ -40,9 +40,32 @@
 
 .lw-evidenceDocuments__tableRow {
     display: grid;
-    grid-template-columns: 1.2fr 1.2fr 1.2fr 10rem 10rem 12rem;
+    /*
+        Header and row are separate grid containers.
+        Avoid max-content (it sizes per-row based on its own content), but also avoid
+        hard fixed widths that overflow on small screens.
+        Use shrinkable tracks (min 0) so the grid can fit the container.
+    */
+    grid-template-columns:
+        minmax(0, 1fr) minmax(0, 6.25rem) minmax(0, 1fr) minmax(0, 6.25rem) minmax(0, 5.5rem) minmax(0, 3.5rem);
     border-bottom: 0.0625rem solid var(--lw-color-disabled);
     align-items: center;
+    gap: 0.25rem;
+}
+
+.lw-evidenceDocuments__tableRow--noOtp {
+    grid-template-columns:
+        minmax(0, 1fr) minmax(0, 6.25rem) minmax(0, 1.5fr) minmax(0, 6.25rem) minmax(0, 3.5rem);
+}
+
+.lw-evidenceDocuments__tableRow--noCase {
+    grid-template-columns:
+        minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 6.25rem) minmax(0, 5.5rem) minmax(0, 3.5rem);
+}
+
+.lw-evidenceDocuments__tableRow--noCase.lw-evidenceDocuments__tableRow--noOtp {
+    grid-template-columns:
+        minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 6.25rem) minmax(0, 3.5rem);
 }
 
 .lw-evidenceDocuments__tableRow--header {
@@ -50,11 +73,38 @@
 }
 
 .lw-evidenceDocuments__cell {
-    padding: 0.75rem;
+    padding: 0.5rem;
     font-size: 0.8125rem;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: wrap;
+    min-width: 0;
+}
+
+.lw-evidenceDocuments__cell--actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5rem;
+}
+
+@media (max-width: v.$bp-narrow) {
+
+    /* Always hide the case column on small screens */
+    .lw-evidenceDocuments__cell--case {
+        display: none;
+    }
+
+    /* When the case column is hidden, keep the grid aligned */
+    .lw-evidenceDocuments__tableRow {
+        grid-template-columns:
+            minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 6.25rem) minmax(0, 5.25rem) minmax(0, 3.25rem);
+    }
+
+    .lw-evidenceDocuments__tableRow--noOtp {
+        grid-template-columns:
+            minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 6.25rem) minmax(0, 3.25rem);
+    }
 }
 
 .lw-evidenceDocuments__footer {
