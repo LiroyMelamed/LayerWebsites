@@ -19,6 +19,7 @@ const signingFileRoutes = require("./routes/signingFileRoutes");
 const auditEventsRoutes = require("./routes/auditEventsRoutes");
 const evidenceDocumentsRoutes = require("./routes/evidenceDocumentsRoutes");
 const billingRoutes = require("./routes/billingRoutes");
+const emailCampaignRoutes = require("./routes/emailCampaignRoutes");
 
 const authMiddleware = require("./middlewares/authMiddleware");
 const { createRateLimitMiddleware, getClientIp } = require("./utils/rateLimiter");
@@ -134,6 +135,7 @@ app.use("/api/SigningFiles", signingFileRoutes);
 app.use("/api/billing", billingRoutes);
 app.use("/api/audit-events", auditEventsRoutes);
 app.use("/api/evidence-documents", evidenceDocumentsRoutes);
+app.use("/api/email/campaign", emailCampaignRoutes);
 
 // Lightweight health endpoint for prereq checks
 app.get("/health", (req, res) => {
