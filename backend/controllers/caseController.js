@@ -2,6 +2,7 @@ const pool = require("../config/db"); // Direct import of the pg pool
 const { formatPhoneNumber } = require("../utils/phoneUtils");
 const { sendMessage, WEBSITE_DOMAIN } = require("../utils/sendMessage");
 const sendAndStoreNotification = require("../utils/sendAndStoreNotification"); // Import the new consolidated utility
+const { notifyRecipient } = require("../services/notifications/notificationOrchestrator");
 const { requireInt } = require("../utils/paramValidation");
 const { getPagination } = require("../utils/pagination");
 
@@ -356,19 +357,33 @@ const addCase = async (req, res) => {
             }
         }
 
-        const formattedPhone = formatPhoneNumber(PhoneNumber);
-        try {
-            sendMessage(
-                `היי ${CustomerName}, \n\n תיק ${CaseName} נוצר, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`,
-                formattedPhone
-            );
-        } catch (e) {
-            console.warn('Warning: failed to send SMS for case creation:', e?.message);
-        }
-
         await client.query('COMMIT');
 
-        await sendAndStoreNotification(UserId, "תיק חדש נוצר", `תיק "${CaseName}" נוצר בהצלחה. היכנס לאתר או לאפליקציה למעקב.`, { caseId: String(caseId) });
+        const notificationTitle = "תיק חדש נוצר";
+        const notificationMessage = `תיק "${CaseName}" נוצר בהצלחה. היכנס לאתר או לאפליקציה למעקב.`;
+        const smsBody = `היי ${CustomerName}, \n\n תיק ${CaseName} נוצר, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`;
+
+        await notifyRecipient({
+            recipientUserId: UserId,
+            recipientPhone: PhoneNumber,
+            notificationType: 'CASE_UPDATE',
+            push: {
+                title: notificationTitle,
+                body: notificationMessage,
+                data: { caseId: String(caseId) },
+            },
+            email: {
+                campaignKey: 'CASE_UPDATE',
+                contactFields: {
+                    recipient_name: String(CustomerName || '').trim(),
+                    case_title: String(CaseName || '').trim(),
+                    action_url: `https://${WEBSITE_DOMAIN}`,
+                },
+            },
+            sms: {
+                messageBody: smsBody,
+            },
+        });
 
         res.status(201).json({ message: "Case created successfully", caseId });
 
@@ -441,19 +456,33 @@ const updateCase = async (req, res) => {
             }
         }
 
-        const formattedPhone = formatPhoneNumber(PhoneNumber);
-        try {
-            sendMessage(
-                `היי ${CustomerName}, \n\n תיק ${CaseName} התעדכן, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`,
-                formattedPhone
-            );
-        } catch (e) {
-            console.warn('Warning: failed to send SMS for case update:', e?.message);
-        }
-
         await client.query('COMMIT');
 
-        await sendAndStoreNotification(UserId, "עדכון תיק", `תיק "${CaseName}" עודכן. היכנס לאתר או לאפליקציה למעקב.`, { caseId: String(caseId) });
+        const notificationTitle = "עדכון תיק";
+        const notificationMessage = `תיק "${CaseName}" עודכן. היכנס לאתר או לאפליקציה למעקב.`;
+        const smsBody = `היי ${CustomerName}, \n\n תיק ${CaseName} התעדכן, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`;
+
+        await notifyRecipient({
+            recipientUserId: UserId,
+            recipientPhone: PhoneNumber,
+            notificationType: 'CASE_UPDATE',
+            push: {
+                title: notificationTitle,
+                body: notificationMessage,
+                data: { caseId: String(caseId) },
+            },
+            email: {
+                campaignKey: 'CASE_UPDATE',
+                contactFields: {
+                    recipient_name: String(CustomerName || '').trim(),
+                    case_title: String(CaseName || '').trim(),
+                    action_url: `https://${WEBSITE_DOMAIN}`,
+                },
+            },
+            sms: {
+                messageBody: smsBody,
+            },
+        });
 
         res.status(200).json({ message: "Case updated successfully" });
     } catch (error) {
@@ -532,15 +561,28 @@ const updateStage = async (req, res) => {
         }
 
         if (notificationMessage) {
-            const formattedPhone = formatPhoneNumber(PhoneNumber);
-            try {
-                sendMessage(notificationMessage, formattedPhone);
-            } catch (e) {
-                console.warn('Warning: failed to send SMS for stage update:', e?.message);
-            }
-
             if (caseUserId) {
-                await sendAndStoreNotification(caseUserId, notificationTitle, notificationMessage, { caseId: String(caseId), stage: String(CurrentStage) });
+                await notifyRecipient({
+                    recipientUserId: caseUserId,
+                    recipientPhone: PhoneNumber,
+                    notificationType: 'CASE_UPDATE',
+                    push: {
+                        title: notificationTitle,
+                        body: notificationMessage,
+                        data: { caseId: String(caseId), stage: String(CurrentStage) },
+                    },
+                    email: {
+                        campaignKey: 'CASE_UPDATE',
+                        contactFields: {
+                            recipient_name: String(CustomerName || '').trim(),
+                            case_title: String(CaseName || '').trim(),
+                            action_url: `https://${WEBSITE_DOMAIN}`,
+                        },
+                    },
+                    sms: {
+                        messageBody: notificationMessage,
+                    },
+                });
             }
         }
 
@@ -821,7 +863,37 @@ const linkWhatsappGroup = async (req, res) => {
         );
 
         if (caseUserId && !isEmpty) {
-            await sendAndStoreNotification(caseUserId, "קבוצת וואטסאפ מקושרת", `קבוצת וואטסאפ קושרה לתיק "${caseName}".`, { caseId: String(caseId) });
+            const msg = `קבוצת וואטסאפ קושרה לתיק "${caseName}".`;
+
+            let recipientNameForTemplate = '';
+            try {
+                const ur = await pool.query('select name as "Name" from users where userid = $1', [caseUserId]);
+                const n = String(ur.rows?.[0]?.Name || '').trim();
+                if (n) recipientNameForTemplate = n;
+            } catch {
+                // Best-effort
+            }
+
+            await notifyRecipient({
+                recipientUserId: caseUserId,
+                notificationType: 'CASE_UPDATE',
+                push: {
+                    title: 'קבוצת וואטסאפ מקושרת',
+                    body: msg,
+                    data: { caseId: String(caseId), type: 'whatsapp_group_linked' },
+                },
+                email: {
+                    campaignKey: 'CASE_UPDATE',
+                    contactFields: {
+                        case_title: String(caseName || '').trim(),
+                        action_url: String(normalized || '').trim(),
+                        recipient_name: recipientNameForTemplate,
+                    },
+                },
+                sms: {
+                    messageBody: `${msg}\n${String(normalized || '').trim()}`,
+                },
+            });
         }
 
         res.status(200).json({ message: "Whatsapp group link updated successfully" });

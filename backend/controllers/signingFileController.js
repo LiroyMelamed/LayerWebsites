@@ -5,6 +5,7 @@ const { PutObjectCommand, GetObjectCommand, HeadObjectCommand } = require("@aws-
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const { r2, BUCKET } = require("../utils/r2");
 const sendAndStoreNotification = require("../utils/sendAndStoreNotification");
+const { notifyRecipient } = require("../services/notifications/notificationOrchestrator");
 const { formatPhoneNumber } = require("../utils/phoneUtils");
 const { sendMessage, WEBSITE_DOMAIN } = require("../utils/sendMessage");
 const { detectHebrewSignatureSpotsFromPdfBuffer, streamToBuffer } = require("../utils/signatureDetection");
@@ -1613,6 +1614,15 @@ exports.uploadFileForSigning = async (req, res, next) => {
             return fail(next, 'UNAUTHORIZED', 401);
         }
 
+        let lawyerNameForTemplate = 'עו"ד';
+        try {
+            const lr = await pool.query('select name as "Name" from users where userid = $1', [lawyerId]);
+            const n = String(lr.rows?.[0]?.Name || '').trim();
+            if (n) lawyerNameForTemplate = n;
+        } catch {
+            // Best-effort
+        }
+
         if (isSigningDebugEnabled()) {
             console.log('[signing] uploadFileForSigning', {
                 lawyerId,
@@ -1977,38 +1987,33 @@ exports.uploadFileForSigning = async (req, res, next) => {
                 ? `מסמך "${fileName}" מחכה לחתימה.\n${publicUrl}`
                 : `מסמך "${fileName}" מחכה לחתימה.`;
 
-            await sendAndStoreNotification(
-                signerUserId,
-                "מסמך מחכה לחתימה",
-                message,
-                { signingFileId, type: "signing_pending", token }
-            );
+            const recipientName = String(signer?.name || '').trim() || 'לקוח';
 
-            // If the signer has no app push tokens, fallback to SMS.
-            try {
-                const hasTokensRes = await pool.query(
-                    "SELECT 1 FROM UserDevices WHERE UserId = $1 AND FcmToken IS NOT NULL LIMIT 1",
-                    [signerUserId]
-                );
-                const hasPushTokens = (hasTokensRes.rows || []).length > 0;
-
-                if (!hasPushTokens && publicUrl) {
-                    const phoneRes = await pool.query(
-                        "SELECT phonenumber as \"PhoneNumber\" FROM users WHERE userid = $1",
-                        [signerUserId]
-                    );
-                    const phoneNumber = phoneRes.rows?.[0]?.PhoneNumber;
-                    const formattedPhone = formatPhoneNumber(phoneNumber);
-                    if (formattedPhone) {
-                        await sendMessage(
-                            `מסמך מחכה לחתימה: ${fileName}\n${publicUrl}`,
-                            formattedPhone
-                        );
+            await notifyRecipient({
+                recipientUserId: signerUserId,
+                notificationType: 'SIGN_INVITE',
+                push: {
+                    title: 'מסמך מחכה לחתימה',
+                    body: message,
+                    data: { signingFileId, type: 'signing_pending', token },
+                },
+                email: publicUrl
+                    ? {
+                        campaignKey: 'SIGN_INVITE',
+                        contactFields: {
+                            recipient_name: recipientName,
+                            document_name: String(fileName || '').trim(),
+                            action_url: String(publicUrl || '').trim(),
+                            lawyer_name: String(lawyerNameForTemplate || '').trim(),
+                        },
                     }
-                }
-            } catch (e) {
-                console.warn('Warning: failed SMS fallback for signing link:', e?.message);
-            }
+                    : null,
+                sms: publicUrl
+                    ? {
+                        messageBody: `מסמך מחכה לחתימה: ${fileName}\n${publicUrl}`,
+                    }
+                    : null,
+            });
         }
 
         return res.json({
@@ -4556,12 +4561,37 @@ exports.signFile = async (req, res, next) => {
                 console.error('Failed to generate signed PDF evidence:', e?.message || e);
             }
 
-            await sendAndStoreNotification(
-                file.LawyerId,
-                "✓ קובץ חתום",
-                `הקובץ ${file.FileName} חתום בהצלחה על ידי כל החתומים`,
-                { signingFileId, type: "file_signed" }
-            );
+            let lawyerNameForTemplate = 'עו"ד';
+            try {
+                const lr = await pool.query('select name as "Name" from users where userid = $1', [file.LawyerId]);
+                const n = String(lr.rows?.[0]?.Name || '').trim();
+                if (n) lawyerNameForTemplate = n;
+            } catch {
+                // Best-effort
+            }
+
+            const message = `הקובץ ${file.FileName} חתום בהצלחה על ידי כל החתומים`;
+
+            await notifyRecipient({
+                recipientUserId: file.LawyerId,
+                notificationType: 'DOC_SIGNED',
+                push: {
+                    title: '✓ קובץ חתום',
+                    body: message,
+                    data: { signingFileId, type: 'file_signed' },
+                },
+                email: {
+                    campaignKey: 'DOC_SIGNED',
+                    contactFields: {
+                        recipient_name: String(lawyerNameForTemplate || '').trim(),
+                        document_name: String(file.FileName || '').trim(),
+                        lawyer_name: String(lawyerNameForTemplate || '').trim(),
+                    },
+                },
+                sms: {
+                    messageBody: `${message}\nhttps://${WEBSITE_DOMAIN}`,
+                },
+            });
         }
 
         return res.json({ success: true, message: "✓ החתימה נשמרה בהצלחה" });
@@ -4636,12 +4666,37 @@ exports.rejectSigning = async (req, res, next) => {
             [rejectionReason || null, signingFileId]
         );
 
-        await sendAndStoreNotification(
-            file.LawyerId,
-            "❌ קובץ נדחה",
-            `${file.FileName} נדחה על ידי חותם. סיבה: ${rejectionReason || "לא צוינה"}`,
-            { signingFileId, type: "file_rejected" }
-        );
+        let lawyerNameForTemplate = 'עו"ד';
+        try {
+            const lr = await pool.query('select name as "Name" from users where userid = $1', [file.LawyerId]);
+            const n = String(lr.rows?.[0]?.Name || '').trim();
+            if (n) lawyerNameForTemplate = n;
+        } catch {
+            // Best-effort
+        }
+
+        const message = `${file.FileName} נדחה על ידי חותם. סיבה: ${rejectionReason || "לא צוינה"}`;
+
+        await notifyRecipient({
+            recipientUserId: file.LawyerId,
+            notificationType: 'DOC_REJECTED',
+            push: {
+                title: '❌ קובץ נדחה',
+                body: message,
+                data: { signingFileId, type: 'file_rejected' },
+            },
+            email: {
+                campaignKey: 'DOC_REJECTED',
+                contactFields: {
+                    recipient_name: String(lawyerNameForTemplate || '').trim(),
+                    document_name: String(file.FileName || '').trim(),
+                    lawyer_name: String(lawyerNameForTemplate || '').trim(),
+                },
+            },
+            sms: {
+                messageBody: `${message}\nhttps://${WEBSITE_DOMAIN}`,
+            },
+        });
 
         return res.json({ success: true, message: "✓ המסמך נדחה בהצלחה" });
     } catch (err) {
@@ -4688,6 +4743,15 @@ exports.reuploadFile = async (req, res, next) => {
             return fail(next, 'IMMUTABLE_DOCUMENT', 409, {
                 message: 'לא ניתן להעלות מחדש מסמך לאחר שהפך לבלתי ניתן לשינוי',
             });
+        }
+
+        let lawyerNameForTemplate = 'עו"ד';
+        try {
+            const lr = await pool.query('select name as "Name" from users where userid = $1', [file.LawyerId]);
+            const n = String(lr.rows?.[0]?.Name || '').trim();
+            if (n) lawyerNameForTemplate = n;
+        } catch {
+            // Best-effort
         }
 
         await pool.query(
@@ -4874,36 +4938,40 @@ exports.reuploadFile = async (req, res, next) => {
                     ? `המסמך "${file.FileName}" הועלה מחדש לחתימה.\n ${publicUrl}`
                     : `המסמך "${file.FileName}" הועלה מחדש לחתימה.`;
 
-                await sendAndStoreNotification(
-                    targetUserId,
-                    "מסמך מחכה לחתימה",
-                    message,
-                    { signingFileId, type: "file_reuploaded", token }
-                );
-
+                let recipientNameForTemplate = 'לקוח';
                 try {
-                    const hasTokensRes = await pool.query(
-                        "SELECT 1 FROM UserDevices WHERE UserId = $1 AND FcmToken IS NOT NULL LIMIT 1",
-                        [targetUserId]
-                    );
-                    const hasPushTokens = (hasTokensRes.rows || []).length > 0;
-                    if (!hasPushTokens && publicUrl) {
-                        const phoneRes = await pool.query(
-                            "SELECT phonenumber as \"PhoneNumber\" FROM users WHERE userid = $1",
-                            [targetUserId]
-                        );
-                        const phoneNumber = phoneRes.rows?.[0]?.PhoneNumber;
-                        const formattedPhone = formatPhoneNumber(phoneNumber);
-                        if (formattedPhone) {
-                            await sendMessage(
-                                `מסמך מחכה לחתימה: ${file.FileName}\n${publicUrl}`,
-                                formattedPhone
-                            );
-                        }
-                    }
-                } catch (e) {
-                    console.warn('Warning: failed SMS fallback for reupload link:', e?.message);
+                    const ur = await pool.query('select name as "Name" from users where userid = $1', [targetUserId]);
+                    const n = String(ur.rows?.[0]?.Name || '').trim();
+                    if (n) recipientNameForTemplate = n;
+                } catch {
+                    // Best-effort
                 }
+
+                await notifyRecipient({
+                    recipientUserId: targetUserId,
+                    notificationType: 'SIGN_INVITE',
+                    push: {
+                        title: 'מסמך מחכה לחתימה',
+                        body: message,
+                        data: { signingFileId, type: 'file_reuploaded', token },
+                    },
+                    email: publicUrl
+                        ? {
+                            campaignKey: 'SIGN_INVITE',
+                            contactFields: {
+                                recipient_name: String(recipientNameForTemplate || '').trim(),
+                                document_name: String(file.FileName || '').trim(),
+                                action_url: String(publicUrl || '').trim(),
+                                lawyer_name: String(lawyerNameForTemplate || '').trim(),
+                            },
+                        }
+                        : null,
+                    sms: publicUrl
+                        ? {
+                            messageBody: `מסמך מחכה לחתימה: ${file.FileName}\n${publicUrl}`,
+                        }
+                        : null,
+                });
             }
         } else {
             // Legacy DB: notify only primary client
@@ -4918,12 +4986,40 @@ exports.reuploadFile = async (req, res, next) => {
                 ? `המסמך "${file.FileName}" הועלה מחדש לחתימה.\n${publicUrl}`
                 : `המסמך "${file.FileName}" הועלה מחדש לחתימה.`;
 
-            await sendAndStoreNotification(
-                file.ClientId,
-                "מסמך מחכה לחתימה",
-                message,
-                { signingFileId, type: "file_reuploaded", token }
-            );
+            let recipientNameForTemplate = 'לקוח';
+            try {
+                const ur = await pool.query('select name as "Name" from users where userid = $1', [file.ClientId]);
+                const n = String(ur.rows?.[0]?.Name || '').trim();
+                if (n) recipientNameForTemplate = n;
+            } catch {
+                // Best-effort
+            }
+
+            await notifyRecipient({
+                recipientUserId: file.ClientId,
+                notificationType: 'SIGN_INVITE',
+                push: {
+                    title: 'מסמך מחכה לחתימה',
+                    body: message,
+                    data: { signingFileId, type: 'file_reuploaded', token },
+                },
+                email: publicUrl
+                    ? {
+                        campaignKey: 'SIGN_INVITE',
+                        contactFields: {
+                            recipient_name: String(recipientNameForTemplate || '').trim(),
+                            document_name: String(file.FileName || '').trim(),
+                            action_url: String(publicUrl || '').trim(),
+                            lawyer_name: String(lawyerNameForTemplate || '').trim(),
+                        },
+                    }
+                    : null,
+                sms: publicUrl
+                    ? {
+                        messageBody: `מסמך מחכה לחתימה: ${file.FileName}\n${publicUrl}`,
+                    }
+                    : null,
+            });
         }
 
         return res.json({ success: true, message: "הקובץ הועלה מחדש לחתימה" });

@@ -53,8 +53,10 @@ async function sendAndStoreNotification(userId, title, message, data = {}) {
             [userId]
         );
 
-        // Extract the tokens from the query result
-        const tokens = tokensResult.rows.map(row => row.FcmToken).filter(Boolean);
+        // Extract the tokens from the query result (be tolerant of casing)
+        const tokens = tokensResult.rows
+            .map((row) => row?.FcmToken ?? row?.fcmtoken ?? row?.fcmToken)
+            .filter(Boolean);
         const expoTokens = tokens.map(t => String(t).trim()).filter(isExpoPushToken);
 
         // Add a Unicode Right-to-Left marker for proper text display in notifications

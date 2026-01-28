@@ -11,14 +11,40 @@ const {
 // For short-term testing: when true, send real EMAIL even in dev.
 const FORCE_SEND_EMAIL_ALL = process.env.FORCE_SEND_EMAIL_ALL === 'true';
 
-const ALLOWED_CAMPAIGN_KEYS = ['SIGN_INVITE', 'SIGN_REMINDER', 'CASE_UPDATE', 'DOC_SIGNED'];
+const ALLOWED_CAMPAIGN_KEYS = ['SIGN_INVITE', 'SIGN_REMINDER', 'CASE_UPDATE', 'DOC_SIGNED', 'DOC_REJECTED'];
+
+const SIGN_INVITE_REQUIRED_CUSTOM_FIELDS = [
+    'recipient_name',
+    'document_name',
+    'action_url',
+    'lawyer_name',
+];
+
+const SIGN_REMINDER_REQUIRED_CUSTOM_FIELDS = [
+    'recipient_name',
+    'document_name',
+    'action_url',
+    'lawyer_name',
+];
+
+const DEFAULT_SMOOVE_REST_BASE_URL = 'https://rest.smoove.io';
+
+const TRANSACTIONAL_EMAIL_REQUIRED_ENV = [
+    'SMOOVE_API_KEY',
+    'SMOOVE_EMAIL_FROM_NAME',
+    'SMOOVE_EMAIL_FROM_EMAIL',
+];
 
 const ALLOWED_CUSTOM_FIELD_KEYS = [
     'client_name',
     'case_number',
     'case_title',
+    'case_stage',
     'action_url',
     'lawyer_name',
+    'recipient_name',
+    'document_name',
+    'rejection_reason',
 ];
 
 /**
@@ -56,21 +82,53 @@ async function sendEmailCampaign({ toEmail, campaignKey, contactFields } = {}) {
 
     const mapped = getCampaignMapping(key);
 
+    const allowedFields = filterAllowedContactFieldsForCampaign(key, contactFields);
+
+    if (key === 'SIGN_INVITE') {
+        const missing = getMissingRequiredCustomFields(allowedFields, SIGN_INVITE_REQUIRED_CUSTOM_FIELDS);
+        if (missing.length) {
+            return { ok: false, errorCode: 'MISSING_CONTACT_FIELDS', missing };
+        }
+
+        const actionUrl = String(allowedFields.action_url || '').trim();
+        if (!isLikelyHttpUrl(actionUrl)) {
+            return { ok: false, errorCode: 'INVALID_CONTACT_FIELDS', details: { field: 'action_url' } };
+        }
+
+        // SIGN_INVITE primary path: transactional send (server-rendered HTML).
+        return await sendTransactionalSignInvite({
+            toEmail: email,
+            contactFields: allowedFields,
+            shouldSendRealEmail,
+        });
+    }
+
+    if (key === 'SIGN_REMINDER') {
+        const missing = getMissingRequiredCustomFields(allowedFields, SIGN_REMINDER_REQUIRED_CUSTOM_FIELDS);
+        if (missing.length) {
+            return { ok: false, errorCode: 'MISSING_CONTACT_FIELDS', missing };
+        }
+
+        const actionUrl = String(allowedFields.action_url || '').trim();
+        if (!isLikelyHttpUrl(actionUrl)) {
+            return { ok: false, errorCode: 'INVALID_CONTACT_FIELDS', details: { field: 'action_url' } };
+        }
+    }
+
     if (!shouldSendRealEmail) {
         console.log('--- EMAIL Campaign Simulation (Dev Mode) ---');
-        console.log('To:', email);
+        console.log('To:', maskEmailForLog(email));
         console.log('CampaignKey:', key);
-        console.log('ContactFields:', safeJsonString(truncateForLog(sanitizeFieldsForLog(filterAllowedContactFields(contactFields)), 1200)));
+        console.log('ContactFields:', safeJsonString(truncateForLog(sanitizeFieldsForLog(allowedFields), 1200)));
         console.log('-------------------------------------------');
         return { ok: true, simulated: true };
     }
 
     try {
-        const baseUrlRaw = String(process.env.SMOOVE_BASE_URL || '').trim();
+        const baseUrlRaw = String(process.env.SMOOVE_BASE_URL || DEFAULT_SMOOVE_REST_BASE_URL).trim();
         const apiKey = String(process.env.SMOOVE_API_KEY || '').trim();
 
         const missing = [];
-        if (!baseUrlRaw) missing.push('SMOOVE_BASE_URL');
         if (!apiKey) missing.push('SMOOVE_API_KEY');
 
         // Explicit requirement: template-based send must be configured.
@@ -87,7 +145,6 @@ async function sendEmailCampaign({ toEmail, campaignKey, contactFields } = {}) {
         const baseUrl = baseUrlRaw.replace(/\/+$/g, '');
 
         // 1) Upsert contact and update only the relevant custom fields.
-        const allowedFields = filterAllowedContactFields(contactFields);
         const upsertRes = await upsertContactByEmail({ baseUrl, apiKey, email, customFields: allowedFields, listId: mapped.listId });
         if (!upsertRes.ok) {
             return upsertRes;
@@ -126,9 +183,264 @@ async function sendEmailCampaign({ toEmail, campaignKey, contactFields } = {}) {
             campaignSendId: sendRes.campaignSendId || null,
         };
     } catch (error) {
-        console.error(`Smoove email campaign failed to ${email}:`, safeStringify(error));
+        console.error(`Smoove email campaign failed to ${maskEmailForLog(email)}:`, safeStringify(error));
         return { ok: false, errorCode: 'UNKNOWN_ERROR' };
     }
+}
+
+async function sendTransactionalSignInvite({ toEmail, contactFields, shouldSendRealEmail }) {
+    const email = String(toEmail || '').trim();
+    const fields = contactFields || {};
+
+    const fromName = String(process.env.SMOOVE_EMAIL_FROM_NAME || '').trim();
+    const fromEmail = String(process.env.SMOOVE_EMAIL_FROM_EMAIL || '').trim();
+    const replyTo = String(process.env.SMOOVE_EMAIL_REPLY_TO || '').trim();
+
+    const baseUrlRaw = String(process.env.SMOOVE_BASE_URL || DEFAULT_SMOOVE_REST_BASE_URL).trim();
+    const apiKey = String(process.env.SMOOVE_API_KEY || '').trim();
+
+    const missing = [];
+    for (const k of TRANSACTIONAL_EMAIL_REQUIRED_ENV) {
+        if (!String(process.env[k] || '').trim()) missing.push(k);
+    }
+
+    if (missing.length) {
+        console.error(`Smoove env vars missing (${missing.join('/')}). Cannot send transactional email.`);
+        return { ok: false, errorCode: 'MISSING_ENV', details: { missing } };
+    }
+
+    const subject = `בקשה לחתימה: ${String(fields.document_name || '').trim()}`;
+
+    const htmlTemplate = buildSignInviteHtmlTemplate();
+    const htmlBody = replaceSignInvitePlaceholders(htmlTemplate, fields);
+
+    if (!shouldSendRealEmail) {
+        console.log('--- EMAIL Transactional Simulation (Dev Mode) ---');
+        console.log('To:', maskEmailForLog(email));
+        console.log('Subject:', truncateForLog(subject, 200));
+        console.log('BodyBytes:', Buffer.byteLength(String(htmlBody || ''), 'utf8'));
+        console.log('FieldKeys:', Object.keys(fields || {}).sort());
+        console.log('------------------------------------------------');
+        return { ok: true, simulated: true, mode: 'transactional' };
+    }
+
+    const baseUrl = baseUrlRaw.replace(/\/+$/g, '');
+    const url = `${baseUrl}/v1/Campaigns?sendNow=true`;
+
+    // Smoove REST v1 does not expose a “transactional email send” endpoint.
+    // The supported way to send a one-off email programmatically is to create an
+    // email campaign targeting a single recipient email and send it immediately.
+    const payload = {
+        trackLinks: true,
+        subject: String(subject || '').trim(),
+        body: String(htmlBody || ''),
+        // Note: API supports customFromAddress/customReplyToAddress (no explicit from-name field).
+        ...(fromEmail ? { customFromAddress: fromEmail } : null),
+        ...(replyTo ? { customReplyToAddress: replyTo } : null),
+        // Send to a single recipient (transactional-like)
+        toMembersByEmail: [email],
+    };
+
+    const requestHeaders = {
+        'Content-Type': 'application/json',
+        // Swagger securityDefinitions: apiKey in header named "Authorization"
+        Authorization: apiKey,
+        // Defensive: some endpoints/accounts accept ApiKey header
+        ApiKey: apiKey,
+    };
+
+    try {
+        const res = await axios.post(url, payload, {
+            headers: requestHeaders,
+            timeout: 15000,
+            validateStatus: () => true,
+        });
+
+        if (res.status >= 200 && res.status < 300) {
+            console.log(`Smoove email campaign sent to ${maskEmailForLog(email)} (SIGN_INVITE)`);
+            return { ok: true, mode: 'campaign-sendnow', campaignId: res.data?.id || null };
+        }
+
+        if (res.status === 401 || res.status === 403) {
+            console.error('Smoove email auth failed; header names used:', Object.keys(requestHeaders).sort());
+        }
+
+        const msg = res.data?.message || res.data?.error || 'Email campaign send failed';
+        console.error('Smoove email campaign send failed:', { status: res.status, message: String(msg).slice(0, 500) });
+        return { ok: false, errorCode: 'EMAIL_SEND_FAILED', details: { status: res.status } };
+    } catch (e) {
+        console.error('Smoove email campaign send exception:', safeStringify(e));
+        return { ok: false, errorCode: 'EMAIL_SEND_FAILED' };
+    }
+}
+
+function buildSignInviteHtmlTemplate() {
+    // User-provided SIGN_INVITE HTML body (placeholders replaced server-side).
+    return `<!DOCTYPE html>
+<html dir="rtl" lang="he">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <meta name="x-apple-disable-message-reformatting">
+        <title>הזמנה לחתימה</title>
+    </head>
+    <body style="margin:0;padding:0;background-color:#EDF2F7;">
+        <!-- Preheader (hidden) -->
+        <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">ממתין/ה לחתימתך על המסמך: [[document_name]]</div>
+
+        <table border="0" cellpadding="0" cellspacing="0" style="background:#EDF2F7;" width="100%">
+            <tbody>
+                <tr>
+                    <td align="center" style="padding:24px 12px;">
+                        <!-- Container -->
+
+                        <table border="0" cellpadding="0" cellspacing="0" style="width:640px;max-width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.08);" width="640">
+                            <tbody>
+                                <!-- Header -->
+                                <tr>
+                                    <td style="background:#2A4365;padding:22px 24px;text-align:center;"><img src="https://client.melamedlaw.co.il/static/media/logoLMwhite.png" width="170" alt="MelamedLaw" style="border:0;outline:none;text-decoration:none;height:auto;max-width:100%;">
+                                        <div style="height:14px;line-height:14px;">&nbsp;</div>
+                                        <div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#FFFFFF;font-size:18px;font-weight:600;line-height:1.4;">בקשה לחתימה דיגיטלית</div>
+                                    </td>
+                                </tr>
+                                <!-- Body -->
+                                <tr>
+                                    <td style="padding:26px 24px 8px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#2D3748;">
+                                        <div style="font-size:16px;line-height:1.7;">שלום [[recipient_name]],
+                                            <br>
+                                            <br>נשלחה אליך בקשה לחתימה על המסמך: <span style="font-weight:600;color:#1A365D;">[[document_name]]</span>
+                                            <br>
+                                            <br>כדי לצפות ולחתום, לחץ/י על הכפתור:</div>
+                                        <div style="height:18px;line-height:18px;">&nbsp;</div>
+                                        <!-- CTA Button -->
+
+                                        <table border="0" cellpadding="0" cellspacing="0" style="width:100%;">
+                                            <tbody>
+                                                <tr>
+                                                    <td align="center" style="padding:0 0 8px 0;"><a href="[[action_url]]" rel="noopener" style="display:inline-block;background:#2A4365;color:#FFFFFF;text-decoration:none;font-weight:500;font-size:14px;line-height:1;padding:12px 18px;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,0.10);" target="_blank">&nbsp;&nbsp;לצפייה וחתימה&nbsp;&nbsp;</a></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <div style="height:10px;line-height:10px;">&nbsp;</div>
+                                        <div style="font-size:13px;line-height:1.7;color:#718096;">אם הכפתור לא עובד, ניתן להעתיק ולהדביק בדפדפן את הקישור:
+                                            <br><a href="[[action_url]]" rel="noopener" style="color:#1A365D;text-decoration:underline;word-break:break-all;" target="_blank">&nbsp;[[action_url]]&nbsp;</a></div>
+                                        <div style="height:18px;line-height:18px;">&nbsp;</div>
+                                        <!-- Info box -->
+
+                                        <table border="0" cellpadding="0" cellspacing="0" style="background:#EDF2F7;border-radius:12px;" width="100%">
+                                            <tbody>
+                                                <tr>
+                                                    <td style="padding:14px 14px;color:#2D3748;font-size:13px;line-height:1.6;">
+                                                        <div style="font-weight:600;color:#1A365D;">מידע חשוב</div>
+                                                        <div style="height:6px;line-height:6px;">&nbsp;</div>
+                                                        <div>עו״ד מטפל: <span style="font-weight:600;">[[lawyer_name]]</span></div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <div style="height:18px;line-height:18px;">&nbsp;</div>
+                                    </td>
+                                </tr>
+                                <!-- Footer -->
+                                <tr>
+                                    <td style="padding:14px 24px 22px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#718096;font-size:12px;line-height:1.7;">הודעה זו נשלחה אוטומטית. אם אינך מצפה לבקשה זו, ניתן להתעלם ממנה.
+                                        <br>&copy; MelamedLaw</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <!-- /Container -->
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </body>
+</html>`;
+}
+
+function replaceSignInvitePlaceholders(template, fields) {
+    const safeRecipient = escapeHtml(String(fields.recipient_name || '').trim());
+    const safeDocument = escapeHtml(String(fields.document_name || '').trim());
+    const safeLawyer = escapeHtml(String(fields.lawyer_name || '').trim());
+
+    const urlRaw = String(fields.action_url || '').trim();
+    const safeUrl = escapeHtml(urlRaw);
+
+    let out = String(template || '');
+    out = replaceAllSafe(out, '[[recipient_name]]', safeRecipient);
+    out = replaceAllSafe(out, '[[document_name]]', safeDocument);
+    out = replaceAllSafe(out, '[[lawyer_name]]', safeLawyer);
+    out = replaceAllSafe(out, '[[action_url]]', safeUrl);
+    return out;
+}
+
+function replaceAllSafe(input, needle, value) {
+    return String(input).split(String(needle)).join(String(value));
+}
+
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function escapeHtmlAttribute(str) {
+    // Attribute-safe: escape quotes + HTML meta chars. (We validate URL scheme separately.)
+    return escapeHtml(str);
+}
+
+function isLikelyHttpUrl(url) {
+    const u = String(url || '').trim();
+    if (!u) return false;
+    return u.startsWith('https://') || u.startsWith('http://');
+}
+
+function filterAllowedContactFieldsForCampaign(campaignKey, contactFields) {
+    const key = String(campaignKey || '').trim().toUpperCase();
+    const input = contactFields || {};
+    const baseFiltered = filterAllowedContactFields(input);
+
+    if (key === 'SIGN_INVITE') {
+        const only = {};
+        for (const k of SIGN_INVITE_REQUIRED_CUSTOM_FIELDS) {
+            if (Object.prototype.hasOwnProperty.call(baseFiltered, k)) {
+                only[k] = baseFiltered[k];
+            }
+        }
+        return only;
+    }
+
+    return baseFiltered;
+}
+
+function getMissingRequiredCustomFields(customFields, requiredKeys) {
+    const fields = customFields || {};
+    const missing = [];
+
+    for (const k of requiredKeys || []) {
+        const v = fields[k];
+        if (v == null) {
+            missing.push(k);
+            continue;
+        }
+        if (String(v).trim() === '') {
+            missing.push(k);
+        }
+    }
+
+    return missing;
+}
+
+function maskEmailForLog(email) {
+    const e = String(email || '').trim();
+    const at = e.indexOf('@');
+    if (at <= 0) return '[redacted-email]';
+    const name = e.slice(0, at);
+    const domain = e.slice(at + 1);
+    const safeName = name.length <= 2 ? `${name[0] || '*'}*` : `${name.slice(0, 2)}***`;
+    return `${safeName}@${domain}`;
 }
 
 function getCampaignMapping(campaignKey) {
@@ -175,6 +487,9 @@ async function upsertContactByEmail({ baseUrl, apiKey, email, customFields, list
         }
 
         const headers = {
+            // Swagger securityDefinitions: apiKey in header named "Authorization"
+            Authorization: apiKey,
+            // Defensive: some endpoints/accounts accept ApiKey header
             ApiKey: apiKey,
             'Content-Type': 'application/json',
         };
@@ -195,6 +510,10 @@ async function upsertContactByEmail({ baseUrl, apiKey, email, customFields, list
             const contactId = Number(res.data?.id) || null;
             console.log(`Smoove contact upserted by email: ${email}`);
             return { ok: true, contactId };
+        }
+
+        if (res.status === 401 || res.status === 403) {
+            console.error('Smoove contact auth failed; header names used:', Object.keys(headers).sort());
         }
 
         const errorMessage = extractSmooveErrorMessage(res.data);
@@ -225,6 +544,9 @@ async function createAndSendCampaignFromTemplate({ baseUrl, apiKey, templateName
         const url = `${baseUrl}/v1/Campaigns`;
 
         const headers = {
+            // Swagger securityDefinitions: apiKey in header named "Authorization"
+            Authorization: apiKey,
+            // Defensive: some endpoints/accounts accept ApiKey header
             ApiKey: apiKey,
             'Content-Type': 'application/json',
         };
@@ -249,6 +571,10 @@ async function createAndSendCampaignFromTemplate({ baseUrl, apiKey, templateName
             const campaignSendId = Number(res.data?.id) || null;
             console.log(`Smoove email campaign created+sent (template=${t}) to ${toEmail}`);
             return { ok: true, campaignSendId };
+        }
+
+        if (res.status === 401 || res.status === 403) {
+            console.error('Smoove campaign create auth failed; header names used:', Object.keys(headers).sort());
         }
 
         const errorMessage = extractSmooveErrorMessage(res.data);
@@ -279,6 +605,9 @@ async function sendExistingCampaign({ baseUrl, apiKey, campaignId }) {
         const url = `${baseUrl}/v1/Campaigns/${encodeURIComponent(id)}/Send`;
 
         const headers = {
+            // Swagger securityDefinitions: apiKey in header named "Authorization"
+            Authorization: apiKey,
+            // Defensive: some endpoints/accounts accept ApiKey header
             ApiKey: apiKey,
             'Content-Type': 'application/json',
         };
@@ -295,6 +624,10 @@ async function sendExistingCampaign({ baseUrl, apiKey, campaignId }) {
         if (res.status >= 200 && res.status < 300) {
             console.log(`Smoove email campaign sent (campaignId=${id})`);
             return { ok: true, campaignSendId: null };
+        }
+
+        if (res.status === 401 || res.status === 403) {
+            console.error('Smoove campaign send auth failed; header names used:', Object.keys(headers).sort());
         }
 
         const errorMessage = extractSmooveErrorMessage(res.data);

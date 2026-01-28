@@ -1,20 +1,62 @@
 const { sendEmailCampaign } = require('../utils/smooveEmailCampaignService');
 
+function buildDefaultContactFieldsForCampaignKey(campaignKey) {
+    const key = String(campaignKey || '').trim().toUpperCase();
+    const baseActionUrl = 'https://client.melamedlaw.co.il';
+
+    switch (key) {
+        case 'SIGN_INVITE':
+        case 'SIGN_REMINDER':
+            return {
+                recipient_name: 'Test Client',
+                document_name: 'מסמך בדיקה',
+                action_url: `${baseActionUrl}/sign/test?token=demo`,
+                lawyer_name: 'Test Lawyer',
+            };
+        case 'CASE_UPDATE':
+            return {
+                recipient_name: 'Test Client',
+                case_title: 'תיק בדיקה',
+                action_url: baseActionUrl,
+            };
+        case 'DOC_SIGNED':
+            return {
+                recipient_name: 'Test Lawyer',
+                document_name: 'מסמך בדיקה',
+                lawyer_name: 'Test Lawyer',
+                action_url: baseActionUrl,
+            };
+        case 'DOC_REJECTED':
+            return {
+                recipient_name: 'Test Lawyer',
+                document_name: 'מסמך בדיקה',
+                lawyer_name: 'Test Lawyer',
+                rejection_reason: 'סיבת דחייה לדוגמה',
+                action_url: baseActionUrl,
+            };
+        default:
+            return {
+                recipient_name: 'Test Recipient',
+                action_url: baseActionUrl,
+            };
+    }
+}
+
 const testSendEmailCampaign = async (req, res, next) => {
     try {
         const toEmail = String(req?.body?.toEmail || '').trim();
         const campaignKey = String(req?.body?.campaignKey || '').trim();
 
+        const providedContactFields = req?.body?.contactFields;
+        const contactFields =
+            providedContactFields && typeof providedContactFields === 'object' && !Array.isArray(providedContactFields)
+                ? providedContactFields
+                : buildDefaultContactFieldsForCampaignKey(campaignKey);
+
         const result = await sendEmailCampaign({
             toEmail,
             campaignKey,
-            contactFields: {
-                client_name: 'Test Client',
-                case_number: 'CASE-12345',
-                case_title: 'תיק בדיקה',
-                action_url: 'https://client.melamedlaw.co.il/sign/test?token=demo',
-                lawyer_name: 'Test Lawyer',
-            },
+            contactFields,
         });
 
         if (!result?.ok) {
