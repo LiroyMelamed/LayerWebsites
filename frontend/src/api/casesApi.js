@@ -18,6 +18,7 @@ import {
 } from "../demo/demoStore";
 
 const GET_ALL_CASES = "Cases/GetCases";
+const GET_MY_CASES = "Cases/my";
 const GET_CASE_BY_ID = "Cases/GetCase/";
 const GET_CASE_BY_NAME = "Cases/GetCaseByName?caseName=";
 const ADD_CASE = "Cases/AddCase";
@@ -67,6 +68,13 @@ const casesApi = {
       return demoOk(demoListCases(), GET_ALL_CASES);
     }
     return await ApiUtils.get(GET_ALL_CASES);
+  },
+
+  getMyCases: async () => {
+    if (isDemoModeEnabled()) {
+      return demoOk(demoListCases(), GET_MY_CASES);
+    }
+    return await ApiUtils.get(GET_MY_CASES);
   },
 
   getAllTaggedCases: async () => {

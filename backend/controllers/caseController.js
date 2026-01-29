@@ -903,8 +903,52 @@ const linkWhatsappGroup = async (req, res) => {
     }
 };
 
+const getMyCases = async (req, res) => {
+    const userId = req.user?.UserId;
+    const role = req.user?.Role;
+
+    if (!userId) {
+        return res.status(401).json({ message: "Unauthorized: User ID missing" });
+    }
+
+    if (role !== 'Admin' && role !== 'Lawyer') {
+        return res.status(403).json({ message: "Forbidden", code: 'FORBIDDEN' });
+    }
+
+    try {
+        const pagination = getPagination(req, res, { defaultLimit: 50, maxLimit: 200 });
+        if (pagination === null) return;
+
+        if (!pagination.enabled) {
+            const query = `${_buildBaseCaseQuery()} WHERE C.casemanagerid = $1 ORDER BY C.caseid, CD.stage`;
+            const result = await pool.query(query, [userId]);
+            return res.json(_mapCaseResults(result.rows));
+        }
+
+        const { limit, offset } = pagination;
+
+        const idsQuery = `SELECT DISTINCT C.caseid
+                  FROM cases C
+                  WHERE C.casemanagerid = $1
+                  ORDER BY C.caseid
+                  LIMIT $2 OFFSET $3`;
+
+        const idsResult = await pool.query(idsQuery, [userId, limit, offset]);
+        const ids = idsResult.rows.map((r) => r.caseid);
+        if (ids.length === 0) return res.json([]);
+
+        const detailsQuery = `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) AND C.casemanagerid = $2 ORDER BY C.caseid, CD.stage`;
+        const result = await pool.query(detailsQuery, [ids, userId]);
+        return res.json(_mapCaseResults(result.rows));
+    } catch (error) {
+        console.error("Error retrieving my cases:", error);
+        return res.status(500).json({ message: "Error retrieving my cases" });
+    }
+};
+
 module.exports = {
     getCases,
+    getMyCases,
     getCaseById,
     getCaseByName,
     addCase,

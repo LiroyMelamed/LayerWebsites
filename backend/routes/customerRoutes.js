@@ -3,6 +3,7 @@ const router = express.Router();
 const customerController = require("../controllers/customerController");
 const authMiddleware = require("../middlewares/authMiddleware");
 const requireAdmin = require("../middlewares/requireAdmin");
+const requireLawyerOrAdmin = require("../middlewares/requireLawyerOrAdmin");
 
 // Customer APIs
 router.get("/GetCustomers", authMiddleware, requireAdmin, customerController.getCustomers);
@@ -13,7 +14,7 @@ router.get("/GetCustomerByName", authMiddleware, requireAdmin, customerControlle
 // Current User Profile APIs
 router.get("/GetCurrentCustomer", authMiddleware, customerController.getCurrentCustomer);
 router.put("/UpdateCurrentCustomer", authMiddleware, customerController.updateCurrentCustomer);
-router.delete("/DeleteCustomer/:userId", authMiddleware, requireAdmin, customerController.deleteCustomer);
+router.delete("/DeleteCustomer/:userId", authMiddleware, requireLawyerOrAdmin, customerController.deleteCustomer);
 router.delete("/DeleteMyAccount", authMiddleware, customerController.deleteMyAccount);
 
 module.exports = router;

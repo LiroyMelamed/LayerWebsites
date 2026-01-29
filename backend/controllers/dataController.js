@@ -21,7 +21,7 @@ const getMainScreenData = async (req, res) => {
 
                 // Fetch all customers (users with a role other than 'Admin')
                 const customersResult = await pool.query(
-                    "SELECT userid, name, email, phonenumber, companyname, createdat, dateofbirth, profilepicurl FROM Users WHERE LOWER(Role) <> 'admin'"
+                    "SELECT userid, name, email, phonenumber, companyname, createdat, dateofbirth, profilepicurl FROM Users WHERE LOWER(Role) <> 'admin' AND LOWER(Role) <> 'deleted'"
                 );
 
                 // Fetch a list of distinct users who have at least one open case
@@ -29,7 +29,7 @@ const getMainScreenData = async (req, res) => {
                     SELECT DISTINCT U.UserId, U.Name, U.Email, U.PhoneNumber, U.CompanyName, U.CreatedAt, U.DateOfBirth, U.ProfilePicUrl
                     FROM Users U
                     JOIN Cases C ON C.UserId = U.UserId
-                    WHERE C.IsClosed = FALSE AND LOWER(U.Role) <> 'admin'
+                    WHERE C.IsClosed = FALSE AND LOWER(U.Role) <> 'admin' AND LOWER(U.Role) <> 'deleted'
                 `);
 
                 // Extract the rows from the query results

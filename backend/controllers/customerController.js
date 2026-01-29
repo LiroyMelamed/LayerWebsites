@@ -9,6 +9,8 @@ const { getPagination } = require("../utils/pagination");
 const { createAppError } = require('../utils/appError');
 const { getHebrewMessage } = require('../utils/errors.he');
 const { userHasLegalData } = require('../utils/legalData');
+const { insertAuditEvent, getRequestIp, getRequestUserAgent } = require('../utils/auditEvents');
+const { invalidateMainScreenDataCache } = require('../utils/mainScreenDataCache');
 
 function requireAdmin(req, res) {
     if (req.user?.Role !== 'Admin') {
@@ -30,8 +32,8 @@ const getCustomers = async (req, res) => {
         if (pagination === null) return;
 
         const query = pagination.enabled
-            ? "SELECT * FROM users WHERE role <> 'Admin' ORDER BY createdat DESC LIMIT $1 OFFSET $2"
-            : "SELECT * FROM users WHERE role <> 'Admin'";
+            ? "SELECT * FROM users WHERE role <> 'Admin' AND role <> 'Deleted' ORDER BY createdat DESC LIMIT $1 OFFSET $2"
+            : "SELECT * FROM users WHERE role <> 'Admin' AND role <> 'Deleted'";
 
         const params = pagination.enabled ? [pagination.limit, pagination.offset] : [];
         const result = await pool.query(query, params);
@@ -164,7 +166,7 @@ const getCustomerByName = async (req, res) => {
                 `
                 SELECT userid, name, email, phonenumber, companyname
                 FROM users
-                WHERE role <> 'Admin'
+                WHERE role <> 'Admin' AND role <> 'Deleted'
                 ORDER BY userid DESC
                 LIMIT $1 OFFSET $2
                 `,
@@ -182,8 +184,8 @@ const getCustomerByName = async (req, res) => {
 
         const baseQuery = `
             SELECT userid, name, email, phonenumber, companyname
-            FROM users
-            WHERE role <> 'Admin'
+                        FROM users
+                        WHERE role <> 'Admin' AND role <> 'Deleted'
               AND (name ILIKE $1 OR email ILIKE $1 OR phonenumber ILIKE $1 OR companyname ILIKE $1)
         `;
 
@@ -359,22 +361,52 @@ const updateCurrentCustomer = async (req, res) => {
 };
 
 const deleteCustomer = async (req, res, next) => {
-    if (!requireAdmin(req, res)) return;
     const userId = requireInt(req, res, { source: 'params', name: 'userId' });
     if (userId === null) return;
+
+    const role = String(req.user?.Role || '');
+    const isAdmin = role === 'Admin';
+    const isLawyer = role === 'Lawyer';
+    if (!isAdmin && !isLawyer) {
+        return next(createAppError('FORBIDDEN', 403, getHebrewMessage('FORBIDDEN')));
+    }
+
+    const confirmRaw = String(req.query?.confirmLegalDelete ?? '').trim().toLowerCase();
+    const confirmLegalDelete = confirmRaw === '1' || confirmRaw === 'true' || confirmRaw === 'yes';
+    if (confirmLegalDelete && !isAdmin && !isLawyer) {
+        return next(createAppError('FORBIDDEN', 403, getHebrewMessage('FORBIDDEN')));
+    }
 
     try {
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
 
-            // Block deletion if the user has any legal/evidentiary data.
-            // Must run BEFORE any DELETE/UPDATE query.
+            // If the client has legal/evidentiary data, we do NOT hard-delete.
+            // Instead we require explicit confirmation and then anonymize + disable the account
+            // (role='Deleted') so all cases/signing/audit history stays intact.
             const hasLegalData = await userHasLegalData(client, userId);
-            if (hasLegalData) {
+            if (hasLegalData && !confirmLegalDelete) {
                 await client.query('ROLLBACK');
-                return next(createAppError('USER_HAS_LEGAL_DATA', 409, getHebrewMessage('USER_HAS_LEGAL_DATA')));
+                return next(
+                    createAppError(
+                        'CLIENT_HAS_LEGAL_DATA',
+                        409,
+                        getHebrewMessage('CLIENT_HAS_LEGAL_DATA'),
+                        { clientId: userId },
+                        undefined,
+                        { legacyErrorCode: 'USER_HAS_LEGAL_DATA' }
+                    )
+                );
             }
+
+            const shouldAuditConfirmedDelete = Boolean(hasLegalData && confirmLegalDelete);
+
+            const actorAuditRes = await client.query(
+                'SELECT 1 FROM audit_events WHERE actor_userid = $1 LIMIT 1',
+                [userId]
+            );
+            const hasActorAuditEvents = actorAuditRes.rowCount > 0;
 
             // 1. מחיקת רשומות קשורות בטבלה userdevices
             await client.query("DELETE FROM userdevices WHERE userid = $1", [userId]);
@@ -385,40 +417,92 @@ const deleteCustomer = async (req, res, next) => {
             // 3. מחיקת רשומות קשורות בטבלה usernotifications
             await client.query("DELETE FROM usernotifications WHERE userid = $1", [userId]);
 
-            // 3.1 ניתוק מסמכי חתימה משויכים (לא מוחקים היסטוריית חתימות)
-            // דורש שהעמודה signingfiles.clientid תהיה NULLable ו-FK יהיה ON DELETE SET NULL
-            await client.query("UPDATE signingfiles SET clientid = NULL WHERE clientid = $1", [userId]);
+            let deleteResult;
 
-            // 4. מחיקת תיאורי תיקים
-            await client.query(
-                `
-                DELETE FROM casedescriptions
-                WHERE caseid IN (SELECT caseid FROM cases WHERE userid = $1)
-                `,
-                [userId]
-            );
+            if (hasLegalData) {
+                // Keep cases/signing/audit history. Only anonymize + disable the user.
+                deleteResult = await client.query(
+                    `UPDATE users
+                     SET name = $2,
+                         email = NULL,
+                         phonenumber = NULL,
+                         passwordhash = NULL,
+                         role = 'Deleted',
+                         companyname = NULL,
+                         dateofbirth = NULL,
+                         profilepicurl = NULL
+                     WHERE userid = $1`,
+                    [userId, `לקוח מחוק (${userId})`]
+                );
+            } else {
+                // No legal/evidentiary data: proceed with cleanup + hard-delete when possible.
+                // Detach signing files if any (should be none in this branch, but keep it safe).
+                await client.query("UPDATE signingfiles SET clientid = NULL WHERE clientid = $1", [userId]);
 
-            // 5. מחיקת תיקים
-            await client.query(
-                `
-                DELETE FROM cases WHERE userid = $1
-                `,
-                [userId]
-            );
+                await client.query(
+                    `
+                    DELETE FROM casedescriptions
+                    WHERE caseid IN (SELECT caseid FROM cases WHERE userid = $1)
+                    `,
+                    [userId]
+                );
 
-            // 6. לבסוף, מחיקת המשתמש
-            const deleteResult = await client.query(
-                "DELETE FROM users WHERE userid = $1",
-                [userId]
-            );
+                await client.query(
+                    `
+                    DELETE FROM cases WHERE userid = $1
+                    `,
+                    [userId]
+                );
+
+                // If this user appears in audit_events.actor_userid, hard delete would attempt
+                // to UPDATE audit_events (ON DELETE SET NULL) and will fail due to append-only trigger.
+                // In that case, anonymize + disable the account instead of deleting the row.
+                deleteResult = hasActorAuditEvents
+                    ? await client.query(
+                        `UPDATE users
+                         SET name = $2,
+                             email = NULL,
+                             phonenumber = NULL,
+                             passwordhash = NULL,
+                             role = 'Deleted',
+                             companyname = NULL,
+                             dateofbirth = NULL,
+                             profilepicurl = NULL
+                         WHERE userid = $1`,
+                        [userId, `לקוח מחוק (${userId})`]
+                    )
+                    : await client.query('DELETE FROM users WHERE userid = $1', [userId]);
+            }
 
             await client.query('COMMIT');
+
+            // Ensure dashboard reflects the change immediately.
+            invalidateMainScreenDataCache();
+
+            if (shouldAuditConfirmedDelete && deleteResult.rowCount > 0) {
+                await insertAuditEvent({
+                    req,
+                    eventType: 'CLIENT_DELETE_CONFIRMED',
+                    actorUserId: req.user?.UserId || null,
+                    actorType: role || null,
+                    success: true,
+                    metadata: {
+                        clientId: userId,
+                        ip: getRequestIp(req),
+                        userAgent: getRequestUserAgent(req),
+                    },
+                });
+            }
 
             if (deleteResult.rowCount === 0) {
                 return res.status(404).json({ message: "Customer not found" });
             }
 
-            res.status(200).json({ message: "לקוח וכל הנתונים המשוייכים נמחקו בהצלחה" });
+            if (hasLegalData) {
+                return res.status(200).json({ message: "הלקוח הוסר מרשימת הלקוחות והמידע המשפטי נשמר" });
+            }
+
+            return res.status(200).json({ message: "לקוח וכל הנתונים המשוייכים נמחקו בהצלחה" });
         } catch (innerError) {
             await client.query('ROLLBACK');
             throw innerError;

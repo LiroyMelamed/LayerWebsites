@@ -12,6 +12,7 @@ import { HebrewCharsValidationWithNULL, HebrewCharsValidationWithNumbers } from 
 import emailValidation from "../../../functions/validation/EmailValidation";
 import IsraeliPhoneNumberValidation from "../../../functions/validation/IsraeliPhoneNumberValidation";
 import { useTranslation } from "react-i18next";
+import SimplePopUp from "../../../components/simpleComponents/SimplePopUp";
 
 import "./ClientPopUp.scss";
 
@@ -26,6 +27,8 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
     const [phoneNumber, setPhoneNumber, phoneNumberError] = useFieldState(IsraeliPhoneNumberValidation, clientDetails?.phonenumber || "");
 
     const [hasError, setHasError] = useState(false);
+    const [isLegalDeleteConfirmOpen, setIsLegalDeleteConfirmOpen] = useState(false);
+    const [legalDeleteMessage, setLegalDeleteMessage] = useState("");
 
     useEffect(() => {
         if (!name || !phoneNumber || !email || nameError || phoneNumberError || emailError) {
@@ -44,13 +47,31 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
         },
     );
 
+    const handleDeleteFailure = (err) => {
+        const status = Number(err?.status);
+        const errorCode = String(err?.data?.errorCode || err?.data?.code || '').trim();
+
+        if (status === 409 && errorCode === 'CLIENT_HAS_LEGAL_DATA') {
+            setLegalDeleteMessage(
+                String(
+                    err?.data?.message ||
+                    'ללקוח יש נתונים משפטיים. מחיקה שלו עלולה לפגוע באמינות המסמכים והראיות. האם אתה מאשר למחוק בכל זאת?'
+                )
+            );
+            setIsLegalDeleteConfirmOpen(true);
+            return;
+        }
+
+        onFailureFunction?.(err);
+    };
+
     const { isPerforming: isPerformingDeleteClient, performRequest: deleteClient } = useHttpRequest(
         customersApi.deleteCustomerById,
         () => {
             closePopUpFunction?.();
             rePerformRequest?.();
         },
-        onFailureFunction
+        handleDeleteFailure
     );
 
     const handleSaveClient = () => {
@@ -72,8 +93,41 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
         deleteClient(clientDetails.userid);
     };
 
+    const handleConfirmLegalDelete = () => {
+        setIsLegalDeleteConfirmOpen(false);
+        deleteClient(clientDetails.userid, { confirmLegalDelete: true });
+    };
+
     return (
         <SimpleContainer className="lw-clientPopup">
+            <SimplePopUp
+                isOpen={isLegalDeleteConfirmOpen}
+                onClose={() => setIsLegalDeleteConfirmOpen(false)}
+                className="lw-clientPopup__legalDeletePopUp"
+            >
+                <SimpleContainer className="lw-clientPopup__legalDeleteModal">
+                    <SimpleContainer className="lw-clientPopup__legalDeleteText">
+                        {legalDeleteMessage}
+                    </SimpleContainer>
+                    <SimpleContainer className="lw-clientPopup__legalDeleteButtons">
+                        <SecondaryButton
+                            className="lw-clientPopup__legalDeleteBtn"
+                            size={buttonSizes.MEDIUM}
+                            onPress={() => setIsLegalDeleteConfirmOpen(false)}
+                        >
+                            ביטול
+                        </SecondaryButton>
+                        <PrimaryButton
+                            className="lw-clientPopup__legalDeleteBtn"
+                            size={buttonSizes.MEDIUM}
+                            onPress={handleConfirmLegalDelete}
+                            disabled={isPerformingDeleteClient}
+                        >
+                            אני מאשר
+                        </PrimaryButton>
+                    </SimpleContainer>
+                </SimpleContainer>
+            </SimplePopUp>
             <SimpleScrollView>
                 <SimpleContainer className="lw-clientPopup__row">
                     <SimpleInput

@@ -12,8 +12,9 @@ import i18next from 'i18next';
 
 import './AllCasesCard.scss';
 
-export default function AllCasesCard({ allCases, isPerforming, reperformAfterSave }) {
+export default function AllCasesCard({ allCases, isPerforming, reperformAfterSave, title }) {
     const { t } = useTranslation();
+    const cardTitle = String(title || '').trim() || t('cases.allCases');
 
     if (isPerforming) {
         return (
@@ -35,7 +36,7 @@ export default function AllCasesCard({ allCases, isPerforming, reperformAfterSav
 
     return (
         <SimpleCard className="lw-allCasesCard">
-            <TextBold20>{t('cases.allCases')}</TextBold20>
+            <TextBold20>{cardTitle}</TextBold20>
 
             <SimpleContainer className="lw-allCasesCard__list">
                 {allCases?.map((item, index) => (

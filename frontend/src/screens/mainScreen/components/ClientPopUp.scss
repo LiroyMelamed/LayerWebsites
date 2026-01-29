@@ -4,6 +4,60 @@
 .lw-clientPopup {
     width: 100%;
     margin: 0 auto;
+    position: relative;
+}
+
+// Legal-delete confirm uses the shared SimplePopUp overlay, but keeps the custom modal UI below.
+.lw-clientPopup__legalDeletePopUp {
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.lw-clientPopup__legalDeletePopUp .lw-simplePopUp__close {
+    display: none;
+}
+
+.lw-clientPopup__legalDeletePopUp .lw-simplePopUp__content {
+    margin-top: 0;
+}
+
+.lw-clientPopup__legalDeleteOverlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    padding: v.$space-4;
+}
+
+.lw-clientPopup__legalDeleteModal {
+    flex-direction: column;
+    width: 100%;
+    max-width: 35rem;
+    background: #fff;
+    border-radius: 0.875rem;
+    padding: v.$space-4;
+}
+
+.lw-clientPopup__legalDeleteText {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #111;
+    text-align: right;
+}
+
+.lw-clientPopup__legalDeleteButtons {
+    margin-top: v.$space-4;
+    @include m.row(v.$space-3, nowrap, center, center);
+    justify-content: flex-end;
+}
+
+.lw-clientPopup__legalDeleteBtn {
+    // min-width: 8.75rem;
 }
 
 .lw-clientPopup__row {

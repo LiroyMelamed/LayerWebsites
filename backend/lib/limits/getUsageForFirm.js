@@ -38,8 +38,10 @@ async function getUsageForFirm(firmId) {
             ),
             pool.query(
                 `select count(*)::int as "SeatsUsed"
-                 from firm_users
-                 where firmid = $1`,
+                                 from firm_users fu
+                                 join users u on u.userid = fu.userid
+                                 where fu.firmid = $1
+                                     and u.role in ('Admin','Lawyer')`,
                 [fid]
             ),
             pool.query(

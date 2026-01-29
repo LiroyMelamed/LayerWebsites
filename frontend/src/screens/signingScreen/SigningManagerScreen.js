@@ -570,16 +570,16 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                 )}
 
                 <SimpleContainer className="lw-signingManagerScreen__actionsRow">
-                    <SecondaryButton onPress={onOpenPdf}>{t('signingManager.actions.openPdf')}</SecondaryButton>
-                    {file?.Status === "signed" && (
-                        <PrimaryButton onPress={onDownloadSigned}>{t('signingManager.actions.downloadSigned')}</PrimaryButton>
-                    )}
                     <PrimaryButton onPress={onDownloadEvidencePdf} disabled={!isSigned}>
                         {t('signingManager.actions.downloadEvidencePdf')}
                     </PrimaryButton>
+                    {file?.Status === "signed" && (
+                        <PrimaryButton onPress={onDownloadSigned}>{t('signingManager.actions.downloadSigned')}</PrimaryButton>
+                    )}
                     <SecondaryButton onPress={onDownloadEvidenceZip} disabled={!isSigned}>
                         {t('signingManager.actions.downloadEvidenceZip')}
                     </SecondaryButton>
+                    <SecondaryButton onPress={onOpenPdf}>{t('signingManager.actions.openPdf')}</SecondaryButton>
                     <SecondaryButton onPress={onClose}>{t('common.close')}</SecondaryButton>
                 </SimpleContainer>
             </>

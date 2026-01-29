@@ -28,7 +28,7 @@ import { PlansPricingScreenName } from "./PlansPricingScreen";
 
 import "./PlanUsageScreen.scss";
 
-export const PlanUsageScreenName = "/plan-usage";
+export const PlanUsageScreenName = "/PlanUsage";
 
 const normalizeCurrency = normalizeCurrencySymbol;
 

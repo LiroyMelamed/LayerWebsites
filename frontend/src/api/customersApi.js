@@ -67,11 +67,13 @@ export const customersApi = {
         return await ApiUtils.put(`${UPDATE_CURRENT_CUSTOMER}`, customerData);
     },
 
-    deleteCustomerById: async (userId) => {
+    deleteCustomerById: async (userId, options = {}) => {
         if (isDemoModeEnabled()) {
             const ok = demoDeleteCustomer(userId);
             return ok ? demoOk({ ok: true }, `${DELETE_CUSTOMER}${userId}`) : demoNotFound("customer not found", `${DELETE_CUSTOMER}${userId}`);
         }
-        return await ApiUtils.delete(`${DELETE_CUSTOMER}${userId}`);
+        const confirmLegalDelete = Boolean(options?.confirmLegalDelete);
+        const suffix = confirmLegalDelete ? `?confirmLegalDelete=1` : '';
+        return await ApiUtils.delete(`${DELETE_CUSTOMER}${userId}${suffix}`);
     }
 };

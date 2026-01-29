@@ -194,6 +194,7 @@
         "caseType": "סוג תיק",
         "statusFilter": "סגור/פתוח",
         "allCases": "כל התיקים",
+        "myCasesTitle": "התיקים שלי",
         "noCases": "אין כרגע תיקים",
         "openCases": "תיקים פתוחים",
         "closedCases": "תיקים סגורים",
@@ -205,6 +206,7 @@
         "stageDetailsTitle": "פירוט שלבים",
         "ended": "הסתיים",
         "searchCaseTitle": "חיפוש תיק",
+        "searchMyCases": "חיפוש בתיקים שלי",
         "searchCaseTypeTitle": "חיפוש סוג תיק",
         "addNewCase": "הוספת תיק חדש",
         "addCaseType": "הוספת סוג תיק",
@@ -347,11 +349,15 @@
         "allManagers": "לכל המנהלים",
         "allCaseTypes": "לכל סוגי התיקים",
         "addCaseType": "הוספת סוג תיק",
+        "myCases": "לתיקים שלי",
         "notifications": "התראות",
         "myProfile": "הפרופיל שלי",
         "terms": "תקנון שימוש",
         "contact": "יצירת קשר",
         "contactMessage": "שלום, אשמח ליצירת קשר"
+    },
+    "myCases": {
+        "title": "התיקים שלי"
     },
     "planUsage": {
         "title": "תכנית ושימוש",

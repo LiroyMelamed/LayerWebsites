@@ -10,6 +10,7 @@ import UploadFileForSigningScreen, { uploadFileForSigningScreenName } from "../s
 import EvidenceDocumentsScreen, { EvidenceDocumentsScreenName } from "../screens/evidenceDocuments/EvidenceDocumentsScreen";
 import PlanUsageScreen, { PlanUsageScreenName } from "../screens/billingScreen/PlanUsageScreen";
 import PlansPricingScreen, { PlansPricingScreenName } from "../screens/billingScreen/PlansPricingScreen";
+import MyCasesScreen, { MyCasesScreenName } from "../screens/myCasesScreen/MyCasesScreen";
 import { LoginStackName } from "./LoginStack";
 import { LoginScreenName } from "../screens/loginScreen/LoginScreen";
 import { getDemoModeToken } from "../utils/demoMode";
@@ -31,6 +32,7 @@ function AdminStack() {
                 <Route path={toRelativePath(MainScreenName)} element={<MainScreen />} />
                 <Route path={toRelativePath(TaggedCasesScreenName)} element={<TaggedCasesScreen />} />
                 <Route path={toRelativePath(AllCasesScreenName)} element={<AllCasesScreen />} />
+                <Route path={toRelativePath(MyCasesScreenName)} element={<MyCasesScreen />} />
                 <Route path={toRelativePath(AllMangerScreenName)} element={<AllMangerScreen />} />
                 <Route path={toRelativePath(AllCasesTypeScreenName)} element={<AllCasesTypeScreen />} />
                 <Route path={toRelativePath(SigningManagerScreenName)} element={<SigningManagerScreen />} />

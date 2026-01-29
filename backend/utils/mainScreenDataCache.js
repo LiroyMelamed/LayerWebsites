@@ -10,12 +10,17 @@ async function getMainScreenDataCached({ loader, ttlMs = MAIN_SCREEN_TTL_MS }) {
     return cache.getOrSet('mainScreenData:admin', { ttlMs }, loader);
 }
 
+function invalidateMainScreenDataCache() {
+    cache.deleteByPrefix('mainScreenData:');
+}
+
 function __testReset() {
     cache.clear();
 }
 
 module.exports = {
     getMainScreenDataCached,
+    invalidateMainScreenDataCache,
     __testReset,
     _ttls: { MAIN_SCREEN_TTL_MS },
 };

@@ -3,9 +3,11 @@ const router = express.Router();
 const caseController = require("../controllers/caseController");
 const authMiddleware = require("../middlewares/authMiddleware");
 const requireAdmin = require("../middlewares/requireAdmin");
+const requireLawyerOrAdmin = require("../middlewares/requireLawyerOrAdmin");
 
 // Case APIs
 router.get("/GetCases", authMiddleware, caseController.getCases);
+router.get("/my", authMiddleware, requireLawyerOrAdmin, caseController.getMyCases);
 router.get("/GetCase/:caseId", authMiddleware, caseController.getCaseById);
 router.get("/GetCaseByName", authMiddleware, caseController.getCaseByName);
 router.post("/AddCase", authMiddleware, requireAdmin, caseController.addCase);

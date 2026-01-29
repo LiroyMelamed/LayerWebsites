@@ -1,0 +1,12 @@
+@use '../../styles/mixins' as m;
+@use '../../styles/variables' as v;
+
+.lw-myCasesScreen__row {
+    @include m.row(v.$space-3, wrap);
+    margin-block-end: v.$space-4;
+}
+
+.lw-myCasesScreen__search {
+    flex: 1 1 18.75rem;
+    min-inline-size: 0;
+}

@@ -8,6 +8,7 @@ import { AdminStackName } from "../../../navigation/AdminStack";
 import { SigningManagerScreenName } from "../../../screens/signingScreen/SigningManagerScreen";
 import { EvidenceDocumentsScreenName } from "../../../screens/evidenceDocuments/EvidenceDocumentsScreen";
 import { PlanUsageScreenName } from "../../../screens/billingScreen/PlanUsageScreen";
+import { MyCasesScreenName } from "../../../screens/myCasesScreen/MyCasesScreen";
 
 export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t) => ({
     NavBarLinks: [
@@ -64,6 +65,12 @@ export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t) =>
             buttonScreen: null,
             icon: null, // icons.NavBarIcons.AddCaseType
             onClick: () => openPopup(<CaseTypeFullView onFailureFunction={() => { }} closePopUpFunction={closePopup} />),
+        },
+        {
+            buttonText: t('nav.myCases'),
+            buttonScreen: t('nav.myCases'),
+            icon: null,
+            onClick: () => navigate(AdminStackName + MyCasesScreenName),
         },
     ]
 });

@@ -33,6 +33,29 @@ async function userHasLegalData(db, userId) {
     return Boolean(row.has_audit_events || row.has_signing_files || row.has_cases || row.has_signatures);
 }
 
+async function clientHasLegalData(db, clientUserId) {
+    const uid = Number(clientUserId);
+    if (!Number.isInteger(uid) || uid <= 0) return false;
+
+    const res = await db.query(
+        `select
+            exists (select 1 from cases where userid = $1) as has_cases,
+            exists (select 1 from signingfiles where clientid = $1) as has_signing_files,
+            exists (
+                select 1
+                from audit_events ae
+                join signingfiles sf on sf.signingfileid = ae.signingfileid
+                where sf.clientid = $1
+            ) as has_audit_events
+        `,
+        [uid]
+    );
+
+    const row = res.rows?.[0] || {};
+    return Boolean(row.has_audit_events || row.has_signing_files || row.has_cases);
+}
+
 module.exports = {
     userHasLegalData,
+    clientHasLegalData,
 };
