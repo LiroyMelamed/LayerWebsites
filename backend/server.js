@@ -1,6 +1,7 @@
 const axios = require('axios');
 const app = require('./app');
 const { signingSchemaStartupCheck } = require('./utils/startupSchemaCheck');
+const { initLicenseRenewalScheduler } = require('./tasks/licenseRenewal/scheduler');
 
 const PORT = process.env.PORT || 5000;
 
@@ -25,6 +26,9 @@ const server = app.listen(PORT, async () => {
     console.log(`Server running on port ${PORT}`);
     await getPublicIp();
     await signingSchemaStartupCheck();
+
+    // Scheduled jobs (best-effort; idempotent at DB layer)
+    initLicenseRenewalScheduler();
 });
 
 // Hard timeouts at the Node server layer (useful behind Nginx).

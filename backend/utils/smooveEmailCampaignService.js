@@ -425,6 +425,28 @@ async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shou
     }
 }
 
+/**
+ * Send a one-off transactional HTML email via Smoove.
+ * This reuses the same transport as other transactional emails (SIGN_INVITE/CASE_UPDATE/etc.).
+ */
+async function sendTransactionalCustomHtmlEmail({ toEmail, subject, htmlBody, logLabel } = {}) {
+    const email = String(toEmail || '').trim();
+    const s = String(subject || '').trim();
+    const body = String(htmlBody || '');
+    const label = String(logLabel || 'CUSTOM').trim();
+
+    const shouldSendRealEmail = isProduction || FORCE_SEND_EMAIL_ALL;
+
+    return await sendTransactionalEmail({
+        toEmail: email,
+        subject: s,
+        htmlBody: body,
+        fields: {},
+        shouldSendRealEmail,
+        logLabel: label,
+    });
+}
+
 function buildSignInviteHtmlTemplate() {
     // User-provided SIGN_INVITE HTML body (placeholders replaced server-side).
     return `<!DOCTYPE html>
@@ -1151,6 +1173,7 @@ function extractSmooveErrorMessage(data) {
 
 module.exports = {
     sendEmailCampaign,
+    sendTransactionalCustomHtmlEmail,
     COMPANY_NAME,
     WEBSITE_DOMAIN,
     isProduction,
