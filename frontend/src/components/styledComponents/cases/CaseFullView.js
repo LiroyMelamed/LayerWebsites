@@ -153,7 +153,8 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
     };
 
     const handleCustomerSelect = (userName) => {
-        const selectedUser = customers.find(user => user.Name === userName);
+        const selectedUser = customers.find(user => user.Name.trim() == userName.trim());
+
         if (selectedUser) {
             setCaseData((prevDetails) => ({
                 ...prevDetails,
@@ -176,8 +177,6 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
 
     const handleManagerSelected = (selectedManager) => {
         const selectedAdmin = adminByName.find(admin => admin.name === selectedManager);
-
-        console.log('selectedAdmin', selectedAdmin);
 
         setCaseData((prevDetails) => ({
             ...prevDetails,
