@@ -117,8 +117,15 @@ async function notifyRecipient({
     const wantEmail = Boolean(email && resolvedEmail);
     const wantSms = Boolean(!hasPush && sms && resolvedPhone);
 
+    // Persist to DB for in-app Notifications screen.
+    // Previously we only stored when sending push, so EMAIL/SMS-only users saw nothing.
+    const storeTitle = String(push?.title || 'התראה').trim();
+    const storeMessage = String(push?.body || sms?.messageBody || '').trim();
+    const wantStore = Boolean(recipientUserId && storeTitle && storeMessage);
+
     const outcomes = {
         decision: hasPush ? 'PUSH_EMAIL' : 'EMAIL_SMS',
+        store: { attempted: wantStore, ok: null },
         push: { attempted: wantPush, ok: null },
         email: { attempted: wantEmail, ok: null },
         sms: { attempted: wantSms, ok: null },
@@ -146,6 +153,27 @@ async function notifyRecipient({
 
     const tasks = [];
 
+    if (wantStore && !wantPush) {
+        // Store without sending push (even if user has some token), because the rule chose EMAIL/SMS.
+        tasks.push(
+            (async () => {
+                try {
+                    await sendAndStoreNotification(
+                        Number(recipientUserId),
+                        storeTitle,
+                        storeMessage,
+                        push?.data || {},
+                        { sendPush: false }
+                    );
+                    outcomes.store.ok = true;
+                } catch (e) {
+                    outcomes.store.ok = false;
+                    errors.push({ channel: 'store', error: e?.message || 'store_failed' });
+                }
+            })()
+        );
+    }
+
     if (wantPush) {
         tasks.push(
             (async () => {
@@ -157,6 +185,7 @@ async function notifyRecipient({
                         push.data || {}
                     );
                     outcomes.push.ok = true;
+                    outcomes.store.ok = true;
                 } catch (e) {
                     outcomes.push.ok = false;
                     errors.push({ channel: 'push', error: e?.message || 'push_failed' });
@@ -208,7 +237,7 @@ async function notifyRecipient({
 
     await Promise.allSettled(tasks);
 
-    const anyOk = [outcomes.push, outcomes.email, outcomes.sms]
+    const anyOk = [outcomes.store, outcomes.push, outcomes.email, outcomes.sms]
         .filter((c) => c.attempted)
         .some((c) => c.ok === true);
 

@@ -45,66 +45,70 @@ async function repairUserNotificationsSequence() {
  * @param {string} message - The message body of the notification.
  * @param {object} data - Optional data payload to send with the notification.
  */
-async function sendAndStoreNotification(userId, title, message, data = {}) {
+async function sendAndStoreNotification(userId, title, message, data = {}, options = {}) {
     try {
+        const sendPush = options?.sendPush !== false;
+
         // Fetch all FCM tokens for the given user from the database
-        const tokensResult = await pool.query(
-            "SELECT FcmToken FROM UserDevices WHERE UserId = $1 AND FcmToken IS NOT NULL",
-            [userId]
-        );
+        if (sendPush) {
+            const tokensResult = await pool.query(
+                "SELECT FcmToken FROM UserDevices WHERE UserId = $1 AND FcmToken IS NOT NULL",
+                [userId]
+            );
 
-        // Extract the tokens from the query result (be tolerant of casing)
-        const tokens = tokensResult.rows
-            .map((row) => row?.FcmToken ?? row?.fcmtoken ?? row?.fcmToken)
-            .filter(Boolean);
-        const expoTokens = tokens.map(t => String(t).trim()).filter(isExpoPushToken);
+            // Extract the tokens from the query result (be tolerant of casing)
+            const tokens = tokensResult.rows
+                .map((row) => row?.FcmToken ?? row?.fcmtoken ?? row?.fcmToken)
+                .filter(Boolean);
+            const expoTokens = tokens.map(t => String(t).trim()).filter(isExpoPushToken);
 
-        // Add a Unicode Right-to-Left marker for proper text display in notifications
-        const rtlTitle = `\u200F${title}`;
-        const rtlMessage = `\u200F${message}`;
+            // Add a Unicode Right-to-Left marker for proper text display in notifications
+            const rtlTitle = `\u200F${title}`;
+            const rtlMessage = `\u200F${message}`;
 
-        if (tokens.length > 0) {
-            if (expoTokens.length === 0) {
-                console.warn(
-                    `UserId ${userId} has push tokens, but none are valid Expo push tokens. Skipping push send.`
-                );
-            } else {
-                // Expo supports sending an array of messages in a single request.
-                const messages = expoTokens.map((token) => ({
-                    to: token,
-                    sound: "default",
-                    title: rtlTitle,
-                    body: rtlMessage,
-                    data,
-                }));
-
-                try {
-                    const resp = await axios.post(
-                        "https://exp.host/--/api/v2/push/send",
-                        messages,
-                        { headers: { "Content-Type": "application/json" } }
+            if (tokens.length > 0) {
+                if (expoTokens.length === 0) {
+                    console.warn(
+                        `UserId ${userId} has push tokens, but none are valid Expo push tokens. Skipping push send.`
                     );
-                    const dataResp = resp?.data;
-                    if (dataResp?.data?.length) {
-                        const failures = dataResp.data.filter((r) => r?.status !== "ok");
-                        if (failures.length) {
-                            console.error(
-                                `❌ Expo push failures for UserId ${userId}:`,
-                                failures
-                            );
+                } else {
+                    // Expo supports sending an array of messages in a single request.
+                    const messages = expoTokens.map((token) => ({
+                        to: token,
+                        sound: "default",
+                        title: rtlTitle,
+                        body: rtlMessage,
+                        data,
+                    }));
+
+                    try {
+                        const resp = await axios.post(
+                            "https://exp.host/--/api/v2/push/send",
+                            messages,
+                            { headers: { "Content-Type": "application/json" } }
+                        );
+                        const dataResp = resp?.data;
+                        if (dataResp?.data?.length) {
+                            const failures = dataResp.data.filter((r) => r?.status !== "ok");
+                            if (failures.length) {
+                                console.error(
+                                    `❌ Expo push failures for UserId ${userId}:`,
+                                    failures
+                                );
+                            }
                         }
+                    } catch (err) {
+                        console.error(
+                            "❌ Expo push send error:",
+                            err?.response?.data || err.message,
+                            "UserId:",
+                            userId
+                        );
                     }
-                } catch (err) {
-                    console.error(
-                        "❌ Expo push send error:",
-                        err?.response?.data || err.message,
-                        "UserId:",
-                        userId
-                    );
                 }
+            } else {
+                console.log(`No push tokens found for UserId: ${userId}. Skipping push notification.`);
             }
-        } else {
-            console.log(`No push tokens found for UserId: ${userId}. Skipping push notification.`);
         }
 
         const dedupeWindowSeconds = 10;

@@ -178,6 +178,10 @@ async function main() {
     // Baseline known data tables to clear.
     const baselineTablesToClear = [
         'audit_events',
+        // Case types are preserved by default via preserveTables,
+        // but must be included here so PROD_RESET_WIPE_CASETYPES=true actually truncates them.
+        'casetypedescriptions',
+        'casetypes',
         'signing_otp_challenges',
         'signing_consents',
         'signaturespots',
