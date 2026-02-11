@@ -19,9 +19,12 @@ DB CONFIG:
 
 NOTES:
 - Preserves reference/platform tables by default (to keep the app functional):
-  - subscription_plans
-  - casetypes
-  - casetypedescriptions
+    - subscription_plans
+    - casetypes
+    - casetypedescriptions
+
+- If you also want to wipe case types, set:
+    - PROD_RESET_WIPE_CASETYPES=true
 
 - Uses TRUNCATE ... CASCADE for data tables when possible.
 - Deletes users last: DELETE FROM users WHERE userid <> preserved.
@@ -163,10 +166,13 @@ async function main() {
         }
     }
 
+    const wipeCaseTypes = asBoolEnv('PROD_RESET_WIPE_CASETYPES');
+
     const preserveTables = new Set([
         'subscription_plans',
-        'casetypes',
-        'casetypedescriptions',
+        // Case types are reference data that the app may depend on.
+        // Preserve by default; allow wiping via PROD_RESET_WIPE_CASETYPES=true.
+        ...(wipeCaseTypes ? [] : ['casetypes', 'casetypedescriptions']),
     ]);
 
     // Baseline known data tables to clear.
