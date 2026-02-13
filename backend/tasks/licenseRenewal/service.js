@@ -46,9 +46,11 @@ function formatDateHebrew(dateKey) {
 function normalizeDateOnlyKey(rawValue) {
     if (!rawValue) return '';
 
+    const tz = String(process.env.LICENSE_RENEWAL_REMINDERS_TZ || 'Asia/Jerusalem');
+
     // pg may return timestamps as JS Date objects
     if (rawValue instanceof Date && !Number.isNaN(rawValue.getTime())) {
-        return rawValue.toISOString().slice(0, 10);
+        return getTodayDateKeyInTz(tz, rawValue);
     }
 
     const s = String(rawValue).trim();
@@ -57,7 +59,7 @@ function normalizeDateOnlyKey(rawValue) {
 
     const dt = new Date(s);
     if (!Number.isNaN(dt.getTime())) {
-        return dt.toISOString().slice(0, 10);
+        return getTodayDateKeyInTz(tz, dt);
     }
 
     return '';
