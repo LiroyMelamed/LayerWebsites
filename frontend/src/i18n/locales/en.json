@@ -53,6 +53,7 @@
         "oopsTitle": "Oops…",
         "unexpected": "Unexpected error",
         "requiredFieldsExceptPassword": "All fields except password are required",
+        "passwordMinLength": "Password must be at least 6 characters",
         "required": "Required",
         "errorPrefix": "Error: "
     },

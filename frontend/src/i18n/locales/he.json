@@ -71,6 +71,7 @@
         "oopsTitle": "אופס…",
         "unexpected": "שגיאה לא צפויה",
         "requiredFieldsExceptPassword": "כל השדות מלבד סיסמה הם חובה",
+        "passwordMinLength": "הסיסמה חייבת להיות לפחות 6 תווים",
         "required": "חובה",
         "errorPrefix": "שגיאה: "
     },

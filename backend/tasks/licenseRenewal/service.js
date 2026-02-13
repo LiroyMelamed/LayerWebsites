@@ -419,21 +419,79 @@ async function runLicenseRenewalRemindersOnce({ timeZone } = {}) {
     }
 
     let total = 0;
+    let sentCount = 0;
+    let skippedCount = 0;
+    let errorCount = 0;
 
     for (const reminderKey of ['M4', 'M2', 'M1', 'D14']) {
         const dueRows = await findDueCasesForReminder({ todayKey, reminderKey });
 
         for (const row of dueRows) {
             total += 1;
-            await sendClientReminder({ reminderKey, row, todayKey });
+            const clientRes = await sendClientReminder({ reminderKey, row, todayKey });
+
+            if (!clientRes?.ok) {
+                errorCount += 1;
+                console.log(
+                    JSON.stringify({
+                        event: 'license_renewal_client_error',
+                        caseId: Number(row.CaseId),
+                        reminderKey,
+                        error: clientRes?.error || 'unknown',
+                    })
+                );
+            } else if (clientRes?.skipped) {
+                skippedCount += 1;
+                console.log(
+                    JSON.stringify({
+                        event: 'license_renewal_client_skipped',
+                        caseId: Number(row.CaseId),
+                        reminderKey,
+                        reason: clientRes?.reason || 'unknown',
+                    })
+                );
+            } else {
+                sentCount += 1;
+            }
 
             if (reminderKey === 'D14') {
-                await sendManagerReminder14Days({ row, todayKey });
+                const managerRes = await sendManagerReminder14Days({ row, todayKey });
+
+                if (!managerRes?.ok) {
+                    errorCount += 1;
+                    console.log(
+                        JSON.stringify({
+                            event: 'license_renewal_manager_error',
+                            caseId: Number(row.CaseId),
+                            reminderKey: 'D14',
+                            error: managerRes?.error || 'unknown',
+                        })
+                    );
+                } else if (managerRes?.skipped) {
+                    skippedCount += 1;
+                    console.log(
+                        JSON.stringify({
+                            event: 'license_renewal_manager_skipped',
+                            caseId: Number(row.CaseId),
+                            reminderKey: 'D14',
+                            reason: managerRes?.reason || 'unknown',
+                        })
+                    );
+                } else {
+                    sentCount += 1;
+                }
             }
         }
     }
 
-    return { ok: true, todayKey, totalCandidates: total };
+    return {
+        ok: true,
+        todayKey,
+        totalCandidates: total,
+        sentCount,
+        skippedCount,
+        errorCount,
+    };
 }
 
 module.exports = {

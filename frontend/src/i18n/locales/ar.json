@@ -53,6 +53,7 @@
         "oopsTitle": "عذرًا…",
         "unexpected": "حدث خطأ غير متوقع",
         "requiredFieldsExceptPassword": "جميع الحقول مطلوبة باستثناء كلمة المرور",
+        "passwordMinLength": "يجب أن تكون كلمة المرور 6 أحرف على الأقل",
         "required": "مطلوب",
         "errorPrefix": "خطأ: "
     },

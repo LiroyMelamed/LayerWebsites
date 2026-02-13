@@ -47,7 +47,15 @@ function initLicenseRenewalScheduler() {
         running = true;
         try {
             console.log(JSON.stringify({ event: 'license_renewal_scheduler_run_start', tz, dayKey, hour, minute }));
-            await runLicenseRenewalRemindersOnce({ timeZone: tz });
+            const result = await runLicenseRenewalRemindersOnce({ timeZone: tz });
+            console.log(
+                JSON.stringify({
+                    event: 'license_renewal_scheduler_run_result',
+                    tz,
+                    dayKey,
+                    result,
+                })
+            );
             lastRunDayKey = dayKey;
             console.log(JSON.stringify({ event: 'license_renewal_scheduler_run_done', tz, dayKey }));
         } catch (e) {
