@@ -43,6 +43,26 @@ function formatDateHebrew(dateKey) {
     }).format(d);
 }
 
+function normalizeDateOnlyKey(rawValue) {
+    if (!rawValue) return '';
+
+    // pg may return timestamps as JS Date objects
+    if (rawValue instanceof Date && !Number.isNaN(rawValue.getTime())) {
+        return rawValue.toISOString().slice(0, 10);
+    }
+
+    const s = String(rawValue).trim();
+    const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (m) return m[1];
+
+    const dt = new Date(s);
+    if (!Number.isNaN(dt.getTime())) {
+        return dt.toISOString().slice(0, 10);
+    }
+
+    return '';
+}
+
 function uuidV4() {
     if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
 
@@ -196,7 +216,7 @@ async function sendClientReminder({ reminderKey, row, todayKey }) {
     const clientEmail = String(row.ClientEmail || '').trim();
     const clientName = String(row.ClientName || '').trim();
     const caseTitle = String(row.CaseName || '').trim();
-    const expiryKey = String(row.LicenseExpiryDate || '').slice(0, 10);
+    const expiryKey = normalizeDateOnlyKey(row.LicenseExpiryDate);
 
     if (!clientEmail) return { ok: true, skipped: true, reason: 'no_client_email' };
 
@@ -322,7 +342,7 @@ async function sendManagerReminder14Days({ row, todayKey }) {
 
     const clientName = String(row.ClientName || '').trim();
     const caseTitle = String(row.CaseName || '').trim();
-    const expiryKey = String(row.LicenseExpiryDate || '').slice(0, 10);
+    const expiryKey = normalizeDateOnlyKey(row.LicenseExpiryDate);
 
     const expiryDateUtc = parseDateOnly(expiryKey);
     if (!expiryDateUtc) return { ok: false, error: 'invalid_expiry_date' };
