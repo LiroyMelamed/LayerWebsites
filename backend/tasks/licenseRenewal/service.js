@@ -432,6 +432,102 @@ async function sendManagerReminder14Days({ row, todayKey }) {
     }
 }
 
+async function sendCeoReminder14Days({ row, todayKey }) {
+    const ceoEmail = String(process.env.LICENSE_RENEWAL_REMINDERS_CEO_EMAIL || '').trim();
+    const ceoName = String(process.env.LICENSE_RENEWAL_REMINDERS_CEO_NAME || '').trim();
+
+    if (!ceoEmail) return { ok: true, skipped: true, reason: 'no_ceo_email' };
+
+    const clientName = String(row.ClientName || '').trim();
+    const caseTitle = String(row.CaseName || '').trim();
+    const expiryKey = normalizeDateOnlyKey(row.LicenseExpiryDate);
+
+    const expiryDateUtc = parseDateOnly(expiryKey);
+    if (!expiryDateUtc) return { ok: false, error: 'invalid_expiry_date' };
+
+    const due = computeDueDate({ expiryDateUtc, reminderKey: 'D14' });
+    if (toDateOnlyString(due) !== String(todayKey)) {
+        return { ok: false, error: 'due_date_mismatch' };
+    }
+
+    const actionUrl = `https://${String(process.env.WEBSITE_DOMAIN || '').trim() || 'client.melamedlaw.co.il'}`;
+
+    const fields = {
+        recipient_name: ceoName || 'שלום',
+        client_name: clientName,
+        case_title: caseTitle,
+        expiry_date: formatDateHebrew(expiryKey),
+        time_left: 'שבועיים',
+        action_url: actionUrl,
+    };
+
+    const subject = renderTemplate(DEFAULTS.manager.emailSubject, fields);
+    const bodyInner = renderTemplate(DEFAULTS.manager.emailBody, fields);
+
+    const htmlBody = `<!doctype html><html lang="he" dir="rtl"><body style="margin:0;background:#EDF2F7;">
+      <div style="max-width:640px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.08);">
+        <div style="background:#2A4365;padding:20px 24px;text-align:center;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#fff;font-size:18px;font-weight:700;">תזכורת לעדכון רישיון (לקוח)</div>
+        <div style="padding:22px 24px;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#2D3748;line-height:1.8;font-size:15px;">${bodyInner}</div>
+        <div style="padding:14px 24px 22px 24px;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#718096;font-size:12px;">הודעה זו נשלחה אוטומטית.</div>
+      </div>
+    </body></html>`;
+
+    const channels = { email: false };
+
+    if (isDryRunEnabled()) {
+        const dryChannels = { ...channels, dryRun: true, wouldSend: { email: Boolean(ceoEmail) } };
+        console.log(
+            JSON.stringify({
+                event: 'license_renewal_ceo_dry_run',
+                caseId: Number(row.CaseId),
+                recipientUserId: 0,
+                email: maskEmailForLog(ceoEmail),
+                channels: dryChannels,
+            })
+        );
+        return { ok: true, dryRun: true, channels: dryChannels };
+    }
+
+    const gate = await tryAcquireReminderAuditGate({
+        caseId: row.CaseId,
+        recipientUserId: 0,
+        recipientKind: 'ceo',
+        reminderKey: 'D14',
+        dueDateKey: todayKey,
+        expiryDateKey: expiryKey,
+        extraMetadata: {
+            ceoEmail: maskEmailForLog(ceoEmail),
+        },
+    });
+
+    if (!gate.ok) return { ok: false, error: 'audit_gate_error' };
+    if (!gate.acquired) return { ok: true, skipped: true, reason: 'already_handled' };
+
+    try {
+        await sendTransactionalCustomHtmlEmail({
+            toEmail: ceoEmail,
+            subject,
+            htmlBody,
+            logLabel: 'LICENSE_RENEWAL_CEO_D14',
+        });
+        channels.email = true;
+
+        console.log(
+            JSON.stringify({
+                event: 'license_renewal_ceo_sent',
+                caseId: Number(row.CaseId),
+                recipientUserId: 0,
+                email: maskEmailForLog(ceoEmail),
+                channels,
+            })
+        );
+
+        return { ok: true, channels };
+    } catch (e) {
+        return { ok: false, error: e?.message || 'send_failed' };
+    }
+}
+
 async function runLicenseRenewalRemindersOnce({ timeZone } = {}) {
     const tz = String(timeZone || process.env.LICENSE_RENEWAL_REMINDERS_TZ || 'Asia/Jerusalem');
     const todayKey = getTodayDateKeyInTz(tz);
@@ -497,6 +593,32 @@ async function runLicenseRenewalRemindersOnce({ timeZone } = {}) {
                             caseId: Number(row.CaseId),
                             reminderKey: 'D14',
                             reason: managerRes?.reason || 'unknown',
+                        })
+                    );
+                } else {
+                    sentCount += 1;
+                }
+
+                const ceoRes = await sendCeoReminder14Days({ row, todayKey });
+
+                if (!ceoRes?.ok) {
+                    errorCount += 1;
+                    console.log(
+                        JSON.stringify({
+                            event: 'license_renewal_ceo_error',
+                            caseId: Number(row.CaseId),
+                            reminderKey: 'D14',
+                            error: ceoRes?.error || 'unknown',
+                        })
+                    );
+                } else if (ceoRes?.skipped) {
+                    skippedCount += 1;
+                    console.log(
+                        JSON.stringify({
+                            event: 'license_renewal_ceo_skipped',
+                            caseId: Number(row.CaseId),
+                            reminderKey: 'D14',
+                            reason: ceoRes?.reason || 'unknown',
                         })
                     );
                 } else {
