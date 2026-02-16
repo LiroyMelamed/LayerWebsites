@@ -161,40 +161,14 @@ BEGIN
     PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='subscription_plans' AND column_name='evidence_cpu_seconds_monthly_quota';
     IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.subscription_plans.evidence_cpu_seconds_monthly_quota'; END IF;
 
-    -- Firm scope tables (additive)
-    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='firms' AND column_name='firmid';
-    IF NOT FOUND THEN RAISE EXCEPTION 'Missing table/column: public.firms.firmid'; END IF;
-    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='firms' AND column_name='firm_key';
-    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.firms.firm_key'; END IF;
+    -- (firms, firm_users, firm_subscriptions, firm_plan_overrides, firm_usage_events, tenant_subscriptions
+    --  were dropped in 2026-02-16_02_drop_redundant_firm_tables.sql — single-DB-per-firm architecture)
 
-    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='firm_users' AND column_name='firmid';
-    IF NOT FOUND THEN RAISE EXCEPTION 'Missing table/column: public.firm_users.firmid'; END IF;
-    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='firm_users' AND column_name='userid';
-    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.firm_users.userid'; END IF;
-
-    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='firm_subscriptions' AND column_name='firmid';
-    IF NOT FOUND THEN RAISE EXCEPTION 'Missing table/column: public.firm_subscriptions.firmid'; END IF;
-    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='firm_subscriptions' AND column_name='plan_key';
-    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.firm_subscriptions.plan_key'; END IF;
-
-    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='firm_plan_overrides' AND column_name='firmid';
-    IF NOT FOUND THEN RAISE EXCEPTION 'Missing table/column: public.firm_plan_overrides.firmid'; END IF;
-
-    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='firm_usage_events' AND column_name='event_id';
-    IF NOT FOUND THEN RAISE EXCEPTION 'Missing table/column: public.firm_usage_events.event_id'; END IF;
-    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='firm_usage_events' AND column_name='meter_key';
-    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.firm_usage_events.meter_key'; END IF;
-
-    -- Firm reference on signingfiles
-    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signingfiles' AND column_name='firmid';
-    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.signingfiles.firmid'; END IF;
+    -- signingfiles byte-size columns
     PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signingfiles' AND column_name='unsignedpdfbytes';
     IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.signingfiles.unsignedpdfbytes'; END IF;
     PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='signingfiles' AND column_name='signedpdfbytes';
     IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.signingfiles.signedpdfbytes'; END IF;
-
-    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='tenant_subscriptions' AND column_name='tenant_id';
-    IF NOT FOUND THEN RAISE EXCEPTION 'Missing table/column: public.tenant_subscriptions.tenant_id'; END IF;
 
     PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='data_retention_runs' AND column_name='run_id';
     IF NOT FOUND THEN RAISE EXCEPTION 'Missing table/column: public.data_retention_runs.run_id'; END IF;
