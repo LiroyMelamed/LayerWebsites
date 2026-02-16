@@ -24,6 +24,19 @@
   width: 100%;
   min-inline-size: 0;
   margin-block-start: v.$space-2;
+  display: flex;
+  flex-direction: column;
+  gap: v.$space-1;
+}
+
+.lw-caseFullView__removeStageBtn {
+  align-self: flex-end;
+}
+
+.lw-caseFullView__addStageRow {
+  display: flex;
+  justify-content: flex-start;
+  margin-block: v.$space-2;
 }
 
 .lw-caseFullView__buttonsRow {

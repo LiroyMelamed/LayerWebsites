@@ -25,22 +25,8 @@ export const PricingScreenName = "/pricing";
 
 export default function PricingScreen() {
     useEffect(() => {
-        const previousDemoMode = window.__LW_DEMO_MODE__;
-        const previousDemoToken = window.__LW_DEMO_TOKEN__;
-
         // Pricing page is Hebrew-only (matches Admin pricing screen behavior).
         void setLanguage("he");
-
-        window.__LW_DEMO_MODE__ = true;
-        window.__LW_DEMO_TOKEN__ = "demo-token";
-
-        return () => {
-            if (previousDemoMode === undefined) delete window.__LW_DEMO_MODE__;
-            else window.__LW_DEMO_MODE__ = previousDemoMode;
-
-            if (previousDemoToken === undefined) delete window.__LW_DEMO_TOKEN__;
-            else window.__LW_DEMO_TOKEN__ = previousDemoToken;
-        };
     }, []);
 
     const { t } = useTranslation();

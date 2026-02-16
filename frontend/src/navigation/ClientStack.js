@@ -7,7 +7,6 @@ import NotificationsScreen, { NotificationsScreenName } from "../screens/client/
 import ProfileScreen, { ProfileScreenName } from "../screens/client/profile/ProfileScreen";
 import { LoginStackName } from "./LoginStack";
 import { LoginScreenName } from "../screens/loginScreen/LoginScreen";
-import { getDemoModeToken } from "../utils/demoMode";
 
 export const ClientStackName = "/ClientStack";
 
@@ -17,7 +16,7 @@ function toRelativePath(pathname) {
 }
 
 function ClientStack() {
-    const token = typeof window !== "undefined" ? (getDemoModeToken() || localStorage.getItem("token")) : null;
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (!token) return <Navigate to={LoginStackName + LoginScreenName} replace />;
 
     return (

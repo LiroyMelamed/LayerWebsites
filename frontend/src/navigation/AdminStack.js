@@ -11,9 +11,9 @@ import EvidenceDocumentsScreen, { EvidenceDocumentsScreenName } from "../screens
 import PlanUsageScreen, { PlanUsageScreenName } from "../screens/billingScreen/PlanUsageScreen";
 import PlansPricingScreen, { PlansPricingScreenName } from "../screens/billingScreen/PlansPricingScreen";
 import MyCasesScreen, { MyCasesScreenName } from "../screens/myCasesScreen/MyCasesScreen";
+import RemindersScreen, { RemindersScreenName } from "../screens/remindersScreen/RemindersScreen";
 import { LoginStackName } from "./LoginStack";
 import { LoginScreenName } from "../screens/loginScreen/LoginScreen";
-import { getDemoModeToken } from "../utils/demoMode";
 
 export const AdminStackName = "/AdminStack";
 
@@ -23,7 +23,7 @@ function toRelativePath(pathname) {
 }
 
 function AdminStack() {
-    const token = typeof window !== "undefined" ? (getDemoModeToken() || localStorage.getItem("token")) : null;
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (!token) return <Navigate to={LoginStackName + LoginScreenName} replace />;
 
     return (
@@ -40,6 +40,7 @@ function AdminStack() {
                 <Route path={toRelativePath(PlanUsageScreenName)} element={<PlanUsageScreen />} />
                 <Route path={toRelativePath(PlansPricingScreenName)} element={<PlansPricingScreen />} />
                 <Route path={toRelativePath(uploadFileForSigningScreenName)} element={<UploadFileForSigningScreen />} />
+                <Route path={toRelativePath(RemindersScreenName)} element={<RemindersScreen />} />
 
             </Routes>
         </TopAndRightNavBar>

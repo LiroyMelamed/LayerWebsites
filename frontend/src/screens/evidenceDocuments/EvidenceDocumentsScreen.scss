@@ -3,16 +3,21 @@
 
 .lw-evidenceDocuments__scroll {
     width: 100%;
+    padding: v.$space-4;
+    direction: rtl;
+    display: flex;
+    flex-direction: column;
+    gap: v.$space-4;
+    box-sizing: border-box;
 }
 
 .lw-evidenceDocuments__header {
-    margin-bottom: v.$space-3;
+    /* spacing handled by parent gap */
 }
 
 .lw-evidenceDocuments__row {
     @include m.row(v.$space-3, wrap);
     align-items: flex-end;
-    margin-block-end: v.$space-3;
 }
 
 .lw-evidenceDocuments__search {
@@ -77,8 +82,9 @@
     font-size: 0.8125rem;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: wrap;
+    white-space: nowrap;
     min-width: 0;
+    direction: rtl;
 }
 
 .lw-evidenceDocuments__cell--actions {
@@ -108,7 +114,6 @@
 }
 
 .lw-evidenceDocuments__footer {
-    margin-block-start: v.$space-3;
     width: 100%;
     justify-content: center;
     text-align: center;

@@ -14,6 +14,7 @@ export default function ChooseButton({
     buttonChoices,
     items,
     OnPressChoiceFunction,
+    showAll = true,
     style: _style,
     props,
 }) {
@@ -25,8 +26,11 @@ export default function ChooseButton({
             ? items
             : normalizedChoices.map((c) => ({ value: c, label: String(c) }));
 
-        return [{ value: null, label: t('common.all') }, ...normalizedItems];
-    }, [buttonChoices, items, t]);
+        if (showAll) {
+            return [{ value: null, label: t('common.all') }, ...normalizedItems];
+        }
+        return normalizedItems;
+    }, [buttonChoices, items, t, showAll]);
 
     const [chosenValue, setChosenValue] = useState(null);
     const [showResults, setShowResults] = useState(false);
@@ -34,7 +38,7 @@ export default function ChooseButton({
 
     const chosenItem = computedItems.find((it) => it.value === chosenValue) || computedItems[0];
 
-    function OnPressChoice(item) {
+    function OnPressChoice(_label, item) {
         setShowResults(false)
         setChosenValue(item?.value ?? null)
         OnPressChoiceFunction?.(item?.value ?? null, item)

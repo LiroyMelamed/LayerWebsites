@@ -1,0 +1,45 @@
+@use '../../../styles/variables' as v;
+
+.lw-confirmationDialog {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: v.$space-4;
+}
+
+.lw-confirmationDialog__card {
+    display: flex;
+    flex-direction: column;
+    gap: v.$space-3;
+    background: var(--lw-color-white, #fff);
+    border-radius: 0.75rem;
+    padding: v.$space-4;
+    max-width: 28rem;
+    width: 100%;
+    box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.12);
+}
+
+.lw-confirmationDialog__title {
+    text-align: center;
+}
+
+.lw-confirmationDialog__message {
+    text-align: center;
+    color: var(--lw-color-text-secondary, #555);
+}
+
+.lw-confirmationDialog__actions {
+    display: flex;
+    justify-content: center;
+    gap: v.$space-2;
+    margin-top: v.$space-2;
+}
+
+.lw-confirmationDialog__btn--danger {
+    background-color: var(--lw-color-error, #d32f2f) !important;
+    border-color: var(--lw-color-error, #d32f2f) !important;
+
+    &:hover {
+        opacity: 0.85;
+    }
+}

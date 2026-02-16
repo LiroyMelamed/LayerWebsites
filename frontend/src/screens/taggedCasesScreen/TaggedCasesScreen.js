@@ -87,7 +87,7 @@ export default function TaggedCasesScreen() {
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
-            {isSmallScreen && <TopToolBarSmallScreen chosenIndex={0} LogoNavigate={AdminStackName + MainScreenName} />}
+            {isSmallScreen && <TopToolBarSmallScreen chosenNavKey="pinnedCases" LogoNavigate={AdminStackName + MainScreenName} />}
 
             <SimpleScrollView>
                 <SimpleContainer className="lw-taggedCasesScreen__row">

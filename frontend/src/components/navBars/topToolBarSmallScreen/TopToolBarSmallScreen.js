@@ -17,19 +17,23 @@ import './TopToolBarSmallScreen.scss';
 
 const Logo = images.Logos.FullLogoOriginal;
 
-export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, GetNavBarData = getNavBarData, isClient = false }) {
+export default function TopToolBarSmallScreen({ chosenIndex = -1, chosenNavKey, LogoNavigate, GetNavBarData = getNavBarData, isClient = false }) {
     const { isFromApp } = useFromApp();
     const { t } = useTranslation();
 
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-
-    const [currentIndex] = useState(chosenIndex);
 
     const navigate = useNavigate();
 
     const { openPopup, closePopup } = usePopup();
 
     const { NavBarLinks } = GetNavBarData(navigate, openPopup, closePopup, isFromApp, t);
+
+    // Determine which nav item is active — prefer navKey, fall back to chosenIndex
+    const isActiveItem = (item, index) => {
+        if (chosenNavKey && item.navKey) return item.navKey === chosenNavKey;
+        return chosenIndex >= 0 && index === chosenIndex;
+    };
 
     const toggleDrawer = () => {
         setIsDrawerOpen(!isDrawerOpen);
@@ -64,11 +68,11 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, LogoNavigate, 
 
                                 return (
                                     <SideBarMenuItem
-                                        key={item.buttonText}
+                                        key={item.navKey || item.buttonText}
                                         buttonText={item.buttonText}
                                         iconSource={item.icon}
                                         size={24}
-                                        isPressed={currentIndex === index}
+                                        isPressed={isActiveItem(item, index)}
                                         onPressFunction={() => {
                                             item.onClick();
                                             toggleDrawer();

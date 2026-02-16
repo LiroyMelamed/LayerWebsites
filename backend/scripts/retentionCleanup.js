@@ -9,11 +9,6 @@ const pool = require('../config/db');
 const { r2, BUCKET } = require('../utils/r2');
 const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const { resolveTenantPlan } = require('../lib/plan/resolveTenantPlan');
-const { resolveFirmPlan } = require('../lib/plan/resolveFirmPlan');
-
-function isFirmScopeEnabled() {
-    return String(process.env.FIRM_SCOPE_ENABLED ?? 'false').toLowerCase() === 'true';
-}
 
 function randomUuid() {
     if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
@@ -26,12 +21,11 @@ function randomUuid() {
 }
 
 function parseArgs(argv) {
-    const args = { tenant: null, firm: null, dryRun: true, nowIso: null, maxDocs: null, softBufferDays: null };
+    const args = { tenant: null, dryRun: true, nowIso: null, maxDocs: null, softBufferDays: null };
     for (let i = 2; i < argv.length; i += 1) {
         const a = argv[i];
         if (a === '--help' || a === '-h') args.help = true;
         else if (a === '--tenant') args.tenant = argv[++i];
-        else if (a === '--firm') args.firm = argv[++i];
         else if (a === '--dry-run') args.dryRun = true;
         else if (a === '--execute') args.dryRun = false;
         else if (a === '--now') args.nowIso = argv[++i];
@@ -93,100 +87,7 @@ async function discoverTenants({ tenantId }) {
     return (res.rows || []).map((r) => Number(r.TenantId)).filter((n) => Number.isFinite(n) && n > 0);
 }
 
-async function discoverFirms({ firmId }) {
-    if (firmId) {
-        const f = Number(firmId);
-        if (!Number.isFinite(f) || f <= 0) throw new Error('--firm must be a positive integer');
-        return [f];
-    }
-
-    const res = await pool.query(
-        `select distinct firmid as "FirmId" from firm_subscriptions where status = 'active'
-     union
-     select distinct firmid as "FirmId" from signingfiles where firmid is not null
-     order by "FirmId" asc`
-    );
-
-    return (res.rows || []).map((r) => Number(r.FirmId)).filter((n) => Number.isFinite(n) && n > 0);
-}
-
-async function tableExists(regclassName) {
-    try {
-        const res = await pool.query('select to_regclass($1) as r', [regclassName]);
-        return Boolean(res.rows?.[0]?.r);
-    } catch {
-        return false;
-    }
-}
-
-async function getCandidateSigningFiles({ scopeType, scopeId, cutoffIso, bufferCutoffIso, maxDocs }) {
-    if (scopeType === 'firm') {
-        // Robustness: include firmid NULL rows only if the lawyer is a member of this firm.
-        // This allows retention cleanup to work safely even before firm backfill completes.
-        const hasFirmUsers = await tableExists('public.firm_users');
-
-        const sql = hasFirmUsers
-            ? `select
-        signingfileid as "SigningFileId",
-        lawyerid as "LawyerId",
-        status as "Status",
-        createdat as "CreatedAt",
-        signedat as "SignedAt",
-        legalhold as "LegalHold",
-        signedstoragebucket as "SignedStorageBucket",
-        signedstoragekey as "SignedStorageKey",
-        signedfilekey as "SignedFileKey",
-        originalstoragebucket as "OriginalStorageBucket",
-        originalstoragekey as "OriginalStorageKey",
-        filekey as "FileKey",
-        originalfilekey as "OriginalFileKey",
-        pendingdeleteatutc as "PendingDeleteAtUtc",
-        presentedpdfsha256 as "PresentedPdfSha256",
-        signedpdfsha256 as "SignedPdfSha256"
-     from signingfiles
-     left join firm_users fu on fu.userid = signingfiles.lawyerid and fu.firmid = $1
-         where (
-           signingfiles.firmid = $1
-           or (signingfiles.firmid is null and fu.firmid is not null)
-         )
-       and lower(status) = 'signed'
-       and coalesce(legalhold, false) = false
-       and pendingdeleteatutc is null
-       and coalesce(signedat, createdat) < $2::timestamptz
-       and (signedat is null or signedat < $3::timestamptz)
-       order by coalesce(signedat, createdat) asc
-       limit $4`
-            : `select
-        signingfileid as "SigningFileId",
-        lawyerid as "LawyerId",
-        status as "Status",
-        createdat as "CreatedAt",
-        signedat as "SignedAt",
-        legalhold as "LegalHold",
-        signedstoragebucket as "SignedStorageBucket",
-        signedstoragekey as "SignedStorageKey",
-        signedfilekey as "SignedFileKey",
-        originalstoragebucket as "OriginalStorageBucket",
-        originalstoragekey as "OriginalStorageKey",
-        filekey as "FileKey",
-        originalfilekey as "OriginalFileKey",
-        pendingdeleteatutc as "PendingDeleteAtUtc",
-        presentedpdfsha256 as "PresentedPdfSha256",
-        signedpdfsha256 as "SignedPdfSha256"
-     from signingfiles
-         where firmid = $1
-       and lower(status) = 'signed'
-       and coalesce(legalhold, false) = false
-       and pendingdeleteatutc is null
-       and coalesce(signedat, createdat) < $2::timestamptz
-       and (signedat is null or signedat < $3::timestamptz)
-       order by coalesce(signedat, createdat) asc
-       limit $4`;
-
-        const res = await pool.query(sql, [scopeId, cutoffIso, bufferCutoffIso, maxDocs]);
-        return res.rows || [];
-    }
-
+async function getCandidateSigningFiles({ scopeId, cutoffIso, bufferCutoffIso, maxDocs }) {
     const res = await pool.query(
         `select
         signingfileid as "SigningFileId",
@@ -275,7 +176,7 @@ async function recordRun({
 async function run(argv = process.argv) {
     const args = parseArgs(argv);
     if (args.help) {
-        console.log('Usage: node scripts/retentionCleanup.js [--tenant <id>] [--firm <id>] [--dry-run|--execute] [--now <iso>] [--max-docs N] [--soft-buffer-days N]');
+        console.log('Usage: node scripts/retentionCleanup.js [--tenant <id>] [--dry-run|--execute] [--now <iso>] [--max-docs N] [--soft-buffer-days N]');
         console.log('Execute mode requires: RETENTION_ALLOW_DELETE=true and RETENTION_CONFIRM=DELETE');
         return;
     }
@@ -299,35 +200,16 @@ async function run(argv = process.argv) {
         otpChallengesDeleted: 0,
     };
 
-    /** @type {Array<{scopeType: 'tenant'|'firm', id: number}>} */
+    /** @type {Array<{scopeType: 'tenant', id: number}>} */
     const scopes = [];
 
-    if (args.firm) {
-        const firms = await discoverFirms({ firmId: args.firm });
-        for (const id of firms) scopes.push({ scopeType: 'firm', id });
-    } else if (args.tenant) {
-        const tenants = await discoverTenants({ tenantId: args.tenant });
-        for (const id of tenants) scopes.push({ scopeType: 'tenant', id });
-    } else if (isFirmScopeEnabled()) {
-        try {
-            const firms = await discoverFirms({ firmId: null });
-            if (firms.length > 0) {
-                for (const id of firms) scopes.push({ scopeType: 'firm', id });
-            } else {
-                const tenants = await discoverTenants({ tenantId: null });
-                for (const id of tenants) scopes.push({ scopeType: 'tenant', id });
-            }
-        } catch {
-            const tenants = await discoverTenants({ tenantId: null });
-            for (const id of tenants) scopes.push({ scopeType: 'tenant', id });
-        }
-    } else {
-        const tenants = await discoverTenants({ tenantId: null });
+    {
+        const tenants = await discoverTenants({ tenantId: args.tenant || null });
         for (const id of tenants) scopes.push({ scopeType: 'tenant', id });
     }
 
     if (scopes.length === 0) {
-        console.log('[retention] No tenants/firms found.');
+        console.log('[retention] No tenants found.');
     }
 
     for (const scope of scopes) {
@@ -338,9 +220,7 @@ async function run(argv = process.argv) {
 
         let policy;
         try {
-            policy = scopeType === 'firm'
-                ? await resolveFirmPlan(scopeId)
-                : await resolveTenantPlan(scopeId);
+            policy = await resolveTenantPlan(scopeId);
         } catch (e) {
             errors.push({ scopeType, scopeId, stage: 'resolvePlan', message: e?.message || String(e) });
             continue;
@@ -365,7 +245,7 @@ async function run(argv = process.argv) {
             return Math.floor(n);
         })();
 
-        const candidates = await getCandidateSigningFiles({ scopeType, scopeId, cutoffIso, bufferCutoffIso, maxDocs });
+        const candidates = await getCandidateSigningFiles({ scopeId, cutoffIso, bufferCutoffIso, maxDocs });
 
         const tenantInfo = {
             scopeType,
@@ -510,7 +390,7 @@ async function run(argv = process.argv) {
     // Best-effort: always write a data_retention_runs record.
     try {
         // In dry-run, planKey is per-tenant; at run level we store null when running multi-tenant.
-        const runScopeId = args.firm ? Number(args.firm) : (args.tenant ? Number(args.tenant) : null);
+        const runScopeId = args.tenant ? Number(args.tenant) : null;
         const runPlanKey = (runScopeId && perTenantSummary.length === 1) ? perTenantSummary[0].planKey : null;
 
         await recordRun({

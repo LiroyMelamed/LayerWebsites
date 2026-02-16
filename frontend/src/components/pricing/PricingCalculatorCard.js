@@ -101,9 +101,8 @@ export default function PricingCalculatorCard({
     );
 
     useEffect(() => {
-        const isDemoMode = typeof window !== "undefined" && Boolean(window.__LW_DEMO_MODE__);
         const isDev = typeof process !== "undefined" && process?.env?.NODE_ENV !== "production";
-        if (!isDemoMode && !isDev) return;
+        if (!isDev) return;
 
         const sum = (resolved?.breakdown || []).reduce((acc, it) => acc + Number(it?.amount || 0), 0);
         const total = Number(resolved?.total || 0);

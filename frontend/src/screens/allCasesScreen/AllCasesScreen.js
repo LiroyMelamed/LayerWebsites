@@ -21,7 +21,7 @@ import { useTranslation } from "react-i18next";
 
 import "./AllCasesScreen.scss";
 
-export const AllCasesScreenName = "/AllCases"
+export const AllCasesScreenName = "/AllCasesScreen";
 
 export default function AllCasesScreen() {
     const { t } = useTranslation();
@@ -85,7 +85,7 @@ export default function AllCasesScreen() {
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
-            {isSmallScreen && <TopToolBarSmallScreen chosenIndex={4} LogoNavigate={AdminStackName + MainScreenName} />}
+            {isSmallScreen && <TopToolBarSmallScreen chosenNavKey="allCases" LogoNavigate={AdminStackName + MainScreenName} />}
 
             <SimpleScrollView>
                 <SimpleContainer className="lw-allCasesScreen__row">

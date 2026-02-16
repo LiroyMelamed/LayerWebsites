@@ -1,9 +1,5 @@
-const { getLimitsForTenant } = require('../lib/limits/getLimitsForTenant');
-const { getUsageForTenant } = require('../lib/limits/getUsageForTenant');
 const { getLimitsForFirm } = require('../lib/limits/getLimitsForFirm');
 const { getUsageForFirm } = require('../lib/limits/getUsageForFirm');
-const { isFirmScopeEnabled } = require('../lib/firm/firmScope');
-const { resolveFirmIdForUserEnsureMembership } = require('../lib/firm/resolveFirmContext');
 const { enforcementMode } = require('../lib/limits/enforceFirmLimits');
 const pool = require('../config/db');
 
@@ -14,17 +10,10 @@ exports.getCurrentPlan = async (req, res) => {
             return res.status(401).json({ message: 'Unauthorized' });
         }
 
-        if (isFirmScopeEnabled()) {
-            const firmId = await resolveFirmIdForUserEnsureMembership({ userId: tenantId, userRole: req.user?.Role });
-            if (firmId) {
-                const limits = await getLimitsForFirm(firmId);
-                if (limits) {
-                    return res.status(200).json({ ...limits, enforcementMode: enforcementMode() });
-                }
-            }
+        const limits = await getLimitsForFirm(null);
+        if (!limits) {
+            return res.status(404).json({ message: 'No plan found' });
         }
-
-        const limits = await getLimitsForTenant(tenantId);
         return res.status(200).json({ ...limits, enforcementMode: enforcementMode() });
     } catch (e) {
         console.error('getCurrentPlan error:', e);
@@ -39,17 +28,10 @@ exports.getCurrentUsage = async (req, res) => {
             return res.status(401).json({ message: 'Unauthorized' });
         }
 
-        if (isFirmScopeEnabled()) {
-            const firmId = await resolveFirmIdForUserEnsureMembership({ userId: tenantId, userRole: req.user?.Role });
-            if (firmId) {
-                const usage = await getUsageForFirm(firmId);
-                if (usage) {
-                    return res.status(200).json(usage);
-                }
-            }
+        const usage = await getUsageForFirm(null);
+        if (!usage) {
+            return res.status(404).json({ message: 'No usage data' });
         }
-
-        const usage = await getUsageForTenant(tenantId);
         return res.status(200).json(usage);
     } catch (e) {
         console.error('getCurrentUsage error:', e);

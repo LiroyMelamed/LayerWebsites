@@ -77,6 +77,8 @@
     },
     "signingManager": {
         "searchTitle": "חיפוש מסמך / לקוח / תיק",
+        "dateFrom": "מתאריך",
+        "dateTo": "עד תאריך",
         "tabs": {
             "pending": "בהמתנה / נדחו ({{count}})",
             "signed": "חתומים ({{count}})"
@@ -102,7 +104,8 @@
             "downloadEvidenceZip": "הורד ZIP ראיות",
             "details": "פרטי מסמך",
             "uploadNew": "שליחת מסמך חדש לחתימה",
-            "openPdf": "פתח PDF"
+            "openPdf": "פתח PDF",
+            "deleteFile": "מחק מסמך"
         },
         "planAndRetention": {
             "title": "תכנית ושמירה",
@@ -130,7 +133,8 @@
             "downloadSignedError": "שגיאה בהורדת הקובץ",
             "missingDocumentId": "שגיאה: מזהה מסמך חסר",
             "evidencePackageSignedOnly": "חבילת ראיות זמינה רק לאחר חתימה מלאה",
-            "evidencePackageDownloadError": "שגיאה בהורדת חבילת ראיות"
+            "evidencePackageDownloadError": "שגיאה בהורדת חבילת ראיות",
+            "deleteError": "שגיאה במחיקת המסמך"
         }
     },
     "audit": {
@@ -224,6 +228,7 @@
         "companyName": "שם החברה",
         "customerEmail": "אימייל לקוח",
         "deleteCase": "מחק תיק",
+        "deleteCaseConfirm": "האם אתה בטוח שברצונך למחוק תיק זה? פעולה זו בלתי הפיכה.",
         "updateCase": "עדכן תיק",
         "saveCase": "שמור תיק",
         "completedStagesLabel": "שלבים שהסתיימו:",
@@ -231,7 +236,9 @@
         "stageContinues": "שלב המשך",
         "stageNumber": "שלב מס' {{number}}",
         "noStagesInCaseType": "אין שלבים בסוג תיק זה",
-        "descriptionNumber": "תיאור מס' {{number}}"
+        "descriptionNumber": "תיאור מס' {{number}}",
+        "addStage": "הוסף שלב",
+        "removeStage": "הסר שלב"
     },
     "caseTypes": {
         "createCaseType": {
@@ -340,17 +347,18 @@
         }
     },
     "nav": {
-        "pinnedCases": "לתיקים נעוצים",
+        "pinnedCases": "תיקים נעוצים",
         "signingFiles": "מסמכים לחתימה",
-        "planUsage": "תכנית ושימוש",
+        "planUsage": "תוכנית ושימוש",
         "auditTrail": "יומן פעולות",
         "evidenceDocuments": "מסמכי ראיות",
-        "allCases": "לכל התיקים",
+        "allCases": "כל התיקים",
         "newOrUpdateCase": "תיק חדש / עדכון תיק",
-        "allManagers": "לכל המנהלים",
-        "allCaseTypes": "לכל סוגי התיקים",
+        "allManagers": "מנהלי מערכת / עורכי דין",
+        "allCaseTypes": "כל סוגי התיקים",
         "addCaseType": "הוספת סוג תיק",
-        "myCases": "לתיקים שלי",
+        "myCases": "התיקים שלי",
+        "reminders": "תזכורות",
         "notifications": "התראות",
         "myProfile": "הפרופיל שלי",
         "terms": "תקנון שימוש",
@@ -420,19 +428,17 @@
         "meters": {
             "documentsMonthly": "מסמכים (החודש)",
             "storageGb": "אחסון (GB)",
-            "seats": "משתמשים",
-            "otpSms": "OTP SMS (החודש)",
-            "evidenceGenerations": "חבילות ראיות (החודש)",
-            "evidenceCpuSeconds": "שניות CPU ראיות (החודש)"
+            "seats": "מנהלי מערכת",
+            "sms": "SMS (החודש)"
         },
         "progress": {
             "documentsMonthly": "מסמכים",
             "storageGb": "אחסון",
-            "seats": "משתמשים",
-            "otpSms": "OTP SMS",
-            "evidenceGenerations": "ראיות",
-            "evidenceCpuSeconds": "שניות CPU"
-        }
+            "seats": "מנהלי מערכת",
+            "sms": "SMS"
+        },
+        "storageApprox": "~ {{size}} בשימוש",
+        "loadingUsage": "טוען נתוני שימוש..."
     },
     "planPricing": {
         "title": "חבילות ותמחור",
@@ -902,6 +908,101 @@
             "openEvidence": "מסמכי ראיות",
             "openSigningManager": "ניהול חתימות",
             "openSigning": "מסמכים שלי לחתימה"
+        }
+    },
+    "clientImport": {
+        "button": "ייבוא לקוחות מאקסל",
+        "title": "ייבוא לקוחות מקובץ Excel",
+        "instructions": "העלה קובץ Excel (.xlsx) או CSV (.csv) עם העמודות: שם (חובה), טלפון, אימייל, ת.ז, הערות. שורות כפולות ידולגו אוטומטית.",
+        "chooseFile": "בחר קובץ",
+        "downloadDemo": "הורד קובץ דוגמה",
+        "uploadButton": "העלה וייבא",
+        "uploading": "מייבא...",
+        "resultTitle": "תוצאות הייבוא",
+        "created": "נוצרו",
+        "skipped": "דולגו (כפילויות)",
+        "failed": "נכשלו",
+        "detailsTitle": "פירוט",
+        "row": "שורה",
+        "statusCreated": "נוצר",
+        "statusSkipped": "דולג",
+        "statusFailed": "נכשל",
+        "andMore": "ועוד {{count}} שורות...",
+        "errorGeneric": "שגיאה בייבוא הלקוחות"
+    },
+    "reminders": {
+        "title": "תזכורות מתוזמנות",
+        "subtitle": "ניהול תזכורות דוא\"ל אוטומטיות ללקוחות. ייבא מאקסל או צפה ברשימה.",
+        "statusFilter": "סטטוס",
+        "importButton": "ייבוא תזכורות מאקסל",
+        "empty": "אין תזכורות להצגה.",
+        "errorLoad": "שגיאה בטעינת התזכורות.",
+        "cancel": "ביטול",
+        "deleteReminder": "מחיקה",
+        "prev": "הקודם",
+        "next": "הבא",
+        "pageInfo": "עמוד {{page}} מתוך {{totalPages}}",
+        "filter": {
+            "all": "הכל",
+            "pending": "ממתין",
+            "sent": "נשלח",
+            "failed": "נכשל",
+            "cancelled": "בוטל"
+        },
+        "status": {
+            "pending": "ממתין",
+            "sent": "נשלח",
+            "failed": "נכשל",
+            "cancelled": "בוטל"
+        },
+        "col": {
+            "clientName": "שם לקוח",
+            "email": "אימייל",
+            "template": "תבנית",
+            "templateKeys": {
+                "GENERAL": "תזכורת כללית",
+                "COURT_DATE": "תזכורת מועד דיון",
+                "DOCUMENT_REQUIRED": "תזכורת להגשת מסמך",
+                "LICENSE_RENEWAL": "תזכורת חידוש רישיון",
+                "PAYMENT": "תזכורת תשלום"
+            },
+            "scheduledFor": "תאריך שליחה",
+            "status": "סטטוס",
+            "sentAt": "נשלח ב",
+            "actions": "פעולות"
+        },
+        "detail": {
+            "title": "פרטי תזכורת",
+            "subject": "נושא",
+            "error": "שגיאה",
+            "edit": "עריכה",
+            "save": "שמירה",
+            "saving": "שומר...",
+            "saveError": "שגיאה בשמירת התזכורת"
+        },
+        "import": {
+            "title": "ייבוא תזכורות מקובץ Excel",
+            "instructions": "העלה קובץ Excel (.xlsx) או CSV (.csv) עם העמודות: שם לקוח (חובה), אימייל (חובה), תאריך (חובה), נושא, הערות. בחר תבנית ושעת שליחה.",
+            "templateLabel": "תבנית אימייל",
+            "sendHourLabel": "שעת שליחה",
+            "sendTimeLabel": "שעת שליחה",
+            "bodyPreviewLabel": "דוגמה לתוכן המייל:",
+            "fileLabel": "קובץ Excel / CSV",
+            "chooseFile": "בחר קובץ",
+            "downloadDemo": "הורד קובץ דוגמה",
+            "uploadButton": "העלה וייבא",
+            "uploading": "מייבא...",
+            "resultTitle": "תוצאות הייבוא",
+            "created": "נוצרו",
+            "skipped": "דולגו",
+            "failed": "נכשלו",
+            "detailsTitle": "פירוט",
+            "row": "שורה",
+            "statusCreated": "נוצר",
+            "statusSkipped": "דולג",
+            "statusFailed": "נכשל",
+            "andMore": "ועוד {{count}} שורות...",
+            "errorGeneric": "שגיאה בייבוא התזכורות"
         }
     }
 }

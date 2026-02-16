@@ -2,7 +2,10 @@ const jwt = require('jsonwebtoken');
 
 // Optional auth: if a Bearer token exists and is valid, populate req.user.
 // If no token (or invalid token), continue without failing.
-const SECRET_KEY = process.env.JWT_SECRET || 'supersecretkey';
+const SECRET_KEY = process.env.JWT_SECRET;
+if (!SECRET_KEY) {
+    throw new Error('FATAL: JWT_SECRET environment variable is not set. Refusing to start.');
+}
 
 module.exports = function optionalAuthMiddleware(req, _res, next) {
     try {

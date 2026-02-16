@@ -1,0 +1,113 @@
+.lw-importClientsModal {
+    min-width: 25rem;
+    max-width: 37.5rem;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.lw-importClientsModal__title {
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+.lw-importClientsModal__instructions {
+    color: var(--lw-color-winter);
+    line-height: 1.5;
+}
+
+.lw-importClientsModal__fileInput {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.lw-importClientsModal__fileInputHidden {
+    display: none;
+}
+
+.lw-importClientsModal__fileRow {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.lw-importClientsModal__demoLink {
+    a {
+        text-decoration: none;
+    }
+}
+
+.lw-importClientsModal__fileName {
+    color: var(--lw-color-text);
+    font-weight: 600;
+}
+
+.lw-importClientsModal__error {
+    color: var(--lw-color-error);
+    background: var(--lw-color-secondary-highlighted);
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+}
+
+.lw-importClientsModal__results {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: var(--lw-color-secondary-highlighted);
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+}
+
+.lw-importClientsModal__resultRow {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.lw-importClientsModal__details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+}
+
+.lw-importClientsModal__detailsList {
+    max-height: 12.5rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.lw-importClientsModal__detail {
+    font-size: 0.75rem;
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+}
+
+.lw-importClientsModal__detail--created {
+    color: var(--lw-color-positive);
+}
+
+.lw-importClientsModal__detail--skipped {
+    color: var(--lw-color-winter);
+}
+
+.lw-importClientsModal__detail--failed {
+    color: var(--lw-color-error);
+}
+
+.lw-importClientsModal__actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    margin-top: 0.5rem;
+}
+
+.lw-importClientsModal__uploadBtn,
+.lw-importClientsModal__closeBtn {
+    min-width: 7.5rem;
+}

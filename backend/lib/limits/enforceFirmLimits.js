@@ -15,9 +15,9 @@ function quotaExceeded({ used, add, quota }) {
     return (u + a) > q;
 }
 
-async function checkFirmLimitsOrNull({ firmId, action, increments }) {
-    const limits = await getLimitsForFirm(firmId);
-    const usage = await getUsageForFirm(firmId);
+async function checkFirmLimitsOrNull({ action, increments } = {}) {
+    const limits = await getLimitsForFirm(null);
+    const usage = await getUsageForFirm(null);
     if (!limits || !usage) return null;
 
     const quotas = limits.quotas || {};
@@ -55,7 +55,7 @@ async function checkFirmLimitsOrNull({ firmId, action, increments }) {
     }
 
     if (action === 'send_otp_sms') {
-        if (quotaExceeded({ used: usage.otp.smsThisMonth, add: increments?.otpSmsThisMonth || 0, quota: quotas.otpSmsMonthlyQuota })) {
+        if (quotaExceeded({ used: usage.sms?.sentThisMonth || 0, add: increments?.otpSmsThisMonth || 0, quota: quotas.otpSmsMonthlyQuota })) {
             const msg = 'OTP SMS monthly quota exceeded';
             warnings.push(msg);
             blocks.push(msg);
@@ -63,13 +63,13 @@ async function checkFirmLimitsOrNull({ firmId, action, increments }) {
     }
 
     if (action === 'generate_evidence') {
-        if (quotaExceeded({ used: usage.evidence.generationsThisMonth, add: increments?.evidenceGenerationsThisMonth || 0, quota: quotas.evidenceGenerationsMonthlyQuota })) {
+        if (quotaExceeded({ used: usage.evidence?.generationsThisMonth || 0, add: increments?.evidenceGenerationsThisMonth || 0, quota: quotas.evidenceGenerationsMonthlyQuota })) {
             const msg = 'Evidence generations monthly quota exceeded';
             warnings.push(msg);
             blocks.push(msg);
         }
 
-        if (quotaExceeded({ used: usage.evidence.cpuSecondsThisMonth, add: increments?.evidenceCpuSecondsThisMonth || 0, quota: quotas.evidenceCpuSecondsMonthlyQuota })) {
+        if (quotaExceeded({ used: usage.evidence?.cpuSecondsThisMonth || 0, add: increments?.evidenceCpuSecondsThisMonth || 0, quota: quotas.evidenceCpuSecondsMonthlyQuota })) {
             const msg = 'Evidence CPU seconds monthly quota exceeded';
             warnings.push(msg);
             blocks.push(msg);

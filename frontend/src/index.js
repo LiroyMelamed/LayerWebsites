@@ -17,24 +17,9 @@ function isTruthyParam(value) {
   return v === '1' || v === 'true' || v === 'yes' || v === 'on';
 }
 
-function maybeEnableDemoModeFromQuery() {
-  try {
-    const params = new URLSearchParams(window.location.search);
-    if (!isTruthyParam(params.get('demo'))) return;
-    window.__LW_DEMO_MODE__ = true;
-    window.__LW_DEMO_TOKEN__ = window.__LW_DEMO_TOKEN__ || 'demo-token';
-  } catch {
-    // no-op
-  }
-}
-
 const root = ReactDOM.createRoot(document.getElementById('root'));
 const params = new URLSearchParams(window.location.search);
 const isMicro = isTruthyParam(params.get('lwMicro'));
-
-if (isMicro) {
-  maybeEnableDemoModeFromQuery();
-}
 
 const appTree = (
   <FromAppProvider>

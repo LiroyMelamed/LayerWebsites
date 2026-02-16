@@ -1,5 +1,6 @@
 const axios = require("axios");
 require("dotenv").config();
+const { recordUsageEvent } = require("../lib/usage/recordFirmUsage");
 
 const COMPANY_NAME = "MelamedLaw";
 const WEBSITE_DOMAIN = "client.melamedlaw.co.il";
@@ -49,6 +50,8 @@ async function sendMessage(messageBody, formattedPhone) {
         console.log("To:", formattedPhone);
         console.log("Body:", messageBody);
         console.log("---------------------------------");
+        // Record even in dev so local usage counters are realistic
+        await recordUsageEvent('SMS', 'dev-simulation', { phone: formattedPhone });
         return;
     }
 
@@ -88,6 +91,7 @@ async function sendMessage(messageBody, formattedPhone) {
         });
 
         console.log(`Smoove SMS sent to ${formattedPhone}`);
+        await recordUsageEvent('SMS', 'smoove-send', { phone: formattedPhone });
         return res.data;
     } catch (err) {
         const { status, data } = safeErrorData(err);

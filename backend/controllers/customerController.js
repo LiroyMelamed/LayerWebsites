@@ -586,6 +586,160 @@ const deleteMyAccount = async (req, res, next) => {
 };
 
 
+const XLSX = require('xlsx');
+
+/**
+ * POST /api/Customers/import
+ * Bulk import clients from an uploaded Excel (.xlsx) or CSV (.csv) file.
+ * Expects multipart/form-data with field name "file".
+ * Required columns: name (full name).
+ * Optional columns: phone, email, idNumber, notes.
+ * Returns { created, skipped, failed, details[] }.
+ */
+const importCustomers = async (req, res, next) => {
+    if (!requireAdmin(req, res)) return;
+
+    try {
+        if (!req.file || !req.file.buffer) {
+            return res.status(400).json({ message: 'נא להעלות קובץ Excel (.xlsx) או CSV (.csv)', code: 'NO_FILE' });
+        }
+
+        const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+        if (req.file.buffer.length > MAX_FILE_SIZE) {
+            return res.status(400).json({ message: 'הקובץ גדול מדי (מקסימום 5MB)', code: 'FILE_TOO_LARGE' });
+        }
+
+        // Parse workbook
+        let workbook;
+        try {
+            workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+        } catch (e) {
+            return res.status(400).json({ message: 'לא ניתן לקרוא את הקובץ. ודא שזהו קובץ Excel או CSV תקין.', code: 'PARSE_ERROR' });
+        }
+
+        const sheetName = workbook.SheetNames[0];
+        if (!sheetName) {
+            return res.status(400).json({ message: 'הקובץ ריק — אין גיליונות.', code: 'EMPTY_FILE' });
+        }
+
+        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
+        if (!rows.length) {
+            return res.status(400).json({ message: 'לא נמצאו שורות בגיליון.', code: 'EMPTY_SHEET' });
+        }
+
+        // Column name mapping (Hebrew + English variants)
+        function findCol(row, variants) {
+            for (const v of variants) {
+                const key = Object.keys(row).find(k => k.trim().toLowerCase() === v.toLowerCase());
+                if (key !== undefined) return String(row[key] ?? '').trim();
+            }
+            return '';
+        }
+
+        const nameVariants = ['name', 'שם', 'שם מלא', 'full name', 'fullname', 'שם לקוח'];
+        const phoneVariants = ['phone', 'טלפון', 'מספר פלאפון', 'phonenumber', 'phone number', 'פלאפון', 'נייד'];
+        const emailVariants = ['email', 'אימייל', 'מייל', 'דואר אלקטרוני', 'e-mail'];
+        const idVariants = ['id', 'idnumber', 'id number', 'ת.ז', 'תעודת זהות', 'מספר זהות', 'ת.ז.'];
+        const notesVariants = ['notes', 'הערות', 'note', 'comments', 'הערה'];
+
+        // Pre-fetch existing phones and emails for duplicate detection
+        const existingPhonesRes = await pool.query(
+            `SELECT regexp_replace(phonenumber, '\\D', '', 'g') as digits FROM users WHERE phonenumber IS NOT NULL AND phonenumber <> ''`
+        );
+        const existingPhones = new Set(existingPhonesRes.rows.map(r => r.digits).filter(Boolean));
+
+        const existingEmailsRes = await pool.query(
+            `SELECT lower(trim(email)) as em FROM users WHERE email IS NOT NULL AND email <> ''`
+        );
+        const existingEmails = new Set(existingEmailsRes.rows.map(r => r.em).filter(Boolean));
+
+        const results = { created: 0, skipped: 0, failed: 0, details: [] };
+        const seenPhones = new Set();
+        const seenEmails = new Set();
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const rowNum = i + 2; // Excel row (1-indexed header + data)
+
+            const name = findCol(row, nameVariants);
+            const phone = findCol(row, phoneVariants);
+            const email = findCol(row, emailVariants);
+            const idNumber = findCol(row, idVariants);
+            const notes = findCol(row, notesVariants);
+
+            // Skip empty rows
+            if (!name && !phone && !email) {
+                continue;
+            }
+
+            // Validate name
+            if (!name) {
+                results.failed++;
+                results.details.push({ row: rowNum, status: 'failed', reason: 'שם חסר' });
+                continue;
+            }
+
+            // Normalize phone
+            const phoneDigits = phone ? String(phone).replace(/\D/g, '') : '';
+
+            // Duplicate detection
+            if (phoneDigits) {
+                if (existingPhones.has(phoneDigits) || seenPhones.has(phoneDigits)) {
+                    results.skipped++;
+                    results.details.push({ row: rowNum, status: 'skipped', reason: `מספר טלפון כפול: ${phone}`, name });
+                    continue;
+                }
+            }
+
+            const emailLower = email ? email.toLowerCase().trim() : '';
+            if (emailLower && !phoneDigits) {
+                if (existingEmails.has(emailLower) || seenEmails.has(emailLower)) {
+                    results.skipped++;
+                    results.details.push({ row: rowNum, status: 'skipped', reason: `אימייל כפול: ${email}`, name });
+                    continue;
+                }
+            }
+
+            try {
+                await pool.query(
+                    `INSERT INTO users (name, email, phonenumber, passwordhash, role, companyname, createdat)
+                     VALUES ($1, $2, $3, $4, 'User', $5, $6)`,
+                    [name, email || null, phone || null, null, notes || null, new Date()]
+                );
+
+                if (phoneDigits) {
+                    existingPhones.add(phoneDigits);
+                    seenPhones.add(phoneDigits);
+                }
+                if (emailLower) {
+                    existingEmails.add(emailLower);
+                    seenEmails.add(emailLower);
+                }
+
+                results.created++;
+                results.details.push({ row: rowNum, status: 'created', name });
+            } catch (e) {
+                if (e?.code === '23505') {
+                    results.skipped++;
+                    results.details.push({ row: rowNum, status: 'skipped', reason: 'כפילות במסד נתונים', name });
+                } else {
+                    results.failed++;
+                    results.details.push({ row: rowNum, status: 'failed', reason: e?.message || 'שגיאה לא ידועה', name });
+                }
+            }
+        }
+
+        // Invalidate main screen cache
+        try { invalidateMainScreenDataCache(); } catch (_) { /* ignore */ }
+
+        return res.status(200).json(results);
+    } catch (error) {
+        console.error('Error importing customers:', error);
+        return res.status(500).json({ message: 'שגיאה בייבוא לקוחות' });
+    }
+};
+
+
 module.exports = {
     getCustomers,
     addCustomer,
@@ -595,4 +749,5 @@ module.exports = {
     updateCurrentCustomer,
     deleteCustomer,
     deleteMyAccount,
+    importCustomers,
 };

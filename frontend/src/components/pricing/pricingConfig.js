@@ -157,10 +157,9 @@ export function resolvePricingLineItems({ platformId, resourceId, signingId }) {
 
     const total = breakdown.reduce((sum, it) => sum + Number(it.amount || 0), 0);
 
-    // Dev/demo guardrails (no runtime behavior changes in production).
-    const isDemoMode = typeof window !== "undefined" && Boolean(window.__LW_DEMO_MODE__);
+    // Dev guardrails (no runtime behavior changes in production).
     const isDev = typeof process !== "undefined" && process?.env?.NODE_ENV !== "production";
-    if (isDemoMode || isDev) {
+    if (isDev) {
         const sum = breakdown.reduce((acc, it) => acc + Number(it.amount || 0), 0);
         console.assert(
             breakdown.length === 4 && breakdown[0]?.id === "system",

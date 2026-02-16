@@ -11,6 +11,8 @@ export const getClientNavBarData = (navigate, openPopup, closePopup, isFromApp =
         ...(!isFromApp
             ? [
                 {
+                    navKey: 'notifications',
+                    routeMatch: NotificationsScreenName,
                     buttonText: t('nav.notifications'),
                     buttonScreen: null,
                     icon: null,
@@ -19,6 +21,8 @@ export const getClientNavBarData = (navigate, openPopup, closePopup, isFromApp =
             ]
             : []),
         {
+            navKey: 'signingFiles',
+            routeMatch: SigningScreenName,
             buttonText: t('nav.signingFiles'),
             buttonScreen: null,
             icon: null,
@@ -27,6 +31,8 @@ export const getClientNavBarData = (navigate, openPopup, closePopup, isFromApp =
         ...(!isFromApp
             ? [
                 {
+                    navKey: 'myProfile',
+                    routeMatch: ProfileScreenName,
                     buttonText: t('nav.myProfile'),
                     buttonScreen: null,
                     icon: null,
@@ -35,6 +41,7 @@ export const getClientNavBarData = (navigate, openPopup, closePopup, isFromApp =
             ]
             : []),
         {
+            navKey: 'terms',
             buttonText: t('nav.terms'),
             buttonScreen: t('nav.terms'),
             icon: null,
@@ -44,6 +51,7 @@ export const getClientNavBarData = (navigate, openPopup, closePopup, isFromApp =
         ...(!isFromApp
             ? [
                 {
+                    navKey: 'contact',
                     buttonText: t('nav.contact'),
                     buttonScreen: null,
                     icon: null,

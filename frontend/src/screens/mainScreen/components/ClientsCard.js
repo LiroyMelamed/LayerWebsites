@@ -9,9 +9,11 @@ import ClientMenuItem from "../../../components/styledComponents/menuItems/Clien
 import Separator from "../../../components/styledComponents/separators/Separator";
 import { usePopup } from "../../../providers/PopUpProvider";
 import ClientPopup from "./ClientPopUp";
+import ImportClientsModal from "./ImportClientsModal";
 import { useTranslation } from "react-i18next";
 
 import "./ClientsCard.scss";
+import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
 
 export default function ClientsCard({ rePerformRequest, customerList, style: _style }) {
     const { openPopup, closePopup } = usePopup();
@@ -65,12 +67,19 @@ export default function ClientsCard({ rePerformRequest, customerList, style: _st
                 ))}
             </SimpleScrollView>
 
-            <PrimaryButton
-                className="lw-clientsCard__addButton"
-                onPress={() => openPopup(<ClientPopup closePopUpFunction={closePopup} rePerformRequest={rePerformRequest} />)}
-            >
-                {t("customers.addCustomer")}
-            </PrimaryButton>
+            <SimpleContainer className="lw-clientsCard__buttonsRow">
+                <PrimaryButton
+                    onPress={() => openPopup(<ClientPopup closePopUpFunction={closePopup} rePerformRequest={rePerformRequest} />)}
+                >
+                    {t("customers.addCustomer")}
+                </PrimaryButton>
+
+                <SecondaryButton
+                    onPress={() => openPopup(<ImportClientsModal closePopUpFunction={closePopup} rePerformRequest={rePerformRequest} />)}
+                >
+                    {t("clientImport.button")}
+                </SecondaryButton>
+            </SimpleContainer>
         </SimpleCard>
     );
 }

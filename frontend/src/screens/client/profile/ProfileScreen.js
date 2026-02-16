@@ -157,7 +157,7 @@ export default function ProfileScreen() {
                 <TopToolBarSmallScreen
                     LogoNavigate={ClientStackName + ClientMainScreenName}
                     GetNavBarData={getClientNavBarData}
-                    chosenIndex={2}
+                    chosenNavKey="myProfile"
                 />
             )}
 

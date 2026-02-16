@@ -124,7 +124,7 @@ export default function SigningScreen() {
                 <TopToolBarSmallScreen
                     LogoNavigate={ClientStackName + ClientMainScreenName}
                     GetNavBarData={getClientNavBarData}
-                    chosenIndex={1}
+                    chosenNavKey="signingFiles"
                 />
             )}
 

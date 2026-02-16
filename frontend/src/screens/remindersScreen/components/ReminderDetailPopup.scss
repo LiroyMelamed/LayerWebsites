@@ -1,0 +1,97 @@
+.lw-reminderDetail {
+    min-width: 22rem;
+    max-width: 28rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    direction: rtl;
+
+    &__title {
+        text-align: center;
+        padding-bottom: 0.25rem;
+    }
+
+    &__card {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        border: 1px solid var(--lw-color-disabled);
+        border-radius: 0.625rem;
+        overflow: hidden;
+    }
+
+    &__row {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.625rem 1rem;
+        border-bottom: 1px solid var(--lw-color-disabled);
+        gap: 1rem;
+
+        &:last-child {
+            border-bottom: none;
+        }
+    }
+
+    &__label {
+        color: var(--lw-color-winter);
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    &__value {
+        text-align: start;
+        min-width: 0;
+        word-break: break-word;
+    }
+
+    &__badge {
+        display: inline-block;
+        padding: 0.125rem 0.625rem;
+        border-radius: 0.75rem;
+        font-weight: 600;
+
+        &--pending {
+            background: var(--lw-color-secondary-highlighted);
+            color: var(--lw-color-winter);
+        }
+
+        &--sent {
+            background: var(--lw-color-secondary-highlighted);
+            color: var(--lw-color-positive);
+        }
+
+        &--failed {
+            background: var(--lw-color-secondary-highlighted);
+            color: var(--lw-color-negative);
+        }
+
+        &--cancelled {
+            background: var(--lw-color-disabled);
+            color: var(--lw-color-winter);
+        }
+    }
+
+    &__errorText {
+        color: var(--lw-color-negative);
+    }
+
+    &__actions {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+        padding-top: 0.25rem;
+    }
+
+    &__deleteBtn {
+        background-color: var(--lw-color-negative) !important;
+        border-color: var(--lw-color-negative) !important;
+        color: #fff !important;
+    }
+
+    &__editInput {
+        width: 100%;
+        min-width: 0;
+    }
+}

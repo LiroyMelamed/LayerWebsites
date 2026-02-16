@@ -502,6 +502,18 @@ const updateStage = async (req, res) => {
     const caseId = requireInt(req, res, { source: 'params', name: 'caseId' });
     if (caseId === null) return;
     const { CurrentStage, IsClosed, PhoneNumber, CustomerName, Descriptions, CaseName } = req.body;
+
+    // --- Stage validation ---
+    if (CurrentStage != null) {
+        const stageNum = Number(CurrentStage);
+        if (!Number.isInteger(stageNum) || stageNum < 1) {
+            return res.status(400).json({ message: "שלב חייב להיות מספר חיובי" });
+        }
+        if (Descriptions && Descriptions.length > 0 && stageNum > Descriptions.length) {
+            return res.status(400).json({ message: `שלב לא יכול לחרוג ממספר השלבים (${Descriptions.length})` });
+        }
+    }
+
     let notificationMessage = "";
     let notificationTitle = "";
 
@@ -510,7 +522,7 @@ const updateStage = async (req, res) => {
         client = await pool.connect();
         await client.query('BEGIN');
 
-        const currentData = await pool.query(
+        const currentData = await client.query(
             "SELECT currentstage, isclosed, userid FROM cases WHERE caseid = $1",
             [caseId]
         );
@@ -524,7 +536,15 @@ const updateStage = async (req, res) => {
         const currentlyClosed = currentData.rows[0]?.isclosed;
         const caseUserId = currentData.rows[0]?.userid;
 
-        await pool.query(
+        // Prevent stage changes on already-closed cases (unless reopening)
+        if (currentlyClosed && !IsClosed && CurrentStage !== undefined) {
+            // Reopening — allowed
+        } else if (currentlyClosed && IsClosed) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ message: "אין אפשרות לעדכן תיק שנסגר" });
+        }
+
+        await client.query(
             `
             UPDATE cases
             SET currentstage = $1,
@@ -536,8 +556,17 @@ const updateStage = async (req, res) => {
         );
 
         if (Descriptions && Descriptions.length > 0) {
+            const stageNum = Number(CurrentStage) || 0;
+
             for (const desc of Descriptions) {
-                await pool.query(
+                // When rolling back stages, clear timestamps and IsNew on
+                // descriptions that are now ahead of the current stage.
+                const descStage = Number(desc.Stage) || 0;
+                const isFutureStage = stageNum > 0 && descStage > stageNum;
+                const timestamp = isFutureStage ? null : (desc.Timestamp ? new Date(desc.Timestamp) : null);
+                const isNew = isFutureStage ? false : (desc.IsNew ? true : false);
+
+                await client.query(
                     `
                     UPDATE casedescriptions
                     SET stage = $1,
@@ -546,11 +575,12 @@ const updateStage = async (req, res) => {
                         isnew = $4
                     WHERE descriptionid = $5 AND caseid = $6
                     `,
-                    [desc.Stage, desc.Text, desc.Timestamp ? new Date(desc.Timestamp) : null, desc.IsNew ? true : false, desc.DescriptionId, caseId]
+                    [desc.Stage, desc.Text, timestamp, isNew, desc.DescriptionId, caseId]
                 );
             }
         }
 
+        // Only notify if stage actually changed
         if (CurrentStage !== currentStageValue) {
             notificationTitle = "עדכון שלב בתיק";
             notificationMessage = `היי ${CustomerName}, \n\nבתיק "${CaseName}" התעדכן שלב, תיקך נמצא בשלב - ${Descriptions[CurrentStage - 1]?.Text || CurrentStage}, היכנס לאתר או לאפליקציה למעקב.`;
@@ -558,6 +588,11 @@ const updateStage = async (req, res) => {
         if (IsClosed && !currentlyClosed) {
             notificationTitle = "תיק הסתיים";
             notificationMessage = `היי ${CustomerName}, \n\nתיק "${CaseName}" הסתיים בהצלחה, היכנס לאתר או לאפליקציה למעקב.`;
+        }
+        // Notify when reopening a closed case
+        if (!IsClosed && currentlyClosed) {
+            notificationTitle = "תיק נפתח מחדש";
+            notificationMessage = `היי ${CustomerName}, \n\nתיק "${CaseName}" נפתח מחדש, היכנס לאתר או לאפליקציה למעקב.`;
         }
 
         if (notificationMessage) {

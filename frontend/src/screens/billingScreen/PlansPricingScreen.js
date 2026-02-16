@@ -53,7 +53,7 @@ export default function PlansPricingScreen() {
                 <TopToolBarSmallScreen
                     LogoNavigate={AdminStackName + MainScreenName}
                     GetNavBarData={getNavBarData}
-                    chosenIndex={3}
+                    chosenNavKey="planUsage"
                 />
             )}
 

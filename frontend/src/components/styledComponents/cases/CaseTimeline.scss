@@ -81,6 +81,14 @@
   background-color: var(--lw-color-pressed);
 }
 
+.lw-caseTimeline__stageDetails--future {
+  opacity: 0.5;
+}
+
+.lw-caseTimeline__dotWrap--future {
+  opacity: 0.4;
+}
+
 .lw-caseTimeline__timestampBadge {
   padding: 0.25rem;
   border-radius: 0.25rem;
@@ -88,4 +96,8 @@
 
 .lw-caseTimeline__timestampBadge--new {
   background-color: #caf1ee;
+}
+
+.lw-caseTimeline__timestampBadge--future {
+  opacity: 0.6;
 }

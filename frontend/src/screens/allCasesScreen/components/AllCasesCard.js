@@ -71,19 +71,14 @@ export default function AllCasesCard({ allCases, isPerforming, reperformAfterSav
 }
 
 //Functions
-export function getOpenData(allCases, index) {
+export function getOpenData(allCases, index, t) {
     const caseItem = allCases[index];
-    const t = arguments.length > 2 ? arguments[2] : undefined;
     const translate = t ?? i18next.t.bind(i18next);
 
     const openData = [
         {
             title: translate('cases.customerName'),
             value: caseItem.CustomerName
-        },
-        {
-            title: translate('cases.customerId'),
-            value: caseItem.CostumerTaz
         },
         {
             title: translate('cases.phoneNumber'),
@@ -95,29 +90,24 @@ export function getOpenData(allCases, index) {
         },
         {
             title: translate('cases.estimatedCompletionDate'),
-            value: DateDDMMYY(caseItem.EstimatedCompletionDate) || translate('common.notSpecified')
+            value: DateDDMMYY(caseItem.EstimatedCompletionDate) || null
         },
         {
             title: translate('cases.licenseExpiryDate'),
-            value: DateDDMMYY(caseItem.LicenseExpiryDate) || translate('common.notSpecified')
+            value: DateDDMMYY(caseItem.LicenseExpiryDate) || null
         },
-    ];
+    ].filter(row => row.value != null && row.value !== '');
 
     return openData;
 }
 
-export function getOpenDataClient(taggedCases, index) {
-    const t = arguments.length > 2 ? arguments[2] : undefined;
+export function getOpenDataClient(taggedCases, index, t) {
     const translate = t ?? i18next.t.bind(i18next);
 
     const openData = [
         {
             title: translate('cases.customerName'),
             value: taggedCases[index].CustomerName
-        },
-        {
-            title: translate('cases.customerId'),
-            value: taggedCases[index].CostumerTaz
         },
         {
             title: translate('cases.phoneNumber'),
@@ -127,7 +117,7 @@ export function getOpenDataClient(taggedCases, index) {
             title: translate('cases.caseManager'),
             value: taggedCases[index].CaseManager
         },
-    ]
+    ].filter(row => row.value != null && row.value !== '');
 
     return openData;
 }

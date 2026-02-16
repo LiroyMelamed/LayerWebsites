@@ -1,7 +1,5 @@
 // frontend/src/utils/fileUploadUtils.js
 import filesApi from "../api/filesApi";
-import { isDemoModeEnabled } from "./demoMode";
-import { demoGetUpload, demoStoreUpload } from "../demo/demoStore";
 
 // uploads a file to r2 using the existing backend presign endpoints
 // note: we intentionally don't use axios in screens; for the presigned url PUT we use fetch
@@ -10,35 +8,6 @@ export const uploadFileToR2 = async (file) => {
     try {
         if (!file) {
             return { success: false, data: null, message: "missing file" };
-        }
-
-        if (isDemoModeEnabled()) {
-            const fileName = file.name || "file";
-            const parts = fileName.split(".");
-            const ext = (parts.length > 1 ? parts[parts.length - 1] : "pdf").toLowerCase();
-            const mime = file.type || "application/octet-stream";
-            const key = `demo://${Date.now()}-${Math.random().toString(16).slice(2)}.${ext}`;
-
-            demoStoreUpload({
-                key,
-                fileName,
-                ext,
-                mime,
-                size: file.size,
-                blob: file,
-            });
-
-            return {
-                success: true,
-                key,
-                data: {
-                    key,
-                    fileName,
-                    ext,
-                    mime,
-                    size: file.size,
-                },
-            };
         }
 
         const fileName = file.name || "file";
@@ -99,16 +68,6 @@ export const getFileReadUrl = async (key) => {
     try {
         if (!key) {
             return { success: false, data: null, message: "missing key" };
-        }
-
-        if (isDemoModeEnabled()) {
-            const item = demoGetUpload(key);
-            if (!item?.blob) {
-                return { success: false, data: null, message: "file not found" };
-            }
-
-            const readUrl = URL.createObjectURL(item.blob);
-            return { success: true, data: { readUrl, expiresIn: 60 * 60 } };
         }
 
         const response = await filesApi.presignRead(key);

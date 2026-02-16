@@ -1,5 +1,4 @@
 const pool = require('../../config/db');
-const { isFirmScopeEnabled } = require('../firm/firmScope');
 
 function isRelationMissingError(e) {
     const msg = String(e?.message || '');
@@ -10,76 +9,52 @@ function monthStartUtcIso() {
     return new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
 }
 
-async function getUsageForFirm(firmId) {
-    if (!isFirmScopeEnabled()) return null;
-
-    const fid = Number(firmId);
-    if (!Number.isFinite(fid) || fid <= 0) return null;
-
+/**
+ * Get usage metrics for this single-tenant DB.
+ * Each DB is per-firm so no firm scoping is needed.
+ * The optional `_firmId` parameter is kept for backward-compat but ignored.
+ */
+async function getUsageForFirm(_firmId) {
     const startIso = monthStartUtcIso();
 
     try {
-        const [docsRes, storageRes, seatsRes, otpRes, evGenRes, evCpuRes] = await Promise.all([
+        const [docsRes, storageRes, seatsRes, smsRes] = await Promise.all([
             pool.query(
                 `select
-                    count(*) filter (where createdat >= $2::timestamptz) as "DocumentsCreatedThisMonth",
+                    count(*) filter (where createdat >= $1::timestamptz) as "DocumentsCreatedThisMonth",
                     count(*) as "DocumentsTotal"
-                 from signingfiles
-                 where firmid = $1`,
-                [fid, startIso]
+                 from signingfiles`,
+                [startIso]
             ),
             pool.query(
                 `select
                     coalesce(sum(coalesce(unsignedpdfbytes,0) + coalesce(signedpdfbytes,0)),0)::bigint as "StorageBytesTotal"
                  from signingfiles
-                 where firmid = $1
-                   and pendingdeleteatutc is null`,
-                [fid]
+                 where pendingdeleteatutc is null`
             ),
+            // seats = admins (Admin role only) – each DB is per-firm
             pool.query(
                 `select count(*)::int as "SeatsUsed"
-                                 from firm_users fu
-                                 join users u on u.userid = fu.userid
-                                 where fu.firmid = $1
-                                     and u.role in ('Admin','Lawyer')`,
-                [fid]
+                 from users
+                 where role = 'Admin'`
             ),
+            // SMS sent this month from message_delivery_events
             pool.query(
-                `select coalesce(sum(quantity),0)::numeric as "OtpSmsThisMonth"
-                 from firm_usage_events
-                 where firmid = $1
-                   and meter_key = 'otp_sms'
-                   and occurred_at >= $2::timestamptz`,
-                [fid, startIso]
-            ),
-            pool.query(
-                `select coalesce(sum(quantity),0)::numeric as "EvidenceGenerationsThisMonth"
-                 from firm_usage_events
-                 where firmid = $1
-                   and meter_key = 'evidence_generation'
-                   and occurred_at >= $2::timestamptz`,
-                [fid, startIso]
-            ),
-            pool.query(
-                `select coalesce(sum(quantity),0)::numeric as "EvidenceCpuSecondsThisMonth"
-                 from firm_usage_events
-                 where firmid = $1
-                   and meter_key = 'evidence_cpu_seconds'
-                   and occurred_at >= $2::timestamptz`,
-                [fid, startIso]
+                `select count(*)::int as "SmsSentThisMonth"
+                 from message_delivery_events
+                 where channel = 'SMS'
+                   and created_at >= $1::timestamptz`,
+                [startIso]
             ),
         ]);
 
         const docs = docsRes.rows?.[0] || {};
         const storage = storageRes.rows?.[0] || {};
         const seats = seatsRes.rows?.[0] || {};
-        const otp = otpRes.rows?.[0] || {};
-        const evGen = evGenRes.rows?.[0] || {};
-        const evCpu = evCpuRes.rows?.[0] || {};
+        const sms = smsRes.rows?.[0] || {};
 
         return {
             scope: 'firm',
-            firmId: fid,
             monthStartUtc: startIso,
             documents: {
                 total: Number(docs.DocumentsTotal || 0),
@@ -91,12 +66,8 @@ async function getUsageForFirm(firmId) {
             seats: {
                 used: Number(seats.SeatsUsed || 0),
             },
-            otp: {
-                smsThisMonth: Number(otp.OtpSmsThisMonth || 0),
-            },
-            evidence: {
-                generationsThisMonth: Number(evGen.EvidenceGenerationsThisMonth || 0),
-                cpuSecondsThisMonth: Number(evCpu.EvidenceCpuSecondsThisMonth || 0),
+            sms: {
+                sentThisMonth: Number(sms.SmsSentThisMonth || 0),
             },
         };
     } catch (e) {

@@ -24,7 +24,7 @@ export default function MyCasesScreen() {
 
     const [query, setQuery] = useState('');
 
-    const { result: myCases, isPerforming: isPerformingMyCases } = useAutoHttpRequest(casesApi.getMyCases);
+    const { result: myCases, isPerforming: isPerformingMyCases, performRequest: refetchMyCases } = useAutoHttpRequest(casesApi.getMyCases);
 
     const filtered = useMemo(() => {
         const q = String(query || '').trim().toLowerCase();
@@ -42,7 +42,7 @@ export default function MyCasesScreen() {
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
-            {isSmallScreen && <TopToolBarSmallScreen chosenIndex={9} LogoNavigate={AdminStackName + MainScreenName} />}
+            {isSmallScreen && <TopToolBarSmallScreen chosenNavKey="myCases" LogoNavigate={AdminStackName + MainScreenName} />}
 
             <SimpleScrollView>
                 <SimpleContainer className="lw-myCasesScreen__row">
@@ -58,7 +58,7 @@ export default function MyCasesScreen() {
                     title={t('cases.myCasesTitle')}
                     allCases={filtered || []}
                     isPerforming={false}
-                    reperformAfterSave={() => { }}
+                    reperformAfterSave={refetchMyCases}
                 />
             </SimpleScrollView>
         </SimpleScreen>

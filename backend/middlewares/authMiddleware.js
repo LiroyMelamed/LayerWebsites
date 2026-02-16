@@ -4,8 +4,11 @@ const { consume } = require("../utils/rateLimiter");
 const { createAppError } = require('../utils/appError');
 const { getHebrewMessage } = require('../utils/errors.he');
 
-// Define a secret key for JWTs. Use an environment variable in production.
-const SECRET_KEY = process.env.JWT_SECRET || "supersecretkey";
+// JWT secret — MUST be set in production; fail fast if missing.
+const SECRET_KEY = process.env.JWT_SECRET;
+if (!SECRET_KEY) {
+    throw new Error('FATAL: JWT_SECRET environment variable is not set. Refusing to start.');
+}
 
 /**
  * Express middleware to authenticate a user via a JWT from the request header.

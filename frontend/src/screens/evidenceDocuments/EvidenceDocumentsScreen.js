@@ -3,8 +3,6 @@ import { useTranslation } from "react-i18next";
 
 import evidenceDocumentsApi from "../../api/evidenceDocumentsApi";
 import ApiUtils from "../../api/apiUtils";
-import { isDemoModeEnabled } from "../../utils/demoMode";
-import { demoGetEvidencePackage } from "../../demo/demoStore";
 import { images } from "../../assets/images/images";
 
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
@@ -238,22 +236,6 @@ export default function EvidenceDocumentsScreen() {
 
     const downloadEvidenceZip = async (signingFileId) => {
         try {
-            if (isDemoModeEnabled()) {
-                const pkg = demoGetEvidencePackage(signingFileId);
-                const blob = pkg?.evidenceZipBlob;
-                if (!blob) throw new Error("missing demo evidence zip");
-
-                const objectUrl = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = objectUrl;
-                a.download = `evidence_${signingFileId}.zip`;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
-                return;
-            }
-
             const baseUrl = ApiUtils?.defaults?.baseURL || "";
             const token = localStorage.getItem("token");
             const url = `${baseUrl}/SigningFiles/${encodeURIComponent(signingFileId)}/evidence-package`;
@@ -287,7 +269,7 @@ export default function EvidenceDocumentsScreen() {
                 <TopToolBarSmallScreen
                     LogoNavigate={AdminStackName + MainScreenName}
                     GetNavBarData={getNavBarData}
-                    chosenIndex={2}
+                    chosenNavKey="evidenceDocuments"
                 />
             )}
 

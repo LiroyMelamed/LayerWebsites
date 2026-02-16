@@ -59,6 +59,8 @@
     },
     "signingManager": {
         "searchTitle": "Search document / customer / case",
+        "dateFrom": "From date",
+        "dateTo": "To date",
         "tabs": {
             "pending": "Pending / Rejected ({{count}})",
             "signed": "Signed ({{count}})"
@@ -84,7 +86,8 @@
             "downloadEvidenceZip": "Download evidence ZIP",
             "details": "Document details",
             "uploadNew": "Send new document for signing",
-            "openPdf": "Open PDF"
+            "openPdf": "Open PDF",
+            "deleteFile": "Delete document"
         },
         "planAndRetention": {
             "title": "Plan & retention",
@@ -112,7 +115,8 @@
             "downloadSignedError": "Error downloading the file",
             "missingDocumentId": "Error: missing document ID",
             "evidencePackageSignedOnly": "Evidence package is available only after full signature",
-            "evidencePackageDownloadError": "Error downloading evidence package"
+            "evidencePackageDownloadError": "Error downloading evidence package",
+            "deleteError": "Error deleting the document"
         }
     },
     "evidenceDocuments": {
@@ -249,6 +253,8 @@
         "stageNumber": "Stage #{{number}}",
         "noStagesInCaseType": "No stages in this case type",
         "descriptionNumber": "Description #{{number}}",
+        "addStage": "Add stage",
+        "removeStage": "Remove stage",
         "whatsapp": {
             "group": "WhatsApp group",
             "linkTitle": "Link WhatsApp group",
@@ -376,11 +382,13 @@
         "evidenceDocuments": "Evidence documents",
         "allCaseTypes": "All case types",
         "addCaseType": "Add case type",
+        "myCases": "My cases",
         "notifications": "Notifications",
         "myProfile": "My profile",
         "terms": "Terms of use",
         "contact": "Contact",
-        "contactMessage": "Hi, I'd like to get in touch"
+        "contactMessage": "Hi, I'd like to get in touch",
+        "reminders": "Reminders"
     },
     "planUsage": {
         "title": "Plan & usage",
@@ -417,19 +425,17 @@
         "meters": {
             "documentsMonthly": "Documents (this month)",
             "storageGb": "Storage (GB)",
-            "seats": "Seats (users)",
-            "otpSms": "OTP SMS (this month)",
-            "evidenceGenerations": "Evidence packages (this month)",
-            "evidenceCpuSeconds": "Evidence CPU seconds (this month)"
+            "seats": "System admins",
+            "sms": "SMS (this month)"
         },
         "progress": {
             "documentsMonthly": "Documents",
             "storageGb": "Storage",
-            "seats": "Seats",
-            "otpSms": "OTP SMS",
-            "evidenceGenerations": "Evidence",
-            "evidenceCpuSeconds": "CPU seconds"
-        }
+            "seats": "Admins",
+            "sms": "SMS"
+        },
+        "storageApprox": "~ {{size}} used",
+        "loadingUsage": "Loading usage data..."
     },
     "planPricing": {
         "title": "Plans & pricing",
@@ -854,6 +860,87 @@
             "openEvidence": "Open Evidence Documents",
             "openSigningManager": "Open Signing Manager",
             "openSigning": "Open My Signing"
+        }
+    },
+    "clientImport": {
+        "button": "Import clients from Excel",
+        "title": "Import Clients from Excel",
+        "instructions": "Upload an Excel (.xlsx) or CSV (.csv) file with columns: Name (required), Phone, Email, ID Number, Notes. Duplicate rows will be skipped automatically.",
+        "uploadButton": "Upload & Import",
+        "uploading": "Importing...",
+        "resultTitle": "Import Results",
+        "created": "Created",
+        "skipped": "Skipped (duplicates)",
+        "failed": "Failed",
+        "detailsTitle": "Details",
+        "row": "Row",
+        "statusCreated": "Created",
+        "statusSkipped": "Skipped",
+        "statusFailed": "Failed",
+        "andMore": "and {{count}} more rows...",
+        "errorGeneric": "Error importing clients"
+    },
+    "reminders": {
+        "title": "Scheduled Reminders",
+        "subtitle": "Manage automated email reminders for clients. Import from Excel or view the list.",
+        "importButton": "Import reminders from Excel",
+        "empty": "No reminders to display.",
+        "errorLoad": "Error loading reminders.",
+        "cancel": "Cancel",
+        "prev": "Previous",
+        "next": "Next",
+        "pageInfo": "Page {{page}} of {{totalPages}}",
+        "filter": {
+            "all": "All",
+            "pending": "Pending",
+            "sent": "Sent",
+            "failed": "Failed",
+            "cancelled": "Cancelled"
+        },
+        "status": {
+            "pending": "Pending",
+            "sent": "Sent",
+            "failed": "Failed",
+            "cancelled": "Cancelled"
+        },
+        "col": {
+            "clientName": "Client Name",
+            "email": "Email",
+            "template": "Template",
+            "scheduledFor": "Scheduled For",
+            "status": "Status",
+            "sentAt": "Sent At",
+            "actions": "Actions"
+        },
+        "import": {
+            "title": "Import Reminders from Excel",
+            "instructions": "Upload an Excel (.xlsx) or CSV (.csv) file with columns: Client Name (required), Email (required), Date (required), Subject, Notes. Choose a template and send hour.",
+            "templateLabel": "Email Template",
+            "sendHourLabel": "Send Hour (0-23)",
+            "uploadButton": "Upload & Import",
+            "uploading": "Importing...",
+            "resultTitle": "Import Results",
+            "created": "Created",
+            "skipped": "Skipped",
+            "failed": "Failed",
+            "detailsTitle": "Details",
+            "row": "Row",
+            "statusCreated": "Created",
+            "statusSkipped": "Skipped",
+            "statusFailed": "Failed",
+            "andMore": "and {{count}} more rows...",
+            "errorGeneric": "Error importing reminders"
+        },
+        "statusFilter": "Status",
+        "deleteReminder": "Delete",
+        "detail": {
+            "title": "Reminder Details",
+            "subject": "Subject",
+            "error": "Error",
+            "edit": "Edit",
+            "save": "Save",
+            "saving": "Saving...",
+            "saveError": "Error saving reminder"
         }
     }
 }

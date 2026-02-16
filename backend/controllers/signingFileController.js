@@ -1,7 +1,7 @@
 // controllers/signingFileController.js
 const pool = require("../config/db");
 const jwt = require('jsonwebtoken');
-const { PutObjectCommand, GetObjectCommand, HeadObjectCommand } = require("@aws-sdk/client-s3");
+const { PutObjectCommand, GetObjectCommand, HeadObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const { r2, BUCKET } = require("../utils/r2");
 const sendAndStoreNotification = require("../utils/sendAndStoreNotification");
@@ -32,11 +32,8 @@ const { createAppError } = require('../utils/appError');
 const { getHebrewMessage } = require('../utils/errors.he');
 const QRCode = require('qrcode');
 const { resolveTenantPlan } = require('../lib/plan/resolveTenantPlan');
-const { isFirmScopeEnabled } = require('../lib/firm/firmScope');
-const { resolveFirmIdForUserEnsureMembership, resolveFirmIdForSigningFile } = require('../lib/firm/resolveFirmContext');
 const { resolveFirmSigningPolicy } = require('../lib/firm/resolveFirmSigningPolicy');
 const { checkFirmLimitsOrNull, enforcementMode } = require('../lib/limits/enforceFirmLimits');
-const { recordFirmUsage } = require('../lib/usage/recordFirmUsage');
 const { consume } = require('../utils/rateLimiter');
 
 const BASE_RENDER_WIDTH = 800;
@@ -755,8 +752,7 @@ function verifyPublicSigningToken(rawToken) {
 }
 
 async function resolveFirmSigningPolicyForSigningFileId(signingFileId) {
-    const firmId = await resolveFirmIdForSigningFile({ signingFileId });
-    return resolveFirmSigningPolicy(firmId);
+    return resolveFirmSigningPolicy(null);
 }
 
 function computeRequireOtpEffectiveFromFirmPolicy(policy) {
@@ -1093,21 +1089,18 @@ async function lookupUserPhoneE164OrNull(userId) {
 }
 
 async function createSigningOtpChallenge({ signingFileId, signerUserId, signingSessionId, presentedPdfSha256, req }) {
-    const firmId = await resolveFirmIdForSigningFile({ signingFileId });
-    if (firmId) {
-        const check = await checkFirmLimitsOrNull({
-            firmId,
-            action: 'send_otp_sms',
-            increments: { otpSmsThisMonth: 1 },
-        });
+    // Check limits (single-tenant)
+    const check = await checkFirmLimitsOrNull({
+        action: 'send_otp_sms',
+        increments: { otpSmsThisMonth: 1 },
+    });
 
-        if (check && (check.blocks || []).length > 0) {
-            if (check.enforcementMode === 'block') {
-                return { ok: false, httpStatus: 402, errorCode: 'LIMIT_EXCEEDED' };
-            }
-
-            console.warn('[limits] send_otp_sms warnings:', check.warnings);
+    if (check && (check.blocks || []).length > 0) {
+        if (check.enforcementMode === 'block') {
+            return { ok: false, httpStatus: 402, errorCode: 'LIMIT_EXCEEDED' };
         }
+
+        console.warn('[limits] send_otp_sms warnings:', check.warnings);
     }
 
     const phoneE164 = await lookupUserPhoneE164OrNull(signerUserId);
@@ -1149,15 +1142,7 @@ async function createSigningOtpChallenge({ signingFileId, signerUserId, signingS
     // Send SMS (provider id is not currently captured by sendMessage); audit log still captures send time.
     await sendMessage(`קוד אימות לחתימה: ${otp}`, phoneE164);
 
-    if (firmId) {
-        await recordFirmUsage({
-            firmId,
-            meterKey: 'otp_sms',
-            quantity: 1,
-            unit: 'count',
-            metadata: { signingFileId, signerUserId, signingSessionId },
-        });
-    }
+    // SMS metering is a no-op in single-tenant mode (firm_usage_events removed)
 
     return {
         ok: true,
@@ -1704,41 +1689,34 @@ exports.uploadFileForSigning = async (req, res, next) => {
         const waiverAckEffective = !requireOtp ? waiverAck : false;
         const policySelectedAtUtc = new Date();
 
-        let firmId = null;
-        if (isFirmScopeEnabled()) {
-            firmId = await resolveFirmIdForUserEnsureMembership({ userId: lawyerId, userRole: req.user?.Role });
+        // Check limits (single-tenant)
+        const check = await checkFirmLimitsOrNull({
+            action: 'upload_signing_file',
+            increments: {
+                documentsCreatedThisMonth: 1,
+                storageBytesTotal: unsignedPdfBytes || 0,
+            },
+        });
 
-            if (firmId) {
-                const check = await checkFirmLimitsOrNull({
-                    firmId,
-                    action: 'upload_signing_file',
-                    increments: {
-                        documentsCreatedThisMonth: 1,
-                        storageBytesTotal: unsignedPdfBytes || 0,
-                    },
-                });
-
-                if (check && (check.blocks || []).length > 0) {
-                    if (check.enforcementMode === 'block') {
-                        return fail(next, 'LIMIT_EXCEEDED', 402, { meta: { mode: 'block', reasons: check.blocks } });
-                    }
-
-                    console.warn('[limits] upload_signing_file warnings:', check.warnings);
-                    await insertAuditEvent({
-                        req,
-                        eventType: 'LIMIT_WARNING',
-                        signingFileId: null,
-                        actorUserId: lawyerId,
-                        actorType: 'lawyer',
-                        success: true,
-                        metadata: {
-                            mode: enforcementMode(),
-                            action: 'upload_signing_file',
-                            warnings: check.warnings,
-                        },
-                    });
-                }
+        if (check && (check.blocks || []).length > 0) {
+            if (check.enforcementMode === 'block') {
+                return fail(next, 'LIMIT_EXCEEDED', 402, { meta: { mode: 'block', reasons: check.blocks } });
             }
+
+            console.warn('[limits] upload_signing_file warnings:', check.warnings);
+            await insertAuditEvent({
+                req,
+                eventType: 'LIMIT_WARNING',
+                signingFileId: null,
+                actorUserId: lawyerId,
+                actorType: 'lawyer',
+                success: true,
+                metadata: {
+                    mode: enforcementMode(),
+                    action: 'upload_signing_file',
+                    warnings: check.warnings,
+                },
+            });
         }
 
         const insertColumns = [
@@ -1812,15 +1790,7 @@ exports.uploadFileForSigning = async (req, res, next) => {
         const signingFileId = insertFile.rows[0].SigningFileId;
         console.log('[controller] Created signing file with ID:', signingFileId);
 
-        if (firmId) {
-            await recordFirmUsage({
-                firmId,
-                meterKey: 'document_created',
-                quantity: 1,
-                unit: 'count',
-                metadata: { signingFileId, unsignedPdfBytes },
-            });
-        }
+        // Document-created metering is a no-op in single-tenant mode
 
         await insertAuditEvent({
             req,
@@ -2629,10 +2599,8 @@ exports.getEvidencePackageZip = async (req, res, next) => {
             return fail(next, 'FORBIDDEN', 403);
         }
 
-        const firmId = await resolveFirmIdForSigningFile({ signingFileId });
-        if (firmId) {
+        {
             const check = await checkFirmLimitsOrNull({
-                firmId,
                 action: 'generate_evidence',
                 increments: { evidenceGenerationsThisMonth: 1 },
             });
@@ -2880,10 +2848,7 @@ exports.getEvidencePackageZip = async (req, res, next) => {
 
         const evidenceEnd = process.hrtime.bigint();
         const elapsedSeconds = Number(evidenceEnd - evidenceStart) / 1e9;
-        if (firmId) {
-            await recordFirmUsage({ firmId, meterKey: 'evidence_generation', quantity: 1, unit: 'count', metadata: { signingFileId, kind: 'zip' } });
-            await recordFirmUsage({ firmId, meterKey: 'evidence_cpu_seconds', quantity: Math.max(0, elapsedSeconds), unit: 'seconds', metadata: { signingFileId, kind: 'zip' } });
-        }
+        // Evidence metering is a no-op in single-tenant mode
     } catch (err) {
         console.error('getEvidencePackageZip error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה ביצירת חבילת ראיות' });
@@ -2914,10 +2879,8 @@ exports.getEvidenceCertificate = async (req, res, next) => {
             return fail(next, 'FORBIDDEN', 403);
         }
 
-        const firmId = await resolveFirmIdForSigningFile({ signingFileId });
-        if (firmId) {
+        {
             const check = await checkFirmLimitsOrNull({
-                firmId,
                 action: 'generate_evidence',
                 increments: { evidenceGenerationsThisMonth: 1 },
             });
@@ -3273,10 +3236,7 @@ exports.getEvidenceCertificate = async (req, res, next) => {
 
         const evidenceEnd = process.hrtime.bigint();
         const elapsedSeconds = Number(evidenceEnd - evidenceStart) / 1e9;
-        if (firmId) {
-            await recordFirmUsage({ firmId, meterKey: 'evidence_generation', quantity: 1, unit: 'count', metadata: { signingFileId, kind: 'certificate' } });
-            await recordFirmUsage({ firmId, meterKey: 'evidence_cpu_seconds', quantity: Math.max(0, elapsedSeconds), unit: 'seconds', metadata: { signingFileId, kind: 'certificate' } });
-        }
+        // Evidence metering is a no-op in single-tenant mode
 
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
@@ -5310,5 +5270,65 @@ exports.detectSignatureSpots = async (req, res, next) => {
         }
         console.error('[controller] detectSignatureSpots error:', err?.message || err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: "שגיאה בזיהוי מקומות חתימה" });
+    }
+};
+
+// ─── Delete a pending signing file ───────────────────────────────────
+exports.deleteSigningFile = async (req, res, next) => {
+    try {
+        const { signingFileId } = req.params;
+        if (!signingFileId) return fail(next, 'MISSING_SIGNING_FILE_ID', 400);
+
+        // Fetch file record (only allow deletion of pending files)
+        const { rows } = await pool.query(
+            `SELECT signingfileid  AS "SigningFileId",
+                    status         AS "Status",
+                    filekey        AS "FileKey",
+                    originalfilekey AS "OriginalFileKey",
+                    signedfilekey  AS "SignedFileKey"
+             FROM signingfiles
+             WHERE signingfileid = $1`,
+            [signingFileId],
+        );
+
+        if (rows.length === 0) {
+            return fail(next, 'NOT_FOUND', 404);
+        }
+
+        const file = rows[0];
+        if (file.Status !== 'pending') {
+            return fail(next, 'ONLY_PENDING_FILES_CAN_BE_DELETED', 400);
+        }
+
+        // Delete from R2/S3 storage (ignore errors — best-effort cleanup)
+        const keysToDelete = [file.FileKey, file.OriginalFileKey, file.SignedFileKey].filter(Boolean);
+        for (const key of keysToDelete) {
+            try {
+                await r2.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
+            } catch (e) {
+                console.error(`[deleteSigningFile] Failed to delete R2 object ${key}:`, e?.message);
+            }
+        }
+
+        // Delete in a transaction with the audit_events override flag so that
+        // ON DELETE SET NULL FK cascades into audit_events are allowed.
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            await client.query("SET LOCAL app.audit_events_allow_delete = 'true'");
+            await client.query(`DELETE FROM signaturespots WHERE signingfileid = $1`, [signingFileId]);
+            await client.query(`DELETE FROM signingfiles WHERE signingfileid = $1`, [signingFileId]);
+            await client.query('COMMIT');
+        } catch (txErr) {
+            await client.query('ROLLBACK');
+            throw txErr;
+        } finally {
+            client.release();
+        }
+
+        return res.json({ ok: true });
+    } catch (err) {
+        console.error('[controller] deleteSigningFile error:', err?.message || err);
+        return fail(next, 'INTERNAL_ERROR', 500);
     }
 };

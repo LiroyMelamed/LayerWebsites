@@ -21,7 +21,7 @@
     "react-pdf": "^10.2.0",
     "react-router-dom": "^6.29.0",
     "react-scripts": "5.0.1",
-    "sass": "^1.80.6",
+    "sass": "1.77.8",
     "web-vitals": "^2.1.4"
   },
   "devDependencies": {

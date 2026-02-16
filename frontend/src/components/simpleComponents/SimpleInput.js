@@ -1,4 +1,4 @@
-import React, { forwardRef, useState, useEffect } from 'react';
+import React, { forwardRef, useState, useEffect, useRef } from 'react';
 import SimpleContainer from './SimpleContainer';
 import { colors } from '../../constant/colors';
 import SimpleIcon from './SimpleIcon';
@@ -33,8 +33,15 @@ const SimpleInput = forwardRef(
         ...props
     }, ref) => {
         const [isFocused, setIsFocused] = useState(false);
-        const [delayedValue, setDelayedValue] = useState(value);
-        const [timeoutId, setTimeoutId] = useState(null);
+        const [delayedValue, setDelayedValue] = useState(value ?? '');
+        const timeoutRef = useRef(null);
+
+        // Cleanup debounce timer on unmount
+        useEffect(() => {
+            return () => {
+                if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            };
+        }, []);
 
         const style = _style;
         const textStyle = _textStyle;
@@ -65,22 +72,21 @@ const SimpleInput = forwardRef(
             const newValue = e.target.value;
             setDelayedValue(newValue);
 
-            if (timeoutId) {
-                clearTimeout(timeoutId);
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
             }
 
-            const newTimeoutId = setTimeout(() => {
+            timeoutRef.current = setTimeout(() => {
                 onChange?.(e);
-                setTimeoutId(null);
+                timeoutRef.current = null;
             }, timeToWaitInMilli);
-
-            setTimeoutId(newTimeoutId);
         };
 
         useEffect(() => {
-            setDelayedValue(value);
-            if (timeoutId) {
-                clearTimeout(timeoutId);
+            setDelayedValue(value ?? '');
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+                timeoutRef.current = null;
             }
         }, [value]);
 

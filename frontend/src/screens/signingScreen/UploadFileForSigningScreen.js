@@ -706,10 +706,8 @@ export default function UploadFileForSigningScreen() {
                 key,
                 signersPayload.length ? signersPayload : null
             );
-            console.log('detectRes:', detectRes);
 
             const spots = detectRes?.data?.spots || detectRes?.spots || [];
-            console.log('spots:', spots);
 
 
             setSignatureSpots(spots);

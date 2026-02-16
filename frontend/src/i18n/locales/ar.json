@@ -59,6 +59,8 @@
     },
     "signingManager": {
         "searchTitle": "بحث عن مستند / عميل / قضية",
+        "dateFrom": "من تاريخ",
+        "dateTo": "إلى تاريخ",
         "tabs": {
             "pageTitle": "سجل الإجراءات",
             "pending": "قيد الانتظار / مرفوضة ({{count}})",
@@ -87,7 +89,8 @@
             "downloadEvidenceZip": "تنزيل ZIP الأدلة",
             "details": "تفاصيل المستند",
             "uploadNew": "إرسال مستند جديد للتوقيع",
-            "openPdf": "فتح PDF"
+            "openPdf": "فتح PDF",
+            "deleteFile": "حذف المستند"
         },
         "planAndRetention": {
             "title": "الخطة والاحتفاظ",
@@ -115,7 +118,8 @@
             "downloadSignedError": "حدث خطأ أثناء تنزيل الملف",
             "missingDocumentId": "خطأ: معرف المستند مفقود",
             "evidencePackageSignedOnly": "حزمة الأدلة متاحة فقط بعد اكتمال التوقيع",
-            "evidencePackageDownloadError": "حدث خطأ أثناء تنزيل حزمة الأدلة"
+            "evidencePackageDownloadError": "حدث خطأ أثناء تنزيل حزمة الأدلة",
+            "deleteError": "حدث خطأ أثناء حذف المستند"
         }
     },
     "audit": {
@@ -247,6 +251,8 @@
         "stageNumber": "المرحلة رقم {{number}}",
         "noStagesInCaseType": "لا توجد مراحل لهذا النوع",
         "descriptionNumber": "الوصف رقم {{number}}",
+        "addStage": "إضافة مرحلة",
+        "removeStage": "إزالة مرحلة",
         "whatsapp": {
             "group": "مجموعة واتساب",
             "linkTitle": "ربط مجموعة واتساب",
@@ -374,11 +380,13 @@
         "allManagers": "كل المديرين",
         "allCaseTypes": "كل أنواع الملفات",
         "addCaseType": "إضافة نوع ملف",
+        "myCases": "ملفاتي",
         "notifications": "الإشعارات",
         "myProfile": "ملفي الشخصي",
         "terms": "شروط الاستخدام",
         "contact": "تواصل معنا",
-        "contactMessage": "مرحبًا، أود التواصل"
+        "contactMessage": "مرحبًا، أود التواصل",
+        "reminders": "التذكيرات"
     },
     "planUsage": {
         "title": "الخطة والاستخدام",
@@ -415,19 +423,17 @@
         "meters": {
             "documentsMonthly": "المستندات (هذا الشهر)",
             "storageGb": "التخزين (GB)",
-            "seats": "المستخدمون",
-            "otpSms": "OTP SMS (هذا الشهر)",
-            "evidenceGenerations": "حزم الأدلة (هذا الشهر)",
-            "evidenceCpuSeconds": "ثواني CPU للأدلة (هذا الشهر)"
+            "seats": "مدراء النظام",
+            "sms": "SMS (هذا الشهر)"
         },
         "progress": {
             "documentsMonthly": "المستندات",
             "storageGb": "التخزين",
-            "seats": "المستخدمون",
-            "otpSms": "OTP SMS",
-            "evidenceGenerations": "الأدلة",
-            "evidenceCpuSeconds": "ثواني CPU"
-        }
+            "seats": "المدراء",
+            "sms": "SMS"
+        },
+        "storageApprox": "~ {{size}} مستخدم",
+        "loadingUsage": "جارٍ تحميل بيانات الاستخدام..."
     },
     "planPricing": {
         "title": "الخطط والأسعار",
@@ -849,6 +855,87 @@
             "openEvidence": "فتح مستندات الأدلة",
             "openSigningManager": "فتح إدارة التوقيع",
             "openSigning": "فتح التوقيع الخاص بي"
+        }
+    },
+    "clientImport": {
+        "button": "استيراد عملاء من Excel",
+        "title": "استيراد عملاء من ملف Excel",
+        "instructions": "ارفع ملف Excel (.xlsx) أو CSV (.csv) يحتوي على الأعمدة: الاسم (إجباري)، الهاتف، البريد الإلكتروني، رقم الهوية، ملاحظات. سيتم تخطي الصفوف المكررة تلقائيًا.",
+        "uploadButton": "رفع واستيراد",
+        "uploading": "جارٍ الاستيراد...",
+        "resultTitle": "نتائج الاستيراد",
+        "created": "تم إنشاؤها",
+        "skipped": "تم تخطيها (مكررات)",
+        "failed": "فشلت",
+        "detailsTitle": "التفاصيل",
+        "row": "صف",
+        "statusCreated": "تم الإنشاء",
+        "statusSkipped": "تم التخطي",
+        "statusFailed": "فشل",
+        "andMore": "و {{count}} صفوف أخرى...",
+        "errorGeneric": "خطأ في استيراد العملاء"
+    },
+    "reminders": {
+        "title": "التذكيرات المجدولة",
+        "subtitle": "إدارة تذكيرات البريد الإلكتروني التلقائية للعملاء. استيراد من Excel أو عرض القائمة.",
+        "importButton": "استيراد تذكيرات من Excel",
+        "empty": "لا توجد تذكيرات للعرض.",
+        "errorLoad": "خطأ في تحميل التذكيرات.",
+        "cancel": "إلغاء",
+        "prev": "السابق",
+        "next": "التالي",
+        "pageInfo": "صفحة {{page}} من {{totalPages}}",
+        "filter": {
+            "all": "الكل",
+            "pending": "قيد الانتظار",
+            "sent": "تم الإرسال",
+            "failed": "فشل",
+            "cancelled": "ملغى"
+        },
+        "status": {
+            "pending": "قيد الانتظار",
+            "sent": "تم الإرسال",
+            "failed": "فشل",
+            "cancelled": "ملغى"
+        },
+        "col": {
+            "clientName": "اسم العميل",
+            "email": "البريد الإلكتروني",
+            "template": "القالب",
+            "scheduledFor": "مجدول لـ",
+            "status": "الحالة",
+            "sentAt": "تم الإرسال في",
+            "actions": "إجراءات"
+        },
+        "import": {
+            "title": "استيراد تذكيرات من ملف Excel",
+            "instructions": "ارفع ملف Excel (.xlsx) أو CSV (.csv) يحتوي على الأعمدة: اسم العميل (إجباري)، البريد الإلكتروني (إجباري)، التاريخ (إجباري)، الموضوع، ملاحظات. اختر قالبًا وساعة الإرسال.",
+            "templateLabel": "قالب البريد الإلكتروني",
+            "sendHourLabel": "ساعة الإرسال (0-23)",
+            "uploadButton": "رفع واستيراد",
+            "uploading": "جارٍ الاستيراد...",
+            "resultTitle": "نتائج الاستيراد",
+            "created": "تم الإنشاء",
+            "skipped": "تم التخطي",
+            "failed": "فشل",
+            "detailsTitle": "التفاصيل",
+            "row": "صف",
+            "statusCreated": "تم الإنشاء",
+            "statusSkipped": "تم التخطي",
+            "statusFailed": "فشل",
+            "andMore": "و {{count}} صفوف أخرى...",
+            "errorGeneric": "خطأ في استيراد التذكيرات"
+        },
+        "statusFilter": "الحالة",
+        "deleteReminder": "حذف",
+        "detail": {
+            "title": "تفاصيل التذكير",
+            "subject": "الموضوع",
+            "error": "خطأ",
+            "edit": "تعديل",
+            "save": "حفظ",
+            "saving": "جارٍ الحفظ...",
+            "saveError": "خطأ في حفظ التذكير"
         }
     }
 }

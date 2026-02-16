@@ -3,8 +3,6 @@ const pool = require('../config/db');
 const { requireInt } = require('../utils/paramValidation');
 const { getLimitsForTenant } = require('../lib/limits/getLimitsForTenant');
 const { getUsageForTenant } = require('../lib/limits/getUsageForTenant');
-const { getLimitsForFirm } = require('../lib/limits/getLimitsForFirm');
-const { getUsageForFirm } = require('../lib/limits/getUsageForFirm');
 
 function toPositiveIntOrNull(v) {
     const n = Number(v);
@@ -204,128 +202,9 @@ exports.getTenantUsage = async (req, res) => {
     }
 };
 
-function isRelationMissingError(e) {
-    const msg = String(e?.message || '');
-    return msg.includes('does not exist');
-}
-
-exports.listFirms = async (_req, res) => {
-    try {
-        const result = await pool.query(
-            `select firmid as "FirmId", firm_key as "FirmKey", name as "Name", created_at as "CreatedAt", updated_at as "UpdatedAt"
-             from firms
-             order by firmid asc`
-        );
-        return res.status(200).json({ firms: result.rows || [] });
-    } catch (e) {
-        if (isRelationMissingError(e)) return res.status(200).json({ firms: [] });
-        console.error('listFirms error:', e);
-        return res.status(500).json({ message: 'Error listing firms' });
-    }
-};
-
-exports.upsertFirm = async (req, res) => {
-    const firmKey = String(req?.body?.firm_key ?? req?.body?.firmKey ?? '').trim();
-    const name = String(req?.body?.name ?? '').trim();
-    if (!firmKey) return res.status(422).json({ message: 'firm_key is required' });
-    if (!name) return res.status(422).json({ message: 'name is required' });
-
-    try {
-        const result = await pool.query(
-            `insert into firms(firm_key, name, created_at, updated_at)
-             values ($1, $2, now(), now())
-             on conflict (firm_key) do update
-             set name = excluded.name, updated_at = now()
-             returning firmid as "FirmId", firm_key as "FirmKey"`,
-            [firmKey, name]
-        );
-        return res.status(200).json({ ok: true, firmId: result.rows?.[0]?.FirmId, firmKey: result.rows?.[0]?.FirmKey });
-    } catch (e) {
-        if (isRelationMissingError(e)) return res.status(409).json({ message: 'Firm tables not migrated yet' });
-        console.error('upsertFirm error:', e);
-        return res.status(500).json({ message: 'Error upserting firm' });
-    }
-};
-
-exports.assignFirmPlan = async (req, res) => {
-    const firmId = requireInt(req, res, { source: 'params', name: 'id' });
-    if (firmId === null) return;
-
-    const planKey = normalizePlanKey(req?.body?.plan_key ?? req?.body?.planKey);
-    if (!planKey) return res.status(422).json({ message: 'plan_key is required' });
-
-    try {
-        const planRes = await pool.query('select plan_key from subscription_plans where plan_key = $1 limit 1', [planKey]);
-        if (planRes.rowCount === 0) return res.status(404).json({ message: 'Unknown plan_key' });
-
-        await pool.query(
-            `insert into firm_subscriptions(firmid, plan_key, status, starts_at, ends_at, updated_at)
-             values ($1, $2, 'active', now(), null, now())
-             on conflict (firmid) do update
-             set plan_key = excluded.plan_key,
-                 status = 'active',
-                 ends_at = null,
-                 starts_at = coalesce(firm_subscriptions.starts_at, now()),
-                 updated_at = now()`,
-            [firmId, planKey]
-        );
-
-        return res.status(200).json({ firmId, plan_key: planKey, status: 'active' });
-    } catch (e) {
-        if (isRelationMissingError(e)) return res.status(409).json({ message: 'Firm tables not migrated yet' });
-        console.error('assignFirmPlan error:', e);
-        return res.status(500).json({ message: 'Error assigning firm plan' });
-    }
-};
-
-exports.upsertFirmOverride = async (req, res) => {
-    const firmId = requireInt(req, res, { source: 'params', name: 'id' });
-    if (firmId === null) return;
-
-    const unlimitedUntilRaw = String(req?.body?.unlimited_until_utc ?? req?.body?.unlimitedUntilUtc ?? '').trim();
-    const notes = req?.body?.notes ?? null;
-    let unlimitedUntil = null;
-    if (unlimitedUntilRaw) {
-        const d = new Date(unlimitedUntilRaw);
-        if (Number.isNaN(d.getTime())) return res.status(422).json({ message: 'Invalid unlimited_until_utc' });
-        unlimitedUntil = d.toISOString();
-    }
-
-    try {
-        await pool.query(
-            `insert into firm_plan_overrides(firmid, unlimited_until_utc, notes, created_at, updated_at)
-             values ($1, $2::timestamptz, $3, now(), now())
-             on conflict (firmid) do update
-             set unlimited_until_utc = excluded.unlimited_until_utc,
-                 notes = excluded.notes,
-                 updated_at = now()`,
-            [firmId, unlimitedUntil, notes]
-        );
-        return res.status(200).json({ ok: true, firmId, unlimited_until_utc: unlimitedUntil });
-    } catch (e) {
-        if (isRelationMissingError(e)) return res.status(409).json({ message: 'Firm tables not migrated yet' });
-        console.error('upsertFirmOverride error:', e);
-        return res.status(500).json({ message: 'Error upserting override' });
-    }
-};
-
-exports.getFirmUsage = async (req, res) => {
-    const firmId = requireInt(req, res, { source: 'params', name: 'id' });
-    if (firmId === null) return;
-
-    try {
-        const [limits, usage] = await Promise.all([
-            getLimitsForFirm(firmId),
-            getUsageForFirm(firmId),
-        ]);
-
-        return res.status(200).json({ firmId, limits, usage });
-    } catch (e) {
-        if (isRelationMissingError(e)) return res.status(409).json({ message: 'Firm tables not migrated yet' });
-        console.error('getFirmUsage error:', e);
-        return res.status(500).json({ message: 'Error getting firm usage' });
-    }
-};
+// Firm-scoped endpoints removed – architecture is one DB per firm.
+// Tables (firms, firm_users, firm_subscriptions, firm_plan_overrides, firm_usage_events, firm_signing_policy)
+// are no longer queried at runtime.
 
 // Placeholder: schedule T-7 days deletion warnings in DB for future messaging.
 // Default behavior: dry-run; only writes when RETENTION_WARNINGS_ALLOW_WRITE=true and execute=true.

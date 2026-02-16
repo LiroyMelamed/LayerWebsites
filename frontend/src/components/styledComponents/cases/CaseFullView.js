@@ -18,9 +18,12 @@ import emailValidation from '../../../functions/validation/EmailValidation';
 import './CaseFullView.scss';
 import useAutoHttpRequest from '../../../hooks/useAutoHttpRequest';
 import { useTranslation } from 'react-i18next';
+import { usePopup } from '../../../providers/PopUpProvider';
+import ConfirmationDialog from '../popups/ConfirmationDialog';
 
 export default function CaseFullView({ caseDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style: _style }) {
     const { t } = useTranslation();
+    const { openPopup: openConfirm, closePopup: closeConfirm } = usePopup();
     const [caseHasBeenChosen, setCaseHasBeenChosen] = useState(false)
     const [hasSubmitted, setHasSubmitted] = useState(false);
     const [fieldErrors, setFieldErrors] = useState({});
@@ -107,7 +110,31 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
     );
 
     const handleInputChange = (field, value) => {
-        setCaseData((prevDetails) => ({ ...prevDetails, [field]: value }));
+        setCaseData((prevDetails) => {
+            const update = { ...prevDetails, [field]: value };
+
+            // When CurrentStage is rolled back, clear timestamps and IsNew
+            // on descriptions that are now ahead of the new stage,
+            // and also un-close the case.
+            if (field === 'CurrentStage') {
+                const newStage = Number(value) || 0;
+                if (newStage > 0 && Array.isArray(prevDetails.Descriptions)) {
+                    update.Descriptions = prevDetails.Descriptions.map((d) => {
+                        const descStage = Number(d.Stage) || 0;
+                        if (descStage > newStage) {
+                            return { ...d, Timestamp: null, IsNew: false };
+                        }
+                        return d;
+                    });
+                }
+                // If we're going backwards, un-close the case
+                if (newStage > 0 && prevDetails.IsClosed) {
+                    update.IsClosed = false;
+                }
+            }
+
+            return update;
+        });
         applyFieldErrorUpdates({ [field]: value });
     };
 
@@ -149,11 +176,24 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
     };
 
     const handleDeleteCase = () => {
-        deleteCase(caseData.CaseId);
+        openConfirm(
+            <ConfirmationDialog
+                title={t('cases.deleteCase')}
+                message={t('cases.deleteCaseConfirm')}
+                confirmText={t('cases.deleteCase')}
+                cancelText={t('common.cancel')}
+                danger
+                onCancel={closeConfirm}
+                onConfirm={() => {
+                    closeConfirm();
+                    deleteCase(caseData.CaseId);
+                }}
+            />
+        );
     };
 
     const handleCustomerSelect = (userName) => {
-        const selectedUser = customers.find(user => user.Name.trim() == userName.trim());
+        const selectedUser = customers.find(user => user.Name.trim() === userName.trim());
 
         if (selectedUser) {
             setCaseData((prevDetails) => ({
@@ -346,14 +386,50 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                             value={description?.Text || ''}
                             onChange={(text) => {
                                 setCaseData((prevDetails) => {
-                                    const updatedDescriptions = [...prevDetails.Descriptions];
-                                    updatedDescriptions[index].Text = text;
+                                    const updatedDescriptions = prevDetails.Descriptions.map((d, i) =>
+                                        i === index ? { ...d, Text: text } : d
+                                    );
                                     return { ...prevDetails, Descriptions: updatedDescriptions };
                                 });
                             }}
                         />
+                        {caseData.Descriptions.length > 1 && (
+                            <SecondaryButton
+                                onPress={() => {
+                                    setCaseData((prev) => {
+                                        const updated = prev.Descriptions.filter((_, i) => i !== index)
+                                            .map((d, i) => ({ ...d, Stage: i + 1 }));
+                                        return { ...prev, Descriptions: updated };
+                                    });
+                                }}
+                                size={buttonSizes.SMALL}
+                                className="lw-caseFullView__removeStageBtn"
+                            >
+                                {t('cases.removeStage')}
+                            </SecondaryButton>
+                        )}
                     </SimpleContainer>
                 ))}
+
+                <SimpleContainer className="lw-caseFullView__addStageRow">
+                    <SecondaryButton
+                        onPress={() => {
+                            setCaseData((prev) => {
+                                const nextStage = (prev.Descriptions?.length || 0) + 1;
+                                return {
+                                    ...prev,
+                                    Descriptions: [
+                                        ...(prev.Descriptions || []),
+                                        { Stage: nextStage, Text: '', Timestamp: null, IsNew: false },
+                                    ],
+                                };
+                            });
+                        }}
+                        size={buttonSizes.SMALL}
+                    >
+                        {t('cases.addStage')}
+                    </SecondaryButton>
+                </SimpleContainer>
 
                 <SimpleContainer className="lw-caseFullView__buttonsRow">
                     {((caseDetails != null) || caseHasBeenChosen) && (

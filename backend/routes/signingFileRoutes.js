@@ -87,4 +87,7 @@ router.post("/:signingFileId/reupload", authMiddleware, requireSigningEnabledFor
 // הורדת קובץ
 router.get("/:signingFileId/download", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.getSignedFileDownload);
 
+// מחיקת קובץ ממתין
+router.delete("/:signingFileId", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.deleteSigningFile);
+
 module.exports = router;

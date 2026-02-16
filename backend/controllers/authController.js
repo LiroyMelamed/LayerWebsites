@@ -216,7 +216,19 @@ const verifyOtp = async (req, res) => {
             }
         }
 
-        return res.status(200).json({ message: "קוד אומת בהצלחה", token, role, refreshToken });
+        // Check if user is a platform admin (for frontend nav visibility)
+        const platformAdminIds = String(process.env.PLATFORM_ADMIN_USER_IDS || '').trim();
+        let isPlatformAdmin = false;
+        if (role === 'Admin') {
+            if (platformAdminIds) {
+                const allowSet = new Set(platformAdminIds.split(',').map(s => Number(s.trim())).filter(n => Number.isFinite(n) && n > 0));
+                isPlatformAdmin = allowSet.has(userid);
+            } else if (String(process.env.NODE_ENV || '').toLowerCase() !== 'production') {
+                isPlatformAdmin = true;
+            }
+        }
+
+        return res.status(200).json({ message: "קוד אומת בהצלחה", token, role, refreshToken, isPlatformAdmin });
     } catch (error) {
         console.error("שגיאה בתהליך האימות:", error);
         return res.status(500).json({ message: "שגיאה בתהליך האימות" });
@@ -281,7 +293,20 @@ const refreshToken = async (req, res) => {
         await client.query('COMMIT');
 
         const token = signAccessToken({ userid: row.userid, role: row.role, phonenumber: row.phonenumber });
-        return res.status(200).json({ token, role: row.role, refreshToken: newTokenRow.refreshToken });
+
+        // Check if user is a platform admin (for frontend nav visibility)
+        const platformAdminIds = String(process.env.PLATFORM_ADMIN_USER_IDS || '').trim();
+        let isPlatformAdmin = false;
+        if (row.role === 'Admin') {
+            if (platformAdminIds) {
+                const allowSet = new Set(platformAdminIds.split(',').map(s => Number(s.trim())).filter(n => Number.isFinite(n) && n > 0));
+                isPlatformAdmin = allowSet.has(row.userid);
+            } else if (String(process.env.NODE_ENV || '').toLowerCase() !== 'production') {
+                isPlatformAdmin = true;
+            }
+        }
+
+        return res.status(200).json({ token, role: row.role, refreshToken: newTokenRow.refreshToken, isPlatformAdmin });
     } catch (error) {
         try {
             await client.query('ROLLBACK');

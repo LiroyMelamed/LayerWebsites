@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { usePopup } from "../../providers/PopUpProvider";
 import { getNavBarData } from '../navBars/data/NavBarData';
 import SimpleContainer from "../simpleComponents/SimpleContainer";
@@ -18,14 +18,21 @@ import "./TopAndRightNavBar.scss";
 
 const Logo = images.Logos.LogoSlangWhite;
 
-export default function TopAndRightNavBar({ chosenIndex = -1, children, LogoNavigate, GetNavBarData = getNavBarData }) {
+export default function TopAndRightNavBar({ children, LogoNavigate, GetNavBarData = getNavBarData }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isSmallScreen } = useScreenSize();
   const { openPopup, closePopup } = usePopup();
   const { isFromApp } = useFromApp();
   const { t } = useTranslation();
-  const [currentIndex, setCurrentIndex] = useState(chosenIndex);
   const { NavBarLinks } = GetNavBarData(navigate, openPopup, closePopup, isFromApp, t);
+
+  /** Check if a nav item matches the current URL pathname */
+  function isActiveItem(item) {
+    if (!item.routeMatch) return false;
+    const matches = Array.isArray(item.routeMatch) ? item.routeMatch : [item.routeMatch];
+    return matches.some(route => location.pathname.includes(route));
+  }
 
   return (
     <SimpleContainer className="lw-topAndRightNavBar">
@@ -36,7 +43,6 @@ export default function TopAndRightNavBar({ chosenIndex = -1, children, LogoNavi
               src={Logo}
               className="lw-topAndRightNavBar__logoBtn"
               onPress={() => {
-                setCurrentIndex(-1);
                 navigate(LogoNavigate);
               }}
             />
@@ -49,11 +55,11 @@ export default function TopAndRightNavBar({ chosenIndex = -1, children, LogoNavi
             <SimpleContainer className="lw-topAndRightNavBar__navList">
               {NavBarLinks.map((item, index) => (
                 <SideBarMenuItem
-                  key={item.buttonScreen || item.buttonText || String(index)}
+                  key={item.navKey || item.buttonText || String(index)}
                   buttonText={item.buttonText}
                   iconSource={item.icon}
                   size={24}
-                  isPressed={currentIndex === index}
+                  isPressed={isActiveItem(item)}
                   onPressFunction={() => { item.onClick() }}
                   buttonIndex={index}
                 />

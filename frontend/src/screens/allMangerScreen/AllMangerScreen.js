@@ -44,7 +44,7 @@ export default function AllMangerScreen() {
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
-            {isSmallScreen && <TopToolBarSmallScreen chosenIndex={6} LogoNavigate={AdminStackName + MainScreenName} />}
+            {isSmallScreen && <TopToolBarSmallScreen chosenNavKey="allManagers" LogoNavigate={AdminStackName + MainScreenName} />}
 
             <SimpleScrollView>
                 <SimpleContainer className="lw-allMangerScreen__row">

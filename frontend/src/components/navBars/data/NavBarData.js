@@ -8,69 +8,108 @@ import { AdminStackName } from "../../../navigation/AdminStack";
 import { SigningManagerScreenName } from "../../../screens/signingScreen/SigningManagerScreen";
 import { EvidenceDocumentsScreenName } from "../../../screens/evidenceDocuments/EvidenceDocumentsScreen";
 import { PlanUsageScreenName } from "../../../screens/billingScreen/PlanUsageScreen";
+import { PlansPricingScreenName } from "../../../screens/billingScreen/PlansPricingScreen";
 import { MyCasesScreenName } from "../../../screens/myCasesScreen/MyCasesScreen";
+import { RemindersScreenName } from "../../../screens/remindersScreen/RemindersScreen";
+import { uploadFileForSigningScreenName } from "../../../screens/signingScreen/UploadFileForSigningScreen";
 
-export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t) => ({
-    NavBarLinks: [
+export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t) => {
+    const isPlatformAdmin = typeof window !== 'undefined' && localStorage.getItem('isPlatformAdmin') === 'true';
+
+    const links = [
+        // ── Cases ──
         {
+            navKey: 'myCases',
+            routeMatch: MyCasesScreenName,
+            buttonText: t('nav.myCases'),
+            buttonScreen: t('nav.myCases'),
+            icon: null,
+            onClick: () => navigate(AdminStackName + MyCasesScreenName),
+        },
+        {
+            navKey: 'pinnedCases',
+            routeMatch: TaggedCasesScreenName,
             buttonText: t('nav.pinnedCases'),
             buttonScreen: t('nav.pinnedCases'),
-            icon: null, // icons.NavBarIcons.Hammer
+            icon: null,
             onClick: () => navigate(AdminStackName + TaggedCasesScreenName),
         },
         {
+            navKey: 'allCases',
+            routeMatch: AllCasesScreenName,
+            buttonText: t('nav.allCases'),
+            buttonScreen: t('nav.allCases'),
+            icon: null,
+            onClick: () => navigate(AdminStackName + AllCasesScreenName),
+        },
+        {
+            navKey: 'newOrUpdateCase',
+            buttonText: t('nav.newOrUpdateCase'),
+            buttonScreen: null,
+            icon: null,
+            onClick: () => openPopup(<CaseFullView onFailureFunction={() => { }} closePopUpFunction={closePopup} />),
+        },
+        // ── Case Types ──
+        {
+            navKey: 'allCaseTypes',
+            routeMatch: AllCasesTypeScreenName,
+            buttonText: t('nav.allCaseTypes'),
+            buttonScreen: t('nav.allCaseTypes'),
+            icon: null,
+            onClick: () => navigate(AdminStackName + AllCasesTypeScreenName),
+        },
+        {
+            navKey: 'addCaseType',
+            buttonText: t('nav.addCaseType'),
+            buttonScreen: null,
+            icon: null,
+            onClick: () => openPopup(<CaseTypeFullView onFailureFunction={() => { }} closePopUpFunction={closePopup} />),
+        },
+        // ── Signing & Reminders ──
+        {
+            navKey: 'signingFiles',
+            routeMatch: [SigningManagerScreenName, uploadFileForSigningScreenName],
             buttonText: t('nav.signingFiles'),
             buttonScreen: t('nav.signingFiles'),
             icon: null,
             onClick: () => navigate(AdminStackName + SigningManagerScreenName),
         },
         {
+            navKey: 'reminders',
+            routeMatch: RemindersScreenName,
+            buttonText: t('nav.reminders'),
+            buttonScreen: t('nav.reminders'),
+            icon: null,
+            onClick: () => navigate(AdminStackName + RemindersScreenName),
+        },
+        // ── Admin ──
+        {
+            navKey: 'allManagers',
+            routeMatch: AllMangerScreenName,
+            buttonText: t('nav.allManagers'),
+            buttonScreen: t('nav.allManagers'),
+            icon: null,
+            onClick: () => navigate(AdminStackName + AllMangerScreenName),
+        },
+        // ── Evidence — platform admin only ──
+        ...(isPlatformAdmin ? [{
+            navKey: 'evidenceDocuments',
+            routeMatch: EvidenceDocumentsScreenName,
             buttonText: t('nav.evidenceDocuments'),
             buttonScreen: t('nav.evidenceDocuments'),
             icon: null,
             onClick: () => navigate(AdminStackName + EvidenceDocumentsScreenName),
-        },
-        {
+        }] : []),
+        // ── Plan & Usage — platform admin only ──
+        ...(isPlatformAdmin ? [{
+            navKey: 'planUsage',
+            routeMatch: [PlanUsageScreenName, PlansPricingScreenName],
             buttonText: t('nav.planUsage'),
             buttonScreen: t('nav.planUsage'),
             icon: null,
             onClick: () => navigate(AdminStackName + PlanUsageScreenName),
-        },
-        {
-            buttonText: t('nav.allCases'),
-            buttonScreen: t('nav.allCases'),
-            icon: null, // icons.NavBarIcons.Hammer
-            onClick: () => navigate(AdminStackName + AllCasesScreenName),
-        },
-        {
-            buttonText: t('nav.newOrUpdateCase'),
-            buttonScreen: null,
-            icon: null, // icons.NavBarIcons.NewCase
-            onClick: () => openPopup(<CaseFullView onFailureFunction={() => { }} closePopUpFunction={closePopup} />),
-        },
-        {
-            buttonText: t('nav.allManagers'),
-            buttonScreen: t('nav.allManagers'),
-            icon: null, // icons.NavBarIcons.AllManagers
-            onClick: () => navigate(AdminStackName + AllMangerScreenName),
-        },
-        {
-            buttonText: t('nav.allCaseTypes'),
-            buttonScreen: t('nav.allCaseTypes'),
-            icon: null, // icons.NavBarIcons.AllCasesType
-            onClick: () => navigate(AdminStackName + AllCasesTypeScreenName),
-        },
-        {
-            buttonText: t('nav.addCaseType'),
-            buttonScreen: null,
-            icon: null, // icons.NavBarIcons.AddCaseType
-            onClick: () => openPopup(<CaseTypeFullView onFailureFunction={() => { }} closePopUpFunction={closePopup} />),
-        },
-        {
-            buttonText: t('nav.myCases'),
-            buttonScreen: t('nav.myCases'),
-            icon: null,
-            onClick: () => navigate(AdminStackName + MyCasesScreenName),
-        },
-    ]
-});
+        }] : []),
+    ];
+
+    return { NavBarLinks: links };
+};

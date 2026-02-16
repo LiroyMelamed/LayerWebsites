@@ -1,5 +1,4 @@
 const pool = require('../../config/db');
-const { isFirmScopeEnabled, getDefaultFirmKey } = require('../firm/firmScope');
 
 function normalizePlanRow(row) {
     if (!row) return null;
@@ -42,43 +41,46 @@ function isRelationMissingError(e) {
     return msg.includes('does not exist');
 }
 
-async function resolveFirmPlan(firmId) {
-    if (!isFirmScopeEnabled()) {
-        return null;
-    }
-
-    const fid = Number(firmId);
-    if (!Number.isFinite(fid) || fid <= 0) return null;
-
+/**
+ * Resolve the active plan for this single-tenant DB.
+ * Reads from tenant_subscriptions → subscription_plans (no firm tables).
+ * Falls back to BASIC if no subscription exists.
+ * The optional `_firmId` parameter is kept for backward-compat but ignored.
+ */
+async function resolveFirmPlan(_firmId) {
     try {
-        const planRes = await pool.query(
-            `select
-                sp.plan_key as "PlanKey",
-                sp.name as "Name",
-                sp.documents_retention_days as "DocumentsRetentionDays",
-                sp.documents_retention_days_core as "DocumentsRetentionDaysCore",
-                sp.documents_retention_days_pii as "DocumentsRetentionDaysPii",
-                sp.documents_monthly_quota as "DocumentsMonthlyQuota",
-                sp.storage_gb_quota as "StorageGbQuota",
-                sp.users_quota as "UsersQuota",
-                sp.otp_sms_monthly_quota as "OtpSmsMonthlyQuota",
-                sp.evidence_generations_monthly_quota as "EvidenceGenerationsMonthlyQuota",
-                sp.evidence_cpu_seconds_monthly_quota as "EvidenceCpuSecondsMonthlyQuota",
-                sp.feature_flags as "FeatureFlags",
-                sp.price_monthly_cents as "PriceMonthlyCents",
-                sp.price_currency as "PriceCurrency",
-                fs.status as "Status"
-             from firm_subscriptions fs
-             join subscription_plans sp on sp.plan_key = fs.plan_key
-             where fs.firmid = $1
-               and fs.status = 'active'
-             limit 1`,
-            [fid]
-        );
+        // Try tenant subscription first (tenant_id = 1 is the admin in a single-tenant DB)
+        let planRow = null;
+        try {
+            const tenantRes = await pool.query(
+                `select
+                    sp.plan_key as "PlanKey",
+                    sp.name as "Name",
+                    sp.documents_retention_days as "DocumentsRetentionDays",
+                    sp.documents_retention_days_core as "DocumentsRetentionDaysCore",
+                    sp.documents_retention_days_pii as "DocumentsRetentionDaysPii",
+                    sp.documents_monthly_quota as "DocumentsMonthlyQuota",
+                    sp.storage_gb_quota as "StorageGbQuota",
+                    sp.users_quota as "UsersQuota",
+                    sp.otp_sms_monthly_quota as "OtpSmsMonthlyQuota",
+                    sp.evidence_generations_monthly_quota as "EvidenceGenerationsMonthlyQuota",
+                    sp.evidence_cpu_seconds_monthly_quota as "EvidenceCpuSecondsMonthlyQuota",
+                    sp.feature_flags as "FeatureFlags",
+                    sp.price_monthly_cents as "PriceMonthlyCents",
+                    sp.price_currency as "PriceCurrency"
+                 from tenant_subscriptions ts
+                 join subscription_plans sp on sp.plan_key = ts.plan_key
+                 where ts.status = 'active'
+                 order by ts.updated_at desc
+                 limit 1`
+            );
+            planRow = tenantRes.rows?.[0] || null;
+        } catch (e) {
+            if (!isRelationMissingError(e)) throw e;
+        }
 
-        let planRow = planRes.rows?.[0] || null;
         if (!planRow) {
-            // Safe default: BASIC if firm has no subscription yet.
+            // Fallback: BASIC plan
             const basic = await pool.query(
                 `select
                     sp.plan_key as "PlanKey",
@@ -102,40 +104,12 @@ async function resolveFirmPlan(firmId) {
             planRow = basic.rows?.[0] || null;
         }
 
-        const overrideRes = await pool.query(
-            `select unlimited_until_utc as "UnlimitedUntilUtc"
-             from firm_plan_overrides
-             where firmid = $1
-             limit 1`,
-            [fid]
-        );
-
-        const overrideUnlimitedUntil = overrideRes.rows?.[0]?.UnlimitedUntilUtc || null;
-
-        // Optional env-based temporary override for the default firm key (for first production firm).
-        let envUnlimitedUntil = null;
+        // Unlimited override via env (for initial deployments)
+        let isUnlimited = false;
         const envVal = String(process.env.FIRM_DEFAULT_UNLIMITED_UNTIL_UTC || '').trim();
         if (envVal) {
             const d = new Date(envVal);
-            if (!Number.isNaN(d.getTime())) envUnlimitedUntil = d.toISOString();
-        }
-
-        let isUnlimited = false;
-        const now = new Date();
-
-        if (overrideUnlimitedUntil) {
-            const d = new Date(overrideUnlimitedUntil);
-            if (!Number.isNaN(d.getTime()) && d.getTime() > now.getTime()) isUnlimited = true;
-        }
-
-        if (!isUnlimited && envUnlimitedUntil) {
-            // Apply only to the firm matching LAW_FIRM_KEY.
-            const keyRes = await pool.query(`select firm_key as "FirmKey" from firms where firmid = $1 limit 1`, [fid]);
-            const key = String(keyRes.rows?.[0]?.FirmKey || '');
-            if (key && key === getDefaultFirmKey()) {
-                const d = new Date(envUnlimitedUntil);
-                if (!Number.isNaN(d.getTime()) && d.getTime() > now.getTime()) isUnlimited = true;
-            }
+            if (!Number.isNaN(d.getTime()) && d.getTime() > Date.now()) isUnlimited = true;
         }
 
         const plan = normalizePlanRow(planRow) || {
@@ -174,7 +148,6 @@ async function resolveFirmPlan(firmId) {
             name: plan.name,
             featureFlags: {
                 ...(plan.featureFlags || {}),
-                firmScope: true,
                 unlimited: isUnlimited,
             },
 

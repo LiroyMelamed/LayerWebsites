@@ -60,6 +60,18 @@
     width: 100%;
 }
 
+.lw-signingManagerScreen__dateFilters {
+    display: flex;
+    gap: v.$space-2;
+    flex-wrap: wrap;
+    margin-block-start: v.$space-2;
+}
+
+.lw-signingManagerScreen__dateInput {
+    flex: 1 1 10rem;
+    max-width: 14rem;
+}
+
 .lw-signingManagerScreen__tabsRow {
     @include m.row(v.$space-4, wrap, center, center);
     margin-block-start: v.$space-6;
@@ -199,6 +211,12 @@
 .lw-signingManagerScreen__actionsRow .lw-textButtonWithTwoOptionalIcons {
     min-block-size: 2.75rem;
     flex: 1 1 12rem;
+}
+
+.lw-signingManagerScreen__deleteBtn {
+    background-color: var(--lw-color-negative) !important;
+    border-color: var(--lw-color-negative) !important;
+    color: #fff !important;
 }
 
 .lw-signingManagerScreen__footer {

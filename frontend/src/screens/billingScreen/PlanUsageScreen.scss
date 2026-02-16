@@ -31,6 +31,12 @@
     margin-top: 1rem;
 }
 
+.lw-planUsageScreen__storageDetail {
+    color: var(--lw-color-winter);
+    margin-block-start: 0.25rem;
+    font-style: italic;
+}
+
 .lw-planUsageScreen__upgradeButton {
     margin-top: 12px;
     align-self: flex-end;

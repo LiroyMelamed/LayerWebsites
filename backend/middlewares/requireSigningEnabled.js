@@ -2,7 +2,6 @@ const { createAppError } = require('../utils/appError');
 const { getHebrewMessage } = require('../utils/errors.he');
 const pool = require('../config/db');
 const crypto = require('crypto');
-const { resolveFirmIdForUserEnsureMembership, resolveFirmIdForSigningFile } = require('../lib/firm/resolveFirmContext');
 const { resolveFirmSigningPolicy } = require('../lib/firm/resolveFirmSigningPolicy');
 
 function sha256Hex(buffer) {
@@ -107,8 +106,7 @@ async function requireSigningEnabledForUser(req, _res, next) {
         const userId = req.user?.UserId;
         if (!userId) return next();
 
-        const firmId = await resolveFirmIdForUserEnsureMembership({ userId, userRole: req.user?.Role });
-        const policy = await resolveFirmSigningPolicy(firmId);
+        const policy = await resolveFirmSigningPolicy(null);
 
         if (!policy.signingEnabled) {
             await insertAuditEventBlocked({
@@ -118,7 +116,6 @@ async function requireSigningEnabledForUser(req, _res, next) {
                 actorType: String(req.user?.Role || '').toLowerCase() || 'user',
                 metadata: {
                     path: req.originalUrl || req.url,
-                    firmId,
                     source: policy.source,
                 },
             });
@@ -136,8 +133,7 @@ async function requireSigningEnabledForSigningFile(req, _res, next) {
         const signingFileId = Number(req.params?.signingFileId);
         if (!Number.isFinite(signingFileId) || signingFileId <= 0) return next();
 
-        const firmId = await resolveFirmIdForSigningFile({ signingFileId });
-        const policy = await resolveFirmSigningPolicy(firmId);
+        const policy = await resolveFirmSigningPolicy(null);
 
         if (!policy.signingEnabled) {
             await insertAuditEventBlocked({
@@ -147,7 +143,6 @@ async function requireSigningEnabledForSigningFile(req, _res, next) {
                 actorType: req.user?.Role ? String(req.user.Role).toLowerCase() : null,
                 metadata: {
                     path: req.originalUrl || req.url,
-                    firmId,
                     source: policy.source,
                 },
             });

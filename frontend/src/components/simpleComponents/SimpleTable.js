@@ -3,8 +3,9 @@ import SimpleContainer from './SimpleContainer';
 import { Text20 } from '../specializedComponents/text/AllTextKindFile';
 import CaseMenuItem from '../specializedComponents/menuItems/CaseMenuItem';
 import SimpleLoader from './SimpleLoader';
-
 import './SimpleTable.scss';
+
+const isElement = (v) => React.isValidElement(v);
 
 const SimpleTable = ({
     titles,
@@ -12,12 +13,17 @@ const SimpleTable = ({
     isLoading,
     noDataMessage,
     rePerformRequest,
+    onRowClick,
+    RowComponent,
+    CellTextComponent,
     style: _style,
     rowStyle: _rowStyle,
     cellStyle: _cellStyle,
     ...props
 }) => {
     const hasData = Array.isArray(data) && data.length > 0;
+    const RowComp = RowComponent || CaseMenuItem;
+    const CellText = CellTextComponent || Text20;
 
     return (
         <SimpleContainer className="lw-simpleTable">
@@ -25,7 +31,7 @@ const SimpleTable = ({
                 <SimpleContainer className="lw-simpleTable__titleRow">
                     {titles.map((title, index) => (
                         <SimpleContainer key={index} className="lw-simpleTable__cell lw-simpleTable__cell--header">
-                            <Text20>{title}</Text20>
+                            <CellText>{title}</CellText>
                         </SimpleContainer>
                     ))}
                 </SimpleContainer>
@@ -41,22 +47,35 @@ const SimpleTable = ({
                 </p>
             ) : (
                 <SimpleContainer className="lw-simpleTable__body" {...props}>
-                    {data.map((item, rowIndex) => (
-                        <CaseMenuItem
-                            key={item?.Column0 ?? rowIndex}
-                            rePerformRequest={rePerformRequest}
-                            caseNumber={item?.Column0}
-                            className="lw-simpleTable__row"
-                        >
-                            {titles.map((_, colIndex) => (
-                                <SimpleContainer key={colIndex} className="lw-simpleTable__cell">
-                                    <Text20 className="lw-simpleTable__cellText" title={item?.[`Column${colIndex}`]}>
-                                        {item?.[`Column${colIndex}`]}
-                                    </Text20>
-                                </SimpleContainer>
-                            ))}
-                        </CaseMenuItem>
-                    ))}
+                    {data.map((item, rowIndex) => {
+                        const rowProps = RowComponent
+                            ? { onPress: onRowClick ? () => onRowClick(item, rowIndex) : undefined }
+                            : {
+                                rePerformRequest,
+                                caseNumber: item?.Column0,
+                                optionalOnPress: onRowClick ? () => onRowClick(item, rowIndex) : undefined,
+                            };
+                        return (
+                            <RowComp
+                                key={rowIndex}
+                                className="lw-simpleTable__row"
+                                {...rowProps}
+                            >
+                                {titles.map((_, colIndex) => {
+                                    const cellValue = item?.[`Column${colIndex}`];
+                                    return (
+                                        <SimpleContainer key={colIndex} className="lw-simpleTable__cell">
+                                            {isElement(cellValue) ? cellValue : (
+                                                <CellText className="lw-simpleTable__cellText" title={cellValue}>
+                                                    {cellValue}
+                                                </CellText>
+                                            )}
+                                        </SimpleContainer>
+                                    );
+                                })}
+                            </RowComp>
+                        );
+                    })}
                 </SimpleContainer>
             )}
         </SimpleContainer>

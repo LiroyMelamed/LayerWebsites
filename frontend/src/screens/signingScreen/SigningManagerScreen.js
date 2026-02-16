@@ -3,6 +3,7 @@ import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
+import useHttpRequest from "../../hooks/useHttpRequest";
 import signingFilesApi from "../../api/signingFilesApi";
 
 import SimpleLoader from "../../components/simpleComponents/SimpleLoader";
@@ -16,13 +17,12 @@ import { getNavBarData } from "../../components/navBars/data/NavBarData";
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
 import SearchInput from "../../components/specializedComponents/containers/SearchInput";
+import SimpleInput from "../../components/simpleComponents/SimpleInput";
 import ProgressBar from "../../components/specializedComponents/containers/ProgressBar";
 
 import { Text14, TextBold24 } from "../../components/specializedComponents/text/AllTextKindFile";
 import { images } from "../../assets/images/images";
 import ApiUtils from "../../api/apiUtils";
-import { isDemoModeEnabled } from "../../utils/demoMode";
-import { demoGetEvidencePackage, demoGetOrCreateUploadObjectUrl, demoGetSigningFile } from "../../demo/demoStore";
 import { usePopup } from "../../providers/PopUpProvider";
 import ErrorPopup from "../../components/styledComponents/popups/ErrorPopup";
 import { useTranslation } from "react-i18next";
@@ -44,8 +44,10 @@ export default function SigningManagerScreen() {
 
     const [activeTab, setActiveTab] = useState("pending");
     const [searchQuery, setSearchQuery] = useState("");
+    const [dateFrom, setDateFrom] = useState("");
+    const [dateTo, setDateTo] = useState("");
 
-    const { result: lawyerFilesData, isPerforming } = useAutoHttpRequest(
+    const { result: lawyerFilesData, isPerforming, performRequest: reloadFiles } = useAutoHttpRequest(
         signingFilesApi.getLawyerSigningFiles
     );
 
@@ -58,16 +60,37 @@ export default function SigningManagerScreen() {
                 ? f.Status === "pending" || f.Status === "rejected"
                 : f.Status === "signed"
         );
-        if (!query) return list;
 
-        return list.filter((f) => {
-            const text = [f.FileName, f.CaseName, f.ClientName, f.RejectionReason]
-                .filter(Boolean)
-                .join(" ")
-                .toLowerCase();
-            return text.includes(query);
-        });
-    }, [files, activeTab, searchQuery]);
+        if (query) {
+            list = list.filter((f) => {
+                const text = [f.FileName, f.CaseName, f.ClientName, f.RejectionReason]
+                    .filter(Boolean)
+                    .join(" ")
+                    .toLowerCase();
+                return text.includes(query);
+            });
+        }
+
+        if (dateFrom) {
+            const from = new Date(dateFrom);
+            from.setHours(0, 0, 0, 0);
+            list = list.filter((f) => {
+                const d = new Date(f.CreatedAt);
+                return !Number.isNaN(d.getTime()) && d >= from;
+            });
+        }
+
+        if (dateTo) {
+            const to = new Date(dateTo);
+            to.setHours(23, 59, 59, 999);
+            list = list.filter((f) => {
+                const d = new Date(f.CreatedAt);
+                return !Number.isNaN(d.getTime()) && d <= to;
+            });
+        }
+
+        return list;
+    }, [files, activeTab, searchQuery, dateFrom, dateTo]);
 
     const pendingCount = files.filter(
         (f) => f.Status === "pending" || f.Status === "rejected"
@@ -86,16 +109,6 @@ export default function SigningManagerScreen() {
 
     const openPdfInNewTab = async (signingFileId) => {
         try {
-            if (isDemoModeEnabled()) {
-                const file = demoGetSigningFile(signingFileId);
-                const url = file?.FileKey
-                    ? demoGetOrCreateUploadObjectUrl(file.FileKey)
-                    : (await signingFilesApi.downloadSignedFile(signingFileId))?.data?.downloadUrl;
-                if (!url) throw new Error("missing demo pdf url");
-                window.open(url, "_blank", "noopener,noreferrer");
-                return;
-            }
-
             const baseUrl = ApiUtils?.defaults?.baseURL || "";
             const token = localStorage.getItem("token");
             const url = `${baseUrl}/SigningFiles/${encodeURIComponent(signingFileId)}/pdf`;
@@ -175,18 +188,6 @@ export default function SigningManagerScreen() {
                 return;
             }
 
-            if (isDemoModeEnabled()) {
-                const pkg = demoGetEvidencePackage(signingFileId);
-                const blob = pkg?.evidenceZipBlob;
-                if (!blob) {
-                    showError({ messageKey: 'signingManager.errors.evidencePackageDownloadError' });
-                    return;
-                }
-                const filename = `evidence_${file?.CaseId || "noCase"}_${signingFileId}.zip`;
-                downloadBlobAsFile(blob, filename);
-                return;
-            }
-
             const baseUrl = ApiUtils?.defaults?.baseURL || "";
             const token = localStorage.getItem("token");
             const url = `${baseUrl}/SigningFiles/${encodeURIComponent(signingFileId)}/evidence-package`;
@@ -257,18 +258,6 @@ export default function SigningManagerScreen() {
                 return;
             }
 
-            if (isDemoModeEnabled()) {
-                const pkg = demoGetEvidencePackage(signingFileId);
-                const blob = pkg?.evidencePdfBlob;
-                if (!blob) {
-                    showError({ messageKey: 'signingManager.errors.evidencePackageDownloadError' });
-                    return;
-                }
-                const filename = `evidence_${file?.CaseId || "noCase"}_${signingFileId}.pdf`;
-                downloadBlobAsFile(blob, filename);
-                return;
-            }
-
             const baseUrl = ApiUtils?.defaults?.baseURL || "";
             const token = localStorage.getItem("token");
             const url = `${baseUrl}/SigningFiles/${encodeURIComponent(signingFileId)}/evidence-certificate`;
@@ -311,6 +300,12 @@ export default function SigningManagerScreen() {
     const handleGoToUpload = () =>
         navigate(AdminStackName + uploadFileForSigningScreenName);
 
+    const { isPerforming: isDeletingFile, performRequest: deleteSigningFile } = useHttpRequest(
+        signingFilesApi.deleteSigningFile,
+        () => { closePopup(); reloadFiles(); },
+        () => { showError({ messageKey: 'signingManager.errors.deleteError' }); }
+    );
+
     const handleOpenDetails = (file) => {
         if (!file) return;
         openPopup(
@@ -321,6 +316,8 @@ export default function SigningManagerScreen() {
                 onDownloadSigned={() => handleDownload(file.SigningFileId, file.FileName)}
                 onDownloadEvidencePdf={() => handleDownloadEvidencePdf(file)}
                 onDownloadEvidenceZip={() => handleDownloadEvidenceZip(file)}
+                onDelete={(id) => deleteSigningFile(id)}
+                isDeleting={isDeletingFile}
                 formatDotDate={formatDotDate}
             />
         );
@@ -337,7 +334,7 @@ export default function SigningManagerScreen() {
                 <TopToolBarSmallScreen
                     LogoNavigate={AdminStackName + MainScreenName}
                     GetNavBarData={getNavBarData}
-                    chosenIndex={1}
+                    chosenNavKey="signingFiles"
                 />
             )}
 
@@ -350,6 +347,22 @@ export default function SigningManagerScreen() {
                             value={searchQuery}
                             title={t('signingManager.searchTitle')}
                             titleFontSize={18}
+                        />
+                    </SimpleContainer>
+                    <SimpleContainer className="lw-signingManagerScreen__dateFilters">
+                        <SimpleInput
+                            type="date"
+                            title={t('signingManager.dateFrom')}
+                            value={dateFrom}
+                            onChange={(e) => setDateFrom(e.target.value)}
+                            className="lw-signingManagerScreen__dateInput"
+                        />
+                        <SimpleInput
+                            type="date"
+                            title={t('signingManager.dateTo')}
+                            value={dateTo}
+                            onChange={(e) => setDateTo(e.target.value)}
+                            className="lw-signingManagerScreen__dateInput"
                         />
                     </SimpleContainer>
                 </SimpleContainer>
@@ -476,7 +489,7 @@ export default function SigningManagerScreen() {
     );
 }
 
-function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned, onDownloadEvidencePdf, onDownloadEvidenceZip, formatDotDate }) {
+function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned, onDownloadEvidencePdf, onDownloadEvidenceZip, onDelete, isDeleting, formatDotDate }) {
     const { t } = useTranslation();
     const totalSpots = Number(file?.TotalSpots || 0);
     const signedSpots = Number(file?.SignedSpots || 0);
@@ -580,6 +593,15 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                         {t('signingManager.actions.downloadEvidenceZip')}
                     </SecondaryButton>
                     <SecondaryButton onPress={onOpenPdf}>{t('signingManager.actions.openPdf')}</SecondaryButton>
+                    {file?.Status === "pending" && onDelete && (
+                        <SecondaryButton
+                            onPress={() => onDelete(file.SigningFileId)}
+                            isPerforming={isDeleting}
+                            className="lw-signingManagerScreen__deleteBtn"
+                        >
+                            {isDeleting ? t('common.deleting') : t('signingManager.actions.deleteFile')}
+                        </SecondaryButton>
+                    )}
                     <SecondaryButton onPress={onClose}>{t('common.close')}</SecondaryButton>
                 </SimpleContainer>
             </>

@@ -1,12 +1,15 @@
 const { resolveFirmPlan } = require('../plan/resolveFirmPlan');
 
-async function getLimitsForFirm(firmId) {
-    const plan = await resolveFirmPlan(firmId);
+/**
+ * Get plan limits for this single-tenant DB.
+ * The `_firmId` parameter is kept for backward-compat but ignored.
+ */
+async function getLimitsForFirm(_firmId) {
+    const plan = await resolveFirmPlan(null);
     if (!plan) return null;
 
     return {
         scope: 'firm',
-        firmId: Number(firmId),
         planKey: plan.planKey,
         name: plan.name,
         priceMonthlyCents: plan.priceMonthlyCents ?? null,

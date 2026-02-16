@@ -13,12 +13,7 @@ router.post('/plans', authMiddleware, requirePlatformAdmin, platformAdminControl
 router.post('/tenants/:id/plan', authMiddleware, requirePlatformAdmin, platformAdminController.assignTenantPlan);
 router.get('/tenants/:id/usage', authMiddleware, requirePlatformAdmin, platformAdminController.getTenantUsage);
 
-// Firm-scoped management (used when FIRM_SCOPE_ENABLED=true)
-router.get('/firms', authMiddleware, requirePlatformAdmin, platformAdminController.listFirms);
-router.post('/firms', authMiddleware, requirePlatformAdmin, platformAdminController.upsertFirm);
-router.post('/firms/:id/plan', authMiddleware, requirePlatformAdmin, platformAdminController.assignFirmPlan);
-router.get('/firms/:id/usage', authMiddleware, requirePlatformAdmin, platformAdminController.getFirmUsage);
-router.post('/firms/:id/override', authMiddleware, requirePlatformAdmin, platformAdminController.upsertFirmOverride);
+// Firm-scoped routes removed – architecture is one DB per firm.
 
 // Placeholder hook for future messaging (T-7 days warnings).
 router.post('/retention/warnings/schedule', authMiddleware, requirePlatformAdmin, platformAdminController.scheduleDeletionWarnings);

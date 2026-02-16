@@ -38,6 +38,15 @@ function bytesToGb(bytes) {
     return b / (1024 * 1024 * 1024);
 }
 
+function formatStorageDisplay(bytes) {
+    const b = Number(bytes || 0);
+    if (!Number.isFinite(b) || b <= 0) return '0 MB';
+    const mb = b / (1024 * 1024);
+    if (mb < 1024) return `${mb.toFixed(1)} MB`;
+    const gb = mb / 1024;
+    return `${gb.toFixed(2)} GB`;
+}
+
 function formatMoneyCents(cents) {
     const n = Number(cents);
     if (!Number.isFinite(n)) return null;
@@ -88,12 +97,12 @@ export default function PlanUsageScreen() {
 
         const quotas = plan?.quotas || {};
 
-        const docsThisMonth = usage?.documents?.createdThisMonth ?? usage?.documents?.createdThisMonth ?? null;
+        const docsThisMonth = usage?.documents?.createdThisMonth ?? null;
         const storageGbUsed = usage?.storage?.bytesTotal != null ? bytesToGb(usage?.storage?.bytesTotal) : null;
+        const storageBytesTotal = usage?.storage?.bytesTotal ?? null;
         const seatsUsed = usage?.seats?.used ?? null;
-        const otpSmsThisMonth = usage?.otp?.smsThisMonth ?? null;
-        const evidenceGenerationsThisMonth = usage?.evidence?.generationsThisMonth ?? null;
-        const evidenceCpuSecondsThisMonth = usage?.evidence?.cpuSecondsThisMonth ?? null;
+        // sms.sentThisMonth = all SMS (OTP + notifications + any); backward compat with old otp field
+        const smsThisMonth = usage?.sms?.sentThisMonth ?? usage?.otp?.smsThisMonth ?? null;
 
         const monthStartUtc = usage?.monthStartUtc ?? usage?.period?.monthStartUtc ?? null;
 
@@ -114,10 +123,9 @@ export default function PlanUsageScreen() {
             meters: {
                 documentsThisMonth: safeNumber(docsThisMonth),
                 storageGbUsed: storageGbUsed != null ? Number(storageGbUsed.toFixed(2)) : null,
+                storageBytesTotal: safeNumber(storageBytesTotal),
                 seatsUsed: safeNumber(seatsUsed),
-                otpSmsThisMonth: safeNumber(otpSmsThisMonth),
-                evidenceGenerationsThisMonth: safeNumber(evidenceGenerationsThisMonth),
-                evidenceCpuSecondsThisMonth: safeNumber(evidenceCpuSecondsThisMonth),
+                smsThisMonth: safeNumber(smsThisMonth),
             },
         };
     }, [plan, usage]);
@@ -180,7 +188,7 @@ export default function PlanUsageScreen() {
                 <TopToolBarSmallScreen
                     LogoNavigate={AdminStackName + MainScreenName}
                     GetNavBarData={getNavBarData}
-                    chosenIndex={3}
+                    chosenNavKey="planUsage"
                 />
             )}
 
@@ -232,6 +240,11 @@ export default function PlanUsageScreen() {
                                 unit: 'GB',
                                 labelKey: 'planUsage.progress.storageGb',
                             })}
+                            {normalized.meters.storageBytesTotal != null && (
+                                <Text14 className="lw-planUsageScreen__storageDetail">
+                                    {t('planUsage.storageApprox', { size: formatStorageDisplay(normalized.meters.storageBytesTotal) })}
+                                </Text14>
+                            )}
 
                             {renderMeter({
                                 title: t('planUsage.meters.seats'),
@@ -242,27 +255,11 @@ export default function PlanUsageScreen() {
                             })}
 
                             {renderMeter({
-                                title: t('planUsage.meters.otpSms'),
-                                used: normalized.meters.otpSmsThisMonth,
+                                title: t('planUsage.meters.sms'),
+                                used: normalized.meters.smsThisMonth,
                                 quota: normalized.quotas?.otpSmsMonthlyQuota,
                                 unit: '',
-                                labelKey: 'planUsage.progress.otpSms',
-                            })}
-
-                            {renderMeter({
-                                title: t('planUsage.meters.evidenceGenerations'),
-                                used: normalized.meters.evidenceGenerationsThisMonth,
-                                quota: normalized.quotas?.evidenceGenerationsMonthlyQuota,
-                                unit: '',
-                                labelKey: 'planUsage.progress.evidenceGenerations',
-                            })}
-
-                            {renderMeter({
-                                title: t('planUsage.meters.evidenceCpuSeconds'),
-                                used: normalized.meters.evidenceCpuSecondsThisMonth,
-                                quota: normalized.quotas?.evidenceCpuSecondsMonthlyQuota,
-                                unit: 's',
-                                labelKey: 'planUsage.progress.evidenceCpuSeconds',
+                                labelKey: 'planUsage.progress.sms',
                             })}
                         </>
                     )}
