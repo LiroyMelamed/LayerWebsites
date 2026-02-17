@@ -441,18 +441,49 @@ const updateCase = async (req, res) => {
         );
 
         if (Descriptions && Descriptions.length > 0) {
-            for (const desc of Descriptions) {
+            // Collect IDs of descriptions the client still has
+            const keptIds = Descriptions
+                .filter((d) => d.DescriptionId)
+                .map((d) => d.DescriptionId);
+
+            // Delete descriptions that were removed on the client
+            if (keptIds.length > 0) {
                 await client.query(
-                    `
-                    UPDATE casedescriptions
-                    SET stage = $1,
-                        text = $2,
-                        timestamp = $3,
-                        isnew = $4
-                    WHERE descriptionid = $5 AND caseid = $6
-                    `,
-                    [desc.Stage, desc.Text, desc.Timestamp ? new Date(desc.Timestamp) : null, desc.IsNew ? true : false, desc.DescriptionId, caseId]
+                    `DELETE FROM casedescriptions WHERE caseid = $1 AND descriptionid != ALL($2::int[])`,
+                    [caseId, keptIds]
                 );
+            } else {
+                // All existing descriptions were removed (shouldn't normally happen)
+                await client.query(
+                    `DELETE FROM casedescriptions WHERE caseid = $1`,
+                    [caseId]
+                );
+            }
+
+            for (const desc of Descriptions) {
+                if (desc.DescriptionId) {
+                    // Update existing description
+                    await client.query(
+                        `
+                        UPDATE casedescriptions
+                        SET stage = $1,
+                            text = $2,
+                            timestamp = $3,
+                            isnew = $4
+                        WHERE descriptionid = $5 AND caseid = $6
+                        `,
+                        [desc.Stage, desc.Text, desc.Timestamp ? new Date(desc.Timestamp) : null, desc.IsNew ? true : false, desc.DescriptionId, caseId]
+                    );
+                } else {
+                    // Insert new description (added via "הוסף שלב")
+                    await client.query(
+                        `
+                        INSERT INTO casedescriptions (caseid, stage, text, timestamp, isnew)
+                        VALUES ($1, $2, $3, $4, $5)
+                        `,
+                        [caseId, desc.Stage, desc.Text, desc.Timestamp ? new Date(desc.Timestamp) : null, desc.IsNew ? true : false]
+                    );
+                }
             }
         }
 
