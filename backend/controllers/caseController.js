@@ -101,7 +101,7 @@ const getCases = async (req, res) => {
                 query += " WHERE C.userid = $1";
                 params.push(userId);
             }
-            query += " ORDER BY C.caseid, CD.stage";
+            query += " ORDER BY C.createdat DESC, C.caseid DESC, CD.stage";
 
             const result = await pool.query(query, params);
             return res.json(_mapCaseResults(result.rows));
@@ -114,12 +114,12 @@ const getCases = async (req, res) => {
             userRole === 'Admin'
                 ? `SELECT DISTINCT C.caseid
                    FROM cases C
-                   ORDER BY C.caseid
+                   ORDER BY C.createdat DESC, C.caseid DESC
                    LIMIT $1 OFFSET $2`
                 : `SELECT DISTINCT C.caseid
                    FROM cases C
                    WHERE C.userid = $1
-                   ORDER BY C.caseid
+                   ORDER BY C.createdat DESC, C.caseid DESC
                    LIMIT $2 OFFSET $3`;
 
         const idsParams = userRole === 'Admin' ? [limit, offset] : [userId, limit, offset];
@@ -130,8 +130,8 @@ const getCases = async (req, res) => {
 
         const detailsQuery =
             userRole === 'Admin'
-                ? `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) ORDER BY C.caseid, CD.stage`
-                : `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) AND C.userid = $2 ORDER BY C.caseid, CD.stage`;
+                ? `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`
+                : `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) AND C.userid = $2 ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
 
         const detailsParams = userRole === 'Admin' ? [ids] : [ids, userId];
         const result = await pool.query(detailsQuery, detailsParams);
@@ -212,12 +212,12 @@ const getCaseByName = async (req, res) => {
                 userRole === 'Admin'
                     ? `SELECT DISTINCT C.caseid
                        FROM cases C
-                       ORDER BY C.caseid
+                       ORDER BY C.createdat DESC, C.caseid DESC
                        LIMIT $1 OFFSET $2`
                     : `SELECT DISTINCT C.caseid
                        FROM cases C
                        WHERE C.userid = $1
-                       ORDER BY C.caseid
+                       ORDER BY C.createdat DESC, C.caseid DESC
                        LIMIT $2 OFFSET $3`;
 
             const idsParams = userRole === 'Admin' ? [limit, offset] : [userId, limit, offset];
@@ -227,8 +227,8 @@ const getCaseByName = async (req, res) => {
 
             const detailsQuery =
                 userRole === 'Admin'
-                    ? `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) ORDER BY C.caseid, CD.stage`
-                    : `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) AND C.userid = $2 ORDER BY C.caseid, CD.stage`;
+                    ? `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`
+                    : `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) AND C.userid = $2 ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
 
             const detailsParams = userRole === 'Admin' ? [ids] : [ids, userId];
             const result = await pool.query(detailsQuery, detailsParams);
@@ -273,7 +273,7 @@ const getCaseByName = async (req, res) => {
             paramIndex++;
         }
 
-        query += " ORDER BY C.caseid, CD.stage";
+        query += " ORDER BY C.createdat DESC, C.caseid DESC, CD.stage";
 
         const result = await pool.query(query, params);
 
@@ -739,8 +739,8 @@ const getTaggedCases = async (req, res) => {
         if (!pagination.enabled) {
             const query =
                 userRole === "Admin"
-                    ? `${_buildBaseCaseQuery()} WHERE C.istagged = true ORDER BY C.caseid, CD.stage;`
-                    : `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.userid = $1 ORDER BY C.caseid, CD.stage;`;
+                    ? `${_buildBaseCaseQuery()} WHERE C.istagged = true ORDER BY C.createdat DESC, C.caseid DESC, CD.stage;`
+                    : `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.userid = $1 ORDER BY C.createdat DESC, C.caseid DESC, CD.stage;`;
 
             const params = userRole === "Admin" ? [] : [userId];
 
@@ -755,12 +755,12 @@ const getTaggedCases = async (req, res) => {
                 ? `SELECT DISTINCT C.caseid
                    FROM cases C
                    WHERE C.istagged = true
-                   ORDER BY C.caseid
+                   ORDER BY C.createdat DESC, C.caseid DESC
                    LIMIT $1 OFFSET $2`
                 : `SELECT DISTINCT C.caseid
                    FROM cases C
                    WHERE C.istagged = true AND C.userid = $1
-                   ORDER BY C.caseid
+                   ORDER BY C.createdat DESC, C.caseid DESC
                    LIMIT $2 OFFSET $3`;
 
         const idsParams = userRole === 'Admin' ? [limit, offset] : [userId, limit, offset];
@@ -771,8 +771,8 @@ const getTaggedCases = async (req, res) => {
 
         const detailsQuery =
             userRole === 'Admin'
-                ? `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.caseid = ANY($1::int[]) ORDER BY C.caseid, CD.stage`
-                : `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.caseid = ANY($1::int[]) AND C.userid = $2 ORDER BY C.caseid, CD.stage`;
+                ? `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.caseid = ANY($1::int[]) ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`
+                : `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.caseid = ANY($1::int[]) AND C.userid = $2 ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
 
         const detailsParams = userRole === 'Admin' ? [ids] : [ids, userId];
         const result = await pool.query(detailsQuery, detailsParams);
@@ -809,12 +809,12 @@ const getTaggedCasesByName = async (req, res) => {
                     ? `SELECT DISTINCT C.caseid
                        FROM cases C
                        WHERE C.istagged = true
-                       ORDER BY C.caseid
+                       ORDER BY C.createdat DESC, C.caseid DESC
                        LIMIT $1 OFFSET $2`
                     : `SELECT DISTINCT C.caseid
                        FROM cases C
                        WHERE C.istagged = true AND C.userid = $1
-                       ORDER BY C.caseid
+                       ORDER BY C.createdat DESC, C.caseid DESC
                        LIMIT $2 OFFSET $3`;
 
             const idsParams = userRole === 'Admin' ? [limit, offset] : [userId, limit, offset];
@@ -824,8 +824,8 @@ const getTaggedCasesByName = async (req, res) => {
 
             const detailsQuery =
                 userRole === 'Admin'
-                    ? `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.caseid = ANY($1::int[]) ORDER BY C.caseid, CD.stage`
-                    : `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.caseid = ANY($1::int[]) AND C.userid = $2 ORDER BY C.caseid, CD.stage`;
+                    ? `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.caseid = ANY($1::int[]) ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`
+                    : `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.caseid = ANY($1::int[]) AND C.userid = $2 ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
 
             const detailsParams = userRole === 'Admin' ? [ids] : [ids, userId];
             const result = await pool.query(detailsQuery, detailsParams);
@@ -871,7 +871,7 @@ const getTaggedCasesByName = async (req, res) => {
             paramIndex++;
         }
 
-        query += " ORDER BY C.caseid, CD.stage";
+        query += " ORDER BY C.createdat DESC, C.caseid DESC, CD.stage";
 
         const result = await pool.query(query, params);
 
@@ -986,7 +986,7 @@ const getMyCases = async (req, res) => {
         if (pagination === null) return;
 
         if (!pagination.enabled) {
-            const query = `${_buildBaseCaseQuery()} WHERE C.casemanagerid = $1 ORDER BY C.caseid, CD.stage`;
+            const query = `${_buildBaseCaseQuery()} WHERE C.casemanagerid = $1 ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
             const result = await pool.query(query, [userId]);
             return res.json(_mapCaseResults(result.rows));
         }
@@ -996,14 +996,14 @@ const getMyCases = async (req, res) => {
         const idsQuery = `SELECT DISTINCT C.caseid
                   FROM cases C
                   WHERE C.casemanagerid = $1
-                  ORDER BY C.caseid
+                  ORDER BY C.createdat DESC, C.caseid DESC
                   LIMIT $2 OFFSET $3`;
 
         const idsResult = await pool.query(idsQuery, [userId, limit, offset]);
         const ids = idsResult.rows.map((r) => r.caseid);
         if (ids.length === 0) return res.json([]);
 
-        const detailsQuery = `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) AND C.casemanagerid = $2 ORDER BY C.caseid, CD.stage`;
+        const detailsQuery = `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) AND C.casemanagerid = $2 ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
         const result = await pool.query(detailsQuery, [ids, userId]);
         return res.json(_mapCaseResults(result.rows));
     } catch (error) {

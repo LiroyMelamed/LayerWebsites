@@ -32,7 +32,7 @@ const getAdminByName = async (req, res) => {
     if (!name) {
         try {
             const result = await pool.query(
-                "SELECT userid, name, email, phonenumber, companyname, createdat FROM users WHERE role = 'Admin' ORDER BY userid DESC"
+                "SELECT userid, name, email, phonenumber, companyname, createdat FROM users WHERE role = 'Admin' ORDER BY createdat DESC"
             );
             return res.json(result.rows);
         } catch (error) {
@@ -44,7 +44,7 @@ const getAdminByName = async (req, res) => {
     try {
         // Use parameterized query with $1 for PostgreSQL and ILIKE for case-insensitive search
         const result = await pool.query(
-            "SELECT userid, name, email, phonenumber, companyname, createdat FROM users WHERE role = 'Admin' AND name ILIKE $1",
+            "SELECT userid, name, email, phonenumber, companyname, createdat FROM users WHERE role = 'Admin' AND name ILIKE $1 ORDER BY createdat DESC",
             [`%${name}%`] // Parameters passed as an array
         );
 

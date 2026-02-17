@@ -35,7 +35,7 @@ const getCaseTypes = async (req, res) => {
             params.push(userId);
         }
 
-        query += " ORDER BY ct.casetypeid, cd.stage";
+        query += " ORDER BY ct.casetypeid DESC, cd.stage";
 
         const result = await getCaseTypesListCached({
             role: userRole,
@@ -191,7 +191,7 @@ const getCaseTypeByName = async (req, res) => {
             query += ` WHERE ${whereClauses.join(' AND ')}`;
         }
 
-        query += ' ORDER BY ct.casetypeid, cd.stage';
+        query += ' ORDER BY ct.casetypeid DESC, cd.stage';
 
         const result = await pool.query(query, params);
 
