@@ -5,7 +5,7 @@ import { TextBold20 } from "../../../../components/specializedComponents/text/Al
 import DefaultState from "../../../../components/styledComponents/defaultState/DefaultState";
 import CaseMenuItem from "../../../../components/styledComponents/menuItems/CaseMenuItem";
 import Separator from "../../../../components/styledComponents/separators/Separator";
-import { getOpenData } from "../../../allCasesScreen/components/AllCasesCard";
+import { getOpenDataClient } from "../../../allCasesScreen/components/AllCasesCard";
 import { useTranslation } from 'react-i18next';
 
 import './ClosedCasesCard.scss';
@@ -47,7 +47,7 @@ export default function ClosedCasesCard({ closedCases, reperformAfterSave, style
                             leftPreSecondLine={""}
                             leftValueSecondLine={""}
 
-                            openData={getOpenData(closedCases, index, t)}
+                            openData={getOpenDataClient(closedCases, index, t)}
                             isClient={true}
                         />
                     </>

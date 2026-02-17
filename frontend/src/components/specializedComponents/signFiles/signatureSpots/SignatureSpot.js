@@ -29,15 +29,15 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
     const isRequired = typeof isRequiredRaw === 'boolean' ? isRequiredRaw : isSignatureLike;
 
     const fieldTypeLabels = {
-        signature: t('signing.fields.signatureShort'),
-        email: t('signing.fields.emailShort'),
-        phone: t('signing.fields.phoneShort'),
-        initials: t('signing.fields.initialsShort'),
-        text: t('signing.fields.textShort'),
-        date: t('signing.fields.dateShort'),
-        checkbox: t('signing.fields.checkboxShort'),
+        signature: t('signing.fields.signature'),
+        email: t('signing.fields.email'),
+        phone: t('signing.fields.phone'),
+        initials: t('signing.fields.initials'),
+        text: t('signing.fields.text'),
+        date: t('signing.fields.date'),
+        checkbox: t('signing.fields.checkbox'),
         number: '#',
-        idnumber: t('signing.fields.idNumberShort'),
+        idnumber: t('signing.fields.idNumber'),
     };
 
     const fieldTypeIcons = {
@@ -246,11 +246,11 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                     {fieldTypeIcons[fieldType] && (
                         <SimpleIcon
                             src={fieldTypeIcons[fieldType]}
-                            alt={fieldTypeLabels[fieldType] || t('signing.fields.signatureShort')}
+                            alt={fieldTypeLabels[fieldType] || t('signing.fields.signature')}
                             size={14}
                         />
                     )}
-                    <span className="lw-signing-spotTypeLabel">{fieldTypeLabels[fieldType] || t('signing.fields.signatureShort')}</span>
+                    <span className="lw-signing-spotTypeLabel">{fieldTypeLabels[fieldType] || t('signing.fields.signature')}</span>
                 </span>
                 <span className={`lw-signing-spotRequired ${isRequired ? 'is-required' : 'is-optional'}`}>
                     {isRequired ? t('signing.fieldSettings.requiredShort') : t('signing.fieldSettings.optionalShort')}

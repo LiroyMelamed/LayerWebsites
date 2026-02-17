@@ -1,16 +1,26 @@
 @use '../../styles/mixins' as m;
 @use '../../styles/variables' as v;
 
-.lw-allCasesScreen__row {
+.lw-allCasesScreen__topRow {
     @include m.row(v.$space-3, wrap);
     max-width: 100%;
-    margin: 1rem;
+    margin: 1rem 1rem 0.5rem;
+}
+
+.lw-allCasesScreen__filtersRow {
+    @include m.row(v.$space-3, wrap);
+    max-width: 100%;
+    margin: 0 1rem 1rem;
 }
 
 .lw-allCasesScreen__search {
-    flex: 1 1 1 10rem;
-    min-inline-size: 14rem;
-    max-inline-size: 31.25rem;
+    flex: 1 1 14rem;
+    min-inline-size: 0;
+}
+
+.lw-allCasesScreen__clientFilter {
+    flex: 1 1 14rem;
+    min-inline-size: 0;
 }
 
 .lw-allCasesScreen__choose {

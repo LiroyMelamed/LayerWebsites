@@ -40,11 +40,21 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
         IsTagged: caseDetails?.IsTagged || false,
         PhoneNumber: caseDetails?.PhoneNumber || '',
         UserId: caseDetails?.UserId || null,
+        Users: caseDetails?.Users || (caseDetails?.UserId ? [{ UserId: caseDetails.UserId, Name: caseDetails.CustomerName || '', Email: caseDetails.CustomerMail || '', PhoneNumber: caseDetails.PhoneNumber || '' }] : []),
         CaseManager: caseDetails?.CaseManager || '',
         CaseManagerId: caseDetails?.CaseManagerId || '',
         EstimatedCompletionDate: caseDetails?.EstimatedCompletionDate,
         LicenseExpiryDate: caseDetails?.LicenseExpiryDate,
     });
+
+    const moveStage = (fromIndex, toIndex) => {
+        setCaseData((prev) => {
+            const descs = [...prev.Descriptions];
+            const [moved] = descs.splice(fromIndex, 1);
+            descs.splice(toIndex, 0, moved);
+            return { ...prev, Descriptions: descs.map((d, i) => ({ ...d, Stage: i + 1 })) };
+        });
+    };
 
     const validateCaseData = useMemo(() => {
         return (data) => {
@@ -163,7 +173,8 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
         setFieldErrors(errors);
         if (Object.keys(errors).length) return;
 
-        saveCase(caseData);
+        const payload = { ...caseData, UserIds: caseData.Users.map(u => u.UserId) };
+        saveCase(payload);
     };
 
     const handleUpdateCase = () => {
@@ -172,7 +183,8 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
         setFieldErrors(errors);
         if (Object.keys(errors).length) return;
 
-        saveCase(caseData.CaseId, caseData);
+        const payload = { ...caseData, UserIds: caseData.Users.map(u => u.UserId) };
+        saveCase(caseData.CaseId, payload);
     };
 
     const handleDeleteCase = () => {
@@ -196,23 +208,51 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
         const selectedUser = customers.find(user => user.Name.trim() === userName.trim());
 
         if (selectedUser) {
-            setCaseData((prevDetails) => ({
-                ...prevDetails,
-                UserId: selectedUser.UserId,
-                CustomerName: selectedUser.Name,
-                CustomerMail: selectedUser.Email,
-                PhoneNumber: selectedUser.PhoneNumber,
-                CompanyName: selectedUser.CompanyName || '',
-            }));
+            setCaseData((prevDetails) => {
+                // Don't add if already linked
+                if (prevDetails.Users.some(u => u.UserId === selectedUser.UserId)) return prevDetails;
+
+                const updatedUsers = [...prevDetails.Users, {
+                    UserId: selectedUser.UserId,
+                    Name: selectedUser.Name,
+                    Email: selectedUser.Email,
+                    PhoneNumber: selectedUser.PhoneNumber,
+                }];
+
+                // Primary client = first user
+                const primary = updatedUsers[0];
+                return {
+                    ...prevDetails,
+                    Users: updatedUsers,
+                    UserId: primary.UserId,
+                    CustomerName: primary.Name,
+                    CustomerMail: primary.Email || prevDetails.CustomerMail,
+                    PhoneNumber: primary.PhoneNumber || prevDetails.PhoneNumber,
+                    CompanyName: selectedUser.CompanyName || prevDetails.CompanyName,
+                };
+            });
 
             applyFieldErrorUpdates({
-                UserId: selectedUser.UserId,
                 CustomerName: selectedUser.Name,
                 CustomerMail: selectedUser.Email,
                 PhoneNumber: selectedUser.PhoneNumber,
-                CompanyName: selectedUser.CompanyName || '',
             });
         }
+    };
+
+    const handleRemoveUser = (userId) => {
+        setCaseData((prevDetails) => {
+            const updatedUsers = prevDetails.Users.filter(u => u.UserId !== userId);
+            const primary = updatedUsers[0];
+            return {
+                ...prevDetails,
+                Users: updatedUsers,
+                UserId: primary?.UserId || null,
+                CustomerName: primary?.Name || '',
+                CustomerMail: primary?.Email || '',
+                PhoneNumber: primary?.PhoneNumber || '',
+            };
+        });
     };
 
     const handleManagerSelected = (selectedManager) => {
@@ -249,6 +289,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                 IsTagged: caseDetails.IsTagged || false,
                 PhoneNumber: caseDetails.PhoneNumber || '',
                 UserId: caseDetails.UserId,
+                Users: caseDetails.Users || (caseDetails.UserId ? [{ UserId: caseDetails.UserId, Name: caseDetails.CustomerName || '', Email: caseDetails.CustomerMail || '', PhoneNumber: caseDetails.PhoneNumber || '' }] : []),
                 CaseManager: caseDetails.CaseManager || '',
                 CaseManagerId: caseDetails?.CaseManagerId || '',
                 EstimatedCompletionDate: caseDetails.EstimatedCompletionDate,
@@ -304,17 +345,28 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                 </SimpleContainer>
 
                 <SimpleContainer className="lw-caseFullView__row">
-                    <SearchInput
-                        onSearch={searchCustomers}
-                        title={t('cases.customerName')}
-                        value={caseData.CustomerName}
-                        isPerforming={isPerformingCustomers}
-                        getButtonTextFunction={(item) => item.Name}
-                        buttonPressFunction={handleCustomerSelect}
-                        queryResult={customers}
-                        className="lw-caseFullView__field"
-                        error={fieldErrors?.CustomerName}
-                    />
+                    <SimpleContainer className="lw-caseFullView__field lw-caseFullView__clientsCol">
+                        <SearchInput
+                            onSearch={searchCustomers}
+                            title={t('cases.customerName')}
+                            value={caseData.CustomerName}
+                            isPerforming={isPerformingCustomers}
+                            getButtonTextFunction={(item) => item.Name}
+                            buttonPressFunction={handleCustomerSelect}
+                            queryResult={customers}
+                            error={fieldErrors?.CustomerName}
+                        />
+                        {caseData.Users.length > 0 && (
+                            <SimpleContainer className="lw-caseFullView__clientChips">
+                                {caseData.Users.map((u) => (
+                                    <span key={u.UserId} className="lw-caseFullView__clientChip">
+                                        {u.Name}
+                                        <button type="button" className="lw-caseFullView__chipRemove" onClick={() => handleRemoveUser(u.UserId)}>&times;</button>
+                                    </span>
+                                ))}
+                            </SimpleContainer>
+                        )}
+                    </SimpleContainer>
                     <SimpleInput
                         className="lw-caseFullView__field"
                         title={t('cases.companyName')}
@@ -380,7 +432,34 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                 </SimpleContainer>
 
                 {caseData?.Descriptions?.map((description, index) => (
-                    <SimpleContainer key={`DescriptionNumber${index}`} className="lw-caseFullView__textAreaRow">
+                    <SimpleContainer
+                        key={`DescriptionNumber${description.DescriptionId || index}`}
+                        className="lw-caseFullView__textAreaRow"
+                    >
+                        <SimpleContainer className="lw-caseFullView__stageHeader">
+                            <SimpleContainer className="lw-caseFullView__stageArrows">
+                                {index > 0 && (
+                                    <button type="button" className="lw-caseFullView__arrowBtn" onClick={() => moveStage(index, index - 1)} title={t('common.moveUp')}>&#x25B2;</button>
+                                )}
+                                {index < caseData.Descriptions.length - 1 && (
+                                    <button type="button" className="lw-caseFullView__arrowBtn" onClick={() => moveStage(index, index + 1)} title={t('common.moveDown')}>&#x25BC;</button>
+                                )}
+                            </SimpleContainer>
+                            {caseData.Descriptions.length > 1 && (
+                                <button
+                                    type="button"
+                                    className="lw-caseFullView__removeStageBtn"
+                                    onClick={() => {
+                                        setCaseData((prev) => {
+                                            const updated = prev.Descriptions.filter((_, i) => i !== index)
+                                                .map((d, i) => ({ ...d, Stage: i + 1 }));
+                                            return { ...prev, Descriptions: updated };
+                                        });
+                                    }}
+                                    title={t('cases.removeStage')}
+                                >&#x2715;</button>
+                            )}
+                        </SimpleContainer>
                         <SimpleTextArea
                             title={t('cases.descriptionNumber', { number: index + 1 })}
                             value={description?.Text || ''}
@@ -393,21 +472,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                                 });
                             }}
                         />
-                        {caseData.Descriptions.length > 1 && (
-                            <SecondaryButton
-                                onPress={() => {
-                                    setCaseData((prev) => {
-                                        const updated = prev.Descriptions.filter((_, i) => i !== index)
-                                            .map((d, i) => ({ ...d, Stage: i + 1 }));
-                                        return { ...prev, Descriptions: updated };
-                                    });
-                                }}
-                                size={buttonSizes.SMALL}
-                                className="lw-caseFullView__removeStageBtn"
-                            >
-                                {t('cases.removeStage')}
-                            </SecondaryButton>
-                        )}
+
                     </SimpleContainer>
                 ))}
 
@@ -426,6 +491,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                             });
                         }}
                         size={buttonSizes.SMALL}
+                        style={{ height: 20, padding: '0.2rem 0.5rem', fontSize: '0.7rem' }}
                     >
                         {t('cases.addStage')}
                     </SecondaryButton>

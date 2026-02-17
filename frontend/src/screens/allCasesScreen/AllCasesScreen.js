@@ -8,6 +8,7 @@ import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
 import SimpleScrollView from "../../components/simpleComponents/SimpleScrollView";
 import SearchInput from "../../components/specializedComponents/containers/SearchInput";
 import ChooseButton from "../../components/styledComponents/buttons/ChooseButton";
+import FilterSearchInput from "../../components/specializedComponents/containers/FilterSearchInput";
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import CaseFullView from "../../components/styledComponents/cases/CaseFullView";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
@@ -29,6 +30,8 @@ export default function AllCasesScreen() {
     const { isSmallScreen } = useScreenSize();
     const [selectedCaseType, setSelectedCaseType] = useState(null);
     const [selectedStatus, setSelectedStatus] = useState(null);
+    const [selectedClient, setSelectedClient] = useState(null);
+    const [selectedManager, setSelectedManager] = useState(null);
     const [filteredCases, setFilteredCases] = useState(null);
 
     const { result: allCasesTypes, isPerforming: isPerformingAllCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
@@ -49,7 +52,7 @@ export default function AllCasesScreen() {
         );
     };
 
-    const applyFilters = (typeFilter, statusFilter) => {
+    const applyFilters = (typeFilter, statusFilter, clientFilter, managerFilter) => {
         let filtered = allCases;
 
         if (typeFilter) {
@@ -62,7 +65,20 @@ export default function AllCasesScreen() {
             filtered = filtered.filter(item => item.IsClosed === true);
         }
 
-        if (!typeFilter && !statusFilter) {
+        if (clientFilter) {
+            filtered = filtered.filter(item => {
+                if (Array.isArray(item.Users) && item.Users.length > 0) {
+                    return item.Users.some(u => u.Name === clientFilter);
+                }
+                return item.CustomerName === clientFilter;
+            });
+        }
+
+        if (managerFilter) {
+            filtered = filtered.filter(item => item.CaseManager === managerFilter);
+        }
+
+        if (!typeFilter && !statusFilter && !clientFilter && !managerFilter) {
             setFilteredCases(null);
         } else {
             setFilteredCases(filtered);
@@ -71,13 +87,29 @@ export default function AllCasesScreen() {
 
     const handleFilterByType = (type) => {
         setSelectedCaseType(type);
-        applyFilters(type, selectedStatus);
+        applyFilters(type, selectedStatus, selectedClient, selectedManager);
     };
 
     const handleFilterByStatus = (status) => {
         setSelectedStatus(status);
-        applyFilters(selectedCaseType, status);
+        applyFilters(selectedCaseType, status, selectedClient, selectedManager);
     };
+
+    const handleFilterByClient = (client) => {
+        setSelectedClient(client);
+        applyFilters(selectedCaseType, selectedStatus, client, selectedManager);
+    };
+
+    const handleFilterByManager = (manager) => {
+        setSelectedManager(manager);
+        applyFilters(selectedCaseType, selectedStatus, selectedClient, manager);
+    };
+
+    const clientNames = [...new Set((allCases || []).flatMap(c => {
+        if (Array.isArray(c.Users) && c.Users.length > 0) return c.Users.map(u => u.Name);
+        return [c.CustomerName];
+    }).filter(Boolean))].sort();
+    const managerNames = [...new Set((allCases || []).map(c => c.CaseManager).filter(Boolean))].sort();
 
     if (isPerformingAllCases || isPerformingAllCasesTypes) {
         return <SimpleLoader />;
@@ -88,7 +120,7 @@ export default function AllCasesScreen() {
             {isSmallScreen && <TopToolBarSmallScreen chosenNavKey="allCases" LogoNavigate={AdminStackName + MainScreenName} />}
 
             <SimpleScrollView>
-                <SimpleContainer className="lw-allCasesScreen__row">
+                <SimpleContainer className="lw-allCasesScreen__topRow">
                     <SearchInput
                         onSearch={handleSearch}
                         title={t('cases.searchCaseTitle')}
@@ -100,6 +132,16 @@ export default function AllCasesScreen() {
                         buttonPressFunction={handleSearchSelect}
                     />
 
+                    <FilterSearchInput
+                        items={clientNames}
+                        placeholder={t('cases.customerName')}
+                        titleFontSize={20}
+                        onSelect={handleFilterByClient}
+                        className="lw-allCasesScreen__clientFilter"
+                    />
+                </SimpleContainer>
+
+                <SimpleContainer className="lw-allCasesScreen__filtersRow">
                     <ChooseButton
                         buttonText={t('cases.statusFilter')}
                         items={[
@@ -115,6 +157,13 @@ export default function AllCasesScreen() {
                         items={(allCasesTypes || []).map((ct) => ({ value: ct, label: ct }))}
                         className="lw-allCasesScreen__choose"
                         OnPressChoiceFunction={handleFilterByType}
+                    />
+
+                    <ChooseButton
+                        buttonText={t('cases.caseManager')}
+                        items={managerNames.map((name) => ({ value: name, label: name }))}
+                        className="lw-allCasesScreen__choose"
+                        OnPressChoiceFunction={handleFilterByManager}
                     />
                 </SimpleContainer>
 

@@ -45,7 +45,7 @@ export default function PinnedCasesCard({ taggedCases, isPerforming, rePerformFu
 
                         <CaseMenuItem
                             fullCase={item}
-                            rightTitle={`${item.CaseName} - ${item.CustomerName}`}
+                            rightTitle={`${item.CaseName} - ${_clientNames(item)}`}
 
                             leftPreFirstLine={t('cases.caseType')}
                             leftValueFirstLine={item.CaseTypeName}
@@ -67,11 +67,18 @@ export default function PinnedCasesCard({ taggedCases, isPerforming, rePerformFu
 }
 
 //Functions
+function _clientNames(caseItem) {
+    if (Array.isArray(caseItem.Users) && caseItem.Users.length > 0) {
+        return caseItem.Users.map(u => u.Name).filter(Boolean).join(', ');
+    }
+    return caseItem.CustomerName || '';
+}
+
 function getOpenData(taggedCases, index, t) {
     const openData = [
         {
             title: t('cases.customerName'),
-            value: taggedCases[index].CustomerName
+            value: _clientNames(taggedCases[index])
         },
         {
             title: t('cases.customerId'),

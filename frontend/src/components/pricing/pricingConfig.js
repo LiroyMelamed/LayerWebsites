@@ -7,9 +7,9 @@ export const PRICING_CONFIG = {
 
     // Single source of truth for contact numbers used on pricing pages.
     contact: {
-        phoneNational: "0507299064",
+        phoneNational: "036565004",
         // WhatsApp expects a country code without '+'
-        phoneE164Digits: "972507299064",
+        phoneE164Digits: "97236565004",
     },
 
     // Total rule: system base + sum of the 3 selected sections.

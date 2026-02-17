@@ -829,6 +829,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             }
 
             // Optimistic: update current spot value immediately so overlay shows it even before reload.
+            let nextUnsignedSpot = null;
             try {
                 setFileDetails((prev) => {
                     if (!prev?.signatureSpots || !currentSpot?.SignatureSpotId) return prev;
@@ -843,24 +844,22 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         };
                     });
 
-                    // Advance locally to keep the new value visible even if the backend cannot persist/return it yet.
-                    try {
-                        const unsignedRequired = getUnsignedRequiredSpots(updatedSpots);
-                        const unsignedOptional = getUnsignedOptionalSpots(updatedSpots);
-                        const nextUnsigned = (unsignedRequired.length > 0 ? unsignedRequired : unsignedOptional)[0] || null;
-                        setCurrentSpot(nextUnsigned);
-                        if (nextUnsigned) {
-                            scrollToSpot(nextUnsigned);
-                            setHasStartedNextFlow(true);
-                        }
-                    } catch {
-                        // ignore
-                    }
+                    // Compute next unsigned spot from the updated list.
+                    const unsignedRequired = getUnsignedRequiredSpots(updatedSpots);
+                    const unsignedOptional = getUnsignedOptionalSpots(updatedSpots);
+                    nextUnsignedSpot = (unsignedRequired.length > 0 ? unsignedRequired : unsignedOptional)[0] || null;
 
                     return { ...prev, signatureSpots: updatedSpots };
                 });
             } catch {
                 // ignore
+            }
+
+            // Advance to next unsigned spot (or clear if all done) — outside updater to avoid batching issues.
+            setCurrentSpot(nextUnsignedSpot);
+            if (nextUnsignedSpot) {
+                scrollToSpot(nextUnsignedSpot);
+                setHasStartedNextFlow(true);
             }
 
             setMessage({ type: "success", text: t("signing.canvas.fieldSavedSuccess") });
@@ -1162,27 +1161,28 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 </SimpleContainer>
                             )}
 
-                            <div className="lw-signing-legalBox">
-                                <label className="lw-signing-legalRow">
-                                    <input
-                                        type="checkbox"
-                                        checked={consentAccepted}
-                                        onChange={(e) => {
-                                            const next = Boolean(e.target.checked);
-                                            if (!next) return;
-                                            setConsentAccepted(true);
-                                            try {
-                                                localStorage.setItem(consentStorageKey, "true");
-                                            } catch {
-                                                // ignore
-                                            }
-                                        }}
-                                        // Keep visible; once accepted, prevent accidental uncheck that would block signing.
-                                        disabled={saving || consentAccepted}
-                                    />
-                                    <span>{t("signing.canvas.consentText")}</span>
-                                </label>
-                            </div>
+                            {!consentAccepted && (
+                                <div className="lw-signing-legalBox">
+                                    <label className="lw-signing-legalRow">
+                                        <input
+                                            type="checkbox"
+                                            checked={consentAccepted}
+                                            onChange={(e) => {
+                                                const next = Boolean(e.target.checked);
+                                                if (!next) return;
+                                                setConsentAccepted(true);
+                                                try {
+                                                    localStorage.setItem(consentStorageKey, "true");
+                                                } catch {
+                                                    // ignore
+                                                }
+                                            }}
+                                            disabled={saving}
+                                        />
+                                        <span>{t("signing.canvas.consentText")}</span>
+                                    </label>
+                                </div>
+                            )}
 
                             {otpRequired && (
                                 <div className="lw-signing-otpBox">

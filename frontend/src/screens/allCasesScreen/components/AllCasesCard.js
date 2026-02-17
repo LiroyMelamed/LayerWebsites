@@ -48,7 +48,7 @@ export default function AllCasesCard({ allCases, isPerforming, reperformAfterSav
 
                         <CaseMenuItem
                             fullCase={item}
-                            rightTitle={`${item.CaseName} - ${item.CustomerName}`}
+                            rightTitle={`${item.CaseName} - ${_clientNames(item)}`}
 
                             leftPreFirstLine={t('cases.caseType')}
                             leftValueFirstLine={item.CaseTypeName}
@@ -71,6 +71,13 @@ export default function AllCasesCard({ allCases, isPerforming, reperformAfterSav
 }
 
 //Functions
+function _clientNames(caseItem) {
+    if (Array.isArray(caseItem.Users) && caseItem.Users.length > 0) {
+        return caseItem.Users.map(u => u.Name).filter(Boolean).join(', ');
+    }
+    return caseItem.CustomerName || '';
+}
+
 export function getOpenData(allCases, index, t) {
     const caseItem = allCases[index];
     const translate = t ?? i18next.t.bind(i18next);
@@ -78,7 +85,7 @@ export function getOpenData(allCases, index, t) {
     const openData = [
         {
             title: translate('cases.customerName'),
-            value: caseItem.CustomerName
+            value: _clientNames(caseItem)
         },
         {
             title: translate('cases.phoneNumber'),
@@ -107,7 +114,7 @@ export function getOpenDataClient(taggedCases, index, t) {
     const openData = [
         {
             title: translate('cases.customerName'),
-            value: taggedCases[index].CustomerName
+            value: _clientNames(taggedCases[index])
         },
         {
             title: translate('cases.phoneNumber'),

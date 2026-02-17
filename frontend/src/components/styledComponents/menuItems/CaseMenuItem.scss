@@ -9,6 +9,8 @@
 .lw-caseMenuItem__header {
     @include m.row(v.$space-4, nowrap, center);
     min-block-size: 2.75rem;
+    min-inline-size: 0;
+    overflow: hidden;
 }
 
 .lw-caseMenuItem__content {
@@ -20,19 +22,43 @@
 
 .lw-caseMenuItem__row {
     @include m.row(v.$space-2, nowrap, center);
+    min-inline-size: 0;
+    max-inline-size: 100%;
+}
+
+.lw-caseMenuItem__row--top {
+    flex-wrap: wrap;
+}
+
+.lw-caseMenuItem__row--bottom {
+    align-items: flex-start;
 }
 
 .lw-caseMenuItem__title {
-    flex: 1;
+    flex: 0 1 auto;
     min-inline-size: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .lw-caseMenuItem__pair {
     @include m.row(v.$space-1, nowrap, center);
 }
 
+.lw-caseMenuItem__pair--caseType {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
 .lw-caseMenuItem__pair--grow {
     flex: 1;
+    min-inline-size: 0;
+    align-items: flex-start;
+
+    > :first-child {
+        white-space: nowrap;
+    }
 }
 
 .lw-caseMenuItem__toggle {

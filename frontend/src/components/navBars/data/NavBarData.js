@@ -3,6 +3,7 @@ import { AllMangerScreenName } from "../../../screens/allMangerScreen/AllMangerS
 import { AllCasesTypeScreenName } from "../../../screens/allCasesTypeScreen/AllCasesTypeScreen";
 import CaseTypeFullView from "../../styledComponents/cases/CaseTypeFullView";
 import CaseFullView from "../../styledComponents/cases/CaseFullView";
+import ClientPopup from "../../../screens/mainScreen/components/ClientPopUp";
 import { TaggedCasesScreenName } from "../../../screens/taggedCasesScreen/TaggedCasesScreen";
 import { AdminStackName } from "../../../navigation/AdminStack";
 import { SigningManagerScreenName } from "../../../screens/signingScreen/SigningManagerScreen";
@@ -66,6 +67,13 @@ export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t) =>
             onClick: () => openPopup(<CaseTypeFullView onFailureFunction={() => { }} closePopUpFunction={closePopup} />),
         },
         // ── Signing & Reminders ──
+        {
+            navKey: 'addOrUpdateClient',
+            buttonText: t('nav.addOrUpdateClient'),
+            buttonScreen: null,
+            icon: null,
+            onClick: () => openPopup(<ClientPopup onFailureFunction={() => { }} closePopUpFunction={closePopup} />),
+        },
         {
             navKey: 'signingFiles',
             routeMatch: [SigningManagerScreenName, uploadFileForSigningScreenName],

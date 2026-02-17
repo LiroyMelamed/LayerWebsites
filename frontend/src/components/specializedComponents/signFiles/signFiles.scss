@@ -379,6 +379,12 @@
         border-style: dashed;
         opacity: 0.85;
     }
+
+    // Ensure spots stay readable on small screens
+    @media (max-width: 480px) {
+        min-width: 90px !important;
+        min-height: 36px !important;
+    }
 }
 
 .lw-signing-spotOverlay {

@@ -27,20 +27,112 @@
   display: flex;
   flex-direction: column;
   gap: v.$space-1;
+  cursor: grab;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  padding: v.$space-1;
+  transition: border-color 0.15s;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &[draggable='true']:hover {
+    border-color: var(--lw-color-primary);
+  }
+}
+
+.lw-caseFullView__stageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+.lw-caseFullView__stageArrows {
+  display: flex;
+  gap: 2px;
+}
+
+.lw-caseFullView__arrowBtn {
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.6rem;
+  line-height: 1;
+  padding: 1px 4px;
+  color: inherit;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: #999;
+  }
 }
 
 .lw-caseFullView__removeStageBtn {
-  align-self: flex-end;
+  background: none;
+  border: 1px solid #e53e3e;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.6rem;
+  line-height: 1;
+  padding: 1px 4px;
+  color: #e53e3e;
+
+  &:hover {
+    background: rgba(229, 62, 62, 0.1);
+    border-color: #c53030;
+    color: #c53030;
+  }
 }
 
 .lw-caseFullView__addStageRow {
   display: flex;
-  justify-content: flex-start;
-  margin-block: v.$space-2;
+  justify-content: flex-end;
+  margin-block: v.$space-1;
 }
 
 .lw-caseFullView__buttonsRow {
   @include m.row(v.$space-2);
   justify-content: center;
   margin-block: v.$space-4;
+}
+
+.lw-caseFullView__clientsCol {
+  display: flex;
+  flex-direction: column;
+  gap: v.$space-1;
+}
+
+.lw-caseFullView__clientChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: v.$space-1;
+}
+
+.lw-caseFullView__clientChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--lw-color-primary);
+  color: #fff;
+  border-radius: 16px;
+  padding: 2px 10px;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.lw-caseFullView__chipRemove {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+
+  &:hover {
+    opacity: 0.7;
+  }
 }

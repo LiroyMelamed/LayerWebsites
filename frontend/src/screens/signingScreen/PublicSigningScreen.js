@@ -13,7 +13,7 @@ import { useTranslation } from "react-i18next";
 
 import "./PublicSigningScreen.scss";
 
-export const PublicSigningScreenName = "/public-sign";
+export const PublicSignScreenName = "/PublicSignScreen";
 
 export default function PublicSigningScreen() {
     const location = useLocation();

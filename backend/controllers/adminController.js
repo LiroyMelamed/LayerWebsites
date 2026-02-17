@@ -178,6 +178,9 @@ const deleteAdmin = async (req, res, next) => {
 const addAdmin = async (req, res) => {
     const { name, email, phoneNumber, password } = req.body;
     try {
+        if (!password) {
+            return res.status(422).json({ message: "Password is required" });
+        }
         const hashedPassword = await bcrypt.hash(password, 10);
 
         await pool.query(

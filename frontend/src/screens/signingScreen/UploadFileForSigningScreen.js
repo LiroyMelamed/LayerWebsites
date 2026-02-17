@@ -38,7 +38,7 @@ import { MainScreenName } from "../mainScreen/MainScreen";
 import { useTranslation } from "react-i18next";
 import { SIGNING_OTP_ENABLED } from "../../featureFlags";
 
-export const uploadFileForSigningScreenName = "/upload-file-for-signing";
+export const uploadFileForSigningScreenName = "/UploadFileForSigningScreen";
 
 const buildFieldTypeOptions = (t) => ([
     { id: 'signature', label: t('signing.fields.signature'), shortLabel: t('signing.fields.signatureShort') },
@@ -345,6 +345,15 @@ export default function UploadFileForSigningScreen() {
 
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState(null);
+    const messageTimerRef = useRef(null);
+
+    useEffect(() => {
+        if (message) {
+            clearTimeout(messageTimerRef.current);
+            messageTimerRef.current = setTimeout(() => setMessage(null), 3000);
+        }
+        return () => clearTimeout(messageTimerRef.current);
+    }, [message]);
 
     const [uploadedFileKey, setUploadedFileKey] = useState(null);
     const [detecting, setDetecting] = useState(false);
@@ -857,13 +866,6 @@ export default function UploadFileForSigningScreen() {
                     </SimpleContainer>
 
                     <SimpleContainer className="lw-uploadSigningScreen__formCard">
-                        {message && (
-                            <div
-                                className={`lw-uploadSigningScreen__message ${message.type === "error" ? "is-error" : "is-success"}`}
-                            >
-                                {message.text}
-                            </div>
-                        )}
 
                         <SimpleContainer className="lw-uploadSigningScreen__searchRow">
                             <SearchInput
@@ -1108,6 +1110,15 @@ export default function UploadFileForSigningScreen() {
                     )}
                 </SimpleContainer>
             </SimpleScrollView>
+
+            {message && (
+                <div
+                    className={`lw-uploadSigningScreen__message ${message.type === "error" ? "is-error" : "is-success"}`}
+                    onClick={() => setMessage(null)}
+                >
+                    {message.text}
+                </div>
+            )}
         </SimpleScreen>
     );
 }

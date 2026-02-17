@@ -9,6 +9,7 @@ import { images } from '../../assets/images/images';
 import SimpleLoader from '../../components/simpleComponents/SimpleLoader';
 import SimpleContainer from '../../components/simpleComponents/SimpleContainer';
 import ChooseButton from '../../components/styledComponents/buttons/ChooseButton';
+import FilterSearchInput from '../../components/specializedComponents/containers/FilterSearchInput';
 import PrimaryButton from '../../components/styledComponents/buttons/PrimaryButton';
 import TopToolBarSmallScreen from '../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen';
 import PinnedCasesCard from './components/PinnedCasesCard';
@@ -31,6 +32,8 @@ export default function TaggedCasesScreen() {
 
     const [selectedCaseType, setSelectedCaseType] = useState(null);
     const [selectedStatus, setSelectedStatus] = useState(null);
+    const [selectedClient, setSelectedClient] = useState(null);
+    const [selectedManager, setSelectedManager] = useState(null);
     const [filteredTaggedCases, setFilteredTaggedCases] = useState(null);
 
     const { result: taggedCases, isPerforming: isPerformingTaggedCases, performRequest } = useAutoHttpRequest(casesApi.getAllTaggedCases);
@@ -51,7 +54,7 @@ export default function TaggedCasesScreen() {
         );
     };
 
-    const applyFilters = (typeFilter, statusFilter) => {
+    const applyFilters = (typeFilter, statusFilter, clientFilter, managerFilter) => {
         let filtered = taggedCases;
 
         if (typeFilter) {
@@ -64,7 +67,20 @@ export default function TaggedCasesScreen() {
             filtered = filtered.filter(item => item.IsClosed === true);
         }
 
-        if (!typeFilter && !statusFilter) {
+        if (clientFilter) {
+            filtered = filtered.filter(item => {
+                if (Array.isArray(item.Users) && item.Users.length > 0) {
+                    return item.Users.some(u => u.Name === clientFilter);
+                }
+                return item.CustomerName === clientFilter;
+            });
+        }
+
+        if (managerFilter) {
+            filtered = filtered.filter(item => item.CaseManager === managerFilter);
+        }
+
+        if (!typeFilter && !statusFilter && !clientFilter && !managerFilter) {
             setFilteredTaggedCases(null);
         } else {
             setFilteredTaggedCases(filtered);
@@ -73,13 +89,29 @@ export default function TaggedCasesScreen() {
 
     const handleFilterByType = (type) => {
         setSelectedCaseType(type);
-        applyFilters(type, selectedStatus);
+        applyFilters(type, selectedStatus, selectedClient, selectedManager);
     };
 
     const handleFilterByStatus = (status) => {
         setSelectedStatus(status);
-        applyFilters(selectedCaseType, status);
+        applyFilters(selectedCaseType, status, selectedClient, selectedManager);
     };
+
+    const handleFilterByClient = (client) => {
+        setSelectedClient(client);
+        applyFilters(selectedCaseType, selectedStatus, client, selectedManager);
+    };
+
+    const handleFilterByManager = (manager) => {
+        setSelectedManager(manager);
+        applyFilters(selectedCaseType, selectedStatus, selectedClient, manager);
+    };
+
+    const clientNames = [...new Set((taggedCases || []).flatMap(c => {
+        if (Array.isArray(c.Users) && c.Users.length > 0) return c.Users.map(u => u.Name);
+        return [c.CustomerName];
+    }).filter(Boolean))].sort();
+    const managerNames = [...new Set((taggedCases || []).map(c => c.CaseManager).filter(Boolean))].sort();
 
     if (isPerformingTaggedCases || isPerformingAllCasesTypes) {
         return <SimpleLoader />;
@@ -90,7 +122,7 @@ export default function TaggedCasesScreen() {
             {isSmallScreen && <TopToolBarSmallScreen chosenNavKey="pinnedCases" LogoNavigate={AdminStackName + MainScreenName} />}
 
             <SimpleScrollView>
-                <SimpleContainer className="lw-taggedCasesScreen__row">
+                <SimpleContainer className="lw-taggedCasesScreen__topRow">
                     <SearchInput
                         onSearch={handleSearch}
                         title={t('taggedCases.searchPinnedCaseTitle')}
@@ -102,6 +134,16 @@ export default function TaggedCasesScreen() {
                         buttonPressFunction={handleSearchSelect}
                     />
 
+                    <FilterSearchInput
+                        items={clientNames}
+                        placeholder={t('cases.customerName')}
+                        titleFontSize={20}
+                        onSelect={handleFilterByClient}
+                        className="lw-taggedCasesScreen__clientFilter"
+                    />
+                </SimpleContainer>
+
+                <SimpleContainer className="lw-taggedCasesScreen__filtersRow">
                     <ChooseButton
                         buttonText={t('cases.statusFilter')}
                         items={[
@@ -117,6 +159,13 @@ export default function TaggedCasesScreen() {
                         items={(allCasesTypes || []).map((ct) => ({ value: ct, label: ct }))}
                         className="lw-taggedCasesScreen__choose"
                         OnPressChoiceFunction={handleFilterByType}
+                    />
+
+                    <ChooseButton
+                        buttonText={t('cases.caseManager')}
+                        items={managerNames.map((name) => ({ value: name, label: name }))}
+                        className="lw-taggedCasesScreen__choose"
+                        OnPressChoiceFunction={handleFilterByManager}
                     />
                 </SimpleContainer>
 

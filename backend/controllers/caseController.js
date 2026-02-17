@@ -38,7 +38,7 @@ const _buildBaseCaseQuery = () => `
     LEFT JOIN casedescriptions CD ON C.caseid = CD.caseid
 `;
 
-const _mapCaseResults = (rows) => {
+const _mapCaseResults = (rows, caseUsersMap) => {
     const casesMap = new Map();
 
     rows.forEach(row => {
@@ -64,21 +64,73 @@ const _mapCaseResults = (rows) => {
                 CaseManagerId: row.casemanagerid,
                 EstimatedCompletionDate: row.estimatedcompletiondate,
                 LicenseExpiryDate: row.licenseexpirydate,
-                Descriptions: []
+                Descriptions: [],
+                Users: [],
             });
         }
 
         if (row.descriptionid) {
-            casesMap.get(caseId).Descriptions.push({
-                DescriptionId: row.descriptionid,
-                Stage: row.stage,
-                Text: row.text,
-                Timestamp: row.timestamp,
-                IsNew: row.isnew
-            });
+            const c = casesMap.get(caseId);
+            // Avoid duplicate descriptions from joined rows
+            if (!c.Descriptions.some(d => d.DescriptionId === row.descriptionid)) {
+                c.Descriptions.push({
+                    DescriptionId: row.descriptionid,
+                    Stage: row.stage,
+                    Text: row.text,
+                    Timestamp: row.timestamp,
+                    IsNew: row.isnew
+                });
+            }
         }
     });
+
+    // Enrich with linked users from case_users
+    if (caseUsersMap) {
+        for (const [caseId, c] of casesMap) {
+            c.Users = caseUsersMap.get(caseId) || [];
+            // Backward compatibility: keep primary UserId/CustomerName from the first linked user
+            if (c.Users.length > 0 && !c.UserId) {
+                c.UserId = c.Users[0].UserId;
+                c.CustomerName = c.Users[0].Name;
+                c.CustomerMail = c.Users[0].Email;
+                c.PhoneNumber = c.Users[0].PhoneNumber;
+            }
+        }
+    }
+
     return Array.from(casesMap.values());
+};
+
+/**
+ * Fetch all users linked to the given case IDs via the case_users junction table.
+ * Returns a Map<caseId, [{UserId, Name, Email, PhoneNumber}]>
+ */
+const _fetchCaseUsers = async (caseIds, client) => {
+    const caseUsersMap = new Map();
+    if (!caseIds || caseIds.length === 0) return caseUsersMap;
+
+    const queryFn = client || pool;
+    const result = await queryFn.query(
+        `SELECT cu.caseid, u.userid, u.name, u.email, u.phonenumber
+         FROM case_users cu
+         JOIN users u ON cu.userid = u.userid
+         WHERE cu.caseid = ANY($1::int[])
+         ORDER BY cu.created_at`,
+        [caseIds]
+    );
+
+    for (const row of result.rows) {
+        if (!caseUsersMap.has(row.caseid)) {
+            caseUsersMap.set(row.caseid, []);
+        }
+        caseUsersMap.get(row.caseid).push({
+            UserId: row.userid,
+            Name: row.name,
+            Email: row.email,
+            PhoneNumber: row.phonenumber,
+        });
+    }
+    return caseUsersMap;
 };
 
 const getCases = async (req, res) => {
@@ -98,13 +150,16 @@ const getCases = async (req, res) => {
             const params = [];
 
             if (userRole !== "Admin") {
-                query += " WHERE C.userid = $1";
+                query += " WHERE C.caseid IN (SELECT caseid FROM case_users WHERE userid = $1)";
                 params.push(userId);
             }
             query += " ORDER BY C.createdat DESC, C.caseid DESC, CD.stage";
 
             const result = await pool.query(query, params);
-            return res.json(_mapCaseResults(result.rows));
+            const cases = _mapCaseResults(result.rows);
+            const caseIds = cases.map(c => c.CaseId);
+            const caseUsersMap = await _fetchCaseUsers(caseIds);
+            return res.json(_mapCaseResults(result.rows, caseUsersMap));
         }
 
         const { limit, offset } = pagination;
@@ -118,7 +173,8 @@ const getCases = async (req, res) => {
                    LIMIT $1 OFFSET $2`
                 : `SELECT DISTINCT C.caseid
                    FROM cases C
-                   WHERE C.userid = $1
+                   JOIN case_users CU ON C.caseid = CU.caseid
+                   WHERE CU.userid = $1
                    ORDER BY C.createdat DESC, C.caseid DESC
                    LIMIT $2 OFFSET $3`;
 
@@ -128,14 +184,11 @@ const getCases = async (req, res) => {
 
         if (ids.length === 0) return res.json([]);
 
-        const detailsQuery =
-            userRole === 'Admin'
-                ? `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`
-                : `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) AND C.userid = $2 ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
+        const detailsQuery = `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
 
-        const detailsParams = userRole === 'Admin' ? [ids] : [ids, userId];
-        const result = await pool.query(detailsQuery, detailsParams);
-        return res.json(_mapCaseResults(result.rows));
+        const result = await pool.query(detailsQuery, [ids]);
+        const caseUsersMap = await _fetchCaseUsers(ids);
+        return res.json(_mapCaseResults(result.rows, caseUsersMap));
 
     } catch (error) {
         console.error("Error retrieving cases:", error);
@@ -152,34 +205,23 @@ const getCaseById = async (req, res) => {
 
         if (userRole !== "Admin") {
             const ownership = await pool.query(
-                "SELECT userid FROM cases WHERE caseid = $1",
-                [caseId]
+                "SELECT 1 FROM case_users WHERE caseid = $1 AND userid = $2",
+                [caseId, userId]
             );
 
             if (ownership.rows.length === 0) {
-                return res.status(404).json({ message: "Case not found" });
-            }
-
-            const ownerUserId = ownership.rows[0]?.userid;
-            if (ownerUserId !== userId) {
                 return res.status(403).json({ message: "Forbidden", code: 'FORBIDDEN' });
             }
         }
 
-        // Non-admin users can only access their own cases
-        const query =
-            userRole === "Admin"
-                ? `${_buildBaseCaseQuery()} WHERE C.caseid = $1 ORDER BY CD.stage`
-                : `${_buildBaseCaseQuery()} WHERE C.caseid = $1 AND C.userid = $2 ORDER BY CD.stage`;
-
-        const params = userRole === "Admin" ? [caseId] : [caseId, userId];
-
-        const result = await pool.query(query, params);
+        const query = `${_buildBaseCaseQuery()} WHERE C.caseid = $1 ORDER BY CD.stage`;
+        const result = await pool.query(query, [caseId]);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ message: "Case not found" });
         }
-        res.json(_mapCaseResults(result.rows)[0]);
+        const caseUsersMap = await _fetchCaseUsers([caseId]);
+        res.json(_mapCaseResults(result.rows, caseUsersMap)[0]);
     } catch (error) {
         console.error("Error retrieving case by ID:", error);
         res.status(500).json({ message: "Error retrieving case by ID" });
@@ -210,13 +252,14 @@ const getCaseByName = async (req, res) => {
             // Paginate by caseId (not joined rows) so descriptions aren't truncated.
             const idsQuery =
                 userRole === 'Admin'
-                    ? `SELECT DISTINCT C.caseid
+                    ? `SELECT DISTINCT C.caseid, C.createdat
                        FROM cases C
                        ORDER BY C.createdat DESC, C.caseid DESC
                        LIMIT $1 OFFSET $2`
-                    : `SELECT DISTINCT C.caseid
+                    : `SELECT DISTINCT C.caseid, C.createdat
                        FROM cases C
-                       WHERE C.userid = $1
+                       JOIN case_users CU ON C.caseid = CU.caseid
+                       WHERE CU.userid = $1
                        ORDER BY C.createdat DESC, C.caseid DESC
                        LIMIT $2 OFFSET $3`;
 
@@ -225,14 +268,11 @@ const getCaseByName = async (req, res) => {
             const ids = idsResult.rows.map((r) => r.caseid);
             if (ids.length === 0) return res.json([]);
 
-            const detailsQuery =
-                userRole === 'Admin'
-                    ? `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`
-                    : `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) AND C.userid = $2 ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
+            const detailsQuery = `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
 
-            const detailsParams = userRole === 'Admin' ? [ids] : [ids, userId];
-            const result = await pool.query(detailsQuery, detailsParams);
-            return res.json(_mapCaseResults(result.rows));
+            const result = await pool.query(detailsQuery, [ids]);
+            const caseUsersMap = await _fetchCaseUsers(ids);
+            return res.json(_mapCaseResults(result.rows, caseUsersMap));
         }
 
         let query = _buildBaseCaseQuery();
@@ -268,7 +308,7 @@ const getCaseByName = async (req, res) => {
         query += ` WHERE (${whereClauses.join(" OR ")})`;
 
         if (userRole !== "Admin") {
-            query += ` AND C.userid = $${paramIndex}`;
+            query += ` AND C.caseid IN (SELECT caseid FROM case_users WHERE userid = $${paramIndex})`;
             params.push(userId);
             paramIndex++;
         }
@@ -280,7 +320,9 @@ const getCaseByName = async (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ message: "No cases found with this name" });
         }
-        res.json(_mapCaseResults(result.rows));
+        const mappedIds = [...new Set(result.rows.map(r => r.caseid))];
+        const caseUsersMap = await _fetchCaseUsers(mappedIds);
+        res.json(_mapCaseResults(result.rows, caseUsersMap));
 
     } catch (error) {
         console.error("Error retrieving case by name:", error);
@@ -293,6 +335,7 @@ const addCase = async (req, res) => {
         CaseName,
         CaseTypeId,
         UserId,
+        UserIds,
         CompanyName,
         CurrentStage,
         Descriptions,
@@ -305,6 +348,11 @@ const addCase = async (req, res) => {
         EstimatedCompletionDate,
         LicenseExpiryDate
     } = req.body;
+
+    // Build resolved user list: prefer UserIds array, fall back to single UserId
+    const resolvedUserIds = Array.isArray(UserIds) && UserIds.length > 0
+        ? [...new Set(UserIds.map(Number).filter(Boolean))]
+        : (UserId ? [Number(UserId)] : []);
 
     let client;
     try {
@@ -323,21 +371,29 @@ const addCase = async (req, res) => {
             `,
             [
                 CaseName,
-                CaseTypeId,
-                UserId,
+                CaseTypeId || null,
+                resolvedUserIds[0] || UserId || null,
                 CompanyName,
                 CurrentStage || 1,
                 false,
                 IsTagged ? true : false,
                 WhatsappGroupLink || null,
-                CaseManager,
-                CaseManagerId,
-                EstimatedCompletionDate,
-                LicenseExpiryDate
+                CaseManager || null,
+                CaseManagerId ? Number(CaseManagerId) || null : null,
+                EstimatedCompletionDate || null,
+                LicenseExpiryDate || null
             ]
         );
 
         const caseId = caseResult.rows[0].caseid;
+
+        // Insert into case_users junction table for all linked clients
+        for (const uid of resolvedUserIds) {
+            await client.query(
+                `INSERT INTO case_users (caseid, userid) VALUES ($1, $2) ON CONFLICT (caseid, userid) DO NOTHING`,
+                [caseId, uid]
+            );
+        }
 
         if (Descriptions && Descriptions.length > 0) {
             for (const [index, desc] of Descriptions.entries()) {
@@ -359,31 +415,41 @@ const addCase = async (req, res) => {
 
         await client.query('COMMIT');
 
-        const notificationTitle = "תיק חדש נוצר";
-        const notificationMessage = `תיק "${CaseName}" נוצר בהצלחה. היכנס לאתר או לאפליקציה למעקב.`;
-        const smsBody = `היי ${CustomerName}, \n\n תיק ${CaseName} נוצר, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`;
+        // Notify all linked users
+        const linkedUsers = resolvedUserIds.length > 0
+            ? (await pool.query(
+                `SELECT userid AS "UserId", name AS "Name", phonenumber AS "PhoneNumber" FROM users WHERE userid = ANY($1::int[])`,
+                [resolvedUserIds]
+            )).rows
+            : [];
 
-        await notifyRecipient({
-            recipientUserId: UserId,
-            recipientPhone: PhoneNumber,
-            notificationType: 'CASE_UPDATE',
-            push: {
-                title: notificationTitle,
-                body: notificationMessage,
-                data: { caseId: String(caseId) },
-            },
-            email: {
-                campaignKey: 'CASE_UPDATE',
-                contactFields: {
-                    recipient_name: String(CustomerName || '').trim(),
-                    case_title: String(CaseName || '').trim(),
-                    action_url: `https://${WEBSITE_DOMAIN}`,
+        for (const u of linkedUsers) {
+            const notificationTitle = "תיק חדש נוצר";
+            const notificationMessage = `תיק "${CaseName}" נוצר בהצלחה. היכנס לאתר או לאפליקציה למעקב.`;
+            const smsBody = `היי ${u.Name || CustomerName}, \n\n תיק ${CaseName} נוצר, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`;
+
+            await notifyRecipient({
+                recipientUserId: u.UserId,
+                recipientPhone: u.PhoneNumber || PhoneNumber,
+                notificationType: 'CASE_UPDATE',
+                push: {
+                    title: notificationTitle,
+                    body: notificationMessage,
+                    data: { caseId: String(caseId) },
                 },
-            },
-            sms: {
-                messageBody: smsBody,
-            },
-        });
+                email: {
+                    campaignKey: 'CASE_UPDATE',
+                    contactFields: {
+                        recipient_name: String(u.Name || CustomerName || '').trim(),
+                        case_title: String(CaseName || '').trim(),
+                        action_url: `https://${WEBSITE_DOMAIN}`,
+                    },
+                },
+                sms: {
+                    messageBody: smsBody,
+                },
+            });
+        }
 
         res.status(201).json({ message: "Case created successfully", caseId });
 
@@ -412,7 +478,12 @@ const addCase = async (req, res) => {
 const updateCase = async (req, res) => {
     const caseId = requireInt(req, res, { source: 'params', name: 'caseId' });
     if (caseId === null) return;
-    const { CaseName, CurrentStage, IsClosed, IsTagged, Descriptions, PhoneNumber, CustomerName, CompanyName, CaseTypeId, UserId, CaseManager, CaseManagerId, CaseTypeName, EstimatedCompletionDate, LicenseExpiryDate } = req.body;
+    const { CaseName, CurrentStage, IsClosed, IsTagged, Descriptions, PhoneNumber, CustomerName, CompanyName, CaseTypeId, UserId, UserIds, CaseManager, CaseManagerId, CaseTypeName, EstimatedCompletionDate, LicenseExpiryDate } = req.body;
+
+    // Build resolved user list: prefer UserIds array, fall back to single UserId
+    const resolvedUserIds = Array.isArray(UserIds) && UserIds.length > 0
+        ? [...new Set(UserIds.map(Number).filter(Boolean))]
+        : (UserId ? [Number(UserId)] : []);
 
     let client;
     try {
@@ -437,8 +508,24 @@ const updateCase = async (req, res) => {
                 updatedat = NOW()
             WHERE caseid = $13
             `,
-            [CaseName, CurrentStage, IsClosed, IsTagged, CompanyName, CaseTypeId, UserId, CaseManager, CaseManagerId, CaseTypeName, EstimatedCompletionDate, LicenseExpiryDate, caseId]
+            [CaseName, CurrentStage, IsClosed, IsTagged, CompanyName, CaseTypeId, resolvedUserIds[0] || UserId, CaseManager || null, CaseManagerId ? Number(CaseManagerId) || null : null, CaseTypeName, EstimatedCompletionDate || null, LicenseExpiryDate || null, caseId]
         );
+
+        // Sync case_users junction table
+        if (resolvedUserIds.length > 0) {
+            // Remove users no longer linked
+            await client.query(
+                `DELETE FROM case_users WHERE caseid = $1 AND userid != ALL($2::int[])`,
+                [caseId, resolvedUserIds]
+            );
+            // Insert new links (ON CONFLICT ignores existing)
+            for (const uid of resolvedUserIds) {
+                await client.query(
+                    `INSERT INTO case_users (caseid, userid) VALUES ($1, $2) ON CONFLICT (caseid, userid) DO NOTHING`,
+                    [caseId, uid]
+                );
+            }
+        }
 
         if (Descriptions && Descriptions.length > 0) {
             // Collect IDs of descriptions the client still has
@@ -489,31 +576,48 @@ const updateCase = async (req, res) => {
 
         await client.query('COMMIT');
 
+        const stageName = (Descriptions && CurrentStage && Descriptions[CurrentStage - 1]?.Text) || '';
         const notificationTitle = "עדכון תיק";
-        const notificationMessage = `תיק "${CaseName}" עודכן. היכנס לאתר או לאפליקציה למעקב.`;
-        const smsBody = `היי ${CustomerName}, \n\n תיק ${CaseName} התעדכן, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`;
 
-        await notifyRecipient({
-            recipientUserId: UserId,
-            recipientPhone: PhoneNumber,
-            notificationType: 'CASE_UPDATE',
-            push: {
-                title: notificationTitle,
-                body: notificationMessage,
-                data: { caseId: String(caseId) },
-            },
-            email: {
-                campaignKey: 'CASE_UPDATE',
-                contactFields: {
-                    recipient_name: String(CustomerName || '').trim(),
-                    case_title: String(CaseName || '').trim(),
-                    action_url: `https://${WEBSITE_DOMAIN}`,
+        // Fetch all linked users to notify
+        const linkedUsers = resolvedUserIds.length > 0
+            ? (await pool.query(
+                `SELECT userid AS "UserId", name AS "Name", phonenumber AS "PhoneNumber" FROM users WHERE userid = ANY($1::int[])`,
+                [resolvedUserIds]
+            )).rows
+            : [];
+
+        for (const u of linkedUsers) {
+            const recipientName = u.Name || CustomerName || '';
+            const notificationMessage = stageName
+                ? `היי ${recipientName}, \n\nתיק "${CaseName}" עודכן לשלב - ${stageName}. היכנס לאתר או לאפליקציה למעקב.`
+                : `תיק "${CaseName}" עודכן. היכנס לאתר או לאפליקציה למעקב.`;
+            const smsBody = stageName
+                ? `היי ${recipientName}, \n\n תיק ${CaseName} עודכן לשלב - ${stageName}, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`
+                : `היי ${recipientName}, \n\n תיק ${CaseName} התעדכן, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`;
+
+            await notifyRecipient({
+                recipientUserId: u.UserId,
+                recipientPhone: u.PhoneNumber || PhoneNumber,
+                notificationType: 'CASE_UPDATE',
+                push: {
+                    title: notificationTitle,
+                    body: notificationMessage,
+                    data: { caseId: String(caseId) },
                 },
-            },
-            sms: {
-                messageBody: smsBody,
-            },
-        });
+                email: {
+                    campaignKey: 'CASE_UPDATE',
+                    contactFields: {
+                        recipient_name: String(recipientName).trim(),
+                        case_title: String(CaseName || '').trim(),
+                        action_url: `https://${WEBSITE_DOMAIN}`,
+                    },
+                },
+                sms: {
+                    messageBody: smsBody,
+                },
+            });
+        }
 
         res.status(200).json({ message: "Case updated successfully" });
     } catch (error) {
@@ -544,9 +648,6 @@ const updateStage = async (req, res) => {
             return res.status(400).json({ message: `שלב לא יכול לחרוג ממספר השלבים (${Descriptions.length})` });
         }
     }
-
-    let notificationMessage = "";
-    let notificationTitle = "";
 
     let client;
     try {
@@ -612,41 +713,63 @@ const updateStage = async (req, res) => {
         }
 
         // Only notify if stage actually changed
+        let notificationType = null;
         if (CurrentStage !== currentStageValue) {
-            notificationTitle = "עדכון שלב בתיק";
-            notificationMessage = `היי ${CustomerName}, \n\nבתיק "${CaseName}" התעדכן שלב, תיקך נמצא בשלב - ${Descriptions[CurrentStage - 1]?.Text || CurrentStage}, היכנס לאתר או לאפליקציה למעקב.`;
+            notificationType = 'stage_changed';
         }
         if (IsClosed && !currentlyClosed) {
-            notificationTitle = "תיק הסתיים";
-            notificationMessage = `היי ${CustomerName}, \n\nתיק "${CaseName}" הסתיים בהצלחה, היכנס לאתר או לאפליקציה למעקב.`;
+            notificationType = 'case_closed';
         }
         // Notify when reopening a closed case
         if (!IsClosed && currentlyClosed) {
-            notificationTitle = "תיק נפתח מחדש";
-            notificationMessage = `היי ${CustomerName}, \n\nתיק "${CaseName}" נפתח מחדש, היכנס לאתר או לאפליקציה למעקב.`;
+            notificationType = 'case_reopened';
         }
 
-        if (notificationMessage) {
-            if (caseUserId) {
+        if (notificationType) {
+            // Fetch all linked users from case_users
+            const linkedUsersResult = await client.query(
+                `SELECT U.userid AS "UserId", U.name AS "Name", U.phonenumber AS "PhoneNumber"
+                 FROM case_users CU JOIN users U ON CU.userid = U.userid
+                 WHERE CU.caseid = $1`,
+                [caseId]
+            );
+            const linkedUsers = linkedUsersResult.rows;
+
+            for (const u of linkedUsers) {
+                const recipientName = u.Name || CustomerName || '';
+                let title = '';
+                let message = '';
+
+                if (notificationType === 'stage_changed') {
+                    title = "עדכון שלב בתיק";
+                    message = `היי ${recipientName}, \n\nבתיק "${CaseName}" התעדכן שלב, תיקך נמצא בשלב - ${Descriptions[CurrentStage - 1]?.Text || CurrentStage}, היכנס לאתר או לאפליקציה למעקב.`;
+                } else if (notificationType === 'case_closed') {
+                    title = "תיק הסתיים";
+                    message = `היי ${recipientName}, \n\nתיק "${CaseName}" הסתיים בהצלחה, היכנס לאתר או לאפליקציה למעקב.`;
+                } else if (notificationType === 'case_reopened') {
+                    title = "תיק נפתח מחדש";
+                    message = `היי ${recipientName}, \n\nתיק "${CaseName}" נפתח מחדש, היכנס לאתר או לאפליקציה למעקב.`;
+                }
+
                 await notifyRecipient({
-                    recipientUserId: caseUserId,
-                    recipientPhone: PhoneNumber,
+                    recipientUserId: u.UserId,
+                    recipientPhone: u.PhoneNumber || PhoneNumber,
                     notificationType: 'CASE_UPDATE',
                     push: {
-                        title: notificationTitle,
-                        body: notificationMessage,
+                        title,
+                        body: message,
                         data: { caseId: String(caseId), stage: String(CurrentStage) },
                     },
                     email: {
                         campaignKey: 'CASE_UPDATE',
                         contactFields: {
-                            recipient_name: String(CustomerName || '').trim(),
+                            recipient_name: String(recipientName).trim(),
                             case_title: String(CaseName || '').trim(),
                             action_url: `https://${WEBSITE_DOMAIN}`,
                         },
                     },
                     sms: {
-                        messageBody: notificationMessage,
+                        messageBody: message,
                     },
                 });
             }
@@ -740,12 +863,14 @@ const getTaggedCases = async (req, res) => {
             const query =
                 userRole === "Admin"
                     ? `${_buildBaseCaseQuery()} WHERE C.istagged = true ORDER BY C.createdat DESC, C.caseid DESC, CD.stage;`
-                    : `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.userid = $1 ORDER BY C.createdat DESC, C.caseid DESC, CD.stage;`;
+                    : `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.caseid IN (SELECT caseid FROM case_users WHERE userid = $1) ORDER BY C.createdat DESC, C.caseid DESC, CD.stage;`;
 
             const params = userRole === "Admin" ? [] : [userId];
 
             const result = await pool.query(query, params);
-            return res.json(_mapCaseResults(result.rows));
+            const ids = [...new Set(result.rows.map(r => r.caseid))];
+            const caseUsersMap = await _fetchCaseUsers(ids);
+            return res.json(_mapCaseResults(result.rows, caseUsersMap));
         }
 
         const { limit, offset } = pagination;
@@ -759,7 +884,8 @@ const getTaggedCases = async (req, res) => {
                    LIMIT $1 OFFSET $2`
                 : `SELECT DISTINCT C.caseid
                    FROM cases C
-                   WHERE C.istagged = true AND C.userid = $1
+                   JOIN case_users CU ON C.caseid = CU.caseid
+                   WHERE C.istagged = true AND CU.userid = $1
                    ORDER BY C.createdat DESC, C.caseid DESC
                    LIMIT $2 OFFSET $3`;
 
@@ -769,14 +895,11 @@ const getTaggedCases = async (req, res) => {
 
         if (ids.length === 0) return res.json([]);
 
-        const detailsQuery =
-            userRole === 'Admin'
-                ? `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.caseid = ANY($1::int[]) ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`
-                : `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.caseid = ANY($1::int[]) AND C.userid = $2 ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
+        const detailsQuery = `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.caseid = ANY($1::int[]) ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
 
-        const detailsParams = userRole === 'Admin' ? [ids] : [ids, userId];
-        const result = await pool.query(detailsQuery, detailsParams);
-        return res.json(_mapCaseResults(result.rows));
+        const result = await pool.query(detailsQuery, [ids]);
+        const caseUsersMap = await _fetchCaseUsers(ids);
+        return res.json(_mapCaseResults(result.rows, caseUsersMap));
     } catch (error) {
         console.error("Error retrieving tagged cases:", error);
         res.status(500).json({ message: "Error retrieving tagged cases" });
@@ -813,7 +936,8 @@ const getTaggedCasesByName = async (req, res) => {
                        LIMIT $1 OFFSET $2`
                     : `SELECT DISTINCT C.caseid
                        FROM cases C
-                       WHERE C.istagged = true AND C.userid = $1
+                       JOIN case_users CU ON C.caseid = CU.caseid
+                       WHERE C.istagged = true AND CU.userid = $1
                        ORDER BY C.createdat DESC, C.caseid DESC
                        LIMIT $2 OFFSET $3`;
 
@@ -822,14 +946,11 @@ const getTaggedCasesByName = async (req, res) => {
             const ids = idsResult.rows.map((r) => r.caseid);
             if (ids.length === 0) return res.json([]);
 
-            const detailsQuery =
-                userRole === 'Admin'
-                    ? `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.caseid = ANY($1::int[]) ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`
-                    : `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.caseid = ANY($1::int[]) AND C.userid = $2 ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
+            const detailsQuery = `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.caseid = ANY($1::int[]) ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
 
-            const detailsParams = userRole === 'Admin' ? [ids] : [ids, userId];
-            const result = await pool.query(detailsQuery, detailsParams);
-            return res.json(_mapCaseResults(result.rows));
+            const result = await pool.query(detailsQuery, [ids]);
+            const caseUsersMap = await _fetchCaseUsers(ids);
+            return res.json(_mapCaseResults(result.rows, caseUsersMap));
         }
 
         const params = [];
@@ -866,7 +987,7 @@ const getTaggedCasesByName = async (req, res) => {
         `;
 
         if (userRole !== "Admin") {
-            query += ` AND C.userid = $${paramIndex}`;
+            query += ` AND C.caseid IN (SELECT caseid FROM case_users WHERE userid = $${paramIndex})`;
             params.push(userId);
             paramIndex++;
         }
@@ -878,7 +999,9 @@ const getTaggedCasesByName = async (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ message: "No tagged cases found with this name" });
         }
-        res.json(_mapCaseResults(result.rows));
+        const mappedIds = [...new Set(result.rows.map(r => r.caseid))];
+        const caseUsersMap = await _fetchCaseUsers(mappedIds);
+        res.json(_mapCaseResults(result.rows, caseUsersMap));
 
     } catch (error) {
         console.error("Error retrieving tagged cases by name:", error);
@@ -928,38 +1051,38 @@ const linkWhatsappGroup = async (req, res) => {
             [isEmpty ? null : String(normalized), caseId]
         );
 
-        if (caseUserId && !isEmpty) {
-            const msg = `קבוצת וואטסאפ קושרה לתיק "${caseName}".`;
+        if (!isEmpty) {
+            // Fetch all linked users from case_users
+            const linkedUsersResult = await pool.query(
+                `SELECT U.userid AS "UserId", U.name AS "Name", U.phonenumber AS "PhoneNumber"
+                 FROM case_users CU JOIN users U ON CU.userid = U.userid
+                 WHERE CU.caseid = $1`,
+                [caseId]
+            );
 
-            let recipientNameForTemplate = '';
-            try {
-                const ur = await pool.query('select name as "Name" from users where userid = $1', [caseUserId]);
-                const n = String(ur.rows?.[0]?.Name || '').trim();
-                if (n) recipientNameForTemplate = n;
-            } catch {
-                // Best-effort
-            }
-
-            await notifyRecipient({
-                recipientUserId: caseUserId,
-                notificationType: 'CASE_UPDATE',
-                push: {
-                    title: 'קבוצת וואטסאפ מקושרת',
-                    body: msg,
-                    data: { caseId: String(caseId), type: 'whatsapp_group_linked' },
-                },
-                email: {
-                    campaignKey: 'CASE_UPDATE',
-                    contactFields: {
-                        case_title: String(caseName || '').trim(),
-                        action_url: String(normalized || '').trim(),
-                        recipient_name: recipientNameForTemplate,
+            for (const u of linkedUsersResult.rows) {
+                const msg = `קבוצת וואטסאפ קושרה לתיק "${caseName}".`;
+                await notifyRecipient({
+                    recipientUserId: u.UserId,
+                    notificationType: 'CASE_UPDATE',
+                    push: {
+                        title: 'קבוצת וואטסאפ מקושרת',
+                        body: msg,
+                        data: { caseId: String(caseId), type: 'whatsapp_group_linked' },
                     },
-                },
-                sms: {
-                    messageBody: `${msg}\n${String(normalized || '').trim()}`,
-                },
-            });
+                    email: {
+                        campaignKey: 'CASE_UPDATE',
+                        contactFields: {
+                            case_title: String(caseName || '').trim(),
+                            action_url: String(normalized || '').trim(),
+                            recipient_name: String(u.Name || '').trim(),
+                        },
+                    },
+                    sms: {
+                        messageBody: `${msg}\n${String(normalized || '').trim()}`,
+                    },
+                });
+            }
         }
 
         res.status(200).json({ message: "Whatsapp group link updated successfully" });
@@ -988,7 +1111,9 @@ const getMyCases = async (req, res) => {
         if (!pagination.enabled) {
             const query = `${_buildBaseCaseQuery()} WHERE C.casemanagerid = $1 ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
             const result = await pool.query(query, [userId]);
-            return res.json(_mapCaseResults(result.rows));
+            const ids = [...new Set(result.rows.map(r => r.caseid))];
+            const caseUsersMap = await _fetchCaseUsers(ids);
+            return res.json(_mapCaseResults(result.rows, caseUsersMap));
         }
 
         const { limit, offset } = pagination;
@@ -1005,7 +1130,8 @@ const getMyCases = async (req, res) => {
 
         const detailsQuery = `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) AND C.casemanagerid = $2 ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
         const result = await pool.query(detailsQuery, [ids, userId]);
-        return res.json(_mapCaseResults(result.rows));
+        const caseUsersMap = await _fetchCaseUsers(ids);
+        return res.json(_mapCaseResults(result.rows, caseUsersMap));
     } catch (error) {
         console.error("Error retrieving my cases:", error);
         return res.status(500).json({ message: "Error retrieving my cases" });

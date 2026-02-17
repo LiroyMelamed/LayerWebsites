@@ -1,4 +1,5 @@
 const axios = require('axios');
+const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 // Constants for company name and website domain (mirror SMS module)
@@ -64,6 +65,8 @@ const ALLOWED_CUSTOM_FIELD_KEYS = [
     'recipient_name',
     'document_name',
     'rejection_reason',
+    'signed_document_url',
+    'evidence_certificate_url',
 ];
 
 /**
@@ -78,7 +81,7 @@ const ALLOWED_CUSTOM_FIELD_KEYS = [
  * @param {string} args.campaignKey
  * @param {object} args.contactFields
  */
-async function sendEmailCampaign({ toEmail, campaignKey, contactFields } = {}) {
+async function sendEmailCampaign({ toEmail, campaignKey, contactFields, attachments, fromEmail } = {}) {
     const email = String(toEmail || '').trim();
     const key = String(campaignKey || '').trim().toUpperCase();
 
@@ -153,7 +156,7 @@ async function sendEmailCampaign({ toEmail, campaignKey, contactFields } = {}) {
             return { ok: false, errorCode: 'MISSING_CONTACT_FIELDS', missing };
         }
 
-        return await sendTransactionalDocSigned({ toEmail: email, contactFields: allowedFields, shouldSendRealEmail });
+        return await sendTransactionalDocSigned({ toEmail: email, contactFields: allowedFields, shouldSendRealEmail, attachments, fromEmail });
     }
 
     if (key === 'DOC_REJECTED') {
@@ -272,10 +275,31 @@ async function sendTransactionalCaseUpdate({ toEmail, contactFields, shouldSendR
     });
 }
 
-async function sendTransactionalDocSigned({ toEmail, contactFields, shouldSendRealEmail }) {
+async function sendTransactionalDocSigned({ toEmail, contactFields, shouldSendRealEmail, attachments, fromEmail } = {}) {
     const fields = contactFields || {};
 
     const subject = `המסמך נחתם בהצלחה: ${String(fields.document_name || '').trim()}`;
+
+    // When PDF attachments are provided and SMTP is configured, send via Nodemailer
+    // so that the signed document + evidence certificate are attached as real files.
+    const hasAttachments = Array.isArray(attachments) && attachments.length > 0;
+    const smtpConfigured = Boolean(String(process.env.SMTP_HOST || '').trim());
+
+    if (hasAttachments && smtpConfigured) {
+        const htmlTemplate = buildDocSignedWithAttachmentsHtmlTemplate();
+        const htmlBody = replaceEmailPlaceholders(htmlTemplate, fields);
+
+        return await sendEmailWithAttachments({
+            toEmail,
+            subject,
+            htmlBody,
+            attachments,
+            logLabel: 'DOC_SIGNED',
+            fromEmail: fromEmail || undefined,
+        });
+    }
+
+    // Fallback: send via Smoove with download link buttons
     const htmlTemplate = buildDocSignedHtmlTemplate();
     const htmlBody = replaceEmailPlaceholders(htmlTemplate, fields);
 
@@ -445,6 +469,73 @@ async function sendTransactionalCustomHtmlEmail({ toEmail, subject, htmlBody, lo
         shouldSendRealEmail,
         logLabel: label,
     });
+}
+
+/**
+ * Send an email with file attachments via Nodemailer (SMTP).
+ * Used for DOC_SIGNED when PDF attachments are provided.
+ *
+ * Requires env vars: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS
+ * Falls back gracefully if SMTP is not configured.
+ */
+async function sendEmailWithAttachments({ toEmail, subject, htmlBody, attachments, logLabel, fromEmail: fromEmailOverride } = {}) {
+    const email = String(toEmail || '').trim();
+    const fromName = String(process.env.SMOOVE_EMAIL_FROM_NAME || '').trim();
+    // Always send FROM the SMTP account (noreply@) – cPanel rejects mismatched senders.
+    const fromEmail = String(process.env.SMTP_FROM_EMAIL || process.env.SMOOVE_EMAIL_FROM_EMAIL || '').trim();
+    // If a lawyer email override is provided, set Reply-To so the client's reply goes to the lawyer.
+    const replyTo = fromEmailOverride ? String(fromEmailOverride).trim() : '';
+
+    const smtpHost = String(process.env.SMTP_HOST || '').trim();
+    const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
+    const smtpUser = String(process.env.SMTP_USER || '').trim();
+    const smtpPass = String(process.env.SMTP_PASS || '').trim();
+
+    if (!smtpHost || !smtpUser || !smtpPass) {
+        console.error('SMTP env vars missing (SMTP_HOST/SMTP_USER/SMTP_PASS). Cannot send email with attachments.');
+        return { ok: false, errorCode: 'SMTP_NOT_CONFIGURED' };
+    }
+
+    const shouldSendRealEmail = isProduction || FORCE_SEND_EMAIL_ALL;
+
+    if (!shouldSendRealEmail) {
+        console.log('--- EMAIL Nodemailer Simulation (Dev Mode) ---');
+        console.log('To:', maskEmailForLog(email));
+        console.log('Label:', String(logLabel || '').trim() || 'NODEMAILER');
+        console.log('Subject:', truncateForLog(String(subject || ''), 200));
+        console.log('Attachments:', (attachments || []).map(a => a.filename).join(', '));
+        console.log('----------------------------------------------');
+        return { ok: true, simulated: true, mode: 'nodemailer' };
+    }
+
+    try {
+        const transporter = nodemailer.createTransport({
+            host: smtpHost,
+            port: smtpPort,
+            secure: smtpPort === 465,
+            auth: { user: smtpUser, pass: smtpPass },
+        });
+
+        const mailOptions = {
+            from: fromName ? `${fromName} <${fromEmail}>` : fromEmail,
+            ...(replyTo ? { replyTo } : {}),
+            to: email,
+            subject: String(subject || '').trim(),
+            html: String(htmlBody || ''),
+            attachments: (attachments || []).map(att => ({
+                filename: att.filename,
+                content: att.content,
+                contentType: att.contentType || 'application/pdf',
+            })),
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log(`Nodemailer email sent to ${maskEmailForLog(email)} (${String(logLabel || 'EMAIL').trim()}) messageId=${info.messageId}`);
+        return { ok: true, mode: 'nodemailer', messageId: info.messageId };
+    } catch (e) {
+        console.error('Nodemailer send exception:', e?.message || e);
+        return { ok: false, errorCode: 'EMAIL_SEND_FAILED', details: { error: e?.message } };
+    }
 }
 
 function buildSignInviteHtmlTemplate() {
@@ -659,6 +750,56 @@ function buildCaseUpdateHtmlTemplate() {
 </html>`;
 }
 
+function buildDocSignedWithAttachmentsHtmlTemplate() {
+    return `<!DOCTYPE html>
+<html dir="rtl" lang="he">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <meta name="x-apple-disable-message-reformatting">
+        <title>המסמך נחתם</title>
+    </head>
+    <body style="margin:0;padding:0;background-color:#EDF2F7;">
+        <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">המסמך נחתם בהצלחה: [[document_name]]</div>
+
+        <table border="0" cellpadding="0" cellspacing="0" style="background:#EDF2F7;" width="100%">
+            <tbody>
+                <tr>
+                    <td align="center" style="padding:24px 12px;">
+                        <table border="0" cellpadding="0" cellspacing="0" style="width:640px;max-width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.08);" width="640">
+                            <tbody>
+                                <tr>
+                                    <td style="background:#2A4365;padding:22px 24px;text-align:center;"><img src="https://client.melamedlaw.co.il/static/media/logoLMwhite.png" width="170" alt="MelamedLaw" style="border:0;outline:none;text-decoration:none;height:auto;max-width:100%;">
+                                        <div style="height:14px;line-height:14px;">&nbsp;</div>
+                                        <div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#FFFFFF;font-size:18px;font-weight:600;line-height:1.4;">✓ המסמך נחתם בהצלחה</div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:26px 24px 8px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#2D3748;">
+                                        <div style="font-size:16px;line-height:1.7;">שלום [[recipient_name]],
+                                            <br><br>המסמך <span style="font-weight:600;color:#1A365D;">[[document_name]]</span> נחתם בהצלחה על ידי כל החתומים.
+                                            <br><br>עו"ד מטפל: <span style="font-weight:600;">[[lawyer_name]]</span></div>
+                                        <div style="height:18px;line-height:18px;">&nbsp;</div>
+                                        <div style="font-size:14px;line-height:1.7;color:#2D3748;background:#EDF2F7;border-radius:8px;padding:12px 16px;">📎 הקבצים החתומים מצורפים להודעה זו.</div>
+                                        <div style="height:12px;line-height:12px;">&nbsp;</div>
+                                        <div style="font-size:13px;line-height:1.7;color:#718096;">ניתן גם להיכנס למערכת לצפייה/הורדה של הקבצים.</div>
+                                        <div style="height:18px;line-height:18px;">&nbsp;</div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:14px 24px 22px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#718096;font-size:12px;line-height:1.7;">הודעה זו נשלחה אוטומטית.
+                                        <br>&copy; MelamedLaw</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </body>
+</html>`;
+}
+
 function buildDocSignedHtmlTemplate() {
     return `<!DOCTYPE html>
 <html dir="rtl" lang="he">
@@ -689,7 +830,20 @@ function buildDocSignedHtmlTemplate() {
                                             <br><br>המסמך <span style="font-weight:600;color:#1A365D;">[[document_name]]</span> נחתם בהצלחה על ידי כל החתומים.
                                             <br><br>עו"ד מטפל: <span style="font-weight:600;">[[lawyer_name]]</span></div>
                                         <div style="height:18px;line-height:18px;">&nbsp;</div>
-                                        <div style="font-size:13px;line-height:1.7;color:#718096;">ניתן להיכנס למערכת לצפייה/הורדה של הקובץ החתום.</div>
+                                        <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                                            <tr>
+                                                <td align="center" style="padding:8px 0;">
+                                                    <a href="[[signed_document_url]]" style="display:inline-block;padding:12px 28px;background:#2A4365;color:#ffffff;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">📄 הורד מסמך חתום</a>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td align="center" style="padding:8px 0;">
+                                                    <a href="[[evidence_certificate_url]]" style="display:inline-block;padding:12px 28px;background:#38A169;color:#ffffff;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">📋 הורד אישור ראייתי</a>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        <div style="height:12px;line-height:12px;">&nbsp;</div>
+                                        <div style="font-size:13px;line-height:1.7;color:#718096;">ניתן גם להיכנס למערכת לצפייה/הורדה של הקבצים.</div>
                                         <div style="height:18px;line-height:18px;">&nbsp;</div>
                                     </td>
                                 </tr>
@@ -764,6 +918,9 @@ function replaceEmailPlaceholders(template, fields) {
     const urlRaw = String(fields.action_url || '').trim();
     const safeUrl = escapeHtml(urlRaw);
 
+    const signedDocUrl = escapeHtml(String(fields.signed_document_url || '').trim());
+    const evidenceUrl = escapeHtml(String(fields.evidence_certificate_url || '').trim());
+
     let out = String(template || '');
     out = replaceAllSafe(out, '[[recipient_name]]', safeRecipient);
     out = replaceAllSafe(out, '[[document_name]]', safeDocument);
@@ -771,6 +928,8 @@ function replaceEmailPlaceholders(template, fields) {
     out = replaceAllSafe(out, '[[case_title]]', safeCaseTitle);
     out = replaceAllSafe(out, '[[rejection_reason]]', safeRejection);
     out = replaceAllSafe(out, '[[action_url]]', safeUrl);
+    out = replaceAllSafe(out, '[[signed_document_url]]', signedDocUrl);
+    out = replaceAllSafe(out, '[[evidence_certificate_url]]', evidenceUrl);
     return out;
 }
 

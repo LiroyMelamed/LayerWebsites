@@ -388,7 +388,8 @@
         "terms": "Terms of use",
         "contact": "Contact",
         "contactMessage": "Hi, I'd like to get in touch",
-        "reminders": "Reminders"
+        "reminders": "Reminders",
+        "addOrUpdateClient": "Add / Update Client"
     },
     "planUsage": {
         "title": "Plan & usage",

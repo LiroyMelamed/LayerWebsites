@@ -202,6 +202,8 @@ async function notifyRecipient({
                         toEmail: resolvedEmail,
                         campaignKey: String(email.campaignKey || '').trim(),
                         contactFields: email.contactFields || {},
+                        attachments: email.attachments || undefined,
+                        fromEmail: email.fromEmail || undefined,
                     });
                     outcomes.email.ok = Boolean(r?.ok);
                     if (!r?.ok) {

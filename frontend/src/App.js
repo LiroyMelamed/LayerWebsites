@@ -2,7 +2,7 @@ import LoginStack, { LoginStackName } from './navigation/LoginStack';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import AdminStack, { AdminStackName } from './navigation/AdminStack';
 import ClientStack, { ClientStackName } from './navigation/ClientStack';
-import PublicSigningScreen, { PublicSigningScreenName } from './screens/signingScreen/PublicSigningScreen';
+import PublicSigningScreen, { PublicSignScreenName } from './screens/signingScreen/PublicSigningScreen';
 import { AppRoles } from './screens/otpScreen/OtpScreen.js/LoginOtpScreen';
 import { useEffect, useRef, useState } from 'react';
 import { MainScreenName } from './screens/mainScreen/MainScreen';
@@ -37,7 +37,7 @@ const App = () => {
       return (
         /(?:^|\/)(SigningScreen|SigningManagerScreen)(?:$|\/)/i.test(p) ||
         /(?:^|\/)(upload-file-for-signing)(?:$|\/)/i.test(p) ||
-        /(?:^|\/)(public-sign)(?:$|\/)/i.test(p) ||
+        /(?:^|\/)(PublicSignScreen)(?:$|\/)/i.test(p) ||
         /(?:^|\/)(verify\/evidence)(?:$|\/)/i.test(p)
       );
     }
@@ -82,6 +82,12 @@ const App = () => {
       return top <= 0;
     }
 
+    function isPageAtTop() {
+      // Check document-level scroll as well as scrolling element
+      const doc = document.scrollingElement || document.documentElement;
+      return Number(doc?.scrollTop || 0) <= 0 && Number(window?.scrollY || window?.pageYOffset || 0) <= 0;
+    }
+
     function isTextInputFocused() {
       const el = document.activeElement;
       if (!el) return false;
@@ -93,7 +99,10 @@ const App = () => {
       if (isPullToRefreshDisabled()) return;
       const scroller = findScrollableParent(e.target);
       scrollerRef.current = scroller;
-      if (!isAtTop(scroller)) return;
+      if (!isAtTop(scroller) || !isPageAtTop()) {
+        startY = null;
+        return;
+      }
       if (!e.touches || e.touches.length !== 1) return;
       startY = e.touches[0].clientY;
       triggered = false;
@@ -106,7 +115,12 @@ const App = () => {
       if (triggered) return;
       if (startY === null) return;
       const scroller = scrollerRef.current;
-      if (!isAtTop(scroller)) return;
+      if (!isAtTop(scroller) || !isPageAtTop()) {
+        // Scroller moved away from top during this gesture — cancel
+        startY = null;
+        scheduleState({ state: 'idle', distance: 0 });
+        return;
+      }
       if (!e.touches || e.touches.length !== 1) return;
       if (isTextInputFocused()) return;
 
@@ -161,7 +175,7 @@ const App = () => {
     const disable =
       /(?:^|\/)(SigningScreen|SigningManagerScreen)(?:$|\/)/i.test(p) ||
       /(?:^|\/)(upload-file-for-signing)(?:$|\/)/i.test(p) ||
-      /(?:^|\/)(public-sign)(?:$|\/)/i.test(p) ||
+      /(?:^|\/)(PublicSignScreen)(?:$|\/)/i.test(p) ||
       /(?:^|\/)(verify\/evidence)(?:$|\/)/i.test(p);
 
     const root = document?.documentElement;
@@ -240,7 +254,7 @@ const App = () => {
       )}
 
       <Routes>
-        <Route path={PublicSigningScreenName} element={<PublicSigningScreen />} />
+        <Route path={PublicSignScreenName} element={<PublicSigningScreen />} />
 
         <Route path={EvidenceVerifyScreenName} element={<EvidenceVerifyScreen />} />
 

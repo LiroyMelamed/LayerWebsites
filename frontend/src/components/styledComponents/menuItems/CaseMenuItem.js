@@ -72,15 +72,17 @@ export default function CaseMenuItem({
                 <SimpleContainer className="lw-caseMenuItem__content">
                     <SimpleContainer className="lw-caseMenuItem__row lw-caseMenuItem__row--top">
                         <SimpleContainer className="lw-caseMenuItem__title">
-                            <TextBold14 className="lw-textEllipsis" shouldApplyClamping numberOfLines={1}>
+                            <TextBold14>
                                 {rightTitle}
                             </TextBold14>
                         </SimpleContainer>
 
-                        <SimpleContainer className="lw-caseMenuItem__pair">
-                            <TextBold12>{leftPreFirstLine}</TextBold12>
-                            <Text12>{leftValueFirstLine}</Text12>
-                        </SimpleContainer>
+                        {leftValueFirstLine ? (
+                            <SimpleContainer className="lw-caseMenuItem__pair lw-caseMenuItem__pair--caseType">
+                                <TextBold12>{leftPreFirstLine}</TextBold12>
+                                <Text12>{leftValueFirstLine}</Text12>
+                            </SimpleContainer>
+                        ) : null}
                     </SimpleContainer>
 
                     <SimpleContainer className="lw-caseMenuItem__row lw-caseMenuItem__row--bottom">

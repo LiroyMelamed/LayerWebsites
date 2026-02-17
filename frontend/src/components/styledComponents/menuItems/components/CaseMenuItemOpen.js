@@ -135,7 +135,11 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
                         <SimpleContainer className="lw-caseMenuItemOpen__items">
                             <SimpleContainer className="lw-caseMenuItemOpen__item">
                                 <TextBold12 className="lw-caseMenuItemOpen__itemLabel">{t("cases.customerName") + ":"}</TextBold12>
-                                <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.CustomerName}</Text12>
+                                <Text12 className="lw-caseMenuItemOpen__itemValue">
+                                    {Array.isArray(fullCase.Users) && fullCase.Users.length > 0
+                                        ? fullCase.Users.map(u => u.Name).filter(Boolean).join(', ')
+                                        : fullCase.CustomerName}
+                                </Text12>
                             </SimpleContainer>
 
                             <SimpleContainer className="lw-caseMenuItemOpen__item">
@@ -168,15 +172,19 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
                                 <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.CreatedAt ? DateDDMMYY(fullCase.CreatedAt) : t("common.notSpecified")}</Text12>
                             </SimpleContainer>
 
-                            <SimpleContainer className="lw-caseMenuItemOpen__item">
-                                <TextBold12 className="lw-caseMenuItemOpen__itemLabel">{t("cases.estimatedCompletionDate") + ":"}</TextBold12>
-                                <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.EstimatedCompletionDate ? DateDDMMYY(fullCase.EstimatedCompletionDate) : t("common.notSpecified")}</Text12>
-                            </SimpleContainer>
+                            {(!isClient || fullCase.EstimatedCompletionDate) && (
+                                <SimpleContainer className="lw-caseMenuItemOpen__item">
+                                    <TextBold12 className="lw-caseMenuItemOpen__itemLabel">{t("cases.estimatedCompletionDate") + ":"}</TextBold12>
+                                    <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.EstimatedCompletionDate ? DateDDMMYY(fullCase.EstimatedCompletionDate) : t("common.notSpecified")}</Text12>
+                                </SimpleContainer>
+                            )}
 
-                            <SimpleContainer className="lw-caseMenuItemOpen__item">
-                                <TextBold12 className="lw-caseMenuItemOpen__itemLabel">{t("cases.licenseExpiryDate") + ":"}</TextBold12>
-                                <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.LicenseExpiryDate ? DateDDMMYY(fullCase.LicenseExpiryDate) : t("common.notSpecified")}</Text12>
-                            </SimpleContainer>
+                            {(!isClient || fullCase.LicenseExpiryDate) && (
+                                <SimpleContainer className="lw-caseMenuItemOpen__item">
+                                    <TextBold12 className="lw-caseMenuItemOpen__itemLabel">{t("cases.licenseExpiryDate") + ":"}</TextBold12>
+                                    <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.LicenseExpiryDate ? DateDDMMYY(fullCase.LicenseExpiryDate) : t("common.notSpecified")}</Text12>
+                                </SimpleContainer>
+                            )}
                         </SimpleContainer>
                     </SimpleContainer>
 
