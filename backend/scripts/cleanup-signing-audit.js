@@ -2,13 +2,11 @@
 /* eslint-disable no-console */
 
 /**
- * Cleanup all signing files and audit events from production.
+ * Cleanup all signing files, audit events, and R2 storage from production.
  * 
  * What it does:
- *   1. Reads all R2 keys from signingfiles (filekey, originalfilekey, signedfilekey)
- *   2. Reads all saved-signature keys from signaturespots (signeruserid → saved-signatures/user-N.png)
- *   3. Deletes all those objects from R2
- *   4. TRUNCATEs audit_events, signing_otp_challenges, signing_consents,
+ *   1. Lists ALL objects in the R2 bucket and deletes them
+ *   2. TRUNCATEs audit_events, signing_otp_challenges, signing_consents,
  *      signaturespots, signing_retention_warnings, firm_signing_policy, signingfiles
  *
  * Usage:
@@ -21,34 +19,30 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const pool = require('../config/db');
 const { r2, BUCKET } = require('../utils/r2');
-const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const { DeleteObjectCommand, ListObjectsV2Command } = require('@aws-sdk/client-s3');
 
 const DRY_RUN = !process.argv.includes('--execute');
 
-async function collectR2Keys(client) {
-    const keys = new Set();
+async function listAllR2Keys() {
+    const keys = [];
+    let continuationToken = undefined;
 
-    // All file keys from signingfiles
-    const { rows: fileRows } = await client.query(`
-        SELECT filekey, originalfilekey, signedfilekey
-        FROM signingfiles
-    `);
+    do {
+        const cmd = new ListObjectsV2Command({
+            Bucket: BUCKET,
+            ContinuationToken: continuationToken,
+            MaxKeys: 1000,
+        });
+        const resp = await r2.send(cmd);
+        if (resp.Contents) {
+            for (const obj of resp.Contents) {
+                keys.push(obj.Key);
+            }
+        }
+        continuationToken = resp.IsTruncated ? resp.NextContinuationToken : undefined;
+    } while (continuationToken);
 
-    for (const row of fileRows) {
-        if (row.filekey) keys.add(row.filekey);
-        if (row.originalfilekey) keys.add(row.originalfilekey);
-        if (row.signedfilekey) keys.add(row.signedfilekey);
-    }
-
-    // Saved signatures: each unique signer user → saved-signatures/user-N.png
-    const { rows: spotRows } = await client.query(`
-        SELECT DISTINCT signeruserid FROM signaturespots WHERE signeruserid IS NOT NULL
-    `);
-    for (const row of spotRows) {
-        keys.add(`saved-signatures/user-${row.signeruserid}.png`);
-    }
-
-    return [...keys].filter(Boolean);
+    return keys;
 }
 
 async function deleteR2Keys(keys) {
@@ -65,7 +59,6 @@ async function deleteR2Keys(keys) {
             }
             deleted++;
         } catch (err) {
-            // NoSuchKey is fine (already deleted), anything else is a warning
             if (err?.name === 'NoSuchKey' || err?.$metadata?.httpStatusCode === 404) {
                 console.log(`  Skipped (not found): ${key}`);
                 deleted++;
@@ -121,9 +114,21 @@ async function main() {
             console.log(`  ${table}: ${count}`);
         }
 
-        // Collect R2 keys
-        const keys = await collectR2Keys(client);
-        console.log(`\nR2 objects to delete: ${keys.length}`);
+        // List ALL objects in R2 bucket
+        console.log('\nListing all R2 objects...');
+        const keys = await listAllR2Keys();
+        console.log(`R2 objects to delete: ${keys.length}`);
+
+        // Group by prefix for summary
+        const prefixes = {};
+        for (const k of keys) {
+            const prefix = k.split('/')[0] || '(root)';
+            prefixes[prefix] = (prefixes[prefix] || 0) + 1;
+        }
+        console.log('By prefix:');
+        for (const [prefix, count] of Object.entries(prefixes)) {
+            console.log(`  ${prefix}/: ${count}`);
+        }
 
         // Delete from R2
         if (keys.length > 0) {
