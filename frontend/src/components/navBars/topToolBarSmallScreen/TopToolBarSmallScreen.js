@@ -87,21 +87,19 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, chosenNavKey, 
                     <SimpleContainer className="lw-topToolBarSmallScreen__languageWrap">
                         <LanguageSwitcher />
                     </SimpleContainer>
-                    <SimpleContainer className="lw-topToolBarSmallScreen__logout">
-                        <PrimaryButton
-                            className="lw-topToolBarSmallScreen__logoutButton"
-                            onPress={() => {
-                                localStorage.removeItem("token");
-                                if (isFromApp && window.ReactNativeWebView?.postMessage) {
-                                    window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'LOGOUT' }));
-                                } else {
+                    {!isFromApp && (
+                        <SimpleContainer className="lw-topToolBarSmallScreen__logout">
+                            <PrimaryButton
+                                className="lw-topToolBarSmallScreen__logoutButton"
+                                onPress={() => {
+                                    localStorage.removeItem("token");
                                     navigate('/');
-                                }
-                            }}
-                        >
-                            {t('common.logout')}
-                        </PrimaryButton>
-                    </SimpleContainer>
+                                }}
+                            >
+                                {t('common.logout')}
+                            </PrimaryButton>
+                        </SimpleContainer>
+                    )}
                 </SimpleContainer>
             }
         </>

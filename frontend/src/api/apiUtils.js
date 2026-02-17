@@ -38,13 +38,25 @@ ApiUtils.interceptors.response.use(
         requestLink: response.config.url,
         success: true,
     }),
-    (error) => ({
-        status: error.response?.status || 500,
-        data: error.response?.data || null,
-        requestLink: error.config?.url,
-        success: false,
-        message: error.message,
-    })
+    (error) => {
+        const status = error.response?.status || 500;
+
+        // Session expired / invalid token — if inside native app, tell it to log out
+        if (status === 401) {
+            localStorage.removeItem("token");
+            if (window.ReactNativeWebView?.postMessage) {
+                window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'LOGOUT' }));
+            }
+        }
+
+        return {
+            status,
+            data: error.response?.data || null,
+            requestLink: error.config?.url,
+            success: false,
+            message: error.message,
+        };
+    }
 );
 
 export default ApiUtils;
