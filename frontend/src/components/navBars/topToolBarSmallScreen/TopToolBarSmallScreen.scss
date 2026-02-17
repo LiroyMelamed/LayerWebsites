@@ -88,3 +88,8 @@
 .lw-topToolBarSmallScreen__logoutButton {
     background-color: var(--lw-color-dark-red) !important;
 }
+
+/* Inside the native app the bottom nav covers the sidebar bottom */
+body.lw-fromApp .lw-topToolBarSmallScreen__sidebar {
+    padding-bottom: 6rem;
+}

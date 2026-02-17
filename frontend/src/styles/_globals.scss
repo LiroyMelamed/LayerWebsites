@@ -122,6 +122,12 @@ select:not([dir]) {
   min-inline-size: 0;
 }
 
+/* When inside the native app WebView, add bottom padding so content
+   doesn't hide behind the native bottom-nav center button (extends ~45 px above the bar). */
+body.lw-fromApp {
+  padding-bottom: 5rem;
+}
+
 /* Prevent browser pull-to-refresh/overscroll bounce where needed (e.g., signing flows) */
 html.lw-noPullRefresh,
 html.lw-noPullRefresh body {

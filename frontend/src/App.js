@@ -18,7 +18,7 @@ const STACK_SUFFIX = "/*"
 const App = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { setIsFromApp } = useFromApp();
+  const { isFromApp, setIsFromApp } = useFromApp();
   useEffect(() => {
     // On signing flows, disable overscroll-based pull-to-refresh (browser-level).
     const p = String(location?.pathname || "");
@@ -37,6 +37,14 @@ const App = () => {
       root.classList.remove("lw-noPullRefresh");
     };
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (isFromApp) {
+      document.body.classList.add('lw-fromApp');
+    } else {
+      document.body.classList.remove('lw-fromApp');
+    }
+  }, [isFromApp]);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
