@@ -38,24 +38,42 @@ export default function CaseMenuItem({
     const [isOpen, setIsOpen] = useState(false);
 
     function updateStage() {
-        if (fullCaseListener.CurrentStage <= fullCaseListener.Descriptions.length) {
-            const tempDescription = fullCaseListener.Descriptions;
-            tempDescription[fullCaseListener.CurrentStage - 1].Timestamp = new Date();
-            tempDescription[fullCaseListener.CurrentStage - 1].IsNew = false;
+        if (fullCaseListener.IsClosed) return;
+        if (fullCaseListener.CurrentStage > fullCaseListener.Descriptions.length) return;
 
-            if (fullCaseListener.CurrentStage + 1 <= fullCaseListener.Descriptions.length) {
-                tempDescription[fullCaseListener.CurrentStage].IsNew = true
-                setFullCaseListener(oldCase => ({ ...oldCase, CurrentStage: fullCaseListener.CurrentStage + 1, Descriptions: tempDescription }));
-            }
+        const tempDescription = [...fullCaseListener.Descriptions];
+        const curIdx = fullCaseListener.CurrentStage - 1;
 
-            if (fullCaseListener.CurrentStage === fullCaseListener.Descriptions.length) {
-                if (!fullCaseListener.IsClosed) {
-                    setFullCaseListener(oldCase => ({ ...oldCase, CurrentStage: fullCaseListener.CurrentStage, IsClosed: true, Descriptions: tempDescription }));
-                    setCase(fullCaseListener.CaseId, { ...fullCaseListener, CurrentStage: fullCaseListener.CurrentStage, IsClosed: true, Descriptions: tempDescription })
-                }
-            } else {
-                setCase(fullCaseListener.CaseId, { ...fullCaseListener, CurrentStage: fullCaseListener.CurrentStage + 1, Descriptions: tempDescription })
+        // Mark current stage as completed with timestamp
+        tempDescription[curIdx] = { ...tempDescription[curIdx], Timestamp: new Date(), IsNew: false };
+
+        const nextStage = fullCaseListener.CurrentStage + 1;
+        const isAdvancingToLast = nextStage >= fullCaseListener.Descriptions.length;
+
+        if (isAdvancingToLast) {
+            // Advancing to the last stage → also mark it done and close the case
+            const lastIdx = fullCaseListener.Descriptions.length - 1;
+            if (lastIdx > curIdx) {
+                tempDescription[lastIdx] = { ...tempDescription[lastIdx], Timestamp: new Date(), IsNew: false };
             }
+            const updated = {
+                ...fullCaseListener,
+                CurrentStage: fullCaseListener.Descriptions.length,
+                IsClosed: true,
+                Descriptions: tempDescription
+            };
+            setFullCaseListener(updated);
+            setCase(fullCaseListener.CaseId, updated);
+        } else {
+            // Normal advance — move to next stage
+            tempDescription[nextStage - 1] = { ...tempDescription[nextStage - 1], IsNew: true };
+            const updated = {
+                ...fullCaseListener,
+                CurrentStage: nextStage,
+                Descriptions: tempDescription
+            };
+            setFullCaseListener(updated);
+            setCase(fullCaseListener.CaseId, updated);
         }
     }
 

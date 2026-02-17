@@ -396,7 +396,12 @@ const addCase = async (req, res) => {
         }
 
         if (Descriptions && Descriptions.length > 0) {
+            const initStage = Number(CurrentStage) || 1;
             for (const [index, desc] of Descriptions.entries()) {
+                // Stages before the current stage are "past" and get today's date.
+                // The current stage (index === initStage - 1) also gets today's date.
+                // Future stages get null.
+                const isPastOrCurrent = index < initStage;
                 await client.query(
                     `
                     INSERT INTO casedescriptions (caseid, stage, text, timestamp, isnew)
@@ -406,8 +411,8 @@ const addCase = async (req, res) => {
                         caseId,
                         desc.Stage,
                         desc.Text,
-                        index === 0 ? new Date() : null,
-                        index === 0 ? true : false
+                        isPastOrCurrent ? new Date() : null,
+                        index === initStage - 1 ? true : false
                     ]
                 );
             }

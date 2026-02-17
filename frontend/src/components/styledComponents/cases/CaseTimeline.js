@@ -27,15 +27,14 @@ export default function CaseTimeline({ stages, currentStage, isClosed = false, t
 
                 <SimpleContainer className="lw-caseTimeline__dotsContainer">
                     {safeStages.slice().map((stage, index) => {
-                        const isCurrent = index === safeCurrentStage - 1;
-                        const isPast = index < safeCurrentStage - 1;
-                        const isFuture = index > safeCurrentStage - 1;
+                        // When case is closed, all stages are done (past)
+                        const isCurrent = !isClosed && index === safeCurrentStage - 1;
+                        const isPast = isClosed || index < safeCurrentStage - 1;
+                        const isFuture = !isClosed && index > safeCurrentStage - 1;
 
                         let badgeText;
                         if (isCurrent) {
-                            badgeText = isClosed && safeCurrentStage >= safeStages.length
-                                ? t('cases.ended')
-                                : t('common.new');
+                            badgeText = t('cases.currentStage');
                         } else if (isPast) {
                             badgeText = DateDDMMYY(stage.Timestamp) || t('cases.stageCompleted');
                         } else {
