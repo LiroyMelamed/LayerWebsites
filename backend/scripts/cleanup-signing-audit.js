@@ -88,7 +88,14 @@ async function truncateTables(client) {
     }
 
     for (const t of tables) {
-        const sql = `TRUNCATE TABLE IF EXISTS public.${t} CASCADE;`;
+        const { rows } = await client.query(
+            `SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1`, [t]
+        );
+        if (rows.length === 0) {
+            console.log(`Skipping ${t} (table does not exist)`);
+            continue;
+        }
+        const sql = `TRUNCATE TABLE public.${t} CASCADE;`;
         console.log(`Running: ${sql}`);
         await client.query(sql);
     }
