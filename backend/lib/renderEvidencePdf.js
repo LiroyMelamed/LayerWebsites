@@ -43,7 +43,6 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
       position: relative;
       border: 2px solid #1b3a57;
       padding: 10mm;
-      min-height: 245mm;
       background: #fff;
     }
 
@@ -166,16 +165,16 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
     }
 
     .footer {
-      position: absolute;
-      left: 10mm;
-      right: 10mm;
-      bottom: 10mm;
+      margin-top: 18px;
+      padding-top: 12px;
+      border-top: 1px solid #e2e8f0;
       display: flex;
       align-items: flex-end;
       justify-content: space-between;
       gap: 10px;
       font-size: 10px;
       color: #4a5568;
+      page-break-inside: avoid;
     }
 
     .qr {
