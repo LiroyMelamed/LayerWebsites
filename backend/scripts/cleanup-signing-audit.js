@@ -79,7 +79,6 @@ async function truncateTables(client) {
         'signing_consents',
         'signaturespots',
         'signing_retention_warnings',
-        'firm_signing_policy',
         'signingfiles',
     ];
 
@@ -106,7 +105,7 @@ async function main() {
         client = await pool.connect();
 
         // Count rows before cleanup
-        const tables = ['signingfiles', 'signaturespots', 'signing_consents', 'signing_otp_challenges', 'audit_events', 'signing_retention_warnings', 'firm_signing_policy'];
+        const tables = ['signingfiles', 'signaturespots', 'signing_consents', 'signing_otp_challenges', 'audit_events', 'signing_retention_warnings'];
         const counts = {};
         for (const t of tables) {
             try {
