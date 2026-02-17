@@ -596,6 +596,30 @@
     overflow: auto;
 }
 
+/* Mobile: keep buttons visible at the bottom of the viewport */
+@media (max-width: v.$bp-md) {
+    .lw-signing-screenContent .lw-signing-modalBody {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        height: 100%;
+    }
+
+    .lw-signing-screenContent .lw-signing-pdfContainer {
+        flex: 1 1 0;
+        min-height: 0;
+        overflow: auto;
+    }
+
+    .lw-signing-screenContent .lw-signing-sidePanel {
+        flex: 0 0 auto;
+        overflow-y: auto;
+        max-height: 40vh;
+        border-top: 1px solid #e0e0e0;
+        padding-top: 0.5rem;
+    }
+}
+
 .lw-signing-legalBox {
     border: 1px solid #e0e0e0;
     border-radius: 0.25rem;

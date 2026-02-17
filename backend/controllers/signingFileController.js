@@ -4821,11 +4821,11 @@ exports.signFile = async (req, res, next) => {
             try {
                 const attachments = [];
                 if (signedPdfKey) {
-                    const signedBuf = await getR2ObjectBuffer(signedPdfKey);
-                    if (signedBuf) {
+                    const signedObj = await getR2ObjectBuffer(signedPdfKey);
+                    if (signedObj?.buffer) {
                         attachments.push({
                             filename: `${String(file.FileName || 'document').replace(/\.pdf$/i, '')}_signed.pdf`,
-                            content: signedBuf,
+                            content: signedObj.buffer,
                             contentType: 'application/pdf',
                         });
                     }
