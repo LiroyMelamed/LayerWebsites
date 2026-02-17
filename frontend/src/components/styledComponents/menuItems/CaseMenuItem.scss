@@ -24,6 +24,7 @@
     @include m.row(v.$space-2, nowrap, center);
     min-inline-size: 0;
     max-inline-size: 100%;
+    overflow: hidden;
 }
 
 .lw-caseMenuItem__row--top {
@@ -48,7 +49,10 @@
 }
 
 .lw-caseMenuItem__pair--caseType {
-    flex: 0 0 auto;
+    flex: 1 1 0;
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }
 
