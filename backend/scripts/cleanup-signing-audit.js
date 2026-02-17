@@ -88,9 +88,11 @@ async function truncateTables(client) {
         return;
     }
 
-    const sql = `TRUNCATE TABLE ${tables.map(t => `public.${t}`).join(', ')} CASCADE;`;
-    console.log(`\nRunning: ${sql}`);
-    await client.query(sql);
+    for (const t of tables) {
+        const sql = `TRUNCATE TABLE IF EXISTS public.${t} CASCADE;`;
+        console.log(`Running: ${sql}`);
+        await client.query(sql);
+    }
     console.log('Tables truncated successfully.');
 }
 
@@ -104,10 +106,15 @@ async function main() {
         client = await pool.connect();
 
         // Count rows before cleanup
+        const tables = ['signingfiles', 'signaturespots', 'signing_consents', 'signing_otp_challenges', 'audit_events', 'signing_retention_warnings', 'firm_signing_policy'];
         const counts = {};
-        for (const t of ['signingfiles', 'signaturespots', 'signing_consents', 'signing_otp_challenges', 'audit_events', 'signing_retention_warnings', 'firm_signing_policy']) {
-            const { rows } = await client.query(`SELECT COUNT(*)::int AS cnt FROM ${t}`);
-            counts[t] = rows[0].cnt;
+        for (const t of tables) {
+            try {
+                const { rows } = await client.query(`SELECT COUNT(*)::int AS cnt FROM ${t}`);
+                counts[t] = rows[0].cnt;
+            } catch {
+                counts[t] = '(table not found)';
+            }
         }
         console.log('Current row counts:');
         for (const [table, count] of Object.entries(counts)) {
