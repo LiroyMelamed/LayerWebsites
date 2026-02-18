@@ -7,7 +7,7 @@
 }
 
 .lw-caseMenuItem__header {
-    @include m.row(v.$space-4, nowrap, center);
+    @include m.row(v.$space-4, nowrap, center, space-between);
     min-block-size: 2.75rem;
     min-inline-size: 0;
     overflow: hidden;
@@ -67,7 +67,7 @@
 
 .lw-caseMenuItem__toggle {
     flex: 0 0 auto;
-    width: 0.75rem;
+    // width: 0.75rem;
     height: 0.75rem;
     transform: rotate(0deg);
     transition: transform 0.3s ease;
