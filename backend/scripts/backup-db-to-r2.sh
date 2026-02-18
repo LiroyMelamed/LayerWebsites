@@ -28,11 +28,8 @@ RETENTION_DAYS=7
 
 echo "$(date '+%F %T') Starting backup..."
 
-# ── 1) Dump database ──
-PGPASSWORD="$DB_PASSWORD" pg_dump \
-  -U "$DB_USER" \
-  -h "${DB_HOST:-127.0.0.1}" \
-  -p "${DB_PORT:-5432}" \
+# ── 1) Dump database (use postgres superuser for full access) ──
+sudo -u postgres pg_dump \
   --format=custom \
   --file "$DUMP_FILE" \
   "$DB_NAME"
