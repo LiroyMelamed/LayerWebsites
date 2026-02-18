@@ -7,10 +7,19 @@
   --lw-simpleTable-cellPaddingInline: #{v.$space-3};
   --lw-simpleTable-rowGap: 0;
 
+  max-width: 100%;
+  min-width: 0;
   max-height: 100%;
   overflow-x: auto;
   overflow-y: hidden;
   flex-direction: column;
+}
+
+@media (max-width: v.$bp-md) {
+  .lw-simpleTable {
+    --lw-simpleTable-cellMin: 5rem;
+    --lw-simpleTable-cellPaddingInline: #{v.$space-2};
+  }
 }
 
 .lw-simpleTable__titleRow {
