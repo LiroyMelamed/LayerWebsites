@@ -24,12 +24,11 @@
     @include m.row(v.$space-2, nowrap, center);
     min-inline-size: 0;
     max-inline-size: 100%;
-    overflow: hidden;
 }
 
 .lw-caseMenuItem__row--top {
     flex-wrap: wrap;
-    justify-content: space-between;
+    justify-content: flex-end;
 }
 
 .lw-caseMenuItem__row--bottom {
@@ -37,11 +36,11 @@
 }
 
 .lw-caseMenuItem__title {
-    flex: 0 1 auto;
+    flex: 1 1 100%;
     min-inline-size: 0;
-    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .lw-caseMenuItem__pair {
@@ -49,11 +48,11 @@
 }
 
 .lw-caseMenuItem__pair--caseType {
-    flex: 1 1 0;
+    flex: 0 1 auto;
     min-inline-size: 0;
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
 .lw-caseMenuItem__pair--grow {
