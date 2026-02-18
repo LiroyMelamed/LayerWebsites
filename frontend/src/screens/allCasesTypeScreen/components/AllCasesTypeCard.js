@@ -43,7 +43,6 @@ export default function AllCasesTypeCard({ allCasesType, reperformAfterSave, isP
 
                         <CaseTypeMenuItem
                             fullCase={item}
-                            rightTitle={item.CaseTypeName}
 
                             leftPreFirstLine={t('cases.caseType')}
                             leftValueFirstLine={item.CaseTypeName}

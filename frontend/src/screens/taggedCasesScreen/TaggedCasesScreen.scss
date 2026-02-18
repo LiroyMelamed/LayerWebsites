@@ -2,30 +2,30 @@
 @use '../../styles/variables' as v;
 
 .lw-taggedCasesScreen__topRow {
-    @include m.row(v.$space-3, wrap);
+    @include m.row(v.$space-3, no-wrap);
     max-width: 100%;
     margin: 1rem 1rem 0.5rem;
 }
 
 .lw-taggedCasesScreen__filtersRow {
     @include m.row(v.$space-3, wrap);
+    align-items: center;
+    justify-content: center;
     max-width: 100%;
-    margin: 0 1rem 1rem;
+    margin-top: 1rem;
 }
 
 .lw-taggedCasesScreen__search {
-    flex: 1 1 14rem;
     min-inline-size: 0;
 }
 
 .lw-taggedCasesScreen__clientFilter {
-    flex: 1 1 14rem;
     min-inline-size: 0;
 }
 
 .lw-taggedCasesScreen__choose {
-    flex: 1 1 8.5rem;
-    min-inline-size: 0;
+    flex: 0 0 auto;
+    min-inline-size: 8.5rem;
 }
 
 .lw-taggedCasesScreen__footer {
@@ -34,8 +34,7 @@
     align-self: center;
 }
 
-.lw-taggedCasesScreen__footer>.lw-textButtonWithTwoOptionalIcons {
+.lw-taggedCasesScreen__addButton {
     margin: 0.5rem 0;
     align-self: center;
-    min-block-size: 2.75rem;
 }

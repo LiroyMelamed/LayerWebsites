@@ -1,7 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
-import { Text16 } from "../../specializedComponents/text/AllTextKindFile";
 import { icons } from "../../../assets/icons/icons";
 import HoverContainer from "../../specializedComponents/containers/HoverContainer";
 import SecondaryButton from "./SecondaryButton";
@@ -27,10 +26,10 @@ export default function ChooseButton({
             : normalizedChoices.map((c) => ({ value: c, label: String(c) }));
 
         if (showAll) {
-            return [{ value: null, label: t('common.all') }, ...normalizedItems];
+            return [{ value: null, label: buttonText ?? t('common.choose') }, ...normalizedItems];
         }
         return normalizedItems;
-    }, [buttonChoices, items, t, showAll]);
+    }, [buttonChoices, items, t, showAll, buttonText]);
 
     const [chosenValue, setChosenValue] = useState(null);
     const [showResults, setShowResults] = useState(false);
@@ -46,7 +45,6 @@ export default function ChooseButton({
 
     return (
         <SimpleContainer className="lw-chooseButton">
-            <Text16>{(buttonText ?? t('common.choose')) + ":"}</Text16>
             <SecondaryButton
                 ref={buttonRef}
                 leftIcon={icons.Button.DownArrow}

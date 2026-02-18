@@ -2,28 +2,39 @@
 @use '../../styles/variables' as v;
 
 .lw-myCasesScreen__topRow {
-    @include m.row(v.$space-3, wrap);
+    @include m.row(v.$space-3, no-wrap);
     max-width: 100%;
     margin: 1rem 1rem 0.5rem;
 }
 
 .lw-myCasesScreen__filtersRow {
     @include m.row(v.$space-3, wrap);
+    align-items: center;
+    justify-content: center;
     max-width: 100%;
-    margin: 0 1rem 1rem;
+    margin-top: 1rem;
 }
 
 .lw-myCasesScreen__search {
-    flex: 1 1 14rem;
     min-inline-size: 0;
 }
 
 .lw-myCasesScreen__clientFilter {
-    flex: 1 1 14rem;
     min-inline-size: 0;
 }
 
 .lw-myCasesScreen__choose {
     flex: 0 0 auto;
     min-inline-size: 8.5rem;
+}
+
+.lw-myCasesScreen__footer {
+    display: flex;
+    justify-content: center;
+    align-self: center;
+}
+
+.lw-myCasesScreen__addButton {
+    margin: 0.5rem 0;
+    align-self: center;
 }

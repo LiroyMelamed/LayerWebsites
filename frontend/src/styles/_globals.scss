@@ -122,9 +122,16 @@ select:not([dir]) {
   min-inline-size: 0;
 }
 
-/* When inside the native app WebView, add bottom padding so content
-   doesn't hide behind the native bottom-nav center button (extends ~45 px above the bar). */
+/* When inside the native app WebView, lock the body so only inner
+   ScrollViews scroll — prevents the navbar from scrolling off-screen. */
 body.lw-fromApp {
+  height: 100svh;
+  overflow: hidden;
+}
+
+/* Bottom padding lives on the scroll view so content clears the native
+   bottom-nav center button (~45 px above the bar). */
+body.lw-fromApp .lw-simpleScrollView {
   padding-bottom: 5rem;
 }
 

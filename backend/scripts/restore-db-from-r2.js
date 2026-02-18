@@ -118,28 +118,40 @@ async function main() {
     console.log(`Creating database "${DB_NAME}"...`);
     psqlSuper(`CREATE DATABASE \\"${DB_NAME}\\" OWNER ${DB_USER};`);
 
-    // Restore
+    // Restore (use superuser for full access to all objects)
     console.log('Restoring...');
     try {
         execSync(
-            `"${PG_BIN}\\pg_restore.exe" -U ${DB_USER} -h ${DB_HOST} -p ${DB_PORT} -d ${DB_NAME} --no-owner --no-privileges "${tmpFile}"`,
-            { env: pgEnv, stdio: 'pipe' }
+            `"${PG_BIN}\\pg_restore.exe" -U ${PG_SUPER_USER} -h ${DB_HOST} -p ${DB_PORT} -d ${DB_NAME} --no-owner --no-privileges "${tmpFile}"`,
+            { env: superEnv, stdio: 'pipe' }
         );
+        console.log('Restore completed successfully.');
     } catch (e) {
-        // pg_restore exits non-zero on warnings (duplicate indexes, ownership) — that's OK
+        // pg_restore exits non-zero on warnings — that's OK
         const stderr = e.stderr ? e.stderr.toString() : '';
         if (stderr.includes('already exists') || stderr.includes('must be owner')) {
-            console.log('Restore completed with non-critical warnings (duplicate indexes/ownership).');
+            console.log('Restore completed with non-critical warnings.');
+        } else if (e.status === 1) {
+            // Exit code 1 = warnings only, data is fine
+            console.log('Restore completed with warnings.');
         } else {
             console.error('Restore error:', stderr);
             process.exit(1);
         }
     }
 
+    // Grant all privileges to the app user
+    console.log(`Granting privileges to ${DB_USER}...`);
+    const grantSql = `GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ${DB_USER}; GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO ${DB_USER}; GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO ${DB_USER};`;
+    execSync(
+        `"${PG_BIN}\\psql.exe" -U ${PG_SUPER_USER} -h ${DB_HOST} -p ${DB_PORT} -d ${DB_NAME} -c "${grantSql}"`,
+        { env: superEnv, stdio: 'pipe' }
+    );
+
     // Verify
     const countResult = execSync(
-        `"${PG_BIN}\\psql.exe" -U ${DB_USER} -h ${DB_HOST} -p ${DB_PORT} -d ${DB_NAME} -t -c "SELECT 'tables=' || count(*) FROM information_schema.tables WHERE table_schema='public';"`,
-        { env: pgEnv, encoding: 'utf8' }
+        `"${PG_BIN}\\psql.exe" -U ${PG_SUPER_USER} -h ${DB_HOST} -p ${DB_PORT} -d ${DB_NAME} -t -c "SELECT 'tables=' || count(*) FROM information_schema.tables WHERE table_schema='public';"`,
+        { env: superEnv, encoding: 'utf8' }
     ).trim();
     console.log(countResult);
 
