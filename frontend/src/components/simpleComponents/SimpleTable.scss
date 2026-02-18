@@ -51,11 +51,8 @@
 .lw-simpleTable__cell {
   flex: 1;
   padding-block: var(--lw-simpleTable-cellPaddingBlock);
-  padding-inline: var(--lw-simpleTable-cellPaddingInline);
   white-space: nowrap;
-  overflow: hidden;
   text-overflow: ellipsis;
-  min-width: var(--lw-simpleTable-cellMin);
   text-align: start;
   font-variant-numeric: tabular-nums;
 }
