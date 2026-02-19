@@ -336,7 +336,6 @@ async function sendTransactionalSignInvite({ toEmail, contactFields, shouldSendR
 
     const fromName = String(process.env.SMOOVE_EMAIL_FROM_NAME || '').trim();
     const fromEmail = String(process.env.SMOOVE_EMAIL_FROM_EMAIL || '').trim();
-    const replyTo = String(process.env.SMOOVE_EMAIL_REPLY_TO || '').trim();
 
     const baseUrlRaw = String(process.env.SMOOVE_BASE_URL || DEFAULT_SMOOVE_REST_BASE_URL).trim();
     const apiKey = String(process.env.SMOOVE_API_KEY || '').trim();
@@ -381,7 +380,7 @@ async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shou
 
     const fromName = String(process.env.SMOOVE_EMAIL_FROM_NAME || '').trim();
     const fromEmail = String(process.env.SMOOVE_EMAIL_FROM_EMAIL || '').trim();
-    const replyTo = String(process.env.SMOOVE_EMAIL_REPLY_TO || '').trim();
+    const ccEmail = String(process.env.LICENSE_RENEWAL_REMINDERS_CEO_EMAIL || '').trim();
 
     if (!shouldSendRealEmail) {
         console.log('--- EMAIL Transactional Simulation (Dev Mode) ---');
@@ -417,8 +416,8 @@ async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shou
 
                 const mailOptions = {
                     from: fromName ? `${fromName} <${smtpFrom}>` : smtpFrom,
-                    ...(replyTo ? { replyTo } : {}),
                     to: email,
+                    ...(ccEmail && ccEmail.toLowerCase() !== email.toLowerCase() ? { cc: ccEmail } : {}),
                     subject: String(subject || '').trim(),
                     html: String(htmlBody || ''),
                 };
@@ -454,7 +453,6 @@ async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shou
         subject: String(subject || '').trim(),
         body: String(htmlBody || ''),
         ...(fromEmail ? { customFromAddress: fromEmail } : null),
-        ...(replyTo ? { customReplyToAddress: replyTo } : null),
         toMembersByEmail: [email],
     };
 
@@ -523,8 +521,7 @@ async function sendEmailWithAttachments({ toEmail, subject, htmlBody, attachment
     const fromName = String(process.env.SMOOVE_EMAIL_FROM_NAME || '').trim();
     // Always send FROM the SMTP account (noreply@) – cPanel rejects mismatched senders.
     const fromEmail = String(process.env.SMTP_FROM_EMAIL || process.env.SMOOVE_EMAIL_FROM_EMAIL || '').trim();
-    // If a lawyer email override is provided, set Reply-To so the client's reply goes to the lawyer.
-    const replyTo = fromEmailOverride ? String(fromEmailOverride).trim() : '';
+    const ccEmail = String(process.env.LICENSE_RENEWAL_REMINDERS_CEO_EMAIL || '').trim();
 
     const smtpHost = String(process.env.SMTP_HOST || '').trim();
     const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
@@ -558,8 +555,8 @@ async function sendEmailWithAttachments({ toEmail, subject, htmlBody, attachment
 
         const mailOptions = {
             from: fromName ? `${fromName} <${fromEmail}>` : fromEmail,
-            ...(replyTo ? { replyTo } : {}),
             to: email,
+            ...(ccEmail && ccEmail.toLowerCase() !== email.toLowerCase() ? { cc: ccEmail } : {}),
             subject: String(subject || '').trim(),
             html: String(htmlBody || ''),
             attachments: (attachments || []).map(att => ({
@@ -1373,6 +1370,7 @@ function extractSmooveErrorMessage(data) {
 module.exports = {
     sendEmailCampaign,
     sendTransactionalCustomHtmlEmail,
+    sendEmailWithAttachments,
     COMPANY_NAME,
     WEBSITE_DOMAIN,
     isProduction,
