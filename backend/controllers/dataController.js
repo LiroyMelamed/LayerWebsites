@@ -25,11 +25,15 @@ const getMainScreenData = async (req, res) => {
                 );
 
                 // Fetch a list of distinct users who have at least one open case
+                // (either as the case owner OR as a linked user via case_users)
                 const activeCustomers = await pool.query(`
                     SELECT DISTINCT U.UserId, U.Name, U.Email, U.PhoneNumber, U.CompanyName, U.CreatedAt, U.DateOfBirth, U.ProfilePicUrl
                     FROM Users U
-                    JOIN Cases C ON C.UserId = U.UserId
-                    WHERE C.IsClosed = FALSE AND LOWER(U.Role) <> 'admin' AND LOWER(U.Role) <> 'deleted'
+                    WHERE LOWER(U.Role) <> 'admin' AND LOWER(U.Role) <> 'deleted'
+                      AND (
+                        EXISTS (SELECT 1 FROM Cases C WHERE C.UserId = U.UserId AND C.IsClosed = FALSE)
+                        OR EXISTS (SELECT 1 FROM case_users CU JOIN Cases C ON C.caseid = CU.caseid WHERE CU.userid = U.UserId AND C.IsClosed = FALSE)
+                      )
                 `);
 
                 // Extract the rows from the query results
