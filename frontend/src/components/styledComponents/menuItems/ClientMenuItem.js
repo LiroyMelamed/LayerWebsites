@@ -45,7 +45,7 @@ export default function ClientMenuItem({
                         <Text14 shouldApplyClamping>{clientMail || "-"}</Text14>
                     </SimpleContainer>
 
-                    <SimpleContainer className="lw-clientMenuItem__cell">
+                    <SimpleContainer className="lw-clientMenuItem__cell lw-clientMenuItem__cell--phone">
                         <Text14>{clientPhone || "-"}</Text14>
                     </SimpleContainer>
                 </SimpleContainer>

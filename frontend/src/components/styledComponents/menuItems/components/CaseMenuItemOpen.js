@@ -249,6 +249,7 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
                                     stages={fullCase.Descriptions}
                                     currentStage={fullCase.CurrentStage}
                                     isClosed={fullCase.IsClosed}
+                                    createdAt={fullCase.CreatedAt}
                                 />
                             </SimpleContainer>
                         )}

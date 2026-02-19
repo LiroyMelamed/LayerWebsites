@@ -110,6 +110,7 @@
 
 .lw-caseMenuItemOpen__item {
     display: flex;
+    flex-wrap: wrap;
     align-items: flex-start;
     gap: v.$space-2;
     min-width: 0;
@@ -195,6 +196,12 @@
     flex-wrap: wrap;
     gap: v.$space-2;
     align-items: center;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.lw-caseMenuItemOpen__whatsAppActions>* {
+    white-space: nowrap;
 }
 
 .lw-caseMenuItemOpen__linkButton {

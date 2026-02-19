@@ -73,8 +73,10 @@ function getContactFieldKeys(contactFields) {
  * Notification Orchestrator
  *
  * Rule (non-OTP):
- * - if recipient has valid push token => send PUSH + EMAIL
- * - else => send EMAIL + SMS
+ * - Send on ALL available channels: Push + Email + SMS
+ * - Push is sent if the user has a valid Expo push token
+ * - Email is sent if the user has an email address
+ * - SMS is sent if the user has a phone number
  *
  * OTP must be SMS-only and should NOT use this orchestrator.
  */
@@ -113,18 +115,18 @@ async function notifyRecipient({
 
     const hasPush = recipientUserId ? await userHasValidPush(recipientUserId) : false;
 
+    // Send on ALL available channels: Push + Email + SMS
     const wantPush = Boolean(hasPush && push && recipientUserId);
     const wantEmail = Boolean(email && resolvedEmail);
-    const wantSms = Boolean(!hasPush && sms && resolvedPhone);
+    const wantSms = Boolean(sms && resolvedPhone);
 
     // Persist to DB for in-app Notifications screen.
-    // Previously we only stored when sending push, so EMAIL/SMS-only users saw nothing.
     const storeTitle = String(push?.title || 'התראה').trim();
     const storeMessage = String(push?.body || sms?.messageBody || '').trim();
     const wantStore = Boolean(recipientUserId && storeTitle && storeMessage);
 
     const outcomes = {
-        decision: hasPush ? 'PUSH_EMAIL' : 'EMAIL_SMS',
+        decision: 'ALL_CHANNELS',
         store: { attempted: wantStore, ok: null },
         push: { attempted: wantPush, ok: null },
         email: { attempted: wantEmail, ok: null },

@@ -116,6 +116,7 @@ export default function CaseMenuItem({
                                 </Text12>
                             )}
                         </SimpleContainer>
+
                     </SimpleContainer>
                 </SimpleContainer>
 

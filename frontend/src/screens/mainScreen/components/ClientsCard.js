@@ -42,7 +42,7 @@ export default function ClientsCard({ rePerformRequest, customerList, style: _st
 
                 <Text14 className="lw-clientsCard__headerCell lw-clientsCard__headerCell--email">{t("common.email")}</Text14>
 
-                <Text14 className="lw-clientsCard__headerCell">{t("cases.phoneNumber")}</Text14>
+                <Text14 className="lw-clientsCard__headerCell lw-clientsCard__headerCell--phone">{t("cases.phoneNumber")}</Text14>
             </SimpleContainer>
 
             <Separator />

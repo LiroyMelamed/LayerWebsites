@@ -383,6 +383,57 @@ async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shou
     const fromEmail = String(process.env.SMOOVE_EMAIL_FROM_EMAIL || '').trim();
     const replyTo = String(process.env.SMOOVE_EMAIL_REPLY_TO || '').trim();
 
+    if (!shouldSendRealEmail) {
+        console.log('--- EMAIL Transactional Simulation (Dev Mode) ---');
+        console.log('To:', maskEmailForLog(email));
+        console.log('Label:', String(logLabel || '').trim() || 'TRANSACTIONAL');
+        console.log('Subject:', truncateForLog(String(subject || ''), 200));
+        console.log('BodyBytes:', Buffer.byteLength(String(htmlBody || ''), 'utf8'));
+        console.log('FieldKeys:', Object.keys(fields || {}).sort());
+        console.log('------------------------------------------------');
+        return { ok: true, simulated: true, mode: 'transactional' };
+    }
+
+    // ── Prefer SMTP/Nodemailer when configured ──
+    // Smoove's campaign API does not properly MIME-encode non-ASCII
+    // (Hebrew) subject lines, causing mojibake.  Nodemailer handles
+    // RFC 2047 encoding and Content-Type charset=utf-8 correctly.
+    const smtpHost = String(process.env.SMTP_HOST || '').trim();
+    if (smtpHost) {
+        const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
+        const smtpUser = String(process.env.SMTP_USER || '').trim();
+        const smtpPass = String(process.env.SMTP_PASS || '').trim();
+        // Always send FROM the SMTP account – cPanel rejects mismatched senders.
+        const smtpFrom = String(process.env.SMTP_FROM_EMAIL || fromEmail || '').trim();
+
+        if (smtpUser && smtpPass) {
+            try {
+                const transporter = nodemailer.createTransport({
+                    host: smtpHost,
+                    port: smtpPort,
+                    secure: smtpPort === 465,
+                    auth: { user: smtpUser, pass: smtpPass },
+                });
+
+                const mailOptions = {
+                    from: fromName ? `${fromName} <${smtpFrom}>` : smtpFrom,
+                    ...(replyTo ? { replyTo } : {}),
+                    to: email,
+                    subject: String(subject || '').trim(),
+                    html: String(htmlBody || ''),
+                };
+
+                const info = await transporter.sendMail(mailOptions);
+                console.log(`SMTP email sent to ${maskEmailForLog(email)} (${String(logLabel || 'EMAIL').trim()}) messageId=${info.messageId}`);
+                return { ok: true, mode: 'smtp', messageId: info.messageId };
+            } catch (e) {
+                console.error(`SMTP send failed for ${String(logLabel || 'EMAIL').trim()}:`, e?.message || e);
+                // Fall through to Smoove as last resort.
+            }
+        }
+    }
+
+    // ── Fallback: Smoove campaign API ──
     const baseUrlRaw = String(process.env.SMOOVE_BASE_URL || DEFAULT_SMOOVE_REST_BASE_URL).trim();
     const apiKey = String(process.env.SMOOVE_API_KEY || '').trim();
 
@@ -393,17 +444,6 @@ async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shou
     if (missing.length) {
         console.error(`Smoove env vars missing (${missing.join('/')}). Cannot send transactional email.`);
         return { ok: false, errorCode: 'MISSING_ENV', details: { missing } };
-    }
-
-    if (!shouldSendRealEmail) {
-        console.log('--- EMAIL Transactional Simulation (Dev Mode) ---');
-        console.log('To:', maskEmailForLog(email));
-        console.log('Label:', String(logLabel || '').trim() || 'TRANSACTIONAL');
-        console.log('Subject:', truncateForLog(String(subject || ''), 200));
-        console.log('BodyBytes:', Buffer.byteLength(String(htmlBody || ''), 'utf8'));
-        console.log('FieldKeys:', Object.keys(fields || {}).sort());
-        console.log('------------------------------------------------');
-        return { ok: true, simulated: true, mode: 'transactional' };
     }
 
     const baseUrl = baseUrlRaw.replace(/\/+$/g, '');
@@ -419,7 +459,7 @@ async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shou
     };
 
     const requestHeaders = {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json; charset=utf-8',
         Authorization: apiKey,
         ApiKey: apiKey,
     };

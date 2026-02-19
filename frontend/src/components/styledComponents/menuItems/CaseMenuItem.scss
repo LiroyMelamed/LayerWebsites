@@ -24,7 +24,6 @@
     @include m.row(v.$space-2, nowrap, center);
     min-inline-size: 0;
     max-inline-size: 100%;
-    overflow: hidden;
 }
 
 .lw-caseMenuItem__row--top {
@@ -39,33 +38,21 @@
 .lw-caseMenuItem__title {
     flex: 1 1 100%;
     min-inline-size: 0;
-
-    > * {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        display: block;
-        max-width: 100%;
-    }
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .lw-caseMenuItem__pair {
     @include m.row(v.$space-1, nowrap, center);
-    min-inline-size: 0;
 }
 
 .lw-caseMenuItem__pair--caseType {
-    flex: 0 1 auto;
+    flex: 1;
     min-inline-size: 0;
-    max-inline-size: 100%;
-    overflow: hidden;
+    align-items: flex-start;
 
-    > * {
+    > :first-child {
         white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        flex-shrink: 1;
-        min-inline-size: 0;
     }
 }
 

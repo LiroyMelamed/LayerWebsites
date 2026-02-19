@@ -3,6 +3,8 @@
 
 .lw-mainScreen__chartWrap {
     flex: 1;
+    min-inline-size: 0;
+    max-inline-size: 100%;
     align-items: center;
     justify-content: center;
 }
@@ -14,10 +16,13 @@
 .lw-mainScreen__cards {
     flex-direction: column;
     flex: 1;
+    min-inline-size: 0;
+    max-inline-size: 100%;
 }
 
 .lw-mainScreen__row {
     @include m.row(v.$space-4);
+    flex-wrap: wrap;
 }
 
 .lw-mainScreen__row--wrap {

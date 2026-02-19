@@ -6,6 +6,59 @@ const { notifyRecipient } = require("../services/notifications/notificationOrche
 const { requireInt } = require("../utils/paramValidation");
 const { getPagination } = require("../utils/pagination");
 
+/**
+ * Notify the case manager (casemanagerid) about a case change,
+ * but only if the manager is not already in the notified users set.
+ */
+async function notifyCaseManager({ caseId, caseName, title, message, smsBody, alreadyNotifiedUserIds }) {
+    try {
+        const caseRes = await pool.query(
+            'SELECT casemanagerid FROM cases WHERE caseid = $1',
+            [caseId]
+        );
+        const managerId = Number(caseRes.rows?.[0]?.casemanagerid);
+        if (!Number.isFinite(managerId) || managerId <= 0) return;
+
+        // Skip if already notified as a linked user
+        if (alreadyNotifiedUserIds && alreadyNotifiedUserIds.has(managerId)) return;
+
+        const managerRes = await pool.query(
+            'SELECT userid AS "UserId", name AS "Name", phonenumber AS "PhoneNumber" FROM users WHERE userid = $1',
+            [managerId]
+        );
+        if (!managerRes.rows?.length) return;
+        const mgr = managerRes.rows[0];
+
+        const recipientName = String(mgr.Name || '').trim();
+        const finalMessage = message || `תיק "${caseName}" עודכן. היכנס לאתר או לאפליקציה למעקב.`;
+        const finalSms = smsBody || finalMessage;
+
+        await notifyRecipient({
+            recipientUserId: mgr.UserId,
+            recipientPhone: mgr.PhoneNumber,
+            notificationType: 'CASE_UPDATE',
+            push: {
+                title: title || 'עדכון תיק',
+                body: finalMessage,
+                data: { caseId: String(caseId) },
+            },
+            email: {
+                campaignKey: 'CASE_UPDATE',
+                contactFields: {
+                    recipient_name: recipientName || 'מנהל תיק',
+                    case_title: String(caseName || '').trim(),
+                    action_url: `https://${WEBSITE_DOMAIN}`,
+                },
+            },
+            sms: {
+                messageBody: finalSms,
+            },
+        });
+    } catch (e) {
+        console.error('notifyCaseManager error (non-fatal):', e?.message || e);
+    }
+}
+
 const _buildBaseCaseQuery = () => `
     SELECT
         C.caseid,
@@ -456,6 +509,17 @@ const addCase = async (req, res) => {
             });
         }
 
+        // Notify case manager if not already notified as a linked user
+        const notifiedCreateIds = new Set(linkedUsers.map(u => u.UserId));
+        await notifyCaseManager({
+            caseId,
+            caseName: CaseName,
+            title: 'תיק חדש נוצר',
+            message: `תיק "${CaseName}" נוצר בהצלחה. היכנס לאתר או לאפליקציה למעקב.`,
+            smsBody: `תיק ${CaseName} נוצר, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`,
+            alreadyNotifiedUserIds: notifiedCreateIds,
+        });
+
         res.status(201).json({ message: "Case created successfully", caseId });
 
     } catch (error) {
@@ -624,6 +688,21 @@ const updateCase = async (req, res) => {
             });
         }
 
+        // Notify case manager if not already notified as a linked user
+        const notifiedUpdateIds = new Set(linkedUsers.map(u => u.UserId));
+        await notifyCaseManager({
+            caseId,
+            caseName: CaseName,
+            title: notificationTitle,
+            message: stageName
+                ? `תיק "${CaseName}" עודכן לשלב - ${stageName}. היכנס לאתר או לאפליקציה למעקב.`
+                : `תיק "${CaseName}" עודכן. היכנס לאתר או לאפליקציה למעקב.`,
+            smsBody: stageName
+                ? `תיק ${CaseName} עודכן לשלב - ${stageName}, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`
+                : `תיק ${CaseName} התעדכן, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`,
+            alreadyNotifiedUserIds: notifiedUpdateIds,
+        });
+
         res.status(200).json({ message: "Case updated successfully" });
     } catch (error) {
         console.error("Error updating case:", error);
@@ -778,6 +857,29 @@ const updateStage = async (req, res) => {
                     },
                 });
             }
+
+            // Notify case manager if not already notified as a linked user
+            const notifiedStageIds = new Set(linkedUsers.map(u => u.UserId));
+            let mgrTitle = 'עדכון תיק';
+            let mgrMessage = `תיק "${CaseName}" עודכן. היכנס לאתר או לאפליקציה למעקב.`;
+            if (notificationType === 'stage_changed') {
+                mgrTitle = 'עדכון שלב בתיק';
+                mgrMessage = `בתיק "${CaseName}" התעדכן שלב, התיק נמצא בשלב - ${Descriptions[CurrentStage - 1]?.Text || CurrentStage}. היכנס לאתר או לאפליקציה למעקב.`;
+            } else if (notificationType === 'case_closed') {
+                mgrTitle = 'תיק הסתיים';
+                mgrMessage = `תיק "${CaseName}" הסתיים בהצלחה. היכנס לאתר או לאפליקציה למעקב.`;
+            } else if (notificationType === 'case_reopened') {
+                mgrTitle = 'תיק נפתח מחדש';
+                mgrMessage = `תיק "${CaseName}" נפתח מחדש. היכנס לאתר או לאפליקציה למעקב.`;
+            }
+            await notifyCaseManager({
+                caseId,
+                caseName: CaseName,
+                title: mgrTitle,
+                message: mgrMessage,
+                smsBody: mgrMessage,
+                alreadyNotifiedUserIds: notifiedStageIds,
+            });
         }
 
         await client.query('COMMIT');
@@ -1088,6 +1190,17 @@ const linkWhatsappGroup = async (req, res) => {
                     },
                 });
             }
+
+            // Notify case manager if not already notified as a linked user
+            const notifiedWaIds = new Set(linkedUsersResult.rows.map(u => u.UserId));
+            await notifyCaseManager({
+                caseId,
+                caseName,
+                title: 'קבוצת וואטסאפ מקושרת',
+                message: `קבוצת וואטסאפ קושרה לתיק "${caseName}".`,
+                smsBody: `קבוצת וואטסאפ קושרה לתיק "${caseName}".\n${String(normalized || '').trim()}`,
+                alreadyNotifiedUserIds: notifiedWaIds,
+            });
         }
 
         res.status(200).json({ message: "Whatsapp group link updated successfully" });

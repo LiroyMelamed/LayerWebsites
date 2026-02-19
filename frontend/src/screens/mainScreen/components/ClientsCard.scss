@@ -7,12 +7,17 @@
 
 .lw-clientsCard__headerRow {
     @include m.row(v.$space-2, nowrap, center);
+    min-inline-size: 0;
+    overflow: hidden;
 }
 
 .lw-clientsCard__headerCell {
     flex: 1;
     text-align: start;
     min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .lw-clientsCard__list {
@@ -32,6 +37,7 @@
 .lw-clientsCard__buttonsRow {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
@@ -46,6 +52,10 @@
 
 @media (max-width: v.$bp-md) {
     .lw-clientsCard__headerCell--email {
+        display: none;
+    }
+
+    .lw-clientsCard__headerCell--phone {
         display: none;
     }
 }

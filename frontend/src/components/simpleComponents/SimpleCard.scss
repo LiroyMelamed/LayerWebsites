@@ -1,5 +1,7 @@
 .lw-simpleCard {
   justify-content: flex-end;
+  min-inline-size: 0;
+  overflow: hidden;
 
   background-color: var(--lw-color-white);
   border-radius: 1rem; // 16px

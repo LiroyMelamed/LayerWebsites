@@ -6,7 +6,19 @@ import { useTranslation } from "react-i18next";
 
 import "./CaseTimeline.scss";
 
-export default function CaseTimeline({ stages, currentStage, isClosed = false, title, style }) {
+/**
+ * Get the date we arrived at the given stage:
+ * - Stage 1: use case CreatedAt
+ * - Stage N>1: use previous stage's completion Timestamp
+ */
+function getStageArrivalDate(stages, stageIndex, createdAt) {
+    if (stageIndex === 0) {
+        return createdAt || null;
+    }
+    return stages?.[stageIndex - 1]?.Timestamp || null;
+}
+
+export default function CaseTimeline({ stages, currentStage, isClosed = false, title, style, createdAt }) {
     const { t } = useTranslation();
     const safeStages = Array.isArray(stages) ? stages : [];
     const safeCurrentStage = Number(currentStage) || 0;
@@ -34,7 +46,10 @@ export default function CaseTimeline({ stages, currentStage, isClosed = false, t
 
                         let badgeText;
                         if (isCurrent) {
-                            badgeText = t('cases.currentStage');
+                            const arrivalDate = DateDDMMYY(getStageArrivalDate(safeStages, index, createdAt));
+                            badgeText = arrivalDate
+                                ? `${t('cases.currentStage')} - ${arrivalDate}`
+                                : t('cases.currentStage');
                         } else if (isPast) {
                             badgeText = DateDDMMYY(stage.Timestamp) || t('cases.stageCompleted');
                         } else {
