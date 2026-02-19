@@ -66,21 +66,49 @@ export default function CaseTypeMenuItem({
                         <SimpleContainer className="lw-caseTypeMenuItem__pair">
                             <TextBold12>
                                 {leftPreSecondLine || (
-                                    <SecondaryButton
-                                        size={buttonSizes.SMALL}
-                                        onPress={() =>
-                                            openPopup(
-                                                <CaseTypeFullView
-                                                    caseTypeDetails={fullCase}
-                                                    rePerformRequest={rePerformFunction}
-                                                    closePopUpFunction={closePopup}
-                                                />
-                                            )
-                                        }
-                                        className="lw-caseTypeMenuItem__editButton"
-                                    >
-                                        {t("common.edit")}
-                                    </SecondaryButton>
+                                    <SimpleContainer className="lw-caseTypeMenuItem__actions">
+                                        <SecondaryButton
+                                            size={buttonSizes.SMALL}
+                                            onPress={() =>
+                                                openPopup(
+                                                    <CaseTypeFullView
+                                                        caseTypeDetails={fullCase}
+                                                        rePerformRequest={rePerformFunction}
+                                                        closePopUpFunction={closePopup}
+                                                    />
+                                                )
+                                            }
+                                            className="lw-caseTypeMenuItem__editButton"
+                                        >
+                                            {t("common.edit")}
+                                        </SecondaryButton>
+                                        <SecondaryButton
+                                            size={buttonSizes.SMALL}
+                                            onPress={() => {
+                                                const duplicatedDetails = {
+                                                    CaseTypeName: `${fullCase.CaseTypeName} - העתק`,
+                                                    NumberOfStages: fullCase.NumberOfStages,
+                                                    Descriptions: (fullCase.Descriptions || []).map((d, i) => ({
+                                                        Stage: d.Stage,
+                                                        Text: d.Text,
+                                                        Timestamp: '',
+                                                        New: false,
+                                                    })),
+                                                };
+                                                openPopup(
+                                                    <CaseTypeFullView
+                                                        caseTypeDetails={null}
+                                                        rePerformRequest={rePerformFunction}
+                                                        closePopUpFunction={closePopup}
+                                                        initialValues={duplicatedDetails}
+                                                    />
+                                                );
+                                            }}
+                                            className="lw-caseTypeMenuItem__editButton"
+                                        >
+                                            {t("caseTypes.duplicateCaseType")}
+                                        </SecondaryButton>
+                                    </SimpleContainer>
                                 )}
                             </TextBold12>
                             <Text12>{leftValueSecondLine}</Text12>

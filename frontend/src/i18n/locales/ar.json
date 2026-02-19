@@ -276,6 +276,7 @@
         "deleteCaseType": "حذف نوع الملف",
         "addStage": "إضافة مرحلة",
         "updateCaseType": "تحديث نوع الملف",
+        "duplicateCaseType": "تكرار نوع الملف",
         "saveCaseType": "حفظ نوع الملف"
     },
     "taggedCases": {

@@ -256,6 +256,7 @@
         "deleteCaseType": "מחק סוג תיק",
         "addStage": "הוסף שלב",
         "updateCaseType": "עדכן סוג תיק",
+        "duplicateCaseType": "שכפל סוג תיק",
         "saveCaseType": "שמור סוג תיק"
     },
     "taggedCases": {

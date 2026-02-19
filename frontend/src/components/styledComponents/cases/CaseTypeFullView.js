@@ -15,11 +15,14 @@ import { useTranslation } from "react-i18next";
 import "./CaseTypeFullView.scss";
 import TertiaryButton from "../buttons/TertiaryButton";
 
-export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style: _style }) {
+export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, onFailureFunction, closePopUpFunction, initialValues, style: _style }) {
     const { t } = useTranslation();
-    const [caseTypeName, setCaseTypeName, caseTypeNameError] = useFieldState(HebrewCharsValidation, caseTypeDetails?.CaseTypeName || "");
-    const [numberOfStages, setNumberOfStages, numberOfStagesError] = useFieldState(NumberOfStagesValidation, caseTypeDetails?.NumberOfStages || "");
-    const [descriptions, setDescriptions] = useState(caseTypeDetails?.Descriptions || [{ Stage: 1, Text: "", Timestamp: "", New: false }]);
+    const initName = caseTypeDetails?.CaseTypeName || initialValues?.CaseTypeName || "";
+    const initStages = caseTypeDetails?.NumberOfStages || initialValues?.NumberOfStages || "";
+    const initDescs = caseTypeDetails?.Descriptions || initialValues?.Descriptions || [{ Stage: 1, Text: "", Timestamp: "", New: false }];
+    const [caseTypeName, setCaseTypeName, caseTypeNameError] = useFieldState(HebrewCharsValidation, initName);
+    const [numberOfStages, setNumberOfStages, numberOfStagesError] = useFieldState(NumberOfStagesValidation, initStages);
+    const [descriptions, setDescriptions] = useState(initDescs);
 
     const [hasError, setHasError] = useState(false);
 

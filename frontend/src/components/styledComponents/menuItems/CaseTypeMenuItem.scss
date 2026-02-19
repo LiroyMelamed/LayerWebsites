@@ -56,3 +56,9 @@
 .lw-caseTypeMenuItem__editButton {
   margin-inline-start: 0.5rem;
 }
+
+.lw-caseTypeMenuItem__actions {
+  flex-direction: row;
+  gap: 0.5rem;
+  align-items: center;
+}

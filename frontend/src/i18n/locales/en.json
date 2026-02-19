@@ -278,6 +278,7 @@
         "deleteCaseType": "Delete case type",
         "addStage": "Add stage",
         "updateCaseType": "Update case type",
+        "duplicateCaseType": "Duplicate case type",
         "saveCaseType": "Save case type"
     },
     "taggedCases": {
