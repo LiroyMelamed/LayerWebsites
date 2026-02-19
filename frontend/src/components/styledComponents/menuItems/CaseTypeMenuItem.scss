@@ -53,8 +53,14 @@
   transform: rotate(180deg);
 }
 
+.lw-caseTypeMenuItem__row--actions {
+  margin-top: 0.5rem;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
 .lw-caseTypeMenuItem__editButton {
-  margin-inline-start: 0.5rem;
+  margin-inline-start: 0;
 }
 
 .lw-caseTypeMenuItem__actions {
