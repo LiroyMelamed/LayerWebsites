@@ -13,11 +13,13 @@ import emailValidation from "../../../functions/validation/EmailValidation";
 import IsraeliPhoneNumberValidation from "../../../functions/validation/IsraeliPhoneNumberValidation";
 import { useTranslation } from "react-i18next";
 import SimplePopUp from "../../../components/simpleComponents/SimplePopUp";
+import SearchInput from "../../../components/specializedComponents/containers/SearchInput";
 
 import "./ClientPopUp.scss";
 
 export default function ClientPopup({ clientDetails, initialName, rePerformRequest, onFailureFunction, closePopUpFunction, style: _style }) {
     const { t } = useTranslation();
+    const [selectedClient, setSelectedClient] = useState(clientDetails || null);
     const [name, setName, nameError] = useFieldState(
         HebrewCharsValidationWithNumbers,
         clientDetails?.name || initialName || ""
@@ -25,6 +27,21 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
     const [companyName, setCompanyName, companyNameError] = useFieldState(HebrewCharsValidationWithNULL, clientDetails?.companyname || "");
     const [email, setEmail, emailError] = useFieldState(emailValidation, clientDetails?.email || "");
     const [phoneNumber, setPhoneNumber, phoneNumberError] = useFieldState(IsraeliPhoneNumberValidation, clientDetails?.phonenumber || "");
+
+    const { result: customersByName, isPerforming: isPerformingCustomersByName, performRequest: searchCustomersByName } = useHttpRequest(customersApi.getCustomersByName, null, () => { });
+
+    const handleSearchCustomer = (query) => {
+        setName(query);
+        searchCustomersByName(query);
+    };
+
+    const handleSelectCustomer = (_text, customer) => {
+        setSelectedClient(customer);
+        setName(customer.name || "");
+        setPhoneNumber(customer.phonenumber || "");
+        setEmail(customer.email || "");
+        setCompanyName(customer.companyname || "");
+    };
 
     const [hasError, setHasError] = useState(false);
     const [isLegalDeleteConfirmOpen, setIsLegalDeleteConfirmOpen] = useState(false);
@@ -39,7 +56,7 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
     }, [name, phoneNumber, email, companyName, nameError, phoneNumberError, emailError, companyNameError])
 
     const { isPerforming, performRequest } = useHttpRequest(
-        clientDetails ? customersApi.updateCustomerById : customersApi.addCustomer,
+        selectedClient ? customersApi.updateCustomerById : customersApi.addCustomer,
         () => {
 
             closePopUpFunction?.();
@@ -82,20 +99,20 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
             companyName: companyName
         };
 
-        const apiCall = clientDetails
-            ? performRequest(clientDetails.userid, clientData)
+        const apiCall = selectedClient
+            ? performRequest(selectedClient.userid, clientData)
             : performRequest(clientData);
 
         apiCall.finally(() => closePopUpFunction?.());
     };
 
     const handleDeleteClient = () => {
-        deleteClient(clientDetails.userid);
+        deleteClient(selectedClient.userid);
     };
 
     const handleConfirmLegalDelete = () => {
         setIsLegalDeleteConfirmOpen(false);
-        deleteClient(clientDetails.userid, { confirmLegalDelete: true });
+        deleteClient(selectedClient.userid, { confirmLegalDelete: true });
     };
 
     return (
@@ -130,11 +147,15 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
             </SimplePopUp>
             <SimpleScrollView>
                 <SimpleContainer className="lw-clientPopup__row">
-                    <SimpleInput
+                    <SearchInput
                         className="lw-clientPopup__input"
                         title={t("cases.customerName")}
                         value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        onSearch={handleSearchCustomer}
+                        isPerforming={isPerformingCustomersByName}
+                        queryResult={customersByName}
+                        getButtonTextFunction={(item) => item.name}
+                        buttonPressFunction={handleSelectCustomer}
                         error={nameError}
                     />
                     <SimpleInput
@@ -166,7 +187,7 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
                 </SimpleContainer>
 
                 <SimpleContainer className="lw-clientPopup__actions">
-                    {clientDetails && (
+                    {selectedClient && (
                         <SecondaryButton
                             className="lw-clientPopup__actionButton"
                             size={buttonSizes.MEDIUM}
@@ -183,7 +204,7 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
                     >
                         {isPerforming
                             ? t("common.saving")
-                            : !clientDetails
+                            : !selectedClient
                                 ? t("customers.saveCustomer")
                                 : t("customers.updateCustomer")}
                     </PrimaryButton>

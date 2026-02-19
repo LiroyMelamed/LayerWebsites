@@ -244,7 +244,7 @@ async function sendEmailCampaign({ toEmail, campaignKey, contactFields, attachme
 async function sendTransactionalSignReminder({ toEmail, contactFields, shouldSendRealEmail }) {
     const fields = contactFields || {};
 
-    const subject = `×ª×–×›×•×¨×ª ×œ×—×ª×™×ž×”: ${String(fields.document_name || '').trim()}`;
+    const subject = `תזכורת לחתימה: ${String(fields.document_name || '').trim()}`;
     const htmlTemplate = buildSignReminderHtmlTemplate();
     const htmlBody = replaceEmailPlaceholders(htmlTemplate, fields);
 
@@ -261,7 +261,7 @@ async function sendTransactionalSignReminder({ toEmail, contactFields, shouldSen
 async function sendTransactionalCaseUpdate({ toEmail, contactFields, shouldSendRealEmail }) {
     const fields = contactFields || {};
 
-    const subject = `×¢×“×›×•×Ÿ ×‘×ª×™×§: ${String(fields.case_title || '').trim()}`;
+    const subject = `עדכון בתיק: ${String(fields.case_title || '').trim()}`;
     const htmlTemplate = buildCaseUpdateHtmlTemplate();
     const htmlBody = replaceEmailPlaceholders(htmlTemplate, fields);
 
@@ -278,7 +278,7 @@ async function sendTransactionalCaseUpdate({ toEmail, contactFields, shouldSendR
 async function sendTransactionalDocSigned({ toEmail, contactFields, shouldSendRealEmail, attachments, fromEmail } = {}) {
     const fields = contactFields || {};
 
-    const subject = `×”×ž×¡×ž×š × ×—×ª× ×‘×”×¦×œ×—×”: ${String(fields.document_name || '').trim()}`;
+    const subject = `המסמך נחתם בהצלחה: ${String(fields.document_name || '').trim()}`;
 
     // When PDF attachments are provided and SMTP is configured, send via Nodemailer
     // so that the signed document + evidence certificate are attached as real files.
@@ -316,7 +316,7 @@ async function sendTransactionalDocSigned({ toEmail, contactFields, shouldSendRe
 async function sendTransactionalDocRejected({ toEmail, contactFields, shouldSendRealEmail }) {
     const fields = contactFields || {};
 
-    const subject = `×”×ž×¡×ž×š × ×“×—×”: ${String(fields.document_name || '').trim()}`;
+    const subject = `המסמך נדחה: ${String(fields.document_name || '').trim()}`;
     const htmlTemplate = buildDocRejectedHtmlTemplate();
     const htmlBody = replaceEmailPlaceholders(htmlTemplate, fields);
 
@@ -351,7 +351,7 @@ async function sendTransactionalSignInvite({ toEmail, contactFields, shouldSendR
         return { ok: false, errorCode: 'MISSING_ENV', details: { missing } };
     }
 
-    const subject = `×‘×§×©×” ×œ×—×ª×™×ž×”: ${String(fields.document_name || '').trim()}`;
+    const subject = `בקשה לחתימה: ${String(fields.document_name || '').trim()}`;
 
     const htmlTemplate = buildSignInviteHtmlTemplate();
     const htmlBody = replaceEmailPlaceholders(htmlTemplate, fields);
@@ -481,7 +481,7 @@ async function sendTransactionalCustomHtmlEmail({ toEmail, subject, htmlBody, lo
 async function sendEmailWithAttachments({ toEmail, subject, htmlBody, attachments, logLabel, fromEmail: fromEmailOverride } = {}) {
     const email = String(toEmail || '').trim();
     const fromName = String(process.env.SMOOVE_EMAIL_FROM_NAME || '').trim();
-    // Always send FROM the SMTP account (noreply@) â€“ cPanel rejects mismatched senders.
+    // Always send FROM the SMTP account (noreply@) – cPanel rejects mismatched senders.
     const fromEmail = String(process.env.SMTP_FROM_EMAIL || process.env.SMOOVE_EMAIL_FROM_EMAIL || '').trim();
     // If a lawyer email override is provided, set Reply-To so the client's reply goes to the lawyer.
     const replyTo = fromEmailOverride ? String(fromEmailOverride).trim() : '';
@@ -546,11 +546,11 @@ function buildSignInviteHtmlTemplate() {
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width,initial-scale=1">
         <meta name="x-apple-disable-message-reformatting">
-        <title>×”×–×ž× ×” ×œ×—×ª×™×ž×”</title>
+        <title>הזמנה לחתימה</title>
     </head>
     <body style="margin:0;padding:0;background-color:#EDF2F7;">
         <!-- Preheader (hidden) -->
-        <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">×ž×ž×ª×™×Ÿ/×” ×œ×—×ª×™×ž×ª×š ×¢×œ ×”×ž×¡×ž×š: [[document_name]]</div>
+        <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">ממתין/ה לחתימתך על המסמך: [[document_name]]</div>
 
         <table border="0" cellpadding="0" cellspacing="0" style="background:#EDF2F7;" width="100%">
             <tbody>
@@ -564,29 +564,29 @@ function buildSignInviteHtmlTemplate() {
                                 <tr>
                                     <td style="background:#2A4365;padding:22px 24px;text-align:center;"><img src="https://client.melamedlaw.co.il/logoLMwhite.png" width="170" alt="MelamedLaw" style="border:0;outline:none;text-decoration:none;height:auto;max-width:100%;">
                                         <div style="height:14px;line-height:14px;">&nbsp;</div>
-                                        <div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#FFFFFF;font-size:18px;font-weight:600;line-height:1.4;">×‘×§×©×” ×œ×—×ª×™×ž×” ×“×™×’×™×˜×œ×™×ª</div>
+                                        <div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#FFFFFF;font-size:18px;font-weight:600;line-height:1.4;">בקשה לחתימה דיגיטלית</div>
                                     </td>
                                 </tr>
                                 <!-- Body -->
                                 <tr>
                                     <td style="padding:26px 24px 8px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#2D3748;">
-                                        <div style="font-size:16px;line-height:1.7;">×©×œ×•× [[recipient_name]],
+                                        <div style="font-size:16px;line-height:1.7;">שלום [[recipient_name]],
                                             <br>
-                                            <br>× ×©×œ×—×” ××œ×™×š ×‘×§×©×” ×œ×—×ª×™×ž×” ×¢×œ ×”×ž×¡×ž×š: <span style="font-weight:600;color:#1A365D;">[[document_name]]</span>
+                                            <br>נשלחה אליך בקשה לחתימה על המסמך: <span style="font-weight:600;color:#1A365D;">[[document_name]]</span>
                                             <br>
-                                            <br>×›×“×™ ×œ×¦×¤×•×ª ×•×œ×—×ª×•×, ×œ×—×¥/×™ ×¢×œ ×”×›×¤×ª×•×¨:</div>
+                                            <br>כדי לצפות ולחתום, לחץ/י על הכפתור:</div>
                                         <div style="height:18px;line-height:18px;">&nbsp;</div>
                                         <!-- CTA Button -->
 
                                         <table border="0" cellpadding="0" cellspacing="0" style="width:100%;">
                                             <tbody>
                                                 <tr>
-                                                    <td align="center" style="padding:0 0 8px 0;"><a href="[[action_url]]" rel="noopener" style="display:inline-block;background:#2A4365;color:#FFFFFF;text-decoration:none;font-weight:500;font-size:14px;line-height:1;padding:12px 18px;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,0.10);" target="_blank">&nbsp;&nbsp;×œ×¦×¤×™×™×” ×•×—×ª×™×ž×”&nbsp;&nbsp;</a></td>
+                                                    <td align="center" style="padding:0 0 8px 0;"><a href="[[action_url]]" rel="noopener" style="display:inline-block;background:#2A4365;color:#FFFFFF;text-decoration:none;font-weight:500;font-size:14px;line-height:1;padding:12px 18px;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,0.10);" target="_blank">&nbsp;&nbsp;לצפייה וחתימה&nbsp;&nbsp;</a></td>
                                                 </tr>
                                             </tbody>
                                         </table>
                                         <div style="height:10px;line-height:10px;">&nbsp;</div>
-                                        <div style="font-size:13px;line-height:1.7;color:#718096;">×× ×”×›×¤×ª×•×¨ ×œ× ×¢×•×‘×“, × ×™×ª×Ÿ ×œ×”×¢×ª×™×§ ×•×œ×”×“×‘×™×§ ×‘×“×¤×“×¤×Ÿ ××ª ×”×§×™×©×•×¨:
+                                        <div style="font-size:13px;line-height:1.7;color:#718096;">אם הכפתור לא עובד, ניתן להעתיק ולהדביק בדפדפן את הקישור:
                                             <br><a href="[[action_url]]" rel="noopener" style="color:#1A365D;text-decoration:underline;word-break:break-all;" target="_blank">&nbsp;[[action_url]]&nbsp;</a></div>
                                         <div style="height:18px;line-height:18px;">&nbsp;</div>
                                         <!-- Info box -->
@@ -595,9 +595,9 @@ function buildSignInviteHtmlTemplate() {
                                             <tbody>
                                                 <tr>
                                                     <td style="padding:14px 14px;color:#2D3748;font-size:13px;line-height:1.6;">
-                                                        <div style="font-weight:600;color:#1A365D;">×ž×™×“×¢ ×—×©×•×‘</div>
+                                                        <div style="font-weight:600;color:#1A365D;">מידע חשוב</div>
                                                         <div style="height:6px;line-height:6px;">&nbsp;</div>
-                                                        <div>×¢×•×´×“ ×ž×˜×¤×œ: <span style="font-weight:600;">[[lawyer_name]]</span></div>
+                                                        <div>עו״ד מטפל: <span style="font-weight:600;">[[lawyer_name]]</span></div>
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -607,7 +607,7 @@ function buildSignInviteHtmlTemplate() {
                                 </tr>
                                 <!-- Footer -->
                                 <tr>
-                                    <td style="padding:14px 24px 22px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#718096;font-size:12px;line-height:1.7;">×”×•×“×¢×” ×–×• × ×©×œ×—×” ××•×˜×•×ž×˜×™×ª. ×× ××™× ×š ×ž×¦×¤×” ×œ×‘×§×©×” ×–×•, × ×™×ª×Ÿ ×œ×”×ª×¢×œ× ×ž×ž× ×”.
+                                    <td style="padding:14px 24px 22px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#718096;font-size:12px;line-height:1.7;">הודעה זו נשלחה אוטומטית. אם אינך מצפה לבקשה זו, ניתן להתעלם ממנה.
                                         <br>&copy; MelamedLaw</td>
                                 </tr>
                             </tbody>
@@ -628,10 +628,10 @@ function buildSignReminderHtmlTemplate() {
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width,initial-scale=1">
         <meta name="x-apple-disable-message-reformatting">
-        <title>×ª×–×›×•×¨×ª ×œ×—×ª×™×ž×”</title>
+        <title>תזכורת לחתימה</title>
     </head>
     <body style="margin:0;padding:0;background-color:#EDF2F7;">
-        <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">×ª×–×›×•×¨×ª: ×ž×ž×ª×™×Ÿ/×” ×œ×—×ª×™×ž×ª×š ×¢×œ ×”×ž×¡×ž×š: [[document_name]]</div>
+        <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">תזכורת: ממתין/ה לחתימתך על המסמך: [[document_name]]</div>
 
         <table border="0" cellpadding="0" cellspacing="0" style="background:#EDF2F7;" width="100%">
             <tbody>
@@ -642,25 +642,25 @@ function buildSignReminderHtmlTemplate() {
                                 <tr>
                                     <td style="background:#2A4365;padding:22px 24px;text-align:center;"><img src="https://client.melamedlaw.co.il/logoLMwhite.png" width="170" alt="MelamedLaw" style="border:0;outline:none;text-decoration:none;height:auto;max-width:100%;">
                                         <div style="height:14px;line-height:14px;">&nbsp;</div>
-                                        <div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#FFFFFF;font-size:18px;font-weight:600;line-height:1.4;">×ª×–×›×•×¨×ª ×œ×—×ª×™×ž×” ×“×™×’×™×˜×œ×™×ª</div>
+                                        <div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#FFFFFF;font-size:18px;font-weight:600;line-height:1.4;">תזכורת לחתימה דיגיטלית</div>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td style="padding:26px 24px 8px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#2D3748;">
-                                        <div style="font-size:16px;line-height:1.7;">×©×œ×•× [[recipient_name]],
-                                            <br><br>×–×•×”×™ ×ª×–×›×•×¨×ª ×œ×›×š ×©×ž×ž×ª×™× ×” ×œ×—×ª×™×ž×ª×š ×‘×§×©×” ×¢×‘×•×¨ ×”×ž×¡×ž×š: <span style="font-weight:600;color:#1A365D;">[[document_name]]</span>
-                                            <br><br>×›×“×™ ×œ×¦×¤×•×ª ×•×œ×—×ª×•×, ×œ×—×¥/×™ ×¢×œ ×”×›×¤×ª×•×¨:</div>
+                                        <div style="font-size:16px;line-height:1.7;">שלום [[recipient_name]],
+                                            <br><br>זוהי תזכורת לכך שממתינה לחתימתך בקשה עבור המסמך: <span style="font-weight:600;color:#1A365D;">[[document_name]]</span>
+                                            <br><br>כדי לצפות ולחתום, לחץ/י על הכפתור:</div>
                                         <div style="height:18px;line-height:18px;">&nbsp;</div>
 
                                         <table border="0" cellpadding="0" cellspacing="0" style="width:100%;">
                                             <tbody>
                                                 <tr>
-                                                    <td align="center" style="padding:0 0 8px 0;"><a href="[[action_url]]" rel="noopener" style="display:inline-block;background:#2A4365;color:#FFFFFF;text-decoration:none;font-weight:500;font-size:14px;line-height:1;padding:12px 18px;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,0.10);" target="_blank">&nbsp;&nbsp;×œ×¦×¤×™×™×” ×•×—×ª×™×ž×”&nbsp;&nbsp;</a></td>
+                                                    <td align="center" style="padding:0 0 8px 0;"><a href="[[action_url]]" rel="noopener" style="display:inline-block;background:#2A4365;color:#FFFFFF;text-decoration:none;font-weight:500;font-size:14px;line-height:1;padding:12px 18px;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,0.10);" target="_blank">&nbsp;&nbsp;לצפייה וחתימה&nbsp;&nbsp;</a></td>
                                                 </tr>
                                             </tbody>
                                         </table>
                                         <div style="height:10px;line-height:10px;">&nbsp;</div>
-                                        <div style="font-size:13px;line-height:1.7;color:#718096;">×× ×”×›×¤×ª×•×¨ ×œ× ×¢×•×‘×“, × ×™×ª×Ÿ ×œ×”×¢×ª×™×§ ×•×œ×”×“×‘×™×§ ×‘×“×¤×“×¤×Ÿ ××ª ×”×§×™×©×•×¨:
+                                        <div style="font-size:13px;line-height:1.7;color:#718096;">אם הכפתור לא עובד, ניתן להעתיק ולהדביק בדפדפן את הקישור:
                                             <br><a href="[[action_url]]" rel="noopener" style="color:#1A365D;text-decoration:underline;word-break:break-all;" target="_blank">&nbsp;[[action_url]]&nbsp;</a></div>
                                         <div style="height:18px;line-height:18px;">&nbsp;</div>
 
@@ -668,9 +668,9 @@ function buildSignReminderHtmlTemplate() {
                                             <tbody>
                                                 <tr>
                                                     <td style="padding:14px 14px;color:#2D3748;font-size:13px;line-height:1.6;">
-                                                        <div style="font-weight:600;color:#1A365D;">×ž×™×“×¢ ×—×©×•×‘</div>
+                                                        <div style="font-weight:600;color:#1A365D;">מידע חשוב</div>
                                                         <div style="height:6px;line-height:6px;">&nbsp;</div>
-                                                        <div>×¢×•×´×“ ×ž×˜×¤×œ: <span style="font-weight:600;">[[lawyer_name]]</span></div>
+                                                        <div>עו״ד מטפל: <span style="font-weight:600;">[[lawyer_name]]</span></div>
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -679,7 +679,7 @@ function buildSignReminderHtmlTemplate() {
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td style="padding:14px 24px 22px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#718096;font-size:12px;line-height:1.7;">×”×•×“×¢×” ×–×• × ×©×œ×—×” ××•×˜×•×ž×˜×™×ª.
+                                    <td style="padding:14px 24px 22px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#718096;font-size:12px;line-height:1.7;">הודעה זו נשלחה אוטומטית.
                                         <br>&copy; MelamedLaw</td>
                                 </tr>
                             </tbody>
@@ -699,10 +699,10 @@ function buildCaseUpdateHtmlTemplate() {
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width,initial-scale=1">
         <meta name="x-apple-disable-message-reformatting">
-        <title>×¢×“×›×•×Ÿ ×‘×ª×™×§</title>
+        <title>עדכון בתיק</title>
     </head>
     <body style="margin:0;padding:0;background-color:#EDF2F7;">
-        <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">×™×© ×¢×“×›×•×Ÿ ×—×“×© ×‘×ª×™×§: [[case_title]]</div>
+        <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">יש עדכון חדש בתיק: [[case_title]]</div>
 
         <table border="0" cellpadding="0" cellspacing="0" style="background:#EDF2F7;" width="100%">
             <tbody>
@@ -713,31 +713,31 @@ function buildCaseUpdateHtmlTemplate() {
                                 <tr>
                                     <td style="background:#2A4365;padding:22px 24px;text-align:center;"><img src="https://client.melamedlaw.co.il/logoLMwhite.png" width="170" alt="MelamedLaw" style="border:0;outline:none;text-decoration:none;height:auto;max-width:100%;">
                                         <div style="height:14px;line-height:14px;">&nbsp;</div>
-                                        <div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#FFFFFF;font-size:18px;font-weight:600;line-height:1.4;">×¢×“×›×•×Ÿ ×‘×ª×™×§</div>
+                                        <div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#FFFFFF;font-size:18px;font-weight:600;line-height:1.4;">עדכון בתיק</div>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td style="padding:26px 24px 8px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#2D3748;">
-                                        <div style="font-size:16px;line-height:1.7;">×©×œ×•× [[recipient_name]],
-                                            <br><br>×™×© ×¢×“×›×•×Ÿ ×—×“×© ×‘×ª×™×§: <span style="font-weight:600;color:#1A365D;">[[case_title]]</span>.
-                                            <br><br>×›×“×™ ×œ×”×™×›× ×¡ ×•×œ×¦×¤×•×ª ×‘×¤×¨×˜×™ ×”×ª×™×§, ×œ×—×¥/×™ ×¢×œ ×”×›×¤×ª×•×¨:</div>
+                                        <div style="font-size:16px;line-height:1.7;">שלום [[recipient_name]],
+                                            <br><br>יש עדכון חדש בתיק: <span style="font-weight:600;color:#1A365D;">[[case_title]]</span>.
+                                            <br><br>כדי להיכנס ולצפות בפרטי התיק, לחץ/י על הכפתור:</div>
                                         <div style="height:18px;line-height:18px;">&nbsp;</div>
 
                                         <table border="0" cellpadding="0" cellspacing="0" style="width:100%;">
                                             <tbody>
                                                 <tr>
-                                                    <td align="center" style="padding:0 0 8px 0;"><a href="[[action_url]]" rel="noopener" style="display:inline-block;background:#2A4365;color:#FFFFFF;text-decoration:none;font-weight:500;font-size:14px;line-height:1;padding:12px 18px;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,0.10);" target="_blank">&nbsp;&nbsp;×œ×¦×¤×™×™×” ×‘×ª×™×§&nbsp;&nbsp;</a></td>
+                                                    <td align="center" style="padding:0 0 8px 0;"><a href="[[action_url]]" rel="noopener" style="display:inline-block;background:#2A4365;color:#FFFFFF;text-decoration:none;font-weight:500;font-size:14px;line-height:1;padding:12px 18px;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,0.10);" target="_blank">&nbsp;&nbsp;לצפייה בתיק&nbsp;&nbsp;</a></td>
                                                 </tr>
                                             </tbody>
                                         </table>
                                         <div style="height:10px;line-height:10px;">&nbsp;</div>
-                                        <div style="font-size:13px;line-height:1.7;color:#718096;">×× ×”×›×¤×ª×•×¨ ×œ× ×¢×•×‘×“, × ×™×ª×Ÿ ×œ×”×¢×ª×™×§ ×•×œ×”×“×‘×™×§ ×‘×“×¤×“×¤×Ÿ ××ª ×”×§×™×©×•×¨:
+                                        <div style="font-size:13px;line-height:1.7;color:#718096;">אם הכפתור לא עובד, ניתן להעתיק ולהדביק בדפדפן את הקישור:
                                             <br><a href="[[action_url]]" rel="noopener" style="color:#1A365D;text-decoration:underline;word-break:break-all;" target="_blank">&nbsp;[[action_url]]&nbsp;</a></div>
                                         <div style="height:18px;line-height:18px;">&nbsp;</div>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td style="padding:14px 24px 22px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#718096;font-size:12px;line-height:1.7;">×”×•×“×¢×” ×–×• × ×©×œ×—×” ××•×˜×•×ž×˜×™×ª.
+                                    <td style="padding:14px 24px 22px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#718096;font-size:12px;line-height:1.7;">הודעה זו נשלחה אוטומטית.
                                         <br>&copy; MelamedLaw</td>
                                 </tr>
                             </tbody>
@@ -757,10 +757,10 @@ function buildDocSignedWithAttachmentsHtmlTemplate() {
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width,initial-scale=1">
         <meta name="x-apple-disable-message-reformatting">
-        <title>×”×ž×¡×ž×š × ×—×ª×</title>
+        <title>המסמך נחתם</title>
     </head>
     <body style="margin:0;padding:0;background-color:#EDF2F7;">
-        <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">×”×ž×¡×ž×š × ×—×ª× ×‘×”×¦×œ×—×”: [[document_name]]</div>
+        <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">המסמך נחתם בהצלחה: [[document_name]]</div>
 
         <table border="0" cellpadding="0" cellspacing="0" style="background:#EDF2F7;" width="100%">
             <tbody>
@@ -771,23 +771,23 @@ function buildDocSignedWithAttachmentsHtmlTemplate() {
                                 <tr>
                                     <td style="background:#2A4365;padding:22px 24px;text-align:center;"><img src="https://client.melamedlaw.co.il/logoLMwhite.png" width="170" alt="MelamedLaw" style="border:0;outline:none;text-decoration:none;height:auto;max-width:100%;">
                                         <div style="height:14px;line-height:14px;">&nbsp;</div>
-                                        <div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#FFFFFF;font-size:18px;font-weight:600;line-height:1.4;">âœ“ ×”×ž×¡×ž×š × ×—×ª× ×‘×”×¦×œ×—×”</div>
+                                        <div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#FFFFFF;font-size:18px;font-weight:600;line-height:1.4;">✓ המסמך נחתם בהצלחה</div>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td style="padding:26px 24px 8px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#2D3748;">
-                                        <div style="font-size:16px;line-height:1.7;">×©×œ×•× [[recipient_name]],
-                                            <br><br>×”×ž×¡×ž×š <span style="font-weight:600;color:#1A365D;">[[document_name]]</span> × ×—×ª× ×‘×”×¦×œ×—×” ×¢×œ ×™×“×™ ×›×œ ×”×—×ª×•×ž×™×.
-                                            <br><br>×¢×•"×“ ×ž×˜×¤×œ: <span style="font-weight:600;">[[lawyer_name]]</span></div>
+                                        <div style="font-size:16px;line-height:1.7;">שלום [[recipient_name]],
+                                            <br><br>המסמך <span style="font-weight:600;color:#1A365D;">[[document_name]]</span> נחתם בהצלחה על ידי כל החתומים.
+                                            <br><br>עו"ד מטפל: <span style="font-weight:600;">[[lawyer_name]]</span></div>
                                         <div style="height:18px;line-height:18px;">&nbsp;</div>
-                                        <div style="font-size:14px;line-height:1.7;color:#2D3748;background:#EDF2F7;border-radius:8px;padding:12px 16px;">ðŸ“Ž ×”×§×‘×¦×™× ×”×—×ª×•×ž×™× ×ž×¦×•×¨×¤×™× ×œ×”×•×“×¢×” ×–×•.</div>
+                                        <div style="font-size:14px;line-height:1.7;color:#2D3748;background:#EDF2F7;border-radius:8px;padding:12px 16px;">📎 הקבצים החתומים מצורפים להודעה זו.</div>
                                         <div style="height:12px;line-height:12px;">&nbsp;</div>
-                                        <div style="font-size:13px;line-height:1.7;color:#718096;">× ×™×ª×Ÿ ×’× ×œ×”×™×›× ×¡ ×œ×ž×¢×¨×›×ª ×œ×¦×¤×™×™×”/×”×•×¨×“×” ×©×œ ×”×§×‘×¦×™×.</div>
+                                        <div style="font-size:13px;line-height:1.7;color:#718096;">ניתן גם להיכנס למערכת לצפייה/הורדה של הקבצים.</div>
                                         <div style="height:18px;line-height:18px;">&nbsp;</div>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td style="padding:14px 24px 22px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#718096;font-size:12px;line-height:1.7;">×”×•×“×¢×” ×–×• × ×©×œ×—×” ××•×˜×•×ž×˜×™×ª.
+                                    <td style="padding:14px 24px 22px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#718096;font-size:12px;line-height:1.7;">הודעה זו נשלחה אוטומטית.
                                         <br>&copy; MelamedLaw</td>
                                 </tr>
                             </tbody>
@@ -807,10 +807,10 @@ function buildDocSignedHtmlTemplate() {
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width,initial-scale=1">
         <meta name="x-apple-disable-message-reformatting">
-        <title>×”×ž×¡×ž×š × ×—×ª×</title>
+        <title>המסמך נחתם</title>
     </head>
     <body style="margin:0;padding:0;background-color:#EDF2F7;">
-        <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">×”×ž×¡×ž×š × ×—×ª× ×‘×”×¦×œ×—×”: [[document_name]]</div>
+        <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">המסמך נחתם בהצלחה: [[document_name]]</div>
 
         <table border="0" cellpadding="0" cellspacing="0" style="background:#EDF2F7;" width="100%">
             <tbody>
@@ -821,34 +821,34 @@ function buildDocSignedHtmlTemplate() {
                                 <tr>
                                     <td style="background:#2A4365;padding:22px 24px;text-align:center;"><img src="https://client.melamedlaw.co.il/logoLMwhite.png" width="170" alt="MelamedLaw" style="border:0;outline:none;text-decoration:none;height:auto;max-width:100%;">
                                         <div style="height:14px;line-height:14px;">&nbsp;</div>
-                                        <div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#FFFFFF;font-size:18px;font-weight:600;line-height:1.4;">âœ“ ×”×ž×¡×ž×š × ×—×ª× ×‘×”×¦×œ×—×”</div>
+                                        <div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#FFFFFF;font-size:18px;font-weight:600;line-height:1.4;">✓ המסמך נחתם בהצלחה</div>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td style="padding:26px 24px 8px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#2D3748;">
-                                        <div style="font-size:16px;line-height:1.7;">×©×œ×•× [[recipient_name]],
-                                            <br><br>×”×ž×¡×ž×š <span style="font-weight:600;color:#1A365D;">[[document_name]]</span> × ×—×ª× ×‘×”×¦×œ×—×” ×¢×œ ×™×“×™ ×›×œ ×”×—×ª×•×ž×™×.
-                                            <br><br>×¢×•"×“ ×ž×˜×¤×œ: <span style="font-weight:600;">[[lawyer_name]]</span></div>
+                                        <div style="font-size:16px;line-height:1.7;">שלום [[recipient_name]],
+                                            <br><br>המסמך <span style="font-weight:600;color:#1A365D;">[[document_name]]</span> נחתם בהצלחה על ידי כל החתומים.
+                                            <br><br>עו"ד מטפל: <span style="font-weight:600;">[[lawyer_name]]</span></div>
                                         <div style="height:18px;line-height:18px;">&nbsp;</div>
                                         <table border="0" cellpadding="0" cellspacing="0" width="100%">
                                             <tr>
                                                 <td align="center" style="padding:8px 0;">
-                                                    <a href="[[signed_document_url]]" style="display:inline-block;padding:12px 28px;background:#2A4365;color:#ffffff;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">ðŸ“„ ×”×•×¨×“ ×ž×¡×ž×š ×—×ª×•×</a>
+                                                    <a href="[[signed_document_url]]" style="display:inline-block;padding:12px 28px;background:#2A4365;color:#ffffff;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">📄 הורד מסמך חתום</a>
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <td align="center" style="padding:8px 0;">
-                                                    <a href="[[evidence_certificate_url]]" style="display:inline-block;padding:12px 28px;background:#38A169;color:#ffffff;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">ðŸ“‹ ×”×•×¨×“ ××™×©×•×¨ ×¨××™×™×ª×™</a>
+                                                    <a href="[[evidence_certificate_url]]" style="display:inline-block;padding:12px 28px;background:#38A169;color:#ffffff;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">📋 הורד אישור ראייתי</a>
                                                 </td>
                                             </tr>
                                         </table>
                                         <div style="height:12px;line-height:12px;">&nbsp;</div>
-                                        <div style="font-size:13px;line-height:1.7;color:#718096;">× ×™×ª×Ÿ ×’× ×œ×”×™×›× ×¡ ×œ×ž×¢×¨×›×ª ×œ×¦×¤×™×™×”/×”×•×¨×“×” ×©×œ ×”×§×‘×¦×™×.</div>
+                                        <div style="font-size:13px;line-height:1.7;color:#718096;">ניתן גם להיכנס למערכת לצפייה/הורדה של הקבצים.</div>
                                         <div style="height:18px;line-height:18px;">&nbsp;</div>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td style="padding:14px 24px 22px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#718096;font-size:12px;line-height:1.7;">×”×•×“×¢×” ×–×• × ×©×œ×—×” ××•×˜×•×ž×˜×™×ª.
+                                    <td style="padding:14px 24px 22px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#718096;font-size:12px;line-height:1.7;">הודעה זו נשלחה אוטומטית.
                                         <br>&copy; MelamedLaw</td>
                                 </tr>
                             </tbody>
@@ -868,10 +868,10 @@ function buildDocRejectedHtmlTemplate() {
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width,initial-scale=1">
         <meta name="x-apple-disable-message-reformatting">
-        <title>×”×ž×¡×ž×š × ×“×—×”</title>
+        <title>המסמך נדחה</title>
     </head>
     <body style="margin:0;padding:0;background-color:#EDF2F7;">
-        <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">×”×ž×¡×ž×š × ×“×—×”: [[document_name]]</div>
+        <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">המסמך נדחה: [[document_name]]</div>
 
         <table border="0" cellpadding="0" cellspacing="0" style="background:#EDF2F7;" width="100%">
             <tbody>
@@ -882,20 +882,20 @@ function buildDocRejectedHtmlTemplate() {
                                 <tr>
                                     <td style="background:#2A4365;padding:22px 24px;text-align:center;"><img src="https://client.melamedlaw.co.il/logoLMwhite.png" width="170" alt="MelamedLaw" style="border:0;outline:none;text-decoration:none;height:auto;max-width:100%;">
                                         <div style="height:14px;line-height:14px;">&nbsp;</div>
-                                        <div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#FFFFFF;font-size:18px;font-weight:600;line-height:1.4;">âŒ ×”×ž×¡×ž×š × ×“×—×”</div>
+                                        <div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#FFFFFF;font-size:18px;font-weight:600;line-height:1.4;">❌ המסמך נדחה</div>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td style="padding:26px 24px 8px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#2D3748;">
-                                        <div style="font-size:16px;line-height:1.7;">×©×œ×•× [[recipient_name]],
-                                            <br><br>×”×ž×¡×ž×š <span style="font-weight:600;color:#1A365D;">[[document_name]]</span> × ×“×—×” ×¢×œ ×™×“×™ ×”×—×•×ª×.
-                                            <br><br>×¡×™×‘×ª ×“×—×™×™×”: <span style="font-weight:600;color:#1A365D;">[[rejection_reason]]</span>
-                                            <br><br>×¢×•"×“ ×ž×˜×¤×œ: <span style="font-weight:600;">[[lawyer_name]]</span></div>
+                                        <div style="font-size:16px;line-height:1.7;">שלום [[recipient_name]],
+                                            <br><br>המסמך <span style="font-weight:600;color:#1A365D;">[[document_name]]</span> נדחה על ידי החותם.
+                                            <br><br>סיבת דחייה: <span style="font-weight:600;color:#1A365D;">[[rejection_reason]]</span>
+                                            <br><br>עו"ד מטפל: <span style="font-weight:600;">[[lawyer_name]]</span></div>
                                         <div style="height:18px;line-height:18px;">&nbsp;</div>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td style="padding:14px 24px 22px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#718096;font-size:12px;line-height:1.7;">×”×•×“×¢×” ×–×• × ×©×œ×—×” ××•×˜×•×ž×˜×™×ª.
+                                    <td style="padding:14px 24px 22px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#718096;font-size:12px;line-height:1.7;">הודעה זו נשלחה אוטומטית.
                                         <br>&copy; MelamedLaw</td>
                                 </tr>
                             </tbody>
@@ -1232,7 +1232,7 @@ function sanitizeFieldsForLog(fields) {
             const s = String(v || '');
             // Avoid leaking signed URLs / tokens into logs.
             const idx = s.indexOf('?');
-            out[k] = idx >= 0 ? `${s.slice(0, idx)}?â€¦` : s;
+            out[k] = idx >= 0 ? `${s.slice(0, idx)}?…` : s;
             continue;
         }
         out[k] = v;
