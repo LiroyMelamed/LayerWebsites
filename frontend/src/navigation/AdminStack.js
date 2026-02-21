@@ -12,6 +12,7 @@ import PlanUsageScreen, { PlanUsageScreenName } from "../screens/billingScreen/P
 import PlansPricingScreen, { PlansPricingScreenName } from "../screens/billingScreen/PlansPricingScreen";
 import MyCasesScreen, { MyCasesScreenName } from "../screens/myCasesScreen/MyCasesScreen";
 import RemindersScreen, { RemindersScreenName } from "../screens/remindersScreen/RemindersScreen";
+import PlatformSettingsScreen, { PlatformSettingsScreenName } from "../screens/platformSettingsScreen/PlatformSettingsScreen";
 import { LoginStackName } from "./LoginStack";
 import { LoginScreenName } from "../screens/loginScreen/LoginScreen";
 

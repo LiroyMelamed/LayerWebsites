@@ -24,6 +24,7 @@ const emailCampaignRoutes = require("./routes/emailCampaignRoutes");
 const notificationOrchestratorRoutes = require("./routes/notificationOrchestratorRoutes");
 const reminderRoutes = require("./routes/reminderRoutes");
 const complianceRoutes = require("./routes/complianceRoutes");
+const platformSettingsRoutes = require("./routes/platformSettingsRoutes");
 
 const authMiddleware = require("./middlewares/authMiddleware");
 const { createRateLimitMiddleware, getClientIp } = require("./utils/rateLimiter");
@@ -157,6 +158,7 @@ app.use("/api/email/campaign", emailCampaignRoutes);
 app.use("/api/notifications/orchestrator", notificationOrchestratorRoutes);
 app.use("/api/reminders", reminderRoutes);
 app.use("/api/compliance", complianceRoutes);
+app.use("/api/platform-settings", platformSettingsRoutes);
 
 // Lightweight health endpoint for prereq checks
 app.get("/health", (req, res) => {

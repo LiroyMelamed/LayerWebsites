@@ -1,5 +1,6 @@
 const { createAppError } = require('../utils/appError');
 const { getHebrewMessage } = require('../utils/errors.he');
+const settingsService = require('../services/settingsService');
 
 function parseAllowlist() {
     const raw = String(process.env.PLATFORM_ADMIN_USER_IDS || '').trim();
@@ -13,7 +14,7 @@ function parseAllowlist() {
 
 const allowlistSet = parseAllowlist();
 
-module.exports = function requirePlatformAdmin(req, _res, next) {
+module.exports = async function requirePlatformAdmin(req, _res, next) {
     const userId = Number(req.user?.UserId);
     const role = req.user?.Role;
 
@@ -25,7 +26,15 @@ module.exports = function requirePlatformAdmin(req, _res, next) {
         return next(createAppError('FORBIDDEN', 403, getHebrewMessage('FORBIDDEN')));
     }
 
-    // In production, enforce allowlist if configured; in non-prod allow Admins by default.
+    // Check DB-based platform_admins table first (async)
+    try {
+        const isAdmin = await settingsService.isPlatformAdmin(userId);
+        if (isAdmin) return next();
+    } catch {
+        // If DB check fails, fall through to env-based allowlist
+    }
+
+    // Fallback: env-based allowlist
     const isProd = String(process.env.NODE_ENV || '').toLowerCase() === 'production';
     if (isProd && !allowlistSet) {
         return next(createAppError('FORBIDDEN', 403, 'Platform admin allowlist not configured'));

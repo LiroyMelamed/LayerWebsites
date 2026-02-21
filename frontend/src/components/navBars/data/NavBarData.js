@@ -10,6 +10,7 @@ import { SigningManagerScreenName } from "../../../screens/signingScreen/Signing
 import { EvidenceDocumentsScreenName } from "../../../screens/evidenceDocuments/EvidenceDocumentsScreen";
 import { PlanUsageScreenName } from "../../../screens/billingScreen/PlanUsageScreen";
 import { PlansPricingScreenName } from "../../../screens/billingScreen/PlansPricingScreen";
+import { PlatformSettingsScreenName } from "../../../screens/platformSettingsScreen/PlatformSettingsScreen";
 import { MyCasesScreenName } from "../../../screens/myCasesScreen/MyCasesScreen";
 import { RemindersScreenName } from "../../../screens/remindersScreen/RemindersScreen";
 import { uploadFileForSigningScreenName } from "../../../screens/signingScreen/UploadFileForSigningScreen";
@@ -116,6 +117,15 @@ export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t) =>
             buttonScreen: t('nav.planUsage'),
             icon: null,
             onClick: () => navigate(AdminStackName + PlanUsageScreenName),
+        }] : []),
+        // ── Platform Settings — platform admin only ──
+        ...(isPlatformAdmin ? [{
+            navKey: 'platformSettings',
+            routeMatch: PlatformSettingsScreenName,
+            buttonText: t('nav.platformSettings', 'הגדרות פלטפורמה'),
+            buttonScreen: t('nav.platformSettings', 'הגדרות פלטפורמה'),
+            icon: null,
+            onClick: () => navigate(AdminStackName + PlatformSettingsScreenName),
         }] : []),
     ];
 
