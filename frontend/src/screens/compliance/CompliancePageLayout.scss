@@ -1,0 +1,111 @@
+.lw-compliancePage {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0e2f44 0%, #1a3a52 50%, #0e2f44 100%);
+    display: flex;
+    flex-direction: column;
+
+    &__header {
+        justify-content: center;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 1.5rem 2rem;
+        background: rgba(0, 0, 0, 0.15);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    &__logo {
+        height: 2.5rem;
+        width: auto;
+        cursor: pointer;
+    }
+
+    &__title {
+        color: #ffffff;
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0;
+        letter-spacing: 0.5px;
+    }
+
+    &__body {
+        flex: 1;
+        padding: 2rem;
+        overflow-y: auto;
+    }
+
+    &__content {
+        flex-direction: column;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    &__footer {
+        max-width: 800px;
+        margin: 3rem auto 1rem;
+        padding-top: 2rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    &__disclaimer {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.7rem;
+        text-align: center;
+        max-width: 600px;
+        line-height: 1.5;
+    }
+}
+
+/* Shared section card used inside compliance pages */
+.lw-complianceSection {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 1.25rem;
+    transition: background 0.2s ease;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    &__heading {
+        color: #f0c040;
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0 0 0.75rem;
+    }
+
+    &__text {
+        color: rgba(255, 255, 255, 0.82);
+        font-size: 0.9rem;
+        line-height: 1.7;
+        margin: 0;
+
+        ul {
+            margin: 0.5rem 0;
+            padding-inline-start: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.35rem;
+        }
+    }
+
+    &__roadmap {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.8rem;
+        font-style: italic;
+        margin-top: 0.75rem;
+    }
+}
+
+/* Badge label colors on dark bg */
+.lw-compliancePage .lw-complianceBadges__label {
+    color: rgba(255, 255, 255, 0.7);
+}

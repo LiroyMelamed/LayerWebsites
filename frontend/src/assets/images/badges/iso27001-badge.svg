@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 140" width="120" height="140">
+  <defs>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a5276;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0e2f44;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="innerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#2980b9;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1a5276;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  
+  <!-- Shield shape -->
+  <path d="M60 5 L110 25 L110 70 C110 100 85 125 60 135 C35 125 10 100 10 70 L10 25 Z" 
+        fill="url(#shieldGrad)" filter="url(#shadow)" stroke="#c9a84c" stroke-width="2"/>
+  
+  <!-- Inner shield -->
+  <path d="M60 12 L104 29 L104 69 C104 96 82 118 60 128 C38 118 16 96 16 69 L16 29 Z" 
+        fill="url(#innerGrad)" stroke="#c9a84c" stroke-width="1" opacity="0.9"/>
+  
+  <!-- Checkmark circle -->
+  <circle cx="60" cy="50" r="22" fill="none" stroke="#c9a84c" stroke-width="2"/>
+  <circle cx="60" cy="50" r="18" fill="rgba(201,168,76,0.15)"/>
+  <path d="M47 50 L55 58 L73 42" fill="none" stroke="#c9a84c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- ISO text -->
+  <text x="60" y="88" text-anchor="middle" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" letter-spacing="2">ISO</text>
+  
+  <!-- 27001 text -->
+  <text x="60" y="105" text-anchor="middle" fill="#c9a84c" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" letter-spacing="1">27001</text>
+  
+  <!-- CERTIFIED text -->
+  <text x="60" y="120" text-anchor="middle" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="7" font-weight="normal" letter-spacing="3" opacity="0.85">CERTIFIED</text>
+</svg>

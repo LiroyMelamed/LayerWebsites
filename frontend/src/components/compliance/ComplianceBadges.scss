@@ -1,0 +1,69 @@
+.lw-complianceBadges {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+
+    &--row {
+        flex-direction: row;
+        justify-content: center;
+    }
+
+    &--column {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    /* ── Size variants ── */
+    &--small &__img {
+        width: 2.5rem;
+        height: auto;
+    }
+
+    &--small &__label {
+        font-size: 0.65rem;
+    }
+
+    &--medium &__img {
+        width: 3.5rem;
+        height: auto;
+    }
+
+    &--medium &__label {
+        font-size: 0.75rem;
+    }
+
+    &--large &__img {
+        width: 5rem;
+        height: auto;
+    }
+
+    &--large &__label {
+        font-size: 0.85rem;
+    }
+
+    &__item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.35rem;
+        transition: opacity 0.2s ease;
+
+        &:hover {
+            opacity: 0.85;
+        }
+    }
+
+    &__img {
+        object-fit: contain;
+        filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.15));
+    }
+
+    &__label {
+        text-align: center;
+        color: #555;
+        font-weight: 500;
+        max-width: 8rem;
+        line-height: 1.3;
+    }
+}
