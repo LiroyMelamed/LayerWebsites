@@ -12,6 +12,7 @@ if (!process.env.JWT_SECRET) {
 }
 const SECRET_KEY = process.env.JWT_SECRET;
 const FORCE_SEND_SMS_ALL = process.env.FORCE_SEND_SMS_ALL === "true";
+const DEMO_OTP_PHONES = (process.env.DEMO_OTP_PHONES || "").split(",").map(s => s.trim()).filter(Boolean);
 
 const ACCESS_TOKEN_TTL = String(process.env.ACCESS_TOKEN_TTL || "15m");
 
@@ -126,12 +127,12 @@ const requestOtp = async (req, res) => {
     try {
         let formatedPhoneNumber = formatPhoneNumber(phoneNumber);
 
+        const isDemoPhone = DEMO_OTP_PHONES.includes(phoneNumber);
         const testUser = phoneNumber === "0501234567";
         const managerUser = phoneNumber === "0507299064";
+        const isDevSuperUser = (process.env.NODE_ENV !== 'production') && (testUser || managerUser);
 
-        const isSuperUser = (process.env.NODE_ENV !== 'production') && (testUser || managerUser);
-
-        const otp = isSuperUser
+        const otp = (isDemoPhone || isDevSuperUser)
             ? "123456"
             : crypto.randomInt(100000, 999999).toString();
 
@@ -157,7 +158,7 @@ const requestOtp = async (req, res) => {
             [phoneNumber, hashOtp(otp), expiry, userId]
         );
 
-        if (FORCE_SEND_SMS_ALL || !isSuperUser) {
+        if (FORCE_SEND_SMS_ALL || !(isDemoPhone || isDevSuperUser)) {
             try {
                 sendMessage(buildOtpSmsBodyForRequest(req, otp), formatedPhoneNumber);
             } catch (e) {
@@ -458,12 +459,12 @@ const register = async (req, res) => {
             [name, null, phoneNumber, null, "User", null, new Date()]
         );
 
+        const isDemoPhone = DEMO_OTP_PHONES.includes(phoneNumber);
         const testUser = phoneNumber === "0501234567";
         const managerUser = phoneNumber === "0507299064";
+        const isDevSuperUser = (process.env.NODE_ENV !== 'production') && (testUser || managerUser);
 
-        const isSuperUser = (process.env.NODE_ENV !== 'production') && (testUser || managerUser);
-
-        const otp = isSuperUser
+        const otp = (isDemoPhone || isDevSuperUser)
             ? "123456"
             : crypto.randomInt(100000, 999999).toString();
         const expiry = new Date(Date.now() + 5 * 60 * 1000);
@@ -484,7 +485,7 @@ const register = async (req, res) => {
             [phoneNumber, hashOtp(otp), expiry, userId]
         );
 
-        if (FORCE_SEND_SMS_ALL || !isSuperUser) {
+        if (FORCE_SEND_SMS_ALL || !(isDemoPhone || isDevSuperUser)) {
             try {
                 sendMessage(buildOtpSmsBodyForRequest(req, otp), formatedPhoneNumber);
             } catch (e) {
