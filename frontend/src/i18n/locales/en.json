@@ -333,6 +333,7 @@
         "totalCases": "Total cases",
         "taggedCases": "Tagged cases",
         "activeCustomers": "Active customers",
+        "unreadNotifications": "Unread notifications",
         "moreDataForAnalytics": "When we have more data, we will show an analytics breakdown"
     },
     "terms": {
@@ -419,7 +420,6 @@
         "retentionHint": "Retention applies to documents and evidence. Legal hold (if enabled) may override retention.",
         "usageCardTitle": "Usage",
         "monthStart": "Month start:",
-        "loadingUsage": "Loading usage…",
         "used": "Used:",
         "limit": "Limit:",
         "quotaUnlimited": "Unlimited",
@@ -943,6 +943,67 @@
             "save": "Save",
             "saving": "Saving...",
             "saveError": "Error saving reminder"
+        }
+    },
+    "compliance": {
+        "disclaimer": "Compliance program in progress. These controls are aligned with the listed standards but have not yet been formally certified by an accredited registrar.",
+        "badges": {
+            "iso27001Aligned": "Aligned with ISO/IEC 27001",
+            "iso27001Certified": "ISO/IEC 27001 Certified",
+            "iso27701Ready": "ISO/IEC 27701-ready",
+            "iso27701Certified": "ISO/IEC 27701 Certified",
+            "iso22301Based": "Based on ISO 22301",
+            "iso22301Certified": "ISO 22301 Certified"
+        },
+        "nav": {
+            "securityAndCompliance": "Security & Compliance"
+        },
+        "hub": {
+            "pageTitle": "Compliance Center",
+            "overviewTitle": "Our Commitment",
+            "overviewText": "We are committed to protecting your data and maintaining the highest standards of information security, privacy, and business continuity. Our compliance program is aligned with internationally recognised ISO standards.",
+            "securityDesc": "How we protect your information — encryption, access controls, monitoring.",
+            "privacyDesc": "How we handle personal data — privacy by design, data minimisation.",
+            "continuityDesc": "How we ensure service availability — backups, disaster recovery, uptime."
+        },
+        "security": {
+            "pageTitle": "Information Security",
+            "whatIsTitle": "What is ISO/IEC 27001?",
+            "whatIsText": "ISO/IEC 27001 is the international standard for Information Security Management Systems (ISMS). It provides a systematic approach to managing sensitive data and ensuring it remains secure through risk management processes.",
+            "whatItMeansTitle": "What This Means for You",
+            "whatItMeansText": "Your case data, documents, and communications are protected by industry-leading security controls. We continuously monitor and improve our security posture to safeguard your information.",
+            "whatWeDoTitle": "What We Implement Today",
+            "whatWeDoText": "<ul><li>End-to-end encryption for data in transit (TLS 1.2+)</li><li>Encryption at rest for stored documents</li><li>Multi-factor authentication (OTP-based)</li><li>Role-based access control with least-privilege principle</li><li>Comprehensive audit logging (ISO 27001 Annex A compliant)</li><li>Automated rate limiting and brute-force protection</li><li>Security headers (HSTS, CSP, X-Frame-Options)</li><li>Regular vulnerability assessments</li></ul>",
+            "roadmapTitle": "Roadmap",
+            "roadmapText": "Formal ISO/IEC 27001 certification audit planned. Continuous improvement of controls through regular internal audits and penetration testing.",
+            "statusTitle": "Certification Status",
+            "statusText": "Aligned with ISO/IEC 27001 controls. Formal certification in progress."
+        },
+        "privacy": {
+            "pageTitle": "Privacy & Data Protection",
+            "whatIsTitle": "What is ISO/IEC 27701?",
+            "whatIsText": "ISO/IEC 27701 extends ISO 27001 with privacy-specific controls, creating a Privacy Information Management System (PIMS). It helps organisations comply with privacy regulations such as GDPR and the Israeli Privacy Protection Law.",
+            "whatItMeansTitle": "What This Means for You",
+            "whatItMeansText": "Your personal data is handled with the utmost care. We collect only what is necessary, store it securely, and never share it without your explicit consent or legal obligation.",
+            "whatWeDoTitle": "What We Implement Today",
+            "whatWeDoText": "<ul><li>Data minimisation — we collect only what is needed</li><li>Purpose limitation — data is used only for stated purposes</li><li>Secure deletion — data is permanently removed when no longer needed</li><li>Privacy by design in all new features</li><li>PII masking in logs and audit trails</li><li>Consent management for communications</li><li>Data subject rights support (access, rectification, erasure)</li></ul>",
+            "roadmapTitle": "Roadmap",
+            "roadmapText": "Formal ISO/IEC 27701 certification as an extension to ISO 27001. Enhanced data processing records and DPIA procedures.",
+            "statusTitle": "Certification Status",
+            "statusText": "ISO/IEC 27701-ready. Privacy controls implemented and operational."
+        },
+        "continuity": {
+            "pageTitle": "Business Continuity",
+            "whatIsTitle": "What is ISO 22301?",
+            "whatIsText": "ISO 22301 is the international standard for Business Continuity Management Systems (BCMS). It ensures that organisations can continue to deliver products and services during disruptions.",
+            "whatItMeansTitle": "What This Means for You",
+            "whatItMeansText": "Your access to case management, documents, and signed files is protected against service disruptions. We have recovery procedures in place to minimise downtime.",
+            "whatWeDoTitle": "What We Implement Today",
+            "whatWeDoText": "<ul><li>Automated database backups with point-in-time recovery</li><li>Cloud storage redundancy (Cloudflare R2 with multi-region replication)</li><li>Application health monitoring and auto-restart (PM2)</li><li>Incident response procedures with structured logging</li><li>Graceful degradation under high load</li><li>Server-side request timeouts to prevent cascade failures</li></ul>",
+            "roadmapTitle": "Roadmap",
+            "roadmapText": "Formal business impact analysis (BIA). Documented disaster recovery plan with defined RTOs and RPOs. Regular DR drills.",
+            "statusTitle": "Certification Status",
+            "statusText": "Business continuity principles based on ISO 22301. Formal assessment planned."
         }
     }
 }

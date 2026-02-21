@@ -113,7 +113,7 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
 
     function contactOnWhatsapp() {
         openExternalUrl(
-            `https://wa.me/972522595097?text=${t("common.whatsapp.contactText", { caseId: fullCase.CaseId })}`,
+            `https://wa.me/97236565004?text=${t("common.whatsapp.contactText", { caseId: fullCase.CaseId })}`,
             { newTab: true }
         );
     }
@@ -127,9 +127,31 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
                     <ProgressBar IsClosed={fullCase.IsClosed} currentStage={fullCase.CurrentStage} totalStages={totalStages} />
                 </SimpleContainer>
 
+                <SimpleContainer className="lw-caseMenuItemOpen__section">
+                    <SimpleContainer className="lw-caseMenuItemOpen__accordionHeader" onPress={() => setIsStagesOpen(!isStagesOpen)}>
+                        <ImageButton
+                            src={icons.Button.DownArrow}
+                            className={"lw-caseMenuItemOpen__dropDownBtn" + (isStagesOpen ? " is-open" : "")}
+                        />
+                        <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">{t("common.stages")}</TextBold12>
+                    </SimpleContainer>
+
+                    {isStagesOpen && (
+                        <SimpleContainer className="lw-caseMenuItemOpen__timelineWrap">
+                            <CaseTimeline
+                                stages={fullCase.Descriptions}
+                                currentStage={fullCase.CurrentStage}
+                                isClosed={fullCase.IsClosed}
+                                createdAt={fullCase.CreatedAt}
+                            />
+                        </SimpleContainer>
+                    )}
+                </SimpleContainer>
+
                 {/* Sections (mobile-first: stack) */}
                 <SimpleContainer className="lw-caseMenuItemOpen__sections">
-                    <SimpleContainer className="lw-caseMenuItemOpen__section">
+
+                    {/* <SimpleContainer className="lw-caseMenuItemOpen__section">
                         <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">{t("common.customerDetails")}</TextBold12>
 
                         <SimpleContainer className="lw-caseMenuItemOpen__items">
@@ -161,32 +183,7 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
                                 </SimpleContainer>
                             </SimpleContainer>
                         </SimpleContainer>
-                    </SimpleContainer>
-
-                    <SimpleContainer className="lw-caseMenuItemOpen__section">
-                        <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">{t("common.dates")}</TextBold12>
-
-                        <SimpleContainer className="lw-caseMenuItemOpen__items">
-                            <SimpleContainer className="lw-caseMenuItemOpen__item">
-                                <TextBold12 className="lw-caseMenuItemOpen__itemLabel">{t("cases.createdAt") + ":"}</TextBold12>
-                                <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.CreatedAt ? DateDDMMYY(fullCase.CreatedAt) : t("common.notSpecified")}</Text12>
-                            </SimpleContainer>
-
-                            {(!isClient || fullCase.EstimatedCompletionDate) && (
-                                <SimpleContainer className="lw-caseMenuItemOpen__item">
-                                    <TextBold12 className="lw-caseMenuItemOpen__itemLabel">{t("cases.estimatedCompletionDate") + ":"}</TextBold12>
-                                    <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.EstimatedCompletionDate ? DateDDMMYY(fullCase.EstimatedCompletionDate) : t("common.notSpecified")}</Text12>
-                                </SimpleContainer>
-                            )}
-
-                            {(!isClient || fullCase.LicenseExpiryDate) && (
-                                <SimpleContainer className="lw-caseMenuItemOpen__item">
-                                    <TextBold12 className="lw-caseMenuItemOpen__itemLabel">{t("cases.licenseExpiryDate") + ":"}</TextBold12>
-                                    <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.LicenseExpiryDate ? DateDDMMYY(fullCase.LicenseExpiryDate) : t("common.notSpecified")}</Text12>
-                                </SimpleContainer>
-                            )}
-                        </SimpleContainer>
-                    </SimpleContainer>
+                    </SimpleContainer> */}
 
                     <SimpleContainer className="lw-caseMenuItemOpen__section">
                         <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">{t("common.management")}</TextBold12>
@@ -235,25 +232,30 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
                     </SimpleContainer>
 
                     <SimpleContainer className="lw-caseMenuItemOpen__section">
-                        <SimpleContainer className="lw-caseMenuItemOpen__accordionHeader" onPress={() => setIsStagesOpen(!isStagesOpen)}>
-                            <ImageButton
-                                src={icons.Button.DownArrow}
-                                className={"lw-caseMenuItemOpen__dropDownBtn" + (isStagesOpen ? " is-open" : "")}
-                            />
-                            <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">{t("common.stages")}</TextBold12>
-                        </SimpleContainer>
+                        <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">{t("common.dates")}</TextBold12>
 
-                        {isStagesOpen && (
-                            <SimpleContainer className="lw-caseMenuItemOpen__timelineWrap">
-                                <CaseTimeline
-                                    stages={fullCase.Descriptions}
-                                    currentStage={fullCase.CurrentStage}
-                                    isClosed={fullCase.IsClosed}
-                                    createdAt={fullCase.CreatedAt}
-                                />
+                        <SimpleContainer className="lw-caseMenuItemOpen__items">
+                            <SimpleContainer className="lw-caseMenuItemOpen__item">
+                                <TextBold12 className="lw-caseMenuItemOpen__itemLabel">{t("cases.createdAt") + ":"}</TextBold12>
+                                <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.CreatedAt ? DateDDMMYY(fullCase.CreatedAt) : t("common.notSpecified")}</Text12>
                             </SimpleContainer>
-                        )}
+
+                            {(!isClient || fullCase.EstimatedCompletionDate) && (
+                                <SimpleContainer className="lw-caseMenuItemOpen__item">
+                                    <TextBold12 className="lw-caseMenuItemOpen__itemLabel">{t("cases.estimatedCompletionDate") + ":"}</TextBold12>
+                                    <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.EstimatedCompletionDate ? DateDDMMYY(fullCase.EstimatedCompletionDate) : t("common.notSpecified")}</Text12>
+                                </SimpleContainer>
+                            )}
+
+                            {(!isClient || fullCase.LicenseExpiryDate) && (
+                                <SimpleContainer className="lw-caseMenuItemOpen__item">
+                                    <TextBold12 className="lw-caseMenuItemOpen__itemLabel">{t("cases.licenseExpiryDate") + ":"}</TextBold12>
+                                    <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.LicenseExpiryDate ? DateDDMMYY(fullCase.LicenseExpiryDate) : t("common.notSpecified")}</Text12>
+                                </SimpleContainer>
+                            )}
+                        </SimpleContainer>
                     </SimpleContainer>
+
                 </SimpleContainer>
 
                 {/* Footer actions */}

@@ -37,10 +37,10 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
 
     const handleSelectCustomer = (_text, customer) => {
         setSelectedClient(customer);
-        setName(customer.name || "");
-        setPhoneNumber(customer.phonenumber || "");
-        setEmail(customer.email || "");
-        setCompanyName(customer.companyname || "");
+        setName(customer.Name || customer.name || "");
+        setPhoneNumber(customer.PhoneNumber || customer.phonenumber || "");
+        setEmail(customer.Email || customer.email || "");
+        setCompanyName(customer.CompanyName || customer.companyname || "");
     };
 
     const [hasError, setHasError] = useState(false);
@@ -100,19 +100,19 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
         };
 
         const apiCall = selectedClient
-            ? performRequest(selectedClient.userid, clientData)
+            ? performRequest(selectedClient.UserId || selectedClient.userid, clientData)
             : performRequest(clientData);
 
         apiCall.finally(() => closePopUpFunction?.());
     };
 
     const handleDeleteClient = () => {
-        deleteClient(selectedClient.userid);
+        deleteClient(selectedClient.UserId || selectedClient.userid);
     };
 
     const handleConfirmLegalDelete = () => {
         setIsLegalDeleteConfirmOpen(false);
-        deleteClient(selectedClient.userid, { confirmLegalDelete: true });
+        deleteClient(selectedClient.UserId || selectedClient.userid, { confirmLegalDelete: true });
     };
 
     return (
@@ -154,7 +154,7 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
                         onSearch={handleSearchCustomer}
                         isPerforming={isPerformingCustomersByName}
                         queryResult={customersByName}
-                        getButtonTextFunction={(item) => item.name}
+                        getButtonTextFunction={(item) => item.Name || item.name}
                         buttonPressFunction={handleSelectCustomer}
                         error={nameError}
                     />

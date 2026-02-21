@@ -36,7 +36,7 @@ const authMiddleware = (req, res, next) => {
 
     try {
         // Verify and decode the JWT using the secret key
-        const decoded = jwt.verify(token, SECRET_KEY);
+        const decoded = jwt.verify(token, SECRET_KEY, { algorithms: ['HS256'] });
 
         // Attach the decoded user data to the request object for use in subsequent middleware and route handlers
         req.user = {

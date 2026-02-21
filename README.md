@@ -119,6 +119,27 @@ This project is licensed under the **MIT License**.
 
 ---
 
+## **🔒 Compliance & ISO Readiness**
+
+MelamedLaw implements controls aligned with international standards:
+
+| Standard | Status |
+|---|---|
+| **ISO/IEC 27001** (Information Security) | Aligned |
+| **ISO/IEC 27701** (Privacy / PIMS) | Ready |
+| **ISO 22301** (Business Continuity) | Based on |
+
+- **Feature flag**: `COMPLIANCE_BADGES_MODE=aligned|certified` (default: `aligned`)
+- **API endpoint**: `GET /api/compliance/status`
+- **Web pages**: `/security`, `/privacy`, `/continuity`, `/compliance`
+- **Mobile app**: Security & Compliance screen (from Profile)
+
+> ⚠ Only set `COMPLIANCE_BADGES_MODE=certified` after obtaining formal certification.
+
+See [docs/compliance.md](docs/compliance.md) for full documentation.
+
+---
+
 ## **💡 Additional Notes**
 - Ensure you **configure the `.env` file** correctly before running the project.
 - Make sure **SQL Azure is accessible** and properly connected.

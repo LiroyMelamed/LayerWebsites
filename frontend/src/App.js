@@ -12,6 +12,10 @@ import { SigningScreenName } from './screens/signingScreen/SigningScreen';
 import { EvidenceDocumentsScreenName } from './screens/evidenceDocuments/EvidenceDocumentsScreen';
 import EvidenceVerifyScreen, { EvidenceVerifyScreenName } from './screens/verify/EvidenceVerifyScreen';
 import PricingScreen, { PricingScreenName } from './screens/pricingScreen/PricingScreen';
+import SecurityScreen, { SecurityScreenName } from './screens/compliance/SecurityScreen';
+import PrivacyPage, { PrivacyPageName } from './screens/compliance/PrivacyPage';
+import ContinuityPage, { ContinuityPageName } from './screens/compliance/ContinuityPage';
+import CompliancePage, { CompliancePageName } from './screens/compliance/CompliancePage';
 
 const STACK_SUFFIX = "/*"
 
@@ -48,8 +52,6 @@ const App = () => {
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
-    const token = searchParams.get('token');
-    const role = searchParams.get('role');
     const fromAppParam = searchParams.get('fromApp');
     const signingFileId = searchParams.get('signingFileId');
     const publicSigningParam = searchParams.get('publicSigning');
@@ -61,9 +63,21 @@ const App = () => {
       setIsFromApp(false);
     }
 
+    // Auth credentials: prefer URL params (legacy/deep-links), fall back to
+    // localStorage (injected by mobile WebView before page load).
+    const token = searchParams.get('token') || localStorage.getItem('token');
+    const role = searchParams.get('role') || localStorage.getItem('role');
+
     if (token && role) {
       localStorage.setItem('token', token);
       localStorage.setItem('role', role);
+
+      // Platform admin flag — may come from URL param or already in localStorage
+      // (injected by mobile app's WebView).
+      const isPlatformAdminParam = searchParams.get('isPlatformAdmin');
+      if (isPlatformAdminParam === 'true') {
+        localStorage.setItem('isPlatformAdmin', 'true');
+      }
 
       // If we have a deep-link target, store it before we clean the URL.
       if (signingFileId) {
@@ -99,6 +113,11 @@ const App = () => {
         <Route path={EvidenceVerifyScreenName} element={<EvidenceVerifyScreen />} />
 
         <Route path={PricingScreenName} element={<PricingScreen />} />
+
+        <Route path={SecurityScreenName} element={<SecurityScreen />} />
+        <Route path={PrivacyPageName} element={<PrivacyPage />} />
+        <Route path={ContinuityPageName} element={<ContinuityPage />} />
+        <Route path={CompliancePageName} element={<CompliancePage />} />
 
         <Route
           path="/admin/evidence-documents"

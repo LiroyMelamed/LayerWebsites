@@ -1,2 +1,4 @@
 .vercel
 assets/fonts/*.ttf
+# Security audit logs (never commit to repo)
+logs/

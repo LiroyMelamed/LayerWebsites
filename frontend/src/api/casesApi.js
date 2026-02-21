@@ -14,6 +14,7 @@ const LINK_WHATSAPP_GROUP = "Cases/LinkWhatsappGroup/";
 const GET_TAGGED_CASES_BY_NAME = "Cases/TaggedCasesByName?caseName=";
 
 const GET_MAIN_SCREEN_DATA = "Data/GetMainScreenData";
+const GET_CLIENT_DASHBOARD_DATA = "Data/GetClientDashboardData";
 
 const GET_CASE_TYPE_BY_NAME = "CaseTypes/GetCaseTypeByName?caseTypeName=";
 const DELETE_CASE_TYPE = "CaseTypes/DeleteCaseType/";
@@ -26,6 +27,10 @@ const ADD_CASE_TYPE = "CaseTypes/AddCaseType";
 const casesApi = {
   getMainScreenData: async () => {
     return await ApiUtils.get(GET_MAIN_SCREEN_DATA);
+  },
+
+  getClientDashboardData: async () => {
+    return await ApiUtils.get(GET_CLIENT_DASHBOARD_DATA);
   },
 
   getAllCases: async () => {

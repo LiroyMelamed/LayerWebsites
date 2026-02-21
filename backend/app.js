@@ -1,5 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const helmet = require("helmet");
 const cors = require("cors");
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
@@ -22,6 +23,7 @@ const billingRoutes = require("./routes/billingRoutes");
 const emailCampaignRoutes = require("./routes/emailCampaignRoutes");
 const notificationOrchestratorRoutes = require("./routes/notificationOrchestratorRoutes");
 const reminderRoutes = require("./routes/reminderRoutes");
+const complianceRoutes = require("./routes/complianceRoutes");
 
 const authMiddleware = require("./middlewares/authMiddleware");
 const { createRateLimitMiddleware, getClientIp } = require("./utils/rateLimiter");
@@ -33,10 +35,24 @@ const app = express();
 // Only trust proxy headers when explicitly enabled (prevents spoofing x-forwarded-for)
 app.set('trust proxy', process.env.TRUST_PROXY === 'true');
 
-const API_JSON_LIMIT = process.env.API_JSON_LIMIT || '50mb';
-const API_URLENCODED_LIMIT = process.env.API_URLENCODED_LIMIT || '50mb';
+const API_JSON_LIMIT = process.env.API_JSON_LIMIT || '2mb';
+const API_URLENCODED_LIMIT = process.env.API_URLENCODED_LIMIT || '2mb';
 const API_REQUEST_TIMEOUT_MS = Number(process.env.API_REQUEST_TIMEOUT_MS || 30_000);
 
+// Security headers – ISO 27001 Annex A – A.8.9 (Web filtering / transport security)
+app.use(helmet({
+    // Strict-Transport-Security: enforce HTTPS for 1 year + includeSubDomains
+    hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+    // X-Content-Type-Options: nosniff
+    contentTypeOptions: true,
+    // X-Frame-Options: DENY (via frameguard)
+    frameguard: { action: 'deny' },
+    // Referrer-Policy: strict-origin-when-cross-origin
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    // X-XSS-Protection (legacy but harmless extra layer)
+    xssFilter: true,
+    // Prevent MIME sniffing, DNS prefetch control, etc. (helmet defaults)
+}));
 app.use(bodyParser.json({ limit: API_JSON_LIMIT }));
 app.use(bodyParser.urlencoded({ limit: API_URLENCODED_LIMIT, extended: true }));
 
@@ -140,6 +156,7 @@ app.use("/api/evidence-documents", evidenceDocumentsRoutes);
 app.use("/api/email/campaign", emailCampaignRoutes);
 app.use("/api/notifications/orchestrator", notificationOrchestratorRoutes);
 app.use("/api/reminders", reminderRoutes);
+app.use("/api/compliance", complianceRoutes);
 
 // Lightweight health endpoint for prereq checks
 app.get("/health", (req, res) => {

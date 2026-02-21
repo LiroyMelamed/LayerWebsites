@@ -80,6 +80,18 @@
     margin-block: 0.75rem;
 }
 
+.lw-topToolBarSmallScreen__isoBadgeWrap {
+    display: flex;
+    justify-content: center;
+    margin-block: 0.5rem;
+}
+
+.lw-topToolBarSmallScreen__isoBadge {
+    width: 3rem;
+    height: auto;
+    opacity: 0.85;
+}
+
 .lw-topToolBarSmallScreen__logout {
     align-self: center;
     margin-block: 0.75rem 1.25rem;

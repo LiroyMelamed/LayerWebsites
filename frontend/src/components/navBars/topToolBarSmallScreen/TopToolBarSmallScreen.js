@@ -12,6 +12,7 @@ import { useFromApp } from "../../../providers/FromAppProvider";
 import PrimaryButton from "../../styledComponents/buttons/PrimaryButton";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from '../../i18n/LanguageSwitcher';
+import ComplianceBadges from '../../compliance/ComplianceBadges';
 
 import './TopToolBarSmallScreen.scss';
 
@@ -86,6 +87,9 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, chosenNavKey, 
 
                     <SimpleContainer className="lw-topToolBarSmallScreen__languageWrap">
                         <LanguageSwitcher />
+                    </SimpleContainer>
+                    <SimpleContainer className="lw-topToolBarSmallScreen__isoBadgeWrap">
+                        <ComplianceBadges size="small" layout="row" showLabels={false} />
                     </SimpleContainer>
                     {!isFromApp && (
                         <SimpleContainer className="lw-topToolBarSmallScreen__logout">

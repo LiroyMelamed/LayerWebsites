@@ -7,6 +7,12 @@ export const images = {
 
     },
 
+    Badges: {
+        Iso27001: require("./badges/ISO-logo.png"),
+        Iso27701: require("./badges/ISO-27701-logo.png"),
+        Iso22301: require("./badges/Iso22301-logo.png"),
+    },
+
     Backgrounds: {
         AppBackground: require("./backgrounds/AppBackground.jpg")
     },

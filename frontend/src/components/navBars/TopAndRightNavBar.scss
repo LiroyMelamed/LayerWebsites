@@ -53,6 +53,23 @@
     align-self: center;
 }
 
+.lw-topAndRightNavBar__isoBadgeWrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.lw-topAndRightNavBar__isoBadge {
+    width: 3.5rem;
+    height: auto;
+    opacity: 0.85;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+        opacity: 1;
+    }
+}
+
 .lw-topAndRightNavBar__logoutWrap {
     align-self: center;
 }

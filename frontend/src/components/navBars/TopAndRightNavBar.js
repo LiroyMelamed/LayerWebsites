@@ -14,6 +14,7 @@ import GenericButton from "../styledComponents/buttons/GenericButton";
 import { colors } from "../../constant/colors";
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../i18n/LanguageSwitcher';
+import ComplianceBadges from '../compliance/ComplianceBadges';
 import "./TopAndRightNavBar.scss";
 
 const Logo = images.Logos.LogoSlangWhite;
@@ -68,6 +69,9 @@ export default function TopAndRightNavBar({ children, LogoNavigate, GetNavBarDat
 
           </SimpleScrollView>
           <SimpleContainer className="lw-topAndRightNavBar__bottom">
+            <SimpleContainer className="lw-topAndRightNavBar__isoBadgeWrap">
+              <ComplianceBadges size="small" layout="column" showLabels={false} />
+            </SimpleContainer>
             <SimpleContainer className="lw-topAndRightNavBar__languageWrap">
               <LanguageSwitcher />
             </SimpleContainer>

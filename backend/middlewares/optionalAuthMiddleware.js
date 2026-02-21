@@ -15,7 +15,7 @@ module.exports = function optionalAuthMiddleware(req, _res, next) {
         const token = raw.split(' ')[1];
         if (!token) return next();
 
-        const decoded = jwt.verify(token, SECRET_KEY);
+        const decoded = jwt.verify(token, SECRET_KEY, { algorithms: ['HS256'] });
         if (decoded) {
             req.user = {
                 UserId: decoded.userid,

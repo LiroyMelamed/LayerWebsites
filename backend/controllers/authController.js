@@ -3,18 +3,29 @@ const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const { formatPhoneNumber } = require("../utils/phoneUtils");
 const { sendMessage } = require("../utils/sendMessage");
+const { isLocked, recordFailure, recordSuccess } = require("../utils/otpBruteForce");
+const { logSecurityEvent, extractIp } = require("../utils/securityAuditLogger");
 require("dotenv").config();
 
-const SECRET_KEY = process.env.JWT_SECRET || "supersecretkey";
+if (!process.env.JWT_SECRET) {
+    throw new Error("FATAL: JWT_SECRET env variable is not set. Server cannot start.");
+}
+const SECRET_KEY = process.env.JWT_SECRET;
 const FORCE_SEND_SMS_ALL = process.env.FORCE_SEND_SMS_ALL === "true";
 
-const ACCESS_TOKEN_TTL = String(process.env.ACCESS_TOKEN_TTL || "30d");
+const ACCESS_TOKEN_TTL = String(process.env.ACCESS_TOKEN_TTL || "15m");
 
 const REFRESH_TOKEN_TTL_DAYS = Number(process.env.REFRESH_TOKEN_TTL_DAYS || 90);
 const REFRESH_TOKEN_PEPPER = String(process.env.REFRESH_TOKEN_PEPPER || "");
 
 const ANDROID_SMS_RETRIEVER_HASH = String(process.env.ANDROID_SMS_RETRIEVER_HASH || "").trim();
 const WEBSITE_DOMAIN_FALLBACK = String(process.env.WEBSITE_DOMAIN || "").trim();
+
+// Hash OTP before storing in DB (ISO 27001 A.10 — never store secrets in plaintext)
+const OTP_PEPPER = String(process.env.SIGNING_OTP_PEPPER || "");
+function hashOtp(otp) {
+    return crypto.createHmac("sha256", OTP_PEPPER).update(String(otp)).digest("hex");
+}
 
 function getClientPlatform(req) {
     const raw = req?.headers?.["x-client-platform"];
@@ -118,11 +129,11 @@ const requestOtp = async (req, res) => {
         const testUser = phoneNumber === "0501234567";
         const managerUser = phoneNumber === "0507299064";
 
-        const isSuperUser = testUser || managerUser;
+        const isSuperUser = (process.env.NODE_ENV !== 'production') && (testUser || managerUser);
 
         const otp = isSuperUser
             ? "123456"
-            : Math.floor(100000 + Math.random() * 900000).toString();
+            : crypto.randomInt(100000, 999999).toString();
 
         const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
@@ -143,7 +154,7 @@ const requestOtp = async (req, res) => {
             ON CONFLICT (phonenumber) DO UPDATE
             SET otp = EXCLUDED.otp, expiry = EXCLUDED.expiry, userid = EXCLUDED.userid;
             `,
-            [phoneNumber, otp, expiry, userId]
+            [phoneNumber, hashOtp(otp), expiry, userId]
         );
 
         if (FORCE_SEND_SMS_ALL || !isSuperUser) {
@@ -157,6 +168,7 @@ const requestOtp = async (req, res) => {
         return res.status(200).json({ message: "קוד נשלח בהצלחה", otpSent: true });
     } catch (error) {
         console.error("שגיאה בשליחת הקוד:", error);
+        logSecurityEvent({ type: 'OTP_REQUEST_ERROR', phone: phoneNumber, ip: extractIp(req), success: false });
         return res.status(500).json({ message: "שגיאה בשליחת הקוד", error: error.message });
     }
 };
@@ -164,7 +176,25 @@ const requestOtp = async (req, res) => {
 const verifyOtp = async (req, res) => {
     let { phoneNumber, otp } = req.body;
 
+    // ── Brute-force lockout check (ISO 27001 A.9.4.2) ──
+    const lockStatus = isLocked(phoneNumber);
+    if (lockStatus.locked) {
+        logSecurityEvent({
+            type: 'OTP_VERIFY_BLOCKED_LOCKOUT',
+            phone: phoneNumber,
+            ip: extractIp(req),
+            userAgent: req.headers?.['user-agent'],
+            success: false,
+            meta: { retryAfterMs: lockStatus.retryAfterMs },
+        });
+        const retryMinutes = Math.ceil((lockStatus.retryAfterMs || 0) / 60000);
+        return res.status(429).json({
+            message: `יותר מדי ניסיונות. נסה שוב בעוד ${retryMinutes} דקות`,
+        });
+    }
+
     try {
+        const otpHash = hashOtp(otp);
         const result = await pool.query(
             `
             SELECT U.userid, U.role, U.phonenumber
@@ -174,21 +204,39 @@ const verifyOtp = async (req, res) => {
               AND O.otp = $2
               AND O.expiry > NOW()
             `,
-            [phoneNumber, otp]
+            [phoneNumber, otpHash]
         );
 
         if (result.rows.length === 0) {
+            recordFailure(phoneNumber);
+            logSecurityEvent({
+                type: 'OTP_VERIFY_FAIL',
+                phone: phoneNumber,
+                ip: extractIp(req),
+                userAgent: req.headers?.['user-agent'],
+                success: false,
+            });
             return res.status(401).json({ message: "קוד לא תקין" });
         }
 
+        recordSuccess(phoneNumber);
         const { userid, role, phonenumber } = result.rows[0];
         const token = signAccessToken({ userid, role, phonenumber });
+
+        logSecurityEvent({
+            type: 'OTP_VERIFY_SUCCESS',
+            phone: phoneNumber,
+            userId: userid,
+            ip: extractIp(req),
+            userAgent: req.headers?.['user-agent'],
+            success: true,
+        });
 
         // Invalidate the OTP after successful verification to prevent replay
         try {
             await pool.query(
                 `DELETE FROM otps WHERE phonenumber = $1 AND otp = $2`,
-                [phoneNumber, otp]
+                [phoneNumber, otpHash]
             );
         } catch (delErr) {
             console.warn('Warning: failed to delete OTP after verification', delErr?.message);
@@ -261,6 +309,7 @@ const refreshToken = async (req, res) => {
 
         if (found.rows.length === 0) {
             await client.query('ROLLBACK');
+            logSecurityEvent({ type: 'TOKEN_REFRESH_FAIL', ip: extractIp(req), userAgent: req.headers?.['user-agent'], success: false, meta: { reason: 'invalid_token' } });
             return res.status(401).json({ message: 'Invalid refresh token' });
         }
 
@@ -268,11 +317,13 @@ const refreshToken = async (req, res) => {
 
         if (row.revoked_at) {
             await client.query('ROLLBACK');
+            logSecurityEvent({ type: 'TOKEN_REFRESH_FAIL', userId: row.userid, ip: extractIp(req), success: false, meta: { reason: 'revoked' } });
             return res.status(401).json({ message: 'Refresh token revoked' });
         }
 
         if (row.expires_at && new Date(row.expires_at).getTime() <= Date.now()) {
             await client.query('ROLLBACK');
+            logSecurityEvent({ type: 'TOKEN_REFRESH_FAIL', userId: row.userid, ip: extractIp(req), success: false, meta: { reason: 'expired' } });
             return res.status(401).json({ message: 'Refresh token expired' });
         }
 
@@ -313,6 +364,7 @@ const refreshToken = async (req, res) => {
         } catch {
             // ignore
         }
+        logSecurityEvent({ type: 'TOKEN_REFRESH_ERROR', ip: extractIp(req), success: false });
 
         if (error?.code === '42P01') {
             return res.status(501).json({ message: 'Refresh tokens not available (migration not applied)' });
@@ -354,7 +406,7 @@ const logout = async (req, res) => {
     const bearer = getBearerToken(req);
     if (bearer) {
         try {
-            const decoded = jwt.verify(bearer, SECRET_KEY);
+            const decoded = jwt.verify(bearer, SECRET_KEY, { algorithms: ['HS256'] });
             const userid = decoded?.userid;
             if (!userid) {
                 return res.status(401).json({ message: 'Invalid access token' });
@@ -409,11 +461,11 @@ const register = async (req, res) => {
         const testUser = phoneNumber === "0501234567";
         const managerUser = phoneNumber === "0507299064";
 
-        const isSuperUser = testUser || managerUser;
+        const isSuperUser = (process.env.NODE_ENV !== 'production') && (testUser || managerUser);
 
         const otp = isSuperUser
             ? "123456"
-            : Math.floor(100000 + Math.random() * 900000).toString();
+            : crypto.randomInt(100000, 999999).toString();
         const expiry = new Date(Date.now() + 5 * 60 * 1000);
 
         const ures = await pool.query(
@@ -429,7 +481,7 @@ const register = async (req, res) => {
             ON CONFLICT (phonenumber) DO UPDATE
             SET otp = EXCLUDED.otp, expiry = EXCLUDED.expiry, userid = EXCLUDED.userid
             `,
-            [phoneNumber, otp, expiry, userId]
+            [phoneNumber, hashOtp(otp), expiry, userId]
         );
 
         if (FORCE_SEND_SMS_ALL || !isSuperUser) {

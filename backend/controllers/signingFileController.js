@@ -730,7 +730,7 @@ function verifyPublicSigningToken(rawToken) {
     const token = String(rawToken || '').trim();
     if (!token) return { ok: false, httpStatus: 401, errorCode: 'INVALID_TOKEN' };
     try {
-        const decoded = jwt.verify(token, getJwtSecret());
+        const decoded = jwt.verify(token, getJwtSecret(), { algorithms: ['HS256'] });
         if (!decoded || decoded.typ !== 'signing_public') {
             return { ok: false, httpStatus: 401, errorCode: 'INVALID_TOKEN' };
         }
@@ -3599,7 +3599,7 @@ exports.createPublicSigningLink = async (req, res, next) => {
             fileExpiresAt: file.ExpiresAt || null,
         });
 
-        const decoded = jwt.verify(token, getJwtSecret());
+        const decoded = jwt.verify(token, getJwtSecret(), { algorithms: ['HS256'] });
         const nowSeconds = Math.floor(Date.now() / 1000);
         const expiresIn = Math.max(60, Number(decoded?.exp || 0) - nowSeconds);
 

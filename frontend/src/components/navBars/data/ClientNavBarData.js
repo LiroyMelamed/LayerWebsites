@@ -57,7 +57,7 @@ export const getClientNavBarData = (navigate, openPopup, closePopup, isFromApp =
                     icon: null,
                     onClick: () => {
                         openExternalUrl(
-                            `https://wa.me/972522595097?text=${encodeURIComponent(t('nav.contactMessage'))}`,
+                            `https://wa.me/97236565004?text=${encodeURIComponent(t('nav.contactMessage'))}`,
                             { newTab: true }
                         );
                     },

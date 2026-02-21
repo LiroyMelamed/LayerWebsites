@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import ClientMainScreen, { ClientMainScreenName } from "../screens/client/clientMainScreen/ClientMainScreen";
+import ClientCasesScreen, { ClientCasesScreenName } from "../screens/client/clientCasesScreen/ClientCasesScreen";
 import TopAndRightNavBar from "../components/navBars/TopAndRightNavBar";
 import { getClientNavBarData } from "../components/navBars/data/ClientNavBarData";
 import SigningScreen, { SigningScreenName } from "../screens/signingScreen/SigningScreen";
@@ -23,6 +24,7 @@ function ClientStack() {
         <TopAndRightNavBar LogoNavigate={ClientStackName + ClientMainScreenName} GetNavBarData={getClientNavBarData}>
             <Routes>
                 <Route path={toRelativePath(ClientMainScreenName)} element={<ClientMainScreen />} />
+                <Route path={toRelativePath(ClientCasesScreenName)} element={<ClientCasesScreen />} />
                 <Route path={toRelativePath(NotificationsScreenName)} element={<NotificationsScreen />} />
                 <Route path={toRelativePath(SigningScreenName)} element={<SigningScreen />} />
                 <Route path={toRelativePath(ProfileScreenName)} element={<ProfileScreen />} />

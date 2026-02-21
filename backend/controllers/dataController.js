@@ -64,7 +64,50 @@ const getMainScreenData = async (req, res) => {
     }
 };
 
+/**
+ * Client-facing dashboard data.
+ * Returns counts scoped to the authenticated user's cases + unread notifications.
+ */
+const getClientDashboardData = async (req, res) => {
+    const userId = req.user?.UserId;
+    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+    try {
+        const [casesResult, unreadResult] = await Promise.all([
+            pool.query(
+                `SELECT COUNT(*)::int AS total,
+                        COUNT(*) FILTER (WHERE C.isclosed = false)::int AS open,
+                        COUNT(*) FILTER (WHERE C.isclosed = true)::int  AS closed
+                 FROM cases C
+                 JOIN case_users CU ON C.caseid = CU.caseid
+                 WHERE CU.userid = $1`,
+                [userId]
+            ),
+            pool.query(
+                `SELECT COUNT(*)::int AS unread
+                 FROM usernotifications
+                 WHERE userid = $1 AND isread = false`,
+                [userId]
+            ),
+        ]);
+
+        const row = casesResult.rows[0] || { total: 0, open: 0, closed: 0 };
+        const unread = unreadResult.rows[0]?.unread ?? 0;
+
+        res.status(200).json({
+            totalCases: row.total,
+            openCases: row.open,
+            closedCases: row.closed,
+            unreadNotifications: unread,
+        });
+    } catch (error) {
+        console.error("Error retrieving client dashboard data:", error);
+        res.status(500).json({ message: "שגיאה בקבלת נתוני לוח הבקרה" });
+    }
+};
+
 // Export the function for use in routes
 module.exports = {
     getMainScreenData,
+    getClientDashboardData,
 };
