@@ -43,17 +43,17 @@ CREATE TABLE IF NOT EXISTS notification_channel_config (
     updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Seed default notification types
-INSERT INTO notification_channel_config (notification_type, label, push_enabled, email_enabled, sms_enabled, admin_cc)
+-- Seed default notification types (admin_cc added by later migration 2026-02-26)
+INSERT INTO notification_channel_config (notification_type, label, push_enabled, email_enabled, sms_enabled)
 VALUES
-    ('CASE_UPDATE',     'עדכון תיק',          TRUE, TRUE, TRUE, TRUE),
-    ('SIGN_INVITE',     'הזמנה לחתימה',       TRUE, TRUE, TRUE, TRUE),
-    ('SIGN_REMINDER',   'תזכורת חתימה',       TRUE, TRUE, TRUE, TRUE),
-    ('DOC_SIGNED',      'מסמך נחתם',          TRUE, TRUE, TRUE, TRUE),
-    ('DOC_REJECTED',    'מסמך נדחה',          TRUE, TRUE, TRUE, TRUE),
-    ('PAYMENT',         'תזכורת תשלום',       TRUE, TRUE, TRUE, TRUE),
-    ('LICENSE_RENEWAL', 'חידוש רישיון',       TRUE, TRUE, TRUE, TRUE),
-    ('GENERAL',         'הודעה כללית',        TRUE, TRUE, TRUE, TRUE)
+    ('CASE_UPDATE',     'עדכון תיק',          TRUE, TRUE, TRUE),
+    ('SIGN_INVITE',     'הזמנה לחתימה',       TRUE, TRUE, TRUE),
+    ('SIGN_REMINDER',   'תזכורת חתימה',       TRUE, TRUE, TRUE),
+    ('DOC_SIGNED',      'מסמך נחתם',          TRUE, TRUE, TRUE),
+    ('DOC_REJECTED',    'מסמך נדחה',          TRUE, TRUE, TRUE),
+    ('PAYMENT',         'תזכורת תשלום',       TRUE, TRUE, TRUE),
+    ('LICENSE_RENEWAL', 'חידוש רישיון',       TRUE, TRUE, TRUE),
+    ('GENERAL',         'הודעה כללית',        TRUE, TRUE, TRUE)
 ON CONFLICT (notification_type) DO NOTHING;
 
 -- ─── 4) Seed initial settings from common env vars ──────────────────
