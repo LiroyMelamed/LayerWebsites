@@ -1,9 +1,20 @@
 const axios = require("axios");
 require("dotenv").config();
 const { recordUsageEvent } = require("../lib/usage/recordFirmUsage");
+const { getSetting } = require("../services/settingsService");
 
+// ── Static defaults (kept for backward-compatible imports) ──────────
 const COMPANY_NAME = "MelamedLaw";
 const WEBSITE_DOMAIN = "client.melamedlaw.co.il";
+
+// ── Async getters that respect platform_settings ────────────────────
+async function getWebsiteDomain() {
+    return await getSetting('firm', 'WEBSITE_DOMAIN', WEBSITE_DOMAIN);
+}
+
+async function getCompanyName() {
+    return await getSetting('firm', 'COMPANY_NAME', COMPANY_NAME);
+}
 
 const isProduction = process.env.IS_PRODUCTION === "true";
 
@@ -68,9 +79,16 @@ async function sendMessage(messageBody, formattedPhone) {
 
     const toPhone = stripPlus(formattedPhone);
 
+    // Prefer platform_settings, fall back to env
+    const senderPhone = await getSetting('messaging', 'SMOOVE_SENDER_PHONE', process.env.SMOOVE_SENDER_PHONE);
+    if (!senderPhone) {
+        console.error('SMOOVE_SENDER_PHONE not configured in platform_settings or .env. Cannot send SMS.');
+        return;
+    }
+
     const messageRequest = {
         toMembersByCell: [toPhone],
-        fromNumber: String(process.env.SMOOVE_SENDER_PHONE),
+        fromNumber: String(senderPhone),
         body: String(messageBody ?? ""),
     };
 
@@ -104,4 +122,4 @@ async function sendMessage(messageBody, formattedPhone) {
     }
 }
 
-module.exports = { sendMessage, COMPANY_NAME, WEBSITE_DOMAIN, isProduction, FORCE_SEND_SMS_ALL };
+module.exports = { sendMessage, COMPANY_NAME, WEBSITE_DOMAIN, getWebsiteDomain, getCompanyName, isProduction, FORCE_SEND_SMS_ALL };

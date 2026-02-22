@@ -1,10 +1,12 @@
 const pool = require("../config/db"); // Direct import of the pg pool
 const { formatPhoneNumber } = require("../utils/phoneUtils");
-const { sendMessage, WEBSITE_DOMAIN } = require("../utils/sendMessage");
+const { sendMessage, getWebsiteDomain } = require("../utils/sendMessage");
 const sendAndStoreNotification = require("../utils/sendAndStoreNotification"); // Import the new consolidated utility
 const { notifyRecipient } = require("../services/notifications/notificationOrchestrator");
 const { requireInt } = require("../utils/paramValidation");
 const { getPagination } = require("../utils/pagination");
+const { getSetting } = require("../services/settingsService");
+const { renderTemplate } = require("../utils/templateRenderer");
 
 /**
  * Notify the case manager (casemanagerid) about a case change,
@@ -30,6 +32,7 @@ async function notifyCaseManager({ caseId, caseName, title, message, smsBody, al
         const mgr = managerRes.rows[0];
 
         const recipientName = String(mgr.Name || '').trim();
+        const domain = await getWebsiteDomain();
         const finalMessage = message || `תיק "${caseName}" עודכן. היכנס לאתר או לאפליקציה למעקב.`;
         const finalSms = smsBody || finalMessage;
 
@@ -47,7 +50,7 @@ async function notifyCaseManager({ caseId, caseName, title, message, smsBody, al
                 contactFields: {
                     recipient_name: recipientName || 'מנהל תיק',
                     case_title: String(caseName || '').trim(),
-                    action_url: `https://${WEBSITE_DOMAIN}`,
+                    action_url: `https://${domain}`,
                 },
             },
             sms: {
@@ -77,7 +80,8 @@ const _buildBaseCaseQuery = () => `
         C.updatedat,
         C.whatsappgrouplink,
         C.casemanager,     
-        C.casemanagerid,   
+        C.casemanagerid,
+        MGR.phonenumber AS casemanagerphone,
         C.estimatedcompletiondate,
         C.licenseexpirydate,
         CD.descriptionid,
@@ -87,6 +91,7 @@ const _buildBaseCaseQuery = () => `
         CD.isnew
     FROM cases C
     LEFT JOIN users U ON C.userid = U.userid
+    LEFT JOIN users MGR ON C.casemanagerid = MGR.userid
     LEFT JOIN casetypes CT ON C.casetypeid = CT.casetypeid
     LEFT JOIN casedescriptions CD ON C.caseid = CD.caseid
 `;
@@ -115,6 +120,7 @@ const _mapCaseResults = (rows, caseUsersMap) => {
                 UpdatedAt: row.updatedat,
                 CaseManager: row.casemanager,
                 CaseManagerId: row.casemanagerid,
+                CaseManagerPhone: row.casemanagerphone || null,
                 EstimatedCompletionDate: row.estimatedcompletiondate,
                 LicenseExpiryDate: row.licenseexpirydate,
                 Descriptions: [],
@@ -402,6 +408,11 @@ const addCase = async (req, res) => {
         LicenseExpiryDate
     } = req.body;
 
+    // ── Validate required CaseManager ──────────────────────────────
+    if (!CaseManagerId) {
+        return res.status(400).json({ code: 'CASE_MANAGER_REQUIRED', message: 'יש לבחור מנהל תיק' });
+    }
+
     // Build resolved user list: prefer UserIds array, fall back to single UserId
     const resolvedUserIds = Array.isArray(UserIds) && UserIds.length > 0
         ? [...new Set(UserIds.map(Number).filter(Boolean))]
@@ -481,10 +492,16 @@ const addCase = async (req, res) => {
             )).rows
             : [];
 
+        const domain = await getWebsiteDomain();
+        const websiteUrl = `https://${domain}`;
+        const createdSmsTemplate = await getSetting('templates', 'CASE_CREATED_SMS',
+            'היי {{recipientName}}, תיק {{caseName}} נוצר, היכנס לאתר למעקב. {{websiteUrl}}');
+
         for (const u of linkedUsers) {
+            const recipientName = u.Name || CustomerName || '';
             const notificationTitle = "תיק חדש נוצר";
             const notificationMessage = `תיק "${CaseName}" נוצר בהצלחה. היכנס לאתר או לאפליקציה למעקב.`;
-            const smsBody = `היי ${u.Name || CustomerName}, \n\n תיק ${CaseName} נוצר, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`;
+            const smsBody = renderTemplate(createdSmsTemplate, { recipientName, caseName: CaseName, websiteUrl });
 
             await notifyRecipient({
                 recipientUserId: u.UserId,
@@ -498,9 +515,9 @@ const addCase = async (req, res) => {
                 email: {
                     campaignKey: 'CASE_UPDATE',
                     contactFields: {
-                        recipient_name: String(u.Name || CustomerName || '').trim(),
+                        recipient_name: String(recipientName).trim(),
                         case_title: String(CaseName || '').trim(),
-                        action_url: `https://${WEBSITE_DOMAIN}`,
+                        action_url: websiteUrl,
                     },
                 },
                 sms: {
@@ -511,12 +528,13 @@ const addCase = async (req, res) => {
 
         // Notify case manager if not already notified as a linked user
         const notifiedCreateIds = new Set(linkedUsers.map(u => u.UserId));
+        const mgrCreatedSms = renderTemplate(createdSmsTemplate, { recipientName: 'מנהל תיק', caseName: CaseName, websiteUrl });
         await notifyCaseManager({
             caseId,
             caseName: CaseName,
             title: 'תיק חדש נוצר',
             message: `תיק "${CaseName}" נוצר בהצלחה. היכנס לאתר או לאפליקציה למעקב.`,
-            smsBody: `תיק ${CaseName} נוצר, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`,
+            smsBody: mgrCreatedSms,
             alreadyNotifiedUserIds: notifiedCreateIds,
         });
 
@@ -558,6 +576,19 @@ const updateCase = async (req, res) => {
     try {
         client = await pool.connect();
         await client.query('BEGIN');
+
+        // ── Fetch old case data for change detection ──
+        const oldCaseResult = await client.query(
+            `SELECT casemanagerid, estimatedcompletiondate FROM cases WHERE caseid = $1`,
+            [caseId]
+        );
+        const oldCase = oldCaseResult.rows[0];
+        const oldManagerId = oldCase?.casemanagerid ? Number(oldCase.casemanagerid) : null;
+        const oldEstDate = oldCase?.estimatedcompletiondate ? new Date(oldCase.estimatedcompletiondate).toISOString().slice(0, 10) : null;
+        const newManagerId = CaseManagerId ? Number(CaseManagerId) || null : null;
+        const newEstDate = EstimatedCompletionDate ? new Date(EstimatedCompletionDate).toISOString().slice(0, 10) : null;
+        const managerChanged = oldManagerId !== newManagerId;
+        const estDateChanged = oldEstDate !== newEstDate;
 
         await client.query(
             `
@@ -647,6 +678,23 @@ const updateCase = async (req, res) => {
 
         const stageName = (Descriptions && CurrentStage && Descriptions[CurrentStage - 1]?.Text) || '';
         const notificationTitle = "עדכון תיק";
+        const domain = await getWebsiteDomain();
+        const websiteUrl = `https://${domain}`;
+
+        // ── Notification suppression for manager/date-only changes ──
+        const notifyOnManagerChange = await getSetting('notifications', 'NOTIFY_ON_MANAGER_CHANGE', false);
+        const notifyOnEstDateChange = await getSetting('notifications', 'NOTIFY_ON_ESTIMATED_DATE_CHANGE', false);
+
+        // If the ONLY changes are manager and/or estimated date, and their
+        // respective settings are disabled, skip client notifications entirely.
+        const suppressManagerNotif = managerChanged && !notifyOnManagerChange;
+        const suppressEstDateNotif = estDateChanged && !notifyOnEstDateChange;
+        const onlyManagerOrDateChanged = (managerChanged || estDateChanged) && !stageName;
+        const skipClientNotifications = onlyManagerOrDateChanged && suppressManagerNotif && (!estDateChanged || suppressEstDateNotif);
+
+        // Load SMS template
+        const updatedSmsTemplate = await getSetting('templates', 'CASE_UPDATED_SMS',
+            'היי {{recipientName}}, תיק {{caseName}} התעדכן, היכנס לאתר למעקב. {{websiteUrl}}');
 
         // Fetch all linked users to notify
         const linkedUsers = resolvedUserIds.length > 0
@@ -656,52 +704,53 @@ const updateCase = async (req, res) => {
             )).rows
             : [];
 
-        for (const u of linkedUsers) {
-            const recipientName = u.Name || CustomerName || '';
-            const notificationMessage = stageName
-                ? `היי ${recipientName}, \n\nתיק "${CaseName}" עודכן לשלב - ${stageName}. היכנס לאתר או לאפליקציה למעקב.`
-                : `תיק "${CaseName}" עודכן. היכנס לאתר או לאפליקציה למעקב.`;
-            const smsBody = stageName
-                ? `היי ${recipientName}, \n\n תיק ${CaseName} עודכן לשלב - ${stageName}, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`
-                : `היי ${recipientName}, \n\n תיק ${CaseName} התעדכן, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`;
+        if (!skipClientNotifications) {
+            for (const u of linkedUsers) {
+                const recipientName = u.Name || CustomerName || '';
+                const notificationMessage = stageName
+                    ? `היי ${recipientName}, \n\nתיק "${CaseName}" עודכן לשלב - ${stageName}. היכנס לאתר או לאפליקציה למעקב.`
+                    : `תיק "${CaseName}" עודכן. היכנס לאתר או לאפליקציה למעקב.`;
+                const smsBody = renderTemplate(updatedSmsTemplate, { recipientName, caseName: CaseName, stageName, websiteUrl });
 
-            await notifyRecipient({
-                recipientUserId: u.UserId,
-                recipientPhone: u.PhoneNumber || PhoneNumber,
-                notificationType: 'CASE_UPDATE',
-                push: {
-                    title: notificationTitle,
-                    body: notificationMessage,
-                    data: { caseId: String(caseId) },
-                },
-                email: {
-                    campaignKey: 'CASE_UPDATE',
-                    contactFields: {
-                        recipient_name: String(recipientName).trim(),
-                        case_title: String(CaseName || '').trim(),
-                        action_url: `https://${WEBSITE_DOMAIN}`,
+                await notifyRecipient({
+                    recipientUserId: u.UserId,
+                    recipientPhone: u.PhoneNumber || PhoneNumber,
+                    notificationType: 'CASE_UPDATE',
+                    push: {
+                        title: notificationTitle,
+                        body: notificationMessage,
+                        data: { caseId: String(caseId) },
                     },
-                },
-                sms: {
-                    messageBody: smsBody,
-                },
-            });
-        }
+                    email: {
+                        campaignKey: 'CASE_UPDATE',
+                        contactFields: {
+                            recipient_name: String(recipientName).trim(),
+                            case_title: String(CaseName || '').trim(),
+                            action_url: websiteUrl,
+                        },
+                    },
+                    sms: {
+                        messageBody: smsBody,
+                    },
+                });
+            }
 
-        // Notify case manager if not already notified as a linked user
-        const notifiedUpdateIds = new Set(linkedUsers.map(u => u.UserId));
-        await notifyCaseManager({
-            caseId,
-            caseName: CaseName,
-            title: notificationTitle,
-            message: stageName
-                ? `תיק "${CaseName}" עודכן לשלב - ${stageName}. היכנס לאתר או לאפליקציה למעקב.`
-                : `תיק "${CaseName}" עודכן. היכנס לאתר או לאפליקציה למעקב.`,
-            smsBody: stageName
-                ? `תיק ${CaseName} עודכן לשלב - ${stageName}, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`
-                : `תיק ${CaseName} התעדכן, היכנס לאתר למעקב. \n\n ${WEBSITE_DOMAIN}`,
-            alreadyNotifiedUserIds: notifiedUpdateIds,
-        });
+            // Notify case manager if not already notified as a linked user
+            const notifiedUpdateIds = new Set(linkedUsers.map(u => u.UserId));
+            const mgrSms = renderTemplate(updatedSmsTemplate, { recipientName: 'מנהל תיק', caseName: CaseName, stageName, websiteUrl });
+            await notifyCaseManager({
+                caseId,
+                caseName: CaseName,
+                title: notificationTitle,
+                message: stageName
+                    ? `תיק "${CaseName}" עודכן לשלב - ${stageName}. היכנס לאתר או לאפליקציה למעקב.`
+                    : `תיק "${CaseName}" עודכן. היכנס לאתר או לאפליקציה למעקב.`,
+                smsBody: mgrSms,
+                alreadyNotifiedUserIds: notifiedUpdateIds,
+            });
+        } else {
+            console.log(`[updateCase] Skipping client notifications for case ${caseId} — only manager/estimated-date change`);
+        }
 
         res.status(200).json({ message: "Case updated successfully" });
     } catch (error) {
@@ -818,6 +867,24 @@ const updateStage = async (req, res) => {
                 [caseId]
             );
             const linkedUsers = linkedUsersResult.rows;
+            const domain = await getWebsiteDomain();
+            const websiteUrl = `https://${domain}`;
+            const currentStageName = Descriptions?.[CurrentStage - 1]?.Text || String(CurrentStage);
+
+            // Load appropriate SMS template
+            let smsTemplateKey = 'CASE_UPDATED_SMS';
+            let smsTemplateDefault = 'היי {{recipientName}}, תיק {{caseName}} התעדכן, היכנס לאתר למעקב. {{websiteUrl}}';
+            if (notificationType === 'stage_changed') {
+                smsTemplateKey = 'CASE_STAGE_CHANGED_SMS';
+                smsTemplateDefault = 'היי {{recipientName}}, בתיק {{caseName}} התעדכן שלב: {{stageName}}. היכנס לאתר למעקב. {{websiteUrl}}';
+            } else if (notificationType === 'case_closed') {
+                smsTemplateKey = 'CASE_CLOSED_SMS';
+                smsTemplateDefault = 'היי {{recipientName}}, תיק {{caseName}} הסתיים בהצלחה. היכנס לאתר למעקב. {{websiteUrl}}';
+            } else if (notificationType === 'case_reopened') {
+                smsTemplateKey = 'CASE_REOPENED_SMS';
+                smsTemplateDefault = 'היי {{recipientName}}, תיק {{caseName}} נפתח מחדש. היכנס לאתר למעקב. {{websiteUrl}}';
+            }
+            const smsTemplate = await getSetting('templates', smsTemplateKey, smsTemplateDefault);
 
             for (const u of linkedUsers) {
                 const recipientName = u.Name || CustomerName || '';
@@ -826,7 +893,7 @@ const updateStage = async (req, res) => {
 
                 if (notificationType === 'stage_changed') {
                     title = "עדכון שלב בתיק";
-                    message = `היי ${recipientName}, \n\nבתיק "${CaseName}" התעדכן שלב, תיקך נמצא בשלב - ${Descriptions[CurrentStage - 1]?.Text || CurrentStage}, היכנס לאתר או לאפליקציה למעקב.`;
+                    message = `היי ${recipientName}, \n\nבתיק "${CaseName}" התעדכן שלב, תיקך נמצא בשלב - ${currentStageName}, היכנס לאתר או לאפליקציה למעקב.`;
                 } else if (notificationType === 'case_closed') {
                     title = "תיק הסתיים";
                     message = `היי ${recipientName}, \n\nתיק "${CaseName}" הסתיים בהצלחה, היכנס לאתר או לאפליקציה למעקב.`;
@@ -834,6 +901,8 @@ const updateStage = async (req, res) => {
                     title = "תיק נפתח מחדש";
                     message = `היי ${recipientName}, \n\nתיק "${CaseName}" נפתח מחדש, היכנס לאתר או לאפליקציה למעקב.`;
                 }
+
+                const smsBody = renderTemplate(smsTemplate, { recipientName, caseName: CaseName, stageName: currentStageName, websiteUrl });
 
                 await notifyRecipient({
                     recipientUserId: u.UserId,
@@ -849,22 +918,23 @@ const updateStage = async (req, res) => {
                         contactFields: {
                             recipient_name: String(recipientName).trim(),
                             case_title: String(CaseName || '').trim(),
-                            action_url: `https://${WEBSITE_DOMAIN}`,
+                            action_url: websiteUrl,
                         },
                     },
                     sms: {
-                        messageBody: message,
+                        messageBody: smsBody,
                     },
                 });
             }
 
             // Notify case manager if not already notified as a linked user
             const notifiedStageIds = new Set(linkedUsers.map(u => u.UserId));
+            const mgrSmsBody = renderTemplate(smsTemplate, { recipientName: 'מנהל תיק', caseName: CaseName, stageName: currentStageName, websiteUrl });
             let mgrTitle = 'עדכון תיק';
             let mgrMessage = `תיק "${CaseName}" עודכן. היכנס לאתר או לאפליקציה למעקב.`;
             if (notificationType === 'stage_changed') {
                 mgrTitle = 'עדכון שלב בתיק';
-                mgrMessage = `בתיק "${CaseName}" התעדכן שלב, התיק נמצא בשלב - ${Descriptions[CurrentStage - 1]?.Text || CurrentStage}. היכנס לאתר או לאפליקציה למעקב.`;
+                mgrMessage = `בתיק "${CaseName}" התעדכן שלב, התיק נמצא בשלב - ${currentStageName}. היכנס לאתר או לאפליקציה למעקב.`;
             } else if (notificationType === 'case_closed') {
                 mgrTitle = 'תיק הסתיים';
                 mgrMessage = `תיק "${CaseName}" הסתיים בהצלחה. היכנס לאתר או לאפליקציה למעקב.`;
@@ -877,7 +947,7 @@ const updateStage = async (req, res) => {
                 caseName: CaseName,
                 title: mgrTitle,
                 message: mgrMessage,
-                smsBody: mgrMessage,
+                smsBody: mgrSmsBody,
                 alreadyNotifiedUserIds: notifiedStageIds,
             });
         }

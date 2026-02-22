@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import casesApi, { casesTypeApi } from "../../api/casesApi";
 import { images } from "../../assets/images/images";
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
@@ -29,7 +29,7 @@ export default function AllCasesScreen() {
     const { openPopup, closePopup } = usePopup();
     const { isSmallScreen } = useScreenSize();
     const [selectedCaseType, setSelectedCaseType] = useState(null);
-    const [selectedStatus, setSelectedStatus] = useState(null);
+    const [selectedStatus, setSelectedStatus] = useState("open");
     const [selectedClient, setSelectedClient] = useState(null);
     const [selectedManager, setSelectedManager] = useState(null);
     const [filteredCases, setFilteredCases] = useState(null);
@@ -37,6 +37,13 @@ export default function AllCasesScreen() {
     const { result: allCasesTypes, isPerforming: isPerformingAllCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
     const { result: allCases, isPerforming: isPerformingAllCases, performRequest: reperformAfterSave } = useAutoHttpRequest(casesApi.getAllCases);
     const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getCaseByName, null, () => { });
+
+    // Apply default "open" filter when data loads
+    useEffect(() => {
+        if (allCases && selectedStatus === "open" && filteredCases === null) {
+            setFilteredCases(allCases.filter(item => item.IsClosed === false));
+        }
+    }, [allCases]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleSearch = (query) => {
         SearchCaseByName(query);
@@ -148,6 +155,7 @@ export default function AllCasesScreen() {
                             { value: 'closed', label: t('cases.closedCases') },
                             { value: 'open', label: t('cases.openCases') },
                         ]}
+                        defaultValue="open"
                         className="lw-allCasesScreen__choose lw-allCasesScreen__choose--openClose"
                         OnPressChoiceFunction={handleFilterByStatus}
                     />

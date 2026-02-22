@@ -14,6 +14,7 @@ export default function ChooseButton({
     items,
     OnPressChoiceFunction,
     showAll = true,
+    defaultValue = null,
     style: _style,
     props,
 }) {
@@ -31,7 +32,7 @@ export default function ChooseButton({
         return normalizedItems;
     }, [buttonChoices, items, t, showAll, buttonText]);
 
-    const [chosenValue, setChosenValue] = useState(null);
+    const [chosenValue, setChosenValue] = useState(defaultValue);
     const [showResults, setShowResults] = useState(false);
     const buttonRef = useRef()
 

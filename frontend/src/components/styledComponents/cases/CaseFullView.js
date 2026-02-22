@@ -82,6 +82,9 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
             const emailErr = emailValidation(email);
             if (emailErr) errors.CustomerMail = emailErr;
 
+            const caseManager = String(data?.CaseManagerId || '').trim();
+            if (!caseManager) errors.CaseManager = t('errors.required');
+
             return errors;
         };
     }, [t]);
@@ -264,6 +267,8 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
             CaseManager: selectedAdmin.name,
             CaseManagerId: selectedAdmin.userid
         }));
+
+        applyFieldErrorUpdates({ CaseManagerId: selectedAdmin.userid });
     }
 
     const handleCaseSelect = (selectedCase) => {
@@ -410,6 +415,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                         buttonPressFunction={handleManagerSelected}
                         queryResult={adminByName}
                         className="lw-caseFullView__field"
+                        error={fieldErrors?.CaseManager}
                     />
                 </SimpleContainer>
 

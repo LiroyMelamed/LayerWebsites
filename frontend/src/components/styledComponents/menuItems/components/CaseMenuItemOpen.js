@@ -112,8 +112,14 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
     }
 
     function contactOnWhatsapp() {
+        // Use case manager's phone if available, fall back to office number
+        const phone = fullCase.CaseManagerPhone
+            ? String(fullCase.CaseManagerPhone).replace(/[^0-9]/g, '')
+            : '97236565004';
+        // Ensure phone has country code
+        const e164Phone = phone.startsWith('972') ? phone : (phone.startsWith('0') ? '972' + phone.slice(1) : '972' + phone);
         openExternalUrl(
-            `https://wa.me/97236565004?text=${t("common.whatsapp.contactText", { caseId: fullCase.CaseId })}`,
+            `https://wa.me/${e164Phone}?text=${encodeURIComponent(t("common.whatsapp.contactText", { caseId: fullCase.CaseId }))}`,
             { newTab: true }
         );
     }
