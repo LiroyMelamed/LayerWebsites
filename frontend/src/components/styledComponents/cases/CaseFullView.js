@@ -257,6 +257,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
 
     const handleManagerSelected = (selectedManager) => {
         const selectedAdmin = adminByName.find(admin => admin.name === selectedManager);
+        if (!selectedAdmin) return;
 
         setCaseData((prevDetails) => ({
             ...prevDetails,
