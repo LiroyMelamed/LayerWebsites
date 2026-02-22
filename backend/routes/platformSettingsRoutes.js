@@ -9,20 +9,20 @@ const ctrl = require('../controllers/platformSettingsController');
 router.use(authMiddleware, requirePlatformAdmin);
 
 // Settings
-router.get   ('/',            ctrl.getAllSettings);
-router.put   ('/',            ctrl.updateSettings);
-router.put   ('/single',     ctrl.updateSingleSetting);
+router.get('/', ctrl.getAllSettings);
+router.put('/', ctrl.updateSettings);
+router.put('/single', ctrl.updateSingleSetting);
 
 // Notification channels
-router.get   ('/channels',          ctrl.getNotificationChannels);
-router.put   ('/channels/:type',    ctrl.updateNotificationChannel);
+router.get('/channels', ctrl.getNotificationChannels);
+router.put('/channels/:type', ctrl.updateNotificationChannel);
 
 // Platform admins
-router.get   ('/admins',            ctrl.listPlatformAdmins);
-router.post  ('/admins',            ctrl.addPlatformAdmin);
-router.delete('/admins/:userId',    ctrl.removePlatformAdmin);
+router.get('/admins', ctrl.listPlatformAdmins);
+router.post('/admins', ctrl.addPlatformAdmin);
+router.delete('/admins/:userId', ctrl.removePlatformAdmin);
 
 // Email templates (read-only preview)
-router.get   ('/email-templates',   ctrl.getEmailTemplates);
+router.get('/email-templates', ctrl.getEmailTemplates);
 
 module.exports = router;

@@ -9,10 +9,13 @@ import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
 import SimpleCard from "../../components/simpleComponents/SimpleCard";
 import SimpleButton from "../../components/simpleComponents/SimpleButton";
 import SimpleLoader from "../../components/simpleComponents/SimpleLoader";
+import SimpleInput from "../../components/simpleComponents/SimpleInput";
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
 import { getNavBarData } from "../../components/navBars/data/NavBarData";
+import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
+import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
 
-import { Text14, TextBold24, TextBold18 } from "../../components/specializedComponents/text/AllTextKindFile";
+import { Text12, Text14, TextBold14, TextBold18, TextBold24 } from "../../components/specializedComponents/text/AllTextKindFile";
 
 import platformSettingsApi from "../../api/platformSettingsApi";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
@@ -20,7 +23,7 @@ import useHttpRequest from "../../hooks/useHttpRequest";
 
 import "./PlatformSettingsScreen.scss";
 
-export const PlatformSettingsScreenName = "/PlatformSettings";
+export const PlatformSettingsScreenName = "/PlatformSettingsScreen";
 
 // ─── Category definitions with Hebrew labels ────────────────────────
 const CATEGORIES = [
@@ -28,7 +31,6 @@ const CATEGORIES = [
     { key: "signing", label: "חתימה דיגיטלית", icon: "✍️" },
     { key: "firm", label: "פרטי המשרד", icon: "🏢" },
     { key: "reminders", label: "תזכורות", icon: "⏰" },
-    { key: "security", label: "אבטחה", icon: "🔒" },
     { key: "channels", label: "ערוצי התראות", icon: "📡" },
     { key: "admins", label: "מנהלי פלטפורמה", icon: "👤" },
 ];
@@ -39,39 +41,54 @@ function SettingInput({ setting, value, onChange }) {
 
     if (setting.valueType === "boolean") {
         return (
-            <label className="lw-platformSettings__toggle">
+            <SimpleContainer className="lw-platformSettings__toggle">
                 <input
                     type="checkbox"
                     checked={inputValue === true || inputValue === "true" || inputValue === "1"}
                     onChange={(e) => onChange(e.target.checked ? "true" : "false")}
                 />
-                <span className="lw-platformSettings__toggleSlider" />
-                <span className="lw-platformSettings__toggleLabel">
+                <SimpleContainer className="lw-platformSettings__toggleSlider" />
+                <Text14 className="lw-platformSettings__toggleLabel">
                     {inputValue === true || inputValue === "true" || inputValue === "1" ? "פעיל" : "לא פעיל"}
-                </span>
-            </label>
+                </Text14>
+            </SimpleContainer>
+        );
+    }
+
+    if (setting.valueType === "time") {
+        return (
+            <SimpleInput
+                className="lw-platformSettings__input"
+                type="time"
+                value={inputValue}
+                onChange={(e) => onChange(e.target.value)}
+                title={setting.label || ""}
+                timeToWaitInMilli={0}
+            />
         );
     }
 
     if (setting.valueType === "number") {
         return (
-            <input
+            <SimpleInput
                 className="lw-platformSettings__input"
                 type="number"
                 value={inputValue}
                 onChange={(e) => onChange(e.target.value)}
-                placeholder={setting.description || ""}
+                title={setting.label || ""}
+                timeToWaitInMilli={0}
             />
         );
     }
 
     return (
-        <input
+        <SimpleInput
             className="lw-platformSettings__input"
             type="text"
             value={inputValue}
             onChange={(e) => onChange(e.target.value)}
-            placeholder={setting.description || ""}
+            title={setting.label || ""}
+            timeToWaitInMilli={0}
         />
     );
 }
@@ -79,37 +96,37 @@ function SettingInput({ setting, value, onChange }) {
 // ─── Channel Toggle Row ─────────────────────────────────────────────
 function ChannelRow({ channel, onToggle }) {
     return (
-        <div className="lw-platformSettings__channelRow">
-            <div className="lw-platformSettings__channelName">
+        <SimpleContainer className="lw-platformSettings__channelRow">
+            <TextBold14 className="lw-platformSettings__channelName">
                 {channel.label || channel.notification_type}
-            </div>
-            <div className="lw-platformSettings__channelToggles">
-                <label className="lw-platformSettings__channelToggle">
+            </TextBold14>
+            <SimpleContainer className="lw-platformSettings__channelToggles">
+                <SimpleContainer className="lw-platformSettings__channelToggle">
                     <input
                         type="checkbox"
                         checked={channel.push_enabled}
                         onChange={() => onToggle(channel.notification_type, "pushEnabled", !channel.push_enabled)}
                     />
-                    <span>Push</span>
-                </label>
-                <label className="lw-platformSettings__channelToggle">
+                    <Text12>Push</Text12>
+                </SimpleContainer>
+                <SimpleContainer className="lw-platformSettings__channelToggle">
                     <input
                         type="checkbox"
                         checked={channel.email_enabled}
                         onChange={() => onToggle(channel.notification_type, "emailEnabled", !channel.email_enabled)}
                     />
-                    <span>אימייל</span>
-                </label>
-                <label className="lw-platformSettings__channelToggle">
+                    <Text12>אימייל</Text12>
+                </SimpleContainer>
+                <SimpleContainer className="lw-platformSettings__channelToggle">
                     <input
                         type="checkbox"
                         checked={channel.sms_enabled}
                         onChange={() => onToggle(channel.notification_type, "smsEnabled", !channel.sms_enabled)}
                     />
-                    <span>SMS</span>
-                </label>
-            </div>
-        </div>
+                    <Text12>SMS</Text12>
+                </SimpleContainer>
+            </SimpleContainer>
+        </SimpleContainer>
     );
 }
 
@@ -117,20 +134,20 @@ function ChannelRow({ channel, onToggle }) {
 function AdminRow({ admin, onRemove, currentUserId }) {
     const isCurrentUser = admin.user_id === currentUserId;
     return (
-        <div className="lw-platformSettings__adminRow">
-            <div className="lw-platformSettings__adminInfo">
-                <span className="lw-platformSettings__adminName">{admin.user_name || "ללא שם"}</span>
-                <span className="lw-platformSettings__adminPhone">{admin.phone}</span>
-            </div>
+        <SimpleContainer className="lw-platformSettings__adminRow">
+            <SimpleContainer className="lw-platformSettings__adminInfo">
+                <TextBold14 className="lw-platformSettings__adminName">{admin.user_name || "ללא שם"}</TextBold14>
+                <Text12 className="lw-platformSettings__adminPhone">{admin.phone}</Text12>
+            </SimpleContainer>
             {!isCurrentUser && (
-                <SimpleButton
+                <SecondaryButton
                     className="lw-platformSettings__removeBtn"
-                    onClick={() => onRemove(admin.user_id)}
+                    onPress={() => onRemove(admin.user_id)}
                 >
                     הסר
-                </SimpleButton>
+                </SecondaryButton>
             )}
-        </div>
+        </SimpleContainer>
     );
 }
 
@@ -141,6 +158,7 @@ export default function PlatformSettingsScreen() {
 
     const [activeTab, setActiveTab] = useState("messaging");
     const [editedValues, setEditedValues] = useState({});
+    const [editedChannels, setEditedChannels] = useState({});
     const [localChannels, setLocalChannels] = useState(null);
     const [newAdminPhone, setNewAdminPhone] = useState("");
     const [saveMessage, setSaveMessage] = useState("");
@@ -152,25 +170,21 @@ export default function PlatformSettingsScreen() {
             onSuccess: (d) => {
                 if (d?.channels) setLocalChannels(d.channels);
             },
-            onFailure: () => {},
+            onFailure: () => { },
         }
     );
 
     // Load admins
     const { result: adminsData, performRequest: reloadAdmins } = useAutoHttpRequest(
         platformSettingsApi.getAdmins,
-        { onFailure: () => {} }
+        { onFailure: () => { } }
     );
 
     // Save handler
     const { isPerforming: isSaving, performRequest: doSave } = useHttpRequest(
         platformSettingsApi.updateSettings,
-        () => {
-            setSaveMessage("✅ ההגדרות נשמרו בהצלחה");
-            setEditedValues({});
-            reload();
-            setTimeout(() => setSaveMessage(""), 3000);
-        }
+        () => { },
+        () => { }
     );
 
     // Add admin handler
@@ -194,32 +208,51 @@ export default function PlatformSettingsScreen() {
         }
     );
 
-    // Channel toggle handler
-    const handleChannelToggle = useCallback(async (type, field, value) => {
+    // Channel toggle handler (deferred — saved on "שמור שינויים")
+    const handleChannelToggle = useCallback((type, field, value) => {
+        const dbField = field === "pushEnabled" ? "push_enabled" : field === "emailEnabled" ? "email_enabled" : "sms_enabled";
         setLocalChannels(prev => prev?.map(ch =>
             ch.notification_type === type
-                ? { ...ch, [field === "pushEnabled" ? "push_enabled" : field === "emailEnabled" ? "email_enabled" : "sms_enabled"]: value }
+                ? { ...ch, [dbField]: value }
                 : ch
         ));
-        try {
-            await platformSettingsApi.updateChannel(type, { [field]: value });
-        } catch {
-            // Revert on error
-            reload();
-        }
-    }, [reload]);
+        setEditedChannels(prev => {
+            const existing = prev[type] || {};
+            return { ...prev, [type]: { ...existing, [field]: value } };
+        });
+    }, []);
 
     // Setting change handler
     const handleSettingChange = useCallback((category, key, value) => {
         setEditedValues(prev => ({ ...prev, [`${category}:${key}`]: { category, key, value } }));
     }, []);
 
-    // Save all edited settings
-    const handleSave = useCallback(() => {
+    // Save all edited settings + channels
+    const handleSave = useCallback(async () => {
         const settingsArray = Object.values(editedValues);
-        if (settingsArray.length === 0) return;
-        doSave(settingsArray);
-    }, [editedValues, doSave]);
+        const channelEntries = Object.entries(editedChannels);
+
+        if (settingsArray.length === 0 && channelEntries.length === 0) return;
+
+        try {
+            // Save settings
+            if (settingsArray.length > 0) {
+                await doSave(settingsArray);
+            }
+            // Save channels
+            for (const [type, fields] of channelEntries) {
+                await platformSettingsApi.updateChannel(type, fields);
+            }
+            setEditedChannels({});
+            setEditedValues({});
+            setSaveMessage("✅ ההגדרות נשמרו בהצלחה");
+            reload();
+            setTimeout(() => setSaveMessage(""), 3000);
+        } catch {
+            setSaveMessage("❌ שגיאה בשמירה");
+            setTimeout(() => setSaveMessage(""), 3000);
+        }
+    }, [editedValues, editedChannels, doSave, reload]);
 
     // Add admin
     const handleAddAdmin = useCallback(() => {
@@ -236,7 +269,7 @@ export default function PlatformSettingsScreen() {
     const settings = data?.settings || {};
     const channels = localChannels || data?.channels || [];
     const admins = adminsData?.admins || [];
-    const hasEdits = Object.keys(editedValues).length > 0;
+    const hasEdits = Object.keys(editedValues).length > 0 || Object.keys(editedChannels).length > 0;
 
     const currentUserId = useMemo(() => {
         try {
@@ -265,15 +298,15 @@ export default function PlatformSettingsScreen() {
                     <Text14 className="lw-platformSettings__subtitle">
                         בחר אילו ערוצים יהיו פעילים עבור כל סוג התראה
                     </Text14>
-                    <div className="lw-platformSettings__channelGrid">
-                        <div className="lw-platformSettings__channelHeader">
-                            <span>סוג התראה</span>
-                            <div className="lw-platformSettings__channelToggles">
-                                <span>Push</span>
-                                <span>אימייל</span>
-                                <span>SMS</span>
-                            </div>
-                        </div>
+                    <SimpleContainer className="lw-platformSettings__channelGrid">
+                        <SimpleContainer className="lw-platformSettings__channelHeader">
+                            <Text14>סוג התראה</Text14>
+                            <SimpleContainer className="lw-platformSettings__channelToggles">
+                                <Text12>Push</Text12>
+                                <Text12>אימייל</Text12>
+                                <Text12>SMS</Text12>
+                            </SimpleContainer>
+                        </SimpleContainer>
                         {channels.map(ch => (
                             <ChannelRow
                                 key={ch.notification_type}
@@ -281,7 +314,7 @@ export default function PlatformSettingsScreen() {
                                 onToggle={handleChannelToggle}
                             />
                         ))}
-                    </div>
+                    </SimpleContainer>
                 </SimpleCard>
             );
         }
@@ -295,7 +328,7 @@ export default function PlatformSettingsScreen() {
                         נהל את רשימת מנהלי הפלטפורמה שיכולים לגשת לדף זה
                     </Text14>
 
-                    <div className="lw-platformSettings__adminList">
+                    <SimpleContainer className="lw-platformSettings__adminList">
                         {admins.map(admin => (
                             <AdminRow
                                 key={admin.user_id}
@@ -304,30 +337,26 @@ export default function PlatformSettingsScreen() {
                                 currentUserId={currentUserId}
                             />
                         ))}
-                        {admins.length === 0 && (
-                            <Text14 className="lw-platformSettings__empty">
-                                אין מנהלי פלטפורמה מוגדרים במסד הנתונים.
-                                המערכת משתמשת ברשימת ה-env.
-                            </Text14>
-                        )}
-                    </div>
 
-                    <div className="lw-platformSettings__addAdmin">
-                        <input
-                            className="lw-platformSettings__input"
-                            type="text"
-                            placeholder="מספר טלפון של מנהל חדש"
+                    </SimpleContainer>
+
+                    <SimpleContainer className="lw-platformSettings__addAdmin">
+                        <SimpleInput
+                            className="lw-platformSettings__addAdminInput"
+                            title="מספר טלפון של מנהל חדש"
                             value={newAdminPhone}
                             onChange={(e) => setNewAdminPhone(e.target.value)}
+                            inputSize="Small"
+                            timeToWaitInMilli={0}
                         />
-                        <SimpleButton
+                        <PrimaryButton
                             className="lw-platformSettings__addBtn"
-                            onClick={handleAddAdmin}
+                            onPress={handleAddAdmin}
                             disabled={isAddingAdmin || !newAdminPhone.trim()}
                         >
                             {isAddingAdmin ? "מוסיף..." : "הוסף מנהל"}
-                        </SimpleButton>
-                    </div>
+                        </PrimaryButton>
+                    </SimpleContainer>
                 </SimpleCard>
             );
         }
@@ -349,35 +378,31 @@ export default function PlatformSettingsScreen() {
         return (
             <SimpleCard className="lw-platformSettings__card">
                 <TextBold18>{CATEGORIES.find(c => c.key === activeTab)?.label}</TextBold18>
-                <div className="lw-platformSettings__settingsList">
+                <SimpleContainer className="lw-platformSettings__settingsList">
                     {settingKeys.map(key => {
                         const setting = categorySettings[key];
                         const editKey = `${activeTab}:${key}`;
                         const editedValue = editedValues[editKey]?.value;
 
                         return (
-                            <div key={key} className="lw-platformSettings__settingRow">
-                                <div className="lw-platformSettings__settingLabel">
-                                    <Text14 className="lw-platformSettings__settingName">
+                            <SimpleContainer key={key} className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">
                                         {setting.label || key}
-                                    </Text14>
-                                    {setting.description && (
-                                        <span className="lw-platformSettings__settingDesc">
-                                            {setting.description}
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="lw-platformSettings__settingInput">
+                                    </TextBold14>
+
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
                                     <SettingInput
                                         setting={setting}
                                         value={editedValue}
                                         onChange={(val) => handleSettingChange(activeTab, key, val)}
                                     />
-                                </div>
-                            </div>
+                                </SimpleContainer>
+                            </SimpleContainer>
                         );
                     })}
-                </div>
+                </SimpleContainer>
             </SimpleCard>
         );
     };
@@ -395,42 +420,45 @@ export default function PlatformSettingsScreen() {
 
                 <SimpleContainer className="lw-platformSettings__layout">
                     {/* Tabs sidebar */}
-                    <div className="lw-platformSettings__tabs">
+                    <SimpleContainer className="lw-platformSettings__tabs">
                         {CATEGORIES.map(cat => (
-                            <button
+                            <SimpleButton
                                 key={cat.key}
                                 className={`lw-platformSettings__tab ${activeTab === cat.key ? "lw-platformSettings__tab--active" : ""}`}
-                                onClick={() => setActiveTab(cat.key)}
+                                onPress={() => setActiveTab(cat.key)}
                             >
-                                <span className="lw-platformSettings__tabIcon">{cat.icon}</span>
-                                <span className="lw-platformSettings__tabLabel">{cat.label}</span>
-                            </button>
+                                <Text14 className="lw-platformSettings__tabIcon">{cat.icon}</Text14>
+                                <Text14 className="lw-platformSettings__tabLabel">{cat.label}</Text14>
+                            </SimpleButton>
                         ))}
-                    </div>
+                    </SimpleContainer>
 
                     {/* Content area */}
-                    <div className="lw-platformSettings__content">
+                    <SimpleContainer className="lw-platformSettings__content">
                         {renderContent()}
 
                         {/* Save bar (only for settings tabs, not channels/admins) */}
-                        {hasEdits && activeTab !== "channels" && activeTab !== "admins" && (
-                            <div className="lw-platformSettings__saveBar">
-                                <SimpleButton
+                        {activeTab !== "admins" && (
+                            <SimpleContainer className="lw-platformSettings__saveBar">
+                                <PrimaryButton
                                     className="lw-platformSettings__saveBtn"
-                                    onClick={handleSave}
-                                    disabled={isSaving}
+                                    onPress={handleSave}
+                                    disabled={isSaving || !hasEdits}
+                                    isPerforming={isSaving}
                                 >
                                     {isSaving ? "שומר..." : "שמור שינויים"}
-                                </SimpleButton>
-                                <SimpleButton
-                                    className="lw-platformSettings__cancelBtn"
-                                    onClick={() => setEditedValues({})}
-                                >
-                                    ביטול
-                                </SimpleButton>
-                            </div>
+                                </PrimaryButton>
+                                {hasEdits && (
+                                    <SecondaryButton
+                                        className="lw-platformSettings__cancelBtn"
+                                        onPress={() => { setEditedValues({}); setEditedChannels({}); reload(); }}
+                                    >
+                                        ביטול
+                                    </SecondaryButton>
+                                )}
+                            </SimpleContainer>
                         )}
-                    </div>
+                    </SimpleContainer>
                 </SimpleContainer>
             </SimpleScrollView>
         </SimpleScreen>

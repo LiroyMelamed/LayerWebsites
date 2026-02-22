@@ -34,7 +34,7 @@ const updateSettings = async (req, res) => {
             }
         }
 
-        const results = await settingsService.bulkUpsert(settings, req.user?.userid);
+        const results = await settingsService.bulkUpsert(settings, req.user?.UserId);
         return res.json({ message: 'ההגדרות עודכנו בהצלחה', count: results.length });
     } catch (err) {
         console.error('[platformSettings] updateSettings error:', err);
@@ -51,7 +51,7 @@ const updateSingleSetting = async (req, res) => {
         }
 
         const result = await settingsService.upsertSetting(category, key, value, {
-            updatedBy: req.user?.userid,
+            updatedBy: req.user?.UserId,
         });
         return res.json({ message: 'ההגדרה עודכנה', setting: result });
     } catch (err) {
@@ -83,7 +83,7 @@ const updateNotificationChannel = async (req, res) => {
             pushEnabled,
             emailEnabled,
             smsEnabled,
-            updatedBy: req.user?.userid,
+            updatedBy: req.user?.UserId,
         });
 
         if (!result) {
@@ -101,7 +101,16 @@ const updateNotificationChannel = async (req, res) => {
 /** GET /api/platform-settings/admins */
 const listPlatformAdmins = async (req, res) => {
     try {
-        const admins = await settingsService.getPlatformAdmins();
+        let admins = await settingsService.getPlatformAdmins();
+
+        // If no admins in DB yet, seed from env var
+        if (admins.length === 0) {
+            const seeded = await settingsService.seedPlatformAdminsFromEnv();
+            if (seeded > 0) {
+                admins = await settingsService.getPlatformAdmins();
+            }
+        }
+
         return res.json({ admins });
     } catch (err) {
         console.error('[platformSettings] listAdmins error:', err);
@@ -132,7 +141,7 @@ const addPlatformAdmin = async (req, res) => {
             return res.status(400).json({ message: 'נדרש userId או phoneNumber' });
         }
 
-        const result = await settingsService.addPlatformAdmin(targetUserId, req.user?.userid);
+        const result = await settingsService.addPlatformAdmin(targetUserId, req.user?.UserId);
         return res.json({ message: 'מנהל פלטפורמה נוסף', admin: result });
     } catch (err) {
         console.error('[platformSettings] addAdmin error:', err);
@@ -146,7 +155,7 @@ const removePlatformAdmin = async (req, res) => {
         const targetUserId = Number(req.params.userId);
 
         // Prevent removing yourself
-        if (targetUserId === req.user?.userid) {
+        if (targetUserId === req.user?.UserId) {
             return res.status(400).json({ message: 'לא ניתן להסיר את עצמך מרשימת המנהלים' });
         }
 

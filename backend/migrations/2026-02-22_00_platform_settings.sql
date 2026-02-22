@@ -74,20 +74,12 @@ VALUES
     -- Firm
     ('firm',      'FIRM_NAME',                  NULL, 'string',  'שם המשרד (אנגלית)',      'שם המשרד באנגלית'),
     ('firm',      'LAW_FIRM_NAME',              NULL, 'string',  'שם המשרד (עברית)',       'שם המשרד בעברית'),
-    ('firm',      'FIRM_DEFAULT_UNLIMITED_UNTIL_UTC', NULL, 'string', 'תוקף חבילה ללא הגבלה', 'תאריך תפוגה של תוקף בלתי מוגבל (ISO-8601)'),
 
     -- Reminders
     ('reminders', 'LICENSE_RENEWAL_REMINDERS_CEO_EMAIL', NULL, 'string',  'אימייל מנכ"ל לתזכורות', 'כתובת אימייל לשליחת תזכורות רישיון'),
     ('reminders', 'LICENSE_RENEWAL_REMINDERS_CEO_NAME',  NULL, 'string',  'שם מנכ"ל לתזכורות',     'שם המנכ"ל שיופיע בתזכורות רישיון'),
-    ('reminders', 'EMAIL_REMINDERS_START_HOUR',          NULL, 'number',  'שעת התחלת שליחה',        'שעת ההתחלה לשליחת תזכורות (0-23)'),
-    ('reminders', 'EMAIL_REMINDERS_END_HOUR',            NULL, 'number',  'שעת סיום שליחה',         'שעת הסיום לשליחת תזכורות (0-23)'),
-    ('reminders', 'EMAIL_REMINDERS_POLL_MINUTES',        NULL, 'number',  'תדירות בדיקה (דקות)',   'כל כמה דקות לבדוק תזכורות חדשות'),
-    ('reminders', 'EMAIL_REMINDERS_BATCH_SIZE',          NULL, 'number',  'גודל אצווה',            'כמה תזכורות לשלוח בכל סבב'),
-
-    -- Security
-    ('security',  'OTP_MAX_ATTEMPTS',           NULL, 'number',  'מקסימום ניסיונות OTP',   'מספר ניסיונות כושלים לפני חסימה'),
-    ('security',  'OTP_LOCKOUT_MS',             NULL, 'number',  'זמן חסימה (מילישניות)', 'משך זמן חסימה לאחר ניסיונות כושלים'),
-    ('security',  'SECURITY_LOG_RETENTION_DAYS', NULL, 'number', 'שמירת לוגים (ימים)',     'כמה ימים לשמור לוגים אבטחתיים')
+    ('reminders', 'EMAIL_REMINDERS_START_HOUR',          NULL, 'time',    'שעת התחלת שליחה',        'שעת ההתחלה לשליחת תזכורות'),
+    ('reminders', 'EMAIL_REMINDERS_END_HOUR',            NULL, 'time',    'שעת סיום שליחה',         'שעת הסיום לשליחת תזכורות')
 ON CONFLICT (category, setting_key) DO NOTHING;
 
 -- ─── 5) Grants ──────────────────────────────────────────────────────

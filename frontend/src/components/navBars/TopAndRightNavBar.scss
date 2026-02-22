@@ -55,8 +55,24 @@
 
 .lw-topAndRightNavBar__isoBadgeWrap {
     display: flex;
+    flex-wrap: nowrap;
     justify-content: center;
     align-items: center;
+    max-width: 100%;
+    overflow: hidden;
+
+    .lw-complianceBadges {
+        flex-wrap: nowrap;
+        gap: 0.5rem;
+    }
+
+    @media (max-height: 700px) {
+        transform: scale(0.8);
+    }
+
+    @media (max-height: 550px) {
+        transform: scale(0.65);
+    }
 }
 
 .lw-topAndRightNavBar__isoBadge {

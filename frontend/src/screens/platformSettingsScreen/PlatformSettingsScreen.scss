@@ -49,6 +49,7 @@
     }
 
     &__tab {
+        justify-content: center;
         display: flex;
         align-items: center;
         gap: v.$space-3;
@@ -57,11 +58,11 @@
         background: transparent;
         border-radius: 8px;
         cursor: pointer;
-        font-size: 0.9rem;
         color: #555;
         transition: all 0.15s ease;
         text-align: right;
         font-family: inherit;
+        width: 100%;
 
         &:hover {
             background: #f5f5f5;
@@ -69,12 +70,15 @@
         }
 
         &--active {
-            background: var(--lw-color-primary);
+            background: var(--lw-color-primary) !important;
             color: #fff;
-            font-weight: 600;
+
+            .lw-simpleText {
+                color: #fff;
+            }
 
             &:hover {
-                background: var(--lw-color-primary);
+                background: var(--lw-color-primary) !important;
                 color: #fff;
             }
         }
@@ -91,11 +95,15 @@
 
     // ── Content area ────────────────────────────────────────────────
     &__content {
+        flex-direction: column;
+        width: 100%;
         flex: 1;
         min-width: 0;
     }
 
     &__card {
+        flex: 1;
+        flex-direction: column;
         background: #fff;
         border-radius: 12px;
         padding: v.$space-5;
@@ -152,8 +160,6 @@
     }
 
     &__settingDesc {
-        display: block;
-        font-size: 0.8rem;
         color: #999;
         margin-top: 2px;
     }
@@ -164,31 +170,13 @@
 
     &__input {
         width: 100%;
-        padding: v.$space-2 v.$space-3;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        font-family: inherit;
         direction: ltr;
-        text-align: left;
-        transition: border-color 0.15s ease;
-        box-sizing: border-box;
-
-        &:focus {
-            outline: none;
-            border-color: var(--lw-color-primary);
-            box-shadow: 0 0 0 3px rgba(42, 67, 101, 0.1);
-        }
-
-        &::placeholder {
-            color: #bbb;
-            font-size: 0.8rem;
-        }
     }
 
     // ── Toggle switch ───────────────────────────────────────────────
     &__toggle {
         display: flex;
+        flex-direction: row;
         align-items: center;
         gap: v.$space-3;
         cursor: pointer;
@@ -228,7 +216,6 @@
     }
 
     &__toggleLabel {
-        font-size: 0.85rem;
         color: #666;
     }
 
@@ -241,17 +228,18 @@
 
     &__channelHeader {
         display: flex;
+        flex-direction: row;
         justify-content: space-between;
         align-items: center;
         padding: v.$space-2 v.$space-3;
         font-weight: 600;
-        font-size: 0.85rem;
         color: #888;
         border-bottom: 2px solid #eee;
     }
 
     &__channelRow {
         display: flex;
+        flex-direction: row;
         justify-content: space-between;
         align-items: center;
         padding: v.$space-3;
@@ -266,11 +254,11 @@
 
     &__channelName {
         font-weight: 500;
-        font-size: 0.9rem;
     }
 
     &__channelToggles {
         display: flex;
+        flex-direction: row;
         gap: v.$space-5;
         min-width: 200px;
         justify-content: space-around;
@@ -278,10 +266,10 @@
 
     &__channelToggle {
         display: flex;
+        flex-direction: row;
         align-items: center;
         gap: v.$space-1;
         cursor: pointer;
-        font-size: 0.85rem;
 
         input[type="checkbox"] {
             width: 18px;
@@ -317,11 +305,9 @@
 
     &__adminName {
         font-weight: 600;
-        font-size: 0.9rem;
     }
 
     &__adminPhone {
-        font-size: 0.8rem;
         color: #888;
         direction: ltr;
         text-align: right;
@@ -329,20 +315,23 @@
 
     &__addAdmin {
         display: flex;
+        flex-direction: row;
         gap: v.$space-3;
         align-items: center;
     }
 
+    &__addAdminInput {
+        width: 100%;
+        flex: 1;
+        min-width: 0;
+    }
+
     &__addBtn {
         white-space: nowrap;
-        padding: v.$space-2 v.$space-4 !important;
-        font-size: 0.85rem !important;
-        border-radius: 8px !important;
     }
 
     &__removeBtn {
         padding: v.$space-1 v.$space-3 !important;
-        font-size: 0.8rem !important;
         background: #fee2e2 !important;
         color: #dc2626 !important;
         border: 1px solid #fecaca !important;
@@ -358,29 +347,15 @@
         display: flex;
         gap: v.$space-3;
         margin-top: v.$space-5;
-        padding: v.$space-4;
-        background: #fffbeb;
-        border: 1px solid #fde68a;
-        border-radius: 10px;
-        justify-content: flex-start;
+        justify-content: center;
     }
 
     &__saveBtn {
-        padding: v.$space-2 v.$space-6 !important;
-        font-weight: 600 !important;
-        border-radius: 8px !important;
+        white-space: nowrap;
     }
 
     &__cancelBtn {
-        padding: v.$space-2 v.$space-4 !important;
-        background: transparent !important;
-        color: #666 !important;
-        border: 1px solid #ddd !important;
-        border-radius: 8px !important;
-
-        &:hover {
-            background: #f5f5f5 !important;
-        }
+        white-space: nowrap;
     }
 
     // ── Mobile responsive ───────────────────────────────────────────

@@ -70,7 +70,7 @@ export default function TopAndRightNavBar({ children, LogoNavigate, GetNavBarDat
           </SimpleScrollView>
           <SimpleContainer className="lw-topAndRightNavBar__bottom">
             <SimpleContainer className="lw-topAndRightNavBar__isoBadgeWrap">
-              <ComplianceBadges size="small" layout="column" showLabels={false} />
+              <ComplianceBadges size="small" layout="row" showLabels={false} />
             </SimpleContainer>
             <SimpleContainer className="lw-topAndRightNavBar__languageWrap">
               <LanguageSwitcher />

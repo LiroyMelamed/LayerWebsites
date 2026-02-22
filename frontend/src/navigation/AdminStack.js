@@ -42,6 +42,7 @@ function AdminStack() {
                 <Route path={toRelativePath(PlansPricingScreenName)} element={<PlansPricingScreen />} />
                 <Route path={toRelativePath(uploadFileForSigningScreenName)} element={<UploadFileForSigningScreen />} />
                 <Route path={toRelativePath(RemindersScreenName)} element={<RemindersScreen />} />
+                <Route path={toRelativePath(PlatformSettingsScreenName)} element={<PlatformSettingsScreen />} />
 
             </Routes>
         </TopAndRightNavBar>

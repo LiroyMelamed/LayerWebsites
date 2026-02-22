@@ -92,7 +92,7 @@ async function getAllSettings() {
         const { rows } = await pool.query(
             `SELECT id, category, setting_key, setting_value, value_type, label, description, updated_at
              FROM platform_settings
-             ORDER BY category, setting_key`
+             ORDER BY category, id`
         );
 
         const grouped = {};
@@ -234,6 +234,34 @@ async function getPlatformAdmins() {
     }
 }
 
+/**
+ * Seed platform_admins from PLATFORM_ADMIN_USER_IDS env var.
+ * Only inserts users that don't already exist (active or inactive) in the table.
+ */
+async function seedPlatformAdminsFromEnv() {
+    const raw = String(process.env.PLATFORM_ADMIN_USER_IDS || '').trim();
+    if (!raw) return 0;
+
+    const ids = raw.split(',').map(s => Number(String(s).trim())).filter(n => Number.isFinite(n) && n > 0);
+    if (ids.length === 0) return 0;
+
+    let seeded = 0;
+    for (const userId of ids) {
+        try {
+            await pool.query(
+                `INSERT INTO platform_admins (user_id, added_by, added_at, is_active)
+                 VALUES ($1, NULL, NOW(), TRUE)
+                 ON CONFLICT (user_id) DO NOTHING`,
+                [userId]
+            );
+            seeded++;
+        } catch (err) {
+            console.warn(`[settingsService] seedPlatformAdminsFromEnv: failed for userId=${userId}:`, err?.message);
+        }
+    }
+    return seeded;
+}
+
 async function addPlatformAdmin(userId, addedBy) {
     // Also ensure the user is an Admin role
     await pool.query(`UPDATE users SET role = 'Admin' WHERE userid = $1 AND role != 'Admin'`, [userId]);
@@ -288,6 +316,7 @@ module.exports = {
     getNotificationChannels,
     updateNotificationChannel,
     getPlatformAdmins,
+    seedPlatformAdminsFromEnv,
     addPlatformAdmin,
     removePlatformAdmin,
     isPlatformAdmin,
