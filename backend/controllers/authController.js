@@ -128,11 +128,8 @@ const requestOtp = async (req, res) => {
         let formatedPhoneNumber = formatPhoneNumber(phoneNumber);
 
         const isDemoPhone = DEMO_OTP_PHONES.includes(phoneNumber);
-        const testUser = phoneNumber === "0501234567";
-        const managerUser = phoneNumber === "0507299064";
-        const isDevSuperUser = (process.env.NODE_ENV !== 'production') && (testUser || managerUser);
 
-        const otp = (isDemoPhone || isDevSuperUser)
+        const otp = isDemoPhone
             ? "123456"
             : crypto.randomInt(100000, 999999).toString();
 
@@ -460,11 +457,8 @@ const register = async (req, res) => {
         );
 
         const isDemoPhone = DEMO_OTP_PHONES.includes(phoneNumber);
-        const testUser = phoneNumber === "0501234567";
-        const managerUser = phoneNumber === "0507299064";
-        const isDevSuperUser = (process.env.NODE_ENV !== 'production') && (testUser || managerUser);
 
-        const otp = (isDemoPhone || isDevSuperUser)
+        const otp = isDemoPhone
             ? "123456"
             : crypto.randomInt(100000, 999999).toString();
         const expiry = new Date(Date.now() + 5 * 60 * 1000);

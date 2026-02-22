@@ -8,10 +8,10 @@ import ClientPopup from "../../../screens/mainScreen/components/ClientPopUp";
 import "./ClientMenuItem.scss";
 
 export default function ClientMenuItem({
-    clientName = "khru",
-    CompanyName = 'nkns',
-    clientMail = "dsadasdasd@walla.com",
-    clientPhone = "0507299064",
+    clientName,
+    CompanyName,
+    clientMail,
+    clientPhone,
     clientDetails,
     closePopUpFunction,
     rePerformRequest,

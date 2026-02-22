@@ -5,11 +5,12 @@ const { getSetting } = require("../services/settingsService");
 
 // ── Static defaults (kept for backward-compatible imports) ──────────
 const COMPANY_NAME = "MelamedLaw";
-const WEBSITE_DOMAIN = "client.melamedlaw.co.il";
+const WEBSITE_DOMAIN = String(process.env.WEBSITE_DOMAIN || "").trim() || "client.melamedlaw.co.il";
 
-// ── Async getters that respect platform_settings ────────────────────
+// ── Async getters ───────────────────────────────────────────────────
+// WEBSITE_DOMAIN comes from env only — never from platform_settings.
 async function getWebsiteDomain() {
-    return await getSetting('firm', 'WEBSITE_DOMAIN', WEBSITE_DOMAIN);
+    return WEBSITE_DOMAIN;
 }
 
 async function getCompanyName() {

@@ -5,7 +5,10 @@ const authMiddleware = require('../middlewares/authMiddleware');
 const requirePlatformAdmin = require('../middlewares/requirePlatformAdmin');
 const ctrl = require('../controllers/platformSettingsController');
 
-// All routes require platform admin
+// Public route — no admin required (only CORS + rate-limit apply)
+router.get('/public', ctrl.getPublicSettings);
+
+// All remaining routes require platform admin
 router.use(authMiddleware, requirePlatformAdmin);
 
 // Settings

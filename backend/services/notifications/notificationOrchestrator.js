@@ -3,6 +3,7 @@ const sendAndStoreNotification = require('../../utils/sendAndStoreNotification')
 const { sendMessage } = require('../../utils/sendMessage');
 const { sendEmailCampaign } = require('../../utils/smooveEmailCampaignService');
 const { formatPhoneNumber } = require('../../utils/phoneUtils');
+const { isAdminCcEnabled, getPlatformAdmins, getChannelConfig } = require('../settingsService');
 
 function isExpoPushToken(token) {
     const t = String(token || '').trim();
@@ -73,10 +74,12 @@ function getContactFieldKeys(contactFields) {
  * Notification Orchestrator
  *
  * Rule (non-OTP):
- * - Send on ALL available channels: Push + Email + SMS
- * - Push is sent if the user has a valid Expo push token
- * - Email is sent if the user has an email address
- * - SMS is sent if the user has a phone number
+ * - Sends on channels that are ENABLED in notification_channel_config
+ *   AND where the recipient has the required contact info.
+ * - Push: requires valid Expo push token + push_enabled
+ * - Email: requires email address + email_enabled
+ * - SMS: requires phone number + sms_enabled
+ * - Admin CC: sends copy to platform admins when admin_cc is TRUE
  *
  * OTP must be SMS-only and should NOT use this orchestrator.
  */
@@ -115,10 +118,13 @@ async function notifyRecipient({
 
     const hasPush = recipientUserId ? await userHasValidPush(recipientUserId) : false;
 
-    // Send on ALL available channels: Push + Email + SMS
-    const wantPush = Boolean(hasPush && push && recipientUserId);
-    const wantEmail = Boolean(email && resolvedEmail);
-    const wantSms = Boolean(sms && resolvedPhone);
+    // Load channel config to respect admin-configured enabled/disabled flags
+    const channelCfg = await getChannelConfig(type);
+
+    // Only send on channels that are both available AND enabled in notification_channel_config
+    const wantPush = Boolean(hasPush && push && recipientUserId && channelCfg.push_enabled);
+    const wantEmail = Boolean(email && resolvedEmail && channelCfg.email_enabled);
+    const wantSms = Boolean(sms && resolvedPhone && channelCfg.sms_enabled);
 
     // Persist to DB for in-app Notifications screen.
     const storeTitle = String(push?.title || 'התראה').trim();
@@ -126,7 +132,7 @@ async function notifyRecipient({
     const wantStore = Boolean(recipientUserId && storeTitle && storeMessage);
 
     const outcomes = {
-        decision: 'ALL_CHANNELS',
+        decision: 'CHANNEL_CONFIG',
         store: { attempted: wantStore, ok: null },
         push: { attempted: wantPush, ok: null },
         email: { attempted: wantEmail, ok: null },
@@ -240,6 +246,78 @@ async function notifyRecipient({
     }
 
     await Promise.allSettled(tasks);
+
+    // ── CC platform admins if admin_cc is enabled for this notification type ──
+    try {
+        const shouldCcAdmin = channelCfg.admin_cc === true;
+        if (shouldCcAdmin) {
+            const admins = await getPlatformAdmins();
+            const adminIds = admins
+                .map(a => Number(a.user_id))
+                .filter(id => Number.isFinite(id) && id > 0 && id !== Number(recipientUserId));
+
+            if (adminIds.length > 0) {
+                const adminUsers = (await pool.query(
+                    `SELECT userid AS "UserId", name AS "Name", email AS "Email", phonenumber AS "PhoneNumber"
+                     FROM users WHERE userid = ANY($1::int[])`,
+                    [adminIds]
+                )).rows;
+
+                for (const admin of adminUsers) {
+                    const adminCcTasks = [];
+
+                    // Push notification for admin (store in their notification list)
+                    if (push && admin.UserId) {
+                        adminCcTasks.push(
+                            sendAndStoreNotification(
+                                Number(admin.UserId),
+                                `[העתק] ${String(push.title || '').trim()}`,
+                                String(push.body || '').trim(),
+                                { ...(push.data || {}), adminCc: true },
+                                { sendPush: await userHasValidPush(admin.UserId) }
+                            ).catch(e => console.warn('[orchestrator] admin CC push failed:', e?.message))
+                        );
+                    }
+
+                    // Email CC for admin
+                    const adminEmail = String(admin.Email || '').trim();
+                    if (email && adminEmail) {
+                        adminCcTasks.push(
+                            sendEmailCampaign({
+                                toEmail: adminEmail,
+                                campaignKey: String(email.campaignKey || '').trim(),
+                                contactFields: {
+                                    ...(email.contactFields || {}),
+                                    recipient_name: `${String(admin.Name || '').trim()} (העתק למנהל)`,
+                                },
+                            }).catch(e => console.warn('[orchestrator] admin CC email failed:', e?.message))
+                        );
+                    }
+
+                    // SMS CC for admin
+                    const adminPhone = formatPhoneNumber(String(admin.PhoneNumber || '').trim());
+                    if (sms && adminPhone) {
+                        adminCcTasks.push(
+                            sendMessage(
+                                `[העתק למנהל] ${String(sms.messageBody || '').trim()}`,
+                                adminPhone
+                            ).catch(e => console.warn('[orchestrator] admin CC sms failed:', e?.message))
+                        );
+                    }
+
+                    await Promise.allSettled(adminCcTasks);
+                }
+
+                console.log(JSON.stringify({
+                    event: 'notify_orchestrator_admin_cc',
+                    type,
+                    adminCount: adminUsers.length,
+                }));
+            }
+        }
+    } catch (ccErr) {
+        console.warn('[orchestrator] admin CC failed:', ccErr?.message);
+    }
 
     const anyOk = [outcomes.store, outcomes.push, outcomes.email, outcomes.sms]
         .filter((c) => c.attempted)

@@ -5,11 +5,17 @@ export const PRICING_CONFIG = {
     currency: "₪",
     billingPeriodLabel: "לחודש",
 
-    // Single source of truth for contact numbers used on pricing pages.
+    // Contact numbers — loaded dynamically at runtime via firmSettings.
+    // These static values are kept only as ultimate fallbacks.
     contact: {
-        phoneNational: "036565004",
-        // WhatsApp expects a country code without '+'
-        phoneE164Digits: "97236565004",
+        get phoneNational() {
+            const { getFirmPhoneNational } = require("../../services/firmSettings");
+            return getFirmPhoneNational() || "036565004";
+        },
+        get phoneE164Digits() {
+            const { getFirmPhone } = require("../../services/firmSettings");
+            return getFirmPhone() || "97236565004";
+        },
     },
 
     // Total rule: system base + sum of the 3 selected sections.

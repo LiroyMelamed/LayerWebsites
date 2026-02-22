@@ -4,6 +4,7 @@
  */
 const pool = require('../config/db');
 const settingsService = require('../services/settingsService');
+const { validateTemplate, TEMPLATE_REQUIRED_VARS } = require('../utils/templateRenderer');
 
 // ── Settings CRUD ───────────────────────────────────────────────────
 
@@ -32,6 +33,17 @@ const updateSettings = async (req, res) => {
             if (!s.category || !s.key) {
                 return res.status(400).json({ message: `הגדרה חסרה category או key` });
             }
+            // Template validation — ensure required variables are present
+            if (s.category === 'templates' && TEMPLATE_REQUIRED_VARS[s.key]) {
+                const result = validateTemplate(s.key, s.value);
+                if (!result.valid) {
+                    return res.status(400).json({
+                        message: `תבנית "${s.key}" חייבת לכלול את המשתנים: ${result.missingVars.map(v => `{{${v}}}`).join(', ')}`,
+                        missingVars: result.missingVars,
+                        templateKey: s.key,
+                    });
+                }
+            }
         }
 
         const results = await settingsService.bulkUpsert(settings, req.user?.UserId);
@@ -48,6 +60,18 @@ const updateSingleSetting = async (req, res) => {
         const { category, key, value } = req.body;
         if (!category || !key) {
             return res.status(400).json({ message: 'נדרש category ו-key' });
+        }
+
+        // Template validation — ensure required variables are present
+        if (category === 'templates' && TEMPLATE_REQUIRED_VARS[key]) {
+            const result = validateTemplate(key, value);
+            if (!result.valid) {
+                return res.status(400).json({
+                    message: `תבנית "${key}" חייבת לכלול את המשתנים: ${result.missingVars.map(v => `{{${v}}}`).join(', ')}`,
+                    missingVars: result.missingVars,
+                    templateKey: key,
+                });
+            }
         }
 
         const result = await settingsService.upsertSetting(category, key, value, {
@@ -77,12 +101,13 @@ const getNotificationChannels = async (req, res) => {
 const updateNotificationChannel = async (req, res) => {
     try {
         const { type } = req.params;
-        const { pushEnabled, emailEnabled, smsEnabled } = req.body;
+        const { pushEnabled, emailEnabled, smsEnabled, adminCc } = req.body;
 
         const result = await settingsService.updateNotificationChannel(type, {
             pushEnabled,
             emailEnabled,
             smsEnabled,
+            adminCc,
             updatedBy: req.user?.UserId,
         });
 
@@ -191,6 +216,33 @@ const getEmailTemplates = async (req, res) => {
     }
 };
 
+// ── Public (non-admin) settings ─────────────────────────────────────
+
+/** Whitelisted keys that any visitor / logged-in user may read. */
+const PUBLIC_SETTINGS_KEYS = [
+    'messaging:WHATSAPP_DEFAULT_PHONE',
+    'firm:LAW_FIRM_NAME',
+];
+
+/** GET /api/platform-settings/public — no admin required */
+const getPublicSettings = async (_req, res) => {
+    try {
+        const all = await settingsService.getAllSettings();
+        const result = {};
+        for (const compoundKey of PUBLIC_SETTINGS_KEYS) {
+            const [category, key] = compoundKey.split(':');
+            const cat = all.find(
+                (s) => s.category === category && s.setting_key === key,
+            );
+            if (cat) result[key] = cat.setting_value;
+        }
+        return res.json(result);
+    } catch (err) {
+        console.error('[platformSettings] getPublicSettings error:', err);
+        return res.status(500).json({ message: 'שגיאה בטעינת הגדרות ציבוריות' });
+    }
+};
+
 module.exports = {
     getAllSettings,
     updateSettings,
@@ -201,4 +253,5 @@ module.exports = {
     addPlatformAdmin,
     removePlatformAdmin,
     getEmailTemplates,
+    getPublicSettings,
 };

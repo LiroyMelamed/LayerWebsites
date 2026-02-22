@@ -44,16 +44,16 @@ CREATE TABLE IF NOT EXISTS notification_channel_config (
 );
 
 -- Seed default notification types
-INSERT INTO notification_channel_config (notification_type, label, push_enabled, email_enabled, sms_enabled)
+INSERT INTO notification_channel_config (notification_type, label, push_enabled, email_enabled, sms_enabled, admin_cc)
 VALUES
-    ('CASE_UPDATE',     'עדכון תיק',          TRUE, TRUE, FALSE),
-    ('SIGN_INVITE',     'הזמנה לחתימה',       TRUE, TRUE, TRUE),
-    ('SIGN_REMINDER',   'תזכורת חתימה',       TRUE, TRUE, TRUE),
-    ('DOC_SIGNED',      'מסמך נחתם',          TRUE, TRUE, FALSE),
-    ('DOC_REJECTED',    'מסמך נדחה',          TRUE, TRUE, FALSE),
-    ('PAYMENT',         'תזכורת תשלום',       TRUE, TRUE, FALSE),
-    ('LICENSE_RENEWAL', 'חידוש רישיון',       TRUE, TRUE, FALSE),
-    ('GENERAL',         'הודעה כללית',        TRUE, TRUE, FALSE)
+    ('CASE_UPDATE',     'עדכון תיק',          TRUE, TRUE, TRUE, TRUE),
+    ('SIGN_INVITE',     'הזמנה לחתימה',       TRUE, TRUE, TRUE, TRUE),
+    ('SIGN_REMINDER',   'תזכורת חתימה',       TRUE, TRUE, TRUE, TRUE),
+    ('DOC_SIGNED',      'מסמך נחתם',          TRUE, TRUE, TRUE, TRUE),
+    ('DOC_REJECTED',    'מסמך נדחה',          TRUE, TRUE, TRUE, TRUE),
+    ('PAYMENT',         'תזכורת תשלום',       TRUE, TRUE, TRUE, TRUE),
+    ('LICENSE_RENEWAL', 'חידוש רישיון',       TRUE, TRUE, TRUE, TRUE),
+    ('GENERAL',         'הודעה כללית',        TRUE, TRUE, TRUE, TRUE)
 ON CONFLICT (notification_type) DO NOTHING;
 
 -- ─── 4) Seed initial settings from common env vars ──────────────────
@@ -62,7 +62,7 @@ ON CONFLICT (notification_type) DO NOTHING;
 INSERT INTO platform_settings (category, setting_key, setting_value, value_type, label, description)
 VALUES
     -- Messaging
-    ('messaging', 'SMOOVE_SENDER_PHONE',      NULL, 'string',  'מספר שולח SMS',          'מספר הטלפון ממנו נשלחות הודעות SMS'),
+    ('messaging', 'SMOOVE_SENDER_PHONE',      '0559199044', 'string',  'מספר שולח SMS',          'מספר הטלפון ממנו נשלחות הודעות SMS — ניתן לשנות בעמוד ההגדרות'),
     ('messaging', 'SMOOVE_EMAIL_FROM_NAME',    NULL, 'string',  'שם שולח אימייל',         'השם שיופיע כשולח באימיילים'),
     ('messaging', 'SMOOVE_EMAIL_FROM_EMAIL',   NULL, 'string',  'כתובת שולח אימייל',      'כתובת האימייל של השולח'),
     ('messaging', 'SMTP_FROM_EMAIL',           NULL, 'string',  'כתובת SMTP שולח',        'כתובת השולח ב-SMTP'),
@@ -72,8 +72,8 @@ VALUES
     ('signing',   'SIGNING_REQUIRE_OTP_DEFAULT', NULL, 'boolean', 'OTP ברירת מחדל',        'ברירת מחדל לדרישת OTP בחתימות חדשות'),
 
     -- Firm
-    ('firm',      'FIRM_NAME',                  NULL, 'string',  'שם המשרד (אנגלית)',      'שם המשרד באנגלית'),
-    ('firm',      'LAW_FIRM_NAME',              NULL, 'string',  'שם המשרד (עברית)',       'שם המשרד בעברית'),
+    ('firm',      'FIRM_NAME',                  NULL, 'string',  'שם המשרד (אנגלית)',      'שם המשרד באנגלית — מופיע בתבניות אימייל תזכורות (בחתימה בסוף המייל) ובמסמכים שנשלחים ללקוחות באנגלית'),
+    ('firm',      'LAW_FIRM_NAME',              NULL, 'string',  'שם המשרד (עברית)',       'שם המשרד בעברית — מופיע בהודעות SMS של יום הולדת ללקוחות, ובתבניות תזכורות שנשלחות בעברית'),
 
     -- Reminders
     ('reminders', 'LICENSE_RENEWAL_REMINDERS_CEO_EMAIL', NULL, 'string',  'אימייל מנכ"ל לתזכורות', 'כתובת אימייל לשליחת תזכורות רישיון'),

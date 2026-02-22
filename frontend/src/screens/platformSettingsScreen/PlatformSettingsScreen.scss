@@ -150,6 +150,7 @@
     }
 
     &__settingLabel {
+        flex-direction: column;
         flex: 1;
         min-width: 0;
     }
@@ -162,6 +163,14 @@
     &__settingDesc {
         color: #999;
         margin-top: 2px;
+    }
+
+    &__settingDescription {
+        color: #888;
+        margin-top: 4px;
+        font-size: 11px;
+        line-height: 1.4;
+        direction: rtl;
     }
 
     &__settingInput {
@@ -259,16 +268,16 @@
     &__channelToggles {
         display: flex;
         flex-direction: row;
-        gap: v.$space-5;
-        min-width: 200px;
-        justify-content: space-around;
+        gap: 0;
+        min-width: 360px;
     }
 
     &__channelToggle {
         display: flex;
         flex-direction: row;
         align-items: center;
-        gap: v.$space-1;
+        justify-content: center;
+        min-width: 90px;
         cursor: pointer;
 
         input[type="checkbox"] {

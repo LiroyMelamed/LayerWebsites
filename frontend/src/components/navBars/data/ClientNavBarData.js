@@ -4,6 +4,7 @@ import { ProfileScreenName } from "../../../screens/client/profile/ProfileScreen
 import { SigningScreenName } from "../../../screens/signingScreen/SigningScreen";
 import TermsOfConditons from "../../termsAndConditions/TermsOfConditons";
 import { openExternalUrl } from "../../../utils/externalNavigation";
+import { getFirmPhone } from "../../../services/firmSettings";
 
 export const getClientNavBarData = (navigate, openPopup, closePopup, isFromApp = false, t) => {
     const NavBarLinks = [
@@ -57,7 +58,7 @@ export const getClientNavBarData = (navigate, openPopup, closePopup, isFromApp =
                     icon: null,
                     onClick: () => {
                         openExternalUrl(
-                            `https://wa.me/97236565004?text=${encodeURIComponent(t('nav.contactMessage'))}`,
+                            `https://wa.me/${getFirmPhone()}?text=${encodeURIComponent(t('nav.contactMessage'))}`,
                             { newTab: true }
                         );
                     },

@@ -38,6 +38,18 @@ export default function TermsOfConditons() {
             <TextBold24 className="lw-terms__mt16">{t('terms.section8.title')}</TextBold24>
             <Text16 className="lw-terms__mt8" shouldApplyClamping>{t('terms.section8.body', { email: 'Liav@MelamedLaw.co.il' })}</Text16>
 
+            <TextBold24 className="lw-terms__mt16">{t('terms.section9.title')}</TextBold24>
+            <Text16 className="lw-terms__mt8" shouldApplyClamping>{t('terms.section9.body')}</Text16>
+
+            <TextBold24 className="lw-terms__mt16">{t('terms.section10.title')}</TextBold24>
+            <Text16 className="lw-terms__mt8" shouldApplyClamping>{t('terms.section10.body')}</Text16>
+
+            <TextBold24 className="lw-terms__mt16">{t('terms.section11.title')}</TextBold24>
+            <Text16 className="lw-terms__mt8" shouldApplyClamping>{t('terms.section11.body')}</Text16>
+
+            <TextBold24 className="lw-terms__mt16">{t('terms.section12.title')}</TextBold24>
+            <Text16 className="lw-terms__mt8" shouldApplyClamping>{t('terms.section12.body', { email: 'Liav@MelamedLaw.co.il' })}</Text16>
+
         </SimpleContainer>
     );
 }

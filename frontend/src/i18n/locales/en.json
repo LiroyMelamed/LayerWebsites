@@ -262,7 +262,7 @@
             "goToGroup": "Go to group",
             "editLink": "Edit link",
             "contact": "Contact",
-            "contactText": "Contacting about case number {{caseId}}"
+            "contactText": "Contacting about case \"{{caseName}}\""
         }
     },
     "caseTypes": {
@@ -339,37 +339,53 @@
     "terms": {
         "title": "Terms of Use for {{appName}}",
         "lastUpdated": "Last updated: {{date}}",
-        "intro": "Welcome to {{appName}}. Your use of the website and our services is subject to your acceptance of the terms of use detailed below.",
+        "intro": "Welcome to {{appName}}. Your use of the website, the application, and our services is subject to your acceptance of the terms of use detailed below. Please read them carefully.",
         "section1": {
             "title": "1. Acceptance of Terms",
-            "body": "• By using the website or our services, you agree to these Terms of Use and our Privacy Policy. If you do not agree, you must refrain from using our services."
+            "body": "• By using the website, the application, or our services, you agree to these Terms of Use and our Privacy Policy.\n• If you do not agree, you must refrain from using our services.\n• These terms apply to all users — clients, lawyers, and system administrators."
         },
         "section2": {
             "title": "2. Services We Provide",
-            "body": "We provide legal case management services, including:\n\n• Creating and managing cases\n• Managing customers\n• Managing case stages and stage descriptions\n• Tagging and filtering cases\n• User roles and security"
+            "body": "We provide a legal management platform that includes:\n\n• Creating and managing legal cases, including stages, tags, and filtering\n• Managing clients and case managers\n• Digital signing of documents with OTP verification\n• Uploading files and evidence documents\n• Sending notifications and messages (Push, email, SMS)\n• Automated reminders (license renewals, case reminders, birthday greetings)\n• User role management and permissions"
         },
         "section3": {
             "title": "3. Registration and User Accounts",
-            "body": "• Using the services requires registration with a phone number and receiving an OTP code for identification.\n• During registration, we may store data such as name, phone number, email address, and company name.\n• Use of the system is limited to users assigned roles (Admins and Users)."
+            "body": "• Using the services requires registration with a phone number and receiving a one-time OTP code for identification.\n• During registration and usage, we may store data such as name, phone number, email address, company name, date of birth, and profile picture.\n• Use of the system is limited to users assigned roles (administrators and clients).\n• The responsibility for keeping login credentials confidential lies solely with the user."
         },
         "section4": {
-            "title": "4. Privacy and Data Protection",
-            "body": "• Your information is stored in a secure Azure SQL database.\n• We use JWT authentication to protect user access.\n• Personal information will not be shared with third parties without your consent, except where required by law."
+            "title": "4. Digital Signing",
+            "body": "• The system allows digital signing of legal documents.\n• Signatures are verified via an OTP code sent to the signer's phone number.\n• A signed document constitutes acknowledgment by the signer that they have read, understood, and agreed to the content of the document.\n• Digital signatures are stored with a timestamp and identification details and cannot be altered after execution.\n• The user is responsible for reviewing the document before signing."
         },
         "section5": {
-            "title": "5. Fair Use and Prohibited Activities",
-            "body": "When using our services, you agree:\n\n• Not to use the services for unlawful purposes.\n• Not to disrupt the system or attempt to breach data stores.\n• Not to submit false or misleading information."
+            "title": "5. File and Document Uploads",
+            "body": "• The system allows uploading files and evidence documents to cases.\n• The user is responsible for ensuring that uploaded files do not infringe copyrights or any other law.\n• We reserve the right to limit file types, sizes, and quantities according to the service plan.\n• Uploaded files are stored securely on our storage servers."
         },
         "section6": {
-            "title": "6. Liability and Indemnification",
-            "body": "• We strive to provide stable services, but we do not guarantee uninterrupted availability.\n• The company will not be liable for indirect, consequential, or incidental damages resulting from use of the service.\n• Users are responsible for safeguarding their access credentials and the information they enter."
+            "title": "6. Notifications and Messages",
+            "body": "• The system sends notifications and messages to users via Push, email, and SMS.\n• Notifications include, among others: case updates, signing invitations, reminders, and automated messages.\n• The system may send automated birthday greetings based on the date of birth entered in the profile.\n• Notification channels can be controlled through the system settings.\n• By providing your phone number, you consent to receiving SMS messages (including OTP, updates, and reminders)."
         },
         "section7": {
-            "title": "7. Changes and Updates",
-            "body": "• We reserve the right to change these Terms of Use at any time. Updates will be published, and continued use after an update constitutes acceptance of the updated terms."
+            "title": "7. Privacy and Data Protection",
+            "body": "• Your information is stored in a secure database.\n• We use token-based authentication (JWT) to protect user access.\n• Personal information will not be shared with third parties without your consent, except where required by law.\n• We use third-party services for sending messages (such as email and SMS), but your details will not be used for marketing unrelated to the service.\n• We maintain activity logs for security and auditing purposes."
         },
         "section8": {
-            "title": "8. Contact",
+            "title": "8. Fair Use and Prohibited Activities",
+            "body": "When using our services, you agree:\n\n• Not to use the services for unlawful purposes.\n• Not to disrupt the system or attempt to breach data stores.\n• Not to submit false or misleading information.\n• Not to upload harmful files or malicious software.\n• Not to share access credentials with third parties."
+        },
+        "section9": {
+            "title": "9. Service Limits and Plans",
+            "body": "• The service may be limited according to the selected plan (number of cases, storage volume, number of users, etc.).\n• Exceeding plan limits may result in blocking or restricting certain features.\n• Plans can be upgraded at any time through the system settings or by contacting us."
+        },
+        "section10": {
+            "title": "10. Liability and Indemnification",
+            "body": "• We strive to provide stable and reliable services, but we do not guarantee uninterrupted availability.\n• The company will not be liable for indirect, consequential, or incidental damages resulting from use of the service.\n• Users are responsible for safeguarding their access credentials and the information they enter.\n• The service does not constitute a substitute for professional legal advice."
+        },
+        "section11": {
+            "title": "11. Changes and Updates",
+            "body": "• We reserve the right to change these Terms of Use at any time.\n• Updates will be published on the website and in the application.\n• Continued use of the service after an update constitutes acceptance of the updated terms.\n• We recommend reviewing the terms from time to time."
+        },
+        "section12": {
+            "title": "12. Contact",
             "body": "• If you have questions regarding these Terms of Use, you can contact us at: {{email}}."
         }
     },

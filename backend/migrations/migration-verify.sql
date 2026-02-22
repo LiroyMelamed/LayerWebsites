@@ -201,4 +201,29 @@ BEGIN
     IF COALESCE(pg_get_serial_sequence('public.usernotifications','notificationid'), '') = '' THEN
         RAISE EXCEPTION 'usernotifications.notificationid has no serial/identity sequence (pg_get_serial_sequence returned NULL)';
     END IF;
+
+    -- ─── Platform settings tables (2026-02-22+) ────────────────────────
+    PERFORM 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='platform_settings';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing table: public.platform_settings'; END IF;
+
+    PERFORM 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='platform_admins';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing table: public.platform_admins'; END IF;
+
+    PERFORM 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='notification_channel_config';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing table: public.notification_channel_config'; END IF;
+
+    -- admin_cc column on notification_channel_config (2026-02-26)
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='notification_channel_config' AND column_name='admin_cc';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.notification_channel_config.admin_cc'; END IF;
+
+    -- Birthday greetings tracking table (2026-02-27)
+    PERFORM 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='birthday_greetings_sent';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing table: public.birthday_greetings_sent'; END IF;
+
+    -- Verify key platform_settings rows exist
+    PERFORM 1 FROM platform_settings WHERE category='messaging' AND setting_key='SMOOVE_SENDER_PHONE';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing platform_settings row: messaging/SMOOVE_SENDER_PHONE'; END IF;
+
+    PERFORM 1 FROM platform_settings WHERE category='messaging' AND setting_key='WHATSAPP_DEFAULT_PHONE';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing platform_settings row: messaging/WHATSAPP_DEFAULT_PHONE'; END IF;
 END$$;

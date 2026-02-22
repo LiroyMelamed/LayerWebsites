@@ -29,8 +29,8 @@ export const PlatformSettingsScreenName = "/PlatformSettingsScreen";
 const CATEGORIES = [
     { key: "messaging", label: "הודעות ואימייל", icon: "📧" },
     { key: "signing", label: "חתימה דיגיטלית", icon: "✍️" },
-    { key: "firm", label: "פרטי המשרד", icon: "🏢" },
-    { key: "reminders", label: "תזכורות", icon: "⏰" },
+    { key: "firm", label: "פרטי המשרד", icon: "🏢" }, { key: "notifications", label: "התראות", icon: "🔔" },
+    { key: "templates", label: "תבניות SMS", icon: "📝" }, { key: "reminders", label: "תזכורות", icon: "⏰" },
     { key: "channels", label: "ערוצי התראות", icon: "📡" },
     { key: "admins", label: "מנהלי פלטפורמה", icon: "👤" },
 ];
@@ -107,7 +107,6 @@ function ChannelRow({ channel, onToggle }) {
                         checked={channel.push_enabled}
                         onChange={() => onToggle(channel.notification_type, "pushEnabled", !channel.push_enabled)}
                     />
-                    <Text12>Push</Text12>
                 </SimpleContainer>
                 <SimpleContainer className="lw-platformSettings__channelToggle">
                     <input
@@ -115,7 +114,6 @@ function ChannelRow({ channel, onToggle }) {
                         checked={channel.email_enabled}
                         onChange={() => onToggle(channel.notification_type, "emailEnabled", !channel.email_enabled)}
                     />
-                    <Text12>אימייל</Text12>
                 </SimpleContainer>
                 <SimpleContainer className="lw-platformSettings__channelToggle">
                     <input
@@ -123,7 +121,13 @@ function ChannelRow({ channel, onToggle }) {
                         checked={channel.sms_enabled}
                         onChange={() => onToggle(channel.notification_type, "smsEnabled", !channel.sms_enabled)}
                     />
-                    <Text12>SMS</Text12>
+                </SimpleContainer>
+                <SimpleContainer className="lw-platformSettings__channelToggle">
+                    <input
+                        type="checkbox"
+                        checked={channel.admin_cc}
+                        onChange={() => onToggle(channel.notification_type, "adminCc", !channel.admin_cc)}
+                    />
                 </SimpleContainer>
             </SimpleContainer>
         </SimpleContainer>
@@ -153,7 +157,7 @@ function AdminRow({ admin, onRemove, currentUserId }) {
 
 // ─── Main Screen ────────────────────────────────────────────────────
 export default function PlatformSettingsScreen() {
-    const { t } = useTranslation();
+    useTranslation();
     const { isSmallScreen } = useScreenSize();
 
     const [activeTab, setActiveTab] = useState("messaging");
@@ -180,12 +184,8 @@ export default function PlatformSettingsScreen() {
         { onFailure: () => { } }
     );
 
-    // Save handler
-    const { isPerforming: isSaving, performRequest: doSave } = useHttpRequest(
-        platformSettingsApi.updateSettings,
-        () => { },
-        () => { }
-    );
+    // Save state (manual — we call the API directly to properly handle errors)
+    const [isSaving, setIsSaving] = useState(false);
 
     // Add admin handler
     const { isPerforming: isAddingAdmin, performRequest: doAddAdmin } = useHttpRequest(
@@ -210,7 +210,13 @@ export default function PlatformSettingsScreen() {
 
     // Channel toggle handler (deferred — saved on "שמור שינויים")
     const handleChannelToggle = useCallback((type, field, value) => {
-        const dbField = field === "pushEnabled" ? "push_enabled" : field === "emailEnabled" ? "email_enabled" : "sms_enabled";
+        const fieldMap = {
+            pushEnabled: 'push_enabled',
+            emailEnabled: 'email_enabled',
+            smsEnabled: 'sms_enabled',
+            adminCc: 'admin_cc',
+        };
+        const dbField = fieldMap[field] || field;
         setLocalChannels(prev => prev?.map(ch =>
             ch.notification_type === type
                 ? { ...ch, [dbField]: value }
@@ -234,25 +240,43 @@ export default function PlatformSettingsScreen() {
 
         if (settingsArray.length === 0 && channelEntries.length === 0) return;
 
+        setIsSaving(true);
         try {
-            // Save settings
+            // Save settings — call API directly so we can check response status
             if (settingsArray.length > 0) {
-                await doSave(settingsArray);
+                const res = await platformSettingsApi.updateSettings(settingsArray);
+                if (res.status !== 200 && res.status !== 201) {
+                    const serverMsg = res.data?.message || 'שגיאה בשמירת הגדרות';
+                    setSaveMessage(`❌ ${serverMsg}`);
+                    setTimeout(() => setSaveMessage(""), 6000);
+                    setIsSaving(false);
+                    return; // Don't proceed — let the user fix the issue first
+                }
             }
             // Save channels
             for (const [type, fields] of channelEntries) {
-                await platformSettingsApi.updateChannel(type, fields);
+                const res = await platformSettingsApi.updateChannel(type, fields);
+                if (res.status !== 200 && res.status !== 201) {
+                    const serverMsg = res.data?.message || 'שגיאה בעדכון ערוץ התראה';
+                    setSaveMessage(`❌ ${serverMsg}`);
+                    setTimeout(() => setSaveMessage(""), 6000);
+                    setIsSaving(false);
+                    return;
+                }
             }
             setEditedChannels({});
             setEditedValues({});
             setSaveMessage("✅ ההגדרות נשמרו בהצלחה");
             reload();
             setTimeout(() => setSaveMessage(""), 3000);
-        } catch {
-            setSaveMessage("❌ שגיאה בשמירה");
-            setTimeout(() => setSaveMessage(""), 3000);
+        } catch (err) {
+            const serverMsg = err?.response?.data?.message || err?.data?.message || err?.message || '';
+            setSaveMessage(`❌ ${serverMsg || 'שגיאה בשמירה'}`);
+            setTimeout(() => setSaveMessage(""), 6000);
+        } finally {
+            setIsSaving(false);
         }
-    }, [editedValues, editedChannels, doSave, reload]);
+    }, [editedValues, editedChannels, reload]);
 
     // Add admin
     const handleAddAdmin = useCallback(() => {
@@ -300,11 +324,20 @@ export default function PlatformSettingsScreen() {
                     </Text14>
                     <SimpleContainer className="lw-platformSettings__channelGrid">
                         <SimpleContainer className="lw-platformSettings__channelHeader">
-                            <Text14>סוג התראה</Text14>
+                            <TextBold14 className="lw-platformSettings__channelName">סוג התראה</TextBold14>
                             <SimpleContainer className="lw-platformSettings__channelToggles">
-                                <Text12>Push</Text12>
-                                <Text12>אימייל</Text12>
-                                <Text12>SMS</Text12>
+                                <SimpleContainer className="lw-platformSettings__channelToggle">
+                                    <Text12>Push</Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__channelToggle">
+                                    <Text12>אימייל</Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__channelToggle">
+                                    <Text12>SMS</Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__channelToggle">
+                                    <Text12>העתק למנהל</Text12>
+                                </SimpleContainer>
                             </SimpleContainer>
                         </SimpleContainer>
                         {channels.map(ch => (
@@ -390,7 +423,11 @@ export default function PlatformSettingsScreen() {
                                     <TextBold14 className="lw-platformSettings__settingName">
                                         {setting.label || key}
                                     </TextBold14>
-
+                                    {setting.description && (
+                                        <Text12 className="lw-platformSettings__settingDescription">
+                                            {setting.description}
+                                        </Text12>
+                                    )}
                                 </SimpleContainer>
                                 <SimpleContainer className="lw-platformSettings__settingInput">
                                     <SettingInput

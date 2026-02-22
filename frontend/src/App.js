@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 import { MainScreenName } from './screens/mainScreen/MainScreen';
 import { ClientMainScreenName } from './screens/client/clientMainScreen/ClientMainScreen';
 import { useFromApp } from './providers/FromAppProvider';
+import { loadFirmSettings } from './services/firmSettings';
 import { SigningScreenName } from './screens/signingScreen/SigningScreen';
 import { EvidenceDocumentsScreenName } from './screens/evidenceDocuments/EvidenceDocumentsScreen';
 import EvidenceVerifyScreen, { EvidenceVerifyScreenName } from './screens/verify/EvidenceVerifyScreen';
@@ -23,6 +24,10 @@ const App = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isFromApp, setIsFromApp } = useFromApp();
+
+  // Eagerly load public firm settings (WhatsApp phone, etc.)
+  useEffect(() => { loadFirmSettings(); }, []);
+
   useEffect(() => {
     // On signing flows, disable overscroll-based pull-to-refresh (browser-level).
     const p = String(location?.pathname || "");

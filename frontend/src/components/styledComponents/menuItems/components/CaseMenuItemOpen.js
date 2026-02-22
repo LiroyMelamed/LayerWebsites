@@ -18,6 +18,7 @@ import SimpleInput from "../../../simpleComponents/SimpleInput";
 import { DateDDMMYY } from "../../../../functions/date/DateDDMMYY";
 import { usePopup } from "../../../../providers/PopUpProvider";
 import { openExternalUrl } from "../../../../utils/externalNavigation";
+import { useFirmPhone } from "../../../../services/firmSettings";
 import "./CaseMenuItemOpen.scss";
 
 function WhatsappGroupLinkModal({
@@ -111,15 +112,17 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
         openExternalUrl(String(WhatsappLink), { newTab: true });
     }
 
+    const firmPhone = useFirmPhone();
+
     function contactOnWhatsapp() {
-        // Use case manager's phone if available, fall back to office number
+        // Use case manager's phone if available, fall back to office number from settings
         const phone = fullCase.CaseManagerPhone
             ? String(fullCase.CaseManagerPhone).replace(/[^0-9]/g, '')
-            : '97236565004';
+            : firmPhone;
         // Ensure phone has country code
         const e164Phone = phone.startsWith('972') ? phone : (phone.startsWith('0') ? '972' + phone.slice(1) : '972' + phone);
         openExternalUrl(
-            `https://wa.me/${e164Phone}?text=${encodeURIComponent(t("common.whatsapp.contactText", { caseId: fullCase.CaseId }))}`,
+            `https://wa.me/${e164Phone}?text=${encodeURIComponent(t("common.whatsapp.contactText", { caseName: fullCase.CaseName || fullCase.CaseId }))}`,
             { newTab: true }
         );
     }

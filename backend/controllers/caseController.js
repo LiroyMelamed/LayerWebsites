@@ -484,7 +484,7 @@ const addCase = async (req, res) => {
 
         await client.query('COMMIT');
 
-        // Notify all linked users
+        // ── Notify linked users (ONE message per user, regardless of stage) ──
         const linkedUsers = resolvedUserIds.length > 0
             ? (await pool.query(
                 `SELECT userid AS "UserId", name AS "Name", phonenumber AS "PhoneNumber" FROM users WHERE userid = ANY($1::int[])`,
@@ -494,14 +494,18 @@ const addCase = async (req, res) => {
 
         const domain = await getWebsiteDomain();
         const websiteUrl = `https://${domain}`;
+        const initStageNum = Number(CurrentStage) || 1;
+        const initStageName = (Descriptions && initStageNum > 0 && Descriptions[initStageNum - 1]?.Text) || '';
         const createdSmsTemplate = await getSetting('templates', 'CASE_CREATED_SMS',
             'היי {{recipientName}}, תיק {{caseName}} נוצר, היכנס לאתר למעקב. {{websiteUrl}}');
 
         for (const u of linkedUsers) {
             const recipientName = u.Name || CustomerName || '';
             const notificationTitle = "תיק חדש נוצר";
-            const notificationMessage = `תיק "${CaseName}" נוצר בהצלחה. היכנס לאתר או לאפליקציה למעקב.`;
-            const smsBody = renderTemplate(createdSmsTemplate, { recipientName, caseName: CaseName, websiteUrl });
+            const notificationMessage = initStageNum > 1 && initStageName
+                ? `תיק "${CaseName}" נוצר בהצלחה ונמצא בשלב - ${initStageName}. היכנס לאתר או לאפליקציה למעקב.`
+                : `תיק "${CaseName}" נוצר בהצלחה. היכנס לאתר או לאפליקציה למעקב.`;
+            const smsBody = renderTemplate(createdSmsTemplate, { recipientName, caseName: CaseName, stageName: initStageName, websiteUrl });
 
             await notifyRecipient({
                 recipientUserId: u.UserId,
@@ -528,12 +532,15 @@ const addCase = async (req, res) => {
 
         // Notify case manager if not already notified as a linked user
         const notifiedCreateIds = new Set(linkedUsers.map(u => u.UserId));
-        const mgrCreatedSms = renderTemplate(createdSmsTemplate, { recipientName: 'מנהל תיק', caseName: CaseName, websiteUrl });
+        const mgrCreatedSms = renderTemplate(createdSmsTemplate, { recipientName: 'מנהל תיק', caseName: CaseName, stageName: initStageName, websiteUrl });
+        const mgrCreatedMsg = initStageNum > 1 && initStageName
+            ? `תיק "${CaseName}" נוצר בהצלחה ונמצא בשלב - ${initStageName}. היכנס לאתר או לאפליקציה למעקב.`
+            : `תיק "${CaseName}" נוצר בהצלחה. היכנס לאתר או לאפליקציה למעקב.`;
         await notifyCaseManager({
             caseId,
             caseName: CaseName,
             title: 'תיק חדש נוצר',
-            message: `תיק "${CaseName}" נוצר בהצלחה. היכנס לאתר או לאפליקציה למעקב.`,
+            message: mgrCreatedMsg,
             smsBody: mgrCreatedSms,
             alreadyNotifiedUserIds: notifiedCreateIds,
         });
@@ -676,6 +683,7 @@ const updateCase = async (req, res) => {
 
         await client.query('COMMIT');
 
+        // ── Notify linked users (ONE message per user with current stage) ──
         const stageName = (Descriptions && CurrentStage && Descriptions[CurrentStage - 1]?.Text) || '';
         const notificationTitle = "עדכון תיק";
         const domain = await getWebsiteDomain();
@@ -859,7 +867,7 @@ const updateStage = async (req, res) => {
         }
 
         if (notificationType) {
-            // Fetch all linked users from case_users
+            // ── ONE notification per user with the current (final) stage ──
             const linkedUsersResult = await client.query(
                 `SELECT U.userid AS "UserId", U.name AS "Name", U.phonenumber AS "PhoneNumber"
                  FROM case_users CU JOIN users U ON CU.userid = U.userid
