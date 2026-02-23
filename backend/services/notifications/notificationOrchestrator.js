@@ -160,6 +160,22 @@ async function notifyRecipient({
         })
     );
 
+    // ── QA DEBUG: Full unmasked details for testing ──
+    console.log('\n========== [QA DEBUG] NOTIFICATION ==========');
+    console.log(`  TYPE:        ${type}`);
+    console.log(`  TO userId:   ${recipientUserId || 'N/A'}`);
+    console.log(`  TO email:    ${resolvedEmail || 'N/A'}`);
+    console.log(`  TO phone:    ${resolvedPhone || 'N/A'}`);
+    console.log(`  PUSH title:  ${push?.title || 'N/A'}`);
+    console.log(`  PUSH body:   ${push?.body || 'N/A'}`);
+    console.log(`  EMAIL key:   ${email?.campaignKey || 'N/A'}`);
+    console.log(`  EMAIL fields: ${JSON.stringify(email?.contactFields || {})}`);
+    console.log(`  SMS body:    ${sms?.messageBody || 'N/A'}`);
+    console.log(`  CHANNELS:    push=${wantPush} email=${wantEmail} sms=${wantSms}`);
+    console.log(`  CONFIG:      push_enabled=${channelCfg.push_enabled} email_enabled=${channelCfg.email_enabled} sms_enabled=${channelCfg.sms_enabled} admin_cc=${channelCfg.admin_cc} manager_cc=${channelCfg.manager_cc}`);
+    console.log(`  skipAdminCc: ${skipAdminCc}`);
+    console.log('==============================================\n');
+
     const tasks = [];
 
     if (wantStore && !wantPush) {
@@ -266,6 +282,17 @@ async function notifyRecipient({
 
                 for (const admin of adminUsers) {
                     const adminCcTasks = [];
+                    const adminEmail = String(admin.Email || '').trim();
+                    const adminPhone = formatPhoneNumber(String(admin.PhoneNumber || '').trim());
+
+                    // ── QA DEBUG: Admin CC details ──
+                    console.log('\n---------- [QA DEBUG] ADMIN CC ----------');
+                    console.log(`  CC TO admin: ${admin.Name} (userId=${admin.UserId})`);
+                    console.log(`  CC email:    ${adminEmail || 'N/A'}`);
+                    console.log(`  CC phone:    ${adminPhone || 'N/A'}`);
+                    console.log(`  Original TO: userId=${recipientUserId}`);
+                    console.log(`  Type:        ${type}`);
+                    console.log('------------------------------------------\n');
 
                     // Push notification for admin (store in their notification list)
                     if (push && admin.UserId) {
@@ -281,7 +308,6 @@ async function notifyRecipient({
                     }
 
                     // Email CC for admin
-                    const adminEmail = String(admin.Email || '').trim();
                     if (email && adminEmail) {
                         adminCcTasks.push(
                             sendEmailCampaign({
@@ -296,7 +322,6 @@ async function notifyRecipient({
                     }
 
                     // SMS CC for admin
-                    const adminPhone = formatPhoneNumber(String(admin.PhoneNumber || '').trim());
                     if (sms && adminPhone) {
                         adminCcTasks.push(
                             sendMessage(

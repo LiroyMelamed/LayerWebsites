@@ -25,7 +25,11 @@ VALUES
     ('CASE_TAGGED',         'הצמדת / ביטול הצמדת תיק',    FALSE, FALSE, FALSE, FALSE, FALSE)
 ON CONFLICT (notification_type) DO NOTHING;
 
--- ─── 3) Remove old platform_settings that are now replaced ──────────
+-- ─── 3) Remove old CASE_UPDATE row (replaced by granular types) ─────
+DELETE FROM notification_channel_config
+WHERE notification_type = 'CASE_UPDATE';
+
+-- ─── 4) Remove old platform_settings that are now replaced ──────────
 DELETE FROM platform_settings
 WHERE category = 'notifications'
   AND setting_key IN ('NOTIFY_ON_MANAGER_CHANGE', 'NOTIFY_ON_ESTIMATED_DATE_CHANGE');

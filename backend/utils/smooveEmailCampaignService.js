@@ -375,12 +375,14 @@ async function sendTransactionalSignInvite({ toEmail, contactFields, shouldSendR
     });
 }
 
-async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shouldSendRealEmail, logLabel }) {
+async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shouldSendRealEmail, logLabel, ccEmails } = {}) {
     const email = String(toEmail || '').trim();
 
     const fromName = String(process.env.SMOOVE_EMAIL_FROM_NAME || '').trim();
     const fromEmail = String(process.env.SMOOVE_EMAIL_FROM_EMAIL || '').trim();
-    const ccEmail = String(process.env.LICENSE_RENEWAL_REMINDERS_CEO_EMAIL || '').trim();
+    // CC list: optional array of email strings passed by callers (replaces old global CEO CC)
+    const ccList = (Array.isArray(ccEmails) ? ccEmails : []).map(e => String(e || '').trim()).filter(Boolean);
+    const ccEmail = ccList.length > 0 ? ccList.join(', ') : '';
 
     if (!shouldSendRealEmail) {
         console.log('--- EMAIL Transactional Simulation (Dev Mode) ---');
@@ -516,12 +518,14 @@ async function sendTransactionalCustomHtmlEmail({ toEmail, subject, htmlBody, lo
  * Requires env vars: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS
  * Falls back gracefully if SMTP is not configured.
  */
-async function sendEmailWithAttachments({ toEmail, subject, htmlBody, attachments, logLabel, fromEmail: fromEmailOverride } = {}) {
+async function sendEmailWithAttachments({ toEmail, subject, htmlBody, attachments, logLabel, fromEmail: fromEmailOverride, ccEmails } = {}) {
     const email = String(toEmail || '').trim();
     const fromName = String(process.env.SMOOVE_EMAIL_FROM_NAME || '').trim();
     // Always send FROM the SMTP account (noreply@) – cPanel rejects mismatched senders.
     const fromEmail = String(process.env.SMTP_FROM_EMAIL || process.env.SMOOVE_EMAIL_FROM_EMAIL || '').trim();
-    const ccEmail = String(process.env.LICENSE_RENEWAL_REMINDERS_CEO_EMAIL || '').trim();
+    // CC list: optional array of email strings passed by callers (replaces old global CEO CC)
+    const ccList = (Array.isArray(ccEmails) ? ccEmails : []).map(e => String(e || '').trim()).filter(Boolean);
+    const ccEmail = ccList.length > 0 ? ccList.join(', ') : '';
 
     const smtpHost = String(process.env.SMTP_HOST || '').trim();
     const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);

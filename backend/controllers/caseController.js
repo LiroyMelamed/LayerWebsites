@@ -13,7 +13,7 @@ const { renderTemplate } = require("../utils/templateRenderer");
  * but only if the manager is not already in the notified users set.
  * @param {string[]} changedTypes - Array of granular notification types that changed
  */
-async function notifyCaseManager({ caseId, caseName, title, message, smsBody, alreadyNotifiedUserIds, changedTypes }) {
+async function notifyCaseManager({ caseId, caseName, title, message, smsBody, alreadyNotifiedUserIds, changedTypes, notificationType: explicitType }) {
     try {
         // Check manager_cc across all changed types; skip if none enabled
         if (changedTypes && changedTypes.length > 0) {
@@ -33,7 +33,10 @@ async function notifyCaseManager({ caseId, caseName, title, message, smsBody, al
         if (!Number.isFinite(managerId) || managerId <= 0) return;
 
         // Skip if already notified as a linked user
-        if (alreadyNotifiedUserIds && alreadyNotifiedUserIds.has(managerId)) return;
+        if (alreadyNotifiedUserIds && alreadyNotifiedUserIds.has(managerId)) {
+            console.log(`\n[QA DEBUG] notifyCaseManager SKIP: manager ${managerId} already notified as linked user`);
+            return;
+        }
 
         // Skip if manager is a platform admin who already received admin CC
         // (the orchestrator sends admin CC to all platform admins when notifying clients)
@@ -47,10 +50,11 @@ async function notifyCaseManager({ caseId, caseName, title, message, smsBody, al
                     : [await getChannelConfig('CASE_STAGE_CHANGE')];
                 const adminCcEnabled = cfgs.some(c => c.admin_cc === true);
                 if (adminCcEnabled) {
-                    console.log(`[notifyCaseManager] Skipping manager ${managerId} — already CC'd as platform admin`);
+                    console.log(`\n[QA DEBUG] notifyCaseManager SKIP: manager ${managerId} is platform admin with admin_cc enabled — already CC'd`);
                     return;
                 }
             }
+            console.log(`\n[QA DEBUG] notifyCaseManager: manager ${managerId}, isPlatformAdmin=${isManagerPlatformAdmin}, changedTypes=${JSON.stringify(changedTypes)}`);
         } catch (e) {
             console.warn('[notifyCaseManager] Platform admin check failed (will still notify):', e?.message);
         }
@@ -67,10 +71,21 @@ async function notifyCaseManager({ caseId, caseName, title, message, smsBody, al
         const finalMessage = message || `תיק "${caseName}" עודכן. היכנס לאתר או לאפליקציה למעקב.`;
         const finalSms = smsBody || finalMessage;
 
+        console.log('\n---------- [QA DEBUG] CASE MANAGER NOTIFICATION ----------');
+        console.log(`  Manager:     ${recipientName} (userId=${mgr.UserId})`);
+        console.log(`  Phone:       ${mgr.PhoneNumber || 'N/A'}`);
+        console.log(`  Case:        ${caseName} (caseId=${caseId})`);
+        console.log(`  Title:       ${title}`);
+        console.log(`  Message:     ${finalMessage}`);
+        console.log(`  SMS:         ${finalSms}`);
+        console.log(`  ChangedTypes: ${JSON.stringify(changedTypes)}`);
+        console.log('-----------------------------------------------------------\n');
+
+        const mgrNotifType = explicitType || (changedTypes && changedTypes[0]) || 'CASE_UPDATE';
         await notifyRecipient({
             recipientUserId: mgr.UserId,
             recipientPhone: mgr.PhoneNumber,
-            notificationType: 'CASE_UPDATE',
+            notificationType: mgrNotifType,
             push: {
                 title: title || 'עדכון תיק',
                 body: finalMessage,
@@ -546,7 +561,7 @@ const addCase = async (req, res) => {
                 await notifyRecipient({
                     recipientUserId: u.UserId,
                     recipientPhone: u.PhoneNumber || PhoneNumber,
-                    notificationType: 'CASE_UPDATE',
+                    notificationType: 'CASE_CREATED',
                     push: {
                         title: notificationTitle,
                         body: notificationMessage,
@@ -648,8 +663,8 @@ const updateCase = async (req, res) => {
         const stageChanged = oldCase && String(oldCase.currentstage ?? '') !== String(CurrentStage ?? '');
         const closedChanged = oldCase && Boolean(oldCase.isclosed) !== Boolean(IsClosed);
         const nameChanged = oldCase && (oldCase.casename ?? '') !== (CaseName ?? '');
-        const typeChanged = oldCase && oldCase.casetypeid != null && CaseTypeId != null && Number(oldCase.casetypeid) !== Number(CaseTypeId);
-        const companyChanged = oldCase && (oldCase.companyname ?? '') !== (CompanyName ?? '');
+        const typeChanged = oldCase && CaseTypeId !== undefined && String(oldCase.casetypeid ?? '') !== String(CaseTypeId ?? '');
+        const companyChanged = oldCase && CompanyName !== undefined && (oldCase.companyname ?? '') !== (CompanyName ?? '');
 
         await client.query(
             `
@@ -754,6 +769,19 @@ const updateCase = async (req, res) => {
         if (licDateChanged) changedTypes.push('CASE_LICENSE_CHANGE');
         if (companyChanged) changedTypes.push('CASE_COMPANY_CHANGE');
 
+        console.log('\n========== [QA DEBUG] updateCase CHANGE DETECTION ==========');
+        console.log(`  caseId:         ${caseId}`);
+        console.log(`  nameChanged:    ${nameChanged} (old="${oldCase?.casename}" new="${CaseName}")`);
+        console.log(`  typeChanged:    ${typeChanged} (old="${oldCase?.casetypeid}" new="${CaseTypeId}")`);
+        console.log(`  stageChanged:   ${stageChanged} (old="${oldCase?.currentstage}" new="${CurrentStage}")`);
+        console.log(`  closedChanged:  ${closedChanged} (old=${oldCase?.isclosed} new=${IsClosed})`);
+        console.log(`  managerChanged: ${managerChanged} (old=${oldCase?.casemanagerid} new=${CaseManagerId})`);
+        console.log(`  estDateChanged: ${estDateChanged}`);
+        console.log(`  licDateChanged: ${licDateChanged}`);
+        console.log(`  companyChanged: ${companyChanged}`);
+        console.log(`  changedTypes:   ${JSON.stringify(changedTypes)}`);
+        console.log('=============================================================\n');
+
         let skipClientNotifications = true;
         if (changedTypes.length > 0) {
             const configs = await Promise.all(changedTypes.map(t => getChannelConfig(t)));
@@ -780,10 +808,11 @@ const updateCase = async (req, res) => {
                     : `תיק "${CaseName}" עודכן. היכנס לאתר או לאפליקציה למעקב.`;
                 const smsBody = renderTemplate(updatedSmsTemplate, { recipientName, caseName: CaseName, stageName, websiteUrl });
 
+                const primaryType = changedTypes[0] || 'CASE_UPDATE';
                 await notifyRecipient({
                     recipientUserId: u.UserId,
                     recipientPhone: u.PhoneNumber || PhoneNumber,
-                    notificationType: 'CASE_UPDATE',
+                    notificationType: primaryType,
                     push: {
                         title: notificationTitle,
                         body: notificationMessage,
@@ -802,8 +831,13 @@ const updateCase = async (req, res) => {
                     },
                 });
             }
+        } else if (changedTypes.length > 0) {
+            console.log(`[updateCase] Skipping client notifications for case ${caseId} — no client channels enabled for: ${changedTypes.join(', ')}`);
+        }
 
-            // Notify case manager if not already notified as a linked user
+        // Notify case manager regardless of client notification skip
+        // (manager_cc is independent of push/email/sms client channels)
+        if (changedTypes.length > 0) {
             const notifiedUpdateIds = new Set(linkedUsers.map(u => u.UserId));
             const mgrSms = renderTemplate(updatedSmsTemplate, { recipientName: 'מנהל תיק', caseName: CaseName, stageName, websiteUrl });
             await notifyCaseManager({
@@ -817,8 +851,6 @@ const updateCase = async (req, res) => {
                 alreadyNotifiedUserIds: notifiedUpdateIds,
                 changedTypes,
             });
-        } else {
-            console.log(`[updateCase] Skipping client notifications for case ${caseId} — only admin fields changed (manager/dates)`);
         }
 
         res.status(200).json({ message: "Case updated successfully" });
@@ -984,7 +1016,7 @@ const updateStage = async (req, res) => {
                     await notifyRecipient({
                         recipientUserId: u.UserId,
                         recipientPhone: u.PhoneNumber || PhoneNumber,
-                        notificationType: 'CASE_UPDATE',
+                        notificationType: channelType,
                         push: {
                             title,
                             body: message,
@@ -1320,7 +1352,7 @@ const linkWhatsappGroup = async (req, res) => {
                 const msg = `קבוצת וואטסאפ קושרה לתיק "${caseName}".`;
                 await notifyRecipient({
                     recipientUserId: u.UserId,
-                    notificationType: 'CASE_UPDATE',
+                    notificationType: 'CASE_TAGGED',
                     push: {
                         title: 'קבוצת וואטסאפ מקושרת',
                         body: msg,
@@ -1349,6 +1381,7 @@ const linkWhatsappGroup = async (req, res) => {
                 message: `קבוצת וואטסאפ קושרה לתיק "${caseName}".`,
                 smsBody: `קבוצת וואטסאפ קושרה לתיק "${caseName}".\n${String(normalized || '').trim()}`,
                 alreadyNotifiedUserIds: notifiedWaIds,
+                changedTypes: ['CASE_TAGGED'],
             });
         }
 

@@ -298,6 +298,10 @@
             cursor: pointer;
             accent-color: var(--lw-color-primary);
         }
+
+        p {
+            text-align: center;
+        }
     }
 
     &__channelToggleLabel {

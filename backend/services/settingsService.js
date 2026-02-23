@@ -261,7 +261,7 @@ async function getPlatformAdmins() {
     try {
         const { rows } = await pool.query(
             `SELECT pa.id, pa.user_id, pa.is_active, pa.added_at,
-                    u.name AS user_name, u.phonenumber AS phone, u.role
+                    u.name AS user_name, u.email, u.phonenumber AS phone, u.role
              FROM platform_admins pa
              JOIN users u ON u.userid = pa.user_id
              WHERE pa.is_active = TRUE

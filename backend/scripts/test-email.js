@@ -1,6 +1,6 @@
 /**
  * Quick one-off test: send a real email through the SMTP path
- * to verify Hebrew subject, CC to CEO, no replyTo.
+ * to verify Hebrew subject, no replyTo.
  *
  * Usage:  node scripts/test-email.js
  * Requires .env to be loaded (dotenv).
@@ -13,12 +13,10 @@ process.env.FORCE_SEND_EMAIL_ALL = 'true';
 const { sendTransactionalCustomHtmlEmail, sendEmailWithAttachments } = require('../utils/smooveEmailCampaignService');
 
 async function main() {
-    const testRecipient = process.env.LICENSE_RENEWAL_REMINDERS_CEO_EMAIL || 'Liav@MelamedLaw.co.il';
+    const testRecipient = 'Liav@MelamedLaw.co.il';
 
     console.log('\n=== Test 1: sendTransactionalEmail (SMTP path) ===');
     console.log('To:', testRecipient);
-    console.log('CC should be:', process.env.LICENSE_RENEWAL_REMINDERS_CEO_EMAIL);
-    console.log('(CC skipped when To === CC)\n');
 
     const result1 = await sendTransactionalCustomHtmlEmail({
         toEmail: testRecipient,

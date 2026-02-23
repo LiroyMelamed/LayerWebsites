@@ -1,6 +1,7 @@
 const pool = require('../../config/db');
 const sendAndStoreNotification = require('../../utils/sendAndStoreNotification');
 const { sendTransactionalCustomHtmlEmail } = require('../../utils/smooveEmailCampaignService');
+const { getPlatformAdmins } = require('../../services/settingsService');
 const { DEFAULTS } = require('./templates');
 const { renderTemplate, maskEmailForLog } = require('./render');
 const { parseDateOnly, toDateOnlyString, computeDueDate, timeLeftLabel } = require('./dateCalc');
@@ -433,10 +434,19 @@ async function sendManagerReminder14Days({ row, todayKey }) {
 }
 
 async function sendCeoReminder14Days({ row, todayKey }) {
-    const ceoEmail = String(process.env.LICENSE_RENEWAL_REMINDERS_CEO_EMAIL || '').trim();
-    const ceoName = String(process.env.LICENSE_RENEWAL_REMINDERS_CEO_NAME || '').trim();
+    // Send license renewal reminder to all active platform admins
+    let admins;
+    try {
+        admins = await getPlatformAdmins();
+    } catch (e) {
+        return { ok: false, error: 'platform_admins_lookup_failed' };
+    }
+    // Filter to admins with an email address
+    const recipients = admins
+        .filter(a => String(a.email || '').trim())
+        .map(a => ({ email: String(a.email).trim(), name: String(a.user_name || '').trim(), userId: Number(a.user_id) }));
 
-    if (!ceoEmail) return { ok: true, skipped: true, reason: 'no_ceo_email' };
+    if (recipients.length === 0) return { ok: true, skipped: true, reason: 'no_platform_admin_email' };
 
     const clientName = String(row.ClientName || '').trim();
     const caseTitle = String(row.CaseName || '').trim();
@@ -452,19 +462,20 @@ async function sendCeoReminder14Days({ row, todayKey }) {
 
     const actionUrl = `https://${String(process.env.WEBSITE_DOMAIN || '').trim() || 'client.melamedlaw.co.il'}`;
 
-    const fields = {
-        recipient_name: ceoName || 'שלום',
-        client_name: clientName,
-        case_title: caseTitle,
-        expiry_date: formatDateHebrew(expiryKey),
-        time_left: 'שבועיים',
-        action_url: actionUrl,
-    };
+    const buildHtml = (recipientName) => {
+        const fields = {
+            recipient_name: recipientName || 'שלום',
+            client_name: clientName,
+            case_title: caseTitle,
+            expiry_date: formatDateHebrew(expiryKey),
+            time_left: 'שבועיים',
+            action_url: actionUrl,
+        };
 
-    const subject = renderTemplate(DEFAULTS.manager.emailSubject, fields);
-    const bodyInner = renderTemplate(DEFAULTS.manager.emailBody, fields);
+        const subject = renderTemplate(DEFAULTS.manager.emailSubject, fields);
+        const bodyInner = renderTemplate(DEFAULTS.manager.emailBody, fields);
 
-    const htmlBody = `<!doctype html><html lang="he" dir="rtl"><body style="margin:0;background:#EDF2F7;">
+        const htmlBody = `<!doctype html><html lang="he" dir="rtl"><body style="margin:0;background:#EDF2F7;">
       <div style="max-width:640px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.08);">
         <div style="background:#2A4365;padding:20px 24px;text-align:center;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#fff;font-size:18px;font-weight:700;">תזכורת לעדכון רישיון (לקוח)</div>
         <div style="padding:22px 24px;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#2D3748;line-height:1.8;font-size:15px;">${bodyInner}</div>
@@ -472,16 +483,18 @@ async function sendCeoReminder14Days({ row, todayKey }) {
       </div>
     </body></html>`;
 
+        return { subject, htmlBody };
+    };
+
     const channels = { email: false };
 
     if (isDryRunEnabled()) {
-        const dryChannels = { ...channels, dryRun: true, wouldSend: { email: Boolean(ceoEmail) } };
+        const dryChannels = { ...channels, dryRun: true, wouldSend: { email: true }, adminCount: recipients.length };
         console.log(
             JSON.stringify({
                 event: 'license_renewal_ceo_dry_run',
                 caseId: Number(row.CaseId),
-                recipientUserId: 0,
-                email: maskEmailForLog(ceoEmail),
+                recipients: recipients.map(r => ({ userId: r.userId, email: maskEmailForLog(r.email) })),
                 channels: dryChannels,
             })
         );
@@ -491,12 +504,12 @@ async function sendCeoReminder14Days({ row, todayKey }) {
     const gate = await tryAcquireReminderAuditGate({
         caseId: row.CaseId,
         recipientUserId: 0,
-        recipientKind: 'ceo',
+        recipientKind: 'platform_admin',
         reminderKey: 'D14',
         dueDateKey: todayKey,
         expiryDateKey: expiryKey,
         extraMetadata: {
-            ceoEmail: maskEmailForLog(ceoEmail),
+            adminCount: recipients.length,
         },
     });
 
@@ -504,25 +517,27 @@ async function sendCeoReminder14Days({ row, todayKey }) {
     if (!gate.acquired) return { ok: true, skipped: true, reason: 'already_handled' };
 
     try {
-        await sendTransactionalCustomHtmlEmail({
-            toEmail: ceoEmail,
-            subject,
-            htmlBody,
-            logLabel: 'LICENSE_RENEWAL_CEO_D14',
-        });
+        for (const recipient of recipients) {
+            const { subject, htmlBody } = buildHtml(recipient.name);
+            await sendTransactionalCustomHtmlEmail({
+                toEmail: recipient.email,
+                subject,
+                htmlBody,
+                logLabel: 'LICENSE_RENEWAL_ADMIN_D14',
+            });
+
+            console.log(
+                JSON.stringify({
+                    event: 'license_renewal_admin_sent',
+                    caseId: Number(row.CaseId),
+                    recipientUserId: recipient.userId,
+                    email: maskEmailForLog(recipient.email),
+                })
+            );
+        }
         channels.email = true;
 
-        console.log(
-            JSON.stringify({
-                event: 'license_renewal_ceo_sent',
-                caseId: Number(row.CaseId),
-                recipientUserId: 0,
-                email: maskEmailForLog(ceoEmail),
-                channels,
-            })
-        );
-
-        return { ok: true, channels };
+        return { ok: true, channels, adminCount: recipients.length };
     } catch (e) {
         return { ok: false, error: e?.message || 'send_failed' };
     }
