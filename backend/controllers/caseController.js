@@ -5,7 +5,7 @@ const sendAndStoreNotification = require("../utils/sendAndStoreNotification"); /
 const { notifyRecipient } = require("../services/notifications/notificationOrchestrator");
 const { requireInt } = require("../utils/paramValidation");
 const { getPagination } = require("../utils/pagination");
-const { getSetting } = require("../services/settingsService");
+const { getSetting, getChannelConfig } = require("../services/settingsService");
 const { renderTemplate } = require("../utils/templateRenderer");
 
 /**
@@ -14,6 +14,10 @@ const { renderTemplate } = require("../utils/templateRenderer");
  */
 async function notifyCaseManager({ caseId, caseName, title, message, smsBody, alreadyNotifiedUserIds }) {
     try {
+        // Check if manager_cc is enabled for CASE_UPDATE notifications
+        const channelCfg = await getChannelConfig('CASE_UPDATE');
+        if (channelCfg.manager_cc === false) return;
+
         const caseRes = await pool.query(
             'SELECT casemanagerid FROM cases WHERE caseid = $1',
             [caseId]

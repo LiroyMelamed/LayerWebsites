@@ -126,11 +126,19 @@ function ChannelRow({ channel, onToggle }) {
                     />
                 </SimpleContainer>
                 <SimpleContainer className="lw-platformSettings__channelToggle">
-                    <Text12 className="lw-platformSettings__channelToggleLabel">מנהל</Text12>
+                    <Text12 className="lw-platformSettings__channelToggleLabel">מנהל מערכת</Text12>
                     <input
                         type="checkbox"
                         checked={channel.admin_cc}
                         onChange={() => onToggle(channel.notification_type, "adminCc", !channel.admin_cc)}
+                    />
+                </SimpleContainer>
+                <SimpleContainer className="lw-platformSettings__channelToggle">
+                    <Text12 className="lw-platformSettings__channelToggleLabel">מנהל תיק</Text12>
+                    <input
+                        type="checkbox"
+                        checked={channel.manager_cc}
+                        onChange={() => onToggle(channel.notification_type, "managerCc", !channel.manager_cc)}
                     />
                 </SimpleContainer>
             </SimpleContainer>
@@ -219,6 +227,7 @@ export default function PlatformSettingsScreen() {
             emailEnabled: 'email_enabled',
             smsEnabled: 'sms_enabled',
             adminCc: 'admin_cc',
+            managerCc: 'manager_cc',
         };
         const dbField = fieldMap[field] || field;
         setLocalChannels(prev => prev?.map(ch =>
@@ -340,7 +349,10 @@ export default function PlatformSettingsScreen() {
                                     <Text12>SMS</Text12>
                                 </SimpleContainer>
                                 <SimpleContainer className="lw-platformSettings__channelToggle">
-                                    <Text12>העתק למנהל</Text12>
+                                    <Text12>העתק למנהל מערכת</Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__channelToggle">
+                                    <Text12>העתק למנהל תיק</Text12>
                                 </SimpleContainer>
                             </SimpleContainer>
                         </SimpleContainer>

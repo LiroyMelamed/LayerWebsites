@@ -101,13 +101,14 @@ const getNotificationChannels = async (req, res) => {
 const updateNotificationChannel = async (req, res) => {
     try {
         const { type } = req.params;
-        const { pushEnabled, emailEnabled, smsEnabled, adminCc } = req.body;
+        const { pushEnabled, emailEnabled, smsEnabled, adminCc, managerCc } = req.body;
 
         const result = await settingsService.updateNotificationChannel(type, {
             pushEnabled,
             emailEnabled,
             smsEnabled,
             adminCc,
+            managerCc,
             updatedBy: req.user?.UserId,
         });
 

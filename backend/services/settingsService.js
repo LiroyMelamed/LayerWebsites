@@ -190,7 +190,9 @@ async function getNotificationChannels() {
     try {
         const { rows } = await pool.query(
             `SELECT id, notification_type, label, push_enabled, email_enabled, sms_enabled,
-                    COALESCE(admin_cc, FALSE) AS admin_cc, updated_at
+                    COALESCE(admin_cc, FALSE) AS admin_cc,
+                    COALESCE(manager_cc, TRUE) AS manager_cc,
+                    updated_at
              FROM notification_channel_config
              ORDER BY notification_type`
         );
@@ -221,10 +223,12 @@ async function isAdminCcEnabled(notificationType) {
  * Returns { push_enabled, email_enabled, sms_enabled, admin_cc } or defaults (all true) if not found.
  */
 async function getChannelConfig(notificationType) {
-    const defaults = { push_enabled: true, email_enabled: true, sms_enabled: true, admin_cc: false };
+    const defaults = { push_enabled: true, email_enabled: true, sms_enabled: true, admin_cc: false, manager_cc: true };
     try {
         const { rows } = await pool.query(
-            `SELECT push_enabled, email_enabled, sms_enabled, COALESCE(admin_cc, FALSE) AS admin_cc
+            `SELECT push_enabled, email_enabled, sms_enabled,
+                    COALESCE(admin_cc, FALSE) AS admin_cc,
+                    COALESCE(manager_cc, TRUE) AS manager_cc
              FROM notification_channel_config WHERE notification_type = $1`,
             [notificationType]
         );
@@ -234,18 +238,19 @@ async function getChannelConfig(notificationType) {
     }
 }
 
-async function updateNotificationChannel(notificationType, { pushEnabled, emailEnabled, smsEnabled, adminCc, updatedBy }) {
+async function updateNotificationChannel(notificationType, { pushEnabled, emailEnabled, smsEnabled, adminCc, managerCc, updatedBy }) {
     const { rows } = await pool.query(
         `UPDATE notification_channel_config
          SET push_enabled  = COALESCE($2, push_enabled),
              email_enabled = COALESCE($3, email_enabled),
              sms_enabled   = COALESCE($4, sms_enabled),
              admin_cc      = COALESCE($5, admin_cc),
-             updated_by    = $6,
+             manager_cc    = COALESCE($6, manager_cc),
+             updated_by    = $7,
              updated_at    = NOW()
          WHERE notification_type = $1
          RETURNING *`,
-        [notificationType, pushEnabled, emailEnabled, smsEnabled, adminCc, updatedBy]
+        [notificationType, pushEnabled, emailEnabled, smsEnabled, adminCc, managerCc, updatedBy]
     );
     return rows[0] || null;
 }
