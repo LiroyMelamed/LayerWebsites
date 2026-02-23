@@ -85,7 +85,7 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
     const { isPerforming: isPerformingTagCase, performRequest: tagCase } = useHttpRequest(casesApi.tagCaseById);
     const { openPopup, closePopup } = usePopup();
 
-    const [isStagesOpen, setIsStagesOpen] = useState(false);
+    const [isStagesOpen, setIsStagesOpen] = useState(true);
     const [IsTagged, setIsTagged] = useState(fullCase.IsTagged);
     const [WhatsappLink, setWhatsappLink] = useState(fullCase.WhatsappGroupLink);
 

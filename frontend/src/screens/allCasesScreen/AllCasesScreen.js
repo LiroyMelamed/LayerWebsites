@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import casesApi, { casesTypeApi } from "../../api/casesApi";
 import { images } from "../../assets/images/images";
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
@@ -26,10 +27,12 @@ export const AllCasesScreenName = "/AllCasesScreen";
 
 export default function AllCasesScreen() {
     const { t } = useTranslation();
+    const [searchParams] = useSearchParams();
+    const initialStatus = searchParams.get('status') === 'closed' ? 'closed' : 'open';
     const { openPopup, closePopup } = usePopup();
     const { isSmallScreen } = useScreenSize();
     const [selectedCaseType, setSelectedCaseType] = useState(null);
-    const [selectedStatus, setSelectedStatus] = useState("open");
+    const [selectedStatus, setSelectedStatus] = useState(initialStatus);
     const [selectedClient, setSelectedClient] = useState(null);
     const [selectedManager, setSelectedManager] = useState(null);
     const [filteredCases, setFilteredCases] = useState(null);
@@ -38,12 +41,17 @@ export default function AllCasesScreen() {
     const { result: allCases, isPerforming: isPerformingAllCases, performRequest: reperformAfterSave } = useAutoHttpRequest(casesApi.getAllCases);
     const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getCaseByName, null, () => { });
 
-    // Apply default "open" filter when data loads
+    const [initialFilterApplied, setInitialFilterApplied] = useState(false);
     useEffect(() => {
-        if (allCases && selectedStatus === "open" && filteredCases === null) {
-            setFilteredCases(allCases.filter(item => item.IsClosed === false));
+        if (allCases?.length > 0 && !initialFilterApplied) {
+            setInitialFilterApplied(true);
+            if (selectedStatus === "open") {
+                setFilteredCases(allCases.filter(item => item.IsClosed === false));
+            } else if (selectedStatus === "closed") {
+                setFilteredCases(allCases.filter(item => item.IsClosed === true));
+            }
         }
-    }, [allCases]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [allCases, initialFilterApplied, selectedStatus]);
 
     const handleSearch = (query) => {
         SearchCaseByName(query);
@@ -61,6 +69,8 @@ export default function AllCasesScreen() {
 
     const applyFilters = (typeFilter, statusFilter, clientFilter, managerFilter) => {
         let filtered = allCases;
+        console.log("Applying filters:", { typeFilter, statusFilter, clientFilter, managerFilter });
+
 
         if (typeFilter) {
             filtered = filtered.filter(item => item.CaseTypeName === typeFilter);
@@ -155,7 +165,7 @@ export default function AllCasesScreen() {
                             { value: 'closed', label: t('cases.closedCases') },
                             { value: 'open', label: t('cases.openCases') },
                         ]}
-                        defaultValue="open"
+                        defaultValue={initialStatus}
                         className="lw-allCasesScreen__choose lw-allCasesScreen__choose--openClose"
                         OnPressChoiceFunction={handleFilterByStatus}
                     />

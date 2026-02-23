@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { images } from "../../../assets/images/images";
 import SimpleCard from "../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
@@ -15,26 +16,28 @@ import { useTranslation } from "react-i18next";
 import "./ClientsCard.scss";
 import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
 
-export default function ClientsCard({ rePerformRequest, customerList, style: _style }) {
+const ClientsCard = forwardRef(({ rePerformRequest, customerList, style: _style }, ref) => {
     const { openPopup, closePopup } = usePopup();
     const { t } = useTranslation();
 
     if (customerList?.length === 0 || !customerList) {
         return (
-            <DefaultState
-                content={t("customers.emptyList")}
-                imageStyle={{ height: 156 }}
-                imageSrc={images.Defaults.SearchingClient}
-                className="lw-clientsCard__empty"
-                imageClassName="lw-clientsCard__emptyImage"
-                actionButton={t("customers.addCustomer")}
-                actionButtonPressFunction={() => openPopup(<ClientPopup closePopUpFunction={closePopup} rePerformRequest={rePerformRequest} />)}
-            />
+            <SimpleCard className="lw-clientsCard__empty--wrap">
+                <DefaultState
+                    content={t("customers.emptyList")}
+                    imageStyle={{ height: 156 }}
+                    imageSrc={images.Defaults.SearchingClient}
+                    className="lw-clientsCard__empty"
+                    imageClassName="lw-clientsCard__emptyImage"
+                    actionButton={t("customers.addCustomer")}
+                    actionButtonPressFunction={() => openPopup(<ClientPopup closePopUpFunction={closePopup} rePerformRequest={rePerformRequest} />)}
+                />
+            </SimpleCard>
         )
     }
 
     return (
-        <SimpleCard className="lw-clientsCard">
+        <SimpleCard className="lw-clientsCard" ref={ref} style={_style}>
             <SimpleContainer className="lw-clientsCard__headerRow">
                 <TextBold14 className="lw-clientsCard__headerCell">{t("customers.companyName")}</TextBold14>
 
@@ -82,4 +85,6 @@ export default function ClientsCard({ rePerformRequest, customerList, style: _st
             </SimpleContainer>
         </SimpleCard>
     );
-}
+});
+
+export default ClientsCard;

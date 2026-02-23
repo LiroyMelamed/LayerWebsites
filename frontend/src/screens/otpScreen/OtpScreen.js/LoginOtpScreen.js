@@ -89,6 +89,9 @@ export default function LoginOtpScreen() {
         localStorage.setItem("token", data.token);
         localStorage.setItem("role", data.role);
         localStorage.setItem("isPlatformAdmin", data.isPlatformAdmin ? "true" : "false");
+        if (data.refreshToken) {
+            localStorage.setItem("refreshToken", data.refreshToken);
+        }
 
         if (data.role == AppRoles.Admin) navigate(AdminStackName + MainScreenName, { replace: true })
         else navigate(ClientStackName + ClientMainScreenName, { replace: true })

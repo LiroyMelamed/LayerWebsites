@@ -155,7 +155,7 @@ const requestOtp = async (req, res) => {
             [phoneNumber, hashOtp(otp), expiry, userId]
         );
 
-        if (FORCE_SEND_SMS_ALL || !(isDemoPhone || isDevSuperUser)) {
+        if (FORCE_SEND_SMS_ALL || !(isDemoPhone)) {
             try {
                 sendMessage(buildOtpSmsBodyForRequest(req, otp), formatedPhoneNumber);
             } catch (e) {
@@ -479,7 +479,7 @@ const register = async (req, res) => {
             [phoneNumber, hashOtp(otp), expiry, userId]
         );
 
-        if (FORCE_SEND_SMS_ALL || !(isDemoPhone || isDevSuperUser)) {
+        if (FORCE_SEND_SMS_ALL || !(isDemoPhone)) {
             try {
                 sendMessage(buildOtpSmsBodyForRequest(req, otp), formatedPhoneNumber);
             } catch (e) {

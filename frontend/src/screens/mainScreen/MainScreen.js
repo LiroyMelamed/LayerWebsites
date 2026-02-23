@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import SimpleScreen from '../../components/simpleComponents/SimpleScreen';
 import { useScreenSize } from '../../providers/ScreenSizeProvider';
 import useAutoHttpRequest from '../../hooks/useAutoHttpRequest';
@@ -26,6 +27,7 @@ export default function MainScreen() {
     const navigate = useNavigate()
     const { isSmallScreen } = useScreenSize();
     const { result: mainScreenData, isPerforming: isPerformingMainScreenData, performRequest } = useAutoHttpRequest(casesApi.getMainScreenData);
+    const clientsCardRef = useRef(null);
 
     if (isPerformingMainScreenData) {
         return <SimpleLoader />;
@@ -45,21 +47,22 @@ export default function MainScreen() {
                         centerText={`${mainScreenData?.AllCasesData?.length}`}
                         subText={t("mainScreen.totalCases")}
                         className="lw-mainScreen__comparisonCard"
+                        onPress={() => { navigate(AdminStackName + AllCasesScreenName + '?status=open') }}
                     />
                 </SimpleContainer>
 
                 <SimpleContainer className="lw-mainScreen__cards">
                     <SimpleContainer className="lw-mainScreen__row">
                         <ShowDataCard
-                            numberText={mainScreenData?.AllCasesData?.length}
-                            title={t("mainScreen.totalCases")}
-                            optionalOnClick={() => { navigate(AdminStackName + AllCasesScreenName) }}
+                            numberText={mainScreenData?.AllCasesData?.length - mainScreenData?.NumberOfClosedCases}
+                            title={t("cases.openCases")}
+                            optionalOnClick={() => { navigate(AdminStackName + AllCasesScreenName + '?status=open') }}
                         />
 
                         <ShowDataCard
                             numberText={mainScreenData?.NumberOfClosedCases}
                             title={t("cases.closedCases")}
-                            optionalOnClick={() => { navigate(AdminStackName + AllCasesScreenName) }}
+                            optionalOnClick={() => { navigate(AdminStackName + AllCasesScreenName + '?status=closed') }}
                         />
                     </SimpleContainer>
 
@@ -72,12 +75,14 @@ export default function MainScreen() {
                         <ShowDataCard
                             numberText={mainScreenData?.ActiveCustomers?.length}
                             title={t("mainScreen.activeCustomers")}
+                            optionalOnClick={() => { clientsCardRef.current?.scrollIntoView({ behavior: 'smooth' }) }}
                         />
                     </SimpleContainer>
 
                 </SimpleContainer>
 
                 <ClientsCard
+                    ref={clientsCardRef}
                     customerList={mainScreenData?.AllCustomersData}
                     rePerformRequest={performRequest}
                 />

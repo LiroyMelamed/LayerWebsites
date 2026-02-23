@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 
 import "./ComprasionDataCard.scss";
 
-export default function ComparisonDataCard({ title, data, colors, labels, centerText, subText, style: _style, className }) {
+export default function ComparisonDataCard({ title, data, colors, labels, centerText, subText, style: _style, className, onPress }) {
     const { isSmallScreen } = useScreenSize();
     const { t } = useTranslation();
 
@@ -23,7 +23,7 @@ export default function ComparisonDataCard({ title, data, colors, labels, center
     }
 
     return (
-        <SimpleCard className={["lw-comparisonDataCard", className].filter(Boolean).join(' ')}>
+        <SimpleCard className={["lw-comparisonDataCard", onPress ? "lw-comparisonDataCard--clickable" : "", className].filter(Boolean).join(' ')} onPress={onPress}>
             <TextBold14>{title}</TextBold14>
 
             <DoughnutChartWithDetails

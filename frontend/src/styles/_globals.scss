@@ -132,7 +132,7 @@ body.lw-fromApp {
 /* Bottom padding lives on the scroll view so content clears the native
    bottom-nav center button (~45 px above the bar). */
 body.lw-fromApp .lw-simpleScrollView {
-  padding-bottom: 5rem;
+  // padding-bottom: 5rem;
 }
 
 /* Prevent browser pull-to-refresh/overscroll bounce where needed (e.g., signing flows) */

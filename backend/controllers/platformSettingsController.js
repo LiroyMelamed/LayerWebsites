@@ -231,10 +231,8 @@ const getPublicSettings = async (_req, res) => {
         const result = {};
         for (const compoundKey of PUBLIC_SETTINGS_KEYS) {
             const [category, key] = compoundKey.split(':');
-            const cat = all.find(
-                (s) => s.category === category && s.setting_key === key,
-            );
-            if (cat) result[key] = cat.setting_value;
+            const entry = all?.[category]?.[key];
+            if (entry) result[key] = entry.effectiveValue ?? entry.value;
         }
         return res.json(result);
     } catch (err) {
