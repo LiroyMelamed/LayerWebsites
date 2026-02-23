@@ -80,9 +80,12 @@ function WhatsappGroupLinkModal({
     );
 }
 
-export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCase, isClient }) {
+export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCase, isClient, rePerformFunction }) {
     const { t } = useTranslation();
-    const { isPerforming: isPerformingTagCase, performRequest: tagCase } = useHttpRequest(casesApi.tagCaseById);
+    const { isPerforming: isPerformingTagCase, performRequest: tagCase } = useHttpRequest(
+        casesApi.tagCaseById,
+        () => { rePerformFunction?.(); }
+    );
     const { openPopup, closePopup } = usePopup();
 
     const [isStagesOpen, setIsStagesOpen] = useState(true);

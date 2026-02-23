@@ -32,7 +32,10 @@ export default function CaseMenuItem({
     style
 }) {
     const { t } = useTranslation();
-    const { isPerforming: isPerformingSetCase, performRequest: setCase } = useHttpRequest(casesApi.updateStageById);
+    const { isPerforming: isPerformingSetCase, performRequest: setCase } = useHttpRequest(
+        casesApi.updateStageById,
+        () => { rePerformFunction?.(); }
+    );
     const { openPopup, closePopup } = usePopup();
     const [fullCaseListener, setFullCaseListener] = useState(fullCase);
     const [isOpen, setIsOpen] = useState(false);
@@ -129,6 +132,7 @@ export default function CaseMenuItem({
                 updateStage={() => updateStage()}
                 editCase={() => openPopup(<CaseFullView caseDetails={fullCaseListener} rePerformRequest={rePerformFunction} closePopUpFunction={closePopup} />)}
                 isClient={isClient}
+                rePerformFunction={rePerformFunction}
             />
 
         </SimpleContainer>
