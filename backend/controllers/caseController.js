@@ -11,12 +11,19 @@ const { renderTemplate } = require("../utils/templateRenderer");
 /**
  * Notify the case manager (casemanagerid) about a case change,
  * but only if the manager is not already in the notified users set.
+ * @param {string[]} changedTypes - Array of granular notification types that changed
  */
-async function notifyCaseManager({ caseId, caseName, title, message, smsBody, alreadyNotifiedUserIds }) {
+async function notifyCaseManager({ caseId, caseName, title, message, smsBody, alreadyNotifiedUserIds, changedTypes }) {
     try {
-        // Check if manager_cc is enabled for CASE_UPDATE notifications
-        const channelCfg = await getChannelConfig('CASE_UPDATE');
-        if (channelCfg.manager_cc === false) return;
+        // Check manager_cc across all changed types; skip if none enabled
+        if (changedTypes && changedTypes.length > 0) {
+            const configs = await Promise.all(changedTypes.map(t => getChannelConfig(t)));
+            if (!configs.some(c => c.manager_cc === true)) return;
+        } else {
+            // Fallback: check CASE_STAGE_CHANGE
+            const channelCfg = await getChannelConfig('CASE_STAGE_CHANGE');
+            if (channelCfg.manager_cc === false) return;
+        }
 
         const caseRes = await pool.query(
             'SELECT casemanagerid FROM cases WHERE caseid = $1',
@@ -489,6 +496,9 @@ const addCase = async (req, res) => {
         await client.query('COMMIT');
 
         // ── Notify linked users (ONE message per user, regardless of stage) ──
+        const createdCfg = await getChannelConfig('CASE_CREATED');
+        const shouldNotifyCreated = createdCfg.push_enabled || createdCfg.email_enabled || createdCfg.sms_enabled;
+
         const linkedUsers = resolvedUserIds.length > 0
             ? (await pool.query(
                 `SELECT userid AS "UserId", name AS "Name", phonenumber AS "PhoneNumber" FROM users WHERE userid = ANY($1::int[])`,
@@ -503,35 +513,37 @@ const addCase = async (req, res) => {
         const createdSmsTemplate = await getSetting('templates', 'CASE_CREATED_SMS',
             'היי {{recipientName}}, תיק {{caseName}} נוצר, היכנס לאתר למעקב. {{websiteUrl}}');
 
-        for (const u of linkedUsers) {
-            const recipientName = u.Name || CustomerName || '';
-            const notificationTitle = "תיק חדש נוצר";
-            const notificationMessage = initStageNum > 1 && initStageName
-                ? `תיק "${CaseName}" נוצר בהצלחה ונמצא בשלב - ${initStageName}. היכנס לאתר או לאפליקציה למעקב.`
-                : `תיק "${CaseName}" נוצר בהצלחה. היכנס לאתר או לאפליקציה למעקב.`;
-            const smsBody = renderTemplate(createdSmsTemplate, { recipientName, caseName: CaseName, stageName: initStageName, websiteUrl });
+        if (shouldNotifyCreated) {
+            for (const u of linkedUsers) {
+                const recipientName = u.Name || CustomerName || '';
+                const notificationTitle = "תיק חדש נוצר";
+                const notificationMessage = initStageNum > 1 && initStageName
+                    ? `תיק "${CaseName}" נוצר בהצלחה ונמצא בשלב - ${initStageName}. היכנס לאתר או לאפליקציה למעקב.`
+                    : `תיק "${CaseName}" נוצר בהצלחה. היכנס לאתר או לאפליקציה למעקב.`;
+                const smsBody = renderTemplate(createdSmsTemplate, { recipientName, caseName: CaseName, stageName: initStageName, websiteUrl });
 
-            await notifyRecipient({
-                recipientUserId: u.UserId,
-                recipientPhone: u.PhoneNumber || PhoneNumber,
-                notificationType: 'CASE_UPDATE',
-                push: {
-                    title: notificationTitle,
-                    body: notificationMessage,
-                    data: { caseId: String(caseId) },
-                },
-                email: {
-                    campaignKey: 'CASE_UPDATE',
-                    contactFields: {
-                        recipient_name: String(recipientName).trim(),
-                        case_title: String(CaseName || '').trim(),
-                        action_url: websiteUrl,
+                await notifyRecipient({
+                    recipientUserId: u.UserId,
+                    recipientPhone: u.PhoneNumber || PhoneNumber,
+                    notificationType: 'CASE_UPDATE',
+                    push: {
+                        title: notificationTitle,
+                        body: notificationMessage,
+                        data: { caseId: String(caseId) },
                     },
-                },
-                sms: {
-                    messageBody: smsBody,
-                },
-            });
+                    email: {
+                        campaignKey: 'CASE_UPDATE',
+                        contactFields: {
+                            recipient_name: String(recipientName).trim(),
+                            case_title: String(CaseName || '').trim(),
+                            action_url: websiteUrl,
+                        },
+                    },
+                    sms: {
+                        messageBody: smsBody,
+                    },
+                });
+            }
         }
 
         // Notify case manager if not already notified as a linked user
@@ -547,6 +559,7 @@ const addCase = async (req, res) => {
             message: mgrCreatedMsg,
             smsBody: mgrCreatedSms,
             alreadyNotifiedUserIds: notifiedCreateIds,
+            changedTypes: ['CASE_CREATED'],
         });
 
         res.status(201).json({ message: "Case created successfully", caseId });
@@ -614,7 +627,8 @@ const updateCase = async (req, res) => {
         const stageChanged = oldCase && String(oldCase.currentstage ?? '') !== String(CurrentStage ?? '');
         const closedChanged = oldCase && Boolean(oldCase.isclosed) !== Boolean(IsClosed);
         const nameChanged = oldCase && (oldCase.casename ?? '') !== (CaseName ?? '');
-        const substantiveChange = stageChanged || closedChanged || nameChanged;
+        const typeChanged = oldCase && oldCase.casetypeid != null && CaseTypeId != null && Number(oldCase.casetypeid) !== Number(CaseTypeId);
+        const companyChanged = oldCase && (oldCase.companyname ?? '') !== (CompanyName ?? '');
 
         await client.query(
             `
@@ -708,19 +722,21 @@ const updateCase = async (req, res) => {
         const domain = await getWebsiteDomain();
         const websiteUrl = `https://${domain}`;
 
-        // ── Notification suppression for manager/date-only changes ──
-        // Respect platform settings for manager and date change notifications.
-        const notifyOnManagerChange = await getSetting('notifications', 'NOTIFY_ON_MANAGER_CHANGE', false);
-        const notifyOnEstDateChange = await getSetting('notifications', 'NOTIFY_ON_ESTIMATED_DATE_CHANGE', false);
+        // ── Per-field notification gating via channel config ──
+        const changedTypes = [];
+        if (nameChanged) changedTypes.push('CASE_NAME_CHANGE');
+        if (typeChanged) changedTypes.push('CASE_TYPE_CHANGE');
+        if (stageChanged) changedTypes.push('CASE_STAGE_CHANGE');
+        if (closedChanged) changedTypes.push(IsClosed ? 'CASE_CLOSED' : 'CASE_REOPENED');
+        if (managerChanged) changedTypes.push('CASE_MANAGER_CHANGE');
+        if (estDateChanged) changedTypes.push('CASE_EST_DATE_CHANGE');
+        if (licDateChanged) changedTypes.push('CASE_LICENSE_CHANGE');
+        if (companyChanged) changedTypes.push('CASE_COMPANY_CHANGE');
 
-        // If a substantive field changed (stage, closed, name), always notify.
-        // Otherwise, only notify if the relevant setting is enabled.
-        let skipClientNotifications = false;
-        if (!substantiveChange) {
-            const managerWantsNotify = managerChanged && notifyOnManagerChange;
-            const estDateWantsNotify = estDateChanged && notifyOnEstDateChange;
-            // Skip if none of the admin-field changes have their setting enabled
-            skipClientNotifications = !managerWantsNotify && !estDateWantsNotify;
+        let skipClientNotifications = true;
+        if (changedTypes.length > 0) {
+            const configs = await Promise.all(changedTypes.map(t => getChannelConfig(t)));
+            skipClientNotifications = !configs.some(c => c.push_enabled || c.email_enabled || c.sms_enabled);
         }
 
         // Load SMS template
@@ -778,6 +794,7 @@ const updateCase = async (req, res) => {
                     : `תיק "${CaseName}" עודכן. היכנס לאתר או לאפליקציה למעקב.`,
                 smsBody: mgrSms,
                 alreadyNotifiedUserIds: notifiedUpdateIds,
+                changedTypes,
             });
         } else {
             console.log(`[updateCase] Skipping client notifications for case ${caseId} — only admin fields changed (manager/dates)`);
@@ -878,18 +895,25 @@ const updateStage = async (req, res) => {
 
         // Only notify if stage actually changed
         let notificationType = null;
+        let channelType = null;
         if (CurrentStage !== currentStageValue) {
             notificationType = 'stage_changed';
+            channelType = 'CASE_STAGE_CHANGE';
         }
         if (IsClosed && !currentlyClosed) {
             notificationType = 'case_closed';
+            channelType = 'CASE_CLOSED';
         }
         // Notify when reopening a closed case
         if (!IsClosed && currentlyClosed) {
             notificationType = 'case_reopened';
+            channelType = 'CASE_REOPENED';
         }
 
         if (notificationType) {
+            // Check channel config for this specific change type
+            const channelCfg = await getChannelConfig(channelType);
+            const shouldNotifyClient = channelCfg.push_enabled || channelCfg.email_enabled || channelCfg.sms_enabled;
             // ── ONE notification per user with the current (final) stage ──
             const linkedUsersResult = await client.query(
                 `SELECT U.userid AS "UserId", U.name AS "Name", U.phonenumber AS "PhoneNumber"
@@ -917,45 +941,47 @@ const updateStage = async (req, res) => {
             }
             const smsTemplate = await getSetting('templates', smsTemplateKey, smsTemplateDefault);
 
-            for (const u of linkedUsers) {
-                const recipientName = u.Name || CustomerName || '';
-                let title = '';
-                let message = '';
+            if (shouldNotifyClient) {
+                for (const u of linkedUsers) {
+                    const recipientName = u.Name || CustomerName || '';
+                    let title = '';
+                    let message = '';
 
-                if (notificationType === 'stage_changed') {
-                    title = "עדכון שלב בתיק";
-                    message = `היי ${recipientName}, \n\nבתיק "${CaseName}" התעדכן שלב, תיקך נמצא בשלב - ${currentStageName}, היכנס לאתר או לאפליקציה למעקב.`;
-                } else if (notificationType === 'case_closed') {
-                    title = "תיק הסתיים";
-                    message = `היי ${recipientName}, \n\nתיק "${CaseName}" הסתיים בהצלחה, היכנס לאתר או לאפליקציה למעקב.`;
-                } else if (notificationType === 'case_reopened') {
-                    title = "תיק נפתח מחדש";
-                    message = `היי ${recipientName}, \n\nתיק "${CaseName}" נפתח מחדש, היכנס לאתר או לאפליקציה למעקב.`;
-                }
+                    if (notificationType === 'stage_changed') {
+                        title = "עדכון שלב בתיק";
+                        message = `היי ${recipientName}, \n\nבתיק "${CaseName}" התעדכן שלב, תיקך נמצא בשלב - ${currentStageName}, היכנס לאתר או לאפליקציה למעקב.`;
+                    } else if (notificationType === 'case_closed') {
+                        title = "תיק הסתיים";
+                        message = `היי ${recipientName}, \n\nתיק "${CaseName}" הסתיים בהצלחה, היכנס לאתר או לאפליקציה למעקב.`;
+                    } else if (notificationType === 'case_reopened') {
+                        title = "תיק נפתח מחדש";
+                        message = `היי ${recipientName}, \n\nתיק "${CaseName}" נפתח מחדש, היכנס לאתר או לאפליקציה למעקב.`;
+                    }
 
-                const smsBody = renderTemplate(smsTemplate, { recipientName, caseName: CaseName, stageName: currentStageName, websiteUrl });
+                    const smsBody = renderTemplate(smsTemplate, { recipientName, caseName: CaseName, stageName: currentStageName, websiteUrl });
 
-                await notifyRecipient({
-                    recipientUserId: u.UserId,
-                    recipientPhone: u.PhoneNumber || PhoneNumber,
-                    notificationType: 'CASE_UPDATE',
-                    push: {
-                        title,
-                        body: message,
-                        data: { caseId: String(caseId), stage: String(CurrentStage) },
-                    },
-                    email: {
-                        campaignKey: 'CASE_UPDATE',
-                        contactFields: {
-                            recipient_name: String(recipientName).trim(),
-                            case_title: String(CaseName || '').trim(),
-                            action_url: websiteUrl,
+                    await notifyRecipient({
+                        recipientUserId: u.UserId,
+                        recipientPhone: u.PhoneNumber || PhoneNumber,
+                        notificationType: 'CASE_UPDATE',
+                        push: {
+                            title,
+                            body: message,
+                            data: { caseId: String(caseId), stage: String(CurrentStage) },
                         },
-                    },
-                    sms: {
-                        messageBody: smsBody,
-                    },
-                });
+                        email: {
+                            campaignKey: 'CASE_UPDATE',
+                            contactFields: {
+                                recipient_name: String(recipientName).trim(),
+                                case_title: String(CaseName || '').trim(),
+                                action_url: websiteUrl,
+                            },
+                        },
+                        sms: {
+                            messageBody: smsBody,
+                        },
+                    });
+                }
             }
 
             // Notify case manager if not already notified as a linked user
@@ -980,6 +1006,7 @@ const updateStage = async (req, res) => {
                 message: mgrMessage,
                 smsBody: mgrSmsBody,
                 alreadyNotifiedUserIds: notifiedStageIds,
+                changedTypes: [channelType],
             });
         }
 

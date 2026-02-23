@@ -29,7 +29,7 @@ export const PlatformSettingsScreenName = "/PlatformSettingsScreen";
 const CATEGORIES = [
     { key: "messaging", label: "הודעות ואימייל", icon: "📧" },
     { key: "signing", label: "חתימה דיגיטלית", icon: "✍️" },
-    { key: "firm", label: "פרטי המשרד", icon: "🏢" }, { key: "notifications", label: "התראות", icon: "🔔" },
+    { key: "firm", label: "פרטי המשרד", icon: "🏢" },
     { key: "templates", label: "תבניות SMS", icon: "📝" }, { key: "reminders", label: "תזכורות", icon: "⏰" },
     { key: "channels", label: "ערוצי התראות", icon: "📡" },
     { key: "admins", label: "מנהלי פלטפורמה", icon: "👤" },
