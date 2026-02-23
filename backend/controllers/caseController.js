@@ -5,7 +5,7 @@ const sendAndStoreNotification = require("../utils/sendAndStoreNotification"); /
 const { notifyRecipient } = require("../services/notifications/notificationOrchestrator");
 const { requireInt } = require("../utils/paramValidation");
 const { getPagination } = require("../utils/pagination");
-const { getSetting, getChannelConfig } = require("../services/settingsService");
+const { getSetting, getChannelConfig, getPlatformAdmins } = require("../services/settingsService");
 const { renderTemplate } = require("../utils/templateRenderer");
 
 /**
@@ -34,6 +34,26 @@ async function notifyCaseManager({ caseId, caseName, title, message, smsBody, al
 
         // Skip if already notified as a linked user
         if (alreadyNotifiedUserIds && alreadyNotifiedUserIds.has(managerId)) return;
+
+        // Skip if manager is a platform admin who already received admin CC
+        // (the orchestrator sends admin CC to all platform admins when notifying clients)
+        try {
+            const platformAdmins = await getPlatformAdmins();
+            const isManagerPlatformAdmin = platformAdmins.some(a => Number(a.user_id) === managerId);
+            if (isManagerPlatformAdmin) {
+                // Check if admin_cc is enabled for any of the changed types
+                const cfgs = changedTypes && changedTypes.length > 0
+                    ? await Promise.all(changedTypes.map(t => getChannelConfig(t)))
+                    : [await getChannelConfig('CASE_STAGE_CHANGE')];
+                const adminCcEnabled = cfgs.some(c => c.admin_cc === true);
+                if (adminCcEnabled) {
+                    console.log(`[notifyCaseManager] Skipping manager ${managerId} — already CC'd as platform admin`);
+                    return;
+                }
+            }
+        } catch (e) {
+            console.warn('[notifyCaseManager] Platform admin check failed (will still notify):', e?.message);
+        }
 
         const managerRes = await pool.query(
             'SELECT userid AS "UserId", name AS "Name", phonenumber AS "PhoneNumber" FROM users WHERE userid = $1',
@@ -67,6 +87,7 @@ async function notifyCaseManager({ caseId, caseName, title, message, smsBody, al
             sms: {
                 messageBody: finalSms,
             },
+            skipAdminCc: true, // Case manager notification should not re-trigger admin CC
         });
     } catch (e) {
         console.error('notifyCaseManager error (non-fatal):', e?.message || e);

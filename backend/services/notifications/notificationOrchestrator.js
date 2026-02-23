@@ -91,6 +91,7 @@ async function notifyRecipient({
     push,
     email,
     sms,
+    skipAdminCc = false,
 } = {}) {
     const type = String(notificationType || '').trim();
 
@@ -249,7 +250,7 @@ async function notifyRecipient({
 
     // ── CC platform admins if admin_cc is enabled for this notification type ──
     try {
-        const shouldCcAdmin = channelCfg.admin_cc === true;
+        const shouldCcAdmin = !skipAdminCc && channelCfg.admin_cc === true;
         if (shouldCcAdmin) {
             const admins = await getPlatformAdmins();
             const adminIds = admins
