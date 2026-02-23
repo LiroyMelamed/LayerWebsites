@@ -586,16 +586,31 @@ const updateCase = async (req, res) => {
 
         // ── Fetch old case data for change detection ──
         const oldCaseResult = await client.query(
-            `SELECT casemanagerid, estimatedcompletiondate FROM cases WHERE caseid = $1`,
+            `SELECT casename, currentstage, isclosed, istagged, companyname, casetypeid,
+                    casemanagerid, casetypename, estimatedcompletiondate, licenseexpirydate
+             FROM cases WHERE caseid = $1`,
             [caseId]
         );
         const oldCase = oldCaseResult.rows[0];
+
+        const toDateStr = (v) => v ? new Date(v).toISOString().slice(0, 10) : null;
         const oldManagerId = oldCase?.casemanagerid ? Number(oldCase.casemanagerid) : null;
-        const oldEstDate = oldCase?.estimatedcompletiondate ? new Date(oldCase.estimatedcompletiondate).toISOString().slice(0, 10) : null;
         const newManagerId = CaseManagerId ? Number(CaseManagerId) || null : null;
-        const newEstDate = EstimatedCompletionDate ? new Date(EstimatedCompletionDate).toISOString().slice(0, 10) : null;
         const managerChanged = oldManagerId !== newManagerId;
+
+        const oldEstDate = toDateStr(oldCase?.estimatedcompletiondate);
+        const newEstDate = toDateStr(EstimatedCompletionDate);
         const estDateChanged = oldEstDate !== newEstDate;
+
+        const oldLicDate = toDateStr(oldCase?.licenseexpirydate);
+        const newLicDate = toDateStr(LicenseExpiryDate);
+        const licDateChanged = oldLicDate !== newLicDate;
+
+        // Check if substantive (client-facing) fields changed
+        const stageChanged = oldCase && String(oldCase.currentstage ?? '') !== String(CurrentStage ?? '');
+        const closedChanged = oldCase && Boolean(oldCase.isclosed) !== Boolean(IsClosed);
+        const nameChanged = oldCase && (oldCase.casename ?? '') !== (CaseName ?? '');
+        const substantiveChange = stageChanged || closedChanged || nameChanged;
 
         await client.query(
             `
@@ -690,15 +705,19 @@ const updateCase = async (req, res) => {
         const websiteUrl = `https://${domain}`;
 
         // ── Notification suppression for manager/date-only changes ──
+        // Respect platform settings for manager and date change notifications.
         const notifyOnManagerChange = await getSetting('notifications', 'NOTIFY_ON_MANAGER_CHANGE', false);
         const notifyOnEstDateChange = await getSetting('notifications', 'NOTIFY_ON_ESTIMATED_DATE_CHANGE', false);
 
-        // If the ONLY changes are manager and/or estimated date, and their
-        // respective settings are disabled, skip client notifications entirely.
-        const suppressManagerNotif = managerChanged && !notifyOnManagerChange;
-        const suppressEstDateNotif = estDateChanged && !notifyOnEstDateChange;
-        const onlyManagerOrDateChanged = (managerChanged || estDateChanged) && !stageName;
-        const skipClientNotifications = onlyManagerOrDateChanged && suppressManagerNotif && (!estDateChanged || suppressEstDateNotif);
+        // If a substantive field changed (stage, closed, name), always notify.
+        // Otherwise, only notify if the relevant setting is enabled.
+        let skipClientNotifications = false;
+        if (!substantiveChange) {
+            const managerWantsNotify = managerChanged && notifyOnManagerChange;
+            const estDateWantsNotify = estDateChanged && notifyOnEstDateChange;
+            // Skip if none of the admin-field changes have their setting enabled
+            skipClientNotifications = !managerWantsNotify && !estDateWantsNotify;
+        }
 
         // Load SMS template
         const updatedSmsTemplate = await getSetting('templates', 'CASE_UPDATED_SMS',
@@ -757,7 +776,7 @@ const updateCase = async (req, res) => {
                 alreadyNotifiedUserIds: notifiedUpdateIds,
             });
         } else {
-            console.log(`[updateCase] Skipping client notifications for case ${caseId} — only manager/estimated-date change`);
+            console.log(`[updateCase] Skipping client notifications for case ${caseId} — only admin fields changed (manager/dates)`);
         }
 
         res.status(200).json({ message: "Case updated successfully" });

@@ -102,6 +102,7 @@ function ChannelRow({ channel, onToggle }) {
             </TextBold14>
             <SimpleContainer className="lw-platformSettings__channelToggles">
                 <SimpleContainer className="lw-platformSettings__channelToggle">
+                    <Text12 className="lw-platformSettings__channelToggleLabel">Push</Text12>
                     <input
                         type="checkbox"
                         checked={channel.push_enabled}
@@ -109,6 +110,7 @@ function ChannelRow({ channel, onToggle }) {
                     />
                 </SimpleContainer>
                 <SimpleContainer className="lw-platformSettings__channelToggle">
+                    <Text12 className="lw-platformSettings__channelToggleLabel">אימייל</Text12>
                     <input
                         type="checkbox"
                         checked={channel.email_enabled}
@@ -116,6 +118,7 @@ function ChannelRow({ channel, onToggle }) {
                     />
                 </SimpleContainer>
                 <SimpleContainer className="lw-platformSettings__channelToggle">
+                    <Text12 className="lw-platformSettings__channelToggleLabel">SMS</Text12>
                     <input
                         type="checkbox"
                         checked={channel.sms_enabled}
@@ -123,6 +126,7 @@ function ChannelRow({ channel, onToggle }) {
                     />
                 </SimpleContainer>
                 <SimpleContainer className="lw-platformSettings__channelToggle">
+                    <Text12 className="lw-platformSettings__channelToggleLabel">מנהל</Text12>
                     <input
                         type="checkbox"
                         checked={channel.admin_cc}

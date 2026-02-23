@@ -8,6 +8,8 @@
 
     &__scroll {
         padding: v.$space-6;
+        overflow-x: hidden;
+        max-width: 100%;
     }
 
     &__header {
@@ -108,6 +110,8 @@
         border-radius: 12px;
         padding: v.$space-5;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        min-width: 0;
+        overflow: hidden;
     }
 
     &__subtitle {
@@ -233,13 +237,19 @@
         display: flex;
         flex-direction: column;
         gap: v.$space-2;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    &__channelHeader,
+    &__channelRow {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        min-width: 0;
     }
 
     &__channelHeader {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
         padding: v.$space-2 v.$space-3;
         font-weight: 600;
         color: #888;
@@ -247,10 +257,6 @@
     }
 
     &__channelRow {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
         padding: v.$space-3;
         border-bottom: 1px solid #f5f5f5;
         border-radius: 8px;
@@ -263,13 +269,18 @@
 
     &__channelName {
         font-weight: 500;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     &__channelToggles {
         display: flex;
         flex-direction: row;
         gap: 0;
-        min-width: 360px;
+        flex-shrink: 0;
     }
 
     &__channelToggle {
@@ -277,15 +288,22 @@
         flex-direction: row;
         align-items: center;
         justify-content: center;
-        min-width: 90px;
+        width: 80px;
+        flex-shrink: 0;
         cursor: pointer;
 
         input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
+            width: 1rem;
+            height: 1rem;
             cursor: pointer;
             accent-color: var(--lw-color-primary);
         }
+    }
+
+    &__channelToggleLabel {
+        display: none;
+        color: #888;
+        font-size: 11px;
     }
 
     // ── Admin management ────────────────────────────────────────────
@@ -378,18 +396,22 @@
         }
 
         &__tabs {
+            justify-content: space-around;
             flex-direction: row;
             min-width: unset;
             width: 100%;
+            max-width: 100%;
             overflow-x: auto;
             position: static;
             padding: v.$space-2;
             gap: v.$space-1;
+            flex-wrap: wrap;
         }
 
         &__tab {
             padding: v.$space-2 v.$space-3;
             font-size: 0.8rem;
+            width: auto;
         }
 
         &__tabLabel {
@@ -410,9 +432,42 @@
             width: 100%;
         }
 
-        &__channelToggles {
-            min-width: unset;
+        &__channelHeader {
+            display: none;
+        }
+
+        &__channelGrid {
             gap: v.$space-3;
+        }
+
+        &__channelRow {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: v.$space-2;
+            padding: v.$space-3;
+            background: #fafafa;
+            border-radius: 8px;
+            border: 1px solid #f0f0f0;
+        }
+
+        &__channelName {
+            white-space: normal;
+            overflow: visible;
+        }
+
+        &__channelToggles {
+            width: 100%;
+            justify-content: space-around;
+        }
+
+        &__channelToggle {
+            flex-direction: column;
+            width: auto;
+            gap: 4px;
+        }
+
+        &__channelToggleLabel {
+            display: block;
         }
 
         &__addAdmin {
