@@ -57,10 +57,13 @@ async function main() {
             },
         },
         {
-            key: 'CASE_UPDATE',
+            key: 'CASE_CREATED',
             fields: {
                 recipient_name: 'לירוי',
-                case_title: 'בדיקת עדכון בתיק',
+                case_title: 'בדיקת יצירת תיק',
+                case_number: '1001',
+                case_stage: 'שלב ראשוני',
+                manager_name: 'עו"ד מלמד',
                 action_url: baseUrl,
             },
         },

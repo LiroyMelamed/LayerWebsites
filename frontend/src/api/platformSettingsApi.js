@@ -47,6 +47,11 @@ export const platformSettingsApi = {
     getEmailTemplates: async () => {
         return await ApiUtils.get(`${base}/email-templates`);
     },
+
+    /** Update an email template */
+    updateEmailTemplate: async (templateKey, data) => {
+        return await ApiUtils.put(`${base}/email-templates/${templateKey}`, data);
+    },
 };
 
 export default platformSettingsApi;

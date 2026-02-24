@@ -36,14 +36,38 @@ function extractTemplateVars(template) {
  * Required variables per SMS template key.
  * When a user edits a template, we verify that the new value still contains
  * every required variable so the code doesn't produce broken messages.
+ *
+ * Available optional vars (always passed by renderTemplate callers):
+ *   caseNumber  — case ID number
+ *   managerName — name of assigned case manager
+ *   stageName   — current stage name (required only for CASE_STAGE_CHANGED_SMS)
  */
 const TEMPLATE_REQUIRED_VARS = {
+    // ── Case lifecycle ──
     CASE_CREATED_SMS: ['recipientName', 'caseName', 'websiteUrl'],
-    CASE_UPDATED_SMS: ['recipientName', 'caseName', 'websiteUrl'],
     CASE_STAGE_CHANGED_SMS: ['recipientName', 'caseName', 'stageName', 'websiteUrl'],
     CASE_CLOSED_SMS: ['recipientName', 'caseName', 'websiteUrl'],
     CASE_REOPENED_SMS: ['recipientName', 'caseName', 'websiteUrl'],
+    // ── Per-field case changes ──
+    CASE_NAME_CHANGE_SMS: ['recipientName', 'caseName', 'websiteUrl'],
+    CASE_TYPE_CHANGE_SMS: ['recipientName', 'caseName', 'websiteUrl'],
+    CASE_MANAGER_CHANGE_SMS: ['recipientName', 'caseName', 'websiteUrl'],
+    CASE_COMPANY_CHANGE_SMS: ['recipientName', 'caseName', 'websiteUrl'],
+    CASE_EST_DATE_CHANGE_SMS: ['recipientName', 'caseName', 'websiteUrl'],
+    CASE_LICENSE_CHANGE_SMS: ['recipientName', 'caseName', 'websiteUrl'],
+    CASE_TAGGED_SMS: ['recipientName', 'caseName', 'websiteUrl'],
+    // ── Signing ──
+    SIGN_INVITE_SMS: ['recipientName', 'documentName', 'websiteUrl'],
+    DOC_SIGNED_SMS: ['recipientName', 'documentName', 'websiteUrl'],
+    DOC_REJECTED_SMS: ['recipientName', 'documentName', 'websiteUrl'],
+    SIGN_REMINDER_SMS: ['recipientName', 'documentName', 'websiteUrl'],
+    // ── Other ──
     BIRTHDAY_SMS: ['recipientName', 'firmName', 'websiteUrl'],
+    GENERAL_SMS: ['recipientName', 'websiteUrl'],
+    PAYMENT_SMS: ['recipientName', 'websiteUrl'],
+    LICENSE_RENEWAL_SMS: ['recipientName', 'websiteUrl'],
+    // ── Client ──
+    NEW_CLIENT_SMS: ['recipientName', 'firmName', 'websiteUrl'],
 };
 
 /**

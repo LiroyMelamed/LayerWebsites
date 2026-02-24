@@ -73,6 +73,11 @@ const App = () => {
     const token = searchParams.get('token') || localStorage.getItem('token');
     const role = searchParams.get('role') || localStorage.getItem('role');
 
+    // Only navigate to default screen when credentials come from URL params
+    // (deep-link / mobile WebView). On normal page refreshes the token is
+    // already in localStorage and we should stay on the current route.
+    const isDeepLink = !!(searchParams.get('token') && searchParams.get('role'));
+
     if (token && role) {
       localStorage.setItem('token', token);
       localStorage.setItem('role', role);
@@ -90,21 +95,33 @@ const App = () => {
         sessionStorage.setItem('lw_signing_deeplink_public', isPublicSigning ? '1' : '0');
       }
 
-      const cleanPath = location.pathname;
-      navigate(cleanPath, { replace: true });
+      // Only redirect when arriving via deep-link with URL params.
+      // On normal refresh, stay on the current page.
+      if (isDeepLink) {
+        // Remove query params from URL
+        navigate(location.pathname, { replace: true });
 
-      // Default behavior: land on the relevant main screen.
-      // Deep-link override: if caller provided signingFileId, go straight to SigningScreen.
-      if (role === AppRoles.Admin) {
-        navigate(AdminStackName + MainScreenName, { replace: true });
-      } else if (role === AppRoles.Customer) {
-        if (signingFileId) {
-          navigate(ClientStackName + SigningScreenName, {
-            replace: true,
-            state: { openSigningFileId: String(signingFileId), publicSigning: isPublicSigning },
-          });
-        } else {
-          navigate(ClientStackName + ClientMainScreenName, { replace: true });
+        // Check if the current path already points to a valid app route.
+        // If so, stay there instead of overriding to the default screen.
+        const alreadyOnAdminRoute = location.pathname.startsWith(AdminStackName);
+        const alreadyOnClientRoute = location.pathname.startsWith(ClientStackName);
+
+        if (role === AppRoles.Admin) {
+          if (signingFileId) {
+            // Admin deep-link to signing – redirect to admin main (signing is client-side)
+            navigate(AdminStackName + MainScreenName, { replace: true });
+          } else if (!alreadyOnAdminRoute) {
+            navigate(AdminStackName + MainScreenName, { replace: true });
+          }
+        } else if (role === AppRoles.Customer) {
+          if (signingFileId) {
+            navigate(ClientStackName + SigningScreenName, {
+              replace: true,
+              state: { openSigningFileId: String(signingFileId), publicSigning: isPublicSigning },
+            });
+          } else if (!alreadyOnClientRoute) {
+            navigate(ClientStackName + ClientMainScreenName, { replace: true });
+          }
         }
       }
     }
@@ -123,11 +140,6 @@ const App = () => {
         <Route path={PrivacyPageName} element={<PrivacyPage />} />
         <Route path={ContinuityPageName} element={<ContinuityPage />} />
         <Route path={CompliancePageName} element={<CompliancePage />} />
-
-        <Route
-          path="/admin/evidence-documents"
-          element={<Navigate to={AdminStackName + EvidenceDocumentsScreenName} replace />}
-        />
 
         <Route path={LoginStackName + STACK_SUFFIX} element={<LoginStack />} />
 

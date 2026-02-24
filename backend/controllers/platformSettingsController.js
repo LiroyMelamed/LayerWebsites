@@ -201,19 +201,38 @@ const removePlatformAdmin = async (req, res) => {
 /** GET /api/platform-settings/email-templates */
 const getEmailTemplates = async (req, res) => {
     try {
-        // Load built-in templates from the reminders template module
-        let templates = [];
-        try {
-            const { getBuiltInTemplates } = require('../tasks/emailReminders/templates');
-            if (typeof getBuiltInTemplates === 'function') {
-                templates = getBuiltInTemplates();
-            }
-        } catch { /* templates module may not exist */ }
-
+        const templates = await settingsService.getAllEmailTemplates();
         return res.json({ templates });
     } catch (err) {
         console.error('[platformSettings] getEmailTemplates error:', err);
         return res.status(500).json({ message: 'שגיאה בטעינת תבניות' });
+    }
+};
+
+/** PUT /api/platform-settings/email-templates/:key */
+const updateEmailTemplate = async (req, res) => {
+    try {
+        const { key } = req.params;
+        const { subjectTemplate, htmlBody } = req.body;
+
+        if (!key) {
+            return res.status(400).json({ message: 'נדרש מפתח תבנית' });
+        }
+
+        const result = await settingsService.updateEmailTemplate(
+            key,
+            { subjectTemplate, htmlBody },
+            req.user?.UserId
+        );
+
+        if (!result) {
+            return res.status(404).json({ message: 'תבנית לא נמצאה' });
+        }
+
+        return res.json({ message: 'התבנית עודכנה', template: result });
+    } catch (err) {
+        console.error('[platformSettings] updateEmailTemplate error:', err);
+        return res.status(500).json({ message: 'שגיאה בעדכון תבנית' });
     }
 };
 
@@ -252,5 +271,6 @@ module.exports = {
     addPlatformAdmin,
     removePlatformAdmin,
     getEmailTemplates,
+    updateEmailTemplate,
     getPublicSettings,
 };

@@ -1,7 +1,10 @@
 const { GetObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const pool = require("../config/db");
 const { formatPhoneNumber } = require("../utils/phoneUtils");
-const { sendMessage, COMPANY_NAME } = require("../utils/sendMessage");
+const { getWebsiteDomain } = require("../utils/sendMessage");
+const { notifyRecipient } = require("../services/notifications/notificationOrchestrator");
+const { getSetting } = require("../services/settingsService");
+const { renderTemplate } = require("../utils/templateRenderer");
 const { BUCKET, r2 } = require("../utils/r2");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const { requireInt } = require("../utils/paramValidation");
@@ -56,7 +59,7 @@ const getCustomers = async (req, res) => {
 
 const addCustomer = async (req, res) => {
     if (!requireAdmin(req, res)) return;
-    const { name, phoneNumber, email, companyName } = req.body;
+    const { name, phoneNumber, email, companyName, dateOfBirth } = req.body;
 
     try {
         const phoneDigits = normalizePhoneDigits(phoneNumber);
@@ -72,22 +75,52 @@ const addCustomer = async (req, res) => {
             return res.status(409).json({ message: "מספר פלאפון כבר קיים במערכת", code: 'PHONE_ALREADY_EXISTS' });
         }
 
-        await pool.query(
+        const insertResult = await pool.query(
             `
-            INSERT INTO users (name, email, phonenumber, passwordhash, role, companyname, createdat)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            INSERT INTO users (name, email, phonenumber, passwordhash, role, companyname, dateofbirth, createdat)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            RETURNING userid
             `,
-            [name, email, phoneNumber, null, "User", companyName, new Date()]
+            [name, email, phoneNumber, null, "User", companyName, dateOfBirth ? new Date(dateOfBirth) : null, new Date()]
         );
+        const newUserId = insertResult.rows[0]?.userid;
 
-        const formattedPhone = formatPhoneNumber(phoneNumber);
+        // Send welcome notification (SMS + email) via the orchestrator
         try {
-            sendMessage(
-                `היי ${name}, ברוכים הבאים לשירות החדש שלנו.\n\n בלינק הבא תוכל להשלים את ההרשמה לשירות.\n\n בברכה ${COMPANY_NAME}`,
-                formattedPhone
-            );
+            const domain = await getWebsiteDomain();
+            const websiteUrl = `https://${domain}`;
+            const firmName = await getSetting('firm', 'LAW_FIRM_NAME', null)
+                || process.env.LAW_FIRM_NAME || 'MelamedLaw';
+            const recipientName = name || '';
+
+            const smsTemplate = await getSetting('templates', 'NEW_CLIENT_SMS',
+                'שלום {{recipientName}}, ברוכים הבאים ל{{firmName}}. היכנס לאתר להשלמת הרשמה: {{websiteUrl}}');
+            const smsBody = renderTemplate(smsTemplate, { recipientName, firmName, websiteUrl });
+
+            await notifyRecipient({
+                recipientUserId: newUserId,
+                recipientPhone: formatPhoneNumber(phoneNumber),
+                recipientEmail: email,
+                notificationType: 'NEW_CLIENT',
+                push: {
+                    title: 'ברוכים הבאים',
+                    body: `שלום ${recipientName}, ברוכים הבאים ל${firmName}.`,
+                    data: {},
+                },
+                email: {
+                    campaignKey: 'NEW_CLIENT',
+                    contactFields: {
+                        recipient_name: String(recipientName).trim(),
+                        firm_name: firmName,
+                        action_url: websiteUrl,
+                    },
+                },
+                sms: {
+                    messageBody: smsBody,
+                },
+            });
         } catch (e) {
-            console.warn('Warning: failed to send welcome SMS:', e?.message);
+            console.warn('Warning: failed to send welcome notification:', e?.message);
         }
 
         res.status(201).json({ message: "לקוח הוקם בהצלחה" });
@@ -106,7 +139,7 @@ const updateCustomerById = async (req, res) => {
     const customerId = requireInt(req, res, { source: 'params', name: 'customerId' });
     if (customerId === null) return;
 
-    const { name, email, phoneNumber, companyName } = req.body;
+    const { name, email, phoneNumber, companyName, dateOfBirth } = req.body;
     try {
         const phoneDigits = normalizePhoneDigits(phoneNumber);
         if (!phoneDigits) {
@@ -128,10 +161,11 @@ const updateCustomerById = async (req, res) => {
                 name = $1,
                 email = $2,
                 phonenumber = $3,
-                companyname = $4
-            WHERE userid = $5
+                companyname = $4,
+                dateofbirth = $5
+            WHERE userid = $6
             `,
-            [name, email, phoneNumber, companyName, customerId]
+            [name, email, phoneNumber, companyName, dateOfBirth ? new Date(dateOfBirth) : null, customerId]
         );
 
         if (result.rowCount === 0) {
@@ -164,7 +198,7 @@ const getCustomerByName = async (req, res) => {
 
             const result = await pool.query(
                 `
-                SELECT userid, name, email, phonenumber, companyname
+                SELECT userid, name, email, phonenumber, companyname, dateofbirth
                 FROM users
                 WHERE role <> 'Admin' AND role <> 'Deleted'
                 ORDER BY userid DESC
@@ -178,12 +212,13 @@ const getCustomerByName = async (req, res) => {
                 Name: row.name,
                 Email: row.email,
                 PhoneNumber: row.phonenumber,
-                CompanyName: row.companyname
+                CompanyName: row.companyname,
+                DateOfBirth: row.dateofbirth
             })));
         }
 
         const baseQuery = `
-            SELECT userid, name, email, phonenumber, companyname
+            SELECT userid, name, email, phonenumber, companyname, dateofbirth
                         FROM users
                         WHERE role <> 'Admin' AND role <> 'Deleted'
               AND (name ILIKE $1 OR email ILIKE $1 OR phonenumber ILIKE $1 OR companyname ILIKE $1)
@@ -208,7 +243,8 @@ const getCustomerByName = async (req, res) => {
             Name: row.name,
             Email: row.email,
             PhoneNumber: row.phonenumber,
-            CompanyName: row.companyname
+            CompanyName: row.companyname,
+            DateOfBirth: row.dateofbirth
         })));
     } catch (error) {
         console.error("Error retrieving users by name:", error);

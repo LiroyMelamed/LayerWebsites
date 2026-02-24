@@ -9,6 +9,8 @@ const { notifyRecipient } = require("../services/notifications/notificationOrche
 const { formatPhoneNumber } = require("../utils/phoneUtils");
 const { sendMessage, WEBSITE_DOMAIN } = require("../utils/sendMessage");
 const { detectHebrewSignatureSpotsFromPdfBuffer, streamToBuffer } = require("../utils/signatureDetection");
+const { renderTemplate } = require("../utils/templateRenderer");
+const { getSetting } = require("../services/settingsService");
 const { PDFDocument, StandardFonts } = require("pdf-lib");
 let fontkit = null;
 try {
@@ -1957,6 +1959,9 @@ exports.uploadFileForSigning = async (req, res, next) => {
                 },
             });
 
+            const signInviteSmsTemplate = await getSetting('templates', 'SIGN_INVITE_SMS',
+                'שלום {{recipientName}}, המסמך "{{documentName}}" מחכה לחתימתך. {{websiteUrl}}');
+
             const message = publicUrl
                 ? `מסמך "${fileName}" מחכה לחתימה.\n${publicUrl}`
                 : `מסמך "${fileName}" מחכה לחתימה.`;
@@ -1984,7 +1989,11 @@ exports.uploadFileForSigning = async (req, res, next) => {
                     : null,
                 sms: publicUrl
                     ? {
-                        messageBody: `מסמך מחכה לחתימה: ${fileName}\n${publicUrl}`,
+                        messageBody: renderTemplate(signInviteSmsTemplate, {
+                            recipientName,
+                            documentName: String(fileName || '').trim(),
+                            websiteUrl: String(publicUrl || '').trim(),
+                        }),
                     }
                     : null,
             });
@@ -4855,6 +4864,9 @@ exports.signFile = async (req, res, next) => {
                 // Best-effort
             }
 
+            const docSignedSmsTemplate = await getSetting('templates', 'DOC_SIGNED_SMS',
+                'שלום {{recipientName}}, המסמך "{{documentName}}" נחתם בהצלחה. {{websiteUrl}}');
+
             const message = `הקובץ ${file.FileName} חתום בהצלחה על ידי כל החתומים`;
             const domainForUrls = String(process.env.WEBSITE_DOMAIN || WEBSITE_DOMAIN || '').trim();
             const signedDocumentUrl = `https://${domainForUrls}/signing-files/${signingFileId}/download`;
@@ -4881,7 +4893,11 @@ exports.signFile = async (req, res, next) => {
                     },
                 },
                 sms: {
-                    messageBody: `${message}\nhttps://${WEBSITE_DOMAIN}`,
+                    messageBody: renderTemplate(docSignedSmsTemplate, {
+                        recipientName: String(lawyerNameForTemplate || '').trim(),
+                        documentName: String(file.FileName || '').trim(),
+                        websiteUrl: `https://${WEBSITE_DOMAIN}`,
+                    }),
                 },
             });
         }
@@ -4969,6 +4985,9 @@ exports.rejectSigning = async (req, res, next) => {
 
         const message = `${file.FileName} נדחה על ידי חותם. סיבה: ${rejectionReason || "לא צוינה"}`;
 
+        const docRejectedSmsTemplate = await getSetting('templates', 'DOC_REJECTED_SMS',
+            'שלום {{recipientName}}, המסמך "{{documentName}}" נדחה. סיבה: {{rejectionReason}}. {{websiteUrl}}');
+
         await notifyRecipient({
             recipientUserId: file.LawyerId,
             notificationType: 'DOC_REJECTED',
@@ -4986,7 +5005,12 @@ exports.rejectSigning = async (req, res, next) => {
                 },
             },
             sms: {
-                messageBody: `${message}\nhttps://${WEBSITE_DOMAIN}`,
+                messageBody: renderTemplate(docRejectedSmsTemplate, {
+                    recipientName: String(lawyerNameForTemplate || '').trim(),
+                    documentName: String(file.FileName || '').trim(),
+                    rejectionReason: String(rejectionReason || 'לא צוינה').trim(),
+                    websiteUrl: `https://${WEBSITE_DOMAIN}`,
+                }),
             },
         });
 
@@ -5203,6 +5227,9 @@ exports.reuploadFile = async (req, res, next) => {
             }
         }
 
+        const signInviteSmsTemplateReup = await getSetting('templates', 'SIGN_INVITE_SMS',
+            'שלום {{recipientName}}, המסמך "{{documentName}}" מחכה לחתימתך. {{websiteUrl}}');
+
         if (schemaSupport.signaturespotsSignerUserId) {
             // Notify all signers (fallback to primary client)
             const signerUserIdsRes = await pool.query(
@@ -5261,7 +5288,11 @@ exports.reuploadFile = async (req, res, next) => {
                         : null,
                     sms: publicUrl
                         ? {
-                            messageBody: `מסמך מחכה לחתימה: ${file.FileName}\n${publicUrl}`,
+                            messageBody: renderTemplate(signInviteSmsTemplateReup, {
+                                recipientName: String(recipientNameForTemplate || '').trim(),
+                                documentName: String(file.FileName || '').trim(),
+                                websiteUrl: String(publicUrl || '').trim(),
+                            }),
                         }
                         : null,
                 });
@@ -5310,7 +5341,11 @@ exports.reuploadFile = async (req, res, next) => {
                     : null,
                 sms: publicUrl
                     ? {
-                        messageBody: `מסמך מחכה לחתימה: ${file.FileName}\n${publicUrl}`,
+                        messageBody: renderTemplate(signInviteSmsTemplateReup, {
+                            recipientName: String(recipientNameForTemplate || '').trim(),
+                            documentName: String(file.FileName || '').trim(),
+                            websiteUrl: String(publicUrl || '').trim(),
+                        }),
                     }
                     : null,
             });

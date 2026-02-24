@@ -51,7 +51,7 @@
     }
 
     &__tab {
-        justify-content: center;
+        justify-content: start;
         display: flex;
         align-items: center;
         gap: v.$space-3;
@@ -60,7 +60,6 @@
         background: transparent;
         border-radius: 8px;
         cursor: pointer;
-        color: #555;
         transition: all 0.15s ease;
         text-align: right;
         font-family: inherit;
@@ -68,15 +67,15 @@
 
         &:hover {
             background: #f5f5f5;
-            color: #333;
         }
 
         &--active {
+
             background: var(--lw-color-primary) !important;
             color: #fff;
 
             .lw-simpleText {
-                color: #fff;
+                color: #fff !important;
             }
 
             &:hover {
@@ -142,9 +141,8 @@
 
     &__settingRow {
         display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: v.$space-4;
+        flex-direction: column;
+        gap: v.$space-2;
         padding: v.$space-3 0;
         border-bottom: 1px solid #f0f0f0;
 
@@ -178,12 +176,17 @@
     }
 
     &__settingInput {
-        flex: 0 0 280px;
+        width: 100%;
     }
 
     &__input {
         width: 100%;
-        direction: ltr;
+        direction: rtl;
+    }
+
+    &__textarea {
+        width: 100%;
+        direction: rtl;
     }
 
     // ── Toggle switch ───────────────────────────────────────────────
@@ -389,6 +392,212 @@
         white-space: nowrap;
     }
 
+    // ── Email Templates Layout ────────────────────────────────────
+    &__emailTemplatesLayout {
+        flex-direction: column;
+        display: flex;
+        gap: v.$space-4;
+        width: 100%;
+        align-items: flex-start;
+    }
+
+    &__emailTemplateList {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-2;
+        background: #fff;
+        border-radius: 12px;
+        padding: v.$space-3;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    &__emailTemplateListTitle {
+        padding-bottom: v.$space-2;
+        border-bottom: 1px solid #f0f0f0;
+        margin-bottom: v.$space-1;
+    }
+
+    &__emailTemplateItem {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+        padding: v.$space-2 v.$space-3;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        border: none;
+        background: transparent;
+        text-align: right;
+        width: 100%;
+
+        &:hover {
+            background: #f8f8f8;
+        }
+
+        &--active {
+            background: var(--lw-color-primary-highlighted, #e8f4fd);
+            border-right: 3px solid var(--lw-color-primary, #2563eb);
+        }
+    }
+
+    &__emailTemplateEditorArea {
+        width: 100%;
+    }
+
+    &__emailEditor {
+        width: 100%;
+        background: #fff;
+        border-radius: 12px;
+        padding: v.$space-5;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-4;
+    }
+
+    &__emailEditorHeader {
+        display: flex;
+        align-items: center;
+        gap: v.$space-3;
+        padding-bottom: v.$space-3;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    &__emailEditorField {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-2;
+    }
+
+    &__emailEditorLabel {
+        font-weight: 600;
+        color: #555;
+    }
+
+    &__emailEditorLabelRow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    &__emailEditorInput {
+        width: 100%;
+        padding: v.$space-2 v.$space-3;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 14px;
+        font-family: inherit;
+        direction: rtl;
+        transition: border-color 0.2s;
+
+        &:focus {
+            outline: none;
+            border-color: var(--lw-color-primary, #2563eb);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+    }
+
+    &__emailEditorTextarea {
+        width: 100%;
+        padding: v.$space-3;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        font-family: 'Courier New', Consolas, monospace;
+        font-size: 13px;
+        line-height: 1.5;
+        resize: vertical;
+        direction: ltr;
+        text-align: left;
+        background: #fafafa;
+        min-height: 300px;
+        transition: border-color 0.2s;
+
+        &:focus {
+            outline: none;
+            border-color: var(--lw-color-primary, #2563eb);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            background: #fff;
+        }
+    }
+
+
+
+    &__emailPreview {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-2;
+    }
+
+    &__emailPreviewFrame {
+        width: 100%;
+        height: 39rem;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        background: #fff;
+    }
+
+    &__emailEditorActions {
+        display: flex;
+        gap: v.$space-3;
+        padding-top: v.$space-3;
+        border-top: 1px solid #f0f0f0;
+    }
+
+
+
+    // ── Variable Buttons (shared by SMS & Email) ────────────────
+    &__varButtons {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-2;
+        margin-top: v.$space-2;
+    }
+
+    &__varButtonsLabel {
+        font-weight: 600;
+        color: #666;
+    }
+
+    &__varButtonsRow {
+        display: flex;
+        flex-wrap: wrap;
+        gap: v.$space-2;
+    }
+
+
+
+    // ── SMS Preview ─────────────────────────────────────────────
+    &__smsPreview {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-1;
+        margin-top: v.$space-2;
+        width: 100%;
+    }
+
+    &__smsPreviewLabel {
+        font-weight: 600;
+        color: #888;
+        font-size: 11px;
+    }
+
+    &__smsPreviewBox {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 8px;
+        padding: v.$space-2 v.$space-3;
+        direction: rtl;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    &__emailTemplateButtons {
+        flex-wrap: wrap;
+        gap: v.$space-1;
+    }
+
     // ── Mobile responsive ───────────────────────────────────────────
     @media (max-width: 768px) {
         &__scroll {
@@ -413,6 +622,7 @@
         }
 
         &__tab {
+            justify-content: center;
             padding: v.$space-2 v.$space-3;
             font-size: 0.8rem;
             width: auto;
@@ -432,6 +642,8 @@
         }
 
         &__settingInput {
+            margin-top: v.$space-2;
+            flex-direction: column;
             flex: unset;
             width: 100%;
         }
@@ -479,6 +691,19 @@
         }
 
         &__saveBar {
+            flex-direction: column;
+        }
+
+        &__emailEditorTextarea {
+            min-height: 200px;
+            font-size: 12px;
+        }
+
+        &__emailPreviewFrame {
+            height: 39rem;
+        }
+
+        &__emailEditorActions {
             flex-direction: column;
         }
     }

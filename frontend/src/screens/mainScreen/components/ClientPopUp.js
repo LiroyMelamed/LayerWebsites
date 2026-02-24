@@ -8,13 +8,14 @@ import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 import { customersApi } from "../../../api/customersApi";
 import useHttpRequest from "../../../hooks/useHttpRequest";
 import useFieldState from "../../../hooks/useFieldState";
-import { HebrewCharsValidationWithNULL, HebrewCharsValidationWithNumbers } from "../../../functions/validation/HebrewCharsValidation";
+import { HebrewCharsValidationWithNumbers } from "../../../functions/validation/HebrewCharsValidation";
 import emailValidation from "../../../functions/validation/EmailValidation";
 import IsraeliPhoneNumberValidation from "../../../functions/validation/IsraeliPhoneNumberValidation";
 import { useTranslation } from "react-i18next";
 import SimplePopUp from "../../../components/simpleComponents/SimplePopUp";
 import SearchInput from "../../../components/specializedComponents/containers/SearchInput";
 
+import { formatDateForInput } from "../../../functions/date/formatDateForInput";
 import "./ClientPopUp.scss";
 
 export default function ClientPopup({ clientDetails, initialName, rePerformRequest, onFailureFunction, closePopUpFunction, style: _style }) {
@@ -24,9 +25,10 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
         HebrewCharsValidationWithNumbers,
         clientDetails?.name || initialName || ""
     );
-    const [companyName, setCompanyName, companyNameError] = useFieldState(HebrewCharsValidationWithNULL, clientDetails?.companyname || "");
+    const [companyName, setCompanyName, companyNameError] = useFieldState(HebrewCharsValidationWithNumbers, clientDetails?.companyname || "");
     const [email, setEmail, emailError] = useFieldState(emailValidation, clientDetails?.email || "");
     const [phoneNumber, setPhoneNumber, phoneNumberError] = useFieldState(IsraeliPhoneNumberValidation, clientDetails?.phonenumber || "");
+    const [dateOfBirth, setDateOfBirth] = useState(clientDetails?.dateofbirth ? formatDateForInput(clientDetails.dateofbirth) : "");
 
     const { result: customersByName, isPerforming: isPerformingCustomersByName, performRequest: searchCustomersByName } = useHttpRequest(customersApi.getCustomersByName, null, () => { });
 
@@ -41,6 +43,7 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
         setPhoneNumber(customer.PhoneNumber || customer.phonenumber || "");
         setEmail(customer.Email || customer.email || "");
         setCompanyName(customer.CompanyName || customer.companyname || "");
+        setDateOfBirth(customer.DateOfBirth || customer.dateofbirth ? formatDateForInput(customer.DateOfBirth || customer.dateofbirth) : "");
     };
 
     const [hasError, setHasError] = useState(false);
@@ -96,14 +99,15 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
             name: name,
             phoneNumber: phoneNumber,
             email: email,
-            companyName: companyName
+            companyName: companyName,
+            dateOfBirth: dateOfBirth || null
         };
 
-        const apiCall = selectedClient
-            ? performRequest(selectedClient.UserId || selectedClient.userid, clientData)
-            : performRequest(clientData);
-
-        apiCall.finally(() => closePopUpFunction?.());
+        if (selectedClient) {
+            performRequest(selectedClient.UserId || selectedClient.userid, clientData);
+        } else {
+            performRequest(clientData);
+        }
     };
 
     const handleDeleteClient = () => {
@@ -183,6 +187,16 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
                         error={companyNameError}
+                    />
+                </SimpleContainer>
+
+                <SimpleContainer className="lw-clientPopup__row">
+                    <SimpleInput
+                        className="lw-clientPopup__input"
+                        title={t("profile.dateOfBirth")}
+                        type="date"
+                        value={dateOfBirth || ""}
+                        onChange={(e) => setDateOfBirth(e.target.value)}
                     />
                 </SimpleContainer>
 

@@ -1,0 +1,280 @@
+﻿D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\app.js:116: const trustProxy = process.env.TRUST_PROXY === 'true';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\app.js:121: windowMs: process.env.RATE_LIMIT_IP_WINDOW_MS,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\app.js:122: max: process.env.RATE_LIMIT_IP_MAX,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\app.js:136: windowMs: process.env.RATE_LIMIT_AUTH_IP_WINDOW_MS || String(10 * 60 * 1000),
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\app.js:137: max: process.env.RATE_LIMIT_AUTH_IP_MAX || '40',
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\app.js:37: app.set('trust proxy', process.env.TRUST_PROXY === 'true');
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\app.js:39: const API_JSON_LIMIT = process.env.API_JSON_LIMIT || '2mb';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\app.js:40: const API_URLENCODED_LIMIT = process.env.API_URLENCODED_LIMIT || '2mb';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\app.js:41: const API_REQUEST_TIMEOUT_MS = Number(process.env.API_REQUEST_TIMEOUT_MS || 30_000);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\app.js:60: const isProduction = process.env.IS_PRODUCTION === 'true';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\config\compliance.js:26: const raw = (process.env.COMPLIANCE_BADGES_MODE || '').toLowerCase().trim();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\config\db.js:10: if (process.env.DB_SSL_CA_PATH) {
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\config\db.js:11: cfg.ca = fs.readFileSync(path.resolve(process.env.DB_SSL_CA_PATH), 'utf8');
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\config\db.js:17: user: process.env.DB_USER,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\config\db.js:18: host: process.env.DB_HOST || 'localhost',
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\config\db.js:19: database: process.env.DB_NAME,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\config\db.js:20: password: process.env.DB_PASSWORD,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\config\db.js:21: port: process.env.DB_PORT || 5432,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\config\db.js:23: max: Number.parseInt(process.env.DB_POOL_MAX || '20', 10),
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\config\db.js:24: idleTimeoutMillis: Number.parseInt(process.env.DB_POOL_IDLE_TIMEOUT_MS || '30000', 10),
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\config\db.js:25: connectionTimeoutMillis: Number.parseInt(process.env.DB_POOL_CONN_TIMEOUT_MS || '5000', 10),
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\config\db.js:30: process.env.NODE_ENV !== 'test' &&
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\config\db.js:31: String(process.env.DB_DISABLE_CONNECT_TEST || '').toLowerCase() !== 'true';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\config\db.js:39: console.log('Connected to PostgreSQL database:', process.env.DB_NAME);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\config\db.js:7: if (process.env.DB_SSL !== 'true') return false;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\config\db.js:8: const cfg = { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' };
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\authController.js:10: if (!process.env.JWT_SECRET) {
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\authController.js:13: const SECRET_KEY = process.env.JWT_SECRET;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\authController.js:14: const FORCE_SEND_SMS_ALL = process.env.FORCE_SEND_SMS_ALL === "true";
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\authController.js:15: const DEMO_OTP_PHONES = (process.env.DEMO_OTP_PHONES || "").split(",").map(s => s.trim()).filter(Boolean);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\authController.js:17: const ACCESS_TOKEN_TTL = String(process.env.ACCESS_TOKEN_TTL || "15m");
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\authController.js:19: const REFRESH_TOKEN_TTL_DAYS = Number(process.env.REFRESH_TOKEN_TTL_DAYS || 90);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\authController.js:20: const REFRESH_TOKEN_PEPPER = String(process.env.REFRESH_TOKEN_PEPPER || "");
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\authController.js:22: const ANDROID_SMS_RETRIEVER_HASH = String(process.env.ANDROID_SMS_RETRIEVER_HASH || "").trim();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\authController.js:23: const WEBSITE_DOMAIN_FALLBACK = String(process.env.WEBSITE_DOMAIN || "").trim();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\authController.js:26: const OTP_PEPPER = String(process.env.SIGNING_OTP_PEPPER || "");
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\authController.js:266: const platformAdminIds = String(process.env.PLATFORM_ADMIN_USER_IDS || '').trim();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\authController.js:272: } else if (String(process.env.NODE_ENV || '').toLowerCase() !== 'production') {
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\authController.js:347: const platformAdminIds = String(process.env.PLATFORM_ADMIN_USER_IDS || '').trim();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\authController.js:353: } else if (String(process.env.NODE_ENV || '').toLowerCase() !== 'production') {
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\caseController.js:608: const isProd = String(process.env.NODE_ENV || "").toLowerCase() === "production";
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\platformAdminController.js:213: const allowWrite = String(process.env.RETENTION_WARNINGS_ALLOW_WRITE || 'false') === 'true';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\platformAdminController.js:255: Number(process.env.PLATFORM_MIN_DOCUMENT_RETENTION_DAYS || '60'),
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\reminderController.js:22: 'firm_name': String(process.env.LAW_FIRM_NAME || 'שם המשרד'),
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\signingFileController.js:1037: const failClosed = String(process.env.IS_PRODUCTION || 'false').toLowerCase() === 'true';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\signingFileController.js:42: process.env.MAX_SIGNING_PDF_BYTES || String(25 * 1024 * 1024)
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\signingFileController.js:45: process.env.MAX_SIGNATURE_IMAGE_BYTES || String(512 * 1024)
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\signingFileController.js:47: const SIGNING_PDF_OP_TIMEOUT_MS = Number(process.env.SIGNING_PDF_OP_TIMEOUT_MS || 20_000);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\signingFileController.js:471: const failClosed = String(process.env.IS_PRODUCTION || 'false').toLowerCase() === 'true';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\signingFileController.js:48: const SIGNING_OTP_TTL_SECONDS = Number(process.env.SIGNING_OTP_TTL_SECONDS || 10 * 60);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\signingFileController.js:484: const s = process.env.JWT_SECRET;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\signingFileController.js:4859: const domainForUrls = String(process.env.WEBSITE_DOMAIN || WEBSITE_DOMAIN || '').trim();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\signingFileController.js:49: const SIGNING_OTP_MAX_ATTEMPTS = Number(process.env.SIGNING_OTP_MAX_ATTEMPTS || 5);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\signingFileController.js:490: return String(process.env.WEBSITE_DOMAIN || WEBSITE_DOMAIN || '').trim();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\signingFileController.js:50: const SIGNING_OTP_LOCK_MINUTES = Number(process.env.SIGNING_OTP_LOCK_MINUTES || 10);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\signingFileController.js:501: const defaultTtlSeconds = Number(process.env.PUBLIC_SIGNING_LINK_TTL_SECONDS || 7 * 24 * 60 * 60);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\signingFileController.js:5090: const failClosed = String(process.env.IS_PRODUCTION || 'false').toLowerCase() === 'true';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\signingFileController.js:51: const SIGNING_REQUIRE_OTP_DEFAULT = String(process.env.SIGNING_REQUIRE_OTP_DEFAULT ?? 'true').toLowerCase() !== 'false';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\signingFileController.js:52: const SIGNING_OTP_ENABLED = String(process.env.SIGNING_OTP_ENABLED ?? 'false').toLowerCase() === 'true';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\signingFileController.js:70: const p = String(process.env.SIGNING_OTP_PEPPER || '').trim();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\signingFileController.js:76: const SIGNING_POLICY_VERSION = String(process.env.SIGNING_POLICY_VERSION || '2026-01-11');
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\signingFileController.js:81: process.env.SIGNING_CONSENT_TEXT ||
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\signingFileController.js:897: return process.env.SIGNING_DEBUG_LOGS === 'true' && process.env.IS_PRODUCTION !== 'true';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\signingFileController.js:96: return String(process.env.IS_PRODUCTION || '').toLowerCase() === 'true';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\controllers\signingFileController.js:979: const failClosed = String(process.env.IS_PRODUCTION || 'false').toLowerCase() === 'true';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\lib\firm\resolveFirmSigningPolicy.js:32: const envSigning = process.env.SIGNING_ENABLED;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\lib\firm\resolveFirmSigningPolicy.js:33: const envOtp = process.env.SIGNING_CLIENT_OTP_REQUIRED;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\lib\limits\enforceFirmLimits.js:5: const mode = String(process.env.LIMITS_ENFORCEMENT_MODE || 'warn').toLowerCase();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\lib\plan\resolveFirmPlan.js:109: const envVal = String(process.env.FIRM_DEFAULT_UNLIMITED_UNTIL_UTC || '').trim();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\lib\plan\resolveFirmPlan.js:27: const floor = Number(process.env.PLATFORM_MIN_DOCUMENT_RETENTION_DAYS || '60');
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\lib\plan\resolveTenantPlan.js:3: const DEFAULT_PLAN_KEY = String(process.env.DEFAULT_PLAN_KEY || 'BASIC').toUpperCase();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\lib\plan\resolveTenantPlan.js:5: process.env.PLATFORM_MIN_DOCUMENT_RETENTION_DAYS || '60'
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\lib\renderEvidencePdf.js:364: const executablePath = String(process.env.PUPPETEER_EXECUTABLE_PATH || '').trim() || undefined;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\lib\renderEvidencePdf.js:365: const noSandbox = String(process.env.PUPPETEER_NO_SANDBOX || '').toLowerCase() === 'true'
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\lib\renderEvidencePdf.js:366: || String(process.env.IS_PRODUCTION || '').toLowerCase() === 'true';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\middlewares\authMiddleware.js:49: const windowMs = Number.parseInt(process.env.RATE_LIMIT_USER_WINDOW_MS || String(5 * 60 * 1000), 10);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\middlewares\authMiddleware.js:50: const max = Number.parseInt(process.env.RATE_LIMIT_USER_MAX || '600', 10);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\middlewares\authMiddleware.js:8: const SECRET_KEY = process.env.JWT_SECRET;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\middlewares\optionalAuthMiddleware.js:5: const SECRET_KEY = process.env.JWT_SECRET;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\middlewares\requirePlatformAdmin.js:38: const isProd = String(process.env.NODE_ENV || '').toLowerCase() === 'production';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\middlewares\requirePlatformAdmin.js:6: const raw = String(process.env.PLATFORM_ADMIN_USER_IDS || '').trim();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\routes\auth.js:12: trustProxy: process.env.TRUST_PROXY === 'true',
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\routes\auth.js:21: trustProxy: process.env.TRUST_PROXY === 'true',
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\firmBackfill.js:14: return String(process.env.FIRM_SCOPE_ENABLED ?? 'false').toLowerCase() === 'true';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\firmBackfill.js:45: if (String(process.env.BACKFILL_ALLOW_WRITE || '').toLowerCase() !== 'true') {
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\firmBackfill.js:48: if (String(process.env.BACKFILL_CONFIRM || '') !== 'YES') {
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\firmBackfill.js:77: const firmKey = String(process.env.LAW_FIRM_KEY || 'default');
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\firmBackfill.js:78: const firmName = String(process.env.LAW_FIRM_NAME || 'Default Firm');
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-cleanup-customers-preserve-phone.js:12: const IS_APPLY = String(process.env.CLEANUP_APPLY || '').toLowerCase() === 'true';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-cleanup-customers-preserve-phone.js:13: const IS_PROD = String(process.env.IS_PRODUCTION || '').toLowerCase() === 'true' || String(process.env.NODE_ENV || '').toLowerCase() === 'production';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-cleanup-customers-preserve-phone.js:17: if (process.env.DATABASE_URL) {
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-cleanup-customers-preserve-phone.js:18: dbConfig.connectionString = process.env.DATABASE_URL;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-cleanup-customers-preserve-phone.js:28: host: process.env.DB_HOST,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-cleanup-customers-preserve-phone.js:29: database: process.env.DB_NAME,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-cleanup-customers-preserve-phone.js:30: user: process.env.DB_USER,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-cleanup-customers-preserve-phone.js:31: password: process.env.DB_PASSWORD,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-cleanup-customers-preserve-phone.js:32: port: Number(process.env.DB_PORT),
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-cleanup-customers-preserve-phone.js:33: ssl: String(process.env.DB_SSL || '').toLowerCase() === 'true',
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-cleanup-test-admins.js:190: const apply = String(process.env.PP_CLEANUP_APPLY || '').toLowerCase() === 'true';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-cleanup-test-admins.js:27: return String(process.env.IS_PRODUCTION || '').toLowerCase() === 'true'
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-cleanup-test-admins.js:28: || String(process.env.NODE_ENV || '').toLowerCase() === 'production';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-cleanup-test-users.js:28: return String(process.env.IS_PRODUCTION || '').toLowerCase() === 'true'
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-cleanup-test-users.js:29: || String(process.env.NODE_ENV || '').toLowerCase() === 'production';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-cleanup-test-users.js:81: const apply = String(process.env.PP_CLEANUP_APPLY || '').toLowerCase() === 'true';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-reset-admins-preserved.js:23: return String(process.env.IS_PRODUCTION || '').toLowerCase() === 'true'
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-reset-admins-preserved.js:24: || String(process.env.NODE_ENV || '').toLowerCase() === 'production';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-reset-admins-preserved.js:65: const apply = String(process.env.PP_RESET_APPLY || '').toLowerCase() === 'true';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-reset-full.js:122: user: process.env.DB_USER,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-reset-full.js:123: host: process.env.DB_HOST || 'localhost',
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-reset-full.js:124: database: process.env.DB_NAME,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-reset-full.js:125: password: process.env.DB_PASSWORD,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-reset-full.js:126: port: process.env.DB_PORT || 5432,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-reset-full.js:127: ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-reset-full.js:128: max: Number.parseInt(process.env.DB_POOL_MAX || '20', 10),
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-reset-full.js:129: idleTimeoutMillis: Number.parseInt(process.env.DB_POOL_IDLE_TIMEOUT_MS || '30000', 10),
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-reset-full.js:130: connectionTimeoutMillis: Number.parseInt(process.env.DB_POOL_CONN_TIMEOUT_MS || '5000', 10),
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-reset-full.js:22: return String(process.env.IS_PRODUCTION || '').toLowerCase() === 'true'
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-reset-full.js:23: || String(process.env.NODE_ENV || '').toLowerCase() === 'production';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-schema-inspect.js:10: host: process.env.DB_HOST,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-schema-inspect.js:11: database: process.env.DB_NAME,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-schema-inspect.js:12: user: process.env.DB_USER,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-schema-inspect.js:13: password: process.env.DB_PASSWORD,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-schema-inspect.js:14: port: Number(process.env.DB_PORT),
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-schema-inspect.js:15: ssl: String(process.env.DB_SSL || '').toLowerCase() === 'true',
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-schema-inspect.js:6: if (process.env.DATABASE_URL) {
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\pp-schema-inspect.js:7: dbConfig.connectionString = process.env.DATABASE_URL;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\prod-reset-preserve-admin-phone.js:108: host: process.env.DB_HOST,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\prod-reset-preserve-admin-phone.js:109: database: process.env.DB_NAME,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\prod-reset-preserve-admin-phone.js:110: user: process.env.DB_USER,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\prod-reset-preserve-admin-phone.js:111: password: process.env.DB_PASSWORD,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\prod-reset-preserve-admin-phone.js:112: port: Number(process.env.DB_PORT),
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\prod-reset-preserve-admin-phone.js:113: ssl: String(process.env.DB_SSL || '').toLowerCase() === 'true' ? { rejectUnauthorized: false } : false,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\prod-reset-preserve-admin-phone.js:114: max: Number.parseInt(process.env.DB_POOL_MAX || '10', 10),
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\prod-reset-preserve-admin-phone.js:115: idleTimeoutMillis: Number.parseInt(process.env.DB_POOL_IDLE_TIMEOUT_MS || '30000', 10),
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\prod-reset-preserve-admin-phone.js:116: connectionTimeoutMillis: Number.parseInt(process.env.DB_POOL_CONN_TIMEOUT_MS || '5000', 10),
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\prod-reset-preserve-admin-phone.js:145: const preservedPhone = String(process.env.PROD_RESET_PHONE || '').trim();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\prod-reset-preserve-admin-phone.js:91: if (process.env.DATABASE_URL) {
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\prod-reset-preserve-admin-phone.js:93: connectionString: process.env.DATABASE_URL,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\prod-reset-preserve-admin-phone.js:94: ssl: String(process.env.DB_SSL || '').toLowerCase() === 'true' ? { rejectUnauthorized: false } : undefined,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\restore-db-from-r2.js:23: const PG_SUPER_USER = process.env.PG_SUPER_USER || 'postgres';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\restore-db-from-r2.js:24: const PG_SUPER_PASSWORD = process.env.PG_SUPER_PASSWORD || process.env.DB_PASSWORD;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\restore-db-from-r2.js:28: endpoint: process.env.S3_ENDPOINT,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\restore-db-from-r2.js:30: accessKeyId: process.env.S3_KEY,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\restore-db-from-r2.js:31: secretAccessKey: process.env.S3_SECRET,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\restore-db-from-r2.js:35: const BUCKET = process.env.S3_BUCKET;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\restore-db-from-r2.js:36: const DB_NAME = process.env.DB_NAME;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\restore-db-from-r2.js:37: const DB_USER = process.env.DB_USER;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\restore-db-from-r2.js:38: const DB_PASSWORD = process.env.DB_PASSWORD;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\restore-db-from-r2.js:39: const DB_HOST = process.env.DB_HOST || 'localhost';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\restore-db-from-r2.js:40: const DB_PORT = process.env.DB_PORT || '5432';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\restore-db-from-r2.js:85: PATH: `${PG_BIN};${process.env.PATH}`,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\restore-db-from-r2.js:92: PATH: `${PG_BIN};${process.env.PATH}`,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\retentionCleanup.js:238: const softBufferDays = Number.parseInt(String(args.softBufferDays ?? process.env.RETENTION_SOFT_BUFFER_DAYS ?? '7'), 10);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\retentionCleanup.js:243: const n = Number(args.maxDocs ?? process.env.RETENTION_MAX_DOCS ?? '500');
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\retentionCleanup.js:40: if (String(process.env.RETENTION_ALLOW_DELETE || '').toLowerCase() !== 'true') {
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\retentionCleanup.js:43: if (String(process.env.RETENTION_CONFIRM || '') !== 'DELETE') {
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\sendSmooveEmailChecks.js:25: process.env.TEST_TO_EMAIL ||
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\scripts\test-email.js:11: process.env.FORCE_SEND_EMAIL_ALL = 'true';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\server.js:10: const SERVER_REQUEST_TIMEOUT_MS = Number(process.env.SERVER_REQUEST_TIMEOUT_MS || 60_000);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\server.js:11: const SERVER_HEADERS_TIMEOUT_MS = Number(process.env.SERVER_HEADERS_TIMEOUT_MS || 65_000);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\server.js:12: const SERVER_KEEPALIVE_TIMEOUT_MS = Number(process.env.SERVER_KEEPALIVE_TIMEOUT_MS || 5_000);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\server.js:8: const PORT = process.env.PORT || 5000;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\services\settingsService.js:282: const raw = String(process.env.PLATFORM_ADMIN_USER_IDS || '').trim();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\services\settingsService.js:344: const envList = String(process.env.PLATFORM_ADMIN_USER_IDS || '').trim();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\birthdayGreetings\scheduler.js:35: const enabled = String(process.env.BIRTHDAY_GREETINGS_SCHEDULER_ENABLED ?? 'true').toLowerCase();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\birthdayGreetings\scheduler.js:41: const tz = process.env.BIRTHDAY_GREETINGS_TZ || 'Asia/Jerusalem';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\birthdayGreetings\scheduler.js:42: const hour = toPositiveIntOrNull(process.env.BIRTHDAY_GREETINGS_HOUR) ?? 9;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\birthdayGreetings\scheduler.js:43: const minute = toPositiveIntOrNull(process.env.BIRTHDAY_GREETINGS_MINUTE) ?? 0;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\birthdayGreetings\scheduler.js:44: const pollMinutes = toPositiveIntOrNull(process.env.BIRTHDAY_GREETINGS_POLL_MINUTES) ?? 5;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\emailReminders\scheduler.js:21: const enabled = (process.env.EMAIL_REMINDERS_SCHEDULER_ENABLED || 'true').toLowerCase();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\emailReminders\scheduler.js:27: const tz = process.env.EMAIL_REMINDERS_TZ || 'Asia/Jerusalem';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\emailReminders\scheduler.js:28: const startHour = Number.parseInt(process.env.EMAIL_REMINDERS_START_HOUR || '7', 10);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\emailReminders\scheduler.js:29: const endHour = Number.parseInt(process.env.EMAIL_REMINDERS_END_HOUR || '21', 10);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\emailReminders\scheduler.js:30: const pollMinutes = Number.parseInt(process.env.EMAIL_REMINDERS_POLL_MINUTES || '5', 10);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\emailReminders\service.js:18: const v = (process.env.EMAIL_REMINDERS_ENABLED || 'true').toLowerCase();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\emailReminders\service.js:22: const v = (process.env.EMAIL_REMINDERS_DRY_RUN || 'false').toLowerCase();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\emailReminders\service.js:39: const batchSize = Number.parseInt(process.env.EMAIL_REMINDERS_BATCH_SIZE || '50', 10);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\emailReminders\service.js:90: firm_name: process.env.FIRM_NAME || 'MelamedLaw',
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\emailReminders\templates.js:84: const envRaw = process.env.REMINDER_EMAIL_TEMPLATES;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\licenseRenewal\scheduler.js:15: const tz = String(process.env.LICENSE_RENEWAL_REMINDERS_TZ || 'Asia/Jerusalem');
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\licenseRenewal\scheduler.js:16: const hour = toPositiveIntOrNull(process.env.LICENSE_RENEWAL_REMINDERS_HOUR) ?? 9;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\licenseRenewal\scheduler.js:17: const minute = toPositiveIntOrNull(process.env.LICENSE_RENEWAL_REMINDERS_MINUTE) ?? 0;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\licenseRenewal\scheduler.js:18: const pollMinutes = toPositiveIntOrNull(process.env.LICENSE_RENEWAL_REMINDERS_POLL_MINUTES) ?? 5;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\licenseRenewal\scheduler.js:9: const enabled = String(process.env.LICENSE_RENEWAL_REMINDERS_SCHEDULER_ENABLED ?? 'true').toLowerCase() === 'true';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\licenseRenewal\service.js:14: String(process.env.LICENSE_RENEWAL_REMINDERS_DRY_RUN || '').trim().toLowerCase()
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\licenseRenewal\service.js:19: return String(process.env.LICENSE_RENEWAL_REMINDERS_ENABLED ?? 'true').toLowerCase() === 'true';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\licenseRenewal\service.js:236: const actionUrl = `https://${String(process.env.WEBSITE_DOMAIN || '').trim() || 'client.melamedlaw.co.il'}`;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\licenseRenewal\service.js:358: const actionUrl = `https://${String(process.env.WEBSITE_DOMAIN || '').trim() || 'client.melamedlaw.co.il'}`;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\licenseRenewal\service.js:463: const actionUrl = `https://${String(process.env.WEBSITE_DOMAIN || '').trim() || 'client.melamedlaw.co.il'}`;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\licenseRenewal\service.js:50: const tz = String(process.env.LICENSE_RENEWAL_REMINDERS_TZ || 'Asia/Jerusalem');
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tasks\licenseRenewal\service.js:547: const tz = String(timeZone || process.env.LICENSE_RENEWAL_REMINDERS_TZ || 'Asia/Jerusalem');
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\authMiddleware.shape.test.js:8: process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\getUsageForFirm.seats.test.js:4: process.env.NODE_ENV = 'test';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\myCases.integration.test.js:10: process.env.RATE_LIMIT_USER_WINDOW_MS = process.env.RATE_LIMIT_USER_WINDOW_MS || String(60 * 1000);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\myCases.integration.test.js:11: process.env.RATE_LIMIT_USER_MAX = process.env.RATE_LIMIT_USER_MAX || '100000';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\myCases.integration.test.js:12: process.env.TRUST_PROXY = process.env.TRUST_PROXY || 'false';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\myCases.integration.test.js:13: process.env.IS_PRODUCTION = process.env.IS_PRODUCTION || 'false';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\myCases.integration.test.js:20: return jwt.sign({ userid, role, phoneNumber: '0000000000' }, process.env.JWT_SECRET, {
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\myCases.integration.test.js:5: process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\myCases.integration.test.js:6: process.env.RATE_LIMIT_IP_WINDOW_MS = process.env.RATE_LIMIT_IP_WINDOW_MS || String(60 * 1000);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\myCases.integration.test.js:7: process.env.RATE_LIMIT_IP_MAX = process.env.RATE_LIMIT_IP_MAX || '100000';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\myCases.integration.test.js:8: process.env.RATE_LIMIT_AUTH_IP_WINDOW_MS = process.env.RATE_LIMIT_AUTH_IP_WINDOW_MS || String(60 * 1000);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\myCases.integration.test.js:9: process.env.RATE_LIMIT_AUTH_IP_MAX = process.env.RATE_LIMIT_AUTH_IP_MAX || '100000';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\numericParamValidation.integration.test.js:10: process.env.RATE_LIMIT_USER_WINDOW_MS = process.env.RATE_LIMIT_USER_WINDOW_MS || String(60 * 1000);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\numericParamValidation.integration.test.js:11: process.env.RATE_LIMIT_USER_MAX = process.env.RATE_LIMIT_USER_MAX || '100000';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\numericParamValidation.integration.test.js:12: process.env.TRUST_PROXY = process.env.TRUST_PROXY || 'false';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\numericParamValidation.integration.test.js:13: process.env.IS_PRODUCTION = process.env.IS_PRODUCTION || 'false';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\numericParamValidation.integration.test.js:20: return jwt.sign({ userid, role, phoneNumber: '0000000000' }, process.env.JWT_SECRET, {
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\numericParamValidation.integration.test.js:5: process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\numericParamValidation.integration.test.js:6: process.env.RATE_LIMIT_IP_WINDOW_MS = process.env.RATE_LIMIT_IP_WINDOW_MS || String(60 * 1000);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\numericParamValidation.integration.test.js:7: process.env.RATE_LIMIT_IP_MAX = process.env.RATE_LIMIT_IP_MAX || '100000';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\numericParamValidation.integration.test.js:8: process.env.RATE_LIMIT_AUTH_IP_WINDOW_MS = process.env.RATE_LIMIT_AUTH_IP_WINDOW_MS || String(60 * 1000);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\numericParamValidation.integration.test.js:9: process.env.RATE_LIMIT_AUTH_IP_MAX = process.env.RATE_LIMIT_AUTH_IP_MAX || '100000';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\reminderTemplates.test.js:33: delete process.env.REMINDER_EMAIL_TEMPLATES;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\reminderTemplates.test.js:4: process.env.NODE_ENV = 'test';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\reminderTemplates.test.js:58: process.env.REMINDER_EMAIL_TEMPLATES = JSON.stringify([
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\reminderTemplates.test.js:69: delete process.env.REMINDER_EMAIL_TEMPLATES;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\reminderTemplates.test.js:73: process.env.REMINDER_EMAIL_TEMPLATES = 'not-valid-json';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\reminderTemplates.test.js:81: delete process.env.REMINDER_EMAIL_TEMPLATES;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\requestTooLarge.integration.test.js:10: process.env.RATE_LIMIT_IP_WINDOW_MS = process.env.RATE_LIMIT_IP_WINDOW_MS || String(60 * 1000);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\requestTooLarge.integration.test.js:11: process.env.RATE_LIMIT_IP_MAX = process.env.RATE_LIMIT_IP_MAX || '100000';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\requestTooLarge.integration.test.js:12: process.env.RATE_LIMIT_AUTH_IP_WINDOW_MS = process.env.RATE_LIMIT_AUTH_IP_WINDOW_MS || String(60 * 1000);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\requestTooLarge.integration.test.js:13: process.env.RATE_LIMIT_AUTH_IP_MAX = process.env.RATE_LIMIT_AUTH_IP_MAX || '100000';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\requestTooLarge.integration.test.js:14: process.env.RATE_LIMIT_USER_WINDOW_MS = process.env.RATE_LIMIT_USER_WINDOW_MS || String(60 * 1000);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\requestTooLarge.integration.test.js:15: process.env.RATE_LIMIT_USER_MAX = process.env.RATE_LIMIT_USER_MAX || '100000';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\requestTooLarge.integration.test.js:16: process.env.TRUST_PROXY = process.env.TRUST_PROXY || 'false';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\requestTooLarge.integration.test.js:17: process.env.IS_PRODUCTION = process.env.IS_PRODUCTION || 'false';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\requestTooLarge.integration.test.js:6: process.env.API_JSON_LIMIT = '1kb';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\requestTooLarge.integration.test.js:7: process.env.API_URLENCODED_LIMIT = '1kb';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\requestTooLarge.integration.test.js:9: process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\test-license-renewal-reminder.js:10: process.env.FORCE_SEND_EMAIL_ALL = 'true';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\test-license-renewal-reminder.js:11: process.env.LICENSE_RENEWAL_REMINDERS_DRY_RUN = '0';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\test-license-renewal-reminder.js:12: process.env.LICENSE_RENEWAL_REMINDERS_ENABLED = 'true';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\tests\test-license-renewal-reminder.js:17: const tz = process.env.LICENSE_RENEWAL_REMINDERS_TZ || 'Asia/Jerusalem';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\appError.js:21: return String(process.env.IS_PRODUCTION || 'false').toLowerCase() === 'true';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\auditEvents.js:113: const failClosed = String(process.env.IS_PRODUCTION || 'false').toLowerCase() === 'true';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\fileScan.js:112: const failClosed = process.env.IS_PRODUCTION === 'true';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\fileScan.js:39: socket: process.env.CLAMAV_SOCKET || '/var/run/clamav/clamd.ctl',
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\fileScan.js:40: host: process.env.CLAMAV_HOST || null,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\fileScan.js:41: port: process.env.CLAMAV_PORT ? Number(process.env.CLAMAV_PORT) : null,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\fileScan.js:42: timeout: Number(process.env.CLAMAV_TIMEOUT_MS || 30000),
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\otpBruteForce.js:13: const MAX_ATTEMPTS = Number(process.env.OTP_MAX_ATTEMPTS || 5);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\otpBruteForce.js:14: const WINDOW_MS = Number(process.env.OTP_ATTEMPT_WINDOW_MS || 15 * 60 * 1000); // 15 min
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\otpBruteForce.js:15: const LOCKOUT_MS = Number(process.env.OTP_LOCKOUT_MS || 15 * 60 * 1000); // 15 min
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\r2.js:12: const BUCKET = process.env.S3_BUCKET;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\r2.js:5: endpoint: process.env.S3_ENDPOINT,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\r2.js:7: accessKeyId: process.env.S3_KEY,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\r2.js:8: secretAccessKey: process.env.S3_SECRET,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\securityAuditLogger.js:27: const MAX_LOG_AGE_DAYS = Number(process.env.SECURITY_LOG_RETENTION_DAYS || 90);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\sendMessage.js:100: Authorization: `Bearer ${process.env.SMOOVE_API_KEY}`,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\sendMessage.js:102: ApiKey: process.env.SMOOVE_API_KEY,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\sendMessage.js:20: const isProduction = process.env.IS_PRODUCTION === "true";
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\sendMessage.js:22: const FORCE_SEND_SMS_ALL = process.env.FORCE_SEND_SMS_ALL === "true";
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\sendMessage.js:30: if (!process.env.SMOOVE_BASE_URL) missing.push("SMOOVE_BASE_URL");
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\sendMessage.js:31: if (!process.env.SMOOVE_API_KEY) missing.push("SMOOVE_API_KEY");
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\sendMessage.js:32: if (!process.env.SMOOVE_SENDER_PHONE) missing.push("SMOOVE_SENDER_PHONE");
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\sendMessage.js:78: const baseUrl = process.env.SMOOVE_BASE_URL.replace(/\/$/, ""); // trim trailing slash
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\sendMessage.js:8: const WEBSITE_DOMAIN = String(process.env.WEBSITE_DOMAIN || "").trim() || "client.melamedlaw.co.il";
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\sendMessage.js:84: const senderPhone = await getSetting('messaging', 'SMOOVE_SENDER_PHONE', process.env.SMOOVE_SENDER_PHONE);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\sendMessage.js:99: TOKEN: process.env.SMOOVE_API_KEY,
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\signatureDetection.js:12: const SIG_DETECT_VERBOSE = isTruthyEnv(process.env.SIG_DETECT_VERBOSE);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\signatureDetection.js:21: const env = process.env.PDFJS_STANDARD_FONT_DATA_URL;
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\smooveEmailCampaignService.js:12: const FORCE_SEND_EMAIL_ALL = process.env.FORCE_SEND_EMAIL_ALL === 'true';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\smooveEmailCampaignService.js:158: const fromName = String(process.env.SMOOVE_EMAIL_FROM_NAME || '').trim();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\smooveEmailCampaignService.js:159: const fromEmail = String(process.env.SMOOVE_EMAIL_FROM_EMAIL || '').trim();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\smooveEmailCampaignService.js:176: const smtpHost = String(process.env.SMTP_HOST || '').trim();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\smooveEmailCampaignService.js:177: const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\smooveEmailCampaignService.js:178: const smtpUser = String(process.env.SMTP_USER || '').trim();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\smooveEmailCampaignService.js:179: const smtpPass = String(process.env.SMTP_PASS || '').trim();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\smooveEmailCampaignService.js:180: const smtpFrom = String(process.env.SMTP_FROM_EMAIL || fromEmail || '').trim();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\smooveEmailCampaignService.js:243: const fromName = String(process.env.SMOOVE_EMAIL_FROM_NAME || '').trim();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\smooveEmailCampaignService.js:245: const fromEmail = String(process.env.SMTP_FROM_EMAIL || process.env.SMOOVE_EMAIL_FROM_EMAIL || '').trim();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\smooveEmailCampaignService.js:250: const smtpHost = String(process.env.SMTP_HOST || '').trim();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\smooveEmailCampaignService.js:251: const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\smooveEmailCampaignService.js:252: const smtpUser = String(process.env.SMTP_USER || '').trim();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\smooveEmailCampaignService.js:253: const smtpPass = String(process.env.SMTP_PASS || '').trim();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\syslogForwarder.js:24: const SYSLOG_HOST = process.env.SYSLOG_HOST || '';
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\syslogForwarder.js:25: const SYSLOG_PORT = Number(process.env.SYSLOG_PORT || 0);
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\syslogForwarder.js:26: const SYSLOG_PROTOCOL = String(process.env.SYSLOG_PROTOCOL || 'udp').toLowerCase();
+D:\Liroy\Websites\lawyer-website\LayerWebsites\backend\utils\syslogForwarder.js:27: const APP_NAME = String(process.env.SYSLOG_APP_NAME || 'melamedlaw');

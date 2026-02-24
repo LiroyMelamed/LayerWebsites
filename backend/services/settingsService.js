@@ -347,6 +347,48 @@ async function isPlatformAdmin(userId) {
     return ids.includes(Number(userId));
 }
 
+// ── Email Templates (DB-stored, admin-editable) ─────────────────────
+
+/**
+ * Get all email templates from the email_templates table.
+ */
+async function getAllEmailTemplates() {
+    const { rows } = await pool.query(
+        `SELECT template_key, label, subject_template, html_body, available_vars, updated_at
+         FROM email_templates ORDER BY template_key`
+    );
+    return rows;
+}
+
+/**
+ * Get a single email template by key.
+ */
+async function getEmailTemplate(templateKey) {
+    const { rows } = await pool.query(
+        `SELECT template_key, label, subject_template, html_body, available_vars, updated_at
+         FROM email_templates WHERE template_key = $1`,
+        [templateKey]
+    );
+    return rows[0] || null;
+}
+
+/**
+ * Update an email template (subject + html_body).
+ */
+async function updateEmailTemplate(templateKey, { subjectTemplate, htmlBody }, updatedBy) {
+    const { rows } = await pool.query(
+        `UPDATE email_templates
+         SET subject_template = COALESCE($2, subject_template),
+             html_body = COALESCE($3, html_body),
+             updated_at = NOW(),
+             updated_by = $4
+         WHERE template_key = $1
+         RETURNING template_key, label, subject_template, html_body, available_vars, updated_at`,
+        [templateKey, subjectTemplate, htmlBody, updatedBy || null]
+    );
+    return rows[0] || null;
+}
+
 module.exports = {
     getSetting,
     getAllSettings,
@@ -362,4 +404,7 @@ module.exports = {
     addPlatformAdmin,
     removePlatformAdmin,
     isPlatformAdmin,
+    getAllEmailTemplates,
+    getEmailTemplate,
+    updateEmailTemplate,
 };

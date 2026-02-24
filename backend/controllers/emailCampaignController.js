@@ -13,10 +13,23 @@ function buildDefaultContactFieldsForCampaignKey(campaignKey) {
                 action_url: `${baseActionUrl}/sign/test?token=demo`,
                 lawyer_name: 'Test Lawyer',
             };
-        case 'CASE_UPDATE':
+        case 'CASE_CREATED':
+        case 'CASE_NAME_CHANGE':
+        case 'CASE_TYPE_CHANGE':
+        case 'CASE_STAGE_CHANGE':
+        case 'CASE_CLOSED':
+        case 'CASE_REOPENED':
+        case 'CASE_MANAGER_CHANGE':
+        case 'CASE_EST_DATE_CHANGE':
+        case 'CASE_LICENSE_CHANGE':
+        case 'CASE_COMPANY_CHANGE':
+        case 'CASE_TAGGED':
             return {
                 recipient_name: 'Test Client',
                 case_title: 'תיק בדיקה',
+                case_number: '1001',
+                case_stage: 'שלב ראשוני',
+                manager_name: 'Test Manager',
                 action_url: baseActionUrl,
             };
         case 'DOC_SIGNED':

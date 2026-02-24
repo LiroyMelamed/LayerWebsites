@@ -25,7 +25,8 @@ router.get('/admins', ctrl.listPlatformAdmins);
 router.post('/admins', ctrl.addPlatformAdmin);
 router.delete('/admins/:userId', ctrl.removePlatformAdmin);
 
-// Email templates (read-only preview)
+// Email templates (CRUD)
 router.get('/email-templates', ctrl.getEmailTemplates);
+router.put('/email-templates/:key', ctrl.updateEmailTemplate);
 
 module.exports = router;

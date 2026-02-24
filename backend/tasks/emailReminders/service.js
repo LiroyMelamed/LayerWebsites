@@ -12,6 +12,7 @@
 const pool = require('../../config/db');
 const { sendTransactionalCustomHtmlEmail } = require('../../utils/smooveEmailCampaignService');
 const { getAllTemplates, renderTemplate, wrapEmailHtml } = require('./templates');
+const { getSetting } = require('../../services/settingsService');
 
 // ---------- env toggles ----------
 function isEnabled() {
@@ -84,10 +85,12 @@ async function processEmailReminders() {
                 : (reminder.template_data || {});
 
             // Merge common fields
+            const firmName = await getSetting('firm', 'FIRM_NAME', null)
+                || process.env.FIRM_NAME || 'MelamedLaw';
             const fields = {
                 client_name: reminder.client_name,
                 date: new Date(reminder.scheduled_for).toLocaleDateString('he-IL'),
-                firm_name: process.env.FIRM_NAME || 'MelamedLaw',
+                firm_name: firmName,
                 ...data,
             };
 
