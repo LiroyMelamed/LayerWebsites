@@ -4,6 +4,21 @@
 BEGIN;
 
 -- ────────────────────────────────────────────────
+-- 0. Ensure email_templates table exists (may be created by a later-dated migration,
+--    but we need it now for the inserts below).
+-- ────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS email_templates (
+    template_key    VARCHAR(80)  PRIMARY KEY,
+    label           VARCHAR(200) NOT NULL,
+    subject_template TEXT        NOT NULL DEFAULT '',
+    html_body       TEXT         NOT NULL DEFAULT '',
+    available_vars  JSONB        NOT NULL DEFAULT '[]',
+    updated_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_by      INTEGER      REFERENCES users(userid) ON DELETE SET NULL
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON email_templates TO liroym;
+
+-- ────────────────────────────────────────────────
 -- 1. Insert per-type email templates (based on CASE_UPDATE HTML structure)
 --    Each has a unique title, subject, preview text, and body text.
 -- ────────────────────────────────────────────────
