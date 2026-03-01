@@ -37,17 +37,20 @@ export function openExternalUrl(url, { newTab = true } = {}) {
     }
 
     // Standard external URL: attempt to open from top window.
+    // NOTE: with "noopener,noreferrer" window.open() returns null even on
+    // success, so we must NOT check the return value to decide whether the
+    // open worked.  Instead we rely on the fact that if open() does not
+    // throw, the tab was created.
     try {
-        const opened = win?.open?.(u, "_blank", "noopener,noreferrer");
-        if (opened) return;
+        win?.open?.(u, "_blank", "noopener,noreferrer");
+        return;                 // opened successfully — stop here
     } catch {
-        // ignore
+        // cross-origin top window or popup blocked — try current window
     }
 
-    // Fallback.
     try {
-        const opened = window?.open?.(u, "_blank", "noopener,noreferrer");
-        if (opened) return;
+        window?.open?.(u, "_blank", "noopener,noreferrer");
+        return;
     } catch {
         // ignore
     }

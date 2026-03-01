@@ -35,6 +35,7 @@ export default function AllCasesScreen() {
     const [selectedStatus, setSelectedStatus] = useState(initialStatus);
     const [selectedClient, setSelectedClient] = useState(null);
     const [selectedManager, setSelectedManager] = useState(null);
+    const [selectedCompany, setSelectedCompany] = useState(null);
     const [filteredCases, setFilteredCases] = useState(null);
 
     const { result: allCasesTypes, isPerforming: isPerformingAllCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
@@ -67,10 +68,8 @@ export default function AllCasesScreen() {
         );
     };
 
-    const applyFilters = (typeFilter, statusFilter, clientFilter, managerFilter) => {
+    const applyFilters = (typeFilter, statusFilter, clientFilter, managerFilter, companyFilter) => {
         let filtered = allCases;
-        console.log("Applying filters:", { typeFilter, statusFilter, clientFilter, managerFilter });
-
 
         if (typeFilter) {
             filtered = filtered.filter(item => item.CaseTypeName === typeFilter);
@@ -95,7 +94,13 @@ export default function AllCasesScreen() {
             filtered = filtered.filter(item => item.CaseManager === managerFilter);
         }
 
-        if (!typeFilter && !statusFilter && !clientFilter && !managerFilter) {
+        if (companyFilter) {
+            filtered = filtered.filter(item =>
+                item.CompanyName && item.CompanyName.toLowerCase().includes(companyFilter.toLowerCase())
+            );
+        }
+
+        if (!typeFilter && !statusFilter && !clientFilter && !managerFilter && !companyFilter) {
             setFilteredCases(null);
         } else {
             setFilteredCases(filtered);
@@ -104,22 +109,27 @@ export default function AllCasesScreen() {
 
     const handleFilterByType = (type) => {
         setSelectedCaseType(type);
-        applyFilters(type, selectedStatus, selectedClient, selectedManager);
+        applyFilters(type, selectedStatus, selectedClient, selectedManager, selectedCompany);
     };
 
     const handleFilterByStatus = (status) => {
         setSelectedStatus(status);
-        applyFilters(selectedCaseType, status, selectedClient, selectedManager);
+        applyFilters(selectedCaseType, status, selectedClient, selectedManager, selectedCompany);
     };
 
     const handleFilterByClient = (client) => {
         setSelectedClient(client);
-        applyFilters(selectedCaseType, selectedStatus, client, selectedManager);
+        applyFilters(selectedCaseType, selectedStatus, client, selectedManager, selectedCompany);
     };
 
     const handleFilterByManager = (manager) => {
         setSelectedManager(manager);
-        applyFilters(selectedCaseType, selectedStatus, selectedClient, manager);
+        applyFilters(selectedCaseType, selectedStatus, selectedClient, manager, selectedCompany);
+    };
+
+    const handleFilterByCompany = (company) => {
+        setSelectedCompany(company);
+        applyFilters(selectedCaseType, selectedStatus, selectedClient, selectedManager, company);
     };
 
     const clientNames = [...new Set((allCases || []).flatMap(c => {
@@ -127,6 +137,7 @@ export default function AllCasesScreen() {
         return [c.CustomerName];
     }).filter(Boolean))].sort();
     const managerNames = [...new Set((allCases || []).map(c => c.CaseManager).filter(Boolean))].sort();
+    const companyNames = [...new Set((allCases || []).map(c => c.CompanyName).filter(Boolean))].sort();
 
     if (isPerformingAllCases || isPerformingAllCasesTypes) {
         return <SimpleLoader />;
@@ -155,6 +166,14 @@ export default function AllCasesScreen() {
                         titleFontSize={20}
                         onSelect={handleFilterByClient}
                         className="lw-allCasesScreen__clientFilter"
+                    />
+
+                    <FilterSearchInput
+                        items={companyNames}
+                        placeholder={t('cases.companyName')}
+                        titleFontSize={20}
+                        onSelect={handleFilterByCompany}
+                        className="lw-allCasesScreen__companyFilter"
                     />
                 </SimpleContainer>
 

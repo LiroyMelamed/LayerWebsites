@@ -12,7 +12,6 @@ import { images } from "../../../assets/images/images";
 import ShowDataCard from "../../mainScreen/components/ShowDataCard";
 import ComparisonDataCard from "../../mainScreen/components/ComprasionDataCard";
 import { colors } from "../../../constant/colors";
-import { NotificationsScreenName } from "../notifications/NotificationsScreen";
 import { ClientCasesScreenName } from "../clientCasesScreen/ClientCasesScreen";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -34,7 +33,6 @@ export default function ClientMainScreen() {
     const totalCases = dashboardData?.totalCases ?? 0;
     const openCases = dashboardData?.openCases ?? 0;
     const closedCases = dashboardData?.closedCases ?? 0;
-    const unreadNotifications = dashboardData?.unreadNotifications ?? 0;
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
@@ -72,11 +70,6 @@ export default function ClientMainScreen() {
                             numberText={openCases}
                             title={t("cases.openCases")}
                             optionalOnClick={() => { navigate(ClientStackName + ClientCasesScreenName) }}
-                        />
-                        <ShowDataCard
-                            numberText={unreadNotifications}
-                            title={t("mainScreen.unreadNotifications")}
-                            optionalOnClick={() => { navigate(ClientStackName + NotificationsScreenName) }}
                         />
                     </SimpleContainer>
                 </SimpleContainer>

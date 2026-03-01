@@ -1,0 +1,76 @@
+.lw-stageFileUpload {
+    margin-top: 6px;
+    padding: 4px 0;
+}
+
+.lw-stageFileUpload__list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 6px;
+}
+
+.lw-stageFileUpload__file {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 6px;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 6px;
+}
+
+.lw-stageFileUpload__fileName {
+    flex: 1;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    text-align: start;
+}
+
+.lw-stageFileUpload__fileLink {
+    color: var(--primary, #3b5998);
+    text-decoration: underline;
+    word-break: break-all;
+}
+
+.lw-stageFileUpload__deleteBtn {
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 2px 4px;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.lw-stageFileUpload__deleteBtn:hover {
+    opacity: 1;
+}
+
+.lw-stageFileUpload__deleteText {
+    color: #c00;
+    font-weight: bold;
+}
+
+.lw-stageFileUpload__uploadRow {
+    margin-top: 4px;
+}
+
+.lw-stageFileUpload__uploadBtn {
+    cursor: pointer;
+    background: none;
+    border: 1px dashed rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    padding: 4px 10px;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.lw-stageFileUpload__uploadBtn:hover {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.4);
+}
+
+.lw-stageFileUpload__uploadText {
+    color: var(--primary, #3b5998);
+    font-weight: 500;
+}

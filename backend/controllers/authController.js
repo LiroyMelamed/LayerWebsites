@@ -15,6 +15,7 @@ const FORCE_SEND_SMS_ALL = process.env.FORCE_SEND_SMS_ALL === "true";
 const DEMO_OTP_PHONES = (process.env.DEMO_OTP_PHONES || "").split(",").map(s => s.trim()).filter(Boolean);
 
 const ACCESS_TOKEN_TTL = String(process.env.ACCESS_TOKEN_TTL || "15m");
+const ACCESS_TOKEN_TTL_ADMIN = String(process.env.ACCESS_TOKEN_TTL_ADMIN || "8h");
 
 const REFRESH_TOKEN_TTL_DAYS = Number(process.env.REFRESH_TOKEN_TTL_DAYS || 90);
 const REFRESH_TOKEN_PEPPER = String(process.env.REFRESH_TOKEN_PEPPER || "");
@@ -65,7 +66,10 @@ function computeRefreshTokenExpiryDate() {
 }
 
 function signAccessToken({ userid, role, phonenumber }) {
-    return jwt.sign({ userid, phonenumber, role }, SECRET_KEY, { expiresIn: ACCESS_TOKEN_TTL });
+    // Admins get a longer-lived access token (ISO 27001 A.9.4 — session limits remain
+    // enforced via refresh-token rotation and audit logging).
+    const ttl = role === 'Admin' ? ACCESS_TOKEN_TTL_ADMIN : ACCESS_TOKEN_TTL;
+    return jwt.sign({ userid, phonenumber, role }, SECRET_KEY, { expiresIn: ttl });
 }
 
 async function createRefreshTokenRow({ client, userid, userAgent, ipAddress }) {

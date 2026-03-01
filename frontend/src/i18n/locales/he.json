@@ -9,6 +9,7 @@
         "next": "הבא",
         "ok": "אישור",
         "cancel": "ביטול",
+        "delete": "מחק",
         "save": "שמור",
         "close": "סגור",
         "search": "חיפוש",
@@ -241,7 +242,16 @@
         "noStagesInCaseType": "אין שלבים בסוג תיק זה",
         "descriptionNumber": "תיאור מס' {{number}}",
         "addStage": "הוסף שלב",
-        "removeStage": "הסר שלב"
+        "removeStage": "הסר שלב",
+        "stageFiles": "קבצים מצורפים",
+        "addStageFile": "הוסף קובץ לשלב",
+        "uploadingFile": "מעלה קובץ...",
+        "fileUploadSuccess": "הקובץ הועלה בהצלחה",
+        "fileUploadError": "שגיאה בהעלאת הקובץ",
+        "deleteStageFile": "מחק קובץ",
+        "deleteStageFileConfirm": "האם אתה בטוח שברצונך למחוק קובץ זה?",
+        "noStageFiles": "אין קבצים מצורפים לשלב זה",
+        "downloadFile": "הורד קובץ"
     },
     "caseTypes": {
         "createCaseType": {
@@ -309,7 +319,7 @@
     "mainScreen": {
         "caseSummary": "סכימת תיקים",
         "totalCases": "סה\"כ תיקים",
-        "taggedCases": "תיקים מתוייגים",
+        "taggedCases": "תיקים נעוצים",
         "activeCustomers": "לקוחות פעילים",
         "unreadNotifications": "התראות שלא נקראו",
         "moreDataForAnalytics": "כשהיה לנו יותר מידע נציג לך פילוח נתונים"

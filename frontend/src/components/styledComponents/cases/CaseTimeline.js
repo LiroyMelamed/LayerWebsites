@@ -3,6 +3,7 @@ import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { Text12, TextBold12 } from "../../specializedComponents/text/AllTextKindFile";
 import { DateDDMMYY } from "../../../functions/date/DateDDMMYY";
 import { useTranslation } from "react-i18next";
+import StageFileUpload from "./StageFileUpload";
 
 import "./CaseTimeline.scss";
 
@@ -18,7 +19,7 @@ function getStageArrivalDate(stages, stageIndex, createdAt) {
     return stages?.[stageIndex - 1]?.Timestamp || null;
 }
 
-export default function CaseTimeline({ stages, currentStage, isClosed = false, title, style, createdAt }) {
+export default function CaseTimeline({ stages, currentStage, isClosed = false, title, style, createdAt, caseId, isClient, stageFiles, onStageFilesChanged }) {
     const { t } = useTranslation();
     const safeStages = Array.isArray(stages) ? stages : [];
     const safeCurrentStage = Number(currentStage) || 0;
@@ -95,6 +96,15 @@ export default function CaseTimeline({ stages, currentStage, isClosed = false, t
                                         }
                                     </SimpleContainer>
                                     <TextBold12>{stage.Text}</TextBold12>
+                                    {caseId && stageFiles && (
+                                        <StageFileUpload
+                                            caseId={caseId}
+                                            stage={index + 1}
+                                            isClient={isClient}
+                                            stageFiles={stageFiles}
+                                            onFilesChanged={onStageFilesChanged}
+                                        />
+                                    )}
                                 </SimpleContainer>
                             </SimpleContainer>
                         );

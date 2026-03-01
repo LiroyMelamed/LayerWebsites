@@ -28,6 +28,7 @@ export default function MyCasesScreen() {
     const [selectedClient, setSelectedClient] = useState(null);
     const [selectedManager, setSelectedManager] = useState(null);
     const [selectedStatus, setSelectedStatus] = useState(null);
+    const [selectedCompany, setSelectedCompany] = useState(null);
 
     const { result: myCases, isPerforming: isPerformingMyCases, performRequest: refetchMyCases } = useAutoHttpRequest(casesApi.getMyCases);
     const { result: allCasesTypes, isPerforming: isPerformingAllCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
@@ -67,14 +68,21 @@ export default function MyCasesScreen() {
             list = list.filter(item => item.CaseManager === selectedManager);
         }
 
+        if (selectedCompany) {
+            list = list.filter(item =>
+                item.CompanyName && item.CompanyName.toLowerCase().includes(selectedCompany.toLowerCase())
+            );
+        }
+
         return list;
-    }, [myCases, query, selectedCaseType, selectedStatus, selectedClient, selectedManager]);
+    }, [myCases, query, selectedCaseType, selectedStatus, selectedClient, selectedManager, selectedCompany]);
 
     const clientNames = [...new Set((myCases || []).flatMap(c => {
         if (Array.isArray(c.Users) && c.Users.length > 0) return c.Users.map(u => u.Name);
         return [c.CustomerName];
     }).filter(Boolean))].sort();
     const managerNames = [...new Set((myCases || []).map(c => c.CaseManager).filter(Boolean))].sort();
+    const companyNames = [...new Set((myCases || []).map(c => c.CompanyName).filter(Boolean))].sort();
 
     if (isPerformingMyCases || isPerformingAllCasesTypes) {
         return <SimpleLoader />;
@@ -99,6 +107,14 @@ export default function MyCasesScreen() {
                         titleFontSize={20}
                         onSelect={setSelectedClient}
                         className="lw-myCasesScreen__clientFilter"
+                    />
+
+                    <FilterSearchInput
+                        items={companyNames}
+                        placeholder={t('cases.companyName')}
+                        titleFontSize={20}
+                        onSelect={setSelectedCompany}
+                        className="lw-myCasesScreen__companyFilter"
                     />
                 </SimpleContainer>
 

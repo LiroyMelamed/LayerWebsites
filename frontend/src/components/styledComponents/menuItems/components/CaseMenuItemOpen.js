@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { buttonSizes } from "../../../../styles/buttons/buttonSizes";
 import SimpleContainer from "../../../simpleComponents/SimpleContainer";
@@ -13,6 +13,7 @@ import ImageButton from "../../../specializedComponents/buttons/ImageButton";
 import { icons } from "../../../../assets/icons/icons";
 import CaseTimeline from "../../cases/CaseTimeline";
 import casesApi from "../../../../api/casesApi";
+import filesApi from "../../../../api/filesApi";
 import SimpleButton from "../../../simpleComponents/SimpleButton";
 import SimpleInput from "../../../simpleComponents/SimpleInput";
 import { DateDDMMYY } from "../../../../functions/date/DateDDMMYY";
@@ -91,6 +92,20 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
     const [isStagesOpen, setIsStagesOpen] = useState(true);
     const [IsTagged, setIsTagged] = useState(fullCase.IsTagged);
     const [WhatsappLink, setWhatsappLink] = useState(fullCase.WhatsappGroupLink);
+    const [stageFiles, setStageFiles] = useState([]);
+
+    const fetchStageFiles = useCallback(async () => {
+        try {
+            const res = await filesApi.getStageFiles(fullCase.CaseId);
+            setStageFiles(res?.data || []);
+        } catch (e) {
+            console.error("Failed to fetch stage files", e);
+        }
+    }, [fullCase.CaseId]);
+
+    useEffect(() => {
+        if (isOpen) fetchStageFiles();
+    }, [isOpen, fetchStageFiles]);
 
     function unTag() {
         setIsTagged(!IsTagged)
@@ -118,11 +133,9 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
     const firmPhone = useFirmPhone();
 
     function contactOnWhatsapp() {
-        // Use case manager's phone if available, fall back to office number from settings
         const phone = fullCase.CaseManagerPhone
             ? String(fullCase.CaseManagerPhone).replace(/[^0-9]/g, '')
             : firmPhone;
-        // Ensure phone has country code
         const e164Phone = phone.startsWith('972') ? phone : (phone.startsWith('0') ? '972' + phone.slice(1) : '972' + phone);
         openExternalUrl(
             `https://wa.me/${e164Phone}?text=${encodeURIComponent(t("common.whatsapp.contactText", { caseName: fullCase.CaseName || fullCase.CaseId }))}`,
@@ -155,6 +168,10 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
                                 currentStage={fullCase.CurrentStage}
                                 isClosed={fullCase.IsClosed}
                                 createdAt={fullCase.CreatedAt}
+                                caseId={fullCase.CaseId}
+                                isClient={isClient}
+                                stageFiles={stageFiles}
+                                onStageFilesChanged={fetchStageFiles}
                             />
                         </SimpleContainer>
                     )}

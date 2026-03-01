@@ -34,6 +34,7 @@ export default function TaggedCasesScreen() {
     const [selectedStatus, setSelectedStatus] = useState(null);
     const [selectedClient, setSelectedClient] = useState(null);
     const [selectedManager, setSelectedManager] = useState(null);
+    const [selectedCompany, setSelectedCompany] = useState(null);
     const [filteredTaggedCases, setFilteredTaggedCases] = useState(null);
 
     const { result: taggedCases, isPerforming: isPerformingTaggedCases, performRequest } = useAutoHttpRequest(casesApi.getAllTaggedCases);
@@ -54,7 +55,7 @@ export default function TaggedCasesScreen() {
         );
     };
 
-    const applyFilters = (typeFilter, statusFilter, clientFilter, managerFilter) => {
+    const applyFilters = (typeFilter, statusFilter, clientFilter, managerFilter, companyFilter) => {
         let filtered = taggedCases;
 
         if (typeFilter) {
@@ -80,7 +81,13 @@ export default function TaggedCasesScreen() {
             filtered = filtered.filter(item => item.CaseManager === managerFilter);
         }
 
-        if (!typeFilter && !statusFilter && !clientFilter && !managerFilter) {
+        if (companyFilter) {
+            filtered = filtered.filter(item =>
+                item.CompanyName && item.CompanyName.toLowerCase().includes(companyFilter.toLowerCase())
+            );
+        }
+
+        if (!typeFilter && !statusFilter && !clientFilter && !managerFilter && !companyFilter) {
             setFilteredTaggedCases(null);
         } else {
             setFilteredTaggedCases(filtered);
@@ -89,22 +96,27 @@ export default function TaggedCasesScreen() {
 
     const handleFilterByType = (type) => {
         setSelectedCaseType(type);
-        applyFilters(type, selectedStatus, selectedClient, selectedManager);
+        applyFilters(type, selectedStatus, selectedClient, selectedManager, selectedCompany);
     };
 
     const handleFilterByStatus = (status) => {
         setSelectedStatus(status);
-        applyFilters(selectedCaseType, status, selectedClient, selectedManager);
+        applyFilters(selectedCaseType, status, selectedClient, selectedManager, selectedCompany);
     };
 
     const handleFilterByClient = (client) => {
         setSelectedClient(client);
-        applyFilters(selectedCaseType, selectedStatus, client, selectedManager);
+        applyFilters(selectedCaseType, selectedStatus, client, selectedManager, selectedCompany);
     };
 
     const handleFilterByManager = (manager) => {
         setSelectedManager(manager);
-        applyFilters(selectedCaseType, selectedStatus, selectedClient, manager);
+        applyFilters(selectedCaseType, selectedStatus, selectedClient, manager, selectedCompany);
+    };
+
+    const handleFilterByCompany = (company) => {
+        setSelectedCompany(company);
+        applyFilters(selectedCaseType, selectedStatus, selectedClient, selectedManager, company);
     };
 
     const clientNames = [...new Set((taggedCases || []).flatMap(c => {
@@ -112,6 +124,7 @@ export default function TaggedCasesScreen() {
         return [c.CustomerName];
     }).filter(Boolean))].sort();
     const managerNames = [...new Set((taggedCases || []).map(c => c.CaseManager).filter(Boolean))].sort();
+    const companyNames = [...new Set((taggedCases || []).map(c => c.CompanyName).filter(Boolean))].sort();
 
     if (isPerformingTaggedCases || isPerformingAllCasesTypes) {
         return <SimpleLoader />;
@@ -140,6 +153,14 @@ export default function TaggedCasesScreen() {
                         titleFontSize={20}
                         onSelect={handleFilterByClient}
                         className="lw-taggedCasesScreen__clientFilter"
+                    />
+
+                    <FilterSearchInput
+                        items={companyNames}
+                        placeholder={t('cases.companyName')}
+                        titleFontSize={20}
+                        onSelect={handleFilterByCompany}
+                        className="lw-taggedCasesScreen__companyFilter"
                     />
                 </SimpleContainer>
 

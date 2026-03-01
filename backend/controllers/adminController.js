@@ -5,14 +5,26 @@ const { createAppError } = require('../utils/appError');
 const { getHebrewMessage } = require('../utils/errors.he');
 const { userHasLegalData } = require('../utils/legalData');
 
+/** Parse HIDDEN_ADMIN_USER_IDS env var into an array of numbers */
+function _getHiddenAdminIds() {
+    const raw = String(process.env.HIDDEN_ADMIN_USER_IDS || '').trim();
+    if (!raw) return [];
+    return raw.split(',').map(s => Number(s.trim())).filter(n => Number.isFinite(n) && n > 0);
+}
+
 /**
- * Retrieves all users with the 'Admin' role.
+ * Retrieves all users with the 'Admin' role (excluding hidden admins).
  */
 const getAdmins = async (req, res) => {
     try {
-        // Query uses lowercase column names to match PostgreSQL's default behavior
-        const result = await pool.query("SELECT userid, name, email, phonenumber, companyname, createdat FROM users WHERE role = 'Admin'");
-        // Access rows directly and return them
+        const hidden = _getHiddenAdminIds();
+        let query = "SELECT userid, name, email, phonenumber, companyname, createdat FROM users WHERE role = 'Admin'";
+        const params = [];
+        if (hidden.length > 0) {
+            query += " AND userid <> ALL($1::int[])";
+            params.push(hidden);
+        }
+        const result = await pool.query(query, params);
         res.json(result.rows);
     } catch (error) {
         console.error("Error retrieving Admins:", error);
@@ -31,9 +43,15 @@ const getAdminByName = async (req, res) => {
     // If empty query: return a default list so dropdowns can preload.
     if (!name) {
         try {
-            const result = await pool.query(
-                "SELECT userid, name, email, phonenumber, companyname, createdat FROM users WHERE role = 'Admin' ORDER BY createdat DESC"
-            );
+            const hidden = _getHiddenAdminIds();
+            let query = "SELECT userid, name, email, phonenumber, companyname, createdat FROM users WHERE role = 'Admin'";
+            const params = [];
+            if (hidden.length > 0) {
+                query += " AND userid <> ALL($1::int[])";
+                params.push(hidden);
+            }
+            query += " ORDER BY createdat DESC";
+            const result = await pool.query(query, params);
             return res.json(result.rows);
         } catch (error) {
             console.error("Error retrieving admins:", error);
@@ -42,11 +60,15 @@ const getAdminByName = async (req, res) => {
     }
 
     try {
-        // Use parameterized query with $1 for PostgreSQL and ILIKE for case-insensitive search
-        const result = await pool.query(
-            "SELECT userid, name, email, phonenumber, companyname, createdat FROM users WHERE role = 'Admin' AND name ILIKE $1 ORDER BY createdat DESC",
-            [`%${name}%`] // Parameters passed as an array
-        );
+        const hidden = _getHiddenAdminIds();
+        let query = "SELECT userid, name, email, phonenumber, companyname, createdat FROM users WHERE role = 'Admin' AND name ILIKE $1";
+        const params = [`%${name}%`];
+        if (hidden.length > 0) {
+            query += " AND userid <> ALL($2::int[])";
+            params.push(hidden);
+        }
+        query += " ORDER BY createdat DESC";
+        const result = await pool.query(query, params);
 
         // Check if any rows were returned
         if (result.rows.length === 0) {

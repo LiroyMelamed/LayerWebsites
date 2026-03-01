@@ -15,7 +15,6 @@ import { ClientStackName } from "../../../navigation/ClientStack";
 import { ClientMainScreenName } from "../clientMainScreen/ClientMainScreen";
 import { getClientNavBarData } from "../../../components/navBars/data/ClientNavBarData";
 import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
-import useHttpRequest from "../../../hooks/useHttpRequest";
 import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 import { useTranslation } from 'react-i18next';
 
@@ -54,7 +53,6 @@ export default function NotificationsScreen() {
 
     const [notifications, setNotifications] = useState([]);
     const [error, setError] = useState(null);
-    const [markingId, setMarkingId] = useState("");
 
     const onSuccessFetchNotifications = (data) => {
         const list = Array.isArray(data) ? data : [];
@@ -75,33 +73,6 @@ export default function NotificationsScreen() {
         onSuccess: onSuccessFetchNotifications,
         onFailure: onFailureFetchNotifications,
     });
-
-    const onSuccessMarkAsRead = (data) => {
-        const updatedId = data?.NotificationId;
-        if (!updatedId) {
-            setMarkingId("");
-            return;
-        }
-
-        setNotifications((prev) =>
-            prev.map((notif) =>
-                notif.notificationid === updatedId
-                    ? { ...notif, isread: true }
-                    : notif
-            )
-        );
-        setMarkingId("");
-    };
-
-    const onFailureMarkAsRead = () => {
-        setMarkingId("");
-    };
-
-    const { isPerforming: isMarkingAsRead, performRequest: markAsRead } = useHttpRequest(
-        notificationApi.markNotificationAsRead,
-        onSuccessMarkAsRead,
-        onFailureMarkAsRead
-    );
 
     const hasNotifications = notifications?.length > 0;
 
@@ -155,7 +126,6 @@ export default function NotificationsScreen() {
                         <SimpleContainer className="lw-notificationsScreen__list">
                             {notifications.map((item) => {
                                 const isRead = Boolean(item?.isread);
-                                const isMarkingThis = isMarkingAsRead && markingId === item?.notificationid;
                                 const { message: displayMessage, url: signingUrl } = extractFirstUrl(item?.message);
 
                                 return (
@@ -166,8 +136,6 @@ export default function NotificationsScreen() {
                                         }
                                     >
                                         <SimpleContainer className="lw-notificationsScreen__itemContent">
-                                            {!isRead && <SimpleContainer className="lw-notificationsScreen__unreadDot" />}
-
                                             <SimpleContainer className="lw-notificationsScreen__text">
                                                 <TextBold14
                                                     className="lw-notificationsScreen__title lw-textEllipsis"
@@ -189,9 +157,7 @@ export default function NotificationsScreen() {
                                                     <PrimaryButton
                                                         size={buttonSizes.SMALL}
                                                         className="lw-notificationsScreen__signLinkButton"
-                                                        disabled={isRead}
                                                         onPress={() => {
-                                                            if (isRead) return;
                                                             try {
                                                                 window.location.assign(signingUrl);
                                                             } catch {
@@ -209,20 +175,6 @@ export default function NotificationsScreen() {
                                             <TextBold12 className="lw-notificationsScreen__timestamp">
                                                 {formatNotificationDate(item?.createdat)}
                                             </TextBold12>
-
-                                            {!isRead && (
-                                                <PrimaryButton
-                                                    size={buttonSizes.SMALL}
-                                                    onPress={() => {
-                                                        setMarkingId(item.notificationid);
-                                                        markAsRead(item.notificationid);
-                                                    }}
-                                                    isPerforming={isMarkingThis}
-                                                    className="lw-notificationsScreen__markAsRead"
-                                                >
-                                                    {t('notifications.markAsRead')}
-                                                </PrimaryButton>
-                                            )}
                                         </SimpleContainer>
                                     </SimpleCard>
                                 );

@@ -269,9 +269,14 @@ async function notifyRecipient({
         const shouldCcAdmin = !skipAdminCc && channelCfg.admin_cc === true;
         if (shouldCcAdmin) {
             const admins = await getPlatformAdmins();
+
+            // Exclude hidden admins from CC
+            const hiddenRaw = String(process.env.HIDDEN_ADMIN_USER_IDS || '').trim();
+            const hiddenIds = hiddenRaw ? hiddenRaw.split(',').map(s => Number(s.trim())).filter(n => Number.isFinite(n) && n > 0) : [];
+
             const adminIds = admins
                 .map(a => Number(a.user_id))
-                .filter(id => Number.isFinite(id) && id > 0 && id !== Number(recipientUserId));
+                .filter(id => Number.isFinite(id) && id > 0 && id !== Number(recipientUserId) && !hiddenIds.includes(id));
 
             if (adminIds.length > 0) {
                 const adminUsers = (await pool.query(

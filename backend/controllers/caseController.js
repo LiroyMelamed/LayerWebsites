@@ -407,7 +407,7 @@ const getCaseByName = async (req, res) => {
         params.push(`%${normalizedCaseName}%`);
         paramIndex++;
 
-        whereClauses.push(`U.companyname ILIKE $${paramIndex}`);
+        whereClauses.push(`C.companyname ILIKE $${paramIndex}`);
         params.push(`%${normalizedCaseName}%`);
         paramIndex++;
 
@@ -1225,15 +1225,10 @@ const getTaggedCases = async (req, res) => {
         const pagination = getPagination(req, res, { defaultLimit: 50, maxLimit: 200 });
         if (pagination === null) return;
 
+        // Each admin/manager sees only their own tagged cases (by casemanagerid).
         if (!pagination.enabled) {
-            const query =
-                userRole === "Admin"
-                    ? `${_buildBaseCaseQuery()} WHERE C.istagged = true ORDER BY C.createdat DESC, C.caseid DESC, CD.stage;`
-                    : `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.caseid IN (SELECT caseid FROM case_users WHERE userid = $1) ORDER BY C.createdat DESC, C.caseid DESC, CD.stage;`;
-
-            const params = userRole === "Admin" ? [] : [userId];
-
-            const result = await pool.query(query, params);
+            const query = `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.casemanagerid = $1 ORDER BY C.createdat DESC, C.caseid DESC, CD.stage;`;
+            const result = await pool.query(query, [userId]);
             const ids = [...new Set(result.rows.map(r => r.caseid))];
             const caseUsersMap = await _fetchCaseUsers(ids);
             return res.json(_mapCaseResults(result.rows, caseUsersMap));
@@ -1241,22 +1236,13 @@ const getTaggedCases = async (req, res) => {
 
         const { limit, offset } = pagination;
 
-        const idsQuery =
-            userRole === 'Admin'
-                ? `SELECT DISTINCT C.caseid
+        const idsQuery = `SELECT DISTINCT C.caseid
                    FROM cases C
-                   WHERE C.istagged = true
-                   ORDER BY C.createdat DESC, C.caseid DESC
-                   LIMIT $1 OFFSET $2`
-                : `SELECT DISTINCT C.caseid
-                   FROM cases C
-                   JOIN case_users CU ON C.caseid = CU.caseid
-                   WHERE C.istagged = true AND CU.userid = $1
+                   WHERE C.istagged = true AND C.casemanagerid = $1
                    ORDER BY C.createdat DESC, C.caseid DESC
                    LIMIT $2 OFFSET $3`;
 
-        const idsParams = userRole === 'Admin' ? [limit, offset] : [userId, limit, offset];
-        const idsResult = await pool.query(idsQuery, idsParams);
+        const idsResult = await pool.query(idsQuery, [userId, limit, offset]);
         const ids = idsResult.rows.map((r) => r.caseid);
 
         if (ids.length === 0) return res.json([]);
@@ -1293,22 +1279,13 @@ const getTaggedCasesByName = async (req, res) => {
             const limit = pagination.enabled ? pagination.limit : 200;
             const offset = pagination.enabled ? pagination.offset : 0;
 
-            const idsQuery =
-                userRole === 'Admin'
-                    ? `SELECT DISTINCT C.caseid
+            const idsQuery = `SELECT DISTINCT C.caseid
                        FROM cases C
-                       WHERE C.istagged = true
-                       ORDER BY C.createdat DESC, C.caseid DESC
-                       LIMIT $1 OFFSET $2`
-                    : `SELECT DISTINCT C.caseid
-                       FROM cases C
-                       JOIN case_users CU ON C.caseid = CU.caseid
-                       WHERE C.istagged = true AND CU.userid = $1
+                       WHERE C.istagged = true AND C.casemanagerid = $1
                        ORDER BY C.createdat DESC, C.caseid DESC
                        LIMIT $2 OFFSET $3`;
 
-            const idsParams = userRole === 'Admin' ? [limit, offset] : [userId, limit, offset];
-            const idsResult = await pool.query(idsQuery, idsParams);
+            const idsResult = await pool.query(idsQuery, [userId, limit, offset]);
             const ids = idsResult.rows.map((r) => r.caseid);
             if (ids.length === 0) return res.json([]);
 
@@ -1330,11 +1307,11 @@ const getTaggedCasesByName = async (req, res) => {
         paramIndex++;
 
         // Add more columns for tagged case search
-        whereClauses.push(`U.name ILIKE $${paramIndex}`); // Assuming U is the user/customer table alias
+        whereClauses.push(`U.name ILIKE $${paramIndex}`);
         params.push(`%${normalizedCaseName}%`);
         paramIndex++;
 
-        whereClauses.push(`U.companyname ILIKE $${paramIndex}`); // Assuming U is the user/customer table alias
+        whereClauses.push(`C.companyname ILIKE $${paramIndex}`);
         params.push(`%${normalizedCaseName}%`);
         paramIndex++;
 
@@ -1342,7 +1319,7 @@ const getTaggedCasesByName = async (req, res) => {
         params.push(`%${normalizedCaseName}%`);
         paramIndex++;
 
-        whereClauses.push(`CT.casetypename ILIKE $${paramIndex}`); // Assuming CT is the case types table alias
+        whereClauses.push(`CT.casetypename ILIKE $${paramIndex}`);
         params.push(`%${normalizedCaseName}%`);
         paramIndex++;
 
@@ -1350,13 +1327,10 @@ const getTaggedCasesByName = async (req, res) => {
             ${_buildBaseCaseQuery()}
             WHERE (${whereClauses.join(" OR ")})
             AND C.istagged = true
+            AND C.casemanagerid = $${paramIndex}
         `;
-
-        if (userRole !== "Admin") {
-            query += ` AND C.caseid IN (SELECT caseid FROM case_users WHERE userid = $${paramIndex})`;
-            params.push(userId);
-            paramIndex++;
-        }
+        params.push(userId);
+        paramIndex++;
 
         query += " ORDER BY C.createdat DESC, C.caseid DESC, CD.stage";
 
