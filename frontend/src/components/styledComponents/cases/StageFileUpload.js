@@ -8,6 +8,7 @@ import { uploadFileToR2 } from "../../../utils/fileUploadUtils";
 import filesApi from "../../../api/filesApi";
 import { usePopup } from "../../../providers/PopUpProvider";
 import ConfirmationDialog from "../popups/ConfirmationDialog";
+import { useFromApp } from "../../../providers/FromAppProvider";
 
 import "./StageFileUpload.scss";
 
@@ -86,23 +87,38 @@ export default function StageFileUpload({ caseId, stage, isClient, stageFiles = 
         );
     }, [t, openPopup, closePopup, performDelete]);
 
+    const { isFromApp } = useFromApp();
+
     const handleDownload = useCallback(async (fileId, fileName) => {
         try {
             const result = await filesApi.readStageFile(fileId);
             if (result?.success && result?.data?.readUrl) {
-                const link = document.createElement("a");
-                link.href = result.data.readUrl;
-                link.target = "_blank";
-                link.rel = "noopener noreferrer";
-                link.download = fileName || "file";
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                const url = result.data.readUrl;
+                // Inside the mobile app WebView, send a native download message
+                // so the app can use expo-file-system + expo-sharing to save/share
+                // the file.  On the regular web we use an <a> tag.
+                if (isFromApp && window.ReactNativeWebView) {
+                    window.ReactNativeWebView.postMessage(JSON.stringify({
+                        type: "DOWNLOAD_FILE",
+                        payload: { url, fileName: fileName || "file.pdf" }
+                    }));
+                } else if (isFromApp) {
+                    window.open(url, "_blank");
+                } else {
+                    const link = document.createElement("a");
+                    link.href = url;
+                    link.target = "_blank";
+                    link.rel = "noopener noreferrer";
+                    link.download = fileName || "file";
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
             }
         } catch (err) {
             console.error("Stage file download error:", err);
         }
-    }, []);
+    }, [isFromApp]);
 
     const files = stageFiles.filter(f => f.stage === stage);
 

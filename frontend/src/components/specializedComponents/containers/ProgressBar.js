@@ -17,7 +17,7 @@ const ProgressBar = ({
     const rootRef = useRef(null);
 
     const safeTotalStages = Number(totalStages) || 0;
-    const safeCurrentStage = Number(currentStage) || 0;
+    const safeCurrentStage = Math.min(Number(currentStage) || 0, safeTotalStages);
 
     // Stage N of T → N/T percentage. Last stage = 100% and closed.
     const rawPercentage = safeTotalStages > 0
