@@ -21,6 +21,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { LoginStackName } from "../../navigation/LoginStack";
 import { LoginScreenName } from "../loginScreen/LoginScreen";
 import { useTranslation } from "react-i18next";
+import { useFromApp } from "../../providers/FromAppProvider";
 import "./SigningScreen.scss";
 import SimpleCard from "../../components/simpleComponents/SimpleCard";
 import Separator from "../../components/styledComponents/separators/Separator";
@@ -32,6 +33,7 @@ export default function SigningScreen() {
     const { isSmallScreen } = useScreenSize();
     const location = useLocation();
     const navigate = useNavigate();
+    const { isFromApp } = useFromApp();
     const [activeTab, setActiveTab] = useState("pending");
     const [selectedFileId, setSelectedFileId] = useState(null);
     const [isPublicSigningSession, setIsPublicSigningSession] = useState(false);
@@ -104,12 +106,21 @@ export default function SigningScreen() {
                 return;
             }
 
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = fileName || "signed_file.pdf";
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
+            const safeName = fileName || "signed_file.pdf";
+
+            if (isFromApp && window.ReactNativeWebView) {
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                    type: "DOWNLOAD_FILE",
+                    payload: { url, fileName: safeName }
+                }));
+            } else {
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = safeName;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            }
         } catch (err) {
             console.error("Download error:", err);
             alert(t('signing.screen.downloadError'));

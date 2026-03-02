@@ -26,6 +26,7 @@ import ApiUtils from "../../api/apiUtils";
 import { usePopup } from "../../providers/PopUpProvider";
 import ErrorPopup from "../../components/styledComponents/popups/ErrorPopup";
 import { useTranslation } from "react-i18next";
+import { useFromApp } from "../../providers/FromAppProvider";
 import { SIGNING_OTP_ENABLED } from "../../featureFlags";
 
 import { AdminStackName } from "../../navigation/AdminStack";
@@ -42,6 +43,7 @@ export default function SigningManagerScreen() {
     const { openPopup, closePopup } = usePopup();
     const { t } = useTranslation();
 
+    const { isFromApp } = useFromApp();
     const [activeTab, setActiveTab] = useState("pending");
     const [searchQuery, setSearchQuery] = useState("");
     const [dateFrom, setDateFrom] = useState("");
@@ -164,10 +166,29 @@ export default function SigningManagerScreen() {
     };
 
     const downloadBlobAsFile = (blob, filename) => {
+        const safeName = filename || "evidence.zip";
+
+        // Inside mobile app WebView: convert blob to base64 and send via
+        // native bridge so expo-file-system can write it to disk.
+        if (isFromApp && window.ReactNativeWebView) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64 = reader.result?.split(',')[1];
+                if (base64) {
+                    window.ReactNativeWebView.postMessage(JSON.stringify({
+                        type: "DOWNLOAD_BASE64",
+                        payload: { base64, fileName: safeName, mimeType: blob.type || 'application/octet-stream' }
+                    }));
+                }
+            };
+            reader.readAsDataURL(blob);
+            return;
+        }
+
         const objectUrl = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = objectUrl;
-        a.download = filename || "evidence.zip";
+        a.download = safeName;
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -228,12 +249,22 @@ export default function SigningManagerScreen() {
                 showError({ messageKey: 'signingManager.errors.downloadSignedMissingUrl' });
                 return;
             }
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = fileName || "signed_file.pdf";
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
+
+            const safeName = fileName || "signed_file.pdf";
+
+            if (isFromApp && window.ReactNativeWebView) {
+                window.ReactNativeWebView.postMessage(JSON.stringify({
+                    type: "DOWNLOAD_FILE",
+                    payload: { url, fileName: safeName }
+                }));
+            } else {
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = safeName;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            }
         } catch (err) {
             console.error("Download error:", err);
             // If backend sends a localized string, keep it as-is.
