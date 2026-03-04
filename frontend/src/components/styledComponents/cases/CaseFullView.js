@@ -151,8 +151,8 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
         applyFieldErrorUpdates({ [field]: value });
     };
 
-    const handleCaseTypeSelect = (caseTypeName) => {
-        const selectedCaseType = caseTypes.find(type => type.CaseTypeName === caseTypeName);
+    const handleCaseTypeSelect = (caseTypeName, resultItem) => {
+        const selectedCaseType = resultItem || caseTypes?.find(type => type.CaseTypeName?.trim() === caseTypeName?.trim());
 
         if (selectedCaseType) {
             setCaseData((prevDetails) => ({
@@ -207,12 +207,11 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
         );
     };
 
-    const handleCustomerSelect = (userName) => {
-        const selectedUser = customers.find(user => user.Name.trim() === userName.trim());
+    const handleCustomerSelect = (userName, resultItem) => {
+        const selectedUser = resultItem || customers?.find(user => user.Name?.trim() === userName?.trim());
 
         if (selectedUser) {
             setCaseData((prevDetails) => {
-                // Don't add if already linked
                 if (prevDetails.Users.some(u => u.UserId === selectedUser.UserId)) return prevDetails;
 
                 const updatedUsers = [...prevDetails.Users, {
@@ -258,8 +257,8 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
         });
     };
 
-    const handleManagerSelected = (selectedManager) => {
-        const selectedAdmin = (Array.isArray(adminByName) ? adminByName : []).find(admin => admin.name === selectedManager);
+    const handleManagerSelected = (selectedManager, resultItem) => {
+        const selectedAdmin = resultItem || (Array.isArray(adminByName) ? adminByName : []).find(admin => admin.name?.trim() === selectedManager?.trim());
         if (!selectedAdmin) return;
 
         setCaseData((prevDetails) => ({
@@ -271,7 +270,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
         applyFieldErrorUpdates({ CaseManagerId: selectedAdmin.userid });
     }
 
-    const handleCaseSelect = (selectedCase) => {
+    const handleCaseSelect = (selectedCase, resultItem) => {
         setCaseData((prevDetails) => ({
             ...prevDetails,
             CaseName: selectedCase
@@ -279,7 +278,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
 
         applyFieldErrorUpdates({ CaseName: selectedCase });
 
-        const caseDetails = cases.find(c => c.CaseName === selectedCase);
+        const caseDetails = resultItem || cases.find(c => c.CaseName?.trim() === selectedCase?.trim());
         if (caseDetails) {
             setCaseHasBeenChosen(true);
             setCaseData({

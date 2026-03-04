@@ -16,8 +16,57 @@
   min-width: 9.375rem;
 }
 
+.lw-caseTypeFullView__textAreaRow {
+  flex-direction: column;
+}
+
 .lw-caseTypeFullView__textAreaRow+.lw-caseTypeFullView__textAreaRow {
   margin-block-start: v.$space-2;
+}
+
+.lw-caseTypeFullView__stageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+.lw-caseTypeFullView__stageArrows {
+  display: flex;
+  gap: 2px;
+}
+
+.lw-caseTypeFullView__arrowBtn {
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.6rem;
+  line-height: 1;
+  padding: 1px 4px;
+  color: inherit;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: #999;
+  }
+}
+
+.lw-caseTypeFullView__removeStageBtn {
+  background: none;
+  border: 1px solid #e53e3e;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.6rem;
+  line-height: 1;
+  padding: 1px 4px;
+  color: #e53e3e;
+
+  &:hover {
+    background: rgba(229, 62, 62, 0.1);
+    border-color: #c53030;
+    color: #c53030;
+  }
 }
 
 .lw-caseTypeFullView__buttonsRow {

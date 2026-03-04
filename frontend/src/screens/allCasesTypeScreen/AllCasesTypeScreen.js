@@ -45,8 +45,8 @@ export default function AllCasesTypeScreen() {
         SearchCaseTypeByName(query);
     };
 
-    const handleButtonPress = (query) => {
-        const foundItem = casesTypeByName.find(caseType => caseType.CaseTypeName === query);
+    const handleButtonPress = (query, resultItem) => {
+        const foundItem = resultItem || casesTypeByName.find(caseType => caseType.CaseTypeName?.trim() === query?.trim());
         openPopup(
             <CaseTypeFullView
                 onFailureFunction={() => { }}

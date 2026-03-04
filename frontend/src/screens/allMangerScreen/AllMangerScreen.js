@@ -34,8 +34,8 @@ export default function AllMangerScreen() {
         SearchAdminByName(query);
     };
 
-    const buttonPressFunction = (query) => {
-        const foundItem = adminByName.find(admin => admin.name === query);
+    const buttonPressFunction = (query, resultItem) => {
+        const foundItem = resultItem || adminByName.find(admin => admin.name?.trim() === query?.trim());
         openPopup(<AdminPopup adminDetails={foundItem} rePerformRequest={performGetAdmins} closePopUpFunction={closePopup} />)
     }
     if (isPerformingAdminsData) {
@@ -56,7 +56,7 @@ export default function AllMangerScreen() {
                         className="lw-allMangerScreen__search"
                         isPerforming={isPerformingAdminById}
                         queryResult={adminByName}
-                        buttonPressFunction={(chosen) => buttonPressFunction(chosen)}
+                        buttonPressFunction={(chosen, result) => buttonPressFunction(chosen, result)}
                     />
                 </SimpleContainer>
 

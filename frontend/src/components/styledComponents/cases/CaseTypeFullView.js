@@ -83,6 +83,23 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
         });
     };
 
+    const moveStage = (fromIndex, toIndex) => {
+        setDescriptions((prev) => {
+            const updated = [...prev];
+            const [moved] = updated.splice(fromIndex, 1);
+            updated.splice(toIndex, 0, moved);
+            return updated.map((d, i) => ({ ...d, Stage: i + 1 }));
+        });
+    };
+
+    const removeStage = (index) => {
+        setDescriptions((prev) => {
+            const updated = prev.filter((_, i) => i !== index).map((d, i) => ({ ...d, Stage: i + 1 }));
+            return updated;
+        });
+        setNumberOfStages((prev) => prev - 1);
+    };
+
     useEffect(() => {
         if (!numberOfStagesError && numberOfStages) {
             setDescriptions((prevDescriptions) => {
@@ -131,6 +148,24 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
 
                 {descriptions.map((description, index) => (
                     <SimpleContainer key={index} className="lw-caseTypeFullView__textAreaRow">
+                        <SimpleContainer className="lw-caseTypeFullView__stageHeader">
+                            <SimpleContainer className="lw-caseTypeFullView__stageArrows">
+                                {index > 0 && (
+                                    <button type="button" className="lw-caseTypeFullView__arrowBtn" onClick={() => moveStage(index, index - 1)} title={t('common.moveUp')}>&#x25B2;</button>
+                                )}
+                                {index < descriptions.length - 1 && (
+                                    <button type="button" className="lw-caseTypeFullView__arrowBtn" onClick={() => moveStage(index, index + 1)} title={t('common.moveDown')}>&#x25BC;</button>
+                                )}
+                            </SimpleContainer>
+                            {descriptions.length > 1 && (
+                                <button
+                                    type="button"
+                                    className="lw-caseTypeFullView__removeStageBtn"
+                                    onClick={() => removeStage(index)}
+                                    title={t('cases.removeStage')}
+                                >&#x2715;</button>
+                            )}
+                        </SimpleContainer>
                         <SimpleTextArea
                             title={t('cases.descriptionNumber', { number: index + 1 })}
                             value={description.Text || ""}

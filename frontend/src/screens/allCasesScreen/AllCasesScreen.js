@@ -7,13 +7,11 @@ import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
 import SimpleLoader from "../../components/simpleComponents/SimpleLoader";
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
 import SimpleScrollView from "../../components/simpleComponents/SimpleScrollView";
-import SearchInput from "../../components/specializedComponents/containers/SearchInput";
 import ChooseButton from "../../components/styledComponents/buttons/ChooseButton";
 import FilterSearchInput from "../../components/specializedComponents/containers/FilterSearchInput";
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import CaseFullView from "../../components/styledComponents/cases/CaseFullView";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
-import useHttpRequest from "../../hooks/useHttpRequest";
 import { AdminStackName } from "../../navigation/AdminStack";
 import { usePopup } from "../../providers/PopUpProvider";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
@@ -36,11 +34,11 @@ export default function AllCasesScreen() {
     const [selectedClient, setSelectedClient] = useState(null);
     const [selectedManager, setSelectedManager] = useState(null);
     const [selectedCompany, setSelectedCompany] = useState(null);
+    const [selectedCaseName, setSelectedCaseName] = useState(null);
     const [filteredCases, setFilteredCases] = useState(null);
 
     const { result: allCasesTypes, isPerforming: isPerformingAllCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
     const { result: allCases, isPerforming: isPerformingAllCases, performRequest: reperformAfterSave } = useAutoHttpRequest(casesApi.getAllCases);
-    const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getCaseByName, null, () => { });
 
     const [initialFilterApplied, setInitialFilterApplied] = useState(false);
     useEffect(() => {
@@ -54,22 +52,19 @@ export default function AllCasesScreen() {
         }
     }, [allCases, initialFilterApplied, selectedStatus]);
 
-    const handleSearch = (query) => {
-        SearchCaseByName(query);
+    const handleFilterByCaseName = (caseName) => {
+        setSelectedCaseName(caseName);
+        applyFilters(selectedCaseType, selectedStatus, selectedClient, selectedManager, selectedCompany, caseName);
     };
 
-    const handleSearchSelect = (text, result) => {
-        openPopup(
-            <CaseFullView
-                caseDetails={result}
-                rePerformRequest={reperformAfterSave}
-                closePopUpFunction={closePopup}
-            />
-        );
-    };
-
-    const applyFilters = (typeFilter, statusFilter, clientFilter, managerFilter, companyFilter) => {
+    const applyFilters = (typeFilter, statusFilter, clientFilter, managerFilter, companyFilter, caseNameFilter) => {
         let filtered = allCases;
+
+        if (caseNameFilter) {
+            filtered = filtered.filter(item =>
+                item.CaseName && item.CaseName.toLowerCase().includes(caseNameFilter.toLowerCase())
+            );
+        }
 
         if (typeFilter) {
             filtered = filtered.filter(item => item.CaseTypeName === typeFilter);
@@ -82,11 +77,12 @@ export default function AllCasesScreen() {
         }
 
         if (clientFilter) {
+            const q = clientFilter.toLowerCase();
             filtered = filtered.filter(item => {
                 if (Array.isArray(item.Users) && item.Users.length > 0) {
-                    return item.Users.some(u => u.Name === clientFilter);
+                    return item.Users.some(u => u.Name && u.Name.toLowerCase().includes(q));
                 }
-                return item.CustomerName === clientFilter;
+                return item.CustomerName && item.CustomerName.toLowerCase().includes(q);
             });
         }
 
@@ -100,7 +96,7 @@ export default function AllCasesScreen() {
             );
         }
 
-        if (!typeFilter && !statusFilter && !clientFilter && !managerFilter && !companyFilter) {
+        if (!typeFilter && !statusFilter && !clientFilter && !managerFilter && !companyFilter && !caseNameFilter) {
             setFilteredCases(null);
         } else {
             setFilteredCases(filtered);
@@ -109,29 +105,30 @@ export default function AllCasesScreen() {
 
     const handleFilterByType = (type) => {
         setSelectedCaseType(type);
-        applyFilters(type, selectedStatus, selectedClient, selectedManager, selectedCompany);
+        applyFilters(type, selectedStatus, selectedClient, selectedManager, selectedCompany, selectedCaseName);
     };
 
     const handleFilterByStatus = (status) => {
         setSelectedStatus(status);
-        applyFilters(selectedCaseType, status, selectedClient, selectedManager, selectedCompany);
+        applyFilters(selectedCaseType, status, selectedClient, selectedManager, selectedCompany, selectedCaseName);
     };
 
     const handleFilterByClient = (client) => {
         setSelectedClient(client);
-        applyFilters(selectedCaseType, selectedStatus, client, selectedManager, selectedCompany);
+        applyFilters(selectedCaseType, selectedStatus, client, selectedManager, selectedCompany, selectedCaseName);
     };
 
     const handleFilterByManager = (manager) => {
         setSelectedManager(manager);
-        applyFilters(selectedCaseType, selectedStatus, selectedClient, manager, selectedCompany);
+        applyFilters(selectedCaseType, selectedStatus, selectedClient, manager, selectedCompany, selectedCaseName);
     };
 
     const handleFilterByCompany = (company) => {
         setSelectedCompany(company);
-        applyFilters(selectedCaseType, selectedStatus, selectedClient, selectedManager, company);
+        applyFilters(selectedCaseType, selectedStatus, selectedClient, selectedManager, company, selectedCaseName);
     };
 
+    const caseNames = [...new Set((allCases || []).map(c => c.CaseName).filter(Boolean))].sort();
     const clientNames = [...new Set((allCases || []).flatMap(c => {
         if (Array.isArray(c.Users) && c.Users.length > 0) return c.Users.map(u => u.Name);
         return [c.CustomerName];
@@ -149,15 +146,12 @@ export default function AllCasesScreen() {
 
             <SimpleScrollView>
                 <SimpleContainer className="lw-allCasesScreen__topRow">
-                    <SearchInput
-                        onSearch={handleSearch}
-                        title={t('cases.searchCaseTitle')}
+                    <FilterSearchInput
+                        items={caseNames}
+                        placeholder={t('cases.searchCaseTitle')}
                         titleFontSize={20}
-                        isPerforming={isPerformingCasesById}
-                        queryResult={casesByName}
-                        getButtonTextFunction={(item) => item.CaseName}
+                        onSelect={handleFilterByCaseName}
                         className="lw-allCasesScreen__search"
-                        buttonPressFunction={handleSearchSelect}
                     />
 
                     <FilterSearchInput
