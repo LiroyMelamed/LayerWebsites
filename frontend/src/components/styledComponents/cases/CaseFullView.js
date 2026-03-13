@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import SimpleContainer from '../../simpleComponents/SimpleContainer';
 import SimpleInput from '../../simpleComponents/SimpleInput';
 import SimpleScrollView from '../../simpleComponents/SimpleScrollView';
@@ -54,6 +54,29 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
             descs.splice(toIndex, 0, moved);
             return { ...prev, Descriptions: descs.map((d, i) => ({ ...d, Stage: i + 1 })) };
         });
+    };
+
+    // ——— Drag & drop for stages ———
+    const [dragIdx, setDragIdx] = useState(null);
+    const [overIdx, setOverIdx] = useState(null);
+    const touchDrag = useRef({ active: false });
+
+    const handleDragStart = (e, index) => { setDragIdx(index); e.dataTransfer.effectAllowed = 'move'; };
+    const handleDragOver = (e, index) => { e.preventDefault(); if (overIdx !== index) setOverIdx(index); };
+    const handleDrop = (e, index) => { e.preventDefault(); if (dragIdx !== null && dragIdx !== index) moveStage(dragIdx, index); setDragIdx(null); setOverIdx(null); };
+    const handleDragEnd = () => { setDragIdx(null); setOverIdx(null); };
+
+    const handleTouchDragStart = (index) => { touchDrag.current.active = true; setDragIdx(index); };
+    const handleTouchDragMove = (e) => {
+        if (!touchDrag.current.active) return;
+        e.preventDefault();
+        const touch = e.touches[0];
+        const els = document.elementsFromPoint(touch.clientX, touch.clientY);
+        for (const el of els) { if (el.dataset?.stageIndex != null) { setOverIdx(Number(el.dataset.stageIndex)); break; } }
+    };
+    const handleTouchDragEnd = () => {
+        if (touchDrag.current.active && dragIdx !== null && overIdx !== null && dragIdx !== overIdx) moveStage(dragIdx, overIdx);
+        touchDrag.current.active = false; setDragIdx(null); setOverIdx(null);
     };
 
     const validateCaseData = useMemo(() => {
@@ -440,9 +463,21 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                 {caseData?.Descriptions?.map((description, index) => (
                     <SimpleContainer
                         key={`DescriptionNumber${description.DescriptionId || index}`}
-                        className="lw-caseFullView__textAreaRow"
+                        className={`lw-caseFullView__textAreaRow${overIdx === index && dragIdx !== index ? ' lw-caseFullView__textAreaRow--dragOver' : ''}${dragIdx === index ? ' lw-caseFullView__textAreaRow--dragging' : ''}`}
+                        data-stage-index={index}
+                        onDragOver={(e) => handleDragOver(e, index)}
+                        onDrop={(e) => handleDrop(e, index)}
                     >
                         <SimpleContainer className="lw-caseFullView__stageHeader">
+                            <span
+                                className="lw-caseFullView__dragHandle"
+                                draggable
+                                onDragStart={(e) => handleDragStart(e, index)}
+                                onDragEnd={handleDragEnd}
+                                onTouchStart={() => handleTouchDragStart(index)}
+                                onTouchMove={(e) => handleTouchDragMove(e)}
+                                onTouchEnd={handleTouchDragEnd}
+                            >&#x2630;</span>
                             <SimpleContainer className="lw-caseFullView__stageArrows">
                                 {index > 0 && (
                                     <button type="button" className="lw-caseFullView__arrowBtn" onClick={() => moveStage(index, index - 1)} title={t('common.moveUp')}>&#x25B2;</button>

@@ -20,7 +20,7 @@ export default function TagCasePopup({ rePerformRequest, style }) {
     };
 
     function tagCase() {
-        setCase(CaseType?.CaseId, { ...CaseType, IsTagged: true })
+        setCase(CaseType?.CaseId, { IsTagged: true })
     }
 
     function buttonPressFunction(text, result) {

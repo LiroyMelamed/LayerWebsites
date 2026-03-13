@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
 import SimpleInput from "../../../components/simpleComponents/SimpleInput";
 import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
@@ -7,6 +7,7 @@ import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryB
 import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 import { customersApi } from "../../../api/customersApi";
 import useHttpRequest from "../../../hooks/useHttpRequest";
+import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
 import useFieldState from "../../../hooks/useFieldState";
 import { HebrewCharsValidationWithNumbers } from "../../../functions/validation/HebrewCharsValidation";
 import emailValidation from "../../../functions/validation/EmailValidation";
@@ -14,6 +15,7 @@ import IsraeliPhoneNumberValidation from "../../../functions/validation/IsraeliP
 import { useTranslation } from "react-i18next";
 import SimplePopUp from "../../../components/simpleComponents/SimplePopUp";
 import SearchInput from "../../../components/specializedComponents/containers/SearchInput";
+import { Text14 } from "../../../components/specializedComponents/text/AllTextKindFile";
 
 import { formatDateForInput } from "../../../functions/date/formatDateForInput";
 import "./ClientPopUp.scss";
@@ -29,8 +31,46 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
     const [email, setEmail, emailError] = useFieldState(emailValidation, clientDetails?.email || "");
     const [phoneNumber, setPhoneNumber, phoneNumberError] = useFieldState(IsraeliPhoneNumberValidation, clientDetails?.phonenumber || "");
     const [dateOfBirth, setDateOfBirth] = useState(clientDetails?.dateofbirth ? formatDateForInput(clientDetails.dateofbirth) : "");
+    const [similarCompanyDismissed, setSimilarCompanyDismissed] = useState(false);
 
+    const { result: allCustomers } = useAutoHttpRequest(customersApi.getAllCustomers);
     const { result: customersByName, isPerforming: isPerformingCustomersByName, performRequest: searchCustomersByName } = useHttpRequest(customersApi.getCustomersByName, null, () => { });
+
+    const similarCompanies = useMemo(() => {
+        if (!companyName || !allCustomers?.length || similarCompanyDismissed || selectedClient) return [];
+        const q = companyName.trim().toLowerCase();
+        if (q.length < 2) return [];
+        return allCustomers
+            .filter(c => {
+                const cn = (c.companyname || c.CompanyName || '').trim().toLowerCase();
+                if (!cn || cn === q) return false;
+                return cn.includes(q) || q.includes(cn) || _levenshteinClose(cn, q);
+            })
+            .slice(0, 5);
+    }, [companyName, allCustomers, similarCompanyDismissed, selectedClient]);
+
+    function _levenshteinClose(a, b) {
+        if (Math.abs(a.length - b.length) > 3) return false;
+        let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+        for (let i = 1; i <= a.length; i++) {
+            const curr = [i];
+            for (let j = 1; j <= b.length; j++) {
+                curr[j] = a[i - 1] === b[j - 1] ? prev[j - 1] : 1 + Math.min(prev[j - 1], prev[j], curr[j - 1]);
+            }
+            prev = curr;
+        }
+        return prev[b.length] <= 2;
+    }
+
+    const handleSelectSimilarCompany = (customer) => {
+        setSelectedClient(customer);
+        setName(customer.Name || customer.name || "");
+        setPhoneNumber(customer.PhoneNumber || customer.phonenumber || "");
+        setEmail(customer.Email || customer.email || "");
+        setCompanyName(customer.CompanyName || customer.companyname || "");
+        setDateOfBirth(customer.DateOfBirth || customer.dateofbirth ? formatDateForInput(customer.DateOfBirth || customer.dateofbirth) : "");
+        setSimilarCompanyDismissed(true);
+    };
 
     const handleSearchCustomer = (query) => {
         setName(query);
@@ -185,10 +225,39 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
                         className="lw-clientPopup__input"
                         title={t("customers.companyName")}
                         value={companyName}
-                        onChange={(e) => setCompanyName(e.target.value)}
+                        onChange={(e) => { setCompanyName(e.target.value); setSimilarCompanyDismissed(false); }}
                         error={companyNameError}
                     />
                 </SimpleContainer>
+
+                {similarCompanies.length > 0 && (
+                    <SimpleContainer className="lw-clientPopup__similarCompanies">
+                        <Text14 className="lw-clientPopup__similarTitle">
+                            {t('customers.similarCompanyFound', { defaultValue: 'נמצאו חברות דומות במערכת:' })}
+                        </Text14>
+                        {similarCompanies.map((c, i) => (
+                            <SimpleContainer key={c.userid || c.UserId || i} className="lw-clientPopup__similarItem">
+                                <Text14 className="lw-clientPopup__similarText">
+                                    {c.companyname || c.CompanyName} — {c.name || c.Name}
+                                </Text14>
+                                <SecondaryButton
+                                    size={buttonSizes.SMALL}
+                                    className="lw-clientPopup__similarBtn"
+                                    onPress={() => handleSelectSimilarCompany(c)}
+                                >
+                                    {t('customers.selectExisting', { defaultValue: 'בחר קיים' })}
+                                </SecondaryButton>
+                            </SimpleContainer>
+                        ))}
+                        <SecondaryButton
+                            size={buttonSizes.SMALL}
+                            className="lw-clientPopup__similarDismiss"
+                            onPress={() => setSimilarCompanyDismissed(true)}
+                        >
+                            {t('customers.continueNew', { defaultValue: 'המשך כלקוח חדש' })}
+                        </SecondaryButton>
+                    </SimpleContainer>
+                )}
 
                 <SimpleContainer className="lw-clientPopup__row">
                     <SimpleInput

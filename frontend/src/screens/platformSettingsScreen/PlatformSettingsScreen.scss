@@ -598,6 +598,92 @@
         gap: v.$space-1;
     }
 
+    // ── Reminder Templates ──────────────────────────────────────
+    &__reminderTplHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: v.$space-4;
+    }
+
+    &__reminderTplList {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-3;
+    }
+
+    &__reminderTplRow {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: v.$space-3;
+        background: #fafafa;
+        border: 1px solid #f0f0f0;
+        border-radius: 8px;
+        gap: v.$space-3;
+    }
+
+    &__reminderTplInfo {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-1;
+        flex: 1;
+    }
+
+    &__reminderTplNameRow {
+        display: flex;
+        align-items: center;
+        gap: v.$space-2;
+    }
+
+    &__reminderTplBadge {
+        background: #dbeafe;
+        color: #1e40af;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    &__reminderTplDesc {
+        color: #666;
+    }
+
+    &__reminderTplActions {
+        display: flex;
+        gap: v.$space-2;
+        flex-shrink: 0;
+    }
+
+    &__reminderEditor {
+        margin-top: v.$space-4;
+        padding: v.$space-4;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-3;
+    }
+
+    &__reminderEditorTitle {
+        margin-bottom: v.$space-2;
+    }
+
+    &__reminderEditorField {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-1;
+    }
+
+    &__reminderEditorActions {
+        display: flex;
+        gap: v.$space-3;
+        padding-top: v.$space-3;
+        border-top: 1px solid #e5e7eb;
+    }
+
     // ── Mobile responsive ───────────────────────────────────────────
     @media (max-width: 768px) {
         &__scroll {

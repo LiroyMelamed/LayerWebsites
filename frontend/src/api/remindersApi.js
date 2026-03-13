@@ -43,6 +43,40 @@ const remindersApi = {
     deleteReminder: async (id) => {
         return await ApiUtils.delete(`${base}/${id}`);
     },
+
+    /** List custom reminder templates */
+    listCustomTemplates: async () => {
+        return await ApiUtils.get(`${base}/custom-templates`);
+    },
+
+    /** Create a custom reminder template */
+    createCustomTemplate: async (data) => {
+        return await ApiUtils.post(`${base}/custom-templates`, data);
+    },
+
+    /** Update a custom reminder template */
+    updateCustomTemplate: async (id, data) => {
+        return await ApiUtils.put(`${base}/custom-templates/${id}`, data);
+    },
+
+    /** Delete a custom reminder template */
+    deleteCustomTemplate: async (id) => {
+        return await ApiUtils.delete(`${base}/custom-templates/${id}`);
+    },
+
+    /** Download example Excel for a template key */
+    downloadTemplateExcel: async (key) => {
+        const res = await ApiUtils.get(`${base}/templates/${key}/example-excel`, { responseType: 'blob' });
+        const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `reminder-example-${key}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    },
 };
 
 export default remindersApi;

@@ -20,6 +20,7 @@ import TertiaryButton from "../../components/styledComponents/buttons/TertiaryBu
 import { Text12, Text14, TextBold14, TextBold18, TextBold24 } from "../../components/specializedComponents/text/AllTextKindFile";
 
 import platformSettingsApi from "../../api/platformSettingsApi";
+import remindersApi from "../../api/remindersApi";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import useHttpRequest from "../../hooks/useHttpRequest";
 
@@ -239,7 +240,16 @@ const VAR_LABELS = {
     rejection_reason: "סיבת דחייה",
     signed_document_url: "קישור מסמך חתום",
     evidence_certificate_url: "קישור אישור ראייתי",
+    // Reminder template variables
+    client_name: "שם הלקוח",
+    date: "תאריך",
+    subject: "נושא",
+    body: "תוכן",
+    amount: "סכום",
 };
+
+// Available variables for reminder email templates
+const REMINDER_TEMPLATE_VARS = ["client_name", "firm_name", "date", "subject", "body", "case_title", "document_name", "amount"];
 
 // ─── Mapping: template key → notification_type (for channel-based filtering) ──
 // Email template keys
@@ -513,6 +523,12 @@ export default function PlatformSettingsScreen() {
     const [selectedEmailKey, setSelectedEmailKey] = useState(null);
     const [emailSaving, setEmailSaving] = useState(false);
 
+    // Reminder templates state
+    const [reminderTemplates, setReminderTemplates] = useState([]);
+    const [loadingReminderTpls, setLoadingReminderTpls] = useState(false);
+    const [editingReminderTpl, setEditingReminderTpl] = useState(null);
+    const [reminderTplSaving, setReminderTplSaving] = useState(false);
+
     // Load all settings
     const { result: data, isPerforming: isLoading, performRequest: reload } = useAutoHttpRequest(
         platformSettingsApi.getAll,
@@ -558,6 +574,67 @@ export default function PlatformSettingsScreen() {
             setEmailSaving(false);
         }
     }, [reloadEmailTemplates]);
+
+    // ─── Reminder templates: load + CRUD ────────────────────────────
+    useEffect(() => {
+        if (activeTab !== "reminders") return;
+        setLoadingReminderTpls(true);
+        remindersApi.getTemplates()
+            .then(res => setReminderTemplates(res.data || []))
+            .catch(() => {})
+            .finally(() => setLoadingReminderTpls(false));
+    }, [activeTab]);
+
+    const handleSaveReminderTemplate = useCallback(async () => {
+        if (!editingReminderTpl) return;
+        const { isNew, id, label, description, subject_template, body_html } = editingReminderTpl;
+        if (!label?.trim() || !subject_template?.trim()) {
+            setSaveMessage("❌ יש למלא שם תבנית ונושא");
+            setTimeout(() => setSaveMessage(""), 3000);
+            return;
+        }
+        setReminderTplSaving(true);
+        try {
+            if (isNew) {
+                await remindersApi.createCustomTemplate({ label, description, subject_template, body_html });
+            } else {
+                await remindersApi.updateCustomTemplate(id, { label, description, subject_template, body_html });
+            }
+            setSaveMessage("✅ תבנית תזכורת נשמרה");
+            setTimeout(() => setSaveMessage(""), 3000);
+            setEditingReminderTpl(null);
+            const res = await remindersApi.getTemplates();
+            setReminderTemplates(res.data || []);
+        } catch {
+            setSaveMessage("❌ שגיאה בשמירת תבנית");
+            setTimeout(() => setSaveMessage(""), 3000);
+        } finally {
+            setReminderTplSaving(false);
+        }
+    }, [editingReminderTpl]);
+
+    const handleDeleteReminderTemplate = useCallback(async (id) => {
+        if (!window.confirm("האם למחוק את התבנית?")) return;
+        try {
+            await remindersApi.deleteCustomTemplate(id);
+            setSaveMessage("✅ התבנית נמחקה");
+            setTimeout(() => setSaveMessage(""), 3000);
+            const res = await remindersApi.getTemplates();
+            setReminderTemplates(res.data || []);
+        } catch {
+            setSaveMessage("❌ שגיאה במחיקת תבנית");
+            setTimeout(() => setSaveMessage(""), 3000);
+        }
+    }, []);
+
+    const handleDownloadReminderExcel = useCallback(async (key) => {
+        try {
+            await remindersApi.downloadTemplateExcel(key);
+        } catch {
+            setSaveMessage("❌ שגיאה בהורדת קובץ דוגמה");
+            setTimeout(() => setSaveMessage(""), 3000);
+        }
+    }, []);
 
     // Save state (manual — we call the API directly to properly handle errors)
     const [isSaving, setIsSaving] = useState(false);
@@ -943,6 +1020,145 @@ export default function PlatformSettingsScreen() {
         );
     };
 
+    // ─── Render reminder templates section ──────────────────────────
+    const renderReminderTemplatesSection = () => (
+        <SimpleCard className="lw-platformSettings__card" style={{ marginTop: 24 }}>
+            <SimpleContainer className="lw-platformSettings__reminderTplHeader">
+                <TextBold18>תבניות תזכורת באימייל</TextBold18>
+                <PrimaryButton
+                    onPress={() => setEditingReminderTpl({
+                        isNew: true, label: "", description: "", subject_template: "", body_html: ""
+                    })}
+                >
+                    + הוסף תבנית חדשה
+                </PrimaryButton>
+            </SimpleContainer>
+
+            {loadingReminderTpls ? <SimpleLoader /> : (
+                <SimpleContainer className="lw-platformSettings__reminderTplList">
+                    {reminderTemplates.map(tpl => (
+                        <SimpleContainer key={tpl.key} className="lw-platformSettings__reminderTplRow">
+                            <SimpleContainer className="lw-platformSettings__reminderTplInfo">
+                                <SimpleContainer className="lw-platformSettings__reminderTplNameRow">
+                                    <TextBold14>{tpl.label}</TextBold14>
+                                    {tpl.isBuiltin && <Text12 className="lw-platformSettings__reminderTplBadge">מובנית</Text12>}
+                                </SimpleContainer>
+                                {tpl.description && <Text12 className="lw-platformSettings__reminderTplDesc">{tpl.description}</Text12>}
+                            </SimpleContainer>
+                            <SimpleContainer className="lw-platformSettings__reminderTplActions">
+                                <TertiaryButton onPress={() => handleDownloadReminderExcel(tpl.key)}>
+                                    📥 אקסל דוגמה
+                                </TertiaryButton>
+                                {!tpl.isBuiltin && (
+                                    <>
+                                        <TertiaryButton onPress={() => setEditingReminderTpl({
+                                            isNew: false, id: tpl.id, label: tpl.label,
+                                            description: tpl.description || "", subject_template: tpl.subject,
+                                            body_html: tpl.bodyHtml || ""
+                                        })}>
+                                            ✏️ עריכה
+                                        </TertiaryButton>
+                                        <TertiaryButton onPress={() => handleDeleteReminderTemplate(tpl.id)}>
+                                            🗑️ מחיקה
+                                        </TertiaryButton>
+                                    </>
+                                )}
+                            </SimpleContainer>
+                        </SimpleContainer>
+                    ))}
+                    {reminderTemplates.length === 0 && (
+                        <Text14 className="lw-platformSettings__empty">אין תבניות עדיין</Text14>
+                    )}
+                </SimpleContainer>
+            )}
+
+            {editingReminderTpl && (
+                <SimpleContainer className="lw-platformSettings__reminderEditor">
+                    <TextBold14 className="lw-platformSettings__reminderEditorTitle">
+                        {editingReminderTpl.isNew ? "תבנית חדשה" : "עריכת תבנית"}
+                    </TextBold14>
+
+                    <SimpleContainer className="lw-platformSettings__reminderEditorField">
+                        <Text12>שם התבנית:</Text12>
+                        <SimpleInput
+                            className="lw-platformSettings__input"
+                            type="text"
+                            value={editingReminderTpl.label}
+                            onChange={(e) => setEditingReminderTpl(prev => ({ ...prev, label: e.target.value }))}
+                            title="שם התבנית"
+                            timeToWaitInMilli={0}
+                        />
+                    </SimpleContainer>
+
+                    <SimpleContainer className="lw-platformSettings__reminderEditorField">
+                        <Text12>תיאור:</Text12>
+                        <SimpleInput
+                            className="lw-platformSettings__input"
+                            type="text"
+                            value={editingReminderTpl.description}
+                            onChange={(e) => setEditingReminderTpl(prev => ({ ...prev, description: e.target.value }))}
+                            title="תיאור"
+                            timeToWaitInMilli={0}
+                        />
+                    </SimpleContainer>
+
+                    <SimpleContainer className="lw-platformSettings__reminderEditorField">
+                        <Text12>נושא האימייל:</Text12>
+                        <SimpleInput
+                            className="lw-platformSettings__input"
+                            type="text"
+                            value={editingReminderTpl.subject_template}
+                            onChange={(e) => setEditingReminderTpl(prev => ({ ...prev, subject_template: e.target.value }))}
+                            title="נושא"
+                            timeToWaitInMilli={0}
+                        />
+                    </SimpleContainer>
+
+                    <SimpleContainer className="lw-platformSettings__reminderEditorField">
+                        <Text12>תוכן ההודעה (HTML):</Text12>
+                        <SimpleTextArea
+                            className="lw-platformSettings__textarea"
+                            value={editingReminderTpl.body_html}
+                            onChange={(val) => setEditingReminderTpl(prev => ({ ...prev, body_html: val }))}
+                            title="תוכן"
+                            rows={8}
+                            dir="rtl"
+                        />
+                    </SimpleContainer>
+
+                    <SimpleContainer className="lw-platformSettings__varButtons">
+                        <Text12 className="lw-platformSettings__varButtonsLabel">משתנים זמינים (לחץ להוספה):</Text12>
+                        <SimpleContainer className="lw-platformSettings__varButtonsRow">
+                            {REMINDER_TEMPLATE_VARS.map(v => (
+                                <TertiaryButton
+                                    key={v}
+                                    onPress={() => setEditingReminderTpl(prev => ({
+                                        ...prev, body_html: (prev.body_html || "") + `[[${v}]]`
+                                    }))}
+                                >
+                                    {VAR_LABELS[v] || v}
+                                </TertiaryButton>
+                            ))}
+                        </SimpleContainer>
+                    </SimpleContainer>
+
+                    <SimpleContainer className="lw-platformSettings__reminderEditorActions">
+                        <PrimaryButton
+                            onPress={handleSaveReminderTemplate}
+                            disabled={reminderTplSaving}
+                            isPerforming={reminderTplSaving}
+                        >
+                            {reminderTplSaving ? "שומר..." : "שמור תבנית"}
+                        </PrimaryButton>
+                        <SecondaryButton onPress={() => setEditingReminderTpl(null)}>
+                            ביטול
+                        </SecondaryButton>
+                    </SimpleContainer>
+                </SimpleContainer>
+            )}
+        </SimpleCard>
+    );
+
     return (
         <SimpleScreen className="lw-platformSettings">
             {isSmallScreen && <TopToolBarSmallScreen navBarData={getNavBarData} />}
@@ -972,6 +1188,9 @@ export default function PlatformSettingsScreen() {
                     {/* Content area */}
                     <SimpleContainer className="lw-platformSettings__content">
                         {renderContent()}
+
+                        {/* Reminder email templates management (under reminders tab) */}
+                        {activeTab === "reminders" && renderReminderTemplatesSection()}
 
                         {/* Save bar (only for settings tabs, not channels/admins/emailTemplates) */}
                         {activeTab !== "admins" && activeTab !== "emailTemplates" && (

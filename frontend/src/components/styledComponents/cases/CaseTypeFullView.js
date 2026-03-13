@@ -9,7 +9,7 @@ import SimpleInput from "../../../components/simpleComponents/SimpleInput";
 import useHttpRequest from "../../../hooks/useHttpRequest";
 import useFieldState from "../../../hooks/useFieldState";
 import { casesTypeApi } from "../../../api/casesApi";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import "./CaseTypeFullView.scss";
@@ -100,6 +100,29 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
         setNumberOfStages((prev) => prev - 1);
     };
 
+    // ——— Drag & drop for stages ———
+    const [dragIdx, setDragIdx] = useState(null);
+    const [overIdx, setOverIdx] = useState(null);
+    const touchDrag = useRef({ active: false });
+
+    const handleDragStart = (e, index) => { setDragIdx(index); e.dataTransfer.effectAllowed = 'move'; };
+    const handleDragOver = (e, index) => { e.preventDefault(); if (overIdx !== index) setOverIdx(index); };
+    const handleDrop = (e, index) => { e.preventDefault(); if (dragIdx !== null && dragIdx !== index) moveStage(dragIdx, index); setDragIdx(null); setOverIdx(null); };
+    const handleDragEnd = () => { setDragIdx(null); setOverIdx(null); };
+
+    const handleTouchDragStart = (index) => { touchDrag.current.active = true; setDragIdx(index); };
+    const handleTouchDragMove = (e) => {
+        if (!touchDrag.current.active) return;
+        e.preventDefault();
+        const touch = e.touches[0];
+        const els = document.elementsFromPoint(touch.clientX, touch.clientY);
+        for (const el of els) { if (el.dataset?.stageIndex != null) { setOverIdx(Number(el.dataset.stageIndex)); break; } }
+    };
+    const handleTouchDragEnd = () => {
+        if (touchDrag.current.active && dragIdx !== null && overIdx !== null && dragIdx !== overIdx) moveStage(dragIdx, overIdx);
+        touchDrag.current.active = false; setDragIdx(null); setOverIdx(null);
+    };
+
     useEffect(() => {
         if (!numberOfStagesError && numberOfStages) {
             setDescriptions((prevDescriptions) => {
@@ -147,8 +170,23 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
                 </SimpleContainer>
 
                 {descriptions.map((description, index) => (
-                    <SimpleContainer key={index} className="lw-caseTypeFullView__textAreaRow">
+                    <SimpleContainer
+                        key={index}
+                        className={`lw-caseTypeFullView__textAreaRow${overIdx === index && dragIdx !== index ? ' lw-caseTypeFullView__textAreaRow--dragOver' : ''}${dragIdx === index ? ' lw-caseTypeFullView__textAreaRow--dragging' : ''}`}
+                        data-stage-index={index}
+                        onDragOver={(e) => handleDragOver(e, index)}
+                        onDrop={(e) => handleDrop(e, index)}
+                    >
                         <SimpleContainer className="lw-caseTypeFullView__stageHeader">
+                            <span
+                                className="lw-caseTypeFullView__dragHandle"
+                                draggable
+                                onDragStart={(e) => handleDragStart(e, index)}
+                                onDragEnd={handleDragEnd}
+                                onTouchStart={() => handleTouchDragStart(index)}
+                                onTouchMove={(e) => handleTouchDragMove(e)}
+                                onTouchEnd={handleTouchDragEnd}
+                            >&#x2630;</span>
                             <SimpleContainer className="lw-caseTypeFullView__stageArrows">
                                 {index > 0 && (
                                     <button type="button" className="lw-caseTypeFullView__arrowBtn" onClick={() => moveStage(index, index - 1)} title={t('common.moveUp')}>&#x25B2;</button>

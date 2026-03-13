@@ -129,15 +129,9 @@ export default function ImportRemindersModal({ closePopUpFunction, rePerformRequ
                             <Text14 className="lw-importReminders__fileName">{file.name}</Text14>
                         )}
                     </SimpleContainer>
-                    <a
-                        href={`${process.env.PUBLIC_URL}/templates/reminders-demo.xlsx`}
-                        download="reminders-demo.xlsx"
-                        className="lw-importReminders__demoLink"
-                    >
-                        <SecondaryButton onPress={() => { }}>
-                            {t("reminders.import.downloadDemo")}
-                        </SecondaryButton>
-                    </a>
+                    <SecondaryButton onPress={() => remindersApi.downloadTemplateExcel(selectedTemplate)}>
+                        📥 {t("reminders.import.downloadDemo")}
+                    </SecondaryButton>
                 </SimpleContainer>
             </SimpleContainer>
 

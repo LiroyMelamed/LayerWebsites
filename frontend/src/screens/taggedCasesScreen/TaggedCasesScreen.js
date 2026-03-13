@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SimpleScreen from '../../components/simpleComponents/SimpleScreen';
 import SimpleScrollView from '../../components/simpleComponents/SimpleScrollView';
 import { useScreenSize } from '../../providers/ScreenSizeProvider';
@@ -28,7 +28,7 @@ export default function TaggedCasesScreen() {
     const { isSmallScreen } = useScreenSize();
 
     const [selectedCaseType, setSelectedCaseType] = useState(null);
-    const [selectedStatus, setSelectedStatus] = useState(null);
+    const [selectedStatus, setSelectedStatus] = useState('open');
     const [selectedClient, setSelectedClient] = useState(null);
     const [selectedManager, setSelectedManager] = useState(null);
     const [selectedCompany, setSelectedCompany] = useState(null);
@@ -36,6 +36,13 @@ export default function TaggedCasesScreen() {
     const [filteredTaggedCases, setFilteredTaggedCases] = useState(null);
 
     const { result: taggedCases, isPerforming: isPerformingTaggedCases, performRequest } = useAutoHttpRequest(casesApi.getAllTaggedCases);
+
+    // Apply initial 'open' filter when data loads
+    useEffect(() => {
+        if (taggedCases && taggedCases.length > 0) {
+            applyFilters(selectedCaseType, 'open', selectedClient, selectedManager, selectedCompany, selectedCaseName);
+        }
+    }, [taggedCases]);
     const { result: allCasesTypes, isPerforming: isPerformingAllCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
 
     const handleFilterByCaseName = (caseName) => {
@@ -166,6 +173,7 @@ export default function TaggedCasesScreen() {
                         ]}
                         className="lw-taggedCasesScreen__choose"
                         OnPressChoiceFunction={handleFilterByStatus}
+                        defaultValue={'open'}
                     />
 
                     <ChooseButton

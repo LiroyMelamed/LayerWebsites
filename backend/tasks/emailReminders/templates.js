@@ -101,6 +101,35 @@ function getAllTemplates() {
 }
 
 /**
+ * Get a template by key — checks built-in first, then DB.
+ * Used by the scheduler when sending a reminder with a custom template.
+ */
+async function getTemplateByKey(key) {
+    const builtIn = getAllTemplates();
+    if (builtIn[key]) return builtIn[key];
+
+    // Fallback to DB-stored custom templates
+    try {
+        const pool = require('../../config/db');
+        const { rows } = await pool.query(
+            'SELECT template_key, label, description, subject_template, body_html FROM reminder_templates WHERE template_key = $1',
+            [key]
+        );
+        if (rows[0]) {
+            return {
+                key: rows[0].template_key,
+                label: rows[0].label,
+                description: rows[0].description || '',
+                subject: rows[0].subject_template,
+                body: rows[0].body_html,
+            };
+        }
+    } catch (_) { /* table may not exist yet */ }
+
+    return null;
+}
+
+/**
  * Replace [[key]] placeholders in a string with values from `fields`.
  */
 function renderTemplate(template, fields) {
@@ -144,4 +173,4 @@ function wrapEmailHtml(bodyHtml, { firmName = 'MelamedLaw' } = {}) {
 </html>`;
 }
 
-module.exports = { BUILT_IN_TEMPLATES, getAllTemplates, renderTemplate, wrapEmailHtml };
+module.exports = { BUILT_IN_TEMPLATES, getAllTemplates, getTemplateByKey, renderTemplate, wrapEmailHtml };

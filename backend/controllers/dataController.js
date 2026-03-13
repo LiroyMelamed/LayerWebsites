@@ -11,12 +11,14 @@ const { getMainScreenDataCached } = require("../utils/mainScreenDataCache");
  */
 const getMainScreenData = async (req, res) => {
     try {
+        const userId = req.user?.UserId;
+
         const payload = await getMainScreenDataCached({
             loader: async () => {
                 // Fetch only the columns needed for dashboard aggregates.
                 // (Avoid SELECT * on potentially large tables.)
                 const casesResult = await pool.query(
-                    "SELECT caseid, isclosed, istagged FROM Cases"
+                    "SELECT caseid, isclosed, istagged, casemanagerid FROM Cases"
                 );
 
                 // Fetch all customers (users with a role other than 'Admin')
@@ -56,6 +58,16 @@ const getMainScreenData = async (req, res) => {
                 };
             },
         });
+
+        // Scope tagged-case count to the connected lawyer
+        if (userId) {
+            const userTaggedCases = payload.TaggedCases.filter(c => c.casemanagerid === userId);
+            return res.status(200).json({
+                ...payload,
+                TaggedCases: userTaggedCases,
+                NumberOfTaggedCases: userTaggedCases.length,
+            });
+        }
 
         res.status(200).json(payload);
     } catch (error) {

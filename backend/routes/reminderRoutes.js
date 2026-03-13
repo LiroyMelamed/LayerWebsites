@@ -18,8 +18,17 @@ const upload = multer({
     },
 });
 
-// GET  /api/reminders/templates  – list available email templates
+// GET  /api/reminders/templates  – list available email templates (built-in + custom)
 router.get('/templates', authMiddleware, reminderController.getTemplates);
+
+// GET  /api/reminders/templates/:key/example-excel – download example Excel for a template
+router.get('/templates/:key/example-excel', authMiddleware, reminderController.downloadTemplateExcel);
+
+// CRUD for custom reminder templates
+router.get('/custom-templates', authMiddleware, reminderController.listCustomTemplates);
+router.post('/custom-templates', authMiddleware, reminderController.createCustomTemplate);
+router.put('/custom-templates/:id', authMiddleware, reminderController.updateCustomTemplate);
+router.delete('/custom-templates/:id', authMiddleware, reminderController.deleteCustomTemplate);
 
 // POST /api/reminders/import     – import reminders from Excel/CSV
 router.post('/import', authMiddleware, upload.single('file'), reminderController.importReminders);

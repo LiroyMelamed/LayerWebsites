@@ -1225,7 +1225,7 @@ const getTaggedCases = async (req, res) => {
         const pagination = getPagination(req, res, { defaultLimit: 50, maxLimit: 200 });
         if (pagination === null) return;
 
-        // Each admin/manager sees only their own tagged cases (by casemanagerid).
+        // Each lawyer sees only their own tagged cases (by casemanagerid).
         if (!pagination.enabled) {
             const query = `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.casemanagerid = $1 ORDER BY C.createdat DESC, C.caseid DESC, CD.stage;`;
             const result = await pool.query(query, [userId]);

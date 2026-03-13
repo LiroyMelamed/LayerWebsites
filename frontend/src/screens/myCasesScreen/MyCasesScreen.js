@@ -27,7 +27,7 @@ export default function MyCasesScreen() {
     const [query, setQuery] = useState('');
     const [selectedClient, setSelectedClient] = useState(null);
     const [selectedManager, setSelectedManager] = useState(null);
-    const [selectedStatus, setSelectedStatus] = useState(null);
+    const [selectedStatus, setSelectedStatus] = useState('open');
     const [selectedCompany, setSelectedCompany] = useState(null);
 
     const { result: myCases, isPerforming: isPerformingMyCases, performRequest: refetchMyCases } = useAutoHttpRequest(casesApi.getMyCases);
@@ -127,6 +127,7 @@ export default function MyCasesScreen() {
                         ]}
                         className="lw-myCasesScreen__choose"
                         OnPressChoiceFunction={setSelectedStatus}
+                        defaultValue={'open'}
                     />
 
                     <ChooseButton

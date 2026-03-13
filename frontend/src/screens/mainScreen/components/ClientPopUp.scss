@@ -82,6 +82,42 @@
     flex: 1 1 12rem;
 }
 
+.lw-clientPopup__similarCompanies {
+    background: #fff8e1;
+    border: 1px solid #ffcc02;
+    border-radius: 0.5rem;
+    padding: v.$space-3;
+    margin-block-end: v.$space-4;
+    flex-direction: column;
+    gap: v.$space-2;
+}
+
+.lw-clientPopup__similarTitle {
+    font-weight: 600;
+    color: #7a5d00;
+    margin-block-end: v.$space-1;
+}
+
+.lw-clientPopup__similarItem {
+    @include m.row(v.$space-2, nowrap, center, center);
+    justify-content: space-between;
+    padding: v.$space-1 0;
+}
+
+.lw-clientPopup__similarText {
+    flex: 1;
+    color: #333;
+}
+
+.lw-clientPopup__similarBtn {
+    white-space: nowrap;
+}
+
+.lw-clientPopup__similarDismiss {
+    align-self: flex-start;
+    margin-block-start: v.$space-1;
+}
+
 @media (max-width: v.$bp-narrow) {
     .lw-clientPopup__input {
         flex-basis: 100%;

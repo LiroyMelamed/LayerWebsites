@@ -12,27 +12,27 @@ const { getAllTemplates } = require('../tasks/emailReminders/templates');
 
 // ─── Templates ───────────────────────────────────────────────────────
 
+// Human-readable placeholder replacements for preview
+const _placeholderMap = {
+    'client_name': '"שם הלקוח"',
+    'firm_name': String(process.env.LAW_FIRM_NAME || 'שם המשרד'),
+    'date': '"תאריך"',
+    'subject': '"נושא"',
+    'body': '"תוכן ההודעה"',
+    'case_title': '"שם התיק"',
+    'document_name': '"שם המסמך"',
+    'amount': '"סכום"',
+};
+
+function _humanizeBody(raw) {
+    let text = (raw || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    text = text.replace(/\[\[([^\]]+)\]\]/g, (_m, key) => _placeholderMap[key] || `"${key}"`);
+    return text.slice(0, 200);
+}
+
 const getTemplates = async (req, res, next) => {
     try {
         const templates = getAllTemplates();
-
-        // Human-readable placeholder replacements for preview
-        const placeholderMap = {
-            'client_name': '"שם הלקוח"',
-            'firm_name': String(process.env.LAW_FIRM_NAME || 'שם המשרד'),
-            'date': '"תאריך"',
-            'subject': '"נושא"',
-            'body': '"תוכן ההודעה"',
-            'case_title': '"שם התיק"',
-            'document_name': '"שם המסמך"',
-            'amount': '"סכום"',
-        };
-
-        const humanizeBody = (raw) => {
-            let text = (raw || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-            text = text.replace(/\[\[([^\]]+)\]\]/g, (_m, key) => placeholderMap[key] || `"${key}"`);
-            return text.slice(0, 200);
-        };
 
         const list = Object.values(templates).map(t => ({
             key: t.key,
@@ -40,8 +40,29 @@ const getTemplates = async (req, res, next) => {
             labelEn: t.labelEn || t.label,
             description: t.description || '',
             subject: t.subject,
-            bodyPreview: humanizeBody(t.body),
+            bodyPreview: _humanizeBody(t.body),
+            isBuiltin: true,
         }));
+
+        // Merge DB-stored custom templates
+        try {
+            const { rows } = await pool.query(
+                'SELECT id, template_key, label, description, subject_template, body_html FROM reminder_templates ORDER BY created_at'
+            );
+            for (const row of rows) {
+                list.push({
+                    key: row.template_key,
+                    label: row.label,
+                    description: row.description || '',
+                    subject: row.subject_template,
+                    bodyPreview: _humanizeBody(row.body_html),
+                    bodyHtml: row.body_html,
+                    isBuiltin: false,
+                    id: row.id,
+                });
+            }
+        } catch (_) { /* table may not exist yet */ }
+
         return res.json({ ok: true, templates: list });
     } catch (e) {
         return next(e);
@@ -338,4 +359,104 @@ const updateReminder = async (req, res, next) => {
     }
 };
 
-module.exports = { getTemplates, importReminders, listReminders, cancelReminder, deleteReminder, updateReminder };
+// ─── Custom reminder template CRUD ──────────────────────────────────
+
+const listCustomTemplates = async (req, res, next) => {
+    try {
+        const { rows } = await pool.query(
+            'SELECT id, template_key, label, description, subject_template, body_html, created_at, updated_at FROM reminder_templates ORDER BY created_at DESC'
+        );
+        return res.json({ ok: true, templates: rows });
+    } catch (e) { return next(e); }
+};
+
+const createCustomTemplate = async (req, res, next) => {
+    try {
+        const { label, description, subjectTemplate, bodyHtml } = req.body;
+        if (!label || !String(label).trim()) {
+            return res.status(400).json({ ok: false, error: 'Label is required' });
+        }
+        const key = 'CUSTOM_' + Date.now();
+        const { rows } = await pool.query(
+            `INSERT INTO reminder_templates (template_key, label, description, subject_template, body_html, created_by)
+             VALUES ($1, $2, $3, $4, $5, $6)
+             RETURNING *`,
+            [
+                key,
+                label.trim(),
+                (description || '').trim(),
+                subjectTemplate || 'תזכורת: [[subject]]',
+                bodyHtml || 'שלום [[client_name]],<br><br>[[body]]<br><br>בברכה,<br>[[firm_name]]',
+                req.user?.UserId || null,
+            ]
+        );
+        return res.status(201).json({ ok: true, template: rows[0] });
+    } catch (e) { return next(e); }
+};
+
+const updateCustomTemplate = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { label, description, subjectTemplate, bodyHtml } = req.body;
+        const { rows, rowCount } = await pool.query(
+            `UPDATE reminder_templates SET
+                label = COALESCE($2, label),
+                description = COALESCE($3, description),
+                subject_template = COALESCE($4, subject_template),
+                body_html = COALESCE($5, body_html),
+                updated_at = NOW()
+             WHERE id = $1 RETURNING *`,
+            [id, label, description, subjectTemplate, bodyHtml]
+        );
+        if (rowCount === 0) return res.status(404).json({ ok: false, error: 'Template not found' });
+        return res.json({ ok: true, template: rows[0] });
+    } catch (e) { return next(e); }
+};
+
+const deleteCustomTemplate = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { rowCount } = await pool.query('DELETE FROM reminder_templates WHERE id = $1', [id]);
+        if (rowCount === 0) return res.status(404).json({ ok: false, error: 'Template not found' });
+        return res.json({ ok: true });
+    } catch (e) { return next(e); }
+};
+
+// ─── Download example Excel for a template ──────────────────────────
+
+const downloadTemplateExcel = async (req, res, next) => {
+    try {
+        const { key } = req.params;
+
+        // Resolve label from built-in or DB
+        const builtIn = getAllTemplates();
+        let templateLabel = key;
+        if (builtIn[key]) {
+            templateLabel = builtIn[key].label;
+        } else {
+            const { rows } = await pool.query('SELECT label FROM reminder_templates WHERE template_key = $1', [key]);
+            if (rows[0]) templateLabel = rows[0].label;
+        }
+
+        const exampleData = [
+            { 'שם לקוח': 'ישראל ישראלי', 'אימייל': 'israel@example.com', 'תאריך': '2026-04-01', 'נושא': 'נושא לדוגמה', 'הערות': 'הערה לדוגמה' },
+            { 'שם לקוח': 'שרה כהן', 'אימייל': 'sara@example.com', 'תאריך': '2026-04-15', 'נושא': '', 'הערות': '' },
+        ];
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(exampleData);
+        ws['!cols'] = [{ wch: 20 }, { wch: 25 }, { wch: 15 }, { wch: 20 }, { wch: 30 }];
+        XLSX.utils.book_append_sheet(wb, ws, templateLabel.slice(0, 31));
+
+        const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="reminder-example-${key}.xlsx"`);
+        return res.send(Buffer.from(buf));
+    } catch (e) { return next(e); }
+};
+
+module.exports = {
+    getTemplates, importReminders, listReminders, cancelReminder, deleteReminder, updateReminder,
+    listCustomTemplates, createCustomTemplate, updateCustomTemplate, deleteCustomTemplate,
+    downloadTemplateExcel,
+};
