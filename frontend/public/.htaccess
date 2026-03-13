@@ -1,0 +1,20 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# ─── Deep Linking: serve .well-known files with correct Content-Type ───
+<IfModule mod_headers.c>
+  <Files "apple-app-site-association">
+    Header set Content-Type "application/json"
+  </Files>
+  <Files "assetlinks.json">
+    Header set Content-Type "application/json"
+  </Files>
+</IfModule>
