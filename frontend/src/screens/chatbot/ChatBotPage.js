@@ -1,5 +1,15 @@
 import React, { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import SimpleScreen from '../../components/simpleComponents/SimpleScreen';
+import SimpleContainer from '../../components/simpleComponents/SimpleContainer';
+import SimplePopUp from '../../components/simpleComponents/SimplePopUp';
+import SimpleInput from '../../components/simpleComponents/SimpleInput';
+import PrimaryButton from '../../components/styledComponents/buttons/PrimaryButton';
+import SecondaryButton from '../../components/styledComponents/buttons/SecondaryButton';
+import ErrorText from '../../components/styledComponents/text/ErrorText';
+import { TextBold18, Text12, Text14 } from '../../components/specializedComponents/text/AllTextKindFile';
+import { colors } from '../../constant/colors';
+import { buttonSizes } from '../../styles/buttons/buttonSizes';
 import ChatWindow from '../../components/chatbot/ChatWindow';
 import ChatInput from '../../components/chatbot/ChatInput';
 import chatbotApi from '../../api/chatbotApi';
@@ -132,94 +142,80 @@ export default function ChatBotPage() {
     };
 
     return (
-        <div className="chatbot-page" dir="rtl">
-            <header className="chatbot-page__header">
-                <h1 className="chatbot-page__title">{t('chatbot.title')}</h1>
+        <SimpleScreen className="lw-chatbotPage">
+            <SimpleContainer className="lw-chatbotPage__header">
+                <TextBold18 color={colors.white}>{t('chatbot.title')}</TextBold18>
                 {verified && (
-                    <span className="chatbot-page__badge">{t('chatbot.verifiedBadge')}</span>
+                    <Text12 color={colors.white} className="lw-chatbotPage__badge">
+                        {t('chatbot.verifiedBadge')}
+                    </Text12>
                 )}
-            </header>
+            </SimpleContainer>
 
             <ChatWindow messages={messages} isTyping={isTyping} />
 
             {error && (
-                <div className="chatbot-page__error">{error}</div>
+                <SimpleContainer className="lw-chatbotPage__error">
+                    <ErrorText>{error}</ErrorText>
+                </SimpleContainer>
             )}
 
             <ChatInput onSend={handleSend} disabled={isTyping} />
 
-            {/* OTP Verification Modal */}
-            {showOtpModal && (
-                <div className="chatbot-otp-overlay" onClick={() => setShowOtpModal(false)}>
-                    <div className="chatbot-otp-modal" dir="rtl" onClick={(e) => e.stopPropagation()}>
-                        <h2 className="chatbot-otp-modal__title">{t('chatbot.otpTitle')}</h2>
-                        <p className="chatbot-otp-modal__desc">{t('chatbot.otpDescription')}</p>
+            <SimplePopUp
+                isOpen={showOtpModal}
+                onClose={() => setShowOtpModal(false)}
+                className="lw-chatbotOtp"
+            >
+                <TextBold18 color={colors.text}>{t('chatbot.otpTitle')}</TextBold18>
+                <Text14 color={colors.winter}>{t('chatbot.otpDescription')}</Text14>
 
-                        {otpStep === 'phone' && (
-                            <>
-                                <input
-                                    className="chatbot-otp-modal__input"
-                                    type="tel"
-                                    value={otpPhone}
-                                    onChange={(e) => setOtpPhone(normalizePhone(e.target.value))}
-                                    placeholder={t('common.phoneNumber')}
-                                    maxLength={10}
-                                    dir="ltr"
-                                />
-                                <button
-                                    className="chatbot-otp-modal__btn"
-                                    onClick={handleRequestOtp}
-                                    disabled={otpLoading || otpPhone.length < 9}
-                                >
-                                    {otpLoading ? t('chatbot.sending') : t('chatbot.sendOtp')}
-                                </button>
-                            </>
-                        )}
-
-                        {otpStep === 'code' && (
-                            <>
-                                <input
-                                    className="chatbot-otp-modal__input"
-                                    type="text"
-                                    inputMode="numeric"
-                                    value={otpCode}
-                                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                                    placeholder={t('chatbot.otpCodePlaceholder')}
-                                    maxLength={6}
-                                    dir="ltr"
-                                    autoFocus
-                                />
-                                <button
-                                    className="chatbot-otp-modal__btn"
-                                    onClick={handleVerifyOtp}
-                                    disabled={otpLoading || otpCode.length < 6}
-                                >
-                                    {otpLoading ? t('chatbot.verifying') : t('chatbot.verifyOtp')}
-                                </button>
-                                <button
-                                    className="chatbot-otp-modal__btn chatbot-otp-modal__btn--secondary"
-                                    onClick={() => { setOtpStep('phone'); setOtpCode(''); setOtpError(''); }}
-                                    disabled={otpLoading}
-                                >
-                                    {t('common.back')}
-                                </button>
-                            </>
-                        )}
-
-                        {otpError && (
-                            <p className="chatbot-otp-modal__error">{otpError}</p>
-                        )}
-
-                        <button
-                            className="chatbot-otp-modal__close"
-                            onClick={() => setShowOtpModal(false)}
-                            aria-label={t('common.close')}
+                {otpStep === 'phone' && (
+                    <>
+                        <SimpleInput
+                            title={t('common.phoneNumber')}
+                            value={otpPhone}
+                            onChange={(e) => setOtpPhone(normalizePhone(e.target.value))}
+                            type="tel"
+                            timeToWaitInMilli={0}
+                        />
+                        <PrimaryButton
+                            onPress={handleRequestOtp}
+                            disabled={otpLoading || otpPhone.length < 9}
+                            size={buttonSizes.MEDIUM}
                         >
-                            &times;
-                        </button>
-                    </div>
-                </div>
-            )}
-        </div>
+                            {otpLoading ? t('chatbot.sending') : t('chatbot.sendOtp')}
+                        </PrimaryButton>
+                    </>
+                )}
+
+                {otpStep === 'code' && (
+                    <>
+                        <SimpleInput
+                            title={t('chatbot.otpCodePlaceholder')}
+                            value={otpCode}
+                            onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            timeToWaitInMilli={0}
+                        />
+                        <PrimaryButton
+                            onPress={handleVerifyOtp}
+                            disabled={otpLoading || otpCode.length < 6}
+                            size={buttonSizes.MEDIUM}
+                        >
+                            {otpLoading ? t('chatbot.verifying') : t('chatbot.verifyOtp')}
+                        </PrimaryButton>
+                        <SecondaryButton
+                            onPress={() => { setOtpStep('phone'); setOtpCode(''); setOtpError(''); }}
+                            disabled={otpLoading}
+                            size={buttonSizes.MEDIUM}
+                        >
+                            {t('common.back')}
+                        </SecondaryButton>
+                    </>
+                )}
+
+                {otpError && <ErrorText>{otpError}</ErrorText>}
+            </SimplePopUp>
+        </SimpleScreen>
     );
 }

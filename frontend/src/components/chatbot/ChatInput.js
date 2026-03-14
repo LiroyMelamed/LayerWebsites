@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import SimpleContainer from '../simpleComponents/SimpleContainer';
+import SimpleTextArea from '../simpleComponents/SimpleTextArea';
+import PrimaryButton from '../styledComponents/buttons/PrimaryButton';
+import { buttonSizes } from '../../styles/buttons/buttonSizes';
 import './ChatInput.scss';
 
 export default function ChatInput({ onSend, disabled }) {
     const [text, setText] = useState('');
     const { t } = useTranslation();
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
+    const handleSubmit = () => {
         const trimmed = text.trim();
         if (!trimmed || disabled) return;
         onSend(trimmed);
@@ -17,31 +20,30 @@ export default function ChatInput({ onSend, disabled }) {
     const handleKeyDown = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            handleSubmit(e);
+            handleSubmit();
         }
     };
 
     return (
-        <form className="chatbot-input" onSubmit={handleSubmit}>
-            <textarea
-                className="chatbot-input__field"
+        <SimpleContainer className="lw-chatInput">
+            <SimpleTextArea
+                className="lw-chatInput__field"
                 value={text}
-                onChange={(e) => setText(e.target.value)}
+                onChange={(val) => setText(val)}
                 onKeyDown={handleKeyDown}
-                placeholder={t('chatbot.inputPlaceholder')}
+                title={t('chatbot.inputPlaceholder')}
                 disabled={disabled}
                 rows={1}
                 maxLength={2000}
-                dir="rtl"
             />
-            <button
-                type="submit"
-                className="chatbot-input__send"
+            <PrimaryButton
+                className="lw-chatInput__send"
+                size={buttonSizes.SMALL}
+                onPress={handleSubmit}
                 disabled={disabled || !text.trim()}
-                aria-label={t('common.send')}
             >
                 {t('common.send')}
-            </button>
-        </form>
+            </PrimaryButton>
+        </SimpleContainer>
     );
 }

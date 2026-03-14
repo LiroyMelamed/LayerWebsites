@@ -4,7 +4,9 @@
   "main": "index.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node --test"
+    "test": "node --test",
+    "chatbot:seed": "node scripts/seedChatbotTestData.js",
+    "chatbot:test": "npm run chatbot:seed && npm test"
   },
   "keywords": [],
   "author": "",

@@ -224,41 +224,53 @@ function formatContextForPrompt(context) {
  * Call the LLM with the composed messages.
  * Uses fetch (Node 18+) or the built-in https module via axios pattern.
  */
-async function callLLM(messages) {
+async function callLLM(messages, retries = 3) {
     if (!LLM_API_KEY) {
         return 'מצטער, שירות הצ׳אט אינו מוגדר כרגע. נסה שוב מאוחר יותר.';
     }
 
-    // Use dynamic import for fetch or fall back to built-in
-    const response = await fetch(LLM_API_URL, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${LLM_API_KEY}`,
-        },
-        body: JSON.stringify({
-            model: LLM_MODEL,
-            messages,
-            max_tokens: LLM_MAX_TOKENS,
-            temperature: LLM_TEMPERATURE,
-        }),
-        signal: AbortSignal.timeout(30_000),
-    });
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        const response = await fetch(LLM_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${LLM_API_KEY}`,
+            },
+            body: JSON.stringify({
+                model: LLM_MODEL,
+                messages,
+                max_tokens: LLM_MAX_TOKENS,
+                temperature: LLM_TEMPERATURE,
+            }),
+            signal: AbortSignal.timeout(30_000),
+        });
 
-    if (!response.ok) {
-        console.error(`[aiChatService] LLM API error: ${response.status} ${response.statusText}`);
-        return 'מצטער, אירעה שגיאה בעיבוד הבקשה. נסה שוב מאוחר יותר.';
+        if (response.status === 429 && attempt < retries) {
+            const retryAfter = parseInt(response.headers.get('retry-after'), 10);
+            const delay = (retryAfter && retryAfter > 0 ? retryAfter : Math.pow(2, attempt + 1)) * 1000;
+            console.warn(`[aiChatService] 429 rate-limited, retrying in ${delay}ms (attempt ${attempt + 1}/${retries})`);
+            await new Promise(r => setTimeout(r, delay));
+            continue;
+        }
+
+        if (!response.ok) {
+            console.error(`[aiChatService] LLM API error: ${response.status} ${response.statusText}`);
+            return 'מצטער, אירעה שגיאה בעיבוד הבקשה. נסה שוב מאוחר יותר.';
+        }
+
+        const data = await response.json();
+        const content = data?.choices?.[0]?.message?.content;
+
+        if (!content) {
+            console.error('[aiChatService] LLM returned no content:', JSON.stringify(data).slice(0, 500));
+            return 'מצטער, לא הצלחתי לעבד את הבקשה. נסה שוב.';
+        }
+
+        return content.trim();
     }
 
-    const data = await response.json();
-    const content = data?.choices?.[0]?.message?.content;
-
-    if (!content) {
-        console.error('[aiChatService] LLM returned no content:', JSON.stringify(data).slice(0, 500));
-        return 'מצטער, לא הצלחתי לעבד את הבקשה. נסה שוב.';
-    }
-
-    return content.trim();
+    console.error('[aiChatService] LLM rate-limited after all retries');
+    return 'מצטער, השירות עמוס כרגע. נסה שוב בעוד מספר דקות.';
 }
 
 // ── Main orchestrator ─────────────────────────────────────────────────

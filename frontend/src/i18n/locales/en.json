@@ -1033,8 +1033,8 @@
         }
     },
     "chatbot": {
-        "title": "Digital Assistant - MelamedLaw",
-        "welcomeTitle": "Hello! I'm MelamedLaw's digital assistant",
+        "title": "Digital Assistant - Liav Melamed Law Office",
+        "welcomeTitle": "Hello! I'm the digital assistant of Liav Melamed Law Office",
         "welcomeSubtitle": "You can ask me general legal questions. To ask about your personal case, please verify your phone number.",
         "inputPlaceholder": "Type your question here...",
         "verifiedBadge": "Verified",

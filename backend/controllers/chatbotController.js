@@ -169,6 +169,13 @@ const requestOtp = async (req, res) => {
         const otp = isDemoPhone ? '123456' : crypto.randomInt(100000, 999999).toString();
         const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
+        // Dev mode: log OTP to console instead of sending SMS
+        if (process.env.NODE_ENV === 'development') {
+            console.log('\n[CHATBOT OTP DEV MODE]');
+            console.log(`phone: ${phoneNumber}`);
+            console.log(`code: ${otp}\n`);
+        }
+
         await pool.query(
             `INSERT INTO otps (phonenumber, otp, expiry, userid)
              VALUES ($1, $2, $3, $4)
