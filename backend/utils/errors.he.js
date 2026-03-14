@@ -58,6 +58,9 @@ const MESSAGES = {
 
     NOT_FOUND: 'המשאב לא נמצא.',
     INTERNAL_ERROR: 'אירעה שגיאה. נסה שוב מאוחר יותר.',
+
+    CHATBOT_SESSION_EXPIRED: 'הפגישה פגה. יש לאמת שוב את מספר הטלפון.',
+    CHATBOT_UNAVAILABLE: 'שירות הצ׳אט אינו זמין כרגע. נסה שוב מאוחר יותר.',
 };
 
 function getHebrewMessage(errorCode) {
