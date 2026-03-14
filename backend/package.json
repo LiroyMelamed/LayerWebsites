@@ -20,6 +20,7 @@
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
+    "exceljs": "^4.4.0",
     "express": "^4.21.2",
     "firebase-admin": "^13.1.0",
     "helmet": "^8.1.0",
@@ -34,11 +35,16 @@
     "puppeteer": "^22.15.0",
     "qrcode": "^1.5.4",
     "twilio": "^5.4.5",
-    "uuid": "^13.0.0",
-    "xlsx": "^0.18.5"
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "adm-zip": "^0.5.16",
     "supertest": "^7.1.4"
+  },
+  "overrides": {
+    "http-proxy-agent": "^7.0.0",
+    "@tootallnate/once": "^3.0.1",
+    "fast-xml-parser": "^5.5.1",
+    "minimatch": "^9.0.9"
   }
 }

@@ -580,7 +580,7 @@ export default function PlatformSettingsScreen() {
         if (activeTab !== "reminders") return;
         setLoadingReminderTpls(true);
         remindersApi.getTemplates()
-            .then(res => setReminderTemplates(res.data || []))
+            .then(res => setReminderTemplates(res.data?.templates || []))
             .catch(() => {})
             .finally(() => setLoadingReminderTpls(false));
     }, [activeTab]);
@@ -604,7 +604,7 @@ export default function PlatformSettingsScreen() {
             setTimeout(() => setSaveMessage(""), 3000);
             setEditingReminderTpl(null);
             const res = await remindersApi.getTemplates();
-            setReminderTemplates(res.data || []);
+            setReminderTemplates(res.data?.templates || []);
         } catch {
             setSaveMessage("❌ שגיאה בשמירת תבנית");
             setTimeout(() => setSaveMessage(""), 3000);
@@ -620,7 +620,7 @@ export default function PlatformSettingsScreen() {
             setSaveMessage("✅ התבנית נמחקה");
             setTimeout(() => setSaveMessage(""), 3000);
             const res = await remindersApi.getTemplates();
-            setReminderTemplates(res.data || []);
+            setReminderTemplates(res.data?.templates || []);
         } catch {
             setSaveMessage("❌ שגיאה במחיקת תבנית");
             setTimeout(() => setSaveMessage(""), 3000);

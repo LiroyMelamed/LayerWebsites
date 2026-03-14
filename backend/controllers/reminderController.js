@@ -6,7 +6,7 @@
  *   PUT  /api/reminders/:id/cancel  – cancel a PENDING reminder
  */
 
-const XLSX = require('xlsx');
+const { parseExcelBuffer } = require('../utils/parseExcel');
 const pool = require('../config/db');
 const { getAllTemplates } = require('../tasks/emailReminders/templates');
 
@@ -96,12 +96,10 @@ const importReminders = async (req, res, next) => {
         const createdBy = req.user?.userid || null;
 
         // Parse workbook
-        const workbook = XLSX.read(req.file.buffer, { type: 'buffer', cellDates: true });
-        const sheetName = workbook.SheetNames[0];
+        const { sheetName, rows } = await parseExcelBuffer(req.file.buffer);
         if (!sheetName) {
             return res.status(400).json({ ok: false, error: 'Empty workbook.' });
         }
-        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
         if (rows.length === 0) {
             return res.status(400).json({ ok: false, error: 'No data rows found.' });
         }
@@ -438,17 +436,19 @@ const downloadTemplateExcel = async (req, res, next) => {
             if (rows[0]) templateLabel = rows[0].label;
         }
 
-        const exampleData = [
-            { 'שם לקוח': 'ישראל ישראלי', 'אימייל': 'israel@example.com', 'תאריך': '2026-04-01', 'נושא': 'נושא לדוגמה', 'הערות': 'הערה לדוגמה' },
-            { 'שם לקוח': 'שרה כהן', 'אימייל': 'sara@example.com', 'תאריך': '2026-04-15', 'נושא': '', 'הערות': '' },
+        const headers = ['שם לקוח', 'אימייל', 'תאריך', 'נושא', 'הערות'];
+        const exampleRows = [
+            ['ישראל ישראלי', 'israel@example.com', '2026-04-01', 'נושא לדוגמה', 'הערה לדוגמה'],
+            ['שרה כהן', 'sara@example.com', '2026-04-15', '', ''],
         ];
 
-        const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.json_to_sheet(exampleData);
-        ws['!cols'] = [{ wch: 20 }, { wch: 25 }, { wch: 15 }, { wch: 20 }, { wch: 30 }];
-        XLSX.utils.book_append_sheet(wb, ws, templateLabel.slice(0, 31));
+        const ExcelJS = require('exceljs');
+        const wb = new ExcelJS.Workbook();
+        const ws = wb.addWorksheet(templateLabel.slice(0, 31));
+        ws.columns = headers.map((h, i) => ({ header: h, key: h, width: [20, 25, 15, 20, 30][i] }));
+        for (const row of exampleRows) ws.addRow(row);
 
-        const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+        const buf = await wb.xlsx.writeBuffer();
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', `attachment; filename="reminder-example-${key}.xlsx"`);
         return res.send(Buffer.from(buf));

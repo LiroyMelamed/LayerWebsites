@@ -622,7 +622,7 @@ const deleteMyAccount = async (req, res, next) => {
 };
 
 
-const XLSX = require('xlsx');
+const { parseExcelBuffer } = require('../utils/parseExcel');
 
 /**
  * POST /api/Customers/import
@@ -646,19 +646,17 @@ const importCustomers = async (req, res, next) => {
         }
 
         // Parse workbook
-        let workbook;
+        let sheetName, rows;
         try {
-            workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+            ({ sheetName, rows } = await parseExcelBuffer(req.file.buffer));
         } catch (e) {
             return res.status(400).json({ message: 'לא ניתן לקרוא את הקובץ. ודא שזהו קובץ Excel או CSV תקין.', code: 'PARSE_ERROR' });
         }
 
-        const sheetName = workbook.SheetNames[0];
         if (!sheetName) {
             return res.status(400).json({ message: 'הקובץ ריק — אין גיליונות.', code: 'EMPTY_FILE' });
         }
 
-        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
         if (!rows.length) {
             return res.status(400).json({ message: 'לא נמצאו שורות בגיליון.', code: 'EMPTY_SHEET' });
         }
