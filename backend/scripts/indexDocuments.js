@@ -39,16 +39,18 @@ async function extractTextFromFile(filePath) {
 
     if (ext === '.pdf') {
         // Lazy-require pdf-parse so the rest of the script works without it for .txt files
-        let pdfParse;
+        let PDFParse;
         try {
-            pdfParse = require('pdf-parse');
+            ({ PDFParse } = require('pdf-parse'));
         } catch {
             console.error('[indexDocuments] pdf-parse not installed. Run: npm install pdf-parse');
             process.exit(1);
         }
         const dataBuffer = fs.readFileSync(filePath);
-        const data = await pdfParse(dataBuffer);
-        return data.text;
+        const parser = new PDFParse({ data: new Uint8Array(dataBuffer) });
+        const result = await parser.getText();
+        await parser.destroy();
+        return result.text;
     }
 
     console.warn(`[indexDocuments] Skipping unsupported file type: ${ext} (${filePath})`);
