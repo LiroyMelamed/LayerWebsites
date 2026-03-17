@@ -50,11 +50,64 @@ async function extractTextFromFile(filePath) {
         const parser = new PDFParse({ data: new Uint8Array(dataBuffer) });
         const result = await parser.getText();
         await parser.destroy();
-        return result.text;
+        const text = result.text;
+
+        // Fix reversed Hebrew text from PDF extraction
+        return fixReversedHebrew(text);
     }
 
     console.warn(`[indexDocuments] Skipping unsupported file type: ${ext} (${filePath})`);
     return null;
+}
+
+/**
+ * Detect and fix reversed Hebrew text from PDF extraction.
+ * Some PDF extractors output RTL text with reversed word order.
+ * Detection heuristic: Hebrew text where punctuation (?,.:) appears at the
+ * START of tokens more than at the END is likely reversed.
+ */
+function fixReversedHebrew(text) {
+    if (!text || text.length < 50) return text;
+
+    // Check a sample of lines to detect reversal
+    const lines = text.split('\n').filter(l => l.trim().length > 10);
+    if (lines.length === 0) return text;
+
+    // Count punctuation at start vs end of words across sample lines
+    const sampleSize = Math.min(lines.length, 30);
+    let punctAtStart = 0;
+    let punctAtEnd = 0;
+
+    for (let i = 0; i < sampleSize; i++) {
+        const line = lines[Math.floor(i * lines.length / sampleSize)].trim();
+        const words = line.split(/\s+/);
+        for (const w of words) {
+            if (!w) continue;
+            if (/^[?!.,;:)(\]\[]/.test(w)) punctAtStart++;
+            if (/[?!.,;:)(\]\[]$/.test(w)) punctAtEnd++;
+        }
+    }
+
+    // If significantly more punctuation at start than end, text is likely reversed
+    const isReversed = punctAtStart > punctAtEnd * 1.5 && punctAtStart > 5;
+
+    if (!isReversed) {
+        console.log('[indexDocuments]   Hebrew text direction: NORMAL (no reversal needed)');
+        return text;
+    }
+
+    console.log(`[indexDocuments]   Hebrew text direction: REVERSED (punctStart=${punctAtStart}, punctEnd=${punctAtEnd}) — fixing...`);
+
+    // Reverse word order in each line
+    return text.split('\n').map(line => {
+        const trimmed = line.trim();
+        if (trimmed.length === 0) return '';
+        // Only reverse lines that contain Hebrew characters
+        if (/[\u0590-\u05FF]/.test(trimmed)) {
+            return trimmed.split(/\s+/).reverse().join(' ');
+        }
+        return trimmed;
+    }).join('\n');
 }
 
 /**

@@ -90,6 +90,8 @@ const sendChatMessage = async (req, res) => {
             verified,
             userId,
             history,
+            sessionId: resolvedSessionId,
+            ip: req.ip,
         });
 
         // Store messages
