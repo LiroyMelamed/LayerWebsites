@@ -24,6 +24,9 @@ import remindersApi from "../../api/remindersApi";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import useHttpRequest from "../../hooks/useHttpRequest";
 
+import { usePopup } from "../../providers/PopUpProvider";
+import ConfirmationDialog from "../../components/styledComponents/popups/ConfirmationDialog";
+
 import "./PlatformSettingsScreen.scss";
 
 export const PlatformSettingsScreenName = "/PlatformSettingsScreen";
@@ -38,6 +41,7 @@ const CATEGORIES = [
     { key: "reminders", label: "תזכורות", icon: "⏰" },
     { key: "channels", label: "ערוצי התראות", icon: "📡" },
     { key: "admins", label: "מנהלי פלטפורמה", icon: "👤" },
+    { key: "knowledgeDocs", label: "מסמכי ידע לצ'אטבוט", icon: "🤖" },
 ];
 
 // ─── Setting Input Component ────────────────────────────────────────
@@ -190,17 +194,17 @@ function AdminRow({ admin, onRemove, currentUserId }) {
 // Keys MUST match the camelCase names used by backend renderTemplate()
 const SMS_TEMPLATE_VARS = {
     // ── Case lifecycle ──
-    CASE_CREATED_SMS: ["recipientName", "caseName", "caseNumber", "stageName", "managerName", "websiteUrl"],
-    CASE_STAGE_CHANGED_SMS: ["recipientName", "caseName", "caseNumber", "stageName", "managerName", "websiteUrl"],
-    CASE_CLOSED_SMS: ["recipientName", "caseName", "caseNumber", "stageName", "managerName", "websiteUrl"],
-    CASE_REOPENED_SMS: ["recipientName", "caseName", "caseNumber", "stageName", "managerName", "websiteUrl"],
+    CASE_CREATED_SMS: ["recipientName", "caseName", "stageName", "managerName", "websiteUrl"],
+    CASE_STAGE_CHANGED_SMS: ["recipientName", "caseName", "stageName", "managerName", "websiteUrl"],
+    CASE_CLOSED_SMS: ["recipientName", "caseName", "stageName", "managerName", "websiteUrl"],
+    CASE_REOPENED_SMS: ["recipientName", "caseName", "stageName", "managerName", "websiteUrl"],
     // ── Per-field case changes ──
-    CASE_NAME_CHANGE_SMS: ["recipientName", "caseName", "caseNumber", "managerName", "websiteUrl"],
-    CASE_TYPE_CHANGE_SMS: ["recipientName", "caseName", "caseNumber", "managerName", "websiteUrl"],
-    CASE_MANAGER_CHANGE_SMS: ["recipientName", "caseName", "caseNumber", "managerName", "websiteUrl"],
-    CASE_COMPANY_CHANGE_SMS: ["recipientName", "caseName", "caseNumber", "websiteUrl"],
-    CASE_EST_DATE_CHANGE_SMS: ["recipientName", "caseName", "caseNumber", "websiteUrl"],
-    CASE_LICENSE_CHANGE_SMS: ["recipientName", "caseName", "caseNumber", "websiteUrl"],
+    CASE_NAME_CHANGE_SMS: ["recipientName", "caseName", "managerName", "websiteUrl"],
+    CASE_TYPE_CHANGE_SMS: ["recipientName", "caseName", "managerName", "websiteUrl"],
+    CASE_MANAGER_CHANGE_SMS: ["recipientName", "caseName", "managerName", "websiteUrl"],
+    CASE_COMPANY_CHANGE_SMS: ["recipientName", "caseName", "websiteUrl"],
+    CASE_EST_DATE_CHANGE_SMS: ["recipientName", "caseName", "websiteUrl"],
+    CASE_LICENSE_CHANGE_SMS: ["recipientName", "caseName", "websiteUrl"],
     CASE_TAGGED_SMS: ["recipientName", "caseName", "websiteUrl"],
     // ── Signing ──
     SIGN_INVITE_SMS: ["recipientName", "documentName", "websiteUrl"],
@@ -220,7 +224,6 @@ const SMS_TEMPLATE_VARS = {
 const VAR_LABELS = {
     recipientName: "שם הנמען",
     caseName: "שם תיק",
-    caseNumber: "מספר תיק",
     stageName: "שלב נוכחי",
     managerName: "שם מנהל התיק",
     firmName: "שם המשרד",
@@ -230,7 +233,6 @@ const VAR_LABELS = {
     // Email template variables (snake_case — used by [[placeholder]] system)
     recipient_name: "שם הנמען",
     case_title: "שם תיק",
-    case_number: "מספר תיק",
     case_stage: "שלב נוכחי",
     manager_name: "שם מנהל התיק",
     lawyer_name: "עו״ד מטפל",
@@ -508,8 +510,9 @@ function EmailTemplateEditor({ template, onSave, saving }) {
 
 // ─── Main Screen ────────────────────────────────────────────────────
 export default function PlatformSettingsScreen() {
-    useTranslation();
+    const { t } = useTranslation();
     const { isSmallScreen } = useScreenSize();
+    const { openPopup, closePopup } = usePopup();
 
     const [activeTab, setActiveTab] = useState("messaging");
     const [editedValues, setEditedValues] = useState({});
@@ -528,6 +531,16 @@ export default function PlatformSettingsScreen() {
     const [loadingReminderTpls, setLoadingReminderTpls] = useState(false);
     const [editingReminderTpl, setEditingReminderTpl] = useState(null);
     const [reminderTplSaving, setReminderTplSaving] = useState(false);
+
+    // Knowledge documents state
+    const [knowledgeDocs, setKnowledgeDocs] = useState([]);
+    const [loadingKnowledgeDocs, setLoadingKnowledgeDocs] = useState(false);
+    const [uploadingDoc, setUploadingDoc] = useState(false);
+    const [docTitle, setDocTitle] = useState("");
+    const [selectedFileName, setSelectedFileName] = useState("");
+    const [chatbotNotifEmail, setChatbotNotifEmail] = useState("");
+    const [chatbotNotifEmailSaved, setChatbotNotifEmailSaved] = useState("");
+    const fileInputRef = useRef(null);
 
     // Load all settings
     const { result: data, isPerforming: isLoading, performRequest: reload } = useAutoHttpRequest(
@@ -581,13 +594,98 @@ export default function PlatformSettingsScreen() {
         setLoadingReminderTpls(true);
         remindersApi.getTemplates()
             .then(res => setReminderTemplates(res.data?.templates || []))
-            .catch(() => {})
+            .catch(() => { })
             .finally(() => setLoadingReminderTpls(false));
     }, [activeTab]);
 
+    // ─── Knowledge documents: load + upload + delete ────────────────
+    const loadKnowledgeDocs = useCallback(async () => {
+        setLoadingKnowledgeDocs(true);
+        try {
+            const res = await platformSettingsApi.getKnowledgeDocs();
+            setKnowledgeDocs(res.data?.documents || []);
+        } catch {
+            // ignore
+        }
+        try {
+            const settingsRes = await platformSettingsApi.getAll();
+            const chatbotSettings = settingsRes.data?.settings?.chatbot || {};
+            const email = chatbotSettings?.CHATBOT_NOTIFICATION_EMAIL?.effectiveValue || "";
+            setChatbotNotifEmail(email);
+            setChatbotNotifEmailSaved(email);
+        } catch {
+            // ignore
+        }
+        setLoadingKnowledgeDocs(false);
+    }, []);
+
+    useEffect(() => {
+        if (activeTab !== "knowledgeDocs") return;
+        loadKnowledgeDocs();
+    }, [activeTab, loadKnowledgeDocs]);
+
+    const handleUploadKnowledgeDoc = useCallback(async (file) => {
+        if (!file) return;
+        setUploadingDoc(true);
+        try {
+            const res = await platformSettingsApi.uploadKnowledgeDoc(file, docTitle || undefined);
+            const msg = res.data?.message || 'המסמך הועלה';
+            const chunks = res.data?.chunkCount || 0;
+            setSaveMessage(`✅ ${msg} (${chunks} קטעים)`);
+            setTimeout(() => setSaveMessage(""), 4000);
+            setDocTitle("");
+            setSelectedFileName("");
+            if (fileInputRef.current) fileInputRef.current.value = "";
+            await loadKnowledgeDocs();
+        } catch (err) {
+            const msg = err?.response?.data?.message || err?.data?.message || 'שגיאה בהעלאת מסמך';
+            setSaveMessage(`❌ ${msg}`);
+            setTimeout(() => setSaveMessage(""), 5000);
+        } finally {
+            setUploadingDoc(false);
+        }
+    }, [docTitle, loadKnowledgeDocs]);
+
+    const handleDeleteKnowledgeDoc = useCallback((docId) => {
+        openPopup(
+            <ConfirmationDialog
+                title={t("platformSettings.deleteDocTitle")}
+                message={t("platformSettings.deleteDocMessage")}
+                confirmText={t("common.remove")}
+                cancelText={t("common.cancel")}
+                danger
+                onCancel={closePopup}
+                onConfirm={async () => {
+                    closePopup();
+                    try {
+                        await platformSettingsApi.deleteKnowledgeDoc(docId);
+                        setSaveMessage("✅ " + t("platformSettings.docDeleted"));
+                        setTimeout(() => setSaveMessage(""), 3000);
+                        await loadKnowledgeDocs();
+                    } catch {
+                        setSaveMessage("❌ " + t("platformSettings.docDeleteError"));
+                        setTimeout(() => setSaveMessage(""), 3000);
+                    }
+                }}
+            />
+        );
+    }, [loadKnowledgeDocs, openPopup, closePopup, t]);
+
+    const handleSaveChatbotNotifEmail = useCallback(async () => {
+        try {
+            await platformSettingsApi.updateSingle("chatbot", "CHATBOT_NOTIFICATION_EMAIL", chatbotNotifEmail.trim());
+            setChatbotNotifEmailSaved(chatbotNotifEmail.trim());
+            setSaveMessage("✅ אימייל ההתראות נשמר");
+            setTimeout(() => setSaveMessage(""), 3000);
+        } catch {
+            setSaveMessage("❌ שגיאה בשמירת אימייל ההתראות");
+            setTimeout(() => setSaveMessage(""), 3000);
+        }
+    }, [chatbotNotifEmail]);
+
     const handleSaveReminderTemplate = useCallback(async () => {
         if (!editingReminderTpl) return;
-        const { isNew, id, label, description, subject_template, body_html } = editingReminderTpl;
+        const { isNew, id, key, label, description, subject_template, body_html } = editingReminderTpl;
         if (!label?.trim() || !subject_template?.trim()) {
             setSaveMessage("❌ יש למלא שם תבנית ונושא");
             setTimeout(() => setSaveMessage(""), 3000);
@@ -596,7 +694,7 @@ export default function PlatformSettingsScreen() {
         setReminderTplSaving(true);
         try {
             if (isNew) {
-                await remindersApi.createCustomTemplate({ label, description, subject_template, body_html });
+                await remindersApi.createCustomTemplate({ label, description, subject_template, body_html, template_key: key || undefined });
             } else {
                 await remindersApi.updateCustomTemplate(id, { label, description, subject_template, body_html });
             }
@@ -613,19 +711,31 @@ export default function PlatformSettingsScreen() {
         }
     }, [editingReminderTpl]);
 
-    const handleDeleteReminderTemplate = useCallback(async (id) => {
-        if (!window.confirm("האם למחוק את התבנית?")) return;
-        try {
-            await remindersApi.deleteCustomTemplate(id);
-            setSaveMessage("✅ התבנית נמחקה");
-            setTimeout(() => setSaveMessage(""), 3000);
-            const res = await remindersApi.getTemplates();
-            setReminderTemplates(res.data?.templates || []);
-        } catch {
-            setSaveMessage("❌ שגיאה במחיקת תבנית");
-            setTimeout(() => setSaveMessage(""), 3000);
-        }
-    }, []);
+    const handleDeleteReminderTemplate = useCallback((id) => {
+        openPopup(
+            <ConfirmationDialog
+                title={t("platformSettings.deleteTemplateTitle")}
+                message={t("platformSettings.deleteTemplateMessage")}
+                confirmText={t("common.remove")}
+                cancelText={t("common.cancel")}
+                danger
+                onCancel={closePopup}
+                onConfirm={async () => {
+                    closePopup();
+                    try {
+                        await remindersApi.deleteCustomTemplate(id);
+                        setSaveMessage("✅ " + t("platformSettings.templateDeleted"));
+                        setTimeout(() => setSaveMessage(""), 3000);
+                        const res = await remindersApi.getTemplates();
+                        setReminderTemplates(res.data?.templates || []);
+                    } catch {
+                        setSaveMessage("❌ " + t("platformSettings.templateDeleteError"));
+                        setTimeout(() => setSaveMessage(""), 3000);
+                    }
+                }}
+            />
+        );
+    }, [openPopup, closePopup, t]);
 
     const handleDownloadReminderExcel = useCallback(async (key) => {
         try {
@@ -739,9 +849,21 @@ export default function PlatformSettingsScreen() {
 
     // Remove admin
     const handleRemoveAdmin = useCallback((userId) => {
-        if (!window.confirm("האם אתה בטוח שברצונך להסיר מנהל זה?")) return;
-        doRemoveAdmin(userId);
-    }, [doRemoveAdmin]);
+        openPopup(
+            <ConfirmationDialog
+                title={t("platformSettings.removeAdminTitle")}
+                message={t("platformSettings.removeAdminMessage")}
+                confirmText={t("common.remove")}
+                cancelText={t("common.cancel")}
+                danger
+                onCancel={closePopup}
+                onConfirm={() => {
+                    closePopup();
+                    doRemoveAdmin(userId);
+                }}
+            />
+        );
+    }, [doRemoveAdmin, openPopup, closePopup, t]);
 
     const settings = data?.settings || {};
     const channels = localChannels || data?.channels || [];
@@ -931,6 +1053,112 @@ export default function PlatformSettingsScreen() {
             );
         }
 
+        // Knowledge documents tab
+        if (activeTab === "knowledgeDocs") {
+            return (
+                <SimpleCard className="lw-platformSettings__card">
+                    <TextBold18>מסמכי ידע לצ'אטבוט</TextBold18>
+                    <Text14 className="lw-platformSettings__subtitle">
+                        העלה מסמכים (PDF או TXT) שהצ'אטבוט ישתמש בהם כדי לענות על שאלות
+                    </Text14>
+
+                    {/* Notification email setting */}
+                    <SimpleContainer className="lw-platformSettings__knowledgeNotifSection">
+                        <TextBold14>📧 אימייל להתראות לידים</TextBold14>
+                        <Text12 className="lw-platformSettings__knowledgeMeta">
+                            כאשר מבקר משאיר מספר טלפון בצ'אט, תישלח התראה עם תמלול השיחה לכתובת זו
+                        </Text12>
+                        <SimpleContainer className="lw-platformSettings__knowledgeUploadRow">
+                            <SimpleInput
+                                className="lw-platformSettings__input lw-platformSettings__knowledgeTitleInput"
+                                type="email"
+                                value={chatbotNotifEmail}
+                                onChange={(e) => setChatbotNotifEmail(e.target.value)}
+                                title="כתובת אימייל להתראות"
+                                timeToWaitInMilli={0}
+                            />
+                            {chatbotNotifEmail.trim() !== chatbotNotifEmailSaved && (
+                                <PrimaryButton onPress={handleSaveChatbotNotifEmail}>
+                                    שמור
+                                </PrimaryButton>
+                            )}
+                        </SimpleContainer>
+                    </SimpleContainer>
+
+                    {/* Upload section */}
+                    <SimpleContainer className="lw-platformSettings__knowledgeUpload">
+                        <SimpleContainer className="lw-platformSettings__knowledgeUploadRow">
+                            <SimpleInput
+                                className="lw-platformSettings__input lw-platformSettings__knowledgeTitleInput"
+                                type="text"
+                                value={docTitle}
+                                onChange={(e) => setDocTitle(e.target.value)}
+                                title={t("platformSettings.docTitlePlaceholder")}
+                                timeToWaitInMilli={0}
+                            />
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".pdf,.txt"
+                                className="lw-platformSettings__knowledgeFileInputHidden"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                        setSelectedFileName(file.name);
+                                        handleUploadKnowledgeDoc(file);
+                                    }
+                                }}
+                                disabled={uploadingDoc}
+                            />
+                            <SecondaryButton
+                                className="lw-platformSettings__knowledgeChooseBtn"
+                                onPress={() => fileInputRef.current?.click()}
+                                disabled={uploadingDoc}
+                            >
+                                📎 {t("platformSettings.chooseFile")}
+                            </SecondaryButton>
+                            {selectedFileName && (
+                                <Text12 className="lw-platformSettings__knowledgeFileName">{selectedFileName}</Text12>
+                            )}
+                        </SimpleContainer>
+                        {uploadingDoc && (
+                            <SimpleContainer className="lw-platformSettings__knowledgeUploading">
+                                <SimpleLoader />
+                                <Text14>{t("platformSettings.uploading")}</Text14>
+                            </SimpleContainer>
+                        )}
+                    </SimpleContainer>
+
+                    {/* Documents list */}
+                    {loadingKnowledgeDocs ? <SimpleLoader /> : (
+                        <SimpleContainer className="lw-platformSettings__knowledgeList">
+                            {knowledgeDocs.map(doc => (
+                                <SimpleContainer key={doc.id} className="lw-platformSettings__knowledgeRow">
+                                    <SimpleContainer className="lw-platformSettings__knowledgeInfo">
+                                        <TextBold14>{doc.title}</TextBold14>
+                                        <Text12 className="lw-platformSettings__knowledgeMeta">
+                                            {doc.source_file} · {doc.chunk_count} קטעים · {new Date(doc.created_at).toLocaleDateString('he-IL')}
+                                        </Text12>
+                                    </SimpleContainer>
+                                    <SecondaryButton
+                                        className="lw-platformSettings__removeBtn"
+                                        onPress={() => handleDeleteKnowledgeDoc(doc.id)}
+                                    >
+                                        🗑️ מחק
+                                    </SecondaryButton>
+                                </SimpleContainer>
+                            ))}
+                            {knowledgeDocs.length === 0 && (
+                                <Text14 className="lw-platformSettings__empty">
+                                    {t("platformSettings.noDocsYet")}
+                                </Text14>
+                            )}
+                        </SimpleContainer>
+                    )}
+                </SimpleCard>
+            );
+        }
+
         // Settings tabs (messaging, signing, firm, reminders, security)
         const categorySettings = settings[activeTab] || {};
         let settingKeys = Object.keys(categorySettings);
@@ -950,17 +1178,18 @@ export default function PlatformSettingsScreen() {
         }
 
         if (settingKeys.length === 0) {
-            const emptyMsg = activeTab === "templates"
-                ? 'אין תבניות SMS פעילות. הפעל ערוץ SMS עבור סוגי התראות בלשונית "ערוצי התראות" כדי לערוך תבניות.'
-                : "אין הגדרות מוגדרות עבור קטגוריה זו";
-            return (
-                <SimpleCard className="lw-platformSettings__card">
-                    {activeTab === "templates" && <TextBold18>תבניות SMS</TextBold18>}
-                    <Text14 className="lw-platformSettings__empty">
-                        {emptyMsg}
-                    </Text14>
-                </SimpleCard>
-            );
+            if (activeTab === "templates") {
+                return (
+                    <SimpleCard className="lw-platformSettings__card">
+                        <TextBold18>תבניות SMS</TextBold18>
+                        <Text14 className="lw-platformSettings__empty">
+                            אין תבניות SMS פעילות. הפעל ערוץ SMS עבור סוגי התראות בלשונית "ערוצי התראות" כדי לערוך תבניות.
+                        </Text14>
+                    </SimpleCard>
+                );
+            }
+            // For tabs like "reminders" that may have no settings but have other sections (e.g. templates), skip the empty card
+            return null;
         }
 
         return (
@@ -1049,19 +1278,17 @@ export default function PlatformSettingsScreen() {
                                 <TertiaryButton onPress={() => handleDownloadReminderExcel(tpl.key)}>
                                     📥 אקסל דוגמה
                                 </TertiaryButton>
-                                {!tpl.isBuiltin && (
-                                    <>
-                                        <TertiaryButton onPress={() => setEditingReminderTpl({
-                                            isNew: false, id: tpl.id, label: tpl.label,
-                                            description: tpl.description || "", subject_template: tpl.subject,
-                                            body_html: tpl.bodyHtml || ""
-                                        })}>
-                                            ✏️ עריכה
-                                        </TertiaryButton>
-                                        <TertiaryButton onPress={() => handleDeleteReminderTemplate(tpl.id)}>
-                                            🗑️ מחיקה
-                                        </TertiaryButton>
-                                    </>
+                                <TertiaryButton onPress={() => setEditingReminderTpl({
+                                    isNew: !tpl.id, id: tpl.id || null, key: tpl.key,
+                                    label: tpl.label, description: tpl.description || "",
+                                    subject_template: tpl.subject, body_html: tpl.bodyHtml || ""
+                                })}>
+                                    ✏️ עריכה
+                                </TertiaryButton>
+                                {!tpl.isBuiltin && tpl.id && (
+                                    <TertiaryButton onPress={() => handleDeleteReminderTemplate(tpl.id)}>
+                                        🗑️ מחיקה
+                                    </TertiaryButton>
                                 )}
                             </SimpleContainer>
                         </SimpleContainer>

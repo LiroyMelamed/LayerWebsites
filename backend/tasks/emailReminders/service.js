@@ -100,6 +100,8 @@ async function processEmailReminders() {
 
             if (dryRun) {
                 console.log(`[email-reminders] DRY-RUN would send to ${reminder.to_email}: "${subjectLine}"`);
+                console.log(`  ├─ id=${reminder.id} client="${reminder.client_name}" template=${reminder.template_key}`);
+                console.log(`  └─ scheduled_for=${reminder.scheduled_for}`);
                 await client.query(
                     `UPDATE scheduled_email_reminders SET status = 'SENT', sent_at = NOW() WHERE id = $1`,
                     [reminder.id],
@@ -118,6 +120,9 @@ async function processEmailReminders() {
             });
 
             if (result?.ok) {
+                console.log(`[email-reminders] ✅ SENT id=${reminder.id} to=${reminder.to_email} subject="${subjectLine}"`);
+                console.log(`  ├─ client="${reminder.client_name}" template=${reminder.template_key}`);
+                console.log(`  └─ scheduled_for=${reminder.scheduled_for}`);
                 await client.query(
                     `UPDATE scheduled_email_reminders SET status = 'SENT', sent_at = NOW() WHERE id = $1`,
                     [reminder.id],
@@ -125,6 +130,7 @@ async function processEmailReminders() {
                 sent++;
             } else {
                 const errMsg = result?.error || result?.message || 'Unknown send error';
+                console.log(`[email-reminders] ❌ FAILED id=${reminder.id} to=${reminder.to_email} error="${errMsg}"`);
                 await client.query(
                     `UPDATE scheduled_email_reminders SET status = 'FAILED', error = $2 WHERE id = $1`,
                     [reminder.id, errMsg.substring(0, 1000)],

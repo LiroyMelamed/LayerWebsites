@@ -58,7 +58,6 @@ const TRANSACTIONAL_EMAIL_REQUIRED_ENV = [
 
 const ALLOWED_CUSTOM_FIELD_KEYS = [
     'client_name',
-    'case_number',
     'case_title',
     'case_stage',
     'action_url',
@@ -305,7 +304,7 @@ function replaceEmailPlaceholders(template, fields) {
     const safeManager = escapeHtml(String(fields.manager_name || '').trim());
     const safeLawyer = escapeHtml(String(fields.lawyer_name || '').trim());
     const safeCaseTitle = escapeHtml(String(fields.case_title || '').trim());
-    const safeCaseNumber = escapeHtml(String(fields.case_number || '').trim());
+
     const safeCaseStage = escapeHtml(String(fields.case_stage || '').trim());
     const safeRejection = escapeHtml(String(fields.rejection_reason || '').trim());
 
@@ -322,7 +321,7 @@ function replaceEmailPlaceholders(template, fields) {
     out = replaceAllSafe(out, '[[manager_name]]', safeManager);
     out = replaceAllSafe(out, '[[lawyer_name]]', safeLawyer);
     out = replaceAllSafe(out, '[[case_title]]', safeCaseTitle);
-    out = replaceAllSafe(out, '[[case_number]]', safeCaseNumber);
+    out = replaceAllSafe(out, '[[case_number]]', '');
     out = replaceAllSafe(out, '[[case_stage]]', safeCaseStage);
     out = replaceAllSafe(out, '[[rejection_reason]]', safeRejection);
     out = replaceAllSafe(out, '[[action_url]]', safeUrl);

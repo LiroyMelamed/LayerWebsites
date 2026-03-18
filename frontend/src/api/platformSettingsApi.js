@@ -52,6 +52,26 @@ export const platformSettingsApi = {
     updateEmailTemplate: async (templateKey, data) => {
         return await ApiUtils.put(`${base}/email-templates/${templateKey}`, data);
     },
+
+    /** List knowledge documents */
+    getKnowledgeDocs: async () => {
+        return await ApiUtils.get(`${base}/knowledge-docs`);
+    },
+
+    /** Upload a knowledge document (FormData with 'file' + optional 'title') */
+    uploadKnowledgeDoc: async (file, title) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        if (title) formData.append("title", title);
+        return await ApiUtils.post(`${base}/knowledge-docs`, formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+    },
+
+    /** Delete a knowledge document */
+    deleteKnowledgeDoc: async (docId) => {
+        return await ApiUtils.delete(`${base}/knowledge-docs/${docId}`);
+    },
 };
 
 export default platformSettingsApi;

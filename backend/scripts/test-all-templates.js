@@ -17,7 +17,6 @@ async function testAll() {
     const data = {
         recipientName: '\u05dc\u05d9\u05e8\u05d5\u05d9 \u05de\u05dc\u05de\u05d3',
         caseName: '\u05ea\u05d9\u05e7 \u05d1\u05d3\u05d9\u05e7\u05d4 123',
-        caseNumber: '42',
         stageName: '\u05d4\u05d2\u05e9\u05ea \u05de\u05e1\u05de\u05db\u05d9\u05dd',
         managerName: '\u05e2\u05d5"\u05d3 \u05db\u05d4\u05df',
         firmName: '\u05de\u05e9\u05e8\u05d3 \u05de\u05dc\u05de\u05d3',

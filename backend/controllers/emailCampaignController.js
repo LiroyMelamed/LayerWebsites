@@ -27,7 +27,6 @@ function buildDefaultContactFieldsForCampaignKey(campaignKey) {
             return {
                 recipient_name: 'Test Client',
                 case_title: 'תיק בדיקה',
-                case_number: '1001',
                 case_stage: 'שלב ראשוני',
                 manager_name: 'Test Manager',
                 action_url: baseActionUrl,

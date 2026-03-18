@@ -1,9 +1,15 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 
 const authMiddleware = require('../middlewares/authMiddleware');
 const requirePlatformAdmin = require('../middlewares/requirePlatformAdmin');
 const ctrl = require('../controllers/platformSettingsController');
+
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+});
 
 // Public route — no admin required (only CORS + rate-limit apply)
 router.get('/public', ctrl.getPublicSettings);
@@ -28,5 +34,10 @@ router.delete('/admins/:userId', ctrl.removePlatformAdmin);
 // Email templates (CRUD)
 router.get('/email-templates', ctrl.getEmailTemplates);
 router.put('/email-templates/:key', ctrl.updateEmailTemplate);
+
+// Knowledge documents (chatbot RAG)
+router.get('/knowledge-docs', ctrl.listKnowledgeDocs);
+router.post('/knowledge-docs', upload.single('file'), ctrl.uploadKnowledgeDoc);
+router.delete('/knowledge-docs/:id', ctrl.deleteKnowledgeDoc);
 
 module.exports = router;

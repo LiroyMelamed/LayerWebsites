@@ -12,5 +12,5 @@ CREATE TABLE IF NOT EXISTS reminder_templates (
 );
 
 -- Grant permissions
-GRANT SELECT, INSERT, UPDATE, DELETE ON reminder_templates TO liroym;
-GRANT USAGE, SELECT ON SEQUENCE reminder_templates_id_seq TO liroym;
+GRANT SELECT, INSERT, UPDATE, DELETE ON reminder_templates TO neondb_owner;
+GRANT USAGE, SELECT ON SEQUENCE reminder_templates_id_seq TO neondb_owner;

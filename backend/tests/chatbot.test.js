@@ -73,7 +73,20 @@ test('aiChatService — formatContextForPrompt formats case data correctly', () 
 
     const context = {
         cases: [
-            { casename: 'תיק בדיקה', status: 'פעיל', case_type: 'אזרחי', updatedat: '2026-03-10' },
+            {
+                caseid: 1,
+                casename: 'תיק בדיקה',
+                case_type: 'אזרחי',
+                currentstage: 2,
+                total_stages: 4,
+                isclosed: false,
+                createdat: '2026-03-01',
+                updatedat: '2026-03-10',
+                stages: [
+                    { stage: 1, text: 'פתיחת תיק', timestamp: '2026-03-01' },
+                    { stage: 2, text: 'הגשת מסמכים', timestamp: '2026-03-05' },
+                ],
+            },
         ],
         recentNotifications: [
             { title: 'עדכון', message: 'עדכון בתיק', createdat: '2026-03-10' },
@@ -82,7 +95,7 @@ test('aiChatService — formatContextForPrompt formats case data correctly', () 
 
     const result = formatContextForPrompt(context);
     assert.ok(result.includes('תיק בדיקה'));
-    assert.ok(result.includes('פעיל'));
+    assert.ok(result.includes('פתוח'));
     assert.ok(result.includes('אזרחי'));
     assert.ok(result.includes('עדכון'));
     assert.ok(result.includes('הקשר מערכת'));

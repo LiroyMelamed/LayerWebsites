@@ -28,7 +28,6 @@ function buildDefaultEmailContactFields(campaignKey) {
             return {
                 recipient_name: 'Test Recipient',
                 case_title: 'תיק בדיקה',
-                case_number: '1001',
                 case_stage: 'שלב ראשוני',
                 manager_name: 'Test Manager',
                 action_url: baseUrl,

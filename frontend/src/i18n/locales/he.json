@@ -1116,5 +1116,21 @@
         "otpInvalid": "קוד האימות שגוי. נסה שוב.",
         "errorGeneric": "אירעה שגיאה. נסה שוב מאוחר יותר.",
         "sessionExpired": "הפגישה פגה. יש לאמת שוב את מספר הטלפון."
+    },
+    "platformSettings": {
+        "docTitlePlaceholder": "שם המסמך (אופציונלי)",
+        "chooseFile": "בחר קובץ",
+        "uploading": "מעלה ומעבד את המסמך...",
+        "noDocsYet": "אין מסמכי ידע עדיין. העלה מסמך כדי שהצ'אטבוט יוכל לענות על שאלות.",
+        "deleteDocTitle": "מחיקת מסמך",
+        "deleteDocMessage": "האם למחוק מסמך זה? כל קטעי הידע שלו יימחקו.",
+        "docDeleted": "המסמך נמחק בהצלחה",
+        "docDeleteError": "שגיאה במחיקת מסמך",
+        "deleteTemplateTitle": "מחיקת תבנית",
+        "deleteTemplateMessage": "האם למחוק את התבנית?",
+        "templateDeleted": "התבנית נמחקה",
+        "templateDeleteError": "שגיאה במחיקת תבנית",
+        "removeAdminTitle": "הסרת מנהל",
+        "removeAdminMessage": "האם אתה בטוח שברצונך להסיר מנהל זה?"
     }
 }

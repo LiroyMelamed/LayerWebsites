@@ -3,6 +3,7 @@
  * Manages dynamic platform settings, notification channels, and admin users.
  */
 const pool = require('../config/db');
+const path = require('path');
 const settingsService = require('../services/settingsService');
 const { validateTemplate, TEMPLATE_REQUIRED_VARS } = require('../utils/templateRenderer');
 
@@ -179,6 +180,9 @@ const addPlatformAdmin = async (req, res) => {
 const removePlatformAdmin = async (req, res) => {
     try {
         const targetUserId = Number(req.params.userId);
+        if (isNaN(targetUserId)) {
+            return res.status(400).json({ message: 'מזהה משתמש לא תקין' });
+        }
 
         // Prevent removing yourself
         if (targetUserId === req.user?.UserId) {
@@ -261,6 +265,70 @@ const getPublicSettings = async (_req, res) => {
     }
 };
 
+// ── Knowledge Documents ─────────────────────────────────────────────
+
+const knowledgeDocService = require('../services/knowledgeDocService');
+
+/** GET /api/platform-settings/knowledge-docs */
+const listKnowledgeDocs = async (req, res) => {
+    try {
+        const docs = await knowledgeDocService.listDocuments();
+        return res.json({ documents: docs });
+    } catch (err) {
+        console.error('[platformSettings] listKnowledgeDocs error:', err);
+        return res.status(500).json({ message: 'שגיאה בטעינת מסמכי ידע' });
+    }
+};
+
+/** POST /api/platform-settings/knowledge-docs (multipart file upload) */
+const uploadKnowledgeDoc = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'לא צורף קובץ' });
+        }
+
+        const allowedExts = ['.txt', '.pdf'];
+        const ext = path.extname(req.file.originalname).toLowerCase();
+        if (!allowedExts.includes(ext)) {
+            return res.status(400).json({ message: 'סוג קובץ לא נתמך. יש להעלות קובץ PDF או TXT' });
+        }
+
+        // Multer encodes originalname as latin1; decode to utf-8 to fix Hebrew filenames
+        const originalName = Buffer.from(req.file.originalname, 'latin1').toString('utf-8');
+        const title = req.body.title || undefined;
+        const result = await knowledgeDocService.ingestDocument(
+            req.file.buffer,
+            originalName,
+            title
+        );
+
+        return res.status(201).json({
+            message: 'המסמך נוסף בהצלחה',
+            documentId: result.documentId,
+            chunkCount: result.chunkCount,
+        });
+    } catch (err) {
+        console.error('[platformSettings] uploadKnowledgeDoc error:', err);
+        return res.status(500).json({ message: err.message || 'שגיאה בהעלאת מסמך' });
+    }
+};
+
+/** DELETE /api/platform-settings/knowledge-docs/:id */
+const deleteKnowledgeDoc = async (req, res) => {
+    try {
+        const docId = parseInt(req.params.id, 10);
+        if (!docId || isNaN(docId)) {
+            return res.status(400).json({ message: 'מזהה מסמך לא תקין' });
+        }
+        await knowledgeDocService.deleteDocument(docId);
+        return res.json({ message: 'המסמך נמחק בהצלחה' });
+    } catch (err) {
+        console.error('[platformSettings] deleteKnowledgeDoc error:', err);
+        const status = err.message === 'המסמך לא נמצא' ? 404 : 500;
+        return res.status(status).json({ message: err.message || 'שגיאה במחיקת מסמך' });
+    }
+};
+
 module.exports = {
     getAllSettings,
     updateSettings,
@@ -273,4 +341,7 @@ module.exports = {
     getEmailTemplates,
     updateEmailTemplate,
     getPublicSettings,
+    listKnowledgeDocs,
+    uploadKnowledgeDoc,
+    deleteKnowledgeDoc,
 };

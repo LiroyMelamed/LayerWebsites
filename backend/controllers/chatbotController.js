@@ -7,6 +7,8 @@ const { logSecurityEvent, extractIp } = require('../utils/securityAuditLogger');
 const { sendError } = require('../utils/appError');
 const { getHebrewMessage } = require('../utils/errors.he');
 const { processMessage } = require('../services/aiChatService');
+const { sendEmailWithAttachments } = require('../utils/smooveEmailCampaignService');
+const { getSetting } = require('../services/settingsService');
 require('dotenv').config();
 
 const OTP_PEPPER = String(process.env.SIGNING_OTP_PEPPER || '');
@@ -18,6 +20,67 @@ const FORCE_SEND_SMS_ALL = process.env.FORCE_SEND_SMS_ALL === 'true';
 
 function hashOtp(otp) {
     return crypto.createHmac('sha256', OTP_PEPPER).update(String(otp)).digest('hex');
+}
+
+// Israeli phone number pattern (05x, 07x, +972, etc.)
+const PHONE_REGEX = /(?:\+?972[-\s]?|0)(?:5[0-9]|7[0-9])[-\s]?\d{3}[-\s]?\d{4}/;
+
+// Track sessions that already sent a lead notification (in memory — resets on restart, but that's fine)
+const _notifiedSessions = new Set();
+
+/**
+ * Check all messages in a session for phone numbers and send a lead notification
+ * email to the configured address.
+ */
+async function maybeSendLeadNotification(sessionId, allMessages) {
+    if (_notifiedSessions.has(sessionId)) return;
+
+    // Check if any user message contains a phone number
+    const userMessages = allMessages.filter(m => m.role === 'user');
+    let detectedPhone = null;
+    for (const msg of userMessages) {
+        const match = msg.content?.match(PHONE_REGEX);
+        if (match) { detectedPhone = match[0]; break; }
+    }
+    if (!detectedPhone) return;
+
+    // Get notification email from settings
+    const notifEmail = await getSetting('chatbot', 'CHATBOT_NOTIFICATION_EMAIL');
+    if (!notifEmail) return;
+
+    _notifiedSessions.add(sessionId);
+
+    // Build conversation summary
+    const lines = allMessages.map(m => {
+        const role = m.role === 'user' ? 'לקוח' : 'עוזר דיגיטלי';
+        return `<strong>${role}:</strong> ${String(m.content || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}`;
+    });
+
+    const htmlBody = `
+        <div dir="rtl" style="font-family:Arial,sans-serif;font-size:15px;line-height:1.8;">
+            <h2 style="color:#1A365D;">🔔 ליד חדש מהצ'אטבוט</h2>
+            <p><strong>טלפון שזוהה:</strong> ${detectedPhone}</p>
+            <p><strong>מזהה שיחה:</strong> ${sessionId}</p>
+            <p><strong>תאריך:</strong> ${new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' })}</p>
+            <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0;">
+            <h3 style="color:#1A365D;">תמלול השיחה:</h3>
+            <div style="background:#f9fafb;padding:16px;border-radius:8px;border:1px solid #e5e7eb;">
+                ${lines.join('<br><br>')}
+            </div>
+        </div>
+    `;
+
+    try {
+        await sendEmailWithAttachments({
+            toEmail: notifEmail,
+            subject: `ליד חדש מהצ'אטבוט — ${detectedPhone}`,
+            htmlBody,
+            logLabel: 'CHATBOT_LEAD_NOTIFICATION',
+        });
+        console.log(`[chatbot] ✅ Lead notification sent to ${notifEmail} (session=${sessionId}, phone=${detectedPhone})`);
+    } catch (err) {
+        console.error(`[chatbot] ❌ Lead notification failed:`, err?.message);
+    }
 }
 
 // ── POST /api/chatbot/message ─────────────────────────────────────────
@@ -107,6 +170,10 @@ const sendChatMessage = async (req, res) => {
         } catch (storeErr) {
             console.warn('[chatbot] Failed to store messages:', storeErr?.message);
         }
+
+        // Send lead notification if phone detected in conversation (fire and forget)
+        const fullHistory = [...history, { role: 'user', content: sanitizedMessage }, { role: 'assistant', content: aiResult.response }];
+        maybeSendLeadNotification(resolvedSessionId, fullHistory).catch(() => { });
 
         // Audit log
         logSecurityEvent({
@@ -286,10 +353,19 @@ const verifyOtp = async (req, res) => {
 
         if (resolvedSessionId) {
             // Update existing session
-            await pool.query(
+            const updateResult = await pool.query(
                 `UPDATE chatbot_sessions SET phone = $1, verified = true, user_id = $2, expires_at = $3 WHERE id = $4`,
                 [phoneNumber, userid, expiresAt, resolvedSessionId]
             );
+            if (updateResult.rowCount === 0) {
+                // Session doesn't exist — create new one
+                const sessionResult = await pool.query(
+                    `INSERT INTO chatbot_sessions (phone, verified, user_id, ip_address, expires_at)
+                     VALUES ($1, true, $2, $3, $4) RETURNING id`,
+                    [phoneNumber, userid, ip, expiresAt]
+                );
+                resolvedSessionId = sessionResult.rows[0].id;
+            }
         } else {
             // Create new verified session
             const sessionResult = await pool.query(

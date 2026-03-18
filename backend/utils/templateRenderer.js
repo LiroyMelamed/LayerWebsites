@@ -38,7 +38,6 @@ function extractTemplateVars(template) {
  * every required variable so the code doesn't produce broken messages.
  *
  * Available optional vars (always passed by renderTemplate callers):
- *   caseNumber  — case ID number
  *   managerName — name of assigned case manager
  *   stageName   — current stage name (required only for CASE_STAGE_CHANGED_SMS)
  */

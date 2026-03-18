@@ -89,7 +89,6 @@ async function notifyCaseManager({ caseId, caseName, title, message, smsBody, sm
         console.log('-----------------------------------------------------------\n');
 
         const mgrNotifType = explicitType || (changedTypes && changedTypes[0]) || 'CASE_STAGE_CHANGE';
-        const caseNumber = smsTemplateData?.caseNumber || String(caseId);
         const caseStage = smsTemplateData?.stageName || '';
         await notifyRecipient({
             recipientUserId: mgr.UserId,
@@ -105,7 +104,6 @@ async function notifyCaseManager({ caseId, caseName, title, message, smsBody, sm
                 contactFields: {
                     recipient_name: recipientName || 'מנהל תיק',
                     case_title: String(caseName || '').trim(),
-                    case_number: caseNumber,
                     case_stage: caseStage,
                     manager_name: recipientName,
                     action_url: `https://${domain}`,
@@ -569,7 +567,7 @@ const addCase = async (req, res) => {
         }
 
         // Common template data for all SMS renders
-        const templateData = { caseName: CaseName, caseNumber: String(caseId), stageName: initStageName, managerName, websiteUrl };
+        const templateData = { caseName: CaseName, stageName: initStageName, managerName, websiteUrl };
 
         if (shouldNotifyCreated) {
             for (const u of linkedUsers) {
@@ -594,7 +592,6 @@ const addCase = async (req, res) => {
                         contactFields: {
                             recipient_name: String(recipientName).trim(),
                             case_title: String(CaseName || '').trim(),
-                            case_number: String(caseId),
                             case_stage: initStageName,
                             manager_name: managerName,
                             action_url: websiteUrl,
@@ -851,7 +848,7 @@ const updateCase = async (req, res) => {
         }
 
         // Common template data for all SMS renders
-        const templateData = { caseName: CaseName, caseNumber: String(caseId), stageName, managerName, websiteUrl };
+        const templateData = { caseName: CaseName, stageName, managerName, websiteUrl };
 
         // Fetch all linked users to notify
         const linkedUsers = resolvedUserIds.length > 0
@@ -883,7 +880,6 @@ const updateCase = async (req, res) => {
                         contactFields: {
                             recipient_name: String(recipientName).trim(),
                             case_title: String(CaseName || '').trim(),
-                            case_number: String(caseId),
                             case_stage: stageName,
                             manager_name: managerName,
                             action_url: websiteUrl,
@@ -1052,7 +1048,7 @@ const updateStage = async (req, res) => {
             }
 
             // Common template data
-            const templateData = { caseName: CaseName, caseNumber: String(caseId), stageName: currentStageName, managerName, websiteUrl };
+            const templateData = { caseName: CaseName, stageName: currentStageName, managerName, websiteUrl };
 
             // Load appropriate SMS template
             let smsTemplateKey = 'CASE_STAGE_CHANGED_SMS';
@@ -1102,7 +1098,6 @@ const updateStage = async (req, res) => {
                             contactFields: {
                                 recipient_name: String(recipientName).trim(),
                                 case_title: String(CaseName || '').trim(),
-                                case_number: String(caseId),
                                 case_stage: currentStageName,
                                 manager_name: managerName,
                                 action_url: websiteUrl,

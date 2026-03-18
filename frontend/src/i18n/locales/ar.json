@@ -1044,5 +1044,21 @@
         "otpInvalid": "رمز التحقق غير صحيح. حاول مرة أخرى.",
         "errorGeneric": "حدث خطأ. حاول مرة أخرى لاحقًا.",
         "sessionExpired": "انتهت الجلسة. يرجى التحقق من رقم هاتفك مرة أخرى."
+    },
+    "platformSettings": {
+        "docTitlePlaceholder": "اسم المستند (اختياري)",
+        "chooseFile": "اختر ملف",
+        "uploading": "جارٍ رفع ومعالجة المستند...",
+        "noDocsYet": "لا توجد مستندات معرفة بعد. ارفع مستندًا حتى يتمكن الشات بوت من الإجابة على الأسئلة.",
+        "deleteDocTitle": "حذف مستند",
+        "deleteDocMessage": "هل تريد حذف هذا المستند؟ سيتم حذف جميع أجزاء المعرفة الخاصة به.",
+        "docDeleted": "تم حذف المستند بنجاح",
+        "docDeleteError": "خطأ في حذف المستند",
+        "deleteTemplateTitle": "حذف قالب",
+        "deleteTemplateMessage": "هل تريد حذف هذا القالب؟",
+        "templateDeleted": "تم حذف القالب",
+        "templateDeleteError": "خطأ في حذف القالب",
+        "removeAdminTitle": "إزالة مدير",
+        "removeAdminMessage": "هل أنت متأكد من إزالة هذا المدير؟"
     }
 }

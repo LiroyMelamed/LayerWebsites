@@ -60,9 +60,10 @@
 }
 
 .lw-simplePopUp__content {
+    flex-direction: column;
     width: 100%;
     min-inline-size: 0;
-    margin-top: v.$space-2;
     direction: rtl;
     text-align: right;
+    gap: 0.5rem;
 }

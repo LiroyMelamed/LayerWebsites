@@ -684,6 +684,95 @@
         border-top: 1px solid #e5e7eb;
     }
 
+    // ── Knowledge Documents ─────────────────────────────────────────
+
+    &__knowledgeUpload {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-3;
+        margin-bottom: v.$space-4;
+        padding: v.$space-4;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+    }
+
+    &__knowledgeUploadRow {
+        display: flex;
+        align-items: center;
+        gap: v.$space-3;
+        flex-wrap: wrap;
+    }
+
+    &__knowledgeTitleInput {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    &__knowledgeFileInputHidden {
+        display: none;
+    }
+
+    &__knowledgeChooseBtn {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    &__knowledgeFileName {
+        color: #6b7280;
+        max-width: 220px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex-shrink: 1;
+    }
+
+    &__knowledgeUploading {
+        display: flex;
+        align-items: center;
+        gap: v.$space-2;
+        color: #4b5563;
+    }
+
+    &__knowledgeList {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-3;
+    }
+
+    &__knowledgeRow {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: v.$space-3;
+        background: #fafafa;
+        border: 1px solid #f0f0f0;
+        border-radius: 8px;
+        gap: v.$space-3;
+    }
+
+    &__knowledgeInfo {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-1;
+        flex: 1;
+    }
+
+    &__knowledgeMeta {
+        color: #666;
+    }
+
+    &__knowledgeNotifSection {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-2;
+        margin-bottom: v.$space-4;
+        padding: v.$space-4;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 10px;
+    }
+
     // ── Mobile responsive ───────────────────────────────────────────
     @media (max-width: 768px) {
         &__scroll {

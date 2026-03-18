@@ -61,7 +61,6 @@ async function main() {
             fields: {
                 recipient_name: 'לירוי',
                 case_title: 'בדיקת יצירת תיק',
-                case_number: '1001',
                 case_stage: 'שלב ראשוני',
                 manager_name: 'עו"ד מלמד',
                 action_url: baseUrl,

@@ -1050,5 +1050,21 @@
         "otpInvalid": "Invalid verification code. Please try again.",
         "errorGeneric": "An error occurred. Please try again later.",
         "sessionExpired": "Session expired. Please verify your phone number again."
+    },
+    "platformSettings": {
+        "docTitlePlaceholder": "Document name (optional)",
+        "chooseFile": "Choose File",
+        "uploading": "Uploading and processing document...",
+        "noDocsYet": "No knowledge documents yet. Upload a document so the chatbot can answer questions.",
+        "deleteDocTitle": "Delete Document",
+        "deleteDocMessage": "Delete this document? All its knowledge chunks will be removed.",
+        "docDeleted": "Document deleted successfully",
+        "docDeleteError": "Error deleting document",
+        "deleteTemplateTitle": "Delete Template",
+        "deleteTemplateMessage": "Delete this template?",
+        "templateDeleted": "Template deleted",
+        "templateDeleteError": "Error deleting template",
+        "removeAdminTitle": "Remove Admin",
+        "removeAdminMessage": "Are you sure you want to remove this admin?"
     }
 }

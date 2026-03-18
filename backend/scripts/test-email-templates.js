@@ -11,7 +11,6 @@ function replaceVars(str, fields) {
 const testFields = {
     recipient_name: 'לירוי מלמד',
     case_title: 'תיק בדיקה 123',
-    case_number: '1001',
     case_stage: 'שלב ראשוני',
     manager_name: 'עו"ד כהן',
     action_url: 'https://client.melamedlaw.co.il',
