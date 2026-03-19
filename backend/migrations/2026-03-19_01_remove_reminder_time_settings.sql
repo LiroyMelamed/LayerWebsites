@@ -4,4 +4,4 @@
 
 DELETE FROM platform_settings
 WHERE category = 'reminders'
-  AND key IN ('EMAIL_REMINDERS_START_HOUR', 'EMAIL_REMINDERS_END_HOUR');
+  AND setting_key IN ('EMAIL_REMINDERS_START_HOUR', 'EMAIL_REMINDERS_END_HOUR');
