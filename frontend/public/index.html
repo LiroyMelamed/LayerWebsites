@@ -28,6 +28,28 @@
   <!-- General SEO description -->
   <meta name="description"
     content="אפליקציית MelamedLaw – ניהול תיקים משפטיים, מעקב בזמן אמת, חתימה דיגיטלית וקשר ישיר עם משרד עורכי הדין." />
+
+  <!-- Smart app redirect: mobile users → native app store -->
+  <script>
+    (function () {
+      // Skip redirect for admin routes (lawyers/admins use the web)
+      var path = window.location.pathname;
+      if (path.indexOf('/AdminStack') === 0) return;
+
+      // Skip if user explicitly chose to stay on web (?web=1)
+      if (window.location.search.indexOf('web=1') !== -1) return;
+
+      var ua = navigator.userAgent || '';
+      var isIOS = /iPhone|iPad|iPod/i.test(ua);
+      var isAndroid = /Android/i.test(ua);
+
+      if (isIOS) {
+        window.location.replace('https://apps.apple.com/il/app/melamedlaw-%D7%9E%D7%A2%D7%A7%D7%91-%D7%AA%D7%99%D7%A7%D7%99%D7%9D/id6751916311');
+      } else if (isAndroid) {
+        window.location.replace('https://play.google.com/store/apps/details?id=com.melamedia.melamedlaw&hl=he');
+      }
+    })();
+  </script>
 </head>
 
 <body>
