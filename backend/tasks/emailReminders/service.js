@@ -10,9 +10,10 @@
  */
 
 const pool = require('../../config/db');
-const { sendTransactionalCustomHtmlEmail } = require('../../utils/smooveEmailCampaignService');
+const { sendTransactionalCustomHtmlEmail, sendEmailWithAttachments } = require('../../utils/smooveEmailCampaignService');
 const { getAllTemplates, renderTemplate, wrapEmailHtml } = require('./templates');
 const { getSetting } = require('../../services/settingsService');
+const { getAttachmentBuffers } = require('../../controllers/templateAttachmentController');
 
 // ---------- env toggles ----------
 function isEnabled() {
@@ -96,7 +97,7 @@ async function processEmailReminders() {
 
             const subjectLine = reminder.subject || renderTemplate(tpl.subject, fields);
             const bodyHtml = renderTemplate(tpl.body, fields);
-            const fullHtml = wrapEmailHtml(bodyHtml, { firmName: fields.firm_name });
+            const fullHtml = wrapEmailHtml(bodyHtml, { firmName: fields.firm_name, title: subjectLine });
 
             if (dryRun) {
                 console.log(`[email-reminders] DRY-RUN would send to ${reminder.to_email}: "${subjectLine}"`);
@@ -111,13 +112,24 @@ async function processEmailReminders() {
                 continue;
             }
 
-            // Send via Smoove transactional
-            const result = await sendTransactionalCustomHtmlEmail({
-                toEmail: reminder.to_email,
-                subject: subjectLine,
-                htmlBody: fullHtml,
-                logLabel: `reminder-${reminder.id}`,
-            });
+            // Fetch template attachments from R2 (if any)
+            const attachments = await getAttachmentBuffers('reminder', reminder.template_key);
+
+            // Send via SMTP (with attachments) or transactional (no attachments)
+            const result = attachments.length > 0
+                ? await sendEmailWithAttachments({
+                    toEmail: reminder.to_email,
+                    subject: subjectLine,
+                    htmlBody: fullHtml,
+                    attachments,
+                    logLabel: `reminder-${reminder.id}`,
+                })
+                : await sendTransactionalCustomHtmlEmail({
+                    toEmail: reminder.to_email,
+                    subject: subjectLine,
+                    htmlBody: fullHtml,
+                    logLabel: `reminder-${reminder.id}`,
+                });
 
             if (result?.ok) {
                 console.log(`[email-reminders] ✅ SENT id=${reminder.id} to=${reminder.to_email} subject="${subjectLine}"`);

@@ -20,6 +20,7 @@ const SimpleTextArea = forwardRef(
         onChange,
         disabled = false,
         error = '',
+        textareaRef,
         ...props
     }, ref) => {
         const [isFocused, setIsFocused] = useState(false);
@@ -66,6 +67,7 @@ const SimpleTextArea = forwardRef(
                 )}
 
                 <textarea
+                    ref={textareaRef}
                     className="lw-simpleTextArea__field"
                     value={value}
                     onChange={(e) => onChange(e.target.value)}

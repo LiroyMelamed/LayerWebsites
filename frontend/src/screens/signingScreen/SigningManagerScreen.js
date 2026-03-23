@@ -16,6 +16,7 @@ import { getNavBarData } from "../../components/navBars/data/NavBarData";
 
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
+import { buttonSizes } from "../../styles/buttons/buttonSizes";
 import SearchInput from "../../components/specializedComponents/containers/SearchInput";
 import SimpleInput from "../../components/simpleComponents/SimpleInput";
 import ProgressBar from "../../components/specializedComponents/containers/ProgressBar";
@@ -350,6 +351,7 @@ export default function SigningManagerScreen() {
                 onDelete={(id) => deleteSigningFile(id)}
                 isDeleting={isDeletingFile}
                 formatDotDate={formatDotDate}
+                onRenamed={() => { closePopup(); reloadFiles?.(); }}
             />
         );
     };
@@ -520,11 +522,33 @@ export default function SigningManagerScreen() {
     );
 }
 
-function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned, onDownloadEvidencePdf, onDownloadEvidenceZip, onDelete, isDeleting, formatDotDate }) {
+function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned, onDownloadEvidencePdf, onDownloadEvidenceZip, onDelete, isDeleting, formatDotDate, onRenamed }) {
     const { t } = useTranslation();
     const totalSpots = Number(file?.TotalSpots || 0);
     const signedSpots = Number(file?.SignedSpots || 0);
     const isSigned = String(file?.Status || '').toLowerCase() === 'signed';
+
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [editName, setEditName] = useState(file?.FileName || '');
+    const [isSavingName, setIsSavingName] = useState(false);
+
+    const handleSaveName = async () => {
+        const trimmed = editName.trim();
+        if (!trimmed || trimmed === file?.FileName) {
+            setIsEditingName(false);
+            return;
+        }
+        setIsSavingName(true);
+        try {
+            await signingFilesApi.renameSigningFile(file.SigningFileId, trimmed);
+            onRenamed?.(trimmed);
+            setIsEditingName(false);
+        } catch (e) {
+            console.error('Failed to rename signing file', e);
+        } finally {
+            setIsSavingName(false);
+        }
+    };
 
     const showOtpUi = SIGNING_OTP_ENABLED;
     const requireOtp = showOtpUi && Boolean(file?.RequireOtp);
@@ -555,7 +579,31 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
 
     return (
         <SimpleContainer className="lw-signingManagerScreen__detailsPopup">
-            <TextBold24>{file?.FileName || t('signingManager.details.titleFallback')}</TextBold24>
+            {isEditingName ? (
+                <SimpleContainer className="lw-signingManagerScreen__renameRow">
+                    <input
+                        className="lw-signingManagerScreen__renameInput"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') setIsEditingName(false); }}
+                        autoFocus
+                        disabled={isSavingName}
+                    />
+                    <SecondaryButton size={buttonSizes.SMALL} onPress={handleSaveName} disabled={isSavingName}>
+                        {isSavingName ? '...' : t('common.save')}
+                    </SecondaryButton>
+                    <SecondaryButton size={buttonSizes.SMALL} onPress={() => { setIsEditingName(false); setEditName(file?.FileName || ''); }}>
+                        {t('common.cancel')}
+                    </SecondaryButton>
+                </SimpleContainer>
+            ) : (
+                <SimpleContainer className="lw-signingManagerScreen__titleRow">
+                    <TextBold24>{file?.FileName || t('signingManager.details.titleFallback')}</TextBold24>
+                    <SecondaryButton size={buttonSizes.SMALL} onPress={() => { setEditName(file?.FileName || ''); setIsEditingName(true); }}>
+                        {t('signingManager.actions.rename')}
+                    </SecondaryButton>
+                </SimpleContainer>
+            )}
 
             {showOtpUi && (
                 <SimpleContainer className={otpChipClassName}>{otpChipText}</SimpleContainer>

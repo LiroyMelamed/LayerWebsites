@@ -141,6 +141,7 @@ const _buildBaseCaseQuery = () => `
         MGR.phonenumber AS casemanagerphone,
         C.estimatedcompletiondate,
         C.licenseexpirydate,
+        C.haslicenseexpiry,
         CD.descriptionid,
         CD.stage,
         CD.text,
@@ -180,6 +181,7 @@ const _mapCaseResults = (rows, caseUsersMap) => {
                 CaseManagerPhone: row.casemanagerphone || null,
                 EstimatedCompletionDate: row.estimatedcompletiondate,
                 LicenseExpiryDate: row.licenseexpirydate,
+                HasLicenseExpiry: row.haslicenseexpiry || false,
                 Descriptions: [],
                 Users: [],
             });
@@ -462,7 +464,8 @@ const addCase = async (req, res) => {
         CaseManager,
         CaseManagerId,
         EstimatedCompletionDate,
-        LicenseExpiryDate
+        LicenseExpiryDate,
+        HasLicenseExpiry
     } = req.body;
 
     // ── Validate required CaseManager ──────────────────────────────
@@ -485,9 +488,9 @@ const addCase = async (req, res) => {
             INSERT INTO cases (
                 casename, casetypeid, userid, companyname, currentstage,
                 isclosed, istagged, whatsappgrouplink, createdat, updatedat,
-                casemanager, casemanagerid, estimatedcompletiondate, licenseexpirydate
+                casemanager, casemanagerid, estimatedcompletiondate, licenseexpirydate, haslicenseexpiry
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW(), $9, $10, $11, $12)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW(), $9, $10, $11, $12, $13)
             RETURNING caseid
             `,
             [
@@ -502,7 +505,8 @@ const addCase = async (req, res) => {
                 CaseManager || null,
                 CaseManagerId ? Number(CaseManagerId) || null : null,
                 EstimatedCompletionDate || null,
-                LicenseExpiryDate || null
+                LicenseExpiryDate || null,
+                HasLicenseExpiry ? true : false
             ]
         );
 
@@ -647,7 +651,7 @@ const addCase = async (req, res) => {
 const updateCase = async (req, res) => {
     const caseId = requireInt(req, res, { source: 'params', name: 'caseId' });
     if (caseId === null) return;
-    const { CaseName, CurrentStage, IsClosed, IsTagged, Descriptions, PhoneNumber, CustomerName, CompanyName, CaseTypeId, UserId, UserIds, CaseManager, CaseManagerId, CaseTypeName, EstimatedCompletionDate, LicenseExpiryDate } = req.body;
+    const { CaseName, CurrentStage, IsClosed, IsTagged, Descriptions, PhoneNumber, CustomerName, CompanyName, CaseTypeId, UserId, UserIds, CaseManager, CaseManagerId, CaseTypeName, EstimatedCompletionDate, LicenseExpiryDate, HasLicenseExpiry } = req.body;
 
     // Build resolved user list: prefer UserIds array, fall back to single UserId
     const resolvedUserIds = Array.isArray(UserIds) && UserIds.length > 0
@@ -703,10 +707,11 @@ const updateCase = async (req, res) => {
                 casetypename = $10,
                 estimatedcompletiondate = $11,
                 licenseexpirydate = $12,
+                haslicenseexpiry = $13,
                 updatedat = NOW()
-            WHERE caseid = $13
+            WHERE caseid = $14
             `,
-            [CaseName, CurrentStage, IsClosed, IsTagged, CompanyName, CaseTypeId, resolvedUserIds[0] || UserId, CaseManager || null, CaseManagerId ? Number(CaseManagerId) || null : null, CaseTypeName, EstimatedCompletionDate || null, LicenseExpiryDate || null, caseId]
+            [CaseName, CurrentStage, IsClosed, IsTagged, CompanyName, CaseTypeId, resolvedUserIds[0] || UserId, CaseManager || null, CaseManagerId ? Number(CaseManagerId) || null : null, CaseTypeName, EstimatedCompletionDate || null, LicenseExpiryDate || null, HasLicenseExpiry ? true : false, caseId]
         );
 
         // Sync case_users junction table
@@ -1491,6 +1496,134 @@ const getMyCases = async (req, res) => {
     }
 };
 
+/**
+ * Create scheduled license-renewal reminders for a case.
+ * Body: { caseId, licenseExpiryDate, intervals: ['4m','3m','2m','1m','2w'] }
+ */
+const createLicenseReminders = async (req, res) => {
+    const { caseId, licenseExpiryDate, intervals } = req.body;
+    const createdBy = req.user?.userid || null;
+
+    if (!caseId || !licenseExpiryDate || !Array.isArray(intervals) || intervals.length === 0) {
+        return res.status(400).json({ message: 'חסרים פרטים ליצירת תזכורות' });
+    }
+
+    const expiry = new Date(licenseExpiryDate);
+    if (isNaN(expiry.getTime())) {
+        return res.status(400).json({ message: 'תאריך תוקף לא תקין' });
+    }
+
+    // Map interval codes to millisecond offsets before expiry
+    const offsetMap = {
+        '4m': 4 * 30 * 24 * 60 * 60 * 1000,
+        '3m': 3 * 30 * 24 * 60 * 60 * 1000,
+        '2m': 2 * 30 * 24 * 60 * 60 * 1000,
+        '1m': 1 * 30 * 24 * 60 * 60 * 1000,
+        '2w': 14 * 24 * 60 * 60 * 1000,
+    };
+
+    const labelMap = {
+        '4m': '4 חודשים',
+        '3m': '3 חודשים',
+        '2m': 'חודשיים',
+        '1m': 'חודש',
+        '2w': 'שבועיים',
+    };
+
+    try {
+        // Fetch case details + linked users
+        const caseResult = await pool.query(
+            `SELECT c.caseid, c.casename, c.casemanagerid, c.casemanager,
+                    u.name AS client_name, u.email AS client_email
+             FROM cases c
+             LEFT JOIN case_users cu ON cu.caseid = c.caseid
+             LEFT JOIN users u ON u.userid = cu.userid
+             WHERE c.caseid = $1
+             LIMIT 1`,
+            [caseId]
+        );
+
+        if (!caseResult.rows.length) {
+            return res.status(404).json({ message: 'תיק לא נמצא' });
+        }
+
+        const caseRow = caseResult.rows[0];
+        const clientName = caseRow.client_name || caseRow.casename || 'לקוח';
+        const clientEmail = caseRow.client_email;
+
+        // Fetch platform admin emails for 2-week reminder
+        const adminRows = await getPlatformAdmins();
+
+        // Fetch case manager email
+        let managerEmail = null;
+        if (caseRow.casemanagerid) {
+            const mgrRes = await pool.query(
+                `SELECT email FROM users WHERE userid = $1`,
+                [caseRow.casemanagerid]
+            );
+            if (mgrRes.rows.length) managerEmail = mgrRes.rows[0].email;
+        }
+
+        const created = [];
+
+        for (const interval of intervals) {
+            const offset = offsetMap[interval];
+            if (!offset) continue;
+
+            const scheduledDate = new Date(expiry.getTime() - offset);
+            // Don't create reminders in the past
+            if (scheduledDate <= new Date()) continue;
+
+            const label = labelMap[interval] || interval;
+            const subject = `תזכורת חידוש רישיון - ${caseRow.casename || 'תיק'} (${label} לפני)`;
+
+            // Determine recipients: client email + (for 2w: admin + manager)
+            const recipients = [];
+            if (clientEmail) recipients.push({ name: clientName, email: clientEmail });
+
+            if (interval === '2w') {
+                // Add admin emails
+                for (const admin of adminRows) {
+                    if (admin.email && !recipients.some(r => r.email === admin.email)) {
+                        recipients.push({ name: admin.name || 'מנהל', email: admin.email });
+                    }
+                }
+                // Add case manager
+                if (managerEmail && !recipients.some(r => r.email === managerEmail)) {
+                    recipients.push({ name: caseRow.casemanager || 'מנהל תיק', email: managerEmail });
+                }
+            }
+
+            for (const recipient of recipients) {
+                const expiryFormatted = expiry.toLocaleDateString('he-IL');
+                const { rows } = await pool.query(
+                    `INSERT INTO scheduled_email_reminders
+                        (user_id, client_name, to_email, subject, template_key, template_data, scheduled_for, created_by)
+                     VALUES (
+                        (SELECT userid FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1),
+                        $2, $1, $3, 'LICENSE_RENEWAL', $4, $5, $6
+                     )
+                     RETURNING *`,
+                    [
+                        recipient.email,
+                        recipient.name,
+                        subject,
+                        JSON.stringify({ client_name: recipient.name, date: expiryFormatted }),
+                        scheduledDate.toISOString(),
+                        createdBy,
+                    ]
+                );
+                if (rows.length) created.push(rows[0]);
+            }
+        }
+
+        return res.status(201).json({ ok: true, count: created.length, reminders: created });
+    } catch (error) {
+        console.error('Error creating license reminders:', error);
+        return res.status(500).json({ message: 'שגיאה ביצירת תזכורות' });
+    }
+};
+
 module.exports = {
     getCases,
     getMyCases,
@@ -1504,4 +1637,5 @@ module.exports = {
     getTaggedCases,
     getTaggedCasesByName,
     linkWhatsappGroup,
+    createLicenseReminders,
 };

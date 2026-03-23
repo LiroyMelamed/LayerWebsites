@@ -45,7 +45,10 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
         CaseManagerId: caseDetails?.CaseManagerId || '',
         EstimatedCompletionDate: caseDetails?.EstimatedCompletionDate,
         LicenseExpiryDate: caseDetails?.LicenseExpiryDate,
+        HasLicenseExpiry: caseDetails?.HasLicenseExpiry || false,
     });
+
+    const [showLicenseExpiry, setShowLicenseExpiry] = useState(!!caseDetails?.HasLicenseExpiry || !!caseDetails?.LicenseExpiryDate);
 
     const moveStage = (fromIndex, toIndex) => {
         setCaseData((prev) => {
@@ -322,6 +325,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                 CaseManagerId: caseDetails?.CaseManagerId || '',
                 EstimatedCompletionDate: caseDetails.EstimatedCompletionDate,
                 LicenseExpiryDate: caseDetails.LicenseExpiryDate,
+                HasLicenseExpiry: caseDetails.HasLicenseExpiry || false,
             });
         }
     };
@@ -450,15 +454,35 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                         value={formatDateForInput(caseData.EstimatedCompletionDate)}
                         onChange={(e) => handleInputChange('EstimatedCompletionDate', e.target.value)}
                     />
-                    <SimpleInput
-                        className="lw-caseFullView__field"
-                        title={t('cases.licenseExpiryDate')}
-                        type="date"
-                        lang="he-IL"
-                        value={formatDateForInput(caseData.LicenseExpiryDate)}
-                        onChange={(e) => handleInputChange('LicenseExpiryDate', e.target.value)}
-                    />
+                    <SimpleContainer className="lw-caseFullView__field lw-caseFullView__licenseToggleField">
+                        <label className="lw-caseFullView__toggleLabel">
+                            <input
+                                type="checkbox"
+                                checked={showLicenseExpiry}
+                                onChange={(e) => {
+                                    const on = e.target.checked;
+                                    setShowLicenseExpiry(on);
+                                    handleInputChange('HasLicenseExpiry', on);
+                                    if (!on) handleInputChange('LicenseExpiryDate', null);
+                                }}
+                            />
+                            <span>{t('cases.licenseExpiryDate')}</span>
+                        </label>
+                    </SimpleContainer>
                 </SimpleContainer>
+
+                {showLicenseExpiry && (
+                    <SimpleContainer className="lw-caseFullView__row">
+                        <SimpleInput
+                            className="lw-caseFullView__field"
+                            title={t('cases.licenseExpiryDate')}
+                            type="date"
+                            lang="he-IL"
+                            value={formatDateForInput(caseData.LicenseExpiryDate)}
+                            onChange={(e) => handleInputChange('LicenseExpiryDate', e.target.value)}
+                        />
+                    </SimpleContainer>
+                )}
 
                 {caseData?.Descriptions?.map((description, index) => (
                     <SimpleContainer

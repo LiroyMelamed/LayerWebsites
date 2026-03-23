@@ -13,6 +13,7 @@ const FORCE_SEND_EMAIL_ALL = process.env.FORCE_SEND_EMAIL_ALL === 'true';
 
 // DB-stored email template service + platform settings
 const { getEmailTemplate, getSetting } = require('../services/settingsService');
+const { getAttachmentBuffers } = require('../controllers/templateAttachmentController');
 
 const ALLOWED_CAMPAIGN_KEYS = [
     'SIGN_INVITE', 'SIGN_REMINDER', 'DOC_SIGNED', 'DOC_REJECTED',
@@ -127,14 +128,40 @@ async function sendEmailCampaign({ toEmail, campaignKey, contactFields, attachme
     // Build HTML body from DB template
     const htmlBody = replaceEmailPlaceholders(dbTemplate.html_body, allowedFields);
 
+    // Fetch template-level attachments from R2 (configured in admin UI)
+    let templateAttachments = [];
+    try {
+        templateAttachments = await getAttachmentBuffers('email', key);
+    } catch (e) {
+        console.error(`[EMAIL] Failed to fetch template attachments for ${key}:`, e?.message);
+    }
+
+    // Merge caller-provided attachments with template attachments
+    const allAttachments = [
+        ...(Array.isArray(attachments) ? attachments : []),
+        ...templateAttachments,
+    ];
+
     // DOC_SIGNED with attachments: send via Nodemailer with file attachments
-    if (key === 'DOC_SIGNED' && hasAttachments) {
+    if (key === 'DOC_SIGNED' && hasAttachments && allAttachments.length > 0) {
         return await sendEmailWithAttachments({
             toEmail: email,
             subject,
             htmlBody,
-            attachments,
+            attachments: allAttachments,
             logLabel: 'DOC_SIGNED',
+            fromEmail: fromEmail || undefined,
+        });
+    }
+
+    // If template attachments exist, use Nodemailer (SMTP) to include them
+    if (allAttachments.length > 0) {
+        return await sendEmailWithAttachments({
+            toEmail: email,
+            subject,
+            htmlBody,
+            attachments: allAttachments,
+            logLabel: key,
             fromEmail: fromEmail || undefined,
         });
     }

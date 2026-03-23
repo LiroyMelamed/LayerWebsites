@@ -16,8 +16,6 @@ export default function ImportRemindersModal({ closePopUpFunction, rePerformRequ
 
     const [file, setFile] = useState(null);
     const [selectedTemplate, setSelectedTemplate] = useState("GENERAL");
-    const [sendHour, setSendHour] = useState("09");
-    const [sendMinute, setSendMinute] = useState("00");
     const fileInputRef = useRef(null);
 
     // Fetch templates on mount
@@ -42,7 +40,7 @@ export default function ImportRemindersModal({ closePopUpFunction, rePerformRequ
 
     // Upload handler
     const { result: uploadResult, isPerforming: uploading, performRequest: doUpload } = useHttpRequest(
-        () => remindersApi.importReminders(file, selectedTemplate, Number(sendHour), Number(sendMinute)),
+        () => remindersApi.importReminders(file, selectedTemplate),
         (data) => { if (rePerformRequest) rePerformRequest(); },
     );
 
@@ -82,32 +80,6 @@ export default function ImportRemindersModal({ closePopUpFunction, rePerformRequ
                         <Text14 className="lw-importReminders__bodyPreviewText">{selectedBodyPreview}</Text14>
                     </SimpleContainer>
                 )}
-            </SimpleContainer>
-
-            {/* Send time HH:MM */}
-            <SimpleContainer className="lw-importReminders__field lw-importReminders__field--row">
-                <Text14>{t("reminders.import.sendTimeLabel")}</Text14>
-                <SimpleContainer className="lw-importReminders__timeRow">
-                    <input
-                        type="number"
-                        min="0"
-                        max="23"
-                        value={sendHour}
-                        onChange={(e) => setSendHour(e.target.value.padStart(2, "0").slice(-2))}
-                        className="lw-importReminders__timeInput"
-                        placeholder="HH"
-                    />
-                    <Text14 className="lw-importReminders__timeSep">:</Text14>
-                    <input
-                        type="number"
-                        min="0"
-                        max="59"
-                        value={sendMinute}
-                        onChange={(e) => setSendMinute(e.target.value.padStart(2, "0").slice(-2))}
-                        className="lw-importReminders__timeInput"
-                        placeholder="MM"
-                    />
-                </SimpleContainer>
             </SimpleContainer>
 
             {/* File picker + demo download */}

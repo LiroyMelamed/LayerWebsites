@@ -80,6 +80,10 @@ const casesApi = {
   linkWhatsappGroup: async (CaseId, whatsappLink) => {
     return await ApiUtils.put(`${LINK_WHATSAPP_GROUP}${CaseId}`, whatsappLink);
   },
+
+  createLicenseReminders: async (data) => {
+    return await ApiUtils.post("Cases/CreateLicenseReminders", data);
+  },
 };
 
 export const casesTypeApi = {

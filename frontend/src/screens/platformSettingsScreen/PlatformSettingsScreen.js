@@ -21,11 +21,14 @@ import { Text12, Text14, TextBold14, TextBold18, TextBold24 } from "../../compon
 
 import platformSettingsApi from "../../api/platformSettingsApi";
 import remindersApi from "../../api/remindersApi";
+import TemplateAttachmentsSection from "../../components/templateAttachments/TemplateAttachmentsSection";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import useHttpRequest from "../../hooks/useHttpRequest";
 
 import { usePopup } from "../../providers/PopUpProvider";
 import ConfirmationDialog from "../../components/styledComponents/popups/ConfirmationDialog";
+import { AdminStackName } from "../../navigation/AdminStack";
+import { MainScreenName } from "../mainScreen/MainScreen";
 
 import "./PlatformSettingsScreen.scss";
 
@@ -248,10 +251,13 @@ const VAR_LABELS = {
     subject: "נושא",
     body: "תוכן",
     amount: "סכום",
+    content_1: "תוכן 1",
+    content_2: "תוכן 2",
+    content_3: "תוכן 3",
 };
 
 // Available variables for reminder email templates
-const REMINDER_TEMPLATE_VARS = ["client_name", "firm_name", "date", "subject", "body", "case_title", "document_name", "amount"];
+const REMINDER_TEMPLATE_VARS = ["client_name", "firm_name", "date", "subject", "body", "case_title", "document_name", "amount", "content_1", "content_2", "content_3"];
 
 // ─── Mapping: template key → notification_type (for channel-based filtering) ──
 // Email template keys
@@ -318,6 +324,62 @@ function SmsVarButtons({ templateKey, onInsert }) {
     );
 }
 
+/**
+ * Wrap reminder body HTML in the branded email shell (matches backend wrapEmailHtml).
+ * Used for the live preview in the reminder template editor.
+ */
+function wrapReminderPreviewHtml(bodyHtml, { title = '' } = {}) {
+    const firmName = 'MelamedLaw';
+    const headerTitle = title || firmName;
+    return `<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${headerTitle}</title></head>
+<body style="margin:0;padding:0;background-color:#EDF2F7;direction:rtl;text-align:right;">
+<table border="0" cellpadding="0" cellspacing="0" style="background:#EDF2F7;" width="100%"><tbody><tr><td align="center" style="padding:24px 12px;">
+<table border="0" cellpadding="0" cellspacing="0" style="width:640px;max-width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.08);" width="640"><tbody>
+<tr><td style="background:#2A4365;padding:22px 24px;text-align:center;"><img src="https://client.melamedlaw.co.il/logoLMwhite.png" width="170" alt="${firmName}" style="border:0;outline:none;text-decoration:none;height:auto;max-width:100%;"><div style="height:14px;line-height:14px;">&nbsp;</div><div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#FFFFFF;font-size:18px;font-weight:600;line-height:1.4;">${headerTitle}</div></td></tr>
+<tr><td style="padding:26px 24px 8px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#2D3748;"><div style="font-size:16px;line-height:1.7;">${bodyHtml}</div><div style="height:18px;line-height:18px;">&nbsp;</div></td></tr>
+<tr><td style="padding:14px 24px 22px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#718096;font-size:12px;line-height:1.7;">הודעה זו נשלחה אוטומטית.<br>&copy; ${firmName}</td></tr>
+</tbody></table>
+</td></tr></tbody></table>
+</body>
+</html>`;
+}
+
+/**
+ * Convert reminder body HTML (no wrapper div) to plain text.
+ */
+function reminderHtmlToPlainText(html) {
+    if (!html) return "";
+    let text = html;
+    text = text.replace(/<br\s*\/?>/gi, "\n");
+    text = text.replace(/<span[^>]*>/gi, "").replace(/<\/span>/gi, "");
+    text = text.replace(/<strong>/gi, "").replace(/<\/strong>/gi, "");
+    text = text.replace(/&nbsp;/g, " ");
+    text = text.replace(/&amp;/g, "&");
+    text = text.replace(/&lt;/g, "<");
+    text = text.replace(/&gt;/g, ">");
+    text = text.replace(/&quot;/g, '"');
+    text = text.replace(/<[^>]+>/g, "");
+    return text.trim();
+}
+
+/**
+ * Convert plain text to reminder body HTML (no wrapper div).
+ */
+function reminderPlainTextToHtml(newText) {
+    let html = newText
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\n/g, "<br>");
+    html = html.replace(
+        /\[\[([^\]]+)\]\]/g,
+        '<span style="font-weight:600;color:#1A365D;">[[$1]]</span>'
+    );
+    return html;
+}
+
 // ─── Email Template Editor ──────────────────────────────────────────
 const CONTENT_DIV_REGEX = /(<div style="font-size:16px;line-height:1\.7;">)([\s\S]*?)(<\/div>)/;
 
@@ -352,6 +414,7 @@ function EmailTemplateEditor({ template, onSave, saving }) {
     const [showCode, setShowCode] = useState(false);
     const iframeRef = useRef(null);
     const textareaRef = useRef(null);
+    const simpleTextareaRef = useRef(null);
 
     useEffect(() => {
         setSubject(template.subject_template || "");
@@ -381,7 +444,7 @@ function EmailTemplateEditor({ template, onSave, saving }) {
         setMessageText(htmlToPlainText(newHtml));
     }, []);
 
-    // Insert variable into message text
+    // Insert variable into message text at cursor position
     const insertVar = useCallback((varName) => {
         const placeholder = `[[${varName}]]`;
         if (showCode && textareaRef.current) {
@@ -392,6 +455,14 @@ function EmailTemplateEditor({ template, onSave, saving }) {
             setHtmlBody(newHtml);
             setMessageText(htmlToPlainText(newHtml));
             setTimeout(() => { ta.focus(); ta.selectionStart = ta.selectionEnd = start + placeholder.length; }, 0);
+        } else if (simpleTextareaRef.current) {
+            const ta = simpleTextareaRef.current;
+            const start = ta.selectionStart;
+            const end = ta.selectionEnd;
+            const newText = messageText.substring(0, start) + placeholder + messageText.substring(end);
+            setMessageText(newText);
+            setHtmlBody(h => plainTextToHtml(h, newText));
+            setTimeout(() => { ta.focus(); ta.selectionStart = ta.selectionEnd = start + placeholder.length; }, 0);
         } else {
             setMessageText(prev => {
                 const newText = prev + placeholder;
@@ -399,7 +470,7 @@ function EmailTemplateEditor({ template, onSave, saving }) {
                 return newText;
             });
         }
-    }, [htmlBody, showCode]);
+    }, [htmlBody, messageText, showCode]);
 
     // Update preview iframe
     useEffect(() => {
@@ -455,6 +526,7 @@ function EmailTemplateEditor({ template, onSave, saving }) {
                         className="lw-platformSettings__textarea"
                         value={messageText}
                         onChange={handleMessageChange}
+                        textareaRef={simpleTextareaRef}
                         title="תוכן ההודעה"
                         rows={6}
                         dir="rtl"
@@ -487,6 +559,9 @@ function EmailTemplateEditor({ template, onSave, saving }) {
                     sandbox="allow-same-origin"
                 />
             </SimpleContainer>
+
+            {/* Template attachments */}
+            <TemplateAttachmentsSection templateType="email" templateKey={template.template_key} />
 
             {hasChanges && (
                 <SimpleContainer className="lw-platformSettings__emailEditorActions">
@@ -531,6 +606,11 @@ export default function PlatformSettingsScreen() {
     const [loadingReminderTpls, setLoadingReminderTpls] = useState(false);
     const [editingReminderTpl, setEditingReminderTpl] = useState(null);
     const [reminderTplSaving, setReminderTplSaving] = useState(false);
+    const [showReminderCode, setShowReminderCode] = useState(false);
+    const [reminderMessageText, setReminderMessageText] = useState("");
+    const reminderTextareaRef = useRef(null);
+    const reminderSimpleTextareaRef = useRef(null);
+    const reminderIframeRef = useRef(null);
 
     // Knowledge documents state
     const [knowledgeDocs, setKnowledgeDocs] = useState([]);
@@ -597,6 +677,26 @@ export default function PlatformSettingsScreen() {
             .catch(() => { })
             .finally(() => setLoadingReminderTpls(false));
     }, [activeTab]);
+
+    // Sync reminder plain-text when editing starts
+    useEffect(() => {
+        if (editingReminderTpl) {
+            setReminderMessageText(reminderHtmlToPlainText(editingReminderTpl.body_html || ""));
+            setShowReminderCode(false);
+        }
+    }, [editingReminderTpl?.id, editingReminderTpl?.key, editingReminderTpl?.isNew]);
+
+    // Update reminder preview iframe (wrapped in branded shell)
+    useEffect(() => {
+        if (reminderIframeRef.current && editingReminderTpl) {
+            const subjectPreview = editingReminderTpl.subject_template || editingReminderTpl.label || '';
+            const fullHtml = wrapReminderPreviewHtml(editingReminderTpl.body_html || '', { title: subjectPreview });
+            const doc = reminderIframeRef.current.contentDocument;
+            doc.open();
+            doc.write(fullHtml);
+            doc.close();
+        }
+    }, [editingReminderTpl?.body_html, editingReminderTpl?.subject_template, editingReminderTpl?.label]);
 
     // ─── Knowledge documents: load + upload + delete ────────────────
     const loadKnowledgeDocs = useCallback(async () => {
@@ -1341,33 +1441,107 @@ export default function PlatformSettingsScreen() {
                         />
                     </SimpleContainer>
 
-                    <SimpleContainer className="lw-platformSettings__reminderEditorField">
-                        <Text12>תוכן ההודעה (HTML):</Text12>
-                        <SimpleTextArea
-                            className="lw-platformSettings__textarea"
-                            value={editingReminderTpl.body_html}
-                            onChange={(val) => setEditingReminderTpl(prev => ({ ...prev, body_html: val }))}
-                            title="תוכן"
-                            rows={8}
-                            dir="rtl"
-                        />
+                    {/* Message text (simple mode) or HTML code (advanced) */}
+                    <SimpleContainer className="lw-platformSettings__emailEditorField">
+                        <SimpleContainer className="lw-platformSettings__emailEditorLabelRow">
+                            <Text12 className="lw-platformSettings__emailEditorLabel">
+                                {showReminderCode ? "קוד HTML:" : "תוכן ההודעה:"}
+                            </Text12>
+                            <TertiaryButton onPress={() => setShowReminderCode(prev => !prev)}>
+                                {showReminderCode ? "חזרה למצב פשוט" : "עריכת קוד HTML"}
+                            </TertiaryButton>
+                        </SimpleContainer>
+
+                        {showReminderCode ? (
+                            <textarea
+                                ref={reminderTextareaRef}
+                                className="lw-platformSettings__emailEditorTextarea"
+                                value={editingReminderTpl.body_html}
+                                onChange={(e) => {
+                                    const newHtml = e.target.value;
+                                    setEditingReminderTpl(prev => ({ ...prev, body_html: newHtml }));
+                                    setReminderMessageText(reminderHtmlToPlainText(newHtml));
+                                }}
+                                dir="ltr"
+                                rows={20}
+                            />
+                        ) : (
+                            <SimpleTextArea
+                                className="lw-platformSettings__textarea"
+                                value={reminderMessageText}
+                                onChange={(val) => {
+                                    setReminderMessageText(val);
+                                    setEditingReminderTpl(prev => ({
+                                        ...prev, body_html: reminderPlainTextToHtml(val)
+                                    }));
+                                }}
+                                textareaRef={reminderSimpleTextareaRef}
+                                title="תוכן ההודעה"
+                                rows={6}
+                                dir="rtl"
+                            />
+                        )}
                     </SimpleContainer>
 
+                    {/* Variable chips */}
                     <SimpleContainer className="lw-platformSettings__varButtons">
                         <Text12 className="lw-platformSettings__varButtonsLabel">משתנים זמינים (לחץ להוספה):</Text12>
                         <SimpleContainer className="lw-platformSettings__varButtonsRow">
                             {REMINDER_TEMPLATE_VARS.map(v => (
                                 <TertiaryButton
                                     key={v}
-                                    onPress={() => setEditingReminderTpl(prev => ({
-                                        ...prev, body_html: (prev.body_html || "") + `[[${v}]]`
-                                    }))}
+                                    onPress={() => {
+                                        const placeholder = `[[${v}]]`;
+                                        if (showReminderCode && reminderTextareaRef.current) {
+                                            const ta = reminderTextareaRef.current;
+                                            const start = ta.selectionStart;
+                                            const end = ta.selectionEnd;
+                                            const newHtml = (editingReminderTpl.body_html || "").substring(0, start) + placeholder + (editingReminderTpl.body_html || "").substring(end);
+                                            setEditingReminderTpl(prev => ({ ...prev, body_html: newHtml }));
+                                            setReminderMessageText(reminderHtmlToPlainText(newHtml));
+                                            setTimeout(() => { ta.focus(); ta.selectionStart = ta.selectionEnd = start + placeholder.length; }, 0);
+                                        } else if (reminderSimpleTextareaRef.current) {
+                                            const ta = reminderSimpleTextareaRef.current;
+                                            const start = ta.selectionStart;
+                                            const end = ta.selectionEnd;
+                                            const newText = reminderMessageText.substring(0, start) + placeholder + reminderMessageText.substring(end);
+                                            setReminderMessageText(newText);
+                                            setEditingReminderTpl(p => ({
+                                                ...p, body_html: reminderPlainTextToHtml(newText)
+                                            }));
+                                            setTimeout(() => { ta.focus(); ta.selectionStart = ta.selectionEnd = start + placeholder.length; }, 0);
+                                        } else {
+                                            setReminderMessageText(prev => {
+                                                const newText = prev + placeholder;
+                                                setEditingReminderTpl(p => ({
+                                                    ...p, body_html: reminderPlainTextToHtml(newText)
+                                                }));
+                                                return newText;
+                                            });
+                                        }
+                                    }}
                                 >
                                     {VAR_LABELS[v] || v}
                                 </TertiaryButton>
                             ))}
                         </SimpleContainer>
                     </SimpleContainer>
+
+                    {/* Live preview */}
+                    <SimpleContainer className="lw-platformSettings__emailEditorField">
+                        <Text12 className="lw-platformSettings__emailEditorLabel">תצוגה מקדימה:</Text12>
+                        <iframe
+                            ref={reminderIframeRef}
+                            className="lw-platformSettings__emailPreviewFrame"
+                            title="Reminder Template Preview"
+                            sandbox="allow-same-origin"
+                        />
+                    </SimpleContainer>
+
+                    {/* Template attachments */}
+                    {!editingReminderTpl.isNew && editingReminderTpl.key && (
+                        <TemplateAttachmentsSection templateType="reminder" templateKey={editingReminderTpl.key} />
+                    )}
 
                     <SimpleContainer className="lw-platformSettings__reminderEditorActions">
                         <PrimaryButton
@@ -1388,7 +1562,7 @@ export default function PlatformSettingsScreen() {
 
     return (
         <SimpleScreen className="lw-platformSettings">
-            {isSmallScreen && <TopToolBarSmallScreen navBarData={getNavBarData} />}
+            {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={AdminStackName + MainScreenName} GetNavBarData={getNavBarData} />}
             <SimpleScrollView className="lw-platformSettings__scroll">
                 <SimpleContainer className="lw-platformSettings__header">
                     <TextBold24>הגדרות פלטפורמה</TextBold24>

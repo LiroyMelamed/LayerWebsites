@@ -10,6 +10,7 @@ import SimpleLoader from "../../simpleComponents/SimpleLoader";
 import { usePopup } from "../../../providers/PopUpProvider";
 import CaseFullView from "../cases/CaseFullView";
 import casesApi from "../../../api/casesApi";
+import LicenseExpiryUpdateModal from "./components/LicenseExpiryUpdateModal";
 
 import "./CaseMenuItem.scss";
 
@@ -33,8 +34,7 @@ export default function CaseMenuItem({
 }) {
     const { t } = useTranslation();
     const { isPerforming: isPerformingSetCase, performRequest: setCase } = useHttpRequest(
-        casesApi.updateStageById,
-        () => { rePerformFunction?.(); }
+        casesApi.updateStageById
     );
     const { openPopup, closePopup } = usePopup();
     const [fullCaseListener, setFullCaseListener] = useState(fullCase);
@@ -65,8 +65,19 @@ export default function CaseMenuItem({
                 IsClosed: true,
                 Descriptions: tempDescription
             };
-            setFullCaseListener(updated);
-            setCase(fullCaseListener.CaseId, updated);
+
+            // Show license expiry update popup before closing
+            openPopup(
+                <LicenseExpiryUpdateModal
+                    fullCase={fullCaseListener}
+                    onDone={() => {
+                        setFullCaseListener(updated);
+                        setCase(fullCaseListener.CaseId, updated);
+                        closePopup();
+                    }}
+                    onClose={closePopup}
+                />
+            );
         } else {
             // Normal advance — move to next stage
             tempDescription[nextStage - 1] = { ...tempDescription[nextStage - 1], IsNew: true };

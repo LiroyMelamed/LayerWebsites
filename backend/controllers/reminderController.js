@@ -22,6 +22,9 @@ const _placeholderMap = {
     'case_title': '"שם התיק"',
     'document_name': '"שם המסמך"',
     'amount': '"סכום"',
+    'content_1': '"תוכן 1"',
+    'content_2': '"תוכן 2"',
+    'content_3': '"תוכן 3"',
 };
 
 function _humanizeBody(raw) {
@@ -134,13 +137,17 @@ const importReminders = async (req, res, next) => {
         const colMap = {
             clientName: ['clientname', 'שם לקוח', 'שם', 'name', 'client_name', 'client'],
             email: ['email', 'אימייל', 'דוא"ל', 'mail', 'to_email', 'דואל'],
-            date: ['date', 'תאריך', 'scheduled_for', 'scheduledfor', 'send_date', 'senddate'],
+            date: ['date', 'תאריך', 'תאריך שליחה', 'scheduled_for', 'scheduledfor', 'send_date', 'senddate'],
             subject: ['subject', 'נושא'],
             notes: ['notes', 'הערות', 'note'],
             body: ['body', 'תוכן', 'content'],
             case_title: ['case_title', 'שם תיק', 'casetitle'],
             document_name: ['document_name', 'שם מסמך', 'documentname', 'document'],
             amount: ['amount', 'סכום', 'sum'],
+            content_1: ['content_1', 'תוכן 1', 'content1'],
+            content_2: ['content_2', 'תוכן 2', 'content2'],
+            content_3: ['content_3', 'תוכן 3', 'content3'],
+            time: ['time', 'שעת שליחה', 'send_time', 'sendtime', 'שעה'],
         };
 
         function findCol(row, aliases) {
@@ -188,6 +195,10 @@ const importReminders = async (req, res, next) => {
             const caseTitle = String(findCol(row, colMap.case_title) || '').trim() || null;
             const documentName = String(findCol(row, colMap.document_name) || '').trim() || null;
             const amount = String(findCol(row, colMap.amount) || '').trim() || null;
+            const content1 = String(findCol(row, colMap.content_1) || '').trim() || null;
+            const content2 = String(findCol(row, colMap.content_2) || '').trim() || null;
+            const content3 = String(findCol(row, colMap.content_3) || '').trim() || null;
+            const rawTime = String(findCol(row, colMap.time) || '').trim() || null;
 
             // Validate required fields
             if (!clientName) {
@@ -201,22 +212,40 @@ const importReminders = async (req, res, next) => {
                 continue;
             }
 
-            // Parse date
+            // Parse date (supports dd/mm/yy, dd/mm/yyyy, yyyy-mm-dd, and JS-parseable formats)
             let scheduledFor;
             if (rawDate instanceof Date) {
                 scheduledFor = rawDate;
             } else {
-                const parsed = new Date(rawDate);
-                if (isNaN(parsed.getTime())) {
+                const dateStr = String(rawDate).trim();
+                const ddmmMatch = dateStr.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+                if (ddmmMatch) {
+                    const day = Number(ddmmMatch[1]);
+                    const month = Number(ddmmMatch[2]) - 1;
+                    let year = Number(ddmmMatch[3]);
+                    if (year < 100) year += 2000;
+                    scheduledFor = new Date(year, month, day);
+                } else {
+                    scheduledFor = new Date(dateStr);
+                }
+                if (isNaN(scheduledFor.getTime())) {
                     details.push({ row: rowNum, clientName, status: 'failed', reason: `תאריך לא תקין: ${rawDate}` });
                     failedCount++;
                     continue;
                 }
-                scheduledFor = parsed;
             }
 
-            // Set scheduled time to the configured sendHour (in local tz, approximated as UTC offset)
-            scheduledFor.setHours(sendHour, sendMinute, 0, 0);
+            // Set scheduled time: per-row time takes precedence, then global sendHour/sendMinute
+            let rowHour = sendHour;
+            let rowMinute = sendMinute;
+            if (rawTime) {
+                const timeParts = rawTime.match(/^(\d{1,2}):(\d{2})$/);
+                if (timeParts) {
+                    rowHour = Number(timeParts[1]);
+                    rowMinute = Number(timeParts[2]);
+                }
+            }
+            scheduledFor.setHours(rowHour, rowMinute, 0, 0);
 
             // Skip if date is in the past
             if (scheduledFor < new Date()) {
@@ -238,6 +267,9 @@ const importReminders = async (req, res, next) => {
             if (caseTitle) templateData.case_title = caseTitle;
             if (documentName) templateData.document_name = documentName;
             if (amount) templateData.amount = amount;
+            if (content1) templateData.content_1 = content1;
+            if (content2) templateData.content_2 = content2;
+            if (content3) templateData.content_3 = content3;
 
             try {
                 await pool.query(
@@ -473,16 +505,78 @@ const deleteCustomTemplate = async (req, res, next) => {
 
 // ─── Download example Excel for a template ──────────────────────────
 
+// ─── Create a single reminder ────────────────────────────────────────
+
+const createSingleReminder = async (req, res, next) => {
+    try {
+        const { client_name, to_email, subject, templateKey, scheduled_for, template_data } = req.body;
+        const createdBy = req.user?.userid || null;
+
+        if (!client_name || !String(client_name).trim()) {
+            return res.status(400).json({ ok: false, error: 'חסר שם לקוח' });
+        }
+        if (!to_email || !String(to_email).trim()) {
+            return res.status(400).json({ ok: false, error: 'חסר אימייל' });
+        }
+        if (!scheduled_for) {
+            return res.status(400).json({ ok: false, error: 'חסר תאריך שליחה' });
+        }
+
+        const scheduledDate = new Date(scheduled_for);
+        if (isNaN(scheduledDate.getTime())) {
+            return res.status(400).json({ ok: false, error: 'תאריך לא תקין' });
+        }
+
+        // Match to existing user
+        let userId = null;
+        try {
+            const { rows } = await pool.query(
+                `SELECT userid FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1`,
+                [to_email.trim()]
+            );
+            if (rows.length) userId = rows[0].userid;
+        } catch (_) { /* ignore */ }
+
+        const tplData = template_data || {};
+        if (subject) tplData.subject = subject;
+
+        const { rows } = await pool.query(
+            `INSERT INTO scheduled_email_reminders
+                (user_id, client_name, to_email, subject, template_key, template_data, scheduled_for, created_by)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             RETURNING *`,
+            [
+                userId,
+                String(client_name).trim(),
+                String(to_email).trim(),
+                subject || null,
+                templateKey || 'GENERAL',
+                JSON.stringify(tplData),
+                scheduledDate.toISOString(),
+                createdBy,
+            ]
+        );
+
+        return res.status(201).json({ ok: true, reminder: rows[0] });
+    } catch (e) {
+        return next(e);
+    }
+};
+
+
 // Map from placeholder name → Hebrew column header
 const _varToHeader = {
     client_name: 'שם לקוח',
     firm_name: 'שם המשרד',
-    date: 'תאריך',
+    date: 'תאריך שליחה',
     subject: 'נושא',
     body: 'תוכן',
     case_title: 'שם תיק',
     document_name: 'שם מסמך',
     amount: 'סכום',
+    content_1: 'תוכן 1',
+    content_2: 'תוכן 2',
+    content_3: 'תוכן 3',
 };
 
 // Extract [[placeholder]] names from template text
@@ -527,14 +621,15 @@ const downloadTemplateExcel = async (req, res, next) => {
         const usedVars = _extractPlaceholders(subjectTpl + ' ' + bodyHtml);
 
         // Always include these base columns first; email + date are always required
-        const headers = ['שם לקוח', 'אימייל', 'תאריך'];
-        const exampleValues = { 'שם לקוח': 'ישראל ישראלי', 'אימייל': 'israel@example.com', 'תאריך': '2026-04-01' };
-        const exampleValues2 = { 'שם לקוח': 'שרה כהן', 'אימייל': 'sara@example.com', 'תאריך': '2026-04-15' };
+        const headers = ['שם לקוח', 'אימייל', 'תאריך שליחה', 'שעת שליחה'];
+        const exampleValues = { 'שם לקוח': 'ישראל ישראלי', 'אימייל': 'israel@example.com', 'תאריך שליחה': '01/04/26', 'שעת שליחה': '09:00' };
+        const exampleValues2 = { 'שם לקוח': 'שרה כהן', 'אימייל': 'sara@example.com', 'תאריך שליחה': '15/04/26', 'שעת שליחה': '14:30' };
 
         // Remove vars that are auto-filled or already in base columns
         usedVars.delete('client_name');
         usedVars.delete('firm_name');
         usedVars.delete('date');
+        usedVars.delete('time');
 
         // Add columns for each used placeholder
         const varExamples = {
@@ -544,6 +639,9 @@ const downloadTemplateExcel = async (req, res, next) => {
             case_title: ['תיק לדוגמה', ''],
             document_name: ['מסמך לדוגמה', ''],
             amount: ['5,000 ₪', ''],
+            content_1: ['טקסט חופשי 1', ''],
+            content_2: ['טקסט חופשי 2', ''],
+            content_3: ['טקסט חופשי 3', ''],
         };
 
         for (const v of usedVars) {
@@ -573,5 +671,5 @@ const downloadTemplateExcel = async (req, res, next) => {
 module.exports = {
     getTemplates, importReminders, listReminders, cancelReminder, deleteReminder, updateReminder,
     listCustomTemplates, createCustomTemplate, updateCustomTemplate, deleteCustomTemplate,
-    downloadTemplateExcel,
+    downloadTemplateExcel, createSingleReminder,
 };

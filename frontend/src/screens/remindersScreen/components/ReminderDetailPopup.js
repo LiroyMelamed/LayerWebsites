@@ -15,7 +15,7 @@ function formatDate(dateStr) {
     return new Date(dateStr).toLocaleString("he-IL", {
         day: "2-digit",
         month: "2-digit",
-        year: "numeric",
+        year: "2-digit",
         hour: "2-digit",
         minute: "2-digit",
     });

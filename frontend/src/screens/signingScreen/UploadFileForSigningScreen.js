@@ -1,5 +1,5 @@
 // src/screens/signingScreen/UploadFileForSigningScreen.js
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 
@@ -332,7 +332,15 @@ export default function UploadFileForSigningScreen() {
     const [selectedSigners, setSelectedSigners] = useState([]);
     const [selectedSignerId, setSelectedSignerId] = useState(null);
     const [notes, setNotes] = useState("");
+
+    // Manual signer entry state
+    const [showManualSigner, setShowManualSigner] = useState(false);
+    const [manualSignerName, setManualSignerName] = useState("");
+    const [manualSignerEmail, setManualSignerEmail] = useState("");
+    const [manualSignerPhone, setManualSignerPhone] = useState("");
+    const nextManualIdRef = useRef(-1);
     const [selectedFile, setSelectedFile] = useState(null);
+    const [documentName, setDocumentName] = useState("");
 
     const [signatureSpots, setSignatureSpots] = useState([]);
     const [selectedFieldType, setSelectedFieldType] = useState('signature');
@@ -342,6 +350,14 @@ export default function UploadFileForSigningScreen() {
     // Court-ready policy: OTP is required by default; waiver must be explicit + acknowledged.
     const [otpPolicy, setOtpPolicy] = useState(otpFeatureEnabled ? "require" : "waive"); // 'waive' | 'require'
     const [otpWaiverAck, setOtpWaiverAck] = useState(!otpFeatureEnabled);
+
+    // Signing order: 'parallel' (all sign at once) or 'sequential' (signer 1 first, then 2, ...)
+    const [signingOrder, setSigningOrder] = useState('parallel');
+
+    // Drag-and-drop state for sequential signer reorder
+    const [seqDragIdx, setSeqDragIdx] = useState(null);
+    const [seqOverIdx, setSeqOverIdx] = useState(null);
+    const seqTouchDrag = useRef({ active: false });
 
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState(null);
@@ -608,6 +624,7 @@ export default function UploadFileForSigningScreen() {
         resetFileState();
         const f = e.target.files?.[0] || null;
         setSelectedFile(f);
+        if (f) setDocumentName(f.name.replace(/\.pdf$/i, ''));
     };
 
     const handleDragEnter = (e) => {
@@ -635,7 +652,10 @@ export default function UploadFileForSigningScreen() {
         resetFileState();
 
         const f = e.dataTransfer.files?.[0] || null;
-        if (f) setSelectedFile(f);
+        if (f) {
+            setSelectedFile(f);
+            setDocumentName(f.name.replace(/\.pdf$/i, ''));
+        }
     };
 
     const validateForm = () => {
@@ -675,9 +695,42 @@ export default function UploadFileForSigningScreen() {
                 {
                     UserId: customer.UserId,
                     Name: customer.Name || t('signing.signerFallback', { index: prev.length + 1 }),
+                    deliveryMethod: 'both', // 'email' | 'phone' | 'both'
                 },
             ];
         });
+    };
+
+    const addManualSigner = () => {
+        const name = manualSignerName.trim();
+        const email = manualSignerEmail.trim();
+        const phone = manualSignerPhone.trim();
+        if (!name) return;
+        if (!email && !phone) return;
+
+        const tempId = nextManualIdRef.current;
+        nextManualIdRef.current -= 1;
+
+        let deliveryMethod = 'both';
+        if (email && !phone) deliveryMethod = 'email';
+        else if (phone && !email) deliveryMethod = 'phone';
+
+        setSelectedSigners((prev) => [
+            ...prev,
+            {
+                UserId: tempId,
+                Name: name,
+                Email: email || null,
+                Phone: phone || null,
+                deliveryMethod,
+                isManual: true,
+            },
+        ]);
+
+        setManualSignerName("");
+        setManualSignerEmail("");
+        setManualSignerPhone("");
+        setShowManualSigner(false);
     };
 
     const removeSigner = (userId) => {
@@ -685,6 +738,66 @@ export default function UploadFileForSigningScreen() {
         // Also clean up spots assigned to removed signer (simple behavior)
         setSignatureSpots((prev) => prev.filter((spot) => Number(spot?.signerUserId) !== Number(userId)));
     };
+
+    // ── Sequential signer reorder (drag-and-drop) ────────────────
+    const moveSignerOrder = useCallback((fromIdx, toIdx) => {
+        if (fromIdx === toIdx) return;
+        setSelectedSigners((prev) => {
+            const next = [...prev];
+            const [moved] = next.splice(fromIdx, 1);
+            next.splice(toIdx, 0, moved);
+            return next;
+        });
+    }, []);
+
+    const handleSeqDragStart = useCallback((e, index) => {
+        setSeqDragIdx(index);
+        e.dataTransfer.effectAllowed = 'move';
+    }, []);
+
+    const handleSeqDragOver = useCallback((e, index) => {
+        e.preventDefault();
+        setSeqOverIdx(index);
+    }, []);
+
+    const handleSeqDrop = useCallback((e, index) => {
+        e.preventDefault();
+        if (seqDragIdx !== null && seqDragIdx !== index) moveSignerOrder(seqDragIdx, index);
+        setSeqDragIdx(null);
+        setSeqOverIdx(null);
+    }, [seqDragIdx, moveSignerOrder]);
+
+    const handleSeqDragEnd = useCallback(() => {
+        setSeqDragIdx(null);
+        setSeqOverIdx(null);
+    }, []);
+
+    const handleSeqTouchStart = useCallback((index) => {
+        seqTouchDrag.current.active = true;
+        setSeqDragIdx(index);
+    }, []);
+
+    const handleSeqTouchMove = useCallback((e) => {
+        if (!seqTouchDrag.current.active) return;
+        e.preventDefault();
+        const touch = e.touches[0];
+        const els = document.elementsFromPoint(touch.clientX, touch.clientY);
+        for (const el of els) {
+            if (el.dataset?.signerOrderIndex != null) {
+                setSeqOverIdx(Number(el.dataset.signerOrderIndex));
+                break;
+            }
+        }
+    }, []);
+
+    const handleSeqTouchEnd = useCallback(() => {
+        if (seqTouchDrag.current.active && seqDragIdx !== null && seqOverIdx !== null) {
+            moveSignerOrder(seqDragIdx, seqOverIdx);
+        }
+        seqTouchDrag.current.active = false;
+        setSeqDragIdx(null);
+        setSeqOverIdx(null);
+    }, [seqDragIdx, seqOverIdx, moveSignerOrder]);
 
     const ensureUploadedKey = async () => {
         if (uploadedFileKey) return uploadedFileKey;
@@ -707,7 +820,7 @@ export default function UploadFileForSigningScreen() {
             const key = await ensureUploadedKey();
 
             const signersPayload = (selectedSigners || []).map((s) => ({
-                userId: Number(s.UserId),
+                userId: s.isManual ? null : Number(s.UserId),
                 name: s.Name,
             }));
 
@@ -749,8 +862,11 @@ export default function UploadFileForSigningScreen() {
             const key = await ensureUploadedKey();
 
             const signersPayload = (selectedSigners || []).map((s) => ({
-                userId: Number(s.UserId),
+                userId: s.isManual ? null : Number(s.UserId),
                 name: s.Name,
+                deliveryMethod: s.deliveryMethod || 'both',
+                ...(s.isManual && s.Email ? { email: s.Email } : {}),
+                ...(s.isManual && s.Phone ? { phone: s.Phone } : {}),
             }));
 
             const primaryClientId = signersPayload?.[0]?.userId || Number(clientId) || null;
@@ -765,13 +881,14 @@ export default function UploadFileForSigningScreen() {
             await signingFilesApi.uploadFileForSigning({
                 caseId: normalizedCaseId,
                 clientId: primaryClientId,
-                fileName: selectedFile.name,
+                fileName: documentName.trim() ? `${documentName.trim()}.pdf` : selectedFile.name,
                 fileKey: key,
                 signatureLocations: signatureSpots,
                 notes: notes || null,
                 signers: signersPayload,
                 requireOtp,
                 otpWaiverAcknowledged,
+                signingOrder,
             });
 
             setMessage({ type: "success", text: t('signing.upload.successSent') });
@@ -782,10 +899,12 @@ export default function UploadFileForSigningScreen() {
             setSelectedSigners([]);
             setNotes("");
             setSelectedFile(null);
+            setDocumentName("");
             setSignatureSpots([]);
             setUploadedFileKey(null);
             setOtpPolicy(otpFeatureEnabled ? "require" : "waive");
             setOtpWaiverAck(!otpFeatureEnabled);
+            setSigningOrder('parallel');
             setCaseSearchQuery("");
 
             if (fileInputRef.current) fileInputRef.current.value = "";
@@ -895,6 +1014,49 @@ export default function UploadFileForSigningScreen() {
                                 value={signerSearchQuery}
                                 clearOnSelect
                             />
+
+                            {!showManualSigner ? (
+                                <SimpleContainer className="lw-uploadSigningScreen__manualSignerToggle">
+                                    <SecondaryButton onPress={() => setShowManualSigner(true)}>
+                                        {t('signing.upload.addManualSigner')}
+                                    </SecondaryButton>
+                                </SimpleContainer>
+                            ) : (
+                                <SimpleContainer className="lw-uploadSigningScreen__manualSignerForm">
+                                    <label className="lw-uploadSigningScreen__label">{t('signing.upload.addManualSigner')}</label>
+                                    <SimpleContainer className="lw-uploadSigningScreen__manualSignerFields">
+                                        <SearchInput
+                                            placeholder={t('signing.upload.manualSignerName')}
+                                            value={manualSignerName}
+                                            onSearch={setManualSignerName}
+                                            className="lw-uploadSigningScreen__manualInput"
+                                            timeToWaitInMilli={0}
+                                        />
+                                        <SearchInput
+                                            placeholder={t('signing.upload.manualSignerEmail')}
+                                            value={manualSignerEmail}
+                                            onSearch={setManualSignerEmail}
+                                            className="lw-uploadSigningScreen__manualInput"
+                                            timeToWaitInMilli={0}
+                                        />
+                                        <SearchInput
+                                            placeholder={t('signing.upload.manualSignerPhone')}
+                                            value={manualSignerPhone}
+                                            onSearch={setManualSignerPhone}
+                                            className="lw-uploadSigningScreen__manualInput"
+                                            timeToWaitInMilli={0}
+                                        />
+                                    </SimpleContainer>
+                                    <SimpleContainer className="lw-uploadSigningScreen__manualSignerActions">
+                                        <PrimaryButton onPress={addManualSigner} disabled={!manualSignerName.trim() || (!manualSignerEmail.trim() && !manualSignerPhone.trim())}>
+                                            {t('signing.upload.addSignerBtn')}
+                                        </PrimaryButton>
+                                        <SecondaryButton onPress={() => { setShowManualSigner(false); setManualSignerName(""); setManualSignerEmail(""); setManualSignerPhone(""); }}>
+                                            {t('common.cancel')}
+                                        </SecondaryButton>
+                                    </SimpleContainer>
+                                </SimpleContainer>
+                            )}
                         </SimpleContainer>
 
                         {selectedCase && (
@@ -922,8 +1084,33 @@ export default function UploadFileForSigningScreen() {
                                 <label className="lw-uploadSigningScreen__label">{t('signing.upload.selectedSignersLabel')}</label>
                                 <SimpleContainer className="lw-uploadSigningScreen__selectedSignersRow">
                                     {selectedSigners.map((s) => (
-                                        <SimpleContainer key={s.UserId} className="lw-uploadSigningScreen__signerChip">
-                                            <span className="lw-uploadSigningScreen__signerChipName">{s.Name}</span>
+                                        <SimpleContainer key={s.UserId} className={`lw-uploadSigningScreen__signerChip${s.isManual ? ' lw-uploadSigningScreen__signerChip--manual' : ''}`}>
+                                            <span className="lw-uploadSigningScreen__signerChipName">
+                                                {s.Name}
+                                                {s.isManual && (s.Email || s.Phone) && (
+                                                    <span className="lw-uploadSigningScreen__signerChipContact">
+                                                        {[s.Email, s.Phone].filter(Boolean).join(' · ')}
+                                                    </span>
+                                                )}
+                                            </span>
+                                            <select
+                                                className="lw-uploadSigningScreen__deliverySelect"
+                                                value={s.deliveryMethod || 'both'}
+                                                onChange={(e) => {
+                                                    const method = e.target.value;
+                                                    setSelectedSigners((prev) =>
+                                                        prev.map((sig) =>
+                                                            Number(sig.UserId) === Number(s.UserId)
+                                                                ? { ...sig, deliveryMethod: method }
+                                                                : sig
+                                                        )
+                                                    );
+                                                }}
+                                            >
+                                                <option value="both">{t('signing.upload.deliveryBoth')}</option>
+                                                <option value="email">{t('signing.upload.deliveryEmail')}</option>
+                                                <option value="phone">{t('signing.upload.deliveryPhone')}</option>
+                                            </select>
                                             <button
                                                 type="button"
                                                 className="lw-uploadSigningScreen__signerChipRemove"
@@ -962,9 +1149,18 @@ export default function UploadFileForSigningScreen() {
                             </div>
 
                             {selectedFile && (
-                                <div className="lw-uploadSigningScreen__fileName">
-                                    {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
-                                </div>
+                                <>
+                                    <div className="lw-uploadSigningScreen__fileName">
+                                        {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                                    </div>
+                                    <SearchInput
+                                        title={t('signing.upload.documentNameTitle')}
+                                        value={documentName}
+                                        onSearch={setDocumentName}
+                                        className="lw-uploadSigningScreen__documentNameInput"
+                                        timeToWaitInMilli={0}
+                                    />
+                                </>
                             )}
                         </SimpleContainer>
 
@@ -1059,6 +1255,67 @@ export default function UploadFileForSigningScreen() {
                         {loading && (
                             <SimpleContainer className="lw-uploadSigningScreen__loading">
                                 <SimpleLoader />
+                            </SimpleContainer>
+                        )}
+                    </SimpleContainer>
+
+                    <SimpleContainer className="lw-uploadSigningScreen__formGroup lw-uploadSigningScreen__otpPolicyGroup">
+                        <label className="lw-uploadSigningScreen__label">{t('signing.upload.signingOrderLabel')}</label>
+
+                        <div className="lw-uploadSigningScreen__radioRow">
+                            <label className="lw-uploadSigningScreen__radioLabel">
+                                <input
+                                    type="radio"
+                                    name="signingOrder"
+                                    checked={signingOrder === 'parallel'}
+                                    onChange={() => setSigningOrder('parallel')}
+                                />
+                                {t('signing.upload.signingOrderParallel')}
+                            </label>
+                        </div>
+
+                        <div className="lw-uploadSigningScreen__radioRow">
+                            <label className="lw-uploadSigningScreen__radioLabel">
+                                <input
+                                    type="radio"
+                                    name="signingOrder"
+                                    checked={signingOrder === 'sequential'}
+                                    onChange={() => setSigningOrder('sequential')}
+                                />
+                                {t('signing.upload.signingOrderSequential')}
+                            </label>
+                        </div>
+
+                        {signingOrder === 'sequential' && selectedSigners.length >= 2 && (
+                            <SimpleContainer className="lw-uploadSigningScreen__seqOrderSection">
+                                <Text14 className="lw-uploadSigningScreen__seqOrderTitle">
+                                    {t('signing.upload.sequentialOrderTitle')}
+                                </Text14>
+                                <SimpleContainer className="lw-uploadSigningScreen__seqOrderList">
+                                    {selectedSigners.map((s, idx) => (
+                                        <SimpleContainer
+                                            key={s.UserId}
+                                            className={`lw-uploadSigningScreen__seqOrderItem${seqOverIdx === idx && seqDragIdx !== idx ? ' lw-uploadSigningScreen__seqOrderItem--dragOver' : ''}${seqDragIdx === idx ? ' lw-uploadSigningScreen__seqOrderItem--dragging' : ''}`}
+                                            data-signer-order-index={idx}
+                                            onDragOver={(e) => handleSeqDragOver(e, idx)}
+                                            onDrop={(e) => handleSeqDrop(e, idx)}
+                                        >
+                                            <span
+                                                className="lw-uploadSigningScreen__seqDragHandle"
+                                                draggable
+                                                onDragStart={(e) => handleSeqDragStart(e, idx)}
+                                                onDragEnd={handleSeqDragEnd}
+                                                onTouchStart={() => handleSeqTouchStart(idx)}
+                                                onTouchMove={(e) => handleSeqTouchMove(e)}
+                                                onTouchEnd={handleSeqTouchEnd}
+                                            >
+                                                &#x2630;
+                                            </span>
+                                            <span className="lw-uploadSigningScreen__seqOrderNum">{idx + 1}</span>
+                                            <span className="lw-uploadSigningScreen__seqOrderName">{s.Name}</span>
+                                        </SimpleContainer>
+                                    ))}
+                                </SimpleContainer>
                             </SimpleContainer>
                         )}
                     </SimpleContainer>

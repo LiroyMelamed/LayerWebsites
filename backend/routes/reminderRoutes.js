@@ -33,6 +33,9 @@ router.delete('/custom-templates/:id', authMiddleware, reminderController.delete
 // POST /api/reminders/import     – import reminders from Excel/CSV
 router.post('/import', authMiddleware, upload.single('file'), reminderController.importReminders);
 
+// POST /api/reminders            – create a single reminder
+router.post('/', authMiddleware, reminderController.createSingleReminder);
+
 // GET  /api/reminders            – list reminders (with filters)
 router.get('/', authMiddleware, reminderController.listReminders);
 

@@ -90,7 +90,7 @@ const SimpleInput = forwardRef(
             }
         }, [value]);
 
-        const shouldFloatLabel = isFocused || !!delayedValue || type === 'date';
+        const shouldFloatLabel = isFocused || !!delayedValue || type === 'date' || type === 'datetime-local';
 
         const resolvedDir = 'rtl';
 

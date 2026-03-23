@@ -956,11 +956,17 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             }
 
             // Sign sequentially to avoid overloading the API and keep order predictable.
+            let signedCount = 0;
             for (const spot of unsigned) {
                 setCurrentSpot(spot);
                 // eslint-disable-next-line no-await-in-loop
                 const didSign = await signCurrentSpotWithImage(dataUrl, spot);
-                if (!didSign) return;
+                if (!didSign) {
+                    // Partial success: reload to show what was signed so far
+                    if (signedCount > 0) await reloadDetailsAndAdvance();
+                    return;
+                }
+                signedCount++;
             }
 
             setMessage({ type: "success", text: t("signing.canvas.signedAllSuccess") });
@@ -969,6 +975,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         } catch (err) {
             console.error("Failed to sign all spots", err);
             setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.signAllError") });
+            // Reload to reflect any partially signed spots
+            try { await reloadDetailsAndAdvance(); } catch (_) { /* ignore */ }
         } finally {
             setSaving(false);
         }
@@ -1071,6 +1079,30 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                             <TertiaryButton className="lw-signing-closeButton" size={buttonSizes.SMALL} onPress={onClose}>
                                 {t("common.close")}
                             </TertiaryButton>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Sequential signing: show waiting message if not this signer's turn
+    if (fileDetails?.signingOrder === 'sequential' && fileDetails?.isMyTurn === false) {
+        return (
+            <div className="lw-signing-scope">
+                <div className={isScreen ? "lw-signing-screen" : "lw-signing-modal"} onClick={isScreen ? undefined : onClose}>
+                    <div
+                        className={isScreen ? "lw-signing-modalContent lw-signing-screenContent" : "lw-signing-modalContent"}
+                        onClick={isScreen ? undefined : (e) => e.stopPropagation()}
+                    >
+                        <div className="lw-signing-modalHeader">
+                            <h3>{t("signing.canvas.waitingForPreviousSigners")}</h3>
+                            <TertiaryButton className="lw-signing-closeButton" size={buttonSizes.SMALL} onPress={onClose}>
+                                {t("common.close")}
+                            </TertiaryButton>
+                        </div>
+                        <div className="lw-signing-modalBody" style={{ padding: '2rem', textAlign: 'center' }}>
+                            <Text14>{t("signing.canvas.waitingForPreviousSignersDesc")}</Text14>
                         </div>
                     </div>
                 </div>
@@ -1378,10 +1410,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                         )}
                                     </div>
                                     <div className="lw-signing-actionsRow">
-                                        <SecondaryButton size={buttonSizes.SMALL} onPress={() => setFieldValue("")} disabled={saving}>
+                                        <SecondaryButton size={buttonSizes.MEDIUM} onPress={() => setFieldValue("")} disabled={saving}>
                                             {t("common.clear")}
                                         </SecondaryButton>
-                                        <PrimaryButton size={buttonSizes.SMALL} onPress={saveFieldValue} disabled={saving}>
+                                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={saveFieldValue} disabled={saving}>
                                             {saving ? t("signing.canvas.saving") : t("signing.canvas.saveField")}
                                         </PrimaryButton>
                                     </div>
@@ -1422,10 +1454,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                     />
 
                                     <div className="lw-signing-actionsRow">
-                                        <SecondaryButton size={buttonSizes.SMALL} onPress={clearCanvas} disabled={saving}>
+                                        <SecondaryButton size={buttonSizes.MEDIUM} onPress={clearCanvas} disabled={saving}>
                                             {t("common.clear")}
                                         </SecondaryButton>
-                                        <PrimaryButton size={buttonSizes.SMALL} onPress={saveSignature} disabled={saving}>
+                                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={saveSignature} disabled={saving}>
                                             {saving
                                                 ? t("signing.canvas.saving")
                                                 : (currentSignMode === 'initials'

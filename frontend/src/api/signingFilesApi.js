@@ -15,6 +15,10 @@ const signingFilesApi = {
         });
     },
 
+    renameSigningFile: async (signingFileId, fileName) => {
+        return await ApiUtils.patch(`${base}/${signingFileId}/rename`, { fileName });
+    },
+
     getClientSigningFiles: async () => {
         return await ApiUtils.get(`${base}/client-files`);
     },

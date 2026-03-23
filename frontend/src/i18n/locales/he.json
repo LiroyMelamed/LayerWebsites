@@ -109,7 +109,8 @@
             "details": "פרטי מסמך",
             "uploadNew": "שליחת מסמך חדש לחתימה",
             "openPdf": "פתח PDF",
-            "deleteFile": "מחק מסמך"
+            "deleteFile": "מחק מסמך",
+            "rename": "שנה שם"
         },
         "planAndRetention": {
             "title": "תכנית ושמירה",
@@ -251,7 +252,25 @@
         "deleteStageFile": "מחק קובץ",
         "deleteStageFileConfirm": "האם אתה בטוח שברצונך למחוק קובץ זה?",
         "noStageFiles": "אין קבצים מצורפים לשלב זה",
-        "downloadFile": "הורד קובץ"
+        "downloadFile": "הורד קובץ",
+        "licenseRenewal": {
+            "title": "עדכון תוקף רישיון",
+            "updateExpiryQuestion": "האם ברצונך לעדכן את תאריך תוקף הרישיון?",
+            "currentExpiry": "תוקף נוכחי",
+            "newExpiry": "תוקף חדש",
+            "update": "עדכן",
+            "skip": "דלג",
+            "reminderTitle": "תזכורות חידוש רישיון",
+            "reminderQuestion": "מתי לשלוח תזכורת על חידוש הרישיון?",
+            "months4": "4 חודשים לפני",
+            "months3": "3 חודשים לפני",
+            "months2": "חודשיים לפני",
+            "months1": "חודש לפני",
+            "weeks2": "שבועיים לפני",
+            "createReminders": "צור תזכורות",
+            "noReminders": "ללא תזכורות",
+            "remindersCreated": "תזכורות חידוש נוצרו בהצלחה"
+        }
     },
     "caseTypes": {
         "createCaseType": {
@@ -809,6 +828,8 @@
             "loadDocumentError": "שגיאה בטעינת המסמך",
             "loadDocumentErrorTitle": "שגיאה בטעינת המסמך",
             "loadingDocument": "טוען מסמך...",
+            "waitingForPreviousSigners": "ממתין לחתימת חותמים קודמים",
+            "waitingForPreviousSignersDesc": "מסמך זה מוגדר לחתימה סדרתית. תורך לחתום יגיע לאחר שהחותמים הקודמים יסיימו. תקבל/י הודעה כשיגיע תורך.",
             "previewComingSoon": "בקרוב: תצוגה מקדימה של המסמך",
             "you": "אתה",
             "consentText": "אני מאשר/ת כי קראתי את המסמך המוצג, ואני נותן/ת הסכמה לחתום עליו באופן אלקטרוני. ידוע לי כי חתימה ללא אימות OTP עשויה להפחית את חוזק הראיות במקרה של מחלוקת.",
@@ -890,12 +911,21 @@
             "signerSelectorLabel": "חותם",
             "title": "שליחת מסמך לחתימה",
             "searchSignerTitle": "חיפוש חותם (לקוח)",
+            "addManualSigner": "הוסף חותם ידנית",
+            "manualSignerName": "שם החותם *",
+            "manualSignerEmail": "אימייל",
+            "manualSignerPhone": "טלפון",
+            "addSignerBtn": "הוסף",
             "selectedCaseLabel": "תיק שנבחר",
             "selectedSignersLabel": "חותמים שנבחרו *",
             "removeSignerAria": "הסר {{name}}",
             "removeCaseAria": "הסר תיק {{name}}",
+            "deliveryBoth": "אימייל + SMS",
+            "deliveryEmail": "אימייל בלבד",
+            "deliveryPhone": "SMS בלבד",
             "fileDropPrompt": "גרור קובץ לכאן או לחץ לבחירה",
             "fileHintPdfOnly": "(PDF בלבד בשלב זה)",
+            "documentNameTitle": "שם המסמך",
             "notesTitle": "הערות ללקוח (לא חובה)",
             "viewerTitle": "תצוגת מסמך והגדרת חתימות",
             "spotHelpText": "בכל עמוד יש כפתור \"+ הוסף חתימה\". גרור את הקוביות למיקום הרצוי או מחק",
@@ -914,6 +944,10 @@
             "otpWaive": "שלח ללא OTP",
             "otpWaiverWarning": "שליחה ללא OTP עשויה להפחית את חוזק הראיות במקרה של מחלוקת.",
             "otpWaiverAck": "אני מאשר/ת במפורש שליחה ללא OTP",
+            "signingOrderLabel": "סדר חתימה",
+            "signingOrderParallel": "מקבילי – כל החותמים חותמים במקביל",
+            "signingOrderSequential": "סדרתי – חותם 1 קודם, אח\"כ חותם 2 וכו'",
+            "sequentialOrderTitle": "סדר חתימה (גרור לשינוי סדר):",
             "detect": {
                 "button": "מצא חתימות אוטומטית",
                 "detecting": "מזהה...",
@@ -1014,7 +1048,7 @@
         },
         "import": {
             "title": "ייבוא תזכורות מקובץ Excel",
-            "instructions": "העלה קובץ Excel (.xlsx) או CSV (.csv) עם העמודות: שם לקוח (חובה), אימייל (חובה), תאריך (חובה), נושא, הערות. בחר תבנית ושעת שליחה.",
+            "instructions": "העלה קובץ Excel (.xlsx) או CSV (.csv) עם העמודות: שם לקוח (חובה), אימייל (חובה), תאריך (חובה), שעת שליחה, נושא, הערות. בחר תבנית.",
             "templateLabel": "תבנית אימייל",
             "sendHourLabel": "שעת שליחה",
             "sendTimeLabel": "שעת שליחה",
@@ -1035,6 +1069,19 @@
             "statusFailed": "נכשל",
             "andMore": "ועוד {{count}} שורות...",
             "errorGeneric": "שגיאה בייבוא התזכורות"
+        },
+        "add": {
+            "title": "הוספת תזכורת",
+            "button": "הוסף תזכורת",
+            "clientName": "שם לקוח",
+            "email": "אימייל",
+            "subject": "נושא (אופציונלי)",
+            "template": "תבנית אימייל",
+            "scheduledFor": "תאריך ושעת שליחה",
+            "submit": "צור תזכורת",
+            "submitting": "יוצר...",
+            "success": "התזכורת נוצרה בהצלחה",
+            "error": "שגיאה ביצירת התזכורת"
         }
     },
     "compliance": {
@@ -1099,8 +1146,8 @@
         }
     },
     "chatbot": {
-        "title": "עוזר דיגיטלי - משרד עורכי דין ליאב מלמד",
-        "welcomeTitle": "שלום! אני העוזר הדיגיטלי של משרד עורכי דין ליאב מלמד",
+        "title": "עוזר AI - משרד עורכי דין ליאב מלמד",
+        "welcomeTitle": "שלום! אני העוזר AI של משרד עורכי דין ליאב מלמד",
         "welcomeSubtitle": "ניתן לשאול אותי שאלות משפטיות כלליות. לשאלות על התיק האישי שלך, יש לאמת את מספר הטלפון.",
         "inputPlaceholder": "הקלד את שאלתך כאן...",
         "verifiedBadge": "מאומת",

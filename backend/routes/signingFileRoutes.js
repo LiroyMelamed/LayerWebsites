@@ -28,7 +28,15 @@ router.get("/public/:token/pdf", publicViewLimiter, signingFileController.getPub
 router.get("/public/:token", publicViewLimiter, signingFileController.getPublicSigningFileDetails);
 router.post("/public/:token/otp/request", signingFileController.publicRequestSigningOtp);
 router.post("/public/:token/otp/verify", signingFileController.publicVerifySigningOtp);
-router.post("/public/:token/sign", optionalAuthMiddleware, signingFileController.publicSignFile);
+// Signing + evidence generation can exceed the default 30s API timeout.
+function extendTimeout(ms) {
+    return (req, res, next) => {
+        if (typeof res.setTimeout === 'function') res.setTimeout(ms);
+        next();
+    };
+}
+
+router.post("/public/:token/sign", extendTimeout(120_000), optionalAuthMiddleware, signingFileController.publicSignFile);
 router.post("/public/:token/reject", signingFileController.publicRejectSigning);
 router.get("/public/:token/saved-signature", publicViewLimiter, signingFileController.getPublicSavedSignature);
 router.get("/public/:token/saved-signature/data-url", publicViewLimiter, signingFileController.getPublicSavedSignatureDataUrl);
@@ -57,6 +65,9 @@ router.post("/:signingFileId/public-link", authMiddleware, requireSigningEnabled
 // Lawyer signing policy configuration (explicit OTP on/off + waiver ack)
 router.patch("/:signingFileId/policy", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.updateSigningPolicy);
 
+// Rename signing file
+router.patch("/:signingFileId/rename", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.renameSigningFile);
+
 // Stream original PDF for in-app viewing/signing
 router.get("/:signingFileId/pdf", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.getSigningFilePdf);
 
@@ -76,7 +87,7 @@ router.post("/:signingFileId/otp/request", authMiddleware, signingFileController
 router.post("/:signingFileId/otp/verify", authMiddleware, signingFileController.verifySigningOtp);
 
 // לקוח חותם על מקום חתימה אחד
-router.post("/:signingFileId/sign", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.signFile);
+router.post("/:signingFileId/sign", extendTimeout(120_000), authMiddleware, requireSigningEnabledForSigningFile, signingFileController.signFile);
 
 // לקוח דוחה את המסמך
 router.post("/:signingFileId/reject", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.rejectSigning);

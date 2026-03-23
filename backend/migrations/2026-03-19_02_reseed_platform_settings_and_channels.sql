@@ -8,7 +8,7 @@ BEGIN;
 -- ═══════════════════════════════════════════════════════════════════
 INSERT INTO notification_channel_config (notification_type, label, push_enabled, email_enabled, sms_enabled, admin_cc, manager_cc)
 VALUES
-    ('SIGN_INVITE',       'הזמנה לחתימה',              TRUE,  TRUE,  TRUE,  TRUE,  TRUE),
+    ('SIGN_INVITE',       'הזמנה לחתימה',              TRUE,  TRUE,  TRUE,  FALSE,  TRUE),
     ('SIGN_REMINDER',     'תזכורת חתימה',              TRUE,  TRUE,  TRUE,  FALSE, TRUE),
     ('DOC_SIGNED',        'מסמך נחתם',                 TRUE,  TRUE,  TRUE,  TRUE,  TRUE),
     ('DOC_REJECTED',      'מסמך נדחה',                 TRUE,  TRUE,  TRUE,  TRUE,  TRUE),

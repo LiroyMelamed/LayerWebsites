@@ -126,6 +126,30 @@
   margin-block: v.$space-4;
 }
 
+.lw-caseFullView__licenseToggleField {
+  display: flex;
+  flex-direction: column;
+  gap: v.$space-1;
+}
+
+.lw-caseFullView__toggleLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: v.$space-2;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--lw-color-text);
+  user-select: none;
+  line-height: 1;
+
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--lw-color-primary);
+  }
+}
+
 .lw-caseFullView__clientsCol {
   display: flex;
   flex-direction: column;

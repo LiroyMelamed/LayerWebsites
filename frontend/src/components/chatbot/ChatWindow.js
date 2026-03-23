@@ -1,7 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import SimpleContainer from '../simpleComponents/SimpleContainer';
-import SimpleLoader from '../simpleComponents/SimpleLoader';
 import { TextBold20, Text14 } from '../specializedComponents/text/AllTextKindFile';
 import { colors } from '../../constant/colors';
 import ChatMessage from './ChatMessage';
@@ -37,7 +36,9 @@ export default function ChatWindow({ messages, isTyping }) {
 
             {isTyping && (
                 <SimpleContainer className="lw-chatWindow__typing">
-                    <SimpleLoader />
+                    <SimpleContainer className="lw-chatWindow__thinkingDots">
+                        <span /><span /><span />
+                    </SimpleContainer>
                 </SimpleContainer>
             )}
 

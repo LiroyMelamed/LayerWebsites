@@ -22,6 +22,12 @@
         flex-wrap: wrap;
     }
 
+    &__titleActions {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
     &__subtitle {
         color: var(--lw-color-winter);
     }
@@ -32,6 +38,8 @@
 
     &__filterRow {
         display: flex;
+        justify-content: space-between;
+        align-items: center;
         gap: 0.5rem;
         flex-wrap: wrap;
     }
@@ -41,6 +49,36 @@
         flex-direction: column;
         overflow: hidden;
         min-width: 0;
+
+        // Force rows to stay within container width
+        .lw-simpleTable__titleRow,
+        .lw-simpleTable__row {
+            width: 100%;
+            min-width: 0;
+        }
+
+        // Constrain the email column (2nd column) so it doesn't push other columns
+        .lw-simpleTable__cell:nth-child(2) {
+            flex: 1.5;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        // Give template, scheduled, status, sentAt equal share
+        .lw-simpleTable__cell:nth-child(3),
+        .lw-simpleTable__cell:nth-child(4),
+        .lw-simpleTable__cell:nth-child(5),
+        .lw-simpleTable__cell:nth-child(6) {
+            flex: 1;
+            min-width: 0;
+        }
+
+        // Actions column – narrower
+        .lw-simpleTable__cell:nth-child(7) {
+            flex: 0.7;
+            min-width: 0;
+        }
     }
 
     &__badge {

@@ -1,0 +1,98 @@
+@use '../../../styles/mixins' as m;
+@use '../../../styles/variables' as v;
+
+.lw-addReminder {
+    display: flex;
+    width: 100%;
+    box-sizing: border-box;
+    min-inline-size: 0;
+
+    // Give the scroll view padding so floated labels don't get clipped
+    >.lw-simpleScrollView {
+        padding: v.$space-4;
+    }
+
+    &__title {
+        margin-block-end: v.$space-2;
+        text-align: center;
+    }
+
+    &__row {
+        width: 100%;
+        @include m.row(v.$space-2);
+        align-items: flex-end;
+        margin-block-end: v.$space-4;
+        min-inline-size: 0;
+    }
+
+    &__field {
+        flex: 1 1 10rem;
+        max-inline-size: 100%;
+    }
+
+    &__templateInfo {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-2;
+        margin-block-end: v.$space-4;
+    }
+
+    &__templateDesc {
+        color: var(--lw-color-secondary-text, #6b7280);
+        font-size: 13px;
+    }
+
+    &__bodyPreview {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        background: var(--lw-color-secondary-highlighted);
+        border: 1px solid var(--lw-color-disabled);
+        border-radius: 0.375rem;
+        padding: 0.5rem 0.75rem;
+    }
+
+    &__bodyPreviewLabel {
+        color: var(--lw-color-winter);
+        font-weight: 600;
+    }
+
+    &__bodyPreviewText {
+        color: var(--lw-color-text);
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    &__error {
+        color: var(--lw-color-error, #dc2626);
+        margin-block-end: v.$space-2;
+    }
+
+    &__buttonsRow {
+        @include m.row(v.$space-2);
+        justify-content: center;
+        margin-block: v.$space-4;
+    }
+
+    &--success {
+        align-items: center;
+        justify-content: center;
+        padding: v.$space-6;
+        text-align: center;
+        flex-direction: column;
+    }
+
+    &__successIcon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 3.5rem;
+        height: 3.5rem;
+        border-radius: 50%;
+        background: var(--lw-color-positive, #16a34a);
+        color: #fff;
+        font-size: 1.75rem;
+        margin-block-end: v.$space-3;
+    }
+}

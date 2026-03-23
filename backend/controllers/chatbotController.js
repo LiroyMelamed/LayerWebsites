@@ -28,38 +28,119 @@ const PHONE_REGEX = /(?:\+?972[-\s]?|0)(?:5[0-9]|7[0-9])[-\s]?\d{3}[-\s]?\d{4}/;
 // Track sessions that already sent a lead notification (in memory — resets on restart, but that's fine)
 const _notifiedSessions = new Set();
 
+// Simple email regex for detecting email addresses in messages
+const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+
 /**
- * Check all messages in a session for phone numbers and send a lead notification
- * email to the configured address.
+ * Try to match a detected phone/email to an existing client, then find their case manager.
+ * Returns { matchedClient, managerEmail } or nulls if no match.
+ */
+async function _findCaseManagerForLead(detectedPhone, detectedEmail) {
+    try {
+        // Strip to digits only for comparison — DB stores raw format (0501234567),
+        // not E.164 (+972501234567), so exact match on formatted phone always fails.
+        const phoneDigits = detectedPhone
+            ? String(detectedPhone).replace(/\D/g, '').replace(/^972/, '0')
+            : null;
+
+        // Try to find user by phone or email
+        let matchedUser = null;
+        if (phoneDigits) {
+            const r = await pool.query(
+                `SELECT userid, name, email, phonenumber FROM users
+                 WHERE regexp_replace(phonenumber, '\\D', '', 'g') = $1
+                    OR regexp_replace(phonenumber, '\\D', '', 'g') = $2
+                 LIMIT 1`,
+                [phoneDigits, phoneDigits.replace(/^0/, '972')]
+            );
+            if (r.rows.length) matchedUser = r.rows[0];
+        }
+        if (!matchedUser && detectedEmail) {
+            const r = await pool.query(`SELECT userid, name, email, phonenumber FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1`, [detectedEmail]);
+            if (r.rows.length) matchedUser = r.rows[0];
+        }
+        if (!matchedUser) return { matchedClient: null, managerEmail: null };
+
+        // Find case manager for this client
+        const caseRes = await pool.query(
+            `SELECT c.casemanagerid FROM case_users cu
+             JOIN cases c ON c.caseid = cu.caseid
+             WHERE cu.userid = $1 AND c.casemanagerid IS NOT NULL AND c.isclosed IS NOT TRUE
+             ORDER BY c.createdat DESC LIMIT 1`,
+            [matchedUser.userid]
+        );
+        // Fallback: also check cases.userid directly
+        let managerId = caseRes.rows[0]?.casemanagerid;
+        if (!managerId) {
+            const fallback = await pool.query(
+                `SELECT casemanagerid FROM cases WHERE userid = $1 AND casemanagerid IS NOT NULL AND isclosed IS NOT TRUE ORDER BY createdat DESC LIMIT 1`,
+                [matchedUser.userid]
+            );
+            managerId = fallback.rows[0]?.casemanagerid;
+        }
+        if (!managerId) return { matchedClient: matchedUser, managerEmail: null };
+
+        // Get the manager's email
+        const mgrRes = await pool.query(`SELECT email FROM users WHERE userid = $1`, [managerId]);
+        return { matchedClient: matchedUser, managerEmail: mgrRes.rows[0]?.email || null };
+    } catch (err) {
+        console.error('[chatbot] Lead matching failed:', err?.message);
+        return { matchedClient: null, managerEmail: null };
+    }
+}
+
+/**
+ * Check all messages in a session for phone/email and send a lead notification
+ * to the case manager (if matched) or the configured fallback address.
  */
 async function maybeSendLeadNotification(sessionId, allMessages) {
     if (_notifiedSessions.has(sessionId)) return;
 
-    // Check if any user message contains a phone number
     const userMessages = allMessages.filter(m => m.role === 'user');
     let detectedPhone = null;
+    let detectedEmail = null;
     for (const msg of userMessages) {
-        const match = msg.content?.match(PHONE_REGEX);
-        if (match) { detectedPhone = match[0]; break; }
+        if (!detectedPhone) {
+            const pm = msg.content?.match(PHONE_REGEX);
+            if (pm) detectedPhone = pm[0];
+        }
+        if (!detectedEmail) {
+            const em = msg.content?.match(EMAIL_REGEX);
+            if (em) detectedEmail = em[0];
+        }
     }
-    if (!detectedPhone) return;
+    if (!detectedPhone && !detectedEmail) return;
 
-    // Get notification email from settings
-    const notifEmail = await getSetting('chatbot', 'CHATBOT_NOTIFICATION_EMAIL');
-    if (!notifEmail) return;
+    // Get fallback notification email from settings
+    const fallbackEmail = await getSetting('chatbot', 'CHATBOT_NOTIFICATION_EMAIL');
+
+    // Try to match to an existing client and find their case manager
+    const { matchedClient, managerEmail } = await _findCaseManagerForLead(detectedPhone, detectedEmail);
+    const toEmail = managerEmail || fallbackEmail;
+    if (!toEmail) return;
 
     _notifiedSessions.add(sessionId);
 
     // Build conversation summary
     const lines = allMessages.map(m => {
-        const role = m.role === 'user' ? 'לקוח' : 'עוזר דיגיטלי';
+        const role = m.role === 'user' ? 'לקוח' : 'עוזר AI';
         return `<strong>${role}:</strong> ${String(m.content || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}`;
     });
+
+    const contactInfo = [
+        detectedPhone ? `<p><strong>טלפון שזוהה:</strong> ${detectedPhone}</p>` : '',
+        detectedEmail ? `<p><strong>אימייל שזוהה:</strong> ${detectedEmail}</p>` : '',
+    ].join('');
+
+    const clientMatch = matchedClient
+        ? `<p style="color:#059669;"><strong>✅ לקוח מזוהה:</strong> ${matchedClient.name || 'ללא שם'} (${matchedClient.email || matchedClient.phonenumber || ''})</p>`
+        : `<p style="color:#d97706;"><strong>⚠️ לקוח לא מזוהה במערכת</strong></p>`;
 
     const htmlBody = `
         <div dir="rtl" style="font-family:Arial,sans-serif;font-size:15px;line-height:1.8;">
             <h2 style="color:#1A365D;">🔔 ליד חדש מהצ'אטבוט</h2>
-            <p><strong>טלפון שזוהה:</strong> ${detectedPhone}</p>
+            ${contactInfo}
+            ${clientMatch}
             <p><strong>מזהה שיחה:</strong> ${sessionId}</p>
             <p><strong>תאריך:</strong> ${new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' })}</p>
             <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0;">
@@ -70,14 +151,15 @@ async function maybeSendLeadNotification(sessionId, allMessages) {
         </div>
     `;
 
+    const contactLabel = detectedPhone || detectedEmail;
     try {
         await sendEmailWithAttachments({
-            toEmail: notifEmail,
-            subject: `ליד חדש מהצ'אטבוט — ${detectedPhone}`,
+            toEmail,
+            subject: `ליד חדש מהצ'אטבוט — ${contactLabel}`,
             htmlBody,
             logLabel: 'CHATBOT_LEAD_NOTIFICATION',
         });
-        console.log(`[chatbot] ✅ Lead notification sent to ${notifEmail} (session=${sessionId}, phone=${detectedPhone})`);
+        console.log(`[chatbot] ✅ Lead notification sent to ${toEmail} (session=${sessionId}, contact=${contactLabel}, matched=${!!matchedClient})`);
     } catch (err) {
         console.error(`[chatbot] ❌ Lead notification failed:`, err?.message);
     }

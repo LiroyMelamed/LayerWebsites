@@ -19,7 +19,7 @@ const BUILT_IN_TEMPLATES = {
         description: 'תבנית כללית לשליחת תזכורת חופשית עם נושא וגוף הודעה מותאמים אישית.',
         subject: 'תזכורת: [[subject]]',
         body:
-            'שלום [[client_name]],<br><br>' +
+            'שלום <span style="font-weight:600;color:#1A365D;">[[client_name]]</span>,<br><br>' +
             '[[body]]<br><br>' +
             'בברכה,<br>[[firm_name]]',
     },
@@ -30,9 +30,9 @@ const BUILT_IN_TEMPLATES = {
         description: 'תזכורת ללקוח על מועד דיון קרב. כוללת תאריך דיון ופרטי תיק.',
         subject: 'תזכורת דיון בתאריך [[date]]',
         body:
-            'שלום [[client_name]],<br><br>' +
-            'ברצוננו להזכיר לך כי נקבע <strong>דיון</strong> בתאריך <strong>[[date]]</strong>.' +
-            '<br><br>תיק: <strong>[[case_title]]</strong>' +
+            'שלום <span style="font-weight:600;color:#1A365D;">[[client_name]]</span>,<br><br>' +
+            'ברצוננו להזכיר לך כי נקבע <strong>דיון</strong> בתאריך <span style="font-weight:600;color:#1A365D;">[[date]]</span>.' +
+            '<br><br>תיק: <span style="font-weight:600;color:#1A365D;">[[case_title]]</span>' +
             '<br><br>נא להגיע בזמן ולהביא את כל המסמכים הנדרשים.' +
             '<br><br>בברכה,<br>[[firm_name]]',
     },
@@ -43,9 +43,9 @@ const BUILT_IN_TEMPLATES = {
         description: 'בקשה מלקוח להגיש מסמך נדרש עד מועד מסוים.',
         subject: 'תזכורת: נדרש מסמך – [[document_name]]',
         body:
-            'שלום [[client_name]],<br><br>' +
-            'נבקש להעביר את המסמך: <strong>[[document_name]]</strong>' +
-            '<br>מועד אחרון: <strong>[[date]]</strong>' +
+            'שלום <span style="font-weight:600;color:#1A365D;">[[client_name]]</span>,<br><br>' +
+            'נבקש להעביר את המסמך: <span style="font-weight:600;color:#1A365D;">[[document_name]]</span>' +
+            '<br>מועד אחרון: <span style="font-weight:600;color:#1A365D;">[[date]]</span>' +
             '<br><br>בברכה,<br>[[firm_name]]',
     },
     LICENSE_RENEWAL: {
@@ -55,8 +55,8 @@ const BUILT_IN_TEMPLATES = {
         description: 'תזכורת ללקוח על חידוש רישיון לפני תום תוקף.',
         subject: 'תזכורת לחידוש רישיון – [[client_name]]',
         body:
-            'שלום [[client_name]],<br><br>' +
-            'הרישיון שלך עומד לפוג בתאריך <strong>[[date]]</strong>.' +
+            'שלום <span style="font-weight:600;color:#1A365D;">[[client_name]]</span>,<br><br>' +
+            'הרישיון שלך עומד לפוג בתאריך <span style="font-weight:600;color:#1A365D;">[[date]]</span>.' +
             '<br>נא לפנות אלינו בהקדם לחידוש.' +
             '<br><br>בברכה,<br>[[firm_name]]',
     },
@@ -67,9 +67,9 @@ const BUILT_IN_TEMPLATES = {
         description: 'תזכורת תשלום ללקוח עם פירוט הסכום ומועד אחרון לתשלום.',
         subject: 'תזכורת תשלום – [[client_name]]',
         body:
-            'שלום [[client_name]],<br><br>' +
-            'ברצוננו להזכיר כי קיימת לך יתרת חוב בסך <strong>[[amount]]</strong>.' +
-            '<br>נא להסדיר את התשלום עד <strong>[[date]]</strong>.' +
+            'שלום <span style="font-weight:600;color:#1A365D;">[[client_name]]</span>,<br><br>' +
+            'ברצוננו להזכיר כי קיימת לך יתרת חוב בסך <span style="font-weight:600;color:#1A365D;">[[amount]]</span>.' +
+            '<br>נא להסדיר את התשלום עד <span style="font-weight:600;color:#1A365D;">[[date]]</span>.' +
             '<br><br>בברכה,<br>[[firm_name]]',
     },
 };
@@ -147,28 +147,22 @@ function renderTemplate(template, fields) {
 }
 
 /**
- * Wrap an email body in a styled RTL HTML shell.
+ * Wrap an email body in the branded RTL HTML shell
+ * (matching the design used by email campaign templates).
  */
-function wrapEmailHtml(bodyHtml, { firmName = 'MelamedLaw' } = {}) {
+function wrapEmailHtml(bodyHtml, { firmName = 'MelamedLaw', title = '' } = {}) {
+    const headerTitle = title || firmName;
     return `<!DOCTYPE html>
-<html lang="he" dir="rtl">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body { margin: 0; padding: 0; background: #f5f5f5; font-family: Arial, Helvetica, sans-serif; direction: rtl; }
-    .container { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
-    .header { background: #1a3c5e; color: #fff; padding: 18px 24px; font-size: 18px; font-weight: bold; }
-    .body { padding: 24px; font-size: 15px; line-height: 1.7; color: #333; }
-    .footer { padding: 16px 24px; font-size: 12px; color: #888; border-top: 1px solid #eee; text-align: center; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">${firmName}</div>
-    <div class="body">${bodyHtml}</div>
-    <div class="footer">הודעה זו נשלחה אוטומטית ממערכת ${firmName}.</div>
-  </div>
+<html dir="rtl" lang="he">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="x-apple-disable-message-reformatting"><title>${headerTitle}</title></head>
+<body style="margin:0;padding:0;background-color:#EDF2F7;direction:rtl;text-align:right;">
+<table border="0" cellpadding="0" cellspacing="0" style="background:#EDF2F7;" width="100%"><tbody><tr><td align="center" style="padding:24px 12px;">
+<table border="0" cellpadding="0" cellspacing="0" style="width:640px;max-width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.08);" width="640"><tbody>
+<tr><td style="background:#2A4365;padding:22px 24px;text-align:center;"><img src="https://client.melamedlaw.co.il/logoLMwhite.png" width="170" alt="${firmName}" style="border:0;outline:none;text-decoration:none;height:auto;max-width:100%;"><div style="height:14px;line-height:14px;">&nbsp;</div><div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#FFFFFF;font-size:18px;font-weight:600;line-height:1.4;">${headerTitle}</div></td></tr>
+<tr><td style="padding:26px 24px 8px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#2D3748;"><div style="font-size:16px;line-height:1.7;">${bodyHtml}</div><div style="height:18px;line-height:18px;">&nbsp;</div></td></tr>
+<tr><td style="padding:14px 24px 22px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#718096;font-size:12px;line-height:1.7;">הודעה זו נשלחה אוטומטית.<br>&copy; ${firmName}</td></tr>
+</tbody></table>
+</td></tr></tbody></table>
 </body>
 </html>`;
 }

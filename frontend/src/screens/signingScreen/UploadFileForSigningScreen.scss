@@ -35,7 +35,6 @@
     padding: 1rem;
     box-shadow: 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.08);
     width: 100%;
-    max-width: 62.5rem;
     min-inline-size: 0;
 }
 
@@ -231,6 +230,78 @@
     color: #333;
 }
 
+// ── Sequential signer reorder list ──
+.lw-uploadSigningScreen__seqOrderSection {
+    margin-top: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.lw-uploadSigningScreen__seqOrderTitle {
+    font-weight: 600;
+    font-size: 0.8125rem;
+    color: #555;
+}
+
+.lw-uploadSigningScreen__seqOrderList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.lw-uploadSigningScreen__seqOrderItem {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    background: var(--lw-color-white, #fff);
+    border: 1px solid #e0e0e0;
+    transition: background-color 0.15s, border-color 0.15s, opacity 0.15s;
+
+    &--dragOver {
+        background: #eef4ff;
+        border-color: var(--lw-color-primary, #1976d2);
+    }
+
+    &--dragging {
+        opacity: 0.4;
+    }
+}
+
+.lw-uploadSigningScreen__seqDragHandle {
+    cursor: grab;
+    font-size: 1rem;
+    color: #aaa;
+    user-select: none;
+    touch-action: none;
+    line-height: 1;
+
+    &:active {
+        cursor: grabbing;
+    }
+}
+
+.lw-uploadSigningScreen__seqOrderNum {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    background: var(--lw-color-primary, #1976d2);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.lw-uploadSigningScreen__seqOrderName {
+    font-size: 0.875rem;
+    color: #333;
+}
+
 .lw-uploadSigningScreen__waiverBox {
     margin-top: 0.5rem;
     border: 0.0625rem solid #f0e0a0;
@@ -284,6 +355,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 0.5rem;
     padding: 0.5rem 0.75rem;
     border-radius: 0.5rem;
     background-color: var(--lw-color-white);
@@ -296,6 +368,62 @@
     overflow: hidden;
     text-overflow: ellipsis;
     max-inline-size: 16rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.lw-uploadSigningScreen__signerChipContact {
+    display: block;
+    font-size: 0.65rem;
+    color: #888;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lw-uploadSigningScreen__signerChip--manual {
+    border-color: #1976d2;
+    border-style: dashed;
+}
+
+.lw-uploadSigningScreen__manualSignerToggle {
+    margin-block-start: v.$space-1;
+    margin-block-end: v.$space-2;
+    margin-inline-start: auto;
+}
+
+.lw-uploadSigningScreen__manualSignerForm {
+    flex-direction: column;
+    gap: v.$space-2;
+    padding: v.$space-3;
+    border: 1px dashed #1976d2;
+    border-radius: 0.5rem;
+    background: #f8fbff;
+    margin-block: v.$space-2;
+}
+
+.lw-uploadSigningScreen__manualSignerFields {
+    @include m.row(v.$space-2, wrap);
+}
+
+.lw-uploadSigningScreen__manualInput {
+    min-width: 10rem;
+    max-width: 16rem;
+    flex: 1;
+}
+
+.lw-uploadSigningScreen__manualSignerActions {
+    @include m.row(v.$space-2);
+}
+
+.lw-uploadSigningScreen__deliverySelect {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.3rem;
+    border-radius: 0.25rem;
+    border: 1px solid #ccc;
+    background: #f9f9f9;
+    cursor: pointer;
 }
 
 .lw-uploadSigningScreen__signerChipRemove {
@@ -360,6 +488,13 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.lw-uploadSigningScreen__documentNameInput {
+    margin-block-start: v.$space-2;
+    max-inline-size: 31.25rem;
+    margin-inline: auto;
+    width: 100%;
 }
 
 .lw-uploadSigningScreen__textarea {

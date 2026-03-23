@@ -21,6 +21,7 @@ import remindersApi from "../../api/remindersApi";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import useHttpRequest from "../../hooks/useHttpRequest";
 import ImportRemindersModal from "./components/ImportRemindersModal";
+import AddReminderModal from "./components/AddReminderModal";
 import ReminderDetailPopup from "./components/ReminderDetailPopup";
 import { AdminStackName } from "../../navigation/AdminStack";
 import { MainScreenName } from "../mainScreen/MainScreen";
@@ -40,7 +41,7 @@ function formatDate(dateStr) {
     return new Date(dateStr).toLocaleString("he-IL", {
         day: "2-digit",
         month: "2-digit",
-        year: "numeric",
+        year: "2-digit",
         hour: "2-digit",
         minute: "2-digit",
     });
@@ -94,6 +95,15 @@ export default function RemindersScreen() {
     const handleImport = useCallback(() => {
         openPopup(
             <ImportRemindersModal
+                closePopUpFunction={closePopup}
+                rePerformRequest={performRequest}
+            />
+        );
+    }, [openPopup, closePopup, performRequest]);
+
+    const handleAddReminder = useCallback(() => {
+        openPopup(
+            <AddReminderModal
                 closePopUpFunction={closePopup}
                 rePerformRequest={performRequest}
             />
@@ -180,21 +190,28 @@ export default function RemindersScreen() {
                     <SimpleCard className="lw-reminders__header">
                         <SimpleContainer className="lw-reminders__titleRow">
                             <Text24>{t("reminders.title")}</Text24>
-                            <PrimaryButton onPress={handleImport}>
-                                {t("reminders.importButton")}
-                            </PrimaryButton>
+                            <SimpleContainer className="lw-reminders__titleActions">
+                                <SecondaryButton onPress={handleImport}>
+                                    {t("reminders.importButton")}
+                                </SecondaryButton>
+                            </SimpleContainer>
                         </SimpleContainer>
                         <Text14 className="lw-reminders__subtitle">{t("reminders.subtitle")}</Text14>
                     </SimpleCard>
 
-                    <ChooseButton
-                        buttonText={t("reminders.statusFilter")}
-                        items={STATUS_FILTERS.map((f) => ({
-                            value: f.value,
-                            label: t(`reminders.filter.${f.label}`),
-                        }))}
-                        OnPressChoiceFunction={handleFilterChange}
-                    />
+                    <SimpleContainer className="lw-reminders__filterRow">
+                        <ChooseButton
+                            buttonText={t("reminders.statusFilter")}
+                            items={STATUS_FILTERS.map((f) => ({
+                                value: f.value,
+                                label: t(`reminders.filter.${f.label}`),
+                            }))}
+                            OnPressChoiceFunction={handleFilterChange}
+                        />
+                        <PrimaryButton onPress={handleAddReminder}>
+                            {t("reminders.add.button")}
+                        </PrimaryButton>
+                    </SimpleContainer>
 
                     <SimpleCard className="lw-reminders__list">
                         <SimpleTable

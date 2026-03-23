@@ -167,6 +167,27 @@
     margin-bottom: v.$space-3;
 }
 
+.lw-signingManagerScreen__titleRow {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.lw-signingManagerScreen__renameRow {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.lw-signingManagerScreen__renameInput {
+    flex: 1;
+    font-size: 1rem;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 0.25rem;
+    direction: rtl;
+}
+
 .lw-signingManagerScreen__detailsTabsRow {
     @include m.row(v.$space-4, wrap, center, flex-start);
     margin-block-start: v.$space-4;

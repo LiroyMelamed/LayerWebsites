@@ -1,0 +1,67 @@
+@use "../../styles/variables" as v;
+
+.lw-templateAttachments {
+    display: flex;
+    flex-direction: column;
+    gap: v.$space-2;
+    margin-block-start: v.$space-2;
+
+    &__label {
+        font-weight: 600;
+        color: var(--lw-color-text-secondary);
+    }
+
+    &__list {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-1;
+    }
+
+    &__item {
+        display: flex;
+        align-items: center;
+        gap: v.$space-2;
+        padding: v.$space-1 v.$space-2;
+        background: var(--lw-color-background-secondary, #f9fafb);
+        border-radius: 0.375rem;
+        border: 1px solid var(--lw-color-border, #e5e7eb);
+    }
+
+    &__filename {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &__size {
+        color: var(--lw-color-text-secondary);
+        flex-shrink: 0;
+    }
+
+    &__deleteBtn {
+        flex-shrink: 0;
+        color: var(--lw-color-negative, #e53e3e);
+        padding: 0 v.$space-1;
+        min-width: auto;
+
+        &:hover {
+            opacity: 0.7;
+        }
+    }
+
+    &__uploadRow {
+        display: flex;
+        align-items: center;
+        gap: v.$space-2;
+    }
+
+    &__fileInput {
+        font-size: 0.85rem;
+    }
+
+    &__error {
+        color: var(--lw-color-negative, #e53e3e);
+    }
+}

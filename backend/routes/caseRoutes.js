@@ -18,5 +18,6 @@ router.put("/TagCase/:CaseId", authMiddleware, requireAdmin, caseController.tagC
 router.get("/TaggedCases", authMiddleware, caseController.getTaggedCases);
 router.get("/TaggedCasesByName", authMiddleware, caseController.getTaggedCasesByName);
 router.put("/LinkWhatsappGroup/:CaseId", authMiddleware, requireAdmin, caseController.linkWhatsappGroup);
+router.post("/CreateLicenseReminders", authMiddleware, requireAdmin, caseController.createLicenseReminders);
 
 module.exports = router;
