@@ -148,6 +148,7 @@ const importReminders = async (req, res, next) => {
             content_2: ['content_2', 'תוכן 2', 'content2'],
             content_3: ['content_3', 'תוכן 3', 'content3'],
             time: ['time', 'שעת שליחה', 'send_time', 'sendtime', 'שעה'],
+            content_date: ['content_date', 'תאריך לתוכן', 'תאריך', 'event_date', 'eventdate', 'deadline', 'מועד'],
         };
 
         function findCol(row, aliases) {
@@ -198,7 +199,8 @@ const importReminders = async (req, res, next) => {
             const content1 = String(findCol(row, colMap.content_1) || '').trim() || null;
             const content2 = String(findCol(row, colMap.content_2) || '').trim() || null;
             const content3 = String(findCol(row, colMap.content_3) || '').trim() || null;
-            const rawTime = String(findCol(row, colMap.time) || '').trim() || null;
+            const rawContentDate = findCol(row, colMap.content_date);
+            const rawTimeVal = findCol(row, colMap.time);
 
             // Validate required fields
             if (!clientName) {
@@ -238,11 +240,23 @@ const importReminders = async (req, res, next) => {
             // Set scheduled time: per-row time takes precedence, then global sendHour/sendMinute
             let rowHour = sendHour;
             let rowMinute = sendMinute;
-            if (rawTime) {
-                const timeParts = rawTime.match(/^(\d{1,2}):(\d{2})$/);
-                if (timeParts) {
-                    rowHour = Number(timeParts[1]);
-                    rowMinute = Number(timeParts[2]);
+            if (rawTimeVal != null && rawTimeVal !== '') {
+                if (rawTimeVal instanceof Date) {
+                    // Excel stores time-only cells as Date objects (epoch 1899-12-30) in UTC
+                    rowHour = rawTimeVal.getUTCHours();
+                    rowMinute = rawTimeVal.getUTCMinutes();
+                } else if (typeof rawTimeVal === 'number' && rawTimeVal >= 0 && rawTimeVal < 1) {
+                    // Fractional day (e.g. 0.791666 = 19:00)
+                    const totalMinutes = Math.round(rawTimeVal * 24 * 60);
+                    rowHour = Math.floor(totalMinutes / 60);
+                    rowMinute = totalMinutes % 60;
+                } else {
+                    const timeStr = String(rawTimeVal).trim();
+                    const timeParts = timeStr.match(/^(\d{1,2}):(\d{2})$/);
+                    if (timeParts) {
+                        rowHour = Number(timeParts[1]);
+                        rowMinute = Number(timeParts[2]);
+                    }
                 }
             }
             scheduledFor.setHours(rowHour, rowMinute, 0, 0);
@@ -261,6 +275,28 @@ const importReminders = async (req, res, next) => {
                 null;
 
             const templateData = {};
+            templateData.client_name = clientName;
+
+            // Content date (for [[date]] in template body) — separate from sending date
+            let contentDate = null;
+            if (rawContentDate != null && rawContentDate !== '') {
+                if (rawContentDate instanceof Date) {
+                    contentDate = rawContentDate;
+                } else {
+                    const cdStr = String(rawContentDate).trim();
+                    const cdMatch = cdStr.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/);
+                    if (cdMatch) {
+                        let y = Number(cdMatch[3]); if (y < 100) y += 2000;
+                        contentDate = new Date(y, Number(cdMatch[2]) - 1, Number(cdMatch[1]));
+                    } else {
+                        const parsed = new Date(cdStr);
+                        if (!isNaN(parsed.getTime())) contentDate = parsed;
+                    }
+                }
+            }
+            templateData.date = contentDate
+                ? contentDate.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                : scheduledFor.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' });
             if (notes) templateData.notes = notes;
             if (subject) templateData.subject = subject;
             if (body) templateData.body = body;
@@ -568,7 +604,7 @@ const createSingleReminder = async (req, res, next) => {
 const _varToHeader = {
     client_name: 'שם לקוח',
     firm_name: 'שם המשרד',
-    date: 'תאריך שליחה',
+    date: 'תאריך לתוכן',
     subject: 'נושא',
     body: 'תוכן',
     case_title: 'שם תיק',
@@ -628,12 +664,11 @@ const downloadTemplateExcel = async (req, res, next) => {
         // Remove vars that are auto-filled or already in base columns
         usedVars.delete('client_name');
         usedVars.delete('firm_name');
-        usedVars.delete('date');
         usedVars.delete('time');
 
         // Add columns for each used placeholder
         const varExamples = {
-            date: ['2026-04-01', '2026-04-15'],
+            date: ['01/05/26', '20/05/26'],
             subject: ['נושא לדוגמה', ''],
             body: ['תוכן ההודעה', ''],
             case_title: ['תיק לדוגמה', ''],

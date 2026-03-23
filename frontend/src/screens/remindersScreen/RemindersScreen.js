@@ -168,7 +168,7 @@ export default function RemindersScreen() {
             ),
             Column5: r.sent_at ? formatDate(r.sent_at) : "—",
             Column6: r.status === "PENDING" ? (
-                <SecondaryButton onPress={() => cancelRequest(r.id)}>
+                <SecondaryButton onPress={(e) => { e?.stopPropagation?.(); cancelRequest(r.id); }}>
                     {t("reminders.cancel")}
                 </SecondaryButton>
             ) : null,

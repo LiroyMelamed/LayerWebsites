@@ -48,10 +48,22 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
         subject: reminder?.subject || "",
         scheduled_for: toDatetimeLocal(reminder?.scheduled_for),
     });
+    const [displayData, setDisplayData] = useState({
+        client_name: reminder?.client_name || "",
+        to_email: reminder?.to_email || "",
+        subject: reminder?.subject || "",
+        scheduled_for: reminder?.scheduled_for || "",
+    });
 
     const { isPerforming: isSaving, performRequest: saveReminder } = useHttpRequest(
         (id, fields) => remindersApi.updateReminder(id, fields),
         () => {
+            setDisplayData({
+                client_name: editData.client_name,
+                to_email: editData.to_email,
+                subject: editData.subject,
+                scheduled_for: editData.scheduled_for ? new Date(editData.scheduled_for).toISOString() : displayData.scheduled_for,
+            });
             setEditing(false);
             onUpdated?.();
         },
@@ -85,7 +97,7 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
                             className="lw-reminderDetail__editInput"
                         />
                     ) : (
-                        <Text14>{reminder.client_name || "—"}</Text14>
+                        <Text14>{displayData.client_name || "—"}</Text14>
                     )}
                 </DetailRow>
 
@@ -98,7 +110,7 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
                             className="lw-reminderDetail__editInput"
                         />
                     ) : (
-                        <Text14>{reminder.to_email || "—"}</Text14>
+                        <Text14>{displayData.to_email || "—"}</Text14>
                     )}
                 </DetailRow>
 
@@ -115,7 +127,7 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
                             className="lw-reminderDetail__editInput"
                         />
                     ) : (
-                        <Text14>{formatDate(reminder.scheduled_for)}</Text14>
+                        <Text14>{formatDate(displayData.scheduled_for)}</Text14>
                     )}
                 </DetailRow>
 
@@ -129,7 +141,7 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
                     <Text14>{reminder.sent_at ? formatDate(reminder.sent_at) : "—"}</Text14>
                 </DetailRow>
 
-                {(editing || reminder.subject) && (
+                {(editing || displayData.subject) && (
                     <DetailRow label={t("reminders.detail.subject")}>
                         {editing ? (
                             <SimpleInput
@@ -138,7 +150,7 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
                                 className="lw-reminderDetail__editInput"
                             />
                         ) : (
-                            <Text14>{reminder.subject}</Text14>
+                            <Text14>{displayData.subject}</Text14>
                         )}
                     </DetailRow>
                 )}

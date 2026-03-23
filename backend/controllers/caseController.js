@@ -1571,6 +1571,8 @@ const createLicenseReminders = async (req, res) => {
             if (!offset) continue;
 
             const scheduledDate = new Date(expiry.getTime() - offset);
+            // Normalize to 08:00 Israel time (05:00 UTC)
+            scheduledDate.setUTCHours(5, 0, 0, 0);
             // Don't create reminders in the past
             if (scheduledDate <= new Date()) continue;
 

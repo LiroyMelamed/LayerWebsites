@@ -34,7 +34,8 @@ export default function CaseMenuItem({
 }) {
     const { t } = useTranslation();
     const { isPerforming: isPerformingSetCase, performRequest: setCase } = useHttpRequest(
-        casesApi.updateStageById
+        casesApi.updateStageById,
+        () => { rePerformFunction?.(); }
     );
     const { openPopup, closePopup } = usePopup();
     const [fullCaseListener, setFullCaseListener] = useState(fullCase);
