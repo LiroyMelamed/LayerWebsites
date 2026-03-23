@@ -6,6 +6,7 @@ import SimpleLoader from "../../../components/simpleComponents/SimpleLoader";
 import ChooseButton from "../../../components/styledComponents/buttons/ChooseButton";
 import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
+import FileUploadBox from "../../../components/styledComponents/fileUpload/FileUploadBox";
 import { Text24, Text14 } from "../../../components/specializedComponents/text/AllTextKindFile";
 import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
 import useHttpRequest from "../../../hooks/useHttpRequest";
@@ -86,21 +87,13 @@ export default function ImportRemindersModal({ closePopUpFunction, rePerformRequ
             <SimpleContainer className="lw-importReminders__field">
                 <Text14>{t("reminders.import.fileLabel")}</Text14>
                 <SimpleContainer className="lw-importReminders__fileRow">
-                    <SimpleContainer className="lw-importReminders__filePicker">
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept=".xlsx,.xls,.csv"
-                            onChange={handleFileChange}
-                            className="lw-importReminders__fileInputHidden"
-                        />
-                        <SecondaryButton onPress={() => fileInputRef.current?.click()}>
-                            {t("reminders.import.chooseFile")}
-                        </SecondaryButton>
-                        {file && (
-                            <Text14 className="lw-importReminders__fileName">{file.name}</Text14>
-                        )}
-                    </SimpleContainer>
+                    <FileUploadBox
+                        accept=".xlsx,.xls,.csv"
+                        onFileSelected={(f) => setFile(f)}
+                        fileName={file?.name}
+                        label={t("reminders.import.chooseFile")}
+                        hint=".xlsx / .xls / .csv"
+                    />
                     <SecondaryButton onPress={() => remindersApi.downloadTemplateExcel(selectedTemplate)}>
                         📥 {t("reminders.import.downloadDemo")}
                     </SecondaryButton>

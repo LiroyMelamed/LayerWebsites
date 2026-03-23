@@ -1,0 +1,67 @@
+@use "../../../styles/variables" as v;
+
+.lw-fileUploadBox {
+    display: flex;
+    flex-direction: column;
+    gap: v.$space-2;
+}
+
+.lw-fileUploadBox__dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: v.$space-2;
+    padding: v.$space-4 v.$space-6;
+    border: 0.125rem dashed var(--lw-color-primary, #1976d2);
+    border-radius: 0.5rem;
+    background: var(--lw-color-background, #fff);
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.15s, border-color 0.15s;
+
+    &:hover {
+        background: var(--lw-color-background-secondary, #f0f8ff);
+    }
+}
+
+.lw-fileUploadBox.is-dragActive .lw-fileUploadBox__dropzone {
+    background: var(--lw-color-background-secondary, #f0f8ff);
+    border-color: var(--lw-color-primary-highlighted, #1565c0);
+}
+
+.lw-fileUploadBox.is-disabled .lw-fileUploadBox__dropzone {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.lw-fileUploadBox__input {
+    display: none;
+}
+
+.lw-fileUploadBox__label {
+    color: var(--lw-color-primary, #1976d2);
+    font-weight: 600;
+    user-select: none;
+}
+
+.lw-fileUploadBox__hint {
+    color: var(--lw-color-text-secondary, #777);
+}
+
+.lw-fileUploadBox__loader {
+    display: flex;
+    align-items: center;
+    gap: v.$space-2;
+}
+
+.lw-fileUploadBox__fileName {
+    padding: v.$space-2 v.$space-3;
+    border-radius: 0.25rem;
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

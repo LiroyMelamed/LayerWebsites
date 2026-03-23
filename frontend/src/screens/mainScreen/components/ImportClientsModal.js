@@ -5,6 +5,7 @@ import SimpleLoader from "../../../components/simpleComponents/SimpleLoader";
 import { Text14, Text24 } from "../../../components/specializedComponents/text/AllTextKindFile";
 import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
+import FileUploadBox from "../../../components/styledComponents/fileUpload/FileUploadBox";
 import { customersApi } from "../../../api/customersApi";
 import useHttpRequest from "../../../hooks/useHttpRequest";
 
@@ -39,24 +40,14 @@ export default function ImportClientsModal({ closePopUpFunction, rePerformReques
             </Text14>
 
             <SimpleContainer className="lw-importClientsModal__fileRow">
-                <SimpleContainer className="lw-importClientsModal__fileInput">
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept=".xlsx,.xls,.csv"
-                        onChange={handleFileChange}
-                        disabled={isPerforming}
-                        className="lw-importClientsModal__fileInputHidden"
-                    />
-                    <SecondaryButton onPress={() => fileInputRef.current?.click()} disabled={isPerforming}>
-                        {t('clientImport.chooseFile')}
-                    </SecondaryButton>
-                    {file && (
-                        <Text14 className="lw-importClientsModal__fileName">
-                            {file.name}
-                        </Text14>
-                    )}
-                </SimpleContainer>
+                <FileUploadBox
+                    accept=".xlsx,.xls,.csv"
+                    onFileSelected={(f) => setFile(f)}
+                    disabled={isPerforming}
+                    fileName={file?.name}
+                    label={t('clientImport.chooseFile')}
+                    hint=".xlsx / .xls / .csv"
+                />
                 <a
                     href={`${process.env.PUBLIC_URL}/templates/clients-demo.xlsx`}
                     download="clients-demo.xlsx"

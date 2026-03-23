@@ -22,6 +22,7 @@ import { Text12, Text14, TextBold14, TextBold18, TextBold24 } from "../../compon
 import platformSettingsApi from "../../api/platformSettingsApi";
 import remindersApi from "../../api/remindersApi";
 import TemplateAttachmentsSection from "../../components/templateAttachments/TemplateAttachmentsSection";
+import FileUploadBox from "../../components/styledComponents/fileUpload/FileUploadBox";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import useHttpRequest from "../../hooks/useHttpRequest";
 
@@ -1196,37 +1197,18 @@ export default function PlatformSettingsScreen() {
                                 title={t("platformSettings.docTitlePlaceholder")}
                                 timeToWaitInMilli={0}
                             />
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept=".pdf,.txt"
-                                className="lw-platformSettings__knowledgeFileInputHidden"
-                                onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) {
-                                        setSelectedFileName(file.name);
-                                        handleUploadKnowledgeDoc(file);
-                                    }
-                                }}
-                                disabled={uploadingDoc}
-                            />
-                            <SecondaryButton
-                                className="lw-platformSettings__knowledgeChooseBtn"
-                                onPress={() => fileInputRef.current?.click()}
-                                disabled={uploadingDoc}
-                            >
-                                📎 {t("platformSettings.chooseFile")}
-                            </SecondaryButton>
-                            {selectedFileName && (
-                                <Text12 className="lw-platformSettings__knowledgeFileName">{selectedFileName}</Text12>
-                            )}
                         </SimpleContainer>
-                        {uploadingDoc && (
-                            <SimpleContainer className="lw-platformSettings__knowledgeUploading">
-                                <SimpleLoader />
-                                <Text14>{t("platformSettings.uploading")}</Text14>
-                            </SimpleContainer>
-                        )}
+                        <FileUploadBox
+                            accept=".pdf,.txt"
+                            onFileSelected={(file) => {
+                                setSelectedFileName(file.name);
+                                handleUploadKnowledgeDoc(file);
+                            }}
+                            uploading={uploadingDoc}
+                            fileName={selectedFileName}
+                            label={t("platformSettings.chooseFile")}
+                            hint=".pdf / .txt"
+                        />
                     </SimpleContainer>
 
                     {/* Documents list */}
@@ -1539,7 +1521,7 @@ export default function PlatformSettingsScreen() {
                     </SimpleContainer>
 
                     {/* Template attachments */}
-                    {!editingReminderTpl.isNew && editingReminderTpl.key && (
+                    {editingReminderTpl.key && (
                         <TemplateAttachmentsSection templateType="reminder" templateKey={editingReminderTpl.key} />
                     )}
 

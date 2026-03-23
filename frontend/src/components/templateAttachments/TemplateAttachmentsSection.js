@@ -3,6 +3,7 @@ import SimpleContainer from "../simpleComponents/SimpleContainer";
 import { Text12, Text14 } from "../specializedComponents/text/AllTextKindFile";
 import TertiaryButton from "../styledComponents/buttons/TertiaryButton";
 import SimpleLoader from "../simpleComponents/SimpleLoader";
+import FileUploadBox from "../styledComponents/fileUpload/FileUploadBox";
 import templateAttachmentsApi from "../../api/templateAttachmentsApi";
 
 import "./TemplateAttachmentsSection.scss";
@@ -36,8 +37,7 @@ export default function TemplateAttachmentsSection({ templateType, templateKey }
         loadAttachments();
     }, [loadAttachments]);
 
-    const handleUpload = useCallback(async (e) => {
-        const file = e.target.files?.[0];
+    const handleUpload = useCallback(async (file) => {
         if (!file) return;
         setUploading(true);
         setError("");
@@ -49,7 +49,6 @@ export default function TemplateAttachmentsSection({ templateType, templateKey }
             setTimeout(() => setError(""), 4000);
         }
         setUploading(false);
-        if (fileInputRef.current) fileInputRef.current.value = "";
     }, [templateType, templateKey, loadAttachments]);
 
     const handleDelete = useCallback(async (id) => {
@@ -91,16 +90,11 @@ export default function TemplateAttachmentsSection({ templateType, templateKey }
                         </SimpleContainer>
                     )}
 
-                    <SimpleContainer className="lw-templateAttachments__uploadRow">
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            onChange={handleUpload}
-                            className="lw-templateAttachments__fileInput"
-                            disabled={uploading}
-                        />
-                        {uploading && <SimpleLoader size="small" />}
-                    </SimpleContainer>
+                    <FileUploadBox
+                        onFileSelected={handleUpload}
+                        uploading={uploading}
+                        label="צרף קובץ"
+                    />
 
                     {error && <Text12 className="lw-templateAttachments__error">{error}</Text12>}
                 </>

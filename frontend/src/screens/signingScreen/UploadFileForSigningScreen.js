@@ -27,6 +27,7 @@ import PdfViewer from "../../components/specializedComponents/signFiles/pdfViewe
 import FieldTypeNavbar from "../../components/specializedComponents/signFiles/fieldToolbar/FieldTypeNavbar";
 import FloatingAddField from "../../components/specializedComponents/signFiles/fieldToolbar/FloatingAddField";
 import SearchInput from "../../components/specializedComponents/containers/SearchInput";
+import FileUploadBox from "../../components/styledComponents/fileUpload/FileUploadBox";
 import casesApi from "../../api/casesApi";
 import useHttpRequest from "../../hooks/useHttpRequest";
 import { customersApi } from "../../api/customersApi";
@@ -345,7 +346,6 @@ export default function UploadFileForSigningScreen() {
     const [signatureSpots, setSignatureSpots] = useState([]);
     const [selectedFieldType, setSelectedFieldType] = useState('signature');
     const [, setSelectedSpotIndex] = useState(null);
-    const [isDragActive, setIsDragActive] = useState(false);
 
     // Court-ready policy: OTP is required by default; waiver must be explicit + acknowledged.
     const [otpPolicy, setOtpPolicy] = useState(otpFeatureEnabled ? "require" : "waive"); // 'waive' | 'require'
@@ -402,8 +402,6 @@ export default function UploadFileForSigningScreen() {
             console.info('otpFeatureEnabled', otpFeatureEnabled);
         }
     }, [otpFeatureEnabled]);
-
-    const fileInputRef = useRef(null);
 
     const fieldTypeOptions = buildFieldTypeOptions(t);
 
@@ -620,42 +618,10 @@ export default function UploadFileForSigningScreen() {
         setSignatureSpots([]);
     };
 
-    const handleFileChange = (e) => {
+    const handleFileSelected = (file) => {
         resetFileState();
-        const f = e.target.files?.[0] || null;
-        setSelectedFile(f);
-        if (f) setDocumentName(f.name.replace(/\.pdf$/i, ''));
-    };
-
-    const handleDragEnter = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragActive(true);
-    };
-
-    const handleDragLeave = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragActive(false);
-    };
-
-    const handleDragOver = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-    };
-
-    const handleDrop = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragActive(false);
-
-        resetFileState();
-
-        const f = e.dataTransfer.files?.[0] || null;
-        if (f) {
-            setSelectedFile(f);
-            setDocumentName(f.name.replace(/\.pdf$/i, ''));
-        }
+        setSelectedFile(file || null);
+        if (file) setDocumentName(file.name.replace(/\.pdf$/i, ''));
     };
 
     const validateForm = () => {
@@ -906,8 +872,6 @@ export default function UploadFileForSigningScreen() {
             setOtpWaiverAck(!otpFeatureEnabled);
             setSigningOrder('parallel');
             setCaseSearchQuery("");
-
-            if (fileInputRef.current) fileInputRef.current.value = "";
         } catch (err) {
             console.error(err);
             setMessage({ type: "error", text: t('signing.upload.errorSending') });
@@ -1127,26 +1091,12 @@ export default function UploadFileForSigningScreen() {
                         )}
 
                         <SimpleContainer className="lw-uploadSigningScreen__formGroup lw-uploadSigningScreen__fileGroup">
-                            <div
-                                className={`lw-uploadSigningScreen__fileBox${isDragActive ? " is-dragActive" : ""}`}
-                                onDragEnter={handleDragEnter}
-                                onDragLeave={handleDragLeave}
-                                onDragOver={handleDragOver}
-                                onDrop={handleDrop}
-                                onClick={() => fileInputRef.current?.click()}
-                            >
-                                <div>{t('signing.upload.fileDropPrompt')}</div>
-                                <div className="lw-uploadSigningScreen__fileHint">
-                                    {t('signing.upload.fileHintPdfOnly')}
-                                </div>
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    className="lw-uploadSigningScreen__fileInput"
-                                    onChange={handleFileChange}
-                                    accept=".pdf"
-                                />
-                            </div>
+                            <FileUploadBox
+                                accept=".pdf"
+                                onFileSelected={handleFileSelected}
+                                label={t('signing.upload.fileDropPrompt')}
+                                hint={t('signing.upload.fileHintPdfOnly')}
+                            />
 
                             {selectedFile && (
                                 <>

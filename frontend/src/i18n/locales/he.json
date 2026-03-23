@@ -54,7 +54,9 @@
         "new": "חדש",
         "noResultsFound": "לא נמצאו תוצאות",
         "submit": "שלח",
-        "simpleImageAlt": "תמונה"
+        "simpleImageAlt": "תמונה",
+        "chooseFilePrompt": "לחץ או גרור קובץ לכאן",
+        "uploading": "מעלה..."
     },
     "auth": {
         "login": "התחברות",

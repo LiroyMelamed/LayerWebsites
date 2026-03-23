@@ -37,7 +37,9 @@ const uploadAttachment = async (req, res, next) => {
             return res.status(400).json({ ok: false, error: 'הקובץ גדול מדי (מקסימום 10MB)' });
         }
 
-        const originalName = req.file.originalname || 'attachment';
+        const rawName = req.file.originalname || 'attachment';
+        // Multer/busboy decodes filenames as Latin-1; re-decode as UTF-8 for Hebrew/non-ASCII names
+        const originalName = Buffer.from(rawName, 'latin1').toString('utf8');
         const ext = originalName.split('.').pop().toLowerCase() || 'bin';
         const mimeType = req.file.mimetype || 'application/octet-stream';
         const fileKey = `template-attachments/${uuid()}.${ext}`;
