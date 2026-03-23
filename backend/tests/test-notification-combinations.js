@@ -5,7 +5,7 @@
  * Usage: node tests/test-notification-combinations.js
  *
  * Prerequisites:
- *   - Backend running on localhost:5000
+ *   - Backend running on localhost:5001
  *   - Migration 2026-02-23_00 applied
  *   - Case 72 exists with linked user 1104 and casemanagerid set
  *   - Platform admin user IDs: 1017, 1088
@@ -13,7 +13,7 @@
 
 const http = require('http');
 
-const BASE_URL = 'http://localhost:5000';
+const BASE_URL = process.env.PORT ? `http://localhost:${process.env.PORT}` : 'http://localhost:5001';
 const CASE_ID = 72;
 const ADMIN_PHONE = '0507299064'; // userId 1017 (Admin - Liroy)
 

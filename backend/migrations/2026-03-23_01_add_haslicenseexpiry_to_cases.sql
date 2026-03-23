@@ -5,5 +5,14 @@ ALTER TABLE cases ADD COLUMN IF NOT EXISTS haslicenseexpiry BOOLEAN NOT NULL DEF
 -- Backfill: if a date was already set, mark the flag as true
 UPDATE cases SET haslicenseexpiry = TRUE WHERE licenseexpirydate IS NOT NULL;
 
--- Grant permissions
-GRANT SELECT, INSERT, UPDATE, DELETE ON cases TO neondb_owner;
+-- Grant permissions (role-safe: works on both dev and prod)
+DO $$
+DECLARE role_name TEXT;
+BEGIN
+    FOREACH role_name IN ARRAY ARRAY['liroym', 'neondb_owner']
+    LOOP
+        IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = role_name) THEN
+            EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.cases TO %I', role_name);
+        END IF;
+    END LOOP;
+END $$;

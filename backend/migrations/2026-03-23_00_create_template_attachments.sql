@@ -14,6 +14,15 @@ CREATE TABLE IF NOT EXISTS template_attachments (
 CREATE INDEX IF NOT EXISTS idx_template_attachments_lookup
     ON template_attachments (template_type, template_key);
 
--- Grant permissions
-GRANT SELECT, INSERT, UPDATE, DELETE ON template_attachments TO neondb_owner;
-GRANT USAGE, SELECT ON SEQUENCE template_attachments_id_seq TO neondb_owner;
+-- Grant permissions (role-safe: works on both dev and prod)
+DO $$
+DECLARE role_name TEXT;
+BEGIN
+    FOREACH role_name IN ARRAY ARRAY['liroym', 'neondb_owner']
+    LOOP
+        IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = role_name) THEN
+            EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.template_attachments TO %I', role_name);
+            EXECUTE format('GRANT USAGE, SELECT ON SEQUENCE public.template_attachments_id_seq TO %I', role_name);
+        END IF;
+    END LOOP;
+END $$;
