@@ -116,9 +116,11 @@ export default function LicenseExpiryUpdateModal({ fullCase, onDone, onClose }) 
                 />
 
                 <SimpleContainer className="lw-licenseExpiryModal__buttons">
-                    <SecondaryButton size={buttonSizes.SMALL} onPress={handleSkipExpiry}>
-                        {t("cases.licenseRenewal.skip")}
-                    </SecondaryButton>
+                    {fullCase.LicenseExpiryDate && (
+                        <SecondaryButton size={buttonSizes.SMALL} onPress={handleSkipExpiry}>
+                            {t("cases.licenseRenewal.skip")}
+                        </SecondaryButton>
+                    )}
                     <PrimaryButton
                         size={buttonSizes.SMALL}
                         onPress={handleUpdateExpiry}

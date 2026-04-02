@@ -1,41 +1,22 @@
 import { AllCasesScreenName } from "../../../screens/allCasesScreen/AllCasesScreen";
 import { AllMangerScreenName } from "../../../screens/allMangerScreen/AllMangerScreen";
 import { AllCasesTypeScreenName } from "../../../screens/allCasesTypeScreen/AllCasesTypeScreen";
-import CaseTypeFullView from "../../styledComponents/cases/CaseTypeFullView";
 import CaseFullView from "../../styledComponents/cases/CaseFullView";
-import ClientPopup from "../../../screens/mainScreen/components/ClientPopUp";
-import { TaggedCasesScreenName } from "../../../screens/taggedCasesScreen/TaggedCasesScreen";
 import { AdminStackName } from "../../../navigation/AdminStack";
 import { SigningManagerScreenName } from "../../../screens/signingScreen/SigningManagerScreen";
 import { EvidenceDocumentsScreenName } from "../../../screens/evidenceDocuments/EvidenceDocumentsScreen";
 import { PlanUsageScreenName } from "../../../screens/billingScreen/PlanUsageScreen";
 import { PlansPricingScreenName } from "../../../screens/billingScreen/PlansPricingScreen";
 import { PlatformSettingsScreenName } from "../../../screens/platformSettingsScreen/PlatformSettingsScreen";
-import { MyCasesScreenName } from "../../../screens/myCasesScreen/MyCasesScreen";
 import { RemindersScreenName } from "../../../screens/remindersScreen/RemindersScreen";
 import { uploadFileForSigningScreenName } from "../../../screens/signingScreen/UploadFileForSigningScreen";
+import { AllClientsScreenName } from "../../../screens/allClientsScreen/AllClientsScreen";
 
 export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t) => {
     const isPlatformAdmin = typeof window !== 'undefined' && localStorage.getItem('isPlatformAdmin') === 'true';
 
     const links = [
         // ── Cases ──
-        {
-            navKey: 'myCases',
-            routeMatch: MyCasesScreenName,
-            buttonText: t('nav.myCases'),
-            buttonScreen: t('nav.myCases'),
-            icon: null,
-            onClick: () => navigate(AdminStackName + MyCasesScreenName),
-        },
-        {
-            navKey: 'pinnedCases',
-            routeMatch: TaggedCasesScreenName,
-            buttonText: t('nav.pinnedCases'),
-            buttonScreen: t('nav.pinnedCases'),
-            icon: null,
-            onClick: () => navigate(AdminStackName + TaggedCasesScreenName),
-        },
         {
             navKey: 'allCases',
             routeMatch: AllCasesScreenName,
@@ -60,20 +41,14 @@ export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t) =>
             icon: null,
             onClick: () => navigate(AdminStackName + AllCasesTypeScreenName),
         },
-        {
-            navKey: 'addCaseType',
-            buttonText: t('nav.addCaseType'),
-            buttonScreen: null,
-            icon: null,
-            onClick: () => openPopup(<CaseTypeFullView onFailureFunction={() => { }} closePopUpFunction={closePopup} />),
-        },
         // ── Signing & Reminders ──
         {
-            navKey: 'addOrUpdateClient',
-            buttonText: t('nav.addOrUpdateClient'),
-            buttonScreen: null,
+            navKey: 'allClients',
+            routeMatch: AllClientsScreenName,
+            buttonText: t('nav.allClients'),
+            buttonScreen: t('nav.allClients'),
             icon: null,
-            onClick: () => openPopup(<ClientPopup onFailureFunction={() => { }} closePopUpFunction={closePopup} />),
+            onClick: () => navigate(AdminStackName + AllClientsScreenName),
         },
         {
             navKey: 'signingFiles',

@@ -1,0 +1,61 @@
+@use '../../../../styles/variables' as v;
+
+.lw-addFieldPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    min-width: 14rem;
+    direction: rtl;
+}
+
+// Inline mode (big screens) — always visible sidebar
+.lw-addFieldPanel--inline {
+    background: var(--lw-color-white);
+    border: 1px solid var(--lw-color-border, #e2e8f0);
+    border-radius: 0.75rem;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.08);
+    position: sticky;
+    top: 4rem;
+    z-index: 3000;
+    align-self: flex-start;
+    flex-shrink: 0;
+}
+
+// Popup mode (small screens) — fixed positioned overlay
+.lw-addFieldPanel--popup {
+    position: fixed;
+    inset-inline-end: 1.5rem;
+    bottom: 9.5rem;
+    z-index: 12000;
+    background: var(--lw-color-white);
+    border: 1px solid var(--lw-color-border, #e2e8f0);
+    border-radius: 0.75rem;
+    min-width: 14rem;
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12);
+}
+
+.lw-addFieldPanel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.lw-addFieldPanel__title {
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: var(--lw-color-text);
+}
+
+.lw-addFieldPanel__close {
+    min-height: 32px;
+}
+
+.lw-addFieldPanel__action {
+    width: 100%;
+}
+
+.lw-addFieldPanel__action .lw-textButtonWithTwoOptionalIcons__inner {
+    justify-content: flex-start;
+}

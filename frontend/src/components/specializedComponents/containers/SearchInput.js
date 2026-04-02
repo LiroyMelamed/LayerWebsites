@@ -40,7 +40,7 @@ const SearchInput = ({
         (Boolean(emptyActionText) && Boolean(onEmptyAction));
 
     useEffect(() => {
-        setQuery(String(value ?? '').trimEnd());
+        setQuery(String(value ?? ''));
     }, [value]);
 
     const handleInputChange = (event) => {

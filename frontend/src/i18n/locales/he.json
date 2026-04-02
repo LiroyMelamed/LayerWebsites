@@ -306,7 +306,12 @@
         "companyName": "שם חברה",
         "saveCustomer": "שמור לקוח",
         "updateCustomer": "עדכן לקוח",
-        "deleteCustomer": "מחק לקוח"
+        "deleteCustomer": "מחק לקוח",
+        "searchCustomer": "חיפוש לקוח",
+        "screenTitle": "כל הלקוחות",
+        "addNewCustomer": "הוספת לקוח חדש",
+        "customerPhone": "טלפון",
+        "customerEmail": "אימייל"
     },
     "admins": {
         "searchAdmin": "חיפוש מנהל",
@@ -412,6 +417,7 @@
         "myCases": "התיקים שלי",
         "reminders": "תזכורות",
         "addOrUpdateClient": "הוספת / עדכון לקוח",
+        "allClients": "כל הלקוחות",
         "notifications": "התראות",
         "myProfile": "הפרופיל שלי",
         "terms": "תקנון שימוש",
@@ -757,7 +763,9 @@
             "checkbox": "תיבת סימון",
             "checkboxShort": "✓",
             "idNumber": "ת.ז / מספר",
-            "idNumberShort": "ת.ז"
+            "idNumberShort": "ת.ז",
+            "lawyerStamp": "חותמת עו\"ד + חתימה",
+            "lawyerStampShort": "חותמת"
         },
         "fieldSettings": {
             "addFieldTitle": "הוספת שדה",
@@ -778,7 +786,13 @@
             "rangeInvalid": "נא להזין טווח עמודים תקין",
             "confirmTitle": "מחיקת שדה",
             "confirmDelete": "האם למחוק את השדה?",
-            "addFieldForPage": "הוסף שדה לעמוד {{page}}"
+            "addFieldForPage": "הוסף שדה לעמוד {{page}}",
+            "lawyerStampTitle": "העלאת חותמת עורך דין",
+            "lawyerStampUploadHint": "העלה קובץ PDF או תמונה של החותמת",
+            "lawyerStampDrawTitle": "חתימה ידנית על החותמת",
+            "lawyerStampDrawHint": "צייר את חתימתך על החותמת",
+            "lawyerStampClearDraw": "נקה חתימה",
+            "lawyerStampConfirm": "אשר חותמת וחתימה"
         },
         "context": {
             "edit": "עריכת הגדרות שדה",
@@ -981,7 +995,7 @@
     "clientImport": {
         "button": "ייבוא לקוחות מאקסל",
         "title": "ייבוא לקוחות מקובץ Excel",
-        "instructions": "העלה קובץ Excel (.xlsx) או CSV (.csv) עם העמודות: שם (חובה), טלפון, אימייל, ת.ז, הערות. שורות כפולות ידולגו אוטומטית.",
+        "instructions": "העלה קובץ Excel (.xlsx) או CSV (.csv) עם העמודות: שם לקוח (חובה), מספר פלאפון, אימייל, שם חברה, תאריך לידה. שורות כפולות ידולגו אוטומטית.",
         "chooseFile": "בחר קובץ",
         "downloadDemo": "הורד קובץ דוגמה",
         "uploadButton": "העלה וייבא",
@@ -1164,7 +1178,11 @@
         "otpSendFailed": "שליחת קוד האימות נכשלה. נסה שוב.",
         "otpInvalid": "קוד האימות שגוי. נסה שוב.",
         "errorGeneric": "אירעה שגיאה. נסה שוב מאוחר יותר.",
-        "sessionExpired": "הפגישה פגה. יש לאמת שוב את מספר הטלפון."
+        "sessionExpired": "הפגישה פגה. יש לאמת שוב את מספר הטלפון.",
+        "greetingMorning": "בוקר טוב! 🌞 אני העוזר AI של משרד עורכי דין ליאב מלמד. איך אוכל לעזור לך היום?",
+        "greetingAfternoon": "צהריים טובים! ☀️ אני העוזר AI של משרד עורכי דין ליאב מלמד. איך אוכל לעזור לך?",
+        "greetingEvening": "ערב טוב! 🌆 אני העוזר AI של משרד עורכי דין ליאב מלמד. איך אוכל לעזור לך?",
+        "greetingNight": "לילה טוב! 🌙 אני העוזר AI של משרד עורכי דין ליאב מלמד. איך אוכל לעזור לך?"
     },
     "platformSettings": {
         "docTitlePlaceholder": "שם המסמך (אופציונלי)",

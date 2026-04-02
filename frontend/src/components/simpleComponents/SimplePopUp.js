@@ -39,7 +39,7 @@ const SimplePopUp = ({ isOpen, children, onClose, className, ...props }) => {
                     .join(' ')}
                 {...props}
             >
-                {!isFloatingMenu && (
+                {!isFloatingMenu && onClose && (
                     <ImageButton
                         height={12}
                         width={12}

@@ -307,7 +307,12 @@
         "companyName": "Company name",
         "saveCustomer": "Save customer",
         "updateCustomer": "Update customer",
-        "deleteCustomer": "Delete customer"
+        "deleteCustomer": "Delete customer",
+        "searchCustomer": "Search customer",
+        "screenTitle": "All Clients",
+        "addNewCustomer": "Add new customer",
+        "customerPhone": "Phone",
+        "customerEmail": "Email"
     },
     "admins": {
         "searchAdmin": "Search admin",
@@ -417,7 +422,8 @@
         "contact": "Contact",
         "contactMessage": "Hi, I'd like to get in touch",
         "reminders": "Reminders",
-        "addOrUpdateClient": "Add / Update Client"
+        "addOrUpdateClient": "Add / Update Client",
+        "allClients": "All Clients"
     },
     "planUsage": {
         "title": "Plan & usage",
@@ -684,7 +690,9 @@
             "checkbox": "Checkbox",
             "checkboxShort": "Check",
             "idNumber": "ID/Number",
-            "idNumberShort": "ID"
+            "idNumberShort": "ID",
+            "lawyerStamp": "Lawyer stamp + signature",
+            "lawyerStampShort": "Stamp"
         },
         "fieldSettings": {
             "addFieldTitle": "Add field",
@@ -705,7 +713,13 @@
             "rangeInvalid": "Enter a valid page range",
             "confirmTitle": "Remove field",
             "confirmDelete": "Are you sure you want to remove this field?",
-            "addFieldForPage": "Add field to page {{page}}"
+            "addFieldForPage": "Add field to page {{page}}",
+            "lawyerStampTitle": "Upload lawyer stamp",
+            "lawyerStampUploadHint": "Upload a PDF or image of the stamp",
+            "lawyerStampDrawTitle": "Hand signature on stamp",
+            "lawyerStampDrawHint": "Draw your signature on the stamp",
+            "lawyerStampClearDraw": "Clear signature",
+            "lawyerStampConfirm": "Confirm stamp & signature"
         },
         "context": {
             "edit": "Edit field settings",
@@ -1055,7 +1069,11 @@
         "otpSendFailed": "Failed to send verification code. Please try again.",
         "otpInvalid": "Invalid verification code. Please try again.",
         "errorGeneric": "An error occurred. Please try again later.",
-        "sessionExpired": "Session expired. Please verify your phone number again."
+        "sessionExpired": "Session expired. Please verify your phone number again.",
+        "greetingMorning": "Good morning! 🌞 I'm the AI assistant of Liav Melamed Law Office. How can I help you today?",
+        "greetingAfternoon": "Good afternoon! ☀️ I'm the AI assistant of Liav Melamed Law Office. How can I help you?",
+        "greetingEvening": "Good evening! 🌆 I'm the AI assistant of Liav Melamed Law Office. How can I help you?",
+        "greetingNight": "Good night! 🌙 I'm the AI assistant of Liav Melamed Law Office. How can I help you?"
     },
     "platformSettings": {
         "docTitlePlaceholder": "Document name (optional)",

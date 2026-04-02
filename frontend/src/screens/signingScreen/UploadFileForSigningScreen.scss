@@ -524,6 +524,7 @@
     padding: v.$space-2;
     border-radius: 0.5rem;
     box-shadow: 0 0.5rem 1rem rgba(15, 23, 42, 0.08);
+    align-self: flex-start;
 }
 
 .lw-uploadSigningScreen__viewerHeaderRow> :last-child {

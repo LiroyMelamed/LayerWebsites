@@ -673,8 +673,8 @@ const importCustomers = async (req, res, next) => {
         const nameVariants = ['name', 'שם', 'שם מלא', 'full name', 'fullname', 'שם לקוח'];
         const phoneVariants = ['phone', 'טלפון', 'מספר פלאפון', 'phonenumber', 'phone number', 'פלאפון', 'נייד'];
         const emailVariants = ['email', 'אימייל', 'מייל', 'דואר אלקטרוני', 'e-mail'];
-        const idVariants = ['id', 'idnumber', 'id number', 'ת.ז', 'תעודת זהות', 'מספר זהות', 'ת.ז.'];
-        const notesVariants = ['notes', 'הערות', 'note', 'comments', 'הערה'];
+        const companyVariants = ['company', 'companyname', 'company name', 'שם חברה', 'חברה'];
+        const dobVariants = ['dateofbirth', 'date of birth', 'dob', 'birthday', 'תאריך לידה', 'יום הולדת'];
 
         // Pre-fetch existing phones and emails for duplicate detection
         const existingPhonesRes = await pool.query(
@@ -698,8 +698,8 @@ const importCustomers = async (req, res, next) => {
             const name = findCol(row, nameVariants);
             const phone = findCol(row, phoneVariants);
             const email = findCol(row, emailVariants);
-            const idNumber = findCol(row, idVariants);
-            const notes = findCol(row, notesVariants);
+            const companyName = findCol(row, companyVariants);
+            const dateOfBirthRaw = findCol(row, dobVariants);
 
             // Skip empty rows
             if (!name && !phone && !email) {
@@ -735,10 +735,23 @@ const importCustomers = async (req, res, next) => {
             }
 
             try {
+                // Parse date of birth – accept YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY
+                let dateOfBirth = null;
+                if (dateOfBirthRaw) {
+                    const raw = String(dateOfBirthRaw).trim();
+                    if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
+                        dateOfBirth = new Date(raw.slice(0, 10));
+                    } else {
+                        const m = raw.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})/);
+                        if (m) dateOfBirth = new Date(`${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`);
+                    }
+                    if (dateOfBirth && isNaN(dateOfBirth.getTime())) dateOfBirth = null;
+                }
+
                 await pool.query(
-                    `INSERT INTO users (name, email, phonenumber, passwordhash, role, companyname, createdat)
-                     VALUES ($1, $2, $3, $4, 'User', $5, $6)`,
-                    [name, email || null, phone || null, null, notes || null, new Date()]
+                    `INSERT INTO users (name, email, phonenumber, passwordhash, role, companyname, dateofbirth, createdat)
+                     VALUES ($1, $2, $3, $4, 'User', $5, $6, $7)`,
+                    [name, email || null, phone || null, null, companyName || null, dateOfBirth, new Date()]
                 );
 
                 if (phoneDigits) {

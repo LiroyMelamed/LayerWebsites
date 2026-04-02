@@ -9,11 +9,10 @@ import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
 import SimpleScrollView from "../../components/simpleComponents/SimpleScrollView";
 import ChooseButton from "../../components/styledComponents/buttons/ChooseButton";
 import FilterSearchInput from "../../components/specializedComponents/containers/FilterSearchInput";
-import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
-import CaseFullView from "../../components/styledComponents/cases/CaseFullView";
+
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import { AdminStackName } from "../../navigation/AdminStack";
-import { usePopup } from "../../providers/PopUpProvider";
+
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import { MainScreenName } from "../mainScreen/MainScreen";
 import AllCasesCard from "./components/AllCasesCard";
@@ -27,7 +26,7 @@ export default function AllCasesScreen() {
     const { t } = useTranslation();
     const [searchParams] = useSearchParams();
     const initialStatus = searchParams.get('status') === 'closed' ? 'closed' : 'open';
-    const { openPopup, closePopup } = usePopup();
+
     const { isSmallScreen } = useScreenSize();
     const [selectedCaseType, setSelectedCaseType] = useState(null);
     const [selectedStatus, setSelectedStatus] = useState(initialStatus);
@@ -204,21 +203,7 @@ export default function AllCasesScreen() {
                     isPerforming={isPerformingAllCases}
                 />
             </SimpleScrollView>
-            <SimpleContainer className="lw-allCasesScreen__footer">
-                <PrimaryButton
-                    className="lw-allCasesScreen__addButton"
-                    onPress={() =>
-                        openPopup(
-                            <CaseFullView
-                                closePopUpFunction={closePopup}
-                                rePerformRequest={reperformAfterSave}
-                            />
-                        )
-                    }
-                >
-                    {t('cases.addNewCase')}
-                </PrimaryButton>
-            </SimpleContainer>
+
 
         </SimpleScreen>
     )

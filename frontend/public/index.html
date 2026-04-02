@@ -4,24 +4,28 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
   <link rel="manifest" href="/manifest.json" />
-  <title>MelamedLaw</title>
+  <title>ליאב מלמד - משרד עו"ד - אזור אישי לקוחות</title>
 
   <!-- Open Graph – WhatsApp / Facebook / social link previews -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://client.melamedlaw.co.il" />
-  <meta property="og:title" content="MelamedLaw" />
+  <meta property="og:title" content="ליאב מלמד - משרד עו&quot;ד - אזור אישי לקוחות" />
   <meta property="og:description"
     content="ניהול תיקים משפטיים בצורה פשוטה ונוחה – מעקב תיקים, התראות, חתימה דיגיטלית וקשר ישיר עם המשרד." />
   <meta property="og:image" content="https://client.melamedlaw.co.il/logo512.png" />
   <meta property="og:image:width" content="512" />
   <meta property="og:image:height" content="512" />
   <meta property="og:locale" content="he_IL" />
-  <meta property="og:site_name" content="MelamedLaw" />
+  <meta property="og:site_name" content="ליאב מלמד - משרד עו&quot;ד" />
 
   <!-- Twitter Card (also used by some apps) -->
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="MelamedLaw" />
+  <meta name="twitter:title" content="ליאב מלמד - משרד עו&quot;ד - אזור אישי לקוחות" />
   <meta name="twitter:description" content="ניהול תיקים משפטיים בצורה פשוטה ונוחה" />
   <meta name="twitter:image" content="https://client.melamedlaw.co.il/logo512.png" />
 
@@ -38,6 +42,12 @@
 
       // Skip if user explicitly chose to stay on web (?web=1)
       if (window.location.search.indexOf('web=1') !== -1) return;
+
+      // Skip if already loaded from the mobile app's WebView
+      if (window.location.search.indexOf('fromApp=true') !== -1) return;
+      try {
+        if (sessionStorage.getItem('lw_fromApp') === '1') return;
+      } catch (e) { }
 
       var ua = navigator.userAgent || '';
       var isIOS = /iPhone|iPad|iPod/i.test(ua);

@@ -629,18 +629,20 @@ const addCase = async (req, res) => {
     } catch (error) {
         console.error("Error creating case:", error);
         if (client) {
-            await client.query('ROLLBACK');
+            try { await client.query('ROLLBACK'); } catch (_) { /* ignore */ }
         }
-        const isProd = String(process.env.NODE_ENV || "").toLowerCase() === "production";
-        res.status(500).json({
-            message: "Error creating case",
-            ...(isProd
-                ? null
-                : {
-                    details: error?.message,
-                    code: error?.code,
-                })
-        });
+        if (!res.headersSent) {
+            const isProd = String(process.env.NODE_ENV || "").toLowerCase() === "production";
+            res.status(500).json({
+                message: "Error creating case",
+                ...(isProd
+                    ? null
+                    : {
+                        details: error?.message,
+                        code: error?.code,
+                    })
+            });
+        }
     } finally {
         if (client) {
             client.release();

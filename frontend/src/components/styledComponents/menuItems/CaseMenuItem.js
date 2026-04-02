@@ -77,7 +77,8 @@ export default function CaseMenuItem({
                         closePopup();
                     }}
                     onClose={closePopup}
-                />
+                />,
+                { preventClose: !fullCaseListener.LicenseExpiryDate }
             );
         } else {
             // Normal advance — move to next stage

@@ -1914,6 +1914,10 @@ exports.uploadFileForSigning = async (req, res, next) => {
 
                 if (Number.isNaN(signerUserId)) signerUserId = null;
 
+                // Manual signers have negative temp IDs from the frontend — these don't exist
+                // in the users table, so we must store NULL to satisfy the FK constraint.
+                if (signerUserId !== null && signerUserId < 0) signerUserId = null;
+
                 console.log(`[controller]   Spot page ${spot.pageNum}: signerIndex=${spot.signerIndex}, signerName="${signerName}", signerUserId=${signerUserId}`);
 
                 const spotType = String(spot.fieldType || spot.type || spot.FieldType || 'signature').toLowerCase();

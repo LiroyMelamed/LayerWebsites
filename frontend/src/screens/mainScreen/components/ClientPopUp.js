@@ -136,10 +136,10 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
 
     const handleSaveClient = () => {
         const clientData = {
-            name: name,
-            phoneNumber: phoneNumber,
-            email: email,
-            companyName: companyName,
+            name: (name || '').trim(),
+            phoneNumber: (phoneNumber || '').trim(),
+            email: (email || '').trim(),
+            companyName: (companyName || '').trim(),
             dateOfBirth: dateOfBirth || null
         };
 

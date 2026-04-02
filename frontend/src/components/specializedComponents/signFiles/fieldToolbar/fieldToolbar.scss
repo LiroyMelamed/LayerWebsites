@@ -81,6 +81,17 @@
   align-items: stretch;
 }
 
+.lw-signing-pdfViewerRow {
+  display: flex;
+  gap: v.$space-3;
+  align-items: flex-start;
+}
+
+.lw-signing-pdfViewerMain {
+  flex: 1;
+  min-width: 0;
+}
+
 .lw-floatingAddField {
   position: fixed;
   inset-inline-end: 1.5rem;

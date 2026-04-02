@@ -1311,6 +1311,20 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                                         <div className={"lw-signing-spotStatus" + (spot.IsSigned ? " is-signed" : "")}>
                                                             {spot.IsSigned ? t("signing.status.signed") : t("signing.status.pending")}
                                                         </div>
+                                                        {spot.IsSigned && (() => {
+                                                            const sType = getSpotType(spot);
+                                                            const sUrl = spot.SignatureUrl || spot.signatureUrl;
+                                                            if (isSignatureLike(sType) && sUrl) {
+                                                                return <img src={sUrl} alt="" className="lw-signing-spotRowImg" />;
+                                                            }
+                                                            const sv = spot.FieldValue ?? spot.fieldValue ?? spot.fieldvalue ?? '';
+                                                            if (String(sv).trim()) {
+                                                                const dv = sType === 'checkbox' ? (sv === 'true' ? '✓' : '✗')
+                                                                    : sType === 'date' && /^\d{4}-\d{2}-\d{2}$/.test(sv) ? sv.split('-').reverse().join('/') : sv;
+                                                                return <div className="lw-signing-spotRowValue">{dv}</div>;
+                                                            }
+                                                            return null;
+                                                        })()}
                                                     </div>
                                                 ))
                                             )}
@@ -1468,9 +1482,35 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 </div>
                             )}
 
-                            {currentSpot && currentSpot.IsSigned && (
-                                <div className="lw-signing-message is-success">{t("signing.canvas.spotAlreadySigned")}</div>
-                            )}
+                            {currentSpot && currentSpot.IsSigned && (() => {
+                                const signedType = getSpotType(currentSpot);
+                                const sigUrl = currentSpot.SignatureUrl || currentSpot.signatureUrl;
+                                const fv = currentSpot.FieldValue ?? currentSpot.fieldValue ?? currentSpot.fieldvalue ?? '';
+                                const isCheckbox = signedType === 'checkbox';
+                                const isDate = signedType === 'date';
+                                const displayVal = isCheckbox
+                                    ? (fv === 'true' ? '✓' : '✗')
+                                    : isDate && /^\d{4}-\d{2}-\d{2}$/.test(fv)
+                                        ? fv.split('-').reverse().join('/')
+                                        : fv;
+
+                                return (
+                                    <div className="lw-signing-signedPreview">
+                                        <div className="lw-signing-message is-success">{t("signing.canvas.spotAlreadySigned")}</div>
+                                        {isSignatureLike(signedType) && sigUrl && (
+                                            <div className="lw-signing-signedImgWrap">
+                                                <img src={sigUrl} alt={t("signing.spot.signatureAlt")} className="lw-signing-signedImg" />
+                                            </div>
+                                        )}
+                                        {!isSignatureLike(signedType) && String(displayVal).trim() && (
+                                            <div className="lw-signing-signedFieldValue">
+                                                <Text14 color={colors.winter}>{t(`signing.fields.${getFieldTypeKey(signedType)}`)}</Text14>
+                                                <Text14 color={colors.text}>{displayVal}</Text14>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })()}
 
                             {allSpotsSignedByUser && spots.length > 0 && (
                                 <div className="lw-signing-message is-success">{t("signing.canvas.allRequiredCompleted")}</div>

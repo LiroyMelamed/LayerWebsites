@@ -2,6 +2,7 @@ import AllCasesTypeScreen, { AllCasesTypeScreenName } from "../screens/allCasesT
 import TaggedCasesScreen, { TaggedCasesScreenName } from "../screens/taggedCasesScreen/TaggedCasesScreen";
 import AllMangerScreen, { AllMangerScreenName } from "../screens/allMangerScreen/AllMangerScreen";
 import AllCasesScreen, { AllCasesScreenName } from "../screens/allCasesScreen/AllCasesScreen";
+import AllClientsScreen, { AllClientsScreenName } from "../screens/allClientsScreen/AllClientsScreen";
 import MainScreen, { MainScreenName } from "../screens/mainScreen/MainScreen";
 import TopAndRightNavBar from "../components/navBars/TopAndRightNavBar";
 import { Navigate, Route, Routes } from "react-router-dom";
@@ -33,6 +34,7 @@ function AdminStack() {
                 <Route path={toRelativePath(MainScreenName)} element={<MainScreen />} />
                 <Route path={toRelativePath(TaggedCasesScreenName)} element={<TaggedCasesScreen />} />
                 <Route path={toRelativePath(AllCasesScreenName)} element={<AllCasesScreen />} />
+                <Route path={toRelativePath(AllClientsScreenName)} element={<AllClientsScreen />} />
                 <Route path={toRelativePath(MyCasesScreenName)} element={<MyCasesScreen />} />
                 <Route path={toRelativePath(AllMangerScreenName)} element={<AllMangerScreen />} />
                 <Route path={toRelativePath(AllCasesTypeScreenName)} element={<AllCasesTypeScreen />} />

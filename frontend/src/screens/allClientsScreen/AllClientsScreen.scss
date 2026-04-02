@@ -1,0 +1,12 @@
+@use '../../styles/mixins' as m;
+@use '../../styles/variables' as v;
+
+.lw-allClientsScreen__topRow {
+    @include m.row(v.$space-3, no-wrap);
+    max-width: 100%;
+    margin: 1rem 1rem 0.5rem;
+}
+
+.lw-allClientsScreen__search {
+    min-inline-size: 0;
+}

@@ -61,10 +61,10 @@ const TEMPLATE_REQUIRED_VARS = {
     DOC_REJECTED_SMS: ['recipientName', 'documentName', 'websiteUrl'],
     SIGN_REMINDER_SMS: ['recipientName', 'documentName', 'websiteUrl'],
     // ── Other ──
-    BIRTHDAY_SMS: ['recipientName', 'firmName', 'websiteUrl'],
-    GENERAL_SMS: ['recipientName', 'websiteUrl'],
-    PAYMENT_SMS: ['recipientName', 'websiteUrl'],
-    LICENSE_RENEWAL_SMS: ['recipientName', 'websiteUrl'],
+    BIRTHDAY_SMS: [],
+    GENERAL_SMS: [],
+    PAYMENT_SMS: [],
+    LICENSE_RENEWAL_SMS: [],
     // ── Client ──
     NEW_CLIENT_SMS: ['recipientName', 'firmName', 'websiteUrl'],
 };

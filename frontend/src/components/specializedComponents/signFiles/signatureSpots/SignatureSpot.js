@@ -25,6 +25,8 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
     const fieldTypeRaw = spot?.type ?? spot?.fieldType ?? spot?.FieldType ?? 'signature';
     const fieldType = typeof fieldTypeRaw === 'string' ? fieldTypeRaw.toLowerCase() : fieldTypeRaw;
     const isSignatureLike = fieldType === 'signature' || fieldType === 'initials';
+    const isLawyerStamp = fieldType === 'lawyerstamp';
+    const stampImageUrl = spot?.stampImageDataUrl || spot?.StampImageDataUrl;
     const isRequiredRaw = spot?.isRequired ?? spot?.IsRequired;
     const isRequired = typeof isRequiredRaw === 'boolean' ? isRequiredRaw : isSignatureLike;
 
@@ -38,6 +40,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
         checkbox: t('signing.fields.checkbox'),
         number: '#',
         idnumber: t('signing.fields.idNumber'),
+        lawyerstamp: t('signing.fields.lawyerStamp'),
     };
 
     const fieldTypeIcons = {
@@ -268,7 +271,13 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                 </div>
             )}
 
-            {hasSignatureImage ? (
+            {isLawyerStamp && stampImageUrl ? (
+                <img
+                    src={stampImageUrl}
+                    alt={t("signing.fields.lawyerStamp")}
+                    className="lw-signing-spotImg lw-signing-spotImg--stamp"
+                />
+            ) : hasSignatureImage ? (
                 <img
                     src={spot.SignatureUrl || spot.signatureUrl}
                     alt={t("signing.spot.signatureAlt")}

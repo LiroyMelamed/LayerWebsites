@@ -26,6 +26,7 @@ import { uploadFileToR2 } from "../../utils/fileUploadUtils";
 import PdfViewer from "../../components/specializedComponents/signFiles/pdfViewer/PdfViewer";
 import FieldTypeNavbar from "../../components/specializedComponents/signFiles/fieldToolbar/FieldTypeNavbar";
 import FloatingAddField from "../../components/specializedComponents/signFiles/fieldToolbar/FloatingAddField";
+import AddFieldPanel from "../../components/specializedComponents/signFiles/fieldToolbar/AddFieldPanel";
 import SearchInput from "../../components/specializedComponents/containers/SearchInput";
 import FileUploadBox from "../../components/styledComponents/fileUpload/FileUploadBox";
 import casesApi from "../../api/casesApi";
@@ -33,6 +34,7 @@ import useHttpRequest from "../../hooks/useHttpRequest";
 import { customersApi } from "../../api/customersApi";
 import { usePopup } from "../../providers/PopUpProvider";
 import ClientPopup from "../mainScreen/components/ClientPopUp";
+import LawyerStampPopup from "../../components/specializedComponents/signFiles/LawyerStampPopup";
 
 import "./UploadFileForSigningScreen.scss";
 import { MainScreenName } from "../mainScreen/MainScreen";
@@ -50,6 +52,7 @@ const buildFieldTypeOptions = (t) => ([
     { id: 'date', label: t('signing.fields.date'), shortLabel: t('signing.fields.dateShort') },
     { id: 'checkbox', label: t('signing.fields.checkbox'), shortLabel: t('signing.fields.checkboxShort') },
     { id: 'idnumber', label: t('signing.fields.idNumber'), shortLabel: t('signing.fields.idNumberShort') },
+    { id: 'lawyerStamp', label: t('signing.fields.lawyerStamp'), shortLabel: t('signing.fields.lawyerStampShort') },
 ]);
 
 function FieldSettingsPopup({
@@ -374,6 +377,7 @@ export default function UploadFileForSigningScreen() {
     const [uploadedFileKey, setUploadedFileKey] = useState(null);
     const [detecting, setDetecting] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
+    const [showAddFieldPopup, setShowAddFieldPopup] = useState(false);
 
     useEffect(() => {
         if (otpFeatureEnabled) return;
@@ -573,33 +577,77 @@ export default function UploadFileForSigningScreen() {
     };
 
     const openAddFieldMenu = (pageNumber, anchor) => {
+        if (isSmallScreen) {
+            setShowAddFieldPopup(true);
+        }
+    };
+
+    const handleFieldPanelSelect = (fieldType) => {
         const signerIdx = getSelectedSignerIndex();
-        openPopup(
-            <SimpleContainer className="lw-fieldContextMenu lw-fieldContextMenu--floating">
-                <SimpleContainer className="lw-fieldContextMenu__header">
-                    <span className="lw-fieldContextMenu__title">{t('signing.fieldSettings.addFieldTitle')}</span>
-                    <SecondaryButton
-                        onPress={closePopup}
-                        className="lw-fieldContextMenu__close"
-                    >
-                        {t('common.close')}
-                    </SecondaryButton>
-                </SimpleContainer>
-                {fieldTypeOptions.map((option) => (
-                    <SecondaryButton
-                        key={option.id}
-                        className="lw-fieldContextMenu__action"
-                        onPress={() => {
-                            closePopup();
-                            setSelectedFieldType(option.id);
-                            handleAddSpotForPage(pageNumber, signerIdx, option.id, anchor);
-                        }}
-                    >
-                        {option.label}
-                    </SecondaryButton>
-                ))}
-            </SimpleContainer>
-        );
+        const pageNumber = currentPage || 1;
+        setSelectedFieldType(fieldType);
+
+        if (fieldType === 'lawyerStamp') {
+            openPopup(
+                <LawyerStampPopup
+                    onConfirm={(compositeDataUrl) => {
+                        closePopup();
+                        handleAddLawyerStampSpot(pageNumber, signerIdx, compositeDataUrl);
+                    }}
+                    onCancel={closePopup}
+                />
+            );
+            if (isSmallScreen) setShowAddFieldPopup(false);
+            return;
+        }
+
+        const container = document.querySelector('.lw-signing-pdfViewer');
+        const pageEl = container?.querySelector(`[data-page-number="${pageNumber}"]`);
+        let anchor = {};
+        if (container && pageEl) {
+            const pageRect = pageEl.getBoundingClientRect();
+            const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+            const centerY = viewportHeight / 2;
+            const relativeY = Math.max(0, Math.min(centerY - pageRect.top, pageRect.height));
+            const yRatio = pageRect.height > 0 ? relativeY / pageRect.height : 0.2;
+            anchor = { yRatio };
+        }
+
+        handleAddSpotForPage(pageNumber, signerIdx, fieldType, anchor);
+        if (isSmallScreen) {
+            setShowAddFieldPopup(false);
+        }
+    };
+
+    const handleAddLawyerStampSpot = (pageNumber, signerIdx, compositeDataUrl) => {
+        const signer = selectedSigners?.[signerIdx] || null;
+        const signerName = signer?.Name || t('signing.signerFallback', { index: Number(signerIdx) + 1 });
+
+        let x = 120;
+        let y = 160;
+        const pageEl = document.querySelector(`.lw-signing-pageInner[data-page-number="${pageNumber}"]`);
+        if (pageEl) {
+            const pageHeight = pageEl.getBoundingClientRect().height || 1000;
+            const scale = (pageEl.getBoundingClientRect().width || 800) / 800;
+            y = Math.max(20, Math.min((pageHeight / 2) / (scale || 1), pageHeight / (scale || 1) - 100));
+        }
+
+        setSignatureSpots((prev) => [
+            ...prev,
+            {
+                pageNum: pageNumber,
+                x,
+                y,
+                width: 200,
+                height: 100,
+                signerIndex: signerIdx,
+                signerUserId: signer?.UserId,
+                signerName,
+                isRequired: true,
+                type: 'lawyerStamp',
+                stampImageDataUrl: compositeDataUrl,
+            },
+        ]);
     };
 
     const handleUpdateSpot = (index, updates) => {
@@ -1164,23 +1212,45 @@ export default function UploadFileForSigningScreen() {
                                         onSelect={setSelectedFieldType}
                                         fieldTypes={fieldTypeOptions}
                                     />
-                                    <PdfViewer
-                                        pdfFile={selectedFile}
-                                        spots={signatureSpots}
-                                        onUpdateSpot={handleUpdateSpot}
-                                        onRemoveSpot={handleRemoveSpot}
-                                        onRequestRemove={(i) => openConfirmRemove(i)}
-                                        onSelectSpot={openFieldEditor}
-                                        onRequestContext={handleSpotContext}
-                                        onAddSpotForPage={handleAddSpotForPage}
-                                        signers={selectedSigners}
-                                        onPageChange={setCurrentPage}
-                                    />
-                                    <FloatingAddField
-                                        onAdd={openAddFieldMenu}
-                                        containerSelector=".lw-signing-pdfViewer"
-                                        currentPage={currentPage}
-                                    />
+                                    <SimpleContainer className="lw-signing-pdfViewerRow">
+                                        {!isSmallScreen && (
+                                            <AddFieldPanel
+                                                fieldTypeOptions={fieldTypeOptions}
+                                                onSelectField={handleFieldPanelSelect}
+                                                isInline
+                                            />
+                                        )}
+                                        <SimpleContainer className="lw-signing-pdfViewerMain">
+                                            <PdfViewer
+                                                pdfFile={selectedFile}
+                                                spots={signatureSpots}
+                                                onUpdateSpot={handleUpdateSpot}
+                                                onRemoveSpot={handleRemoveSpot}
+                                                onRequestRemove={(i) => openConfirmRemove(i)}
+                                                onSelectSpot={openFieldEditor}
+                                                onRequestContext={handleSpotContext}
+                                                onAddSpotForPage={handleAddSpotForPage}
+                                                signers={selectedSigners}
+                                                onPageChange={setCurrentPage}
+                                            />
+                                        </SimpleContainer>
+                                    </SimpleContainer>
+                                    {isSmallScreen && (
+                                        <>
+                                            <FloatingAddField
+                                                onAdd={openAddFieldMenu}
+                                                containerSelector=".lw-signing-pdfViewer"
+                                                currentPage={currentPage}
+                                            />
+                                            {showAddFieldPopup && (
+                                                <AddFieldPanel
+                                                    fieldTypeOptions={fieldTypeOptions}
+                                                    onSelectField={handleFieldPanelSelect}
+                                                    onClose={() => setShowAddFieldPopup(false)}
+                                                />
+                                            )}
+                                        </>
+                                    )}
                                 </SimpleContainer>
 
                                 <div className="lw-uploadSigningScreen__infoText">

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import SimpleScreen from '../../components/simpleComponents/SimpleScreen';
 import SimpleContainer from '../../components/simpleComponents/SimpleContainer';
@@ -33,6 +33,25 @@ export default function ChatBotPage() {
     const [otpStep, setOtpStep] = useState('phone'); // 'phone' | 'code'
     const [otpLoading, setOtpLoading] = useState(false);
     const [otpError, setOtpError] = useState('');
+
+    useEffect(() => {
+        const hour = new Date().getHours();
+        let greeting;
+        if (hour >= 5 && hour < 12) {
+            greeting = t('chatbot.greetingMorning');
+        } else if (hour >= 12 && hour < 17) {
+            greeting = t('chatbot.greetingAfternoon');
+        } else if (hour >= 17 && hour < 21) {
+            greeting = t('chatbot.greetingEvening');
+        } else {
+            greeting = t('chatbot.greetingNight');
+        }
+        setMessages([{
+            role: 'assistant',
+            content: greeting,
+            timestamp: new Date().toISOString(),
+        }]);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleSend = useCallback(async (text) => {
         setError(null);
