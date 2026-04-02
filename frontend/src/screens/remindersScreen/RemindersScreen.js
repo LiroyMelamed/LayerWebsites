@@ -54,7 +54,24 @@ export default function RemindersScreen() {
 
     const [statusFilter, setStatusFilter] = useState("ALL");
     const [page, setPage] = useState(1);
+    const [templateLabelMap, setTemplateLabelMap] = useState({});
     const limit = 25;
+
+    useEffect(() => {
+        remindersApi.getTemplates().then((res) => {
+            if (res?.status === 200 && res.data?.templates) {
+                const map = {};
+                res.data.templates.forEach((tpl) => { map[tpl.key] = tpl.label; });
+                setTemplateLabelMap(map);
+            }
+        }).catch(() => {});
+    }, []);
+
+    const resolveTemplateLabel = useCallback((key) => {
+        if (!key) return '—';
+        const i18nLabel = t(`reminders.col.templateKeys.${key}`, { defaultValue: '' });
+        return i18nLabel || templateLabelMap[key] || key;
+    }, [t, templateLabelMap]);
 
     const fetchReminders = useCallback(async () => {
         return await remindersApi.listReminders({
@@ -120,6 +137,7 @@ export default function RemindersScreen() {
                 onCancel={(id) => { cancelRequest(id); }}
                 onDelete={(id) => { deleteRequest(id); }}
                 onUpdated={() => performRequest()}
+                resolveTemplateLabel={resolveTemplateLabel}
             />
         );
     }, [reminders, openPopup, closePopup, cancelRequest]);
@@ -159,7 +177,7 @@ export default function RemindersScreen() {
         return reminders.map((r) => ({
             Column0: r.client_name || "—",
             Column1: r.to_email || "—",
-            Column2: t(`reminders.col.templateKeys.${r.template_key}`, { defaultValue: r.template_key }) || "—",
+            Column2: resolveTemplateLabel(r.template_key),
             Column3: formatDate(r.scheduled_for),
             Column4: (
                 <SimpleContainer className={`lw-reminders__badge lw-reminders__badge--${(r.status || "").toLowerCase()}`}>

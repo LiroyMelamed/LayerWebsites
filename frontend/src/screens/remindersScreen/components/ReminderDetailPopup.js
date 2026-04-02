@@ -37,7 +37,7 @@ function DetailRow({ label, children }) {
     );
 }
 
-export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCancel, onDelete, onUpdated }) {
+export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCancel, onDelete, onUpdated, resolveTemplateLabel }) {
     const { t } = useTranslation();
     const isPending = reminder?.status === "PENDING";
 
@@ -115,7 +115,7 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
                 </DetailRow>
 
                 <DetailRow label={t("reminders.col.template")}>
-                    <Text14>{t(`reminders.col.templateKeys.${reminder.template_key}`, { defaultValue: reminder.template_key }) || "—"}</Text14>
+                    <Text14>{resolveTemplateLabel ? resolveTemplateLabel(reminder.template_key) : (t(`reminders.col.templateKeys.${reminder.template_key}`, { defaultValue: reminder.template_key }) || "—")}</Text14>
                 </DetailRow>
 
                 <DetailRow label={t("reminders.col.scheduledFor")}>
