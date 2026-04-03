@@ -50,11 +50,7 @@ $reader.Close()
 $writer.Close()
 Write-Host "Processed $lineCount lines"
 
-Write-Host "`n=== [4/7] Enabling pgvector on Neon ===" -ForegroundColor Cyan
-& $PSQL $NEON_CONNSTR -c "CREATE EXTENSION IF NOT EXISTS vector;" 2>&1
-Write-Host "pgvector extension ready"
-
-Write-Host "`n=== [5/7] Dropping all Neon tables ===" -ForegroundColor Cyan
+Write-Host "`n=== [4/7] Dropping all Neon tables ===" -ForegroundColor Cyan
 $dropFile = Join-Path $PSScriptRoot "drop_all.sql"
 @'
 DROP SCHEMA IF EXISTS public CASCADE;
@@ -65,6 +61,10 @@ GRANT ALL ON SCHEMA public TO neondb_owner;
 Remove-Item $dropFile -ErrorAction SilentlyContinue
 $tableCount = & $PSQL $NEON_CONNSTR -A -t -c "SELECT count(*) FROM pg_tables WHERE schemaname='public';"
 Write-Host "Tables remaining: $($tableCount.Trim())"
+
+Write-Host "`n=== [5/7] Enabling pgvector on Neon ===" -ForegroundColor Cyan
+& $PSQL $NEON_CONNSTR -c "CREATE EXTENSION IF NOT EXISTS vector;" 2>&1
+Write-Host "pgvector extension ready"
 
 Write-Host "`n=== [6/7] Restoring production data to Neon ===" -ForegroundColor Cyan
 $env:PGCLIENTENCODING = "UTF8"
