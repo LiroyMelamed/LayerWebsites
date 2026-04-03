@@ -40,7 +40,7 @@
         '',
         '#mlw-chat-widget-frame-wrap {',
         '  position: fixed;',
-        '  bottom: 152px;',
+        '  bottom: 220px;',
         '  left: 24px;',
         '  width: 380px;',
         '  height: 560px;',
