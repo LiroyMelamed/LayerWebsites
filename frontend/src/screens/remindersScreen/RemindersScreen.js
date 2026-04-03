@@ -64,7 +64,7 @@ export default function RemindersScreen() {
                 res.data.templates.forEach((tpl) => { map[tpl.key] = tpl.label; });
                 setTemplateLabelMap(map);
             }
-        }).catch(() => {});
+        }).catch(() => { });
     }, []);
 
     const resolveTemplateLabel = useCallback((key) => {
