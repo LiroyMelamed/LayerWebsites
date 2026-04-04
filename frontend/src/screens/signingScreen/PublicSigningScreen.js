@@ -32,7 +32,7 @@ export default function PublicSigningScreen() {
     };
 
     return (
-        <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
+        <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground} className="lw-publicSigningScreen">
             <SimpleContainer className="lw-publicSigningScreen__container">
                 {!token ? (
                     <SimpleContainer className="lw-publicSigningScreen__stack">

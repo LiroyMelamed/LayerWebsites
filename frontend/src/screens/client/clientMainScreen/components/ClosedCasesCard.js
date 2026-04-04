@@ -1,6 +1,7 @@
 import { images } from "../../../../assets/images/images";
 import SimpleCard from "../../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../../components/simpleComponents/SimpleContainer";
+import Skeleton from "../../../../components/simpleComponents/Skeleton";
 import { TextBold20 } from "../../../../components/specializedComponents/text/AllTextKindFile";
 import DefaultState from "../../../../components/styledComponents/defaultState/DefaultState";
 import CaseMenuItem from "../../../../components/styledComponents/menuItems/CaseMenuItem";
@@ -10,8 +11,26 @@ import { useTranslation } from 'react-i18next';
 
 import './ClosedCasesCard.scss';
 
-export default function ClosedCasesCard({ closedCases, reperformAfterSave, style: _style, className }) {
+export default function ClosedCasesCard({ closedCases, reperformAfterSave, style: _style, className, isPerforming }) {
     const { t } = useTranslation();
+
+    if (isPerforming) {
+        return (
+            <SimpleCard className={["lw-closedCasesCard", className].filter(Boolean).join(' ')}>
+                <TextBold20>{t('cases.closedCases')}</TextBold20>
+                {[1, 2, 3].map(i => (
+                    <SimpleContainer key={i} style={{ padding: '12px 0' }}>
+                        {i !== 1 && <Separator />}
+                        <Skeleton width="60%" height={16} />
+                        <SimpleContainer style={{ display: 'flex', gap: 16, marginTop: 8 }}>
+                            <Skeleton width="30%" height={12} />
+                            <Skeleton width="30%" height={12} />
+                        </SimpleContainer>
+                    </SimpleContainer>
+                ))}
+            </SimpleCard>
+        );
+    }
 
     if (closedCases?.length === 0 || !closedCases) {
         return (

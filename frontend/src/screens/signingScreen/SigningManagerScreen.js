@@ -6,7 +6,7 @@ import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import useHttpRequest from "../../hooks/useHttpRequest";
 import signingFilesApi from "../../api/signingFilesApi";
 
-import SimpleLoader from "../../components/simpleComponents/SimpleLoader";
+import Skeleton from "../../components/simpleComponents/Skeleton";
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
 import SimpleScrollView from "../../components/simpleComponents/SimpleScrollView";
 import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
@@ -35,6 +35,7 @@ import { uploadFileForSigningScreenName } from "./UploadFileForSigningScreen";
 import "./SigningManagerScreen.scss";
 import { MainScreenName } from "../mainScreen/MainScreen";
 import SimpleCard from "../../components/simpleComponents/SimpleCard";
+import { formatDateForInput, parseDateInput } from "../../functions/date/formatDateForInput";
 
 export const SigningManagerScreenName = "/SigningManagerScreen";
 
@@ -75,7 +76,8 @@ export default function SigningManagerScreen() {
         }
 
         if (dateFrom) {
-            const from = new Date(dateFrom);
+            const parsed = parseDateInput(dateFrom) || dateFrom;
+            const from = new Date(parsed);
             from.setHours(0, 0, 0, 0);
             list = list.filter((f) => {
                 const d = new Date(f.CreatedAt);
@@ -84,7 +86,8 @@ export default function SigningManagerScreen() {
         }
 
         if (dateTo) {
-            const to = new Date(dateTo);
+            const parsed = parseDateInput(dateTo) || dateTo;
+            const to = new Date(parsed);
             to.setHours(23, 59, 59, 999);
             list = list.filter((f) => {
                 const d = new Date(f.CreatedAt);
@@ -356,9 +359,6 @@ export default function SigningManagerScreen() {
         );
     };
 
-    if (isPerforming) return <SimpleLoader />;
-
-
     return (
         <SimpleScreen
             imageBackgroundSource={images.Backgrounds.AppBackground}
@@ -384,14 +384,14 @@ export default function SigningManagerScreen() {
                     </SimpleContainer>
                     <SimpleContainer className="lw-signingManagerScreen__dateFilters">
                         <SimpleInput
-                            type="date"
+                            placeholder="dd/mm/yyyy"
                             title={t('signingManager.dateFrom')}
                             value={dateFrom}
                             onChange={(e) => setDateFrom(e.target.value)}
                             className="lw-signingManagerScreen__dateInput"
                         />
                         <SimpleInput
-                            type="date"
+                            placeholder="dd/mm/yyyy"
                             title={t('signingManager.dateTo')}
                             value={dateTo}
                             onChange={(e) => setDateTo(e.target.value)}
@@ -415,7 +415,16 @@ export default function SigningManagerScreen() {
                 </SimpleContainer>
 
                 {/* List */}
-                {filteredFiles.length === 0 ? (
+                {isPerforming ? (
+                    <SimpleCard>
+                        {[1, 2, 3].map(i => (
+                            <SimpleContainer key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0' }}>
+                                <Skeleton width="40%" height={14} />
+                                <Skeleton width="20%" height={14} />
+                            </SimpleContainer>
+                        ))}
+                    </SimpleCard>
+                ) : filteredFiles.length === 0 ? (
                     <SimpleContainer className="lw-signingManagerScreen__emptyState">
                         <Text14>
                             {activeTab === "pending"

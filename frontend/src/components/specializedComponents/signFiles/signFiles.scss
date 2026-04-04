@@ -427,6 +427,12 @@
         opacity: 0.85;
     }
 
+    &.is-signed {
+        border: none;
+        box-shadow: none;
+        background-color: transparent;
+    }
+
     // Ensure spots stay readable on small screens
     @media (max-width: 480px) {
         min-width: 90px !important;
@@ -906,4 +912,64 @@
     gap: 0.5rem;
     font-size: 0.9rem;
     color: #333;
+}
+
+.lw-signing-fileUploadBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.25rem;
+    border: 1px solid #d9d9d9;
+    border-radius: 0.5rem;
+    background: #fff;
+    color: #333;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+
+    &:hover {
+        background: #f5f5f5;
+        border-color: #bbb;
+    }
+}
+
+.lw-signing-fileUploadInput {
+    display: none;
+}
+
+.lw-signing-stampCanvasWrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 400 / 180;
+    border: 1px solid #d9d9d9;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: #fff;
+}
+
+.lw-signing-stampCanvasBg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.lw-signing-canvas--overStamp {
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+    z-index: 1;
+    background: transparent !important;
 }

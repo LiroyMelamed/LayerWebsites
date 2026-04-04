@@ -1,6 +1,6 @@
 :root {
     /* Font stack to match React-Native AppText (System/sans-serif feel) */
-    --lw-font-stack: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    --lw-font-stack: "Heebo", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
 
     /* Colors mirrored from src/constant/colors.js */
     --lw-color-primary: #2A4365;

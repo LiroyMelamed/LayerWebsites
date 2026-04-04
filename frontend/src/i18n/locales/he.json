@@ -764,8 +764,10 @@
             "checkboxShort": "✓",
             "idNumber": "ת.ז / מספר",
             "idNumberShort": "ת.ז",
-            "lawyerStamp": "חותמת עו\"ד + חתימה",
-            "lawyerStampShort": "חותמת"
+            "lawyerStamp": "חותמת + חתימת מנהל",
+            "lawyerStampShort": "חותמת",
+            "clientStamp": "חותמת לקוח",
+            "clientStampShort": "חותמת לק׳"
         },
         "fieldSettings": {
             "addFieldTitle": "הוספת שדה",
@@ -787,12 +789,14 @@
             "confirmTitle": "מחיקת שדה",
             "confirmDelete": "האם למחוק את השדה?",
             "addFieldForPage": "הוסף שדה לעמוד {{page}}",
-            "lawyerStampTitle": "העלאת חותמת עורך דין",
+            "lawyerStampTitle": "העלאת חותמת + חתימת מנהל",
             "lawyerStampUploadHint": "העלה קובץ PDF או תמונה של החותמת",
             "lawyerStampDrawTitle": "חתימה ידנית על החותמת",
             "lawyerStampDrawHint": "צייר את חתימתך על החותמת",
             "lawyerStampClearDraw": "נקה חתימה",
-            "lawyerStampConfirm": "אשר חותמת וחתימה"
+            "lawyerStampConfirm": "אשר חותמת וחתימה",
+            "clientStampTitle": "חותמת לקוח",
+            "clientStampUploadHint": "הלקוח יעלה קובץ PNG או PDF של החותמת שלו בעת החתימה"
         },
         "context": {
             "edit": "עריכת הגדרות שדה",
@@ -904,7 +908,13 @@
             "spotAlreadySigned": "מקום החתימה הזה כבר חתום על ידך",
             "allRequiredCompleted": "השלמת את כל החתימות הנדרשות!",
             "rejectDocument": "דחה מסמך",
-            "failedToLoadSignatureImage": "שגיאה בטעינת תמונת החתימה"
+            "failedToLoadSignatureImage": "שגיאה בטעינת תמונת החתימה",
+            "clientStampSavedSuccess": "החותמת נשמרה בהצלחה",
+            "clientStampUploadError": "שגיאה בהעלאת החותמת",
+            "chooseFile": "בחירת קובץ",
+            "signOnStampHint": "ניתן לחתום מעל החותמת (אופציונלי)",
+            "changeStamp": "החלף חותמת",
+            "nextStep": "המשך"
         },
         "screen": {
             "tabPending": "בהמתנה לחתימה ({{count}})",

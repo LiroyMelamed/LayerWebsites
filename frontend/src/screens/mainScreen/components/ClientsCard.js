@@ -2,6 +2,7 @@ import { forwardRef } from "react";
 import { images } from "../../../assets/images/images";
 import SimpleCard from "../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
+import Skeleton from "../../../components/simpleComponents/Skeleton";
 import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
 import { Text14, TextBold14 } from "../../../components/specializedComponents/text/AllTextKindFile";
 import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryButton";
@@ -16,9 +17,34 @@ import { useTranslation } from "react-i18next";
 import "./ClientsCard.scss";
 import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
 
-const ClientsCard = forwardRef(({ rePerformRequest, customerList, style: _style }, ref) => {
+const ClientsCard = forwardRef(({ rePerformRequest, customerList, style: _style, isPerforming }, ref) => {
     const { openPopup, closePopup } = usePopup();
     const { t } = useTranslation();
+
+    if (isPerforming) {
+        return (
+            <SimpleCard className="lw-clientsCard" ref={ref}>
+                <SimpleContainer className="lw-clientsCard__headerRow">
+                    <Skeleton width="25%" height={14} />
+                    <Skeleton width="25%" height={14} />
+                    <Skeleton width="25%" height={14} />
+                    <Skeleton width="15%" height={14} />
+                </SimpleContainer>
+                <Separator />
+                {[1, 2, 3, 4].map(i => (
+                    <SimpleContainer key={i} style={{ padding: '12px 0' }}>
+                        {i !== 1 && <Separator />}
+                        <SimpleContainer style={{ display: 'flex', gap: 16, padding: '8px 0' }}>
+                            <Skeleton width="25%" height={14} />
+                            <Skeleton width="25%" height={14} />
+                            <Skeleton width="25%" height={14} />
+                            <Skeleton width="15%" height={14} />
+                        </SimpleContainer>
+                    </SimpleContainer>
+                ))}
+            </SimpleCard>
+        );
+    }
 
     if (customerList?.length === 0 || !customerList) {
         return (

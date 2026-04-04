@@ -23,6 +23,7 @@ import useHttpRequest from "../../hooks/useHttpRequest";
 import ImportRemindersModal from "./components/ImportRemindersModal";
 import AddReminderModal from "./components/AddReminderModal";
 import ReminderDetailPopup from "./components/ReminderDetailPopup";
+import { formatDateTimeForInput } from "../../functions/date/formatDateForInput";
 import { AdminStackName } from "../../navigation/AdminStack";
 import { MainScreenName } from "../mainScreen/MainScreen";
 import "./RemindersScreen.scss";
@@ -37,14 +38,7 @@ const STATUS_FILTERS = [
 ];
 
 function formatDate(dateStr) {
-    if (!dateStr) return "—";
-    return new Date(dateStr).toLocaleString("he-IL", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
+    return formatDateTimeForInput(dateStr) || "—";
 }
 
 export default function RemindersScreen() {

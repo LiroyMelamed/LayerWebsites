@@ -2,7 +2,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
-import SimpleLoader from "../../components/simpleComponents/SimpleLoader";
+import Skeleton from "../../components/simpleComponents/Skeleton";
 import signingFilesApi from "../../api/signingFilesApi";
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
@@ -66,8 +66,6 @@ export default function SigningScreen() {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-
-    if (isPerforming) return <SimpleLoader />;
 
     const files = clientFilesData?.files || [];
 
@@ -156,7 +154,16 @@ export default function SigningScreen() {
 
                     <Separator />
 
-                    {currentList.length === 0 ? (
+                    {isPerforming ? (
+                        <SimpleCard>
+                            {[1, 2, 3].map(i => (
+                                <SimpleContainer key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0' }}>
+                                    <Skeleton width="40%" height={14} />
+                                    <Skeleton width="20%" height={14} />
+                                </SimpleContainer>
+                            ))}
+                        </SimpleCard>
+                    ) : currentList.length === 0 ? (
                         <SimpleContainer className="lw-signingScreen__emptyState">
                             <Text14>
                                 {activeTab === "pending"

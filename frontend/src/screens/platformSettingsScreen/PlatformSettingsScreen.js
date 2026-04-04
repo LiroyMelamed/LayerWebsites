@@ -8,7 +8,7 @@ import SimpleScrollView from "../../components/simpleComponents/SimpleScrollView
 import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
 import SimpleCard from "../../components/simpleComponents/SimpleCard";
 import SimpleButton from "../../components/simpleComponents/SimpleButton";
-import SimpleLoader from "../../components/simpleComponents/SimpleLoader";
+import Skeleton from "../../components/simpleComponents/Skeleton";
 import SimpleInput from "../../components/simpleComponents/SimpleInput";
 import SimpleTextArea from "../../components/simpleComponents/SimpleTextArea";
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
@@ -985,7 +985,14 @@ export default function PlatformSettingsScreen() {
         if (isLoading) {
             return (
                 <SimpleContainer className="lw-platformSettings__loading">
-                    <SimpleLoader />
+                    <SimpleCard>
+                        {[1, 2, 3].map(i => (
+                            <SimpleContainer key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0' }}>
+                                <Skeleton width="40%" height={14} />
+                                <Skeleton width="30%" height={14} />
+                            </SimpleContainer>
+                        ))}
+                    </SimpleCard>
                 </SimpleContainer>
             );
         }
@@ -1078,7 +1085,14 @@ export default function PlatformSettingsScreen() {
             if (isLoadingEmailTemplates) {
                 return (
                     <SimpleContainer className="lw-platformSettings__loading">
-                        <SimpleLoader />
+                        <SimpleCard>
+                            {[1, 2, 3].map(i => (
+                                <SimpleContainer key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0' }}>
+                                    <Skeleton width="40%" height={14} />
+                                    <Skeleton width="30%" height={14} />
+                                </SimpleContainer>
+                            ))}
+                        </SimpleCard>
                     </SimpleContainer>
                 );
             }
@@ -1212,14 +1226,23 @@ export default function PlatformSettingsScreen() {
                     </SimpleContainer>
 
                     {/* Documents list */}
-                    {loadingKnowledgeDocs ? <SimpleLoader /> : (
+                    {loadingKnowledgeDocs ? (
+                        <SimpleCard>
+                            {[1, 2].map(i => (
+                                <SimpleContainer key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0' }}>
+                                    <Skeleton width="50%" height={14} />
+                                    <Skeleton width="20%" height={14} />
+                                </SimpleContainer>
+                            ))}
+                        </SimpleCard>
+                    ) : (
                         <SimpleContainer className="lw-platformSettings__knowledgeList">
                             {knowledgeDocs.map(doc => (
                                 <SimpleContainer key={doc.id} className="lw-platformSettings__knowledgeRow">
                                     <SimpleContainer className="lw-platformSettings__knowledgeInfo">
                                         <TextBold14>{doc.title}</TextBold14>
                                         <Text12 className="lw-platformSettings__knowledgeMeta">
-                                            {doc.source_file} · {doc.chunk_count} קטעים · {new Date(doc.created_at).toLocaleDateString('he-IL')}
+                                            {doc.source_file} · {doc.chunk_count} קטעים · {new Date(doc.created_at).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                         </Text12>
                                     </SimpleContainer>
                                     <SecondaryButton
@@ -1345,7 +1368,16 @@ export default function PlatformSettingsScreen() {
                 </PrimaryButton>
             </SimpleContainer>
 
-            {loadingReminderTpls ? <SimpleLoader /> : (
+            {loadingReminderTpls ? (
+                <SimpleCard>
+                    {[1, 2].map(i => (
+                        <SimpleContainer key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0' }}>
+                            <Skeleton width="50%" height={14} />
+                            <Skeleton width="20%" height={14} />
+                        </SimpleContainer>
+                    ))}
+                </SimpleCard>
+            ) : (
                 <SimpleContainer className="lw-platformSettings__reminderTplList">
                     {reminderTemplates.map(tpl => (
                         <SimpleContainer key={tpl.key} className="lw-platformSettings__reminderTplRow">

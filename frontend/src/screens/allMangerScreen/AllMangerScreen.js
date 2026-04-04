@@ -38,10 +38,6 @@ export default function AllMangerScreen() {
         const foundItem = resultItem || adminByName.find(admin => admin.name?.trim() === query?.trim());
         openPopup(<AdminPopup adminDetails={foundItem} rePerformRequest={performGetAdmins} closePopUpFunction={closePopup} />)
     }
-    if (isPerformingAdminsData) {
-        return <SimpleLoader />;
-    }
-
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
             {isSmallScreen && <TopToolBarSmallScreen chosenNavKey="allManagers" LogoNavigate={AdminStackName + MainScreenName} />}

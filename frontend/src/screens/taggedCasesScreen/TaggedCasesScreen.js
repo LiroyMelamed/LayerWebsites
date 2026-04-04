@@ -129,41 +129,11 @@ export default function TaggedCasesScreen() {
     const managerNames = [...new Set((taggedCases || []).map(c => c.CaseManager).filter(Boolean))].sort();
     const companyNames = [...new Set((taggedCases || []).map(c => c.CompanyName).filter(Boolean))].sort();
 
-    if (isPerformingTaggedCases || isPerformingAllCasesTypes) {
-        return <SimpleLoader />;
-    }
-
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
             {isSmallScreen && <TopToolBarSmallScreen chosenNavKey="pinnedCases" LogoNavigate={AdminStackName + MainScreenName} />}
 
             <SimpleScrollView>
-                <SimpleContainer className="lw-taggedCasesScreen__topRow">
-                    <FilterSearchInput
-                        items={caseNames}
-                        placeholder={t('taggedCases.searchPinnedCaseTitle')}
-                        titleFontSize={20}
-                        onSelect={handleFilterByCaseName}
-                        className="lw-taggedCasesScreen__search"
-                    />
-
-                    <FilterSearchInput
-                        items={clientNames}
-                        placeholder={t('cases.customerName')}
-                        titleFontSize={20}
-                        onSelect={handleFilterByClient}
-                        className="lw-taggedCasesScreen__clientFilter"
-                    />
-
-                    <FilterSearchInput
-                        items={companyNames}
-                        placeholder={t('cases.companyName')}
-                        titleFontSize={20}
-                        onSelect={handleFilterByCompany}
-                        className="lw-taggedCasesScreen__companyFilter"
-                    />
-                </SimpleContainer>
-
                 <SimpleContainer className="lw-taggedCasesScreen__filtersRow">
                     <ChooseButton
                         buttonText={t('cases.statusFilter')}
@@ -188,6 +158,32 @@ export default function TaggedCasesScreen() {
                         items={managerNames.map((name) => ({ value: name, label: name }))}
                         className="lw-taggedCasesScreen__choose"
                         OnPressChoiceFunction={handleFilterByManager}
+                    />
+                </SimpleContainer>
+
+                <SimpleContainer className="lw-taggedCasesScreen__topRow">
+                    <FilterSearchInput
+                        items={caseNames}
+                        placeholder={t('taggedCases.searchPinnedCaseTitle')}
+                        titleFontSize={20}
+                        onSelect={handleFilterByCaseName}
+                        className="lw-taggedCasesScreen__search"
+                    />
+
+                    <FilterSearchInput
+                        items={clientNames}
+                        placeholder={t('cases.customerName')}
+                        titleFontSize={20}
+                        onSelect={handleFilterByClient}
+                        className="lw-taggedCasesScreen__clientFilter"
+                    />
+
+                    <FilterSearchInput
+                        items={companyNames}
+                        placeholder={t('cases.companyName')}
+                        titleFontSize={20}
+                        onSelect={handleFilterByCompany}
+                        className="lw-taggedCasesScreen__companyFilter"
                     />
                 </SimpleContainer>
 

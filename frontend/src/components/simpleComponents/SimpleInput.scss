@@ -74,6 +74,10 @@
     opacity: 1;
 }
 
+.lw-simpleInput.is-floated .lw-simpleInput__field::placeholder {
+    opacity: 0.5;
+}
+
 .lw-simpleInput--small.is-floated .lw-simpleInput__label {
     transform: translateY(-85%) scale(0.7);
 }
@@ -127,6 +131,11 @@
     font-size: 1rem;
     color: var(--lw-color-text);
     text-align: start;
+
+    &::placeholder {
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
 
     // Override browser autofill blue/yellow background
     &:-webkit-autofill,

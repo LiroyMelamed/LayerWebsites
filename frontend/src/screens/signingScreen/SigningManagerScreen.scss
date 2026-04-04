@@ -19,7 +19,7 @@
 
 .lw-signingManagerScreen__topRow {
     @include m.row(v.$space-3, wrap);
-    justify-content: flex-start;
+    justify-content: center;
     width: 100%;
 }
 
@@ -47,9 +47,8 @@
 }
 
 .lw-signingManagerScreen__searchContainer {
-    flex: 1 1 100%;
-    width: 100%;
-    min-inline-size: 0;
+    flex: 1 1 0;
+    min-inline-size: 12rem;
 }
 
 .lw-signingManagerScreen__searchContainer>* {
@@ -63,13 +62,13 @@
 .lw-signingManagerScreen__dateFilters {
     display: flex;
     gap: v.$space-2;
-    flex-wrap: wrap;
-    margin-block-start: v.$space-2;
+    align-items: center;
+    flex: 0 1 auto;
 }
 
 .lw-signingManagerScreen__dateInput {
-    flex: 1 1 10rem;
-    max-width: 14rem;
+    flex: 0 1 10rem;
+    min-inline-size: 7rem;
 }
 
 .lw-signingManagerScreen__tabsRow {

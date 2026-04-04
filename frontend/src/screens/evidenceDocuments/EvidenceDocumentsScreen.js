@@ -8,7 +8,8 @@ import { images } from "../../assets/images/images";
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
 import SimpleScrollView from "../../components/simpleComponents/SimpleScrollView";
 import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
-import SimpleLoader from "../../components/simpleComponents/SimpleLoader";
+import Skeleton from "../../components/simpleComponents/Skeleton";
+import SimpleCard from "../../components/simpleComponents/SimpleCard";
 import SimpleInput from "../../components/simpleComponents/SimpleInput";
 
 import SearchInput from "../../components/specializedComponents/containers/SearchInput";
@@ -33,6 +34,7 @@ import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 
 import { SIGNING_OTP_ENABLED } from "../../featureFlags";
 
+import { parseDateInput } from "../../functions/date/formatDateForInput";
 import "./EvidenceDocumentsScreen.scss";
 
 export const EvidenceDocumentsScreenName = "/EvidenceDocumentsScreen";
@@ -163,8 +165,8 @@ export default function EvidenceDocumentsScreen() {
         const next = {
             q: String(inputQ || "").trim(),
             caseId: String(inputCaseId || "").trim(),
-            from: String(inputFrom || "").trim(),
-            to: String(inputTo || "").trim(),
+            from: parseDateInput(String(inputFrom || "").trim()) || String(inputFrom || "").trim(),
+            to: parseDateInput(String(inputTo || "").trim()) || String(inputTo || "").trim(),
         };
         setApplied(next);
         setItems([]);
@@ -314,7 +316,7 @@ export default function EvidenceDocumentsScreen() {
 
                     <SimpleInput
                         title={t("evidenceDocuments.filters.from")}
-                        type="date"
+                        placeholder="dd/mm/yyyy"
                         value={inputFrom}
                         onChange={(e) => setInputFrom(e.target.value)}
                         onKeyDown={onKeyDownSearch}
@@ -322,7 +324,7 @@ export default function EvidenceDocumentsScreen() {
 
                     <SimpleInput
                         title={t("evidenceDocuments.filters.to")}
-                        type="date"
+                        placeholder="dd/mm/yyyy"
                         value={inputTo}
                         onChange={(e) => setInputTo(e.target.value)}
                         onKeyDown={onKeyDownSearch}
@@ -340,7 +342,15 @@ export default function EvidenceDocumentsScreen() {
                 </SimpleContainer>
 
                 {isLoading && items.length === 0 ? (
-                    <SimpleLoader />
+                    <SimpleCard>
+                        {[1, 2, 3].map(i => (
+                            <SimpleContainer key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0' }}>
+                                <Skeleton width="30%" height={14} />
+                                <Skeleton width="20%" height={14} />
+                                <Skeleton width="15%" height={14} />
+                            </SimpleContainer>
+                        ))}
+                    </SimpleCard>
                 ) : hasLoadError && items.length === 0 ? (
                     <SimpleContainer className="lw-evidenceDocuments__state">
                         <Text14>{t("evidenceDocuments.errors.load")}</Text14>

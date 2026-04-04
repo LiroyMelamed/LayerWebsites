@@ -26,6 +26,8 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
     const fieldType = typeof fieldTypeRaw === 'string' ? fieldTypeRaw.toLowerCase() : fieldTypeRaw;
     const isSignatureLike = fieldType === 'signature' || fieldType === 'initials';
     const isLawyerStamp = fieldType === 'lawyerstamp';
+    const isClientStamp = fieldType === 'clientstamp';
+    const isStampType = isLawyerStamp || isClientStamp;
     const stampImageUrl = spot?.stampImageDataUrl || spot?.StampImageDataUrl;
     const isRequiredRaw = spot?.isRequired ?? spot?.IsRequired;
     const isRequired = typeof isRequiredRaw === 'boolean' ? isRequiredRaw : isSignatureLike;
@@ -41,6 +43,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
         number: '#',
         idnumber: t('signing.fields.idNumber'),
         lawyerstamp: t('signing.fields.lawyerStamp'),
+        clientstamp: t('signing.fields.clientStamp'),
     };
 
     const fieldTypeIcons = {
@@ -231,6 +234,8 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
         return fieldValue;
     })();
 
+    const isSigned = Boolean(spot?.IsSigned);
+
     return (
         <SimpleContainer
             ref={ref}
@@ -240,11 +245,12 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                     ? startDragTouchFallback
                     : undefined
             }
-            className={`lw-signing-spot ${colorClass} lw-signing-spot--type-${fieldType} ${isRequired ? 'is-required' : 'is-optional'}`}
+            className={`lw-signing-spot ${colorClass} lw-signing-spot--type-${fieldType} ${isRequired ? 'is-required' : 'is-optional'}${isSigned ? ' is-signed' : ''}`}
             style={spotStyle}
             title={t("signing.spot.signedByTitle", { name: signerNameSafe })}
         >
-            <div className="lw-signing-spotMeta">
+            {!isSigned && (
+                <div className="lw-signing-spotMeta">
                 <span className="lw-signing-spotType">
                     {fieldTypeIcons[fieldType] && (
                         <SimpleIcon
@@ -259,6 +265,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                     {isRequired ? t('signing.fieldSettings.requiredShort') : t('signing.fieldSettings.optionalShort')}
                 </span>
             </div>
+            )}
 
             {/* Value renderer (non-signature fields). Must render above click-capture overlay but not block clicks. */}
             {showFieldValue && (
@@ -271,10 +278,10 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                 </div>
             )}
 
-            {isLawyerStamp && stampImageUrl ? (
+            {isStampType && stampImageUrl ? (
                 <img
                     src={stampImageUrl}
-                    alt={t("signing.fields.lawyerStamp")}
+                    alt={isClientStamp ? t("signing.fields.clientStamp") : t("signing.fields.lawyerStamp")}
                     className="lw-signing-spotImg lw-signing-spotImg--stamp"
                 />
             ) : hasSignatureImage ? (
@@ -283,7 +290,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                     alt={t("signing.spot.signatureAlt")}
                     className="lw-signing-spotImg"
                 />
-            ) : (
+            ) : !showFieldValue && (
                 <div className="lw-signing-spotLabel">
                     <div className="lw-signing-spotLabelText">
                         {signerNameSafe.length > 10 ? signerNameSafe.substring(0, 8) + "..." : signerNameSafe}

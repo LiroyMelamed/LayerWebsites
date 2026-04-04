@@ -1,3 +1,9 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Disallow: /AdminStack/
+Disallow: /ClientStack/
+Disallow: /LoginStack/
+Disallow: /PublicSignScreen
+Allow: /
+
+Sitemap: https://client.melamedlaw.co.il/sitemap.xml

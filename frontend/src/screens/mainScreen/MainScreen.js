@@ -29,10 +29,6 @@ export default function MainScreen() {
     const { result: mainScreenData, isPerforming: isPerformingMainScreenData, performRequest } = useAutoHttpRequest(casesApi.getMainScreenData);
     const clientsCardRef = useRef(null);
 
-    if (isPerformingMainScreenData) {
-        return <SimpleLoader />;
-    }
-
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
             {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={AdminStackName + MainScreenName} />}
@@ -48,6 +44,7 @@ export default function MainScreen() {
                         subText={t("mainScreen.totalCases")}
                         className="lw-mainScreen__comparisonCard"
                         onPress={() => { navigate(AdminStackName + AllCasesScreenName + '?status=open') }}
+                        isPerforming={isPerformingMainScreenData}
                     />
                 </SimpleContainer>
 
@@ -57,12 +54,14 @@ export default function MainScreen() {
                             numberText={mainScreenData?.AllCasesData?.length - mainScreenData?.NumberOfClosedCases}
                             title={t("cases.openCases")}
                             optionalOnClick={() => { navigate(AdminStackName + AllCasesScreenName + '?status=open') }}
+                            isPerforming={isPerformingMainScreenData}
                         />
 
                         <ShowDataCard
                             numberText={mainScreenData?.NumberOfClosedCases}
                             title={t("cases.closedCases")}
                             optionalOnClick={() => { navigate(AdminStackName + AllCasesScreenName + '?status=closed') }}
+                            isPerforming={isPerformingMainScreenData}
                         />
                     </SimpleContainer>
 
@@ -71,11 +70,13 @@ export default function MainScreen() {
                             numberText={mainScreenData?.NumberOfTaggedCases}
                             title={t("mainScreen.taggedCases")}
                             optionalOnClick={() => { navigate(AdminStackName + TaggedCasesScreenName) }}
+                            isPerforming={isPerformingMainScreenData}
                         />
                         <ShowDataCard
                             numberText={mainScreenData?.ActiveCustomers?.length}
                             title={t("mainScreen.activeCustomers")}
                             optionalOnClick={() => { clientsCardRef.current?.scrollIntoView({ behavior: 'smooth' }) }}
+                            isPerforming={isPerformingMainScreenData}
                         />
                     </SimpleContainer>
 
@@ -85,6 +86,7 @@ export default function MainScreen() {
                     ref={clientsCardRef}
                     customerList={mainScreenData?.AllCustomersData}
                     rePerformRequest={performRequest}
+                    isPerforming={isPerformingMainScreenData}
                 />
             </SimpleScrollView>
 

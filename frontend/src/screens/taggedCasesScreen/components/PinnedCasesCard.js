@@ -1,7 +1,7 @@
 import { images } from "../../../assets/images/images";
 import SimpleCard from "../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
-import SimpleLoader from "../../../components/simpleComponents/SimpleLoader";
+import Skeleton from "../../../components/simpleComponents/Skeleton";
 import { TextBold20 } from "../../../components/specializedComponents/text/AllTextKindFile";
 import DefaultState from "../../../components/styledComponents/defaultState/DefaultState";
 import CaseMenuItem from "../../../components/styledComponents/menuItems/CaseMenuItem";
@@ -16,7 +16,16 @@ export default function PinnedCasesCard({ taggedCases, isPerforming, rePerformFu
     if (isPerforming) {
         return (
             <SimpleCard className="lw-pinnedCasesCard">
-                <SimpleLoader />
+                {[1, 2, 3].map(i => (
+                    <SimpleContainer key={i} style={{ padding: '12px 0' }}>
+                        {i !== 1 && <Separator />}
+                        <Skeleton width="60%" height={16} />
+                        <SimpleContainer style={{ display: 'flex', gap: 16, marginTop: 8 }}>
+                            <Skeleton width="30%" height={12} />
+                            <Skeleton width="30%" height={12} />
+                        </SimpleContainer>
+                    </SimpleContainer>
+                ))}
             </SimpleCard>
         )
     }

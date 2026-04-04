@@ -10,7 +10,6 @@ import { ClientMainScreenName } from './screens/client/clientMainScreen/ClientMa
 import { useFromApp } from './providers/FromAppProvider';
 import { loadFirmSettings } from './services/firmSettings';
 import { SigningScreenName } from './screens/signingScreen/SigningScreen';
-import { EvidenceDocumentsScreenName } from './screens/evidenceDocuments/EvidenceDocumentsScreen';
 import EvidenceVerifyScreen, { EvidenceVerifyScreenName } from './screens/verify/EvidenceVerifyScreen';
 import PricingScreen, { PricingScreenName } from './screens/pricingScreen/PricingScreen';
 import SecurityScreen, { SecurityScreenName } from './screens/compliance/SecurityScreen';
@@ -69,15 +68,20 @@ const App = () => {
       setIsFromApp(false);
     }
 
+    // The PublicSignScreen route uses ?token= for a signing JWT, not an auth
+    // token.  Skip URL-param extraction so we don't overwrite the real auth
+    // token in localStorage.
+    const isPublicSignRoute = /^\/PublicSign/i.test(location?.pathname || '');
+
     // Auth credentials: prefer URL params (legacy/deep-links), fall back to
     // localStorage (injected by mobile WebView before page load).
-    const token = searchParams.get('token') || localStorage.getItem('token');
-    const role = searchParams.get('role') || localStorage.getItem('role');
+    const token = (!isPublicSignRoute && searchParams.get('token')) || localStorage.getItem('token');
+    const role = (!isPublicSignRoute && searchParams.get('role')) || localStorage.getItem('role');
 
     // Only navigate to default screen when credentials come from URL params
     // (deep-link / mobile WebView). On normal page refreshes the token is
     // already in localStorage and we should stay on the current route.
-    const isDeepLink = !!(searchParams.get('token') && searchParams.get('role'));
+    const isDeepLink = !isPublicSignRoute && !!(searchParams.get('token') && searchParams.get('role'));
 
     if (token && role) {
       localStorage.setItem('token', token);

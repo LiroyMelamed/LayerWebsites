@@ -3,6 +3,7 @@
 
 .lw-taggedCasesScreen__topRow {
     @include m.row(v.$space-3, no-wrap);
+    justify-content: center;
     max-width: 100%;
     margin: 1rem 1rem 0.5rem;
 }

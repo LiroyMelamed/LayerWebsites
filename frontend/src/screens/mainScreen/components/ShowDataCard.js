@@ -2,17 +2,29 @@ import { icons } from "../../../assets/icons/icons";
 import SimpleCard from "../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
 import SimpleIcon from "../../../components/simpleComponents/SimpleIcon";
+import Skeleton from "../../../components/simpleComponents/Skeleton";
 import { Text12, TextBold14, TextBold36 } from "../../../components/specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../constant/colors";
 import addCommasToNumber from "../../../functions/numbers/addCommasToNumber";
 
 import "./ShowDataCard.scss";
 
-export default function ShowDataCard({ title, icon, numberText, comprationNumber, comprationText, optionalOnClick }) {
+export default function ShowDataCard({ title, icon, numberText, comprationNumber, comprationText, optionalOnClick, isPerforming }) {
     return (
         <SimpleCard className="lw-showDataCard" onPress={optionalOnClick}>
             <TextBold14 >{title}</TextBold14>
 
+            {isPerforming ? (
+                <>
+                <SimpleContainer className="lw-showDataCard__number">
+                    <Skeleton width={80} height={36} borderRadius={6} />
+                </SimpleContainer>
+                <SimpleContainer className="lw-showDataCard__comparisonRow">
+                    <Skeleton width={120} height={12} />
+                </SimpleContainer>
+                </>
+            ) : (
+            <>
             <SimpleContainer className="lw-showDataCard__number">
                 <TextBold36>{numberText}</TextBold36>
             </SimpleContainer>
@@ -39,6 +51,8 @@ export default function ShowDataCard({ title, icon, numberText, comprationNumber
                     </SimpleContainer>
                 </SimpleContainer>
             }
+            </>
+            )}
         </SimpleCard>
     );
 }

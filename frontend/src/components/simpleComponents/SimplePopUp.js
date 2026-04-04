@@ -1,8 +1,7 @@
 // SimplePopUp.js
 import { useRef, isValidElement } from 'react';
 import SimpleContainer from './SimpleContainer';
-import ImageButton from '../specializedComponents/buttons/ImageButton';
-import { icons } from '../../assets/icons/icons';
+import SimpleButton from './SimpleButton';
 
 import './SimplePopUp.scss';
 
@@ -40,13 +39,14 @@ const SimplePopUp = ({ isOpen, children, onClose, className, ...props }) => {
                 {...props}
             >
                 {!isFloatingMenu && onClose && (
-                    <ImageButton
-                        height={12}
-                        width={12}
+                    <SimpleButton
                         onPress={onClose}
                         className="lw-simplePopUp__close"
-                        src={icons.Button.X}
-                    />
+                    >
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L13 13M13 1L1 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
+                    </SimpleButton>
                 )}
                 {isFloatingMenu ? children : (
                     <SimpleContainer className="lw-simplePopUp__content">

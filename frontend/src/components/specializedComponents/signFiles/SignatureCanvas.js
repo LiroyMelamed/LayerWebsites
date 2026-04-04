@@ -77,21 +77,24 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const [otpBusy, setOtpBusy] = useState(false);
     const [fieldValue, setFieldValue] = useState("");
     const [fieldChecked, setFieldChecked] = useState(false);
+    const [clientStampFile, setClientStampFile] = useState(null);
+    const [clientStampPreview, setClientStampPreview] = useState(null);
+    const [stampSignPhase, setStampSignPhase] = useState(false); // true = drawing on top of stamp
+    const [stampNormalizedDataUrl, setStampNormalizedDataUrl] = useState(null);
 
     const getSignModeForSpotType = (type) => {
         const t0 = String(type || 'signature').toLowerCase();
         if (t0 === 'initials') return 'initials';
         if (t0 === 'signature') return 'signature';
+        if (t0 === 'clientstamp') return 'clientStamp';
         return 'field';
     };
 
     const getActiveSpotForMode = (details, current) => {
         if (current) return current;
-        const allSpots = details?.signatureSpots || [];
+        const allSpots = (details?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
         const unsignedRequired = getUnsignedRequiredSpots(allSpots);
         if (unsignedRequired.length > 0) return unsignedRequired[0];
-        const unsignedOptional = getUnsignedOptionalSpots(allSpots);
-        if (unsignedOptional.length > 0) return unsignedOptional[0];
         return null;
     };
 
@@ -252,6 +255,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         switch (type) {
             case 'idnumber':
                 return 'idNumber';
+            case 'clientstamp':
+                return 'clientStamp';
+            case 'lawyerstamp':
+                return 'lawyerStamp';
             default:
                 return type;
         }
@@ -270,11 +277,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     };
 
     const focusNextUnsignedSpot = () => {
-        const allSpots = fileDetails?.signatureSpots || [];
+        const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
         const unsignedRequired = getUnsignedRequiredSpots(allSpots);
-        const unsignedOptional = getUnsignedOptionalSpots(allSpots);
-        const unsigned = unsignedRequired.length > 0 ? unsignedRequired : unsignedOptional;
-        const target = (!currentSpot || currentSpot.IsSigned) ? (unsigned[0] || null) : currentSpot;
+        const target = (!currentSpot || currentSpot.IsSigned) ? (unsignedRequired[0] || null) : currentSpot;
         if (target) {
             setCurrentSpot(target);
             scrollToSpot(target);
@@ -382,8 +387,11 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             try {
                 setLoading(true);
 
-                // Fresh session requires explicit consent; OTP state is per session.
-                setConsentAccepted(false);
+                // Restore consent from localStorage; OTP state is per session.
+                try {
+                    const persisted = localStorage.getItem(consentStorageKey) === "true";
+                    setConsentAccepted(persisted);
+                } catch { setConsentAccepted(false); }
                 setOtpRequested(false);
                 setOtpCode("");
                 setOtpVerified(false);
@@ -447,14 +455,16 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             const ctx = canvas.getContext("2d");
             if (!ctx) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "#999";
-            ctx.font = "12px Arial";
-            ctx.textAlign = "center";
-            ctx.fillText(t("signing.canvas.signHere"), canvas.width / 2, canvas.height / 2);
+            if (!stampSignPhase) {
+                ctx.fillStyle = "#999";
+                ctx.font = "12px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText(t("signing.canvas.signHere"), canvas.width / 2, canvas.height / 2);
+            }
             setHasUserDrawn(false);
             lastPointRef.current = null;
         }
-    }, [currentSpot]);
+    }, [currentSpot, stampSignPhase]);
 
     useEffect(() => {
         if (!currentSpot) return;
@@ -464,6 +474,14 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             const truthy = value === true || value === 'true' || value === 1 || value === '1' || value === 'yes' || value === '✓';
             setFieldChecked(Boolean(truthy));
             setFieldValue(truthy ? 'true' : '');
+        } else if (type === 'date' && !value) {
+            // Auto-fill today's date for empty date fields
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const d = String(now.getDate()).padStart(2, '0');
+            setFieldValue(`${y}-${m}-${d}`);
+            setFieldChecked(false);
         } else {
             setFieldValue(String(value || ""));
             setFieldChecked(false);
@@ -620,7 +638,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         if (!spot || spot.IsSigned) return false;
 
         const spotType = getSpotType(spot);
-        if (!isSignatureLike(spotType)) return false;
+        if (!isSignatureLike(spotType) && spotType !== 'clientstamp') return false;
 
         const requireOtp = otpRequired;
         const consentVersion = String(fileDetails?.file?.SigningPolicyVersion || "2026-01-11");
@@ -736,8 +754,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
         const spots = mergedData?.signatureSpots || [];
         const unsignedRequired = getUnsignedRequiredSpots(spots);
-        const unsignedOptional = getUnsignedOptionalSpots(spots);
-        const nextUnsigned = (unsignedRequired.length > 0 ? unsignedRequired : unsignedOptional)[0] || null;
+        // Only auto-advance to required spots; optional spots are filled manually by tapping on them.
+        const nextUnsigned = unsignedRequired[0] || null;
         setCurrentSpot(nextUnsigned);
         if (nextUnsigned) {
             scrollToSpot(nextUnsigned);
@@ -875,6 +893,102 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         }
     };
 
+    const fileToDataUrl = (file) => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(file);
+    });
+
+    const handleClientStampFileSelected = (file) => {
+        if (!file) return;
+        setClientStampFile(file);
+        const url = URL.createObjectURL(file);
+        setClientStampPreview(url);
+    };
+
+    const clearClientStamp = () => {
+        if (clientStampPreview) URL.revokeObjectURL(clientStampPreview);
+        setClientStampFile(null);
+        setClientStampPreview(null);
+        setStampSignPhase(false);
+        setStampNormalizedDataUrl(null);
+    };
+
+    const saveClientStamp = async () => {
+        if (!currentSpot || currentSpot.IsSigned || !clientStampFile) return;
+        setSaving(true);
+        try {
+            const isPdf = clientStampFile.type === 'application/pdf';
+            let dataUrl;
+            if (isPdf) {
+                dataUrl = await fileToDataUrl(clientStampFile);
+            } else {
+                const rawDataUrl = await fileToDataUrl(clientStampFile);
+                dataUrl = await normalizeSignatureDataUrl(rawDataUrl);
+            }
+            if (!dataUrl) {
+                setMessage({ type: "error", text: t("signing.canvas.clientStampUploadError") });
+                return;
+            }
+            // Enter "sign on stamp" phase: show canvas with stamp as background
+            setStampNormalizedDataUrl(dataUrl);
+            setStampSignPhase(true);
+            clearCanvas();
+            setHasUserDrawn(false);
+        } catch (err) {
+            console.error("Failed to process client stamp", err);
+            setMessage({ type: "error", text: t("signing.canvas.clientStampUploadError") });
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const saveStampWithSignature = async () => {
+        if (!currentSpot || currentSpot.IsSigned || !stampNormalizedDataUrl) return;
+        setSaving(true);
+        try {
+            let finalDataUrl = stampNormalizedDataUrl;
+
+            // If user drew on top, composite stamp + drawing
+            if (hasUserDrawn && canvasRef.current) {
+                const W = 400;
+                const H = 180;
+                const comp = document.createElement('canvas');
+                comp.width = W;
+                comp.height = H;
+                const ctx = comp.getContext('2d');
+                if (ctx) {
+                    // Draw stamp background
+                    const stampImg = new Image();
+                    await new Promise((res, rej) => { stampImg.onload = res; stampImg.onerror = rej; stampImg.src = stampNormalizedDataUrl; });
+                    ctx.drawImage(stampImg, 0, 0, W, H);
+
+                    // Draw the user's strokes on top
+                    const drawingDataUrl = canvasRef.current.toDataURL('image/png');
+                    const drawImg = new Image();
+                    await new Promise((res, rej) => { drawImg.onload = res; drawImg.onerror = rej; drawImg.src = drawingDataUrl; });
+                    ctx.drawImage(drawImg, 0, 0, W, H);
+
+                    finalDataUrl = comp.toDataURL('image/png');
+                }
+            }
+
+            const didSign = await signCurrentSpotWithImage(finalDataUrl);
+            if (!didSign) return;
+
+            setMessage({ type: "success", text: t("signing.canvas.clientStampSavedSuccess") });
+            clearClientStamp();
+            await reloadDetailsAndAdvance();
+            setTimeout(() => setMessage(null), 2000);
+        } catch (err) {
+            console.error("Failed to save client stamp", err);
+            setMessage({ type: "error", text: t("signing.canvas.clientStampUploadError") });
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const useSavedSignatureForNext = async () => {
         try {
             if (!savedSignature?.exists) {
@@ -882,7 +996,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 return;
             }
 
-            const allSpots = fileDetails?.signatureSpots || [];
+            const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
             const unsigned = getUnsignedRequiredSpots(allSpots).filter((s) => getSpotType(s) === 'signature');
             const target = (!currentSpot || currentSpot.IsSigned) ? (unsigned[0] || null) : currentSpot;
             if (!target) return;
@@ -926,7 +1040,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const signAllRemainingSpots = async () => {
         try {
-            const allSpots = fileDetails?.signatureSpots || [];
+            const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
             const unsignedRequired = getUnsignedRequiredSpots(allSpots);
             const unsigned = unsignedRequired.filter((s) => getSpotType(s) === 'signature');
             if (!unsigned.length) return;
@@ -1110,7 +1224,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         );
     }
 
-    const spots = fileDetails.signatureSpots || [];
+    const allSpots = fileDetails.signatureSpots || [];
+    // LawyerStamp spots are pre-signed by the lawyer — hide them from the client view entirely.
+    const spots = allSpots.filter((s) => getSpotType(s) !== 'lawyerstamp');
     const requiredSpots = spots.filter((s) => isSpotRequired(s));
     const effectiveRequiredSpots = requiredSpots;
     const unsignedRequiredSpots = getUnsignedRequiredSpots(spots);
@@ -1124,11 +1240,11 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const currentSignMode = getSignModeForSpotType(currentSpotType);
 
     const goToNextSigningSpot = () => {
-        const unsigned = unsignedRequiredSpots.length > 0 ? unsignedRequiredSpots : unsignedOptionalSpots;
-        if (unsigned.length === 0) return;
+        // Only cycle through required spots — optional spots are not navigated to.
+        if (unsignedRequiredSpots.length === 0) return;
 
         if (!hasStartedNextFlow) {
-            const first = unsigned[0];
+            const first = unsignedRequiredSpots[0];
             setCurrentSpot(first);
             scrollToSpot(first);
             setHasStartedNextFlow(true);
@@ -1136,9 +1252,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         }
 
         const currentId = currentSpot?.SignatureSpotId;
-        const currentIdx = unsigned.findIndex((s) => s.SignatureSpotId === currentId);
-        const nextIdx = currentIdx >= 0 ? (currentIdx + 1) % unsigned.length : 0;
-        const nextSpot = unsigned[nextIdx];
+        const currentIdx = unsignedRequiredSpots.findIndex((s) => s.SignatureSpotId === currentId);
+        const nextIdx = currentIdx >= 0 ? (currentIdx + 1) % unsignedRequiredSpots.length : 0;
+        const nextSpot = unsignedRequiredSpots[nextIdx];
         setCurrentSpot(nextSpot);
         scrollToSpot(nextSpot);
     };
@@ -1242,39 +1358,29 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 </div>
                             )}
 
+                            {remainingCount > 1 && (
+                                <div>
+                                    <div className="lw-signing-nextHeaderRow">
+                                        <PrimaryButton
+                                            className="lw-signing-nextFocus"
+                                            size={buttonSizes.SMALL}
+                                            onPress={() => goToNextSigningSpot()}
+                                            disabled={saving}
+                                        >
+                                            {t("signing.canvas.nextSignature")}
+                                        </PrimaryButton>
+
+                                        <div className="lw-signing-progressHint">
+                                            {effectiveRequiredSpots.length > 0
+                                                ? t("signing.canvas.remainingSignatures", { count: remainingCount })
+                                                : ""}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             {(remainingCount > 0 || optionalRemainingCount > 0) && (
                                 <div>
-                                    {remainingCount > 0 && (
-                                        <div className="lw-signing-nextHeaderRow">
-                                            <PrimaryButton
-                                                className="lw-signing-nextFocus"
-                                                size={buttonSizes.SMALL}
-                                                onPress={() => goToNextSigningSpot()}
-                                                disabled={saving}
-                                            >
-                                                {t("signing.canvas.nextSignature")}
-                                            </PrimaryButton>
-
-                                            <div className="lw-signing-progressHint">
-                                                {effectiveRequiredSpots.length > 0
-                                                    ? t("signing.canvas.remainingSignatures", { count: remainingCount })
-                                                    : ""}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {optionalRemainingCount > 0 && remainingCount === 0 && (
-                                        <div className="lw-signing-nextHeaderRow">
-                                            <PrimaryButton
-                                                className="lw-signing-nextFocus"
-                                                size={buttonSizes.SMALL}
-                                                onPress={() => goToNextSigningSpot()}
-                                                disabled={saving}
-                                            >
-                                                {t("signing.canvas.nextSignature")}
-                                            </PrimaryButton>
-                                        </div>
-                                    )}
 
                                     <div className="lw-signing-actionsRow">
                                         <TertiaryButton size={buttonSizes.SMALL} onPress={() => setShowAllSpots((v) => !v)}>
@@ -1392,7 +1498,88 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 </div>
                             )}
 
-                            {currentSpot && !currentSpot.IsSigned && !currentSpotIsSignature && (
+                            {currentSpot && !currentSpot.IsSigned && currentSignMode === 'clientStamp' && !stampSignPhase && (
+                                <div className="lw-signing-canvasSection">
+                                    <div className="lw-signing-fieldInput">
+                                        <div className="lw-signing-fieldLabel">
+                                            {t("signing.fieldSettings.clientStampTitle")}
+                                        </div>
+                                        <div className="lw-signing-fieldLabel" style={{ fontSize: '0.8rem', opacity: 0.7 }}>
+                                            {t("signing.fieldSettings.clientStampUploadHint")}
+                                        </div>
+                                        {clientStampPreview && (
+                                            <img
+                                                src={clientStampPreview}
+                                                alt={t("signing.fields.clientStamp")}
+                                                className="lw-signing-savedSigPreview"
+                                                style={{ maxHeight: 120, objectFit: 'contain', margin: '0.5rem 0' }}
+                                            />
+                                        )}
+                                        <label className="lw-signing-fileUploadBtn">
+                                            <input
+                                                type="file"
+                                                accept="image/png,image/jpeg,application/pdf"
+                                                onChange={(e) => handleClientStampFileSelected(e.target.files?.[0])}
+                                                disabled={saving}
+                                                className="lw-signing-fileUploadInput"
+                                            />
+                                            {clientStampFile ? clientStampFile.name : t("signing.canvas.chooseFile")}
+                                        </label>
+                                    </div>
+                                    <div className="lw-signing-actionsRow">
+                                        <SecondaryButton size={buttonSizes.MEDIUM} onPress={clearClientStamp} disabled={saving}>
+                                            {t("common.clear")}
+                                        </SecondaryButton>
+                                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={saveClientStamp} disabled={saving || !clientStampFile}>
+                                            {saving ? t("signing.canvas.saving") : t("signing.canvas.nextStep")}
+                                        </PrimaryButton>
+                                    </div>
+                                </div>
+                            )}
+
+                            {currentSpot && !currentSpot.IsSigned && currentSignMode === 'clientStamp' && stampSignPhase && (
+                                <div className="lw-signing-canvasSection">
+                                    <div className="lw-signing-fieldLabel" style={{ padding: '0 0.75rem' }}>
+                                        {t("signing.canvas.signOnStampHint")}
+                                    </div>
+
+                                    <div className="lw-signing-stampCanvasWrap">
+                                        {stampNormalizedDataUrl && (
+                                            <img
+                                                src={stampNormalizedDataUrl}
+                                                alt=""
+                                                className="lw-signing-stampCanvasBg"
+                                            />
+                                        )}
+                                        <canvas
+                                            ref={canvasRef}
+                                            className="lw-signing-canvas lw-signing-canvas--overStamp"
+                                            onPointerDown={startDrawing}
+                                            onPointerMove={drawMove}
+                                            onPointerUp={endDrawing}
+                                            onPointerCancel={endDrawing}
+                                            onPointerLeave={endDrawing}
+                                            onTouchStart={startDrawing}
+                                            onTouchMove={drawMove}
+                                            onTouchEnd={endDrawing}
+                                        />
+                                    </div>
+
+                                    <div className="lw-signing-actionsRow">
+                                        <SecondaryButton size={buttonSizes.MEDIUM} onPress={clearCanvas} disabled={saving}>
+                                            {t("common.clear")}
+                                        </SecondaryButton>
+                                        <TertiaryButton size={buttonSizes.SMALL} onPress={clearClientStamp} disabled={saving}>
+                                            {t("signing.canvas.changeStamp")}
+                                        </TertiaryButton>
+                                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={saveStampWithSignature} disabled={saving}>
+                                            {saving ? t("signing.canvas.saving") : t("signing.canvas.saveField")}
+                                        </PrimaryButton>
+                                    </div>
+                                </div>
+                            )}
+
+                            {currentSpot && !currentSpot.IsSigned && !currentSpotIsSignature && currentSignMode !== 'clientStamp' && (
                                 <div className="lw-signing-canvasSection">
                                     <div className="lw-signing-fieldInput">
                                         <div className="lw-signing-fieldLabel">
@@ -1411,6 +1598,43 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                                 />
                                                 <span>{t("signing.canvas.checkboxLabel")}</span>
                                             </label>
+                                        ) : currentSpotType === 'date' ? (
+                                            <input
+                                                className="lw-signing-fieldInputControl"
+                                                type="text"
+                                                inputMode="numeric"
+                                                placeholder="DD/MM/YYYY"
+                                                value={(() => {
+                                                    // Display stored YYYY-MM-DD as DD/MM/YYYY
+                                                    if (/^\d{4}-\d{2}-\d{2}$/.test(fieldValue)) {
+                                                        const [y, m, d] = fieldValue.split('-');
+                                                        return `${d}/${m}/${y}`;
+                                                    }
+                                                    return fieldValue;
+                                                })()}
+                                                onChange={(e) => {
+                                                    const raw = e.target.value.replace(/[^\d/]/g, '');
+                                                    // Auto-insert slashes
+                                                    let formatted = raw;
+                                                    const digits = raw.replace(/\//g, '');
+                                                    if (digits.length <= 2) {
+                                                        formatted = digits;
+                                                    } else if (digits.length <= 4) {
+                                                        formatted = digits.slice(0, 2) + '/' + digits.slice(2);
+                                                    } else {
+                                                        formatted = digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4, 8);
+                                                    }
+                                                    // Convert complete DD/MM/YYYY to YYYY-MM-DD for storage
+                                                    if (/^\d{2}\/\d{2}\/\d{4}$/.test(formatted)) {
+                                                        const [dd, mm, yyyy] = formatted.split('/');
+                                                        setFieldValue(`${yyyy}-${mm}-${dd}`);
+                                                    } else {
+                                                        setFieldValue(formatted);
+                                                    }
+                                                }}
+                                                maxLength={10}
+                                                disabled={saving}
+                                            />
                                         ) : (
                                             <input
                                                 className="lw-signing-fieldInputControl"

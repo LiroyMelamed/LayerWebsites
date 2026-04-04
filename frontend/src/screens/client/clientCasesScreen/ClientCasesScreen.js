@@ -20,22 +20,20 @@ export default function ClientCasesScreen() {
     const { isSmallScreen } = useScreenSize();
     const { result: allCases, isPerforming: isPerformingAllCases } = useAutoHttpRequest(casesApi.getAllCases);
 
-    if (isPerformingAllCases) {
-        return <SimpleLoader />;
-    }
-
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
             {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={ClientStackName + ClientMainScreenName} GetNavBarData={getClientNavBarData} isClient={true} />}
 
             <SimpleScrollView>
                 <OpenCasesCard
-                    openCases={allCases.filter(caseItem => caseItem.IsClosed === false)}
+                    openCases={(allCases || []).filter(caseItem => caseItem.IsClosed === false)}
+                    isPerforming={isPerformingAllCases}
                 />
 
                 <ClosedCasesCard
-                    closedCases={allCases.filter(caseItem => caseItem.IsClosed === true)}
+                    closedCases={(allCases || []).filter(caseItem => caseItem.IsClosed === true)}
                     className="lw-clientCasesScreen__closedCard"
+                    isPerforming={isPerformingAllCases}
                 />
             </SimpleScrollView>
         </SimpleScreen>

@@ -2,7 +2,7 @@ import { images } from "../../../assets/images/images";
 import { useTranslation } from "react-i18next";
 import SimpleCard from "../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
-import SimpleLoader from "../../../components/simpleComponents/SimpleLoader";
+import Skeleton from "../../../components/simpleComponents/Skeleton";
 import { Text14, TextBold14 } from "../../../components/specializedComponents/text/AllTextKindFile";
 import DefaultState from "../../../components/styledComponents/defaultState/DefaultState";
 import AdminMenuItem from "../../../components/styledComponents/menuItems/AdminMenuItem";
@@ -17,7 +17,24 @@ export default function AdminsCard({ adminList, isPerforming, performGetAdmins, 
     if (isPerforming) {
         return (
             <SimpleCard className="lw-adminsCard lw-adminsCard--loading">
-                <SimpleLoader />
+                <SimpleContainer className="lw-adminsCard__headerRow">
+                    <Skeleton width="25%" height={14} />
+                    <Skeleton width="20%" height={14} />
+                    <Skeleton width="25%" height={14} />
+                    <Skeleton width="15%" height={14} />
+                </SimpleContainer>
+                <Separator />
+                {[1, 2, 3].map(i => (
+                    <SimpleContainer key={i} style={{ padding: '12px 0' }}>
+                        {i !== 1 && <Separator />}
+                        <SimpleContainer style={{ display: 'flex', gap: 16, padding: '8px 0' }}>
+                            <Skeleton width="25%" height={14} />
+                            <Skeleton width="20%" height={14} />
+                            <Skeleton width="25%" height={14} />
+                            <Skeleton width="15%" height={14} />
+                        </SimpleContainer>
+                    </SimpleContainer>
+                ))}
             </SimpleCard>
         )
     }

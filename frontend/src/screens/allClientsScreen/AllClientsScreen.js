@@ -87,10 +87,6 @@ export default function AllClientsScreen() {
 
     const displayList = filteredClients || allCustomers;
 
-    if (isPerforming) {
-        return <SimpleLoader />;
-    }
-
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
             {isSmallScreen && <TopToolBarSmallScreen chosenNavKey="allClients" LogoNavigate={AdminStackName + MainScreenName} />}
@@ -122,7 +118,7 @@ export default function AllClientsScreen() {
                     />
                 </SimpleContainer>
 
-                {(!displayList || displayList.length === 0) ? (
+                {(!isPerforming && (!displayList || displayList.length === 0)) ? (
                     <DefaultState
                         content={t("customers.emptyList")}
                         imageClassName="lw-defaultState__image--h156"
@@ -132,6 +128,7 @@ export default function AllClientsScreen() {
                     <ClientsCard
                         customerList={displayList}
                         rePerformRequest={reperformAfterSave}
+                        isPerforming={isPerforming}
                     />
                 )}
             </SimpleScrollView>

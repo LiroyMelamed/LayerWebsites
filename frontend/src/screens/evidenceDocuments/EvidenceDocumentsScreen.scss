@@ -18,6 +18,7 @@
 .lw-evidenceDocuments__row {
     @include m.row(v.$space-3, wrap);
     align-items: flex-end;
+    justify-content: center;
 }
 
 .lw-evidenceDocuments__search {

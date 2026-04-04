@@ -1,6 +1,12 @@
 @use '../../styles/variables' as v;
 @use '../../styles/mixins' as m;
 
+.lw-publicSigningScreen .lw-simpleScreen__content {
+    width: 100%;
+    margin-right: 0;
+    align-items: center;
+}
+
 .lw-publicSigningScreen__container {
     width: 100%;
     height: 100vh;

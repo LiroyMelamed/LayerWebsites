@@ -135,41 +135,11 @@ export default function AllCasesScreen() {
     const managerNames = [...new Set((allCases || []).map(c => c.CaseManager).filter(Boolean))].sort();
     const companyNames = [...new Set((allCases || []).map(c => c.CompanyName).filter(Boolean))].sort();
 
-    if (isPerformingAllCases || isPerformingAllCasesTypes) {
-        return <SimpleLoader />;
-    }
-
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
             {isSmallScreen && <TopToolBarSmallScreen chosenNavKey="allCases" LogoNavigate={AdminStackName + MainScreenName} />}
 
             <SimpleScrollView>
-                <SimpleContainer className="lw-allCasesScreen__topRow">
-                    <FilterSearchInput
-                        items={caseNames}
-                        placeholder={t('cases.searchCaseTitle')}
-                        titleFontSize={20}
-                        onSelect={handleFilterByCaseName}
-                        className="lw-allCasesScreen__search"
-                    />
-
-                    <FilterSearchInput
-                        items={clientNames}
-                        placeholder={t('cases.customerName')}
-                        titleFontSize={20}
-                        onSelect={handleFilterByClient}
-                        className="lw-allCasesScreen__clientFilter"
-                    />
-
-                    <FilterSearchInput
-                        items={companyNames}
-                        placeholder={t('cases.companyName')}
-                        titleFontSize={20}
-                        onSelect={handleFilterByCompany}
-                        className="lw-allCasesScreen__companyFilter"
-                    />
-                </SimpleContainer>
-
                 <SimpleContainer className="lw-allCasesScreen__filtersRow">
                     <ChooseButton
                         buttonText={t('cases.statusFilter')}
@@ -194,6 +164,32 @@ export default function AllCasesScreen() {
                         items={managerNames.map((name) => ({ value: name, label: name }))}
                         className="lw-allCasesScreen__choose"
                         OnPressChoiceFunction={handleFilterByManager}
+                    />
+                </SimpleContainer>
+
+                <SimpleContainer className="lw-allCasesScreen__topRow">
+                    <FilterSearchInput
+                        items={caseNames}
+                        placeholder={t('cases.searchCaseTitle')}
+                        titleFontSize={20}
+                        onSelect={handleFilterByCaseName}
+                        className="lw-allCasesScreen__search"
+                    />
+
+                    <FilterSearchInput
+                        items={clientNames}
+                        placeholder={t('cases.customerName')}
+                        titleFontSize={20}
+                        onSelect={handleFilterByClient}
+                        className="lw-allCasesScreen__clientFilter"
+                    />
+
+                    <FilterSearchInput
+                        items={companyNames}
+                        placeholder={t('cases.companyName')}
+                        titleFontSize={20}
+                        onSelect={handleFilterByCompany}
+                        className="lw-allCasesScreen__companyFilter"
                     />
                 </SimpleContainer>
 

@@ -5,11 +5,6 @@ html {
   font-size: 16px; // baseline: 1rem = 16px
 }
 
-body {
-  font-size: v.$font-size-base;
-  line-height: v.$line-height-base;
-}
-
 html,
 body,
 #root {
@@ -36,10 +31,15 @@ svg {
 }
 
 body {
+  font-size: v.$font-size-base;
+  line-height: v.$line-height-base;
   font-family: var(--lw-font-stack);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  direction: rtl;
+  unicode-bidi: plaintext;
 }
+
 
 /* Hide native scrollbars globally (keep scroll behavior). */
 html,

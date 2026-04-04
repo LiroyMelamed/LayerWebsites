@@ -2,7 +2,8 @@ import React, { useState, useCallback, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import remindersApi from "../../../api/remindersApi";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
-import SimpleLoader from "../../../components/simpleComponents/SimpleLoader";
+import Skeleton from "../../../components/simpleComponents/Skeleton";
+import SimpleCard from "../../../components/simpleComponents/SimpleCard";
 import ChooseButton from "../../../components/styledComponents/buttons/ChooseButton";
 import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
@@ -63,7 +64,7 @@ export default function ImportRemindersModal({ closePopUpFunction, rePerformRequ
             {/* Template selector */}
             <SimpleContainer className="lw-importReminders__field">
                 {loadingTemplates ? (
-                    <SimpleLoader />
+                    <Skeleton width="100%" height={36} borderRadius={6} />
                 ) : (
                     <ChooseButton
                         buttonText={t("reminders.import.templateLabel")}
@@ -119,7 +120,7 @@ export default function ImportRemindersModal({ closePopUpFunction, rePerformRequ
                                 <Text14 key={i} className={`lw-importReminders__detail lw-importReminders__detail--${d.status}`}>
                                     {t("reminders.import.row")} {d.row}: {d.clientName}
                                     {d.email ? ` (${d.email})` : ""}
-                                    {d.date ? ` → ${new Date(d.date).toLocaleDateString("he-IL")}` : ""}
+                                    {d.date ? ` → ${new Date(d.date).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' })}` : ""}
                                     {" — "}
                                     {t(`reminders.import.status${d.status.charAt(0).toUpperCase() + d.status.slice(1)}`)}
                                     {d.reason ? ` (${d.reason})` : ""}
@@ -133,7 +134,7 @@ export default function ImportRemindersModal({ closePopUpFunction, rePerformRequ
                 </SimpleContainer>
             )}
 
-            {uploading && <SimpleLoader />}
+            {uploading && <Skeleton width="100%" height={36} borderRadius={6} />}
 
             <SimpleContainer className="lw-importReminders__actions">
                 <PrimaryButton onPress={doUpload} disabled={!file || uploading}>

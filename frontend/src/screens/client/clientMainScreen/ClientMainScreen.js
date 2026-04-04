@@ -26,10 +26,6 @@ export default function ClientMainScreen() {
     const { isSmallScreen } = useScreenSize();
     const { result: dashboardData, isPerforming: isPerformingDashboard } = useAutoHttpRequest(casesApi.getClientDashboardData);
 
-    if (isPerformingDashboard) {
-        return <SimpleLoader />;
-    }
-
     const totalCases = dashboardData?.totalCases ?? 0;
     const openCases = dashboardData?.openCases ?? 0;
     const closedCases = dashboardData?.closedCases ?? 0;
@@ -48,6 +44,7 @@ export default function ClientMainScreen() {
                         centerText={`${totalCases}`}
                         subText={t("mainScreen.totalCases")}
                         className="lw-clientMainScreen__comparisonCard"
+                        isPerforming={isPerformingDashboard}
                     />
                 </SimpleContainer>
 
@@ -57,11 +54,13 @@ export default function ClientMainScreen() {
                             numberText={totalCases}
                             title={t("mainScreen.totalCases")}
                             optionalOnClick={() => { navigate(ClientStackName + ClientCasesScreenName) }}
+                            isPerforming={isPerformingDashboard}
                         />
                         <ShowDataCard
                             numberText={closedCases}
                             title={t("cases.closedCases")}
                             optionalOnClick={() => { navigate(ClientStackName + ClientCasesScreenName) }}
+                            isPerforming={isPerformingDashboard}
                         />
                     </SimpleContainer>
 
@@ -70,6 +69,7 @@ export default function ClientMainScreen() {
                             numberText={openCases}
                             title={t("cases.openCases")}
                             optionalOnClick={() => { navigate(ClientStackName + ClientCasesScreenName) }}
+                            isPerforming={isPerformingDashboard}
                         />
                     </SimpleContainer>
                 </SimpleContainer>

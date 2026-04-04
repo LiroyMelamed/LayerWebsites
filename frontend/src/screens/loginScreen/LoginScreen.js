@@ -35,6 +35,11 @@ export default function LoginScreen() {
         setPhoneNumber(normalized.slice(0, 10));
     };
 
+    const handleKeyDown = (event) => {
+        if (event.key === 'Enter' && !isPerforming && phoneNumberError == null) {
+            performRequest(phoneNumber);
+        }
+    };
 
     return (
         <LoginSimpleScreen
@@ -56,6 +61,7 @@ export default function LoginScreen() {
                     className="lw-loginScreen__input"
                     value={phoneNumber}
                     onChange={handleInputChange}
+                    onKeyDown={handleKeyDown}
                     error={phoneNumberError}
                     textStyle={{ textAlign: 'center' }}
                     maxLength={10}

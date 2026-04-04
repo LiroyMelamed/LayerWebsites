@@ -17,7 +17,7 @@ import SimplePopUp from "../../../components/simpleComponents/SimplePopUp";
 import SearchInput from "../../../components/specializedComponents/containers/SearchInput";
 import { Text14 } from "../../../components/specializedComponents/text/AllTextKindFile";
 
-import { formatDateForInput } from "../../../functions/date/formatDateForInput";
+import { formatDateForInput, parseDateInput } from "../../../functions/date/formatDateForInput";
 import "./ClientPopUp.scss";
 
 export default function ClientPopup({ clientDetails, initialName, rePerformRequest, onFailureFunction, closePopUpFunction, style: _style }) {
@@ -140,7 +140,7 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
             phoneNumber: (phoneNumber || '').trim(),
             email: (email || '').trim(),
             companyName: (companyName || '').trim(),
-            dateOfBirth: dateOfBirth || null
+            dateOfBirth: parseDateInput(dateOfBirth) || null
         };
 
         if (selectedClient) {
@@ -263,7 +263,7 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
                     <SimpleInput
                         className="lw-clientPopup__input"
                         title={t("profile.dateOfBirth")}
-                        type="date"
+                        placeholder="dd/mm/yyyy"
                         value={dateOfBirth || ""}
                         onChange={(e) => setDateOfBirth(e.target.value)}
                     />

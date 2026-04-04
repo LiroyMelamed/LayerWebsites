@@ -11,7 +11,7 @@ const { sendMessage, WEBSITE_DOMAIN } = require("../utils/sendMessage");
 const { detectHebrewSignatureSpotsFromPdfBuffer, streamToBuffer } = require("../utils/signatureDetection");
 const { renderTemplate } = require("../utils/templateRenderer");
 const { getSetting } = require("../services/settingsService");
-const { PDFDocument, StandardFonts } = require("pdf-lib");
+const { PDFDocument, StandardFonts, rgb } = require("pdf-lib");
 let fontkit = null;
 try {
     // Optional: enables embedding TTF fonts (e.g., Hebrew) in pdf-lib.
@@ -1331,17 +1331,36 @@ async function generateSignedPdfBuffer({ pdfKey, spots }) {
                 height: h,
             });
         } else if (fieldValue !== null && fieldValue !== undefined && String(fieldValue).length > 0) {
-            const text = String(fieldValue);
+            let text = String(fieldValue);
+            // Format dates as DD/MM/YYYY for display in the PDF
+            if (fieldType === 'date' && /^\d{4}-\d{2}-\d{2}$/.test(text)) {
+                const [yr, mo, da] = text.split('-');
+                text = `${da}/${mo}/${yr}`;
+            }
             const baseFont = (hebrewFont && isLikelyHebrew(text)) ? hebrewFont : latinFont;
             const fontSize = clamp(h * 0.6, 8, 14);
             if (fieldType === 'checkbox') {
                 const checked = text === 'true' || text === '1' || text.toLowerCase() === 'yes' || text === '✓';
                 if (checked) {
-                    page.drawText('✓', {
-                        x: x + 4,
-                        y: y + Math.max(2, h * 0.2),
-                        size: Math.min(16, h * 0.8),
-                        font: baseFont,
+                    // Draw a checkmark using lines instead of a font glyph (Helvetica lacks ✓)
+                    const cx = x + w / 2;
+                    const cy = y + h / 2;
+                    const sz = Math.min(w, h) * 0.35;
+                    const lineWidth = Math.max(1.5, sz * 0.2);
+                    const green = rgb(0.13, 0.55, 0.13);
+                    // Short stroke: bottom-left to bottom-center
+                    page.drawLine({
+                        start: { x: cx - sz * 0.5, y: cy },
+                        end: { x: cx - sz * 0.1, y: cy - sz * 0.4 },
+                        thickness: lineWidth,
+                        color: green,
+                    });
+                    // Long stroke: bottom-center to top-right
+                    page.drawLine({
+                        start: { x: cx - sz * 0.1, y: cy - sz * 0.4 },
+                        end: { x: cx + sz * 0.5, y: cy + sz * 0.45 },
+                        thickness: lineWidth,
+                        color: green,
                     });
                 }
             } else {
@@ -1897,6 +1916,14 @@ exports.uploadFileForSigning = async (req, res, next) => {
                     signerUserId = Number(spot.signeruserid);
                 }
 
+                if (Number.isNaN(signerUserId)) signerUserId = null;
+
+                // Manual signers have negative temp IDs from the frontend — these don't exist
+                // in the users table, so we must store NULL to satisfy the FK constraint.
+                // Clear them early so the signerIndex / signerName fallbacks can resolve
+                // the real userId from signersList.
+                if (signerUserId !== null && signerUserId < 0) signerUserId = null;
+
                 // If spot has a signerIndex, use that signer
                 if ((signerUserId === null || Number.isNaN(signerUserId)) && spot.signerIndex !== undefined && spot.signerIndex !== null) {
                     const idx = Number(spot.signerIndex);
@@ -1913,9 +1940,7 @@ exports.uploadFileForSigning = async (req, res, next) => {
                 }
 
                 if (Number.isNaN(signerUserId)) signerUserId = null;
-
-                // Manual signers have negative temp IDs from the frontend — these don't exist
-                // in the users table, so we must store NULL to satisfy the FK constraint.
+                // Final safety: reject any remaining negative IDs
                 if (signerUserId !== null && signerUserId < 0) signerUserId = null;
 
                 console.log(`[controller]   Spot page ${spot.pageNum}: signerIndex=${spot.signerIndex}, signerName="${signerName}", signerUserId=${signerUserId}`);
@@ -1966,6 +1991,26 @@ exports.uploadFileForSigning = async (req, res, next) => {
                     if (schemaSupport.signaturespotsFieldLabel) {
                         insertColumns.push('fieldlabel');
                         insertValues.push(spotLabel);
+                    }
+
+                    // LawyerStamp spots are pre-composed by the lawyer during upload.
+                    // Store the stamp image in R2 and mark the spot as already signed.
+                    const stampDataUrl = spot.stampImageDataUrl || spot.stampimageDataUrl || null;
+                    if (spotType === 'lawyerstamp' && stampDataUrl) {
+                        try {
+                            const { buffer } = decodeBase64DataUrl(stampDataUrl);
+                            const stampKey = `signatures/${lawyerId}/stamp_${signingFileId}_${uuid()}.png`;
+                            await r2.send(new PutObjectCommand({
+                                Bucket: BUCKET,
+                                Key: stampKey,
+                                Body: buffer,
+                                ContentType: 'image/png',
+                            }));
+                            insertColumns.push('issigned', 'signedat', 'signaturedata');
+                            insertValues.push(true, new Date(), stampKey);
+                        } catch (stampErr) {
+                            console.error('[controller] Failed to upload lawyerStamp image, spot will be unsigned:', stampErr?.message);
+                        }
                     }
 
                     const placeholders = insertValues.map((_, idx) => `$${idx + 1}`).join(',');
@@ -2429,7 +2474,7 @@ exports.getSigningFileDetails = async (req, res, next) => {
 
         // If client (not lawyer), only show their own signature spots
         if (schemaSupport.signaturespotsSignerUserId && !isLawyer) {
-            spotsQuery += ` and (signeruserid = $2 or signeruserid is null)`;
+            spotsQuery += ` and signeruserid = $2`;
             spotsParams.push(userId);
         }
 
@@ -3875,8 +3920,9 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
 
         const spotsParams = [signingFileId];
 
-        if (schemaSupport.signaturespotsSignerUserId && !isLawyer) {
-            spotsQuery += ` and (signeruserid = $2 or signeruserid is null)`;
+        // Public signing: always filter by the signer's userId, even if they happen to be the lawyer
+        if (schemaSupport.signaturespotsSignerUserId) {
+            spotsQuery += ` and signeruserid = $2`;
             spotsParams.push(signerUserId);
         }
 
@@ -3919,14 +3965,15 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
             );
             signingOrder = orderRes.rows[0]?.signingorder || 'parallel';
 
-            if (signingOrder === 'sequential' && !isLawyer && schemaSupport.signaturespotsSignerUserId) {
+            if (signingOrder === 'sequential' && schemaSupport.signaturespotsSignerUserId) {
                 // Find the lowest signerindex with unsigned required spots (across ALL signers)
                 const lowestRes = await pool.query(
                     `select min(signerindex) as "minIndex"
                      from signaturespots
                      where signingfileid = $1
                        and isrequired = true
-                       and issigned = false`,
+                       and issigned = false
+                       and coalesce(fieldtype, 'signature') not in ('lawyerstamp')`,
                     [signingFileId]
                 );
                 // Find this signer's index
@@ -4648,9 +4695,12 @@ exports.signFile = async (req, res, next) => {
 
         const spot = spotResult.rows[0];
 
-        // Check authorization: user can sign if they're the primary client OR specifically assigned to this spot
+        // Check authorization: if the spot has a specific signer assigned, only that signer can sign it.
+        // Fall back to primary client check only for unassigned spots (legacy / single-signer).
         const isAuthorized = schemaSupport.signaturespotsSignerUserId
-            ? (file.ClientId === userId || (spot.SignerUserId && spot.SignerUserId === userId))
+            ? (spot.SignerUserId
+                ? spot.SignerUserId === userId
+                : file.ClientId === userId)
             : (file.ClientId === userId);
 
         if (!isAuthorized) {
@@ -4674,7 +4724,8 @@ exports.signFile = async (req, res, next) => {
                      from signaturespots
                      where signingfileid = $1
                        and isrequired = true
-                       and issigned = false`,
+                       and issigned = false
+                       and coalesce(fieldtype, 'signature') not in ('lawyerstamp')`,
                     [signingFileId]
                 );
                 const minIndex = lowestUnsigned.rows[0]?.minIndex;
@@ -4698,7 +4749,7 @@ exports.signFile = async (req, res, next) => {
         const effectivePolicyVersion = String(file.SigningPolicyVersion || SIGNING_POLICY_VERSION);
         const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy);
         const spotType = String(spot.FieldType || 'signature').toLowerCase();
-        const isSignatureLike = spotType === 'signature' || spotType === 'initials';
+        const isSignatureLike = spotType === 'signature' || spotType === 'initials' || spotType === 'clientstamp';
         const fieldValueRaw = req.body?.fieldValue ?? req.body?.field_value;
         const fieldValue = fieldValueRaw === undefined || fieldValueRaw === null ? '' : String(fieldValueRaw).trim();
         if (!consentAccepted) {
@@ -5426,6 +5477,9 @@ exports.reuploadFile = async (req, res, next) => {
                     signerUserId = Number(spot.signeruserid);
                 }
 
+                if (Number.isNaN(signerUserId)) signerUserId = null;
+                if (signerUserId !== null && signerUserId < 0) signerUserId = null;
+
                 // Fallback to signerIndex
                 if ((signerUserId === null || Number.isNaN(signerUserId)) && spot.signerIndex !== undefined && spot.signerIndex !== null) {
                     const idx = Number(spot.signerIndex);
@@ -5442,6 +5496,7 @@ exports.reuploadFile = async (req, res, next) => {
                 }
 
                 if (Number.isNaN(signerUserId)) signerUserId = null;
+                if (signerUserId !== null && signerUserId < 0) signerUserId = null;
 
                 const spotType = String(spot.fieldType || spot.type || spot.FieldType || 'signature').toLowerCase();
                 const spotLabel = spot.fieldLabel || spot.label || null;
@@ -5486,6 +5541,25 @@ exports.reuploadFile = async (req, res, next) => {
                     if (schemaSupport.signaturespotsFieldLabel) {
                         insertColumns.push('fieldlabel');
                         insertValues.push(spotLabel);
+                    }
+
+                    // LawyerStamp spots are pre-composed by the lawyer during upload.
+                    const stampDataUrl = spot.stampImageDataUrl || spot.stampimageDataUrl || null;
+                    if (spotType === 'lawyerstamp' && stampDataUrl) {
+                        try {
+                            const { buffer } = decodeBase64DataUrl(stampDataUrl);
+                            const stampKey = `signatures/${signingFileId}/stamp_reup_${uuid()}.png`;
+                            await r2.send(new PutObjectCommand({
+                                Bucket: BUCKET,
+                                Key: stampKey,
+                                Body: buffer,
+                                ContentType: 'image/png',
+                            }));
+                            insertColumns.push('issigned', 'signedat', 'signaturedata');
+                            insertValues.push(true, new Date(), stampKey);
+                        } catch (stampErr) {
+                            console.error('[controller] Failed to upload lawyerStamp image (re-upload), spot will be unsigned:', stampErr?.message);
+                        }
                     }
 
                     const placeholders = insertValues.map((_, idx) => `$${idx + 1}`).join(',');

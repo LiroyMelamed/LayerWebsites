@@ -6,7 +6,8 @@ import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
 import SimpleScrollView from "../../components/simpleComponents/SimpleScrollView";
 import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
-import SimpleLoader from "../../components/simpleComponents/SimpleLoader";
+import Skeleton from "../../components/simpleComponents/Skeleton";
+import SimpleCard from "../../components/simpleComponents/SimpleCard";
 import SimpleInput from "../../components/simpleComponents/SimpleInput";
 
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
@@ -24,7 +25,6 @@ import { SigningManagerScreenName } from "./SigningManagerScreen";
 
 import { uploadFileToR2 } from "../../utils/fileUploadUtils";
 import PdfViewer from "../../components/specializedComponents/signFiles/pdfViewer/PdfViewer";
-import FieldTypeNavbar from "../../components/specializedComponents/signFiles/fieldToolbar/FieldTypeNavbar";
 import FloatingAddField from "../../components/specializedComponents/signFiles/fieldToolbar/FloatingAddField";
 import AddFieldPanel from "../../components/specializedComponents/signFiles/fieldToolbar/AddFieldPanel";
 import SearchInput from "../../components/specializedComponents/containers/SearchInput";
@@ -53,6 +53,7 @@ const buildFieldTypeOptions = (t) => ([
     { id: 'checkbox', label: t('signing.fields.checkbox'), shortLabel: t('signing.fields.checkboxShort') },
     { id: 'idnumber', label: t('signing.fields.idNumber'), shortLabel: t('signing.fields.idNumberShort') },
     { id: 'lawyerStamp', label: t('signing.fields.lawyerStamp'), shortLabel: t('signing.fields.lawyerStampShort') },
+    { id: 'clientStamp', label: t('signing.fields.clientStamp'), shortLabel: t('signing.fields.clientStampShort') },
 ]);
 
 function FieldSettingsPopup({
@@ -643,7 +644,7 @@ export default function UploadFileForSigningScreen() {
                 signerIndex: signerIdx,
                 signerUserId: signer?.UserId,
                 signerName,
-                isRequired: true,
+                isRequired: false,
                 type: 'lawyerStamp',
                 stampImageDataUrl: compositeDataUrl,
             },
@@ -1207,11 +1208,6 @@ export default function UploadFileForSigningScreen() {
                                             </SimpleContainer>
                                         </SimpleContainer>
                                     )}
-                                    <FieldTypeNavbar
-                                        selected={selectedFieldType}
-                                        onSelect={setSelectedFieldType}
-                                        fieldTypes={fieldTypeOptions}
-                                    />
                                     <SimpleContainer className="lw-signing-pdfViewerRow">
                                         {!isSmallScreen && (
                                             <AddFieldPanel
@@ -1274,7 +1270,7 @@ export default function UploadFileForSigningScreen() {
 
                         {loading && (
                             <SimpleContainer className="lw-uploadSigningScreen__loading">
-                                <SimpleLoader />
+                                <Skeleton width="100%" height={40} borderRadius={6} />
                             </SimpleContainer>
                         )}
                     </SimpleContainer>

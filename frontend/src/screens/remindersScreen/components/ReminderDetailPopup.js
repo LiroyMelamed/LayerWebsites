@@ -8,25 +8,8 @@ import { Text20, Text14, Text12 } from "../../../components/specializedComponent
 import useHttpRequest from "../../../hooks/useHttpRequest";
 import remindersApi from "../../../api/remindersApi";
 
+import { formatDateTimeForInput, parseDateTimeInput } from "../../../functions/date/formatDateForInput";
 import "./ReminderDetailPopup.scss";
-
-function formatDate(dateStr) {
-    if (!dateStr) return "—";
-    return new Date(dateStr).toLocaleString("he-IL", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
-}
-
-function toDatetimeLocal(dateStr) {
-    if (!dateStr) return "";
-    const d = new Date(dateStr);
-    const pad = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
 
 function DetailRow({ label, children }) {
     return (
@@ -46,7 +29,7 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
         client_name: reminder?.client_name || "",
         to_email: reminder?.to_email || "",
         subject: reminder?.subject || "",
-        scheduled_for: toDatetimeLocal(reminder?.scheduled_for),
+        scheduled_for: formatDateTimeForInput(reminder?.scheduled_for),
     });
     const [displayData, setDisplayData] = useState({
         client_name: reminder?.client_name || "",
@@ -62,7 +45,7 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
                 client_name: editData.client_name,
                 to_email: editData.to_email,
                 subject: editData.subject,
-                scheduled_for: editData.scheduled_for ? new Date(editData.scheduled_for).toISOString() : displayData.scheduled_for,
+                scheduled_for: editData.scheduled_for ? new Date(parseDateTimeInput(editData.scheduled_for)).toISOString() : displayData.scheduled_for,
             });
             setEditing(false);
             onUpdated?.();
@@ -75,7 +58,7 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
             client_name: editData.client_name,
             to_email: editData.to_email,
             subject: editData.subject,
-            scheduled_for: editData.scheduled_for ? new Date(editData.scheduled_for).toISOString() : undefined,
+            scheduled_for: editData.scheduled_for ? new Date(parseDateTimeInput(editData.scheduled_for)).toISOString() : undefined,
         };
         saveReminder(reminder.id, payload);
     };
@@ -121,13 +104,13 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
                 <DetailRow label={t("reminders.col.scheduledFor")}>
                     {editing ? (
                         <SimpleInput
-                            type="datetime-local"
+                            placeholder="dd/mm/yyyy, HH:mm"
                             value={editData.scheduled_for}
                             onChange={(e) => setEditData((prev) => ({ ...prev, scheduled_for: e.target.value }))}
                             className="lw-reminderDetail__editInput"
                         />
                     ) : (
-                        <Text14>{formatDate(displayData.scheduled_for)}</Text14>
+                        <Text14>{formatDateTimeForInput(displayData.scheduled_for) || "—"}</Text14>
                     )}
                 </DetailRow>
 
@@ -138,7 +121,7 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
                 </DetailRow>
 
                 <DetailRow label={t("reminders.col.sentAt")}>
-                    <Text14>{reminder.sent_at ? formatDate(reminder.sent_at) : "—"}</Text14>
+                    <Text14>{reminder.sent_at ? formatDateTimeForInput(reminder.sent_at) : "—"}</Text14>
                 </DetailRow>
 
                 {(editing || displayData.subject) && (

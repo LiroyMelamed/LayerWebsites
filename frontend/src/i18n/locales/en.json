@@ -691,8 +691,10 @@
             "checkboxShort": "Check",
             "idNumber": "ID/Number",
             "idNumberShort": "ID",
-            "lawyerStamp": "Lawyer stamp + signature",
-            "lawyerStampShort": "Stamp"
+            "lawyerStamp": "Stamp + manager signature",
+            "lawyerStampShort": "Stamp",
+            "clientStamp": "Client stamp",
+            "clientStampShort": "C.Stamp"
         },
         "fieldSettings": {
             "addFieldTitle": "Add field",
@@ -714,12 +716,14 @@
             "confirmTitle": "Remove field",
             "confirmDelete": "Are you sure you want to remove this field?",
             "addFieldForPage": "Add field to page {{page}}",
-            "lawyerStampTitle": "Upload lawyer stamp",
+            "lawyerStampTitle": "Upload stamp + manager signature",
             "lawyerStampUploadHint": "Upload a PDF or image of the stamp",
             "lawyerStampDrawTitle": "Hand signature on stamp",
             "lawyerStampDrawHint": "Draw your signature on the stamp",
             "lawyerStampClearDraw": "Clear signature",
-            "lawyerStampConfirm": "Confirm stamp & signature"
+            "lawyerStampConfirm": "Confirm stamp & signature",
+            "clientStampTitle": "Client stamp",
+            "clientStampUploadHint": "The client will upload a PNG or PDF of their stamp when signing"
         },
         "context": {
             "edit": "Edit field settings",
@@ -829,7 +833,13 @@
             "spotAlreadySigned": "This signature spot is already signed by you",
             "allRequiredCompleted": "You have completed all required signatures!",
             "rejectDocument": "Reject document",
-            "failedToLoadSignatureImage": "Failed to load signature image"
+            "failedToLoadSignatureImage": "Failed to load signature image",
+            "clientStampSavedSuccess": "Client stamp saved successfully",
+            "clientStampUploadError": "Failed to upload client stamp",
+            "chooseFile": "Choose File",
+            "signOnStampHint": "You can sign on top of the stamp (optional)",
+            "changeStamp": "Change stamp",
+            "nextStep": "Continue"
         },
         "screen": {
             "tabPending": "Pending for signature ({{count}})",

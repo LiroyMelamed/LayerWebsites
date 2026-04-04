@@ -84,40 +84,11 @@ export default function MyCasesScreen() {
     const managerNames = [...new Set((myCases || []).map(c => c.CaseManager).filter(Boolean))].sort();
     const companyNames = [...new Set((myCases || []).map(c => c.CompanyName).filter(Boolean))].sort();
 
-    if (isPerformingMyCases || isPerformingAllCasesTypes) {
-        return <SimpleLoader />;
-    }
-
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
             {isSmallScreen && <TopToolBarSmallScreen chosenNavKey="myCases" LogoNavigate={AdminStackName + MainScreenName} />}
 
             <SimpleScrollView>
-                <SimpleContainer className="lw-myCasesScreen__topRow">
-                    <SearchInput
-                        onSearch={setQuery}
-                        title={t('cases.searchMyCases')}
-                        titleFontSize={20}
-                        className="lw-myCasesScreen__search"
-                    />
-
-                    <FilterSearchInput
-                        items={clientNames}
-                        placeholder={t('cases.customerName')}
-                        titleFontSize={20}
-                        onSelect={setSelectedClient}
-                        className="lw-myCasesScreen__clientFilter"
-                    />
-
-                    <FilterSearchInput
-                        items={companyNames}
-                        placeholder={t('cases.companyName')}
-                        titleFontSize={20}
-                        onSelect={setSelectedCompany}
-                        className="lw-myCasesScreen__companyFilter"
-                    />
-                </SimpleContainer>
-
                 <SimpleContainer className="lw-myCasesScreen__filtersRow">
                     <ChooseButton
                         buttonText={t('cases.statusFilter')}
@@ -145,10 +116,35 @@ export default function MyCasesScreen() {
                     />
                 </SimpleContainer>
 
+                <SimpleContainer className="lw-myCasesScreen__topRow">
+                    <SearchInput
+                        onSearch={setQuery}
+                        title={t('cases.searchMyCases')}
+                        titleFontSize={20}
+                        className="lw-myCasesScreen__search"
+                    />
+
+                    <FilterSearchInput
+                        items={clientNames}
+                        placeholder={t('cases.customerName')}
+                        titleFontSize={20}
+                        onSelect={setSelectedClient}
+                        className="lw-myCasesScreen__clientFilter"
+                    />
+
+                    <FilterSearchInput
+                        items={companyNames}
+                        placeholder={t('cases.companyName')}
+                        titleFontSize={20}
+                        onSelect={setSelectedCompany}
+                        className="lw-myCasesScreen__companyFilter"
+                    />
+                </SimpleContainer>
+
                 <AllCasesCard
                     title={t('cases.myCasesTitle')}
                     allCases={filtered || []}
-                    isPerforming={false}
+                    isPerforming={isPerformingMyCases}
                     reperformAfterSave={refetchMyCases}
                 />
             </SimpleScrollView>

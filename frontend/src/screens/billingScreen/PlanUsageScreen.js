@@ -4,7 +4,7 @@ import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
-import SimpleLoader from "../../components/simpleComponents/SimpleLoader";
+import Skeleton from "../../components/simpleComponents/Skeleton";
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
 import SimpleScrollView from "../../components/simpleComponents/SimpleScrollView";
 import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
@@ -163,9 +163,7 @@ export default function PlanUsageScreen() {
         );
     };
 
-    if (isPlanLoading && !plan) return <SimpleLoader />;
-
-    const priceAmount = normalized.priceCents != null ? formatMoneyCents(normalized.priceCents) : null;
+    const priceAmount = (isPlanLoading || !plan) ? null : (normalized.priceCents != null ? formatMoneyCents(normalized.priceCents) : null);
     const priceCurrency = normalizeCurrency(normalized.priceCurrency);
     const priceText = priceAmount && priceCurrency
         ? t('planUsage.priceMonthly', { amount: priceAmount, currency: priceCurrency })
@@ -195,6 +193,18 @@ export default function PlanUsageScreen() {
             <SimpleScrollView className="lw-planUsageScreen__scroll">
                 <TextBold24 className="lw-planUsageScreen__title">{t('planUsage.title')}</TextBold24>
 
+                {(isPlanLoading && !plan) ? (
+                    <SimpleCard className="lw-planUsageScreen__card">
+                        <Skeleton width={120} height={20} borderRadius={6} />
+                        {[1, 2, 3, 4].map(i => (
+                            <SimpleContainer key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0' }}>
+                                <Skeleton width="30%" height={14} />
+                                <Skeleton width="40%" height={14} />
+                            </SimpleContainer>
+                        ))}
+                    </SimpleCard>
+                ) : (
+                <>
                 <SimpleCard className="lw-planUsageScreen__card">
                     <TextBold24>{t('planUsage.planCardTitle')}</TextBold24>
                     {renderRow(t('planUsage.planName'), normalized.planName)}
@@ -220,7 +230,7 @@ export default function PlanUsageScreen() {
 
                 <SimpleCard className="lw-planUsageScreen__card">
                     <TextBold24>{t('planUsage.usageCardTitle')}</TextBold24>
-                    {normalized.monthStartUtc && renderRow(t('planUsage.monthStart'), new Date(normalized.monthStartUtc).toLocaleDateString())}
+                    {normalized.monthStartUtc && renderRow(t('planUsage.monthStart'), new Date(normalized.monthStartUtc).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' }))}
                     {isUsageLoading && !usage ? (
                         <Text14>{t('planUsage.loadingUsage')}</Text14>
                     ) : (
@@ -264,6 +274,8 @@ export default function PlanUsageScreen() {
                         </>
                     )}
                 </SimpleCard>
+                </>
+                )}
             </SimpleScrollView>
         </SimpleScreen>
     );

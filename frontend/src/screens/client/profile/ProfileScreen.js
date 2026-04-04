@@ -6,7 +6,7 @@ import { customersApi } from "../../../api/customersApi";
 import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
 import useHttpRequest from "../../../hooks/useHttpRequest";
 
-import SimpleLoader from "../../../components/simpleComponents/SimpleLoader";
+import Skeleton from "../../../components/simpleComponents/Skeleton";
 import SimpleScreen from "../../../components/simpleComponents/SimpleScreen";
 import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
@@ -27,7 +27,7 @@ import { useScreenSize } from "../../../providers/ScreenSizeProvider";
 import { usePopup } from "../../../providers/PopUpProvider";
 import { Text12, Text14, TextBold16, TextBold24 } from "../../../components/specializedComponents/text/AllTextKindFile";
 
-import { formatDateForInput } from "../../../functions/date/formatDateForInput";
+import { formatDateForInput, parseDateInput } from "../../../functions/date/formatDateForInput";
 import { uploadFileToR2, getFileReadUrl } from "../../../utils/fileUploadUtils";
 
 import "./ProfileScreen.scss";
@@ -142,14 +142,12 @@ export default function ProfileScreen() {
             Email: profile.email,
             PhoneNumber: profile.phoneNumber,
             CompanyName: profile.companyName,
-            dateOfBirth: profile.dateOfBirth || null,
+            dateOfBirth: parseDateInput(profile.dateOfBirth) || null,
             PhotoKey: profile.photoKey,
         };
 
         performSave(payload);
     };
-
-    if (isFetching) return <SimpleLoader />;
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
@@ -162,6 +160,20 @@ export default function ProfileScreen() {
             )}
 
             <SimpleScrollView className="lw-profileScreen__scroll">
+                {isFetching ? (
+                    <SimpleCard>
+                        <SimpleContainer style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+                            <Skeleton circle height={64} />
+                            <SimpleContainer style={{ flex: 1 }}>
+                                <Skeleton width="50%" height={18} />
+                                <Skeleton width="30%" height={14} style={{ marginTop: 8 }} />
+                            </SimpleContainer>
+                        </SimpleContainer>
+                        {[1, 2, 3, 4].map(i => (
+                            <Skeleton key={i} width="100%" height={40} borderRadius={6} style={{ marginTop: 12 }} />
+                        ))}
+                    </SimpleCard>
+                ) : (
                 <SimpleContainer className="lw-profileScreen">
                     <SimpleContainer className="lw-profileScreen__header">
                         <SimpleContainer className="lw-profileScreen__avatarWrap">
@@ -228,7 +240,7 @@ export default function ProfileScreen() {
                                 <SimpleInput
                                     className="lw-profileScreen__input"
                                     title={t("profile.dateOfBirth")}
-                                    type="date"
+                                    placeholder="dd/mm/yyyy"
                                     value={profile.dateOfBirth || ""}
                                     onChange={(e) => setProfile((p) => ({ ...p, dateOfBirth: e.target.value }))}
                                 />
@@ -244,6 +256,7 @@ export default function ProfileScreen() {
                         </SimpleCard>
                     </SimpleContainer>
                 </SimpleContainer>
+                )}
             </SimpleScrollView>
         </SimpleScreen>
     );

@@ -1,7 +1,7 @@
 import { images } from "../../../assets/images/images";
 import SimpleCard from "../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
-import SimpleLoader from "../../../components/simpleComponents/SimpleLoader";
+import Skeleton from "../../../components/simpleComponents/Skeleton";
 import DefaultState from "../../../components/styledComponents/defaultState/DefaultState";
 import CaseTypeMenuItem from "../../../components/styledComponents/menuItems/CaseTypeMenuItem";
 import Separator from "../../../components/styledComponents/separators/Separator";
@@ -15,7 +15,16 @@ export default function AllCasesTypeCard({ allCasesType, reperformAfterSave, isP
     if (isPerforming) {
         return (
             <SimpleCard className="lw-allCasesTypeCard">
-                <SimpleLoader />
+                {[1, 2, 3].map(i => (
+                    <SimpleContainer key={i} style={{ padding: '12px 0' }}>
+                        {i !== 1 && <Separator />}
+                        <Skeleton width="50%" height={14} />
+                        <SimpleContainer style={{ display: 'flex', gap: 16, marginTop: 8 }}>
+                            <Skeleton width="30%" height={12} />
+                            <Skeleton width="20%" height={12} />
+                        </SimpleContainer>
+                    </SimpleContainer>
+                ))}
             </SimpleCard>
         )
     }

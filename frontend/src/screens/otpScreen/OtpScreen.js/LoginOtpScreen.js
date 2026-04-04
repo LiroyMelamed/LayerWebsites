@@ -41,6 +41,12 @@ export default function LoginOtpScreen() {
         setOtpNumber(digitsOnly);
     };
 
+    const handleKeyDown = (event) => {
+        if (event.key === 'Enter' && !isPerforming && otpError == null) {
+            performRequest(phoneNumber, otpNumber);
+        }
+    };
+
     useEffect(() => {
         // Web OTP API (mainly Android/Chrome). Requires HTTPS and SMS containing: "@domain #123456".
         if (didAutoSubmitRef.current) return;
@@ -116,6 +122,7 @@ export default function LoginOtpScreen() {
                     className="lw-loginOtpScreen__input"
                     value={otpNumber}
                     onChange={handleInputChange}
+                    onKeyDown={handleKeyDown}
                     timeToWaitInMilli={0}
                     maxLength={6}
                     type="tel"
