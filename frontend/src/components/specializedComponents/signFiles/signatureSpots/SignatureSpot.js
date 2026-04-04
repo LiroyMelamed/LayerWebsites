@@ -251,20 +251,20 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
         >
             {!isSigned && (
                 <div className="lw-signing-spotMeta">
-                <span className="lw-signing-spotType">
-                    {fieldTypeIcons[fieldType] && (
-                        <SimpleIcon
-                            src={fieldTypeIcons[fieldType]}
-                            alt={fieldTypeLabels[fieldType] || t('signing.fields.signature')}
-                            size={14}
-                        />
-                    )}
-                    <span className="lw-signing-spotTypeLabel">{fieldTypeLabels[fieldType] || t('signing.fields.signature')}</span>
-                </span>
-                <span className={`lw-signing-spotRequired ${isRequired ? 'is-required' : 'is-optional'}`}>
-                    {isRequired ? t('signing.fieldSettings.requiredShort') : t('signing.fieldSettings.optionalShort')}
-                </span>
-            </div>
+                    <span className="lw-signing-spotType">
+                        {fieldTypeIcons[fieldType] && (
+                            <SimpleIcon
+                                src={fieldTypeIcons[fieldType]}
+                                alt={fieldTypeLabels[fieldType] || t('signing.fields.signature')}
+                                size={14}
+                            />
+                        )}
+                        <span className="lw-signing-spotTypeLabel">{fieldTypeLabels[fieldType] || t('signing.fields.signature')}</span>
+                    </span>
+                    <span className={`lw-signing-spotRequired ${isRequired ? 'is-required' : 'is-optional'}`}>
+                        {isRequired ? t('signing.fieldSettings.requiredShort') : t('signing.fieldSettings.optionalShort')}
+                    </span>
+                </div>
             )}
 
             {/* Value renderer (non-signature fields). Must render above click-capture overlay but not block clicks. */}
