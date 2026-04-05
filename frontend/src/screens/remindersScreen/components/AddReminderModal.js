@@ -243,7 +243,7 @@ export default function AddReminderModal({ closePopUpFunction, rePerformRequest 
                 {error && <Text14 className="lw-addReminder__error">{error}</Text14>}
 
                 <SimpleContainer className="lw-addReminder__buttonsRow">
-                    <PrimaryButton onPress={handleSubmit} disabled={submitting}>
+                    <PrimaryButton onPress={handleSubmit} disabled={submitting} isPerforming={submitting}>
                         {submitting ? t("reminders.add.submitting") : t("reminders.add.submit")}
                     </PrimaryButton>
                     <SecondaryButton onPress={closePopUpFunction}>

@@ -1,14 +1,9 @@
-.lw-planUsageScreen__scroll {
-    padding: 16px;
-}
-
-.lw-planUsageScreen__title {
-    margin: 0 0 12px 0;
-}
+@use '../../styles/mixins' as m;
+@use '../../styles/variables' as v;
 
 .lw-planUsageScreen__card {
     flex-direction: column;
-    margin-bottom: 16px;
+    margin-bottom: 1rem;
 }
 
 .lw-planUsageScreen__row {
@@ -38,7 +33,7 @@
 }
 
 .lw-planUsageScreen__upgradeButton {
-    margin-top: 12px;
+    margin-top: 0.75rem;
     align-self: flex-end;
-    padding: 10px 14px;
+    padding: 0.625rem 0.875rem;
 }

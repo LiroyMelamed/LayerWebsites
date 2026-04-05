@@ -14,7 +14,7 @@ import SimpleButton from "../../components/simpleComponents/SimpleButton";
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
 import { getNavBarData } from "../../components/navBars/data/NavBarData";
 
-import { Text14, TextBold24 } from "../../components/specializedComponents/text/AllTextKindFile";
+import { Text14, TextBold14, TextBold24 } from "../../components/specializedComponents/text/AllTextKindFile";
 import ProgressBar from "../../components/specializedComponents/containers/ProgressBar";
 
 import billingApi from "../../api/billingApi";
@@ -132,7 +132,7 @@ export default function PlanUsageScreen() {
 
     const renderRow = (label, value) => (
         <SimpleContainer className="lw-planUsageScreen__row">
-            <div className="lw-planUsageScreen__label"><Text14>{label}</Text14></div>
+            <div className="lw-planUsageScreen__label"><TextBold14>{label}</TextBold14></div>
             <div className="lw-planUsageScreen__value"><Text14>{value}</Text14></div>
         </SimpleContainer>
     );
@@ -190,9 +190,7 @@ export default function PlanUsageScreen() {
                 />
             )}
 
-            <SimpleScrollView className="lw-planUsageScreen__scroll">
-                <TextBold24 className="lw-planUsageScreen__title">{t('planUsage.title')}</TextBold24>
-
+            <SimpleScrollView>
                 {(isPlanLoading && !plan) ? (
                     <SimpleCard className="lw-planUsageScreen__card">
                         <Skeleton width={120} height={20} borderRadius={6} />
@@ -204,77 +202,77 @@ export default function PlanUsageScreen() {
                         ))}
                     </SimpleCard>
                 ) : (
-                <>
-                <SimpleCard className="lw-planUsageScreen__card">
-                    <TextBold24>{t('planUsage.planCardTitle')}</TextBold24>
-                    {renderRow(t('planUsage.planName'), normalized.planName)}
-                    {renderRow(t('planUsage.planKey'), normalized.planKey)}
-                    {renderRow(t('planUsage.price'), priceText)}
-                    {renderRow(t('planUsage.scope'), scopeText)}
-                    {normalized.firmId != null && renderRow(t('planUsage.firmId'), String(normalized.firmId))}
-                    {enforcementModeText && renderRow(t('planUsage.enforcementMode'), enforcementModeText)}
+                    <>
+                        <SimpleCard className="lw-planUsageScreen__card">
+                            <TextBold24>{t('planUsage.planCardTitle')}</TextBold24>
+                            {renderRow(t('planUsage.planName'), normalized.planName)}
+                            {renderRow(t('planUsage.planKey'), normalized.planKey)}
+                            {renderRow(t('planUsage.price'), priceText)}
+                            {renderRow(t('planUsage.scope'), scopeText)}
+                            {normalized.firmId != null && renderRow(t('planUsage.firmId'), String(normalized.firmId))}
+                            {enforcementModeText && renderRow(t('planUsage.enforcementMode'), enforcementModeText)}
 
-                    <SimpleButton
-                        className="lw-planUsageScreen__upgradeButton"
-                        onPress={() => navigate(AdminStackName + PlansPricingScreenName)}
-                    >
-                        <Text14>{t('planUsage.upgradeButton')}</Text14>
-                    </SimpleButton>
-                </SimpleCard>
+                            <SimpleButton
+                                className="lw-planUsageScreen__upgradeButton"
+                                onPress={() => navigate(AdminStackName + PlansPricingScreenName)}
+                            >
+                                <Text14>{t('planUsage.upgradeButton')}</Text14>
+                            </SimpleButton>
+                        </SimpleCard>
 
-                <SimpleCard className="lw-planUsageScreen__card">
-                    <TextBold24>{t('planUsage.retentionTitle')}</TextBold24>
-                    {renderRow(t('planUsage.retentionCore'), `${coreRetentionText} ${t('planUsage.days')}`)}
-                    {renderRow(t('planUsage.retentionPii'), `${piiRetentionText} ${t('planUsage.days')}`)}
-                </SimpleCard>
+                        <SimpleCard className="lw-planUsageScreen__card">
+                            <TextBold24>{t('planUsage.retentionTitle')}</TextBold24>
+                            {renderRow(t('planUsage.retentionCore'), `${coreRetentionText} ${t('planUsage.days')}`)}
+                            {renderRow(t('planUsage.retentionPii'), `${piiRetentionText} ${t('planUsage.days')}`)}
+                        </SimpleCard>
 
-                <SimpleCard className="lw-planUsageScreen__card">
-                    <TextBold24>{t('planUsage.usageCardTitle')}</TextBold24>
-                    {normalized.monthStartUtc && renderRow(t('planUsage.monthStart'), new Date(normalized.monthStartUtc).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' }))}
-                    {isUsageLoading && !usage ? (
-                        <Text14>{t('planUsage.loadingUsage')}</Text14>
-                    ) : (
-                        <>
-                            {renderMeter({
-                                title: t('planUsage.meters.documentsMonthly'),
-                                used: normalized.meters.documentsThisMonth,
-                                quota: normalized.quotas?.documentsMonthlyQuota,
-                                unit: '',
-                                labelKey: 'planUsage.progress.documentsMonthly',
-                            })}
+                        <SimpleCard className="lw-planUsageScreen__card">
+                            <TextBold24>{t('planUsage.usageCardTitle')}</TextBold24>
+                            {normalized.monthStartUtc && renderRow(t('planUsage.monthStart'), new Date(normalized.monthStartUtc).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' }))}
+                            {isUsageLoading && !usage ? (
+                                <Text14>{t('planUsage.loadingUsage')}</Text14>
+                            ) : (
+                                <>
+                                    {renderMeter({
+                                        title: t('planUsage.meters.documentsMonthly'),
+                                        used: normalized.meters.documentsThisMonth,
+                                        quota: normalized.quotas?.documentsMonthlyQuota,
+                                        unit: '',
+                                        labelKey: 'planUsage.progress.documentsMonthly',
+                                    })}
 
-                            {renderMeter({
-                                title: t('planUsage.meters.storageGb'),
-                                used: normalized.meters.storageGbUsed,
-                                quota: normalized.quotas?.storageGbQuota,
-                                unit: 'GB',
-                                labelKey: 'planUsage.progress.storageGb',
-                            })}
-                            {normalized.meters.storageBytesTotal != null && (
-                                <Text14 className="lw-planUsageScreen__storageDetail">
-                                    {t('planUsage.storageApprox', { size: formatStorageDisplay(normalized.meters.storageBytesTotal) })}
-                                </Text14>
+                                    {renderMeter({
+                                        title: t('planUsage.meters.storageGb'),
+                                        used: normalized.meters.storageGbUsed,
+                                        quota: normalized.quotas?.storageGbQuota,
+                                        unit: 'GB',
+                                        labelKey: 'planUsage.progress.storageGb',
+                                    })}
+                                    {normalized.meters.storageBytesTotal != null && (
+                                        <Text14 className="lw-planUsageScreen__storageDetail">
+                                            {t('planUsage.storageApprox', { size: formatStorageDisplay(normalized.meters.storageBytesTotal) })}
+                                        </Text14>
+                                    )}
+
+                                    {renderMeter({
+                                        title: t('planUsage.meters.seats'),
+                                        used: normalized.meters.seatsUsed,
+                                        quota: normalized.quotas?.usersQuota,
+                                        unit: '',
+                                        labelKey: 'planUsage.progress.seats',
+                                    })}
+
+                                    {renderMeter({
+                                        title: t('planUsage.meters.sms'),
+                                        used: normalized.meters.smsThisMonth,
+                                        quota: normalized.quotas?.otpSmsMonthlyQuota,
+                                        unit: '',
+                                        labelKey: 'planUsage.progress.sms',
+                                    })}
+                                </>
                             )}
-
-                            {renderMeter({
-                                title: t('planUsage.meters.seats'),
-                                used: normalized.meters.seatsUsed,
-                                quota: normalized.quotas?.usersQuota,
-                                unit: '',
-                                labelKey: 'planUsage.progress.seats',
-                            })}
-
-                            {renderMeter({
-                                title: t('planUsage.meters.sms'),
-                                used: normalized.meters.smsThisMonth,
-                                quota: normalized.quotas?.otpSmsMonthlyQuota,
-                                unit: '',
-                                labelKey: 'planUsage.progress.sms',
-                            })}
-                        </>
-                    )}
-                </SimpleCard>
-                </>
+                        </SimpleCard>
+                    </>
                 )}
             </SimpleScrollView>
         </SimpleScreen>

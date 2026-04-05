@@ -13,6 +13,11 @@ import { AdminStackName } from "../../navigation/AdminStack";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import { MainScreenName } from "../mainScreen/MainScreen";
 import ClientsCard from "../mainScreen/components/ClientsCard";
+import ClientPopup from "../mainScreen/components/ClientPopUp";
+import ImportClientsModal from "../mainScreen/components/ImportClientsModal";
+import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
+import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
+import { usePopup } from "../../providers/PopUpProvider";
 import { useTranslation } from "react-i18next";
 
 import "./AllClientsScreen.scss";
@@ -29,6 +34,7 @@ export default function AllClientsScreen() {
     const [filteredClients, setFilteredClients] = useState(null);
 
     const { result: rawCustomers, isPerforming, performRequest: reperformAfterSave } = useAutoHttpRequest(customersApi.getAllCustomers);
+    const { openPopup, closePopup } = usePopup();
 
     const allCustomers = (rawCustomers || []).map(c => ({
         userid: c.UserId ?? c.userid,
@@ -129,9 +135,24 @@ export default function AllClientsScreen() {
                         customerList={displayList}
                         rePerformRequest={reperformAfterSave}
                         isPerforming={isPerforming}
+                        hideButtons
                     />
                 )}
             </SimpleScrollView>
+
+            <SimpleContainer className="lw-allClientsScreen__footer">
+                <PrimaryButton
+                    onPress={() => openPopup(<ClientPopup closePopUpFunction={closePopup} rePerformRequest={reperformAfterSave} />)}
+                >
+                    {t("customers.addCustomer")}
+                </PrimaryButton>
+
+                <SecondaryButton
+                    onPress={() => openPopup(<ImportClientsModal closePopUpFunction={closePopup} rePerformRequest={reperformAfterSave} />)}
+                >
+                    {t("clientImport.button")}
+                </SecondaryButton>
+            </SimpleContainer>
         </SimpleScreen>
     );
 }

@@ -11,3 +11,16 @@
 .lw-allClientsScreen__search {
     min-inline-size: 0;
 }
+
+.lw-allClientsScreen__footer {
+    display: flex;
+    justify-content: center;
+    align-self: center;
+    gap: 0.75rem;
+}
+
+.lw-allClientsScreen__footer>.lw-textButtonWithTwoOptionalIcons {
+    margin: 0.5rem 0;
+    align-self: center;
+    min-block-size: 2.75rem;
+}

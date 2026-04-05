@@ -23,6 +23,7 @@ const HoverContainer = ({
 }) => {
     const { t } = useTranslation();
     const [position, setPosition] = useState({ top: 0, left: 0 });
+    const [isPositioned, setIsPositioned] = useState(false);
     const hoverRef = useRef(null);
 
     useEffect(() => {
@@ -42,6 +43,7 @@ const HoverContainer = ({
                     top: targetRect.bottom + 4,
                     left,
                 });
+                setIsPositioned(true);
             }
         };
 
@@ -75,7 +77,7 @@ const HoverContainer = ({
     return (
         <SimpleContainer
             ref={hoverRef}
-            className={['lw-hoverContainer', className].filter(Boolean).join(' ')}
+            className={['lw-hoverContainer', isPositioned ? 'is-positioned' : null, className].filter(Boolean).join(' ')}
         >
             <SimpleScrollView className="lw-hoverContainer__scroll">
                 {isPerforming ? (

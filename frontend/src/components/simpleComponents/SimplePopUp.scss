@@ -3,17 +3,22 @@
 .lw-simplePopUp__overlay {
     position: fixed;
     inset: 0;
-    background-color: rgba(45, 55, 72, 0.75);
-    backdrop-filter: blur(0.25rem);
-    /* 4px */
+    background-color: rgba(45, 55, 72, 0);
+    backdrop-filter: blur(0);
     align-items: center;
     justify-content: center;
     z-index: 20000;
+    transition: background-color 0.25s ease, backdrop-filter 0.25s ease;
+
+    &.is-visible {
+        background-color: rgba(45, 55, 72, 0.75);
+        backdrop-filter: blur(0.25rem);
+    }
 }
 
 .lw-simplePopUp__overlay--transparent {
-    background-color: transparent;
-    backdrop-filter: none;
+    background-color: transparent !important;
+    backdrop-filter: none !important;
 }
 
 
@@ -36,6 +41,17 @@
     align-items: center;
 
     border: 0.0625rem solid rgba(226, 232, 240, 0.8);
+
+    // Enter/exit animation
+    opacity: 0;
+    transform: scale(0.92) translateY(0.5rem);
+    transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &.is-visible {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
 }
 
 .lw-simplePopUp__container--floating {

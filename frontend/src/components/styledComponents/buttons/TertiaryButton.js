@@ -14,7 +14,7 @@ const contentColor = {
     disabled: colors.disabledHighlighted,
 }
 
-export default function TertiaryButton({ children, size, rightIcon, leftIcon, innerTextColor, ...props }) {
+export default function TertiaryButton({ children, size, rightIcon, leftIcon, innerTextColor, isPerforming, ...props }) {
     const buttonStyle = {
         ...style,
         ...props.style,
@@ -36,6 +36,7 @@ export default function TertiaryButton({ children, size, rightIcon, leftIcon, in
             contentColor={innerTextColor || contentColor.normal}
             pressedContentColor={contentColor.pressed}
             disabledContentColor={contentColor.disabled}
+            isPerforming={isPerforming}
         >
             {children}
         </GenericButton>
@@ -43,5 +44,6 @@ export default function TertiaryButton({ children, size, rightIcon, leftIcon, in
 }
 
 const style = {
-    shadowColor: colors.primary,
+    boxShadow: `0 0px 0px 0px rgba(42, 67, 101, 0.12)`,
+    marginBottom: 4,
 }

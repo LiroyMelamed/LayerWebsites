@@ -137,7 +137,7 @@ export default function ImportRemindersModal({ closePopUpFunction, rePerformRequ
             {uploading && <Skeleton width="100%" height={36} borderRadius={6} />}
 
             <SimpleContainer className="lw-importReminders__actions">
-                <PrimaryButton onPress={doUpload} disabled={!file || uploading}>
+                <PrimaryButton onPress={doUpload} disabled={!file || uploading} isPerforming={uploading}>
                     {uploading ? t("reminders.import.uploading") : t("reminders.import.uploadButton")}
                 </PrimaryButton>
                 <SecondaryButton onPress={closePopUpFunction}>

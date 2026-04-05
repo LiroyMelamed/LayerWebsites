@@ -14,7 +14,7 @@ const contentColor = {
     disabled: colors.disabledHighlighted,
 };
 
-const SecondaryButton = forwardRef(({ children, size, rightIcon, leftIcon, ...props }, ref) => {
+const SecondaryButton = forwardRef(({ children, size, rightIcon, leftIcon, isPerforming, ...props }, ref) => {
     const buttonStyle = {
         ...styles.button,
         ...props.style,
@@ -35,6 +35,7 @@ const SecondaryButton = forwardRef(({ children, size, rightIcon, leftIcon, ...pr
             pressedContentColor={contentColor.pressed}
             disabledContentColor={contentColor.disabled}
             hasBorder={true}
+            isPerforming={isPerforming}
         >
             {children}
         </GenericButton>

@@ -60,52 +60,65 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, chosenNavKey, 
                 </SimpleButton>
             </SimpleContainer >
 
-            {isDrawerOpen &&
-                <SimpleContainer className="lw-topToolBarSmallScreen__sidebar">
-                    <SimpleScrollView className="lw-topToolBarSmallScreen__scroll">
-                        <SimpleContainer className="lw-topToolBarSmallScreen__sidebarContent">
-                            {NavBarLinks.map((item, index) => {
+            {/* Backdrop overlay */}
+            <div
+                className={[
+                    'lw-topToolBarSmallScreen__backdrop',
+                    isDrawerOpen ? 'lw-topToolBarSmallScreen__backdrop--open' : null,
+                ].filter(Boolean).join(' ')}
+                onClick={toggleDrawer}
+            />
 
-
-                                return (
-                                    <SideBarMenuItem
-                                        key={item.navKey || item.buttonText}
-                                        buttonText={item.buttonText}
-                                        iconSource={item.icon}
-                                        size={24}
-                                        isPressed={isActiveItem(item, index)}
-                                        onPressFunction={() => {
-                                            item.onClick();
-                                            toggleDrawer();
-                                        }}
-                                        buttonIndex={index}
-                                    />
-                                );
-                            })}
-                        </SimpleContainer>
-                    </SimpleScrollView>
-
-                    <SimpleContainer className="lw-topToolBarSmallScreen__languageWrap">
-                        <LanguageSwitcher />
-                    </SimpleContainer>
-                    <SimpleContainer className="lw-topToolBarSmallScreen__isoBadgeWrap">
-                        <ComplianceBadges size="small" layout="row" showLabels={false} />
-                    </SimpleContainer>
-                    {!isFromApp && (
-                        <SimpleContainer className="lw-topToolBarSmallScreen__logout">
-                            <PrimaryButton
-                                className="lw-topToolBarSmallScreen__logoutButton"
-                                onPress={() => {
-                                    localStorage.removeItem("token");
-                                    navigate('/');
-                                }}
+            <SimpleContainer
+                className={[
+                    'lw-topToolBarSmallScreen__sidebar',
+                    isDrawerOpen ? 'lw-topToolBarSmallScreen__sidebar--open' : null,
+                ].filter(Boolean).join(' ')}
+            >
+                <SimpleScrollView className="lw-topToolBarSmallScreen__scroll">
+                    <SimpleContainer className="lw-topToolBarSmallScreen__sidebarContent">
+                        {NavBarLinks.map((item, index) => (
+                            <SimpleContainer
+                                key={item.navKey || item.buttonText}
+                                className="lw-topToolBarSmallScreen__menuItem"
+                                style={{ transitionDelay: isDrawerOpen ? `${index * 40}ms` : '0ms' }}
                             >
-                                {t('common.logout')}
-                            </PrimaryButton>
-                        </SimpleContainer>
-                    )}
+                                <SideBarMenuItem
+                                    buttonText={item.buttonText}
+                                    iconSource={item.icon}
+                                    size={24}
+                                    isPressed={isActiveItem(item, index)}
+                                    onPressFunction={() => {
+                                        item.onClick();
+                                        toggleDrawer();
+                                    }}
+                                    buttonIndex={index}
+                                />
+                            </SimpleContainer>
+                        ))}
+                    </SimpleContainer>
+                </SimpleScrollView>
+
+                <SimpleContainer className="lw-topToolBarSmallScreen__languageWrap">
+                    <LanguageSwitcher />
                 </SimpleContainer>
-            }
+                <SimpleContainer className="lw-topToolBarSmallScreen__isoBadgeWrap">
+                    <ComplianceBadges size="small" layout="row" showLabels={false} />
+                </SimpleContainer>
+                {!isFromApp && (
+                    <SimpleContainer className="lw-topToolBarSmallScreen__logout">
+                        <PrimaryButton
+                            className="lw-topToolBarSmallScreen__logoutButton"
+                            onPress={() => {
+                                localStorage.removeItem("token");
+                                navigate('/');
+                            }}
+                        >
+                            {t('common.logout')}
+                        </PrimaryButton>
+                    </SimpleContainer>
+                )}
+            </SimpleContainer>
         </>
     );
 }

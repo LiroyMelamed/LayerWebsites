@@ -39,17 +39,11 @@ export default function AllCasesScreen() {
     const { result: allCasesTypes, isPerforming: isPerformingAllCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
     const { result: allCases, isPerforming: isPerformingAllCases, performRequest: reperformAfterSave } = useAutoHttpRequest(casesApi.getAllCases);
 
-    const [initialFilterApplied, setInitialFilterApplied] = useState(false);
     useEffect(() => {
-        if (allCases?.length > 0 && !initialFilterApplied) {
-            setInitialFilterApplied(true);
-            if (selectedStatus === "open") {
-                setFilteredCases(allCases.filter(item => item.IsClosed === false));
-            } else if (selectedStatus === "closed") {
-                setFilteredCases(allCases.filter(item => item.IsClosed === true));
-            }
+        if (allCases?.length > 0) {
+            applyFilters(selectedCaseType, selectedStatus, selectedClient, selectedManager, selectedCompany, selectedCaseName);
         }
-    }, [allCases, initialFilterApplied, selectedStatus]);
+    }, [allCases]);
 
     const handleFilterByCaseName = (caseName) => {
         setSelectedCaseName(caseName);

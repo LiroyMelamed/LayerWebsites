@@ -27,6 +27,7 @@ import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import useHttpRequest from "../../hooks/useHttpRequest";
 
 import { usePopup } from "../../providers/PopUpProvider";
+import { images } from "../../assets/images/images";
 import ConfirmationDialog from "../../components/styledComponents/popups/ConfirmationDialog";
 import { AdminStackName } from "../../navigation/AdminStack";
 import { MainScreenName } from "../mainScreen/MainScreen";
@@ -1072,6 +1073,7 @@ export default function PlatformSettingsScreen() {
                             className="lw-platformSettings__addBtn"
                             onPress={handleAddAdmin}
                             disabled={isAddingAdmin || !newAdminPhone.trim()}
+                            isPerforming={isAddingAdmin}
                         >
                             {isAddingAdmin ? "מוסיף..." : "הוסף מנהל"}
                         </PrimaryButton>
@@ -1575,7 +1577,7 @@ export default function PlatformSettingsScreen() {
     );
 
     return (
-        <SimpleScreen className="lw-platformSettings">
+        <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground} className="lw-platformSettings">
             {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={AdminStackName + MainScreenName} GetNavBarData={getNavBarData} />}
             <SimpleScrollView className="lw-platformSettings__scroll">
                 <SimpleContainer className="lw-platformSettings__header">

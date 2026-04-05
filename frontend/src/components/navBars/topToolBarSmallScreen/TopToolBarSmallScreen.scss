@@ -63,7 +63,60 @@
 
     z-index: 11111;
     box-shadow: -0.125rem 0 0.3125rem rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    // Hidden by default — slide off-screen (inline-start direction)
+    transform: translateX(-100%);
+    pointer-events: none;
+
+    [dir="rtl"] & {
+        transform: translateX(100%);
+    }
+
+    &--open {
+        transform: translateX(0);
+        pointer-events: auto;
+
+        [dir="rtl"] & {
+            transform: translateX(0);
+        }
+    }
+}
+
+// Backdrop overlay
+.lw-topToolBarSmallScreen__backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 11110;
+    background: rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lw-topToolBarSmallScreen__backdrop--open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+// Staggered menu item entrance
+.lw-topToolBarSmallScreen__menuItem {
+    opacity: 0;
+    transform: translateX(-0.75rem);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+
+    [dir="rtl"] & {
+        transform: translateX(0.75rem);
+    }
+}
+
+.lw-topToolBarSmallScreen__sidebar--open .lw-topToolBarSmallScreen__menuItem {
+    opacity: 1;
+    transform: translateX(0);
+
+    [dir="rtl"] & {
+        transform: translateX(0);
+    }
 }
 
 .lw-topToolBarSmallScreen__scroll {

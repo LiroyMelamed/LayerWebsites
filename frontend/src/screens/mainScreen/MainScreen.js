@@ -16,6 +16,7 @@ import SimpleScrollView from '../../components/simpleComponents/SimpleScrollView
 import { useNavigate } from 'react-router-dom';
 import { TaggedCasesScreenName } from '../taggedCasesScreen/TaggedCasesScreen';
 import { AllCasesScreenName } from '../allCasesScreen/AllCasesScreen';
+import { AllClientsScreenName } from '../allClientsScreen/AllClientsScreen';
 import { useTranslation } from "react-i18next";
 
 import "./MainScreen.scss";
@@ -75,7 +76,7 @@ export default function MainScreen() {
                         <ShowDataCard
                             numberText={mainScreenData?.ActiveCustomers?.length}
                             title={t("mainScreen.activeCustomers")}
-                            optionalOnClick={() => { clientsCardRef.current?.scrollIntoView({ behavior: 'smooth' }) }}
+                            optionalOnClick={() => { navigate(AdminStackName + AllClientsScreenName) }}
                             isPerforming={isPerformingMainScreenData}
                         />
                     </SimpleContainer>

@@ -57,13 +57,14 @@ const SYSTEM_PROMPT = `
 13. כאשר ללקוח יש יותר מתיק אחד בהקשר מערכת ושואל שאלה כללית על "התיק שלי" (כמו סטטוס, שלב, עדכון) — שאל אותו על איזה תיק הוא מדבר, והצג לו את שמות התיקים שלו לבחירה.
 14. כאשר ללקוח יש תיק אחד בלבד, ענה ישירות על התיק הזה בלי לשאול.
 15. כאשר אתה מדווח על שלב בתיק, השתמש בשם השלב (לדוגמה: "בדיקה ראשונית", "הכנת ביצוע שטר") ולא במספר השלב בלבד. אם יש ציר זמן של שלבים, הצג אותו בצורה ברורה.
-16. ציין את שם מנהל התיק כשזה רלוונטי.
-17. כאשר הלקוח שואל "מה השלב הבא?" — חפש בהקשר מערכת את הסימן ▸ "השלב הבא" והשתמש בשם שמופיע שם. אם זה השלב האחרון, ציין זאת.
-18. כאשר הלקוח שואל על מסמכים או קבצים — חפש בהקשר מערכת "מסמכים בשלב" ו"מסמכי חתימה דיגיטלית" וענה לפי המידע שמופיע. אם אין מסמכים, ציין שלא נמצאו מסמכים בתיק כרגע.
-19. כאשר הלקוח שואל "מתי עודכן השלב?" או "מה הפעולה האחרונה?" — השתמש בתאריכים שמופיעים בציר הזמן של השלבים. השלב האחרון עם תאריך הוא הפעולה האחרונה.
-20. כאשר הלקוח שואל "מה סוג התיק?" — ענה לפי שדה "סוג תיק" בהקשר מערכת.
-21. כאשר יש תאריך סיום משוער או תפוגת רישיון — הצג אותם כשהלקוח שואל על לוחות זמנים.
-22. כאשר הלקוח שואל על חתימה דיגיטלית — הצג את סטטוס המסמך (ממתין לחתימה / נחתם / נדחה) ותאריך עדכון אחרון.
+16. כאשר הלקוח שואל מי מנהל התיק שלו — חפש בהקשר מערכת את השדה "מנהל התיק" וענה לפי הנתון שמופיע שם. לעולם אל תאמר שהמידע לא קיים אם הוא מופיע בהקשר.
+17. כאשר הלקוח שואל איך הוא קשור לתיק או למה התיק שייך לו — הסבר שהוא רשום במערכת כלקוח (צד) בתיק, בהתבסס על נתוני הקשר מערכת.
+18. כאשר הלקוח שואל "מה השלב הבא?" — חפש בהקשר מערכת את הסימן ▸ "השלב הבא" והשתמש בשם שמופיע שם. אם זה השלב האחרון, ציין זאת.
+19. כאשר הלקוח שואל על מסמכים או קבצים — חפש בהקשר מערכת "מסמכים בשלב" ו"מסמכי חתימה דיגיטלית" וענה לפי המידע שמופיע. אם אין מסמכים, ציין שלא נמצאו מסמכים בתיק כרגע.
+20. כאשר הלקוח שואל "מתי עודכן השלב?" או "מה הפעולה האחרונה?" — השתמש בתאריכים שמופיעים בציר הזמן של השלבים. השלב האחרון עם תאריך הוא הפעולה האחרונה.
+21. כאשר הלקוח שואל "מה סוג התיק?" — ענה לפי שדה "סוג תיק" בהקשר מערכת.
+22. כאשר יש תאריך סיום משוער או תפוגת רישיון — הצג אותם כשהלקוח שואל על לוחות זמנים.
+23. כאשר הלקוח שואל על חתימה דיגיטלית — הצג את סטטוס המסמך (ממתין לחתימה / נחתם / נדחה) ותאריך עדכון אחרון.
 `.trim();
 
 // ── Prompt-injection detection ────────────────────────────────────────
@@ -103,6 +104,7 @@ const PERSONAL_KEYWORDS_HE = [
     'תאריך סיום', 'לוח זמנים', 'מתי יסתיים',
     'חתימה דיגיטלית', 'לחתום', 'ממתין לחתימה',
     'עורך הדין שלי', 'מי מטפל',
+    'מי מנהל', 'מנהל התיק', 'קשור אליי', 'קשור לי', 'שייך לי',
 ];
 
 const PERSONAL_KEYWORDS_EN = [
@@ -150,10 +152,11 @@ async function retrieveUserContext(userId) {
             C.casetypeid,
             MGR.name AS manager_name
         FROM cases C
-        LEFT JOIN case_users CU ON CU.caseid = C.caseid
+        JOIN case_users CU      ON CU.caseid = C.caseid
         LEFT JOIN casetypes CT  ON CT.casetypeid = C.casetypeid
         LEFT JOIN users MGR     ON MGR.userid = C.casemanagerid
         WHERE CU.userid = $1
+          AND (C.casemanagerid IS NULL OR C.casemanagerid != $1)
         ORDER BY C.updatedat DESC NULLS LAST
         LIMIT 10
         `,
@@ -265,8 +268,12 @@ async function retrieveUserContext(userId) {
  */
 async function retrieveCaseContext(caseId, userId) {
     // Verify user has access to this case
+    // Verify user is a client (not case manager) on this case
     const accessCheck = await pool.query(
-        `SELECT 1 FROM case_users WHERE caseid = $1 AND userid = $2`,
+        `SELECT 1 FROM case_users cu
+         JOIN cases c ON c.caseid = cu.caseid
+         WHERE cu.caseid = $1 AND cu.userid = $2
+           AND (c.casemanagerid IS NULL OR c.casemanagerid != $2)`,
         [caseId, userId]
     );
     if (accessCheck.rows.length === 0) return null;
@@ -502,10 +509,12 @@ function formatContextForPrompt(context) {
     const parts = [];
 
     if (context.cases && context.cases.length > 0) {
-        parts.push(`ללקוח יש ${context.cases.length} תיקים:`);
+        parts.push(`ללקוח יש ${context.cases.length} תיקים (הלקוח מופיע כצד בתיק — לא כמנהל התיק):`);
         for (const c of context.cases) {
             parts.push(_formatCaseBlock(c, c.stages, c.stageFiles, c.signingFiles, c.caseTypeStages));
         }
+    } else {
+        parts.push('לא נמצאו תיקים המשויכים למשתמש זה במערכת. אם המשתמש שואל על תיקים, אמור לו שלא נמצאו תיקים משויכים למספר הטלפון שלו ומומלץ לפנות למשרד. אל תמציא שמות תיקים.');
     }
 
     if (context.case) {
@@ -534,15 +543,14 @@ function _formatCaseBlock(c, stages, stageFiles, signingFiles, caseTypeStages) {
         ? 'סגור'
         : `פתוח — שלב נוכחי: "${currentStageName || `שלב ${c.currentstage || 1}`}" (${c.currentstage || 1}/${totalStages || '?'})`;
 
-    let header = `  📁 תיק "${c.casename || 'ללא שם'}" (מזהה: ${c.caseid})`;
-    header += `\n     סטטוס: ${status}`;
-    header += ` | סוג תיק: ${c.case_type || 'לא צויין'}`;
-    if (c.manager_name) header += ` | מנהל התיק: ${c.manager_name}`;
-    if (c.companyname) header += ` | חברה: ${c.companyname}`;
-    header += `\n     נפתח: ${_fmtDate(c.createdat)} | עדכון אחרון: ${_fmtDate(c.updatedat)}`;
-    if (c.estimatedcompletiondate) header += ` | תאריך סיום משוער: ${_fmtDate(c.estimatedcompletiondate)}`;
-    if (c.licenseexpirydate) header += ` | תפוגת רישיון: ${_fmtDate(c.licenseexpirydate)}`;
-    lines.push(header);
+    lines.push(`  📁 תיק "${c.casename || 'ללא שם'}" (מזהה: ${c.caseid})`);
+    lines.push(`     סטטוס: ${status}`);
+    lines.push(`     סוג תיק: ${c.case_type || 'לא צויין'}`);
+    lines.push(`     מנהל התיק: ${c.manager_name || 'לא צויין'}`);
+    if (c.companyname) lines.push(`     חברה: ${c.companyname}`);
+    lines.push(`     נפתח: ${_fmtDate(c.createdat)} | עדכון אחרון: ${_fmtDate(c.updatedat)}`);
+    if (c.estimatedcompletiondate) lines.push(`     תאריך סיום משוער: ${_fmtDate(c.estimatedcompletiondate)}`);
+    if (c.licenseexpirydate) lines.push(`     תפוגת רישיון: ${_fmtDate(c.licenseexpirydate)}`);
 
     // Build a map of stage files grouped by stage
     const filesByStage = {};
@@ -723,13 +731,23 @@ async function processMessage({ message, verified, userId, history = [], session
 
     // 3b. Retrieve database context for verified users
     let databaseContext = '';
+    let userCaseCount = 0;
     if (verified && userId) {
         try {
             const context = await retrieveUserContext(userId);
+            userCaseCount = (context.cases || []).length;
             databaseContext = formatContextForPrompt(context);
         } catch (err) {
             console.error('[aiChatService] RAG context retrieval failed:', err?.message);
         }
+    }
+
+    // 3c. Short-circuit: if user is verified, asking about personal cases, but has 0 cases — return canned response (prevents LLM hallucination)
+    if (isPersonal && verified && userId && userCaseCount === 0) {
+        return {
+            response: 'לא נמצאו תיקים המשויכים למספר הטלפון שלך במערכת. אם אתה סבור שיש טעות, מומלץ לפנות ישירות למשרד.',
+            requiresVerification: false,
+        };
     }
 
     // 4. Compose messages for LLM

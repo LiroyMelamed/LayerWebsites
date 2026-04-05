@@ -198,67 +198,61 @@ export default function RemindersScreen() {
             )}
 
             <SimpleScrollView>
-                <SimpleContainer className="lw-reminders">
-                    <SimpleCard className="lw-reminders__header">
-                        <SimpleContainer className="lw-reminders__titleRow">
-                            <Text24>{t("reminders.title")}</Text24>
-                            <SimpleContainer className="lw-reminders__titleActions">
-                                <SecondaryButton onPress={handleImport}>
-                                    {t("reminders.importButton")}
-                                </SecondaryButton>
-                            </SimpleContainer>
-                        </SimpleContainer>
-                        <Text14 className="lw-reminders__subtitle">{t("reminders.subtitle")}</Text14>
-                    </SimpleCard>
-
-                    <SimpleContainer className="lw-reminders__filterRow">
-                        <ChooseButton
-                            buttonText={t("reminders.statusFilter")}
-                            items={STATUS_FILTERS.map((f) => ({
-                                value: f.value,
-                                label: t(`reminders.filter.${f.label}`),
-                            }))}
-                            OnPressChoiceFunction={handleFilterChange}
-                        />
-                        <PrimaryButton onPress={handleAddReminder}>
-                            {t("reminders.add.button")}
-                        </PrimaryButton>
-                    </SimpleContainer>
-
-                    <SimpleCard className="lw-reminders__list">
-                        <SimpleTable
-                            titles={tableTitles}
-                            data={tableData}
-                            isLoading={isPerforming}
-                            noDataMessage={t("reminders.empty")}
-                            rePerformRequest={performRequest}
-                            onRowClick={handleRowClick}
-                            RowComponent={ReminderMenuItem}
-                            CellTextComponent={Text14}
-                        />
-
-                        {!isPerforming && totalPages > 1 && (
-                            <SimpleContainer className="lw-reminders__pagination">
-                                <SecondaryButton
-                                    disabled={page <= 1}
-                                    onPress={() => setPage((p) => Math.max(1, p - 1))}
-                                >
-                                    {t("reminders.prev")}
-                                </SecondaryButton>
-                                <Text14>
-                                    {t("reminders.pageInfo", { page, totalPages })}
-                                </Text14>
-                                <SecondaryButton
-                                    disabled={page >= totalPages}
-                                    onPress={() => setPage((p) => p + 1)}
-                                >
-                                    {t("reminders.next")}
-                                </SecondaryButton>
-                            </SimpleContainer>
-                        )}
-                    </SimpleCard>
+                <SimpleContainer className="lw-reminders__filtersRow">
+                    <ChooseButton
+                        buttonText={t("reminders.statusFilter")}
+                        items={STATUS_FILTERS.map((f) => ({
+                            value: f.value,
+                            label: t(`reminders.filter.${f.label}`),
+                        }))}
+                        OnPressChoiceFunction={handleFilterChange}
+                        className="lw-reminders__choose"
+                    />
                 </SimpleContainer>
+
+                <SimpleCard className="lw-reminders__list">
+                    <SimpleTable
+                        titles={tableTitles}
+                        data={tableData}
+                        isLoading={isPerforming}
+                        noDataMessage={t("reminders.empty")}
+                        rePerformRequest={performRequest}
+                        onRowClick={handleRowClick}
+                        RowComponent={ReminderMenuItem}
+                        CellTextComponent={Text14}
+                    />
+
+                    {!isPerforming && totalPages > 1 && (
+                        <SimpleContainer className="lw-reminders__pagination">
+                            <SecondaryButton
+                                disabled={page <= 1}
+                                onPress={() => setPage((p) => Math.max(1, p - 1))}
+                            >
+                                {t("reminders.prev")}
+                            </SecondaryButton>
+                            <Text14>
+                                {t("reminders.pageInfo", { page, totalPages })}
+                            </Text14>
+                            <SecondaryButton
+                                disabled={page >= totalPages}
+                                onPress={() => setPage((p) => p + 1)}
+                            >
+                                {t("reminders.next")}
+                            </SecondaryButton>
+                        </SimpleContainer>
+                    )}
+                </SimpleCard>
             </SimpleScrollView>
+
+            <SimpleContainer className="lw-reminders__footer">
+                <PrimaryButton onPress={handleAddReminder}>
+                    {t("reminders.add.button")}
+                </PrimaryButton>
+
+                <SecondaryButton onPress={handleImport}>
+                    {t("reminders.importButton")}
+                </SecondaryButton>
+            </SimpleContainer>
         </SimpleScreen>
     );
 }

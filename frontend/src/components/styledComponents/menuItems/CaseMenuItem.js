@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { icons } from "../../../assets/icons/icons";
@@ -34,12 +34,15 @@ export default function CaseMenuItem({
 }) {
     const { t } = useTranslation();
     const { isPerforming: isPerformingSetCase, performRequest: setCase } = useHttpRequest(
-        casesApi.updateStageById,
-        () => { rePerformFunction?.(); }
+        casesApi.updateStageById
     );
     const { openPopup, closePopup } = usePopup();
     const [fullCaseListener, setFullCaseListener] = useState(fullCase);
     const [isOpen, setIsOpen] = useState(false);
+
+    useEffect(() => {
+        setFullCaseListener(fullCase);
+    }, [fullCase]);
 
     function updateStage() {
         if (fullCaseListener.IsClosed) return;
@@ -143,6 +146,7 @@ export default function CaseMenuItem({
                 isOpen={isOpen}
                 fullCase={fullCaseListener}
                 updateStage={() => updateStage()}
+                isPerformingUpdateStage={isPerformingSetCase}
                 editCase={() => openPopup(<CaseFullView caseDetails={fullCaseListener} rePerformRequest={rePerformFunction} closePopUpFunction={closePopup} />)}
                 isClient={isClient}
                 rePerformFunction={rePerformFunction}

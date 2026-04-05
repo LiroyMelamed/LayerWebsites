@@ -17,7 +17,7 @@ import { useTranslation } from "react-i18next";
 import "./ClientsCard.scss";
 import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
 
-const ClientsCard = forwardRef(({ rePerformRequest, customerList, style: _style, isPerforming }, ref) => {
+const ClientsCard = forwardRef(({ rePerformRequest, customerList, style: _style, isPerforming, hideButtons }, ref) => {
     const { openPopup, closePopup } = usePopup();
     const { t } = useTranslation();
 
@@ -96,19 +96,21 @@ const ClientsCard = forwardRef(({ rePerformRequest, customerList, style: _style,
                 ))}
             </SimpleScrollView>
 
-            <SimpleContainer className="lw-clientsCard__buttonsRow">
-                <PrimaryButton
-                    onPress={() => openPopup(<ClientPopup closePopUpFunction={closePopup} rePerformRequest={rePerformRequest} />)}
-                >
-                    {t("customers.addCustomer")}
-                </PrimaryButton>
+            {!hideButtons && (
+                <SimpleContainer className="lw-clientsCard__buttonsRow">
+                    <PrimaryButton
+                        onPress={() => openPopup(<ClientPopup closePopUpFunction={closePopup} rePerformRequest={rePerformRequest} />)}
+                    >
+                        {t("customers.addCustomer")}
+                    </PrimaryButton>
 
-                <SecondaryButton
-                    onPress={() => openPopup(<ImportClientsModal closePopUpFunction={closePopup} rePerformRequest={rePerformRequest} />)}
-                >
-                    {t("clientImport.button")}
-                </SecondaryButton>
-            </SimpleContainer>
+                    <SecondaryButton
+                        onPress={() => openPopup(<ImportClientsModal closePopUpFunction={closePopup} rePerformRequest={rePerformRequest} />)}
+                    >
+                        {t("clientImport.button")}
+                    </SecondaryButton>
+                </SimpleContainer>
+            )}
         </SimpleCard>
     );
 });

@@ -598,7 +598,7 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                         autoFocus
                         disabled={isSavingName}
                     />
-                    <SecondaryButton size={buttonSizes.SMALL} onPress={handleSaveName} disabled={isSavingName}>
+                    <SecondaryButton size={buttonSizes.SMALL} onPress={handleSaveName} disabled={isSavingName} isPerforming={isSavingName}>
                         {isSavingName ? '...' : t('common.save')}
                     </SecondaryButton>
                     <SecondaryButton size={buttonSizes.SMALL} onPress={() => { setIsEditingName(false); setEditName(file?.FileName || ''); }}>

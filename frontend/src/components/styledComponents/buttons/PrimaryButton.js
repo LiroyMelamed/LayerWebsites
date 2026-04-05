@@ -14,7 +14,7 @@ const contentColor = {
     disabled: colors.disabledHighlighted,
 }
 
-export default function PrimaryButton({ children, size, rightIcon, leftIcon, ...props }) {
+export default function PrimaryButton({ children, size, rightIcon, leftIcon, isPerforming, ...props }) {
     const buttonStyle = {
         ...style,
         ...props.style,
@@ -36,6 +36,7 @@ export default function PrimaryButton({ children, size, rightIcon, leftIcon, ...
             contentColor={contentColor.normal}
             pressedContentColor={contentColor.pressed}
             disabledContentColor={contentColor.disabled}
+            isPerforming={isPerforming}
         >
             {children}
         </GenericButton>

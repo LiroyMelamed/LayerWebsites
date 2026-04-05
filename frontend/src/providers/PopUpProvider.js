@@ -17,8 +17,9 @@ export const PopupProvider = ({ children }) => {
 
     const closePopup = () => {
         setIsOpen(false);
-        setPopupContent(null);
         setPreventClose(false);
+        // Delay clearing content so the exit animation can play
+        setTimeout(() => setPopupContent(null), 300);
     };
 
     return (

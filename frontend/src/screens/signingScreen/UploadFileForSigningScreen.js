@@ -1180,7 +1180,7 @@ export default function UploadFileForSigningScreen() {
                                         {t('signing.upload.viewerTitle')}
                                     </h3>
 
-                                    <SecondaryButton onPress={handleDetectSpots} disabled={detecting}>
+                                    <SecondaryButton onPress={handleDetectSpots} disabled={detecting} isPerforming={detecting}>
                                         {detecting ? t('signing.upload.detect.detecting') : t('signing.upload.detect.button')}
                                     </SecondaryButton>
                                 </SimpleContainer>
@@ -1263,7 +1263,7 @@ export default function UploadFileForSigningScreen() {
                             >
                                 {t('common.back')}
                             </SecondaryButton>
-                            <PrimaryButton onPress={handleSubmit} disabled={loading}>
+                            <PrimaryButton onPress={handleSubmit} disabled={loading} isPerforming={loading}>
                                 {loading ? t('signing.upload.sending') : t('signing.upload.sendToClient')}
                             </PrimaryButton>
                         </SimpleContainer>

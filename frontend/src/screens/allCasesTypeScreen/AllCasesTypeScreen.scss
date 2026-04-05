@@ -3,13 +3,13 @@
 
 .lw-allCasesTypeScreen__row {
     @include m.row(v.$space-3, wrap);
+    justify-content: center;
     max-width: 100%;
-    margin: 1rem;
+    margin: 1rem 1rem 0.5rem;
 }
 
 .lw-allCasesTypeScreen__search {
     flex: 1 1 10rem;
-    min-inline-size: 14rem;
     max-inline-size: 31.25rem;
     min-inline-size: 0;
 }

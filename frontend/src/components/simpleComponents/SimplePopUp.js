@@ -1,14 +1,35 @@
 // SimplePopUp.js
-import { useRef, isValidElement } from 'react';
+import { useRef, useEffect, useState, isValidElement } from 'react';
 import SimpleContainer from './SimpleContainer';
 import SimpleButton from './SimpleButton';
 
 import './SimplePopUp.scss';
 
 const SimplePopUp = ({ isOpen, children, onClose, className, ...props }) => {
-    const popupRef = useRef(null); // Ref to keep track of the popup container
+    const popupRef = useRef(null);
+    const [shouldRender, setShouldRender] = useState(false);
+    const [isVisible, setIsVisible] = useState(false);
 
-    if (!isOpen) return null; // Don't render if not open
+    useEffect(() => {
+        if (isOpen) {
+            setShouldRender(true);
+            // Trigger enter animation on next frame so the DOM is ready
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => setIsVisible(true));
+            });
+        } else {
+            setIsVisible(false);
+        }
+    }, [isOpen]);
+
+    // Unmount after exit transition ends
+    const handleTransitionEnd = (e) => {
+        if (!isOpen && e.target === e.currentTarget) {
+            setShouldRender(false);
+        }
+    };
+
+    if (!shouldRender) return null;
 
     // Handle click outside the popup container
     const handleOverlayClick = (e) => {
@@ -22,10 +43,11 @@ const SimplePopUp = ({ isOpen, children, onClose, className, ...props }) => {
 
     return (
         <SimpleContainer
-            className={['lw-simplePopUp__overlay', isFloatingMenu ? 'lw-simplePopUp__overlay--transparent' : null]
+            className={['lw-simplePopUp__overlay', isFloatingMenu ? 'lw-simplePopUp__overlay--transparent' : null, isVisible ? 'is-visible' : null]
                 .filter(Boolean)
                 .join(' ')}
             onClick={handleOverlayClick}
+            onTransitionEnd={handleTransitionEnd}
         >
             <SimpleContainer
                 ref={popupRef}
@@ -33,6 +55,7 @@ const SimplePopUp = ({ isOpen, children, onClose, className, ...props }) => {
                     'lw-simplePopUp__container',
                     className,
                     isFloatingMenu ? 'lw-simplePopUp__container--floating' : null,
+                    isVisible ? 'is-visible' : null,
                 ]
                     .filter(Boolean)
                     .join(' ')}

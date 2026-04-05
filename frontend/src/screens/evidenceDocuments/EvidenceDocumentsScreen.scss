@@ -1,24 +1,11 @@
 @use '../../styles/mixins' as m;
 @use '../../styles/variables' as v;
 
-.lw-evidenceDocuments__scroll {
-    width: 100%;
-    padding: v.$space-4;
-    direction: rtl;
-    display: flex;
-    flex-direction: column;
-    gap: v.$space-4;
-    box-sizing: border-box;
-}
-
-.lw-evidenceDocuments__header {
-    /* spacing handled by parent gap */
-}
-
-.lw-evidenceDocuments__row {
+.lw-evidenceDocuments__topRow {
     @include m.row(v.$space-3, wrap);
     align-items: flex-end;
     justify-content: center;
+    margin: 1rem 1rem 0.5rem;
 }
 
 .lw-evidenceDocuments__search {
@@ -26,8 +13,17 @@
     min-inline-size: 16rem;
 }
 
+.lw-evidenceDocuments__filtersRow {
+    @include m.row(v.$space-3, wrap);
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+    margin-top: 1rem;
+}
+
 .lw-evidenceDocuments__choose {
-    min-inline-size: 14rem;
+    flex: 0 0 auto;
+    min-inline-size: 8.5rem;
 }
 
 .lw-evidenceDocuments__state {
@@ -36,86 +32,90 @@
     text-align: center;
 }
 
-.lw-evidenceDocuments__table {
+/* Card layout */
+.lw-evidenceDocuments__card {
     flex-direction: column;
-    width: 100%;
-    border: 0.0625rem solid var(--lw-color-disabled);
-    border-radius: 0.5rem;
+}
+
+.lw-evidenceDocuments__headerRow {
+    @include m.row(v.$space-2, nowrap, center);
+    min-inline-size: 0;
     overflow: hidden;
 }
 
-.lw-evidenceDocuments__tableRow {
-    display: grid;
-    /*
-        Header and row are separate grid containers.
-        Avoid max-content (it sizes per-row based on its own content), but also avoid
-        hard fixed widths that overflow on small screens.
-        Use shrinkable tracks (min 0) so the grid can fit the container.
-    */
-    grid-template-columns:
-        minmax(0, 1fr) minmax(0, 6.25rem) minmax(0, 1fr) minmax(0, 6.25rem) minmax(0, 5.5rem) minmax(0, 3.5rem);
-    border-bottom: 0.0625rem solid var(--lw-color-disabled);
-    align-items: center;
-    gap: 0.25rem;
-}
-
-.lw-evidenceDocuments__tableRow--noOtp {
-    grid-template-columns:
-        minmax(0, 1fr) minmax(0, 6.25rem) minmax(0, 1.5fr) minmax(0, 6.25rem) minmax(0, 3.5rem);
-}
-
-.lw-evidenceDocuments__tableRow--noCase {
-    grid-template-columns:
-        minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 6.25rem) minmax(0, 5.5rem) minmax(0, 3.5rem);
-}
-
-.lw-evidenceDocuments__tableRow--noCase.lw-evidenceDocuments__tableRow--noOtp {
-    grid-template-columns:
-        minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 6.25rem) minmax(0, 3.5rem);
-}
-
-.lw-evidenceDocuments__tableRow--header {
-    background-color: var(--lw-color-secondary-highlighted);
-}
-
-.lw-evidenceDocuments__cell {
-    padding: 0.5rem;
-    font-size: 0.8125rem;
+.lw-evidenceDocuments__headerCell {
+    flex: 1;
+    text-align: start;
+    min-inline-size: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    min-width: 0;
+}
+
+.lw-evidenceDocuments__headerCell--date,
+.lw-evidenceDocuments__headerCell--otp {
+    flex: 0 0 6.25rem;
+}
+
+.lw-evidenceDocuments__headerCell--actions {
+    flex: 0 0 3.5rem;
+    text-align: center;
+}
+
+.lw-evidenceDocuments__list {
+    flex: 1;
+}
+
+.lw-evidenceDocuments__listItem {
+    flex-direction: column;
+}
+
+.lw-evidenceDocuments__itemRow {
+    @include m.row(v.$space-2, nowrap, center);
+    min-inline-size: 0;
+    overflow: hidden;
+    padding: 0.25rem 0;
+}
+
+.lw-evidenceDocuments__itemCell {
+    flex: 1;
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     direction: rtl;
 }
 
-.lw-evidenceDocuments__cell--actions {
+.lw-evidenceDocuments__itemCell--date,
+.lw-evidenceDocuments__itemCell--otp {
+    flex: 0 0 6.25rem;
+}
+
+.lw-evidenceDocuments__itemCell--actions {
+    flex: 0 0 3.5rem;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 0.5rem;
 }
 
-@media (max-width: v.$bp-narrow) {
+/* Footer */
+.lw-evidenceDocuments__footer {
+    display: flex;
+    justify-content: center;
+    align-self: center;
+    gap: 0.75rem;
+}
 
-    /* Always hide the case column on small screens */
-    .lw-evidenceDocuments__cell--case {
+.lw-evidenceDocuments__footer>.lw-textButtonWithTwoOptionalIcons {
+    margin: 0.5rem 0;
+    align-self: center;
+    min-block-size: 2.75rem;
+}
+
+@media (max-width: v.$bp-md) {
+
+    .lw-evidenceDocuments__headerCell--case,
+    .lw-evidenceDocuments__itemCell--case {
         display: none;
     }
-
-    /* When the case column is hidden, keep the grid aligned */
-    .lw-evidenceDocuments__tableRow {
-        grid-template-columns:
-            minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 6.25rem) minmax(0, 5.25rem) minmax(0, 3.25rem);
-    }
-
-    .lw-evidenceDocuments__tableRow--noOtp {
-        grid-template-columns:
-            minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 6.25rem) minmax(0, 3.25rem);
-    }
-}
-
-.lw-evidenceDocuments__footer {
-    width: 100%;
-    justify-content: center;
-    text-align: center;
 }

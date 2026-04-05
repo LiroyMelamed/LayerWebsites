@@ -3,11 +3,9 @@
 .lw-platformSettings {
     direction: rtl;
     width: 100%;
-    min-height: 100vh;
-    background: var(--lw-color-secondary-highlighted);
 
     &__scroll {
-        padding: v.$space-6;
+        padding: 0;
         overflow-x: hidden;
         max-width: 100%;
     }
@@ -16,7 +14,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: v.$space-6;
+        margin: 1rem 1rem 0.5rem;
         flex-wrap: wrap;
         gap: v.$space-3;
     }
@@ -32,8 +30,9 @@
 
     &__layout {
         display: flex;
-        gap: v.$space-5;
+        gap: v.$space-3;
         align-items: flex-start;
+        margin: 0 1rem;
     }
 
     // ── Tabs sidebar ────────────────────────────────────────────────
@@ -42,12 +41,10 @@
         flex-direction: column;
         gap: v.$space-2;
         min-width: 200px;
-        background: #fff;
         border-radius: 12px;
         padding: v.$space-3;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
         position: sticky;
-        top: v.$space-6;
+        top: 1rem;
     }
 
     &__tab {
@@ -101,44 +98,43 @@
         width: 100%;
         flex: 1;
         min-width: 0;
+        overflow: hidden;
     }
 
     &__card {
         flex: 1;
         flex-direction: column;
-        background: #fff;
-        border-radius: 12px;
-        padding: v.$space-5;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
         min-width: 0;
         overflow: hidden;
         margin: 0;
+        max-width: 100%;
+        box-sizing: border-box;
     }
 
     &__subtitle {
         color: #888;
-        margin-top: v.$space-2;
-        margin-bottom: v.$space-5;
+        margin-top: v.$space-1;
+        margin-bottom: v.$space-3;
     }
 
     &__loading {
         display: flex;
         justify-content: center;
-        padding: v.$space-8;
+        padding: v.$space-4;
     }
 
     &__empty {
         color: #999;
         text-align: center;
-        padding: v.$space-6;
+        padding: v.$space-4;
     }
 
     // ── Settings list ───────────────────────────────────────────────
     &__settingsList {
         display: flex;
         flex-direction: column;
-        gap: v.$space-4;
-        margin-top: v.$space-5;
+        gap: v.$space-3;
+        margin-top: v.$space-3;
     }
 
     &__settingRow {
@@ -382,7 +378,7 @@
     &__saveBar {
         display: flex;
         gap: v.$space-3;
-        margin-top: v.$space-5;
+        margin-top: v.$space-3;
         justify-content: center;
     }
 
@@ -408,10 +404,7 @@
         display: flex;
         flex-direction: column;
         gap: v.$space-2;
-        background: #fff;
-        border-radius: 12px;
         padding: v.$space-3;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     }
 
     &__emailTemplateListTitle {
@@ -450,10 +443,7 @@
 
     &__emailEditor {
         width: 100%;
-        background: #fff;
-        border-radius: 12px;
-        padding: v.$space-5;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        padding: v.$space-4;
         display: flex;
         flex-direction: column;
         gap: v.$space-4;
@@ -515,6 +505,8 @@
         background: #fafafa;
         min-height: 300px;
         transition: border-color 0.2s;
+        box-sizing: border-box;
+        max-width: 100%;
 
         &:focus {
             outline: none;
@@ -538,6 +530,8 @@
         border: 1px solid #e0e0e0;
         border-radius: 8px;
         background: #fff;
+        max-width: 100%;
+        box-sizing: border-box;
     }
 
     &__emailEditorActions {
@@ -606,6 +600,8 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: v.$space-4;
+        flex-wrap: wrap;
+        gap: v.$space-3;
     }
 
     &__reminderTplList {
@@ -623,6 +619,8 @@
         border: 1px solid #f0f0f0;
         border-radius: 8px;
         gap: v.$space-3;
+        flex-wrap: wrap;
+        min-width: 0;
     }
 
     &__reminderTplInfo {
@@ -630,12 +628,14 @@
         flex-direction: column;
         gap: v.$space-1;
         flex: 1;
+        min-width: 0;
     }
 
     &__reminderTplNameRow {
         display: flex;
         align-items: center;
         gap: v.$space-2;
+        flex-wrap: wrap;
     }
 
     &__reminderTplBadge {
@@ -656,6 +656,7 @@
         display: flex;
         gap: v.$space-2;
         flex-shrink: 0;
+        flex-wrap: wrap;
     }
 
     &__reminderEditor {
@@ -667,6 +668,9 @@
         display: flex;
         flex-direction: column;
         gap: v.$space-3;
+        min-width: 0;
+        max-width: 100%;
+        box-sizing: border-box;
     }
 
     &__reminderEditorTitle {
@@ -777,12 +781,9 @@
 
     // ── Mobile responsive ───────────────────────────────────────────
     @media (max-width: 768px) {
-        &__scroll {
-            padding: v.$space-4;
-        }
-
         &__layout {
             flex-direction: column;
+            margin: 0 0.5rem;
         }
 
         &__tabs {
@@ -882,6 +883,28 @@
 
         &__emailEditorActions {
             flex-direction: column;
+        }
+
+        &__reminderTplRow {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        &__reminderTplActions {
+            width: 100%;
+            justify-content: flex-start;
+        }
+
+        &__reminderEditor {
+            padding: v.$space-3;
+        }
+
+        &__reminderEditorActions {
+            flex-direction: column;
+        }
+
+        &__emailPreviewFrame {
+            height: 24rem;
         }
     }
 }

@@ -13,12 +13,13 @@ import SimpleCard from "../../components/simpleComponents/SimpleCard";
 import SimpleInput from "../../components/simpleComponents/SimpleInput";
 
 import SearchInput from "../../components/specializedComponents/containers/SearchInput";
-import { Text14, TextBold14, TextBold24 } from "../../components/specializedComponents/text/AllTextKindFile";
+import { Text14, TextBold14 } from "../../components/specializedComponents/text/AllTextKindFile";
 import ChooseButton from "../../components/styledComponents/buttons/ChooseButton";
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
 import TertiaryButton from "../../components/styledComponents/buttons/TertiaryButton";
 import ErrorPopup from "../../components/styledComponents/popups/ErrorPopup";
+import Separator from "../../components/styledComponents/separators/Separator";
 import { buttonSizes } from "../../styles/buttons/buttonSizes";
 import { icons } from "../../assets/icons/icons";
 
@@ -73,16 +74,6 @@ export default function EvidenceDocumentsScreen() {
     const { openPopup, closePopup } = usePopup();
 
     const showOtpUi = SIGNING_OTP_ENABLED;
-
-    const tableRowClassName = useMemo(() => {
-        return [
-            "lw-evidenceDocuments__tableRow",
-            isSmallScreen ? "lw-evidenceDocuments__tableRow--noCase" : null,
-            showOtpUi ? null : "lw-evidenceDocuments__tableRow--noOtp",
-        ]
-            .filter(Boolean)
-            .join(" ");
-    }, [isSmallScreen, showOtpUi]);
 
     const [inputQ, setInputQ] = useState("");
     const [inputCaseId, setInputCaseId] = useState("");
@@ -275,12 +266,8 @@ export default function EvidenceDocumentsScreen() {
                 />
             )}
 
-            <SimpleScrollView className="lw-evidenceDocuments__scroll">
-                <SimpleContainer className="lw-evidenceDocuments__header">
-                    <TextBold24>{t("evidenceDocuments.pageTitle")}</TextBold24>
-                </SimpleContainer>
-
-                <SimpleContainer className="lw-evidenceDocuments__row">
+            <SimpleScrollView>
+                <SimpleContainer className="lw-evidenceDocuments__topRow">
                     <SearchInput
                         value={inputQ}
                         onSearch={setInputQ}
@@ -306,7 +293,7 @@ export default function EvidenceDocumentsScreen() {
                     </PrimaryButton>
                 </SimpleContainer>
 
-                <SimpleContainer className="lw-evidenceDocuments__row">
+                <SimpleContainer className="lw-evidenceDocuments__filtersRow">
                     <SimpleInput
                         title={t("evidenceDocuments.filters.caseId")}
                         value={inputCaseId}
@@ -342,12 +329,23 @@ export default function EvidenceDocumentsScreen() {
                 </SimpleContainer>
 
                 {isLoading && items.length === 0 ? (
-                    <SimpleCard>
-                        {[1, 2, 3].map(i => (
-                            <SimpleContainer key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0' }}>
-                                <Skeleton width="30%" height={14} />
-                                <Skeleton width="20%" height={14} />
-                                <Skeleton width="15%" height={14} />
+                    <SimpleCard className="lw-evidenceDocuments__card">
+                        <SimpleContainer className="lw-evidenceDocuments__headerRow">
+                            <Skeleton width="25%" height={14} />
+                            <Skeleton width="20%" height={14} />
+                            <Skeleton width="25%" height={14} />
+                            <Skeleton width="15%" height={14} />
+                        </SimpleContainer>
+                        <Separator />
+                        {[1, 2, 3, 4].map(i => (
+                            <SimpleContainer key={i} style={{ padding: '12px 0' }}>
+                                {i !== 1 && <Separator />}
+                                <SimpleContainer style={{ display: 'flex', gap: 16, padding: '8px 0' }}>
+                                    <Skeleton width="25%" height={14} />
+                                    <Skeleton width="20%" height={14} />
+                                    <Skeleton width="25%" height={14} />
+                                    <Skeleton width="15%" height={14} />
+                                </SimpleContainer>
                             </SimpleContainer>
                         ))}
                     </SimpleCard>
@@ -360,83 +358,68 @@ export default function EvidenceDocumentsScreen() {
                         <Text14>{t("evidenceDocuments.empty")}</Text14>
                     </SimpleContainer>
                 ) : (
-                    <SimpleContainer className="lw-evidenceDocuments__table">
-                        <SimpleContainer className={`${tableRowClassName} lw-evidenceDocuments__tableRow--header`}>
-                            <SimpleContainer className="lw-evidenceDocuments__cell">
-                                <TextBold14>{t("evidenceDocuments.columns.client")}</TextBold14>
-                            </SimpleContainer>
+                    <SimpleCard className="lw-evidenceDocuments__card">
+                        <SimpleContainer className="lw-evidenceDocuments__headerRow">
+                            <TextBold14 className="lw-evidenceDocuments__headerCell">{t("evidenceDocuments.columns.client")}</TextBold14>
                             {!isSmallScreen && (
-                                <SimpleContainer className="lw-evidenceDocuments__cell lw-evidenceDocuments__cell--case">
-                                    <TextBold14>{t("evidenceDocuments.columns.case")}</TextBold14>
-                                </SimpleContainer>
+                                <TextBold14 className="lw-evidenceDocuments__headerCell lw-evidenceDocuments__headerCell--case">{t("evidenceDocuments.columns.case")}</TextBold14>
                             )}
-                            <SimpleContainer className="lw-evidenceDocuments__cell">
-                                <TextBold14>{t("evidenceDocuments.columns.document")}</TextBold14>
-                            </SimpleContainer>
-                            <SimpleContainer className="lw-evidenceDocuments__cell">
-                                <TextBold14>{t("evidenceDocuments.columns.signedAt")}</TextBold14>
-                            </SimpleContainer>
+                            <TextBold14 className="lw-evidenceDocuments__headerCell">{t("evidenceDocuments.columns.document")}</TextBold14>
+                            <TextBold14 className="lw-evidenceDocuments__headerCell lw-evidenceDocuments__headerCell--date">{t("evidenceDocuments.columns.signedAt")}</TextBold14>
                             {showOtpUi && (
-                                <SimpleContainer className="lw-evidenceDocuments__cell">
-                                    <TextBold14>{t("evidenceDocuments.columns.otp")}</TextBold14>
-                                </SimpleContainer>
+                                <TextBold14 className="lw-evidenceDocuments__headerCell lw-evidenceDocuments__headerCell--otp">{t("evidenceDocuments.columns.otp")}</TextBold14>
                             )}
-                            <SimpleContainer className="lw-evidenceDocuments__cell">
-                                <TextBold14>{t("evidenceDocuments.columns.actions")}</TextBold14>
-                            </SimpleContainer>
+                            <TextBold14 className="lw-evidenceDocuments__headerCell lw-evidenceDocuments__headerCell--actions">{t("evidenceDocuments.columns.actions")}</TextBold14>
                         </SimpleContainer>
 
-                        {filteredItems.map((it) => (
-                            <SimpleContainer
-                                key={`${it.signingFileId}_${it.signedAtUtc || ""}`}
-                                className={tableRowClassName}
-                            >
-                                <SimpleContainer className="lw-evidenceDocuments__cell" title={it.clientDisplayName || ""}>
-                                    <Text14>{clientNameOnly(it.clientDisplayName) || "-"}</Text14>
-                                </SimpleContainer>
-                                {!isSmallScreen && (
-                                    <SimpleContainer className="lw-evidenceDocuments__cell lw-evidenceDocuments__cell--case" title={String(it.caseId || "")}>
-                                        <Text14>{it.caseId ? String(it.caseId) : "-"}</Text14>
-                                    </SimpleContainer>
-                                )}
-                                <SimpleContainer className="lw-evidenceDocuments__cell" title={it.documentDisplayName || ""}>
-                                    <Text14>{it.documentDisplayName || "-"}</Text14>
-                                </SimpleContainer>
-                                <SimpleContainer className="lw-evidenceDocuments__cell">
-                                    <Text14>{formatDateDdMmYy(it.signedAtUtc)}</Text14>
-                                </SimpleContainer>
-                                {showOtpUi && (
-                                    <SimpleContainer className="lw-evidenceDocuments__cell">
-                                        <Text14>{otpLabel(it, t)}</Text14>
-                                    </SimpleContainer>
-                                )}
-                                <SimpleContainer className="lw-evidenceDocuments__cell lw-evidenceDocuments__cell--actions">
-                                    <TertiaryButton
-                                        onPress={() => downloadEvidenceZip(it.signingFileId)}
-                                        disabled={!it.evidenceZipAvailable}
-                                        title={t("evidenceDocuments.actions.downloadZip")}
-                                        size={buttonSizes.SMALL}
-                                        rightIcon={icons.Button.DownArrow}
-                                        style={{ padding: '0.35rem 0.45rem', minWidth: 'unset' }}
-                                    >
-                                        {""}
-                                    </TertiaryButton>
-                                </SimpleContainer>
-                            </SimpleContainer>
-                        ))}
-                    </SimpleContainer>
-                )}
+                        <Separator />
 
-                <SimpleContainer className="lw-evidenceDocuments__footer">
-                    {nextCursor ? (
-                        <SecondaryButton onPress={handleLoadMore} disabled={isLoading}>
-                            {t("evidenceDocuments.actions.loadMore")}
-                        </SecondaryButton>
-                    ) : (
-                        items.length > 0 && <Text14>{t("evidenceDocuments.end")}</Text14>
-                    )}
-                </SimpleContainer>
+                        <SimpleScrollView className="lw-evidenceDocuments__list">
+                            {filteredItems.map((it, index) => (
+                                <SimpleContainer
+                                    key={`${it.signingFileId}_${it.signedAtUtc || ""}`}
+                                    className="lw-evidenceDocuments__listItem"
+                                >
+                                    {index !== 0 && <Separator />}
+                                    <SimpleContainer className="lw-evidenceDocuments__itemRow">
+                                        <Text14 className="lw-evidenceDocuments__itemCell" title={it.clientDisplayName || ""}>{clientNameOnly(it.clientDisplayName) || "-"}</Text14>
+                                        {!isSmallScreen && (
+                                            <Text14 className="lw-evidenceDocuments__itemCell lw-evidenceDocuments__itemCell--case" title={String(it.caseId || "")}>{it.caseId ? String(it.caseId) : "-"}</Text14>
+                                        )}
+                                        <Text14 className="lw-evidenceDocuments__itemCell" title={it.documentDisplayName || ""}>{it.documentDisplayName || "-"}</Text14>
+                                        <Text14 className="lw-evidenceDocuments__itemCell lw-evidenceDocuments__itemCell--date">{formatDateDdMmYy(it.signedAtUtc)}</Text14>
+                                        {showOtpUi && (
+                                            <Text14 className="lw-evidenceDocuments__itemCell lw-evidenceDocuments__itemCell--otp">{otpLabel(it, t)}</Text14>
+                                        )}
+                                        <SimpleContainer className="lw-evidenceDocuments__itemCell lw-evidenceDocuments__itemCell--actions">
+                                            <TertiaryButton
+                                                onPress={() => downloadEvidenceZip(it.signingFileId)}
+                                                disabled={!it.evidenceZipAvailable}
+                                                title={t("evidenceDocuments.actions.downloadZip")}
+                                                size={buttonSizes.SMALL}
+                                                rightIcon={icons.Button.DownArrow}
+                                                style={{ padding: '0.35rem 0.45rem', minWidth: 'unset' }}
+                                            >
+                                                {""}
+                                            </TertiaryButton>
+                                        </SimpleContainer>
+                                    </SimpleContainer>
+                                </SimpleContainer>
+                            ))}
+                        </SimpleScrollView>
+                    </SimpleCard>
+                )}
             </SimpleScrollView>
+
+            <SimpleContainer className="lw-evidenceDocuments__footer">
+                {nextCursor ? (
+                    <SecondaryButton onPress={handleLoadMore} disabled={isLoading}>
+                        {t("evidenceDocuments.actions.loadMore")}
+                    </SecondaryButton>
+                ) : (
+                    items.length > 0 && <Text14>{t("evidenceDocuments.end")}</Text14>
+                )}
+            </SimpleContainer>
         </SimpleScreen>
     );
 }

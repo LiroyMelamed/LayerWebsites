@@ -10,10 +10,19 @@
     flex-direction: column;
 }
 
-.lw-adminsCard__headerRow {}
+.lw-adminsCard__headerRow {
+    @include m.row(v.$space-2, nowrap, center);
+    min-inline-size: 0;
+    overflow: hidden;
+}
 
 .lw-adminsCard__headerCell {
     flex: 1;
+    text-align: start;
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .lw-adminsCard__item {

@@ -201,6 +201,7 @@ export default function ChatBotPage() {
                         <PrimaryButton
                             onPress={handleRequestOtp}
                             disabled={otpLoading || otpPhone.length < 9}
+                            isPerforming={otpLoading}
                             size={buttonSizes.MEDIUM}
                         >
                             {otpLoading ? t('chatbot.sending') : t('chatbot.sendOtp')}
@@ -219,6 +220,7 @@ export default function ChatBotPage() {
                         <PrimaryButton
                             onPress={handleVerifyOtp}
                             disabled={otpLoading || otpCode.length < 6}
+                            isPerforming={otpLoading}
                             size={buttonSizes.MEDIUM}
                         >
                             {otpLoading ? t('chatbot.verifying') : t('chatbot.verifyOtp')}

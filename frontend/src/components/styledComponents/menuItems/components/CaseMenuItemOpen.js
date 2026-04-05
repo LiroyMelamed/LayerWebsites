@@ -81,11 +81,10 @@ function WhatsappGroupLinkModal({
     );
 }
 
-export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCase, isClient, rePerformFunction }) {
+export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, isPerformingUpdateStage, editCase, isClient, rePerformFunction }) {
     const { t } = useTranslation();
     const { isPerforming: isPerformingTagCase, performRequest: tagCase } = useHttpRequest(
-        casesApi.tagCaseById,
-        () => { rePerformFunction?.(); }
+        casesApi.tagCaseById
     );
     const { openPopup, closePopup } = usePopup();
 
@@ -161,20 +160,18 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
                         <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">{t("common.stages")}</TextBold12>
                     </SimpleContainer>
 
-                    {isStagesOpen && (
-                        <SimpleContainer className="lw-caseMenuItemOpen__timelineWrap">
-                            <CaseTimeline
-                                stages={fullCase.Descriptions}
-                                currentStage={fullCase.CurrentStage}
-                                isClosed={fullCase.IsClosed}
-                                createdAt={fullCase.CreatedAt}
-                                caseId={fullCase.CaseId}
-                                isClient={isClient}
-                                stageFiles={stageFiles}
-                                onStageFilesChanged={fetchStageFiles}
-                            />
-                        </SimpleContainer>
-                    )}
+                    <SimpleContainer className={`lw-caseMenuItemOpen__timelineWrap${isStagesOpen ? ' is-open' : ''}`}>
+                        <CaseTimeline
+                            stages={fullCase.Descriptions}
+                            currentStage={fullCase.CurrentStage}
+                            isClosed={fullCase.IsClosed}
+                            createdAt={fullCase.CreatedAt}
+                            caseId={fullCase.CaseId}
+                            isClient={isClient}
+                            stageFiles={stageFiles}
+                            onStageFilesChanged={fetchStageFiles}
+                        />
+                    </SimpleContainer>
                 </SimpleContainer>
 
                 {/* Sections (mobile-first: stack) */}
@@ -290,14 +287,14 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, editCa
                 {/* Footer actions */}
                 {!isClient && (
                     <SimpleContainer className="lw-caseMenuItemOpen__footer">
-                        <TertiaryButton size={buttonSizes.SMALL} onPress={unTag}>
+                        <TertiaryButton size={buttonSizes.SMALL} onPress={unTag} isPerforming={isPerformingTagCase}>
                             {IsTagged ? t("taggedCases.unpin") : t("taggedCases.pin")}
                         </TertiaryButton>
                         <SecondaryButton size={buttonSizes.SMALL} onPress={editCase} className="lw-caseMenuItemOpen__action">
                             {t("common.edit")}
                         </SecondaryButton>
                         {!fullCase.IsClosed && (
-                            <PrimaryButton size={buttonSizes.SMALL} onPress={updateStage} className="lw-caseMenuItemOpen__action">
+                            <PrimaryButton size={buttonSizes.SMALL} onPress={updateStage} isPerforming={isPerformingUpdateStage} className="lw-caseMenuItemOpen__action" >
                                 {t("cases.advanceStage")}
                             </PrimaryButton>
                         )}

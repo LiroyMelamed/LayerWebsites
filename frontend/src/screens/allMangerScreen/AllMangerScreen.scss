@@ -3,12 +3,13 @@
 
 .lw-allMangerScreen__row {
     @include m.row(v.$space-3, wrap);
+    justify-content: center;
     max-width: 100%;
-    margin: 1rem;
+    margin: 1rem 1rem 0.5rem;
 }
 
 .lw-allMangerScreen__search {
-    flex: 1 1 1 10rem;
+    flex: 1 1 10rem;
     max-inline-size: 31.25rem;
     min-inline-size: 0;
 }
