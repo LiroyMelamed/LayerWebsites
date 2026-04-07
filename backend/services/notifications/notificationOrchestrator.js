@@ -92,6 +92,7 @@ async function notifyRecipient({
     email,
     sms,
     skipAdminCc = false,
+    caseId = null,
 } = {}) {
     const type = String(notificationType || '').trim();
 
@@ -348,6 +349,85 @@ async function notifyRecipient({
         }
     } catch (ccErr) {
         console.warn('[orchestrator] admin CC failed:', ccErr?.message);
+    }
+
+    // ── CC case manager if manager_cc is enabled and a caseId is provided ──
+    try {
+        const shouldCcManager = !skipAdminCc && channelCfg.manager_cc === true && caseId;
+        if (shouldCcManager) {
+            const caseRow = await pool.query(
+                `SELECT c.casemanagerid AS "CaseManagerId"
+                 FROM cases c
+                 WHERE c.caseid = $1 AND c.casemanagerid IS NOT NULL`,
+                [caseId]
+            );
+            const managerId = caseRow.rows?.[0]?.CaseManagerId ? Number(caseRow.rows[0].CaseManagerId) : null;
+
+            if (managerId && managerId !== Number(recipientUserId)) {
+                // Avoid duplicate CC if the manager is also a platform admin (already CC'd above)
+                const managerUser = await getUserContactById(managerId);
+                if (managerUser) {
+                    const managerEmail = String(managerUser.email || '').trim();
+                    const managerPhone = formatPhoneNumber(String(managerUser.phoneNumber || '').trim());
+
+                    console.log('\n---------- [QA DEBUG] MANAGER CC ----------');
+                    console.log(`  CC TO manager: ${managerUser.name} (userId=${managerId})`);
+                    console.log(`  CC email:      ${managerEmail || 'N/A'}`);
+                    console.log(`  CC phone:      ${managerPhone || 'N/A'}`);
+                    console.log(`  CaseId:        ${caseId}`);
+                    console.log(`  Original TO:   userId=${recipientUserId}`);
+                    console.log(`  Type:          ${type}`);
+                    console.log('--------------------------------------------\n');
+
+                    const managerCcTasks = [];
+
+                    if (push && managerId) {
+                        managerCcTasks.push(
+                            sendAndStoreNotification(
+                                managerId,
+                                `[העתק למנהל תיק] ${String(push.title || '').trim()}`,
+                                String(push.body || '').trim(),
+                                { ...(push.data || {}), managerCc: true },
+                                { sendPush: await userHasValidPush(managerId) }
+                            ).catch(e => console.warn('[orchestrator] manager CC push failed:', e?.message))
+                        );
+                    }
+
+                    if (email && managerEmail) {
+                        managerCcTasks.push(
+                            sendEmailCampaign({
+                                toEmail: managerEmail,
+                                campaignKey: String(email.campaignKey || '').trim(),
+                                contactFields: {
+                                    ...(email.contactFields || {}),
+                                    recipient_name: `${String(managerUser.name || '').trim()} (העתק למנהל תיק)`,
+                                },
+                            }).catch(e => console.warn('[orchestrator] manager CC email failed:', e?.message))
+                        );
+                    }
+
+                    if (sms && managerPhone) {
+                        managerCcTasks.push(
+                            sendMessage(
+                                `[העתק למנהל תיק] ${String(sms.messageBody || '').trim()}`,
+                                managerPhone
+                            ).catch(e => console.warn('[orchestrator] manager CC sms failed:', e?.message))
+                        );
+                    }
+
+                    await Promise.allSettled(managerCcTasks);
+
+                    console.log(JSON.stringify({
+                        event: 'notify_orchestrator_manager_cc',
+                        type,
+                        caseId,
+                        managerId,
+                    }));
+                }
+            }
+        }
+    } catch (ccErr) {
+        console.warn('[orchestrator] manager CC failed:', ccErr?.message);
     }
 
     const anyOk = [outcomes.store, outcomes.push, outcomes.email, outcomes.sms]

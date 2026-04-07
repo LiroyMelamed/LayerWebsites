@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { SIGNING_OTP_ENABLED } from "../../../featureFlags";
 
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
+import SimpleLoader from "../../simpleComponents/SimpleLoader";
 import { Text12, Text14 } from "../../specializedComponents/text/AllTextKindFile";
 
 import PrimaryButton from "../../styledComponents/buttons/PrimaryButton";
@@ -64,7 +65,12 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         exists: false,
         url: null,
     });
-    const [signatureMode, setSignatureMode] = useState("draw"); // 'draw' | 'saved'
+    const [savedStamp, setSavedStamp] = useState({
+        loading: false,
+        exists: false,
+        url: null,
+    });
+    const [signatureMode, setSignatureMode] = useState("draw"); // 'draw' | 'saved' | 'stamp' | 'savedStamp'
 
     // Court-ready: per-session identifier for audit trail + OTP binding.
     const signingSessionIdRef = useRef(uuidv4());
@@ -81,6 +87,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const [clientStampPreview, setClientStampPreview] = useState(null);
     const [stampSignPhase, setStampSignPhase] = useState(false); // true = drawing on top of stamp
     const [stampNormalizedDataUrl, setStampNormalizedDataUrl] = useState(null);
+    const [showSpotPopup, setShowSpotPopup] = useState(false);
 
     const getSignModeForSpotType = (type) => {
         const t0 = String(type || 'signature').toLowerCase();
@@ -381,6 +388,24 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         }
     };
 
+    const refreshSavedStamp = async () => {
+        try {
+            const res = isPublic
+                ? await signingFilesApi.getPublicSavedStamp(publicToken)
+                : await signingFilesApi.getSavedStamp();
+            unwrapApi(res);
+            const data = res?.data;
+            setSavedStamp({
+                loading: false,
+                exists: Boolean(data?.exists),
+                url: data?.url || null,
+            });
+        } catch (err) {
+            console.warn("Failed to refresh saved stamp", err);
+            setSavedStamp({ loading: false, exists: false, url: null });
+        }
+    };
+
     useEffect(() => {
         let isMounted = true;
         const load = async () => {
@@ -424,18 +449,26 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     useEffect(() => {
         setSavedSignature((p) => ({ ...p, loading: true }));
+        setSavedStamp((p) => ({ ...p, loading: true }));
         refreshSavedSignature().then(() => {
             // Default UX: if saved exists, offer it first.
         });
+        refreshSavedStamp();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isPublic, publicToken]);
 
     useEffect(() => {
-        if (savedSignature.loading) return;
+        if (savedSignature.loading || savedStamp.loading) return;
 
         const activeSpot = getActiveSpotForMode(fileDetails, currentSpot);
         const activeSpotType = activeSpot ? getSpotType(activeSpot) : 'signature';
         const signMode = getSignModeForSpotType(activeSpotType);
+
+        // clientStamp spots: default to saved stamp if exists, else upload
+        if (signMode === 'clientStamp') {
+            setSignatureMode(savedStamp.exists ? 'savedStamp' : 'stamp');
+            return;
+        }
 
         // Initials must always be a minimal draw-only flow (no saved signature).
         if (signMode !== 'signature') {
@@ -445,7 +478,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
         setSignatureMode(savedSignature.exists ? 'saved' : 'draw');
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [savedSignature.exists, savedSignature.loading, currentSpot, fileDetails]);
+    }, [savedSignature.exists, savedSignature.loading, savedStamp.exists, savedStamp.loading, currentSpot, fileDetails]);
 
     useEffect(() => {
         if (currentSpot && canvasRef.current) {
@@ -633,6 +666,20 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         await refreshSavedSignature();
     };
 
+    const saveStampAsDefault = async (dataUrl) => {
+        if (!dataUrl) return;
+        try {
+            if (isPublic) {
+                await signingFilesApi.savePublicSavedStamp(publicToken, dataUrl);
+            } else {
+                await signingFilesApi.saveSavedStamp(dataUrl);
+            }
+            await refreshSavedStamp();
+        } catch (err) {
+            console.warn("Failed to save stamp as default", err);
+        }
+    };
+
     const signCurrentSpotWithImage = async (dataUrl, spotOverride = null) => {
         const spot = spotOverride || currentSpot;
         if (!spot || spot.IsSigned) return false;
@@ -800,6 +847,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             });
             await reloadDetailsAndAdvance();
             setTimeout(() => setMessage(null), 2000);
+            return true;
         } catch (err) {
             console.error("Failed to save signature", err);
             const spotType = currentSpot ? getSpotType(currentSpot) : 'signature';
@@ -813,6 +861,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         } finally {
             setSaving(false);
         }
+        return false;
     };
 
     const saveFieldValue = async () => {
@@ -881,6 +930,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             }
 
             setMessage({ type: "success", text: t("signing.canvas.fieldSavedSuccess") });
+            return true;
             // NOTE: Intentionally no reloadDetailsAndAdvance() here.
             // If the DB schema lacks signaturespots.fieldvalue, the backend won't return FieldValue,
             // and an immediate reload would erase the visible value from the overlay.
@@ -891,6 +941,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         } finally {
             setSaving(false);
         }
+        return false;
     };
 
     const fileToDataUrl = (file) => new Promise((resolve, reject) => {
@@ -977,19 +1028,24 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             const didSign = await signCurrentSpotWithImage(finalDataUrl);
             if (!didSign) return;
 
+            // Save stamp as default after successful signing
+            saveStampAsDefault(stampNormalizedDataUrl);
+
             setMessage({ type: "success", text: t("signing.canvas.clientStampSavedSuccess") });
             clearClientStamp();
             await reloadDetailsAndAdvance();
             setTimeout(() => setMessage(null), 2000);
+            return true;
         } catch (err) {
             console.error("Failed to save client stamp", err);
             setMessage({ type: "error", text: t("signing.canvas.clientStampUploadError") });
         } finally {
             setSaving(false);
         }
+        return false;
     };
 
-    const useSavedSignatureForNext = async () => {
+    const applySavedSignatureForNext = async () => {
         try {
             if (!savedSignature?.exists) {
                 setMessage({ type: "error", text: t("signing.canvas.noSavedSignature") });
@@ -1030,9 +1086,42 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             setMessage({ type: "success", text: t("signing.canvas.signatureSavedSuccess") });
             await reloadDetailsAndAdvance();
             setTimeout(() => setMessage(null), 2000);
+            return true;
         } catch (err) {
             console.error("Failed to use saved signature", err);
             setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.useSavedSignatureError") });
+        } finally {
+            setSaving(false);
+        }
+        return false;
+    };
+
+    const applySavedStampForNext = async () => {
+        try {
+            if (!savedStamp?.exists) {
+                setMessage({ type: "error", text: t("signing.canvas.noSavedStamp") });
+                return;
+            }
+
+            setSaving(true);
+            const stampRes = isPublic
+                ? await signingFilesApi.getPublicSavedStampDataUrl(publicToken)
+                : await signingFilesApi.getSavedStampDataUrl();
+            unwrapApi(stampRes);
+            const rawDataUrl = stampRes?.data?.dataUrl;
+            const dataUrl = await normalizeSignatureDataUrl(rawDataUrl);
+            if (!dataUrl) {
+                throw new Error(t("signing.canvas.missingSavedStampData"));
+            }
+
+            // Enter stamp-sign phase with saved stamp as background
+            setStampNormalizedDataUrl(dataUrl);
+            setStampSignPhase(true);
+            clearCanvas();
+            setHasUserDrawn(false);
+        } catch (err) {
+            console.error("Failed to use saved stamp", err);
+            setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.useSavedStampError") });
         } finally {
             setSaving(false);
         }
@@ -1086,6 +1175,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             setMessage({ type: "success", text: t("signing.canvas.signedAllSuccess") });
             await reloadDetailsAndAdvance();
             setTimeout(() => setMessage(null), 2000);
+            return true;
         } catch (err) {
             console.error("Failed to sign all spots", err);
             setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.signAllError") });
@@ -1094,6 +1184,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         } finally {
             setSaving(false);
         }
+        return false;
     };
 
     const requestOtp = async () => {
@@ -1248,6 +1339,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             setCurrentSpot(first);
             scrollToSpot(first);
             setHasStartedNextFlow(true);
+            if (isScreen) setShowSpotPopup(true);
             return;
         }
 
@@ -1257,14 +1349,596 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         const nextSpot = unsignedRequiredSpots[nextIdx];
         setCurrentSpot(nextSpot);
         scrollToSpot(nextSpot);
+        if (isScreen) setShowSpotPopup(true);
     };
 
+    const handleSpotSelect = (index) => {
+        const spot = spots[index];
+        if (!spot) return;
+        setCurrentSpot(spot);
+        if (isSignatureLike(getSpotType(spot))) {
+            setSignatureMode("draw");
+            clearCanvas();
+        }
+        scrollToSpot(spot);
+        setHasStartedNextFlow(true);
+        if (isScreen) setShowSpotPopup(true);
+    };
+
+    const closeSpotPopup = () => {
+        setShowSpotPopup(false);
+    };
+
+    // ─── Shared signing UI (used in side panel for modal, popup for screen) ───
+    const renderConsentAndOtp = () => (
+        <>
+            {!consentAccepted && (
+                <div className="lw-signing-legalBox">
+                    <label className="lw-signing-legalRow">
+                        <input
+                            type="checkbox"
+                            checked={consentAccepted}
+                            onChange={(e) => {
+                                const next = Boolean(e.target.checked);
+                                if (!next) return;
+                                setConsentAccepted(true);
+                                try {
+                                    localStorage.setItem(consentStorageKey, "true");
+                                } catch { /* ignore */ }
+                            }}
+                            disabled={saving}
+                        />
+                        <span>{t("signing.canvas.consentText")}</span>
+                    </label>
+                </div>
+            )}
+
+            {otpRequired && (
+                <div className="lw-signing-otpBox">
+                    <div className="lw-signing-otpTitle">{t("signing.canvas.otpTitle")}</div>
+                    <div className="lw-signing-otpRow">
+                        <input
+                            className="lw-signing-otpInput"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            placeholder={t("signing.canvas.otpPlaceholder")}
+                            value={otpCode}
+                            onChange={(e) => setOtpCode(e.target.value)}
+                            disabled={otpBusy || saving}
+                        />
+                        <PrimaryButton size={buttonSizes.SMALL} onPress={verifyOtp} disabled={otpBusy || saving}>
+                            {t("signing.canvas.verify")}
+                        </PrimaryButton>
+                    </div>
+                    <div className="lw-signing-actionsRow">
+                        <SecondaryButton size={buttonSizes.SMALL} onPress={requestOtp} disabled={otpBusy || saving}>
+                            {otpRequested ? t("signing.canvas.resend") : t("signing.canvas.sendCode")}
+                        </SecondaryButton>
+                        {otpVerified && <div className="lw-signing-otpVerified">{t("signing.canvas.verified")}</div>}
+                    </div>
+                </div>
+            )}
+        </>
+    );
+
+    const renderSigningControls = () => (
+        <>
+            {/* ─── Tab bar for signature spots (draw / saved / stamp) ─── */}
+            {currentSpot && !currentSpot.IsSigned && currentSpotIsSignature && remainingCount > 0 && (
+                <div className="lw-signing-tabBar">
+                    <button
+                        className={"lw-signing-tab" + (signatureMode === "draw" ? " is-active" : "")}
+                        onClick={() => { setSignatureMode("draw"); clearCanvas(); clearClientStamp(); }}
+                        disabled={saving}
+                    >
+                        {t("signing.canvas.tabDraw")}
+                    </button>
+                    {savedSignature.exists && (
+                        <button
+                            className={"lw-signing-tab" + (signatureMode === "saved" ? " is-active" : "")}
+                            onClick={() => { setSignatureMode("saved"); clearClientStamp(); }}
+                            disabled={saving}
+                        >
+                            {t("signing.canvas.tabSaved")}
+                        </button>
+                    )}
+                    <button
+                        className={"lw-signing-tab" + (signatureMode === "stamp" ? " is-active" : "")}
+                        onClick={() => { setSignatureMode("stamp"); }}
+                        disabled={saving}
+                    >
+                        {t("signing.canvas.tabStamp")}
+                    </button>
+                    {savedStamp.exists && (
+                        <button
+                            className={"lw-signing-tab" + (signatureMode === "savedStamp" ? " is-active" : "")}
+                            onClick={() => { setSignatureMode("savedStamp"); clearClientStamp(); }}
+                            disabled={saving}
+                        >
+                            {t("signing.canvas.tabSavedStamp")}
+                        </button>
+                    )}
+                </div>
+            )}
+
+            {/* ─── Saved signature mode ─── */}
+            {currentSpotIsSignature && savedSignature.exists && signatureMode === "saved" && remainingCount > 0 && (
+                <div className="lw-signing-canvasSection">
+                    <div className="lw-signing-savedSigBox">
+                        <div className="lw-signing-savedSigPreviewWrap">
+                            {savedSignature.url ? (
+                                <img
+                                    className="lw-signing-savedSigPreview"
+                                    src={savedSignature.url}
+                                    alt={t("signing.canvas.savedSignatureAlt")}
+                                />
+                            ) : (
+                                <div className="lw-signing-inlineHint">{t("signing.canvas.loadingSavedSignature")}</div>
+                            )}
+                        </div>
+                        <div className="lw-signing-actionsRow">
+                            <PrimaryButton
+                                size={buttonSizes.SMALL}
+                                onPress={async () => { const ok = await applySavedSignatureForNext(); if (ok && isScreen) closeSpotPopup(); }}
+                                disabled={saving || !savedSignature.exists}
+                            >
+                                {saving ? t("signing.canvas.saving") : t("signing.canvas.sign")}
+                            </PrimaryButton>
+                            <SecondaryButton
+                                size={buttonSizes.SMALL}
+                                onPress={async () => { const ok = await signAllRemainingSpots(); if (ok && isScreen) closeSpotPopup(); }}
+                                disabled={saving || remainingCount === 0 || (!savedSignature?.exists && !(signatureMode !== "saved" && hasUserDrawn))}
+                            >
+                                {t("signing.canvas.signAll")}
+                            </SecondaryButton>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ─── Saved stamp mode (for signature spots) ─── */}
+            {currentSpotIsSignature && savedStamp.exists && signatureMode === "savedStamp" && remainingCount > 0 && !stampSignPhase && (
+                <div className="lw-signing-canvasSection">
+                    <div className="lw-signing-savedSigBox">
+                        <div className="lw-signing-savedSigPreviewWrap">
+                            {savedStamp.url ? (
+                                <img
+                                    className="lw-signing-savedSigPreview"
+                                    src={savedStamp.url}
+                                    alt={t("signing.canvas.savedStampAlt")}
+                                />
+                            ) : (
+                                <div className="lw-signing-inlineHint">{t("signing.canvas.loadingSavedStamp")}</div>
+                            )}
+                        </div>
+                        <div className="lw-signing-actionsRow">
+                            <PrimaryButton
+                                size={buttonSizes.SMALL}
+                                onPress={applySavedStampForNext}
+                                disabled={saving || !savedStamp.exists}
+                            >
+                                {saving ? t("signing.canvas.saving") : t("signing.canvas.nextStep")}
+                            </PrimaryButton>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ─── Stamp upload mode (for signature spots) ─── */}
+            {currentSpot && !currentSpot.IsSigned && currentSpotIsSignature && signatureMode === "stamp" && !stampSignPhase && (
+                <div className="lw-signing-canvasSection">
+                    <div className="lw-signing-fieldInput">
+                        <div className="lw-signing-fieldLabel" style={{ fontSize: '0.8rem', opacity: 0.7 }}>
+                            {t("signing.fieldSettings.clientStampUploadHint")}
+                        </div>
+                        {clientStampPreview && (
+                            <img
+                                src={clientStampPreview}
+                                alt={t("signing.fields.clientStamp")}
+                                className="lw-signing-savedSigPreview"
+                                style={{ maxHeight: 120, objectFit: 'contain', margin: '0.5rem 0' }}
+                            />
+                        )}
+                        <label className="lw-signing-fileUploadBtn">
+                            <input
+                                type="file"
+                                accept="image/png,image/jpeg,application/pdf"
+                                onChange={(e) => handleClientStampFileSelected(e.target.files?.[0])}
+                                disabled={saving}
+                                className="lw-signing-fileUploadInput"
+                            />
+                            {clientStampFile ? clientStampFile.name : t("signing.canvas.chooseFile")}
+                        </label>
+                    </div>
+                    <div className="lw-signing-actionsRow">
+                        <SecondaryButton size={buttonSizes.MEDIUM} onPress={clearClientStamp} disabled={saving}>
+                            {t("common.clear")}
+                        </SecondaryButton>
+                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={saveClientStamp} disabled={saving || !clientStampFile}>
+                            {saving ? t("signing.canvas.saving") : t("signing.canvas.nextStep")}
+                        </PrimaryButton>
+                    </div>
+                </div>
+            )}
+
+            {/* ─── Stamp sign-on-top phase (shared for stamp mode and clientStamp spots) ─── */}
+            {currentSpot && !currentSpot.IsSigned && (signatureMode === "stamp" || signatureMode === "savedStamp" || currentSignMode === 'clientStamp') && stampSignPhase && (
+                <div className="lw-signing-canvasSection">
+                    <div className="lw-signing-fieldLabel" style={{ padding: '0 0.75rem' }}>
+                        {t("signing.canvas.signOnStampHint")}
+                    </div>
+                    <div className="lw-signing-stampCanvasWrap">
+                        {stampNormalizedDataUrl && (
+                            <img src={stampNormalizedDataUrl} alt="" className="lw-signing-stampCanvasBg" />
+                        )}
+                        <canvas
+                            ref={canvasRef}
+                            className="lw-signing-canvas lw-signing-canvas--overStamp"
+                            onPointerDown={startDrawing}
+                            onPointerMove={drawMove}
+                            onPointerUp={endDrawing}
+                            onPointerCancel={endDrawing}
+                            onPointerLeave={endDrawing}
+                            onTouchStart={startDrawing}
+                            onTouchMove={drawMove}
+                            onTouchEnd={endDrawing}
+                        />
+                    </div>
+                    <div className="lw-signing-actionsRow">
+                        <SecondaryButton size={buttonSizes.MEDIUM} onPress={clearCanvas} disabled={saving}>
+                            {t("common.clear")}
+                        </SecondaryButton>
+                        <TertiaryButton size={buttonSizes.SMALL} onPress={clearClientStamp} disabled={saving}>
+                            {t("signing.canvas.changeStamp")}
+                        </TertiaryButton>
+                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { const ok = await saveStampWithSignature(); if (ok && isScreen) closeSpotPopup(); }} disabled={saving}>
+                            {saving ? t("signing.canvas.saving") : t("signing.canvas.saveField")}
+                        </PrimaryButton>
+                    </div>
+                </div>
+            )}
+
+            {/* ─── ClientStamp spot type – tab bar ─── */}
+            {currentSpot && !currentSpot.IsSigned && currentSignMode === 'clientStamp' && !stampSignPhase && savedStamp.exists && (
+                <div className="lw-signing-tabBar">
+                    <button
+                        className={"lw-signing-tab" + (signatureMode === "stamp" ? " is-active" : "")}
+                        onClick={() => { setSignatureMode("stamp"); }}
+                        disabled={saving}
+                    >
+                        {t("signing.canvas.tabStamp")}
+                    </button>
+                    <button
+                        className={"lw-signing-tab" + (signatureMode === "savedStamp" ? " is-active" : "")}
+                        onClick={() => { setSignatureMode("savedStamp"); clearClientStamp(); }}
+                        disabled={saving}
+                    >
+                        {t("signing.canvas.tabSavedStamp")}
+                    </button>
+                </div>
+            )}
+
+            {/* ─── ClientStamp spot type – saved stamp panel ─── */}
+            {currentSpot && !currentSpot.IsSigned && currentSignMode === 'clientStamp' && !stampSignPhase && signatureMode === 'savedStamp' && savedStamp.exists && (
+                <div className="lw-signing-canvasSection">
+                    <div className="lw-signing-savedSigBox">
+                        <div className="lw-signing-fieldLabel">{t("signing.fieldSettings.clientStampTitle")}</div>
+                        <div className="lw-signing-savedSigPreviewWrap">
+                            {savedStamp.url ? (
+                                <img
+                                    className="lw-signing-savedSigPreview"
+                                    src={savedStamp.url}
+                                    alt={t("signing.canvas.savedStampAlt")}
+                                />
+                            ) : (
+                                <div className="lw-signing-inlineHint">{t("signing.canvas.loadingSavedStamp")}</div>
+                            )}
+                        </div>
+                        <div className="lw-signing-actionsRow">
+                            <PrimaryButton
+                                size={buttonSizes.SMALL}
+                                onPress={applySavedStampForNext}
+                                disabled={saving || !savedStamp.exists}
+                            >
+                                {saving ? t("signing.canvas.saving") : t("signing.canvas.nextStep")}
+                            </PrimaryButton>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ─── ClientStamp spot type – upload phase ─── */}
+            {currentSpot && !currentSpot.IsSigned && currentSignMode === 'clientStamp' && !stampSignPhase && signatureMode !== 'savedStamp' && (
+                <div className="lw-signing-canvasSection">
+                    <div className="lw-signing-fieldInput">
+                        <div className="lw-signing-fieldLabel">{t("signing.fieldSettings.clientStampTitle")}</div>
+                        <div className="lw-signing-fieldLabel" style={{ fontSize: '0.8rem', opacity: 0.7 }}>
+                            {t("signing.fieldSettings.clientStampUploadHint")}
+                        </div>
+                        {clientStampPreview && (
+                            <img
+                                src={clientStampPreview}
+                                alt={t("signing.fields.clientStamp")}
+                                className="lw-signing-savedSigPreview"
+                                style={{ maxHeight: 120, objectFit: 'contain', margin: '0.5rem 0' }}
+                            />
+                        )}
+                        <label className="lw-signing-fileUploadBtn">
+                            <input
+                                type="file"
+                                accept="image/png,image/jpeg,application/pdf"
+                                onChange={(e) => handleClientStampFileSelected(e.target.files?.[0])}
+                                disabled={saving}
+                                className="lw-signing-fileUploadInput"
+                            />
+                            {clientStampFile ? clientStampFile.name : t("signing.canvas.chooseFile")}
+                        </label>
+                    </div>
+                    <div className="lw-signing-actionsRow">
+                        <SecondaryButton size={buttonSizes.MEDIUM} onPress={clearClientStamp} disabled={saving}>
+                            {t("common.clear")}
+                        </SecondaryButton>
+                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={saveClientStamp} disabled={saving || !clientStampFile}>
+                            {saving ? t("signing.canvas.saving") : t("signing.canvas.nextStep")}
+                        </PrimaryButton>
+                    </div>
+                </div>
+            )}
+
+            {/* ─── Field input (non-signature, non-stamp) ─── */}
+            {currentSpot && !currentSpot.IsSigned && !currentSpotIsSignature && currentSignMode !== 'clientStamp' && (
+                <div className="lw-signing-canvasSection">
+                    <div className="lw-signing-fieldInput">
+                        <div className="lw-signing-fieldLabel">
+                            {t("signing.canvas.fieldValueLabel", { type: t(`signing.fields.${getFieldTypeKey(currentSpotType)}`) })}
+                        </div>
+                        {currentSpotType === 'checkbox' ? (
+                            <label className="lw-signing-fieldCheckbox">
+                                <input
+                                    type="checkbox"
+                                    checked={fieldChecked}
+                                    onChange={(e) => {
+                                        setFieldChecked(Boolean(e.target.checked));
+                                        setFieldValue(e.target.checked ? 'true' : '');
+                                    }}
+                                    disabled={saving}
+                                />
+                                <span>{t("signing.canvas.checkboxLabel")}</span>
+                            </label>
+                        ) : currentSpotType === 'date' ? (
+                            <input
+                                className="lw-signing-fieldInputControl"
+                                type="text"
+                                inputMode="numeric"
+                                placeholder="DD/MM/YYYY"
+                                value={(() => {
+                                    if (/^\d{4}-\d{2}-\d{2}$/.test(fieldValue)) {
+                                        const [y, m, d] = fieldValue.split('-');
+                                        return `${d}/${m}/${y}`;
+                                    }
+                                    return fieldValue;
+                                })()}
+                                onChange={(e) => {
+                                    const raw = e.target.value.replace(/[^\d/]/g, '');
+                                    let formatted = raw;
+                                    const digits = raw.replace(/\//g, '');
+                                    if (digits.length <= 2) {
+                                        formatted = digits;
+                                    } else if (digits.length <= 4) {
+                                        formatted = digits.slice(0, 2) + '/' + digits.slice(2);
+                                    } else {
+                                        formatted = digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4, 8);
+                                    }
+                                    if (/^\d{2}\/\d{2}\/\d{4}$/.test(formatted)) {
+                                        const [dd, mm, yyyy] = formatted.split('/');
+                                        setFieldValue(`${yyyy}-${mm}-${dd}`);
+                                    } else {
+                                        setFieldValue(formatted);
+                                    }
+                                }}
+                                maxLength={10}
+                                disabled={saving}
+                            />
+                        ) : (
+                            <input
+                                className="lw-signing-fieldInputControl"
+                                type={getInputTypeForField(currentSpotType)}
+                                {...getInputPropsForField(currentSpotType)}
+                                placeholder={t("signing.canvas.fieldValuePlaceholder")}
+                                value={fieldValue}
+                                onChange={(e) => setFieldValue(e.target.value)}
+                                disabled={saving}
+                            />
+                        )}
+                    </div>
+                    <div className="lw-signing-actionsRow">
+                        <SecondaryButton size={buttonSizes.MEDIUM} onPress={() => setFieldValue("")} disabled={saving}>
+                            {t("common.clear")}
+                        </SecondaryButton>
+                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { const ok = await saveFieldValue(); if (ok && isScreen) closeSpotPopup(); }} disabled={saving}>
+                            {saving ? t("signing.canvas.saving") : t("signing.canvas.saveField")}
+                        </PrimaryButton>
+                    </div>
+                </div>
+            )}
+
+            {/* ─── Draw mode ─── */}
+            {signatureMode === "draw" && currentSpot && !currentSpot.IsSigned && currentSpotIsSignature && (
+                <div className="lw-signing-canvasSection">
+                    <canvas
+                        ref={canvasRef}
+                        className="lw-signing-canvas"
+                        onPointerDown={startDrawing}
+                        onPointerMove={drawMove}
+                        onPointerUp={endDrawing}
+                        onPointerCancel={endDrawing}
+                        onPointerLeave={endDrawing}
+                        onTouchStart={startDrawing}
+                        onTouchMove={drawMove}
+                        onTouchEnd={endDrawing}
+                    />
+                    <div className="lw-signing-actionsRow">
+                        <SecondaryButton size={buttonSizes.MEDIUM} onPress={clearCanvas} disabled={saving}>
+                            {t("common.clear")}
+                        </SecondaryButton>
+                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { const ok = await saveSignature(); if (ok && isScreen) closeSpotPopup(); }} disabled={saving}>
+                            {saving
+                                ? t("signing.canvas.saving")
+                                : (currentSignMode === 'initials'
+                                    ? t("signing.canvas.saveInitials")
+                                    : t("signing.canvas.saveSignature"))}
+                        </PrimaryButton>
+                    </div>
+                </div>
+            )}
+
+            {currentSpot && currentSpot.IsSigned && (() => {
+                const signedType = getSpotType(currentSpot);
+                const sigUrl = currentSpot.SignatureUrl || currentSpot.signatureUrl;
+                const fv = currentSpot.FieldValue ?? currentSpot.fieldValue ?? currentSpot.fieldvalue ?? '';
+                const isCheckbox = signedType === 'checkbox';
+                const isDate = signedType === 'date';
+                const displayVal = isCheckbox
+                    ? (fv === 'true' ? '✓' : '✗')
+                    : isDate && /^\d{4}-\d{2}-\d{2}$/.test(fv)
+                        ? fv.split('-').reverse().join('/')
+                        : fv;
+
+                return (
+                    <div className="lw-signing-signedPreview">
+                        <div className="lw-signing-message is-success">{t("signing.canvas.spotAlreadySigned")}</div>
+                        {isSignatureLike(signedType) && sigUrl && (
+                            <div className="lw-signing-signedImgWrap">
+                                <img src={sigUrl} alt={t("signing.spot.signatureAlt")} className="lw-signing-signedImg" />
+                            </div>
+                        )}
+                        {!isSignatureLike(signedType) && String(displayVal).trim() && (
+                            <div className="lw-signing-signedFieldValue">
+                                <Text14 color={colors.winter}>{t(`signing.fields.${getFieldTypeKey(signedType)}`)}</Text14>
+                                <Text14 color={colors.text}>{displayVal}</Text14>
+                            </div>
+                        )}
+                    </div>
+                );
+            })()}
+        </>
+    );
+
+    const renderSpotPopup = () => {
+        if (!showSpotPopup || !currentSpot) return null;
+        const spotType = getSpotType(currentSpot);
+        const fieldTypeLabel = t(`signing.fields.${getFieldTypeKey(spotType)}`);
+        const title = currentSpot.IsSigned
+            ? t("signing.canvas.spotAlreadySigned")
+            : isSignatureLike(spotType)
+                ? (spotType === 'initials' ? t("signing.canvas.saveInitials") : t("signing.canvas.saveSignature"))
+                : fieldTypeLabel;
+
+        return (
+            <div className="lw-signing-popupOverlay" onClick={closeSpotPopup}>
+                <div className="lw-signing-popup" onClick={(e) => e.stopPropagation()}>
+                    <div className="lw-signing-popupHeader">
+                        <span className="lw-signing-popupTitle">{title}</span>
+                        <TertiaryButton size={buttonSizes.SMALL} onPress={closeSpotPopup}>
+                            {t("common.close")}
+                        </TertiaryButton>
+                    </div>
+                    <div className="lw-signing-popupBody">
+                        {message && (
+                            <div className={"lw-signing-message " + (message.type === "success" ? "is-success" : message.type === "error" ? "is-error" : "is-warning")}>
+                                {message.text}
+                            </div>
+                        )}
+                        {renderConsentAndOtp()}
+                        {renderSigningControls()}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    // ─── Screen variant: full-screen PDF + floating bar + popup ───
+    if (isScreen) {
+        return (
+            <div className="lw-signing-scope">
+                <div className="lw-signing-screen">
+                    <div className="lw-signing-modalContent lw-signing-screenContent">
+                        <SimpleContainer className="lw-signing-screenBody">
+                            <div className="lw-signing-floatingBar">
+                                <div className="lw-signing-progressHint">
+                                    {remainingCount > 0
+                                        ? t("signing.canvas.remainingSignatures", { count: remainingCount })
+                                        : allSpotsSignedByUser && spots.length > 0
+                                            ? t("signing.canvas.allRequiredCompleted")
+                                            : ""}
+                                </div>
+                                {remainingCount > 0 && (
+                                    <PrimaryButton
+                                        size={buttonSizes.SMALL}
+                                        onPress={goToNextSigningSpot}
+                                        disabled={saving}
+                                    >
+                                        {t("signing.canvas.nextSignature")}
+                                    </PrimaryButton>
+                                )}
+                                {!allSpotsSignedByUser && (
+                                    <TertiaryButton
+                                        size={buttonSizes.SMALL}
+                                        onPress={rejectFile}
+                                        disabled={saving}
+                                        hasBorder={true}
+                                        innerTextColor={colors.error}
+                                    >
+                                        {t("signing.canvas.rejectDocument")}
+                                    </TertiaryButton>
+                                )}
+                                <SecondaryButton size={buttonSizes.SMALL} onPress={onClose} disabled={saving}>
+                                    {t("common.close")}
+                                </SecondaryButton>
+                            </div>
+
+                            <SimpleContainer className="lw-signing-pdfContainer" ref={pdfScrollRef}>
+                                {pdfFile && fileDetails.file?.FileKey ? (
+                                    <PdfViewer
+                                        pdfFile={pdfFile}
+                                        spots={spots}
+                                        signers={[{ UserId: fileDetails.file.ClientId, Name: t("signing.canvas.you") }]}
+                                        onSelectSpot={handleSpotSelect}
+                                        onUpdateSpot={undefined}
+                                        onRemoveSpot={undefined}
+                                        onAddSpotForPage={undefined}
+                                        showAddSpotButtons={false}
+                                    />
+                                ) : (
+                                    <SimpleContainer className="lw-signing-pdfLoading">
+                                        <SimpleLoader />
+                                    </SimpleContainer>
+                                )}
+                            </SimpleContainer>
+
+                            {message && !showSpotPopup && (
+                                <div className="lw-signing-floatingMessage">
+                                    <div className={"lw-signing-message " + (message.type === "success" ? "is-success" : message.type === "error" ? "is-error" : "is-warning")}>
+                                        {message.text}
+                                    </div>
+                                </div>
+                            )}
+                        </SimpleContainer>
+
+                        {renderSpotPopup()}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // ─── Modal variant: original side-panel layout ───
     return (
         <div className="lw-signing-scope">
-            <div className={isScreen ? "lw-signing-screen" : "lw-signing-modal"} onClick={isScreen ? undefined : onClose}>
+            <div className="lw-signing-modal" onClick={onClose}>
                 <div
-                    className={isScreen ? "lw-signing-modalContent lw-signing-screenContent" : "lw-signing-modalContent"}
-                    onClick={isScreen ? undefined : (e) => e.stopPropagation()}
+                    className="lw-signing-modalContent"
+                    onClick={(e) => e.stopPropagation()}
                 >
 
                     <SimpleContainer className="lw-signing-modalBody">
@@ -1274,25 +1948,15 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                     pdfFile={pdfFile}
                                     spots={spots}
                                     signers={[{ UserId: fileDetails.file.ClientId, Name: t("signing.canvas.you") }]}
-                                    onSelectSpot={(index) => {
-                                        const spot = spots[index];
-                                        if (!spot) return;
-                                        setCurrentSpot(spot);
-                                        if (isSignatureLike(getSpotType(spot))) {
-                                            setSignatureMode("draw");
-                                            clearCanvas();
-                                        }
-                                        scrollToSpot(spot);
-                                        setHasStartedNextFlow(true);
-                                    }}
+                                    onSelectSpot={handleSpotSelect}
                                     onUpdateSpot={undefined}
                                     onRemoveSpot={undefined}
                                     onAddSpotForPage={undefined}
                                     showAddSpotButtons={false}
                                 />
                             ) : (
-                                <SimpleContainer className="lw-signing-inlineHint">
-                                    <Text14>{t("signing.canvas.previewComingSoon")}</Text14>
+                                <SimpleContainer className="lw-signing-pdfLoading">
+                                    <SimpleLoader />
                                 </SimpleContainer>
                             )}
                         </SimpleContainer>
@@ -1309,54 +1973,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 </SimpleContainer>
                             )}
 
-                            {!consentAccepted && (
-                                <div className="lw-signing-legalBox">
-                                    <label className="lw-signing-legalRow">
-                                        <input
-                                            type="checkbox"
-                                            checked={consentAccepted}
-                                            onChange={(e) => {
-                                                const next = Boolean(e.target.checked);
-                                                if (!next) return;
-                                                setConsentAccepted(true);
-                                                try {
-                                                    localStorage.setItem(consentStorageKey, "true");
-                                                } catch {
-                                                    // ignore
-                                                }
-                                            }}
-                                            disabled={saving}
-                                        />
-                                        <span>{t("signing.canvas.consentText")}</span>
-                                    </label>
-                                </div>
-                            )}
-
-                            {otpRequired && (
-                                <div className="lw-signing-otpBox">
-                                    <div className="lw-signing-otpTitle">{t("signing.canvas.otpTitle")}</div>
-                                    <div className="lw-signing-otpRow">
-                                        <input
-                                            className="lw-signing-otpInput"
-                                            inputMode="numeric"
-                                            pattern="[0-9]*"
-                                            placeholder={t("signing.canvas.otpPlaceholder")}
-                                            value={otpCode}
-                                            onChange={(e) => setOtpCode(e.target.value)}
-                                            disabled={otpBusy || saving}
-                                        />
-                                        <PrimaryButton size={buttonSizes.SMALL} onPress={verifyOtp} disabled={otpBusy || saving}>
-                                            {t("signing.canvas.verify")}
-                                        </PrimaryButton>
-                                    </div>
-                                    <div className="lw-signing-actionsRow">
-                                        <SecondaryButton size={buttonSizes.SMALL} onPress={requestOtp} disabled={otpBusy || saving}>
-                                            {otpRequested ? t("signing.canvas.resend") : t("signing.canvas.sendCode")}
-                                        </SecondaryButton>
-                                        {otpVerified && <div className="lw-signing-otpVerified">{t("signing.canvas.verified")}</div>}
-                                    </div>
-                                </div>
-                            )}
+                            {renderConsentAndOtp()}
 
                             {remainingCount > 1 && (
                                 <div>
@@ -1393,7 +2010,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                             {spots.length === 0 ? (
                                                 <div className="lw-signing-emptySpots">{t("signing.canvas.noSpotsToShow")}</div>
                                             ) : (
-                                                spots.map((spot) => (
+                                                spots.map((spot, idx) => (
                                                     <div
                                                         key={spot.SignatureSpotId}
                                                         className={
@@ -1403,15 +2020,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                                                 ? " is-selected"
                                                                 : "")
                                                         }
-                                                        onClick={() => {
-                                                            setCurrentSpot(spot);
-                                                            if (isSignatureLike(getSpotType(spot))) {
-                                                                setSignatureMode("draw");
-                                                                clearCanvas();
-                                                            }
-                                                            scrollToSpot(spot);
-                                                            setHasStartedNextFlow(true);
-                                                        }}
+                                                        onClick={() => handleSpotSelect(idx)}
                                                     >
                                                         <div className="lw-signing-spotName">{spot.SignerName}</div>
                                                         <div className={"lw-signing-spotStatus" + (spot.IsSigned ? " is-signed" : "")}>
@@ -1439,302 +2048,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 </div>
                             )}
 
-                            {currentSignMode === 'signature' && savedSignature.exists && signatureMode === "saved" && remainingCount > 0 && (
-                                <div className="lw-signing-canvasSection">
-                                    <div className="lw-signing-savedSigBox">
-
-                                        <div className="lw-signing-savedSigPreviewWrap">
-                                            <TertiaryButton
-                                                className="lw-signing-modeToggleButton"
-                                                size={buttonSizes.SMALL}
-                                                onPress={() => {
-                                                    // Don't steal focus from the current spot.
-                                                    // This mattered for initials: user clicks an initials spot, then wants to draw (not jump elsewhere).
-                                                    if (!currentSpot || currentSpot.IsSigned || !currentSpotIsSignature) {
-                                                        focusNextUnsignedSpot();
-                                                    }
-                                                    setSignatureMode("draw");
-                                                    clearCanvas();
-                                                }}
-                                                disabled={saving}
-                                            >
-                                                <Text12 shouldApplyClamping className="lw-signing-modeToggleText">
-                                                    {t("signing.canvas.drawNewSignature")}
-                                                </Text12>
-                                            </TertiaryButton>
-
-                                            {savedSignature.url ? (
-                                                <img
-                                                    className="lw-signing-savedSigPreview"
-                                                    src={savedSignature.url}
-                                                    alt={t("signing.canvas.savedSignatureAlt")}
-                                                />
-                                            ) : (
-                                                <div className="lw-signing-inlineHint">{t("signing.canvas.loadingSavedSignature")}</div>
-                                            )}
-                                        </div>
-
-                                        <div className="lw-signing-actionsRow">
-                                            <PrimaryButton
-                                                size={buttonSizes.SMALL}
-                                                onPress={useSavedSignatureForNext}
-                                                disabled={saving || !savedSignature.exists}
-                                            >
-                                                {saving ? t("signing.canvas.saving") : t("signing.canvas.sign")}
-                                            </PrimaryButton>
-                                            <SecondaryButton
-                                                size={buttonSizes.SMALL}
-                                                onPress={signAllRemainingSpots}
-                                                disabled={
-                                                    saving ||
-                                                    remainingCount === 0 ||
-                                                    (!savedSignature?.exists && !(signatureMode !== "saved" && hasUserDrawn))
-                                                }
-                                            >
-                                                {t("signing.canvas.signAll")}
-                                            </SecondaryButton>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {currentSpot && !currentSpot.IsSigned && currentSignMode === 'clientStamp' && !stampSignPhase && (
-                                <div className="lw-signing-canvasSection">
-                                    <div className="lw-signing-fieldInput">
-                                        <div className="lw-signing-fieldLabel">
-                                            {t("signing.fieldSettings.clientStampTitle")}
-                                        </div>
-                                        <div className="lw-signing-fieldLabel" style={{ fontSize: '0.8rem', opacity: 0.7 }}>
-                                            {t("signing.fieldSettings.clientStampUploadHint")}
-                                        </div>
-                                        {clientStampPreview && (
-                                            <img
-                                                src={clientStampPreview}
-                                                alt={t("signing.fields.clientStamp")}
-                                                className="lw-signing-savedSigPreview"
-                                                style={{ maxHeight: 120, objectFit: 'contain', margin: '0.5rem 0' }}
-                                            />
-                                        )}
-                                        <label className="lw-signing-fileUploadBtn">
-                                            <input
-                                                type="file"
-                                                accept="image/png,image/jpeg,application/pdf"
-                                                onChange={(e) => handleClientStampFileSelected(e.target.files?.[0])}
-                                                disabled={saving}
-                                                className="lw-signing-fileUploadInput"
-                                            />
-                                            {clientStampFile ? clientStampFile.name : t("signing.canvas.chooseFile")}
-                                        </label>
-                                    </div>
-                                    <div className="lw-signing-actionsRow">
-                                        <SecondaryButton size={buttonSizes.MEDIUM} onPress={clearClientStamp} disabled={saving}>
-                                            {t("common.clear")}
-                                        </SecondaryButton>
-                                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={saveClientStamp} disabled={saving || !clientStampFile}>
-                                            {saving ? t("signing.canvas.saving") : t("signing.canvas.nextStep")}
-                                        </PrimaryButton>
-                                    </div>
-                                </div>
-                            )}
-
-                            {currentSpot && !currentSpot.IsSigned && currentSignMode === 'clientStamp' && stampSignPhase && (
-                                <div className="lw-signing-canvasSection">
-                                    <div className="lw-signing-fieldLabel" style={{ padding: '0 0.75rem' }}>
-                                        {t("signing.canvas.signOnStampHint")}
-                                    </div>
-
-                                    <div className="lw-signing-stampCanvasWrap">
-                                        {stampNormalizedDataUrl && (
-                                            <img
-                                                src={stampNormalizedDataUrl}
-                                                alt=""
-                                                className="lw-signing-stampCanvasBg"
-                                            />
-                                        )}
-                                        <canvas
-                                            ref={canvasRef}
-                                            className="lw-signing-canvas lw-signing-canvas--overStamp"
-                                            onPointerDown={startDrawing}
-                                            onPointerMove={drawMove}
-                                            onPointerUp={endDrawing}
-                                            onPointerCancel={endDrawing}
-                                            onPointerLeave={endDrawing}
-                                            onTouchStart={startDrawing}
-                                            onTouchMove={drawMove}
-                                            onTouchEnd={endDrawing}
-                                        />
-                                    </div>
-
-                                    <div className="lw-signing-actionsRow">
-                                        <SecondaryButton size={buttonSizes.MEDIUM} onPress={clearCanvas} disabled={saving}>
-                                            {t("common.clear")}
-                                        </SecondaryButton>
-                                        <TertiaryButton size={buttonSizes.SMALL} onPress={clearClientStamp} disabled={saving}>
-                                            {t("signing.canvas.changeStamp")}
-                                        </TertiaryButton>
-                                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={saveStampWithSignature} disabled={saving}>
-                                            {saving ? t("signing.canvas.saving") : t("signing.canvas.saveField")}
-                                        </PrimaryButton>
-                                    </div>
-                                </div>
-                            )}
-
-                            {currentSpot && !currentSpot.IsSigned && !currentSpotIsSignature && currentSignMode !== 'clientStamp' && (
-                                <div className="lw-signing-canvasSection">
-                                    <div className="lw-signing-fieldInput">
-                                        <div className="lw-signing-fieldLabel">
-                                            {t("signing.canvas.fieldValueLabel", { type: t(`signing.fields.${getFieldTypeKey(currentSpotType)}`) })}
-                                        </div>
-                                        {currentSpotType === 'checkbox' ? (
-                                            <label className="lw-signing-fieldCheckbox">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={fieldChecked}
-                                                    onChange={(e) => {
-                                                        setFieldChecked(Boolean(e.target.checked));
-                                                        setFieldValue(e.target.checked ? 'true' : '');
-                                                    }}
-                                                    disabled={saving}
-                                                />
-                                                <span>{t("signing.canvas.checkboxLabel")}</span>
-                                            </label>
-                                        ) : currentSpotType === 'date' ? (
-                                            <input
-                                                className="lw-signing-fieldInputControl"
-                                                type="text"
-                                                inputMode="numeric"
-                                                placeholder="DD/MM/YYYY"
-                                                value={(() => {
-                                                    // Display stored YYYY-MM-DD as DD/MM/YYYY
-                                                    if (/^\d{4}-\d{2}-\d{2}$/.test(fieldValue)) {
-                                                        const [y, m, d] = fieldValue.split('-');
-                                                        return `${d}/${m}/${y}`;
-                                                    }
-                                                    return fieldValue;
-                                                })()}
-                                                onChange={(e) => {
-                                                    const raw = e.target.value.replace(/[^\d/]/g, '');
-                                                    // Auto-insert slashes
-                                                    let formatted = raw;
-                                                    const digits = raw.replace(/\//g, '');
-                                                    if (digits.length <= 2) {
-                                                        formatted = digits;
-                                                    } else if (digits.length <= 4) {
-                                                        formatted = digits.slice(0, 2) + '/' + digits.slice(2);
-                                                    } else {
-                                                        formatted = digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4, 8);
-                                                    }
-                                                    // Convert complete DD/MM/YYYY to YYYY-MM-DD for storage
-                                                    if (/^\d{2}\/\d{2}\/\d{4}$/.test(formatted)) {
-                                                        const [dd, mm, yyyy] = formatted.split('/');
-                                                        setFieldValue(`${yyyy}-${mm}-${dd}`);
-                                                    } else {
-                                                        setFieldValue(formatted);
-                                                    }
-                                                }}
-                                                maxLength={10}
-                                                disabled={saving}
-                                            />
-                                        ) : (
-                                            <input
-                                                className="lw-signing-fieldInputControl"
-                                                type={getInputTypeForField(currentSpotType)}
-                                                {...getInputPropsForField(currentSpotType)}
-                                                placeholder={t("signing.canvas.fieldValuePlaceholder")}
-                                                value={fieldValue}
-                                                onChange={(e) => setFieldValue(e.target.value)}
-                                                disabled={saving}
-                                            />
-                                        )}
-                                    </div>
-                                    <div className="lw-signing-actionsRow">
-                                        <SecondaryButton size={buttonSizes.MEDIUM} onPress={() => setFieldValue("")} disabled={saving}>
-                                            {t("common.clear")}
-                                        </SecondaryButton>
-                                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={saveFieldValue} disabled={saving}>
-                                            {saving ? t("signing.canvas.saving") : t("signing.canvas.saveField")}
-                                        </PrimaryButton>
-                                    </div>
-                                </div>
-                            )}
-
-                            {signatureMode !== "saved" && currentSpot && !currentSpot.IsSigned && currentSpotIsSignature && (
-                                <div className="lw-signing-canvasSection">
-                                    {currentSignMode === 'signature' && savedSignature.exists && (
-                                        <div className="lw-signing-toggleSlot">
-                                            <TertiaryButton
-                                                className="lw-signing-modeToggleButton"
-                                                size={buttonSizes.SMALL}
-                                                onPress={() => {
-                                                    setSignatureMode("saved");
-                                                    clearCanvas();
-                                                }}
-                                                disabled={saving}
-                                            >
-                                                <Text12 shouldApplyClamping className="lw-signing-modeToggleText">
-                                                    {t("signing.canvas.useSavedSignature")}
-                                                </Text12>
-                                            </TertiaryButton>
-                                        </div>
-                                    )}
-
-                                    <canvas
-                                        ref={canvasRef}
-                                        className="lw-signing-canvas"
-                                        onPointerDown={startDrawing}
-                                        onPointerMove={drawMove}
-                                        onPointerUp={endDrawing}
-                                        onPointerCancel={endDrawing}
-                                        onPointerLeave={endDrawing}
-                                        onTouchStart={startDrawing}
-                                        onTouchMove={drawMove}
-                                        onTouchEnd={endDrawing}
-                                    />
-
-                                    <div className="lw-signing-actionsRow">
-                                        <SecondaryButton size={buttonSizes.MEDIUM} onPress={clearCanvas} disabled={saving}>
-                                            {t("common.clear")}
-                                        </SecondaryButton>
-                                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={saveSignature} disabled={saving}>
-                                            {saving
-                                                ? t("signing.canvas.saving")
-                                                : (currentSignMode === 'initials'
-                                                    ? t("signing.canvas.saveInitials")
-                                                    : t("signing.canvas.saveSignature"))}
-                                        </PrimaryButton>
-                                    </div>
-                                </div>
-                            )}
-
-                            {currentSpot && currentSpot.IsSigned && (() => {
-                                const signedType = getSpotType(currentSpot);
-                                const sigUrl = currentSpot.SignatureUrl || currentSpot.signatureUrl;
-                                const fv = currentSpot.FieldValue ?? currentSpot.fieldValue ?? currentSpot.fieldvalue ?? '';
-                                const isCheckbox = signedType === 'checkbox';
-                                const isDate = signedType === 'date';
-                                const displayVal = isCheckbox
-                                    ? (fv === 'true' ? '✓' : '✗')
-                                    : isDate && /^\d{4}-\d{2}-\d{2}$/.test(fv)
-                                        ? fv.split('-').reverse().join('/')
-                                        : fv;
-
-                                return (
-                                    <div className="lw-signing-signedPreview">
-                                        <div className="lw-signing-message is-success">{t("signing.canvas.spotAlreadySigned")}</div>
-                                        {isSignatureLike(signedType) && sigUrl && (
-                                            <div className="lw-signing-signedImgWrap">
-                                                <img src={sigUrl} alt={t("signing.spot.signatureAlt")} className="lw-signing-signedImg" />
-                                            </div>
-                                        )}
-                                        {!isSignatureLike(signedType) && String(displayVal).trim() && (
-                                            <div className="lw-signing-signedFieldValue">
-                                                <Text14 color={colors.winter}>{t(`signing.fields.${getFieldTypeKey(signedType)}`)}</Text14>
-                                                <Text14 color={colors.text}>{displayVal}</Text14>
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })()}
+                            {renderSigningControls()}
 
                             {allSpotsSignedByUser && spots.length > 0 && (
                                 <div className="lw-signing-message is-success">{t("signing.canvas.allRequiredCompleted")}</div>

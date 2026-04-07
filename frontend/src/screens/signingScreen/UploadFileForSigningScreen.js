@@ -53,7 +53,6 @@ const buildFieldTypeOptions = (t) => ([
     { id: 'checkbox', label: t('signing.fields.checkbox'), shortLabel: t('signing.fields.checkboxShort') },
     { id: 'idnumber', label: t('signing.fields.idNumber'), shortLabel: t('signing.fields.idNumberShort') },
     { id: 'lawyerStamp', label: t('signing.fields.lawyerStamp'), shortLabel: t('signing.fields.lawyerStampShort') },
-    { id: 'clientStamp', label: t('signing.fields.clientStamp'), shortLabel: t('signing.fields.clientStampShort') },
 ]);
 
 function FieldSettingsPopup({
@@ -346,6 +345,7 @@ export default function UploadFileForSigningScreen() {
     const nextManualIdRef = useRef(-1);
     const [selectedFile, setSelectedFile] = useState(null);
     const [documentName, setDocumentName] = useState("");
+    const [completionEmail, setCompletionEmail] = useState("");
 
     const [signatureSpots, setSignatureSpots] = useState([]);
     const [selectedFieldType, setSelectedFieldType] = useState('signature');
@@ -904,6 +904,7 @@ export default function UploadFileForSigningScreen() {
                 requireOtp,
                 otpWaiverAcknowledged,
                 signingOrder,
+                completionEmail: completionEmail.trim() || null,
             });
 
             setMessage({ type: "success", text: t('signing.upload.successSent') });
@@ -915,6 +916,7 @@ export default function UploadFileForSigningScreen() {
             setNotes("");
             setSelectedFile(null);
             setDocumentName("");
+            setCompletionEmail("");
             setSignatureSpots([]);
             setUploadedFileKey(null);
             setOtpPolicy(otpFeatureEnabled ? "require" : "waive");
@@ -1173,6 +1175,20 @@ export default function UploadFileForSigningScreen() {
                             />
                         </SimpleContainer>
 
+                        <SimpleContainer className="lw-uploadSigningScreen__formGroup">
+                            <label className="lw-uploadSigningScreen__label">{t('signing.upload.completionEmailLabel')}</label>
+                            <SearchInput
+                                placeholder={t('signing.upload.completionEmailPlaceholder')}
+                                value={completionEmail}
+                                onSearch={setCompletionEmail}
+                                className="lw-uploadSigningScreen__completionEmailInput"
+                                timeToWaitInMilli={0}
+                            />
+                            <Text14 className="lw-uploadSigningScreen__completionEmailHint">
+                                {t('signing.upload.completionEmailHint')}
+                            </Text14>
+                        </SimpleContainer>
+
                         {selectedFile && (
                             <>
                                 <SimpleContainer className="lw-uploadSigningScreen__viewerHeaderRow">
@@ -1189,7 +1205,6 @@ export default function UploadFileForSigningScreen() {
                                     {Array.isArray(selectedSigners) && selectedSigners.length > 1 && (
                                         <SimpleContainer className="lw-uploadSigningScreen__signerSticky">
                                             <SimpleContainer className="lw-fieldTypeNavbar__signerRow">
-                                                <span className="lw-fieldTypeNavbar__signerLabel">{t('signing.upload.signerSelectorLabel')}</span>
                                                 <SimpleContainer className="lw-fieldTypeNavbar__signerButtons">
                                                     {selectedSigners.map((s) => {
                                                         const isSelected = Number(s?.UserId) === Number(selectedSignerId);

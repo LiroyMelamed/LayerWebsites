@@ -95,7 +95,7 @@
         },
         "labels": {
             "case": "תיק:",
-            "client": "לקוח:",
+            "client": "חותמים:",
             "uploadedAt": "תאריך העלאה:",
             "status": "סטטוס:",
             "signatures": "חתימות:",
@@ -112,7 +112,16 @@
             "uploadNew": "שליחת מסמך חדש לחתימה",
             "openPdf": "פתח PDF",
             "deleteFile": "מחק מסמך",
-            "rename": "שנה שם"
+            "rename": "שנה שם",
+            "resendInvite": "שלח שוב לחתימה"
+        },
+        "resend": {
+            "title": "שליחה מחדש לחתימה",
+            "noSigners": "לא נמצאו חתומים למסמך זה",
+            "sendButton": "שלח",
+            "sending": "שולח...",
+            "success": "ההזמנה נשלחה מחדש בהצלחה",
+            "error": "שגיאה בשליחה מחדש"
         },
         "planAndRetention": {
             "title": "תכנית ושמירה",
@@ -892,6 +901,15 @@
             "drawNewSignature": "צייר\nחתימה חדשה",
             "savedSignatureAlt": "חתימה שמורה",
             "loadingSavedSignature": "טוען חתימה שמורה...",
+            "tabDraw": "ציור",
+            "tabSaved": "חתימה שמורה",
+            "tabStamp": "העלאת חותמת",
+            "tabSavedStamp": "חותמת שמורה",
+            "noSavedStamp": "אין חותמת שמורה",
+            "missingSavedStampData": "חסר מידע על חותמת שמורה",
+            "useSavedStampError": "שגיאה בשימוש בחותמת שמורה",
+            "savedStampAlt": "חותמת שמורה",
+            "loadingSavedStamp": "טוען חותמת שמורה...",
             "saving": "שומר...",
             "saveField": "שמור שדה",
             "fieldValueLabel": "ערך לשדה: {{type}}",
@@ -953,6 +971,9 @@
             "fileHintPdfOnly": "(PDF בלבד בשלב זה)",
             "documentNameTitle": "שם המסמך",
             "notesTitle": "הערות ללקוח (לא חובה)",
+            "completionEmailLabel": "אימייל לקבלת מסמך חתום",
+            "completionEmailPlaceholder": "example@email.com",
+            "completionEmailHint": "כתובת האימייל שתקבל את המסמך החתום ותעודת הראיות בסיום החתימה",
             "viewerTitle": "תצוגת מסמך והגדרת חתימות",
             "spotHelpText": "בכל עמוד יש כפתור \"+ הוסף חתימה\". גרור את הקוביות למיקום הרצוי או מחק",
             "sending": "שולח...",

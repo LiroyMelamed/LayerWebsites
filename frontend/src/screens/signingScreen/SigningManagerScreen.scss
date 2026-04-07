@@ -256,6 +256,75 @@
     max-width: 20rem;
 }
 
+.lw-signingManagerScreen__resendSection {
+    flex-direction: column;
+    margin-top: 1rem;
+    padding: 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 0.5rem;
+    background-color: #f9f9f9;
+}
+
+.lw-signingManagerScreen__resendTitle {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+    color: #333;
+}
+
+.lw-signingManagerScreen__resendSignerRow {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+
+    &:last-of-type {
+        border-bottom: none;
+    }
+}
+
+.lw-signingManagerScreen__resendSignerName {
+    font-size: 0.9rem;
+    color: #333;
+}
+
+.lw-signingManagerScreen__resendSignedBadge {
+    font-size: 0.75rem;
+    color: #155724;
+    background-color: #d4edda;
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.25rem;
+    margin-inline-start: auto;
+}
+
+.lw-signingManagerScreen__resendActions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.lw-signingManagerScreen__resendMessage {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+
+    &.is-success {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    &.is-error {
+        background: #f8d7da;
+        color: #721c24;
+    }
+}
+
 @media (max-width: v.$bp-narrow) {
     .lw-signingManagerScreen__searchContainer {
         min-inline-size: 0;

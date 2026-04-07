@@ -525,6 +525,11 @@ function getSavedSignatureKey(userId) {
     return `saved-signatures/user-${safeId}.png`;
 }
 
+function getSavedStampKey(userId) {
+    const safeId = Number(userId);
+    return `saved-stamps/user-${safeId}.png`;
+}
+
 function parseDataUrlImage(dataUrl) {
     const raw = String(dataUrl || '').trim();
     const m = raw.match(/^data:(image\/(png|jpeg|jpg|webp));base64,(.+)$/i);
@@ -725,6 +730,154 @@ exports.savePublicSavedSignature = async (req, res, next) => {
     } catch (err) {
         console.error('savePublicSavedSignature error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשמירת חתימה שמורה' });
+    }
+};
+
+// ─── Saved stamp (auth) ───
+exports.getSavedStamp = async (req, res, next) => {
+    try {
+        const userId = req.user?.UserId;
+        if (!userId) return fail(next, 'UNAUTHORIZED', 401);
+
+        const key = getSavedStampKey(userId);
+        const exists = await savedSignatureExists(key);
+        if (!exists) return res.json({ exists: false });
+
+        const url = await presignSavedSignatureReadUrl(key);
+        return res.json({ exists: true, url, key });
+    } catch (err) {
+        console.error('getSavedStamp error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליפת חותמת שמורה' });
+    }
+};
+
+exports.getSavedStampDataUrl = async (req, res, next) => {
+    try {
+        const userId = req.user?.UserId;
+        if (!userId) return fail(next, 'UNAUTHORIZED', 401);
+
+        const key = getSavedStampKey(userId);
+        const exists = await savedSignatureExists(key);
+        if (!exists) return res.json({ exists: false });
+
+        const dataUrl = await getSavedSignatureDataUrlByKey(key);
+        return res.json({ exists: true, dataUrl, key });
+    } catch (err) {
+        console.error('getSavedStampDataUrl error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליפת חותמת שמורה' });
+    }
+};
+
+exports.saveSavedStamp = async (req, res, next) => {
+    try {
+        const userId = req.user?.UserId;
+        if (!userId) return fail(next, 'UNAUTHORIZED', 401);
+
+        const parsed = parseDataUrlImage(req.body?.stampImage);
+        if (!parsed.ok) {
+            if (parsed.code === 'REQUEST_TOO_LARGE') {
+                return fail(next, 'REQUEST_TOO_LARGE', 413);
+            }
+            return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'stampImage' } });
+        }
+
+        const key = getSavedStampKey(userId);
+        await r2.send(
+            new PutObjectCommand({
+                Bucket: BUCKET,
+                Key: key,
+                Body: parsed.buffer,
+                ContentType: parsed.contentType,
+            })
+        );
+
+        return res.json({ success: true, key });
+    } catch (err) {
+        console.error('saveSavedStamp error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשמירת חותמת שמורה' });
+    }
+};
+
+// ─── Saved stamp (public token) ───
+exports.getPublicSavedStamp = async (req, res, next) => {
+    try {
+        const verified = verifyPublicSigningToken(req.params.token);
+        if (!verified.ok) {
+            return fail(next, verified.errorCode, verified.httpStatus);
+        }
+
+        const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId: verified.signingFileId, next });
+        if (!enabledCheck.ok) return;
+
+        const { signerUserId } = verified;
+        const key = getSavedStampKey(signerUserId);
+        const exists = await savedSignatureExists(key);
+        if (!exists) return res.json({ exists: false });
+
+        const url = await presignSavedSignatureReadUrl(key);
+        return res.json({ exists: true, url, key });
+    } catch (err) {
+        console.error('getPublicSavedStamp error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליפת חותמת שמורה' });
+    }
+};
+
+exports.getPublicSavedStampDataUrl = async (req, res, next) => {
+    try {
+        const verified = verifyPublicSigningToken(req.params.token);
+        if (!verified.ok) {
+            return fail(next, verified.errorCode, verified.httpStatus);
+        }
+
+        const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId: verified.signingFileId, next });
+        if (!enabledCheck.ok) return;
+
+        const { signerUserId } = verified;
+        const key = getSavedStampKey(signerUserId);
+        const exists = await savedSignatureExists(key);
+        if (!exists) return res.json({ exists: false });
+
+        const dataUrl = await getSavedSignatureDataUrlByKey(key);
+        return res.json({ exists: true, dataUrl, key });
+    } catch (err) {
+        console.error('getPublicSavedStampDataUrl error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליפת חותמת שמורה' });
+    }
+};
+
+exports.savePublicSavedStamp = async (req, res, next) => {
+    try {
+        const verified = verifyPublicSigningToken(req.params.token);
+        if (!verified.ok) {
+            return fail(next, verified.errorCode, verified.httpStatus);
+        }
+
+        const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId: verified.signingFileId, next });
+        if (!enabledCheck.ok) return;
+
+        const { signerUserId } = verified;
+        const parsed = parseDataUrlImage(req.body?.stampImage);
+        if (!parsed.ok) {
+            if (parsed.code === 'REQUEST_TOO_LARGE') {
+                return fail(next, 'REQUEST_TOO_LARGE', 413);
+            }
+            return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'stampImage' } });
+        }
+
+        const key = getSavedStampKey(signerUserId);
+        await r2.send(
+            new PutObjectCommand({
+                Bucket: BUCKET,
+                Key: key,
+                Body: parsed.buffer,
+                ContentType: parsed.contentType,
+            })
+        );
+
+        return res.json({ success: true, key });
+    } catch (err) {
+        console.error('savePublicSavedStamp error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשמירת חותמת שמורה' });
     }
 };
 
@@ -1614,6 +1767,7 @@ exports.uploadFileForSigning = async (req, res, next) => {
             signers, // NEW: array of signer objects [{userId, name}, ...]
             signingConfig, // NEW: explicit signing policy selection (OTP required / waived)
             signingOrder, // 'parallel' (default) or 'sequential'
+            completionEmail, // Email to receive signed doc + evidence on completion
         } = req.body;
 
         const lawyerId = req.user?.UserId;
@@ -1845,6 +1999,13 @@ exports.uploadFileForSigning = async (req, res, next) => {
         const normalizedSigningOrder = signingOrder === 'sequential' ? 'sequential' : 'parallel';
         insertColumns.push('signingorder');
         insertValues.push(normalizedSigningOrder);
+
+        // Completion email: optional email to receive signed doc + evidence
+        const sanitizedCompletionEmail = completionEmail ? String(completionEmail).trim().toLowerCase() : null;
+        if (sanitizedCompletionEmail) {
+            insertColumns.push('completionemail');
+            insertValues.push(sanitizedCompletionEmail);
+        }
 
         if (schemaSupport.signingfilesFirmId && firmId) {
             insertColumns.push('firmid');
@@ -2255,12 +2416,17 @@ exports.getLawyerSigningFiles = async (req, res, next) => {
                 sf.otpwaiveracknowledgedatutc as "OtpWaiverAcknowledgedAtUtc",
                 sf.otpwaiveracknowledgedbyuserid as "OtpWaiverAcknowledgedByUserId",
                 c.casename            as "CaseName",
-                u.name                as "ClientName",
+                (
+                  select string_agg(distinct u2.name, ', ')
+                  from signaturespots ss2
+                  join users u2 on u2.userid = ss2.signeruserid
+                  where ss2.signingfileid = sf.signingfileid
+                    and u2.name is not null
+                ) as "ClientName",
                 count(case when ss.isrequired = true then ss.signaturespotid end)                                       as "TotalSpots",
                 coalesce(sum(case when ss.isrequired = true and ss.issigned = true then 1 else 0 end),0) as "SignedSpots"
              from signingfiles sf
              left join cases c  on c.caseid  = sf.caseid
-             left join users u  on u.userid  = sf.clientid
              left join signaturespots ss on ss.signingfileid = sf.signingfileid
              where sf.lawyerid = $1
              group by sf.signingfileid, sf.caseid, sf.filename,
@@ -2268,7 +2434,7 @@ exports.getLawyerSigningFiles = async (req, res, next) => {
                       sf.signedfilekey, sf.signedstoragekey, sf.requireotp, sf.signingpolicyversion,
                       sf.policyselectedbyuserid, sf.policyselectedatutc,
                       sf.otpwaiveracknowledged, sf.otpwaiveracknowledgedatutc, sf.otpwaiveracknowledgedbyuserid,
-                      c.casename, u.name
+                      c.casename
              order by sf.createdat desc` +
             (pagination.enabled ? ` limit $2 offset $3` : ``);
 
@@ -3679,6 +3845,158 @@ exports.getEvidenceCertificate = async (req, res, next) => {
     } catch (err) {
         console.error('getEvidenceCertificate error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה ביצירת מסמך ראייה' });
+    }
+};
+
+// Get distinct signers for a signing file (for resend UI)
+exports.getSigningFileSigners = async (req, res, next) => {
+    try {
+        const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
+        if (signingFileId === null) return;
+        const requesterId = req.user?.UserId;
+
+        const fileResult = await pool.query(
+            `select lawyerid as "LawyerId" from signingfiles where signingfileid = $1`,
+            [signingFileId]
+        );
+        if (fileResult.rows.length === 0) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
+        if (Number(fileResult.rows[0].LawyerId) !== Number(requesterId)) return fail(next, 'FORBIDDEN', 403);
+
+        const signersResult = await pool.query(
+            `select distinct ss.signeruserid as "SignerUserId",
+                    u.name as "Name",
+                    u.email as "Email",
+                    u.phonenumber as "Phone",
+                    bool_and(ss.issigned) as "AllSigned"
+             from signaturespots ss
+             left join users u on u.userid = ss.signeruserid
+             where ss.signingfileid = $1
+               and ss.signeruserid is not null
+               and lower(coalesce(ss.fieldtype, 'signature')) != 'lawyerstamp'
+             group by ss.signeruserid, u.name, u.email, u.phonenumber
+             order by u.name`,
+            [signingFileId]
+        );
+
+        return res.json({ signers: signersResult.rows });
+    } catch (err) {
+        console.error('getSigningFileSigners error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליפת החתומים' });
+    }
+};
+
+// Resend signing invitation to selected signers
+exports.resendSigningInvite = async (req, res, next) => {
+    try {
+        const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
+        if (signingFileId === null) return;
+        const requesterId = req.user?.UserId;
+        const { signerUserIds } = req.body;
+
+        if (!Array.isArray(signerUserIds) || signerUserIds.length === 0) {
+            return fail(next, 'VALIDATION_ERROR', 422, { message: 'signerUserIds is required' });
+        }
+
+        const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId, next });
+        if (!enabledCheck.ok) return;
+
+        const fileResult = await pool.query(
+            `select signingfileid as "SigningFileId",
+                    lawyerid as "LawyerId",
+                    clientid as "ClientId",
+                    filename as "FileName",
+                    status as "Status",
+                    expiresat as "ExpiresAt"
+             from signingfiles where signingfileid = $1`,
+            [signingFileId]
+        );
+        if (fileResult.rows.length === 0) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
+        const file = fileResult.rows[0];
+        if (Number(file.LawyerId) !== Number(requesterId)) return fail(next, 'FORBIDDEN', 403);
+        if (file.Status !== 'pending') return fail(next, 'VALIDATION_ERROR', 422, { message: 'Only pending documents can be resent' });
+
+        let lawyerNameForTemplate = 'עו"ד';
+        try {
+            const lr = await pool.query('select name as "Name" from users where userid = $1', [file.LawyerId]);
+            const n = String(lr.rows?.[0]?.Name || '').trim();
+            if (n) lawyerNameForTemplate = n;
+        } catch { /* best effort */ }
+
+        const signInviteSmsTemplate = await getSetting('templates', 'SIGN_INVITE_SMS',
+            'שלום {{recipientName}}, המסמך "{{documentName}}" מחכה לחתימתך. {{websiteUrl}}');
+
+        let sentCount = 0;
+        for (const signerUserId of signerUserIds) {
+            const uid = parsePositiveIntStrict(signerUserId);
+            if (!uid) continue;
+
+            const signerResult = await pool.query(
+                `select u.userid as "UserId", u.name as "Name", u.email as "Email", u.phonenumber as "Phone"
+                 from users u
+                 where u.userid = $1`,
+                [uid]
+            );
+            if (signerResult.rows.length === 0) continue;
+            const signer = signerResult.rows[0];
+
+            const token = createPublicSigningToken({
+                signingFileId,
+                signerUserId: uid,
+                fileExpiresAt: file.ExpiresAt || null,
+            });
+            const publicUrl = buildPublicSigningUrl(token);
+
+            await insertAuditEvent({
+                req,
+                eventType: 'SIGNING_INVITE_RESENT',
+                signingFileId,
+                actorUserId: requesterId,
+                actorType: 'lawyer',
+                success: true,
+                metadata: { targetSignerUserId: uid },
+            });
+
+            const recipientName = String(signer.Name || '').trim() || 'לקוח';
+
+            await notifyRecipient({
+                recipientUserId: uid,
+                recipientEmail: String(signer.Email || '').trim() || undefined,
+                recipientPhone: String(signer.Phone || '').trim() || undefined,
+                notificationType: 'SIGN_INVITE',
+                push: {
+                    title: 'מסמך מחכה לחתימה',
+                    body: publicUrl ? `מסמך "${file.FileName}" מחכה לחתימה.\n${publicUrl}` : `מסמך "${file.FileName}" מחכה לחתימה.`,
+                    data: { signingFileId, type: 'signing_pending', token },
+                },
+                email: publicUrl
+                    ? {
+                        campaignKey: 'SIGN_INVITE',
+                        contactFields: {
+                            recipient_name: recipientName,
+                            document_name: String(file.FileName || '').trim(),
+                            action_url: String(publicUrl || '').trim(),
+                            lawyer_name: String(lawyerNameForTemplate || '').trim(),
+                        },
+                    }
+                    : null,
+                sms: publicUrl
+                    ? {
+                        messageBody: renderTemplate(signInviteSmsTemplate, {
+                            recipientName,
+                            documentName: String(file.FileName || '').trim(),
+                            websiteUrl: String(publicUrl || '').trim(),
+                        }),
+                    }
+                    : null,
+            });
+
+            sentCount++;
+        }
+
+        return res.json({ success: true, sentCount });
+    } catch (err) {
+        console.error('resendSigningInvite error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליחה מחדש' });
     }
 };
 
@@ -5212,6 +5530,7 @@ exports.signFile = async (req, res, next) => {
             await notifyRecipient({
                 recipientUserId: file.LawyerId,
                 notificationType: 'DOC_SIGNED',
+                caseId: file.CaseId || null,
                 push: {
                     title: '✓ קובץ חתום',
                     body: message,
@@ -5237,6 +5556,35 @@ exports.signFile = async (req, res, next) => {
                     }),
                 },
             });
+
+            // Send signed document + evidence to completionEmail if configured
+            try {
+                const ceRow = await pool.query(
+                    `select completionemail from signingfiles where signingfileid = $1`,
+                    [signingFileId]
+                );
+                const completionEmail = (ceRow.rows?.[0]?.completionemail || '').trim();
+                if (completionEmail) {
+                    await notifyRecipient({
+                        recipientEmail: completionEmail,
+                        notificationType: 'DOC_SIGNED',
+                        skipAdminCc: true,
+                        email: {
+                            campaignKey: 'DOC_SIGNED',
+                            attachments: emailAttachments || [],
+                            contactFields: {
+                                recipient_name: completionEmail,
+                                document_name: String(file.FileName || '').trim(),
+                                lawyer_name: String(lawyerNameForTemplate || '').trim(),
+                                signed_document_url: signedDocumentUrl,
+                                evidence_certificate_url: evidenceCertificateUrl,
+                            },
+                        },
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to send to completionEmail (non-fatal):', e?.message || e);
+            }
         }
 
         if (res.headersSent) return;
@@ -5330,6 +5678,7 @@ exports.rejectSigning = async (req, res, next) => {
         await notifyRecipient({
             recipientUserId: file.LawyerId,
             notificationType: 'DOC_REJECTED',
+            caseId: file.CaseId || null,
             push: {
                 title: '❌ קובץ נדחה',
                 body: message,
@@ -5858,7 +6207,11 @@ exports.getSigningFilePdf = async (req, res, next) => {
                 lawyerid      as "LawyerId",
                 clientid      as "ClientId",
                 filename      as "FileName",
-                filekey       as "FileKey"
+                filekey       as "FileKey",
+                status        as "Status",
+                signedfilekey      as "SignedFileKey",
+                signedstoragebucket as "SignedStorageBucket",
+                signedstoragekey    as "SignedStorageKey"
              from signingfiles
              where signingfileid = $1`,
             [signingFileId]
@@ -5904,10 +6257,32 @@ exports.getSigningFilePdf = async (req, res, next) => {
             return fail(next, 'FILEKEY_MISSING', 404);
         }
 
+        // If the document is signed, serve the flattened signed PDF (with signatures overlaid).
+        let pdfKey = file.FileKey;
+        let pdfBucket = BUCKET;
+        if (String(file.Status || '').toLowerCase() === 'signed') {
+            let signedKey = file.SignedStorageKey || file.SignedFileKey;
+            if (!signedKey) {
+                try {
+                    signedKey = await ensureSignedPdfKey({
+                        signingFileId,
+                        lawyerId: file.LawyerId,
+                        pdfKey: file.FileKey,
+                    });
+                } catch (e) {
+                    console.error('getSigningFilePdf: ensureSignedPdfKey failed, falling back to original:', e?.message);
+                }
+            }
+            if (signedKey) {
+                pdfKey = signedKey;
+                pdfBucket = file.SignedStorageBucket || BUCKET;
+            }
+        }
+
         const range = req.headers.range;
         const cmd = new GetObjectCommand({
-            Bucket: BUCKET,
-            Key: file.FileKey,
+            Bucket: pdfBucket,
+            Key: pdfKey,
             ...(range ? { Range: range } : {}),
         });
 

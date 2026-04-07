@@ -148,6 +148,7 @@ const GenericButton = forwardRef(({
             rightIcon={isPerforming ? null : rightIcon}
             rightIconSize={ICON_SIZE}
             rightIconTintColor={getContentColor()}
+            disabled={disabled}
         >
             {isPerforming ? <SimpleLoader color={getContentColor()} /> : children}
         </TextButtonWithTwoOptionalIcons>

@@ -527,6 +527,12 @@
     align-self: flex-start;
 }
 
+.lw-fieldTypeNavbar__signerButtons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: v.$space-2;
+}
+
 .lw-uploadSigningScreen__viewerHeaderRow> :last-child {
     margin-inline-start: auto;
 }

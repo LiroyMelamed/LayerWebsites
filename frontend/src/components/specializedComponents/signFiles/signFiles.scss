@@ -447,6 +447,222 @@
     pointer-events: auto;
 }
 
+/* ─── Full-screen public signing layout (variant="screen") ─── */
+
+.lw-signing-screenBody {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+.lw-signing-screenBody .lw-signing-pdfContainer {
+    flex: 1;
+    border: none;
+    border-radius: 0;
+}
+
+.lw-signing-floatingBar {
+    position: absolute;
+    top: 0.75rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(6px);
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+    max-width: 90%;
+    flex-wrap: nowrap;
+    justify-content: center;
+}
+
+.lw-signing-pdfLoading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    min-height: 60vh;
+}
+
+@media (max-width: v.$bp-md) {
+    .lw-signing-floatingBar {
+        position: static;
+        transform: none;
+        max-width: 100%;
+        border-radius: 0;
+        padding: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .lw-signing-floatingBar .lw-signing-progressHint {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+.lw-signing-floatingMessage {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    max-width: 90%;
+    animation: lw-signing-fadeIn 0.2s ease;
+}
+
+@keyframes lw-signing-fadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* ─── Spot signing popup ─── */
+
+.lw-signing-popupOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 20001;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    animation: lw-signing-fadeIn 0.15s ease;
+}
+
+.lw-signing-popup {
+    background: #fff;
+    border-radius: 1rem 1rem 0 0;
+    width: 100%;
+    max-width: 32rem;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    animation: lw-signing-slideUp 0.25s ease;
+}
+
+@keyframes lw-signing-slideUp {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+@keyframes lw-signing-popupScaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.lw-signing-popupHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem 0.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.lw-signing-popupTitle {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #333;
+}
+
+.lw-signing-popupBody {
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.lw-signing-popupBody .lw-signing-canvas {
+    width: 100%;
+    height: 160px;
+}
+
+.lw-signing-popupBody .lw-signing-actionsRow {
+    margin-top: 0;
+}
+
+/* ─── Tab bar for signing mode selection ─── */
+
+.lw-signing-tabBar {
+    display: flex;
+    gap: 0;
+    border: 1px solid #e0e0e0;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: #f5f5f5;
+}
+
+.lw-signing-tab {
+    flex: 1;
+    padding: 0.5rem 0.25rem;
+    border: none;
+    background: transparent;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: center;
+    white-space: nowrap;
+
+    &:not(:last-child) {
+        border-inline-end: 1px solid #e0e0e0;
+    }
+
+    &.is-active {
+        background: #fff;
+        color: var(--lw-color-primary, #2A4365);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    &:hover:not(.is-active):not(:disabled) {
+        background: #eee;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: default;
+    }
+}
+
+/* Desktop: center popup instead of bottom-sheet */
+@media (min-width: v.$bp-md) {
+    .lw-signing-popupOverlay {
+        align-items: center;
+    }
+
+    .lw-signing-popup {
+        border-radius: 1rem;
+        max-height: 70vh;
+        animation: lw-signing-popupScaleIn 0.2s ease;
+    }
+}
+
 .lw-signing-spotMeta {
     position: absolute;
     top: -0.5rem;
@@ -617,10 +833,11 @@
     margin-bottom: 0.25rem;
 }
 
-/* Screen variant: use the same layout, but not as an overlay modal. */
+/* Screen variant: full-screen PDF with floating bar + popup signing. */
 .lw-signing-screen {
     width: 100%;
     height: 100vh;
+    height: 100dvh;
     overflow: hidden;
     display: flex;
     justify-content: center;
@@ -632,6 +849,7 @@
     max-width: none;
     max-height: none;
     height: 100vh;
+    height: 100dvh;
     margin: 0;
 
     /* Remove "card" look */
@@ -639,22 +857,19 @@
     box-shadow: none;
 }
 
-/* In screen mode, prevent the body column from scrolling; keep panels stable. */
+/* Legacy overrides kept for backwards compat with modal body in screen */
 .lw-signing-screenContent .lw-signing-modalBody {
     overflow: hidden;
 }
 
-/* Keep the signature panel always visible (no scroll). */
 .lw-signing-screenContent .lw-signing-sidePanel {
     overflow: visible;
 }
 
-/* Allow only the PDF pane to scroll. */
 .lw-signing-screenContent .lw-signing-pdfContainer {
     overflow: auto;
 }
 
-/* Mobile: keep buttons visible at the bottom of the viewport */
 @media (max-width: v.$bp-md) {
     .lw-signing-screenContent .lw-signing-modalBody {
         display: flex;

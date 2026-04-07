@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Document, Page } from "react-pdf";
 import SimpleContainer from "../../../simpleComponents/SimpleContainer";
+import SimpleLoader from "../../../simpleComponents/SimpleLoader";
 import { useTranslation } from "react-i18next";
 
 export default function PdfPage({ pdfFile, pageNumber = 1, onLoadTotalPages, renderWidth = 800 }) {
@@ -27,7 +28,7 @@ export default function PdfPage({ pdfFile, pageNumber = 1, onLoadTotalPages, ren
         <SimpleContainer className="lw-signing-pdfPage">
             <Document
                 file={objectUrl}
-                loading={<div>{t("signing.pdf.loading")}</div>}
+                loading={<SimpleContainer className="lw-signing-pdfLoading"><SimpleLoader /></SimpleContainer>}
                 error={<div>{t("signing.pdf.loadError")}</div>}
                 onLoadSuccess={(pdf) => {
                     if (onLoadTotalPages) onLoadTotalPages(pdf.numPages);

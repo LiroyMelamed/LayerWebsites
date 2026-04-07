@@ -35,6 +35,14 @@ const signingFilesApi = {
         return await ApiUtils.post(`${base}/${signingFileId}/public-link`, signerUserId ? { signerUserId } : {});
     },
 
+    getSigningFileSigners: async (signingFileId) => {
+        return await ApiUtils.get(`${base}/${signingFileId}/signers`);
+    },
+
+    resendSigningInvite: async (signingFileId, signerUserIds) => {
+        return await ApiUtils.post(`${base}/${signingFileId}/resend`, { signerUserIds });
+    },
+
     getPublicSigningFileDetails: async (token) => {
         return await ApiUtils.get(`${base}/public/${encodeURIComponent(token)}`);
     },
@@ -85,6 +93,26 @@ const signingFilesApi = {
 
     savePublicSavedSignature: async (token, signatureImage) => {
         return await ApiUtils.post(`${base}/public/${encodeURIComponent(token)}/saved-signature`, { signatureImage });
+    },
+
+    // Saved stamp
+    getSavedStamp: async () => {
+        return await ApiUtils.get(`${base}/saved-stamp`);
+    },
+    getSavedStampDataUrl: async () => {
+        return await ApiUtils.get(`${base}/saved-stamp/data-url`);
+    },
+    saveSavedStamp: async (stampImage) => {
+        return await ApiUtils.post(`${base}/saved-stamp`, { stampImage });
+    },
+    getPublicSavedStamp: async (token) => {
+        return await ApiUtils.get(`${base}/public/${encodeURIComponent(token)}/saved-stamp`);
+    },
+    getPublicSavedStampDataUrl: async (token) => {
+        return await ApiUtils.get(`${base}/public/${encodeURIComponent(token)}/saved-stamp/data-url`);
+    },
+    savePublicSavedStamp: async (token, stampImage) => {
+        return await ApiUtils.post(`${base}/public/${encodeURIComponent(token)}/saved-stamp`, { stampImage });
     },
 
     signFile: async (signingFileId, body, config = undefined) => {

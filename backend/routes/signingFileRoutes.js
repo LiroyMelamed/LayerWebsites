@@ -41,11 +41,19 @@ router.post("/public/:token/reject", signingFileController.publicRejectSigning);
 router.get("/public/:token/saved-signature", publicViewLimiter, signingFileController.getPublicSavedSignature);
 router.get("/public/:token/saved-signature/data-url", publicViewLimiter, signingFileController.getPublicSavedSignatureDataUrl);
 router.post("/public/:token/saved-signature", signingFileController.savePublicSavedSignature);
+router.get("/public/:token/saved-stamp", publicViewLimiter, signingFileController.getPublicSavedStamp);
+router.get("/public/:token/saved-stamp/data-url", publicViewLimiter, signingFileController.getPublicSavedStampDataUrl);
+router.post("/public/:token/saved-stamp", signingFileController.savePublicSavedStamp);
 
 // Saved signature for current user (auth)
 router.get("/saved-signature", authMiddleware, requireSigningEnabledForUser, signingFileController.getSavedSignature);
 router.get("/saved-signature/data-url", authMiddleware, requireSigningEnabledForUser, signingFileController.getSavedSignatureDataUrl);
 router.post("/saved-signature", authMiddleware, requireSigningEnabledForUser, signingFileController.saveSavedSignature);
+
+// Saved stamp for current user (auth)
+router.get("/saved-stamp", authMiddleware, requireSigningEnabledForUser, signingFileController.getSavedStamp);
+router.get("/saved-stamp/data-url", authMiddleware, requireSigningEnabledForUser, signingFileController.getSavedStampDataUrl);
+router.post("/saved-stamp", authMiddleware, requireSigningEnabledForUser, signingFileController.saveSavedStamp);
 
 // עו"ד מעלה קובץ לחתימה
 router.post("/upload", authMiddleware, requireSigningEnabledForUser, signingFileController.uploadFileForSigning);
@@ -61,6 +69,12 @@ router.get("/pending", authMiddleware, requireSigningEnabledForUser, signingFile
 
 // Generate a public signing link token (lawyer/admin)
 router.post("/:signingFileId/public-link", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.createPublicSigningLink);
+
+// Get signers for a signing file (for resend UI)
+router.get("/:signingFileId/signers", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.getSigningFileSigners);
+
+// Resend signing invitations to selected signers
+router.post("/:signingFileId/resend", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.resendSigningInvite);
 
 // Lawyer signing policy configuration (explicit OTP on/off + waiver ack)
 router.patch("/:signingFileId/policy", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.updateSigningPolicy);
