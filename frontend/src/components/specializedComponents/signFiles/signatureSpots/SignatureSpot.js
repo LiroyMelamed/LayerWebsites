@@ -13,6 +13,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
     const ref = useRef(null);
 
     const longPressRef = useRef({ timer: null, startX: 0, startY: 0, fired: false });
+    const dragMovedRef = useRef(false);
     const LONG_PRESS_MS = 550;
     const MOVE_TOL_PX = 10;
 
@@ -96,6 +97,8 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
         e.preventDefault();
         e.stopPropagation();
 
+        dragMovedRef.current = false;
+
         const target = e.currentTarget;
         const pointerId = e.pointerId;
 
@@ -104,6 +107,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
         const onPointerMove = (ev) => {
             if (ev.pointerId !== pointerId) return;
             ev.preventDefault();
+            dragMovedRef.current = true;
             moveFromClientPoint(ev.clientX, ev.clientY);
         };
 
@@ -116,6 +120,10 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                 target?.releasePointerCapture?.(pointerId);
             } catch {
                 // ignore
+            }
+            // If no drag movement occurred, treat as a click → open field settings
+            if (!dragMovedRef.current && typeof onSelectSpot === 'function') {
+                onSelectSpot(index);
             }
         };
 

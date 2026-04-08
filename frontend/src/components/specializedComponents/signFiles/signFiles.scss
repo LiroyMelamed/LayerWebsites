@@ -147,6 +147,83 @@
     background: #fff;
 }
 
+// ─── Saved items grid (merged signatures + stamps) ───
+.lw-signing-savedItemsGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.25rem 0;
+}
+
+.lw-signing-savedItem {
+    position: relative;
+    flex: 1 1 calc(50% - 0.75rem);
+    min-width: 120px;
+    max-width: 200px;
+    border: 2px solid #e0e0e0;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: #fafafa;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &.is-selected {
+        border-color: var(--lw-color-primary, #1a3a5c);
+        box-shadow: 0 0 0 2px rgba(26, 58, 92, 0.25);
+    }
+}
+
+.lw-signing-savedItemLabel {
+    font-size: 0.7rem;
+    color: #888;
+    padding: 0.25rem 0.5rem 0;
+    text-align: center;
+}
+
+.lw-signing-savedItemDelete {
+    position: absolute;
+    top: 0.15rem;
+    left: 0.15rem;
+    z-index: 2;
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(220, 50, 50, 0.85);
+    color: #fff;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+
+    &:hover {
+        background: rgba(200, 30, 30, 1);
+    }
+}
+
+.lw-signing-savedItemPreview {
+    cursor: pointer;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 70px;
+
+    &:hover {
+        background: #f0f0f0;
+    }
+
+    .lw-signing-savedSigPreview {
+        max-height: 80px;
+        width: auto;
+        max-width: 100%;
+        object-fit: contain;
+    }
+}
+
 .lw-signing-checkboxRow {
     display: flex;
     align-items: center;
@@ -533,12 +610,12 @@
 .lw-signing-popupOverlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: transparent;
     z-index: 20001;
     display: flex;
     justify-content: center;
     align-items: flex-end;
-    animation: lw-signing-fadeIn 0.15s ease;
+    pointer-events: none;
 }
 
 .lw-signing-popup {
@@ -548,10 +625,11 @@
     max-width: 32rem;
     max-height: 80vh;
     overflow-y: auto;
-    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 -6px 32px rgba(0, 0, 0, 0.3), 0 0 0 9999px rgba(0, 0, 0, 0.08);
     display: flex;
     flex-direction: column;
     animation: lw-signing-slideUp 0.25s ease;
+    pointer-events: auto;
 }
 
 @keyframes lw-signing-slideUp {

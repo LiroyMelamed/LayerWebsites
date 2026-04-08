@@ -795,8 +795,8 @@
             "drawNewSignature": "ارسم\nتوقيعًا جديدًا",
             "savedSignatureAlt": "توقيع محفوظ",
             "loadingSavedSignature": "جارٍ تحميل التوقيع المحفوظ...",
-            "tabDraw": "رسم",
-            "tabSaved": "توقيع محفوظ",
+            "tabDraw": "توقيع",
+            "tabSaved": "محفوظات",
             "tabStamp": "رفع ختم",
             "tabSavedStamp": "ختم محفوظ",
             "noSavedStamp": "لا يوجد ختم محفوظ",
@@ -813,9 +813,16 @@
             "fieldRequired": "يجب تعبئة الحقل المطلوب",
             "checkboxLabel": "تحديد",
             "sign": "وقّع",
+            "signOnly": "وقّع",
             "signAll": "وقّع الكل",
             "useSavedSignature": "استخدم\nتوقيعًا محفوظًا",
             "saveSignature": "حفظ التوقيع",
+            "deleteSavedItem": "حذف",
+            "deleteSavedSuccess": "تم الحذف بنجاح",
+            "deleteSavedError": "فشل الحذف",
+            "noSavedItems": "لا توجد تواقيع أو أختام محفوظة",
+            "savedSignatureLabel": "توقيع",
+            "savedStampLabel": "ختم",
             "spotAlreadySigned": "تم توقيع مكان التوقيع هذا بالفعل بواسطةك",
             "allRequiredCompleted": "لقد أكملت جميع التواقيع المطلوبة!",
             "rejectDocument": "رفض المستند",
@@ -1075,5 +1082,14 @@
         "templateDeleteError": "خطأ في حذف القالب",
         "removeAdminTitle": "إزالة مدير",
         "removeAdminMessage": "هل أنت متأكد من إزالة هذا المدير؟"
+    },
+    "viewSignedDoc": {
+        "invalidLink": "رابط غير صالح",
+        "expired": "انتهت صلاحية الرابط",
+        "notSigned": "لم يتم توقيع المستند بعد",
+        "loadError": "خطأ في تحميل المستند",
+        "loading": "جاري تحميل المستند...",
+        "signedAt": "تم التوقيع بتاريخ",
+        "download": "تحميل المستند الموقع"
     }
 }

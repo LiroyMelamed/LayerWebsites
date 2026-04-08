@@ -817,8 +817,8 @@
             "drawNewSignature": "Draw\nnew signature",
             "savedSignatureAlt": "Saved signature",
             "loadingSavedSignature": "Loading saved signature...",
-            "tabDraw": "Draw",
-            "tabSaved": "Saved signature",
+            "tabDraw": "Signature",
+            "tabSaved": "Saved",
             "tabStamp": "Upload stamp",
             "tabSavedStamp": "Saved stamp",
             "noSavedStamp": "No saved stamp",
@@ -835,10 +835,17 @@
             "fieldRequired": "Required field must be filled",
             "checkboxLabel": "Check",
             "sign": "Sign",
+            "signOnly": "Sign",
             "signAll": "Sign all",
             "useSavedSignature": "Use\nsaved signature",
             "saveSignature": "Save signature",
             "saveInitials": "Save initials",
+            "deleteSavedItem": "Delete",
+            "deleteSavedSuccess": "Deleted successfully",
+            "deleteSavedError": "Delete failed",
+            "noSavedItems": "No saved signatures or stamps",
+            "savedSignatureLabel": "Signature",
+            "savedStampLabel": "Stamp",
             "spotAlreadySigned": "This signature spot is already signed by you",
             "allRequiredCompleted": "You have completed all required signatures!",
             "rejectDocument": "Reject document",
@@ -846,7 +853,7 @@
             "clientStampSavedSuccess": "Client stamp saved successfully",
             "clientStampUploadError": "Failed to upload client stamp",
             "chooseFile": "Choose File",
-            "signOnStampHint": "You can sign on top of the stamp (optional)",
+            "signOnStampHint": "You can sign on the stamp (optional)",
             "changeStamp": "Change stamp",
             "nextStep": "Continue"
         },
@@ -1109,5 +1116,14 @@
         "templateDeleteError": "Error deleting template",
         "removeAdminTitle": "Remove Admin",
         "removeAdminMessage": "Are you sure you want to remove this admin?"
+    },
+    "viewSignedDoc": {
+        "invalidLink": "Invalid link",
+        "expired": "This link has expired",
+        "notSigned": "Document has not been signed yet",
+        "loadError": "Error loading document",
+        "loading": "Loading document...",
+        "signedAt": "Signed on",
+        "download": "Download Signed Document"
     }
 }

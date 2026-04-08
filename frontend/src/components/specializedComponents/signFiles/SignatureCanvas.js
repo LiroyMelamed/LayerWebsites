@@ -70,6 +70,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         exists: false,
         url: null,
     });
+    // New: arrays of saved items for the merged "saved" tab
+    const [savedSignatures, setSavedSignatures] = useState([]);
+    const [savedStamps, setSavedStamps] = useState([]);
+    const [savedItemsLoading, setSavedItemsLoading] = useState(false);
     const [signatureMode, setSignatureMode] = useState("draw"); // 'draw' | 'saved' | 'stamp' | 'savedStamp'
 
     // Court-ready: per-session identifier for audit trail + OTP binding.
@@ -88,6 +92,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const [stampSignPhase, setStampSignPhase] = useState(false); // true = drawing on top of stamp
     const [stampNormalizedDataUrl, setStampNormalizedDataUrl] = useState(null);
     const [showSpotPopup, setShowSpotPopup] = useState(false);
+    const [selectedSavedItem, setSelectedSavedItem] = useState(null); // { type: 'signature'|'stamp', url, index }
 
     const getSignModeForSpotType = (type) => {
         const t0 = String(type || 'signature').toLowerCase();
@@ -406,6 +411,53 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         }
     };
 
+    const refreshSavedItems = async () => {
+        try {
+            setSavedItemsLoading(true);
+            const res = isPublic
+                ? await signingFilesApi.listPublicSavedItems(publicToken)
+                : await signingFilesApi.listSavedItems();
+            unwrapApi(res);
+            const data = res?.data || {};
+            setSavedSignatures(data.signatures || []);
+            setSavedStamps(data.stamps || []);
+            // Also update legacy single-item state for backward compat
+            const sigs = data.signatures || [];
+            const stamps = data.stamps || [];
+            setSavedSignature({
+                loading: false,
+                exists: sigs.length > 0,
+                url: sigs[0]?.url || null,
+            });
+            setSavedStamp({
+                loading: false,
+                exists: stamps.length > 0,
+                url: stamps[0]?.url || null,
+            });
+        } catch (err) {
+            console.warn("Failed to refresh saved items", err);
+            setSavedSignatures([]);
+            setSavedStamps([]);
+        } finally {
+            setSavedItemsLoading(false);
+        }
+    };
+
+    const deleteSavedItem = async (type, index) => {
+        try {
+            const res = isPublic
+                ? await signingFilesApi.deletePublicSavedItem(publicToken, type, index)
+                : await signingFilesApi.deleteSavedItem(type, index);
+            unwrapApi(res);
+            setMessage({ type: "success", text: t("signing.canvas.deleteSavedSuccess") });
+            await refreshSavedItems();
+            setTimeout(() => setMessage(null), 2000);
+        } catch (err) {
+            console.error("Failed to delete saved item", err);
+            setMessage({ type: "error", text: t("signing.canvas.deleteSavedError") });
+        }
+    };
+
     useEffect(() => {
         let isMounted = true;
         const load = async () => {
@@ -450,15 +502,12 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     useEffect(() => {
         setSavedSignature((p) => ({ ...p, loading: true }));
         setSavedStamp((p) => ({ ...p, loading: true }));
-        refreshSavedSignature().then(() => {
-            // Default UX: if saved exists, offer it first.
-        });
-        refreshSavedStamp();
+        refreshSavedItems();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isPublic, publicToken]);
 
     useEffect(() => {
-        if (savedSignature.loading || savedStamp.loading) return;
+        if (savedSignature.loading || savedStamp.loading || savedItemsLoading) return;
 
         const activeSpot = getActiveSpotForMode(fileDetails, currentSpot);
         const activeSpotType = activeSpot ? getSpotType(activeSpot) : 'signature';
@@ -476,9 +525,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             return;
         }
 
-        setSignatureMode(savedSignature.exists ? 'saved' : 'draw');
+        const hasSaved = savedSignatures.length > 0 || savedStamps.length > 0;
+        setSignatureMode(hasSaved ? 'saved' : 'draw');
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [savedSignature.exists, savedSignature.loading, savedStamp.exists, savedStamp.loading, currentSpot, fileDetails]);
+    }, [savedSignature.exists, savedSignature.loading, savedStamp.exists, savedStamp.loading, savedItemsLoading, savedSignatures.length, savedStamps.length, currentSpot, fileDetails]);
 
     useEffect(() => {
         if (currentSpot && canvasRef.current) {
@@ -607,13 +657,19 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const getApiErrorMessage = (err) => {
         const msg = err?.response?.data?.message || err?.data?.message || err?.message;
-        if (!msg) return t("errors.unexpected");
-        return String(msg);
+        if (!msg) return null;
+        const s = String(msg);
+        // Only use the API message if it contains Hebrew characters (user-facing),
+        // otherwise fall back to the translated string from the caller.
+        if (/[\u0590-\u05FF]/.test(s)) return s;
+        return null;
     };
 
     const unwrapApi = (res) => {
         if (res?.success === false) {
-            const err = new Error(res?.data?.message || res?.message || t("errors.unexpected"));
+            const rawMsg = res?.data?.message || res?.message || '';
+            const msg = /[\u0590-\u05FF]/.test(rawMsg) ? rawMsg : t("errors.unexpected");
+            const err = new Error(msg);
             err.data = res?.data || null;
             throw err;
         }
@@ -663,7 +719,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         } else {
             await signingFilesApi.saveSavedSignature(dataUrl);
         }
-        await refreshSavedSignature();
+        await refreshSavedItems();
     };
 
     const saveStampAsDefault = async (dataUrl) => {
@@ -674,7 +730,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             } else {
                 await signingFilesApi.saveSavedStamp(dataUrl);
             }
-            await refreshSavedStamp();
+            await refreshSavedItems();
         } catch (err) {
             console.warn("Failed to save stamp as default", err);
         }
@@ -807,6 +863,12 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         if (nextUnsigned) {
             scrollToSpot(nextUnsigned);
             setHasStartedNextFlow(true);
+            // Auto-open the signing popup for the next spot (mobile screen mode)
+            if (isScreen) setShowSpotPopup(true);
+        } else {
+            // All spots signed — close popup
+            if (isScreen) setShowSpotPopup(false);
+            setSelectedSavedItem(null);
         }
         clearCanvas();
     };
@@ -858,6 +920,32 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                     ? t("signing.canvas.initialsSaveError")
                     : t("signing.canvas.signatureSaveError"),
             });
+        } finally {
+            setSaving(false);
+        }
+        return false;
+    };
+
+    const signOnly = async () => {
+        if (!canvasRef.current || !currentSpot || currentSpot.IsSigned) return;
+        setSaving(true);
+        try {
+            if (!hasUserDrawn) {
+                setMessage({ type: "error", text: t("signing.canvas.pleaseSignBeforeSave") });
+                return;
+            }
+
+            const dataUrl = canvasRef.current.toDataURL("image/png");
+            const didSign = await signCurrentSpotWithImage(dataUrl);
+            if (!didSign) return;
+
+            setMessage({ type: "success", text: t("signing.canvas.signatureSavedSuccess") });
+            await reloadDetailsAndAdvance();
+            setTimeout(() => setMessage(null), 2000);
+            return true;
+        } catch (err) {
+            console.error("Failed to sign", err);
+            setMessage({ type: "error", text: t("signing.canvas.signatureSaveError") });
         } finally {
             setSaving(false);
         }
@@ -951,6 +1039,62 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         reader.readAsDataURL(file);
     });
 
+    const removeImageBackground = (dataUrl) => new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const w = img.naturalWidth || img.width;
+            const h = img.naturalHeight || img.height;
+            const c = document.createElement('canvas');
+            c.width = w;
+            c.height = h;
+            const ctx = c.getContext('2d');
+            if (!ctx) { resolve(dataUrl); return; }
+            ctx.drawImage(img, 0, 0, w, h);
+            const imageData = ctx.getImageData(0, 0, w, h);
+            const d = imageData.data;
+            // Sample corner pixels to detect background color
+            const corners = [
+                0,                          // top-left
+                (w - 1) * 4,               // top-right
+                ((h - 1) * w) * 4,         // bottom-left
+                ((h - 1) * w + w - 1) * 4, // bottom-right
+            ];
+            let bgR = 255, bgG = 255, bgB = 255;
+            let validCorners = 0;
+            let rSum = 0, gSum = 0, bSum = 0;
+            for (const idx of corners) {
+                if (idx >= 0 && idx + 2 < d.length) {
+                    rSum += d[idx]; gSum += d[idx + 1]; bSum += d[idx + 2];
+                    validCorners++;
+                }
+            }
+            if (validCorners > 0) {
+                bgR = Math.round(rSum / validCorners);
+                bgG = Math.round(gSum / validCorners);
+                bgB = Math.round(bSum / validCorners);
+            }
+            // Make pixels similar to background transparent
+            const threshold = 60;
+            for (let i = 0; i < d.length; i += 4) {
+                const dr = Math.abs(d[i] - bgR);
+                const dg = Math.abs(d[i + 1] - bgG);
+                const db = Math.abs(d[i + 2] - bgB);
+                const dist = Math.sqrt(dr * dr + dg * dg + db * db);
+                if (dist < threshold) {
+                    d[i + 3] = 0; // fully transparent
+                } else if (dist < threshold + 30) {
+                    // Feather the edge
+                    const alpha = Math.round(((dist - threshold) / 30) * d[i + 3]);
+                    d[i + 3] = alpha;
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+            resolve(c.toDataURL('image/png'));
+        };
+        img.onerror = () => resolve(dataUrl);
+        img.src = dataUrl;
+    });
+
     const handleClientStampFileSelected = (file) => {
         if (!file) return;
         setClientStampFile(file);
@@ -976,7 +1120,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 dataUrl = await fileToDataUrl(clientStampFile);
             } else {
                 const rawDataUrl = await fileToDataUrl(clientStampFile);
-                dataUrl = await normalizeSignatureDataUrl(rawDataUrl);
+                const normalized = await normalizeSignatureDataUrl(rawDataUrl);
+                // Remove background (white/colored) from uploaded stamp
+                dataUrl = await removeImageBackground(normalized);
             }
             if (!dataUrl) {
                 setMessage({ type: "error", text: t("signing.canvas.clientStampUploadError") });
@@ -1028,8 +1174,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             const didSign = await signCurrentSpotWithImage(finalDataUrl);
             if (!didSign) return;
 
-            // Save stamp as default after successful signing
-            saveStampAsDefault(stampNormalizedDataUrl);
+            // Save the composited stamp+signature so the preview includes the drawn signature
+            saveStampAsDefault(finalDataUrl);
 
             setMessage({ type: "success", text: t("signing.canvas.clientStampSavedSuccess") });
             clearClientStamp();
@@ -1045,13 +1191,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         return false;
     };
 
-    const applySavedSignatureForNext = async () => {
+    const applySavedSignatureForNext = async (imageUrl) => {
         try {
-            if (!savedSignature?.exists) {
-                setMessage({ type: "error", text: t("signing.canvas.noSavedSignature") });
-                return;
-            }
-
             const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
             const unsigned = getUnsignedRequiredSpots(allSpots).filter((s) => getSpotType(s) === 'signature');
             const target = (!currentSpot || currentSpot.IsSigned) ? (unsigned[0] || null) : currentSpot;
@@ -1069,14 +1210,30 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             }
 
             setSaving(true);
-            const sigRes = isPublic
-                ? await signingFilesApi.getPublicSavedSignatureDataUrl(publicToken)
-                : await signingFilesApi.getSavedSignatureDataUrl();
-            unwrapApi(sigRes);
-            const rawDataUrl = sigRes?.data?.dataUrl;
-            const dataUrl = await normalizeSignatureDataUrl(rawDataUrl);
+            let dataUrl = null;
+
+            if (imageUrl) {
+                // Fetch the image URL and convert to data URL
+                const resp = await fetch(imageUrl);
+                const blob = await resp.blob();
+                dataUrl = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(blob);
+                });
+                dataUrl = await normalizeSignatureDataUrl(dataUrl);
+            } else if (savedSignature?.exists) {
+                const sigRes = isPublic
+                    ? await signingFilesApi.getPublicSavedSignatureDataUrl(publicToken)
+                    : await signingFilesApi.getSavedSignatureDataUrl();
+                unwrapApi(sigRes);
+                const rawDataUrl = sigRes?.data?.dataUrl;
+                dataUrl = await normalizeSignatureDataUrl(rawDataUrl);
+            }
+
             if (!dataUrl) {
-                throw new Error(t("signing.canvas.missingSavedSignatureData"));
+                setMessage({ type: "error", text: t("signing.canvas.noSavedSignature") });
+                return;
             }
 
             setCurrentSpot(target);
@@ -1096,38 +1253,63 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         return false;
     };
 
-    const applySavedStampForNext = async () => {
+    const applySavedStampForNext = async (imageUrl) => {
         try {
-            if (!savedStamp?.exists) {
+            const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
+            const unsigned = getUnsignedRequiredSpots(allSpots).filter((s) => getSpotType(s) === 'signature');
+            const target = (!currentSpot || currentSpot.IsSigned) ? (unsigned[0] || null) : currentSpot;
+            if (!target) return;
+
+            if (!currentSpot || currentSpot.IsSigned) {
+                setCurrentSpot(target);
+                scrollToSpot(target);
+                setHasStartedNextFlow(true);
+            }
+
+            setSaving(true);
+            let dataUrl = null;
+
+            if (imageUrl) {
+                const resp = await fetch(imageUrl);
+                const blob = await resp.blob();
+                dataUrl = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(blob);
+                });
+                dataUrl = await normalizeSignatureDataUrl(dataUrl);
+            } else if (savedStamp?.exists) {
+                const stampRes = isPublic
+                    ? await signingFilesApi.getPublicSavedStampDataUrl(publicToken)
+                    : await signingFilesApi.getSavedStampDataUrl();
+                unwrapApi(stampRes);
+                const rawDataUrl = stampRes?.data?.dataUrl;
+                dataUrl = await normalizeSignatureDataUrl(rawDataUrl);
+            }
+
+            if (!dataUrl) {
                 setMessage({ type: "error", text: t("signing.canvas.noSavedStamp") });
                 return;
             }
 
-            setSaving(true);
-            const stampRes = isPublic
-                ? await signingFilesApi.getPublicSavedStampDataUrl(publicToken)
-                : await signingFilesApi.getSavedStampDataUrl();
-            unwrapApi(stampRes);
-            const rawDataUrl = stampRes?.data?.dataUrl;
-            const dataUrl = await normalizeSignatureDataUrl(rawDataUrl);
-            if (!dataUrl) {
-                throw new Error(t("signing.canvas.missingSavedStampData"));
-            }
+            setCurrentSpot(target);
+            const didSign = await signCurrentSpotWithImage(dataUrl, target);
+            if (!didSign) return;
 
-            // Enter stamp-sign phase with saved stamp as background
-            setStampNormalizedDataUrl(dataUrl);
-            setStampSignPhase(true);
-            clearCanvas();
-            setHasUserDrawn(false);
+            setMessage({ type: "success", text: t("signing.canvas.clientStampSavedSuccess") });
+            await reloadDetailsAndAdvance();
+            setTimeout(() => setMessage(null), 2000);
+            return true;
         } catch (err) {
             console.error("Failed to use saved stamp", err);
             setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.useSavedStampError") });
         } finally {
             setSaving(false);
         }
+        return false;
     };
 
-    const signAllRemainingSpots = async () => {
+    const signAllRemainingSpots = async (imageUrl) => {
         try {
             const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
             const unsignedRequired = getUnsignedRequiredSpots(allSpots);
@@ -1138,7 +1320,17 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
             let dataUrl;
 
-            if (savedSignature?.exists) {
+            if (imageUrl) {
+                // Use the provided saved item URL directly
+                const resp = await fetch(imageUrl);
+                const blob = await resp.blob();
+                dataUrl = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(blob);
+                });
+                dataUrl = await normalizeSignatureDataUrl(dataUrl);
+            } else if (savedSignature?.exists) {
                 const sigRes = isPublic
                     ? await signingFilesApi.getPublicSavedSignatureDataUrl(publicToken)
                     : await signingFilesApi.getSavedSignatureDataUrl();
@@ -1428,15 +1620,15 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 <div className="lw-signing-tabBar">
                     <button
                         className={"lw-signing-tab" + (signatureMode === "draw" ? " is-active" : "")}
-                        onClick={() => { setSignatureMode("draw"); clearCanvas(); clearClientStamp(); }}
+                        onClick={() => { setSignatureMode("draw"); clearCanvas(); clearClientStamp(); setSelectedSavedItem(null); }}
                         disabled={saving}
                     >
                         {t("signing.canvas.tabDraw")}
                     </button>
-                    {savedSignature.exists && (
+                    {(savedSignatures.length > 0 || savedStamps.length > 0) && (
                         <button
                             className={"lw-signing-tab" + (signatureMode === "saved" ? " is-active" : "")}
-                            onClick={() => { setSignatureMode("saved"); clearClientStamp(); }}
+                            onClick={() => { setSignatureMode("saved"); clearClientStamp(); setSelectedSavedItem(null); }}
                             disabled={saving}
                         >
                             {t("signing.canvas.tabSaved")}
@@ -1449,78 +1641,85 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                     >
                         {t("signing.canvas.tabStamp")}
                     </button>
-                    {savedStamp.exists && (
-                        <button
-                            className={"lw-signing-tab" + (signatureMode === "savedStamp" ? " is-active" : "")}
-                            onClick={() => { setSignatureMode("savedStamp"); clearClientStamp(); }}
-                            disabled={saving}
-                        >
-                            {t("signing.canvas.tabSavedStamp")}
-                        </button>
-                    )}
                 </div>
             )}
 
-            {/* ─── Saved signature mode ─── */}
-            {currentSpotIsSignature && savedSignature.exists && signatureMode === "saved" && remainingCount > 0 && (
+            {/* ─── Merged saved items mode (signatures + stamps) ─── */}
+            {currentSpotIsSignature && signatureMode === "saved" && remainingCount > 0 && !stampSignPhase && (
                 <div className="lw-signing-canvasSection">
-                    <div className="lw-signing-savedSigBox">
-                        <div className="lw-signing-savedSigPreviewWrap">
-                            {savedSignature.url ? (
-                                <img
-                                    className="lw-signing-savedSigPreview"
-                                    src={savedSignature.url}
-                                    alt={t("signing.canvas.savedSignatureAlt")}
-                                />
-                            ) : (
-                                <div className="lw-signing-inlineHint">{t("signing.canvas.loadingSavedSignature")}</div>
-                            )}
-                        </div>
+                    <div className="lw-signing-savedItemsGrid">
+                        {savedSignatures.map((item) => (
+                            <div
+                                key={item.key}
+                                className={`lw-signing-savedItem${selectedSavedItem?.type === 'signature' && selectedSavedItem?.index === item.index ? ' is-selected' : ''}`}
+                                onClick={() => setSelectedSavedItem({ type: 'signature', url: item.url, index: item.index })}
+                            >
+                                <div className="lw-signing-savedItemLabel">{t("signing.canvas.savedSignatureLabel")}</div>
+                                <button
+                                    className="lw-signing-savedItemDelete"
+                                    onClick={(e) => { e.stopPropagation(); deleteSavedItem('signature', item.index); }}
+                                    disabled={saving}
+                                    title={t("signing.canvas.deleteSavedItem")}
+                                >×</button>
+                                <div className="lw-signing-savedItemPreview">
+                                    {item.url ? (
+                                        <img src={item.url} alt={t("signing.canvas.savedSignatureAlt")} className="lw-signing-savedSigPreview" />
+                                    ) : (
+                                        <div className="lw-signing-inlineHint">{t("signing.canvas.loadingSavedSignature")}</div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                        {savedStamps.map((item) => (
+                            <div
+                                key={item.key}
+                                className={`lw-signing-savedItem${selectedSavedItem?.type === 'stamp' && selectedSavedItem?.index === item.index ? ' is-selected' : ''}`}
+                                onClick={() => setSelectedSavedItem({ type: 'stamp', url: item.url, index: item.index })}
+                            >
+                                <div className="lw-signing-savedItemLabel">{t("signing.canvas.savedStampLabel")}</div>
+                                <button
+                                    className="lw-signing-savedItemDelete"
+                                    onClick={(e) => { e.stopPropagation(); deleteSavedItem('stamp', item.index); }}
+                                    disabled={saving}
+                                    title={t("signing.canvas.deleteSavedItem")}
+                                >×</button>
+                                <div className="lw-signing-savedItemPreview">
+                                    {item.url ? (
+                                        <img src={item.url} alt={t("signing.canvas.savedStampAlt")} className="lw-signing-savedSigPreview" />
+                                    ) : (
+                                        <div className="lw-signing-inlineHint">{t("signing.canvas.loadingSavedStamp")}</div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                        {savedSignatures.length === 0 && savedStamps.length === 0 && (
+                            <div className="lw-signing-inlineHint">{t("signing.canvas.noSavedItems")}</div>
+                        )}
+                    </div>
+                    {selectedSavedItem && (
                         <div className="lw-signing-actionsRow">
                             <PrimaryButton
                                 size={buttonSizes.SMALL}
-                                onPress={async () => { const ok = await applySavedSignatureForNext(); if (ok && isScreen) closeSpotPopup(); }}
-                                disabled={saving || !savedSignature.exists}
+                                onPress={async () => {
+                                    if (selectedSavedItem.type === 'signature') {
+                                        await applySavedSignatureForNext(selectedSavedItem.url);
+                                    } else {
+                                        await applySavedStampForNext(selectedSavedItem.url);
+                                    }
+                                }}
+                                disabled={saving}
                             >
-                                {saving ? t("signing.canvas.saving") : t("signing.canvas.sign")}
+                                {saving ? t("signing.canvas.saving") : t("signing.canvas.signOnly")}
                             </PrimaryButton>
                             <SecondaryButton
                                 size={buttonSizes.SMALL}
-                                onPress={async () => { const ok = await signAllRemainingSpots(); if (ok && isScreen) closeSpotPopup(); }}
-                                disabled={saving || remainingCount === 0 || (!savedSignature?.exists && !(signatureMode !== "saved" && hasUserDrawn))}
+                                onPress={async () => { await signAllRemainingSpots(selectedSavedItem.url); }}
+                                disabled={saving || remainingCount === 0}
                             >
                                 {t("signing.canvas.signAll")}
                             </SecondaryButton>
                         </div>
-                    </div>
-                </div>
-            )}
-
-            {/* ─── Saved stamp mode (for signature spots) ─── */}
-            {currentSpotIsSignature && savedStamp.exists && signatureMode === "savedStamp" && remainingCount > 0 && !stampSignPhase && (
-                <div className="lw-signing-canvasSection">
-                    <div className="lw-signing-savedSigBox">
-                        <div className="lw-signing-savedSigPreviewWrap">
-                            {savedStamp.url ? (
-                                <img
-                                    className="lw-signing-savedSigPreview"
-                                    src={savedStamp.url}
-                                    alt={t("signing.canvas.savedStampAlt")}
-                                />
-                            ) : (
-                                <div className="lw-signing-inlineHint">{t("signing.canvas.loadingSavedStamp")}</div>
-                            )}
-                        </div>
-                        <div className="lw-signing-actionsRow">
-                            <PrimaryButton
-                                size={buttonSizes.SMALL}
-                                onPress={applySavedStampForNext}
-                                disabled={saving || !savedStamp.exists}
-                            >
-                                {saving ? t("signing.canvas.saving") : t("signing.canvas.nextStep")}
-                            </PrimaryButton>
-                        </div>
-                    </div>
+                    )}
                 </div>
             )}
 
@@ -1591,7 +1790,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         <TertiaryButton size={buttonSizes.SMALL} onPress={clearClientStamp} disabled={saving}>
                             {t("signing.canvas.changeStamp")}
                         </TertiaryButton>
-                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { const ok = await saveStampWithSignature(); if (ok && isScreen) closeSpotPopup(); }} disabled={saving}>
+                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { await saveStampWithSignature(); }} disabled={saving}>
                             {saving ? t("signing.canvas.saving") : t("signing.canvas.saveField")}
                         </PrimaryButton>
                     </div>
@@ -1755,7 +1954,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         <SecondaryButton size={buttonSizes.MEDIUM} onPress={() => setFieldValue("")} disabled={saving}>
                             {t("common.clear")}
                         </SecondaryButton>
-                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { const ok = await saveFieldValue(); if (ok && isScreen) closeSpotPopup(); }} disabled={saving}>
+                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { await saveFieldValue(); }} disabled={saving}>
                             {saving ? t("signing.canvas.saving") : t("signing.canvas.saveField")}
                         </PrimaryButton>
                     </div>
@@ -1781,7 +1980,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         <SecondaryButton size={buttonSizes.MEDIUM} onPress={clearCanvas} disabled={saving}>
                             {t("common.clear")}
                         </SecondaryButton>
-                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { const ok = await saveSignature(); if (ok && isScreen) closeSpotPopup(); }} disabled={saving}>
+                        <SecondaryButton size={buttonSizes.MEDIUM} onPress={async () => { await signOnly(); }} disabled={saving}>
+                            {saving ? t("signing.canvas.saving") : t("signing.canvas.signOnly")}
+                        </SecondaryButton>
+                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { await saveSignature(); }} disabled={saving}>
                             {saving
                                 ? t("signing.canvas.saving")
                                 : (currentSignMode === 'initials'

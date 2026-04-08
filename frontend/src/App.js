@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-
 import AdminStack, { AdminStackName } from './navigation/AdminStack';
 import ClientStack, { ClientStackName } from './navigation/ClientStack';
 import PublicSigningScreen, { PublicSignScreenName } from './screens/signingScreen/PublicSigningScreen';
+import ViewSignedDocument, { ViewSignedDocumentName } from './screens/viewSignedDocument/ViewSignedDocument';
 import { AppRoles } from './screens/otpScreen/OtpScreen.js/LoginOtpScreen';
 import { useEffect } from 'react';
 import { MainScreenName } from './screens/mainScreen/MainScreen';
@@ -136,6 +137,7 @@ const App = () => {
     <>
       <Routes>
         <Route path={PublicSignScreenName} element={<PublicSigningScreen />} />
+        <Route path={ViewSignedDocumentName} element={<ViewSignedDocument />} />
 
         <Route path={EvidenceVerifyScreenName} element={<EvidenceVerifyScreen />} />
 

@@ -115,6 +115,22 @@ const signingFilesApi = {
         return await ApiUtils.post(`${base}/public/${encodeURIComponent(token)}/saved-stamp`, { stampImage });
     },
 
+    // List all saved items (signatures + stamps)
+    listSavedItems: async () => {
+        return await ApiUtils.get(`${base}/saved-items`);
+    },
+    listPublicSavedItems: async (token) => {
+        return await ApiUtils.get(`${base}/public/${encodeURIComponent(token)}/saved-items`);
+    },
+
+    // Delete saved item
+    deleteSavedItem: async (type, index) => {
+        return await ApiUtils.delete(`${base}/saved-items/${encodeURIComponent(type)}/${encodeURIComponent(index)}`);
+    },
+    deletePublicSavedItem: async (token, type, index) => {
+        return await ApiUtils.delete(`${base}/public/${encodeURIComponent(token)}/saved-items/${encodeURIComponent(type)}/${encodeURIComponent(index)}`);
+    },
+
     signFile: async (signingFileId, body, config = undefined) => {
         return await ApiUtils.post(`${base}/${signingFileId}/sign`, body, config);
     },
@@ -161,6 +177,11 @@ const signingFilesApi = {
             payload.signers = signers;
         }
         return await ApiUtils.post(`${base}/detect-spots`, payload);
+    },
+
+    // Public view of signed document (no auth, uses view token)
+    getPublicSignedDocumentView: async (viewToken) => {
+        return await ApiUtils.get(`${base}/public/view/${encodeURIComponent(viewToken)}`);
     },
 };
 

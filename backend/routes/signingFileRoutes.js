@@ -23,6 +23,9 @@ const publicViewLimiter = createRateLimitMiddleware({
 
 router.post("/detect-spots", authMiddleware, requireSigningEnabledForUser, signingFileController.detectSignatureSpots);
 
+// Public view of signed document (JWT view token, no auth)
+router.get("/public/view/:token", publicViewLimiter, signingFileController.getPublicSignedDocumentView);
+
 // Public signing (no auth) via signed token
 router.get("/public/:token/pdf", publicViewLimiter, signingFileController.getPublicSigningFilePdf);
 router.get("/public/:token", publicViewLimiter, signingFileController.getPublicSigningFileDetails);
@@ -44,6 +47,8 @@ router.post("/public/:token/saved-signature", signingFileController.savePublicSa
 router.get("/public/:token/saved-stamp", publicViewLimiter, signingFileController.getPublicSavedStamp);
 router.get("/public/:token/saved-stamp/data-url", publicViewLimiter, signingFileController.getPublicSavedStampDataUrl);
 router.post("/public/:token/saved-stamp", signingFileController.savePublicSavedStamp);
+router.get("/public/:token/saved-items", publicViewLimiter, signingFileController.listPublicSavedItems);
+router.delete("/public/:token/saved-items/:type/:index", signingFileController.deletePublicSavedItem);
 
 // Saved signature for current user (auth)
 router.get("/saved-signature", authMiddleware, requireSigningEnabledForUser, signingFileController.getSavedSignature);
@@ -54,6 +59,10 @@ router.post("/saved-signature", authMiddleware, requireSigningEnabledForUser, si
 router.get("/saved-stamp", authMiddleware, requireSigningEnabledForUser, signingFileController.getSavedStamp);
 router.get("/saved-stamp/data-url", authMiddleware, requireSigningEnabledForUser, signingFileController.getSavedStampDataUrl);
 router.post("/saved-stamp", authMiddleware, requireSigningEnabledForUser, signingFileController.saveSavedStamp);
+
+// List + delete saved items
+router.get("/saved-items", authMiddleware, requireSigningEnabledForUser, signingFileController.listSavedItems);
+router.delete("/saved-items/:type/:index", authMiddleware, requireSigningEnabledForUser, signingFileController.deleteSavedItem);
 
 // עו"ד מעלה קובץ לחתימה
 router.post("/upload", authMiddleware, requireSigningEnabledForUser, signingFileController.uploadFileForSigning);

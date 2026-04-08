@@ -525,15 +525,85 @@ function getSavedSignatureKey(userId) {
     return `saved-signatures/user-${safeId}.png`;
 }
 
+function getSavedSignatureKeyIndexed(userId, index) {
+    const safeId = Number(userId);
+    const safeIdx = Number(index);
+    return `saved-signatures/user-${safeId}-${safeIdx}.png`;
+}
+
 function getSavedStampKey(userId) {
     const safeId = Number(userId);
     return `saved-stamps/user-${safeId}.png`;
 }
 
+function getSavedStampKeyIndexed(userId, index) {
+    const safeId = Number(userId);
+    const safeIdx = Number(index);
+    return `saved-stamps/user-${safeId}-${safeIdx}.png`;
+}
+
+const MAX_SAVED_SIGNATURES = 2;
+const MAX_SAVED_STAMPS = 2;
+
+async function listSavedItems(userId) {
+    const safeId = Number(userId);
+    const signatures = [];
+    const stamps = [];
+
+    // Check legacy single-file keys first, then indexed slots
+    const legacySigKey = getSavedSignatureKey(safeId);
+    if (await savedSignatureExists(legacySigKey)) {
+        const url = await presignSavedSignatureReadUrl(legacySigKey);
+        signatures.push({ index: -1, key: legacySigKey, url, type: 'signature' });
+    }
+    for (let i = 0; i < MAX_SAVED_SIGNATURES; i++) {
+        const key = getSavedSignatureKeyIndexed(safeId, i);
+        if (await savedSignatureExists(key)) {
+            const url = await presignSavedSignatureReadUrl(key);
+            signatures.push({ index: i, key, url, type: 'signature' });
+        }
+    }
+
+    const legacyStampKey = getSavedStampKey(safeId);
+    if (await savedSignatureExists(legacyStampKey)) {
+        const url = await presignSavedSignatureReadUrl(legacyStampKey);
+        stamps.push({ index: -1, key: legacyStampKey, url, type: 'stamp' });
+    }
+    for (let i = 0; i < MAX_SAVED_STAMPS; i++) {
+        const key = getSavedStampKeyIndexed(safeId, i);
+        if (await savedSignatureExists(key)) {
+            const url = await presignSavedSignatureReadUrl(key);
+            stamps.push({ index: i, key, url, type: 'stamp' });
+        }
+    }
+
+    return { signatures, stamps };
+}
+
+async function findNextSavedSlot(userId, type) {
+    const maxSlots = type === 'signature' ? MAX_SAVED_SIGNATURES : MAX_SAVED_STAMPS;
+    const keyFn = type === 'signature' ? getSavedSignatureKeyIndexed : getSavedStampKeyIndexed;
+    for (let i = 0; i < maxSlots; i++) {
+        const key = keyFn(userId, i);
+        if (!(await savedSignatureExists(key))) return i;
+    }
+    // All full — overwrite oldest (slot 0)
+    return 0;
+}
+
+async function deleteSavedItemByKey(key) {
+    try {
+        await r2.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 function parseDataUrlImage(dataUrl) {
     const raw = String(dataUrl || '').trim();
     const m = raw.match(/^data:(image\/(png|jpeg|jpg|webp));base64,(.+)$/i);
-    if (!m) return { ok: false, message: 'Invalid signatureImage (expected data URL)' };
+    if (!m) return { ok: false, message: 'תמונת חתימה לא תקינה' };
 
     const contentType = String(m[1]).toLowerCase();
     const base64 = m[3];
@@ -541,12 +611,12 @@ function parseDataUrlImage(dataUrl) {
     try {
         buffer = Buffer.from(base64, 'base64');
     } catch {
-        return { ok: false, message: 'Invalid base64' };
+        return { ok: false, message: 'נתוני תמונה לא תקינים' };
     }
 
-    if (!buffer || buffer.length === 0) return { ok: false, message: 'Empty image' };
+    if (!buffer || buffer.length === 0) return { ok: false, message: 'תמונה ריקה' };
     if (buffer.length > MAX_SIGNATURE_IMAGE_BYTES) {
-        return { ok: false, message: 'Signature image is too large', code: 'REQUEST_TOO_LARGE' };
+        return { ok: false, message: 'תמונת החתימה גדולה מדי', code: 'REQUEST_TOO_LARGE' };
     }
 
     return { ok: true, buffer, contentType };
@@ -633,7 +703,8 @@ exports.saveSavedSignature = async (req, res, next) => {
             return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'signatureImage' } });
         }
 
-        const key = getSavedSignatureKey(userId);
+        const slotIndex = await findNextSavedSlot(userId, 'signature');
+        const key = getSavedSignatureKeyIndexed(userId, slotIndex);
         await r2.send(
             new PutObjectCommand({
                 Bucket: BUCKET,
@@ -643,7 +714,7 @@ exports.saveSavedSignature = async (req, res, next) => {
             })
         );
 
-        return res.json({ success: true, key });
+        return res.json({ success: true, key, index: slotIndex });
     } catch (err) {
         console.error('saveSavedSignature error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשמירת חתימה שמורה' });
@@ -716,7 +787,8 @@ exports.savePublicSavedSignature = async (req, res, next) => {
             return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'signatureImage' } });
         }
 
-        const key = getSavedSignatureKey(signerUserId);
+        const slotIndex = await findNextSavedSlot(signerUserId, 'signature');
+        const key = getSavedSignatureKeyIndexed(signerUserId, slotIndex);
         await r2.send(
             new PutObjectCommand({
                 Bucket: BUCKET,
@@ -726,7 +798,7 @@ exports.savePublicSavedSignature = async (req, res, next) => {
             })
         );
 
-        return res.json({ success: true, key });
+        return res.json({ success: true, key, index: slotIndex });
     } catch (err) {
         console.error('savePublicSavedSignature error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשמירת חתימה שמורה' });
@@ -781,7 +853,8 @@ exports.saveSavedStamp = async (req, res, next) => {
             return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'stampImage' } });
         }
 
-        const key = getSavedStampKey(userId);
+        const slotIndex = await findNextSavedSlot(userId, 'stamp');
+        const key = getSavedStampKeyIndexed(userId, slotIndex);
         await r2.send(
             new PutObjectCommand({
                 Bucket: BUCKET,
@@ -791,7 +864,7 @@ exports.saveSavedStamp = async (req, res, next) => {
             })
         );
 
-        return res.json({ success: true, key });
+        return res.json({ success: true, key, index: slotIndex });
     } catch (err) {
         console.error('saveSavedStamp error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשמירת חותמת שמורה' });
@@ -864,7 +937,8 @@ exports.savePublicSavedStamp = async (req, res, next) => {
             return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'stampImage' } });
         }
 
-        const key = getSavedStampKey(signerUserId);
+        const slotIndex = await findNextSavedSlot(signerUserId, 'stamp');
+        const key = getSavedStampKeyIndexed(signerUserId, slotIndex);
         await r2.send(
             new PutObjectCommand({
                 Bucket: BUCKET,
@@ -874,10 +948,81 @@ exports.savePublicSavedStamp = async (req, res, next) => {
             })
         );
 
-        return res.json({ success: true, key });
+        return res.json({ success: true, key, index: slotIndex });
     } catch (err) {
         console.error('savePublicSavedStamp error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשמירת חותמת שמורה' });
+    }
+};
+
+// ─── List all saved items (auth) ───
+exports.listSavedItems = async (req, res, next) => {
+    try {
+        const userId = req.user?.UserId;
+        if (!userId) return fail(next, 'UNAUTHORIZED', 401);
+        const items = await listSavedItems(userId);
+        return res.json(items);
+    } catch (err) {
+        console.error('listSavedItems error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליפת פריטים שמורים' });
+    }
+};
+
+// ─── List all saved items (public) ───
+exports.listPublicSavedItems = async (req, res, next) => {
+    try {
+        const verified = verifyPublicSigningToken(req.params.token);
+        if (!verified.ok) return fail(next, verified.errorCode, verified.httpStatus);
+        const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId: verified.signingFileId, next });
+        if (!enabledCheck.ok) return;
+        const items = await listSavedItems(verified.signerUserId);
+        return res.json(items);
+    } catch (err) {
+        console.error('listPublicSavedItems error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליפת פריטים שמורים' });
+    }
+};
+
+// ─── Delete saved item (auth) ───
+exports.deleteSavedItem = async (req, res, next) => {
+    try {
+        const userId = req.user?.UserId;
+        if (!userId) return fail(next, 'UNAUTHORIZED', 401);
+        const type = req.params.type; // 'signature' or 'stamp'
+        const index = Number(req.params.index);
+        if (!['signature', 'stamp'].includes(type)) return fail(next, 'INVALID_PARAMETER', 422);
+        if (isNaN(index) || index < -1 || index >= 2) return fail(next, 'INVALID_PARAMETER', 422);
+        const key = index === -1
+            ? (type === 'signature' ? getSavedSignatureKey(userId) : getSavedStampKey(userId))
+            : (type === 'signature' ? getSavedSignatureKeyIndexed(userId, index) : getSavedStampKeyIndexed(userId, index));
+        await deleteSavedItemByKey(key);
+        return res.json({ success: true });
+    } catch (err) {
+        console.error('deleteSavedItem error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה במחיקת פריט שמור' });
+    }
+};
+
+// ─── Delete saved item (public) ───
+exports.deletePublicSavedItem = async (req, res, next) => {
+    try {
+        const verified = verifyPublicSigningToken(req.params.token);
+        if (!verified.ok) return fail(next, verified.errorCode, verified.httpStatus);
+        const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId: verified.signingFileId, next });
+        if (!enabledCheck.ok) return;
+        const { signerUserId } = verified;
+        const type = req.params.type;
+        const index = Number(req.params.index);
+        if (!['signature', 'stamp'].includes(type)) return fail(next, 'INVALID_PARAMETER', 422);
+        if (isNaN(index) || index < -1 || index >= 2) return fail(next, 'INVALID_PARAMETER', 422);
+        const key = index === -1
+            ? (type === 'signature' ? getSavedSignatureKey(signerUserId) : getSavedStampKey(signerUserId))
+            : (type === 'signature' ? getSavedSignatureKeyIndexed(signerUserId, index) : getSavedStampKeyIndexed(signerUserId, index));
+        await deleteSavedItemByKey(key);
+        return res.json({ success: true });
+    } catch (err) {
+        console.error('deletePublicSavedItem error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה במחיקת פריט שמור' });
     }
 };
 
@@ -904,6 +1049,42 @@ function verifyPublicSigningToken(rawToken) {
         }
         return { ok: false, httpStatus: 401, errorCode: 'INVALID_TOKEN' };
     }
+}
+
+// ── Public view tokens: allow unauthenticated access to signed documents ──
+function createPublicViewToken(signingFileId) {
+    return jwt.sign(
+        { typ: 'signed_view', signingFileId: Number(signingFileId) },
+        getJwtSecret(),
+        { expiresIn: '30d' }
+    );
+}
+
+function verifyPublicViewToken(rawToken) {
+    const token = String(rawToken || '').trim();
+    if (!token) return { ok: false, httpStatus: 401, errorCode: 'INVALID_TOKEN' };
+    try {
+        const decoded = jwt.verify(token, getJwtSecret(), { algorithms: ['HS256'] });
+        if (!decoded || decoded.typ !== 'signed_view') {
+            return { ok: false, httpStatus: 401, errorCode: 'INVALID_TOKEN' };
+        }
+        const signingFileId = Number(decoded.signingFileId);
+        if (!Number.isFinite(signingFileId) || signingFileId <= 0) {
+            return { ok: false, httpStatus: 401, errorCode: 'INVALID_TOKEN' };
+        }
+        return { ok: true, signingFileId };
+    } catch (e) {
+        if (e && e.name === 'TokenExpiredError') {
+            return { ok: false, httpStatus: 401, errorCode: 'TOKEN_EXPIRED' };
+        }
+        return { ok: false, httpStatus: 401, errorCode: 'INVALID_TOKEN' };
+    }
+}
+
+function buildPublicViewUrl(viewToken) {
+    const domain = getWebsiteDomain();
+    if (!domain) return null;
+    return `https://${domain}/ViewSignedDocument?token=${encodeURIComponent(String(viewToken))}`;
 }
 
 async function resolveFirmSigningPolicyForSigningFileId(signingFileId) {
@@ -1815,7 +1996,7 @@ exports.uploadFileForSigning = async (req, res, next) => {
             const signerName = String(signer.name || '').trim() || 'חותם חיצוני';
 
             if (!signerEmail && !signerPhone) {
-                return fail(next, 'VALIDATION_ERROR', 422, { message: 'External signer requires email or phone' });
+                return fail(next, 'VALIDATION_ERROR', 422, { message: 'חותם חיצוני דורש אימייל או טלפון' });
             }
 
             let resolvedUserId = null;
@@ -3894,7 +4075,7 @@ exports.resendSigningInvite = async (req, res, next) => {
         const { signerUserIds } = req.body;
 
         if (!Array.isArray(signerUserIds) || signerUserIds.length === 0) {
-            return fail(next, 'VALIDATION_ERROR', 422, { message: 'signerUserIds is required' });
+            return fail(next, 'VALIDATION_ERROR', 422, { message: 'נדרש לציין חותמים' });
         }
 
         const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId, next });
@@ -3913,7 +4094,7 @@ exports.resendSigningInvite = async (req, res, next) => {
         if (fileResult.rows.length === 0) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
         const file = fileResult.rows[0];
         if (Number(file.LawyerId) !== Number(requesterId)) return fail(next, 'FORBIDDEN', 403);
-        if (file.Status !== 'pending') return fail(next, 'VALIDATION_ERROR', 422, { message: 'Only pending documents can be resent' });
+        if (file.Status !== 'pending') return fail(next, 'VALIDATION_ERROR', 422, { message: 'ניתן לשלוח מחדש רק מסמכים ממתינים' });
 
         let lawyerNameForTemplate = 'עו"ד';
         try {
@@ -5524,7 +5705,10 @@ exports.signFile = async (req, res, next) => {
 
             const message = `הקובץ ${file.FileName} חתום בהצלחה על ידי כל החתומים`;
             const domainForUrls = String(process.env.WEBSITE_DOMAIN || WEBSITE_DOMAIN || '').trim();
-            const signedDocumentUrl = `https://${domainForUrls}/signing-files/${signingFileId}/download`;
+
+            // Generate a public view URL so recipients can view/download without app auth
+            const publicViewToken = createPublicViewToken(signingFileId);
+            const signedDocumentUrl = buildPublicViewUrl(publicViewToken) || `https://${domainForUrls}/signing-files/${signingFileId}/download`;
             const evidenceCertificateUrl = `https://${domainForUrls}/signing-files/${signingFileId}/evidence-certificate`;
 
             await notifyRecipient({
@@ -5552,7 +5736,7 @@ exports.signFile = async (req, res, next) => {
                     messageBody: renderTemplate(docSignedSmsTemplate, {
                         recipientName: String(lawyerNameForTemplate || '').trim(),
                         documentName: String(file.FileName || '').trim(),
-                        websiteUrl: `https://${WEBSITE_DOMAIN}`,
+                        websiteUrl: signedDocumentUrl,
                     }),
                 },
             });
@@ -5584,6 +5768,49 @@ exports.signFile = async (req, res, next) => {
                 }
             } catch (e) {
                 console.error('Failed to send to completionEmail (non-fatal):', e?.message || e);
+            }
+
+            // Notify the signer (client) that the document was signed successfully
+            try {
+                let signerName = '';
+                try {
+                    const sr = await pool.query('select name as "Name" from users where userid = $1', [userId]);
+                    signerName = String(sr.rows?.[0]?.Name || '').trim();
+                } catch { /* best-effort */ }
+
+                const signerMessage = `המסמך "${file.FileName}" נחתם בהצלחה`;
+                const signerSignedSmsTemplate = await getSetting('templates', 'DOC_SIGNED_SIGNER_SMS',
+                    'שלום {{recipientName}}, המסמך "{{documentName}}" נחתם בהצלחה.');
+
+                await notifyRecipient({
+                    recipientUserId: userId,
+                    notificationType: 'DOC_SIGNED',
+                    skipAdminCc: true,
+                    push: {
+                        title: '✓ מסמך נחתם בהצלחה',
+                        body: signerMessage,
+                        data: { signingFileId, type: 'file_signed' },
+                    },
+                    email: {
+                        campaignKey: 'DOC_SIGNED',
+                        contactFields: {
+                            recipient_name: signerName || '',
+                            document_name: String(file.FileName || '').trim(),
+                            lawyer_name: String(lawyerNameForTemplate || '').trim(),
+                            signed_document_url: signedDocumentUrl,
+                            evidence_certificate_url: '',
+                        },
+                    },
+                    sms: {
+                        messageBody: renderTemplate(signerSignedSmsTemplate, {
+                            recipientName: signerName || '',
+                            documentName: String(file.FileName || '').trim(),
+                        }),
+                    },
+                });
+                console.log(`[signing] Notified signer userId=${userId} that document ${signingFileId} is fully signed`);
+            } catch (e) {
+                console.error('Failed to notify signer (non-fatal):', e?.message || e);
             }
         }
 
@@ -6187,6 +6414,93 @@ exports.getSignedFileDownload = async (req, res, next) => {
     } catch (err) {
         console.error("getSignedFileDownload error:", err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: "שגיאה ביצירת קישור הורדה" });
+    }
+};
+
+// ── Public view / download of a signed document via JWT view token ──
+exports.getPublicSignedDocumentView = async (req, res, next) => {
+    try {
+        const verified = verifyPublicViewToken(req.params.token);
+        if (!verified.ok) {
+            return fail(next, verified.errorCode, verified.httpStatus);
+        }
+        const { signingFileId } = verified;
+
+        const schemaSupport = await getSchemaSupport();
+
+        const fileResult = await pool.query(
+            `select
+                signingfileid    as "SigningFileId",
+                lawyerid         as "LawyerId",
+                filename         as "FileName",
+                status           as "Status",
+                signedat         as "SignedAt",
+                signedfilekey    as "SignedFileKey",
+                signedstoragekey as "SignedStorageKey",
+                filekey          as "FileKey"
+             from signingfiles
+             where signingfileid = $1`,
+            [signingFileId]
+        );
+        if (fileResult.rows.length === 0) {
+            return fail(next, 'DOCUMENT_NOT_FOUND', 404);
+        }
+        const file = fileResult.rows[0];
+        if (file.Status !== 'signed') {
+            return fail(next, 'DOCUMENT_NOT_SIGNED', 409, { message: 'המסמך טרם נחתם' });
+        }
+
+        let key = file.SignedStorageKey || file.SignedFileKey;
+
+        // Regenerate if field-value spots exist
+        let hasSignedFieldValues = false;
+        if (schemaSupport.signaturespotsFieldValue) {
+            try {
+                const fvRes = await pool.query(
+                    `select 1 from signaturespots
+                     where signingfileid = $1 and issigned = true
+                       and fieldvalue is not null and length(trim(fieldvalue::text)) > 0
+                     limit 1`,
+                    [signingFileId]
+                );
+                hasSignedFieldValues = fvRes.rows.length > 0;
+            } catch { hasSignedFieldValues = false; }
+        }
+        if (!key || (schemaSupport.signaturespotsFieldValue && hasSignedFieldValues)) {
+            try {
+                key = await ensureSignedPdfKey({ signingFileId, lawyerId: file.LawyerId, pdfKey: file.FileKey });
+            } catch (e) {
+                console.error('Public view: failed to generate signed PDF', e);
+            }
+        }
+        key = key || file.FileKey;
+
+        // Generate view URL (inline) and download URL (attachment)
+        const viewCmd = new GetObjectCommand({
+            Bucket: BUCKET,
+            Key: key,
+            ResponseContentDisposition: `inline; filename="${file.FileName}"`,
+            ResponseContentType: 'application/pdf',
+        });
+        const downloadCmd = new GetObjectCommand({
+            Bucket: BUCKET,
+            Key: key,
+            ResponseContentDisposition: `attachment; filename="${file.FileName}"`,
+        });
+
+        const viewUrl = await getSignedUrl(r2, viewCmd, { expiresIn: 600 });
+        const downloadUrl = await getSignedUrl(r2, downloadCmd, { expiresIn: 600 });
+
+        return res.json({
+            fileName: file.FileName,
+            signedAt: file.SignedAt,
+            viewUrl,
+            downloadUrl,
+            expiresIn: 600,
+        });
+    } catch (err) {
+        console.error('getPublicSignedDocumentView error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בטעינת המסמך' });
     }
 };
 

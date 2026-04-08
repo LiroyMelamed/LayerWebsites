@@ -901,8 +901,8 @@
             "drawNewSignature": "צייר\nחתימה חדשה",
             "savedSignatureAlt": "חתימה שמורה",
             "loadingSavedSignature": "טוען חתימה שמורה...",
-            "tabDraw": "ציור",
-            "tabSaved": "חתימה שמורה",
+            "tabDraw": "חתימה",
+            "tabSaved": "חתימות שמורות",
             "tabStamp": "העלאת חותמת",
             "tabSavedStamp": "חותמת שמורה",
             "noSavedStamp": "אין חותמת שמורה",
@@ -919,10 +919,17 @@
             "fieldRequired": "יש למלא שדה חובה",
             "checkboxLabel": "סמן",
             "sign": "חתום",
+            "signOnly": "חתום",
             "signAll": "חתום על הכל",
             "useSavedSignature": "השתמש\nבחתימה שמורה",
             "saveSignature": "שמור חתימה",
             "saveInitials": "שמור ר\"ת",
+            "deleteSavedItem": "מחק",
+            "deleteSavedSuccess": "נמחק בהצלחה",
+            "deleteSavedError": "שגיאה במחיקה",
+            "noSavedItems": "אין חתימות או חותמות שמורות",
+            "savedSignatureLabel": "חתימה",
+            "savedStampLabel": "חותמת",
             "spotAlreadySigned": "מקום החתימה הזה כבר חתום על ידך",
             "allRequiredCompleted": "השלמת את כל החתימות הנדרשות!",
             "rejectDocument": "דחה מסמך",
@@ -930,7 +937,7 @@
             "clientStampSavedSuccess": "החותמת נשמרה בהצלחה",
             "clientStampUploadError": "שגיאה בהעלאת החותמת",
             "chooseFile": "בחירת קובץ",
-            "signOnStampHint": "ניתן לחתום מעל החותמת (אופציונלי)",
+            "signOnStampHint": "ניתן לחתום על החותמת (אופציונלי)",
             "changeStamp": "החלף חותמת",
             "nextStep": "המשך"
         },
@@ -1230,5 +1237,14 @@
         "templateDeleteError": "שגיאה במחיקת תבנית",
         "removeAdminTitle": "הסרת מנהל",
         "removeAdminMessage": "האם אתה בטוח שברצונך להסיר מנהל זה?"
+    },
+    "viewSignedDoc": {
+        "invalidLink": "קישור לא תקין",
+        "expired": "תוקף הקישור פג",
+        "notSigned": "המסמך טרם נחתם",
+        "loadError": "שגיאה בטעינת המסמך",
+        "loading": "טוען מסמך...",
+        "signedAt": "נחתם בתאריך",
+        "download": "הורד מסמך חתום"
     }
 }
