@@ -21,7 +21,7 @@ import { PRICING_CONFIG, buildWhatsAppUrl } from "../../components/pricing/prici
 
 import "./PricingScreen.scss";
 
-export const PricingScreenName = "/pricing";
+export const PricingScreenName = "/Pricing";
 
 export default function PricingScreen() {
     useEffect(() => {
@@ -41,7 +41,7 @@ export default function PricingScreen() {
 
     const openContactPopup = useCallback(() => {
         openPopup(
-            <SimpleCard className="lw-pricingScreen__contactPopup">
+            <SimpleContainer className="lw-pricingScreen__contactPopup">
                 <TextBold24>{t("nav.contact")}</TextBold24>
                 <Text14 className="lw-pricingScreen__subtitle">
                     {t("nav.contactMessage")}
@@ -66,7 +66,7 @@ export default function PricingScreen() {
                         {phoneNational}
                     </SecondaryButton>
                 </SimpleContainer>
-            </SimpleCard>
+            </SimpleContainer>
         );
     }, [closePopup, openPopup, phoneNational, t, whatsappUrl]);
 

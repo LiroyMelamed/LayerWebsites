@@ -120,7 +120,7 @@ export default function StageFileUpload({ caseId, stage, isClient, stageFiles = 
         }
     }, [isFromApp]);
 
-    const files = stageFiles.filter(f => f.stage === stage);
+    const files = Array.isArray(stageFiles) ? stageFiles.filter(f => f.stage === stage) : [];
 
     if (files.length === 0 && isClient) return null;
 

@@ -26,6 +26,7 @@ import ReminderDetailPopup from "./components/ReminderDetailPopup";
 import { formatDateTimeForInput } from "../../functions/date/formatDateForInput";
 import { AdminStackName } from "../../navigation/AdminStack";
 import { MainScreenName } from "../mainScreen/MainScreen";
+import { useDemoMode, DEMO_REMINDERS } from "../../hooks/useDemoMode";
 import "./RemindersScreen.scss";
 
 export const RemindersScreenName = "/RemindersScreen";
@@ -45,6 +46,7 @@ export default function RemindersScreen() {
     const { t } = useTranslation();
     const { openPopup, closePopup } = usePopup();
     const { isSmallScreen } = useScreenSize();
+    const isDemo = useDemoMode();
 
     const [statusFilter, setStatusFilter] = useState("ALL");
     const [page, setPage] = useState(1);
@@ -52,6 +54,7 @@ export default function RemindersScreen() {
     const limit = 25;
 
     useEffect(() => {
+        if (isDemo) return;
         remindersApi.getTemplates().then((res) => {
             if (res?.status === 200 && res.data?.templates) {
                 const map = {};
@@ -68,12 +71,13 @@ export default function RemindersScreen() {
     }, [t, templateLabelMap]);
 
     const fetchReminders = useCallback(async () => {
+        if (isDemo) return { status: 200, data: DEMO_REMINDERS };
         return await remindersApi.listReminders({
             status: statusFilter === "ALL" ? undefined : statusFilter,
             page,
             limit,
         });
-    }, [statusFilter, page]);
+    }, [statusFilter, page, isDemo]);
 
     const { result, isPerforming, performRequest } = useAutoHttpRequest(fetchReminders, {
         onSuccess: () => { },

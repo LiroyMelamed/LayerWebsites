@@ -26,6 +26,8 @@ const useHttpRequest = (requestFunction, onSuccess, onFailure) => {
 
   const defaultOnFailure = useCallback(
     (error) => {
+      // In demo mode, silently ignore API errors
+      try { if (sessionStorage.getItem('lw_demo') === '1') return; } catch { }
       openPopup(<ErrorPopup closePopup={closePopup} errorText={error?.data?.message} />)
     },
     [openPopup, closePopup]

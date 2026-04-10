@@ -36,7 +36,7 @@ const App = () => {
       /(?:^|\/)(SigningScreen|SigningManagerScreen)(?:$|\/)/i.test(p) ||
       /(?:^|\/)(upload-file-for-signing)(?:$|\/)/i.test(p) ||
       /(?:^|\/)(PublicSignScreen)(?:$|\/)/i.test(p) ||
-      /(?:^|\/)(verify\/evidence)(?:$|\/)/i.test(p);
+      /(?:^|\/)(Verify\/Evidence)(?:$|\/)/i.test(p);
 
     const root = document?.documentElement;
     if (!root) return;

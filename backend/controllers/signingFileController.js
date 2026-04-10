@@ -14,9 +14,6 @@ const { getSetting } = require("../services/settingsService");
 const { PDFDocument, StandardFonts, rgb } = require("pdf-lib");
 let fontkit = null;
 try {
-    // Optional: enables embedding TTF fonts (e.g., Hebrew) in pdf-lib.
-    // If not installed, we gracefully fall back to StandardFonts.
-    // eslint-disable-next-line global-require
     fontkit = require('@pdf-lib/fontkit');
 } catch {
     fontkit = null;
@@ -3582,7 +3579,7 @@ async function generateEvidenceCertificateBuffer(signingFileId) {
     if (!fileRow?.PresentedPdfSha256) missingNotes.push('Presented PDF SHA256 missing');
     if (!fileRow?.SignedPdfSha256) missingNotes.push('Signed PDF SHA256 missing (computed in-certificate)');
 
-    const verifyUrl = `https://${WEBSITE_DOMAIN}/verify/evidence/${encodeURIComponent(signingFileId)}`;
+    const verifyUrl = `https://${WEBSITE_DOMAIN}/Verify/Evidence/${encodeURIComponent(signingFileId)}`;
     const signingPolicyVersion = fileRow?.SigningPolicyVersion || SIGNING_POLICY_VERSION || 'N/A';
 
     const doc = {
@@ -3951,7 +3948,7 @@ exports.getEvidenceCertificate = async (req, res, next) => {
         if (!fileRow?.PresentedPdfSha256) missingNotes.push('Presented PDF SHA256 missing');
         if (!fileRow?.SignedPdfSha256) missingNotes.push('Signed PDF SHA256 missing (computed in-certificate)');
 
-        const verifyUrl = `https://${WEBSITE_DOMAIN}/verify/evidence/${encodeURIComponent(signingFileId)}`;
+        const verifyUrl = `https://${WEBSITE_DOMAIN}/Verify/Evidence/${encodeURIComponent(signingFileId)}`;
 
         const signingPolicyVersion = fileRow?.SigningPolicyVersion || SIGNING_POLICY_VERSION || 'N/A';
 

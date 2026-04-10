@@ -17,6 +17,7 @@ import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import { MainScreenName } from "../mainScreen/MainScreen";
 import AllCasesCard from "./components/AllCasesCard";
 import { useTranslation } from "react-i18next";
+import { useDemoMode, DEMO_CASES, DEMO_CASE_TYPES } from "../../hooks/useDemoMode";
 
 import "./AllCasesScreen.scss";
 
@@ -28,6 +29,7 @@ export default function AllCasesScreen() {
     const initialStatus = searchParams.get('status') === 'closed' ? 'closed' : 'open';
 
     const { isSmallScreen } = useScreenSize();
+    const isDemo = useDemoMode();
     const [selectedCaseType, setSelectedCaseType] = useState(null);
     const [selectedStatus, setSelectedStatus] = useState(initialStatus);
     const [selectedClient, setSelectedClient] = useState(null);
@@ -36,8 +38,8 @@ export default function AllCasesScreen() {
     const [selectedCaseName, setSelectedCaseName] = useState(null);
     const [filteredCases, setFilteredCases] = useState(null);
 
-    const { result: allCasesTypes, isPerforming: isPerformingAllCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
-    const { result: allCases, isPerforming: isPerformingAllCases, performRequest: reperformAfterSave } = useAutoHttpRequest(casesApi.getAllCases);
+    const { result: allCasesTypes, isPerforming: isPerformingAllCasesTypes } = useAutoHttpRequest(isDemo ? async () => ({ status: 200, data: DEMO_CASE_TYPES }) : casesTypeApi.getAllCasesTypeForFilter);
+    const { result: allCases, isPerforming: isPerformingAllCases, performRequest: reperformAfterSave } = useAutoHttpRequest(isDemo ? async () => ({ status: 200, data: DEMO_CASES }) : casesApi.getAllCases);
 
     useEffect(() => {
         if (allCases?.length > 0) {

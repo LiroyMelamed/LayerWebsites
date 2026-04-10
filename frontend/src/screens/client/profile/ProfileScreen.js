@@ -29,6 +29,7 @@ import { Text12, Text14, TextBold16, TextBold24 } from "../../../components/spec
 
 import { formatDateForInput, parseDateInput } from "../../../functions/date/formatDateForInput";
 import { uploadFileToR2, getFileReadUrl } from "../../../utils/fileUploadUtils";
+import { useDemoMode, DEMO_PROFILE } from "../../../hooks/useDemoMode";
 
 import "./ProfileScreen.scss";
 
@@ -40,6 +41,7 @@ export default function ProfileScreen() {
     const { openPopup, closePopup } = usePopup();
 
     const fileInputRef = useRef(null);
+    const isDemo = useDemoMode();
 
 
     const [profile, setProfile] = useState({
@@ -78,7 +80,7 @@ export default function ProfileScreen() {
         null
     );
 
-    const { isPerforming: isFetching } = useAutoHttpRequest(customersApi.getCurrentCustomer, {
+    const { isPerforming: isFetching } = useAutoHttpRequest(isDemo ? async () => ({ status: 200, data: DEMO_PROFILE }) : customersApi.getCurrentCustomer, {
         onSuccess: async (data) => {
             initialFetchDoneRef.current = true;
             setProfile((p) => ({
@@ -174,88 +176,88 @@ export default function ProfileScreen() {
                         ))}
                     </SimpleCard>
                 ) : (
-                <SimpleContainer className="lw-profileScreen">
-                    <SimpleContainer className="lw-profileScreen__header">
-                        <SimpleContainer className="lw-profileScreen__avatarWrap">
-                            <SimpleImage
-                                className="lw-profileScreen__avatar"
-                                resizeMode="contain"
-                                src={profile.photoUri || images.Logos.FullLogoOriginal}
-                            />
-
-                            <SimpleButton
-                                className="lw-profileScreen__avatarEdit"
-                                onPress={handleChooseImage}
-                                disabled={isSaving}
-                            >
-                                <Text12 className="lw-profileScreen__avatarEditText">{t("common.edit")}</Text12>
-                            </SimpleButton>
-
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/*"
-                                className="lw-profileScreen__fileInput"
-                                onChange={handleFileChange}
-                            />
-                        </SimpleContainer>
-
-                        <TextBold24 className="lw-profileScreen__name">{profile.name || ""}</TextBold24>
-                    </SimpleContainer>
-
-                    <SimpleContainer className="lw-profileScreen__content">
-                        <SimpleCard className="lw-profileScreen__card">
-
-                            <SimpleContainer className="lw-profileScreen__form">
-                                <SimpleInput
-                                    className="lw-profileScreen__input"
-                                    title={t("cases.customerName")}
-                                    value={profile.name}
-                                    onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))}
+                    <SimpleContainer className="lw-profileScreen">
+                        <SimpleContainer className="lw-profileScreen__header">
+                            <SimpleContainer className="lw-profileScreen__avatarWrap">
+                                <SimpleImage
+                                    className="lw-profileScreen__avatar"
+                                    resizeMode="contain"
+                                    src={profile.photoUri || images.Logos.FullLogoOriginal}
                                 />
 
-                                <SimpleInput
-                                    className="lw-profileScreen__input"
-                                    title={t("common.email")}
-                                    type="email"
-                                    value={profile.email}
-                                    onChange={(e) => setProfile((p) => ({ ...p, email: e.target.value }))}
-                                />
-
-                                <SimpleInput
-                                    className="lw-profileScreen__input"
-                                    title={t("cases.phoneNumber")}
-                                    type="tel"
-                                    value={profile.phoneNumber}
-                                    onChange={(e) => setProfile((p) => ({ ...p, phoneNumber: e.target.value }))}
-                                />
-
-                                <SimpleInput
-                                    className="lw-profileScreen__input"
-                                    title={t("customers.companyName")}
-                                    value={profile.companyName}
-                                    onChange={(e) => setProfile((p) => ({ ...p, companyName: e.target.value }))}
-                                />
-
-                                <SimpleInput
-                                    className="lw-profileScreen__input"
-                                    title={t("profile.dateOfBirth")}
-                                    placeholder="dd/mm/yyyy"
-                                    value={profile.dateOfBirth || ""}
-                                    onChange={(e) => setProfile((p) => ({ ...p, dateOfBirth: e.target.value }))}
-                                />
-
-                                <PrimaryButton
-                                    className="lw-profileScreen__saveButton"
-                                    onPress={handleSave}
+                                <SimpleButton
+                                    className="lw-profileScreen__avatarEdit"
+                                    onPress={handleChooseImage}
                                     disabled={isSaving}
                                 >
-                                    {isSaving ? t("common.saving") : t("common.save")}
-                                </PrimaryButton>
+                                    <Text12 className="lw-profileScreen__avatarEditText">{t("common.edit")}</Text12>
+                                </SimpleButton>
+
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className="lw-profileScreen__fileInput"
+                                    onChange={handleFileChange}
+                                />
                             </SimpleContainer>
-                        </SimpleCard>
+
+                            <TextBold24 className="lw-profileScreen__name">{profile.name || ""}</TextBold24>
+                        </SimpleContainer>
+
+                        <SimpleContainer className="lw-profileScreen__content">
+                            <SimpleCard className="lw-profileScreen__card">
+
+                                <SimpleContainer className="lw-profileScreen__form">
+                                    <SimpleInput
+                                        className="lw-profileScreen__input"
+                                        title={t("cases.customerName")}
+                                        value={profile.name}
+                                        onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))}
+                                    />
+
+                                    <SimpleInput
+                                        className="lw-profileScreen__input"
+                                        title={t("common.email")}
+                                        type="email"
+                                        value={profile.email}
+                                        onChange={(e) => setProfile((p) => ({ ...p, email: e.target.value }))}
+                                    />
+
+                                    <SimpleInput
+                                        className="lw-profileScreen__input"
+                                        title={t("cases.phoneNumber")}
+                                        type="tel"
+                                        value={profile.phoneNumber}
+                                        onChange={(e) => setProfile((p) => ({ ...p, phoneNumber: e.target.value }))}
+                                    />
+
+                                    <SimpleInput
+                                        className="lw-profileScreen__input"
+                                        title={t("customers.companyName")}
+                                        value={profile.companyName}
+                                        onChange={(e) => setProfile((p) => ({ ...p, companyName: e.target.value }))}
+                                    />
+
+                                    <SimpleInput
+                                        className="lw-profileScreen__input"
+                                        title={t("profile.dateOfBirth")}
+                                        placeholder="dd/mm/yyyy"
+                                        value={profile.dateOfBirth || ""}
+                                        onChange={(e) => setProfile((p) => ({ ...p, dateOfBirth: e.target.value }))}
+                                    />
+
+                                    <PrimaryButton
+                                        className="lw-profileScreen__saveButton"
+                                        onPress={handleSave}
+                                        disabled={isSaving}
+                                    >
+                                        {isSaving ? t("common.saving") : t("common.save")}
+                                    </PrimaryButton>
+                                </SimpleContainer>
+                            </SimpleCard>
+                        </SimpleContainer>
                     </SimpleContainer>
-                </SimpleContainer>
                 )}
             </SimpleScrollView>
         </SimpleScreen>

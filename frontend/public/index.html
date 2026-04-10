@@ -85,12 +85,23 @@
   <!-- Smart app redirect: mobile users → native app store -->
   <script>
     (function () {
-      // Skip redirect for admin routes (lawyers/admins use the web)
+      // Skip redirect for admin routes and all public web pages
       var path = window.location.pathname;
-      if (path.indexOf('/AdminStack') === 0) return;
-
-      // Skip redirect for public signing screen (clients must sign on web)
-      if (path.indexOf('/PublicSignScreen') === 0) return;
+      var publicPaths = [
+        '/AdminStack',
+        '/PublicSignScreen',
+        '/ViewSignedDocument',
+        '/Verify/Evidence',
+        '/Pricing',
+        '/SecurityScreen',
+        '/Privacy',
+        '/Continuity',
+        '/Compliance',
+        '/ChatBot'
+      ];
+      for (var i = 0; i < publicPaths.length; i++) {
+        if (path.indexOf(publicPaths[i]) === 0) return;
+      }
 
       // Skip if user explicitly chose to stay on web (?web=1)
       if (window.location.search.indexOf('web=1') !== -1) return;

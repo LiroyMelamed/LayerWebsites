@@ -24,7 +24,7 @@ import { setLanguage } from "../../i18n/i18n";
 
 import "./PlansPricingScreen.scss";
 
-export const PlansPricingScreenName = "/plans-pricing";
+export const PlansPricingScreenName = "/PlansPricing";
 
 function safeDiv(numerator, denominator) {
     const n = Number(numerator);

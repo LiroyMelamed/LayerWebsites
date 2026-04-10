@@ -2,7 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import CompliancePageLayout from "./CompliancePageLayout";
 
-export const ContinuityPageName = "/continuity";
+export const ContinuityPageName = "/Continuity";
 
 function Section({ headingKey, textKey }) {
     const { t } = useTranslation();

@@ -11,6 +11,7 @@ import casesApi from "../../../api/casesApi";
 import ClosedCasesCard from "../clientMainScreen/components/ClosedCasesCard";
 import OpenCasesCard from "../clientMainScreen/components/OpenCasesCard";
 import { images } from "../../../assets/images/images";
+import { useDemoMode, DEMO_CLIENT_CASES } from "../../../hooks/useDemoMode";
 
 import "./ClientCasesScreen.scss";
 
@@ -18,7 +19,8 @@ export const ClientCasesScreenName = "/ClientCasesScreen";
 
 export default function ClientCasesScreen() {
     const { isSmallScreen } = useScreenSize();
-    const { result: allCases, isPerforming: isPerformingAllCases } = useAutoHttpRequest(casesApi.getAllCases);
+    const isDemo = useDemoMode();
+    const { result: allCases, isPerforming: isPerformingAllCases } = useAutoHttpRequest(isDemo ? async () => ({ status: 200, data: DEMO_CLIENT_CASES }) : casesApi.getAllCases);
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>

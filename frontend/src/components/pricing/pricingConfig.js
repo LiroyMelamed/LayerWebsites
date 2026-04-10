@@ -10,11 +10,11 @@ export const PRICING_CONFIG = {
     contact: {
         get phoneNational() {
             const { getFirmPhoneNational } = require("../../services/firmSettings");
-            return getFirmPhoneNational() || "036565004";
+            return getFirmPhoneNational() || "0507299064";
         },
         get phoneE164Digits() {
             const { getFirmPhone } = require("../../services/firmSettings");
-            return getFirmPhone() || "97236565004";
+            return getFirmPhone() || "972507299064";
         },
     },
 

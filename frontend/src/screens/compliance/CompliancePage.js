@@ -6,7 +6,7 @@ import { SecurityScreenName } from "./SecurityScreen";
 import { PrivacyPageName } from "./PrivacyPage";
 import { ContinuityPageName } from "./ContinuityPage";
 
-export const CompliancePageName = "/compliance";
+export const CompliancePageName = "/Compliance";
 
 function LinkCard({ titleKey, descKey, to }) {
     const { t } = useTranslation();

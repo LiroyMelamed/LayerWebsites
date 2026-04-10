@@ -17,6 +17,7 @@ import { getClientNavBarData } from "../../../components/navBars/data/ClientNavB
 import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
 import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 import { useTranslation } from 'react-i18next';
+import { useDemoMode, DEMO_NOTIFICATIONS } from "../../../hooks/useDemoMode";
 
 import "./NotificationsScreen.scss";
 
@@ -49,8 +50,9 @@ function extractFirstUrl(text) {
 export default function NotificationsScreen() {
     const { t } = useTranslation();
     const { isSmallScreen } = useScreenSize();
+    const isDemo = useDemoMode();
 
-    const [notifications, setNotifications] = useState([]);
+    const [notifications, setNotifications] = useState(isDemo ? DEMO_NOTIFICATIONS : []);
     const [error, setError] = useState(null);
 
     const onSuccessFetchNotifications = (data) => {
@@ -68,7 +70,7 @@ export default function NotificationsScreen() {
     const {
         isPerforming: isFetching,
         performRequest: refetchNotifications,
-    } = useAutoHttpRequest(notificationApi.getNotifications, {
+    } = useAutoHttpRequest(isDemo ? async () => ({ status: 200, data: DEMO_NOTIFICATIONS }) : notificationApi.getNotifications, {
         onSuccess: onSuccessFetchNotifications,
         onFailure: onFailureFetchNotifications,
     });

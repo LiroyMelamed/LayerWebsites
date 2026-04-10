@@ -18,6 +18,7 @@ import { TaggedCasesScreenName } from '../taggedCasesScreen/TaggedCasesScreen';
 import { AllCasesScreenName } from '../allCasesScreen/AllCasesScreen';
 import { AllClientsScreenName } from '../allClientsScreen/AllClientsScreen';
 import { useTranslation } from "react-i18next";
+import { useDemoMode, DEMO_ADMIN_DATA } from '../../hooks/useDemoMode';
 
 import "./MainScreen.scss";
 
@@ -27,7 +28,10 @@ export default function MainScreen() {
     const { t } = useTranslation();
     const navigate = useNavigate()
     const { isSmallScreen } = useScreenSize();
-    const { result: mainScreenData, isPerforming: isPerformingMainScreenData, performRequest } = useAutoHttpRequest(casesApi.getMainScreenData);
+    const isDemo = useDemoMode();
+    const { result: liveData, isPerforming: isPerformingLive, performRequest } = useAutoHttpRequest(isDemo ? async () => ({ status: 200, data: null }) : casesApi.getMainScreenData);
+    const mainScreenData = isDemo ? DEMO_ADMIN_DATA : liveData;
+    const isPerformingMainScreenData = isDemo ? false : isPerformingLive;
     const clientsCardRef = useRef(null);
 
     return (

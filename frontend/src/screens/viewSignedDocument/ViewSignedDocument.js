@@ -52,6 +52,18 @@ export default function ViewSignedDocument() {
         loadDocument();
     }, [loadDocument]);
 
+    // Allow pinch-to-zoom only on this page
+    useEffect(() => {
+        const meta = document.querySelector('meta[name="viewport"]');
+        const original = meta?.getAttribute('content') || '';
+        if (meta) {
+            meta.setAttribute('content', 'width=device-width, initial-scale=1.0');
+        }
+        return () => {
+            if (meta) meta.setAttribute('content', original);
+        };
+    }, []);
+
     const handleDownload = () => {
         if (docInfo?.downloadUrl) {
             window.open(docInfo.downloadUrl, "_blank");

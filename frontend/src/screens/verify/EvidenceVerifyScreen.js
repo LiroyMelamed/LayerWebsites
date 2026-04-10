@@ -17,7 +17,7 @@ import { AppRoles } from "../otpScreen/OtpScreen.js/LoginOtpScreen";
 import { useTranslation } from "react-i18next";
 import "./EvidenceVerifyScreen.scss";
 
-export const EvidenceVerifyScreenName = "/verify/evidence/:signingFileId";
+export const EvidenceVerifyScreenName = "/Verify/Evidence/:signingFileId";
 
 export default function EvidenceVerifyScreen() {
     const navigate = useNavigate();

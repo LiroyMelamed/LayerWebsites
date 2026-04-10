@@ -16,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import { MainScreenName } from "../mainScreen/MainScreen";
 import AdminPopup from "./components/AdminPopup";
 import AdminsCard from "./components/AdminsCard";
+import { useDemoMode, DEMO_ADMINS } from "../../hooks/useDemoMode";
 
 import "./AllMangerScreen.scss";
 
@@ -23,7 +24,8 @@ export const AllMangerScreenName = "/AllManger"
 
 export default function AllMangerScreen() {
     const { t } = useTranslation();
-    const { result: adminsData, isPerforming: isPerformingAdminsData, performRequest: performGetAdmins } = useAutoHttpRequest(adminApi.getAllAdmins);
+    const isDemo = useDemoMode();
+    const { result: adminsData, isPerforming: isPerformingAdminsData, performRequest: performGetAdmins } = useAutoHttpRequest(isDemo ? async () => ({ status: 200, data: DEMO_ADMINS }) : adminApi.getAllAdmins);
     const { result: adminByName, isPerforming: isPerformingAdminById, performRequest: SearchAdminByName } = useHttpRequest(adminApi.getAdminByName, null, () => { });
 
     const { openPopup, closePopup } = usePopup();

@@ -2,7 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import CompliancePageLayout from "./CompliancePageLayout";
 
-export const PrivacyPageName = "/privacy";
+export const PrivacyPageName = "/Privacy";
 
 function Section({ headingKey, textKey }) {
     const { t } = useTranslation();

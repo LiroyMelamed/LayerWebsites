@@ -19,6 +19,7 @@ import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButt
 import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
 import { usePopup } from "../../providers/PopUpProvider";
 import { useTranslation } from "react-i18next";
+import { useDemoMode, DEMO_ALL_CUSTOMERS } from "../../hooks/useDemoMode";
 
 import "./AllClientsScreen.scss";
 
@@ -27,13 +28,14 @@ export const AllClientsScreenName = "/AllClientsScreen";
 export default function AllClientsScreen() {
     const { t } = useTranslation();
     const { isSmallScreen } = useScreenSize();
+    const isDemo = useDemoMode();
 
     const [selectedName, setSelectedName] = useState(null);
     const [selectedCompany, setSelectedCompany] = useState(null);
     const [selectedPhone, setSelectedPhone] = useState(null);
     const [filteredClients, setFilteredClients] = useState(null);
 
-    const { result: rawCustomers, isPerforming, performRequest: reperformAfterSave } = useAutoHttpRequest(customersApi.getAllCustomers);
+    const { result: rawCustomers, isPerforming, performRequest: reperformAfterSave } = useAutoHttpRequest(isDemo ? async () => ({ status: 200, data: DEMO_ALL_CUSTOMERS }) : customersApi.getAllCustomers);
     const { openPopup, closePopup } = usePopup();
 
     const allCustomers = (rawCustomers || []).map(c => ({

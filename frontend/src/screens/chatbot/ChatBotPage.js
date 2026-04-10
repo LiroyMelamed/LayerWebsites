@@ -15,7 +15,7 @@ import ChatInput from '../../components/chatbot/ChatInput';
 import chatbotApi from '../../api/chatbotApi';
 import './ChatBotPage.scss';
 
-export const ChatBotPageName = '/chatbot';
+export const ChatBotPageName = '/ChatBot';
 
 export default function ChatBotPage() {
     const { t } = useTranslation();
