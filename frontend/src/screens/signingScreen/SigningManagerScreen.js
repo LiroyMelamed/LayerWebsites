@@ -36,7 +36,7 @@ import "./SigningManagerScreen.scss";
 import { MainScreenName } from "../mainScreen/MainScreen";
 import SimpleCard from "../../components/simpleComponents/SimpleCard";
 import { formatDateForInput, parseDateInput } from "../../functions/date/formatDateForInput";
-import { useDemoMode, DEMO_LAWYER_SIGNING_FILES } from "../../hooks/useDemoMode";
+
 
 export const SigningManagerScreenName = "/SigningManagerScreen";
 
@@ -47,7 +47,6 @@ export default function SigningManagerScreen() {
     const { t } = useTranslation();
 
     const { isFromApp } = useFromApp();
-    const isDemo = useDemoMode();
     const [activeTab, setActiveTab] = useState("pending");
     const [searchQuery, setSearchQuery] = useState("");
     const [dateFrom, setDateFrom] = useState("");
@@ -56,7 +55,7 @@ export default function SigningManagerScreen() {
     const [isDownloadingSigned, setIsDownloadingSigned] = useState(false);
 
     const { result: lawyerFilesData, isPerforming, performRequest: reloadFiles } = useAutoHttpRequest(
-        isDemo ? async () => ({ status: 200, data: DEMO_LAWYER_SIGNING_FILES }) : signingFilesApi.getLawyerSigningFiles
+        signingFilesApi.getLawyerSigningFiles
     );
 
     const files = useMemo(() => lawyerFilesData?.files || [], [lawyerFilesData]);

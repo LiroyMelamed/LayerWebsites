@@ -25,7 +25,7 @@ import { useFromApp } from "../../providers/FromAppProvider";
 import "./SigningScreen.scss";
 import SimpleCard from "../../components/simpleComponents/SimpleCard";
 import Separator from "../../components/styledComponents/separators/Separator";
-import { useDemoMode, DEMO_CLIENT_SIGNING_FILES } from "../../hooks/useDemoMode";
+
 
 export const SigningScreenName = "/SigningScreen";
 
@@ -35,13 +35,12 @@ export default function SigningScreen() {
     const location = useLocation();
     const navigate = useNavigate();
     const { isFromApp } = useFromApp();
-    const isDemo = useDemoMode();
     const [activeTab, setActiveTab] = useState("pending");
     const [selectedFileId, setSelectedFileId] = useState(null);
     const [isPublicSigningSession, setIsPublicSigningSession] = useState(false);
 
     const { result: clientFilesData, isPerforming, performRequest } = useAutoHttpRequest(
-        isDemo ? async () => ({ status: 200, data: DEMO_CLIENT_SIGNING_FILES }) : signingFilesApi.getClientSigningFiles
+        signingFilesApi.getClientSigningFiles
     );
 
     const handleSigningComplete = useCallback(() => {

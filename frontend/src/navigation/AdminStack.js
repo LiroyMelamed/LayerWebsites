@@ -16,7 +16,6 @@ import RemindersScreen, { RemindersScreenName } from "../screens/remindersScreen
 import PlatformSettingsScreen, { PlatformSettingsScreenName } from "../screens/platformSettingsScreen/PlatformSettingsScreen";
 import { LoginStackName } from "./LoginStack";
 import { LoginScreenName } from "../screens/loginScreen/LoginScreen";
-import { useDemoMode } from "../hooks/useDemoMode";
 
 export const AdminStackName = "/AdminStack";
 
@@ -26,9 +25,8 @@ function toRelativePath(pathname) {
 }
 
 function AdminStack() {
-    const isDemo = useDemoMode();
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    if (!token && !isDemo) return <Navigate to={LoginStackName + LoginScreenName} replace />;
+    if (!token) return <Navigate to={LoginStackName + LoginScreenName} replace />;
 
     return (
         <TopAndRightNavBar LogoNavigate={AdminStackName + MainScreenName}>

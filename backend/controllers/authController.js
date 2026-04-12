@@ -11,8 +11,6 @@ if (!process.env.JWT_SECRET) {
     throw new Error("FATAL: JWT_SECRET env variable is not set. Server cannot start.");
 }
 const SECRET_KEY = process.env.JWT_SECRET;
-const FORCE_SEND_SMS_ALL = process.env.FORCE_SEND_SMS_ALL === "true";
-const DEMO_OTP_PHONES = (process.env.DEMO_OTP_PHONES || "").split(",").map(s => s.trim()).filter(Boolean);
 
 const ACCESS_TOKEN_TTL = String(process.env.ACCESS_TOKEN_TTL || "15m");
 const ACCESS_TOKEN_TTL_ADMIN = String(process.env.ACCESS_TOKEN_TTL_ADMIN || "8h");
@@ -131,11 +129,7 @@ const requestOtp = async (req, res) => {
     try {
         let formatedPhoneNumber = formatPhoneNumber(phoneNumber);
 
-        const isDemoPhone = DEMO_OTP_PHONES.includes(phoneNumber);
-
-        const otp = isDemoPhone
-            ? "123456"
-            : crypto.randomInt(100000, 999999).toString();
+        const otp = crypto.randomInt(100000, 999999).toString();
 
         const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
@@ -159,12 +153,10 @@ const requestOtp = async (req, res) => {
             [phoneNumber, hashOtp(otp), expiry, userId]
         );
 
-        if (FORCE_SEND_SMS_ALL || !(isDemoPhone)) {
-            try {
-                sendMessage(buildOtpSmsBodyForRequest(req, otp), formatedPhoneNumber);
-            } catch (e) {
-                console.warn("SMS send failed:", e?.message);
-            }
+        try {
+            sendMessage(buildOtpSmsBodyForRequest(req, otp), formatedPhoneNumber);
+        } catch (e) {
+            console.warn("SMS send failed:", e?.message);
         }
 
         return res.status(200).json({ message: "קוד נשלח בהצלחה", otpSent: true });
@@ -460,11 +452,7 @@ const register = async (req, res) => {
             [name, null, phoneNumber, null, "User", null, new Date()]
         );
 
-        const isDemoPhone = DEMO_OTP_PHONES.includes(phoneNumber);
-
-        const otp = isDemoPhone
-            ? "123456"
-            : crypto.randomInt(100000, 999999).toString();
+        const otp = crypto.randomInt(100000, 999999).toString();
         const expiry = new Date(Date.now() + 5 * 60 * 1000);
 
         const ures = await pool.query(
@@ -483,12 +471,10 @@ const register = async (req, res) => {
             [phoneNumber, hashOtp(otp), expiry, userId]
         );
 
-        if (FORCE_SEND_SMS_ALL || !(isDemoPhone)) {
-            try {
-                sendMessage(buildOtpSmsBodyForRequest(req, otp), formatedPhoneNumber);
-            } catch (e) {
-                console.warn("כשל בשליחת SMS לאחר הרשמה:", e?.message);
-            }
+        try {
+            sendMessage(buildOtpSmsBodyForRequest(req, otp), formatedPhoneNumber);
+        } catch (e) {
+            console.warn("כשל בשליחת SMS לאחר הרשמה:", e?.message);
         }
 
         return res.status(201).json({ otpSent: true });

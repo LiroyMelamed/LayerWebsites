@@ -56,9 +56,6 @@ async function tryRefreshToken() {
 }
 
 function clearAuthAndRedirect() {
-    // In demo mode, never redirect to login
-    if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('lw_demo') === '1') return;
-
     localStorage.removeItem("token");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("role");

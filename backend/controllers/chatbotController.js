@@ -15,9 +15,6 @@ const OTP_PEPPER = String(process.env.SIGNING_OTP_PEPPER || '');
 const SESSION_TTL_MINUTES = Number(process.env.CHATBOT_SESSION_TTL_MINUTES) || 30;
 const MAX_MESSAGE_LENGTH = 2000;
 
-const DEMO_OTP_PHONES = (process.env.DEMO_OTP_PHONES || '').split(',').map(s => s.trim()).filter(Boolean);
-const FORCE_SEND_SMS_ALL = process.env.FORCE_SEND_SMS_ALL === 'true';
-
 function hashOtp(otp) {
     return crypto.createHmac('sha256', OTP_PEPPER).update(String(otp)).digest('hex');
 }
@@ -298,7 +295,6 @@ const requestOtp = async (req, res) => {
 
     try {
         const formattedPhone = formatPhoneNumber(phoneNumber);
-        const isDemoPhone = DEMO_OTP_PHONES.includes(phoneNumber);
 
         // Check if user exists
         const userResult = await pool.query(
@@ -317,7 +313,7 @@ const requestOtp = async (req, res) => {
         }
 
         // Generate and store OTP
-        const otp = isDemoPhone ? '123456' : crypto.randomInt(100000, 999999).toString();
+        const otp = crypto.randomInt(100000, 999999).toString();
         const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
         // Dev mode: log OTP to console instead of sending SMS
@@ -336,13 +332,11 @@ const requestOtp = async (req, res) => {
         );
 
         // Send SMS
-        if (FORCE_SEND_SMS_ALL || !isDemoPhone) {
-            try {
-                const smsBody = `קוד האימות שלך לצ׳אט הוא ${otp}`;
-                sendMessage(smsBody, formattedPhone);
-            } catch (smsErr) {
-                console.warn('[chatbot] SMS send failed:', smsErr?.message);
-            }
+        try {
+            const smsBody = `קוד האימות שלך לצ׳אט הוא ${otp}`;
+            sendMessage(smsBody, formattedPhone);
+        } catch (smsErr) {
+            console.warn('[chatbot] SMS send failed:', smsErr?.message);
         }
 
         logSecurityEvent({

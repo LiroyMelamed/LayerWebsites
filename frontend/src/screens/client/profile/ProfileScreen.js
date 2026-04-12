@@ -29,7 +29,7 @@ import { Text12, Text14, TextBold16, TextBold24 } from "../../../components/spec
 
 import { formatDateForInput, parseDateInput } from "../../../functions/date/formatDateForInput";
 import { uploadFileToR2, getFileReadUrl } from "../../../utils/fileUploadUtils";
-import { useDemoMode, DEMO_PROFILE } from "../../../hooks/useDemoMode";
+
 
 import "./ProfileScreen.scss";
 
@@ -41,7 +41,6 @@ export default function ProfileScreen() {
     const { openPopup, closePopup } = usePopup();
 
     const fileInputRef = useRef(null);
-    const isDemo = useDemoMode();
 
 
     const [profile, setProfile] = useState({
@@ -80,7 +79,7 @@ export default function ProfileScreen() {
         null
     );
 
-    const { isPerforming: isFetching } = useAutoHttpRequest(isDemo ? async () => ({ status: 200, data: DEMO_PROFILE }) : customersApi.getCurrentCustomer, {
+    const { isPerforming: isFetching } = useAutoHttpRequest(customersApi.getCurrentCustomer, {
         onSuccess: async (data) => {
             initialFetchDoneRef.current = true;
             setProfile((p) => ({

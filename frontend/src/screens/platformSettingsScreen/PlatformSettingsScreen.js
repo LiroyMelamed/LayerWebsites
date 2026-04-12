@@ -1612,6 +1612,9 @@ export default function PlatformSettingsScreen() {
                         {/* Save bar (only for settings tabs, not channels/admins/emailTemplates) */}
                         {activeTab !== "admins" && activeTab !== "emailTemplates" && (
                             <SimpleContainer className="lw-platformSettings__saveBar">
+                                {saveMessage && (
+                                    <Text14 className="lw-platformSettings__saveMessage">{saveMessage}</Text14>
+                                )}
                                 <PrimaryButton
                                     className="lw-platformSettings__saveBtn"
                                     onPress={handleSave}

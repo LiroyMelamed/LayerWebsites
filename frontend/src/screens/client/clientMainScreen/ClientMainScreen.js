@@ -15,7 +15,6 @@ import { colors } from "../../../constant/colors";
 import { ClientCasesScreenName } from "../clientCasesScreen/ClientCasesScreen";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useDemoMode, DEMO_CLIENT_DATA } from "../../../hooks/useDemoMode";
 
 import "./ClientMainScreen.scss";
 
@@ -25,10 +24,7 @@ export default function ClientMainScreen() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { isSmallScreen } = useScreenSize();
-    const isDemo = useDemoMode();
-    const { result: liveData, isPerforming: isPerformingLive } = useAutoHttpRequest(isDemo ? async () => ({ status: 200, data: null }) : casesApi.getClientDashboardData);
-    const dashboardData = isDemo ? DEMO_CLIENT_DATA : liveData;
-    const isPerformingDashboard = isDemo ? false : isPerformingLive;
+    const { result: dashboardData, isPerforming: isPerformingDashboard } = useAutoHttpRequest(casesApi.getClientDashboardData);
 
     const totalCases = dashboardData?.totalCases ?? 0;
     const openCases = dashboardData?.openCases ?? 0;

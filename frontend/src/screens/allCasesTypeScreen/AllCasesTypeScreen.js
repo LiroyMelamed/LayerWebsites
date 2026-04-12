@@ -17,7 +17,7 @@ import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import { MainScreenName } from "../mainScreen/MainScreen";
 import AllCasesTypeCard from "./components/AllCasesTypeCard";
 import { useTranslation } from "react-i18next";
-import { useDemoMode, DEMO_ALL_CASE_TYPES } from "../../hooks/useDemoMode";
+
 
 import "./AllCasesTypeScreen.scss";
 
@@ -27,15 +27,13 @@ export default function AllCasesTypeScreen() {
     const { t } = useTranslation();
     const { openPopup, closePopup } = usePopup();
     const { isSmallScreen } = useScreenSize();
-    const isDemo = useDemoMode();
-
     const [selectedStageCount, setSelectedStageCount] = useState(null);
 
     const {
         result: allCasesType,
         isPerforming: isPerformingAllCasesType,
         performRequest: reperformAfterSave
-    } = useAutoHttpRequest(isDemo ? async () => ({ status: 200, data: DEMO_ALL_CASE_TYPES }) : casesTypeApi.getAllCasesType);
+    } = useAutoHttpRequest(casesTypeApi.getAllCasesType);
 
     const {
         result: casesTypeByName,
