@@ -62,6 +62,15 @@
         '  border: none;',
         '}',
         '',
+        '#mlw-chat-widget-backdrop {',
+        '  position: fixed;',
+        '  inset: 0;',
+        '  background: rgba(0,0,0,0.5);',
+        '  z-index: 2147483640;',
+        '  display: none;',
+        '}',
+        '#mlw-chat-widget-backdrop.mlw-open { display: block; }',
+        '',
         '@media (max-width: 480px) {',
         '  #mlw-chat-widget-frame-wrap {',
         '    bottom: 0;',
@@ -73,9 +82,9 @@
         '    max-height: 100dvh;',
         '    max-width: 100vw;',
         '    border-radius: 0;',
-        '    z-index: 9999999;',
+        '    z-index: 2147483647;',
         '  }',
-        '  #mlw-chat-widget-btn { bottom: 80px; left: 16px; width: 56px; height: 56px; }',
+        '  #mlw-chat-widget-btn { bottom: 80px; left: 16px; width: 56px; height: 56px; z-index: 2147483646; }',
         '}',
         '@media (max-width: 768px) and (min-width: 481px) {',
         '  #mlw-chat-widget-frame-wrap {',
@@ -88,8 +97,9 @@
         '    max-height: 85dvh;',
         '    max-width: 100vw;',
         '    border-radius: 16px 16px 0 0;',
+        '    z-index: 2147483647;',
         '  }',
-        '  #mlw-chat-widget-btn { bottom: 80px; left: 16px; }',
+        '  #mlw-chat-widget-btn { bottom: 80px; left: 16px; z-index: 2147483646; }',
         '}',
     ].join('\n');
     document.head.appendChild(style);
@@ -117,6 +127,11 @@
     wrap.id = 'mlw-chat-widget-frame-wrap';
     document.body.appendChild(wrap);
 
+    // ── Backdrop (covers WordPress floating elements on mobile) ──
+    var backdrop = document.createElement('div');
+    backdrop.id = 'mlw-chat-widget-backdrop';
+    document.body.appendChild(backdrop);
+
     var iframe = null;
     var isOpen = false;
 
@@ -125,6 +140,7 @@
 
         if (isOpen) {
             wrap.classList.add('mlw-open');
+            backdrop.classList.add('mlw-open');
             btn.innerHTML = closeSvg;
 
             if (!iframe) {
@@ -137,7 +153,15 @@
             }
         } else {
             wrap.classList.remove('mlw-open');
+            backdrop.classList.remove('mlw-open');
             btn.innerHTML = chatSvg;
         }
+    });
+
+    backdrop.addEventListener('click', function () {
+        isOpen = false;
+        wrap.classList.remove('mlw-open');
+        backdrop.classList.remove('mlw-open');
+        btn.innerHTML = chatSvg;
     });
 })();
