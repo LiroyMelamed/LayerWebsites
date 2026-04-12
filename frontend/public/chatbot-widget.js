@@ -8,7 +8,7 @@
 (function () {
     if (document.getElementById('mlw-chat-widget')) return;
 
-    var CHAT_URL = 'https://client.melamedlaw.co.il/chatbot';
+    var CHAT_URL = 'https://client.melamedlaw.co.il/ChatBot';
 
     // ── Styles ──
     var style = document.createElement('style');
@@ -67,12 +67,29 @@
         '    bottom: 0;',
         '    left: 0;',
         '    width: 100vw;',
+        '    height: 100vh;',
         '    height: 100dvh;',
+        '    max-height: 100vh;',
         '    max-height: 100dvh;',
         '    max-width: 100vw;',
         '    border-radius: 0;',
+        '    z-index: 9999999;',
         '  }',
-        '  #mlw-chat-widget-btn { bottom: 72px; left: 16px; }',
+        '  #mlw-chat-widget-btn { bottom: 80px; left: 16px; width: 56px; height: 56px; }',
+        '}',
+        '@media (max-width: 768px) and (min-width: 481px) {',
+        '  #mlw-chat-widget-frame-wrap {',
+        '    bottom: 0;',
+        '    left: 0;',
+        '    width: 100vw;',
+        '    height: 85vh;',
+        '    height: 85dvh;',
+        '    max-height: 85vh;',
+        '    max-height: 85dvh;',
+        '    max-width: 100vw;',
+        '    border-radius: 16px 16px 0 0;',
+        '  }',
+        '  #mlw-chat-widget-btn { bottom: 80px; left: 16px; }',
         '}',
     ].join('\n');
     document.head.appendChild(style);
