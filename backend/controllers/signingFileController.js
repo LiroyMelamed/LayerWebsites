@@ -1949,8 +1949,7 @@ exports.uploadFileForSigning = async (req, res, next) => {
         } = req.body;
 
         const lawyerId = req.user?.UserId;
-        // firmid column is INTEGER FK → firms(firmid). LAW_FIRM_KEY is a slug, not an int.
-        // For single-firm setups the column is nullable, so skip it.
+        // firmid column is INTEGER FK → firms(firmid). For single-firm setups the column is nullable, so skip it.
         const firmId = null;
         if (!lawyerId) {
             return fail(next, 'UNAUTHORIZED', 401);
