@@ -48,17 +48,15 @@ const ClientsCard = forwardRef(({ rePerformRequest, customerList, style: _style,
 
     if (customerList?.length === 0 || !customerList) {
         return (
-            <SimpleCard className="lw-clientsCard__empty--wrap">
-                <DefaultState
-                    content={t("customers.emptyList")}
-                    imageStyle={{ height: 156 }}
-                    imageSrc={images.Defaults.SearchingClient}
-                    className="lw-clientsCard__empty"
-                    imageClassName="lw-clientsCard__emptyImage"
-                    actionButton={t("customers.addCustomer")}
-                    actionButtonPressFunction={() => openPopup(<ClientPopup closePopUpFunction={closePopup} rePerformRequest={rePerformRequest} />)}
-                />
-            </SimpleCard>
+            <DefaultState
+                content={t("customers.emptyList")}
+                imageStyle={{ height: 156 }}
+                imageSrc={images.Defaults.SearchingClient}
+                className="lw-clientsCard__empty"
+                imageClassName="lw-clientsCard__emptyImage"
+                actionButton={t("customers.addCustomer")}
+                actionButtonPressFunction={() => openPopup(<ClientPopup closePopUpFunction={closePopup} rePerformRequest={rePerformRequest} />)}
+            />
         )
     }
 
