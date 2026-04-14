@@ -35,7 +35,7 @@ async function main() {
         return;
     }
 
-    const baseUrl = 'https://client.melamedlaw.co.il';
+    const baseUrl = 'https://morlevy.mela-media.co.il';
 
     const tests = [
         {

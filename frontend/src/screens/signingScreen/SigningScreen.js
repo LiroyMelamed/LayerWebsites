@@ -26,7 +26,6 @@ import "./SigningScreen.scss";
 import SimpleCard from "../../components/simpleComponents/SimpleCard";
 import Separator from "../../components/styledComponents/separators/Separator";
 
-
 export const SigningScreenName = "/SigningScreen";
 
 export default function SigningScreen() {

@@ -2,7 +2,7 @@ const { sendEmailCampaign } = require('../utils/smooveEmailCampaignService');
 
 function buildDefaultContactFieldsForCampaignKey(campaignKey) {
     const key = String(campaignKey || '').trim().toUpperCase();
-    const baseActionUrl = 'https://client.melamedlaw.co.il';
+    const baseActionUrl = 'https://morlevy.mela-media.co.il';
 
     switch (key) {
         case 'SIGN_INVITE':

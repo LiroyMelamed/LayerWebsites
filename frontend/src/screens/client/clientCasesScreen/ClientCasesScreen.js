@@ -12,7 +12,6 @@ import ClosedCasesCard from "../clientMainScreen/components/ClosedCasesCard";
 import OpenCasesCard from "../clientMainScreen/components/OpenCasesCard";
 import { images } from "../../../assets/images/images";
 
-
 import "./ClientCasesScreen.scss";
 
 export const ClientCasesScreenName = "/ClientCasesScreen";

@@ -90,7 +90,7 @@ const addCustomer = async (req, res) => {
             const domain = await getWebsiteDomain();
             const websiteUrl = `https://${domain}`;
             const firmName = await getSetting('firm', 'LAW_FIRM_NAME', null)
-                || process.env.LAW_FIRM_NAME || 'MelamedLaw';
+                || process.env.LAW_FIRM_NAME || 'MorLevy';
             const recipientName = name || '';
 
             const smsTemplate = await getSetting('templates', 'NEW_CLIENT_SMS',

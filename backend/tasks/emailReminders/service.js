@@ -87,7 +87,7 @@ async function processEmailReminders() {
 
             // Merge common fields
             const firmName = await getSetting('firm', 'FIRM_NAME', null)
-                || process.env.FIRM_NAME || 'MelamedLaw';
+                || process.env.FIRM_NAME || 'MorLevy';
             const fields = {
                 client_name: reminder.client_name,
                 date: new Date(reminder.scheduled_for).toLocaleDateString('he-IL'),

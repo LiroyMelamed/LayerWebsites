@@ -1,14 +1,14 @@
 /**
- * MelamedLaw Chatbot Floating Widget
+ * MorLevy Chatbot Floating Widget
  * Drop this script into any website to add a floating chat button
  * that opens the chatbot in a popup iframe.
  *
- * Usage:  <script src="https://client.melamedlaw.co.il/chatbot-widget.js"></script>
+ * Usage:  <script src="https://morlevy.mela-media.co.il/chatbot-widget.js"></script>
  */
 (function () {
     if (document.getElementById('mlw-chat-widget')) return;
 
-    var CHAT_URL = 'https://client.melamedlaw.co.il/ChatBot';
+    var CHAT_URL = 'https://morlevy.mela-media.co.il/ChatBot';
 
     // ── Styles ──
     var style = document.createElement('style');

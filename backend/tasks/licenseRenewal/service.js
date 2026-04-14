@@ -233,15 +233,7 @@ async function sendClientReminder({ reminderKey, row, todayKey }) {
     }
 
     const timeLeft = timeLeftLabel(reminderKey);
-    const actionUrl = `https://${String(process.env.WEBSITE_DOMAIN || '').trim() || 'client.melamedlaw.co.il'}`;
-
-    const fields = {
-        recipient_name: clientName,
-        client_name: clientName,
-        case_title: caseTitle,
-        expiry_date: formatDateHebrew(expiryKey),
-        time_left: timeLeft,
-        action_url: actionUrl,
+    const actionUrl = `https://${String(process.env.WEBSITE_DOMAIN || '').trim() || 'morlevy.mela-media.co.il'}`;
     };
 
     const subject = renderTemplate(DEFAULTS.client.emailSubject, fields);
@@ -355,7 +347,7 @@ async function sendManagerReminder14Days({ row, todayKey }) {
         return { ok: false, error: 'due_date_mismatch' };
     }
 
-    const actionUrl = `https://${String(process.env.WEBSITE_DOMAIN || '').trim() || 'client.melamedlaw.co.il'}`;
+    const actionUrl = `https://${String(process.env.WEBSITE_DOMAIN || '').trim() || 'morlevy.mela-media.co.il'}`;
 
     const fields = {
         recipient_name: managerName,
@@ -460,7 +452,7 @@ async function sendCeoReminder14Days({ row, todayKey }) {
         return { ok: false, error: 'due_date_mismatch' };
     }
 
-    const actionUrl = `https://${String(process.env.WEBSITE_DOMAIN || '').trim() || 'client.melamedlaw.co.il'}`;
+    const actionUrl = `https://${String(process.env.WEBSITE_DOMAIN || '').trim() || 'morlevy.mela-media.co.il'}`;
 
     const buildHtml = (recipientName) => {
         const fields = {

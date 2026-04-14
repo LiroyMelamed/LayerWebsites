@@ -30,7 +30,7 @@ const DOC_SIMILARITY_THRESHOLD = 0.25; // minimum cosine similarity to include a
 
 // ── System prompt ─────────────────────────────────────────────────────
 const SYSTEM_PROMPT = `
-אתה העוזר AI של משרד עורכי דין מלמד (MelamedLaw).
+אתה העוזר AI של משרד עורכי דין מור לוי (MorLevy).
 
 כאשר מוצג לך הקשר מתוך מסמכים פנימיים — זהו מקור המידע העיקרי שלך. השתמש בו כדי לענות על שאלות הלקוח.
 

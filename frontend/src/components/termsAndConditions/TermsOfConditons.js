@@ -10,9 +10,9 @@ export default function TermsOfConditons() {
 
     return (
         <SimpleContainer className="lw-terms">
-            <TextBold32>{t('terms.title', { appName: 'MelamedLaw' })}</TextBold32>
+            <TextBold32>{t('terms.title', { appName: 'MorLevy' })}</TextBold32>
             <Text12 className="lw-terms__mt8">{t('terms.lastUpdated', { date: DateDDMMYY(new Date()) })}</Text12>
-            <Text16 className="lw-terms__mt12">{t('terms.intro', { appName: 'MelamedLaw' })}</Text16>
+            <Text16 className="lw-terms__mt12">{t('terms.intro', { appName: 'MorLevy' })}</Text16>
 
             <TextBold24 className="lw-terms__mt16">{t('terms.section1.title')}</TextBold24>
             <Text16 className="lw-terms__mt8">{t('terms.section1.body')}</Text16>
@@ -36,7 +36,7 @@ export default function TermsOfConditons() {
             <Text16 className="lw-terms__mt8" shouldApplyClamping>{t('terms.section7.body')}</Text16>
 
             <TextBold24 className="lw-terms__mt16">{t('terms.section8.title')}</TextBold24>
-            <Text16 className="lw-terms__mt8" shouldApplyClamping>{t('terms.section8.body', { email: 'Liav@MelamedLaw.co.il' })}</Text16>
+            <Text16 className="lw-terms__mt8" shouldApplyClamping>{t('terms.section8.body', { email: 'noreply@morlevy.mela-media.co.il' })}</Text16>
 
             <TextBold24 className="lw-terms__mt16">{t('terms.section9.title')}</TextBold24>
             <Text16 className="lw-terms__mt8" shouldApplyClamping>{t('terms.section9.body')}</Text16>
@@ -48,7 +48,7 @@ export default function TermsOfConditons() {
             <Text16 className="lw-terms__mt8" shouldApplyClamping>{t('terms.section11.body')}</Text16>
 
             <TextBold24 className="lw-terms__mt16">{t('terms.section12.title')}</TextBold24>
-            <Text16 className="lw-terms__mt8" shouldApplyClamping>{t('terms.section12.body', { email: 'Liav@MelamedLaw.co.il' })}</Text16>
+            <Text16 className="lw-terms__mt8" shouldApplyClamping>{t('terms.section12.body', { email: 'noreply@morlevy.mela-media.co.il' })}</Text16>
 
         </SimpleContainer>
     );

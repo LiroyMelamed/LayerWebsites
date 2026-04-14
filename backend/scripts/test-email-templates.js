@@ -13,12 +13,12 @@ const testFields = {
     case_title: 'תיק בדיקה 123',
     case_stage: 'שלב ראשוני',
     manager_name: 'עו"ד כהן',
-    action_url: 'https://client.melamedlaw.co.il',
+    action_url: 'https://morlevy.mela-media.co.il',
     document_name: 'חוזה שכירות',
-    lawyer_name: 'עו"ד מלמד',
+    lawyer_name: 'עו"ד מור לוי',
     rejection_reason: 'חתימה לא ברורה',
-    signed_document_url: 'https://client.melamedlaw.co.il/signed/123',
-    evidence_certificate_url: 'https://client.melamedlaw.co.il/cert/123',
+    signed_document_url: 'https://morlevy.mela-media.co.il/signed/123',
+    evidence_certificate_url: 'https://morlevy.mela-media.co.il/cert/123',
 };
 
 async function test() {
