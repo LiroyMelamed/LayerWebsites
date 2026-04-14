@@ -234,12 +234,12 @@ async function sendClientReminder({ reminderKey, row, todayKey }) {
 
     const timeLeft = timeLeftLabel(reminderKey);
     const actionUrl = `https://${String(process.env.WEBSITE_DOMAIN || '').trim() || 'morlevy.mela-media.co.il'}`;
-    };
+};
 
-    const subject = renderTemplate(DEFAULTS.client.emailSubject, fields);
-    const bodyInner = renderTemplate(DEFAULTS.client.emailBody, fields);
+const subject = renderTemplate(DEFAULTS.client.emailSubject, fields);
+const bodyInner = renderTemplate(DEFAULTS.client.emailBody, fields);
 
-    const htmlBody = `<!doctype html><html lang="he" dir="rtl"><body style="margin:0;background:#EDF2F7;">
+const htmlBody = `<!doctype html><html lang="he" dir="rtl"><body style="margin:0;background:#EDF2F7;">
       <div style="max-width:640px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.08);">
         <div style="background:#2A4365;padding:20px 24px;text-align:center;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#fff;font-size:18px;font-weight:700;">תזכורת לעדכון רישיון</div>
         <div style="padding:22px 24px;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#2D3748;line-height:1.8;font-size:15px;">${bodyInner}</div>
@@ -247,84 +247,84 @@ async function sendClientReminder({ reminderKey, row, todayKey }) {
       </div>
     </body></html>`;
 
-    const hasPush = await userHasValidExpoPush(clientUserId);
+const hasPush = await userHasValidExpoPush(clientUserId);
 
-    const channels = { email: false, push: false, inApp: false };
+const channels = { email: false, push: false, inApp: false };
 
-    if (isDryRunEnabled()) {
-        const dryChannels = {
-            ...channels,
-            dryRun: true,
-            wouldSend: { email: Boolean(clientEmail), push: Boolean(hasPush), inApp: Boolean(hasPush) },
-        };
-        console.log(
-            JSON.stringify({
-                event: 'license_renewal_client_dry_run',
-                caseId: Number(row.CaseId),
-                reminderKey,
-                recipientUserId: clientUserId,
-                email: maskEmailForLog(clientEmail),
-                hasPush,
-                channels: dryChannels,
-            })
-        );
-
-        return { ok: true, dryRun: true, channels: dryChannels };
-    }
-
-    const gate = await tryAcquireReminderAuditGate({
-        caseId: row.CaseId,
-        recipientUserId: clientUserId,
-        recipientKind: 'client',
-        reminderKey,
-        dueDateKey: todayKey,
-        expiryDateKey: expiryKey,
-        extraMetadata: {
+if (isDryRunEnabled()) {
+    const dryChannels = {
+        ...channels,
+        dryRun: true,
+        wouldSend: { email: Boolean(clientEmail), push: Boolean(hasPush), inApp: Boolean(hasPush) },
+    };
+    console.log(
+        JSON.stringify({
+            event: 'license_renewal_client_dry_run',
+            caseId: Number(row.CaseId),
+            reminderKey,
+            recipientUserId: clientUserId,
+            email: maskEmailForLog(clientEmail),
             hasPush,
-            clientEmail: clientEmail ? maskEmailForLog(clientEmail) : null,
-        },
-    });
+            channels: dryChannels,
+        })
+    );
 
-    if (!gate.ok) return { ok: false, error: 'audit_gate_error' };
-    if (!gate.acquired) return { ok: true, skipped: true, reason: 'already_handled' };
+    return { ok: true, dryRun: true, channels: dryChannels };
+}
 
-    try {
-        if (hasPush) {
-            const pushTitle = renderTemplate(DEFAULTS.client.pushTitle, fields);
-            const pushBody = renderTemplate(DEFAULTS.client.pushBody, fields);
-            await sendAndStoreNotification(clientUserId, pushTitle, pushBody, {
-                caseId: String(row.CaseId),
-                type: 'LICENSE_RENEWAL',
-                reminderKey,
-            });
-            channels.push = true;
-            channels.inApp = true;
-        }
+const gate = await tryAcquireReminderAuditGate({
+    caseId: row.CaseId,
+    recipientUserId: clientUserId,
+    recipientKind: 'client',
+    reminderKey,
+    dueDateKey: todayKey,
+    expiryDateKey: expiryKey,
+    extraMetadata: {
+        hasPush,
+        clientEmail: clientEmail ? maskEmailForLog(clientEmail) : null,
+    },
+});
 
-        await sendTransactionalCustomHtmlEmail({
-            toEmail: clientEmail,
-            subject,
-            htmlBody,
-            logLabel: `LICENSE_RENEWAL_${reminderKey}`,
+if (!gate.ok) return { ok: false, error: 'audit_gate_error' };
+if (!gate.acquired) return { ok: true, skipped: true, reason: 'already_handled' };
+
+try {
+    if (hasPush) {
+        const pushTitle = renderTemplate(DEFAULTS.client.pushTitle, fields);
+        const pushBody = renderTemplate(DEFAULTS.client.pushBody, fields);
+        await sendAndStoreNotification(clientUserId, pushTitle, pushBody, {
+            caseId: String(row.CaseId),
+            type: 'LICENSE_RENEWAL',
+            reminderKey,
         });
-        channels.email = true;
-
-        console.log(
-            JSON.stringify({
-                event: 'license_renewal_client_sent',
-                caseId: Number(row.CaseId),
-                reminderKey,
-                recipientUserId: clientUserId,
-                email: clientEmail ? maskEmailForLog(clientEmail) : null,
-                hasPush,
-                channels,
-            })
-        );
-
-        return { ok: true, channels };
-    } catch (e) {
-        return { ok: false, error: e?.message || 'send_failed' };
+        channels.push = true;
+        channels.inApp = true;
     }
+
+    await sendTransactionalCustomHtmlEmail({
+        toEmail: clientEmail,
+        subject,
+        htmlBody,
+        logLabel: `LICENSE_RENEWAL_${reminderKey}`,
+    });
+    channels.email = true;
+
+    console.log(
+        JSON.stringify({
+            event: 'license_renewal_client_sent',
+            caseId: Number(row.CaseId),
+            reminderKey,
+            recipientUserId: clientUserId,
+            email: clientEmail ? maskEmailForLog(clientEmail) : null,
+            hasPush,
+            channels,
+        })
+    );
+
+    return { ok: true, channels };
+} catch (e) {
+    return { ok: false, error: e?.message || 'send_failed' };
+}
 }
 
 async function sendManagerReminder14Days({ row, todayKey }) {
