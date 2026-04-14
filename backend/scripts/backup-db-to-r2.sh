@@ -6,7 +6,7 @@
 #   bash /root/LayerWebsites/backend/scripts/backup-db-to-r2.sh
 #
 # Cron (every night at 02:00):
-#   0 2 * * * /root/LayerWebsites/backend/scripts/backup-db-to-r2.sh >> /var/log/melamedlaw-backup.log 2>&1
+#   0 2 * * * /root/LayerWebsites/backend/scripts/backup-db-to-r2.sh >> /var/log/morlevy-backup.log 2>&1
 # ──────────────────────────────────────────────────────────────
 set -euo pipefail
 
@@ -22,8 +22,8 @@ export $(grep -E '^(DB_|S3_)' "$ENV_FILE" | xargs)
 
 # ── Config ──
 STAMP=$(date +%Y%m%d-%H%M%S)
-DUMP_FILE="/tmp/melamedlaw-${STAMP}.dump"
-R2_KEY="backups/melamedlaw-${STAMP}.dump"
+DUMP_FILE="/tmp/morlevy-${STAMP}.dump"
+R2_KEY="backups/morlevy-${STAMP}.dump"
 RETENTION_DAYS=7
 
 echo "$(date '+%F %T') Starting backup..."
@@ -64,7 +64,7 @@ aws s3 ls "s3://${BUCKET}/backups/" \
   FILE_NAME=$(echo "$line" | awk '{print $4}')
   if [ -z "$FILE_NAME" ]; then continue; fi
   
-  # Extract date from filename: melamedlaw-YYYYMMDD-HHMMSS.dump
+  # Extract date from filename: morlevy-YYYYMMDD-HHMMSS.dump
   FILE_DATE=$(echo "$FILE_NAME" | grep -oP '\d{8}' | head -1)
   if [ -z "$FILE_DATE" ]; then continue; fi
   

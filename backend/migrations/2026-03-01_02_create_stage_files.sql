@@ -17,12 +17,12 @@ CREATE TABLE IF NOT EXISTS stage_files (
 CREATE INDEX IF NOT EXISTS idx_stage_files_caseid ON stage_files(caseid);
 CREATE INDEX IF NOT EXISTS idx_stage_files_caseid_stage ON stage_files(caseid, stage);
 
--- Grant permissions to the app role(s) – works in both dev (liroym) and prod (melamedlaw_app).
+-- Grant permissions to the app role(s) – works in both dev (liroym) and prod (morlevy_app).
 DO $$
 DECLARE
     role_name TEXT;
 BEGIN
-    FOREACH role_name IN ARRAY ARRAY['liroym', 'melamedlaw_app']
+    FOREACH role_name IN ARRAY ARRAY['liroym', 'morlevy_app']
     LOOP
         IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = role_name) THEN
             EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.stage_files TO %I', role_name);

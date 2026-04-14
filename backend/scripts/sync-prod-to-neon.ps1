@@ -8,19 +8,19 @@
 
 $ErrorActionPreference = "Continue"
 $PROD_HOST    = "root@37.60.230.148"
-$NEON_HOST    = "ep-patient-tooth-agty0w4k.c-2.eu-central-1.aws.neon.tech"
+$NEON_HOST    = "ep-super-mode-alv2q4jv.c-3.eu-central-1.aws.neon.tech"
 $NEON_DB      = "neondb"
 $NEON_USER    = "neondb_owner"
-$NEON_PASS    = "npg_nY9aZ0dCyKRf"
+$NEON_PASS    = "npg_te3Jw0sqBSHg"
 $PSQL         = "C:\Program Files\PostgreSQL\17\bin\psql.exe"
-$DUMP_REMOTE  = "/tmp/melamedlaw_prod.sql"
-$DUMP_LOCAL   = "$PSScriptRoot\..\melamedlaw_prod.sql"
-$DUMP_CLEAN   = "$PSScriptRoot\..\melamedlaw_clean.sql"
+$DUMP_REMOTE  = "/tmp/morlevydb_prod.sql"
+$DUMP_LOCAL   = "$PSScriptRoot\..\morlevydb_prod.sql"
+$DUMP_CLEAN   = "$PSScriptRoot\..\morlevydb_clean.sql"
 
 $NEON_CONNSTR = "postgresql://${NEON_USER}:${NEON_PASS}@${NEON_HOST}:5432/${NEON_DB}?sslmode=require"
 
 Write-Host "`n=== [1/7] Dumping production DB (read-only) ===" -ForegroundColor Cyan
-ssh $PROD_HOST "sudo -u postgres pg_dump -d melamedlaw --format=plain --no-owner --no-privileges --encoding=UTF8 > $DUMP_REMOTE 2>/dev/null; echo ROWS:; wc -l $DUMP_REMOTE"
+ssh $PROD_HOST "sudo -u postgres pg_dump -d morlevy --format=plain --no-owner --no-privileges --encoding=UTF8 > $DUMP_REMOTE 2>/dev/null; echo ROWS:; wc -l $DUMP_REMOTE"
 if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: SSH/dump failed" -ForegroundColor Red; exit 1 }
 
 Write-Host "`n=== [2/7] Downloading dump ===" -ForegroundColor Cyan

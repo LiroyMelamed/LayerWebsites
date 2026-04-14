@@ -3,7 +3,7 @@
         "apps": [],
         "details": [
             {
-                "appID": "A38RHM586C.com.melamedia.MelamedLaw",
+                "appID": "A38RHM586C.com.melamedia.morlevy",
                 "paths": [
                     "NOT /api/*",
                     "NOT /.well-known/*",
@@ -15,7 +15,7 @@
     },
     "webcredentials": {
         "apps": [
-            "A38RHM586C.com.melamedia.MelamedLaw"
+            "A38RHM586C.com.melamedia.morlevy"
         ]
     }
 }

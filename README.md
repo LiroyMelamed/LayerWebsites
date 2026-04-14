@@ -121,7 +121,7 @@ This project is licensed under the **MIT License**.
 
 ## **🔒 Compliance & ISO Readiness**
 
-MelamedLaw implements controls aligned with international standards:
+MorLevy implements controls aligned with international standards:
 
 | Standard | Status |
 |---|---|

@@ -2,7 +2,7 @@
   Send test emails for all supported Smoove email campaign keys.
 
   Usage (PowerShell):
-    $env:FORCE_SEND_EMAIL_ALL='true'; node scripts/sendSmooveEmailChecks.js --to liroymelamed@icloud.com
+    $env:FORCE_SEND_EMAIL_ALL='true'; node scripts/sendSmooveEmailChecks.js --to mor@levylaw.co.il
 
   Notes:
   - Uses backend/utils/smooveEmailCampaignService.js

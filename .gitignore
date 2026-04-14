@@ -132,3 +132,19 @@ dist
 
 /frontend/build
 *.dump
+
+# IDE / editor
+.vs/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Deployment metadata
+.vercel/
+
+# OS files
+.DS_Store
+Thumbs.db

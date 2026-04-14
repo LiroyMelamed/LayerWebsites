@@ -13,7 +13,7 @@ process.env.FORCE_SEND_EMAIL_ALL = 'true';
 const { sendTransactionalCustomHtmlEmail, sendEmailWithAttachments } = require('../utils/smooveEmailCampaignService');
 
 async function main() {
-    const testRecipient = 'Liav@MelamedLaw.co.il';
+    const testRecipient = 'mor@levylaw.co.il';
 
     console.log('\n=== Test 1: sendTransactionalEmail (SMTP path) ===');
     console.log('To:', testRecipient);
