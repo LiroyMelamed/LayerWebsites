@@ -74,7 +74,7 @@ async function regclassExists(name) {
 }
 
 async function ensureDefaultFirm() {
-    const firmKey = String(process.env.LAW_FIRM_KEY || 'default');
+    const firmKey = 'default';
     const firmName = String(process.env.LAW_FIRM_NAME || 'Default Firm');
 
     const existing = await pool.query(

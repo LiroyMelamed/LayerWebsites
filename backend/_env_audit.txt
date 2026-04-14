@@ -114,7 +114,6 @@ JWT_SECRET|||tests\myCases.integration.test.js
 JWT_SECRET|||tests\numericParamValidation.integration.test.js
 JWT_SECRET|||tests\requestTooLarge.integration.test.js
 JWT_SECRET|||tests\stageFiles.integration.test.js
-LAW_FIRM_KEY|||scripts\firmBackfill.js
 LAW_FIRM_NAME|||controllers\customerController.js
 LAW_FIRM_NAME|||controllers\reminderController.js
 LAW_FIRM_NAME|||scripts\firmBackfill.js
