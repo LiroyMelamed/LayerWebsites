@@ -16,7 +16,7 @@ import ComplianceBadges from '../../compliance/ComplianceBadges';
 
 import './TopToolBarSmallScreen.scss';
 
-const Logo = images.Logos.FullLogoOriginal;
+const Logo = images.Logos.FullLogoBlack;
 
 export default function TopToolBarSmallScreen({ chosenIndex = -1, chosenNavKey, LogoNavigate, GetNavBarData = getNavBarData, isClient = false }) {
     const { isFromApp } = useFromApp();
