@@ -70,6 +70,7 @@ const ALLOWED_CUSTOM_FIELD_KEYS = [
     'signed_document_url',
     'evidence_certificate_url',
     'firm_name',
+    'firm_logo_url',
 ];
 
 /**
@@ -102,7 +103,18 @@ async function sendEmailCampaign({ toEmail, campaignKey, contactFields, attachme
     }
 
     const shouldSendRealEmail = isProduction || FORCE_SEND_EMAIL_ALL;
-    const allowedFields = filterAllowedContactFieldsForCampaign(key, contactFields);
+
+    // Auto-inject firm branding fields from platform settings
+    const enrichedFields = { ...contactFields };
+    if (!enrichedFields.firm_name) {
+        enrichedFields.firm_name = await getSetting('firm', 'LAW_FIRM_NAME', null)
+            || process.env.LAW_FIRM_NAME || '';
+    }
+    if (!enrichedFields.firm_logo_url) {
+        enrichedFields.firm_logo_url = await getSetting('firm', 'FIRM_LOGO_URL', null) || '';
+    }
+
+    const allowedFields = filterAllowedContactFieldsForCampaign(key, enrichedFields);
 
     // ── Load template from DB ──
     // For DOC_SIGNED with attachments, use the DOC_SIGNED_ATTACHMENTS variant
@@ -341,6 +353,8 @@ function replaceEmailPlaceholders(template, fields) {
     const signedDocUrl = escapeHtml(String(fields.signed_document_url || '').trim());
     const evidenceUrl = escapeHtml(String(fields.evidence_certificate_url || '').trim());
     const safeFirmName = escapeHtml(String(fields.firm_name || '').trim());
+    // firm_logo_url is a URL — no HTML escaping (used inside src="...")
+    const firmLogoUrl = String(fields.firm_logo_url || '').trim();
 
     let out = String(template || '');
     out = replaceAllSafe(out, '[[recipient_name]]', safeRecipient);
@@ -355,6 +369,7 @@ function replaceEmailPlaceholders(template, fields) {
     out = replaceAllSafe(out, '[[signed_document_url]]', signedDocUrl);
     out = replaceAllSafe(out, '[[evidence_certificate_url]]', evidenceUrl);
     out = replaceAllSafe(out, '[[firm_name]]', safeFirmName);
+    out = replaceAllSafe(out, '[[firm_logo_url]]', firmLogoUrl);
     return out;
 }
 

@@ -88,6 +88,7 @@ async function processEmailReminders() {
             // Merge common fields
             const firmName = await getSetting('firm', 'FIRM_NAME', null)
                 || process.env.FIRM_NAME || 'MorLevy';
+            const firmLogoUrl = await getSetting('firm', 'FIRM_LOGO_URL', null) || '';
             const fields = {
                 client_name: reminder.client_name,
                 date: new Date(reminder.scheduled_for).toLocaleDateString('he-IL'),
@@ -97,7 +98,7 @@ async function processEmailReminders() {
 
             const subjectLine = reminder.subject || renderTemplate(tpl.subject, fields);
             const bodyHtml = renderTemplate(tpl.body, fields);
-            const fullHtml = wrapEmailHtml(bodyHtml, { firmName: fields.firm_name, title: subjectLine });
+            const fullHtml = wrapEmailHtml(bodyHtml, { firmName: fields.firm_name, firmLogoUrl, title: subjectLine });
 
             if (dryRun) {
                 console.log(`[email-reminders] DRY-RUN would send to ${reminder.to_email}: "${subjectLine}"`);

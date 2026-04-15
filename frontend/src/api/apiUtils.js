@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const prodURL = "https://api.morlevy.mela-media.co.il/api";
+const prodURL = "https://api-morlevy.mela-media.co.il/api";
 const stageURL = "http://localhost:5001/api";
 
 function normalizeBaseUrl(url) {

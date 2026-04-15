@@ -25,6 +25,11 @@ const pool = new Pool({
     connectionTimeoutMillis: Number.parseInt(process.env.DB_POOL_CONN_TIMEOUT_MS || '5000', 10),
 });
 
+// Handle unexpected errors on idle pool clients to prevent process crash
+pool.on('error', (err) => {
+    console.error('[pg-pool] Unexpected error on idle client:', err.message);
+});
+
 // Test the connection (skip in tests to avoid noisy timeouts when DB isn't configured)
 const shouldTestConnection =
     process.env.NODE_ENV !== 'test' &&
