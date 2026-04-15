@@ -1,7 +1,7 @@
 module.exports = {
     apps: [
         {
-            name: 'melamedlaw-api',
+            name: 'morlevy-api',
             cwd: __dirname,
             script: 'server.js',
 
@@ -21,8 +21,8 @@ module.exports = {
             min_uptime: 5000,
             time: true,
 
-            out_file: '/var/log/melamedlaw-api/out.log',
-            error_file: '/var/log/melamedlaw-api/err.log',
+            out_file: '/var/log/morlevy-api/out.log',
+            error_file: '/var/log/morlevy-api/err.log',
             log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
             merge_logs: true,
 
@@ -40,8 +40,8 @@ module.exports = {
                 // Postgres (local on the Ubuntu server)
                 DB_HOST: '127.0.0.1',
                 DB_PORT: '5432',
-                DB_NAME: 'melamedlaw',
-                DB_USER: 'melamedlaw_app',
+                DB_NAME: 'morlevy',
+                DB_USER: 'morlevy_app',
                 DB_PASSWORD: '__SET_IN_SERVER_ENV__',
                 DB_SSL: 'false',
 

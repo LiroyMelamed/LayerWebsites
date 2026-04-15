@@ -4,8 +4,8 @@ const { recordUsageEvent } = require("../lib/usage/recordFirmUsage");
 const { getSetting } = require("../services/settingsService");
 
 // ── Static defaults (kept for backward-compatible imports) ──────────
-const COMPANY_NAME = "MelamedLaw";
-const WEBSITE_DOMAIN = String(process.env.WEBSITE_DOMAIN || "").trim() || "client.melamedlaw.co.il";
+const COMPANY_NAME = String(process.env.COMPANY_NAME || "").trim() || "LayerWebsites";
+const WEBSITE_DOMAIN = String(process.env.WEBSITE_DOMAIN || "").trim() || "localhost";
 
 // ── Async getters ───────────────────────────────────────────────────
 // WEBSITE_DOMAIN comes from env only — never from platform_settings.

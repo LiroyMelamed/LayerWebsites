@@ -24,7 +24,7 @@ async function main() {
     console.log('\nResult:', JSON.stringify(result, null, 2));
 
     if (result.sentCount > 0) {
-        console.log(`\n✅ ${result.sentCount} reminder(s) sent! Check liroymelamed@icloud.com inbox.`);
+        console.log(`\n✅ ${result.sentCount} reminder(s) sent! Check mor@levylaw.co.il inbox.`);
     } else if (result.skippedCount > 0) {
         console.log(`\n⚠️ ${result.skippedCount} reminder(s) skipped (already sent or audit gate blocked).`);
     } else {

@@ -68,7 +68,7 @@ async function main() {
     console.log(`Latest backup: ${latest.Key} (${latest.Size} bytes, ${latest.LastModified})`);
 
     // Download
-    const tmpFile = path.join(require('os').tmpdir(), 'melamedlaw-latest.dump');
+    const tmpFile = path.join(require('os').tmpdir(), 'layer-latest.dump');
     console.log(`Downloading to ${tmpFile}...`);
 
     const obj = await r2.send(

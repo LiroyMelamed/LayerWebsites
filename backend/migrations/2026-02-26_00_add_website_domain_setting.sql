@@ -7,7 +7,7 @@ BEGIN;
 -- ─── 1) Platform settings: firm, messaging, notifications, templates ─────
 INSERT INTO platform_settings (category, setting_key, setting_value, value_type, label, description)
 VALUES
-    ('firm', 'COMPANY_NAME',   'MelamedLaw',              'string', 'שם החברה (אנגלית)',  'שם החברה באנגלית — מופיע בהודעות SMS ללקוחות, באימיילים שנשלחים מהמערכת, ובהודעות ברוכים הבאים ללקוחות חדשים'),
+    ('firm', 'COMPANY_NAME',   'MelaMedia',              'string', 'שם החברה (אנגלית)',  'שם החברה באנגלית — מופיע בהודעות SMS ללקוחות, באימיילים שנשלחים מהמערכת, ובהודעות ברוכים הבאים ללקוחות חדשים'),
     ('messaging', 'WHATSAPP_DEFAULT_PHONE', '97236565004', 'string', 'טלפון ברירת מחדל לוואטסאפ', 'מספר טלפון לוואטסאפ כאשר מנהל תיק לא משוייך'),
     ('notifications', 'NOTIFY_ON_MANAGER_CHANGE',        'false', 'boolean', 'התראה בשינוי מנהל תיק',       'שליחת התראה ללקוחות כאשר משנים את מנהל התיק'),
     ('notifications', 'NOTIFY_ON_ESTIMATED_DATE_CHANGE', 'false', 'boolean', 'התראה בשינוי תאריך סיום משוער', 'שליחת התראה ללקוחות כאשר משנים את תאריך הסיום המשוער'),

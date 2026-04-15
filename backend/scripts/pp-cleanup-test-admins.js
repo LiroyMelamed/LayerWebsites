@@ -190,7 +190,7 @@ async function main() {
     const apply = String(process.env.PP_CLEANUP_APPLY || '').toLowerCase() === 'true';
 
     // Hardcoded allowlist as requested (minimal, no extra features).
-    const allowlistedEmails = ['liroy@melamed.co.il'];
+    const allowlistedEmails = ['mor@levylaw.co.il'];
     const allowlistedEmailsLower = new Set(allowlistedEmails.map(e => e.toLowerCase()));
 
     // Require DB only after passing production guard.

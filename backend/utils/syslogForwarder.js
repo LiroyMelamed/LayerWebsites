@@ -24,7 +24,7 @@ const os = require('os');
 const SYSLOG_HOST = process.env.SYSLOG_HOST || '';
 const SYSLOG_PORT = Number(process.env.SYSLOG_PORT || 0);
 const SYSLOG_PROTOCOL = String(process.env.SYSLOG_PROTOCOL || 'udp').toLowerCase();
-const APP_NAME = String(process.env.SYSLOG_APP_NAME || 'melamedlaw');
+const APP_NAME = String(process.env.SYSLOG_APP_NAME || 'layer-api');
 
 const LOG_FILE = path.join(__dirname, '..', 'logs', 'security-audit.log');
 

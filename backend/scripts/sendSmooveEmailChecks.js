@@ -2,7 +2,7 @@
   Send test emails for all supported Smoove email campaign keys.
 
   Usage (PowerShell):
-    $env:FORCE_SEND_EMAIL_ALL='true'; node scripts/sendSmooveEmailChecks.js --to liroymelamed@icloud.com
+    $env:FORCE_SEND_EMAIL_ALL='true'; node scripts/sendSmooveEmailChecks.js --to mor@levylaw.co.il
 
   Notes:
   - Uses backend/utils/smooveEmailCampaignService.js
@@ -35,7 +35,7 @@ async function main() {
         return;
     }
 
-    const baseUrl = 'https://client.melamedlaw.co.il';
+    const baseUrl = `https://${String(process.env.WEBSITE_DOMAIN || '').trim() || 'example.mela-media.co.il'}`;
 
     const tests = [
         {
@@ -44,7 +44,7 @@ async function main() {
                 recipient_name: 'לירוי',
                 document_name: 'בדיקת הזמנה לחתימה',
                 action_url: `${baseUrl}/sign/test?token=demo`,
-                lawyer_name: 'עו"ד מלמד',
+                lawyer_name: 'עו"ד בדיקה',
             },
         },
         {
@@ -53,7 +53,7 @@ async function main() {
                 recipient_name: 'לירוי',
                 document_name: 'בדיקת תזכורת לחתימה',
                 action_url: `${baseUrl}/sign/test?token=demo`,
-                lawyer_name: 'עו"ד מלמד',
+                lawyer_name: 'עו"ד בדיקה',
             },
         },
         {
@@ -62,7 +62,7 @@ async function main() {
                 recipient_name: 'לירוי',
                 case_title: 'בדיקת יצירת תיק',
                 case_stage: 'שלב ראשוני',
-                manager_name: 'עו"ד מלמד',
+                manager_name: 'עו"ד בדיקה',
                 action_url: baseUrl,
             },
         },
@@ -71,7 +71,7 @@ async function main() {
             fields: {
                 recipient_name: 'לירוי',
                 document_name: 'בדיקת מסמך נחתם',
-                lawyer_name: 'עו"ד מלמד',
+                lawyer_name: 'עו"ד בדיקה',
                 action_url: baseUrl,
             },
         },
@@ -80,7 +80,7 @@ async function main() {
             fields: {
                 recipient_name: 'לירוי',
                 document_name: 'בדיקת מסמך נדחה',
-                lawyer_name: 'עו"ד מלמד',
+                lawyer_name: 'עו"ד בדיקה',
                 rejection_reason: 'בדיקת סיבת דחייה',
                 action_url: baseUrl,
             },

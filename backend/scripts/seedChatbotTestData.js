@@ -18,7 +18,7 @@ const pool = require('../config/db');
 
 const TEST_PHONE = '0500000000';
 const TEST_NAME = 'לקוח בדיקה';
-const TEST_EMAIL = 'test-chatbot@melamedlaw.local';
+const TEST_EMAIL = 'test-chatbot@test.local';
 const TEST_CASE_NAME = 'תיק בדיקת צ׳אטבוט';
 const TEST_CASE_TYPE = 'אזרחי';
 

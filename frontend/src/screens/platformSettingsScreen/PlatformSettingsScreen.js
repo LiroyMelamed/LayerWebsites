@@ -330,16 +330,18 @@ function SmsVarButtons({ templateKey, onInsert }) {
  * Wrap reminder body HTML in the branded email shell (matches backend wrapEmailHtml).
  * Used for the live preview in the reminder template editor.
  */
-function wrapReminderPreviewHtml(bodyHtml, { title = '' } = {}) {
-    const firmName = 'MelamedLaw';
+function wrapReminderPreviewHtml(bodyHtml, { title = '', firmName = '', firmLogoUrl = '' } = {}) {
     const headerTitle = title || firmName;
+    const logoHtml = firmLogoUrl
+        ? `<img src="${firmLogoUrl}" width="170" alt="${firmName}" style="border:0;outline:none;text-decoration:none;height:auto;max-width:100%;">`
+        : '';
     return `<!DOCTYPE html>
 <html dir="rtl" lang="he">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${headerTitle}</title></head>
 <body style="margin:0;padding:0;background-color:#EDF2F7;direction:rtl;text-align:right;">
 <table border="0" cellpadding="0" cellspacing="0" style="background:#EDF2F7;" width="100%"><tbody><tr><td align="center" style="padding:24px 12px;">
 <table border="0" cellpadding="0" cellspacing="0" style="width:640px;max-width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.08);" width="640"><tbody>
-<tr><td style="background:#2A4365;padding:22px 24px;text-align:center;"><img src="https://client.melamedlaw.co.il/logoLMwhite.png" width="170" alt="${firmName}" style="border:0;outline:none;text-decoration:none;height:auto;max-width:100%;"><div style="height:14px;line-height:14px;">&nbsp;</div><div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#FFFFFF;font-size:18px;font-weight:600;line-height:1.4;">${headerTitle}</div></td></tr>
+<tr><td style="background:#2A4365;padding:22px 24px;text-align:center;">${logoHtml}<div style="height:14px;line-height:14px;">&nbsp;</div><div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#FFFFFF;font-size:18px;font-weight:600;line-height:1.4;">${headerTitle}</div></td></tr>
 <tr><td style="padding:26px 24px 8px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#2D3748;"><div style="font-size:16px;line-height:1.7;">${bodyHtml}</div><div style="height:18px;line-height:18px;">&nbsp;</div></td></tr>
 <tr><td style="padding:14px 24px 22px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#718096;font-size:12px;line-height:1.7;">הודעה זו נשלחה אוטומטית.<br>&copy; ${firmName}</td></tr>
 </tbody></table>
@@ -409,7 +411,7 @@ function plainTextToHtml(fullHtml, newText) {
     return fullHtml.replace(CONTENT_DIV_REGEX, `$1${htmlContent}$3`);
 }
 
-function EmailTemplateEditor({ template, onSave, saving }) {
+function EmailTemplateEditor({ template, onSave, saving, firmSettings }) {
     const [subject, setSubject] = useState(template.subject_template || "");
     const [htmlBody, setHtmlBody] = useState(template.html_body || "");
     const [messageText, setMessageText] = useState(() => htmlToPlainText(template.html_body || ""));
@@ -477,12 +479,17 @@ function EmailTemplateEditor({ template, onSave, saving }) {
     // Update preview iframe
     useEffect(() => {
         if (iframeRef.current) {
+            let previewHtml = htmlBody;
+            const firmName = firmSettings?.LAW_FIRM_NAME?.effectiveValue || firmSettings?.FIRM_NAME?.effectiveValue || '';
+            const firmLogoUrl = firmSettings?.FIRM_LOGO_URL?.effectiveValue || '';
+            if (firmName) previewHtml = previewHtml.split('[[firm_name]]').join(firmName);
+            if (firmLogoUrl) previewHtml = previewHtml.split('[[firm_logo_url]]').join(firmLogoUrl);
             const doc = iframeRef.current.contentDocument;
             doc.open();
-            doc.write(htmlBody);
+            doc.write(previewHtml);
             doc.close();
         }
-    }, [htmlBody]);
+    }, [htmlBody, firmSettings]);
 
     return (
         <SimpleContainer className="lw-platformSettings__emailEditor">
@@ -692,13 +699,18 @@ export default function PlatformSettingsScreen() {
     useEffect(() => {
         if (reminderIframeRef.current && editingReminderTpl) {
             const subjectPreview = editingReminderTpl.subject_template || editingReminderTpl.label || '';
-            const fullHtml = wrapReminderPreviewHtml(editingReminderTpl.body_html || '', { title: subjectPreview });
+            const firmS = data?.settings?.firm || {};
+            const fullHtml = wrapReminderPreviewHtml(editingReminderTpl.body_html || '', {
+                title: subjectPreview,
+                firmName: firmS.LAW_FIRM_NAME?.effectiveValue || firmS.FIRM_NAME?.effectiveValue || '',
+                firmLogoUrl: firmS.FIRM_LOGO_URL?.effectiveValue || '',
+            });
             const doc = reminderIframeRef.current.contentDocument;
             doc.open();
             doc.write(fullHtml);
             doc.close();
         }
-    }, [editingReminderTpl?.body_html, editingReminderTpl?.subject_template, editingReminderTpl?.label]);
+    }, [editingReminderTpl?.body_html, editingReminderTpl?.subject_template, editingReminderTpl?.label, data?.settings?.firm]);
 
     // ─── Knowledge documents: load + upload + delete ────────────────
     const loadKnowledgeDocs = useCallback(async () => {
@@ -1159,6 +1171,7 @@ export default function PlatformSettingsScreen() {
                                 template={effectiveTemplate}
                                 onSave={handleSaveEmailTemplate}
                                 saving={emailSaving}
+                                firmSettings={settings.firm}
                             />
                         ) : (
                             <SimpleCard className="lw-platformSettings__card">

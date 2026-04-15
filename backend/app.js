@@ -65,13 +65,13 @@ function selectMode(forProduction, forStage) {
     return isProduction ? forProduction : forStage;
 }
 
-const productionOrigin = [
-    "https://client.melamedlaw.co.il/",
-    "https://client.melamedlaw.co.il",
-];
+const productionOrigin = (process.env.ALLOWED_ORIGINS || "")
+    .split(",")
+    .map(s => s.trim())
+    .filter(Boolean);
 const stageOrigin = [
     "http://localhost:3000",
-    "https://client.melamedlaw.co.il",
+    ...productionOrigin,
 ];
 
 const allowedOrigins = selectMode(productionOrigin, stageOrigin);
@@ -186,7 +186,7 @@ app.get("/api/cases", authMiddleware, async (req, res) => {
 });
 
 app.get("/", (req, res) => {
-    res.send("MelamedLaw API is running!");
+    res.send("API is running!");
 });
 
 // Centralized error handler (must be last)

@@ -380,16 +380,8 @@
         display: flex;
         gap: v.$space-3;
         justify-content: center;
-        position: sticky;
-        bottom: 0;
-        z-index: 50;
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(6px);
         padding: v.$space-3 v.$space-4;
         margin-top: v.$space-3;
-        border-top: 1px solid #e2e8f0;
-        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
-        border-radius: 0 0 8px 8px;
     }
 
     &__saveBtn {

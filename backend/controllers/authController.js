@@ -21,6 +21,12 @@ const REFRESH_TOKEN_PEPPER = String(process.env.REFRESH_TOKEN_PEPPER || "");
 const ANDROID_SMS_RETRIEVER_HASH = String(process.env.ANDROID_SMS_RETRIEVER_HASH || "").trim();
 const WEBSITE_DOMAIN_FALLBACK = String(process.env.WEBSITE_DOMAIN || "").trim();
 
+// Demo phones: skip real SMS, use fixed OTP "123456"
+const DEMO_OTP_PHONES = new Set(
+    (process.env.DEMO_OTP_PHONES || "").split(",").map(p => p.trim()).filter(Boolean)
+);
+const DEMO_OTP_CODE = "123456";
+
 // Hash OTP before storing in DB (ISO 27001 A.10 — never store secrets in plaintext)
 const OTP_PEPPER = String(process.env.SIGNING_OTP_PEPPER || "");
 function hashOtp(otp) {
@@ -129,7 +135,8 @@ const requestOtp = async (req, res) => {
     try {
         let formatedPhoneNumber = formatPhoneNumber(phoneNumber);
 
-        const otp = crypto.randomInt(100000, 999999).toString();
+        const isDemo = DEMO_OTP_PHONES.has(phoneNumber);
+        const otp = isDemo ? DEMO_OTP_CODE : crypto.randomInt(100000, 999999).toString();
 
         const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
@@ -153,10 +160,12 @@ const requestOtp = async (req, res) => {
             [phoneNumber, hashOtp(otp), expiry, userId]
         );
 
-        try {
-            sendMessage(buildOtpSmsBodyForRequest(req, otp), formatedPhoneNumber);
-        } catch (e) {
-            console.warn("SMS send failed:", e?.message);
+        if (!isDemo) {
+            try {
+                sendMessage(buildOtpSmsBodyForRequest(req, otp), formatedPhoneNumber);
+            } catch (e) {
+                console.warn("SMS send failed:", e?.message);
+            }
         }
 
         return res.status(200).json({ message: "קוד נשלח בהצלחה", otpSent: true });

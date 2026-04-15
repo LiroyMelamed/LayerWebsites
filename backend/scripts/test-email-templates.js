@@ -9,16 +9,16 @@ function replaceVars(str, fields) {
 }
 
 const testFields = {
-    recipient_name: 'לירוי מלמד',
+    recipient_name: 'לקוח בדיקה',
     case_title: 'תיק בדיקה 123',
     case_stage: 'שלב ראשוני',
     manager_name: 'עו"ד כהן',
-    action_url: 'https://client.melamedlaw.co.il',
+    action_url: 'https://example.mela-media.co.il',
     document_name: 'חוזה שכירות',
-    lawyer_name: 'עו"ד מלמד',
+    lawyer_name: 'עו"ד בדיקה',
     rejection_reason: 'חתימה לא ברורה',
-    signed_document_url: 'https://client.melamedlaw.co.il/signed/123',
-    evidence_certificate_url: 'https://client.melamedlaw.co.il/cert/123',
+    signed_document_url: 'https://example.mela-media.co.il/signed/123',
+    evidence_certificate_url: 'https://example.mela-media.co.il/cert/123',
 };
 
 async function test() {

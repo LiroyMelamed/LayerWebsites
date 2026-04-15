@@ -1,14 +1,17 @@
 /**
- * MelamedLaw Chatbot Floating Widget
+ * Chatbot Floating Widget
  * Drop this script into any website to add a floating chat button
  * that opens the chatbot in a popup iframe.
  *
- * Usage:  <script src="https://client.melamedlaw.co.il/chatbot-widget.js"></script>
+ * Usage:  <script src="https://your-domain.com/chatbot-widget.js" data-chat-url="https://your-domain.com/ChatBot"></script>
+ * If data-chat-url is omitted, it defaults to window.location.origin + '/ChatBot'.
  */
 (function () {
     if (document.getElementById('mlw-chat-widget')) return;
 
-    var CHAT_URL = 'https://client.melamedlaw.co.il/ChatBot';
+    var scriptEl = document.currentScript;
+    var CHAT_URL = (scriptEl && scriptEl.getAttribute('data-chat-url'))
+        || (window.location.origin + '/ChatBot');
 
     // ── Styles ──
     var style = document.createElement('style');
@@ -147,7 +150,7 @@
                 iframe = document.createElement('iframe');
                 iframe.id = 'mlw-chat-widget-iframe';
                 iframe.src = CHAT_URL;
-                iframe.title = 'צ׳אט עם משרד מלמד';
+                iframe.title = 'צ׳אט עם המשרד';
                 iframe.setAttribute('allow', 'clipboard-write');
                 wrap.appendChild(iframe);
             }
