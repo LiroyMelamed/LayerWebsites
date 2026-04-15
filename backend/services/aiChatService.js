@@ -28,9 +28,11 @@ const OPENAI_EMBEDDINGS_URL = 'https://api.openai.com/v1/embeddings';
 const DOC_CONTEXT_MAX_CHARS = 6000; // ~2000 tokens
 const DOC_SIMILARITY_THRESHOLD = 0.25; // minimum cosine similarity to include a chunk
 
+const FIRM_DISPLAY_NAME = String(process.env.FIRM_DISPLAY_NAME || process.env.COMPANY_NAME || '').trim() || 'the firm';
+
 // ── System prompt ─────────────────────────────────────────────────────
 const SYSTEM_PROMPT = `
-אתה העוזר AI של משרד עורכי דין מור לוי (MorLevy).
+אתה העוזר AI של משרד עורכי דין ${FIRM_DISPLAY_NAME}.
 
 כאשר מוצג לך הקשר מתוך מסמכים פנימיים — זהו מקור המידע העיקרי שלך. השתמש בו כדי לענות על שאלות הלקוח.
 

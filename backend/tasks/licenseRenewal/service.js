@@ -233,7 +233,7 @@ async function sendClientReminder({ reminderKey, row, todayKey }) {
     }
 
     const timeLeft = timeLeftLabel(reminderKey);
-    const actionUrl = `https://${String(process.env.WEBSITE_DOMAIN || '').trim() || 'morlevy.mela-media.co.il'}`;
+    const actionUrl = `https://${String(process.env.WEBSITE_DOMAIN || '').trim() || 'localhost'}`;
 
     const fields = {
         recipient_name: clientName,
@@ -355,7 +355,7 @@ async function sendManagerReminder14Days({ row, todayKey }) {
         return { ok: false, error: 'due_date_mismatch' };
     }
 
-    const actionUrl = `https://${String(process.env.WEBSITE_DOMAIN || '').trim() || 'morlevy.mela-media.co.il'}`;
+    const actionUrl = `https://${String(process.env.WEBSITE_DOMAIN || '').trim() || 'localhost'}`;
 
     const fields = {
         recipient_name: managerName,
@@ -460,7 +460,7 @@ async function sendCeoReminder14Days({ row, todayKey }) {
         return { ok: false, error: 'due_date_mismatch' };
     }
 
-    const actionUrl = `https://${String(process.env.WEBSITE_DOMAIN || '').trim() || 'morlevy.mela-media.co.il'}`;
+    const actionUrl = `https://${String(process.env.WEBSITE_DOMAIN || '').trim() || 'localhost'}`;
 
     const buildHtml = (recipientName) => {
         const fields = {

@@ -3619,7 +3619,7 @@ async function generateEvidenceCertificateBuffer(signingFileId) {
 
     const pdfBuffer = await renderEvidencePdf({
         doc, sender, signers, qrDataUrl,
-        brand: { companyName: 'MorLevy', logoDataUrl },
+        brand: { companyName: process.env.COMPANY_NAME || '', logoDataUrl },
     });
 
     const now = new Date();
@@ -3997,7 +3997,7 @@ exports.getEvidenceCertificate = async (req, res, next) => {
             signers,
             qrDataUrl,
             brand: {
-                companyName: 'MorLevy',
+                companyName: process.env.COMPANY_NAME || '',
                 logoDataUrl,
             },
         });

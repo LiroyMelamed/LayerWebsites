@@ -78,7 +78,7 @@ async function processBirthdayGreetings({ timeZone = 'Asia/Jerusalem' } = {}) {
         '{{firmName}} מאחלת לך מזל טוב ליום הולדתך, {{recipientName}}! 🎂🎉'
     );
     const firmName = await getSetting('firm', 'LAW_FIRM_NAME', null)
-        || await getSetting('firm', 'COMPANY_NAME', 'MorLevy');
+        || await getSetting('firm', 'COMPANY_NAME', '');
     const domain = await getWebsiteDomain();
     const websiteUrl = `https://${domain}`;
 

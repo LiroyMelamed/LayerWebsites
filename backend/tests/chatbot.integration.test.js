@@ -41,7 +41,7 @@ function createTestApp() {
 }
 
 // Mock LLM response — intercept global fetch
-const MOCK_LLM_RESPONSE = 'שלום! אני העוזר הדיגיטלי של משרד מלמד. איך אוכל לעזור?';
+const MOCK_LLM_RESPONSE = 'שלום! אני העוזר הדיגיטלי של המשרד. איך אוכל לעזור?';
 const MOCK_RAG_RESPONSE = 'על פי נתוני המערכת, התיק שלך במצב פעיל.';
 
 let fetchCallCount = 0;

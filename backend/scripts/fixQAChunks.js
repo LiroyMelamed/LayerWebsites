@@ -31,7 +31,7 @@ const apply = process.argv.includes('--apply');
  *   ":לקוח"  → "לקוח:"
  *   ",שלום"  → "שלום,"
  *   "?דין"   → "דין?"
- *   ".מלמד" → "מלמד."
+ *   ".עורך" → "עורך."
  */
 function fixReversedLine(line) {
     const trimmed = line.trim();

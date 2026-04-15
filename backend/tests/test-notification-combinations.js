@@ -282,7 +282,7 @@ const TESTS = [
             if (c.CaseManagerId !== 1088) {
                 const body = caseToUpdateBody(c);
                 body.CaseManagerId = 1088;
-                body.CaseManager = 'ליאב';
+                body.CaseManager = 'מור';
                 await updateCase(token, CASE_ID, body);
                 await sleep(1000);
             }
@@ -304,7 +304,7 @@ const TESTS = [
             if (c.CaseManagerId !== 1088) {
                 const body = caseToUpdateBody(c);
                 body.CaseManagerId = 1088;
-                body.CaseManager = 'ליאב';
+                body.CaseManager = 'מור';
                 await updateCase(token, CASE_ID, body);
                 await sleep(1000);
             }
@@ -576,7 +576,7 @@ async function run() {
         const restoreBody = caseToUpdateBody(finalCase);
         restoreBody.IsClosed = false;
         restoreBody.CaseManagerId = 1088;
-        restoreBody.CaseManager = 'ליאב מלמד';
+        restoreBody.CaseManager = 'מנהל תיק';
         await updateCase(token, CASE_ID, restoreBody);
     }
 

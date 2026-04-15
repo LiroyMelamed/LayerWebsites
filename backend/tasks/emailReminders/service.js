@@ -87,7 +87,7 @@ async function processEmailReminders() {
 
             // Merge common fields
             const firmName = await getSetting('firm', 'FIRM_NAME', null)
-                || process.env.FIRM_NAME || 'MorLevy';
+                || process.env.FIRM_NAME || '';
             const firmLogoUrl = await getSetting('firm', 'FIRM_LOGO_URL', null) || '';
             const fields = {
                 client_name: reminder.client_name,

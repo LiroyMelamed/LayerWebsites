@@ -1,6 +1,5 @@
 import axios from "axios";
 
-const prodURL = "https://api-morlevy.mela-media.co.il/api";
 const stageURL = "http://localhost:5001/api";
 
 function normalizeBaseUrl(url) {
@@ -11,7 +10,11 @@ function resolveApiBaseUrl() {
     const fromEnv = normalizeBaseUrl(process.env.REACT_APP_API_BASE_URL);
     if (fromEnv) return fromEnv;
 
-    return process.env.NODE_ENV === "production" ? prodURL : stageURL;
+    if (process.env.NODE_ENV === "production") {
+        console.warn("[apiUtils] REACT_APP_API_BASE_URL is not set – falling back to /api");
+        return "/api";
+    }
+    return stageURL;
 }
 
 const ApiUtils = axios.create({

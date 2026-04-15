@@ -401,7 +401,7 @@ async function renderEvidencePdf({ doc, sender, signers, qrDataUrl, brand }) {
   const fontDataUrl = loadFileAsDataUrl(fontPath, 'font/ttf');
 
   const safeBrand = {
-    companyName: brand?.companyName || 'MorLevy',
+    companyName: brand?.companyName || process.env.COMPANY_NAME || '',
     logoDataUrl: brand?.logoDataUrl || null,
   };
 
