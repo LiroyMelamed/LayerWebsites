@@ -315,7 +315,7 @@ const uploadKnowledgeDoc = async (req, res) => {
         });
     } catch (err) {
         console.error('[platformSettings] uploadKnowledgeDoc error:', err);
-        return res.status(500).json({ message: err.message || 'שגיאה בהעלאת מסמך' });
+        return res.status(500).json({ message: 'שגיאה בהעלאת מסמך' });
     }
 };
 
@@ -330,8 +330,8 @@ const deleteKnowledgeDoc = async (req, res) => {
         return res.json({ message: 'המסמך נמחק בהצלחה' });
     } catch (err) {
         console.error('[platformSettings] deleteKnowledgeDoc error:', err);
-        const status = err.message === 'המסמך לא נמצא' ? 404 : 500;
-        return res.status(status).json({ message: err.message || 'שגיאה במחיקת מסמך' });
+        const isNotFound = err.message === 'המסמך לא נמצא';
+        return res.status(isNotFound ? 404 : 500).json({ message: isNotFound ? 'המסמך לא נמצא' : 'שגיאה במחיקת מסמך' });
     }
 };
 

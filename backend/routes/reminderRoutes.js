@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const authMiddleware = require('../middlewares/authMiddleware');
+const requireLawyerOrAdmin = require('../middlewares/requireLawyerOrAdmin');
 const reminderController = require('../controllers/reminderController');
 
 // Multer config for Excel/CSV upload (in memory, 5 MB limit)
@@ -19,33 +20,33 @@ const upload = multer({
 });
 
 // GET  /api/reminders/templates  – list available email templates (built-in + custom)
-router.get('/templates', authMiddleware, reminderController.getTemplates);
+router.get('/templates', authMiddleware, requireLawyerOrAdmin, reminderController.getTemplates);
 
 // GET  /api/reminders/templates/:key/example-excel – download example Excel for a template
-router.get('/templates/:key/example-excel', authMiddleware, reminderController.downloadTemplateExcel);
+router.get('/templates/:key/example-excel', authMiddleware, requireLawyerOrAdmin, reminderController.downloadTemplateExcel);
 
-// CRUD for custom reminder templates
-router.get('/custom-templates', authMiddleware, reminderController.listCustomTemplates);
-router.post('/custom-templates', authMiddleware, reminderController.createCustomTemplate);
-router.put('/custom-templates/:id', authMiddleware, reminderController.updateCustomTemplate);
-router.delete('/custom-templates/:id', authMiddleware, reminderController.deleteCustomTemplate);
+// CRUD for custom reminder templates (lawyer/admin only)
+router.get('/custom-templates', authMiddleware, requireLawyerOrAdmin, reminderController.listCustomTemplates);
+router.post('/custom-templates', authMiddleware, requireLawyerOrAdmin, reminderController.createCustomTemplate);
+router.put('/custom-templates/:id', authMiddleware, requireLawyerOrAdmin, reminderController.updateCustomTemplate);
+router.delete('/custom-templates/:id', authMiddleware, requireLawyerOrAdmin, reminderController.deleteCustomTemplate);
 
-// POST /api/reminders/import     – import reminders from Excel/CSV
-router.post('/import', authMiddleware, upload.single('file'), reminderController.importReminders);
+// POST /api/reminders/import     – import reminders from Excel/CSV (lawyer/admin only)
+router.post('/import', authMiddleware, requireLawyerOrAdmin, upload.single('file'), reminderController.importReminders);
 
-// POST /api/reminders            – create a single reminder
-router.post('/', authMiddleware, reminderController.createSingleReminder);
+// POST /api/reminders            – create a single reminder (lawyer/admin only)
+router.post('/', authMiddleware, requireLawyerOrAdmin, reminderController.createSingleReminder);
 
-// GET  /api/reminders            – list reminders (with filters)
-router.get('/', authMiddleware, reminderController.listReminders);
+// GET  /api/reminders            – list reminders (lawyer/admin only)
+router.get('/', authMiddleware, requireLawyerOrAdmin, reminderController.listReminders);
 
-// PUT  /api/reminders/:id/cancel – cancel a PENDING reminder
-router.put('/:id/cancel', authMiddleware, reminderController.cancelReminder);
+// PUT  /api/reminders/:id/cancel – cancel a PENDING reminder (lawyer/admin only)
+router.put('/:id/cancel', authMiddleware, requireLawyerOrAdmin, reminderController.cancelReminder);
 
-// PUT  /api/reminders/:id – update a PENDING reminder
-router.put('/:id', authMiddleware, reminderController.updateReminder);
+// PUT  /api/reminders/:id – update a PENDING reminder (lawyer/admin only)
+router.put('/:id', authMiddleware, requireLawyerOrAdmin, reminderController.updateReminder);
 
-// DELETE /api/reminders/:id – permanently delete a reminder
-router.delete('/:id', authMiddleware, reminderController.deleteReminder);
+// DELETE /api/reminders/:id – permanently delete a reminder (lawyer/admin only)
+router.delete('/:id', authMiddleware, requireLawyerOrAdmin, reminderController.deleteReminder);
 
 module.exports = router;

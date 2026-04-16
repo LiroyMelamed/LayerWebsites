@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import SimpleContainer from '../../simpleComponents/SimpleContainer';
 import SimpleLoader from '../../simpleComponents/SimpleLoader';
 import { Text20 } from '../text/AllTextKindFile';
@@ -74,7 +75,7 @@ const HoverContainer = ({
         hoverRef.current.style.setProperty('--lw-hoverContainer-left', `${position.left}px`);
     }, [position]);
 
-    return (
+    return createPortal(
         <SimpleContainer
             ref={hoverRef}
             className={['lw-hoverContainer', isPositioned ? 'is-positioned' : null, className].filter(Boolean).join(' ')}
@@ -126,7 +127,8 @@ const HoverContainer = ({
                     )
                 )}
             </SimpleScrollView>
-        </SimpleContainer>
+        </SimpleContainer>,
+        document.body
     );
 };
 
