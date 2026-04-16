@@ -44,7 +44,7 @@ export default function AllCasesScreen() {
         if (allCases?.length > 0) {
             applyFilters(selectedCaseType, selectedStatus, selectedClient, selectedManager, selectedCompany, selectedCaseName);
         }
-    }, [allCases]);
+    }, [allCases, selectedCaseType, selectedStatus, selectedClient, selectedManager, selectedCompany, selectedCaseName]);
 
     const handleFilterByCaseName = (caseName) => {
         setSelectedCaseName(caseName);

@@ -26,7 +26,8 @@ const useHttpRequest = (requestFunction, onSuccess, onFailure) => {
 
   const defaultOnFailure = useCallback(
     (error) => {
-      openPopup(<ErrorPopup closePopup={closePopup} errorText={error?.data?.message} />)
+      const errorText = error?.data?.message || (typeof error?.data === 'string' ? error.data : null) || error?.message || 'שגיאה בלתי צפויה';
+      openPopup(<ErrorPopup closePopup={closePopup} errorText={errorText} />)
     },
     [openPopup, closePopup]
   );
