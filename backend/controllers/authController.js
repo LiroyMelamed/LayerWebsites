@@ -172,7 +172,7 @@ const requestOtp = async (req, res) => {
     } catch (error) {
         console.error("שגיאה בשליחת הקוד:", error);
         logSecurityEvent({ type: 'OTP_REQUEST_ERROR', phone: phoneNumber, ip: extractIp(req), success: false });
-        return res.status(500).json({ message: "שגיאה בשליחת הקוד", error: error.message });
+        return res.status(500).json({ message: "שגיאה בשליחת הקוד" });
     }
 };
 

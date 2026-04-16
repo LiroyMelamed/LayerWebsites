@@ -6,4 +6,4 @@ Disallow: /LoginStack/
 Disallow: /PublicSignScreen
 Allow: /
 
-Sitemap: https://morlevy.mela-media.co.il/sitemap.xml
+Sitemap: https://client.melamedlaw.co.il/sitemap.xml

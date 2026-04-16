@@ -58,7 +58,9 @@ export default function RemindersScreen() {
                 res.data.templates.forEach((tpl) => { map[tpl.key] = tpl.label; });
                 setTemplateLabelMap(map);
             }
-        }).catch(() => { });
+        }).catch((err) => {
+            console.error('[RemindersScreen] Failed to load reminder templates:', err?.message);
+        });
     }, []);
 
     const resolveTemplateLabel = useCallback((key) => {
@@ -79,7 +81,6 @@ export default function RemindersScreen() {
         onSuccess: () => { },
     });
 
-    // Re-fetch when filter or page changes
     useEffect(() => {
         performRequest();
     }, [statusFilter, page]);

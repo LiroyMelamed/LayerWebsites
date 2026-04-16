@@ -39,9 +39,9 @@ export default function MainScreen() {
                     <ComprasionDataCard
                         colors={colors.doughnutChartColorScale}
                         labels={[t("cases.openCases"), t("cases.closedCases")]}
-                        data={[mainScreenData?.AllCasesData?.length - mainScreenData?.NumberOfClosedCases, mainScreenData?.NumberOfClosedCases]}
+                        data={[(mainScreenData?.AllCasesData?.length ?? 0) - (mainScreenData?.NumberOfClosedCases ?? 0), mainScreenData?.NumberOfClosedCases ?? 0]}
                         title={t("mainScreen.caseSummary")}
-                        centerText={`${mainScreenData?.AllCasesData?.length}`}
+                        centerText={`${mainScreenData?.AllCasesData?.length ?? 0}`}
                         subText={t("mainScreen.totalCases")}
                         className="lw-mainScreen__comparisonCard"
                         onPress={() => { navigate(AdminStackName + AllCasesScreenName + '?status=open') }}
@@ -52,14 +52,14 @@ export default function MainScreen() {
                 <SimpleContainer className="lw-mainScreen__cards">
                     <SimpleContainer className="lw-mainScreen__row">
                         <ShowDataCard
-                            numberText={mainScreenData?.AllCasesData?.length - mainScreenData?.NumberOfClosedCases}
+                            numberText={(mainScreenData?.AllCasesData?.length ?? 0) - (mainScreenData?.NumberOfClosedCases ?? 0)}
                             title={t("cases.openCases")}
                             optionalOnClick={() => { navigate(AdminStackName + AllCasesScreenName + '?status=open') }}
                             isPerforming={isPerformingMainScreenData}
                         />
 
                         <ShowDataCard
-                            numberText={mainScreenData?.NumberOfClosedCases}
+                            numberText={mainScreenData?.NumberOfClosedCases ?? 0}
                             title={t("cases.closedCases")}
                             optionalOnClick={() => { navigate(AdminStackName + AllCasesScreenName + '?status=closed') }}
                             isPerforming={isPerformingMainScreenData}
@@ -68,13 +68,13 @@ export default function MainScreen() {
 
                     <SimpleContainer className="lw-mainScreen__row lw-mainScreen__row--wrap">
                         <ShowDataCard
-                            numberText={mainScreenData?.NumberOfTaggedCases}
+                            numberText={mainScreenData?.NumberOfTaggedCases ?? 0}
                             title={t("mainScreen.taggedCases")}
                             optionalOnClick={() => { navigate(AdminStackName + TaggedCasesScreenName) }}
                             isPerforming={isPerformingMainScreenData}
                         />
                         <ShowDataCard
-                            numberText={mainScreenData?.ActiveCustomers?.length}
+                            numberText={mainScreenData?.ActiveCustomers?.length ?? 0}
                             title={t("mainScreen.activeCustomers")}
                             optionalOnClick={() => { navigate(AdminStackName + AllClientsScreenName) }}
                             isPerforming={isPerformingMainScreenData}

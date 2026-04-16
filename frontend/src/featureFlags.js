@@ -9,4 +9,5 @@ export const SIGNING_OTP_ENABLED = false;
 // AI Chatbot feature.
 // When false: the /chatbot route is hidden from navigation (page still accessible via direct URL).
 // When true: chatbot link is visible in the app navigation.
-export const AI_CHATBOT_ENABLED = true;
+// Set to false until the navigation entry is wired up.
+export const AI_CHATBOT_ENABLED = false;

@@ -6,7 +6,7 @@ const useAutoHttpRequest = (requestFunction, { body = [], onSuccess = null, onFa
 
   useEffect(() => {
     performRequest(body);
-  }, []);
+  }, [requestFunction]);
 
   return { result, isPerforming, error, performRequest };
 };

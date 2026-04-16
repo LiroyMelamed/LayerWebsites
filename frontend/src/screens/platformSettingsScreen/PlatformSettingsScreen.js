@@ -683,7 +683,9 @@ export default function PlatformSettingsScreen() {
         setLoadingReminderTpls(true);
         remindersApi.getTemplates()
             .then(res => setReminderTemplates(res.data?.templates || []))
-            .catch(() => { })
+            .catch((err) => {
+                console.error('[PlatformSettingsScreen] Failed to load reminder templates:', err?.message);
+            })
             .finally(() => setLoadingReminderTpls(false));
     }, [activeTab]);
 

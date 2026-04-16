@@ -116,8 +116,11 @@ export default function SigningScreen() {
                 a.href = url;
                 a.download = safeName;
                 document.body.appendChild(a);
-                a.click();
-                a.remove();
+                try {
+                    a.click();
+                } finally {
+                    a.remove();
+                }
             }
         } catch (err) {
             console.error("Download error:", err);
