@@ -16,7 +16,7 @@ const { getEmailTemplate, getSetting } = require('../services/settingsService');
 const { getAttachmentBuffers } = require('../controllers/templateAttachmentController');
 
 const ALLOWED_CAMPAIGN_KEYS = [
-    'SIGN_INVITE', 'SIGN_REMINDER', 'DOC_SIGNED', 'DOC_REJECTED',
+    'SIGN_INVITE', 'SIGN_REMINDER', 'DOC_SIGNED', 'DOC_SIGNED_ATTACHMENTS', 'DOC_REJECTED',
     'CASE_CREATED', 'CASE_NAME_CHANGE', 'CASE_TYPE_CHANGE',
     'CASE_STAGE_CHANGE', 'CASE_CLOSED', 'CASE_REOPENED',
     'CASE_MANAGER_CHANGE', 'CASE_EST_DATE_CHANGE',

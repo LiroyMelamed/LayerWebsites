@@ -32,6 +32,7 @@ function buildDefaultContactFieldsForCampaignKey(campaignKey) {
                 action_url: baseActionUrl,
             };
         case 'DOC_SIGNED':
+        case 'DOC_SIGNED_ATTACHMENTS':
             return {
                 recipient_name: 'Test Lawyer',
                 document_name: 'מסמך בדיקה',
