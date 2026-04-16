@@ -44,7 +44,7 @@ exports.listPlans = async (req, res) => {
         return res.status(200).json({ plans: result.rows });
     } catch (e) {
         console.error('listPlans error:', e);
-        return res.status(500).json({ message: 'Error listing plans' });
+        return res.status(500).json({ message: 'שגיאה בשליפת רשימת תוכניות' });
     }
 };
 
@@ -52,8 +52,8 @@ exports.upsertPlan = async (req, res) => {
     const planKey = normalizePlanKey(req?.body?.plan_key ?? req?.body?.planKey);
     const name = String(req?.body?.name ?? '').trim();
 
-    if (!planKey) return res.status(422).json({ message: 'plan_key is required' });
-    if (!name) return res.status(422).json({ message: 'name is required' });
+    if (!planKey) return res.status(422).json({ message: 'שדה plan_key הוא חובה' });
+    if (!name) return res.status(422).json({ message: 'שדה name הוא חובה' });
 
     const documentsRetentionDaysLegacy = toPositiveIntOrNull(req?.body?.documents_retention_days ?? req?.body?.documentsRetentionDays);
     const documentsRetentionDaysCore = toPositiveIntOrNull(req?.body?.documents_retention_days_core ?? req?.body?.documentsRetentionDaysCore);
@@ -74,7 +74,7 @@ exports.upsertPlan = async (req, res) => {
 
     const featureFlags = req?.body?.feature_flags ?? req?.body?.featureFlags ?? {};
     if (featureFlags && typeof featureFlags !== 'object') {
-        return res.status(422).json({ message: 'feature_flags must be an object' });
+        return res.status(422).json({ message: 'feature_flags חייב להיות אובייקט' });
     }
 
     // Keep legacy column populated (NOT NULL) for backward compatibility.
@@ -83,7 +83,7 @@ exports.upsertPlan = async (req, res) => {
         ?? documentsRetentionDaysCore;
 
     if (!effectiveLegacyRetention) {
-        return res.status(422).json({ message: 'At least one retention field is required (documents_retention_days_core / _pii / legacy)' });
+        return res.status(422).json({ message: 'נדרש לפחות שדה שמירה אחד (documents_retention_days_core / _pii / legacy)' });
     }
 
     try {
@@ -151,7 +151,7 @@ exports.upsertPlan = async (req, res) => {
         return res.status(200).json({ ok: true, planKey: result.rows?.[0]?.PlanKey || planKey });
     } catch (e) {
         console.error('upsertPlan error:', e);
-        return res.status(500).json({ message: 'Error upserting plan' });
+        return res.status(500).json({ message: 'שגיאה בשמירת תוכנית' });
     }
 };
 
@@ -160,11 +160,11 @@ exports.assignTenantPlan = async (req, res) => {
     if (tenantId === null) return;
 
     const planKey = normalizePlanKey(req?.body?.plan_key ?? req?.body?.planKey);
-    if (!planKey) return res.status(422).json({ message: 'plan_key is required' });
+    if (!planKey) return res.status(422).json({ message: 'שדה plan_key הוא חובה' });
 
     try {
         const planRes = await pool.query('select plan_key from subscription_plans where plan_key = $1 limit 1', [planKey]);
-        if (planRes.rowCount === 0) return res.status(404).json({ message: 'Unknown plan_key' });
+        if (planRes.rowCount === 0) return res.status(404).json({ message: 'מפתח תוכנית לא מוכר' });
 
         await pool.query(
             `insert into tenant_subscriptions(tenant_id, plan_key, status, starts_at, ends_at, updated_at)
@@ -181,7 +181,7 @@ exports.assignTenantPlan = async (req, res) => {
         return res.status(200).json({ tenantId, plan_key: planKey, status: 'active' });
     } catch (e) {
         console.error('assignTenantPlan error:', e);
-        return res.status(500).json({ message: 'Error assigning tenant plan' });
+        return res.status(500).json({ message: 'שגיאה בהקצאת תוכנית לדייר' });
     }
 };
 
@@ -198,7 +198,7 @@ exports.getTenantUsage = async (req, res) => {
         return res.status(200).json({ tenantId, limits, usage });
     } catch (e) {
         console.error('getTenantUsage error:', e);
-        return res.status(500).json({ message: 'Error getting tenant usage' });
+        return res.status(500).json({ message: 'שגיאה בשליפת נתוני שימוש הדייר' });
     }
 };
 
@@ -289,6 +289,6 @@ exports.scheduleDeletionWarnings = async (req, res) => {
         });
     } catch (e) {
         console.error('scheduleDeletionWarnings error:', e);
-        return res.status(500).json({ message: 'Error scheduling deletion warnings' });
+        return res.status(500).json({ message: 'שגיאה בתזמון התראות מחיקה' });
     }
 };

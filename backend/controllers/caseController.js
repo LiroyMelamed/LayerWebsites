@@ -256,7 +256,7 @@ const getCases = async (req, res) => {
     const userRole = req.user?.Role;
 
     if (!userId) {
-        return res.status(401).json({ message: "Unauthorized: User ID missing" });
+        return res.status(401).json({ message: "נדרש להתחבר" });
     }
 
     try {
@@ -310,7 +310,7 @@ const getCases = async (req, res) => {
 
     } catch (error) {
         console.error("Error retrieving cases:", error);
-        res.status(500).json({ message: "Error retrieving cases" });
+        res.status(500).json({ message: "שגיאה בשליפת תיקים" });
     }
 };
 
@@ -328,7 +328,7 @@ const getCaseById = async (req, res) => {
             );
 
             if (ownership.rows.length === 0) {
-                return res.status(403).json({ message: "Forbidden", code: 'FORBIDDEN' });
+                return res.status(403).json({ message: "אין הרשאה", code: 'FORBIDDEN' });
             }
         }
 
@@ -336,13 +336,13 @@ const getCaseById = async (req, res) => {
         const result = await pool.query(query, [caseId]);
 
         if (result.rows.length === 0) {
-            return res.status(404).json({ message: "Case not found" });
+            return res.status(404).json({ message: "תיק לא נמצא" });
         }
         const caseUsersMap = await _fetchCaseUsers([caseId]);
         res.json(_mapCaseResults(result.rows, caseUsersMap)[0]);
     } catch (error) {
         console.error("Error retrieving case by ID:", error);
-        res.status(500).json({ message: "Error retrieving case by ID" });
+        res.status(500).json({ message: "שגיאה בשליפת תיק לפי מזהה" });
     }
 };
 
@@ -355,7 +355,7 @@ const getCaseByName = async (req, res) => {
     const userRole = req.user?.Role;
 
     if (!userId) {
-        return res.status(401).json({ message: "Unauthorized: User ID missing" });
+        return res.status(401).json({ message: "נדרש להתחבר" });
     }
 
     try {
@@ -436,7 +436,7 @@ const getCaseByName = async (req, res) => {
         const result = await pool.query(query, params);
 
         if (result.rows.length === 0) {
-            return res.status(404).json({ message: "No cases found with this name" });
+            return res.status(404).json({ message: "לא נמצאו תיקים עם שם זה" });
         }
         const mappedIds = [...new Set(result.rows.map(r => r.caseid))];
         const caseUsersMap = await _fetchCaseUsers(mappedIds);
@@ -444,7 +444,7 @@ const getCaseByName = async (req, res) => {
 
     } catch (error) {
         console.error("Error retrieving case by name:", error);
-        res.status(500).json({ message: "Error retrieving case by name" });
+        res.status(500).json({ message: "שגיאה בשליפת תיק לפי שם" });
     }
 };
 
@@ -471,6 +471,10 @@ const addCase = async (req, res) => {
     // ── Validate required CaseManager ──────────────────────────────
     if (!CaseManagerId) {
         return res.status(400).json({ code: 'CASE_MANAGER_REQUIRED', message: 'יש לבחור מנהל תיק' });
+    }
+    const parsedCaseManagerId = Number(CaseManagerId);
+    if (!Number.isFinite(parsedCaseManagerId) || parsedCaseManagerId <= 0) {
+        return res.status(400).json({ code: 'CASE_MANAGER_REQUIRED', message: 'מנהל תיק לא תקין' });
     }
 
     // Build resolved user list: prefer UserIds array, fall back to single UserId
@@ -503,7 +507,7 @@ const addCase = async (req, res) => {
                 IsTagged ? true : false,
                 WhatsappGroupLink || null,
                 CaseManager || null,
-                CaseManagerId ? Number(CaseManagerId) || null : null,
+                parsedCaseManagerId,
                 EstimatedCompletionDate || null,
                 LicenseExpiryDate || null,
                 HasLicenseExpiry ? true : false
@@ -582,29 +586,33 @@ const addCase = async (req, res) => {
                     : `תיק "${CaseName}" נוצר בהצלחה. היכנס לאתר או לאפליקציה למעקב.`;
                 const smsBody = renderTemplate(createdSmsTemplate, { ...templateData, recipientName });
 
-                await notifyRecipient({
-                    recipientUserId: u.UserId,
-                    recipientPhone: u.PhoneNumber || PhoneNumber,
-                    notificationType: 'CASE_CREATED',
-                    push: {
-                        title: notificationTitle,
-                        body: notificationMessage,
-                        data: { caseId: String(caseId) },
-                    },
-                    email: {
-                        campaignKey: 'CASE_CREATED',
-                        contactFields: {
-                            recipient_name: String(recipientName).trim(),
-                            case_title: String(CaseName || '').trim(),
-                            case_stage: initStageName,
-                            manager_name: managerName,
-                            action_url: websiteUrl,
+                try {
+                    await notifyRecipient({
+                        recipientUserId: u.UserId,
+                        recipientPhone: u.PhoneNumber || PhoneNumber,
+                        notificationType: 'CASE_CREATED',
+                        push: {
+                            title: notificationTitle,
+                            body: notificationMessage,
+                            data: { caseId: String(caseId) },
                         },
-                    },
-                    sms: {
-                        messageBody: smsBody,
-                    },
-                });
+                        email: {
+                            campaignKey: 'CASE_CREATED',
+                            contactFields: {
+                                recipient_name: String(recipientName).trim(),
+                                case_title: String(CaseName || '').trim(),
+                                case_stage: initStageName,
+                                manager_name: managerName,
+                                action_url: websiteUrl,
+                            },
+                        },
+                        sms: {
+                            messageBody: smsBody,
+                        },
+                    });
+                } catch (notifyErr) {
+                    console.error(`[addCase] Failed to notify user ${u.UserId}:`, notifyErr?.message);
+                }
             }
         }
 
@@ -624,7 +632,7 @@ const addCase = async (req, res) => {
             changedTypes: ['CASE_CREATED'],
         });
 
-        res.status(201).json({ message: "Case created successfully", caseId });
+        res.status(201).json({ message: "התיק נוצר בהצלחה", caseId });
 
     } catch (error) {
         console.error("Error creating case:", error);
@@ -633,15 +641,10 @@ const addCase = async (req, res) => {
         }
         if (!res.headersSent) {
             const isProd = String(process.env.NODE_ENV || "").toLowerCase() === "production";
-            res.status(500).json({
-                message: "Error creating case",
-                ...(isProd
-                    ? null
-                    : {
-                        details: error?.message,
-                        code: error?.code,
-                    })
-            });
+            if (!isProd) {
+                console.error('[addCase] Full error details:', error?.message, '| pg code:', error?.code);
+            }
+            res.status(500).json({ message: "שגיאה ביצירת תיק" });
         }
     } finally {
         if (client) {
@@ -672,6 +675,10 @@ const updateCase = async (req, res) => {
              FROM cases WHERE caseid = $1`,
             [caseId]
         );
+        if (oldCaseResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ message: "תיק לא נמצא" });
+        }
         const oldCase = oldCaseResult.rows[0];
 
         const toDateStr = (v) => v ? new Date(v).toISOString().slice(0, 10) : null;
@@ -873,29 +880,33 @@ const updateCase = async (req, res) => {
                     : `תיק "${CaseName}" עודכן. היכנס לאתר או לאפליקציה למעקב.`;
                 const smsBody = renderTemplate(updatedSmsTemplate, { ...templateData, recipientName });
 
-                await notifyRecipient({
-                    recipientUserId: u.UserId,
-                    recipientPhone: u.PhoneNumber || PhoneNumber,
-                    notificationType: primaryType,
-                    push: {
-                        title: notificationTitle,
-                        body: notificationMessage,
-                        data: { caseId: String(caseId) },
-                    },
-                    email: {
-                        campaignKey: primaryType,
-                        contactFields: {
-                            recipient_name: String(recipientName).trim(),
-                            case_title: String(CaseName || '').trim(),
-                            case_stage: stageName,
-                            manager_name: managerName,
-                            action_url: websiteUrl,
+                try {
+                    await notifyRecipient({
+                        recipientUserId: u.UserId,
+                        recipientPhone: u.PhoneNumber || PhoneNumber,
+                        notificationType: primaryType,
+                        push: {
+                            title: notificationTitle,
+                            body: notificationMessage,
+                            data: { caseId: String(caseId) },
                         },
-                    },
-                    sms: {
-                        messageBody: smsBody,
-                    },
-                });
+                        email: {
+                            campaignKey: primaryType,
+                            contactFields: {
+                                recipient_name: String(recipientName).trim(),
+                                case_title: String(CaseName || '').trim(),
+                                case_stage: stageName,
+                                manager_name: managerName,
+                                action_url: websiteUrl,
+                            },
+                        },
+                        sms: {
+                            messageBody: smsBody,
+                        },
+                    });
+                } catch (notifyErr) {
+                    console.error(`[updateCase] Failed to notify user ${u.UserId}:`, notifyErr?.message);
+                }
             }
         } else if (changedTypes.length > 0) {
             console.log(`[updateCase] Skipping client notifications for case ${caseId} — no client channels enabled for: ${changedTypes.join(', ')}`);
@@ -919,11 +930,11 @@ const updateCase = async (req, res) => {
             });
         }
 
-        res.status(200).json({ message: "Case updated successfully" });
+        res.status(200).json({ message: "התיק עודכן בהצלחה" });
     } catch (error) {
         console.error("Error updating case:", error);
         if (client) {
-            await client.query('ROLLBACK');
+            try { await client.query('ROLLBACK'); } catch (rbErr) { console.error('[updateCase] ROLLBACK failed:', rbErr?.message); }
         }
         res.status(500).json({ message: "שגיאה בעדכון תיק" });
     } finally {
@@ -961,7 +972,7 @@ const updateStage = async (req, res) => {
 
         if (currentData.rows.length === 0) {
             await client.query('ROLLBACK');
-            return res.status(404).json({ message: "Case not found" });
+            return res.status(404).json({ message: "תיק לא נמצא" });
         }
 
         const currentStageValue = currentData.rows[0]?.currentstage;
@@ -1145,14 +1156,14 @@ const updateStage = async (req, res) => {
 
         await client.query('COMMIT');
 
-        res.status(200).json({ message: "Stage updated successfully" });
+        res.status(200).json({ message: "השלב עודכן בהצלחה" });
 
     } catch (error) {
         console.error("Error updating stage:", error);
         if (client) {
             await client.query('ROLLBACK');
         }
-        res.status(500).json({ message: "Error updating stage" });
+        res.status(500).json({ message: "שגיאה בעדכון שלב" });
     } finally {
         if (client) {
             client.release();
@@ -1175,17 +1186,17 @@ const deleteCase = async (req, res) => {
         await client.query('COMMIT');
 
         if (result.rowCount === 0) {
-            return res.status(404).json({ message: "No case found with this ID" });
+            return res.status(404).json({ message: "לא נמצא תיק עם מזהה זה" });
         }
 
-        res.status(200).json({ message: "Case deleted successfully" });
+        res.status(200).json({ message: "התיק נמחק בהצלחה" });
 
     } catch (error) {
         console.error("Error deleting case:", error);
         if (client) {
             await client.query('ROLLBACK');
         }
-        res.status(500).json({ message: "Error deleting case" });
+        res.status(500).json({ message: "שגיאה במחיקת תיק" });
     } finally {
         if (client) {
             client.release();
@@ -1208,10 +1219,10 @@ const tagCase = async (req, res) => {
             [IsTagged ? true : false, caseId]
         );
 
-        res.status(200).json({ message: "Case Tagged successfully" });
+        res.status(200).json({ message: "התיק תויג בהצלחה" });
     } catch (error) {
         console.error("Error updating case tag:", error);
-        res.status(500).json({ message: "Error updating case tag" });
+        res.status(500).json({ message: "שגיאה בעדכון תיוג תיק" });
     }
 };
 
@@ -1221,7 +1232,7 @@ const getTaggedCases = async (req, res) => {
         const userRole = req.user?.Role;
 
         if (!userId) {
-            return res.status(401).json({ message: "Unauthorized: User ID missing" });
+            return res.status(401).json({ message: "נדרש להתחבר" });
         }
 
         const pagination = getPagination(req, res, { defaultLimit: 50, maxLimit: 200 });
@@ -1256,7 +1267,7 @@ const getTaggedCases = async (req, res) => {
         return res.json(_mapCaseResults(result.rows, caseUsersMap));
     } catch (error) {
         console.error("Error retrieving tagged cases:", error);
-        res.status(500).json({ message: "Error retrieving tagged cases" });
+        res.status(500).json({ message: "שגיאה בשליפת תיקים מתויגים" });
     }
 };
 
@@ -1269,7 +1280,7 @@ const getTaggedCasesByName = async (req, res) => {
     const userRole = req.user?.Role;
 
     if (!userId) {
-        return res.status(401).json({ message: "Unauthorized: User ID missing" });
+        return res.status(401).json({ message: "נדרש להתחבר" });
     }
 
     try {
@@ -1339,7 +1350,7 @@ const getTaggedCasesByName = async (req, res) => {
         const result = await pool.query(query, params);
 
         if (result.rows.length === 0) {
-            return res.status(404).json({ message: "No tagged cases found with this name" });
+            return res.status(404).json({ message: "לא נמצאו תיקים מתויגים עם שם זה" });
         }
         const mappedIds = [...new Set(result.rows.map(r => r.caseid))];
         const caseUsersMap = await _fetchCaseUsers(mappedIds);
@@ -1347,7 +1358,7 @@ const getTaggedCasesByName = async (req, res) => {
 
     } catch (error) {
         console.error("Error retrieving tagged cases by name:", error);
-        res.status(500).json({ message: "Error retrieving tagged cases by name" });
+        res.status(500).json({ message: "שגיאה בשליפת תיקים מתויגים לפי שם" });
     }
 };
 
@@ -1368,10 +1379,10 @@ const linkWhatsappGroup = async (req, res) => {
         try {
             parsed = new URL(String(normalized));
         } catch {
-            return res.status(400).json({ message: "WhatsappGroupLink must be a valid URL" });
+            return res.status(400).json({ message: "קישור קבוצת הוואטסאפ חייב להיות כתובת URL תקינה" });
         }
         if (!/^https?:$/.test(parsed.protocol)) {
-            return res.status(400).json({ message: "WhatsappGroupLink must start with http(s)" });
+            return res.status(400).json({ message: "קישור קבוצת הוואטסאפ חייב להתחיל ב-http או https" });
         }
     }
 
@@ -1445,10 +1456,10 @@ const linkWhatsappGroup = async (req, res) => {
             });
         }
 
-        res.status(200).json({ message: "Whatsapp group link updated successfully" });
+        res.status(200).json({ message: "קישור קבוצת הוואטסאפ עודכן בהצלחה" });
     } catch (error) {
         console.error("Error linking Whatsapp group:", error);
-        res.status(500).json({ message: "Error linking Whatsapp group" });
+        res.status(500).json({ message: "שגיאה בקישור קבוצת הוואטסאפ" });
     }
 };
 
@@ -1457,11 +1468,11 @@ const getMyCases = async (req, res) => {
     const role = req.user?.Role;
 
     if (!userId) {
-        return res.status(401).json({ message: "Unauthorized: User ID missing" });
+        return res.status(401).json({ message: "נדרש להתחבר" });
     }
 
     if (role !== 'Admin' && role !== 'Lawyer') {
-        return res.status(403).json({ message: "Forbidden", code: 'FORBIDDEN' });
+        return res.status(403).json({ message: "אין הרשאה", code: 'FORBIDDEN' });
     }
 
     try {
@@ -1494,7 +1505,7 @@ const getMyCases = async (req, res) => {
         return res.json(_mapCaseResults(result.rows, caseUsersMap));
     } catch (error) {
         console.error("Error retrieving my cases:", error);
-        return res.status(500).json({ message: "Error retrieving my cases" });
+        return res.status(500).json({ message: "שגיאה בשליפת התיקים שלי" });
     }
 };
 

@@ -7,17 +7,17 @@ exports.getCurrentPlan = async (req, res) => {
     try {
         const tenantId = Number(req.user?.UserId);
         if (!Number.isFinite(tenantId) || tenantId <= 0) {
-            return res.status(401).json({ message: 'Unauthorized' });
+            return res.status(401).json({ message: 'נדרש להתחבר' });
         }
 
         const limits = await getLimitsForFirm(null);
         if (!limits) {
-            return res.status(404).json({ message: 'No plan found' });
+            return res.status(404).json({ message: 'לא נמצאה תוכנית' });
         }
         return res.status(200).json({ ...limits, enforcementMode: enforcementMode() });
     } catch (e) {
         console.error('getCurrentPlan error:', e);
-        return res.status(500).json({ message: 'Error getting plan' });
+        return res.status(500).json({ message: 'שגיאה בשליפת תוכנית' });
     }
 };
 
@@ -25,17 +25,17 @@ exports.getCurrentUsage = async (req, res) => {
     try {
         const tenantId = Number(req.user?.UserId);
         if (!Number.isFinite(tenantId) || tenantId <= 0) {
-            return res.status(401).json({ message: 'Unauthorized' });
+            return res.status(401).json({ message: 'נדרש להתחבר' });
         }
 
         const usage = await getUsageForFirm(null);
         if (!usage) {
-            return res.status(404).json({ message: 'No usage data' });
+            return res.status(404).json({ message: 'אין נתוני שימוש' });
         }
         return res.status(200).json(usage);
     } catch (e) {
         console.error('getCurrentUsage error:', e);
-        return res.status(500).json({ message: 'Error getting usage' });
+        return res.status(500).json({ message: 'שגיאה בשליפת נתוני שימוש' });
     }
 };
 
@@ -44,7 +44,7 @@ exports.listPlans = async (req, res) => {
     try {
         const tenantId = Number(req.user?.UserId);
         if (!Number.isFinite(tenantId) || tenantId <= 0) {
-            return res.status(401).json({ message: 'Unauthorized' });
+            return res.status(401).json({ message: 'נדרש להתחבר' });
         }
 
         const result = await pool.query(
@@ -72,6 +72,6 @@ exports.listPlans = async (req, res) => {
         return res.status(200).json({ plans: result.rows });
     } catch (e) {
         console.error('listPlans error:', e);
-        return res.status(500).json({ message: 'Error listing plans' });
+        return res.status(500).json({ message: 'שגיאה בשליפת רשימת תוכניות' });
     }
 };

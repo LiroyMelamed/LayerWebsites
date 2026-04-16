@@ -20,7 +20,7 @@ const saveDeviceToken = async (req, res) => {
     const token = (fcmToken || pushToken || expoPushToken || "").trim();
 
     if (!userId || !token) {
-        return res.status(400).json({ message: "Missing user ID or push token" });
+        return res.status(400).json({ message: "חסר מזהה משתמש או אסימון התראות" });
     }
 
     try {
@@ -57,10 +57,10 @@ const saveDeviceToken = async (req, res) => {
             }
         }
 
-        res.status(200).json({ message: "Device token saved successfully" });
+        res.status(200).json({ message: "אסימון המכשיר נשמר בהצלחה" });
     } catch (error) {
         console.error("Error saving device token:", error);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ message: "שגיאה פנימית בשרת" });
     }
 };
 
@@ -120,25 +120,8 @@ const markNotificationAsRead = async (req, res) => {
     const userId = req.user.UserId;
 
     try {
-        const ownership = await pool.query(
-            `
-            SELECT UserId
-            FROM UserNotifications
-            WHERE NotificationId = $1
-            `,
-            [notificationId]
-        );
-
-        if (ownership.rows.length === 0) {
-            return res.status(404).json({ message: "Notification not found" });
-        }
-
-        const ownerUserId = ownership.rows[0]?.userid;
-        if (ownerUserId !== userId) {
-            return res.status(403).json({ message: "Forbidden", code: 'FORBIDDEN' });
-        }
-
-        // Update the notification's status in the database
+        // The UPDATE's WHERE clause enforces both existence and ownership atomically.
+        // No separate SELECT needed — avoids column-name uncertainty and TOCTOU race.
         const result = await pool.query(
             `
             UPDATE UserNotifications
@@ -149,7 +132,9 @@ const markNotificationAsRead = async (req, res) => {
         );
 
         if (result.rowCount === 0) {
-            return res.status(404).json({ message: "Notification not found" });
+            // Either the notification doesn't exist or it belongs to another user.
+            // Return 404 in both cases to avoid leaking existence to other users.
+            return res.status(404).json({ message: "התראה לא נמצאה" });
         }
 
         res.status(200).json({ NotificationId: notificationId });

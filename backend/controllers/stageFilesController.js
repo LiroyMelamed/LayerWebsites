@@ -25,7 +25,7 @@ exports.getStageFiles = async (req, res) => {
                 [caseId, userId]
             );
             if (link.rowCount === 0) {
-                return res.status(403).json({ message: "Forbidden" });
+                return res.status(403).json({ message: "אין הרשאה" });
             }
         }
 
@@ -43,7 +43,7 @@ exports.getStageFiles = async (req, res) => {
         return res.json(result.rows);
     } catch (err) {
         console.error("getStageFiles error:", err);
-        return res.status(500).json({ message: "Failed to fetch stage files" });
+        return res.status(500).json({ message: "שגיאה בשליפת קבצי שלב" });
     }
 };
 
@@ -61,7 +61,7 @@ exports.addStageFile = async (req, res) => {
 
     const { fileKey, fileName, fileExt, fileMime, fileSize } = req.body;
     if (!fileKey || !fileName) {
-        return res.status(400).json({ message: "fileKey and fileName are required" });
+        return res.status(400).json({ message: "fileKey ו-fileName הם שדות חובה" });
     }
 
     try {
@@ -70,7 +70,7 @@ exports.addStageFile = async (req, res) => {
         // Verify case exists
         const caseRes = await pool.query("SELECT caseid FROM cases WHERE caseid = $1", [caseId]);
         if (caseRes.rowCount === 0) {
-            return res.status(404).json({ message: "Case not found" });
+            return res.status(404).json({ message: "תיק לא נמצא" });
         }
 
         const result = await pool.query(
@@ -83,7 +83,7 @@ exports.addStageFile = async (req, res) => {
         return res.status(201).json(result.rows[0]);
     } catch (err) {
         console.error("addStageFile error:", err);
-        return res.status(500).json({ message: "Failed to add stage file" });
+        return res.status(500).json({ message: "שגיאה בהוספת קובץ שלב" });
     }
 };
 
@@ -102,12 +102,12 @@ exports.deleteStageFile = async (req, res) => {
             [fileId]
         );
         if (result.rowCount === 0) {
-            return res.status(404).json({ message: "Stage file not found" });
+            return res.status(404).json({ message: "קובץ שלב לא נמצא" });
         }
-        return res.json({ message: "Deleted", id: fileId });
+        return res.json({ message: "נמחק", id: fileId });
     } catch (err) {
         console.error("deleteStageFile error:", err);
-        return res.status(500).json({ message: "Failed to delete stage file" });
+        return res.status(500).json({ message: "שגיאה במחיקת קובץ שלב" });
     }
 };
 
@@ -129,7 +129,7 @@ exports.readStageFile = async (req, res) => {
             [fileId]
         );
         if (fileRes.rowCount === 0) {
-            return res.status(404).json({ message: "Stage file not found" });
+            return res.status(404).json({ message: "קובץ שלב לא נמצא" });
         }
 
         const { file_key, file_name, caseid } = fileRes.rows[0];
@@ -141,7 +141,7 @@ exports.readStageFile = async (req, res) => {
                 [caseid, userId]
             );
             if (link.rowCount === 0) {
-                return res.status(403).json({ message: "Forbidden" });
+                return res.status(403).json({ message: "אין הרשאה" });
             }
         }
 
@@ -155,6 +155,6 @@ exports.readStageFile = async (req, res) => {
         return res.json({ readUrl, fileName: file_name, expiresIn: 600 });
     } catch (err) {
         console.error("readStageFile error:", err);
-        return res.status(500).json({ message: "Failed to get read URL" });
+        return res.status(500).json({ message: "שגיאה ביצירת קישור קריאה" });
     }
 };

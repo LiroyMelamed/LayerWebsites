@@ -4,6 +4,7 @@ const { requireInt } = require("../utils/paramValidation");
 const { createAppError } = require('../utils/appError');
 const { getHebrewMessage } = require('../utils/errors.he');
 const { userHasLegalData } = require('../utils/legalData');
+const { insertAuditEvent } = require('../utils/auditEvents');
 
 /** Parse HIDDEN_ADMIN_USER_IDS env var into an array of numbers */
 function _getHiddenAdminIds() {
@@ -28,7 +29,7 @@ const getAdmins = async (req, res) => {
         res.json(result.rows);
     } catch (error) {
         console.error("Error retrieving Admins:", error);
-        res.status(500).json({ message: "Error retrieving Admins" });
+        res.status(500).json({ message: "שגיאה בשליפת מנהלים" });
     }
 };
 
@@ -55,7 +56,7 @@ const getAdminByName = async (req, res) => {
             return res.json(result.rows);
         } catch (error) {
             console.error("Error retrieving admins:", error);
-            return res.status(500).json({ message: "Error retrieving Admins" });
+            return res.status(500).json({ message: "שגיאה בשליפת מנהלים" });
         }
     }
 
@@ -72,14 +73,14 @@ const getAdminByName = async (req, res) => {
 
         // Check if any rows were returned
         if (result.rows.length === 0) {
-            return res.status(404).json({ message: "No admin found with this name" });
+            return res.status(404).json({ message: "לא נמצא מנהל עם שם זה" });
         }
 
         // Return the found rows
         res.json(result.rows);
     } catch (error) {
         console.error("Error retrieving admin:", error);
-        res.status(500).json({ message: "Error retrieving admin by name" });
+        res.status(500).json({ message: "שגיאה בשליפת מנהל לפי שם" });
     }
 };
 
@@ -117,10 +118,10 @@ const updateAdmin = async (req, res) => {
 
         await pool.query(query, params); // Execute query with parameters
 
-        res.status(200).json({ message: "Admin updated successfully" });
+        res.status(200).json({ message: "המנהל עודכן בהצלחה" });
     } catch (error) {
         console.error("Error updating admin:", error);
-        res.status(500).json({ message: "Error updating admin" });
+        res.status(500).json({ message: "שגיאה בעדכון מנהל" });
     }
 };
 
@@ -148,7 +149,7 @@ const deleteAdmin = async (req, res, next) => {
             const roleRes = await client.query('SELECT role FROM users WHERE userid = $1', [adminUserId]);
             if (roleRes.rowCount === 0 || roleRes.rows[0]?.role !== 'Admin') {
                 await client.query('ROLLBACK');
-                return res.status(404).json({ message: 'Admin not found or already deleted' });
+                return res.status(404).json({ message: 'המנהל לא נמצא או כבר נמחק' });
             }
 
             // Mirror customer deletion cascade to satisfy FK constraints.
@@ -178,10 +179,10 @@ const deleteAdmin = async (req, res, next) => {
             await client.query('COMMIT');
 
             if (result.rowCount === 0) {
-                return res.status(404).json({ message: 'Admin not found or already deleted' });
+                return res.status(404).json({ message: 'המנהל לא נמצא או כבר נמחק' });
             }
 
-            return res.status(200).json({ message: 'Admin deleted successfully' });
+            return res.status(200).json({ message: 'המנהל נמחק בהצלחה' });
         } catch (innerError) {
             await client.query('ROLLBACK');
             throw innerError;
@@ -190,7 +191,7 @@ const deleteAdmin = async (req, res, next) => {
         }
     } catch (error) {
         console.error("Error deleting admin:", error);
-        res.status(500).json({ message: "Error deleting admin" });
+        res.status(500).json({ message: "שגיאה במחיקת מנהל" });
     }
 };
 
@@ -201,22 +202,37 @@ const addAdmin = async (req, res) => {
     const { name, email, phoneNumber, password } = req.body;
     try {
         if (!password) {
-            return res.status(422).json({ message: "Password is required" });
+            return res.status(422).json({ message: "סיסמה היא שדה חובה" });
         }
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        await pool.query(
+        const insertResult = await pool.query(
             `
             INSERT INTO users (name, email, phonenumber, passwordhash, role, createdat)
             VALUES ($1, $2, $3, $4, $5, NOW())
+            RETURNING userid
             `,
             [name, email, phoneNumber, hashedPassword, "Admin"]
         );
+        const newAdminId = insertResult.rows[0]?.userid;
 
-        res.status(201).json({ message: "Admin added successfully" });
+        try {
+            await insertAuditEvent({
+                req,
+                eventType: 'ADMIN_CREATED',
+                actorUserId: req.user?.UserId ?? null,
+                actorType: 'Admin',
+                success: true,
+                metadata: { newAdminId, newAdminName: name },
+            });
+        } catch (auditErr) {
+            console.error('[addAdmin] Audit log failed (non-fatal):', auditErr?.message);
+        }
+
+        res.status(201).json({ message: "המנהל נוסף בהצלחה" });
     } catch (error) {
         console.error("Error adding admin:", error);
-        res.status(500).json({ message: "Error adding admin" });
+        res.status(500).json({ message: "שגיאה בהוספת מנהל" });
     }
 };
 
@@ -229,7 +245,7 @@ const setTenantPlan = async (req, res) => {
     const planKeyRaw = req?.body?.plan_key ?? req?.body?.planKey;
     const planKey = String(planKeyRaw || '').trim().toUpperCase();
     if (!planKey) {
-        return res.status(422).json({ message: 'plan_key is required' });
+        return res.status(422).json({ message: 'שדה plan_key הוא חובה' });
     }
 
     try {
@@ -238,7 +254,7 @@ const setTenantPlan = async (req, res) => {
             [planKey]
         );
         if (planRes.rowCount === 0) {
-            return res.status(404).json({ message: 'Unknown plan_key' });
+            return res.status(404).json({ message: 'מפתח תוכנית לא מוכר' });
         }
 
         await pool.query(
@@ -256,7 +272,7 @@ const setTenantPlan = async (req, res) => {
         return res.status(200).json({ tenantId, plan_key: planKey, status: 'active' });
     } catch (error) {
         console.error('Error setting tenant plan:', error);
-        return res.status(500).json({ message: 'Error setting tenant plan' });
+        return res.status(500).json({ message: 'שגיאה בהגדרת תוכנית הדייר' });
     }
 };
 

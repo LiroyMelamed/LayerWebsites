@@ -82,7 +82,7 @@ const getMainScreenData = async (req, res) => {
  */
 const getClientDashboardData = async (req, res) => {
     const userId = req.user?.UserId;
-    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+    if (!userId) return res.status(401).json({ message: "נדרש להתחבר" });
 
     try {
         const [casesResult, unreadResult] = await Promise.all([
