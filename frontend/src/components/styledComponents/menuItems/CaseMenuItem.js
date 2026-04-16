@@ -70,19 +70,25 @@ export default function CaseMenuItem({
                 Descriptions: tempDescription
             };
 
-            // Show license expiry update popup before closing
-            openPopup(
-                <LicenseExpiryUpdateModal
-                    fullCase={fullCaseListener}
-                    onDone={() => {
-                        setFullCaseListener(updated);
-                        setCase(fullCaseListener.CaseId, updated);
-                        closePopup();
-                    }}
-                    onClose={closePopup}
-                />,
-                { preventClose: !fullCaseListener.LicenseExpiryDate }
-            );
+            if (fullCaseListener.HasLicenseExpiry || fullCaseListener.LicenseExpiryDate) {
+                // Show license expiry update popup before closing
+                openPopup(
+                    <LicenseExpiryUpdateModal
+                        fullCase={fullCaseListener}
+                        onDone={() => {
+                            setFullCaseListener(updated);
+                            setCase(fullCaseListener.CaseId, updated);
+                            closePopup();
+                        }}
+                        onClose={closePopup}
+                    />,
+                    { preventClose: !fullCaseListener.LicenseExpiryDate }
+                );
+            } else {
+                // No license expiry tracking — close the case directly
+                setFullCaseListener(updated);
+                setCase(fullCaseListener.CaseId, updated);
+            }
         } else {
             // Normal advance — move to next stage
             tempDescription[nextStage - 1] = { ...tempDescription[nextStage - 1], IsNew: true };
