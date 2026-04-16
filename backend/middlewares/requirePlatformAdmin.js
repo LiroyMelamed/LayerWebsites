@@ -37,7 +37,7 @@ module.exports = async function requirePlatformAdmin(req, _res, next) {
     // Fallback: env-based allowlist
     const isProd = String(process.env.NODE_ENV || '').toLowerCase() === 'production';
     if (isProd && !allowlistSet) {
-        return next(createAppError('FORBIDDEN', 403, 'Platform admin allowlist not configured'));
+        return next(createAppError('FORBIDDEN', 403, 'רשימת מנהלי פלטפורמה לא הוגדרה'));
     }
 
     if (allowlistSet && !allowlistSet.has(userId)) {

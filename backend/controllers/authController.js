@@ -289,7 +289,7 @@ const verifyOtp = async (req, res) => {
 const refreshToken = async (req, res) => {
     const rawRefreshToken = String(req?.body?.refreshToken || "").trim();
     if (!rawRefreshToken) {
-        return res.status(400).json({ message: 'Missing refreshToken' });
+        return res.status(400).json({ message: 'חסר אסימון רענון' });
     }
 
     const tokenHash = hashRefreshToken(rawRefreshToken);
@@ -313,7 +313,7 @@ const refreshToken = async (req, res) => {
         if (found.rows.length === 0) {
             await client.query('ROLLBACK');
             logSecurityEvent({ type: 'TOKEN_REFRESH_FAIL', ip: extractIp(req), userAgent: req.headers?.['user-agent'], success: false, meta: { reason: 'invalid_token' } });
-            return res.status(401).json({ message: 'Invalid refresh token' });
+            return res.status(401).json({ message: 'אסימון רענון לא תקין' });
         }
 
         const row = found.rows[0];
@@ -321,13 +321,13 @@ const refreshToken = async (req, res) => {
         if (row.revoked_at) {
             await client.query('ROLLBACK');
             logSecurityEvent({ type: 'TOKEN_REFRESH_FAIL', userId: row.userid, ip: extractIp(req), success: false, meta: { reason: 'revoked' } });
-            return res.status(401).json({ message: 'Refresh token revoked' });
+            return res.status(401).json({ message: 'אסימון הרענון בוטל' });
         }
 
         if (row.expires_at && new Date(row.expires_at).getTime() <= Date.now()) {
             await client.query('ROLLBACK');
             logSecurityEvent({ type: 'TOKEN_REFRESH_FAIL', userId: row.userid, ip: extractIp(req), success: false, meta: { reason: 'expired' } });
-            return res.status(401).json({ message: 'Refresh token expired' });
+            return res.status(401).json({ message: 'אסימון הרענון פג תוקף' });
         }
 
         // Rotate refresh token on each refresh.
@@ -370,11 +370,11 @@ const refreshToken = async (req, res) => {
         logSecurityEvent({ type: 'TOKEN_REFRESH_ERROR', ip: extractIp(req), success: false });
 
         if (error?.code === '42P01') {
-            return res.status(501).json({ message: 'Refresh tokens not available (migration not applied)' });
+            return res.status(501).json({ message: 'אסימוני רענון אינם זמינים' });
         }
 
         console.error('refreshToken error:', error);
-        return res.status(500).json({ message: 'Failed to refresh token' });
+        return res.status(500).json({ message: 'שגיאה בחידוש אסימון' });
     } finally {
         client.release();
     }
@@ -398,10 +398,10 @@ const logout = async (req, res) => {
             return res.status(200).json({ ok: true });
         } catch (error) {
             if (error?.code === '42P01') {
-                return res.status(501).json({ message: 'Refresh tokens not available (migration not applied)' });
+                return res.status(501).json({ message: 'אסימוני רענון אינם זמינים' });
             }
             console.error('logout error:', error);
-            return res.status(500).json({ message: 'Failed to logout' });
+            return res.status(500).json({ message: 'שגיאה בהתנתקות' });
         }
     }
 
@@ -412,7 +412,7 @@ const logout = async (req, res) => {
             const decoded = jwt.verify(bearer, SECRET_KEY, { algorithms: ['HS256'] });
             const userid = decoded?.userid;
             if (!userid) {
-                return res.status(401).json({ message: 'Invalid access token' });
+                return res.status(401).json({ message: 'אסימון גישה לא תקין' });
             }
 
             await pool.query(
@@ -426,13 +426,13 @@ const logout = async (req, res) => {
             return res.status(200).json({ ok: true });
         } catch (error) {
             if (error?.code === '42P01') {
-                return res.status(501).json({ message: 'Refresh tokens not available (migration not applied)' });
+                return res.status(501).json({ message: 'אסימוני רענון אינם זמינים' });
             }
-            return res.status(401).json({ message: 'Invalid access token' });
+            return res.status(401).json({ message: 'אסימון גישה לא תקין' });
         }
     }
 
-    return res.status(400).json({ message: 'Provide refreshToken or Authorization bearer token' });
+    return res.status(400).json({ message: 'נדרש לספק אסימון רענון או כותרת Authorization' });
 };
 
 const register = async (req, res) => {

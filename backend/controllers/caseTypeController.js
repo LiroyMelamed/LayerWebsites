@@ -69,7 +69,7 @@ const getCaseTypes = async (req, res) => {
 
     } catch (error) {
         console.error("Error retrieving case types:", error);
-        res.status(500).json({ message: "Error retrieving case types" });
+        res.status(500).json({ message: "שגיאה בשליפת סוגי תיקים" });
     }
 };
 
@@ -105,7 +105,7 @@ const getCaseTypesForFilter = async (req, res) => {
 
     } catch (error) {
         console.error("Error retrieving case type names for filter:", error);
-        res.status(500).json({ message: "Error retrieving case type names" });
+        res.status(500).json({ message: "שגיאה בשליפת שמות סוגי תיקים" });
     }
 };
 
@@ -121,7 +121,7 @@ const getCaseTypeById = async (req, res) => {
             loader: () => pool.query(`SELECT * FROM casetypes WHERE casetypeid = $1`, [caseTypeIdInt]),
         });
         if (result.rows.length === 0) {
-            return res.status(404).json({ message: "Case type not found" });
+            return res.status(404).json({ message: "סוג תיק לא נמצא" });
         }
 
         if (userRole !== 'Admin') {
@@ -135,14 +135,14 @@ const getCaseTypeById = async (req, res) => {
             );
 
             if (hasAccess.rows.length === 0) {
-                return res.status(403).json({ message: "Forbidden", code: 'FORBIDDEN' });
+                return res.status(403).json({ message: "אין הרשאה", code: 'FORBIDDEN' });
             }
         }
 
         res.json(result.rows[0]);
     } catch (error) {
         console.error("Error retrieving case type by ID:", error);
-        res.status(500).json({ message: "Error retrieving case type by ID" });
+        res.status(500).json({ message: "שגיאה בשליפת סוג תיק לפי מזהה" });
     }
 };
 
@@ -197,7 +197,7 @@ const getCaseTypeByName = async (req, res) => {
 
         if (result.rows.length === 0) {
             if (caseTypeName) {
-                return res.status(404).json({ message: "No case type found" });
+                return res.status(404).json({ message: "לא נמצא סוג תיק" });
             }
             return res.json([]);
         }
@@ -227,7 +227,7 @@ const getCaseTypeByName = async (req, res) => {
         res.json(Array.from(caseTypesMap.values()));
     } catch (error) {
         console.error("Error retrieving case type by name:", error);
-        res.status(500).json({ message: "Error retrieving case type" });
+        res.status(500).json({ message: "שגיאה בשליפת סוג תיק" });
     }
 };
 
@@ -249,18 +249,18 @@ const deleteCaseType = async (req, res) => {
         await client.query('COMMIT');
 
         if (result.rowCount === 0) {
-            return res.status(404).json({ message: "Case type not found or already deleted" });
+            return res.status(404).json({ message: "סוג תיק לא נמצא או כבר נמחק" });
         }
 
         invalidateCaseTypes({ caseTypeId: CaseTypeId });
 
-        res.status(200).json({ message: "Case type deleted successfully" });
+        res.status(200).json({ message: "סוג התיק נמחק בהצלחה" });
     } catch (error) {
         console.error("Error deleting case type:", error);
         if (client) {
             await client.query('ROLLBACK');
         }
-        res.status(500).json({ message: "Error deleting case type" });
+        res.status(500).json({ message: "שגיאה במחיקת סוג תיק" });
     } finally {
         if (client) {
             client.release();
@@ -303,13 +303,13 @@ const addCaseType = async (req, res) => {
 
         invalidateCaseTypes();
 
-        res.status(201).json({ message: "Case type created successfully", CaseTypeId: caseTypeId });
+        res.status(201).json({ message: "סוג התיק נוצר בהצלחה", CaseTypeId: caseTypeId });
     } catch (error) {
         console.error("Error creating case type:", error);
         if (client) {
             await client.query('ROLLBACK');
         }
-        res.status(500).json({ message: "Error creating case type" });
+        res.status(500).json({ message: "שגיאה ביצירת סוג תיק" });
     } finally {
         if (client) {
             client.release();
@@ -375,7 +375,7 @@ const updateCaseType = async (req, res) => {
         await client.query('COMMIT');
 
         invalidateCaseTypes({ caseTypeId: caseTypeIdInt });
-        res.status(200).json({ message: "Case type updated successfully" });
+        res.status(200).json({ message: "סוג התיק עודכן בהצלחה" });
 
     } catch (error) {
         console.error("Error updating case type:", error);
@@ -386,7 +386,7 @@ const updateCaseType = async (req, res) => {
                 console.error("Error during transaction rollback:", rollbackError);
             }
         }
-        res.status(500).json({ message: "Error updating case type" });
+        res.status(500).json({ message: "שגיאה בעדכון סוג תיק" });
     } finally {
         if (client) {
             client.release();

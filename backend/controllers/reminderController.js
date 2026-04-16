@@ -213,6 +213,11 @@ const importReminders = async (req, res, next) => {
                 failedCount++;
                 continue;
             }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                details.push({ row: rowNum, clientName, status: 'failed', reason: `אימייל לא תקין: ${email}` });
+                failedCount++;
+                continue;
+            }
 
             // Parse date (supports dd/mm/yy, dd/mm/yyyy, yyyy-mm-dd, and JS-parseable formats)
             let scheduledFor;

@@ -62,7 +62,7 @@ exports.testNotifyOrchestrator = async (req, res) => {
     try {
         const recipientUserId = parsePositiveInt(req.body?.recipientUserId ?? req.body?.userId);
         if (!recipientUserId) {
-            return res.status(422).json({ ok: false, errorCode: 'VALIDATION_ERROR', error: 'recipientUserId is required' });
+            return res.status(422).json({ ok: false, errorCode: 'VALIDATION_ERROR', error: 'שדה recipientUserId הוא חובה' });
         }
 
         const notificationType = String(req.body?.notificationType || 'SIGN_INVITE').trim();
@@ -94,6 +94,6 @@ exports.testNotifyOrchestrator = async (req, res) => {
 
         return res.json(result);
     } catch (e) {
-        return res.status(500).json({ ok: false, errorCode: 'INTERNAL_ERROR', error: e?.message || 'Unknown error' });
+        return res.status(500).json({ ok: false, errorCode: 'INTERNAL_ERROR', error: e?.message || 'שגיאה לא ידועה' });
     }
 };

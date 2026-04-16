@@ -23,7 +23,7 @@ exports.presignUpload = async (req, res) => {
         return res.json({ uploadUrl, key, expiresIn: 60 });
     } catch (err) {
         console.error("presign-upload error:", err);
-        return res.status(500).json({ message: "Failed to presign upload" });
+        return res.status(500).json({ message: "שגיאה ביצירת קישור העלאה" });
     }
 };
 
@@ -31,11 +31,11 @@ exports.presignUpload = async (req, res) => {
 exports.presignRead = async (req, res) => {
     try {
         const key = req.query.key;
-        if (!key) return res.status(400).json({ message: "missing key" });
+        if (!key) return res.status(400).json({ message: "חסר מפתח קובץ" });
 
         // Simple ownership check
         if (!key.startsWith(`users/${req.user.UserId}/`)) {
-            return res.status(403).json({ message: "Forbidden", code: 'FORBIDDEN' });
+            return res.status(403).json({ message: "אין הרשאה", code: 'FORBIDDEN' });
         }
 
         const cmd = new GetObjectCommand({
@@ -48,6 +48,6 @@ exports.presignRead = async (req, res) => {
         return res.json({ readUrl, expiresIn: 600 });
     } catch (err) {
         console.error("presign-read error:", err);
-        return res.status(500).json({ message: "Failed to presign read" });
+        return res.status(500).json({ message: "שגיאה ביצירת קישור קריאה" });
     }
 };

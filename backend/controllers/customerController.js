@@ -53,7 +53,7 @@ const getCustomers = async (req, res) => {
         })));
     } catch (error) {
         console.error("Error retrieving customers:", error);
-        res.status(500).json({ message: "Error retrieving customers" });
+        res.status(500).json({ message: "שגיאה בשליפת לקוחות" });
     }
 };
 
@@ -65,6 +65,15 @@ const addCustomer = async (req, res) => {
         const phoneDigits = normalizePhoneDigits(phoneNumber);
         if (!phoneDigits) {
             return res.status(400).json({ message: "נא להזין מספר פלאפון תקין", code: 'INVALID_PHONE' });
+        }
+
+        let parsedDob = null;
+        if (dateOfBirth) {
+            const d = new Date(dateOfBirth);
+            if (isNaN(d.getTime())) {
+                return res.status(400).json({ message: "תאריך לידה לא תקין", code: 'INVALID_DATE' });
+            }
+            parsedDob = d;
         }
 
         const existing = await pool.query(
@@ -81,7 +90,7 @@ const addCustomer = async (req, res) => {
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING userid
             `,
-            [name, email, phoneNumber, null, "User", companyName, dateOfBirth ? new Date(dateOfBirth) : null, new Date()]
+            [name, email, phoneNumber, null, "User", companyName, parsedDob, new Date()]
         );
         const newUserId = insertResult.rows[0]?.userid;
 
@@ -146,6 +155,15 @@ const updateCustomerById = async (req, res) => {
             return res.status(400).json({ message: "נא להזין מספר פלאפון תקין", code: 'INVALID_PHONE' });
         }
 
+        let parsedDob = null;
+        if (dateOfBirth) {
+            const d = new Date(dateOfBirth);
+            if (isNaN(d.getTime())) {
+                return res.status(400).json({ message: "תאריך לידה לא תקין", code: 'INVALID_DATE' });
+            }
+            parsedDob = d;
+        }
+
         const existing = await pool.query(
             `SELECT userid FROM users WHERE regexp_replace(phonenumber, '\\D', '', 'g') = $1 AND userid <> $2 LIMIT 1`,
             [phoneDigits, customerId]
@@ -165,7 +183,7 @@ const updateCustomerById = async (req, res) => {
                 dateofbirth = $5
             WHERE userid = $6
             `,
-            [name, email, phoneNumber, companyName, dateOfBirth ? new Date(dateOfBirth) : null, customerId]
+            [name, email, phoneNumber, companyName, parsedDob, customerId]
         );
 
         if (result.rowCount === 0) {
@@ -235,7 +253,7 @@ const getCustomerByName = async (req, res) => {
         const result = await pool.query(query, params);
 
         if (result.rows.length === 0) {
-            return res.status(404).json({ message: "No users found" });
+            return res.status(404).json({ message: "לא נמצאו משתמשים" });
         }
 
         res.json(result.rows.map(row => ({
@@ -248,7 +266,7 @@ const getCustomerByName = async (req, res) => {
         })));
     } catch (error) {
         console.error("Error retrieving users by name:", error);
-        res.status(500).json({ message: "Error retrieving users" });
+        res.status(500).json({ message: "שגיאה בשליפת משתמשים" });
     }
 };
 
@@ -274,7 +292,7 @@ const getCurrentCustomer = async (req, res) => {
         );
 
         if (result.rows.length === 0) {
-            return res.status(404).json({ message: "Current user not found." });
+            return res.status(404).json({ message: "המשתמש הנוכחי לא נמצא" });
         }
 
         const row = result.rows[0];
@@ -316,7 +334,7 @@ const getCurrentCustomer = async (req, res) => {
         });
     } catch (error) {
         console.error("Error retrieving current customer:", error);
-        res.status(500).json({ message: "Error retrieving current customer profile." });
+        res.status(500).json({ message: "שגיאה בשליפת פרופיל הלקוח הנוכחי" });
     }
 };
 
@@ -361,7 +379,7 @@ const updateCurrentCustomer = async (req, res) => {
 
         const result = await pool.query(sql, params);
         if (result.rowCount === 0) {
-            return res.status(404).json({ message: "User not found." });
+            return res.status(404).json({ message: "משתמש לא נמצא" });
         }
 
         if (PhotoKey && oldKey && oldKey !== PhotoKey && oldKey.startsWith(`users/${userId}/`)) {
@@ -531,7 +549,7 @@ const deleteCustomer = async (req, res, next) => {
             }
 
             if (deleteResult.rowCount === 0) {
-                return res.status(404).json({ message: "Customer not found" });
+                return res.status(404).json({ message: "לקוח לא נמצא" });
             }
 
             if (hasLegalData) {
@@ -555,7 +573,7 @@ const deleteMyAccount = async (req, res, next) => {
     const userId = req.user && (req.user.UserId || req.user.id);
 
     if (!userId) {
-        return res.status(401).json({ message: "Not authorized" });
+        return res.status(401).json({ message: "נדרש להתחבר" });
     }
 
     try {
@@ -567,12 +585,12 @@ const deleteMyAccount = async (req, res, next) => {
             const roleRes = await client.query("SELECT role FROM users WHERE userid = $1", [userId]);
             if (roleRes.rows.length === 0) {
                 await client.query("ROLLBACK");
-                return res.status(404).json({ message: "User not found" });
+                return res.status(404).json({ message: "משתמש לא נמצא" });
             }
             const userRole = roleRes.rows[0].role;
             if (userRole && userRole.toLowerCase() === "admin") {
                 await client.query("ROLLBACK");
-                return res.status(403).json({ message: "Admins cannot delete account via this endpoint" });
+                return res.status(403).json({ message: "מנהלים אינם יכולים למחוק חשבון דרך נקודת קצה זו" });
             }
 
             // Block deletion if the user has any legal/evidentiary data.
@@ -602,12 +620,12 @@ const deleteMyAccount = async (req, res, next) => {
             await client.query("COMMIT");
 
             if (delRes.rowCount === 0) {
-                return res.status(404).json({ message: "User not found" });
+                return res.status(404).json({ message: "משתמש לא נמצא" });
             }
 
             return res.status(200).json({
                 success: true,
-                message: "Your account and associated data were permanently deleted. החשבון וכל הנתונים המשויכים נמחקו לצמיתות."
+                message: "החשבון וכל הנתונים המשויכים נמחקו לצמיתות"
             });
         } catch (err) {
             await client.query("ROLLBACK");
@@ -659,6 +677,14 @@ const importCustomers = async (req, res, next) => {
 
         if (!rows.length) {
             return res.status(400).json({ message: 'לא נמצאו שורות בגיליון.', code: 'EMPTY_SHEET' });
+        }
+
+        const MAX_IMPORT_ROWS = 5000;
+        if (rows.length > MAX_IMPORT_ROWS) {
+            return res.status(400).json({
+                message: `יותר מדי שורות — מקסימום ${MAX_IMPORT_ROWS} לייבוא אחד`,
+                code: 'TOO_MANY_ROWS'
+            });
         }
 
         // Column name mapping (Hebrew + English variants)

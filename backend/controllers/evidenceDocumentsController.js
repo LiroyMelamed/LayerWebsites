@@ -50,7 +50,12 @@ function encodeCursor({ signedAtUtc, signingFileId }) {
 function decodeCursor(cursor) {
     const raw = base64UrlDecodeToString(cursor);
     if (!raw) return null;
-    const obj = JSON.parse(raw);
+    let obj;
+    try {
+        obj = JSON.parse(raw);
+    } catch {
+        return null; // malformed cursor → treat as missing (no pagination)
+    }
 
     const signedAtUtc = String(obj?.signedAtUtc || '').trim();
     const signingFileId = parsePositiveIntOrNull(obj?.signingFileId);
