@@ -2,8 +2,11 @@
 
 .lw-hoverContainer {
   position: fixed;
-  top: var(--lw-hoverContainer-top, 0px);
-  left: var(--lw-hoverContainer-left, 0px);
+  // top/left are set via inline style by useLayoutEffect before first paint
+  top: 0;
+  left: 0;
+
+  flex-direction: column; // override SimpleContainer's default row direction
 
   min-width: 7.5rem;
   max-height: 25rem;
@@ -14,17 +17,7 @@
   border-radius: 1.5625rem;
   box-shadow: 0 0.25rem 0.375rem rgba(0, 0, 0, 0.1);
 
-  z-index: 20001;
-
-  // Hidden until position is calculated (prevents flicker at 0,0)
-  opacity: 0;
-  transform: translateY(-0.25rem);
-  transition: opacity 0.15s ease, transform 0.15s ease;
-
-  &.is-positioned {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  z-index: 20001; // above SimplePopUp overlay (20000); both are now body-level portals
 }
 
 .lw-hoverContainer__optionText {
@@ -32,7 +25,11 @@
 }
 
 .lw-hoverContainer__scroll {
+  // Override SimpleScrollView's flex: 1 so height is driven by content, not parent
+  flex: 0 1 auto;
   max-height: 25rem;
+  overflow-y: auto;
+  width: 100%;
 }
 
 .lw-hoverContainer__loading {
@@ -44,6 +41,7 @@
 
 .lw-hoverContainer__list {
   flex-direction: column;
+  width: 100%;
 }
 
 .lw-hoverContainer__option {

@@ -196,9 +196,6 @@ const getCaseTypeByName = async (req, res) => {
         const result = await pool.query(query, params);
 
         if (result.rows.length === 0) {
-            if (caseTypeName) {
-                return res.status(404).json({ message: "לא נמצא סוג תיק" });
-            }
             return res.json([]);
         }
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useLayoutEffect, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import SimpleContainer from '../../simpleComponents/SimpleContainer';
 import SimpleLoader from '../../simpleComponents/SimpleLoader';
@@ -23,62 +23,59 @@ const HoverContainer = ({
     className,
 }) => {
     const { t } = useTranslation();
-    const [position, setPosition] = useState({ top: 0, left: 0 });
-    const [isPositioned, setIsPositioned] = useState(false);
     const hoverRef = useRef(null);
 
-    useEffect(() => {
+    // useLayoutEffect: runs after DOM commit but BEFORE browser paint.
+    // This guarantees hoverRef.current is set and getBoundingClientRect() is valid,
+    // and positions the element before the first visible frame (no flash at 0,0).
+    useLayoutEffect(() => {
+        const el = hoverRef.current;
+        if (!el) return;
+
         const adjustPosition = () => {
-            if (targetRef.current && hoverRef.current) {
-                const targetRect = targetRef.current.getBoundingClientRect();
-                const hoverRect = hoverRef.current.getBoundingClientRect();
+            const target = targetRef?.current;
+            const hover = hoverRef.current;
+            if (!target || !hover) return;
 
-                const viewportWidth = window.innerWidth;
+            const targetRect = target.getBoundingClientRect();
+            const hoverRect = hover.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
 
-                // Use viewport-relative coordinates (pairs with `position: fixed`).
-                const desiredLeft = targetRect.left + targetRect.width / 2 - hoverRect.width / 2;
-                const margin = 8;
-                const left = Math.max(margin, Math.min(desiredLeft, viewportWidth - hoverRect.width - margin));
+            const desiredLeft = targetRect.left + targetRect.width / 2 - hoverRect.width / 2;
+            const margin = 8;
+            const left = Math.max(margin, Math.min(desiredLeft, viewportWidth - hoverRect.width - margin));
 
-                setPosition({
-                    top: targetRect.bottom + 4,
-                    left,
-                });
-                setIsPositioned(true);
-            }
+            hover.style.top = `${targetRect.bottom + 4}px`;
+            hover.style.left = `${left}px`;
         };
 
+        adjustPosition();
+
+        window.addEventListener('resize', adjustPosition);
+        // Capture scroll from scrollable parents (e.g. inside a popup)
+        window.addEventListener('scroll', adjustPosition, true);
+
+        return () => {
+            window.removeEventListener('resize', adjustPosition);
+            window.removeEventListener('scroll', adjustPosition, true);
+        };
+    }, [targetRef]);
+
+    // Separate effect for click-outside so it doesn't re-run just because onClose changes reference
+    useEffect(() => {
         const handleClickOutside = (event) => {
             if (hoverRef.current && !hoverRef.current.contains(event.target)) {
                 onClose();
             }
         };
-
-        adjustPosition();
-        window.addEventListener('resize', adjustPosition);
-        // Capture scroll events from scrollable parents (e.g., popups/modals).
-        window.addEventListener('scroll', adjustPosition, true);
         document.addEventListener('mousedown', handleClickOutside);
-
-        return () => {
-            window.removeEventListener('resize', adjustPosition);
-            window.removeEventListener('scroll', adjustPosition, true);
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [targetRef, onClose]);
-
-    useEffect(() => {
-        if (!hoverRef.current) return;
-
-        // runtime dynamic: positioned relative to the target element
-        hoverRef.current.style.setProperty('--lw-hoverContainer-top', `${position.top}px`);
-        hoverRef.current.style.setProperty('--lw-hoverContainer-left', `${position.left}px`);
-    }, [position]);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [onClose]);
 
     return createPortal(
         <SimpleContainer
             ref={hoverRef}
-            className={['lw-hoverContainer', isPositioned ? 'is-positioned' : null, className].filter(Boolean).join(' ')}
+            className={['lw-hoverContainer', className].filter(Boolean).join(' ')}
         >
             <SimpleScrollView className="lw-hoverContainer__scroll">
                 {isPerforming ? (
@@ -93,7 +90,6 @@ const HoverContainer = ({
                                     key={`choiceNumber${index}`}
                                     className="lw-hoverContainer__option"
                                     onPressIn={(e) => {
-
                                         e.preventDefault();
                                     }}
                                     onPress={() => onPressButtonFunction(getButtonTextFunction?.(result), result)}

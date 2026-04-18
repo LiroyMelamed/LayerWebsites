@@ -4,21 +4,18 @@
     position: fixed;
     inset: 0;
     background-color: rgba(45, 55, 72, 0);
-    backdrop-filter: blur(0);
     align-items: center;
     justify-content: center;
     z-index: 20000;
-    transition: background-color 0.25s ease, backdrop-filter 0.25s ease;
+    transition: background-color 0.25s ease;
 
     &.is-visible {
         background-color: rgba(45, 55, 72, 0.75);
-        backdrop-filter: blur(0.25rem);
     }
 }
 
 .lw-simplePopUp__overlay--transparent {
     background-color: transparent !important;
-    backdrop-filter: none !important;
 }
 
 
