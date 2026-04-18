@@ -1,5 +1,6 @@
 // SimplePopUp.js
 import { useRef, useEffect, useState, isValidElement } from 'react';
+import { createPortal } from 'react-dom';
 import SimpleContainer from './SimpleContainer';
 import SimpleButton from './SimpleButton';
 
@@ -41,7 +42,10 @@ const SimplePopUp = ({ isOpen, children, onClose, className, ...props }) => {
     const contentClassName = isValidElement(children) ? children.props?.className : '';
     const isFloatingMenu = typeof contentClassName === 'string' && contentClassName.includes('lw-fieldContextMenu--floating');
 
-    return (
+    // Portal the overlay to document.body so it shares the same stacking context
+    // as other portals (e.g. HoverContainer). This prevents backdrop-filter
+    // compositing from hiding fixed-position elements that have a higher z-index.
+    return createPortal(
         <SimpleContainer
             className={['lw-simplePopUp__overlay', isFloatingMenu ? 'lw-simplePopUp__overlay--transparent' : null, isVisible ? 'is-visible' : null]
                 .filter(Boolean)
@@ -77,7 +81,8 @@ const SimplePopUp = ({ isOpen, children, onClose, className, ...props }) => {
                     </SimpleContainer>
                 )}
             </SimpleContainer>
-        </SimpleContainer>
+        </SimpleContainer>,
+        document.body
     );
 };
 
