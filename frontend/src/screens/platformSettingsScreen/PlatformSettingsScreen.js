@@ -47,6 +47,7 @@ const CATEGORIES = [
     { key: "channels", label: "ערוצי התראות", icon: "📡" },
     { key: "admins", label: "מנהלי פלטפורמה", icon: "👤" },
     { key: "knowledgeDocs", label: "מסמכי ידע לצ'אטבוט", icon: "🤖" },
+    { key: "contractor_monitor", label: "מעקב קבלנים", icon: "🔍" },
 ];
 
 // ─── Setting Input Component ────────────────────────────────────────
@@ -1278,6 +1279,206 @@ export default function PlatformSettingsScreen() {
                         </SimpleContainer>
                     )}
                 </SimpleCard>
+            );
+        }
+
+        // Contractor Monitor tab
+        if (activeTab === "contractor_monitor") {
+            const cmSettings = settings["contractor_monitor"] || {};
+
+            const getVal = (key, defaultVal = "") => {
+                const edited = editedValues[`contractor_monitor:${key}`]?.value;
+                if (edited !== undefined) return edited;
+                const eff = cmSettings[key]?.effectiveValue;
+                return eff !== undefined && eff !== null ? eff : defaultVal;
+            };
+            const handleChange = (key, val) => handleSettingChange("contractor_monitor", key, val);
+
+            const CM_DATASETS = [
+                { key: "PINKASH",  label: "פנקס הקבלנים הרשומים" },
+                { key: "MANPOWER", label: "קבלני כח אדם מורשים" },
+                { key: "CRANE",    label: "קבלני כוח אדם – עגורנאי צריח" },
+                { key: "SERVICE",  label: "קבלני שירות – שמירה, אבטחה וניקיון" },
+            ];
+
+            const lastRunAt = getVal("CM_LAST_RUN_AT");
+            const lastRunResult = getVal("CM_LAST_RUN_RESULT");
+            const formattedLastRun = lastRunAt
+                ? new Date(lastRunAt).toLocaleString("he-IL", { timeZone: "Asia/Jerusalem", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
+                : "לא הורץ עדיין";
+
+            return (
+                <SimpleContainer>
+                    {/* Global Settings */}
+                    <SimpleCard className="lw-platformSettings__card">
+                        <TextBold18>מעקב קבלנים</TextBold18>
+                        <Text14 className="lw-platformSettings__subtitle">
+                            הגדרות מערכת מעקב שינויים במאגרי קבלנים ממשלתיים
+                        </Text14>
+                        <SimpleContainer className="lw-platformSettings__settingsList">
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">מעקב קבלנים פעיל</TextBold14>
+                                    <Text12 className="lw-platformSettings__settingDescription">הפעלה/כיבוי של מערכת מעקב הקבלנים</Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "boolean" }}
+                                        value={getVal("CM_ENABLED", "true")}
+                                        onChange={(val) => handleChange("CM_ENABLED", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">מרווח ימים בין בדיקות</TextBold14>
+                                    <Text12 className="lw-platformSettings__settingDescription">כל כמה ימים לבדוק שינויים במאגרים</Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "number", label: "מרווח ימים" }}
+                                        value={getVal("CM_CHECK_INTERVAL_DAYS", "1")}
+                                        onChange={(val) => handleChange("CM_CHECK_INTERVAL_DAYS", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">שלח דוח גם ללא שינויים</TextBold14>
+                                    <Text12 className="lw-platformSettings__settingDescription">שליחת אימייל דוח יומי גם כשאין שינויים</Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "boolean" }}
+                                        value={getVal("CM_ALWAYS_SEND_REPORT", "true")}
+                                        onChange={(val) => handleChange("CM_ALWAYS_SEND_REPORT", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">שעת שליחת הדוח</TextBold14>
+                                    <Text12 className="lw-platformSettings__settingDescription">באיזו שעה לשלוח את הבדיקה היומית</Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "time", label: "שעה" }}
+                                        value={getVal("CM_REPORT_HOUR", "07:00")}
+                                        onChange={(val) => handleChange("CM_REPORT_HOUR", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">כתובות אימייל לדוח (ברירת מחדל)</TextBold14>
+                                    <Text12 className="lw-platformSettings__settingDescription">כתובות אימייל מופרדות בפסיק — ישמשו כברירת מחדל לכל המאגרים</Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "string", label: t("platformSettings.emailOverridePlaceholder") }}
+                                        value={getVal("CM_GLOBAL_EMAIL_RECIPIENTS")}
+                                        onChange={(val) => handleChange("CM_GLOBAL_EMAIL_RECIPIENTS", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">טלפונים ל-SMS (ברירת מחדל)</TextBold14>
+                                    <Text12 className="lw-platformSettings__settingDescription">מספרי טלפון מופרדים בפסיק — ישמשו כברירת מחדל</Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "string", label: t("platformSettings.smsOverridePlaceholder") }}
+                                        value={getVal("CM_GLOBAL_SMS_RECIPIENTS")}
+                                        onChange={(val) => handleChange("CM_GLOBAL_SMS_RECIPIENTS", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                        </SimpleContainer>
+                    </SimpleCard>
+
+                    {/* Per-Dataset Cards */}
+                    <SimpleContainer style={{ marginTop: 16 }}>
+                        {CM_DATASETS.map((ds) => {
+                            const enabledKey = `CM_${ds.key}_ENABLED`;
+                            const emailKey   = `CM_${ds.key}_EMAIL_RECIPIENTS`;
+                            const smsKey     = `CM_${ds.key}_SMS_RECIPIENTS`;
+                            const globalEmail = getVal("CM_GLOBAL_EMAIL_RECIPIENTS", "");
+                            const globalSms   = getVal("CM_GLOBAL_SMS_RECIPIENTS", "");
+
+                            return (
+                                <SimpleCard key={ds.key} className="lw-platformSettings__card" style={{ marginBottom: 12 }}>
+                                    <SimpleContainer className="lw-platformSettings__settingsList">
+                                        <SimpleContainer className="lw-platformSettings__settingRow">
+                                            <TextBold14 className="lw-platformSettings__settingName">{ds.label}</TextBold14>
+                                            <SimpleContainer className="lw-platformSettings__settingInput">
+                                                <SettingInput
+                                                    setting={{ valueType: "boolean" }}
+                                                    value={getVal(enabledKey, "true")}
+                                                    onChange={(val) => handleChange(enabledKey, val)}
+                                                />
+                                            </SimpleContainer>
+                                        </SimpleContainer>
+
+                                        <SimpleContainer className="lw-platformSettings__settingRow">
+                                            <SimpleContainer className="lw-platformSettings__settingLabel">
+                                                <Text14>אימייל (ריק = ברירת מחדל)</Text14>
+                                                {globalEmail && (
+                                                    <Text12 className="lw-platformSettings__settingDescription">ברירת מחדל: {globalEmail}</Text12>
+                                                )}
+                                            </SimpleContainer>
+                                            <SimpleContainer className="lw-platformSettings__settingInput">
+                                                <SettingInput
+                                                    setting={{ valueType: "string", label: t("platformSettings.emailOverridePlaceholder") }}
+                                                    value={getVal(emailKey)}
+                                                    onChange={(val) => handleChange(emailKey, val)}
+                                                />
+                                            </SimpleContainer>
+                                        </SimpleContainer>
+
+                                        <SimpleContainer className="lw-platformSettings__settingRow">
+                                            <SimpleContainer className="lw-platformSettings__settingLabel">
+                                                <Text14>SMS (ריק = ברירת מחדל)</Text14>
+                                                {globalSms && (
+                                                    <Text12 className="lw-platformSettings__settingDescription">ברירת מחדל: {globalSms}</Text12>
+                                                )}
+                                            </SimpleContainer>
+                                            <SimpleContainer className="lw-platformSettings__settingInput">
+                                                <SettingInput
+                                                    setting={{ valueType: "string", label: t("platformSettings.smsOverridePlaceholder") }}
+                                                    value={getVal(smsKey)}
+                                                    onChange={(val) => handleChange(smsKey, val)}
+                                                />
+                                            </SimpleContainer>
+                                        </SimpleContainer>
+                                    </SimpleContainer>
+                                </SimpleCard>
+                            );
+                        })}
+                    </SimpleContainer>
+
+                    {/* Status Section */}
+                    <SimpleCard className="lw-platformSettings__card" style={{ marginTop: 16 }}>
+                        <TextBold18>סטטוס מערכת</TextBold18>
+                        <SimpleContainer className="lw-platformSettings__settingsList">
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <TextBold14 className="lw-platformSettings__settingName">הרצה אחרונה:</TextBold14>
+                                <Text14>{formattedLastRun}</Text14>
+                            </SimpleContainer>
+                            {lastRunResult && (
+                                <SimpleContainer className="lw-platformSettings__settingRow">
+                                    <TextBold14 className="lw-platformSettings__settingName">תוצאה אחרונה:</TextBold14>
+                                    <Text14 style={{ direction: "rtl", wordBreak: "break-word" }}>{lastRunResult}</Text14>
+                                </SimpleContainer>
+                            )}
+                        </SimpleContainer>
+                    </SimpleCard>
+                </SimpleContainer>
             );
         }
 
