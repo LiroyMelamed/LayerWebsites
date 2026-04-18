@@ -1295,10 +1295,10 @@ export default function PlatformSettingsScreen() {
             const handleChange = (key, val) => handleSettingChange("contractor_monitor", key, val);
 
             const CM_DATASETS = [
-                { key: "PINKASH",  label: "פנקס הקבלנים הרשומים" },
+                { key: "PINKASH", label: "פנקס הקבלנים הרשומים" },
                 { key: "MANPOWER", label: "קבלני כח אדם מורשים" },
-                { key: "CRANE",    label: "קבלני כוח אדם – עגורנאי צריח" },
-                { key: "SERVICE",  label: "קבלני שירות – שמירה, אבטחה וניקיון" },
+                { key: "CRANE", label: "קבלני כוח אדם – עגורנאי צריח" },
+                { key: "SERVICE", label: "קבלני שירות – שמירה, אבטחה וניקיון" },
             ];
 
             const lastRunAt = getVal("CM_LAST_RUN_AT");
@@ -1308,7 +1308,7 @@ export default function PlatformSettingsScreen() {
                 : "לא הורץ עדיין";
 
             return (
-                <SimpleContainer>
+                <SimpleContainer style={{ flexDirection: "column", gap: 16 }}>
                     {/* Global Settings */}
                     <SimpleCard className="lw-platformSettings__card">
                         <TextBold18>מעקב קבלנים</TextBold18>
@@ -1403,16 +1403,16 @@ export default function PlatformSettingsScreen() {
                     </SimpleCard>
 
                     {/* Per-Dataset Cards */}
-                    <SimpleContainer style={{ marginTop: 16 }}>
+                    <SimpleContainer style={{ flexDirection: "column", gap: 12 }}>
                         {CM_DATASETS.map((ds) => {
                             const enabledKey = `CM_${ds.key}_ENABLED`;
-                            const emailKey   = `CM_${ds.key}_EMAIL_RECIPIENTS`;
-                            const smsKey     = `CM_${ds.key}_SMS_RECIPIENTS`;
+                            const emailKey = `CM_${ds.key}_EMAIL_RECIPIENTS`;
+                            const smsKey = `CM_${ds.key}_SMS_RECIPIENTS`;
                             const globalEmail = getVal("CM_GLOBAL_EMAIL_RECIPIENTS", "");
-                            const globalSms   = getVal("CM_GLOBAL_SMS_RECIPIENTS", "");
+                            const globalSms = getVal("CM_GLOBAL_SMS_RECIPIENTS", "");
 
                             return (
-                                <SimpleCard key={ds.key} className="lw-platformSettings__card" style={{ marginBottom: 12 }}>
+                                <SimpleCard key={ds.key} className="lw-platformSettings__card">
                                     <SimpleContainer className="lw-platformSettings__settingsList">
                                         <SimpleContainer className="lw-platformSettings__settingRow">
                                             <TextBold14 className="lw-platformSettings__settingName">{ds.label}</TextBold14>
@@ -1463,7 +1463,7 @@ export default function PlatformSettingsScreen() {
                     </SimpleContainer>
 
                     {/* Status Section */}
-                    <SimpleCard className="lw-platformSettings__card" style={{ marginTop: 16 }}>
+                    <SimpleCard className="lw-platformSettings__card">
                         <TextBold18>סטטוס מערכת</TextBold18>
                         <SimpleContainer className="lw-platformSettings__settingsList">
                             <SimpleContainer className="lw-platformSettings__settingRow">
