@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
 import SimpleLoader from "../../../components/simpleComponents/SimpleLoader";
@@ -14,18 +14,11 @@ import "./ImportClientsModal.scss";
 export default function ImportClientsModal({ closePopUpFunction, rePerformRequest }) {
     const { t } = useTranslation();
     const [file, setFile] = useState(null);
-    const fileInputRef = useRef(null);
 
     const { result, isPerforming, performRequest } = useHttpRequest(
         () => customersApi.importCustomers(file),
         () => { if (rePerformRequest) rePerformRequest(); },
     );
-
-    const handleFileChange = useCallback((e) => {
-        const selected = e.target.files?.[0];
-        if (!selected) return;
-        setFile(selected);
-    }, []);
 
     const hasResult = result?.created != null;
 

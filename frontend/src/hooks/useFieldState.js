@@ -8,9 +8,10 @@ export default function useFieldState(checkForErrorFunction, defaultValue = null
     })
 
     useEffect(() => {
-        if (defaultValue != fieldState.value) {
+        if (defaultValue !== fieldState.value) {
             setValueFunction(defaultValue)
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [defaultValue])
 
     function setValueFunction(valueOrUpdater) {

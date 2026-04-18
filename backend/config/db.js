@@ -60,8 +60,8 @@ async function queryWithRetry(text, params) {
         return await _originalQuery(text, params);
     } catch (err) {
         if (!isRetryable(err)) throw err;
-        console.warn('[pg-pool] Retryable connection error, waiting 2 s then retrying…', err.message);
-        await new Promise(r => setTimeout(r, 2000));
+        console.warn('[pg-pool] Retryable connection error, waiting 5 s then retrying…', err.message);
+        await new Promise(r => setTimeout(r, 5000));
         return await _originalQuery(text, params);
     }
 }
