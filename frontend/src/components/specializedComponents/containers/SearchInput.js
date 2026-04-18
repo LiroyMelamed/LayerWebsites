@@ -31,6 +31,13 @@ const SearchInput = ({
     const [showResults, setShowResults] = useState(false);
     const [isOpening, setIsOpening] = useState(false);
     const targetRef = useRef(null);
+    const blurTimerRef = useRef(null);
+
+    useEffect(() => {
+        return () => {
+            if (blurTimerRef.current) clearTimeout(blurTimerRef.current);
+        };
+    }, []);
 
     const hasDropdown =
         queryResult !== undefined ||
@@ -52,6 +59,10 @@ const SearchInput = ({
     };
 
     const handleFocus = () => {
+        if (blurTimerRef.current) {
+            clearTimeout(blurTimerRef.current);
+            blurTimerRef.current = null;
+        }
         if (!hasDropdown) return;
 
         setShowResults(true);
@@ -61,12 +72,12 @@ const SearchInput = ({
         onSearch?.(q.trim() ? q : '');
     };
 
-    const handleBlur = (event) => {
-        const nextFocusTarget = event?.relatedTarget;
-        if (!nextFocusTarget || !targetRef.current?.contains(nextFocusTarget)) {
+    const handleBlur = () => {
+        blurTimerRef.current = setTimeout(() => {
+            blurTimerRef.current = null;
             setShowResults(false);
             setIsOpening(false);
-        }
+        }, 150);
     };
 
     useEffect(() => {
@@ -86,6 +97,10 @@ const SearchInput = ({
     }, [hasDropdown, showResults, isOpening, isPerforming, queryResult]);
 
     function hoverButtonPressed(text, result) {
+        if (blurTimerRef.current) {
+            clearTimeout(blurTimerRef.current);
+            blurTimerRef.current = null;
+        }
         const cleanedText = String(text ?? '').trimEnd();
         buttonPressFunction?.(cleanedText, result);
         setShowResults(false);
