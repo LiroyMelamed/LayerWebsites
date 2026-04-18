@@ -1379,7 +1379,7 @@ export default function PlatformSettingsScreen() {
                                 </SimpleContainer>
                                 <SimpleContainer className="lw-platformSettings__settingInput">
                                     <SettingInput
-                                        setting={{ valueType: "string", label: "email1@example.com, email2@example.com" }}
+                                        setting={{ valueType: "string", label: t("platformSettings.emailOverridePlaceholder") }}
                                         value={getVal("CM_GLOBAL_EMAIL_RECIPIENTS")}
                                         onChange={(val) => handleChange("CM_GLOBAL_EMAIL_RECIPIENTS", val)}
                                     />
@@ -1393,7 +1393,7 @@ export default function PlatformSettingsScreen() {
                                 </SimpleContainer>
                                 <SimpleContainer className="lw-platformSettings__settingInput">
                                     <SettingInput
-                                        setting={{ valueType: "string", label: "0501234567, 0521234567" }}
+                                        setting={{ valueType: "string", label: t("platformSettings.smsOverridePlaceholder") }}
                                         value={getVal("CM_GLOBAL_SMS_RECIPIENTS")}
                                         onChange={(val) => handleChange("CM_GLOBAL_SMS_RECIPIENTS", val)}
                                     />
@@ -1434,7 +1434,7 @@ export default function PlatformSettingsScreen() {
                                             </SimpleContainer>
                                             <SimpleContainer className="lw-platformSettings__settingInput">
                                                 <SettingInput
-                                                    setting={{ valueType: "string", label: "override email, ..." }}
+                                                    setting={{ valueType: "string", label: t("platformSettings.emailOverridePlaceholder") }}
                                                     value={getVal(emailKey)}
                                                     onChange={(val) => handleChange(emailKey, val)}
                                                 />
@@ -1450,7 +1450,7 @@ export default function PlatformSettingsScreen() {
                                             </SimpleContainer>
                                             <SimpleContainer className="lw-platformSettings__settingInput">
                                                 <SettingInput
-                                                    setting={{ valueType: "string", label: "0501234567" }}
+                                                    setting={{ valueType: "string", label: t("platformSettings.smsOverridePlaceholder") }}
                                                     value={getVal(smsKey)}
                                                     onChange={(val) => handleChange(smsKey, val)}
                                                 />

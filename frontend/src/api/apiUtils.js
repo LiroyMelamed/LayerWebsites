@@ -1,4 +1,5 @@
 import axios from "axios";
+import i18n from "../i18n/i18n";
 
 const stageURL = "http://localhost:5001/api";
 
@@ -79,8 +80,19 @@ function formatSuccess(response) {
     return { status: response.status, data: response.data || null, requestLink: response.config.url, success: true };
 }
 
+function translateAxiosMessage(error) {
+    if (!error.response) {
+        // Network-level failure: CORS, server down, no internet
+        if (error.code === "ECONNABORTED" || /timeout/i.test(error.message)) {
+            return i18n.t("errors.timeout");
+        }
+        return i18n.t("errors.networkError");
+    }
+    return error.message;
+}
+
 function formatError(error) {
-    return { status: error.response?.status || 500, data: error.response?.data || null, requestLink: error.config?.url, success: false, message: error.message };
+    return { status: error.response?.status || 500, data: error.response?.data || null, requestLink: error.config?.url, success: false, message: translateAxiosMessage(error) };
 }
 
 

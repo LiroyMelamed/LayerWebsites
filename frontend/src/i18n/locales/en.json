@@ -1,1129 +1,1133 @@
 {
-    "common": {
-        "language": "Language",
-        "hebrew": "Hebrew",
-        "arabic": "Arabic",
-        "english": "English",
-        "logout": "Log out",
-        "back": "Back",
-        "next": "Next",
-        "ok": "OK",
-        "cancel": "Cancel",
-        "delete": "Delete",
-        "save": "Save",
-        "close": "Close",
-        "search": "Search",
-        "all": "All",
-        "choose": "Choose",
-        "yes": "Yes",
-        "no": "No",
-        "retry": "Try again",
-        "notSpecified": "Not specified",
-        "unassigned": "Unassigned",
-        "refreshPull": "Pull down to refresh",
-        "refreshing": "Refreshing…",
-        "send": "Send",
-        "remove": "Remove",
-        "clear": "Clear",
-        "email": "Email",
-        "password": "Password",
-        "edit": "Edit",
-        "saving": "Saving...",
-        "deleting": "Deleting...",
-        "new": "New",
-        "noResultsFound": "No results found",
-        "submit": "Submit",
-        "simpleImageAlt": "Image"
+  "common": {
+    "language": "Language",
+    "hebrew": "Hebrew",
+    "arabic": "Arabic",
+    "english": "English",
+    "logout": "Log out",
+    "back": "Back",
+    "next": "Next",
+    "ok": "OK",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "save": "Save",
+    "close": "Close",
+    "search": "Search",
+    "all": "All",
+    "choose": "Choose",
+    "yes": "Yes",
+    "no": "No",
+    "retry": "Try again",
+    "notSpecified": "Not specified",
+    "unassigned": "Unassigned",
+    "refreshPull": "Pull down to refresh",
+    "refreshing": "Refreshing…",
+    "send": "Send",
+    "remove": "Remove",
+    "clear": "Clear",
+    "email": "Email",
+    "password": "Password",
+    "edit": "Edit",
+    "saving": "Saving...",
+    "deleting": "Deleting...",
+    "new": "New",
+    "noResultsFound": "No results found",
+    "submit": "Submit",
+    "simpleImageAlt": "Image"
+  },
+  "auth": {
+    "login": "Log in",
+    "next": "Continue",
+    "enterPhone": "Please enter a phone number",
+    "enterOtp": "Please enter the code",
+    "enterOtpInstruction": "Enter the code you received in the message",
+    "tagline": "All your case information in one place!"
+  },
+  "errors": {
+    "invalidPhone": "Invalid phone number",
+    "invalidOtp": "Invalid code",
+    "invalidEmail": "Invalid email",
+    "hebrewOnly": "Hebrew only",
+    "hebrewAndNumbersOnly": "Hebrew and numbers only",
+    "numbersOnly": "Numbers only",
+    "maxStages15": "Up to 15 stages",
+    "oopsTitle": "Oops…",
+    "unexpected": "Unexpected error",
+    "requiredFieldsExceptPassword": "All fields except password are required",
+    "passwordMinLength": "Password must be at least 6 characters",
+    "required": "Required",
+    "errorPrefix": "Error: ",
+    "networkError": "Network connection error — could not reach the server",
+    "timeout": "Request timed out — please try again"
+  },
+  "signingManager": {
+    "searchTitle": "Search document / customer / case",
+    "dateFrom": "From date",
+    "dateTo": "To date",
+    "tabs": {
+      "pending": "Pending / Rejected ({{count}})",
+      "signed": "Signed ({{count}})"
     },
-    "auth": {
-        "login": "Log in",
-        "next": "Continue",
-        "enterPhone": "Please enter a phone number",
-        "enterOtp": "Please enter the code",
-        "enterOtpInstruction": "Enter the code you received in the message",
-        "tagline": "All your case information in one place!"
+    "empty": {
+      "pending": "No pending or rejected documents",
+      "signed": "No signed documents to display"
+    },
+    "labels": {
+      "case": "Case:",
+      "client": "Customer:",
+      "uploadedAt": "Upload date:",
+      "status": "Status:",
+      "signatures": "Signatures:",
+      "rejectionReason": "Rejection reason:",
+      "signedAt": "Signed at:",
+      "otpWaiverBy": "OTP waiver set by:",
+      "otpWaiverAt": "OTP waiver set at:"
+    },
+    "actions": {
+      "downloadSigned": "Download signed file",
+      "downloadEvidencePdf": "Download evidence PDF",
+      "downloadEvidenceZip": "Download evidence ZIP",
+      "details": "Document details",
+      "uploadNew": "Send new document for signing",
+      "openPdf": "Open PDF",
+      "deleteFile": "Delete document"
+    },
+    "planAndRetention": {
+      "title": "Plan & retention",
+      "loading": "Loading plan…",
+      "unavailable": "Plan info is currently unavailable.",
+      "planKey": "Plan:",
+      "retentionCore": "Retention (core):",
+      "retentionPii": "Retention (PII):",
+      "monthlyDocs": "Docs this month:",
+      "note": "Retention applies to documents and evidence. Legal hold (if enabled) may override retention."
+    },
+    "details": {
+      "titleFallback": "Document details",
+      "tabs": {
+        "details": "Details",
+        "auditTrail": "Audit trail"
+      }
+    },
+    "aria": {
+      "signaturesPercent": "Signatures: {{percent}}%"
     },
     "errors": {
-        "invalidPhone": "Invalid phone number",
-        "invalidOtp": "Invalid code",
-        "invalidEmail": "Invalid email",
-        "hebrewOnly": "Hebrew only",
-        "hebrewAndNumbersOnly": "Hebrew and numbers only",
-        "numbersOnly": "Numbers only",
-        "maxStages15": "Up to 15 stages",
-        "oopsTitle": "Oops…",
-        "unexpected": "Unexpected error",
-        "requiredFieldsExceptPassword": "All fields except password are required",
-        "passwordMinLength": "Password must be at least 6 characters",
-        "required": "Required",
-        "errorPrefix": "Error: "
+      "openPdf": "Error opening the PDF",
+      "downloadSignedMissingUrl": "Unable to download the signed file",
+      "downloadSignedError": "Error downloading the file",
+      "missingDocumentId": "Error: missing document ID",
+      "evidencePackageSignedOnly": "Evidence package is available only after full signature",
+      "evidencePackageDownloadError": "Error downloading evidence package",
+      "deleteError": "Error deleting the document"
+    }
+  },
+  "evidenceDocuments": {
+    "pageTitle": "Evidence documents",
+    "searchTitle": "Search document / customer / case",
+    "filters": {
+      "caseId": "Case ID",
+      "from": "From",
+      "to": "To",
+      "otp": "OTP"
     },
-    "signingManager": {
-        "searchTitle": "Search document / customer / case",
-        "dateFrom": "From date",
-        "dateTo": "To date",
-        "tabs": {
-            "pending": "Pending / Rejected ({{count}})",
-            "signed": "Signed ({{count}})"
-        },
-        "empty": {
-            "pending": "No pending or rejected documents",
-            "signed": "No signed documents to display"
-        },
-        "labels": {
-            "case": "Case:",
-            "client": "Customer:",
-            "uploadedAt": "Upload date:",
-            "status": "Status:",
-            "signatures": "Signatures:",
-            "rejectionReason": "Rejection reason:",
-            "signedAt": "Signed at:",
-            "otpWaiverBy": "OTP waiver set by:",
-            "otpWaiverAt": "OTP waiver set at:"
-        },
-        "actions": {
-            "downloadSigned": "Download signed file",
-            "downloadEvidencePdf": "Download evidence PDF",
-            "downloadEvidenceZip": "Download evidence ZIP",
-            "details": "Document details",
-            "uploadNew": "Send new document for signing",
-            "openPdf": "Open PDF",
-            "deleteFile": "Delete document"
-        },
-        "planAndRetention": {
-            "title": "Plan & retention",
-            "loading": "Loading plan…",
-            "unavailable": "Plan info is currently unavailable.",
-            "planKey": "Plan:",
-            "retentionCore": "Retention (core):",
-            "retentionPii": "Retention (PII):",
-            "monthlyDocs": "Docs this month:",
-            "note": "Retention applies to documents and evidence. Legal hold (if enabled) may override retention."
-        },
-        "details": {
-            "titleFallback": "Document details",
-            "tabs": {
-                "details": "Details",
-                "auditTrail": "Audit trail"
-            }
-        },
-        "aria": {
-            "signaturesPercent": "Signatures: {{percent}}%"
-        },
-        "errors": {
-            "openPdf": "Error opening the PDF",
-            "downloadSignedMissingUrl": "Unable to download the signed file",
-            "downloadSignedError": "Error downloading the file",
-            "missingDocumentId": "Error: missing document ID",
-            "evidencePackageSignedOnly": "Evidence package is available only after full signature",
-            "evidencePackageDownloadError": "Error downloading evidence package",
-            "deleteError": "Error deleting the document"
-        }
+    "columns": {
+      "client": "Customer",
+      "case": "Case",
+      "document": "Document",
+      "signedAt": "Signed at",
+      "otp": "OTP",
+      "actions": "Actions"
     },
-    "evidenceDocuments": {
-        "pageTitle": "Evidence documents",
-        "searchTitle": "Search document / customer / case",
-        "filters": {
-            "caseId": "Case ID",
-            "from": "From",
-            "to": "To",
-            "otp": "OTP"
-        },
-        "columns": {
-            "client": "Customer",
-            "case": "Case",
-            "document": "Document",
-            "signedAt": "Signed at",
-            "otp": "OTP",
-            "actions": "Actions"
-        },
-        "otp": {
-            "required": "Required",
-            "waived": "Waived by lawyer"
-        },
-        "actions": {
-            "downloadZip": "Download evidence ZIP",
-            "loadMore": "Load more"
-        },
-        "empty": "No documents found",
-        "end": "No more results",
-        "casePrefix": "Case ",
-        "errors": {
-            "load": "Error loading evidence documents",
-            "downloadZip": "Error downloading evidence ZIP"
-        }
+    "otp": {
+      "required": "Required",
+      "waived": "Waived by lawyer"
     },
-    "audit": {
-        "pageTitle": "Audit Trail",
-        "filters": {
-            "eventType": "Action",
-            "actorType": "Actor type",
-            "from": "From",
-            "to": "To",
-            "search": "Search",
-            "success": "Result"
-        },
-        "columns": {
-            "dateTime": "Date/time",
-            "action": "Action",
-            "actor": "Actor",
-            "status": "Result",
-            "ip": "IP",
-            "device": "Device",
-            "details": "Details",
-            "client": "Client",
-            "case": "Case",
-            "document": "Document"
-        },
-        "actions": {
-            "details": "Details",
-            "loadMore": "Load more"
-        },
-        "status": {
-            "success": "Success",
-            "fail": "Fail"
-        },
-        "empty": "No events to display",
-        "end": "No more events",
-        "errors": {
-            "load": "Error loading audit trail"
-        },
-        "details": {
-            "title": "Audit event details",
-            "details": "Details"
-        },
-        "actorTypes": {
-            "LAWYER": "Lawyer",
-            "CLIENT": "Client",
-            "SYSTEM": "System",
-            "PUBLIC": "Public"
-        },
-        "eventTypes": {
-            "PDF_VIEWED": "PDF viewed",
-            "OTP_SENT": "OTP sent",
-            "OTP_VERIFIED": "OTP verified",
-            "CONSENT_ACCEPTED": "Consent accepted",
-            "SIGN_ATTEMPT": "Sign attempt",
-            "SIGN_SUCCESS": "Sign success",
-            "SIGN_REJECTED": "Sign rejected",
-            "SIGNED_PDF_GENERATED": "Signed PDF generated",
-            "SIGNED_PDF_DOWNLOADED": "Signed PDF downloaded",
-            "EVIDENCE_ZIP_DOWNLOADED": "Evidence package downloaded"
-        }
+    "actions": {
+      "downloadZip": "Download evidence ZIP",
+      "loadMore": "Load more"
     },
-    "cases": {
-        "caseType": "Case type",
-        "statusFilter": "Status",
-        "allCases": "All cases",
-        "noCases": "No cases at the moment",
-        "openCases": "Open cases",
-        "closedCases": "Closed cases",
-        "noOpenCases": "No open cases at the moment",
-        "noClosedCases": "No closed cases at the moment",
-        "noCaseTypes": "No case types at the moment",
-        "currentStage": "Current stage",
-        "completedSuccessfully": "Completed successfully",
-        "stageDetailsTitle": "Stage details",
-        "ended": "Ended",
-        "searchCaseTitle": "Search case",
-        "searchCaseTypeTitle": "Search case type",
-        "addNewCase": "Add new case",
-        "addCaseType": "Add case type",
-        "stageCount": "Stage count",
-        "customerName": "Customer name",
-        "customerId": "Customer ID",
-        "phoneNumber": "Phone number",
-        "createdAt": "Created at",
-        "customerDetails": "Customer details",
-        "dates": "Dates",
-        "estimatedCompletionDate": "Estimated completion date",
-        "licenseExpiryDate": "License expiry date",
-        "management": "Management",
-        "caseManager": "Case manager",
-        "stages": "Stages",
-        "advanceStage": "Advance stage",
-        "caseNumber": "Case number",
-        "companyName": "Company name",
-        "customerEmail": "Customer email",
-        "deleteCase": "Delete case",
-        "updateCase": "Update case",
-        "saveCase": "Save case",
-        "completedStagesLabel": "Completed stages:",
-        "stageCompleted": "Stage completed",
-        "stageContinues": "Stage in progress",
-        "stageNumber": "Stage #{{number}}",
-        "noStagesInCaseType": "No stages in this case type",
-        "descriptionNumber": "Description #{{number}}",
-        "addStage": "Add stage",
-        "removeStage": "Remove stage",
-        "stageFiles": "Attached files",
-        "addStageFile": "Add file to stage",
-        "uploadingFile": "Uploading file...",
-        "fileUploadSuccess": "File uploaded successfully",
-        "fileUploadError": "Error uploading file",
-        "deleteStageFile": "Delete file",
-        "deleteStageFileConfirm": "Are you sure you want to delete this file?",
-        "noStageFiles": "No files attached to this stage",
-        "downloadFile": "Download file",
-        "whatsapp": {
-            "group": "WhatsApp group",
-            "linkTitle": "Link WhatsApp group",
-            "groupLink": "WhatsApp group link",
-            "goToGroup": "Go to group",
-            "editLink": "Edit link",
-            "contact": "Contact",
-            "contactText": "Contacting about case \"{{caseName}}\""
-        }
+    "empty": "No documents found",
+    "end": "No more results",
+    "casePrefix": "Case ",
+    "errors": {
+      "load": "Error loading evidence documents",
+      "downloadZip": "Error downloading evidence ZIP"
+    }
+  },
+  "audit": {
+    "pageTitle": "Audit Trail",
+    "filters": {
+      "eventType": "Action",
+      "actorType": "Actor type",
+      "from": "From",
+      "to": "To",
+      "search": "Search",
+      "success": "Result"
     },
-    "caseTypes": {
-        "createCaseType": {
-            "title": "Create or Update Case Type",
-            "caseTypeIdPlaceholder": "Case Type ID",
-            "caseLevelPlaceholder": "Case Level",
-            "caseTypePlaceholder": "Case Type",
-            "descriptionPlaceholder": "Description {{number}}",
-            "success": "Case type created/updated successfully!"
-        },
-        "caseTypeName": "Case type name",
-        "deleteCaseType": "Delete case type",
-        "addStage": "Add stage",
-        "updateCaseType": "Update case type",
-        "duplicateCaseType": "Duplicate",
-        "saveCaseType": "Save case type"
+    "columns": {
+      "dateTime": "Date/time",
+      "action": "Action",
+      "actor": "Actor",
+      "status": "Result",
+      "ip": "IP",
+      "device": "Device",
+      "details": "Details",
+      "client": "Client",
+      "case": "Case",
+      "document": "Document"
     },
-    "taggedCases": {
-        "searchPinnedCaseTitle": "Search pinned case",
-        "pinCase": "Pin case",
-        "caseNumber": "Case number",
-        "pin": "Pin",
-        "unpin": "Unpin",
-        "emptyPinnedCases": "No pinned cases yet",
-        "pinnedCasesTitle": "Pinned cases",
-        "pinned": "Pinned"
+    "actions": {
+      "details": "Details",
+      "loadMore": "Load more"
     },
-    "customers": {
-        "addCustomer": "Add customer",
-        "emptyList": "When we add customers, they will appear here",
-        "companyName": "Company name",
-        "saveCustomer": "Save customer",
-        "updateCustomer": "Update customer",
-        "deleteCustomer": "Delete customer",
-        "searchCustomer": "Search customer",
-        "screenTitle": "All Clients",
-        "addNewCustomer": "Add new customer",
-        "customerPhone": "Phone",
-        "customerEmail": "Email"
+    "status": {
+      "success": "Success",
+      "fail": "Fail"
     },
-    "admins": {
-        "searchAdmin": "Search admin",
-        "addAdmin": "Add admin",
-        "adminName": "Admin name",
-        "createdAt": "Created at",
-        "emptyList": "When we add admins, they will appear here",
-        "saveAdmin": "Save admin",
-        "updateAdmin": "Update admin",
-        "deleteAdmin": "Delete admin"
+    "empty": "No events to display",
+    "end": "No more events",
+    "errors": {
+      "load": "Error loading audit trail"
     },
-    "updates": {
-        "notifications": "Notifications",
-        "updates": "Updates",
-        "messages": "Messages",
-        "serviceComingSoon": "{{name}} will be available soon"
+    "details": {
+      "title": "Audit event details",
+      "details": "Details"
     },
-    "profile": {
-        "successTitle": "Success",
-        "updatedSuccess": "Profile updated successfully",
-        "dateOfBirth": "Date of birth"
+    "actorTypes": {
+      "LAWYER": "Lawyer",
+      "CLIENT": "Client",
+      "SYSTEM": "System",
+      "PUBLIC": "Public"
     },
-    "notifications": {
-        "loadError": "Error loading notifications. Please try again.",
-        "loading": "Loading notifications...",
-        "empty": "You have no notifications right now.",
-        "fallbackTitle": "New notification",
-        "goToSigning": "Go to signing",
-        "markAsRead": "Mark as read"
+    "eventTypes": {
+      "PDF_VIEWED": "PDF viewed",
+      "OTP_SENT": "OTP sent",
+      "OTP_VERIFIED": "OTP verified",
+      "CONSENT_ACCEPTED": "Consent accepted",
+      "SIGN_ATTEMPT": "Sign attempt",
+      "SIGN_SUCCESS": "Sign success",
+      "SIGN_REJECTED": "Sign rejected",
+      "SIGNED_PDF_GENERATED": "Signed PDF generated",
+      "SIGNED_PDF_DOWNLOADED": "Signed PDF downloaded",
+      "EVIDENCE_ZIP_DOWNLOADED": "Evidence package downloaded"
+    }
+  },
+  "cases": {
+    "caseType": "Case type",
+    "statusFilter": "Status",
+    "allCases": "All cases",
+    "noCases": "No cases at the moment",
+    "openCases": "Open cases",
+    "closedCases": "Closed cases",
+    "noOpenCases": "No open cases at the moment",
+    "noClosedCases": "No closed cases at the moment",
+    "noCaseTypes": "No case types at the moment",
+    "currentStage": "Current stage",
+    "completedSuccessfully": "Completed successfully",
+    "stageDetailsTitle": "Stage details",
+    "ended": "Ended",
+    "searchCaseTitle": "Search case",
+    "searchCaseTypeTitle": "Search case type",
+    "addNewCase": "Add new case",
+    "addCaseType": "Add case type",
+    "stageCount": "Stage count",
+    "customerName": "Customer name",
+    "customerId": "Customer ID",
+    "phoneNumber": "Phone number",
+    "createdAt": "Created at",
+    "customerDetails": "Customer details",
+    "dates": "Dates",
+    "estimatedCompletionDate": "Estimated completion date",
+    "licenseExpiryDate": "License expiry date",
+    "management": "Management",
+    "caseManager": "Case manager",
+    "stages": "Stages",
+    "advanceStage": "Advance stage",
+    "caseNumber": "Case number",
+    "companyName": "Company name",
+    "customerEmail": "Customer email",
+    "deleteCase": "Delete case",
+    "updateCase": "Update case",
+    "saveCase": "Save case",
+    "completedStagesLabel": "Completed stages:",
+    "stageCompleted": "Stage completed",
+    "stageContinues": "Stage in progress",
+    "stageNumber": "Stage #{{number}}",
+    "noStagesInCaseType": "No stages in this case type",
+    "descriptionNumber": "Description #{{number}}",
+    "addStage": "Add stage",
+    "removeStage": "Remove stage",
+    "stageFiles": "Attached files",
+    "addStageFile": "Add file to stage",
+    "uploadingFile": "Uploading file...",
+    "fileUploadSuccess": "File uploaded successfully",
+    "fileUploadError": "Error uploading file",
+    "deleteStageFile": "Delete file",
+    "deleteStageFileConfirm": "Are you sure you want to delete this file?",
+    "noStageFiles": "No files attached to this stage",
+    "downloadFile": "Download file",
+    "whatsapp": {
+      "group": "WhatsApp group",
+      "linkTitle": "Link WhatsApp group",
+      "groupLink": "WhatsApp group link",
+      "goToGroup": "Go to group",
+      "editLink": "Edit link",
+      "contact": "Contact",
+      "contactText": "Contacting about case \"{{caseName}}\""
+    }
+  },
+  "caseTypes": {
+    "createCaseType": {
+      "title": "Create or Update Case Type",
+      "caseTypeIdPlaceholder": "Case Type ID",
+      "caseLevelPlaceholder": "Case Level",
+      "caseTypePlaceholder": "Case Type",
+      "descriptionPlaceholder": "Description {{number}}",
+      "success": "Case type created/updated successfully!"
     },
-    "mainScreen": {
-        "caseSummary": "Case summary",
-        "totalCases": "Total cases",
-        "taggedCases": "Tagged cases",
-        "activeCustomers": "Active customers",
-        "unreadNotifications": "Unread notifications",
-        "moreDataForAnalytics": "When we have more data, we will show an analytics breakdown"
+    "caseTypeName": "Case type name",
+    "deleteCaseType": "Delete case type",
+    "addStage": "Add stage",
+    "updateCaseType": "Update case type",
+    "duplicateCaseType": "Duplicate",
+    "saveCaseType": "Save case type"
+  },
+  "taggedCases": {
+    "searchPinnedCaseTitle": "Search pinned case",
+    "pinCase": "Pin case",
+    "caseNumber": "Case number",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "emptyPinnedCases": "No pinned cases yet",
+    "pinnedCasesTitle": "Pinned cases",
+    "pinned": "Pinned"
+  },
+  "customers": {
+    "addCustomer": "Add customer",
+    "emptyList": "When we add customers, they will appear here",
+    "companyName": "Company name",
+    "saveCustomer": "Save customer",
+    "updateCustomer": "Update customer",
+    "deleteCustomer": "Delete customer",
+    "searchCustomer": "Search customer",
+    "screenTitle": "All Clients",
+    "addNewCustomer": "Add new customer",
+    "customerPhone": "Phone",
+    "customerEmail": "Email"
+  },
+  "admins": {
+    "searchAdmin": "Search admin",
+    "addAdmin": "Add admin",
+    "adminName": "Admin name",
+    "createdAt": "Created at",
+    "emptyList": "When we add admins, they will appear here",
+    "saveAdmin": "Save admin",
+    "updateAdmin": "Update admin",
+    "deleteAdmin": "Delete admin"
+  },
+  "updates": {
+    "notifications": "Notifications",
+    "updates": "Updates",
+    "messages": "Messages",
+    "serviceComingSoon": "{{name}} will be available soon"
+  },
+  "profile": {
+    "successTitle": "Success",
+    "updatedSuccess": "Profile updated successfully",
+    "dateOfBirth": "Date of birth"
+  },
+  "notifications": {
+    "loadError": "Error loading notifications. Please try again.",
+    "loading": "Loading notifications...",
+    "empty": "You have no notifications right now.",
+    "fallbackTitle": "New notification",
+    "goToSigning": "Go to signing",
+    "markAsRead": "Mark as read"
+  },
+  "mainScreen": {
+    "caseSummary": "Case summary",
+    "totalCases": "Total cases",
+    "taggedCases": "Tagged cases",
+    "activeCustomers": "Active customers",
+    "unreadNotifications": "Unread notifications",
+    "moreDataForAnalytics": "When we have more data, we will show an analytics breakdown"
+  },
+  "terms": {
+    "title": "Terms of Use for {{appName}}",
+    "lastUpdated": "Last updated: {{date}}",
+    "intro": "Welcome to {{appName}}. Your use of the website, the application, and our services is subject to your acceptance of the terms of use detailed below. Please read them carefully.",
+    "section1": {
+      "title": "1. Acceptance of Terms",
+      "body": "• By using the website, the application, or our services, you agree to these Terms of Use and our Privacy Policy.\n• If you do not agree, you must refrain from using our services.\n• These terms apply to all users — clients, lawyers, and system administrators."
     },
-    "terms": {
-        "title": "Terms of Use for {{appName}}",
-        "lastUpdated": "Last updated: {{date}}",
-        "intro": "Welcome to {{appName}}. Your use of the website, the application, and our services is subject to your acceptance of the terms of use detailed below. Please read them carefully.",
-        "section1": {
-            "title": "1. Acceptance of Terms",
-            "body": "• By using the website, the application, or our services, you agree to these Terms of Use and our Privacy Policy.\n• If you do not agree, you must refrain from using our services.\n• These terms apply to all users — clients, lawyers, and system administrators."
-        },
-        "section2": {
-            "title": "2. Services We Provide",
-            "body": "We provide a legal management platform that includes:\n\n• Creating and managing legal cases, including stages, tags, and filtering\n• Managing clients and case managers\n• Digital signing of documents with OTP verification\n• Uploading files and evidence documents\n• Sending notifications and messages (Push, email, SMS)\n• Automated reminders (license renewals, case reminders, birthday greetings)\n• User role management and permissions"
-        },
-        "section3": {
-            "title": "3. Registration and User Accounts",
-            "body": "• Using the services requires registration with a phone number and receiving a one-time OTP code for identification.\n• During registration and usage, we may store data such as name, phone number, email address, company name, date of birth, and profile picture.\n• Use of the system is limited to users assigned roles (administrators and clients).\n• The responsibility for keeping login credentials confidential lies solely with the user."
-        },
-        "section4": {
-            "title": "4. Digital Signing",
-            "body": "• The system allows digital signing of legal documents.\n• Signatures are verified via an OTP code sent to the signer's phone number.\n• A signed document constitutes acknowledgment by the signer that they have read, understood, and agreed to the content of the document.\n• Digital signatures are stored with a timestamp and identification details and cannot be altered after execution.\n• The user is responsible for reviewing the document before signing."
-        },
-        "section5": {
-            "title": "5. File and Document Uploads",
-            "body": "• The system allows uploading files and evidence documents to cases.\n• The user is responsible for ensuring that uploaded files do not infringe copyrights or any other law.\n• We reserve the right to limit file types, sizes, and quantities according to the service plan.\n• Uploaded files are stored securely on our storage servers."
-        },
-        "section6": {
-            "title": "6. Notifications and Messages",
-            "body": "• The system sends notifications and messages to users via Push, email, and SMS.\n• Notifications include, among others: case updates, signing invitations, reminders, and automated messages.\n• The system may send automated birthday greetings based on the date of birth entered in the profile.\n• Notification channels can be controlled through the system settings.\n• By providing your phone number, you consent to receiving SMS messages (including OTP, updates, and reminders)."
-        },
-        "section7": {
-            "title": "7. Privacy and Data Protection",
-            "body": "• Your information is stored in a secure database.\n• We use token-based authentication (JWT) to protect user access.\n• Personal information will not be shared with third parties without your consent, except where required by law.\n• We use third-party services for sending messages (such as email and SMS), but your details will not be used for marketing unrelated to the service.\n• We maintain activity logs for security and auditing purposes."
-        },
-        "section8": {
-            "title": "8. Fair Use and Prohibited Activities",
-            "body": "When using our services, you agree:\n\n• Not to use the services for unlawful purposes.\n• Not to disrupt the system or attempt to breach data stores.\n• Not to submit false or misleading information.\n• Not to upload harmful files or malicious software.\n• Not to share access credentials with third parties."
-        },
-        "section9": {
-            "title": "9. Service Limits and Plans",
-            "body": "• The service may be limited according to the selected plan (number of cases, storage volume, number of users, etc.).\n• Exceeding plan limits may result in blocking or restricting certain features.\n• Plans can be upgraded at any time through the system settings or by contacting us."
-        },
-        "section10": {
-            "title": "10. Liability and Indemnification",
-            "body": "• We strive to provide stable and reliable services, but we do not guarantee uninterrupted availability.\n• The company will not be liable for indirect, consequential, or incidental damages resulting from use of the service.\n• Users are responsible for safeguarding their access credentials and the information they enter.\n• The service does not constitute a substitute for professional legal advice."
-        },
-        "section11": {
-            "title": "11. Changes and Updates",
-            "body": "• We reserve the right to change these Terms of Use at any time.\n• Updates will be published on the website and in the application.\n• Continued use of the service after an update constitutes acceptance of the updated terms.\n• We recommend reviewing the terms from time to time."
-        },
-        "section12": {
-            "title": "12. Contact",
-            "body": "• If you have questions regarding these Terms of Use, you can contact us at: {{email}}."
-        }
+    "section2": {
+      "title": "2. Services We Provide",
+      "body": "We provide a legal management platform that includes:\n\n• Creating and managing legal cases, including stages, tags, and filtering\n• Managing clients and case managers\n• Digital signing of documents with OTP verification\n• Uploading files and evidence documents\n• Sending notifications and messages (Push, email, SMS)\n• Automated reminders (license renewals, case reminders, birthday greetings)\n• User role management and permissions"
     },
-    "nav": {
-        "pinnedCases": "Pinned cases",
-        "signingFiles": "Documents for signing",
-        "planUsage": "Plan & usage",
-        "allCases": "All cases",
-        "newOrUpdateCase": "New / Update case",
-        "allManagers": "All managers",
-        "auditTrail": "Audit Trail",
-        "evidenceDocuments": "Evidence documents",
-        "allCaseTypes": "All case types",
-        "addCaseType": "Add case type",
-        "myCases": "My cases",
-        "notifications": "Notifications",
-        "myProfile": "My profile",
-        "terms": "Terms of use",
-        "contact": "Contact",
-        "contactMessage": "Hi, I'd like to get in touch",
-        "reminders": "Reminders",
-        "addOrUpdateClient": "Add / Update Client",
-        "allClients": "All Clients"
+    "section3": {
+      "title": "3. Registration and User Accounts",
+      "body": "• Using the services requires registration with a phone number and receiving a one-time OTP code for identification.\n• During registration and usage, we may store data such as name, phone number, email address, company name, date of birth, and profile picture.\n• Use of the system is limited to users assigned roles (administrators and clients).\n• The responsibility for keeping login credentials confidential lies solely with the user."
     },
-    "planUsage": {
-        "title": "Plan & usage",
-        "planCardTitle": "Your plan",
-        "upgradeButton": "Upgrade / View plans",
-        "planName": "Name:",
-        "planKey": "Plan key:",
-        "price": "Price:",
-        "priceMonthly": "{{currency}}{{amount}} / month",
-        "commercialPricingHint": "How pricing works (commercial):\n1) Core (required): {{currency}}{{coreAmount}} / month\n2) Client channels (choose at least one): Portal / App / Bundle\n3) Resource package (required): Basic / Pro / Enterprise — sets usage limits (storage, seats, retention)\n4) Signing + Evidence (optional): choose a monthly package (Starter / Pro / Office / Unlimited). Effective per-document price is shown for clarity only (package price ÷ included documents).",
-        "scope": "Scope:",
-        "firmId": "Firm ID:",
-        "enforcementMode": "Enforcement:",
-        "scopeValues": {
-            "firm": "Firm",
-            "tenant": "User"
-        },
-        "enforcementModeValues": {
-            "warn": "Warn",
-            "block": "Block"
-        },
-        "retentionTitle": "Retention",
-        "retentionCore": "Core documents:",
-        "retentionPii": "PII documents:",
-        "days": "days",
-        "retentionHint": "Retention applies to documents and evidence. Legal hold (if enabled) may override retention.",
-        "usageCardTitle": "Usage",
-        "monthStart": "Month start:",
-        "used": "Used:",
-        "limit": "Limit:",
-        "quotaUnlimited": "Unlimited",
-        "quotaNotAvailable": "N/A",
-        "meters": {
-            "documentsMonthly": "Documents (this month)",
-            "storageGb": "Storage (GB)",
-            "seats": "System admins",
-            "sms": "SMS (this month)"
-        },
-        "progress": {
-            "documentsMonthly": "Documents",
-            "storageGb": "Storage",
-            "seats": "Admins",
-            "sms": "SMS"
-        },
-        "storageApprox": "~ {{size}} used",
-        "loadingUsage": "Loading usage data..."
+    "section4": {
+      "title": "4. Digital Signing",
+      "body": "• The system allows digital signing of legal documents.\n• Signatures are verified via an OTP code sent to the signer's phone number.\n• A signed document constitutes acknowledgment by the signer that they have read, understood, and agreed to the content of the document.\n• Digital signatures are stored with a timestamp and identification details and cannot be altered after execution.\n• The user is responsible for reviewing the document before signing."
     },
-    "planPricing": {
-        "title": "Plans & pricing",
-        "subtitle": "Everything you pay for, explained clearly.",
-        "baseAndChannelsTitle": "Base system + client channels",
-        "baseAndChannelsSubtitle": "Mandatory: Base + at least one client channel.",
-        "systemPlansTitle": "Resource Packages (mandatory)",
-        "systemPlansSubtitle": "Mandatory: choose one Resource Package. It defines system capacity (users, storage, retention, performance). You cannot use the system without at least one client channel.",
-        "commercialPricingTitle": "Commercial Pricing (Per Firm)",
-        "commercialPricingSubtitle": "These prices are billed per firm.",
-        "coreCommercialLine": "Core: {{currency}}{{amount}} / month (no signatures).",
-        "signingAddonCommercialLine": "Signing + Evidence (optional): choose a monthly package (Starter / Pro / Office / Unlimited). Effective per-document price is shown for clarity (package price ÷ included documents).",
-        "noPlans": "No plans available.",
-        "currentPlan": "Current plan",
-        "planKey": "Plan key: {{planKey}}",
-        "price": "Price:",
-        "priceMonthly": "{{currency}}{{amount}} / month",
-        "pricePerCommercial": "defined by commercial pricing",
-        "priceNotAvailable": "N/A",
-        "retentionCore": "Core retention:",
-        "retentionPii": "PII retention:",
-        "days": "days",
-        "documentsMonthly": "Documents / month:",
-        "storageGb": "Storage (GB):",
-        "users": "Users:",
-        "systemPlansCardFooter": "This package defines usage limits.",
-        "systemPlansExplanation": {
-            "title": "What are Resource Packages?",
-            "line1": "Resource Packages are paid tiers that define system capacity (users, storage, retention, workload level). They do not include document counts.",
-            "line2": "You must choose one package for your firm (and at least one client channel)."
-        },
-        "resourcePackages": {
-            "includedPrice": "{{currency}}{{amount}} / month (included)",
-            "basicDescription": "Included for small offices and trial usage.",
-            "proDescription": "Recommended for active law firms.",
-            "enterpriseDescription": "For large offices or regulatory-heavy workloads."
-        },
-        "unlimited": "Unlimited",
-        "notAvailable": "N/A",
-        "howItWorks": {
-            "title": "How pricing works",
-            "s1": "1) Choose the Base system.",
-            "s2": "2) Choose at least one client channel (Portal or App; or Bundle).",
-            "s3": "3) Choose one Resource Package (Basic / Pro / Enterprise).",
-            "s4": "4) Add Signing + Evidence only if needed."
-        },
-        "commercial": {
-            "core": {
-                "title": "System Base (required)",
-                "description": "Required for every firm. Must be combined with at least one client channel."
-            },
-            "channels": {
-                "title": "Client Channels (choose at least one)",
-                "requiredExplanation": "Required. This is how clients view cases and communicate with the firm.",
-                "portalLine": "Portal (Website): {{currency}}{{amount}} / month — Client portal for updates and documents",
-                "appLine": "Mobile App: {{currency}}{{amount}} / month — Mobile client experience",
-                "bundleLine": "Bundle (Portal + App): {{currency}}{{amount}} / month — Best value"
-            },
-            "signing": {
-                "title": "Signing + Evidence (optional add-on)",
-                "v1": "Legal signing with audit trail",
-                "v2": "Court-admissible evidence package",
-                "v3": "Monthly bundles (Starter / Pro / Office / Unlimited)",
-                "bundlesTitle": "Monthly bundles:",
-                "bundleLine": "Up to {{included}} signed documents/month — {{currency}}{{amount}} / month (effective per-document price is derived from package price ÷ included documents)",
-                "bundlesFooter": "OTP policy is configurable per firm."
-            }
-        },
-        "signingSectionTitle": "Signing + Evidence (optional)",
-        "signingSectionSubtitle": "Optional add-on for legal-grade signing and evidence.",
-        "signing": {
-            "title": "Signing packages",
-            "b1": "Court-admissible evidence package",
-            "b2": "Full audit trail",
-            "b3": "Evidence package",
-            "b4": "OTP is optional per firm",
-            "packageLine": "{{packageName}} — {{currency}}{{amount}} / month (up to {{included}} signed documents/month; {{currency}}{{rate}} effective per signed document)",
-            "unlimitedLine": "Signing Unlimited — {{currency}}{{amount}} / month (unlimited signed documents — fair use)",
-            "fairUseExplanation": "Fair use means normal legal-office usage. If your volume is consistently extreme, we’ll help you pick the right tier.",
-            "overageExplanation": "No per-document overage billing. If you consistently exceed your package, upgrade."
-        }
+    "section5": {
+      "title": "5. File and Document Uploads",
+      "body": "• The system allows uploading files and evidence documents to cases.\n• The user is responsible for ensuring that uploaded files do not infringe copyrights or any other law.\n• We reserve the right to limit file types, sizes, and quantities according to the service plan.\n• Uploaded files are stored securely on our storage servers."
     },
-    "pricingPage": {
-        "title": "Pricing",
-        "subtitle": "A clear, explainable pricing model for law firms.",
-        "clarifyingLine": "Core cannot be purchased alone — you must choose: (1) at least one client channel, and (2) one Resource Package.",
-        "howItWorks": {
-            "title": "How pricing works",
-            "s1": "1) Start with the System Base.",
-            "s2": "2) Choose at least one client channel (Portal or App; or Bundle).",
-            "s3": "3) Choose one Resource Package (Basic / Pro / Enterprise).",
-            "s4": "4) Add Signing + Evidence only if needed."
-        },
-        "sections": {
-            "baseAndChannels": "Base system + client channels",
-            "resourcePackages": "Resource packages (mandatory)",
-            "signing": "Signing + Evidence (optional)"
-        },
-        "core": {
-            "title": "System Base (required)",
-            "requiredExplanation": "Required for every firm. Must be combined with at least one client channel.",
-            "b1": "Case tracking and workflow",
-            "b2": "Firm-side management and admin",
-            "b3": "Secure communication foundation",
-            "b4": "No signatures included (add Signing + Evidence if needed)",
-            "b5": "Role-based access for firm users",
-            "b6": "Built to connect with your chosen client channel"
-        },
-        "channels": {
-            "title": "Client channels (choose at least one)",
-            "requiredExplanation": "Required. Without a client channel, clients can’t view cases or communicate.",
-            "portalTitle": "Portal (Website)",
-            "appTitle": "Mobile app",
-            "bundleTitle": "Bundle (Portal + App)",
-            "portalDescription": "Client portal (web) for updates and documents",
-            "appDescription": "Mobile experience for clients on their phone",
-            "bundleDescription": "Portal + App together (best value)",
-            "b1": "Required: choose Portal, App, or Bundle",
-            "b2": "You can add or switch channels later"
-        },
-        "resourcePackages": {
-            "subtitle": "You must choose one package. It defines system capacity (storage, users, retention).",
-            "includedPrice": "{{currency}}{{amount}} / month (included)",
-            "basic": {
-                "title": "Basic (small office)",
-                "description": "Included for small offices and trial usage.",
-                "l1": "Up to 10GB storage",
-                "l2": "Up to 3 users",
-                "l3": "Data retention: 60 days",
-                "l4": "Workload level: Starter"
-            },
-            "pro": {
-                "title": "Pro (active office)",
-                "description": "Recommended for active law firms.",
-                "l1": "Up to 100GB storage",
-                "l2": "Up to 10 users",
-                "l3": "Data retention: 180 days",
-                "l4": "Workload level: Growing firm"
-            },
-            "enterprise": {
-                "title": "Enterprise (large office)",
-                "description": "For large offices or regulatory-heavy workloads.",
-                "l1": "Unlimited storage (fair use)",
-                "l2": "Unlimited users",
-                "l3": "Data retention: 365 days",
-                "l4": "Workload level: Enterprise"
-            }
-        },
-        "signing": {
-            "title": "Signing + Evidence (optional add-on)",
-            "v1": "Legal signing with audit trail",
-            "v2": "Court-admissible evidence package",
-            "v3": "Monthly bundles (Starter / Pro / Office / Unlimited)",
-            "v4": "OTP is optional per firm",
-            "packagesTitle": "Signing packages:",
-            "packageLine": "{{packageName}} — {{currency}}{{amount}} / month (up to {{included}} signed documents/month; {{currency}}{{rate}} effective per signed document)",
-            "unlimitedLine": "Signing Unlimited — {{currency}}{{amount}} / month (unlimited signed documents — fair use)",
-            "fairUseExplanation": "Fair use means normal legal-office usage. If your volume is consistently extreme, we’ll help you pick the right tier.",
-            "overageExplanation": "No per-document overage billing. If you consistently exceed your package, upgrade."
-        },
-        "calculator": {
-            "title": "Pricing calculator",
-            "subtitle": "Build your monthly price: Base + channels + one Resource Package. Signing is optional.",
-            "channelsTitle": "Client channels (choose at least one)",
-            "channelPortal": "Portal",
-            "channelApp": "App",
-            "channelBundle": "Bundle (Portal + App)",
-            "resourceTitle": "Resource Package (required)",
-            "resourceBasic": "Basic",
-            "resourcePro": "Pro",
-            "resourceEnterprise": "Enterprise",
-            "signingTitle": "Signing + Evidence (optional)",
-            "signingNone": "None",
-            "signingStarter": "Signing Starter",
-            "signingPro": "Signing Pro",
-            "signingOffice": "Signing Office",
-            "signingUnlimited": "Signing Unlimited",
-            "summaryTitle": "Summary",
-            "notSelected": "Not selected",
-            "baseLine": "Base system",
-            "channelsLine": "Client channels",
-            "resourceLine": "Resource Package",
-            "signingLine": "Signing + Evidence",
-            "totalLine": "Total monthly"
-        },
-        "faq": {
-            "title": "FAQ",
-            "q1": "Can I buy Core alone?",
-            "a1": "No. Core must be combined with at least one client channel and one Resource Package.",
-            "q2": "Is OTP mandatory?",
-            "a2": "No. OTP is optional and configurable per firm.",
-            "q3": "What happens if I exceed limits?",
-            "a3": "If you exceed your Resource Package limits regularly, upgrade your package. For signing, there is no per-document overage billing — if you consistently exceed your tier, upgrade.",
-            "q4": "What is the per-document signing rate?",
-            "a4": "It’s calculated as (package price ÷ included documents). For Signing Starter, that’s {{currency}}{{rate}} per signed document."
-        }
+    "section6": {
+      "title": "6. Notifications and Messages",
+      "body": "• The system sends notifications and messages to users via Push, email, and SMS.\n• Notifications include, among others: case updates, signing invitations, reminders, and automated messages.\n• The system may send automated birthday greetings based on the date of birth entered in the profile.\n• Notification channels can be controlled through the system settings.\n• By providing your phone number, you consent to receiving SMS messages (including OTP, updates, and reminders)."
+    },
+    "section7": {
+      "title": "7. Privacy and Data Protection",
+      "body": "• Your information is stored in a secure database.\n• We use token-based authentication (JWT) to protect user access.\n• Personal information will not be shared with third parties without your consent, except where required by law.\n• We use third-party services for sending messages (such as email and SMS), but your details will not be used for marketing unrelated to the service.\n• We maintain activity logs for security and auditing purposes."
+    },
+    "section8": {
+      "title": "8. Fair Use and Prohibited Activities",
+      "body": "When using our services, you agree:\n\n• Not to use the services for unlawful purposes.\n• Not to disrupt the system or attempt to breach data stores.\n• Not to submit false or misleading information.\n• Not to upload harmful files or malicious software.\n• Not to share access credentials with third parties."
+    },
+    "section9": {
+      "title": "9. Service Limits and Plans",
+      "body": "• The service may be limited according to the selected plan (number of cases, storage volume, number of users, etc.).\n• Exceeding plan limits may result in blocking or restricting certain features.\n• Plans can be upgraded at any time through the system settings or by contacting us."
+    },
+    "section10": {
+      "title": "10. Liability and Indemnification",
+      "body": "• We strive to provide stable and reliable services, but we do not guarantee uninterrupted availability.\n• The company will not be liable for indirect, consequential, or incidental damages resulting from use of the service.\n• Users are responsible for safeguarding their access credentials and the information they enter.\n• The service does not constitute a substitute for professional legal advice."
+    },
+    "section11": {
+      "title": "11. Changes and Updates",
+      "body": "• We reserve the right to change these Terms of Use at any time.\n• Updates will be published on the website and in the application.\n• Continued use of the service after an update constitutes acceptance of the updated terms.\n• We recommend reviewing the terms from time to time."
+    },
+    "section12": {
+      "title": "12. Contact",
+      "body": "• If you have questions regarding these Terms of Use, you can contact us at: {{email}}."
+    }
+  },
+  "nav": {
+    "pinnedCases": "Pinned cases",
+    "signingFiles": "Documents for signing",
+    "planUsage": "Plan & usage",
+    "allCases": "All cases",
+    "newOrUpdateCase": "New / Update case",
+    "allManagers": "All managers",
+    "auditTrail": "Audit Trail",
+    "evidenceDocuments": "Evidence documents",
+    "allCaseTypes": "All case types",
+    "addCaseType": "Add case type",
+    "myCases": "My cases",
+    "notifications": "Notifications",
+    "myProfile": "My profile",
+    "terms": "Terms of use",
+    "contact": "Contact",
+    "contactMessage": "Hi, I'd like to get in touch",
+    "reminders": "Reminders",
+    "addOrUpdateClient": "Add / Update Client",
+    "allClients": "All Clients"
+  },
+  "planUsage": {
+    "title": "Plan & usage",
+    "planCardTitle": "Your plan",
+    "upgradeButton": "Upgrade / View plans",
+    "planName": "Name:",
+    "planKey": "Plan key:",
+    "price": "Price:",
+    "priceMonthly": "{{currency}}{{amount}} / month",
+    "commercialPricingHint": "How pricing works (commercial):\n1) Core (required): {{currency}}{{coreAmount}} / month\n2) Client channels (choose at least one): Portal / App / Bundle\n3) Resource package (required): Basic / Pro / Enterprise — sets usage limits (storage, seats, retention)\n4) Signing + Evidence (optional): choose a monthly package (Starter / Pro / Office / Unlimited). Effective per-document price is shown for clarity only (package price ÷ included documents).",
+    "scope": "Scope:",
+    "firmId": "Firm ID:",
+    "enforcementMode": "Enforcement:",
+    "scopeValues": {
+      "firm": "Firm",
+      "tenant": "User"
+    },
+    "enforcementModeValues": {
+      "warn": "Warn",
+      "block": "Block"
+    },
+    "retentionTitle": "Retention",
+    "retentionCore": "Core documents:",
+    "retentionPii": "PII documents:",
+    "days": "days",
+    "retentionHint": "Retention applies to documents and evidence. Legal hold (if enabled) may override retention.",
+    "usageCardTitle": "Usage",
+    "monthStart": "Month start:",
+    "used": "Used:",
+    "limit": "Limit:",
+    "quotaUnlimited": "Unlimited",
+    "quotaNotAvailable": "N/A",
+    "meters": {
+      "documentsMonthly": "Documents (this month)",
+      "storageGb": "Storage (GB)",
+      "seats": "System admins",
+      "sms": "SMS (this month)"
+    },
+    "progress": {
+      "documentsMonthly": "Documents",
+      "storageGb": "Storage",
+      "seats": "Admins",
+      "sms": "SMS"
+    },
+    "storageApprox": "~ {{size}} used",
+    "loadingUsage": "Loading usage data..."
+  },
+  "planPricing": {
+    "title": "Plans & pricing",
+    "subtitle": "Everything you pay for, explained clearly.",
+    "baseAndChannelsTitle": "Base system + client channels",
+    "baseAndChannelsSubtitle": "Mandatory: Base + at least one client channel.",
+    "systemPlansTitle": "Resource Packages (mandatory)",
+    "systemPlansSubtitle": "Mandatory: choose one Resource Package. It defines system capacity (users, storage, retention, performance). You cannot use the system without at least one client channel.",
+    "commercialPricingTitle": "Commercial Pricing (Per Firm)",
+    "commercialPricingSubtitle": "These prices are billed per firm.",
+    "coreCommercialLine": "Core: {{currency}}{{amount}} / month (no signatures).",
+    "signingAddonCommercialLine": "Signing + Evidence (optional): choose a monthly package (Starter / Pro / Office / Unlimited). Effective per-document price is shown for clarity (package price ÷ included documents).",
+    "noPlans": "No plans available.",
+    "currentPlan": "Current plan",
+    "planKey": "Plan key: {{planKey}}",
+    "price": "Price:",
+    "priceMonthly": "{{currency}}{{amount}} / month",
+    "pricePerCommercial": "defined by commercial pricing",
+    "priceNotAvailable": "N/A",
+    "retentionCore": "Core retention:",
+    "retentionPii": "PII retention:",
+    "days": "days",
+    "documentsMonthly": "Documents / month:",
+    "storageGb": "Storage (GB):",
+    "users": "Users:",
+    "systemPlansCardFooter": "This package defines usage limits.",
+    "systemPlansExplanation": {
+      "title": "What are Resource Packages?",
+      "line1": "Resource Packages are paid tiers that define system capacity (users, storage, retention, workload level). They do not include document counts.",
+      "line2": "You must choose one package for your firm (and at least one client channel)."
+    },
+    "resourcePackages": {
+      "includedPrice": "{{currency}}{{amount}} / month (included)",
+      "basicDescription": "Included for small offices and trial usage.",
+      "proDescription": "Recommended for active law firms.",
+      "enterpriseDescription": "For large offices or regulatory-heavy workloads."
+    },
+    "unlimited": "Unlimited",
+    "notAvailable": "N/A",
+    "howItWorks": {
+      "title": "How pricing works",
+      "s1": "1) Choose the Base system.",
+      "s2": "2) Choose at least one client channel (Portal or App; or Bundle).",
+      "s3": "3) Choose one Resource Package (Basic / Pro / Enterprise).",
+      "s4": "4) Add Signing + Evidence only if needed."
+    },
+    "commercial": {
+      "core": {
+        "title": "System Base (required)",
+        "description": "Required for every firm. Must be combined with at least one client channel."
+      },
+      "channels": {
+        "title": "Client Channels (choose at least one)",
+        "requiredExplanation": "Required. This is how clients view cases and communicate with the firm.",
+        "portalLine": "Portal (Website): {{currency}}{{amount}} / month — Client portal for updates and documents",
+        "appLine": "Mobile App: {{currency}}{{amount}} / month — Mobile client experience",
+        "bundleLine": "Bundle (Portal + App): {{currency}}{{amount}} / month — Best value"
+      },
+      "signing": {
+        "title": "Signing + Evidence (optional add-on)",
+        "v1": "Legal signing with audit trail",
+        "v2": "Court-admissible evidence package",
+        "v3": "Monthly bundles (Starter / Pro / Office / Unlimited)",
+        "bundlesTitle": "Monthly bundles:",
+        "bundleLine": "Up to {{included}} signed documents/month — {{currency}}{{amount}} / month (effective per-document price is derived from package price ÷ included documents)",
+        "bundlesFooter": "OTP policy is configurable per firm."
+      }
+    },
+    "signingSectionTitle": "Signing + Evidence (optional)",
+    "signingSectionSubtitle": "Optional add-on for legal-grade signing and evidence.",
+    "signing": {
+      "title": "Signing packages",
+      "b1": "Court-admissible evidence package",
+      "b2": "Full audit trail",
+      "b3": "Evidence package",
+      "b4": "OTP is optional per firm",
+      "packageLine": "{{packageName}} — {{currency}}{{amount}} / month (up to {{included}} signed documents/month; {{currency}}{{rate}} effective per signed document)",
+      "unlimitedLine": "Signing Unlimited — {{currency}}{{amount}} / month (unlimited signed documents — fair use)",
+      "fairUseExplanation": "Fair use means normal legal-office usage. If your volume is consistently extreme, we’ll help you pick the right tier.",
+      "overageExplanation": "No per-document overage billing. If you consistently exceed your package, upgrade."
+    }
+  },
+  "pricingPage": {
+    "title": "Pricing",
+    "subtitle": "A clear, explainable pricing model for law firms.",
+    "clarifyingLine": "Core cannot be purchased alone — you must choose: (1) at least one client channel, and (2) one Resource Package.",
+    "howItWorks": {
+      "title": "How pricing works",
+      "s1": "1) Start with the System Base.",
+      "s2": "2) Choose at least one client channel (Portal or App; or Bundle).",
+      "s3": "3) Choose one Resource Package (Basic / Pro / Enterprise).",
+      "s4": "4) Add Signing + Evidence only if needed."
+    },
+    "sections": {
+      "baseAndChannels": "Base system + client channels",
+      "resourcePackages": "Resource packages (mandatory)",
+      "signing": "Signing + Evidence (optional)"
+    },
+    "core": {
+      "title": "System Base (required)",
+      "requiredExplanation": "Required for every firm. Must be combined with at least one client channel.",
+      "b1": "Case tracking and workflow",
+      "b2": "Firm-side management and admin",
+      "b3": "Secure communication foundation",
+      "b4": "No signatures included (add Signing + Evidence if needed)",
+      "b5": "Role-based access for firm users",
+      "b6": "Built to connect with your chosen client channel"
+    },
+    "channels": {
+      "title": "Client channels (choose at least one)",
+      "requiredExplanation": "Required. Without a client channel, clients can’t view cases or communicate.",
+      "portalTitle": "Portal (Website)",
+      "appTitle": "Mobile app",
+      "bundleTitle": "Bundle (Portal + App)",
+      "portalDescription": "Client portal (web) for updates and documents",
+      "appDescription": "Mobile experience for clients on their phone",
+      "bundleDescription": "Portal + App together (best value)",
+      "b1": "Required: choose Portal, App, or Bundle",
+      "b2": "You can add or switch channels later"
+    },
+    "resourcePackages": {
+      "subtitle": "You must choose one package. It defines system capacity (storage, users, retention).",
+      "includedPrice": "{{currency}}{{amount}} / month (included)",
+      "basic": {
+        "title": "Basic (small office)",
+        "description": "Included for small offices and trial usage.",
+        "l1": "Up to 10GB storage",
+        "l2": "Up to 3 users",
+        "l3": "Data retention: 60 days",
+        "l4": "Workload level: Starter"
+      },
+      "pro": {
+        "title": "Pro (active office)",
+        "description": "Recommended for active law firms.",
+        "l1": "Up to 100GB storage",
+        "l2": "Up to 10 users",
+        "l3": "Data retention: 180 days",
+        "l4": "Workload level: Growing firm"
+      },
+      "enterprise": {
+        "title": "Enterprise (large office)",
+        "description": "For large offices or regulatory-heavy workloads.",
+        "l1": "Unlimited storage (fair use)",
+        "l2": "Unlimited users",
+        "l3": "Data retention: 365 days",
+        "l4": "Workload level: Enterprise"
+      }
     },
     "signing": {
-        "invalidLinkTitle": "Invalid link",
-        "missingToken": "Missing token parameter in the link.",
-        "otpRequiredBadge": "OTP required",
-        "otpWaivedBadge": "OTP waived",
-        "evidencePackageDownload": "Download Evidence Package",
-        "signerFallback": "Signer {{index}}",
-        "fields": {
-            "signature": "Signature",
-            "signatureShort": "Sig",
-            "email": "Email",
-            "emailShort": "Email",
-            "phone": "Phone",
-            "phoneShort": "Phone",
-            "initials": "Initials",
-            "initialsShort": "Init",
-            "text": "Text",
-            "textShort": "Text",
-            "date": "Date",
-            "dateShort": "Date",
-            "checkbox": "Checkbox",
-            "checkboxShort": "Check",
-            "idNumber": "ID/Number",
-            "idNumberShort": "ID",
-            "lawyerStamp": "Stamp + manager signature",
-            "lawyerStampShort": "Stamp",
-            "clientStamp": "Client stamp",
-            "clientStampShort": "C.Stamp"
-        },
-        "fieldSettings": {
-            "addFieldTitle": "Add field",
-            "title": "Field settings",
-            "type": "Field type",
-            "requiredLabel": "Required",
-            "required": "Required",
-            "optional": "Optional",
-            "requiredShort": "Req",
-            "optionalShort": "Opt",
-            "duplicateTitle": "Duplicate",
-            "duplicateAll": "All pages",
-            "duplicateEven": "Even pages",
-            "duplicateOdd": "Odd pages",
-            "duplicateRange": "Range",
-            "rangeFrom": "From",
-            "rangeTo": "To",
-            "rangeInvalid": "Enter a valid page range",
-            "confirmTitle": "Remove field",
-            "confirmDelete": "Are you sure you want to remove this field?",
-            "addFieldForPage": "Add field to page {{page}}",
-            "lawyerStampTitle": "Upload stamp + manager signature",
-            "lawyerStampUploadHint": "Upload a PDF or image of the stamp",
-            "lawyerStampDrawTitle": "Hand signature on stamp",
-            "lawyerStampDrawHint": "Draw your signature on the stamp",
-            "lawyerStampClearDraw": "Clear signature",
-            "lawyerStampConfirm": "Confirm stamp & signature",
-            "clientStampTitle": "Client stamp",
-            "clientStampUploadHint": "The client will upload a PNG or PDF of their stamp when signing"
-        },
-        "context": {
-            "edit": "Edit field settings",
-            "duplicate": "Duplicate to",
-            "allPages": "All pages",
-            "evenPages": "Even pages",
-            "oddPages": "Odd pages",
-            "pageRange": "Page range"
-        },
-        "duplicate": {
-            "noneAdded": "No new fields were added"
-        },
-        "progress": {
-            "label": "Signatures progress"
-        },
-        "status": {
-            "pending": "Pending",
-            "signed": "Signed",
-            "rejected": "Rejected"
-        },
-        "public": {
-            "closedTitle": "Closed",
-            "closedHint": "You can close this window."
-        },
-        "pdf": {
-            "loading": "Loading PDF…",
-            "loadError": "Error loading PDF"
-        },
-        "pdfViewer": {
-            "addSpotForSigner": "Add spot for {{name}} on page {{pageNumber}}",
-            "addSpot": "Add spot on page {{pageNumber}}"
-        },
-        "spot": {
-            "defaultSignerName": "Signature",
-            "signedByTitle": "Signed by: {{name}}",
-            "signatureAlt": "Signature"
-        },
-        "spotMarker": {
-            "title": "📍 Signature spot {{index}}",
-            "signerName": "Signer name",
-            "pageNumber": "Page number",
-            "positionX": "X position (% of width)",
-            "positionY": "Y position (% of height)",
-            "widthPx": "Width (px)",
-            "heightPx": "Height (px)",
-            "required": "Required signature"
-        },
-        "canvas": {
-            "loadDocumentError": "Error loading the document",
-            "loadDocumentErrorTitle": "Error loading the document",
-            "loadingDocument": "Loading document...",
-            "previewComingSoon": "Coming soon: document preview",
-            "you": "You",
-            "consentText": "I confirm that I have read the displayed document, and I consent to sign it electronically. I understand that signing without OTP verification may reduce the strength of the evidence in the event of a dispute.",
-            "consentRequired": "You must accept the consent before continuing.",
-            "otpRequired": "SMS verification is required before signing.",
-            "signHere": "Sign here",
-            "pleaseSignBeforeSave": "Please sign before saving",
-            "pleaseInitialBeforeSave": "Please draw initials before saving",
-            "signatureSavedSuccess": "Signature saved successfully",
-            "initialsSavedSuccess": "Initials saved successfully",
-            "signatureSaveError": "Error saving signature",
-            "initialsSaveError": "Error saving initials",
-            "noSavedSignature": "No saved signature",
-            "missingSavedSignatureData": "Missing saved signature data",
-            "useSavedSignatureError": "Error using saved signature",
-            "useSavedSignatureSignatureOnly": "Saved signature can only be used for signature fields",
-            "signAllRequiresSignature": "To sign all, choose a saved signature or draw a signature",
-            "noSignatureToUse": "No signature found to use",
-            "signedAllSuccess": "All spots were signed successfully",
-            "signAllError": "Error signing all spots",
-            "otpSent": "Verification code sent via SMS",
-            "otpSendError": "Error sending code",
-            "otpInvalidFormat": "Please enter a 6-digit code",
-            "otpVerified": "Code verified successfully",
-            "otpVerifyError": "Error verifying code",
-            "rejectReasonPrompt": "What is the reason for rejecting the document?",
-            "documentRejected": "The document was rejected and the lawyer was notified",
-            "rejectError": "Error rejecting the document",
-            "otpTitle": "SMS verification (OTP) is required before signing",
-            "otpPlaceholder": "Code (6 digits)",
-            "verify": "Verify",
-            "resend": "Resend",
-            "sendCode": "Send code",
-            "verified": "Verified",
-            "nextSignature": "Next signature",
-            "remainingSignatures": "{{count}} signatures remaining",
-            "hideAllSpots": "Hide all spots",
-            "showAllSpots": "Show all spots",
-            "noSpotsToShow": "No signature spots to display",
-            "drawNewSignature": "Draw\nnew signature",
-            "savedSignatureAlt": "Saved signature",
-            "loadingSavedSignature": "Loading saved signature...",
-            "tabDraw": "Signature",
-            "tabSaved": "Saved",
-            "tabStamp": "Upload stamp",
-            "tabSavedStamp": "Saved stamp",
-            "noSavedStamp": "No saved stamp",
-            "missingSavedStampData": "Missing saved stamp data",
-            "useSavedStampError": "Error using saved stamp",
-            "savedStampAlt": "Saved stamp",
-            "loadingSavedStamp": "Loading saved stamp...",
-            "saving": "Saving...",
-            "saveField": "Save field",
-            "fieldValueLabel": "Field value: {{type}}",
-            "fieldValuePlaceholder": "Enter value",
-            "fieldSavedSuccess": "Value saved successfully",
-            "fieldSaveError": "Error saving value",
-            "fieldRequired": "Required field must be filled",
-            "checkboxLabel": "Check",
-            "sign": "Sign",
-            "signOnly": "Sign",
-            "signAll": "Sign all",
-            "useSavedSignature": "Use\nsaved signature",
-            "saveSignature": "Save signature",
-            "saveInitials": "Save initials",
-            "deleteSavedItem": "Delete",
-            "deleteSavedSuccess": "Deleted successfully",
-            "deleteSavedError": "Delete failed",
-            "noSavedItems": "No saved signatures or stamps",
-            "savedSignatureLabel": "Signature",
-            "savedStampLabel": "Stamp",
-            "spotAlreadySigned": "This signature spot is already signed by you",
-            "allRequiredCompleted": "You have completed all required signatures!",
-            "rejectDocument": "Reject document",
-            "failedToLoadSignatureImage": "Failed to load signature image",
-            "clientStampSavedSuccess": "Client stamp saved successfully",
-            "clientStampUploadError": "Failed to upload client stamp",
-            "chooseFile": "Choose File",
-            "signOnStampHint": "You can sign on the stamp (optional)",
-            "changeStamp": "Change stamp",
-            "nextStep": "Continue"
-        },
-        "screen": {
-            "tabPending": "Pending for signature ({{count}})",
-            "tabSigned": "Signed ({{count}})",
-            "emptyPending": "No documents are currently pending your signature",
-            "emptySigned": "No signed documents to display",
-            "caseLabel": "Case:",
-            "lawyerLabel": "Lawyer:",
-            "uploadedAtLabel": "Upload date:",
-            "signaturesLabel": "Signatures:",
-            "signaturesAria": "Signatures: {{percent}}%",
-            "notesLabel": "Lawyer notes:",
-            "signDocument": "Sign the document",
-            "downloadSigned": "Download signed file",
-            "details": "Details",
-            "downloadMissingUrl": "Unable to download the file",
-            "downloadError": "Error downloading the file"
-        },
-        "upload": {
-            "signerSelectorLabel": "Signer",
-            "title": "Send document for signing",
-            "searchSignerTitle": "Search signer (customer)",
-            "addManualSigner": "Add signer manually",
-            "manualSignerName": "Signer name *",
-            "manualSignerEmail": "Email",
-            "manualSignerPhone": "Phone",
-            "addSignerBtn": "Add",
-            "selectedCaseLabel": "Selected case",
-            "selectedSignersLabel": "Selected signers *",
-            "removeSignerAria": "Remove {{name}}",
-            "removeCaseAria": "Remove case {{name}}",
-            "fileDropPrompt": "Drag a file here or click to choose",
-            "fileHintPdfOnly": "(PDF only for now)",
-            "documentNameTitle": "Document Name",
-            "notesTitle": "Notes to customer (optional)",
-            "viewerTitle": "Document preview & signature setup",
-            "spotHelpText": "Each page has a \"+ Add signature\" button. Drag the boxes to the desired location or delete",
-            "sending": "Sending...",
-            "retentionNotice": {
-                "title": "Retention notice",
-                "text": "Signed documents and evidence may be retained for {{coreDays}} days (core) and {{piiDays}} days (PII), according to your plan and any legal hold policies. Continue to confirm you understand.",
-                "textFallback": "Signed documents and evidence may be retained according to your plan and any legal hold policies. Continue to confirm you understand.",
-                "ackButton": "I understand"
-            },
-            "sendToClient": "Send to customer",
-            "successSent": "The file was sent to the customer for signing.",
-            "errorSending": "Error sending the file for signing.",
-            "otpPolicyLabel": "OTP policy *",
-            "otpRequire": "Require SMS OTP (recommended)",
-            "otpWaive": "Send without OTP",
-            "otpWaiverWarning": "Sending without OTP may reduce evidence strength in case of a dispute.",
-            "otpWaiverAck": "I explicitly approve sending without OTP",
-            "detect": {
-                "button": "Detect signatures automatically",
-                "detecting": "Detecting...",
-                "noneFound": "No automatic signature spots found. You can add manually.",
-                "error": "Error detecting signatures automatically."
-            },
-            "validation": {
-                "selectFile": "Please select a file.",
-                "selectAtLeastOneSigner": "Please select at least one signer.",
-                "atLeastOneSpot": "At least one signature spot is required.",
-                "selectOtpPolicy": "Please choose an OTP policy.",
-                "waiverAckRequired": "To send without OTP, you must explicitly acknowledge the statement."
-            }
-        }
+      "title": "Signing + Evidence (optional add-on)",
+      "v1": "Legal signing with audit trail",
+      "v2": "Court-admissible evidence package",
+      "v3": "Monthly bundles (Starter / Pro / Office / Unlimited)",
+      "v4": "OTP is optional per firm",
+      "packagesTitle": "Signing packages:",
+      "packageLine": "{{packageName}} — {{currency}}{{amount}} / month (up to {{included}} signed documents/month; {{currency}}{{rate}} effective per signed document)",
+      "unlimitedLine": "Signing Unlimited — {{currency}}{{amount}} / month (unlimited signed documents — fair use)",
+      "fairUseExplanation": "Fair use means normal legal-office usage. If your volume is consistently extreme, we’ll help you pick the right tier.",
+      "overageExplanation": "No per-document overage billing. If you consistently exceed your package, upgrade."
     },
-    "verifyEvidence": {
-        "title": "Evidence Verification",
-        "subtitle": "This link is referenced by the Evidence Certificate (PDF).",
-        "signingFileIdLabel": "Signing File ID:",
-        "instructions": "To verify the certificate, compare the Signing File ID and the SHA-256 hashes printed in the PDF with the presented document files.",
-        "privacyNote": "For privacy and legal reasons, this page does not display personal data. The full evidence package is available to authorized users.",
-        "actions": {
-            "login": "Log in",
-            "openEvidence": "Open Evidence Documents",
-            "openSigningManager": "Open Signing Manager",
-            "openSigning": "Open My Signing"
-        }
+    "calculator": {
+      "title": "Pricing calculator",
+      "subtitle": "Build your monthly price: Base + channels + one Resource Package. Signing is optional.",
+      "channelsTitle": "Client channels (choose at least one)",
+      "channelPortal": "Portal",
+      "channelApp": "App",
+      "channelBundle": "Bundle (Portal + App)",
+      "resourceTitle": "Resource Package (required)",
+      "resourceBasic": "Basic",
+      "resourcePro": "Pro",
+      "resourceEnterprise": "Enterprise",
+      "signingTitle": "Signing + Evidence (optional)",
+      "signingNone": "None",
+      "signingStarter": "Signing Starter",
+      "signingPro": "Signing Pro",
+      "signingOffice": "Signing Office",
+      "signingUnlimited": "Signing Unlimited",
+      "summaryTitle": "Summary",
+      "notSelected": "Not selected",
+      "baseLine": "Base system",
+      "channelsLine": "Client channels",
+      "resourceLine": "Resource Package",
+      "signingLine": "Signing + Evidence",
+      "totalLine": "Total monthly"
     },
-    "clientImport": {
-        "button": "Import clients from Excel",
-        "title": "Import Clients from Excel",
-        "instructions": "Upload an Excel (.xlsx) or CSV (.csv) file with columns: Name (required), Phone, Email, ID Number, Notes. Duplicate rows will be skipped automatically.",
-        "uploadButton": "Upload & Import",
-        "uploading": "Importing...",
-        "resultTitle": "Import Results",
-        "created": "Created",
-        "skipped": "Skipped (duplicates)",
-        "failed": "Failed",
-        "detailsTitle": "Details",
-        "row": "Row",
-        "statusCreated": "Created",
-        "statusSkipped": "Skipped",
-        "statusFailed": "Failed",
-        "andMore": "and {{count}} more rows...",
-        "errorGeneric": "Error importing clients"
-    },
-    "reminders": {
-        "title": "Scheduled Reminders",
-        "subtitle": "Manage automated email reminders for clients. Import from Excel or view the list.",
-        "importButton": "Import reminders from Excel",
-        "empty": "No reminders to display.",
-        "errorLoad": "Error loading reminders.",
-        "cancel": "Cancel",
-        "prev": "Previous",
-        "next": "Next",
-        "pageInfo": "Page {{page}} of {{totalPages}}",
-        "filter": {
-            "all": "All",
-            "pending": "Pending",
-            "sent": "Sent",
-            "failed": "Failed",
-            "cancelled": "Cancelled"
-        },
-        "status": {
-            "pending": "Pending",
-            "sent": "Sent",
-            "failed": "Failed",
-            "cancelled": "Cancelled"
-        },
-        "col": {
-            "clientName": "Client Name",
-            "email": "Email",
-            "template": "Template",
-            "scheduledFor": "Scheduled For",
-            "status": "Status",
-            "sentAt": "Sent At",
-            "actions": "Actions"
-        },
-        "import": {
-            "title": "Import Reminders from Excel",
-            "instructions": "Upload an Excel (.xlsx) or CSV (.csv) file with columns: Client Name (required), Email (required), Date (required), Subject, Notes. Choose a template and send hour.",
-            "templateLabel": "Email Template",
-            "sendHourLabel": "Send Hour (0-23)",
-            "uploadButton": "Upload & Import",
-            "uploading": "Importing...",
-            "resultTitle": "Import Results",
-            "created": "Created",
-            "skipped": "Skipped",
-            "failed": "Failed",
-            "detailsTitle": "Details",
-            "row": "Row",
-            "statusCreated": "Created",
-            "statusSkipped": "Skipped",
-            "statusFailed": "Failed",
-            "andMore": "and {{count}} more rows...",
-            "errorGeneric": "Error importing reminders"
-        },
-        "statusFilter": "Status",
-        "deleteReminder": "Delete",
-        "detail": {
-            "title": "Reminder Details",
-            "subject": "Subject",
-            "error": "Error",
-            "edit": "Edit",
-            "save": "Save",
-            "saving": "Saving...",
-            "saveError": "Error saving reminder"
-        }
-    },
-    "compliance": {
-        "disclaimer": "Compliance program in progress. These controls are aligned with the listed standards but have not yet been formally certified by an accredited registrar.",
-        "badges": {
-            "iso27001Aligned": "Aligned with ISO/IEC 27001",
-            "iso27001Certified": "ISO/IEC 27001 Certified",
-            "iso27701Ready": "ISO/IEC 27701-ready",
-            "iso27701Certified": "ISO/IEC 27701 Certified",
-            "iso22301Based": "Based on ISO 22301",
-            "iso22301Certified": "ISO 22301 Certified"
-        },
-        "nav": {
-            "securityAndCompliance": "Security & Compliance"
-        },
-        "hub": {
-            "pageTitle": "Compliance Center",
-            "overviewTitle": "Our Commitment",
-            "overviewText": "We are committed to protecting your data and maintaining the highest standards of information security, privacy, and business continuity. Our compliance program is aligned with internationally recognised ISO standards.",
-            "securityDesc": "How we protect your information — encryption, access controls, monitoring.",
-            "privacyDesc": "How we handle personal data — privacy by design, data minimisation.",
-            "continuityDesc": "How we ensure service availability — backups, disaster recovery, uptime."
-        },
-        "security": {
-            "pageTitle": "Information Security",
-            "whatIsTitle": "What is ISO/IEC 27001?",
-            "whatIsText": "ISO/IEC 27001 is the international standard for Information Security Management Systems (ISMS). It provides a systematic approach to managing sensitive data and ensuring it remains secure through risk management processes.",
-            "whatItMeansTitle": "What This Means for You",
-            "whatItMeansText": "Your case data, documents, and communications are protected by industry-leading security controls. We continuously monitor and improve our security posture to safeguard your information.",
-            "whatWeDoTitle": "What We Implement Today",
-            "whatWeDoText": "<ul><li>End-to-end encryption for data in transit (TLS 1.2+)</li><li>Encryption at rest for stored documents</li><li>Multi-factor authentication (OTP-based)</li><li>Role-based access control with least-privilege principle</li><li>Comprehensive audit logging (ISO 27001 Annex A compliant)</li><li>Automated rate limiting and brute-force protection</li><li>Security headers (HSTS, CSP, X-Frame-Options)</li><li>Regular vulnerability assessments</li></ul>",
-            "roadmapTitle": "Roadmap",
-            "roadmapText": "Formal ISO/IEC 27001 certification audit planned. Continuous improvement of controls through regular internal audits and penetration testing.",
-            "statusTitle": "Certification Status",
-            "statusText": "Aligned with ISO/IEC 27001 controls. Formal certification in progress."
-        },
-        "privacy": {
-            "pageTitle": "Privacy & Data Protection",
-            "whatIsTitle": "What is ISO/IEC 27701?",
-            "whatIsText": "ISO/IEC 27701 extends ISO 27001 with privacy-specific controls, creating a Privacy Information Management System (PIMS). It helps organisations comply with privacy regulations such as GDPR and the Israeli Privacy Protection Law.",
-            "whatItMeansTitle": "What This Means for You",
-            "whatItMeansText": "Your personal data is handled with the utmost care. We collect only what is necessary, store it securely, and never share it without your explicit consent or legal obligation.",
-            "whatWeDoTitle": "What We Implement Today",
-            "whatWeDoText": "<ul><li>Data minimisation — we collect only what is needed</li><li>Purpose limitation — data is used only for stated purposes</li><li>Secure deletion — data is permanently removed when no longer needed</li><li>Privacy by design in all new features</li><li>PII masking in logs and audit trails</li><li>Consent management for communications</li><li>Data subject rights support (access, rectification, erasure)</li></ul>",
-            "roadmapTitle": "Roadmap",
-            "roadmapText": "Formal ISO/IEC 27701 certification as an extension to ISO 27001. Enhanced data processing records and DPIA procedures.",
-            "statusTitle": "Certification Status",
-            "statusText": "ISO/IEC 27701-ready. Privacy controls implemented and operational."
-        },
-        "continuity": {
-            "pageTitle": "Business Continuity",
-            "whatIsTitle": "What is ISO 22301?",
-            "whatIsText": "ISO 22301 is the international standard for Business Continuity Management Systems (BCMS). It ensures that organisations can continue to deliver products and services during disruptions.",
-            "whatItMeansTitle": "What This Means for You",
-            "whatItMeansText": "Your access to case management, documents, and signed files is protected against service disruptions. We have recovery procedures in place to minimise downtime.",
-            "whatWeDoTitle": "What We Implement Today",
-            "whatWeDoText": "<ul><li>Automated database backups with point-in-time recovery</li><li>Cloud storage redundancy (Cloudflare R2 with multi-region replication)</li><li>Application health monitoring and auto-restart (PM2)</li><li>Incident response procedures with structured logging</li><li>Graceful degradation under high load</li><li>Server-side request timeouts to prevent cascade failures</li></ul>",
-            "roadmapTitle": "Roadmap",
-            "roadmapText": "Formal business impact analysis (BIA). Documented disaster recovery plan with defined RTOs and RPOs. Regular DR drills.",
-            "statusTitle": "Certification Status",
-            "statusText": "Business continuity principles based on ISO 22301. Formal assessment planned."
-        }
-    },
-    "chatbot": {
-        "title": "AI Assistant - Mor Levy Law Office",
-        "welcomeTitle": "Hello! I'm the AI Assistant of Mor Levy Law Office",
-        "welcomeSubtitle": "You can ask me general legal questions. To ask about your personal case, please verify your phone number.",
-        "inputPlaceholder": "Type your question here...",
-        "verifiedBadge": "Verified",
-        "otpTitle": "Identity Verification",
-        "otpDescription": "To access your case information, please enter the phone number registered in the system.",
-        "sendOtp": "Send verification code",
-        "otpCodePlaceholder": "Enter 6-digit code",
-        "verifyOtp": "Verify code",
-        "sending": "Sending...",
-        "verifying": "Verifying...",
-        "verificationSuccess": "Identity verified successfully! You can now ask questions about your case.",
-        "otpSendFailed": "Failed to send verification code. Please try again.",
-        "otpInvalid": "Invalid verification code. Please try again.",
-        "errorGeneric": "An error occurred. Please try again later.",
-        "sessionExpired": "Session expired. Please verify your phone number again.",
-        "greetingMorning": "Good morning! 🌞 I'm the AI assistant of Mor Levy Law Office. How can I help you today?",
-        "greetingAfternoon": "Good afternoon! ☀️ I'm the AI assistant of Mor Levy Law Office. How can I help you?",
-        "greetingEvening": "Good evening! 🌆 I'm the AI assistant of Mor Levy Law Office. How can I help you?",
-        "greetingNight": "Good night! 🌙 I'm the AI assistant of Mor Levy Law Office. How can I help you?"
-    },
-    "platformSettings": {
-        "docTitlePlaceholder": "Document name (optional)",
-        "chooseFile": "Choose File",
-        "uploading": "Uploading and processing document...",
-        "noDocsYet": "No knowledge documents yet. Upload a document so the chatbot can answer questions.",
-        "deleteDocTitle": "Delete Document",
-        "deleteDocMessage": "Delete this document? All its knowledge chunks will be removed.",
-        "docDeleted": "Document deleted successfully",
-        "docDeleteError": "Error deleting document",
-        "deleteTemplateTitle": "Delete Template",
-        "deleteTemplateMessage": "Delete this template?",
-        "templateDeleted": "Template deleted",
-        "templateDeleteError": "Error deleting template",
-        "removeAdminTitle": "Remove Admin",
-        "removeAdminMessage": "Are you sure you want to remove this admin?"
-    },
-    "viewSignedDoc": {
-        "invalidLink": "Invalid link",
-        "expired": "This link has expired",
-        "notSigned": "Document has not been signed yet",
-        "loadError": "Error loading document",
-        "loading": "Loading document...",
-        "signedAt": "Signed on",
-        "download": "Download Signed Document"
+    "faq": {
+      "title": "FAQ",
+      "q1": "Can I buy Core alone?",
+      "a1": "No. Core must be combined with at least one client channel and one Resource Package.",
+      "q2": "Is OTP mandatory?",
+      "a2": "No. OTP is optional and configurable per firm.",
+      "q3": "What happens if I exceed limits?",
+      "a3": "If you exceed your Resource Package limits regularly, upgrade your package. For signing, there is no per-document overage billing — if you consistently exceed your tier, upgrade.",
+      "q4": "What is the per-document signing rate?",
+      "a4": "It’s calculated as (package price ÷ included documents). For Signing Starter, that’s {{currency}}{{rate}} per signed document."
     }
+  },
+  "signing": {
+    "invalidLinkTitle": "Invalid link",
+    "missingToken": "Missing token parameter in the link.",
+    "otpRequiredBadge": "OTP required",
+    "otpWaivedBadge": "OTP waived",
+    "evidencePackageDownload": "Download Evidence Package",
+    "signerFallback": "Signer {{index}}",
+    "fields": {
+      "signature": "Signature",
+      "signatureShort": "Sig",
+      "email": "Email",
+      "emailShort": "Email",
+      "phone": "Phone",
+      "phoneShort": "Phone",
+      "initials": "Initials",
+      "initialsShort": "Init",
+      "text": "Text",
+      "textShort": "Text",
+      "date": "Date",
+      "dateShort": "Date",
+      "checkbox": "Checkbox",
+      "checkboxShort": "Check",
+      "idNumber": "ID/Number",
+      "idNumberShort": "ID",
+      "lawyerStamp": "Stamp + manager signature",
+      "lawyerStampShort": "Stamp",
+      "clientStamp": "Client stamp",
+      "clientStampShort": "C.Stamp"
+    },
+    "fieldSettings": {
+      "addFieldTitle": "Add field",
+      "title": "Field settings",
+      "type": "Field type",
+      "requiredLabel": "Required",
+      "required": "Required",
+      "optional": "Optional",
+      "requiredShort": "Req",
+      "optionalShort": "Opt",
+      "duplicateTitle": "Duplicate",
+      "duplicateAll": "All pages",
+      "duplicateEven": "Even pages",
+      "duplicateOdd": "Odd pages",
+      "duplicateRange": "Range",
+      "rangeFrom": "From",
+      "rangeTo": "To",
+      "rangeInvalid": "Enter a valid page range",
+      "confirmTitle": "Remove field",
+      "confirmDelete": "Are you sure you want to remove this field?",
+      "addFieldForPage": "Add field to page {{page}}",
+      "lawyerStampTitle": "Upload stamp + manager signature",
+      "lawyerStampUploadHint": "Upload a PDF or image of the stamp",
+      "lawyerStampDrawTitle": "Hand signature on stamp",
+      "lawyerStampDrawHint": "Draw your signature on the stamp",
+      "lawyerStampClearDraw": "Clear signature",
+      "lawyerStampConfirm": "Confirm stamp & signature",
+      "clientStampTitle": "Client stamp",
+      "clientStampUploadHint": "The client will upload a PNG or PDF of their stamp when signing"
+    },
+    "context": {
+      "edit": "Edit field settings",
+      "duplicate": "Duplicate to",
+      "allPages": "All pages",
+      "evenPages": "Even pages",
+      "oddPages": "Odd pages",
+      "pageRange": "Page range"
+    },
+    "duplicate": {
+      "noneAdded": "No new fields were added"
+    },
+    "progress": {
+      "label": "Signatures progress"
+    },
+    "status": {
+      "pending": "Pending",
+      "signed": "Signed",
+      "rejected": "Rejected"
+    },
+    "public": {
+      "closedTitle": "Closed",
+      "closedHint": "You can close this window."
+    },
+    "pdf": {
+      "loading": "Loading PDF…",
+      "loadError": "Error loading PDF"
+    },
+    "pdfViewer": {
+      "addSpotForSigner": "Add spot for {{name}} on page {{pageNumber}}",
+      "addSpot": "Add spot on page {{pageNumber}}"
+    },
+    "spot": {
+      "defaultSignerName": "Signature",
+      "signedByTitle": "Signed by: {{name}}",
+      "signatureAlt": "Signature"
+    },
+    "spotMarker": {
+      "title": "📍 Signature spot {{index}}",
+      "signerName": "Signer name",
+      "pageNumber": "Page number",
+      "positionX": "X position (% of width)",
+      "positionY": "Y position (% of height)",
+      "widthPx": "Width (px)",
+      "heightPx": "Height (px)",
+      "required": "Required signature"
+    },
+    "canvas": {
+      "loadDocumentError": "Error loading the document",
+      "loadDocumentErrorTitle": "Error loading the document",
+      "loadingDocument": "Loading document...",
+      "previewComingSoon": "Coming soon: document preview",
+      "you": "You",
+      "consentText": "I confirm that I have read the displayed document, and I consent to sign it electronically. I understand that signing without OTP verification may reduce the strength of the evidence in the event of a dispute.",
+      "consentRequired": "You must accept the consent before continuing.",
+      "otpRequired": "SMS verification is required before signing.",
+      "signHere": "Sign here",
+      "pleaseSignBeforeSave": "Please sign before saving",
+      "pleaseInitialBeforeSave": "Please draw initials before saving",
+      "signatureSavedSuccess": "Signature saved successfully",
+      "initialsSavedSuccess": "Initials saved successfully",
+      "signatureSaveError": "Error saving signature",
+      "initialsSaveError": "Error saving initials",
+      "noSavedSignature": "No saved signature",
+      "missingSavedSignatureData": "Missing saved signature data",
+      "useSavedSignatureError": "Error using saved signature",
+      "useSavedSignatureSignatureOnly": "Saved signature can only be used for signature fields",
+      "signAllRequiresSignature": "To sign all, choose a saved signature or draw a signature",
+      "noSignatureToUse": "No signature found to use",
+      "signedAllSuccess": "All spots were signed successfully",
+      "signAllError": "Error signing all spots",
+      "otpSent": "Verification code sent via SMS",
+      "otpSendError": "Error sending code",
+      "otpInvalidFormat": "Please enter a 6-digit code",
+      "otpVerified": "Code verified successfully",
+      "otpVerifyError": "Error verifying code",
+      "rejectReasonPrompt": "What is the reason for rejecting the document?",
+      "documentRejected": "The document was rejected and the lawyer was notified",
+      "rejectError": "Error rejecting the document",
+      "otpTitle": "SMS verification (OTP) is required before signing",
+      "otpPlaceholder": "Code (6 digits)",
+      "verify": "Verify",
+      "resend": "Resend",
+      "sendCode": "Send code",
+      "verified": "Verified",
+      "nextSignature": "Next signature",
+      "remainingSignatures": "{{count}} signatures remaining",
+      "hideAllSpots": "Hide all spots",
+      "showAllSpots": "Show all spots",
+      "noSpotsToShow": "No signature spots to display",
+      "drawNewSignature": "Draw\nnew signature",
+      "savedSignatureAlt": "Saved signature",
+      "loadingSavedSignature": "Loading saved signature...",
+      "tabDraw": "Signature",
+      "tabSaved": "Saved",
+      "tabStamp": "Upload stamp",
+      "tabSavedStamp": "Saved stamp",
+      "noSavedStamp": "No saved stamp",
+      "missingSavedStampData": "Missing saved stamp data",
+      "useSavedStampError": "Error using saved stamp",
+      "savedStampAlt": "Saved stamp",
+      "loadingSavedStamp": "Loading saved stamp...",
+      "saving": "Saving...",
+      "saveField": "Save field",
+      "fieldValueLabel": "Field value: {{type}}",
+      "fieldValuePlaceholder": "Enter value",
+      "fieldSavedSuccess": "Value saved successfully",
+      "fieldSaveError": "Error saving value",
+      "fieldRequired": "Required field must be filled",
+      "checkboxLabel": "Check",
+      "sign": "Sign",
+      "signOnly": "Sign",
+      "signAll": "Sign all",
+      "useSavedSignature": "Use\nsaved signature",
+      "saveSignature": "Save signature",
+      "saveInitials": "Save initials",
+      "deleteSavedItem": "Delete",
+      "deleteSavedSuccess": "Deleted successfully",
+      "deleteSavedError": "Delete failed",
+      "noSavedItems": "No saved signatures or stamps",
+      "savedSignatureLabel": "Signature",
+      "savedStampLabel": "Stamp",
+      "spotAlreadySigned": "This signature spot is already signed by you",
+      "allRequiredCompleted": "You have completed all required signatures!",
+      "rejectDocument": "Reject document",
+      "failedToLoadSignatureImage": "Failed to load signature image",
+      "clientStampSavedSuccess": "Client stamp saved successfully",
+      "clientStampUploadError": "Failed to upload client stamp",
+      "chooseFile": "Choose File",
+      "signOnStampHint": "You can sign on the stamp (optional)",
+      "changeStamp": "Change stamp",
+      "nextStep": "Continue"
+    },
+    "screen": {
+      "tabPending": "Pending for signature ({{count}})",
+      "tabSigned": "Signed ({{count}})",
+      "emptyPending": "No documents are currently pending your signature",
+      "emptySigned": "No signed documents to display",
+      "caseLabel": "Case:",
+      "lawyerLabel": "Lawyer:",
+      "uploadedAtLabel": "Upload date:",
+      "signaturesLabel": "Signatures:",
+      "signaturesAria": "Signatures: {{percent}}%",
+      "notesLabel": "Lawyer notes:",
+      "signDocument": "Sign the document",
+      "downloadSigned": "Download signed file",
+      "details": "Details",
+      "downloadMissingUrl": "Unable to download the file",
+      "downloadError": "Error downloading the file"
+    },
+    "upload": {
+      "signerSelectorLabel": "Signer",
+      "title": "Send document for signing",
+      "searchSignerTitle": "Search signer (customer)",
+      "addManualSigner": "Add signer manually",
+      "manualSignerName": "Signer name *",
+      "manualSignerEmail": "Email",
+      "manualSignerPhone": "Phone",
+      "addSignerBtn": "Add",
+      "selectedCaseLabel": "Selected case",
+      "selectedSignersLabel": "Selected signers *",
+      "removeSignerAria": "Remove {{name}}",
+      "removeCaseAria": "Remove case {{name}}",
+      "fileDropPrompt": "Drag a file here or click to choose",
+      "fileHintPdfOnly": "(PDF only for now)",
+      "documentNameTitle": "Document Name",
+      "notesTitle": "Notes to customer (optional)",
+      "viewerTitle": "Document preview & signature setup",
+      "spotHelpText": "Each page has a \"+ Add signature\" button. Drag the boxes to the desired location or delete",
+      "sending": "Sending...",
+      "retentionNotice": {
+        "title": "Retention notice",
+        "text": "Signed documents and evidence may be retained for {{coreDays}} days (core) and {{piiDays}} days (PII), according to your plan and any legal hold policies. Continue to confirm you understand.",
+        "textFallback": "Signed documents and evidence may be retained according to your plan and any legal hold policies. Continue to confirm you understand.",
+        "ackButton": "I understand"
+      },
+      "sendToClient": "Send to customer",
+      "successSent": "The file was sent to the customer for signing.",
+      "errorSending": "Error sending the file for signing.",
+      "otpPolicyLabel": "OTP policy *",
+      "otpRequire": "Require SMS OTP (recommended)",
+      "otpWaive": "Send without OTP",
+      "otpWaiverWarning": "Sending without OTP may reduce evidence strength in case of a dispute.",
+      "otpWaiverAck": "I explicitly approve sending without OTP",
+      "detect": {
+        "button": "Detect signatures automatically",
+        "detecting": "Detecting...",
+        "noneFound": "No automatic signature spots found. You can add manually.",
+        "error": "Error detecting signatures automatically."
+      },
+      "validation": {
+        "selectFile": "Please select a file.",
+        "selectAtLeastOneSigner": "Please select at least one signer.",
+        "atLeastOneSpot": "At least one signature spot is required.",
+        "selectOtpPolicy": "Please choose an OTP policy.",
+        "waiverAckRequired": "To send without OTP, you must explicitly acknowledge the statement."
+      }
+    }
+  },
+  "verifyEvidence": {
+    "title": "Evidence Verification",
+    "subtitle": "This link is referenced by the Evidence Certificate (PDF).",
+    "signingFileIdLabel": "Signing File ID:",
+    "instructions": "To verify the certificate, compare the Signing File ID and the SHA-256 hashes printed in the PDF with the presented document files.",
+    "privacyNote": "For privacy and legal reasons, this page does not display personal data. The full evidence package is available to authorized users.",
+    "actions": {
+      "login": "Log in",
+      "openEvidence": "Open Evidence Documents",
+      "openSigningManager": "Open Signing Manager",
+      "openSigning": "Open My Signing"
+    }
+  },
+  "clientImport": {
+    "button": "Import clients from Excel",
+    "title": "Import Clients from Excel",
+    "instructions": "Upload an Excel (.xlsx) or CSV (.csv) file with columns: Name (required), Phone, Email, ID Number, Notes. Duplicate rows will be skipped automatically.",
+    "uploadButton": "Upload & Import",
+    "uploading": "Importing...",
+    "resultTitle": "Import Results",
+    "created": "Created",
+    "skipped": "Skipped (duplicates)",
+    "failed": "Failed",
+    "detailsTitle": "Details",
+    "row": "Row",
+    "statusCreated": "Created",
+    "statusSkipped": "Skipped",
+    "statusFailed": "Failed",
+    "andMore": "and {{count}} more rows...",
+    "errorGeneric": "Error importing clients"
+  },
+  "reminders": {
+    "title": "Scheduled Reminders",
+    "subtitle": "Manage automated email reminders for clients. Import from Excel or view the list.",
+    "importButton": "Import reminders from Excel",
+    "empty": "No reminders to display.",
+    "errorLoad": "Error loading reminders.",
+    "cancel": "Cancel",
+    "prev": "Previous",
+    "next": "Next",
+    "pageInfo": "Page {{page}} of {{totalPages}}",
+    "filter": {
+      "all": "All",
+      "pending": "Pending",
+      "sent": "Sent",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "status": {
+      "pending": "Pending",
+      "sent": "Sent",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "col": {
+      "clientName": "Client Name",
+      "email": "Email",
+      "template": "Template",
+      "scheduledFor": "Scheduled For",
+      "status": "Status",
+      "sentAt": "Sent At",
+      "actions": "Actions"
+    },
+    "import": {
+      "title": "Import Reminders from Excel",
+      "instructions": "Upload an Excel (.xlsx) or CSV (.csv) file with columns: Client Name (required), Email (required), Date (required), Subject, Notes. Choose a template and send hour.",
+      "templateLabel": "Email Template",
+      "sendHourLabel": "Send Hour (0-23)",
+      "uploadButton": "Upload & Import",
+      "uploading": "Importing...",
+      "resultTitle": "Import Results",
+      "created": "Created",
+      "skipped": "Skipped",
+      "failed": "Failed",
+      "detailsTitle": "Details",
+      "row": "Row",
+      "statusCreated": "Created",
+      "statusSkipped": "Skipped",
+      "statusFailed": "Failed",
+      "andMore": "and {{count}} more rows...",
+      "errorGeneric": "Error importing reminders"
+    },
+    "statusFilter": "Status",
+    "deleteReminder": "Delete",
+    "detail": {
+      "title": "Reminder Details",
+      "subject": "Subject",
+      "error": "Error",
+      "edit": "Edit",
+      "save": "Save",
+      "saving": "Saving...",
+      "saveError": "Error saving reminder"
+    }
+  },
+  "compliance": {
+    "disclaimer": "Compliance program in progress. These controls are aligned with the listed standards but have not yet been formally certified by an accredited registrar.",
+    "badges": {
+      "iso27001Aligned": "Aligned with ISO/IEC 27001",
+      "iso27001Certified": "ISO/IEC 27001 Certified",
+      "iso27701Ready": "ISO/IEC 27701-ready",
+      "iso27701Certified": "ISO/IEC 27701 Certified",
+      "iso22301Based": "Based on ISO 22301",
+      "iso22301Certified": "ISO 22301 Certified"
+    },
+    "nav": {
+      "securityAndCompliance": "Security & Compliance"
+    },
+    "hub": {
+      "pageTitle": "Compliance Center",
+      "overviewTitle": "Our Commitment",
+      "overviewText": "We are committed to protecting your data and maintaining the highest standards of information security, privacy, and business continuity. Our compliance program is aligned with internationally recognised ISO standards.",
+      "securityDesc": "How we protect your information — encryption, access controls, monitoring.",
+      "privacyDesc": "How we handle personal data — privacy by design, data minimisation.",
+      "continuityDesc": "How we ensure service availability — backups, disaster recovery, uptime."
+    },
+    "security": {
+      "pageTitle": "Information Security",
+      "whatIsTitle": "What is ISO/IEC 27001?",
+      "whatIsText": "ISO/IEC 27001 is the international standard for Information Security Management Systems (ISMS). It provides a systematic approach to managing sensitive data and ensuring it remains secure through risk management processes.",
+      "whatItMeansTitle": "What This Means for You",
+      "whatItMeansText": "Your case data, documents, and communications are protected by industry-leading security controls. We continuously monitor and improve our security posture to safeguard your information.",
+      "whatWeDoTitle": "What We Implement Today",
+      "whatWeDoText": "<ul><li>End-to-end encryption for data in transit (TLS 1.2+)</li><li>Encryption at rest for stored documents</li><li>Multi-factor authentication (OTP-based)</li><li>Role-based access control with least-privilege principle</li><li>Comprehensive audit logging (ISO 27001 Annex A compliant)</li><li>Automated rate limiting and brute-force protection</li><li>Security headers (HSTS, CSP, X-Frame-Options)</li><li>Regular vulnerability assessments</li></ul>",
+      "roadmapTitle": "Roadmap",
+      "roadmapText": "Formal ISO/IEC 27001 certification audit planned. Continuous improvement of controls through regular internal audits and penetration testing.",
+      "statusTitle": "Certification Status",
+      "statusText": "Aligned with ISO/IEC 27001 controls. Formal certification in progress."
+    },
+    "privacy": {
+      "pageTitle": "Privacy & Data Protection",
+      "whatIsTitle": "What is ISO/IEC 27701?",
+      "whatIsText": "ISO/IEC 27701 extends ISO 27001 with privacy-specific controls, creating a Privacy Information Management System (PIMS). It helps organisations comply with privacy regulations such as GDPR and the Israeli Privacy Protection Law.",
+      "whatItMeansTitle": "What This Means for You",
+      "whatItMeansText": "Your personal data is handled with the utmost care. We collect only what is necessary, store it securely, and never share it without your explicit consent or legal obligation.",
+      "whatWeDoTitle": "What We Implement Today",
+      "whatWeDoText": "<ul><li>Data minimisation — we collect only what is needed</li><li>Purpose limitation — data is used only for stated purposes</li><li>Secure deletion — data is permanently removed when no longer needed</li><li>Privacy by design in all new features</li><li>PII masking in logs and audit trails</li><li>Consent management for communications</li><li>Data subject rights support (access, rectification, erasure)</li></ul>",
+      "roadmapTitle": "Roadmap",
+      "roadmapText": "Formal ISO/IEC 27701 certification as an extension to ISO 27001. Enhanced data processing records and DPIA procedures.",
+      "statusTitle": "Certification Status",
+      "statusText": "ISO/IEC 27701-ready. Privacy controls implemented and operational."
+    },
+    "continuity": {
+      "pageTitle": "Business Continuity",
+      "whatIsTitle": "What is ISO 22301?",
+      "whatIsText": "ISO 22301 is the international standard for Business Continuity Management Systems (BCMS). It ensures that organisations can continue to deliver products and services during disruptions.",
+      "whatItMeansTitle": "What This Means for You",
+      "whatItMeansText": "Your access to case management, documents, and signed files is protected against service disruptions. We have recovery procedures in place to minimise downtime.",
+      "whatWeDoTitle": "What We Implement Today",
+      "whatWeDoText": "<ul><li>Automated database backups with point-in-time recovery</li><li>Cloud storage redundancy (Cloudflare R2 with multi-region replication)</li><li>Application health monitoring and auto-restart (PM2)</li><li>Incident response procedures with structured logging</li><li>Graceful degradation under high load</li><li>Server-side request timeouts to prevent cascade failures</li></ul>",
+      "roadmapTitle": "Roadmap",
+      "roadmapText": "Formal business impact analysis (BIA). Documented disaster recovery plan with defined RTOs and RPOs. Regular DR drills.",
+      "statusTitle": "Certification Status",
+      "statusText": "Business continuity principles based on ISO 22301. Formal assessment planned."
+    }
+  },
+  "chatbot": {
+    "title": "AI Assistant - Mor Levy Law Office",
+    "welcomeTitle": "Hello! I'm the AI Assistant of Mor Levy Law Office",
+    "welcomeSubtitle": "You can ask me general legal questions. To ask about your personal case, please verify your phone number.",
+    "inputPlaceholder": "Type your question here...",
+    "verifiedBadge": "Verified",
+    "otpTitle": "Identity Verification",
+    "otpDescription": "To access your case information, please enter the phone number registered in the system.",
+    "sendOtp": "Send verification code",
+    "otpCodePlaceholder": "Enter 6-digit code",
+    "verifyOtp": "Verify code",
+    "sending": "Sending...",
+    "verifying": "Verifying...",
+    "verificationSuccess": "Identity verified successfully! You can now ask questions about your case.",
+    "otpSendFailed": "Failed to send verification code. Please try again.",
+    "otpInvalid": "Invalid verification code. Please try again.",
+    "errorGeneric": "An error occurred. Please try again later.",
+    "sessionExpired": "Session expired. Please verify your phone number again.",
+    "greetingMorning": "Good morning! 🌞 I'm the AI assistant of Mor Levy Law Office. How can I help you today?",
+    "greetingAfternoon": "Good afternoon! ☀️ I'm the AI assistant of Mor Levy Law Office. How can I help you?",
+    "greetingEvening": "Good evening! 🌆 I'm the AI assistant of Mor Levy Law Office. How can I help you?",
+    "greetingNight": "Good night! 🌙 I'm the AI assistant of Mor Levy Law Office. How can I help you?"
+  },
+  "platformSettings": {
+    "docTitlePlaceholder": "Document name (optional)",
+    "chooseFile": "Choose File",
+    "uploading": "Uploading and processing document...",
+    "noDocsYet": "No knowledge documents yet. Upload a document so the chatbot can answer questions.",
+    "deleteDocTitle": "Delete Document",
+    "deleteDocMessage": "Delete this document? All its knowledge chunks will be removed.",
+    "docDeleted": "Document deleted successfully",
+    "docDeleteError": "Error deleting document",
+    "deleteTemplateTitle": "Delete Template",
+    "deleteTemplateMessage": "Delete this template?",
+    "templateDeleted": "Template deleted",
+    "templateDeleteError": "Error deleting template",
+    "removeAdminTitle": "Remove Admin",
+    "removeAdminMessage": "Are you sure you want to remove this admin?",
+    "emailOverridePlaceholder": "Override email (empty = use default)",
+    "smsOverridePlaceholder": "Override SMS (empty = use default)"
+  },
+  "viewSignedDoc": {
+    "invalidLink": "Invalid link",
+    "expired": "This link has expired",
+    "notSigned": "Document has not been signed yet",
+    "loadError": "Error loading document",
+    "loading": "Loading document...",
+    "signedAt": "Signed on",
+    "download": "Download Signed Document"
+  }
 }
