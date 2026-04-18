@@ -3,7 +3,6 @@ import SimpleScreen from '../../components/simpleComponents/SimpleScreen';
 import { useScreenSize } from '../../providers/ScreenSizeProvider';
 import useAutoHttpRequest from '../../hooks/useAutoHttpRequest';
 import { images } from '../../assets/images/images';
-import SimpleLoader from '../../components/simpleComponents/SimpleLoader';
 import SimpleContainer from '../../components/simpleComponents/SimpleContainer';
 import TopToolBarSmallScreen from '../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen';
 import ShowDataCard from './components/ShowDataCard';

@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import casesApi, { casesTypeApi } from "../../api/casesApi";
 import { images } from "../../assets/images/images";
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
 import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
-import SimpleLoader from "../../components/simpleComponents/SimpleLoader";
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
 import SimpleScrollView from "../../components/simpleComponents/SimpleScrollView";
 import ChooseButton from "../../components/styledComponents/buttons/ChooseButton";
@@ -37,21 +36,10 @@ export default function AllCasesScreen() {
     const [selectedCaseName, setSelectedCaseName] = useState(null);
     const [filteredCases, setFilteredCases] = useState(null);
 
-    const { result: allCasesTypes, isPerforming: isPerformingAllCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
+    const { result: allCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
     const { result: allCases, isPerforming: isPerformingAllCases, performRequest: reperformAfterSave } = useAutoHttpRequest(casesApi.getAllCases);
 
-    useEffect(() => {
-        if (allCases?.length > 0) {
-            applyFilters(selectedCaseType, selectedStatus, selectedClient, selectedManager, selectedCompany, selectedCaseName);
-        }
-    }, [allCases, selectedCaseType, selectedStatus, selectedClient, selectedManager, selectedCompany, selectedCaseName]);
-
-    const handleFilterByCaseName = (caseName) => {
-        setSelectedCaseName(caseName);
-        applyFilters(selectedCaseType, selectedStatus, selectedClient, selectedManager, selectedCompany, caseName);
-    };
-
-    const applyFilters = (typeFilter, statusFilter, clientFilter, managerFilter, companyFilter, caseNameFilter) => {
+    const applyFilters = useCallback((typeFilter, statusFilter, clientFilter, managerFilter, companyFilter, caseNameFilter) => {
         let filtered = allCases;
 
         if (caseNameFilter) {
@@ -95,6 +83,17 @@ export default function AllCasesScreen() {
         } else {
             setFilteredCases(filtered);
         }
+    }, [allCases]);
+
+    useEffect(() => {
+        if (allCases?.length > 0) {
+            applyFilters(selectedCaseType, selectedStatus, selectedClient, selectedManager, selectedCompany, selectedCaseName);
+        }
+    }, [allCases, selectedCaseType, selectedStatus, selectedClient, selectedManager, selectedCompany, selectedCaseName, applyFilters]);
+
+    const handleFilterByCaseName = (caseName) => {
+        setSelectedCaseName(caseName);
+        applyFilters(selectedCaseType, selectedStatus, selectedClient, selectedManager, selectedCompany, caseName);
     };
 
     const handleFilterByType = (type) => {

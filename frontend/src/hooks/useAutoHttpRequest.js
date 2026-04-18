@@ -6,6 +6,7 @@ const useAutoHttpRequest = (requestFunction, { body = [], onSuccess = null, onFa
 
   useEffect(() => {
     performRequest(body);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestFunction]);
 
   return { result, isPerforming, error, performRequest };
