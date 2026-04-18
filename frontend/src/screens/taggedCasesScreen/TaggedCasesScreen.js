@@ -4,7 +4,6 @@ import SimpleScrollView from '../../components/simpleComponents/SimpleScrollView
 import { useScreenSize } from '../../providers/ScreenSizeProvider';
 import useAutoHttpRequest from '../../hooks/useAutoHttpRequest';
 import { images } from '../../assets/images/images';
-import SimpleLoader from '../../components/simpleComponents/SimpleLoader';
 import SimpleContainer from '../../components/simpleComponents/SimpleContainer';
 import ChooseButton from '../../components/styledComponents/buttons/ChooseButton';
 import FilterSearchInput from '../../components/specializedComponents/containers/FilterSearchInput';
@@ -37,13 +36,15 @@ export default function TaggedCasesScreen() {
 
     const { result: taggedCases, isPerforming: isPerformingTaggedCases, performRequest } = useAutoHttpRequest(casesApi.getAllTaggedCases);
 
-    // Apply initial 'open' filter when data loads
+    const { result: allCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
+
+    // Apply initial 'open' filter when data first loads — intentionally only fires on taggedCases change
     useEffect(() => {
         if (taggedCases && taggedCases.length > 0) {
             applyFilters(selectedCaseType, 'open', selectedClient, selectedManager, selectedCompany, selectedCaseName);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [taggedCases]);
-    const { result: allCasesTypes, isPerforming: isPerformingAllCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
 
     const handleFilterByCaseName = (caseName) => {
         setSelectedCaseName(caseName);

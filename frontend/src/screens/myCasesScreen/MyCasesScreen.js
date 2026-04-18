@@ -3,7 +3,6 @@ import casesApi, { casesTypeApi } from '../../api/casesApi';
 import { images } from '../../assets/images/images';
 import TopToolBarSmallScreen from '../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen';
 import SimpleContainer from '../../components/simpleComponents/SimpleContainer';
-import SimpleLoader from '../../components/simpleComponents/SimpleLoader';
 import SimpleScreen from '../../components/simpleComponents/SimpleScreen';
 import SimpleScrollView from '../../components/simpleComponents/SimpleScrollView';
 import SearchInput from '../../components/specializedComponents/containers/SearchInput';
@@ -31,7 +30,7 @@ export default function MyCasesScreen() {
     const [selectedCompany, setSelectedCompany] = useState(null);
 
     const { result: myCases, isPerforming: isPerformingMyCases, performRequest: refetchMyCases } = useAutoHttpRequest(casesApi.getMyCases);
-    const { result: allCasesTypes, isPerforming: isPerformingAllCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
+    const { result: allCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
     const [selectedCaseType, setSelectedCaseType] = useState(null);
 
     const filtered = useMemo(() => {

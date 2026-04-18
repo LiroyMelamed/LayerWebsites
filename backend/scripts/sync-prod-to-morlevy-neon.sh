@@ -6,6 +6,7 @@ set -euo pipefail
 PROD_HOST="root@37.60.230.148"
 PROD_DB="morlevy"
 NEON_HOST="ep-super-mode-alv2q4jv-pooler.c-3.eu-central-1.aws.neon.tech"
+NEON_HOST_DIRECT="ep-super-mode-alv2q4jv.c-3.eu-central-1.aws.neon.tech"
 NEON_DB="neondb"
 NEON_USER="neondb_owner"
 NEON_PASS="npg_te3Jw0sqBSHg"
@@ -57,7 +58,9 @@ PGPASSWORD="$NEON_PASS" "$PSQL" "$NEON_CONNSTR" -f "$DUMP_CLEAN" 2>&1 | grep "^C
 
 echo ""
 echo "=== [7/7] Verifying ==="
-PGPASSWORD="$NEON_PASS" "$PSQL" "$NEON_CONNSTR" -A -t -c "
+NEON_DIRECT="postgresql://${NEON_USER}:${NEON_PASS}@${NEON_HOST_DIRECT}:5432/${NEON_DB}?sslmode=require"
+PGPASSWORD="$NEON_PASS" "$PSQL" "$NEON_DIRECT" -A -t -c "
+  SET search_path TO public;
   SELECT 'users=' || count(*) FROM users;
   SELECT 'cases=' || count(*) FROM cases;
   SELECT 'tables=' || count(*) FROM pg_tables WHERE schemaname='public';
