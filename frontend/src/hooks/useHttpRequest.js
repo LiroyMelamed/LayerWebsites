@@ -8,9 +8,17 @@ const useHttpRequest = (requestFunction, onSuccess, onFailure) => {
   const [result, setResult] = useState(null);
 
   const isPerformingRef = useRef(false);
+  const isMountedRef = useRef(true);
   const requestFunctionRef = useRef(requestFunction);
   const onSuccessRef = useRef(onSuccess);
   const onFailureRef = useRef(onFailure);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     requestFunctionRef.current = requestFunction;
@@ -41,6 +49,8 @@ const useHttpRequest = (requestFunction, onSuccess, onFailure) => {
     try {
       const data = await requestFunctionRef.current(...args);
 
+      if (!isMountedRef.current) return;
+
       if (data.status !== 200 && data.status !== 201) {
 
         if (onFailureRef.current) onFailureRef.current(data)
@@ -54,14 +64,16 @@ const useHttpRequest = (requestFunction, onSuccess, onFailure) => {
       }
     } catch (err) {
 
+      if (!isMountedRef.current) return;
+
       setResult([]);
 
       if (onFailureRef.current) onFailureRef.current(err);
       else defaultOnFailure(err);
 
     } finally {
-      setIsPerforming(false);
       isPerformingRef.current = false;
+      if (isMountedRef.current) setIsPerforming(false);
     }
   }, [defaultOnFailure]);
 
