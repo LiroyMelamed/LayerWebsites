@@ -7,6 +7,8 @@
             "namespace": "android_app",
             "package_name": "com.melamedia.morlevy",
             "sha256_cert_fingerprints": [
+                "E2:CE:1C:50:15:90:FC:60:94:16:8D:35:72:93:1C:79:BC:67:93:31:41:F2:CA:87:F1:E7:10:97:57:15:08:2E",
+                "56:DB:C5:1D:ED:D4:92:6F:9E:41:79:01:09:E3:C2:D7:CB:F7:5F:C5:B3:E6:CD:9E:4B:E0:B1:78:0E:5E:E6:B3"
             ]
         }
     }
