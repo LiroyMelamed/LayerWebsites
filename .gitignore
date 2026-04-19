@@ -73,7 +73,9 @@ web_modules/
 .yarn-integrity
 
 # dotenv environment variable files
-.env
+# frontend/.env is tracked per-branch (public config only: API URL, app name)
+# backend/.env contains real secrets — keep ignored
+backend/.env
 .env.development.local
 .env.test.local
 .env.production.local
