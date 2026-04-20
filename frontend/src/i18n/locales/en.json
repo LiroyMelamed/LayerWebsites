@@ -425,7 +425,8 @@
     "contactMessage": "Hi, I'd like to get in touch",
     "reminders": "Reminders",
     "addOrUpdateClient": "Add / Update Client",
-    "allClients": "All Clients"
+    "allClients": "All Clients",
+    "platformSettings": "Platform Settings"
   },
   "planUsage": {
     "title": "Plan & usage",
