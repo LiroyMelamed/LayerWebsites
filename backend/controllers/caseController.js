@@ -632,7 +632,9 @@ const addCase = async (req, res) => {
             changedTypes: ['CASE_CREATED'],
         });
 
-        res.status(201).json({ message: "התיק נוצר בהצלחה", caseId });
+        if (!res.headersSent) {
+            res.status(201).json({ message: "התיק נוצר בהצלחה", caseId });
+        }
 
     } catch (error) {
         console.error("Error creating case:", error);
