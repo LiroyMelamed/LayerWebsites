@@ -33,7 +33,30 @@
     "new": "جديد",
     "noResultsFound": "لا توجد نتائج",
     "submit": "إرسال",
-    "simpleImageAlt": "صورة"
+    "simpleImageAlt": "صورة",
+    "drag": "اسحب",
+    "moveUp": "تحريك لأعلى",
+    "moveDown": "تحريك لأسفل",
+    "phoneNumber": "رقم الهاتف",
+    "customerDetails": "تفاصيل العميل",
+    "dates": "التواريخ",
+    "estimatedCompletionDate": "تاريخ الإنهاء المتوقع",
+    "licenseExpiryDate": "تاريخ انتهاء الترخيص",
+    "management": "الإدارة",
+    "caseManager": "مدير الملف",
+    "stages": "المراحل",
+    "advanceStage": "تقدم مرحلة",
+    "whatsapp": {
+      "group": "مجموعة واتساب",
+      "linkTitle": "ربط مجموعة واتساب",
+      "groupLink": "رابط مجموعة واتساب",
+      "goToGroup": "الانتقال إلى المجموعة",
+      "editLink": "تعديل الرابط",
+      "contact": "تواصل",
+      "contactText": "أتواصل بخصوص الملف \"{{caseName}}\""
+    },
+    "chooseFilePrompt": "انقر أو اسحب ملفًا إلى هنا",
+    "uploading": "جارٍ الرفع..."
   },
   "auth": {
     "login": "تسجيل الدخول",
@@ -93,7 +116,17 @@
       "details": "تفاصيل المستند",
       "uploadNew": "إرسال مستند جديد للتوقيع",
       "openPdf": "فتح PDF",
-      "deleteFile": "حذف المستند"
+      "deleteFile": "حذف المستند",
+      "rename": "تغيير الاسم",
+      "resendInvite": "إعادة الإرسال للتوقيع"
+    },
+    "resend": {
+      "title": "إعادة الإرسال للتوقيع",
+      "noSigners": "لم يتم العثور على موقّعين لهذا المستند",
+      "sendButton": "إرسال",
+      "sending": "جارٍ الإرسال...",
+      "success": "تم إعادة إرسال الدعوة بنجاح",
+      "error": "حدث خطأ أثناء إعادة الإرسال"
     },
     "planAndRetention": {
       "title": "الخطة والاحتفاظ",
@@ -126,9 +159,11 @@
     }
   },
   "audit": {
+    "pageTitle": "سجل الإجراءات",
     "filters": {
       "eventType": "الإجراء",
       "actorType": "نوع المنفّذ",
+      "success": "النتيجة",
       "from": "من تاريخ",
       "to": "إلى تاريخ",
       "search": "بحث"
@@ -138,6 +173,9 @@
       "action": "الإجراء",
       "actor": "المنفّذ",
       "status": "النتيجة",
+      "client": "العميل",
+      "case": "الملف",
+      "document": "المستند",
       "ip": "IP",
       "device": "الجهاز",
       "details": "التفاصيل"
@@ -216,6 +254,7 @@
     "statusFilter": "الحالة",
     "createdAt": "تاريخ الإنشاء",
     "allCases": "كل الملفات",
+    "myCasesTitle": "ملفاتي",
     "noCases": "لا توجد ملفات حاليًا",
     "openCases": "ملفات مفتوحة",
     "closedCases": "ملفات مغلقة",
@@ -227,6 +266,7 @@
     "stageDetailsTitle": "تفاصيل المراحل",
     "ended": "انتهى",
     "searchCaseTitle": "بحث عن ملف",
+    "searchMyCases": "بحث في ملفاتي",
     "searchCaseTypeTitle": "بحث عن نوع الملف",
     "addNewCase": "إضافة ملف جديد",
     "addCaseType": "إضافة نوع ملف",
@@ -246,6 +286,7 @@
     "companyName": "اسم الشركة",
     "customerEmail": "البريد الإلكتروني للعميل",
     "deleteCase": "حذف الملف",
+    "deleteCaseConfirm": "هل أنت متأكد من حذف هذا الملف؟ لا يمكن التراجع عن هذا الإجراء.",
     "updateCase": "تحديث الملف",
     "saveCase": "حفظ الملف",
     "completedStagesLabel": "المراحل المكتملة:",
@@ -273,6 +314,24 @@
       "editLink": "تعديل الرابط",
       "contact": "تواصل",
       "contactText": "أتواصل بخصوص الملف \"{{caseName}}\""
+    },
+    "licenseRenewal": {
+      "title": "تحديث تاريخ انتهاء الترخيص",
+      "updateExpiryQuestion": "هل ترغب في تحديث تاريخ انتهاء الترخيص؟",
+      "currentExpiry": "تاريخ الانتهاء الحالي",
+      "newExpiry": "تاريخ الانتهاء الجديد",
+      "update": "تحديث",
+      "skip": "تخطي",
+      "reminderTitle": "تذكيرات تجديد الترخيص",
+      "reminderQuestion": "متى ترسل تذكيرًا بتجديد الترخيص؟",
+      "months4": "قبل 4 أشهر",
+      "months3": "قبل 3 أشهر",
+      "months2": "قبل شهرين",
+      "months1": "قبل شهر",
+      "weeks2": "قبل أسبوعين",
+      "createReminders": "إنشاء تذكيرات",
+      "noReminders": "بدون تذكيرات",
+      "remindersCreated": "تم إنشاء تذكيرات التجديد بنجاح"
     }
   },
   "caseTypes": {
@@ -307,7 +366,12 @@
     "companyName": "اسم الشركة",
     "saveCustomer": "حفظ العميل",
     "updateCustomer": "تحديث العميل",
-    "deleteCustomer": "حذف العميل"
+    "deleteCustomer": "حذف العميل",
+    "searchCustomer": "بحث عن عميل",
+    "screenTitle": "كل العملاء",
+    "addNewCustomer": "إضافة عميل جديد",
+    "customerPhone": "هاتف",
+    "customerEmail": "بريد إلكتروني"
   },
   "admins": {
     "searchAdmin": "بحث عن مدير",
@@ -416,7 +480,13 @@
     "terms": "شروط الاستخدام",
     "contact": "تواصل معنا",
     "contactMessage": "مرحبًا، أود التواصل",
-    "reminders": "التذكيرات"
+    "reminders": "التذكيرات",
+    "addOrUpdateClient": "إضافة / تحديث عميل",
+    "allClients": "كل العملاء",
+    "platformSettings": "إعدادات المنصة"
+  },
+  "myCases": {
+    "title": "ملفاتي"
   },
   "planUsage": {
     "title": "الخطة والاستخدام",
@@ -462,7 +532,33 @@
       "sms": "SMS"
     },
     "storageApprox": "~ {{size}} مستخدم",
-    "loadingUsage": "جارٍ تحميل بيانات الاستخدام..."
+    "loadingUsage": "جارٍ تحميل بيانات الاستخدام...",
+    "systemPlansTitle": "حزم الموارد (إلزامي)",
+    "systemPlansSubtitle": "حزمة الموارد تحدد سعة النظام (التخزين، المستخدمون، الاحتفاظ بالبيانات ومستوى الحمل). إلزامي اختيار حزمة واحدة.",
+    "commercialPricingTitle": "التسعير التجاري (لكل مكتب)",
+    "commercialPricingSubtitle": "يتم احتساب هذه الأسعار لكل مكتب.",
+    "pricePerCommercial": "يُحدَّد وفقاً للتسعير التجاري",
+    "priceNotAvailable": "غير متاح",
+    "notAvailable": "غير متاح",
+    "systemPlansCardFooter": "هذه الحزمة تحدد حدود الاستخدام فقط.",
+    "commercial": {
+      "core": {
+        "title": "أساس النظام (إلزامي)",
+        "description": "نظام لمتابعة الملفات والتواصل مع عملاء المكتب"
+      },
+      "channels": {
+        "title": "قنوات العميل (اختر واحدة على الأقل)",
+        "portalLine": "بوابة: {{currency}}{{amount}} / شهر — بوابة العملاء (موقع)",
+        "appLine": "تطبيق: {{currency}}{{amount}} / شهر — تطبيق للعملاء",
+        "bundleLine": "حزمة (بوابة + تطبيق): {{currency}}{{amount}} / شهر — أفضل قيمة"
+      },
+      "signing": {
+        "title": "التوقيع + الأدلة (إضافة اختيارية)",
+        "includes": "يشمل حتى {{included}} مستند موقّع في الشهر.",
+        "overage": "لا يوجد احتساب لكل مستند عند التجاوز. إذا تجاوزت بشكل متكرر — قم بالترقية.",
+        "noteOtpOptional": "تحقق OTP عند التوقيع حسب اختيار المكتب."
+      }
+    }
   },
   "planPricing": {
     "title": "الخطط والأسعار",
@@ -544,7 +640,10 @@
         "packageLine": "{{packageName}} — {{currency}}{{amount}} / شهر (حتى {{included}} مستند موقّع/شهر؛ {{currency}}{{rate}} لكل مستند موقّع)",
         "unlimitedLine": "Signing Unlimited — {{currency}}{{amount}} / شهر (مستندات موقّعة غير محدودة — استخدام عادل)",
         "fairUseExplanation": "الاستخدام العادل يعني الاستخدام الطبيعي لمكتب محاماة. إذا كان الحجم مرتفعًا بشكل دائم وغير اعتيادي سنساعدك على اختيار المستوى المناسب.",
-        "overageExplanation": "لا يوجد احتساب لكل مستند عند التجاوز. إذا تجاوزت حزمتك بشكل متكرر — قم بالترقية."
+        "overageExplanation": "لا يوجد احتساب لكل مستند عند التجاوز. إذا تجاوزت حزمتك بشكل متكرر — قم بالترقية.",
+        "bundlesTitle": "حزم شهرية:",
+        "bundleLine": "حتى {{included}} مستند موقّع/شهر — {{currency}}{{amount}} / شهر (سعر المستند مشتق من (سعر الحزمة ÷ العدد المضمن))",
+        "bundlesFooter": "سياسة رمز التحقق قابلة للتعديل حسب المكتب."
       }
     }
   },
@@ -620,6 +719,11 @@
       "v2": "حزمة أدلة قابلة للاستخدام أمام المحكمة",
       "v3": "حزم شهرية (Starter / Pro / Office / Unlimited)",
       "v4": "OTP اختياري حسب سياسة المكتب",
+      "b1": "توقيع قانوني مع سجل تدقيق",
+      "b2": "حزمة أدلة قابلة للاستخدام أمام المحكمة",
+      "includes": "يشمل حتى {{included}} مستند موقّع في الشهر.",
+      "overage": "سعر المستند (للتوضيح): {{currency}}{{overage}} لكل مستند موقّع.",
+      "noteOtpOptional": "تحقق OTP عند التوقيع حسب اختيار المكتب.",
       "packagesTitle": "حزم التوقيع:",
       "packageLine": "{{packageName}} — {{currency}}{{amount}} / شهر (حتى {{included}} مستند موقّع/شهر؛ {{currency}}{{rate}} لكل مستند موقّع)",
       "unlimitedLine": "Signing Unlimited — {{currency}}{{amount}} / شهر (مستندات موقّعة غير محدودة — استخدام عادل)",
@@ -661,6 +765,13 @@
       "a3": "إذا تجاوزت حدود حزمة الموارد بشكل متكرر — قم بالترقية. في التوقيع لا يوجد احتساب لكل مستند عند التجاوز — إذا تجاوزت المستوى بشكل متكرر قم بالترقية.",
       "q4": "ما هو سعر المستند في التوقيع؟",
       "a4": "يُحسب كالتالي: (سعر الحزمة ÷ العدد المضمن). مثال Signing Starter: {{currency}}{{rate}} لكل مستند موقّع."
+    },
+    "calculatorOnlyNote": "يتم تحديد السعر بناءً على اختيار القنوات وحزمة الموارد. التوقيع إضافة اختيارية — اختر حزمة حسب حجم الاستخدام.",
+    "demo": {
+      "title": "عرض توضيحي مباشر (داخل النظام)",
+      "subtitle": "عرضان حقيقيان للنظام — مكتب (مدير) وعميل — في بيئة معزولة.",
+      "adminTitle": "عرض نظام المكتب (مدير)",
+      "clientTitle": "عرض نظام العميل"
     }
   },
   "signing": {
@@ -686,7 +797,11 @@
       "checkbox": "خانة اختيار",
       "checkboxShort": "✓",
       "idNumber": "هوية/رقم",
-      "idNumberShort": "هوية"
+      "idNumberShort": "هوية",
+      "lawyerStamp": "ختم + توقيع المدير",
+      "lawyerStampShort": "ختم",
+      "clientStamp": "ختم العميل",
+      "clientStampShort": "ختم عم"
     },
     "fieldSettings": {
       "addFieldTitle": "إضافة حقل",
@@ -707,7 +822,15 @@
       "rangeInvalid": "يرجى إدخال نطاق صفحات صالح",
       "confirmTitle": "حذف الحقل",
       "confirmDelete": "هل تريد حذف هذا الحقل؟",
-      "addFieldForPage": "أضف حقلاً إلى الصفحة {{page}}"
+      "addFieldForPage": "أضف حقلاً إلى الصفحة {{page}}",
+      "lawyerStampTitle": "رفع ختم + توقيع المدير",
+      "lawyerStampUploadHint": "ارفع ملف PDF أو صورة للختم",
+      "lawyerStampDrawTitle": "توقيع يدوي على الختم",
+      "lawyerStampDrawHint": "ارسم توقيعك على الختم",
+      "lawyerStampClearDraw": "مسح التوقيع",
+      "lawyerStampConfirm": "تأكيد الختم والتوقيع",
+      "clientStampTitle": "ختم العميل",
+      "clientStampUploadHint": "سيقوم العميل برفع ملف PNG أو PDF للختم عند التوقيع"
     },
     "context": {
       "edit": "تعديل إعدادات الحقل",
@@ -759,6 +882,8 @@
       "loadDocumentError": "حدث خطأ أثناء تحميل المستند",
       "loadDocumentErrorTitle": "حدث خطأ أثناء تحميل المستند",
       "loadingDocument": "جارٍ تحميل المستند...",
+      "waitingForPreviousSigners": "في انتظار توقيع الموقّعين السابقين",
+      "waitingForPreviousSignersDesc": "هذا المستند مُعدّ للتوقيع التسلسلي. سيأتي دورك للتوقيع بعد انتهاء الموقّعين السابقين. ستتلقى إشعارًا عند حلول دورك.",
       "previewComingSoon": "قريبًا: معاينة المستند",
       "you": "أنت",
       "consentText": "أؤكد أنني قرأت المستند المعروض، وأوافق على التوقيع عليه إلكترونيًا. أعلم أن التوقيع بدون تحقق OTP قد يقلل من قوة الأدلة في حال وجود نزاع.",
@@ -766,11 +891,15 @@
       "otpRequired": "يتطلب التوقيع تحقق SMS قبل التوقيع.",
       "signHere": "وقّع هنا",
       "pleaseSignBeforeSave": "يرجى التوقيع قبل الحفظ",
+      "pleaseInitialBeforeSave": "يرجى كتابة الأحرف الأولى قبل الحفظ",
       "signatureSavedSuccess": "تم حفظ التوقيع بنجاح",
+      "initialsSavedSuccess": "تم حفظ الأحرف الأولى بنجاح",
       "signatureSaveError": "حدث خطأ أثناء حفظ التوقيع",
+      "initialsSaveError": "حدث خطأ أثناء حفظ الأحرف الأولى",
       "noSavedSignature": "لا يوجد توقيع محفوظ",
       "missingSavedSignatureData": "بيانات التوقيع المحفوظة مفقودة",
       "useSavedSignatureError": "حدث خطأ أثناء استخدام التوقيع المحفوظ",
+      "useSavedSignatureSignatureOnly": "يمكن استخدام التوقيع المحفوظ فقط لحقل التوقيع",
       "signAllRequiresSignature": "لتوقيع الكل، اختر توقيعًا محفوظًا أو ارسم توقيعًا",
       "noSignatureToUse": "لم يتم العثور على توقيع للاستخدام",
       "signedAllSuccess": "تم توقيع جميع الأماكن بنجاح",
@@ -819,6 +948,7 @@
       "signAll": "وقّع الكل",
       "useSavedSignature": "استخدم\nتوقيعًا محفوظًا",
       "saveSignature": "حفظ التوقيع",
+      "saveInitials": "حفظ الأحرف الأولى",
       "deleteSavedItem": "حذف",
       "deleteSavedSuccess": "تم الحذف بنجاح",
       "deleteSavedError": "فشل الحذف",
@@ -828,7 +958,13 @@
       "spotAlreadySigned": "تم توقيع مكان التوقيع هذا بالفعل بواسطةك",
       "allRequiredCompleted": "لقد أكملت جميع التواقيع المطلوبة!",
       "rejectDocument": "رفض المستند",
-      "failedToLoadSignatureImage": "فشل تحميل صورة التوقيع"
+      "failedToLoadSignatureImage": "فشل تحميل صورة التوقيع",
+      "clientStampSavedSuccess": "تم حفظ الختم بنجاح",
+      "clientStampUploadError": "حدث خطأ أثناء رفع الختم",
+      "chooseFile": "اختيار ملف",
+      "signOnStampHint": "يمكن التوقيع على الختم (اختياري)",
+      "changeStamp": "تغيير الختم",
+      "nextStep": "متابعة"
     },
     "screen": {
       "tabPending": "قيد الانتظار للتوقيع ({{count}})",
@@ -860,16 +996,23 @@
       "selectedSignersLabel": "الموقّعون المختارون *",
       "removeSignerAria": "إزالة {{name}}",
       "removeCaseAria": "إزالة القضية {{name}}",
+      "deliveryBoth": "بريد إلكتروني + SMS",
+      "deliveryEmail": "بريد إلكتروني فقط",
+      "deliveryPhone": "SMS فقط",
       "fileDropPrompt": "اسحب ملفًا إلى هنا أو انقر للاختيار",
       "documentNameTitle": "اسم المستند",
       "fileHintPdfOnly": "(PDF فقط حاليًا)",
       "notesTitle": "ملاحظات للعميل (اختياري)",
+      "completionEmailLabel": "بريد إلكتروني لاستلام المستند الموقّع",
+      "completionEmailPlaceholder": "example@email.com",
+      "completionEmailHint": "عنوان البريد الإلكتروني الذي سيتلقى المستند الموقّع وشهادة الأدلة عند انتهاء التوقيع",
       "viewerTitle": "معاينة المستند وإعداد التواقيع",
       "spotHelpText": "في كل صفحة يوجد زر \"+ إضافة توقيع\". اسحب المربعات للمكان المطلوب أو احذف",
       "sending": "جارٍ الإرسال...",
       "retentionNotice": {
         "title": "إشعار الاحتفاظ",
         "text": "قد يتم الاحتفاظ بالمستندات الموقّعة والأدلة لمدة {{coreDays}} يوماً (أساسي) و{{piiDays}} يوماً (بيانات شخصية)، وفقاً لخُطتك وأي سياسات حجز قانوني. تابع لتأكيد أنك تفهم.",
+        "textFallback": "قد يتم الاحتفاظ بالمستندات الموقّعة والأدلة لفترة وفقاً لخُطتك وسياسات الحجز القانوني. تابع لتأكيد أنك تفهم.",
         "ackButton": "أفهم"
       },
       "sendToClient": "إرسال للعميل",
@@ -880,6 +1023,10 @@
       "otpWaive": "إرسال بدون OTP",
       "otpWaiverWarning": "قد يؤدي الإرسال بدون OTP إلى تقليل قوة الأدلة في حال وجود نزاع.",
       "otpWaiverAck": "أوافق صراحةً على الإرسال بدون OTP",
+      "signingOrderLabel": "ترتيب التوقيع",
+      "signingOrderParallel": "متوازي — جميع الموقّعين يوقّعون في نفس الوقت",
+      "signingOrderSequential": "تسلسلي — موقّع 1 أولاً، ثم موقّع 2 وهكذا",
+      "sequentialOrderTitle": "ترتيب التوقيع (اسحب لتغيير الترتيب):",
       "detect": {
         "button": "اكتشاف التواقيع تلقائيًا",
         "detecting": "جارٍ الاكتشاف...",
@@ -912,6 +1059,8 @@
     "button": "استيراد عملاء من Excel",
     "title": "استيراد عملاء من ملف Excel",
     "instructions": "ارفع ملف Excel (.xlsx) أو CSV (.csv) يحتوي على الأعمدة: الاسم (إجباري)، الهاتف، البريد الإلكتروني، رقم الهوية، ملاحظات. سيتم تخطي الصفوف المكررة تلقائيًا.",
+    "chooseFile": "اختر ملف",
+    "downloadDemo": "تحميل ملف نموذجي",
     "uploadButton": "رفع واستيراد",
     "uploading": "جارٍ الاستيراد...",
     "resultTitle": "نتائج الاستيراد",
@@ -953,6 +1102,13 @@
       "clientName": "اسم العميل",
       "email": "البريد الإلكتروني",
       "template": "القالب",
+      "templateKeys": {
+        "GENERAL": "تذكير عام",
+        "COURT_DATE": "تذكير بموعد جلسة",
+        "DOCUMENT_REQUIRED": "تذكير بتقديم مستند",
+        "LICENSE_RENEWAL": "تذكير بتجديد ترخيص",
+        "PAYMENT": "تذكير بالدفع"
+      },
       "scheduledFor": "مجدول لـ",
       "status": "الحالة",
       "sentAt": "تم الإرسال في",
@@ -963,6 +1119,11 @@
       "instructions": "ارفع ملف Excel (.xlsx) أو CSV (.csv) يحتوي على الأعمدة: اسم العميل (إجباري)، البريد الإلكتروني (إجباري)، التاريخ (إجباري)، الموضوع، ملاحظات. اختر قالبًا وساعة الإرسال.",
       "templateLabel": "قالب البريد الإلكتروني",
       "sendHourLabel": "ساعة الإرسال (0-23)",
+      "sendTimeLabel": "ساعة الإرسال",
+      "bodyPreviewLabel": "معاينة محتوى البريد:",
+      "fileLabel": "ملف Excel / CSV",
+      "chooseFile": "اختر ملف",
+      "downloadDemo": "تحميل ملف نموذجي",
       "uploadButton": "رفع واستيراد",
       "uploading": "جارٍ الاستيراد...",
       "resultTitle": "نتائج الاستيراد",
@@ -987,6 +1148,19 @@
       "save": "حفظ",
       "saving": "جارٍ الحفظ...",
       "saveError": "خطأ في حفظ التذكير"
+    },
+    "add": {
+      "title": "إضافة تذكير",
+      "button": "إضافة تذكير",
+      "clientName": "اسم العميل",
+      "email": "البريد الإلكتروني",
+      "subject": "الموضوع (اختياري)",
+      "template": "قالب البريد الإلكتروني",
+      "scheduledFor": "تاريخ ووقت الإرسال",
+      "submit": "إنشاء تذكير",
+      "submitting": "جارٍ الإنشاء...",
+      "success": "تم إنشاء التذكير بنجاح",
+      "error": "خطأ في إنشاء التذكير"
     }
   },
   "compliance": {
@@ -1067,7 +1241,11 @@
     "otpSendFailed": "فشل إرسال رمز التحقق. حاول مرة أخرى.",
     "otpInvalid": "رمز التحقق غير صحيح. حاول مرة أخرى.",
     "errorGeneric": "حدث خطأ. حاول مرة أخرى لاحقًا.",
-    "sessionExpired": "انتهت الجلسة. يرجى التحقق من رقم هاتفك مرة أخرى."
+    "sessionExpired": "انتهت الجلسة. يرجى التحقق من رقم هاتفك مرة أخرى.",
+    "greetingMorning": "صباح الخير! 🌞 أنا مساعد الـ AI الخاص بمكتب المحاماة. كيف يمكنني مساعدتك اليوم؟",
+    "greetingAfternoon": "مرحبًا! ☀️ أنا مساعد الـ AI الخاص بمكتب المحاماة. كيف يمكنني مساعدتك؟",
+    "greetingEvening": "مساء الخير! 🌆 أنا مساعد الـ AI الخاص بمكتب المحاماة. كيف يمكنني مساعدتك؟",
+    "greetingNight": "مساء الخير! 🌙 أنا مساعد الـ AI الخاص بمكتب المحاماة. كيف يمكنني مساعدتك؟"
   },
   "platformSettings": {
     "docTitlePlaceholder": "اسم المستند (اختياري)",
