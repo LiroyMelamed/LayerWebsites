@@ -5,9 +5,9 @@
         ],
         "target": {
             "namespace": "android_app",
-            "package_name": "com.melamedia.melamedlaw",
+            "package_name": "com.melamedia.ashrafessa",
             "sha256_cert_fingerprints": [
-                "32:8D:EA:4C:FA:A8:62:17:61:1F:6E:F7:65:05:22:CA:C7:67:64:A7:21:D4:C5:5F:D3:04:D5:54:21:7B:84:18"
+                "E9:C8:35:10:AC:3C:D5:CA:06:A8:ED:41:6C:DA:E2:48:F0:F4:4B:C4:FB:8C:C0:BE:D8:9B:3A:BC:27:74:9B:76"
             ]
         }
     }
