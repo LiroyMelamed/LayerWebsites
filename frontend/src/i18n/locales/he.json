@@ -433,7 +433,8 @@
     "myProfile": "הפרופיל שלי",
     "terms": "תקנון שימוש",
     "contact": "יצירת קשר",
-    "contactMessage": "שלום, אשמח ליצירת קשר"
+    "contactMessage": "שלום, אשמח ליצירת קשר",
+    "platformSettings": "הגדרות פלטפורמה"
   },
   "myCases": {
     "title": "התיקים שלי"
