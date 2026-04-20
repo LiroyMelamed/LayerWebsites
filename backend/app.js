@@ -192,11 +192,4 @@ app.get("/", (req, res) => {
 // Centralized error handler (must be last)
 app.use(errorHandler);
 
-process.on('SIGINT', async () => {
-    console.log('Shutting down server...');
-    await pool.end();
-    console.log('Database pool closed.');
-    process.exit(0);
-});
-
 module.exports = app;

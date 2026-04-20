@@ -136,6 +136,10 @@ const requestOtp = async (req, res) => {
         let formatedPhoneNumber = formatPhoneNumber(phoneNumber);
 
         const isDemo = DEMO_OTP_PHONES.has(phoneNumber);
+        if (!isDemo && !formatedPhoneNumber) {
+            return res.status(400).json({ message: "נא להזין מספר פלאפון תקין" });
+        }
+
         const otp = isDemo ? DEMO_OTP_CODE : crypto.randomInt(100000, 999999).toString();
 
         const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
@@ -444,6 +448,9 @@ const register = async (req, res) => {
         }
 
         let formatedPhoneNumber = formatPhoneNumber(phoneNumber);
+        if (!formatedPhoneNumber) {
+            return res.status(400).json({ message: "נא להזין מספר פלאפון תקין" });
+        }
 
         const exists = await pool.query(
             `SELECT userid FROM users WHERE phonenumber = $1`,
