@@ -26,48 +26,13 @@ module.exports = {
             log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
             merge_logs: true,
 
-            // IMPORTANT: This file is committed, so do NOT put real secrets here.
-            // Fill secrets via server env (recommended) or a root-owned env file.
+            // All tenant-specific values (DB creds, secrets, SMTP, R2) live in backend/.env
+            // (gitignored, root-owned on the server). Do NOT put real secrets here.
+            // Only non-secret, non-overriding defaults belong in env_production.
             env_production: {
                 NODE_ENV: 'production',
                 IS_PRODUCTION: 'true',
                 TRUST_PROXY: 'true',
-                PORT: '3002',
-
-                // Auth
-                JWT_SECRET: '__SET_IN_SERVER_ENV__',
-
-                // Postgres (local on the Ubuntu server)
-                DB_HOST: '127.0.0.1',
-                DB_PORT: '5432',
-                DB_NAME: 'ashrafessa',
-                DB_USER: 'ashrafessa_app',
-                DB_PASSWORD: '__SET_IN_SERVER_ENV__',
-                DB_SSL: 'false',
-
-                // Pool tuning (safe defaults; tune based on server size)
-                DB_POOL_MAX: '20',
-                DB_POOL_IDLE_TIMEOUT_MS: '30000',
-                DB_POOL_CONN_TIMEOUT_MS: '5000',
-
-                // Rate limiting (tune based on real traffic)
-                RATE_LIMIT_IP_WINDOW_MS: '60000',
-                RATE_LIMIT_IP_MAX: '600',
-                RATE_LIMIT_AUTH_IP_WINDOW_MS: '600000',
-                RATE_LIMIT_AUTH_IP_MAX: '40',
-                RATE_LIMIT_USER_WINDOW_MS: '300000',
-                RATE_LIMIT_USER_MAX: '600',
-
-                // Object storage (S3/R2)
-                S3_ENDPOINT: '__SET_IN_SERVER_ENV__',
-                S3_BUCKET: '__SET_IN_SERVER_ENV__',
-                S3_KEY: '__SET_IN_SERVER_ENV__',
-                S3_SECRET: '__SET_IN_SERVER_ENV__',
-
-                // SMS (Twilio)
-                TWILIO_ACCOUNT_SID: '__SET_IN_SERVER_ENV__',
-                TWILIO_AUTH_TOKEN: '__SET_IN_SERVER_ENV__',
-                TWILIO_PHONE_NUMBER: '__SET_IN_SERVER_ENV__',
             },
         },
     ],
