@@ -20,6 +20,14 @@ test('renderTemplate escapes HTML in values', () => {
     assert.ok(result.includes('&lt;script&gt;'));
 });
 
+test('renderTemplate skips HTML escape for subject when escapeHtml is false', () => {
+    const { renderTemplate } = require('../tasks/emailReminders/templates');
+
+    const tpl = 'סכום [[amount]]';
+    const result = renderTemplate(tpl, { amount: '1,000 ש"ח' }, { escapeHtml: false });
+    assert.equal(result, 'סכום 1,000 ש"ח');
+});
+
 test('renderTemplate leaves unmatched placeholders intact', () => {
     const { renderTemplate } = require('../tasks/emailReminders/templates');
 

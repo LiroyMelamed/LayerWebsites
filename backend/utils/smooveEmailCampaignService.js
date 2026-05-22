@@ -135,10 +135,10 @@ async function sendEmailCampaign({ toEmail, campaignKey, contactFields, attachme
 
     // Build subject from template
     const subjectTemplate = dbTemplate.subject_template || '';
-    const subject = replaceEmailPlaceholders(subjectTemplate, allowedFields);
+    const subject = replaceEmailPlaceholders(subjectTemplate, allowedFields, false);
 
     // Build HTML body from DB template
-    const htmlBody = replaceEmailPlaceholders(dbTemplate.html_body, allowedFields);
+    const htmlBody = replaceEmailPlaceholders(dbTemplate.html_body, allowedFields, true);
 
     // Fetch template-level attachments from R2 (configured in admin UI)
     let templateAttachments = [];
@@ -337,22 +337,39 @@ async function sendEmailWithAttachments({ toEmail, subject, htmlBody, attachment
 
 // ── Template builders removed — templates are now loaded from email_templates DB table ──
 
-function replaceEmailPlaceholders(template, fields) {
-    const safeRecipient = escapeHtml(String(fields.recipient_name || '').trim());
-    const safeDocument = escapeHtml(String(fields.document_name || '').trim());
-    const safeManager = escapeHtml(String(fields.manager_name || '').trim());
-    const safeLawyer = escapeHtml(String(fields.lawyer_name || '').trim());
-    const safeCaseTitle = escapeHtml(String(fields.case_title || '').trim());
+/**
+ * Placeholder values for the email Subject line must stay plain text.
+ * HTML-escaping quotes (e.g. ש"ח → ש&quot;ח) leaks entities into the subject.
+ */
+function plainTextPlaceholderValue(str) {
+    return String(str ?? '')
+        .replace(/\r?\n/g, ' ')
+        .replace(/\0/g, '')
+        .trim();
+}
 
-    const safeCaseStage = escapeHtml(String(fields.case_stage || '').trim());
-    const safeRejection = escapeHtml(String(fields.rejection_reason || '').trim());
+function replaceEmailPlaceholders(template, fields, forHtml = true) {
+    const esc = forHtml ? escapeHtml : plainTextPlaceholderValue;
+
+    const safeRecipient = esc(String(fields.recipient_name || '').trim());
+    const safeDocument = esc(String(fields.document_name || '').trim());
+    const safeManager = esc(String(fields.manager_name || '').trim());
+    const safeLawyer = esc(String(fields.lawyer_name || '').trim());
+    const safeCaseTitle = esc(String(fields.case_title || '').trim());
+
+    const safeCaseStage = esc(String(fields.case_stage || '').trim());
+    const safeRejection = esc(String(fields.rejection_reason || '').trim());
 
     const urlRaw = String(fields.action_url || '').trim();
-    const safeUrl = escapeHtml(urlRaw);
+    const safeUrl = forHtml ? escapeHtml(urlRaw) : plainTextPlaceholderValue(urlRaw);
 
-    const signedDocUrl = escapeHtml(String(fields.signed_document_url || '').trim());
-    const evidenceUrl = escapeHtml(String(fields.evidence_certificate_url || '').trim());
-    const safeFirmName = escapeHtml(String(fields.firm_name || '').trim());
+    const signedDocUrl = forHtml
+        ? escapeHtml(String(fields.signed_document_url || '').trim())
+        : plainTextPlaceholderValue(String(fields.signed_document_url || '').trim());
+    const evidenceUrl = forHtml
+        ? escapeHtml(String(fields.evidence_certificate_url || '').trim())
+        : plainTextPlaceholderValue(String(fields.evidence_certificate_url || '').trim());
+    const safeFirmName = esc(String(fields.firm_name || '').trim());
     // firm_logo_url is a URL — no HTML escaping (used inside src="...")
     const firmLogoUrl = String(fields.firm_logo_url || '').trim();
 
