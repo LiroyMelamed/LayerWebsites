@@ -131,14 +131,22 @@ async function getTemplateByKey(key) {
 
 /**
  * Replace [[key]] placeholders in a string with values from `fields`.
+ *
+ * @param {object} [options]
+ * @param {boolean} [options.escapeHtml=true]  When false (e.g. email Subject), values are not HTML-escaped.
  */
-function renderTemplate(template, fields) {
+function renderTemplate(template, fields, options = {}) {
+    const escapeForHtml = options.escapeHtml !== false;
     if (!template) return '';
     return template.replace(/\[\[(\w+)\]\]/g, (_, key) => {
         const val = fields[key];
         if (val == null) return `[[${key}]]`;
+        const s = String(val);
+        if (!escapeForHtml) {
+            return s.replace(/\r?\n/g, ' ');
+        }
         // Basic HTML escape
-        return String(val)
+        return s
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
