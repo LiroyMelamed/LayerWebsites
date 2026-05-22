@@ -244,7 +244,7 @@ async function sendClientReminder({ reminderKey, row, todayKey }) {
         action_url: actionUrl,
     };
 
-    const subject = renderTemplate(DEFAULTS.client.emailSubject, fields);
+    const subject = renderTemplate(DEFAULTS.client.emailSubject, fields, { escapeHtml: false });
     const bodyInner = renderTemplate(DEFAULTS.client.emailBody, fields);
 
     const htmlBody = `<!doctype html><html lang="he" dir="rtl"><body style="margin:0;background:#EDF2F7;">
@@ -298,8 +298,8 @@ async function sendClientReminder({ reminderKey, row, todayKey }) {
 
     try {
         if (hasPush) {
-            const pushTitle = renderTemplate(DEFAULTS.client.pushTitle, fields);
-            const pushBody = renderTemplate(DEFAULTS.client.pushBody, fields);
+            const pushTitle = renderTemplate(DEFAULTS.client.pushTitle, fields, { escapeHtml: false });
+            const pushBody = renderTemplate(DEFAULTS.client.pushBody, fields, { escapeHtml: false });
             await sendAndStoreNotification(clientUserId, pushTitle, pushBody, {
                 caseId: String(row.CaseId),
                 type: 'LICENSE_RENEWAL',
@@ -366,7 +366,7 @@ async function sendManagerReminder14Days({ row, todayKey }) {
         action_url: actionUrl,
     };
 
-    const subject = renderTemplate(DEFAULTS.manager.emailSubject, fields);
+    const subject = renderTemplate(DEFAULTS.manager.emailSubject, fields, { escapeHtml: false });
     const bodyInner = renderTemplate(DEFAULTS.manager.emailBody, fields);
 
     const htmlBody = `<!doctype html><html lang="he" dir="rtl"><body style="margin:0;background:#EDF2F7;">
@@ -472,7 +472,7 @@ async function sendCeoReminder14Days({ row, todayKey }) {
             action_url: actionUrl,
         };
 
-        const subject = renderTemplate(DEFAULTS.manager.emailSubject, fields);
+        const subject = renderTemplate(DEFAULTS.manager.emailSubject, fields, { escapeHtml: false });
         const bodyInner = renderTemplate(DEFAULTS.manager.emailBody, fields);
 
         const htmlBody = `<!doctype html><html lang="he" dir="rtl"><body style="margin:0;background:#EDF2F7;">
