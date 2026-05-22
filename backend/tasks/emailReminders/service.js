@@ -96,7 +96,7 @@ async function processEmailReminders() {
                 ...data,
             };
 
-            const subjectLine = reminder.subject || renderTemplate(tpl.subject, fields);
+            const subjectLine = reminder.subject || renderTemplate(tpl.subject, fields, { escapeHtml: false });
             const bodyHtml = renderTemplate(tpl.body, fields);
             const fullHtml = wrapEmailHtml(bodyHtml, { firmName: fields.firm_name, firmLogoUrl, title: subjectLine });
 

@@ -7,10 +7,14 @@ function escapeHtml(str) {
         .replace(/'/g, '&#39;');
 }
 
-function renderTemplate(template, fields) {
+function renderTemplate(template, fields, options = {}) {
+    const escapeForHtml = options.escapeHtml !== false;
     let out = String(template || '');
     for (const [key, raw] of Object.entries(fields || {})) {
-        const safe = escapeHtml(String(raw ?? ''));
+        const s = String(raw ?? '');
+        const safe = escapeForHtml
+            ? escapeHtml(s)
+            : s.replace(/\r?\n/g, ' ');
         out = out.split(`[[${key}]]`).join(safe);
     }
     return out;
