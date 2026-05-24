@@ -1,4 +1,4 @@
--- Lower default storage quotas to practical MB values (100 MB / 500 MB).
+-- Align storage quotas with real usage (~few MB per tenant).
 BEGIN;
 
 UPDATE public.subscription_plans
