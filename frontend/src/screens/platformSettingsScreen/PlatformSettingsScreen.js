@@ -297,11 +297,18 @@ function SmsVarButtons({ templateKey, onInsert }) {
     );
 }
 
+function withLogoCacheBust(url) {
+    const u = String(url || '').trim();
+    if (!u || /[?&]v=/.test(u)) return u;
+    return `${u}${u.includes('?') ? '&' : '?'}v=2`;
+}
+
 /**
  * Wrap reminder body HTML in the branded email shell (matches backend wrapEmailHtml).
  * Used for the live preview in the reminder template editor.
  */
 function wrapReminderPreviewHtml(bodyHtml, { title = '', firmName = '', firmLogoUrl = '' } = {}) {
+    firmLogoUrl = withLogoCacheBust(firmLogoUrl);
     const headerTitle = title || firmName;
     const logoHtml = firmLogoUrl
         ? `<img src="${firmLogoUrl}" width="170" alt="${firmName}" style="border:0;outline:none;text-decoration:none;height:auto;max-width:100%;">`
@@ -453,7 +460,7 @@ function EmailTemplateEditor({ template, onSave, saving, firmSettings }) {
         if (iframeRef.current) {
             let previewHtml = htmlBody;
             const firmName = firmSettings?.LAW_FIRM_NAME?.effectiveValue || firmSettings?.FIRM_NAME?.effectiveValue || '';
-            const firmLogoUrl = firmSettings?.FIRM_LOGO_URL?.effectiveValue || '';
+            const firmLogoUrl = withLogoCacheBust(firmSettings?.FIRM_LOGO_URL?.effectiveValue || '');
             if (firmName) previewHtml = previewHtml.split('[[firm_name]]').join(firmName);
             if (firmLogoUrl) previewHtml = previewHtml.split('[[firm_logo_url]]').join(firmLogoUrl);
             const doc = iframeRef.current.contentDocument;
@@ -677,7 +684,7 @@ export default function PlatformSettingsScreen() {
             const fullHtml = wrapReminderPreviewHtml(editingReminderTpl.body_html || '', {
                 title: subjectPreview,
                 firmName: firmS.LAW_FIRM_NAME?.effectiveValue || firmS.FIRM_NAME?.effectiveValue || '',
-                firmLogoUrl: firmS.FIRM_LOGO_URL?.effectiveValue || '',
+                firmLogoUrl: withLogoCacheBust(firmS.FIRM_LOGO_URL?.effectiveValue || ''),
             });
             const doc = reminderIframeRef.current.contentDocument;
             doc.open();

@@ -40,6 +40,8 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "build:morlevy": "cp .env.production.morlevy .env && react-scripts build",
+    "build:ashrafessa": "cp .env.production.ashrafessa .env && react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "i18n:extract": "node scripts/extract-hebrew-i18n.js"
