@@ -7,12 +7,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-try:
-    import fitz
-    from PIL import Image, ImageEnhance, ImageFilter, ImageOps
-except ImportError:
-    print("Install: pip3 install pymupdf pillow", file=sys.stderr)
-    sys.exit(1)
+import cv2
+import fitz
+import numpy as np
+from PIL import Image, ImageEnhance, ImageFilter
 
 ROOT = Path(__file__).resolve().parents[2]
 FRONTEND = ROOT / "frontend"
@@ -21,58 +19,67 @@ LOGOS = FRONTEND / "src" / "assets" / "images" / "logos"
 DEFAULT_PDF = Path.home() / "Downloads" / "CamScanner 03.05.2026 17.55.pdf"
 
 
-def extract_pdf(pdf_path: Path, out_png: Path, zoom: float = 6.0) -> None:
+def extract_pdf(pdf_path: Path, zoom: float = 10.0) -> np.ndarray:
     doc = fitz.open(pdf_path)
     page = doc[0]
     pix = page.get_pixmap(matrix=fitz.Matrix(zoom, zoom), alpha=False)
-    pix.save(str(out_png))
+    img = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)
     doc.close()
+    if img.shape[2] == 4:
+        img = cv2.cvtColor(img, cv2.COLOR_RGBA2BGR)
+    elif img.shape[2] == 3:
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    return img
 
 
-def trim_fuzz(im: Image.Image, fuzz_pct: int = 8) -> Image.Image:
-    tmp_in = Path("/tmp/ashraf-trim-in.png")
-    tmp_out = Path("/tmp/ashraf-trim-out.png")
-    im.convert("RGB").save(tmp_in)
+def trim_white_margins(bgr: np.ndarray, fuzz: int = 12) -> np.ndarray:
+    tmp = Path("/tmp/ashraf-trim.png")
+    cv2.imwrite(str(tmp), bgr)
+    out = Path("/tmp/ashraf-trimmed.png")
     subprocess.run(
-        ["magick", str(tmp_in), "-fuzz", f"{fuzz_pct}%", "-trim", "+repage", str(tmp_out)],
+        ["magick", str(tmp), "-fuzz", f"{fuzz}%", "-trim", "+repage", str(out)],
         check=True,
     )
-    return Image.open(tmp_out).convert("RGBA")
+    return cv2.imread(str(out))
 
 
-def gentle_sharpen(im: Image.Image) -> Image.Image:
-    rgb = im.convert("RGB")
-    rgb = rgb.filter(ImageFilter.UnsharpMask(radius=1.2, percent=120, threshold=4))
-    rgb = ImageEnhance.Sharpness(rgb).enhance(1.15)
-    out = rgb.convert("RGBA")
-    if im.mode == "RGBA":
-        out.putalpha(im.split()[3])
-    return out
+def enhance_scan(bgr: np.ndarray) -> np.ndarray:
+    """Denoise scan, recover contrast, sharpen without halos."""
+    denoised = cv2.fastNlMeansDenoisingColored(bgr, None, 6, 6, 7, 21)
+    lab = cv2.cvtColor(denoised, cv2.COLOR_BGR2LAB)
+    l, a, b = cv2.split(lab)
+    clahe = cv2.createCLAHE(clipLimit=1.8, tileGridSize=(8, 8))
+    l = clahe.apply(l)
+    merged = cv2.merge([l, a, b])
+    enhanced = cv2.cvtColor(merged, cv2.COLOR_LAB2BGR)
+    blurred = cv2.GaussianBlur(enhanced, (0, 0), 1.2)
+    sharp = cv2.addWeighted(enhanced, 1.35, blurred, -0.35, 0)
+    return sharp
 
 
-def white_background_to_alpha(im: Image.Image, threshold: int = 248) -> Image.Image:
-    """Remove scan paper white; keep logo colors on transparent background."""
-    src = im.convert("RGBA")
-    px = src.load()
-    w, h = src.size
-    for y in range(h):
-        for x in range(w):
-            r, g, b, a = px[x, y]
-            # Near-white paper + light grey scan noise
-            if r >= threshold and g >= threshold and b >= threshold:
-                px[x, y] = (255, 255, 255, 0)
-            else:
-                px[x, y] = (r, g, b, 255)
-    # Soften alpha edges (reduces jagged white halos)
-    r, g, b, a = src.split()
-    a = a.filter(ImageFilter.GaussianBlur(radius=0.6))
-    return Image.merge("RGBA", (r, g, b, a))
+def bgr_to_rgba_with_alpha(bgr: np.ndarray) -> np.ndarray:
+    """Paper white -> transparent; smooth alpha for clean edges."""
+    rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+    white = np.array([255, 255, 255], dtype=np.float32)
+    diff = np.linalg.norm(rgb.astype(np.float32) - white, axis=2)
+  # 0 = white paper, higher = ink/gold
+    alpha = np.clip((diff - 18) * 4.5, 0, 255).astype(np.uint8)
+    # Remove light grey scan noise in background
+    grey = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
+    alpha[grey > 246] = 0
+    alpha = cv2.GaussianBlur(alpha, (3, 3), 0)
+    rgba = np.dstack([rgb, alpha])
+    return rgba
 
 
-def fit_on_canvas(im: Image.Image, size: int, bg=(255, 255, 255, 255), pad_ratio: float = 0.08) -> Image.Image:
+def rgba_to_pil(rgba: np.ndarray) -> Image.Image:
+    return Image.fromarray(rgba)
+
+
+def fit_square(rgba: Image.Image, size: int, bg=(255, 255, 255, 255), pad: float = 0.07) -> Image.Image:
     canvas = Image.new("RGBA", (size, size), bg)
-    inner = int(size * (1 - 2 * pad_ratio))
-    copy = im.copy()
+    inner = int(size * (1 - 2 * pad))
+    copy = rgba.copy()
     copy.thumbnail((inner, inner), Image.Resampling.LANCZOS)
     x = (size - copy.width) // 2
     y = (size - copy.height) // 2
@@ -80,84 +87,85 @@ def fit_on_canvas(im: Image.Image, size: int, bg=(255, 255, 255, 255), pad_ratio
     return canvas
 
 
-def resize_width(im: Image.Image, width: int) -> Image.Image:
-    ratio = width / im.width
-    return im.resize((width, max(1, int(im.height * ratio))), Image.Resampling.LANCZOS)
+def resize_width(rgba: Image.Image, width: int) -> Image.Image:
+    h = max(1, int(rgba.height * width / rgba.width))
+    return rgba.resize((width, h), Image.Resampling.LANCZOS)
 
 
-def emblem_for_tint(full_rgba: Image.Image) -> Image.Image:
-    """Dark single-tone emblem for login/toolbar tint (scales area only)."""
-    w, h = full_rgba.size
-    side = int(min(w, h * 0.55))
+def emblem_tint_source(rgba: Image.Image) -> Image.Image:
+    """Dark emblem for login tint — scales region only."""
+    w, h = rgba.size
+    side = int(min(w, h * 0.54))
     left = (w - side) // 2
-    crop = full_rgba.crop((left, 0, left + side, side))
-    gray = ImageOps.grayscale(crop.convert("RGB"))
-    # Dark bronze silhouette
-    dark = gray.point(lambda p: 45 if p < 220 else 0)
-    dark = dark.convert("RGBA")
-    dark.putalpha(gray.point(lambda p: 0 if p > 235 else 255))
-    return resize_width(dark, 140)
+    crop = rgba.crop((left, 0, left + side, side))
+    gray = np.array(crop.convert("L"))
+    dark = np.where(gray < 210, 42, 0).astype(np.uint8)
+    alpha = np.where(gray < 238, 255, 0).astype(np.uint8)
+    out = np.dstack([dark, dark, dark, alpha])
+    return resize_width(Image.fromarray(out), 150)
 
 
-def save_png(im: Image.Image, path: Path) -> None:
+def white_variant(rgba: Image.Image) -> Image.Image:
+    gray = np.array(rgba.convert("L"))
+    white = 255 - gray
+    alpha = np.array(rgba.split()[3])
+    return Image.fromarray(np.dstack([white, white, white, alpha]))
+
+
+def save(im: Image.Image, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    if path.suffix.lower() == ".ico":
-        sizes = [(16, 16), (32, 32), (48, 48)]
-        im.save(path, format="ICO", sizes=[(s[0], s[1]) for s in sizes])
+    if path.suffix == ".ico":
+        im.save(path, format="ICO", sizes=[(16, 16), (32, 32), (48, 48)])
     else:
         im.save(path, format="PNG", optimize=True)
 
 
 def main() -> None:
     src = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_PDF
-    mode = (sys.argv[2] if len(sys.argv) > 2 else "wordmark").lower()
-
     if not src.exists():
-        print(f"Source not found: {src}", file=sys.stderr)
-        sys.exit(1)
+        sys.exit(f"Source not found: {src}")
 
-    raw_png = Path("/tmp/ashraf-raw.png")
+    print(f"# Processing {src}")
     if src.suffix.lower() == ".pdf":
-        print(f"# Extracting {src} at 8x")
-        extract_pdf(src, raw_png, zoom=8.0)
+        bgr = extract_pdf(src, zoom=10.0)
     else:
-        raw_png = src
+        bgr = cv2.imread(str(src))
 
-    trimmed = trim_fuzz(Image.open(raw_png))
-    sharp = gentle_sharpen(trimmed)
-    logo_rgba = white_background_to_alpha(sharp)
+    print(f"# Raw {bgr.shape[1]}x{bgr.shape[0]}")
+    bgr = trim_white_margins(bgr)
+    print(f"# Trimmed {bgr.shape[1]}x{bgr.shape[0]}")
+    bgr = enhance_scan(bgr)
+    rgba = bgr_to_rgba_with_alpha(bgr)
+    logo = rgba_to_pil(rgba)
 
-    if mode in ("wordmark", "all"):
-        # Navbar + email: full scanned wordmark, transparent background
-        save_png(resize_width(logo_rgba, 900), LOGOS / "logo2.png")
-        save_png(fit_on_canvas(logo_rgba, 512, pad_ratio=0.06), PUBLIC / "firm-logo.png")
-        print(f"# {LOGOS / 'logo2.png'}")
-        print(f"# {PUBLIC / 'firm-logo.png'}")
+    # Master square — downscale from large size for crisp icons
+    master = fit_square(logo, 2048, pad=0.065)
 
-    if mode == "all":
-        master_square = fit_on_canvas(logo_rgba, 1024, bg=(255, 255, 255, 255))
-        for name, px in {
-            "android-chrome-512x512.png": 512,
-            "android-chrome-192x192.png": 192,
-            "apple-touch-icon.png": 180,
-            "logo512.png": 512,
-            "logo192.png": 192,
-            "favicon.png": 512,
-            "favicon-32x32.png": 32,
-            "favicon-16x16.png": 16,
-        }.items():
-            save_png(master_square.resize((px, px), Image.Resampling.LANCZOS), PUBLIC / name)
-            print(f"# {PUBLIC / name}")
-        save_png(master_square.resize((32, 32), Image.Resampling.LANCZOS), PUBLIC / "favicon.ico")
-        save_png(resize_width(logo_rgba, 240), LOGOS / "logo.png")
-        save_png(emblem_for_tint(logo_rgba), LOGOS / "logoLM.png")
-        lum = ImageOps.grayscale(logo_rgba.convert("RGB"))
-        white = ImageOps.invert(lum)
-        alpha = logo_rgba.split()[3]
-        white_rgba = Image.merge("RGBA", (white, white, white, alpha))
-        save_png(resize_width(white_rgba, 400), LOGOS / "logoLMwhite.png")
+    icon_sizes = {
+        "android-chrome-512x512.png": 512,
+        "android-chrome-192x192.png": 192,
+        "apple-touch-icon.png": 180,
+        "logo512.png": 512,
+        "logo192.png": 192,
+        "favicon.png": 512,
+        "favicon-32x32.png": 32,
+        "favicon-16x16.png": 16,
+        "firm-logo.png": 512,
+    }
+    for name, px in icon_sizes.items():
+        save(master.resize((px, px), Image.Resampling.LANCZOS), PUBLIC / name)
+        print(f"# {PUBLIC / name}")
 
-    print("# Done (mode=%s). Favicons: keep existing crisp emblem unless mode=all." % mode)
+    save(master.resize((32, 32), Image.Resampling.LANCZOS), PUBLIC / "favicon.ico")
+
+    save(resize_width(logo, 1000), LOGOS / "logo2.png")
+    save(resize_width(logo, 260), LOGOS / "logo.png")
+    save(emblem_tint_source(logo), LOGOS / "logoLM.png")
+    white = resize_width(white_variant(logo), 420)
+    save(white, LOGOS / "logoLMwhite.png")
+    save(white, PUBLIC / "logoLMwhite.png")
+
+    print("# Done — all assets from scanned source")
 
 
 if __name__ == "__main__":
