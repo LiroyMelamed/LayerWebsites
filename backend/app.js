@@ -65,9 +65,15 @@ function selectMode(forProduction, forStage) {
     return isProduction ? forProduction : forStage;
 }
 
+function normalizeOrigin(origin) {
+    const s = String(origin || "").trim();
+    if (!s) return "";
+    return s.endsWith("/") ? s.slice(0, -1) : s;
+}
+
 const productionOrigin = (process.env.ALLOWED_ORIGINS || "")
     .split(",")
-    .map(s => s.trim())
+    .map(normalizeOrigin)
     .filter(Boolean);
 const stageOrigin = [
     "http://localhost:3000",
@@ -81,7 +87,8 @@ app.use(
         // Allow only configured origins. If no origin (e.g. same-origin or curl), allow it.
         origin: function (origin, callback) {
             if (!origin) return callback(null, true);
-            if (allowedOrigins.includes(origin)) {
+            const normalized = normalizeOrigin(origin);
+            if (allowedOrigins.includes(normalized)) {
                 return callback(null, true);
             }
             // Reject unknown origin
