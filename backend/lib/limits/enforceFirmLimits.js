@@ -34,11 +34,11 @@ async function checkFirmLimitsOrNull({ action, increments } = {}) {
 
         const storageBytes = Number(usage.storage.bytesTotal || 0);
         const addBytes = Number(increments?.storageBytesTotal || 0);
-        const storageGbQuota = quotas.storageGbQuota;
-        if (storageGbQuota !== null && storageGbQuota !== undefined) {
-            const qGb = Number(storageGbQuota);
-            if (Number.isFinite(qGb) && qGb > 0) {
-                const qBytes = qGb * 1024 * 1024 * 1024;
+        const storageMbQuota = quotas.storageMbQuota;
+        if (storageMbQuota !== null && storageMbQuota !== undefined) {
+            const qMb = Number(storageMbQuota);
+            if (Number.isFinite(qMb) && qMb > 0) {
+                const qBytes = qMb * 1024 * 1024;
                 if ((storageBytes + addBytes) > qBytes) {
                     const msg = 'Storage quota exceeded';
                     warnings.push(msg);

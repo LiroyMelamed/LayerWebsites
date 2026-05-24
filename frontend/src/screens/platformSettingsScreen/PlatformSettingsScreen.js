@@ -36,21 +36,22 @@ import "./PlatformSettingsScreen.scss";
 
 export const PlatformSettingsScreenName = "/PlatformSettingsScreen";
 
-// ─── Category definitions with Hebrew labels ────────────────────────
+// ─── Category definitions ────────────────────────────────────────────
 const CATEGORIES = [
-    { key: "messaging", label: "הודעות ואימייל", icon: "📧" },
-    { key: "signing", label: "חתימה דיגיטלית", icon: "✍️" },
-    { key: "firm", label: "פרטי המשרד", icon: "🏢" },
-    { key: "templates", label: "תבניות SMS", icon: "📝" },
-    { key: "emailTemplates", label: "תבניות אימייל", icon: "✉️" },
-    { key: "reminders", label: "תזכורות", icon: "⏰" },
-    { key: "channels", label: "ערוצי התראות", icon: "📡" },
-    { key: "admins", label: "מנהלי פלטפורמה", icon: "👤" },
-    { key: "knowledgeDocs", label: "מסמכי ידע לצ'אטבוט", icon: "🤖" },
+    { key: "messaging", labelKey: "platformSettings.cat_messaging", icon: "📧" },
+    { key: "signing", labelKey: "platformSettings.cat_signing", icon: "✍️" },
+    { key: "firm", labelKey: "platformSettings.cat_firm", icon: "🏢" },
+    { key: "templates", labelKey: "platformSettings.cat_templates", icon: "📝" },
+    { key: "emailTemplates", labelKey: "platformSettings.cat_emailTemplates", icon: "✉️" },
+    { key: "reminders", labelKey: "platformSettings.cat_reminders", icon: "⏰" },
+    { key: "channels", labelKey: "platformSettings.cat_channels", icon: "📡" },
+    { key: "admins", labelKey: "platformSettings.cat_admins", icon: "👤" },
+    { key: "knowledgeDocs", labelKey: "platformSettings.cat_knowledgeDocs", icon: "🤖" },
 ];
 
 // ─── Setting Input Component ────────────────────────────────────────
 function SettingInput({ setting, value, onChange, isTemplate = false }) {
+    const { t } = useTranslation();
     const inputValue = value ?? setting.effectiveValue ?? "";
 
     if (setting.valueType === "boolean") {
@@ -63,7 +64,7 @@ function SettingInput({ setting, value, onChange, isTemplate = false }) {
                 />
                 <SimpleContainer className="lw-platformSettings__toggleSlider" />
                 <Text14 className="lw-platformSettings__toggleLabel">
-                    {inputValue === true || inputValue === "true" || inputValue === "1" ? "פעיל" : "לא פעיל"}
+                    {inputValue === true || inputValue === "true" || inputValue === "1" ? t("platformSettings.active") : t("platformSettings.inactive")}
                 </Text14>
             </SimpleContainer>
         );
@@ -123,6 +124,7 @@ function SettingInput({ setting, value, onChange, isTemplate = false }) {
 
 // ─── Channel Toggle Row ─────────────────────────────────────────────
 function ChannelRow({ channel, onToggle }) {
+    const { t } = useTranslation();
     return (
         <SimpleContainer className="lw-platformSettings__channelRow">
             <TextBold14 className="lw-platformSettings__channelName">
@@ -138,7 +140,7 @@ function ChannelRow({ channel, onToggle }) {
                     />
                 </SimpleContainer>
                 <SimpleContainer className="lw-platformSettings__channelToggle">
-                    <Text12 className="lw-platformSettings__channelToggleLabel">אימייל</Text12>
+                    <Text12 className="lw-platformSettings__channelToggleLabel">{t("platformSettings.email")}</Text12>
                     <input
                         type="checkbox"
                         checked={channel.email_enabled}
@@ -154,7 +156,7 @@ function ChannelRow({ channel, onToggle }) {
                     />
                 </SimpleContainer>
                 <SimpleContainer className="lw-platformSettings__channelToggle">
-                    <Text12 className="lw-platformSettings__channelToggleLabel">מנהל תיק</Text12>
+                    <Text12 className="lw-platformSettings__channelToggleLabel">{t("platformSettings.caseManager")}</Text12>
                     <input
                         type="checkbox"
                         checked={channel.manager_cc}
@@ -162,7 +164,7 @@ function ChannelRow({ channel, onToggle }) {
                     />
                 </SimpleContainer>
                 <SimpleContainer className="lw-platformSettings__channelToggle">
-                    <Text12 className="lw-platformSettings__channelToggleLabel">מנהל מערכת</Text12>
+                    <Text12 className="lw-platformSettings__channelToggleLabel">{t("platformSettings.systemAdmin")}</Text12>
                     <input
                         type="checkbox"
                         checked={channel.admin_cc}
@@ -176,11 +178,12 @@ function ChannelRow({ channel, onToggle }) {
 
 // ─── Admin Row ──────────────────────────────────────────────────────
 function AdminRow({ admin, onRemove, currentUserId }) {
+    const { t } = useTranslation();
     const isCurrentUser = admin.user_id === currentUserId;
     return (
         <SimpleContainer className="lw-platformSettings__adminRow">
             <SimpleContainer className="lw-platformSettings__adminInfo">
-                <TextBold14 className="lw-platformSettings__adminName">{admin.user_name || "ללא שם"}</TextBold14>
+                <TextBold14 className="lw-platformSettings__adminName">{admin.user_name || t("platformSettings.noName")}</TextBold14>
                 <Text12 className="lw-platformSettings__adminPhone">{admin.phone}</Text12>
             </SimpleContainer>
             {!isCurrentUser && (
@@ -188,7 +191,7 @@ function AdminRow({ admin, onRemove, currentUserId }) {
                     className="lw-platformSettings__removeBtn"
                     onPress={() => onRemove(admin.user_id)}
                 >
-                    הסר
+                    {t("platformSettings.remove")}
                 </SecondaryButton>
             )}
         </SimpleContainer>
@@ -223,39 +226,6 @@ const SMS_TEMPLATE_VARS = {
     LICENSE_RENEWAL_SMS: ["recipientName", "firmName", "websiteUrl"],
     // ── Client ──
     NEW_CLIENT_SMS: ["recipientName", "firmName", "websiteUrl"],
-};
-
-// Hebrew labels for SMS template variables (camelCase keys)
-const VAR_LABELS = {
-    recipientName: "שם הנמען",
-    caseName: "שם תיק",
-    stageName: "שלב נוכחי",
-    managerName: "שם מנהל התיק",
-    firmName: "שם המשרד",
-    websiteUrl: "קישור לאתר",
-    documentName: "שם מסמך",
-    rejectionReason: "סיבת דחייה",
-    // Email template variables (snake_case — used by [[placeholder]] system)
-    recipient_name: "שם הנמען",
-    case_title: "שם תיק",
-    case_stage: "שלב נוכחי",
-    manager_name: "שם מנהל התיק",
-    lawyer_name: "עו״ד מטפל",
-    document_name: "שם מסמך",
-    action_url: "קישור פעולה",
-    firm_name: "שם המשרד",
-    rejection_reason: "סיבת דחייה",
-    signed_document_url: "קישור מסמך חתום",
-    evidence_certificate_url: "קישור אישור ראייתי",
-    // Reminder template variables
-    client_name: "שם הלקוח",
-    date: "תאריך",
-    subject: "נושא",
-    body: "תוכן",
-    amount: "סכום",
-    content_1: "תוכן 1",
-    content_2: "תוכן 2",
-    content_3: "תוכן 3",
 };
 
 // Available variables for reminder email templates
@@ -307,18 +277,19 @@ const SMS_KEY_TO_NOTIF_TYPE = {
 };
 
 function SmsVarButtons({ templateKey, onInsert }) {
+    const { t } = useTranslation();
     const vars = SMS_TEMPLATE_VARS[templateKey];
     if (!vars || vars.length === 0) return null;
     return (
         <SimpleContainer className="lw-platformSettings__varButtons">
-            <Text12 className="lw-platformSettings__varButtonsLabel">משתנים זמינים:</Text12>
+            <Text12 className="lw-platformSettings__varButtonsLabel">{t("platformSettings.availableVars")}</Text12>
             <SimpleContainer className="lw-platformSettings__varButtonsRow">
                 {vars.map(v => (
                     <TertiaryButton
                         key={v}
                         onPress={() => onInsert(`{{${v}}}`)}
                     >
-                        {VAR_LABELS[v] || v}
+                        {t(`platformSettings.var_${v}`, v)}
                     </TertiaryButton>
                 ))}
             </SimpleContainer>
@@ -412,6 +383,7 @@ function plainTextToHtml(fullHtml, newText) {
 }
 
 function EmailTemplateEditor({ template, onSave, saving, firmSettings }) {
+    const { t } = useTranslation();
     const [subject, setSubject] = useState(template.subject_template || "");
     const [htmlBody, setHtmlBody] = useState(template.html_body || "");
     const [messageText, setMessageText] = useState(() => htmlToPlainText(template.html_body || ""));
@@ -499,13 +471,13 @@ function EmailTemplateEditor({ template, onSave, saving, firmSettings }) {
 
             {/* Subject */}
             <SimpleContainer className="lw-platformSettings__emailEditorField">
-                <Text12 className="lw-platformSettings__emailEditorLabel">נושא האימייל:</Text12>
+                <Text12 className="lw-platformSettings__emailEditorLabel">{t("platformSettings.emailSubject")}</Text12>
                 <SimpleInput
                     className="lw-platformSettings__input"
                     type="text"
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
-                    title="נושא"
+                    title={t("platformSettings.subject")}
                     timeToWaitInMilli={0}
                 />
             </SimpleContainer>
@@ -514,10 +486,10 @@ function EmailTemplateEditor({ template, onSave, saving, firmSettings }) {
             <SimpleContainer className="lw-platformSettings__emailEditorField">
                 <SimpleContainer className="lw-platformSettings__emailEditorLabelRow">
                     <Text12 className="lw-platformSettings__emailEditorLabel">
-                        {showCode ? "קוד HTML:" : "תוכן ההודעה:"}
+                        {showCode ? t("platformSettings.htmlCode") : t("platformSettings.messageContent")}
                     </Text12>
                     <TertiaryButton onPress={() => setShowCode(prev => !prev)}>
-                        {showCode ? "חזרה למצב פשוט" : "עריכת קוד HTML"}
+                        {showCode ? t("platformSettings.backToSimple") : t("platformSettings.editHtmlCode")}
                     </TertiaryButton>
                 </SimpleContainer>
 
@@ -536,7 +508,7 @@ function EmailTemplateEditor({ template, onSave, saving, firmSettings }) {
                         value={messageText}
                         onChange={handleMessageChange}
                         textareaRef={simpleTextareaRef}
-                        title="תוכן ההודעה"
+                        title={t("platformSettings.messageContent")}
                         rows={6}
                         dir="rtl"
                     />
@@ -545,14 +517,14 @@ function EmailTemplateEditor({ template, onSave, saving, firmSettings }) {
 
             {/* Variable chips */}
             <SimpleContainer className="lw-platformSettings__varButtons">
-                <Text12 className="lw-platformSettings__varButtonsLabel">משתנים זמינים (לחץ להוספה):</Text12>
+                <Text12 className="lw-platformSettings__varButtonsLabel">{t("platformSettings.availableVarsClick")}</Text12>
                 <SimpleContainer className="lw-platformSettings__varButtonsRow">
                     {availableVars.map(v => (
                         <TertiaryButton
                             key={v}
                             onPress={() => insertVar(v)}
                         >
-                            {VAR_LABELS[v] || v}
+                            {t(`platformSettings.var_${v}`, v)}
                         </TertiaryButton>
                     ))}
                 </SimpleContainer>
@@ -560,7 +532,7 @@ function EmailTemplateEditor({ template, onSave, saving, firmSettings }) {
 
             {/* Live preview */}
             <SimpleContainer className="lw-platformSettings__emailEditorField">
-                <Text12 className="lw-platformSettings__emailEditorLabel">תצוגה מקדימה:</Text12>
+                <Text12 className="lw-platformSettings__emailEditorLabel">{t("platformSettings.preview")}</Text12>
                 <iframe
                     ref={iframeRef}
                     className="lw-platformSettings__emailPreviewFrame"
@@ -579,12 +551,12 @@ function EmailTemplateEditor({ template, onSave, saving, firmSettings }) {
                         disabled={saving}
                         isPerforming={saving}
                     >
-                        {saving ? "שומר..." : "שמור תבנית"}
+                        {saving ? t("platformSettings.saving") : t("platformSettings.saveTemplate")}
                     </PrimaryButton>
                     <SecondaryButton
                         onPress={() => { setSubject(template.subject_template || ""); setHtmlBody(template.html_body || ""); setMessageText(htmlToPlainText(template.html_body || "")); }}
                     >
-                        ביטול
+                        {t("common.cancel")}
                     </SecondaryButton>
                 </SimpleContainer>
             )}
@@ -666,11 +638,11 @@ export default function PlatformSettingsScreen() {
         setEmailSaving(true);
         try {
             await platformSettingsApi.updateEmailTemplate(templateKey, data);
-            setSaveMessage("✅ התבנית נשמרה בהצלחה");
+            setSaveMessage("✅ " + t("platformSettings.templateSaved"));
             setTimeout(() => setSaveMessage(""), 3000);
             await reloadEmailTemplates();
         } catch (err) {
-            setSaveMessage("❌ שגיאה בשמירת התבנית");
+            setSaveMessage("❌ " + t("platformSettings.templateSaveError"));
             setTimeout(() => setSaveMessage(""), 3000);
         } finally {
             setEmailSaving(false);
@@ -745,16 +717,16 @@ export default function PlatformSettingsScreen() {
         setUploadingDoc(true);
         try {
             const res = await platformSettingsApi.uploadKnowledgeDoc(file, docTitle || undefined);
-            const msg = res.data?.message || 'המסמך הועלה';
+            const msg = res.data?.message || t("platformSettings.docUploaded");
             const chunks = res.data?.chunkCount || 0;
-            setSaveMessage(`✅ ${msg} (${chunks} קטעים)`);
+            setSaveMessage(`✅ ${msg} (${chunks} ${t("platformSettings.chunks")})`);
             setTimeout(() => setSaveMessage(""), 4000);
             setDocTitle("");
             setSelectedFileName("");
             if (fileInputRef.current) fileInputRef.current.value = "";
             await loadKnowledgeDocs();
         } catch (err) {
-            const msg = err?.response?.data?.message || err?.data?.message || 'שגיאה בהעלאת מסמך';
+            const msg = err?.response?.data?.message || err?.data?.message || t("platformSettings.docUploadError");
             setSaveMessage(`❌ ${msg}`);
             setTimeout(() => setSaveMessage(""), 5000);
         } finally {
@@ -791,10 +763,10 @@ export default function PlatformSettingsScreen() {
         try {
             await platformSettingsApi.updateSingle("chatbot", "CHATBOT_NOTIFICATION_EMAIL", chatbotNotifEmail.trim());
             setChatbotNotifEmailSaved(chatbotNotifEmail.trim());
-            setSaveMessage("✅ אימייל ההתראות נשמר");
+            setSaveMessage("✅ " + t("platformSettings.notifEmailSaved"));
             setTimeout(() => setSaveMessage(""), 3000);
         } catch {
-            setSaveMessage("❌ שגיאה בשמירת אימייל ההתראות");
+            setSaveMessage("❌ " + t("platformSettings.notifEmailSaveError"));
             setTimeout(() => setSaveMessage(""), 3000);
         }
     }, [chatbotNotifEmail]);
@@ -803,7 +775,7 @@ export default function PlatformSettingsScreen() {
         if (!editingReminderTpl) return;
         const { isNew, id, key, label, description, subject_template, body_html } = editingReminderTpl;
         if (!label?.trim() || !subject_template?.trim()) {
-            setSaveMessage("❌ יש למלא שם תבנית ונושא");
+            setSaveMessage("❌ " + t("platformSettings.fillNameAndSubject"));
             setTimeout(() => setSaveMessage(""), 3000);
             return;
         }
@@ -814,13 +786,13 @@ export default function PlatformSettingsScreen() {
             } else {
                 await remindersApi.updateCustomTemplate(id, { label, description, subject_template, body_html });
             }
-            setSaveMessage("✅ תבנית תזכורת נשמרה");
+            setSaveMessage("✅ " + t("platformSettings.reminderTemplateSaved"));
             setTimeout(() => setSaveMessage(""), 3000);
             setEditingReminderTpl(null);
             const res = await remindersApi.getTemplates();
             setReminderTemplates(res.data?.templates || []);
         } catch {
-            setSaveMessage("❌ שגיאה בשמירת תבנית");
+            setSaveMessage("❌ " + t("platformSettings.templateSaveError"));
             setTimeout(() => setSaveMessage(""), 3000);
         } finally {
             setReminderTplSaving(false);
@@ -857,7 +829,7 @@ export default function PlatformSettingsScreen() {
         try {
             await remindersApi.downloadTemplateExcel(key);
         } catch {
-            setSaveMessage("❌ שגיאה בהורדת קובץ דוגמה");
+            setSaveMessage("❌ " + t("platformSettings.excelDownloadError"));
             setTimeout(() => setSaveMessage(""), 3000);
         }
     }, []);
@@ -871,7 +843,7 @@ export default function PlatformSettingsScreen() {
         () => {
             setNewAdminPhone("");
             reloadAdmins();
-            setSaveMessage("✅ מנהל נוסף בהצלחה");
+            setSaveMessage("✅ " + t("platformSettings.adminAdded"));
             setTimeout(() => setSaveMessage(""), 3000);
         }
     );
@@ -881,7 +853,7 @@ export default function PlatformSettingsScreen() {
         platformSettingsApi.removeAdmin,
         () => {
             reloadAdmins();
-            setSaveMessage("✅ מנהל הוסר");
+            setSaveMessage("✅ " + t("platformSettings.adminRemoved"));
             setTimeout(() => setSaveMessage(""), 3000);
         }
     );
@@ -925,7 +897,7 @@ export default function PlatformSettingsScreen() {
             if (settingsArray.length > 0) {
                 const res = await platformSettingsApi.updateSettings(settingsArray);
                 if (res.status !== 200 && res.status !== 201) {
-                    const serverMsg = res.data?.message || 'שגיאה בשמירת הגדרות';
+                    const serverMsg = res.data?.message || t("platformSettings.settingsSaveError");
                     setSaveMessage(`❌ ${serverMsg}`);
                     setTimeout(() => setSaveMessage(""), 6000);
                     setIsSaving(false);
@@ -936,7 +908,7 @@ export default function PlatformSettingsScreen() {
             for (const [type, fields] of channelEntries) {
                 const res = await platformSettingsApi.updateChannel(type, fields);
                 if (res.status !== 200 && res.status !== 201) {
-                    const serverMsg = res.data?.message || 'שגיאה בעדכון ערוץ התראה';
+                    const serverMsg = res.data?.message || t("platformSettings.channelUpdateError");
                     setSaveMessage(`❌ ${serverMsg}`);
                     setTimeout(() => setSaveMessage(""), 6000);
                     setIsSaving(false);
@@ -945,13 +917,12 @@ export default function PlatformSettingsScreen() {
             }
             setEditedChannels({});
             setEditedValues({});
-            setSaveMessage("✅ ההגדרות נשמרו בהצלחה");
+            setSaveMessage("✅ " + t("platformSettings.settingsSaved"));
             reload();
             setTimeout(() => setSaveMessage(""), 3000);
         } catch (err) {
             const serverMsg = err?.response?.data?.message || err?.data?.message || err?.message || '';
-            setSaveMessage(`❌ ${serverMsg || 'שגיאה בשמירה'}`);
-            setTimeout(() => setSaveMessage(""), 6000);
+            setSaveMessage(`❌ ${serverMsg || t("platformSettings.saveError")}`);            setTimeout(() => setSaveMessage(""), 6000);
         } finally {
             setIsSaving(false);
         }
@@ -1016,28 +987,28 @@ export default function PlatformSettingsScreen() {
         if (activeTab === "channels") {
             return (
                 <SimpleCard className="lw-platformSettings__card">
-                    <TextBold18>ערוצי התראות</TextBold18>
+                    <TextBold18>{t("platformSettings.notificationChannels")}</TextBold18>
                     <Text14 className="lw-platformSettings__subtitle">
-                        בחר אילו ערוצים יהיו פעילים עבור כל סוג התראה
+                        {t("platformSettings.channelsSubtitle")}
                     </Text14>
                     <SimpleContainer className="lw-platformSettings__channelGrid">
                         <SimpleContainer className="lw-platformSettings__channelHeader">
-                            <TextBold14 className="lw-platformSettings__channelName">סוג התראה</TextBold14>
+                            <TextBold14 className="lw-platformSettings__channelName">{t("platformSettings.notificationType")}</TextBold14>
                             <SimpleContainer className="lw-platformSettings__channelToggles">
                                 <SimpleContainer className="lw-platformSettings__channelToggle">
                                     <Text12>Push</Text12>
                                 </SimpleContainer>
                                 <SimpleContainer className="lw-platformSettings__channelToggle">
-                                    <Text12>אימייל</Text12>
+                                    <Text12>{t("platformSettings.email")}</Text12>
                                 </SimpleContainer>
                                 <SimpleContainer className="lw-platformSettings__channelToggle">
                                     <Text12>SMS</Text12>
                                 </SimpleContainer>
                                 <SimpleContainer className="lw-platformSettings__channelToggle">
-                                    <Text12>העתק למנהל תיק</Text12>
+                                    <Text12>{t("platformSettings.ccCaseManager")}</Text12>
                                 </SimpleContainer>
                                 <SimpleContainer className="lw-platformSettings__channelToggle">
-                                    <Text12>העתק למנהל מערכת</Text12>
+                                    <Text12>{t("platformSettings.ccSystemAdmin")}</Text12>
                                 </SimpleContainer>
                             </SimpleContainer>
                         </SimpleContainer>
@@ -1057,9 +1028,9 @@ export default function PlatformSettingsScreen() {
         if (activeTab === "admins") {
             return (
                 <SimpleCard className="lw-platformSettings__card">
-                    <TextBold18>מנהלי פלטפורמה</TextBold18>
+                    <TextBold18>{t("platformSettings.platformAdmins")}</TextBold18>
                     <Text14 className="lw-platformSettings__subtitle">
-                        נהל את רשימת מנהלי הפלטפורמה שיכולים לגשת לדף זה
+                        {t("platformSettings.adminsSubtitle")}
                     </Text14>
 
                     <SimpleContainer className="lw-platformSettings__adminList">
@@ -1077,7 +1048,7 @@ export default function PlatformSettingsScreen() {
                     <SimpleContainer className="lw-platformSettings__addAdmin">
                         <SimpleInput
                             className="lw-platformSettings__addAdminInput"
-                            title="מספר טלפון של מנהל חדש"
+                            title={t("platformSettings.newAdminPhone")}
                             value={newAdminPhone}
                             onChange={(e) => setNewAdminPhone(e.target.value)}
                             inputSize="Small"
@@ -1089,7 +1060,7 @@ export default function PlatformSettingsScreen() {
                             disabled={isAddingAdmin || !newAdminPhone.trim()}
                             isPerforming={isAddingAdmin}
                         >
-                            {isAddingAdmin ? "מוסיף..." : "הוסף מנהל"}
+                            {isAddingAdmin ? t("platformSettings.adding") : t("platformSettings.addAdmin")}
                         </PrimaryButton>
                     </SimpleContainer>
                 </SimpleCard>
@@ -1130,9 +1101,9 @@ export default function PlatformSettingsScreen() {
             if (filteredEmailTemplates.length === 0) {
                 return (
                     <SimpleCard className="lw-platformSettings__card">
-                        <TextBold18>תבניות אימייל</TextBold18>
+                        <TextBold18>{t("platformSettings.emailTemplatesTitle")}</TextBold18>
                         <Text14 className="lw-platformSettings__empty">
-                            אין תבניות אימייל פעילות. הפעל ערוץ אימייל עבור סוגי התראות בלשונית "ערוצי התראות" כדי לערוך תבניות.
+                            {t("platformSettings.noActiveEmailTemplates")}
                         </Text14>
                     </SimpleCard>
                 );
@@ -1147,7 +1118,7 @@ export default function PlatformSettingsScreen() {
                 <SimpleContainer className="lw-platformSettings__emailTemplatesLayout">
                     {/* Template list */}
                     <SimpleContainer className="lw-platformSettings__emailTemplateList">
-                        <TextBold14 className="lw-platformSettings__emailTemplateListTitle">בחר תבנית</TextBold14>
+                        <TextBold14 className="lw-platformSettings__emailTemplateListTitle">{t("platformSettings.selectTemplate")}</TextBold14>
                         <SimpleContainer className="lw-platformSettings__emailTemplateButtons">
                             {filteredEmailTemplates.map(t => {
                                 const isSelected = effectiveSelectedKey === t.template_key;
@@ -1177,7 +1148,7 @@ export default function PlatformSettingsScreen() {
                             />
                         ) : (
                             <SimpleCard className="lw-platformSettings__card">
-                                <Text14>בחר תבנית מהרשימה</Text14>
+                                <Text14>{t("platformSettings.selectFromList")}</Text14>
                             </SimpleCard>
                         )}
                     </SimpleContainer>
@@ -1189,16 +1160,16 @@ export default function PlatformSettingsScreen() {
         if (activeTab === "knowledgeDocs") {
             return (
                 <SimpleCard className="lw-platformSettings__card">
-                    <TextBold18>מסמכי ידע לצ'אטבוט</TextBold18>
+                    <TextBold18>{t("platformSettings.knowledgeDocsTitle")}</TextBold18>
                     <Text14 className="lw-platformSettings__subtitle">
-                        העלה מסמכים (PDF או TXT) שהצ'אטבוט ישתמש בהם כדי לענות על שאלות
+                        {t("platformSettings.knowledgeDocsSubtitle")}
                     </Text14>
 
                     {/* Notification email setting */}
                     <SimpleContainer className="lw-platformSettings__knowledgeNotifSection">
-                        <TextBold14>📧 אימייל להתראות לידים</TextBold14>
+                        <TextBold14>{t("platformSettings.leadNotifEmail")}</TextBold14>
                         <Text12 className="lw-platformSettings__knowledgeMeta">
-                            כאשר מבקר משאיר מספר טלפון בצ'אט, תישלח התראה עם תמלול השיחה לכתובת זו
+                            {t("platformSettings.leadNotifEmailDesc")}
                         </Text12>
                         <SimpleContainer className="lw-platformSettings__knowledgeUploadRow">
                             <SimpleInput
@@ -1206,12 +1177,12 @@ export default function PlatformSettingsScreen() {
                                 type="email"
                                 value={chatbotNotifEmail}
                                 onChange={(e) => setChatbotNotifEmail(e.target.value)}
-                                title="כתובת אימייל להתראות"
+                                title={t("platformSettings.notifEmailPlaceholder")}
                                 timeToWaitInMilli={0}
                             />
                             {chatbotNotifEmail.trim() !== chatbotNotifEmailSaved && (
                                 <PrimaryButton onPress={handleSaveChatbotNotifEmail}>
-                                    שמור
+                                    {t("platformSettings.save")}
                                 </PrimaryButton>
                             )}
                         </SimpleContainer>
@@ -1259,14 +1230,14 @@ export default function PlatformSettingsScreen() {
                                     <SimpleContainer className="lw-platformSettings__knowledgeInfo">
                                         <TextBold14>{doc.title}</TextBold14>
                                         <Text12 className="lw-platformSettings__knowledgeMeta">
-                                            {doc.source_file} · {doc.chunk_count} קטעים · {new Date(doc.created_at).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                            {doc.source_file} · {doc.chunk_count} {t("platformSettings.chunks")} · {new Date(doc.created_at).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                         </Text12>
                                     </SimpleContainer>
                                     <SecondaryButton
                                         className="lw-platformSettings__removeBtn"
                                         onPress={() => handleDeleteKnowledgeDoc(doc.id)}
                                     >
-                                        🗑️ מחק
+                                        {t("platformSettings.delete")}
                                     </SecondaryButton>
                                 </SimpleContainer>
                             ))}
@@ -1304,9 +1275,9 @@ export default function PlatformSettingsScreen() {
             if (activeTab === "templates") {
                 return (
                     <SimpleCard className="lw-platformSettings__card">
-                        <TextBold18>תבניות SMS</TextBold18>
+                        <TextBold18>{t("platformSettings.smsTemplatesTitle")}</TextBold18>
                         <Text14 className="lw-platformSettings__empty">
-                            אין תבניות SMS פעילות. הפעל ערוץ SMS עבור סוגי התראות בלשונית "ערוצי התראות" כדי לערוך תבניות.
+                            {t("platformSettings.noActiveSmsTemplates")}
                         </Text14>
                     </SimpleCard>
                 );
@@ -1317,7 +1288,7 @@ export default function PlatformSettingsScreen() {
 
         return (
             <SimpleCard className="lw-platformSettings__card">
-                <TextBold18>{CATEGORIES.find(c => c.key === activeTab)?.label}</TextBold18>
+                <TextBold18>{CATEGORIES.find(c => c.key === activeTab)?.labelKey ? t(CATEGORIES.find(c => c.key === activeTab).labelKey) : activeTab}</TextBold18>
                 <SimpleContainer className="lw-platformSettings__settingsList">
                     {settingKeys.map(key => {
                         const setting = categorySettings[key];
@@ -1358,7 +1329,7 @@ export default function PlatformSettingsScreen() {
                                 {/* SMS template preview */}
                                 {activeTab === "templates" && currentValue && (
                                     <SimpleContainer className="lw-platformSettings__smsPreview">
-                                        <Text12 className="lw-platformSettings__smsPreviewLabel">תצוגה מקדימה:</Text12>
+                                        <Text12 className="lw-platformSettings__smsPreviewLabel">{t("platformSettings.preview")}</Text12>
                                         <SimpleContainer className="lw-platformSettings__smsPreviewBox">
                                             <Text12>{currentValue}</Text12>
                                         </SimpleContainer>
@@ -1376,13 +1347,13 @@ export default function PlatformSettingsScreen() {
     const renderReminderTemplatesSection = () => (
         <SimpleCard className="lw-platformSettings__card" style={{ marginTop: 24 }}>
             <SimpleContainer className="lw-platformSettings__reminderTplHeader">
-                <TextBold18>תבניות תזכורת באימייל</TextBold18>
+                <TextBold18>{t("platformSettings.reminderEmailTemplates")}</TextBold18>
                 <PrimaryButton
                     onPress={() => setEditingReminderTpl({
                         isNew: true, label: "", description: "", subject_template: "", body_html: ""
                     })}
                 >
-                    + הוסף תבנית חדשה
+                    {t("platformSettings.addNewTemplate")}
                 </PrimaryButton>
             </SimpleContainer>
 
@@ -1402,31 +1373,31 @@ export default function PlatformSettingsScreen() {
                             <SimpleContainer className="lw-platformSettings__reminderTplInfo">
                                 <SimpleContainer className="lw-platformSettings__reminderTplNameRow">
                                     <TextBold14>{tpl.label}</TextBold14>
-                                    {tpl.isBuiltin && <Text12 className="lw-platformSettings__reminderTplBadge">מובנית</Text12>}
+                                    {tpl.isBuiltin && <Text12 className="lw-platformSettings__reminderTplBadge">{t("platformSettings.builtin")}</Text12>}
                                 </SimpleContainer>
                                 {tpl.description && <Text12 className="lw-platformSettings__reminderTplDesc">{tpl.description}</Text12>}
                             </SimpleContainer>
                             <SimpleContainer className="lw-platformSettings__reminderTplActions">
                                 <TertiaryButton onPress={() => handleDownloadReminderExcel(tpl.key)}>
-                                    📥 אקסל דוגמה
+                                    {t("platformSettings.excelSample")}
                                 </TertiaryButton>
                                 <TertiaryButton onPress={() => setEditingReminderTpl({
                                     isNew: !tpl.id, id: tpl.id || null, key: tpl.key,
                                     label: tpl.label, description: tpl.description || "",
                                     subject_template: tpl.subject, body_html: tpl.bodyHtml || ""
                                 })}>
-                                    ✏️ עריכה
+                                    {t("platformSettings.edit")}
                                 </TertiaryButton>
                                 {!tpl.isBuiltin && tpl.id && (
                                     <TertiaryButton onPress={() => handleDeleteReminderTemplate(tpl.id)}>
-                                        🗑️ מחיקה
+                                        {t("platformSettings.deleteAction")}
                                     </TertiaryButton>
                                 )}
                             </SimpleContainer>
                         </SimpleContainer>
                     ))}
                     {reminderTemplates.length === 0 && (
-                        <Text14 className="lw-platformSettings__empty">אין תבניות עדיין</Text14>
+                        <Text14 className="lw-platformSettings__empty">{t("platformSettings.noTemplatesYet")}</Text14>
                     )}
                 </SimpleContainer>
             )}
@@ -1434,41 +1405,41 @@ export default function PlatformSettingsScreen() {
             {editingReminderTpl && (
                 <SimpleContainer className="lw-platformSettings__reminderEditor">
                     <TextBold14 className="lw-platformSettings__reminderEditorTitle">
-                        {editingReminderTpl.isNew ? "תבנית חדשה" : "עריכת תבנית"}
+                        {editingReminderTpl.isNew ? t("platformSettings.newTemplate") : t("platformSettings.editTemplate")}
                     </TextBold14>
 
                     <SimpleContainer className="lw-platformSettings__reminderEditorField">
-                        <Text12>שם התבנית:</Text12>
+                        <Text12>{t("platformSettings.templateNameLabel")}</Text12>
                         <SimpleInput
                             className="lw-platformSettings__input"
                             type="text"
                             value={editingReminderTpl.label}
                             onChange={(e) => setEditingReminderTpl(prev => ({ ...prev, label: e.target.value }))}
-                            title="שם התבנית"
+                            title={t("platformSettings.templateNamePlaceholder")}
                             timeToWaitInMilli={0}
                         />
                     </SimpleContainer>
 
                     <SimpleContainer className="lw-platformSettings__reminderEditorField">
-                        <Text12>תיאור:</Text12>
+                        <Text12>{t("platformSettings.descriptionLabel")}</Text12>
                         <SimpleInput
                             className="lw-platformSettings__input"
                             type="text"
                             value={editingReminderTpl.description}
                             onChange={(e) => setEditingReminderTpl(prev => ({ ...prev, description: e.target.value }))}
-                            title="תיאור"
+                            title={t("platformSettings.descriptionPlaceholder")}
                             timeToWaitInMilli={0}
                         />
                     </SimpleContainer>
 
                     <SimpleContainer className="lw-platformSettings__reminderEditorField">
-                        <Text12>נושא האימייל:</Text12>
+                        <Text12>{t("platformSettings.emailSubject")}</Text12>
                         <SimpleInput
                             className="lw-platformSettings__input"
                             type="text"
                             value={editingReminderTpl.subject_template}
                             onChange={(e) => setEditingReminderTpl(prev => ({ ...prev, subject_template: e.target.value }))}
-                            title="נושא"
+                            title={t("platformSettings.subject")}
                             timeToWaitInMilli={0}
                         />
                     </SimpleContainer>
@@ -1477,10 +1448,10 @@ export default function PlatformSettingsScreen() {
                     <SimpleContainer className="lw-platformSettings__emailEditorField">
                         <SimpleContainer className="lw-platformSettings__emailEditorLabelRow">
                             <Text12 className="lw-platformSettings__emailEditorLabel">
-                                {showReminderCode ? "קוד HTML:" : "תוכן ההודעה:"}
+                                {showReminderCode ? t("platformSettings.htmlCode") : t("platformSettings.messageContent")}
                             </Text12>
                             <TertiaryButton onPress={() => setShowReminderCode(prev => !prev)}>
-                                {showReminderCode ? "חזרה למצב פשוט" : "עריכת קוד HTML"}
+                                {showReminderCode ? t("platformSettings.backToSimple") : t("platformSettings.editHtmlCode")}
                             </TertiaryButton>
                         </SimpleContainer>
 
@@ -1508,7 +1479,7 @@ export default function PlatformSettingsScreen() {
                                     }));
                                 }}
                                 textareaRef={reminderSimpleTextareaRef}
-                                title="תוכן ההודעה"
+                                title={t("platformSettings.messageContent")}
                                 rows={6}
                                 dir="rtl"
                             />
@@ -1517,7 +1488,7 @@ export default function PlatformSettingsScreen() {
 
                     {/* Variable chips */}
                     <SimpleContainer className="lw-platformSettings__varButtons">
-                        <Text12 className="lw-platformSettings__varButtonsLabel">משתנים זמינים (לחץ להוספה):</Text12>
+                        <Text12 className="lw-platformSettings__varButtonsLabel">{t("platformSettings.availableVarsClick")}</Text12>
                         <SimpleContainer className="lw-platformSettings__varButtonsRow">
                             {REMINDER_TEMPLATE_VARS.map(v => (
                                 <TertiaryButton
@@ -1553,7 +1524,7 @@ export default function PlatformSettingsScreen() {
                                         }
                                     }}
                                 >
-                                    {VAR_LABELS[v] || v}
+                                    {t(`platformSettings.var_${v}`, v)}
                                 </TertiaryButton>
                             ))}
                         </SimpleContainer>
@@ -1561,7 +1532,7 @@ export default function PlatformSettingsScreen() {
 
                     {/* Live preview */}
                     <SimpleContainer className="lw-platformSettings__emailEditorField">
-                        <Text12 className="lw-platformSettings__emailEditorLabel">תצוגה מקדימה:</Text12>
+                        <Text12 className="lw-platformSettings__emailEditorLabel">{t("platformSettings.preview")}</Text12>
                         <iframe
                             ref={reminderIframeRef}
                             className="lw-platformSettings__emailPreviewFrame"
@@ -1581,10 +1552,10 @@ export default function PlatformSettingsScreen() {
                             disabled={reminderTplSaving}
                             isPerforming={reminderTplSaving}
                         >
-                            {reminderTplSaving ? "שומר..." : "שמור תבנית"}
+                            {reminderTplSaving ? t("platformSettings.saving") : t("platformSettings.saveTemplate")}
                         </PrimaryButton>
                         <SecondaryButton onPress={() => setEditingReminderTpl(null)}>
-                            ביטול
+                            {t("common.cancel")}
                         </SecondaryButton>
                     </SimpleContainer>
                 </SimpleContainer>
@@ -1597,7 +1568,7 @@ export default function PlatformSettingsScreen() {
             {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={AdminStackName + MainScreenName} GetNavBarData={getNavBarData} />}
             <SimpleScrollView className="lw-platformSettings__scroll">
                 <SimpleContainer className="lw-platformSettings__header">
-                    <TextBold24>הגדרות פלטפורמה</TextBold24>
+                    <TextBold24>{t("platformSettings.title")}</TextBold24>
                     {saveMessage && (
                         <Text14 className="lw-platformSettings__saveMessage">{saveMessage}</Text14>
                     )}
@@ -1613,7 +1584,7 @@ export default function PlatformSettingsScreen() {
                                 onPress={() => setActiveTab(cat.key)}
                             >
                                 <Text14 className="lw-platformSettings__tabIcon">{cat.icon}</Text14>
-                                <Text14 className="lw-platformSettings__tabLabel">{cat.label}</Text14>
+                                <Text14 className="lw-platformSettings__tabLabel">{t(cat.labelKey)}</Text14>
                             </SimpleButton>
                         ))}
                     </SimpleContainer>
@@ -1637,14 +1608,14 @@ export default function PlatformSettingsScreen() {
                                     disabled={isSaving || !hasEdits}
                                     isPerforming={isSaving}
                                 >
-                                    {isSaving ? "שומר..." : "שמור שינויים"}
+                                    {isSaving ? t("platformSettings.saving") : t("platformSettings.saveChanges")}
                                 </PrimaryButton>
                                 {hasEdits && (
                                     <SecondaryButton
                                         className="lw-platformSettings__cancelBtn"
                                         onPress={() => { setEditedValues({}); setEditedChannels({}); reload(); }}
                                     >
-                                        ביטול
+                                        {t("common.cancel")}
                                     </SecondaryButton>
                                 )}
                             </SimpleContainer>

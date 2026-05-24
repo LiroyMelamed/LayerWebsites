@@ -31,7 +31,7 @@ async function resolveTenantPlan(tenantId) {
         sp.documents_retention_days_core as "DocumentsRetentionDaysCore",
         sp.documents_retention_days_pii as "DocumentsRetentionDaysPii",
         sp.documents_monthly_quota as "DocumentsMonthlyQuota",
-        sp.storage_gb_quota as "StorageGbQuota",
+        sp.storage_mb_quota as "StorageMbQuota",
         sp.cases_quota as "CasesQuota",
         sp.clients_quota as "ClientsQuota",
         sp.users_quota as "UsersQuota",
@@ -53,7 +53,7 @@ async function resolveTenantPlan(tenantId) {
     let startsAt = null;
     let endsAt = null;
     let documentsMonthlyQuota = null;
-    let storageGbQuota = null;
+    let storageMbQuota = null;
     let casesQuota = null;
     let clientsQuota = null;
     let usersQuota = null;
@@ -70,7 +70,7 @@ async function resolveTenantPlan(tenantId) {
         endsAt = res.rows[0].EndsAt || null;
 
         documentsMonthlyQuota = toPositiveIntOrNull(res.rows[0].DocumentsMonthlyQuota);
-        storageGbQuota = toPositiveIntOrNull(res.rows[0].StorageGbQuota);
+        storageMbQuota = toPositiveIntOrNull(res.rows[0].StorageMbQuota);
         casesQuota = toPositiveIntOrNull(res.rows[0].CasesQuota);
         clientsQuota = toPositiveIntOrNull(res.rows[0].ClientsQuota);
         usersQuota = toPositiveIntOrNull(res.rows[0].UsersQuota);
@@ -88,7 +88,7 @@ async function resolveTenantPlan(tenantId) {
           documents_retention_days_core as "DocumentsRetentionDaysCore",
           documents_retention_days_pii as "DocumentsRetentionDaysPii",
           documents_monthly_quota as "DocumentsMonthlyQuota",
-          storage_gb_quota as "StorageGbQuota",
+          storage_mb_quota as "StorageMbQuota",
           cases_quota as "CasesQuota",
           clients_quota as "ClientsQuota",
           users_quota as "UsersQuota",
@@ -105,7 +105,7 @@ async function resolveTenantPlan(tenantId) {
             planRetentionPii = toPositiveIntOrNull(planRes.rows[0].DocumentsRetentionDaysPii);
 
             documentsMonthlyQuota = toPositiveIntOrNull(planRes.rows[0].DocumentsMonthlyQuota);
-            storageGbQuota = toPositiveIntOrNull(planRes.rows[0].StorageGbQuota);
+            storageMbQuota = toPositiveIntOrNull(planRes.rows[0].StorageMbQuota);
             casesQuota = toPositiveIntOrNull(planRes.rows[0].CasesQuota);
             clientsQuota = toPositiveIntOrNull(planRes.rows[0].ClientsQuota);
             usersQuota = toPositiveIntOrNull(planRes.rows[0].UsersQuota);
@@ -140,7 +140,7 @@ async function resolveTenantPlan(tenantId) {
 
         quotas: {
             documentsMonthlyQuota,
-            storageGbQuota,
+            storageMbQuota,
             casesQuota,
             clientsQuota,
             usersQuota,
