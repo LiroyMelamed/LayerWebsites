@@ -91,10 +91,10 @@ app.use(
             if (allowedOrigins.includes(normalized)) {
                 return callback(null, true);
             }
-            // Reject unknown origin
-            return callback(new Error('Not allowed by CORS'));
+            // Reject unknown origin without throwing (Error → HTTP 500 on OPTIONS preflight)
+            return callback(null, false);
         },
-        methods: ["GET", "POST", "PUT", "DELETE"],
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
         credentials: true,
     })
 );
