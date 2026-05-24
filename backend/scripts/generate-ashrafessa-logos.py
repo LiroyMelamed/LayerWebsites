@@ -92,17 +92,38 @@ def resize_width(rgba: Image.Image, width: int) -> Image.Image:
     return rgba.resize((width, h), Image.Resampling.LANCZOS)
 
 
-def emblem_tint_source(rgba: Image.Image) -> Image.Image:
-    """Dark emblem for login tint — scales region only."""
-    w, h = rgba.size
-    side = int(min(w, h * 0.54))
-    left = (w - side) // 2
-    crop = rgba.crop((left, 0, left + side, side))
-    gray = np.array(crop.convert("L"))
-    dark = np.where(gray < 210, 42, 0).astype(np.uint8)
-    alpha = np.where(gray < 238, 255, 0).astype(np.uint8)
-    out = np.dstack([dark, dark, dark, alpha])
-    return resize_width(Image.fromarray(out), 150)
+def make_logo_lm(bgr: np.ndarray) -> Image.Image:
+    """Scales emblem only — crisp dark silhouette for login tint (LogoSlang)."""
+    h, w = bgr.shape[:2]
+    crop_h = int(h * 0.46)
+    crop_w = int(w * 0.78)
+    left = (w - crop_w) // 2
+    crop = bgr[0:crop_h, left : left + crop_w]
+
+    gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+    hsv = cv2.cvtColor(crop, cv2.COLOR_BGR2HSV)
+
+    mask_gold = cv2.inRange(hsv, np.array([8, 30, 40]), np.array([42, 255, 255]))
+    mask_dark = cv2.inRange(gray, 0, 210)
+    mask = cv2.bitwise_or(mask_gold, mask_dark)
+    mask[gray > 252] = 0
+
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=2)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel, iterations=1)
+    _, mask = cv2.threshold(mask, 80, 255, cv2.THRESH_BINARY)
+
+    # Pure black on transparent — required for tintColor on login
+    rgb = np.zeros((mask.shape[0], mask.shape[1], 3), dtype=np.uint8)
+    emblem = Image.fromarray(np.dstack([rgb, mask]))
+
+    # Square canvas — full wingspan visible, sharp downscale
+    canvas = Image.new("RGBA", (1024, 1024), (0, 0, 0, 0))
+    emblem.thumbnail((920, 920), Image.Resampling.LANCZOS)
+    x = (1024 - emblem.width) // 2
+    y = (1024 - emblem.height) // 2
+    canvas.paste(emblem, (x, y), emblem)
+    return canvas.resize((200, 200), Image.Resampling.LANCZOS)
 
 
 def white_variant(rgba: Image.Image) -> Image.Image:
@@ -160,7 +181,7 @@ def main() -> None:
 
     save(resize_width(logo, 1000), LOGOS / "logo2.png")
     save(resize_width(logo, 260), LOGOS / "logo.png")
-    save(emblem_tint_source(logo), LOGOS / "logoLM.png")
+    save(make_logo_lm(bgr), LOGOS / "logoLM.png")
     white = resize_width(white_variant(logo), 420)
     save(white, LOGOS / "logoLMwhite.png")
     save(white, PUBLIC / "logoLMwhite.png")
