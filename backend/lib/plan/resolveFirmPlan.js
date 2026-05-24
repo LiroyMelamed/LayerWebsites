@@ -12,7 +12,7 @@ function normalizePlanRow(row) {
         documentsRetentionDaysPii: row.DocumentsRetentionDaysPii,
 
         documentsMonthlyQuota: row.DocumentsMonthlyQuota,
-        storageGbQuota: row.StorageGbQuota,
+        storageMbQuota: row.StorageMbQuota,
         usersQuota: row.UsersQuota,
         otpSmsMonthlyQuota: row.OtpSmsMonthlyQuota,
         evidenceGenerationsMonthlyQuota: row.EvidenceGenerationsMonthlyQuota,
@@ -60,7 +60,7 @@ async function resolveFirmPlan(_firmId) {
                     sp.documents_retention_days_core as "DocumentsRetentionDaysCore",
                     sp.documents_retention_days_pii as "DocumentsRetentionDaysPii",
                     sp.documents_monthly_quota as "DocumentsMonthlyQuota",
-                    sp.storage_gb_quota as "StorageGbQuota",
+                    sp.storage_mb_quota as "StorageMbQuota",
                     sp.users_quota as "UsersQuota",
                     sp.otp_sms_monthly_quota as "OtpSmsMonthlyQuota",
                     sp.evidence_generations_monthly_quota as "EvidenceGenerationsMonthlyQuota",
@@ -89,7 +89,7 @@ async function resolveFirmPlan(_firmId) {
                     sp.documents_retention_days_core as "DocumentsRetentionDaysCore",
                     sp.documents_retention_days_pii as "DocumentsRetentionDaysPii",
                     sp.documents_monthly_quota as "DocumentsMonthlyQuota",
-                    sp.storage_gb_quota as "StorageGbQuota",
+                    sp.storage_mb_quota as "StorageMbQuota",
                     sp.users_quota as "UsersQuota",
                     sp.otp_sms_monthly_quota as "OtpSmsMonthlyQuota",
                     sp.evidence_generations_monthly_quota as "EvidenceGenerationsMonthlyQuota",
@@ -125,7 +125,7 @@ async function resolveFirmPlan(_firmId) {
 
         const quotas = {
             documentsMonthlyQuota: plan.documentsMonthlyQuota ?? null,
-            storageGbQuota: plan.storageGbQuota ?? null,
+            storageMbQuota: plan.storageMbQuota ?? null,
             usersQuota: plan.usersQuota ?? null,
             otpSmsMonthlyQuota: plan.otpSmsMonthlyQuota ?? null,
             evidenceGenerationsMonthlyQuota: plan.evidenceGenerationsMonthlyQuota ?? null,
@@ -135,7 +135,7 @@ async function resolveFirmPlan(_firmId) {
         const effectiveQuotas = isUnlimited
             ? {
                 documentsMonthlyQuota: null,
-                storageGbQuota: null,
+                storageMbQuota: null,
                 usersQuota: null,
                 otpSmsMonthlyQuota: null,
                 evidenceGenerationsMonthlyQuota: null,

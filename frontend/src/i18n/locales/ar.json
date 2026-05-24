@@ -521,13 +521,13 @@
     "quotaNotAvailable": "غير متاح",
     "meters": {
       "documentsMonthly": "المستندات (هذا الشهر)",
-      "storageGb": "التخزين (GB)",
+      "storageMb": "التخزين (MB)",
       "seats": "مدراء النظام",
       "sms": "SMS (هذا الشهر)"
     },
     "progress": {
       "documentsMonthly": "المستندات",
-      "storageGb": "التخزين",
+      "storageMb": "التخزين",
       "seats": "المدراء",
       "sms": "SMS"
     },
@@ -595,7 +595,7 @@
     "retentionPii": "الاحتفاظ (بيانات شخصية):",
     "days": "يوم",
     "documentsMonthly": "المستندات / شهر:",
-    "storageGb": "التخزين (GB):",
+    "storageMb": "التخزين (MB):",
     "users": "المستخدمون:",
     "systemPlansCardFooter": "هذه الحزمة تحدد حدود الاستخدام.",
     "systemPlansExplanation": {

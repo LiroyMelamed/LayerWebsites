@@ -55,7 +55,7 @@ exports.listPlans = async (req, res) => {
           documents_retention_days_core as "documentsRetentionDaysCore",
           documents_retention_days_pii as "documentsRetentionDaysPii",
           documents_monthly_quota as "documentsMonthlyQuota",
-          storage_gb_quota as "storageGbQuota",
+          storage_mb_quota as "storageMbQuota",
           otp_sms_monthly_quota as "otpSmsMonthlyQuota",
           evidence_generations_monthly_quota as "evidenceGenerationsMonthlyQuota",
           evidence_cpu_seconds_monthly_quota as "evidenceCpuSecondsMonthlyQuota",
