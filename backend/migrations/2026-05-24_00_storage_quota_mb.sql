@@ -23,12 +23,12 @@ BEGIN
     END IF;
 END $$;
 
--- Seed defaults in MB (1 GB / 10 GB).
+-- Seed defaults in MB (100 MB / 500 MB).
 UPDATE public.subscription_plans
 SET storage_mb_quota = COALESCE(storage_mb_quota,
     CASE plan_key
-        WHEN 'BASIC' THEN 1024
-        WHEN 'PRO' THEN 10240
+        WHEN 'BASIC' THEN 100
+        WHEN 'PRO' THEN 500
         ELSE NULL
     END
 )

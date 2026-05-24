@@ -599,7 +599,7 @@
       "basic": {
         "title": "Basic (small office)",
         "description": "Included for small offices and trial usage.",
-        "l1": "Up to 1024 MB storage (1 GB)",
+        "l1": "Up to 100 MB storage",
         "l2": "Up to 3 users",
         "l3": "Data retention: 60 days",
         "l4": "Workload level: Starter"
@@ -607,7 +607,7 @@
       "pro": {
         "title": "Pro (active office)",
         "description": "Recommended for active law firms.",
-        "l1": "Up to 10240 MB storage (10 GB)",
+        "l1": "Up to 500 MB storage",
         "l2": "Up to 10 users",
         "l3": "Data retention: 180 days",
         "l4": "Workload level: Growing firm"
