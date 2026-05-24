@@ -92,45 +92,21 @@ def resize_width(rgba: Image.Image, width: int) -> Image.Image:
     return rgba.resize((width, h), Image.Resampling.LANCZOS)
 
 
-def make_logo_lm(bgr: np.ndarray) -> Image.Image:
-    """Scales emblem only — crisp dark silhouette for login tint (LogoSlang)."""
-    h, w = bgr.shape[:2]
-    crop_h = int(h * 0.46)
-    crop_w = int(w * 0.78)
-    left = (w - crop_w) // 2
-    crop = bgr[0:crop_h, left : left + crop_w]
-
-    gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
-    hsv = cv2.cvtColor(crop, cv2.COLOR_BGR2HSV)
-
-    mask_gold = cv2.inRange(hsv, np.array([8, 30, 40]), np.array([42, 255, 255]))
-    mask_dark = cv2.inRange(gray, 0, 210)
-    mask = cv2.bitwise_or(mask_gold, mask_dark)
-    mask[gray > 252] = 0
-
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=2)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel, iterations=1)
-    _, mask = cv2.threshold(mask, 80, 255, cv2.THRESH_BINARY)
-
-    # Pure black on transparent — required for tintColor on login
-    rgb = np.zeros((mask.shape[0], mask.shape[1], 3), dtype=np.uint8)
-    emblem = Image.fromarray(np.dstack([rgb, mask]))
-
-    # Square canvas — full wingspan visible, sharp downscale
-    canvas = Image.new("RGBA", (1024, 1024), (0, 0, 0, 0))
-    emblem.thumbnail((920, 920), Image.Resampling.LANCZOS)
-    x = (1024 - emblem.width) // 2
-    y = (1024 - emblem.height) // 2
-    canvas.paste(emblem, (x, y), emblem)
-    return canvas.resize((200, 200), Image.Resampling.LANCZOS)
-
-
 def white_variant(rgba: Image.Image) -> Image.Image:
     gray = np.array(rgba.convert("L"))
     white = 255 - gray
     alpha = np.array(rgba.split()[3])
     return Image.fromarray(np.dstack([white, white, white, alpha]))
+
+
+def black_variant(rgba: Image.Image) -> Image.Image:
+    """Same silhouette as logoLMwhite — pure black on transparent (login tint)."""
+    gray = np.array(rgba.convert("L"))
+    ink = 255 - gray
+    alpha = np.array(rgba.split()[3])
+    combined = ((ink.astype(np.uint16) * alpha) // 255).astype(np.uint8)
+    rgb = np.zeros((gray.shape[0], gray.shape[1], 3), dtype=np.uint8)
+    return Image.fromarray(np.dstack([rgb, combined]))
 
 
 def save(im: Image.Image, path: Path) -> None:
@@ -181,8 +157,9 @@ def main() -> None:
 
     save(resize_width(logo, 1000), LOGOS / "logo2.png")
     save(resize_width(logo, 260), LOGOS / "logo.png")
-    save(make_logo_lm(bgr), LOGOS / "logoLM.png")
-    white = resize_width(white_variant(logo), 420)
+    lm_width = 420
+    save(resize_width(black_variant(logo), lm_width), LOGOS / "logoLM.png")
+    white = resize_width(white_variant(logo), lm_width)
     save(white, LOGOS / "logoLMwhite.png")
     save(white, PUBLIC / "logoLMwhite.png")
 
