@@ -15,6 +15,14 @@ const FORCE_SEND_EMAIL_ALL = process.env.FORCE_SEND_EMAIL_ALL === 'true';
 const { getEmailTemplate, getSetting } = require('../services/settingsService');
 const { getAttachmentBuffers } = require('../controllers/templateAttachmentController');
 
+async function resolveEmailFromName() {
+    const fromDb =
+        (await getSetting('messaging', 'SMOOVE_EMAIL_FROM_NAME', null))
+        || (await getSetting('messaging', 'SMTP_FROM_NAME', null));
+    const fromEnv = process.env.SMTP_FROM_NAME;
+    return String(fromDb || fromEnv || '').trim();
+}
+
 const ALLOWED_CAMPAIGN_KEYS = [
     'SIGN_INVITE', 'SIGN_REMINDER', 'DOC_SIGNED', 'DOC_SIGNED_ATTACHMENTS', 'DOC_REJECTED',
     'CASE_CREATED', 'CASE_NAME_CHANGE', 'CASE_TYPE_CHANGE',
@@ -192,7 +200,7 @@ async function sendEmailCampaign({ toEmail, campaignKey, contactFields, attachme
 async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shouldSendRealEmail, logLabel, ccEmails } = {}) {
     const email = String(toEmail || '').trim();
 
-    const fromName = String(await getSetting('messaging', 'SMTP_FROM_NAME', process.env.SMTP_FROM_NAME) || '').trim();
+    const fromName = await resolveEmailFromName();
     // CC list: optional array of email strings passed by callers (replaces old global CEO CC)
     const ccList = (Array.isArray(ccEmails) ? ccEmails : []).map(e => String(e || '').trim()).filter(Boolean);
     const ccEmail = ccList.length > 0 ? ccList.join(', ') : '';
@@ -228,11 +236,13 @@ async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shou
             auth: { user: smtpUser, pass: smtpPass },
         });
 
+        const plainText = String(htmlBody || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
         const mailOptions = {
             from: fromName ? `${fromName} <${smtpFrom}>` : smtpFrom,
             to: email,
             ...(ccEmail && ccEmail.toLowerCase() !== email.toLowerCase() ? { cc: ccEmail } : {}),
             subject: String(subject || '').trim(),
+            text: plainText || undefined,
             html: String(htmlBody || ''),
         };
 
@@ -276,7 +286,7 @@ async function sendTransactionalCustomHtmlEmail({ toEmail, subject, htmlBody, lo
  */
 async function sendEmailWithAttachments({ toEmail, subject, htmlBody, attachments, logLabel, fromEmail: fromEmailOverride, ccEmails } = {}) {
     const email = String(toEmail || '').trim();
-    const fromName = String(await getSetting('messaging', 'SMTP_FROM_NAME', process.env.SMTP_FROM_NAME) || '').trim();
+    const fromName = await resolveEmailFromName();
     // Always send FROM the SMTP account (noreply@) – cPanel rejects mismatched senders.
     const fromEmail = String(await getSetting('messaging', 'SMTP_FROM_EMAIL', process.env.SMTP_FROM_EMAIL) || '').trim();
     // CC list: optional array of email strings passed by callers (replaces old global CEO CC)
