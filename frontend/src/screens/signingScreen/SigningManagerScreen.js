@@ -1,5 +1,5 @@
 // src/screens/signingScreen/SigningManagerScreen.js
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
@@ -611,16 +611,28 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
         setIsResending(true);
         setResendMessage(null);
         try {
-            await signingFilesApi.resendSigningInvite(file.SigningFileId, selectedSignerIds);
-            setResendMessage({ type: 'success', text: t('signingManager.resend.success') });
+            const resendRes = await signingFilesApi.resendSigningInvite(file.SigningFileId, selectedSignerIds);
+            const sent = Number(resendRes?.data?.sentCount || 0);
+            const total = Number(resendRes?.data?.targetCount || selectedSignerIds.length || 0);
+            const failed = Number(resendRes?.data?.failedCount || Math.max(0, total - sent));
+            if (failed > 0) {
+                setResendMessage({ type: 'error', text: `נשלח ל-${sent} מתוך ${total}. חלק מהנמענים לא קיבלו הזמנה.` });
+            } else {
+                setResendMessage({ type: 'success', text: `ההזמנה נשלחה ל-${sent || total} נמענים.` });
+            }
             setTimeout(() => setShowResend(false), 1500);
         } catch (e) {
             console.error('Resend failed', e);
-            setResendMessage({ type: 'error', text: t('signingManager.resend.error') });
+            setResendMessage({ type: 'error', text: e?.data?.message || t('signingManager.resend.error') });
         } finally {
             setIsResending(false);
         }
     };
+
+    useEffect(() => {
+        loadSigners();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [file?.SigningFileId]);
 
     const handleSaveName = async () => {
         const trimmed = editName.trim();
@@ -723,6 +735,21 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                 <SimpleContainer className="lw-signingManagerScreen__detailRow">
                     <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.signatures')}</div>
                     <div className="lw-signingManagerScreen__detailValue">{signedSpots}/{totalSpots}</div>
+                </SimpleContainer>
+
+                <SimpleContainer className="lw-signingManagerScreen__detailRow">
+                    <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.client')}</div>
+                    <div className="lw-signingManagerScreen__detailValue">
+                        {loadingSigners ? '...' : (
+                            (signers.length ? signers : []).map((s) => (
+                                <div key={s.SignerUserId}>
+                                    <div>{s.Name || `#${s.SignerUserId}`}</div>
+                                    <div>{s.Email || '-'}</div>
+                                    <div>{s.Phone || '-'}</div>
+                                </div>
+                            ))
+                        )}
+                    </div>
                 </SimpleContainer>
 
                 {file?.Status === "rejected" && file?.RejectionReason && (

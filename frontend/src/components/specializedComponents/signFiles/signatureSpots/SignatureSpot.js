@@ -8,7 +8,7 @@ import { icons } from "../../../../assets/icons/icons";
 
 // Color classes are defined in SCSS and mapped via signerColorClass
 
-export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot, onRequestRemove, onSelectSpot, onRequestContext, signerIndex = 0, signerName, scale = 1 }) {
+export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot, onRequestRemove, onSelectSpot, onRequestContext, signerIndex = 0, signerName, scale = 1, isSelected = false }) {
     const { t } = useTranslation();
     const ref = useRef(null);
 
@@ -253,7 +253,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                     ? startDragTouchFallback
                     : undefined
             }
-            className={`lw-signing-spot ${colorClass} lw-signing-spot--type-${fieldType} ${isRequired ? 'is-required' : 'is-optional'}${isSigned ? ' is-signed' : ''}`}
+            className={`lw-signing-spot ${colorClass} lw-signing-spot--type-${fieldType} ${isRequired ? 'is-required' : 'is-optional'}${isSigned ? ' is-signed' : ''}${isSelected ? ' is-selected' : ''}`}
             style={spotStyle}
             title={t("signing.spot.signedByTitle", { name: signerNameSafe })}
         >
