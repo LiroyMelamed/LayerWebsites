@@ -16,6 +16,8 @@ export default function PdfViewer({
     onAddSpotForPage,
     signers = [],
     onPageChange,
+    selectedSpotIndex = null,
+    selectedSpotId = null,
 }) {
     // translation not needed in this viewer component for commit (1)
     const [numPages, setNumPages] = useState(0);
@@ -172,6 +174,8 @@ export default function PdfViewer({
                                 onRequestContext={onRequestContext}
                                 signers={signers}
                                 scale={spotScale}
+                                selectedSpotIndex={selectedSpotIndex}
+                                selectedSpotId={selectedSpotId}
                             />
                         </SimpleContainer>
                     </SimpleContainer>

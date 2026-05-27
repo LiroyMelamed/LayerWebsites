@@ -2389,9 +2389,19 @@ exports.uploadFileForSigning = async (req, res, next) => {
             ? [notifyTargets[0]]
             : notifyTargets;
 
+        let sentCount = 0;
+        const deliveryResults = [];
+
         for (const signer of effectiveNotifyTargets) {
             const signerUserId = Number(signer.userId);
-            if (!Number.isFinite(signerUserId) || signerUserId <= 0) continue;
+            if (!Number.isFinite(signerUserId) || signerUserId <= 0) {
+                deliveryResults.push({
+                    signerUserId: signer.userId || null,
+                    ok: false,
+                    reason: 'invalid_signer_user_id',
+                });
+                continue;
+            }
 
             const deliveryMethod = String(signer.deliveryMethod || 'both').trim();
 
@@ -2430,10 +2440,11 @@ exports.uploadFileForSigning = async (req, res, next) => {
             const sendEmail = deliveryMethod === 'email' || deliveryMethod === 'both';
             const sendSms = deliveryMethod === 'phone' || deliveryMethod === 'both';
 
-            await notifyRecipient({
+            const notifyResult = await notifyRecipient({
                 recipientUserId: signerUserId,
                 recipientEmail: String(signer.email || '').trim() || undefined,
                 recipientPhone: String(signer.phone || '').trim() || undefined,
+                caseId: normalizedCaseId,
                 notificationType: 'SIGN_INVITE',
                 push: {
                     title: 'מסמך מחכה לחתימה',
@@ -2461,6 +2472,26 @@ exports.uploadFileForSigning = async (req, res, next) => {
                     }
                     : null,
             });
+
+            const ok = Boolean(notifyResult?.ok);
+            if (ok) sentCount++;
+            deliveryResults.push({
+                signerUserId,
+                ok,
+                errorCode: notifyResult?.errorCode || null,
+                errors: Array.isArray(notifyResult?.errors) ? notifyResult.errors : [],
+            });
+        }
+
+        if (sentCount <= 0) {
+            return fail(next, 'INTERNAL_ERROR', 500, {
+                message: 'המסמך נשמר אך ההזמנות לא נשלחו. בדוק הגדרות ערוצי שליחה ופרטי נמענים.',
+                extras: {
+                    sentCount,
+                    targetCount: effectiveNotifyTargets.length,
+                    deliveryResults,
+                },
+            });
         }
 
         return res.json({
@@ -2468,6 +2499,10 @@ exports.uploadFileForSigning = async (req, res, next) => {
             signingFileId,
             message: "קובץ נשלח לחתומים לחתימה",
             signerCount: signersList.length,
+            sentCount,
+            targetCount: effectiveNotifyTargets.length,
+            failedCount: Math.max(0, effectiveNotifyTargets.length - sentCount),
+            deliveryResults,
         });
     } catch (err) {
         console.error("uploadFileForSigning error:", err);
@@ -4079,6 +4114,7 @@ exports.resendSigningInvite = async (req, res, next) => {
 
         const fileResult = await pool.query(
             `select signingfileid as "SigningFileId",
+                    caseid as "CaseId",
                     lawyerid as "LawyerId",
                     clientid as "ClientId",
                     filename as "FileName",
@@ -4103,9 +4139,17 @@ exports.resendSigningInvite = async (req, res, next) => {
             'שלום {{recipientName}}, המסמך "{{documentName}}" מחכה לחתימתך. {{websiteUrl}}');
 
         let sentCount = 0;
+        const deliveryResults = [];
         for (const signerUserId of signerUserIds) {
             const uid = parsePositiveIntStrict(signerUserId);
-            if (!uid) continue;
+            if (!uid) {
+                deliveryResults.push({
+                    signerUserId: signerUserId || null,
+                    ok: false,
+                    reason: 'invalid_signer_user_id',
+                });
+                continue;
+            }
 
             const signerResult = await pool.query(
                 `select u.userid as "UserId", u.name as "Name", u.email as "Email", u.phonenumber as "Phone"
@@ -4135,10 +4179,11 @@ exports.resendSigningInvite = async (req, res, next) => {
 
             const recipientName = String(signer.Name || '').trim() || 'לקוח';
 
-            await notifyRecipient({
+            const notifyResult = await notifyRecipient({
                 recipientUserId: uid,
                 recipientEmail: String(signer.Email || '').trim() || undefined,
                 recipientPhone: String(signer.Phone || '').trim() || undefined,
+                caseId: file.CaseId || null,
                 notificationType: 'SIGN_INVITE',
                 push: {
                     title: 'מסמך מחכה לחתימה',
@@ -4167,10 +4212,34 @@ exports.resendSigningInvite = async (req, res, next) => {
                     : null,
             });
 
-            sentCount++;
+            const ok = Boolean(notifyResult?.ok);
+            if (ok) sentCount++;
+            deliveryResults.push({
+                signerUserId: uid,
+                ok,
+                errorCode: notifyResult?.errorCode || null,
+                errors: Array.isArray(notifyResult?.errors) ? notifyResult.errors : [],
+            });
         }
 
-        return res.json({ success: true, sentCount });
+        if (sentCount <= 0) {
+            return fail(next, 'INTERNAL_ERROR', 500, {
+                message: 'לא הצלחנו לשלוח מחדש לאף נמען. בדוק פרטי קשר והגדרות ערוצי שליחה.',
+                extras: {
+                    sentCount,
+                    targetCount: signerUserIds.length,
+                    deliveryResults,
+                },
+            });
+        }
+
+        return res.json({
+            success: true,
+            sentCount,
+            targetCount: signerUserIds.length,
+            failedCount: Math.max(0, signerUserIds.length - sentCount),
+            deliveryResults,
+        });
     } catch (err) {
         console.error('resendSigningInvite error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליחה מחדש' });

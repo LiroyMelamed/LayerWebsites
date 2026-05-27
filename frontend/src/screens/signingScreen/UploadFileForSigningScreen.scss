@@ -382,6 +382,17 @@
     text-overflow: ellipsis;
 }
 
+.lw-uploadSigningScreen__signerChipEdit {
+    margin-inline-start: 0.4rem;
+    border: 1px solid #d0d7de;
+    background: #fff;
+    color: #2a4365;
+    border-radius: 0.35rem;
+    padding: 0.15rem 0.45rem;
+    cursor: pointer;
+    font-size: 0.75rem;
+}
+
 .lw-uploadSigningScreen__signerChip--manual {
     border-color: #1976d2;
     border-style: dashed;
