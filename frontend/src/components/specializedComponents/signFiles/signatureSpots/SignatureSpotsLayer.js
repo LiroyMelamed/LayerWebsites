@@ -14,6 +14,8 @@ export default function SignatureSpotsLayer({
     onRequestContext,
     signers = [],
     scale = 1,
+    selectedSpotIndex = null,
+    selectedSpotId = null,
 }) {
     const { t } = useTranslation();
     const normalizeSpot = (spot) => {
@@ -103,6 +105,10 @@ export default function SignatureSpotsLayer({
                 .sort((a, b) => (a.y || 0) - (b.y || 0))  // Sort by Y ascending (frontend coords: lower Y = top of page)
                 .map((spot) => {
                     const signerInfo = getSignerInfo(spot);
+                    const spotId = spot?.SignatureSpotId ?? spot?.signatureSpotId ?? null;
+                    const isSelected =
+                        (selectedSpotId != null && String(spotId) === String(selectedSpotId)) ||
+                        (selectedSpotIndex != null && Number(spot.originalIndex) === Number(selectedSpotIndex));
                     return (
                         <SignatureSpot
                             key={spot.originalIndex}
@@ -116,6 +122,7 @@ export default function SignatureSpotsLayer({
                             signerIndex={signerInfo.signerIndex}
                             signerName={signerInfo.signerName}
                             scale={scale}
+                            isSelected={isSelected}
                         />
                     );
                 })}

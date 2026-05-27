@@ -1,6 +1,7 @@
 import React from 'react';
 import SimpleContainer from '../../../simpleComponents/SimpleContainer';
 import SecondaryButton from '../../../styledComponents/buttons/SecondaryButton';
+import { buttonSizes } from '../../../../styles/buttons/buttonSizes';
 import { useTranslation } from 'react-i18next';
 
 import './addFieldPanel.scss';
@@ -22,6 +23,7 @@ export default function AddFieldPanel({ fieldTypeOptions, onSelectField, onClose
                 <SecondaryButton
                     key={option.id}
                     className="lw-addFieldPanel__action"
+                    size={buttonSizes.SMALL}
                     onPress={() => onSelectField(option.id)}
                 >
                     {option.label}

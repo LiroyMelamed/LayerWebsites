@@ -63,6 +63,7 @@ function FieldSettingsPopup({
     onCancel,
     onDuplicate,
     onDelete,
+    onReplaceStamp,
 }) {
     const { t } = useTranslation();
     const [isRequired, setIsRequired] = useState(spot?.isRequired !== false);
@@ -149,6 +150,15 @@ function FieldSettingsPopup({
                     </SimpleContainer>
                     {rangeError && <Text14 className="lw-fieldSettingsPopup__error">{rangeError}</Text14>}
                 </SimpleContainer>
+
+                {spot?.type === 'lawyerStamp' && typeof onReplaceStamp === 'function' && (
+                    <SimpleContainer className="lw-fieldSettingsPopup__section">
+                        <Text14 className="lw-fieldSettingsPopup__sectionTitle">{t('signing.fields.lawyerStamp')}</Text14>
+                        <SecondaryButton onPress={() => onReplaceStamp(index)}>
+                            החלפת חותם
+                        </SecondaryButton>
+                    </SimpleContainer>
+                )}
             </SimpleContainer>
 
             <SimpleContainer className="lw-fieldSettingsPopup__footer">
@@ -210,6 +220,24 @@ export default function UploadFileForSigningScreen() {
                     closePopup();
                     openConfirmRemove(index);
                 }}
+                onReplaceStamp={(i) => {
+                    closePopup();
+                    handleReplaceLawyerStamp(i);
+                }}
+            />
+        );
+    };
+
+    const handleReplaceLawyerStamp = (index) => {
+        const spot = signatureSpots[index];
+        if (!spot) return;
+        openPopup(
+            <LawyerStampPopup
+                onConfirm={(compositeDataUrl) => {
+                    closePopup();
+                    handleUpdateSpot(index, { stampImageDataUrl: compositeDataUrl });
+                }}
+                onCancel={closePopup}
             />
         );
     };
@@ -349,7 +377,7 @@ export default function UploadFileForSigningScreen() {
 
     const [signatureSpots, setSignatureSpots] = useState([]);
     const [selectedFieldType, setSelectedFieldType] = useState('signature');
-    const [, setSelectedSpotIndex] = useState(null);
+    const [selectedSpotIndex, setSelectedSpotIndex] = useState(null);
 
     // Court-ready policy: OTP is required by default; waiver must be explicit + acknowledged.
     const [otpPolicy, setOtpPolicy] = useState(otpFeatureEnabled ? "require" : "waive"); // 'waive' | 'require'
@@ -710,6 +738,8 @@ export default function UploadFileForSigningScreen() {
                 {
                     UserId: customer.UserId,
                     Name: customer.Name || t('signing.signerFallback', { index: prev.length + 1 }),
+                    Email: customer.Email || null,
+                    Phone: customer.PhoneNumber || customer.Phone || null,
                     deliveryMethod: 'both', // 'email' | 'phone' | 'both'
                 },
             ];
@@ -893,7 +923,7 @@ export default function UploadFileForSigningScreen() {
                 ? (otpPolicy === "waive" ? Boolean(otpWaiverAck) : false)
                 : true;
 
-            await signingFilesApi.uploadFileForSigning({
+            const uploadRes = await signingFilesApi.uploadFileForSigning({
                 caseId: normalizedCaseId,
                 clientId: primaryClientId,
                 fileName: documentName.trim() ? `${documentName.trim()}.pdf` : selectedFile.name,
@@ -906,8 +936,20 @@ export default function UploadFileForSigningScreen() {
                 signingOrder,
                 completionEmail: completionEmail.trim() || null,
             });
-
-            setMessage({ type: "success", text: t('signing.upload.successSent') });
+            const sentCount = Number(uploadRes?.data?.sentCount || 0);
+            const targetCount = Number(uploadRes?.data?.targetCount || selectedSigners.length || 0);
+            const failedCount = Number(uploadRes?.data?.failedCount || Math.max(0, targetCount - sentCount));
+            if (failedCount > 0) {
+                setMessage({
+                    type: "error",
+                    text: `נשלח ל-${sentCount} מתוך ${targetCount}. חלק מהנמענים לא קיבלו הזמנה.`,
+                });
+            } else {
+                setMessage({
+                    type: "success",
+                    text: `ההזמנה נשלחה בהצלחה ל-${sentCount || targetCount} נמענים.`,
+                });
+            }
 
             setCaseId("");
             setSelectedCase(null);
@@ -923,9 +965,11 @@ export default function UploadFileForSigningScreen() {
             setOtpWaiverAck(!otpFeatureEnabled);
             setSigningOrder('parallel');
             setCaseSearchQuery("");
+            setSelectedSpotIndex(null);
         } catch (err) {
             console.error(err);
-            setMessage({ type: "error", text: t('signing.upload.errorSending') });
+            const backendMessage = err?.data?.message || err?.message;
+            setMessage({ type: "error", text: backendMessage || t('signing.upload.errorSending') });
         } finally {
             setLoading(false);
         }
@@ -1102,7 +1146,7 @@ export default function UploadFileForSigningScreen() {
                                         <SimpleContainer key={s.UserId} className={`lw-uploadSigningScreen__signerChip${s.isManual ? ' lw-uploadSigningScreen__signerChip--manual' : ''}`}>
                                             <span className="lw-uploadSigningScreen__signerChipName">
                                                 {s.Name}
-                                                {s.isManual && (s.Email || s.Phone) && (
+                                                {(s.Email || s.Phone) && (
                                                     <span className="lw-uploadSigningScreen__signerChipContact">
                                                         {[s.Email, s.Phone].filter(Boolean).join(' · ')}
                                                     </span>
@@ -1126,6 +1170,31 @@ export default function UploadFileForSigningScreen() {
                                                 <option value="email">{t('signing.upload.deliveryEmail')}</option>
                                                 <option value="phone">{t('signing.upload.deliveryPhone')}</option>
                                             </select>
+                                            <button
+                                                type="button"
+                                                className="lw-uploadSigningScreen__signerChipEdit"
+                                                onClick={() => {
+                                                    const editedName = window.prompt(t('signing.upload.manualSignerName'), s.Name || '') || s.Name || '';
+                                                    const editedEmail = window.prompt(t('signing.upload.manualSignerEmail'), s.Email || '') || '';
+                                                    const editedPhone = window.prompt(t('signing.upload.manualSignerPhone'), s.Phone || '') || '';
+                                                    setSelectedSigners((prev) =>
+                                                        prev.map((sig) =>
+                                                            Number(sig.UserId) === Number(s.UserId)
+                                                                ? {
+                                                                    ...sig,
+                                                                    Name: editedName.trim() || sig.Name,
+                                                                    Email: editedEmail.trim() || null,
+                                                                    Phone: editedPhone.trim() || null,
+                                                                }
+                                                                : sig
+                                                        )
+                                                    );
+                                                }}
+                                                aria-label={t('signing.context.edit')}
+                                                title={t('signing.context.edit')}
+                                            >
+                                                {t('signing.context.edit')}
+                                            </button>
                                             <button
                                                 type="button"
                                                 className="lw-uploadSigningScreen__signerChipRemove"
@@ -1243,6 +1312,7 @@ export default function UploadFileForSigningScreen() {
                                                 onAddSpotForPage={handleAddSpotForPage}
                                                 signers={selectedSigners}
                                                 onPageChange={setCurrentPage}
+                                                selectedSpotIndex={selectedSpotIndex}
                                             />
                                         </SimpleContainer>
                                     </SimpleContainer>

@@ -2110,6 +2110,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                         onRemoveSpot={undefined}
                                         onAddSpotForPage={undefined}
                                         showAddSpotButtons={false}
+                                        selectedSpotId={currentSpot?.SignatureSpotId || currentSpot?.signatureSpotId || null}
                                     />
                                 ) : (
                                     <SimpleContainer className="lw-signing-pdfLoading">
@@ -2155,6 +2156,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                     onRemoveSpot={undefined}
                                     onAddSpotForPage={undefined}
                                     showAddSpotButtons={false}
+                                    selectedSpotId={currentSpot?.SignatureSpotId || currentSpot?.signatureSpotId || null}
                                 />
                             ) : (
                                 <SimpleContainer className="lw-signing-pdfLoading">
