@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
 import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
@@ -10,34 +10,101 @@ import calendarApi from "../../../api/calendarApi";
 import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
 import "./PersonalSyncModal.scss";
 
+function toWebcalUrl(webcalOrHttps) {
+    const raw = String(webcalOrHttps || "").trim();
+    if (!raw) return "";
+    if (raw.startsWith("webcal://")) return raw;
+    if (raw.startsWith("http://") || raw.startsWith("https://")) {
+        return `webcal://${raw.replace(/^https?:\/\//, "")}`;
+    }
+    return "";
+}
+
+function buildGoogleCalendarSubscribeUrl(webcalUrl) {
+    if (!webcalUrl) return "";
+    return `https://www.google.com/calendar/render?cid=${encodeURIComponent(webcalUrl)}`;
+}
+
+/** Open webcal/https links without navigating the SPA away (required for iOS Calendar). */
+function openExternalSubscribeUrl(url) {
+    if (!url) return;
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.rel = "noopener noreferrer";
+    anchor.style.display = "none";
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+}
+
 /**
  * Per-lawyer calendar sync — Google OAuth, manual sync, personal iCal feed.
- * Must only be opened from CalendarScreen (not Platform Settings).
+ * Opened from CalendarScreen only (not Platform Settings).
  */
-export default function PersonalSyncModal({ onClose }) {
+export default function PersonalSyncModal({ closePopUpFunction, onEventsChanged }) {
     const { t } = useTranslation();
 
-    // ── iCal (personal WebCal subscription) ───────────────────────────────────
     const [icalToken, setIcalToken] = useState(null);
     const [icalUrl, setIcalUrl] = useState("");
     const [icalHttpsUrl, setIcalHttpsUrl] = useState("");
     const [icalCopied, setIcalCopied] = useState(false);
     const [icalLoading, setIcalLoading] = useState(false);
     const [icalRotating, setIcalRotating] = useState(false);
+    const [icalError, setIcalError] = useState("");
+
+    const applyIcalPayload = useCallback((data) => {
+        if (!data) return;
+        setIcalToken(data.token);
+        setIcalUrl(data.subscriptionUrl || "");
+        setIcalHttpsUrl(data.httpsSubscriptionUrl || data.subscriptionUrl || "");
+        setIcalError("");
+    }, []);
 
     const loadIcal = useCallback(async () => {
         setIcalLoading(true);
+        setIcalError("");
         try {
             const res = await calendarApi.getIcalToken();
-            if (res?.data) {
-                setIcalToken(res.data.token);
-                setIcalUrl(res.data.subscriptionUrl || "");
-                setIcalHttpsUrl(res.data.httpsSubscriptionUrl || res.data.subscriptionUrl || "");
-            }
+            applyIcalPayload(res?.data);
+        } catch {
+            setIcalError(t("calendar.icalLoadError"));
         } finally {
             setIcalLoading(false);
         }
-    }, []);
+    }, [applyIcalPayload, t]);
+
+    useEffect(() => {
+        loadIcal();
+    }, [loadIcal]);
+
+    const ensureIcalReady = useCallback(async () => {
+        const existing = toWebcalUrl(icalUrl || icalHttpsUrl);
+        if (existing) return existing;
+        setIcalLoading(true);
+        setIcalError("");
+        try {
+            const res = await calendarApi.getIcalToken();
+            applyIcalPayload(res?.data);
+            return toWebcalUrl(res?.data?.subscriptionUrl || res?.data?.httpsSubscriptionUrl);
+        } catch {
+            setIcalError(t("calendar.icalLoadError"));
+            return "";
+        } finally {
+            setIcalLoading(false);
+        }
+    }, [applyIcalPayload, icalHttpsUrl, icalUrl, t]);
+
+    const handleSubscribePhone = async () => {
+        const webcal = await ensureIcalReady();
+        if (!webcal) return;
+        openExternalSubscribeUrl(webcal);
+    };
+
+    const handleSubscribeGoogle = async () => {
+        const webcal = await ensureIcalReady();
+        if (!webcal) return;
+        openExternalSubscribeUrl(buildGoogleCalendarSubscribeUrl(webcal));
+    };
 
     const handleCopyIcal = () => {
         const copyTarget = icalHttpsUrl || icalUrl;
@@ -50,20 +117,18 @@ export default function PersonalSyncModal({ onClose }) {
 
     const handleRotateIcal = async () => {
         setIcalRotating(true);
+        setIcalError("");
         try {
             const res = await calendarApi.rotateIcalToken();
-            if (res?.data) {
-                setIcalToken(res.data.token);
-                setIcalUrl(res.data.subscriptionUrl || "");
-                setIcalHttpsUrl(res.data.httpsSubscriptionUrl || res.data.subscriptionUrl || "");
-                setIcalCopied(false);
-            }
+            applyIcalPayload(res?.data);
+            setIcalCopied(false);
+        } catch {
+            setIcalError(t("calendar.icalLoadError"));
         } finally {
             setIcalRotating(false);
         }
     };
 
-    // ── Google (personal OAuth) ───────────────────────────────────────────────
     const [googleSyncing, setGoogleSyncing] = useState(false);
     const [googleSyncMsg, setGoogleSyncMsg] = useState("");
     const [googleSyncError, setGoogleSyncError] = useState(false);
@@ -113,6 +178,7 @@ export default function PersonalSyncModal({ onClose }) {
             const res = await calendarApi.syncGoogleEvents();
             if (res?.success && res?.data?.synced !== undefined) {
                 setGoogleSyncMsg(t("calendar.googleSyncSuccess", { count: res.data.synced }));
+                onEventsChanged?.();
             } else {
                 setGoogleSyncMsg(res?.data?.message || t("calendar.googleSyncError"));
                 setGoogleSyncError(true);
@@ -131,21 +197,25 @@ export default function PersonalSyncModal({ onClose }) {
     return (
         <SimpleContainer className="lw-personalSyncModal">
             <SimpleScrollView className="lw-personalSyncModal__scroll">
-                <SimpleContainer className="lw-personalSyncModal__header">
-                    <Text24>{t("calendar.personalSyncTitle")}</Text24>
-                    <Text12 color="#718096">{t("calendar.personalSyncHint")}</Text12>
-                </SimpleContainer>
+                <Text24 className="lw-personalSyncModal__title">{t("calendar.personalSyncTitle")}</Text24>
+                <Text12 color="#718096">{t("calendar.personalSyncHint")}</Text12>
 
-                {/* ── iCal ── */}
                 <SimpleContainer className="lw-personalSyncModal__section">
                     <TextBold14 color={colors.primary}>{t("calendar.icalSubscribe")}</TextBold14>
                     <Text12 color={colors.winter}>{t("calendar.icalSubscribeHint")}</Text12>
 
-                    {!icalToken ? (
-                        <PrimaryButton onPress={loadIcal} isPerforming={icalLoading}>
-                            {t("calendar.icalShowLink")}
+                    <SimpleContainer className="lw-personalSyncModal__btnRow">
+                        <PrimaryButton onPress={handleSubscribePhone} isPerforming={icalLoading}>
+                            {t("calendar.icalSubscribeDevice")}
                         </PrimaryButton>
-                    ) : (
+                        <SecondaryButton onPress={handleSubscribeGoogle} isPerforming={icalLoading}>
+                            {t("calendar.icalSubscribeGoogle")}
+                        </SecondaryButton>
+                    </SimpleContainer>
+
+                    {icalError && <Text14 color="#E53E3E">{icalError}</Text14>}
+
+                    {icalToken && (
                         <SimpleContainer className="lw-personalSyncModal__icalRow">
                             <SimpleContainer className="lw-personalSyncModal__icalUrl">
                                 <Text12 color={colors.winter} style={{ wordBreak: "break-all" }}>
@@ -164,7 +234,6 @@ export default function PersonalSyncModal({ onClose }) {
                     )}
                 </SimpleContainer>
 
-                {/* ── Google ── */}
                 <SimpleContainer className="lw-personalSyncModal__section lw-personalSyncModal__section--border">
                     <TextBold14 color={colors.primary}>{t("calendar.googleCalendarTitle")}</TextBold14>
 
@@ -200,8 +269,8 @@ export default function PersonalSyncModal({ onClose }) {
                     )}
                 </SimpleContainer>
 
-                <SimpleContainer className="lw-personalSyncModal__footer">
-                    <SecondaryButton onPress={onClose}>{t("common.close")}</SecondaryButton>
+                <SimpleContainer className="lw-personalSyncModal__buttonsRow">
+                    <SecondaryButton onPress={closePopUpFunction}>{t("common.close")}</SecondaryButton>
                 </SimpleContainer>
             </SimpleScrollView>
         </SimpleContainer>

@@ -54,7 +54,7 @@ function _resolvePublicApiOrigin() {
 
 function _buildIcalSubscriptionUrls(token) {
     const origin = _resolvePublicApiOrigin();
-    const path = `/api/calendar/feed/${token}`;
+    const path = `/api/calendar/feed/${token}.ics`;
     const httpsSubscriptionUrl = origin ? `${origin}${path}` : path;
     const subscriptionUrl = `webcal://${httpsSubscriptionUrl.replace(/^https?:\/\//, '')}`;
     return { httpsSubscriptionUrl, subscriptionUrl };
@@ -823,17 +823,19 @@ const serveIcalFeed = async (req, res) => {
         );
 
         const firmName = process.env.LAW_FIRM_NAME || process.env.COMPANY_NAME || 'Melamedia';
+        const feedDomain = (process.env.WEBSITE_DOMAIN || 'melamedia.app').replace(/^https?:\/\//, '');
         const calendar = ical.default
-            ? ical.default({ name: `${firmName} — ${userName}` })
-            : ical({ name: `${firmName} — ${userName}` });
+            ? ical.default({ name: `${firmName} — ${userName}`, ttl: 900 })
+            : ical({ name: `${firmName} — ${userName}`, ttl: 900 });
 
         for (const ev of events) {
             const eventObj = {
-                id: `melamedia-${ev.id}@${process.env.WEBSITE_DOMAIN || 'melamedia.app'}`,
+                id: `melamedia-event-${ev.id}@${feedDomain}`,
                 start: new Date(ev.start_time),
                 end: new Date(ev.end_time),
                 summary: ev.title,
                 allDay: ev.all_day,
+                lastModified: ev.updated_at ? new Date(ev.updated_at) : undefined,
             };
             if (ev.description) eventObj.description = ev.description;
             if (ev.location) eventObj.location = ev.location;
@@ -1110,54 +1112,70 @@ const syncGoogleEvents = async (req, res) => {
         const { google } = googleapis;
         const calendarApi = google.calendar({ version: 'v3', auth: oauth2Client });
 
-        // Pull events from the next 90 days
-        const timeMin = new Date().toISOString();
-        const timeMax = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
+        // Match iCal feed window: recent past + upcoming year. Paginate through all pages.
+        const timeMin = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+        const timeMax = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
 
-        const listRes = await calendarApi.events.list({
-            calendarId: 'primary',
-            timeMin,
-            timeMax,
-            singleEvents: true,
-            orderBy: 'startTime',
-            maxResults: 250,
-        });
+        const googleEvents = [];
+        let pageToken;
+        do {
+            const listRes = await calendarApi.events.list({
+                calendarId: 'primary',
+                timeMin,
+                timeMax,
+                singleEvents: true,
+                orderBy: 'startTime',
+                maxResults: 250,
+                pageToken: pageToken || undefined,
+            });
+            googleEvents.push(...(listRes.data.items || []));
+            pageToken = listRes.data.nextPageToken;
+        } while (pageToken);
 
-        const googleEvents = listRes.data.items || [];
         let upsertCount = 0;
+        let failedCount = 0;
 
         for (const gev of googleEvents) {
             if (gev.status === 'cancelled') continue;
-            const startTime = gev.start?.dateTime || `${gev.start?.date}T00:00:00Z`;
-            const endTime = gev.end?.dateTime || `${gev.end?.date}T23:59:59Z`;
+            if (!gev.id) continue;
+
+            const startTime = gev.start?.dateTime || (gev.start?.date ? `${gev.start.date}T00:00:00Z` : null);
+            const endTime = gev.end?.dateTime || (gev.end?.date ? `${gev.end.date}T23:59:59Z` : null);
+            if (!startTime || !endTime) continue;
+
             const allDay = !gev.start?.dateTime;
 
-            await pool.query(
-                `INSERT INTO calendar_events
-                   (owner_id, title, description, location, start_time, end_time, all_day, google_event_id)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                 ON CONFLICT (owner_id, google_event_id) WHERE google_event_id IS NOT NULL DO UPDATE SET
-                   title       = EXCLUDED.title,
-                   description = EXCLUDED.description,
-                   location    = EXCLUDED.location,
-                   start_time  = EXCLUDED.start_time,
-                   end_time    = EXCLUDED.end_time,
-                   all_day     = EXCLUDED.all_day`,
-                [
-                    userId,
-                    (gev.summary || '(ללא כותרת)').trim(),
-                    gev.description || null,
-                    gev.location || null,
-                    startTime,
-                    endTime,
-                    allDay,
-                    gev.id,
-                ]
-            );
-            upsertCount++;
+            try {
+                await pool.query(
+                    `INSERT INTO calendar_events
+                       (owner_id, title, description, location, start_time, end_time, all_day, google_event_id)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                     ON CONFLICT (owner_id, google_event_id) WHERE google_event_id IS NOT NULL DO UPDATE SET
+                       title       = EXCLUDED.title,
+                       description = EXCLUDED.description,
+                       location    = EXCLUDED.location,
+                       start_time  = EXCLUDED.start_time,
+                       end_time    = EXCLUDED.end_time,
+                       all_day     = EXCLUDED.all_day`,
+                    [
+                        userId,
+                        (gev.summary || '(ללא כותרת)').trim(),
+                        gev.description || null,
+                        gev.location || null,
+                        startTime,
+                        endTime,
+                        allDay,
+                        gev.id,
+                    ]
+                );
+                upsertCount++;
+            } catch (upsertErr) {
+                failedCount++;
+                console.error('[calendarController] Google sync upsert failed:', gev.id, upsertErr.message);
+            }
         }
 
-        return res.json({ ok: true, synced: upsertCount });
+        return res.json({ ok: true, synced: upsertCount, total: googleEvents.length, failed: failedCount });
     } catch (err) {
         console.error('[calendarController] syncGoogleEvents error:', err.message);
         // Token revoked / expired and couldn't refresh → prompt reconnect

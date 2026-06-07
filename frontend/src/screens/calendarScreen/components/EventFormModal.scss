@@ -4,9 +4,10 @@
 .lw-eventFormModal {
     flex-direction: column;
     width: 100%;
-    min-inline-size: 0;
-    max-inline-size: min(520px, calc(100vw - 2rem));
-    max-block-size: min(90vh, calc(100dvh - 3rem));
+    box-sizing: border-box;
+    min-inline-size: min(640px, 92vw);
+    max-inline-size: 960px;
+    max-block-size: calc(85vh - 2rem);
     overflow: hidden;
     margin: 0 auto;
 
@@ -18,7 +19,7 @@
 
     &--caseForm {
         min-inline-size: min(640px, 92vw);
-        max-inline-size: min(960px, 92vw);
+        max-inline-size: 960px;
         width: 100%;
         block-size: calc(85vh - 2rem);
         max-block-size: calc(85vh - 2rem);
@@ -320,25 +321,4 @@
 
 .lw-eventFormModal__caseChip.is-active .lw-eventFormModal__caseChipStage {
     opacity: 0.85;
-}
-
-@media (max-width: 640px) {
-    .lw-eventFormModal__segmentedBtn {
-        font-size: 0.6875rem;
-        min-height: 2rem;
-        padding: 0.35rem 0.25rem;
-    }
-
-    .lw-eventFormModal__actions {
-        flex-direction: column;
-        align-items: stretch;
-
-        > * {
-            width: 100%;
-        }
-    }
-
-    .lw-eventFormModal__caseGrid {
-        grid-template-columns: 1fr;
-    }
 }

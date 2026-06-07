@@ -199,16 +199,6 @@ export default function CalendarScreen() {
 
     // ── Google callback toast ──────────────────────────────────────────────
     const [googleMsg, setGoogleMsg] = useState("");
-    useEffect(() => {
-        if (searchParams.get("google_connected") === "1") {
-            setGoogleMsg("Google Calendar חובר בהצלחה ✓");
-            setTimeout(() => setGoogleMsg(""), 4000);
-        }
-        if (searchParams.get("google_error") === "1") {
-            setGoogleMsg("חיבור Google Calendar נכשל. נסה שוב.");
-            setTimeout(() => setGoogleMsg(""), 4000);
-        }
-    }, [searchParams]);
 
     // ── Load lawyer list (for filter + legend) ─────────────────────────────
     useEffect(() => {
@@ -289,6 +279,23 @@ export default function CalendarScreen() {
     // Re-fetch whenever filters/scope change (range is reused from the last datesSet).
     useEffect(() => { fetchEvents(null); }, [fetchEvents]);
 
+    useEffect(() => {
+        if (searchParams.get("google_connected") === "1") {
+            setGoogleMsg("Google Calendar חובר בהצלחה ✓");
+            (async () => {
+                try {
+                    await calendarApi.syncGoogleEvents();
+                } catch { /* status toast still shown */ }
+                fetchEvents(null);
+            })();
+            setTimeout(() => setGoogleMsg(""), 4000);
+        }
+        if (searchParams.get("google_error") === "1") {
+            setGoogleMsg("חיבור Google Calendar נכשל. נסה שוב.");
+            setTimeout(() => setGoogleMsg(""), 4000);
+        }
+    }, [searchParams, fetchEvents]);
+
     // ── FullCalendar config ────────────────────────────────────────────────
     const hiddenDays = useMemo(() => {
         const set = new Set(workingDays);
@@ -314,8 +321,13 @@ export default function CalendarScreen() {
     }, [apiFilters.scope]);
 
     const openPersonalSyncModal = useCallback(() => {
-        openPopup(<PersonalSyncModal onClose={closePopup} />);
-    }, [openPopup, closePopup]);
+        openPopup(
+            <PersonalSyncModal
+                closePopUpFunction={closePopup}
+                onEventsChanged={() => fetchEvents(null)}
+            />
+        );
+    }, [openPopup, closePopup, fetchEvents]);
 
     const openCreateModal = useCallback((selectInfo) => {
         const prefill = buildNewEventPrefill(selectInfo, {
