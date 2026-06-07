@@ -5,6 +5,8 @@ set -euo pipefail
 
 PROD_HOST="root@37.60.230.148"
 PROD_DB="melamedlaw"
+SSH_KEY="${SSH_KEY:-$HOME/.ssh/id_ed25519}"
+SSH_OPTS=(-i "$SSH_KEY" -o BatchMode=yes -o StrictHostKeyChecking=accept-new)
 NEON_HOST="ep-super-mode-alv2q4jv-pooler.c-3.eu-central-1.aws.neon.tech"
 NEON_HOST_DIRECT="ep-super-mode-alv2q4jv.c-3.eu-central-1.aws.neon.tech"
 NEON_DB="neondb"
@@ -19,12 +21,12 @@ NEON_CONNSTR="postgresql://${NEON_USER}:${NEON_PASS}@${NEON_HOST}:5432/${NEON_DB
 
 echo ""
 echo "=== [1/7] Dumping MelamedLaw production DB (read-only) ==="
-sshpass -p 'Aa0507299064' ssh "$PROD_HOST" \
+ssh "${SSH_OPTS[@]}" "$PROD_HOST" \
   "sudo -u postgres pg_dump -d $PROD_DB --format=plain --no-owner --no-privileges --encoding=UTF8 > $DUMP_REMOTE 2>/dev/null; echo ROWS:; wc -l $DUMP_REMOTE"
 
 echo ""
 echo "=== [2/7] Downloading dump ==="
-sshpass -p 'Aa0507299064' scp "${PROD_HOST}:${DUMP_REMOTE}" "$DUMP_LOCAL"
+scp "${SSH_OPTS[@]}" "${PROD_HOST}:${DUMP_REMOTE}" "$DUMP_LOCAL"
 echo "Downloaded: $(du -h "$DUMP_LOCAL" | cut -f1)"
 
 echo ""
@@ -68,7 +70,7 @@ PGPASSWORD="$NEON_PASS" "$PSQL" "$NEON_DIRECT" -A -t -c "
 
 # Cleanup temp files
 rm -f "$DUMP_LOCAL" "$DUMP_CLEAN"
-sshpass -p 'Aa0507299064' ssh "$PROD_HOST" "rm -f $DUMP_REMOTE"
+ssh "${SSH_OPTS[@]}" "$PROD_HOST" "rm -f $DUMP_REMOTE"
 
 echo ""
 echo "=== Done! MelamedLaw Neon DB synced from MelamedLaw production ==="

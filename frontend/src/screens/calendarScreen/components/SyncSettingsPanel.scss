@@ -1,0 +1,38 @@
+@use '../../../styles/variables' as v;
+@use '../../../styles/mixins' as m;
+
+.lw-syncPanel {
+    flex-direction: column;
+    gap: v.$space-4;
+}
+
+.lw-syncPanel__section {
+    flex-direction: column;
+    gap: v.$space-3;
+}
+
+.lw-syncPanel__section--border {
+    padding-block-start: v.$space-4;
+    border-block-start: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.lw-syncPanel__icalRow {
+    flex-direction: column;
+    gap: v.$space-3;
+}
+
+.lw-syncPanel__icalUrl {
+    background: #EDF2F7;
+    border-radius: 8px;
+    padding: v.$space-3;
+}
+
+.lw-syncPanel__icalBtns {
+    @include m.row(v.$space-3);
+    flex-wrap: wrap;
+}
+
+.lw-syncPanel__googleBtns {
+    @include m.row(v.$space-3);
+    flex-wrap: wrap;
+}

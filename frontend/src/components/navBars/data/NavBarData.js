@@ -9,6 +9,8 @@ import { PlanUsageScreenName } from "../../../screens/billingScreen/PlanUsageScr
 import { PlansPricingScreenName } from "../../../screens/billingScreen/PlansPricingScreen";
 import { PlatformSettingsScreenName } from "../../../screens/platformSettingsScreen/PlatformSettingsScreen";
 import { RemindersScreenName } from "../../../screens/remindersScreen/RemindersScreen";
+import { CalendarScreenName } from "../../../screens/calendarScreen/CalendarScreen";
+import { ENABLE_CALENDAR_MODULE } from "../../../featureFlags";
 import { uploadFileForSigningScreenName } from "../../../screens/signingScreen/UploadFileForSigningScreen";
 import { AllClientsScreenName } from "../../../screens/allClientsScreen/AllClientsScreen";
 
@@ -66,6 +68,14 @@ export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t) =>
             icon: null,
             onClick: () => navigate(AdminStackName + RemindersScreenName),
         },
+        ...(ENABLE_CALENDAR_MODULE ? [{
+            navKey: 'calendar',
+            routeMatch: CalendarScreenName,
+            buttonText: t('nav.calendar'),
+            buttonScreen: t('nav.calendar'),
+            icon: null,
+            onClick: () => navigate(AdminStackName + CalendarScreenName),
+        }] : []),
         // ── Admin ──
         {
             navKey: 'allManagers',

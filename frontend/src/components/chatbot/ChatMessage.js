@@ -2,6 +2,7 @@ import React from 'react';
 import SimpleContainer from '../simpleComponents/SimpleContainer';
 import { Text14, Text12 } from '../specializedComponents/text/AllTextKindFile';
 import { colors } from '../../constant/colors';
+import { formatDisplayTime } from '../../functions/date/formatDateForInput';
 import './ChatMessage.scss';
 
 export default function ChatMessage({ role, content, timestamp }) {
@@ -18,7 +19,7 @@ export default function ChatMessage({ role, content, timestamp }) {
                 </Text14>
                 {timestamp && (
                     <Text12 className="lw-chatMessage__time">
-                        {new Date(timestamp).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
+                        {formatDisplayTime(timestamp)}
                     </Text12>
                 )}
             </SimpleContainer>

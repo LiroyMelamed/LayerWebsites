@@ -1,3 +1,4 @@
+import { formatDisplayDate, formatDisplayDateTime } from "../../functions/date/formatDateForInput";
 // src/screens/platformSettingsScreen/PlatformSettingsScreen.js
 import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -31,6 +32,7 @@ import { images } from "../../assets/images/images";
 import ConfirmationDialog from "../../components/styledComponents/popups/ConfirmationDialog";
 import { AdminStackName } from "../../navigation/AdminStack";
 import { MainScreenName } from "../mainScreen/MainScreen";
+import SyncSettingsPanel from "../calendarScreen/components/SyncSettingsPanel";
 
 import "./PlatformSettingsScreen.scss";
 
@@ -44,6 +46,7 @@ const CATEGORIES = [
     { key: "templates", label: "תבניות SMS", icon: "📝" },
     { key: "emailTemplates", label: "תבניות אימייל", icon: "✉️" },
     { key: "reminders", label: "תזכורות", icon: "⏰" },
+    { key: "calendar", label: "לוח שנה", icon: "📅" },
     { key: "channels", label: "ערוצי התראות", icon: "📡" },
     { key: "admins", label: "מנהלי פלטפורמה", icon: "👤" },
     { key: "knowledgeDocs", label: "מסמכי ידע לצ'אטבוט", icon: "🤖" },
@@ -1260,7 +1263,7 @@ export default function PlatformSettingsScreen() {
                                     <SimpleContainer className="lw-platformSettings__knowledgeInfo">
                                         <TextBold14>{doc.title}</TextBold14>
                                         <Text12 className="lw-platformSettings__knowledgeMeta">
-                                            {doc.source_file} · {doc.chunk_count} קטעים · {new Date(doc.created_at).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                            {doc.source_file} · {doc.chunk_count} קטעים · {formatDisplayDate(doc.created_at)}
                                         </Text12>
                                     </SimpleContainer>
                                     <SecondaryButton
@@ -1305,7 +1308,7 @@ export default function PlatformSettingsScreen() {
             const lastRunAt = getVal("CM_LAST_RUN_AT");
             const lastRunResult = getVal("CM_LAST_RUN_RESULT");
             const formattedLastRun = lastRunAt
-                ? new Date(lastRunAt).toLocaleString("he-IL", { timeZone: "Asia/Jerusalem", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
+                ? formatDisplayDateTime(lastRunAt)
                 : "לא הורץ עדיין";
 
             return (
@@ -1479,6 +1482,134 @@ export default function PlatformSettingsScreen() {
                             )}
                         </SimpleContainer>
                     </SimpleCard>
+                </SimpleContainer>
+            );
+        }
+
+        // Calendar tab — working days/hours + reminders + sync (Google/iCal)
+        if (activeTab === "calendar") {
+            const calSettings = settings["calendar"] || {};
+            const getVal = (key, defaultVal = "") => {
+                const edited = editedValues[`calendar:${key}`]?.value;
+                if (edited !== undefined) return edited;
+                const eff = calSettings[key]?.effectiveValue;
+                return eff !== undefined && eff !== null ? eff : defaultVal;
+            };
+            const handleChange = (key, val) => handleSettingChange("calendar", key, val);
+
+            const DAYS = [
+                { value: "0", label: "ראשון" },
+                { value: "1", label: "שני" },
+                { value: "2", label: "שלישי" },
+                { value: "3", label: "רביעי" },
+                { value: "4", label: "חמישי" },
+                { value: "5", label: "שישי" },
+                { value: "6", label: "שבת" },
+            ];
+
+            const workingDaysRaw = String(getVal("WORKING_DAYS", "0,1,2,3,4"));
+            const workingDaysSet = new Set(
+                workingDaysRaw.split(",").map(s => s.trim()).filter(Boolean)
+            );
+            const toggleDay = (dayValue) => {
+                const next = new Set(workingDaysSet);
+                if (next.has(dayValue)) next.delete(dayValue);
+                else next.add(dayValue);
+                const ordered = DAYS.map(d => d.value).filter(v => next.has(v));
+                handleChange("WORKING_DAYS", ordered.join(","));
+            };
+
+            return (
+                <SimpleContainer className="lw-platformSettings__calendarTab">
+                    {/* Working days */}
+                    <SimpleCard className="lw-platformSettings__card">
+                        <TextBold18>ימי עבודה של המשרד</TextBold18>
+                        <Text12 className="lw-platformSettings__settingDescription">
+                            בחר את הימים בהם המשרד פעיל. ימים שלא נבחרו לא יוצגו בלוח השנה.
+                        </Text12>
+                        <SimpleContainer className="lw-platformSettings__dayPicker">
+                            {DAYS.map(d => {
+                                const active = workingDaysSet.has(d.value);
+                                return (
+                                    <SimpleButton
+                                        key={d.value}
+                                        className={`lw-platformSettings__dayChip ${active ? "lw-platformSettings__dayChip--active" : ""}`}
+                                        onPress={() => toggleDay(d.value)}
+                                    >
+                                        <Text14 className="lw-platformSettings__dayChipLabel">{d.label}</Text14>
+                                    </SimpleButton>
+                                );
+                            })}
+                        </SimpleContainer>
+                    </SimpleCard>
+
+                    {/* Working hours */}
+                    <SimpleCard className="lw-platformSettings__card">
+                        <TextBold18>שעות עבודה</TextBold18>
+                        <SimpleContainer className="lw-platformSettings__settingsList">
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">שעת תחילת יום עבודה</TextBold14>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "time", label: "שעת התחלה" }}
+                                        value={getVal("WORKING_HOURS_START", "08:00")}
+                                        onChange={(val) => handleChange("WORKING_HOURS_START", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">שעת סיום יום עבודה</TextBold14>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "time", label: "שעת סיום" }}
+                                        value={getVal("WORKING_HOURS_END", "18:00")}
+                                        onChange={(val) => handleChange("WORKING_HOURS_END", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                        </SimpleContainer>
+                    </SimpleCard>
+
+                    {/* Reminders */}
+                    <SimpleCard className="lw-platformSettings__card">
+                        <TextBold18>תזכורות יומן</TextBold18>
+                        <SimpleContainer className="lw-platformSettings__settingsList">
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">הפעלת תזכורות אוטומטיות</TextBold14>
+                                    <Text12 className="lw-platformSettings__settingDescription">
+                                        שליחת תזכורות יום לפני ו-30 דקות לפני האירוע
+                                    </Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "boolean" }}
+                                        value={getVal("CALENDAR_REMINDERS_ENABLED", "true")}
+                                        onChange={(val) => handleChange("CALENDAR_REMINDERS_ENABLED", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">תדירות בדיקה (דקות)</TextBold14>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "number", label: "דקות" }}
+                                        value={getVal("CALENDAR_REMINDERS_POLL_MINUTES", "5")}
+                                        onChange={(val) => handleChange("CALENDAR_REMINDERS_POLL_MINUTES", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                        </SimpleContainer>
+                    </SimpleCard>
+
+                    {/* Sync (Google / iCal) */}
+                    <SyncSettingsPanel />
                 </SimpleContainer>
             );
         }

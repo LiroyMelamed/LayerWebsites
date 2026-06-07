@@ -1,0 +1,283 @@
+@use '../../../styles/variables' as v;
+@use '../../../styles/mixins' as m;
+
+.lw-eventFormModal {
+    flex-direction: column;
+    min-inline-size: min(420px, 90vw);
+    max-inline-size: 520px;
+    max-block-size: 90vh;
+    overflow: hidden;
+    margin: 0 auto;
+}
+
+.lw-eventFormModal__header {
+    padding-block-end: v.$space-4;
+    border-block-end: 1px solid rgba(226, 232, 240, 0.8);
+    margin-block-end: v.$space-4;
+}
+
+.lw-eventFormModal__body {
+    flex-direction: column;
+    gap: v.$space-3;
+}
+
+.lw-eventFormModal__allDay {
+    @include m.row(v.$space-2);
+    cursor: pointer;
+
+    label {
+        cursor: pointer;
+    }
+}
+
+.lw-eventFormModal__actions {
+    @include m.row(v.$space-3);
+    flex-wrap: wrap;
+    margin-block-start: v.$space-6;
+    padding-block-start: v.$space-4;
+    border-block-start: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.lw-eventFormModal__colorRow {
+    @include m.row(v.$space-3, nowrap, center, space-between);
+}
+
+.lw-eventFormModal__colorInput {
+    inline-size: 3rem;
+    block-size: 2rem;
+    border: 1px solid rgba(203, 213, 224, 0.8);
+    border-radius: 0.5rem;
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+// ─── Generic field wrapper (plain div — avoids SimpleContainer flex clash) ───
+
+.lw-eventFormModal__field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+// ─── Segmented control (event type / intake mode) ───────────────────────────
+
+.lw-eventFormModal__segmented {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    background: #EDF2F7;
+    border: 1px solid #CBD5E0;
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+    box-sizing: border-box;
+
+    &:not(.lw-eventFormModal__segmented--quad) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.lw-eventFormModal__segmentedBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 2.25rem;
+    min-width: 0;
+    background: transparent;
+    color: #2A4365;
+    border: none;
+    border-radius: 6px;
+    padding: 0.45rem 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.25;
+    text-align: center;
+    white-space: normal;
+    word-break: break-word;
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease, opacity 120ms ease;
+
+    &.is-active {
+        background: #2A4365;
+        color: #FFFFFF;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+// ─── Conflict warning banner (amber/gold) ───────────────────────────────────
+
+.lw-eventFormModal__conflictBanner {
+    @include m.row(v.$space-3, nowrap, flex-start, flex-start);
+    background: #FFFBEA;
+    border: 1px solid #F6E05E;
+    border-inline-start: 4px solid #D69E2E;
+    border-radius: 8px;
+    padding: v.$space-3 v.$space-4;
+    margin-block-end: v.$space-3;
+    box-shadow: 0 1px 2px rgba(214, 158, 46, 0.15);
+}
+
+.lw-eventFormModal__conflictBannerIcon {
+    font-size: 1.25rem;
+    line-height: 1.2;
+    flex: 0 0 auto;
+}
+
+.lw-eventFormModal__conflictBannerBody {
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+    min-inline-size: 0;
+}
+
+.lw-eventFormModal__conflictBannerHint {
+    font-style: italic;
+    opacity: 0.85;
+}
+
+.lw-eventFormModal__conflictLoading {
+    margin-inline-start: auto;
+}
+
+// ─── Success banner (post-conversion / link) ────────────────────────────────
+
+.lw-eventFormModal__successBanner {
+    background: #F0FFF4;
+    border: 1px solid #C6F6D5;
+    border-inline-start: 4px solid #38A169;
+    border-radius: 8px;
+    padding: v.$space-3 v.$space-4;
+    margin-block-end: v.$space-3;
+}
+
+// ─── Lead intake box ────────────────────────────────────────────────────────
+
+.lw-eventFormModal__leadBox {
+    flex-direction: column;
+    gap: v.$space-2;
+    background: #F7FAFC;
+    border: 1px dashed #CBD5E0;
+    border-radius: 8px;
+    padding: v.$space-3;
+}
+
+// ─── Convert-lead CTA box ───────────────────────────────────────────────────
+
+.lw-eventFormModal__convertBox {
+    flex-direction: column;
+    gap: v.$space-2;
+    background: linear-gradient(135deg, rgba(42, 67, 101, 0.04), rgba(42, 67, 101, 0.10));
+    border: 1px solid rgba(42, 67, 101, 0.18);
+    border-radius: 10px;
+    padding: v.$space-3;
+}
+
+.lw-eventFormModal__convertBtn {
+    align-self: stretch;
+    font-weight: 600;
+}
+
+// ─── Linked-case display + selectable case grid ─────────────────────────────
+
+.lw-eventFormModal__caseLinker {
+    flex-direction: column;
+    gap: v.$space-2;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    padding: v.$space-3;
+}
+
+.lw-eventFormModal__caseLinkerHeader {
+    @include m.row(v.$space-2, nowrap, center, space-between);
+    flex-wrap: wrap;
+}
+
+.lw-eventFormModal__caseLinkerCurrent {
+    @include m.row(v.$space-2, nowrap, center, flex-end);
+}
+
+.lw-eventFormModal__unlinkBtn {
+    background: transparent;
+    border: 1px solid #FED7D7;
+    color: #9B2C2C;
+    border-radius: 999px;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: background-color 120ms ease;
+
+    &:hover {
+        background: #FED7D7;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+.lw-eventFormModal__caseGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.5rem;
+}
+
+.lw-eventFormModal__caseChip {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+    padding: 0.5rem 0.7rem;
+    background: #FFFFFF;
+    border: 1px solid #CBD5E0;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: start;
+    transition: border-color 120ms ease, background-color 120ms ease, transform 100ms ease, box-shadow 120ms ease;
+
+    &:hover:not(:disabled) {
+        border-color: #2A4365;
+        background: #F7FAFC;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(42, 67, 101, 0.08);
+    }
+
+    &.is-active {
+        background: #2A4365;
+        border-color: #2A4365;
+        color: #FFFFFF;
+        box-shadow: 0 2px 6px rgba(42, 67, 101, 0.20);
+    }
+
+    &:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+}
+
+.lw-eventFormModal__caseChipName {
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-inline-size: 100%;
+}
+
+.lw-eventFormModal__caseChipStage {
+    font-size: 0.6875rem;
+    opacity: 0.7;
+}
+
+.lw-eventFormModal__caseChip.is-active .lw-eventFormModal__caseChipStage {
+    opacity: 0.85;
+}

@@ -189,13 +189,15 @@ async function sendEmailCampaign({ toEmail, campaignKey, contactFields, attachme
     });
 }
 
-async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shouldSendRealEmail, logLabel, ccEmails } = {}) {
+async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shouldSendRealEmail, logLabel, ccEmails, replyTo, fromName: fromNameOverride, fromEmail: fromEmailOverride } = {}) {
     const email = String(toEmail || '').trim();
 
-    const fromName = String(await getSetting('messaging', 'SMTP_FROM_NAME', process.env.SMTP_FROM_NAME) || '').trim();
+    const fromNameSetting = String(await getSetting('messaging', 'SMTP_FROM_NAME', process.env.SMTP_FROM_NAME) || '').trim();
+    const fromName = String(fromNameOverride || '').trim() || fromNameSetting;
     // CC list: optional array of email strings passed by callers (replaces old global CEO CC)
     const ccList = (Array.isArray(ccEmails) ? ccEmails : []).map(e => String(e || '').trim()).filter(Boolean);
     const ccEmail = ccList.length > 0 ? ccList.join(', ') : '';
+    const replyToEmail = String(replyTo || '').trim();
 
     if (!shouldSendRealEmail) {
         console.log('--- EMAIL Transactional Simulation (Dev Mode) ---');
@@ -213,7 +215,8 @@ async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shou
     const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
     const smtpUser = String(process.env.SMTP_USER || '').trim();
     const smtpPass = String(process.env.SMTP_PASS || '').trim();
-    const smtpFrom = String(await getSetting('messaging', 'SMTP_FROM_EMAIL', process.env.SMTP_FROM_EMAIL) || '').trim();
+    const smtpFromSetting = String(await getSetting('messaging', 'SMTP_FROM_EMAIL', process.env.SMTP_FROM_EMAIL) || '').trim();
+    const smtpFrom = String(fromEmailOverride || '').trim() || smtpFromSetting;
 
     if (!smtpHost || !smtpUser || !smtpPass) {
         console.error('SMTP env vars missing (SMTP_HOST/SMTP_USER/SMTP_PASS). Cannot send email.');
@@ -231,6 +234,7 @@ async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shou
         const mailOptions = {
             from: fromName ? `${fromName} <${smtpFrom}>` : smtpFrom,
             to: email,
+            ...(replyToEmail ? { replyTo: replyToEmail } : {}),
             ...(ccEmail && ccEmail.toLowerCase() !== email.toLowerCase() ? { cc: ccEmail } : {}),
             subject: String(subject || '').trim(),
             html: String(htmlBody || ''),
@@ -249,7 +253,7 @@ async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shou
  * Send a one-off transactional HTML email.
  * Reuses the same SMTP transport as other transactional emails.
  */
-async function sendTransactionalCustomHtmlEmail({ toEmail, subject, htmlBody, logLabel } = {}) {
+async function sendTransactionalCustomHtmlEmail({ toEmail, subject, htmlBody, logLabel, replyTo, fromName, fromEmail } = {}) {
     const email = String(toEmail || '').trim();
     const s = String(subject || '').trim();
     const body = String(htmlBody || '');
@@ -264,6 +268,9 @@ async function sendTransactionalCustomHtmlEmail({ toEmail, subject, htmlBody, lo
         fields: {},
         shouldSendRealEmail,
         logLabel: label,
+        replyTo,
+        fromName,
+        fromEmail,
     });
 }
 
@@ -274,14 +281,17 @@ async function sendTransactionalCustomHtmlEmail({ toEmail, subject, htmlBody, lo
  * Requires env vars: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS
  * Falls back gracefully if SMTP is not configured.
  */
-async function sendEmailWithAttachments({ toEmail, subject, htmlBody, attachments, logLabel, fromEmail: fromEmailOverride, ccEmails } = {}) {
+async function sendEmailWithAttachments({ toEmail, subject, htmlBody, attachments, logLabel, fromEmail: fromEmailOverride, ccEmails, replyTo, fromName: fromNameOverride } = {}) {
     const email = String(toEmail || '').trim();
-    const fromName = String(await getSetting('messaging', 'SMTP_FROM_NAME', process.env.SMTP_FROM_NAME) || '').trim();
+    const fromNameSetting = String(await getSetting('messaging', 'SMTP_FROM_NAME', process.env.SMTP_FROM_NAME) || '').trim();
+    const fromName = String(fromNameOverride || '').trim() || fromNameSetting;
     // Always send FROM the SMTP account (noreply@) – cPanel rejects mismatched senders.
-    const fromEmail = String(await getSetting('messaging', 'SMTP_FROM_EMAIL', process.env.SMTP_FROM_EMAIL) || '').trim();
+    const fromEmailSetting = String(await getSetting('messaging', 'SMTP_FROM_EMAIL', process.env.SMTP_FROM_EMAIL) || '').trim();
+    const fromEmail = String(fromEmailOverride || '').trim() || fromEmailSetting;
     // CC list: optional array of email strings passed by callers (replaces old global CEO CC)
     const ccList = (Array.isArray(ccEmails) ? ccEmails : []).map(e => String(e || '').trim()).filter(Boolean);
     const ccEmail = ccList.length > 0 ? ccList.join(', ') : '';
+    const replyToEmail = String(replyTo || '').trim();
 
     const smtpHost = String(process.env.SMTP_HOST || '').trim();
     const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
@@ -316,6 +326,7 @@ async function sendEmailWithAttachments({ toEmail, subject, htmlBody, attachment
         const mailOptions = {
             from: fromName ? `${fromName} <${fromEmail}>` : fromEmail,
             to: email,
+            ...(replyToEmail ? { replyTo: replyToEmail } : {}),
             ...(ccEmail && ccEmail.toLowerCase() !== email.toLowerCase() ? { cc: ccEmail } : {}),
             subject: String(subject || '').trim(),
             html: String(htmlBody || ''),

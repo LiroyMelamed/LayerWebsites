@@ -2,9 +2,11 @@ const axios = require('axios');
 const app = require('./app');
 const pool = require('./config/db');
 const { signingSchemaStartupCheck } = require('./utils/startupSchemaCheck');
+const { assertRuntimeTenantMatchesBranch } = require('./utils/runtimeTenantGuard');
 const { initLicenseRenewalScheduler } = require('./tasks/licenseRenewal/scheduler');
 const { initEmailReminderScheduler } = require('./tasks/emailReminders/scheduler');
 const { initBirthdayGreetingsScheduler } = require('./tasks/birthdayGreetings/scheduler');
+const { initCalendarReminderScheduler } = require('./tasks/calendarReminders/scheduler');
 
 const PORT = process.env.PORT || 5000;
 
@@ -29,11 +31,13 @@ const server = app.listen(PORT, async () => {
     console.log(`Server running on port ${PORT}`);
     await getPublicIp();
     await signingSchemaStartupCheck();
+    await assertRuntimeTenantMatchesBranch(pool);
 
     // Scheduled jobs (best-effort; idempotent at DB layer)
     initLicenseRenewalScheduler();
     initEmailReminderScheduler();
     initBirthdayGreetingsScheduler();
+    await initCalendarReminderScheduler();
 });
 
 // Hard timeouts at the Node server layer (useful behind Nginx).
