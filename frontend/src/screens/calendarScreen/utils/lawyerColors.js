@@ -38,6 +38,11 @@ export function colorForKey(key) {
     return PALETTE[_hash(key) % PALETTE.length];
 }
 
+/** Firm-view color key: manager (מנהל) when set, otherwise event owner. */
+export function colorKeyForEvent(ev) {
+    return ev?.managerUserId ?? ev?.managerName ?? ev?.ownerId ?? ev?.ownerName ?? ev?.id;
+}
+
 /** Color reserved for leave/vacation events — visually distinct from any lawyer. */
 export function leaveColor() {
     return LEAVE_COLOR;
@@ -56,6 +61,7 @@ export function buildLawyerLegend(lawyers = []) {
 
 const lawyerColors = {
     colorForKey,
+    colorKeyForEvent,
     leaveColor,
     buildLawyerLegend,
 };

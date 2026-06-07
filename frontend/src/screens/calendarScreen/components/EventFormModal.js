@@ -13,6 +13,7 @@ import calendarApi from "../../../api/calendarApi";
 import { customersApi } from "../../../api/customersApi";
 import { adminApi } from "../../../api/adminApi";
 import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
+import CaseFullView from "../../../components/styledComponents/cases/CaseFullView";
 import "./EventFormModal.scss";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -56,14 +57,40 @@ function _initialIntakeMode(event) {
     return INTAKE_EXISTING;
 }
 
+/** Build fresh form state from an event prop (create prefill or edit row). */
+function _formStateFromEvent(event) {
+    return {
+        eventType: event?.eventType || EVENT_TYPE_APPT,
+        title: event?.title || "",
+        description: event?.description || "",
+        location: event?.location || "",
+        startTime: toDatetimeLocal(event?.startTime) || "",
+        endTime: toDatetimeLocal(event?.endTime) || "",
+        allDay: event?.allDay || false,
+        color: event?.color || NAVY,
+        clientName: event?.clientName || "",
+        clientUserId: event?.clientUserId || null,
+        managerName: event?.managerName || "",
+        managerUserId: event?.managerUserId || null,
+        caseId: event?.caseId || null,
+        caseName: event?.caseName || "",
+        intakeMode: _initialIntakeMode(event),
+        leadName: event?.leadName || "",
+        leadPhone: event?.leadPhone || "",
+        leadEmail: event?.leadEmail || "",
+        leadCaseName: event?.leadCaseName || "",
+    };
+}
+
 /** Props:
  *  - event      : existing event object (edit mode) OR a slot prefill (create mode).
  *                 Edit mode is detected by event?.id != null.
+ *  - onUpdated  : (savedEventRow) => void — refresh calendar without closing modal
  *  - onSaved    : (savedEventRow) → void
  *  - onDeleted  : (deletedEventId) → void
  *  - onClose    : () → void
  */
-export default function EventFormModal({ event, onSaved, onDeleted, onClose }) {
+export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, onClose }) {
     const { t } = useTranslation();
     const isEdit = event?.id != null;
 
@@ -99,7 +126,9 @@ export default function EventFormModal({ event, onSaved, onDeleted, onClose }) {
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [converting, setConverting] = useState(false);
     const [linkingCase, setLinkingCase] = useState(false);
-    const [optionalConvertCaseName, setOptionalConvertCaseName] = useState("");
+    const [optionalConvertCaseName, setOptionalConvertCaseName] = useState(event?.leadCaseName || "");
+    const [caseFormDraft, setCaseFormDraft] = useState(null);
+    const linkedClientLabelRef = useRef(event?.clientName || "");
 
     // Conflict-check state
     const [conflictState, setConflictState] = useState({
@@ -126,6 +155,38 @@ export default function EventFormModal({ event, onSaved, onDeleted, onClose }) {
         performRequest: searchAdmins,
     } = useAutoHttpRequest(adminApi.getAdminByName, { onFailure: () => { } });
 
+    // ─── Effect: reset entire form when a different event is opened in the popup ─
+    const eventIdentity = event?.id ?? `${event?.startTime || ""}|${event?.endTime || ""}|new`;
+    useEffect(() => {
+        const s = _formStateFromEvent(event);
+        setEventType(s.eventType);
+        setTitle(s.title);
+        setDescription(s.description);
+        setLocation(s.location);
+        setStartTime(s.startTime);
+        setEndTime(s.endTime);
+        setAllDay(s.allDay);
+        setColor(s.color);
+        setClientName(s.clientName);
+        setClientUserId(s.clientUserId);
+        setManagerName(s.managerName);
+        setManagerUserId(s.managerUserId);
+        setCaseId(s.caseId);
+        setCaseName(s.caseName);
+        setIntakeMode(s.intakeMode);
+        setLeadName(s.leadName);
+        setLeadPhone(s.leadPhone);
+        setLeadEmail(s.leadEmail);
+        setOptionalConvertCaseName(s.leadCaseName || "");
+        linkedClientLabelRef.current = s.clientName || "";
+        setCaseFormDraft(null);
+        setClientCases([]);
+        setError("");
+        setSuccessMsg("");
+        setConfirmDelete(false);
+        lastConflictKeyRef.current = null;
+    }, [eventIdentity, event]);
+
     // ─── Effect: snap allDay times to full-day window ─────────────────────
     useEffect(() => {
         if (allDay) {
@@ -151,19 +212,6 @@ export default function EventFormModal({ event, onSaved, onDeleted, onClose }) {
     }, [intakeMode]);
 
     // ─── Effect: clear client/case/lead when switching to leave/reminder ─
-    useEffect(() => {
-        if (eventType !== EVENT_TYPE_LEAVE && eventType !== EVENT_TYPE_REMINDER) return;
-        setIntakeMode(INTAKE_EXISTING);
-        setClientName("");
-        setClientUserId(null);
-        setCaseId(null);
-        setCaseName("");
-        setLeadName("");
-        setLeadPhone("");
-        setLeadEmail("");
-    }, [eventType]);
-
-    // ─── Effect: clear client/case/lead when switching to leave or reminder ─
     useEffect(() => {
         if (eventType !== EVENT_TYPE_LEAVE && eventType !== EVENT_TYPE_REMINDER) return;
         setIntakeMode(INTAKE_EXISTING);
@@ -297,15 +345,39 @@ export default function EventFormModal({ event, onSaved, onDeleted, onClose }) {
                 all_day: allDay,
                 manager_user_id: managerUserId,
                 manager_name: managerName || null,
-                // Existing-client fields (cleared when in lead mode)
-                client_user_id: isLeadMode ? null : clientUserId,
-                client_name: isLeadMode ? null : (clientName || null),
-                case_id: isLeadMode ? null : caseId,
-                // Lead fields
-                lead_name: isLeadMode ? (leadName.trim() || null) : null,
-                lead_phone: isLeadMode ? (leadPhone.trim() || null) : null,
-                lead_email: isLeadMode ? (leadEmail.trim() || null) : null,
             };
+
+            if (isLeadMode) {
+                Object.assign(payload, {
+                    client_user_id: null,
+                    client_name: null,
+                    case_id: null,
+                    lead_name: leadName.trim() || null,
+                    lead_phone: leadPhone.trim() || null,
+                    lead_email: leadEmail.trim() || null,
+                    lead_case_name: optionalConvertCaseName.trim() || null,
+                });
+            } else if (isClientScoped) {
+                Object.assign(payload, {
+                    client_user_id: clientUserId,
+                    client_name: clientName || null,
+                    case_id: caseId,
+                    lead_name: null,
+                    lead_phone: null,
+                    lead_email: null,
+                    lead_case_name: null,
+                });
+            } else {
+                Object.assign(payload, {
+                    client_user_id: null,
+                    client_name: null,
+                    case_id: null,
+                    lead_name: null,
+                    lead_phone: null,
+                    lead_email: null,
+                    lead_case_name: null,
+                });
+            }
 
             const res = isEdit
                 ? await calendarApi.updateEvent(event.id, payload)
@@ -344,33 +416,98 @@ export default function EventFormModal({ event, onSaved, onDeleted, onClose }) {
     };
 
     // ─── Lead → Client + Case conversion ──────────────────────────────────
+    const applyConvertResult = useCallback((ev, newClient, {
+        savedLeadName,
+        savedLeadPhone,
+        savedLeadEmail,
+        suggestedCaseName,
+        alreadyConverted = false,
+    }) => {
+        const clientId = ev.clientUserId || newClient.id || null;
+        const clientDisplayName = ev.clientName || newClient.name || savedLeadName || "";
+
+        setIntakeMode(INTAKE_EXISTING);
+        setLeadName("");
+        setLeadPhone("");
+        setLeadEmail("");
+        setClientUserId(clientId);
+        setClientName(clientDisplayName);
+        linkedClientLabelRef.current = clientDisplayName;
+        setCaseId(ev.caseId || null);
+        setCaseName(ev.caseName || "");
+        setOptionalConvertCaseName("");
+        setSuccessMsg(alreadyConverted
+            ? t("calendar.convertLeadAlreadyDone")
+            : t("calendar.convertLeadSuccess"));
+        onUpdated?.(ev);
+
+        if (ev.caseId) return;
+
+        setCaseFormDraft({
+            CaseName: suggestedCaseName || `תיק — ${clientDisplayName}`,
+            CustomerName: clientDisplayName,
+            CustomerMail: newClient.email || savedLeadEmail || "",
+            PhoneNumber: newClient.phone || savedLeadPhone || "",
+            UserId: clientId,
+            Users: clientId ? [{
+                UserId: clientId,
+                Name: clientDisplayName,
+                Email: newClient.email || savedLeadEmail || "",
+                PhoneNumber: newClient.phone || savedLeadPhone || "",
+            }] : [],
+            CaseManager: managerName || "",
+            CaseManagerId: managerUserId || "",
+        });
+    }, [managerName, managerUserId, onUpdated, t]);
+
+    const handleOpenCaseForm = () => {
+        const clientId = clientUserId || event?.clientUserId || null;
+        if (!clientId) return;
+        const clientDisplayName = clientName || event?.clientName || "";
+        const suggestedCaseName = optionalConvertCaseName.trim() || event?.leadCaseName || "";
+        setCaseFormDraft({
+            CaseName: suggestedCaseName || `תיק — ${clientDisplayName}`,
+            CustomerName: clientDisplayName,
+            CustomerMail: leadEmail || "",
+            PhoneNumber: leadPhone || "",
+            UserId: clientId,
+            Users: [{
+                UserId: clientId,
+                Name: clientDisplayName,
+                Email: leadEmail || "",
+                PhoneNumber: leadPhone || "",
+            }],
+            CaseManager: managerName || "",
+            CaseManagerId: managerUserId || "",
+        });
+    };
+
     const handleConvertLead = async () => {
         if (!isEdit) return;
         setConverting(true);
         setError("");
         setSuccessMsg("");
+        const savedLeadName = leadName;
+        const savedLeadPhone = leadPhone;
+        const savedLeadEmail = leadEmail;
+        const suggestedCaseName = optionalConvertCaseName.trim();
         try {
-            const res = await calendarApi.convertLead({
-                eventId: event.id,
-                case_name: optionalConvertCaseName.trim() || undefined,
-            });
+            const res = await calendarApi.convertLead({ eventId: event.id });
             if (res?.success && res?.data?.event) {
-                const ev = res.data.event;
-                const newClient = res.data.client || {};
-                const newCase = res.data.case || {};
-                // Refresh local state to reflect the linked client/case.
-                setIntakeMode(INTAKE_EXISTING);
-                setLeadName(""); setLeadPhone(""); setLeadEmail("");
-                setClientUserId(ev.clientUserId || newClient.id || null);
-                setClientName(ev.clientName || newClient.name || "");
-                setCaseId(ev.caseId || newCase.id || null);
-                setCaseName(ev.caseName || newCase.name || "");
-                setOptionalConvertCaseName("");
-                setSuccessMsg(t("calendar.convertLeadSuccess"));
-                // Bubble up so the parent calendar refreshes the row.
-                onSaved?.(ev);
+                applyConvertResult(res.data.event, res.data.client || {}, {
+                    savedLeadName,
+                    savedLeadPhone,
+                    savedLeadEmail,
+                    suggestedCaseName,
+                    alreadyConverted: !!res.data.alreadyConverted,
+                });
             } else {
-                setError(res?.data?.message || res?.message || t("calendar.convertLeadError"));
+                const code = res?.data?.code;
+                if (code === "PHONE_ALREADY_EXISTS") {
+                    setError(res?.data?.message || t("calendar.convertLeadPhoneExists"));
+                } else {
+                    setError(res?.data?.message || res?.message || t("calendar.convertLeadError"));
+                }
             }
         } catch (err) {
             setError(err?.response?.data?.message || t("calendar.convertLeadError"));
@@ -399,8 +536,8 @@ export default function EventFormModal({ event, onSaved, onDeleted, onClose }) {
                 const ev = res.data.event;
                 setCaseId(ev.caseId || null);
                 setCaseName(ev.caseName || "");
-                setSuccessMsg(newCaseId ? t("calendar.linkCaseSuccess") : t("calendar.linkCaseSuccess"));
-                onSaved?.(ev);
+                setSuccessMsg(newCaseId ? t("calendar.linkCaseSuccess") : t("calendar.unlinkCaseSuccess"));
+                onUpdated?.(ev);
             } else {
                 setError(res?.data?.message || res?.message || t("calendar.linkCaseError"));
             }
@@ -417,12 +554,33 @@ export default function EventFormModal({ event, onSaved, onDeleted, onClose }) {
             ? customers.find((u) => u.Name?.trim() === selectedCustomerName?.trim())
             : null);
         if (!selectedUser) return;
-        setClientName(selectedUser.Name || selectedCustomerName || "");
+        const displayName = selectedUser.Name?.trim() || selectedCustomerName?.trim() || "";
+        setClientName(displayName);
         setClientUserId(selectedUser.UserId || null);
+        linkedClientLabelRef.current = displayName;
         // Reset case selection — it must come from the new client's case list.
         setCaseId(null);
         setCaseName("");
     };
+
+    const handleClientNameSearch = useCallback((name) => {
+        setClientName(name);
+        const trimmed = String(name ?? "").trim();
+        const linkedTrimmed = String(linkedClientLabelRef.current ?? "").trim();
+
+        if (clientUserId && trimmed !== linkedTrimmed) {
+            setClientUserId(null);
+            setCaseId(null);
+            setCaseName("");
+        }
+
+        if (clientUserId && trimmed === linkedTrimmed) {
+            searchCustomers("");
+            return;
+        }
+
+        searchCustomers(trimmed);
+    }, [clientUserId, searchCustomers]);
 
     const handleManagerSelected = (selectedManagerName, resultItem) => {
         const selectedAdmin = resultItem || (Array.isArray(admins)
@@ -438,10 +596,48 @@ export default function EventFormModal({ event, onSaved, onDeleted, onClose }) {
     const showIntakeToggle = !isInternalScopedType;
     const showLeadFields = showIntakeToggle && intakeMode === INTAKE_LEAD;
     const showExistingClientFields = showIntakeToggle && intakeMode === INTAKE_EXISTING;
-    const hasLeadDataPersisted = isEdit && !clientUserId && (event?.leadName || event?.leadPhone || event?.leadEmail);
+    const linkedClientId = clientUserId || event?.clientUserId || null;
+    const linkedCaseId = caseId || event?.caseId || null;
+    const hasLeadDataPersisted = isEdit
+        && !linkedClientId
+        && !linkedCaseId
+        && (leadName || leadPhone || leadEmail);
     const showConvertCta = hasLeadDataPersisted && !converting;
-    const showCaseLinker = showExistingClientFields && !!clientUserId;
+    const showOpenCaseCta = isEdit && !!linkedClientId && !linkedCaseId && !showConvertCta && !caseFormDraft;
+    const showCaseLinker = showExistingClientFields && !!linkedClientId;
     const showConflictBanner = !isInternalScopedType && (conflictState.hasConflict || conflictState.hasLeaveConflict);
+
+    if (caseFormDraft) {
+        return (
+            <SimpleContainer className="lw-eventFormModal lw-eventFormModal--caseForm">
+                <SimpleContainer className="lw-eventFormModal__header">
+                    <Text24>{t("calendar.createCaseFromLead")}</Text24>
+                    {successMsg && (
+                        <Text12 color="#276749">{successMsg}</Text12>
+                    )}
+                </SimpleContainer>
+                <SimpleScrollView className="lw-eventFormModal__caseFormScroll">
+                    <CaseFullView
+                        initialDraft={caseFormDraft}
+                        closePopUpFunction={() => setCaseFormDraft(null)}
+                        onFailureFunction={(err) => setError(err?.data?.message || err?.message || t("calendar.linkCaseError"))}
+                        onCaseCreated={async (createdCaseId) => {
+                            const linkRes = await calendarApi.linkCase(event.id, createdCaseId);
+                            if (!linkRes?.success || !linkRes?.data?.event) {
+                                throw new Error(linkRes?.data?.message || linkRes?.message || t("calendar.linkCaseError"));
+                            }
+                            const linked = linkRes.data.event;
+                            setCaseId(linked.caseId || createdCaseId);
+                            setCaseName(linked.caseName || "");
+                            setSuccessMsg(t("calendar.linkCaseSuccess"));
+                            onUpdated?.(linked);
+                        }}
+                    />
+                    {error && <Text14 color="#E53E3E">{error}</Text14>}
+                </SimpleScrollView>
+            </SimpleContainer>
+        );
+    }
 
     return (
         <SimpleContainer className="lw-eventFormModal">
@@ -594,13 +790,7 @@ export default function EventFormModal({ event, onSaved, onDeleted, onClose }) {
                             <SearchInput
                                 title={t("calendar.client")}
                                 value={clientName}
-                                onSearch={(name) => {
-                                    setClientName(name);
-                                    setClientUserId(null);
-                                    setCaseId(null);
-                                    setCaseName("");
-                                    searchCustomers(name);
-                                }}
+                                onSearch={handleClientNameSearch}
                                 isPerforming={isSearchingCustomers}
                                 queryResult={customers}
                                 getButtonTextFunction={(item) => item.Name}
@@ -692,24 +882,35 @@ export default function EventFormModal({ event, onSaved, onDeleted, onClose }) {
                                 onChange={(e) => setLeadEmail(e.target.value)}
                                 timeToWaitInMilli={0}
                             />
-                        </SimpleContainer>
-                    )}
-
-                    {/* ─── Convert-lead CTA (edit mode + has lead data) ─── */}
-                    {showConvertCta && (
-                        <SimpleContainer className="lw-eventFormModal__convertBox">
                             <SimpleInput
                                 title={t("calendar.convertLeadOptionalCaseName")}
                                 value={optionalConvertCaseName}
                                 onChange={(e) => setOptionalConvertCaseName(e.target.value)}
                                 timeToWaitInMilli={0}
                             />
+                        </SimpleContainer>
+                    )}
+
+                    {/* ─── Convert-lead CTA (edit mode + has lead data) ─── */}
+                    {showConvertCta && (
+                        <SimpleContainer className="lw-eventFormModal__convertBox">
                             <PrimaryButton
                                 onPress={handleConvertLead}
                                 isPerforming={converting}
                                 className="lw-eventFormModal__convertBtn"
                             >
                                 {converting ? t("calendar.convertingLead") : t("calendar.convertLeadCta")}
+                            </PrimaryButton>
+                        </SimpleContainer>
+                    )}
+
+                    {showOpenCaseCta && (
+                        <SimpleContainer className="lw-eventFormModal__convertBox">
+                            <PrimaryButton
+                                onPress={handleOpenCaseForm}
+                                className="lw-eventFormModal__convertBtn"
+                            >
+                                {t("calendar.openCaseFormCta")}
                             </PrimaryButton>
                         </SimpleContainer>
                     )}

@@ -1,0 +1,58 @@
+@use '../../../styles/variables' as v;
+@use '../../../styles/mixins' as m;
+
+.lw-personalSyncModal {
+    flex-direction: column;
+    min-inline-size: min(420px, 90vw);
+    max-inline-size: 520px;
+    max-block-size: calc(85vh - 2rem);
+    overflow: hidden;
+    margin: 0 auto;
+}
+
+.lw-personalSyncModal__scroll {
+    flex: 1 1 auto;
+    min-block-size: 0;
+    flex-direction: column;
+    gap: v.$space-4;
+    padding-block-end: v.$space-2;
+}
+
+.lw-personalSyncModal__header {
+    flex-direction: column;
+    gap: v.$space-2;
+    padding-block-end: v.$space-3;
+    border-block-end: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.lw-personalSyncModal__section {
+    flex-direction: column;
+    gap: v.$space-3;
+}
+
+.lw-personalSyncModal__section--border {
+    padding-block-start: v.$space-3;
+    border-block-start: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.lw-personalSyncModal__icalRow {
+    flex-direction: column;
+    gap: v.$space-3;
+}
+
+.lw-personalSyncModal__icalUrl {
+    background: #EDF2F7;
+    border-radius: 8px;
+    padding: v.$space-3;
+}
+
+.lw-personalSyncModal__btnRow {
+    @include m.row(v.$space-3);
+    flex-wrap: wrap;
+}
+
+.lw-personalSyncModal__footer {
+    padding-block-start: v.$space-3;
+    border-block-start: 1px solid rgba(226, 232, 240, 0.8);
+    justify-content: flex-end;
+}

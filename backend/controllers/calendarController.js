@@ -121,6 +121,7 @@ function _sanitizeEvent(row) {
         leadName: row.lead_name ?? null,
         leadPhone: row.lead_phone ?? null,
         leadEmail: row.lead_email ?? null,
+        leadCaseName: row.lead_case_name ?? null,
         lastReminderSentAt: row.last_reminder_sent_at ?? null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
@@ -214,6 +215,12 @@ async function _validateWorkingHours(startTime, endTime, allDay) {
     }
     return { ok: true };
 }
+
+/** Firm policy — lawyers may connect/sync Google only when enabled by admin. */
+async function _isGoogleSyncEnabledForFirm() {
+    const raw = await settingsService.getSetting('calendar', 'GOOGLE_SYNC_ENABLED', 'true');
+    return String(raw ?? 'true').trim().toLowerCase() !== 'false';
+}
 // ──────────────────────────────────────────────────────────────────────────────
 
 
@@ -228,7 +235,7 @@ async function _validateWorkingHours(startTime, endTime, allDay) {
  *
  * Query parameters (all optional):
  *   • scope         'mine' (default) | 'firm' — firm-wide view of all lawyers
- *   • lawyer_id     int   — pin to one owner (overrides scope)
+ *   • lawyer_id     int   — pin to owner or manager (overrides scope)
  *   • client_id     int   — events linked to this client_user_id
  *   • case_id       int   — events for this case
  *   • event_type    'appointment' | 'leave' | 'hearing' | 'reminder'
@@ -265,7 +272,16 @@ const listEvents = async (req, res) => {
         return res.status(400).json({ message: 'מזהה עורך דין לא תקין' });
     }
     if (requestedLawyerId) {
-        conditions.push(`ce.owner_id = $${idx++}`);
+        conditions.push(`(
+            ce.manager_user_id = $${idx}
+            OR ce.owner_id = $${idx}
+            OR (
+                ce.manager_user_id IS NULL
+                AND ce.manager_name IS NOT NULL
+                AND ce.manager_name = (SELECT name FROM users WHERE userid = $${idx})
+            )
+        )`);
+        idx++;
         params.push(requestedLawyerId);
     } else if (scope !== 'firm') {
         conditions.push(`ce.owner_id = $${idx++}`);
@@ -375,6 +391,7 @@ const createEvent = async (req, res) => {
         lead_name,
         lead_phone,
         lead_email,
+        lead_case_name,
     } = req.body;
 
     if (!title || !start_time || !end_time) {
@@ -389,14 +406,21 @@ const createEvent = async (req, res) => {
         return res.status(400).json({ message: 'סוג אירוע לא תקין' });
     }
 
-    const caseId = case_id ? parseInt(case_id, 10) : null;
+    // Lead vs client mutual exclusion (mirrors DB CHECK for a clearer error)
+    const hasLead = !!(lead_name || lead_phone || lead_email);
+    let caseId = case_id ? parseInt(case_id, 10) : null;
     if (case_id && !Number.isFinite(caseId)) {
         return res.status(400).json({ message: 'מזהה תיק לא תקין' });
     }
-    const clientUserId = client_user_id ? parseInt(client_user_id, 10) : null;
+    let clientUserId = client_user_id ? parseInt(client_user_id, 10) : null;
     if (client_user_id && !Number.isFinite(clientUserId)) {
         return res.status(400).json({ message: 'מזהה לקוח לא תקין' });
     }
+    if (hasLead) {
+        caseId = null;
+        clientUserId = null;
+    }
+    const leadCaseName = lead_case_name ? String(lead_case_name).trim() : null;
     const managerUserId = manager_user_id ? parseInt(manager_user_id, 10) : null;
     if (manager_user_id && !Number.isFinite(managerUserId)) {
         return res.status(400).json({ message: 'מזהה מנהל לא תקין' });
@@ -404,9 +428,6 @@ const createEvent = async (req, res) => {
     if (color && !/^#[0-9a-fA-F]{6}$/.test(String(color))) {
         return res.status(400).json({ message: 'צבע אירוע לא תקין' });
     }
-
-    // Lead vs client mutual exclusion (mirrors DB CHECK for a clearer error)
-    const hasLead = !!(lead_name || lead_phone || lead_email);
     const hasClientLink = !!(clientUserId || caseId);
     if (hasLead && hasClientLink) {
         return res.status(400).json({
@@ -432,8 +453,8 @@ const createEvent = async (req, res) => {
                (owner_id, case_id, title, description, location, event_type,
                 client_user_id, client_name, manager_user_id, manager_name, color,
                 start_time, end_time, all_day, rrule,
-                lead_name, lead_phone, lead_email)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+                lead_name, lead_phone, lead_email, lead_case_name)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
              RETURNING *`,
             [
                 userId,
@@ -443,7 +464,7 @@ const createEvent = async (req, res) => {
                 location || null,
                 eventType,
                 clientUserId,
-                client_name || null,
+                hasLead ? null : (client_name || null),
                 managerUserId,
                 manager_name || null,
                 color || null,
@@ -454,6 +475,7 @@ const createEvent = async (req, res) => {
                 lead_name ? String(lead_name).trim() : null,
                 lead_phone ? String(lead_phone).trim() : null,
                 lead_email ? String(lead_email).trim().toLowerCase() : null,
+                hasLead ? (leadCaseName || null) : null,
             ]
         );
         return res.status(201).json({ event: _sanitizeEvent(rows[0]) });
@@ -522,6 +544,7 @@ const updateEvent = async (req, res) => {
         lead_name,
         lead_phone,
         lead_email,
+        lead_case_name,
     } = req.body;
 
     if (start_time && end_time && new Date(end_time) < new Date(start_time)) {
@@ -569,10 +592,22 @@ const updateEvent = async (req, res) => {
         const nextLeadEmail = lead_email !== undefined
             ? (lead_email ? String(lead_email).trim().toLowerCase() : null)
             : ev.lead_email;
+        const nextLeadCaseName = lead_case_name !== undefined
+            ? (lead_case_name ? String(lead_case_name).trim() : null)
+            : ev.lead_case_name;
 
         // Lead vs client mutual exclusion (mirrors DB CHECK for a clearer error)
         const hasLead = !!(nextLeadName || nextLeadPhone || nextLeadEmail);
-        const hasClientLink = !!(nextClientUserId || nextCaseId);
+        let resolvedClientUserId = nextClientUserId;
+        let resolvedCaseId = nextCaseId;
+        if (hasLead) {
+            resolvedClientUserId = null;
+            resolvedCaseId = null;
+        }
+        const resolvedClientName = hasLead
+            ? null
+            : (client_name !== undefined ? (client_name || null) : ev.client_name);
+        const hasClientLink = !!(resolvedClientUserId || resolvedCaseId);
         if (hasLead && hasClientLink) {
             return res.status(400).json({
                 message: 'לא ניתן לשמור פרטי ליד לצד תיק/לקוח קיים',
@@ -602,16 +637,17 @@ const updateEvent = async (req, res) => {
                lead_name              = $15,
                lead_phone             = $16,
                lead_email             = $17,
-               last_reminder_sent_at  = $18
-             WHERE id = $19
+               lead_case_name         = $18,
+               last_reminder_sent_at  = $19
+             WHERE id = $20
              RETURNING *`,
             [
                 (title || ev.title).trim(),
                 description !== undefined ? description : ev.description,
                 location !== undefined ? location : ev.location,
                 newEventType,
-                nextClientUserId,
-                client_name !== undefined ? client_name : ev.client_name,
+                resolvedClientUserId,
+                resolvedClientName,
                 manager_user_id !== undefined ? (parseInt(manager_user_id, 10) || null) : ev.manager_user_id,
                 manager_name !== undefined ? manager_name : ev.manager_name,
                 color !== undefined ? (color || null) : ev.color,
@@ -619,10 +655,11 @@ const updateEvent = async (req, res) => {
                 end_time || ev.end_time,
                 newAllDay,
                 rrule !== undefined ? rrule : ev.rrule,
-                nextCaseId,
+                resolvedCaseId,
                 nextLeadName,
                 nextLeadPhone,
                 nextLeadEmail,
+                hasLead ? nextLeadCaseName : null,
                 timeChanged ? null : ev.last_reminder_sent_at,
                 eventId,
             ]
@@ -804,6 +841,12 @@ const getGoogleAuthUrl = async (req, res) => {
     if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
         return res.status(503).json({ message: 'Google Calendar integration not configured' });
     }
+    if (!(await _isGoogleSyncEnabledForFirm())) {
+        return res.status(403).json({
+            message: 'סנכרון Google Calendar מושבת בהגדרות המשרד',
+            code: 'GOOGLE_SYNC_DISABLED',
+        });
+    }
 
     try {
         const oauth2Client = _buildOAuth2Client();
@@ -850,6 +893,11 @@ const handleGoogleCallback = async (req, res) => {
     }
 
     try {
+        if (!(await _isGoogleSyncEnabledForFirm())) {
+            console.warn('[calendarController] Google callback rejected: firm sync disabled');
+            return res.redirect(errorRedirect);
+        }
+
         const oauth2Client = _buildOAuth2Client();
         const { tokens } = await oauth2Client.getToken(code);
         oauth2Client.setCredentials(tokens);
@@ -894,14 +942,20 @@ const handleGoogleCallback = async (req, res) => {
 const getGoogleStatus = async (req, res) => {
     const userId = req.user.UserId;
     try {
+        const googleSyncAllowed = await _isGoogleSyncEnabledForFirm();
         const { rows } = await pool.query(
             'SELECT google_connected, google_email, google_scope FROM user_calendar_tokens WHERE user_id = $1',
             [userId]
         );
         if (!rows.length || !rows[0].google_connected) {
-            return res.json({ connected: false });
+            return res.json({ connected: false, googleSyncAllowed });
         }
-        return res.json({ connected: true, email: rows[0].google_email, scope: rows[0].google_scope });
+        return res.json({
+            connected: true,
+            email: rows[0].google_email,
+            scope: rows[0].google_scope,
+            googleSyncAllowed,
+        });
     } catch (err) {
         console.error('[calendarController] getGoogleStatus error:', err.message);
         return res.status(500).json({ message: 'שגיאה פנימית בשרת' });
@@ -960,6 +1014,12 @@ const disconnectGoogle = async (req, res) => {
 const syncGoogleEvents = async (req, res) => {
     if (!googleapis) {
         return res.status(503).json({ message: 'Google Calendar integration not configured' });
+    }
+    if (!(await _isGoogleSyncEnabledForFirm())) {
+        return res.status(403).json({
+            message: 'סנכרון Google Calendar מושבת בהגדרות המשרד',
+            code: 'GOOGLE_SYNC_DISABLED',
+        });
     }
 
     const userId = req.user.UserId;
@@ -1247,11 +1307,16 @@ const linkCase = async (req, res) => {
         }
 
         const { rows } = await pool.query(
-            `UPDATE calendar_events
-             SET    case_id    = $1,
-                    updated_at = NOW()
-             WHERE  id = $2
-             RETURNING *`,
+            `WITH updated AS (
+                UPDATE calendar_events
+                SET    case_id    = $1,
+                       updated_at = NOW()
+                WHERE  id = $2
+                RETURNING *
+             )
+             SELECT u.*, c.casename AS case_name
+             FROM   updated u
+             LEFT JOIN cases c ON c.caseid = u.case_id`,
             [caseId, eventId]
         );
         return res.json({ event: _sanitizeEvent(rows[0]) });
@@ -1269,17 +1334,14 @@ const linkCase = async (req, res) => {
  *   1. SELECT … FOR UPDATE on the event (locks against concurrent converters)
  *   2. Dedupe an existing client by normalized phone (regexp_replace '\D' → '')
  *   3. INSERT into users when no match (passwordhash NULL, role 'User')
- *   4. INSERT a rapid case shell into cases (stage=1, casemanager = owning lawyer)
- *   5. INSERT into case_users junction (idempotent via ON CONFLICT)
- *   6. UPDATE the event: attach case_id + client_user_id, null out lead_*
+ *   4. UPDATE the event: attach client_user_id + client_name, null out lead_* (no auto case shell)
  *
- * Body: { eventId, case_name? }
+ * Body: { eventId }
  */
 const convertLead = async (req, res) => {
     const userId = req.user.UserId;
     const userRole = req.user.Role;
     const evId = parseInt(req.body?.eventId, 10);
-    const requestedCaseName = req.body?.case_name ? String(req.body.case_name).trim() : null;
 
     if (!Number.isFinite(evId)) {
         return res.status(400).json({ message: 'מזהה אירוע לא תקין' });
@@ -1292,7 +1354,7 @@ const convertLead = async (req, res) => {
         // 1. Lock the event row
         const { rows: evRows } = await client.query(
             `SELECT id, owner_id, case_id, client_user_id,
-                    lead_name, lead_phone, lead_email, title
+                    lead_name, lead_phone, lead_email, lead_case_name, title
              FROM   calendar_events
              WHERE  id = $1
              FOR UPDATE`,
@@ -1308,11 +1370,31 @@ const convertLead = async (req, res) => {
             await client.query('ROLLBACK');
             return res.status(403).json({ message: 'אין הרשאה לבצע פעולה זו' });
         }
-        if (ev.case_id) {
+        if (ev.client_user_id) {
+            const { rows: userRows } = await client.query(
+                `SELECT userid, name, email, phonenumber
+                 FROM   users
+                 WHERE  userid = $1`,
+                [ev.client_user_id]
+            );
+            const { rows: freshEvent } = await client.query(
+                `SELECT ce.*, c.casename AS case_name
+                 FROM   calendar_events ce
+                 LEFT JOIN cases c ON c.caseid = ce.case_id
+                 WHERE  ce.id = $1`,
+                [evId]
+            );
             await client.query('ROLLBACK');
-            return res.status(409).json({
-                message: 'אירוע זה כבר משויך לתיק קיים',
-                code: 'ALREADY_CONVERTED',
+            const u = userRows[0] || {};
+            return res.json({
+                event: _sanitizeEvent(freshEvent[0] || ev),
+                client: {
+                    id: ev.client_user_id,
+                    name: u.name || ev.client_name || null,
+                    email: u.email || null,
+                    phone: u.phonenumber || null,
+                },
+                alreadyConverted: true,
             });
         }
         if (!ev.lead_name && !ev.lead_phone && !ev.lead_email) {
@@ -1330,7 +1412,7 @@ const convertLead = async (req, res) => {
         let clientDisplayName = ev.lead_name || null;
         if (phoneDigits) {
             const { rows: existing } = await client.query(
-                `SELECT userid, name
+                `SELECT userid, name, email, phonenumber
                  FROM   users
                  WHERE  regexp_replace(phonenumber, '\\D', '', 'g') = $1
                  LIMIT 1`,
@@ -1339,6 +1421,22 @@ const convertLead = async (req, res) => {
             if (existing.length) {
                 clientUserId = existing[0].userid;
                 clientDisplayName = existing[0].name || clientDisplayName;
+            }
+        }
+
+        if (!clientUserId && ev.lead_email) {
+            const { rows: existingEmail } = await client.query(
+                `SELECT userid, name, email, phonenumber
+                 FROM   users
+                 WHERE  role = 'User'
+                   AND  email IS NOT NULL
+                   AND  lower(trim(email)) = lower(trim($1))
+                 LIMIT 1`,
+                [ev.lead_email]
+            );
+            if (existingEmail.length) {
+                clientUserId = existingEmail[0].userid;
+                clientDisplayName = existingEmail[0].name || clientDisplayName;
             }
         }
 
@@ -1361,57 +1459,44 @@ const convertLead = async (req, res) => {
             clientDisplayName = ins[0].name;
         }
 
-        // 4. Resolve lawyer display name for casemanager column
-        const { rows: lawyerRows } = await client.query(
-            `SELECT name FROM users WHERE userid = $1 LIMIT 1`,
-            [ev.owner_id]
-        );
-        const lawyerName = lawyerRows[0]?.name || null;
-
-        // 5. Rapid case shell
-        const caseName = requestedCaseName || `תיק חדש — ${clientDisplayName || 'לקוח חדש'}`;
-        const { rows: caseRows } = await client.query(
-            `INSERT INTO cases (
-                casename, casetypeid, userid, companyname, currentstage,
-                isclosed, istagged, whatsappgrouplink, createdat, updatedat,
-                casemanager, casemanagerid, estimatedcompletiondate, licenseexpirydate, haslicenseexpiry
-             )
-             VALUES ($1, NULL, $2, NULL, 1, FALSE, FALSE, NULL, NOW(), NOW(), $3, $4, NULL, NULL, FALSE)
-             RETURNING caseid`,
-            [caseName, clientUserId, lawyerName, ev.owner_id]
-        );
-        const newCaseId = caseRows[0].caseid;
-
-        // 6. Junction — client ↔ case
-        await client.query(
-            `INSERT INTO case_users (caseid, userid)
-             VALUES ($1, $2)
-             ON CONFLICT (caseid, userid) DO NOTHING`,
-            [newCaseId, clientUserId]
-        );
-
-        // 7. Promote the event — attach case+client and scrub lead breadcrumbs.
-        //    The chk_calendar_events_lead_xor_client CHECK is the safety net here.
+        // 4. Promote the event — attach client only; case is created via the standard case form.
         const { rows: updated } = await client.query(
             `UPDATE calendar_events
-             SET    case_id        = $1,
-                    client_user_id = $2,
-                    client_name    = $3,
+             SET    client_user_id = $1,
+                    client_name    = $2,
                     lead_name      = NULL,
                     lead_phone     = NULL,
                     lead_email     = NULL,
+                    lead_case_name = NULL,
                     updated_at     = NOW()
-             WHERE  id = $4
+             WHERE  id = $3
              RETURNING *`,
-            [newCaseId, clientUserId, clientDisplayName, evId]
+            [clientUserId, clientDisplayName, evId]
+        );
+
+        const { rows: joined } = await client.query(
+            `SELECT ce.*, c.casename AS case_name
+             FROM   calendar_events ce
+             LEFT JOIN cases c ON c.caseid = ce.case_id
+             WHERE  ce.id = $1`,
+            [evId]
+        );
+
+        const { rows: clientRow } = await client.query(
+            `SELECT userid, name, email, phonenumber FROM users WHERE userid = $1`,
+            [clientUserId]
         );
 
         await client.query('COMMIT');
 
         return res.json({
-            event: _sanitizeEvent(updated[0]),
-            client: { id: clientUserId, name: clientDisplayName },
-            case: { id: newCaseId, name: caseName },
+            event: _sanitizeEvent(joined[0] || updated[0]),
+            client: {
+                id: clientUserId,
+                name: clientDisplayName,
+                email: clientRow[0]?.email || ev.lead_email || null,
+                phone: clientRow[0]?.phonenumber || ev.lead_phone || null,
+            },
         });
     } catch (err) {
         try { await client.query('ROLLBACK'); } catch (_) { /* ignore */ }

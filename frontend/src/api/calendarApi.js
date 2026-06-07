@@ -44,9 +44,9 @@ const calendarApi = {
         return await ApiUtils.patch(`${base}/${eventId}/link-case`, { case_id: caseId });
     },
 
-    /** Atomic lead → client + case promotion. */
-    convertLead: async ({ eventId, case_name } = {}) => {
-        return await ApiUtils.post(`${base}/convert-lead`, { eventId, case_name });
+    /** Promote lead to registered client; case is created via CaseFullView afterward. */
+    convertLead: async ({ eventId } = {}) => {
+        return await ApiUtils.post(`${base}/convert-lead`, { eventId });
     },
 
     /** Dashboard widget — today + tomorrow events */

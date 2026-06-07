@@ -8,9 +8,42 @@
     max-block-size: 90vh;
     overflow: hidden;
     margin: 0 auto;
+
+    &--caseForm {
+        min-inline-size: min(640px, 92vw);
+        max-inline-size: min(960px, 92vw);
+        width: 100%;
+        block-size: calc(85vh - 2rem);
+        max-block-size: calc(85vh - 2rem);
+        overflow: hidden;
+
+        .lw-eventFormModal__header {
+            flex: 0 0 auto;
+        }
+
+        .lw-eventFormModal__caseFormScroll {
+            flex: 1 1 auto;
+            min-block-size: 0;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .lw-caseFullView {
+            min-inline-size: 0;
+            max-inline-size: 100%;
+        }
+
+        // Single scroll region — avoid nested non-scrolling clip
+        .lw-caseFullView > .lw-simpleScrollView {
+            overflow: visible;
+            flex: none;
+            min-block-size: unset;
+        }
+    }
 }
 
 .lw-eventFormModal__header {
+    flex-direction: column;
     padding-block-end: v.$space-4;
     border-block-end: 1px solid rgba(226, 232, 240, 0.8);
     margin-block-end: v.$space-4;

@@ -3,9 +3,11 @@
 
 .lw-caseFullView {
   display: flex;
+  flex-direction: column;
   width: 100%;
   box-sizing: border-box;
-  min-inline-size: 0;
+  min-inline-size: min(640px, 92vw);
+  max-inline-size: 960px;
 }
 
 .lw-caseFullView__row {

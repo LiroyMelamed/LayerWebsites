@@ -32,7 +32,6 @@ import { images } from "../../assets/images/images";
 import ConfirmationDialog from "../../components/styledComponents/popups/ConfirmationDialog";
 import { AdminStackName } from "../../navigation/AdminStack";
 import { MainScreenName } from "../mainScreen/MainScreen";
-import SyncSettingsPanel from "../calendarScreen/components/SyncSettingsPanel";
 
 import "./PlatformSettingsScreen.scss";
 
@@ -1486,7 +1485,7 @@ export default function PlatformSettingsScreen() {
             );
         }
 
-        // Calendar tab — working days/hours + reminders + sync (Google/iCal)
+        // Calendar tab — firm-wide working days/hours, reminders, sync policy
         if (activeTab === "calendar") {
             const calSettings = settings["calendar"] || {};
             const getVal = (key, defaultVal = "") => {
@@ -1574,6 +1573,34 @@ export default function PlatformSettingsScreen() {
                         </SimpleContainer>
                     </SimpleCard>
 
+                    {/* Google sync firm policy */}
+                    <SimpleCard className="lw-platformSettings__card">
+                        <TextBold18>סנכרון Google Calendar</TextBold18>
+                        <Text12 className="lw-platformSettings__settingDescription">
+                            הגדרה ברמת המשרד. חיבור Google, ניתוק וסנכרון ידני מתבצעים על ידי כל עורך דין
+                            ממסך היומן תחת &quot;סנכרון אישי&quot; — לא מכאן.
+                        </Text12>
+                        <SimpleContainer className="lw-platformSettings__settingsList">
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">
+                                        {t("calendar.googleSyncFirmEnabled")}
+                                    </TextBold14>
+                                    <Text12 className="lw-platformSettings__settingDescription">
+                                        {t("calendar.googleSyncFirmEnabledHint")}
+                                    </Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "boolean" }}
+                                        value={getVal("GOOGLE_SYNC_ENABLED", "true")}
+                                        onChange={(val) => handleChange("GOOGLE_SYNC_ENABLED", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                        </SimpleContainer>
+                    </SimpleCard>
+
                     {/* Reminders */}
                     <SimpleCard className="lw-platformSettings__card">
                         <TextBold18>תזכורות יומן</TextBold18>
@@ -1607,9 +1634,6 @@ export default function PlatformSettingsScreen() {
                             </SimpleContainer>
                         </SimpleContainer>
                     </SimpleCard>
-
-                    {/* Sync (Google / iCal) */}
-                    <SyncSettingsPanel />
                 </SimpleContainer>
             );
         }

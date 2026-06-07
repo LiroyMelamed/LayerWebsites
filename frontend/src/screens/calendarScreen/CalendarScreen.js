@@ -15,9 +15,11 @@ import SimpleButton from "../../components/simpleComponents/SimpleButton";
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
+import SearchInput from "../../components/specializedComponents/containers/SearchInput";
 import { Text24, Text14, Text12, TextBold14 } from "../../components/specializedComponents/text/AllTextKindFile";
 import { usePopup } from "../../providers/PopUpProvider";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
+import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import { images } from "../../assets/images/images";
 import { AdminStackName } from "../../navigation/AdminStack";
 import { MainScreenName } from "../mainScreen/MainScreen";
@@ -30,7 +32,9 @@ import { customersApi } from "../../api/customersApi";
 import casesApi from "../../api/casesApi";
 
 import EventFormModal from "./components/EventFormModal";
-import { colorForKey, leaveColor, buildLawyerLegend } from "./utils/lawyerColors";
+import PersonalSyncModal from "./components/PersonalSyncModal";
+import { colorForKey, colorKeyForEvent, leaveColor, buildLawyerLegend } from "./utils/lawyerColors";
+import { buildNewEventPrefill } from "./utils/eventDefaults";
 
 import "./CalendarScreen.scss";
 
@@ -43,6 +47,21 @@ const SCOPE_FIRM = "firm";
 const EVENT_TYPE_ALL = "all";
 const EVENT_TYPE_APPT = "appointment";
 const EVENT_TYPE_LEAVE = "leave";
+const EVENT_TYPE_HEARING = "hearing";
+const EVENT_TYPE_REMINDER = "reminder";
+
+const EVENT_TYPE_FILTER_OPTIONS = [
+    { v: EVENT_TYPE_ALL, labelKey: "calendar.eventTypeAll" },
+    { v: EVENT_TYPE_APPT, labelKey: "calendar.eventTypeAppointment" },
+    { v: EVENT_TYPE_LEAVE, labelKey: "calendar.eventTypeLeave" },
+    { v: EVENT_TYPE_HEARING, labelKey: "calendar.eventTypeHearing" },
+    { v: EVENT_TYPE_REMINDER, labelKey: "calendar.eventTypeReminder" },
+];
+
+function _eventTypeFilterLabel(eventType, t) {
+    const hit = EVENT_TYPE_FILTER_OPTIONS.find((opt) => opt.v === eventType);
+    return hit ? t(hit.labelKey) : eventType;
+}
 
 // Map a raw calendar_events row → FullCalendar EventInput. The scope drives
 // whether we color by lawyer (firm view) or by event.color (personal view).
@@ -77,8 +96,9 @@ function buildFullCalendarEvent(ev, { scope }) {
             : /(דיון|court|hearing)/i.test(text) ? "#B83280"
                 : "#2A4365");
 
+    // Firm view: color by manager (מנהל) so legend matches who handles the event.
     const color = scope === SCOPE_FIRM
-        ? colorForKey(ev?.ownerId ?? ev?.ownerName ?? ev?.id)
+        ? colorForKey(colorKeyForEvent(ev))
         : personalInferred;
 
     return {
@@ -100,6 +120,19 @@ function _currentRole() {
     catch { return ""; }
 }
 function _isFirmManager(role) { return role && role !== "User"; }
+
+/** HH:MM pill label for the FullCalendar now-indicator axis. */
+function _formatNowBadgeTime(date) {
+    const h = String(date.getHours()).padStart(2, "0");
+    const m = String(date.getMinutes()).padStart(2, "0");
+    return `${h}:${m}`;
+}
+
+/** Stable React key — forces modal remount so client/case state never leaks between events. */
+function _eventFormModalKey(event) {
+    if (event?.id != null) return `edit-${event.id}`;
+    return `create-${event?.startTime || "blank"}-${event?.endTime || "blank"}`;
+}
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 export default function CalendarScreen() {
@@ -142,10 +175,27 @@ export default function CalendarScreen() {
 
     // ── Reference data for filter panel ────────────────────────────────────
     const [lawyers, setLawyers] = useState([]);
-    const [clientQuery, setClientQuery] = useState("");
-    const [clientResults, setClientResults] = useState([]);
-    const [allCases, setAllCases] = useState([]);
-    const [caseQuery, setCaseQuery] = useState("");
+    const [managerFilterLabel, setManagerFilterLabel] = useState("");
+    const [clientFilterLabel, setClientFilterLabel] = useState("");
+    const [caseFilterLabel, setCaseFilterLabel] = useState("");
+
+    const {
+        result: adminResults,
+        isPerforming: isSearchingAdmins,
+        performRequest: searchAdmins,
+    } = useAutoHttpRequest(adminApi.getAdminByName, { onFailure: () => { } });
+
+    const {
+        result: customerResults,
+        isPerforming: isSearchingCustomers,
+        performRequest: searchCustomers,
+    } = useAutoHttpRequest(customersApi.getCustomersByName, { onFailure: () => { } });
+
+    const {
+        result: caseResults,
+        isPerforming: isSearchingCases,
+        performRequest: searchCases,
+    } = useAutoHttpRequest(casesApi.getCaseByName, { onFailure: () => { } });
 
     // ── Google callback toast ──────────────────────────────────────────────
     const [googleMsg, setGoogleMsg] = useState("");
@@ -173,35 +223,6 @@ export default function CalendarScreen() {
         })();
         return () => { cancelled = true; };
     }, [canUseFirmView]);
-
-    // ── Load case list once (filter dropdown) ──────────────────────────────
-    useEffect(() => {
-        let cancelled = false;
-        (async () => {
-            try {
-                const res = await casesApi.getAllCases();
-                const list = res?.data?.cases || res?.data || [];
-                if (!cancelled && Array.isArray(list)) setAllCases(list);
-            } catch { /* swallow */ }
-        })();
-        return () => { cancelled = true; };
-    }, []);
-
-    // ── Debounced client search ─────────────────────────────────────────────
-    useEffect(() => {
-        if (!clientQuery || clientQuery.trim().length < 2) {
-            setClientResults([]);
-            return undefined;
-        }
-        const handle = setTimeout(async () => {
-            try {
-                const res = await customersApi.getCustomersByName(clientQuery.trim());
-                const list = res?.data?.customers || res?.data || [];
-                setClientResults(Array.isArray(list) ? list.slice(0, 20) : []);
-            } catch { setClientResults([]); }
-        }, 250);
-        return () => clearTimeout(handle);
-    }, [clientQuery]);
 
     // ── Load firm working days/hours from platform settings ────────────────
     useEffect(() => {
@@ -292,14 +313,21 @@ export default function CalendarScreen() {
         });
     }, [apiFilters.scope]);
 
+    const openPersonalSyncModal = useCallback(() => {
+        openPopup(<PersonalSyncModal onClose={closePopup} />);
+    }, [openPopup, closePopup]);
+
     const openCreateModal = useCallback((selectInfo) => {
-        const prefill = selectInfo
-            ? { startTime: selectInfo.startStr, endTime: selectInfo.endStr, allDay: selectInfo.allDay }
-            : null;
+        const prefill = buildNewEventPrefill(selectInfo, {
+            workingHoursStart,
+            workingHoursEnd,
+        });
 
         openPopup(
             <EventFormModal
-                event={prefill ? { ...prefill } : null}
+                key={_eventFormModalKey(prefill)}
+                event={prefill}
+                onUpdated={upsertLocally}
                 onSaved={(saved) => {
                     upsertLocally(saved);
                     closePopup();
@@ -309,31 +337,36 @@ export default function CalendarScreen() {
                 onClose={closePopup}
             />
         );
-    }, [openPopup, closePopup, upsertLocally]);
+    }, [openPopup, closePopup, upsertLocally, workingHoursStart, workingHoursEnd]);
 
     const openEditModal = useCallback((clickInfo) => {
         const ev = clickInfo.event.extendedProps;
+        const eventPayload = {
+            id: Number(clickInfo.event.id),
+            title: clickInfo.event.title,
+            startTime: clickInfo.event.startStr,
+            endTime: clickInfo.event.endStr,
+            allDay: clickInfo.event.allDay,
+            description: ev.description,
+            location: ev.location,
+            eventType: ev.eventType,
+            clientName: ev.clientName,
+            managerName: ev.managerName,
+            clientUserId: ev.clientUserId,
+            managerUserId: ev.managerUserId,
+            caseId: ev.caseId,
+            caseName: ev.caseName,
+            leadName: ev.leadName,
+            leadPhone: ev.leadPhone,
+            leadEmail: ev.leadEmail,
+            leadCaseName: ev.leadCaseName,
+            color: ev.color,
+        };
         openPopup(
             <EventFormModal
-                event={{
-                    id: Number(clickInfo.event.id),
-                    title: clickInfo.event.title,
-                    startTime: clickInfo.event.startStr,
-                    endTime: clickInfo.event.endStr,
-                    allDay: clickInfo.event.allDay,
-                    description: ev.description,
-                    location: ev.location,
-                    eventType: ev.eventType,
-                    clientName: ev.clientName,
-                    managerName: ev.managerName,
-                    clientUserId: ev.clientUserId,
-                    managerUserId: ev.managerUserId,
-                    caseId: ev.caseId,
-                    leadName: ev.leadName,
-                    leadPhone: ev.leadPhone,
-                    leadEmail: ev.leadEmail,
-                    color: ev.color,
-                }}
+                key={_eventFormModalKey(eventPayload)}
+                event={eventPayload}
+                onUpdated={upsertLocally}
                 onSaved={(saved) => { upsertLocally(saved); closePopup(); }}
                 onDeleted={(deletedId) => {
                     setEvents((prev) => prev.filter((e) => e.id !== String(deletedId)));
@@ -353,16 +386,19 @@ export default function CalendarScreen() {
         if (!matched) return;
 
         hasAutoOpenedEventRef.current = true;
+        const eventPayload = {
+            id: Number(matched.id),
+            title: matched.title,
+            startTime: matched.start,
+            endTime: matched.end,
+            allDay: matched.allDay,
+            ...matched.extendedProps,
+        };
         openPopup(
             <EventFormModal
-                event={{
-                    id: Number(matched.id),
-                    title: matched.title,
-                    startTime: matched.start,
-                    endTime: matched.end,
-                    allDay: matched.allDay,
-                    ...matched.extendedProps,
-                }}
+                key={_eventFormModalKey(eventPayload)}
+                event={eventPayload}
+                onUpdated={upsertLocally}
                 onSaved={(saved) => { upsertLocally(saved); closePopup(); }}
                 onDeleted={(deletedId) => {
                     setEvents((prev) => prev.filter((e) => e.id !== String(deletedId)));
@@ -379,12 +415,19 @@ export default function CalendarScreen() {
         calendarRef.current?.getApi().changeView(v);
     };
 
+    const renderNowIndicatorContent = useCallback((arg) => {
+        if (!arg.isAxis) return null;
+        const label = _formatNowBadgeTime(arg.date);
+        return { html: `<span class="lw-fcNowBadge">${label}</span>` };
+    }, []);
+
     // ── Filter handlers ────────────────────────────────────────────────────
     const setFilter = (key, value) => setFilters((prev) => ({ ...prev, [key]: value }));
     const clearAllFilters = () => {
         setFilters({ lawyer_id: null, client_id: null, case_id: null, event_type: EVENT_TYPE_ALL });
-        setClientQuery("");
-        setCaseQuery("");
+        setManagerFilterLabel("");
+        setClientFilterLabel("");
+        setCaseFilterLabel("");
     };
     const hasActiveFilters =
         !!filters.lawyer_id || !!filters.client_id || !!filters.case_id ||
@@ -392,36 +435,68 @@ export default function CalendarScreen() {
 
     // ── Derived dropdown data ──────────────────────────────────────────────
     const lawyerLegend = useMemo(() => buildLawyerLegend(lawyers), [lawyers]);
-    const filteredCases = useMemo(() => {
-        const q = caseQuery.trim().toLowerCase();
-        if (!q) return allCases.slice(0, 50);
-        return allCases
-            .filter((c) => String(c?.CaseName || c?.casename || "").toLowerCase().includes(q))
-            .slice(0, 50);
-    }, [allCases, caseQuery]);
+
+    const handleManagerFilterSearch = useCallback((name) => {
+        setManagerFilterLabel(name);
+        if (!String(name || "").trim()) {
+            setFilter("lawyer_id", null);
+        }
+        searchAdmins(name);
+    }, [searchAdmins]);
+
+    const handleManagerFilterSelected = useCallback((selectedName, resultItem) => {
+        const selectedAdmin = resultItem || (Array.isArray(adminResults)
+            ? adminResults.find((a) => a.name?.trim() === selectedName?.trim())
+            : null);
+        const id = selectedAdmin?.userid ?? selectedAdmin?.UserId ?? selectedAdmin?.id;
+        const name = selectedAdmin?.name ?? selectedAdmin?.Name ?? selectedName ?? "";
+        if (id == null) return;
+        setFilter("lawyer_id", id);
+        setManagerFilterLabel(name);
+    }, [adminResults]);
+
+    const handleClientFilterSearch = useCallback((name) => {
+        setClientFilterLabel(name);
+        if (!String(name || "").trim()) {
+            setFilter("client_id", null);
+        }
+        searchCustomers(name);
+    }, [searchCustomers]);
+
+    const handleClientFilterSelected = useCallback((item) => {
+        const id = item?.UserId ?? item?.userid ?? item?.id;
+        const name = item?.Name ?? item?.name ?? "";
+        if (id == null) return;
+        setFilter("client_id", id);
+        setClientFilterLabel(name);
+    }, []);
+
+    const handleCaseFilterSearch = useCallback((name) => {
+        setCaseFilterLabel(name);
+        if (!String(name || "").trim()) {
+            setFilter("case_id", null);
+        }
+        searchCases(name);
+    }, [searchCases]);
+
+    const handleCaseFilterSelected = useCallback((item) => {
+        const id = item?.CaseId ?? item?.caseid ?? item?.id;
+        const name = item?.CaseName ?? item?.casename ?? "";
+        if (id == null) return;
+        setFilter("case_id", id);
+        setCaseFilterLabel(name);
+    }, []);
 
     // ── Lookups for active-filter chips ────────────────────────────────────
-    const activeLawyerName = useMemo(() => {
-        if (!filters.lawyer_id) return null;
-        const hit = lawyers.find((l) =>
-            String(l?.UserId ?? l?.userid ?? l?.id) === String(filters.lawyer_id)
-        );
-        return hit?.Name || hit?.name || `#${filters.lawyer_id}`;
-    }, [filters.lawyer_id, lawyers]);
-    const activeClientName = useMemo(() => {
-        if (!filters.client_id) return null;
-        const hit = clientResults.find((c) =>
-            String(c?.UserId ?? c?.userid ?? c?.id) === String(filters.client_id)
-        );
-        return hit?.Name || hit?.name || `#${filters.client_id}`;
-    }, [filters.client_id, clientResults]);
-    const activeCaseName = useMemo(() => {
-        if (!filters.case_id) return null;
-        const hit = allCases.find((c) =>
-            String(c?.CaseId ?? c?.caseid ?? c?.id) === String(filters.case_id)
-        );
-        return hit?.CaseName || hit?.casename || `#${filters.case_id}`;
-    }, [filters.case_id, allCases]);
+    const activeManagerName = filters.lawyer_id
+        ? (managerFilterLabel || `#${filters.lawyer_id}`)
+        : null;
+    const activeClientName = filters.client_id
+        ? (clientFilterLabel || `#${filters.client_id}`)
+        : null;
+    const activeCaseName = filters.case_id
+        ? (caseFilterLabel || `#${filters.case_id}`)
+        : null;
 
     if (!ENABLE_CALENDAR_MODULE) return null;
 
@@ -465,6 +540,14 @@ export default function CalendarScreen() {
                             </SecondaryButton>
                         )}
 
+                        <SecondaryButton
+                            className="lw-calendarScreen__syncBtn"
+                            onPress={openPersonalSyncModal}
+                            aria-label={t("calendar.openPersonalSyncAria")}
+                        >
+                            {t("calendar.openPersonalSync")}
+                        </SecondaryButton>
+
                         <PrimaryButton onPress={() => openCreateModal(null)}>
                             {t("calendar.addEvent")}
                         </PrimaryButton>
@@ -484,29 +567,86 @@ export default function CalendarScreen() {
                 {hasActiveFilters && (
                     <SimpleContainer className="lw-calendarScreen__chips">
                         <Text12 color="#4C6690">{t("calendar.activeFilters")}:</Text12>
-                        {activeLawyerName && (
-                            <button type="button" className="lw-calendarScreen__chip" onClick={() => setFilter("lawyer_id", null)}>
-                                {activeLawyerName} ✕
+                        {activeManagerName && (
+                            <button type="button" className="lw-calendarScreen__chip" onClick={() => {
+                                setFilter("lawyer_id", null);
+                                setManagerFilterLabel("");
+                            }}>
+                                {activeManagerName} ✕
                             </button>
                         )}
                         {activeClientName && (
-                            <button type="button" className="lw-calendarScreen__chip" onClick={() => setFilter("client_id", null)}>
+                            <button type="button" className="lw-calendarScreen__chip" onClick={() => {
+                                setFilter("client_id", null);
+                                setClientFilterLabel("");
+                            }}>
                                 {activeClientName} ✕
                             </button>
                         )}
                         {activeCaseName && (
-                            <button type="button" className="lw-calendarScreen__chip" onClick={() => setFilter("case_id", null)}>
+                            <button type="button" className="lw-calendarScreen__chip" onClick={() => {
+                                setFilter("case_id", null);
+                                setCaseFilterLabel("");
+                            }}>
                                 {activeCaseName} ✕
                             </button>
                         )}
                         {filters.event_type && filters.event_type !== EVENT_TYPE_ALL && (
                             <button type="button" className="lw-calendarScreen__chip" onClick={() => setFilter("event_type", EVENT_TYPE_ALL)}>
-                                {filters.event_type === EVENT_TYPE_LEAVE ? t("calendar.eventTypeLeave") : t("calendar.eventTypeAppointment")} ✕
+                                {_eventTypeFilterLabel(filters.event_type, t)} ✕
                             </button>
                         )}
                         <button type="button" className="lw-calendarScreen__chip lw-calendarScreen__chip--clear" onClick={clearAllFilters}>
                             {t("calendar.clearFilters")}
                         </button>
+                    </SimpleContainer>
+                )}
+
+                {/* ── Manager / client / case filters (one row) ── */}
+                {filtersPanelOpen && (
+                    <SimpleContainer
+                        className={`lw-calendarScreen__filterRow ${canUseFirmView ? "lw-calendarScreen__filterRow--three" : "lw-calendarScreen__filterRow--two"}`}
+                    >
+                        {canUseFirmView && (
+                            <SimpleContainer className="lw-calendarScreen__filterGroup">
+                                <SearchInput
+                                    title={t("calendar.filterByManager")}
+                                    value={managerFilterLabel}
+                                    onSearch={handleManagerFilterSearch}
+                                    isPerforming={isSearchingAdmins}
+                                    queryResult={adminResults}
+                                    getButtonTextFunction={(item) => item.name}
+                                    buttonPressFunction={handleManagerFilterSelected}
+                                    clearOnSelect={false}
+                                />
+                            </SimpleContainer>
+                        )}
+
+                        <SimpleContainer className="lw-calendarScreen__filterGroup">
+                            <SearchInput
+                                title={t("calendar.filterByClient")}
+                                value={clientFilterLabel}
+                                onSearch={handleClientFilterSearch}
+                                isPerforming={isSearchingCustomers}
+                                queryResult={customerResults}
+                                getButtonTextFunction={(item) => item.Name}
+                                buttonPressFunction={handleClientFilterSelected}
+                                clearOnSelect={false}
+                            />
+                        </SimpleContainer>
+
+                        <SimpleContainer className="lw-calendarScreen__filterGroup">
+                            <SearchInput
+                                title={t("calendar.filterByCase")}
+                                value={caseFilterLabel}
+                                onSearch={handleCaseFilterSearch}
+                                isPerforming={isSearchingCases}
+                                queryResult={caseResults}
+                                getButtonTextFunction={(item) => item.CaseName}
+                                buttonPressFunction={handleCaseFilterSelected}
+                                clearOnSelect={false}
+                            />
+                        </SimpleContainer>
                     </SimpleContainer>
                 )}
 
@@ -529,95 +669,18 @@ export default function CalendarScreen() {
                                 )}
                             </SimpleContainer>
 
-                            {/* Lawyer filter — managers only */}
-                            {canUseFirmView && (
-                                <SimpleContainer className="lw-calendarScreen__filterGroup">
-                                    <label className="lw-calendarScreen__filterLabel">{t("calendar.filterByLawyer")}</label>
-                                    <select
-                                        className="lw-calendarScreen__select"
-                                        value={filters.lawyer_id || ""}
-                                        onChange={(e) => setFilter("lawyer_id", e.target.value ? Number(e.target.value) : null)}
-                                    >
-                                        <option value="">{t("calendar.eventTypeAll")}</option>
-                                        {lawyers.map((l) => {
-                                            const id = l?.UserId ?? l?.userid ?? l?.id;
-                                            const name = l?.Name ?? l?.name ?? `#${id}`;
-                                            return id != null ? <option key={id} value={id}>{name}</option> : null;
-                                        })}
-                                    </select>
-                                </SimpleContainer>
-                            )}
-
-                            {/* Client filter — debounced search */}
-                            <SimpleContainer className="lw-calendarScreen__filterGroup">
-                                <label className="lw-calendarScreen__filterLabel">{t("calendar.filterByClient")}</label>
-                                <input
-                                    type="text"
-                                    className="lw-calendarScreen__input"
-                                    placeholder={t("calendar.searchClientPlaceholder")}
-                                    value={clientQuery}
-                                    onChange={(e) => setClientQuery(e.target.value)}
-                                />
-                                {clientResults.length > 0 && (
-                                    <SimpleContainer className="lw-calendarScreen__resultList">
-                                        {clientResults.map((c) => {
-                                            const id = c?.UserId ?? c?.userid ?? c?.id;
-                                            const name = c?.Name ?? c?.name ?? "—";
-                                            return (
-                                                <button
-                                                    key={id}
-                                                    type="button"
-                                                    className={`lw-calendarScreen__resultItem ${String(filters.client_id) === String(id) ? "is-active" : ""}`}
-                                                    onClick={() => setFilter("client_id", id)}
-                                                >
-                                                    {name}
-                                                </button>
-                                            );
-                                        })}
-                                    </SimpleContainer>
-                                )}
-                            </SimpleContainer>
-
-                            {/* Case filter */}
-                            <SimpleContainer className="lw-calendarScreen__filterGroup">
-                                <label className="lw-calendarScreen__filterLabel">{t("calendar.filterByCase")}</label>
-                                <input
-                                    type="text"
-                                    className="lw-calendarScreen__input"
-                                    placeholder={t("calendar.searchCasePlaceholder")}
-                                    value={caseQuery}
-                                    onChange={(e) => setCaseQuery(e.target.value)}
-                                />
-                                <select
-                                    className="lw-calendarScreen__select"
-                                    value={filters.case_id || ""}
-                                    onChange={(e) => setFilter("case_id", e.target.value ? Number(e.target.value) : null)}
-                                >
-                                    <option value="">{t("calendar.eventTypeAll")}</option>
-                                    {filteredCases.map((c) => {
-                                        const id = c?.CaseId ?? c?.caseid ?? c?.id;
-                                        const name = c?.CaseName ?? c?.casename ?? `#${id}`;
-                                        return id != null ? <option key={id} value={id}>{name}</option> : null;
-                                    })}
-                                </select>
-                            </SimpleContainer>
-
                             {/* Event type filter */}
                             <div className="lw-calendarScreen__filterGroup">
                                 <label className="lw-calendarScreen__filterLabel">{t("calendar.filterByEventType")}</label>
-                                <div className="lw-calendarScreen__segmented" role="group">
-                                    {[
-                                        { v: EVENT_TYPE_ALL, label: t("calendar.eventTypeAll") },
-                                        { v: EVENT_TYPE_APPT, label: t("calendar.eventTypeAppointment") },
-                                        { v: EVENT_TYPE_LEAVE, label: t("calendar.eventTypeLeave") },
-                                    ].map((opt) => (
+                                <div className="lw-calendarScreen__segmented lw-calendarScreen__segmented--eventTypes" role="group">
+                                    {EVENT_TYPE_FILTER_OPTIONS.map((opt) => (
                                         <SimpleButton
                                             key={opt.v}
                                             className={`lw-calendarScreen__segmentedBtn ${filters.event_type === opt.v ? "is-active" : ""}`}
                                             onPress={() => setFilter("event_type", opt.v)}
                                             aria-pressed={filters.event_type === opt.v}
                                         >
-                                            {opt.label}
+                                            {t(opt.labelKey)}
                                         </SimpleButton>
                                     ))}
                                 </div>
@@ -707,6 +770,8 @@ export default function CalendarScreen() {
                                 slotMinTime={workingHoursStart}
                                 slotMaxTime={workingHoursEnd}
                                 nowIndicator
+                                nowIndicatorContent={renderNowIndicatorContent}
+                                nowIndicatorClassNames="lw-fcNowIndicator"
                                 slotLabelFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}
                                 eventTimeFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}
                                 noEventsText={t("calendar.noEvents")}
