@@ -479,7 +479,7 @@
     "openPersonalSync": "סנכרון אישי",
     "openPersonalSyncAria": "פתח הגדרות סנכרון אישי",
     "icalSubscribe": "הירשם ליומן (WebCal)",
-    "icalSubscribeHint": "הדבק את הקישור האישי בלוח השנה של האייפון / Google כמנוי (Subscribe).",
+    "icalSubscribeHint": "הדבק את הקישור האישי (HTTPS) בלוח השנה של האייפון / Google כמנוי (Subscribe).",
     "icalShowLink": "הצג קישור אישי",
     "icalCopy": "העתק",
     "icalCopied": "הקישור הועתק!",

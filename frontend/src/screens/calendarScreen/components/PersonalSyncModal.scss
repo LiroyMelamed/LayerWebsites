@@ -3,9 +3,10 @@
 
 .lw-personalSyncModal {
     flex-direction: column;
-    min-inline-size: min(420px, 90vw);
-    max-inline-size: 520px;
-    max-block-size: calc(85vh - 2rem);
+    width: 100%;
+    min-inline-size: 0;
+    max-inline-size: min(520px, calc(100vw - 2rem));
+    max-block-size: min(calc(100dvh - 3rem), 85vh);
     overflow: hidden;
     margin: 0 auto;
 }
@@ -55,4 +56,15 @@
     padding-block-start: v.$space-3;
     border-block-start: 1px solid rgba(226, 232, 240, 0.8);
     justify-content: flex-end;
+}
+
+@media (max-width: 640px) {
+    .lw-personalSyncModal__btnRow {
+        flex-direction: column;
+        align-items: stretch;
+
+        > * {
+            width: 100%;
+        }
+    }
 }

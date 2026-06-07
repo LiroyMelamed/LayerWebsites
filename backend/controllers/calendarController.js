@@ -27,6 +27,39 @@ let googleapis;
 try { googleapis = require('googleapis'); } catch (_) { googleapis = null; }
 // ──────────────────────────────────────────────────────────────────────────────
 
+/** Public API origin for iCal/WebCal links (must hit the API host, not the SPA). */
+function _resolvePublicApiOrigin() {
+    const explicit = String(
+        process.env.PUBLIC_API_BASE_URL
+        || process.env.API_PUBLIC_ORIGIN
+        || ''
+    ).trim().replace(/\/+$/, '');
+    if (explicit) {
+        return explicit.replace(/\/api$/i, '');
+    }
+
+    const website = String(process.env.WEBSITE_DOMAIN || '').trim();
+    if (!website) return '';
+
+    const host = website.replace(/^https?:\/\//, '').split('/')[0];
+
+    if (host.includes('melamedlaw.co.il')) {
+        return 'https://api.calls.melamedlaw.co.il';
+    }
+    if (host.endsWith('.mela-media.co.il') && !host.startsWith('api-')) {
+        return `https://api-${host}`;
+    }
+    return `https://${host}`;
+}
+
+function _buildIcalSubscriptionUrls(token) {
+    const origin = _resolvePublicApiOrigin();
+    const path = `/api/calendar/feed/${token}`;
+    const httpsSubscriptionUrl = origin ? `${origin}${path}` : path;
+    const subscriptionUrl = `webcal://${httpsSubscriptionUrl.replace(/^https?:\/\//, '')}`;
+    return { httpsSubscriptionUrl, subscriptionUrl };
+}
+
 // ─── Encryption helpers (AES-256-GCM) ────────────────────────────────────────
 // CALENDAR_ENCRYPTION_KEY must be a 64-char hex string (32 bytes) in .env
 const _ENC_KEY_HEX = process.env.CALENDAR_ENCRYPTION_KEY || '';
@@ -722,10 +755,7 @@ const getIcalToken = async (req, res) => {
             [userId, uuidv4()]
         );
         const token = rows[0].ical_feed_token;
-        const baseUrl = process.env.WEBSITE_DOMAIN
-            ? `${process.env.WEBSITE_DOMAIN}/api/calendar/feed/${token}`
-            : `/api/calendar/feed/${token}`;
-        return res.json({ token, subscriptionUrl: `webcal://${baseUrl.replace(/^https?:\/\//, '')}` });
+        return res.json({ token, ..._buildIcalSubscriptionUrls(token) });
     } catch (err) {
         console.error('[calendarController] getIcalToken error:', err.message);
         return res.status(500).json({ message: 'שגיאה פנימית בשרת' });
@@ -746,10 +776,7 @@ const rotateIcalToken = async (req, res) => {
              ON CONFLICT (user_id) DO UPDATE SET ical_feed_token = $2`,
             [userId, newToken]
         );
-        const baseUrl = process.env.WEBSITE_DOMAIN
-            ? `${process.env.WEBSITE_DOMAIN}/api/calendar/feed/${newToken}`
-            : `/api/calendar/feed/${newToken}`;
-        return res.json({ token: newToken, subscriptionUrl: `webcal://${baseUrl.replace(/^https?:\/\//, '')}` });
+        return res.json({ token: newToken, ..._buildIcalSubscriptionUrls(newToken) });
     } catch (err) {
         console.error('[calendarController] rotateIcalToken error:', err.message);
         return res.status(500).json({ message: 'שגיאה פנימית בשרת' });

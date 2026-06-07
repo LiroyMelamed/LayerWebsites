@@ -20,6 +20,7 @@ export default function PersonalSyncModal({ onClose }) {
     // ── iCal (personal WebCal subscription) ───────────────────────────────────
     const [icalToken, setIcalToken] = useState(null);
     const [icalUrl, setIcalUrl] = useState("");
+    const [icalHttpsUrl, setIcalHttpsUrl] = useState("");
     const [icalCopied, setIcalCopied] = useState(false);
     const [icalLoading, setIcalLoading] = useState(false);
     const [icalRotating, setIcalRotating] = useState(false);
@@ -30,7 +31,8 @@ export default function PersonalSyncModal({ onClose }) {
             const res = await calendarApi.getIcalToken();
             if (res?.data) {
                 setIcalToken(res.data.token);
-                setIcalUrl(res.data.subscriptionUrl);
+                setIcalUrl(res.data.subscriptionUrl || "");
+                setIcalHttpsUrl(res.data.httpsSubscriptionUrl || res.data.subscriptionUrl || "");
             }
         } finally {
             setIcalLoading(false);
@@ -38,8 +40,9 @@ export default function PersonalSyncModal({ onClose }) {
     }, []);
 
     const handleCopyIcal = () => {
-        if (!icalUrl) return;
-        navigator.clipboard.writeText(icalUrl).then(() => {
+        const copyTarget = icalHttpsUrl || icalUrl;
+        if (!copyTarget) return;
+        navigator.clipboard.writeText(copyTarget).then(() => {
             setIcalCopied(true);
             setTimeout(() => setIcalCopied(false), 2500);
         });
@@ -51,7 +54,8 @@ export default function PersonalSyncModal({ onClose }) {
             const res = await calendarApi.rotateIcalToken();
             if (res?.data) {
                 setIcalToken(res.data.token);
-                setIcalUrl(res.data.subscriptionUrl);
+                setIcalUrl(res.data.subscriptionUrl || "");
+                setIcalHttpsUrl(res.data.httpsSubscriptionUrl || res.data.subscriptionUrl || "");
                 setIcalCopied(false);
             }
         } finally {
@@ -144,7 +148,9 @@ export default function PersonalSyncModal({ onClose }) {
                     ) : (
                         <SimpleContainer className="lw-personalSyncModal__icalRow">
                             <SimpleContainer className="lw-personalSyncModal__icalUrl">
-                                <Text12 color={colors.winter} style={{ wordBreak: "break-all" }}>{icalUrl}</Text12>
+                                <Text12 color={colors.winter} style={{ wordBreak: "break-all" }}>
+                                    {icalHttpsUrl || icalUrl}
+                                </Text12>
                             </SimpleContainer>
                             <SimpleContainer className="lw-personalSyncModal__btnRow">
                                 <PrimaryButton onPress={handleCopyIcal}>
