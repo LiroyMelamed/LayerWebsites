@@ -171,3 +171,13 @@
 .lw-simpleInput__field:disabled {
     color: var(--lw-color-disabled);
 }
+
+.lw-simpleInput__field[type='date'],
+.lw-simpleInput__field[type='datetime-local'],
+.lw-simpleInput__field[type='time'],
+.lw-simpleInput__field[type='month'],
+.lw-simpleInput__field[type='week'] {
+    direction: ltr;
+    text-align: left;
+    unicode-bidi: isolate;
+}

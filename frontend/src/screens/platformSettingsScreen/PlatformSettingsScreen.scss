@@ -188,6 +188,52 @@
         direction: rtl;
     }
 
+    // ── Calendar tab ────────────────────────────────────────────────
+    &__calendarTab {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-3;
+        width: 100%;
+    }
+
+    &__dayPicker {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: v.$space-2;
+        margin-top: v.$space-3;
+    }
+
+    &__dayChip {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: v.$space-2 v.$space-4;
+        border-radius: 999px;
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        min-width: 64px;
+
+        &:hover {
+            background: #f8fafc;
+        }
+
+        &--active {
+            background: var(--lw-color-primary) !important;
+            border-color: var(--lw-color-primary);
+
+            .lw-simpleText {
+                color: #fff !important;
+            }
+        }
+    }
+
+    &__dayChipLabel {
+        white-space: nowrap;
+    }
+
     // ── Toggle switch ───────────────────────────────────────────────
     &__toggle {
         display: flex;

@@ -20,6 +20,7 @@ import ProgressBar from "../../components/specializedComponents/containers/Progr
 import billingApi from "../../api/billingApi";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import { normalizeCurrencySymbol } from "../../constant/commercialPricing";
+import { formatDisplayDate } from "../../functions/date/formatDateForInput";
 
 import { images } from "../../assets/images/images";
 import { AdminStackName } from "../../navigation/AdminStack";
@@ -228,7 +229,7 @@ export default function PlanUsageScreen() {
 
                         <SimpleCard className="lw-planUsageScreen__card">
                             <TextBold24>{t('planUsage.usageCardTitle')}</TextBold24>
-                            {normalized.monthStartUtc && renderRow(t('planUsage.monthStart'), new Date(normalized.monthStartUtc).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' }))}
+                            {normalized.monthStartUtc && renderRow(t('planUsage.monthStart'), formatDisplayDate(normalized.monthStartUtc))}
                             {isUsageLoading && !usage ? (
                                 <Text14>{t('planUsage.loadingUsage')}</Text14>
                             ) : (

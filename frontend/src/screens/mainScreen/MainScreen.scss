@@ -28,3 +28,8 @@
 .lw-mainScreen__row--wrap {
     flex-wrap: wrap;
 }
+
+.lw-mainScreen__row--full > * {
+    flex: 1;
+    inline-size: 100%;
+}

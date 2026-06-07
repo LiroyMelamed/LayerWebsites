@@ -10,12 +10,15 @@ import ComprasionDataCard from './components/ComprasionDataCard';
 import { colors } from '../../constant/colors';
 import ClientsCard from './components/ClientsCard';
 import casesApi from '../../api/casesApi';
+import calendarApi from '../../api/calendarApi';
 import { AdminStackName } from '../../navigation/AdminStack';
 import SimpleScrollView from '../../components/simpleComponents/SimpleScrollView';
 import { useNavigate } from 'react-router-dom';
 import { TaggedCasesScreenName } from '../taggedCasesScreen/TaggedCasesScreen';
 import { AllCasesScreenName } from '../allCasesScreen/AllCasesScreen';
 import { AllClientsScreenName } from '../allClientsScreen/AllClientsScreen';
+import CalendarWidget from './components/CalendarWidget';
+import { ENABLE_CALENDAR_MODULE } from '../../featureFlags';
 import { useTranslation } from "react-i18next";
 
 import "./MainScreen.scss";
@@ -27,6 +30,9 @@ export default function MainScreen() {
     const navigate = useNavigate()
     const { isSmallScreen } = useScreenSize();
     const { result: mainScreenData, isPerforming: isPerformingMainScreenData, performRequest } = useAutoHttpRequest(casesApi.getMainScreenData);
+    const { result: calendarTodayData, isPerforming: isPerformingCalendar } = useAutoHttpRequest(
+        ENABLE_CALENDAR_MODULE ? calendarApi.getTodayAndTomorrow : () => Promise.resolve(null)
+    );
     const clientsCardRef = useRef(null);
 
     return (
@@ -34,6 +40,15 @@ export default function MainScreen() {
             {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={AdminStackName + MainScreenName} />}
 
             <SimpleScrollView>
+                {ENABLE_CALENDAR_MODULE && (
+                    <SimpleContainer className="lw-mainScreen__row lw-mainScreen__row--full">
+                        <CalendarWidget
+                            events={calendarTodayData?.events || []}
+                            isPerforming={isPerformingCalendar}
+                        />
+                    </SimpleContainer>
+                )}
+
                 <SimpleContainer className="lw-mainScreen__chartWrap">
                     <ComprasionDataCard
                         colors={colors.doughnutChartColorScale}

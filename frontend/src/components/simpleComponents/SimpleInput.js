@@ -91,8 +91,12 @@ const SimpleInput = forwardRef(
         }, [value]);
 
         const shouldFloatLabel = isFocused || !!delayedValue || type === 'date' || type === 'datetime-local';
+        const temporalTypes = ['date', 'datetime-local', 'time', 'month', 'week'];
+        const isTemporalInput = temporalTypes.includes(type);
 
-        const resolvedDir = 'rtl';
+        const resolvedDir = containerDir || 'rtl';
+        const inputDir = isTemporalInput ? 'ltr' : resolvedDir;
+        const inputTextAlign = isTemporalInput ? 'left' : 'right';
 
         const sizeKey = String(inputSize || 'Medium');
         const sizeClass =
@@ -151,8 +155,8 @@ const SimpleInput = forwardRef(
                 <input
                     type={type}
                     className="lw-simpleInput__field"
-                    dir={resolvedDir}
-                    style={{ textAlign: 'right', ...(textStyle || {}) }}
+                    dir={inputDir}
+                    style={{ textAlign: inputTextAlign, ...(textStyle || {}) }}
                     value={delayedValue}
                     onChange={handleInputChange}
                     onFocus={handleFocus}

@@ -1,0 +1,564 @@
+@use '../../styles/variables' as v;
+@use '../../styles/mixins' as m;
+
+// ─── Page layout ─────────────────────────────────────────────────────────────
+
+.lw-calendarScreen__scroll {
+    padding: v.$space-4;
+}
+
+.lw-calendarScreen__header {
+    @include m.row(v.$space-4, nowrap, center, space-between);
+    flex-wrap: wrap;
+    margin-block-end: v.$space-4;
+}
+
+.lw-calendarScreen__headerActions {
+    @include m.row(v.$space-3);
+    flex-wrap: wrap;
+}
+
+.lw-calendarScreen__syncBtn {
+    flex-shrink: 0;
+}
+
+// ─── Scope toggle (My Calendar / Firm Calendar) ──────────────────────────────
+
+.lw-calendarScreen__headerActions .lw-calendarScreen__scopeToggle {
+    display: inline-flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    background: #EDF2F7;
+    border: 1px solid #CBD5E0;
+    border-radius: 999px;
+    padding: 3px;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.lw-calendarScreen__scopeBtn {
+    flex: 1 1 auto;
+    min-width: 0;
+    background: transparent;
+    color: #2A4365;
+    border: none;
+    border-radius: 999px;
+    padding: 0.4rem 1rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease;
+
+    &.is-active {
+        background: #2A4365;
+        color: #FFFFFF;
+        box-shadow: 0 1px 3px rgba(42, 67, 101, 0.25);
+    }
+}
+
+// ─── Active filter chips ─────────────────────────────────────────────────────
+
+.lw-calendarScreen__chips {
+    @include m.row(v.$space-2);
+    flex-wrap: wrap;
+    margin-block-end: v.$space-3;
+    align-items: center;
+}
+
+.lw-calendarScreen__chip {
+    background: #EBF8FF;
+    color: #2A4365;
+    border: 1px solid #BEE3F8;
+    border-radius: 999px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 120ms ease;
+
+    &:hover {
+        background: #BEE3F8;
+    }
+
+    &--clear {
+        background: #FED7D7;
+        color: #9B2C2C;
+        border-color: #FEB2B2;
+
+        &:hover {
+            background: #FEB2B2;
+        }
+    }
+}
+
+// ─── Two-column layout (sidebar + calendar) ──────────────────────────────────
+
+.lw-calendarScreen__layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: v.$space-4;
+    align-items: start;
+
+    &.is-sidebarClosed {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 1024px) {
+    .lw-calendarScreen__layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.lw-calendarScreen__sidebar {
+    padding: v.$space-4;
+    top: v.$space-4;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: v.$space-3;
+}
+
+.lw-calendarScreen__sidebarHeader {
+    @include m.row(v.$space-2, nowrap, center, space-between);
+}
+
+.lw-calendarScreen__sidebarClose {
+    background: transparent;
+    border: none;
+    color: #4C6690;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+}
+
+.lw-calendarScreen__calendarCol {
+    flex-direction: column;
+    min-width: 0; // prevent FullCalendar from blowing out the grid
+}
+
+// ─── Filter groups ───────────────────────────────────────────────────────────
+
+.lw-calendarScreen__filterRow {
+    display: grid;
+    gap: v.$space-3;
+    width: 100%;
+    margin-bottom: v.$space-2;
+
+    &--three {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    &--two {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    @media (max-width: 768px) {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+.lw-calendarScreen__filterGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    min-width: 0;
+}
+
+.lw-calendarScreen__filterLabel {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #4C6690;
+    text-align: start;
+}
+
+.lw-calendarScreen__select,
+.lw-calendarScreen__input {
+    width: 100%;
+    border: 1px solid #CBD5E0;
+    border-radius: 6px;
+    padding: 0.45rem 0.6rem;
+    background: #FFFFFF;
+    color: #2D3748;
+    font-size: 0.875rem;
+    text-align: start;
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+
+    &:focus {
+        outline: none;
+        border-color: #2A4365;
+        box-shadow: 0 0 0 2px rgba(42, 67, 101, 0.18);
+    }
+}
+
+.lw-calendarScreen__resultList {
+    display: flex;
+    flex-direction: column;
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid #E2E8F0;
+    border-radius: 6px;
+    background: #FFFFFF;
+}
+
+.lw-calendarScreen__resultItem {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #EDF2F7;
+    padding: 0.5rem 0.6rem;
+    text-align: start;
+    cursor: pointer;
+    color: #2D3748;
+    font-size: 0.8125rem;
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    &:hover {
+        background: #F7FAFC;
+    }
+
+    &.is-active {
+        background: #2A4365;
+        color: #FFFFFF;
+    }
+}
+
+// ─── Segmented control ──────────────────────────────────────────────────────
+
+.lw-calendarScreen__segmented {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+    &--eventTypes {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    width: 100%;
+    background: #EDF2F7;
+    border: 1px solid #CBD5E0;
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+    box-sizing: border-box;
+}
+
+.lw-calendarScreen__segmentedBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 2rem;
+    min-width: 0;
+    background: transparent;
+    color: #2A4365;
+    border: none;
+    border-radius: 6px;
+    padding: 0.4rem 0.35rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.25;
+    text-align: center;
+    white-space: normal;
+    word-break: break-word;
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease;
+
+    &.is-active {
+        background: #2A4365;
+        color: #FFFFFF;
+    }
+}
+
+.lw-calendarScreen__clearBtn {
+    align-self: stretch;
+}
+
+// ─── Lawyer legend ───────────────────────────────────────────────────────────
+
+.lw-calendarScreen__legend {
+    border-top: 1px solid #E2E8F0;
+    padding-top: v.$space-3;
+    display: flex;
+    flex-direction: column;
+    gap: v.$space-2;
+}
+
+.lw-calendarScreen__legendList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.lw-calendarScreen__legendItem {
+    @include m.row(0.5rem, nowrap, center, flex-start);
+}
+
+.lw-calendarScreen__legendDot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+
+    &--striped {
+        background-image: repeating-linear-gradient(45deg,
+                rgba(255, 255, 255, 0.4) 0,
+                rgba(255, 255, 255, 0.4) 2px,
+                transparent 2px,
+                transparent 5px) !important;
+    }
+}
+
+.lw-calendarScreen__toast {
+    background: #F0FFF4;
+    border: 1px solid #C6F6D5;
+    border-radius: 8px;
+    padding: v.$space-3 v.$space-4;
+    margin-block-end: v.$space-4;
+}
+
+.lw-calendarScreen__syncWrap {
+    margin-block-end: v.$space-4;
+}
+
+.lw-calendarScreen__viewSwitcher {
+    @include m.row(v.$space-2);
+    margin-block-end: v.$space-4;
+    flex-wrap: wrap;
+
+    button.is-active {
+        background-color: #2A4365;
+        color: #ffffff;
+        border-color: #2A4365;
+    }
+}
+
+.lw-calendarScreen__calendarCard {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    width: 100%;
+    padding: v.$space-4;
+    overflow: hidden;
+    margin: 0;
+
+    .fc {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .lw-calendarScreen__scroll {
+        padding: v.$space-3;
+    }
+
+    .lw-calendarScreen__calendarCard {
+        padding: v.$space-2;
+    }
+}
+
+// ─── FullCalendar theme overrides (navy palette, RTL) ─────────────────────────
+
+.lw-calendarScreen__calendarCard .fc-header-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    width: 100%;
+}
+
+.lw-calendarScreen__calendarCard .fc-toolbar-chunk {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+// Toolbar buttons
+.fc .fc-button {
+    background-color: #4C6690;
+    border-color: #4C6690;
+    color: #ffffff;
+    border-radius: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+
+    &:hover:not(:disabled) {
+        background-color: #2A4365;
+        border-color: #2A4365;
+    }
+
+    &:focus {
+        box-shadow: 0 0 0 2px rgba(42, 67, 101, 0.4);
+    }
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+    background-color: #1A365D;
+    border-color: #1A365D;
+}
+
+// Toolbar title
+.fc .fc-toolbar-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #2A4365;
+}
+
+// Day headers
+.lw-calendarScreen__calendarCard .fc .fc-col-header-cell {
+    background-color: #EDF2F7;
+    color: #2A4365;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border-color: #E2E8F0;
+}
+
+.lw-calendarScreen__calendarCard .fc .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion {
+    display: inline-block;
+    background: #2A4365;
+    color: #FFFFFF;
+    border-radius: 8px;
+    padding: 0.2rem 0.55rem;
+}
+
+// Today highlight
+.lw-calendarScreen__calendarCard .fc .fc-daygrid-day.fc-day-today,
+.lw-calendarScreen__calendarCard .fc .fc-timegrid-col.fc-day-today {
+    background-color: rgba(42, 67, 101, 0.05);
+}
+
+// Time grid — soft lines like reference, platform greys
+.lw-calendarScreen__calendarCard .fc .fc-timegrid-slot,
+.lw-calendarScreen__calendarCard .fc .fc-timegrid-col,
+.lw-calendarScreen__calendarCard .fc .fc-scrollgrid,
+.lw-calendarScreen__calendarCard .fc .fc-scrollgrid-section > td {
+    border-color: #E2E8F0;
+}
+
+.lw-calendarScreen__calendarCard .fc .fc-timegrid-slot-label-cushion {
+    color: #718096;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+// Month view cell polish
+.lw-calendarScreen__calendarCard .fc .fc-daygrid-day-top {
+    flex-direction: row-reverse;
+    justify-content: flex-start;
+    padding: 2px 6px;
+}
+
+.lw-calendarScreen__calendarCard .fc .fc-daygrid-day-number {
+    float: none;
+    padding: 2px 4px;
+    margin: 0;
+}
+
+.lw-calendarScreen__calendarCard .fc .fc-daygrid-day-events {
+    margin-inline: 4px;
+}
+
+.lw-calendarScreen__calendarCard .fc .fc-daygrid-event .fc-event-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+// Events — rounded cards (reference shape, platform colors)
+.lw-calendarScreen__calendarCard .fc-event {
+    border-radius: 8px;
+    border: none;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    padding: 0.2rem 0.45rem;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(42, 67, 101, 0.14);
+}
+
+.lw-calendarScreen__calendarCard .fc-event:hover {
+    opacity: 0.92;
+    box-shadow: 0 2px 6px rgba(42, 67, 101, 0.18);
+}
+
+.lw-calendarScreen__calendarCard .fc-timegrid-event-harness .fc-event {
+    margin-inline: 2px;
+}
+
+// RTL: time axis on the right
+.lw-calendarScreen__calendarCard .fc[dir='rtl'] .fc-timegrid-axis {
+    text-align: center;
+}
+
+// Now line — reference-style pill + thin line, platform navy
+.lw-calendarScreen__calendarCard .fc-timegrid-now-indicator-container {
+    z-index: 4;
+    pointer-events: none;
+}
+
+.lw-calendarScreen__calendarCard .fc-timegrid-now-indicator-line {
+    border-color: #2A4365;
+    border-width: 1px;
+    opacity: 0.9;
+}
+
+.lw-calendarScreen__calendarCard .fc-timegrid-now-indicator-arrow {
+    display: none;
+}
+
+.lw-calendarScreen__calendarCard .lw-fcNowBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.5rem;
+    background: #2A4365;
+    color: #FFFFFF;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 0.28rem 0.5rem;
+    border-radius: 999px;
+    box-shadow: 0 1px 4px rgba(42, 67, 101, 0.28);
+    transform: translateY(-50%);
+    white-space: nowrap;
+}
+
+.lw-calendarScreen__calendarCard .fc[dir='rtl'] .lw-fcNowBadge {
+    transform: translateY(-50%);
+}
+
+// ─── Leave / vacation event styling ──────────────────────────────────────────
+// Background-display events show as full-day striped blocks across the column.
+
+.fc .fc-bg-event.lw-fcEvent--leave,
+.fc .lw-fcEvent--leave {
+    background-color: #718096 !important;
+    background-image: repeating-linear-gradient(45deg,
+            rgba(255, 255, 255, 0.18) 0,
+            rgba(255, 255, 255, 0.18) 6px,
+            transparent 6px,
+            transparent 14px) !important;
+    opacity: 0.55 !important;
+    color: #FFFFFF !important;
+    font-weight: 600;
+}
+
+// Inline label for background events (FullCalendar normally hides the title)
+.fc .fc-bg-event.lw-fcEvent--leave .fc-event-title {
+    opacity: 1;
+    color: #FFFFFF;
+    padding-inline-start: 6px;
+    font-size: 0.8125rem;
+    letter-spacing: 0.01em;
+}

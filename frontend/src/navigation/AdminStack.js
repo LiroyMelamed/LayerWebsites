@@ -14,6 +14,8 @@ import PlansPricingScreen, { PlansPricingScreenName } from "../screens/billingSc
 import MyCasesScreen, { MyCasesScreenName } from "../screens/myCasesScreen/MyCasesScreen";
 import RemindersScreen, { RemindersScreenName } from "../screens/remindersScreen/RemindersScreen";
 import PlatformSettingsScreen, { PlatformSettingsScreenName } from "../screens/platformSettingsScreen/PlatformSettingsScreen";
+import CalendarScreen, { CalendarScreenName } from "../screens/calendarScreen/CalendarScreen";
+import { ENABLE_CALENDAR_MODULE } from "../featureFlags";
 import { LoginStackName } from "./LoginStack";
 import { LoginScreenName } from "../screens/loginScreen/LoginScreen";
 
@@ -45,6 +47,9 @@ function AdminStack() {
                 <Route path={toRelativePath(uploadFileForSigningScreenName)} element={<UploadFileForSigningScreen />} />
                 <Route path={toRelativePath(RemindersScreenName)} element={<RemindersScreen />} />
                 <Route path={toRelativePath(PlatformSettingsScreenName)} element={<PlatformSettingsScreen />} />
+                {ENABLE_CALENDAR_MODULE && (
+                    <Route path={toRelativePath(CalendarScreenName)} element={<CalendarScreen />} />
+                )}
 
             </Routes>
         </TopAndRightNavBar>

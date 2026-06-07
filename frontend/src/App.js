@@ -18,6 +18,7 @@ import PrivacyPage, { PrivacyPageName } from './screens/compliance/PrivacyPage';
 import ContinuityPage, { ContinuityPageName } from './screens/compliance/ContinuityPage';
 import CompliancePage, { CompliancePageName } from './screens/compliance/CompliancePage';
 import ChatBotPage, { ChatBotPageName } from './screens/chatbot/ChatBotPage';
+import { CalendarScreenName } from './screens/calendarScreen/CalendarScreen';
 
 const STACK_SUFFIX = "/*"
 
@@ -60,6 +61,7 @@ const App = () => {
     const searchParams = new URLSearchParams(location.search);
     const fromAppParam = searchParams.get('fromApp');
     const signingFileId = searchParams.get('signingFileId');
+    const appointmentId = searchParams.get('appointmentId');
     const publicSigningParam = searchParams.get('publicSigning');
     const isPublicSigning = publicSigningParam === '1' || publicSigningParam === 'true';
 
@@ -113,7 +115,12 @@ const App = () => {
         const alreadyOnClientRoute = location.pathname.startsWith(ClientStackName);
 
         if (role === AppRoles.Admin) {
-          if (signingFileId) {
+          if (appointmentId) {
+            navigate(
+              `${AdminStackName + CalendarScreenName}?eventId=${encodeURIComponent(String(appointmentId))}`,
+              { replace: true }
+            );
+          } else if (signingFileId) {
             // Admin deep-link to signing – redirect to admin main (signing is client-side)
             navigate(AdminStackName + MainScreenName, { replace: true });
           } else if (!alreadyOnAdminRoute) {

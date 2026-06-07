@@ -1,3 +1,4 @@
+import { formatDisplayDate, formatDisplayDateTime } from "../../functions/date/formatDateForInput";
 // src/screens/platformSettingsScreen/PlatformSettingsScreen.js
 import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -44,6 +45,7 @@ const CATEGORIES = [
     { key: "templates", labelKey: "platformSettings.cat_templates", icon: "📝" },
     { key: "emailTemplates", labelKey: "platformSettings.cat_emailTemplates", icon: "✉️" },
     { key: "reminders", labelKey: "platformSettings.cat_reminders", icon: "⏰" },
+    { key: "calendar", labelKey: "platformSettings.cat_calendar", icon: "📅" },
     { key: "channels", labelKey: "platformSettings.cat_channels", icon: "📡" },
     { key: "admins", labelKey: "platformSettings.cat_admins", icon: "👤" },
     { key: "knowledgeDocs", labelKey: "platformSettings.cat_knowledgeDocs", icon: "🤖" },
@@ -1237,7 +1239,7 @@ export default function PlatformSettingsScreen() {
                                     <SimpleContainer className="lw-platformSettings__knowledgeInfo">
                                         <TextBold14>{doc.title}</TextBold14>
                                         <Text12 className="lw-platformSettings__knowledgeMeta">
-                                            {doc.source_file} · {doc.chunk_count} {t("platformSettings.chunks")} · {new Date(doc.created_at).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                            {doc.source_file} · {doc.chunk_count} {t("platformSettings.chunks")} · {formatDisplayDate(doc.created_at)}
                                         </Text12>
                                     </SimpleContainer>
                                     <SecondaryButton
@@ -1259,6 +1261,359 @@ export default function PlatformSettingsScreen() {
             );
         }
 
+
+        // Contractor Monitor tab
+        if (activeTab === "contractor_monitor") {
+            const cmSettings = settings["contractor_monitor"] || {};
+
+            const getVal = (key, defaultVal = "") => {
+                const edited = editedValues[`contractor_monitor:${key}`]?.value;
+                if (edited !== undefined) return edited;
+                const eff = cmSettings[key]?.effectiveValue;
+                return eff !== undefined && eff !== null ? eff : defaultVal;
+            };
+            const handleChange = (key, val) => handleSettingChange("contractor_monitor", key, val);
+
+            const CM_DATASETS = [
+                { key: "PINKASH", label: "פנקס הקבלנים הרשומים" },
+                { key: "MANPOWER", label: "קבלני כח אדם מורשים" },
+                { key: "CRANE", label: "קבלני כוח אדם – עגורנאי צריח" },
+                { key: "SERVICE", label: "קבלני שירות – שמירה, אבטחה וניקיון" },
+            ];
+
+            const lastRunAt = getVal("CM_LAST_RUN_AT");
+            const lastRunResult = getVal("CM_LAST_RUN_RESULT");
+            const formattedLastRun = lastRunAt
+                ? formatDisplayDateTime(lastRunAt)
+                : "לא הורץ עדיין";
+
+            return (
+                <SimpleContainer style={{ flexDirection: "column", gap: 16 }}>
+                    {/* Global Settings */}
+                    <SimpleCard className="lw-platformSettings__card">
+                        <TextBold18>מעקב קבלנים</TextBold18>
+                        <Text14 className="lw-platformSettings__subtitle">
+                            הגדרות מערכת מעקב שינויים במאגרי קבלנים ממשלתיים
+                        </Text14>
+                        <SimpleContainer className="lw-platformSettings__settingsList">
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">מעקב קבלנים פעיל</TextBold14>
+                                    <Text12 className="lw-platformSettings__settingDescription">הפעלה/כיבוי של מערכת מעקב הקבלנים</Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "boolean" }}
+                                        value={getVal("CM_ENABLED", "true")}
+                                        onChange={(val) => handleChange("CM_ENABLED", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">מרווח ימים בין בדיקות</TextBold14>
+                                    <Text12 className="lw-platformSettings__settingDescription">כל כמה ימים לבדוק שינויים במאגרים</Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "number", label: "מרווח ימים" }}
+                                        value={getVal("CM_CHECK_INTERVAL_DAYS", "1")}
+                                        onChange={(val) => handleChange("CM_CHECK_INTERVAL_DAYS", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">שלח דוח גם ללא שינויים</TextBold14>
+                                    <Text12 className="lw-platformSettings__settingDescription">שליחת אימייל דוח יומי גם כשאין שינויים</Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "boolean" }}
+                                        value={getVal("CM_ALWAYS_SEND_REPORT", "true")}
+                                        onChange={(val) => handleChange("CM_ALWAYS_SEND_REPORT", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">שעת שליחת הדוח</TextBold14>
+                                    <Text12 className="lw-platformSettings__settingDescription">באיזו שעה לשלוח את הבדיקה היומית</Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "time", label: "שעה" }}
+                                        value={getVal("CM_REPORT_HOUR", "07:00")}
+                                        onChange={(val) => handleChange("CM_REPORT_HOUR", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">כתובות אימייל לדוח (ברירת מחדל)</TextBold14>
+                                    <Text12 className="lw-platformSettings__settingDescription">כתובות אימייל מופרדות בפסיק — ישמשו כברירת מחדל לכל המאגרים</Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "string", label: t("platformSettings.emailOverridePlaceholder") }}
+                                        value={getVal("CM_GLOBAL_EMAIL_RECIPIENTS")}
+                                        onChange={(val) => handleChange("CM_GLOBAL_EMAIL_RECIPIENTS", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">טלפונים ל-SMS (ברירת מחדל)</TextBold14>
+                                    <Text12 className="lw-platformSettings__settingDescription">מספרי טלפון מופרדים בפסיק — ישמשו כברירת מחדל</Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "string", label: t("platformSettings.smsOverridePlaceholder") }}
+                                        value={getVal("CM_GLOBAL_SMS_RECIPIENTS")}
+                                        onChange={(val) => handleChange("CM_GLOBAL_SMS_RECIPIENTS", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                        </SimpleContainer>
+                    </SimpleCard>
+
+                    {/* Per-Dataset Cards */}
+                    <SimpleContainer style={{ flexDirection: "column", gap: 12 }}>
+                        {CM_DATASETS.map((ds) => {
+                            const enabledKey = `CM_${ds.key}_ENABLED`;
+                            const emailKey = `CM_${ds.key}_EMAIL_RECIPIENTS`;
+                            const smsKey = `CM_${ds.key}_SMS_RECIPIENTS`;
+                            const globalEmail = getVal("CM_GLOBAL_EMAIL_RECIPIENTS", "");
+                            const globalSms = getVal("CM_GLOBAL_SMS_RECIPIENTS", "");
+
+                            return (
+                                <SimpleCard key={ds.key} className="lw-platformSettings__card">
+                                    <SimpleContainer className="lw-platformSettings__settingsList">
+                                        <SimpleContainer className="lw-platformSettings__settingRow">
+                                            <TextBold14 className="lw-platformSettings__settingName">{ds.label}</TextBold14>
+                                            <SimpleContainer className="lw-platformSettings__settingInput">
+                                                <SettingInput
+                                                    setting={{ valueType: "boolean" }}
+                                                    value={getVal(enabledKey, "true")}
+                                                    onChange={(val) => handleChange(enabledKey, val)}
+                                                />
+                                            </SimpleContainer>
+                                        </SimpleContainer>
+
+                                        <SimpleContainer className="lw-platformSettings__settingRow">
+                                            <SimpleContainer className="lw-platformSettings__settingLabel">
+                                                <Text14>אימייל (ריק = ברירת מחדל)</Text14>
+                                                {globalEmail && (
+                                                    <Text12 className="lw-platformSettings__settingDescription">ברירת מחדל: {globalEmail}</Text12>
+                                                )}
+                                            </SimpleContainer>
+                                            <SimpleContainer className="lw-platformSettings__settingInput">
+                                                <SettingInput
+                                                    setting={{ valueType: "string", label: t("platformSettings.emailOverridePlaceholder") }}
+                                                    value={getVal(emailKey)}
+                                                    onChange={(val) => handleChange(emailKey, val)}
+                                                />
+                                            </SimpleContainer>
+                                        </SimpleContainer>
+
+                                        <SimpleContainer className="lw-platformSettings__settingRow">
+                                            <SimpleContainer className="lw-platformSettings__settingLabel">
+                                                <Text14>SMS (ריק = ברירת מחדל)</Text14>
+                                                {globalSms && (
+                                                    <Text12 className="lw-platformSettings__settingDescription">ברירת מחדל: {globalSms}</Text12>
+                                                )}
+                                            </SimpleContainer>
+                                            <SimpleContainer className="lw-platformSettings__settingInput">
+                                                <SettingInput
+                                                    setting={{ valueType: "string", label: t("platformSettings.smsOverridePlaceholder") }}
+                                                    value={getVal(smsKey)}
+                                                    onChange={(val) => handleChange(smsKey, val)}
+                                                />
+                                            </SimpleContainer>
+                                        </SimpleContainer>
+                                    </SimpleContainer>
+                                </SimpleCard>
+                            );
+                        })}
+                    </SimpleContainer>
+
+                    {/* Status Section */}
+                    <SimpleCard className="lw-platformSettings__card">
+                        <TextBold18>סטטוס מערכת</TextBold18>
+                        <SimpleContainer className="lw-platformSettings__settingsList">
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <TextBold14 className="lw-platformSettings__settingName">הרצה אחרונה:</TextBold14>
+                                <Text14>{formattedLastRun}</Text14>
+                            </SimpleContainer>
+                            {lastRunResult && (
+                                <SimpleContainer className="lw-platformSettings__settingRow">
+                                    <TextBold14 className="lw-platformSettings__settingName">תוצאה אחרונה:</TextBold14>
+                                    <Text14 style={{ direction: "rtl", wordBreak: "break-word" }}>{lastRunResult}</Text14>
+                                </SimpleContainer>
+                            )}
+                        </SimpleContainer>
+                    </SimpleCard>
+                </SimpleContainer>
+            );
+        }
+
+        // Calendar tab — firm-wide working days/hours, reminders, sync policy
+        if (activeTab === "calendar") {
+            const calSettings = settings["calendar"] || {};
+            const getVal = (key, defaultVal = "") => {
+                const edited = editedValues[`calendar:${key}`]?.value;
+                if (edited !== undefined) return edited;
+                const eff = calSettings[key]?.effectiveValue;
+                return eff !== undefined && eff !== null ? eff : defaultVal;
+            };
+            const handleChange = (key, val) => handleSettingChange("calendar", key, val);
+
+            const DAYS = [
+                { value: "0", label: "ראשון" },
+                { value: "1", label: "שני" },
+                { value: "2", label: "שלישי" },
+                { value: "3", label: "רביעי" },
+                { value: "4", label: "חמישי" },
+                { value: "5", label: "שישי" },
+                { value: "6", label: "שבת" },
+            ];
+
+            const workingDaysRaw = String(getVal("WORKING_DAYS", "0,1,2,3,4"));
+            const workingDaysSet = new Set(
+                workingDaysRaw.split(",").map(s => s.trim()).filter(Boolean)
+            );
+            const toggleDay = (dayValue) => {
+                const next = new Set(workingDaysSet);
+                if (next.has(dayValue)) next.delete(dayValue);
+                else next.add(dayValue);
+                const ordered = DAYS.map(d => d.value).filter(v => next.has(v));
+                handleChange("WORKING_DAYS", ordered.join(","));
+            };
+
+            return (
+                <SimpleContainer className="lw-platformSettings__calendarTab">
+                    {/* Working days */}
+                    <SimpleCard className="lw-platformSettings__card">
+                        <TextBold18>ימי עבודה של המשרד</TextBold18>
+                        <Text12 className="lw-platformSettings__settingDescription">
+                            בחר את הימים בהם המשרד פעיל. ימים שלא נבחרו לא יוצגו בלוח השנה.
+                        </Text12>
+                        <SimpleContainer className="lw-platformSettings__dayPicker">
+                            {DAYS.map(d => {
+                                const active = workingDaysSet.has(d.value);
+                                return (
+                                    <SimpleButton
+                                        key={d.value}
+                                        className={`lw-platformSettings__dayChip ${active ? "lw-platformSettings__dayChip--active" : ""}`}
+                                        onPress={() => toggleDay(d.value)}
+                                    >
+                                        <Text14 className="lw-platformSettings__dayChipLabel">{d.label}</Text14>
+                                    </SimpleButton>
+                                );
+                            })}
+                        </SimpleContainer>
+                    </SimpleCard>
+
+                    {/* Working hours */}
+                    <SimpleCard className="lw-platformSettings__card">
+                        <TextBold18>שעות עבודה</TextBold18>
+                        <SimpleContainer className="lw-platformSettings__settingsList">
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">שעת תחילת יום עבודה</TextBold14>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "time", label: "שעת התחלה" }}
+                                        value={getVal("WORKING_HOURS_START", "08:00")}
+                                        onChange={(val) => handleChange("WORKING_HOURS_START", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">שעת סיום יום עבודה</TextBold14>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "time", label: "שעת סיום" }}
+                                        value={getVal("WORKING_HOURS_END", "18:00")}
+                                        onChange={(val) => handleChange("WORKING_HOURS_END", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                        </SimpleContainer>
+                    </SimpleCard>
+
+                    {/* Google sync firm policy */}
+                    <SimpleCard className="lw-platformSettings__card">
+                        <TextBold18>סנכרון Google Calendar</TextBold18>
+                        <Text12 className="lw-platformSettings__settingDescription">
+                            הגדרה ברמת המשרד. חיבור Google, ניתוק וסנכרון ידני מתבצעים על ידי כל עורך דין
+                            ממסך היומן תחת &quot;סנכרון אישי&quot; — לא מכאן.
+                        </Text12>
+                        <SimpleContainer className="lw-platformSettings__settingsList">
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">
+                                        {t("calendar.googleSyncFirmEnabled")}
+                                    </TextBold14>
+                                    <Text12 className="lw-platformSettings__settingDescription">
+                                        {t("calendar.googleSyncFirmEnabledHint")}
+                                    </Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "boolean" }}
+                                        value={getVal("GOOGLE_SYNC_ENABLED", "true")}
+                                        onChange={(val) => handleChange("GOOGLE_SYNC_ENABLED", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                        </SimpleContainer>
+                    </SimpleCard>
+
+                    {/* Reminders */}
+                    <SimpleCard className="lw-platformSettings__card">
+                        <TextBold18>תזכורות יומן</TextBold18>
+                        <SimpleContainer className="lw-platformSettings__settingsList">
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">הפעלת תזכורות אוטומטיות</TextBold14>
+                                    <Text12 className="lw-platformSettings__settingDescription">
+                                        שליחת תזכורות יום לפני ו-30 דקות לפני האירוע
+                                    </Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "boolean" }}
+                                        value={getVal("CALENDAR_REMINDERS_ENABLED", "true")}
+                                        onChange={(val) => handleChange("CALENDAR_REMINDERS_ENABLED", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">תדירות בדיקה (דקות)</TextBold14>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "number", label: "דקות" }}
+                                        value={getVal("CALENDAR_REMINDERS_POLL_MINUTES", "5")}
+                                        onChange={(val) => handleChange("CALENDAR_REMINDERS_POLL_MINUTES", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                        </SimpleContainer>
+                    </SimpleCard>
+                </SimpleContainer>
+            );
+        }
 
         // Settings tabs (messaging, signing, firm, reminders, security)
         const categorySettings = settings[activeTab] || {};

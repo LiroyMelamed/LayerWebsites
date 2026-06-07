@@ -6,6 +6,7 @@ import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
 import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
 import { Text14, TextBold24 } from "../../components/specializedComponents/text/AllTextKindFile";
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
+import { formatDisplayDateTime } from "../../functions/date/formatDateForInput";
 import "./ViewSignedDocument.scss";
 
 export const ViewSignedDocumentName = "/ViewSignedDocument";
@@ -70,15 +71,7 @@ export default function ViewSignedDocument() {
         }
     };
 
-    const formattedDate = docInfo?.signedAt
-        ? new Date(docInfo.signedAt).toLocaleDateString("he-IL", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        })
-        : "";
+    const formattedDate = formatDisplayDateTime(docInfo?.signedAt);
 
     return (
         <SimpleScreen className="lw-viewSignedDoc">
