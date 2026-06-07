@@ -91,7 +91,6 @@ function buildFullCalendarEvent(ev, { scope }) {
             start,
             end,
             allDay: true,
-            display: "background",
             backgroundColor: leaveColor(),
             borderColor: leaveColor(),
             textColor: "#FFFFFF",
@@ -366,18 +365,19 @@ export default function CalendarScreen() {
     }, [openPopup, closePopup, upsertLocally, fetchEvents, workingHoursStart, workingHoursEnd]);
 
     const openEditModal = useCallback((clickInfo) => {
-        const ev = clickInfo.event.extendedProps;
+        const ev = clickInfo.event.extendedProps || {};
         const eventPayload = {
             id: Number(clickInfo.event.id),
-            title: clickInfo.event.title,
-            startTime: clickInfo.event.startStr,
-            endTime: clickInfo.event.endStr,
-            allDay: clickInfo.event.allDay,
+            title: ev.title || clickInfo.event.title,
+            startTime: ev.startTime || clickInfo.event.startStr,
+            endTime: ev.endTime || clickInfo.event.endStr,
+            allDay: ev.allDay ?? clickInfo.event.allDay,
             description: ev.description,
             location: ev.location,
             eventType: ev.eventType,
             clientName: ev.clientName,
             managerName: ev.managerName,
+            managers: ev.managers,
             clientUserId: ev.clientUserId,
             managerUserId: ev.managerUserId,
             caseId: ev.caseId,

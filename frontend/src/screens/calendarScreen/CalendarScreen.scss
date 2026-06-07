@@ -539,26 +539,39 @@
 }
 
 // ─── Leave / vacation event styling ──────────────────────────────────────────
-// Background-display events show as full-day striped blocks across the column.
+// Regular (clickable) all-day events styled as striped vacation blocks.
 
-.fc .fc-bg-event.lw-fcEvent--leave,
-.fc .lw-fcEvent--leave {
+.lw-calendarScreen__calendarCard .fc-event.lw-fcEvent--leave,
+.fc .fc-event.lw-fcEvent--leave {
     background-color: #718096 !important;
     background-image: repeating-linear-gradient(45deg,
             rgba(255, 255, 255, 0.18) 0,
             rgba(255, 255, 255, 0.18) 6px,
             transparent 6px,
             transparent 14px) !important;
-    opacity: 0.55 !important;
+    border-color: #718096 !important;
     color: #FFFFFF !important;
     font-weight: 600;
+    cursor: pointer;
+    opacity: 0.92;
 }
 
-// Inline label for background events (FullCalendar normally hides the title)
-.fc .fc-bg-event.lw-fcEvent--leave .fc-event-title {
+.lw-calendarScreen__calendarCard .fc-event.lw-fcEvent--leave:hover,
+.fc .fc-event.lw-fcEvent--leave:hover {
     opacity: 1;
+    filter: brightness(1.05);
+}
+
+.lw-calendarScreen__calendarCard .fc-event.lw-fcEvent--leave .fc-event-title,
+.fc .fc-event.lw-fcEvent--leave .fc-event-title {
     color: #FFFFFF;
     padding-inline-start: 6px;
     font-size: 0.8125rem;
     letter-spacing: 0.01em;
+}
+
+// Legacy bg-event selector (older cached builds)
+.fc .fc-bg-event.lw-fcEvent--leave {
+    pointer-events: auto;
+    cursor: pointer;
 }
