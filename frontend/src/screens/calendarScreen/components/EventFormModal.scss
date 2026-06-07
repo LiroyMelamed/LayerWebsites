@@ -322,3 +322,40 @@
 .lw-eventFormModal__caseChip.is-active .lw-eventFormModal__caseChipStage {
     opacity: 0.85;
 }
+
+.lw-eventFormModal__managersCol {
+    flex-direction: column;
+    gap: v.$space-1;
+    width: 100%;
+}
+
+.lw-eventFormModal__managerChips {
+    flex-wrap: wrap;
+    gap: v.$space-1;
+}
+
+.lw-eventFormModal__managerChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--lw-color-primary);
+    color: #fff;
+    border-radius: 16px;
+    padding: 2px 10px;
+    font-size: 0.85rem;
+    line-height: 1.6;
+}
+
+.lw-eventFormModal__chipRemove {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0 2px;
+    line-height: 1;
+
+    &:hover {
+        opacity: 0.7;
+    }
+}

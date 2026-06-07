@@ -46,7 +46,23 @@ function toDatetimeLocal(val) {
 }
 
 function _shallowEqualConflictKey(a, b) {
-    return a?.start === b?.start && a?.end === b?.end && a?.lawyer === b?.lawyer && a?.exclude === b?.exclude;
+    return a?.start === b?.start
+        && a?.end === b?.end
+        && a?.lawyers === b?.lawyers
+        && a?.exclude === b?.exclude;
+}
+
+function _initialManagers(event) {
+    if (Array.isArray(event?.managers) && event.managers.length) {
+        return event.managers.map((m) => ({
+            userId: m.userId,
+            name: m.name || "",
+        }));
+    }
+    if (event?.managerUserId) {
+        return [{ userId: event.managerUserId, name: event?.managerName || "" }];
+    }
+    return [];
 }
 
 /** Decide initial intake mode for a given event. Lead data wins; otherwise existing. */
@@ -107,8 +123,8 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     // Existing-client / manager fields
     const [clientName, setClientName] = useState(event?.clientName || "");
     const [clientUserId, setClientUserId] = useState(event?.clientUserId || null);
-    const [managerName, setManagerName] = useState(event?.managerName || "");
-    const [managerUserId, setManagerUserId] = useState(event?.managerUserId || null);
+    const [managers, setManagers] = useState(() => _initialManagers(event));
+    const [managerSearch, setManagerSearch] = useState("");
     const [caseId, setCaseId] = useState(event?.caseId || null);
     const [caseName, setCaseName] = useState(event?.caseName || "");
 
@@ -137,6 +153,8 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         hasLeaveConflict: false,
     });
     const lastConflictKeyRef = useRef(null);
+    const eventTypeRef = useRef(eventType);
+    eventTypeRef.current = eventType;
 
     // Cases-for-client state
     const [clientCases, setClientCases] = useState([]);
@@ -169,8 +187,8 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setColor(s.color);
         setClientName(s.clientName);
         setClientUserId(s.clientUserId);
-        setManagerName(s.managerName);
-        setManagerUserId(s.managerUserId);
+        setManagers(_initialManagers(event));
+        setManagerSearch("");
         setCaseId(s.caseId);
         setCaseName(s.caseName);
         setIntakeMode(s.intakeMode);
@@ -226,8 +244,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
 
     // ─── Effect: live conflict check (debounced) ──────────────────────────
     useEffect(() => {
-        if (eventType === EVENT_TYPE_LEAVE) {
-            // Leave events themselves create the conflict; don't double-warn the owner.
+        if (eventType === EVENT_TYPE_LEAVE || eventType === EVENT_TYPE_REMINDER) {
             setConflictState({ loading: false, hasConflict: false, hasLeaveConflict: false });
             return undefined;
         }
@@ -243,10 +260,11 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             return undefined;
         }
 
+        const lawyerIds = managers.map((m) => m.userId).filter(Boolean);
         const key = {
             start: startISO,
             end: endISO,
-            lawyer: managerUserId || null,
+            lawyers: lawyerIds.join(",") || "self",
             exclude: isEdit ? event.id : null,
         };
         if (_shallowEqualConflictKey(lastConflictKeyRef.current, key)) return undefined;
@@ -256,11 +274,14 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setConflictState((prev) => ({ ...prev, loading: true }));
 
         const handle = setTimeout(async () => {
+            if (eventTypeRef.current === EVENT_TYPE_LEAVE || eventTypeRef.current === EVENT_TYPE_REMINDER) {
+                return;
+            }
             try {
                 const res = await calendarApi.checkConflict({
                     start_time: startISO,
                     end_time: endISO,
-                    lawyer_id: managerUserId || undefined,
+                    lawyer_ids: lawyerIds.length ? lawyerIds : undefined,
                     exclude_event_id: isEdit ? event.id : undefined,
                 });
                 if (cancelled) return;
@@ -278,7 +299,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         }, 400);
 
         return () => { cancelled = true; clearTimeout(handle); };
-    }, [startTime, endTime, managerUserId, eventType, isEdit, event?.id]);
+    }, [startTime, endTime, managers, eventType, isEdit, event?.id]);
 
     // ─── Effect: load active cases for the linked client ──────────────────
     const loadClientCases = useCallback(async (cuid) => {
@@ -330,6 +351,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         try {
             const isClientScoped = eventType === EVENT_TYPE_APPT || eventType === EVENT_TYPE_HEARING;
             const isLeadMode = intakeMode === INTAKE_LEAD && isClientScoped;
+            const primaryManager = managers[0] || null;
             const payload = {
                 title: title.trim() || (eventType === EVENT_TYPE_LEAVE
                     ? t("calendar.leaveLabel")
@@ -343,8 +365,11 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 start_time: new Date(startTime).toISOString(),
                 end_time: new Date(endTime).toISOString(),
                 all_day: allDay,
-                manager_user_id: managerUserId,
-                manager_name: managerName || null,
+                manager_user_id: primaryManager?.userId || null,
+                manager_name: managers.length
+                    ? managers.map((m) => m.name).filter(Boolean).join(", ")
+                    : null,
+                manager_user_ids: managers.map((m) => m.userId).filter(Boolean),
             };
 
             if (isLeadMode) {
@@ -455,10 +480,10 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 Email: newClient.email || savedLeadEmail || "",
                 PhoneNumber: newClient.phone || savedLeadPhone || "",
             }] : [],
-            CaseManager: managerName || "",
-            CaseManagerId: managerUserId || "",
+            CaseManager: managers[0]?.name || "",
+            CaseManagerId: managers[0]?.userId || "",
         });
-    }, [managerName, managerUserId, onUpdated, t]);
+    }, [managers, onUpdated, t]);
 
     const handleOpenCaseForm = () => {
         const clientId = clientUserId || event?.clientUserId || null;
@@ -477,8 +502,8 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 Email: leadEmail || "",
                 PhoneNumber: leadPhone || "",
             }],
-            CaseManager: managerName || "",
-            CaseManagerId: managerUserId || "",
+            CaseManager: managers[0]?.name || "",
+            CaseManagerId: managers[0]?.userId || "",
         });
     };
 
@@ -586,9 +611,20 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         const selectedAdmin = resultItem || (Array.isArray(admins)
             ? admins.find((a) => a.name?.trim() === selectedManagerName?.trim())
             : null);
-        if (!selectedAdmin) return;
-        setManagerName(selectedAdmin.name || selectedManagerName || "");
-        setManagerUserId(selectedAdmin.userid || null);
+        if (!selectedAdmin?.userid) return;
+        setManagers((prev) => {
+            if (prev.some((m) => m.userId === selectedAdmin.userid)) return prev;
+            return [...prev, {
+                userId: selectedAdmin.userid,
+                name: selectedAdmin.name || selectedManagerName || "",
+            }];
+        });
+        setManagerSearch("");
+        searchAdmins("");
+    };
+
+    const handleRemoveManager = (userId) => {
+        setManagers((prev) => prev.filter((m) => m.userId !== userId));
     };
 
     // ─── Derived flags ────────────────────────────────────────────────────
@@ -744,20 +780,38 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                         timeToWaitInMilli={0}
                     />
 
-                    {/* ─── Manager (the lawyer the event belongs to) ─── */}
-                    <SearchInput
-                        title={t("calendar.manager")}
-                        value={managerName}
-                        onSearch={(name) => {
-                            setManagerName(name);
-                            setManagerUserId(null);
-                            searchAdmins(name);
-                        }}
-                        isPerforming={isSearchingAdmins}
-                        queryResult={admins}
-                        getButtonTextFunction={(item) => item.name}
-                        buttonPressFunction={handleManagerSelected}
-                    />
+                    {/* ─── Managers (multiple lawyers, like clients on a case) ─── */}
+                    <SimpleContainer className="lw-eventFormModal__managersCol">
+                        <SearchInput
+                            title={t("calendar.manager")}
+                            value={managerSearch}
+                            onSearch={(name) => {
+                                setManagerSearch(name);
+                                searchAdmins(name);
+                            }}
+                            isPerforming={isSearchingAdmins}
+                            queryResult={admins}
+                            getButtonTextFunction={(item) => item.name}
+                            buttonPressFunction={handleManagerSelected}
+                        />
+                        {managers.length > 0 && (
+                            <SimpleContainer className="lw-eventFormModal__managerChips">
+                                {managers.map((m) => (
+                                    <span key={m.userId} className="lw-eventFormModal__managerChip">
+                                        {m.name}
+                                        <button
+                                            type="button"
+                                            className="lw-eventFormModal__chipRemove"
+                                            onClick={() => handleRemoveManager(m.userId)}
+                                            aria-label={t("calendar.removeManager")}
+                                        >
+                                            &times;
+                                        </button>
+                                    </span>
+                                ))}
+                            </SimpleContainer>
+                        )}
+                    </SimpleContainer>
 
                     {/* ─── Intake-mode toggle (appointment-only) ─── */}
                     {showIntakeToggle && (

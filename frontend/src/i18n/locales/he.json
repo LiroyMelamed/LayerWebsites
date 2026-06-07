@@ -455,6 +455,8 @@
     "location": "מיקום",
     "client": "לקוח",
     "manager": "מנהל",
+    "removeManager": "הסר מנהל",
+    "managersHint": "ניתן להוסיף מספר עורכי דין — כמו לקוחות בתיק",
     "eventColor": "צבע אירוע",
     "startTime": "שעת התחלה",
     "endTime": "שעת סיום",

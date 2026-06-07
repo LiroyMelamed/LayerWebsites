@@ -167,6 +167,104 @@ function _normalizePhoneDigits(phone) {
     return digits || null;
 }
 
+function _parseManagerUserIds(body) {
+    const raw = body?.manager_user_ids;
+    if (Array.isArray(raw)) {
+        return [...new Set(
+            raw.map((id) => parseInt(id, 10)).filter((id) => Number.isFinite(id))
+        )];
+    }
+    const single = body?.manager_user_id != null && body?.manager_user_id !== ''
+        ? parseInt(body.manager_user_id, 10)
+        : null;
+    return Number.isFinite(single) ? [single] : [];
+}
+
+async function _fetchEventManagers(eventIds) {
+    const map = new Map();
+    if (!eventIds?.length) return map;
+    const { rows } = await pool.query(
+        `SELECT cem.event_id, u.userid AS user_id, u.name
+         FROM calendar_event_managers cem
+         JOIN users u ON u.userid = cem.user_id
+         WHERE cem.event_id = ANY($1::int[])
+         ORDER BY cem.event_id, u.name`,
+        [eventIds]
+    );
+    for (const row of rows) {
+        if (!map.has(row.event_id)) map.set(row.event_id, []);
+        map.get(row.event_id).push({ userId: row.user_id, name: row.name });
+    }
+    return map;
+}
+
+async function _syncEventManagers(eventId, userIds, dbClient = pool) {
+    const uniqueIds = [...new Set(userIds.filter((id) => Number.isFinite(id)))];
+    await dbClient.query('DELETE FROM calendar_event_managers WHERE event_id = $1', [eventId]);
+    for (const uid of uniqueIds) {
+        await dbClient.query(
+            `INSERT INTO calendar_event_managers (event_id, user_id)
+             VALUES ($1, $2)
+             ON CONFLICT (event_id, user_id) DO NOTHING`,
+            [eventId, uid]
+        );
+    }
+    if (!uniqueIds.length) {
+        return { managerUserId: null, managerName: null, managers: [] };
+    }
+    const { rows } = await dbClient.query(
+        `SELECT userid, name FROM users WHERE userid = ANY($1::int[]) ORDER BY name`,
+        [uniqueIds]
+    );
+    const managers = rows.map((r) => ({ userId: r.userid, name: r.name }));
+    return {
+        managerUserId: managers[0]?.userId || null,
+        managerName: managers.map((m) => m.name).join(', ') || null,
+        managers,
+    };
+}
+
+function _applyManagersToEvent(sanitized, managers) {
+    if (!managers?.length) {
+        if (sanitized.managerUserId) {
+            sanitized.managers = [{
+                userId: sanitized.managerUserId,
+                name: sanitized.managerName || '',
+            }];
+        } else {
+            sanitized.managers = [];
+        }
+        return sanitized;
+    }
+    sanitized.managers = managers;
+    sanitized.managerUserId = managers[0].userId;
+    sanitized.managerName = managers.map((m) => m.name).join(', ');
+    return sanitized;
+}
+
+async function _sanitizeEventWithManagers(row, managersMap) {
+    const ev = _sanitizeEvent(row);
+    const managers = managersMap?.get(row.id);
+    return _applyManagersToEvent(ev, managers);
+}
+
+/** SQL fragment: event belongs to lawyer (owner, legacy manager column, or junction). */
+function _lawyerMatchSql(lawyerParamIdx) {
+    return `(
+        ce.owner_id = $${lawyerParamIdx}
+        OR ce.manager_user_id = $${lawyerParamIdx}
+        OR EXISTS (
+            SELECT 1 FROM calendar_event_managers cem
+            WHERE cem.event_id = ce.id AND cem.user_id = $${lawyerParamIdx}
+        )
+        OR (
+            ce.manager_user_id IS NULL
+            AND ce.manager_name IS NOT NULL
+            AND ce.manager_name = (SELECT name FROM users WHERE userid = $${lawyerParamIdx})
+        )
+    )`;
+}
+
 /** Ensure the event belongs to the requesting user */
 async function _requireOwnership(eventId, userId) {
     const { rows } = await pool.query(
@@ -305,19 +403,18 @@ const listEvents = async (req, res) => {
         return res.status(400).json({ message: 'מזהה עורך דין לא תקין' });
     }
     if (requestedLawyerId) {
-        conditions.push(`(
-            ce.manager_user_id = $${idx}
-            OR ce.owner_id = $${idx}
-            OR (
-                ce.manager_user_id IS NULL
-                AND ce.manager_name IS NOT NULL
-                AND ce.manager_name = (SELECT name FROM users WHERE userid = $${idx})
-            )
-        )`);
+        conditions.push(_lawyerMatchSql(idx));
         idx++;
         params.push(requestedLawyerId);
     } else if (scope !== 'firm') {
-        conditions.push(`ce.owner_id = $${idx++}`);
+        conditions.push(`(
+            ce.owner_id = $${idx}
+            OR EXISTS (
+                SELECT 1 FROM calendar_event_managers cem
+                WHERE cem.event_id = ce.id AND cem.user_id = $${idx}
+            )
+        )`);
+        idx++;
         params.push(userId);
     }
 
@@ -365,7 +462,12 @@ const listEvents = async (req, res) => {
              LIMIT $${idx++} OFFSET $${idx++}`,
             params
         );
-        return res.json({ events: rows.map(_sanitizeEvent) });
+        const eventIds = rows.map((r) => r.id);
+        const managersMap = await _fetchEventManagers(eventIds);
+        const events = await Promise.all(
+            rows.map((r) => _sanitizeEventWithManagers(r, managersMap))
+        );
+        return res.json({ events });
     } catch (err) {
         console.error('[calendarController] listEvents error:', err.message);
         return res.status(500).json({ message: 'שגיאה פנימית בשרת' });
@@ -454,8 +556,12 @@ const createEvent = async (req, res) => {
         clientUserId = null;
     }
     const leadCaseName = lead_case_name ? String(lead_case_name).trim() : null;
-    const managerUserId = manager_user_id ? parseInt(manager_user_id, 10) : null;
-    if (manager_user_id && !Number.isFinite(managerUserId)) {
+    const managerIds = _parseManagerUserIds(req.body);
+    const managerUserId = managerIds[0] ?? (manager_user_id ? parseInt(manager_user_id, 10) : null);
+    if (manager_user_id && !Number.isFinite(parseInt(manager_user_id, 10))) {
+        return res.status(400).json({ message: 'מזהה מנהל לא תקין' });
+    }
+    if (managerIds.some((id) => !Number.isFinite(id))) {
         return res.status(400).json({ message: 'מזהה מנהל לא תקין' });
     }
     if (color && !/^#[0-9a-fA-F]{6}$/.test(String(color))) {
@@ -511,7 +617,18 @@ const createEvent = async (req, res) => {
                 hasLead ? (leadCaseName || null) : null,
             ]
         );
-        return res.status(201).json({ event: _sanitizeEvent(rows[0]) });
+        const created = rows[0];
+        const mgrMeta = await _syncEventManagers(created.id, managerIds.length ? managerIds : (managerUserId ? [managerUserId] : []));
+        if (mgrMeta.managerUserId && (mgrMeta.managerUserId !== created.manager_user_id || mgrMeta.managerName !== created.manager_name)) {
+            await pool.query(
+                'UPDATE calendar_events SET manager_user_id = $1, manager_name = $2 WHERE id = $3',
+                [mgrMeta.managerUserId, mgrMeta.managerName, created.id]
+            );
+            created.manager_user_id = mgrMeta.managerUserId;
+            created.manager_name = mgrMeta.managerName;
+        }
+        const event = _applyManagersToEvent(_sanitizeEvent(created), mgrMeta.managers);
+        return res.status(201).json({ event });
     } catch (err) {
         // Unique violation on partial lead index = duplicate active lead for this lawyer
         if (err?.code === '23505' && /uq_calendar_events_owner_active_lead_phone/.test(err.message || '')) {
@@ -539,7 +656,9 @@ const getEvent = async (req, res) => {
 
     try {
         const { rows } = await pool.query('SELECT * FROM calendar_events WHERE id = $1', [eventId]);
-        return res.json({ event: _sanitizeEvent(rows[0]) });
+        const managersMap = await _fetchEventManagers([eventId]);
+        const event = await _sanitizeEventWithManagers(rows[0], managersMap);
+        return res.json({ event });
     } catch (err) {
         console.error('[calendarController] getEvent error:', err.message);
         return res.status(500).json({ message: 'שגיאה פנימית בשרת' });
@@ -578,6 +697,7 @@ const updateEvent = async (req, res) => {
         lead_phone,
         lead_email,
         lead_case_name,
+        manager_user_ids,
     } = req.body;
 
     if (start_time && end_time && new Date(end_time) < new Date(start_time)) {
@@ -651,6 +771,18 @@ const updateEvent = async (req, res) => {
             return res.status(400).json({ message: 'אירוע חופשה או תזכורת לא יכול להכיל פרטי ליד' });
         }
 
+        const parsedManagerIds = manager_user_ids !== undefined
+            ? _parseManagerUserIds(req.body)
+            : null;
+        if (parsedManagerIds && parsedManagerIds.some((id) => !Number.isFinite(id))) {
+            return res.status(400).json({ message: 'מזהה מנהל לא תקין' });
+        }
+
+        const nextManagerUserId = manager_user_id !== undefined
+            ? (parseInt(manager_user_id, 10) || null)
+            : (parsedManagerIds?.[0] ?? ev.manager_user_id);
+        const nextManagerName = manager_name !== undefined ? manager_name : ev.manager_name;
+
         const { rows } = await pool.query(
             `UPDATE calendar_events SET
                title                  = $1,
@@ -681,8 +813,8 @@ const updateEvent = async (req, res) => {
                 newEventType,
                 resolvedClientUserId,
                 resolvedClientName,
-                manager_user_id !== undefined ? (parseInt(manager_user_id, 10) || null) : ev.manager_user_id,
-                manager_name !== undefined ? manager_name : ev.manager_name,
+                nextManagerUserId,
+                nextManagerName,
                 color !== undefined ? (color || null) : ev.color,
                 newStart,
                 end_time || ev.end_time,
@@ -697,7 +829,20 @@ const updateEvent = async (req, res) => {
                 eventId,
             ]
         );
-        return res.json({ event: _sanitizeEvent(rows[0]) });
+        let updated = rows[0];
+        if (parsedManagerIds !== null) {
+            const mgrMeta = await _syncEventManagers(eventId, parsedManagerIds);
+            if (mgrMeta.managerUserId !== updated.manager_user_id || mgrMeta.managerName !== updated.manager_name) {
+                await pool.query(
+                    'UPDATE calendar_events SET manager_user_id = $1, manager_name = $2 WHERE id = $3',
+                    [mgrMeta.managerUserId, mgrMeta.managerName, eventId]
+                );
+                updated = { ...updated, manager_user_id: mgrMeta.managerUserId, manager_name: mgrMeta.managerName };
+            }
+            return res.json({ event: _applyManagersToEvent(_sanitizeEvent(updated), mgrMeta.managers) });
+        }
+        const managersMap = await _fetchEventManagers([eventId]);
+        return res.json({ event: await _sanitizeEventWithManagers(updated, managersMap) });
     } catch (err) {
         if (err?.code === '23505' && /uq_calendar_events_owner_active_lead_phone/.test(err.message || '')) {
             return res.status(409).json({
@@ -1201,7 +1346,7 @@ const syncGoogleEvents = async (req, res) => {
  * Application-layer overlap detector (soft warning — no DB-level EXCLUDE constraint).
  * Returns any of the target lawyer's events whose time window intersects [start_time, end_time).
  *
- * Body: { start_time, end_time, lawyer_id?, exclude_event_id? }
+ * Body: { start_time, end_time, lawyer_id?, lawyer_ids?, exclude_event_id? }
  *   • lawyer_id defaults to req.user.UserId
  *   • exclude_event_id is required when editing an existing event to avoid self-collision
  *
@@ -1209,7 +1354,7 @@ const syncGoogleEvents = async (req, res) => {
  */
 const checkConflict = async (req, res) => {
     const userId = req.user.UserId;
-    const { start_time, end_time, lawyer_id, exclude_event_id } = req.body || {};
+    const { start_time, end_time, lawyer_id, lawyer_ids, exclude_event_id } = req.body || {};
 
     if (!start_time || !end_time) {
         return res.status(400).json({ message: 'נא לציין שעת התחלה וסיום לבדיקת התנגשויות' });
@@ -1218,8 +1363,18 @@ const checkConflict = async (req, res) => {
         return res.status(400).json({ message: 'שעת הסיום חייבת להיות אחרי שעת ההתחלה' });
     }
 
-    const targetLawyerId = lawyer_id ? parseInt(lawyer_id, 10) : userId;
-    if (!Number.isFinite(targetLawyerId)) {
+    let targetLawyerIds = [];
+    if (Array.isArray(lawyer_ids) && lawyer_ids.length) {
+        targetLawyerIds = [...new Set(
+            lawyer_ids.map((id) => parseInt(id, 10)).filter((id) => Number.isFinite(id))
+        )];
+    } else if (lawyer_id != null && lawyer_id !== '') {
+        const single = parseInt(lawyer_id, 10);
+        if (Number.isFinite(single)) targetLawyerIds = [single];
+    } else {
+        targetLawyerIds = [userId];
+    }
+    if (!targetLawyerIds.length) {
         return res.status(400).json({ message: 'מזהה עורך דין לא תקין' });
     }
 
@@ -1229,28 +1384,37 @@ const checkConflict = async (req, res) => {
     }
 
     try {
-        const { rows } = await pool.query(
-            `SELECT ce.*,
-                    u_owner.name  AS owner_name,
-                    u_client.name AS client_display_name,
-                    c.casename    AS case_name
-             FROM   calendar_events ce
-             LEFT JOIN users u_owner  ON u_owner.userid  = ce.owner_id
-             LEFT JOIN users u_client ON u_client.userid = ce.client_user_id
-             LEFT JOIN cases c        ON c.caseid        = ce.case_id
-             WHERE  ce.owner_id = $1
-               AND  ($4::int IS NULL OR ce.id <> $4)
-               AND  tstzrange(ce.start_time, ce.end_time, '[)')
-                    && tstzrange($2::timestamptz, $3::timestamptz, '[)')
-             ORDER BY ce.start_time ASC
-             LIMIT  20`,
-            [targetLawyerId, start_time, end_time, excludeId]
-        );
-        const hasLeave = rows.some(r => r.event_type === 'leave');
+        const allRows = [];
+        for (const targetLawyerId of targetLawyerIds) {
+            const { rows } = await pool.query(
+                `SELECT ce.*,
+                        u_owner.name  AS owner_name,
+                        u_client.name AS client_display_name,
+                        c.casename    AS case_name
+                 FROM   calendar_events ce
+                 LEFT JOIN users u_owner  ON u_owner.userid  = ce.owner_id
+                 LEFT JOIN users u_client ON u_client.userid = ce.client_user_id
+                 LEFT JOIN cases c        ON c.caseid        = ce.case_id
+                 WHERE  ${_lawyerMatchSql(1)}
+                   AND  ($4::int IS NULL OR ce.id <> $4)
+                   AND  tstzrange(ce.start_time, ce.end_time, '[)')
+                        && tstzrange($2::timestamptz, $3::timestamptz, '[)')
+                 ORDER BY ce.start_time ASC
+                 LIMIT  20`,
+                [targetLawyerId, start_time, end_time, excludeId]
+            );
+            for (const row of rows) {
+                if (!allRows.some((existing) => existing.id === row.id)) {
+                    allRows.push(row);
+                }
+            }
+        }
+        allRows.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+        const hasLeave = allRows.some((r) => r.event_type === 'leave');
         return res.json({
-            hasConflict: rows.length > 0,
+            hasConflict: allRows.length > 0,
             hasLeaveConflict: hasLeave,
-            conflicts: rows.map(_sanitizeEvent),
+            conflicts: allRows.slice(0, 20).map(_sanitizeEvent),
         });
     } catch (err) {
         console.error('[calendarController] checkConflict error:', err.message);
