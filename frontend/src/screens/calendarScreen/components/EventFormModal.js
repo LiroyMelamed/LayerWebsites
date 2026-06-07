@@ -351,6 +351,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         try {
             const isClientScoped = eventType === EVENT_TYPE_APPT || eventType === EVENT_TYPE_HEARING;
             const isLeadMode = intakeMode === INTAKE_LEAD && isClientScoped;
+            const isLeaveType = eventType === EVENT_TYPE_LEAVE;
             const primaryManager = managers[0] || null;
             const payload = {
                 title: title.trim() || (eventType === EVENT_TYPE_LEAVE
@@ -364,7 +365,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 color: color || null,
                 start_time: new Date(startTime).toISOString(),
                 end_time: new Date(endTime).toISOString(),
-                all_day: allDay,
+                all_day: isLeaveType ? true : allDay,
                 manager_user_id: primaryManager?.userId || null,
                 manager_name: managers.length
                     ? managers.map((m) => m.name).filter(Boolean).join(", ")

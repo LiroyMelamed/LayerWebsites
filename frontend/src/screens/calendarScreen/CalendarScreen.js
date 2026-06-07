@@ -65,19 +65,32 @@ function _eventTypeFilterLabel(eventType, t) {
 
 // Map a raw calendar_events row → FullCalendar EventInput. The scope drives
 // whether we color by lawyer (firm view) or by event.color (personal view).
+
+/** FullCalendar all-day end is exclusive — extend by one calendar day. */
+function leaveAllDayRange(startTime, endTime) {
+    const start = String(startTime || "").slice(0, 10);
+    const endBase = new Date(endTime);
+    if (Number.isNaN(endBase.getTime())) return { start, end: start };
+    endBase.setUTCDate(endBase.getUTCDate() + 1);
+    return { start, end: endBase.toISOString().slice(0, 10) };
+}
+
 function buildFullCalendarEvent(ev, { scope }) {
     const isLeave = ev?.eventType === "leave";
 
     // Leave events render as muted background blocks across the day(s).
+    // Must be all-day — timed background events do not span days in month view.
     if (isLeave) {
-        const lawyerName = ev?.ownerName || "";
+        const managerLabel = ev?.managerName || ev?.ownerName || "";
         const labelPrefix = "[חופשה]";
+        const titleCore = ev?.title || managerLabel;
+        const { start, end } = leaveAllDayRange(ev.startTime, ev.endTime);
         return {
             id: String(ev.id),
-            title: lawyerName ? `${labelPrefix} ${lawyerName}` : `${labelPrefix} ${ev.title || ""}`.trim(),
-            start: ev.startTime,
-            end: ev.endTime,
-            allDay: ev.allDay,
+            title: titleCore ? `${labelPrefix} ${titleCore}` : labelPrefix,
+            start,
+            end,
+            allDay: true,
             display: "background",
             backgroundColor: leaveColor(),
             borderColor: leaveColor(),
@@ -342,6 +355,7 @@ export default function CalendarScreen() {
                 onUpdated={upsertLocally}
                 onSaved={(saved) => {
                     upsertLocally(saved);
+                    fetchEvents(null);
                     closePopup();
                     selectInfo?.view?.calendar?.unselect?.();
                 }}
@@ -349,7 +363,7 @@ export default function CalendarScreen() {
                 onClose={closePopup}
             />
         );
-    }, [openPopup, closePopup, upsertLocally, workingHoursStart, workingHoursEnd]);
+    }, [openPopup, closePopup, upsertLocally, fetchEvents, workingHoursStart, workingHoursEnd]);
 
     const openEditModal = useCallback((clickInfo) => {
         const ev = clickInfo.event.extendedProps;
@@ -379,7 +393,7 @@ export default function CalendarScreen() {
                 key={_eventFormModalKey(eventPayload)}
                 event={eventPayload}
                 onUpdated={upsertLocally}
-                onSaved={(saved) => { upsertLocally(saved); closePopup(); }}
+                onSaved={(saved) => { upsertLocally(saved); fetchEvents(null); closePopup(); }}
                 onDeleted={(deletedId) => {
                     setEvents((prev) => prev.filter((e) => e.id !== String(deletedId)));
                     closePopup();
@@ -387,7 +401,7 @@ export default function CalendarScreen() {
                 onClose={closePopup}
             />
         );
-    }, [openPopup, closePopup, upsertLocally]);
+    }, [openPopup, closePopup, upsertLocally, fetchEvents]);
 
     // ── Deep-link: /CalendarScreen?eventId=<id> ────────────────────────────
     useEffect(() => {
@@ -411,7 +425,7 @@ export default function CalendarScreen() {
                 key={_eventFormModalKey(eventPayload)}
                 event={eventPayload}
                 onUpdated={upsertLocally}
-                onSaved={(saved) => { upsertLocally(saved); closePopup(); }}
+                onSaved={(saved) => { upsertLocally(saved); fetchEvents(null); closePopup(); }}
                 onDeleted={(deletedId) => {
                     setEvents((prev) => prev.filter((e) => e.id !== String(deletedId)));
                     closePopup();
@@ -419,7 +433,7 @@ export default function CalendarScreen() {
                 onClose={closePopup}
             />
         );
-    }, [events, searchParams, openPopup, closePopup, upsertLocally]);
+    }, [events, searchParams, openPopup, closePopup, upsertLocally, fetchEvents]);
 
     // ── View switcher ──────────────────────────────────────────────────────
     const switchView = (v) => {

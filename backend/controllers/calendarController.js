@@ -418,8 +418,16 @@ const listEvents = async (req, res) => {
         params.push(userId);
     }
 
-    if (from) { conditions.push(`ce.start_time >= $${idx++}`); params.push(from); }
-    if (to) { conditions.push(`ce.start_time <= $${idx++}`); params.push(to); }
+    if (from && to) {
+        conditions.push(
+            `tstzrange(ce.start_time, ce.end_time, '[)') && tstzrange($${idx}::timestamptz, $${idx + 1}::timestamptz, '[)')`
+        );
+        params.push(from, to);
+        idx += 2;
+    } else {
+        if (from) { conditions.push(`ce.start_time >= $${idx++}`); params.push(from); }
+        if (to) { conditions.push(`ce.end_time > $${idx++}`); params.push(to); }
+    }
 
     if (client_id) {
         const cid = parseInt(client_id, 10);
@@ -579,8 +587,9 @@ const createEvent = async (req, res) => {
     }
 
     // Leave/reminder events are lawyer-scoped — they may fall outside working hours.
+    const storedAllDay = eventType === 'leave' ? true : !!all_day;
     if (!_isInternalScopedEventType(eventType)) {
-        const workingCheck = await _validateWorkingHours(start_time, end_time, !!all_day);
+        const workingCheck = await _validateWorkingHours(start_time, end_time, storedAllDay);
         if (!workingCheck.ok) {
             return res.status(400).json({ message: workingCheck.message });
         }
@@ -609,7 +618,7 @@ const createEvent = async (req, res) => {
                 color || null,
                 start_time,
                 end_time,
-                !!all_day,
+                storedAllDay,
                 rrule || null,
                 lead_name ? String(lead_name).trim() : null,
                 lead_phone ? String(lead_phone).trim() : null,
@@ -725,8 +734,10 @@ const updateEvent = async (req, res) => {
 
         const newStart = start_time || ev.start_time;
         const newEnd = end_time || ev.end_time;
-        const newAllDay = all_day !== undefined ? !!all_day : ev.all_day;
         const newEventType = event_type !== undefined ? event_type : (ev.event_type || 'appointment');
+        const newAllDay = newEventType === 'leave'
+            ? true
+            : (all_day !== undefined ? !!all_day : ev.all_day);
         // Reset audit on time change so the cron worker re-fires reminders.
         const timeChanged = start_time && new Date(start_time).getTime() !== new Date(ev.start_time).getTime();
 
