@@ -1,23 +1,28 @@
 # sync-prod-to-neon.ps1 — Sync Neon dev DB from production VPS
 # Usage: .\scripts\sync-prod-to-neon.ps1
-#
-# Prerequisites:
-#   - SSH access to production server (root@37.60.230.148)
-#   - psql (PostgreSQL 17 client) installed locally
-#   - Neon database accessible (connection details below)
+# Credentials: set $env:NEON_DATABASE_URL or $env:NEON_PASS (see .env.neon.example)
 
 $ErrorActionPreference = "Continue"
-$PROD_HOST    = "root@37.60.230.148"
-$NEON_HOST    = "ep-super-mode-alv2q4jv.c-3.eu-central-1.aws.neon.tech"
-$NEON_DB      = "neondb"
-$NEON_USER    = "neondb_owner"
-$NEON_PASS    = "npg_te3Jw0sqBSHg"
-$PSQL         = "C:\Program Files\PostgreSQL\17\bin\psql.exe"
-$DUMP_REMOTE  = "/tmp/morlevydb_prod.sql"
-$DUMP_LOCAL   = "$PSScriptRoot\..\morlevydb_prod.sql"
-$DUMP_CLEAN   = "$PSScriptRoot\..\morlevydb_clean.sql"
+$PROD_HOST = "root@37.60.230.148"
+$NEON_HOST = if ($env:NEON_HOST) { $env:NEON_HOST } else { "ep-super-mode-alv2q4jv.c-3.eu-central-1.aws.neon.tech" }
+$NEON_DB = if ($env:NEON_DB) { $env:NEON_DB } else { "neondb" }
+$NEON_USER = if ($env:NEON_USER) { $env:NEON_USER } else { "neondb_owner" }
+$NEON_PASS = $env:NEON_PASS
+$PSQL = "C:\Program Files\PostgreSQL\17\bin\psql.exe"
+$DUMP_REMOTE = "/tmp/morlevydb_prod.sql"
+$DUMP_LOCAL = "$PSScriptRoot\..\morlevydb_prod.sql"
+$DUMP_CLEAN = "$PSScriptRoot\..\morlevydb_clean.sql"
 
-$NEON_CONNSTR = "postgresql://${NEON_USER}:${NEON_PASS}@${NEON_HOST}:5432/${NEON_DB}?sslmode=require"
+if ($env:NEON_DATABASE_URL) {
+    $NEON_CONNSTR = $env:NEON_DATABASE_URL
+}
+elseif ($NEON_PASS) {
+    $NEON_CONNSTR = "postgresql://${NEON_USER}:${NEON_PASS}@${NEON_HOST}:5432/${NEON_DB}?sslmode=require"
+}
+else {
+    Write-Host "ERROR: Set NEON_DATABASE_URL or NEON_PASS before running (see .env.neon.example)." -ForegroundColor Red
+    exit 1
+}
 
 Write-Host "`n=== [1/7] Dumping production DB (read-only) ===" -ForegroundColor Cyan
 ssh $PROD_HOST "sudo -u postgres pg_dump -d morlevy --format=plain --no-owner --no-privileges --encoding=UTF8 > $DUMP_REMOTE 2>/dev/null; echo ROWS:; wc -l $DUMP_REMOTE"
