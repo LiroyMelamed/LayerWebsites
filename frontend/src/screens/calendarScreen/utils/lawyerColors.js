@@ -22,6 +22,7 @@ const PALETTE = [
 ];
 
 const LEAVE_COLOR = '#718096'; // muted slate gray — distinct from any lawyer color
+const HOLIDAY_COLOR = '#B7791F'; // warm amber — distinct from leave and lawyer palette
 
 function _hash(input) {
     const str = String(input ?? '');
@@ -48,6 +49,11 @@ export function leaveColor() {
     return LEAVE_COLOR;
 }
 
+/** Color reserved for firm holidays — visually distinct from leave and lawyer colors. */
+export function holidayColor() {
+    return HOLIDAY_COLOR;
+}
+
 /** Build a legend payload `{ id, name, color }[]` from a list of lawyers. */
 export function buildLawyerLegend(lawyers = []) {
     return lawyers
@@ -63,6 +69,7 @@ const lawyerColors = {
     colorForKey,
     colorKeyForEvent,
     leaveColor,
+    holidayColor,
     buildLawyerLegend,
 };
 

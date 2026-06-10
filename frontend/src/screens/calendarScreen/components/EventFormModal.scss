@@ -115,8 +115,20 @@
     gap: 2px;
     box-sizing: border-box;
 
-    &:not(.lw-eventFormModal__segmented--quad) {
+    &:not(.lw-eventFormModal__segmented--quad):not(.lw-eventFormModal__segmented--penta) {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    &--quad {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    &--penta {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+
+        @media (max-width: 520px) {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
     }
 }
 

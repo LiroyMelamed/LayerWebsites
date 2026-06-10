@@ -28,12 +28,24 @@ const EVENT_TYPE_APPT = "appointment";
 const EVENT_TYPE_LEAVE = "leave";
 const EVENT_TYPE_HEARING = "hearing";
 const EVENT_TYPE_REMINDER = "reminder";
+const EVENT_TYPE_HOLIDAY = "holiday";
+
+const INTERNAL_SCOPED_EVENT_TYPES = [
+    EVENT_TYPE_LEAVE,
+    EVENT_TYPE_REMINDER,
+    EVENT_TYPE_HOLIDAY,
+];
+
+function isInternalScopedEventType(type) {
+    return INTERNAL_SCOPED_EVENT_TYPES.includes(type);
+}
 
 const EVENT_TYPE_OPTIONS = [
     { value: EVENT_TYPE_APPT, labelKey: "calendar.eventTypeAppointmentSingular" },
     { value: EVENT_TYPE_LEAVE, labelKey: "calendar.eventTypeLeaveSingular" },
     { value: EVENT_TYPE_HEARING, labelKey: "calendar.type_hearing" },
     { value: EVENT_TYPE_REMINDER, labelKey: "calendar.type_reminder" },
+    { value: EVENT_TYPE_HOLIDAY, labelKey: "calendar.eventTypeHolidaySingular" },
 ];
 
 /** ISO/Date → "YYYY-MM-DDTHH:MM" for <input type="datetime-local">. */
@@ -229,9 +241,9 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         }
     }, [intakeMode]);
 
-    // ─── Effect: clear client/case/lead when switching to leave/reminder ─
+    // ─── Effect: clear client/case/lead when switching to internal-scoped types ─
     useEffect(() => {
-        if (eventType !== EVENT_TYPE_LEAVE && eventType !== EVENT_TYPE_REMINDER) return;
+        if (!isInternalScopedEventType(eventType)) return;
         setIntakeMode(INTAKE_EXISTING);
         setClientName("");
         setClientUserId(null);
@@ -244,7 +256,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
 
     // ─── Effect: live conflict check (debounced) ──────────────────────────
     useEffect(() => {
-        if (eventType === EVENT_TYPE_LEAVE || eventType === EVENT_TYPE_REMINDER) {
+        if (isInternalScopedEventType(eventType)) {
             setConflictState({ loading: false, hasConflict: false, hasLeaveConflict: false });
             return undefined;
         }
@@ -274,7 +286,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setConflictState((prev) => ({ ...prev, loading: true }));
 
         const handle = setTimeout(async () => {
-            if (eventTypeRef.current === EVENT_TYPE_LEAVE || eventTypeRef.current === EVENT_TYPE_REMINDER) {
+            if (isInternalScopedEventType(eventTypeRef.current)) {
                 return;
             }
             try {
@@ -323,7 +335,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
 
     // ─── Validation ───────────────────────────────────────────────────────
     const validate = () => {
-        if (!title.trim() && eventType !== EVENT_TYPE_LEAVE && eventType !== EVENT_TYPE_REMINDER) {
+        if (!title.trim() && !isInternalScopedEventType(eventType)) {
             setError("חובה להזין כותרת לאירוע");
             return false;
         }
@@ -351,21 +363,23 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         try {
             const isClientScoped = eventType === EVENT_TYPE_APPT || eventType === EVENT_TYPE_HEARING;
             const isLeadMode = intakeMode === INTAKE_LEAD && isClientScoped;
-            const isLeaveType = eventType === EVENT_TYPE_LEAVE;
+            const forceAllDay = eventType === EVENT_TYPE_LEAVE || eventType === EVENT_TYPE_HOLIDAY;
             const primaryManager = managers[0] || null;
             const payload = {
                 title: title.trim() || (eventType === EVENT_TYPE_LEAVE
                     ? t("calendar.leaveLabel")
                     : eventType === EVENT_TYPE_REMINDER
                         ? t("calendar.type_reminder")
-                        : ""),
+                        : eventType === EVENT_TYPE_HOLIDAY
+                            ? t("calendar.holidayLabel")
+                            : ""),
                 description: description || null,
                 location: location || null,
                 event_type: eventType,
                 color: color || null,
                 start_time: new Date(startTime).toISOString(),
                 end_time: new Date(endTime).toISOString(),
-                all_day: isLeaveType ? true : allDay,
+                all_day: forceAllDay ? true : allDay,
                 manager_user_id: primaryManager?.userId || null,
                 manager_name: managers.length
                     ? managers.map((m) => m.name).filter(Boolean).join(", ")
@@ -629,7 +643,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     };
 
     // ─── Derived flags ────────────────────────────────────────────────────
-    const isInternalScopedType = eventType === EVENT_TYPE_LEAVE || eventType === EVENT_TYPE_REMINDER;
+    const isInternalScopedType = isInternalScopedEventType(eventType);
     const showIntakeToggle = !isInternalScopedType;
     const showLeadFields = showIntakeToggle && intakeMode === INTAKE_LEAD;
     const showExistingClientFields = showIntakeToggle && intakeMode === INTAKE_EXISTING;
@@ -719,7 +733,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     {/* ─── Event-type segmented (appointment / leave / hearing / reminder) ─── */}
                     <div className="lw-eventFormModal__field">
                         <Text14 color={NAVY}>{t("calendar.filterByEventType")}</Text14>
-                        <div className="lw-eventFormModal__segmented lw-eventFormModal__segmented--quad" role="group">
+                        <div className="lw-eventFormModal__segmented lw-eventFormModal__segmented--penta" role="group">
                             {EVENT_TYPE_OPTIONS.map(({ value, labelKey }) => (
                                 <SimpleButton
                                     key={value}

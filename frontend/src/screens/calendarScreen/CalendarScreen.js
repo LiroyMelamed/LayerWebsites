@@ -33,7 +33,7 @@ import casesApi from "../../api/casesApi";
 
 import EventFormModal from "./components/EventFormModal";
 import PersonalSyncModal from "./components/PersonalSyncModal";
-import { colorForKey, colorKeyForEvent, leaveColor, buildLawyerLegend } from "./utils/lawyerColors";
+import { colorForKey, colorKeyForEvent, leaveColor, holidayColor, buildLawyerLegend } from "./utils/lawyerColors";
 import { buildNewEventPrefill } from "./utils/eventDefaults";
 
 import "./CalendarScreen.scss";
@@ -49,6 +49,7 @@ const EVENT_TYPE_APPT = "appointment";
 const EVENT_TYPE_LEAVE = "leave";
 const EVENT_TYPE_HEARING = "hearing";
 const EVENT_TYPE_REMINDER = "reminder";
+const EVENT_TYPE_HOLIDAY = "holiday";
 
 const EVENT_TYPE_FILTER_OPTIONS = [
     { v: EVENT_TYPE_ALL, labelKey: "calendar.eventTypeAll" },
@@ -56,6 +57,7 @@ const EVENT_TYPE_FILTER_OPTIONS = [
     { v: EVENT_TYPE_LEAVE, labelKey: "calendar.eventTypeLeave" },
     { v: EVENT_TYPE_HEARING, labelKey: "calendar.eventTypeHearing" },
     { v: EVENT_TYPE_REMINDER, labelKey: "calendar.eventTypeReminder" },
+    { v: EVENT_TYPE_HOLIDAY, labelKey: "calendar.eventTypeHoliday" },
 ];
 
 function _eventTypeFilterLabel(eventType, t) {
@@ -75,28 +77,43 @@ function leaveAllDayRange(startTime, endTime) {
     return { start, end: endBase.toISOString().slice(0, 10) };
 }
 
+function buildInternalAllDayEvent(ev, { labelPrefix, color, className }) {
+    const managerLabel = ev?.managerName || ev?.ownerName || "";
+    const titleCore = ev?.title || managerLabel;
+    const { start, end } = leaveAllDayRange(ev.startTime, ev.endTime);
+    return {
+        id: String(ev.id),
+        title: titleCore ? `${labelPrefix} ${titleCore}` : labelPrefix,
+        start,
+        end,
+        allDay: true,
+        backgroundColor: color,
+        borderColor: color,
+        textColor: "#FFFFFF",
+        classNames: [className],
+        extendedProps: ev,
+    };
+}
+
 function buildFullCalendarEvent(ev, { scope }) {
     const isLeave = ev?.eventType === "leave";
+    const isHoliday = ev?.eventType === "holiday";
 
-    // Leave events render as muted background blocks across the day(s).
+    // Leave/holiday events render as muted background blocks across the day(s).
     // Must be all-day — timed background events do not span days in month view.
     if (isLeave) {
-        const managerLabel = ev?.managerName || ev?.ownerName || "";
-        const labelPrefix = "[חופשה]";
-        const titleCore = ev?.title || managerLabel;
-        const { start, end } = leaveAllDayRange(ev.startTime, ev.endTime);
-        return {
-            id: String(ev.id),
-            title: titleCore ? `${labelPrefix} ${titleCore}` : labelPrefix,
-            start,
-            end,
-            allDay: true,
-            backgroundColor: leaveColor(),
-            borderColor: leaveColor(),
-            textColor: "#FFFFFF",
-            classNames: ["lw-fcEvent--leave"],
-            extendedProps: ev,
-        };
+        return buildInternalAllDayEvent(ev, {
+            labelPrefix: "[חופשה]",
+            color: leaveColor(),
+            className: "lw-fcEvent--leave",
+        });
+    }
+    if (isHoliday) {
+        return buildInternalAllDayEvent(ev, {
+            labelPrefix: "[חג]",
+            color: holidayColor(),
+            className: "lw-fcEvent--holiday",
+        });
     }
 
     // Appointments: color by owner in firm view, otherwise honor stored color
@@ -304,6 +321,20 @@ export default function CalendarScreen() {
         }
         if (searchParams.get("google_error") === "1") {
             setGoogleMsg("חיבור Google Calendar נכשל. נסה שוב.");
+            setTimeout(() => setGoogleMsg(""), 4000);
+        }
+        if (searchParams.get("outlook_connected") === "1") {
+            setGoogleMsg("Outlook Calendar חובר בהצלחה ✓");
+            (async () => {
+                try {
+                    await calendarApi.syncOutlookEvents();
+                } catch { /* status toast still shown */ }
+                fetchEvents(null);
+            })();
+            setTimeout(() => setGoogleMsg(""), 4000);
+        }
+        if (searchParams.get("outlook_error") === "1") {
+            setGoogleMsg("חיבור Outlook Calendar נכשל. נסה שוב.");
             setTimeout(() => setGoogleMsg(""), 4000);
         }
     }, [searchParams, fetchEvents]);
@@ -790,6 +821,9 @@ export default function CalendarScreen() {
                                 select={openCreateModal}
                                 eventClick={openEditModal}
                                 datesSet={fetchEvents}
+                                longPressDelay={350}
+                                selectLongPressDelay={350}
+                                eventLongPressDelay={0}
                                 height="auto"
                                 hiddenDays={hiddenDays}
                                 businessHours={businessHours}

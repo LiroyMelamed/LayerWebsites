@@ -194,6 +194,71 @@ export default function PersonalSyncModal({ closePopUpFunction, onEventsChanged 
         }
     };
 
+    const [outlookSyncing, setOutlookSyncing] = useState(false);
+    const [outlookSyncMsg, setOutlookSyncMsg] = useState("");
+    const [outlookSyncError, setOutlookSyncError] = useState(false);
+    const [outlookDisconnecting, setOutlookDisconnecting] = useState(false);
+
+    const { result: outlookStatus, performRequest: refetchOutlookStatus } =
+        useAutoHttpRequest(calendarApi.getOutlookStatus);
+
+    const outlookConnected = outlookStatus?.connected;
+    const outlookEmail = outlookStatus?.email;
+    const outlookSyncAllowed = outlookStatus?.outlookSyncAllowed !== false;
+
+    const handleConnectOutlook = async () => {
+        if (!outlookSyncAllowed) return;
+        try {
+            const res = await calendarApi.getOutlookAuthUrl();
+            if (res?.success && res?.data?.authUrl) {
+                window.location.href = res.data.authUrl;
+            } else if (!res?.success) {
+                setOutlookSyncMsg(res?.data?.message || t("calendar.outlookSyncError"));
+                setOutlookSyncError(true);
+            }
+        } catch {
+            setOutlookSyncMsg(t("calendar.outlookSyncError"));
+            setOutlookSyncError(true);
+        }
+    };
+
+    const handleDisconnectOutlook = async () => {
+        setOutlookDisconnecting(true);
+        setOutlookSyncMsg("");
+        setOutlookSyncError(false);
+        try {
+            await calendarApi.disconnectOutlook();
+            refetchOutlookStatus();
+        } finally {
+            setOutlookDisconnecting(false);
+        }
+    };
+
+    const handleSyncOutlook = async () => {
+        if (!outlookSyncAllowed) return;
+        setOutlookSyncing(true);
+        setOutlookSyncMsg("");
+        setOutlookSyncError(false);
+        try {
+            const res = await calendarApi.syncOutlookEvents();
+            if (res?.success && res?.data?.synced !== undefined) {
+                setOutlookSyncMsg(t("calendar.outlookSyncSuccess", { count: res.data.synced }));
+                onEventsChanged?.();
+            } else {
+                setOutlookSyncMsg(res?.data?.message || t("calendar.outlookSyncError"));
+                setOutlookSyncError(true);
+                if (res?.data?.reconnect) refetchOutlookStatus();
+            }
+        } catch (err) {
+            const msg = err?.response?.data?.message;
+            setOutlookSyncMsg(msg || t("calendar.outlookSyncError"));
+            setOutlookSyncError(true);
+            if (err?.response?.data?.reconnect) refetchOutlookStatus();
+        } finally {
+            setOutlookSyncing(false);
+        }
+    };
+
     return (
         <SimpleContainer className="lw-personalSyncModal">
             <SimpleScrollView className="lw-personalSyncModal__scroll">
@@ -264,6 +329,41 @@ export default function PersonalSyncModal({ closePopUpFunction, onEventsChanged 
                             </PrimaryButton>
                             {googleSyncMsg && (
                                 <Text14 color="#E53E3E">{googleSyncMsg}</Text14>
+                            )}
+                        </>
+                    )}
+                </SimpleContainer>
+
+                <SimpleContainer className="lw-personalSyncModal__section lw-personalSyncModal__section--border">
+                    <TextBold14 color={colors.primary}>{t("calendar.outlookCalendarTitle")}</TextBold14>
+
+                    {!outlookSyncAllowed ? (
+                        <Text12 color="#744210">{t("calendar.outlookSyncDisabledByFirm")}</Text12>
+                    ) : outlookConnected ? (
+                        <>
+                            <Text14 color={colors.positive}>
+                                {t("calendar.outlookConnected", { email: outlookEmail || "" })}
+                            </Text14>
+                            <SimpleContainer className="lw-personalSyncModal__btnRow">
+                                <PrimaryButton onPress={handleSyncOutlook} isPerforming={outlookSyncing}>
+                                    {outlookSyncing ? t("calendar.outlookSyncing") : t("calendar.syncOutlook")}
+                                </PrimaryButton>
+                                <SecondaryButton onPress={handleDisconnectOutlook} isPerforming={outlookDisconnecting}>
+                                    {t("calendar.disconnectOutlook")}
+                                </SecondaryButton>
+                            </SimpleContainer>
+                            {outlookSyncMsg && (
+                                <Text14 color={outlookSyncError ? "#E53E3E" : colors.positive}>{outlookSyncMsg}</Text14>
+                            )}
+                        </>
+                    ) : (
+                        <>
+                            <Text12 color={colors.winter}>{t("calendar.outlookConnectHint")}</Text12>
+                            <PrimaryButton onPress={handleConnectOutlook}>
+                                {t("calendar.connectOutlook")}
+                            </PrimaryButton>
+                            {outlookSyncMsg && (
+                                <Text14 color="#E53E3E">{outlookSyncMsg}</Text14>
                             )}
                         </>
                     )}

@@ -575,3 +575,44 @@
     pointer-events: auto;
     cursor: pointer;
 }
+
+// ─── Holiday event styling ───────────────────────────────────────────────────
+
+.lw-calendarScreen__calendarCard .fc-event.lw-fcEvent--holiday,
+.fc .fc-event.lw-fcEvent--holiday {
+    background-color: #B7791F !important;
+    background-image: repeating-linear-gradient(-45deg,
+            rgba(255, 255, 255, 0.16) 0,
+            rgba(255, 255, 255, 0.16) 5px,
+            transparent 5px,
+            transparent 12px) !important;
+    border-color: #B7791F !important;
+    color: #FFFFFF !important;
+    font-weight: 600;
+    cursor: pointer;
+    opacity: 0.94;
+}
+
+.lw-calendarScreen__calendarCard .fc-event.lw-fcEvent--holiday:hover,
+.fc .fc-event.lw-fcEvent--holiday:hover {
+    opacity: 1;
+    filter: brightness(1.04);
+}
+
+.lw-calendarScreen__calendarCard .fc-event.lw-fcEvent--holiday .fc-event-title,
+.fc .fc-event.lw-fcEvent--holiday .fc-event-title {
+    color: #FFFFFF;
+    padding-inline-start: 6px;
+}
+
+// ─── Touch / mobile interaction ───────────────────────────────────────────────
+
+.lw-calendarScreen__calendarCard .fc {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.lw-calendarScreen__calendarCard .fc-event,
+.lw-calendarScreen__calendarCard .fc-daygrid-day {
+    touch-action: manipulation;
+}

@@ -1,7 +1,4 @@
--- Migration: expand calendar_events.event_type whitelist
---   appointment | leave | hearing | reminder | holiday
---
--- Uses TEXT + CHECK (not a Postgres ENUM). Idempotent for staging/production re-runs.
+-- Add 'holiday' to calendar_events.event_type whitelist and internal-scoped lead guard.
 
 BEGIN;
 
@@ -11,10 +8,6 @@ ALTER TABLE calendar_events
 ALTER TABLE calendar_events
     ADD CONSTRAINT chk_calendar_events_event_type
     CHECK (event_type IN ('appointment', 'leave', 'hearing', 'reminder', 'holiday'));
-
--- Extend the leave-only no-lead guard to cover reminder as well.
-ALTER TABLE calendar_events
-    DROP CONSTRAINT IF EXISTS chk_calendar_events_leave_no_lead;
 
 ALTER TABLE calendar_events
     DROP CONSTRAINT IF EXISTS chk_calendar_events_internal_no_lead;

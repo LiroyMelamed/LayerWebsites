@@ -31,6 +31,13 @@
  *     GET    /api/calendar/google/status       – check if connected
  *     DELETE /api/calendar/google/disconnect   – revoke & clear tokens
  *     POST   /api/calendar/google/sync         – pull events from Google Calendar
+ *
+ *   Outlook Calendar OAuth2 (auth required except /outlook/callback)
+ *     GET    /api/calendar/outlook/auth-url     – get OAuth2 consent URL
+ *     GET    /api/calendar/outlook/callback     – OAuth2 callback (Microsoft redirects here — PUBLIC)
+ *     GET    /api/calendar/outlook/status       – check if connected
+ *     DELETE /api/calendar/outlook/disconnect    – clear tokens
+ *     POST   /api/calendar/outlook/sync         – pull events from Outlook Calendar
  */
 
 const express = require('express');
@@ -80,5 +87,12 @@ router.get('/google/callback', cal.handleGoogleCallback);
 router.get('/google/status', ...protect, cal.getGoogleStatus);
 router.delete('/google/disconnect', ...protect, cal.disconnectGoogle);
 router.post('/google/sync', ...protect, cal.syncGoogleEvents);
+
+// ─── Outlook Calendar ───────────────────────────────────────────────────────
+router.get('/outlook/auth-url', ...protect, cal.getOutlookAuthUrl);
+router.get('/outlook/callback', cal.handleOutlookCallback);
+router.get('/outlook/status', ...protect, cal.getOutlookStatus);
+router.delete('/outlook/disconnect', ...protect, cal.disconnectOutlook);
+router.post('/outlook/sync', ...protect, cal.syncOutlookEvents);
 
 module.exports = router;

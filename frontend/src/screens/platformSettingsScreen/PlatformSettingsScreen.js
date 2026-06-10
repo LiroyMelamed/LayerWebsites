@@ -1578,6 +1578,34 @@ export default function PlatformSettingsScreen() {
                         </SimpleContainer>
                     </SimpleCard>
 
+                    {/* Outlook sync firm policy */}
+                    <SimpleCard className="lw-platformSettings__card">
+                        <TextBold18>סנכרון Outlook Calendar</TextBold18>
+                        <Text12 className="lw-platformSettings__settingDescription">
+                            הגדרה ברמת המשרד. חיבור Outlook, ניתוק וסנכרון ידני מתבצעים על ידי כל עורך דין
+                            ממסך היומן תחת &quot;סנכרון אישי&quot; — לא מכאן.
+                        </Text12>
+                        <SimpleContainer className="lw-platformSettings__settingsList">
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">
+                                        {t("calendar.outlookSyncFirmEnabled")}
+                                    </TextBold14>
+                                    <Text12 className="lw-platformSettings__settingDescription">
+                                        {t("calendar.outlookSyncFirmEnabledHint")}
+                                    </Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "boolean" }}
+                                        value={getVal("OUTLOOK_SYNC_ENABLED", "true")}
+                                        onChange={(val) => handleChange("OUTLOOK_SYNC_ENABLED", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                        </SimpleContainer>
+                    </SimpleCard>
+
                     {/* Reminders */}
                     <SimpleCard className="lw-platformSettings__card">
                         <TextBold18>תזכורות יומן</TextBold18>

@@ -6,6 +6,7 @@
  *   Dashboard – GET /today  (today + tomorrow appointments widget)
  *   iCal feed – public tokenized WebCal subscription endpoint
  *   Google    – OAuth2 flow, token storage (encrypted), event sync
+ *   Outlook   – Microsoft Graph OAuth2 flow, token storage (encrypted), event sync
  *
  * Security:
  *   - All authenticated routes use JWT (authMiddleware + requireLawyerOrAdmin).
@@ -16,6 +17,7 @@
 
 const pool = require('../config/db');
 const crypto = require('crypto');
+const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 const settingsService = require('../services/settingsService');
 
@@ -118,8 +120,8 @@ const GOOGLE_SCOPES = [
 // ──────────────────────────────────────────────────────────────────────────────
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const VALID_EVENT_TYPES = Object.freeze(['appointment', 'leave', 'hearing', 'reminder']);
-const INTERNAL_SCOPED_EVENT_TYPES = Object.freeze(['leave', 'reminder']);
+const VALID_EVENT_TYPES = Object.freeze(['appointment', 'leave', 'hearing', 'reminder', 'holiday']);
+const INTERNAL_SCOPED_EVENT_TYPES = Object.freeze(['leave', 'reminder', 'holiday']);
 
 function _isValidEventType(value) {
     return VALID_EVENT_TYPES.includes(value);
@@ -151,6 +153,7 @@ function _sanitizeEvent(row) {
         allDay: row.all_day,
         rrule: row.rrule,
         googleEventId: row.google_event_id,
+        outlookEventId: row.outlook_event_id,
         leadName: row.lead_name ?? null,
         leadPhone: row.lead_phone ?? null,
         leadEmail: row.lead_email ?? null,
@@ -352,6 +355,16 @@ async function _isGoogleSyncEnabledForFirm() {
     const raw = await settingsService.getSetting('calendar', 'GOOGLE_SYNC_ENABLED', 'true');
     return String(raw ?? 'true').trim().toLowerCase() !== 'false';
 }
+
+/** Firm policy — lawyers may connect/sync Outlook only when enabled by admin. */
+async function _isOutlookSyncEnabledForFirm() {
+    const raw = await settingsService.getSetting('calendar', 'OUTLOOK_SYNC_ENABLED', 'true');
+    return String(raw ?? 'true').trim().toLowerCase() !== 'false';
+}
+
+function _isAllDayInternalEventType(eventType) {
+    return eventType === 'leave' || eventType === 'holiday';
+}
 // ──────────────────────────────────────────────────────────────────────────────
 
 
@@ -369,7 +382,7 @@ async function _isGoogleSyncEnabledForFirm() {
  *   • lawyer_id     int   — pin to owner or manager (overrides scope)
  *   • client_id     int   — events linked to this client_user_id
  *   • case_id       int   — events for this case
- *   • event_type    'appointment' | 'leave' | 'hearing' | 'reminder'
+ *   • event_type    'appointment' | 'leave' | 'hearing' | 'reminder' | 'holiday'
  *   • from / to     ISO timestamptz — window over start_time
  *   • limit/offset  pagination (default 500 / 0, max 1000)
  *
@@ -509,7 +522,7 @@ const getTodayAndTomorrow = async (req, res) => {
  * POST /api/calendar
  * Create a new calendar event.
  *
- * Accepts an `event_type` ('appointment' | 'leave' | 'hearing' | 'reminder') and optional prospect/lead
+ * Accepts an `event_type` ('appointment' | 'leave' | 'hearing' | 'reminder' | 'holiday') and optional prospect/lead
  * fields (`lead_name`, `lead_phone`, `lead_email`). A row is either lead-mode OR
  * client-mode; the DB CHECK chk_calendar_events_lead_xor_client enforces this,
  * but we re-validate in JS to return a friendlier 400 message.
@@ -583,11 +596,11 @@ const createEvent = async (req, res) => {
         });
     }
     if (_isInternalScopedEventType(eventType) && hasLead) {
-        return res.status(400).json({ message: 'אירוע חופשה או תזכורת לא יכול להכיל פרטי ליד' });
+        return res.status(400).json({ message: 'אירוע פנימי (חופשה, חג או תזכורת) לא יכול להכיל פרטי ליד' });
     }
 
-    // Leave/reminder events are lawyer-scoped — they may fall outside working hours.
-    const storedAllDay = eventType === 'leave' ? true : !!all_day;
+    // Internal-scoped events are lawyer-scoped — they may fall outside working hours.
+    const storedAllDay = _isAllDayInternalEventType(eventType) ? true : !!all_day;
     if (!_isInternalScopedEventType(eventType)) {
         const workingCheck = await _validateWorkingHours(start_time, end_time, storedAllDay);
         if (!workingCheck.ok) {
@@ -735,7 +748,7 @@ const updateEvent = async (req, res) => {
         const newStart = start_time || ev.start_time;
         const newEnd = end_time || ev.end_time;
         const newEventType = event_type !== undefined ? event_type : (ev.event_type || 'appointment');
-        const newAllDay = newEventType === 'leave'
+        const newAllDay = _isAllDayInternalEventType(newEventType)
             ? true
             : (all_day !== undefined ? !!all_day : ev.all_day);
         // Reset audit on time change so the cron worker re-fires reminders.
@@ -779,7 +792,7 @@ const updateEvent = async (req, res) => {
             });
         }
         if (_isInternalScopedEventType(newEventType) && hasLead) {
-            return res.status(400).json({ message: 'אירוע חופשה או תזכורת לא יכול להכיל פרטי ליד' });
+            return res.status(400).json({ message: 'אירוע פנימי (חופשה, חג או תזכורת) לא יכול להכיל פרטי ליד' });
         }
 
         const parsedManagerIds = manager_user_ids !== undefined
@@ -1348,6 +1361,388 @@ const syncGoogleEvents = async (req, res) => {
 
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// OUTLOOK CALENDAR OAUTH2 (Microsoft Graph)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const OUTLOOK_SCOPES = ['offline_access', 'Calendars.ReadWrite', 'User.Read'];
+const OUTLOOK_AUTH_BASE = 'https://login.microsoftonline.com/common/oauth2/v2.0';
+
+function _isOutlookConfigured() {
+    return !!(
+        process.env.OUTLOOK_CLIENT_ID
+        && process.env.OUTLOOK_CLIENT_SECRET
+        && process.env.OUTLOOK_OAUTH_REDIRECT_URI
+    );
+}
+
+function _buildOutlookAuthorizeUrl(state) {
+    const params = new URLSearchParams({
+        client_id: process.env.OUTLOOK_CLIENT_ID,
+        response_type: 'code',
+        redirect_uri: process.env.OUTLOOK_OAUTH_REDIRECT_URI,
+        response_mode: 'query',
+        scope: OUTLOOK_SCOPES.join(' '),
+        state,
+    });
+    return `${OUTLOOK_AUTH_BASE}/authorize?${params.toString()}`;
+}
+
+async function _exchangeOutlookAuthCode(code) {
+    const params = new URLSearchParams({
+        client_id: process.env.OUTLOOK_CLIENT_ID,
+        client_secret: process.env.OUTLOOK_CLIENT_SECRET,
+        code,
+        redirect_uri: process.env.OUTLOOK_OAUTH_REDIRECT_URI,
+        grant_type: 'authorization_code',
+        scope: OUTLOOK_SCOPES.join(' '),
+    });
+    const { data } = await axios.post(`${OUTLOOK_AUTH_BASE}/token`, params.toString(), {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        timeout: 15000,
+    });
+    return data;
+}
+
+async function _refreshOutlookAccessToken(refreshToken) {
+    const params = new URLSearchParams({
+        client_id: process.env.OUTLOOK_CLIENT_ID,
+        client_secret: process.env.OUTLOOK_CLIENT_SECRET,
+        refresh_token: refreshToken,
+        grant_type: 'refresh_token',
+        scope: OUTLOOK_SCOPES.join(' '),
+    });
+    const { data } = await axios.post(`${OUTLOOK_AUTH_BASE}/token`, params.toString(), {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        timeout: 15000,
+    });
+    return data;
+}
+
+async function _outlookGraphGet(accessToken, pathOrUrl) {
+    const url = String(pathOrUrl).startsWith('http')
+        ? pathOrUrl
+        : `https://graph.microsoft.com/v1.0${pathOrUrl}`;
+    const { data } = await axios.get(url, {
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+            Prefer: 'outlook.timezone="UTC"',
+        },
+        timeout: 20000,
+    });
+    return data;
+}
+
+function _parseOutlookEventTimes(oev) {
+    if (oev.isAllDay || (oev.start?.date && !oev.start?.dateTime)) {
+        const start = oev.start?.date;
+        const end = oev.end?.date;
+        if (!start || !end) return null;
+        return {
+            startTime: `${start}T00:00:00Z`,
+            endTime: `${end}T23:59:59Z`,
+            allDay: true,
+        };
+    }
+    const startRaw = oev.start?.dateTime;
+    const endRaw = oev.end?.dateTime;
+    if (!startRaw || !endRaw) return null;
+    const startTime = new Date(`${startRaw}${startRaw.endsWith('Z') ? '' : 'Z'}`).toISOString();
+    const endTime = new Date(`${endRaw}${endRaw.endsWith('Z') ? '' : 'Z'}`).toISOString();
+    return { startTime, endTime, allDay: false };
+}
+
+async function _persistOutlookTokens(userId, {
+    accessToken,
+    refreshToken,
+    tokenExpiry,
+    scope,
+    email,
+    connected = true,
+}) {
+    await pool.query(
+        `INSERT INTO user_calendar_tokens
+           (user_id, outlook_connected, outlook_email,
+            outlook_access_token, outlook_refresh_token, outlook_token_expiry, outlook_scope)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         ON CONFLICT (user_id) DO UPDATE SET
+           outlook_connected     = EXCLUDED.outlook_connected,
+           outlook_email         = EXCLUDED.outlook_email,
+           outlook_access_token  = EXCLUDED.outlook_access_token,
+           outlook_refresh_token = COALESCE(EXCLUDED.outlook_refresh_token, user_calendar_tokens.outlook_refresh_token),
+           outlook_token_expiry  = EXCLUDED.outlook_token_expiry,
+           outlook_scope         = EXCLUDED.outlook_scope`,
+        [
+            userId,
+            connected,
+            email || null,
+            accessToken ? encrypt(accessToken) : null,
+            refreshToken ? encrypt(refreshToken) : null,
+            tokenExpiry || null,
+            scope || OUTLOOK_SCOPES.join(' '),
+        ]
+    );
+}
+
+async function _resolveOutlookAccessToken(userId, row) {
+    let accessToken = decrypt(row.outlook_access_token);
+    const refreshToken = decrypt(row.outlook_refresh_token);
+    const expiry = row.outlook_token_expiry ? new Date(row.outlook_token_expiry) : null;
+    const isExpired = expiry && expiry.getTime() <= Date.now() + 60_000;
+
+    if ((!accessToken || isExpired) && refreshToken) {
+        const refreshed = await _refreshOutlookAccessToken(refreshToken);
+        accessToken = refreshed.access_token;
+        const tokenExpiry = refreshed.expires_in
+            ? new Date(Date.now() + Number(refreshed.expires_in) * 1000)
+            : null;
+        await _persistOutlookTokens(userId, {
+            accessToken,
+            refreshToken: refreshed.refresh_token || refreshToken,
+            tokenExpiry,
+            scope: refreshed.scope || row.outlook_scope,
+            email: row.outlook_email,
+            connected: true,
+        });
+    }
+
+    return accessToken;
+}
+
+/**
+ * GET /api/calendar/outlook/auth-url   (auth required)
+ */
+const getOutlookAuthUrl = async (req, res) => {
+    if (!_isOutlookConfigured()) {
+        return res.status(503).json({ message: 'Outlook Calendar integration not configured' });
+    }
+    if (!(await _isOutlookSyncEnabledForFirm())) {
+        return res.status(403).json({
+            message: 'סנכרון Outlook Calendar מושבת בהגדרות המשרד',
+            code: 'OUTLOOK_SYNC_DISABLED',
+        });
+    }
+
+    try {
+        const state = Buffer.from(JSON.stringify({ userId: req.user.UserId })).toString('base64url');
+        return res.json({ authUrl: _buildOutlookAuthorizeUrl(state) });
+    } catch (err) {
+        console.error('[calendarController] getOutlookAuthUrl error:', err.message);
+        return res.status(500).json({ message: 'שגיאה פנימית בשרת' });
+    }
+};
+
+/**
+ * GET /api/calendar/outlook/callback   (PUBLIC)
+ */
+const handleOutlookCallback = async (req, res) => {
+    const frontendBase = process.env.FRONTEND_URL || process.env.WEBSITE_DOMAIN || 'http://localhost:3000';
+    const successRedirect = `${frontendBase}/AdminStack/CalendarScreen?outlook_connected=1`;
+    const errorRedirect = `${frontendBase}/AdminStack/CalendarScreen?outlook_error=1`;
+
+    const { code, state, error } = req.query;
+    if (error || !code || !state) {
+        console.warn('[calendarController] Outlook callback: consent denied or missing params');
+        return res.redirect(errorRedirect);
+    }
+
+    let userId;
+    try {
+        userId = JSON.parse(Buffer.from(state, 'base64url').toString('utf8')).userId;
+        if (!Number.isFinite(Number(userId))) throw new Error('invalid userId in state');
+    } catch (err) {
+        console.warn('[calendarController] Outlook callback: invalid state param', err.message);
+        return res.redirect(errorRedirect);
+    }
+
+    try {
+        if (!(await _isOutlookSyncEnabledForFirm())) {
+            console.warn('[calendarController] Outlook callback rejected: firm sync disabled');
+            return res.redirect(errorRedirect);
+        }
+
+        const tokens = await _exchangeOutlookAuthCode(code);
+        const accessToken = tokens.access_token;
+        if (!accessToken) throw new Error('missing access_token');
+
+        const profile = await _outlookGraphGet(accessToken, '/me?$select=mail,userPrincipalName');
+        const outlookEmail = profile.mail || profile.userPrincipalName || '';
+        const tokenExpiry = tokens.expires_in
+            ? new Date(Date.now() + Number(tokens.expires_in) * 1000)
+            : null;
+
+        await _persistOutlookTokens(userId, {
+            accessToken,
+            refreshToken: tokens.refresh_token || null,
+            tokenExpiry,
+            scope: tokens.scope || OUTLOOK_SCOPES.join(' '),
+            email: outlookEmail,
+            connected: true,
+        });
+
+        return res.redirect(successRedirect);
+    } catch (err) {
+        console.error('[calendarController] handleOutlookCallback error:', err.message);
+        return res.redirect(errorRedirect);
+    }
+};
+
+/**
+ * GET /api/calendar/outlook/status   (auth required)
+ */
+const getOutlookStatus = async (req, res) => {
+    const userId = req.user.UserId;
+    try {
+        const outlookSyncAllowed = await _isOutlookSyncEnabledForFirm();
+        const { rows } = await pool.query(
+            'SELECT outlook_connected, outlook_email, outlook_scope FROM user_calendar_tokens WHERE user_id = $1',
+            [userId]
+        );
+        if (!rows.length || !rows[0].outlook_connected) {
+            return res.json({ connected: false, outlookSyncAllowed });
+        }
+        return res.json({
+            connected: true,
+            email: rows[0].outlook_email,
+            scope: rows[0].outlook_scope,
+            outlookSyncAllowed,
+        });
+    } catch (err) {
+        console.error('[calendarController] getOutlookStatus error:', err.message);
+        return res.status(500).json({ message: 'שגיאה פנימית בשרת' });
+    }
+};
+
+/**
+ * DELETE /api/calendar/outlook/disconnect   (auth required)
+ */
+const disconnectOutlook = async (req, res) => {
+    const userId = req.user.UserId;
+    try {
+        await pool.query(
+            `UPDATE user_calendar_tokens SET
+               outlook_connected     = FALSE,
+               outlook_email         = NULL,
+               outlook_access_token  = NULL,
+               outlook_refresh_token = NULL,
+               outlook_token_expiry  = NULL,
+               outlook_scope         = NULL
+             WHERE user_id = $1`,
+            [userId]
+        );
+        return res.json({ ok: true });
+    } catch (err) {
+        console.error('[calendarController] disconnectOutlook error:', err.message);
+        return res.status(500).json({ message: 'שגיאה פנימית בשרת' });
+    }
+};
+
+/**
+ * POST /api/calendar/outlook/sync   (auth required)
+ */
+const syncOutlookEvents = async (req, res) => {
+    if (!_isOutlookConfigured()) {
+        return res.status(503).json({ message: 'Outlook Calendar integration not configured' });
+    }
+    if (!(await _isOutlookSyncEnabledForFirm())) {
+        return res.status(403).json({
+            message: 'סנכרון Outlook Calendar מושבת בהגדרות המשרד',
+            code: 'OUTLOOK_SYNC_DISABLED',
+        });
+    }
+
+    const userId = req.user.UserId;
+
+    try {
+        const { rows } = await pool.query(
+            `SELECT outlook_access_token, outlook_refresh_token, outlook_token_expiry,
+                    outlook_email, outlook_scope
+             FROM user_calendar_tokens
+             WHERE user_id = $1 AND outlook_connected = TRUE`,
+            [userId]
+        );
+
+        if (!rows.length) {
+            return res.status(400).json({ message: 'Outlook Calendar לא מחובר. יש לחבר קודם.' });
+        }
+
+        const row = rows[0];
+        const accessToken = await _resolveOutlookAccessToken(userId, row);
+        if (!accessToken) {
+            return res.status(400).json({ message: 'אסימון Outlook אינו תקין. יש לחבר מחדש.' });
+        }
+
+        const timeMin = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+        const timeMax = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+
+        const outlookEvents = [];
+        let nextUrl = `/me/calendarview?startDateTime=${encodeURIComponent(timeMin)}&endDateTime=${encodeURIComponent(timeMax)}&$top=250&$orderby=start/dateTime`;
+        while (nextUrl) {
+            const page = await _outlookGraphGet(accessToken, nextUrl);
+            outlookEvents.push(...(page.value || []));
+            nextUrl = page['@odata.nextLink'] || null;
+        }
+
+        let upsertCount = 0;
+        let failedCount = 0;
+
+        for (const oev of outlookEvents) {
+            if (oev.isCancelled) continue;
+            if (!oev.id) continue;
+
+            const parsedTimes = _parseOutlookEventTimes(oev);
+            if (!parsedTimes) continue;
+            const { startTime, endTime, allDay } = parsedTimes;
+            const description = typeof oev.body?.content === 'string' ? oev.body.content : null;
+            const location = oev.location?.displayName || null;
+
+            try {
+                await pool.query(
+                    `INSERT INTO calendar_events
+                       (owner_id, title, description, location, start_time, end_time, all_day, outlook_event_id)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                     ON CONFLICT (owner_id, outlook_event_id) WHERE outlook_event_id IS NOT NULL DO UPDATE SET
+                       title       = EXCLUDED.title,
+                       description = EXCLUDED.description,
+                       location    = EXCLUDED.location,
+                       start_time  = EXCLUDED.start_time,
+                       end_time    = EXCLUDED.end_time,
+                       all_day     = EXCLUDED.all_day`,
+                    [
+                        userId,
+                        (oev.subject || '(ללא כותרת)').trim(),
+                        description,
+                        location,
+                        startTime,
+                        endTime,
+                        allDay,
+                        oev.id,
+                    ]
+                );
+                upsertCount++;
+            } catch (upsertErr) {
+                failedCount++;
+                console.error('[calendarController] Outlook sync upsert failed:', oev.id, upsertErr.message);
+            }
+        }
+
+        return res.json({ ok: true, synced: upsertCount, total: outlookEvents.length, failed: failedCount });
+    } catch (err) {
+        console.error('[calendarController] syncOutlookEvents error:', err.message);
+        const status = err?.response?.status;
+        const errCode = err?.response?.data?.error;
+        if (status === 401 || errCode === 'invalid_grant') {
+            await pool.query(
+                'UPDATE user_calendar_tokens SET outlook_connected = FALSE WHERE user_id = $1',
+                [userId]
+            );
+            return res.status(401).json({ message: 'חיבור Outlook פג תוקפו. יש לחבר מחדש.', reconnect: true });
+        }
+        return res.status(500).json({ message: 'שגיאה בסנכרון Outlook Calendar' });
+    }
+};
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // CRM — conflict check, client-case dropdown, link-case, convert-lead
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -1421,7 +1816,7 @@ const checkConflict = async (req, res) => {
             }
         }
         allRows.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
-        const hasLeave = allRows.some((r) => r.event_type === 'leave');
+        const hasLeave = allRows.some((r) => r.event_type === 'leave' || r.event_type === 'holiday');
         return res.json({
             hasConflict: allRows.length > 0,
             hasLeaveConflict: hasLeave,
@@ -1764,4 +2159,10 @@ module.exports = {
     getGoogleStatus,
     disconnectGoogle,
     syncGoogleEvents,
+    // Outlook
+    getOutlookAuthUrl,
+    handleOutlookCallback,
+    getOutlookStatus,
+    disconnectOutlook,
+    syncOutlookEvents,
 };

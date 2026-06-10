@@ -107,6 +107,24 @@ const calendarApi = {
     syncGoogleEvents: async () => {
         return await ApiUtils.post(`${base}/google/sync`);
     },
+
+    // ── Outlook Calendar ───────────────────────────────────────────────────────
+
+    getOutlookAuthUrl: async () => {
+        return await ApiUtils.get(`${base}/outlook/auth-url`);
+    },
+
+    getOutlookStatus: async () => {
+        return await ApiUtils.get(`${base}/outlook/status`);
+    },
+
+    disconnectOutlook: async () => {
+        return await ApiUtils.delete(`${base}/outlook/disconnect`);
+    },
+
+    syncOutlookEvents: async () => {
+        return await ApiUtils.post(`${base}/outlook/sync`);
+    },
 };
 
 export default calendarApi;
