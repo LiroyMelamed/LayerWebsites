@@ -287,6 +287,21 @@
         }
     }
 
+    // Desktop: column headers label the time fields — hide duplicate floated labels
+    &__dayHoursCol--time .lw-simpleInput__label {
+        @media (min-width: 48.01rem) {
+            display: none;
+        }
+    }
+
+    &__dayHoursCol--time .lw-simpleInput {
+        margin-top: 0;
+
+        @media (max-width: 48rem) {
+            margin-top: 1.25rem;
+        }
+    }
+
     &__reminderOptions {
         display: flex;
         flex-direction: row;
@@ -1015,6 +1030,65 @@
 
         &__emailPreviewFrame {
             height: 24rem;
+        }
+
+        &__card {
+            overflow: visible;
+        }
+
+        &__dayHoursHeader {
+            display: none;
+        }
+
+        &__dayHoursRow {
+            grid-template-columns: 1fr auto;
+            grid-template-areas:
+                "day open"
+                "start end";
+            gap: v.$space-2 v.$space-3;
+            padding: v.$space-3;
+            background: #fafafa;
+            border: 0.0625rem solid #e2e8f0;
+            border-radius: 0.5rem;
+            border-bottom: none;
+            margin-bottom: v.$space-2;
+        }
+
+        &__dayHoursCol--day {
+            grid-area: day;
+            font-weight: 600;
+        }
+
+        &__dayHoursCol--open {
+            grid-area: open;
+            justify-content: flex-end;
+
+            .lw-platformSettings__toggle {
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 0.25rem;
+            }
+
+            .lw-platformSettings__toggleLabel {
+                font-size: 0.75rem;
+            }
+        }
+
+        &__dayHoursCol--start {
+            grid-area: start;
+            min-width: 0;
+        }
+
+        &__dayHoursCol--end {
+            grid-area: end;
+            min-width: 0;
+        }
+
+        &__reminderOptions {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-block-end: 0.25rem;
         }
     }
 }

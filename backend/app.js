@@ -1,5 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const compression = require("compression");
 const helmet = require("helmet");
 const cors = require("cors");
 const path = require('path');
@@ -57,6 +58,7 @@ app.use(helmet({
 }));
 app.use(bodyParser.json({ limit: API_JSON_LIMIT }));
 app.use(bodyParser.urlencoded({ limit: API_URLENCODED_LIMIT, extended: true }));
+app.use(compression());
 
 const isProduction = process.env.IS_PRODUCTION === 'true';
 

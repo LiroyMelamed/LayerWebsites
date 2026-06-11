@@ -1548,14 +1548,14 @@ export default function PlatformSettingsScreen() {
                                                 onChange={(val) => updateWorkingSchedule(dayIndex, { open: val === "true" })}
                                             />
                                         </SimpleContainer>
-                                        <SimpleContainer className="lw-platformSettings__dayHoursCol lw-platformSettings__dayHoursCol--time">
+                                        <SimpleContainer className="lw-platformSettings__dayHoursCol lw-platformSettings__dayHoursCol--time lw-platformSettings__dayHoursCol--start">
                                             <SettingInput
                                                 setting={{ valueType: "time", label: t("platformSettings.workingHoursStartCol") }}
                                                 value={day.start}
                                                 onChange={(val) => day.open && updateWorkingSchedule(dayIndex, { start: val })}
                                             />
                                         </SimpleContainer>
-                                        <SimpleContainer className="lw-platformSettings__dayHoursCol lw-platformSettings__dayHoursCol--time">
+                                        <SimpleContainer className="lw-platformSettings__dayHoursCol lw-platformSettings__dayHoursCol--time lw-platformSettings__dayHoursCol--end">
                                             <SettingInput
                                                 setting={{ valueType: "time", label: t("platformSettings.workingHoursEndCol") }}
                                                 value={day.end}

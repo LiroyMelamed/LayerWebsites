@@ -1,7 +1,9 @@
 import { ClientStackName } from "../../../navigation/ClientStack";
-import { NotificationsScreenName } from "../../../screens/client/notifications/NotificationsScreen";
-import { ProfileScreenName } from "../../../screens/client/profile/ProfileScreen";
-import { SigningScreenName } from "../../../screens/signingScreen/SigningScreen";
+import {
+    NotificationsScreenName,
+    ProfileScreenName,
+    SigningScreenName,
+} from "../../../navigation/screenPaths";
 import TermsOfConditons from "../../termsAndConditions/TermsOfConditons";
 import { openExternalUrl } from "../../../utils/externalNavigation";
 import { getFirmPhone } from "../../../services/firmSettings";

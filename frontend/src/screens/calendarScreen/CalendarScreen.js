@@ -338,11 +338,8 @@ export default function CalendarScreen() {
     }, [searchParams, fetchEvents]);
 
     // ── FullCalendar config ────────────────────────────────────────────────
-    // Month view must show all weekdays; hiddenDays only applies to week/day time grids.
-    const hiddenDays = useMemo(() => {
-        if (view === "dayGridMonth") return [];
-        return getHiddenDays(workingSchedule);
-    }, [workingSchedule, view]);
+    // Hide closed weekdays everywhere (month / week / day) per platform settings.
+    const hiddenDays = useMemo(() => getHiddenDays(workingSchedule), [workingSchedule]);
 
     const businessHours = useMemo(() => getBusinessHours(workingSchedule), [workingSchedule]);
 

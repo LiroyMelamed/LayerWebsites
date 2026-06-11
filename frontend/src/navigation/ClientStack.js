@@ -1,15 +1,25 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import ClientMainScreen, { ClientMainScreenName } from "../screens/client/clientMainScreen/ClientMainScreen";
-import ClientCasesScreen, { ClientCasesScreenName } from "../screens/client/clientCasesScreen/ClientCasesScreen";
 import TopAndRightNavBar from "../components/navBars/TopAndRightNavBar";
+import RouteFallback from "../components/simpleComponents/RouteFallback";
 import { getClientNavBarData } from "../components/navBars/data/ClientNavBarData";
-import SigningScreen, { SigningScreenName } from "../screens/signingScreen/SigningScreen";
-import NotificationsScreen, { NotificationsScreenName } from "../screens/client/notifications/NotificationsScreen";
-import ProfileScreen, { ProfileScreenName } from "../screens/client/profile/ProfileScreen";
+import {
+    ClientCasesScreenName,
+    ClientMainScreenName,
+    LoginScreenName,
+    NotificationsScreenName,
+    ProfileScreenName,
+    SigningScreenName,
+} from "./screenPaths";
 import { LoginStackName } from "./LoginStack";
-import { LoginScreenName } from "../screens/loginScreen/LoginScreen";
 
 export const ClientStackName = "/ClientStack";
+
+const ClientMainScreen = lazy(() => import("../screens/client/clientMainScreen/ClientMainScreen"));
+const ClientCasesScreen = lazy(() => import("../screens/client/clientCasesScreen/ClientCasesScreen"));
+const SigningScreen = lazy(() => import("../screens/signingScreen/SigningScreen"));
+const NotificationsScreen = lazy(() => import("../screens/client/notifications/NotificationsScreen"));
+const ProfileScreen = lazy(() => import("../screens/client/profile/ProfileScreen"));
 
 function toRelativePath(pathname) {
     const p = String(pathname || "");
@@ -22,13 +32,15 @@ function ClientStack() {
 
     return (
         <TopAndRightNavBar LogoNavigate={ClientStackName + ClientMainScreenName} GetNavBarData={getClientNavBarData}>
-            <Routes>
-                <Route path={toRelativePath(ClientMainScreenName)} element={<ClientMainScreen />} />
-                <Route path={toRelativePath(ClientCasesScreenName)} element={<ClientCasesScreen />} />
-                <Route path={toRelativePath(NotificationsScreenName)} element={<NotificationsScreen />} />
-                <Route path={toRelativePath(SigningScreenName)} element={<SigningScreen />} />
-                <Route path={toRelativePath(ProfileScreenName)} element={<ProfileScreen />} />
-            </Routes>
+            <Suspense fallback={<RouteFallback />}>
+                <Routes>
+                    <Route path={toRelativePath(ClientMainScreenName)} element={<ClientMainScreen />} />
+                    <Route path={toRelativePath(ClientCasesScreenName)} element={<ClientCasesScreen />} />
+                    <Route path={toRelativePath(NotificationsScreenName)} element={<NotificationsScreen />} />
+                    <Route path={toRelativePath(SigningScreenName)} element={<SigningScreen />} />
+                    <Route path={toRelativePath(ProfileScreenName)} element={<ProfileScreen />} />
+                </Routes>
+            </Suspense>
         </TopAndRightNavBar>
     );
 }

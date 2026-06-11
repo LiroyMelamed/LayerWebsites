@@ -53,9 +53,9 @@ export default function MainScreen() {
                     <ComprasionDataCard
                         colors={colors.doughnutChartColorScale}
                         labels={[t("cases.openCases"), t("cases.closedCases")]}
-                        data={[(mainScreenData?.AllCasesData?.length ?? 0) - (mainScreenData?.NumberOfClosedCases ?? 0), mainScreenData?.NumberOfClosedCases ?? 0]}
+                        data={[mainScreenData?.OpenCases ?? 0, mainScreenData?.NumberOfClosedCases ?? 0]}
                         title={t("mainScreen.caseSummary")}
-                        centerText={`${mainScreenData?.AllCasesData?.length ?? 0}`}
+                        centerText={`${mainScreenData?.TotalCases ?? 0}`}
                         subText={t("mainScreen.totalCases")}
                         className="lw-mainScreen__comparisonCard"
                         onPress={() => { navigate(AdminStackName + AllCasesScreenName + '?status=open') }}
@@ -66,7 +66,7 @@ export default function MainScreen() {
                 <SimpleContainer className="lw-mainScreen__cards">
                     <SimpleContainer className="lw-mainScreen__row">
                         <ShowDataCard
-                            numberText={(mainScreenData?.AllCasesData?.length ?? 0) - (mainScreenData?.NumberOfClosedCases ?? 0)}
+                            numberText={mainScreenData?.OpenCases ?? 0}
                             title={t("cases.openCases")}
                             optionalOnClick={() => { navigate(AdminStackName + AllCasesScreenName + '?status=open') }}
                             isPerforming={isPerformingMainScreenData}
@@ -88,7 +88,7 @@ export default function MainScreen() {
                             isPerforming={isPerformingMainScreenData}
                         />
                         <ShowDataCard
-                            numberText={mainScreenData?.ActiveCustomers?.length ?? 0}
+                            numberText={mainScreenData?.NumberOfActiveCustomers ?? 0}
                             title={t("mainScreen.activeCustomers")}
                             optionalOnClick={() => { navigate(AdminStackName + AllClientsScreenName) }}
                             isPerforming={isPerformingMainScreenData}
