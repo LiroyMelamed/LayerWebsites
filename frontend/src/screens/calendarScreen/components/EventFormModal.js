@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
 import SimpleInput from "../../../components/simpleComponents/SimpleInput";
@@ -10,6 +10,19 @@ import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryB
 import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
 import { Text12, Text14, Text24, TextBold14 } from "../../../components/specializedComponents/text/AllTextKindFile";
 import calendarApi from "../../../api/calendarApi";
+import platformSettingsApi from "../../../api/platformSettingsApi";
+import {
+    parseAllowedOptionsFromSettings,
+    parseAllowedChannelsFromSettings,
+    presetsForAllowedMinutes,
+    channelsForEventType,
+    normalizeSelectedOffsets,
+    normalizeSelectedChannels,
+    normalizeChannelsForEventType,
+    parseStoredChannels,
+    parseOffsetsList,
+    hasAnyReminderChannel,
+} from "../utils/eventReminders";
 import { customersApi } from "../../../api/customersApi";
 import { adminApi } from "../../../api/adminApi";
 import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
@@ -38,6 +51,14 @@ const INTERNAL_SCOPED_EVENT_TYPES = [
 
 function isInternalScopedEventType(type) {
     return INTERNAL_SCOPED_EVENT_TYPES.includes(type);
+}
+
+function isReminderCapableEventType(type) {
+    return type === EVENT_TYPE_APPT || type === EVENT_TYPE_HEARING || type === EVENT_TYPE_REMINDER;
+}
+
+function isLeaveOrHolidayEventType(type) {
+    return type === EVENT_TYPE_LEAVE || type === EVENT_TYPE_HOLIDAY;
 }
 
 const EVENT_TYPE_OPTIONS = [
@@ -107,6 +128,8 @@ function _formStateFromEvent(event) {
         leadPhone: event?.leadPhone || "",
         leadEmail: event?.leadEmail || "",
         leadCaseName: event?.leadCaseName || "",
+        reminderOffsets: parseOffsetsList(event?.reminderOffsets),
+        reminderChannels: parseStoredChannels(event?.reminderChannels),
     };
 }
 
@@ -155,6 +178,10 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const [converting, setConverting] = useState(false);
     const [linkingCase, setLinkingCase] = useState(false);
     const [optionalConvertCaseName, setOptionalConvertCaseName] = useState(event?.leadCaseName || "");
+    const [reminderOffsets, setReminderOffsets] = useState(() => parseOffsetsList(event?.reminderOffsets));
+    const [reminderChannels, setReminderChannels] = useState(() => parseStoredChannels(event?.reminderChannels));
+    const [allowedReminderMinutes, setAllowedReminderMinutes] = useState([15, 30, 60, 120, 1440]);
+    const [allowedReminderChannelKeys, setAllowedReminderChannelKeys] = useState(["push", "sms", "email"]);
     const [caseFormDraft, setCaseFormDraft] = useState(null);
     const linkedClientLabelRef = useRef(event?.clientName || "");
 
@@ -208,6 +235,8 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setLeadPhone(s.leadPhone);
         setLeadEmail(s.leadEmail);
         setOptionalConvertCaseName(s.leadCaseName || "");
+        setReminderOffsets(s.reminderOffsets);
+        setReminderChannels(s.reminderChannels);
         linkedClientLabelRef.current = s.clientName || "";
         setCaseFormDraft(null);
         setClientCases([]);
@@ -252,6 +281,57 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setLeadName("");
         setLeadPhone("");
         setLeadEmail("");
+        if (isLeaveOrHolidayEventType(eventType)) {
+            setReminderOffsets([]);
+            setReminderChannels({ push: false, sms: false, email: false });
+        }
+    }, [eventType]);
+
+    // ─── Effect: load firm reminder options from platform settings ─────────
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await platformSettingsApi.getAll();
+                const cal = res?.data?.settings?.calendar || res?.settings?.calendar || {};
+                if (!cancelled) {
+                    setAllowedReminderMinutes(parseAllowedOptionsFromSettings(cal));
+                    setAllowedReminderChannelKeys(parseAllowedChannelsFromSettings(cal));
+                }
+            } catch { /* keep defaults */ }
+        })();
+        return () => { cancelled = true; };
+    }, []);
+
+    const reminderPresets = presetsForAllowedMinutes(allowedReminderMinutes);
+    const reminderChannelOptions = useMemo(
+        () => channelsForEventType(eventType, allowedReminderChannelKeys),
+        [eventType, allowedReminderChannelKeys]
+    );
+    const showReminderPicker = isReminderCapableEventType(eventType);
+
+    const toggleReminderOffset = (minutes) => {
+        setReminderOffsets((prev) => {
+            const set = new Set(prev);
+            if (set.has(minutes)) set.delete(minutes);
+            else set.add(minutes);
+            return normalizeSelectedOffsets([...set], allowedReminderMinutes);
+        });
+    };
+
+    const toggleReminderChannel = (key) => {
+        setReminderChannels((prev) => {
+            const next = { ...prev, [key]: !prev[key] };
+            return normalizeChannelsForEventType(eventType, next, allowedReminderChannelKeys);
+        });
+    };
+
+    // Push channel is only for תזכורת events — strip when switching to meeting/hearing.
+    useEffect(() => {
+        if (eventType === EVENT_TYPE_REMINDER) return;
+        setReminderChannels((prev) => (
+            prev.push ? { ...prev, push: false } : prev
+        ));
     }, [eventType]);
 
     // ─── Effect: live conflict check (debounced) ──────────────────────────
@@ -351,6 +431,10 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 return false;
             }
         }
+        if (showReminderPicker && reminderOffsets.length > 0 && !hasAnyReminderChannel(reminderChannels)) {
+            setError(t("calendar.eventRemindersChannelRequired"));
+            return false;
+        }
         setError("");
         return true;
     };
@@ -385,6 +469,12 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     ? managers.map((m) => m.name).filter(Boolean).join(", ")
                     : null,
                 manager_user_ids: managers.map((m) => m.userId).filter(Boolean),
+                reminder_offsets: showReminderPicker
+                    ? normalizeSelectedOffsets(reminderOffsets, allowedReminderMinutes)
+                    : [],
+                reminder_channels: showReminderPicker
+                    ? normalizeChannelsForEventType(eventType, reminderChannels, allowedReminderChannelKeys)
+                    : { push: false, sms: false, email: false },
             };
 
             if (isLeadMode) {
@@ -794,6 +884,55 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                         onChange={(e) => setLocation(e.target.value)}
                         timeToWaitInMilli={0}
                     />
+
+                    {showReminderPicker && (
+                        <SimpleContainer className="lw-eventFormModal__reminders">
+                            <TextBold14 color={NAVY}>{t("calendar.eventRemindersTitle")}</TextBold14>
+                            <Text12 color="#718096">
+                                {eventType === EVENT_TYPE_REMINDER
+                                    ? t("calendar.eventRemindersHintReminderType")
+                                    : t("calendar.eventRemindersHint")}
+                            </Text12>
+                            <SimpleContainer className="lw-eventFormModal__reminderChips">
+                                {reminderPresets.map(({ minutes, labelKey }) => {
+                                    const active = reminderOffsets.includes(minutes);
+                                    return (
+                                        <SimpleButton
+                                            key={minutes}
+                                            className={`lw-eventFormModal__reminderChip ${active ? "is-active" : ""}`}
+                                            onPress={() => toggleReminderOffset(minutes)}
+                                            aria-pressed={active}
+                                        >
+                                            <Text14>{t(labelKey)}</Text14>
+                                        </SimpleButton>
+                                    );
+                                })}
+                            </SimpleContainer>
+                            {reminderOffsets.length === 0 && (
+                                <Text12 color="#718096">{t("calendar.eventRemindersNone")}</Text12>
+                            )}
+                            {reminderOffsets.length > 0 && (
+                                <SimpleContainer className="lw-eventFormModal__reminderChannels">
+                                    <TextBold14 color={NAVY}>{t("calendar.eventRemindersChannelsTitle")}</TextBold14>
+                                    <SimpleContainer className="lw-eventFormModal__reminderChips">
+                                        {reminderChannelOptions.map(({ key, labelKey }) => {
+                                            const active = !!reminderChannels[key];
+                                            return (
+                                                <SimpleButton
+                                                    key={key}
+                                                    className={`lw-eventFormModal__reminderChip ${active ? "is-active" : ""}`}
+                                                    onPress={() => toggleReminderChannel(key)}
+                                                    aria-pressed={active}
+                                                >
+                                                    <Text14>{t(labelKey)}</Text14>
+                                                </SimpleButton>
+                                            );
+                                        })}
+                                    </SimpleContainer>
+                                </SimpleContainer>
+                            )}
+                        </SimpleContainer>
+                    )}
 
                     {/* ─── Managers (multiple lawyers, like clients on a case) ─── */}
                     <SimpleContainer className="lw-eventFormModal__managersCol">

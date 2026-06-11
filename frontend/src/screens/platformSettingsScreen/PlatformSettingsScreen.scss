@@ -234,6 +234,67 @@
         white-space: nowrap;
     }
 
+    &__dayHoursTable {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-2;
+        margin-top: v.$space-3;
+        width: 100%;
+    }
+
+    &__dayHoursHeader,
+    &__dayHoursRow {
+        display: grid;
+        grid-template-columns: minmax(72px, 1fr) minmax(100px, 1.2fr) minmax(120px, 1fr) minmax(120px, 1fr);
+        gap: v.$space-2;
+        align-items: center;
+        padding: v.$space-2 0;
+        border-bottom: 1px solid #f0f0f0;
+
+        &:last-child {
+            border-bottom: none;
+        }
+    }
+
+    &__dayHoursHeader {
+        padding-top: 0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    &__dayHoursCol {
+        min-width: 0;
+
+        &--day {
+            font-weight: 600;
+        }
+
+        &--open {
+            display: flex;
+            align-items: center;
+        }
+
+        &--time {
+            .lw-platformSettings__input {
+                opacity: 1;
+            }
+        }
+    }
+
+    &__dayHoursRow--closed {
+        .lw-platformSettings__dayHoursCol--time .lw-platformSettings__input {
+            opacity: 0.45;
+            pointer-events: none;
+        }
+    }
+
+    &__reminderOptions {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: v.$space-2;
+        margin-top: v.$space-2;
+    }
+
     // ── Toggle switch ───────────────────────────────────────────────
     &__toggle {
         display: flex;

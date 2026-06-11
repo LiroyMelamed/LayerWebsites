@@ -50,7 +50,12 @@ const updateSettings = async (req, res) => {
         const results = await settingsService.bulkUpsert(settings, req.user?.UserId);
         return res.json({ message: 'ההגדרות עודכנו בהצלחה', count: results.length });
     } catch (err) {
-        console.error('[platformSettings] updateSettings error:', err);
+        console.error('[platformSettings] updateSettings error:', err?.message || err);
+        if (err?.code === '23503') {
+            return res.status(400).json({
+                message: 'לא ניתן לשמור הגדרות — מזהה המשתמש לא קיים במערכת. נסה להתחבר מחדש.',
+            });
+        }
         return res.status(500).json({ message: 'שגיאה בעדכון הגדרות' });
     }
 };

@@ -20,6 +20,23 @@ const crypto = require('crypto');
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 const settingsService = require('../services/settingsService');
+const {
+    loadWorkingSchedule,
+    validateEventAgainstSchedule,
+} = require('../lib/calendarWorkingHours');
+const {
+    REMINDABLE_EVENT_TYPES,
+    loadAllowedReminderOffsets,
+    loadAllowedReminderChannels,
+    normalizeReminderOffsets,
+    normalizeReminderChannels,
+    offsetsToJson,
+    channelsToJson,
+    parseStoredOffsets,
+    parseStoredSentOffsets,
+    parseStoredChannels,
+    hasAnyReminderChannel,
+} = require('../lib/calendarEventReminders');
 
 // ─── Optional peer deps (graceful-fail if not yet installed) ──────────────────
 let ical;
@@ -131,6 +148,66 @@ function _isInternalScopedEventType(value) {
     return INTERNAL_SCOPED_EVENT_TYPES.includes(value);
 }
 
+async function _resolveReminderOffsets(body, eventType) {
+    if (!REMINDABLE_EVENT_TYPES.has(eventType)) {
+        return [];
+    }
+    if (body?.reminder_offsets === undefined) {
+        return null;
+    }
+    const allowed = await loadAllowedReminderOffsets(settingsService);
+    return normalizeReminderOffsets(body.reminder_offsets, allowed);
+}
+
+function _calendarFkErrorMessage(err) {
+    if (err?.code !== '23503') return null;
+    const detail = String(err.detail || err.message || '');
+    if (/owner_id/.test(detail)) {
+        return 'החשבון המחובר לא קיים במערכת. התנתק והתחבר מחדש (ייתכן שמירת הטוקן מסביבה אחרת).';
+    }
+    if (/client_user_id/.test(detail)) {
+        return 'הלקוח שנבחר לא קיים במערכת.';
+    }
+    if (/manager_user_id/.test(detail)) {
+        return 'עורך הדין שנבחר לא קיים במערכת.';
+    }
+    return null;
+}
+
+async function _requireExistingOwner(userId) {
+    const id = parseInt(userId, 10);
+    if (!Number.isFinite(id) || id <= 0) {
+        return { ok: false, status: 401, message: 'נדרשת התחברות מחדש' };
+    }
+    const { rows } = await pool.query('SELECT 1 FROM users WHERE userid = $1', [id]);
+    if (!rows.length) {
+        return {
+            ok: false,
+            status: 401,
+            message: 'החשבון המחובר לא קיים במערכת. התנתק והתחבר מחדש (ייתכן שמירת הטוקן מסביבה אחרת).',
+        };
+    }
+    return { ok: true };
+}
+
+async function _resolveReminderChannels(body, eventType, reminderOffsets) {
+    if (!REMINDABLE_EVENT_TYPES.has(eventType)) {
+        return { push: false, sms: false, email: false };
+    }
+    if (body?.reminder_channels === undefined) {
+        return null;
+    }
+    const allowed = await loadAllowedReminderChannels(settingsService);
+    const channels = normalizeReminderChannels(body.reminder_channels, allowed);
+    if (eventType !== 'reminder') {
+        channels.push = false;
+    }
+    if (reminderOffsets.length > 0 && !hasAnyReminderChannel(channels)) {
+        return { error: 'נבחרו תזכורות אך לא נבחר ערוץ שליחה (Push, SMS או אימייל).' };
+    }
+    return channels;
+}
+
 function _sanitizeEvent(row) {
     return {
         id: row.id,
@@ -159,6 +236,9 @@ function _sanitizeEvent(row) {
         leadEmail: row.lead_email ?? null,
         leadCaseName: row.lead_case_name ?? null,
         lastReminderSentAt: row.last_reminder_sent_at ?? null,
+        reminderOffsets: parseStoredOffsets(row.reminder_offsets),
+        reminderChannels: parseStoredChannels(row.reminder_channels),
+        remindersSentOffsets: parseStoredOffsets(row.reminders_sent_offsets),
         createdAt: row.created_at,
         updatedAt: row.updated_at,
     };
@@ -268,6 +348,68 @@ function _lawyerMatchSql(lawyerParamIdx) {
     )`;
 }
 
+/** Personal calendar (scope=mine): holidays for all, manager-tagged, or owned with connected lawyers. */
+function _personalCalendarSql(lawyerParamIdx) {
+    const p = `$${lawyerParamIdx}`;
+    const managedByLawyer = `(
+        ce.manager_user_id = ${p}
+        OR EXISTS (
+            SELECT 1 FROM calendar_event_managers cem
+            WHERE cem.event_id = ce.id AND cem.user_id = ${p}
+        )
+        OR (
+            ce.manager_user_id IS NULL
+            AND ce.manager_name IS NOT NULL
+            AND ce.manager_name = (SELECT name FROM users WHERE userid = ${p})
+        )
+    )`;
+    return `(
+        ce.event_type = 'holiday'
+        OR (
+            ce.event_type = 'leave'
+            AND (
+                (
+                    ce.owner_id = ${p}
+                    AND (ce.manager_user_id IS NULL OR ce.manager_user_id = ${p})
+                )
+                OR (
+                    ce.owner_id <> ${p}
+                    AND ${managedByLawyer}
+                )
+            )
+        )
+        OR (
+            ce.event_type NOT IN ('holiday', 'leave')
+            AND (
+                (
+                    ce.owner_id <> ${p}
+                    AND ${managedByLawyer}
+                )
+                OR (
+                    ce.owner_id = ${p}
+                    AND (
+                        (ce.manager_user_id IS NOT NULL AND ce.manager_user_id <> ${p})
+                        OR EXISTS (
+                            SELECT 1 FROM calendar_event_managers cem
+                            WHERE cem.event_id = ce.id AND cem.user_id <> ${p}
+                        )
+                    )
+                )
+            )
+        )
+    )`;
+}
+
+/** Leave belongs to the lawyer taking time off — not whoever created the entry. */
+function _resolveEventOwnerId(userId, eventType, managerUserId, managerIds) {
+    if (eventType !== 'leave') return userId;
+    const ids = managerIds?.length
+        ? managerIds
+        : (managerUserId ? [managerUserId] : []);
+    const primary = ids.find((id) => Number.isFinite(id));
+    return primary || userId;
+}
+
 /** Ensure the event belongs to the requesting user */
 async function _requireOwnership(eventId, userId) {
     const { rows } = await pool.query(
@@ -279,75 +421,13 @@ async function _requireOwnership(eventId, userId) {
     return { ok: true };
 }
 
-const HEBREW_DAY_NAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
-const TENANT_TIME_ZONE = 'Asia/Jerusalem';
-
-/** Parse "HH:MM" → minutes since midnight. Returns null if malformed. */
-function _hhmmToMinutes(str) {
-    const m = /^(\d{2}):(\d{2})/.exec(String(str || ''));
-    if (!m) return null;
-    return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
-}
-
-/** Get the firm day-of-week (0=Sun..6=Sat) and minutes-of-day for a date in the tenant TZ. */
-function _localDayAndMinutes(date) {
-    const parts = new Intl.DateTimeFormat('en-US', {
-        timeZone: TENANT_TIME_ZONE,
-        weekday: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-    }).formatToParts(date);
-    const weekdayMap = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
-    const wd = parts.find(p => p.type === 'weekday')?.value;
-    const hour = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10) % 24;
-    const minute = parseInt(parts.find(p => p.type === 'minute')?.value || '0', 10);
-    return { day: weekdayMap[wd], minutes: hour * 60 + minute };
-}
-
 /**
- * Validate that an event falls within the firm's configured working days/hours.
+ * Validate that an event falls within the firm's per-day working schedule.
  * Returns { ok: true } or { ok: false, message }. All-day events skip the hours check.
  */
 async function _validateWorkingHours(startTime, endTime, allDay) {
-    const daysRaw = await settingsService.getSetting('calendar', 'WORKING_DAYS', '0,1,2,3,4');
-    const startRaw = await settingsService.getSetting('calendar', 'WORKING_HOURS_START', '08:00');
-    const endRaw = await settingsService.getSetting('calendar', 'WORKING_HOURS_END', '18:00');
-
-    const workingDays = String(daysRaw)
-        .split(',')
-        .map(s => parseInt(s.trim(), 10))
-        .filter(n => Number.isInteger(n) && n >= 0 && n <= 6);
-    if (!workingDays.length) return { ok: true };
-
-    const start = new Date(startTime);
-    const end = new Date(endTime);
-    if (isNaN(start) || isNaN(end)) return { ok: true };
-
-    const startInfo = _localDayAndMinutes(start);
-
-    // Day-of-week check (based on event start)
-    if (!workingDays.includes(startInfo.day)) {
-        const openDays = workingDays.map(d => HEBREW_DAY_NAMES[d]).join(', ');
-        return { ok: false, message: `המשרד פעיל בימים: ${openDays}. לא ניתן לקבוע אירוע ביום ${HEBREW_DAY_NAMES[startInfo.day]}.` };
-    }
-
-    if (allDay) return { ok: true };
-
-    const openMin = _hhmmToMinutes(startRaw);
-    const closeMin = _hhmmToMinutes(endRaw);
-    if (openMin == null || closeMin == null) return { ok: true };
-
-    const endInfo = _localDayAndMinutes(end);
-
-    if (startInfo.minutes < openMin || startInfo.minutes > closeMin) {
-        return { ok: false, message: `שעות הפעילות של המשרד הן ${startRaw}–${endRaw}. שעת ההתחלה מחוץ לטווח.` };
-    }
-    // Allow end exactly at close time; reject if it spills past closing.
-    if (endInfo.minutes > closeMin || endInfo.minutes < openMin) {
-        return { ok: false, message: `שעות הפעילות של המשרד הן ${startRaw}–${endRaw}. שעת הסיום מחוץ לטווח.` };
-    }
-    return { ok: true };
+    const schedule = await loadWorkingSchedule(settingsService);
+    return validateEventAgainstSchedule(startTime, endTime, allDay, schedule);
 }
 
 /** Firm policy — lawyers may connect/sync Google only when enabled by admin. */
@@ -378,7 +458,7 @@ function _isAllDayInternalEventType(eventType) {
  * Lists calendar events with contextual privacy and dynamic multi-axis filters.
  *
  * Query parameters (all optional):
- *   • scope         'mine' (default) | 'firm' — firm-wide view of all lawyers
+ *   • scope         'mine' (default) | 'firm' — mine = personal (managers/holidays); firm = all
  *   • lawyer_id     int   — pin to owner or manager (overrides scope)
  *   • client_id     int   — events linked to this client_user_id
  *   • case_id       int   — events for this case
@@ -408,8 +488,8 @@ const listEvents = async (req, res) => {
     let idx = 1;
 
     // Contextual privacy:
-    //   • lawyer_id wins (locks to that lawyer)
-    //   • else scope=mine  → owner_id = req.user.UserId
+    //   • lawyer_id wins (owner, legacy manager column, or junction managers)
+    //   • else scope=mine  → holidays, manager-tagged, or owned with connected lawyers
     //   • else scope=firm  → no owner filter (firm-wide)
     const requestedLawyerId = lawyer_id ? parseInt(lawyer_id, 10) : null;
     if (lawyer_id && !Number.isFinite(requestedLawyerId)) {
@@ -420,13 +500,7 @@ const listEvents = async (req, res) => {
         idx++;
         params.push(requestedLawyerId);
     } else if (scope !== 'firm') {
-        conditions.push(`(
-            ce.owner_id = $${idx}
-            OR EXISTS (
-                SELECT 1 FROM calendar_event_managers cem
-                WHERE cem.event_id = ce.id AND cem.user_id = $${idx}
-            )
-        )`);
+        conditions.push(_personalCalendarSql(idx));
         idx++;
         params.push(userId);
     }
@@ -529,6 +603,11 @@ const getTodayAndTomorrow = async (req, res) => {
  */
 const createEvent = async (req, res) => {
     const userId = req.user.UserId;
+    const ownerCheck = await _requireExistingOwner(userId);
+    if (!ownerCheck.ok) {
+        return res.status(ownerCheck.status).json({ message: ownerCheck.message });
+    }
+
     const {
         title,
         description,
@@ -608,17 +687,27 @@ const createEvent = async (req, res) => {
         }
     }
 
+    const reminderOffsets = await _resolveReminderOffsets(req.body, eventType);
+    const storedReminderOffsets = reminderOffsets ?? [];
+    const resolvedChannels = await _resolveReminderChannels(req.body, eventType, storedReminderOffsets);
+    if (resolvedChannels?.error) {
+        return res.status(400).json({ message: resolvedChannels.error });
+    }
+    const storedReminderChannels = resolvedChannels ?? { push: false, sms: false, email: false };
+    const ownerId = _resolveEventOwnerId(userId, eventType, managerUserId, managerIds);
+
     try {
         const { rows } = await pool.query(
             `INSERT INTO calendar_events
                (owner_id, case_id, title, description, location, event_type,
                 client_user_id, client_name, manager_user_id, manager_name, color,
                 start_time, end_time, all_day, rrule,
-                lead_name, lead_phone, lead_email, lead_case_name)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+                lead_name, lead_phone, lead_email, lead_case_name,
+                reminder_offsets, reminder_channels, reminders_sent_offsets)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20::jsonb, $21::jsonb, '[]'::jsonb)
              RETURNING *`,
             [
-                userId,
+                ownerId,
                 caseId,
                 title.trim(),
                 description || null,
@@ -637,6 +726,8 @@ const createEvent = async (req, res) => {
                 lead_phone ? String(lead_phone).trim() : null,
                 lead_email ? String(lead_email).trim().toLowerCase() : null,
                 hasLead ? (leadCaseName || null) : null,
+                offsetsToJson(storedReminderOffsets),
+                channelsToJson(storedReminderChannels),
             ]
         );
         const created = rows[0];
@@ -659,6 +750,8 @@ const createEvent = async (req, res) => {
                 code: 'DUPLICATE_ACTIVE_LEAD',
             });
         }
+        const fkMsg = _calendarFkErrorMessage(err);
+        if (fkMsg) return res.status(400).json({ message: fkMsg });
         console.error('[calendarController] createEvent error:', err.message);
         return res.status(500).json({ message: 'שגיאה פנימית בשרת' });
     }
@@ -690,7 +783,7 @@ const getEvent = async (req, res) => {
 /**
  * PUT /api/calendar/:id
  * Update an existing event (owner only).
- * Resets reminder flags when time changes so cron worker re-fires reminders.
+ * Resets sent-reminder state when time or reminder selection changes.
  */
 const updateEvent = async (req, res) => {
     const userId = req.user.UserId;
@@ -720,6 +813,7 @@ const updateEvent = async (req, res) => {
         lead_email,
         lead_case_name,
         manager_user_ids,
+        reminder_offsets,
     } = req.body;
 
     if (start_time && end_time && new Date(end_time) < new Date(start_time)) {
@@ -751,8 +845,25 @@ const updateEvent = async (req, res) => {
         const newAllDay = _isAllDayInternalEventType(newEventType)
             ? true
             : (all_day !== undefined ? !!all_day : ev.all_day);
-        // Reset audit on time change so the cron worker re-fires reminders.
         const timeChanged = start_time && new Date(start_time).getTime() !== new Date(ev.start_time).getTime();
+        const resolvedReminderOffsets = await _resolveReminderOffsets(req.body, newEventType);
+        const nextReminderOffsets = resolvedReminderOffsets !== null
+            ? resolvedReminderOffsets
+            : parseStoredOffsets(ev.reminder_offsets);
+        const currentReminderOffsets = parseStoredOffsets(ev.reminder_offsets);
+        const remindersChanged = resolvedReminderOffsets !== null
+            && offsetsToJson(nextReminderOffsets) !== offsetsToJson(currentReminderOffsets);
+        const resolvedChannels = await _resolveReminderChannels(req.body, newEventType, nextReminderOffsets);
+        if (resolvedChannels?.error) {
+            return res.status(400).json({ message: resolvedChannels.error });
+        }
+        const nextReminderChannels = resolvedChannels !== null
+            ? resolvedChannels
+            : parseStoredChannels(ev.reminder_channels);
+        const currentReminderChannels = parseStoredChannels(ev.reminder_channels);
+        const channelsChanged = resolvedChannels !== null
+            && channelsToJson(nextReminderChannels) !== channelsToJson(currentReminderChannels);
+        const resetRemindersSent = timeChanged || remindersChanged || channelsChanged;
 
         // Skip working-hours guard for internally-scoped events — see createEvent for rationale.
         if (!_isInternalScopedEventType(newEventType)) {
@@ -806,6 +917,12 @@ const updateEvent = async (req, res) => {
             ? (parseInt(manager_user_id, 10) || null)
             : (parsedManagerIds?.[0] ?? ev.manager_user_id);
         const nextManagerName = manager_name !== undefined ? manager_name : ev.manager_name;
+        const nextOwnerId = _resolveEventOwnerId(
+            ev.owner_id,
+            newEventType,
+            nextManagerUserId,
+            parsedManagerIds ?? (nextManagerUserId ? [nextManagerUserId] : [])
+        );
 
         const { rows } = await pool.query(
             `UPDATE calendar_events SET
@@ -827,8 +944,12 @@ const updateEvent = async (req, res) => {
                lead_phone             = $16,
                lead_email             = $17,
                lead_case_name         = $18,
-               last_reminder_sent_at  = $19
-             WHERE id = $20
+               reminder_offsets       = $19::jsonb,
+               reminder_channels      = $20::jsonb,
+               reminders_sent_offsets = $21::jsonb,
+               last_reminder_sent_at  = $22,
+               owner_id               = $23
+             WHERE id = $24
              RETURNING *`,
             [
                 (title || ev.title).trim(),
@@ -849,7 +970,11 @@ const updateEvent = async (req, res) => {
                 nextLeadPhone,
                 nextLeadEmail,
                 hasLead ? nextLeadCaseName : null,
-                timeChanged ? null : ev.last_reminder_sent_at,
+                offsetsToJson(REMINDABLE_EVENT_TYPES.has(newEventType) ? nextReminderOffsets : []),
+                channelsToJson(REMINDABLE_EVENT_TYPES.has(newEventType) ? nextReminderChannels : { push: false, sms: false, email: false }),
+                resetRemindersSent ? '[]' : offsetsToJson(parseStoredSentOffsets(ev.reminders_sent_offsets)),
+                resetRemindersSent ? null : ev.last_reminder_sent_at,
+                nextOwnerId,
                 eventId,
             ]
         );
@@ -874,6 +999,8 @@ const updateEvent = async (req, res) => {
                 code: 'DUPLICATE_ACTIVE_LEAD',
             });
         }
+        const fkMsg = _calendarFkErrorMessage(err);
+        if (fkMsg) return res.status(400).json({ message: fkMsg });
         console.error('[calendarController] updateEvent error:', err.message);
         return res.status(500).json({ message: 'שגיאה פנימית בשרת' });
     }

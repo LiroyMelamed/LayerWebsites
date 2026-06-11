@@ -38,15 +38,35 @@ const HoverContainer = ({
             if (!target || !hover) return;
 
             const targetRect = target.getBoundingClientRect();
-            const hoverRect = hover.getBoundingClientRect();
+            const hoverWidth = hover.offsetWidth || hover.getBoundingClientRect().width;
+            const hoverHeight = hover.offsetHeight || hover.getBoundingClientRect().height;
             const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
 
-            const desiredLeft = targetRect.left + targetRect.width / 2 - hoverRect.width / 2;
             const margin = 8;
-            const left = Math.max(margin, Math.min(desiredLeft, viewportWidth - hoverRect.width - margin));
+            const gap = 4;
+            const desiredLeft = targetRect.left + targetRect.width / 2 - hoverWidth / 2;
+            const left = Math.max(margin, Math.min(desiredLeft, viewportWidth - hoverWidth - margin));
 
-            hover.style.top = `${targetRect.bottom + 4}px`;
+            const spaceBelow = viewportHeight - targetRect.bottom - margin;
+            const spaceAbove = targetRect.top - margin;
+            let top;
+
+            if (spaceBelow >= hoverHeight + gap || spaceBelow >= spaceAbove) {
+                top = targetRect.bottom + gap;
+                if (top + hoverHeight > viewportHeight - margin) {
+                    top = Math.max(margin, viewportHeight - hoverHeight - margin);
+                }
+            } else {
+                top = targetRect.top - hoverHeight - gap;
+                if (top < margin) {
+                    top = margin;
+                }
+            }
+
+            hover.style.top = `${top}px`;
             hover.style.left = `${left}px`;
+            hover.style.maxHeight = `${Math.max(120, viewportHeight - margin * 2)}px`;
         };
 
         adjustPosition();
@@ -59,7 +79,7 @@ const HoverContainer = ({
             window.removeEventListener('resize', adjustPosition);
             window.removeEventListener('scroll', adjustPosition, true);
         };
-    }, [targetRef]);
+    }, [targetRef, queryResult, isPerforming, query]);
 
     // Separate effect for click-outside so it doesn't re-run just because onClose changes reference
     useEffect(() => {

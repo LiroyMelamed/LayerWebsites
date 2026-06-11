@@ -7,6 +7,7 @@ import DefaultState from "../../../components/styledComponents/defaultState/Defa
 import CaseMenuItem from "../../../components/styledComponents/menuItems/CaseMenuItem";
 import Separator from "../../../components/styledComponents/separators/Separator";
 import { DateDDMMYY } from "../../../functions/date/DateDDMMYY";
+import { caseClientNames, caseMenuTitle } from "../../../functions/cases/caseMenuTitle";
 import { useTranslation } from 'react-i18next';
 import i18next from 'i18next';
 
@@ -57,7 +58,7 @@ export default function AllCasesCard({ allCases, isPerforming, reperformAfterSav
 
                         <CaseMenuItem
                             fullCase={item}
-                            rightTitle={`${item.CaseName} - ${_clientNames(item)}`}
+                            rightTitle={caseMenuTitle(item)}
 
                             leftPreFirstLine={t('cases.caseType')}
                             leftValueFirstLine={item.CaseTypeName}
@@ -79,14 +80,6 @@ export default function AllCasesCard({ allCases, isPerforming, reperformAfterSav
     )
 }
 
-//Functions
-function _clientNames(caseItem) {
-    if (Array.isArray(caseItem.Users) && caseItem.Users.length > 0) {
-        return caseItem.Users.map(u => u.Name).filter(Boolean).join(', ');
-    }
-    return caseItem.CustomerName || '';
-}
-
 export function getOpenData(allCases, index, t) {
     const caseItem = allCases[index];
     const translate = t ?? i18next.t.bind(i18next);
@@ -94,7 +87,7 @@ export function getOpenData(allCases, index, t) {
     const openData = [
         {
             title: translate('cases.customerName'),
-            value: _clientNames(caseItem)
+            value: caseClientNames(caseItem)
         },
         {
             title: translate('cases.phoneNumber'),
@@ -123,7 +116,7 @@ export function getOpenDataClient(taggedCases, index, t) {
     const openData = [
         {
             title: translate('cases.customerName'),
-            value: _clientNames(taggedCases[index])
+            value: caseClientNames(taggedCases[index])
         },
         {
             title: translate('cases.phoneNumber'),

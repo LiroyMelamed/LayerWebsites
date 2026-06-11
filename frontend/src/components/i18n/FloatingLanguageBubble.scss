@@ -17,15 +17,14 @@
 }
 
 .lw-floatingLanguageBubble__menu {
-    position: absolute;
-    bottom: calc(100% + 0.4rem);
-    left: 0;
-    right: auto;
+    position: fixed;
     min-width: 10rem;
     background: var(--lw-color-white);
     border: 1px solid rgba(0, 0, 0, 0.12);
     border-radius: 0.4rem;
     overflow: hidden;
+    z-index: 20002;
+    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.15);
 }
 
 .lw-floatingLanguageBubble__menu>button {

@@ -33,6 +33,20 @@ import ConfirmationDialog from "../../components/styledComponents/popups/Confirm
 import { AdminStackName } from "../../navigation/AdminStack";
 import { MainScreenName } from "../mainScreen/MainScreen";
 
+import {
+    WEEKDAY_LABELS,
+    parseScheduleJson,
+    buildScheduleFromLegacy,
+    serializeSchedule,
+    deriveLegacySettings,
+} from "../calendarScreen/utils/workingHours";
+import {
+    REMINDER_PRESETS,
+    REMINDER_CHANNEL_OPTIONS,
+    parseOffsetsList,
+    parseChannelsList,
+} from "../calendarScreen/utils/eventReminders";
+
 import "./PlatformSettingsScreen.scss";
 
 export const PlatformSettingsScreenName = "/PlatformSettingsScreen";
@@ -1473,80 +1487,84 @@ export default function PlatformSettingsScreen() {
             };
             const handleChange = (key, val) => handleSettingChange("calendar", key, val);
 
-            const DAYS = [
-                { value: "0", label: "ראשון" },
-                { value: "1", label: "שני" },
-                { value: "2", label: "שלישי" },
-                { value: "3", label: "רביעי" },
-                { value: "4", label: "חמישי" },
-                { value: "5", label: "שישי" },
-                { value: "6", label: "שבת" },
-            ];
+            const workingSchedule = (() => {
+                const byDayRaw = getVal("WORKING_HOURS_BY_DAY", "");
+                const parsed = parseScheduleJson(byDayRaw);
+                if (parsed) return parsed;
+                return buildScheduleFromLegacy(
+                    getVal("WORKING_DAYS", "0,1,2,3,4"),
+                    getVal("WORKING_HOURS_START", "08:00"),
+                    getVal("WORKING_HOURS_END", "18:00"),
+                );
+            })();
 
-            const workingDaysRaw = String(getVal("WORKING_DAYS", "0,1,2,3,4"));
-            const workingDaysSet = new Set(
-                workingDaysRaw.split(",").map(s => s.trim()).filter(Boolean)
-            );
-            const toggleDay = (dayValue) => {
-                const next = new Set(workingDaysSet);
-                if (next.has(dayValue)) next.delete(dayValue);
-                else next.add(dayValue);
-                const ordered = DAYS.map(d => d.value).filter(v => next.has(v));
-                handleChange("WORKING_DAYS", ordered.join(","));
+            const updateWorkingSchedule = (dayIndex, patch) => {
+                const next = { ...workingSchedule };
+                next[dayIndex] = { ...next[dayIndex], ...patch };
+                const legacy = deriveLegacySettings(next);
+                handleChange("WORKING_HOURS_BY_DAY", serializeSchedule(next));
+                handleChange("WORKING_DAYS", legacy.WORKING_DAYS);
+                handleChange("WORKING_HOURS_START", legacy.WORKING_HOURS_START);
+                handleChange("WORKING_HOURS_END", legacy.WORKING_HOURS_END);
             };
 
             return (
                 <SimpleContainer className="lw-platformSettings__calendarTab">
-                    {/* Working days */}
+                    {/* Per-day working hours */}
                     <SimpleCard className="lw-platformSettings__card">
-                        <TextBold18>ימי עבודה של המשרד</TextBold18>
+                        <TextBold18>{t("platformSettings.workingHoursByDayTitle")}</TextBold18>
                         <Text12 className="lw-platformSettings__settingDescription">
-                            בחר את הימים בהם המשרד פעיל. ימים שלא נבחרו לא יוצגו בלוח השנה.
+                            {t("platformSettings.workingHoursByDayHint")}
                         </Text12>
-                        <SimpleContainer className="lw-platformSettings__dayPicker">
-                            {DAYS.map(d => {
-                                const active = workingDaysSet.has(d.value);
+                        <SimpleContainer className="lw-platformSettings__dayHoursTable">
+                            <SimpleContainer className="lw-platformSettings__dayHoursHeader">
+                                <TextBold14 className="lw-platformSettings__dayHoursCol lw-platformSettings__dayHoursCol--day">
+                                    {t("platformSettings.workingHoursDayCol")}
+                                </TextBold14>
+                                <TextBold14 className="lw-platformSettings__dayHoursCol lw-platformSettings__dayHoursCol--open">
+                                    {t("platformSettings.workingHoursOpenCol")}
+                                </TextBold14>
+                                <TextBold14 className="lw-platformSettings__dayHoursCol lw-platformSettings__dayHoursCol--time">
+                                    {t("platformSettings.workingHoursStartCol")}
+                                </TextBold14>
+                                <TextBold14 className="lw-platformSettings__dayHoursCol lw-platformSettings__dayHoursCol--time">
+                                    {t("platformSettings.workingHoursEndCol")}
+                                </TextBold14>
+                            </SimpleContainer>
+                            {WEEKDAY_LABELS.map((label, dayIndex) => {
+                                const day = workingSchedule[dayIndex] || { open: false, start: "08:00", end: "18:00" };
                                 return (
-                                    <SimpleButton
-                                        key={d.value}
-                                        className={`lw-platformSettings__dayChip ${active ? "lw-platformSettings__dayChip--active" : ""}`}
-                                        onPress={() => toggleDay(d.value)}
+                                    <SimpleContainer
+                                        key={dayIndex}
+                                        className={`lw-platformSettings__dayHoursRow ${day.open ? "" : "lw-platformSettings__dayHoursRow--closed"}`}
                                     >
-                                        <Text14 className="lw-platformSettings__dayChipLabel">{d.label}</Text14>
-                                    </SimpleButton>
+                                        <Text14 className="lw-platformSettings__dayHoursCol lw-platformSettings__dayHoursCol--day">
+                                            {label}
+                                        </Text14>
+                                        <SimpleContainer className="lw-platformSettings__dayHoursCol lw-platformSettings__dayHoursCol--open">
+                                            <SettingInput
+                                                setting={{ valueType: "boolean" }}
+                                                value={day.open ? "true" : "false"}
+                                                onChange={(val) => updateWorkingSchedule(dayIndex, { open: val === "true" })}
+                                            />
+                                        </SimpleContainer>
+                                        <SimpleContainer className="lw-platformSettings__dayHoursCol lw-platformSettings__dayHoursCol--time">
+                                            <SettingInput
+                                                setting={{ valueType: "time", label: t("platformSettings.workingHoursStartCol") }}
+                                                value={day.start}
+                                                onChange={(val) => day.open && updateWorkingSchedule(dayIndex, { start: val })}
+                                            />
+                                        </SimpleContainer>
+                                        <SimpleContainer className="lw-platformSettings__dayHoursCol lw-platformSettings__dayHoursCol--time">
+                                            <SettingInput
+                                                setting={{ valueType: "time", label: t("platformSettings.workingHoursEndCol") }}
+                                                value={day.end}
+                                                onChange={(val) => day.open && updateWorkingSchedule(dayIndex, { end: val })}
+                                            />
+                                        </SimpleContainer>
+                                    </SimpleContainer>
                                 );
                             })}
-                        </SimpleContainer>
-                    </SimpleCard>
-
-                    {/* Working hours */}
-                    <SimpleCard className="lw-platformSettings__card">
-                        <TextBold18>שעות עבודה</TextBold18>
-                        <SimpleContainer className="lw-platformSettings__settingsList">
-                            <SimpleContainer className="lw-platformSettings__settingRow">
-                                <SimpleContainer className="lw-platformSettings__settingLabel">
-                                    <TextBold14 className="lw-platformSettings__settingName">שעת תחילת יום עבודה</TextBold14>
-                                </SimpleContainer>
-                                <SimpleContainer className="lw-platformSettings__settingInput">
-                                    <SettingInput
-                                        setting={{ valueType: "time", label: "שעת התחלה" }}
-                                        value={getVal("WORKING_HOURS_START", "08:00")}
-                                        onChange={(val) => handleChange("WORKING_HOURS_START", val)}
-                                    />
-                                </SimpleContainer>
-                            </SimpleContainer>
-                            <SimpleContainer className="lw-platformSettings__settingRow">
-                                <SimpleContainer className="lw-platformSettings__settingLabel">
-                                    <TextBold14 className="lw-platformSettings__settingName">שעת סיום יום עבודה</TextBold14>
-                                </SimpleContainer>
-                                <SimpleContainer className="lw-platformSettings__settingInput">
-                                    <SettingInput
-                                        setting={{ valueType: "time", label: "שעת סיום" }}
-                                        value={getVal("WORKING_HOURS_END", "18:00")}
-                                        onChange={(val) => handleChange("WORKING_HOURS_END", val)}
-                                    />
-                                </SimpleContainer>
-                            </SimpleContainer>
                         </SimpleContainer>
                     </SimpleCard>
 
@@ -1608,13 +1626,18 @@ export default function PlatformSettingsScreen() {
 
                     {/* Reminders */}
                     <SimpleCard className="lw-platformSettings__card">
-                        <TextBold18>תזכורות יומן</TextBold18>
+                        <TextBold18>{t("platformSettings.calendarRemindersTitle")}</TextBold18>
+                        <Text12 className="lw-platformSettings__settingDescription">
+                            {t("platformSettings.calendarRemindersHint")}
+                        </Text12>
                         <SimpleContainer className="lw-platformSettings__settingsList">
                             <SimpleContainer className="lw-platformSettings__settingRow">
                                 <SimpleContainer className="lw-platformSettings__settingLabel">
-                                    <TextBold14 className="lw-platformSettings__settingName">הפעלת תזכורות אוטומטיות</TextBold14>
+                                    <TextBold14 className="lw-platformSettings__settingName">
+                                        {t("platformSettings.calendarRemindersEnabled")}
+                                    </TextBold14>
                                     <Text12 className="lw-platformSettings__settingDescription">
-                                        שליחת תזכורות יום לפני ו-30 דקות לפני האירוע
+                                        {t("platformSettings.calendarRemindersEnabledHint")}
                                     </Text12>
                                 </SimpleContainer>
                                 <SimpleContainer className="lw-platformSettings__settingInput">
@@ -1627,7 +1650,79 @@ export default function PlatformSettingsScreen() {
                             </SimpleContainer>
                             <SimpleContainer className="lw-platformSettings__settingRow">
                                 <SimpleContainer className="lw-platformSettings__settingLabel">
-                                    <TextBold14 className="lw-platformSettings__settingName">תדירות בדיקה (דקות)</TextBold14>
+                                    <TextBold14 className="lw-platformSettings__settingName">
+                                        {t("platformSettings.calendarReminderOptionsTitle")}
+                                    </TextBold14>
+                                    <Text12 className="lw-platformSettings__settingDescription">
+                                        {t("platformSettings.calendarReminderOptionsHint")}
+                                    </Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__reminderOptions">
+                                    {REMINDER_PRESETS.map(({ minutes, labelKey }) => {
+                                        const selected = new Set(
+                                            parseOffsetsList(getVal("CALENDAR_REMINDER_OPTIONS", "15,30,60,120,1440"))
+                                        );
+                                        const active = selected.has(minutes);
+                                        return (
+                                            <SimpleButton
+                                                key={minutes}
+                                                className={`lw-platformSettings__dayChip ${active ? "lw-platformSettings__dayChip--active" : ""}`}
+                                                onPress={() => {
+                                                    const next = new Set(selected);
+                                                    if (next.has(minutes)) next.delete(minutes);
+                                                    else next.add(minutes);
+                                                    const ordered = REMINDER_PRESETS
+                                                        .map((p) => p.minutes)
+                                                        .filter((m) => next.has(m));
+                                                    handleChange("CALENDAR_REMINDER_OPTIONS", ordered.join(","));
+                                                }}
+                                            >
+                                                <Text14 className="lw-platformSettings__dayChipLabel">{t(labelKey)}</Text14>
+                                            </SimpleButton>
+                                        );
+                                    })}
+                                </SimpleContainer>
+                            </SimpleContainer>
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">
+                                        {t("platformSettings.calendarReminderChannelsTitle")}
+                                    </TextBold14>
+                                    <Text12 className="lw-platformSettings__settingDescription">
+                                        {t("platformSettings.calendarReminderChannelsHint")}
+                                    </Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__reminderOptions">
+                                    {REMINDER_CHANNEL_OPTIONS.map(({ key, labelKey }) => {
+                                        const selected = new Set(
+                                            parseChannelsList(getVal("CALENDAR_REMINDER_CHANNELS", "push,sms,email"))
+                                        );
+                                        const active = selected.has(key);
+                                        return (
+                                            <SimpleButton
+                                                key={key}
+                                                className={`lw-platformSettings__dayChip ${active ? "lw-platformSettings__dayChip--active" : ""}`}
+                                                onPress={() => {
+                                                    const next = new Set(selected);
+                                                    if (next.has(key)) next.delete(key);
+                                                    else next.add(key);
+                                                    const ordered = REMINDER_CHANNEL_OPTIONS
+                                                        .map((c) => c.key)
+                                                        .filter((k) => next.has(k));
+                                                    handleChange("CALENDAR_REMINDER_CHANNELS", ordered.join(","));
+                                                }}
+                                            >
+                                                <Text14 className="lw-platformSettings__dayChipLabel">{t(labelKey)}</Text14>
+                                            </SimpleButton>
+                                        );
+                                    })}
+                                </SimpleContainer>
+                            </SimpleContainer>
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">
+                                        {t("platformSettings.calendarRemindersPollMinutes")}
+                                    </TextBold14>
                                 </SimpleContainer>
                                 <SimpleContainer className="lw-platformSettings__settingInput">
                                     <SettingInput

@@ -60,6 +60,23 @@ function _castValue(raw, valueType) {
     }
 }
 
+/** Return updatedBy only when the user exists (avoids FK violations in dev/cross-tenant). */
+async function _resolveUpdatedBy(updatedBy) {
+    if (updatedBy == null || updatedBy === '') return null;
+    const id = Number.parseInt(String(updatedBy), 10);
+    if (!Number.isFinite(id) || id <= 0) return null;
+    try {
+        const { rows } = await pool.query(
+            'SELECT 1 FROM users WHERE userid = $1 LIMIT 1',
+            [id]
+        );
+        return rows.length > 0 ? id : null;
+    } catch (err) {
+        if (err?.code === '42P01') return null;
+        throw err;
+    }
+}
+
 // ── Public API ──────────────────────────────────────────────────────
 
 /**
@@ -122,6 +139,7 @@ async function getAllSettings() {
  * Create or update a single setting.
  */
 async function upsertSetting(category, key, value, { valueType, label, description, updatedBy } = {}) {
+    const safeUpdatedBy = await _resolveUpdatedBy(updatedBy);
     const result = await pool.query(
         `INSERT INTO platform_settings (category, setting_key, setting_value, value_type, label, description, updated_by, updated_at)
          VALUES ($1, $2, $3, COALESCE($4, 'string'), $5, $6, $7, NOW())
@@ -134,7 +152,7 @@ async function upsertSetting(category, key, value, { valueType, label, descripti
              updated_by    = EXCLUDED.updated_by,
              updated_at    = NOW()
          RETURNING *`,
-        [category, key, value === undefined ? null : String(value), valueType || null, label || null, description || null, updatedBy || null]
+        [category, key, value === undefined ? null : String(value), valueType || null, label || null, description || null, safeUpdatedBy]
     );
 
     // Invalidate cache
@@ -149,6 +167,7 @@ async function upsertSetting(category, key, value, { valueType, label, descripti
  * @param {number} updatedBy - userId
  */
 async function bulkUpsert(settings, updatedBy) {
+    const safeUpdatedBy = await _resolveUpdatedBy(updatedBy);
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
@@ -163,7 +182,7 @@ async function bulkUpsert(settings, updatedBy) {
                      updated_by    = EXCLUDED.updated_by,
                      updated_at    = NOW()
                  RETURNING *`,
-                [s.category, s.key, s.value === undefined ? null : String(s.value), updatedBy]
+                [s.category, s.key, s.value === undefined ? null : String(s.value), safeUpdatedBy]
             );
             results.push(r.rows[0]);
         }

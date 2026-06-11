@@ -35,6 +35,13 @@ import EventFormModal from "./components/EventFormModal";
 import PersonalSyncModal from "./components/PersonalSyncModal";
 import { colorForKey, colorKeyForEvent, leaveColor, holidayColor, buildLawyerLegend } from "./utils/lawyerColors";
 import { buildNewEventPrefill } from "./utils/eventDefaults";
+import {
+    defaultSchedule,
+    parseScheduleFromCalendarSettings,
+    getHiddenDays,
+    getBusinessHours,
+    getSlotRange,
+} from "./utils/workingHours";
 
 import "./CalendarScreen.scss";
 
@@ -197,10 +204,8 @@ export default function CalendarScreen() {
     });
     const [filtersPanelOpen, setFiltersPanelOpen] = useState(!isSmallScreen);
 
-    // ── Working-hours config ───────────────────────────────────────────────
-    const [workingDays, setWorkingDays] = useState([0, 1, 2, 3, 4]);
-    const [workingHoursStart, setWorkingHoursStart] = useState("08:00");
-    const [workingHoursEnd, setWorkingHoursEnd] = useState("18:00");
+    // ── Working-hours config (per weekday) ─────────────────────────────────
+    const [workingSchedule, setWorkingSchedule] = useState(() => defaultSchedule());
 
     // ── Reference data for filter panel ────────────────────────────────────
     const [lawyers, setLawyers] = useState([]);
@@ -243,7 +248,7 @@ export default function CalendarScreen() {
         return () => { cancelled = true; };
     }, [canUseFirmView]);
 
-    // ── Load firm working days/hours from platform settings ────────────────
+    // ── Load firm per-day working hours from platform settings ─────────────
     useEffect(() => {
         let cancelled = false;
         (async () => {
@@ -251,22 +256,7 @@ export default function CalendarScreen() {
                 const res = await platformSettingsApi.getAll();
                 const cal = res?.data?.settings?.calendar || res?.settings?.calendar || {};
                 if (cancelled) return;
-                const daysRaw = cal?.WORKING_DAYS?.effectiveValue;
-                if (typeof daysRaw === "string" && daysRaw.length) {
-                    const parsed = daysRaw
-                        .split(",")
-                        .map((s) => parseInt(s.trim(), 10))
-                        .filter((n) => Number.isInteger(n) && n >= 0 && n <= 6);
-                    if (parsed.length) setWorkingDays(parsed);
-                }
-                const startRaw = cal?.WORKING_HOURS_START?.effectiveValue;
-                if (typeof startRaw === "string" && /^\d{2}:\d{2}/.test(startRaw)) {
-                    setWorkingHoursStart(startRaw.slice(0, 5));
-                }
-                const endRaw = cal?.WORKING_HOURS_END?.effectiveValue;
-                if (typeof endRaw === "string" && /^\d{2}:\d{2}/.test(endRaw)) {
-                    setWorkingHoursEnd(endRaw.slice(0, 5));
-                }
+                setWorkingSchedule(parseScheduleFromCalendarSettings(cal));
             } catch { /* keep defaults */ }
         })();
         return () => { cancelled = true; };
@@ -275,9 +265,10 @@ export default function CalendarScreen() {
     // ── Filter assembly ─────────────────────────────────────────────────────
     const apiFilters = useMemo(() => {
         const f = {};
-        // scope=firm is only meaningful for lawyers/admins; non-managers always get scope=mine.
-        if (canUseFirmView && scope === SCOPE_FIRM) f.scope = SCOPE_FIRM;
-        if (filters.lawyer_id) f.lawyer_id = filters.lawyer_id;
+        const isFirmScope = canUseFirmView && scope === SCOPE_FIRM;
+        f.scope = isFirmScope ? SCOPE_FIRM : SCOPE_MINE;
+        // Lawyer pin is firm-view only — must not leak into "היומן שלי".
+        if (isFirmScope && filters.lawyer_id) f.lawyer_id = filters.lawyer_id;
         if (filters.client_id) f.client_id = filters.client_id;
         if (filters.case_id) f.case_id = filters.case_id;
         if (filters.event_type && filters.event_type !== EVENT_TYPE_ALL) {
@@ -307,6 +298,13 @@ export default function CalendarScreen() {
 
     // Re-fetch whenever filters/scope change (range is reused from the last datesSet).
     useEffect(() => { fetchEvents(null); }, [fetchEvents]);
+
+    // Lawyer filter is firm-view only — drop it if scope is personal.
+    useEffect(() => {
+        if (scope !== SCOPE_MINE || !filters.lawyer_id) return;
+        setFilters((prev) => ({ ...prev, lawyer_id: null }));
+        setManagerFilterLabel("");
+    }, [scope, filters.lawyer_id]);
 
     useEffect(() => {
         if (searchParams.get("google_connected") === "1") {
@@ -340,16 +338,11 @@ export default function CalendarScreen() {
     }, [searchParams, fetchEvents]);
 
     // ── FullCalendar config ────────────────────────────────────────────────
-    const hiddenDays = useMemo(() => {
-        const set = new Set(workingDays);
-        return [0, 1, 2, 3, 4, 5, 6].filter((d) => !set.has(d));
-    }, [workingDays]);
+    const hiddenDays = useMemo(() => getHiddenDays(workingSchedule), [workingSchedule]);
 
-    const businessHours = useMemo(() => ({
-        daysOfWeek: workingDays,
-        startTime: workingHoursStart,
-        endTime: workingHoursEnd,
-    }), [workingDays, workingHoursStart, workingHoursEnd]);
+    const businessHours = useMemo(() => getBusinessHours(workingSchedule), [workingSchedule]);
+
+    const slotRange = useMemo(() => getSlotRange(workingSchedule), [workingSchedule]);
 
     // ── Modal helpers ──────────────────────────────────────────────────────
     const upsertLocally = useCallback((saved) => {
@@ -373,10 +366,7 @@ export default function CalendarScreen() {
     }, [openPopup, closePopup, fetchEvents]);
 
     const openCreateModal = useCallback((selectInfo) => {
-        const prefill = buildNewEventPrefill(selectInfo, {
-            workingHoursStart,
-            workingHoursEnd,
-        });
+        const prefill = buildNewEventPrefill(selectInfo, { workingSchedule });
 
         openPopup(
             <EventFormModal
@@ -393,31 +383,17 @@ export default function CalendarScreen() {
                 onClose={closePopup}
             />
         );
-    }, [openPopup, closePopup, upsertLocally, fetchEvents, workingHoursStart, workingHoursEnd]);
+    }, [openPopup, closePopup, upsertLocally, fetchEvents, workingSchedule]);
 
     const openEditModal = useCallback((clickInfo) => {
         const ev = clickInfo.event.extendedProps || {};
         const eventPayload = {
+            ...ev,
             id: Number(clickInfo.event.id),
             title: ev.title || clickInfo.event.title,
             startTime: ev.startTime || clickInfo.event.startStr,
             endTime: ev.endTime || clickInfo.event.endStr,
             allDay: ev.allDay ?? clickInfo.event.allDay,
-            description: ev.description,
-            location: ev.location,
-            eventType: ev.eventType,
-            clientName: ev.clientName,
-            managerName: ev.managerName,
-            managers: ev.managers,
-            clientUserId: ev.clientUserId,
-            managerUserId: ev.managerUserId,
-            caseId: ev.caseId,
-            caseName: ev.caseName,
-            leadName: ev.leadName,
-            leadPhone: ev.leadPhone,
-            leadEmail: ev.leadEmail,
-            leadCaseName: ev.leadCaseName,
-            color: ev.color,
         };
         openPopup(
             <EventFormModal
@@ -480,6 +456,14 @@ export default function CalendarScreen() {
 
     // ── Filter handlers ────────────────────────────────────────────────────
     const setFilter = (key, value) => setFilters((prev) => ({ ...prev, [key]: value }));
+
+    const switchToMineScope = useCallback(() => {
+        setScope(SCOPE_MINE);
+        setFilters((prev) => (prev.lawyer_id ? { ...prev, lawyer_id: null } : prev));
+        setManagerFilterLabel("");
+    }, []);
+
+    const switchToFirmScope = useCallback(() => setScope(SCOPE_FIRM), []);
     const clearAllFilters = () => {
         setFilters({ lawyer_id: null, client_id: null, case_id: null, event_type: EVENT_TYPE_ALL });
         setManagerFilterLabel("");
@@ -520,13 +504,16 @@ export default function CalendarScreen() {
         searchCustomers(name);
     }, [searchCustomers]);
 
-    const handleClientFilterSelected = useCallback((item) => {
+    const handleClientFilterSelected = useCallback((selectedName, resultItem) => {
+        const item = resultItem || (Array.isArray(customerResults)
+            ? customerResults.find((c) => c.Name?.trim() === selectedName?.trim())
+            : null);
         const id = item?.UserId ?? item?.userid ?? item?.id;
-        const name = item?.Name ?? item?.name ?? "";
+        const name = item?.Name ?? item?.name ?? selectedName ?? "";
         if (id == null) return;
         setFilter("client_id", id);
         setClientFilterLabel(name);
-    }, []);
+    }, [customerResults]);
 
     const handleCaseFilterSearch = useCallback((name) => {
         setCaseFilterLabel(name);
@@ -536,13 +523,16 @@ export default function CalendarScreen() {
         searchCases(name);
     }, [searchCases]);
 
-    const handleCaseFilterSelected = useCallback((item) => {
+    const handleCaseFilterSelected = useCallback((selectedName, resultItem) => {
+        const item = resultItem || (Array.isArray(caseResults)
+            ? caseResults.find((c) => c.CaseName?.trim() === selectedName?.trim())
+            : null);
         const id = item?.CaseId ?? item?.caseid ?? item?.id;
-        const name = item?.CaseName ?? item?.casename ?? "";
+        const name = item?.CaseName ?? item?.casename ?? selectedName ?? "";
         if (id == null) return;
         setFilter("case_id", id);
         setCaseFilterLabel(name);
-    }, []);
+    }, [caseResults]);
 
     // ── Lookups for active-filter chips ────────────────────────────────────
     const activeManagerName = filters.lawyer_id
@@ -573,14 +563,14 @@ export default function CalendarScreen() {
                             <div className="lw-calendarScreen__scopeToggle" role="group" aria-label={t("calendar.scopeMine")}>
                                 <SimpleButton
                                     className={`lw-calendarScreen__scopeBtn ${scope === SCOPE_MINE ? "is-active" : ""}`}
-                                    onPress={() => setScope(SCOPE_MINE)}
+                                    onPress={switchToMineScope}
                                     aria-pressed={scope === SCOPE_MINE}
                                 >
                                     {t("calendar.scopeMine")}
                                 </SimpleButton>
                                 <SimpleButton
                                     className={`lw-calendarScreen__scopeBtn ${scope === SCOPE_FIRM ? "is-active" : ""}`}
-                                    onPress={() => setScope(SCOPE_FIRM)}
+                                    onPress={switchToFirmScope}
                                     aria-pressed={scope === SCOPE_FIRM}
                                 >
                                     {t("calendar.scopeFirm")}
@@ -662,9 +652,9 @@ export default function CalendarScreen() {
                 {/* ── Manager / client / case filters (one row) ── */}
                 {filtersPanelOpen && (
                     <SimpleContainer
-                        className={`lw-calendarScreen__filterRow ${canUseFirmView ? "lw-calendarScreen__filterRow--three" : "lw-calendarScreen__filterRow--two"}`}
+                        className={`lw-calendarScreen__filterRow ${canUseFirmView && scope === SCOPE_FIRM ? "lw-calendarScreen__filterRow--three" : "lw-calendarScreen__filterRow--two"}`}
                     >
-                        {canUseFirmView && (
+                        {canUseFirmView && scope === SCOPE_FIRM && (
                             <SimpleContainer className="lw-calendarScreen__filterGroup">
                                 <SearchInput
                                     title={t("calendar.filterByManager")}
@@ -827,8 +817,8 @@ export default function CalendarScreen() {
                                 height="auto"
                                 hiddenDays={hiddenDays}
                                 businessHours={businessHours}
-                                slotMinTime={workingHoursStart}
-                                slotMaxTime={workingHoursEnd}
+                                slotMinTime={slotRange.min}
+                                slotMaxTime={slotRange.max}
                                 nowIndicator
                                 nowIndicatorContent={renderNowIndicatorContent}
                                 nowIndicatorClassNames="lw-fcNowIndicator"

@@ -1120,7 +1120,22 @@
     "removeAdminTitle": "Remove Admin",
     "removeAdminMessage": "Are you sure you want to remove this admin?",
     "emailOverridePlaceholder": "Override email (empty = use default)",
-    "smsOverridePlaceholder": "Override SMS (empty = use default)"
+    "smsOverridePlaceholder": "Override SMS (empty = use default)",
+    "workingHoursByDayTitle": "Working hours by day",
+    "workingHoursByDayHint": "Set whether the firm is open each weekday and the hours for that day. Closed days are hidden from the calendar.",
+    "workingHoursDayCol": "Day",
+    "workingHoursOpenCol": "Open",
+    "workingHoursStartCol": "Start",
+    "workingHoursEndCol": "End",
+    "calendarRemindersTitle": "Calendar reminders",
+    "calendarRemindersHint": "Lawyers choose reminders per event. Configure the delivery worker and which options are available.",
+    "calendarRemindersEnabled": "Push reminder worker enabled",
+    "calendarRemindersEnabledHint": "When off, no reminders are sent even if selected on an event.",
+    "calendarReminderOptionsTitle": "Reminder options for lawyers",
+    "calendarReminderOptionsHint": "Choose which reminder intervals appear when creating an event.",
+    "calendarRemindersPollMinutes": "Poll interval (minutes)",
+    "calendarReminderChannelsTitle": "Delivery channels for lawyers",
+    "calendarReminderChannelsHint": "Choose which channels appear when lawyers set event reminders."
   },
   "viewSignedDoc": {
     "invalidLink": "Invalid link",
