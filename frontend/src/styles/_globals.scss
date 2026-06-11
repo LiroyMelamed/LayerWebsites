@@ -2,7 +2,7 @@
 @use 'mixins' as m;
 
 html {
-  font-size: 16px; // baseline: 1rem = 16px
+  font-size: 1rem; // baseline: 1rem = 1rem
 }
 
 html,
@@ -130,7 +130,7 @@ body.lw-fromApp {
 }
 
 /* Bottom padding lives on the scroll view so content clears the native
-   bottom-nav center button (~45 px above the bar). */
+   bottom-nav center button (~2.8125rem above the bar). */
 body.lw-fromApp .lw-simpleScrollView {
   // padding-bottom: 5rem;
 }
@@ -170,7 +170,7 @@ html.lw-noPullRefresh body {
   padding: v.$space-2 v.$space-4;
   color: var(--lw-color-text);
   background: var(--lw-color-secondary);
-  border-bottom: 1px solid var(--lw-color-disabled);
+  border-bottom: 0.0625rem solid var(--lw-color-disabled);
 }
 
 .lw-pullRefresh__text {
@@ -180,8 +180,8 @@ html.lw-noPullRefresh body {
 .lw-pullRefresh__spinner {
   width: 1rem;
   height: 1rem;
-  border-radius: 999px;
-  border: 2px solid var(--lw-color-disabled);
+  border-radius: 62.4375rem;
+  border: 0.125rem solid var(--lw-color-disabled);
   border-top-color: var(--lw-color-primary);
   animation: lw-spin 0.75s linear infinite;
 }

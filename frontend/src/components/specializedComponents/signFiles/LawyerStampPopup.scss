@@ -3,7 +3,7 @@
     flex-direction: column;
     gap: 1rem;
     direction: rtl;
-    max-width: 600px;
+    max-width: 37.5rem;
     width: 100%;
 }
 
@@ -22,15 +22,15 @@
 
 .lw-lawyerStampPopup__canvasWrap {
     position: relative;
-    border: 2px dashed var(--lw-color-border, #e2e8f0);
+    border: 0.125rem dashed var(--lw-color-border, #e2e8f0);
     border-radius: 0.5rem;
     overflow: hidden;
     background: #fff;
-    min-height: 200px;
+    min-height: 12.5rem;
 }
 
 .lw-lawyerStampPopup__canvasWrap--pdf {
-    min-height: 250px;
+    min-height: 15.625rem;
 }
 
 .lw-lawyerStampPopup__stampImg {
@@ -41,7 +41,7 @@
 
 .lw-lawyerStampPopup__pdfEmbed {
     width: 100%;
-    min-height: 200px;
+    min-height: 12.5rem;
 }
 
 .lw-lawyerStampPopup__canvas {
@@ -63,5 +63,5 @@
     justify-content: flex-end;
     gap: 0.75rem;
     padding-top: 0.5rem;
-    border-top: 1px solid var(--lw-color-border, #e2e8f0);
+    border-top: 0.0625rem solid var(--lw-color-border, #e2e8f0);
 }

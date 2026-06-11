@@ -39,7 +39,7 @@
 
     &__templateDesc {
         color: var(--lw-color-secondary-text, #6b7280);
-        font-size: 13px;
+        font-size: 0.8125rem;
     }
 
     &__bodyPreview {
@@ -47,7 +47,7 @@
         flex-direction: column;
         gap: 0.25rem;
         background: var(--lw-color-secondary-highlighted);
-        border: 1px solid var(--lw-color-disabled);
+        border: 0.0625rem solid var(--lw-color-disabled);
         border-radius: 0.375rem;
         padding: 0.5rem 0.75rem;
     }

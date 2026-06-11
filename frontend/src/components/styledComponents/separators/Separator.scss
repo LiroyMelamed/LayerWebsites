@@ -5,15 +5,15 @@
 }
 
 .lw-separator--horizontal {
-    block-size: 0.0625rem; /* 1px */
+    block-size: 0.0625rem; /* 0.0625rem */
     inline-size: 100%;
-    margin-block: var(--lw-separator-margin-block, 0.625rem); /* 10px */
+    margin-block: var(--lw-separator-margin-block, 0.625rem); /* 0.625rem */
     margin-inline: 0;
 }
 
 .lw-separator--vertical {
-    inline-size: 0.0625rem; /* 1px */
+    inline-size: 0.0625rem; /* 0.0625rem */
     block-size: 100%;
-    margin-inline: var(--lw-separator-margin-inline, 0.625rem); /* 10px */
+    margin-inline: var(--lw-separator-margin-inline, 0.625rem); /* 0.625rem */
     margin-block: 0;
 }

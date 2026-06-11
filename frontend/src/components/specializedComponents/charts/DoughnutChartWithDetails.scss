@@ -19,11 +19,11 @@
 }
 
 .lw-doughnutChartWithDetails__chart {
-    max-inline-size: 8.75rem; // 140px
+    max-inline-size: 8.75rem; // 8.75rem
 }
 
 .lw-doughnutChartWithDetails__chart.is-compact {
-    max-inline-size: 10rem; // 160px
+    max-inline-size: 10rem; // 10rem
 }
 
 .lw-doughnutChartWithDetails__legend {
@@ -39,7 +39,7 @@
     @include m.row(v.$space-2, nowrap);
     padding-block: v.$space-1;
     padding-inline: v.$space-2;
-    border-radius: 9999px;
+    border-radius: 624.9375rem;
     background-color: var(--lw-color-secondary-highlighted);
     border: 0.0625rem solid var(--lw-color-disabled);
     min-inline-size: 0;
@@ -53,5 +53,5 @@
 .lw-doughnutChartWithDetails__swatch {
     width: 0.625rem;
     height: 0.625rem;
-    border-radius: 9999px;
+    border-radius: 624.9375rem;
 }

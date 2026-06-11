@@ -33,7 +33,7 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
 
     html, body {
       font-family: "EvidenceHebrew", Arial, sans-serif;
-      font-size: 12px;
+      font-size: 0.75rem;
       color: #101214;
       margin: 0;
       padding: 0;
@@ -41,7 +41,7 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
 
     .page {
       position: relative;
-      border: 2px solid #1b3a57;
+      border: 0.125rem solid #1b3a57;
       padding: 10mm;
       background: #fff;
     }
@@ -57,8 +57,8 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 14px;
+      gap: 1rem;
+      margin-bottom: 0.875rem;
       z-index: 1;
       position: relative;
     }
@@ -66,59 +66,59 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
     .brand {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 0.625rem;
     }
 
     .brand img {
-      width: 42px;
-      height: 42px;
+      width: 2.625rem;
+      height: 2.625rem;
       object-fit: contain;
     }
 
     .brand .name {
       font-weight: 700;
-      font-size: 14px;
+      font-size: 0.875rem;
       color: #1b3a57;
     }
 
     .title {
       font-weight: 700;
-      font-size: 16px;
+      font-size: 1rem;
       text-align: left;
       color: #1b3a57;
       line-height: 1.2;
     }
     .subtitle {
-      font-size: 12px;
+      font-size: 0.75rem;
       color: #4a5568;
-      margin-top: 2px;
+      margin-top: 0.125rem;
       text-align: left;
     }
 
     .section {
-      margin-top: 14px;
+      margin-top: 0.875rem;
       z-index: 1;
       position: relative;
     }
     .section h3 {
-      margin: 0 0 6px 0;
-      font-size: 12px;
+      margin: 0 0 0.375rem 0;
+      font-size: 0.75rem;
       font-weight: 700;
       color: #1f2933;
-      border-bottom: 1px solid #e2e8f0;
-      padding-bottom: 4px;
+      border-bottom: 0.0625rem solid #e2e8f0;
+      padding-bottom: 0.25rem;
     }
 
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px 18px;
+      gap: 0.625rem 1.125rem;
     }
 
     .kv {
       display: grid;
-      grid-template-columns: 120px 1fr;
-      gap: 6px;
+      grid-template-columns: 7.5rem 1fr;
+      gap: 0.375rem;
       align-items: baseline;
     }
     .k { color: #4a5568; font-weight: 700; }
@@ -131,8 +131,8 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
     }
 
     th, td {
-      border: 1px solid #e2e8f0;
-      padding: 6px 6px;
+      border: 0.0625rem solid #e2e8f0;
+      padding: 0.375rem 0.375rem;
       vertical-align: top;
       word-break: break-word;
     }
@@ -141,11 +141,11 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
       background: #f8fafc;
       color: #1f2933;
       font-weight: 700;
-      font-size: 10px;
+      font-size: 0.625rem;
     }
 
     td {
-      font-size: 10px;
+      font-size: 0.625rem;
       color: #111827;
       white-space: pre-line;
     }
@@ -153,34 +153,34 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
     .chip {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 0.375rem;
     }
     .dot {
-      width: 9px;
-      height: 9px;
+      width: 0.5625rem;
+      height: 0.5625rem;
       border-radius: 50%;
       display: inline-block;
       background: var(--c, #1b3a57);
-      border: 1px solid rgba(0,0,0,0.15);
+      border: 0.0625rem solid rgba(0,0,0,0.15);
     }
 
     .footer {
-      margin-top: 18px;
-      padding-top: 12px;
-      border-top: 1px solid #e2e8f0;
+      margin-top: 1.125rem;
+      padding-top: 0.75rem;
+      border-top: 0.0625rem solid #e2e8f0;
       display: flex;
       align-items: flex-end;
       justify-content: space-between;
-      gap: 10px;
-      font-size: 10px;
+      gap: 0.625rem;
+      font-size: 0.625rem;
       color: #4a5568;
       page-break-inside: avoid;
     }
 
     .qr {
-      width: 96px;
-      height: 96px;
-      border: 1px solid #e2e8f0;
+      width: 6rem;
+      height: 6rem;
+      border: 0.0625rem solid #e2e8f0;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -195,7 +195,7 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
 
     .mono {
       font-family: "Courier New", monospace;
-      font-size: 10px;
+      font-size: 0.625rem;
       direction: ltr;
       text-align: left;
     }
@@ -271,7 +271,7 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
                   <span class="dot"></span>
                   <span>${s.name || "-"}</span>
                 </span>
-                <div class="mono" style="margin-top:4px;">
+                <div class="mono" style="margin-top:0.25rem;">
                   UserId: ${s.userId || "-"}\nSession: ${s.signingSessionId || "-"}
                 </div>
               </td>

@@ -5,7 +5,7 @@
 
 .lw-languageSwitcher__button {
     background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.35);
+    border: 0.0625rem solid rgba(255, 255, 255, 0.35);
     color: var(--lw-color-white);
     padding: 0.35rem 0.6rem;
     border-radius: 0.4rem;
@@ -17,7 +17,7 @@
     position: fixed;
     min-width: 10rem;
     background: var(--lw-color-white);
-    border: 1px solid rgba(0, 0, 0, 0.12);
+    border: 0.0625rem solid rgba(0, 0, 0, 0.12);
     border-radius: 0.4rem;
     overflow: hidden;
     z-index: 20002;

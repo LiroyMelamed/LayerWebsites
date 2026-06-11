@@ -35,15 +35,15 @@
     &__thinkingDots {
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 0.25rem;
         background: var(--lw-color-bg);
-        padding: 12px 18px;
-        border-radius: 16px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        padding: 0.75rem 1.125rem;
+        border-radius: 1rem;
+        box-shadow: 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.08);
 
         span {
-            width: 8px;
-            height: 8px;
+            width: 0.5rem;
+            height: 0.5rem;
             border-radius: 50%;
             background: var(--lw-color-winter, #94a3b8);
             animation: lw-thinkingBounce 1.4s ease-in-out infinite;

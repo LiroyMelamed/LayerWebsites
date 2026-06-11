@@ -194,7 +194,7 @@ export const inputStyles = {
     Small: {
         height: 24,
         fontSize: 12,
-        padding: '8px',
+        padding: '0.5rem',
         labelTop: '50%',
         borderStyle: 'solid',
         transformFocused: 'translateY(-85%) scale(0.7)',
@@ -202,7 +202,7 @@ export const inputStyles = {
     Medium: {
         height: 32,
         fontSize: 16,
-        padding: '16px',
+        padding: '1rem',
         labelTop: '50%',
         borderStyle: 'solid',
         transformFocused: 'translateY(-110%) scale(0.7)',
@@ -210,7 +210,7 @@ export const inputStyles = {
     Big: {
         height: 40,
         fontSize: 24,
-        padding: '16px',
+        padding: '1rem',
         labelTop: '50%',
         transformFocused: 'translateY(-110%) scale(0.7)',
     },

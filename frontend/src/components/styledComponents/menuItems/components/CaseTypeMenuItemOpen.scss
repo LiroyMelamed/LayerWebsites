@@ -5,11 +5,11 @@
     transition: max-height 0.5s ease, opacity 0.5s ease;
     max-height: 0;
     opacity: 0;
-    margin-block-start: 0.5rem; /* 8px */
-    margin-inline-end: 1.75rem; /* 28px */
+    margin-block-start: 0.5rem; /* 0.5rem */
+    margin-inline-end: 1.75rem; /* 1.75rem */
 }
 
 .lw-caseTypeMenuItemOpen--open {
-    max-height: 200rem; /* 700px */
+    max-height: 200rem; /* 43.75rem */
     opacity: 1;
 }

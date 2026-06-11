@@ -16,10 +16,10 @@ export default function AllCasesTypeCard({ allCasesType, reperformAfterSave, isP
         return (
             <SimpleCard className="lw-allCasesTypeCard">
                 {[1, 2, 3].map(i => (
-                    <SimpleContainer key={i} style={{ padding: '12px 0' }}>
+                    <SimpleContainer key={i} style={{ padding: '0.75rem 0' }}>
                         {i !== 1 && <Separator />}
                         <Skeleton width="50%" height={14} />
-                        <SimpleContainer style={{ display: 'flex', gap: 16, marginTop: 8 }}>
+                        <SimpleContainer style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
                             <Skeleton width="30%" height={12} />
                             <Skeleton width="20%" height={12} />
                         </SimpleContainer>

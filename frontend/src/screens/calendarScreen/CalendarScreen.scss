@@ -30,10 +30,10 @@
     flex-wrap: nowrap;
     align-items: stretch;
     background: #EDF2F7;
-    border: 1px solid #CBD5E0;
-    border-radius: 999px;
-    padding: 3px;
-    gap: 2px;
+    border: 0.0625rem solid #CBD5E0;
+    border-radius: 62.4375rem;
+    padding: 0.1875rem;
+    gap: 0.125rem;
     flex-shrink: 0;
 }
 
@@ -43,7 +43,7 @@
     background: transparent;
     color: #2A4365;
     border: none;
-    border-radius: 999px;
+    border-radius: 62.4375rem;
     padding: 0.4rem 1rem;
     font-weight: 600;
     font-size: 0.875rem;
@@ -54,7 +54,7 @@
     &.is-active {
         background: #2A4365;
         color: #FFFFFF;
-        box-shadow: 0 1px 3px rgba(42, 67, 101, 0.25);
+        box-shadow: 0 0.0625rem 0.1875rem rgba(42, 67, 101, 0.25);
     }
 }
 
@@ -70,8 +70,8 @@
 .lw-calendarScreen__chip {
     background: #EBF8FF;
     color: #2A4365;
-    border: 1px solid #BEE3F8;
-    border-radius: 999px;
+    border: 0.0625rem solid #BEE3F8;
+    border-radius: 62.4375rem;
     padding: 0.25rem 0.75rem;
     font-size: 0.8125rem;
     font-weight: 500;
@@ -97,7 +97,7 @@
 
 .lw-calendarScreen__layout {
     display: grid;
-    grid-template-columns: 280px 1fr;
+    grid-template-columns: 17.5rem 1fr;
     gap: v.$space-4;
     align-items: start;
 
@@ -106,7 +106,7 @@
     }
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 64rem) {
     .lw-calendarScreen__layout {
         grid-template-columns: 1fr;
     }
@@ -115,7 +115,7 @@
 .lw-calendarScreen__sidebar {
     padding: v.$space-4;
     top: v.$space-4;
-    max-height: calc(100vh - 120px);
+    max-height: calc(100vh - 7.5rem);
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -156,7 +156,7 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 48rem) {
         grid-template-columns: 1fr !important;
     }
 }
@@ -178,8 +178,8 @@
 .lw-calendarScreen__select,
 .lw-calendarScreen__input {
     width: 100%;
-    border: 1px solid #CBD5E0;
-    border-radius: 6px;
+    border: 0.0625rem solid #CBD5E0;
+    border-radius: 0.375rem;
     padding: 0.45rem 0.6rem;
     background: #FFFFFF;
     color: #2D3748;
@@ -190,24 +190,24 @@
     &:focus {
         outline: none;
         border-color: #2A4365;
-        box-shadow: 0 0 0 2px rgba(42, 67, 101, 0.18);
+        box-shadow: 0 0 0 0.125rem rgba(42, 67, 101, 0.18);
     }
 }
 
 .lw-calendarScreen__resultList {
     display: flex;
     flex-direction: column;
-    max-height: 180px;
+    max-height: 11.25rem;
     overflow-y: auto;
-    border: 1px solid #E2E8F0;
-    border-radius: 6px;
+    border: 0.0625rem solid #E2E8F0;
+    border-radius: 0.375rem;
     background: #FFFFFF;
 }
 
 .lw-calendarScreen__resultItem {
     background: transparent;
     border: none;
-    border-bottom: 1px solid #EDF2F7;
+    border-bottom: 0.0625rem solid #EDF2F7;
     padding: 0.5rem 0.6rem;
     text-align: start;
     cursor: pointer;
@@ -239,10 +239,10 @@
     }
     width: 100%;
     background: #EDF2F7;
-    border: 1px solid #CBD5E0;
-    border-radius: 8px;
-    padding: 2px;
-    gap: 2px;
+    border: 0.0625rem solid #CBD5E0;
+    border-radius: 0.5rem;
+    padding: 0.125rem;
+    gap: 0.125rem;
     box-sizing: border-box;
 }
 
@@ -256,7 +256,7 @@
     background: transparent;
     color: #2A4365;
     border: none;
-    border-radius: 6px;
+    border-radius: 0.375rem;
     padding: 0.4rem 0.35rem;
     font-size: 0.75rem;
     font-weight: 500;
@@ -280,7 +280,7 @@
 // ─── Lawyer legend ───────────────────────────────────────────────────────────
 
 .lw-calendarScreen__legend {
-    border-top: 1px solid #E2E8F0;
+    border-top: 0.0625rem solid #E2E8F0;
     padding-top: v.$space-3;
     display: flex;
     flex-direction: column;
@@ -291,7 +291,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.375rem;
-    max-height: 220px;
+    max-height: 13.75rem;
     overflow-y: auto;
 }
 
@@ -301,25 +301,25 @@
 
 .lw-calendarScreen__legendDot {
     display: inline-block;
-    width: 12px;
-    height: 12px;
+    width: 0.75rem;
+    height: 0.75rem;
     border-radius: 50%;
     flex: 0 0 auto;
-    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+    box-shadow: inset 0 0 0 0.0625rem rgba(0, 0, 0, 0.06);
 
     &--striped {
         background-image: repeating-linear-gradient(45deg,
                 rgba(255, 255, 255, 0.4) 0,
-                rgba(255, 255, 255, 0.4) 2px,
-                transparent 2px,
-                transparent 5px) !important;
+                rgba(255, 255, 255, 0.4) 0.125rem,
+                transparent 0.125rem,
+                transparent 0.3125rem) !important;
     }
 }
 
 .lw-calendarScreen__toast {
     background: #F0FFF4;
-    border: 1px solid #C6F6D5;
-    border-radius: 8px;
+    border: 0.0625rem solid #C6F6D5;
+    border-radius: 0.5rem;
     padding: v.$space-3 v.$space-4;
     margin-block-end: v.$space-4;
 }
@@ -355,13 +355,31 @@
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 48rem) {
     .lw-calendarScreen__scroll {
         padding: v.$space-3;
     }
 
     .lw-calendarScreen__calendarCard {
         padding: v.$space-2;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .lw-calendarScreen__calendarCard .fc .fc-scrollgrid,
+    .lw-calendarScreen__calendarCard .fc .fc-scrollgrid-sync-table,
+    .lw-calendarScreen__calendarCard .fc .fc-daygrid-body,
+    .lw-calendarScreen__calendarCard .fc .fc-col-header {
+        width: 100% !important;
+    }
+
+    .lw-calendarScreen__calendarCard .fc .fc-daygrid-day-number {
+        font-size: 0.75rem;
+    }
+
+    .lw-calendarScreen__calendarCard .fc .fc-col-header-cell-cushion {
+        font-size: 0.6875rem;
+        padding: 0.25rem;
     }
 }
 
@@ -399,7 +417,7 @@
     }
 
     &:focus {
-        box-shadow: 0 0 0 2px rgba(42, 67, 101, 0.4);
+        box-shadow: 0 0 0 0.125rem rgba(42, 67, 101, 0.4);
     }
 }
 
@@ -429,7 +447,7 @@
     display: inline-block;
     background: #2A4365;
     color: #FFFFFF;
-    border-radius: 8px;
+    border-radius: 0.5rem;
     padding: 0.2rem 0.55rem;
 }
 
@@ -457,17 +475,17 @@
 .lw-calendarScreen__calendarCard .fc .fc-daygrid-day-top {
     flex-direction: row-reverse;
     justify-content: flex-start;
-    padding: 2px 6px;
+    padding: 0.125rem 0.375rem;
 }
 
 .lw-calendarScreen__calendarCard .fc .fc-daygrid-day-number {
     float: none;
-    padding: 2px 4px;
+    padding: 0.125rem 0.25rem;
     margin: 0;
 }
 
 .lw-calendarScreen__calendarCard .fc .fc-daygrid-day-events {
-    margin-inline: 4px;
+    margin-inline: 0.25rem;
 }
 
 .lw-calendarScreen__calendarCard .fc .fc-daygrid-event .fc-event-title {
@@ -478,22 +496,22 @@
 
 // Events — rounded cards (reference shape, platform colors)
 .lw-calendarScreen__calendarCard .fc-event {
-    border-radius: 8px;
+    border-radius: 0.5rem;
     border: none;
     font-size: 0.8125rem;
     font-weight: 600;
     padding: 0.2rem 0.45rem;
     cursor: pointer;
-    box-shadow: 0 1px 3px rgba(42, 67, 101, 0.14);
+    box-shadow: 0 0.0625rem 0.1875rem rgba(42, 67, 101, 0.14);
 }
 
 .lw-calendarScreen__calendarCard .fc-event:hover {
     opacity: 0.92;
-    box-shadow: 0 2px 6px rgba(42, 67, 101, 0.18);
+    box-shadow: 0 0.125rem 0.375rem rgba(42, 67, 101, 0.18);
 }
 
 .lw-calendarScreen__calendarCard .fc-timegrid-event-harness .fc-event {
-    margin-inline: 2px;
+    margin-inline: 0.125rem;
 }
 
 // RTL: time axis on the right
@@ -509,7 +527,7 @@
 
 .lw-calendarScreen__calendarCard .fc-timegrid-now-indicator-line {
     border-color: #2A4365;
-    border-width: 1px;
+    border-width: 0.0625rem;
     opacity: 0.9;
 }
 
@@ -528,8 +546,8 @@
     font-weight: 700;
     line-height: 1;
     padding: 0.28rem 0.5rem;
-    border-radius: 999px;
-    box-shadow: 0 1px 4px rgba(42, 67, 101, 0.28);
+    border-radius: 62.4375rem;
+    box-shadow: 0 0.0625rem 0.25rem rgba(42, 67, 101, 0.28);
     transform: translateY(-50%);
     white-space: nowrap;
 }
@@ -546,9 +564,9 @@
     background-color: #718096 !important;
     background-image: repeating-linear-gradient(45deg,
             rgba(255, 255, 255, 0.18) 0,
-            rgba(255, 255, 255, 0.18) 6px,
-            transparent 6px,
-            transparent 14px) !important;
+            rgba(255, 255, 255, 0.18) 0.375rem,
+            transparent 0.375rem,
+            transparent 0.875rem) !important;
     border-color: #718096 !important;
     color: #FFFFFF !important;
     font-weight: 600;
@@ -565,7 +583,7 @@
 .lw-calendarScreen__calendarCard .fc-event.lw-fcEvent--leave .fc-event-title,
 .fc .fc-event.lw-fcEvent--leave .fc-event-title {
     color: #FFFFFF;
-    padding-inline-start: 6px;
+    padding-inline-start: 0.375rem;
     font-size: 0.8125rem;
     letter-spacing: 0.01em;
 }
@@ -583,9 +601,9 @@
     background-color: #B7791F !important;
     background-image: repeating-linear-gradient(-45deg,
             rgba(255, 255, 255, 0.16) 0,
-            rgba(255, 255, 255, 0.16) 5px,
-            transparent 5px,
-            transparent 12px) !important;
+            rgba(255, 255, 255, 0.16) 0.3125rem,
+            transparent 0.3125rem,
+            transparent 0.75rem) !important;
     border-color: #B7791F !important;
     color: #FFFFFF !important;
     font-weight: 600;
@@ -602,7 +620,7 @@
 .lw-calendarScreen__calendarCard .fc-event.lw-fcEvent--holiday .fc-event-title,
 .fc .fc-event.lw-fcEvent--holiday .fc-event-title {
     color: #FFFFFF;
-    padding-inline-start: 6px;
+    padding-inline-start: 0.375rem;
 }
 
 // ─── Touch / mobile interaction ───────────────────────────────────────────────

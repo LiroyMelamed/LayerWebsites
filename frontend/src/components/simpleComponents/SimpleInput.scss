@@ -61,7 +61,7 @@
     font-family: inherit;
     color: var(--lw-color-primary-highlighted);
     border: none;
-    border-radius: 9999px;
+    border-radius: 624.9375rem;
     transition: transform 0.2s ease, opacity 0.2s ease, inset-inline-start 0.2s ease;
 }
 
@@ -104,12 +104,12 @@
 
 .lw-simpleInput__icon--right {
     margin-inline-end: 0.5rem;
-    /* 8px */
+    /* 0.5rem */
 }
 
 .lw-simpleInput__icon--left {
     margin-inline-start: 0.5rem;
-    /* 8px */
+    /* 0.5rem */
 }
 
 .lw-simpleInput__field {
@@ -141,7 +141,7 @@
     &:-webkit-autofill,
     &:-webkit-autofill:hover,
     &:-webkit-autofill:focus {
-        -webkit-box-shadow: 0 0 0 1000px var(--lw-color-white) inset;
+        -webkit-box-shadow: 0 0 0 62.5rem var(--lw-color-white) inset;
         -webkit-text-fill-color: var(--lw-color-text);
         transition: background-color 5000s ease-in-out 0s;
     }

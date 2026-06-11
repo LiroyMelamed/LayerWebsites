@@ -288,7 +288,7 @@ async function main() {
 
         const htmlBody = fillTemplate(
             `
-<div dir="rtl" style="font-family: Arial, sans-serif; line-height: 1.75; color: #222; font-size: 15px;">
+<div dir="rtl" style="font-family: Arial, sans-serif; line-height: 1.75; color: #222; font-size: 0.9375rem;">
     <p>מה קורה עו"ד [[recipient_name]],</p>
 
     <p>[[referral_phrase]].</p>
@@ -331,7 +331,7 @@ async function main() {
         [[signature_title]]
     </p>
 
-    <p style="font-size: 12px; color: #666;">
+    <p style="font-size: 0.75rem; color: #666;">
         ואם זה לא רלוונטי כרגע, הכל בסדר. תכתוב לי "לא" ואעצור כאן.
     </p>
 </div>

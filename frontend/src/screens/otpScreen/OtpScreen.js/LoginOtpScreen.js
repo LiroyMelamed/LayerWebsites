@@ -135,7 +135,7 @@ export default function LoginOtpScreen() {
                     enterKeyHint="done"
                     name="otp"
                     pattern="\\d*"
-                    textStyle={{ textAlign: 'center', letterSpacing: '8px' }}
+                    textStyle={{ textAlign: 'center', letterSpacing: '0.5rem' }}
                     error={otpError}
                 />
             </SimpleContainer>

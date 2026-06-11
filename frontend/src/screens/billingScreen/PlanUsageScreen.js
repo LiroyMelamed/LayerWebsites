@@ -196,7 +196,7 @@ export default function PlanUsageScreen() {
                     <SimpleCard className="lw-planUsageScreen__card">
                         <Skeleton width={120} height={20} borderRadius={6} />
                         {[1, 2, 3, 4].map(i => (
-                            <SimpleContainer key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0' }}>
+                            <SimpleContainer key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.625rem 0' }}>
                                 <Skeleton width="30%" height={14} />
                                 <Skeleton width="40%" height={14} />
                             </SimpleContainer>

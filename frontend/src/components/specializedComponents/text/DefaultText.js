@@ -15,7 +15,7 @@ export default function DefaultText({ controlId, children, shouldApplyClamping =
             WebkitLineClamp: numberOfLines,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            lineHeight: lineHeight || `${size * 1.2}px`,
+            lineHeight: lineHeight || `${(size * 1.2) / 16}rem`,
             whiteSpace: 'pre-line',
             overflowWrap: 'break-word',
             wordBreak: 'break-word',

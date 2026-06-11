@@ -18,10 +18,10 @@ export default function PinnedCasesCard({ taggedCases, isPerforming, rePerformFu
         return (
             <SimpleCard className="lw-pinnedCasesCard">
                 {[1, 2, 3].map(i => (
-                    <SimpleContainer key={i} style={{ padding: '12px 0' }}>
+                    <SimpleContainer key={i} style={{ padding: '0.75rem 0' }}>
                         {i !== 1 && <Separator />}
                         <Skeleton width="60%" height={16} />
-                        <SimpleContainer style={{ display: 'flex', gap: 16, marginTop: 8 }}>
+                        <SimpleContainer style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
                             <Skeleton width="30%" height={12} />
                             <Skeleton width="30%" height={12} />
                         </SimpleContainer>

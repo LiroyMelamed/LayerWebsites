@@ -4,8 +4,8 @@
 .lw-personalSyncModal {
     flex-direction: column;
     width: 100%;
-    min-inline-size: min(420px, 90vw);
-    max-inline-size: 520px;
+    min-inline-size: min(26.25rem, 90vw);
+    max-inline-size: 32.5rem;
     max-block-size: calc(85vh - 2rem);
     overflow: hidden;
     margin: 0 auto;
@@ -34,7 +34,7 @@
 
 .lw-personalSyncModal__section--border {
     padding-block-start: v.$space-3;
-    border-block-start: 1px solid rgba(226, 232, 240, 0.8);
+    border-block-start: 0.0625rem solid rgba(226, 232, 240, 0.8);
 }
 
 .lw-personalSyncModal__icalRow {
@@ -44,7 +44,7 @@
 
 .lw-personalSyncModal__icalUrl {
     background: #EDF2F7;
-    border-radius: 8px;
+    border-radius: 0.5rem;
     padding: v.$space-3;
 }
 

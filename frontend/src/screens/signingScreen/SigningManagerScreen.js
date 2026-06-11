@@ -424,7 +424,7 @@ export default function SigningManagerScreen() {
                 {isPerforming ? (
                     <SimpleCard>
                         {[1, 2, 3].map(i => (
-                            <SimpleContainer key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0' }}>
+                            <SimpleContainer key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0' }}>
                                 <Skeleton width="40%" height={14} />
                                 <Skeleton width="20%" height={14} />
                             </SimpleContainer>

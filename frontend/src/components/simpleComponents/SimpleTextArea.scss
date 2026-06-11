@@ -8,13 +8,13 @@
     width: 100%;
 
     border-radius: 0.75rem;
-    /* 12px */
+    /* 0.75rem */
     border: 0.0625rem solid var(--lw-color-secondary-highlighted);
     background-color: var(--lw-color-white);
     box-shadow: none;
 
     padding: 0.75rem;
-    /* 12px */
+    /* 0.75rem */
     direction: var(--lw-simpleTextArea-direction, rtl);
 }
 
@@ -35,9 +35,9 @@
 .lw-simpleTextArea__label {
     position: absolute;
     inset-block-start: 0.75rem;
-    /* 12px */
+    /* 0.75rem */
     inset-inline-start: 0.9375rem;
-    /* 15px */
+    /* 0.9375rem */
 
     font-size: 1rem;
     font-family: inherit;
@@ -45,8 +45,8 @@
 
     background-color: var(--lw-color-white);
     padding-inline: 0.3125rem;
-    /* 5px */
-    border-radius: 9999px;
+    /* 0.3125rem */
+    border-radius: 624.9375rem;
 
     pointer-events: none;
     transform: translateY(0.625rem) scale(1);
@@ -76,12 +76,12 @@
 
 .lw-simpleTextArea__icon--right {
     margin-inline-end: 0.5rem;
-    /* 8px */
+    /* 0.5rem */
 }
 
 .lw-simpleTextArea__icon--left {
     margin-inline-start: 0.5rem;
-    /* 8px */
+    /* 0.5rem */
 }
 
 .lw-simpleTextArea__field {
@@ -89,14 +89,14 @@
 
     padding-block: 0;
     padding-inline: 0.9375rem;
-    /* 15px */
+    /* 0.9375rem */
 
     border: none;
     background-color: transparent;
     outline: none;
 
     font-size: 0.875rem;
-    /* 14px */
+    /* 0.875rem */
     font-family: inherit;
     color: var(--lw-color-text);
     direction: inherit;
@@ -105,9 +105,9 @@
     /* Scrollbar styling (scoped to this textarea) */
     &::-webkit-scrollbar {
         width: 0.5rem;
-        /* 8px */
+        /* 0.5rem */
         height: 0.5rem;
-        /* 8px */
+        /* 0.5rem */
     }
 
     &::-webkit-scrollbar-thumb {

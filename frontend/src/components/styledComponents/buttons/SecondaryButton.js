@@ -44,7 +44,7 @@ const SecondaryButton = forwardRef(({ children, size, rightIcon, leftIcon, isPer
 
 const styles = {
     button: {
-        border: `1px solid ${colors.primaryHighlighted}`,
+        border: `0.0625rem solid ${colors.primaryHighlighted}`,
         background: colors.secondary,
         shadowColor: colors.primary,
     },

@@ -338,9 +338,9 @@ export default function EvidenceDocumentsScreen() {
                         </SimpleContainer>
                         <Separator />
                         {[1, 2, 3, 4].map(i => (
-                            <SimpleContainer key={i} style={{ padding: '12px 0' }}>
+                            <SimpleContainer key={i} style={{ padding: '0.75rem 0' }}>
                                 {i !== 1 && <Separator />}
-                                <SimpleContainer style={{ display: 'flex', gap: 16, padding: '8px 0' }}>
+                                <SimpleContainer style={{ display: 'flex', gap: '1rem', padding: '0.5rem 0' }}>
                                     <Skeleton width="25%" height={14} />
                                     <Skeleton width="20%" height={14} />
                                     <Skeleton width="25%" height={14} />

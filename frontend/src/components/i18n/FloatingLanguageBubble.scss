@@ -8,10 +8,10 @@
 
 .lw-floatingLanguageBubble__button {
     background: var(--lw-color-white);
-    border: 1px solid var(--lw-color-border, rgba(0, 0, 0, 0.12));
+    border: 0.0625rem solid var(--lw-color-border, rgba(0, 0, 0, 0.12));
     color: var(--lw-color-text);
     padding: 0.5rem 0.75rem;
-    border-radius: 9999px;
+    border-radius: 624.9375rem;
     cursor: pointer;
     font: inherit;
 }
@@ -20,7 +20,7 @@
     position: fixed;
     min-width: 10rem;
     background: var(--lw-color-white);
-    border: 1px solid rgba(0, 0, 0, 0.12);
+    border: 0.0625rem solid rgba(0, 0, 0, 0.12);
     border-radius: 0.4rem;
     overflow: hidden;
     z-index: 20002;

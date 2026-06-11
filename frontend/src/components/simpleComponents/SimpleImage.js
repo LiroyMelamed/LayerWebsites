@@ -18,7 +18,7 @@ export default function SimpleImage({ src, style, tintColor = null, resizeMode =
 
   const imageWithTintStyle = {
     width: style?.width || '100%',
-    height: style?.height || '100px',
+    height: style?.height || '6.25rem',
     backgroundColor: tintColor,
     WebkitMaskImage: `url(${resolvedSrc})`,
     maskImage: `url(${resolvedSrc})`,

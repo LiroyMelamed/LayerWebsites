@@ -248,10 +248,10 @@ async function sendClientReminder({ reminderKey, row, todayKey }) {
     const bodyInner = renderTemplate(DEFAULTS.client.emailBody, fields);
 
     const htmlBody = `<!doctype html><html lang="he" dir="rtl"><body style="margin:0;background:#EDF2F7;">
-      <div style="max-width:640px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.08);">
-        <div style="background:#2A4365;padding:20px 24px;text-align:center;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#fff;font-size:18px;font-weight:700;">תזכורת לעדכון רישיון</div>
-        <div style="padding:22px 24px;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#2D3748;line-height:1.8;font-size:15px;">${bodyInner}</div>
-        <div style="padding:14px 24px 22px 24px;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#718096;font-size:12px;">הודעה זו נשלחה אוטומטית.</div>
+      <div style="max-width:40rem;margin:0 auto;background:#fff;border-radius:1rem;overflow:hidden;box-shadow:0 0.375rem 1.125rem rgba(0,0,0,0.08);">
+        <div style="background:#2A4365;padding:1.25rem 1.5rem;text-align:center;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#fff;font-size:1.125rem;font-weight:700;">תזכורת לעדכון רישיון</div>
+        <div style="padding:1.375rem 1.5rem;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#2D3748;line-height:1.8;font-size:0.9375rem;">${bodyInner}</div>
+        <div style="padding:0.875rem 1.5rem 1.375rem 1.5rem;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#718096;font-size:0.75rem;">הודעה זו נשלחה אוטומטית.</div>
       </div>
     </body></html>`;
 
@@ -370,10 +370,10 @@ async function sendManagerReminder14Days({ row, todayKey }) {
     const bodyInner = renderTemplate(DEFAULTS.manager.emailBody, fields);
 
     const htmlBody = `<!doctype html><html lang="he" dir="rtl"><body style="margin:0;background:#EDF2F7;">
-      <div style="max-width:640px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.08);">
-        <div style="background:#2A4365;padding:20px 24px;text-align:center;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#fff;font-size:18px;font-weight:700;">תזכורת לעדכון רישיון (לקוח)</div>
-        <div style="padding:22px 24px;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#2D3748;line-height:1.8;font-size:15px;">${bodyInner}</div>
-        <div style="padding:14px 24px 22px 24px;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#718096;font-size:12px;">הודעה זו נשלחה אוטומטית.</div>
+      <div style="max-width:40rem;margin:0 auto;background:#fff;border-radius:1rem;overflow:hidden;box-shadow:0 0.375rem 1.125rem rgba(0,0,0,0.08);">
+        <div style="background:#2A4365;padding:1.25rem 1.5rem;text-align:center;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#fff;font-size:1.125rem;font-weight:700;">תזכורת לעדכון רישיון (לקוח)</div>
+        <div style="padding:1.375rem 1.5rem;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#2D3748;line-height:1.8;font-size:0.9375rem;">${bodyInner}</div>
+        <div style="padding:0.875rem 1.5rem 1.375rem 1.5rem;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#718096;font-size:0.75rem;">הודעה זו נשלחה אוטומטית.</div>
       </div>
     </body></html>`;
 
@@ -476,10 +476,10 @@ async function sendCeoReminder14Days({ row, todayKey }) {
         const bodyInner = renderTemplate(DEFAULTS.manager.emailBody, fields);
 
         const htmlBody = `<!doctype html><html lang="he" dir="rtl"><body style="margin:0;background:#EDF2F7;">
-      <div style="max-width:640px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.08);">
-        <div style="background:#2A4365;padding:20px 24px;text-align:center;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#fff;font-size:18px;font-weight:700;">תזכורת לעדכון רישיון (לקוח)</div>
-        <div style="padding:22px 24px;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#2D3748;line-height:1.8;font-size:15px;">${bodyInner}</div>
-        <div style="padding:14px 24px 22px 24px;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#718096;font-size:12px;">הודעה זו נשלחה אוטומטית.</div>
+      <div style="max-width:40rem;margin:0 auto;background:#fff;border-radius:1rem;overflow:hidden;box-shadow:0 0.375rem 1.125rem rgba(0,0,0,0.08);">
+        <div style="background:#2A4365;padding:1.25rem 1.5rem;text-align:center;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#fff;font-size:1.125rem;font-weight:700;">תזכורת לעדכון רישיון (לקוח)</div>
+        <div style="padding:1.375rem 1.5rem;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#2D3748;line-height:1.8;font-size:0.9375rem;">${bodyInner}</div>
+        <div style="padding:0.875rem 1.5rem 1.375rem 1.5rem;font-family:system-ui,Segoe UI,Arial,sans-serif;color:#718096;font-size:0.75rem;">הודעה זו נשלחה אוטומטית.</div>
       </div>
     </body></html>`;
 

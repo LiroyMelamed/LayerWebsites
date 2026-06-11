@@ -18,9 +18,9 @@ export default function ComparisonDataCard({ title, data, colors, labels, center
         return (
             <SimpleCard className={["lw-comparisonDataCard", className].filter(Boolean).join(' ')}>
                 <TextBold14>{title}</TextBold14>
-                <SimpleContainer style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 0' }}>
+                <SimpleContainer style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem 0' }}>
                     <Skeleton circle height={120} />
-                    <SimpleContainer style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+                    <SimpleContainer style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
                         <Skeleton width="70%" height={12} />
                         <Skeleton width="50%" height={12} />
                         <Skeleton width="60%" height={12} />

@@ -520,7 +520,7 @@
     "eventTypeReminder": "תזכורות",
     "eventTypeHoliday": "חגים",
     "clearFilters": "נקה סינון",
-    "eventRemindersTitle": "תזכורות Push",
+    "eventRemindersTitle": "תזכורות",
     "eventRemindersHint": "בחר מתי לשלוח תזכורת לאירוע זה. אם לא נבחר כלום — לא תישלח תזכורת.",
     "eventRemindersHintReminderType": "בחר מתי ואיך לקבל תזכורת לאירוע תזכורת זה (Push, SMS או אימייל).",
     "eventRemindersNone": "ללא תזכורות",
