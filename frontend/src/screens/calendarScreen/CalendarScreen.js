@@ -6,6 +6,8 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import heLocale from "@fullcalendar/core/locales/he";
+import arLocale from "@fullcalendar/core/locales/ar";
+import enGbLocale from "@fullcalendar/core/locales/en-gb";
 
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
 import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
@@ -46,6 +48,14 @@ import {
 import "./CalendarScreen.scss";
 
 export const CalendarScreenName = "/CalendarScreen";
+
+/** FullCalendar locale must follow the website language (i18next), not the OS. */
+function fullCalendarLocaleFor(lang) {
+    const key = String(lang || "").toLowerCase().slice(0, 2);
+    if (key === "ar") return arLocale;
+    if (key === "en") return enGbLocale;
+    return heLocale;
+}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const SCOPE_MINE = "mine";
@@ -172,7 +182,7 @@ function _eventFormModalKey(event) {
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 export default function CalendarScreen() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const navigate = useNavigate();
     const { isSmallScreen } = useScreenSize();
     const { openPopup, closePopup } = usePopup();
@@ -366,8 +376,22 @@ export default function CalendarScreen() {
         );
     }, [openPopup, closePopup, fetchEvents]);
 
+    // Dedupe guard — a desktop mouse click fires both dateClick and select,
+    // which would otherwise open the modal twice.
+    const lastCreateOpenRef = useRef({ key: null, ts: 0 });
+
     const openCreateModal = useCallback((selectInfo) => {
         const prefill = buildNewEventPrefill(selectInfo, { workingSchedule });
+
+        const dedupeKey = prefill.startTime;
+        const now = Date.now();
+        if (
+            lastCreateOpenRef.current.key === dedupeKey &&
+            now - lastCreateOpenRef.current.ts < 800
+        ) {
+            return;
+        }
+        lastCreateOpenRef.current = { key: dedupeKey, ts: now };
 
         openPopup(
             <EventFormModal
@@ -799,8 +823,8 @@ export default function CalendarScreen() {
                                 ref={calendarRef}
                                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                                 initialView={view}
-                                locale={heLocale}
-                                direction="rtl"
+                                locale={fullCalendarLocaleFor(i18n.language)}
+                                direction={String(i18n.language || "he").startsWith("en") ? "ltr" : "rtl"}
                                 headerToolbar={{
                                     start: "prev,next today",
                                     center: "title",
@@ -810,6 +834,19 @@ export default function CalendarScreen() {
                                 selectable
                                 selectMirror
                                 select={openCreateModal}
+                                // Touch devices: a plain tap doesn't trigger `select`
+                                // (that needs a long-press), so open the create modal
+                                // from dateClick as well. openCreateModal dedupes the
+                                // double-fire on desktop clicks.
+                                dateClick={(info) => {
+                                    const start = info.date;
+                                    let end = null;
+                                    if (!info.allDay && start instanceof Date) {
+                                        end = new Date(start);
+                                        end.setHours(end.getHours() + 1);
+                                    }
+                                    openCreateModal({ start, end, allDay: info.allDay });
+                                }}
                                 eventClick={openEditModal}
                                 datesSet={fetchEvents}
                                 longPressDelay={350}

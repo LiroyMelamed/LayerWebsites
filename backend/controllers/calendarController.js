@@ -348,7 +348,14 @@ function _lawyerMatchSql(lawyerParamIdx) {
     )`;
 }
 
-/** Personal calendar (scope=mine): holidays for all, manager-tagged, or owned with connected lawyers. */
+/**
+ * Personal calendar (scope=mine):
+ *   • holidays — visible to everyone
+ *   • leave — my own leave, or leave where I'm the tagged lawyer
+ *   • other events — events I'm tagged in (as manager), plus events I own that
+ *     have no tagged lawyer at all. Events I created *for another lawyer* do
+ *     NOT appear in my personal calendar (they show in the firm calendar).
+ */
 function _personalCalendarSql(lawyerParamIdx) {
     const p = `$${lawyerParamIdx}`;
     const managedByLawyer = `(
@@ -381,18 +388,13 @@ function _personalCalendarSql(lawyerParamIdx) {
         OR (
             ce.event_type NOT IN ('holiday', 'leave')
             AND (
-                (
-                    ce.owner_id <> ${p}
-                    AND ${managedByLawyer}
-                )
+                ${managedByLawyer}
                 OR (
                     ce.owner_id = ${p}
-                    AND (
-                        (ce.manager_user_id IS NOT NULL AND ce.manager_user_id <> ${p})
-                        OR EXISTS (
-                            SELECT 1 FROM calendar_event_managers cem
-                            WHERE cem.event_id = ce.id AND cem.user_id <> ${p}
-                        )
+                    AND ce.manager_user_id IS NULL
+                    AND NOT EXISTS (
+                        SELECT 1 FROM calendar_event_managers cem
+                        WHERE cem.event_id = ce.id
                     )
                 )
             )
@@ -577,11 +579,11 @@ const getTodayAndTomorrow = async (req, res) => {
     const userId = req.user.UserId;
     try {
         const { rows } = await pool.query(
-            `SELECT * FROM calendar_events
-             WHERE owner_id = $1
-               AND start_time >= NOW()::date
-               AND start_time <  NOW()::date + INTERVAL '2 days'
-             ORDER BY start_time ASC
+            `SELECT ce.* FROM calendar_events ce
+             WHERE ${_personalCalendarSql(1)}
+               AND ce.start_time >= NOW()::date
+               AND ce.start_time <  NOW()::date + INTERVAL '2 days'
+             ORDER BY ce.start_time ASC
              LIMIT 20`,
             [userId]
         );
@@ -1108,12 +1110,12 @@ const serveIcalFeed = async (req, res) => {
         );
         const userName = userRow.rows[0]?.name || 'עורך דין';
 
-        // Fetch future + recent events
+        // Fetch future + recent events (same visibility as the personal calendar)
         const { rows: events } = await pool.query(
-            `SELECT * FROM calendar_events
-             WHERE owner_id = $1
-               AND end_time >= NOW() - INTERVAL '30 days'
-             ORDER BY start_time ASC
+            `SELECT ce.* FROM calendar_events ce
+             WHERE ${_personalCalendarSql(1)}
+               AND ce.end_time >= NOW() - INTERVAL '30 days'
+             ORDER BY ce.start_time ASC
              LIMIT 500`,
             [userId]
         );

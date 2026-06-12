@@ -113,7 +113,7 @@ async function _claimDueReminders(pollMinutes, limit = 200) {
                     || to_jsonb($2::int)
                 WHERE id = $1
                   AND NOT COALESCE(reminders_sent_offsets, '[]'::jsonb) @> to_jsonb($2::int)
-                RETURNING id, owner_id, client_user_id, case_id, title, event_type, location, start_time,
+                RETURNING id, owner_id, manager_user_id, client_user_id, case_id, title, event_type, location, start_time,
                           lead_phone, lead_email, reminder_channels
                 `,
                 [row.id, row.offset_minutes]
@@ -156,20 +156,46 @@ async function _revertSentOffset(eventId, offsetMinutes, prevSent) {
     }
 }
 
+/** Lawyers to remind: tagged managers (junction + legacy column), else the owner. */
+async function _resolveLawyerRecipients(ev) {
+    const ids = new Set();
+    try {
+        const { rows } = await pool.query(
+            'SELECT user_id FROM calendar_event_managers WHERE event_id = $1',
+            [ev.id]
+        );
+        rows.forEach((r) => ids.add(r.user_id));
+    } catch (err) {
+        console.error(`[calendar-reminders] manager lookup failed eventId=${ev.id}:`, err.message);
+    }
+    if (ev.manager_user_id) ids.add(ev.manager_user_id);
+    if (!ids.size && ev.owner_id) ids.add(ev.owner_id);
+    return [...ids];
+}
+
 async function _dispatchOne(ev) {
     const payload = _buildDeepLinkPayload(ev.id);
     const channels = ev.reminder_channels;
     const lawyerMsg = composeLawyerReminderMessage(ev.offset_minutes, ev);
 
-    const lawyerResult = await dispatchCalendarReminder({
-        userId: ev.owner_id,
-        eventChannels: channels,
-        eventType: ev.event_type,
-        title: lawyerMsg.title,
-        body: lawyerMsg.body,
-        payload,
-    });
-    if (!lawyerResult.sent) {
+    const lawyerIds = await _resolveLawyerRecipients(ev);
+    let anySent = false;
+    for (const lawyerId of lawyerIds) {
+        try {
+            const result = await dispatchCalendarReminder({
+                userId: lawyerId,
+                eventChannels: channels,
+                eventType: ev.event_type,
+                title: lawyerMsg.title,
+                body: lawyerMsg.body,
+                payload,
+            });
+            if (result.sent) anySent = true;
+        } catch (err) {
+            console.error(`[calendar-reminders] lawyer dispatch failed eventId=${ev.id} userId=${lawyerId}:`, err.message);
+        }
+    }
+    if (!anySent) {
         throw new Error('lawyer_reminder_not_sent');
     }
 

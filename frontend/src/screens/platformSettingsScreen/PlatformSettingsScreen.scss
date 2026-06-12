@@ -1085,9 +1085,11 @@
         }
 
         &__reminderOptions {
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
+            // Wrap chips instead of nowrap horizontal scroll — the nowrap row
+            // propagated its max-content width and overflowed the screen.
+            flex-wrap: wrap;
+            min-width: 0;
+            max-width: 100%;
             padding-block-end: 0.25rem;
         }
     }

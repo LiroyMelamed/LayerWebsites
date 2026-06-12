@@ -40,8 +40,11 @@ const HoverContainer = ({
             const targetRect = target.getBoundingClientRect();
             const hoverWidth = hover.offsetWidth || hover.getBoundingClientRect().width;
             const hoverHeight = hover.offsetHeight || hover.getBoundingClientRect().height;
-            const viewportWidth = window.innerWidth;
-            const viewportHeight = window.innerHeight;
+            // Prefer the visual viewport — on mobile webviews the on-screen keyboard
+            // shrinks it while window.innerHeight stays stale.
+            const vv = window.visualViewport;
+            const viewportWidth = vv?.width || window.innerWidth;
+            const viewportHeight = vv?.height || window.innerHeight;
 
             const margin = 8;
             const gap = 4;
@@ -64,9 +67,13 @@ const HoverContainer = ({
                 }
             }
 
-            hover.style.top = `${top}px`;
-            hover.style.left = `${left}px`;
-            hover.style.maxHeight = `${Math.max(120, viewportHeight - margin * 2)}px`;
+            // Project convention: rem units (keeps browser font-size scaling consistent).
+            const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+            const toRem = (valuePx) => `${valuePx / rootFontSize}rem`;
+
+            hover.style.top = toRem(top);
+            hover.style.left = toRem(left);
+            hover.style.maxHeight = toRem(Math.max(120, viewportHeight - margin * 2));
         };
 
         adjustPosition();
@@ -75,9 +82,27 @@ const HoverContainer = ({
         // Capture scroll from scrollable parents (e.g. inside a popup)
         window.addEventListener('scroll', adjustPosition, true);
 
+        // Mobile webviews: opening the on-screen keyboard resizes/offsets the
+        // visual viewport without firing window resize/scroll — reposition then too.
+        const vv = window.visualViewport;
+        vv?.addEventListener('resize', adjustPosition);
+        vv?.addEventListener('scroll', adjustPosition);
+
+        // Reposition when the dropdown's own size changes (loader → results) or
+        // when the anchor input moves/resizes due to layout shifts.
+        let resizeObserver;
+        if (typeof ResizeObserver !== 'undefined') {
+            resizeObserver = new ResizeObserver(adjustPosition);
+            resizeObserver.observe(el);
+            if (targetRef?.current) resizeObserver.observe(targetRef.current);
+        }
+
         return () => {
             window.removeEventListener('resize', adjustPosition);
             window.removeEventListener('scroll', adjustPosition, true);
+            vv?.removeEventListener('resize', adjustPosition);
+            vv?.removeEventListener('scroll', adjustPosition);
+            resizeObserver?.disconnect();
         };
     }, [targetRef, queryResult, isPerforming, query]);
 

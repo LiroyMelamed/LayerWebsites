@@ -92,4 +92,8 @@
 
 .lw-topAndRightNavBar__content {
     flex: 1;
+    // Flex items default to min-width:auto, so wide screen content (e.g. a
+    // nowrap chip row) used to blow the whole layout past the viewport.
+    min-width: 0;
+    max-width: 100%;
 }
