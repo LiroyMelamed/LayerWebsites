@@ -404,17 +404,18 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
+    min-inline-size: 0;
 }
 
 .lw-signing-pageWrap {
     width: 100%;
-    max-width: 56.25rem;
     position: relative;
     margin-bottom: 1.5rem;
     display: flex;
     flex-direction: column;
     align-items: center;
+    min-inline-size: 0;
 }
 
 .lw-signing-addSpotRow {
@@ -434,10 +435,11 @@
 
 .lw-signing-pageInner {
     position: relative;
+    flex-direction: column;
     justify-content: flex-start;
     margin-inline: auto;
-    width: 100%;
-    max-width: var(--lw-pdf-render-width, 50rem);
+    width: var(--lw-pdf-render-width, 100%);
+    max-width: 100%;
     min-inline-size: 0;
     overflow: hidden;
 }
@@ -445,19 +447,22 @@
 .lw-signing-pdfPage {
     position: relative;
     width: 100%;
-    max-width: 100%;
     min-inline-size: 0;
 }
 
-/* react-pdf can render a large canvas; ensure it never overflows mobile viewport */
+/* react-pdf: fill the computed page width */
 .lw-signing-pdfViewer .react-pdf__Document,
-.lw-signing-pdfViewer .react-pdf__Page {
+.lw-signing-pdfViewer .react-pdf__Page,
+.lw-signing-pdfViewer .react-pdf__Page__canvas {
+    width: 100% !important;
     max-width: 100%;
 }
 
 .lw-signing-pdfViewer canvas {
-    max-width: 100%;
+    width: 100% !important;
     height: auto !important;
+    max-width: 100%;
+    display: block;
     position: relative;
     z-index: 1;
 }
