@@ -17,6 +17,7 @@
 
 const pool = require('../config/db');
 const { getLawFirmNameHe, getFirmNameEn } = require('../lib/firmBranding');
+const reminderCalendarSync = require('../lib/reminderCalendarSync');
 const crypto = require('crypto');
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
@@ -240,6 +241,7 @@ function _sanitizeEvent(row) {
         reminderOffsets: parseStoredOffsets(row.reminder_offsets),
         reminderChannels: parseStoredChannels(row.reminder_channels),
         remindersSentOffsets: parseStoredOffsets(row.reminders_sent_offsets),
+        linkedReminderId: row.linked_reminder_id ?? null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
     };
@@ -461,6 +463,65 @@ async function _isOutlookSyncEnabledForFirm() {
 function _isAllDayInternalEventType(eventType) {
     return eventType === 'leave' || eventType === 'holiday';
 }
+
+/**
+ * Sync a reminder row when an event of event_type='reminder' is updated.
+ * If the event has a linked reminder, it patches title/time/recipient/template
+ * onto the reminder row. If the event does not have one yet but the request
+ * provided enough recipient info (toEmail + clientName), it creates one.
+ *
+ * Sync failures are logged and swallowed — they never fail the user's update.
+ */
+async function _syncReminderForUpdatedEvent(updatedRow, rawBody, payload) {
+    if (!updatedRow || updatedRow.event_type !== 'reminder') return;
+
+    try {
+        const { rows: existing } = await pool.query(
+            'SELECT id FROM scheduled_email_reminders WHERE calendar_event_id = $1 LIMIT 1',
+            [updatedRow.id]
+        );
+
+        if (existing.length) {
+            await reminderCalendarSync.updateReminderForCalendarEvent(updatedRow, {
+                toEmail: payload.reminder_to_email,
+                clientName: payload.reminder_client_name,
+                templateKey: payload.reminder_template_key,
+                templateData: payload.reminder_template_data,
+                subject: payload.reminder_subject,
+            });
+        } else if (payload.reminder_to_email && payload.reminder_client_name) {
+            await reminderCalendarSync.createReminderForCalendarEvent(
+                updatedRow,
+                {
+                    toEmail: payload.reminder_to_email,
+                    clientName: payload.reminder_client_name,
+                    templateKey: payload.reminder_template_key,
+                    templateData: payload.reminder_template_data,
+                    subject: payload.reminder_subject,
+                    createdBy: updatedRow.owner_id,
+                }
+            );
+        }
+    } catch (err) {
+        console.error('[calendarController] reminder sync on update failed:', err.message);
+    }
+}
+
+/** Populate `linkedReminderId` on the sanitized event payload returned to the client. */
+async function _attachLinkedReminderId(sanitized) {
+    if (!sanitized?.id) return sanitized;
+    if (sanitized.eventType !== 'reminder') return sanitized;
+    try {
+        const { rows } = await pool.query(
+            'SELECT id FROM scheduled_email_reminders WHERE calendar_event_id = $1 LIMIT 1',
+            [sanitized.id]
+        );
+        sanitized.linkedReminderId = rows[0]?.id ?? null;
+    } catch (_) {
+        sanitized.linkedReminderId = null;
+    }
+    return sanitized;
+}
 // ──────────────────────────────────────────────────────────────────────────────
 
 
@@ -566,11 +627,14 @@ const listEvents = async (req, res) => {
             `SELECT ce.*,
                     u_owner.name  AS owner_name,
                     u_client.name AS client_display_name,
-                    c.casename    AS case_name
+                    c.casename    AS case_name,
+                    ser.id        AS linked_reminder_id
              FROM   calendar_events ce
              LEFT JOIN users u_owner  ON u_owner.userid  = ce.owner_id
              LEFT JOIN users u_client ON u_client.userid = ce.client_user_id
              LEFT JOIN cases c        ON c.caseid        = ce.case_id
+             LEFT JOIN scheduled_email_reminders ser
+                    ON ser.calendar_event_id = ce.id
              ${whereSql}
              ORDER BY ce.start_time ASC
              LIMIT $${idx++} OFFSET $${idx++}`,
@@ -646,6 +710,11 @@ const createEvent = async (req, res) => {
         lead_phone,
         lead_email,
         lead_case_name,
+        reminder_to_email,
+        reminder_client_name,
+        reminder_template_key,
+        reminder_template_data,
+        reminder_subject,
     } = req.body;
 
     if (!title || !start_time || !end_time) {
@@ -759,8 +828,36 @@ const createEvent = async (req, res) => {
             created.manager_user_id = mgrMeta.managerUserId;
             created.manager_name = mgrMeta.managerName;
         }
-        const event = _applyManagersToEvent(_sanitizeEvent(created), mgrMeta.managers);
-        return res.status(201).json({ event });
+
+        // For reminder-type events, mirror to scheduled_email_reminders so the
+        // reminders worker actually sends the email at start_time.
+        let linkedReminderId = null;
+        let reminderSyncWarning = null;
+        if (eventType === 'reminder') {
+            try {
+                linkedReminderId = await reminderCalendarSync.createReminderForCalendarEvent(
+                    created,
+                    {
+                        toEmail: reminder_to_email,
+                        clientName: reminder_client_name,
+                        templateKey: reminder_template_key,
+                        templateData: reminder_template_data,
+                        subject: reminder_subject,
+                        createdBy: userId,
+                    }
+                );
+            } catch (syncErr) {
+                console.error('[calendarController] createEvent reminder sync failed:', syncErr.message);
+                reminderSyncWarning = 'האירוע נשמר אך לא נוצרה תזכורת מקושרת.';
+            }
+        }
+
+        const sanitized = _applyManagersToEvent(_sanitizeEvent(created), mgrMeta.managers);
+        if (linkedReminderId) sanitized.linkedReminderId = linkedReminderId;
+        return res.status(201).json({
+            event: sanitized,
+            ...(reminderSyncWarning ? { reminderSyncWarning } : {}),
+        });
     } catch (err) {
         // Unique violation on partial lead index = duplicate active lead for this lawyer
         if (err?.code === '23505' && /uq_calendar_events_owner_active_lead_phone/.test(err.message || '')) {
@@ -789,7 +886,13 @@ const getEvent = async (req, res) => {
     if (!ownership.ok) return res.status(ownership.status).json({ message: ownership.message });
 
     try {
-        const { rows } = await pool.query('SELECT * FROM calendar_events WHERE id = $1', [eventId]);
+        const { rows } = await pool.query(
+            `SELECT ce.*, ser.id AS linked_reminder_id
+               FROM calendar_events ce
+          LEFT JOIN scheduled_email_reminders ser ON ser.calendar_event_id = ce.id
+              WHERE ce.id = $1`,
+            [eventId]
+        );
         const managersMap = await _fetchEventManagers([eventId]);
         const event = await _sanitizeEventWithManagers(rows[0], managersMap);
         return res.json({ event });
@@ -833,6 +936,11 @@ const updateEvent = async (req, res) => {
         lead_case_name,
         manager_user_ids,
         reminder_offsets,
+        reminder_to_email,
+        reminder_client_name,
+        reminder_template_key,
+        reminder_template_data,
+        reminder_subject,
     } = req.body;
 
     if (start_time && end_time && new Date(end_time) < new Date(start_time)) {
@@ -1009,10 +1117,28 @@ const updateEvent = async (req, res) => {
                 );
                 updated = { ...updated, manager_user_id: mgrMeta.managerUserId, manager_name: mgrMeta.managerName };
             }
-            return res.json({ event: _applyManagersToEvent(_sanitizeEvent(updated), mgrMeta.managers) });
+            await _syncReminderForUpdatedEvent(updated, req.body, {
+                reminder_to_email,
+                reminder_client_name,
+                reminder_template_key,
+                reminder_template_data,
+                reminder_subject,
+            });
+            const sanitized = _applyManagersToEvent(_sanitizeEvent(updated), mgrMeta.managers);
+            await _attachLinkedReminderId(sanitized);
+            return res.json({ event: sanitized });
         }
         const managersMap = await _fetchEventManagers([eventId]);
-        return res.json({ event: await _sanitizeEventWithManagers(updated, managersMap) });
+        await _syncReminderForUpdatedEvent(updated, req.body, {
+            reminder_to_email,
+            reminder_client_name,
+            reminder_template_key,
+            reminder_template_data,
+            reminder_subject,
+        });
+        const sanitized = await _sanitizeEventWithManagers(updated, managersMap);
+        await _attachLinkedReminderId(sanitized);
+        return res.json({ event: sanitized });
     } catch (err) {
         if (err?.code === '23505' && /uq_calendar_events_owner_active_lead_phone/.test(err.message || '')) {
             return res.status(409).json({

@@ -10,6 +10,11 @@ const { getLawFirmNameHe } = require('../lib/firmBranding');
 const { parseExcelBuffer } = require('../utils/parseExcel');
 const pool = require('../config/db');
 const { getAllTemplates } = require('../tasks/emailReminders/templates');
+const reminderCalendarSync = require('../lib/reminderCalendarSync');
+
+function _resolveCreatedBy(req) {
+    return req.user?.UserId ?? req.user?.userid ?? null;
+}
 
 // ─── Templates ───────────────────────────────────────────────────────
 
@@ -128,7 +133,7 @@ const importReminders = async (req, res, next) => {
         const templateKey = req.body.templateKey || 'GENERAL';
         const sendHour = Number.parseInt(req.body.sendHour || '9', 10);
         const sendMinute = Number.parseInt(req.body.sendMinute || '0', 10);
-        const createdBy = req.user?.userid || null;
+        const createdBy = _resolveCreatedBy(req);
 
         // Parse workbook
         const { sheetName, rows } = await parseExcelBuffer(req.file.buffer);
@@ -319,10 +324,11 @@ const importReminders = async (req, res, next) => {
             if (content3) templateData.content_3 = content3;
 
             try {
-                await pool.query(
+                const { rows: insertedRows } = await pool.query(
                     `INSERT INTO scheduled_email_reminders
                         (user_id, client_name, to_email, subject, template_key, template_data, scheduled_for, created_by)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                     RETURNING *`,
                     [
                         matchedUser?.userid || null,
                         clientName,
@@ -334,6 +340,18 @@ const importReminders = async (req, res, next) => {
                         createdBy,
                     ],
                 );
+                const insertedReminder = insertedRows[0];
+                try {
+                    const calendarEventId = await reminderCalendarSync.createCalendarEventForReminder(insertedReminder);
+                    if (calendarEventId) {
+                        await pool.query(
+                            'UPDATE scheduled_email_reminders SET calendar_event_id = $1 WHERE id = $2',
+                            [calendarEventId, insertedReminder.id]
+                        );
+                    }
+                } catch (syncErr) {
+                    console.error('[reminderController] importReminders calendar sync failed:', syncErr.message);
+                }
                 details.push({ row: rowNum, clientName, email, date: scheduledFor.toISOString(), status: 'created' });
                 created++;
             } catch (err) {
@@ -373,7 +391,8 @@ const listReminders = async (req, res, next) => {
 
         const countQ = `SELECT COUNT(*) FROM scheduled_email_reminders ${where}`;
         const dataQ = `SELECT id, user_id, client_name, to_email, subject, template_key,
-                               scheduled_for, status, error, created_at, sent_at, cancelled_at
+                               scheduled_for, status, error, created_at, sent_at, cancelled_at,
+                               calendar_event_id
                         FROM scheduled_email_reminders ${where}
                         ORDER BY scheduled_for DESC
                         LIMIT $${idx++} OFFSET $${idx++}`;
@@ -396,6 +415,33 @@ const listReminders = async (req, res, next) => {
     }
 };
 
+// ─── Get a single reminder ──────────────────────────────────────────
+
+const getReminderById = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const reminderId = parseInt(id, 10);
+        if (!Number.isFinite(reminderId)) {
+            return res.status(400).json({ ok: false, error: 'Invalid reminder id.' });
+        }
+        const { rows } = await pool.query(
+            `SELECT id, user_id, client_name, to_email, subject, template_key, template_data,
+                    scheduled_for, status, error, created_at, sent_at, cancelled_at,
+                    created_by, calendar_event_id
+               FROM scheduled_email_reminders
+              WHERE id = $1
+              LIMIT 1`,
+            [reminderId]
+        );
+        if (!rows.length) {
+            return res.status(404).json({ ok: false, error: 'Reminder not found.' });
+        }
+        return res.json({ ok: true, reminder: rows[0] });
+    } catch (e) {
+        return next(e);
+    }
+};
+
 // ─── Cancel a reminder ───────────────────────────────────────────────
 
 const cancelReminder = async (req, res, next) => {
@@ -410,6 +456,11 @@ const cancelReminder = async (req, res, next) => {
         if (rowCount === 0) {
             return res.status(404).json({ ok: false, error: 'Reminder not found or already processed.' });
         }
+        try {
+            await reminderCalendarSync.unlinkAndDeleteCalendarEventForReminder(id);
+        } catch (syncErr) {
+            console.error('[reminderController] cancelReminder calendar unlink failed:', syncErr.message);
+        }
         return res.json({ ok: true });
     } catch (e) {
         return next(e);
@@ -421,6 +472,13 @@ const cancelReminder = async (req, res, next) => {
 const deleteReminder = async (req, res, next) => {
     try {
         const { id } = req.params;
+        // Drop the linked calendar event first; the FK is calendar → reminder with
+        // ON DELETE CASCADE, so deleting the reminder alone leaves an orphan event.
+        try {
+            await reminderCalendarSync.unlinkAndDeleteCalendarEventForReminder(id);
+        } catch (syncErr) {
+            console.error('[reminderController] deleteReminder calendar unlink failed:', syncErr.message);
+        }
         const { rowCount } = await pool.query(
             `DELETE FROM scheduled_email_reminders WHERE id = $1`,
             [id],
@@ -447,7 +505,11 @@ const updateReminder = async (req, res, next) => {
         let idx = 1;
 
         if (client_name !== undefined) { fields.push(`client_name = $${idx++}`); values.push(client_name); }
-        if (to_email !== undefined) { fields.push(`to_email = $${idx++}`); values.push(to_email); }
+        if (to_email !== undefined) {
+            fields.push(`to_email = $${idx++}`);
+            values.push(to_email);
+            fields.push(`user_id = (SELECT userid FROM users WHERE LOWER(email) = LOWER($${idx - 1}) LIMIT 1)`);
+        }
         if (subject !== undefined) { fields.push(`subject = $${idx++}`); values.push(subject); }
         if (scheduled_for !== undefined) { fields.push(`scheduled_for = $${idx++}`); values.push(scheduled_for); }
 
@@ -468,7 +530,26 @@ const updateReminder = async (req, res, next) => {
             return res.status(404).json({ ok: false, error: 'Reminder not found or not in PENDING status.' });
         }
 
-        return res.json({ ok: true, reminder: rows[0] });
+        let reminder = rows[0];
+
+        try {
+            if (!reminder.calendar_event_id && reminder.created_by) {
+                const calendarEventId = await reminderCalendarSync.createCalendarEventForReminder(reminder);
+                if (calendarEventId) {
+                    const { rows: relinked } = await pool.query(
+                        'UPDATE scheduled_email_reminders SET calendar_event_id = $1 WHERE id = $2 RETURNING *',
+                        [calendarEventId, reminder.id]
+                    );
+                    if (relinked[0]) reminder = relinked[0];
+                }
+            } else {
+                await reminderCalendarSync.updateCalendarEventForReminder(reminder);
+            }
+        } catch (syncErr) {
+            console.error('[reminderController] updateReminder calendar sync failed:', syncErr.message);
+        }
+
+        return res.json({ ok: true, reminder });
     } catch (e) {
         return next(e);
     }
@@ -557,7 +638,7 @@ const deleteCustomTemplate = async (req, res, next) => {
 const createSingleReminder = async (req, res, next) => {
     try {
         const { client_name, to_email, subject, templateKey, scheduled_for, template_data } = req.body;
-        const createdBy = req.user?.userid || null;
+        const createdBy = _resolveCreatedBy(req);
 
         if (!client_name || !String(client_name).trim()) {
             return res.status(400).json({ ok: false, error: 'חסר שם לקוח' });
@@ -603,8 +684,28 @@ const createSingleReminder = async (req, res, next) => {
                 createdBy,
             ]
         );
+        let reminder = rows[0];
 
-        return res.status(201).json({ ok: true, reminder: rows[0] });
+        let calendarSyncWarning = null;
+        try {
+            const calendarEventId = await reminderCalendarSync.createCalendarEventForReminder(reminder);
+            if (calendarEventId) {
+                const { rows: relinked } = await pool.query(
+                    'UPDATE scheduled_email_reminders SET calendar_event_id = $1 WHERE id = $2 RETURNING *',
+                    [calendarEventId, reminder.id]
+                );
+                if (relinked[0]) reminder = relinked[0];
+            }
+        } catch (syncErr) {
+            console.error('[reminderController] createSingleReminder calendar sync failed:', syncErr.message);
+            calendarSyncWarning = 'התזכורת נשמרה אך לא נוצר אירוע יומן מקושר.';
+        }
+
+        return res.status(201).json({
+            ok: true,
+            reminder,
+            ...(calendarSyncWarning ? { calendarSyncWarning } : {}),
+        });
     } catch (e) {
         return next(e);
     }
@@ -717,5 +818,5 @@ const downloadTemplateExcel = async (req, res, next) => {
 module.exports = {
     getTemplates, importReminders, listReminders, cancelReminder, deleteReminder, updateReminder,
     listCustomTemplates, createCustomTemplate, updateCustomTemplate, deleteCustomTemplate,
-    downloadTemplateExcel, createSingleReminder,
+    downloadTemplateExcel, createSingleReminder, getReminderById,
 };
