@@ -48,15 +48,23 @@ export default function SigningManagerScreen() {
 
     const { isFromApp } = useFromApp();
     const [activeTab, setActiveTab] = useState("pending");
+    const [scope, setScope] = useState("mine");
     const [searchQuery, setSearchQuery] = useState("");
     const [dateFrom, setDateFrom] = useState("");
     const [dateTo, setDateTo] = useState("");
 
     const [isDownloadingSigned, setIsDownloadingSigned] = useState(false);
 
-    const { result: lawyerFilesData, isPerforming, performRequest: reloadFiles } = useAutoHttpRequest(
+    const { result: lawyerFilesData, isPerforming, performRequest: reloadFilesRaw } = useAutoHttpRequest(
         signingFilesApi.getLawyerSigningFiles
     );
+
+    const reloadFiles = React.useCallback(() => reloadFilesRaw(scope), [reloadFilesRaw, scope]);
+
+    useEffect(() => {
+        reloadFilesRaw(scope);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [scope]);
 
     const files = useMemo(() => lawyerFilesData?.files || [], [lawyerFilesData]);
 
@@ -406,7 +414,21 @@ export default function SigningManagerScreen() {
                     </SimpleContainer>
                 </SimpleContainer>
 
-                {/* Tabs */}
+                {/* Scope: my files vs all office files */}
+                <SimpleContainer className="lw-signingManagerScreen__tabsRow">
+                    <TabButton
+                        active={scope === "mine"}
+                        label={t('signingManager.scope.mine', 'המסמכים שלי')}
+                        onPress={() => setScope("mine")}
+                    />
+                    <TabButton
+                        active={scope === "office"}
+                        label={t('signingManager.scope.office', 'מסמכי המשרד')}
+                        onPress={() => setScope("office")}
+                    />
+                </SimpleContainer>
+
+                {/* Status tabs */}
                 <SimpleContainer className="lw-signingManagerScreen__tabsRow">
                     <TabButton
                         active={activeTab === "pending"}
@@ -458,6 +480,12 @@ export default function SigningManagerScreen() {
                                     <SimpleContainer className={chip.className}>{chip.text}</SimpleContainer>
                                 </SimpleContainer>
 
+                                {scope === "office" && (
+                                    <SimpleContainer className="lw-signingManagerScreen__detailRow">
+                                        <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.lawyer')}</div>
+                                        <div className="lw-signingManagerScreen__detailValue">{file.LawyerName || "-"}</div>
+                                    </SimpleContainer>
+                                )}
                                 <SimpleContainer className="lw-signingManagerScreen__detailRow">
                                     <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.case')}</div>
                                     <div className="lw-signingManagerScreen__detailValue">{file.CaseName || "-"}</div>
