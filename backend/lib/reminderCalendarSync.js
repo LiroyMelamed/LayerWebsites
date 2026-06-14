@@ -24,6 +24,32 @@ const pool = require('../config/db');
 const EMPTY_OFFSETS = '[]';
 const EMPTY_CHANNELS = JSON.stringify({ push: false, sms: false, email: false });
 
+/** Cached once per process; false on tenants without calendar module / migration. */
+let _calendarSyncAvailable = null;
+
+async function _isCalendarSyncAvailable(dbClient) {
+    if (_calendarSyncAvailable !== null) return _calendarSyncAvailable;
+    try {
+        const { rows } = await dbClient.query(
+            `SELECT
+                 EXISTS (
+                     SELECT 1 FROM information_schema.tables
+                     WHERE table_schema = 'public' AND table_name = 'calendar_events'
+                 ) AS has_calendar,
+                 EXISTS (
+                     SELECT 1 FROM information_schema.columns
+                     WHERE table_schema = 'public'
+                       AND table_name = 'scheduled_email_reminders'
+                       AND column_name = 'calendar_event_id'
+                 ) AS has_link_col`
+        );
+        _calendarSyncAvailable = Boolean(rows[0]?.has_calendar && rows[0]?.has_link_col);
+    } catch (_) {
+        _calendarSyncAvailable = false;
+    }
+    return _calendarSyncAvailable;
+}
+
 function _trimOrNull(value) {
     if (value === null || value === undefined) return null;
     const trimmed = String(value).trim();
@@ -51,6 +77,7 @@ function _normalizeEmail(value) {
 async function createCalendarEventForReminder(reminder, opts = {}) {
     const dbClient = opts.client || pool;
     if (!reminder) return null;
+    if (!(await _isCalendarSyncAvailable(dbClient))) return null;
 
     const ownerId = reminder.created_by ?? null;
     if (!ownerId) return null;
@@ -174,6 +201,7 @@ async function createReminderForCalendarEvent(event, payload = {}, opts = {}) {
 async function updateCalendarEventForReminder(reminder, opts = {}) {
     const dbClient = opts.client || pool;
     if (!reminder?.calendar_event_id) return;
+    if (!(await _isCalendarSyncAvailable(dbClient))) return;
 
     const userId = reminder.user_id ?? null;
     const clientName = _trimOrNull(reminder.client_name);
@@ -303,6 +331,7 @@ async function updateReminderForCalendarEvent(event, payload = {}, opts = {}) {
 async function unlinkAndDeleteCalendarEventForReminder(reminderId, opts = {}) {
     const dbClient = opts.client || pool;
     if (!reminderId) return null;
+    if (!(await _isCalendarSyncAvailable(dbClient))) return null;
 
     const { rows: snapshot } = await dbClient.query(
         'SELECT calendar_event_id FROM scheduled_email_reminders WHERE id = $1',
