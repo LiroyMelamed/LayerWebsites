@@ -415,7 +415,6 @@ export default function SigningManagerScreen() {
                     </SimpleContainer>
                     <SegmentedSwitch
                         className="lw-signingManagerScreen__scopeSwitch"
-                        title={t('signingManager.scope.title', 'תצוגה')}
                         ariaLabel={t('signingManager.scope.title', 'תצוגה')}
                         value={scope}
                         onChange={setScope}

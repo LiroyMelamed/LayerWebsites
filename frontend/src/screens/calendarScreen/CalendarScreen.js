@@ -33,6 +33,8 @@ import { adminApi } from "../../api/adminApi";
 import { customersApi } from "../../api/customersApi";
 import casesApi from "../../api/casesApi";
 
+import SegmentedSwitch from "../../components/styledComponents/SegmentedSwitch";
+
 import EventFormModal from "./components/EventFormModal";
 import PersonalSyncModal from "./components/PersonalSyncModal";
 import { colorForKey, colorKeyForEvent, leaveColor, holidayColor, buildLawyerLegend } from "./utils/lawyerColors";
@@ -585,22 +587,19 @@ export default function CalendarScreen() {
 
                     <SimpleContainer className="lw-calendarScreen__headerActions">
                         {canUseFirmView && (
-                            <div className="lw-calendarScreen__scopeToggle" role="group" aria-label={t("calendar.scopeMine")}>
-                                <SimpleButton
-                                    className={`lw-calendarScreen__scopeBtn ${scope === SCOPE_MINE ? "is-active" : ""}`}
-                                    onPress={switchToMineScope}
-                                    aria-pressed={scope === SCOPE_MINE}
-                                >
-                                    {t("calendar.scopeMine")}
-                                </SimpleButton>
-                                <SimpleButton
-                                    className={`lw-calendarScreen__scopeBtn ${scope === SCOPE_FIRM ? "is-active" : ""}`}
-                                    onPress={switchToFirmScope}
-                                    aria-pressed={scope === SCOPE_FIRM}
-                                >
-                                    {t("calendar.scopeFirm")}
-                                </SimpleButton>
-                            </div>
+                            <SegmentedSwitch
+                                className="lw-calendarScreen__scopeSwitch"
+                                ariaLabel={t("calendar.scopeMine")}
+                                value={scope}
+                                onChange={(next) => {
+                                    if (next === SCOPE_FIRM) switchToFirmScope();
+                                    else switchToMineScope();
+                                }}
+                                options={[
+                                    { value: SCOPE_MINE, label: t("calendar.scopeMine") },
+                                    { value: SCOPE_FIRM, label: t("calendar.scopeFirm") },
+                                ]}
+                            />
                         )}
 
                         {isSmallScreen && (
