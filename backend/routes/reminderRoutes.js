@@ -40,6 +40,9 @@ router.post('/', authMiddleware, requireLawyerOrAdmin, reminderController.create
 // GET  /api/reminders            – list reminders (lawyer/admin only)
 router.get('/', authMiddleware, requireLawyerOrAdmin, reminderController.listReminders);
 
+// GET  /api/reminders/:id        – fetch a single reminder by id (lawyer/admin only)
+router.get('/:id', authMiddleware, requireLawyerOrAdmin, reminderController.getReminderById);
+
 // PUT  /api/reminders/:id/cancel – cancel a PENDING reminder (lawyer/admin only)
 router.put('/:id/cancel', authMiddleware, requireLawyerOrAdmin, reminderController.cancelReminder);
 
