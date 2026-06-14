@@ -87,6 +87,10 @@
     "searchTitle": "חיפוש מסמך / לקוח / תיק",
     "dateFrom": "מתאריך",
     "dateTo": "עד תאריך",
+    "scopeTabs": {
+      "mine": "המסמכים שלי",
+      "office": "מסמכי המשרד"
+    },
     "tabs": {
       "pending": "בהמתנה / נדחו ({{count}})",
       "signed": "חתומים ({{count}})"
@@ -96,6 +100,7 @@
       "signed": "אין מסמכים חתומים להצגה"
     },
     "labels": {
+      "lawyer": "עו\"ד:",
       "case": "תיק:",
       "client": "חותמים:",
       "uploadedAt": "תאריך העלאה:",

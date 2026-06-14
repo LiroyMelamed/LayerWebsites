@@ -72,9 +72,15 @@
     min-inline-size: 7rem;
 }
 
+.lw-signingManagerScreen__scopeTabsRow {
+    @include m.row(v.$space-3, wrap, center, center);
+    margin-block-start: v.$space-4;
+    margin-block-end: v.$space-2;
+}
+
 .lw-signingManagerScreen__tabsRow {
     @include m.row(v.$space-4, wrap, center, center);
-    margin-block-start: v.$space-6;
+    margin-block-start: v.$space-4;
     margin-block-end: v.$space-4;
     border-bottom: 0.125rem solid #e0e0e0;
     padding-block-end: v.$space-2;

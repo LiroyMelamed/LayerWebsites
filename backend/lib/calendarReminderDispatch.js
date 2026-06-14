@@ -103,7 +103,13 @@ async function dispatchCalendarReminder({
 
     if (!tasks.length) return { sent: false, reason: 'no_channels_or_contact' };
 
-    await Promise.all(tasks);
+    const results = await Promise.allSettled(tasks);
+    const anySent = results.some((r) => r.status === 'fulfilled');
+    if (!anySent) {
+        const firstErr = results.find((r) => r.status === 'rejected');
+        console.error('[calendar-reminders] all channels failed:', firstErr?.reason?.message || firstErr?.reason);
+        return { sent: false, reason: 'all_channels_failed' };
+    }
     return { sent: true, channels: { push: wantPush, sms: wantSms, email: wantEmail } };
 }
 

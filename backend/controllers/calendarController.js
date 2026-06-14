@@ -412,15 +412,28 @@ function _resolveEventOwnerId(userId, eventType, managerUserId, managerIds) {
     return primary || userId;
 }
 
-/** Ensure the event belongs to the requesting user */
-async function _requireOwnership(eventId, userId) {
+/** Ensure the user may read or mutate this event (owner, assigned manager, or Admin). */
+async function _requireEventAccess(eventId, userId, userRole) {
+    if (String(userRole) === 'Admin') return { ok: true };
+
     const { rows } = await pool.query(
-        'SELECT owner_id FROM calendar_events WHERE id = $1',
-        [eventId]
+        `SELECT ce.owner_id,
+                ce.manager_user_id,
+                EXISTS (
+                    SELECT 1 FROM calendar_event_managers cem
+                    WHERE cem.event_id = ce.id AND cem.user_id = $2
+                ) AS is_manager
+         FROM calendar_events ce
+         WHERE ce.id = $1`,
+        [eventId, userId]
     );
     if (!rows.length) return { ok: false, status: 404, message: 'אירוע לא נמצא' };
-    if (rows[0].owner_id !== userId) return { ok: false, status: 403, message: 'אין הרשאה לגשת לאירוע זה' };
-    return { ok: true };
+
+    const row = rows[0];
+    if (row.owner_id === userId || row.manager_user_id === userId || row.is_manager) {
+        return { ok: true };
+    }
+    return { ok: false, status: 403, message: 'אין הרשאה לגשת לאירוע זה' };
 }
 
 /**
@@ -498,6 +511,9 @@ const listEvents = async (req, res) => {
         return res.status(400).json({ message: 'מזהה עורך דין לא תקין' });
     }
     if (requestedLawyerId) {
+        if (scope !== 'firm') {
+            return res.status(400).json({ message: 'סינון עורך דין זמין רק בתצוגת משרד' });
+        }
         conditions.push(_lawyerMatchSql(idx));
         idx++;
         params.push(requestedLawyerId);
@@ -581,8 +597,8 @@ const getTodayAndTomorrow = async (req, res) => {
         const { rows } = await pool.query(
             `SELECT ce.* FROM calendar_events ce
              WHERE ${_personalCalendarSql(1)}
-               AND ce.start_time >= NOW()::date
-               AND ce.start_time <  NOW()::date + INTERVAL '2 days'
+               AND ce.start_time >= (NOW() AT TIME ZONE 'Asia/Jerusalem')::date AT TIME ZONE 'Asia/Jerusalem'
+               AND ce.start_time <  ((NOW() AT TIME ZONE 'Asia/Jerusalem')::date + INTERVAL '2 days') AT TIME ZONE 'Asia/Jerusalem'
              ORDER BY ce.start_time ASC
              LIMIT 20`,
             [userId]
@@ -768,7 +784,7 @@ const getEvent = async (req, res) => {
     const eventId = parseInt(req.params.id, 10);
     if (!Number.isFinite(eventId)) return res.status(400).json({ message: 'מזהה אירוע לא תקין' });
 
-    const ownership = await _requireOwnership(eventId, userId);
+    const ownership = await _requireEventAccess(eventId, userId, req.user?.Role);
     if (!ownership.ok) return res.status(ownership.status).json({ message: ownership.message });
 
     try {
@@ -792,7 +808,7 @@ const updateEvent = async (req, res) => {
     const eventId = parseInt(req.params.id, 10);
     if (!Number.isFinite(eventId)) return res.status(400).json({ message: 'מזהה אירוע לא תקין' });
 
-    const ownership = await _requireOwnership(eventId, userId);
+    const ownership = await _requireEventAccess(eventId, userId, req.user?.Role);
     if (!ownership.ok) return res.status(ownership.status).json({ message: ownership.message });
 
     const {
@@ -847,7 +863,9 @@ const updateEvent = async (req, res) => {
         const newAllDay = _isAllDayInternalEventType(newEventType)
             ? true
             : (all_day !== undefined ? !!all_day : ev.all_day);
-        const timeChanged = start_time && new Date(start_time).getTime() !== new Date(ev.start_time).getTime();
+        const timeChanged =
+            (start_time && new Date(start_time).getTime() !== new Date(ev.start_time).getTime()) ||
+            (end_time && new Date(end_time).getTime() !== new Date(ev.end_time).getTime());
         const resolvedReminderOffsets = await _resolveReminderOffsets(req.body, newEventType);
         const nextReminderOffsets = resolvedReminderOffsets !== null
             ? resolvedReminderOffsets
@@ -1017,7 +1035,7 @@ const deleteEvent = async (req, res) => {
     const eventId = parseInt(req.params.id, 10);
     if (!Number.isFinite(eventId)) return res.status(400).json({ message: 'מזהה אירוע לא תקין' });
 
-    const ownership = await _requireOwnership(eventId, userId);
+    const ownership = await _requireEventAccess(eventId, userId, req.user?.Role);
     if (!ownership.ok) return res.status(ownership.status).json({ message: ownership.message });
 
     try {
