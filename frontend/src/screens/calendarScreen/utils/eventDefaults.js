@@ -25,7 +25,13 @@ function applyTimeToDate(baseDate, hm) {
  * - Day click → that day, same rules
  * - Timed drag in week/day view → use selection (minimum 1 hour, capped at work end)
  */
-export function buildNewEventPrefill(selectInfo, { workingHoursStart = "08:00", workingHoursEnd = "18:00" } = {}) {
+export function buildNewEventPrefill(selectInfo, { workingSchedule, workingHoursStart, workingHoursEnd } = {}) {
+    const base = selectInfo?.start ? new Date(selectInfo.start) : new Date();
+    const dayOfWeek = base.getDay();
+    const dayEntry = workingSchedule?.[dayOfWeek];
+    const hoursStart = dayEntry?.open ? dayEntry.start : (workingHoursStart || "08:00");
+    const hoursEnd = dayEntry?.open ? dayEntry.end : (workingHoursEnd || "18:00");
+
     if (selectInfo?.start && selectInfo?.end && !selectInfo.allDay) {
         const start = new Date(selectInfo.start);
         let end = new Date(selectInfo.end);
@@ -33,7 +39,7 @@ export function buildNewEventPrefill(selectInfo, { workingHoursStart = "08:00", 
             end = new Date(start);
             end.setHours(end.getHours() + 1);
         }
-        const dayCap = applyTimeToDate(start, workingHoursEnd);
+        const dayCap = applyTimeToDate(start, hoursEnd);
         if (end > dayCap) end = dayCap;
         return {
             startTime: toDatetimeLocal(start),
@@ -42,11 +48,10 @@ export function buildNewEventPrefill(selectInfo, { workingHoursStart = "08:00", 
         };
     }
 
-    const base = selectInfo?.start ? new Date(selectInfo.start) : new Date();
     base.setHours(0, 0, 0, 0);
 
-    let start = applyTimeToDate(base, workingHoursStart);
-    const endCap = applyTimeToDate(base, workingHoursEnd);
+    let start = applyTimeToDate(base, hoursStart);
+    const endCap = applyTimeToDate(base, hoursEnd);
 
     const now = new Date();
     const isToday = base.toDateString() === now.toDateString();
@@ -65,7 +70,7 @@ export function buildNewEventPrefill(selectInfo, { workingHoursStart = "08:00", 
     if (end > endCap) {
         end = endCap;
         if (end <= start) {
-            start = applyTimeToDate(base, workingHoursStart);
+            start = applyTimeToDate(base, hoursStart);
             end = new Date(start);
             end.setHours(end.getHours() + 1);
             if (end > endCap) end = endCap;

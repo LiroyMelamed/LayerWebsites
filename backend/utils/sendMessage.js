@@ -2,6 +2,7 @@ const axios = require("axios");
 require("dotenv").config();
 const { recordUsageEvent } = require("../lib/usage/recordFirmUsage");
 const { getSetting } = require("../services/settingsService");
+const { getFirmNameEn } = require("../lib/firmBranding");
 
 // ── Static defaults (kept for backward-compatible imports) ──────────
 const COMPANY_NAME = String(process.env.COMPANY_NAME || "").trim() || "LayerWebsites";
@@ -14,7 +15,8 @@ async function getWebsiteDomain() {
 }
 
 async function getCompanyName() {
-    return await getSetting('firm', 'COMPANY_NAME', COMPANY_NAME);
+    const fromDb = await getFirmNameEn();
+    return fromDb || COMPANY_NAME;
 }
 
 const isProduction = process.env.IS_PRODUCTION === "true";

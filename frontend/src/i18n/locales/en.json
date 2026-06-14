@@ -461,13 +461,13 @@
     "quotaNotAvailable": "N/A",
     "meters": {
       "documentsMonthly": "Documents (this month)",
-      "storageGb": "Storage (GB)",
+      "storageMb": "Storage (MB)",
       "seats": "System admins",
       "sms": "SMS (this month)"
     },
     "progress": {
       "documentsMonthly": "Documents",
-      "storageGb": "Storage",
+      "storageMb": "Storage",
       "seats": "Admins",
       "sms": "SMS"
     },
@@ -496,7 +496,7 @@
     "retentionPii": "PII retention:",
     "days": "days",
     "documentsMonthly": "Documents / month:",
-    "storageGb": "Storage (GB):",
+    "storageMb": "Storage (MB):",
     "users": "Users:",
     "systemPlansCardFooter": "This package defines usage limits.",
     "systemPlansExplanation": {
@@ -599,7 +599,7 @@
       "basic": {
         "title": "Basic (small office)",
         "description": "Included for small offices and trial usage.",
-        "l1": "Up to 10GB storage",
+        "l1": "Up to 100 MB storage",
         "l2": "Up to 3 users",
         "l3": "Data retention: 60 days",
         "l4": "Workload level: Starter"
@@ -607,7 +607,7 @@
       "pro": {
         "title": "Pro (active office)",
         "description": "Recommended for active law firms.",
-        "l1": "Up to 100GB storage",
+        "l1": "Up to 500 MB storage",
         "l2": "Up to 10 users",
         "l3": "Data retention: 180 days",
         "l4": "Workload level: Growing firm"
@@ -1120,7 +1120,22 @@
     "removeAdminTitle": "Remove Admin",
     "removeAdminMessage": "Are you sure you want to remove this admin?",
     "emailOverridePlaceholder": "Override email (empty = use default)",
-    "smsOverridePlaceholder": "Override SMS (empty = use default)"
+    "smsOverridePlaceholder": "Override SMS (empty = use default)",
+    "workingHoursByDayTitle": "Working hours by day",
+    "workingHoursByDayHint": "Set whether the firm is open each weekday and the hours for that day. Closed days are hidden from the calendar.",
+    "workingHoursDayCol": "Day",
+    "workingHoursOpenCol": "Open",
+    "workingHoursStartCol": "Start",
+    "workingHoursEndCol": "End",
+    "calendarRemindersTitle": "Calendar reminders",
+    "calendarRemindersHint": "Lawyers choose reminders per event. Configure the delivery worker and which options are available.",
+    "calendarRemindersEnabled": "Push reminder worker enabled",
+    "calendarRemindersEnabledHint": "When off, no reminders are sent even if selected on an event.",
+    "calendarReminderOptionsTitle": "Reminder options for lawyers",
+    "calendarReminderOptionsHint": "Choose which reminder intervals appear when creating an event.",
+    "calendarRemindersPollMinutes": "Poll interval (minutes)",
+    "calendarReminderChannelsTitle": "Delivery channels for lawyers",
+    "calendarReminderChannelsHint": "Choose which channels appear when lawyers set event reminders."
   },
   "viewSignedDoc": {
     "invalidLink": "Invalid link",

@@ -3,8 +3,8 @@
 .lw-addFieldPanel {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 12px;
+    gap: 0.5rem;
+    padding: 0.75rem;
     min-width: 14rem;
     direction: rtl;
 }
@@ -12,7 +12,7 @@
 // Inline mode (big screens) — always visible sidebar
 .lw-addFieldPanel--inline {
     background: var(--lw-color-white);
-    border: 1px solid var(--lw-color-border, #e2e8f0);
+    border: 0.0625rem solid var(--lw-color-border, #e2e8f0);
     border-radius: 0.75rem;
     box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.08);
     position: sticky;
@@ -29,7 +29,7 @@
     bottom: 9.5rem;
     z-index: 12000;
     background: var(--lw-color-white);
-    border: 1px solid var(--lw-color-border, #e2e8f0);
+    border: 0.0625rem solid var(--lw-color-border, #e2e8f0);
     border-radius: 0.75rem;
     min-width: 14rem;
     box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12);
@@ -49,12 +49,12 @@
 }
 
 .lw-addFieldPanel__close {
-    min-height: 32px;
+    min-height: 2rem;
 }
 
 .lw-addFieldPanel__action {
     width: 100%;
-    min-height: 34px;
+    min-height: 2.125rem;
     font-size: 0.82rem;
 }
 

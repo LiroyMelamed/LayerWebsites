@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import "../../../../utils/pdfjsConfig";
 import { Document, Page } from "react-pdf";
 import SimpleContainer from "../../../simpleComponents/SimpleContainer";
 import SimpleLoader from "../../../simpleComponents/SimpleLoader";

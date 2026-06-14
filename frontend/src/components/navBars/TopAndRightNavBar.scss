@@ -66,11 +66,11 @@
         gap: 0.5rem;
     }
 
-    @media (max-height: 700px) {
+    @media (max-height: 43.75rem) {
         transform: scale(0.8);
     }
 
-    @media (max-height: 550px) {
+    @media (max-height: 34.375rem) {
         transform: scale(0.65);
     }
 }
@@ -92,4 +92,8 @@
 
 .lw-topAndRightNavBar__content {
     flex: 1;
+    // Flex items default to min-width:auto, so wide screen content (e.g. a
+    // nowrap chip row) used to blow the whole layout past the viewport.
+    min-width: 0;
+    max-width: 100%;
 }

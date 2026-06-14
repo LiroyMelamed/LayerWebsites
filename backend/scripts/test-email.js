@@ -22,7 +22,7 @@ async function main() {
         toEmail: testRecipient,
         subject: 'בדיקת מערכת אימייל - עדכון תיק',
         htmlBody: `
-            <div dir="rtl" style="font-family: Arial, sans-serif; padding: 20px;">
+            <div dir="rtl" style="font-family: Arial, sans-serif; padding: 1.25rem;">
                 <h2>בדיקת מערכת אימייל</h2>
                 <p>זוהי הודעת בדיקה מהמערכת.</p>
                 <p>אם אתה רואה את ההודעה הזו בצורה תקינה, ללא תווים מוזרים - המערכת עובדת!</p>
@@ -42,7 +42,7 @@ async function main() {
         toEmail: testRecipient,
         subject: 'בדיקה #2 - מסמך נחתם בהצלחה',
         htmlBody: `
-            <div dir="rtl" style="font-family: Arial, sans-serif; padding: 20px;">
+            <div dir="rtl" style="font-family: Arial, sans-serif; padding: 1.25rem;">
                 <h2>בדיקת שליחה עם קבצים מצורפים</h2>
                 <p>זהו אימייל בדיקה שנשלח דרך sendEmailWithAttachments.</p>
                 <p>אם הנושא בעברית תקין - הכול עובד!</p>

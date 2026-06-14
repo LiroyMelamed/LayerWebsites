@@ -6,7 +6,6 @@ import { BrowserRouter } from 'react-router-dom';
 import './index.scss';
 import { PopupProvider } from './providers/PopUpProvider';
 import { FromAppProvider } from './providers/FromAppProvider';
-import "./utils/pdfjsConfig";
 
 // Initialize i18n exactly once (language + RTL/LTR handled centrally).
 import './i18n/i18n';

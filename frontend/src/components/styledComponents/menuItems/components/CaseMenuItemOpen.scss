@@ -58,9 +58,9 @@
     display: inline-flex;
     align-items: center;
     padding: 0.25rem 0.5rem;
-    border-radius: 999px;
+    border-radius: 62.4375rem;
     background: var(--lw-color-secondary-highlighted);
-    border: 1px solid var(--lw-color-disabled);
+    border: 0.0625rem solid var(--lw-color-disabled);
     flex: 0 0 auto;
 }
 
@@ -89,7 +89,7 @@
     display: flex;
     flex-direction: column;
     background: var(--lw-color-secondary-highlighted);
-    border: 1px solid var(--lw-color-disabled);
+    border: 0.0625rem solid var(--lw-color-disabled);
     border-radius: 0.75rem;
     padding: v.$space-4;
     min-width: 0;
@@ -225,7 +225,7 @@
 }
 
 .lw-caseMenuItemOpen__footer {
-    border-top: 1px solid var(--lw-color-secondary-highlighted);
+    border-top: 0.0625rem solid var(--lw-color-secondary-highlighted);
     margin-top: v.$space-4;
     padding-top: v.$space-4;
     display: flex;

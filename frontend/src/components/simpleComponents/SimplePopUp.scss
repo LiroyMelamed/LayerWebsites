@@ -23,12 +23,10 @@
     position: relative;
     background-color: var(--lw-color-white);
     border-radius: 1rem;
-    /* 16px */
     box-shadow: 0 1.25rem 1.5625rem -0.3125rem rgba(0, 0, 0, 0.1),
         0 0.625rem 0.625rem -0.3125rem rgba(0, 0, 0, 0.04);
 
     padding: 1rem;
-    /* 16px */
     width: auto;
     max-width: 90vw;
     max-height: 85vh;
@@ -98,4 +96,19 @@
     gap: 0.5rem;
     max-height: calc(85vh - 2rem);
     overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 40rem) {
+    .lw-simplePopUp__container {
+        width: calc(100vw - 1.25rem);
+        max-width: calc(100vw - 1.25rem);
+        padding: 0.75rem;
+        max-height: calc(100dvh - 1.5rem);
+    }
+
+    .lw-simplePopUp__content {
+        max-height: calc(100dvh - 3.5rem);
+    }
 }

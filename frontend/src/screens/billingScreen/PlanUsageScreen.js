@@ -33,10 +33,10 @@ export const PlanUsageScreenName = "/PlanUsage";
 
 const normalizeCurrency = normalizeCurrencySymbol;
 
-function bytesToGb(bytes) {
+function bytesToMb(bytes) {
     const b = Number(bytes || 0);
     if (!Number.isFinite(b) || b <= 0) return 0;
-    return b / (1024 * 1024 * 1024);
+    return b / (1024 * 1024);
 }
 
 function formatStorageDisplay(bytes) {
@@ -99,7 +99,7 @@ export default function PlanUsageScreen() {
         const quotas = plan?.quotas || {};
 
         const docsThisMonth = usage?.documents?.createdThisMonth ?? null;
-        const storageGbUsed = usage?.storage?.bytesTotal != null ? bytesToGb(usage?.storage?.bytesTotal) : null;
+        const storageMbUsed = usage?.storage?.bytesTotal != null ? bytesToMb(usage?.storage?.bytesTotal) : null;
         const storageBytesTotal = usage?.storage?.bytesTotal ?? null;
         const seatsUsed = usage?.seats?.used ?? null;
         // sms.sentThisMonth = all SMS (OTP + notifications + any); backward compat with old otp field
@@ -123,7 +123,7 @@ export default function PlanUsageScreen() {
             monthStartUtc,
             meters: {
                 documentsThisMonth: safeNumber(docsThisMonth),
-                storageGbUsed: storageGbUsed != null ? Number(storageGbUsed.toFixed(2)) : null,
+                storageMbUsed: storageMbUsed != null ? Number(storageMbUsed.toFixed(1)) : null,
                 storageBytesTotal: safeNumber(storageBytesTotal),
                 seatsUsed: safeNumber(seatsUsed),
                 smsThisMonth: safeNumber(smsThisMonth),
@@ -196,7 +196,7 @@ export default function PlanUsageScreen() {
                     <SimpleCard className="lw-planUsageScreen__card">
                         <Skeleton width={120} height={20} borderRadius={6} />
                         {[1, 2, 3, 4].map(i => (
-                            <SimpleContainer key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0' }}>
+                            <SimpleContainer key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.625rem 0' }}>
                                 <Skeleton width="30%" height={14} />
                                 <Skeleton width="40%" height={14} />
                             </SimpleContainer>
@@ -243,11 +243,11 @@ export default function PlanUsageScreen() {
                                     })}
 
                                     {renderMeter({
-                                        title: t('planUsage.meters.storageGb'),
-                                        used: normalized.meters.storageGbUsed,
-                                        quota: normalized.quotas?.storageGbQuota,
-                                        unit: 'GB',
-                                        labelKey: 'planUsage.progress.storageGb',
+                                        title: t('planUsage.meters.storageMb'),
+                                        used: normalized.meters.storageMbUsed,
+                                        quota: normalized.quotas?.storageMbQuota,
+                                        unit: 'MB',
+                                        labelKey: 'planUsage.progress.storageMb',
                                     })}
                                     {normalized.meters.storageBytesTotal != null && (
                                         <Text14 className="lw-planUsageScreen__storageDetail">

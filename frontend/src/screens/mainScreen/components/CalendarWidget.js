@@ -16,27 +16,28 @@ import "./CalendarWidget.scss";
 const NAVY = "#2A4365";
 const SLATE = "#4C6690";
 
-function startOfDay(d) {
-    const x = new Date(d);
-    x.setHours(0, 0, 0, 0);
-    return x;
+function jerusalemDateKey(value) {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(value));
+}
+
+function addJerusalemDays(fromDate, days) {
+    const [y, m, d] = jerusalemDateKey(fromDate).split("-").map(Number);
+    const shifted = new Date(Date.UTC(y, m - 1, d + days));
+    return jerusalemDateKey(shifted);
 }
 
 function bucketEvents(events) {
-    const today = startOfDay(new Date());
-    const tomorrow = startOfDay(new Date());
-    tomorrow.setDate(today.getDate() + 1);
-    const dayAfter = startOfDay(new Date());
-    dayAfter.setDate(today.getDate() + 2);
+    const todayKey = jerusalemDateKey(new Date());
+    const tomorrowKey = addJerusalemDays(new Date(), 1);
 
     const inTodayBucket = [];
     const inTomorrowBucket = [];
 
     for (const ev of events || []) {
         if (!ev?.startTime) continue;
-        const start = new Date(ev.startTime);
-        if (start >= today && start < tomorrow) inTodayBucket.push(ev);
-        else if (start >= tomorrow && start < dayAfter) inTomorrowBucket.push(ev);
+        const key = jerusalemDateKey(ev.startTime);
+        if (key === todayKey) inTodayBucket.push(ev);
+        else if (key === tomorrowKey) inTomorrowBucket.push(ev);
     }
 
     inTodayBucket.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));

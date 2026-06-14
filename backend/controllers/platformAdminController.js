@@ -25,7 +25,7 @@ exports.listPlans = async (req, res) => {
           documents_retention_days_core as "DocumentsRetentionDaysCore",
           documents_retention_days_pii as "DocumentsRetentionDaysPii",
           documents_monthly_quota as "DocumentsMonthlyQuota",
-          storage_gb_quota as "StorageGbQuota",
+          storage_mb_quota as "StorageMbQuota",
           otp_sms_monthly_quota as "OtpSmsMonthlyQuota",
           evidence_generations_monthly_quota as "EvidenceGenerationsMonthlyQuota",
           evidence_cpu_seconds_monthly_quota as "EvidenceCpuSecondsMonthlyQuota",
@@ -60,7 +60,9 @@ exports.upsertPlan = async (req, res) => {
     const documentsRetentionDaysPii = toPositiveIntOrNull(req?.body?.documents_retention_days_pii ?? req?.body?.documentsRetentionDaysPii);
 
     const documentsMonthlyQuota = toPositiveIntOrNull(req?.body?.documents_monthly_quota ?? req?.body?.documentsMonthlyQuota);
-    const storageGbQuota = toPositiveIntOrNull(req?.body?.storage_gb_quota ?? req?.body?.storageGbQuota);
+    const storageMbQuota = toPositiveIntOrNull(
+        req?.body?.storage_mb_quota ?? req?.body?.storageMbQuota ?? req?.body?.storage_gb_quota ?? req?.body?.storageGbQuota
+    );
     const casesQuota = toPositiveIntOrNull(req?.body?.cases_quota ?? req?.body?.casesQuota);
     const clientsQuota = toPositiveIntOrNull(req?.body?.clients_quota ?? req?.body?.clientsQuota);
     const usersQuota = toPositiveIntOrNull(req?.body?.users_quota ?? req?.body?.usersQuota);
@@ -95,7 +97,7 @@ exports.upsertPlan = async (req, res) => {
           documents_retention_days_core,
           documents_retention_days_pii,
           documents_monthly_quota,
-          storage_gb_quota,
+          storage_mb_quota,
                     otp_sms_monthly_quota,
                     evidence_generations_monthly_quota,
                     evidence_cpu_seconds_monthly_quota,
@@ -116,7 +118,7 @@ exports.upsertPlan = async (req, res) => {
            documents_retention_days_core = excluded.documents_retention_days_core,
            documents_retention_days_pii = excluded.documents_retention_days_pii,
            documents_monthly_quota = excluded.documents_monthly_quota,
-           storage_gb_quota = excluded.storage_gb_quota,
+           storage_mb_quota = excluded.storage_mb_quota,
               otp_sms_monthly_quota = excluded.otp_sms_monthly_quota,
               evidence_generations_monthly_quota = excluded.evidence_generations_monthly_quota,
               evidence_cpu_seconds_monthly_quota = excluded.evidence_cpu_seconds_monthly_quota,
@@ -135,7 +137,7 @@ exports.upsertPlan = async (req, res) => {
                 documentsRetentionDaysCore ?? null,
                 documentsRetentionDaysPii ?? null,
                 documentsMonthlyQuota,
-                storageGbQuota,
+                storageMbQuota,
                 otpSmsMonthlyQuota,
                 evidenceGenerationsMonthlyQuota,
                 evidenceCpuSecondsMonthlyQuota,

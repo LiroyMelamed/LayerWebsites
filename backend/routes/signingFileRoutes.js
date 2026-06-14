@@ -6,6 +6,7 @@ const signingFileController = require("../controllers/signingFileController");
 const crypto = require('crypto');
 const { createRateLimitMiddleware } = require('../utils/rateLimiter');
 const { requireSigningEnabledForUser, requireSigningEnabledForSigningFile } = require('../middlewares/requireSigningEnabled');
+const requireLawyerOrAdmin = require('../middlewares/requireLawyerOrAdmin');
 
 function hashToken(raw) {
     const token = String(raw || '');
@@ -71,7 +72,7 @@ router.post("/upload", authMiddleware, requireSigningEnabledForUser, signingFile
 router.get("/client-files", authMiddleware, requireSigningEnabledForUser, signingFileController.getClientSigningFiles);
 
 // רשימת קבצים שעו"ד שלח ללקוחות
-router.get("/lawyer-files", authMiddleware, requireSigningEnabledForUser, signingFileController.getLawyerSigningFiles);
+router.get("/lawyer-files", authMiddleware, requireLawyerOrAdmin, requireSigningEnabledForUser, signingFileController.getLawyerSigningFiles);
 
 // (אופציונלי) רק בהמתנה ללקוח
 router.get("/pending", authMiddleware, requireSigningEnabledForUser, signingFileController.getPendingSigningFiles);

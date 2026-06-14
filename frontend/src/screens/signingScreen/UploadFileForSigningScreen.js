@@ -1,5 +1,5 @@
 // src/screens/signingScreen/UploadFileForSigningScreen.js
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 
@@ -17,6 +17,7 @@ import { Text14, TextBold24 } from "../../components/specializedComponents/text/
 import { images } from "../../assets/images/images";
 import signingFilesApi from "../../api/signingFilesApi";
 import billingApi from "../../api/billingApi";
+import platformSettingsApi from "../../api/platformSettingsApi";
 
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
 import { getNavBarData } from "../../components/navBars/data/NavBarData";
@@ -194,6 +195,74 @@ export default function UploadFileForSigningScreen() {
     useEffect(() => {
         loadBillingPlan();
     }, [loadBillingPlan]);
+
+    // Platform admin's allowlist for SIGN_INVITE — drives which delivery
+    // methods (email / phone) the lawyer can pick per signer. Defaults to
+    // both enabled so the picker still works if the lookup fails.
+    const [signInviteChannels, setSignInviteChannels] = useState({ email: true, sms: true });
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await platformSettingsApi.getChannelsLite();
+                const list = res?.data?.channels || res?.channels || [];
+                const found = Array.isArray(list)
+                    ? list.find((c) => c?.notification_type === "SIGN_INVITE")
+                    : null;
+                if (!cancelled && found) {
+                    setSignInviteChannels({
+                        email: !!found.email_enabled,
+                        sms: !!found.sms_enabled,
+                    });
+                }
+            } catch {
+                // best-effort — keep defaults
+            }
+        })();
+        return () => { cancelled = true; };
+    }, []);
+
+    const deliveryOptions = useMemo(() => {
+        const opts = [];
+        if (signInviteChannels.email && signInviteChannels.sms) {
+            opts.push({ value: "both", label: t("signing.upload.deliveryBoth") });
+        }
+        if (signInviteChannels.email) {
+            opts.push({ value: "email", label: t("signing.upload.deliveryEmail") });
+        }
+        if (signInviteChannels.sms) {
+            opts.push({ value: "phone", label: t("signing.upload.deliveryPhone") });
+        }
+        return opts;
+    }, [signInviteChannels.email, signInviteChannels.sms, t]);
+
+    const defaultDeliveryMethod = signInviteChannels.email && signInviteChannels.sms
+        ? "both"
+        : signInviteChannels.email
+            ? "email"
+            : signInviteChannels.sms
+                ? "phone"
+                : "both";
+
+    // If the platform admin disables a channel after a signer was added,
+    // coerce that signer's stored deliveryMethod into one that's still allowed.
+    useEffect(() => {
+        setSelectedSigners((prev) => {
+            let changed = false;
+            const next = prev.map((s) => {
+                const m = s.deliveryMethod || "both";
+                const stillAllowed =
+                    (m === "both" && signInviteChannels.email && signInviteChannels.sms) ||
+                    (m === "email" && signInviteChannels.email) ||
+                    (m === "phone" && signInviteChannels.sms);
+                if (stillAllowed) return s;
+                changed = true;
+                return { ...s, deliveryMethod: defaultDeliveryMethod };
+            });
+            return changed ? next : prev;
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [signInviteChannels.email, signInviteChannels.sms]);
 
     const openFieldEditor = (index) => {
         const spot = signatureSpots[index];
@@ -740,7 +809,7 @@ export default function UploadFileForSigningScreen() {
                     Name: customer.Name || t('signing.signerFallback', { index: prev.length + 1 }),
                     Email: customer.Email || null,
                     Phone: customer.PhoneNumber || customer.Phone || null,
-                    deliveryMethod: 'both', // 'email' | 'phone' | 'both'
+                    deliveryMethod: defaultDeliveryMethod, // 'email' | 'phone' | 'both'
                 },
             ];
         });
@@ -756,9 +825,9 @@ export default function UploadFileForSigningScreen() {
         const tempId = nextManualIdRef.current;
         nextManualIdRef.current -= 1;
 
-        let deliveryMethod = 'both';
-        if (email && !phone) deliveryMethod = 'email';
-        else if (phone && !email) deliveryMethod = 'phone';
+        let deliveryMethod = defaultDeliveryMethod;
+        if (email && !phone && signInviteChannels.email) deliveryMethod = 'email';
+        else if (phone && !email && signInviteChannels.sms) deliveryMethod = 'phone';
 
         setSelectedSigners((prev) => [
             ...prev,
@@ -1152,24 +1221,30 @@ export default function UploadFileForSigningScreen() {
                                                     </span>
                                                 )}
                                             </span>
-                                            <select
-                                                className="lw-uploadSigningScreen__deliverySelect"
-                                                value={s.deliveryMethod || 'both'}
-                                                onChange={(e) => {
-                                                    const method = e.target.value;
-                                                    setSelectedSigners((prev) =>
-                                                        prev.map((sig) =>
-                                                            Number(sig.UserId) === Number(s.UserId)
-                                                                ? { ...sig, deliveryMethod: method }
-                                                                : sig
-                                                        )
-                                                    );
-                                                }}
-                                            >
-                                                <option value="both">{t('signing.upload.deliveryBoth')}</option>
-                                                <option value="email">{t('signing.upload.deliveryEmail')}</option>
-                                                <option value="phone">{t('signing.upload.deliveryPhone')}</option>
-                                            </select>
+                                            {deliveryOptions.length > 1 ? (
+                                                <select
+                                                    className="lw-uploadSigningScreen__deliverySelect"
+                                                    value={s.deliveryMethod || defaultDeliveryMethod}
+                                                    onChange={(e) => {
+                                                        const method = e.target.value;
+                                                        setSelectedSigners((prev) =>
+                                                            prev.map((sig) =>
+                                                                Number(sig.UserId) === Number(s.UserId)
+                                                                    ? { ...sig, deliveryMethod: method }
+                                                                    : sig
+                                                            )
+                                                        );
+                                                    }}
+                                                >
+                                                    {deliveryOptions.map((opt) => (
+                                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                    ))}
+                                                </select>
+                                            ) : deliveryOptions.length === 1 ? (
+                                                <span className="lw-uploadSigningScreen__deliveryFixed">
+                                                    {deliveryOptions[0].label}
+                                                </span>
+                                            ) : null}
                                             <button
                                                 type="button"
                                                 className="lw-uploadSigningScreen__signerChipEdit"

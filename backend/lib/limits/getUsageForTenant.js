@@ -44,7 +44,7 @@ async function getUsageForTenant(tenantId) {
         cases: null,
         clients: null,
         users: null,
-        storageGb: null,
+        storageMb: null,
         notifications: null,
     };
 }

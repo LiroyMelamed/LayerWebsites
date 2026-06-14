@@ -5,6 +5,31 @@ import SimpleIcon from './SimpleIcon';
 
 import './SimpleInput.scss';
 
+/**
+ * Deterministic display for native date/time inputs.
+ * Browsers render these values in the OS language/format (e.g. "06/12/2026, 10:30 AM"
+ * on an English phone). The site language must win, so while the input is not
+ * focused we mask the native text and show a fixed dd/mm/yyyy HH:mm rendering.
+ * Pure string parsing — no Date object — to avoid timezone shifts.
+ */
+function formatTemporalDisplay(type, rawValue) {
+    const v = String(rawValue ?? '');
+    if (!v) return '';
+    if (type === 'date') {
+        const m = v.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        return m ? `${m[3]}/${m[2]}/${m[1]}` : v;
+    }
+    if (type === 'datetime-local') {
+        const m = v.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+        return m ? `${m[3]}/${m[2]}/${m[1]} ${m[4]}:${m[5]}` : v;
+    }
+    if (type === 'time') {
+        const m = v.match(/^(\d{2}):(\d{2})/);
+        return m ? `${m[1]}:${m[2]}` : v;
+    }
+    return '';
+}
+
 const SimpleInput = forwardRef(
     ({
         title,
@@ -94,6 +119,12 @@ const SimpleInput = forwardRef(
         const temporalTypes = ['date', 'datetime-local', 'time', 'month', 'week'];
         const isTemporalInput = temporalTypes.includes(type);
 
+        // Mask OS-locale rendering of date/time values while not focused.
+        const temporalDisplay = isTemporalInput && !isFocused
+            ? formatTemporalDisplay(type, delayedValue)
+            : '';
+        const isTemporalMasked = isTemporalInput && !isFocused;
+
         const resolvedDir = containerDir || 'rtl';
         const inputDir = isTemporalInput ? 'ltr' : resolvedDir;
         const inputTextAlign = isTemporalInput ? 'left' : 'right';
@@ -112,6 +143,7 @@ const SimpleInput = forwardRef(
             className,
             isFocused ? 'is-focused' : '',
             shouldFloatLabel ? 'is-floated' : '',
+            isTemporalMasked ? 'is-temporalMasked' : '',
             error ? 'has-error' : '',
             disabled ? 'is-disabled' : '',
             rightIcon ? 'has-rightIcon' : '',
@@ -166,6 +198,12 @@ const SimpleInput = forwardRef(
                     {...props}
                 />
 
+                {isTemporalMasked && temporalDisplay && (
+                    <span className="lw-simpleInput__temporalDisplay" aria-hidden="true">
+                        {temporalDisplay}
+                    </span>
+                )}
+
                 {leftIcon && (
                     <SimpleContainer
                         className="lw-simpleInput__icon lw-simpleInput__icon--left"
@@ -194,7 +232,7 @@ export const inputStyles = {
     Small: {
         height: 24,
         fontSize: 12,
-        padding: '8px',
+        padding: '0.5rem',
         labelTop: '50%',
         borderStyle: 'solid',
         transformFocused: 'translateY(-85%) scale(0.7)',
@@ -202,7 +240,7 @@ export const inputStyles = {
     Medium: {
         height: 32,
         fontSize: 16,
-        padding: '16px',
+        padding: '1rem',
         labelTop: '50%',
         borderStyle: 'solid',
         transformFocused: 'translateY(-110%) scale(0.7)',
@@ -210,7 +248,7 @@ export const inputStyles = {
     Big: {
         height: 40,
         fontSize: 24,
-        padding: '16px',
+        padding: '1rem',
         labelTop: '50%',
         transformFocused: 'translateY(-110%) scale(0.7)',
     },

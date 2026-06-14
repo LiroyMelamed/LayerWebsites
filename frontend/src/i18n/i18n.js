@@ -10,6 +10,8 @@ const STORAGE_KEY = 'ml_lang';
 function getInitialLanguage() {
     const raw = typeof window !== 'undefined' ? window.localStorage.getItem(STORAGE_KEY) : null;
     if (raw === 'he' || raw === 'ar' || raw === 'en') return raw;
+    const envDefault = process.env.REACT_APP_DEFAULT_LANG;
+    if (envDefault === 'he' || envDefault === 'ar' || envDefault === 'en') return envDefault;
     return 'he';
 }
 

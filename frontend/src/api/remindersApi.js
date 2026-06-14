@@ -27,6 +27,11 @@ const remindersApi = {
         return await ApiUtils.get(`${base}?${params.toString()}`);
     },
 
+    /** Fetch a single reminder by id (used by the calendar event modal) */
+    getReminder: async (id) => {
+        return await ApiUtils.get(`${base}/${id}`);
+    },
+
     /** Cancel a PENDING reminder */
     cancelReminder: async (id) => {
         return await ApiUtils.put(`${base}/${id}/cancel`);

@@ -3,11 +3,16 @@
 
 .lw-personalSyncModal {
     flex-direction: column;
-    min-inline-size: min(420px, 90vw);
-    max-inline-size: 520px;
+    width: 100%;
+    min-inline-size: min(26.25rem, 90vw);
+    max-inline-size: 32.5rem;
     max-block-size: calc(85vh - 2rem);
     overflow: hidden;
     margin: 0 auto;
+
+    > .lw-simpleScrollView {
+        padding: v.$space-4;
+    }
 }
 
 .lw-personalSyncModal__scroll {
@@ -15,14 +20,11 @@
     min-block-size: 0;
     flex-direction: column;
     gap: v.$space-4;
-    padding-block-end: v.$space-2;
 }
 
-.lw-personalSyncModal__header {
-    flex-direction: column;
-    gap: v.$space-2;
-    padding-block-end: v.$space-3;
-    border-block-end: 1px solid rgba(226, 232, 240, 0.8);
+.lw-personalSyncModal__title {
+    margin-block-end: v.$space-2;
+    text-align: right;
 }
 
 .lw-personalSyncModal__section {
@@ -32,7 +34,7 @@
 
 .lw-personalSyncModal__section--border {
     padding-block-start: v.$space-3;
-    border-block-start: 1px solid rgba(226, 232, 240, 0.8);
+    border-block-start: 0.0625rem solid rgba(226, 232, 240, 0.8);
 }
 
 .lw-personalSyncModal__icalRow {
@@ -42,7 +44,7 @@
 
 .lw-personalSyncModal__icalUrl {
     background: #EDF2F7;
-    border-radius: 8px;
+    border-radius: 0.5rem;
     padding: v.$space-3;
 }
 
@@ -51,8 +53,8 @@
     flex-wrap: wrap;
 }
 
-.lw-personalSyncModal__footer {
-    padding-block-start: v.$space-3;
-    border-block-start: 1px solid rgba(226, 232, 240, 0.8);
+.lw-personalSyncModal__buttonsRow {
+    @include m.row(v.$space-2);
     justify-content: flex-end;
+    margin-block-start: v.$space-2;
 }

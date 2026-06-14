@@ -102,14 +102,14 @@ const GenericButton = forwardRef(({
         // runtime dynamic: button visuals depend on props + pressed/disabled state
         const nextStyle = {
             padding: size === buttonSizes.SMALL ? '0.4rem 0.5rem' : '0.8rem 1rem',
-            height: `${getButtonHeightBySize(size)}px`,
+            height: `${getButtonHeightBySize(size) / 16}rem`,
             backgroundColor: getBackgroundColor(),
-            borderWidth: hasBorder ? '1px' : '0',
+            borderWidth: hasBorder ? '0.0625rem' : '0',
             borderStyle: 'solid',
             borderColor: getContentColor(),
-            boxShadow: disabled ? 'none' : '0 2px 4px rgba(0,0,0,0.1)',
+            boxShadow: disabled ? 'none' : '0 0.125rem 0.25rem rgba(0,0,0,0.1)',
             transform: isButtonPressed() ? 'scale(0.98)' : 'scale(1)',
-            borderRadius: '8px',
+            borderRadius: '0.5rem',
             fontWeight: 500,
             ...(customStyle || {}),
         };

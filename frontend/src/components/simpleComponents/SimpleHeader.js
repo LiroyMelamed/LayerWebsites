@@ -9,7 +9,7 @@ const SimpleHeader = ({ logoSrc, logoAlt, navLinks, style }) => {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '12px 24px',
+    padding: '0.75rem 1.5rem',
     backgroundColor: colors.greyBackground,
     ...style
   };
@@ -22,7 +22,7 @@ const SimpleHeader = ({ logoSrc, logoAlt, navLinks, style }) => {
   return (
     <header style={headerStyle}>
       <SimpleContainer style={logoContainerStyle}>
-        <SimpleImage src={logoSrc} alt={logoAlt} width="150px" height="50px" />
+        <SimpleImage src={logoSrc} alt={logoAlt} width="9.375rem" height="3.125rem" />
       </SimpleContainer>
       <SimpleNav links={navLinks} />
     </header>

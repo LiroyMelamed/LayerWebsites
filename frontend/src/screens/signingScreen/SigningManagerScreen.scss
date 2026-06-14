@@ -67,6 +67,11 @@
     flex: 0 1 auto;
 }
 
+.lw-signingManagerScreen__scopeSwitch {
+    align-self: flex-end;
+    flex: 0 0 auto;
+}
+
 .lw-signingManagerScreen__dateInput {
     flex: 0 1 10rem;
     min-inline-size: 7rem;
@@ -183,7 +188,7 @@
     flex: 1;
     font-size: 1rem;
     padding: 0.4rem 0.6rem;
-    border: 1px solid #ccc;
+    border: 0.0625rem solid #ccc;
     border-radius: 0.25rem;
     direction: rtl;
 }
@@ -260,7 +265,7 @@
     flex-direction: column;
     margin-top: 1rem;
     padding: 1rem;
-    border: 1px solid #e0e0e0;
+    border: 0.0625rem solid #e0e0e0;
     border-radius: 0.5rem;
     background-color: #f9f9f9;
 }
@@ -277,7 +282,7 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 0;
-    border-bottom: 1px solid #eee;
+    border-bottom: 0.0625rem solid #eee;
     cursor: pointer;
 
     &:last-of-type {

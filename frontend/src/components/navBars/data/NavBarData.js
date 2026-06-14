@@ -1,18 +1,20 @@
-import { AllCasesScreenName } from "../../../screens/allCasesScreen/AllCasesScreen";
-import { AllMangerScreenName } from "../../../screens/allMangerScreen/AllMangerScreen";
-import { AllCasesTypeScreenName } from "../../../screens/allCasesTypeScreen/AllCasesTypeScreen";
 import CaseFullView from "../../styledComponents/cases/CaseFullView";
 import { AdminStackName } from "../../../navigation/AdminStack";
-import { SigningManagerScreenName } from "../../../screens/signingScreen/SigningManagerScreen";
-import { EvidenceDocumentsScreenName } from "../../../screens/evidenceDocuments/EvidenceDocumentsScreen";
-import { PlanUsageScreenName } from "../../../screens/billingScreen/PlanUsageScreen";
-import { PlansPricingScreenName } from "../../../screens/billingScreen/PlansPricingScreen";
-import { PlatformSettingsScreenName } from "../../../screens/platformSettingsScreen/PlatformSettingsScreen";
-import { RemindersScreenName } from "../../../screens/remindersScreen/RemindersScreen";
-import { CalendarScreenName } from "../../../screens/calendarScreen/CalendarScreen";
+import {
+    AllCasesScreenName,
+    AllCasesTypeScreenName,
+    AllClientsScreenName,
+    AllMangerScreenName,
+    CalendarScreenName,
+    EvidenceDocumentsScreenName,
+    PlanUsageScreenName,
+    PlansPricingScreenName,
+    PlatformSettingsScreenName,
+    RemindersScreenName,
+    SigningManagerScreenName,
+    uploadFileForSigningScreenName,
+} from "../../../navigation/screenPaths";
 import { ENABLE_CALENDAR_MODULE } from "../../../featureFlags";
-import { uploadFileForSigningScreenName } from "../../../screens/signingScreen/UploadFileForSigningScreen";
-import { AllClientsScreenName } from "../../../screens/allClientsScreen/AllClientsScreen";
 
 export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t) => {
     const isPlatformAdmin = typeof window !== 'undefined' && localStorage.getItem('isPlatformAdmin') === 'true';

@@ -28,9 +28,9 @@ const calendarApi = {
     },
 
     /** Soft overlap detector (Step 5 conflict banner). */
-    checkConflict: async ({ start_time, end_time, lawyer_id, exclude_event_id } = {}) => {
+    checkConflict: async ({ start_time, end_time, lawyer_id, lawyer_ids, exclude_event_id } = {}) => {
         return await ApiUtils.post(`${base}/check-conflict`, {
-            start_time, end_time, lawyer_id, exclude_event_id,
+            start_time, end_time, lawyer_id, lawyer_ids, exclude_event_id,
         });
     },
 
@@ -106,6 +106,24 @@ const calendarApi = {
     /** Pull the latest events from Google Calendar into the platform */
     syncGoogleEvents: async () => {
         return await ApiUtils.post(`${base}/google/sync`);
+    },
+
+    // ── Outlook Calendar ───────────────────────────────────────────────────────
+
+    getOutlookAuthUrl: async () => {
+        return await ApiUtils.get(`${base}/outlook/auth-url`);
+    },
+
+    getOutlookStatus: async () => {
+        return await ApiUtils.get(`${base}/outlook/status`);
+    },
+
+    disconnectOutlook: async () => {
+        return await ApiUtils.delete(`${base}/outlook/disconnect`);
+    },
+
+    syncOutlookEvents: async () => {
+        return await ApiUtils.post(`${base}/outlook/sync`);
     },
 };
 

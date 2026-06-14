@@ -6,6 +6,8 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import heLocale from "@fullcalendar/core/locales/he";
+import arLocale from "@fullcalendar/core/locales/ar";
+import enGbLocale from "@fullcalendar/core/locales/en-gb";
 
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
 import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
@@ -31,14 +33,31 @@ import { adminApi } from "../../api/adminApi";
 import { customersApi } from "../../api/customersApi";
 import casesApi from "../../api/casesApi";
 
+import SegmentedSwitch from "../../components/styledComponents/SegmentedSwitch";
+
 import EventFormModal from "./components/EventFormModal";
 import PersonalSyncModal from "./components/PersonalSyncModal";
-import { colorForKey, colorKeyForEvent, leaveColor, buildLawyerLegend } from "./utils/lawyerColors";
+import { colorForKey, colorKeyForEvent, leaveColor, holidayColor, buildLawyerLegend } from "./utils/lawyerColors";
 import { buildNewEventPrefill } from "./utils/eventDefaults";
+import {
+    defaultSchedule,
+    parseScheduleFromCalendarSettings,
+    getHiddenDays,
+    getBusinessHours,
+    getSlotRange,
+} from "./utils/workingHours";
 
 import "./CalendarScreen.scss";
 
 export const CalendarScreenName = "/CalendarScreen";
+
+/** FullCalendar locale must follow the website language (i18next), not the OS. */
+function fullCalendarLocaleFor(lang) {
+    const key = String(lang || "").toLowerCase().slice(0, 2);
+    if (key === "ar") return arLocale;
+    if (key === "en") return enGbLocale;
+    return heLocale;
+}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const SCOPE_MINE = "mine";
@@ -49,6 +68,7 @@ const EVENT_TYPE_APPT = "appointment";
 const EVENT_TYPE_LEAVE = "leave";
 const EVENT_TYPE_HEARING = "hearing";
 const EVENT_TYPE_REMINDER = "reminder";
+const EVENT_TYPE_HOLIDAY = "holiday";
 
 const EVENT_TYPE_FILTER_OPTIONS = [
     { v: EVENT_TYPE_ALL, labelKey: "calendar.eventTypeAll" },
@@ -56,6 +76,7 @@ const EVENT_TYPE_FILTER_OPTIONS = [
     { v: EVENT_TYPE_LEAVE, labelKey: "calendar.eventTypeLeave" },
     { v: EVENT_TYPE_HEARING, labelKey: "calendar.eventTypeHearing" },
     { v: EVENT_TYPE_REMINDER, labelKey: "calendar.eventTypeReminder" },
+    { v: EVENT_TYPE_HOLIDAY, labelKey: "calendar.eventTypeHoliday" },
 ];
 
 function _eventTypeFilterLabel(eventType, t) {
@@ -65,26 +86,53 @@ function _eventTypeFilterLabel(eventType, t) {
 
 // Map a raw calendar_events row → FullCalendar EventInput. The scope drives
 // whether we color by lawyer (firm view) or by event.color (personal view).
+
+/** FullCalendar all-day end is exclusive — extend by one calendar day. */
+function leaveAllDayRange(startTime, endTime) {
+    const start = String(startTime || "").slice(0, 10);
+    const endBase = new Date(endTime);
+    if (Number.isNaN(endBase.getTime())) return { start, end: start };
+    endBase.setUTCDate(endBase.getUTCDate() + 1);
+    return { start, end: endBase.toISOString().slice(0, 10) };
+}
+
+function buildInternalAllDayEvent(ev, { labelPrefix, color, className }) {
+    const managerLabel = ev?.managerName || ev?.ownerName || "";
+    const titleCore = ev?.title || managerLabel;
+    const { start, end } = leaveAllDayRange(ev.startTime, ev.endTime);
+    return {
+        id: String(ev.id),
+        title: titleCore ? `${labelPrefix} ${titleCore}` : labelPrefix,
+        start,
+        end,
+        allDay: true,
+        backgroundColor: color,
+        borderColor: color,
+        textColor: "#FFFFFF",
+        classNames: [className],
+        extendedProps: ev,
+    };
+}
+
 function buildFullCalendarEvent(ev, { scope }) {
     const isLeave = ev?.eventType === "leave";
+    const isHoliday = ev?.eventType === "holiday";
 
-    // Leave events render as muted background blocks across the day(s).
+    // Leave/holiday events render as muted background blocks across the day(s).
+    // Must be all-day — timed background events do not span days in month view.
     if (isLeave) {
-        const lawyerName = ev?.ownerName || "";
-        const labelPrefix = "[חופשה]";
-        return {
-            id: String(ev.id),
-            title: lawyerName ? `${labelPrefix} ${lawyerName}` : `${labelPrefix} ${ev.title || ""}`.trim(),
-            start: ev.startTime,
-            end: ev.endTime,
-            allDay: ev.allDay,
-            display: "background",
-            backgroundColor: leaveColor(),
-            borderColor: leaveColor(),
-            textColor: "#FFFFFF",
-            classNames: ["lw-fcEvent--leave"],
-            extendedProps: ev,
-        };
+        return buildInternalAllDayEvent(ev, {
+            labelPrefix: "[חופשה]",
+            color: leaveColor(),
+            className: "lw-fcEvent--leave",
+        });
+    }
+    if (isHoliday) {
+        return buildInternalAllDayEvent(ev, {
+            labelPrefix: "[חג]",
+            color: holidayColor(),
+            className: "lw-fcEvent--holiday",
+        });
     }
 
     // Appointments: color by owner in firm view, otherwise honor stored color
@@ -136,7 +184,7 @@ function _eventFormModalKey(event) {
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 export default function CalendarScreen() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const navigate = useNavigate();
     const { isSmallScreen } = useScreenSize();
     const { openPopup, closePopup } = usePopup();
@@ -168,10 +216,8 @@ export default function CalendarScreen() {
     });
     const [filtersPanelOpen, setFiltersPanelOpen] = useState(!isSmallScreen);
 
-    // ── Working-hours config ───────────────────────────────────────────────
-    const [workingDays, setWorkingDays] = useState([0, 1, 2, 3, 4]);
-    const [workingHoursStart, setWorkingHoursStart] = useState("08:00");
-    const [workingHoursEnd, setWorkingHoursEnd] = useState("18:00");
+    // ── Working-hours config (per weekday) ─────────────────────────────────
+    const [workingSchedule, setWorkingSchedule] = useState(() => defaultSchedule());
 
     // ── Reference data for filter panel ────────────────────────────────────
     const [lawyers, setLawyers] = useState([]);
@@ -199,16 +245,6 @@ export default function CalendarScreen() {
 
     // ── Google callback toast ──────────────────────────────────────────────
     const [googleMsg, setGoogleMsg] = useState("");
-    useEffect(() => {
-        if (searchParams.get("google_connected") === "1") {
-            setGoogleMsg("Google Calendar חובר בהצלחה ✓");
-            setTimeout(() => setGoogleMsg(""), 4000);
-        }
-        if (searchParams.get("google_error") === "1") {
-            setGoogleMsg("חיבור Google Calendar נכשל. נסה שוב.");
-            setTimeout(() => setGoogleMsg(""), 4000);
-        }
-    }, [searchParams]);
 
     // ── Load lawyer list (for filter + legend) ─────────────────────────────
     useEffect(() => {
@@ -224,7 +260,7 @@ export default function CalendarScreen() {
         return () => { cancelled = true; };
     }, [canUseFirmView]);
 
-    // ── Load firm working days/hours from platform settings ────────────────
+    // ── Load firm per-day working hours from platform settings ─────────────
     useEffect(() => {
         let cancelled = false;
         (async () => {
@@ -232,22 +268,7 @@ export default function CalendarScreen() {
                 const res = await platformSettingsApi.getAll();
                 const cal = res?.data?.settings?.calendar || res?.settings?.calendar || {};
                 if (cancelled) return;
-                const daysRaw = cal?.WORKING_DAYS?.effectiveValue;
-                if (typeof daysRaw === "string" && daysRaw.length) {
-                    const parsed = daysRaw
-                        .split(",")
-                        .map((s) => parseInt(s.trim(), 10))
-                        .filter((n) => Number.isInteger(n) && n >= 0 && n <= 6);
-                    if (parsed.length) setWorkingDays(parsed);
-                }
-                const startRaw = cal?.WORKING_HOURS_START?.effectiveValue;
-                if (typeof startRaw === "string" && /^\d{2}:\d{2}/.test(startRaw)) {
-                    setWorkingHoursStart(startRaw.slice(0, 5));
-                }
-                const endRaw = cal?.WORKING_HOURS_END?.effectiveValue;
-                if (typeof endRaw === "string" && /^\d{2}:\d{2}/.test(endRaw)) {
-                    setWorkingHoursEnd(endRaw.slice(0, 5));
-                }
+                setWorkingSchedule(parseScheduleFromCalendarSettings(cal));
             } catch { /* keep defaults */ }
         })();
         return () => { cancelled = true; };
@@ -256,9 +277,10 @@ export default function CalendarScreen() {
     // ── Filter assembly ─────────────────────────────────────────────────────
     const apiFilters = useMemo(() => {
         const f = {};
-        // scope=firm is only meaningful for lawyers/admins; non-managers always get scope=mine.
-        if (canUseFirmView && scope === SCOPE_FIRM) f.scope = SCOPE_FIRM;
-        if (filters.lawyer_id) f.lawyer_id = filters.lawyer_id;
+        const isFirmScope = canUseFirmView && scope === SCOPE_FIRM;
+        f.scope = isFirmScope ? SCOPE_FIRM : SCOPE_MINE;
+        // Lawyer pin is firm-view only — must not leak into "היומן שלי".
+        if (isFirmScope && filters.lawyer_id) f.lawyer_id = filters.lawyer_id;
         if (filters.client_id) f.client_id = filters.client_id;
         if (filters.case_id) f.case_id = filters.case_id;
         if (filters.event_type && filters.event_type !== EVENT_TYPE_ALL) {
@@ -289,17 +311,51 @@ export default function CalendarScreen() {
     // Re-fetch whenever filters/scope change (range is reused from the last datesSet).
     useEffect(() => { fetchEvents(null); }, [fetchEvents]);
 
-    // ── FullCalendar config ────────────────────────────────────────────────
-    const hiddenDays = useMemo(() => {
-        const set = new Set(workingDays);
-        return [0, 1, 2, 3, 4, 5, 6].filter((d) => !set.has(d));
-    }, [workingDays]);
+    // Lawyer filter is firm-view only — drop it if scope is personal.
+    useEffect(() => {
+        if (scope !== SCOPE_MINE || !filters.lawyer_id) return;
+        setFilters((prev) => ({ ...prev, lawyer_id: null }));
+        setManagerFilterLabel("");
+    }, [scope, filters.lawyer_id]);
 
-    const businessHours = useMemo(() => ({
-        daysOfWeek: workingDays,
-        startTime: workingHoursStart,
-        endTime: workingHoursEnd,
-    }), [workingDays, workingHoursStart, workingHoursEnd]);
+    useEffect(() => {
+        if (searchParams.get("google_connected") === "1") {
+            setGoogleMsg("Google Calendar חובר בהצלחה ✓");
+            (async () => {
+                try {
+                    await calendarApi.syncGoogleEvents();
+                } catch { /* status toast still shown */ }
+                fetchEvents(null);
+            })();
+            setTimeout(() => setGoogleMsg(""), 4000);
+        }
+        if (searchParams.get("google_error") === "1") {
+            setGoogleMsg("חיבור Google Calendar נכשל. נסה שוב.");
+            setTimeout(() => setGoogleMsg(""), 4000);
+        }
+        if (searchParams.get("outlook_connected") === "1") {
+            setGoogleMsg("Outlook Calendar חובר בהצלחה ✓");
+            (async () => {
+                try {
+                    await calendarApi.syncOutlookEvents();
+                } catch { /* status toast still shown */ }
+                fetchEvents(null);
+            })();
+            setTimeout(() => setGoogleMsg(""), 4000);
+        }
+        if (searchParams.get("outlook_error") === "1") {
+            setGoogleMsg("חיבור Outlook Calendar נכשל. נסה שוב.");
+            setTimeout(() => setGoogleMsg(""), 4000);
+        }
+    }, [searchParams, fetchEvents]);
+
+    // ── FullCalendar config ────────────────────────────────────────────────
+    // Hide closed weekdays everywhere (month / week / day) per platform settings.
+    const hiddenDays = useMemo(() => getHiddenDays(workingSchedule), [workingSchedule]);
+
+    const businessHours = useMemo(() => getBusinessHours(workingSchedule), [workingSchedule]);
+
+    const slotRange = useMemo(() => getSlotRange(workingSchedule), [workingSchedule]);
 
     // ── Modal helpers ──────────────────────────────────────────────────────
     const upsertLocally = useCallback((saved) => {
@@ -314,14 +370,30 @@ export default function CalendarScreen() {
     }, [apiFilters.scope]);
 
     const openPersonalSyncModal = useCallback(() => {
-        openPopup(<PersonalSyncModal onClose={closePopup} />);
-    }, [openPopup, closePopup]);
+        openPopup(
+            <PersonalSyncModal
+                closePopUpFunction={closePopup}
+                onEventsChanged={() => fetchEvents(null)}
+            />
+        );
+    }, [openPopup, closePopup, fetchEvents]);
+
+    // Dedupe guard — a desktop mouse click fires both dateClick and select,
+    // which would otherwise open the modal twice.
+    const lastCreateOpenRef = useRef({ key: null, ts: 0 });
 
     const openCreateModal = useCallback((selectInfo) => {
-        const prefill = buildNewEventPrefill(selectInfo, {
-            workingHoursStart,
-            workingHoursEnd,
-        });
+        const prefill = buildNewEventPrefill(selectInfo, { workingSchedule });
+
+        const dedupeKey = prefill.startTime;
+        const now = Date.now();
+        if (
+            lastCreateOpenRef.current.key === dedupeKey &&
+            now - lastCreateOpenRef.current.ts < 800
+        ) {
+            return;
+        }
+        lastCreateOpenRef.current = { key: dedupeKey, ts: now };
 
         openPopup(
             <EventFormModal
@@ -330,6 +402,7 @@ export default function CalendarScreen() {
                 onUpdated={upsertLocally}
                 onSaved={(saved) => {
                     upsertLocally(saved);
+                    fetchEvents(null);
                     closePopup();
                     selectInfo?.view?.calendar?.unselect?.();
                 }}
@@ -337,37 +410,24 @@ export default function CalendarScreen() {
                 onClose={closePopup}
             />
         );
-    }, [openPopup, closePopup, upsertLocally, workingHoursStart, workingHoursEnd]);
+    }, [openPopup, closePopup, upsertLocally, fetchEvents, workingSchedule]);
 
     const openEditModal = useCallback((clickInfo) => {
-        const ev = clickInfo.event.extendedProps;
+        const ev = clickInfo.event.extendedProps || {};
         const eventPayload = {
+            ...ev,
             id: Number(clickInfo.event.id),
-            title: clickInfo.event.title,
-            startTime: clickInfo.event.startStr,
-            endTime: clickInfo.event.endStr,
-            allDay: clickInfo.event.allDay,
-            description: ev.description,
-            location: ev.location,
-            eventType: ev.eventType,
-            clientName: ev.clientName,
-            managerName: ev.managerName,
-            clientUserId: ev.clientUserId,
-            managerUserId: ev.managerUserId,
-            caseId: ev.caseId,
-            caseName: ev.caseName,
-            leadName: ev.leadName,
-            leadPhone: ev.leadPhone,
-            leadEmail: ev.leadEmail,
-            leadCaseName: ev.leadCaseName,
-            color: ev.color,
+            title: ev.title || clickInfo.event.title,
+            startTime: ev.startTime || clickInfo.event.startStr,
+            endTime: ev.endTime || clickInfo.event.endStr,
+            allDay: ev.allDay ?? clickInfo.event.allDay,
         };
         openPopup(
             <EventFormModal
                 key={_eventFormModalKey(eventPayload)}
                 event={eventPayload}
                 onUpdated={upsertLocally}
-                onSaved={(saved) => { upsertLocally(saved); closePopup(); }}
+                onSaved={(saved) => { upsertLocally(saved); fetchEvents(null); closePopup(); }}
                 onDeleted={(deletedId) => {
                     setEvents((prev) => prev.filter((e) => e.id !== String(deletedId)));
                     closePopup();
@@ -375,7 +435,7 @@ export default function CalendarScreen() {
                 onClose={closePopup}
             />
         );
-    }, [openPopup, closePopup, upsertLocally]);
+    }, [openPopup, closePopup, upsertLocally, fetchEvents]);
 
     // ── Deep-link: /CalendarScreen?eventId=<id> ────────────────────────────
     useEffect(() => {
@@ -399,7 +459,7 @@ export default function CalendarScreen() {
                 key={_eventFormModalKey(eventPayload)}
                 event={eventPayload}
                 onUpdated={upsertLocally}
-                onSaved={(saved) => { upsertLocally(saved); closePopup(); }}
+                onSaved={(saved) => { upsertLocally(saved); fetchEvents(null); closePopup(); }}
                 onDeleted={(deletedId) => {
                     setEvents((prev) => prev.filter((e) => e.id !== String(deletedId)));
                     closePopup();
@@ -407,7 +467,7 @@ export default function CalendarScreen() {
                 onClose={closePopup}
             />
         );
-    }, [events, searchParams, openPopup, closePopup, upsertLocally]);
+    }, [events, searchParams, openPopup, closePopup, upsertLocally, fetchEvents]);
 
     // ── View switcher ──────────────────────────────────────────────────────
     const switchView = (v) => {
@@ -423,6 +483,14 @@ export default function CalendarScreen() {
 
     // ── Filter handlers ────────────────────────────────────────────────────
     const setFilter = (key, value) => setFilters((prev) => ({ ...prev, [key]: value }));
+
+    const switchToMineScope = useCallback(() => {
+        setScope(SCOPE_MINE);
+        setFilters((prev) => (prev.lawyer_id ? { ...prev, lawyer_id: null } : prev));
+        setManagerFilterLabel("");
+    }, []);
+
+    const switchToFirmScope = useCallback(() => setScope(SCOPE_FIRM), []);
     const clearAllFilters = () => {
         setFilters({ lawyer_id: null, client_id: null, case_id: null, event_type: EVENT_TYPE_ALL });
         setManagerFilterLabel("");
@@ -463,13 +531,16 @@ export default function CalendarScreen() {
         searchCustomers(name);
     }, [searchCustomers]);
 
-    const handleClientFilterSelected = useCallback((item) => {
+    const handleClientFilterSelected = useCallback((selectedName, resultItem) => {
+        const item = resultItem || (Array.isArray(customerResults)
+            ? customerResults.find((c) => c.Name?.trim() === selectedName?.trim())
+            : null);
         const id = item?.UserId ?? item?.userid ?? item?.id;
-        const name = item?.Name ?? item?.name ?? "";
+        const name = item?.Name ?? item?.name ?? selectedName ?? "";
         if (id == null) return;
         setFilter("client_id", id);
         setClientFilterLabel(name);
-    }, []);
+    }, [customerResults]);
 
     const handleCaseFilterSearch = useCallback((name) => {
         setCaseFilterLabel(name);
@@ -479,13 +550,16 @@ export default function CalendarScreen() {
         searchCases(name);
     }, [searchCases]);
 
-    const handleCaseFilterSelected = useCallback((item) => {
+    const handleCaseFilterSelected = useCallback((selectedName, resultItem) => {
+        const item = resultItem || (Array.isArray(caseResults)
+            ? caseResults.find((c) => c.CaseName?.trim() === selectedName?.trim())
+            : null);
         const id = item?.CaseId ?? item?.caseid ?? item?.id;
-        const name = item?.CaseName ?? item?.casename ?? "";
+        const name = item?.CaseName ?? item?.casename ?? selectedName ?? "";
         if (id == null) return;
         setFilter("case_id", id);
         setCaseFilterLabel(name);
-    }, []);
+    }, [caseResults]);
 
     // ── Lookups for active-filter chips ────────────────────────────────────
     const activeManagerName = filters.lawyer_id
@@ -513,22 +587,19 @@ export default function CalendarScreen() {
 
                     <SimpleContainer className="lw-calendarScreen__headerActions">
                         {canUseFirmView && (
-                            <div className="lw-calendarScreen__scopeToggle" role="group" aria-label={t("calendar.scopeMine")}>
-                                <SimpleButton
-                                    className={`lw-calendarScreen__scopeBtn ${scope === SCOPE_MINE ? "is-active" : ""}`}
-                                    onPress={() => setScope(SCOPE_MINE)}
-                                    aria-pressed={scope === SCOPE_MINE}
-                                >
-                                    {t("calendar.scopeMine")}
-                                </SimpleButton>
-                                <SimpleButton
-                                    className={`lw-calendarScreen__scopeBtn ${scope === SCOPE_FIRM ? "is-active" : ""}`}
-                                    onPress={() => setScope(SCOPE_FIRM)}
-                                    aria-pressed={scope === SCOPE_FIRM}
-                                >
-                                    {t("calendar.scopeFirm")}
-                                </SimpleButton>
-                            </div>
+                            <SegmentedSwitch
+                                className="lw-calendarScreen__scopeSwitch"
+                                ariaLabel={t("calendar.scopeMine")}
+                                value={scope}
+                                onChange={(next) => {
+                                    if (next === SCOPE_FIRM) switchToFirmScope();
+                                    else switchToMineScope();
+                                }}
+                                options={[
+                                    { value: SCOPE_MINE, label: t("calendar.scopeMine") },
+                                    { value: SCOPE_FIRM, label: t("calendar.scopeFirm") },
+                                ]}
+                            />
                         )}
 
                         {isSmallScreen && (
@@ -605,9 +676,9 @@ export default function CalendarScreen() {
                 {/* ── Manager / client / case filters (one row) ── */}
                 {filtersPanelOpen && (
                     <SimpleContainer
-                        className={`lw-calendarScreen__filterRow ${canUseFirmView ? "lw-calendarScreen__filterRow--three" : "lw-calendarScreen__filterRow--two"}`}
+                        className={`lw-calendarScreen__filterRow ${canUseFirmView && scope === SCOPE_FIRM ? "lw-calendarScreen__filterRow--three" : "lw-calendarScreen__filterRow--two"}`}
                     >
-                        {canUseFirmView && (
+                        {canUseFirmView && scope === SCOPE_FIRM && (
                             <SimpleContainer className="lw-calendarScreen__filterGroup">
                                 <SearchInput
                                     title={t("calendar.filterByManager")}
@@ -751,8 +822,8 @@ export default function CalendarScreen() {
                                 ref={calendarRef}
                                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                                 initialView={view}
-                                locale={heLocale}
-                                direction="rtl"
+                                locale={fullCalendarLocaleFor(i18n.language)}
+                                direction={String(i18n.language || "he").startsWith("en") ? "ltr" : "rtl"}
                                 headerToolbar={{
                                     start: "prev,next today",
                                     center: "title",
@@ -762,13 +833,29 @@ export default function CalendarScreen() {
                                 selectable
                                 selectMirror
                                 select={openCreateModal}
+                                // Touch devices: a plain tap doesn't trigger `select`
+                                // (that needs a long-press), so open the create modal
+                                // from dateClick as well. openCreateModal dedupes the
+                                // double-fire on desktop clicks.
+                                dateClick={(info) => {
+                                    const start = info.date;
+                                    let end = null;
+                                    if (!info.allDay && start instanceof Date) {
+                                        end = new Date(start);
+                                        end.setHours(end.getHours() + 1);
+                                    }
+                                    openCreateModal({ start, end, allDay: info.allDay });
+                                }}
                                 eventClick={openEditModal}
                                 datesSet={fetchEvents}
+                                longPressDelay={350}
+                                selectLongPressDelay={350}
+                                eventLongPressDelay={0}
                                 height="auto"
                                 hiddenDays={hiddenDays}
                                 businessHours={businessHours}
-                                slotMinTime={workingHoursStart}
-                                slotMaxTime={workingHoursEnd}
+                                slotMinTime={slotRange.min}
+                                slotMaxTime={slotRange.max}
                                 nowIndicator
                                 nowIndicatorContent={renderNowIndicatorContent}
                                 nowIndicatorClassNames="lw-fcNowIndicator"

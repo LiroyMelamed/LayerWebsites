@@ -44,6 +44,6 @@ export default function TertiaryButton({ children, size, rightIcon, leftIcon, in
 }
 
 const style = {
-    boxShadow: `0 0px 0px 0px rgba(42, 67, 101, 0.12)`,
+    boxShadow: `0 0 0 0 rgba(42, 67, 101, 0.12)`,
     marginBottom: 4,
 }

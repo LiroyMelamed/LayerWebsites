@@ -12,7 +12,7 @@
         gap: 1.5rem;
         padding: 1.5rem 2rem;
         background: rgba(0, 0, 0, 0.15);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.08);
     }
 
     &__logo {
@@ -26,7 +26,7 @@
         font-size: 1.5rem;
         font-weight: 600;
         margin: 0;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.0313rem;
     }
 
     &__body {
@@ -37,15 +37,15 @@
 
     &__content {
         flex-direction: column;
-        max-width: 800px;
+        max-width: 50rem;
         margin: 0 auto;
     }
 
     &__footer {
-        max-width: 800px;
+        max-width: 50rem;
         margin: 3rem auto 1rem;
         padding-top: 2rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        border-top: 0.0625rem solid rgba(255, 255, 255, 0.12);
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -56,7 +56,7 @@
         color: rgba(255, 255, 255, 0.5);
         font-size: 0.7rem;
         text-align: center;
-        max-width: 600px;
+        max-width: 37.5rem;
         line-height: 1.5;
     }
 }
@@ -64,8 +64,8 @@
 /* Shared section card used inside compliance pages */
 .lw-complianceSection {
     background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
+    border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
     padding: 1.5rem 2rem;
     margin-bottom: 1.25rem;
     transition: background 0.2s ease;

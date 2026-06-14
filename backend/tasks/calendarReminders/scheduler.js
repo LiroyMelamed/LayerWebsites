@@ -1,36 +1,9 @@
 /**
  * calendarReminders/scheduler.js
  *
- * Production-grade reminder worker for the synchronized calendar.
- *
- * Design (Step 3):
- *   • Single source of truth — `calendar_events.last_reminder_sent_at`.
- *     Legacy boolean flags reminder_sent_30m / _1d are ignored entirely; a
- *     follow-up migration may drop them.
- *   • Only event_type = 'appointment' is processed. 'leave' events are skipped.
- *   • Race-safe across PM2 cluster workers: each tick opens a transaction,
- *     atomically claims due rows with FOR UPDATE SKIP LOCKED, bumps
- *     last_reminder_sent_at, COMMITs, then dispatches push notifications
- *     OUTSIDE the transaction (so DB connections are released immediately).
- *   • Dual delivery — every reminder pushes once to the lawyer (owner_id) and,
- *     when the appointment is linked to a client/case, once more to the client
- *     (client_user_id) with role-tailored Hebrew text and a deep-link payload.
- *   • If dispatch fails for a claimed row, last_reminder_sent_at is reverted to
- *     its prior value so the next tick re-attempts delivery ("at-least-once").
- *
- * Reminder windows (interpreted from `last_reminder_sent_at` only):
- *   • 1-day  : start_time ∈ [now+23h55m, now+25h]
- *              AND (last_reminder_sent_at IS NULL
- *                   OR last_reminder_sent_at < start_time - 25h)
- *   • 30-min : start_time ∈ [now+25m, now+35m]
- *              AND (last_reminder_sent_at IS NULL
- *                   OR last_reminder_sent_at < start_time - 35m)
- *
- *   Why this works with a single timestamp: after the 1-day push fires we set
- *   last_reminder_sent_at ≈ start_time - 24h. That timestamp IS older than
- *   (start_time - 35m), so the 30-minute claim gate opens correctly ~23.5h
- *   later. After the 30-minute push fires we set the timestamp to ≈ start - 30m,
- *   which fails both gates → no further re-fires for this event.
+ * Dispatches push reminders for calendar events based on per-event
+ * `reminder_offsets` (minutes before start). Lawyers choose reminders when
+ * creating/editing an event — nothing is sent automatically unless selected.
  *
  * Env / platform_settings:
  *   • CALENDAR_REMINDERS_ENABLED        "true" (default) | "false"
@@ -42,29 +15,14 @@
 const cron = require('node-cron');
 const pool = require('../../config/db');
 const settingsService = require('../../services/settingsService');
-const sendAndStoreNotification = require('../../utils/sendAndStoreNotification');
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-const KIND_1D = '1d';
-const KIND_30M = '30m';
+const {
+    composeLawyerReminderMessage,
+    composeClientReminderMessage,
+} = require('../../lib/calendarEventReminders');
+const { dispatchCalendarReminder } = require('../../lib/calendarReminderDispatch');
 
 const DEEP_LINK_SCHEME = 'melamedia://appointment/';
 
-// Per-kind claim window + dedupe gap (Postgres interval literal).
-const WINDOWS = {
-    [KIND_1D]: {
-        windowMinFromNow: 23 * 60 + 55,        // ≥ now + 23h55m
-        windowMaxFromNow: 25 * 60,             // ≤ now + 25h
-        dedupeGapBeforeStart: '25 hours',      // last_reminder_sent_at must be older than (start_time − this)
-    },
-    [KIND_30M]: {
-        windowMinFromNow: 25,                  // ≥ now + 25m
-        windowMaxFromNow: 35,                  // ≤ now + 35m
-        dedupeGapBeforeStart: '35 minutes',
-    },
-};
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 function _buildDeepLinkPayload(eventId) {
     return {
         screen: 'appointment',
@@ -74,127 +32,104 @@ function _buildDeepLinkPayload(eventId) {
     };
 }
 
-function _formatTime(date) {
-    return new Date(date).toLocaleTimeString('he-IL', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-    });
+async function _enrichWithNames(rows) {
+    if (!rows.length) return [];
+    const ids = [...new Set(rows.map((r) => r.id))];
+    const { rows: enriched } = await pool.query(
+        `
+        SELECT ce.id,
+               u_owner.name AS owner_name,
+               COALESCE(u_client.name, ce.client_name) AS client_name
+        FROM calendar_events ce
+        LEFT JOIN users u_owner ON u_owner.userid = ce.owner_id
+        LEFT JOIN users u_client ON u_client.userid = ce.client_user_id
+        WHERE ce.id = ANY($1::int[])
+        `,
+        [ids]
+    );
+    const nameById = new Map(enriched.map((r) => [r.id, r]));
+    return rows.map((r) => ({
+        ...r,
+        owner_name: nameById.get(r.id)?.owner_name || null,
+        client_name: nameById.get(r.id)?.client_name || null,
+    }));
 }
 
-/** Build lawyer-facing Hebrew title+body. */
-function _composeLawyerMessage(kind, ev) {
-    const timeStr = _formatTime(ev.start_time);
-    const audience = ev.client_name || null;
-
-    if (kind === KIND_1D) {
-        const title = 'תזכורת לפגישה מחר';
-        const body = audience
-            ? `פגישה עם הלקוח ${audience} — מחר בשעה ${timeStr}`
-            : `${ev.title} — מחר בשעה ${timeStr}`;
-        return { title, body };
-    }
-    const title = 'פגישה בעוד 30 דקות';
-    const body = audience
-        ? `פגישה עם הלקוח ${audience} — בשעה ${timeStr}`
-        : `${ev.title} — בשעה ${timeStr}`;
-    return { title, body };
-}
-
-/** Build client-facing Hebrew title+body. */
-function _composeClientMessage(kind, ev) {
-    const timeStr = _formatTime(ev.start_time);
-    const lawyer = ev.owner_name || 'עורך הדין';
-
-    if (kind === KIND_1D) {
-        return {
-            title: 'תזכורת לפגישה מחר',
-            body: `פגישתך עם עו״ד ${lawyer} תתחיל מחר בשעה ${timeStr}`,
-        };
-    }
-    return {
-        title: 'פגישה בעוד 30 דקות',
-        body: `פגישתך עם עו״ד ${lawyer} תתחיל בשעה ${timeStr}`,
-    };
-}
-
-// ─── Claim phase ──────────────────────────────────────────────────────────────
-/**
- * Atomically claim due reminders inside a single transaction:
- *   BEGIN → SELECT FOR UPDATE SKIP LOCKED → UPDATE last_reminder_sent_at → COMMIT.
- * Returns the claimed rows enriched with owner_name / client_name for dispatch.
- *
- * Each row also carries `prev_last_reminder_sent_at` so we can revert on
- * dispatch failure without re-querying.
- */
-async function _claimDueRows(kind, limit = 200) {
-    const cfg = WINDOWS[kind];
-
+async function _claimDueReminders(pollMinutes, limit = 200) {
+    const grace = Math.max(5, Number.parseInt(String(pollMinutes || 5), 10) || 5);
     const dbClient = await pool.connect();
+
     try {
         await dbClient.query('BEGIN');
 
-        const { rows: claimed } = await dbClient.query(
+        const { rows: due } = await dbClient.query(
             `
-            WITH due AS (
-                SELECT id, last_reminder_sent_at AS prev_last
-                FROM   calendar_events
-                WHERE  event_type = 'appointment'
-                  AND  start_time >= NOW() + ($1::int * INTERVAL '1 minute')
-                  AND  start_time <= NOW() + ($2::int * INTERVAL '1 minute')
-                  AND  (
-                        last_reminder_sent_at IS NULL
-                        OR last_reminder_sent_at < (start_time - $3::interval)
-                  )
-                ORDER BY start_time ASC
-                LIMIT $4
-                FOR UPDATE SKIP LOCKED
-            )
-            UPDATE calendar_events ce
-            SET    last_reminder_sent_at = NOW()
-            FROM   due
-            WHERE  ce.id = due.id
-            RETURNING ce.id,
-                      ce.owner_id,
-                      ce.client_user_id,
-                      ce.case_id,
-                      ce.title,
-                      ce.location,
-                      ce.start_time,
-                      due.prev_last AS prev_last_reminder_sent_at
+            SELECT ce.id,
+                   ce.owner_id,
+                   ce.client_user_id,
+                   ce.case_id,
+                   ce.title,
+                   ce.event_type,
+                   ce.location,
+                   ce.start_time,
+                   ce.lead_phone,
+                   ce.lead_email,
+                   ce.reminder_channels,
+                   ce.reminders_sent_offsets AS prev_sent,
+                   (off.value)::int AS offset_minutes
+            FROM calendar_events ce
+            CROSS JOIN LATERAL jsonb_array_elements_text(COALESCE(ce.reminder_offsets, '[]'::jsonb)) AS off(value)
+            WHERE ce.event_type IN ('appointment', 'hearing', 'reminder')
+              AND jsonb_array_length(COALESCE(ce.reminder_offsets, '[]'::jsonb)) > 0
+              AND (
+                    COALESCE(ce.reminder_channels->>'push', 'false') IN ('true', '1')
+                 OR COALESCE(ce.reminder_channels->>'sms', 'false') IN ('true', '1')
+                 OR COALESCE(ce.reminder_channels->>'email', 'false') IN ('true', '1')
+              )
+              AND ce.start_time > NOW()
+              AND NOT COALESCE(ce.reminders_sent_offsets, '[]'::jsonb) @> to_jsonb((off.value)::int)
+              AND ce.start_time - ((off.value)::int * INTERVAL '1 minute')
+                  >= NOW() - ($1::int * INTERVAL '1 minute')
+              AND ce.start_time - ((off.value)::int * INTERVAL '1 minute')
+                  <= NOW() + ($1::int * INTERVAL '1 minute')
+            ORDER BY ce.start_time ASC
+            LIMIT $2
+            FOR UPDATE OF ce SKIP LOCKED
             `,
-            [cfg.windowMinFromNow, cfg.windowMaxFromNow, cfg.dedupeGapBeforeStart, limit]
+            [grace, limit]
         );
 
-        if (!claimed.length) {
+        if (!due.length) {
             await dbClient.query('COMMIT');
             return [];
         }
 
-        // Enrich with display names IN-TRANSACTION so the snapshot stays
-        // consistent with the rows we just locked.
-        const ids = claimed.map(r => r.id);
-        const { rows: enriched } = await dbClient.query(
-            `
-            SELECT ce.id,
-                   u_owner.name  AS owner_name,
-                   COALESCE(u_client.name, ce.client_name) AS client_name
-            FROM   calendar_events ce
-            LEFT JOIN users u_owner  ON u_owner.userid  = ce.owner_id
-            LEFT JOIN users u_client ON u_client.userid = ce.client_user_id
-            WHERE  ce.id = ANY($1::int[])
-            `,
-            [ids]
-        );
+        const claimed = [];
+        for (const row of due) {
+            const { rows: updated } = await dbClient.query(
+                `
+                UPDATE calendar_events
+                SET reminders_sent_offsets = COALESCE(reminders_sent_offsets, '[]'::jsonb)
+                    || to_jsonb($2::int)
+                WHERE id = $1
+                  AND NOT COALESCE(reminders_sent_offsets, '[]'::jsonb) @> to_jsonb($2::int)
+                RETURNING id, owner_id, manager_user_id, client_user_id, case_id, title, event_type, location, start_time,
+                          lead_phone, lead_email, reminder_channels
+                `,
+                [row.id, row.offset_minutes]
+            );
+            if (updated.length) {
+                claimed.push({
+                    ...updated[0],
+                    offset_minutes: row.offset_minutes,
+                    prev_sent: row.prev_sent,
+                    reminder_channels: row.reminder_channels,
+                });
+            }
+        }
 
         await dbClient.query('COMMIT');
-
-        const nameById = new Map(enriched.map(r => [r.id, r]));
-        return claimed.map(r => ({
-            ...r,
-            owner_name: nameById.get(r.id)?.owner_name || null,
-            client_name: nameById.get(r.id)?.client_name || null,
-        }));
+        return _enrichWithNames(claimed);
     } catch (err) {
         try { await dbClient.query('ROLLBACK'); } catch (_) { /* ignore */ }
         throw err;
@@ -203,96 +138,140 @@ async function _claimDueRows(kind, limit = 200) {
     }
 }
 
-/** Revert last_reminder_sent_at to its previous value on dispatch failure. */
-async function _revertClaim(eventId, prevValue) {
+async function _revertSentOffset(eventId, offsetMinutes, prevSent) {
     try {
         await pool.query(
-            `UPDATE calendar_events
-             SET    last_reminder_sent_at = $1
-             WHERE  id = $2`,
-            [prevValue, eventId]
+            `
+            UPDATE calendar_events
+            SET reminders_sent_offsets = COALESCE($1::jsonb, '[]'::jsonb)
+            WHERE id = $2
+            `,
+            [JSON.stringify(Array.isArray(prevSent) ? prevSent : []), eventId]
         );
     } catch (err) {
-        // Non-fatal — the next tick will retry once start_time gets closer.
         console.error(
-            `[calendar-reminders] Failed to revert last_reminder_sent_at for eventId=${eventId}:`,
+            `[calendar-reminders] Failed to revert reminders_sent_offsets for eventId=${eventId}, offset=${offsetMinutes}:`,
             err.message
         );
     }
 }
 
-// ─── Dispatch phase ───────────────────────────────────────────────────────────
-async function _dispatchOne(kind, ev) {
-    const payload = _buildDeepLinkPayload(ev.id);
-
-    // Lawyer push — always.
-    const lawyerMsg = _composeLawyerMessage(kind, ev);
-    const lawyerPromise = sendAndStoreNotification(
-        ev.owner_id,
-        lawyerMsg.title,
-        lawyerMsg.body,
-        payload
-    );
-
-    // Client push — only when a real client_user_id is linked.
-    // case_id alone isn't enough; we need a user to push to.
-    let clientPromise = Promise.resolve();
-    if (ev.client_user_id) {
-        const clientMsg = _composeClientMessage(kind, ev);
-        clientPromise = sendAndStoreNotification(
-            ev.client_user_id,
-            clientMsg.title,
-            clientMsg.body,
-            payload
+/** Lawyers to remind: tagged managers (junction + legacy column), else the owner. */
+async function _resolveLawyerRecipients(ev) {
+    const ids = new Set();
+    try {
+        const { rows } = await pool.query(
+            'SELECT user_id FROM calendar_event_managers WHERE event_id = $1',
+            [ev.id]
         );
+        rows.forEach((r) => ids.add(r.user_id));
+    } catch (err) {
+        console.error(`[calendar-reminders] manager lookup failed eventId=${ev.id}:`, err.message);
     }
-
-    // sendAndStoreNotification already catches its own send/store errors and
-    // logs them. We still wrap defensively so an unexpected throw reverts the
-    // claim instead of leaving the reminder marked as sent.
-    await Promise.all([lawyerPromise, clientPromise]);
+    if (ev.manager_user_id) ids.add(ev.manager_user_id);
+    if (!ids.size && ev.owner_id) ids.add(ev.owner_id);
+    return [...ids];
 }
 
-async function _processClaimedRows(kind, rows) {
+async function _dispatchOne(ev) {
+    const payload = _buildDeepLinkPayload(ev.id);
+    const channels = ev.reminder_channels;
+    const lawyerMsg = composeLawyerReminderMessage(ev.offset_minutes, ev);
+
+    const lawyerIds = await _resolveLawyerRecipients(ev);
+    let anySent = false;
+    for (const lawyerId of lawyerIds) {
+        try {
+            const result = await dispatchCalendarReminder({
+                userId: lawyerId,
+                eventChannels: channels,
+                eventType: ev.event_type,
+                title: lawyerMsg.title,
+                body: lawyerMsg.body,
+                payload,
+            });
+            if (result.sent) anySent = true;
+        } catch (err) {
+            console.error(`[calendar-reminders] lawyer dispatch failed eventId=${ev.id} userId=${lawyerId}:`, err.message);
+        }
+    }
+    if (!anySent) {
+        throw new Error('lawyer_reminder_not_sent');
+    }
+
+    if (ev.event_type !== 'reminder' && ev.client_user_id) {
+        const clientMsg = composeClientReminderMessage(ev.offset_minutes, ev);
+        try {
+            await dispatchCalendarReminder({
+                userId: ev.client_user_id,
+                eventChannels: channels,
+                eventType: ev.event_type,
+                title: clientMsg.title,
+                body: clientMsg.body,
+                payload,
+            });
+        } catch (err) {
+            console.error(`[calendar-reminders] client dispatch failed eventId=${ev.id}:`, err.message);
+        }
+    } else if (ev.event_type !== 'reminder' && (ev.lead_phone || ev.lead_email)) {
+        const clientMsg = composeClientReminderMessage(ev.offset_minutes, ev);
+        try {
+            await dispatchCalendarReminder({
+                email: ev.lead_email,
+                phone: ev.lead_phone,
+                eventChannels: channels,
+                eventType: ev.event_type,
+                title: clientMsg.title,
+                body: clientMsg.body,
+                payload,
+            });
+        } catch (err) {
+            console.error(`[calendar-reminders] lead dispatch failed eventId=${ev.id}:`, err.message);
+        }
+    }
+}
+
+async function _processClaimedRows(rows) {
     for (const ev of rows) {
         try {
-            await _dispatchOne(kind, ev);
+            await _dispatchOne(ev);
             console.log(
-                `[calendar-reminders] ${kind} dispatched → eventId=${ev.id}, ` +
+                `[calendar-reminders] offset=${ev.offset_minutes}m dispatched → eventId=${ev.id}, ` +
                 `lawyer=${ev.owner_id}` +
                 (ev.client_user_id ? `, client=${ev.client_user_id}` : '')
             );
         } catch (err) {
             console.error(
-                `[calendar-reminders] ${kind} dispatch FAILED → eventId=${ev.id}:`,
+                `[calendar-reminders] offset=${ev.offset_minutes}m dispatch FAILED → eventId=${ev.id}:`,
                 err.message
             );
-            await _revertClaim(ev.id, ev.prev_last_reminder_sent_at);
+            let prev = [];
+            if (Array.isArray(ev.prev_sent)) prev = ev.prev_sent;
+            else if (typeof ev.prev_sent === 'string') {
+                try { prev = JSON.parse(ev.prev_sent); } catch { prev = []; }
+            } else if (ev.prev_sent && typeof ev.prev_sent === 'object') {
+                prev = Object.values(ev.prev_sent);
+            }
+            await _revertSentOffset(ev.id, ev.offset_minutes, prev);
         }
     }
 }
 
-// ─── Tick orchestration ───────────────────────────────────────────────────────
 async function processCalendarReminders() {
-    // 1-day reminders first, then 30-minute. Order doesn't affect correctness
-    // (the windows are disjoint), but it keeps the more time-sensitive 30m
-    // pushes as close to "now" as possible inside the tick.
-    for (const kind of [KIND_1D, KIND_30M]) {
-        let claimed;
-        try {
-            claimed = await _claimDueRows(kind);
-        } catch (err) {
-            console.error(`[calendar-reminders] claim phase failed for ${kind}:`, err.message);
-            continue;
-        }
-        if (!claimed.length) continue;
-
-        console.log(`[calendar-reminders] ${kind} claimed ${claimed.length} event(s)`);
-        await _processClaimedRows(kind, claimed);
+    const { pollMinutes } = await _readSchedulerSettings();
+    let claimed;
+    try {
+        claimed = await _claimDueReminders(pollMinutes);
+    } catch (err) {
+        console.error('[calendar-reminders] claim phase failed:', err.message);
+        return;
     }
+    if (!claimed.length) return;
+
+    console.log(`[calendar-reminders] claimed ${claimed.length} reminder(s)`);
+    await _processClaimedRows(claimed);
 }
 
-// ─── Cron wiring ──────────────────────────────────────────────────────────────
 function _minutesToCronExpression(minutes) {
     const m = Number.parseInt(String(minutes || ''), 10);
     if (!Number.isFinite(m) || m <= 0) return '*/5 * * * *';
@@ -326,10 +305,8 @@ async function initCalendarReminderScheduler() {
     }
 
     const cronExpr = _minutesToCronExpression(pollMinutes);
-
-    // Re-entrancy guard within a single PM2 worker process.
-    // Cross-process safety is delivered by FOR UPDATE SKIP LOCKED at the DB layer.
     let running = false;
+
     async function tick() {
         if (running) return;
         running = true;
@@ -346,10 +323,9 @@ async function initCalendarReminderScheduler() {
         tick().catch(() => { /* logged inside */ });
     });
 
-    // Fire once on boot so a freshly-deployed PM2 instance doesn't wait a full poll cycle.
     tick().catch(() => { });
 
-    console.log(`[calendar-reminders] Started. cron="${cronExpr}" (${pollMinutes}m poll, DB-locked dual-push)`);
+    console.log(`[calendar-reminders] Started. cron="${cronExpr}" (${pollMinutes}m poll, per-event offsets)`);
     return { ok: true, enabled: true, pollMinutes, cronExpr, taskStarted: !!task };
 }
 

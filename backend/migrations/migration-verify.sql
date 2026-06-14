@@ -149,8 +149,8 @@ BEGIN
     IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.subscription_plans.documents_retention_days_pii'; END IF;
     PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='subscription_plans' AND column_name='documents_monthly_quota';
     IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.subscription_plans.documents_monthly_quota'; END IF;
-    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='subscription_plans' AND column_name='storage_gb_quota';
-    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.subscription_plans.storage_gb_quota'; END IF;
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='subscription_plans' AND column_name='storage_mb_quota';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.subscription_plans.storage_mb_quota'; END IF;
     PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='subscription_plans' AND column_name='users_quota';
     IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.subscription_plans.users_quota'; END IF;
 

@@ -1,23 +1,21 @@
 #!/usr/bin/env bash
 # sync-prod-to-melamed-neon.sh — Sync MelamedLaw Neon DB from MelamedLaw production VPS
 # Usage: bash scripts/sync-prod-to-melamed-neon.sh
+# Credentials: set NEON_DATABASE_URL or NEON_PASS (see .env.neon.example)
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/_neon-sync-common.sh"
 
 PROD_HOST="root@37.60.230.148"
 PROD_DB="melamedlaw"
 SSH_KEY="${SSH_KEY:-$HOME/.ssh/id_ed25519}"
 SSH_OPTS=(-i "$SSH_KEY" -o BatchMode=yes -o StrictHostKeyChecking=accept-new)
-NEON_HOST="ep-super-mode-alv2q4jv-pooler.c-3.eu-central-1.aws.neon.tech"
-NEON_HOST_DIRECT="ep-super-mode-alv2q4jv.c-3.eu-central-1.aws.neon.tech"
-NEON_DB="neondb"
-NEON_USER="neondb_owner"
-NEON_PASS="npg_te3Jw0sqBSHg"
 PSQL="$(brew --prefix libpq)/bin/psql"
 DUMP_REMOTE="/tmp/melamedlaw_prod.sql"
-DUMP_LOCAL="$(dirname "$0")/../melamedlaw_prod.sql"
-DUMP_CLEAN="$(dirname "$0")/../melamedlaw_clean.sql"
-
-NEON_CONNSTR="postgresql://${NEON_USER}:${NEON_PASS}@${NEON_HOST}:5432/${NEON_DB}?sslmode=require"
+DUMP_LOCAL="$SCRIPT_DIR/../melamedlaw_prod.sql"
+DUMP_CLEAN="$SCRIPT_DIR/../melamedlaw_clean.sql"
 
 echo ""
 echo "=== [1/7] Dumping MelamedLaw production DB (read-only) ==="
@@ -40,28 +38,27 @@ echo "Processed $(wc -l < "$DUMP_CLEAN") lines"
 
 echo ""
 echo "=== [4/7] Dropping all Neon tables ==="
-PGPASSWORD="$NEON_PASS" "$PSQL" "$NEON_CONNSTR" -c "
+"$PSQL" "$NEON_CONNSTR" -c "
   DROP SCHEMA IF EXISTS public CASCADE;
   CREATE SCHEMA public;
   GRANT ALL ON SCHEMA public TO neondb_owner;
 " 2>&1 || true
-TABLE_COUNT=$(PGPASSWORD="$NEON_PASS" "$PSQL" "$NEON_CONNSTR" -A -t -c "SELECT count(*) FROM pg_tables WHERE schemaname='public';")
+TABLE_COUNT=$("$PSQL" "$NEON_CONNSTR" -A -t -c "SELECT count(*) FROM pg_tables WHERE schemaname='public';")
 echo "Tables remaining: $TABLE_COUNT"
 
 echo ""
 echo "=== [5/7] Enabling pgvector on Neon ==="
-PGPASSWORD="$NEON_PASS" "$PSQL" "$NEON_CONNSTR" -c "CREATE EXTENSION IF NOT EXISTS vector;" 2>&1 || true
+"$PSQL" "$NEON_CONNSTR" -c "CREATE EXTENSION IF NOT EXISTS vector;" 2>&1 || true
 echo "pgvector extension ready"
 
 echo ""
 echo "=== [6/7] Restoring production data to Neon ==="
 export PGCLIENTENCODING=UTF8
-PGPASSWORD="$NEON_PASS" "$PSQL" "$NEON_CONNSTR" -f "$DUMP_CLEAN" 2>&1 | grep "^COPY" || true
+"$PSQL" "$NEON_CONNSTR" -f "$DUMP_CLEAN" 2>&1 | grep "^COPY" || true
 
 echo ""
 echo "=== [7/7] Verifying ==="
-NEON_DIRECT="postgresql://${NEON_USER}:${NEON_PASS}@${NEON_HOST_DIRECT}:5432/${NEON_DB}?sslmode=require"
-PGPASSWORD="$NEON_PASS" "$PSQL" "$NEON_DIRECT" -A -t -c "
+"$PSQL" "$NEON_DIRECT_URL" -A -t -c "
   SET search_path TO public;
   SELECT 'users=' || count(*) FROM users;
   SELECT 'cases=' || count(*) FROM cases;

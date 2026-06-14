@@ -4,7 +4,7 @@ const path = require('path');
 const BRANCH_TENANT_HINTS = {
     MelamedLaw: ['melamed', 'ליאב מלמד'],
     MorLevi: ['mor levy', 'מור לוי'],
-    AshrafEssa: ['ashraf', 'עאשרף', 'אשרף'],
+    AshrafEssa: ['ashraf', 'ashrafessa', 'עיסא', 'אשראף', 'עאשרף'],
 };
 
 function detectCurrentBranch() {

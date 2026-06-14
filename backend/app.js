@@ -1,9 +1,10 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const compression = require("compression");
 const helmet = require("helmet");
 const cors = require("cors");
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+require('dotenv').config({ path: path.join(__dirname, '.env'), override: true });
 
 const pool = require("./config/db");
 
@@ -57,6 +58,7 @@ app.use(helmet({
 }));
 app.use(bodyParser.json({ limit: API_JSON_LIMIT }));
 app.use(bodyParser.urlencoded({ limit: API_URLENCODED_LIMIT, extended: true }));
+app.use(compression());
 
 const isProduction = process.env.IS_PRODUCTION === 'true';
 
@@ -64,9 +66,15 @@ function selectMode(forProduction, forStage) {
     return isProduction ? forProduction : forStage;
 }
 
+function normalizeOrigin(origin) {
+    const s = String(origin || "").trim();
+    if (!s) return "";
+    return s.endsWith("/") ? s.slice(0, -1) : s;
+}
+
 const productionOrigin = (process.env.ALLOWED_ORIGINS || "")
     .split(",")
-    .map(s => s.trim())
+    .map(normalizeOrigin)
     .filter(Boolean);
 const stageOrigin = [
     "http://localhost:3000",
@@ -80,13 +88,14 @@ app.use(
         // Allow only configured origins. If no origin (e.g. same-origin or curl), allow it.
         origin: function (origin, callback) {
             if (!origin) return callback(null, true);
-            if (allowedOrigins.includes(origin)) {
+            const normalized = normalizeOrigin(origin);
+            if (allowedOrigins.includes(normalized)) {
                 return callback(null, true);
             }
-            // Reject unknown origin
-            return callback(new Error('Not allowed by CORS'));
+            // Reject unknown origin without throwing (Error → HTTP 500 on OPTIONS preflight)
+            return callback(null, false);
         },
-        methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
         credentials: true,
     })
 );

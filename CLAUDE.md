@@ -11,7 +11,7 @@ Hebrew-first UI. Example client domain: client.melamedlaw.co.il
 - **Auth**: OTP-based login (SMS, no passwords), JWT (HS256), refresh token rotation
 - **Storage**: Cloudflare R2 / S3-compatible (AWS SDK v3)
 - **PDF**: pdf-lib, puppeteer, pdfjs-dist
-- **SMS**: Twilio + MessageBird, Smoove
+- **SMS**: Smoove
 - **Email**: Nodemailer + Smoove for campaigns
 - **Push**: Firebase Admin (Expo push tokens)
 

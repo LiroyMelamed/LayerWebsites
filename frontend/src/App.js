@@ -1,24 +1,40 @@
-import LoginStack, { LoginStackName } from './navigation/LoginStack';
+import { lazy, Suspense, useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
-import AdminStack, { AdminStackName } from './navigation/AdminStack';
-import ClientStack, { ClientStackName } from './navigation/ClientStack';
-import PublicSigningScreen, { PublicSignScreenName } from './screens/signingScreen/PublicSigningScreen';
-import ViewSignedDocument, { ViewSignedDocumentName } from './screens/viewSignedDocument/ViewSignedDocument';
-import { AppRoles } from './screens/otpScreen/OtpScreen.js/LoginOtpScreen';
-import { useEffect } from 'react';
-import { MainScreenName } from './screens/mainScreen/MainScreen';
-import { ClientMainScreenName } from './screens/client/clientMainScreen/ClientMainScreen';
+import RouteFallback from './components/simpleComponents/RouteFallback';
+import { AdminStackName } from './navigation/AdminStack';
+import { ClientStackName } from './navigation/ClientStack';
+import { LoginStackName } from './navigation/LoginStack';
+import { AppRoles } from './constant/appRoles';
 import { useFromApp } from './providers/FromAppProvider';
 import { loadFirmSettings } from './services/firmSettings';
-import { SigningScreenName } from './screens/signingScreen/SigningScreen';
-import EvidenceVerifyScreen, { EvidenceVerifyScreenName } from './screens/verify/EvidenceVerifyScreen';
-import PricingScreen, { PricingScreenName } from './screens/pricingScreen/PricingScreen';
-import SecurityScreen, { SecurityScreenName } from './screens/compliance/SecurityScreen';
-import PrivacyPage, { PrivacyPageName } from './screens/compliance/PrivacyPage';
-import ContinuityPage, { ContinuityPageName } from './screens/compliance/ContinuityPage';
-import CompliancePage, { CompliancePageName } from './screens/compliance/CompliancePage';
-import ChatBotPage, { ChatBotPageName } from './screens/chatbot/ChatBotPage';
-import { CalendarScreenName } from './screens/calendarScreen/CalendarScreen';
+import {
+  CalendarScreenName,
+  ChatBotPageName,
+  ClientMainScreenName,
+  CompliancePageName,
+  ContinuityPageName,
+  EvidenceVerifyScreenName,
+  MainScreenName,
+  PricingScreenName,
+  PrivacyPageName,
+  PublicSignScreenName,
+  SecurityScreenName,
+  SigningScreenName,
+  ViewSignedDocumentName,
+} from './navigation/screenPaths';
+
+const LoginStack = lazy(() => import('./navigation/LoginStack'));
+const AdminStack = lazy(() => import('./navigation/AdminStack'));
+const ClientStack = lazy(() => import('./navigation/ClientStack'));
+const PublicSigningScreen = lazy(() => import('./screens/signingScreen/PublicSigningScreen'));
+const ViewSignedDocument = lazy(() => import('./screens/viewSignedDocument/ViewSignedDocument'));
+const EvidenceVerifyScreen = lazy(() => import('./screens/verify/EvidenceVerifyScreen'));
+const PricingScreen = lazy(() => import('./screens/pricingScreen/PricingScreen'));
+const SecurityScreen = lazy(() => import('./screens/compliance/SecurityScreen'));
+const PrivacyPage = lazy(() => import('./screens/compliance/PrivacyPage'));
+const ContinuityPage = lazy(() => import('./screens/compliance/ContinuityPage'));
+const CompliancePage = lazy(() => import('./screens/compliance/CompliancePage'));
+const ChatBotPage = lazy(() => import('./screens/chatbot/ChatBotPage'));
 
 const STACK_SUFFIX = "/*"
 
@@ -141,7 +157,7 @@ const App = () => {
   }, []);
 
   return (
-    <>
+    <Suspense fallback={<RouteFallback />}>
       <Routes>
         <Route path={PublicSignScreenName} element={<PublicSigningScreen />} />
         <Route path={ViewSignedDocumentName} element={<ViewSignedDocument />} />
@@ -165,7 +181,7 @@ const App = () => {
 
         <Route path="/*" element={<Navigate to={LoginStackName} replace />} />
       </Routes>
-    </>
+    </Suspense>
   );
 };
 

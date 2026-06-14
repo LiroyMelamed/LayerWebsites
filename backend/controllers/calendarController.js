@@ -6,6 +6,7 @@
  *   Dashboard – GET /today  (today + tomorrow appointments widget)
  *   iCal feed – public tokenized WebCal subscription endpoint
  *   Google    – OAuth2 flow, token storage (encrypted), event sync
+ *   Outlook   – Microsoft Graph OAuth2 flow, token storage (encrypted), event sync
  *
  * Security:
  *   - All authenticated routes use JWT (authMiddleware + requireLawyerOrAdmin).
@@ -15,9 +16,29 @@
  */
 
 const pool = require('../config/db');
+const { getLawFirmNameHe, getFirmNameEn } = require('../lib/firmBranding');
+const reminderCalendarSync = require('../lib/reminderCalendarSync');
 const crypto = require('crypto');
+const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 const settingsService = require('../services/settingsService');
+const {
+    loadWorkingSchedule,
+    validateEventAgainstSchedule,
+} = require('../lib/calendarWorkingHours');
+const {
+    REMINDABLE_EVENT_TYPES,
+    loadAllowedReminderOffsets,
+    loadAllowedReminderChannels,
+    normalizeReminderOffsets,
+    normalizeReminderChannels,
+    offsetsToJson,
+    channelsToJson,
+    parseStoredOffsets,
+    parseStoredSentOffsets,
+    parseStoredChannels,
+    hasAnyReminderChannel,
+} = require('../lib/calendarEventReminders');
 
 // ─── Optional peer deps (graceful-fail if not yet installed) ──────────────────
 let ical;
@@ -26,6 +47,39 @@ try { ical = require('ical-generator'); } catch (_) { ical = null; }
 let googleapis;
 try { googleapis = require('googleapis'); } catch (_) { googleapis = null; }
 // ──────────────────────────────────────────────────────────────────────────────
+
+/** Public API origin for iCal/WebCal links (must hit the API host, not the SPA). */
+function _resolvePublicApiOrigin() {
+    const explicit = String(
+        process.env.PUBLIC_API_BASE_URL
+        || process.env.API_PUBLIC_ORIGIN
+        || ''
+    ).trim().replace(/\/+$/, '');
+    if (explicit) {
+        return explicit.replace(/\/api$/i, '');
+    }
+
+    const website = String(process.env.WEBSITE_DOMAIN || '').trim();
+    if (!website) return '';
+
+    const host = website.replace(/^https?:\/\//, '').split('/')[0];
+
+    if (host.includes('melamedlaw.co.il')) {
+        return 'https://api.calls.melamedlaw.co.il';
+    }
+    if (host.endsWith('.mela-media.co.il') && !host.startsWith('api-')) {
+        return `https://api-${host}`;
+    }
+    return `https://${host}`;
+}
+
+function _buildIcalSubscriptionUrls(token) {
+    const origin = _resolvePublicApiOrigin();
+    const path = `/api/calendar/feed/${token}.ics`;
+    const httpsSubscriptionUrl = origin ? `${origin}${path}` : path;
+    const subscriptionUrl = `webcal://${httpsSubscriptionUrl.replace(/^https?:\/\//, '')}`;
+    return { httpsSubscriptionUrl, subscriptionUrl };
+}
 
 // ─── Encryption helpers (AES-256-GCM) ────────────────────────────────────────
 // CALENDAR_ENCRYPTION_KEY must be a 64-char hex string (32 bytes) in .env
@@ -85,8 +139,8 @@ const GOOGLE_SCOPES = [
 // ──────────────────────────────────────────────────────────────────────────────
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const VALID_EVENT_TYPES = Object.freeze(['appointment', 'leave', 'hearing', 'reminder']);
-const INTERNAL_SCOPED_EVENT_TYPES = Object.freeze(['leave', 'reminder']);
+const VALID_EVENT_TYPES = Object.freeze(['appointment', 'leave', 'hearing', 'reminder', 'holiday']);
+const INTERNAL_SCOPED_EVENT_TYPES = Object.freeze(['leave', 'reminder', 'holiday']);
 
 function _isValidEventType(value) {
     return VALID_EVENT_TYPES.includes(value);
@@ -94,6 +148,66 @@ function _isValidEventType(value) {
 
 function _isInternalScopedEventType(value) {
     return INTERNAL_SCOPED_EVENT_TYPES.includes(value);
+}
+
+async function _resolveReminderOffsets(body, eventType) {
+    if (!REMINDABLE_EVENT_TYPES.has(eventType)) {
+        return [];
+    }
+    if (body?.reminder_offsets === undefined) {
+        return null;
+    }
+    const allowed = await loadAllowedReminderOffsets(settingsService);
+    return normalizeReminderOffsets(body.reminder_offsets, allowed);
+}
+
+function _calendarFkErrorMessage(err) {
+    if (err?.code !== '23503') return null;
+    const detail = String(err.detail || err.message || '');
+    if (/owner_id/.test(detail)) {
+        return 'החשבון המחובר לא קיים במערכת. התנתק והתחבר מחדש (ייתכן שמירת הטוקן מסביבה אחרת).';
+    }
+    if (/client_user_id/.test(detail)) {
+        return 'הלקוח שנבחר לא קיים במערכת.';
+    }
+    if (/manager_user_id/.test(detail)) {
+        return 'עורך הדין שנבחר לא קיים במערכת.';
+    }
+    return null;
+}
+
+async function _requireExistingOwner(userId) {
+    const id = parseInt(userId, 10);
+    if (!Number.isFinite(id) || id <= 0) {
+        return { ok: false, status: 401, message: 'נדרשת התחברות מחדש' };
+    }
+    const { rows } = await pool.query('SELECT 1 FROM users WHERE userid = $1', [id]);
+    if (!rows.length) {
+        return {
+            ok: false,
+            status: 401,
+            message: 'החשבון המחובר לא קיים במערכת. התנתק והתחבר מחדש (ייתכן שמירת הטוקן מסביבה אחרת).',
+        };
+    }
+    return { ok: true };
+}
+
+async function _resolveReminderChannels(body, eventType, reminderOffsets) {
+    if (!REMINDABLE_EVENT_TYPES.has(eventType)) {
+        return { push: false, sms: false, email: false };
+    }
+    if (body?.reminder_channels === undefined) {
+        return null;
+    }
+    const allowed = await loadAllowedReminderChannels(settingsService);
+    const channels = normalizeReminderChannels(body.reminder_channels, allowed);
+    if (eventType !== 'reminder') {
+        channels.push = false;
+    }
+    if (reminderOffsets.length > 0 && !hasAnyReminderChannel(channels)) {
+        return { error: 'נבחרו תזכורות אך לא נבחר ערוץ שליחה (Push, SMS או אימייל).' };
+    }
+    return channels;
 }
 
 function _sanitizeEvent(row) {
@@ -118,11 +232,16 @@ function _sanitizeEvent(row) {
         allDay: row.all_day,
         rrule: row.rrule,
         googleEventId: row.google_event_id,
+        outlookEventId: row.outlook_event_id,
         leadName: row.lead_name ?? null,
         leadPhone: row.lead_phone ?? null,
         leadEmail: row.lead_email ?? null,
         leadCaseName: row.lead_case_name ?? null,
         lastReminderSentAt: row.last_reminder_sent_at ?? null,
+        reminderOffsets: parseStoredOffsets(row.reminder_offsets),
+        reminderChannels: parseStoredChannels(row.reminder_channels),
+        remindersSentOffsets: parseStoredOffsets(row.reminders_sent_offsets),
+        linkedReminderId: row.linked_reminder_id ?? null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
     };
@@ -134,92 +253,274 @@ function _normalizePhoneDigits(phone) {
     return digits || null;
 }
 
-/** Ensure the event belongs to the requesting user */
-async function _requireOwnership(eventId, userId) {
+function _parseManagerUserIds(body) {
+    const raw = body?.manager_user_ids;
+    if (Array.isArray(raw)) {
+        return [...new Set(
+            raw.map((id) => parseInt(id, 10)).filter((id) => Number.isFinite(id))
+        )];
+    }
+    const single = body?.manager_user_id != null && body?.manager_user_id !== ''
+        ? parseInt(body.manager_user_id, 10)
+        : null;
+    return Number.isFinite(single) ? [single] : [];
+}
+
+async function _fetchEventManagers(eventIds) {
+    const map = new Map();
+    if (!eventIds?.length) return map;
     const { rows } = await pool.query(
-        'SELECT owner_id FROM calendar_events WHERE id = $1',
-        [eventId]
+        `SELECT cem.event_id, u.userid AS user_id, u.name
+         FROM calendar_event_managers cem
+         JOIN users u ON u.userid = cem.user_id
+         WHERE cem.event_id = ANY($1::int[])
+         ORDER BY cem.event_id, u.name`,
+        [eventIds]
     );
-    if (!rows.length) return { ok: false, status: 404, message: 'אירוע לא נמצא' };
-    if (rows[0].owner_id !== userId) return { ok: false, status: 403, message: 'אין הרשאה לגשת לאירוע זה' };
-    return { ok: true };
+    for (const row of rows) {
+        if (!map.has(row.event_id)) map.set(row.event_id, []);
+        map.get(row.event_id).push({ userId: row.user_id, name: row.name });
+    }
+    return map;
 }
 
-const HEBREW_DAY_NAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
-const TENANT_TIME_ZONE = 'Asia/Jerusalem';
-
-/** Parse "HH:MM" → minutes since midnight. Returns null if malformed. */
-function _hhmmToMinutes(str) {
-    const m = /^(\d{2}):(\d{2})/.exec(String(str || ''));
-    if (!m) return null;
-    return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+async function _syncEventManagers(eventId, userIds, dbClient = pool) {
+    const uniqueIds = [...new Set(userIds.filter((id) => Number.isFinite(id)))];
+    await dbClient.query('DELETE FROM calendar_event_managers WHERE event_id = $1', [eventId]);
+    for (const uid of uniqueIds) {
+        await dbClient.query(
+            `INSERT INTO calendar_event_managers (event_id, user_id)
+             VALUES ($1, $2)
+             ON CONFLICT (event_id, user_id) DO NOTHING`,
+            [eventId, uid]
+        );
+    }
+    if (!uniqueIds.length) {
+        return { managerUserId: null, managerName: null, managers: [] };
+    }
+    const { rows } = await dbClient.query(
+        `SELECT userid, name FROM users WHERE userid = ANY($1::int[]) ORDER BY name`,
+        [uniqueIds]
+    );
+    const managers = rows.map((r) => ({ userId: r.userid, name: r.name }));
+    return {
+        managerUserId: managers[0]?.userId || null,
+        managerName: managers.map((m) => m.name).join(', ') || null,
+        managers,
+    };
 }
 
-/** Get the firm day-of-week (0=Sun..6=Sat) and minutes-of-day for a date in the tenant TZ. */
-function _localDayAndMinutes(date) {
-    const parts = new Intl.DateTimeFormat('en-US', {
-        timeZone: TENANT_TIME_ZONE,
-        weekday: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-    }).formatToParts(date);
-    const weekdayMap = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
-    const wd = parts.find(p => p.type === 'weekday')?.value;
-    const hour = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10) % 24;
-    const minute = parseInt(parts.find(p => p.type === 'minute')?.value || '0', 10);
-    return { day: weekdayMap[wd], minutes: hour * 60 + minute };
+function _applyManagersToEvent(sanitized, managers) {
+    if (!managers?.length) {
+        if (sanitized.managerUserId) {
+            sanitized.managers = [{
+                userId: sanitized.managerUserId,
+                name: sanitized.managerName || '',
+            }];
+        } else {
+            sanitized.managers = [];
+        }
+        return sanitized;
+    }
+    sanitized.managers = managers;
+    sanitized.managerUserId = managers[0].userId;
+    sanitized.managerName = managers.map((m) => m.name).join(', ');
+    return sanitized;
+}
+
+async function _sanitizeEventWithManagers(row, managersMap) {
+    const ev = _sanitizeEvent(row);
+    const managers = managersMap?.get(row.id);
+    return _applyManagersToEvent(ev, managers);
+}
+
+/** SQL fragment: event belongs to lawyer (owner, legacy manager column, or junction). */
+function _lawyerMatchSql(lawyerParamIdx) {
+    return `(
+        ce.owner_id = $${lawyerParamIdx}
+        OR ce.manager_user_id = $${lawyerParamIdx}
+        OR EXISTS (
+            SELECT 1 FROM calendar_event_managers cem
+            WHERE cem.event_id = ce.id AND cem.user_id = $${lawyerParamIdx}
+        )
+        OR (
+            ce.manager_user_id IS NULL
+            AND ce.manager_name IS NOT NULL
+            AND ce.manager_name = (SELECT name FROM users WHERE userid = $${lawyerParamIdx})
+        )
+    )`;
 }
 
 /**
- * Validate that an event falls within the firm's configured working days/hours.
+ * Personal calendar (scope=mine):
+ *   • holidays — visible to everyone
+ *   • leave — my own leave, or leave where I'm the tagged lawyer
+ *   • other events — events I'm tagged in (as manager), plus events I own that
+ *     have no tagged lawyer at all. Events I created *for another lawyer* do
+ *     NOT appear in my personal calendar (they show in the firm calendar).
+ */
+function _personalCalendarSql(lawyerParamIdx) {
+    const p = `$${lawyerParamIdx}`;
+    const managedByLawyer = `(
+        ce.manager_user_id = ${p}
+        OR EXISTS (
+            SELECT 1 FROM calendar_event_managers cem
+            WHERE cem.event_id = ce.id AND cem.user_id = ${p}
+        )
+        OR (
+            ce.manager_user_id IS NULL
+            AND ce.manager_name IS NOT NULL
+            AND ce.manager_name = (SELECT name FROM users WHERE userid = ${p})
+        )
+    )`;
+    return `(
+        ce.event_type = 'holiday'
+        OR (
+            ce.event_type = 'leave'
+            AND (
+                (
+                    ce.owner_id = ${p}
+                    AND (ce.manager_user_id IS NULL OR ce.manager_user_id = ${p})
+                )
+                OR (
+                    ce.owner_id <> ${p}
+                    AND ${managedByLawyer}
+                )
+            )
+        )
+        OR (
+            ce.event_type NOT IN ('holiday', 'leave')
+            AND (
+                ${managedByLawyer}
+                OR (
+                    ce.owner_id = ${p}
+                    AND ce.manager_user_id IS NULL
+                    AND NOT EXISTS (
+                        SELECT 1 FROM calendar_event_managers cem
+                        WHERE cem.event_id = ce.id
+                    )
+                )
+            )
+        )
+    )`;
+}
+
+/** Leave belongs to the lawyer taking time off — not whoever created the entry. */
+function _resolveEventOwnerId(userId, eventType, managerUserId, managerIds) {
+    if (eventType !== 'leave') return userId;
+    const ids = managerIds?.length
+        ? managerIds
+        : (managerUserId ? [managerUserId] : []);
+    const primary = ids.find((id) => Number.isFinite(id));
+    return primary || userId;
+}
+
+/** Ensure the user may read or mutate this event (owner, assigned manager, or Admin). */
+async function _requireEventAccess(eventId, userId, userRole) {
+    if (String(userRole) === 'Admin') return { ok: true };
+
+    const { rows } = await pool.query(
+        `SELECT ce.owner_id,
+                ce.manager_user_id,
+                EXISTS (
+                    SELECT 1 FROM calendar_event_managers cem
+                    WHERE cem.event_id = ce.id AND cem.user_id = $2
+                ) AS is_manager
+         FROM calendar_events ce
+         WHERE ce.id = $1`,
+        [eventId, userId]
+    );
+    if (!rows.length) return { ok: false, status: 404, message: 'אירוע לא נמצא' };
+
+    const row = rows[0];
+    if (row.owner_id === userId || row.manager_user_id === userId || row.is_manager) {
+        return { ok: true };
+    }
+    return { ok: false, status: 403, message: 'אין הרשאה לגשת לאירוע זה' };
+}
+
+/**
+ * Validate that an event falls within the firm's per-day working schedule.
  * Returns { ok: true } or { ok: false, message }. All-day events skip the hours check.
  */
 async function _validateWorkingHours(startTime, endTime, allDay) {
-    const daysRaw = await settingsService.getSetting('calendar', 'WORKING_DAYS', '0,1,2,3,4');
-    const startRaw = await settingsService.getSetting('calendar', 'WORKING_HOURS_START', '08:00');
-    const endRaw = await settingsService.getSetting('calendar', 'WORKING_HOURS_END', '18:00');
-
-    const workingDays = String(daysRaw)
-        .split(',')
-        .map(s => parseInt(s.trim(), 10))
-        .filter(n => Number.isInteger(n) && n >= 0 && n <= 6);
-    if (!workingDays.length) return { ok: true };
-
-    const start = new Date(startTime);
-    const end = new Date(endTime);
-    if (isNaN(start) || isNaN(end)) return { ok: true };
-
-    const startInfo = _localDayAndMinutes(start);
-
-    // Day-of-week check (based on event start)
-    if (!workingDays.includes(startInfo.day)) {
-        const openDays = workingDays.map(d => HEBREW_DAY_NAMES[d]).join(', ');
-        return { ok: false, message: `המשרד פעיל בימים: ${openDays}. לא ניתן לקבוע אירוע ביום ${HEBREW_DAY_NAMES[startInfo.day]}.` };
-    }
-
-    if (allDay) return { ok: true };
-
-    const openMin = _hhmmToMinutes(startRaw);
-    const closeMin = _hhmmToMinutes(endRaw);
-    if (openMin == null || closeMin == null) return { ok: true };
-
-    const endInfo = _localDayAndMinutes(end);
-
-    if (startInfo.minutes < openMin || startInfo.minutes > closeMin) {
-        return { ok: false, message: `שעות הפעילות של המשרד הן ${startRaw}–${endRaw}. שעת ההתחלה מחוץ לטווח.` };
-    }
-    // Allow end exactly at close time; reject if it spills past closing.
-    if (endInfo.minutes > closeMin || endInfo.minutes < openMin) {
-        return { ok: false, message: `שעות הפעילות של המשרד הן ${startRaw}–${endRaw}. שעת הסיום מחוץ לטווח.` };
-    }
-    return { ok: true };
+    const schedule = await loadWorkingSchedule(settingsService);
+    return validateEventAgainstSchedule(startTime, endTime, allDay, schedule);
 }
 
 /** Firm policy — lawyers may connect/sync Google only when enabled by admin. */
 async function _isGoogleSyncEnabledForFirm() {
     const raw = await settingsService.getSetting('calendar', 'GOOGLE_SYNC_ENABLED', 'true');
     return String(raw ?? 'true').trim().toLowerCase() !== 'false';
+}
+
+/** Firm policy — lawyers may connect/sync Outlook only when enabled by admin. */
+async function _isOutlookSyncEnabledForFirm() {
+    const raw = await settingsService.getSetting('calendar', 'OUTLOOK_SYNC_ENABLED', 'true');
+    return String(raw ?? 'true').trim().toLowerCase() !== 'false';
+}
+
+function _isAllDayInternalEventType(eventType) {
+    return eventType === 'leave' || eventType === 'holiday';
+}
+
+/**
+ * Sync a reminder row when an event of event_type='reminder' is updated.
+ * If the event has a linked reminder, it patches title/time/recipient/template
+ * onto the reminder row. If the event does not have one yet but the request
+ * provided enough recipient info (toEmail + clientName), it creates one.
+ *
+ * Sync failures are logged and swallowed — they never fail the user's update.
+ */
+async function _syncReminderForUpdatedEvent(updatedRow, rawBody, payload) {
+    if (!updatedRow || updatedRow.event_type !== 'reminder') return;
+
+    try {
+        const { rows: existing } = await pool.query(
+            'SELECT id FROM scheduled_email_reminders WHERE calendar_event_id = $1 LIMIT 1',
+            [updatedRow.id]
+        );
+
+        if (existing.length) {
+            await reminderCalendarSync.updateReminderForCalendarEvent(updatedRow, {
+                toEmail: payload.reminder_to_email,
+                clientName: payload.reminder_client_name,
+                templateKey: payload.reminder_template_key,
+                templateData: payload.reminder_template_data,
+                subject: payload.reminder_subject,
+            });
+        } else if (payload.reminder_to_email && payload.reminder_client_name) {
+            await reminderCalendarSync.createReminderForCalendarEvent(
+                updatedRow,
+                {
+                    toEmail: payload.reminder_to_email,
+                    clientName: payload.reminder_client_name,
+                    templateKey: payload.reminder_template_key,
+                    templateData: payload.reminder_template_data,
+                    subject: payload.reminder_subject,
+                    createdBy: updatedRow.owner_id,
+                }
+            );
+        }
+    } catch (err) {
+        console.error('[calendarController] reminder sync on update failed:', err.message);
+    }
+}
+
+/** Populate `linkedReminderId` on the sanitized event payload returned to the client. */
+async function _attachLinkedReminderId(sanitized) {
+    if (!sanitized?.id) return sanitized;
+    if (sanitized.eventType !== 'reminder') return sanitized;
+    try {
+        const { rows } = await pool.query(
+            'SELECT id FROM scheduled_email_reminders WHERE calendar_event_id = $1 LIMIT 1',
+            [sanitized.id]
+        );
+        sanitized.linkedReminderId = rows[0]?.id ?? null;
+    } catch (_) {
+        sanitized.linkedReminderId = null;
+    }
+    return sanitized;
 }
 // ──────────────────────────────────────────────────────────────────────────────
 
@@ -234,11 +535,11 @@ async function _isGoogleSyncEnabledForFirm() {
  * Lists calendar events with contextual privacy and dynamic multi-axis filters.
  *
  * Query parameters (all optional):
- *   • scope         'mine' (default) | 'firm' — firm-wide view of all lawyers
+ *   • scope         'mine' (default) | 'firm' — mine = personal (managers/holidays); firm = all
  *   • lawyer_id     int   — pin to owner or manager (overrides scope)
  *   • client_id     int   — events linked to this client_user_id
  *   • case_id       int   — events for this case
- *   • event_type    'appointment' | 'leave' | 'hearing' | 'reminder'
+ *   • event_type    'appointment' | 'leave' | 'hearing' | 'reminder' | 'holiday'
  *   • from / to     ISO timestamptz — window over start_time
  *   • limit/offset  pagination (default 500 / 0, max 1000)
  *
@@ -264,32 +565,36 @@ const listEvents = async (req, res) => {
     let idx = 1;
 
     // Contextual privacy:
-    //   • lawyer_id wins (locks to that lawyer)
-    //   • else scope=mine  → owner_id = req.user.UserId
+    //   • lawyer_id wins (owner, legacy manager column, or junction managers)
+    //   • else scope=mine  → holidays, manager-tagged, or owned with connected lawyers
     //   • else scope=firm  → no owner filter (firm-wide)
     const requestedLawyerId = lawyer_id ? parseInt(lawyer_id, 10) : null;
     if (lawyer_id && !Number.isFinite(requestedLawyerId)) {
         return res.status(400).json({ message: 'מזהה עורך דין לא תקין' });
     }
     if (requestedLawyerId) {
-        conditions.push(`(
-            ce.manager_user_id = $${idx}
-            OR ce.owner_id = $${idx}
-            OR (
-                ce.manager_user_id IS NULL
-                AND ce.manager_name IS NOT NULL
-                AND ce.manager_name = (SELECT name FROM users WHERE userid = $${idx})
-            )
-        )`);
+        if (scope !== 'firm') {
+            return res.status(400).json({ message: 'סינון עורך דין זמין רק בתצוגת משרד' });
+        }
+        conditions.push(_lawyerMatchSql(idx));
         idx++;
         params.push(requestedLawyerId);
     } else if (scope !== 'firm') {
-        conditions.push(`ce.owner_id = $${idx++}`);
+        conditions.push(_personalCalendarSql(idx));
+        idx++;
         params.push(userId);
     }
 
-    if (from) { conditions.push(`ce.start_time >= $${idx++}`); params.push(from); }
-    if (to) { conditions.push(`ce.start_time <= $${idx++}`); params.push(to); }
+    if (from && to) {
+        conditions.push(
+            `tstzrange(ce.start_time, ce.end_time, '[)') && tstzrange($${idx}::timestamptz, $${idx + 1}::timestamptz, '[)')`
+        );
+        params.push(from, to);
+        idx += 2;
+    } else {
+        if (from) { conditions.push(`ce.start_time >= $${idx++}`); params.push(from); }
+        if (to) { conditions.push(`ce.end_time > $${idx++}`); params.push(to); }
+    }
 
     if (client_id) {
         const cid = parseInt(client_id, 10);
@@ -322,17 +627,25 @@ const listEvents = async (req, res) => {
             `SELECT ce.*,
                     u_owner.name  AS owner_name,
                     u_client.name AS client_display_name,
-                    c.casename    AS case_name
+                    c.casename    AS case_name,
+                    ser.id        AS linked_reminder_id
              FROM   calendar_events ce
              LEFT JOIN users u_owner  ON u_owner.userid  = ce.owner_id
              LEFT JOIN users u_client ON u_client.userid = ce.client_user_id
              LEFT JOIN cases c        ON c.caseid        = ce.case_id
+             LEFT JOIN scheduled_email_reminders ser
+                    ON ser.calendar_event_id = ce.id
              ${whereSql}
              ORDER BY ce.start_time ASC
              LIMIT $${idx++} OFFSET $${idx++}`,
             params
         );
-        return res.json({ events: rows.map(_sanitizeEvent) });
+        const eventIds = rows.map((r) => r.id);
+        const managersMap = await _fetchEventManagers(eventIds);
+        const events = await Promise.all(
+            rows.map((r) => _sanitizeEventWithManagers(r, managersMap))
+        );
+        return res.json({ events });
     } catch (err) {
         console.error('[calendarController] listEvents error:', err.message);
         return res.status(500).json({ message: 'שגיאה פנימית בשרת' });
@@ -347,11 +660,11 @@ const getTodayAndTomorrow = async (req, res) => {
     const userId = req.user.UserId;
     try {
         const { rows } = await pool.query(
-            `SELECT * FROM calendar_events
-             WHERE owner_id = $1
-               AND start_time >= NOW()::date
-               AND start_time <  NOW()::date + INTERVAL '2 days'
-             ORDER BY start_time ASC
+            `SELECT ce.* FROM calendar_events ce
+             WHERE ${_personalCalendarSql(1)}
+               AND ce.start_time >= (NOW() AT TIME ZONE 'Asia/Jerusalem')::date AT TIME ZONE 'Asia/Jerusalem'
+               AND ce.start_time <  ((NOW() AT TIME ZONE 'Asia/Jerusalem')::date + INTERVAL '2 days') AT TIME ZONE 'Asia/Jerusalem'
+             ORDER BY ce.start_time ASC
              LIMIT 20`,
             [userId]
         );
@@ -366,13 +679,18 @@ const getTodayAndTomorrow = async (req, res) => {
  * POST /api/calendar
  * Create a new calendar event.
  *
- * Accepts an `event_type` ('appointment' | 'leave' | 'hearing' | 'reminder') and optional prospect/lead
+ * Accepts an `event_type` ('appointment' | 'leave' | 'hearing' | 'reminder' | 'holiday') and optional prospect/lead
  * fields (`lead_name`, `lead_phone`, `lead_email`). A row is either lead-mode OR
  * client-mode; the DB CHECK chk_calendar_events_lead_xor_client enforces this,
  * but we re-validate in JS to return a friendlier 400 message.
  */
 const createEvent = async (req, res) => {
     const userId = req.user.UserId;
+    const ownerCheck = await _requireExistingOwner(userId);
+    if (!ownerCheck.ok) {
+        return res.status(ownerCheck.status).json({ message: ownerCheck.message });
+    }
+
     const {
         title,
         description,
@@ -392,6 +710,11 @@ const createEvent = async (req, res) => {
         lead_phone,
         lead_email,
         lead_case_name,
+        reminder_to_email,
+        reminder_client_name,
+        reminder_template_key,
+        reminder_template_data,
+        reminder_subject,
     } = req.body;
 
     if (!title || !start_time || !end_time) {
@@ -421,8 +744,12 @@ const createEvent = async (req, res) => {
         clientUserId = null;
     }
     const leadCaseName = lead_case_name ? String(lead_case_name).trim() : null;
-    const managerUserId = manager_user_id ? parseInt(manager_user_id, 10) : null;
-    if (manager_user_id && !Number.isFinite(managerUserId)) {
+    const managerIds = _parseManagerUserIds(req.body);
+    const managerUserId = managerIds[0] ?? (manager_user_id ? parseInt(manager_user_id, 10) : null);
+    if (manager_user_id && !Number.isFinite(parseInt(manager_user_id, 10))) {
+        return res.status(400).json({ message: 'מזהה מנהל לא תקין' });
+    }
+    if (managerIds.some((id) => !Number.isFinite(id))) {
         return res.status(400).json({ message: 'מזהה מנהל לא תקין' });
     }
     if (color && !/^#[0-9a-fA-F]{6}$/.test(String(color))) {
@@ -436,16 +763,26 @@ const createEvent = async (req, res) => {
         });
     }
     if (_isInternalScopedEventType(eventType) && hasLead) {
-        return res.status(400).json({ message: 'אירוע חופשה או תזכורת לא יכול להכיל פרטי ליד' });
+        return res.status(400).json({ message: 'אירוע פנימי (חופשה, חג או תזכורת) לא יכול להכיל פרטי ליד' });
     }
 
-    // Leave/reminder events are lawyer-scoped — they may fall outside working hours.
+    // Internal-scoped events are lawyer-scoped — they may fall outside working hours.
+    const storedAllDay = _isAllDayInternalEventType(eventType) ? true : !!all_day;
     if (!_isInternalScopedEventType(eventType)) {
-        const workingCheck = await _validateWorkingHours(start_time, end_time, !!all_day);
+        const workingCheck = await _validateWorkingHours(start_time, end_time, storedAllDay);
         if (!workingCheck.ok) {
             return res.status(400).json({ message: workingCheck.message });
         }
     }
+
+    const reminderOffsets = await _resolveReminderOffsets(req.body, eventType);
+    const storedReminderOffsets = reminderOffsets ?? [];
+    const resolvedChannels = await _resolveReminderChannels(req.body, eventType, storedReminderOffsets);
+    if (resolvedChannels?.error) {
+        return res.status(400).json({ message: resolvedChannels.error });
+    }
+    const storedReminderChannels = resolvedChannels ?? { push: false, sms: false, email: false };
+    const ownerId = _resolveEventOwnerId(userId, eventType, managerUserId, managerIds);
 
     try {
         const { rows } = await pool.query(
@@ -453,11 +790,12 @@ const createEvent = async (req, res) => {
                (owner_id, case_id, title, description, location, event_type,
                 client_user_id, client_name, manager_user_id, manager_name, color,
                 start_time, end_time, all_day, rrule,
-                lead_name, lead_phone, lead_email, lead_case_name)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+                lead_name, lead_phone, lead_email, lead_case_name,
+                reminder_offsets, reminder_channels, reminders_sent_offsets)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20::jsonb, $21::jsonb, '[]'::jsonb)
              RETURNING *`,
             [
-                userId,
+                ownerId,
                 caseId,
                 title.trim(),
                 description || null,
@@ -470,15 +808,56 @@ const createEvent = async (req, res) => {
                 color || null,
                 start_time,
                 end_time,
-                !!all_day,
+                storedAllDay,
                 rrule || null,
                 lead_name ? String(lead_name).trim() : null,
                 lead_phone ? String(lead_phone).trim() : null,
                 lead_email ? String(lead_email).trim().toLowerCase() : null,
                 hasLead ? (leadCaseName || null) : null,
+                offsetsToJson(storedReminderOffsets),
+                channelsToJson(storedReminderChannels),
             ]
         );
-        return res.status(201).json({ event: _sanitizeEvent(rows[0]) });
+        const created = rows[0];
+        const mgrMeta = await _syncEventManagers(created.id, managerIds.length ? managerIds : (managerUserId ? [managerUserId] : []));
+        if (mgrMeta.managerUserId && (mgrMeta.managerUserId !== created.manager_user_id || mgrMeta.managerName !== created.manager_name)) {
+            await pool.query(
+                'UPDATE calendar_events SET manager_user_id = $1, manager_name = $2 WHERE id = $3',
+                [mgrMeta.managerUserId, mgrMeta.managerName, created.id]
+            );
+            created.manager_user_id = mgrMeta.managerUserId;
+            created.manager_name = mgrMeta.managerName;
+        }
+
+        // For reminder-type events, mirror to scheduled_email_reminders so the
+        // reminders worker actually sends the email at start_time.
+        let linkedReminderId = null;
+        let reminderSyncWarning = null;
+        if (eventType === 'reminder') {
+            try {
+                linkedReminderId = await reminderCalendarSync.createReminderForCalendarEvent(
+                    created,
+                    {
+                        toEmail: reminder_to_email,
+                        clientName: reminder_client_name,
+                        templateKey: reminder_template_key,
+                        templateData: reminder_template_data,
+                        subject: reminder_subject,
+                        createdBy: userId,
+                    }
+                );
+            } catch (syncErr) {
+                console.error('[calendarController] createEvent reminder sync failed:', syncErr.message);
+                reminderSyncWarning = 'האירוע נשמר אך לא נוצרה תזכורת מקושרת.';
+            }
+        }
+
+        const sanitized = _applyManagersToEvent(_sanitizeEvent(created), mgrMeta.managers);
+        if (linkedReminderId) sanitized.linkedReminderId = linkedReminderId;
+        return res.status(201).json({
+            event: sanitized,
+            ...(reminderSyncWarning ? { reminderSyncWarning } : {}),
+        });
     } catch (err) {
         // Unique violation on partial lead index = duplicate active lead for this lawyer
         if (err?.code === '23505' && /uq_calendar_events_owner_active_lead_phone/.test(err.message || '')) {
@@ -487,6 +866,8 @@ const createEvent = async (req, res) => {
                 code: 'DUPLICATE_ACTIVE_LEAD',
             });
         }
+        const fkMsg = _calendarFkErrorMessage(err);
+        if (fkMsg) return res.status(400).json({ message: fkMsg });
         console.error('[calendarController] createEvent error:', err.message);
         return res.status(500).json({ message: 'שגיאה פנימית בשרת' });
     }
@@ -501,12 +882,20 @@ const getEvent = async (req, res) => {
     const eventId = parseInt(req.params.id, 10);
     if (!Number.isFinite(eventId)) return res.status(400).json({ message: 'מזהה אירוע לא תקין' });
 
-    const ownership = await _requireOwnership(eventId, userId);
+    const ownership = await _requireEventAccess(eventId, userId, req.user?.Role);
     if (!ownership.ok) return res.status(ownership.status).json({ message: ownership.message });
 
     try {
-        const { rows } = await pool.query('SELECT * FROM calendar_events WHERE id = $1', [eventId]);
-        return res.json({ event: _sanitizeEvent(rows[0]) });
+        const { rows } = await pool.query(
+            `SELECT ce.*, ser.id AS linked_reminder_id
+               FROM calendar_events ce
+          LEFT JOIN scheduled_email_reminders ser ON ser.calendar_event_id = ce.id
+              WHERE ce.id = $1`,
+            [eventId]
+        );
+        const managersMap = await _fetchEventManagers([eventId]);
+        const event = await _sanitizeEventWithManagers(rows[0], managersMap);
+        return res.json({ event });
     } catch (err) {
         console.error('[calendarController] getEvent error:', err.message);
         return res.status(500).json({ message: 'שגיאה פנימית בשרת' });
@@ -516,14 +905,14 @@ const getEvent = async (req, res) => {
 /**
  * PUT /api/calendar/:id
  * Update an existing event (owner only).
- * Resets reminder flags when time changes so cron worker re-fires reminders.
+ * Resets sent-reminder state when time or reminder selection changes.
  */
 const updateEvent = async (req, res) => {
     const userId = req.user.UserId;
     const eventId = parseInt(req.params.id, 10);
     if (!Number.isFinite(eventId)) return res.status(400).json({ message: 'מזהה אירוע לא תקין' });
 
-    const ownership = await _requireOwnership(eventId, userId);
+    const ownership = await _requireEventAccess(eventId, userId, req.user?.Role);
     if (!ownership.ok) return res.status(ownership.status).json({ message: ownership.message });
 
     const {
@@ -545,6 +934,13 @@ const updateEvent = async (req, res) => {
         lead_phone,
         lead_email,
         lead_case_name,
+        manager_user_ids,
+        reminder_offsets,
+        reminder_to_email,
+        reminder_client_name,
+        reminder_template_key,
+        reminder_template_data,
+        reminder_subject,
     } = req.body;
 
     if (start_time && end_time && new Date(end_time) < new Date(start_time)) {
@@ -572,10 +968,31 @@ const updateEvent = async (req, res) => {
 
         const newStart = start_time || ev.start_time;
         const newEnd = end_time || ev.end_time;
-        const newAllDay = all_day !== undefined ? !!all_day : ev.all_day;
         const newEventType = event_type !== undefined ? event_type : (ev.event_type || 'appointment');
-        // Reset audit on time change so the cron worker re-fires reminders.
-        const timeChanged = start_time && new Date(start_time).getTime() !== new Date(ev.start_time).getTime();
+        const newAllDay = _isAllDayInternalEventType(newEventType)
+            ? true
+            : (all_day !== undefined ? !!all_day : ev.all_day);
+        const timeChanged =
+            (start_time && new Date(start_time).getTime() !== new Date(ev.start_time).getTime()) ||
+            (end_time && new Date(end_time).getTime() !== new Date(ev.end_time).getTime());
+        const resolvedReminderOffsets = await _resolveReminderOffsets(req.body, newEventType);
+        const nextReminderOffsets = resolvedReminderOffsets !== null
+            ? resolvedReminderOffsets
+            : parseStoredOffsets(ev.reminder_offsets);
+        const currentReminderOffsets = parseStoredOffsets(ev.reminder_offsets);
+        const remindersChanged = resolvedReminderOffsets !== null
+            && offsetsToJson(nextReminderOffsets) !== offsetsToJson(currentReminderOffsets);
+        const resolvedChannels = await _resolveReminderChannels(req.body, newEventType, nextReminderOffsets);
+        if (resolvedChannels?.error) {
+            return res.status(400).json({ message: resolvedChannels.error });
+        }
+        const nextReminderChannels = resolvedChannels !== null
+            ? resolvedChannels
+            : parseStoredChannels(ev.reminder_channels);
+        const currentReminderChannels = parseStoredChannels(ev.reminder_channels);
+        const channelsChanged = resolvedChannels !== null
+            && channelsToJson(nextReminderChannels) !== channelsToJson(currentReminderChannels);
+        const resetRemindersSent = timeChanged || remindersChanged || channelsChanged;
 
         // Skip working-hours guard for internally-scoped events — see createEvent for rationale.
         if (!_isInternalScopedEventType(newEventType)) {
@@ -615,8 +1032,26 @@ const updateEvent = async (req, res) => {
             });
         }
         if (_isInternalScopedEventType(newEventType) && hasLead) {
-            return res.status(400).json({ message: 'אירוע חופשה או תזכורת לא יכול להכיל פרטי ליד' });
+            return res.status(400).json({ message: 'אירוע פנימי (חופשה, חג או תזכורת) לא יכול להכיל פרטי ליד' });
         }
+
+        const parsedManagerIds = manager_user_ids !== undefined
+            ? _parseManagerUserIds(req.body)
+            : null;
+        if (parsedManagerIds && parsedManagerIds.some((id) => !Number.isFinite(id))) {
+            return res.status(400).json({ message: 'מזהה מנהל לא תקין' });
+        }
+
+        const nextManagerUserId = manager_user_id !== undefined
+            ? (parseInt(manager_user_id, 10) || null)
+            : (parsedManagerIds?.[0] ?? ev.manager_user_id);
+        const nextManagerName = manager_name !== undefined ? manager_name : ev.manager_name;
+        const nextOwnerId = _resolveEventOwnerId(
+            ev.owner_id,
+            newEventType,
+            nextManagerUserId,
+            parsedManagerIds ?? (nextManagerUserId ? [nextManagerUserId] : [])
+        );
 
         const { rows } = await pool.query(
             `UPDATE calendar_events SET
@@ -638,8 +1073,12 @@ const updateEvent = async (req, res) => {
                lead_phone             = $16,
                lead_email             = $17,
                lead_case_name         = $18,
-               last_reminder_sent_at  = $19
-             WHERE id = $20
+               reminder_offsets       = $19::jsonb,
+               reminder_channels      = $20::jsonb,
+               reminders_sent_offsets = $21::jsonb,
+               last_reminder_sent_at  = $22,
+               owner_id               = $23
+             WHERE id = $24
              RETURNING *`,
             [
                 (title || ev.title).trim(),
@@ -648,8 +1087,8 @@ const updateEvent = async (req, res) => {
                 newEventType,
                 resolvedClientUserId,
                 resolvedClientName,
-                manager_user_id !== undefined ? (parseInt(manager_user_id, 10) || null) : ev.manager_user_id,
-                manager_name !== undefined ? manager_name : ev.manager_name,
+                nextManagerUserId,
+                nextManagerName,
                 color !== undefined ? (color || null) : ev.color,
                 newStart,
                 end_time || ev.end_time,
@@ -660,11 +1099,46 @@ const updateEvent = async (req, res) => {
                 nextLeadPhone,
                 nextLeadEmail,
                 hasLead ? nextLeadCaseName : null,
-                timeChanged ? null : ev.last_reminder_sent_at,
+                offsetsToJson(REMINDABLE_EVENT_TYPES.has(newEventType) ? nextReminderOffsets : []),
+                channelsToJson(REMINDABLE_EVENT_TYPES.has(newEventType) ? nextReminderChannels : { push: false, sms: false, email: false }),
+                resetRemindersSent ? '[]' : offsetsToJson(parseStoredSentOffsets(ev.reminders_sent_offsets)),
+                resetRemindersSent ? null : ev.last_reminder_sent_at,
+                nextOwnerId,
                 eventId,
             ]
         );
-        return res.json({ event: _sanitizeEvent(rows[0]) });
+        let updated = rows[0];
+        if (parsedManagerIds !== null) {
+            const mgrMeta = await _syncEventManagers(eventId, parsedManagerIds);
+            if (mgrMeta.managerUserId !== updated.manager_user_id || mgrMeta.managerName !== updated.manager_name) {
+                await pool.query(
+                    'UPDATE calendar_events SET manager_user_id = $1, manager_name = $2 WHERE id = $3',
+                    [mgrMeta.managerUserId, mgrMeta.managerName, eventId]
+                );
+                updated = { ...updated, manager_user_id: mgrMeta.managerUserId, manager_name: mgrMeta.managerName };
+            }
+            await _syncReminderForUpdatedEvent(updated, req.body, {
+                reminder_to_email,
+                reminder_client_name,
+                reminder_template_key,
+                reminder_template_data,
+                reminder_subject,
+            });
+            const sanitized = _applyManagersToEvent(_sanitizeEvent(updated), mgrMeta.managers);
+            await _attachLinkedReminderId(sanitized);
+            return res.json({ event: sanitized });
+        }
+        const managersMap = await _fetchEventManagers([eventId]);
+        await _syncReminderForUpdatedEvent(updated, req.body, {
+            reminder_to_email,
+            reminder_client_name,
+            reminder_template_key,
+            reminder_template_data,
+            reminder_subject,
+        });
+        const sanitized = await _sanitizeEventWithManagers(updated, managersMap);
+        await _attachLinkedReminderId(sanitized);
+        return res.json({ event: sanitized });
     } catch (err) {
         if (err?.code === '23505' && /uq_calendar_events_owner_active_lead_phone/.test(err.message || '')) {
             return res.status(409).json({
@@ -672,6 +1146,8 @@ const updateEvent = async (req, res) => {
                 code: 'DUPLICATE_ACTIVE_LEAD',
             });
         }
+        const fkMsg = _calendarFkErrorMessage(err);
+        if (fkMsg) return res.status(400).json({ message: fkMsg });
         console.error('[calendarController] updateEvent error:', err.message);
         return res.status(500).json({ message: 'שגיאה פנימית בשרת' });
     }
@@ -686,7 +1162,7 @@ const deleteEvent = async (req, res) => {
     const eventId = parseInt(req.params.id, 10);
     if (!Number.isFinite(eventId)) return res.status(400).json({ message: 'מזהה אירוע לא תקין' });
 
-    const ownership = await _requireOwnership(eventId, userId);
+    const ownership = await _requireEventAccess(eventId, userId, req.user?.Role);
     if (!ownership.ok) return res.status(ownership.status).json({ message: ownership.message });
 
     try {
@@ -722,10 +1198,7 @@ const getIcalToken = async (req, res) => {
             [userId, uuidv4()]
         );
         const token = rows[0].ical_feed_token;
-        const baseUrl = process.env.WEBSITE_DOMAIN
-            ? `${process.env.WEBSITE_DOMAIN}/api/calendar/feed/${token}`
-            : `/api/calendar/feed/${token}`;
-        return res.json({ token, subscriptionUrl: `webcal://${baseUrl.replace(/^https?:\/\//, '')}` });
+        return res.json({ token, ..._buildIcalSubscriptionUrls(token) });
     } catch (err) {
         console.error('[calendarController] getIcalToken error:', err.message);
         return res.status(500).json({ message: 'שגיאה פנימית בשרת' });
@@ -746,10 +1219,7 @@ const rotateIcalToken = async (req, res) => {
              ON CONFLICT (user_id) DO UPDATE SET ical_feed_token = $2`,
             [userId, newToken]
         );
-        const baseUrl = process.env.WEBSITE_DOMAIN
-            ? `${process.env.WEBSITE_DOMAIN}/api/calendar/feed/${newToken}`
-            : `/api/calendar/feed/${newToken}`;
-        return res.json({ token: newToken, subscriptionUrl: `webcal://${baseUrl.replace(/^https?:\/\//, '')}` });
+        return res.json({ token: newToken, ..._buildIcalSubscriptionUrls(newToken) });
     } catch (err) {
         console.error('[calendarController] rotateIcalToken error:', err.message);
         return res.status(500).json({ message: 'שגיאה פנימית בשרת' });
@@ -785,28 +1255,30 @@ const serveIcalFeed = async (req, res) => {
         );
         const userName = userRow.rows[0]?.name || 'עורך דין';
 
-        // Fetch future + recent events
+        // Fetch future + recent events (same visibility as the personal calendar)
         const { rows: events } = await pool.query(
-            `SELECT * FROM calendar_events
-             WHERE owner_id = $1
-               AND end_time >= NOW() - INTERVAL '30 days'
-             ORDER BY start_time ASC
+            `SELECT ce.* FROM calendar_events ce
+             WHERE ${_personalCalendarSql(1)}
+               AND ce.end_time >= NOW() - INTERVAL '30 days'
+             ORDER BY ce.start_time ASC
              LIMIT 500`,
             [userId]
         );
 
-        const firmName = process.env.LAW_FIRM_NAME || process.env.COMPANY_NAME || 'Melamedia';
+        const firmName = (await getLawFirmNameHe()) || (await getFirmNameEn()) || 'Melamedia';
+        const feedDomain = (process.env.WEBSITE_DOMAIN || 'melamedia.app').replace(/^https?:\/\//, '');
         const calendar = ical.default
-            ? ical.default({ name: `${firmName} — ${userName}` })
-            : ical({ name: `${firmName} — ${userName}` });
+            ? ical.default({ name: `${firmName} — ${userName}`, ttl: 900 })
+            : ical({ name: `${firmName} — ${userName}`, ttl: 900 });
 
         for (const ev of events) {
             const eventObj = {
-                id: `melamedia-${ev.id}@${process.env.WEBSITE_DOMAIN || 'melamedia.app'}`,
+                id: `melamedia-event-${ev.id}@${feedDomain}`,
                 start: new Date(ev.start_time),
                 end: new Date(ev.end_time),
                 summary: ev.title,
                 allDay: ev.all_day,
+                lastModified: ev.updated_at ? new Date(ev.updated_at) : undefined,
             };
             if (ev.description) eventObj.description = ev.description;
             if (ev.location) eventObj.location = ev.location;
@@ -1083,54 +1555,70 @@ const syncGoogleEvents = async (req, res) => {
         const { google } = googleapis;
         const calendarApi = google.calendar({ version: 'v3', auth: oauth2Client });
 
-        // Pull events from the next 90 days
-        const timeMin = new Date().toISOString();
-        const timeMax = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
+        // Match iCal feed window: recent past + upcoming year. Paginate through all pages.
+        const timeMin = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+        const timeMax = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
 
-        const listRes = await calendarApi.events.list({
-            calendarId: 'primary',
-            timeMin,
-            timeMax,
-            singleEvents: true,
-            orderBy: 'startTime',
-            maxResults: 250,
-        });
+        const googleEvents = [];
+        let pageToken;
+        do {
+            const listRes = await calendarApi.events.list({
+                calendarId: 'primary',
+                timeMin,
+                timeMax,
+                singleEvents: true,
+                orderBy: 'startTime',
+                maxResults: 250,
+                pageToken: pageToken || undefined,
+            });
+            googleEvents.push(...(listRes.data.items || []));
+            pageToken = listRes.data.nextPageToken;
+        } while (pageToken);
 
-        const googleEvents = listRes.data.items || [];
         let upsertCount = 0;
+        let failedCount = 0;
 
         for (const gev of googleEvents) {
             if (gev.status === 'cancelled') continue;
-            const startTime = gev.start?.dateTime || `${gev.start?.date}T00:00:00Z`;
-            const endTime = gev.end?.dateTime || `${gev.end?.date}T23:59:59Z`;
+            if (!gev.id) continue;
+
+            const startTime = gev.start?.dateTime || (gev.start?.date ? `${gev.start.date}T00:00:00Z` : null);
+            const endTime = gev.end?.dateTime || (gev.end?.date ? `${gev.end.date}T23:59:59Z` : null);
+            if (!startTime || !endTime) continue;
+
             const allDay = !gev.start?.dateTime;
 
-            await pool.query(
-                `INSERT INTO calendar_events
-                   (owner_id, title, description, location, start_time, end_time, all_day, google_event_id)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                 ON CONFLICT (owner_id, google_event_id) WHERE google_event_id IS NOT NULL DO UPDATE SET
-                   title       = EXCLUDED.title,
-                   description = EXCLUDED.description,
-                   location    = EXCLUDED.location,
-                   start_time  = EXCLUDED.start_time,
-                   end_time    = EXCLUDED.end_time,
-                   all_day     = EXCLUDED.all_day`,
-                [
-                    userId,
-                    (gev.summary || '(ללא כותרת)').trim(),
-                    gev.description || null,
-                    gev.location || null,
-                    startTime,
-                    endTime,
-                    allDay,
-                    gev.id,
-                ]
-            );
-            upsertCount++;
+            try {
+                await pool.query(
+                    `INSERT INTO calendar_events
+                       (owner_id, title, description, location, start_time, end_time, all_day, google_event_id)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                     ON CONFLICT (owner_id, google_event_id) WHERE google_event_id IS NOT NULL DO UPDATE SET
+                       title       = EXCLUDED.title,
+                       description = EXCLUDED.description,
+                       location    = EXCLUDED.location,
+                       start_time  = EXCLUDED.start_time,
+                       end_time    = EXCLUDED.end_time,
+                       all_day     = EXCLUDED.all_day`,
+                    [
+                        userId,
+                        (gev.summary || '(ללא כותרת)').trim(),
+                        gev.description || null,
+                        gev.location || null,
+                        startTime,
+                        endTime,
+                        allDay,
+                        gev.id,
+                    ]
+                );
+                upsertCount++;
+            } catch (upsertErr) {
+                failedCount++;
+                console.error('[calendarController] Google sync upsert failed:', gev.id, upsertErr.message);
+            }
         }
 
-        return res.json({ ok: true, synced: upsertCount });
+        return res.json({ ok: true, synced: upsertCount, total: googleEvents.length, failed: failedCount });
     } catch (err) {
         console.error('[calendarController] syncGoogleEvents error:', err.message);
         // Token revoked / expired and couldn't refresh → prompt reconnect
@@ -1147,6 +1635,388 @@ const syncGoogleEvents = async (req, res) => {
 
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// OUTLOOK CALENDAR OAUTH2 (Microsoft Graph)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const OUTLOOK_SCOPES = ['offline_access', 'Calendars.ReadWrite', 'User.Read'];
+const OUTLOOK_AUTH_BASE = 'https://login.microsoftonline.com/common/oauth2/v2.0';
+
+function _isOutlookConfigured() {
+    return !!(
+        process.env.OUTLOOK_CLIENT_ID
+        && process.env.OUTLOOK_CLIENT_SECRET
+        && process.env.OUTLOOK_OAUTH_REDIRECT_URI
+    );
+}
+
+function _buildOutlookAuthorizeUrl(state) {
+    const params = new URLSearchParams({
+        client_id: process.env.OUTLOOK_CLIENT_ID,
+        response_type: 'code',
+        redirect_uri: process.env.OUTLOOK_OAUTH_REDIRECT_URI,
+        response_mode: 'query',
+        scope: OUTLOOK_SCOPES.join(' '),
+        state,
+    });
+    return `${OUTLOOK_AUTH_BASE}/authorize?${params.toString()}`;
+}
+
+async function _exchangeOutlookAuthCode(code) {
+    const params = new URLSearchParams({
+        client_id: process.env.OUTLOOK_CLIENT_ID,
+        client_secret: process.env.OUTLOOK_CLIENT_SECRET,
+        code,
+        redirect_uri: process.env.OUTLOOK_OAUTH_REDIRECT_URI,
+        grant_type: 'authorization_code',
+        scope: OUTLOOK_SCOPES.join(' '),
+    });
+    const { data } = await axios.post(`${OUTLOOK_AUTH_BASE}/token`, params.toString(), {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        timeout: 15000,
+    });
+    return data;
+}
+
+async function _refreshOutlookAccessToken(refreshToken) {
+    const params = new URLSearchParams({
+        client_id: process.env.OUTLOOK_CLIENT_ID,
+        client_secret: process.env.OUTLOOK_CLIENT_SECRET,
+        refresh_token: refreshToken,
+        grant_type: 'refresh_token',
+        scope: OUTLOOK_SCOPES.join(' '),
+    });
+    const { data } = await axios.post(`${OUTLOOK_AUTH_BASE}/token`, params.toString(), {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        timeout: 15000,
+    });
+    return data;
+}
+
+async function _outlookGraphGet(accessToken, pathOrUrl) {
+    const url = String(pathOrUrl).startsWith('http')
+        ? pathOrUrl
+        : `https://graph.microsoft.com/v1.0${pathOrUrl}`;
+    const { data } = await axios.get(url, {
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+            Prefer: 'outlook.timezone="UTC"',
+        },
+        timeout: 20000,
+    });
+    return data;
+}
+
+function _parseOutlookEventTimes(oev) {
+    if (oev.isAllDay || (oev.start?.date && !oev.start?.dateTime)) {
+        const start = oev.start?.date;
+        const end = oev.end?.date;
+        if (!start || !end) return null;
+        return {
+            startTime: `${start}T00:00:00Z`,
+            endTime: `${end}T23:59:59Z`,
+            allDay: true,
+        };
+    }
+    const startRaw = oev.start?.dateTime;
+    const endRaw = oev.end?.dateTime;
+    if (!startRaw || !endRaw) return null;
+    const startTime = new Date(`${startRaw}${startRaw.endsWith('Z') ? '' : 'Z'}`).toISOString();
+    const endTime = new Date(`${endRaw}${endRaw.endsWith('Z') ? '' : 'Z'}`).toISOString();
+    return { startTime, endTime, allDay: false };
+}
+
+async function _persistOutlookTokens(userId, {
+    accessToken,
+    refreshToken,
+    tokenExpiry,
+    scope,
+    email,
+    connected = true,
+}) {
+    await pool.query(
+        `INSERT INTO user_calendar_tokens
+           (user_id, outlook_connected, outlook_email,
+            outlook_access_token, outlook_refresh_token, outlook_token_expiry, outlook_scope)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         ON CONFLICT (user_id) DO UPDATE SET
+           outlook_connected     = EXCLUDED.outlook_connected,
+           outlook_email         = EXCLUDED.outlook_email,
+           outlook_access_token  = EXCLUDED.outlook_access_token,
+           outlook_refresh_token = COALESCE(EXCLUDED.outlook_refresh_token, user_calendar_tokens.outlook_refresh_token),
+           outlook_token_expiry  = EXCLUDED.outlook_token_expiry,
+           outlook_scope         = EXCLUDED.outlook_scope`,
+        [
+            userId,
+            connected,
+            email || null,
+            accessToken ? encrypt(accessToken) : null,
+            refreshToken ? encrypt(refreshToken) : null,
+            tokenExpiry || null,
+            scope || OUTLOOK_SCOPES.join(' '),
+        ]
+    );
+}
+
+async function _resolveOutlookAccessToken(userId, row) {
+    let accessToken = decrypt(row.outlook_access_token);
+    const refreshToken = decrypt(row.outlook_refresh_token);
+    const expiry = row.outlook_token_expiry ? new Date(row.outlook_token_expiry) : null;
+    const isExpired = expiry && expiry.getTime() <= Date.now() + 60_000;
+
+    if ((!accessToken || isExpired) && refreshToken) {
+        const refreshed = await _refreshOutlookAccessToken(refreshToken);
+        accessToken = refreshed.access_token;
+        const tokenExpiry = refreshed.expires_in
+            ? new Date(Date.now() + Number(refreshed.expires_in) * 1000)
+            : null;
+        await _persistOutlookTokens(userId, {
+            accessToken,
+            refreshToken: refreshed.refresh_token || refreshToken,
+            tokenExpiry,
+            scope: refreshed.scope || row.outlook_scope,
+            email: row.outlook_email,
+            connected: true,
+        });
+    }
+
+    return accessToken;
+}
+
+/**
+ * GET /api/calendar/outlook/auth-url   (auth required)
+ */
+const getOutlookAuthUrl = async (req, res) => {
+    if (!_isOutlookConfigured()) {
+        return res.status(503).json({ message: 'Outlook Calendar integration not configured' });
+    }
+    if (!(await _isOutlookSyncEnabledForFirm())) {
+        return res.status(403).json({
+            message: 'סנכרון Outlook Calendar מושבת בהגדרות המשרד',
+            code: 'OUTLOOK_SYNC_DISABLED',
+        });
+    }
+
+    try {
+        const state = Buffer.from(JSON.stringify({ userId: req.user.UserId })).toString('base64url');
+        return res.json({ authUrl: _buildOutlookAuthorizeUrl(state) });
+    } catch (err) {
+        console.error('[calendarController] getOutlookAuthUrl error:', err.message);
+        return res.status(500).json({ message: 'שגיאה פנימית בשרת' });
+    }
+};
+
+/**
+ * GET /api/calendar/outlook/callback   (PUBLIC)
+ */
+const handleOutlookCallback = async (req, res) => {
+    const frontendBase = process.env.FRONTEND_URL || process.env.WEBSITE_DOMAIN || 'http://localhost:3000';
+    const successRedirect = `${frontendBase}/AdminStack/CalendarScreen?outlook_connected=1`;
+    const errorRedirect = `${frontendBase}/AdminStack/CalendarScreen?outlook_error=1`;
+
+    const { code, state, error } = req.query;
+    if (error || !code || !state) {
+        console.warn('[calendarController] Outlook callback: consent denied or missing params');
+        return res.redirect(errorRedirect);
+    }
+
+    let userId;
+    try {
+        userId = JSON.parse(Buffer.from(state, 'base64url').toString('utf8')).userId;
+        if (!Number.isFinite(Number(userId))) throw new Error('invalid userId in state');
+    } catch (err) {
+        console.warn('[calendarController] Outlook callback: invalid state param', err.message);
+        return res.redirect(errorRedirect);
+    }
+
+    try {
+        if (!(await _isOutlookSyncEnabledForFirm())) {
+            console.warn('[calendarController] Outlook callback rejected: firm sync disabled');
+            return res.redirect(errorRedirect);
+        }
+
+        const tokens = await _exchangeOutlookAuthCode(code);
+        const accessToken = tokens.access_token;
+        if (!accessToken) throw new Error('missing access_token');
+
+        const profile = await _outlookGraphGet(accessToken, '/me?$select=mail,userPrincipalName');
+        const outlookEmail = profile.mail || profile.userPrincipalName || '';
+        const tokenExpiry = tokens.expires_in
+            ? new Date(Date.now() + Number(tokens.expires_in) * 1000)
+            : null;
+
+        await _persistOutlookTokens(userId, {
+            accessToken,
+            refreshToken: tokens.refresh_token || null,
+            tokenExpiry,
+            scope: tokens.scope || OUTLOOK_SCOPES.join(' '),
+            email: outlookEmail,
+            connected: true,
+        });
+
+        return res.redirect(successRedirect);
+    } catch (err) {
+        console.error('[calendarController] handleOutlookCallback error:', err.message);
+        return res.redirect(errorRedirect);
+    }
+};
+
+/**
+ * GET /api/calendar/outlook/status   (auth required)
+ */
+const getOutlookStatus = async (req, res) => {
+    const userId = req.user.UserId;
+    try {
+        const outlookSyncAllowed = await _isOutlookSyncEnabledForFirm();
+        const { rows } = await pool.query(
+            'SELECT outlook_connected, outlook_email, outlook_scope FROM user_calendar_tokens WHERE user_id = $1',
+            [userId]
+        );
+        if (!rows.length || !rows[0].outlook_connected) {
+            return res.json({ connected: false, outlookSyncAllowed });
+        }
+        return res.json({
+            connected: true,
+            email: rows[0].outlook_email,
+            scope: rows[0].outlook_scope,
+            outlookSyncAllowed,
+        });
+    } catch (err) {
+        console.error('[calendarController] getOutlookStatus error:', err.message);
+        return res.status(500).json({ message: 'שגיאה פנימית בשרת' });
+    }
+};
+
+/**
+ * DELETE /api/calendar/outlook/disconnect   (auth required)
+ */
+const disconnectOutlook = async (req, res) => {
+    const userId = req.user.UserId;
+    try {
+        await pool.query(
+            `UPDATE user_calendar_tokens SET
+               outlook_connected     = FALSE,
+               outlook_email         = NULL,
+               outlook_access_token  = NULL,
+               outlook_refresh_token = NULL,
+               outlook_token_expiry  = NULL,
+               outlook_scope         = NULL
+             WHERE user_id = $1`,
+            [userId]
+        );
+        return res.json({ ok: true });
+    } catch (err) {
+        console.error('[calendarController] disconnectOutlook error:', err.message);
+        return res.status(500).json({ message: 'שגיאה פנימית בשרת' });
+    }
+};
+
+/**
+ * POST /api/calendar/outlook/sync   (auth required)
+ */
+const syncOutlookEvents = async (req, res) => {
+    if (!_isOutlookConfigured()) {
+        return res.status(503).json({ message: 'Outlook Calendar integration not configured' });
+    }
+    if (!(await _isOutlookSyncEnabledForFirm())) {
+        return res.status(403).json({
+            message: 'סנכרון Outlook Calendar מושבת בהגדרות המשרד',
+            code: 'OUTLOOK_SYNC_DISABLED',
+        });
+    }
+
+    const userId = req.user.UserId;
+
+    try {
+        const { rows } = await pool.query(
+            `SELECT outlook_access_token, outlook_refresh_token, outlook_token_expiry,
+                    outlook_email, outlook_scope
+             FROM user_calendar_tokens
+             WHERE user_id = $1 AND outlook_connected = TRUE`,
+            [userId]
+        );
+
+        if (!rows.length) {
+            return res.status(400).json({ message: 'Outlook Calendar לא מחובר. יש לחבר קודם.' });
+        }
+
+        const row = rows[0];
+        const accessToken = await _resolveOutlookAccessToken(userId, row);
+        if (!accessToken) {
+            return res.status(400).json({ message: 'אסימון Outlook אינו תקין. יש לחבר מחדש.' });
+        }
+
+        const timeMin = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+        const timeMax = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+
+        const outlookEvents = [];
+        let nextUrl = `/me/calendarview?startDateTime=${encodeURIComponent(timeMin)}&endDateTime=${encodeURIComponent(timeMax)}&$top=250&$orderby=start/dateTime`;
+        while (nextUrl) {
+            const page = await _outlookGraphGet(accessToken, nextUrl);
+            outlookEvents.push(...(page.value || []));
+            nextUrl = page['@odata.nextLink'] || null;
+        }
+
+        let upsertCount = 0;
+        let failedCount = 0;
+
+        for (const oev of outlookEvents) {
+            if (oev.isCancelled) continue;
+            if (!oev.id) continue;
+
+            const parsedTimes = _parseOutlookEventTimes(oev);
+            if (!parsedTimes) continue;
+            const { startTime, endTime, allDay } = parsedTimes;
+            const description = typeof oev.body?.content === 'string' ? oev.body.content : null;
+            const location = oev.location?.displayName || null;
+
+            try {
+                await pool.query(
+                    `INSERT INTO calendar_events
+                       (owner_id, title, description, location, start_time, end_time, all_day, outlook_event_id)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                     ON CONFLICT (owner_id, outlook_event_id) WHERE outlook_event_id IS NOT NULL DO UPDATE SET
+                       title       = EXCLUDED.title,
+                       description = EXCLUDED.description,
+                       location    = EXCLUDED.location,
+                       start_time  = EXCLUDED.start_time,
+                       end_time    = EXCLUDED.end_time,
+                       all_day     = EXCLUDED.all_day`,
+                    [
+                        userId,
+                        (oev.subject || '(ללא כותרת)').trim(),
+                        description,
+                        location,
+                        startTime,
+                        endTime,
+                        allDay,
+                        oev.id,
+                    ]
+                );
+                upsertCount++;
+            } catch (upsertErr) {
+                failedCount++;
+                console.error('[calendarController] Outlook sync upsert failed:', oev.id, upsertErr.message);
+            }
+        }
+
+        return res.json({ ok: true, synced: upsertCount, total: outlookEvents.length, failed: failedCount });
+    } catch (err) {
+        console.error('[calendarController] syncOutlookEvents error:', err.message);
+        const status = err?.response?.status;
+        const errCode = err?.response?.data?.error;
+        if (status === 401 || errCode === 'invalid_grant') {
+            await pool.query(
+                'UPDATE user_calendar_tokens SET outlook_connected = FALSE WHERE user_id = $1',
+                [userId]
+            );
+            return res.status(401).json({ message: 'חיבור Outlook פג תוקפו. יש לחבר מחדש.', reconnect: true });
+        }
+        return res.status(500).json({ message: 'שגיאה בסנכרון Outlook Calendar' });
+    }
+};
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // CRM — conflict check, client-case dropdown, link-case, convert-lead
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -1156,7 +2026,7 @@ const syncGoogleEvents = async (req, res) => {
  * Application-layer overlap detector (soft warning — no DB-level EXCLUDE constraint).
  * Returns any of the target lawyer's events whose time window intersects [start_time, end_time).
  *
- * Body: { start_time, end_time, lawyer_id?, exclude_event_id? }
+ * Body: { start_time, end_time, lawyer_id?, lawyer_ids?, exclude_event_id? }
  *   • lawyer_id defaults to req.user.UserId
  *   • exclude_event_id is required when editing an existing event to avoid self-collision
  *
@@ -1164,7 +2034,7 @@ const syncGoogleEvents = async (req, res) => {
  */
 const checkConflict = async (req, res) => {
     const userId = req.user.UserId;
-    const { start_time, end_time, lawyer_id, exclude_event_id } = req.body || {};
+    const { start_time, end_time, lawyer_id, lawyer_ids, exclude_event_id } = req.body || {};
 
     if (!start_time || !end_time) {
         return res.status(400).json({ message: 'נא לציין שעת התחלה וסיום לבדיקת התנגשויות' });
@@ -1173,8 +2043,18 @@ const checkConflict = async (req, res) => {
         return res.status(400).json({ message: 'שעת הסיום חייבת להיות אחרי שעת ההתחלה' });
     }
 
-    const targetLawyerId = lawyer_id ? parseInt(lawyer_id, 10) : userId;
-    if (!Number.isFinite(targetLawyerId)) {
+    let targetLawyerIds = [];
+    if (Array.isArray(lawyer_ids) && lawyer_ids.length) {
+        targetLawyerIds = [...new Set(
+            lawyer_ids.map((id) => parseInt(id, 10)).filter((id) => Number.isFinite(id))
+        )];
+    } else if (lawyer_id != null && lawyer_id !== '') {
+        const single = parseInt(lawyer_id, 10);
+        if (Number.isFinite(single)) targetLawyerIds = [single];
+    } else {
+        targetLawyerIds = [userId];
+    }
+    if (!targetLawyerIds.length) {
         return res.status(400).json({ message: 'מזהה עורך דין לא תקין' });
     }
 
@@ -1184,28 +2064,37 @@ const checkConflict = async (req, res) => {
     }
 
     try {
-        const { rows } = await pool.query(
-            `SELECT ce.*,
-                    u_owner.name  AS owner_name,
-                    u_client.name AS client_display_name,
-                    c.casename    AS case_name
-             FROM   calendar_events ce
-             LEFT JOIN users u_owner  ON u_owner.userid  = ce.owner_id
-             LEFT JOIN users u_client ON u_client.userid = ce.client_user_id
-             LEFT JOIN cases c        ON c.caseid        = ce.case_id
-             WHERE  ce.owner_id = $1
-               AND  ($4::int IS NULL OR ce.id <> $4)
-               AND  tstzrange(ce.start_time, ce.end_time, '[)')
-                    && tstzrange($2::timestamptz, $3::timestamptz, '[)')
-             ORDER BY ce.start_time ASC
-             LIMIT  20`,
-            [targetLawyerId, start_time, end_time, excludeId]
-        );
-        const hasLeave = rows.some(r => r.event_type === 'leave');
+        const allRows = [];
+        for (const targetLawyerId of targetLawyerIds) {
+            const { rows } = await pool.query(
+                `SELECT ce.*,
+                        u_owner.name  AS owner_name,
+                        u_client.name AS client_display_name,
+                        c.casename    AS case_name
+                 FROM   calendar_events ce
+                 LEFT JOIN users u_owner  ON u_owner.userid  = ce.owner_id
+                 LEFT JOIN users u_client ON u_client.userid = ce.client_user_id
+                 LEFT JOIN cases c        ON c.caseid        = ce.case_id
+                 WHERE  ${_lawyerMatchSql(1)}
+                   AND  ($4::int IS NULL OR ce.id <> $4)
+                   AND  tstzrange(ce.start_time, ce.end_time, '[)')
+                        && tstzrange($2::timestamptz, $3::timestamptz, '[)')
+                 ORDER BY ce.start_time ASC
+                 LIMIT  20`,
+                [targetLawyerId, start_time, end_time, excludeId]
+            );
+            for (const row of rows) {
+                if (!allRows.some((existing) => existing.id === row.id)) {
+                    allRows.push(row);
+                }
+            }
+        }
+        allRows.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+        const hasLeave = allRows.some((r) => r.event_type === 'leave' || r.event_type === 'holiday');
         return res.json({
-            hasConflict: rows.length > 0,
+            hasConflict: allRows.length > 0,
             hasLeaveConflict: hasLeave,
-            conflicts: rows.map(_sanitizeEvent),
+            conflicts: allRows.slice(0, 20).map(_sanitizeEvent),
         });
     } catch (err) {
         console.error('[calendarController] checkConflict error:', err.message);
@@ -1544,4 +2433,10 @@ module.exports = {
     getGoogleStatus,
     disconnectGoogle,
     syncGoogleEvents,
+    // Outlook
+    getOutlookAuthUrl,
+    handleOutlookCallback,
+    getOutlookStatus,
+    disconnectOutlook,
+    syncOutlookEvents,
 };

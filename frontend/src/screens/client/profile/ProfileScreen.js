@@ -163,11 +163,11 @@ export default function ProfileScreen() {
             <SimpleScrollView className="lw-profileScreen__scroll">
                 {isFetching ? (
                     <SimpleCard>
-                        <SimpleContainer style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+                        <SimpleContainer style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
                             <Skeleton circle height={64} />
                             <SimpleContainer style={{ flex: 1 }}>
                                 <Skeleton width="50%" height={18} />
-                                <Skeleton width="30%" height={14} style={{ marginTop: 8 }} />
+                                <Skeleton width="30%" height={14} style={{ marginTop: '0.5rem' }} />
                             </SimpleContainer>
                         </SimpleContainer>
                         {[1, 2, 3, 4].map(i => (

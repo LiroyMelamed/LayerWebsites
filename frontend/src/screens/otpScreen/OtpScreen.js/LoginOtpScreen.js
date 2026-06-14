@@ -14,13 +14,11 @@ import { MainScreenName } from "../../mainScreen/MainScreen";
 import { ClientStackName } from "../../../navigation/ClientStack";
 import { ClientMainScreenName } from "../../client/clientMainScreen/ClientMainScreen";
 import { useTranslation } from "react-i18next";
+import { AppRoles } from "../../../constant/appRoles";
 
 import "./LoginOtpScreen.scss";
 
-export const AppRoles = {
-    Admin: 'Admin',
-    Customer: 'User'
-}
+export { AppRoles };
 
 export const LoginOtpScreenName = "/LoginOtpScreen";
 
@@ -135,7 +133,7 @@ export default function LoginOtpScreen() {
                     enterKeyHint="done"
                     name="otp"
                     pattern="\\d*"
-                    textStyle={{ textAlign: 'center', letterSpacing: '8px' }}
+                    textStyle={{ textAlign: 'center', letterSpacing: '0.5rem' }}
                     error={otpError}
                 />
             </SimpleContainer>

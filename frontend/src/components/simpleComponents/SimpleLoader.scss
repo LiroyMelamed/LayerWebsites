@@ -27,13 +27,13 @@
 
 .lw-simpleLoader__dot {
   width: 0.625rem;
-  /* 10px */
+  /* 0.625rem */
   height: 0.625rem;
-  /* 10px */
+  /* 0.625rem */
   background-color: currentColor;
-  border-radius: 9999px;
+  border-radius: 624.9375rem;
   margin-inline: 0.375rem;
-  /* 6px */
+  /* 0.375rem */
   opacity: 0;
   animation: lw-dotPulse 1.8s infinite cubic-bezier(0.4, 0, 0.2, 1);
   transform: scale(0);
