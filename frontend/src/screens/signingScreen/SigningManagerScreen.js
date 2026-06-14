@@ -1,5 +1,5 @@
 // src/screens/signingScreen/SigningManagerScreen.js
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
@@ -48,49 +48,15 @@ export default function SigningManagerScreen() {
 
     const { isFromApp } = useFromApp();
     const [activeTab, setActiveTab] = useState("pending");
-    const [docScope, setDocScope] = useState("mine");
     const [searchQuery, setSearchQuery] = useState("");
     const [dateFrom, setDateFrom] = useState("");
     const [dateTo, setDateTo] = useState("");
 
     const [isDownloadingSigned, setIsDownloadingSigned] = useState(false);
 
-    const fetchLawyerFiles = useCallback(
-        () => signingFilesApi.getLawyerSigningFiles({ scope: docScope }),
-        [docScope]
-    );
-
     const { result: lawyerFilesData, isPerforming, performRequest: reloadFiles } = useAutoHttpRequest(
-        fetchLawyerFiles
+        signingFilesApi.getLawyerSigningFiles
     );
-
-    const currentUserId = useMemo(() => {
-        try {
-            const token = localStorage.getItem("token");
-            if (!token) return null;
-            const payload = JSON.parse(atob(token.split(".")[1]));
-            return payload?.userid || payload?.UserId || null;
-        } catch {
-            return null;
-        }
-    }, []);
-
-    const currentUserRole = useMemo(() => {
-        try {
-            const token = localStorage.getItem("token");
-            if (!token) return null;
-            const payload = JSON.parse(atob(token.split(".")[1]));
-            return payload?.role || payload?.Role || null;
-        } catch {
-            return null;
-        }
-    }, []);
-
-    const canManageFile = useCallback((file) => {
-        if (!file) return false;
-        if (String(currentUserRole) === "Admin") return true;
-        return Number(file.LawyerId) === Number(currentUserId);
-    }, [currentUserId, currentUserRole]);
 
     const files = useMemo(() => lawyerFilesData?.files || [], [lawyerFilesData]);
 
@@ -104,7 +70,7 @@ export default function SigningManagerScreen() {
 
         if (query) {
             list = list.filter((f) => {
-                const text = [f.FileName, f.CaseName, f.ClientName, f.LawyerName, f.RejectionReason]
+                const text = [f.FileName, f.CaseName, f.ClientName, f.RejectionReason]
                     .filter(Boolean)
                     .join(" ")
                     .toLowerCase();
@@ -386,7 +352,6 @@ export default function SigningManagerScreen() {
         openPopup(
             <SigningManagerFileDetails
                 file={file}
-                canManage={canManageFile(file)}
                 onClose={closePopup}
                 onOpenPdf={() => openPdfInNewTab(file.SigningFileId)}
                 onDownloadSigned={() => handleDownload(file.SigningFileId, file.FileName)}
@@ -441,21 +406,7 @@ export default function SigningManagerScreen() {
                     </SimpleContainer>
                 </SimpleContainer>
 
-                {/* Scope: my documents vs office documents */}
-                <SimpleContainer className="lw-signingManagerScreen__scopeTabsRow">
-                    <TabButton
-                        active={docScope === "mine"}
-                        label={t('signingManager.scopeTabs.mine')}
-                        onPress={() => setDocScope("mine")}
-                    />
-                    <TabButton
-                        active={docScope === "office"}
-                        label={t('signingManager.scopeTabs.office')}
-                        onPress={() => setDocScope("office")}
-                    />
-                </SimpleContainer>
-
-                {/* Status tabs */}
+                {/* Tabs */}
                 <SimpleContainer className="lw-signingManagerScreen__tabsRow">
                     <TabButton
                         active={activeTab === "pending"}
@@ -506,13 +457,6 @@ export default function SigningManagerScreen() {
                                     </h3>
                                     <SimpleContainer className={chip.className}>{chip.text}</SimpleContainer>
                                 </SimpleContainer>
-
-                                {docScope === "office" && (
-                                    <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                        <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.lawyer')}</div>
-                                        <div className="lw-signingManagerScreen__detailValue">{file.LawyerName || "-"}</div>
-                                    </SimpleContainer>
-                                )}
 
                                 <SimpleContainer className="lw-signingManagerScreen__detailRow">
                                     <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.case')}</div>
@@ -595,7 +539,7 @@ export default function SigningManagerScreen() {
     );
 }
 
-function SigningManagerFileDetails({ file, canManage = true, onClose, onOpenPdf, onDownloadSigned, onDownloadEvidencePdf, onDownloadEvidenceZip, onDelete, isDeleting, formatDotDate, onRenamed }) {
+function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned, onDownloadEvidencePdf, onDownloadEvidenceZip, onDelete, isDeleting, formatDotDate, onRenamed }) {
     const { t } = useTranslation();
     const totalSpots = Number(file?.TotalSpots || 0);
     const signedSpots = Number(file?.SignedSpots || 0);
@@ -757,11 +701,9 @@ function SigningManagerFileDetails({ file, canManage = true, onClose, onOpenPdf,
             ) : (
                 <SimpleContainer className="lw-signingManagerScreen__titleRow">
                     <TextBold24>{file?.FileName || t('signingManager.details.titleFallback')}</TextBold24>
-                    {canManage && (
-                        <SecondaryButton size={buttonSizes.SMALL} onPress={() => { setEditName(file?.FileName || ''); setIsEditingName(true); }}>
-                            {t('signingManager.actions.rename')}
-                        </SecondaryButton>
-                    )}
+                    <SecondaryButton size={buttonSizes.SMALL} onPress={() => { setEditName(file?.FileName || ''); setIsEditingName(true); }}>
+                        {t('signingManager.actions.rename')}
+                    </SecondaryButton>
                 </SimpleContainer>
             )}
 
@@ -847,12 +789,12 @@ function SigningManagerFileDetails({ file, canManage = true, onClose, onOpenPdf,
                         {t('signingManager.actions.downloadEvidenceZip')}
                     </SecondaryButton>
                     <SecondaryButton onPress={wrappedOpenPdf} disabled={isOpeningPdf} isPerforming={isOpeningPdf}>{t('signingManager.actions.openPdf')}</SecondaryButton>
-                    {canManage && isPending && (
+                    {isPending && (
                         <SecondaryButton onPress={handleOpenResend}>
                             {t('signingManager.actions.resendInvite')}
                         </SecondaryButton>
                     )}
-                    {canManage && file?.Status === "pending" && onDelete && (
+                    {file?.Status === "pending" && onDelete && (
                         <SecondaryButton
                             onPress={() => onDelete(file.SigningFileId)}
                             isPerforming={isDeleting}

@@ -1410,12 +1410,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             const res = isPublic
                 ? await signingFilesApi.publicVerifySigningOtp(publicToken, otp, signingSessionId)
                 : await signingFilesApi.verifySigningOtp(effectiveSigningFileId, otp, signingSessionId);
-            const payload = unwrapApi(res);
-            const verified = payload?.data?.verified === true || payload?.verified === true;
-            if (!verified) {
-                setMessage({ type: "error", text: t("signing.canvas.otpVerifyError") });
-                return;
-            }
+            unwrapApi(res);
             setOtpVerified(true);
             setMessage({ type: "success", text: t("signing.canvas.otpVerified") });
         } catch (err) {
