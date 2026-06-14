@@ -139,12 +139,14 @@ function SettingInput({ setting, value, onChange, isTemplate = false }) {
 }
 
 // Notification types whose delivery channels (push/email/sms) are picked
-// per-action by the lawyer (e.g. SIGN_INVITE — chosen per signer when
-// uploading a document for signing). For these, the platform-level
-// per-channel toggles are bypassed at the orchestrator level, so we hide
-// them here to avoid showing controls that have no effect. We still expose
-// the admin_cc / manager_cc toggles since those remain in effect.
-const PER_ACTION_CHANNEL_TYPES = new Set(["SIGN_INVITE"]);
+// per-action by the lawyer:
+//   - SIGN_INVITE: chosen per signer when uploading a document for signing
+//   - CALENDAR_REMINDER: chosen per calendar event (reminder_channels)
+// For these, the platform-level per-channel toggles are bypassed at the
+// orchestrator level, so we hide them here to avoid showing controls that
+// have no effect. We still expose the admin_cc / manager_cc toggles since
+// those remain in effect.
+const PER_ACTION_CHANNEL_TYPES = new Set(["SIGN_INVITE", "CALENDAR_REMINDER"]);
 
 // ─── Channel Toggle Row ─────────────────────────────────────────────
 function ChannelRow({ channel, onToggle }) {
