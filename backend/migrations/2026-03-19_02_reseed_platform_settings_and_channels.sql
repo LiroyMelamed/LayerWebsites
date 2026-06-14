@@ -37,9 +37,7 @@ INSERT INTO platform_settings (category, setting_key, setting_value, value_type,
 VALUES
     -- messaging
     ('messaging', 'SMOOVE_SENDER_PHONE',    '0559199044', 'string', 'מספר שולח SMS',           'מספר הטלפון ממנו נשלחות הודעות SMS'),
-    ('messaging', 'SMOOVE_EMAIL_FROM_NAME',  NULL, 'string', 'שם שולח אימייל',          'השם שיופיע כשולח באימיילים'),
-    ('messaging', 'SMOOVE_EMAIL_FROM_EMAIL', NULL, 'string', 'כתובת שולח אימייל',       'כתובת האימייל של השולח'),
-    ('messaging', 'SMTP_FROM_EMAIL',         NULL, 'string', 'כתובת SMTP שולח',         'כתובת השולח ב-SMTP'),
+    ('messaging', 'SMTP_FROM_EMAIL',         NULL, 'string', 'כתובת שולח מייל',         'כתובת המייל שממנה נשלחות הודעות (חייבת להתאים ל-SMTP_USER)'),
     ('messaging', 'WHATSAPP_DEFAULT_PHONE', '97236565004', 'string', 'טלפון ברירת מחדל לוואטסאפ', 'מספר טלפון לוואטסאפ כאשר מנהל תיק לא משוייך'),
 
     -- signing
@@ -47,9 +45,8 @@ VALUES
     ('signing', 'SIGNING_REQUIRE_OTP_DEFAULT', NULL, 'boolean', 'OTP ברירת מחדל',         'ברירת מחדל לדרישת OTP בחתימות חדשות'),
 
     -- firm
-    ('firm', 'FIRM_NAME',     NULL,          'string', 'שם המשרד (אנגלית)', 'שם המשרד באנגלית — מופיע בתבניות אימייל תזכורות ובמסמכים שנשלחים ללקוחות באנגלית'),
-    ('firm', 'LAW_FIRM_NAME', NULL,          'string', 'שם המשרד (עברית)',  'שם המשרד בעברית — מופיע בהודעות SMS של יום הולדת ללקוחות, ובתבניות תזכורות שנשלחות בעברית'),
-    ('firm', 'COMPANY_NAME',  'MelaMedia', 'string', 'שם החברה (אנגלית)', 'שם החברה באנגלית — מופיע בהודעות SMS ללקוחות, באימיילים שנשלחים מהמערכת, ובהודעות ברוכים הבאים'),
+    ('firm', 'LAW_FIRM_NAME', NULL,          'string', 'שם המשרד (עברית)',  'שם המשרד בעברית — SMS, אימיילים, תבניות, ושם השולח במייל'),
+    ('firm', 'COMPANY_NAME',  'MelaMedia', 'string', 'שם המשרד (אנגלית)', 'שם המשרד באנגלית — תזכורות, מסמכים באנגלית, ומיתוג פנימי'),
 
     -- reminders
     ('reminders', 'LICENSE_RENEWAL_REMINDERS_CEO_EMAIL', NULL, 'string', 'אימייל מנכ"ל לתזכורות', 'כתובת אימייל לשליחת תזכורות רישיון'),

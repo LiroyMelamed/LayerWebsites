@@ -16,6 +16,7 @@
  */
 
 const pool = require('../config/db');
+const { getLawFirmNameHe, getFirmNameEn } = require('../lib/firmBranding');
 const crypto = require('crypto');
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
@@ -1138,7 +1139,7 @@ const serveIcalFeed = async (req, res) => {
             [userId]
         );
 
-        const firmName = process.env.LAW_FIRM_NAME || process.env.COMPANY_NAME || 'Melamedia';
+        const firmName = (await getLawFirmNameHe()) || (await getFirmNameEn()) || 'Melamedia';
         const feedDomain = (process.env.WEBSITE_DOMAIN || 'melamedia.app').replace(/^https?:\/\//, '');
         const calendar = ical.default
             ? ical.default({ name: `${firmName} — ${userName}`, ttl: 900 })

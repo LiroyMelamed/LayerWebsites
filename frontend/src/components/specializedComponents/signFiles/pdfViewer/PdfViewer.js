@@ -84,33 +84,42 @@ export default function PdfViewer({
 
         const rootEl = findScrollParent(container);
 
-        const observer = new IntersectionObserver(
-            (entries) => {
-                entries.forEach((entry) => {
-                    const pageNumber = Number(entry.target.getAttribute('data-page-number')) || 1;
-                    ratios.set(pageNumber, entry.intersectionRatio);
-                });
+        let observer;
+        try {
+            observer = new IntersectionObserver(
+                (entries) => {
+                    entries.forEach((entry) => {
+                        const pageNumber = Number(entry.target.getAttribute('data-page-number')) || 1;
+                        ratios.set(pageNumber, entry.intersectionRatio);
+                    });
 
-                let best = null;
-                ratios.forEach((ratio, pageNumber) => {
-                    if (!best || ratio > best.ratio) {
-                        best = { pageNumber, ratio };
+                    let best = null;
+                    ratios.forEach((ratio, pageNumber) => {
+                        if (!best || ratio > best.ratio) {
+                            best = { pageNumber, ratio };
+                        }
+                    });
+
+                    if (best && best.ratio > 0 && best.pageNumber !== activePage) {
+                        activePage = best.pageNumber;
+                        onPageChange(best.pageNumber);
                     }
-                });
-
-                if (best && best.ratio > 0 && best.pageNumber !== activePage) {
-                    activePage = best.pageNumber;
-                    onPageChange(best.pageNumber);
+                },
+                {
+                    root: rootEl || null,
+                    // IntersectionObserver rejects bare "0" — must be px or %.
+                    rootMargin: '-25% 0px -25% 0px',
+                    threshold: [0, 0.25, 0.5, 0.75, 1],
                 }
-            },
-            {
-                root: rootEl || null,
-                rootMargin: '-25% 0 -25% 0',
-                threshold: [0, 0.25, 0.5, 0.75, 1],
-            }
-        );
+            );
 
-        pages.forEach((page) => observer.observe(page));
+            pages.forEach((page) => observer.observe(page));
+        } catch (err) {
+            console.warn('[PdfViewer] IntersectionObserver unavailable:', err?.message || err);
+            onPageChange(1);
+            return undefined;
+        }
+
         return () => observer.disconnect();
     }, [onPageChange, numPages, pdfFile]);
 

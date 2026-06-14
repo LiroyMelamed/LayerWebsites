@@ -14,13 +14,10 @@ const FORCE_SEND_EMAIL_ALL = process.env.FORCE_SEND_EMAIL_ALL === 'true';
 // DB-stored email template service + platform settings
 const { getEmailTemplate, getSetting } = require('../services/settingsService');
 const { getAttachmentBuffers } = require('../controllers/templateAttachmentController');
+const { getLawFirmNameHe, getEmailFromName, getEmailFromEmail } = require('../lib/firmBranding');
 
 async function resolveEmailFromName() {
-    const fromDb =
-        (await getSetting('messaging', 'SMOOVE_EMAIL_FROM_NAME', null))
-        || (await getSetting('messaging', 'SMTP_FROM_NAME', null));
-    const fromEnv = process.env.SMTP_FROM_NAME;
-    return String(fromDb || fromEnv || '').trim();
+    return getEmailFromName();
 }
 
 const ALLOWED_CAMPAIGN_KEYS = [
@@ -115,8 +112,7 @@ async function sendEmailCampaign({ toEmail, campaignKey, contactFields, attachme
     // Auto-inject firm branding fields from platform settings
     const enrichedFields = { ...contactFields };
     if (!enrichedFields.firm_name) {
-        enrichedFields.firm_name = await getSetting('firm', 'LAW_FIRM_NAME', null)
-            || process.env.LAW_FIRM_NAME || '';
+        enrichedFields.firm_name = await getLawFirmNameHe();
     }
     if (!enrichedFields.firm_logo_url) {
         enrichedFields.firm_logo_url = await getSetting('firm', 'FIRM_LOGO_URL', null) || '';
@@ -200,8 +196,7 @@ async function sendEmailCampaign({ toEmail, campaignKey, contactFields, attachme
 async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shouldSendRealEmail, logLabel, ccEmails, replyTo, fromName: fromNameOverride, fromEmail: fromEmailOverride } = {}) {
     const email = String(toEmail || '').trim();
 
-    const fromNameSetting = String(await getSetting('messaging', 'SMTP_FROM_NAME', process.env.SMTP_FROM_NAME) || '').trim();
-    const fromName = String(fromNameOverride || '').trim() || fromNameSetting || await resolveEmailFromName();
+    const fromName = String(fromNameOverride || '').trim() || await resolveEmailFromName();
     // CC list: optional array of email strings passed by callers (replaces old global CEO CC)
     const ccList = (Array.isArray(ccEmails) ? ccEmails : []).map(e => String(e || '').trim()).filter(Boolean);
     const ccEmail = ccList.length > 0 ? ccList.join(', ') : '';
@@ -223,8 +218,7 @@ async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shou
     const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
     const smtpUser = String(process.env.SMTP_USER || '').trim();
     const smtpPass = String(process.env.SMTP_PASS || '').trim();
-    const smtpFromSetting = String(await getSetting('messaging', 'SMTP_FROM_EMAIL', process.env.SMTP_FROM_EMAIL) || '').trim();
-    const smtpFrom = String(fromEmailOverride || '').trim() || smtpFromSetting;
+    const smtpFrom = String(fromEmailOverride || '').trim() || await getEmailFromEmail();
 
     if (!smtpHost || !smtpUser || !smtpPass) {
         console.error('SMTP env vars missing (SMTP_HOST/SMTP_USER/SMTP_PASS). Cannot send email.');
@@ -293,11 +287,9 @@ async function sendTransactionalCustomHtmlEmail({ toEmail, subject, htmlBody, lo
  */
 async function sendEmailWithAttachments({ toEmail, subject, htmlBody, attachments, logLabel, fromEmail: fromEmailOverride, ccEmails, replyTo, fromName: fromNameOverride } = {}) {
     const email = String(toEmail || '').trim();
-    const fromNameSetting = String(await getSetting('messaging', 'SMTP_FROM_NAME', process.env.SMTP_FROM_NAME) || '').trim();
-    const fromName = String(fromNameOverride || '').trim() || fromNameSetting || await resolveEmailFromName();
+    const fromName = String(fromNameOverride || '').trim() || await resolveEmailFromName();
     // Always send FROM the SMTP account (noreply@) – cPanel rejects mismatched senders.
-    const fromEmailSetting = String(await getSetting('messaging', 'SMTP_FROM_EMAIL', process.env.SMTP_FROM_EMAIL) || '').trim();
-    const fromEmail = String(fromEmailOverride || '').trim() || fromEmailSetting;
+    const fromEmail = String(fromEmailOverride || '').trim() || await getEmailFromEmail();
     // CC list: optional array of email strings passed by callers (replaces old global CEO CC)
     const ccList = (Array.isArray(ccEmails) ? ccEmails : []).map(e => String(e || '').trim()).filter(Boolean);
     const ccEmail = ccList.length > 0 ? ccList.join(', ') : '';

@@ -21,6 +21,7 @@ try {
 const { v4: uuid } = require("uuid");
 const crypto = require('crypto');
 const { renderEvidencePdf, loadFileAsDataUrl } = require('../lib/renderEvidencePdf');
+const { getFirmNameEn } = require('../lib/firmBranding');
 const fs = require('fs');
 const path = require('path');
 const archiver = require('archiver');
@@ -3791,9 +3792,11 @@ async function generateEvidenceCertificateBuffer(signingFileId) {
     let qrDataUrl = null;
     try { qrDataUrl = await QRCode.toDataURL(verifyUrl, { width: 256, margin: 1 }); } catch { qrDataUrl = null; }
 
+    const brandCompanyName = await getFirmNameEn();
+
     const pdfBuffer = await renderEvidencePdf({
         doc, sender, signers, qrDataUrl,
-        brand: { companyName: process.env.COMPANY_NAME || '', logoDataUrl },
+        brand: { companyName: brandCompanyName, logoDataUrl },
     });
 
     const now = new Date();
@@ -4163,13 +4166,15 @@ exports.getEvidenceCertificate = async (req, res, next) => {
             qrDataUrl = null;
         }
 
+        const brandCompanyName = await getFirmNameEn();
+
         const pdfBuffer = await renderEvidencePdf({
             doc,
             sender,
             signers,
             qrDataUrl,
             brand: {
-                companyName: process.env.COMPANY_NAME || '',
+                companyName: brandCompanyName,
                 logoDataUrl,
             },
         });
@@ -4799,6 +4804,11 @@ exports.publicSignFile = async (req, res, next) => {
                 },
             });
             return fail(next, 'RATE_LIMITED', 429);
+        }
+
+        const file = await loadSigningPolicyForFile(signingFileId);
+        if (!file) {
+            return fail(next, 'DOCUMENT_NOT_FOUND', 404);
         }
 
         const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file);

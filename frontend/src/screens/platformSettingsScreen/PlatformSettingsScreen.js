@@ -475,7 +475,7 @@ function EmailTemplateEditor({ template, onSave, saving, firmSettings }) {
     useEffect(() => {
         if (iframeRef.current) {
             let previewHtml = htmlBody;
-            const firmName = firmSettings?.LAW_FIRM_NAME?.effectiveValue || firmSettings?.FIRM_NAME?.effectiveValue || '';
+            const firmName = firmSettings?.LAW_FIRM_NAME?.effectiveValue || firmSettings?.COMPANY_NAME?.effectiveValue || '';
             const firmLogoUrl = withLogoCacheBust(firmSettings?.FIRM_LOGO_URL?.effectiveValue || '');
             if (firmName) previewHtml = previewHtml.split('[[firm_name]]').join(firmName);
             if (firmLogoUrl) previewHtml = previewHtml.split('[[firm_logo_url]]').join(firmLogoUrl);
@@ -699,7 +699,7 @@ export default function PlatformSettingsScreen() {
             const firmS = data?.settings?.firm || {};
             const fullHtml = wrapReminderPreviewHtml(editingReminderTpl.body_html || '', {
                 title: subjectPreview,
-                firmName: firmS.LAW_FIRM_NAME?.effectiveValue || firmS.FIRM_NAME?.effectiveValue || '',
+                firmName: firmS.LAW_FIRM_NAME?.effectiveValue || firmS.COMPANY_NAME?.effectiveValue || '',
                 firmLogoUrl: withLogoCacheBust(firmS.FIRM_LOGO_URL?.effectiveValue || ''),
             });
             const doc = reminderIframeRef.current.contentDocument;

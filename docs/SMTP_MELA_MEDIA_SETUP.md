@@ -113,7 +113,7 @@ pm2 restart ashrafessa-api   # Ashraf only
 In **הגדרות פלטפורמה → messaging**, set:
 
 - `SMTP_FROM_EMAIL` — same as mailbox address
-- `SMOOVE_EMAIL_FROM_NAME` / sender display name if shown
+- Email sender display name comes from **שם המשרד (עברית)** in platform settings (`LAW_FIRM_NAME`), with optional `SMTP_FROM_NAME` in `.env` as fallback
 
 Env vars are the source of truth if DB value is NULL.
 

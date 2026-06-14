@@ -6,16 +6,17 @@
  *   PUT  /api/reminders/:id/cancel  – cancel a PENDING reminder
  */
 
+const { getLawFirmNameHe } = require('../lib/firmBranding');
 const { parseExcelBuffer } = require('../utils/parseExcel');
 const pool = require('../config/db');
 const { getAllTemplates } = require('../tasks/emailReminders/templates');
 
 // ─── Templates ───────────────────────────────────────────────────────
 
-// Human-readable placeholder replacements for preview
-const _placeholderMap = {
+// Human-readable placeholder replacements for preview (resolved per request)
+const _defaultPlaceholderMap = {
     'client_name': '"שם הלקוח"',
-    'firm_name': String(process.env.LAW_FIRM_NAME || 'שם המשרד'),
+    'firm_name': 'שם המשרד',
     'date': '"תאריך"',
     'subject': '"נושא"',
     'body': '"תוכן ההודעה"',
@@ -27,14 +28,19 @@ const _placeholderMap = {
     'content_3': '"תוכן 3"',
 };
 
-function _humanizeBody(raw) {
+function _humanizeBody(raw, placeholderMap = _defaultPlaceholderMap) {
     let text = (raw || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-    text = text.replace(/\[\[([^\]]+)\]\]/g, (_m, key) => _placeholderMap[key] || `"${key}"`);
+    text = text.replace(/\[\[([^\]]+)\]\]/g, (_m, key) => placeholderMap[key] || `"${key}"`);
     return text.slice(0, 200);
 }
 
 const getTemplates = async (req, res, next) => {
     try {
+        const firmName = await getLawFirmNameHe();
+        const placeholderMap = {
+            ..._defaultPlaceholderMap,
+            firm_name: firmName || _defaultPlaceholderMap.firm_name,
+        };
         const templates = getAllTemplates();
 
         // Load DB-stored templates (overrides + custom)
@@ -58,7 +64,7 @@ const getTemplates = async (req, res, next) => {
                     labelEn: t.labelEn || t.label,
                     description: dbOverride.description || t.description || '',
                     subject: dbOverride.subject_template || t.subject,
-                    bodyPreview: _humanizeBody(dbOverride.body_html || t.body),
+                    bodyPreview: _humanizeBody(dbOverride.body_html || t.body, placeholderMap),
                     bodyHtml: dbOverride.body_html || t.body,
                     isBuiltin: true,
                     id: dbOverride.id,
@@ -70,7 +76,7 @@ const getTemplates = async (req, res, next) => {
                 labelEn: t.labelEn || t.label,
                 description: t.description || '',
                 subject: t.subject,
-                bodyPreview: _humanizeBody(t.body),
+                bodyPreview: _humanizeBody(t.body, placeholderMap),
                 bodyHtml: t.body,
                 isBuiltin: true,
             };
@@ -84,7 +90,7 @@ const getTemplates = async (req, res, next) => {
                     label: row.label,
                     description: row.description || '',
                     subject: row.subject_template,
-                    bodyPreview: _humanizeBody(row.body_html),
+                    bodyPreview: _humanizeBody(row.body_html, placeholderMap),
                     bodyHtml: row.body_html,
                     isBuiltin: false,
                     id: row.id,

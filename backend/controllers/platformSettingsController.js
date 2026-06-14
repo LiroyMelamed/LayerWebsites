@@ -251,7 +251,6 @@ const updateEmailTemplate = async (req, res) => {
 const PUBLIC_SETTINGS_KEYS = [
     'messaging:WHATSAPP_DEFAULT_PHONE',
     'firm:LAW_FIRM_NAME',
-    'firm:FIRM_NAME',
     'firm:FIRM_LOGO_URL',
     'firm:COMPANY_NAME',
     'contact:OFFICE_PHONE',
