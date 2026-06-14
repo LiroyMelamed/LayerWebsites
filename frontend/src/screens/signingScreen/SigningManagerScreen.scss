@@ -67,6 +67,11 @@
     flex: 0 1 auto;
 }
 
+.lw-signingManagerScreen__scopeSwitch {
+    align-self: flex-end;
+    flex: 0 0 auto;
+}
+
 .lw-signingManagerScreen__dateInput {
     flex: 0 1 10rem;
     min-inline-size: 7rem;

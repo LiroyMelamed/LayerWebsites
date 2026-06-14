@@ -20,6 +20,7 @@ import { buttonSizes } from "../../styles/buttons/buttonSizes";
 import SearchInput from "../../components/specializedComponents/containers/SearchInput";
 import SimpleInput from "../../components/simpleComponents/SimpleInput";
 import ProgressBar from "../../components/specializedComponents/containers/ProgressBar";
+import SegmentedSwitch from "../../components/styledComponents/SegmentedSwitch";
 
 import { Text14, TextBold24 } from "../../components/specializedComponents/text/AllTextKindFile";
 import { images } from "../../assets/images/images";
@@ -412,19 +413,16 @@ export default function SigningManagerScreen() {
                             className="lw-signingManagerScreen__dateInput"
                         />
                     </SimpleContainer>
-                </SimpleContainer>
-
-                {/* Scope: my files vs all office files */}
-                <SimpleContainer className="lw-signingManagerScreen__tabsRow">
-                    <TabButton
-                        active={scope === "mine"}
-                        label={t('signingManager.scope.mine', 'המסמכים שלי')}
-                        onPress={() => setScope("mine")}
-                    />
-                    <TabButton
-                        active={scope === "office"}
-                        label={t('signingManager.scope.office', 'מסמכי המשרד')}
-                        onPress={() => setScope("office")}
+                    <SegmentedSwitch
+                        className="lw-signingManagerScreen__scopeSwitch"
+                        title={t('signingManager.scope.title', 'תצוגה')}
+                        ariaLabel={t('signingManager.scope.title', 'תצוגה')}
+                        value={scope}
+                        onChange={setScope}
+                        options={[
+                            { value: "mine", label: t('signingManager.scope.mine', 'המסמכים שלי') },
+                            { value: "office", label: t('signingManager.scope.office', 'מסמכי המשרד') },
+                        ]}
                     />
                 </SimpleContainer>
 
