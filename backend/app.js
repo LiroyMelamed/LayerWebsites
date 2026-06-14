@@ -1,5 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const compression = require("compression");
 const helmet = require("helmet");
 const cors = require("cors");
 const path = require('path');
@@ -26,8 +27,7 @@ const reminderRoutes = require("./routes/reminderRoutes");
 const complianceRoutes = require("./routes/complianceRoutes");
 const platformSettingsRoutes = require("./routes/platformSettingsRoutes");
 const chatbotRoutes = require("./routes/chatbotRoutes");
-const templateAttachmentRoutes = require("./routes/templateAttachmentRoutes");
-
+const templateAttachmentRoutes = require("./routes/templateAttachmentRoutes"); const calendarRoutes = require('./routes/calendarRoutes');
 const authMiddleware = require("./middlewares/authMiddleware");
 const { createRateLimitMiddleware, getClientIp } = require("./utils/rateLimiter");
 const errorHandler = require('./middlewares/errorHandler');
@@ -58,6 +58,7 @@ app.use(helmet({
 }));
 app.use(bodyParser.json({ limit: API_JSON_LIMIT }));
 app.use(bodyParser.urlencoded({ limit: API_URLENCODED_LIMIT, extended: true }));
+app.use(compression());
 
 const isProduction = process.env.IS_PRODUCTION === 'true';
 
@@ -170,6 +171,7 @@ app.use("/api/compliance", complianceRoutes);
 app.use("/api/platform-settings", platformSettingsRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/template-attachments", templateAttachmentRoutes);
+app.use("/api/calendar", calendarRoutes);
 
 // Lightweight health endpoint for prereq checks
 app.get("/health", (req, res) => {

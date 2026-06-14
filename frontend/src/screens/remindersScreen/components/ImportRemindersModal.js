@@ -11,6 +11,7 @@ import FileUploadBox from "../../../components/styledComponents/fileUpload/FileU
 import { Text24, Text14 } from "../../../components/specializedComponents/text/AllTextKindFile";
 import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
 import useHttpRequest from "../../../hooks/useHttpRequest";
+import { formatDisplayDate } from "../../../functions/date/formatDateForInput";
 import "./ImportRemindersModal.scss";
 
 export default function ImportRemindersModal({ closePopUpFunction, rePerformRequest }) {
@@ -120,7 +121,7 @@ export default function ImportRemindersModal({ closePopUpFunction, rePerformRequ
                                 <Text14 key={i} className={`lw-importReminders__detail lw-importReminders__detail--${d.status}`}>
                                     {t("reminders.import.row")} {d.row}: {d.clientName}
                                     {d.email ? ` (${d.email})` : ""}
-                                    {d.date ? ` → ${new Date(d.date).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' })}` : ""}
+                                    {d.date ? ` → ${formatDisplayDate(d.date)}` : ""}
                                     {" — "}
                                     {t(`reminders.import.status${d.status.charAt(0).toUpperCase() + d.status.slice(1)}`)}
                                     {d.reason ? ` (${d.reason})` : ""}

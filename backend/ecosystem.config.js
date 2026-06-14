@@ -1,14 +1,12 @@
 module.exports = {
     apps: [
         {
-            name: 'ashrafessa-api',
+            name: 'morlevy-api',
             cwd: __dirname,
             script: 'server.js',
 
-            // Load environment variables from a local .env file in the backend directory.
-            // This matches the production workflow where you deploy a backend/.env on the server.
-            // NOTE: Do NOT commit backend/.env (secrets). Use backend/.env.production.example as a template.
-            env_file: '.env',
+            // Env vars load via dotenv in app.js (backend/.env). Do NOT use PM2 env_file here —
+            // it can hang or mis-parse tenant .env files that contain Hebrew / special characters.
             // Keep fork mode by default (safe with in-memory rate limiting/caching).
             // If you later move shared state to Redis, you can switch to `exec_mode: 'cluster'`.
             exec_mode: 'fork',
@@ -21,8 +19,8 @@ module.exports = {
             min_uptime: 5000,
             time: true,
 
-            out_file: '/var/log/ashrafessa-api/out.log',
-            error_file: '/var/log/ashrafessa-api/err.log',
+            out_file: '/var/log/morlevy-api/out.log',
+            error_file: '/var/log/morlevy-api/err.log',
             log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
             merge_logs: true,
 

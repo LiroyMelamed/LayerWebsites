@@ -20,6 +20,7 @@ import { buttonSizes } from "../../styles/buttons/buttonSizes";
 import SearchInput from "../../components/specializedComponents/containers/SearchInput";
 import SimpleInput from "../../components/simpleComponents/SimpleInput";
 import ProgressBar from "../../components/specializedComponents/containers/ProgressBar";
+import SegmentedSwitch from "../../components/styledComponents/SegmentedSwitch";
 
 import { Text14, TextBold24 } from "../../components/specializedComponents/text/AllTextKindFile";
 import { images } from "../../assets/images/images";
@@ -48,15 +49,23 @@ export default function SigningManagerScreen() {
 
     const { isFromApp } = useFromApp();
     const [activeTab, setActiveTab] = useState("pending");
+    const [scope, setScope] = useState("mine");
     const [searchQuery, setSearchQuery] = useState("");
     const [dateFrom, setDateFrom] = useState("");
     const [dateTo, setDateTo] = useState("");
 
     const [isDownloadingSigned, setIsDownloadingSigned] = useState(false);
 
-    const { result: lawyerFilesData, isPerforming, performRequest: reloadFiles } = useAutoHttpRequest(
+    const { result: lawyerFilesData, isPerforming, performRequest: reloadFilesRaw } = useAutoHttpRequest(
         signingFilesApi.getLawyerSigningFiles
     );
+
+    const reloadFiles = React.useCallback(() => reloadFilesRaw(scope), [reloadFilesRaw, scope]);
+
+    useEffect(() => {
+        reloadFilesRaw(scope);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [scope]);
 
     const files = useMemo(() => lawyerFilesData?.files || [], [lawyerFilesData]);
 
@@ -404,9 +413,19 @@ export default function SigningManagerScreen() {
                             className="lw-signingManagerScreen__dateInput"
                         />
                     </SimpleContainer>
+                    <SegmentedSwitch
+                        className="lw-signingManagerScreen__scopeSwitch"
+                        ariaLabel={t('signingManager.scope.title', 'תצוגה')}
+                        value={scope}
+                        onChange={setScope}
+                        options={[
+                            { value: "mine", label: t('signingManager.scope.mine', 'המסמכים שלי') },
+                            { value: "office", label: t('signingManager.scope.office', 'מסמכי המשרד') },
+                        ]}
+                    />
                 </SimpleContainer>
 
-                {/* Tabs */}
+                {/* Status tabs */}
                 <SimpleContainer className="lw-signingManagerScreen__tabsRow">
                     <TabButton
                         active={activeTab === "pending"}
@@ -424,7 +443,7 @@ export default function SigningManagerScreen() {
                 {isPerforming ? (
                     <SimpleCard>
                         {[1, 2, 3].map(i => (
-                            <SimpleContainer key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0' }}>
+                            <SimpleContainer key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 0' }}>
                                 <Skeleton width="40%" height={14} />
                                 <Skeleton width="20%" height={14} />
                             </SimpleContainer>
@@ -458,6 +477,12 @@ export default function SigningManagerScreen() {
                                     <SimpleContainer className={chip.className}>{chip.text}</SimpleContainer>
                                 </SimpleContainer>
 
+                                {scope === "office" && (
+                                    <SimpleContainer className="lw-signingManagerScreen__detailRow">
+                                        <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.lawyer')}</div>
+                                        <div className="lw-signingManagerScreen__detailValue">{file.LawyerName || "-"}</div>
+                                    </SimpleContainer>
+                                )}
                                 <SimpleContainer className="lw-signingManagerScreen__detailRow">
                                     <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.case')}</div>
                                     <div className="lw-signingManagerScreen__detailValue">{file.CaseName || "-"}</div>

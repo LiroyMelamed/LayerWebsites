@@ -11,6 +11,7 @@
 
 const pool = require('../../config/db');
 const { getSetting } = require('../../services/settingsService');
+const { getLawFirmNameHe, getFirmNameEn } = require('../../lib/firmBranding');
 const { renderTemplate } = require('../../utils/templateRenderer');
 const { notifyRecipient } = require('../../services/notifications/notificationOrchestrator');
 const { getWebsiteDomain } = require('../../utils/sendMessage');
@@ -77,8 +78,7 @@ async function processBirthdayGreetings({ timeZone = 'Asia/Jerusalem' } = {}) {
         'BIRTHDAY_SMS',
         '{{firmName}} מאחלת לך מזל טוב ליום הולדתך, {{recipientName}}! 🎂🎉'
     );
-    const firmName = await getSetting('firm', 'LAW_FIRM_NAME', null)
-        || await getSetting('firm', 'COMPANY_NAME', '');
+    const firmName = (await getLawFirmNameHe()) || (await getFirmNameEn());
     const domain = await getWebsiteDomain();
     const websiteUrl = `https://${domain}`;
 

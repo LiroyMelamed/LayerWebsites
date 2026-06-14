@@ -50,7 +50,12 @@ const updateSettings = async (req, res) => {
         const results = await settingsService.bulkUpsert(settings, req.user?.UserId);
         return res.json({ message: 'ההגדרות עודכנו בהצלחה', count: results.length });
     } catch (err) {
-        console.error('[platformSettings] updateSettings error:', err);
+        console.error('[platformSettings] updateSettings error:', err?.message || err);
+        if (err?.code === '23503') {
+            return res.status(400).json({
+                message: 'לא ניתן לשמור הגדרות — מזהה המשתמש לא קיים במערכת. נסה להתחבר מחדש.',
+            });
+        }
         return res.status(500).json({ message: 'שגיאה בעדכון הגדרות' });
     }
 };
@@ -86,6 +91,30 @@ const updateSingleSetting = async (req, res) => {
 };
 
 // ── Notification Channels ───────────────────────────────────────────
+
+/**
+ * GET /api/platform-settings/channels-lite
+ *
+ * Lawyer-readable allowlist of which channels (push/email/sms) are enabled
+ * per notification type. The per-action UIs (signing upload, calendar
+ * event reminder picker) use this to show only the channels the platform
+ * admin enabled. admin_cc / manager_cc are intentionally NOT exposed.
+ */
+const getNotificationChannelsLite = async (req, res) => {
+    try {
+        const channels = await settingsService.getNotificationChannels();
+        const lite = (Array.isArray(channels) ? channels : []).map((c) => ({
+            notification_type: c.notification_type,
+            push_enabled: !!c.push_enabled,
+            email_enabled: !!c.email_enabled,
+            sms_enabled: !!c.sms_enabled,
+        }));
+        return res.json({ channels: lite });
+    } catch (err) {
+        console.error('[platformSettings] getChannelsLite error:', err);
+        return res.status(500).json({ message: 'שגיאה בטעינת ערוצי התראות' });
+    }
+};
 
 /** GET /api/platform-settings/channels */
 const getNotificationChannels = async (req, res) => {
@@ -246,7 +275,6 @@ const updateEmailTemplate = async (req, res) => {
 const PUBLIC_SETTINGS_KEYS = [
     'messaging:WHATSAPP_DEFAULT_PHONE',
     'firm:LAW_FIRM_NAME',
-    'firm:FIRM_NAME',
     'firm:FIRM_LOGO_URL',
     'firm:COMPANY_NAME',
     'contact:OFFICE_PHONE',
@@ -340,6 +368,7 @@ module.exports = {
     updateSettings,
     updateSingleSetting,
     getNotificationChannels,
+    getNotificationChannelsLite,
     updateNotificationChannel,
     listPlatformAdmins,
     addPlatformAdmin,

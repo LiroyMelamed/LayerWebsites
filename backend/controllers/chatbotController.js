@@ -134,15 +134,15 @@ async function maybeSendLeadNotification(sessionId, allMessages) {
         : `<p style="color:#d97706;"><strong>⚠️ לקוח לא מזוהה במערכת</strong></p>`;
 
     const htmlBody = `
-        <div dir="rtl" style="font-family:Arial,sans-serif;font-size:15px;line-height:1.8;">
+        <div dir="rtl" style="font-family:Arial,sans-serif;font-size:0.9375rem;line-height:1.8;">
             <h2 style="color:#1A365D;">🔔 ליד חדש מהצ'אטבוט</h2>
             ${contactInfo}
             ${clientMatch}
             <p><strong>מזהה שיחה:</strong> ${sessionId}</p>
             <p><strong>תאריך:</strong> ${new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' })}</p>
-            <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0;">
+            <hr style="border:none;border-top:0.0625rem solid #e5e7eb;margin:1rem 0;">
             <h3 style="color:#1A365D;">תמלול השיחה:</h3>
-            <div style="background:#f9fafb;padding:16px;border-radius:8px;border:1px solid #e5e7eb;">
+            <div style="background:#f9fafb;padding:1rem;border-radius:0.5rem;border:0.0625rem solid #e5e7eb;">
                 ${lines.join('<br><br>')}
             </div>
         </div>

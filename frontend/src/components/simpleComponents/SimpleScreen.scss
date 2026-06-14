@@ -33,8 +33,8 @@
 
 @media (min-width: v.$bp-lg) {
   .lw-simpleScreen__content {
-    width: calc(100% - 250px);
-    margin-right: 250px;
+    width: calc(100% - 15.625rem);
+    margin-right: 15.625rem;
     align-items: flex-end;
   }
 }

@@ -14,6 +14,12 @@ const upload = multer({
 // Public route — no admin required (only CORS + rate-limit apply)
 router.get('/public', ctrl.getPublicSettings);
 
+// Lawyer-readable allowlist of enabled channels per notification type.
+// Used by the per-action pickers (signing, calendar) to only show
+// channels the platform admin enabled. Auth required, but no platform
+// admin requirement.
+router.get('/channels-lite', authMiddleware, ctrl.getNotificationChannelsLite);
+
 // All remaining routes require platform admin
 router.use(authMiddleware, requirePlatformAdmin);
 

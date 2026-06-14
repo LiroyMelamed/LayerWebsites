@@ -28,13 +28,13 @@
 
 .lw-plansPricingScreen__grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(16.25rem, 1fr));
     gap: v.$space-3;
 }
 
 .lw-plansPricingScreen__commercialGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(16.25rem, 1fr));
     gap: v.$space-3;
     margin-top: v.$space-2;
 }
@@ -45,7 +45,7 @@
 }
 
 .lw-plansPricingScreen__card--current {
-    outline: 2px solid rgba(76, 175, 80, 0.55);
+    outline: 0.125rem solid rgba(76, 175, 80, 0.55);
 }
 
 .lw-plansPricingScreen__planKey {

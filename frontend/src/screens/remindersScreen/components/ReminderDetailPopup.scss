@@ -16,7 +16,7 @@
         display: flex;
         flex-direction: column;
         gap: 0;
-        border: 1px solid var(--lw-color-disabled);
+        border: 0.0625rem solid var(--lw-color-disabled);
         border-radius: 0.625rem;
         overflow: hidden;
     }
@@ -27,7 +27,7 @@
         align-items: center;
         justify-content: space-between;
         padding: 0.625rem 1rem;
-        border-bottom: 1px solid var(--lw-color-disabled);
+        border-bottom: 0.0625rem solid var(--lw-color-disabled);
         gap: 1rem;
 
         &:last-child {

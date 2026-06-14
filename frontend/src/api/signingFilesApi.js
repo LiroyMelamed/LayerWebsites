@@ -23,8 +23,9 @@ const signingFilesApi = {
         return await ApiUtils.get(`${base}/client-files`);
     },
 
-    getLawyerSigningFiles: async () => {
-        return await ApiUtils.get(`${base}/lawyer-files`);
+    getLawyerSigningFiles: async (scope = "mine") => {
+        const safeScope = scope === "office" ? "office" : "mine";
+        return await ApiUtils.get(`${base}/lawyer-files?scope=${safeScope}`);
     },
 
     getSigningFileDetails: async (signingFileId) => {

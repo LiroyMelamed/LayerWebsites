@@ -38,15 +38,42 @@ const HoverContainer = ({
             if (!target || !hover) return;
 
             const targetRect = target.getBoundingClientRect();
-            const hoverRect = hover.getBoundingClientRect();
-            const viewportWidth = window.innerWidth;
+            const hoverWidth = hover.offsetWidth || hover.getBoundingClientRect().width;
+            const hoverHeight = hover.offsetHeight || hover.getBoundingClientRect().height;
+            // Prefer the visual viewport — on mobile webviews the on-screen keyboard
+            // shrinks it while window.innerHeight stays stale.
+            const vv = window.visualViewport;
+            const viewportWidth = vv?.width || window.innerWidth;
+            const viewportHeight = vv?.height || window.innerHeight;
 
-            const desiredLeft = targetRect.left + targetRect.width / 2 - hoverRect.width / 2;
             const margin = 8;
-            const left = Math.max(margin, Math.min(desiredLeft, viewportWidth - hoverRect.width - margin));
+            const gap = 4;
+            const desiredLeft = targetRect.left + targetRect.width / 2 - hoverWidth / 2;
+            const left = Math.max(margin, Math.min(desiredLeft, viewportWidth - hoverWidth - margin));
 
-            hover.style.top = `${targetRect.bottom + 4}px`;
-            hover.style.left = `${left}px`;
+            const spaceBelow = viewportHeight - targetRect.bottom - margin;
+            const spaceAbove = targetRect.top - margin;
+            let top;
+
+            if (spaceBelow >= hoverHeight + gap || spaceBelow >= spaceAbove) {
+                top = targetRect.bottom + gap;
+                if (top + hoverHeight > viewportHeight - margin) {
+                    top = Math.max(margin, viewportHeight - hoverHeight - margin);
+                }
+            } else {
+                top = targetRect.top - hoverHeight - gap;
+                if (top < margin) {
+                    top = margin;
+                }
+            }
+
+            // Project convention: rem units (keeps browser font-size scaling consistent).
+            const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+            const toRem = (valuePx) => `${valuePx / rootFontSize}rem`;
+
+            hover.style.top = toRem(top);
+            hover.style.left = toRem(left);
+            hover.style.maxHeight = toRem(Math.max(120, viewportHeight - margin * 2));
         };
 
         adjustPosition();
@@ -55,11 +82,29 @@ const HoverContainer = ({
         // Capture scroll from scrollable parents (e.g. inside a popup)
         window.addEventListener('scroll', adjustPosition, true);
 
+        // Mobile webviews: opening the on-screen keyboard resizes/offsets the
+        // visual viewport without firing window resize/scroll — reposition then too.
+        const vv = window.visualViewport;
+        vv?.addEventListener('resize', adjustPosition);
+        vv?.addEventListener('scroll', adjustPosition);
+
+        // Reposition when the dropdown's own size changes (loader → results) or
+        // when the anchor input moves/resizes due to layout shifts.
+        let resizeObserver;
+        if (typeof ResizeObserver !== 'undefined') {
+            resizeObserver = new ResizeObserver(adjustPosition);
+            resizeObserver.observe(el);
+            if (targetRef?.current) resizeObserver.observe(targetRef.current);
+        }
+
         return () => {
             window.removeEventListener('resize', adjustPosition);
             window.removeEventListener('scroll', adjustPosition, true);
+            vv?.removeEventListener('resize', adjustPosition);
+            vv?.removeEventListener('scroll', adjustPosition);
+            resizeObserver?.disconnect();
         };
-    }, [targetRef]);
+    }, [targetRef, queryResult, isPerforming, query]);
 
     // Separate effect for click-outside so it doesn't re-run just because onClose changes reference
     useEffect(() => {

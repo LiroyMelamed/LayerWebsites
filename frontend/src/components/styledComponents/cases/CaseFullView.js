@@ -21,34 +21,46 @@ import { useTranslation } from 'react-i18next';
 import { usePopup } from '../../../providers/PopUpProvider';
 import ConfirmationDialog from '../popups/ConfirmationDialog';
 
-export default function CaseFullView({ caseDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style: _style }) {
+function _buildInitialCaseData(caseDetails, initialDraft) {
+    const source = caseDetails?.CaseId ? caseDetails : (initialDraft || caseDetails || {});
+    return {
+        CaseId: source.CaseId || '',
+        CaseName: source.CaseName || '',
+        CaseTypeName: source.CaseTypeName || '',
+        CompanyName: source.CompanyName || '',
+        CurrentStage: source.CurrentStage || '',
+        CustomerMail: source.CustomerMail || '',
+        CustomerName: source.CustomerName || '',
+        Descriptions: source.Descriptions || [{ Stage: 1, Text: '', Timestamp: '', New: false }],
+        IsClosed: source.IsClosed || false,
+        IsTagged: source.IsTagged || false,
+        PhoneNumber: source.PhoneNumber || '',
+        UserId: source.UserId || null,
+        Users: source.Users || (source.UserId ? [{
+            UserId: source.UserId,
+            Name: source.CustomerName || '',
+            Email: source.CustomerMail || '',
+            PhoneNumber: source.PhoneNumber || '',
+        }] : []),
+        CaseManager: source.CaseManager || '',
+        CaseManagerId: source.CaseManagerId || '',
+        EstimatedCompletionDate: source.EstimatedCompletionDate,
+        LicenseExpiryDate: source.LicenseExpiryDate,
+        HasLicenseExpiry: source.HasLicenseExpiry || false,
+    };
+}
+
+export default function CaseFullView({ caseDetails, initialDraft, rePerformRequest, onFailureFunction, closePopUpFunction, onCaseCreated, style: _style }) {
     const { t } = useTranslation();
     const { openPopup: openConfirm, closePopup: closeConfirm } = usePopup();
+    const isEditingExisting = !!caseDetails?.CaseId;
     const [caseHasBeenChosen, setCaseHasBeenChosen] = useState(false)
     const [hasSubmitted, setHasSubmitted] = useState(false);
     const [fieldErrors, setFieldErrors] = useState({});
-    const [caseData, setCaseData] = useState({
-        CaseId: caseDetails?.CaseId || '',
-        CaseName: caseDetails?.CaseName || '',
-        CaseTypeName: caseDetails?.CaseTypeName || '',
-        CompanyName: caseDetails?.CompanyName || '',
-        CurrentStage: caseDetails?.CurrentStage || '',
-        CustomerMail: caseDetails?.CustomerMail || '',
-        CustomerName: caseDetails?.CustomerName || '',
-        Descriptions: caseDetails?.Descriptions || [{ Stage: 1, Text: '', Timestamp: '', New: false }],
-        IsClosed: caseDetails?.IsClosed || false,
-        IsTagged: caseDetails?.IsTagged || false,
-        PhoneNumber: caseDetails?.PhoneNumber || '',
-        UserId: caseDetails?.UserId || null,
-        Users: caseDetails?.Users || (caseDetails?.UserId ? [{ UserId: caseDetails.UserId, Name: caseDetails.CustomerName || '', Email: caseDetails.CustomerMail || '', PhoneNumber: caseDetails.PhoneNumber || '' }] : []),
-        CaseManager: caseDetails?.CaseManager || '',
-        CaseManagerId: caseDetails?.CaseManagerId || '',
-        EstimatedCompletionDate: caseDetails?.EstimatedCompletionDate,
-        LicenseExpiryDate: caseDetails?.LicenseExpiryDate,
-        HasLicenseExpiry: caseDetails?.HasLicenseExpiry || false,
-    });
+    const [caseData, setCaseData] = useState(() => _buildInitialCaseData(caseDetails, initialDraft));
 
-    const [showLicenseExpiry, setShowLicenseExpiry] = useState(!!caseDetails?.HasLicenseExpiry || !!caseDetails?.LicenseExpiryDate);
+    const seed = caseDetails?.CaseId ? caseDetails : (initialDraft || caseDetails);
+    const [showLicenseExpiry, setShowLicenseExpiry] = useState(!!seed?.HasLicenseExpiry || !!seed?.LicenseExpiryDate);
 
     const moveStage = (fromIndex, toIndex) => {
         setCaseData((prev) => {
@@ -131,10 +143,22 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
     const { result: cases, isPerforming: isPerformingCases, performRequest: searchCases } = useAutoHttpRequest(casesApi.getCaseByName, { onFailure: () => { } });
 
     const { isPerforming: isSaving, performRequest: saveCase } = useHttpRequest(
-        caseDetails ? casesApi.updateCaseById : casesApi.addCase,
-        () => {
+        isEditingExisting ? casesApi.updateCaseById : casesApi.addCase,
+        (data) => {
             rePerformRequest?.();
-            closePopUpFunction?.();
+            (async () => {
+                try {
+                    if (!isEditingExisting && onCaseCreated && data?.caseId) {
+                        await onCaseCreated(data.caseId);
+                    }
+                    closePopUpFunction?.();
+                } catch (err) {
+                    onFailureFunction?.({
+                        data: { message: err?.message },
+                        message: err?.message,
+                    });
+                }
+            })();
         },
         onFailureFunction
     );
@@ -334,7 +358,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
         <SimpleContainer className="lw-caseFullView">
             <SimpleScrollView>
                 <SimpleContainer className="lw-caseFullView__row">
-                    {caseDetails ?
+                    {isEditingExisting ?
                         <SimpleInput
                             className="lw-caseFullView__field"
                             title={t('cases.caseNumber')}
@@ -561,7 +585,7 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                 </SimpleContainer>
 
                 <SimpleContainer className="lw-caseFullView__buttonsRow">
-                    {((caseDetails != null) || caseHasBeenChosen) && (
+                    {(isEditingExisting || caseHasBeenChosen) && (
                         <SecondaryButton
                             onPress={handleDeleteCase}
                             isPerforming={isDeleting}
@@ -571,11 +595,11 @@ export default function CaseFullView({ caseDetails, rePerformRequest, onFailureF
                         </SecondaryButton>
                     )}
                     <PrimaryButton
-                        onPress={caseDetails ? handleUpdateCase : handleSaveCase}
+                        onPress={isEditingExisting ? handleUpdateCase : handleSaveCase}
                         isPerforming={isSaving}
                         size={buttonSizes.MEDIUM}
                     >
-                        {isSaving ? t('common.saving') : caseDetails || caseHasBeenChosen ? t('cases.updateCase') : t('cases.saveCase')}
+                        {isSaving ? t('common.saving') : isEditingExisting || caseHasBeenChosen ? t('cases.updateCase') : t('cases.saveCase')}
                     </PrimaryButton>
                     <SecondaryButton
                         onPress={() => closePopUpFunction?.()}

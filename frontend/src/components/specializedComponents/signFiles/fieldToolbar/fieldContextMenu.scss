@@ -2,8 +2,8 @@
   margin-top: 0.5rem;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px;
+  gap: 0.5rem;
+  padding: 0.75rem;
   min-width: 14rem;
 }
 
@@ -12,9 +12,9 @@
   inset-inline-end: 1.5rem;
   bottom: 9.5rem;
   z-index: 12000;
-  padding: 12px;
+  padding: 0.75rem;
   background: var(--lw-color-white);
-  border: 1px solid var(--lw-color-border, #e2e8f0);
+  border: 0.0625rem solid var(--lw-color-border, #e2e8f0);
   border-radius: 0.75rem;
   min-width: 14rem;
   box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12);
@@ -34,7 +34,7 @@
 }
 
 .lw-fieldContextMenu__close {
-  min-height: 32px;
+  min-height: 2rem;
 }
 
 .lw-fieldContextMenu__action {
@@ -46,13 +46,13 @@
 }
 
 .lw-fieldContextMenu__divider {
-  height: 1px;
+  height: 0.0625rem;
   background: var(--lw-color-disabled, #E2E8F0);
-  margin: 6px 0;
+  margin: 0.375rem 0;
 }
 
 .lw-fieldContextMenu__groupTitle {
   font-weight: 700;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--lw-color-text);
 }

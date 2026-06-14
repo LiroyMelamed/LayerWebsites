@@ -4,6 +4,8 @@ import PdfPage from "./PdfPage";
 import SignatureSpotsLayer from "../signatureSpots/SignatureSpotsLayer";
 
 const BASE_RENDER_WIDTH = 800;
+const MIN_RENDER_WIDTH = 320;
+const MAX_RENDER_WIDTH = 800;
 
 export default function PdfViewer({
     pdfFile,
@@ -33,7 +35,9 @@ export default function PdfViewer({
 
         const update = () => {
             const w = el.getBoundingClientRect().width;
-            if (w && Number.isFinite(w)) setContainerWidth(w);
+            if (w && Number.isFinite(w) && w >= MIN_RENDER_WIDTH) {
+                setContainerWidth(w);
+            }
         };
 
         update();
@@ -50,7 +54,7 @@ export default function PdfViewer({
             if (ro) ro.disconnect();
             else window.removeEventListener("resize", update);
         };
-    }, []);
+    }, [pdfFile]);
 
     useEffect(() => {
         const container = viewerRef.current;
@@ -80,48 +84,57 @@ export default function PdfViewer({
 
         const rootEl = findScrollParent(container);
 
-        const observer = new IntersectionObserver(
-            (entries) => {
-                entries.forEach((entry) => {
-                    const pageNumber = Number(entry.target.getAttribute('data-page-number')) || 1;
-                    ratios.set(pageNumber, entry.intersectionRatio);
-                });
+        let observer;
+        try {
+            observer = new IntersectionObserver(
+                (entries) => {
+                    entries.forEach((entry) => {
+                        const pageNumber = Number(entry.target.getAttribute('data-page-number')) || 1;
+                        ratios.set(pageNumber, entry.intersectionRatio);
+                    });
 
-                let best = null;
-                ratios.forEach((ratio, pageNumber) => {
-                    if (!best || ratio > best.ratio) {
-                        best = { pageNumber, ratio };
+                    let best = null;
+                    ratios.forEach((ratio, pageNumber) => {
+                        if (!best || ratio > best.ratio) {
+                            best = { pageNumber, ratio };
+                        }
+                    });
+
+                    if (best && best.ratio > 0 && best.pageNumber !== activePage) {
+                        activePage = best.pageNumber;
+                        onPageChange(best.pageNumber);
                     }
-                });
-
-                if (best && best.ratio > 0 && best.pageNumber !== activePage) {
-                    activePage = best.pageNumber;
-                    onPageChange(best.pageNumber);
+                },
+                {
+                    root: rootEl || null,
+                    // IntersectionObserver rejects bare "0" — must be px or %.
+                    rootMargin: '-25% 0px -25% 0px',
+                    threshold: [0, 0.25, 0.5, 0.75, 1],
                 }
-            },
-            {
-                root: rootEl || null,
-                rootMargin: '-25% 0px -25% 0px',
-                threshold: [0, 0.25, 0.5, 0.75, 1],
-            }
-        );
+            );
 
-        pages.forEach((page) => observer.observe(page));
+            pages.forEach((page) => observer.observe(page));
+        } catch (err) {
+            console.warn('[PdfViewer] IntersectionObserver unavailable:', err?.message || err);
+            onPageChange(1);
+            return undefined;
+        }
+
         return () => observer.disconnect();
     }, [onPageChange, numPages, pdfFile]);
 
     const renderWidth = useMemo(() => {
-        // Keep same coordinate system across app: spots are stored in BASE_RENDER_WIDTH space.
-        // Render PDF at whatever width is available (up to BASE_RENDER_WIDTH), and scale spots accordingly.
-        const safe = Math.max(280, containerWidth || BASE_RENDER_WIDTH);
-        return Math.min(BASE_RENDER_WIDTH, Math.floor(safe));
+        // Spots are stored in BASE_RENDER_WIDTH space; scale overlays via spotScale.
+        const safe = Math.max(MIN_RENDER_WIDTH, containerWidth || BASE_RENDER_WIDTH);
+        return Math.min(MAX_RENDER_WIDTH, Math.floor(safe));
     }, [containerWidth]);
 
     const spotScale = useMemo(() => renderWidth / BASE_RENDER_WIDTH, [renderWidth]);
 
     useEffect(() => {
-        if (!pageContainerRef.current) return;
-        pageContainerRef.current.style.setProperty('--lw-pdf-render-width', `${renderWidth}px`);
+        const el = viewerRef.current;
+        if (!el) return;
+        el.style.setProperty('--lw-pdf-render-width', `${renderWidth}px`);
     }, [renderWidth]);
 
     useEffect(() => {
@@ -151,8 +164,6 @@ export default function PdfViewer({
                         ref={pageNumber === 1 ? pageContainerRef : undefined}
                         className="lw-signing-pageWrap"
                     >
-
-
                         <SimpleContainer
                             className="lw-signing-pageInner"
                             data-page-number={pageNumber}

@@ -1,0 +1,60 @@
+@use '../../../styles/variables' as v;
+@use '../../../styles/mixins' as m;
+
+.lw-personalSyncModal {
+    flex-direction: column;
+    width: 100%;
+    min-inline-size: min(26.25rem, 90vw);
+    max-inline-size: 32.5rem;
+    max-block-size: calc(85vh - 2rem);
+    overflow: hidden;
+    margin: 0 auto;
+
+    > .lw-simpleScrollView {
+        padding: v.$space-4;
+    }
+}
+
+.lw-personalSyncModal__scroll {
+    flex: 1 1 auto;
+    min-block-size: 0;
+    flex-direction: column;
+    gap: v.$space-4;
+}
+
+.lw-personalSyncModal__title {
+    margin-block-end: v.$space-2;
+    text-align: right;
+}
+
+.lw-personalSyncModal__section {
+    flex-direction: column;
+    gap: v.$space-3;
+}
+
+.lw-personalSyncModal__section--border {
+    padding-block-start: v.$space-3;
+    border-block-start: 0.0625rem solid rgba(226, 232, 240, 0.8);
+}
+
+.lw-personalSyncModal__icalRow {
+    flex-direction: column;
+    gap: v.$space-3;
+}
+
+.lw-personalSyncModal__icalUrl {
+    background: #EDF2F7;
+    border-radius: 0.5rem;
+    padding: v.$space-3;
+}
+
+.lw-personalSyncModal__btnRow {
+    @include m.row(v.$space-3);
+    flex-wrap: wrap;
+}
+
+.lw-personalSyncModal__buttonsRow {
+    @include m.row(v.$space-2);
+    justify-content: flex-end;
+    margin-block-start: v.$space-2;
+}

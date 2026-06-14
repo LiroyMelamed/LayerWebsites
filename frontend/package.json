@@ -4,6 +4,11 @@
   "private": true,
   "homepage": "/",
   "dependencies": {
+    "@fullcalendar/core": "^6.1.20",
+    "@fullcalendar/daygrid": "^6.1.20",
+    "@fullcalendar/interaction": "^6.1.20",
+    "@fullcalendar/react": "^6.1.20",
+    "@fullcalendar/timegrid": "^6.1.20",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -40,8 +45,8 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "build:morlevy": "cp .env.production.morlevy .env && react-scripts build",
-    "build:ashrafessa": "cp .env.production.ashrafessa .env && react-scripts build",
+    "build:morlevy": "cp public/tenants/morlevy/firm-logo.png public/firm-logo.png && cp .env.production.morlevy .env && react-scripts build",
+    "build:ashrafessa": "cp public/tenants/ashrafessa/firm-logo.png public/firm-logo.png && cp .env.production.ashrafessa .env && react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "i18n:extract": "node scripts/extract-hebrew-i18n.js"

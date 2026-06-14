@@ -16,6 +16,7 @@
 
 const pool = require('../config/db');
 const { logSecurityEvent } = require('../utils/securityAuditLogger');
+const { getFirmDisplayName } = require('../lib/firmBranding');
 require('dotenv').config();
 
 const LLM_API_KEY = String(process.env.CHATBOT_LLM_API_KEY || '').trim();
@@ -28,11 +29,12 @@ const OPENAI_EMBEDDINGS_URL = 'https://api.openai.com/v1/embeddings';
 const DOC_CONTEXT_MAX_CHARS = 6000; // ~2000 tokens
 const DOC_SIMILARITY_THRESHOLD = 0.25; // minimum cosine similarity to include a chunk
 
-const FIRM_DISPLAY_NAME = String(process.env.FIRM_DISPLAY_NAME || process.env.COMPANY_NAME || '').trim() || 'the firm';
+const FIRM_DISPLAY_NAME_FALLBACK = String(process.env.FIRM_DISPLAY_NAME || process.env.COMPANY_NAME || '').trim() || 'the firm';
 
-// ── System prompt ─────────────────────────────────────────────────────
-const SYSTEM_PROMPT = `
-אתה העוזר AI של משרד עורכי דין ${FIRM_DISPLAY_NAME}.
+function buildSystemPrompt(firmName) {
+    const name = String(firmName || FIRM_DISPLAY_NAME_FALLBACK).trim() || FIRM_DISPLAY_NAME_FALLBACK;
+    return `
+אתה העוזר AI של משרד עורכי דין ${name}.
 
 כאשר מוצג לך הקשר מתוך מסמכים פנימיים — זהו מקור המידע העיקרי שלך. השתמש בו כדי לענות על שאלות הלקוח.
 
@@ -68,6 +70,7 @@ const SYSTEM_PROMPT = `
 22. כאשר יש תאריך סיום משוער או תפוגת רישיון — הצג אותם כשהלקוח שואל על לוחות זמנים.
 23. כאשר הלקוח שואל על חתימה דיגיטלית — הצג את סטטוס המסמך (ממתין לחתימה / נחתם / נדחה) ותאריך עדכון אחרון.
 `.trim();
+}
 
 // ── Prompt-injection detection ────────────────────────────────────────
 const INJECTION_PATTERNS = [
@@ -754,7 +757,8 @@ async function processMessage({ message, verified, userId, history = [], session
 
     // 4. Compose messages for LLM
     // Order: systemPrompt → documentContext → databaseContext → history → userMessage
-    const systemContent = SYSTEM_PROMPT + documentContext + databaseContext;
+    const firmDisplayName = await getFirmDisplayName() || FIRM_DISPLAY_NAME_FALLBACK;
+    const systemContent = buildSystemPrompt(firmDisplayName) + documentContext + databaseContext;
 
     const messages = [
         { role: 'system', content: systemContent },

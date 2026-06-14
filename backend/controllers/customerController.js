@@ -4,6 +4,7 @@ const { formatPhoneNumber } = require("../utils/phoneUtils");
 const { getWebsiteDomain } = require("../utils/sendMessage");
 const { notifyRecipient } = require("../services/notifications/notificationOrchestrator");
 const { getSetting } = require("../services/settingsService");
+const { getLawFirmNameHe } = require("../lib/firmBranding");
 const { renderTemplate } = require("../utils/templateRenderer");
 const { BUCKET, r2 } = require("../utils/r2");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
@@ -98,8 +99,7 @@ const addCustomer = async (req, res) => {
         try {
             const domain = await getWebsiteDomain();
             const websiteUrl = `https://${domain}`;
-            const firmName = await getSetting('firm', 'LAW_FIRM_NAME', null)
-                || process.env.LAW_FIRM_NAME || '';
+            const firmName = await getLawFirmNameHe();
             const recipientName = name || '';
 
             const smsTemplate = await getSetting('templates', 'NEW_CLIENT_SMS',

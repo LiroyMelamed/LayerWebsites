@@ -13,6 +13,7 @@ const pool = require('../../config/db');
 const { sendTransactionalCustomHtmlEmail, sendEmailWithAttachments } = require('../../utils/smooveEmailCampaignService');
 const { getAllTemplates, renderTemplate, wrapEmailHtml } = require('./templates');
 const { getSetting } = require('../../services/settingsService');
+const { getLawFirmNameHe, getFirmNameEn } = require('../../lib/firmBranding');
 const { getAttachmentBuffers } = require('../../controllers/templateAttachmentController');
 
 // ---------- env toggles ----------
@@ -86,8 +87,7 @@ async function processEmailReminders() {
                 : (reminder.template_data || {});
 
             // Merge common fields
-            const firmName = await getSetting('firm', 'FIRM_NAME', null)
-                || process.env.FIRM_NAME || '';
+            const firmName = (await getLawFirmNameHe()) || (await getFirmNameEn());
             const firmLogoUrl = await getSetting('firm', 'FIRM_LOGO_URL', null) || '';
             const fields = {
                 client_name: reminder.client_name,

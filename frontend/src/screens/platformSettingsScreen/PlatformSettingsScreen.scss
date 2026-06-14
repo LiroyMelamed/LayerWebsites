@@ -24,8 +24,8 @@
         font-weight: 600;
         background: #f0fdf4;
         padding: v.$space-2 v.$space-4;
-        border-radius: 8px;
-        border: 1px solid #bbf7d0;
+        border-radius: 0.5rem;
+        border: 0.0625rem solid #bbf7d0;
     }
 
     &__layout {
@@ -40,8 +40,8 @@
         display: flex;
         flex-direction: column;
         gap: v.$space-2;
-        min-width: 200px;
-        border-radius: 12px;
+        min-width: 12.5rem;
+        border-radius: 0.75rem;
         padding: v.$space-3;
         position: sticky;
         top: 1rem;
@@ -55,7 +55,7 @@
         padding: v.$space-3 v.$space-4;
         border: none;
         background: transparent;
-        border-radius: 8px;
+        border-radius: 0.5rem;
         cursor: pointer;
         transition: all 0.15s ease;
         text-align: right;
@@ -143,7 +143,7 @@
         flex-direction: column;
         gap: v.$space-2;
         padding: v.$space-3 0;
-        border-bottom: 1px solid #f0f0f0;
+        border-bottom: 0.0625rem solid #f0f0f0;
 
         &:last-child {
             border-bottom: none;
@@ -163,13 +163,13 @@
 
     &__settingDesc {
         color: #999;
-        margin-top: 2px;
+        margin-top: 0.125rem;
     }
 
     &__settingDescription {
         color: #888;
-        margin-top: 4px;
-        font-size: 11px;
+        margin-top: 0.25rem;
+        font-size: 0.6875rem;
         line-height: 1.4;
         direction: rtl;
     }
@@ -188,6 +188,128 @@
         direction: rtl;
     }
 
+    // ── Calendar tab ────────────────────────────────────────────────
+    &__calendarTab {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-3;
+        width: 100%;
+    }
+
+    &__dayPicker {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: v.$space-2;
+        margin-top: v.$space-3;
+    }
+
+    &__dayChip {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: v.$space-2 v.$space-4;
+        border-radius: 62.4375rem;
+        border: 0.0625rem solid #e2e8f0;
+        background: #fff;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        min-width: 4rem;
+
+        &:hover {
+            background: #f8fafc;
+        }
+
+        &--active {
+            background: var(--lw-color-primary) !important;
+            border-color: var(--lw-color-primary);
+
+            .lw-simpleText {
+                color: #fff !important;
+            }
+        }
+    }
+
+    &__dayChipLabel {
+        white-space: nowrap;
+    }
+
+    &__dayHoursTable {
+        display: flex;
+        flex-direction: column;
+        gap: v.$space-2;
+        margin-top: v.$space-3;
+        width: 100%;
+    }
+
+    &__dayHoursHeader,
+    &__dayHoursRow {
+        display: grid;
+        grid-template-columns: minmax(4.5rem, 1fr) minmax(6.25rem, 1.2fr) minmax(7.5rem, 1fr) minmax(7.5rem, 1fr);
+        gap: v.$space-2;
+        align-items: center;
+        padding: v.$space-2 0;
+        border-bottom: 0.0625rem solid #f0f0f0;
+
+        &:last-child {
+            border-bottom: none;
+        }
+    }
+
+    &__dayHoursHeader {
+        padding-top: 0;
+        border-bottom: 0.0625rem solid #e2e8f0;
+    }
+
+    &__dayHoursCol {
+        min-width: 0;
+
+        &--day {
+            font-weight: 600;
+        }
+
+        &--open {
+            display: flex;
+            align-items: center;
+        }
+
+        &--time {
+            .lw-platformSettings__input {
+                opacity: 1;
+            }
+        }
+    }
+
+    &__dayHoursRow--closed {
+        .lw-platformSettings__dayHoursCol--time .lw-platformSettings__input {
+            opacity: 0.45;
+            pointer-events: none;
+        }
+    }
+
+    // Desktop: column headers label the time fields — hide duplicate floated labels
+    &__dayHoursCol--time .lw-simpleInput__label {
+        @media (min-width: 48.01rem) {
+            display: none;
+        }
+    }
+
+    &__dayHoursCol--time .lw-simpleInput {
+        margin-top: 0;
+
+        @media (max-width: 48rem) {
+            margin-top: 1.25rem;
+        }
+    }
+
+    &__reminderOptions {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: v.$space-2;
+        margin-top: v.$space-2;
+    }
+
     // ── Toggle switch ───────────────────────────────────────────────
     &__toggle {
         display: flex;
@@ -197,11 +319,11 @@
         cursor: pointer;
 
         input[type="checkbox"] {
-            width: 44px;
-            height: 24px;
+            width: 2.75rem;
+            height: 1.5rem;
             appearance: none;
             background: #ddd;
-            border-radius: 12px;
+            border-radius: 0.75rem;
             position: relative;
             cursor: pointer;
             transition: background 0.2s ease;
@@ -210,21 +332,21 @@
             &::before {
                 content: "";
                 position: absolute;
-                top: 2px;
-                right: 2px;
-                width: 20px;
-                height: 20px;
+                top: 0.125rem;
+                right: 0.125rem;
+                width: 1.25rem;
+                height: 1.25rem;
                 background: #fff;
                 border-radius: 50%;
                 transition: transform 0.2s ease;
-                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+                box-shadow: 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.15);
             }
 
             &:checked {
                 background: var(--lw-color-primary);
 
                 &::before {
-                    transform: translateX(-20px);
+                    transform: translateX(-1.25rem);
                 }
             }
         }
@@ -255,13 +377,13 @@
         padding: v.$space-2 v.$space-3;
         font-weight: 600;
         color: #888;
-        border-bottom: 2px solid #eee;
+        border-bottom: 0.125rem solid #eee;
     }
 
     &__channelRow {
         padding: v.$space-3;
-        border-bottom: 1px solid #f5f5f5;
-        border-radius: 8px;
+        border-bottom: 0.0625rem solid #f5f5f5;
+        border-radius: 0.5rem;
         transition: background 0.1s ease;
 
         &:hover {
@@ -290,7 +412,7 @@
         flex-direction: row;
         align-items: center;
         justify-content: center;
-        width: 80px;
+        width: 5rem;
         flex-shrink: 0;
         cursor: pointer;
 
@@ -309,7 +431,21 @@
     &__channelToggleLabel {
         display: none;
         color: #888;
-        font-size: 11px;
+        font-size: 0.6875rem;
+    }
+
+    &__channelPerActionNote {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 0.75rem;
+        color: #4a5568;
+        font-size: 0.75rem;
+        font-style: italic;
+        line-height: 1.3;
+        text-align: center;
+        flex: 1 1 auto;
+        min-width: 12rem;
     }
 
     // ── Admin management ────────────────────────────────────────────
@@ -326,14 +462,14 @@
         align-items: center;
         padding: v.$space-3 v.$space-4;
         background: #fafafa;
-        border-radius: 8px;
-        border: 1px solid #eee;
+        border-radius: 0.5rem;
+        border: 0.0625rem solid #eee;
     }
 
     &__adminInfo {
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        gap: 0.125rem;
     }
 
     &__adminName {
@@ -367,8 +503,8 @@
         padding: v.$space-1 v.$space-3 !important;
         background: #fee2e2 !important;
         color: #dc2626 !important;
-        border: 1px solid #fecaca !important;
-        border-radius: 6px !important;
+        border: 0.0625rem solid #fecaca !important;
+        border-radius: 0.375rem !important;
 
         &:hover {
             background: #fecaca !important;
@@ -411,7 +547,7 @@
 
     &__emailTemplateListTitle {
         padding-bottom: v.$space-2;
-        border-bottom: 1px solid #f0f0f0;
+        border-bottom: 0.0625rem solid #f0f0f0;
         margin-bottom: v.$space-1;
     }
 
@@ -419,9 +555,9 @@
         display: flex;
         flex-direction: column;
         align-items: flex-start;
-        gap: 2px;
+        gap: 0.125rem;
         padding: v.$space-2 v.$space-3;
-        border-radius: 8px;
+        border-radius: 0.5rem;
         cursor: pointer;
         transition: all 0.15s ease;
         border: none;
@@ -435,7 +571,7 @@
 
         &--active {
             background: var(--lw-color-primary-highlighted, #e8f4fd);
-            border-right: 3px solid var(--lw-color-primary, #2563eb);
+            border-right: 0.1875rem solid var(--lw-color-primary, #2563eb);
         }
     }
 
@@ -456,7 +592,7 @@
         align-items: center;
         gap: v.$space-3;
         padding-bottom: v.$space-3;
-        border-bottom: 1px solid #f0f0f0;
+        border-bottom: 0.0625rem solid #f0f0f0;
     }
 
     &__emailEditorField {
@@ -479,9 +615,9 @@
     &__emailEditorInput {
         width: 100%;
         padding: v.$space-2 v.$space-3;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        font-size: 14px;
+        border: 0.0625rem solid #e0e0e0;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
         font-family: inherit;
         direction: rtl;
         transition: border-color 0.2s;
@@ -489,23 +625,23 @@
         &:focus {
             outline: none;
             border-color: var(--lw-color-primary, #2563eb);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            box-shadow: 0 0 0 0.1875rem rgba(37, 99, 235, 0.1);
         }
     }
 
     &__emailEditorTextarea {
         width: 100%;
         padding: v.$space-3;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
+        border: 0.0625rem solid #e0e0e0;
+        border-radius: 0.5rem;
         font-family: 'Courier New', Consolas, monospace;
-        font-size: 13px;
+        font-size: 0.8125rem;
         line-height: 1.5;
         resize: vertical;
         direction: ltr;
         text-align: left;
         background: #fafafa;
-        min-height: 300px;
+        min-height: 18.75rem;
         transition: border-color 0.2s;
         box-sizing: border-box;
         max-width: 100%;
@@ -513,7 +649,7 @@
         &:focus {
             outline: none;
             border-color: var(--lw-color-primary, #2563eb);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            box-shadow: 0 0 0 0.1875rem rgba(37, 99, 235, 0.1);
             background: #fff;
         }
     }
@@ -529,8 +665,8 @@
     &__emailPreviewFrame {
         width: 100%;
         height: 39rem;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
+        border: 0.0625rem solid #e0e0e0;
+        border-radius: 0.5rem;
         background: #fff;
         max-width: 100%;
         box-sizing: border-box;
@@ -540,7 +676,7 @@
         display: flex;
         gap: v.$space-3;
         padding-top: v.$space-3;
-        border-top: 1px solid #f0f0f0;
+        border-top: 0.0625rem solid #f0f0f0;
     }
 
 
@@ -578,13 +714,13 @@
     &__smsPreviewLabel {
         font-weight: 600;
         color: #888;
-        font-size: 11px;
+        font-size: 0.6875rem;
     }
 
     &__smsPreviewBox {
         background: #f0fdf4;
-        border: 1px solid #bbf7d0;
-        border-radius: 8px;
+        border: 0.0625rem solid #bbf7d0;
+        border-radius: 0.5rem;
         padding: v.$space-2 v.$space-3;
         direction: rtl;
         white-space: pre-wrap;
@@ -618,8 +754,8 @@
         align-items: center;
         padding: v.$space-3;
         background: #fafafa;
-        border: 1px solid #f0f0f0;
-        border-radius: 8px;
+        border: 0.0625rem solid #f0f0f0;
+        border-radius: 0.5rem;
         gap: v.$space-3;
         flex-wrap: wrap;
         min-width: 0;
@@ -643,9 +779,9 @@
     &__reminderTplBadge {
         background: #dbeafe;
         color: #1e40af;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 11px;
+        padding: 0.125rem 0.5rem;
+        border-radius: 0.75rem;
+        font-size: 0.6875rem;
         font-weight: 600;
         white-space: nowrap;
     }
@@ -665,8 +801,8 @@
         margin-top: v.$space-4;
         padding: v.$space-4;
         background: #f9fafb;
-        border: 1px solid #e5e7eb;
-        border-radius: 10px;
+        border: 0.0625rem solid #e5e7eb;
+        border-radius: 0.625rem;
         display: flex;
         flex-direction: column;
         gap: v.$space-3;
@@ -689,7 +825,7 @@
         display: flex;
         gap: v.$space-3;
         padding-top: v.$space-3;
-        border-top: 1px solid #e5e7eb;
+        border-top: 0.0625rem solid #e5e7eb;
     }
 
     // ── Knowledge Documents ─────────────────────────────────────────
@@ -701,8 +837,8 @@
         margin-bottom: v.$space-4;
         padding: v.$space-4;
         background: #f9fafb;
-        border: 1px solid #e5e7eb;
-        border-radius: 10px;
+        border: 0.0625rem solid #e5e7eb;
+        border-radius: 0.625rem;
     }
 
     &__knowledgeUploadRow {
@@ -714,7 +850,7 @@
 
     &__knowledgeTitleInput {
         flex: 1;
-        min-width: 200px;
+        min-width: 12.5rem;
     }
 
     &__knowledgeFileInputHidden {
@@ -728,7 +864,7 @@
 
     &__knowledgeFileName {
         color: #6b7280;
-        max-width: 220px;
+        max-width: 13.75rem;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -754,8 +890,8 @@
         align-items: center;
         padding: v.$space-3;
         background: #fafafa;
-        border: 1px solid #f0f0f0;
-        border-radius: 8px;
+        border: 0.0625rem solid #f0f0f0;
+        border-radius: 0.5rem;
         gap: v.$space-3;
     }
 
@@ -777,12 +913,12 @@
         margin-bottom: v.$space-4;
         padding: v.$space-4;
         background: #eff6ff;
-        border: 1px solid #bfdbfe;
-        border-radius: 10px;
+        border: 0.0625rem solid #bfdbfe;
+        border-radius: 0.625rem;
     }
 
     // ── Mobile responsive ───────────────────────────────────────────
-    @media (max-width: 768px) {
+    @media (max-width: 48rem) {
         &__layout {
             flex-direction: column;
             margin: 0 0.5rem;
@@ -842,8 +978,8 @@
             gap: v.$space-2;
             padding: v.$space-3;
             background: #fafafa;
-            border-radius: 8px;
-            border: 1px solid #f0f0f0;
+            border-radius: 0.5rem;
+            border: 0.0625rem solid #f0f0f0;
         }
 
         &__channelName {
@@ -859,7 +995,7 @@
         &__channelToggle {
             flex-direction: column;
             width: auto;
-            gap: 4px;
+            gap: 0.25rem;
         }
 
         &__channelToggleLabel {
@@ -876,8 +1012,8 @@
         }
 
         &__emailEditorTextarea {
-            min-height: 200px;
-            font-size: 12px;
+            min-height: 12.5rem;
+            font-size: 0.75rem;
         }
 
         &__emailPreviewFrame {
@@ -908,6 +1044,67 @@
 
         &__emailPreviewFrame {
             height: 24rem;
+        }
+
+        &__card {
+            overflow: visible;
+        }
+
+        &__dayHoursHeader {
+            display: none;
+        }
+
+        &__dayHoursRow {
+            grid-template-columns: 1fr auto;
+            grid-template-areas:
+                "day open"
+                "start end";
+            gap: v.$space-2 v.$space-3;
+            padding: v.$space-3;
+            background: #fafafa;
+            border: 0.0625rem solid #e2e8f0;
+            border-radius: 0.5rem;
+            border-bottom: none;
+            margin-bottom: v.$space-2;
+        }
+
+        &__dayHoursCol--day {
+            grid-area: day;
+            font-weight: 600;
+        }
+
+        &__dayHoursCol--open {
+            grid-area: open;
+            justify-content: flex-end;
+
+            .lw-platformSettings__toggle {
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 0.25rem;
+            }
+
+            .lw-platformSettings__toggleLabel {
+                font-size: 0.75rem;
+            }
+        }
+
+        &__dayHoursCol--start {
+            grid-area: start;
+            min-width: 0;
+        }
+
+        &__dayHoursCol--end {
+            grid-area: end;
+            min-width: 0;
+        }
+
+        &__reminderOptions {
+            // Wrap chips instead of nowrap horizontal scroll — the nowrap row
+            // propagated its max-content width and overflowed the screen.
+            flex-wrap: wrap;
+            min-width: 0;
+            max-width: 100%;
+            padding-block-end: 0.25rem;
         }
     }
 }

@@ -7,6 +7,7 @@ import DefaultState from "../../../components/styledComponents/defaultState/Defa
 import CaseMenuItem from "../../../components/styledComponents/menuItems/CaseMenuItem";
 import Separator from "../../../components/styledComponents/separators/Separator";
 import { useTranslation } from "react-i18next";
+import { caseClientNames, caseMenuTitle } from "../../../functions/cases/caseMenuTitle";
 
 import './PinnedCasesCard.scss';
 
@@ -17,10 +18,10 @@ export default function PinnedCasesCard({ taggedCases, isPerforming, rePerformFu
         return (
             <SimpleCard className="lw-pinnedCasesCard">
                 {[1, 2, 3].map(i => (
-                    <SimpleContainer key={i} style={{ padding: '12px 0' }}>
+                    <SimpleContainer key={i} style={{ padding: '0.75rem 0' }}>
                         {i !== 1 && <Separator />}
                         <Skeleton width="60%" height={16} />
-                        <SimpleContainer style={{ display: 'flex', gap: 16, marginTop: 8 }}>
+                        <SimpleContainer style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
                             <Skeleton width="30%" height={12} />
                             <Skeleton width="30%" height={12} />
                         </SimpleContainer>
@@ -54,7 +55,7 @@ export default function PinnedCasesCard({ taggedCases, isPerforming, rePerformFu
 
                         <CaseMenuItem
                             fullCase={item}
-                            rightTitle={`${item.CaseName} - ${_clientNames(item)}`}
+                            rightTitle={caseMenuTitle(item)}
 
                             leftPreFirstLine={t('cases.caseType')}
                             leftValueFirstLine={item.CaseTypeName}
@@ -75,19 +76,11 @@ export default function PinnedCasesCard({ taggedCases, isPerforming, rePerformFu
     )
 }
 
-//Functions
-function _clientNames(caseItem) {
-    if (Array.isArray(caseItem.Users) && caseItem.Users.length > 0) {
-        return caseItem.Users.map(u => u.Name).filter(Boolean).join(', ');
-    }
-    return caseItem.CustomerName || '';
-}
-
 function getOpenData(taggedCases, index, t) {
     const openData = [
         {
             title: t('cases.customerName'),
-            value: _clientNames(taggedCases[index])
+            value: caseClientNames(taggedCases[index])
         },
         {
             title: t('cases.customerId'),

@@ -4,8 +4,7 @@ const { getMainScreenDataCached } = require("../utils/mainScreenDataCache");
 
 /**
  * Retrieves and aggregates all necessary data for the main dashboard screen.
- * This includes all cases, all customers (excluding admins), and a list of
- * active customers with open cases.
+ * Uses SQL aggregates for case counts (avoids shipping every case row to the client).
  * @param {object} req - The Express request object.
  * @param {object} res - The Express response object.
  */
@@ -15,61 +14,69 @@ const getMainScreenData = async (req, res) => {
 
         const payload = await getMainScreenDataCached({
             loader: async () => {
-                // Fetch only the columns needed for dashboard aggregates.
-                // (Avoid SELECT * on potentially large tables.)
-                const casesResult = await pool.query(
-                    "SELECT caseid, isclosed, istagged, casemanagerid FROM Cases"
-                );
+                const [caseCountsResult, customersResult, activeCustomersCountResult] = await Promise.all([
+                    pool.query(`
+                        SELECT
+                            COUNT(*)::int AS total,
+                            COUNT(*) FILTER (WHERE isclosed = false)::int AS open,
+                            COUNT(*) FILTER (WHERE isclosed = true)::int AS closed
+                        FROM cases
+                    `),
+                    pool.query(
+                        `SELECT userid, name, email, phonenumber, companyname, createdat, dateofbirth, profilepicurl
+                         FROM users
+                         WHERE LOWER(role) <> 'admin' AND LOWER(role) <> 'deleted'
+                         ORDER BY createdat DESC`
+                    ),
+                    pool.query(`
+                        SELECT COUNT(DISTINCT U.userid)::int AS count
+                        FROM users U
+                        WHERE LOWER(U.role) <> 'admin' AND LOWER(U.role) <> 'deleted'
+                          AND (
+                            EXISTS (SELECT 1 FROM cases C WHERE C.userid = U.userid AND C.isclosed = false)
+                            OR EXISTS (
+                                SELECT 1 FROM case_users CU
+                                JOIN cases C ON C.caseid = CU.caseid
+                                WHERE CU.userid = U.userid AND C.isclosed = false
+                            )
+                          )
+                    `),
+                ]);
 
-                // Fetch all customers (users with a role other than 'Admin')
-                const customersResult = await pool.query(
-                    "SELECT userid, name, email, phonenumber, companyname, createdat, dateofbirth, profilepicurl FROM Users WHERE LOWER(Role) <> 'admin' AND LOWER(Role) <> 'deleted'"
-                );
-
-                // Fetch a list of distinct users who have at least one open case
-                // (either as the case owner OR as a linked user via case_users)
-                const activeCustomers = await pool.query(`
-                    SELECT DISTINCT U.UserId, U.Name, U.Email, U.PhoneNumber, U.CompanyName, U.CreatedAt, U.DateOfBirth, U.ProfilePicUrl
-                    FROM Users U
-                    WHERE LOWER(U.Role) <> 'admin' AND LOWER(U.Role) <> 'deleted'
-                      AND (
-                        EXISTS (SELECT 1 FROM Cases C WHERE C.UserId = U.UserId AND C.IsClosed = FALSE)
-                        OR EXISTS (SELECT 1 FROM case_users CU JOIN Cases C ON C.caseid = CU.caseid WHERE CU.userid = U.UserId AND C.IsClosed = FALSE)
-                      )
-                `);
-
-                // Extract the rows from the query results
-                const casesArray = casesResult.rows;
+                const caseCounts = caseCountsResult.rows[0] || { total: 0, open: 0, closed: 0 };
                 const customersArray = customersResult.rows;
-                const activeCustomersArray = activeCustomers.rows;
-
-                // Filter the cases data to find closed and tagged cases
-                const closedCases = casesArray.filter(caseItem => caseItem.isclosed === true);
-                const taggedCases = casesArray.filter(caseItem => caseItem.istagged === true);
+                const numberOfActiveCustomers = activeCustomersCountResult.rows[0]?.count ?? 0;
 
                 return {
-                    AllCasesData: casesArray,
-                    ClosedCasesData: closedCases,
-                    TaggedCases: taggedCases,
-                    NumberOfClosedCases: closedCases.length,
-                    NumberOfTaggedCases: taggedCases.length,
+                    TotalCases: caseCounts.total,
+                    OpenCases: caseCounts.open,
+                    NumberOfClosedCases: caseCounts.closed,
+                    NumberOfTaggedCases: 0,
                     AllCustomersData: customersArray,
-                    ActiveCustomers: activeCustomersArray,
+                    NumberOfActiveCustomers: numberOfActiveCustomers,
                 };
             },
         });
 
-        // Scope tagged-case count to the connected lawyer
         if (userId) {
-            const userTaggedCases = payload.TaggedCases.filter(c => c.casemanagerid === userId);
+            const taggedResult = await pool.query(
+                `SELECT COUNT(*)::int AS count FROM cases WHERE istagged = true AND casemanagerid = $1`,
+                [userId]
+            );
+            const numberOfTaggedCases = taggedResult.rows[0]?.count ?? 0;
             return res.status(200).json({
                 ...payload,
-                TaggedCases: userTaggedCases,
-                NumberOfTaggedCases: userTaggedCases.length,
+                NumberOfTaggedCases: numberOfTaggedCases,
             });
         }
 
-        res.status(200).json(payload);
+        const taggedAllResult = await pool.query(
+            `SELECT COUNT(*)::int AS count FROM cases WHERE istagged = true`
+        );
+        res.status(200).json({
+            ...payload,
+            NumberOfTaggedCases: taggedAllResult.rows[0]?.count ?? 0,
+        });
     } catch (error) {
         console.error("Error retrieving main screen data:", error);
         res.status(500).json({ message: "שגיאה בקבלת נתוני מסך הבית" });
@@ -118,7 +125,6 @@ const getClientDashboardData = async (req, res) => {
     }
 };
 
-// Export the function for use in routes
 module.exports = {
     getMainScreenData,
     getClientDashboardData,
