@@ -81,6 +81,11 @@ function getContactFieldKeys(contactFields) {
  * - SMS: requires phone number + sms_enabled
  * - Admin CC: sends copy to platform admins when admin_cc is TRUE
  *
+ * `respectExplicitChannelChoice = true` (set by callers where the lawyer
+ * explicitly picked the delivery channels per action — e.g. SIGN_INVITE per
+ * signer) skips the per-channel platform gate entirely. The lawyer's choice
+ * wins; admin_cc / manager_cc are still respected.
+ *
  * OTP must be SMS-only and should NOT use this orchestrator.
  */
 async function notifyRecipient({
@@ -93,6 +98,7 @@ async function notifyRecipient({
     sms,
     skipAdminCc = false,
     caseId = null,
+    respectExplicitChannelChoice = false,
 } = {}) {
     const type = String(notificationType || '').trim();
 
@@ -123,10 +129,16 @@ async function notifyRecipient({
     // Load channel config to respect admin-configured enabled/disabled flags
     const channelCfg = await getChannelConfig(type);
 
-    // Only send on channels that are both available AND enabled in notification_channel_config
-    const wantPush = Boolean(hasPush && push && recipientUserId && channelCfg.push_enabled);
-    const wantEmail = Boolean(email && resolvedEmail && channelCfg.email_enabled);
-    const wantSms = Boolean(sms && resolvedPhone && channelCfg.sms_enabled);
+    // For lawyer-driven types (e.g. SIGN_INVITE) the caller passes
+    // `respectExplicitChannelChoice` so the per-channel platform gate does
+    // not silently override the lawyer's explicit per-action selection.
+    const pushAllowed = respectExplicitChannelChoice ? true : channelCfg.push_enabled;
+    const emailAllowed = respectExplicitChannelChoice ? true : channelCfg.email_enabled;
+    const smsAllowed = respectExplicitChannelChoice ? true : channelCfg.sms_enabled;
+
+    const wantPush = Boolean(hasPush && push && recipientUserId && pushAllowed);
+    const wantEmail = Boolean(email && resolvedEmail && emailAllowed);
+    const wantSms = Boolean(sms && resolvedPhone && smsAllowed);
 
     // Persist to DB for in-app Notifications screen.
     const storeTitle = String(push?.title || 'התראה').trim();
@@ -134,7 +146,7 @@ async function notifyRecipient({
     const wantStore = Boolean(recipientUserId && storeTitle && storeMessage);
 
     const outcomes = {
-        decision: 'CHANNEL_CONFIG',
+        decision: respectExplicitChannelChoice ? 'EXPLICIT_CHANNEL_CHOICE' : 'CHANNEL_CONFIG',
         store: { attempted: wantStore, ok: null },
         push: { attempted: wantPush, ok: null },
         email: { attempted: wantEmail, ok: null },

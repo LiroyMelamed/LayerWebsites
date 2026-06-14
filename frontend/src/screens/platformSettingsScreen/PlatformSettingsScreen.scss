@@ -434,6 +434,20 @@
         font-size: 0.6875rem;
     }
 
+    &__channelPerActionNote {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 0.75rem;
+        color: #4a5568;
+        font-size: 0.75rem;
+        font-style: italic;
+        line-height: 1.3;
+        text-align: center;
+        flex: 1 1 auto;
+        min-width: 12rem;
+    }
+
     // ── Admin management ────────────────────────────────────────────
     &__adminList {
         display: flex;

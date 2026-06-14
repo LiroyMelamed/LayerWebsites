@@ -138,39 +138,56 @@ function SettingInput({ setting, value, onChange, isTemplate = false }) {
     );
 }
 
+// Notification types whose delivery channels (push/email/sms) are picked
+// per-action by the lawyer (e.g. SIGN_INVITE — chosen per signer when
+// uploading a document for signing). For these, the platform-level
+// per-channel toggles are bypassed at the orchestrator level, so we hide
+// them here to avoid showing controls that have no effect. We still expose
+// the admin_cc / manager_cc toggles since those remain in effect.
+const PER_ACTION_CHANNEL_TYPES = new Set(["SIGN_INVITE"]);
+
 // ─── Channel Toggle Row ─────────────────────────────────────────────
 function ChannelRow({ channel, onToggle }) {
     const { t } = useTranslation();
+    const isPerAction = PER_ACTION_CHANNEL_TYPES.has(channel.notification_type);
     return (
         <SimpleContainer className="lw-platformSettings__channelRow">
             <TextBold14 className="lw-platformSettings__channelName">
                 {channel.label || channel.notification_type}
             </TextBold14>
             <SimpleContainer className="lw-platformSettings__channelToggles">
-                <SimpleContainer className="lw-platformSettings__channelToggle">
-                    <Text12 className="lw-platformSettings__channelToggleLabel">Push</Text12>
-                    <input
-                        type="checkbox"
-                        checked={channel.push_enabled}
-                        onChange={() => onToggle(channel.notification_type, "pushEnabled", !channel.push_enabled)}
-                    />
-                </SimpleContainer>
-                <SimpleContainer className="lw-platformSettings__channelToggle">
-                    <Text12 className="lw-platformSettings__channelToggleLabel">{t("platformSettings.email")}</Text12>
-                    <input
-                        type="checkbox"
-                        checked={channel.email_enabled}
-                        onChange={() => onToggle(channel.notification_type, "emailEnabled", !channel.email_enabled)}
-                    />
-                </SimpleContainer>
-                <SimpleContainer className="lw-platformSettings__channelToggle">
-                    <Text12 className="lw-platformSettings__channelToggleLabel">SMS</Text12>
-                    <input
-                        type="checkbox"
-                        checked={channel.sms_enabled}
-                        onChange={() => onToggle(channel.notification_type, "smsEnabled", !channel.sms_enabled)}
-                    />
-                </SimpleContainer>
+                {isPerAction ? (
+                    <Text12 className="lw-platformSettings__channelPerActionNote">
+                        {t("platformSettings.perActionChannelsNote")}
+                    </Text12>
+                ) : (
+                    <>
+                        <SimpleContainer className="lw-platformSettings__channelToggle">
+                            <Text12 className="lw-platformSettings__channelToggleLabel">Push</Text12>
+                            <input
+                                type="checkbox"
+                                checked={channel.push_enabled}
+                                onChange={() => onToggle(channel.notification_type, "pushEnabled", !channel.push_enabled)}
+                            />
+                        </SimpleContainer>
+                        <SimpleContainer className="lw-platformSettings__channelToggle">
+                            <Text12 className="lw-platformSettings__channelToggleLabel">{t("platformSettings.email")}</Text12>
+                            <input
+                                type="checkbox"
+                                checked={channel.email_enabled}
+                                onChange={() => onToggle(channel.notification_type, "emailEnabled", !channel.email_enabled)}
+                            />
+                        </SimpleContainer>
+                        <SimpleContainer className="lw-platformSettings__channelToggle">
+                            <Text12 className="lw-platformSettings__channelToggleLabel">SMS</Text12>
+                            <input
+                                type="checkbox"
+                                checked={channel.sms_enabled}
+                                onChange={() => onToggle(channel.notification_type, "smsEnabled", !channel.sms_enabled)}
+                            />
+                        </SimpleContainer>
+                    </>
+                )}
                 <SimpleContainer className="lw-platformSettings__channelToggle">
                     <Text12 className="lw-platformSettings__channelToggleLabel">{t("platformSettings.caseManager")}</Text12>
                     <input
@@ -1116,6 +1133,8 @@ export default function PlatformSettingsScreen() {
             const filteredEmailTemplates = emailTemplates.filter(t => {
                 const notifType = EMAIL_KEY_TO_NOTIF_TYPE[t.template_key];
                 if (!notifType) return true; // unknown mapping → show by default
+                // Lawyer-driven types: channel is picked per-action, ignore platform toggle
+                if (PER_ACTION_CHANNEL_TYPES.has(notifType)) return true;
                 const ch = channelMap[notifType];
                 if (!ch) return true; // no channel config → show by default
                 return ch.email_enabled;
@@ -1750,6 +1769,8 @@ export default function PlatformSettingsScreen() {
             settingKeys = settingKeys.filter(key => {
                 const notifType = SMS_KEY_TO_NOTIF_TYPE[key];
                 if (!notifType) return true; // unknown mapping → show by default
+                // Lawyer-driven types: channel is picked per-action, ignore platform toggle
+                if (PER_ACTION_CHANNEL_TYPES.has(notifType)) return true;
                 const ch = channelMap[notifType];
                 if (!ch) return true; // no channel config → show by default
                 return ch.sms_enabled;

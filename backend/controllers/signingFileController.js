@@ -2574,6 +2574,7 @@ exports.uploadFileForSigning = async (req, res, next) => {
                 recipientPhone: String(signer.phone || '').trim() || undefined,
                 caseId: normalizedCaseId,
                 notificationType: 'SIGN_INVITE',
+                respectExplicitChannelChoice: true,
                 push: {
                     title: 'מסמך מחכה לחתימה',
                     body: message,
@@ -4357,6 +4358,7 @@ exports.resendSigningInvite = async (req, res, next) => {
                 recipientPhone: String(signer.Phone || '').trim() || undefined,
                 caseId: file.CaseId || null,
                 notificationType: 'SIGN_INVITE',
+                respectExplicitChannelChoice: true,
                 push: {
                     title: 'מסמך מחכה לחתימה',
                     body: publicUrl ? `מסמך "${file.FileName}" מחכה לחתימה.\n${publicUrl}` : `מסמך "${file.FileName}" מחכה לחתימה.`,
@@ -5853,6 +5855,7 @@ exports.signFile = async (req, res, next) => {
                                 await notifyRecipient({
                                     recipientUserId: nextSignerUserId,
                                     notificationType: 'SIGN_INVITE',
+                                    respectExplicitChannelChoice: true,
                                     push: {
                                         title: 'מסמך מחכה לחתימה',
                                         body: message,
@@ -6519,6 +6522,7 @@ exports.reuploadFile = async (req, res, next) => {
                 await notifyRecipient({
                     recipientUserId: targetUserId,
                     notificationType: 'SIGN_INVITE',
+                    respectExplicitChannelChoice: true,
                     push: {
                         title: 'מסמך מחכה לחתימה',
                         body: message,
@@ -6572,6 +6576,7 @@ exports.reuploadFile = async (req, res, next) => {
             await notifyRecipient({
                 recipientUserId: file.ClientId,
                 notificationType: 'SIGN_INVITE',
+                respectExplicitChannelChoice: true,
                 push: {
                     title: 'מסמך מחכה לחתימה',
                     body: message,
