@@ -6,22 +6,17 @@
   flex-direction: column;
   gap: v.$space-2;
   align-items: stretch;
-  width: 100%;
-  min-inline-size: 0;
 }
 
 .lw-signing-pdfViewerRow {
   display: flex;
   gap: v.$space-3;
   align-items: flex-start;
-  width: 100%;
-  min-inline-size: 0;
 }
 
 .lw-signing-pdfViewerMain {
-  flex: 1 1 0;
+  flex: 1;
   min-width: 0;
-  width: 100%;
 }
 
 .lw-floatingAddField {

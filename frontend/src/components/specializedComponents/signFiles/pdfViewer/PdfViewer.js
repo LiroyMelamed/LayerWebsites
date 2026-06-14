@@ -5,7 +5,7 @@ import SignatureSpotsLayer from "../signatureSpots/SignatureSpotsLayer";
 
 const BASE_RENDER_WIDTH = 800;
 const MIN_RENDER_WIDTH = 320;
-const MAX_RENDER_WIDTH = 1200;
+const MAX_RENDER_WIDTH = 800;
 
 export default function PdfViewer({
     pdfFile,
@@ -30,7 +30,7 @@ export default function PdfViewer({
     const [containerWidth, setContainerWidth] = useState(BASE_RENDER_WIDTH);
 
     useEffect(() => {
-        const el = viewerRef.current;
+        const el = pageContainerRef.current;
         if (!el) return;
 
         const update = () => {
@@ -167,7 +167,6 @@ export default function PdfViewer({
                         <SimpleContainer
                             className="lw-signing-pageInner"
                             data-page-number={pageNumber}
-                            style={{ width: `${renderWidth}px`, maxWidth: '100%' }}
                         >
                             <PdfPage
                                 pdfFile={pdfFile}
