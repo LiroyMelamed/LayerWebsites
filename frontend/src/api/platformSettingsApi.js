@@ -23,6 +23,15 @@ export const platformSettingsApi = {
         return await ApiUtils.get(`${base}/channels`);
     },
 
+    /**
+     * Get the lawyer-readable allowlist of channels enabled per
+     * notification type. Returns `{ channels: [{ notification_type,
+     * push_enabled, email_enabled, sms_enabled }] }`.
+     */
+    getChannelsLite: async () => {
+        return await ApiUtils.get(`${base}/channels-lite`);
+    },
+
     /** Update a notification channel */
     updateChannel: async (type, data) => {
         return await ApiUtils.put(`${base}/channels/${type}`, data);

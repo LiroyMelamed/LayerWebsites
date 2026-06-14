@@ -92,6 +92,30 @@ const updateSingleSetting = async (req, res) => {
 
 // ── Notification Channels ───────────────────────────────────────────
 
+/**
+ * GET /api/platform-settings/channels-lite
+ *
+ * Lawyer-readable allowlist of which channels (push/email/sms) are enabled
+ * per notification type. The per-action UIs (signing upload, calendar
+ * event reminder picker) use this to show only the channels the platform
+ * admin enabled. admin_cc / manager_cc are intentionally NOT exposed.
+ */
+const getNotificationChannelsLite = async (req, res) => {
+    try {
+        const channels = await settingsService.getNotificationChannels();
+        const lite = (Array.isArray(channels) ? channels : []).map((c) => ({
+            notification_type: c.notification_type,
+            push_enabled: !!c.push_enabled,
+            email_enabled: !!c.email_enabled,
+            sms_enabled: !!c.sms_enabled,
+        }));
+        return res.json({ channels: lite });
+    } catch (err) {
+        console.error('[platformSettings] getChannelsLite error:', err);
+        return res.status(500).json({ message: 'שגיאה בטעינת ערוצי התראות' });
+    }
+};
+
 /** GET /api/platform-settings/channels */
 const getNotificationChannels = async (req, res) => {
     try {
@@ -344,6 +368,7 @@ module.exports = {
     updateSettings,
     updateSingleSetting,
     getNotificationChannels,
+    getNotificationChannelsLite,
     updateNotificationChannel,
     listPlatformAdmins,
     addPlatformAdmin,

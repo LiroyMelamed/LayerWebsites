@@ -7,6 +7,7 @@ const sendAndStoreNotification = require('../utils/sendAndStoreNotification');
 const { sendMessage } = require('../utils/sendMessage');
 const { sendTransactionalCustomHtmlEmail } = require('../utils/smooveEmailCampaignService');
 const { formatPhoneNumber } = require('../utils/phoneUtils');
+const { getChannelConfig } = require('../services/settingsService');
 const { parseStoredChannels } = require('./calendarEventReminders');
 
 const NOTIFICATION_TYPE = 'CALENDAR_REMINDER';
@@ -28,11 +29,11 @@ async function _getUserContact(userId) {
 }
 
 /**
- * Send a reminder to one recipient on the channels the lawyer picked on
- * the event itself. The platform notification_channel_config gate is
- * intentionally bypassed: when the lawyer makes an explicit per-event
- * channel choice, that choice wins (otherwise an admin toggle could
- * silently swallow notifications the lawyer expected to send).
+ * Send a reminder to one recipient on the channels selected on the event,
+ * gated by firm notification_channel_config for CALENDAR_REMINDER. The UI
+ * already filters the lawyer's per-event picker to the same allowlist, so
+ * this is a defensive belt-and-braces check (e.g. the admin disabled a
+ * channel after the event was saved).
  */
 async function dispatchCalendarReminder({
     userId = null,
@@ -48,6 +49,7 @@ async function dispatchCalendarReminder({
     if (eventType && eventType !== 'reminder') {
         selected.push = false;
     }
+    const firmCfg = await getChannelConfig(NOTIFICATION_TYPE);
 
     let resolvedEmail = String(email || '').trim();
     let resolvedPhone = String(phone || '').trim();
@@ -60,9 +62,9 @@ async function dispatchCalendarReminder({
         }
     }
 
-    const wantPush = selected.push && userId;
-    const wantSms = selected.sms && resolvedPhone;
-    const wantEmail = selected.email && resolvedEmail;
+    const wantPush = selected.push && firmCfg.push_enabled && userId;
+    const wantSms = selected.sms && firmCfg.sms_enabled && resolvedPhone;
+    const wantEmail = selected.email && firmCfg.email_enabled && resolvedEmail;
 
     const tasks = [];
 
