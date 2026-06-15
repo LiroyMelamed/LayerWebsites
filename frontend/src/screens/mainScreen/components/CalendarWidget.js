@@ -17,11 +17,15 @@ const NAVY = "#2A4365";
 const SLATE = "#4C6690";
 
 function jerusalemDateKey(value) {
-    return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date(value));
+    const d = new Date(value);
+    if (!Number.isFinite(d.getTime())) return null;
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(d);
 }
 
 function addJerusalemDays(fromDate, days) {
-    const [y, m, d] = jerusalemDateKey(fromDate).split("-").map(Number);
+    const baseKey = jerusalemDateKey(fromDate);
+    if (!baseKey) return null;
+    const [y, m, d] = baseKey.split("-").map(Number);
     const shifted = new Date(Date.UTC(y, m - 1, d + days));
     return jerusalemDateKey(shifted);
 }
@@ -36,6 +40,7 @@ function bucketEvents(events) {
     for (const ev of events || []) {
         if (!ev?.startTime) continue;
         const key = jerusalemDateKey(ev.startTime);
+        if (!key) continue;
         if (key === todayKey) inTodayBucket.push(ev);
         else if (key === tomorrowKey) inTomorrowBucket.push(ev);
     }
