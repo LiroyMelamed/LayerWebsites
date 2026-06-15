@@ -24,11 +24,15 @@ const pool = require('../config/db');
 const EMPTY_OFFSETS = '[]';
 const EMPTY_CHANNELS = JSON.stringify({ push: false, sms: false, email: false });
 
-/** Cached once per process; false on tenants without calendar module / migration. */
+/**
+ * Cached `true` on tenants that have the calendar tables; never cached `false`
+ * because a single transient PG error during the first probe would otherwise
+ * latch sync off forever and silently drop reminder↔calendar updates.
+ */
 let _calendarSyncAvailable = null;
 
 async function _isCalendarSyncAvailable(dbClient) {
-    if (_calendarSyncAvailable !== null) return _calendarSyncAvailable;
+    if (_calendarSyncAvailable === true) return true;
     try {
         const { rows } = await dbClient.query(
             `SELECT
@@ -43,11 +47,14 @@ async function _isCalendarSyncAvailable(dbClient) {
                        AND column_name = 'calendar_event_id'
                  ) AS has_link_col`
         );
-        _calendarSyncAvailable = Boolean(rows[0]?.has_calendar && rows[0]?.has_link_col);
-    } catch (_) {
-        _calendarSyncAvailable = false;
+        const ok = Boolean(rows[0]?.has_calendar && rows[0]?.has_link_col);
+        if (ok) _calendarSyncAvailable = true;
+        return ok;
+    } catch (err) {
+        // Transient errors: do NOT cache — re-probe on next call.
+        console.warn('[reminder-calendar-sync] schema probe failed, will retry next call:', err.message);
+        return false;
     }
-    return _calendarSyncAvailable;
 }
 
 function _trimOrNull(value) {
