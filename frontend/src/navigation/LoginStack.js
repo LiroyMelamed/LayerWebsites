@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
 import LoginVerifyOtpCodeFieldsProvider from "../providers/LoginVerifyOtpCodeFieldsProvider";
 import RouteFallback from "../components/simpleComponents/RouteFallback";
 import { Navigate, Route, Routes } from "react-router-dom";
@@ -12,10 +12,10 @@ import {
     MainScreenName,
 } from "./screenPaths";
 
-export const LoginStackName = "/LoginStack";
+import LoginScreen from "../screens/loginScreen/LoginScreen";
+import LoginOtpScreen from "../screens/otpScreen/OtpScreen.js/LoginOtpScreen";
 
-const LoginScreen = lazy(() => import("../screens/loginScreen/LoginScreen"));
-const LoginOtpScreen = lazy(() => import("../screens/otpScreen/OtpScreen.js/LoginOtpScreen"));
+export const LoginStackName = "/LoginStack";
 
 function LoginStack() {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;

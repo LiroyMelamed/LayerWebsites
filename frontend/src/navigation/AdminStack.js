@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
 import TopAndRightNavBar from "../components/navBars/TopAndRightNavBar";
 import RouteFallback from "../components/simpleComponents/RouteFallback";
 import { Navigate, Route, Routes } from "react-router-dom";
@@ -22,24 +22,23 @@ import {
 } from "./screenPaths";
 import { ENABLE_CALENDAR_MODULE } from "../featureFlags";
 import { LoginStackName } from "./LoginStack";
+import MainScreen from "../screens/mainScreen/MainScreen";
+import TaggedCasesScreen from "../screens/taggedCasesScreen/TaggedCasesScreen";
+import AllCasesScreen from "../screens/allCasesScreen/AllCasesScreen";
+import AllClientsScreen from "../screens/allClientsScreen/AllClientsScreen";
+import MyCasesScreen from "../screens/myCasesScreen/MyCasesScreen";
+import AllMangerScreen from "../screens/allMangerScreen/AllMangerScreen";
+import AllCasesTypeScreen from "../screens/allCasesTypeScreen/AllCasesTypeScreen";
+import SigningManagerScreen from "../screens/signingScreen/SigningManagerScreen";
+import UploadFileForSigningScreen from "../screens/signingScreen/UploadFileForSigningScreen";
+import EvidenceDocumentsScreen from "../screens/evidenceDocuments/EvidenceDocumentsScreen";
+import PlanUsageScreen from "../screens/billingScreen/PlanUsageScreen";
+import PlansPricingScreen from "../screens/billingScreen/PlansPricingScreen";
+import RemindersScreen from "../screens/remindersScreen/RemindersScreen";
+import PlatformSettingsScreen from "../screens/platformSettingsScreen/PlatformSettingsScreen";
+import CalendarScreen from "../screens/calendarScreen/CalendarScreen";
 
 export const AdminStackName = "/AdminStack";
-
-const MainScreen = lazy(() => import("../screens/mainScreen/MainScreen"));
-const TaggedCasesScreen = lazy(() => import("../screens/taggedCasesScreen/TaggedCasesScreen"));
-const AllCasesScreen = lazy(() => import("../screens/allCasesScreen/AllCasesScreen"));
-const AllClientsScreen = lazy(() => import("../screens/allClientsScreen/AllClientsScreen"));
-const MyCasesScreen = lazy(() => import("../screens/myCasesScreen/MyCasesScreen"));
-const AllMangerScreen = lazy(() => import("../screens/allMangerScreen/AllMangerScreen"));
-const AllCasesTypeScreen = lazy(() => import("../screens/allCasesTypeScreen/AllCasesTypeScreen"));
-const SigningManagerScreen = lazy(() => import("../screens/signingScreen/SigningManagerScreen"));
-const UploadFileForSigningScreen = lazy(() => import("../screens/signingScreen/UploadFileForSigningScreen"));
-const EvidenceDocumentsScreen = lazy(() => import("../screens/evidenceDocuments/EvidenceDocumentsScreen"));
-const PlanUsageScreen = lazy(() => import("../screens/billingScreen/PlanUsageScreen"));
-const PlansPricingScreen = lazy(() => import("../screens/billingScreen/PlansPricingScreen"));
-const RemindersScreen = lazy(() => import("../screens/remindersScreen/RemindersScreen"));
-const PlatformSettingsScreen = lazy(() => import("../screens/platformSettingsScreen/PlatformSettingsScreen"));
-const CalendarScreen = lazy(() => import("../screens/calendarScreen/CalendarScreen"));
 
 function toRelativePath(pathname) {
     const p = String(pathname || "");

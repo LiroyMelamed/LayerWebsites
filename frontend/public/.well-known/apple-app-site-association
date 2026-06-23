@@ -8,7 +8,6 @@
                     "NOT /api/*",
                     "NOT /.well-known/*",
                     "NOT /static/*",
-                    "NOT /PublicSignScreen*",
                     "*"
                 ]
             }
