@@ -101,7 +101,7 @@ export default function PdfViewer({
             },
             {
                 root: rootEl || null,
-                rootMargin: '-25% 0 -25% 0',
+                rootMargin: '-25% 0px -25% 0px',
                 threshold: [0, 0.25, 0.5, 0.75, 1],
             }
         );
