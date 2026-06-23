@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import RouteFallback from './components/simpleComponents/RouteFallback';
 import { AdminStackName } from './navigation/AdminStack';
@@ -23,18 +23,18 @@ import {
   ViewSignedDocumentName,
 } from './navigation/screenPaths';
 
-const LoginStack = lazy(() => import('./navigation/LoginStack'));
-const AdminStack = lazy(() => import('./navigation/AdminStack'));
-const ClientStack = lazy(() => import('./navigation/ClientStack'));
-const PublicSigningScreen = lazy(() => import('./screens/signingScreen/PublicSigningScreen'));
-const ViewSignedDocument = lazy(() => import('./screens/viewSignedDocument/ViewSignedDocument'));
-const EvidenceVerifyScreen = lazy(() => import('./screens/verify/EvidenceVerifyScreen'));
-const PricingScreen = lazy(() => import('./screens/pricingScreen/PricingScreen'));
-const SecurityScreen = lazy(() => import('./screens/compliance/SecurityScreen'));
-const PrivacyPage = lazy(() => import('./screens/compliance/PrivacyPage'));
-const ContinuityPage = lazy(() => import('./screens/compliance/ContinuityPage'));
-const CompliancePage = lazy(() => import('./screens/compliance/CompliancePage'));
-const ChatBotPage = lazy(() => import('./screens/chatbot/ChatBotPage'));
+import LoginStack from './navigation/LoginStack';
+import AdminStack from './navigation/AdminStack';
+import ClientStack from './navigation/ClientStack';
+import PublicSigningScreen from './screens/signingScreen/PublicSigningScreen';
+import ViewSignedDocument from './screens/viewSignedDocument/ViewSignedDocument';
+import EvidenceVerifyScreen from './screens/verify/EvidenceVerifyScreen';
+import PricingScreen from './screens/pricingScreen/PricingScreen';
+import SecurityScreen from './screens/compliance/SecurityScreen';
+import PrivacyPage from './screens/compliance/PrivacyPage';
+import ContinuityPage from './screens/compliance/ContinuityPage';
+import CompliancePage from './screens/compliance/CompliancePage';
+import ChatBotPage from './screens/chatbot/ChatBotPage';
 
 const STACK_SUFFIX = "/*"
 
