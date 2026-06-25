@@ -7,6 +7,7 @@ import { LoginStackName } from "../../navigation/LoginStack";
 import NextLoginButton from "./components/NextLoginButton";
 import TopCenteredLogo from "./components/TopCenteredLogo";
 import useHttpRequest from "../../hooks/useHttpRequest";
+import PoweredByMela from "../../components/PoweredByMela";
 import { images } from "../../assets/images/images";
 import { useNavigate } from "react-router-dom";
 import loginApi from "../../api/loginApi";
@@ -46,12 +47,15 @@ export default function LoginScreen() {
             imageBackgroundSource={images.Backgrounds.AppBackground}
             unScrollableTopComponent={<TopCenteredLogo />}
             unScrollableBottomComponent={
-                <NextLoginButton
-                    isPerforming={isPerforming}
-                    buttonText={t('auth.login')}
-                    onPress={() => performRequest(phoneNumber)}
-                    disabled={phoneNumberError != null}
-                />
+                <>
+                    <NextLoginButton
+                        isPerforming={isPerforming}
+                        buttonText={t('auth.login')}
+                        onPress={() => performRequest(phoneNumber)}
+                        disabled={phoneNumberError != null}
+                    />
+                    <PoweredByMela />
+                </>
             }
         >
             <SimpleContainer className="lw-loginScreen__center">
