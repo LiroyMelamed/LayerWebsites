@@ -1602,7 +1602,7 @@ async function createSigningOtpChallenge({ signingFileId, signerUserId, signingS
     );
 
     // Send SMS (provider id is not currently captured by sendMessage); audit log still captures send time.
-    await sendMessage(`קוד אימות לחתימה: ${otp}`, phoneE164);
+    await sendMessage(`קוד אימות לחתימה: ${otp}`, phoneE164, { fast: true });
 
     // SMS metering is a no-op in single-tenant mode (firm_usage_events removed)
 

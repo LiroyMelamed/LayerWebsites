@@ -18,6 +18,16 @@ export const platformSettingsApi = {
         return await ApiUtils.put(`${base}/single`, { category, key, value });
     },
 
+    /** Request an SMS sender change (stored as pending + emails the technical team) */
+    requestSmsSenderChange: async (phone) => {
+        return await ApiUtils.post(`${base}/sms-sender-request`, { phone });
+    },
+
+    /** Activate the pending SMS sender (after InforU verification) */
+    activateSmsSender: async () => {
+        return await ApiUtils.post(`${base}/sms-sender-activate`);
+    },
+
     /** Get notification channels */
     getChannels: async () => {
         return await ApiUtils.get(`${base}/channels`);

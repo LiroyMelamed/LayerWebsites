@@ -28,6 +28,10 @@ router.get('/', ctrl.getAllSettings);
 router.put('/', ctrl.updateSettings);
 router.put('/single', ctrl.updateSingleSetting);
 
+// SMS sender change (InforU verification flow)
+router.post('/sms-sender-request', ctrl.requestSmsSenderChange);
+router.post('/sms-sender-activate', ctrl.activateSmsSenderChange);
+
 // Notification channels
 router.get('/channels', ctrl.getNotificationChannels);
 router.put('/channels/:type', ctrl.updateNotificationChannel);

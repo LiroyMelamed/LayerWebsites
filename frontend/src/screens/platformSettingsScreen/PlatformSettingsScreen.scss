@@ -732,6 +732,24 @@
         gap: v.$space-1;
     }
 
+    &__senderPending {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: v.$space-2;
+        margin-top: v.$space-2;
+        width: 100%;
+        background: #fffbeb;
+        border: 0.0625rem solid #fde68a;
+        border-radius: 0.5rem;
+        padding: v.$space-2 v.$space-3;
+    }
+
+    &__senderPendingLabel {
+        font-weight: 600;
+        color: #92400e;
+    }
+
     // ── Reminder Templates ──────────────────────────────────────
     &__reminderTplHeader {
         display: flex;

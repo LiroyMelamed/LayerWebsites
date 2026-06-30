@@ -166,7 +166,7 @@ const requestOtp = async (req, res) => {
 
         if (!isDemo) {
             try {
-                sendMessage(buildOtpSmsBodyForRequest(req, otp), formatedPhoneNumber);
+                sendMessage(buildOtpSmsBodyForRequest(req, otp), formatedPhoneNumber, { fast: true });
             } catch (e) {
                 console.warn("SMS send failed:", e?.message);
             }
@@ -488,7 +488,7 @@ const register = async (req, res) => {
         );
 
         try {
-            sendMessage(buildOtpSmsBodyForRequest(req, otp), formatedPhoneNumber);
+            sendMessage(buildOtpSmsBodyForRequest(req, otp), formatedPhoneNumber, { fast: true });
         } catch (e) {
             console.warn("כשל בשליחת SMS לאחר הרשמה:", e?.message);
         }
