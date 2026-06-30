@@ -38,6 +38,20 @@ function getClientPlatform(req) {
     return String(raw || "").trim().toLowerCase();
 }
 
+/**
+ * Android SMS Retriever app-hash, as reported by the client for ITS OWN build.
+ * The mobile app computes this at runtime (react-native-otp-verify getHash) and
+ * sends it in the `x-android-sms-hash` header — so it always matches the running
+ * build's signing certificate, unlike a statically-configured env hash.
+ *
+ * The value is appended verbatim into the outgoing SMS body, so validate strictly
+ * (exactly 11 base64 chars) to prevent SMS-body injection via a forged header.
+ */
+function getAndroidSmsHash(req) {
+    const raw = String(req?.headers?.["x-android-sms-hash"] || "").trim();
+    return /^[A-Za-z0-9+/]{11}$/.test(raw) ? raw : "";
+}
+
 function getBearerToken(req) {
     const auth = String(req?.headers?.authorization || req?.headers?.Authorization || "").trim();
     if (!auth) return "";
@@ -112,9 +126,15 @@ function buildOtpSmsBody(otp, options = {}) {
 
 function buildOtpSmsBodyForRequest(req, otp) {
     const platform = getClientPlatform(req);
-    if (platform === "android") {
 
-        return buildOtpSmsBody(otp, { platform: "android", androidHash: ANDROID_SMS_RETRIEVER_HASH });
+    // Prefer the hash the Android client reports for its own build (always matches the
+    // running build's signing cert) over the statically-configured env hash, which is a
+    // frequent source of SMS-Retriever mismatches across debug/EAS/release keystores.
+    // A valid app hash alone also identifies Android, as a belt-and-braces fallback.
+    const appHash = getAndroidSmsHash(req);
+    const androidHash = appHash || ANDROID_SMS_RETRIEVER_HASH;
+    if (androidHash && (platform === "android" || appHash)) {
+        return buildOtpSmsBody(otp, { platform: "android", androidHash });
     }
 
     if (platform === "web") {
