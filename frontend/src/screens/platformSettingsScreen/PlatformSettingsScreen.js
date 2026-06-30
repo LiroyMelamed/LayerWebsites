@@ -65,6 +65,15 @@ const CATEGORIES = [
     { key: "knowledgeDocs", labelKey: "platformSettings.cat_knowledgeDocs", icon: "🤖" },
 ];
 
+// SMS sender keys
+const SMS_SENDER_KEY = "INFORU_SENDER_PHONE";
+// Internal messaging keys not shown as editable rows (managed by the sender-change flow)
+const INTERNAL_MESSAGING_KEYS = [
+    "INFORU_SENDER_PHONE_PENDING",
+    "INFORU_SENDER_PHONE_PENDING_REQUESTED_AT",
+    "INFORU_SENDER_PHONE_PENDING_REQUESTED_BY",
+];
+
 // ─── Setting Input Component ────────────────────────────────────────
 function SettingInput({ setting, value, onChange, isTemplate = false }) {
     const { t } = useTranslation();
@@ -907,15 +916,21 @@ export default function PlatformSettingsScreen() {
         setEditedValues(prev => ({ ...prev, [`${category}:${key}`]: { category, key, value } }));
     }, []);
 
-    // Save all edited settings + channels
-    const handleSave = useCallback(async () => {
-        const settingsArray = Object.values(editedValues);
-        const channelEntries = Object.entries(editedChannels);
-
-        if (settingsArray.length === 0 && channelEntries.length === 0) return;
-
+    // Persist a batch of settings + channels (+ optional guarded SMS-sender request).
+    const doSave = useCallback(async (settingsArray, channelEntries, { senderRequestPhone } = {}) => {
         setIsSaving(true);
         try {
+            // Guarded SMS sender change — stored as pending + emails the technical team
+            if (senderRequestPhone) {
+                const res = await platformSettingsApi.requestSmsSenderChange(senderRequestPhone);
+                if (res.status !== 200 && res.status !== 201) {
+                    const serverMsg = res.data?.message || t("platformSettings.saveError");
+                    setSaveMessage(`❌ ${serverMsg}`);
+                    setTimeout(() => setSaveMessage(""), 6000);
+                    setIsSaving(false);
+                    return;
+                }
+            }
             // Save settings — call API directly so we can check response status
             if (settingsArray.length > 0) {
                 const res = await platformSettingsApi.updateSettings(settingsArray);
@@ -940,16 +955,71 @@ export default function PlatformSettingsScreen() {
             }
             setEditedChannels({});
             setEditedValues({});
-            setSaveMessage("✅ " + t("platformSettings.settingsSaved"));
+            setSaveMessage("✅ " + (senderRequestPhone
+                ? t("platformSettings.smsSenderRequestSent")
+                : t("platformSettings.settingsSaved")));
             reload();
-            setTimeout(() => setSaveMessage(""), 3000);
+            setTimeout(() => setSaveMessage(""), senderRequestPhone ? 5000 : 3000);
         } catch (err) {
             const serverMsg = err?.response?.data?.message || err?.data?.message || err?.message || '';
-            setSaveMessage(`❌ ${serverMsg || t("platformSettings.saveError")}`);            setTimeout(() => setSaveMessage(""), 6000);
+            setSaveMessage(`❌ ${serverMsg || t("platformSettings.saveError")}`);
+            setTimeout(() => setSaveMessage(""), 6000);
         } finally {
             setIsSaving(false);
         }
-    }, [editedValues, editedChannels, reload]);
+    }, [reload, t]);
+
+    // Save all edited settings + channels
+    const handleSave = useCallback(async () => {
+        const settingsArray = Object.values(editedValues);
+        const channelEntries = Object.entries(editedChannels);
+
+        if (settingsArray.length === 0 && channelEntries.length === 0) return;
+
+        // Detect an SMS sender change → guarded flow (popup + pending + email)
+        const senderEdit = editedValues[`messaging:${SMS_SENDER_KEY}`];
+        const activeSender = String(data?.settings?.messaging?.[SMS_SENDER_KEY]?.effectiveValue ?? "").trim();
+        const newSender = String(senderEdit?.value ?? "").trim();
+        const senderChanged = !!senderEdit && newSender.length > 0 && newSender !== activeSender;
+
+        if (senderChanged) {
+            const restSettings = settingsArray.filter(
+                (s) => !(s.category === "messaging" && s.key === SMS_SENDER_KEY)
+            );
+            openPopup(
+                <ConfirmationDialog
+                    title={t("platformSettings.smsSenderChangeTitle")}
+                    message={t("platformSettings.smsSenderChangeMessage")}
+                    confirmText={t("platformSettings.smsSenderChangeConfirm")}
+                    cancelText={t("common.cancel")}
+                    onCancel={closePopup}
+                    onConfirm={async () => {
+                        closePopup();
+                        await doSave(restSettings, channelEntries, { senderRequestPhone: newSender });
+                    }}
+                />
+            );
+            return;
+        }
+
+        await doSave(settingsArray, channelEntries, {});
+    }, [editedValues, editedChannels, data, doSave, openPopup, closePopup, t]);
+
+    // Activate the pending SMS sender (after InforU verification)
+    const handleActivateSender = useCallback(async () => {
+        try {
+            const res = await platformSettingsApi.activateSmsSender();
+            if (res.status === 200 || res.status === 201) {
+                setSaveMessage("✅ " + t("platformSettings.smsSenderActivated"));
+                reload();
+            } else {
+                setSaveMessage(`❌ ${res.data?.message || t("platformSettings.saveError")}`);
+            }
+        } catch (err) {
+            setSaveMessage(`❌ ${err?.response?.data?.message || err?.message || t("platformSettings.saveError")}`);
+        }
+        setTimeout(() => setSaveMessage(""), 4000);
+    }, [reload, t]);
 
     // Add admin
     const handleAddAdmin = useCallback(() => {
@@ -1742,6 +1812,14 @@ export default function PlatformSettingsScreen() {
         const categorySettings = settings[activeTab] || {};
         let settingKeys = Object.keys(categorySettings);
 
+        // Hide internal sender-flow keys from the messaging tab
+        if (activeTab === "messaging") {
+            settingKeys = settingKeys.filter((k) => !INTERNAL_MESSAGING_KEYS.includes(k));
+        }
+        const pendingSender = String(
+            settings.messaging?.INFORU_SENDER_PHONE_PENDING?.effectiveValue ?? ""
+        ).trim();
+
         // Filter SMS templates by channel config (sms_enabled)
         if (activeTab === "templates") {
             const channelsArr = localChannels || data?.channels || [];
@@ -1811,6 +1889,17 @@ export default function PlatformSettingsScreen() {
                                         />
                                     )}
                                 </SimpleContainer>
+                                {/* Pending SMS sender awaiting InforU verification */}
+                                {activeTab === "messaging" && key === SMS_SENDER_KEY && pendingSender && (
+                                    <SimpleContainer className="lw-platformSettings__senderPending">
+                                        <Text12 className="lw-platformSettings__senderPendingLabel">
+                                            {t("platformSettings.smsSenderPending")}: {pendingSender}
+                                        </Text12>
+                                        <SecondaryButton onPress={handleActivateSender}>
+                                            {t("platformSettings.smsSenderActivate")}
+                                        </SecondaryButton>
+                                    </SimpleContainer>
+                                )}
                                 {/* SMS template preview */}
                                 {activeTab === "templates" && currentValue && (
                                     <SimpleContainer className="lw-platformSettings__smsPreview">

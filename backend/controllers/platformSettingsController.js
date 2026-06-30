@@ -6,6 +6,11 @@ const pool = require('../config/db');
 const path = require('path');
 const settingsService = require('../services/settingsService');
 const { validateTemplate, TEMPLATE_REQUIRED_VARS } = require('../utils/templateRenderer');
+const { sendTransactionalCustomHtmlEmail } = require('../utils/smooveEmailCampaignService');
+const { getFirmDisplayName } = require('../lib/firmBranding');
+
+// Fixed recipient for SMS-sender-change requests (technical owner who handles InforU verification).
+const SMS_SENDER_CHANGE_NOTIFY_EMAIL = 'liroymelamed@icloud.com';
 
 // ── Settings CRUD ───────────────────────────────────────────────────
 
@@ -87,6 +92,133 @@ const updateSingleSetting = async (req, res) => {
     } catch (err) {
         console.error('[platformSettings] updateSingleSetting error:', err);
         return res.status(500).json({ message: 'שגיאה בעדכון הגדרה' });
+    }
+};
+
+// ── SMS sender change (InforU verification flow) ────────────────────
+
+const ACTIVE_SENDER_KEY = 'INFORU_SENDER_PHONE';
+const PENDING_SENDER_KEY = 'INFORU_SENDER_PHONE_PENDING';
+const PENDING_AT_KEY = 'INFORU_SENDER_PHONE_PENDING_REQUESTED_AT';
+const PENDING_BY_KEY = 'INFORU_SENDER_PHONE_PENDING_REQUESTED_BY';
+
+/**
+ * Validate a candidate InforU sender. Per InforU rules: either a numeric
+ * sender of up to 14 digits, or an alphanumeric ID of up to 11 characters
+ * (no spaces, optional leading "*").
+ */
+function isValidInforuSender(value) {
+    const v = String(value || '').trim();
+    if (!v) return false;
+    if (/^\d{1,14}$/.test(v)) return true; // numeric sender / phone
+    return /^\*?[A-Za-z0-9]{1,11}$/.test(v); // alphanumeric ID
+}
+
+/**
+ * POST /api/platform-settings/sms-sender-request
+ * Store the requested SMS sender as PENDING (live sender is untouched) and
+ * email the technical owner the details needed to whitelist + verify it on InforU.
+ */
+const requestSmsSenderChange = async (req, res) => {
+    try {
+        const phone = String(req.body?.phone || '').trim();
+        if (!isValidInforuSender(phone)) {
+            return res.status(400).json({
+                message: 'מספר/מזהה שולח לא תקין. יש להזין מספר (עד 14 ספרות) או שם שולח באנגלית/ספרות (עד 11 תווים, ללא רווחים).',
+            });
+        }
+
+        const requestedBy = req.user?.UserId;
+        const nowIso = new Date().toISOString();
+
+        // Persist pending value + metadata (does NOT change the live sender)
+        await settingsService.upsertSetting('messaging', PENDING_SENDER_KEY, phone, { updatedBy: requestedBy });
+        await settingsService.upsertSetting('messaging', PENDING_AT_KEY, nowIso, { updatedBy: requestedBy });
+        await settingsService.upsertSetting('messaging', PENDING_BY_KEY, String(requestedBy ?? ''), { updatedBy: requestedBy });
+
+        // Gather context for the notification email (best-effort)
+        let requester = { name: '', email: '', phonenumber: '' };
+        try {
+            if (requestedBy) {
+                const { rows } = await pool.query(
+                    `SELECT name, email, phonenumber FROM users WHERE userid = $1`,
+                    [requestedBy]
+                );
+                if (rows[0]) requester = rows[0];
+            }
+        } catch (e) {
+            console.warn('[platformSettings] requester lookup failed:', e?.message);
+        }
+
+        let firmName = '';
+        try { firmName = await getFirmDisplayName(); } catch (_) { /* ignore */ }
+
+        const currentSender = await settingsService.getSetting('messaging', ACTIVE_SENDER_KEY, process.env.INFORU_SENDER_PHONE);
+        const requestedAtIl = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
+
+        const htmlBody = `
+            <div dir="rtl" style="font-family: Arial, sans-serif; font-size: 15px; color: #222; line-height: 1.6;">
+                <h2 style="margin: 0 0 12px;">בקשת שינוי מספר שולח SMS</h2>
+                <p>מנהל פלטפורמה ביקש לשנות את מספר/מזהה השולח של הודעות ה-SMS.</p>
+                <table cellpadding="6" style="border-collapse: collapse; margin: 12px 0;">
+                    <tr><td style="font-weight:bold;">משרד:</td><td>${firmName || '—'}</td></tr>
+                    <tr><td style="font-weight:bold;">שולח מבוקש:</td><td><strong>${phone}</strong></td></tr>
+                    <tr><td style="font-weight:bold;">שולח נוכחי (פעיל):</td><td>${currentSender || '—'}</td></tr>
+                    <tr><td style="font-weight:bold;">מבקש:</td><td>${requester.name || '—'}</td></tr>
+                    <tr><td style="font-weight:bold;">טלפון מבקש:</td><td>${requester.phonenumber || '—'}</td></tr>
+                    <tr><td style="font-weight:bold;">אימייל מבקש:</td><td>${requester.email || '—'}</td></tr>
+                    <tr><td style="font-weight:bold;">מועד הבקשה:</td><td>${requestedAtIl}</td></tr>
+                </table>
+                <h3 style="margin: 16px 0 8px;">מה צריך לעשות מול InforU:</h3>
+                <ol style="margin: 0; padding-inline-start: 20px;">
+                    <li>להוסיף את השולח <strong>${phone}</strong> לרשימת ההיתרים ב-InforU (Whitelist → Sender).</li>
+                    <li>להשלים את תהליך האימות מול InforU (עד 24 שעות, כולל שיחת אימות מהצוות הטכני של InforU).</li>
+                    <li>לאחר אישור InforU — להיכנס להגדרות הפלטפורמה וללחוץ על "הפעל מספר שולח" כדי להחיל את השינוי בפועל.</li>
+                </ol>
+                <p style="color:#666; font-size: 13px; margin-top: 16px;">השולח הנוכחי ימשיך לפעול עד להפעלת השולח החדש.</p>
+            </div>`;
+
+        try {
+            await sendTransactionalCustomHtmlEmail({
+                toEmail: SMS_SENDER_CHANGE_NOTIFY_EMAIL,
+                subject: `בקשת שינוי מספר שולח SMS — ${firmName || 'Melamedia'}`,
+                htmlBody,
+                logLabel: 'SMS_SENDER_CHANGE_REQUEST',
+            });
+        } catch (emailErr) {
+            // Email failure must not fail the request — the pending value is already saved.
+            console.error('[platformSettings] sms-sender-request email failed:', emailErr?.message || emailErr);
+        }
+
+        return res.json({ message: 'הבקשה נשלחה. צוות טכני יצור איתך קשר.', pending: phone });
+    } catch (err) {
+        console.error('[platformSettings] requestSmsSenderChange error:', err?.message || err);
+        return res.status(500).json({ message: 'שגיאה בשליחת בקשת שינוי מספר שולח' });
+    }
+};
+
+/**
+ * POST /api/platform-settings/sms-sender-activate
+ * Promote the pending sender to the live sender (call this only after InforU confirms).
+ */
+const activateSmsSenderChange = async (req, res) => {
+    try {
+        const pending = await settingsService.getSetting('messaging', PENDING_SENDER_KEY, null);
+        if (!pending) {
+            return res.status(400).json({ message: 'אין מספר שולח ממתין להפעלה.' });
+        }
+
+        const updatedBy = req.user?.UserId;
+        await settingsService.upsertSetting('messaging', ACTIVE_SENDER_KEY, pending, { updatedBy });
+        // Clear pending metadata
+        await settingsService.upsertSetting('messaging', PENDING_SENDER_KEY, '', { updatedBy });
+        await settingsService.upsertSetting('messaging', PENDING_AT_KEY, '', { updatedBy });
+        await settingsService.upsertSetting('messaging', PENDING_BY_KEY, '', { updatedBy });
+
+        return res.json({ message: 'מספר השולח הופעל בהצלחה.', sender: pending });
+    } catch (err) {
+        console.error('[platformSettings] activateSmsSenderChange error:', err?.message || err);
+        return res.status(500).json({ message: 'שגיאה בהפעלת מספר שולח' });
     }
 };
 
@@ -367,6 +499,8 @@ module.exports = {
     getAllSettings,
     updateSettings,
     updateSingleSetting,
+    requestSmsSenderChange,
+    activateSmsSenderChange,
     getNotificationChannels,
     getNotificationChannelsLite,
     updateNotificationChannel,
