@@ -23,16 +23,21 @@ const isProduction = process.env.IS_PRODUCTION === "true";
 
 const FORCE_SEND_SMS_ALL = process.env.FORCE_SEND_SMS_ALL === "true";
 
+// Active SMS provider. Default is InforU; set SMS_PROVIDER=smoove to roll back.
+const SMS_PROVIDER = String(process.env.SMS_PROVIDER || "inforu").trim().toLowerCase();
+
 function stripPlus(e164Phone) {
     return String(e164Phone).startsWith("+") ? String(e164Phone).slice(1) : String(e164Phone);
 }
 
-function requiredEnvMissing() {
-    const missing = [];
-    if (!process.env.SMOOVE_BASE_URL) missing.push("SMOOVE_BASE_URL");
-    if (!process.env.SMOOVE_API_KEY) missing.push("SMOOVE_API_KEY");
-    if (!process.env.SMOOVE_SENDER_PHONE) missing.push("SMOOVE_SENDER_PHONE");
-    return missing;
+/**
+ * Convert an E.164 number to the local format InforU expects.
+ * Israeli numbers (+972XXXXXXXXX) become 0XXXXXXXXX; anything else just loses the leading "+".
+ */
+function toInforuPhone(e164Phone) {
+    const raw = String(e164Phone);
+    if (raw.startsWith("+972")) return "0" + raw.slice(4);
+    return stripPlus(raw);
 }
 
 function safeErrorData(err) {
@@ -45,35 +50,117 @@ function safeErrorData(err) {
 }
 
 /**
- * Sends an SMS message using the Smoove API. In development, it logs the message instead.
- * @param {string} messageBody - The body of the message to be sent.
- * @param {string} formattedPhone - The phone number to send the message to, in E.164 format.
+ * Resolve the active sender ID/number. DB (platform_settings) wins over env.
+ * NOTE: this is the *active* sender — the pending value awaiting InforU verification
+ * is stored separately under INFORU_SENDER_PHONE_PENDING and is never used here.
  */
-async function sendMessage(messageBody, formattedPhone) {
-    const e164Regex = /^\+[1-9]\d{7,14}$/;
+async function getActiveSender() {
+    return getSetting("messaging", "INFORU_SENDER_PHONE", process.env.INFORU_SENDER_PHONE);
+}
 
-    if (!formattedPhone || !e164Regex.test(String(formattedPhone))) {
-        console.error(`Invalid phone for SMS (expected E.164):`, formattedPhone);
-        return;
+// ── InforU provider ─────────────────────────────────────────────────
+
+function inforuEnvMissing() {
+    const missing = [];
+    if (!process.env.INFORU_BASE_URL) missing.push("INFORU_BASE_URL");
+    // Either a pre-encoded Authorization header, or username + token to build one.
+    if (!process.env.INFORU_AUTH && (!process.env.INFORU_USERNAME || !process.env.INFORU_TOKEN)) {
+        missing.push("INFORU_AUTH | (INFORU_USERNAME + INFORU_TOKEN)");
     }
+    return missing;
+}
 
-    const shouldSendRealSms = isProduction || FORCE_SEND_SMS_ALL;
+function inforuAuthHeader() {
+    if (process.env.INFORU_AUTH) return process.env.INFORU_AUTH;
+    const creds = `${process.env.INFORU_USERNAME}:${process.env.INFORU_TOKEN}`;
+    return "Basic " + Buffer.from(creds, "utf8").toString("base64");
+}
 
-    if (!shouldSendRealSms) {
-        console.log("--- SMS Simulation (Dev Mode) ---");
-        console.log("To:", formattedPhone);
-        console.log("Body:", messageBody);
-        console.log("---------------------------------");
-        // Record even in dev so local usage counters are realistic
-        await recordUsageEvent('SMS', 'dev-simulation', { phone: formattedPhone });
-        return;
-    }
-
-    const missing = requiredEnvMissing();
+/**
+ * Send an SMS via the InforU API (capi.inforu.co.il /api/v2/SMS/SendSms).
+ * @param {string} messageBody
+ * @param {string} formattedPhone - E.164
+ * @param {boolean} fast - high priority (Priority -1), used for OTP messages
+ */
+async function sendViaInforU(messageBody, formattedPhone, fast) {
+    const missing = inforuEnvMissing();
     if (missing.length) {
-        console.error(
-            `Smoove env vars missing (${missing.join("/")}). Cannot send SMS.`
-        );
+        console.error(`InforU env vars missing (${missing.join("/")}). Cannot send SMS.`);
+        return;
+    }
+
+    const senderPhone = await getActiveSender();
+    if (!senderPhone) {
+        console.error("INFORU_SENDER_PHONE not configured in platform_settings or .env. Cannot send SMS.");
+        return;
+    }
+
+    const baseUrl = process.env.INFORU_BASE_URL.replace(/\/$/, ""); // trim trailing slash
+    const url = `${baseUrl}/api/v2/SMS/SendSms`;
+
+    const requestBody = {
+        Data: {
+            Message: String(messageBody ?? ""),
+            Recipients: [{ Phone: toInforuPhone(formattedPhone) }],
+            Settings: {
+                Sender: String(senderPhone),
+                // 0 = normal, -1 = high priority (single message — used for OTP)
+                Priority: fast ? -1 : 0,
+            },
+        },
+    };
+
+    const requestHeaders = {
+        "Content-Type": "application/json; charset=utf-8",
+        Authorization: inforuAuthHeader(),
+    };
+
+    try {
+        const res = await axios.post(url, requestBody, {
+            headers: requestHeaders,
+            timeout: 15000,
+        });
+
+        const statusId = res?.data?.StatusId;
+        if (statusId === 1) {
+            console.log(`InforU SMS sent to ${formattedPhone}${fast ? " (high priority)" : ""}`);
+            await recordUsageEvent("SMS", "inforu-send", { phone: formattedPhone });
+            return res.data;
+        }
+
+        console.error(`InforU SMS not accepted for ${formattedPhone}:`, {
+            StatusId: statusId,
+            StatusDescription: res?.data?.StatusDescription,
+            DetailedDescription: res?.data?.DetailedDescription,
+        });
+    } catch (err) {
+        const { status, data } = safeErrorData(err);
+        if (status === 401 || status === 403) {
+            console.error("InforU SMS auth failed (check INFORU_AUTH / INFORU_USERNAME / INFORU_TOKEN).");
+        }
+        console.error(`Error sending message to ${formattedPhone}:`, { status, data });
+    }
+}
+
+// ── Smoove provider (legacy — kept for rollback via SMS_PROVIDER=smoove) ──
+
+function smooveEnvMissing() {
+    const missing = [];
+    if (!process.env.SMOOVE_BASE_URL) missing.push("SMOOVE_BASE_URL");
+    if (!process.env.SMOOVE_API_KEY) missing.push("SMOOVE_API_KEY");
+    return missing;
+}
+
+async function sendViaSmoove(messageBody, formattedPhone) {
+    const missing = smooveEnvMissing();
+    if (missing.length) {
+        console.error(`Smoove env vars missing (${missing.join("/")}). Cannot send SMS.`);
+        return;
+    }
+
+    const senderPhone = await getActiveSender();
+    if (!senderPhone) {
+        console.error("INFORU_SENDER_PHONE not configured in platform_settings or .env. Cannot send SMS.");
         return;
     }
 
@@ -81,13 +168,6 @@ async function sendMessage(messageBody, formattedPhone) {
     const url = `${baseUrl}/v1/Messages`;
 
     const toPhone = stripPlus(formattedPhone);
-
-    // Prefer platform_settings, fall back to env
-    const senderPhone = await getSetting('messaging', 'SMOOVE_SENDER_PHONE', process.env.SMOOVE_SENDER_PHONE);
-    if (!senderPhone) {
-        console.error('SMOOVE_SENDER_PHONE not configured in platform_settings or .env. Cannot send SMS.');
-        return;
-    }
 
     const messageRequest = {
         toMembersByCell: [toPhone],
@@ -112,17 +192,51 @@ async function sendMessage(messageBody, formattedPhone) {
         });
 
         console.log(`Smoove SMS sent to ${formattedPhone}`);
-        await recordUsageEvent('SMS', 'smoove-send', { phone: formattedPhone });
+        await recordUsageEvent("SMS", "smoove-send", { phone: formattedPhone });
         return res.data;
     } catch (err) {
         const { status, data } = safeErrorData(err);
 
         if (status === 401 || status === 403) {
-            console.error('Smoove SMS auth failed; header names used:', Object.keys(requestHeaders).sort());
+            console.error("Smoove SMS auth failed; header names used:", Object.keys(requestHeaders).sort());
         }
 
         console.error(`Error sending message to ${formattedPhone}:`, { status, data });
     }
+}
+
+/**
+ * Sends an SMS message via the configured provider (InforU by default, Smoove if
+ * SMS_PROVIDER=smoove). In development, it logs the message instead.
+ * @param {string} messageBody - The body of the message to be sent.
+ * @param {string} formattedPhone - The phone number to send to, in E.164 format.
+ * @param {{ fast?: boolean }} [options] - Set fast=true for high-priority OTP delivery.
+ */
+async function sendMessage(messageBody, formattedPhone, { fast = false } = {}) {
+    const e164Regex = /^\+[1-9]\d{7,14}$/;
+
+    if (!formattedPhone || !e164Regex.test(String(formattedPhone))) {
+        console.error(`Invalid phone for SMS (expected E.164):`, formattedPhone);
+        return;
+    }
+
+    const shouldSendRealSms = isProduction || FORCE_SEND_SMS_ALL;
+
+    if (!shouldSendRealSms) {
+        console.log("--- SMS Simulation (Dev Mode) ---");
+        console.log("To:", formattedPhone);
+        console.log("Priority:", fast ? "high (OTP)" : "normal");
+        console.log("Body:", messageBody);
+        console.log("---------------------------------");
+        // Record even in dev so local usage counters are realistic
+        await recordUsageEvent("SMS", "dev-simulation", { phone: formattedPhone });
+        return;
+    }
+
+    if (SMS_PROVIDER === "smoove") {
+        return sendViaSmoove(messageBody, formattedPhone);
+    }
+    return sendViaInforU(messageBody, formattedPhone, fast);
 }
 
 module.exports = { sendMessage, COMPANY_NAME, WEBSITE_DOMAIN, getWebsiteDomain, getCompanyName, isProduction, FORCE_SEND_SMS_ALL };

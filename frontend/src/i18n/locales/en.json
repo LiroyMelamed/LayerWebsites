@@ -1105,6 +1105,13 @@
     "greetingNight": "Good night! 🌙 I'm the AI assistant of Mor Levy Law Office. How can I help you?"
   },
   "platformSettings": {
+    "smsSenderChangeTitle": "Update SMS sender number",
+    "smsSenderChangeMessage": "Changing the sender number may take up to 24 hours to take effect, and a technical team member will call you to verify the request. The current number stays active until approval.",
+    "smsSenderChangeConfirm": "Send request",
+    "smsSenderRequestSent": "Request sent. Our technical team will contact you.",
+    "smsSenderPending": "Pending verification",
+    "smsSenderActivate": "Activate sender",
+    "smsSenderActivated": "Sender activated successfully",
     "docTitlePlaceholder": "Document name (optional)",
     "chooseFile": "Choose File",
     "uploading": "Uploading and processing document...",
