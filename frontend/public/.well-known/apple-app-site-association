@@ -8,7 +8,9 @@
                     "NOT /api/*",
                     "NOT /.well-known/*",
                     "NOT /static/*",
-                    "NOT /PublicSignScreen*",
+                    "NOT /PublicSign*",
+                    "NOT /ViewSignedDocument*",
+                    "NOT /Verify/Evidence/*",
                     "*"
                 ]
             }
