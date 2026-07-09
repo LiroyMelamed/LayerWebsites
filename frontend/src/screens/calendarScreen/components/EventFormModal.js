@@ -110,6 +110,35 @@ function _shallowEqualConflictKey(a, b) {
         && a?.exclude === b?.exclude;
 }
 
+function _currentUserIdFromToken() {
+    try {
+        const token = localStorage.getItem("token");
+        if (!token) return null;
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const id = payload?.userid ?? payload?.UserId;
+        return id != null ? Number(id) : null;
+    } catch {
+        return null;
+    }
+}
+
+/** Creator tagged other lawyers but not themselves — visible in firm view only. */
+function _creatorScheduledForOthersOnly(saved, currentUserId) {
+    if (!currentUserId || !saved) return false;
+    const eventType = saved.eventType || saved.event_type;
+    if (isInternalScopedEventType(eventType)) return false;
+    const ownerId = saved.ownerId ?? saved.owner_id;
+    if (Number(ownerId) !== Number(currentUserId)) return false;
+
+    const managerIds = new Set();
+    (saved.managers || []).forEach((m) => {
+        if (m?.userId != null) managerIds.add(Number(m.userId));
+    });
+    if (saved.managerUserId != null) managerIds.add(Number(saved.managerUserId));
+    if (!managerIds.size) return false;
+    return !managerIds.has(Number(currentUserId));
+}
+
 function _initialManagers(event) {
     if (Array.isArray(event?.managers) && event.managers.length) {
         return event.managers.map((m) => ({
@@ -688,7 +717,12 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 : await calendarApi.createEvent(payload);
 
             if (res?.success && res?.data?.event) {
-                onSaved(res.data.event);
+                const saved = res.data.event;
+                const firmOnlyNotice = _creatorScheduledForOthersOnly(
+                    saved,
+                    _currentUserIdFromToken()
+                );
+                onSaved(saved, { firmOnlyNotice });
             } else {
                 setError(res?.data?.message || res?.message || "שגיאה. נסה שוב.");
             }
