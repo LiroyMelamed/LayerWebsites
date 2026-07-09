@@ -712,6 +712,17 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         return c.toDataURL("image/png");
     };
 
+    const fetchSavedItemDataUrl = async (savedItem) => {
+        if (!savedItem || savedItem.type == null || savedItem.index == null) return null;
+        const res = isPublic
+            ? await signingFilesApi.getPublicSavedItemDataUrl(publicToken, savedItem.type, savedItem.index)
+            : await signingFilesApi.getSavedItemDataUrl(savedItem.type, savedItem.index);
+        unwrapApi(res);
+        const rawDataUrl = res?.data?.dataUrl;
+        if (!rawDataUrl) return null;
+        return normalizeSignatureDataUrl(rawDataUrl);
+    };
+
     const saveSignatureAsDefault = async (dataUrl) => {
         if (!dataUrl) return;
         if (isPublic) {
@@ -1191,7 +1202,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         return false;
     };
 
-    const applySavedSignatureForNext = async (imageUrl) => {
+    const applySavedSignatureForNext = async (savedItem = null) => {
         try {
             const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
             const unsigned = getUnsignedRequiredSpots(allSpots).filter((s) => getSpotType(s) === 'signature');
@@ -1212,16 +1223,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             setSaving(true);
             let dataUrl = null;
 
-            if (imageUrl) {
-                // Fetch the image URL and convert to data URL
-                const resp = await fetch(imageUrl);
-                const blob = await resp.blob();
-                dataUrl = await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result);
-                    reader.readAsDataURL(blob);
-                });
-                dataUrl = await normalizeSignatureDataUrl(dataUrl);
+            if (savedItem) {
+                dataUrl = await fetchSavedItemDataUrl(savedItem);
             } else if (savedSignature?.exists) {
                 const sigRes = isPublic
                     ? await signingFilesApi.getPublicSavedSignatureDataUrl(publicToken)
@@ -1253,7 +1256,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         return false;
     };
 
-    const applySavedStampForNext = async (imageUrl) => {
+    const applySavedStampForNext = async (savedItem = null) => {
         try {
             const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
             const unsigned = getUnsignedRequiredSpots(allSpots).filter((s) => getSpotType(s) === 'signature');
@@ -1269,15 +1272,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             setSaving(true);
             let dataUrl = null;
 
-            if (imageUrl) {
-                const resp = await fetch(imageUrl);
-                const blob = await resp.blob();
-                dataUrl = await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result);
-                    reader.readAsDataURL(blob);
-                });
-                dataUrl = await normalizeSignatureDataUrl(dataUrl);
+            if (savedItem) {
+                dataUrl = await fetchSavedItemDataUrl(savedItem);
             } else if (savedStamp?.exists) {
                 const stampRes = isPublic
                     ? await signingFilesApi.getPublicSavedStampDataUrl(publicToken)
@@ -1309,7 +1305,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         return false;
     };
 
-    const signAllRemainingSpots = async (imageUrl) => {
+    const signAllRemainingSpots = async (savedItem = null) => {
         try {
             const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
             const unsignedRequired = getUnsignedRequiredSpots(allSpots);
@@ -1320,16 +1316,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
             let dataUrl;
 
-            if (imageUrl) {
-                // Use the provided saved item URL directly
-                const resp = await fetch(imageUrl);
-                const blob = await resp.blob();
-                dataUrl = await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result);
-                    reader.readAsDataURL(blob);
-                });
-                dataUrl = await normalizeSignatureDataUrl(dataUrl);
+            if (savedItem) {
+                dataUrl = await fetchSavedItemDataUrl(savedItem);
             } else if (savedSignature?.exists) {
                 const sigRes = isPublic
                     ? await signingFilesApi.getPublicSavedSignatureDataUrl(publicToken)
@@ -1702,9 +1690,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 size={buttonSizes.SMALL}
                                 onPress={async () => {
                                     if (selectedSavedItem.type === 'signature') {
-                                        await applySavedSignatureForNext(selectedSavedItem.url);
+                                        await applySavedSignatureForNext(selectedSavedItem);
                                     } else {
-                                        await applySavedStampForNext(selectedSavedItem.url);
+                                        await applySavedStampForNext(selectedSavedItem);
                                     }
                                 }}
                                 disabled={saving}
@@ -1713,7 +1701,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                             </PrimaryButton>
                             <SecondaryButton
                                 size={buttonSizes.SMALL}
-                                onPress={async () => { await signAllRemainingSpots(selectedSavedItem.url); }}
+                                onPress={async () => { await signAllRemainingSpots(selectedSavedItem); }}
                                 disabled={saving || remainingCount === 0}
                             >
                                 {t("signing.canvas.signAll")}
