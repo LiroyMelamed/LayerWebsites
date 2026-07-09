@@ -188,7 +188,7 @@ export default function CalendarScreen() {
     const navigate = useNavigate();
     const { isSmallScreen } = useScreenSize();
     const { openPopup, closePopup } = usePopup();
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
 
     // Feature-flag guard: bounce to main screen if the module is disabled.
     useEffect(() => {
@@ -203,6 +203,7 @@ export default function CalendarScreen() {
     const calendarRef = useRef(null);
     const fetchRangeRef = useRef({ from: null, to: null });
     const hasAutoOpenedEventRef = useRef(false);
+    const fetchEventsRef = useRef(null);
 
     // ── View / scope / filters ─────────────────────────────────────────────
     const [events, setEvents] = useState([]);
@@ -243,8 +244,9 @@ export default function CalendarScreen() {
         performRequest: searchCases,
     } = useAutoHttpRequest(casesApi.getCaseByName, { onFailure: () => { } });
 
-    // ── Google callback toast ──────────────────────────────────────────────
+    // ── Status toasts (OAuth + save notices) ───────────────────────────────
     const [googleMsg, setGoogleMsg] = useState("");
+    const [calendarMsg, setCalendarMsg] = useState("");
 
     // ── Load lawyer list (for filter + legend) ─────────────────────────────
     useEffect(() => {
@@ -308,6 +310,8 @@ export default function CalendarScreen() {
         }
     }, [apiFilters]);
 
+    fetchEventsRef.current = fetchEvents;
+
     // Re-fetch whenever filters/scope change (range is reused from the last datesSet).
     useEffect(() => { fetchEvents(null); }, [fetchEvents]);
 
@@ -319,35 +323,51 @@ export default function CalendarScreen() {
     }, [scope, filters.lawyer_id]);
 
     useEffect(() => {
-        if (searchParams.get("google_connected") === "1") {
+        const googleConnected = searchParams.get("google_connected") === "1";
+        const googleError = searchParams.get("google_error") === "1";
+        const outlookConnected = searchParams.get("outlook_connected") === "1";
+        const outlookError = searchParams.get("outlook_error") === "1";
+
+        if (!googleConnected && !googleError && !outlookConnected && !outlookError) {
+            return;
+        }
+
+        const nextParams = new URLSearchParams(searchParams);
+        nextParams.delete("google_connected");
+        nextParams.delete("google_error");
+        nextParams.delete("outlook_connected");
+        nextParams.delete("outlook_error");
+        setSearchParams(nextParams, { replace: true });
+
+        if (googleConnected) {
             setGoogleMsg("Google Calendar חובר בהצלחה ✓");
             (async () => {
                 try {
                     await calendarApi.syncGoogleEvents();
                 } catch { /* status toast still shown */ }
-                fetchEvents(null);
+                fetchEventsRef.current?.(null);
             })();
             setTimeout(() => setGoogleMsg(""), 4000);
         }
-        if (searchParams.get("google_error") === "1") {
+        if (googleError) {
             setGoogleMsg("חיבור Google Calendar נכשל. נסה שוב.");
             setTimeout(() => setGoogleMsg(""), 4000);
         }
-        if (searchParams.get("outlook_connected") === "1") {
+        if (outlookConnected) {
             setGoogleMsg("Outlook Calendar חובר בהצלחה ✓");
             (async () => {
                 try {
                     await calendarApi.syncOutlookEvents();
                 } catch { /* status toast still shown */ }
-                fetchEvents(null);
+                fetchEventsRef.current?.(null);
             })();
             setTimeout(() => setGoogleMsg(""), 4000);
         }
-        if (searchParams.get("outlook_error") === "1") {
+        if (outlookError) {
             setGoogleMsg("חיבור Outlook Calendar נכשל. נסה שוב.");
             setTimeout(() => setGoogleMsg(""), 4000);
         }
-    }, [searchParams, fetchEvents]);
+    }, [searchParams, setSearchParams]);
 
     // ── FullCalendar config ────────────────────────────────────────────────
     // Hide closed weekdays everywhere (month / week / day) per platform settings.
@@ -368,6 +388,16 @@ export default function CalendarScreen() {
             return next;
         });
     }, [apiFilters.scope]);
+
+    const handleEventSaved = useCallback((saved, { firmOnlyNotice } = {}) => {
+        upsertLocally(saved);
+        fetchEvents(null);
+        closePopup();
+        if (firmOnlyNotice) {
+            setCalendarMsg(t("calendar.savedFirmOnlyNotice"));
+            setTimeout(() => setCalendarMsg(""), 8000);
+        }
+    }, [upsertLocally, fetchEvents, closePopup, t]);
 
     const openPersonalSyncModal = useCallback(() => {
         openPopup(
@@ -400,17 +430,15 @@ export default function CalendarScreen() {
                 key={_eventFormModalKey(prefill)}
                 event={prefill}
                 onUpdated={upsertLocally}
-                onSaved={(saved) => {
-                    upsertLocally(saved);
-                    fetchEvents(null);
-                    closePopup();
+                onSaved={(saved, opts) => {
+                    handleEventSaved(saved, opts);
                     selectInfo?.view?.calendar?.unselect?.();
                 }}
                 onDeleted={() => closePopup()}
                 onClose={closePopup}
             />
         );
-    }, [openPopup, closePopup, upsertLocally, fetchEvents, workingSchedule]);
+    }, [openPopup, closePopup, upsertLocally, handleEventSaved, workingSchedule]);
 
     const openEditModal = useCallback((clickInfo) => {
         const ev = clickInfo.event.extendedProps || {};
@@ -427,7 +455,7 @@ export default function CalendarScreen() {
                 key={_eventFormModalKey(eventPayload)}
                 event={eventPayload}
                 onUpdated={upsertLocally}
-                onSaved={(saved) => { upsertLocally(saved); fetchEvents(null); closePopup(); }}
+                onSaved={handleEventSaved}
                 onDeleted={(deletedId) => {
                     setEvents((prev) => prev.filter((e) => e.id !== String(deletedId)));
                     closePopup();
@@ -435,7 +463,7 @@ export default function CalendarScreen() {
                 onClose={closePopup}
             />
         );
-    }, [openPopup, closePopup, upsertLocally, fetchEvents]);
+    }, [openPopup, closePopup, upsertLocally, handleEventSaved]);
 
     // ── Deep-link: /CalendarScreen?eventId=<id> ────────────────────────────
     useEffect(() => {
@@ -459,7 +487,7 @@ export default function CalendarScreen() {
                 key={_eventFormModalKey(eventPayload)}
                 event={eventPayload}
                 onUpdated={upsertLocally}
-                onSaved={(saved) => { upsertLocally(saved); fetchEvents(null); closePopup(); }}
+                onSaved={handleEventSaved}
                 onDeleted={(deletedId) => {
                     setEvents((prev) => prev.filter((e) => e.id !== String(deletedId)));
                     closePopup();
@@ -467,7 +495,7 @@ export default function CalendarScreen() {
                 onClose={closePopup}
             />
         );
-    }, [events, searchParams, openPopup, closePopup, upsertLocally, fetchEvents]);
+    }, [events, searchParams, openPopup, closePopup, upsertLocally, handleEventSaved]);
 
     // ── View switcher ──────────────────────────────────────────────────────
     const switchView = (v) => {
@@ -625,12 +653,17 @@ export default function CalendarScreen() {
                     </SimpleContainer>
                 </SimpleContainer>
 
-                {/* ── Google callback message ── */}
+                {/* ── Status toasts (OAuth + save notices) ── */}
                 {googleMsg && (
                     <SimpleContainer className="lw-calendarScreen__toast">
                         <Text14 color={googleMsg.includes("נכשל") ? "#E53E3E" : "#38A169"}>
                             {googleMsg}
                         </Text14>
+                    </SimpleContainer>
+                )}
+                {calendarMsg && (
+                    <SimpleContainer className="lw-calendarScreen__toast">
+                        <Text14 color="#744210">{calendarMsg}</Text14>
                     </SimpleContainer>
                 )}
 
