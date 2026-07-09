@@ -124,6 +124,13 @@ const signingFilesApi = {
         return await ApiUtils.get(`${base}/public/${encodeURIComponent(token)}/saved-items`);
     },
 
+    getSavedItemDataUrl: async (type, index) => {
+        return await ApiUtils.get(`${base}/saved-items/${encodeURIComponent(type)}/${encodeURIComponent(index)}/data-url`);
+    },
+    getPublicSavedItemDataUrl: async (token, type, index) => {
+        return await ApiUtils.get(`${base}/public/${encodeURIComponent(token)}/saved-items/${encodeURIComponent(type)}/${encodeURIComponent(index)}/data-url`);
+    },
+
     // Delete saved item
     deleteSavedItem: async (type, index) => {
         return await ApiUtils.delete(`${base}/saved-items/${encodeURIComponent(type)}/${encodeURIComponent(index)}`);
