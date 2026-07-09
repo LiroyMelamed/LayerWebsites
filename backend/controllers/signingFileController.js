@@ -1030,6 +1030,60 @@ exports.deletePublicSavedItem = async (req, res, next) => {
     }
 };
 
+function getSavedItemKeyByTypeAndIndex(userId, type, index) {
+    const safeIndex = Number(index);
+    if (type === 'signature') {
+        return safeIndex === -1 ? getSavedSignatureKey(userId) : getSavedSignatureKeyIndexed(userId, safeIndex);
+    }
+    if (type === 'stamp') {
+        return safeIndex === -1 ? getSavedStampKey(userId) : getSavedStampKeyIndexed(userId, safeIndex);
+    }
+    return null;
+}
+
+// ─── Saved item data-url by type + index (auth) ───
+exports.getSavedItemDataUrl = async (req, res, next) => {
+    try {
+        const userId = req.user?.UserId;
+        if (!userId) return fail(next, 'UNAUTHORIZED', 401);
+        const type = req.params.type;
+        const index = Number(req.params.index);
+        if (!['signature', 'stamp'].includes(type)) return fail(next, 'INVALID_PARAMETER', 422);
+        if (isNaN(index) || index < -1 || index >= 2) return fail(next, 'INVALID_PARAMETER', 422);
+        const key = getSavedItemKeyByTypeAndIndex(userId, type, index);
+        const exists = await savedSignatureExists(key);
+        if (!exists) return res.json({ exists: false });
+        const dataUrl = await getSavedSignatureDataUrlByKey(key);
+        return res.json({ exists: true, dataUrl, key, type, index });
+    } catch (err) {
+        console.error('getSavedItemDataUrl error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליפת פריט שמור' });
+    }
+};
+
+// ─── Saved item data-url by type + index (public) ───
+exports.getPublicSavedItemDataUrl = async (req, res, next) => {
+    try {
+        const verified = verifyPublicSigningToken(req.params.token);
+        if (!verified.ok) return fail(next, verified.errorCode, verified.httpStatus);
+        const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId: verified.signingFileId, next });
+        if (!enabledCheck.ok) return;
+        const { signerUserId } = verified;
+        const type = req.params.type;
+        const index = Number(req.params.index);
+        if (!['signature', 'stamp'].includes(type)) return fail(next, 'INVALID_PARAMETER', 422);
+        if (isNaN(index) || index < -1 || index >= 2) return fail(next, 'INVALID_PARAMETER', 422);
+        const key = getSavedItemKeyByTypeAndIndex(signerUserId, type, index);
+        const exists = await savedSignatureExists(key);
+        if (!exists) return res.json({ exists: false });
+        const dataUrl = await getSavedSignatureDataUrlByKey(key);
+        return res.json({ exists: true, dataUrl, key, type, index });
+    } catch (err) {
+        console.error('getPublicSavedItemDataUrl error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליפת פריט שמור' });
+    }
+};
+
 function verifyPublicSigningToken(rawToken) {
     const token = String(rawToken || '').trim();
     if (!token) return { ok: false, httpStatus: 401, errorCode: 'INVALID_TOKEN' };
