@@ -39,6 +39,8 @@ const {
     parseStoredChannels,
     hasAnyReminderChannel,
 } = require('../lib/calendarEventReminders');
+const { lawyerMatchSql, personalCalendarSql } = require('../lib/calendarVisibility');
+const { signOAuthState, verifyOAuthState } = require('../lib/calendarOAuthState');
 
 // ─── Optional peer deps (graceful-fail if not yet installed) ──────────────────
 let ical;
@@ -266,6 +268,20 @@ function _parseManagerUserIds(body) {
     return Number.isFinite(single) ? [single] : [];
 }
 
+/** Whether the update body touches managers and the resolved id list for junction sync. */
+function _resolveManagerIdsForUpdate(body) {
+    if (body?.manager_user_ids !== undefined) {
+        return { sync: true, ids: _parseManagerUserIds(body) };
+    }
+    if (body?.manager_user_id !== undefined) {
+        const single = body.manager_user_id != null && body.manager_user_id !== ''
+            ? parseInt(body.manager_user_id, 10)
+            : null;
+        return { sync: true, ids: Number.isFinite(single) ? [single] : [] };
+    }
+    return { sync: false, ids: [] };
+}
+
 async function _fetchEventManagers(eventIds) {
     const map = new Map();
     if (!eventIds?.length) return map;
@@ -336,75 +352,13 @@ async function _sanitizeEventWithManagers(row, managersMap) {
 
 /** SQL fragment: event belongs to lawyer (owner, legacy manager column, or junction). */
 function _lawyerMatchSql(lawyerParamIdx) {
-    return `(
-        ce.owner_id = $${lawyerParamIdx}
-        OR ce.manager_user_id = $${lawyerParamIdx}
-        OR EXISTS (
-            SELECT 1 FROM calendar_event_managers cem
-            WHERE cem.event_id = ce.id AND cem.user_id = $${lawyerParamIdx}
-        )
-        OR (
-            ce.manager_user_id IS NULL
-            AND ce.manager_name IS NOT NULL
-            AND ce.manager_name = (SELECT name FROM users WHERE userid = $${lawyerParamIdx})
-        )
-    )`;
+    return lawyerMatchSql(lawyerParamIdx);
 }
 
-/**
- * Personal calendar (scope=mine):
- *   • holidays — visible to everyone
- *   • leave — my own leave, or leave where I'm the tagged lawyer
- *   • other events — events I'm tagged in (as manager), plus events I own that
- *     have no tagged lawyer at all. Events I created *for another lawyer* do
- *     NOT appear in my personal calendar (they show in the firm calendar).
- */
+/** Personal calendar filter — see lib/calendarVisibility.js */
 function _personalCalendarSql(lawyerParamIdx) {
-    const p = `$${lawyerParamIdx}`;
-    const managedByLawyer = `(
-        ce.manager_user_id = ${p}
-        OR EXISTS (
-            SELECT 1 FROM calendar_event_managers cem
-            WHERE cem.event_id = ce.id AND cem.user_id = ${p}
-        )
-        OR (
-            ce.manager_user_id IS NULL
-            AND ce.manager_name IS NOT NULL
-            AND ce.manager_name = (SELECT name FROM users WHERE userid = ${p})
-        )
-    )`;
-    return `(
-        ce.event_type = 'holiday'
-        OR (
-            ce.event_type = 'leave'
-            AND (
-                (
-                    ce.owner_id = ${p}
-                    AND (ce.manager_user_id IS NULL OR ce.manager_user_id = ${p})
-                )
-                OR (
-                    ce.owner_id <> ${p}
-                    AND ${managedByLawyer}
-                )
-            )
-        )
-        OR (
-            ce.event_type NOT IN ('holiday', 'leave')
-            AND (
-                ${managedByLawyer}
-                OR (
-                    ce.owner_id = ${p}
-                    AND ce.manager_user_id IS NULL
-                    AND NOT EXISTS (
-                        SELECT 1 FROM calendar_event_managers cem
-                        WHERE cem.event_id = ce.id
-                    )
-                )
-            )
-        )
-    )`;
+    return personalCalendarSql(lawyerParamIdx);
 }
-
 /** Leave belongs to the lawyer taking time off — not whoever created the entry. */
 function _resolveEventOwnerId(userId, eventType, managerUserId, managerIds) {
     if (eventType !== 'leave') return userId;
@@ -1035,22 +989,20 @@ const updateEvent = async (req, res) => {
             return res.status(400).json({ message: 'אירוע פנימי (חופשה, חג או תזכורת) לא יכול להכיל פרטי ליד' });
         }
 
-        const parsedManagerIds = manager_user_ids !== undefined
-            ? _parseManagerUserIds(req.body)
-            : null;
-        if (parsedManagerIds && parsedManagerIds.some((id) => !Number.isFinite(id))) {
+        const managerUpdate = _resolveManagerIdsForUpdate(req.body);
+        if (managerUpdate.sync && managerUpdate.ids.some((id) => !Number.isFinite(id))) {
             return res.status(400).json({ message: 'מזהה מנהל לא תקין' });
         }
 
         const nextManagerUserId = manager_user_id !== undefined
             ? (parseInt(manager_user_id, 10) || null)
-            : (parsedManagerIds?.[0] ?? ev.manager_user_id);
+            : (managerUpdate.sync ? (managerUpdate.ids[0] ?? null) : ev.manager_user_id);
         const nextManagerName = manager_name !== undefined ? manager_name : ev.manager_name;
         const nextOwnerId = _resolveEventOwnerId(
             ev.owner_id,
             newEventType,
             nextManagerUserId,
-            parsedManagerIds ?? (nextManagerUserId ? [nextManagerUserId] : [])
+            managerUpdate.sync ? managerUpdate.ids : (nextManagerUserId ? [nextManagerUserId] : [])
         );
 
         const { rows } = await pool.query(
@@ -1108,8 +1060,9 @@ const updateEvent = async (req, res) => {
             ]
         );
         let updated = rows[0];
-        if (parsedManagerIds !== null) {
-            const mgrMeta = await _syncEventManagers(eventId, parsedManagerIds);
+        let mgrMeta = null;
+        if (managerUpdate.sync) {
+            mgrMeta = await _syncEventManagers(eventId, managerUpdate.ids);
             if (mgrMeta.managerUserId !== updated.manager_user_id || mgrMeta.managerName !== updated.manager_name) {
                 await pool.query(
                     'UPDATE calendar_events SET manager_user_id = $1, manager_name = $2 WHERE id = $3',
@@ -1117,18 +1070,7 @@ const updateEvent = async (req, res) => {
                 );
                 updated = { ...updated, manager_user_id: mgrMeta.managerUserId, manager_name: mgrMeta.managerName };
             }
-            await _syncReminderForUpdatedEvent(updated, req.body, {
-                reminder_to_email,
-                reminder_client_name,
-                reminder_template_key,
-                reminder_template_data,
-                reminder_subject,
-            });
-            const sanitized = _applyManagersToEvent(_sanitizeEvent(updated), mgrMeta.managers);
-            await _attachLinkedReminderId(sanitized);
-            return res.json({ event: sanitized });
         }
-        const managersMap = await _fetchEventManagers([eventId]);
         await _syncReminderForUpdatedEvent(updated, req.body, {
             reminder_to_email,
             reminder_client_name,
@@ -1136,7 +1078,9 @@ const updateEvent = async (req, res) => {
             reminder_template_data,
             reminder_subject,
         });
-        const sanitized = await _sanitizeEventWithManagers(updated, managersMap);
+        const sanitized = mgrMeta
+            ? _applyManagersToEvent(_sanitizeEvent(updated), mgrMeta.managers)
+            : await _sanitizeEventWithManagers(updated, await _fetchEventManagers([eventId]));
         await _attachLinkedReminderId(sanitized);
         return res.json({ event: sanitized });
     } catch (err) {
@@ -1155,7 +1099,7 @@ const updateEvent = async (req, res) => {
 
 /**
  * DELETE /api/calendar/:id
- * Delete an event (owner only).
+ * Delete an event. Linked PENDING reminders are cancelled (not cascade-deleted).
  */
 const deleteEvent = async (req, res) => {
     const userId = req.user.UserId;
@@ -1165,12 +1109,26 @@ const deleteEvent = async (req, res) => {
     const ownership = await _requireEventAccess(eventId, userId, req.user?.Role);
     if (!ownership.ok) return res.status(ownership.status).json({ message: ownership.message });
 
+    const dbClient = await pool.connect();
     try {
-        await pool.query('DELETE FROM calendar_events WHERE id = $1', [eventId]);
+        await dbClient.query('BEGIN');
+        await reminderCalendarSync.unlinkRemindersForCalendarEvent(eventId, { client: dbClient });
+        const { rowCount } = await dbClient.query(
+            'DELETE FROM calendar_events WHERE id = $1',
+            [eventId]
+        );
+        if (!rowCount) {
+            await dbClient.query('ROLLBACK');
+            return res.status(404).json({ message: 'אירוע לא נמצא' });
+        }
+        await dbClient.query('COMMIT');
         return res.json({ ok: true });
     } catch (err) {
+        try { await dbClient.query('ROLLBACK'); } catch (_) { /* ignore */ }
         console.error('[calendarController] deleteEvent error:', err.message);
         return res.status(500).json({ message: 'שגיאה פנימית בשרת' });
+    } finally {
+        dbClient.release();
     }
 };
 
@@ -1322,9 +1280,7 @@ const getGoogleAuthUrl = async (req, res) => {
 
     try {
         const oauth2Client = _buildOAuth2Client();
-        // Encode the requesting user's ID in the state parameter so the callback
-        // knows which user to associate the tokens with.
-        const state = Buffer.from(JSON.stringify({ userId: req.user.UserId })).toString('base64url');
+        const state = signOAuthState({ userId: req.user.UserId });
 
         const url = oauth2Client.generateAuthUrl({
             access_type: 'offline',   // request refresh token
@@ -1357,8 +1313,7 @@ const handleGoogleCallback = async (req, res) => {
 
     let userId;
     try {
-        userId = JSON.parse(Buffer.from(state, 'base64url').toString('utf8')).userId;
-        if (!Number.isFinite(Number(userId))) throw new Error('invalid userId in state');
+        userId = verifyOAuthState(String(state)).userId;
     } catch (err) {
         console.warn('[calendarController] Google callback: invalid state param', err.message);
         return res.redirect(errorRedirect);
@@ -1797,7 +1752,7 @@ const getOutlookAuthUrl = async (req, res) => {
     }
 
     try {
-        const state = Buffer.from(JSON.stringify({ userId: req.user.UserId })).toString('base64url');
+        const state = signOAuthState({ userId: req.user.UserId });
         return res.json({ authUrl: _buildOutlookAuthorizeUrl(state) });
     } catch (err) {
         console.error('[calendarController] getOutlookAuthUrl error:', err.message);
@@ -1821,8 +1776,7 @@ const handleOutlookCallback = async (req, res) => {
 
     let userId;
     try {
-        userId = JSON.parse(Buffer.from(state, 'base64url').toString('utf8')).userId;
-        if (!Number.isFinite(Number(userId))) throw new Error('invalid userId in state');
+        userId = verifyOAuthState(String(state)).userId;
     } catch (err) {
         console.warn('[calendarController] Outlook callback: invalid state param', err.message);
         return res.redirect(errorRedirect);

@@ -16,7 +16,8 @@
  * The unique partial index idx_ser_calendar_event_id keeps the relationship 1:1
  * and ON DELETE CASCADE on the FK removes the reminder when the calendar event
  * is deleted. Cancelling a reminder explicitly unlinks before delete so the
- * reminder row is preserved in CANCELLED state for audit.
+ * reminder row is preserved in CANCELLED state for audit. Deleting a calendar
+ * event should cancel/unlink linked reminders first — never CASCADE-delete them.
  */
 
 const pool = require('../config/db');
@@ -359,10 +360,53 @@ async function unlinkAndDeleteCalendarEventForReminder(reminderId, opts = {}) {
     return prevEventId;
 }
 
+/**
+ * Before deleting a calendar event, cancel or unlink any paired reminders so
+ * ON DELETE CASCADE does not hard-delete scheduled_email_reminders rows.
+ *
+ * PENDING reminders → CANCELLED (mirrors cancelReminder UI flow).
+ * Other statuses    → FK cleared only (audit/history preserved).
+ *
+ * @returns {Promise<{ linked: number, cancelled: number }>}
+ */
+async function unlinkRemindersForCalendarEvent(eventId, opts = {}) {
+    const dbClient = opts.client || pool;
+    if (!eventId) return { linked: 0, cancelled: 0 };
+    if (!(await _isCalendarSyncAvailable(dbClient))) return { linked: 0, cancelled: 0 };
+
+    const { rows } = await dbClient.query(
+        `SELECT id, status FROM scheduled_email_reminders WHERE calendar_event_id = $1`,
+        [eventId]
+    );
+    if (!rows.length) return { linked: 0, cancelled: 0 };
+
+    let cancelled = 0;
+    for (const row of rows) {
+        if (row.status === 'PENDING') {
+            await dbClient.query(
+                `UPDATE scheduled_email_reminders
+                 SET status = 'CANCELLED',
+                     cancelled_at = NOW(),
+                     calendar_event_id = NULL
+                 WHERE id = $1`,
+                [row.id]
+            );
+            cancelled += 1;
+        } else {
+            await dbClient.query(
+                'UPDATE scheduled_email_reminders SET calendar_event_id = NULL WHERE id = $1',
+                [row.id]
+            );
+        }
+    }
+    return { linked: rows.length, cancelled };
+}
+
 module.exports = {
     createCalendarEventForReminder,
     createReminderForCalendarEvent,
     updateCalendarEventForReminder,
     updateReminderForCalendarEvent,
     unlinkAndDeleteCalendarEventForReminder,
+    unlinkRemindersForCalendarEvent,
 };
