@@ -49,6 +49,7 @@ router.get("/public/:token/saved-stamp", publicViewLimiter, signingFileControlle
 router.get("/public/:token/saved-stamp/data-url", publicViewLimiter, signingFileController.getPublicSavedStampDataUrl);
 router.post("/public/:token/saved-stamp", signingFileController.savePublicSavedStamp);
 router.get("/public/:token/saved-items", publicViewLimiter, signingFileController.listPublicSavedItems);
+router.get("/public/:token/saved-items/:type/:index/data-url", publicViewLimiter, signingFileController.getPublicSavedItemDataUrl);
 router.delete("/public/:token/saved-items/:type/:index", signingFileController.deletePublicSavedItem);
 
 // Saved signature for current user (auth)
@@ -63,6 +64,7 @@ router.post("/saved-stamp", authMiddleware, requireSigningEnabledForUser, signin
 
 // List + delete saved items
 router.get("/saved-items", authMiddleware, requireSigningEnabledForUser, signingFileController.listSavedItems);
+router.get("/saved-items/:type/:index/data-url", authMiddleware, requireSigningEnabledForUser, signingFileController.getSavedItemDataUrl);
 router.delete("/saved-items/:type/:index", authMiddleware, requireSigningEnabledForUser, signingFileController.deleteSavedItem);
 
 // עו"ד מעלה קובץ לחתימה
