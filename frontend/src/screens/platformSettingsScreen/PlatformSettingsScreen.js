@@ -67,8 +67,9 @@ const CATEGORIES = [
 
 // SMS sender keys
 const SMS_SENDER_KEY = "INFORU_SENDER_PHONE";
-// Internal messaging keys not shown as editable rows (managed by the sender-change flow)
+// Internal / legacy messaging keys not shown as editable rows
 const INTERNAL_MESSAGING_KEYS = [
+    "SMOOVE_SENDER_PHONE", // legacy key — same setting as INFORU_SENDER_PHONE
     "INFORU_SENDER_PHONE_PENDING",
     "INFORU_SENDER_PHONE_PENDING_REQUESTED_AT",
     "INFORU_SENDER_PHONE_PENDING_REQUESTED_BY",
@@ -146,6 +147,12 @@ function SettingInput({ setting, value, onChange, isTemplate = false }) {
         />
     );
 }
+
+// Notification types whose delivery channels are picked per-action by the
+// lawyer (SIGN_INVITE per signer, CALENDAR_REMINDER per event). These must
+// not appear in Platform Settings → ערוצי התראות — the lawyer's choice is
+// the only gate. Templates for these types remain editable.
+const PER_ACTION_CHANNEL_TYPES = new Set(["SIGN_INVITE", "CALENDAR_REMINDER"]);
 
 // ─── Channel Toggle Row ─────────────────────────────────────────────
 function ChannelRow({ channel, onToggle }) {
@@ -1105,7 +1112,9 @@ export default function PlatformSettingsScreen() {
                                 </SimpleContainer>
                             </SimpleContainer>
                         </SimpleContainer>
-                        {channels.map(ch => (
+                        {channels
+                            .filter((ch) => !PER_ACTION_CHANNEL_TYPES.has(ch.notification_type))
+                            .map((ch) => (
                             <ChannelRow
                                 key={ch.notification_type}
                                 channel={ch}
@@ -1186,6 +1195,8 @@ export default function PlatformSettingsScreen() {
             const filteredEmailTemplates = emailTemplates.filter(t => {
                 const notifType = EMAIL_KEY_TO_NOTIF_TYPE[t.template_key];
                 if (!notifType) return true; // unknown mapping → show by default
+                // Lawyer picks channels per-action — always show templates
+                if (PER_ACTION_CHANNEL_TYPES.has(notifType)) return true;
                 const ch = channelMap[notifType];
                 if (!ch) return true; // no channel config → show by default
                 return ch.email_enabled;
@@ -1809,11 +1820,23 @@ export default function PlatformSettingsScreen() {
         }
 
         // Settings tabs (messaging, signing, firm, reminders, security)
-        const categorySettings = settings[activeTab] || {};
+        let categorySettings = settings[activeTab] || {};
         let settingKeys = Object.keys(categorySettings);
 
         // Hide internal sender-flow keys from the messaging tab
         if (activeTab === "messaging") {
+            // Alias legacy SMOOVE_SENDER_PHONE → INFORU_SENDER_PHONE so the
+            // guarded sender UI still works before the consolidate migration.
+            if (!categorySettings[SMS_SENDER_KEY] && categorySettings.SMOOVE_SENDER_PHONE) {
+                categorySettings = {
+                    ...categorySettings,
+                    [SMS_SENDER_KEY]: {
+                        ...categorySettings.SMOOVE_SENDER_PHONE,
+                        label: categorySettings.SMOOVE_SENDER_PHONE.label || "מספר שולח SMS",
+                    },
+                };
+                settingKeys = Object.keys(categorySettings);
+            }
             settingKeys = settingKeys.filter((k) => !INTERNAL_MESSAGING_KEYS.includes(k));
         }
         const pendingSender = String(
@@ -1828,6 +1851,8 @@ export default function PlatformSettingsScreen() {
             settingKeys = settingKeys.filter(key => {
                 const notifType = SMS_KEY_TO_NOTIF_TYPE[key];
                 if (!notifType) return true; // unknown mapping → show by default
+                // Lawyer picks channels per-action — always show templates
+                if (PER_ACTION_CHANNEL_TYPES.has(notifType)) return true;
                 const ch = channelMap[notifType];
                 if (!ch) return true; // no channel config → show by default
                 return ch.sms_enabled;
