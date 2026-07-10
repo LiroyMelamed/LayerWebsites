@@ -401,49 +401,20 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     }, [eventType]);
 
     // ─── Effect: load firm reminder options from platform settings ─────────
-    // Allowed channel keys are intersected with the platform admin's
-    // notification_channel_config.CALENDAR_REMINDER allowlist (channels-lite),
-    // so the picker only offers channels the admin enabled.
+    // Channel allowlist comes from calendar.CALENDAR_REMINDER_CHANNELS only.
+    // CALENDAR_REMINDER is a per-action lawyer choice, so it is not gated by
+    // notification_channel_config (and is hidden from ערוצי התראות).
     useEffect(() => {
         let cancelled = false;
         (async () => {
-            // Try platform-admin-only getAll first (for the calendar minutes
-            // setting); falls back to defaults silently for non-admin lawyers.
-            let calChannelKeys = null;
             try {
                 const res = await platformSettingsApi.getAll();
                 const cal = res?.data?.settings?.calendar || res?.settings?.calendar || {};
-                if (!cancelled) {
-                    setAllowedReminderMinutes(parseAllowedOptionsFromSettings(cal));
-                    calChannelKeys = parseAllowedChannelsFromSettings(cal);
-                }
+                if (cancelled) return;
+                setAllowedReminderMinutes(parseAllowedOptionsFromSettings(cal));
+                const calChannelKeys = parseAllowedChannelsFromSettings(cal);
+                if (calChannelKeys) setAllowedReminderChannelKeys(calChannelKeys);
             } catch { /* keep defaults */ }
-
-            // Then intersect with the lawyer-readable channels-lite allowlist.
-            let adminAllowed = null;
-            try {
-                const res = await platformSettingsApi.getChannelsLite();
-                const list = res?.data?.channels || res?.channels || [];
-                const found = Array.isArray(list)
-                    ? list.find((c) => c?.notification_type === "CALENDAR_REMINDER")
-                    : null;
-                if (found) {
-                    adminAllowed = [];
-                    if (found.push_enabled) adminAllowed.push("push");
-                    if (found.sms_enabled) adminAllowed.push("sms");
-                    if (found.email_enabled) adminAllowed.push("email");
-                }
-            } catch { /* keep current allowlist */ }
-
-            if (cancelled) return;
-
-            if (calChannelKeys && adminAllowed) {
-                setAllowedReminderChannelKeys(calChannelKeys.filter((k) => adminAllowed.includes(k)));
-            } else if (calChannelKeys) {
-                setAllowedReminderChannelKeys(calChannelKeys);
-            } else if (adminAllowed) {
-                setAllowedReminderChannelKeys((prev) => prev.filter((k) => adminAllowed.includes(k)));
-            }
         })();
         return () => { cancelled = true; };
     }, []);

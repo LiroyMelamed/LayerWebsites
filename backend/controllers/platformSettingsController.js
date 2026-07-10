@@ -209,7 +209,11 @@ const activateSmsSenderChange = async (req, res) => {
         }
 
         const updatedBy = req.user?.UserId;
-        await settingsService.upsertSetting('messaging', ACTIVE_SENDER_KEY, pending, { updatedBy });
+        await settingsService.upsertSetting('messaging', ACTIVE_SENDER_KEY, pending, {
+            updatedBy,
+            label: 'מספר שולח SMS',
+            description: 'מספר הטלפון ממנו נשלחות הודעות SMS',
+        });
         // Clear pending metadata
         await settingsService.upsertSetting('messaging', PENDING_SENDER_KEY, '', { updatedBy });
         await settingsService.upsertSetting('messaging', PENDING_AT_KEY, '', { updatedBy });
@@ -228,19 +232,22 @@ const activateSmsSenderChange = async (req, res) => {
  * GET /api/platform-settings/channels-lite
  *
  * Lawyer-readable allowlist of which channels (push/email/sms) are enabled
- * per notification type. The per-action UIs (signing upload, calendar
- * event reminder picker) use this to show only the channels the platform
- * admin enabled. admin_cc / manager_cc are intentionally NOT exposed.
+ * per notification type. Types whose channels are picked per-action by the
+ * lawyer (SIGN_INVITE, CALENDAR_REMINDER) are excluded — those UIs do not
+ * consult this endpoint. admin_cc / manager_cc are intentionally NOT exposed.
  */
 const getNotificationChannelsLite = async (req, res) => {
     try {
+        const PER_ACTION = new Set(['SIGN_INVITE', 'CALENDAR_REMINDER']);
         const channels = await settingsService.getNotificationChannels();
-        const lite = (Array.isArray(channels) ? channels : []).map((c) => ({
-            notification_type: c.notification_type,
-            push_enabled: !!c.push_enabled,
-            email_enabled: !!c.email_enabled,
-            sms_enabled: !!c.sms_enabled,
-        }));
+        const lite = (Array.isArray(channels) ? channels : [])
+            .filter((c) => !PER_ACTION.has(c.notification_type))
+            .map((c) => ({
+                notification_type: c.notification_type,
+                push_enabled: !!c.push_enabled,
+                email_enabled: !!c.email_enabled,
+                sms_enabled: !!c.sms_enabled,
+            }));
         return res.json({ channels: lite });
     } catch (err) {
         console.error('[platformSettings] getChannelsLite error:', err);
