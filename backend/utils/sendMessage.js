@@ -51,11 +51,16 @@ function safeErrorData(err) {
 
 /**
  * Resolve the active sender ID/number. DB (platform_settings) wins over env.
- * NOTE: this is the *active* sender — the pending value awaiting InforU verification
- * is stored separately under INFORU_SENDER_PHONE_PENDING and is never used here.
+ * Falls back to the legacy SMOOVE_SENDER_PHONE key until the consolidate
+ * migration has run. Pending requests live under INFORU_SENDER_PHONE_PENDING
+ * and are never used here.
  */
 async function getActiveSender() {
-    return getSetting("messaging", "INFORU_SENDER_PHONE", process.env.INFORU_SENDER_PHONE);
+    const fromInforu = await getSetting("messaging", "INFORU_SENDER_PHONE", null);
+    if (fromInforu) return fromInforu;
+    const fromLegacy = await getSetting("messaging", "SMOOVE_SENDER_PHONE", null);
+    if (fromLegacy) return fromLegacy;
+    return process.env.INFORU_SENDER_PHONE || process.env.SMOOVE_SENDER_PHONE || null;
 }
 
 // ── InforU provider ─────────────────────────────────────────────────
