@@ -48,6 +48,10 @@ const signingFilesApi = {
         return await ApiUtils.get(`${base}/public/${encodeURIComponent(token)}`);
     },
 
+    resolvePublicSigningShortLink: async (slug) => {
+        return await ApiUtils.get(`${base}/public/short/${encodeURIComponent(slug)}`);
+    },
+
     publicRequestSigningOtp: async (token, signingSessionId) => {
         return await ApiUtils.post(
             `${base}/public/${encodeURIComponent(token)}/otp/request`,

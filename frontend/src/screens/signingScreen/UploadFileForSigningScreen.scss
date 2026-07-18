@@ -106,6 +106,9 @@
     background-color: #fff;
 }
 
+.lw-simpleContainer.lw-fieldSettingsPopup,
+.lw-simpleContainer.lw-fieldConfirmPopup,
+.lw-simpleContainer.lw-fieldInfoPopup,
 .lw-fieldSettingsPopup,
 .lw-fieldConfirmPopup,
 .lw-fieldInfoPopup {
@@ -118,6 +121,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    width: 100%;
 }
 
 .lw-fieldSettingsPopup__header {
@@ -130,10 +134,12 @@
     margin-inline-start: auto;
 }
 
+.lw-simpleContainer.lw-fieldSettingsPopup__body,
 .lw-fieldSettingsPopup__body {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    width: 100%;
 }
 
 .lw-fieldSettingsPopup__row {
@@ -159,12 +165,14 @@
     font-size: 0.875rem;
 }
 
+.lw-simpleContainer.lw-fieldSettingsPopup__section,
 .lw-fieldSettingsPopup__section {
     border-top: 0.0625rem solid var(--lw-color-border, #e2e8f0);
     padding-top: 0.75rem;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    width: 100%;
 }
 
 .lw-fieldSettingsPopup__sectionTitle {
@@ -408,20 +416,24 @@
     flex-direction: column;
     gap: v.$space-2;
     padding: v.$space-3;
+    padding-block-start: v.$space-4;
     border: 0.0625rem dashed #1976d2;
     border-radius: 0.5rem;
     background: #f8fbff;
     margin-block: v.$space-2;
+    overflow: visible;
 }
 
 .lw-uploadSigningScreen__manualSignerFields {
     @include m.row(v.$space-2, wrap);
+    overflow: visible;
 }
 
 .lw-uploadSigningScreen__manualInput {
     min-width: 10rem;
     max-width: 16rem;
     flex: 1;
+    overflow: visible;
 }
 
 .lw-uploadSigningScreen__manualSignerActions {

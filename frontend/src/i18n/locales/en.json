@@ -813,6 +813,7 @@
       "sendCode": "Send code",
       "verified": "Verified",
       "nextSignature": "Next signature",
+      "nextField": "Next field",
       "remainingSignatures": "{{count}} signatures remaining",
       "hideAllSpots": "Hide all spots",
       "showAllSpots": "Show all spots",

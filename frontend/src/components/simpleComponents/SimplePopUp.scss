@@ -87,7 +87,9 @@
     }
 }
 
+.lw-simpleContainer.lw-simplePopUp__content,
 .lw-simplePopUp__content {
+    display: flex;
     flex-direction: column;
     width: 100%;
     min-inline-size: 0;
