@@ -919,6 +919,7 @@
       "sendCode": "إرسال الرمز",
       "verified": "تم التحقق",
       "nextSignature": "التوقيع التالي",
+      "nextField": "الحقل التالي",
       "remainingSignatures": "تبقى {{count}} تواقيع",
       "hideAllSpots": "إخفاء كل الأماكن",
       "showAllSpots": "إظهار كل الأماكن",

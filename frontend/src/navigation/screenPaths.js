@@ -26,6 +26,7 @@ export const LoginScreenName = "/LoginScreen";
 export const LoginOtpScreenName = "/LoginOtpScreen";
 
 export const PublicSignScreenName = "/PublicSignScreen";
+export const ShortSignRedirectScreenName = "/s/:slug";
 export const ViewSignedDocumentName = "/ViewSignedDocument";
 export const EvidenceVerifyScreenName = "/Verify/Evidence/:signingFileId";
 export const PricingScreenName = "/Pricing";

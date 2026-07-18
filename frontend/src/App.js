@@ -18,6 +18,7 @@ import {
   PricingScreenName,
   PrivacyPageName,
   PublicSignScreenName,
+  ShortSignRedirectScreenName,
   SecurityScreenName,
   SigningScreenName,
   ViewSignedDocumentName,
@@ -27,6 +28,7 @@ import LoginStack from './navigation/LoginStack';
 import AdminStack from './navigation/AdminStack';
 import ClientStack from './navigation/ClientStack';
 import PublicSigningScreen from './screens/signingScreen/PublicSigningScreen';
+import ShortSignRedirectScreen from './screens/signingScreen/ShortSignRedirectScreen';
 import ViewSignedDocument from './screens/viewSignedDocument/ViewSignedDocument';
 import EvidenceVerifyScreen from './screens/verify/EvidenceVerifyScreen';
 import PricingScreen from './screens/pricingScreen/PricingScreen';
@@ -53,6 +55,7 @@ const App = () => {
       /(?:^|\/)(SigningScreen|SigningManagerScreen)(?:$|\/)/i.test(p) ||
       /(?:^|\/)(upload-file-for-signing)(?:$|\/)/i.test(p) ||
       /(?:^|\/)(PublicSignScreen)(?:$|\/)/i.test(p) ||
+      /(?:^|\/)s(?:$|\/)/i.test(p) ||
       /(?:^|\/)(Verify\/Evidence)(?:$|\/)/i.test(p);
 
     const root = document?.documentElement;
@@ -160,6 +163,7 @@ const App = () => {
     <Suspense fallback={<RouteFallback />}>
       <Routes>
         <Route path={PublicSignScreenName} element={<PublicSigningScreen />} />
+        <Route path={ShortSignRedirectScreenName} element={<ShortSignRedirectScreen />} />
         <Route path={ViewSignedDocumentName} element={<ViewSignedDocument />} />
 
         <Route path={EvidenceVerifyScreenName} element={<EvidenceVerifyScreen />} />

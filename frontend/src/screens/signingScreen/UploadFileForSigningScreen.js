@@ -37,6 +37,7 @@ import ClientPopup from "../mainScreen/components/ClientPopUp";
 import LawyerStampPopup from "../../components/specializedComponents/signFiles/LawyerStampPopup";
 
 import "./UploadFileForSigningScreen.scss";
+import "../../components/specializedComponents/signFiles/fieldToolbar/fieldContextMenu.scss";
 import { MainScreenName } from "../mainScreen/MainScreen";
 import { useTranslation } from "react-i18next";
 import { SIGNING_OTP_ENABLED } from "../../featureFlags";
@@ -312,7 +313,7 @@ export default function UploadFileForSigningScreen() {
             <SimpleContainer className="lw-fieldContextMenu">
                 <SecondaryButton
                     className="lw-fieldContextMenu__action"
-                    onPress={() => { closePopup(); openFieldEditor(index); }}
+                    onPress={() => openFieldEditor(index)}
                 >
                     {t('signing.context.edit')}
                 </SecondaryButton>
@@ -338,7 +339,7 @@ export default function UploadFileForSigningScreen() {
                 </SecondaryButton>
                 <SecondaryButton
                     className="lw-fieldContextMenu__action"
-                    onPress={() => { closePopup(); openFieldEditor(index); }}
+                    onPress={() => openFieldEditor(index)}
                 >
                     {t('signing.context.pageRange')}
                 </SecondaryButton>
@@ -1084,26 +1085,28 @@ export default function UploadFileForSigningScreen() {
                                 <SimpleContainer className="lw-uploadSigningScreen__manualSignerForm">
                                     <label className="lw-uploadSigningScreen__label">{t('signing.upload.addManualSigner')}</label>
                                     <SimpleContainer className="lw-uploadSigningScreen__manualSignerFields">
-                                        <SearchInput
-                                            placeholder={t('signing.upload.manualSignerName')}
+                                        <SimpleInput
+                                            title={t('signing.upload.manualSignerName')}
                                             value={manualSignerName}
-                                            onSearch={setManualSignerName}
+                                            onChange={(e) => setManualSignerName(e.target.value)}
                                             className="lw-uploadSigningScreen__manualInput"
                                             timeToWaitInMilli={0}
                                         />
-                                        <SearchInput
-                                            placeholder={t('signing.upload.manualSignerEmail')}
+                                        <SimpleInput
+                                            title={t('signing.upload.manualSignerEmail')}
                                             value={manualSignerEmail}
-                                            onSearch={setManualSignerEmail}
+                                            onChange={(e) => setManualSignerEmail(e.target.value)}
                                             className="lw-uploadSigningScreen__manualInput"
                                             timeToWaitInMilli={0}
+                                            type="email"
                                         />
-                                        <SearchInput
-                                            placeholder={t('signing.upload.manualSignerPhone')}
+                                        <SimpleInput
+                                            title={t('signing.upload.manualSignerPhone')}
                                             value={manualSignerPhone}
-                                            onSearch={setManualSignerPhone}
+                                            onChange={(e) => setManualSignerPhone(e.target.value)}
                                             className="lw-uploadSigningScreen__manualInput"
                                             timeToWaitInMilli={0}
+                                            type="tel"
                                         />
                                     </SimpleContainer>
                                     <SimpleContainer className="lw-uploadSigningScreen__manualSignerActions">

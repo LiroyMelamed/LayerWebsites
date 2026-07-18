@@ -490,11 +490,95 @@ function getWebsiteDomain() {
     return String(process.env.WEBSITE_DOMAIN || WEBSITE_DOMAIN || '').trim();
 }
 
-function buildPublicSigningUrl(token) {
+function buildLongPublicSigningUrl(token) {
     const domain = getWebsiteDomain();
     if (!domain) return null;
     return `https://${domain}/PublicSignScreen?token=${encodeURIComponent(String(token))}`;
 }
+
+function generateSigningShortSlug() {
+    // 8 URL-safe chars (~48 bits) — short enough for SMS, collision-resistant for our volume.
+    return crypto.randomBytes(6).toString('base64url').slice(0, 8);
+}
+
+function decodeJwtExpDate(token) {
+    try {
+        const payload = jwt.decode(String(token || ''));
+        const exp = Number(payload?.exp);
+        if (!Number.isFinite(exp) || exp <= 0) return null;
+        return new Date(exp * 1000);
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Prefer a short /s/<slug> link. Falls back to the long JWT URL if persistence fails.
+ */
+async function buildPublicSigningUrl(token) {
+    const longUrl = buildLongPublicSigningUrl(token);
+    if (!token || !longUrl) return longUrl;
+
+    const domain = getWebsiteDomain();
+    if (!domain) return longUrl;
+
+    const expiresAt = decodeJwtExpDate(token) || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+        const slug = generateSigningShortSlug();
+        try {
+            await pool.query(
+                `INSERT INTO signing_short_links (slug, token, expires_at)
+                 VALUES ($1, $2, $3)`,
+                [slug, String(token), expiresAt]
+            );
+            return `https://${domain}/s/${encodeURIComponent(slug)}`;
+        } catch (err) {
+            // Unique violation → retry with a new slug; anything else → long URL fallback.
+            if (err?.code === '23505') continue;
+            console.warn('[signing] short-link insert failed, using long URL:', err?.message);
+            return longUrl;
+        }
+    }
+
+    console.warn('[signing] short-link slug collisions exhausted, using long URL');
+    return longUrl;
+}
+
+exports.resolvePublicSigningShortLink = async (req, res, next) => {
+    try {
+        const slug = String(req.params.slug || '').trim();
+        if (!/^[A-Za-z0-9_-]{6,16}$/.test(slug)) {
+            return fail(next, 'INVALID_TOKEN', 404, { message: 'קישור לא תקין' });
+        }
+
+        const result = await pool.query(
+            `SELECT token, expires_at
+             FROM signing_short_links
+             WHERE slug = $1
+             LIMIT 1`,
+            [slug]
+        );
+        if (result.rows.length === 0) {
+            return fail(next, 'INVALID_TOKEN', 404, { message: 'קישור לא נמצא או שפג תוקפו' });
+        }
+
+        const row = result.rows[0];
+        if (row.expires_at && new Date(row.expires_at).getTime() <= Date.now()) {
+            return fail(next, 'TOKEN_EXPIRED', 410, { message: 'פג תוקף הקישור' });
+        }
+
+        const verified = verifyPublicSigningToken(row.token);
+        if (!verified.ok) {
+            return fail(next, verified.errorCode, verified.httpStatus);
+        }
+
+        return res.json({ token: row.token, slug });
+    } catch (err) {
+        console.error('resolvePublicSigningShortLink error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בטעינת הקישור' });
+    }
+};
 
 function createPublicSigningToken({ signingFileId, signerUserId, fileExpiresAt }) {
     // Token lifetime: default 7 days, but never beyond file.expiresAt if provided.
@@ -546,53 +630,73 @@ function getSavedStampKeyIndexed(userId, index) {
     return `saved-stamps/user-${safeId}-${safeIdx}.png`;
 }
 
-const MAX_SAVED_SIGNATURES = 2;
+const MAX_SAVED_SIGNATURES = 2; // legacy indexed slots still cleaned up on write
 const MAX_SAVED_STAMPS = 2;
 
-async function listSavedItems(userId) {
+/**
+ * Resolve the single active saved mark for a user.
+ * Prefer the canonical key; fall back to the newest indexed legacy slot.
+ */
+async function resolveCanonicalSavedItem(userId, type) {
     const safeId = Number(userId);
+    const canonicalKey = type === 'signature'
+        ? getSavedSignatureKey(safeId)
+        : getSavedStampKey(safeId);
+
+    if (await savedSignatureExists(canonicalKey)) {
+        const url = await presignSavedSignatureReadUrl(canonicalKey);
+        return { index: -1, key: canonicalKey, url, type };
+    }
+
+    const maxSlots = type === 'signature' ? MAX_SAVED_SIGNATURES : MAX_SAVED_STAMPS;
+    const keyFn = type === 'signature' ? getSavedSignatureKeyIndexed : getSavedStampKeyIndexed;
+    // Prefer highest index (most recently written under the old multi-slot scheme)
+    for (let i = maxSlots - 1; i >= 0; i--) {
+        const key = keyFn(safeId, i);
+        if (await savedSignatureExists(key)) {
+            const url = await presignSavedSignatureReadUrl(key);
+            return { index: i, key, url, type };
+        }
+    }
+    return null;
+}
+
+async function listSavedItems(userId) {
     const signatures = [];
     const stamps = [];
 
-    // Check legacy single-file keys first, then indexed slots
-    const legacySigKey = getSavedSignatureKey(safeId);
-    if (await savedSignatureExists(legacySigKey)) {
-        const url = await presignSavedSignatureReadUrl(legacySigKey);
-        signatures.push({ index: -1, key: legacySigKey, url, type: 'signature' });
-    }
-    for (let i = 0; i < MAX_SAVED_SIGNATURES; i++) {
-        const key = getSavedSignatureKeyIndexed(safeId, i);
-        if (await savedSignatureExists(key)) {
-            const url = await presignSavedSignatureReadUrl(key);
-            signatures.push({ index: i, key, url, type: 'signature' });
-        }
-    }
+    const sig = await resolveCanonicalSavedItem(userId, 'signature');
+    if (sig) signatures.push(sig);
 
-    const legacyStampKey = getSavedStampKey(safeId);
-    if (await savedSignatureExists(legacyStampKey)) {
-        const url = await presignSavedSignatureReadUrl(legacyStampKey);
-        stamps.push({ index: -1, key: legacyStampKey, url, type: 'stamp' });
-    }
-    for (let i = 0; i < MAX_SAVED_STAMPS; i++) {
-        const key = getSavedStampKeyIndexed(safeId, i);
-        if (await savedSignatureExists(key)) {
-            const url = await presignSavedSignatureReadUrl(key);
-            stamps.push({ index: i, key, url, type: 'stamp' });
-        }
-    }
+    const stamp = await resolveCanonicalSavedItem(userId, 'stamp');
+    if (stamp) stamps.push(stamp);
 
     return { signatures, stamps };
 }
 
-async function findNextSavedSlot(userId, type) {
+/** Overwrite the single canonical mark and delete any legacy indexed copies. */
+async function putCanonicalSavedItem(userId, type, buffer, contentType) {
+    const safeId = Number(userId);
+    const key = type === 'signature'
+        ? getSavedSignatureKey(safeId)
+        : getSavedStampKey(safeId);
+
+    await r2.send(
+        new PutObjectCommand({
+            Bucket: BUCKET,
+            Key: key,
+            Body: buffer,
+            ContentType: contentType,
+        })
+    );
+
     const maxSlots = type === 'signature' ? MAX_SAVED_SIGNATURES : MAX_SAVED_STAMPS;
     const keyFn = type === 'signature' ? getSavedSignatureKeyIndexed : getSavedStampKeyIndexed;
     for (let i = 0; i < maxSlots; i++) {
-        const key = keyFn(userId, i);
-        if (!(await savedSignatureExists(key))) return i;
+        await deleteSavedItemByKey(keyFn(safeId, i));
     }
-    // All full — overwrite oldest (slot 0)
-    return 0;
+
+    return { key, index: -1 };
 }
 
 async function deleteSavedItemByKey(key) {
@@ -665,12 +769,9 @@ exports.getSavedSignature = async (req, res, next) => {
         const userId = req.user?.UserId;
         if (!userId) return fail(next, 'UNAUTHORIZED', 401);
 
-        const key = getSavedSignatureKey(userId);
-        const exists = await savedSignatureExists(key);
-        if (!exists) return res.json({ exists: false });
-
-        const url = await presignSavedSignatureReadUrl(key);
-        return res.json({ exists: true, url, key });
+        const item = await resolveCanonicalSavedItem(userId, 'signature');
+        if (!item) return res.json({ exists: false });
+        return res.json({ exists: true, url: item.url, key: item.key });
     } catch (err) {
         console.error('getSavedSignature error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליפת חתימה שמורה' });
@@ -682,12 +783,11 @@ exports.getSavedSignatureDataUrl = async (req, res, next) => {
         const userId = req.user?.UserId;
         if (!userId) return fail(next, 'UNAUTHORIZED', 401);
 
-        const key = getSavedSignatureKey(userId);
-        const exists = await savedSignatureExists(key);
-        if (!exists) return res.json({ exists: false });
+        const item = await resolveCanonicalSavedItem(userId, 'signature');
+        if (!item) return res.json({ exists: false });
 
-        const dataUrl = await getSavedSignatureDataUrlByKey(key);
-        return res.json({ exists: true, dataUrl, key });
+        const dataUrl = await getSavedSignatureDataUrlByKey(item.key);
+        return res.json({ exists: true, dataUrl, key: item.key });
     } catch (err) {
         console.error('getSavedSignatureDataUrl error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליפת חתימה שמורה' });
@@ -707,18 +807,14 @@ exports.saveSavedSignature = async (req, res, next) => {
             return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'signatureImage' } });
         }
 
-        const slotIndex = await findNextSavedSlot(userId, 'signature');
-        const key = getSavedSignatureKeyIndexed(userId, slotIndex);
-        await r2.send(
-            new PutObjectCommand({
-                Bucket: BUCKET,
-                Key: key,
-                Body: parsed.buffer,
-                ContentType: parsed.contentType,
-            })
+        const { key, index } = await putCanonicalSavedItem(
+            userId,
+            'signature',
+            parsed.buffer,
+            parsed.contentType
         );
 
-        return res.json({ success: true, key, index: slotIndex });
+        return res.json({ success: true, key, index });
     } catch (err) {
         console.error('saveSavedSignature error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשמירת חתימה שמורה' });
@@ -737,12 +833,9 @@ exports.getPublicSavedSignature = async (req, res, next) => {
         if (!enabledCheck.ok) return;
 
         const { signerUserId } = verified;
-        const key = getSavedSignatureKey(signerUserId);
-        const exists = await savedSignatureExists(key);
-        if (!exists) return res.json({ exists: false });
-
-        const url = await presignSavedSignatureReadUrl(key);
-        return res.json({ exists: true, url, key });
+        const item = await resolveCanonicalSavedItem(signerUserId, 'signature');
+        if (!item) return res.json({ exists: false });
+        return res.json({ exists: true, url: item.url, key: item.key });
     } catch (err) {
         console.error('getPublicSavedSignature error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליפת חתימה שמורה' });
@@ -760,12 +853,11 @@ exports.getPublicSavedSignatureDataUrl = async (req, res, next) => {
         if (!enabledCheck.ok) return;
 
         const { signerUserId } = verified;
-        const key = getSavedSignatureKey(signerUserId);
-        const exists = await savedSignatureExists(key);
-        if (!exists) return res.json({ exists: false });
+        const item = await resolveCanonicalSavedItem(signerUserId, 'signature');
+        if (!item) return res.json({ exists: false });
 
-        const dataUrl = await getSavedSignatureDataUrlByKey(key);
-        return res.json({ exists: true, dataUrl, key });
+        const dataUrl = await getSavedSignatureDataUrlByKey(item.key);
+        return res.json({ exists: true, dataUrl, key: item.key });
     } catch (err) {
         console.error('getPublicSavedSignatureDataUrl error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליפת חתימה שמורה' });
@@ -791,18 +883,14 @@ exports.savePublicSavedSignature = async (req, res, next) => {
             return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'signatureImage' } });
         }
 
-        const slotIndex = await findNextSavedSlot(signerUserId, 'signature');
-        const key = getSavedSignatureKeyIndexed(signerUserId, slotIndex);
-        await r2.send(
-            new PutObjectCommand({
-                Bucket: BUCKET,
-                Key: key,
-                Body: parsed.buffer,
-                ContentType: parsed.contentType,
-            })
+        const { key, index } = await putCanonicalSavedItem(
+            signerUserId,
+            'signature',
+            parsed.buffer,
+            parsed.contentType
         );
 
-        return res.json({ success: true, key, index: slotIndex });
+        return res.json({ success: true, key, index });
     } catch (err) {
         console.error('savePublicSavedSignature error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשמירת חתימה שמורה' });
@@ -815,12 +903,9 @@ exports.getSavedStamp = async (req, res, next) => {
         const userId = req.user?.UserId;
         if (!userId) return fail(next, 'UNAUTHORIZED', 401);
 
-        const key = getSavedStampKey(userId);
-        const exists = await savedSignatureExists(key);
-        if (!exists) return res.json({ exists: false });
-
-        const url = await presignSavedSignatureReadUrl(key);
-        return res.json({ exists: true, url, key });
+        const item = await resolveCanonicalSavedItem(userId, 'stamp');
+        if (!item) return res.json({ exists: false });
+        return res.json({ exists: true, url: item.url, key: item.key });
     } catch (err) {
         console.error('getSavedStamp error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליפת חותמת שמורה' });
@@ -832,12 +917,11 @@ exports.getSavedStampDataUrl = async (req, res, next) => {
         const userId = req.user?.UserId;
         if (!userId) return fail(next, 'UNAUTHORIZED', 401);
 
-        const key = getSavedStampKey(userId);
-        const exists = await savedSignatureExists(key);
-        if (!exists) return res.json({ exists: false });
+        const item = await resolveCanonicalSavedItem(userId, 'stamp');
+        if (!item) return res.json({ exists: false });
 
-        const dataUrl = await getSavedSignatureDataUrlByKey(key);
-        return res.json({ exists: true, dataUrl, key });
+        const dataUrl = await getSavedSignatureDataUrlByKey(item.key);
+        return res.json({ exists: true, dataUrl, key: item.key });
     } catch (err) {
         console.error('getSavedStampDataUrl error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליפת חותמת שמורה' });
@@ -857,18 +941,14 @@ exports.saveSavedStamp = async (req, res, next) => {
             return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'stampImage' } });
         }
 
-        const slotIndex = await findNextSavedSlot(userId, 'stamp');
-        const key = getSavedStampKeyIndexed(userId, slotIndex);
-        await r2.send(
-            new PutObjectCommand({
-                Bucket: BUCKET,
-                Key: key,
-                Body: parsed.buffer,
-                ContentType: parsed.contentType,
-            })
+        const { key, index } = await putCanonicalSavedItem(
+            userId,
+            'stamp',
+            parsed.buffer,
+            parsed.contentType
         );
 
-        return res.json({ success: true, key, index: slotIndex });
+        return res.json({ success: true, key, index });
     } catch (err) {
         console.error('saveSavedStamp error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשמירת חותמת שמורה' });
@@ -887,12 +967,9 @@ exports.getPublicSavedStamp = async (req, res, next) => {
         if (!enabledCheck.ok) return;
 
         const { signerUserId } = verified;
-        const key = getSavedStampKey(signerUserId);
-        const exists = await savedSignatureExists(key);
-        if (!exists) return res.json({ exists: false });
-
-        const url = await presignSavedSignatureReadUrl(key);
-        return res.json({ exists: true, url, key });
+        const item = await resolveCanonicalSavedItem(signerUserId, 'stamp');
+        if (!item) return res.json({ exists: false });
+        return res.json({ exists: true, url: item.url, key: item.key });
     } catch (err) {
         console.error('getPublicSavedStamp error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליפת חותמת שמורה' });
@@ -910,12 +987,11 @@ exports.getPublicSavedStampDataUrl = async (req, res, next) => {
         if (!enabledCheck.ok) return;
 
         const { signerUserId } = verified;
-        const key = getSavedStampKey(signerUserId);
-        const exists = await savedSignatureExists(key);
-        if (!exists) return res.json({ exists: false });
+        const item = await resolveCanonicalSavedItem(signerUserId, 'stamp');
+        if (!item) return res.json({ exists: false });
 
-        const dataUrl = await getSavedSignatureDataUrlByKey(key);
-        return res.json({ exists: true, dataUrl, key });
+        const dataUrl = await getSavedSignatureDataUrlByKey(item.key);
+        return res.json({ exists: true, dataUrl, key: item.key });
     } catch (err) {
         console.error('getPublicSavedStampDataUrl error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליפת חותמת שמורה' });
@@ -941,18 +1017,14 @@ exports.savePublicSavedStamp = async (req, res, next) => {
             return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'stampImage' } });
         }
 
-        const slotIndex = await findNextSavedSlot(signerUserId, 'stamp');
-        const key = getSavedStampKeyIndexed(signerUserId, slotIndex);
-        await r2.send(
-            new PutObjectCommand({
-                Bucket: BUCKET,
-                Key: key,
-                Body: parsed.buffer,
-                ContentType: parsed.contentType,
-            })
+        const { key, index } = await putCanonicalSavedItem(
+            signerUserId,
+            'stamp',
+            parsed.buffer,
+            parsed.contentType
         );
 
-        return res.json({ success: true, key, index: slotIndex });
+        return res.json({ success: true, key, index });
     } catch (err) {
         console.error('savePublicSavedStamp error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשמירת חותמת שמורה' });
@@ -2171,52 +2243,103 @@ exports.uploadFileForSigning = async (req, res, next) => {
 
             // External signer: requires at least email or phone
             const signerEmail = String(signer.email || '').trim().toLowerCase();
-            const signerPhone = String(signer.phone || '').trim();
+            const rawPhone = String(signer.phone || '').trim();
+            const formattedPhone = formatPhoneNumber(rawPhone);
+            if (rawPhone && !formattedPhone) {
+                return fail(next, 'INVALID_PARAMETER', 422, {
+                    message: 'מספר הטלפון של החותם אינו תקין',
+                    meta: { name: 'phone' },
+                });
+            }
+            // Preserve the entered representation for OTP login, while using the
+            // normalized form as an additional identity lookup candidate.
+            const signerPhone = rawPhone || formattedPhone || '';
             const signerName = String(signer.name || '').trim() || 'חותם חיצוני';
+            const hasPhone = Boolean(signerPhone);
 
-            if (!signerEmail && !signerPhone) {
+            if (!signerEmail && !hasPhone) {
                 return fail(next, 'VALIDATION_ERROR', 422, { message: 'חותם חיצוני דורש אימייל או טלפון' });
             }
 
             let resolvedUserId = null;
+            let resolvedRole = null;
 
             // Try to find existing user by email
             if (signerEmail) {
                 const emailSearch = await pool.query(
-                    `SELECT userid FROM users WHERE LOWER(email) = $1 LIMIT 1`,
+                    `SELECT userid, role FROM users WHERE LOWER(email) = $1 LIMIT 1`,
                     [signerEmail]
                 );
                 if (emailSearch.rows.length > 0) {
                     resolvedUserId = emailSearch.rows[0].userid;
+                    resolvedRole = emailSearch.rows[0].role;
                 }
             }
 
-            // Try to find by phone if not found by email
-            if (!resolvedUserId && signerPhone) {
+            // Try to find by phone if not found by email (match several common formats)
+            if (!resolvedUserId && hasPhone) {
+                const phoneCandidates = Array.from(new Set([
+                    signerPhone,
+                    rawPhone,
+                    formattedPhone,
+                    // digits-only local / intl variants
+                    String(rawPhone).replace(/\D/g, ''),
+                    formattedPhone ? String(formattedPhone).replace(/\D/g, '') : null,
+                    formattedPhone && formattedPhone.startsWith('+972')
+                        ? `0${formattedPhone.slice(4)}`
+                        : null,
+                ].filter(Boolean)));
+
                 const phoneSearch = await pool.query(
-                    `SELECT userid FROM users WHERE phonenumber = $1 LIMIT 1`,
-                    [signerPhone]
+                    `SELECT userid, role, phonenumber
+                     FROM users
+                     WHERE phonenumber = ANY($1::text[])
+                     LIMIT 1`,
+                    [phoneCandidates]
                 );
                 if (phoneSearch.rows.length > 0) {
                     resolvedUserId = phoneSearch.rows[0].userid;
+                    resolvedRole = phoneSearch.rows[0].role;
                 }
             }
 
-            // Create a guest user if not found
+            // Create a new client (User) when phone is provided; email-only stays ExternalSigner.
             if (!resolvedUserId) {
+                const roleToCreate = hasPhone ? 'User' : 'ExternalSigner';
                 const insertUser = await pool.query(
                     `INSERT INTO users (name, email, phonenumber, role)
-                     VALUES ($1, $2, $3, 'ExternalSigner')
+                     VALUES ($1, $2, $3, $4)
                      RETURNING userid`,
-                    [signerName, signerEmail || null, signerPhone || null]
+                    [signerName, signerEmail || null, signerPhone || null, roleToCreate]
                 );
                 resolvedUserId = insertUser.rows[0].userid;
-                console.log(`[signing] Created external signer user: userId=${resolvedUserId}, name="${signerName}"`);
+                resolvedRole = roleToCreate;
+                console.log(
+                    `[signing] Created ${roleToCreate} signer: userId=${resolvedUserId}, name="${signerName}"`
+                );
+            } else if (
+                hasPhone &&
+                String(resolvedRole || '') === 'ExternalSigner'
+            ) {
+                // Promote legacy external signers who now have a phone into real clients.
+                await pool.query(
+                    `UPDATE users
+                     SET role = 'User',
+                         name = COALESCE(NULLIF(name, ''), $2),
+                         phonenumber = COALESCE(phonenumber, $3),
+                         email = COALESCE(email, $4)
+                     WHERE userid = $1`,
+                    [resolvedUserId, signerName, signerPhone || null, signerEmail || null]
+                );
+                console.log(
+                    `[signing] Promoted ExternalSigner->User: userId=${resolvedUserId}`
+                );
             }
 
             signersList.push({
                 ...signer,
                 userId: resolvedUserId,
+                phone: signerPhone || signer.phone,
             });
         }
 
@@ -2592,7 +2715,7 @@ exports.uploadFileForSigning = async (req, res, next) => {
                 signerUserId,
                 fileExpiresAt: expiresAt || null,
             });
-            const publicUrl = buildPublicSigningUrl(token);
+            const publicUrl = await buildPublicSigningUrl(token);
             console.log('[signing] Public signing URL:', publicUrl);
 
             await insertAuditEvent({
@@ -4392,7 +4515,7 @@ exports.resendSigningInvite = async (req, res, next) => {
                 });
                 continue;
             }
-            const publicUrl = buildPublicSigningUrl(token);
+            const publicUrl = await buildPublicSigningUrl(token);
 
             await insertAuditEvent({
                 req,
@@ -4564,7 +4687,8 @@ exports.createPublicSigningLink = async (req, res, next) => {
             },
         });
 
-        return res.json({ token, expiresIn });
+        const url = await buildPublicSigningUrl(token);
+        return res.json({ token, expiresIn, url });
     } catch (err) {
         console.error('createPublicSigningLink error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה ביצירת קישור לחתימה' });
@@ -4903,6 +5027,133 @@ exports.publicSignFile = async (req, res, next) => {
     } catch (err) {
         console.error('publicSignFile error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשמירת החתימה' });
+    }
+};
+
+/**
+ * Batch-sign multiple signature spots in one request.
+ * Avoids N round-trips of large base64 payloads (main client-side cost of "sign all").
+ * Still applies spots sequentially server-side for evidence integrity + finalize-once.
+ */
+exports.publicSignFileBatch = async (req, res, next) => {
+    const t0 = Date.now();
+    const timings = {};
+    try {
+        const verified = verifyPublicSigningToken(req.params.token);
+        if (!verified.ok) {
+            return fail(next, verified.errorCode, verified.httpStatus);
+        }
+
+        const { signingFileId, signerUserId } = verified;
+        const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId, next, req });
+        if (!enabledCheck.ok) return;
+
+        const tokenId = hashTokenId(req?.params?.token);
+        const windowMs = 60 * 1000;
+        const max = 30;
+        const hitToken = tokenId ? isRateLimited(windowMs, max, `signing:public_sign_batch:token:${tokenId}`) : false;
+        const hitFile = isRateLimited(windowMs, max, `signing:public_sign_batch:file:${signingFileId}`);
+        if (hitToken || hitFile) {
+            return fail(next, 'RATE_LIMITED', 429);
+        }
+
+        const spotIdsRaw = req.body?.signatureSpotIds ?? req.body?.signature_spot_ids;
+        if (!Array.isArray(spotIdsRaw) || spotIdsRaw.length === 0) {
+            return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'signatureSpotIds' } });
+        }
+        const signatureSpotIds = [...new Set(
+            spotIdsRaw.map((v) => Number(v)).filter((n) => Number.isFinite(n) && n > 0)
+        )];
+        if (!signatureSpotIds.length || signatureSpotIds.length > 40) {
+            return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'signatureSpotIds' } });
+        }
+
+        const { signatureImage } = req.body;
+        if (!signatureImage) {
+            return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'signatureImage' } });
+        }
+
+        // Reuse authenticated signFile path once per spot, capturing JSON instead of sending.
+        // Shared request body fields (consent, session, image) stay constant.
+        req.params.signingFileId = String(signingFileId);
+        req.user = { UserId: signerUserId };
+
+        const signed = [];
+        const tLoop = Date.now();
+        for (const signatureSpotId of signatureSpotIds) {
+            req.body.signatureSpotId = signatureSpotId;
+            const captured = { statusCode: 200, body: null, err: null };
+            const fakeRes = {
+                headersSent: false,
+                setTimeout() {},
+                status(code) {
+                    captured.statusCode = code;
+                    return this;
+                },
+                json(payload) {
+                    captured.body = payload;
+                    this.headersSent = true;
+                    return this;
+                },
+            };
+            const fakeNext = (err) => {
+                captured.err = err || new Error('SIGN_FAILED');
+            };
+            // eslint-disable-next-line no-await-in-loop
+            await exports.signFile(req, fakeRes, fakeNext);
+            if (captured.err) {
+                const code = captured.err?.errorCode || captured.err?.code || 'INTERNAL_ERROR';
+                const status = Number(captured.err?.httpStatus || captured.err?.status || 500);
+                timings.loopMs = Date.now() - tLoop;
+                timings.totalMs = Date.now() - t0;
+                console.log('[signing] publicSignFileBatch partial', {
+                    signingFileId,
+                    signed: signed.length,
+                    failedAt: signatureSpotId,
+                    code,
+                    timings,
+                });
+                if (signed.length > 0) {
+                    return res.status(207).json({
+                        success: false,
+                        partial: true,
+                        signedSpotIds: signed,
+                        errorCode: code,
+                        message: captured.err?.message || 'שגיאה בחתימה על חלק מהשדות',
+                        timings,
+                    });
+                }
+                return fail(next, code, status, { message: captured.err?.message });
+            }
+            if (!captured.body?.success && captured.statusCode >= 400) {
+                timings.loopMs = Date.now() - tLoop;
+                timings.totalMs = Date.now() - t0;
+                if (signed.length > 0) {
+                    return res.status(207).json({
+                        success: false,
+                        partial: true,
+                        signedSpotIds: signed,
+                        message: captured.body?.message || 'שגיאה בחתימה על חלק מהשדות',
+                        timings,
+                    });
+                }
+                return res.status(captured.statusCode || 500).json(captured.body || { success: false });
+            }
+            signed.push(signatureSpotId);
+        }
+        timings.loopMs = Date.now() - tLoop;
+        timings.totalMs = Date.now() - t0;
+        console.log('[signing] publicSignFileBatch ok', { signingFileId, count: signed.length, timings });
+        if (res.headersSent) return;
+        return res.json({
+            success: true,
+            message: '✓ כל החתימות נשמרו בהצלחה',
+            signedSpotIds: signed,
+            timings,
+        });
+    } catch (err) {
+        console.error('publicSignFileBatch error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשמירת החתימות' });
     }
 };
 
@@ -5447,6 +5698,7 @@ exports.verifySigningOtp = async (req, res, next) => {
 
 
 exports.signFile = async (req, res, next) => {
+    const _signT0 = Date.now();
     try {
         const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
         if (signingFileId === null) return;
@@ -5879,7 +6131,7 @@ exports.signFile = async (req, res, next) => {
                                     signerUserId: nextSignerUserId,
                                     fileExpiresAt: null,
                                 });
-                                const publicUrl = buildPublicSigningUrl(token);
+                                const publicUrl = await buildPublicSigningUrl(token);
 
                                 let nextSignerName = 'לקוח';
                                 try {
@@ -6168,7 +6420,11 @@ exports.signFile = async (req, res, next) => {
         }
 
         if (res.headersSent) return;
-        return res.json({ success: true, message: "✓ החתימה נשמרה בהצלחה" });
+        const signMs = Date.now() - _signT0;
+        if (signMs > 800) {
+            console.log('[signing] signFile slow', { signingFileId, signatureSpotId, remaining, signMs });
+        }
+        return res.json({ success: true, message: "✓ החתימה נשמרה בהצלחה", timings: { signMs } });
     } catch (err) {
         console.error("signFile error:", err);
         if (res.headersSent) return;
@@ -6557,7 +6813,7 @@ exports.reuploadFile = async (req, res, next) => {
                     signerUserId: Number(targetUserId),
                     fileExpiresAt: null,
                 });
-                const publicUrl = buildPublicSigningUrl(token);
+                const publicUrl = await buildPublicSigningUrl(token);
                 console.log('[signing] Public signing URL (re-upload, signer):', publicUrl);
 
                 const message = publicUrl
@@ -6611,7 +6867,7 @@ exports.reuploadFile = async (req, res, next) => {
                 signerUserId: Number(file.ClientId),
                 fileExpiresAt: null,
             });
-            const publicUrl = buildPublicSigningUrl(token);
+            const publicUrl = await buildPublicSigningUrl(token);
             console.log('[signing] Public signing URL (re-upload, legacy):', publicUrl);
 
             const message = publicUrl
