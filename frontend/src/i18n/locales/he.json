@@ -1057,6 +1057,7 @@
       "sendCode": "שלח קוד",
       "verified": "אומת",
       "nextSignature": "לחתימה הבאה",
+      "nextField": "לשדה הבא",
       "remainingSignatures": "נותרו {{count}} חתימות",
       "hideAllSpots": "הסתר את כל המקומות",
       "showAllSpots": "הצג את כל המקומות",

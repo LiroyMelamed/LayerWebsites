@@ -27,6 +27,9 @@ router.post("/detect-spots", authMiddleware, requireSigningEnabledForUser, signi
 // Public view of signed document (JWT view token, no auth)
 router.get("/public/view/:token", publicViewLimiter, signingFileController.getPublicSignedDocumentView);
 
+// Public short-link resolver (slug → JWT). Must be registered before /public/:token.
+router.get("/public/short/:slug", publicViewLimiter, signingFileController.resolvePublicSigningShortLink);
+
 // Public signing (no auth) via signed token
 router.get("/public/:token/pdf", publicViewLimiter, signingFileController.getPublicSigningFilePdf);
 router.get("/public/:token", publicViewLimiter, signingFileController.getPublicSigningFileDetails);
@@ -41,6 +44,7 @@ function extendTimeout(ms) {
 }
 
 router.post("/public/:token/sign", extendTimeout(120_000), optionalAuthMiddleware, signingFileController.publicSignFile);
+router.post("/public/:token/sign-batch", extendTimeout(180_000), optionalAuthMiddleware, signingFileController.publicSignFileBatch);
 router.post("/public/:token/reject", signingFileController.publicRejectSigning);
 router.get("/public/:token/saved-signature", publicViewLimiter, signingFileController.getPublicSavedSignature);
 router.get("/public/:token/saved-signature/data-url", publicViewLimiter, signingFileController.getPublicSavedSignatureDataUrl);

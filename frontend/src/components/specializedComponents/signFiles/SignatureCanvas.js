@@ -519,8 +519,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             return;
         }
 
-        // Initials must always be a minimal draw-only flow (no saved signature).
-        if (signMode !== 'signature') {
+        // Public signing always starts with a blank "new signature" canvas.
+        // Keep the authenticated app's existing saved-item convenience.
+        if (isPublic || signMode !== 'signature') {
             setSignatureMode('draw');
             return;
         }
@@ -950,6 +951,13 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             const didSign = await signCurrentSpotWithImage(dataUrl);
             if (!didSign) return;
 
+            const spotType = getSpotType(currentSpot);
+            const signMode = getSignModeForSpotType(spotType);
+            // Auto-save newly drawn signatures (sign + sign-all); initials stay ephemeral.
+            if (signMode === 'signature') {
+                await saveSignatureAsDefault(dataUrl);
+            }
+
             setMessage({ type: "success", text: t("signing.canvas.signatureSavedSuccess") });
             await reloadDetailsAndAdvance();
             setTimeout(() => setMessage(null), 2000);
@@ -1029,11 +1037,11 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             }
 
             setMessage({ type: "success", text: t("signing.canvas.fieldSavedSuccess") });
-            return true;
             // NOTE: Intentionally no reloadDetailsAndAdvance() here.
             // If the DB schema lacks signaturespots.fieldvalue, the backend won't return FieldValue,
             // and an immediate reload would erase the visible value from the overlay.
             setTimeout(() => setMessage(null), 2000);
+            return true;
         } catch (err) {
             console.error("Failed to save field value", err);
             setMessage({ type: "error", text: t("signing.canvas.fieldSaveError") });
@@ -1318,6 +1326,14 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
             if (savedItem) {
                 dataUrl = await fetchSavedItemDataUrl(savedItem);
+            } else if (canvasRef.current && hasUserDrawn) {
+                dataUrl = canvasRef.current.toDataURL("image/png");
+                // Persist a newly drawn signature before applying it everywhere.
+                try {
+                    await saveSignatureAsDefault(dataUrl);
+                } catch (persistErr) {
+                    console.warn("Failed to persist signature during sign-all", persistErr);
+                }
             } else if (savedSignature?.exists) {
                 const sigRes = isPublic
                     ? await signingFilesApi.getPublicSavedSignatureDataUrl(publicToken)
@@ -1326,11 +1342,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 const rawDataUrl = sigRes?.data?.dataUrl;
                 dataUrl = await normalizeSignatureDataUrl(rawDataUrl);
             } else {
-                if (!canvasRef.current || !hasUserDrawn) {
-                    setMessage({ type: "error", text: t("signing.canvas.signAllRequiresSignature") });
-                    return;
-                }
-                dataUrl = canvasRef.current.toDataURL("image/png");
+                setMessage({ type: "error", text: t("signing.canvas.signAllRequiresSignature") });
+                return;
             }
 
             if (!dataUrl) {
@@ -1505,6 +1518,12 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const remainingCount = unsignedRequiredSpots.length;
     const optionalRemainingCount = unsignedOptionalSpots.length;
     const allSpotsSignedByUser = remainingCount === 0;
+    const hasUnsignedSignatureSpots = unsignedRequiredSpots.some((s) =>
+        isSignatureLike(getSpotType(s)),
+    );
+    const nextSpotButtonLabel = hasUnsignedSignatureSpots
+        ? t("signing.canvas.nextSignature")
+        : t("signing.canvas.nextField");
     const activeSpotForMode = getActiveSpotForMode(fileDetails, currentSpot);
     const currentSpotType = activeSpotForMode ? getSpotType(activeSpotForMode) : 'signature';
     const currentSpotIsSignature = activeSpotForMode ? isSignatureLike(currentSpotType) : false;
@@ -1968,16 +1987,37 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         <SecondaryButton size={buttonSizes.MEDIUM} onPress={clearCanvas} disabled={saving}>
                             {t("common.clear")}
                         </SecondaryButton>
-                        <SecondaryButton size={buttonSizes.MEDIUM} onPress={async () => { await signOnly(); }} disabled={saving}>
-                            {saving ? t("signing.canvas.saving") : t("signing.canvas.signOnly")}
-                        </SecondaryButton>
-                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { await saveSignature(); }} disabled={saving}>
-                            {saving
-                                ? t("signing.canvas.saving")
-                                : (currentSignMode === 'initials'
-                                    ? t("signing.canvas.saveInitials")
-                                    : t("signing.canvas.saveSignature"))}
-                        </PrimaryButton>
+                        {isPublic ? (
+                            <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { await signOnly(); }} disabled={saving}>
+                                {saving
+                                    ? t("signing.canvas.saving")
+                                    : (currentSignMode === 'initials'
+                                        ? t("signing.canvas.saveInitials")
+                                        : t("signing.canvas.signOnly"))}
+                            </PrimaryButton>
+                        ) : (
+                            <>
+                                <SecondaryButton size={buttonSizes.MEDIUM} onPress={async () => { await signOnly(); }} disabled={saving}>
+                                    {saving ? t("signing.canvas.saving") : t("signing.canvas.signOnly")}
+                                </SecondaryButton>
+                                <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { await saveSignature(); }} disabled={saving}>
+                                    {saving
+                                        ? t("signing.canvas.saving")
+                                        : (currentSignMode === 'initials'
+                                            ? t("signing.canvas.saveInitials")
+                                            : t("signing.canvas.saveSignature"))}
+                                </PrimaryButton>
+                            </>
+                        )}
+                        {isPublic && remainingCount > 1 && currentSignMode === 'signature' && (
+                            <SecondaryButton
+                                size={buttonSizes.MEDIUM}
+                                onPress={async () => { await signAllRemainingSpots(); }}
+                                disabled={saving}
+                            >
+                                {t("signing.canvas.signAll")}
+                            </SecondaryButton>
+                        )}
                     </div>
                 </div>
             )}
@@ -2068,7 +2108,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                         onPress={goToNextSigningSpot}
                                         disabled={saving}
                                     >
-                                        {t("signing.canvas.nextSignature")}
+                                        {nextSpotButtonLabel}
                                     </PrimaryButton>
                                 )}
                                 {!allSpotsSignedByUser && (
@@ -2176,7 +2216,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                             onPress={() => goToNextSigningSpot()}
                                             disabled={saving}
                                         >
-                                            {t("signing.canvas.nextSignature")}
+                                            {nextSpotButtonLabel}
                                         </PrimaryButton>
 
                                         <div className="lw-signing-progressHint">
