@@ -745,6 +745,17 @@ export default function UploadFileForSigningScreen() {
     const addSigner = (customer) => {
         if (!customer?.UserId) return;
 
+        if (contactsCollideWithSelected({
+            email: customer.Email,
+            phone: customer.PhoneNumber || customer.Phone,
+        })) {
+            setMessage({
+                type: 'error',
+                text: t('signing.upload.validation.duplicateSignerContact'),
+            });
+            return;
+        }
+
         setSelectedSigners((prev) => {
             const exists = prev.some((s) => Number(s?.UserId) === Number(customer.UserId));
             if (exists) return prev;
@@ -761,12 +772,42 @@ export default function UploadFileForSigningScreen() {
         });
     };
 
+    const normalizePhoneDigits = (phone) => String(phone || '').replace(/\D/g, '');
+    const normalizeEmail = (email) => String(email || '').trim().toLowerCase();
+
+    const contactsCollideWithSelected = ({ email, phone, excludeUserId = null }) => {
+        const emailNorm = normalizeEmail(email);
+        const phoneDigits = normalizePhoneDigits(phone);
+        return (selectedSigners || []).some((s) => {
+            if (excludeUserId != null && Number(s?.UserId) === Number(excludeUserId)) return false;
+            const sEmail = normalizeEmail(s?.Email);
+            const sPhone = normalizePhoneDigits(s?.Phone || s?.PhoneNumber);
+            if (emailNorm && sEmail && emailNorm === sEmail) return true;
+            if (phoneDigits && sPhone && phoneDigits === sPhone) return true;
+            // Treat +972... and 0... as the same Israeli mobile when both are present.
+            if (phoneDigits && sPhone) {
+                const a = phoneDigits.startsWith('972') ? `0${phoneDigits.slice(3)}` : phoneDigits;
+                const b = sPhone.startsWith('972') ? `0${sPhone.slice(3)}` : sPhone;
+                if (a && b && a === b) return true;
+            }
+            return false;
+        });
+    };
+
     const addManualSigner = () => {
         const name = manualSignerName.trim();
         const email = manualSignerEmail.trim();
         const phone = manualSignerPhone.trim();
         if (!name) return;
         if (!email && !phone) return;
+
+        if (contactsCollideWithSelected({ email, phone })) {
+            setMessage({
+                type: 'error',
+                text: t('signing.upload.validation.duplicateSignerContact'),
+            });
+            return;
+        }
 
         const tempId = nextManualIdRef.current;
         nextManualIdRef.current -= 1;
@@ -1194,14 +1235,31 @@ export default function UploadFileForSigningScreen() {
                                                     const editedName = window.prompt(t('signing.upload.manualSignerName'), s.Name || '') || s.Name || '';
                                                     const editedEmail = window.prompt(t('signing.upload.manualSignerEmail'), s.Email || '') || '';
                                                     const editedPhone = window.prompt(t('signing.upload.manualSignerPhone'), s.Phone || '') || '';
+                                                    const nextEmail = editedEmail.trim() || null;
+                                                    const nextPhone = editedPhone.trim() || null;
+                                                    if (contactsCollideWithSelected({
+                                                        email: nextEmail,
+                                                        phone: nextPhone,
+                                                        excludeUserId: s.UserId,
+                                                    })) {
+                                                        setMessage({
+                                                            type: 'error',
+                                                            text: t('signing.upload.validation.duplicateSignerContact'),
+                                                        });
+                                                        return;
+                                                    }
+                                                    const contactChanged =
+                                                        normalizeEmail(nextEmail) !== normalizeEmail(s.Email) ||
+                                                        normalizePhoneDigits(nextPhone) !== normalizePhoneDigits(s.Phone);
                                                     setSelectedSigners((prev) =>
                                                         prev.map((sig) =>
                                                             Number(sig.UserId) === Number(s.UserId)
                                                                 ? {
                                                                     ...sig,
                                                                     Name: editedName.trim() || sig.Name,
-                                                                    Email: editedEmail.trim() || null,
-                                                                    Phone: editedPhone.trim() || null,
+                                                                    Email: nextEmail,
+                                                                    Phone: nextPhone,
+                                                                    ...(contactChanged ? { isManual: true } : {}),
                                                                 }
                                                                 : sig
                                                         )
