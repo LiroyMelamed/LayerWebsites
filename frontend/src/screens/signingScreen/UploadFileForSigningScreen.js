@@ -1475,7 +1475,7 @@ export default function UploadFileForSigningScreen() {
                             </>
                         )}
 
-                        <SimpleContainer className="lw-uploadSigningScreen__actionsRow">
+                        <SimpleContainer className="lw-uploadSigningScreen__actionsRow lw-uploadSigningScreen__actionsRow--inline">
                             <SecondaryButton
                                 onPress={() => navigate(AdminStackName + SigningManagerScreenName)}
                             >
@@ -1601,6 +1601,19 @@ export default function UploadFileForSigningScreen() {
                     )}
                 </SimpleContainer>
             </SimpleScrollView>
+
+            {selectedFile && (
+                <SimpleContainer className="lw-uploadSigningScreen__stickySendBar">
+                    <SecondaryButton
+                        onPress={() => navigate(AdminStackName + SigningManagerScreenName)}
+                    >
+                        {t('common.back')}
+                    </SecondaryButton>
+                    <PrimaryButton onPress={handleSubmit} disabled={loading} isPerforming={loading}>
+                        {loading ? t('signing.upload.sending') : t('signing.upload.sendToClient')}
+                    </PrimaryButton>
+                </SimpleContainer>
+            )}
 
             {message && (
                 <div

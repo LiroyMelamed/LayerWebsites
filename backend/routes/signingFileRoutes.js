@@ -21,11 +21,20 @@ const publicViewLimiter = createRateLimitMiddleware({
     trustProxy: true,
 });
 
+// Signing + evidence generation can exceed the default 30s API timeout.
+function extendTimeout(ms) {
+    return (req, res, next) => {
+        if (typeof res.setTimeout === 'function') res.setTimeout(ms);
+        next();
+    };
+}
+
 
 router.post("/detect-spots", authMiddleware, requireSigningEnabledForUser, signingFileController.detectSignatureSpots);
 
 // Public view of signed document (JWT view token, no auth)
 router.get("/public/view/:token", publicViewLimiter, signingFileController.getPublicSignedDocumentView);
+router.get("/public/view/:token/evidence-certificate", publicViewLimiter, extendTimeout(120_000), signingFileController.getPublicEvidenceCertificate);
 
 // Public short-link resolver (slug → JWT). Must be registered before /public/:token.
 router.get("/public/short/:slug", publicViewLimiter, signingFileController.resolvePublicSigningShortLink);
@@ -35,14 +44,6 @@ router.get("/public/:token/pdf", publicViewLimiter, signingFileController.getPub
 router.get("/public/:token", publicViewLimiter, signingFileController.getPublicSigningFileDetails);
 router.post("/public/:token/otp/request", signingFileController.publicRequestSigningOtp);
 router.post("/public/:token/otp/verify", signingFileController.publicVerifySigningOtp);
-// Signing + evidence generation can exceed the default 30s API timeout.
-function extendTimeout(ms) {
-    return (req, res, next) => {
-        if (typeof res.setTimeout === 'function') res.setTimeout(ms);
-        next();
-    };
-}
-
 router.post("/public/:token/sign", extendTimeout(120_000), optionalAuthMiddleware, signingFileController.publicSignFile);
 router.post("/public/:token/sign-batch", extendTimeout(180_000), optionalAuthMiddleware, signingFileController.publicSignFileBatch);
 router.post("/public/:token/reject", signingFileController.publicRejectSigning);

@@ -1217,6 +1217,14 @@ function buildPublicViewUrl(viewToken) {
     return `https://${domain}/ViewSignedDocument?token=${encodeURIComponent(String(viewToken))}`;
 }
 
+function buildPublicEvidenceUrl(viewToken) {
+    const domain = getWebsiteDomain();
+    if (!domain) return null;
+    // Opens the public signed-doc page which downloads evidence via the public API token route.
+    // Avoids 403 on the authenticated /signing-files/:id/evidence-certificate link from emails.
+    return `https://${domain}/ViewSignedDocument?token=${encodeURIComponent(String(viewToken))}&evidence=1`;
+}
+
 async function resolveFirmSigningPolicyForSigningFileId(signingFileId) {
     return resolveFirmSigningPolicy(null);
 }
@@ -4019,6 +4027,49 @@ async function generateEvidenceCertificateBuffer(signingFileId) {
     return { pdfBuffer: Buffer.from(pdfBuffer), filename };
 }
 
+
+async function sendEvidenceCertificatePdf({ res, next, signingFileId, evidenceStart, meterUsage = false }) {
+    try {
+        if (meterUsage) {
+            const check = await checkFirmLimitsOrNull({
+                action: 'generate_evidence',
+                increments: { evidenceGenerationsThisMonth: 1 },
+            });
+            if (check && (check.blocks || []).length > 0) {
+                if (check.enforcementMode === 'block') {
+                    return fail(next, 'LIMIT_EXCEEDED', 402, { meta: { reasons: check.blocks } });
+                }
+                console.warn('[limits] generate_evidence warnings:', check.warnings);
+            }
+        }
+
+        const result = await generateEvidenceCertificateBuffer(signingFileId);
+        if (!result?.pdfBuffer) {
+            return fail(next, 'DOCUMENT_NOT_FOUND', 404);
+        }
+
+        const evidenceEnd = process.hrtime.bigint();
+        const elapsedSeconds = Number(evidenceEnd - (evidenceStart || evidenceEnd)) / 1e9;
+        if (Number.isFinite(elapsedSeconds) && elapsedSeconds > 0) {
+            console.log(`[evidence] certificate generated in ${elapsedSeconds.toFixed(2)}s for signingFileId=${signingFileId}`);
+        }
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${result.filename || 'evidence_certificate.pdf'}"`);
+        return res.send(Buffer.from(result.pdfBuffer));
+    } catch (err) {
+        const msg = String(err?.message || err || '');
+        if (/not signed/i.test(msg)) {
+            return fail(next, 'DOCUMENT_NOT_SIGNED', 409);
+        }
+        if (/not found/i.test(msg)) {
+            return fail(next, 'DOCUMENT_NOT_FOUND', 404);
+        }
+        console.error('sendEvidenceCertificatePdf error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה ביצירת מסמך ראייה' });
+    }
+}
+
 exports.getEvidenceCertificate = async (req, res, next) => {
     try {
         const evidenceStart = process.hrtime.bigint();
@@ -4040,376 +4091,41 @@ exports.getEvidenceCertificate = async (req, res, next) => {
             return fail(next, 'FORBIDDEN', 403);
         }
 
-        {
-            const check = await checkFirmLimitsOrNull({
-                action: 'generate_evidence',
-                increments: { evidenceGenerationsThisMonth: 1 },
-            });
-
-            if (check && (check.blocks || []).length > 0) {
-                if (check.enforcementMode === 'block') {
-                    return fail(next, 'LIMIT_EXCEEDED', 402, { meta: { reasons: check.blocks } });
-                }
-                console.warn('[limits] generate_evidence warnings:', check.warnings);
-            }
-        }
-
-        // Gather evidence rows (reuses existing loader)
-        const evidence = await loadEvidenceRowsForZip(signingFileId);
-        const fileRow = evidence.file;
-        if (!fileRow) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
-
-        if (String(fileRow.Status || '').toLowerCase() !== 'signed') {
-            return fail(next, 'DOCUMENT_NOT_SIGNED', 409);
-        }
-
-        // Build a human-readable evidence certificate using Puppeteer HTML->PDF
-        // Map data according to the requested rules and call renderEvidencePdf
-        const spots = evidence.signatureSpots || [];
-        const auditEvents = evidence.auditEvents || [];
-        const otpVerifications = evidence.otpVerifications || [];
-        const consents = evidence.consents || [];
-
-        let caseName = null;
-        try {
-            if (fileRow?.CaseId) {
-                const cn = await pool.query('select casename as "CaseName" from cases where caseid = $1', [fileRow.CaseId]);
-                caseName = cn.rows?.[0]?.CaseName || null;
-            }
-        } catch {
-            caseName = null;
-        }
-
-        // Batch-fetch user info for any signer userIds (to get phone/email)
-        const signerUserIds = Array.from(new Set(spots.map(s => s.SignerUserId).filter(id => id)));
-        const usersById = new Map();
-        if (signerUserIds.length > 0) {
-            const usersRes = await pool.query(
-                `select userid as "UserId", name as "Name", email as "Email", phonenumber as "Phone" from users where userid = any($1::int[])`,
-                [signerUserIds]
-            );
-            for (const r of usersRes.rows) usersById.set(String(r.UserId), r);
-        }
-
-        const signersMap = new Map();
-        const colorPalette = ['#1b3a57', '#e53e3e', '#dd6b20', '#2f855a', '#6b46c1', '#b83280', '#319795'];
-        let colorIdx = 0;
-
-        const normalizeUtc = (value) => {
-            if (!value) return '-';
-            const d = new Date(value);
-            if (Number.isNaN(d.getTime())) return String(value);
-            return d.toISOString().replace('T', ' ').slice(0, 19) + 'Z';
-        };
-
-        const parseEventMeta = (event) => {
-            if (!event?.Metadata) return {};
-            if (typeof event.Metadata === 'object') return event.Metadata;
-            try {
-                return JSON.parse(event.Metadata);
-            } catch {
-                return {};
-            }
-        };
-
-
-        const pickUtc = (...values) => {
-            for (const value of values) {
-                const normalized = normalizeUtc(value);
-                if (normalized !== '-') return normalized;
-            }
-            return '-';
-        };
-
-        const parseDeviceBrowser = (ua) => {
-            if (!ua) return '-';
-            const s = String(ua);
-            const device = /android|iphone|ipad|mobile/i.test(s)
-                ? 'Mobile'
-                : /Windows NT|Macintosh|Linux/i.test(s)
-                    ? 'Desktop'
-                    : 'Unknown';
-            let browser = 'Other';
-            if (/edg/i.test(s)) browser = 'Edge';
-            else if (/chrome/i.test(s)) browser = 'Chrome';
-            else if (/firefox/i.test(s)) browser = 'Firefox';
-            else if (/safari/i.test(s) && !/chrome/i.test(s)) browser = 'Safari';
-            return `${device} / ${browser}`;
-        };
-
-        for (const s of spots) {
-            const key = s.SignerUserId ? `u:${s.SignerUserId}` : `n:${s.SignerName || 'idx' + s.SignatureSpotId}`;
-            const userInfo = s.SignerUserId ? usersById.get(String(s.SignerUserId)) : null;
-
-            const viewedEvent = auditEvents.find(
-                (e) => String(e.EventType) === 'PDF_VIEWED' && String(e.SigningSessionId) === String(s.SigningSessionId)
-            );
-            const signedEvent = auditEvents.find(
-                (e) => String(e.EventType) === 'SIGN_SUCCESS' && String(e.SigningSessionId) === String(s.SigningSessionId)
-            );
-            const otpRow = otpVerifications.find(
-                (o) => String(o.SignerUserId) === String(s.SignerUserId) && String(o.SigningSessionId) === String(s.SigningSessionId)
-            );
-            const otpSentEvent = auditEvents.find(
-                (e) => String(e.EventType) === 'OTP_SENT' && String(e.SigningSessionId) === String(s.SigningSessionId)
-                    && String(e.ActorUserId) === String(s.SignerUserId)
-            );
-            const publicLinkEvent = auditEvents.find((e) => {
-                if (String(e.EventType) !== 'PUBLIC_LINK_ISSUED') return false;
-                const meta = parseEventMeta(e);
-                return String(meta?.targetSignerUserId || '') === String(s.SignerUserId || '');
-            });
-
-            const timeSentUtc = pickUtc(
-                otpRow?.SentAtUtc,
-                otpSentEvent?.OccurredAtUtc,
-                publicLinkEvent?.OccurredAtUtc,
-                fileRow?.CreatedAt
-            );
-
-            const presentedPdfSha256 = s.PresentedPdfSha256 || fileRow?.PresentedPdfSha256 || '-';
-            const signatureImageSha256 = s.SignatureImageSha256 || null;
-
-            const existing = signersMap.get(key);
-            const next = existing || {
-                name: s.SignerName || (userInfo?.Name) || '-',
-                userId: s.SignerUserId || '-',
-                signingSessionId: s.SigningSessionId || '-',
-                phone: userInfo?.Phone || '-',
-                otpPhoneE164: SIGNING_OTP_ENABLED ? (otpRow?.PhoneE164 || '-') : 'N/A',
-                email: userInfo?.Email || '-',
-                otpUsed: SIGNING_OTP_ENABLED ? Boolean(s.OtpVerificationId || (otpRow && otpRow.Verified)) : false,
-                otpVerifiedAtUtc: SIGNING_OTP_ENABLED ? normalizeUtc(otpRow?.VerifiedAtUtc) : 'N/A',
-                authProvider: SIGNING_OTP_ENABLED ? '-' : 'N/A',
-                viewIp: viewedEvent?.Ip || '-',
-                signIp: s.SignerIp || '-',
-                device: parseDeviceBrowser(s.SignerUserAgent || viewedEvent?.UserAgent || otpSentEvent?.UserAgent || '-'),
-                timeSentUtc,
-                timeViewedUtc: normalizeUtc(viewedEvent?.OccurredAtUtc),
-                timeSignedUtc: normalizeUtc(s.SignedAt || signedEvent?.OccurredAtUtc),
-                presentedPdfSha256,
-                signatureImageSha256: signatureImageSha256 || '-',
-                _sigHashes: new Set(),
-                color: colorPalette[(colorIdx++) % colorPalette.length],
-            };
-
-            if (signatureImageSha256) {
-                try {
-                    next._sigHashes.add(String(signatureImageSha256));
-                } catch {
-                    // ignore
-                }
-            }
-            // Prefer a stable representative hash, but keep union when multiple spots exist.
-            if (next._sigHashes && next._sigHashes.size > 0) {
-                next.signatureImageSha256 = Array.from(next._sigHashes.values())[0] || next.signatureImageSha256;
-            }
-
-            // Prefer concrete values if later spots have them.
-            next.userId = next.userId !== '-' ? next.userId : (s.SignerUserId || next.userId);
-            next.signingSessionId = next.signingSessionId !== '-' ? next.signingSessionId : (s.SigningSessionId || next.signingSessionId);
-            if (SIGNING_OTP_ENABLED) {
-                next.otpPhoneE164 = next.otpPhoneE164 !== '-' ? next.otpPhoneE164 : (otpRow?.PhoneE164 || next.otpPhoneE164);
-            }
-            next.viewIp = next.viewIp !== '-' ? next.viewIp : (viewedEvent?.Ip || next.viewIp);
-            next.signIp = next.signIp !== '-' ? next.signIp : (s.SignerIp || next.signIp);
-            next.presentedPdfSha256 = next.presentedPdfSha256 !== '-' ? next.presentedPdfSha256 : presentedPdfSha256;
-            if (SIGNING_OTP_ENABLED) {
-                next.otpUsed = next.otpUsed || Boolean(s.OtpVerificationId || (otpRow && otpRow.Verified));
-                if (next.otpVerifiedAtUtc === '-' && otpRow?.VerifiedAtUtc) next.otpVerifiedAtUtc = normalizeUtc(otpRow.VerifiedAtUtc);
-            }
-
-            signersMap.set(key, next);
-        }
-
-        const signers = Array.from(signersMap.values()).map((s) => {
-            const hashes = s?._sigHashes && typeof s._sigHashes.size === 'number'
-                ? Array.from(s._sigHashes.values()).filter(Boolean)
-                : [];
-            const compactHashes = (() => {
-                if (!hashes.length) return s.signatureImageSha256 || '-';
-                const max = 3;
-                const head = hashes.slice(0, max);
-                const rest = hashes.length - head.length;
-                return rest > 0 ? [...head, `(+${rest} more)`].join('\n') : head.join('\n');
-            })();
-
-            const { _sigHashes, ...clean } = s;
-            return { ...clean, signatureImageSha256: compactHashes };
+        return await sendEvidenceCertificatePdf({
+            req,
+            res,
+            next,
+            signingFileId,
+            evidenceStart,
+            meterUsage: true,
         });
-
-        // Sender info: resolve lawyer/admin user + best-effort send attribution.
-        let sender = { name: '-', email: '-', phone: '-', ip: '-', sentBy: '-', sentAtUtc: '-' };
-        try {
-            if (fileRow.LawyerId) {
-                const lr = await pool.query('select userid as "UserId", name as "Name", email as "Email", phonenumber as "Phone" from users where userid = $1', [fileRow.LawyerId]);
-                if (lr.rows.length > 0) {
-                    sender.name = lr.rows[0].Name || sender.name;
-                    sender.email = lr.rows[0].Email || sender.email;
-                    sender.phone = lr.rows[0].Phone || sender.phone;
-                }
-            }
-        } catch (e) {
-            // ignore
-        }
-
-        const firstPublicLink = auditEvents.find((e) => String(e?.EventType) === 'PUBLIC_LINK_ISSUED');
-        if (firstPublicLink) {
-            sender.ip = firstPublicLink.Ip || sender.ip;
-            sender.sentAtUtc = normalizeUtc(firstPublicLink.OccurredAtUtc);
-            const actorType = String(firstPublicLink.ActorType || '').trim();
-            const actorUserId = firstPublicLink.ActorUserId ? String(firstPublicLink.ActorUserId) : null;
-            sender.sentBy = actorType
-                ? (actorUserId ? `${actorType} (UserId ${actorUserId})` : actorType)
-                : (actorUserId ? `UserId ${actorUserId}` : sender.sentBy);
-        }
-
-        let signedHashSha256 = fileRow.SignedPdfSha256 || null;
-        if (!signedHashSha256) {
-            const signedPdf = await loadSignedPdfStreamOrPlaceholder({ signingFileId, fileRow });
-            const signedPdfBuffer = await streamToBuffer(signedPdf.stream);
-            signedHashSha256 = sha256Hex(signedPdfBuffer);
-        }
-
-        const otpPolicy = (() => {
-            const requireOtp = Boolean(fileRow?.RequireOtp);
-            if (requireOtp) return 'OTP required';
-            const waived = Boolean(fileRow?.OtpWaiverAcknowledged);
-            return waived ? 'OTP waived (acknowledged)' : 'OTP waived';
-        })();
-
-        const consentSummary = (() => {
-            if (!consents.length) {
-                return {
-                    required: false,
-                    accepted: false,
-                    acceptedAtUtc: 'N/A',
-                    consentVersion: 'N/A',
-                    consentTextSha256: 'N/A',
-                    note: 'Consent: Not required',
-                };
-            }
-
-            const first = consents[0];
-            const acceptedAtUtc = normalizeUtc(first?.AcceptedAtUtc);
-
-            return {
-                required: true,
-                accepted: true,
-                acceptedAtUtc: acceptedAtUtc === '-' ? 'N/A' : acceptedAtUtc,
-                consentVersion: first?.ConsentVersion || 'N/A',
-                consentTextSha256: first?.ConsentTextSha256 || 'N/A',
-                note: consents.length > 1 ? `Multiple consent records: ${consents.length}` : '-',
-            };
-        })();
-
-        const otpSummary = {
-            systemEnabled: SIGNING_OTP_ENABLED,
-            required: SIGNING_OTP_ENABLED ? Boolean(fileRow?.RequireOtp) : false,
-            used: SIGNING_OTP_ENABLED ? (otpVerifications.length > 0) : false,
-            verified: SIGNING_OTP_ENABLED ? otpVerifications.some((o) => Boolean(o?.Verified)) : false,
-            provider: SIGNING_OTP_ENABLED ? 'OTP' : 'N/A',
-            messageId: 'N/A',
-        };
-
-        const securitySummary = (() => {
-            if (!auditEvents.length) {
-                return {
-                    auditHashChainPresent: 'Not available',
-                    auditEventCount: 0,
-                };
-            }
-            const hasAnyHash = auditEvents.some((e) => Boolean(e?.EventHash) || Boolean(e?.PrevEventHash));
-            return {
-                auditHashChainPresent: hasAnyHash,
-                auditEventCount: auditEvents.length,
-            };
-        })();
-
-        const missingNotes = [];
-        if (!fileRow?.PresentedPdfSha256) missingNotes.push('Presented PDF SHA256 missing');
-        if (!fileRow?.SignedPdfSha256) missingNotes.push('Signed PDF SHA256 missing (computed in-certificate)');
-
-        const verifyUrl = `https://${WEBSITE_DOMAIN}/Verify/Evidence/${encodeURIComponent(signingFileId)}`;
-
-        const signingPolicyVersion = fileRow?.SigningPolicyVersion || SIGNING_POLICY_VERSION || 'N/A';
-
-        const doc = {
-            documentId: fileRow.SigningFileId || signingFileId,
-            documentName: fileRow.FileName || '-',
-            caseId: fileRow.CaseId || 'N/A',
-            caseName: caseName || 'N/A',
-            signingPolicyVersion: signingPolicyVersion || 'N/A',
-            signatureTypeDisclosure: '[REQUIRES LOCAL COUNSEL] Electronic signature (not PKI / not qualified / not "approved").',
-            creationUtc: new Date(fileRow.CreatedAt || new Date()).toISOString().replace('T', ' ').slice(0, 19) + 'Z',
-            signedHashSha256: signedHashSha256 || '-',
-            signedPdfSha256: signedHashSha256 || '-',
-            presentedPdfSha256: fileRow.PresentedPdfSha256 || '-',
-            originalPdfSha256: fileRow.OriginalPdfSha256 || '-',
-            otpPolicy,
-            planKeyAtSigning: fileRow.PlanKeyAtSigning || null,
-            retentionDaysCoreAtSigning: fileRow.RetentionDaysCoreAtSigning ?? null,
-            retentionDaysPiiAtSigning: fileRow.RetentionDaysPiiAtSigning ?? null,
-            retentionPolicyHashAtSigning: fileRow.RetentionPolicyHashAtSigning || null,
-            verifyUrl,
-            missingNotes,
-            consent: consentSummary,
-            otp: otpSummary,
-            security: securitySummary,
-        };
-
-        const logoCandidates = [
-            path.resolve(__dirname, '../../frontend/src/assets/images/logos/logoLM.png'),
-            path.resolve(__dirname, '../../frontend/src/assets/images/logos/logo.png'),
-            path.resolve(__dirname, '../../frontend/src/assets/images/logos/logo2.png'),
-            path.resolve(__dirname, '../../frontend/src/assets/images/logos/logoLMwhite.png'),
-        ];
-        const logoPath = logoCandidates.find(p => fs.existsSync(p)) || null;
-        const logoDataUrl = logoPath ? loadFileAsDataUrl(logoPath, 'image/png') : null;
-
-        let qrDataUrl = null;
-        try {
-            qrDataUrl = await QRCode.toDataURL(verifyUrl, { width: 256, margin: 1 });
-        } catch (e) {
-            qrDataUrl = null;
-        }
-
-        const brandCompanyName = await getFirmNameEn();
-
-        const pdfBuffer = await renderEvidencePdf({
-            doc,
-            sender,
-            signers,
-            qrDataUrl,
-            brand: {
-                companyName: brandCompanyName,
-                logoDataUrl,
-            },
-        });
-
-        // Filename: evidence_<caseId>_<signingFileId>_<YYYYMMDD_HHMM>.pdf (UTC)
-        const now = new Date();
-        const yyyy = String(now.getUTCFullYear());
-        const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
-        const dd = String(now.getUTCDate()).padStart(2, '0');
-        const hh = String(now.getUTCHours()).padStart(2, '0');
-        const min = String(now.getUTCMinutes()).padStart(2, '0');
-        const caseIdPart = fileRow.CaseId || 'noCase';
-        const filename = `evidence_${caseIdPart}_${signingFileId}_${yyyy}${mm}${dd}_${hh}${min}.pdf`;
-
-        const evidenceEnd = process.hrtime.bigint();
-        const elapsedSeconds = Number(evidenceEnd - evidenceStart) / 1e9;
-        // Evidence metering is a no-op in single-tenant mode
-
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-        return res.send(Buffer.from(pdfBuffer));
     } catch (err) {
         console.error('getEvidenceCertificate error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה ביצירת מסמך ראייה' });
     }
 };
 
+/** Public evidence download via signed_view JWT (used in DOC_SIGNED email links / admin CC). */
+exports.getPublicEvidenceCertificate = async (req, res, next) => {
+    try {
+        const evidenceStart = process.hrtime.bigint();
+        const verified = verifyPublicViewToken(req.params.token);
+        if (!verified.ok) {
+            return fail(next, verified.errorCode, verified.httpStatus);
+        }
+        return await sendEvidenceCertificatePdf({
+            req,
+            res,
+            next,
+            signingFileId: verified.signingFileId,
+            evidenceStart,
+            meterUsage: false,
+        });
+    } catch (err) {
+        console.error('getPublicEvidenceCertificate error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה ביצירת מסמך ראייה' });
+    }
+};
 // Get distinct signers for a signing file (for resend UI)
 exports.getSigningFileSigners = async (req, res, next) => {
     try {
@@ -6372,7 +6088,8 @@ exports.signFile = async (req, res, next) => {
             // Generate a public view URL so recipients can view/download without app auth
             const publicViewToken = createPublicViewToken(signingFileId);
             const signedDocumentUrl = buildPublicViewUrl(publicViewToken) || `https://${domainForUrls}/signing-files/${signingFileId}/download`;
-            const evidenceCertificateUrl = `https://${domainForUrls}/signing-files/${signingFileId}/evidence-certificate`;
+            const evidenceCertificateUrl = buildPublicEvidenceUrl(publicViewToken)
+                || `https://${domainForUrls}/ViewSignedDocument?token=${encodeURIComponent(publicViewToken)}&evidence=1`;
 
             await notifyRecipient({
                 recipientUserId: file.LawyerId,

@@ -6,6 +6,7 @@ import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
 import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
 import { Text14, TextBold24 } from "../../components/specializedComponents/text/AllTextKindFile";
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
+import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
 import { formatDisplayDateTime } from "../../functions/date/formatDateForInput";
 import "./ViewSignedDocument.scss";
 
@@ -15,6 +16,7 @@ export default function ViewSignedDocument() {
     const { t } = useTranslation();
     const [searchParams] = useSearchParams();
     const token = searchParams.get("token") || "";
+    const wantsEvidence = searchParams.get("evidence") === "1";
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -29,6 +31,11 @@ export default function ViewSignedDocument() {
         try {
             setLoading(true);
             setError(null);
+            if (wantsEvidence) {
+                const evidenceUrl = signingFilesApi.getPublicEvidenceCertificateUrl(token);
+                window.location.replace(evidenceUrl);
+                return;
+            }
             const res = await signingFilesApi.getPublicSignedDocumentView(token);
             const data = res?.data || res;
             if (!data?.viewUrl) {
@@ -36,18 +43,20 @@ export default function ViewSignedDocument() {
             }
             setDocInfo(data);
         } catch (err) {
-            const code = err?.response?.data?.errorCode || err?.response?.data?.code;
+            const code = err?.response?.data?.errorCode || err?.response?.data?.code || err?.data?.errorCode;
             if (code === "TOKEN_EXPIRED") {
                 setError(t("viewSignedDoc.expired", "תוקף הקישור פג"));
             } else if (code === "DOCUMENT_NOT_SIGNED") {
                 setError(t("viewSignedDoc.notSigned", "המסמך טרם נחתם"));
+            } else if (code === "FORBIDDEN") {
+                setError(t("viewSignedDoc.forbidden", "אין לך הרשאה לבצע פעולה זו."));
             } else {
                 setError(t("viewSignedDoc.loadError", "שגיאה בטעינת המסמך"));
             }
         } finally {
             setLoading(false);
         }
-    }, [token, t]);
+    }, [token, t, wantsEvidence]);
 
     useEffect(() => {
         loadDocument();
@@ -71,6 +80,11 @@ export default function ViewSignedDocument() {
         }
     };
 
+    const handleDownloadEvidence = () => {
+        if (!token) return;
+        window.open(signingFilesApi.getPublicEvidenceCertificateUrl(token), "_blank");
+    };
+
     const formattedDate = formatDisplayDateTime(docInfo?.signedAt);
 
     return (
@@ -78,7 +92,11 @@ export default function ViewSignedDocument() {
             <SimpleContainer className="lw-viewSignedDoc__card">
                 {loading && (
                     <SimpleContainer className="lw-viewSignedDoc__center">
-                        <Text14>{t("viewSignedDoc.loading", "טוען מסמך...")}</Text14>
+                        <Text14>
+                            {wantsEvidence
+                                ? t("viewSignedDoc.loadingEvidence", "מוריד מסמך ראיות...")
+                                : t("viewSignedDoc.loading", "טוען מסמך...")}
+                        </Text14>
                     </SimpleContainer>
                 )}
 
@@ -113,6 +131,9 @@ export default function ViewSignedDocument() {
                             <PrimaryButton onPress={handleDownload}>
                                 {t("viewSignedDoc.download", "הורד מסמך חתום")}
                             </PrimaryButton>
+                            <SecondaryButton onPress={handleDownloadEvidence}>
+                                {t("viewSignedDoc.downloadEvidence", "הורד מסמך ראיות")}
+                            </SecondaryButton>
                         </SimpleContainer>
                     </>
                 )}

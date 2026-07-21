@@ -71,25 +71,71 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
     const signerIdForColor = spot?.signerUserId ?? spot?.SignerUserId ?? spot?.signerIndex ?? spot?.signerIdx ?? signerIndex;
     const colorClass = signerPaletteClass(signerIdForColor);
 
-    const startDragFromClientPoint = (startClientX, startClientY, onEnd) => {
+    const startDragFromClientPoint = (startClientX, startClientY) => {
         const startX = Number(startClientX);
         const startY = Number(startClientY);
         const baseX = Number(spot.x || 0);
         const baseY = Number(spot.y || 0);
+        const basePage = Number(spot.pageNum ?? spot.PageNumber ?? 1) || 1;
         const safeScale = scale || 1;
+        const spotW = Number(spot.width || 130);
+        const spotH = Number(spot.height || 48);
+
+        const startPageEl = document.querySelector(`.lw-signing-pageInner[data-page-number="${basePage}"]`);
+        const startRect = startPageEl?.getBoundingClientRect();
+        const grabOffsetX = startRect ? startX - (startRect.left + baseX * safeScale) : 0;
+        const grabOffsetY = startRect ? startY - (startRect.top + baseY * safeScale) : 0;
+
+        const findPageUnderPoint = (clientX, clientY) => {
+            const hit = document.elementsFromPoint(clientX, clientY)
+                .map((el) => el?.closest?.(".lw-signing-pageInner"))
+                .find(Boolean);
+            if (hit) return hit;
+
+            const pages = Array.from(document.querySelectorAll(".lw-signing-pageInner[data-page-number]"));
+            let best = null;
+            let bestDist = Infinity;
+            for (const page of pages) {
+                const rect = page.getBoundingClientRect();
+                let dist = 0;
+                if (clientY < rect.top) dist = rect.top - clientY;
+                else if (clientY > rect.bottom) dist = clientY - rect.bottom;
+                if (dist < bestDist) {
+                    bestDist = dist;
+                    best = page;
+                }
+            }
+            return best;
+        };
 
         const moveFromClientPoint = (clientX, clientY) => {
-            const dx = Number(clientX) - startX;
-            const dy = Number(clientY) - startY;
+            const pageEl = findPageUnderPoint(clientX, clientY) || startPageEl;
+            if (!pageEl) {
+                onUpdateSpot?.(index, {
+                    x: baseX + (Number(clientX) - startX) / safeScale,
+                    y: baseY + (Number(clientY) - startY) / safeScale,
+                });
+                return;
+            }
+
+            const pageNumber = Number(pageEl.getAttribute("data-page-number")) || basePage;
+            const rect = pageEl.getBoundingClientRect();
+            const pageW = rect.width / safeScale;
+            const pageH = rect.height / safeScale;
+            const nextX = (Number(clientX) - rect.left - grabOffsetX) / safeScale;
+            const nextY = (Number(clientY) - rect.top - grabOffsetY) / safeScale;
+            const clampedX = Math.max(0, Math.min(nextX, Math.max(0, pageW - spotW)));
+            const clampedY = Math.max(0, Math.min(nextY, Math.max(0, pageH - spotH)));
 
             onUpdateSpot?.(index, {
-                // dx/dy are in screen pixels; convert to base coordinate space.
-                x: baseX + dx / safeScale,
-                y: baseY + dy / safeScale,
+                x: clampedX,
+                y: clampedY,
+                pageNum: pageNumber,
+                PageNumber: pageNumber,
             });
         };
 
-        return { moveFromClientPoint, onEnd };
+        return { moveFromClientPoint };
     };
 
     const startDragPointer = (e) => {

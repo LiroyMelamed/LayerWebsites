@@ -439,7 +439,8 @@
     width: 100%;
     max-width: var(--lw-pdf-render-width, 50rem);
     min-inline-size: 0;
-    overflow: hidden;
+    /* Allow spots to remain visible while dragging across page gutters. */
+    overflow: visible;
 }
 
 .lw-signing-pdfPage {
