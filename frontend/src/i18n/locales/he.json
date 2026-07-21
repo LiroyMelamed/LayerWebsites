@@ -1125,7 +1125,7 @@
     "upload": {
       "signerSelectorLabel": "חותם",
       "title": "שליחת מסמך לחתימה",
-      "searchSignerTitle": "חיפוש חותם (לקוח)",
+      "searchSignerTitle": "לקוחות שמורים",
       "addManualSigner": "הוסף חותם ידנית",
       "manualSignerName": "שם החותם *",
       "manualSignerEmail": "אימייל",

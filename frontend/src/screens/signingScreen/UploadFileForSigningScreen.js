@@ -376,6 +376,20 @@ export default function UploadFileForSigningScreen() {
     const [documentName, setDocumentName] = useState("");
     const [completionEmail, setCompletionEmail] = useState("");
 
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await customersApi.getCurrentCustomer();
+                const email = String(res?.data?.Email || res?.data?.email || "").trim();
+                if (!cancelled && email) setCompletionEmail((prev) => prev || email);
+            } catch {
+                // best-effort default only
+            }
+        })();
+        return () => { cancelled = true; };
+    }, []);
+
     const [signatureSpots, setSignatureSpots] = useState([]);
     const [selectedFieldType, setSelectedFieldType] = useState('signature');
     const [selectedSpotIndex, setSelectedSpotIndex] = useState(null);
