@@ -103,15 +103,26 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         return 'field';
     };
 
+    const isPublic = Boolean(publicToken);
+
     const getActiveSpotForMode = (details, current) => {
-        if (current) return current;
+        const canAct = (spot) => {
+            if (!spot || spot.IsSigned) return false;
+            const flag = spot?.CanSign ?? spot?.canSign;
+            if (typeof flag === 'boolean') return flag;
+            if (!isPublic) return true;
+            const myId = details?.signerUserId ?? details?.SignerUserId;
+            const spotSignerId = spot?.SignerUserId ?? spot?.signerUserId;
+            if (myId == null || spotSignerId == null) return false;
+            return Number(spotSignerId) === Number(myId);
+        };
+        if (canAct(current)) return current;
         const allSpots = (details?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
         const unsignedRequired = getUnsignedRequiredSpots(allSpots);
         if (unsignedRequired.length > 0) return unsignedRequired[0];
         return null;
     };
 
-    const isPublic = Boolean(publicToken);
     const isScreen = variant === "screen";
     const otpEnabled = SIGNING_OTP_ENABLED && Boolean(fileDetails?.file?.OtpEnabled ?? true);
     const otpRequired = otpEnabled && Boolean(fileDetails?.file?.RequireOtp);
@@ -304,12 +315,17 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const isMyActionableSpot = (spot) => {
         // Prefer explicit backend flag (public + authenticated details).
-        if (typeof spot?.CanSign === 'boolean') return spot.CanSign;
-        if (!isPublic) return true; // legacy authenticated responses
-        const myId = fileDetails?.signerUserId;
-        if (myId == null) return true;
+        const flag = spot?.CanSign ?? spot?.canSign ?? spot?.IsMine ?? spot?.isMine;
+        if (typeof flag === 'boolean') return flag;
+        const myId = fileDetails?.signerUserId ?? fileDetails?.SignerUserId;
         const spotSignerId = spot?.SignerUserId ?? spot?.signerUserId;
-        if (spotSignerId == null) return true;
+        if (isPublic) {
+            // Public links: never treat another signer's spot as actionable when flags are missing.
+            if (myId == null || spotSignerId == null) return false;
+            return Number(spotSignerId) === Number(myId);
+        }
+        // Legacy authenticated responses without CanSign: allow unless clearly assigned to someone else.
+        if (myId == null || spotSignerId == null) return true;
         return Number(spotSignerId) === Number(myId);
     };
 

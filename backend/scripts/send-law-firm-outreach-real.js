@@ -2,27 +2,22 @@
 'use strict';
 
 /**
- * REAL law-firm outreach sender.
+ * REAL law-firm outreach sender (direct Nodemailer — no simulation gate).
  *
- * Why this exists: the original send-law-firm-outreach.js routes through
- * smooveEmailCampaignService, whose send is gated by
- *   shouldSendRealEmail = isProduction || FORCE_SEND_EMAIL_ALL
- * Both are false in this environment (NODE_ENV=development, IS_PRODUCTION unset,
- * FORCE_SEND_EMAIL_ALL=false, and the runtime override is defeated by module
- * load order), so every "send" silently SIMULATED and nothing was delivered.
- *
- * This script sends for real through the dedicated Brevo SMTP relay
- * (OUTREACH_SMTP_*), exactly like scripts/send-test-outreach.js which we
- * verified delivers. No simulation gate, no app SMTP, no PDF attachment.
- *
- * It reuses the same state file + row indexing as the original script, so
- * --resume continues from logs/outreach-state.json (nextRow).
- *
+ * Resumes from logs/outreach-state.json with --resume.
  * Default mode is DRY RUN. Use --send to actually deliver.
  *
- * Example (resume real send, 300 max, 800ms apart):
+ * SMTP:
+ *   --smtp app       → MelamedLaw SMTP_* (mail.melamedlaw.co.il)
+ *   --smtp outreach  → Brevo OUTREACH_SMTP_* (default historically)
+ *
+ * Example (resume remaining with MelamedLaw SMTP + sales deck):
  *   node scripts/send-law-firm-outreach-real.js \
- *     --file "./data/רשימת עורכי דין.xlsx" --send --limit 300 --resume --delay-ms 800
+ *     --file "./data/רשימת עורכי דין.xlsx" \
+ *     --send --resume --smtp app \
+ *     --sales-deck "./data/מצגת מכירות.pdf" \
+ *     --platform-url "https://mela-media.co.il/platform/" \
+ *     --delay-ms 5000
  */
 
 const fs = require('fs');
@@ -81,8 +76,6 @@ function firstNonEmpty(row, keys) {
     }
     return '';
 }
-// Names in the sheet often already carry the "עו"ד" honorific (e.g. עו"ד יאיר יעקב).
-// Strip a leading advocate title so the greeting doesn't read "שלום עו"ד עו"ד ...".
 function stripAdvocateTitle(name) {
     return String(name || '')
         .trim()
@@ -94,6 +87,56 @@ function maskEmail(email) {
     const at = s.indexOf('@');
     if (at <= 0) return s;
     return `${s.slice(0, Math.min(3, at))}***${s.slice(at)}`;
+}
+
+function resolveOptionalSalesDeckPath(inputPath) {
+    const explicit = String(inputPath || '').trim();
+    if (explicit) {
+        const abs = path.isAbsolute(explicit) ? explicit : path.resolve(process.cwd(), explicit);
+        if (fs.existsSync(abs) && fs.statSync(abs).isFile()) return abs;
+        console.error(`Sales deck not found: ${abs}`);
+        process.exit(1);
+    }
+    const dataDir = path.resolve(__dirname, '../data');
+    if (!fs.existsSync(dataDir) || !fs.statSync(dataDir).isDirectory()) return null;
+    const candidates = fs.readdirSync(dataDir)
+        .filter(name => /מצגת|sales|pitch|deck/i.test(name))
+        .filter(name => /\.(pdf|ppt|pptx)$/i.test(name));
+    if (!candidates.length) return null;
+    return path.resolve(dataDir, candidates[0]);
+}
+
+function inferContentTypeByFilename(filename) {
+    const n = String(filename || '').toLowerCase();
+    if (n.endsWith('.pdf')) return 'application/pdf';
+    if (n.endsWith('.ppt')) return 'application/vnd.ms-powerpoint';
+    if (n.endsWith('.pptx')) {
+        return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+    }
+    return 'application/octet-stream';
+}
+
+function resolveSmtpConfig(smtpMode) {
+    if (smtpMode === 'app') {
+        return {
+            mode: 'app',
+            host: process.env.SMTP_HOST,
+            port: parseInt(process.env.SMTP_PORT || '465', 10),
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+            fromEmail: process.env.SMTP_FROM_EMAIL,
+            label: 'MelamedLaw SMTP (SMTP_*)',
+        };
+    }
+    return {
+        mode: 'outreach',
+        host: process.env.OUTREACH_SMTP_HOST,
+        port: parseInt(process.env.OUTREACH_SMTP_PORT || '587', 10),
+        user: process.env.OUTREACH_SMTP_USER,
+        pass: process.env.OUTREACH_SMTP_PASS,
+        fromEmail: process.env.OUTREACH_SMTP_FROM_EMAIL,
+        label: 'Brevo outreach (OUTREACH_SMTP_*)',
+    };
 }
 
 const HTML_TEMPLATE = `
@@ -114,6 +157,10 @@ const HTML_TEMPLATE = `
 
     <p>זה לא מחליף את המערכת הקיימת אצלך — זו שכבה שמפחיתה את העומס האדמיניסטרטיבי.</p>
 
+    [[platform_paragraph]]
+
+    [[sales_deck_paragraph]]
+
     <p>
         אם רלוונטי, אשמח ל-10 דקות כדי להראות איך זה נראה. אפשר פשוט להשיב למייל הזה.
     </p>
@@ -122,11 +169,15 @@ const HTML_TEMPLATE = `
         בתודה,<br/>
         <strong>[[signature_name]]</strong> · Melamedia
     </p>
+
+    <p style="font-size: 0.75rem; color: #666;">
+        קיבלת מייל זה כי אנחנו פונים למשרדי עו"ד בישראל. אם זה לא רלוונטי, השב/י "להסיר" ולא אטריד שוב.
+    </p>
 </div>
 `.trim();
 
 function buildText(data) {
-    return [
+    const lines = [
         `${data.greeting},`,
         '',
         'אני לירוי מלמד מחברת Melamedia. אנחנו מפעילים פלטפורמה שכבר עובדת בכמה משרדי עו"ד בישראל, עם מטרה אחת: שהלקוחות יראו בעצמם באיזה שלב התיק שלהם נמצא — בלי הטלפונים החוזרים של "מה קורה עם התיק שלי?".',
@@ -135,11 +186,20 @@ function buildText(data) {
         '',
         'זה לא מחליף את המערכת הקיימת אצלך — זו שכבה שמפחיתה את העומס האדמיניסטרטיבי.',
         '',
+    ];
+    if (data.platform_url) {
+        lines.push(`לפרטים נוספים על הפלטפורמה: ${data.platform_url}`, '');
+    }
+    if (data.has_sales_deck) {
+        lines.push('צירפתי מצגת קצרה שמראה את זה בתמונות — שווה מבט.', '');
+    }
+    lines.push(
         'אם רלוונטי, אשמח ל-10 דקות כדי להראות איך זה נראה. אפשר פשוט להשיב למייל הזה.',
         '',
         'בתודה,',
         `${data.signature_name} · Melamedia`,
-    ].join('\n');
+    );
+    return lines.join('\n');
 }
 
 async function main() {
@@ -153,10 +213,15 @@ async function main() {
     }
 
     const shouldSend = hasFlag('--send');
-    const delayMs = toPositiveInt(getArgValue('--delay-ms', '4000'), 4000);
+    const delayMs = toPositiveInt(getArgValue('--delay-ms', '5000'), 5000);
     const limit = toPositiveInt(getArgValue('--limit', '0'), 0);
     const resume = hasFlag('--resume');
     const stateFile = path.resolve(__dirname, '../logs/outreach-state.json');
+    const smtpMode = String(getArgValue('--smtp', 'app') || 'app').toLowerCase();
+    if (!['app', 'outreach'].includes(smtpMode)) {
+        console.error('--smtp must be "app" (MelamedLaw) or "outreach" (Brevo)');
+        process.exit(1);
+    }
 
     let startAt = toPositiveInt(getArgValue('--start-at', '1'), 1);
     if (resume) {
@@ -177,16 +242,15 @@ async function main() {
     const signatureName = getArgValue('--signature-name', 'לירוי מלמד');
     const replyTo = getArgValue('--reply-to', 'liroymelamed@icloud.com');
     const fromName = getArgValue('--from-name', 'לירוי מלמד · Melamedia');
+    const platformUrl = getArgValue('--platform-url', 'https://mela-media.co.il/platform/');
+    const salesDeckPath = resolveOptionalSalesDeckPath(getArgValue('--sales-deck', ''));
+    const onlyEmail = String(getArgValue('--only-email', '') || '').trim().toLowerCase();
 
-    // Dedicated Brevo relay (same as the verified test sender).
-    const smtpHost = process.env.OUTREACH_SMTP_HOST;
-    const smtpPort = parseInt(process.env.OUTREACH_SMTP_PORT || '587', 10);
-    const smtpUser = process.env.OUTREACH_SMTP_USER;
-    const smtpPass = process.env.OUTREACH_SMTP_PASS;
-    const fromEmail = getArgValue('--from-email', '') || process.env.OUTREACH_SMTP_FROM_EMAIL || '';
+    const smtp = resolveSmtpConfig(smtpMode);
+    const fromEmail = getArgValue('--from-email', '') || smtp.fromEmail || '';
 
-    if (shouldSend && (!smtpHost || !smtpUser || !smtpPass || !fromEmail)) {
-        console.error('Missing OUTREACH_SMTP_* env vars. Cannot send. Check backend/.env.');
+    if (shouldSend && (!smtp.host || !smtp.user || !smtp.pass || !fromEmail)) {
+        console.error(`Missing SMTP config for mode "${smtpMode}". Check backend/.env.`);
         process.exit(1);
     }
 
@@ -197,20 +261,30 @@ async function main() {
 
     const selectedRows = rows.slice(startAt - 1);
 
+    let salesDeckAttachment = null;
+    if (salesDeckPath) {
+        salesDeckAttachment = {
+            filename: path.basename(salesDeckPath),
+            content: fs.readFileSync(salesDeckPath),
+            contentType: inferContentTypeByFilename(salesDeckPath),
+        };
+    }
+
     let transporter = null;
     if (shouldSend) {
         transporter = nodemailer.createTransport({
-            host: smtpHost,
-            port: smtpPort,
-            secure: smtpPort === 465,
-            auth: { user: smtpUser, pass: smtpPass },
+            host: smtp.host,
+            port: smtp.port,
+            secure: smtp.port === 465,
+            auth: { user: smtp.user, pass: smtp.pass },
         });
         await transporter.verify();
     }
 
     console.log('---------------------------------------------');
-    console.log('Law-firm outreach run (REAL sender / Brevo)');
+    console.log('Law-firm outreach run (REAL sender)');
     console.log('Mode:        ', shouldSend ? 'SEND' : 'DRY RUN');
+    console.log('SMTP:        ', smtp.label);
     console.log('Workbook:    ', absoluteFilePath);
     console.log('Sheet:       ', sheetName);
     console.log('Rows in file:', rows.length);
@@ -218,9 +292,12 @@ async function main() {
     console.log('Max sends:   ', limit > 0 ? limit : '(no cap)');
     console.log('Rows to scan:', selectedRows.length);
     console.log('Delay (ms):  ', delayMs);
+    console.log('Sales deck:  ', salesDeckPath || '(none)');
+    console.log('Platform URL:', platformUrl || '(none)');
     console.log('Reply-To:    ', replyTo);
     console.log('From:        ', `${fromName} <${fromEmail}>`);
-    console.log('SMTP host:   ', shouldSend ? smtpHost : '(dry-run, no SMTP)');
+    console.log('SMTP host:   ', shouldSend ? smtp.host : '(dry-run, no SMTP)');
+    if (onlyEmail) console.log('Only email:  ', onlyEmail);
     console.log('---------------------------------------------');
 
     const emailKeys = ['email', 'e-mail', 'mail', 'אימייל', 'מייל', 'כתובת אימייל', 'דואר אלקטרוני'];
@@ -259,6 +336,10 @@ async function main() {
             console.log(`[SKIP] row=${excelRowNumber} invalid email`);
             continue;
         }
+        if (onlyEmail && toEmail !== onlyEmail) {
+            skipped++;
+            continue;
+        }
         if (seen.has(toEmail)) {
             skipped++;
             console.log(`[SKIP] row=${excelRowNumber} duplicate email ${maskEmail(toEmail)}`);
@@ -270,6 +351,14 @@ async function main() {
             greeting,
             firm: firmName,
             signature_name: signatureName,
+            platform_url: platformUrl,
+            has_sales_deck: Boolean(salesDeckAttachment),
+            platform_paragraph: platformUrl
+                ? `<p>לפרטים נוספים על הפלטפורמה: <a href="${platformUrl}">${platformUrl}</a></p>`
+                : '',
+            sales_deck_paragraph: salesDeckAttachment
+                ? '<p>צירפתי מצגת קצרה שמראה את זה בתמונות — שווה מבט.</p>'
+                : '',
         };
         const subject = fillTemplate(subjectTemplate, placeholderData);
         const htmlBody = fillTemplate(HTML_TEMPLATE, placeholderData);
@@ -277,19 +366,24 @@ async function main() {
 
         if (!shouldSend) {
             sent++;
-            console.log(`[DRY]  row=${excelRowNumber} to=${maskEmail(toEmail)} firm="${firmName}" subject="${subject}"`);
+            const deckLabel = salesDeckPath ? ` attachment=${path.basename(salesDeckPath)}` : '';
+            console.log(`[DRY]  row=${excelRowNumber} to=${maskEmail(toEmail)} firm="${firmName}" subject="${subject}"${deckLabel}`);
             continue;
         }
 
         try {
-            const info = await transporter.sendMail({
+            const mailOptions = {
                 from: `"${fromName}" <${fromEmail}>`,
                 to: toEmail,
                 replyTo,
                 subject,
                 text: textBody,
                 html: htmlBody,
-            });
+            };
+            if (salesDeckAttachment) {
+                mailOptions.attachments = [salesDeckAttachment];
+            }
+            const info = await transporter.sendMail(mailOptions);
             sent++;
             console.log(`[SENT] row=${excelRowNumber} to=${maskEmail(toEmail)} messageId=${info.messageId}`);
             try {
@@ -299,6 +393,7 @@ async function main() {
                     nextRow: excelRowNumber + 1,
                     totalRowsInFile: rows.length,
                     updatedAt: new Date().toISOString(),
+                    smtpMode,
                 }, null, 2), 'utf8');
             } catch (e) {
                 console.warn(`Could not update state file: ${e.message}`);
@@ -307,6 +402,12 @@ async function main() {
             failed++;
             failures.push({ row: excelRowNumber, email: toEmail, reason: 'EMAIL_SEND_FAILED', details: { error: e?.message } });
             console.log(`[FAIL] row=${excelRowNumber} to=${maskEmail(toEmail)} reason=${e?.message}`);
+            // Stop on hard SMTP failures (auth / rate limit) so we don't burn the list.
+            const msg = String(e?.message || '').toLowerCase();
+            if (msg.includes('auth') || msg.includes('rate') || msg.includes('too many') || msg.includes('limit')) {
+                console.error('Stopping early due to SMTP auth/rate-limit error.');
+                break;
+            }
         }
 
         if (i < selectedRows.length - 1) await sleep(delayMs);
@@ -314,12 +415,16 @@ async function main() {
 
     const summary = {
         mode: shouldSend ? 'send' : 'dry-run',
-        sender: 'brevo-direct',
+        sender: smtp.mode === 'app' ? 'melamedlaw-smtp' : 'brevo-direct',
+        smtpHost: smtp.host || null,
         file: absoluteFilePath,
         sheetName,
         totalRowsInFile: rows.length,
+        startAt,
         attemptedRows: selectedRows.length,
         sent, skipped, failed, failures,
+        salesDeck: salesDeckPath || null,
+        platformUrl: platformUrl || null,
         finishedAt: new Date().toISOString(),
     };
     const ts = new Date().toISOString().replace(/[.:]/g, '-');
