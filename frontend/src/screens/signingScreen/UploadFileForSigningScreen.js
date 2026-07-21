@@ -355,7 +355,11 @@ export default function UploadFileForSigningScreen() {
     };
 
     const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getCaseByName, null, () => { });
-    const { result: customersByName, isPerforming: isPerformingCustomersByName, performRequest: SearchCustomersByName } = useHttpRequest(customersApi.getCustomersByName, null, () => { });
+    const { result: customersByName, isPerforming: isPerformingCustomersByName, performRequest: SearchCustomersByName } = useHttpRequest(
+        (userName) => customersApi.getCustomersByName(userName, { includeStaff: true }),
+        null,
+        () => { }
+    );
 
     const [caseId, setCaseId] = useState("");
     const [selectedCase, setSelectedCase] = useState(null);
