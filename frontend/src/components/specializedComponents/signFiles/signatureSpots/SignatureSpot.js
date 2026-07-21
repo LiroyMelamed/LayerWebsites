@@ -372,7 +372,8 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                     X
                 </span>
             )}
-            {/* overlay for editor + context menu */}
+            {/* overlay for editor + context menu — signed spots are display-only */}
+            {!isSigned && (
             <div
                 onClick={(e) => {
                     if (canEditSpot) return;
@@ -431,6 +432,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                 aria-hidden
                 className="lw-signing-spotOverlay"
             />
+            )}
         </SimpleContainer>
     );
 }

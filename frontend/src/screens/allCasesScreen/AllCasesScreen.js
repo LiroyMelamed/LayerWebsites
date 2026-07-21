@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import casesApi, { casesTypeApi } from "../../api/casesApi";
 import { images } from "../../assets/images/images";
@@ -16,6 +16,8 @@ import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import { MainScreenName } from "../mainScreen/MainScreen";
 import AllCasesCard from "./components/AllCasesCard";
 import { useTranslation } from "react-i18next";
+import { usePopup } from "../../providers/PopUpProvider";
+import CaseFullView from "../../components/styledComponents/cases/CaseFullView";
 
 
 import "./AllCasesScreen.scss";
@@ -24,10 +26,13 @@ export const AllCasesScreenName = "/AllCasesScreen";
 
 export default function AllCasesScreen() {
     const { t } = useTranslation();
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const initialStatus = searchParams.get('status') === 'closed' ? 'closed' : 'open';
+    const deepCaseId = String(searchParams.get('caseId') || '').trim();
+    const deepLinkHandledRef = useRef(false);
 
     const { isSmallScreen } = useScreenSize();
+    const { openPopup, closePopup } = usePopup();
     const [selectedCaseType, setSelectedCaseType] = useState(null);
     const [selectedStatus, setSelectedStatus] = useState(initialStatus);
     const [selectedClient, setSelectedClient] = useState(null);
@@ -38,6 +43,41 @@ export default function AllCasesScreen() {
 
     const { result: allCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
     const { result: allCases, isPerforming: isPerformingAllCases, performRequest: reperformAfterSave } = useAutoHttpRequest(casesApi.getAllCases);
+
+    const clearDeepCaseId = useCallback(() => {
+        if (!searchParams.has('caseId')) return;
+        const next = new URLSearchParams(searchParams);
+        next.delete('caseId');
+        setSearchParams(next, { replace: true });
+    }, [searchParams, setSearchParams]);
+
+    useEffect(() => {
+        if (!deepCaseId || deepLinkHandledRef.current) return;
+        let cancelled = false;
+
+        (async () => {
+            try {
+                const res = await casesApi.getCaseById(deepCaseId);
+                const caseDetails = res?.data ?? res;
+                if (cancelled || !caseDetails || (!caseDetails.CaseId && !caseDetails.caseid)) return;
+                deepLinkHandledRef.current = true;
+                openPopup(
+                    <CaseFullView
+                        caseDetails={caseDetails}
+                        rePerformRequest={reperformAfterSave}
+                        closePopUpFunction={closePopup}
+                    />
+                );
+                clearDeepCaseId();
+            } catch (err) {
+                console.error('Failed to open case from deep link', err);
+                deepLinkHandledRef.current = true;
+                clearDeepCaseId();
+            }
+        })();
+
+        return () => { cancelled = true; };
+    }, [deepCaseId, openPopup, closePopup, reperformAfterSave, clearDeepCaseId]);
 
     const applyFilters = useCallback((typeFilter, statusFilter, clientFilter, managerFilter, companyFilter, caseNameFilter) => {
         let filtered = allCases;

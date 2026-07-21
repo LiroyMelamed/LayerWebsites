@@ -10,6 +10,8 @@
                     "NOT /static/*",
                     "NOT /ViewSignedDocument*",
                     "NOT /Verify/Evidence/*",
+                    "NOT /ticket*",
+                    "NOT /TicketScreen*",
                     "/PublicSign*",
                     "/s/*",
                     "*"
