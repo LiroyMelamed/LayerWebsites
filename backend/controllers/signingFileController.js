@@ -1439,8 +1439,8 @@ function buildLawyerSigningFilesListQuery({ scope, pagination }) {
                   where ss2.signingfileid = sf.signingfileid
                     and u2.name is not null
                 ) as "ClientName",
-                count(case when ss.isrequired = true then ss.signaturespotid end) as "TotalSpots",
-                coalesce(sum(case when ss.isrequired = true and ss.issigned = true then 1 else 0 end),0) as "SignedSpots"`;
+                count(case when ss.isrequired = true and lower(coalesce(ss.fieldtype, 'signature')) != 'lawyerstamp' then ss.signaturespotid end) as "TotalSpots",
+                coalesce(sum(case when ss.isrequired = true and ss.issigned = true and lower(coalesce(ss.fieldtype, 'signature')) != 'lawyerstamp' then 1 else 0 end),0) as "SignedSpots"`;
 
     const joins = isOffice
         ? `left join users owner_u on owner_u.userid = sf.lawyerid`
@@ -2840,8 +2840,8 @@ exports.getClientSigningFiles = async (req, res, next) => {
                     sf.signedat           as "SignedAt",
                     c.casename            as "CaseName",
                     u.name                as "LawyerName",
-                    count(case when ss.isrequired = true then ss.signaturespotid end)                                       as "TotalSpots",
-                    coalesce(sum(case when ss.isrequired = true and ss.issigned = true then 1 else 0 end),0) as "SignedSpots"
+                    count(case when ss.isrequired = true and lower(coalesce(ss.fieldtype, 'signature')) != 'lawyerstamp' then ss.signaturespotid end) as "TotalSpots",
+                    coalesce(sum(case when ss.isrequired = true and ss.issigned = true and lower(coalesce(ss.fieldtype, 'signature')) != 'lawyerstamp' then 1 else 0 end),0) as "SignedSpots"
                  from signingfiles sf
                  join cases c  on c.caseid  = sf.caseid
                  join users u  on u.userid  = sf.lawyerid
@@ -2875,8 +2875,8 @@ exports.getClientSigningFiles = async (req, res, next) => {
                 sf.signedat           as "SignedAt",
                 c.casename            as "CaseName",
                 u.name                as "LawyerName",
-                count(case when ss.isrequired = true then ss.signaturespotid end)                                       as "TotalSpots",
-                coalesce(sum(case when ss.isrequired = true and ss.issigned = true then 1 else 0 end),0) as "SignedSpots"
+                count(case when ss.isrequired = true and lower(coalesce(ss.fieldtype, 'signature')) != 'lawyerstamp' then ss.signaturespotid end) as "TotalSpots",
+                coalesce(sum(case when ss.isrequired = true and ss.issigned = true and lower(coalesce(ss.fieldtype, 'signature')) != 'lawyerstamp' then 1 else 0 end),0) as "SignedSpots"
              from signingfiles sf
              left join cases c  on c.caseid  = sf.caseid
              join users u  on u.userid  = sf.lawyerid
@@ -2961,8 +2961,8 @@ exports.getPendingSigningFiles = async (req, res, next) => {
                     sf.notes              as "Notes",
                     c.casename            as "CaseName",
                     u.name                as "LawyerName",
-                    count(case when ss.isrequired = true then ss.signaturespotid end)                                       as "TotalSpots",
-                    coalesce(sum(case when ss.isrequired = true and ss.issigned = true then 1 else 0 end),0) as "SignedSpots"
+                    count(case when ss.isrequired = true and lower(coalesce(ss.fieldtype, 'signature')) != 'lawyerstamp' then ss.signaturespotid end) as "TotalSpots",
+                    coalesce(sum(case when ss.isrequired = true and ss.issigned = true and lower(coalesce(ss.fieldtype, 'signature')) != 'lawyerstamp' then 1 else 0 end),0) as "SignedSpots"
                  from signingfiles sf
                  join cases c  on c.caseid  = sf.caseid
                  join users u  on u.userid  = sf.lawyerid
@@ -2996,8 +2996,8 @@ exports.getPendingSigningFiles = async (req, res, next) => {
                 sf.notes              as "Notes",
                 c.casename            as "CaseName",
                 u.name                as "LawyerName",
-                count(case when ss.isrequired = true then ss.signaturespotid end)                                       as "TotalSpots",
-                coalesce(sum(case when ss.isrequired = true and ss.issigned = true then 1 else 0 end),0) as "SignedSpots"
+                count(case when ss.isrequired = true and lower(coalesce(ss.fieldtype, 'signature')) != 'lawyerstamp' then ss.signaturespotid end) as "TotalSpots",
+                coalesce(sum(case when ss.isrequired = true and ss.issigned = true and lower(coalesce(ss.fieldtype, 'signature')) != 'lawyerstamp' then 1 else 0 end),0) as "SignedSpots"
              from signingfiles sf
              left join cases c  on c.caseid  = sf.caseid
              join users u  on u.userid  = sf.lawyerid
@@ -3145,12 +3145,24 @@ exports.getSigningFileDetails = async (req, res, next) => {
         // NOTE: Access control is already enforced above and (for clients) the spots are filtered.
         const signatureSpots = await Promise.all(
             (spotsResult.rows || []).map(async (spot) => {
-                const signatureData = spot?.SignatureData;
-                if (!signatureData) return spot;
+                let canSign = false;
+                if (schemaSupport.signaturespotsSignerUserId) {
+                    if (spot.SignerUserId != null) {
+                        canSign = Number(spot.SignerUserId) === Number(userId);
+                    } else {
+                        canSign = Number(file.ClientId) === Number(userId);
+                    }
+                } else {
+                    canSign = Number(file.ClientId) === Number(userId);
+                }
+
+                const withCanSign = { ...spot, CanSign: canSign, IsMine: canSign };
+                const signatureData = withCanSign?.SignatureData;
+                if (!signatureData) return withCanSign;
 
                 // Some legacy rows may already store a full URL.
                 if (typeof signatureData === "string" && /^https?:\/\//i.test(signatureData)) {
-                    return { ...spot, SignatureUrl: signatureData };
+                    return { ...withCanSign, SignatureUrl: signatureData };
                 }
 
                 try {
@@ -3161,11 +3173,11 @@ exports.getSigningFileDetails = async (req, res, next) => {
                     });
 
                     const signatureUrl = await getSignedUrl(r2, cmd, { expiresIn: 600 });
-                    return { ...spot, SignatureUrl: signatureUrl };
+                    return { ...withCanSign, SignatureUrl: signatureUrl };
                 } catch (e) {
                     // If presigning fails, don't break details response.
                     console.error("Failed to presign signature read URL", e);
-                    return spot;
+                    return withCanSign;
                 }
             })
         );
@@ -3211,6 +3223,7 @@ exports.getSigningFileDetails = async (req, res, next) => {
         return res.json({
             file: { ...file, OtpEnabled: SIGNING_OTP_ENABLED },
             signatureSpots,
+            signerUserId: userId,
             isLawyer: viewAllSpots,
             signingOrder,
             isMyTurn,
@@ -4398,11 +4411,11 @@ exports.getSigningFileSigners = async (req, res, next) => {
         }
 
         const signersResult = await pool.query(
-            `select distinct ss.signeruserid as "SignerUserId",
+            `select ss.signeruserid as "SignerUserId",
                     u.name as "Name",
                     u.email as "Email",
                     u.phonenumber as "Phone",
-                    bool_and(ss.issigned) as "AllSigned"
+                    bool_and(ss.issigned) filter (where ss.isrequired = true) as "AllSigned"
              from signaturespots ss
              left join users u on u.userid = ss.signeruserid
              where ss.signingfileid = $1
@@ -4491,6 +4504,28 @@ exports.resendSigningInvite = async (req, res, next) => {
                     reason: 'signer_not_assigned',
                 });
                 continue;
+            }
+
+            // Do not resend to signers who already completed all required spots.
+            try {
+                const signedRes = await pool.query(
+                    `select bool_and(ss.issigned) filter (where ss.isrequired = true) as "AllSigned"
+                     from signaturespots ss
+                     where ss.signingfileid = $1
+                       and ss.signeruserid = $2
+                       and lower(coalesce(ss.fieldtype, 'signature')) != 'lawyerstamp'`,
+                    [signingFileId, uid]
+                );
+                if (signedRes.rows?.[0]?.AllSigned === true) {
+                    deliveryResults.push({
+                        signerUserId: uid,
+                        ok: false,
+                        reason: 'already_signed',
+                    });
+                    continue;
+                }
+            } catch (signedErr) {
+                console.warn('[signing] resend already-signed check failed:', signedErr?.message);
             }
 
             const signerResult = await pool.query(
@@ -4864,22 +4899,23 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
 
         const spotsParams = [signingFileId];
 
-        // Public signing: always filter by the signer's userId, even if they happen to be the lawyer
-        if (schemaSupport.signaturespotsSignerUserId) {
-            spotsQuery += ` and signeruserid = $2`;
-            spotsParams.push(signerUserId);
-        }
-
+        // Return all spots so later signers can see prior signatures on the PDF.
+        // Actionable (unsigned) spots for other signers are filtered on the client via CanSign.
         spotsQuery += ` order by pagenumber, y, x`;
 
         const spotsResult = await pool.query(spotsQuery, spotsParams);
 
         const signatureSpots = await Promise.all(
             (spotsResult.rows || []).map(async (spot) => {
-                const signatureData = spot?.SignatureData;
-                if (!signatureData) return spot;
+                const canSign = schemaSupport.signaturespotsSignerUserId
+                    ? Number(spot?.SignerUserId) === Number(signerUserId)
+                    : true;
+                const withCanSign = { ...spot, CanSign: canSign, IsMine: canSign };
+
+                const signatureData = withCanSign?.SignatureData;
+                if (!signatureData) return withCanSign;
                 if (typeof signatureData === 'string' && /^https?:\/\//i.test(signatureData)) {
-                    return { ...spot, SignatureUrl: signatureData };
+                    return { ...withCanSign, SignatureUrl: signatureData };
                 }
 
                 try {
@@ -4889,10 +4925,10 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
                         ResponseContentDisposition: 'inline',
                     });
                     const signatureUrl = await getSignedUrl(r2, cmd, { expiresIn: 600 });
-                    return { ...spot, SignatureUrl: signatureUrl };
+                    return { ...withCanSign, SignatureUrl: signatureUrl };
                 } catch (e) {
                     console.error('Failed to presign signature read URL', e);
-                    return spot;
+                    return withCanSign;
                 }
             })
         );
@@ -4941,6 +4977,7 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
         return res.json({
             file: { ...file, RequireOtp: requireOtpEffective, OtpEnabled: SIGNING_OTP_ENABLED },
             signatureSpots,
+            signerUserId,
             isLawyer,
             signingOrder,
             isMyTurn,
@@ -6083,7 +6120,8 @@ exports.signFile = async (req, res, next) => {
              from signaturespots
              where signingfileid = $1
                and isrequired = true
-               and issigned = false`,
+               and issigned = false
+               and lower(coalesce(fieldtype, 'signature')) != 'lawyerstamp'`,
             [signingFileId]
         );
 
@@ -6106,7 +6144,8 @@ exports.signFile = async (req, res, next) => {
                          where signingfileid = $1
                            and signeruserid = $2
                            and isrequired = true
-                           and issigned = false`,
+                           and issigned = false
+                           and lower(coalesce(fieldtype, 'signature')) != 'lawyerstamp'`,
                         [signingFileId, userId]
                     );
 
@@ -6118,6 +6157,7 @@ exports.signFile = async (req, res, next) => {
                              where signingfileid = $1
                                and isrequired = true
                                and issigned = false
+                               and lower(coalesce(fieldtype, 'signature')) != 'lawyerstamp'
                              order by signerindex asc
                              limit 1`,
                             [signingFileId]

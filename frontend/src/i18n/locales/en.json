@@ -881,7 +881,7 @@
     "upload": {
       "signerSelectorLabel": "Signer",
       "title": "Send document for signing",
-      "searchSignerTitle": "Search signer (customer)",
+      "searchSignerTitle": "Saved customers",
       "addManualSigner": "Add signer manually",
       "manualSignerName": "Signer name *",
       "manualSignerEmail": "Email",
@@ -895,6 +895,9 @@
       "fileHintPdfOnly": "(PDF only for now)",
       "documentNameTitle": "Document Name",
       "notesTitle": "Notes to customer (optional)",
+      "completionEmailLabel": "Email for signed document",
+      "completionEmailPlaceholder": "example@email.com",
+      "completionEmailHint": "Email address that will receive the signed document and evidence certificate when signing is complete",
       "viewerTitle": "Document preview & signature setup",
       "spotHelpText": "Each page has a \"+ Add signature\" button. Drag the boxes to the desired location or delete",
       "sending": "Sending...",

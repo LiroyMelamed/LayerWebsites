@@ -626,6 +626,8 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
     };
 
     const toggleSignerId = (id) => {
+        const signer = signers.find((s) => s.SignerUserId === id);
+        if (signer?.AllSigned) return;
         setSelectedSignerIds(prev =>
             prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
         );
@@ -846,7 +848,7 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                                             type="checkbox"
                                             checked={selectedSignerIds.includes(signer.SignerUserId)}
                                             onChange={() => toggleSignerId(signer.SignerUserId)}
-                                            disabled={isResending}
+                                            disabled={isResending || Boolean(signer.AllSigned)}
                                         />
                                         <span className="lw-signingManagerScreen__resendSignerName">
                                             {signer.Name || signer.Email || signer.Phone || `#${signer.SignerUserId}`}
