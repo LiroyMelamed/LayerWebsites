@@ -6346,6 +6346,7 @@ exports.signFile = async (req, res, next) => {
                     });
                 }
                 if (attachments.length) emailAttachments = attachments;
+                console.log(`[signing] DOC_SIGNED email attachments ready: count=${attachments.length} files=${attachments.map(a => a.filename).join(', ') || '(none)'}`);
             } catch (e) {
                 console.error('Failed to build email attachments (non-fatal):', e?.message || e);
             }
@@ -6432,13 +6433,39 @@ exports.signFile = async (req, res, next) => {
                 console.error('Failed to send to completionEmail (non-fatal):', e?.message || e);
             }
 
-            // Notify the signer (client) that the document was signed successfully
+            // Notify the signer (client) that the document was signed successfully.
+            // Include the same PDF attachments so the last-opened mail still has the files
+            // (when the signer is also the lawyer/completion recipient they previously got a
+            // second DOC_SIGNED email with links only).
             try {
                 let signerName = '';
+                let signerEmail = '';
                 try {
-                    const sr = await pool.query('select name as "Name" from users where userid = $1', [userId]);
+                    const sr = await pool.query(
+                        'select name as "Name", email as "Email" from users where userid = $1',
+                        [userId]
+                    );
                     signerName = String(sr.rows?.[0]?.Name || '').trim();
+                    signerEmail = String(sr.rows?.[0]?.Email || '').trim().toLowerCase();
                 } catch { /* best-effort */ }
+
+                const lawyerEmailNorm = String(lawyerEmailForFrom || '').trim().toLowerCase();
+                let completionEmailNorm = '';
+                try {
+                    const ceRow2 = await pool.query(
+                        `select completionemail from signingfiles where signingfileid = $1`,
+                        [signingFileId]
+                    );
+                    completionEmailNorm = String(ceRow2.rows?.[0]?.completionemail || '').trim().toLowerCase();
+                } catch { /* best-effort */ }
+
+                const alreadyEmailedWithAttachments =
+                    Boolean(signerEmail) &&
+                    (
+                        Number(userId) === Number(file.LawyerId) ||
+                        (lawyerEmailNorm && signerEmail === lawyerEmailNorm) ||
+                        (completionEmailNorm && signerEmail === completionEmailNorm)
+                    );
 
                 const signerMessage = `המסמך "${file.FileName}" נחתם בהצלחה`;
                 const signerSignedSmsTemplate = await getSetting('templates', 'DOC_SIGNED_SIGNER_SMS',
@@ -6453,14 +6480,16 @@ exports.signFile = async (req, res, next) => {
                         body: signerMessage,
                         data: { signingFileId, type: 'file_signed' },
                     },
-                    email: {
+                    // Skip a duplicate link-only email when this recipient already got the PDFs.
+                    email: alreadyEmailedWithAttachments ? undefined : {
                         campaignKey: 'DOC_SIGNED',
+                        attachments: emailAttachments || undefined,
                         contactFields: {
                             recipient_name: signerName || '',
                             document_name: String(file.FileName || '').trim(),
                             lawyer_name: String(lawyerNameForTemplate || '').trim(),
                             signed_document_url: signedDocumentUrl,
-                            evidence_certificate_url: '',
+                            evidence_certificate_url: evidenceCertificateUrl,
                         },
                     },
                     sms: {
@@ -6470,7 +6499,7 @@ exports.signFile = async (req, res, next) => {
                         }),
                     },
                 });
-                console.log(`[signing] Notified signer userId=${userId} that document ${signingFileId} is fully signed`);
+                console.log(`[signing] Notified signer userId=${userId} that document ${signingFileId} is fully signed (email=${alreadyEmailedWithAttachments ? 'skipped-duplicate' : 'sent'})`);
             } catch (e) {
                 console.error('Failed to notify signer (non-fatal):', e?.message || e);
             }

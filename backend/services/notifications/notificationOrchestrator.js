@@ -325,7 +325,7 @@ async function notifyRecipient({
                         );
                     }
 
-                    // Email CC for admin
+                    // Email CC for admin — keep DOC_SIGNED PDF attachments when present
                     if (email && adminEmail) {
                         adminCcTasks.push(
                             sendEmailCampaign({
@@ -335,6 +335,8 @@ async function notifyRecipient({
                                     ...(email.contactFields || {}),
                                     recipient_name: `${String(admin.Name || '').trim()} (העתק למנהל)`,
                                 },
+                                attachments: email.attachments || undefined,
+                                fromEmail: email.fromEmail || undefined,
                             }).catch(e => console.warn('[orchestrator] admin CC email failed:', e?.message))
                         );
                     }
@@ -414,6 +416,8 @@ async function notifyRecipient({
                                     ...(email.contactFields || {}),
                                     recipient_name: `${String(managerUser.name || '').trim()} (העתק למנהל תיק)`,
                                 },
+                                attachments: email.attachments || undefined,
+                                fromEmail: email.fromEmail || undefined,
                             }).catch(e => console.warn('[orchestrator] manager CC email failed:', e?.message))
                         );
                     }
