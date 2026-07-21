@@ -100,10 +100,24 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
 
     const { isPerforming, performRequest } = useHttpRequest(
         selectedClient ? customersApi.updateCustomerById : customersApi.addCustomer,
-        () => {
-
+        (data) => {
             closePopUpFunction?.();
-            rePerformRequest?.();
+            const savedClient = selectedClient
+                ? {
+                    UserId: selectedClient.UserId || selectedClient.userid,
+                    Name: (name || '').trim() || selectedClient.Name || selectedClient.name,
+                    Email: (email || '').trim() || selectedClient.Email || selectedClient.email || null,
+                    PhoneNumber: (phoneNumber || '').trim() || selectedClient.PhoneNumber || selectedClient.phonenumber || null,
+                    CompanyName: (companyName || '').trim() || selectedClient.CompanyName || selectedClient.companyname || null,
+                }
+                : {
+                    UserId: data?.UserId,
+                    Name: data?.Name || (name || '').trim(),
+                    Email: data?.Email ?? ((email || '').trim() || null),
+                    PhoneNumber: data?.PhoneNumber || (phoneNumber || '').trim(),
+                    CompanyName: data?.CompanyName ?? ((companyName || '').trim() || null),
+                };
+            rePerformRequest?.(savedClient);
         },
     );
 
