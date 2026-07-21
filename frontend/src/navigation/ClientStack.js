@@ -10,6 +10,7 @@ import {
     NotificationsScreenName,
     ProfileScreenName,
     SigningScreenName,
+    ClientTicketScreenName,
 } from "./screenPaths";
 import { LoginStackName } from "./LoginStack";
 import ClientMainScreen from "../screens/client/clientMainScreen/ClientMainScreen";
@@ -17,6 +18,7 @@ import ClientCasesScreen from "../screens/client/clientCasesScreen/ClientCasesSc
 import SigningScreen from "../screens/signingScreen/SigningScreen";
 import NotificationsScreen from "../screens/client/notifications/NotificationsScreen";
 import ProfileScreen from "../screens/client/profile/ProfileScreen";
+import ClientTicketScreen from "../screens/client/ticket/ClientTicketScreen";
 
 export const ClientStackName = "/ClientStack";
 
@@ -38,6 +40,7 @@ function ClientStack() {
                     <Route path={toRelativePath(NotificationsScreenName)} element={<NotificationsScreen />} />
                     <Route path={toRelativePath(SigningScreenName)} element={<SigningScreen />} />
                     <Route path={toRelativePath(ProfileScreenName)} element={<ProfileScreen />} />
+                    <Route path={toRelativePath(ClientTicketScreenName)} element={<ClientTicketScreen />} />
                 </Routes>
             </Suspense>
         </TopAndRightNavBar>
