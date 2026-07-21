@@ -1175,7 +1175,11 @@ export default function UploadFileForSigningScreen() {
                                 titleFontSize={20}
                                 isPerforming={isPerformingCustomersByName}
                                 queryResult={customersByName}
-                                getButtonTextFunction={(item) => `${item.Name}`}
+                                getButtonTextFunction={(item) => {
+                                    const name = String(item?.Name || '').trim();
+                                    const phone = String(item?.PhoneNumber || item?.Phone || '').trim();
+                                    return phone ? `${name} | ${phone}` : name;
+                                }}
                                 className="lw-uploadSigningScreen__search"
                                 buttonPressFunction={handleAddSignerFromSearch}
                                 emptyActionText={t('customers.addCustomer')}
