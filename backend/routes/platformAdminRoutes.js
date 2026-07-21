@@ -18,4 +18,6 @@ router.get('/tenants/:id/usage', authMiddleware, requirePlatformAdmin, platformA
 // Placeholder hook for future messaging (T-7 days warnings).
 router.post('/retention/warnings/schedule', authMiddleware, requirePlatformAdmin, platformAdminController.scheduleDeletionWarnings);
 
+router.get('/master-stats', authMiddleware, requirePlatformAdmin, platformAdminController.getMasterStats);
+
 module.exports = router;

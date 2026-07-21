@@ -21,6 +21,7 @@ export const ClientCasesScreenName = "/ClientCasesScreen";
 export const SigningScreenName = "/SigningScreen";
 export const NotificationsScreenName = "/Notifications";
 export const ProfileScreenName = "/ProfileScreen";
+export const ClientTicketScreenName = "/TicketScreen";
 
 export const LoginScreenName = "/LoginScreen";
 export const LoginOtpScreenName = "/LoginOtpScreen";
