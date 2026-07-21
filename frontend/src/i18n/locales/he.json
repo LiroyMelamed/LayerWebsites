@@ -1177,7 +1177,8 @@
         "selectAtLeastOneSigner": "יש לבחור לפחות חותם אחד.",
         "atLeastOneSpot": "חייב להיות לפחות מקום חתימה אחד.",
         "selectOtpPolicy": "יש לבחור מדיניות אימות (OTP).",
-        "waiverAckRequired": "כדי לשלוח ללא OTP יש לאשר במפורש את ההצהרה."
+        "waiverAckRequired": "כדי לשלוח ללא OTP יש לאשר במפורש את ההצהרה.",
+        "duplicateSignerContact": "אימייל או טלפון זה כבר משויכים לחותם אחר במסמך. לכל חותם חייב להיות אימייל/טלפון ייחודי."
       }
     }
   },

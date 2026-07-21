@@ -2352,6 +2352,26 @@ exports.uploadFileForSigning = async (req, res, next) => {
             return fail(next, 'VALIDATION_ERROR', 422);
         }
 
+        // Prevent two signer slots collapsing onto the same user (e.g. manual "Shelly"
+        // entered with another signer's email/phone). That made invites/UI show only one person.
+        {
+            const seenSignerIds = new Set();
+            for (const s of signersList) {
+                const id = Number(s?.userId);
+                if (!Number.isFinite(id) || id <= 0) {
+                    return fail(next, 'VALIDATION_ERROR', 422, {
+                        message: 'כל חותם חייב להיות מזוהה עם משתמש תקין',
+                    });
+                }
+                if (seenSignerIds.has(id)) {
+                    return fail(next, 'VALIDATION_ERROR', 422, {
+                        message: 'לא ניתן לשלוח לאותו חותם יותר מפעם אחת. בדקו שאימייל/טלפון של כל חותם שונים.',
+                    });
+                }
+                seenSignerIds.add(id);
+            }
+        }
+
         // Enforce max PDF size by verifying object size in R2.
         // This is the only reliable way when uploads go directly from client -> R2.
         let unsignedPdfBytes = null;
@@ -2547,44 +2567,41 @@ exports.uploadFileForSigning = async (req, res, next) => {
         if (Array.isArray(signatureLocations)) {
             console.log('[controller] Processing', signatureLocations.length, 'signature locations...');
             for (const spot of signatureLocations) {
-                // Try to match spot to a specific signer based on signerName or index
+                // Resolve signer from the authoritative signersList.
+                // signerIndex is the source of truth (spot.signerUserId may be a temp manual id
+                // or stale after reorder / contact resolution).
                 let signerName = spot.signerName || "חתימה ✍️";
                 let signerUserId = null;
 
-                // Prefer explicit userId from the client (most reliable)
-                if (spot.signerUserId !== undefined && spot.signerUserId !== null && spot.signerUserId !== '') {
-                    signerUserId = Number(spot.signerUserId);
-                } else if (spot.signeruserid !== undefined && spot.signeruserid !== null && spot.signeruserid !== '') {
-                    // Support alternate casing from older clients
-                    signerUserId = Number(spot.signeruserid);
+                const idxRaw = spot.signerIndex ?? spot.SignerIndex;
+                if (idxRaw !== undefined && idxRaw !== null && idxRaw !== '') {
+                    const idx = Number(idxRaw);
+                    if (!Number.isNaN(idx) && idx >= 0 && idx < signersList.length) {
+                        signerUserId = Number(signersList[idx].userId);
+                        signerName = signersList[idx].name || signerName;
+                    }
                 }
 
-                if (Number.isNaN(signerUserId)) signerUserId = null;
-
-                // Manual signers have negative temp IDs from the frontend — these don't exist
-                // in the users table, so we must store NULL to satisfy the FK constraint.
-                // Clear them early so the signerIndex / signerName fallbacks can resolve
-                // the real userId from signersList.
-                if (signerUserId !== null && signerUserId < 0) signerUserId = null;
-
-                // If spot has a signerIndex, use that signer
-                if ((signerUserId === null || Number.isNaN(signerUserId)) && spot.signerIndex !== undefined && spot.signerIndex !== null) {
-                    const idx = Number(spot.signerIndex);
-                    if (!Number.isNaN(idx) && idx >= 0 && idx < signersList.length) {
-                        signerUserId = signersList[idx].userId;
-                        signerName = signersList[idx].name;
+                if (signerUserId === null || Number.isNaN(signerUserId)) {
+                    if (spot.signerUserId !== undefined && spot.signerUserId !== null && spot.signerUserId !== '') {
+                        signerUserId = Number(spot.signerUserId);
+                    } else if (spot.signeruserid !== undefined && spot.signeruserid !== null && spot.signeruserid !== '') {
+                        signerUserId = Number(spot.signeruserid);
+                    }
+                    if (Number.isNaN(signerUserId) || (signerUserId !== null && signerUserId < 0)) {
+                        signerUserId = null;
                     }
                 }
 
                 // If we still don't have a userId, try to match by signerName
                 if ((signerUserId === null || Number.isNaN(signerUserId)) && signerName && signersList.length > 0) {
                     const match = signersList.find((s) => (s?.name || '').trim() === String(signerName).trim());
-                    if (match?.userId) signerUserId = match.userId;
+                    if (match?.userId) signerUserId = Number(match.userId);
                 }
 
-                if (Number.isNaN(signerUserId)) signerUserId = null;
-                // Final safety: reject any remaining negative IDs
-                if (signerUserId !== null && signerUserId < 0) signerUserId = null;
+                if (Number.isNaN(signerUserId) || (signerUserId !== null && signerUserId < 0)) {
+                    signerUserId = null;
+                }
 
                 console.log(`[controller]   Spot page ${spot.pageNum}: signerIndex=${spot.signerIndex}, signerName="${signerName}", signerUserId=${signerUserId}`);
 
@@ -6708,35 +6725,38 @@ exports.reuploadFile = async (req, res, next) => {
                 let signerUserId = null;
                 let signerName = spot.signerName || "חתימה";
 
-                // Prefer explicit userId from the client
-                if (spot.signerUserId !== undefined && spot.signerUserId !== null && spot.signerUserId !== '') {
-                    signerUserId = Number(spot.signerUserId);
-                } else if (spot.SignerUserId !== undefined && spot.SignerUserId !== null && spot.SignerUserId !== '') {
-                    signerUserId = Number(spot.SignerUserId);
-                } else if (spot.signeruserid !== undefined && spot.signeruserid !== null && spot.signeruserid !== '') {
-                    signerUserId = Number(spot.signeruserid);
+                // signerIndex is authoritative when signersList is provided
+                const idxRaw = spot.signerIndex ?? spot.SignerIndex;
+                if (signersList.length > 0 && idxRaw !== undefined && idxRaw !== null && idxRaw !== '') {
+                    const idx = Number(idxRaw);
+                    if (!Number.isNaN(idx) && idx >= 0 && idx < signersList.length) {
+                        signerUserId = Number(signersList[idx].userId);
+                        signerName = signersList[idx].name || signerName;
+                    }
                 }
 
-                if (Number.isNaN(signerUserId)) signerUserId = null;
-                if (signerUserId !== null && signerUserId < 0) signerUserId = null;
-
-                // Fallback to signerIndex
-                if ((signerUserId === null || Number.isNaN(signerUserId)) && spot.signerIndex !== undefined && spot.signerIndex !== null) {
-                    const idx = Number(spot.signerIndex);
-                    if (!Number.isNaN(idx) && idx >= 0 && idx < signersList.length) {
-                        signerUserId = signersList[idx].userId;
-                        signerName = signersList[idx].name || signerName;
+                if (signerUserId === null || Number.isNaN(signerUserId)) {
+                    if (spot.signerUserId !== undefined && spot.signerUserId !== null && spot.signerUserId !== '') {
+                        signerUserId = Number(spot.signerUserId);
+                    } else if (spot.SignerUserId !== undefined && spot.SignerUserId !== null && spot.SignerUserId !== '') {
+                        signerUserId = Number(spot.SignerUserId);
+                    } else if (spot.signeruserid !== undefined && spot.signeruserid !== null && spot.signeruserid !== '') {
+                        signerUserId = Number(spot.signeruserid);
+                    }
+                    if (Number.isNaN(signerUserId) || (signerUserId !== null && signerUserId < 0)) {
+                        signerUserId = null;
                     }
                 }
 
                 // Fallback to signerName match
                 if ((signerUserId === null || Number.isNaN(signerUserId)) && signerName && signersList.length > 0) {
                     const match = signersList.find((s) => (s?.name || '').trim() === String(signerName).trim());
-                    if (match?.userId) signerUserId = match.userId;
+                    if (match?.userId) signerUserId = Number(match.userId);
                 }
 
-                if (Number.isNaN(signerUserId)) signerUserId = null;
-                if (signerUserId !== null && signerUserId < 0) signerUserId = null;
+                if (Number.isNaN(signerUserId) || (signerUserId !== null && signerUserId < 0)) {
+                    signerUserId = null;
+                }
 
                 const spotType = String(spot.fieldType || spot.type || spot.FieldType || 'signature').toLowerCase();
                 const spotLabel = spot.fieldLabel || spot.label || null;
