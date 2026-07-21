@@ -190,6 +190,7 @@ async function sendEmailCampaign({ toEmail, campaignKey, contactFields, attachme
         fields: allowedFields,
         shouldSendRealEmail,
         logLabel: key,
+        replyTo: fromEmail || undefined,
     });
 }
 
@@ -200,7 +201,8 @@ async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shou
     // CC list: optional array of email strings passed by callers (replaces old global CEO CC)
     const ccList = (Array.isArray(ccEmails) ? ccEmails : []).map(e => String(e || '').trim()).filter(Boolean);
     const ccEmail = ccList.length > 0 ? ccList.join(', ') : '';
-    const replyToEmail = String(replyTo || '').trim();
+    // Never send From a non-authenticated address (cPanel rejects it). Use replyTo instead.
+    const replyToEmail = String(replyTo || fromEmailOverride || '').trim();
 
     if (!shouldSendRealEmail) {
         console.log('--- EMAIL Transactional Simulation (Dev Mode) ---');
@@ -218,11 +220,15 @@ async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shou
     const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
     const smtpUser = String(process.env.SMTP_USER || '').trim();
     const smtpPass = String(process.env.SMTP_PASS || '').trim();
-    const smtpFrom = String(fromEmailOverride || '').trim() || await getEmailFromEmail();
+    const smtpFrom = await getEmailFromEmail();
 
     if (!smtpHost || !smtpUser || !smtpPass) {
         console.error('SMTP env vars missing (SMTP_HOST/SMTP_USER/SMTP_PASS). Cannot send email.');
         return { ok: false, errorCode: 'SMTP_NOT_CONFIGURED' };
+    }
+    if (!smtpFrom) {
+        console.error('SMTP from address missing (set SMTP_FROM_EMAIL or SMTP_USER). Cannot send email.');
+        return { ok: false, errorCode: 'SMTP_FROM_NOT_CONFIGURED' };
     }
 
     try {
@@ -289,11 +295,11 @@ async function sendEmailWithAttachments({ toEmail, subject, htmlBody, attachment
     const email = String(toEmail || '').trim();
     const fromName = String(fromNameOverride || '').trim() || await resolveEmailFromName();
     // Always send FROM the SMTP account (noreply@) – cPanel rejects mismatched senders.
-    const fromEmail = String(fromEmailOverride || '').trim() || await getEmailFromEmail();
+    const fromEmail = await getEmailFromEmail();
     // CC list: optional array of email strings passed by callers (replaces old global CEO CC)
     const ccList = (Array.isArray(ccEmails) ? ccEmails : []).map(e => String(e || '').trim()).filter(Boolean);
     const ccEmail = ccList.length > 0 ? ccList.join(', ') : '';
-    const replyToEmail = String(replyTo || '').trim();
+    const replyToEmail = String(replyTo || fromEmailOverride || '').trim();
 
     const smtpHost = String(process.env.SMTP_HOST || '').trim();
     const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
@@ -303,6 +309,10 @@ async function sendEmailWithAttachments({ toEmail, subject, htmlBody, attachment
     if (!smtpHost || !smtpUser || !smtpPass) {
         console.error('SMTP env vars missing (SMTP_HOST/SMTP_USER/SMTP_PASS). Cannot send email with attachments.');
         return { ok: false, errorCode: 'SMTP_NOT_CONFIGURED' };
+    }
+    if (!fromEmail) {
+        console.error('SMTP from address missing (set SMTP_FROM_EMAIL or SMTP_USER). Cannot send email with attachments.');
+        return { ok: false, errorCode: 'SMTP_FROM_NOT_CONFIGURED' };
     }
 
     const shouldSendRealEmail = isProduction || FORCE_SEND_EMAIL_ALL;
