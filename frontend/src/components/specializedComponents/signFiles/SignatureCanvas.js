@@ -277,15 +277,26 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     };
     const isSignatureLike = (spotType) => spotType === 'signature' || spotType === 'initials';
 
+    const isMyActionableSpot = (spot) => {
+        // Prefer explicit backend flag (public + authenticated details).
+        if (typeof spot?.CanSign === 'boolean') return spot.CanSign;
+        if (!isPublic) return true; // legacy authenticated responses
+        const myId = fileDetails?.signerUserId;
+        if (myId == null) return true;
+        const spotSignerId = spot?.SignerUserId ?? spot?.signerUserId;
+        if (spotSignerId == null) return true;
+        return Number(spotSignerId) === Number(myId);
+    };
+
     const getUnsignedRequiredSpots = (spots) => {
         const list = Array.isArray(spots) ? spots : [];
-        const required = list.filter((s) => isSpotRequired(s));
+        const required = list.filter((s) => isSpotRequired(s) && isMyActionableSpot(s));
         return required.filter((s) => !s.IsSigned);
     };
 
     const getUnsignedOptionalSpots = (spots) => {
         const list = Array.isArray(spots) ? spots : [];
-        return list.filter((s) => !isSpotRequired(s) && !s.IsSigned);
+        return list.filter((s) => !isSpotRequired(s) && !s.IsSigned && isMyActionableSpot(s));
     };
 
     const focusNextUnsignedSpot = () => {
@@ -1510,7 +1521,13 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const allSpots = fileDetails.signatureSpots || [];
     // LawyerStamp spots are pre-signed by the lawyer — hide them from the client view entirely.
-    const spots = allSpots.filter((s) => getSpotType(s) !== 'lawyerstamp');
+    // Multi-signer: show everyone's signed spots (so later signers see prior signatures),
+    // but only show unsigned spots the current user can actually sign.
+    const spots = allSpots.filter((s) => {
+        if (getSpotType(s) === 'lawyerstamp') return false;
+        if (s?.IsSigned) return true;
+        return isMyActionableSpot(s);
+    });
     const requiredSpots = spots.filter((s) => isSpotRequired(s));
     const effectiveRequiredSpots = requiredSpots;
     const unsignedRequiredSpots = getUnsignedRequiredSpots(spots);
@@ -1553,7 +1570,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const handleSpotSelect = (index) => {
         const spot = spots[index];
-        if (!spot) return;
+        if (!spot || spot.IsSigned) return;
+        if (!isMyActionableSpot(spot)) return;
         setCurrentSpot(spot);
         if (isSignatureLike(getSpotType(spot))) {
             setSignatureMode("draw");

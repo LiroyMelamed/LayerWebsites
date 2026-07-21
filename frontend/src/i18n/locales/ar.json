@@ -987,7 +987,7 @@
     "upload": {
       "signerSelectorLabel": "الموقّع",
       "title": "إرسال مستند للتوقيع",
-      "searchSignerTitle": "بحث عن الموقّع (عميل)",
+      "searchSignerTitle": "عملاء محفوظون",
       "addManualSigner": "إضافة موقّع يدوياً",
       "manualSignerName": "اسم الموقّع *",
       "manualSignerEmail": "البريد الإلكتروني",
