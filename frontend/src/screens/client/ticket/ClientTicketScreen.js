@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ClientStackName } from "../../navigation/ClientStack";
-import { ClientMainScreenName } from "../../navigation/screenPaths";
+import { ClientStackName } from "../../../navigation/ClientStack";
+import { ClientMainScreenName } from "../../../navigation/screenPaths";
 import "./ClientTicketScreen.scss";
 
 const CENTRAL =
