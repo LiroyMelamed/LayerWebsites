@@ -81,6 +81,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const signingSessionId = signingSessionIdRef.current;
 
     const [consentAccepted, setConsentAccepted] = useState(false);
+    const [showConsentUi, setShowConsentUi] = useState(true);
     const [otpRequested, setOtpRequested] = useState(false);
     const [otpCode, setOtpCode] = useState("");
     const [otpVerified, setOtpVerified] = useState(false);
@@ -189,14 +190,38 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     };
 
     useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await ApiUtils.get("platform-settings/public");
+                const raw = res?.data?.SHOW_PUBLIC_SIGNING_CONSENT;
+                const enabled = !(raw === false || raw === "false" || raw === "0" || raw === 0);
+                if (cancelled) return;
+                setShowConsentUi(enabled);
+                if (!enabled) setConsentAccepted(true);
+            } catch {
+                // Default: keep consent UI visible.
+            }
+        })();
+        return () => { cancelled = true; };
+    }, []);
+
+    useEffect(() => {
+        if (!showConsentUi) {
+            setConsentAccepted(true);
+            return;
+        }
         try {
             const persisted = localStorage.getItem(consentStorageKey) === "true";
             setConsentAccepted(persisted);
         } catch {
             // ignore (private mode / blocked storage)
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [consentStorageKey]);
+    }, [consentStorageKey, showConsentUi]);
+
+    useEffect(() => {
+        if (!showConsentUi) setConsentAccepted(true);
+    }, [showConsentUi]);
 
     const effectiveSigningFileId = useMemo(() => {
         return fileDetails?.file?.SigningFileId || signingFileId;
@@ -1589,7 +1614,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     // ─── Shared signing UI (used in side panel for modal, popup for screen) ───
     const renderConsentAndOtp = () => (
         <>
-            {!consentAccepted && (
+            {!consentAccepted && showConsentUi && (
                 <div className="lw-signing-legalBox">
                     <label className="lw-signing-legalRow">
                         <input

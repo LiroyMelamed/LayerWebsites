@@ -195,6 +195,11 @@ const signingFilesApi = {
     getPublicSignedDocumentView: async (viewToken) => {
         return await ApiUtils.get(`${base}/public/view/${encodeURIComponent(viewToken)}`);
     },
+
+    getPublicEvidenceCertificateUrl: (viewToken) => {
+        const apiBase = String(ApiUtils?.defaults?.baseURL || '').replace(/\/+$/, '');
+        return `${apiBase}/${base}/public/view/${encodeURIComponent(viewToken)}/evidence-certificate`;
+    },
 };
 
 export default signingFilesApi;
