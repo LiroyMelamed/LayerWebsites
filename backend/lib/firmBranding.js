@@ -44,11 +44,15 @@ async function getEmailFromName() {
 }
 
 async function getEmailFromEmail() {
-    return String(
+    const smtpUser = String(process.env.SMTP_USER || '').trim();
+    const configured = String(
         (await getSetting('messaging', 'SMTP_FROM_EMAIL', null))
         || process.env.SMTP_FROM_EMAIL
         || ''
     ).trim();
+    // cPanel-style SMTP requires From to match the authenticated mailbox.
+    // Prefer SMTP_USER when set; fall back to configured sender address.
+    return smtpUser || configured;
 }
 
 module.exports = {

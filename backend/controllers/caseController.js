@@ -555,7 +555,7 @@ const addCase = async (req, res) => {
 
         const linkedUsers = resolvedUserIds.length > 0
             ? (await pool.query(
-                `SELECT userid AS "UserId", name AS "Name", phonenumber AS "PhoneNumber" FROM users WHERE userid = ANY($1::int[])`,
+                `SELECT userid AS "UserId", name AS "Name", email AS "Email", phonenumber AS "PhoneNumber" FROM users WHERE userid = ANY($1::int[])`,
                 [resolvedUserIds]
             )).rows
             : [];
@@ -590,6 +590,7 @@ const addCase = async (req, res) => {
                     await notifyRecipient({
                         recipientUserId: u.UserId,
                         recipientPhone: u.PhoneNumber || PhoneNumber,
+                        recipientEmail: String(u.Email || '').trim() || undefined,
                         notificationType: 'CASE_CREATED',
                         push: {
                             title: notificationTitle,
@@ -869,7 +870,7 @@ const updateCase = async (req, res) => {
         // Fetch all linked users to notify
         const linkedUsers = resolvedUserIds.length > 0
             ? (await pool.query(
-                `SELECT userid AS "UserId", name AS "Name", phonenumber AS "PhoneNumber" FROM users WHERE userid = ANY($1::int[])`,
+                `SELECT userid AS "UserId", name AS "Name", email AS "Email", phonenumber AS "PhoneNumber" FROM users WHERE userid = ANY($1::int[])`,
                 [resolvedUserIds]
             )).rows
             : [];
@@ -886,6 +887,7 @@ const updateCase = async (req, res) => {
                     await notifyRecipient({
                         recipientUserId: u.UserId,
                         recipientPhone: u.PhoneNumber || PhoneNumber,
+                        recipientEmail: String(u.Email || '').trim() || undefined,
                         notificationType: primaryType,
                         push: {
                             title: notificationTitle,
@@ -1048,7 +1050,7 @@ const updateStage = async (req, res) => {
             const shouldNotifyClient = channelCfg.push_enabled || channelCfg.email_enabled || channelCfg.sms_enabled;
             // ── ONE notification per user with the current (final) stage ──
             const linkedUsersResult = await client.query(
-                `SELECT U.userid AS "UserId", U.name AS "Name", U.phonenumber AS "PhoneNumber"
+                `SELECT U.userid AS "UserId", U.name AS "Name", U.email AS "Email", U.phonenumber AS "PhoneNumber"
                  FROM case_users CU JOIN users U ON CU.userid = U.userid
                  WHERE CU.caseid = $1`,
                 [caseId]
@@ -1107,6 +1109,7 @@ const updateStage = async (req, res) => {
                     await notifyRecipient({
                         recipientUserId: u.UserId,
                         recipientPhone: u.PhoneNumber || PhoneNumber,
+                        recipientEmail: String(u.Email || '').trim() || undefined,
                         notificationType: channelType,
                         push: {
                             title,
@@ -1409,7 +1412,7 @@ const linkWhatsappGroup = async (req, res) => {
         if (!isEmpty) {
             // Fetch all linked users from case_users
             const linkedUsersResult = await pool.query(
-                `SELECT U.userid AS "UserId", U.name AS "Name", U.phonenumber AS "PhoneNumber"
+                `SELECT U.userid AS "UserId", U.name AS "Name", U.email AS "Email", U.phonenumber AS "PhoneNumber"
                  FROM case_users CU JOIN users U ON CU.userid = U.userid
                  WHERE CU.caseid = $1`,
                 [caseId]
@@ -1421,6 +1424,7 @@ const linkWhatsappGroup = async (req, res) => {
                     'שלום {{recipientName}}, קבוצת וואטסאפ קושרה לתיק "{{caseName}}". {{websiteUrl}}');
                 await notifyRecipient({
                     recipientUserId: u.UserId,
+                    recipientEmail: String(u.Email || '').trim() || undefined,
                     notificationType: 'CASE_TAGGED',
                     push: {
                         title: 'קבוצת וואטסאפ מקושרת',

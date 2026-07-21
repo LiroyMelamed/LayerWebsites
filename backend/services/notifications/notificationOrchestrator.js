@@ -42,8 +42,8 @@ async function getUserContactById(userId) {
     return {
         userId: Number(row.UserId) || id,
         name: String(row.Name || '').trim(),
-        email: String(row.Email || '').trim(),
-        phoneNumber: String(row.PhoneNumber || '').trim(),
+        email: String(row.Email || row.email || '').trim(),
+        phoneNumber: String(row.PhoneNumber || row.phonenumber || '').trim(),
     };
 }
 
