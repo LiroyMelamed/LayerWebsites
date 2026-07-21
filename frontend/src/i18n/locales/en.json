@@ -927,7 +927,9 @@
         "atLeastOneSpot": "At least one signature spot is required.",
         "selectOtpPolicy": "Please choose an OTP policy.",
         "waiverAckRequired": "To send without OTP, you must explicitly acknowledge the statement.",
-        "duplicateSignerContact": "This email or phone is already used by another signer on this document. Each signer needs a unique email/phone."
+        "duplicateSignerContact": "This email or phone is already used by another signer on this document. Each signer needs a unique email/phone.",
+        "manualSignerPhoneRequired": "To save a signer as a new client, enter a unique phone number.",
+        "manualSignerCreateFailed": "Could not create a new client. Check that the phone number is not already in the system."
       }
     }
   },

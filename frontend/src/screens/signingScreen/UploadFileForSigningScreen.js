@@ -371,7 +371,6 @@ export default function UploadFileForSigningScreen() {
     const [manualSignerName, setManualSignerName] = useState("");
     const [manualSignerEmail, setManualSignerEmail] = useState("");
     const [manualSignerPhone, setManualSignerPhone] = useState("");
-    const nextManualIdRef = useRef(-1);
     const [selectedFile, setSelectedFile] = useState(null);
     const [documentName, setDocumentName] = useState("");
     const [completionEmail, setCompletionEmail] = useState("");
@@ -794,12 +793,18 @@ export default function UploadFileForSigningScreen() {
         });
     };
 
-    const addManualSigner = () => {
+    const addManualSigner = async () => {
         const name = manualSignerName.trim();
         const email = manualSignerEmail.trim();
         const phone = manualSignerPhone.trim();
         if (!name) return;
-        if (!email && !phone) return;
+        if (!phone) {
+            setMessage({
+                type: 'error',
+                text: t('signing.upload.validation.manualSignerPhoneRequired'),
+            });
+            return;
+        }
 
         if (contactsCollideWithSelected({ email, phone })) {
             setMessage({
@@ -809,29 +814,63 @@ export default function UploadFileForSigningScreen() {
             return;
         }
 
-        const tempId = nextManualIdRef.current;
-        nextManualIdRef.current -= 1;
+        try {
+            setMessage(null);
+            const res = await customersApi.addCustomer({
+                name,
+                phoneNumber: phone,
+                email: email || '',
+                companyName: '',
+                dateOfBirth: null,
+            });
 
-        let deliveryMethod = 'both';
-        if (email && !phone) deliveryMethod = 'email';
-        else if (phone && !email) deliveryMethod = 'phone';
+            if (res?.status !== 200 && res?.status !== 201) {
+                setMessage({
+                    type: 'error',
+                    text: res?.data?.message || t('signing.upload.validation.manualSignerCreateFailed'),
+                });
+                return;
+            }
 
-        setSelectedSigners((prev) => [
-            ...prev,
-            {
-                UserId: tempId,
-                Name: name,
-                Email: email || null,
-                Phone: phone || null,
-                deliveryMethod,
-                isManual: true,
-            },
-        ]);
+            const created = res?.data || {};
+            const userId = created.UserId;
+            if (!userId) {
+                setMessage({
+                    type: 'error',
+                    text: t('signing.upload.validation.manualSignerCreateFailed'),
+                });
+                return;
+            }
 
-        setManualSignerName("");
-        setManualSignerEmail("");
-        setManualSignerPhone("");
-        setShowManualSigner(false);
+            setSelectedSigners((prev) => {
+                const exists = prev.some((s) => Number(s?.UserId) === Number(userId));
+                if (exists) return prev;
+                let deliveryMethod = 'both';
+                if (email && !phone) deliveryMethod = 'email';
+                else if (phone && !email) deliveryMethod = 'phone';
+                return [
+                    ...prev,
+                    {
+                        UserId: userId,
+                        Name: created.Name || name,
+                        Email: created.Email || email || null,
+                        Phone: created.PhoneNumber || phone || null,
+                        deliveryMethod,
+                    },
+                ];
+            });
+
+            setManualSignerName("");
+            setManualSignerEmail("");
+            setManualSignerPhone("");
+            setShowManualSigner(false);
+            SearchCustomersByName(name);
+        } catch (err) {
+            setMessage({
+                type: 'error',
+                text: err?.data?.message || err?.message || t('signing.upload.validation.manualSignerCreateFailed'),
+            });
+        }
     };
 
     const removeSigner = (userId) => {
@@ -1077,7 +1116,18 @@ export default function UploadFileForSigningScreen() {
             <ClientPopup
                 initialName={query}
                 closePopUpFunction={closePopup}
-                rePerformRequest={() => SearchCustomersByName(query)}
+                rePerformRequest={(savedClient) => {
+                    if (savedClient?.UserId) {
+                        addSigner({
+                            UserId: savedClient.UserId,
+                            Name: savedClient.Name,
+                            Email: savedClient.Email,
+                            PhoneNumber: savedClient.PhoneNumber || savedClient.Phone,
+                            Phone: savedClient.PhoneNumber || savedClient.Phone,
+                        });
+                    }
+                    SearchCustomersByName(query || savedClient?.Name || '');
+                }}
             />
         );
     };
@@ -1165,7 +1215,7 @@ export default function UploadFileForSigningScreen() {
                                         />
                                     </SimpleContainer>
                                     <SimpleContainer className="lw-uploadSigningScreen__manualSignerActions">
-                                        <PrimaryButton onPress={addManualSigner} disabled={!manualSignerName.trim() || (!manualSignerEmail.trim() && !manualSignerPhone.trim())}>
+                                        <PrimaryButton onPress={addManualSigner} disabled={!manualSignerName.trim() || !manualSignerPhone.trim()}>
                                             {t('signing.upload.addSignerBtn')}
                                         </PrimaryButton>
                                         <SecondaryButton onPress={() => { setShowManualSigner(false); setManualSignerName(""); setManualSignerEmail(""); setManualSignerPhone(""); }}>

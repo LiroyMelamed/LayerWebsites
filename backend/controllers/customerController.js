@@ -89,11 +89,12 @@ const addCustomer = async (req, res) => {
             `
             INSERT INTO users (name, email, phonenumber, passwordhash, role, companyname, dateofbirth, createdat)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            RETURNING userid
+            RETURNING userid, name, email, phonenumber, companyname, dateofbirth
             `,
             [name, email, phoneNumber, null, "User", companyName, parsedDob, new Date()]
         );
-        const newUserId = insertResult.rows[0]?.userid;
+        const created = insertResult.rows[0] || {};
+        const newUserId = created.userid;
 
         // Send welcome notification (SMS + email) via the orchestrator
         try {
@@ -132,7 +133,15 @@ const addCustomer = async (req, res) => {
             console.warn('Warning: failed to send welcome notification:', e?.message);
         }
 
-        res.status(201).json({ message: "לקוח הוקם בהצלחה" });
+        res.status(201).json({
+            message: "לקוח הוקם בהצלחה",
+            UserId: newUserId,
+            Name: created.name || name,
+            Email: created.email ?? email ?? null,
+            PhoneNumber: created.phonenumber || phoneNumber,
+            CompanyName: created.companyname ?? companyName ?? null,
+            DateOfBirth: created.dateofbirth ?? parsedDob ?? null,
+        });
 
     } catch (error) {
         console.error('Error adding customer:', error);
