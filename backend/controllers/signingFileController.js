@@ -6,6 +6,7 @@ const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const { r2, BUCKET } = require("../utils/r2");
 const sendAndStoreNotification = require("../utils/sendAndStoreNotification");
 const { notifyRecipient } = require("../services/notifications/notificationOrchestrator");
+const { buildSignedDocPushData } = require("../utils/appDeepLinks");
 const { formatPhoneNumber } = require("../utils/phoneUtils");
 const { sendMessage, WEBSITE_DOMAIN } = require("../utils/sendMessage");
 const { detectHebrewSignatureSpotsFromPdfBuffer, streamToBuffer } = require("../utils/signatureDetection");
@@ -543,6 +544,25 @@ async function buildPublicSigningUrl(token) {
 
     console.warn('[signing] short-link slug collisions exhausted, using long URL');
     return longUrl;
+}
+
+/** Push payload that opens the native/public signing screen on tap. */
+function buildSigningInvitePushData({ signingFileId, token, publicUrl, type = 'signing_pending' }) {
+    const data = {
+        signingFileId,
+        type,
+        token: token || undefined,
+    };
+    if (publicUrl) {
+        data.url = publicUrl;
+    }
+    if (token) {
+        // melamedia:// is registered in every LawyerApp tenant linking config.
+        data.deepLink = `melamedia://PublicSigning?token=${encodeURIComponent(String(token))}`;
+    } else if (publicUrl) {
+        data.deepLink = publicUrl;
+    }
+    return data;
 }
 
 exports.resolvePublicSigningShortLink = async (req, res, next) => {
@@ -2780,7 +2800,7 @@ exports.uploadFileForSigning = async (req, res, next) => {
                 push: {
                     title: 'מסמך מחכה לחתימה',
                     body: message,
-                    data: { signingFileId, type: 'signing_pending', token },
+                    data: buildSigningInvitePushData({ signingFileId, token, publicUrl }),
                 },
                 email: sendEmail && publicUrl
                     ? {
@@ -4307,7 +4327,7 @@ exports.resendSigningInvite = async (req, res, next) => {
                 push: {
                     title: 'מסמך מחכה לחתימה',
                     body: publicUrl ? `מסמך "${file.FileName}" מחכה לחתימה.\n${publicUrl}` : `מסמך "${file.FileName}" מחכה לחתימה.`,
-                    data: { signingFileId, type: 'signing_pending', token },
+                    data: buildSigningInvitePushData({ signingFileId, token, publicUrl }),
                 },
                 email: publicUrl
                     ? {
@@ -4632,8 +4652,15 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
 
         const spotsParams = [signingFileId];
 
-        // Return all spots so later signers can see prior signatures on the PDF.
-        // Actionable (unsigned) spots for other signers are filtered on the client via CanSign.
+        // Each signer only receives:
+        // - their own spots (signed or waiting), and
+        // - other signers' already-signed spots (image/value only on the client).
+        // Other signers' unsigned spots are omitted so they cannot appear as canvases
+        // or be targeted by "sign all" / next-spot navigation.
+        if (schemaSupport.signaturespotsSignerUserId) {
+            spotsQuery += ` and (issigned = true or signeruserid = $2)`;
+            spotsParams.push(signerUserId);
+        }
         spotsQuery += ` order by pagenumber, y, x`;
 
         const spotsResult = await pool.query(spotsQuery, spotsParams);
@@ -5554,10 +5581,10 @@ exports.signFile = async (req, res, next) => {
         // Check authorization: if the spot has a specific signer assigned, only that signer can sign it.
         // Fall back to primary client check only for unassigned spots (legacy / single-signer).
         const isAuthorized = schemaSupport.signaturespotsSignerUserId
-            ? (spot.SignerUserId
-                ? spot.SignerUserId === userId
-                : file.ClientId === userId)
-            : (file.ClientId === userId);
+            ? (spot.SignerUserId != null
+                ? Number(spot.SignerUserId) === Number(userId)
+                : Number(file.ClientId) === Number(userId))
+            : Number(file.ClientId) === Number(userId);
 
         if (!isAuthorized) {
             return fail(next, 'FORBIDDEN', 403);
@@ -5938,7 +5965,7 @@ exports.signFile = async (req, res, next) => {
                                     push: {
                                         title: 'מסמך מחכה לחתימה',
                                         body: message,
-                                        data: { signingFileId, type: 'signing_pending', token },
+                                        data: buildSigningInvitePushData({ signingFileId, token, publicUrl }),
                                     },
                                     email: publicUrl
                                         ? {
@@ -6098,7 +6125,12 @@ exports.signFile = async (req, res, next) => {
                 push: {
                     title: '✓ קובץ חתום',
                     body: message,
-                    data: { signingFileId, type: 'file_signed' },
+                    data: buildSignedDocPushData({
+                        type: 'file_signed',
+                        caseId: file.CaseId,
+                        signingFileId,
+                        publicUrl: signedDocumentUrl,
+                    }),
                 },
                 email: {
                     campaignKey: 'DOC_SIGNED',
@@ -6195,7 +6227,12 @@ exports.signFile = async (req, res, next) => {
                     push: {
                         title: '✓ מסמך נחתם בהצלחה',
                         body: signerMessage,
-                        data: { signingFileId, type: 'file_signed' },
+                        data: buildSignedDocPushData({
+                            type: 'file_signed',
+                            caseId: file.CaseId,
+                            signingFileId,
+                            publicUrl: signedDocumentUrl,
+                        }),
                     },
                     // Skip a duplicate link-only email when this recipient already got the PDFs.
                     email: alreadyEmailedWithAttachments ? undefined : {
@@ -6327,6 +6364,15 @@ exports.rejectSigning = async (req, res, next) => {
         const docRejectedSmsTemplate = await getSetting('templates', 'DOC_REJECTED_SMS',
             'שלום {{recipientName}}, המסמך "{{documentName}}" נדחה. סיבה: {{rejectionReason}}. {{websiteUrl}}');
 
+        const rejectedPushData = buildSignedDocPushData({
+            type: 'file_rejected',
+            caseId: file.CaseId,
+            signingFileId,
+        });
+        const rejectedWebsiteUrl = file.CaseId
+            ? `https://${WEBSITE_DOMAIN}/AdminStack/AllCasesScreen?caseId=${encodeURIComponent(String(file.CaseId))}`
+            : `https://${WEBSITE_DOMAIN}/AdminStack/SigningManagerScreen`;
+
         await notifyRecipient({
             recipientUserId: file.LawyerId,
             notificationType: 'DOC_REJECTED',
@@ -6334,7 +6380,7 @@ exports.rejectSigning = async (req, res, next) => {
             push: {
                 title: '❌ קובץ נדחה',
                 body: message,
-                data: { signingFileId, type: 'file_rejected' },
+                data: rejectedPushData,
             },
             email: {
                 campaignKey: 'DOC_REJECTED',
@@ -6349,7 +6395,7 @@ exports.rejectSigning = async (req, res, next) => {
                     recipientName: String(lawyerNameForTemplate || '').trim(),
                     documentName: String(file.FileName || '').trim(),
                     rejectionReason: String(rejectionReason || 'לא צוינה').trim(),
-                    websiteUrl: `https://${WEBSITE_DOMAIN}`,
+                    websiteUrl: rejectedWebsiteUrl,
                 }),
             },
         });
@@ -6642,7 +6688,7 @@ exports.reuploadFile = async (req, res, next) => {
                     push: {
                         title: 'מסמך מחכה לחתימה',
                         body: message,
-                        data: { signingFileId, type: 'file_reuploaded', token },
+                        data: buildSigningInvitePushData({ signingFileId, token, publicUrl, type: 'file_reuploaded' }),
                     },
                     email: publicUrl
                         ? {
@@ -6696,7 +6742,7 @@ exports.reuploadFile = async (req, res, next) => {
                 push: {
                     title: 'מסמך מחכה לחתימה',
                     body: message,
-                    data: { signingFileId, type: 'file_reuploaded', token },
+                    data: buildSigningInvitePushData({ signingFileId, token, publicUrl, type: 'file_reuploaded' }),
                 },
                 email: publicUrl
                     ? {

@@ -1,5 +1,7 @@
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
+const { verifyAndConsumeCentralHandoff } = require('../utils/centralHandoff');
 
 const router = express.Router();
 
@@ -31,6 +33,76 @@ async function pingDb() {
     return { ok: false, latencyMs: Date.now() - started };
   }
 }
+
+async function resolvePlatformAdminUser() {
+  try {
+    const { rows } = await pool.query(
+      `SELECT pa.user_id AS userid, u.role, u.phonenumber
+       FROM platform_admins pa
+       JOIN users u ON u.userid = pa.user_id
+       WHERE pa.is_active = TRUE AND LOWER(COALESCE(u.role, '')) = 'admin'
+       ORDER BY pa.added_at ASC NULLS LAST
+       LIMIT 1`,
+    );
+    if (rows[0]) return rows[0];
+  } catch {
+    /* table may not exist */
+  }
+
+  const raw = String(process.env.PLATFORM_ADMIN_USER_IDS || '').trim();
+  const first = Number(raw.split(',')[0]?.trim());
+  if (!Number.isFinite(first) || first <= 0) return null;
+
+  const { rows } = await pool.query(
+    `SELECT userid, role, phonenumber FROM users WHERE userid = $1 LIMIT 1`,
+    [first],
+  );
+  return rows[0] || null;
+}
+
+/**
+ * Public: redeem central Super-Admin handoff → local platform-admin JWT.
+ * Auth is the HMAC handoff token (not CENTRAL_SERVICE_KEY bearer).
+ */
+router.post('/master-handoff', async (req, res) => {
+  try {
+    const token = String(req.body?.token || '').trim();
+    const payload = verifyAndConsumeCentralHandoff(token, PRODUCT_ID);
+    if (!payload) {
+      return sendJson(res, 401, { error: 'INVALID_HANDOFF' });
+    }
+
+    const user = await resolvePlatformAdminUser();
+    if (!user?.userid) {
+      return sendJson(res, 503, { error: 'MASTER_NOT_CONFIGURED' });
+    }
+    if (!process.env.JWT_SECRET) {
+      return sendJson(res, 503, { error: 'JWT_NOT_CONFIGURED' });
+    }
+
+    const accessToken = jwt.sign(
+      {
+        userid: user.userid,
+        phonenumber: user.phonenumber,
+        role: user.role || 'Admin',
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: String(process.env.ACCESS_TOKEN_TTL_ADMIN || '8h') },
+    );
+
+    return sendJson(res, null, {
+      ok: true,
+      token: accessToken,
+      role: user.role || 'Admin',
+      isPlatformAdmin: true,
+    });
+  } catch (err) {
+    return sendJson(res, 500, {
+      error: 'HANDOFF_FAILED',
+      message: err?.message || String(err),
+    });
+  }
+});
 
 router.get('/health', async (req, res) => {
   if (!requireCentralService(req, res)) return;

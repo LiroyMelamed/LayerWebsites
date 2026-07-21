@@ -9,11 +9,20 @@ import "./MasterAdminScreen.scss";
  * מאסטר־אדמין ברמת פרויקט ל־LayerWebsites.
  */
 export default function MasterAdminScreen() {
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const centralTheme = searchParams.get("centralTheme") || "layerwebsites";
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    const isPlatformAdmin =
-        typeof window !== "undefined" && localStorage.getItem("isPlatformAdmin") === "true";
+    const handoffToken = searchParams.get("centralHandoff");
+
+    const [token, setToken] = useState(() =>
+        typeof window !== "undefined" ? localStorage.getItem("token") : null,
+    );
+    const [isPlatformAdmin, setIsPlatformAdmin] = useState(
+        () => typeof window !== "undefined" && localStorage.getItem("isPlatformAdmin") === "true",
+    );
+    const [handoffState, setHandoffState] = useState(
+        handoffToken ? "pending" : "idle",
+    ); // idle | pending | done | error
+    const [handoffError, setHandoffError] = useState(null);
 
     const [data, setData] = useState(null);
     const [error, setError] = useState(null);
@@ -29,6 +38,46 @@ export default function MasterAdminScreen() {
     }, [centralTheme]);
 
     useEffect(() => {
+        if (!handoffToken || handoffState !== "pending") return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await ApiUtils.post("/platform/v1/master-handoff", {
+                    token: handoffToken,
+                });
+                const access = res?.data?.token;
+                if (!access) throw new Error(res?.data?.error || "INVALID_HANDOFF");
+                localStorage.setItem("token", access);
+                localStorage.setItem("role", res.data.role || "Admin");
+                localStorage.setItem("isPlatformAdmin", "true");
+                if (!cancelled) {
+                    setToken(access);
+                    setIsPlatformAdmin(true);
+                    setHandoffState("done");
+                    const next = new URLSearchParams(searchParams);
+                    next.delete("centralHandoff");
+                    setSearchParams(next, { replace: true });
+                }
+            } catch (err) {
+                if (!cancelled) {
+                    setHandoffError(
+                        err?.response?.data?.message ||
+                            err?.response?.data?.error ||
+                            err.message ||
+                            "התחברות מרכזית נכשלה",
+                    );
+                    setHandoffState("error");
+                    setLoading(false);
+                }
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [handoffToken, handoffState, searchParams, setSearchParams]);
+
+    useEffect(() => {
+        if (handoffState === "pending") return;
         if (!token || !isPlatformAdmin) {
             setLoading(false);
             return;
@@ -58,7 +107,29 @@ export default function MasterAdminScreen() {
         return () => {
             cancelled = true;
         };
-    }, [token, isPlatformAdmin]);
+    }, [token, isPlatformAdmin, handoffState]);
+
+    if (handoffState === "pending") {
+        return (
+            <div className="lw-master" dir="rtl" lang="he">
+                <div className="lw-master__card">
+                    <p className="lw-master__muted">מתחבר דרך Super-Admin…</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (handoffState === "error") {
+        return (
+            <div className="lw-master" dir="rtl" lang="he">
+                <div className="lw-master__card">
+                    <h1>מאסטר־אדמין</h1>
+                    <p className="lw-master__error">{handoffError}</p>
+                    <Link to={LoginStackName + LoginScreenName}>התחברות ידנית</Link>
+                </div>
+            </div>
+        );
+    }
 
     if (!token) {
         return <Navigate to={LoginStackName + LoginScreenName} replace />;

@@ -4,9 +4,10 @@ import { ClientStackName } from "../../../navigation/ClientStack";
 import { ClientMainScreenName } from "../../../navigation/screenPaths";
 import "./ClientTicketScreen.scss";
 
-const CENTRAL =
-  (typeof process !== "undefined" && process.env.REACT_APP_CENTRAL_API_URL?.replace(/\/$/, "")) ||
-  "http://127.0.0.1:4100";
+const CENTRAL = (
+  process.env.REACT_APP_CENTRAL_API_URL ||
+  "https://central-api.mela-media.co.il"
+).replace(/\/$/, "");
 
 export default function ClientTicketScreen() {
   const [title, setTitle] = useState("");
