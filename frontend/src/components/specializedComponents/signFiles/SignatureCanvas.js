@@ -723,6 +723,38 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         return normalizeSignatureDataUrl(rawDataUrl);
     };
 
+    const toSavedItemRef = (type, item) => ({
+        type,
+        url: item.url,
+        index: item.index,
+    });
+
+    const resolveSavedItemForAction = (preferSignature = false) => {
+        if (selectedSavedItem) {
+            if (preferSignature && selectedSavedItem.type !== 'signature' && savedSignatures.length > 0) {
+                return toSavedItemRef('signature', savedSignatures[0]);
+            }
+            return selectedSavedItem;
+        }
+        if (savedSignatures.length > 0) {
+            return toSavedItemRef('signature', savedSignatures[0]);
+        }
+        if (savedStamps.length > 0) {
+            return toSavedItemRef('stamp', savedStamps[0]);
+        }
+        return null;
+    };
+
+    useEffect(() => {
+        if (signatureMode !== 'saved' || savedItemsLoading || selectedSavedItem) return;
+        if (savedSignatures.length > 0) {
+            setSelectedSavedItem(toSavedItemRef('signature', savedSignatures[0]));
+        } else if (savedStamps.length > 0) {
+            setSelectedSavedItem(toSavedItemRef('stamp', savedStamps[0]));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [signatureMode, savedItemsLoading, savedSignatures, savedStamps, selectedSavedItem]);
+
     const saveSignatureAsDefault = async (dataUrl) => {
         if (!dataUrl) return;
         if (isPublic) {
@@ -1684,30 +1716,37 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                             <div className="lw-signing-inlineHint">{t("signing.canvas.noSavedItems")}</div>
                         )}
                     </div>
-                    {selectedSavedItem && (
-                        <div className="lw-signing-actionsRow">
-                            <PrimaryButton
-                                size={buttonSizes.SMALL}
-                                onPress={async () => {
-                                    if (selectedSavedItem.type === 'signature') {
-                                        await applySavedSignatureForNext(selectedSavedItem);
-                                    } else {
-                                        await applySavedStampForNext(selectedSavedItem);
-                                    }
-                                }}
-                                disabled={saving}
-                            >
-                                {saving ? t("signing.canvas.saving") : t("signing.canvas.signOnly")}
-                            </PrimaryButton>
-                            <SecondaryButton
-                                size={buttonSizes.SMALL}
-                                onPress={async () => { await signAllRemainingSpots(selectedSavedItem); }}
-                                disabled={saving || remainingCount === 0}
-                            >
-                                {t("signing.canvas.signAll")}
-                            </SecondaryButton>
-                        </div>
-                    )}
+                    {(() => {
+                        const actionItem = resolveSavedItemForAction();
+                        const signAllItem = resolveSavedItemForAction(true);
+                        if (!actionItem) return null;
+                        return (
+                            <div className="lw-signing-actionsRow">
+                                <PrimaryButton
+                                    size={buttonSizes.SMALL}
+                                    onPress={async () => {
+                                        if (actionItem.type === 'signature') {
+                                            await applySavedSignatureForNext(actionItem);
+                                        } else {
+                                            await applySavedStampForNext(actionItem);
+                                        }
+                                    }}
+                                    disabled={saving}
+                                >
+                                    {saving ? t("signing.canvas.saving") : t("signing.canvas.signOnly")}
+                                </PrimaryButton>
+                                {signAllItem?.type === 'signature' && (
+                                    <SecondaryButton
+                                        size={buttonSizes.SMALL}
+                                        onPress={async () => { await signAllRemainingSpots(signAllItem); }}
+                                        disabled={saving || remainingCount === 0}
+                                    >
+                                        {t("signing.canvas.signAll")}
+                                    </SecondaryButton>
+                                )}
+                            </div>
+                        );
+                    })()}
                 </div>
             )}
 
