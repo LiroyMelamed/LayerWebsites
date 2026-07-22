@@ -525,10 +525,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             return;
         }
 
-        const hasSaved = savedSignatures.length > 0 || savedStamps.length > 0;
-        setSignatureMode(hasSaved ? 'saved' : 'draw');
+        // Default to new signature (draw); user can switch to saved tab if desired.
+        setSignatureMode('draw');
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [savedSignature.exists, savedSignature.loading, savedStamp.exists, savedStamp.loading, savedItemsLoading, savedSignatures.length, savedStamps.length, currentSpot, fileDetails]);
+    }, [savedSignature.loading, savedStamp.exists, savedStamp.loading, savedItemsLoading, currentSpot, fileDetails]);
 
     useEffect(() => {
         if (currentSpot && canvasRef.current) {
