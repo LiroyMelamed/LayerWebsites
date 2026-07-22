@@ -280,6 +280,7 @@ const PUBLIC_SETTINGS_KEYS = [
     'contact:OFFICE_PHONE',
     'contact:WHATSAPP_PHONE',
     'contact:SMS_PHONE',
+    'signing:SHOW_PUBLIC_SIGNING_CONSENT',
 ];
 
 /** GET /api/platform-settings/public — no admin required */
