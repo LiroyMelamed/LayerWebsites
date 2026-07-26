@@ -2471,16 +2471,26 @@ exports.uploadFileForSigning = async (req, res, next) => {
 
         // OTP policy: platform settings (admin) control feature + default.
         // If the lawyer explicitly waives OTP, they must also explicitly acknowledge the waiver.
+        // Accept both nested signingConfig and top-level body fields (frontend sends top-level).
         const otpSystemEnabled = await getSigningOtpEnabled();
         const requireOtpDefault = await getSigningRequireOtpDefault();
-        const requireOtpRaw = signingConfig?.require_otp ?? signingConfig?.requireOtp;
+        const requireOtpRaw =
+            signingConfig?.require_otp
+            ?? signingConfig?.requireOtp
+            ?? req.body?.require_otp
+            ?? req.body?.requireOtp;
         const hasExplicitPolicySelection = requireOtpRaw === true || requireOtpRaw === false || requireOtpRaw === 1 || requireOtpRaw === 0;
         const requireOtp = otpSystemEnabled
             ? (hasExplicitPolicySelection ? Boolean(requireOtpRaw) : requireOtpDefault)
             : false;
         const waiverAck = otpSystemEnabled
             ? (hasExplicitPolicySelection
-                ? Boolean(signingConfig?.otpWaiverAcknowledged ?? signingConfig?.otp_waiver_acknowledged)
+                ? Boolean(
+                    signingConfig?.otpWaiverAcknowledged
+                    ?? signingConfig?.otp_waiver_acknowledged
+                    ?? req.body?.otpWaiverAcknowledged
+                    ?? req.body?.otp_waiver_acknowledged
+                )
                 : !requireOtpDefault)
             : true;
         if (otpSystemEnabled && !requireOtp && !waiverAck) {
