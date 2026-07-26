@@ -422,6 +422,8 @@ const PUBLIC_SETTINGS_KEYS = [
     'signing:SHOW_PUBLIC_SIGNING_CONSENT',
     'signing:SIGNING_OTP_ENABLED',
     'signing:SIGNING_REQUIRE_OTP_DEFAULT',
+    'calendar:ENABLE_CALENDAR_MODULE',
+    'chatbot:AI_CHATBOT_ENABLED',
 ];
 
 /** GET /api/platform-settings/public — no admin required */
