@@ -72,6 +72,10 @@ const signingFilesApi = {
         return await ApiUtils.post(`${base}/public/${encodeURIComponent(token)}/sign`, body, config);
     },
 
+    publicSignFileBatch: async (token, body, config = undefined) => {
+        return await ApiUtils.post(`${base}/public/${encodeURIComponent(token)}/sign-batch`, body, config);
+    },
+
     publicRejectSigning: async (token, body) => {
         return await ApiUtils.post(`${base}/public/${encodeURIComponent(token)}/reject`, body);
     },

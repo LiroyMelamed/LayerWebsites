@@ -4,7 +4,7 @@
 // Signing OTP (SMS verification) feature.
 // When false: no OTP UI is shown and signing flows will not require OTP on the client.
 // When true: OTP UI + client-side gating is enabled (server must also support/enforce it).
-export const SIGNING_OTP_ENABLED = false;
+export const SIGNING_OTP_ENABLED = true;
 
 // AI Chatbot feature.
 // When false: the /chatbot route is hidden from navigation (page still accessible via direct URL).

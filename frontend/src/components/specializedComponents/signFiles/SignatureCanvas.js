@@ -565,23 +565,29 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         const activeSpotType = activeSpot ? getSpotType(activeSpot) : 'signature';
         const signMode = getSignModeForSpotType(activeSpotType);
 
-        // clientStamp spots: default to saved stamp if exists, else upload
+        // Always start with a blank "new signature" canvas.
+        // Saved signature / stamp remain available via their tabs.
         if (signMode === 'clientStamp') {
-            setSignatureMode(savedStamp.exists ? 'savedStamp' : 'stamp');
+            setSignatureMode('stamp');
             return;
         }
-
-        // Public signing always starts with a blank "new signature" canvas.
-        // Keep the authenticated app's existing saved-item convenience.
-        if (isPublic || signMode !== 'signature') {
-            setSignatureMode('draw');
-            return;
-        }
-
-        const hasSaved = savedSignatures.length > 0 || savedStamps.length > 0;
-        setSignatureMode(hasSaved ? 'saved' : 'draw');
+        setSignatureMode('draw');
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [savedSignature.exists, savedSignature.loading, savedStamp.exists, savedStamp.loading, savedItemsLoading, savedSignatures.length, savedStamps.length, currentSpot, fileDetails]);
+
+    useEffect(() => {
+        if (signatureMode !== 'saved') return;
+        if (selectedSavedItem) return;
+        if (savedSignatures.length > 0) {
+            const item = savedSignatures[0];
+            setSelectedSavedItem({ type: 'signature', url: item.url, index: item.index });
+            return;
+        }
+        if (savedStamps.length > 0) {
+            const item = savedStamps[0];
+            setSelectedSavedItem({ type: 'stamp', url: item.url, index: item.index });
+        }
+    }, [signatureMode, savedSignatures, savedStamps, selectedSavedItem]);
 
     useEffect(() => {
         if (currentSpot && canvasRef.current) {
@@ -1403,18 +1409,49 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 return;
             }
 
-            // Sign sequentially to avoid overloading the API and keep order predictable.
-            let signedCount = 0;
-            for (const spot of unsigned) {
-                setCurrentSpot(spot);
-                // eslint-disable-next-line no-await-in-loop
-                const didSign = await signCurrentSpotWithImage(dataUrl, spot);
-                if (!didSign) {
-                    // Partial success: reload to show what was signed so far
-                    if (signedCount > 0) await reloadDetailsAndAdvance();
-                    return;
+            const requireOtp = otpRequired;
+            const consentVersion = String(fileDetails?.file?.SigningPolicyVersion || "2026-01-11");
+
+            if (!consentAccepted) {
+                setMessage({ type: "warning", text: t("signing.canvas.consentRequired") });
+                return;
+            }
+            if (requireOtp && !otpVerified) {
+                setMessage({ type: "warning", text: t("signing.canvas.otpRequired") });
+                return;
+            }
+
+            const signatureSpotIds = unsigned
+                .map((s) => Number(s.SignatureSpotId))
+                .filter((n) => Number.isFinite(n) && n > 0);
+
+            if (isPublic && signatureSpotIds.length > 1) {
+                const config = { headers: { "x-signing-session-id": signingSessionId } };
+                const res = await signingFilesApi.publicSignFileBatch(
+                    publicToken,
+                    {
+                        signatureSpotIds,
+                        signatureImage: dataUrl,
+                        signingSessionId,
+                        consentAccepted: true,
+                        consentVersion,
+                    },
+                    config
+                );
+                unwrapApi(res);
+            } else {
+                // Authenticated app or single remaining spot: sequential sign.
+                let signedCount = 0;
+                for (const spot of unsigned) {
+                    setCurrentSpot(spot);
+                    // eslint-disable-next-line no-await-in-loop
+                    const didSign = await signCurrentSpotWithImage(dataUrl, spot);
+                    if (!didSign) {
+                        if (signedCount > 0) await reloadDetailsAndAdvance();
+                        return;
+                    }
+                    signedCount++;
                 }
-                signedCount++;
             }
 
             setMessage({ type: "success", text: t("signing.canvas.signedAllSuccess") });
@@ -1574,6 +1611,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const unsignedRequiredSpots = getUnsignedRequiredSpots(spots);
     const unsignedOptionalSpots = getUnsignedOptionalSpots(spots);
     const remainingCount = unsignedRequiredSpots.length;
+    const remainingSignatureSpots = unsignedRequiredSpots.filter(
+        (s) => getSpotType(s) === 'signature',
+    ).length;
     const optionalRemainingCount = unsignedOptionalSpots.length;
     const allSpotsSignedByUser = remainingCount === 0;
     const hasUnsignedSignatureSpots = unsignedRequiredSpots.some((s) =>
@@ -1694,7 +1734,20 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                     {(savedSignatures.length > 0 || savedStamps.length > 0) && (
                         <button
                             className={"lw-signing-tab" + (signatureMode === "saved" ? " is-active" : "")}
-                            onClick={() => { setSignatureMode("saved"); clearClientStamp(); setSelectedSavedItem(null); }}
+                            onClick={() => {
+                                setSignatureMode("saved");
+                                clearClientStamp();
+                                // Keep / auto-select first item so חתום / חתום על הכל stay visible.
+                                if (savedSignatures.length > 0) {
+                                    const item = savedSignatures[0];
+                                    setSelectedSavedItem({ type: 'signature', url: item.url, index: item.index });
+                                } else if (savedStamps.length > 0) {
+                                    const item = savedStamps[0];
+                                    setSelectedSavedItem({ type: 'stamp', url: item.url, index: item.index });
+                                } else {
+                                    setSelectedSavedItem(null);
+                                }
+                            }}
                             disabled={saving}
                         >
                             {t("signing.canvas.tabSaved")}
@@ -1777,13 +1830,15 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                             >
                                 {saving ? t("signing.canvas.saving") : t("signing.canvas.signOnly")}
                             </PrimaryButton>
-                            <SecondaryButton
-                                size={buttonSizes.SMALL}
-                                onPress={async () => { await signAllRemainingSpots(selectedSavedItem); }}
-                                disabled={saving || remainingCount === 0}
-                            >
-                                {t("signing.canvas.signAll")}
-                            </SecondaryButton>
+                            {remainingSignatureSpots > 1 && (
+                                <SecondaryButton
+                                    size={buttonSizes.SMALL}
+                                    onPress={async () => { await signAllRemainingSpots(selectedSavedItem); }}
+                                    disabled={saving}
+                                >
+                                    {t("signing.canvas.signAll")}
+                                </SecondaryButton>
+                            )}
                         </div>
                     )}
                 </div>
@@ -2046,29 +2101,19 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         <SecondaryButton size={buttonSizes.MEDIUM} onPress={clearCanvas} disabled={saving}>
                             {t("common.clear")}
                         </SecondaryButton>
-                        {isPublic ? (
-                            <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { await signOnly(); }} disabled={saving}>
-                                {saving
-                                    ? t("signing.canvas.saving")
-                                    : (currentSignMode === 'initials'
-                                        ? t("signing.canvas.saveInitials")
-                                        : t("signing.canvas.signOnly"))}
-                            </PrimaryButton>
-                        ) : (
-                            <>
-                                <SecondaryButton size={buttonSizes.MEDIUM} onPress={async () => { await signOnly(); }} disabled={saving}>
-                                    {saving ? t("signing.canvas.saving") : t("signing.canvas.signOnly")}
-                                </SecondaryButton>
-                                <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { await saveSignature(); }} disabled={saving}>
-                                    {saving
-                                        ? t("signing.canvas.saving")
-                                        : (currentSignMode === 'initials'
-                                            ? t("signing.canvas.saveInitials")
-                                            : t("signing.canvas.saveSignature"))}
-                                </PrimaryButton>
-                            </>
+                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { await signOnly(); }} disabled={saving}>
+                            {saving
+                                ? t("signing.canvas.saving")
+                                : (currentSignMode === 'initials'
+                                    ? t("signing.canvas.saveInitials")
+                                    : t("signing.canvas.signOnly"))}
+                        </PrimaryButton>
+                        {!isPublic && currentSignMode === 'signature' && (
+                            <SecondaryButton size={buttonSizes.MEDIUM} onPress={async () => { await saveSignature(); }} disabled={saving}>
+                                {saving ? t("signing.canvas.saving") : t("signing.canvas.saveSignature")}
+                            </SecondaryButton>
                         )}
-                        {isPublic && remainingCount > 1 && currentSignMode === 'signature' && (
+                        {remainingSignatureSpots > 1 && currentSignMode === 'signature' && (
                             <SecondaryButton
                                 size={buttonSizes.MEDIUM}
                                 onPress={async () => { await signAllRemainingSpots(); }}
