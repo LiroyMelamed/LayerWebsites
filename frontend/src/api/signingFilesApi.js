@@ -151,6 +151,10 @@ const signingFilesApi = {
         return await ApiUtils.post(`${base}/${signingFileId}/sign`, body, config);
     },
 
+    signFileBatch: async (signingFileId, body, config = undefined) => {
+        return await ApiUtils.post(`${base}/${signingFileId}/sign-batch`, body, config);
+    },
+
     requestSigningOtp: async (signingFileId, signingSessionId) => {
         return await ApiUtils.post(
             `${base}/${signingFileId}/otp/request`,
