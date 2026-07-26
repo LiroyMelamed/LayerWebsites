@@ -1269,6 +1269,39 @@ export default function PlatformSettingsScreen() {
                         {t("platformSettings.knowledgeDocsSubtitle")}
                     </Text14>
 
+                    {/* Chatbot module visibility */}
+                    {(() => {
+                        const botSettings = settings?.chatbot || {};
+                        const editKey = "chatbot:AI_CHATBOT_ENABLED";
+                        const edited = editedValues[editKey]?.value;
+                        const current =
+                            edited !== undefined
+                                ? edited
+                                : (botSettings.AI_CHATBOT_ENABLED?.effectiveValue ?? "false");
+                        return (
+                            <SimpleContainer className="lw-platformSettings__knowledgeNotifSection">
+                                <TextBold14>
+                                    {botSettings.AI_CHATBOT_ENABLED?.label
+                                        || t("platformSettings.aiChatbotEnabled", "צ׳אטבוט AI")}
+                                </TextBold14>
+                                <Text12 className="lw-platformSettings__knowledgeMeta">
+                                    {botSettings.AI_CHATBOT_ENABLED?.description
+                                        || t(
+                                            "platformSettings.aiChatbotEnabledDesc",
+                                            "הגדרת פלטפורמה (לא בילד). הניתוב /chatbot נשאר זמין ב-URL ישיר."
+                                        )}
+                                </Text12>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "boolean" }}
+                                        value={String(current)}
+                                        onChange={(val) => handleSettingChange("chatbot", "AI_CHATBOT_ENABLED", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                        );
+                    })()}
+
                     {/* Notification email setting */}
                     <SimpleContainer className="lw-platformSettings__knowledgeNotifSection">
                         <TextBold14>{t("platformSettings.leadNotifEmail")}</TextBold14>
@@ -1591,6 +1624,39 @@ export default function PlatformSettingsScreen() {
 
             return (
                 <SimpleContainer className="lw-platformSettings__calendarTab">
+                    {/* Module visibility */}
+                    <SimpleCard className="lw-platformSettings__card">
+                        <TextBold18>{t("platformSettings.calendarModuleTitle", "מודול יומן")}</TextBold18>
+                        <Text12 className="lw-platformSettings__settingDescription">
+                            {t(
+                                "platformSettings.calendarModuleHint",
+                                "כאשר כבוי: מסך היומן, ווידג׳ט בלוח הבקרה ופריט התפריט מוסתרים. אין צורך בבילד מחדש."
+                            )}
+                        </Text12>
+                        <SimpleContainer className="lw-platformSettings__settingsList">
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">
+                                        {calSettings.ENABLE_CALENDAR_MODULE?.label
+                                            || t("platformSettings.calendarModuleEnabled", "הצג מודול יומן")}
+                                    </TextBold14>
+                                    {calSettings.ENABLE_CALENDAR_MODULE?.description && (
+                                        <Text12 className="lw-platformSettings__settingDescription">
+                                            {calSettings.ENABLE_CALENDAR_MODULE.description}
+                                        </Text12>
+                                    )}
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "boolean" }}
+                                        value={getVal("ENABLE_CALENDAR_MODULE", "true")}
+                                        onChange={(val) => handleChange("ENABLE_CALENDAR_MODULE", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                        </SimpleContainer>
+                    </SimpleCard>
+
                     {/* Per-day working hours */}
                     <SimpleCard className="lw-platformSettings__card">
                         <TextBold18>{t("platformSettings.workingHoursByDayTitle")}</TextBold18>
