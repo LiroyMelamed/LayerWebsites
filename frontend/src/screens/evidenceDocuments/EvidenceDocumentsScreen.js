@@ -33,7 +33,7 @@ import { MainScreenName } from "../mainScreen/MainScreen";
 
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 
-import { SIGNING_OTP_ENABLED } from "../../featureFlags";
+import { useSigningOtpEnabled } from "../../services/firmSettings";
 
 import { parseDateInput } from "../../functions/date/formatDateForInput";
 import "./EvidenceDocumentsScreen.scss";
@@ -58,8 +58,8 @@ function formatDateDdMmYy(iso) {
     return `${dd}/${mm}/${yy}`;
 }
 
-function otpLabel(item, t) {
-    if (!SIGNING_OTP_ENABLED) return "-";
+function otpLabel(item, t, otpFeatureEnabled) {
+    if (!otpFeatureEnabled) return "-";
     const requireOtp = Boolean(item?.otpPolicy?.requireOtp);
     const waivedBy = String(item?.otpPolicy?.waivedBy || "").trim();
 
@@ -73,7 +73,7 @@ export default function EvidenceDocumentsScreen() {
     const { isSmallScreen } = useScreenSize();
     const { openPopup, closePopup } = usePopup();
 
-    const showOtpUi = SIGNING_OTP_ENABLED;
+    const showOtpUi = useSigningOtpEnabled();
 
     const [inputQ, setInputQ] = useState("");
     const [inputCaseId, setInputCaseId] = useState("");
@@ -389,7 +389,7 @@ export default function EvidenceDocumentsScreen() {
                                         <Text14 className="lw-evidenceDocuments__itemCell" title={it.documentDisplayName || ""}>{it.documentDisplayName || "-"}</Text14>
                                         <Text14 className="lw-evidenceDocuments__itemCell lw-evidenceDocuments__itemCell--date">{formatDateDdMmYy(it.signedAtUtc)}</Text14>
                                         {showOtpUi && (
-                                            <Text14 className="lw-evidenceDocuments__itemCell lw-evidenceDocuments__itemCell--otp">{otpLabel(it, t)}</Text14>
+                                            <Text14 className="lw-evidenceDocuments__itemCell lw-evidenceDocuments__itemCell--otp">{otpLabel(it, t, showOtpUi)}</Text14>
                                         )}
                                         <SimpleContainer className="lw-evidenceDocuments__itemCell lw-evidenceDocuments__itemCell--actions">
                                             <TertiaryButton
