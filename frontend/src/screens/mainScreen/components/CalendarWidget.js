@@ -9,7 +9,7 @@ import { colors } from "../../../constant/colors";
 import { AdminStackName } from "../../../navigation/AdminStack";
 import { CalendarScreenName } from "../../calendarScreen/CalendarScreen";
 import { formatDisplayTime } from "../../../functions/date/formatDateForInput";
-import { ENABLE_CALENDAR_MODULE } from "../../../featureFlags";
+import { useCalendarModuleEnabled } from "../../../services/firmSettings";
 import { leaveColor } from "../../calendarScreen/utils/lawyerColors";
 import "./CalendarWidget.scss";
 
@@ -103,11 +103,12 @@ function BucketSection({ heading, events, t }) {
 export default function CalendarWidget({ events = [], isPerforming }) {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const calendarEnabled = useCalendarModuleEnabled();
 
     const buckets = useMemo(() => bucketEvents(events), [events]);
     const totalCount = buckets.today.length + buckets.tomorrow.length;
 
-    if (!ENABLE_CALENDAR_MODULE) return null;
+    if (!calendarEnabled) return null;
 
     const handleNavigate = () => navigate(AdminStackName + CalendarScreenName);
 

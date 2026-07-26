@@ -18,7 +18,7 @@ import { TaggedCasesScreenName } from '../taggedCasesScreen/TaggedCasesScreen';
 import { AllCasesScreenName } from '../allCasesScreen/AllCasesScreen';
 import { AllClientsScreenName } from '../allClientsScreen/AllClientsScreen';
 import CalendarWidget from './components/CalendarWidget';
-import { ENABLE_CALENDAR_MODULE } from '../../featureFlags';
+import { useCalendarModuleEnabled } from '../../services/firmSettings';
 import { useTranslation } from "react-i18next";
 
 import "./MainScreen.scss";
@@ -29,9 +29,10 @@ export default function MainScreen() {
     const { t } = useTranslation();
     const navigate = useNavigate()
     const { isSmallScreen } = useScreenSize();
+    const calendarEnabled = useCalendarModuleEnabled();
     const { result: mainScreenData, isPerforming: isPerformingMainScreenData, performRequest } = useAutoHttpRequest(casesApi.getMainScreenData);
     const { result: calendarTodayData, isPerforming: isPerformingCalendar } = useAutoHttpRequest(
-        ENABLE_CALENDAR_MODULE ? calendarApi.getTodayAndTomorrow : () => Promise.resolve(null)
+        calendarEnabled ? calendarApi.getTodayAndTomorrow : () => Promise.resolve(null)
     );
     const clientsCardRef = useRef(null);
 
@@ -40,7 +41,7 @@ export default function MainScreen() {
             {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={AdminStackName + MainScreenName} />}
 
             <SimpleScrollView>
-                {ENABLE_CALENDAR_MODULE && (
+                {calendarEnabled && (
                     <SimpleContainer className="lw-mainScreen__row lw-mainScreen__row--full">
                         <CalendarWidget
                             events={calendarTodayData?.events || []}

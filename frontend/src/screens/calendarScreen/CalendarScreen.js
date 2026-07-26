@@ -25,7 +25,7 @@ import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import { images } from "../../assets/images/images";
 import { AdminStackName } from "../../navigation/AdminStack";
 import { MainScreenName } from "../mainScreen/MainScreen";
-import { ENABLE_CALENDAR_MODULE } from "../../featureFlags";
+import { useCalendarModuleEnabled } from "../../services/firmSettings";
 
 import calendarApi from "../../api/calendarApi";
 import platformSettingsApi from "../../api/platformSettingsApi";
@@ -189,13 +189,14 @@ export default function CalendarScreen() {
     const { isSmallScreen } = useScreenSize();
     const { openPopup, closePopup } = usePopup();
     const [searchParams, setSearchParams] = useSearchParams();
+    const calendarEnabled = useCalendarModuleEnabled();
 
     // Feature-flag guard: bounce to main screen if the module is disabled.
     useEffect(() => {
-        if (!ENABLE_CALENDAR_MODULE) {
+        if (!calendarEnabled) {
             navigate(AdminStackName + MainScreenName, { replace: true });
         }
-    }, [navigate]);
+    }, [navigate, calendarEnabled]);
 
     const role = _currentRole();
     const canUseFirmView = _isFirmManager(role);
@@ -600,7 +601,7 @@ export default function CalendarScreen() {
         ? (caseFilterLabel || `#${filters.case_id}`)
         : null;
 
-    if (!ENABLE_CALENDAR_MODULE) return null;
+    if (!calendarEnabled) return null;
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>

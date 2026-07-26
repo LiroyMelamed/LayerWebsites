@@ -20,7 +20,7 @@ import {
     uploadFileForSigningScreenName,
     LoginScreenName,
 } from "./screenPaths";
-import { ENABLE_CALENDAR_MODULE } from "../featureFlags";
+import { useCalendarModuleEnabled } from "../services/firmSettings";
 import { LoginStackName } from "./LoginStack";
 import MainScreen from "../screens/mainScreen/MainScreen";
 import TaggedCasesScreen from "../screens/taggedCasesScreen/TaggedCasesScreen";
@@ -47,6 +47,7 @@ function toRelativePath(pathname) {
 
 function AdminStack() {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const calendarEnabled = useCalendarModuleEnabled();
     if (!token) return <Navigate to={LoginStackName + LoginScreenName} replace />;
 
     return (
@@ -67,7 +68,7 @@ function AdminStack() {
                     <Route path={toRelativePath(uploadFileForSigningScreenName)} element={<UploadFileForSigningScreen />} />
                     <Route path={toRelativePath(RemindersScreenName)} element={<RemindersScreen />} />
                     <Route path={toRelativePath(PlatformSettingsScreenName)} element={<PlatformSettingsScreen />} />
-                    {ENABLE_CALENDAR_MODULE && (
+                    {calendarEnabled && (
                         <Route path={toRelativePath(CalendarScreenName)} element={<CalendarScreen />} />
                     )}
                 </Routes>
