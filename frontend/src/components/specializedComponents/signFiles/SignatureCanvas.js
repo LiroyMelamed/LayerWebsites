@@ -1396,7 +1396,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             }
             const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
             const unsignedRequired = getUnsignedRequiredSpots(allSpots);
-            const unsigned = unsignedRequired.filter((s) => getSpotType(s) === 'signature');
+            // Sign-all applies one drawn/saved signature to every remaining
+            // signature-like spot this signer can act on (signature + initials).
+            const unsigned = unsignedRequired.filter((s) => isSignatureLike(getSpotType(s)));
             if (!unsigned.length) return;
 
             setSaving(true);
@@ -1435,32 +1437,21 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 .map((s) => Number(s.SignatureSpotId))
                 .filter((n) => Number.isFinite(n) && n > 0);
 
-            if (isPublic && signatureSpotIds.length > 1) {
+            // Always batch when possible — one request signs the full list server-side
+            // (avoids per-spot rate limits and is much faster).
+            if (signatureSpotIds.length >= 1) {
                 const config = { headers: { "x-signing-session-id": signingSessionId } };
-                const res = await signingFilesApi.publicSignFileBatch(
-                    publicToken,
-                    {
-                        signatureSpotIds,
-                        signatureImage: dataUrl,
-                        signingSessionId,
-                        consentAccepted: true,
-                        consentVersion,
-                    },
-                    config
-                );
+                const body = {
+                    signatureSpotIds,
+                    signatureImage: dataUrl,
+                    signingSessionId,
+                    consentAccepted: true,
+                    consentVersion,
+                };
+                const res = isPublic
+                    ? await signingFilesApi.publicSignFileBatch(publicToken, body, config)
+                    : await signingFilesApi.signFileBatch(fileDetails.file.SigningFileId, body, config);
                 unwrapApi(res);
-            } else {
-                let signedCount = 0;
-                for (const spot of unsigned) {
-                    setCurrentSpot(spot);
-                    // eslint-disable-next-line no-await-in-loop
-                    const didSign = await signCurrentSpotWithImage(dataUrl, spot);
-                    if (!didSign) {
-                        if (signedCount > 0) await reloadDetailsAndAdvance();
-                        return;
-                    }
-                    signedCount++;
-                }
             }
 
             setMessage({ type: "success", text: t("signing.canvas.signedAllSuccess") });
@@ -1637,7 +1628,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const unsignedOptionalSpots = getUnsignedOptionalSpots(spots);
     const remainingCount = unsignedRequiredSpots.length;
     const remainingSignatureSpots = unsignedRequiredSpots.filter(
-        (s) => getSpotType(s) === 'signature',
+        (s) => isSignatureLike(getSpotType(s)),
     ).length;
     const optionalRemainingCount = unsignedOptionalSpots.length;
     const allSpotsSignedByUser = remainingCount === 0;

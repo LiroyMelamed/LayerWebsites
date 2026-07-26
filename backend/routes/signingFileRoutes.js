@@ -120,6 +120,9 @@ router.post("/:signingFileId/otp/verify", authMiddleware, signingFileController.
 // לקוח חותם על מקום חתימה אחד
 router.post("/:signingFileId/sign", extendTimeout(60_000), authMiddleware, requireSigningEnabledForSigningFile, signingFileController.signFile);
 
+// לקוח חותם על כמה מקומות בבקשה אחת (Sign all)
+router.post("/:signingFileId/sign-batch", extendTimeout(60_000), authMiddleware, requireSigningEnabledForSigningFile, signingFileController.signFileBatch);
+
 // לקוח דוחה את המסמך
 router.post("/:signingFileId/reject", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.rejectSigning);
 
