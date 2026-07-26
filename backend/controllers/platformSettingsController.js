@@ -420,6 +420,8 @@ const PUBLIC_SETTINGS_KEYS = [
     'contact:WHATSAPP_PHONE',
     'contact:SMS_PHONE',
     'signing:SHOW_PUBLIC_SIGNING_CONSENT',
+    'signing:SIGNING_OTP_ENABLED',
+    'signing:SIGNING_REQUIRE_OTP_DEFAULT',
 ];
 
 /** GET /api/platform-settings/public — no admin required */
