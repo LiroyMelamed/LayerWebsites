@@ -138,6 +138,24 @@ export function useFirmPhone() {
     return phone;
 }
 
+/** Hook: platform setting LAW_FIRM_NAME (Hebrew client-facing). */
+export function useFirmName() {
+    const [name, setName] = useState(_firmName);
+
+    useEffect(() => {
+        const sync = () => setName(_firmName);
+        if (_loaded) {
+            sync();
+            return undefined;
+        }
+        loadFirmSettings().then(sync);
+        _listeners.add(sync);
+        return () => { _listeners.delete(sync); };
+    }, []);
+
+    return name;
+}
+
 /** Hook: platform setting SIGNING_OTP_ENABLED. */
 export function useSigningOtpEnabled() {
     return useCachedBool(getSigningOtpEnabledCached, false);
