@@ -1,9 +1,9 @@
 /**
  * firmSettings  — lightweight module that fetches non-sensitive firm
- * settings (WhatsApp phone, firm name) once and caches them in memory.
+ * settings (WhatsApp phone, firm name, signing OTP flags) once and caches them.
  *
- * Usage in React components  → useFirmPhone()
- * Usage in plain JS functions → getFirmPhone()
+ * Usage in React components  → useFirmPhone() / useSigningOtpEnabled()
+ * Usage in plain JS functions → getFirmPhone() / getSigningOtpEnabledCached()
  */
 import { useState, useEffect } from "react";
 import ApiUtils from "../api/apiUtils";
@@ -11,8 +11,15 @@ import ApiUtils from "../api/apiUtils";
 // ── Module-level cache ──────────────────────────────────────────────
 let _whatsappPhone = "";
 let _firmName = "";
+let _signingOtpEnabled = false;
+let _signingRequireOtpDefault = true;
 let _loaded = false;
 let _loadPromise = null;
+
+function toBool(raw, fallback = false) {
+    if (raw === undefined || raw === null || raw === "") return fallback;
+    return raw === true || raw === "true" || raw === "1" || raw === 1;
+}
 
 /**
  * Fetch public settings from the server (called lazily on first access).
@@ -27,6 +34,8 @@ export async function loadFirmSettings() {
             const data = res?.data || {};
             _whatsappPhone = data.WHATSAPP_DEFAULT_PHONE || "";
             _firmName = data.LAW_FIRM_NAME || "";
+            _signingOtpEnabled = toBool(data.SIGNING_OTP_ENABLED, false);
+            _signingRequireOtpDefault = toBool(data.SIGNING_REQUIRE_OTP_DEFAULT, true);
             _loaded = true;
         })
         .catch((err) => {
@@ -61,7 +70,17 @@ export function getFirmName() {
     return _firmName;
 }
 
-// ── React hook ──────────────────────────────────────────────────────
+export function getSigningOtpEnabledCached() {
+    if (!_loaded && !_loadPromise) loadFirmSettings();
+    return _signingOtpEnabled;
+}
+
+export function getSigningRequireOtpDefaultCached() {
+    if (!_loaded && !_loadPromise) loadFirmSettings();
+    return _signingRequireOtpDefault;
+}
+
+// ── React hooks ─────────────────────────────────────────────────────
 
 /** Hook that triggers a lazy load and re-renders when the phone arrives. */
 export function useFirmPhone() {
@@ -76,4 +95,19 @@ export function useFirmPhone() {
     }, []);
 
     return phone;
+}
+
+/** Hook: platform setting SIGNING_OTP_ENABLED. */
+export function useSigningOtpEnabled() {
+    const [enabled, setEnabled] = useState(_loaded ? _signingOtpEnabled : false);
+
+    useEffect(() => {
+        if (_loaded) {
+            setEnabled(_signingOtpEnabled);
+            return;
+        }
+        loadFirmSettings().then(() => setEnabled(_signingOtpEnabled));
+    }, []);
+
+    return enabled;
 }

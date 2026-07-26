@@ -4,7 +4,8 @@ import signingFilesApi from "../../../api/signingFilesApi";
 import ApiUtils from "../../../api/apiUtils";
 import PdfViewer from "./pdfViewer/PdfViewer";
 import { useTranslation } from "react-i18next";
-import { SIGNING_OTP_ENABLED } from "../../../featureFlags";
+// OTP UI is driven by file.OtpEnabled / file.RequireOtp from the API
+// (platform setting SIGNING_OTP_ENABLED), not a build-time feature flag.
 
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import SimpleLoader from "../../simpleComponents/SimpleLoader";
@@ -124,7 +125,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     };
 
     const isScreen = variant === "screen";
-    const otpEnabled = SIGNING_OTP_ENABLED && Boolean(fileDetails?.file?.OtpEnabled ?? true);
+    // Server sets OtpEnabled from platform setting SIGNING_OTP_ENABLED.
+    const otpEnabled = Boolean(fileDetails?.file?.OtpEnabled);
     const otpRequired = otpEnabled && Boolean(fileDetails?.file?.RequireOtp);
 
     const consentStorageKey = useMemo(() => {

@@ -49,8 +49,30 @@ const SIGNING_PDF_OP_TIMEOUT_MS = Number(process.env.SIGNING_PDF_OP_TIMEOUT_MS |
 const SIGNING_OTP_TTL_SECONDS = Number(process.env.SIGNING_OTP_TTL_SECONDS || 10 * 60);
 const SIGNING_OTP_MAX_ATTEMPTS = Number(process.env.SIGNING_OTP_MAX_ATTEMPTS || 5);
 const SIGNING_OTP_LOCK_MINUTES = Number(process.env.SIGNING_OTP_LOCK_MINUTES || 10);
-const SIGNING_REQUIRE_OTP_DEFAULT = String(process.env.SIGNING_REQUIRE_OTP_DEFAULT ?? 'true').toLowerCase() !== 'false';
-const SIGNING_OTP_ENABLED = String(process.env.SIGNING_OTP_ENABLED ?? 'false').toLowerCase() === 'true';
+
+function toSettingBool(value, fallback = false) {
+    if (value === undefined || value === null || value === '') return Boolean(fallback);
+    return value === true || value === 1 || value === '1' || String(value).toLowerCase() === 'true';
+}
+
+/** Platform settings (admin UI) win over env. Cached ~1m via settingsService. */
+async function getSigningOtpEnabled() {
+    const v = await getSetting(
+        'signing',
+        'SIGNING_OTP_ENABLED',
+        process.env.SIGNING_OTP_ENABLED ?? 'false'
+    );
+    return toSettingBool(v, false);
+}
+
+async function getSigningRequireOtpDefault() {
+    const v = await getSetting(
+        'signing',
+        'SIGNING_REQUIRE_OTP_DEFAULT',
+        process.env.SIGNING_REQUIRE_OTP_DEFAULT ?? 'true'
+    );
+    return toSettingBool(v, true);
+}
 
 function appError(errorCode, httpStatus, { message, meta, extras, legacyAliases } = {}) {
     return createAppError(
@@ -1250,13 +1272,21 @@ async function resolveFirmSigningPolicyForSigningFileId(signingFileId) {
     return resolveFirmSigningPolicy(null);
 }
 
-function computeRequireOtpEffectiveFromFirmPolicy(policy, file = null) {
-    if (!SIGNING_OTP_ENABLED) return false;
-    if (!policy?.signingClientOtpRequired) return false;
+function computeRequireOtpEffectiveFromFirmPolicy(_policy, file = null, otpSystemEnabled = false) {
+    // Emergency env kill-switch only (not the admin "OTP בחתימה" UI toggle).
+    const envOtp = process.env.SIGNING_CLIENT_OTP_REQUIRED;
+    if (envOtp !== undefined && envOtp !== null && String(envOtp).trim() !== '') {
+        if (!toSettingBool(envOtp, false)) return false;
+    }
+
+    // Already-sent documents: honor the lawyer's choice stored on the file.
+    // Turning off platform "OTP בחתימה" must NOT waive OTP on pending/in-flight docs.
     if (file && file.RequireOtp !== undefined && file.RequireOtp !== null) {
         return Boolean(file.RequireOtp);
     }
-    return true;
+
+    // No explicit per-document flag (legacy): only require if the feature is currently on.
+    return Boolean(otpSystemEnabled);
 }
 
 function isSigningDocumentExpired(file) {
@@ -2439,19 +2469,21 @@ exports.uploadFileForSigning = async (req, res, next) => {
         // For backward compatibility, use first signer as primary clientId
         const primaryClientId = signersList[0].userId || clientId;
 
-        // OTP policy: default is controlled by feature flag.
+        // OTP policy: platform settings (admin) control feature + default.
         // If the lawyer explicitly waives OTP, they must also explicitly acknowledge the waiver.
+        const otpSystemEnabled = await getSigningOtpEnabled();
+        const requireOtpDefault = await getSigningRequireOtpDefault();
         const requireOtpRaw = signingConfig?.require_otp ?? signingConfig?.requireOtp;
         const hasExplicitPolicySelection = requireOtpRaw === true || requireOtpRaw === false || requireOtpRaw === 1 || requireOtpRaw === 0;
-        const requireOtp = SIGNING_OTP_ENABLED
-            ? (hasExplicitPolicySelection ? Boolean(requireOtpRaw) : SIGNING_REQUIRE_OTP_DEFAULT)
+        const requireOtp = otpSystemEnabled
+            ? (hasExplicitPolicySelection ? Boolean(requireOtpRaw) : requireOtpDefault)
             : false;
-        const waiverAck = SIGNING_OTP_ENABLED
+        const waiverAck = otpSystemEnabled
             ? (hasExplicitPolicySelection
                 ? Boolean(signingConfig?.otpWaiverAcknowledged ?? signingConfig?.otp_waiver_acknowledged)
-                : !SIGNING_REQUIRE_OTP_DEFAULT)
+                : !requireOtpDefault)
             : true;
-        if (SIGNING_OTP_ENABLED && !requireOtp && !waiverAck) {
+        if (otpSystemEnabled && !requireOtp && !waiverAck) {
             return fail(next, 'OTP_WAIVER_ACK_REQUIRED', 422);
         }
 
@@ -3131,7 +3163,8 @@ exports.getSigningFileDetails = async (req, res, next) => {
 
         const file = fileResult.rows[0];
         const policy = await resolveFirmSigningPolicyForSigningFileId(signingFileId);
-        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(policy, file);
+        const otpSystemEnabled = await getSigningOtpEnabled();
+        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(policy, file, otpSystemEnabled);
         file.RequireOtp = requireOtpEffective;
 
         const isLawyer = file.LawyerId === userId;
@@ -3267,7 +3300,7 @@ exports.getSigningFileDetails = async (req, res, next) => {
         }
 
         return res.json({
-            file: { ...file, OtpEnabled: SIGNING_OTP_ENABLED },
+            file: { ...file, OtpEnabled: (await getSigningOtpEnabled()) },
             signatureSpots,
             signerUserId: userId,
             isLawyer: viewAllSpots,
@@ -3345,7 +3378,8 @@ exports.getEvidencePackage = async (req, res, next) => {
 
         const policy = await resolveFirmSigningPolicyForSigningFileId(signingFileId);
         const rawFileEvidence = fileEvidenceRes.rows?.[0] || null;
-        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(policy, rawFileEvidence);
+        const otpSystemEnabled = await getSigningOtpEnabled();
+        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(policy, rawFileEvidence, otpSystemEnabled);
         const fileEvidence = rawFileEvidence
             ? { ...rawFileEvidence, RequireOtp: requireOtpEffective }
             : null;
@@ -3863,11 +3897,11 @@ async function generateEvidenceCertificateBuffer(signingFileId) {
             userId: s.SignerUserId || '-',
             signingSessionId: s.SigningSessionId || '-',
             phone: userInfo?.Phone || '-',
-            otpPhoneE164: SIGNING_OTP_ENABLED ? (otpRow?.PhoneE164 || '-') : 'N/A',
+            otpPhoneE164: (await getSigningOtpEnabled()) ? (otpRow?.PhoneE164 || '-') : 'N/A',
             email: userInfo?.Email || '-',
-            otpUsed: SIGNING_OTP_ENABLED ? Boolean(s.OtpVerificationId || (otpRow && otpRow.Verified)) : false,
-            otpVerifiedAtUtc: SIGNING_OTP_ENABLED ? normalizeUtc(otpRow?.VerifiedAtUtc) : 'N/A',
-            authProvider: SIGNING_OTP_ENABLED ? '-' : 'N/A',
+            otpUsed: (await getSigningOtpEnabled()) ? Boolean(s.OtpVerificationId || (otpRow && otpRow.Verified)) : false,
+            otpVerifiedAtUtc: (await getSigningOtpEnabled()) ? normalizeUtc(otpRow?.VerifiedAtUtc) : 'N/A',
+            authProvider: (await getSigningOtpEnabled()) ? '-' : 'N/A',
             viewIp: viewedEvent?.Ip || '-',
             signIp: s.SignerIp || '-',
             device: parseDeviceBrowser(s.SignerUserAgent || viewedEvent?.UserAgent || otpSentEvent?.UserAgent || '-'),
@@ -3889,13 +3923,13 @@ async function generateEvidenceCertificateBuffer(signingFileId) {
 
         next.userId = next.userId !== '-' ? next.userId : (s.SignerUserId || next.userId);
         next.signingSessionId = next.signingSessionId !== '-' ? next.signingSessionId : (s.SigningSessionId || next.signingSessionId);
-        if (SIGNING_OTP_ENABLED) {
+        if ((await getSigningOtpEnabled())) {
             next.otpPhoneE164 = next.otpPhoneE164 !== '-' ? next.otpPhoneE164 : (otpRow?.PhoneE164 || next.otpPhoneE164);
         }
         next.viewIp = next.viewIp !== '-' ? next.viewIp : (viewedEvent?.Ip || next.viewIp);
         next.signIp = next.signIp !== '-' ? next.signIp : (s.SignerIp || next.signIp);
         next.presentedPdfSha256 = next.presentedPdfSha256 !== '-' ? next.presentedPdfSha256 : presentedPdfSha256;
-        if (SIGNING_OTP_ENABLED) {
+        if ((await getSigningOtpEnabled())) {
             next.otpUsed = next.otpUsed || Boolean(s.OtpVerificationId || (otpRow && otpRow.Verified));
             if (next.otpVerifiedAtUtc === '-' && otpRow?.VerifiedAtUtc) next.otpVerifiedAtUtc = normalizeUtc(otpRow.VerifiedAtUtc);
         }
@@ -3970,11 +4004,11 @@ async function generateEvidenceCertificateBuffer(signingFileId) {
     })();
 
     const otpSummary = {
-        systemEnabled: SIGNING_OTP_ENABLED,
-        required: SIGNING_OTP_ENABLED ? Boolean(fileRow?.RequireOtp) : false,
-        used: SIGNING_OTP_ENABLED ? (otpVerifications.length > 0) : false,
-        verified: SIGNING_OTP_ENABLED ? otpVerifications.some((o) => Boolean(o?.Verified)) : false,
-        provider: SIGNING_OTP_ENABLED ? 'OTP' : 'N/A',
+        systemEnabled: (await getSigningOtpEnabled()),
+        required: (await getSigningOtpEnabled()) ? Boolean(fileRow?.RequireOtp) : false,
+        used: (await getSigningOtpEnabled()) ? (otpVerifications.length > 0) : false,
+        verified: (await getSigningOtpEnabled()) ? otpVerifications.some((o) => Boolean(o?.Verified)) : false,
+        provider: (await getSigningOtpEnabled()) ? 'OTP' : 'N/A',
         messageId: 'N/A',
     };
 
@@ -4423,7 +4457,8 @@ exports.createPublicSigningLink = async (req, res, next) => {
             return fail(next, 'FORBIDDEN', 403);
         }
 
-        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file);
+        const otpSystemEnabled = await getSigningOtpEnabled();
+        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file, otpSystemEnabled);
 
         const targetSignerUserId = signerUserId || file.ClientId;
         if (!targetSignerUserId) {
@@ -4500,11 +4535,12 @@ exports.updateSigningPolicy = async (req, res, next) => {
             return fail(next, 'SIGNING_POLICY_REQUIRED', 422);
         }
 
-        const requireOtp = SIGNING_OTP_ENABLED ? Boolean(requireOtpRaw) : false;
-        const waiverAck = SIGNING_OTP_ENABLED
+        const otpSystemEnabled = await getSigningOtpEnabled();
+        const requireOtp = otpSystemEnabled ? Boolean(requireOtpRaw) : false;
+        const waiverAck = otpSystemEnabled
             ? Boolean(req.body?.otpWaiverAcknowledged ?? req.body?.otp_waiver_acknowledged)
             : true;
-        if (SIGNING_OTP_ENABLED && !requireOtp && !waiverAck) {
+        if (otpSystemEnabled && !requireOtp && !waiverAck) {
             return fail(next, 'OTP_WAIVER_ACK_REQUIRED', 422);
         }
 
@@ -4694,7 +4730,8 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
             })
         );
 
-        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file);
+        const otpSystemEnabled = await getSigningOtpEnabled();
+        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file, otpSystemEnabled);
 
         // Sequential signing: check if it's this signer's turn
         let signingOrder = 'parallel';
@@ -4736,7 +4773,7 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
         }
 
         return res.json({
-            file: { ...file, RequireOtp: requireOtpEffective, OtpEnabled: SIGNING_OTP_ENABLED },
+            file: { ...file, RequireOtp: requireOtpEffective, OtpEnabled: (await getSigningOtpEnabled()) },
             signatureSpots,
             signerUserId,
             isLawyer,
@@ -4789,7 +4826,8 @@ exports.publicSignFile = async (req, res, next) => {
             return fail(next, 'DOCUMENT_NOT_FOUND', 404);
         }
 
-        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file);
+        const otpSystemEnabled = await getSigningOtpEnabled();
+        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file, otpSystemEnabled);
         // When OTP is not required, the signed public token already embeds
         // a verified signerUserId, so no additional auth is needed.
         // If the caller IS authenticated, verify they match the token's signer
@@ -4979,7 +5017,8 @@ exports.publicSignFileBatch = async (req, res, next) => {
         }
 
         const effectivePolicyVersion = String(file.SigningPolicyVersion || SIGNING_POLICY_VERSION);
-        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file);
+        const otpSystemEnabled = await getSigningOtpEnabled();
+        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file, otpSystemEnabled);
 
         if (!consentAccepted) {
             return fail(next, 'CONSENT_REQUIRED', 403);
@@ -5347,7 +5386,7 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
         return res.json({ success: true });
     }
 
-    if (!SIGNING_OTP_ENABLED) {
+    if (!(await getSigningOtpEnabled())) {
         await auditOtpBlocked({
             req,
             signingFileId,
@@ -5359,7 +5398,8 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
         return res.json({ success: true });
     }
 
-    const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file);
+    const otpSystemEnabled = await getSigningOtpEnabled();
+    const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file, otpSystemEnabled);
     if (!requireOtpEffective) {
         await auditOtpBlocked({
             req,
@@ -5527,7 +5567,7 @@ async function verifySigningOtpImpl({ req, res, next, signingFileId, signerUserI
         return res.json({ success: true });
     }
 
-    if (!SIGNING_OTP_ENABLED) {
+    if (!(await getSigningOtpEnabled())) {
         await auditOtpBlocked({
             req,
             signingFileId,
@@ -5539,7 +5579,8 @@ async function verifySigningOtpImpl({ req, res, next, signingFileId, signerUserI
         return res.json({ success: true });
     }
 
-    const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file);
+    const otpSystemEnabled = await getSigningOtpEnabled();
+    const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file, otpSystemEnabled);
     if (!requireOtpEffective) {
         await auditOtpBlocked({
             req,
@@ -6157,7 +6198,8 @@ exports.signFile = async (req, res, next) => {
         }
 
         const effectivePolicyVersion = String(file.SigningPolicyVersion || SIGNING_POLICY_VERSION);
-        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file);
+        const otpSystemEnabled = await getSigningOtpEnabled();
+        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file, otpSystemEnabled);
         const spotType = String(spot.FieldType || 'signature').toLowerCase();
         const isSignatureLike = spotType === 'signature' || spotType === 'initials' || spotType === 'clientstamp';
         const fieldValueRaw = req.body?.fieldValue ?? req.body?.field_value;
