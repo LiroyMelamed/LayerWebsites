@@ -4884,22 +4884,33 @@ exports.publicSignFileBatch = async (req, res, next) => {
     const t0 = Date.now();
     const timings = {};
     try {
-        const verified = verifyPublicSigningToken(req.params.token);
-        if (!verified.ok) {
-            return fail(next, verified.errorCode, verified.httpStatus);
-        }
+        let signingFileId;
+        let signerUserId;
+        let enabledCheck;
 
-        const { signingFileId, signerUserId } = verified;
-        const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId, next, req });
-        if (!enabledCheck.ok) return;
+        if (req.__authSignBatch) {
+            signingFileId = req.__authSignBatch.signingFileId;
+            signerUserId = req.__authSignBatch.signerUserId;
+            enabledCheck = req.__authSignBatch.enabledCheck;
+        } else {
+            const verified = verifyPublicSigningToken(req.params.token);
+            if (!verified.ok) {
+                return fail(next, verified.errorCode, verified.httpStatus);
+            }
 
-        const tokenId = hashTokenId(req?.params?.token);
-        const windowMs = 60 * 1000;
-        const max = 30;
-        const hitToken = tokenId ? isRateLimited(windowMs, max, `signing:public_sign_batch:token:${tokenId}`) : false;
-        const hitFile = isRateLimited(windowMs, max, `signing:public_sign_batch:file:${signingFileId}`);
-        if (hitToken || hitFile) {
-            return fail(next, 'RATE_LIMITED', 429);
+            signingFileId = verified.signingFileId;
+            signerUserId = verified.signerUserId;
+            enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId, next, req });
+            if (!enabledCheck.ok) return;
+
+            const tokenId = hashTokenId(req?.params?.token);
+            const windowMs = 60 * 1000;
+            const max = 30;
+            const hitToken = tokenId ? isRateLimited(windowMs, max, `signing:public_sign_batch:token:${tokenId}`) : false;
+            const hitFile = isRateLimited(windowMs, max, `signing:public_sign_batch:file:${signingFileId}`);
+            if (hitToken || hitFile) {
+                return fail(next, 'RATE_LIMITED', 429);
+            }
         }
 
         const spotIdsRaw = req.body?.signatureSpotIds ?? req.body?.signature_spot_ids;
@@ -4909,7 +4920,7 @@ exports.publicSignFileBatch = async (req, res, next) => {
         const signatureSpotIds = [...new Set(
             spotIdsRaw.map((v) => Number(v)).filter((n) => Number.isFinite(n) && n > 0)
         )];
-        if (!signatureSpotIds.length || signatureSpotIds.length > 40) {
+        if (!signatureSpotIds.length || signatureSpotIds.length > 200) {
             return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'signatureSpotIds' } });
         }
 
@@ -5206,6 +5217,49 @@ exports.publicSignFileBatch = async (req, res, next) => {
         });
     } catch (err) {
         console.error('publicSignFileBatch error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשמירת החתימות' });
+    }
+};
+
+
+exports.signFileBatch = async (req, res, next) => {
+    // Authenticated "sign all" — same batch path as public, without the public token.
+    try {
+        const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
+        if (signingFileId === null) return;
+
+        const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId, next, req });
+        if (!enabledCheck.ok) return;
+
+        const userId = req.user?.UserId;
+        if (!userId) {
+            return fail(next, 'UNAUTHORIZED', 401);
+        }
+
+        const windowMs = 60 * 1000;
+        const max = 30;
+        const hitUser = isRateLimited(windowMs, max, `signing:auth_sign_batch:user:${userId}`);
+        const hitFile = isRateLimited(windowMs, max, `signing:auth_sign_batch:file:${signingFileId}`);
+        if (hitUser || hitFile) {
+            return fail(next, 'RATE_LIMITED', 429);
+        }
+
+        // Reuse public batch implementation by synthesizing the verified token context.
+        const originalParams = req.params;
+        const originalUser = req.user;
+        req.params = { ...originalParams, token: '__auth_batch__' };
+        req.user = { UserId: userId };
+
+        // Monkey-patch verify for this call via a one-shot body flag consumed below.
+        req.__authSignBatch = { signingFileId, signerUserId: userId, enabledCheck };
+
+        return exports.publicSignFileBatch(req, res, next).finally(() => {
+            req.params = originalParams;
+            req.user = originalUser;
+            delete req.__authSignBatch;
+        });
+    } catch (err) {
+        console.error('signFileBatch error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשמירת החתימות' });
     }
 };
