@@ -13,12 +13,15 @@ import { buttonSizes } from '../../styles/buttons/buttonSizes';
 import ChatWindow from '../../components/chatbot/ChatWindow';
 import ChatInput from '../../components/chatbot/ChatInput';
 import chatbotApi from '../../api/chatbotApi';
+import { useFirmName } from '../../services/firmSettings';
 import './ChatBotPage.scss';
 
 export const ChatBotPageName = '/ChatBot';
 
 export default function ChatBotPage() {
     const { t } = useTranslation();
+    const firmNameRaw = useFirmName();
+    const firmName = firmNameRaw || t('chatbot.firmNameFallback', 'המשרד');
 
     const [messages, setMessages] = useState([]);
     const [isTyping, setIsTyping] = useState(false);
@@ -36,22 +39,27 @@ export default function ChatBotPage() {
 
     useEffect(() => {
         const hour = new Date().getHours();
+        const vars = { firmName };
         let greeting;
         if (hour >= 5 && hour < 12) {
-            greeting = t('chatbot.greetingMorning');
+            greeting = t('chatbot.greetingMorning', vars);
         } else if (hour >= 12 && hour < 17) {
-            greeting = t('chatbot.greetingAfternoon');
+            greeting = t('chatbot.greetingAfternoon', vars);
         } else if (hour >= 17 && hour < 21) {
-            greeting = t('chatbot.greetingEvening');
+            greeting = t('chatbot.greetingEvening', vars);
         } else {
-            greeting = t('chatbot.greetingNight');
+            greeting = t('chatbot.greetingNight', vars);
         }
-        setMessages([{
-            role: 'assistant',
-            content: greeting,
-            timestamp: new Date().toISOString(),
-        }]);
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+        setMessages((prev) => {
+            // Keep later conversation turns; only seed/replace the initial greeting.
+            if (prev.length > 1) return prev;
+            return [{
+                role: 'assistant',
+                content: greeting,
+                timestamp: prev[0]?.timestamp || new Date().toISOString(),
+            }];
+        });
+    }, [firmName, t]);
 
     const handleSend = useCallback(async (text) => {
         setError(null);
@@ -163,7 +171,7 @@ export default function ChatBotPage() {
     return (
         <SimpleScreen className="lw-chatbotPage">
             <SimpleContainer className="lw-chatbotPage__header">
-                <TextBold18 color={colors.white}>{t('chatbot.title')}</TextBold18>
+                <TextBold18 color={colors.white}>{t('chatbot.title', { firmName })}</TextBold18>
                 {verified && (
                     <Text12 color={colors.white} className="lw-chatbotPage__badge">
                         {t('chatbot.verifiedBadge')}
