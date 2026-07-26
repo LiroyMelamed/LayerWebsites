@@ -49,8 +49,30 @@ const SIGNING_PDF_OP_TIMEOUT_MS = Number(process.env.SIGNING_PDF_OP_TIMEOUT_MS |
 const SIGNING_OTP_TTL_SECONDS = Number(process.env.SIGNING_OTP_TTL_SECONDS || 10 * 60);
 const SIGNING_OTP_MAX_ATTEMPTS = Number(process.env.SIGNING_OTP_MAX_ATTEMPTS || 5);
 const SIGNING_OTP_LOCK_MINUTES = Number(process.env.SIGNING_OTP_LOCK_MINUTES || 10);
-const SIGNING_REQUIRE_OTP_DEFAULT = String(process.env.SIGNING_REQUIRE_OTP_DEFAULT ?? 'true').toLowerCase() !== 'false';
-const SIGNING_OTP_ENABLED = String(process.env.SIGNING_OTP_ENABLED ?? 'false').toLowerCase() === 'true';
+
+function toSettingBool(value, fallback = false) {
+    if (value === undefined || value === null || value === '') return Boolean(fallback);
+    return value === true || value === 1 || value === '1' || String(value).toLowerCase() === 'true';
+}
+
+/** Platform settings (admin UI) win over env. Cached ~1m via settingsService. */
+async function getSigningOtpEnabled() {
+    const v = await getSetting(
+        'signing',
+        'SIGNING_OTP_ENABLED',
+        process.env.SIGNING_OTP_ENABLED ?? 'false'
+    );
+    return toSettingBool(v, false);
+}
+
+async function getSigningRequireOtpDefault() {
+    const v = await getSetting(
+        'signing',
+        'SIGNING_REQUIRE_OTP_DEFAULT',
+        process.env.SIGNING_REQUIRE_OTP_DEFAULT ?? 'true'
+    );
+    return toSettingBool(v, true);
+}
 
 function appError(errorCode, httpStatus, { message, meta, extras, legacyAliases } = {}) {
     return createAppError(
@@ -546,6 +568,17 @@ async function buildPublicSigningUrl(token) {
     return longUrl;
 }
 
+/**
+ * iMessage builds a separate rich-preview bubble for bare https URLs (esp. with OG tags).
+ * Surrounding the URL with periods suppresses that preview while keeping the link tappable.
+ * Emails / push keep the clean URL.
+ */
+function formatSmsUrlNoPreview(url) {
+    const u = String(url || '').trim();
+    if (!u) return u;
+    return `.${u}.`;
+}
+
 /** Push payload that opens the native/public signing screen on tap. */
 function buildSigningInvitePushData({ signingFileId, token, publicUrl, type = 'signing_pending' }) {
     const data = {
@@ -557,8 +590,10 @@ function buildSigningInvitePushData({ signingFileId, token, publicUrl, type = 's
         data.url = publicUrl;
     }
     if (token) {
-        // melamedia:// is registered in every LawyerApp tenant linking config.
-        data.deepLink = `melamedia://PublicSigning?token=${encodeURIComponent(String(token))}`;
+        // Prefer tenant-agnostic path; apps rewrite melamedia:// → their scheme.
+        // Also include melamedlaw for MelamedLaw builds that only register that scheme.
+        data.deepLink = `melamedlaw://PublicSigning?token=${encodeURIComponent(String(token))}`;
+        data.deepLinkAlt = `melamedia://PublicSigning?token=${encodeURIComponent(String(token))}`;
     } else if (publicUrl) {
         data.deepLink = publicUrl;
     }
@@ -1249,13 +1284,21 @@ async function resolveFirmSigningPolicyForSigningFileId(signingFileId) {
     return resolveFirmSigningPolicy(null);
 }
 
-function computeRequireOtpEffectiveFromFirmPolicy(policy, file = null) {
-    if (!SIGNING_OTP_ENABLED) return false;
-    if (!policy?.signingClientOtpRequired) return false;
+function computeRequireOtpEffectiveFromFirmPolicy(_policy, file = null, otpSystemEnabled = false) {
+    // Emergency env kill-switch only (not the admin "OTP בחתימה" UI toggle).
+    const envOtp = process.env.SIGNING_CLIENT_OTP_REQUIRED;
+    if (envOtp !== undefined && envOtp !== null && String(envOtp).trim() !== '') {
+        if (!toSettingBool(envOtp, false)) return false;
+    }
+
+    // Already-sent documents: honor the lawyer's choice stored on the file.
+    // Turning off platform "OTP בחתימה" must NOT waive OTP on pending/in-flight docs.
     if (file && file.RequireOtp !== undefined && file.RequireOtp !== null) {
         return Boolean(file.RequireOtp);
     }
-    return true;
+
+    // No explicit per-document flag (legacy): only require if the feature is currently on.
+    return Boolean(otpSystemEnabled);
 }
 
 function isSigningDocumentExpired(file) {
@@ -1704,7 +1747,15 @@ async function lookupUserPhoneE164OrNull(userId) {
     return formatted || null;
 }
 
-async function createSigningOtpChallenge({ signingFileId, signerUserId, signingSessionId, presentedPdfSha256, req }) {
+async function createSigningOtpChallenge({
+    signingFileId,
+    signerUserId,
+    signingSessionId,
+    presentedPdfSha256,
+    req,
+    skipSms = false,
+    ttlSeconds = SIGNING_OTP_TTL_SECONDS,
+}) {
     // Check limits (single-tenant)
     const check = await checkFirmLimitsOrNull({
         action: 'send_otp_sms',
@@ -1729,7 +1780,8 @@ async function createSigningOtpChallenge({ signingFileId, signerUserId, signingS
     const salt = uuid();
     const otpHash = computeSigningOtpHash({ otp, salt });
     const sentAtUtc = new Date();
-    const expiresAtUtc = new Date(sentAtUtc.getTime() + SIGNING_OTP_TTL_SECONDS * 1000);
+    const ttl = Math.max(60, Number(ttlSeconds) || SIGNING_OTP_TTL_SECONDS);
+    const expiresAtUtc = new Date(sentAtUtc.getTime() + ttl * 1000);
 
     await pool.query(
         `insert into signing_otp_challenges
@@ -1755,16 +1807,17 @@ async function createSigningOtpChallenge({ signingFileId, signerUserId, signingS
         ]
     );
 
-    // Send SMS (provider id is not currently captured by sendMessage); audit log still captures send time.
-    await sendMessage(`קוד אימות לחתימה: ${otp}`, phoneE164, { fast: true });
-
-    // SMS metering is a no-op in single-tenant mode (firm_usage_events removed)
+    // Invite flow bundles OTP into the same SMS — skip a second provider send.
+    if (!skipSms) {
+        await sendMessage(`קוד אימות לחתימה: ${otp}`, phoneE164, { fast: true });
+    }
 
     return {
         ok: true,
         challengeId,
         phoneE164,
         expiresAtUtc: expiresAtUtc.toISOString(),
+        otp: skipSms ? otp : undefined,
     };
 }
 
@@ -2438,19 +2491,21 @@ exports.uploadFileForSigning = async (req, res, next) => {
         // For backward compatibility, use first signer as primary clientId
         const primaryClientId = signersList[0].userId || clientId;
 
-        // OTP policy: default is controlled by feature flag.
+        // OTP policy: platform settings (admin) control feature + default.
         // If the lawyer explicitly waives OTP, they must also explicitly acknowledge the waiver.
+        const otpSystemEnabled = await getSigningOtpEnabled();
+        const requireOtpDefault = await getSigningRequireOtpDefault();
         const requireOtpRaw = signingConfig?.require_otp ?? signingConfig?.requireOtp;
         const hasExplicitPolicySelection = requireOtpRaw === true || requireOtpRaw === false || requireOtpRaw === 1 || requireOtpRaw === 0;
-        const requireOtp = SIGNING_OTP_ENABLED
-            ? (hasExplicitPolicySelection ? Boolean(requireOtpRaw) : SIGNING_REQUIRE_OTP_DEFAULT)
+        const requireOtp = otpSystemEnabled
+            ? (hasExplicitPolicySelection ? Boolean(requireOtpRaw) : requireOtpDefault)
             : false;
-        const waiverAck = SIGNING_OTP_ENABLED
+        const waiverAck = otpSystemEnabled
             ? (hasExplicitPolicySelection
                 ? Boolean(signingConfig?.otpWaiverAcknowledged ?? signingConfig?.otp_waiver_acknowledged)
-                : !SIGNING_REQUIRE_OTP_DEFAULT)
+                : !requireOtpDefault)
             : true;
-        if (SIGNING_OTP_ENABLED && !requireOtp && !waiverAck) {
+        if (otpSystemEnabled && !requireOtp && !waiverAck) {
             return fail(next, 'OTP_WAIVER_ACK_REQUIRED', 422);
         }
 
@@ -2753,7 +2808,7 @@ exports.uploadFileForSigning = async (req, res, next) => {
                 continue;
             }
 
-            const deliveryMethod = String(signer.deliveryMethod || 'both').trim();
+            const deliveryMethod = String(signer.deliveryMethod || 'phone').trim();
 
             const token = createPublicSigningToken({
                 signingFileId,
@@ -2779,7 +2834,7 @@ exports.uploadFileForSigning = async (req, res, next) => {
             });
 
             const signInviteSmsTemplate = await getSetting('templates', 'SIGN_INVITE_SMS',
-                'שלום {{recipientName}}, המסמך "{{documentName}}" מחכה לחתימתך. {{websiteUrl}}');
+                'שלום {{recipientName}}, מסמך "{{documentName}}" מחכה לחתימה: {{websiteUrl}}');
 
             const message = publicUrl
                 ? `מסמך "${fileName}" מחכה לחתימה.\n${publicUrl}`
@@ -2790,6 +2845,14 @@ exports.uploadFileForSigning = async (req, res, next) => {
             const sendEmail = deliveryMethod === 'email' || deliveryMethod === 'both';
             const sendSms = deliveryMethod === 'phone' || deliveryMethod === 'both';
 
+            let smsBody = sendSms && publicUrl
+                ? renderTemplate(signInviteSmsTemplate, {
+                    recipientName,
+                    documentName: String(fileName || '').trim(),
+                    websiteUrl: formatSmsUrlNoPreview(publicUrl),
+                })
+                : null;
+
             const notifyResult = await notifyRecipient({
                 recipientUserId: signerUserId,
                 recipientEmail: String(signer.email || '').trim() || undefined,
@@ -2797,6 +2860,7 @@ exports.uploadFileForSigning = async (req, res, next) => {
                 caseId: normalizedCaseId,
                 notificationType: 'SIGN_INVITE',
                 respectExplicitChannelChoice: true,
+                // Push always when the client has the app (same as before).
                 push: {
                     title: 'מסמך מחכה לחתימה',
                     body: message,
@@ -2813,14 +2877,8 @@ exports.uploadFileForSigning = async (req, res, next) => {
                         },
                     }
                     : null,
-                sms: sendSms && publicUrl
-                    ? {
-                        messageBody: renderTemplate(signInviteSmsTemplate, {
-                            recipientName,
-                            documentName: String(fileName || '').trim(),
-                            websiteUrl: String(publicUrl || '').trim(),
-                        }),
-                    }
+                sms: smsBody
+                    ? { messageBody: smsBody }
                     : null,
             });
 
@@ -3129,8 +3187,9 @@ exports.getSigningFileDetails = async (req, res, next) => {
         }
 
         const file = fileResult.rows[0];
+        const otpSystemEnabled = await getSigningOtpEnabled();
         const policy = await resolveFirmSigningPolicyForSigningFileId(signingFileId);
-        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(policy, file);
+        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(policy, file, otpSystemEnabled);
         file.RequireOtp = requireOtpEffective;
 
         const isLawyer = file.LawyerId === userId;
@@ -3266,7 +3325,7 @@ exports.getSigningFileDetails = async (req, res, next) => {
         }
 
         return res.json({
-            file: { ...file, OtpEnabled: SIGNING_OTP_ENABLED },
+            file: { ...file, OtpEnabled: otpSystemEnabled },
             signatureSpots,
             signerUserId: userId,
             isLawyer: viewAllSpots,
@@ -3342,9 +3401,10 @@ exports.getEvidencePackage = async (req, res, next) => {
             [signingFileId]
         );
 
+        const otpSystemEnabled = await getSigningOtpEnabled();
         const policy = await resolveFirmSigningPolicyForSigningFileId(signingFileId);
         const rawFileEvidence = fileEvidenceRes.rows?.[0] || null;
-        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(policy, rawFileEvidence);
+        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(policy, rawFileEvidence, otpSystemEnabled);
         const fileEvidence = rawFileEvidence
             ? { ...rawFileEvidence, RequireOtp: requireOtpEffective }
             : null;
@@ -3758,6 +3818,7 @@ exports.getEvidencePackageZip = async (req, res, next) => {
  * @returns {Promise<{ pdfBuffer: Buffer, filename: string }>}
  */
 async function generateEvidenceCertificateBuffer(signingFileId) {
+    const otpSystemEnabled = await getSigningOtpEnabled();
     const evidence = await loadEvidenceRowsForZip(signingFileId);
     const fileRow = evidence.file;
     if (!fileRow) throw new Error('Evidence: file not found');
@@ -3797,9 +3858,25 @@ async function generateEvidenceCertificateBuffer(signingFileId) {
 
     const normalizeUtc = (value) => {
         if (!value) return '-';
-        const d = new Date(value);
+        const d = value instanceof Date ? value : new Date(value);
         if (Number.isNaN(d.getTime())) return String(value);
-        return d.toISOString().replace('T', ' ').slice(0, 19) + 'Z';
+        // Evidence certificate times are shown in Israel local time (Asia/Jerusalem).
+        try {
+            const parts = new Intl.DateTimeFormat('en-GB', {
+                timeZone: 'Asia/Jerusalem',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false,
+            }).formatToParts(d);
+            const get = (type) => parts.find((p) => p.type === type)?.value || '00';
+            return `${get('year')}-${get('month')}-${get('day')} ${get('hour')}:${get('minute')}:${get('second')} (Israel)`;
+        } catch {
+            return d.toISOString().replace('T', ' ').slice(0, 19) + 'Z';
+        }
     };
 
     const parseEventMeta = (event) => {
@@ -3862,11 +3939,11 @@ async function generateEvidenceCertificateBuffer(signingFileId) {
             userId: s.SignerUserId || '-',
             signingSessionId: s.SigningSessionId || '-',
             phone: userInfo?.Phone || '-',
-            otpPhoneE164: SIGNING_OTP_ENABLED ? (otpRow?.PhoneE164 || '-') : 'N/A',
+            otpPhoneE164: otpSystemEnabled ? (otpRow?.PhoneE164 || '-') : 'N/A',
             email: userInfo?.Email || '-',
-            otpUsed: SIGNING_OTP_ENABLED ? Boolean(s.OtpVerificationId || (otpRow && otpRow.Verified)) : false,
-            otpVerifiedAtUtc: SIGNING_OTP_ENABLED ? normalizeUtc(otpRow?.VerifiedAtUtc) : 'N/A',
-            authProvider: SIGNING_OTP_ENABLED ? '-' : 'N/A',
+            otpUsed: otpSystemEnabled ? Boolean(s.OtpVerificationId || (otpRow && otpRow.Verified)) : false,
+            otpVerifiedAtUtc: otpSystemEnabled ? normalizeUtc(otpRow?.VerifiedAtUtc) : 'N/A',
+            authProvider: otpSystemEnabled ? '-' : 'N/A',
             viewIp: viewedEvent?.Ip || '-',
             signIp: s.SignerIp || '-',
             device: parseDeviceBrowser(s.SignerUserAgent || viewedEvent?.UserAgent || otpSentEvent?.UserAgent || '-'),
@@ -3888,13 +3965,13 @@ async function generateEvidenceCertificateBuffer(signingFileId) {
 
         next.userId = next.userId !== '-' ? next.userId : (s.SignerUserId || next.userId);
         next.signingSessionId = next.signingSessionId !== '-' ? next.signingSessionId : (s.SigningSessionId || next.signingSessionId);
-        if (SIGNING_OTP_ENABLED) {
+        if (otpSystemEnabled) {
             next.otpPhoneE164 = next.otpPhoneE164 !== '-' ? next.otpPhoneE164 : (otpRow?.PhoneE164 || next.otpPhoneE164);
         }
         next.viewIp = next.viewIp !== '-' ? next.viewIp : (viewedEvent?.Ip || next.viewIp);
         next.signIp = next.signIp !== '-' ? next.signIp : (s.SignerIp || next.signIp);
         next.presentedPdfSha256 = next.presentedPdfSha256 !== '-' ? next.presentedPdfSha256 : presentedPdfSha256;
-        if (SIGNING_OTP_ENABLED) {
+        if (otpSystemEnabled) {
             next.otpUsed = next.otpUsed || Boolean(s.OtpVerificationId || (otpRow && otpRow.Verified));
             if (next.otpVerifiedAtUtc === '-' && otpRow?.VerifiedAtUtc) next.otpVerifiedAtUtc = normalizeUtc(otpRow.VerifiedAtUtc);
         }
@@ -3937,6 +4014,8 @@ async function generateEvidenceCertificateBuffer(signingFileId) {
         sender.sentBy = actorType
             ? (actorUserId ? `${actorType} (UserId ${actorUserId})` : actorType)
             : (actorUserId ? `UserId ${actorUserId}` : sender.sentBy);
+    } else if (fileRow?.CreatedAt) {
+        sender.sentAtUtc = normalizeUtc(fileRow.CreatedAt);
     }
 
     let signedHashSha256 = fileRow.SignedPdfSha256 || null;
@@ -3969,11 +4048,12 @@ async function generateEvidenceCertificateBuffer(signingFileId) {
     })();
 
     const otpSummary = {
-        systemEnabled: SIGNING_OTP_ENABLED,
-        required: SIGNING_OTP_ENABLED ? Boolean(fileRow?.RequireOtp) : false,
-        used: SIGNING_OTP_ENABLED ? (otpVerifications.length > 0) : false,
-        verified: SIGNING_OTP_ENABLED ? otpVerifications.some((o) => Boolean(o?.Verified)) : false,
-        provider: SIGNING_OTP_ENABLED ? 'OTP' : 'N/A',
+        systemEnabled: otpSystemEnabled,
+        // Historical/evidence: use the document policy, not the current platform toggle.
+        required: Boolean(fileRow?.RequireOtp),
+        used: otpVerifications.length > 0,
+        verified: otpVerifications.some((o) => Boolean(o?.Verified)),
+        provider: Boolean(fileRow?.RequireOtp) ? 'OTP' : 'N/A',
         messageId: 'N/A',
     };
 
@@ -3999,7 +4079,7 @@ async function generateEvidenceCertificateBuffer(signingFileId) {
         caseName: caseName || 'N/A',
         signingPolicyVersion: signingPolicyVersion || 'N/A',
         signatureTypeDisclosure: '[REQUIRES LOCAL COUNSEL] Electronic signature (not PKI / not qualified / not "approved").',
-        creationUtc: new Date(fileRow.CreatedAt || new Date()).toISOString().replace('T', ' ').slice(0, 19) + 'Z',
+        creationUtc: normalizeUtc(fileRow.CreatedAt || new Date()),
         signedHashSha256: signedHashSha256 || '-',
         signedPdfSha256: signedHashSha256 || '-',
         presentedPdfSha256: fileRow.PresentedPdfSha256 || '-',
@@ -4207,8 +4287,10 @@ exports.resendSigningInvite = async (req, res, next) => {
                     lawyerid as "LawyerId",
                     clientid as "ClientId",
                     filename as "FileName",
+                    filekey as "FileKey",
                     status as "Status",
-                    expiresat as "ExpiresAt"
+                    expiresat as "ExpiresAt",
+                    requireotp as "RequireOtp"
              from signingfiles where signingfileid = $1`,
             [signingFileId]
         );
@@ -4317,6 +4399,14 @@ exports.resendSigningInvite = async (req, res, next) => {
 
             const recipientName = String(signer.Name || '').trim() || 'לקוח';
 
+            let smsBody = publicUrl
+                ? renderTemplate(signInviteSmsTemplate, {
+                    recipientName,
+                    documentName: String(file.FileName || '').trim(),
+                    websiteUrl: formatSmsUrlNoPreview(publicUrl),
+                })
+                : null;
+
             const notifyResult = await notifyRecipient({
                 recipientUserId: uid,
                 recipientEmail: String(signer.Email || '').trim() || undefined,
@@ -4340,14 +4430,8 @@ exports.resendSigningInvite = async (req, res, next) => {
                         },
                     }
                     : null,
-                sms: publicUrl
-                    ? {
-                        messageBody: renderTemplate(signInviteSmsTemplate, {
-                            recipientName,
-                            documentName: String(file.FileName || '').trim(),
-                            websiteUrl: String(publicUrl || '').trim(),
-                        }),
-                    }
+                sms: smsBody
+                    ? { messageBody: smsBody }
                     : null,
             });
 
@@ -4422,7 +4506,8 @@ exports.createPublicSigningLink = async (req, res, next) => {
             return fail(next, 'FORBIDDEN', 403);
         }
 
-        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file);
+        const otpSystemEnabled = await getSigningOtpEnabled();
+        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file, otpSystemEnabled);
 
         const targetSignerUserId = signerUserId || file.ClientId;
         if (!targetSignerUserId) {
@@ -4499,11 +4584,12 @@ exports.updateSigningPolicy = async (req, res, next) => {
             return fail(next, 'SIGNING_POLICY_REQUIRED', 422);
         }
 
-        const requireOtp = SIGNING_OTP_ENABLED ? Boolean(requireOtpRaw) : false;
-        const waiverAck = SIGNING_OTP_ENABLED
+        const otpSystemEnabled = await getSigningOtpEnabled();
+        const requireOtp = otpSystemEnabled ? Boolean(requireOtpRaw) : false;
+        const waiverAck = otpSystemEnabled
             ? Boolean(req.body?.otpWaiverAcknowledged ?? req.body?.otp_waiver_acknowledged)
             : true;
-        if (SIGNING_OTP_ENABLED && !requireOtp && !waiverAck) {
+        if (otpSystemEnabled && !requireOtp && !waiverAck) {
             return fail(next, 'OTP_WAIVER_ACK_REQUIRED', 422);
         }
 
@@ -4652,15 +4738,9 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
 
         const spotsParams = [signingFileId];
 
-        // Each signer only receives:
-        // - their own spots (signed or waiting), and
-        // - other signers' already-signed spots (image/value only on the client).
-        // Other signers' unsigned spots are omitted so they cannot appear as canvases
-        // or be targeted by "sign all" / next-spot navigation.
-        if (schemaSupport.signaturespotsSignerUserId) {
-            spotsQuery += ` and (issigned = true or signeruserid = $2)`;
-            spotsParams.push(signerUserId);
-        }
+        // Multi-signer: return every spot so each signer can see others' canvases
+        // (unsigned boxes + signed images). Signing is still gated by CanSign below —
+        // only the current signer's unsigned spots are actionable.
         spotsQuery += ` order by pagenumber, y, x`;
 
         const spotsResult = await pool.query(spotsQuery, spotsParams);
@@ -4693,7 +4773,8 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
             })
         );
 
-        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file);
+        const otpSystemEnabled = await getSigningOtpEnabled();
+        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file, otpSystemEnabled);
 
         // Sequential signing: check if it's this signer's turn
         let signingOrder = 'parallel';
@@ -4735,7 +4816,7 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
         }
 
         return res.json({
-            file: { ...file, RequireOtp: requireOtpEffective, OtpEnabled: SIGNING_OTP_ENABLED },
+            file: { ...file, RequireOtp: requireOtpEffective, OtpEnabled: otpSystemEnabled },
             signatureSpots,
             signerUserId,
             isLawyer,
@@ -4788,7 +4869,8 @@ exports.publicSignFile = async (req, res, next) => {
             return fail(next, 'DOCUMENT_NOT_FOUND', 404);
         }
 
-        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file);
+        const otpSystemEnabled = await getSigningOtpEnabled();
+        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file, otpSystemEnabled);
         // When OTP is not required, the signed public token already embeds
         // a verified signerUserId, so no additional auth is needed.
         // If the caller IS authenticated, verify they match the token's signer
@@ -4829,8 +4911,7 @@ exports.publicSignFile = async (req, res, next) => {
 
 /**
  * Batch-sign multiple signature spots in one request.
- * Avoids N round-trips of large base64 payloads (main client-side cost of "sign all").
- * Still applies spots sequentially server-side for evidence integrity + finalize-once.
+ * One image upload + multi-spot DB update; PDF/email finalize runs async after response.
  */
 exports.publicSignFileBatch = async (req, res, next) => {
     const t0 = Date.now();
@@ -4870,77 +4951,285 @@ exports.publicSignFileBatch = async (req, res, next) => {
             return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'signatureImage' } });
         }
 
-        // Reuse authenticated signFile path once per spot, capturing JSON instead of sending.
-        // Shared request body fields (consent, session, image) stay constant.
-        req.params.signingFileId = String(signingFileId);
-        req.user = { UserId: signerUserId };
-
-        const signed = [];
-        const tLoop = Date.now();
-        for (const signatureSpotId of signatureSpotIds) {
-            req.body.signatureSpotId = signatureSpotId;
-            const captured = { statusCode: 200, body: null, err: null };
-            const fakeRes = {
-                headersSent: false,
-                setTimeout() {},
-                status(code) {
-                    captured.statusCode = code;
-                    return this;
-                },
-                json(payload) {
-                    captured.body = payload;
-                    this.headersSent = true;
-                    return this;
-                },
-            };
-            const fakeNext = (err) => {
-                captured.err = err || new Error('SIGN_FAILED');
-            };
-            // eslint-disable-next-line no-await-in-loop
-            await exports.signFile(req, fakeRes, fakeNext);
-            if (captured.err) {
-                const code = captured.err?.errorCode || captured.err?.code || 'INTERNAL_ERROR';
-                const status = Number(captured.err?.httpStatus || captured.err?.status || 500);
-                timings.loopMs = Date.now() - tLoop;
-                timings.totalMs = Date.now() - t0;
-                console.log('[signing] publicSignFileBatch partial', {
-                    signingFileId,
-                    signed: signed.length,
-                    failedAt: signatureSpotId,
-                    code,
-                    timings,
-                });
-                if (signed.length > 0) {
-                    return res.status(207).json({
-                        success: false,
-                        partial: true,
-                        signedSpotIds: signed,
-                        errorCode: code,
-                        message: captured.err?.message || 'שגיאה בחתימה על חלק מהשדות',
-                        timings,
-                    });
-                }
-                return fail(next, code, status, { message: captured.err?.message });
-            }
-            if (!captured.body?.success && captured.statusCode >= 400) {
-                timings.loopMs = Date.now() - tLoop;
-                timings.totalMs = Date.now() - t0;
-                if (signed.length > 0) {
-                    return res.status(207).json({
-                        success: false,
-                        partial: true,
-                        signedSpotIds: signed,
-                        message: captured.body?.message || 'שגיאה בחתימה על חלק מהשדות',
-                        timings,
-                    });
-                }
-                return res.status(captured.statusCode || 500).json(captured.body || { success: false });
-            }
-            signed.push(signatureSpotId);
+        const signingSessionId = getSigningSessionIdFromReq(req);
+        if (!signingSessionId) {
+            return fail(next, 'SIGNING_SESSION_REQUIRED', 422);
         }
-        timings.loopMs = Date.now() - tLoop;
+
+        const consentAccepted = req.body?.consentAccepted === true;
+        const consentVersion = String(req.body?.consentVersion || '').trim();
+
+        const schemaSupport = await getSchemaSupport();
+
+        const fileResult = await pool.query(
+            `select 
+                signingfileid as "SigningFileId",
+                caseid        as "CaseId",
+                lawyerid      as "LawyerId",
+                clientid      as "ClientId",
+                filename      as "FileName",
+                filekey       as "FileKey",
+                status        as "Status",
+                expiresat     as "ExpiresAt",
+                requireotp    as "RequireOtp",
+                signingpolicyversion as "SigningPolicyVersion",
+                policyselectedatutc  as "PolicySelectedAtUtc",
+                otpwaiveracknowledged as "OtpWaiverAcknowledged",
+                presentedpdfsha256 as "PresentedPdfSha256"
+             from signingfiles
+             where signingfileid = $1`,
+            [signingFileId]
+        );
+        if (fileResult.rows.length === 0) {
+            return fail(next, 'DOCUMENT_NOT_FOUND', 404);
+        }
+        const file = fileResult.rows[0];
+
+        if (String(file.Status || '').toLowerCase() !== 'pending') {
+            return fail(next, 'DOCUMENT_NOT_SIGNABLE', 409);
+        }
+        if (isSigningDocumentExpired(file)) {
+            return fail(next, 'DOCUMENT_EXPIRED', 410);
+        }
+
+        const spotsRes = await pool.query(
+            `select
+                signaturespotid as "SignatureSpotId",
+                signingfileid   as "SigningFileId",
+                issigned        as "IsSigned",
+                isrequired      as "IsRequired"${schemaSupport.signaturespotsSignerUserId ? ',\n                signeruserid    as "SignerUserId"' : ''}${schemaSupport.signaturespotsFieldType ? ',\n                fieldtype       as "FieldType"' : ''}
+             from signaturespots
+             where signingfileid = $1
+               and signaturespotid = any($2::int[])`,
+            [signingFileId, signatureSpotIds]
+        );
+
+        if (spotsRes.rows.length !== signatureSpotIds.length) {
+            return fail(next, 'SIGNATURE_SPOT_INVALID', 422);
+        }
+
+        for (const spot of spotsRes.rows) {
+            const isAuthorized = schemaSupport.signaturespotsSignerUserId
+                ? (spot.SignerUserId != null
+                    ? Number(spot.SignerUserId) === Number(signerUserId)
+                    : Number(file.ClientId) === Number(signerUserId))
+                : Number(file.ClientId) === Number(signerUserId);
+            if (!isAuthorized) {
+                return fail(next, 'FORBIDDEN', 403);
+            }
+            if (spot.IsSigned) {
+                return fail(next, 'SIGNATURE_SPOT_ALREADY_SIGNED', 409);
+            }
+            const spotType = String(spot.FieldType || 'signature').toLowerCase();
+            if (spotType !== 'signature' && spotType !== 'initials' && spotType !== 'clientstamp') {
+                return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'signatureSpotIds' } });
+            }
+        }
+
+        // Sequential turn check (same as single sign)
+        try {
+            const orderCheck = await pool.query(
+                `select signingorder as "signingorder" from signingfiles where signingfileid = $1`,
+                [signingFileId]
+            );
+            if (orderCheck.rows[0]?.signingorder === 'sequential' && schemaSupport.signaturespotsSignerUserId) {
+                const lowestUnsigned = await pool.query(
+                    `select min(signerindex) as "minIndex"
+                     from signaturespots
+                     where signingfileid = $1
+                       and isrequired = true
+                       and issigned = false
+                       and coalesce(fieldtype, 'signature') not in ('lawyerstamp')`,
+                    [signingFileId]
+                );
+                const minIndex = lowestUnsigned.rows[0]?.minIndex;
+                const myIndexRes = await pool.query(
+                    `select min(signerindex) as "signerIndex"
+                     from signaturespots
+                     where signaturespotid = any($1::int[])`,
+                    [signatureSpotIds]
+                );
+                const myIndex = myIndexRes.rows[0]?.signerIndex;
+                if (minIndex !== null && myIndex !== null && myIndex > minIndex) {
+                    return fail(next, 'SIGNING_NOT_YOUR_TURN', 403);
+                }
+            }
+        } catch (seqCheckErr) {
+            console.error('[signing] Batch sequential turn check error:', seqCheckErr?.message);
+            return fail(next, 'SIGNING_ORDER_CHECK_FAILED', 503);
+        }
+
+        const effectivePolicyVersion = String(file.SigningPolicyVersion || SIGNING_POLICY_VERSION);
+        const otpSystemEnabled = await getSigningOtpEnabled();
+        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file, otpSystemEnabled);
+
+        if (!consentAccepted) {
+            return fail(next, 'CONSENT_REQUIRED', 403);
+        }
+        if (!consentVersion || consentVersion !== effectivePolicyVersion) {
+            return fail(next, 'CONSENT_VERSION_MISMATCH', 422);
+        }
+        if (!file.PresentedPdfSha256) {
+            return fail(next, 'MISSING_PRESENTED_HASH', 500);
+        }
+
+        const otpVerificationId = requireOtpEffective
+            ? await getVerifiedOtpChallengeIdOrNull({
+                signingFileId,
+                signerUserId,
+                signingSessionId,
+                presentedPdfSha256: file.PresentedPdfSha256,
+            })
+            : null;
+
+        if (requireOtpEffective && !otpVerificationId) {
+            return fail(next, 'OTP_REQUIRED', 403);
+        }
+
+        let buffer;
+        try {
+            ({ buffer } = decodeBase64DataUrl(signatureImage));
+        } catch {
+            return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'signatureImage' } });
+        }
+        if (
+            Number.isFinite(MAX_SIGNATURE_IMAGE_BYTES) &&
+            MAX_SIGNATURE_IMAGE_BYTES > 0 &&
+            buffer.length > MAX_SIGNATURE_IMAGE_BYTES
+        ) {
+            return fail(next, 'REQUEST_TOO_LARGE', 413);
+        }
+
+        const isPng = String(signatureImage).includes('png');
+        const ext = isPng ? 'png' : 'jpg';
+        // One shared R2 object for all spots in this batch (same image bytes).
+        const sharedKey = `signatures/${file.LawyerId}/${signerUserId}/${signingFileId}_batch_${uuid()}.${ext}`;
+
+        const tUpload = Date.now();
+        const putRes = await r2.send(new PutObjectCommand({
+            Bucket: BUCKET,
+            Key: sharedKey,
+            Body: buffer,
+            ContentType: `image/${ext}`,
+        }));
+        timings.uploadMs = Date.now() - tUpload;
+
+        const signatureEtag = putRes?.ETag ? String(putRes.ETag).replace(/\"/g, '') : null;
+        const signatureVersionId = putRes?.VersionId ? String(putRes.VersionId) : null;
+        const signatureSha = sha256Hex(buffer);
+
+        const consentId = await getOrCreateConsent({
+            signingFileId,
+            signerUserId,
+            signingSessionId,
+            consentVersion: effectivePolicyVersion,
+            req,
+        });
+
+        const tDb = Date.now();
+        const client = await pool.connect();
+        let signed = [];
+        try {
+            await client.query('BEGIN');
+            const updRes = await client.query(
+                `update signaturespots
+                 set issigned = true,
+                     signedat = now(),
+                     signaturedata = $1,
+                     signerip = $3::inet,
+                     signeruseragent = $4,
+                     signingsessionid = $5::uuid,
+                     presentedpdfsha256 = $6,
+                     otpverificationid = $7::uuid,
+                     consentid = $8::uuid,
+                     signatureimagesha256 = $9,
+                     signaturestorageetag = $10,
+                     signaturestorageversionid = $11
+                 where signingfileid = $12
+                   and signaturespotid = any($2::int[])
+                   and issigned = false
+                 returning signaturespotid as "SignatureSpotId"`,
+                [
+                    sharedKey,
+                    signatureSpotIds,
+                    getRequestIp(req),
+                    getRequestUserAgent(req),
+                    signingSessionId,
+                    file.PresentedPdfSha256,
+                    otpVerificationId,
+                    consentId,
+                    signatureSha,
+                    signatureEtag,
+                    signatureVersionId,
+                    signingFileId,
+                ]
+            );
+            signed = (updRes.rows || []).map((r) => Number(r.SignatureSpotId));
+            if (signed.length === 0) {
+                await client.query('ROLLBACK');
+                return fail(next, 'SIGNATURE_SPOT_ALREADY_SIGNED', 409);
+            }
+            await client.query('COMMIT');
+        } catch (dbErr) {
+            try { await client.query('ROLLBACK'); } catch { /* ignore */ }
+            throw dbErr;
+        } finally {
+            client.release();
+        }
+        timings.dbMs = Date.now() - tDb;
+
+        for (const signatureSpotId of signed) {
+            // eslint-disable-next-line no-await-in-loop
+            await insertAuditEvent({
+                req,
+                eventType: 'SIGN_SUCCESS',
+                signingFileId,
+                signatureSpotId,
+                actorUserId: signerUserId,
+                actorType: 'signer',
+                signingSessionId,
+                success: true,
+                metadata: {
+                    signingPolicyVersion: effectivePolicyVersion,
+                    requireOtp: requireOtpEffective,
+                    otpWaived: !requireOtpEffective,
+                    presentedPdfSha256: file.PresentedPdfSha256,
+                    consentId,
+                    otpVerificationId,
+                    batch: true,
+                },
+            });
+        }
+
+        const remainingResult = await pool.query(
+            `select count(*)::int as "count"
+             from signaturespots
+             where signingfileid = $1
+               and isrequired = true
+               and issigned = false
+               and lower(coalesce(fieldtype, 'signature')) != 'lawyerstamp'`,
+            [signingFileId]
+        );
+        const remaining = remainingResult.rows[0].count;
+
+        if (remaining === 0) {
+            await markFileSignedAndScheduleFinalize({
+                signingFileId,
+                file,
+                signerUserId,
+                signingSessionId,
+                effectivePolicyVersion,
+                req,
+            });
+        }
+
         timings.totalMs = Date.now() - t0;
-        console.log('[signing] publicSignFileBatch ok', { signingFileId, count: signed.length, timings });
+        console.log('[signing] publicSignFileBatch ok', {
+            signingFileId,
+            count: signed.length,
+            remaining,
+            timings,
+        });
         if (res.headersSent) return;
         return res.json({
             success: true,
@@ -5140,7 +5429,8 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
         return res.json({ success: true });
     }
 
-    if (!SIGNING_OTP_ENABLED) {
+    const otpSystemEnabled = await getSigningOtpEnabled();
+    if (!otpSystemEnabled) {
         await auditOtpBlocked({
             req,
             signingFileId,
@@ -5152,7 +5442,7 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
         return res.json({ success: true });
     }
 
-    const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file);
+    const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file, otpSystemEnabled);
     if (!requireOtpEffective) {
         await auditOtpBlocked({
             req,
@@ -5320,7 +5610,8 @@ async function verifySigningOtpImpl({ req, res, next, signingFileId, signerUserI
         return res.json({ success: true });
     }
 
-    if (!SIGNING_OTP_ENABLED) {
+    const otpSystemEnabled = await getSigningOtpEnabled();
+    if (!otpSystemEnabled) {
         await auditOtpBlocked({
             req,
             signingFileId,
@@ -5332,7 +5623,7 @@ async function verifySigningOtpImpl({ req, res, next, signingFileId, signerUserI
         return res.json({ success: true });
     }
 
-    const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file);
+    const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file, otpSystemEnabled);
     if (!requireOtpEffective) {
         await auditOtpBlocked({
             req,
@@ -5395,7 +5686,13 @@ async function verifySigningOtpImpl({ req, res, next, signingFileId, signerUserI
             signingSessionId,
             metadata: { kind: 'otp_verify', reason: verified.errorCode || 'OTP_INVALID' },
         });
-        return res.json({ success: true, verified: false });
+        // Explicit failure so clients cannot treat HTTP 200 as "verified".
+        return res.status(401).json({
+            success: false,
+            verified: false,
+            errorCode: verified.errorCode || 'OTP_INVALID',
+            message: 'קוד אימות שגוי או שפג תוקפו',
+        });
     }
 
     return res.json({ success: true, verified: true });
@@ -5493,6 +5790,336 @@ exports.verifySigningOtp = async (req, res, next) => {
     }
 };
 
+
+/**
+ * Snapshot request fields needed for async finalize/audit after the HTTP response.
+ */
+function buildReqSnapshot(req) {
+    return {
+        headers: {
+            'user-agent': getRequestUserAgent(req) || '',
+            'x-forwarded-for': getRequestIp(req) || '',
+            'x-signing-session-id': getSigningSessionIdFromReq(req) || '',
+            'x-request-id': getRequestIdFromReq(req) || '',
+        },
+        ip: getRequestIp(req),
+        body: {},
+    };
+}
+
+/**
+ * Heavy post-complete work: burn signed PDF, evidence cert, DOC_SIGNED notifications.
+ * Runs after HTTP response via scheduleSigningFinalize.
+ */
+async function runSigningFinalize({
+    signingFileId,
+    file,
+    signerUserId,
+    signingSessionId,
+    effectivePolicyVersion,
+    req,
+}) {
+    const t0 = Date.now();
+    let signedPdfKey = null;
+    try {
+        // Idempotent: skip burn if signed output already exists.
+        const existing = await pool.query(
+            `select signedfilekey as "SignedFileKey"
+             from signingfiles
+             where signingfileid = $1`,
+            [signingFileId]
+        );
+        signedPdfKey = existing.rows?.[0]?.SignedFileKey || null;
+
+        if (!signedPdfKey) {
+            try {
+                signedPdfKey = await ensureSignedPdfKey({
+                    signingFileId,
+                    lawyerId: file.LawyerId,
+                    pdfKey: file.FileKey,
+                });
+                await insertAuditEvent({
+                    req,
+                    eventType: 'SIGNED_PDF_GENERATED',
+                    signingFileId,
+                    actorUserId: file.LawyerId,
+                    actorType: 'system',
+                    signingSessionId,
+                    success: true,
+                    metadata: {
+                        signingPolicyVersion: effectivePolicyVersion,
+                        async: true,
+                    },
+                });
+            } catch (e) {
+                console.error('[signingFinalize] Failed to generate signed PDF:', e?.message || e);
+            }
+        }
+
+        let emailAttachments;
+        try {
+            const attachments = [];
+            if (signedPdfKey) {
+                const signedObj = await getR2ObjectBuffer(signedPdfKey);
+                if (signedObj?.buffer) {
+                    attachments.push({
+                        filename: `${String(file.FileName || 'document').replace(/\.pdf$/i, '')}_signed.pdf`,
+                        content: signedObj.buffer,
+                        contentType: 'application/pdf',
+                    });
+                }
+            }
+            const evResult = await generateEvidenceCertificateBuffer(signingFileId);
+            if (evResult?.pdfBuffer) {
+                attachments.push({
+                    filename: evResult.filename || 'evidence_certificate.pdf',
+                    content: evResult.pdfBuffer,
+                    contentType: 'application/pdf',
+                });
+            }
+            if (attachments.length) emailAttachments = attachments;
+            console.log(`[signingFinalize] DOC_SIGNED attachments ready: count=${attachments.length}`);
+        } catch (e) {
+            console.error('[signingFinalize] Failed to build email attachments (non-fatal):', e?.message || e);
+        }
+
+        let lawyerNameForTemplate = 'עו"ד';
+        let lawyerEmailForFrom = '';
+        try {
+            const lr = await pool.query('select name as "Name", email as "Email" from users where userid = $1', [file.LawyerId]);
+            const n = String(lr.rows?.[0]?.Name || '').trim();
+            if (n) lawyerNameForTemplate = n;
+            const em = String(lr.rows?.[0]?.Email || '').trim();
+            if (em) lawyerEmailForFrom = em;
+        } catch {
+            // Best-effort
+        }
+
+        const docSignedSmsTemplate = await getSetting('templates', 'DOC_SIGNED_SMS',
+            'שלום {{recipientName}}, המסמך "{{documentName}}" נחתם בהצלחה. {{websiteUrl}}');
+
+        const message = `הקובץ ${file.FileName} חתום בהצלחה על ידי כל החתומים`;
+        const domainForUrls = String(process.env.WEBSITE_DOMAIN || WEBSITE_DOMAIN || '').trim();
+
+        const publicViewToken = createPublicViewToken(signingFileId);
+        const signedDocumentUrl = buildPublicViewUrl(publicViewToken) || `https://${domainForUrls}/signing-files/${signingFileId}/download`;
+        const evidenceCertificateUrl = buildPublicEvidenceUrl(publicViewToken)
+            || `https://${domainForUrls}/ViewSignedDocument?token=${encodeURIComponent(publicViewToken)}&evidence=1`;
+
+        await notifyRecipient({
+            recipientUserId: file.LawyerId,
+            notificationType: 'DOC_SIGNED',
+            caseId: file.CaseId || null,
+            push: {
+                title: '✓ קובץ חתום',
+                body: message,
+                data: buildSignedDocPushData({
+                        type: 'file_signed',
+                        caseId: file.CaseId,
+                        signingFileId,
+                        publicUrl: signedDocumentUrl,
+                    }),
+            },
+            email: {
+                campaignKey: 'DOC_SIGNED',
+                fromEmail: lawyerEmailForFrom || undefined,
+                attachments: emailAttachments || undefined,
+                contactFields: {
+                    recipient_name: String(lawyerNameForTemplate || '').trim(),
+                    document_name: String(file.FileName || '').trim(),
+                    lawyer_name: String(lawyerNameForTemplate || '').trim(),
+                    signed_document_url: signedDocumentUrl,
+                    evidence_certificate_url: evidenceCertificateUrl,
+                },
+            },
+            sms: {
+                messageBody: renderTemplate(docSignedSmsTemplate, {
+                    recipientName: String(lawyerNameForTemplate || '').trim(),
+                    documentName: String(file.FileName || '').trim(),
+                    websiteUrl: signedDocumentUrl,
+                }),
+            },
+        });
+
+        try {
+            const ceRow = await pool.query(
+                `select completionemail from signingfiles where signingfileid = $1`,
+                [signingFileId]
+            );
+            const completionEmail = (ceRow.rows?.[0]?.completionemail || '').trim();
+            if (completionEmail) {
+                await notifyRecipient({
+                    recipientEmail: completionEmail,
+                    notificationType: 'DOC_SIGNED',
+                    skipAdminCc: true,
+                    email: {
+                        campaignKey: 'DOC_SIGNED',
+                        attachments: emailAttachments || [],
+                        contactFields: {
+                            recipient_name: completionEmail,
+                            document_name: String(file.FileName || '').trim(),
+                            lawyer_name: String(lawyerNameForTemplate || '').trim(),
+                            signed_document_url: signedDocumentUrl,
+                            evidence_certificate_url: evidenceCertificateUrl,
+                        },
+                    },
+                });
+            }
+        } catch (e) {
+            console.error('[signingFinalize] Failed to send to completionEmail (non-fatal):', e?.message || e);
+        }
+
+        try {
+            let signerName = '';
+            let signerEmail = '';
+            try {
+                const sr = await pool.query(
+                    'select name as "Name", email as "Email" from users where userid = $1',
+                    [signerUserId]
+                );
+                signerName = String(sr.rows?.[0]?.Name || '').trim();
+                signerEmail = String(sr.rows?.[0]?.Email || '').trim().toLowerCase();
+            } catch { /* best-effort */ }
+
+            const lawyerEmailNorm = String(lawyerEmailForFrom || '').trim().toLowerCase();
+            let completionEmailNorm = '';
+            try {
+                const ceRow2 = await pool.query(
+                    `select completionemail from signingfiles where signingfileid = $1`,
+                    [signingFileId]
+                );
+                completionEmailNorm = String(ceRow2.rows?.[0]?.completionemail || '').trim().toLowerCase();
+            } catch { /* best-effort */ }
+
+            const alreadyEmailedWithAttachments =
+                Boolean(signerEmail) &&
+                (
+                    Number(signerUserId) === Number(file.LawyerId) ||
+                    (lawyerEmailNorm && signerEmail === lawyerEmailNorm) ||
+                    (completionEmailNorm && signerEmail === completionEmailNorm)
+                );
+
+            const signerMessage = `המסמך "${file.FileName}" נחתם בהצלחה`;
+            const signerSignedSmsTemplate = await getSetting('templates', 'DOC_SIGNED_SIGNER_SMS',
+                'שלום {{recipientName}}, המסמך "{{documentName}}" נחתם בהצלחה.');
+
+            await notifyRecipient({
+                recipientUserId: signerUserId,
+                notificationType: 'DOC_SIGNED',
+                skipAdminCc: true,
+                push: {
+                    title: '✓ מסמך נחתם בהצלחה',
+                    body: signerMessage,
+                    data: buildSignedDocPushData({
+                        type: 'file_signed',
+                        caseId: file.CaseId,
+                        signingFileId,
+                        publicUrl: signedDocumentUrl,
+                    }),
+                },
+                email: alreadyEmailedWithAttachments ? undefined : {
+                    campaignKey: 'DOC_SIGNED',
+                    attachments: emailAttachments || undefined,
+                    contactFields: {
+                        recipient_name: signerName || '',
+                        document_name: String(file.FileName || '').trim(),
+                        lawyer_name: String(lawyerNameForTemplate || '').trim(),
+                        signed_document_url: signedDocumentUrl,
+                        evidence_certificate_url: evidenceCertificateUrl,
+                    },
+                },
+                sms: {
+                    messageBody: renderTemplate(signerSignedSmsTemplate, {
+                        recipientName: signerName || '',
+                        documentName: String(file.FileName || '').trim(),
+                    }),
+                },
+            });
+            console.log(`[signingFinalize] Notified signer userId=${signerUserId} for file ${signingFileId}`);
+        } catch (e) {
+            console.error('[signingFinalize] Failed to notify signer (non-fatal):', e?.message || e);
+        }
+
+        console.log('[signingFinalize] done', { signingFileId, ms: Date.now() - t0 });
+    } catch (err) {
+        console.error('[signingFinalize] unexpected error:', err?.message || err);
+    }
+}
+
+function scheduleSigningFinalize(args) {
+    setImmediate(() => {
+        runSigningFinalize(args).catch((err) => {
+            console.error('[signingFinalize] unhandled:', err?.message || err);
+        });
+    });
+}
+
+/**
+ * Mark file signed + snapshot retention, then enqueue async PDF/notify finalize.
+ * Returns { didFinalizeStatus: boolean }.
+ */
+async function markFileSignedAndScheduleFinalize({
+    signingFileId,
+    file,
+    signerUserId,
+    signingSessionId,
+    effectivePolicyVersion,
+    req,
+}) {
+    let planKeyAtSigning = null;
+    let retentionDaysCoreAtSigning = null;
+    let retentionDaysPiiAtSigning = null;
+    let retentionPolicyHashAtSigning = null;
+
+    try {
+        const policy = await resolveTenantPlan(file.LawyerId);
+        planKeyAtSigning = policy?.planKey || null;
+        retentionDaysCoreAtSigning = policy?.effectiveDocumentsRetentionDaysCore ?? null;
+        retentionDaysPiiAtSigning = policy?.effectiveDocumentsRetentionDaysPii ?? null;
+
+        if (planKeyAtSigning && retentionDaysCoreAtSigning && retentionDaysPiiAtSigning) {
+            const policyBlob = JSON.stringify({
+                v: 1,
+                planKey: planKeyAtSigning,
+                documentsCoreDays: retentionDaysCoreAtSigning,
+                documentsPiiDays: retentionDaysPiiAtSigning,
+                platformFloorDays: policy?.platformMinDocumentsRetentionDays ?? null,
+            });
+            retentionPolicyHashAtSigning = sha256Hex(Buffer.from(policyBlob, 'utf8'));
+        }
+    } catch {
+        // Best-effort
+    }
+
+    const finalizeRes = await pool.query(
+        `update signingfiles
+         set status = 'signed',
+             signedat = now(),
+             plan_key_at_signing = $2,
+             retention_days_core_at_signing = $3,
+             retention_days_pii_at_signing = $4,
+             retention_policy_hash_at_signing = $5
+         where signingfileid = $1
+           and status = 'pending'
+         returning signingfileid`,
+        [signingFileId, planKeyAtSigning, retentionDaysCoreAtSigning, retentionDaysPiiAtSigning, retentionPolicyHashAtSigning]
+    );
+
+    if (!finalizeRes.rowCount) {
+        return { didFinalizeStatus: false };
+    }
+
+    scheduleSigningFinalize({
+        signingFileId,
+        file,
+        signerUserId,
+        signingSessionId,
+        effectivePolicyVersion,
+        req: buildReqSnapshot(req),
+    });
+
+    return { didFinalizeStatus: true };
+}
 
 exports.signFile = async (req, res, next) => {
     const _signT0 = Date.now();
@@ -5630,7 +6257,8 @@ exports.signFile = async (req, res, next) => {
         }
 
         const effectivePolicyVersion = String(file.SigningPolicyVersion || SIGNING_POLICY_VERSION);
-        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file);
+        const otpSystemEnabled = await getSigningOtpEnabled();
+        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file, otpSystemEnabled);
         const spotType = String(spot.FieldType || 'signature').toLowerCase();
         const isSignatureLike = spotType === 'signature' || spotType === 'initials' || spotType === 'clientstamp';
         const fieldValueRaw = req.body?.fieldValue ?? req.body?.field_value;
@@ -5958,6 +6586,14 @@ exports.signFile = async (req, res, next) => {
                                     ? `מסמך "${file.FileName}" מחכה לחתימה.\n${publicUrl}`
                                     : `מסמך "${file.FileName}" מחכה לחתימה.`;
 
+                                let nextSmsBody = publicUrl
+                                    ? renderTemplate(signInviteSmsTemplate, {
+                                        recipientName: nextSignerName,
+                                        documentName: String(file.FileName || '').trim(),
+                                        websiteUrl: formatSmsUrlNoPreview(publicUrl),
+                                    })
+                                    : null;
+
                                 await notifyRecipient({
                                     recipientUserId: nextSignerUserId,
                                     notificationType: 'SIGN_INVITE',
@@ -5978,14 +6614,8 @@ exports.signFile = async (req, res, next) => {
                                             },
                                         }
                                         : null,
-                                    sms: publicUrl
-                                        ? {
-                                            messageBody: renderTemplate(signInviteSmsTemplate, {
-                                                recipientName: nextSignerName,
-                                                documentName: String(file.FileName || '').trim(),
-                                                websiteUrl: String(publicUrl || '').trim(),
-                                            }),
-                                        }
+                                    sms: nextSmsBody
+                                        ? { messageBody: nextSmsBody }
                                         : null,
                                 });
 
@@ -6000,263 +6630,14 @@ exports.signFile = async (req, res, next) => {
         }
 
         if (remaining === 0) {
-            // Snapshot plan + retention policy at signing time for evidence.
-            // This avoids retroactively changing evidence if the tenant plan changes later.
-            let planKeyAtSigning = null;
-            let retentionDaysCoreAtSigning = null;
-            let retentionDaysPiiAtSigning = null;
-            let retentionPolicyHashAtSigning = null;
-
-            try {
-                const policy = await resolveTenantPlan(file.LawyerId);
-                planKeyAtSigning = policy?.planKey || null;
-                retentionDaysCoreAtSigning = policy?.effectiveDocumentsRetentionDaysCore ?? null;
-                retentionDaysPiiAtSigning = policy?.effectiveDocumentsRetentionDaysPii ?? null;
-
-                if (planKeyAtSigning && retentionDaysCoreAtSigning && retentionDaysPiiAtSigning) {
-                    const policyBlob = JSON.stringify({
-                        v: 1,
-                        planKey: planKeyAtSigning,
-                        documentsCoreDays: retentionDaysCoreAtSigning,
-                        documentsPiiDays: retentionDaysPiiAtSigning,
-                        platformFloorDays: policy?.platformMinDocumentsRetentionDays ?? null,
-                    });
-                    retentionPolicyHashAtSigning = sha256Hex(Buffer.from(policyBlob, 'utf8'));
-                }
-            } catch {
-                // Best-effort: if plan resolution fails, signing still completes.
-            }
-
-            const finalizeRes = await pool.query(
-                `update signingfiles
-                 set status = 'signed',
-                     signedat = now(),
-                     plan_key_at_signing = $2,
-                     retention_days_core_at_signing = $3,
-                     retention_days_pii_at_signing = $4,
-                     retention_policy_hash_at_signing = $5
-                 where signingfileid = $1
-                   and status = 'pending'
-                 returning signingfileid`,
-                [signingFileId, planKeyAtSigning, retentionDaysCoreAtSigning, retentionDaysPiiAtSigning, retentionPolicyHashAtSigning]
-            );
-
-            if (!finalizeRes.rowCount) {
-                if (res.headersSent) return;
-                return res.json({ success: true, message: "✓ החתימה נשמרה בהצלחה" });
-            }
-
-            // Court-ready: finalize an immutable signed output and persist its SHA-256 + storage integrity metadata.
-            let signedPdfKey = null;
-            try {
-                signedPdfKey = await ensureSignedPdfKey({ signingFileId, lawyerId: file.LawyerId, pdfKey: file.FileKey });
-                await insertAuditEvent({
-                    req,
-                    eventType: 'SIGNED_PDF_GENERATED',
-                    signingFileId,
-                    actorUserId: file.LawyerId,
-                    actorType: 'system',
-                    signingSessionId,
-                    success: true,
-                    metadata: {
-                        signingPolicyVersion: effectivePolicyVersion,
-                    },
-                });
-            } catch (e) {
-                console.error('Failed to generate signed PDF evidence:', e?.message || e);
-            }
-
-            // Build PDF attachments for the DOC_SIGNED email (best-effort).
-            let emailAttachments;
-            try {
-                const attachments = [];
-                if (signedPdfKey) {
-                    const signedObj = await getR2ObjectBuffer(signedPdfKey);
-                    if (signedObj?.buffer) {
-                        attachments.push({
-                            filename: `${String(file.FileName || 'document').replace(/\.pdf$/i, '')}_signed.pdf`,
-                            content: signedObj.buffer,
-                            contentType: 'application/pdf',
-                        });
-                    }
-                }
-                const evResult = await generateEvidenceCertificateBuffer(signingFileId);
-                if (evResult?.pdfBuffer) {
-                    attachments.push({
-                        filename: evResult.filename || 'evidence_certificate.pdf',
-                        content: evResult.pdfBuffer,
-                        contentType: 'application/pdf',
-                    });
-                }
-                if (attachments.length) emailAttachments = attachments;
-                console.log(`[signing] DOC_SIGNED email attachments ready: count=${attachments.length} files=${attachments.map(a => a.filename).join(', ') || '(none)'}`);
-            } catch (e) {
-                console.error('Failed to build email attachments (non-fatal):', e?.message || e);
-            }
-
-            let lawyerNameForTemplate = 'עו"ד';
-            let lawyerEmailForFrom = '';
-            try {
-                const lr = await pool.query('select name as "Name", email as "Email" from users where userid = $1', [file.LawyerId]);
-                const n = String(lr.rows?.[0]?.Name || '').trim();
-                if (n) lawyerNameForTemplate = n;
-                const em = String(lr.rows?.[0]?.Email || '').trim();
-                if (em) lawyerEmailForFrom = em;
-            } catch {
-                // Best-effort
-            }
-
-            const docSignedSmsTemplate = await getSetting('templates', 'DOC_SIGNED_SMS',
-                'שלום {{recipientName}}, המסמך "{{documentName}}" נחתם בהצלחה. {{websiteUrl}}');
-
-            const message = `הקובץ ${file.FileName} חתום בהצלחה על ידי כל החתומים`;
-            const domainForUrls = String(process.env.WEBSITE_DOMAIN || WEBSITE_DOMAIN || '').trim();
-
-            // Generate a public view URL so recipients can view/download without app auth
-            const publicViewToken = createPublicViewToken(signingFileId);
-            const signedDocumentUrl = buildPublicViewUrl(publicViewToken) || `https://${domainForUrls}/signing-files/${signingFileId}/download`;
-            const evidenceCertificateUrl = buildPublicEvidenceUrl(publicViewToken)
-                || `https://${domainForUrls}/ViewSignedDocument?token=${encodeURIComponent(publicViewToken)}&evidence=1`;
-
-            await notifyRecipient({
-                recipientUserId: file.LawyerId,
-                notificationType: 'DOC_SIGNED',
-                caseId: file.CaseId || null,
-                push: {
-                    title: '✓ קובץ חתום',
-                    body: message,
-                    data: buildSignedDocPushData({
-                        type: 'file_signed',
-                        caseId: file.CaseId,
-                        signingFileId,
-                        publicUrl: signedDocumentUrl,
-                    }),
-                },
-                email: {
-                    campaignKey: 'DOC_SIGNED',
-                    fromEmail: lawyerEmailForFrom || undefined,
-                    attachments: emailAttachments || undefined,
-                    contactFields: {
-                        recipient_name: String(lawyerNameForTemplate || '').trim(),
-                        document_name: String(file.FileName || '').trim(),
-                        lawyer_name: String(lawyerNameForTemplate || '').trim(),
-                        signed_document_url: signedDocumentUrl,
-                        evidence_certificate_url: evidenceCertificateUrl,
-                    },
-                },
-                sms: {
-                    messageBody: renderTemplate(docSignedSmsTemplate, {
-                        recipientName: String(lawyerNameForTemplate || '').trim(),
-                        documentName: String(file.FileName || '').trim(),
-                        websiteUrl: signedDocumentUrl,
-                    }),
-                },
+            await markFileSignedAndScheduleFinalize({
+                signingFileId,
+                file,
+                signerUserId: userId,
+                signingSessionId,
+                effectivePolicyVersion,
+                req,
             });
-
-            // Send signed document + evidence to completionEmail if configured
-            try {
-                const ceRow = await pool.query(
-                    `select completionemail from signingfiles where signingfileid = $1`,
-                    [signingFileId]
-                );
-                const completionEmail = (ceRow.rows?.[0]?.completionemail || '').trim();
-                if (completionEmail) {
-                    await notifyRecipient({
-                        recipientEmail: completionEmail,
-                        notificationType: 'DOC_SIGNED',
-                        skipAdminCc: true,
-                        email: {
-                            campaignKey: 'DOC_SIGNED',
-                            attachments: emailAttachments || [],
-                            contactFields: {
-                                recipient_name: completionEmail,
-                                document_name: String(file.FileName || '').trim(),
-                                lawyer_name: String(lawyerNameForTemplate || '').trim(),
-                                signed_document_url: signedDocumentUrl,
-                                evidence_certificate_url: evidenceCertificateUrl,
-                            },
-                        },
-                    });
-                }
-            } catch (e) {
-                console.error('Failed to send to completionEmail (non-fatal):', e?.message || e);
-            }
-
-            // Notify the signer (client) that the document was signed successfully.
-            // Include the same PDF attachments so the last-opened mail still has the files
-            // (when the signer is also the lawyer/completion recipient they previously got a
-            // second DOC_SIGNED email with links only).
-            try {
-                let signerName = '';
-                let signerEmail = '';
-                try {
-                    const sr = await pool.query(
-                        'select name as "Name", email as "Email" from users where userid = $1',
-                        [userId]
-                    );
-                    signerName = String(sr.rows?.[0]?.Name || '').trim();
-                    signerEmail = String(sr.rows?.[0]?.Email || '').trim().toLowerCase();
-                } catch { /* best-effort */ }
-
-                const lawyerEmailNorm = String(lawyerEmailForFrom || '').trim().toLowerCase();
-                let completionEmailNorm = '';
-                try {
-                    const ceRow2 = await pool.query(
-                        `select completionemail from signingfiles where signingfileid = $1`,
-                        [signingFileId]
-                    );
-                    completionEmailNorm = String(ceRow2.rows?.[0]?.completionemail || '').trim().toLowerCase();
-                } catch { /* best-effort */ }
-
-                const alreadyEmailedWithAttachments =
-                    Boolean(signerEmail) &&
-                    (
-                        Number(userId) === Number(file.LawyerId) ||
-                        (lawyerEmailNorm && signerEmail === lawyerEmailNorm) ||
-                        (completionEmailNorm && signerEmail === completionEmailNorm)
-                    );
-
-                const signerMessage = `המסמך "${file.FileName}" נחתם בהצלחה`;
-                const signerSignedSmsTemplate = await getSetting('templates', 'DOC_SIGNED_SIGNER_SMS',
-                    'שלום {{recipientName}}, המסמך "{{documentName}}" נחתם בהצלחה.');
-
-                await notifyRecipient({
-                    recipientUserId: userId,
-                    notificationType: 'DOC_SIGNED',
-                    skipAdminCc: true,
-                    push: {
-                        title: '✓ מסמך נחתם בהצלחה',
-                        body: signerMessage,
-                        data: buildSignedDocPushData({
-                            type: 'file_signed',
-                            caseId: file.CaseId,
-                            signingFileId,
-                            publicUrl: signedDocumentUrl,
-                        }),
-                    },
-                    // Skip a duplicate link-only email when this recipient already got the PDFs.
-                    email: alreadyEmailedWithAttachments ? undefined : {
-                        campaignKey: 'DOC_SIGNED',
-                        attachments: emailAttachments || undefined,
-                        contactFields: {
-                            recipient_name: signerName || '',
-                            document_name: String(file.FileName || '').trim(),
-                            lawyer_name: String(lawyerNameForTemplate || '').trim(),
-                            signed_document_url: signedDocumentUrl,
-                            evidence_certificate_url: evidenceCertificateUrl,
-                        },
-                    },
-                    sms: {
-                        messageBody: renderTemplate(signerSignedSmsTemplate, {
-                            recipientName: signerName || '',
-                            documentName: String(file.FileName || '').trim(),
-                        }),
-                    },
-                });
-                console.log(`[signing] Notified signer userId=${userId} that document ${signingFileId} is fully signed (email=${alreadyEmailedWithAttachments ? 'skipped-duplicate' : 'sent'})`);
-            } catch (e) {
-                console.error('Failed to notify signer (non-fatal):', e?.message || e);
-            }
         }
 
         if (res.headersSent) return;
@@ -6423,7 +6804,9 @@ exports.reuploadFile = async (req, res, next) => {
                 lawyerid      as "LawyerId",
                 clientid      as "ClientId",
                 filename      as "FileName",
+                filekey       as "FileKey",
                 status        as "Status",
+                requireotp    as "RequireOtp",
                 immutableatutc as "ImmutableAtUtc"
              from signingfiles
              where signingfileid = $1`,
@@ -6681,6 +7064,14 @@ exports.reuploadFile = async (req, res, next) => {
                     // Best-effort
                 }
 
+                let reupSmsBody = publicUrl
+                    ? renderTemplate(signInviteSmsTemplateReup, {
+                        recipientName: String(recipientNameForTemplate || '').trim(),
+                        documentName: String(file.FileName || '').trim(),
+                        websiteUrl: formatSmsUrlNoPreview(publicUrl),
+                    })
+                    : null;
+
                 await notifyRecipient({
                     recipientUserId: targetUserId,
                     notificationType: 'SIGN_INVITE',
@@ -6701,14 +7092,8 @@ exports.reuploadFile = async (req, res, next) => {
                             },
                         }
                         : null,
-                    sms: publicUrl
-                        ? {
-                            messageBody: renderTemplate(signInviteSmsTemplateReup, {
-                                recipientName: String(recipientNameForTemplate || '').trim(),
-                                documentName: String(file.FileName || '').trim(),
-                                websiteUrl: String(publicUrl || '').trim(),
-                            }),
-                        }
+                    sms: reupSmsBody
+                        ? { messageBody: reupSmsBody }
                         : null,
                 });
             }
@@ -6735,6 +7120,14 @@ exports.reuploadFile = async (req, res, next) => {
                 // Best-effort
             }
 
+            let legacyReupSms = publicUrl
+                ? renderTemplate(signInviteSmsTemplateReup, {
+                    recipientName: String(recipientNameForTemplate || '').trim(),
+                    documentName: String(file.FileName || '').trim(),
+                    websiteUrl: formatSmsUrlNoPreview(publicUrl),
+                })
+                : null;
+
             await notifyRecipient({
                 recipientUserId: file.ClientId,
                 notificationType: 'SIGN_INVITE',
@@ -6755,14 +7148,8 @@ exports.reuploadFile = async (req, res, next) => {
                         },
                     }
                     : null,
-                sms: publicUrl
-                    ? {
-                        messageBody: renderTemplate(signInviteSmsTemplateReup, {
-                            recipientName: String(recipientNameForTemplate || '').trim(),
-                            documentName: String(file.FileName || '').trim(),
-                            websiteUrl: String(publicUrl || '').trim(),
-                        }),
-                    }
+                sms: legacyReupSms
+                    ? { messageBody: legacyReupSms }
                     : null,
             });
         }
@@ -7090,6 +7477,8 @@ exports.getSigningFilePdf = async (req, res, next) => {
 
         res.setHeader("Content-Type", obj.ContentType || "application/pdf");
         res.setHeader("Accept-Ranges", "bytes");
+        // Allow the SPA (different origin) to stream this PDF via pdf.js range requests.
+        res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
         // pdf.js runs in the browser and needs access to these headers when CORS is in play.
         // Without Access-Control-Expose-Headers, the browser hides them from JS.
         res.setHeader(

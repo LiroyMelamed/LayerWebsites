@@ -44,8 +44,8 @@ router.get("/public/:token/pdf", publicViewLimiter, signingFileController.getPub
 router.get("/public/:token", publicViewLimiter, signingFileController.getPublicSigningFileDetails);
 router.post("/public/:token/otp/request", signingFileController.publicRequestSigningOtp);
 router.post("/public/:token/otp/verify", signingFileController.publicVerifySigningOtp);
-router.post("/public/:token/sign", extendTimeout(120_000), optionalAuthMiddleware, signingFileController.publicSignFile);
-router.post("/public/:token/sign-batch", extendTimeout(180_000), optionalAuthMiddleware, signingFileController.publicSignFileBatch);
+router.post("/public/:token/sign", extendTimeout(60_000), optionalAuthMiddleware, signingFileController.publicSignFile);
+router.post("/public/:token/sign-batch", extendTimeout(60_000), optionalAuthMiddleware, signingFileController.publicSignFileBatch);
 router.post("/public/:token/reject", signingFileController.publicRejectSigning);
 router.get("/public/:token/saved-signature", publicViewLimiter, signingFileController.getPublicSavedSignature);
 router.get("/public/:token/saved-signature/data-url", publicViewLimiter, signingFileController.getPublicSavedSignatureDataUrl);
@@ -118,7 +118,7 @@ router.post("/:signingFileId/otp/request", authMiddleware, signingFileController
 router.post("/:signingFileId/otp/verify", authMiddleware, signingFileController.verifySigningOtp);
 
 // לקוח חותם על מקום חתימה אחד
-router.post("/:signingFileId/sign", extendTimeout(120_000), authMiddleware, requireSigningEnabledForSigningFile, signingFileController.signFile);
+router.post("/:signingFileId/sign", extendTimeout(60_000), authMiddleware, requireSigningEnabledForSigningFile, signingFileController.signFile);
 
 // לקוח דוחה את המסמך
 router.post("/:signingFileId/reject", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.rejectSigning);
