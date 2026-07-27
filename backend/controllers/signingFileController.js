@@ -573,6 +573,16 @@ async function buildPublicSigningUrl(token) {
     return longUrl;
 }
 
+/**
+ * iMessage builds a separate rich-preview bubble for bare https URLs (esp. with OG tags).
+ * Surrounding the URL with periods suppresses that preview while keeping the link tappable.
+ * Emails / push keep the clean URL.
+ */
+function formatSmsUrlNoPreview(url) {
+    const u = String(url || '').trim();
+    if (!u) return u;
+    return `.${u}.`;
+}
 
 /**
  * iMessage builds a separate rich-preview bubble for bare https URLs (esp. with OG tags).

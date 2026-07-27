@@ -8,6 +8,7 @@ export const MyCasesScreenName = "/MyCases";
 export const AllMangerScreenName = "/AllManger";
 export const AllCasesTypeScreenName = "/AllCasesType";
 export const SigningManagerScreenName = "/SigningManagerScreen";
+export const SigningSpotsPreviewScreenName = "/SigningSpotsPreview/:signingFileId";
 export const uploadFileForSigningScreenName = "/UploadFileForSigningScreen";
 export const EvidenceDocumentsScreenName = "/EvidenceDocumentsScreen";
 export const PlanUsageScreenName = "/PlanUsage";
