@@ -123,9 +123,24 @@
       "details": "פרטי מסמך",
       "uploadNew": "שליחת מסמך חדש לחתימה",
       "openPdf": "פתח PDF",
+      "viewSignatureSpots": "צפיה במיקומי חתימות",
       "deleteFile": "מחק מסמך",
       "rename": "שנה שם",
       "resendInvite": "שלח שוב לחתימה"
+    },
+    "signerStatus": {
+      "title": "סטטוס חותמים",
+      "name": "שם",
+      "contact": "דוא״ל/טלפון",
+      "sent": "נשלח",
+      "viewed": "נצפה",
+      "signed": "נחתם"
+    },
+    "spotsPreview": {
+      "title": "מיקומי חתימות",
+      "loading": "טוען תצוגה…",
+      "error": "שגיאה בטעינת תצוגת מיקומי חתימות",
+      "close": "סגור"
     },
     "resend": {
       "title": "שליחה מחדש לחתימה",
@@ -1096,6 +1111,9 @@
       "savedStampLabel": "חותמת",
       "spotAlreadySigned": "מקום החתימה הזה כבר חתום על ידך",
       "allRequiredCompleted": "השלמת את כל החתימות הנדרשות!",
+      "signingCompleteTitle": "חתימה הושלמה",
+      "signingCompleteSubtitle": "כל מיקומי החתימה הושלמו בהצלחה. תודה!",
+      "signingCompleteClose": "סיום",
       "rejectDocument": "דחה מסמך",
       "failedToLoadSignatureImage": "שגיאה בטעינת תמונת החתימה",
       "clientStampSavedSuccess": "החותמת נשמרה בהצלחה",
@@ -1524,7 +1542,7 @@
     "var_case_title": "שם תיק",
     "var_case_stage": "שלב נוכחי",
     "var_manager_name": "שם מנהל התיק",
-    "var_lawyer_name": "עו״ד מטפל",
+    "var_lawyer_name": "מנהל תיק",
     "var_document_name": "שם מסמך",
     "var_action_url": "קישור פעולה",
     "var_firm_name": "שם המשרד",

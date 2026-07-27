@@ -50,17 +50,42 @@ function safeErrorData(err) {
 }
 
 /**
+ * Sanitize a brand name into an InforU alphanumeric Sender ID:
+ * Latin letters + digits only, max 11 chars, optional leading "*".
+ */
+function sanitizeAlphanumericSender(name) {
+    const raw = String(name || '').trim();
+    if (!raw) return null;
+    const cleaned = raw.replace(/[^A-Za-z0-9]/g, '');
+    if (!cleaned) return null;
+    return cleaned.slice(0, 11);
+}
+
+/**
  * Resolve the active sender ID/number. DB (platform_settings) wins over env.
  * Falls back to the legacy SMOOVE_SENDER_PHONE key until the consolidate
  * migration has run. Pending requests live under INFORU_SENDER_PHONE_PENDING
  * and are never used here.
+ *
+ * If no explicit sender is configured, derive an alphanumeric Sender from
+ * firm:COMPANY_NAME (English law-firm name) — InforU allows up to 11 Latin chars.
  */
 async function getActiveSender() {
     const fromInforu = await getSetting("messaging", "INFORU_SENDER_PHONE", null);
-    if (fromInforu) return fromInforu;
+    if (fromInforu) return String(fromInforu).trim() || null;
     const fromLegacy = await getSetting("messaging", "SMOOVE_SENDER_PHONE", null);
-    if (fromLegacy) return fromLegacy;
-    return process.env.INFORU_SENDER_PHONE || process.env.SMOOVE_SENDER_PHONE || null;
+    if (fromLegacy) return String(fromLegacy).trim() || null;
+    const fromEnv = process.env.INFORU_SENDER_PHONE || process.env.SMOOVE_SENDER_PHONE || null;
+    if (fromEnv) return String(fromEnv).trim() || null;
+
+    try {
+        const enName = await getFirmNameEn();
+        const fromFirm = sanitizeAlphanumericSender(enName);
+        if (fromFirm) return fromFirm;
+    } catch (err) {
+        console.warn('[sms] derive sender from COMPANY_NAME failed:', err?.message || err);
+    }
+    return sanitizeAlphanumericSender(COMPANY_NAME);
 }
 
 // ── InforU provider ─────────────────────────────────────────────────

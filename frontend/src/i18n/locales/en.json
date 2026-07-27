@@ -90,7 +90,22 @@
       "details": "Document details",
       "uploadNew": "Send new document for signing",
       "openPdf": "Open PDF",
+      "viewSignatureSpots": "View signature locations",
       "deleteFile": "Delete document"
+    },
+    "signerStatus": {
+      "title": "Signer status",
+      "name": "Name",
+      "contact": "Email/Phone",
+      "sent": "Sent",
+      "viewed": "Viewed",
+      "signed": "Signed"
+    },
+    "spotsPreview": {
+      "title": "Signature locations",
+      "loading": "Loading preview…",
+      "error": "Failed to load signature locations preview",
+      "close": "Close"
     },
     "planAndRetention": {
       "title": "Plan & retention",
@@ -852,6 +867,9 @@
       "savedStampLabel": "Stamp",
       "spotAlreadySigned": "This signature spot is already signed by you",
       "allRequiredCompleted": "You have completed all required signatures!",
+      "signingCompleteTitle": "Signing complete",
+      "signingCompleteSubtitle": "All signature locations were completed successfully. Thank you!",
+      "signingCompleteClose": "Done",
       "rejectDocument": "Reject document",
       "failedToLoadSignatureImage": "Failed to load signature image",
       "clientStampSavedSuccess": "Client stamp saved successfully",

@@ -53,6 +53,29 @@ const updateSettings = async (req, res) => {
         }
 
         const results = await settingsService.bulkUpsert(settings, req.user?.UserId);
+
+        // Sign-reminder platform settings side-effects
+        try {
+            const {
+                rescheduleUnmodifiedReminders,
+                cancelAllAutoManagedPending,
+            } = require('../lib/signingFileReminders');
+            for (const s of settings) {
+                if (s.category !== 'signing') continue;
+                if (s.key === 'SIGN_REMINDER_OFFSET_HOURS') {
+                    await rescheduleUnmodifiedReminders(s.value);
+                }
+                if (s.key === 'SIGN_REMINDER_AUTO_ENABLED') {
+                    const v = String(s.value ?? '').trim().toLowerCase();
+                    if (v !== 'true' && v !== '1' && v !== 'yes') {
+                        await cancelAllAutoManagedPending();
+                    }
+                }
+            }
+        } catch (sideErr) {
+            console.warn('[platformSettings] sign-reminder side-effect failed:', sideErr?.message || sideErr);
+        }
+
         return res.json({ message: 'ההגדרות עודכנו בהצלחה', count: results.length });
     } catch (err) {
         console.error('[platformSettings] updateSettings error:', err?.message || err);
@@ -88,6 +111,27 @@ const updateSingleSetting = async (req, res) => {
         const result = await settingsService.upsertSetting(category, key, value, {
             updatedBy: req.user?.UserId,
         });
+
+        try {
+            if (category === 'signing') {
+                const {
+                    rescheduleUnmodifiedReminders,
+                    cancelAllAutoManagedPending,
+                } = require('../lib/signingFileReminders');
+                if (key === 'SIGN_REMINDER_OFFSET_HOURS') {
+                    await rescheduleUnmodifiedReminders(value);
+                }
+                if (key === 'SIGN_REMINDER_AUTO_ENABLED') {
+                    const v = String(value ?? '').trim().toLowerCase();
+                    if (v !== 'true' && v !== '1' && v !== 'yes') {
+                        await cancelAllAutoManagedPending();
+                    }
+                }
+            }
+        } catch (sideErr) {
+            console.warn('[platformSettings] sign-reminder single side-effect failed:', sideErr?.message || sideErr);
+        }
+
         return res.json({ message: 'ההגדרה עודכנה', setting: result });
     } catch (err) {
         console.error('[platformSettings] updateSingleSetting error:', err);

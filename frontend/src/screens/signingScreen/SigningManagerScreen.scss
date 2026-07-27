@@ -330,6 +330,68 @@
     }
 }
 
+.lw-signingManagerScreen__signerStatusWrap {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.lw-signingManagerScreen__signerStatusTitle {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.lw-signingManagerScreen__signerStatusTable {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 36rem;
+}
+
+.lw-signingManagerScreen__signerStatusHead,
+.lw-signingManagerScreen__signerStatusRow {
+    display: grid;
+    grid-template-columns: 1.2fr 1.4fr 1fr 1fr 1fr;
+    gap: 0.5rem;
+    align-items: start;
+    font-size: 0.8125rem;
+}
+
+.lw-signingManagerScreen__signerStatusHead {
+    font-weight: 700;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    padding-bottom: 0.35rem;
+}
+
+.lw-signingManagerScreen__signerStatusRow {
+    padding: 0.35rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.lw-signingManagerScreen__spotsPreview {
+    margin-top: 1rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    padding-top: 0.75rem;
+}
+
+.lw-signingManagerScreen__spotsPreviewHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.lw-signingManagerScreen__spotsPreviewBody {
+    max-height: 70vh;
+    overflow: auto;
+}
+
+.lw-signingManagerScreen__spotsPreviewError {
+    margin-top: 0.5rem;
+    color: #721c24;
+    font-size: 0.875rem;
+}
+
 @media (max-width: v.$bp-narrow) {
     .lw-signingManagerScreen__searchContainer {
         min-inline-size: 0;
