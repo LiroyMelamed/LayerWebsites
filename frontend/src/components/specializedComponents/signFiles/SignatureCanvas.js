@@ -1497,7 +1497,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 : await signingFilesApi.verifySigningOtp(effectiveSigningFileId, otp, signingSessionId);
             unwrapApi(res);
             setOtpVerified(true);
-            setMessage({ type: "success", text: t("signing.canvas.otpVerified") });
+            setMessage(null);
         } catch (err) {
             console.error("OTP verify failed", err);
             otpAutoVerifyRef.current = false;
@@ -1727,12 +1727,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         <SecondaryButton size={buttonSizes.SMALL} onPress={requestOtp} disabled={otpBusy || saving}>
                             {otpRequested ? t("signing.canvas.resend") : t("signing.canvas.sendCode")}
                         </SecondaryButton>
-                        {otpVerified && <div className="lw-signing-otpVerified">{t("signing.canvas.verified")}</div>}
                     </div>
                 </div>
-            )}
-            {otpRequired && otpVerified && (
-                <div className="lw-signing-otpVerifiedBanner">{t("signing.canvas.verified")}</div>
             )}
         </>
     );

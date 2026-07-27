@@ -1129,7 +1129,8 @@
         "COURT_DATE": "تذكير بموعد جلسة",
         "DOCUMENT_REQUIRED": "تذكير بتقديم مستند",
         "LICENSE_RENEWAL": "تذكير بتجديد ترخيص",
-        "PAYMENT": "تذكير بالدفع"
+        "PAYMENT": "تذكير بالدفع",
+        "SIGN_REMINDER": "تذكير بالتوقيع"
       },
       "scheduledFor": "مجدول لـ",
       "status": "الحالة",
