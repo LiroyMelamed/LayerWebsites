@@ -1981,6 +1981,14 @@ export default function PlatformSettingsScreen() {
                                     )}
                                 </SimpleContainer>
                                 {/* Pending SMS sender awaiting InforU verification */}
+                                {activeTab === "messaging" && key === SMS_SENDER_KEY && (
+                                    <Text12 className="lw-platformSettings__hint">
+                                        {t(
+                                            "platformSettings.smsSenderHint",
+                                            "אם השדה ריק — שם השולח ב-SMS יילקח משם המשרד באנגלית (עד 11 תווים לטיניים)."
+                                        )}
+                                    </Text12>
+                                )}
                                 {activeTab === "messaging" && key === SMS_SENDER_KEY && pendingSender && (
                                     <SimpleContainer className="lw-platformSettings__senderPending">
                                         <Text12 className="lw-platformSettings__senderPendingLabel">
