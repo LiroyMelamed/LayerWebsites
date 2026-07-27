@@ -4278,7 +4278,7 @@ exports.getSigningFileSigners = async (req, res, next) => {
                         actor_type AS "ActorType",
                         metadata AS "Metadata"
                  FROM audit_events
-                 WHERE signing_file_id = $1
+                 WHERE signingfileid = $1
                    AND event_type IN ('PUBLIC_LINK_ISSUED', 'SIGNING_INVITE_RESENT', 'PDF_VIEWED')
                  ORDER BY occurred_at_utc ASC`,
                 [signingFileId]
