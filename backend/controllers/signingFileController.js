@@ -573,6 +573,16 @@ async function buildPublicSigningUrl(token) {
     return longUrl;
 }
 
+/**
+ * iMessage builds a separate rich-preview bubble for bare https URLs (esp. with OG tags).
+ * Surrounding the URL with periods suppresses that preview while keeping the link tappable.
+ * Emails / push keep the clean URL.
+ */
+function formatSmsUrlNoPreview(url) {
+    const u = String(url || '').trim();
+    if (!u) return u;
+    return `.${u}.`;
+}
 
 /** Push payload that opens the native/public signing screen on tap. */
 function buildSigningInvitePushData({ signingFileId, token, publicUrl, type = 'signing_pending' }) {
@@ -2870,7 +2880,7 @@ exports.uploadFileForSigning = async (req, res, next) => {
                         messageBody: renderTemplate(signInviteSmsTemplate, {
                             recipientName,
                             documentName: String(fileName || '').trim(),
-                            websiteUrl: String(publicUrl || '').trim(),
+                            websiteUrl: formatSmsUrlNoPreview(publicUrl),
                         }),
                     }
                     : null,
@@ -4470,7 +4480,7 @@ exports.resendSigningInvite = async (req, res, next) => {
                         messageBody: renderTemplate(signInviteSmsTemplate, {
                             recipientName,
                             documentName: String(file.FileName || '').trim(),
-                            websiteUrl: String(publicUrl || '').trim(),
+                            websiteUrl: formatSmsUrlNoPreview(publicUrl),
                         }),
                     }
                     : null,
@@ -6730,7 +6740,7 @@ exports.signFile = async (req, res, next) => {
                                             messageBody: renderTemplate(signInviteSmsTemplate, {
                                                 recipientName: nextSignerName,
                                                 documentName: String(file.FileName || '').trim(),
-                                                websiteUrl: String(publicUrl || '').trim(),
+                                                websiteUrl: formatSmsUrlNoPreview(publicUrl),
                                             }),
                                         }
                                         : null,
@@ -7235,7 +7245,7 @@ exports.reuploadFile = async (req, res, next) => {
                             messageBody: renderTemplate(signInviteSmsTemplateReup, {
                                 recipientName: String(recipientNameForTemplate || '').trim(),
                                 documentName: String(file.FileName || '').trim(),
-                                websiteUrl: String(publicUrl || '').trim(),
+                                websiteUrl: formatSmsUrlNoPreview(publicUrl),
                             }),
                         }
                         : null,
@@ -7289,7 +7299,7 @@ exports.reuploadFile = async (req, res, next) => {
                         messageBody: renderTemplate(signInviteSmsTemplateReup, {
                             recipientName: String(recipientNameForTemplate || '').trim(),
                             documentName: String(file.FileName || '').trim(),
-                            websiteUrl: String(publicUrl || '').trim(),
+                            websiteUrl: formatSmsUrlNoPreview(publicUrl),
                         }),
                     }
                     : null,

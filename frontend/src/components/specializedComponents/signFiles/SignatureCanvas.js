@@ -1702,7 +1702,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 </div>
             )}
 
-            {otpRequired && (
+            {otpRequired && !otpVerified && (
                 <div className="lw-signing-otpBox">
                     <div className="lw-signing-otpTitle">{t("signing.canvas.otpTitle")}</div>
                     <div className="lw-signing-otpRow">
@@ -1730,6 +1730,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         {otpVerified && <div className="lw-signing-otpVerified">{t("signing.canvas.verified")}</div>}
                     </div>
                 </div>
+            )}
+            {otpRequired && otpVerified && (
+                <div className="lw-signing-otpVerifiedBanner">{t("signing.canvas.verified")}</div>
             )}
         </>
     );
@@ -2282,7 +2285,6 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 {showCompletion && (
                     <div className="lw-signing-completeOverlay" role="dialog" aria-modal="true">
                         <div className="lw-signing-completeCard">
-                            <div className="lw-signing-completeBurst" aria-hidden="true" />
                             <div className="lw-signing-completeCheck" aria-hidden="true">
                                 <svg viewBox="0 0 52 52">
                                     <circle className="lw-signing-completeCheck__circle" cx="26" cy="26" r="24" fill="none" />
@@ -2291,9 +2293,11 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                             </div>
                             <h2 className="lw-signing-completeTitle">{t("signing.canvas.signingCompleteTitle")}</h2>
                             <p className="lw-signing-completeSubtitle">{t("signing.canvas.signingCompleteSubtitle")}</p>
-                            <PrimaryButton onPress={onClose}>
-                                {t("signing.canvas.signingCompleteClose")}
-                            </PrimaryButton>
+                            <div className="lw-signing-completeActions">
+                                <PrimaryButton onPress={onClose}>
+                                    {t("signing.canvas.signingCompleteClose")}
+                                </PrimaryButton>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -2448,7 +2452,6 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             {showCompletion && (
                 <div className="lw-signing-completeOverlay" role="dialog" aria-modal="true">
                     <div className="lw-signing-completeCard">
-                        <div className="lw-signing-completeBurst" aria-hidden="true" />
                         <div className="lw-signing-completeCheck" aria-hidden="true">
                             <svg viewBox="0 0 52 52">
                                 <circle className="lw-signing-completeCheck__circle" cx="26" cy="26" r="24" fill="none" />
@@ -2457,9 +2460,11 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         </div>
                         <h2 className="lw-signing-completeTitle">{t("signing.canvas.signingCompleteTitle")}</h2>
                         <p className="lw-signing-completeSubtitle">{t("signing.canvas.signingCompleteSubtitle")}</p>
-                        <PrimaryButton onPress={onClose}>
-                            {t("signing.canvas.signingCompleteClose")}
-                        </PrimaryButton>
+                        <div className="lw-signing-completeActions">
+                            <PrimaryButton onPress={onClose}>
+                                {t("signing.canvas.signingCompleteClose")}
+                            </PrimaryButton>
+                        </div>
                     </div>
                 </div>
             )}

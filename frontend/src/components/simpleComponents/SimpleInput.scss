@@ -178,10 +178,10 @@
 .lw-simpleInput__field[type='month'],
 .lw-simpleInput__field[type='week'] {
     direction: ltr;
-    text-align: left;
+    text-align: right;
     unicode-bidi: isolate;
     position: relative;
-    // Leave room for the native calendar-picker indicator (often drawn on the start/left).
+    // Icon on the left; date text sits on the right (matches RTL form labels).
     padding-inline-start: 2.5rem;
     padding-inline-end: 0.75rem;
 }
@@ -216,12 +216,11 @@
     transform: translateY(-50%);
     pointer-events: none;
 
-    // Match field padding so overlay text clears the calendar icon on the start side.
     padding-inline-start: 2.5rem;
     padding-inline-end: 0.75rem;
 
     direction: ltr;
-    text-align: left;
+    text-align: right;
     white-space: nowrap;
     overflow: hidden;
 

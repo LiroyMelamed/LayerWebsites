@@ -37,7 +37,6 @@ import "./SigningManagerScreen.scss";
 import { MainScreenName } from "../mainScreen/MainScreen";
 import SimpleCard from "../../components/simpleComponents/SimpleCard";
 import { formatDateForInput, parseDateInput } from "../../functions/date/formatDateForInput";
-import PdfViewer from "../../components/specializedComponents/signFiles/pdfViewer/PdfViewer";
 
 
 export const SigningManagerScreenName = "/SigningManagerScreen";
@@ -582,7 +581,6 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
     const [isDownloadingEvidenceZip, setIsDownloadingEvidenceZip] = useState(false);
     const [isOpeningPdf, setIsOpeningPdf] = useState(false);
     const [isOpeningSpotsPreview, setIsOpeningSpotsPreview] = useState(false);
-    const [spotsPreview, setSpotsPreview] = useState(null); // { pdfFile, spots } | null
     const [spotsPreviewError, setSpotsPreviewError] = useState(null);
 
     const wrappedDownloadSigned = async () => {
@@ -602,30 +600,21 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
         try { await onOpenPdf(); } finally { setIsOpeningPdf(false); }
     };
 
-    const openSpotsPreview = async () => {
+    const openSpotsPreview = () => {
         const signingFileId = file?.SigningFileId;
         if (!signingFileId) return;
-        setIsOpeningSpotsPreview(true);
         setSpotsPreviewError(null);
+        setIsOpeningSpotsPreview(true);
         try {
-            const baseUrl = ApiUtils?.defaults?.baseURL || "";
-            const token = localStorage.getItem("token");
-            const [pdfRes, detailsRes] = await Promise.all([
-                fetch(`${baseUrl}/SigningFiles/${encodeURIComponent(signingFileId)}/pdf`, {
-                    method: "GET",
-                    headers: token ? { Authorization: `Bearer ${token}` } : {},
-                }),
-                signingFilesApi.getSigningFileDetails(signingFileId),
-            ]);
-            if (!pdfRes.ok) throw new Error(`PDF fetch failed: ${pdfRes.status}`);
-            const blob = await pdfRes.blob();
-            const pdfFile = new File([blob], file?.FileName || "document.pdf", {
-                type: blob.type || "application/pdf",
-            });
-            const spots = detailsRes?.data?.signatureSpots || detailsRes?.data?.SignatureSpots || [];
-            setSpotsPreview({ pdfFile, spots });
+            const path = `${AdminStackName}/SigningSpotsPreview/${encodeURIComponent(signingFileId)}`;
+            const url = `${window.location.origin}${path}`;
+            const opened = window.open(url, "_blank", "noopener,noreferrer");
+            if (!opened) {
+                // Popup blocked — navigate in the same tab.
+                window.location.assign(path);
+            }
         } catch (err) {
-            console.error("Spots preview error:", err);
+            console.error("Spots preview open failed", err);
             setSpotsPreviewError(t('signingManager.spotsPreview.error'));
         } finally {
             setIsOpeningSpotsPreview(false);
@@ -656,6 +645,7 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
 
     const handleOpenResend = () => {
         setShowResend(true);
+        setSpotsPreviewError(null);
         loadSigners();
     };
 
@@ -798,40 +788,37 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                     <div className="lw-signingManagerScreen__detailValue">{signedSpots}/{totalSpots}</div>
                 </SimpleContainer>
 
-                <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                    <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.client')}</div>
-                    <div className="lw-signingManagerScreen__detailValue">
-                        {loadingSigners ? '...' : (
-                            <div className="lw-signingManagerScreen__signerStatusWrap">
-                                <div className="lw-signingManagerScreen__signerStatusTitle">
-                                    {t('signingManager.signerStatus.title')}
-                                </div>
-                                <div className="lw-signingManagerScreen__signerStatusTable">
-                                    <div className="lw-signingManagerScreen__signerStatusHead">
-                                        <span>{t('signingManager.signerStatus.name')}</span>
-                                        <span>{t('signingManager.signerStatus.contact')}</span>
-                                        <span>{t('signingManager.signerStatus.sent')}</span>
-                                        <span>{t('signingManager.signerStatus.viewed')}</span>
-                                        <span>{t('signingManager.signerStatus.signed')}</span>
-                                    </div>
-                                    {(signers.length ? signers : []).map((s) => (
-                                        <div key={s.SignerUserId} className="lw-signingManagerScreen__signerStatusRow">
-                                            <span>{s.Name || `#${s.SignerUserId}`}</span>
-                                            <span>{[s.Email, s.Phone].filter(Boolean).join(' · ') || '-'}</span>
-                                            <span>{formatUtcDateTime(s.SentAt)}</span>
-                                            <span>{formatUtcDateTime(s.ViewedAt)}</span>
-                                            <span>{formatUtcDateTime(s.SignedAt)}</span>
-                                        </div>
-                                    ))}
-                                    {!signers.length && !loadingSigners && (
-                                        <div className="lw-signingManagerScreen__signerStatusRow">
-                                            <span>-</span><span>-</span><span>-</span><span>-</span><span>-</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
+                <SimpleContainer className="lw-signingManagerScreen__signerStatusSection">
+                    <div className="lw-signingManagerScreen__signerStatusTitle">
+                        {t('signingManager.signerStatus.title')}
                     </div>
+                    {loadingSigners ? '...' : (
+                        <div className="lw-signingManagerScreen__signerStatusWrap">
+                            <div className="lw-signingManagerScreen__signerStatusTable">
+                                <div className="lw-signingManagerScreen__signerStatusHead">
+                                    <span>{t('signingManager.signerStatus.name')}</span>
+                                    <span>{t('signingManager.signerStatus.contact')}</span>
+                                    <span>{t('signingManager.signerStatus.sent')}</span>
+                                    <span>{t('signingManager.signerStatus.viewed')}</span>
+                                    <span>{t('signingManager.signerStatus.signed')}</span>
+                                </div>
+                                {(signers.length ? signers : []).map((s) => (
+                                    <div key={s.SignerUserId} className="lw-signingManagerScreen__signerStatusRow">
+                                        <span>{s.Name || `#${s.SignerUserId}`}</span>
+                                        <span>{[s.Email, s.Phone].filter(Boolean).join(' · ') || '-'}</span>
+                                        <span>{formatUtcDateTime(s.SentAt)}</span>
+                                        <span>{formatUtcDateTime(s.ViewedAt)}</span>
+                                        <span>{formatUtcDateTime(s.SignedAt)}</span>
+                                    </div>
+                                ))}
+                                {!signers.length && !loadingSigners && (
+                                    <div className="lw-signingManagerScreen__signerStatusRow">
+                                        <span>-</span><span>-</span><span>-</span><span>-</span><span>-</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </SimpleContainer>
 
                 {file?.Status === "rejected" && file?.RejectionReason && (
@@ -905,24 +892,6 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
 
                 {spotsPreviewError && (
                     <div className="lw-signingManagerScreen__spotsPreviewError">{spotsPreviewError}</div>
-                )}
-
-                {spotsPreview && (
-                    <SimpleContainer className="lw-signingManagerScreen__spotsPreview">
-                        <SimpleContainer className="lw-signingManagerScreen__spotsPreviewHeader">
-                            <TextBold24>{t('signingManager.spotsPreview.title')}</TextBold24>
-                            <SecondaryButton size={buttonSizes.SMALL} onPress={() => setSpotsPreview(null)}>
-                                {t('signingManager.spotsPreview.close')}
-                            </SecondaryButton>
-                        </SimpleContainer>
-                        <SimpleContainer className="lw-signingManagerScreen__spotsPreviewBody">
-                            <PdfViewer
-                                pdfFile={spotsPreview.pdfFile}
-                                spots={spotsPreview.spots}
-                                signers={signers}
-                            />
-                        </SimpleContainer>
-                    </SimpleContainer>
                 )}
 
                 {showResend && (

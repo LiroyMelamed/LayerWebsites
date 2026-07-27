@@ -1301,15 +1301,6 @@
     overflow: hidden;
 }
 
-.lw-signing-completeBurst {
-    position: absolute;
-    inset: -20% -10% auto;
-    height: 10rem;
-    background: radial-gradient(circle at 50% 80%, rgba(34, 197, 94, 0.28), transparent 65%);
-    animation: lw-signing-complete-burst 0.9s ease-out;
-    pointer-events: none;
-}
-
 .lw-signing-completeCheck {
     width: 4.5rem;
     height: 4.5rem;
@@ -1353,6 +1344,25 @@
     color: #475569;
 }
 
+.lw-signing-completeActions {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.lw-signing-otpVerifiedBanner {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0.5rem 0 0.75rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    background: #dcfce7;
+    color: #166534;
+    font-size: 0.875rem;
+    font-weight: 700;
+}
+
 @keyframes lw-signing-complete-fade {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -1361,11 +1371,6 @@
 @keyframes lw-signing-complete-rise {
     from { opacity: 0; transform: translateY(1rem) scale(0.96); }
     to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@keyframes lw-signing-complete-burst {
-    from { opacity: 0; transform: scale(0.6); }
-    to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes lw-signing-complete-circle {
