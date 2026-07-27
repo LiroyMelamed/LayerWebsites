@@ -1274,7 +1274,8 @@
         "COURT_DATE": "תזכורת מועד דיון",
         "DOCUMENT_REQUIRED": "תזכורת להגשת מסמך",
         "LICENSE_RENEWAL": "תזכורת חידוש רישיון",
-        "PAYMENT": "תזכורת תשלום"
+        "PAYMENT": "תזכורת תשלום",
+        "SIGN_REMINDER": "תזכורת חתימה"
       },
       "scheduledFor": "תאריך שליחה",
       "status": "סטטוס",

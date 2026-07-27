@@ -1527,7 +1527,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 return;
             }
             setOtpVerified(true);
-            setMessage({ type: "success", text: t("signing.canvas.otpVerified") });
+            setMessage(null);
         } catch (err) {
             console.error("OTP verify failed", err);
             setOtpVerified(false);
@@ -1756,9 +1756,6 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         </SecondaryButton>
                     </div>
                 </div>
-            )}
-            {otpRequired && otpVerified && (
-                <div className="lw-signing-otpVerifiedBanner">{t("signing.canvas.verified")}</div>
             )}
         </>
     );

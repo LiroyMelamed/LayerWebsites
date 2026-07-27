@@ -373,39 +373,89 @@ const importReminders = async (req, res, next) => {
     }
 };
 
+function parseSigningReminderId(rawId) {
+    const s = String(rawId || '');
+    const m = /^sfr-(\d+)$/i.exec(s);
+    if (!m) return null;
+    const n = Number.parseInt(m[1], 10);
+    return Number.isFinite(n) ? n : null;
+}
+
 // ─── List reminders ──────────────────────────────────────────────────
+// Includes scheduled_email_reminders + signing_file_reminders (auto sign-remind).
 
 const listReminders = async (req, res, next) => {
     try {
         const { status, page = 1, limit = 50 } = req.query;
         const offset = (Math.max(1, Number(page)) - 1) * Number(limit);
-
-        let where = 'WHERE 1=1';
         const params = [];
         let idx = 1;
-
+        let statusFilter = '';
         if (status) {
-            where += ` AND status = $${idx++}`;
-            params.push(status.toUpperCase());
+            statusFilter = ` AND status = $${idx++}`;
+            params.push(String(status).toUpperCase());
         }
 
-        const countQ = `SELECT COUNT(*) FROM scheduled_email_reminders ${where}`;
-        const dataQ = `SELECT id, user_id, client_name, to_email, subject, template_key,
-                               scheduled_for, status, error, created_at, sent_at, cancelled_at,
-                               calendar_event_id
-                        FROM scheduled_email_reminders ${where}
-                        ORDER BY scheduled_for DESC
-                        LIMIT $${idx++} OFFSET $${idx++}`;
-        params.push(Number(limit), offset);
+        const combinedSql = `
+            SELECT * FROM (
+                SELECT
+                    id::text AS id,
+                    user_id,
+                    client_name,
+                    to_email,
+                    subject,
+                    template_key,
+                    scheduled_for,
+                    status,
+                    error,
+                    created_at,
+                    sent_at,
+                    cancelled_at,
+                    calendar_event_id,
+                    'email'::text AS source
+                FROM scheduled_email_reminders
+                WHERE 1=1
+                ${statusFilter}
 
-        const [{ rows: [{ count }] }, { rows: reminders }] = await Promise.all([
-            pool.query(countQ, params.slice(0, idx - 3)),
-            pool.query(dataQ, params),
+                UNION ALL
+
+                SELECT
+                    ('sfr-' || sfr.id)::text AS id,
+                    sfr.signer_user_id AS user_id,
+                    COALESCE(NULLIF(TRIM(u.name), ''), u.email, u.phonenumber, ('#' || sfr.signer_user_id::text)) AS client_name,
+                    COALESCE(u.email, u.phonenumber, '') AS to_email,
+                    COALESCE(sf.filename, 'Signing reminder') AS subject,
+                    'SIGN_REMINDER'::text AS template_key,
+                    sfr.scheduled_for,
+                    sfr.status,
+                    sfr.error,
+                    sfr.created_at,
+                    sfr.sent_at,
+                    sfr.cancelled_at,
+                    NULL::integer AS calendar_event_id,
+                    'signing'::text AS source
+                FROM signing_file_reminders sfr
+                LEFT JOIN users u ON u.userid = sfr.signer_user_id
+                LEFT JOIN signingfiles sf ON sf.signingfileid = sfr.signing_file_id
+                WHERE 1=1
+                ${statusFilter}
+            ) combined
+        `;
+
+        const countQ = `SELECT COUNT(*)::int AS count FROM (${combinedSql}) c`;
+        const dataQ = `${combinedSql}
+                       ORDER BY scheduled_for DESC
+                       LIMIT $${idx++} OFFSET $${idx++}`;
+        const dataParams = [...params, Number(limit), offset];
+
+        const [{ rows: countRows }, { rows: reminders }] = await Promise.all([
+            pool.query(countQ, params),
+            pool.query(dataQ, dataParams),
         ]);
 
         return res.json({
             ok: true,
-            total: Number(count),
+            total: Number(countRows?.[0]?.count || 0),
             page: Number(page),
             limit: Number(limit),
             reminders,
@@ -420,14 +470,47 @@ const listReminders = async (req, res, next) => {
 const getReminderById = async (req, res, next) => {
     try {
         const { id } = req.params;
+        const signingId = parseSigningReminderId(id);
+        if (signingId != null) {
+            const { rows } = await pool.query(
+                `SELECT
+                    ('sfr-' || sfr.id)::text AS id,
+                    sfr.signer_user_id AS user_id,
+                    COALESCE(NULLIF(TRIM(u.name), ''), u.email, u.phonenumber, ('#' || sfr.signer_user_id::text)) AS client_name,
+                    COALESCE(u.email, u.phonenumber, '') AS to_email,
+                    COALESCE(sf.filename, 'Signing reminder') AS subject,
+                    'SIGN_REMINDER'::text AS template_key,
+                    '{}'::jsonb AS template_data,
+                    sfr.scheduled_for,
+                    sfr.status,
+                    sfr.error,
+                    sfr.created_at,
+                    sfr.sent_at,
+                    sfr.cancelled_at,
+                    NULL::integer AS created_by,
+                    NULL::integer AS calendar_event_id,
+                    'signing'::text AS source
+                 FROM signing_file_reminders sfr
+                 LEFT JOIN users u ON u.userid = sfr.signer_user_id
+                 LEFT JOIN signingfiles sf ON sf.signingfileid = sfr.signing_file_id
+                 WHERE sfr.id = $1
+                 LIMIT 1`,
+                [signingId]
+            );
+            if (!rows.length) {
+                return res.status(404).json({ ok: false, error: 'Reminder not found.' });
+            }
+            return res.json({ ok: true, reminder: rows[0] });
+        }
+
         const reminderId = parseInt(id, 10);
         if (!Number.isFinite(reminderId)) {
             return res.status(400).json({ ok: false, error: 'Invalid reminder id.' });
         }
         const { rows } = await pool.query(
-            `SELECT id, user_id, client_name, to_email, subject, template_key, template_data,
+            `SELECT id::text AS id, user_id, client_name, to_email, subject, template_key, template_data,
                     scheduled_for, status, error, created_at, sent_at, cancelled_at,
-                    created_by, calendar_event_id
+                    created_by, calendar_event_id, 'email'::text AS source
                FROM scheduled_email_reminders
               WHERE id = $1
               LIMIT 1`,
@@ -447,6 +530,20 @@ const getReminderById = async (req, res, next) => {
 const cancelReminder = async (req, res, next) => {
     try {
         const { id } = req.params;
+        const signingId = parseSigningReminderId(id);
+        if (signingId != null) {
+            const { rowCount } = await pool.query(
+                `UPDATE signing_file_reminders
+                 SET status = 'CANCELLED', cancelled_at = NOW(), auto_managed = FALSE
+                 WHERE id = $1 AND status = 'PENDING'`,
+                [signingId],
+            );
+            if (rowCount === 0) {
+                return res.status(404).json({ ok: false, error: 'Reminder not found or already processed.' });
+            }
+            return res.json({ ok: true });
+        }
+
         const { rowCount } = await pool.query(
             `UPDATE scheduled_email_reminders
              SET status = 'CANCELLED', cancelled_at = NOW()
@@ -472,6 +569,18 @@ const cancelReminder = async (req, res, next) => {
 const deleteReminder = async (req, res, next) => {
     try {
         const { id } = req.params;
+        const signingId = parseSigningReminderId(id);
+        if (signingId != null) {
+            const { rowCount } = await pool.query(
+                `DELETE FROM signing_file_reminders WHERE id = $1`,
+                [signingId],
+            );
+            if (rowCount === 0) {
+                return res.status(404).json({ ok: false, error: 'Reminder not found.' });
+            }
+            return res.json({ ok: true });
+        }
+
         // Drop the linked calendar event first; the FK is calendar → reminder with
         // ON DELETE CASCADE, so deleting the reminder alone leaves an orphan event.
         try {
@@ -498,6 +607,35 @@ const updateReminder = async (req, res, next) => {
     try {
         const { id } = req.params;
         const { client_name, to_email, subject, scheduled_for } = req.body;
+
+        const signingId = parseSigningReminderId(id);
+        if (signingId != null) {
+            if (scheduled_for === undefined) {
+                return res.status(400).json({ ok: false, error: 'Only scheduled_for can be updated for signing reminders.' });
+            }
+            const { rowCount, rows } = await pool.query(
+                `UPDATE signing_file_reminders sfr
+                 SET scheduled_for = $1,
+                     auto_managed = FALSE
+                 WHERE sfr.id = $2 AND sfr.status = 'PENDING'
+                 RETURNING
+                    ('sfr-' || sfr.id)::text AS id,
+                    sfr.signer_user_id AS user_id,
+                    sfr.scheduled_for,
+                    sfr.status,
+                    sfr.error,
+                    sfr.created_at,
+                    sfr.sent_at,
+                    sfr.cancelled_at,
+                    'SIGN_REMINDER'::text AS template_key,
+                    'signing'::text AS source`,
+                [scheduled_for, signingId],
+            );
+            if (rowCount === 0) {
+                return res.status(404).json({ ok: false, error: 'Reminder not found or not in PENDING status.' });
+            }
+            return res.json({ ok: true, reminder: rows[0] });
+        }
 
         // Build dynamic SET clause from supplied fields
         const fields = [];

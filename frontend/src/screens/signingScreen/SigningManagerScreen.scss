@@ -333,6 +333,9 @@
 .lw-signingManagerScreen__signerStatusSection {
     margin-top: 0.75rem;
     width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
 }
 
 .lw-signingManagerScreen__signerStatusWrap {
@@ -342,7 +345,8 @@
 
 .lw-signingManagerScreen__signerStatusTitle {
     font-weight: 700;
-    margin-bottom: 0.5rem;
+    width: 100%;
+    margin-bottom: 0;
 }
 
 .lw-signingManagerScreen__signerStatusTable {

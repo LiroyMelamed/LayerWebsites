@@ -61,31 +61,38 @@ function sanitizeAlphanumericSender(name) {
     return cleaned.slice(0, 11);
 }
 
+function isPhoneLikeSender(value) {
+    const cleaned = String(value || '').replace(/[\s\-()]/g, '');
+    return /^\+?\d{6,}$/.test(cleaned);
+}
+
 /**
- * Resolve the active sender ID/number. DB (platform_settings) wins over env.
- * Falls back to the legacy SMOOVE_SENDER_PHONE key until the consolidate
- * migration has run. Pending requests live under INFORU_SENDER_PHONE_PENDING
- * and are never used here.
- *
- * If no explicit sender is configured, derive an alphanumeric Sender from
- * firm:COMPANY_NAME (English law-firm name) — InforU allows up to 11 Latin chars.
+ * Resolve the active InforU/Smoove Sender.
+ * Prefer alphanumeric firm brand (firm:COMPANY_NAME) so SMS shows the office
+ * name. Explicit alphanumeric overrides in platform_settings/env still win.
+ * Numeric-only INFORU_SENDER_PHONE values are treated as legacy fallbacks.
+ * Pending requests live under INFORU_SENDER_PHONE_PENDING and are never used.
  */
 async function getActiveSender() {
     const fromInforu = await getSetting("messaging", "INFORU_SENDER_PHONE", null);
-    if (fromInforu) return String(fromInforu).trim() || null;
     const fromLegacy = await getSetting("messaging", "SMOOVE_SENDER_PHONE", null);
-    if (fromLegacy) return String(fromLegacy).trim() || null;
     const fromEnv = process.env.INFORU_SENDER_PHONE || process.env.SMOOVE_SENDER_PHONE || null;
-    if (fromEnv) return String(fromEnv).trim() || null;
+    const configured = String(fromInforu || fromLegacy || fromEnv || '').trim() || null;
 
+    let fromFirm = null;
     try {
         const enName = await getFirmNameEn();
-        const fromFirm = sanitizeAlphanumericSender(enName);
-        if (fromFirm) return fromFirm;
+        fromFirm = sanitizeAlphanumericSender(enName) || sanitizeAlphanumericSender(COMPANY_NAME);
     } catch (err) {
         console.warn('[sms] derive sender from COMPANY_NAME failed:', err?.message || err);
+        fromFirm = sanitizeAlphanumericSender(COMPANY_NAME);
     }
-    return sanitizeAlphanumericSender(COMPANY_NAME);
+
+    // Explicit alphanumeric brand override (e.g. "AshrafEssa") wins.
+    if (configured && !isPhoneLikeSender(configured)) return configured;
+    // Prefer firm name over a legacy numeric sender.
+    if (fromFirm) return fromFirm;
+    return configured;
 }
 
 // ── InforU provider ─────────────────────────────────────────────────
