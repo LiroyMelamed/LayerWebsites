@@ -3,13 +3,13 @@
 BEGIN;
 
 UPDATE email_templates
-SET body_html = replace(body_html, 'עו״ד מטפל', 'מנהל תיק'),
+SET html_body = replace(html_body, 'עו״ד מטפל', 'מנהל תיק'),
     updated_at = NOW()
-WHERE body_html LIKE '%עו״ד מטפל%';
+WHERE html_body LIKE '%עו״ד מטפל%';
 
 UPDATE email_templates
-SET body_html = replace(body_html, E'עו"ד מטפל', 'מנהל תיק'),
+SET html_body = replace(html_body, E'עו"ד מטפל', 'מנהל תיק'),
     updated_at = NOW()
-WHERE body_html LIKE E'%עו"ד מטפל%';
+WHERE html_body LIKE E'%עו"ד מטפל%';
 
 COMMIT;
