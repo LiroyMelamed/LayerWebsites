@@ -23,6 +23,7 @@ function DetailRow({ label, children }) {
 export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCancel, onDelete, onUpdated, resolveTemplateLabel }) {
     const { t } = useTranslation();
     const isPending = reminder?.status === "PENDING";
+    const isSigningReminder = reminder?.source === "signing" || String(reminder?.id || "").startsWith("sfr-");
 
     const [editing, setEditing] = useState(false);
     const [editData, setEditData] = useState({
@@ -54,12 +55,20 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
     );
 
     const handleSave = () => {
-        const payload = {
-            client_name: editData.client_name,
-            to_email: editData.to_email,
-            subject: editData.subject,
-            scheduled_for: editData.scheduled_for ? new Date(parseDateTimeInput(editData.scheduled_for)).toISOString() : undefined,
-        };
+        const payload = isSigningReminder
+            ? {
+                scheduled_for: editData.scheduled_for
+                    ? new Date(parseDateTimeInput(editData.scheduled_for)).toISOString()
+                    : undefined,
+            }
+            : {
+                client_name: editData.client_name,
+                to_email: editData.to_email,
+                subject: editData.subject,
+                scheduled_for: editData.scheduled_for
+                    ? new Date(parseDateTimeInput(editData.scheduled_for)).toISOString()
+                    : undefined,
+            };
         saveReminder(reminder.id, payload);
     };
 
@@ -73,7 +82,7 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
 
             <SimpleContainer className="lw-reminderDetail__card">
                 <DetailRow label={t("reminders.col.clientName")}>
-                    {editing ? (
+                    {editing && !isSigningReminder ? (
                         <SimpleInput
                             value={editData.client_name}
                             onChange={(e) => setEditData((prev) => ({ ...prev, client_name: e.target.value }))}
@@ -85,7 +94,7 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
                 </DetailRow>
 
                 <DetailRow label={t("reminders.col.email")}>
-                    {editing ? (
+                    {editing && !isSigningReminder ? (
                         <SimpleInput
                             type="email"
                             value={editData.to_email}
@@ -126,7 +135,7 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
 
                 {(editing || displayData.subject) && (
                     <DetailRow label={t("reminders.detail.subject")}>
-                        {editing ? (
+                        {editing && !isSigningReminder ? (
                             <SimpleInput
                                 value={editData.subject}
                                 onChange={(e) => setEditData((prev) => ({ ...prev, subject: e.target.value }))}
