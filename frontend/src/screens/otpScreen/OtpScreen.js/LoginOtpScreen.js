@@ -46,6 +46,24 @@ export default function LoginOtpScreen() {
     };
 
     useEffect(() => {
+        // Auto-submit when the user typed/pasted/autofilled all 6 digits.
+        if (isPerforming) return;
+        const code = String(otpNumber || "").replace(/\D/g, "").slice(0, 6);
+        if (code.length !== 6) {
+            didAutoSubmitRef.current = false;
+            return;
+        }
+        if (otpError != null) {
+            // Allow retry after a failed verify once the user edits the code.
+            return;
+        }
+        if (didAutoSubmitRef.current) return;
+        if (!phoneNumber) return;
+        didAutoSubmitRef.current = true;
+        performRequest(phoneNumber, code);
+    }, [otpNumber, phoneNumber, isPerforming, otpError, performRequest]);
+
+    useEffect(() => {
         // Web OTP API (mainly Android/Chrome). Requires HTTPS and SMS containing: "@domain #123456".
         if (didAutoSubmitRef.current) return;
         if (typeof window === "undefined") return;

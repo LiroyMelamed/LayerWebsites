@@ -12,6 +12,11 @@ const { sendMessage, WEBSITE_DOMAIN } = require("../utils/sendMessage");
 const { detectHebrewSignatureSpotsFromPdfBuffer, streamToBuffer } = require("../utils/signatureDetection");
 const { renderTemplate } = require("../utils/templateRenderer");
 const { getSetting } = require("../services/settingsService");
+const {
+    scheduleRemindersForSigners,
+    cancelRemindersForFile,
+    cancelReminderForSigner,
+} = require("../lib/signingFileReminders");
 const { PDFDocument, StandardFonts, rgb } = require("pdf-lib");
 let fontkit = null;
 try {
@@ -650,6 +655,10 @@ function createPublicSigningToken({ signingFileId, signerUserId, fileExpiresAt }
         { expiresIn }
     );
 }
+
+// Exported for sign-reminder worker (lazy-required to avoid circular deps).
+exports.createPublicSigningToken = createPublicSigningToken;
+exports.buildPublicSigningUrl = buildPublicSigningUrl;
 
 function getSavedSignatureKey(userId) {
     const safeId = Number(userId);
@@ -2888,6 +2897,19 @@ exports.uploadFileForSigning = async (req, res, next) => {
             });
         }
 
+        // Auto sign-reminders for successfully invited signers (platform setting).
+        try {
+            const invitedSignerIds = deliveryResults
+                .filter((d) => d.ok && d.signerUserId)
+                .map((d) => d.signerUserId);
+            await scheduleRemindersForSigners({
+                signingFileId,
+                signerUserIds: invitedSignerIds,
+            });
+        } catch (remErr) {
+            console.warn('[signing] scheduleRemindersForSigners failed:', remErr?.message || remErr);
+        }
+
         return res.json({
             success: true,
             signingFileId,
@@ -4213,7 +4235,8 @@ exports.getSigningFileSigners = async (req, res, next) => {
                     u.name as "Name",
                     u.email as "Email",
                     u.phonenumber as "Phone",
-                    bool_and(ss.issigned) filter (where ss.isrequired = true) as "AllSigned"
+                    bool_and(ss.issigned) filter (where ss.isrequired = true) as "AllSigned",
+                    max(ss.signedat) filter (where ss.issigned = true and ss.isrequired = true) as "SignedAt"
              from signaturespots ss
              left join users u on u.userid = ss.signeruserid
              where ss.signingfileid = $1
@@ -4224,7 +4247,64 @@ exports.getSigningFileSigners = async (req, res, next) => {
             [signingFileId]
         );
 
-        return res.json({ signers: signersResult.rows });
+        // Enrich with SentAt / ViewedAt from audit_events (best-effort).
+        let auditRows = [];
+        try {
+            const auditRes = await pool.query(
+                `SELECT event_type AS "EventType",
+                        occurred_at_utc AS "OccurredAtUtc",
+                        actor_userid AS "ActorUserId",
+                        actor_type AS "ActorType",
+                        metadata AS "Metadata"
+                 FROM audit_events
+                 WHERE signing_file_id = $1
+                   AND event_type IN ('PUBLIC_LINK_ISSUED', 'SIGNING_INVITE_RESENT', 'PDF_VIEWED')
+                 ORDER BY occurred_at_utc ASC`,
+                [signingFileId]
+            );
+            auditRows = auditRes.rows || [];
+        } catch (auditErr) {
+            console.warn('[signing] getSigningFileSigners audit enrich failed:', auditErr?.message || auditErr);
+        }
+
+        const parseMeta = (raw) => {
+            if (!raw) return {};
+            if (typeof raw === 'object') return raw;
+            try { return JSON.parse(raw); } catch { return {}; }
+        };
+
+        const sentBySigner = new Map();
+        const viewedBySigner = new Map();
+        for (const ev of auditRows) {
+            const meta = parseMeta(ev.Metadata);
+            if (ev.EventType === 'PUBLIC_LINK_ISSUED' || ev.EventType === 'SIGNING_INVITE_RESENT') {
+                const targetId = Number(meta?.targetSignerUserId);
+                if (Number.isFinite(targetId) && targetId > 0 && !sentBySigner.has(targetId)) {
+                    sentBySigner.set(targetId, ev.OccurredAtUtc);
+                }
+            }
+            if (ev.EventType === 'PDF_VIEWED') {
+                // Signer views only (not lawyer preview opens).
+                const actorType = String(ev.ActorType || '').toLowerCase();
+                if (actorType === 'lawyer') continue;
+                const actorId = Number(ev.ActorUserId);
+                if (Number.isFinite(actorId) && actorId > 0 && !viewedBySigner.has(actorId)) {
+                    viewedBySigner.set(actorId, ev.OccurredAtUtc);
+                }
+            }
+        }
+
+        const signers = (signersResult.rows || []).map((s) => {
+            const uid = Number(s.SignerUserId);
+            return {
+                ...s,
+                SentAt: sentBySigner.get(uid) || null,
+                ViewedAt: viewedBySigner.get(uid) || null,
+                SignedAt: s.SignedAt || null,
+            };
+        });
+
+        return res.json({ signers });
     } catch (err) {
         console.error('getSigningFileSigners error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליפת החתומים' });
@@ -4415,6 +4495,18 @@ exports.resendSigningInvite = async (req, res, next) => {
                     deliveryResults,
                 },
             });
+        }
+
+        try {
+            const invitedSignerIds = deliveryResults
+                .filter((d) => d.ok && d.signerUserId)
+                .map((d) => d.signerUserId);
+            await scheduleRemindersForSigners({
+                signingFileId,
+                signerUserIds: invitedSignerIds,
+            });
+        } catch (remErr) {
+            console.warn('[signing] resend scheduleRemindersForSigners failed:', remErr?.message || remErr);
         }
 
         return res.json({
@@ -5199,6 +5291,22 @@ exports.publicSignFileBatch = async (req, res, next) => {
                 effectivePolicyVersion,
                 req,
             });
+        } else {
+            try {
+                const signerDone = await pool.query(
+                    `SELECT bool_and(issigned) FILTER (WHERE isrequired = TRUE) AS all_signed
+                     FROM signaturespots
+                     WHERE signingfileid = $1
+                       AND signeruserid = $2
+                       AND lower(coalesce(fieldtype, 'signature')) != 'lawyerstamp'`,
+                    [signingFileId, signerUserId]
+                );
+                if (signerDone.rows[0]?.all_signed === true) {
+                    await cancelReminderForSigner(signingFileId, signerUserId);
+                }
+            } catch (remErr) {
+                console.warn('[signing] cancelReminderForSigner failed:', remErr?.message || remErr);
+            }
         }
 
         timings.totalMs = Date.now() - t0;
@@ -6114,6 +6222,12 @@ async function markFileSignedAndScheduleFinalize({
         return { didFinalizeStatus: false };
     }
 
+    try {
+        await cancelRemindersForFile(signingFileId);
+    } catch (remErr) {
+        console.warn('[signing] cancelRemindersForFile on finalize failed:', remErr?.message || remErr);
+    }
+
     scheduleSigningFinalize({
         signingFileId,
         file,
@@ -6622,6 +6736,15 @@ exports.signFile = async (req, res, next) => {
                                         : null,
                                 });
 
+                                try {
+                                    await scheduleRemindersForSigners({
+                                        signingFileId,
+                                        signerUserIds: [nextSignerUserId],
+                                    });
+                                } catch (remErr) {
+                                    console.warn('[signing] sequential scheduleReminders failed:', remErr?.message || remErr);
+                                }
+
                                 console.log(`[signing] Sequential: notified next signer userId=${nextSignerUserId} for file ${signingFileId}`);
                             }
                         }
@@ -6641,6 +6764,22 @@ exports.signFile = async (req, res, next) => {
                 effectivePolicyVersion,
                 req,
             });
+        } else {
+            try {
+                const signerDone = await pool.query(
+                    `SELECT bool_and(issigned) FILTER (WHERE isrequired = TRUE) AS all_signed
+                     FROM signaturespots
+                     WHERE signingfileid = $1
+                       AND signeruserid = $2
+                       AND lower(coalesce(fieldtype, 'signature')) != 'lawyerstamp'`,
+                    [signingFileId, userId]
+                );
+                if (signerDone.rows[0]?.all_signed === true) {
+                    await cancelReminderForSigner(signingFileId, userId);
+                }
+            } catch (remErr) {
+                console.warn('[signing] cancelReminderForSigner (signFile) failed:', remErr?.message || remErr);
+            }
         }
 
         if (res.headersSent) return;
@@ -6733,6 +6872,12 @@ exports.rejectSigning = async (req, res, next) => {
              where signingfileid = $2`,
             [rejectionReason || null, signingFileId]
         );
+
+        try {
+            await cancelRemindersForFile(signingFileId);
+        } catch (remErr) {
+            console.warn('[signing] cancelRemindersForFile on reject failed:', remErr?.message || remErr);
+        }
 
         let lawyerNameForTemplate = 'עו"ד';
         try {
@@ -7149,6 +7294,16 @@ exports.reuploadFile = async (req, res, next) => {
                     }
                     : null,
             });
+        }
+
+        try {
+            const reupIds = signerUserIds.length > 0 ? signerUserIds : [file.ClientId];
+            await scheduleRemindersForSigners({
+                signingFileId,
+                signerUserIds: reupIds,
+            });
+        } catch (remErr) {
+            console.warn('[signing] reupload scheduleReminders failed:', remErr?.message || remErr);
         }
 
         return res.json({ success: true, message: "הקובץ הועלה מחדש לחתימה" });

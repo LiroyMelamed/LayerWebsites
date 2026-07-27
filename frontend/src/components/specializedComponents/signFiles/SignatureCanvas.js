@@ -87,6 +87,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const [otpCode, setOtpCode] = useState("");
     const [otpVerified, setOtpVerified] = useState(false);
     const [otpBusy, setOtpBusy] = useState(false);
+    const otpAutoVerifyRef = useRef(false);
+    const [showCompletion, setShowCompletion] = useState(false);
     const [fieldValue, setFieldValue] = useState("");
     const [fieldChecked, setFieldChecked] = useState(false);
     const [clientStampFile, setClientStampFile] = useState(null);
@@ -938,9 +940,12 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             // Auto-open the signing popup for the next spot (mobile screen mode)
             if (isScreen) setShowSpotPopup(true);
         } else {
-            // All spots signed — close popup
+            // All spots signed — close popup and celebrate
             if (isScreen) setShowSpotPopup(false);
             setSelectedSavedItem(null);
+            if (spots.length > 0) {
+                setShowCompletion(true);
+            }
         }
         clearCanvas();
     };
@@ -1445,6 +1450,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
             setMessage({ type: "success", text: t("signing.canvas.signedAllSuccess") });
             await reloadDetailsAndAdvance();
+            setShowCompletion(true);
             setTimeout(() => setMessage(null), 2000);
             return true;
         } catch (err) {
@@ -1494,11 +1500,26 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             setMessage({ type: "success", text: t("signing.canvas.otpVerified") });
         } catch (err) {
             console.error("OTP verify failed", err);
+            otpAutoVerifyRef.current = false;
             setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.otpVerifyError") });
         } finally {
             setOtpBusy(false);
         }
     };
+
+    // Auto-verify as soon as 6 digits are present (typed or autofilled).
+    useEffect(() => {
+        if (!otpRequired || otpVerified || otpBusy || saving) return;
+        const otp = String(otpCode || "").replace(/\D/g, "").slice(0, 6);
+        if (otp.length !== 6) {
+            otpAutoVerifyRef.current = false;
+            return;
+        }
+        if (otpAutoVerifyRef.current) return;
+        otpAutoVerifyRef.current = true;
+        verifyOtp();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [otpCode, otpRequired, otpVerified, otpBusy, saving]);
 
     const rejectFile = async () => {
         const reason = prompt(t("signing.canvas.rejectReasonPrompt"));
@@ -1608,6 +1629,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const hasUnsignedSignatureSpots = unsignedRequiredSpots.some((s) =>
         isSignatureLike(getSpotType(s)),
     );
+
     const nextSpotButtonLabel = hasUnsignedSignatureSpots
         ? t("signing.canvas.nextSignature")
         : t("signing.canvas.nextField");
@@ -1690,7 +1712,11 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                             pattern="[0-9]*"
                             placeholder={t("signing.canvas.otpPlaceholder")}
                             value={otpCode}
-                            onChange={(e) => setOtpCode(e.target.value)}
+                            onChange={(e) => {
+                                const digits = String(e.target.value || "").replace(/\D/g, "").slice(0, 6);
+                                setOtpCode(digits);
+                            }}
+                            autoComplete="one-time-code"
                             disabled={otpBusy || saving}
                         />
                         <PrimaryButton size={buttonSizes.SMALL} onPress={verifyOtp} disabled={otpBusy || saving}>
@@ -2252,6 +2278,25 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         {renderSpotPopup()}
                     </div>
                 </div>
+
+                {showCompletion && (
+                    <div className="lw-signing-completeOverlay" role="dialog" aria-modal="true">
+                        <div className="lw-signing-completeCard">
+                            <div className="lw-signing-completeBurst" aria-hidden="true" />
+                            <div className="lw-signing-completeCheck" aria-hidden="true">
+                                <svg viewBox="0 0 52 52">
+                                    <circle className="lw-signing-completeCheck__circle" cx="26" cy="26" r="24" fill="none" />
+                                    <path className="lw-signing-completeCheck__mark" fill="none" d="M14 27 l8 8 16-16" />
+                                </svg>
+                            </div>
+                            <h2 className="lw-signing-completeTitle">{t("signing.canvas.signingCompleteTitle")}</h2>
+                            <p className="lw-signing-completeSubtitle">{t("signing.canvas.signingCompleteSubtitle")}</p>
+                            <PrimaryButton onPress={onClose}>
+                                {t("signing.canvas.signingCompleteClose")}
+                            </PrimaryButton>
+                        </div>
+                    </div>
+                )}
             </div>
         );
     }
@@ -2375,7 +2420,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
                             {renderSigningControls()}
 
-                            {allSpotsSignedByUser && spots.length > 0 && (
+                            {allSpotsSignedByUser && spots.length > 0 && !showCompletion && (
                                 <div className="lw-signing-message is-success">{t("signing.canvas.allRequiredCompleted")}</div>
                             )}
                         </SimpleContainer>
@@ -2399,6 +2444,25 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                     </SimpleContainer>
                 </div>
             </div>
+
+            {showCompletion && (
+                <div className="lw-signing-completeOverlay" role="dialog" aria-modal="true">
+                    <div className="lw-signing-completeCard">
+                        <div className="lw-signing-completeBurst" aria-hidden="true" />
+                        <div className="lw-signing-completeCheck" aria-hidden="true">
+                            <svg viewBox="0 0 52 52">
+                                <circle className="lw-signing-completeCheck__circle" cx="26" cy="26" r="24" fill="none" />
+                                <path className="lw-signing-completeCheck__mark" fill="none" d="M14 27 l8 8 16-16" />
+                            </svg>
+                        </div>
+                        <h2 className="lw-signing-completeTitle">{t("signing.canvas.signingCompleteTitle")}</h2>
+                        <p className="lw-signing-completeSubtitle">{t("signing.canvas.signingCompleteSubtitle")}</p>
+                        <PrimaryButton onPress={onClose}>
+                            {t("signing.canvas.signingCompleteClose")}
+                        </PrimaryButton>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

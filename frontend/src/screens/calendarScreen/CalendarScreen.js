@@ -42,7 +42,6 @@ import { buildNewEventPrefill } from "./utils/eventDefaults";
 import {
     defaultSchedule,
     parseScheduleFromCalendarSettings,
-    getHiddenDays,
     getBusinessHours,
     getSlotRange,
 } from "./utils/workingHours";
@@ -208,7 +207,7 @@ export default function CalendarScreen() {
 
     // ── View / scope / filters ─────────────────────────────────────────────
     const [events, setEvents] = useState([]);
-    const [view, setView] = useState("dayGridMonth");
+    const [view, setView] = useState("timeGridWeek");
     const [scope, setScope] = useState(SCOPE_MINE);
     const [filters, setFilters] = useState({
         lawyer_id: null,
@@ -371,9 +370,8 @@ export default function CalendarScreen() {
     }, [searchParams, setSearchParams]);
 
     // ── FullCalendar config ────────────────────────────────────────────────
-    // Hide closed weekdays everywhere (month / week / day) per platform settings.
-    const hiddenDays = useMemo(() => getHiddenDays(workingSchedule), [workingSchedule]);
-
+    // Keep closed weekdays visible (weekends included) while still shading
+    // non-working hours via businessHours.
     const businessHours = useMemo(() => getBusinessHours(workingSchedule), [workingSchedule]);
 
     const slotRange = useMemo(() => getSlotRange(workingSchedule), [workingSchedule]);
@@ -886,7 +884,6 @@ export default function CalendarScreen() {
                                 selectLongPressDelay={350}
                                 eventLongPressDelay={0}
                                 height="auto"
-                                hiddenDays={hiddenDays}
                                 businessHours={businessHours}
                                 slotMinTime={slotRange.min}
                                 slotMaxTime={slotRange.max}

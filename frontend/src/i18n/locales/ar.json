@@ -116,9 +116,24 @@
       "details": "تفاصيل المستند",
       "uploadNew": "إرسال مستند جديد للتوقيع",
       "openPdf": "فتح PDF",
+      "viewSignatureSpots": "عرض مواقع التوقيع",
       "deleteFile": "حذف المستند",
       "rename": "تغيير الاسم",
       "resendInvite": "إعادة الإرسال للتوقيع"
+    },
+    "signerStatus": {
+      "title": "حالة الموقّعين",
+      "name": "الاسم",
+      "contact": "البريد/الهاتف",
+      "sent": "أُرسل",
+      "viewed": "عُرض",
+      "signed": "وُقّع"
+    },
+    "spotsPreview": {
+      "title": "مواقع التوقيع",
+      "loading": "جارٍ التحميل…",
+      "error": "فشل تحميل معاينة مواقع التوقيع",
+      "close": "إغلاق"
     },
     "resend": {
       "title": "إعادة الإرسال للتوقيع",
@@ -958,6 +973,9 @@
       "savedStampLabel": "ختم",
       "spotAlreadySigned": "تم توقيع مكان التوقيع هذا بالفعل بواسطةك",
       "allRequiredCompleted": "لقد أكملت جميع التواقيع المطلوبة!",
+      "signingCompleteTitle": "اكتمل التوقيع",
+      "signingCompleteSubtitle": "تم إكمال جميع مواقع التوقيع بنجاح. شكرًا لك!",
+      "signingCompleteClose": "إنهاء",
       "rejectDocument": "رفض المستند",
       "failedToLoadSignatureImage": "فشل تحميل صورة التوقيع",
       "clientStampSavedSuccess": "تم حفظ الختم بنجاح",

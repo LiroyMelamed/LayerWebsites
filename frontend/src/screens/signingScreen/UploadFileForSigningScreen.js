@@ -1074,6 +1074,9 @@ export default function UploadFileForSigningScreen() {
                     type: "success",
                     text: `ההזמנה נשלחה בהצלחה ל-${sentCount || targetCount} נמענים.`,
                 });
+                // Navigate to pending documents after successful send.
+                navigate(AdminStackName + SigningManagerScreenName);
+                return;
             }
 
             setCaseId("");

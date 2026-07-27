@@ -180,6 +180,23 @@
     direction: ltr;
     text-align: left;
     unicode-bidi: isolate;
+    position: relative;
+    // Leave room for the native calendar-picker indicator (often drawn on the start/left).
+    padding-inline-start: 2.5rem;
+    padding-inline-end: 0.75rem;
+}
+
+.lw-simpleInput__field[type='date']::-webkit-calendar-picker-indicator,
+.lw-simpleInput__field[type='datetime-local']::-webkit-calendar-picker-indicator,
+.lw-simpleInput__field[type='month']::-webkit-calendar-picker-indicator,
+.lw-simpleInput__field[type='week']::-webkit-calendar-picker-indicator {
+    position: absolute;
+    inset-inline-start: 0.55rem;
+    inset-inline-end: auto;
+    width: 1.15rem;
+    height: 1.15rem;
+    cursor: pointer;
+    opacity: 0.85;
 }
 
 // While not focused, hide the browser's OS-locale rendering of date/time values
@@ -199,8 +216,9 @@
     transform: translateY(-50%);
     pointer-events: none;
 
-    padding-inline-start: 1rem;
-    padding-inline-end: 1rem;
+    // Match field padding so overlay text clears the calendar icon on the start side.
+    padding-inline-start: 2.5rem;
+    padding-inline-end: 0.75rem;
 
     direction: ltr;
     text-align: left;
