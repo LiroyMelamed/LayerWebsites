@@ -181,9 +181,26 @@
     text-align: right;
     unicode-bidi: isolate;
     position: relative;
-    // Icon on the left; date text sits on the right (matches RTL form labels).
-    padding-inline-start: 2.5rem;
+    // Space for calendar icon on the left; value stays on the right.
+    padding-inline-start: 2.75rem;
     padding-inline-end: 0.75rem;
+    color-scheme: light;
+}
+
+.lw-simpleInput__field[type='date']::-webkit-datetime-edit,
+.lw-simpleInput__field[type='datetime-local']::-webkit-datetime-edit,
+.lw-simpleInput__field[type='time']::-webkit-datetime-edit {
+    text-align: right;
+    width: 100%;
+    padding: 0;
+}
+
+.lw-simpleInput__field[type='date']::-webkit-datetime-edit-fields-wrapper,
+.lw-simpleInput__field[type='datetime-local']::-webkit-datetime-edit-fields-wrapper,
+.lw-simpleInput__field[type='time']::-webkit-datetime-edit-fields-wrapper {
+    display: inline-flex;
+    justify-content: flex-end;
+    width: 100%;
 }
 
 .lw-simpleInput__field[type='date']::-webkit-calendar-picker-indicator,
@@ -191,21 +208,54 @@
 .lw-simpleInput__field[type='month']::-webkit-calendar-picker-indicator,
 .lw-simpleInput__field[type='week']::-webkit-calendar-picker-indicator {
     position: absolute;
-    inset-inline-start: 0.55rem;
-    inset-inline-end: auto;
-    width: 1.15rem;
-    height: 1.15rem;
+    left: 0.55rem;
+    right: auto;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.25rem;
+    height: 1.25rem;
+    margin: 0;
+    padding: 0;
     cursor: pointer;
-    opacity: 0.85;
+    opacity: 1;
+    z-index: 2;
+    // Force a visible icon — native indicator goes invisible when input color is transparent.
+    background-color: transparent;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234A5568' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2'/%3E%3Cline x1='16' y1='2' x2='16' y2='6'/%3E%3Cline x1='8' y1='2' x2='8' y2='6'/%3E%3Cline x1='3' y1='10' x2='21' y2='10'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 1.15rem 1.15rem;
+    color: transparent;
+    -webkit-appearance: none;
+    appearance: none;
 }
 
 // While not focused, hide the browser's OS-locale rendering of date/time values
 // and show our deterministic dd/mm/yyyy HH:mm overlay instead (site language wins).
 .lw-simpleInput.is-temporalMasked .lw-simpleInput__field {
     color: transparent;
+    caret-color: transparent;
 
-    &::-webkit-datetime-edit {
+    &::-webkit-datetime-edit,
+    &::-webkit-datetime-edit-fields-wrapper,
+    &::-webkit-datetime-edit-text,
+    &::-webkit-datetime-edit-month-field,
+    &::-webkit-datetime-edit-day-field,
+    &::-webkit-datetime-edit-year-field,
+    &::-webkit-datetime-edit-hour-field,
+    &::-webkit-datetime-edit-minute-field,
+    &::-webkit-datetime-edit-ampm-field {
         color: transparent;
+    }
+
+    // Keep calendar icon visible while value text is masked.
+    &::-webkit-calendar-picker-indicator {
+        opacity: 1;
+        color: transparent;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234A5568' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2'/%3E%3Cline x1='16' y1='2' x2='16' y2='6'/%3E%3Cline x1='8' y1='2' x2='8' y2='6'/%3E%3Cline x1='3' y1='10' x2='21' y2='10'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 1.15rem 1.15rem;
     }
 }
 
@@ -215,8 +265,9 @@
     top: 50%;
     transform: translateY(-50%);
     pointer-events: none;
+    z-index: 1;
 
-    padding-inline-start: 2.5rem;
+    padding-inline-start: 2.75rem;
     padding-inline-end: 0.75rem;
 
     direction: ltr;
