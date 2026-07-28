@@ -728,6 +728,28 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         return null;
     };
 
+    const resetOtpAfterServerReject = (err) => {
+        const code = err?.response?.data?.errorCode
+            || err?.data?.errorCode
+            || err?.data?.code
+            || err?.response?.data?.code;
+        const msg = String(
+            err?.response?.data?.message
+            || err?.data?.message
+            || err?.message
+            || ""
+        );
+        const isOtpRequired = code === "OTP_REQUIRED"
+            || /OTP_REQUIRED/i.test(msg)
+            || /אימות בקוד חד/.test(msg);
+        if (!isOtpRequired) return false;
+        setOtpVerified(false);
+        setOtpRequested(false);
+        setOtpCode("");
+        otpAutoVerifyRef.current = false;
+        return true;
+    };
+
     const unwrapApi = (res) => {
         if (res?.success === false) {
             const rawMsg = res?.data?.message || res?.message || '';
@@ -989,13 +1011,14 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             return true;
         } catch (err) {
             console.error("Failed to save signature", err);
+            resetOtpAfterServerReject(err);
             const spotType = currentSpot ? getSpotType(currentSpot) : 'signature';
             const signMode = getSignModeForSpotType(spotType);
             setMessage({
                 type: "error",
-                text: signMode === 'initials'
+                text: getApiErrorMessage(err) || (signMode === 'initials'
                     ? t("signing.canvas.initialsSaveError")
-                    : t("signing.canvas.signatureSaveError"),
+                    : t("signing.canvas.signatureSaveError")),
             });
         } finally {
             setSaving(false);
@@ -1029,7 +1052,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             return true;
         } catch (err) {
             console.error("Failed to sign", err);
-            setMessage({ type: "error", text: t("signing.canvas.signatureSaveError") });
+            resetOtpAfterServerReject(err);
+            setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.signatureSaveError") });
         } finally {
             setSaving(false);
         }
@@ -1109,7 +1133,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             return true;
         } catch (err) {
             console.error("Failed to save field value", err);
-            setMessage({ type: "error", text: t("signing.canvas.fieldSaveError") });
+            resetOtpAfterServerReject(err);
+            setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.fieldSaveError") });
         } finally {
             setSaving(false);
         }
@@ -1268,7 +1293,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             return true;
         } catch (err) {
             console.error("Failed to save client stamp", err);
-            setMessage({ type: "error", text: t("signing.canvas.clientStampUploadError") });
+            resetOtpAfterServerReject(err);
+            setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.clientStampUploadError") });
         } finally {
             setSaving(false);
         }
@@ -1322,6 +1348,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             return true;
         } catch (err) {
             console.error("Failed to use saved signature", err);
+            resetOtpAfterServerReject(err);
             setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.useSavedSignatureError") });
         } finally {
             setSaving(false);
@@ -1371,6 +1398,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             return true;
         } catch (err) {
             console.error("Failed to use saved stamp", err);
+            resetOtpAfterServerReject(err);
             setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.useSavedStampError") });
         } finally {
             setSaving(false);
@@ -1455,6 +1483,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             return true;
         } catch (err) {
             console.error("Failed to sign all spots", err);
+            resetOtpAfterServerReject(err);
             setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.signAllError") });
             // Reload to reflect any partially signed spots
             try { await reloadDetailsAndAdvance(); } catch (_) { /* ignore */ }
@@ -1496,11 +1525,20 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 ? await signingFilesApi.publicVerifySigningOtp(publicToken, otp, signingSessionId)
                 : await signingFilesApi.verifySigningOtp(effectiveSigningFileId, otp, signingSessionId);
             unwrapApi(res);
+            // OTP verify endpoints intentionally return success:true even on failure
+            // (anti-enumeration). Only trust an explicit verified:true.
+            if (res?.data?.verified !== true) {
+                otpAutoVerifyRef.current = false;
+                setOtpVerified(false);
+                setMessage({ type: "error", text: t("signing.canvas.otpVerifyError") });
+                return;
+            }
             setOtpVerified(true);
             setMessage(null);
         } catch (err) {
             console.error("OTP verify failed", err);
             otpAutoVerifyRef.current = false;
+            setOtpVerified(false);
             setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.otpVerifyError") });
         } finally {
             setOtpBusy(false);
