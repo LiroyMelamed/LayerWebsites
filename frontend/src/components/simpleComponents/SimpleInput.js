@@ -6,10 +6,7 @@ import SimpleIcon from './SimpleIcon';
 import './SimpleInput.scss';
 
 /**
- * Deterministic display for native date/time inputs.
- * Browsers render these values in the OS language/format (e.g. "06/12/2026, 10:30 AM"
- * on an English phone). The site language must win, so we always mask the native
- * text and show a fixed dd/mm/yyyy HH:mm rendering.
+ * Format native date/time values as dd/mm/yyyy HH:mm for display/editing.
  * Pure string parsing — no Date object — to avoid timezone shifts.
  */
 function formatTemporalDisplay(type, rawValue) {
@@ -28,6 +25,50 @@ function formatTemporalDisplay(type, rawValue) {
         return m ? `${m[1]}:${m[2]}` : v;
     }
     return '';
+}
+
+/** Parse user-typed dd/mm/yyyy [HH:mm] back to native input value. */
+function parseTemporalText(type, text) {
+    const raw = String(text ?? '').trim().replace(/\s+/g, ' ');
+    if (!raw) return '';
+
+    if (type === 'time') {
+        const m = raw.match(/^(\d{1,2}):(\d{2})$/);
+        if (!m) return null;
+        const hh = Number(m[1]);
+        const mm = Number(m[2]);
+        if (hh > 23 || mm > 59) return null;
+        return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+    }
+
+    if (type === 'date') {
+        const m = raw.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/);
+        if (!m) return null;
+        const dd = Number(m[1]);
+        const mo = Number(m[2]);
+        const yyyy = Number(m[3]);
+        if (mo < 1 || mo > 12 || dd < 1 || dd > 31) return null;
+        return `${yyyy}-${String(mo).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
+    }
+
+    if (type === 'datetime-local') {
+        const m = raw.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})[ T](\d{1,2}):(\d{2})$/);
+        if (!m) return null;
+        const dd = Number(m[1]);
+        const mo = Number(m[2]);
+        const yyyy = Number(m[3]);
+        const hh = Number(m[4]);
+        const mi = Number(m[5]);
+        if (mo < 1 || mo > 12 || dd < 1 || dd > 31 || hh > 23 || mi > 59) return null;
+        return `${yyyy}-${String(mo).padStart(2, '0')}-${String(dd).padStart(2, '0')}T${String(hh).padStart(2, '0')}:${String(mi).padStart(2, '0')}`;
+    }
+
+    return null;
+}
+
+function emitChange(onChange, nativeValue) {
+    if (!onChange) return;
+    onChange({ target: { value: nativeValue } });
 }
 
 const SimpleInput = forwardRef(
@@ -57,12 +98,21 @@ const SimpleInput = forwardRef(
         timeToWaitInMilli = 500,
         ...props
     }, ref) => {
+        const temporalTypes = ['date', 'datetime-local', 'time', 'month', 'week'];
+        const isTemporalInput = temporalTypes.includes(type);
+        const showCalendarButton = type === 'date' || type === 'datetime-local' || type === 'month' || type === 'week';
+        // month/week keep native control; date/time/datetime become editable text.
+        const isEditableTemporal = type === 'date' || type === 'datetime-local' || type === 'time';
+
         const [isFocused, setIsFocused] = useState(false);
         const [delayedValue, setDelayedValue] = useState(value ?? '');
+        const [textValue, setTextValue] = useState(() =>
+            isEditableTemporal ? formatTemporalDisplay(type, value ?? '') : ''
+        );
         const timeoutRef = useRef(null);
-        const internalInputRef = useRef(null);
+        const textInputRef = useRef(null);
+        const pickerRef = useRef(null);
 
-        // Cleanup debounce timer on unmount
         useEffect(() => {
             return () => {
                 if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -90,47 +140,78 @@ const SimpleInput = forwardRef(
         }
 
         function handleBlur(e) {
+            if (isEditableTemporal) {
+                const parsed = parseTemporalText(type, textValue);
+                if (parsed !== null) {
+                    setDelayedValue(parsed);
+                    setTextValue(formatTemporalDisplay(type, parsed));
+                    if (parsed !== String(value ?? '')) emitChange(onChange, parsed);
+                } else {
+                    // Restore last valid value if typing was incomplete/invalid.
+                    setTextValue(formatTemporalDisplay(type, delayedValue));
+                }
+            }
             onBlur?.(e);
             setIsFocused(false);
         }
 
-        const handleInputChange = (e) => {
-            const newValue = e.target.value;
-            setDelayedValue(newValue);
-
+        const commitNativeValue = (nativeValue) => {
+            setDelayedValue(nativeValue);
+            if (isEditableTemporal) {
+                setTextValue(formatTemporalDisplay(type, nativeValue));
+            }
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
+                timeoutRef.current = null;
             }
+            timeoutRef.current = setTimeout(() => {
+                emitChange(onChange, nativeValue);
+                timeoutRef.current = null;
+            }, isEditableTemporal ? 0 : timeToWaitInMilli);
+        };
 
+        const handleNativeInputChange = (e) => {
+            const newValue = e.target.value;
+            setDelayedValue(newValue);
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
             timeoutRef.current = setTimeout(() => {
                 onChange?.(e);
                 timeoutRef.current = null;
             }, timeToWaitInMilli);
         };
 
+        const handleTextChange = (e) => {
+            const next = e.target.value;
+            setTextValue(next);
+            const parsed = parseTemporalText(type, next);
+            if (parsed === null) return;
+            setDelayedValue(parsed);
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            timeoutRef.current = setTimeout(() => {
+                emitChange(onChange, parsed);
+                timeoutRef.current = null;
+            }, timeToWaitInMilli);
+        };
+
         useEffect(() => {
-            setDelayedValue(value ?? '');
+            const next = value ?? '';
+            setDelayedValue(next);
+            if (isEditableTemporal && !isFocused) {
+                setTextValue(formatTemporalDisplay(type, next));
+            }
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
                 timeoutRef.current = null;
             }
-        }, [value]);
+        }, [value, type, isEditableTemporal, isFocused]);
 
-        const shouldFloatLabel = isFocused || !!delayedValue || type === 'date' || type === 'datetime-local';
-        const temporalTypes = ['date', 'datetime-local', 'time', 'month', 'week'];
-        const isTemporalInput = temporalTypes.includes(type);
-        const showCalendarButton = type === 'date' || type === 'datetime-local' || type === 'month' || type === 'week';
-
-        // Always show our dd/mm/yyyy overlay. Native segment editing hides the
-        // active digit (white-on-blue), so temporal fields are picker-only.
-        const isTemporalMasked = isTemporalInput;
-        const temporalDisplay = isTemporalInput ? formatTemporalDisplay(type, delayedValue) : '';
+        const shouldFloatLabel = isFocused || !!delayedValue || !!textValue || type === 'date' || type === 'datetime-local';
 
         const resolvedDir = containerDir || 'rtl';
         const inputDir = isTemporalInput ? 'ltr' : resolvedDir;
 
-        const setFieldRef = (node) => {
-            internalInputRef.current = node;
+        const setTextFieldRef = (node) => {
+            textInputRef.current = node;
             if (typeof inputRef === 'function') inputRef(node);
             else if (inputRef && typeof inputRef === 'object') inputRef.current = node;
         };
@@ -139,13 +220,13 @@ const SimpleInput = forwardRef(
             e?.preventDefault?.();
             e?.stopPropagation?.();
             if (disabled) return;
-            const el = internalInputRef.current;
+            const el = pickerRef.current || textInputRef.current;
             if (!el) return;
-            el.focus();
             try {
                 if (typeof el.showPicker === 'function') el.showPicker();
+                else el.focus();
             } catch {
-                // Older browsers: focus alone is enough for the native UI.
+                el.focus();
             }
         };
 
@@ -164,7 +245,7 @@ const SimpleInput = forwardRef(
             isFocused ? 'is-focused' : '',
             shouldFloatLabel ? 'is-floated' : '',
             isTemporalInput ? 'is-temporal' : '',
-            isTemporalMasked ? 'is-temporalMasked' : '',
+            isEditableTemporal ? 'is-temporalText' : '',
             showCalendarButton ? 'has-calendarBtn' : '',
             error ? 'has-error' : '',
             disabled ? 'is-disabled' : '',
@@ -225,36 +306,65 @@ const SimpleInput = forwardRef(
                     </button>
                 )}
 
-                <input
-                    type={type}
-                    className="lw-simpleInput__field"
-                    dir={inputDir}
-                    {...props}
-                    style={{
-                        ...(isTemporalInput ? {} : { textAlign: 'right' }),
-                        ...(textStyle || {}),
-                        ...(props.style || {}),
-                    }}
-                    value={delayedValue}
-                    onChange={handleInputChange}
-                    onFocus={(e) => {
-                        handleFocus(e);
-                        if (isTemporalInput) openTemporalPicker(e);
-                    }}
-                    onClick={isTemporalInput ? openTemporalPicker : props.onClick}
-                    onBlur={handleBlur}
-                    disabled={disabled}
-                    readOnly={isTemporalInput || Boolean(props.readOnly)}
-                    ref={setFieldRef}
-                />
-
-                {isTemporalInput && (
-                    <span
-                        className={"lw-simpleInput__temporalDisplay" + (!temporalDisplay ? " is-empty" : "")}
-                        aria-hidden="true"
-                    >
-                        {temporalDisplay || "\u00A0"}
-                    </span>
+                {isEditableTemporal ? (
+                    <>
+                        <input
+                            type="text"
+                            className="lw-simpleInput__field lw-simpleInput__field--temporalText"
+                            dir="ltr"
+                            inputMode="numeric"
+                            autoComplete="off"
+                            spellCheck={false}
+                            {...props}
+                            style={{
+                                textAlign: 'right',
+                                ...(textStyle || {}),
+                                ...(props.style || {}),
+                            }}
+                            value={textValue}
+                            onChange={handleTextChange}
+                            onFocus={handleFocus}
+                            onBlur={handleBlur}
+                            disabled={disabled}
+                            ref={setTextFieldRef}
+                            placeholder={
+                                type === 'time'
+                                    ? 'HH:mm'
+                                    : type === 'date'
+                                        ? 'dd/mm/yyyy'
+                                        : 'dd/mm/yyyy HH:mm'
+                            }
+                        />
+                        {/* Hidden native picker — calendar button / optional sync only */}
+                        <input
+                            type={type}
+                            className="lw-simpleInput__nativePicker"
+                            tabIndex={-1}
+                            aria-hidden="true"
+                            disabled={disabled}
+                            value={delayedValue}
+                            onChange={(e) => commitNativeValue(e.target.value)}
+                            ref={pickerRef}
+                        />
+                    </>
+                ) : (
+                    <input
+                        type={type}
+                        className="lw-simpleInput__field"
+                        dir={inputDir}
+                        {...props}
+                        style={{
+                            ...(isTemporalInput ? { textAlign: 'right' } : { textAlign: 'right' }),
+                            ...(textStyle || {}),
+                            ...(props.style || {}),
+                        }}
+                        value={delayedValue}
+                        onChange={handleNativeInputChange}
+                        onFocus={handleFocus}
+                        onBlur={handleBlur}
+                        disabled={disabled}
+                        ref={setTextFieldRef}
+                    />
                 )}
 
                 {leftIcon && (
