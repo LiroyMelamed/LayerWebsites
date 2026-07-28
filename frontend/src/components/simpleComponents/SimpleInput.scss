@@ -181,29 +181,32 @@
     text-align: right;
     unicode-bidi: isolate;
     position: relative;
-    // Room for our custom calendar button on the left.
-    padding-inline-start: 2.75rem;
-    padding-inline-end: 0.75rem;
+    // Icon + picker sit next to the value on the right (RTL forms).
+    padding-inline-start: 0.75rem;
+    padding-inline-end: 2.75rem;
     color-scheme: light;
 }
 
-// Hide the native picker glyph — we render a stable custom button instead.
-// Leaving the native control visible caused a blue focus block over the date text.
+// Keep native picker hit-target tiny & invisible; our button opens showPicker().
 .lw-simpleInput__field[type='date']::-webkit-calendar-picker-indicator,
 .lw-simpleInput__field[type='datetime-local']::-webkit-calendar-picker-indicator,
 .lw-simpleInput__field[type='month']::-webkit-calendar-picker-indicator,
 .lw-simpleInput__field[type='week']::-webkit-calendar-picker-indicator {
     position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
+    right: 0.45rem;
+    left: auto;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.75rem;
+    height: 1.75rem;
     opacity: 0;
     cursor: pointer;
 }
 
 .lw-simpleInput__calendarBtn {
     position: absolute;
-    left: 0.45rem;
+    right: 0.45rem;
+    left: auto;
     top: 50%;
     transform: translateY(-50%);
     z-index: 3;
@@ -234,9 +237,8 @@
     cursor: not-allowed;
 }
 
-// Always mask native OS-locale date/time text; show our overlay instead.
-// This also prevents WebKit's blue segment-focus rectangle from appearing
-// as a misplaced block over the value.
+// Blurred only: hide OS-locale native text, show our dd/mm/yyyy overlay.
+// Focused: native segments stay visible so the active number is obvious.
 .lw-simpleInput.is-temporalMasked .lw-simpleInput__field {
     color: transparent;
     caret-color: transparent;
@@ -255,6 +257,16 @@
     }
 }
 
+.lw-simpleInput.is-temporal.is-focused .lw-simpleInput__field {
+    color: var(--lw-color-text);
+
+    &::-webkit-datetime-edit,
+    &::-webkit-datetime-edit-fields-wrapper {
+        color: var(--lw-color-text);
+        background: transparent;
+    }
+}
+
 .lw-simpleInput__temporalDisplay {
     position: absolute;
     inset-inline: 0;
@@ -263,8 +275,8 @@
     pointer-events: none;
     z-index: 1;
 
-    padding-inline-start: 2.75rem;
-    padding-inline-end: 0.75rem;
+    padding-inline-start: 0.75rem;
+    padding-inline-end: 2.75rem;
 
     direction: ltr;
     text-align: right;
