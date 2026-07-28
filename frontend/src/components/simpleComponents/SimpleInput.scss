@@ -182,8 +182,9 @@
     text-align: right;
     unicode-bidi: isolate;
     position: relative;
-    padding-inline-start: 0.75rem;
-    padding-inline-end: 2.75rem;
+    // Calendar icon sits on the physical left; date text stays right-aligned.
+    padding-inline-start: 2.75rem;
+    padding-inline-end: 0.75rem;
     color-scheme: light;
     color: var(--lw-color-text);
     -webkit-text-fill-color: var(--lw-color-text);
@@ -201,8 +202,8 @@
 .lw-simpleInput__field[type='month']::-webkit-calendar-picker-indicator,
 .lw-simpleInput__field[type='week']::-webkit-calendar-picker-indicator {
     position: absolute;
-    right: 0.45rem;
-    left: auto;
+    left: 0.45rem;
+    right: auto;
     top: 50%;
     transform: translateY(-50%);
     width: 1.75rem;
@@ -226,8 +227,8 @@
 
 .lw-simpleInput__calendarBtn {
     position: absolute;
-    right: 0.45rem;
-    left: auto;
+    left: 0.45rem;
+    right: auto;
     top: 50%;
     transform: translateY(-50%);
     z-index: 3;
