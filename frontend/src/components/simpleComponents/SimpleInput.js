@@ -8,8 +8,8 @@ import './SimpleInput.scss';
 /**
  * Deterministic display for native date/time inputs.
  * Browsers render these values in the OS language/format (e.g. "06/12/2026, 10:30 AM"
- * on an English phone). The site language must win, so while the input is not
- * focused we mask the native text and show a fixed dd/mm/yyyy HH:mm rendering.
+ * on an English phone). The site language must win, so we always mask the native
+ * text and show a fixed dd/mm/yyyy HH:mm rendering.
  * Pure string parsing — no Date object — to avoid timezone shifts.
  */
 function formatTemporalDisplay(type, rawValue) {
@@ -60,6 +60,7 @@ const SimpleInput = forwardRef(
         const [isFocused, setIsFocused] = useState(false);
         const [delayedValue, setDelayedValue] = useState(value ?? '');
         const timeoutRef = useRef(null);
+        const internalInputRef = useRef(null);
 
         // Cleanup debounce timer on unmount
         useEffect(() => {
@@ -118,15 +119,33 @@ const SimpleInput = forwardRef(
         const shouldFloatLabel = isFocused || !!delayedValue || type === 'date' || type === 'datetime-local';
         const temporalTypes = ['date', 'datetime-local', 'time', 'month', 'week'];
         const isTemporalInput = temporalTypes.includes(type);
+        const showCalendarButton = type === 'date' || type === 'datetime-local' || type === 'month' || type === 'week';
 
-        // Mask OS-locale rendering of date/time values while not focused.
-        const temporalDisplay = isTemporalInput && !isFocused
-            ? formatTemporalDisplay(type, delayedValue)
-            : '';
-        const isTemporalMasked = isTemporalInput && !isFocused;
+        // Always mask native OS-locale text; show our dd/mm/yyyy overlay instead.
+        const temporalDisplay = isTemporalInput ? formatTemporalDisplay(type, delayedValue) : '';
 
         const resolvedDir = containerDir || 'rtl';
         const inputDir = isTemporalInput ? 'ltr' : resolvedDir;
+
+        const setFieldRef = (node) => {
+            internalInputRef.current = node;
+            if (typeof inputRef === 'function') inputRef(node);
+            else if (inputRef && typeof inputRef === 'object') inputRef.current = node;
+        };
+
+        const openTemporalPicker = (e) => {
+            e?.preventDefault?.();
+            e?.stopPropagation?.();
+            if (disabled) return;
+            const el = internalInputRef.current;
+            if (!el) return;
+            el.focus();
+            try {
+                if (typeof el.showPicker === 'function') el.showPicker();
+            } catch {
+                // Older browsers: focus alone is enough for the native UI.
+            }
+        };
 
         const sizeKey = String(inputSize || 'Medium');
         const sizeClass =
@@ -142,7 +161,9 @@ const SimpleInput = forwardRef(
             className,
             isFocused ? 'is-focused' : '',
             shouldFloatLabel ? 'is-floated' : '',
-            isTemporalMasked ? 'is-temporalMasked' : '',
+            isTemporalInput ? 'is-temporal' : '',
+            isTemporalInput ? 'is-temporalMasked' : '',
+            showCalendarButton ? 'has-calendarBtn' : '',
             error ? 'has-error' : '',
             disabled ? 'is-disabled' : '',
             rightIcon ? 'has-rightIcon' : '',
@@ -183,13 +204,30 @@ const SimpleInput = forwardRef(
                     </SimpleContainer>
                 )}
 
+                {showCalendarButton && (
+                    <button
+                        type="button"
+                        className="lw-simpleInput__calendarBtn"
+                        aria-label="Open calendar"
+                        tabIndex={-1}
+                        disabled={disabled}
+                        onMouseDown={openTemporalPicker}
+                        onClick={openTemporalPicker}
+                    >
+                        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+                            <rect x="3" y="4" width="18" height="18" rx="2" fill="none" stroke="currentColor" strokeWidth="2" />
+                            <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                            <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                            <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" strokeWidth="2" />
+                        </svg>
+                    </button>
+                )}
+
                 <input
                     type={type}
                     className="lw-simpleInput__field"
                     dir={inputDir}
                     style={{
-                        // Temporal alignment is CSS-owned (right + icon gutters).
-                        // Inline textAlign left was overriding that and jumping the value on focus.
                         ...(isTemporalInput ? {} : { textAlign: 'right' }),
                         ...(textStyle || {}),
                     }}
@@ -198,11 +236,11 @@ const SimpleInput = forwardRef(
                     onFocus={handleFocus}
                     onBlur={handleBlur}
                     disabled={disabled}
-                    ref={inputRef}
+                    ref={setFieldRef}
                     {...props}
                 />
 
-                {isTemporalMasked && temporalDisplay && (
+                {isTemporalInput && temporalDisplay && (
                     <span className="lw-simpleInput__temporalDisplay" aria-hidden="true">
                         {temporalDisplay}
                     </span>
