@@ -121,9 +121,10 @@ const SimpleInput = forwardRef(
         const isTemporalInput = temporalTypes.includes(type);
         const showCalendarButton = type === 'date' || type === 'datetime-local' || type === 'month' || type === 'week';
 
-        // Mask only while blurred so focused editing shows which segment is active.
-        const isTemporalMasked = isTemporalInput && !isFocused;
-        const temporalDisplay = isTemporalMasked ? formatTemporalDisplay(type, delayedValue) : '';
+        // Always show our dd/mm/yyyy overlay. Native segment editing hides the
+        // active digit (white-on-blue), so temporal fields are picker-only.
+        const isTemporalMasked = isTemporalInput;
+        const temporalDisplay = isTemporalInput ? formatTemporalDisplay(type, delayedValue) : '';
 
         const resolvedDir = containerDir || 'rtl';
         const inputDir = isTemporalInput ? 'ltr' : resolvedDir;
@@ -228,22 +229,31 @@ const SimpleInput = forwardRef(
                     type={type}
                     className="lw-simpleInput__field"
                     dir={inputDir}
+                    {...props}
                     style={{
                         ...(isTemporalInput ? {} : { textAlign: 'right' }),
                         ...(textStyle || {}),
+                        ...(props.style || {}),
                     }}
                     value={delayedValue}
                     onChange={handleInputChange}
-                    onFocus={handleFocus}
+                    onFocus={(e) => {
+                        handleFocus(e);
+                        if (isTemporalInput) openTemporalPicker(e);
+                    }}
+                    onClick={isTemporalInput ? openTemporalPicker : props.onClick}
                     onBlur={handleBlur}
                     disabled={disabled}
+                    readOnly={isTemporalInput || Boolean(props.readOnly)}
                     ref={setFieldRef}
-                    {...props}
                 />
 
-                {isTemporalMasked && temporalDisplay && (
-                    <span className="lw-simpleInput__temporalDisplay" aria-hidden="true">
-                        {temporalDisplay}
+                {isTemporalInput && (
+                    <span
+                        className={"lw-simpleInput__temporalDisplay" + (!temporalDisplay ? " is-empty" : "")}
+                        aria-hidden="true"
+                    >
+                        {temporalDisplay || "\u00A0"}
                     </span>
                 )}
 
