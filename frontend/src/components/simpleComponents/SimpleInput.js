@@ -121,8 +121,9 @@ const SimpleInput = forwardRef(
         const isTemporalInput = temporalTypes.includes(type);
         const showCalendarButton = type === 'date' || type === 'datetime-local' || type === 'month' || type === 'week';
 
-        // Always mask native OS-locale text; show our dd/mm/yyyy overlay instead.
-        const temporalDisplay = isTemporalInput ? formatTemporalDisplay(type, delayedValue) : '';
+        // Mask only while blurred so focused editing shows which segment is active.
+        const isTemporalMasked = isTemporalInput && !isFocused;
+        const temporalDisplay = isTemporalMasked ? formatTemporalDisplay(type, delayedValue) : '';
 
         const resolvedDir = containerDir || 'rtl';
         const inputDir = isTemporalInput ? 'ltr' : resolvedDir;
@@ -162,7 +163,7 @@ const SimpleInput = forwardRef(
             isFocused ? 'is-focused' : '',
             shouldFloatLabel ? 'is-floated' : '',
             isTemporalInput ? 'is-temporal' : '',
-            isTemporalInput ? 'is-temporalMasked' : '',
+            isTemporalMasked ? 'is-temporalMasked' : '',
             showCalendarButton ? 'has-calendarBtn' : '',
             error ? 'has-error' : '',
             disabled ? 'is-disabled' : '',
@@ -240,7 +241,7 @@ const SimpleInput = forwardRef(
                     {...props}
                 />
 
-                {isTemporalInput && temporalDisplay && (
+                {isTemporalMasked && temporalDisplay && (
                     <span className="lw-simpleInput__temporalDisplay" aria-hidden="true">
                         {temporalDisplay}
                     </span>
