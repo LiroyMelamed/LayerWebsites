@@ -1723,7 +1723,6 @@ async function getVerifiedOtpChallengeIdOrNull({ signingFileId, signerUserId, si
                and presentedpdfsha256 = $4
                and verified = true
                and verified_at_utc is not null
-               and expires_at_utc > now()
              order by verified_at_utc desc
              limit 1`,
             [signingFileId, signerUserId, signingSessionId, String(presentedPdfSha256 || '')]
