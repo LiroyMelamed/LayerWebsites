@@ -237,11 +237,12 @@
     cursor: not-allowed;
 }
 
-// Blurred only: hide OS-locale native text, show our dd/mm/yyyy overlay.
-// Focused: native segments stay visible so the active number is obvious.
+// Always mask native OS-locale text. Temporal fields are picker-only so the
+// full dd/mm/yyyy value stays readable (native segment focus hides digits).
 .lw-simpleInput.is-temporalMasked .lw-simpleInput__field {
-    color: transparent;
+    color: transparent !important;
     caret-color: transparent;
+    -webkit-text-fill-color: transparent;
 
     &::-webkit-datetime-edit,
     &::-webkit-datetime-edit-fields-wrapper,
@@ -251,19 +252,12 @@
     &::-webkit-datetime-edit-year-field,
     &::-webkit-datetime-edit-hour-field,
     &::-webkit-datetime-edit-minute-field,
+    &::-webkit-datetime-edit-second-field,
     &::-webkit-datetime-edit-ampm-field {
-        color: transparent;
-        background: transparent;
-    }
-}
-
-.lw-simpleInput.is-temporal.is-focused .lw-simpleInput__field {
-    color: var(--lw-color-text);
-
-    &::-webkit-datetime-edit,
-    &::-webkit-datetime-edit-fields-wrapper {
-        color: var(--lw-color-text);
-        background: transparent;
+        color: transparent !important;
+        -webkit-text-fill-color: transparent !important;
+        background: transparent !important;
+        caret-color: transparent;
     }
 }
 
@@ -285,6 +279,7 @@
 
     font-family: inherit;
     font-size: 1rem;
+    font-weight: 600;
     color: var(--lw-color-text);
 }
 
