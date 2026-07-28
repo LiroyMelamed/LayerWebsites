@@ -42,7 +42,7 @@ function parseTemporalText(type, text) {
     }
 
     if (type === 'date') {
-        const m = raw.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/);
+        const m = raw.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/);
         if (!m) return null;
         const dd = Number(m[1]);
         const mo = Number(m[2]);
@@ -52,7 +52,7 @@ function parseTemporalText(type, text) {
     }
 
     if (type === 'datetime-local') {
-        const m = raw.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})[ T](\d{1,2}):(\d{2})$/);
+        const m = raw.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})[ T](\d{1,2}):(\d{2})$/);
         if (!m) return null;
         const dd = Number(m[1]);
         const mo = Number(m[2]);
