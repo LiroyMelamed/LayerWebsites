@@ -176,18 +176,26 @@
 .lw-simpleInput__field[type='datetime-local'],
 .lw-simpleInput__field[type='time'],
 .lw-simpleInput__field[type='month'],
-.lw-simpleInput__field[type='week'] {
+.lw-simpleInput__field[type='week'],
+.lw-simpleInput__field--temporalText {
     direction: ltr;
     text-align: right;
     unicode-bidi: isolate;
     position: relative;
-    // Icon + picker sit next to the value on the right (RTL forms).
     padding-inline-start: 0.75rem;
     padding-inline-end: 2.75rem;
     color-scheme: light;
+    color: var(--lw-color-text);
+    -webkit-text-fill-color: var(--lw-color-text);
+    caret-color: var(--lw-color-text);
 }
 
-// Keep native picker hit-target tiny & invisible; our button opens showPicker().
+.lw-simpleInput__field--temporalText {
+    // Real editable text — select/highlight digits like any other input.
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+}
+
 .lw-simpleInput__field[type='date']::-webkit-calendar-picker-indicator,
 .lw-simpleInput__field[type='datetime-local']::-webkit-calendar-picker-indicator,
 .lw-simpleInput__field[type='month']::-webkit-calendar-picker-indicator,
@@ -201,6 +209,19 @@
     height: 1.75rem;
     opacity: 0;
     cursor: pointer;
+}
+
+// Off-screen native picker used only by the calendar button.
+.lw-simpleInput__nativePicker {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
 }
 
 .lw-simpleInput__calendarBtn {
@@ -235,62 +256,4 @@
 .lw-simpleInput__calendarBtn:disabled {
     opacity: 0.45;
     cursor: not-allowed;
-}
-
-// Always mask native OS-locale text. Temporal fields are picker-only so the
-// full dd/mm/yyyy value stays readable (native segment focus hides digits).
-.lw-simpleInput.is-temporalMasked .lw-simpleInput__field {
-    color: transparent !important;
-    caret-color: transparent;
-    -webkit-text-fill-color: transparent;
-
-    &::-webkit-datetime-edit,
-    &::-webkit-datetime-edit-fields-wrapper,
-    &::-webkit-datetime-edit-text,
-    &::-webkit-datetime-edit-month-field,
-    &::-webkit-datetime-edit-day-field,
-    &::-webkit-datetime-edit-year-field,
-    &::-webkit-datetime-edit-hour-field,
-    &::-webkit-datetime-edit-minute-field,
-    &::-webkit-datetime-edit-second-field,
-    &::-webkit-datetime-edit-ampm-field {
-        color: transparent !important;
-        -webkit-text-fill-color: transparent !important;
-        background: transparent !important;
-        caret-color: transparent;
-    }
-}
-
-.lw-simpleInput__temporalDisplay {
-    position: absolute;
-    inset-inline: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none;
-    z-index: 1;
-
-    padding-inline-start: 0.75rem;
-    padding-inline-end: 2.75rem;
-
-    direction: ltr;
-    text-align: right;
-    white-space: nowrap;
-    overflow: hidden;
-
-    font-family: inherit;
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--lw-color-text);
-}
-
-.lw-simpleInput--small .lw-simpleInput__temporalDisplay {
-    font-size: 0.75rem;
-}
-
-.lw-simpleInput--big .lw-simpleInput__temporalDisplay {
-    font-size: 1.5rem;
-}
-
-.lw-simpleInput.is-disabled .lw-simpleInput__temporalDisplay {
-    color: var(--lw-color-disabled);
 }
