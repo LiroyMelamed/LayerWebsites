@@ -127,7 +127,6 @@ const SimpleInput = forwardRef(
 
         const resolvedDir = containerDir || 'rtl';
         const inputDir = isTemporalInput ? 'ltr' : resolvedDir;
-        const inputTextAlign = isTemporalInput ? 'left' : 'right';
 
         const sizeKey = String(inputSize || 'Medium');
         const sizeClass =
@@ -188,7 +187,12 @@ const SimpleInput = forwardRef(
                     type={type}
                     className="lw-simpleInput__field"
                     dir={inputDir}
-                    style={{ textAlign: inputTextAlign, ...(textStyle || {}) }}
+                    style={{
+                        // Temporal alignment is CSS-owned (right + icon gutters).
+                        // Inline textAlign left was overriding that and jumping the value on focus.
+                        ...(isTemporalInput ? {} : { textAlign: 'right' }),
+                        ...(textStyle || {}),
+                    }}
                     value={delayedValue}
                     onChange={handleInputChange}
                     onFocus={handleFocus}
