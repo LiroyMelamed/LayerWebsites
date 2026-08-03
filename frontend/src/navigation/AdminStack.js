@@ -8,6 +8,7 @@ import {
     AllClientsScreenName,
     AllMangerScreenName,
     CalendarScreenName,
+    DailyAgendaScreenName,
     EvidenceDocumentsScreenName,
     MainScreenName,
     MyCasesScreenName,
@@ -39,6 +40,7 @@ import PlansPricingScreen from "../screens/billingScreen/PlansPricingScreen";
 import RemindersScreen from "../screens/remindersScreen/RemindersScreen";
 import PlatformSettingsScreen from "../screens/platformSettingsScreen/PlatformSettingsScreen";
 import CalendarScreen from "../screens/calendarScreen/CalendarScreen";
+import DailyAgendaScreen from "../screens/calendarScreen/DailyAgendaScreen";
 
 export const AdminStackName = "/AdminStack";
 
@@ -72,7 +74,10 @@ function AdminStack() {
                     <Route path={toRelativePath(RemindersScreenName)} element={<RemindersScreen />} />
                     <Route path={toRelativePath(PlatformSettingsScreenName)} element={<PlatformSettingsScreen />} />
                     {calendarEnabled && (
-                        <Route path={toRelativePath(CalendarScreenName)} element={<CalendarScreen />} />
+                        <>
+                            <Route path={toRelativePath(CalendarScreenName)} element={<CalendarScreen />} />
+                            <Route path={toRelativePath(DailyAgendaScreenName)} element={<DailyAgendaScreen />} />
+                        </>
                     )}
                 </Routes>
             </Suspense>

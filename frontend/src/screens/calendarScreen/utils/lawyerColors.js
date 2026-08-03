@@ -21,6 +21,14 @@ const PALETTE = [
     '#553C9A', // indigo
 ];
 
+/** Preset swatches for the event form (no free-form color picker). */
+export const EVENT_COLOR_PRESETS = [...PALETTE];
+
+export function isPresetEventColor(color) {
+    const c = String(color || '').trim().toUpperCase();
+    return EVENT_COLOR_PRESETS.some((p) => p.toUpperCase() === c);
+}
+
 const LEAVE_COLOR = '#718096'; // muted slate gray — distinct from any lawyer color
 const HOLIDAY_COLOR = '#B7791F'; // warm amber — distinct from leave and lawyer palette
 

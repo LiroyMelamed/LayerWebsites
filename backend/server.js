@@ -8,6 +8,7 @@ const { initEmailReminderScheduler } = require('./tasks/emailReminders/scheduler
 const { initBirthdayGreetingsScheduler } = require('./tasks/birthdayGreetings/scheduler');
 const { initCalendarReminderScheduler } = require('./tasks/calendarReminders/scheduler');
 const { initSignReminderScheduler } = require('./tasks/signReminders/scheduler');
+const { startDailyAgendaScheduler } = require('./tasks/dailyAgenda/scheduler');
 
 const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST || "127.0.0.1";
@@ -41,6 +42,7 @@ const server = app.listen(PORT, HOST, async () => {
     initBirthdayGreetingsScheduler();
     await initCalendarReminderScheduler();
     initSignReminderScheduler();
+    startDailyAgendaScheduler();
 });
 
 // Hard timeouts at the Node server layer (useful behind Nginx).

@@ -18,6 +18,7 @@ const settingsService = require('../../services/settingsService');
 const {
     composeLawyerReminderMessage,
     composeClientReminderMessage,
+    parseReminderTargets,
 } = require('../../lib/calendarEventReminders');
 const { dispatchCalendarReminder } = require('../../lib/calendarReminderDispatch');
 
@@ -176,30 +177,36 @@ async function _resolveLawyerRecipients(ev) {
 async function _dispatchOne(ev) {
     const payload = _buildDeepLinkPayload(ev.id);
     const channels = ev.reminder_channels;
-    const lawyerMsg = composeLawyerReminderMessage(ev.offset_minutes, ev);
+    const targets = parseReminderTargets(ev.reminder_targets);
 
-    const lawyerIds = await _resolveLawyerRecipients(ev);
     let anySent = false;
-    for (const lawyerId of lawyerIds) {
-        try {
-            const result = await dispatchCalendarReminder({
-                userId: lawyerId,
-                eventChannels: channels,
-                eventType: ev.event_type,
-                title: lawyerMsg.title,
-                body: lawyerMsg.body,
-                payload,
-            });
-            if (result.sent) anySent = true;
-        } catch (err) {
-            console.error(`[calendar-reminders] lawyer dispatch failed eventId=${ev.id} userId=${lawyerId}:`, err.message);
+
+    if (targets.managers) {
+        const lawyerMsg = composeLawyerReminderMessage(ev.offset_minutes, ev);
+        const lawyerIds = await _resolveLawyerRecipients(ev);
+        for (const lawyerId of lawyerIds) {
+            try {
+                const result = await dispatchCalendarReminder({
+                    userId: lawyerId,
+                    eventChannels: channels,
+                    eventType: ev.event_type,
+                    title: lawyerMsg.title,
+                    body: lawyerMsg.body,
+                    payload,
+                });
+                if (result.sent) anySent = true;
+            } catch (err) {
+                console.error(`[calendar-reminders] lawyer dispatch failed eventId=${ev.id} userId=${lawyerId}:`, err.message);
+            }
+        }
+        if (!anySent && lawyerIds.length) {
+            throw new Error('lawyer_reminder_not_sent');
         }
     }
-    if (!anySent) {
-        throw new Error('lawyer_reminder_not_sent');
-    }
 
-    if (ev.event_type !== 'reminder' && ev.client_user_id) {
+    if (!targets.client || ev.event_type === 'reminder') return;
+
+    if (ev.client_user_id) {
         const clientMsg = composeClientReminderMessage(ev.offset_minutes, ev);
         try {
             await dispatchCalendarReminder({
@@ -213,7 +220,7 @@ async function _dispatchOne(ev) {
         } catch (err) {
             console.error(`[calendar-reminders] client dispatch failed eventId=${ev.id}:`, err.message);
         }
-    } else if (ev.event_type !== 'reminder' && (ev.lead_phone || ev.lead_email)) {
+    } else if (ev.lead_phone || ev.lead_email) {
         const clientMsg = composeClientReminderMessage(ev.offset_minutes, ev);
         try {
             await dispatchCalendarReminder({

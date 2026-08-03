@@ -59,6 +59,11 @@ router.post('/', ...protect, cal.createEvent);
 
 // Named routes BEFORE /:id so Express doesn't swallow them as id params
 router.get('/today', ...protect, cal.getTodayAndTomorrow);
+router.get('/agenda/:date', ...protect, cal.getDayAgenda);
+
+// Public invite RSVP (no auth)
+router.get('/invite/:token', cal.getInviteByToken);
+router.post('/invite/:token', cal.respondToInvite);
 
 // ─── CRM (Step 2) ─────────────────────────────────────────────────────────────
 // All named routes go BEFORE the generic /:id handlers below.
@@ -66,6 +71,7 @@ router.post('/check-conflict', ...protect, cal.checkConflict);
 router.post('/convert-lead', ...protect, cal.convertLead);
 router.get('/clients/:clientUserId/cases', ...protect, cal.getClientCases);
 router.patch('/:id/link-case', ...protect, cal.linkCase);
+router.post('/:id/resend-invite', ...protect, cal.resendInvite);
 
 router.get('/:id', ...protect, cal.getEvent);
 router.put('/:id', ...protect, cal.updateEvent);
