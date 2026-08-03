@@ -570,14 +570,6 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setReminderTargets((prev) => ({ ...prev, [key]: !prev[key] }));
     };
 
-    // Push channel is only for תזכורת events — strip when switching to meeting/hearing.
-    useEffect(() => {
-        if (eventType === EVENT_TYPE_REMINDER) return;
-        setReminderChannels((prev) => (
-            prev.push ? { ...prev, push: false } : prev
-        ));
-    }, [eventType]);
-
     // ─── Effect: live conflict check (debounced) ──────────────────────────
     useEffect(() => {
         if (isInternalScopedEventType(eventType)) {

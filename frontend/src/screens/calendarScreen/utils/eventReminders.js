@@ -139,19 +139,13 @@ export function channelsForAllowedKeys(allowedKeys) {
     return REMINDER_CHANNEL_OPTIONS.filter((c) => allowed.has(c.key));
 }
 
-/** Push reminders apply only to תזכורת (reminder) events — SMS/email still for meetings. */
-export function channelsForEventType(eventType, allowedKeys) {
-    const options = channelsForAllowedKeys(allowedKeys);
-    if (eventType === "reminder") return options;
-    return options.filter((c) => c.key !== "push");
+/** Channel chips follow platform CALENDAR_REMINDER_CHANNELS for every event type. */
+export function channelsForEventType(_eventType, allowedKeys) {
+    return channelsForAllowedKeys(allowedKeys);
 }
 
-export function normalizeChannelsForEventType(eventType, selected, allowedKeys) {
-    const normalized = normalizeSelectedChannels(selected, allowedKeys);
-    if (eventType !== "reminder") {
-        normalized.push = false;
-    }
-    return normalized;
+export function normalizeChannelsForEventType(_eventType, selected, allowedKeys) {
+    return normalizeSelectedChannels(selected, allowedKeys);
 }
 
 export function normalizeSelectedChannels(selected, allowedKeys) {
