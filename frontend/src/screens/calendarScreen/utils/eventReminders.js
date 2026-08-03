@@ -18,7 +18,29 @@ export const REMINDER_PRESETS = [
     { minutes: 10080, labelKey: "calendar.reminder1w" },
 ];
 
-const DEFAULT_ALLOWED = [15, 30, 60, 120, 1440];
+const DEFAULT_ALLOWED = [15, 30, 60, 120, 1440, 2880, 10080];
+
+/** Default offsets selected on new appointment/hearing create. */
+export function defaultReminderOffsets(allowedMinutes = DEFAULT_ALLOWED) {
+    return normalizeSelectedOffsets(allowedMinutes, allowedMinutes);
+}
+
+/** Default channels on new create — SMS on. */
+export function defaultReminderChannels(allowedKeys = DEFAULT_ALLOWED_CHANNELS) {
+    return normalizeSelectedChannels({ push: false, sms: true, email: false }, allowedKeys);
+}
+
+export function defaultReminderTargets() {
+    return { client: true, managers: true };
+}
+
+export function parseReminderTargets(raw) {
+    if (!raw || typeof raw !== 'object') return defaultReminderTargets();
+    return {
+        client: raw.client !== false && raw.client !== 'false' && raw.client !== 0,
+        managers: raw.managers !== false && raw.managers !== 'false' && raw.managers !== 0,
+    };
+}
 
 export function parseOffsetsList(raw) {
     if (raw == null || raw === "") return [];

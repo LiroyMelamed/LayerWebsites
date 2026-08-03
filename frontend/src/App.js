@@ -9,6 +9,7 @@ import { useFromApp } from './providers/FromAppProvider';
 import { loadFirmSettings } from './services/firmSettings';
 import {
   CalendarScreenName,
+  CalendarInviteScreenName,
   ChatBotPageName,
   ClientMainScreenName,
   CompliancePageName,
@@ -39,6 +40,7 @@ import CompliancePage from './screens/compliance/CompliancePage';
 import ChatBotPage from './screens/chatbot/ChatBotPage';
 import MasterAdminScreen from './screens/masterAdmin/MasterAdminScreen';
 import ClientTicketScreen from './screens/client/ticket/ClientTicketScreen';
+import CalendarInviteScreen from './screens/calendarScreen/CalendarInviteScreen';
 
 const STACK_SUFFIX = "/*"
 
@@ -167,6 +169,7 @@ const App = () => {
         <Route path={PublicSignScreenName} element={<PublicSigningScreen />} />
         <Route path={ShortSignRedirectScreenName} element={<ShortSignRedirectScreen />} />
         <Route path={ViewSignedDocumentName} element={<ViewSignedDocument />} />
+        <Route path={CalendarInviteScreenName} element={<CalendarInviteScreen />} />
 
         <Route path={EvidenceVerifyScreenName} element={<EvidenceVerifyScreen />} />
 

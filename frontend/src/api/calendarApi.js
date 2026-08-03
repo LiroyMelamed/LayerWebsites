@@ -125,6 +125,16 @@ const calendarApi = {
     syncOutlookEvents: async () => {
         return await ApiUtils.post(`${base}/outlook/sync`);
     },
+
+    /** Authenticated day agenda (YYYY-MM-DD) */
+    getDayAgenda: async (date) => {
+        return await ApiUtils.get(`${base}/agenda/${encodeURIComponent(date)}`);
+    },
+
+    /** Resend client meeting invite */
+    resendInvite: async (eventId) => {
+        return await ApiUtils.post(`${base}/${eventId}/resend-invite`);
+    },
 };
 
 export default calendarApi;
