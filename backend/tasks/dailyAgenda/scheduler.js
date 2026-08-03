@@ -9,6 +9,7 @@ const cron = require('node-cron');
 const pool = require('../../config/db');
 const { sendMessage } = require('../../utils/sendMessage');
 const { sendTransactionalCustomHtmlEmail } = require('../../utils/smooveEmailCampaignService');
+const sendAndStoreNotification = require('../../utils/sendAndStoreNotification');
 const { personalCalendarSql } = require('../../lib/calendarVisibility');
 
 function _israelNowParts() {
@@ -44,6 +45,7 @@ function _parseChannels(raw) {
             .filter(Boolean)
     );
     return {
+        push: set.has('push'),
         email: set.has('email'),
         sms: set.has('sms'),
     };
@@ -76,10 +78,11 @@ function _resolveRecipients(row, channels) {
 
 async function _sendForUser(row, date) {
     const channels = _parseChannels(row.channels);
-    if (!channels.email && !channels.sms) return false;
+    if (!channels.email && !channels.sms && !channels.push) return false;
 
     const recipients = _resolveRecipients(row, channels);
-    if (!recipients.length) return false;
+    // Push alone is enough even without email/phone recipients.
+    if (!recipients.length && !channels.push) return false;
 
     const { rows: events } = await pool.query(
         `SELECT ce.title, ce.location, ce.start_time, ce.end_time, ce.invite_status
@@ -98,8 +101,27 @@ async function _sendForUser(row, date) {
         : ['אין אירועים להיום'];
     const body = `יומן ליום ${date}\n\n${lines.join('\n')}`;
     const html = `<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.7"><h3>יומן ליום ${date}</h3><pre style="font-family:inherit;white-space:pre-wrap">${lines.join('\n')}</pre></div>`;
+    const pushBody = events.length
+        ? `${events.length} אירועים להיום`
+        : 'אין אירועים להיום';
 
     let sentAny = false;
+
+    if (channels.push) {
+        try {
+            await sendAndStoreNotification(
+                row.user_id,
+                `יומן יומי — ${date}`,
+                pushBody,
+                { type: 'DAILY_AGENDA', date },
+                { sendPush: true }
+            );
+            sentAny = true;
+        } catch (err) {
+            console.error('[daily-agenda] push failed user=', row.user_id, err.message);
+        }
+    }
+
     for (const recipient of recipients) {
         try {
             const isMail = _isEmail(recipient);
@@ -114,14 +136,7 @@ async function _sendForUser(row, date) {
             } else if (channels.sms && !isMail) {
                 await sendMessage(body, recipient);
                 sentAny = true;
-            } else if (channels.sms && isMail && !channels.email) {
-                // skip email-shaped recipient when only SMS selected
             } else if (channels.email && !isMail && channels.sms) {
-                await sendMessage(body, recipient);
-                sentAny = true;
-            } else if (channels.sms && isMail && channels.email) {
-                // already handled by email branch
-            } else if (channels.sms && !isMail) {
                 await sendMessage(body, recipient);
                 sentAny = true;
             }

@@ -150,11 +150,10 @@ export function getBusinessHours(schedule) {
 }
 
 export function getSlotRange(_schedule) {
-    // Do not clip the calendar time axis to firm hours — show the full day.
-    // Working hours are visual guidance only (businessHours shading).
+    // Fixed visible day window — working hours only shade slots inside this range.
     return {
-        min: "00:00:00",
-        max: "24:00:00",
+        min: "05:00:00",
+        max: "22:00:00",
     };
 }
 
