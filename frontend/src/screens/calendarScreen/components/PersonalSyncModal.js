@@ -55,6 +55,7 @@ function parseChannelSet(raw) {
 
 function channelsToString(set) {
     const ordered = [];
+    if (set.has("push")) ordered.push("push");
     if (set.has("email")) ordered.push("email");
     if (set.has("sms")) ordered.push("sms");
     return ordered.join(",") || "email";
@@ -348,10 +349,8 @@ export default function PersonalSyncModal({ closePopUpFunction, onEventsChanged 
                 <Text12 color="#718096">{t("calendar.personalSyncHint")}</Text12>
 
                 <SimpleContainer className="lw-personalSyncModal__section">
-                    <TextBold14 color={colors.primary}>{t("calendar.dailyAgendaSettings")}</TextBold14>
-                    <Text12 color={colors.winter}>{t("calendar.dailyAgendaPersonalHint")}</Text12>
-
                     <SegmentedSwitch
+                        className="lw-personalSyncModal__agendaSwitch"
                         title={t("calendar.dailyAgendaEnabled")}
                         ariaLabel={t("calendar.dailyAgendaEnabled")}
                         value={agendaEnabled ? "on" : "off"}
@@ -364,6 +363,15 @@ export default function PersonalSyncModal({ closePopUpFunction, onEventsChanged 
 
                     <TextBold14 color={NAVY}>{t("calendar.dailyAgendaChannel")}</TextBold14>
                     <SimpleContainer className="lw-personalSyncModal__chips">
+                        <SimpleButton
+                            className={`lw-personalSyncModal__chip ${agendaChannels.has("push") ? "is-active" : ""}`}
+                            onPress={() => toggleAgendaChannel("push")}
+                            aria-pressed={agendaChannels.has("push")}
+                        >
+                            <Text14 color={agendaChannels.has("push") ? WHITE : CHIP_IDLE}>
+                                {t("calendar.reminderChannelPush")}
+                            </Text14>
+                        </SimpleButton>
                         <SimpleButton
                             className={`lw-personalSyncModal__chip ${agendaChannels.has("email") ? "is-active" : ""}`}
                             onPress={() => toggleAgendaChannel("email")}
