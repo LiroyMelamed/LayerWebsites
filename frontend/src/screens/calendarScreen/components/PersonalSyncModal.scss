@@ -58,6 +58,23 @@
     flex-wrap: wrap;
 }
 
+.lw-personalSyncModal__agendaSwitch {
+    width: 100%;
+
+    .lw-segmentedSwitch__track {
+        width: 100%;
+        display: flex;
+    }
+
+    .lw-segmentedSwitch__option {
+        flex: 1 1 0;
+        text-align: center;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
 /* Same chip pattern as EventFormModal reminder channels */
 .lw-personalSyncModal__chip {
     display: flex;
