@@ -16,6 +16,8 @@ export const PlansPricingScreenName = "/PlansPricing";
 export const RemindersScreenName = "/RemindersScreen";
 export const PlatformSettingsScreenName = "/PlatformSettingsScreen";
 export const CalendarScreenName = "/CalendarScreen";
+export const DailyAgendaScreenName = "/calendar/day/:date";
+export const CalendarInviteScreenName = "/calendar-invite/:token";
 
 export const ClientMainScreenName = "/ClientMainScreen";
 export const ClientCasesScreenName = "/ClientCasesScreen";

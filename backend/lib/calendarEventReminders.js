@@ -4,11 +4,38 @@
  * Platform admins configure which preset offsets are available.
  */
 
-const DEFAULT_ALLOWED_OFFSETS = [15, 30, 60, 120, 1440];
+const DEFAULT_ALLOWED_OFFSETS = [15, 30, 60, 120, 1440, 2880, 10080];
 const DEFAULT_ALLOWED_CHANNELS = ['push', 'sms', 'email'];
 const REMINDABLE_EVENT_TYPES = new Set(['appointment', 'hearing', 'reminder']);
 const MAX_OFFSETS_PER_EVENT = 8;
 const VALID_CHANNEL_KEYS = new Set(['push', 'sms', 'email']);
+
+function defaultReminderTargets() {
+    return { client: true, managers: true };
+}
+
+function parseReminderTargets(raw) {
+    let src = raw;
+    if (typeof raw === 'string') {
+        try { src = JSON.parse(raw); } catch { src = null; }
+    }
+    if (!src || typeof src !== 'object') return defaultReminderTargets();
+    return {
+        client: src.client !== false && src.client !== 'false' && src.client !== 0,
+        managers: src.managers !== false && src.managers !== 'false' && src.managers !== 0,
+    };
+}
+
+function targetsToJson(targets) {
+    return JSON.stringify(parseReminderTargets(targets));
+}
+
+function buildNavLinks(location) {
+    const q = String(location || '').trim();
+    if (!q) return '';
+    const encoded = encodeURIComponent(q);
+    return `\nמיקום: ${q}\nWaze: https://waze.com/ul?q=${encoded}\nMaps: https://www.google.com/maps/search/?api=1&query=${encoded}`;
+}
 
 function parseOffsetsList(raw) {
     if (raw == null || raw === '') return [];
@@ -178,11 +205,12 @@ function composeLawyerReminderMessage(offsetMinutes, ev) {
     const title = isReminderEvent
         ? 'תזכורת מהיומן'
         : (offsetMinutes >= 1440 ? 'תזכורת לפגישה' : 'תזכורת לפגישה קרובה');
-    const body = isReminderEvent
+    let body = isReminderEvent
         ? `${ev.title || 'תזכורת'} — ${when} בשעה ${timeStr}`
         : (audience
             ? `פגישה עם הלקוח ${audience} — ${when} בשעה ${timeStr}`
             : `${ev.title} — ${when} בשעה ${timeStr}`);
+    body += buildNavLinks(ev.location);
     return { title, body };
 }
 
@@ -194,9 +222,15 @@ function composeClientReminderMessage(offsetMinutes, ev) {
     });
     const when = formatOffsetHebrew(offsetMinutes);
     const lawyer = ev.owner_name || 'עורך הדין';
+    let body = `פגישתך עם עו״ד ${lawyer} ${when} בשעה ${timeStr}`;
+    body += buildNavLinks(ev.location);
+    if (ev.invite_token) {
+        const base = String(process.env.PUBLIC_APP_URL || process.env.FRONTEND_URL || '').replace(/\/$/, '');
+        if (base) body += `\nלאישור / ביטול: ${base}/calendar-invite/${ev.invite_token}`;
+    }
     return {
         title: offsetMinutes >= 1440 ? 'תזכורת לפגישה' : 'תזכורת לפגישה קרובה',
-        body: `פגישתך עם עו״ד ${lawyer} ${when} בשעה ${timeStr}`,
+        body,
     };
 }
 
@@ -217,8 +251,12 @@ module.exports = {
     parseStoredSentOffsets,
     parseStoredChannels,
     defaultReminderChannels,
+    defaultReminderTargets,
+    parseReminderTargets,
+    targetsToJson,
     hasAnyReminderChannel,
     formatOffsetHebrew,
+    buildNavLinks,
     composeLawyerReminderMessage,
     composeClientReminderMessage,
 };

@@ -38,9 +38,16 @@ const {
     parseStoredSentOffsets,
     parseStoredChannels,
     hasAnyReminderChannel,
+    parseReminderTargets,
+    targetsToJson,
+    defaultReminderTargets,
+    composeClientReminderMessage,
+    buildNavLinks,
 } = require('../lib/calendarEventReminders');
 const { lawyerMatchSql, personalCalendarSql } = require('../lib/calendarVisibility');
 const { signOAuthState, verifyOAuthState } = require('../lib/calendarOAuthState');
+const { sendMessage } = require('../utils/sendMessage');
+const { sendTransactionalCustomHtmlEmail } = require('../utils/smooveEmailCampaignService');
 
 // ─── Optional peer deps (graceful-fail if not yet installed) ──────────────────
 let ical;
@@ -242,7 +249,11 @@ function _sanitizeEvent(row) {
         lastReminderSentAt: row.last_reminder_sent_at ?? null,
         reminderOffsets: parseStoredOffsets(row.reminder_offsets),
         reminderChannels: parseStoredChannels(row.reminder_channels),
+        reminderTargets: parseReminderTargets(row.reminder_targets),
         remindersSentOffsets: parseStoredOffsets(row.reminders_sent_offsets),
+        inviteStatus: row.invite_status || 'none',
+        inviteToken: row.invite_token || null,
+        inviteRespondedAt: row.invite_responded_at || null,
         linkedReminderId: row.linked_reminder_id ?? null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
@@ -720,14 +731,8 @@ const createEvent = async (req, res) => {
         return res.status(400).json({ message: 'אירוע פנימי (חופשה, חג או תזכורת) לא יכול להכיל פרטי ליד' });
     }
 
-    // Internal-scoped events are lawyer-scoped — they may fall outside working hours.
+    // Working hours are visual guidance on the calendar grid only — do not block saves.
     const storedAllDay = _isAllDayInternalEventType(eventType) ? true : !!all_day;
-    if (!_isInternalScopedEventType(eventType)) {
-        const workingCheck = await _validateWorkingHours(start_time, end_time, storedAllDay);
-        if (!workingCheck.ok) {
-            return res.status(400).json({ message: workingCheck.message });
-        }
-    }
 
     const reminderOffsets = await _resolveReminderOffsets(req.body, eventType);
     const storedReminderOffsets = reminderOffsets ?? [];
@@ -736,7 +741,19 @@ const createEvent = async (req, res) => {
         return res.status(400).json({ message: resolvedChannels.error });
     }
     const storedReminderChannels = resolvedChannels ?? { push: false, sms: false, email: false };
+    const storedReminderTargets = req.body?.reminder_targets !== undefined
+        ? parseReminderTargets(req.body.reminder_targets)
+        : defaultReminderTargets();
     const ownerId = _resolveEventOwnerId(userId, eventType, managerUserId, managerIds);
+
+    const shouldInviteClient = (
+        (eventType === 'appointment' || eventType === 'hearing')
+        && storedReminderTargets.client
+        && hasAnyReminderChannel(storedReminderChannels)
+        && (clientUserId || lead_phone || lead_email)
+    );
+    const inviteToken = shouldInviteClient ? crypto.randomBytes(24).toString('hex') : null;
+    const inviteStatus = shouldInviteClient ? 'pending' : 'none';
 
     try {
         const { rows } = await pool.query(
@@ -745,8 +762,10 @@ const createEvent = async (req, res) => {
                 client_user_id, client_name, manager_user_id, manager_name, color,
                 start_time, end_time, all_day, rrule,
                 lead_name, lead_phone, lead_email, lead_case_name,
-                reminder_offsets, reminder_channels, reminders_sent_offsets)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20::jsonb, $21::jsonb, '[]'::jsonb)
+                reminder_offsets, reminder_channels, reminder_targets, reminders_sent_offsets,
+                invite_status, invite_token)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
+                     $20::jsonb, $21::jsonb, $22::jsonb, '[]'::jsonb, $23, $24)
              RETURNING *`,
             [
                 ownerId,
@@ -770,6 +789,9 @@ const createEvent = async (req, res) => {
                 hasLead ? (leadCaseName || null) : null,
                 offsetsToJson(storedReminderOffsets),
                 channelsToJson(storedReminderChannels),
+                targetsToJson(storedReminderTargets),
+                inviteStatus,
+                inviteToken,
             ]
         );
         const created = rows[0];
@@ -808,6 +830,15 @@ const createEvent = async (req, res) => {
 
         const sanitized = _applyManagersToEvent(_sanitizeEvent(created), mgrMeta.managers);
         if (linkedReminderId) sanitized.linkedReminderId = linkedReminderId;
+
+        if (shouldInviteClient && inviteToken) {
+            try {
+                await _sendCalendarInvite(created);
+            } catch (inviteErr) {
+                console.error('[calendarController] invite send failed:', inviteErr.message);
+            }
+        }
+
         return res.status(201).json({
             event: sanitized,
             ...(reminderSyncWarning ? { reminderSyncWarning } : {}),
@@ -948,13 +979,7 @@ const updateEvent = async (req, res) => {
             && channelsToJson(nextReminderChannels) !== channelsToJson(currentReminderChannels);
         const resetRemindersSent = timeChanged || remindersChanged || channelsChanged;
 
-        // Skip working-hours guard for internally-scoped events — see createEvent for rationale.
-        if (!_isInternalScopedEventType(newEventType)) {
-            const workingCheck = await _validateWorkingHours(newStart, newEnd, newAllDay);
-            if (!workingCheck.ok) {
-                return res.status(400).json({ message: workingCheck.message });
-            }
-        }
+        // Working hours are visual guidance only — do not block updates/drag-resize.
 
         const nextClientUserId = client_user_id !== undefined ? (parseInt(client_user_id, 10) || null) : ev.client_user_id;
         const nextCaseId = case_id !== undefined ? (parseInt(case_id, 10) || null) : ev.case_id;
@@ -1005,6 +1030,10 @@ const updateEvent = async (req, res) => {
             managerUpdate.sync ? managerUpdate.ids : (nextManagerUserId ? [nextManagerUserId] : [])
         );
 
+        const nextReminderTargets = req.body?.reminder_targets !== undefined
+            ? parseReminderTargets(req.body.reminder_targets)
+            : parseReminderTargets(ev.reminder_targets);
+
         const { rows } = await pool.query(
             `UPDATE calendar_events SET
                title                  = $1,
@@ -1027,10 +1056,11 @@ const updateEvent = async (req, res) => {
                lead_case_name         = $18,
                reminder_offsets       = $19::jsonb,
                reminder_channels      = $20::jsonb,
-               reminders_sent_offsets = $21::jsonb,
-               last_reminder_sent_at  = $22,
-               owner_id               = $23
-             WHERE id = $24
+               reminder_targets       = $21::jsonb,
+               reminders_sent_offsets = $22::jsonb,
+               last_reminder_sent_at  = $23,
+               owner_id               = $24
+             WHERE id = $25
              RETURNING *`,
             [
                 (title || ev.title).trim(),
@@ -1053,6 +1083,7 @@ const updateEvent = async (req, res) => {
                 hasLead ? nextLeadCaseName : null,
                 offsetsToJson(REMINDABLE_EVENT_TYPES.has(newEventType) ? nextReminderOffsets : []),
                 channelsToJson(REMINDABLE_EVENT_TYPES.has(newEventType) ? nextReminderChannels : { push: false, sms: false, email: false }),
+                targetsToJson(REMINDABLE_EVENT_TYPES.has(newEventType) ? nextReminderTargets : { client: false, managers: false }),
                 resetRemindersSent ? '[]' : offsetsToJson(parseStoredSentOffsets(ev.reminders_sent_offsets)),
                 resetRemindersSent ? null : ev.last_reminder_sent_at,
                 nextOwnerId,
@@ -2361,6 +2392,201 @@ const convertLead = async (req, res) => {
 };
 
 
+async function _publicAppBase() {
+    return String(
+        process.env.PUBLIC_APP_URL
+        || process.env.FRONTEND_URL
+        || process.env.CLIENT_APP_URL
+        || ''
+    ).replace(/\/$/, '');
+}
+
+async function _sendCalendarInvite(ev) {
+    if (!ev?.invite_token) return;
+    const base = await _publicAppBase();
+    const link = base ? `${base}/calendar-invite/${ev.invite_token}` : '';
+    const when = new Date(ev.start_time).toLocaleString('he-IL', {
+        dateStyle: 'short',
+        timeStyle: 'short',
+        hour12: false,
+    });
+    const firm = await getLawFirmNameHe().catch(() => 'המשרד');
+    let body = `הזמנה לפגישה עם ${firm}: ${ev.title || 'פגישה'} ב־${when}`;
+    body += buildNavLinks(ev.location);
+    if (link) body += `\nלאישור או ביטול: ${link}`;
+
+    let phone = ev.lead_phone || null;
+    let email = ev.lead_email || null;
+    if (ev.client_user_id) {
+        const { rows } = await pool.query(
+            'SELECT phonenumber AS phone, email FROM users WHERE userid = $1',
+            [ev.client_user_id]
+        );
+        phone = phone || rows[0]?.phone || null;
+        email = email || rows[0]?.email || null;
+    }
+
+    const toE164 = (raw) => {
+        const digits = String(raw || '').replace(/\D/g, '');
+        if (!digits) return null;
+        if (digits.startsWith('972') && digits.length >= 11) return `+${digits}`;
+        if (digits.startsWith('0') && digits.length >= 9) return `+972${digits.slice(1)}`;
+        if (digits.length >= 8 && digits.length <= 10) return `+972${digits}`;
+        if (String(raw).startsWith('+')) return String(raw).replace(/\s+/g, '');
+        return null;
+    };
+
+    const e164 = toE164(phone);
+    if (e164) {
+        try { await sendMessage(body, e164); } catch (e) {
+            console.error('[calendar-invite] SMS failed:', e.message);
+        }
+    }
+    if (email) {
+        try {
+            await sendTransactionalCustomHtmlEmail({
+                toEmail: email,
+                subject: `הזמנה לפגישה — ${ev.title || 'פגישה'}`,
+                htmlBody: `<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.7">${body.replace(/\n/g, '<br/>')}</div>`,
+                logLabel: 'calendar-invite',
+            });
+        } catch (e) {
+            console.error('[calendar-invite] email failed:', e.message);
+        }
+    }
+}
+
+/**
+ * GET /api/calendar/invite/:token — public invite details
+ */
+const getInviteByToken = async (req, res) => {
+    const token = String(req.params.token || '').trim();
+    if (!token) return res.status(400).json({ message: 'token required' });
+    try {
+        const { rows } = await pool.query(
+            `SELECT id, title, description, location, start_time, end_time, all_day,
+                    invite_status, invite_responded_at, client_name, lead_name
+             FROM calendar_events WHERE invite_token = $1 LIMIT 1`,
+            [token]
+        );
+        if (!rows.length) return res.status(404).json({ message: 'הזמנה לא נמצאה' });
+        const ev = rows[0];
+        return res.json({
+            invite: {
+                title: ev.title,
+                description: ev.description,
+                location: ev.location,
+                startTime: ev.start_time,
+                endTime: ev.end_time,
+                allDay: ev.all_day,
+                status: ev.invite_status,
+                respondedAt: ev.invite_responded_at,
+                clientName: ev.client_name || ev.lead_name || null,
+            },
+        });
+    } catch (err) {
+        console.error('[calendarController] getInviteByToken:', err.message);
+        return res.status(500).json({ message: 'שגיאה פנימית' });
+    }
+};
+
+/**
+ * POST /api/calendar/invite/:token  body: { action: 'accept'|'decline' }
+ */
+const respondToInvite = async (req, res) => {
+    const token = String(req.params.token || '').trim();
+    const action = String(req.body?.action || '').trim().toLowerCase();
+    if (!token) return res.status(400).json({ message: 'token required' });
+    if (!['accept', 'decline'].includes(action)) {
+        return res.status(400).json({ message: 'action must be accept or decline' });
+    }
+    const nextStatus = action === 'accept' ? 'accepted' : 'declined';
+    try {
+        const { rows } = await pool.query(
+            `UPDATE calendar_events
+             SET invite_status = $1, invite_responded_at = NOW(), updated_at = NOW()
+             WHERE invite_token = $2
+             RETURNING id, invite_status, invite_responded_at, title`,
+            [nextStatus, token]
+        );
+        if (!rows.length) return res.status(404).json({ message: 'הזמנה לא נמצאה' });
+        return res.json({
+            ok: true,
+            status: rows[0].invite_status,
+            respondedAt: rows[0].invite_responded_at,
+            title: rows[0].title,
+        });
+    } catch (err) {
+        console.error('[calendarController] respondToInvite:', err.message);
+        return res.status(500).json({ message: 'שגיאה פנימית' });
+    }
+};
+
+/**
+ * POST /api/calendar/:id/resend-invite
+ */
+const resendInvite = async (req, res) => {
+    const userId = req.user.UserId;
+    const eventId = parseInt(req.params.id, 10);
+    if (!Number.isFinite(eventId)) return res.status(400).json({ message: 'מזהה אירוע לא תקין' });
+    const ownership = await _requireEventAccess(eventId, userId, req.user?.Role);
+    if (!ownership.ok) return res.status(ownership.status).json({ message: ownership.message });
+    try {
+        let ev = ownership.event;
+        if (!ev.invite_token) {
+            const token = crypto.randomBytes(24).toString('hex');
+            const { rows } = await pool.query(
+                `UPDATE calendar_events
+                 SET invite_token = $1, invite_status = 'pending', invite_responded_at = NULL, updated_at = NOW()
+                 WHERE id = $2
+                 RETURNING *`,
+                [token, eventId]
+            );
+            ev = rows[0];
+        } else if (ev.invite_status === 'none') {
+            const { rows } = await pool.query(
+                `UPDATE calendar_events SET invite_status = 'pending', updated_at = NOW() WHERE id = $1 RETURNING *`,
+                [eventId]
+            );
+            ev = rows[0];
+        }
+        await _sendCalendarInvite(ev);
+        return res.json({ event: _sanitizeEvent(ev) });
+    } catch (err) {
+        console.error('[calendarController] resendInvite:', err.message);
+        return res.status(500).json({ message: 'שגיאה פנימית' });
+    }
+};
+
+/**
+ * GET /api/calendar/agenda/:date  (YYYY-MM-DD) — authenticated day agenda
+ */
+const getDayAgenda = async (req, res) => {
+    const userId = req.user.UserId;
+    const dateStr = String(req.params.date || '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        return res.status(400).json({ message: 'תאריך לא תקין' });
+    }
+    try {
+        const { rows } = await pool.query(
+            `SELECT ce.*
+             FROM calendar_events ce
+             WHERE ${personalCalendarSql(1)}
+               AND ce.start_time >= ($2::date)
+               AND ce.start_time < ($2::date + INTERVAL '1 day')
+             ORDER BY ce.start_time ASC`,
+            [userId, dateStr]
+        );
+        const ids = rows.map((r) => r.id);
+        const managersMap = await _fetchEventManagers(ids);
+        const events = rows.map((r) => _applyManagersToEvent(_sanitizeEvent(r), managersMap.get(r.id) || []));
+        return res.json({ date: dateStr, events });
+    } catch (err) {
+        console.error('[calendarController] getDayAgenda:', err.message);
+        return res.status(500).json({ message: 'שגיאה פנימית' });
+    }
+};
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // Exports
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2377,6 +2603,12 @@ module.exports = {
     getClientCases,
     linkCase,
     convertLead,
+    // Invite RSVP
+    getInviteByToken,
+    respondToInvite,
+    resendInvite,
+    // Agenda
+    getDayAgenda,
     // iCal
     getIcalToken,
     rotateIcalToken,

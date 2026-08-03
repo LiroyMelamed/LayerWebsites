@@ -134,29 +134,42 @@ function buildFullCalendarEvent(ev, { scope }) {
         });
     }
 
-    // Appointments: color by owner in firm view, otherwise honor stored color
-    // (or infer from title heuristics for backwards compatibility).
+    // Appointments: color by owner in firm view, otherwise honor stored color,
+    // then type defaults from platform settings, then heuristics.
     const text = `${String(ev?.title || "")} ${String(ev?.description || "")}`;
+    const typeDefaults = (typeof window !== "undefined" && window.__CALENDAR_TYPE_COLORS__) || {};
+    const typeDefault = typeDefaults[ev?.eventType] || null;
     const personalInferred =
         ev?.color ||
+        typeDefault ||
         (/(חופשה|vacation|pto|holiday)/i.test(text) ? "#2F855A"
             : /(דיון|court|hearing)/i.test(text) ? "#B83280"
                 : "#2A4365");
 
-    // Firm view: color by manager (מנהל) so legend matches who handles the event.
+    // Firm view: color by manager (מי בפגישה?) so legend matches who handles the event.
     const color = scope === SCOPE_FIRM
         ? colorForKey(colorKeyForEvent(ev))
         : personalInferred;
 
+    const inviteStatus = ev?.inviteStatus;
+    const inviteBadge =
+        inviteStatus === "accepted" ? " ✓"
+            : inviteStatus === "declined" ? " ✕"
+                : inviteStatus === "pending" ? " …"
+                    : "";
+
     return {
         id: String(ev.id),
-        title: ev.title,
+        title: `${ev.title || ""}${inviteBadge}`,
         start: ev.startTime,
         end: ev.endTime,
         allDay: ev.allDay,
         backgroundColor: color,
         borderColor: color,
         textColor: "#FFFFFF",
+        editable: ev?.eventType !== "leave" && ev?.eventType !== "holiday",
+        startEditable: ev?.eventType !== "leave" && ev?.eventType !== "holiday",
+        durationEditable: ev?.eventType !== "leave" && ev?.eventType !== "holiday" && !ev?.allDay,
         extendedProps: ev,
     };
 }
@@ -271,6 +284,13 @@ export default function CalendarScreen() {
                 const cal = res?.data?.settings?.calendar || res?.settings?.calendar || {};
                 if (cancelled) return;
                 setWorkingSchedule(parseScheduleFromCalendarSettings(cal));
+                try {
+                    const raw = cal?.CALENDAR_EVENT_TYPE_COLORS?.effectiveValue;
+                    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+                    if (parsed && typeof parsed === "object") {
+                        window.__CALENDAR_TYPE_COLORS__ = parsed;
+                    }
+                } catch { /* ignore */ }
             } catch { /* keep defaults */ }
         })();
         return () => { cancelled = true; };
@@ -879,6 +899,55 @@ export default function CalendarScreen() {
                                     openCreateModal({ start, end, allDay: info.allDay });
                                 }}
                                 eventClick={openEditModal}
+                                editable
+                                eventStartEditable
+                                eventDurationEditable
+                                eventDrop={async (info) => {
+                                    const id = parseInt(info.event.id, 10);
+                                    if (!Number.isFinite(id)) {
+                                        info.revert();
+                                        return;
+                                    }
+                                    try {
+                                        const res = await calendarApi.updateEvent(id, {
+                                            start_time: info.event.start?.toISOString(),
+                                            end_time: (info.event.end || info.event.start)?.toISOString(),
+                                            all_day: !!info.event.allDay,
+                                        });
+                                        if (!res?.success) {
+                                            info.revert();
+                                            window.alert(res?.data?.message || res?.message || t("calendar.googleSyncError"));
+                                            return;
+                                        }
+                                        fetchEvents();
+                                    } catch (err) {
+                                        info.revert();
+                                        window.alert(err?.response?.data?.message || t("calendar.googleSyncError"));
+                                    }
+                                }}
+                                eventResize={async (info) => {
+                                    const id = parseInt(info.event.id, 10);
+                                    if (!Number.isFinite(id)) {
+                                        info.revert();
+                                        return;
+                                    }
+                                    try {
+                                        const res = await calendarApi.updateEvent(id, {
+                                            start_time: info.event.start?.toISOString(),
+                                            end_time: (info.event.end || info.event.start)?.toISOString(),
+                                            all_day: !!info.event.allDay,
+                                        });
+                                        if (!res?.success) {
+                                            info.revert();
+                                            window.alert(res?.data?.message || res?.message || t("calendar.googleSyncError"));
+                                            return;
+                                        }
+                                        fetchEvents();
+                                    } catch (err) {
+                                        info.revert();
+                                        window.alert(err?.response?.data?.message || t("calendar.googleSyncError"));
+                                    }
+                                }}
                                 datesSet={fetchEvents}
                                 longPressDelay={350}
                                 selectLongPressDelay={350}

@@ -1,0 +1,24 @@
+.lw-calendarInvite {
+  max-width: 32rem;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  direction: rtl;
+}
+
+.lw-calendarInvite__nav {
+  display: flex;
+  gap: 1rem;
+  a {
+    color: #2A4365;
+    font-weight: 600;
+  }
+}
+
+.lw-calendarInvite__actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
