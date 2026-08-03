@@ -18,3 +18,24 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_holidays_date_day_title
 
 CREATE INDEX IF NOT EXISTS idx_holidays_date_day
   ON holidays_date (holiday_date);
+
+DO $$
+DECLARE
+    role_name TEXT;
+BEGIN
+    FOREACH role_name IN ARRAY ARRAY['liroym', 'neondb_owner', 'morlevy_app', 'ashrafessa_app']
+    LOOP
+        IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = role_name) THEN
+            CONTINUE;
+        END IF;
+        EXECUTE format(
+            'GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.holidays_date TO %I',
+            role_name
+        );
+        EXECUTE format(
+            'GRANT USAGE, SELECT ON SEQUENCE public.holidays_date_id_seq TO %I',
+            role_name
+        );
+    END LOOP;
+END $$;
+
