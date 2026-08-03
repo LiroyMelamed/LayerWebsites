@@ -65,7 +65,7 @@ function channelsToString(set) {
  * Per-lawyer calendar sync + personal daily agenda digest.
  * Opened from CalendarScreen only (not Platform Settings).
  */
-export default function PersonalSyncModal({ closePopUpFunction, onEventsChanged }) {
+export default function PersonalSyncModal({ onEventsChanged }) {
     const { t } = useTranslation();
 
     const [icalToken, setIcalToken] = useState(null);
@@ -510,10 +510,6 @@ export default function PersonalSyncModal({ closePopUpFunction, onEventsChanged 
                             )}
                         </>
                     )}
-                </SimpleContainer>
-
-                <SimpleContainer className="lw-personalSyncModal__buttonsRow">
-                    <SecondaryButton onPress={closePopUpFunction}>{t("common.close")}</SecondaryButton>
                 </SimpleContainer>
             </SimpleScrollView>
         </SimpleContainer>
