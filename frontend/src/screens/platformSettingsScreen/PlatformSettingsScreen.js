@@ -1657,6 +1657,44 @@ export default function PlatformSettingsScreen() {
                         </SimpleContainer>
                     </SimpleCard>
 
+                    {/* Visible clock range on the calendar grid */}
+                    <SimpleCard className="lw-platformSettings__card">
+                        <TextBold18>{t("platformSettings.calendarVisibleHoursTitle")}</TextBold18>
+                        <Text12 className="lw-platformSettings__settingDescription">
+                            {t("platformSettings.calendarVisibleHoursHint")}
+                        </Text12>
+                        <SimpleContainer className="lw-platformSettings__settingsList">
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">
+                                        {t("platformSettings.calendarVisibleHoursStart")}
+                                    </TextBold14>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "time", label: t("platformSettings.calendarVisibleHoursStart") }}
+                                        value={getVal("CALENDAR_VISIBLE_HOURS_START", "05:00")}
+                                        onChange={(val) => handleChange("CALENDAR_VISIBLE_HOURS_START", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">
+                                        {t("platformSettings.calendarVisibleHoursEnd")}
+                                    </TextBold14>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "time", label: t("platformSettings.calendarVisibleHoursEnd") }}
+                                        value={getVal("CALENDAR_VISIBLE_HOURS_END", "22:00")}
+                                        onChange={(val) => handleChange("CALENDAR_VISIBLE_HOURS_END", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                        </SimpleContainer>
+                    </SimpleCard>
+
                     {/* Per-day working hours */}
                     <SimpleCard className="lw-platformSettings__card">
                         <TextBold18>{t("platformSettings.workingHoursByDayTitle")}</TextBold18>

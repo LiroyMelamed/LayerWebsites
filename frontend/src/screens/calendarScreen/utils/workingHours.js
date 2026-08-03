@@ -12,10 +12,25 @@ export const WEEKDAY_LABELS = [
 
 const DEFAULT_START = "08:00";
 const DEFAULT_END = "18:00";
+const DEFAULT_VISIBLE_START = "05:00";
+const DEFAULT_VISIBLE_END = "22:00";
 
 function normalizeTime(str, fallback) {
     const m = /^(\d{2}):(\d{2})/.exec(String(str || ""));
     return m ? `${m[1]}:${m[2]}` : fallback;
+}
+
+/** HH:MM → FullCalendar slot time (HH:MM:SS). */
+function toSlotTime(hhmm) {
+    return `${normalizeTime(hhmm, "00:00")}:00`;
+}
+
+function hhmmToMinutes(hhmm) {
+    const n = normalizeTime(hhmm, null);
+    if (!n) return null;
+    const [h, m] = n.split(":").map((x) => parseInt(x, 10));
+    if (!Number.isInteger(h) || !Number.isInteger(m)) return null;
+    return h * 60 + m;
 }
 
 function parseWorkingDays(daysRaw) {
@@ -101,12 +116,6 @@ export function serializeSchedule(schedule) {
     return JSON.stringify(out);
 }
 
-function hhmmToMinutes(str) {
-    const m = /^(\d{2}):(\d{2})/.exec(String(str || ""));
-    if (!m) return null;
-    return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
-}
-
 function minutesToHhmm(mins) {
     const h = Math.floor(mins / 60);
     const m = mins % 60;
@@ -149,11 +158,44 @@ export function getBusinessHours(schedule) {
         }));
 }
 
-export function getSlotRange(_schedule) {
-    // Fixed visible day window — working hours only shade slots inside this range.
+/**
+ * Visible clock range for FullCalendar (slotMinTime / slotMaxTime).
+ * Platform admin sets CALENDAR_VISIBLE_HOURS_START / _END.
+ */
+export function parseVisibleSlotRangeFromSettings(calSettings = {}) {
+    let start = normalizeTime(
+        calSettings?.CALENDAR_VISIBLE_HOURS_START?.effectiveValue
+            ?? calSettings?.CALENDAR_VISIBLE_HOURS_START,
+        DEFAULT_VISIBLE_START,
+    );
+    let end = normalizeTime(
+        calSettings?.CALENDAR_VISIBLE_HOURS_END?.effectiveValue
+            ?? calSettings?.CALENDAR_VISIBLE_HOURS_END,
+        DEFAULT_VISIBLE_END,
+    );
+    const startMin = hhmmToMinutes(start);
+    const endMin = hhmmToMinutes(end);
+    if (startMin == null || endMin == null || endMin <= startMin) {
+        start = DEFAULT_VISIBLE_START;
+        end = DEFAULT_VISIBLE_END;
+    }
+    return { min: toSlotTime(start), max: toSlotTime(end), start, end };
+}
+
+export function getSlotRange(scheduleOrRange) {
+    if (scheduleOrRange && typeof scheduleOrRange === "object"
+        && (scheduleOrRange.min || scheduleOrRange.start)) {
+        if (scheduleOrRange.min && scheduleOrRange.max) {
+            return { min: scheduleOrRange.min, max: scheduleOrRange.max };
+        }
+        return parseVisibleSlotRangeFromSettings({
+            CALENDAR_VISIBLE_HOURS_START: scheduleOrRange.start,
+            CALENDAR_VISIBLE_HOURS_END: scheduleOrRange.end,
+        });
+    }
     return {
-        min: "05:00:00",
-        max: "22:00:00",
+        min: toSlotTime(DEFAULT_VISIBLE_START),
+        max: toSlotTime(DEFAULT_VISIBLE_END),
     };
 }
 
