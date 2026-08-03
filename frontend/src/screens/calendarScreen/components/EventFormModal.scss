@@ -112,6 +112,7 @@
 .lw-eventFormModal__actions {
     @include m.row(v.$space-3);
     flex-wrap: wrap;
+    justify-content: flex-end; // physical left in RTL popup
     margin-block-start: v.$space-6;
     padding-block-start: v.$space-4;
     border-block-start: 0.0625rem solid rgba(226, 232, 240, 0.8);
