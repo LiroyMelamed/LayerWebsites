@@ -660,6 +660,99 @@ const listHolidays = async (req, res) => {
     }
 };
 
+function _normalizeAgendaChannels(raw) {
+    const set = new Set(
+        String(raw || '')
+            .toLowerCase()
+            .split(/[,;\s]+/)
+            .map((s) => s.trim())
+            .filter((s) => s === 'email' || s === 'sms')
+    );
+    const ordered = [];
+    if (set.has('email')) ordered.push('email');
+    if (set.has('sms')) ordered.push('sms');
+    return ordered.length ? ordered.join(',') : 'email';
+}
+
+function _normalizeAgendaSendTime(raw) {
+    const m = String(raw || '07:30').trim().match(/^(\d{1,2}):(\d{2})$/);
+    if (!m) return '07:30';
+    const hh = Math.min(23, Math.max(0, parseInt(m[1], 10)));
+    const mm = Math.min(59, Math.max(0, parseInt(m[2], 10)));
+    return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+
+/**
+ * GET /api/calendar/daily-agenda-settings
+ * Current lawyer/admin daily agenda digest preferences.
+ */
+const getDailyAgendaSettings = async (req, res) => {
+    const userId = req.user.UserId;
+    try {
+        const { rows } = await pool.query(
+            `SELECT enabled, channels, recipients, send_time, last_sent_date
+             FROM user_daily_agenda_settings WHERE user_id = $1`,
+            [userId]
+        );
+        const row = rows[0];
+        return res.json({
+            success: true,
+            settings: {
+                enabled: row?.enabled === true,
+                channels: row?.channels || 'email',
+                recipients: row?.recipients || '',
+                sendTime: row?.send_time || '07:30',
+                lastSentDate: row?.last_sent_date || '',
+            },
+        });
+    } catch (err) {
+        console.error('[calendarController] getDailyAgendaSettings error:', err.message);
+        return res.status(500).json({ message: 'שגיאה בשליפת הגדרות יומן יומי' });
+    }
+};
+
+/**
+ * PUT /api/calendar/daily-agenda-settings
+ * Upsert current lawyer/admin daily agenda digest preferences.
+ */
+const updateDailyAgendaSettings = async (req, res) => {
+    const userId = req.user.UserId;
+    try {
+        const enabled = req.body?.enabled === true || req.body?.enabled === 'true' || req.body?.enabled === 1;
+        const channels = _normalizeAgendaChannels(req.body?.channels);
+        const recipients = String(req.body?.recipients ?? '').trim();
+        const sendTime = _normalizeAgendaSendTime(req.body?.sendTime ?? req.body?.send_time);
+
+        const { rows } = await pool.query(
+            `INSERT INTO user_daily_agenda_settings
+                (user_id, enabled, channels, recipients, send_time, updated_at)
+             VALUES ($1, $2, $3, $4, $5, NOW())
+             ON CONFLICT (user_id) DO UPDATE SET
+                enabled = EXCLUDED.enabled,
+                channels = EXCLUDED.channels,
+                recipients = EXCLUDED.recipients,
+                send_time = EXCLUDED.send_time,
+                updated_at = NOW()
+             RETURNING enabled, channels, recipients, send_time, last_sent_date`,
+            [userId, enabled, channels, recipients, sendTime]
+        );
+        const row = rows[0];
+        return res.json({
+            success: true,
+            settings: {
+                enabled: row.enabled === true,
+                channels: row.channels,
+                recipients: row.recipients || '',
+                sendTime: row.send_time,
+                lastSentDate: row.last_sent_date || '',
+            },
+        });
+    } catch (err) {
+        console.error('[calendarController] updateDailyAgendaSettings error:', err.message);
+        return res.status(500).json({ message: 'שגיאה בשמירת הגדרות יומן יומי' });
+    }
+};
+
 /**
  * POST /api/calendar
  * Create a new calendar event.
@@ -2615,6 +2708,8 @@ module.exports = {
     listEvents,
     getTodayAndTomorrow,
     listHolidays,
+    getDailyAgendaSettings,
+    updateDailyAgendaSettings,
     createEvent,
     getEvent,
     updateEvent,
