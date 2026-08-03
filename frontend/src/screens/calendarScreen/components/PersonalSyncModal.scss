@@ -102,9 +102,3 @@
         }
     }
 }
-
-.lw-personalSyncModal__buttonsRow {
-    @include m.row(v.$space-2);
-    justify-content: flex-end;
-    margin-block-start: v.$space-2;
-}
