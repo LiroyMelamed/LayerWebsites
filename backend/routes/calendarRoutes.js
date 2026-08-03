@@ -60,6 +60,8 @@ router.post('/', ...protect, cal.createEvent);
 // Named routes BEFORE /:id so Express doesn't swallow them as id params
 router.get('/today', ...protect, cal.getTodayAndTomorrow);
 router.get('/holidays', ...protect, cal.listHolidays);
+router.get('/daily-agenda-settings', ...protect, cal.getDailyAgendaSettings);
+router.put('/daily-agenda-settings', ...protect, cal.updateDailyAgendaSettings);
 router.get('/agenda/:date', ...protect, cal.getDayAgenda);
 
 // Public invite RSVP (no auth)
