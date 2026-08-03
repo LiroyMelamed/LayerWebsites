@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
 import SimpleInput from "../../../components/simpleComponents/SimpleInput";
@@ -1071,9 +1071,68 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const showCaseLinker = showExistingClientFields && !!linkedClientId;
     const showConflictBanner = !isInternalScopedType && (conflictState.hasConflict || conflictState.hasLeaveConflict);
 
+    const modalRootRef = useRef(null);
+    const prevPopupHeightRef = useRef(null);
+    const sizeMorphCleanupRef = useRef(null);
+    // Compact (חופשה/חג) ↔ full form is the size jump users notice.
+    const layoutMode = caseFormDraft
+        ? "case"
+        : (isInternalScopedType ? "compact" : "full");
+
+    // Smoothly morph the outer SimplePopUp card height when form density changes.
+    useLayoutEffect(() => {
+        const root = modalRootRef.current;
+        if (!root) return undefined;
+        const popup = root.closest(".lw-simplePopUp__container");
+        if (!popup) return undefined;
+
+        if (typeof sizeMorphCleanupRef.current === "function") {
+            sizeMorphCleanupRef.current();
+            sizeMorphCleanupRef.current = null;
+        }
+
+        popup.style.height = "";
+        const nextH = Math.round(popup.getBoundingClientRect().height);
+        const prevH = prevPopupHeightRef.current;
+
+        if (prevH != null && Math.abs(prevH - nextH) > 2) {
+            popup.classList.add("lw-simplePopUp__container--sizeMorph");
+            popup.style.overflow = "hidden";
+            popup.style.height = `${prevH}px`;
+            // Force reflow, then ease to the new natural height.
+            void popup.offsetHeight;
+            popup.style.height = `${nextH}px`;
+
+            let finished = false;
+            let safety = 0;
+            const finish = (e) => {
+                if (finished) return;
+                if (e && e.propertyName && e.propertyName !== "height") return;
+                finished = true;
+                window.clearTimeout(safety);
+                popup.style.height = "";
+                popup.style.overflow = "";
+                popup.classList.remove("lw-simplePopUp__container--sizeMorph");
+                popup.removeEventListener("transitionend", finish);
+                sizeMorphCleanupRef.current = null;
+            };
+            safety = window.setTimeout(() => finish({ propertyName: "height" }), 420);
+            popup.addEventListener("transitionend", finish);
+            sizeMorphCleanupRef.current = () => finish({ propertyName: "height" });
+        }
+
+        prevPopupHeightRef.current = nextH;
+        return () => {
+            if (typeof sizeMorphCleanupRef.current === "function") {
+                sizeMorphCleanupRef.current();
+                sizeMorphCleanupRef.current = null;
+            }
+        };
+    }, [layoutMode, eventType, showConflictBanner, showLeadFields, showExistingClientFields, showManagersField, isReminderEventType]);
+
     if (caseFormDraft) {
         return (
-            <SimpleContainer className="lw-eventFormModal lw-eventFormModal--caseForm">
+            <SimpleContainer ref={modalRootRef} className="lw-eventFormModal lw-eventFormModal--caseForm">
                 <SimpleContainer className="lw-eventFormModal__header">
                     <Text24>{t("calendar.createCaseFromLead")}</Text24>
                     {successMsg && (
@@ -1104,7 +1163,10 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     }
 
     return (
-        <SimpleContainer className="lw-eventFormModal">
+        <SimpleContainer
+            ref={modalRootRef}
+            className={`lw-eventFormModal lw-eventFormModal--${layoutMode}`}
+        >
             <SimpleScrollView>
 
                 {/* ─── Header ─── */}
@@ -1141,7 +1203,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     </SimpleContainer>
                 )}
 
-                <SimpleContainer className="lw-eventFormModal__body">
+                <SimpleContainer className="lw-eventFormModal__body lw-eventFormModal__body--layoutTween">
 
                     {/* ─── Event-type segmented (appointment / leave / hearing / reminder) ─── */}
                     <div className="lw-eventFormModal__field">
