@@ -1921,27 +1921,36 @@ export default function PlatformSettingsScreen() {
                                             </TextBold14>
                                         </SimpleContainer>
                                         <SimpleContainer className="lw-platformSettings__settingInput" style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
-                                            {presets.map((hex) => (
+                                            {presets.map((hex) => {
+                                                const selected = current.toUpperCase() === hex.toUpperCase();
+                                                return (
                                                 <button
                                                     key={hex}
                                                     type="button"
                                                     title={hex}
                                                     aria-label={hex}
+                                                    aria-pressed={selected}
                                                     onClick={() => {
                                                         const next = { ...colors, [typeKey]: hex };
                                                         handleChange("CALENDAR_EVENT_TYPE_COLORS", JSON.stringify(next));
                                                     }}
                                                     style={{
-                                                        width: "1.5rem",
-                                                        height: "1.5rem",
+                                                        width: "1.75rem",
+                                                        height: "1.75rem",
                                                         borderRadius: "999px",
-                                                        border: current.toUpperCase() === hex.toUpperCase() ? "2px solid #1A202C" : "2px solid transparent",
+                                                        border: selected ? "3px solid #1A202C" : "2px solid rgba(26, 32, 44, 0.15)",
+                                                        boxShadow: selected
+                                                            ? "0 0 0 3px #FFFFFF, 0 0 0 6px #2A4365"
+                                                            : "none",
                                                         background: hex,
                                                         cursor: "pointer",
                                                         padding: 0,
+                                                        outline: "none",
+                                                        transform: selected ? "scale(1.08)" : "none",
                                                     }}
                                                 />
-                                            ))}
+                                                );
+                                            })}
                                         </SimpleContainer>
                                     </SimpleContainer>
                                 );
