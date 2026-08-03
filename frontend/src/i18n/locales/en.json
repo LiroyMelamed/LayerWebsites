@@ -764,7 +764,8 @@
     },
     "public": {
       "closedTitle": "Closed",
-      "closedHint": "You can close this window."
+      "closedHint": "You can close this window.",
+      "loadingDocument": "Loading document for signing..."
     },
     "pdf": {
       "loading": "Loading PDF…",
@@ -818,6 +819,7 @@
       "otpInvalidFormat": "Please enter a 6-digit code",
       "otpVerified": "Code verified successfully",
       "otpVerifyError": "Error verifying code",
+      "otpWaitBeforeResend": "Please wait 30 seconds before requesting another code",
       "rejectReasonPrompt": "What is the reason for rejecting the document?",
       "documentRejected": "The document was rejected and the lawyer was notified",
       "rejectError": "Error rejecting the document",
@@ -1133,12 +1135,12 @@
   },
   "platformSettings": {
     "smsSenderChangeTitle": "Update SMS sender number",
-    "smsSenderChangeMessage": "Changing the sender number may take up to 24 hours to take effect, and a technical team member will call you to verify the request. The current number stays active until approval.",
+    "smsSenderChangeMessage": "Changing the SMS sender number may take up to 24 hours, and our technical team will call to verify. The current number stays active until approval. The alphanumeric sender name (if set) is separate.",
     "smsSenderChangeConfirm": "Send request",
     "smsSenderRequestSent": "Request sent. Our technical team will contact you.",
     "smsSenderPending": "Pending verification",
-    "smsSenderActivate": "Activate sender",
-    "smsSenderActivated": "Sender activated successfully",
+    "smsSenderActivate": "Activate sender number",
+    "smsSenderActivated": "SMS sender number activated successfully",
     "docTitlePlaceholder": "Document name (optional)",
     "chooseFile": "Choose File",
     "uploading": "Uploading and processing document...",
@@ -1156,7 +1158,7 @@
     "emailOverridePlaceholder": "Override email (empty = use default)",
     "smsOverridePlaceholder": "Override SMS (empty = use default)",
     "workingHoursByDayTitle": "Working hours by day",
-    "workingHoursByDayHint": "Set whether the firm is open each weekday and the hours for that day. Closed days are hidden from the calendar.",
+    "workingHoursByDayHint": "Visual guidance only (hours outside these times are shaded on the calendar). All weekdays stay visible, and events can be created outside these hours.",
     "workingHoursDayCol": "Day",
     "workingHoursOpenCol": "Open",
     "workingHoursStartCol": "Start",

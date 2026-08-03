@@ -24,13 +24,52 @@ const PALETTE = [
 /** Preset swatches for the event form (no free-form color picker). */
 export const EVENT_COLOR_PRESETS = [...PALETTE];
 
+/** Built-in fallbacks — must match migration CALENDAR_EVENT_TYPE_COLORS defaults. */
+export const DEFAULT_EVENT_TYPE_COLORS = {
+    appointment: '#2A4365',
+    hearing: '#B83280',
+    leave: '#718096',
+    holiday: '#B7791F',
+    reminder: '#3182CE',
+};
+
+/**
+ * Platform-admin default color for an event type.
+ * Reads live settings from window.__CALENDAR_TYPE_COLORS__ when available.
+ */
+export function getEventTypeDefaultColor(eventType) {
+    const key = String(eventType || 'appointment').trim().toLowerCase();
+    const live =
+        (typeof window !== 'undefined' && window.__CALENDAR_TYPE_COLORS__ && typeof window.__CALENDAR_TYPE_COLORS__ === 'object')
+            ? window.__CALENDAR_TYPE_COLORS__
+            : null;
+    const fromLive = live?.[key];
+    if (typeof fromLive === 'string' && /^#[0-9a-fA-F]{6}$/.test(fromLive.trim())) {
+        return fromLive.trim().toUpperCase();
+    }
+    return (DEFAULT_EVENT_TYPE_COLORS[key] || DEFAULT_EVENT_TYPE_COLORS.appointment).toUpperCase();
+}
+
+/**
+ * True when the stored color is empty / the type default / a legacy navy default —
+ * i.e. not a lawyer-chosen custom swatch.
+ */
+export function isStockEventColor(storedRaw, eventType) {
+    const stored = String(storedRaw || '').trim().toUpperCase();
+    if (!stored) return true;
+    const key = String(eventType || 'appointment').trim().toLowerCase();
+    const typeDefault = getEventTypeDefaultColor(key).toUpperCase();
+    const builtin = (DEFAULT_EVENT_TYPE_COLORS[key] || '').toUpperCase();
+    if (stored === typeDefault || stored === builtin) return true;
+    // Legacy form always saved navy — not a real custom pick when type default differs.
+    if (stored === '#2A4365' && typeDefault !== '#2A4365') return true;
+    return false;
+}
+
 export function isPresetEventColor(color) {
     const c = String(color || '').trim().toUpperCase();
     return EVENT_COLOR_PRESETS.some((p) => p.toUpperCase() === c);
 }
-
-const LEAVE_COLOR = '#718096'; // muted slate gray — distinct from any lawyer color
-const HOLIDAY_COLOR = '#B7791F'; // warm amber — distinct from leave and lawyer palette
 
 function _hash(input) {
     const str = String(input ?? '');
@@ -54,12 +93,12 @@ export function colorKeyForEvent(ev) {
 
 /** Color reserved for leave/vacation events — visually distinct from any lawyer. */
 export function leaveColor() {
-    return LEAVE_COLOR;
+    return getEventTypeDefaultColor('leave');
 }
 
 /** Color reserved for firm holidays — visually distinct from leave and lawyer colors. */
 export function holidayColor() {
-    return HOLIDAY_COLOR;
+    return getEventTypeDefaultColor('holiday');
 }
 
 /** Build a legend payload `{ id, name, color }[]` from a list of lawyers. */

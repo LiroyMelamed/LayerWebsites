@@ -37,7 +37,7 @@ import SegmentedSwitch from "../../components/styledComponents/SegmentedSwitch";
 
 import EventFormModal from "./components/EventFormModal";
 import PersonalSyncModal from "./components/PersonalSyncModal";
-import { colorForKey, colorKeyForEvent, leaveColor, holidayColor, buildLawyerLegend } from "./utils/lawyerColors";
+import { colorForKey, colorKeyForEvent, leaveColor, holidayColor, buildLawyerLegend, getEventTypeDefaultColor, isStockEventColor } from "./utils/lawyerColors";
 import { buildNewEventPrefill } from "./utils/eventDefaults";
 import {
     defaultSchedule,
@@ -128,8 +128,8 @@ function buildHolidayHintEvent(h, t) {
         end,
         allDay: true,
         display: "background",
-        backgroundColor: "#B7791F",
-        borderColor: "#B7791F",
+        backgroundColor: holidayColor(),
+        borderColor: holidayColor(),
         classNames: ["lw-fcEvent--holiday", "lw-fcEvent--holidayHint"],
         editable: false,
         startEditable: false,
@@ -159,17 +159,12 @@ function buildFullCalendarEvent(ev, { scope }) {
         });
     }
 
-    // Appointments: color by owner in firm view, otherwise honor stored color,
-    // then type defaults from platform settings, then heuristics.
-    const text = `${String(ev?.title || "")} ${String(ev?.description || "")}`;
-    const typeDefaults = (typeof window !== "undefined" && window.__CALENDAR_TYPE_COLORS__) || {};
-    const typeDefault = typeDefaults[ev?.eventType] || null;
-    const personalInferred =
-        ev?.color ||
-        typeDefault ||
-        (/(חופשה|vacation|pto|holiday)/i.test(text) ? "#2F855A"
-            : /(דיון|court|hearing)/i.test(text) ? "#B83280"
-                : "#2A4365");
+    // Appointments: color by owner in firm view, otherwise honor a *custom*
+    // stored color. Stock / empty / legacy-navy colors follow platform type defaults.
+    const typeDefault = getEventTypeDefaultColor(ev?.eventType);
+    const personalInferred = isStockEventColor(ev?.color, ev?.eventType)
+        ? typeDefault
+        : String(ev.color).trim().toUpperCase();
 
     // Firm view: color by manager (מי בפגישה?) so legend matches who handles the event.
     const color = scope === SCOPE_FIRM
@@ -300,7 +295,7 @@ export default function CalendarScreen() {
         return () => { cancelled = true; };
     }, [canUseFirmView]);
 
-    // ── Load firm per-day working hours from platform settings ─────────────
+    // ── Load firm working hours + per-type default colors ─────────────────
     useEffect(() => {
         let cancelled = false;
         (async () => {
@@ -314,11 +309,30 @@ export default function CalendarScreen() {
                     const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
                     if (parsed && typeof parsed === "object") {
                         window.__CALENDAR_TYPE_COLORS__ = parsed;
+                        // Rebuild colors now that admin defaults are available
+                        // (first fetch may have raced ahead of this settings call).
+                        setEvents((prev) => prev.map((fc) => {
+                            const rawEv = fc?.extendedProps;
+                            if (!rawEv || rawEv.hint) {
+                                if (rawEv?.holiday || fc?.classNames?.includes?.("lw-fcEvent--holidayHint")) {
+                                    return {
+                                        ...fc,
+                                        backgroundColor: holidayColor(),
+                                        borderColor: holidayColor(),
+                                    };
+                                }
+                                return fc;
+                            }
+                            return buildFullCalendarEvent(rawEv, {
+                                scope: apiFilters.scope || SCOPE_MINE,
+                            });
+                        }));
                     }
                 } catch { /* ignore */ }
             } catch { /* keep defaults */ }
         })();
         return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- apply once on mount; scope rebuild happens via fetch
     }, []);
 
     // ── Filter assembly ─────────────────────────────────────────────────────
@@ -426,8 +440,8 @@ export default function CalendarScreen() {
     }, [searchParams, setSearchParams]);
 
     // ── FullCalendar config ────────────────────────────────────────────────
-    // Keep closed weekdays visible (weekends included) while still shading
-    // non-working hours via businessHours.
+    // All weekdays stay visible. Working hours only shade non-open times
+    // (visual guidance) — they do not hide days or block creating events.
     const businessHours = useMemo(() => getBusinessHours(workingSchedule), [workingSchedule]);
 
     const slotRange = useMemo(() => getSlotRange(workingSchedule), [workingSchedule]);
