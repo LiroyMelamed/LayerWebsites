@@ -113,6 +113,31 @@ function buildInternalAllDayEvent(ev, { labelPrefix, color, className }) {
     };
 }
 
+function buildHolidayHintEvent(h, t) {
+    const date = String(h?.date || "").slice(0, 10);
+    if (!date) return null;
+    const title = h?.title || h?.titleEn || t?.("calendar.holidayHintPrefix") || "חג";
+    // FullCalendar exclusive end for all-day
+    const endDate = new Date(`${date}T12:00:00`);
+    endDate.setDate(endDate.getDate() + 1);
+    const end = endDate.toISOString().slice(0, 10);
+    return {
+        id: `holiday-hint-${h.id || date}-${title}`,
+        title: `[חג] ${title}`,
+        start: date,
+        end,
+        allDay: true,
+        display: "background",
+        backgroundColor: "#B7791F",
+        borderColor: "#B7791F",
+        classNames: ["lw-fcEvent--holiday", "lw-fcEvent--holidayHint"],
+        editable: false,
+        startEditable: false,
+        durationEditable: false,
+        extendedProps: { hint: true, holiday: true, ...h },
+    };
+}
+
 function buildFullCalendarEvent(ev, { scope }) {
     const isLeave = ev?.eventType === "leave";
     const isHoliday = ev?.eventType === "holiday";
@@ -322,9 +347,20 @@ export default function CalendarScreen() {
         fetchRangeRef.current = { from, to };
 
         try {
-            const res = await calendarApi.listEvents({ from, to, limit: 500, ...apiFilters });
+            const [res, holidaysRes] = await Promise.all([
+                calendarApi.listEvents({ from, to, limit: 500, ...apiFilters }),
+                calendarApi.listHolidays({
+                    from: String(from).slice(0, 10),
+                    to: String(to).slice(0, 10),
+                }).catch(() => null),
+            ]);
             const list = res?.data?.events || [];
-            setEvents(list.map((ev) => buildFullCalendarEvent(ev, { scope: apiFilters.scope || SCOPE_MINE })));
+            const scopeKey = apiFilters.scope || SCOPE_MINE;
+            const built = list.map((ev) => buildFullCalendarEvent(ev, { scope: scopeKey }));
+            const holidayHints = (holidaysRes?.data?.holidays || [])
+                .map((h) => buildHolidayHintEvent(h))
+                .filter(Boolean);
+            setEvents([...holidayHints, ...built]);
         } catch {
             // leave the last successful calendar state visible
         }
@@ -461,6 +497,8 @@ export default function CalendarScreen() {
 
     const openEditModal = useCallback((clickInfo) => {
         const ev = clickInfo.event.extendedProps || {};
+        // Hebcal holiday hints are display-only background events.
+        if (ev.hint) return;
         const eventPayload = {
             ...ev,
             id: Number(clickInfo.event.id),

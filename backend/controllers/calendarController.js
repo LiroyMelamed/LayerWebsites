@@ -641,6 +641,26 @@ const getTodayAndTomorrow = async (req, res) => {
 };
 
 /**
+ * GET /api/calendar/holidays?from=YYYY-MM-DD&to=YYYY-MM-DD
+ * Hebcal-synced holiday hints for the calendar grid (read-only background).
+ */
+const listHolidays = async (req, res) => {
+    try {
+        const { listHolidaysInRange } = require('../lib/hebcalHolidays');
+        const from = String(req.query.from || '').trim();
+        const to = String(req.query.to || '').trim();
+        if (!from || !to) {
+            return res.status(400).json({ message: 'נדרשים from ו-to (YYYY-MM-DD)' });
+        }
+        const holidays = await listHolidaysInRange(from, to);
+        return res.json({ success: true, holidays });
+    } catch (err) {
+        console.error('[calendarController] listHolidays error:', err.message);
+        return res.status(500).json({ message: 'שגיאה בשליפת חגים' });
+    }
+};
+
+/**
  * POST /api/calendar
  * Create a new calendar event.
  *
@@ -2594,6 +2614,7 @@ module.exports = {
     // CRUD
     listEvents,
     getTodayAndTomorrow,
+    listHolidays,
     createEvent,
     getEvent,
     updateEvent,

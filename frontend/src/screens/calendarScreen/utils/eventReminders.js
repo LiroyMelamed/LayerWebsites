@@ -20,9 +20,12 @@ export const REMINDER_PRESETS = [
 
 const DEFAULT_ALLOWED = [15, 30, 60, 120, 1440, 2880, 10080];
 
+/** Yellow-marked create defaults: 30m, 1h, 2h, 1d, 2d (not 15m / 1w). */
+export const DEFAULT_CREATE_REMINDER_OFFSETS = [30, 60, 120, 1440, 2880];
+
 /** Default offsets selected on new appointment/hearing create. */
 export function defaultReminderOffsets(allowedMinutes = DEFAULT_ALLOWED) {
-    return normalizeSelectedOffsets(allowedMinutes, allowedMinutes);
+    return normalizeSelectedOffsets(DEFAULT_CREATE_REMINDER_OFFSETS, allowedMinutes);
 }
 
 /** Default channels on new create — SMS on. */
