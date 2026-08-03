@@ -149,22 +149,12 @@ export function getBusinessHours(schedule) {
         }));
 }
 
-export function getSlotRange(schedule) {
-    let minStart = null;
-    let maxEnd = null;
-
-    for (let d = 0; d <= 6; d++) {
-        const day = schedule[d];
-        if (!day?.open) continue;
-        const startMin = hhmmToMinutes(day.start);
-        const endMin = hhmmToMinutes(day.end);
-        if (startMin != null && (minStart == null || startMin < minStart)) minStart = startMin;
-        if (endMin != null && (maxEnd == null || endMin > maxEnd)) maxEnd = endMin;
-    }
-
+export function getSlotRange(_schedule) {
+    // Do not clip the calendar time axis to firm hours — show the full day.
+    // Working hours are visual guidance only (businessHours shading).
     return {
-        min: minStart != null ? minutesToHhmm(minStart) : DEFAULT_START,
-        max: maxEnd != null ? minutesToHhmm(maxEnd) : DEFAULT_END,
+        min: "00:00:00",
+        max: "24:00:00",
     };
 }
 
