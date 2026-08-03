@@ -1948,68 +1948,6 @@ export default function PlatformSettingsScreen() {
                             })}
                         </SimpleContainer>
                     </SimpleCard>
-
-                    <SimpleCard className="lw-platformSettings__card">
-                        <TextBold18>{t("calendar.dailyAgendaSettings")}</TextBold18>
-                        <SimpleContainer className="lw-platformSettings__settingsList">
-                            <SimpleContainer className="lw-platformSettings__settingRow">
-                                <SimpleContainer className="lw-platformSettings__settingLabel">
-                                    <TextBold14 className="lw-platformSettings__settingName">
-                                        {t("calendar.dailyAgendaEnabled")}
-                                    </TextBold14>
-                                </SimpleContainer>
-                                <SimpleContainer className="lw-platformSettings__settingInput">
-                                    <SettingInput
-                                        setting={{ valueType: "boolean" }}
-                                        value={getVal("DAILY_AGENDA_ENABLED", "false")}
-                                        onChange={(val) => handleChange("DAILY_AGENDA_ENABLED", val)}
-                                    />
-                                </SimpleContainer>
-                            </SimpleContainer>
-                            <SimpleContainer className="lw-platformSettings__settingRow">
-                                <SimpleContainer className="lw-platformSettings__settingLabel">
-                                    <TextBold14 className="lw-platformSettings__settingName">
-                                        {t("calendar.dailyAgendaChannel")}
-                                    </TextBold14>
-                                </SimpleContainer>
-                                <SimpleContainer className="lw-platformSettings__settingInput">
-                                    <SettingInput
-                                        setting={{ valueType: "string", label: "email / sms" }}
-                                        value={getVal("DAILY_AGENDA_CHANNELS", "email")}
-                                        onChange={(val) => handleChange("DAILY_AGENDA_CHANNELS", val)}
-                                    />
-                                </SimpleContainer>
-                            </SimpleContainer>
-                            <SimpleContainer className="lw-platformSettings__settingRow">
-                                <SimpleContainer className="lw-platformSettings__settingLabel">
-                                    <TextBold14 className="lw-platformSettings__settingName">
-                                        {t("calendar.dailyAgendaRecipients")}
-                                    </TextBold14>
-                                </SimpleContainer>
-                                <SimpleContainer className="lw-platformSettings__settingInput">
-                                    <SettingInput
-                                        setting={{ valueType: "string" }}
-                                        value={getVal("DAILY_AGENDA_RECIPIENTS", "")}
-                                        onChange={(val) => handleChange("DAILY_AGENDA_RECIPIENTS", val)}
-                                    />
-                                </SimpleContainer>
-                            </SimpleContainer>
-                            <SimpleContainer className="lw-platformSettings__settingRow">
-                                <SimpleContainer className="lw-platformSettings__settingLabel">
-                                    <TextBold14 className="lw-platformSettings__settingName">
-                                        {t("calendar.dailyAgendaSendTime")}
-                                    </TextBold14>
-                                </SimpleContainer>
-                                <SimpleContainer className="lw-platformSettings__settingInput">
-                                    <SettingInput
-                                        setting={{ valueType: "string", label: "HH:MM" }}
-                                        value={getVal("DAILY_AGENDA_SEND_TIME", "07:30")}
-                                        onChange={(val) => handleChange("DAILY_AGENDA_SEND_TIME", val)}
-                                    />
-                                </SimpleContainer>
-                            </SimpleContainer>
-                        </SimpleContainer>
-                    </SimpleCard>
                 </SimpleContainer>
             );
         }

@@ -135,6 +135,14 @@ const calendarApi = {
         return await ApiUtils.get(`${base}/holidays${qs ? `?${qs}` : ""}`);
     },
 
+    getDailyAgendaSettings: async () => {
+        return await ApiUtils.get(`${base}/daily-agenda-settings`);
+    },
+
+    updateDailyAgendaSettings: async (payload) => {
+        return await ApiUtils.put(`${base}/daily-agenda-settings`, payload);
+    },
+
     /** Authenticated day agenda (YYYY-MM-DD) */
     getDayAgenda: async (date) => {
         return await ApiUtils.get(`${base}/agenda/${encodeURIComponent(date)}`);
