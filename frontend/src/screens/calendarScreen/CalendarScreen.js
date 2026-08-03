@@ -42,6 +42,7 @@ import { buildNewEventPrefill } from "./utils/eventDefaults";
 import {
     defaultSchedule,
     parseScheduleFromCalendarSettings,
+    parseVisibleSlotRangeFromSettings,
     getBusinessHours,
     getSlotRange,
 } from "./utils/workingHours";
@@ -252,6 +253,7 @@ export default function CalendarScreen() {
 
     // ── Working-hours config (per weekday) ─────────────────────────────────
     const [workingSchedule, setWorkingSchedule] = useState(() => defaultSchedule());
+    const [visibleSlotRange, setVisibleSlotRange] = useState(() => getSlotRange());
 
     // ── Reference data for filter panel ────────────────────────────────────
     const [lawyers, setLawyers] = useState([]);
@@ -304,6 +306,7 @@ export default function CalendarScreen() {
                 const cal = res?.data?.settings?.calendar || res?.settings?.calendar || {};
                 if (cancelled) return;
                 setWorkingSchedule(parseScheduleFromCalendarSettings(cal));
+                setVisibleSlotRange(parseVisibleSlotRangeFromSettings(cal));
                 try {
                     const raw = cal?.CALENDAR_EVENT_TYPE_COLORS?.effectiveValue;
                     const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
@@ -444,7 +447,7 @@ export default function CalendarScreen() {
     // (visual guidance) — they do not hide days or block creating events.
     const businessHours = useMemo(() => getBusinessHours(workingSchedule), [workingSchedule]);
 
-    const slotRange = useMemo(() => getSlotRange(workingSchedule), [workingSchedule]);
+    const slotRange = visibleSlotRange;
 
     // ── Modal helpers ──────────────────────────────────────────────────────
     const upsertLocally = useCallback((saved) => {
