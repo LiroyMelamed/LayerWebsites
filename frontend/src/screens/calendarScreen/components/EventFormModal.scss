@@ -332,27 +332,6 @@
     }
 }
 
-.lw-eventFormModal__locationBlock {
-    display: flex;
-    flex-direction: column;
-    gap: v.$space-2;
-    width: 100%;
-}
-
-.lw-eventFormModal__navLinks {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.lw-eventFormModal__navLink {
-    color: #2A4365;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    text-decoration: underline;
-}
-
 .lw-eventFormModal__colorSwatches {
     display: flex;
     flex-wrap: wrap;

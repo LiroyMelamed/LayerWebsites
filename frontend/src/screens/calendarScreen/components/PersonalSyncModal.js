@@ -6,6 +6,7 @@ import SimpleInput from "../../../components/simpleComponents/SimpleInput";
 import SimpleButton from "../../../components/simpleComponents/SimpleButton";
 import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
+import SegmentedSwitch from "../../../components/styledComponents/SegmentedSwitch";
 import { Text14, Text12, Text24, TextBold14 } from "../../../components/specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../constant/colors";
 import calendarApi from "../../../api/calendarApi";
@@ -13,6 +14,8 @@ import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
 import "./PersonalSyncModal.scss";
 
 const NAVY = "#2A4365";
+const WHITE = "#FFFFFF";
+const CHIP_IDLE = "#2A4365";
 
 function toWebcalUrl(webcalOrHttps) {
     const raw = String(webcalOrHttps || "").trim();
@@ -74,7 +77,6 @@ export default function PersonalSyncModal({ closePopUpFunction, onEventsChanged 
 
     const [agendaEnabled, setAgendaEnabled] = useState(false);
     const [agendaChannels, setAgendaChannels] = useState(() => new Set(["email"]));
-    const [agendaRecipients, setAgendaRecipients] = useState("");
     const [agendaSendTime, setAgendaSendTime] = useState("07:30");
     const [agendaLoading, setAgendaLoading] = useState(false);
     const [agendaSaving, setAgendaSaving] = useState(false);
@@ -109,7 +111,6 @@ export default function PersonalSyncModal({ closePopUpFunction, onEventsChanged 
             const s = res?.data?.settings || res?.settings || {};
             setAgendaEnabled(!!s.enabled);
             setAgendaChannels(parseChannelSet(s.channels || "email"));
-            setAgendaRecipients(s.recipients || "");
             setAgendaSendTime(s.sendTime || "07:30");
         } catch {
             /* keep defaults */
@@ -140,14 +141,13 @@ export default function PersonalSyncModal({ closePopUpFunction, onEventsChanged 
             const res = await calendarApi.updateDailyAgendaSettings({
                 enabled: agendaEnabled,
                 channels: channelsToString(agendaChannels),
-                recipients: agendaRecipients,
+                recipients: "", // always self — lawyer email/phone from profile
                 sendTime: agendaSendTime,
             });
             const s = res?.data?.settings || res?.settings;
             if (s) {
                 setAgendaEnabled(!!s.enabled);
                 setAgendaChannels(parseChannelSet(s.channels || "email"));
-                setAgendaRecipients(s.recipients || "");
                 setAgendaSendTime(s.sendTime || "07:30");
             }
             setAgendaMsg(t("calendar.dailyAgendaSaved"));
@@ -351,17 +351,16 @@ export default function PersonalSyncModal({ closePopUpFunction, onEventsChanged 
                     <TextBold14 color={colors.primary}>{t("calendar.dailyAgendaSettings")}</TextBold14>
                     <Text12 color={colors.winter}>{t("calendar.dailyAgendaPersonalHint")}</Text12>
 
-                    <SimpleContainer className="lw-personalSyncModal__toggleRow">
-                        <Text14 color={NAVY}>{t("calendar.dailyAgendaEnabled")}</Text14>
-                        <SimpleButton
-                            className={`lw-personalSyncModal__chip ${agendaEnabled ? "is-active" : ""}`}
-                            onPress={() => setAgendaEnabled((v) => !v)}
-                            aria-pressed={agendaEnabled}
-                            disabled={agendaLoading}
-                        >
-                            <Text14>{agendaEnabled ? t("platformSettings.active") : t("platformSettings.inactive")}</Text14>
-                        </SimpleButton>
-                    </SimpleContainer>
+                    <SegmentedSwitch
+                        title={t("calendar.dailyAgendaEnabled")}
+                        ariaLabel={t("calendar.dailyAgendaEnabled")}
+                        value={agendaEnabled ? "on" : "off"}
+                        onChange={(next) => setAgendaEnabled(next === "on")}
+                        options={[
+                            { value: "on", label: t("platformSettings.active") },
+                            { value: "off", label: t("platformSettings.inactive") },
+                        ]}
+                    />
 
                     <TextBold14 color={NAVY}>{t("calendar.dailyAgendaChannel")}</TextBold14>
                     <SimpleContainer className="lw-personalSyncModal__chips">
@@ -370,25 +369,20 @@ export default function PersonalSyncModal({ closePopUpFunction, onEventsChanged 
                             onPress={() => toggleAgendaChannel("email")}
                             aria-pressed={agendaChannels.has("email")}
                         >
-                            <Text14>{t("calendar.reminderChannelEmail")}</Text14>
+                            <Text14 color={agendaChannels.has("email") ? WHITE : CHIP_IDLE}>
+                                {t("calendar.reminderChannelEmail")}
+                            </Text14>
                         </SimpleButton>
                         <SimpleButton
                             className={`lw-personalSyncModal__chip ${agendaChannels.has("sms") ? "is-active" : ""}`}
                             onPress={() => toggleAgendaChannel("sms")}
                             aria-pressed={agendaChannels.has("sms")}
                         >
-                            <Text14>{t("calendar.reminderChannelSms")}</Text14>
+                            <Text14 color={agendaChannels.has("sms") ? WHITE : CHIP_IDLE}>
+                                {t("calendar.reminderChannelSms")}
+                            </Text14>
                         </SimpleButton>
                     </SimpleContainer>
-
-                    <SimpleInput
-                        title={t("calendar.dailyAgendaRecipients")}
-                        value={agendaRecipients}
-                        onChange={(e) => setAgendaRecipients(e.target.value)}
-                        timeToWaitInMilli={0}
-                        placeholder={t("calendar.dailyAgendaRecipientsPlaceholder")}
-                    />
-                    <Text12 color="#718096">{t("calendar.dailyAgendaRecipientsHint")}</Text12>
 
                     <SimpleInput
                         title={t("calendar.dailyAgendaSendTime")}

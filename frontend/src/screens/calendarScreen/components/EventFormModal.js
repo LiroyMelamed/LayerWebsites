@@ -33,7 +33,7 @@ import { customersApi } from "../../../api/customersApi";
 import { adminApi } from "../../../api/adminApi";
 import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
 import CaseFullView from "../../../components/styledComponents/cases/CaseFullView";
-import { EVENT_COLOR_PRESETS } from "../utils/lawyerColors";
+import { EVENT_COLOR_PRESETS, getEventTypeDefaultColor, isStockEventColor } from "../utils/lawyerColors";
 import "./EventFormModal.scss";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -50,6 +50,13 @@ const EVENT_TYPE_LEAVE = "leave";
 const EVENT_TYPE_HEARING = "hearing";
 const EVENT_TYPE_REMINDER = "reminder";
 const EVENT_TYPE_HOLIDAY = "holiday";
+
+function resolveFormColor(event, eventType) {
+    const type = eventType || event?.eventType || EVENT_TYPE_APPT;
+    const typeDefault = getEventTypeDefaultColor(type);
+    if (isStockEventColor(event?.color, type)) return typeDefault;
+    return String(event.color).trim().toUpperCase();
+}
 
 const INTERNAL_SCOPED_EVENT_TYPES = [
     EVENT_TYPE_LEAVE,
@@ -191,7 +198,7 @@ function _formStateFromEvent(event) {
         startTime: toDatetimeLocal(event?.startTime) || "",
         endTime: toDatetimeLocal(event?.endTime) || "",
         allDay: event?.allDay || false,
-        color: event?.color || NAVY,
+        color: resolveFormColor(event, event?.eventType || EVENT_TYPE_APPT),
         clientName: event?.clientName || "",
         clientUserId: event?.clientUserId || null,
         managerName: event?.managerName || "",
@@ -242,7 +249,8 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const [startTime, setStartTime] = useState(toDatetimeLocal(event?.startTime) || "");
     const [endTime, setEndTime] = useState(toDatetimeLocal(event?.endTime) || "");
     const [allDay, setAllDay] = useState(event?.allDay || false);
-    const [color, setColor] = useState(event?.color || NAVY);
+    const [color, setColor] = useState(() => resolveFormColor(event, event?.eventType || EVENT_TYPE_APPT));
+    const colorTouchedRef = useRef(!isStockEventColor(event?.color, event?.eventType || EVENT_TYPE_APPT));
 
     // Existing-client / manager fields
     const [clientName, setClientName] = useState(event?.clientName || "");
@@ -281,7 +289,6 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     });
     const [allowedReminderMinutes, setAllowedReminderMinutes] = useState(DEFAULT_ALLOWED_MINUTES);
     const [allowedReminderChannelKeys, setAllowedReminderChannelKeys] = useState(["push", "sms", "email"]);
-    const [firmOfficeAddress, setFirmOfficeAddress] = useState("");
     const [caseFormDraft, setCaseFormDraft] = useState(null);
     const linkedClientLabelRef = useRef(event?.clientName || "");
 
@@ -335,6 +342,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setEndTime(s.endTime);
         setAllDay(s.allDay);
         setColor(s.color);
+        colorTouchedRef.current = !isStockEventColor(event?.color, s.eventType);
         setClientName(s.clientName);
         setClientUserId(s.clientUserId);
         setManagers(_initialManagers(event));
@@ -461,6 +469,10 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         prevEventTypeRef.current = eventType;
         if (isEdit) return;
         if (prevType === eventType) return;
+        // Follow platform type-default color unless the lawyer picked a custom swatch.
+        if (!colorTouchedRef.current) {
+            setColor(getEventTypeDefaultColor(eventType));
+        }
         if (!isReminderCapableEventType(eventType)) return;
         // Coming from leave/holiday (or empty offsets): seed yellow defaults.
         setReminderOffsets((prev) => (
@@ -492,16 +504,26 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 setAllowedReminderMinutes(allowed);
                 const calChannelKeys = parseAllowedChannelsFromSettings(cal);
                 if (calChannelKeys) setAllowedReminderChannelKeys(calChannelKeys);
-                const office =
+                const office = String(
                     branding?.FIRM_OFFICE_ADDRESS?.effectiveValue ||
                     firm?.FIRM_OFFICE_ADDRESS?.effectiveValue ||
                     cal?.FIRM_OFFICE_ADDRESS?.effectiveValue ||
-                    "";
-                if (office) {
-                    setFirmOfficeAddress(String(office).trim());
-                    if (!isEdit) {
-                        setLocation((prev) => (prev && String(prev).trim() ? prev : String(office).trim()));
+                    ""
+                ).trim();
+                // Prefill location for new events only — Waze/Maps links go to the client message, not admin UI.
+                if (office && !isEdit) {
+                    setLocation((prev) => (prev && String(prev).trim() ? prev : office));
+                }
+                try {
+                    const rawColors = cal?.CALENDAR_EVENT_TYPE_COLORS?.effectiveValue;
+                    const parsedColors = typeof rawColors === "string" ? JSON.parse(rawColors) : rawColors;
+                    if (parsedColors && typeof parsedColors === "object") {
+                        window.__CALENDAR_TYPE_COLORS__ = parsedColors;
                     }
+                } catch { /* ignore */ }
+                // On create, apply platform type-default color once settings are known.
+                if (!isEdit && !colorTouchedRef.current) {
+                    setColor(getEventTypeDefaultColor(eventTypeRef.current));
                 }
                 // On create, re-apply defaults against the firm allowlist once settings load.
                 if (!isEdit) {
@@ -718,7 +740,15 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 description: description || null,
                 location: location || null,
                 event_type: eventType,
-                color: color || null,
+                // Persist null when using the platform type default so admin color
+                // changes keep applying until the lawyer picks a custom swatch.
+                color: (() => {
+                    const picked = String(color || "").trim().toUpperCase();
+                    const typeDefault = getEventTypeDefaultColor(eventType).toUpperCase();
+                    if (!colorTouchedRef.current || !picked || picked === typeDefault) return null;
+                    if (isStockEventColor(picked, eventType)) return null;
+                    return picked;
+                })(),
                 start_time: new Date(startTime).toISOString(),
                 end_time: reminderEndIso,
                 all_day: forceAllDay ? true : allDay,
@@ -1176,35 +1206,12 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     </SimpleContainer>
 
                     {!isReminderEventType && (
-                        <SimpleContainer className="lw-eventFormModal__locationBlock">
-                            <SimpleInput
-                                title={t("calendar.location")}
-                                value={location}
-                                onChange={(e) => setLocation(e.target.value)}
-                                timeToWaitInMilli={0}
-                            />
-                            {(location || firmOfficeAddress) && (
-                                <SimpleContainer className="lw-eventFormModal__navLinks">
-                                    <Text12 color="#718096">{t("calendar.navigateToLocation")}:</Text12>
-                                    <a
-                                        className="lw-eventFormModal__navLink"
-                                        href={`https://waze.com/ul?q=${encodeURIComponent(location || firmOfficeAddress)}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        {t("calendar.openInWaze")}
-                                    </a>
-                                    <a
-                                        className="lw-eventFormModal__navLink"
-                                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location || firmOfficeAddress)}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        {t("calendar.openInMaps")}
-                                    </a>
-                                </SimpleContainer>
-                            )}
-                        </SimpleContainer>
+                        <SimpleInput
+                            title={t("calendar.location")}
+                            value={location}
+                            onChange={(e) => setLocation(e.target.value)}
+                            timeToWaitInMilli={0}
+                        />
                     )}
 
                     {isReminderEventType && (
@@ -1596,7 +1603,10 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                     type="button"
                                     className={`lw-eventFormModal__colorSwatch ${String(color).toUpperCase() === hex.toUpperCase() ? "is-active" : ""}`}
                                     style={{ backgroundColor: hex }}
-                                    onClick={() => setColor(hex)}
+                                    onClick={() => {
+                                        colorTouchedRef.current = true;
+                                        setColor(hex);
+                                    }}
                                     aria-label={hex}
                                     title={hex}
                                 />
