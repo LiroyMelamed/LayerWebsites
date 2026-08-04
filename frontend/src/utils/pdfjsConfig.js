@@ -11,6 +11,5 @@ if (!URL.parse) {
     };
 }
 
-// workerSrc - must match runtime pdfjs version
-pdfjs.GlobalWorkerOptions.workerSrc =
-    `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+// Local worker (avoids CDN latency on first PDF open)
+pdfjs.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL || ""}/pdf.worker.min.mjs`;

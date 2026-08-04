@@ -6,11 +6,95 @@ import SimpleLoader from "../../../simpleComponents/SimpleLoader";
 import SignatureSpotsLayer from "../signatureSpots/SignatureSpotsLayer";
 import { useTranslation } from "react-i18next";
 
+/** Spot coordinates are authored against this width; display may be wider. */
 const BASE_RENDER_WIDTH = 800;
+
+function LazyPdfPage({
+    pageNumber,
+    renderWidth,
+    spotScale,
+    spots,
+    onUpdateSpot,
+    onRemoveSpot,
+    onRequestRemove,
+    onSelectSpot,
+    onRequestContext,
+    signers,
+    selectedSpotIndex,
+    selectedSpotId,
+    isFirst,
+    pageContainerRef,
+}) {
+    const wrapRef = useRef(null);
+    const [visible, setVisible] = useState(pageNumber <= 2);
+
+    useEffect(() => {
+        if (visible) return undefined;
+        const el = wrapRef.current;
+        if (!el) return undefined;
+        const io = new IntersectionObserver(
+            (entries) => {
+                if (entries.some((e) => e.isIntersecting)) {
+                    setVisible(true);
+                    io.disconnect();
+                }
+            },
+            { root: null, rootMargin: "900px 0px", threshold: 0.01 }
+        );
+        io.observe(el);
+        return () => io.disconnect();
+    }, [visible]);
+
+    const placeholderHeight = Math.round(renderWidth * 1.35);
+
+    return (
+        <div
+            ref={(node) => {
+                wrapRef.current = node;
+                if (isFirst && pageContainerRef) pageContainerRef.current = node;
+            }}
+            className="lw-signing-pageWrap"
+        >
+            <SimpleContainer className="lw-signing-pageInner" data-page-number={pageNumber}>
+                {visible ? (
+                    <>
+                        <SimpleContainer className="lw-signing-pdfPage">
+                            <Page
+                                pageNumber={pageNumber}
+                                width={renderWidth}
+                                renderTextLayer={false}
+                                renderAnnotationLayer={false}
+                            />
+                        </SimpleContainer>
+                        <SignatureSpotsLayer
+                            pageNumber={pageNumber}
+                            spots={spots}
+                            onUpdateSpot={onUpdateSpot}
+                            onRemoveSpot={onRemoveSpot}
+                            onRequestRemove={onRequestRemove}
+                            onSelectSpot={onSelectSpot}
+                            onRequestContext={onRequestContext}
+                            signers={signers}
+                            scale={spotScale}
+                            selectedSpotIndex={selectedSpotIndex}
+                            selectedSpotId={selectedSpotId}
+                        />
+                    </>
+                ) : (
+                    <div
+                        className="lw-signing-pagePlaceholder"
+                        style={{ width: "100%", maxWidth: renderWidth, height: placeholderHeight }}
+                        aria-hidden="true"
+                    />
+                )}
+            </SimpleContainer>
+        </div>
+    );
+}
 
 /**
  * Single react-pdf Document for all pages — critical on iOS Safari.
- * (One Document per page previously caused repeated WebKit crashes / OOM.)
+ * Lazy-mounts off-screen pages for faster first paint; full container width.
  */
 export default function PdfViewer({
     pdfFile,
@@ -50,7 +134,7 @@ export default function PdfViewer({
     const file = pdfSource || objectUrl;
 
     useEffect(() => {
-        const el = pageContainerRef.current;
+        const el = viewerRef.current;
         if (!el) return;
 
         const update = () => {
@@ -87,8 +171,8 @@ export default function PdfViewer({
         let activePage = null;
         const ratios = new Map();
 
-        const findScrollParent = (el) => {
-            let cur = el;
+        const findScrollParent = (node) => {
+            let cur = node;
             while (cur && cur !== document.body) {
                 const style = window.getComputedStyle(cur);
                 const overflowY = style?.overflowY;
@@ -134,7 +218,7 @@ export default function PdfViewer({
 
     const renderWidth = useMemo(() => {
         const safe = Math.max(280, containerWidth || BASE_RENDER_WIDTH);
-        return Math.min(BASE_RENDER_WIDTH, Math.floor(safe));
+        return Math.floor(Math.min(safe - 16, 1400));
     }, [containerWidth]);
 
     const spotScale = useMemo(() => renderWidth / BASE_RENDER_WIDTH, [renderWidth]);
@@ -177,39 +261,23 @@ export default function PdfViewer({
                 {Array.from({ length: pagesToRender }).map((_, i) => {
                     const pageNumber = i + 1;
                     return (
-                        <SimpleContainer
+                        <LazyPdfPage
                             key={pageNumber}
-                            ref={pageNumber === 1 ? pageContainerRef : undefined}
-                            className="lw-signing-pageWrap"
-                        >
-                            <SimpleContainer
-                                className="lw-signing-pageInner"
-                                data-page-number={pageNumber}
-                            >
-                                <SimpleContainer className="lw-signing-pdfPage">
-                                    <Page
-                                        pageNumber={pageNumber}
-                                        width={renderWidth}
-                                        renderTextLayer={false}
-                                        renderAnnotationLayer={false}
-                                    />
-                                </SimpleContainer>
-
-                                <SignatureSpotsLayer
-                                    pageNumber={pageNumber}
-                                    spots={spots}
-                                    onUpdateSpot={onUpdateSpot}
-                                    onRemoveSpot={onRemoveSpot}
-                                    onRequestRemove={onRequestRemove}
-                                    onSelectSpot={onSelectSpot}
-                                    onRequestContext={onRequestContext}
-                                    signers={signers}
-                                    scale={spotScale}
-                                    selectedSpotIndex={selectedSpotIndex}
-                                    selectedSpotId={selectedSpotId}
-                                />
-                            </SimpleContainer>
-                        </SimpleContainer>
+                            pageNumber={pageNumber}
+                            renderWidth={renderWidth}
+                            spotScale={spotScale}
+                            spots={spots}
+                            onUpdateSpot={onUpdateSpot}
+                            onRemoveSpot={onRemoveSpot}
+                            onRequestRemove={onRequestRemove}
+                            onSelectSpot={onSelectSpot}
+                            onRequestContext={onRequestContext}
+                            signers={signers}
+                            selectedSpotIndex={selectedSpotIndex}
+                            selectedSpotId={selectedSpotId}
+                            isFirst={pageNumber === 1}
+                            pageContainerRef={pageContainerRef}
+                        />
                     );
                 })}
             </Document>

@@ -342,6 +342,9 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         () => String(event?.inviteSms || "").trim() || DEFAULT_INVITE_SMS
     );
     const [smsFirmPhone, setSmsFirmPhone] = useState("");
+    const [smsFirmWazeUrl, setSmsFirmWazeUrl] = useState("");
+    const [smsFirmMapsUrl, setSmsFirmMapsUrl] = useState("");
+    const [smsOfficeAddress, setSmsOfficeAddress] = useState("");
     const [allowedReminderMinutes, setAllowedReminderMinutes] = useState(DEFAULT_ALLOWED_MINUTES);
     const [allowedReminderChannelKeys, setAllowedReminderChannelKeys] = useState(["push", "sms", "email"]);
     const [caseFormDraft, setCaseFormDraft] = useState(null);
@@ -560,6 +563,8 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 const contact = res?.data?.settings?.contact || res?.settings?.contact || {};
                 if (cancelled) return;
                 setSmsFirmPhone(String(contact?.WHATSAPP_PHONE?.effectiveValue || "").trim());
+                setSmsFirmWazeUrl(String(cal?.FIRM_WAZE_URL?.effectiveValue || "").trim());
+                setSmsFirmMapsUrl(String(cal?.FIRM_MAPS_URL?.effectiveValue || "").trim());
                 const allowed = parseAllowedOptionsFromSettings(cal);
                 setAllowedReminderMinutes(allowed);
                 const calChannelKeys = parseAllowedChannelsFromSettings(cal);
@@ -570,6 +575,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     cal?.FIRM_OFFICE_ADDRESS?.effectiveValue ||
                     ""
                 ).trim();
+                setSmsOfficeAddress(office);
                 // Prefill location for new events only — Waze/Maps links go to the client message, not admin UI.
                 if (office && !isEdit) {
                     setLocation((prev) => (prev && String(prev).trim() ? prev : office));
@@ -614,6 +620,8 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const smsPreviewValues = useMemo(() => {
         const start = startTime ? new Date(startTime) : null;
         const validStart = start && !Number.isNaN(start.getTime()) ? start : null;
+        const addr = (location || "").trim() || smsOfficeAddress;
+        const useFirmLinks = !(location || "").trim() || (smsOfficeAddress && addr === smsOfficeAddress);
         return {
             recipientName: (clientName || leadName || "").trim(),
             firmName: getFirmName() || "",
@@ -623,17 +631,16 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             time: validStart
                 ? validStart.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })
                 : "",
-            address: (location || "").trim(),
-            // Short nav/RSVP links are generated on send — show Hebrew stand-ins in the preview.
-            wazeUrl: "",
-            mapsUrl: "",
+            address: addr,
+            wazeUrl: (useFirmLinks && smsFirmWazeUrl) ? smsFirmWazeUrl : "",
+            mapsUrl: (useFirmLinks && smsFirmMapsUrl) ? smsFirmMapsUrl : "",
             rsvpUrl: "",
             firmPhone: smsFirmPhone,
             websiteUrl: typeof window !== "undefined" ? window.location.origin : "",
             lawyerName: (managers?.[0]?.name || "").trim(),
             title: (title || "").trim(),
         };
-    }, [clientName, leadName, startTime, location, smsFirmPhone, managers, title]);
+    }, [clientName, leadName, startTime, location, smsFirmPhone, smsFirmWazeUrl, smsFirmMapsUrl, smsOfficeAddress, managers, title]);
 
     const reminderPresets = presetsForAllowedMinutes(allowedReminderMinutes);
     const reminderChannelOptions = useMemo(

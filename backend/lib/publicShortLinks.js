@@ -25,6 +25,7 @@ function generateSlug(len = 8) {
 
 /**
  * Persist target URL under /n/<slug>. Returns absolute short URL, or targetUrl on failure.
+ * Used for RSVP only — Waze/Maps go direct to the nav app.
  */
 async function createShortLink(targetUrl, kind = 'nav', { expiresAt = null } = {}) {
     const url = String(targetUrl || '').trim();
@@ -79,19 +80,37 @@ function rawMapsUrl(location) {
     return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
 }
 
+function normalizeHttpUrl(url) {
+    const s = String(url || '').trim();
+    if (!s) return '';
+    if (/^https?:\/\//i.test(s)) return s;
+    if (/^waze:\/\//i.test(s)) return s;
+    return '';
+}
+
 /**
- * Build short (or raw fallback) nav URLs for SMS.
+ * Direct Waze/Maps URLs for SMS (never wrapped in /n/).
+ * Prefer firm place links when address is empty or matches the office address.
  * @returns {Promise<{ address: string, wazeUrl: string, mapsUrl: string }>}
  */
-async function buildShortNavUrls(location) {
-    const address = String(location || '').trim();
+async function buildShortNavUrls(location, {
+    officeAddress = '',
+    firmWazeUrl = '',
+    firmMapsUrl = '',
+} = {}) {
+    const address = String(location || '').trim() || String(officeAddress || '').trim();
     if (!address) return { address: '', wazeUrl: '', mapsUrl: '' };
-    const wazeTarget = rawWazeUrl(address);
-    const mapsTarget = rawMapsUrl(address);
-    const [wazeUrl, mapsUrl] = await Promise.all([
-        createShortLink(wazeTarget, 'waze'),
-        createShortLink(mapsTarget, 'maps'),
-    ]);
+
+    const office = String(officeAddress || '').trim();
+    const useFirmLinks = !String(location || '').trim()
+        || (office && address === office);
+
+    const firmWaze = normalizeHttpUrl(firmWazeUrl);
+    const firmMaps = normalizeHttpUrl(firmMapsUrl);
+
+    const wazeUrl = (useFirmLinks && firmWaze) ? firmWaze : rawWazeUrl(address);
+    const mapsUrl = (useFirmLinks && firmMaps) ? firmMaps : rawMapsUrl(address);
+
     return { address, wazeUrl, mapsUrl };
 }
 
@@ -105,12 +124,12 @@ async function buildShortRsvpUrl(inviteToken) {
 }
 
 /** Compact nav block for lawyer auto SMS (not template-driven). */
-async function buildShortNavLinksBlock(location) {
-    const { address, wazeUrl, mapsUrl } = await buildShortNavUrls(location);
+async function buildShortNavLinksBlock(location, opts = {}) {
+    const { address, wazeUrl, mapsUrl } = await buildShortNavUrls(location, opts);
     if (!address) return '';
     let block = `\nמיקום: ${address}`;
-    if (wazeUrl) block += `\nWaze: ${wazeUrl}`;
-    if (mapsUrl) block += `\nMaps: ${mapsUrl}`;
+    if (wazeUrl) block += `\nוויז: ${wazeUrl}`;
+    if (mapsUrl) block += `\nמפות: ${mapsUrl}`;
     return block;
 }
 
