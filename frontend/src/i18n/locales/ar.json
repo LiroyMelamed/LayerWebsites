@@ -1,5 +1,6 @@
 {
   "common": {
+    "loading": "جارٍ التحميل…",
     "language": "اللغة",
     "hebrew": "עברית",
     "arabic": "العربية",
