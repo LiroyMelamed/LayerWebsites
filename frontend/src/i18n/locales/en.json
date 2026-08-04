@@ -766,7 +766,8 @@
     "public": {
       "closedTitle": "Closed",
       "closedHint": "You can close this window.",
-      "loadingDocument": "Loading document for signing..."
+      "loadingDocument": "Loading document for signing...",
+      "openInApp": "Open in app"
     },
     "pdf": {
       "loading": "Loading PDF…",
@@ -825,7 +826,6 @@
       "documentRejected": "The document was rejected and the lawyer was notified",
       "rejectError": "Error rejecting the document",
       "otpTitle": "SMS verification (OTP) is required before signing",
-      "otpInviteHint": "The code was sent in the invite SMS — enter it here. If it expired, resend.",
       "otpPlaceholder": "Code (6 digits)",
       "verify": "Verify",
       "resend": "Resend",
@@ -840,8 +840,8 @@
       "drawNewSignature": "Draw\nnew signature",
       "savedSignatureAlt": "Saved signature",
       "loadingSavedSignature": "Loading saved signature...",
-      "tabDraw": "New signature",
-      "tabSaved": "Saved signature",
+      "tabDraw": "Signature",
+      "tabSaved": "Saved",
       "tabStamp": "Upload stamp",
       "tabSavedStamp": "Saved stamp",
       "noSavedStamp": "No saved stamp",
