@@ -27,6 +27,7 @@ export default function PdfViewer({
     onDocumentReady,
     selectedSpotIndex = null,
     selectedSpotId = null,
+    suppressLoadingUI = false,
 }) {
     const { t } = useTranslation();
     const [numPages, setNumPages] = useState(0);
@@ -156,9 +157,13 @@ export default function PdfViewer({
             <Document
                 file={file}
                 loading={
-                    <SimpleContainer className="lw-signing-pdfLoading">
-                        <SimpleLoader />
-                    </SimpleContainer>
+                    suppressLoadingUI
+                        ? null
+                        : (
+                            <SimpleContainer className="lw-signing-pdfLoading">
+                                <SimpleLoader />
+                            </SimpleContainer>
+                        )
                 }
                 error={<div className="lw-signing-pdfLoading">{t("signing.pdf.loadError")}</div>}
                 onLoadSuccess={(pdf) => {

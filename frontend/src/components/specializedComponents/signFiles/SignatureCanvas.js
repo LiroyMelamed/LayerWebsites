@@ -18,6 +18,7 @@ import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 import { colors } from "../../../constant/colors";
 
 import "./signFiles.scss";
+import "../../../screens/signingScreen/PublicSigningScreen.scss";
 
 function uuidv4() {
     const cryptoObj = window.crypto || window.msCrypto;
@@ -52,6 +53,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const [loading, setLoading] = useState(true);
     const [fileDetails, setFileDetails] = useState(null);
     const [pdfFile, setPdfFile] = useState(null);
+    const [pdfReady, setPdfReady] = useState(false);
     const [currentSpot, setCurrentSpot] = useState(null);
     const [message, setMessage] = useState(null);
     const [saving, setSaving] = useState(false);
@@ -87,7 +89,11 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const [otpCode, setOtpCode] = useState("");
     const [otpVerified, setOtpVerified] = useState(false);
     const [otpBusy, setOtpBusy] = useState(false);
+    const otpAutoSentRef = useRef(false);
     const otpAutoVerifyRef = useRef(false);
+    const otpLastFailedRef = useRef("");
+    const otpResendAtRef = useRef(0);
+    const otpInputRef = useRef(null);
     const [showCompletion, setShowCompletion] = useState(false);
     const [fieldValue, setFieldValue] = useState("");
     const [fieldChecked, setFieldChecked] = useState(false);
@@ -519,6 +525,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         const load = async () => {
             try {
                 setLoading(true);
+                setPdfReady(false);
+                setPdfFile(null);
 
                 // Restore consent from localStorage; OTP state is per session.
                 try {
@@ -528,6 +536,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 setOtpRequested(false);
                 setOtpCode("");
                 setOtpVerified(false);
+                otpAutoSentRef.current = false;
 
                 const res = isPublic
                     ? await signingFilesApi.getPublicSigningFileDetails(publicToken)
@@ -746,6 +755,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         setOtpVerified(false);
         setOtpRequested(false);
         setOtpCode("");
+        otpAutoSentRef.current = false;
+        otpLastFailedRef.current = "";
         otpAutoVerifyRef.current = false;
         return true;
     };
@@ -1493,28 +1504,50 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         return false;
     };
 
-    const requestOtp = async () => {
+
+    const requestOtp = async ({ silent = false } = {}) => {
         try {
             if (!otpRequired) return;
+            const now = Date.now();
+            if (!silent && now < otpResendAtRef.current) {
+                setMessage({ type: "warning", text: t("signing.canvas.otpWaitBeforeResend") || "נא להמתין לפני שליחה מחדש" });
+                return;
+            }
             setOtpBusy(true);
             const res = isPublic
                 ? await signingFilesApi.publicRequestSigningOtp(publicToken, signingSessionId)
                 : await signingFilesApi.requestSigningOtp(effectiveSigningFileId, signingSessionId);
             unwrapApi(res);
             setOtpRequested(true);
-            setMessage({ type: "success", text: t("signing.canvas.otpSent") });
+            otpLastFailedRef.current = "";
+            otpAutoVerifyRef.current = false;
+            otpResendAtRef.current = Date.now() + 30_000;
+            if (!silent) {
+                setMessage({ type: "success", text: t("signing.canvas.otpSent") });
+            }
         } catch (err) {
             console.error("OTP request failed", err);
-            setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.otpSendError") });
+            otpAutoSentRef.current = false;
+            if (!silent) {
+                setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.otpSendError") });
+            }
         } finally {
             setOtpBusy(false);
         }
     };
 
+    // Send the first OTP once the document is ready.
+    useEffect(() => {
+        if (!fileDetails || !otpRequired || otpVerified || otpAutoSentRef.current) return;
+        otpAutoSentRef.current = true;
+        requestOtp({ silent: false });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [fileDetails, otpRequired, otpVerified]);
+
     const verifyOtp = async () => {
         try {
             if (!otpRequired) return;
-            const otp = String(otpCode || "").trim();
+            const otp = String(otpCode || "").replace(/\D/g, "").slice(0, 6);
             if (!/^[0-9]{6}$/.test(otp)) {
                 setMessage({ type: "error", text: t("signing.canvas.otpInvalidFormat") });
                 return;
@@ -1525,27 +1558,38 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 ? await signingFilesApi.publicVerifySigningOtp(publicToken, otp, signingSessionId)
                 : await signingFilesApi.verifySigningOtp(effectiveSigningFileId, otp, signingSessionId);
             unwrapApi(res);
-            // OTP verify endpoints intentionally return success:true even on failure
-            // (anti-enumeration). Only trust an explicit verified:true.
-            if (res?.data?.verified !== true) {
+            const verifiedOk = res?.data?.verified === true || res?.verified === true;
+            if (!verifiedOk) {
+                // Remember this code so auto-submit does not loop; input stays editable.
+                otpLastFailedRef.current = otp;
                 otpAutoVerifyRef.current = false;
                 setOtpVerified(false);
-                setMessage({ type: "error", text: t("signing.canvas.otpVerifyError") });
+                const rateLimited = Boolean(res?.data?.rateLimited || res?.rateLimited);
+                setMessage({
+                    type: "error",
+                    text: rateLimited
+                        ? (t("signing.canvas.otpRateLimited") || "נעשו יותר מדי ניסיונות. בקשו קוד חדש ונסו שוב.")
+                        : t("signing.canvas.otpVerifyError"),
+                });
+                try { otpInputRef.current?.focus?.(); otpInputRef.current?.select?.(); } catch (_) { /* ignore */ }
                 return;
             }
+            otpLastFailedRef.current = "";
             setOtpVerified(true);
             setMessage(null);
         } catch (err) {
             console.error("OTP verify failed", err);
+            otpLastFailedRef.current = String(otpCode || "").replace(/\D/g, "").slice(0, 6);
             otpAutoVerifyRef.current = false;
             setOtpVerified(false);
             setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.otpVerifyError") });
+            try { otpInputRef.current?.focus?.(); otpInputRef.current?.select?.(); } catch (_) { /* ignore */ }
         } finally {
             setOtpBusy(false);
         }
     };
 
-    // Auto-verify as soon as 6 digits are present (typed or autofilled).
+    // Auto-submit when 6 digits are present. After a failure, wait until the client changes the code.
     useEffect(() => {
         if (!otpRequired || otpVerified || otpBusy || saving) return;
         const otp = String(otpCode || "").replace(/\D/g, "").slice(0, 6);
@@ -1553,6 +1597,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             otpAutoVerifyRef.current = false;
             return;
         }
+        if (otp === otpLastFailedRef.current) return;
         if (otpAutoVerifyRef.current) return;
         otpAutoVerifyRef.current = true;
         verifyOtp();
@@ -1582,12 +1627,25 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     };
 
     if (loading) {
+        // Public signing: same centered spinner as /s/:slug so resolve → open feels like one loader
+        if (isScreen) {
+            return (
+                <div className="lw-signing-scope lw-publicSigningScreen">
+                    <SimpleContainer className="lw-publicSigningScreen__container">
+                        <SimpleContainer className="lw-publicSigningScreen__stack">
+                            <div className="lw-publicSigningScreen__spinner" aria-hidden="true" />
+                            <Text14>{t("signing.public.loadingDocument") || t("signing.canvas.loadingDocument")}</Text14>
+                        </SimpleContainer>
+                    </SimpleContainer>
+                </div>
+            );
+        }
         return (
             <div className="lw-signing-scope">
-                <div className={isScreen ? "lw-signing-screen" : "lw-signing-modal"} onClick={isScreen ? undefined : onClose}>
+                <div className="lw-signing-modal" onClick={onClose}>
                     <div
-                        className={isScreen ? "lw-signing-modalContent lw-signing-screenContent" : "lw-signing-modalContent"}
-                        onClick={isScreen ? undefined : (e) => e.stopPropagation()}
+                        className="lw-signing-modalContent"
+                        onClick={(e) => e.stopPropagation()}
                     >
                         <div className="lw-signing-modalHeader">
                             <h3>{t("signing.canvas.loadingDocument")}</h3>
@@ -1750,19 +1808,25 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                             pattern="[0-9]*"
                             placeholder={t("signing.canvas.otpPlaceholder")}
                             value={otpCode}
+                            ref={otpInputRef}
                             onChange={(e) => {
                                 const digits = String(e.target.value || "").replace(/\D/g, "").slice(0, 6);
+                                // Editing clears the failed-code lock so a corrected code can auto-submit.
+                                if (digits !== otpLastFailedRef.current) {
+                                    otpLastFailedRef.current = "";
+                                    otpAutoVerifyRef.current = false;
+                                }
                                 setOtpCode(digits);
                             }}
                             autoComplete="one-time-code"
-                            disabled={otpBusy || saving}
+                            disabled={saving || otpVerified}
                         />
-                        <PrimaryButton size={buttonSizes.SMALL} onPress={verifyOtp} disabled={otpBusy || saving}>
+                        <PrimaryButton size={buttonSizes.SMALL} onPress={verifyOtp} disabled={otpBusy || saving || otpVerified}>
                             {t("signing.canvas.verify")}
                         </PrimaryButton>
                     </div>
                     <div className="lw-signing-actionsRow">
-                        <SecondaryButton size={buttonSizes.SMALL} onPress={requestOtp} disabled={otpBusy || saving}>
+                        <SecondaryButton size={buttonSizes.SMALL} onPress={() => requestOtp()} disabled={otpBusy || saving || otpVerified}>
                             {otpRequested ? t("signing.canvas.resend") : t("signing.canvas.sendCode")}
                         </SecondaryButton>
                     </div>
@@ -2245,8 +2309,21 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     // ─── Screen variant: full-screen PDF + floating bar + popup ───
     if (isScreen) {
+        // Keep the same spinner covering chrome until react-pdf Document is ready
+        // (avoids: short-link loader → meta loader → PDF loader flash).
+        const showPdfBootstrap = !pdfReady;
         return (
             <div className="lw-signing-scope">
+                {showPdfBootstrap && (
+                    <div className="lw-publicSigningScreen lw-signing-pdfBootstrap" aria-busy="true">
+                        <SimpleContainer className="lw-publicSigningScreen__container">
+                            <SimpleContainer className="lw-publicSigningScreen__stack">
+                                <div className="lw-publicSigningScreen__spinner" aria-hidden="true" />
+                                <Text14>{t("signing.public.loadingDocument") || t("signing.canvas.loadingDocument")}</Text14>
+                            </SimpleContainer>
+                        </SimpleContainer>
+                    </div>
+                )}
                 <div className="lw-signing-screen">
                     <div className="lw-signing-modalContent lw-signing-screenContent">
                         <SimpleContainer className="lw-signing-screenBody">
@@ -2295,12 +2372,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                         onAddSpotForPage={undefined}
                                         showAddSpotButtons={false}
                                         selectedSpotId={currentSpot?.SignatureSpotId || currentSpot?.signatureSpotId || null}
+                                        onDocumentReady={() => setPdfReady(true)}
+                                        suppressLoadingUI
                                     />
-                                ) : (
-                                    <SimpleContainer className="lw-signing-pdfLoading">
-                                        <SimpleLoader />
-                                    </SimpleContainer>
-                                )}
+                                ) : null}
                             </SimpleContainer>
 
                             {message && !showSpotPopup && (
