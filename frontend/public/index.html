@@ -121,35 +121,7 @@
         } catch (e) { }
       }
 
-      function signingDeepLink(scheme) {
-        if (!scheme) return '';
-        var shortMatch = path.match(/^\/s\/([A-Za-z0-9_-]{6,16})\/?$/);
-        if (shortMatch) {
-          return scheme + '://PublicSigning?slug=' + encodeURIComponent(shortMatch[1]);
-        }
-        if (/^\/PublicSign/i.test(path)) {
-          var token = '';
-          try { token = new URLSearchParams(search).get('token') || ''; } catch (e) { }
-          if (token) return scheme + '://PublicSigning?token=' + encodeURIComponent(token);
-          return scheme + '://PublicSigning' + search;
-        }
-        return '';
-      }
-
-      // Signing: soft-open app only (no store banner). WhatsApp never hands off Universal Links.
-      var deep = signingDeepLink(APP_SCHEME);
-      if (deep) {
-        tryScheme(deep);
-        setTimeout(function () {
-          if (!document.hidden) {
-            var alt = signingDeepLink(APP_SCHEME_ALT);
-            if (alt && alt !== deep) tryScheme(alt);
-          }
-        }, 400);
-        return;
-      }
-
-      // Portal pages (non-signing): soft-open + optional download banner
+      // Public/client flows stay in the browser — no soft-open to the native app.
       var publicPaths = [
         '/AdminStack',
         '/ViewSignedDocument',
@@ -163,7 +135,9 @@
         '/ticket',
         '/TicketScreen',
         '/n/',
-        '/calendar-invite'
+        '/calendar-invite',
+        '/s/',
+        '/PublicSign'
       ];
       for (var i = 0; i < publicPaths.length; i++) {
         if (path.indexOf(publicPaths[i]) === 0) return;

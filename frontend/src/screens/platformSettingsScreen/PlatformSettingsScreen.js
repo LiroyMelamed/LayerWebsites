@@ -1933,6 +1933,7 @@ export default function PlatformSettingsScreen() {
 
                     <SimpleCard className="lw-platformSettings__card">
                         <TextBold18>{t("calendar.firmOfficeAddress")}</TextBold18>
+                        <Text12 color="#718096">{t("calendar.firmNavLinksHint")}</Text12>
                         <SimpleContainer className="lw-platformSettings__settingsList">
                             <SimpleContainer className="lw-platformSettings__settingRow">
                                 <SimpleContainer className="lw-platformSettings__settingLabel">
@@ -1945,6 +1946,36 @@ export default function PlatformSettingsScreen() {
                                         setting={{ valueType: "string", label: t("calendar.firmOfficeAddress") }}
                                         value={getVal("FIRM_OFFICE_ADDRESS", "")}
                                         onChange={(val) => handleChange("FIRM_OFFICE_ADDRESS", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">
+                                        {t("calendar.firmWazeUrl")}
+                                    </TextBold14>
+                                    <Text12 color="#718096">{t("calendar.firmWazeUrlHint")}</Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "string", label: t("calendar.firmWazeUrl") }}
+                                        value={getVal("FIRM_WAZE_URL", "")}
+                                        onChange={(val) => handleChange("FIRM_WAZE_URL", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">
+                                        {t("calendar.firmMapsUrl")}
+                                    </TextBold14>
+                                    <Text12 color="#718096">{t("calendar.firmMapsUrlHint")}</Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "string", label: t("calendar.firmMapsUrl") }}
+                                        value={getVal("FIRM_MAPS_URL", "")}
+                                        onChange={(val) => handleChange("FIRM_MAPS_URL", val)}
                                     />
                                 </SimpleContainer>
                             </SimpleContainer>

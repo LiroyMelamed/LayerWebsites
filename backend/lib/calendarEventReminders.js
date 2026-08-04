@@ -246,6 +246,12 @@ async function loadCalendarSmsContext(ev) {
     const officeAddress = String(
         await settingsService.getSetting('calendar', 'FIRM_OFFICE_ADDRESS', '') || ''
     ).trim();
+    const firmWazeUrl = String(
+        await settingsService.getSetting('calendar', 'FIRM_WAZE_URL', '') || ''
+    ).trim();
+    const firmMapsUrl = String(
+        await settingsService.getSetting('calendar', 'FIRM_MAPS_URL', '') || ''
+    ).trim();
     const address = String(ev.location || '').trim() || officeAddress;
     const firmName = (await getFirmDisplayName()) || (await getLawFirmNameHe()) || 'המשרד';
     const firmPhone = String(
@@ -255,7 +261,11 @@ async function loadCalendarSmsContext(ev) {
     ).trim();
     const domain = getWebsiteDomain();
     const websiteUrl = domain ? `https://${domain}` : (getPublicAppBase() || '');
-    const nav = await buildShortNavUrls(address);
+    const nav = await buildShortNavUrls(address, {
+        officeAddress,
+        firmWazeUrl,
+        firmMapsUrl,
+    });
     const rsvpUrl = ev.invite_token ? await buildShortRsvpUrl(ev.invite_token) : '';
 
     return {
@@ -307,7 +317,11 @@ async function composeLawyerReminderMessage(offsetMinutes, ev) {
         : (audience
             ? `פגישה עם הלקוח ${audience} — ${when} בשעה ${timeStr}`
             : `${ev.title} — ${when} בשעה ${timeStr}`);
-    body += await buildShortNavLinksBlock(ev.location);
+    body += await buildShortNavLinksBlock(ev.location, {
+        officeAddress: String(await settingsService.getSetting('calendar', 'FIRM_OFFICE_ADDRESS', '') || '').trim(),
+        firmWazeUrl: String(await settingsService.getSetting('calendar', 'FIRM_WAZE_URL', '') || '').trim(),
+        firmMapsUrl: String(await settingsService.getSetting('calendar', 'FIRM_MAPS_URL', '') || '').trim(),
+    });
     return { title, body };
 }
 

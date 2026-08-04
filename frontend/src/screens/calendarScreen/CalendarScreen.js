@@ -174,10 +174,15 @@ function buildFullCalendarEvent(ev, { scope }) {
 
     const inviteStatus = ev?.inviteStatus;
     const inviteBadge =
-        inviteStatus === "accepted" ? " ✓"
-            : inviteStatus === "declined" ? " ✕"
-                : inviteStatus === "pending" ? " …"
+        inviteStatus === "accepted" ? " אושר"
+            : inviteStatus === "declined" ? " נדחה"
+                : inviteStatus === "pending" ? " ממתין"
                     : "";
+    const inviteClass =
+        inviteStatus === "accepted" ? "lw-fcEvent--inviteAccepted"
+            : inviteStatus === "declined" ? "lw-fcEvent--inviteDeclined"
+                : inviteStatus === "pending" ? "lw-fcEvent--invitePending"
+                    : null;
 
     return {
         id: String(ev.id),
@@ -188,6 +193,7 @@ function buildFullCalendarEvent(ev, { scope }) {
         backgroundColor: color,
         borderColor: color,
         textColor: "#FFFFFF",
+        classNames: inviteClass ? [inviteClass] : undefined,
         editable: ev?.eventType !== "leave" && ev?.eventType !== "holiday",
         startEditable: ev?.eventType !== "leave" && ev?.eventType !== "holiday",
         durationEditable: ev?.eventType !== "leave" && ev?.eventType !== "holiday" && !ev?.allDay,
