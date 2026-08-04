@@ -1,0 +1,28 @@
+{
+    "applinks": {
+        "apps": [],
+        "details": [
+            {
+                "appID": "A38RHM586C.com.melamedia.MelamedLaw",
+                "paths": [
+                    "NOT /api/*",
+                    "NOT /.well-known/*",
+                    "NOT /static/*",
+                    "NOT /ViewSignedDocument*",
+                    "NOT /Verify/Evidence/*",
+                    "NOT /ticket*",
+                    "NOT /TicketScreen*",
+                    "/PublicSign*",
+                    "/PublicSignScreen*",
+                    "/s/*",
+                    "*"
+                ]
+            }
+        ]
+    },
+    "webcredentials": {
+        "apps": [
+            "A38RHM586C.com.melamedia.MelamedLaw"
+        ]
+    }
+}

@@ -1,5 +1,6 @@
 {
   "common": {
+    "loading": "Loading…",
     "language": "Language",
     "hebrew": "Hebrew",
     "arabic": "Arabic",
