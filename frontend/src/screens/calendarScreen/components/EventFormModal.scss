@@ -327,6 +327,19 @@
     margin-top: v.$space-2;
 }
 
+.lw-eventFormModal__smsTemplates {
+    flex-direction: column;
+    gap: v.$space-2;
+    width: 100%;
+    margin-top: v.$space-2;
+}
+
+.lw-eventFormModal__smsVarRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
 .lw-eventFormModal__reminderEmail {
     display: flex;
     flex-direction: column;
@@ -354,6 +367,28 @@
     @media (max-width: 40rem) {
         grid-template-columns: 1fr;
     }
+}
+
+.lw-eventFormModal__bodyPreview {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    background: var(--lw-color-secondary-highlighted);
+    border: 0.0625rem solid var(--lw-color-disabled);
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+}
+
+.lw-eventFormModal__bodyPreviewLabel {
+    color: var(--lw-color-winter);
+    font-weight: 600;
+}
+
+.lw-eventFormModal__bodyPreviewText {
+    color: var(--lw-color-text);
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
 .lw-eventFormModal__colorSwatches {

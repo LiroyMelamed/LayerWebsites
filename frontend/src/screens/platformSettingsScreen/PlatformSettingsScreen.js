@@ -259,6 +259,15 @@ const SMS_TEMPLATE_VARS = {
     LICENSE_RENEWAL_SMS: ["recipientName", "firmName", "websiteUrl"],
     // ── Client ──
     NEW_CLIENT_SMS: ["recipientName", "firmName", "websiteUrl"],
+    // ── Calendar ──
+    CALENDAR_CLIENT_REMINDER_SMS: [
+        "recipientName", "firmName", "date", "time", "address",
+        "wazeUrl", "mapsUrl", "firmPhone", "websiteUrl", "lawyerName", "title",
+    ],
+    CALENDAR_INVITE_SMS: [
+        "recipientName", "firmName", "date", "time", "address",
+        "wazeUrl", "mapsUrl", "rsvpUrl", "firmPhone", "websiteUrl", "lawyerName", "title",
+    ],
 };
 
 // Available variables for reminder email templates
@@ -307,6 +316,8 @@ const SMS_KEY_TO_NOTIF_TYPE = {
     PAYMENT_SMS: 'PAYMENT',
     LICENSE_RENEWAL_SMS: 'LICENSE_RENEWAL',
     NEW_CLIENT_SMS: 'NEW_CLIENT',
+    CALENDAR_CLIENT_REMINDER_SMS: 'CALENDAR_REMINDER',
+    CALENDAR_INVITE_SMS: 'CALENDAR_REMINDER',
 };
 
 function SmsVarButtons({ templateKey, onInsert }) {
