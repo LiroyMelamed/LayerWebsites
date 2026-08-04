@@ -1,24 +1,298 @@
 .lw-calendarInvite {
-  max-width: 32rem;
-  margin: 2rem auto;
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 1.5rem;
+  direction: rtl;
+  font-family: Heebo, "Segoe UI", Arial, sans-serif;
+  color: #1A202C;
+  overflow: hidden;
+}
+
+.lw-calendarInvite__bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(42, 67, 101, 0.18), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 90% 80%, rgba(183, 121, 31, 0.14), transparent 50%),
+    linear-gradient(165deg, #F7FAFC 0%, #EDF2F7 45%, #E2E8F0 100%);
+  z-index: 0;
+}
+
+.lw-calendarInvite__card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 26rem;
+  padding: 1.75rem 1.5rem 2rem;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(42, 67, 101, 0.08);
+  border-radius: 1.25rem;
+  box-shadow:
+    0 1px 2px rgba(26, 32, 44, 0.04),
+    0 18px 40px rgba(42, 67, 101, 0.12);
+  backdrop-filter: blur(8px);
+  animation: lw-invite-card-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes lw-invite-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.lw-calendarInvite__eyebrow {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #2A4365;
+  opacity: 0.85;
+}
+
+.lw-calendarInvite__title {
+  margin: 0 0 1.25rem;
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #1A202C;
+}
+
+.lw-calendarInvite__meta {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  direction: rtl;
+  gap: 0.15rem;
+  margin: 0 0 0.85rem;
+  font-size: 0.95rem;
+
+  span {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #718096;
+  }
+
+  strong {
+    font-weight: 600;
+    color: #2D3748;
+  }
+}
+
+.lw-calendarInvite__location {
+  margin-bottom: 0.5rem;
 }
 
 .lw-calendarInvite__nav {
   display: flex;
-  gap: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+
   a {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    background: #EDF2F7;
     color: #2A4365;
+    font-size: 0.85rem;
     font-weight: 600;
+    text-decoration: none;
+    transition: background 160ms ease, transform 160ms ease;
+
+    &:hover {
+      background: #E2E8F0;
+      transform: translateY(-1px);
+    }
   }
+}
+
+.lw-calendarInvite__error {
+  color: #C53030;
+  font-size: 0.9rem;
+  margin: 0.5rem 0;
 }
 
 .lw-calendarInvite__actions {
   display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 1.5rem;
+}
+
+.lw-calendarInvite__btn {
+  appearance: none;
+  border: none;
+  border-radius: 0.85rem;
+  padding: 0.95rem 1.25rem;
+  font-family: inherit;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, opacity 160ms ease;
+
+  &:disabled {
+    opacity: 0.65;
+    cursor: wait;
+  }
+
+  &:not(:disabled):active {
+    transform: scale(0.98);
+  }
+}
+
+.lw-calendarInvite__btn--accept {
+  background: linear-gradient(135deg, #2F855A 0%, #276749 100%);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(47, 133, 90, 0.28);
+}
+
+.lw-calendarInvite__btn--decline {
+  background: #fff;
+  color: #744210;
+  border: 1.5px solid #E2E8F0;
+}
+
+.lw-calendarInvite.is-anim-accept .lw-calendarInvite__btn--accept {
+  animation: lw-invite-pulse 480ms ease;
+}
+
+.lw-calendarInvite.is-anim-decline .lw-calendarInvite__btn--decline {
+  animation: lw-invite-pulse 480ms ease;
+}
+
+@keyframes lw-invite-pulse {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+.lw-calendarInvite__result {
+  margin-top: 1.5rem;
+  text-align: center;
+  animation: lw-invite-result-in 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  h2 {
+    margin: 0.75rem 0 0.35rem;
+    font-size: 1.25rem;
+  }
+
+  p {
+    margin: 0;
+    color: #4A5568;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+}
+
+@keyframes lw-invite-result-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.lw-calendarInvite__check {
+  width: 3.5rem;
+  height: 3.5rem;
+  margin: 0 auto;
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  circle {
+    stroke: #2F855A;
+    stroke-width: 2;
+    stroke-dasharray: 166;
+    stroke-dashoffset: 166;
+    animation: lw-invite-circle 0.5s ease-out forwards;
+  }
+
+  path {
+    stroke: #2F855A;
+    stroke-width: 3.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 48;
+    stroke-dashoffset: 48;
+    animation: lw-invite-check 0.35s 0.35s ease-out forwards;
+  }
+}
+
+@keyframes lw-invite-circle {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes lw-invite-check {
+  to { stroke-dashoffset: 0; }
+}
+
+.lw-calendarInvite__cross {
+  width: 3.25rem;
+  height: 3.25rem;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #FFFAF0;
+  color: #C05621;
+  font-size: 1.4rem;
+  font-weight: 700;
+  animation: lw-invite-result-in 420ms ease both;
+}
+
+.lw-calendarInvite__loading,
+.lw-calendarInvite__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 0.75rem;
-  margin-top: 0.5rem;
+  padding: 1.5rem 0;
+  text-align: center;
+  color: #4A5568;
+}
+
+.lw-calendarInvite__spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid rgba(42, 67, 101, 0.15);
+  border-top-color: #2A4365;
+  border-radius: 50%;
+  animation: lw-invite-spin 0.75s linear infinite;
+}
+
+@keyframes lw-invite-spin {
+  to { transform: rotate(360deg); }
+}
+
+.lw-calendarInvite__emptyIcon {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  background: #FED7D7;
+  color: #C53030;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.25rem;
+}
+
+.lw-calendarInvite__empty h1 {
+  margin: 0;
+  font-size: 1.2rem;
 }
