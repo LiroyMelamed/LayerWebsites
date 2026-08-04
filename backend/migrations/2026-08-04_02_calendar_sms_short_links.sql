@@ -32,7 +32,7 @@ COMMENT ON COLUMN calendar_events.invite_sms IS
     'Optional override for calendar invite / RSVP SMS template ({{vars}}).';
 
 -- Platform default SMS templates (calendar)
-INSERT INTO platform_settings (category, setting_key, setting_value, value_type, display_name, description)
+INSERT INTO platform_settings (category, setting_key, setting_value, value_type, label, description)
 VALUES
 (
     'templates',
