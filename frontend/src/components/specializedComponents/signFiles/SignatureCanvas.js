@@ -51,6 +51,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const [fileDetails, setFileDetails] = useState(null);
     const [pdfFile, setPdfFile] = useState(null);
     const [pdfSource, setPdfSource] = useState(null);
+    const [pdfReady, setPdfReady] = useState(false);
     const [currentSpot, setCurrentSpot] = useState(null);
     const [message, setMessage] = useState(null);
     const [saving, setSaving] = useState(false);
@@ -422,6 +423,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
             // Prefer ranged URL loading (pdf.js streams pages) — critical for Safari + large PDFs.
             // Avoid downloading the entire PDF into a Blob up-front.
+            setPdfReady(false);
             setPdfFile(null);
             setPdfSource({
                 url,
@@ -432,6 +434,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             console.error("Failed to prepare PDF source", err);
             setPdfFile(null);
             setPdfSource(null);
+            setPdfReady(false);
             setMessage({
                 type: "error",
                 text: t("signing.canvas.loadDocumentError") || t("signing.pdf.loadError"),
@@ -527,6 +530,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         const load = async () => {
             try {
                 setLoading(true);
+                setPdfReady(false);
+                setPdfFile(null);
+                setPdfSource(null);
 
                 // Restore consent from localStorage; OTP state is per session.
                 try {
@@ -1607,12 +1613,25 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     };
 
     if (loading) {
+        // Public signing: same centered spinner as /s/:slug so resolve → open feels like one loader
+        if (isScreen) {
+            return (
+                <div className="lw-signing-scope lw-publicSigningScreen">
+                    <SimpleContainer className="lw-publicSigningScreen__container">
+                        <SimpleContainer className="lw-publicSigningScreen__stack">
+                            <div className="lw-publicSigningScreen__spinner" aria-hidden="true" />
+                            <Text14>{t("signing.public.loadingDocument") || t("signing.canvas.loadingDocument")}</Text14>
+                        </SimpleContainer>
+                    </SimpleContainer>
+                </div>
+            );
+        }
         return (
             <div className="lw-signing-scope">
-                <div className={isScreen ? "lw-signing-screen" : "lw-signing-modal"} onClick={isScreen ? undefined : onClose}>
+                <div className="lw-signing-modal" onClick={onClose}>
                     <div
-                        className={isScreen ? "lw-signing-modalContent lw-signing-screenContent" : "lw-signing-modalContent"}
-                        onClick={isScreen ? undefined : (e) => e.stopPropagation()}
+                        className="lw-signing-modalContent"
+                        onClick={(e) => e.stopPropagation()}
                     >
                         <div className="lw-signing-modalHeader">
                             <h3>{t("signing.canvas.loadingDocument")}</h3>
@@ -2270,8 +2289,21 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     // ─── Screen variant: full-screen PDF + floating bar + popup ───
     if (isScreen) {
+        // Keep the same spinner covering chrome until react-pdf Document is ready
+        // (avoids: short-link loader → meta loader → PDF loader flash).
+        const showPdfBootstrap = !pdfReady;
         return (
             <div className="lw-signing-scope">
+                {showPdfBootstrap && (
+                    <div className="lw-publicSigningScreen lw-signing-pdfBootstrap" aria-busy="true">
+                        <SimpleContainer className="lw-publicSigningScreen__container">
+                            <SimpleContainer className="lw-publicSigningScreen__stack">
+                                <div className="lw-publicSigningScreen__spinner" aria-hidden="true" />
+                                <Text14>{t("signing.public.loadingDocument") || t("signing.canvas.loadingDocument")}</Text14>
+                            </SimpleContainer>
+                        </SimpleContainer>
+                    </div>
+                )}
                 <div className="lw-signing-screen">
                     <div className="lw-signing-modalContent lw-signing-screenContent">
                         <SimpleContainer className="lw-signing-screenBody">
@@ -2321,12 +2353,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                         onAddSpotForPage={undefined}
                                         showAddSpotButtons={false}
                                         selectedSpotId={currentSpot?.SignatureSpotId || currentSpot?.signatureSpotId || null}
+                                        onDocumentReady={() => setPdfReady(true)}
+                                        suppressLoadingUI
                                     />
-                                ) : (
-                                    <SimpleContainer className="lw-signing-pdfLoading">
-                                        <SimpleLoader />
-                                    </SimpleContainer>
-                                )}
+                                ) : null}
                             </SimpleContainer>
 
                             {message && !showSpotPopup && (
