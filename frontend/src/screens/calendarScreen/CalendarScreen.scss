@@ -572,6 +572,13 @@
 
 // ─── Holiday event styling ───────────────────────────────────────────────────
 
+// Holiday hints must not flood the whole day column in week/day views —
+// the holiday chip in the all-day row (top) is enough. Month-view tint stays.
+.fc .fc-timegrid-col-bg .fc-bg-event.lw-fcEvent--holidayHint,
+.fc .fc-timegrid-body .fc-bg-event.lw-fcEvent--holidayHint {
+    display: none;
+}
+
 .lw-calendarScreen__calendarCard .fc-event.lw-fcEvent--holiday,
 .fc .fc-event.lw-fcEvent--holiday {
     background-color: #B7791F !important;
