@@ -78,7 +78,125 @@
     }
   </script>
 
-  <!-- Mobile app redirect disabled (no native app yet for AshrafEssa) -->
+  <!-- Soft app open: try native app if installed; never trap users in the App Store -->
+  <script>
+    (function () {
+      var path = window.location.pathname || '';
+      // Signing + other public pages stay on web here. Universal Links open the
+      // app before this script when the app is installed (same for all tenants).
+      var publicPaths = [
+        '/AdminStack',
+        '/PublicSign',
+        '/PublicSignScreen',
+        '/s/',
+        '/ViewSignedDocument',
+        '/Verify/Evidence',
+        '/Pricing',
+        '/SecurityScreen',
+        '/Privacy',
+        '/Continuity',
+        '/Compliance',
+        '/ChatBot',
+        '/ticket',
+        '/TicketScreen'
+      ];
+      for (var i = 0; i < publicPaths.length; i++) {
+        if (path.indexOf(publicPaths[i]) === 0 || path === '/s') return;
+      }
+
+      var search = window.location.search || '';
+      if (search.indexOf('web=1') !== -1) {
+        try { sessionStorage.setItem('lw_prefer_web', '1'); } catch (e) { }
+        return;
+      }
+      if (search.indexOf('fromApp=true') !== -1) {
+        try { sessionStorage.setItem('lw_fromApp', '1'); } catch (e) { }
+        return;
+      }
+      try {
+        if (sessionStorage.getItem('lw_fromApp') === '1') return;
+        if (sessionStorage.getItem('lw_prefer_web') === '1') return;
+      } catch (e) { }
+
+      var ua = navigator.userAgent || '';
+      var isIOS = /iPhone|iPad|iPod/i.test(ua);
+      var isAndroid = /Android/i.test(ua);
+      if (!isIOS && !isAndroid) return;
+
+      var IOS_STORE = '';
+      var ANDROID_STORE = 'https://play.google.com/store/apps/details?id=com.melamedia.ashrafessa&hl=he';
+      var APP_SCHEME = 'ashrafessa://';
+      var APP_SCHEME_ALT = 'melamedia://';
+
+      var left = false;
+      function onHide() {
+        if (document.hidden) left = true;
+      }
+      document.addEventListener('visibilitychange', onHide);
+
+      function tryScheme(scheme) {
+        if (!scheme) return;
+        try {
+          var iframe = document.createElement('iframe');
+          iframe.style.display = 'none';
+          iframe.src = scheme;
+          (document.body || document.documentElement).appendChild(iframe);
+          setTimeout(function () {
+            try { iframe.parentNode && iframe.parentNode.removeChild(iframe); } catch (e) { }
+          }, 1200);
+        } catch (e) { }
+      }
+      tryScheme(APP_SCHEME);
+      setTimeout(function () { if (!left && !document.hidden) tryScheme(APP_SCHEME_ALT); }, 400);
+
+      function showBanner() {
+        if (left || document.hidden) return;
+        if (document.getElementById('lw-app-download-banner')) return;
+        var storeUrl = isIOS ? IOS_STORE : ANDROID_STORE;
+        if (!storeUrl) return; // soft-open only when store listing is not configured yet
+        var bar = document.createElement('div');
+        bar.id = 'lw-app-download-banner';
+        bar.setAttribute('dir', 'rtl');
+        bar.style.cssText = [
+          'position:fixed', 'z-index:99999', 'left:12px', 'right:12px', 'bottom:12px',
+          'display:flex', 'align-items:center', 'gap:10px', 'justify-content:space-between',
+          'padding:12px 14px', 'border-radius:14px',
+          'background:#111', 'color:#fff', 'font-family:Heebo,Arial,sans-serif',
+          'font-size:14px', 'line-height:1.35', 'box-shadow:0 8px 24px rgba(0,0,0,.25)'
+        ].join(';');
+        var text = document.createElement('div');
+        text.style.cssText = 'flex:1;min-width:0';
+        text.textContent = 'לחוויה מיטבית ניתן להשתמש באפליקציה';
+        var actions = document.createElement('div');
+        actions.style.cssText = 'display:flex;align-items:center;gap:8px;flex-shrink:0';
+        var openBtn = document.createElement('a');
+        openBtn.href = storeUrl;
+        openBtn.target = '_blank';
+        openBtn.rel = 'noopener noreferrer';
+        openBtn.textContent = 'הורדה';
+        openBtn.style.cssText = 'color:#111;background:#fff;text-decoration:none;padding:8px 12px;border-radius:999px;font-weight:600';
+        var closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.setAttribute('aria-label', 'סגור');
+        closeBtn.textContent = 'ביטול';
+        closeBtn.style.cssText = 'color:#fff;background:transparent;border:1px solid rgba(255,255,255,.35);padding:8px 12px;border-radius:999px;cursor:pointer;font:inherit';
+        closeBtn.onclick = function () {
+          try { sessionStorage.setItem('lw_prefer_web', '1'); } catch (e) { }
+          if (bar.parentNode) bar.parentNode.removeChild(bar);
+        };
+        actions.appendChild(openBtn);
+        actions.appendChild(closeBtn);
+        bar.appendChild(text);
+        bar.appendChild(actions);
+        (document.body || document.documentElement).appendChild(bar);
+      }
+
+      setTimeout(function () {
+        document.removeEventListener('visibilitychange', onHide);
+        showBanner();
+      }, 1600);
+    })();
+  </script>
 </head>
 
 <body>
