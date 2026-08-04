@@ -492,6 +492,7 @@
     "clientReminderSmsHint": "ניתן לערוך את ההודעה לאירוע זה. משתנים כמו {{date}} יוחלפו בשליחה.",
     "inviteSmsLabel": "הודעת אישור הגעה (SMS)",
     "inviteSmsHint": "נשלחת ללקוח כשנוצרת הזמנה. כוללת קישור לאישור הגעה.",
+    "smsPreviewTitle": "כך תיראה ההודעה שתישלח:",
     "holidayHintPrefix": "חג",
     "inviteStatusPending": "ממתין לאישור הלקוח",
     "inviteStatusAccepted": "הלקוח אישר",
@@ -1596,7 +1597,15 @@
     "var_amount": "סכום",
     "var_content_1": "תוכן 1",
     "var_content_2": "תוכן 2",
-    "var_content_3": "תוכן 3"
+    "var_content_3": "תוכן 3",
+    "var_time": "שעה",
+    "var_address": "כתובת",
+    "var_wazeUrl": "קישור וויז",
+    "var_mapsUrl": "קישור מפות",
+    "var_rsvpUrl": "קישור אישור הגעה",
+    "var_firmPhone": "טלפון המשרד",
+    "var_lawyerName": "שם עורך הדין",
+    "var_title": "כותרת האירוע"
   },
   "viewSignedDoc": {
     "invalidLink": "קישור לא תקין",
