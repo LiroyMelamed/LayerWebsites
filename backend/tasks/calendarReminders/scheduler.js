@@ -76,6 +76,9 @@ async function _claimDueReminders(pollMinutes, limit = 200) {
                    ce.lead_phone,
                    ce.lead_email,
                    ce.reminder_channels,
+                   ce.reminder_targets,
+                   ce.invite_token,
+                   ce.client_reminder_sms,
                    ce.reminders_sent_offsets AS prev_sent,
                    (off.value)::int AS offset_minutes
             FROM calendar_events ce
@@ -115,7 +118,8 @@ async function _claimDueReminders(pollMinutes, limit = 200) {
                 WHERE id = $1
                   AND NOT COALESCE(reminders_sent_offsets, '[]'::jsonb) @> to_jsonb($2::int)
                 RETURNING id, owner_id, manager_user_id, client_user_id, case_id, title, event_type, location, start_time,
-                          lead_phone, lead_email, reminder_channels
+                          lead_phone, lead_email, lead_name, client_name, reminder_channels, reminder_targets,
+                          invite_token, client_reminder_sms
                 `,
                 [row.id, row.offset_minutes]
             );
@@ -124,7 +128,10 @@ async function _claimDueReminders(pollMinutes, limit = 200) {
                     ...updated[0],
                     offset_minutes: row.offset_minutes,
                     prev_sent: row.prev_sent,
-                    reminder_channels: row.reminder_channels,
+                    reminder_channels: row.reminder_channels || updated[0].reminder_channels,
+                    reminder_targets: row.reminder_targets || updated[0].reminder_targets,
+                    invite_token: row.invite_token || updated[0].invite_token,
+                    client_reminder_sms: row.client_reminder_sms || updated[0].client_reminder_sms,
                 });
             }
         }
@@ -182,7 +189,7 @@ async function _dispatchOne(ev) {
     let anySent = false;
 
     if (targets.managers) {
-        const lawyerMsg = composeLawyerReminderMessage(ev.offset_minutes, ev);
+        const lawyerMsg = await composeLawyerReminderMessage(ev.offset_minutes, ev);
         const lawyerIds = await _resolveLawyerRecipients(ev);
         for (const lawyerId of lawyerIds) {
             try {
@@ -207,7 +214,7 @@ async function _dispatchOne(ev) {
     if (!targets.client || ev.event_type === 'reminder') return;
 
     if (ev.client_user_id) {
-        const clientMsg = composeClientReminderMessage(ev.offset_minutes, ev);
+        const clientMsg = await composeClientReminderMessage(ev.offset_minutes, ev);
         try {
             await dispatchCalendarReminder({
                 userId: ev.client_user_id,
@@ -221,7 +228,10 @@ async function _dispatchOne(ev) {
             console.error(`[calendar-reminders] client dispatch failed eventId=${ev.id}:`, err.message);
         }
     } else if (ev.lead_phone || ev.lead_email) {
-        const clientMsg = composeClientReminderMessage(ev.offset_minutes, ev);
+        const clientMsg = await composeClientReminderMessage(ev.offset_minutes, {
+            ...ev,
+            client_name: ev.client_name || ev.lead_name,
+        });
         try {
             await dispatchCalendarReminder({
                 email: ev.lead_email,

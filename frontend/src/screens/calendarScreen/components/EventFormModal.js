@@ -8,10 +8,13 @@ import SimpleButton from "../../../components/simpleComponents/SimpleButton";
 import SearchInput from "../../../components/specializedComponents/containers/SearchInput";
 import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
+import TertiaryButton from "../../../components/styledComponents/buttons/TertiaryButton";
 import { Text12, Text14, Text24, TextBold14 } from "../../../components/specializedComponents/text/AllTextKindFile";
 import calendarApi from "../../../api/calendarApi";
 import platformSettingsApi from "../../../api/platformSettingsApi";
 import remindersApi from "../../../api/remindersApi";
+import { buildReminderBodyPreview } from "../../../functions/reminders/buildReminderBodyPreview";
+import { getFirmName } from "../../../services/firmSettings";
 import ChooseButton from "../../../components/styledComponents/buttons/ChooseButton";
 import {
     parseAllowedOptionsFromSettings,
@@ -41,6 +44,28 @@ import "./EventFormModal.scss";
 const NAVY = "#2A4365";
 const AMBER_TEXT = "#744210";
 const DEFAULT_ALLOWED_MINUTES = [15, 30, 60, 120, 1440, 2880, 10080];
+
+const DEFAULT_CLIENT_REMINDER_SMS =
+    "שלום {{recipientName}},\n"
+    + "זוהי תזכורת לפגישה שנקבעה עבורך ב{{firmName}}\n"
+    + "בתאריך {{date}} בשעה {{time}}.\n"
+    + "כתובתנו הינה {{address}}\n"
+    + "להוראות הגעה בוויז {{wazeUrl}}\n"
+    + "לבירור או שינוי נא להתקשר ל {{firmPhone}}\n"
+    + "מידע נוסף ניתן למצוא באתר שלנו\n"
+    + "{{websiteUrl}}";
+
+const DEFAULT_INVITE_SMS =
+    "שלום {{recipientName}}, נקבעה לך פגישה, בתאריך {{date}} בשעה {{time}},\n"
+    + "כתובתנו היא {{address}}. בברכה, {{firmName}},\n"
+    + "לאישור הגעה, אנא לחץ/י על הקישור {{rsvpUrl}}\n"
+    + "להוראות הגעה בוויז: {{wazeUrl}}\n"
+    + "לבירור או שינוי נא להתקשר ל {{firmPhone}}";
+
+const CALENDAR_SMS_VARS = [
+    "recipientName", "firmName", "date", "time", "address",
+    "wazeUrl", "mapsUrl", "rsvpUrl", "firmPhone", "websiteUrl", "lawyerName", "title",
+];
 
 const INTAKE_EXISTING = "existing";
 const INTAKE_LEAD = "lead";
@@ -287,6 +312,12 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         const s = _formStateFromEvent(event);
         return s.reminderTargets;
     });
+    const [clientReminderSms, setClientReminderSms] = useState(
+        () => String(event?.clientReminderSms || "").trim() || DEFAULT_CLIENT_REMINDER_SMS
+    );
+    const [inviteSms, setInviteSms] = useState(
+        () => String(event?.inviteSms || "").trim() || DEFAULT_INVITE_SMS
+    );
     const [allowedReminderMinutes, setAllowedReminderMinutes] = useState(DEFAULT_ALLOWED_MINUTES);
     const [allowedReminderChannelKeys, setAllowedReminderChannelKeys] = useState(["push", "sms", "email"]);
     const [caseFormDraft, setCaseFormDraft] = useState(null);
@@ -357,6 +388,8 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setReminderOffsets(s.reminderOffsets);
         setReminderChannels(s.reminderChannels);
         setReminderTargets(s.reminderTargets);
+        setClientReminderSms(String(event?.clientReminderSms || "").trim() || DEFAULT_CLIENT_REMINDER_SMS);
+        setInviteSms(String(event?.inviteSms || "").trim() || DEFAULT_INVITE_SMS);
         linkedClientLabelRef.current = s.clientName || "";
         setCaseFormDraft(null);
         setClientCases([]);
@@ -499,6 +532,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 const cal = res?.data?.settings?.calendar || res?.settings?.calendar || {};
                 const branding = res?.data?.settings?.branding || res?.settings?.branding || {};
                 const firm = res?.data?.settings?.firm || res?.settings?.firm || {};
+                const templates = res?.data?.settings?.templates || res?.settings?.templates || {};
                 if (cancelled) return;
                 const allowed = parseAllowedOptionsFromSettings(cal);
                 setAllowedReminderMinutes(allowed);
@@ -513,6 +547,18 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 // Prefill location for new events only — Waze/Maps links go to the client message, not admin UI.
                 if (office && !isEdit) {
                     setLocation((prev) => (prev && String(prev).trim() ? prev : office));
+                }
+                const platformClientSms = String(
+                    templates?.CALENDAR_CLIENT_REMINDER_SMS?.effectiveValue || ""
+                ).trim();
+                const platformInviteSms = String(
+                    templates?.CALENDAR_INVITE_SMS?.effectiveValue || ""
+                ).trim();
+                if (!String(event?.clientReminderSms || "").trim() && platformClientSms) {
+                    setClientReminderSms(platformClientSms);
+                }
+                if (!String(event?.inviteSms || "").trim() && platformInviteSms) {
+                    setInviteSms(platformInviteSms);
                 }
                 try {
                     const rawColors = cal?.CALENDAR_EVENT_TYPE_COLORS?.effectiveValue;
@@ -561,6 +607,21 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         () => _extractReminderPlaceholders(currentReminderTemplate),
         [currentReminderTemplate]
     );
+    const reminderBodyPreview = useMemo(() => {
+        if (!isReminderEventType || !currentReminderTemplate) return "";
+        return buildReminderBodyPreview(currentReminderTemplate, {
+            ...reminderTemplateData,
+            client_name: reminderClientName.trim() || undefined,
+            subject: reminderSubject.trim() || undefined,
+            firm_name: getFirmName() || undefined,
+        });
+    }, [
+        isReminderEventType,
+        currentReminderTemplate,
+        reminderTemplateData,
+        reminderClientName,
+        reminderSubject,
+    ]);
 
     const handleReminderTemplateChange = (value) => {
         if (!value) return;
@@ -766,6 +827,8 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 reminder_targets: showReminderPicker
                     ? reminderTargets
                     : { client: false, managers: false },
+                client_reminder_sms: showReminderPicker ? clientReminderSms : null,
+                invite_sms: showReminderPicker ? inviteSms : null,
             };
 
             if (isReminderEventType) {
@@ -798,16 +861,34 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     lead_email: null,
                     lead_case_name: null,
                 });
-            } else {
+            } else if (isReminderEventType) {
+                // Registered client → client_* only. Unregistered recipient → lead_*
+                // (reminderCalendarSync mirrors the same split). Never mix both —
+                // the DB CHECK rejects lead + client_user_id together.
+                const linkedClientId = clientUserId || null;
                 Object.assign(payload, {
-                    client_user_id: isReminderEventType ? (clientUserId || null) : null,
-                    client_name: isReminderEventType
+                    client_user_id: linkedClientId,
+                    client_name: linkedClientId
                         ? (reminderClientName.trim() || clientName || null)
                         : null,
                     case_id: null,
+                    lead_name: linkedClientId
+                        ? null
+                        : (reminderClientName.trim() || null),
+                    lead_phone: null,
+                    lead_email: linkedClientId
+                        ? null
+                        : (reminderToEmail.trim() || null),
+                    lead_case_name: null,
+                });
+            } else {
+                Object.assign(payload, {
+                    client_user_id: null,
+                    client_name: null,
+                    case_id: null,
                     lead_name: null,
                     lead_phone: null,
-                    lead_email: isReminderEventType ? (reminderToEmail.trim() || null) : null,
+                    lead_email: null,
                     lead_case_name: null,
                 });
             }
@@ -822,7 +903,8 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     saved,
                     _currentUserIdFromToken()
                 );
-                onSaved(saved, { firmOnlyNotice });
+                const reminderSyncWarning = res?.data?.reminderSyncWarning || null;
+                onSaved(saved, { firmOnlyNotice, reminderSyncWarning });
             } else {
                 setError(res?.data?.message || res?.message || "שגיאה. נסה שוב.");
             }
@@ -1357,6 +1439,17 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                     rows={3}
                                 />
                             )}
+
+                            {reminderBodyPreview && (
+                                <SimpleContainer className="lw-eventFormModal__bodyPreview">
+                                    <Text14 className="lw-eventFormModal__bodyPreviewLabel">
+                                        {t("reminders.import.bodyPreviewLabel")}
+                                    </Text14>
+                                    <Text14 className="lw-eventFormModal__bodyPreviewText">
+                                        {reminderBodyPreview}
+                                    </Text14>
+                                </SimpleContainer>
+                            )}
                         </SimpleContainer>
                     )}
 
@@ -1422,6 +1515,44 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                     </SimpleButton>
                                 </SimpleContainer>
                             </SimpleContainer>
+                            {(reminderChannels.sms || reminderTargets.client) && (
+                                <SimpleContainer className="lw-eventFormModal__smsTemplates">
+                                    <TextBold14 color={NAVY}>{t("calendar.clientReminderSmsLabel")}</TextBold14>
+                                    <Text12 color="#718096">{t("calendar.clientReminderSmsHint")}</Text12>
+                                    <SimpleContainer className="lw-eventFormModal__smsVarRow">
+                                        {CALENDAR_SMS_VARS.map((v) => (
+                                            <TertiaryButton
+                                                key={`rem-${v}`}
+                                                onPress={() => setClientReminderSms((prev) => `${prev}{{${v}}}`)}
+                                            >
+                                                {`{{${v}}}`}
+                                            </TertiaryButton>
+                                        ))}
+                                    </SimpleContainer>
+                                    <SimpleTextArea
+                                        value={clientReminderSms}
+                                        onChange={setClientReminderSms}
+                                        rows={8}
+                                    />
+                                    <TextBold14 color={NAVY}>{t("calendar.inviteSmsLabel")}</TextBold14>
+                                    <Text12 color="#718096">{t("calendar.inviteSmsHint")}</Text12>
+                                    <SimpleContainer className="lw-eventFormModal__smsVarRow">
+                                        {CALENDAR_SMS_VARS.map((v) => (
+                                            <TertiaryButton
+                                                key={`inv-${v}`}
+                                                onPress={() => setInviteSms((prev) => `${prev}{{${v}}}`)}
+                                            >
+                                                {`{{${v}}}`}
+                                            </TertiaryButton>
+                                        ))}
+                                    </SimpleContainer>
+                                    <SimpleTextArea
+                                        value={inviteSms}
+                                        onChange={setInviteSms}
+                                        rows={7}
+                                    />
+                                </SimpleContainer>
+                            )}
                         </SimpleContainer>
                     )}
 
