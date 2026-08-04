@@ -67,6 +67,7 @@ router.get('/agenda/:date', ...protect, cal.getDayAgenda);
 // Public invite RSVP (no auth)
 router.get('/invite/:token', cal.getInviteByToken);
 router.post('/invite/:token', cal.respondToInvite);
+router.get('/short-links/:slug', cal.resolvePublicShortLink);
 
 // ─── CRM (Step 2) ─────────────────────────────────────────────────────────────
 // All named routes go BEFORE the generic /:id handlers below.

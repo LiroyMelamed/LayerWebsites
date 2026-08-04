@@ -18,6 +18,7 @@ export const PlatformSettingsScreenName = "/PlatformSettingsScreen";
 export const CalendarScreenName = "/CalendarScreen";
 export const DailyAgendaScreenName = "/calendar/day/:date";
 export const CalendarInviteScreenName = "/calendar-invite/:token";
+export const ShortNavRedirectScreenName = "/n/:slug";
 
 export const ClientMainScreenName = "/ClientMainScreen";
 export const ClientCasesScreenName = "/ClientCasesScreen";

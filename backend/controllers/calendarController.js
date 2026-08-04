@@ -41,9 +41,9 @@ const {
     parseReminderTargets,
     targetsToJson,
     defaultReminderTargets,
-    composeClientReminderMessage,
-    buildNavLinks,
+    composeInviteSmsMessage,
 } = require('../lib/calendarEventReminders');
+const { resolveShortLink } = require('../lib/publicShortLinks');
 const { lawyerMatchSql, personalCalendarSql } = require('../lib/calendarVisibility');
 const { signOAuthState, verifyOAuthState } = require('../lib/calendarOAuthState');
 const { sendMessage } = require('../utils/sendMessage');
@@ -254,6 +254,8 @@ function _sanitizeEvent(row) {
         inviteStatus: row.invite_status || 'none',
         inviteToken: row.invite_token || null,
         inviteRespondedAt: row.invite_responded_at || null,
+        clientReminderSms: row.client_reminder_sms ?? null,
+        inviteSms: row.invite_sms ?? null,
         linkedReminderId: row.linked_reminder_id ?? null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
@@ -840,8 +842,11 @@ const createEvent = async (req, res) => {
             code: 'LEAD_AND_CLIENT_MUTUALLY_EXCLUSIVE',
         });
     }
-    if (_isInternalScopedEventType(eventType) && hasLead) {
-        return res.status(400).json({ message: 'אירוע פנימי (חופשה, חג או תזכורת) לא יכול להכיל פרטי ליד' });
+    // Leave/holiday are firm-internal and must not carry lead CRM fields.
+    // Reminder events intentionally reuse lead_name/lead_email for recipients
+    // who are not yet registered users (see reminderCalendarSync).
+    if ((eventType === 'leave' || eventType === 'holiday') && hasLead) {
+        return res.status(400).json({ message: 'אירוע פנימי (חופשה או חג) לא יכול להכיל פרטי ליד' });
     }
 
     // Working hours are visual guidance on the calendar grid only — do not block saves.
@@ -867,6 +872,12 @@ const createEvent = async (req, res) => {
     );
     const inviteToken = shouldInviteClient ? crypto.randomBytes(24).toString('hex') : null;
     const inviteStatus = shouldInviteClient ? 'pending' : 'none';
+    const clientReminderSms = req.body?.client_reminder_sms != null
+        ? String(req.body.client_reminder_sms).trim() || null
+        : null;
+    const inviteSms = req.body?.invite_sms != null
+        ? String(req.body.invite_sms).trim() || null
+        : null;
 
     try {
         const { rows } = await pool.query(
@@ -876,9 +887,9 @@ const createEvent = async (req, res) => {
                 start_time, end_time, all_day, rrule,
                 lead_name, lead_phone, lead_email, lead_case_name,
                 reminder_offsets, reminder_channels, reminder_targets, reminders_sent_offsets,
-                invite_status, invite_token)
+                invite_status, invite_token, client_reminder_sms, invite_sms)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
-                     $20::jsonb, $21::jsonb, $22::jsonb, '[]'::jsonb, $23, $24)
+                     $20::jsonb, $21::jsonb, $22::jsonb, '[]'::jsonb, $23, $24, $25, $26)
              RETURNING *`,
             [
                 ownerId,
@@ -905,6 +916,8 @@ const createEvent = async (req, res) => {
                 targetsToJson(storedReminderTargets),
                 inviteStatus,
                 inviteToken,
+                clientReminderSms,
+                inviteSms,
             ]
         );
         const created = rows[0];
@@ -935,6 +948,9 @@ const createEvent = async (req, res) => {
                         createdBy: userId,
                     }
                 );
+                if (!linkedReminderId) {
+                    reminderSyncWarning = 'האירוע נשמר אך חסרים אימייל או שם לקוח — התזכורת לא נוספה למסך התזכורות.';
+                }
             } catch (syncErr) {
                 console.error('[calendarController] createEvent reminder sync failed:', syncErr.message);
                 reminderSyncWarning = 'האירוע נשמר אך לא נוצרה תזכורת מקושרת.';
@@ -1123,8 +1139,8 @@ const updateEvent = async (req, res) => {
                 code: 'LEAD_AND_CLIENT_MUTUALLY_EXCLUSIVE',
             });
         }
-        if (_isInternalScopedEventType(newEventType) && hasLead) {
-            return res.status(400).json({ message: 'אירוע פנימי (חופשה, חג או תזכורת) לא יכול להכיל פרטי ליד' });
+        if ((newEventType === 'leave' || newEventType === 'holiday') && hasLead) {
+            return res.status(400).json({ message: 'אירוע פנימי (חופשה או חג) לא יכול להכיל פרטי ליד' });
         }
 
         const managerUpdate = _resolveManagerIdsForUpdate(req.body);
@@ -1146,6 +1162,13 @@ const updateEvent = async (req, res) => {
         const nextReminderTargets = req.body?.reminder_targets !== undefined
             ? parseReminderTargets(req.body.reminder_targets)
             : parseReminderTargets(ev.reminder_targets);
+
+        const nextClientReminderSms = req.body?.client_reminder_sms !== undefined
+            ? (String(req.body.client_reminder_sms || '').trim() || null)
+            : ev.client_reminder_sms;
+        const nextInviteSms = req.body?.invite_sms !== undefined
+            ? (String(req.body.invite_sms || '').trim() || null)
+            : ev.invite_sms;
 
         const { rows } = await pool.query(
             `UPDATE calendar_events SET
@@ -1172,8 +1195,10 @@ const updateEvent = async (req, res) => {
                reminder_targets       = $21::jsonb,
                reminders_sent_offsets = $22::jsonb,
                last_reminder_sent_at  = $23,
-               owner_id               = $24
-             WHERE id = $25
+               owner_id               = $24,
+               client_reminder_sms    = $25,
+               invite_sms             = $26
+             WHERE id = $27
              RETURNING *`,
             [
                 (title || ev.title).trim(),
@@ -1200,6 +1225,8 @@ const updateEvent = async (req, res) => {
                 resetRemindersSent ? '[]' : offsetsToJson(parseStoredSentOffsets(ev.reminders_sent_offsets)),
                 resetRemindersSent ? null : ev.last_reminder_sent_at,
                 nextOwnerId,
+                nextClientReminderSms,
+                nextInviteSms,
                 eventId,
             ]
         );
@@ -2516,28 +2543,24 @@ async function _publicAppBase() {
 
 async function _sendCalendarInvite(ev) {
     if (!ev?.invite_token) return;
-    const base = await _publicAppBase();
-    const link = base ? `${base}/calendar-invite/${ev.invite_token}` : '';
-    const when = new Date(ev.start_time).toLocaleString('he-IL', {
-        dateStyle: 'short',
-        timeStyle: 'short',
-        hour12: false,
-    });
-    const firm = await getLawFirmNameHe().catch(() => 'המשרד');
-    let body = `הזמנה לפגישה עם ${firm}: ${ev.title || 'פגישה'} ב־${when}`;
-    body += buildNavLinks(ev.location);
-    if (link) body += `\nלאישור או ביטול: ${link}`;
 
     let phone = ev.lead_phone || null;
     let email = ev.lead_email || null;
+    let clientName = ev.client_name || ev.lead_name || null;
     if (ev.client_user_id) {
         const { rows } = await pool.query(
-            'SELECT phonenumber AS phone, email FROM users WHERE userid = $1',
+            'SELECT phonenumber AS phone, email, name FROM users WHERE userid = $1',
             [ev.client_user_id]
         );
         phone = phone || rows[0]?.phone || null;
         email = email || rows[0]?.email || null;
+        clientName = clientName || rows[0]?.name || null;
     }
+
+    const messageBody = await composeInviteSmsMessage({
+        ...ev,
+        client_name: clientName,
+    });
 
     const toE164 = (raw) => {
         const digits = String(raw || '').replace(/\D/g, '');
@@ -2551,7 +2574,7 @@ async function _sendCalendarInvite(ev) {
 
     const e164 = toE164(phone);
     if (e164) {
-        try { await sendMessage(body, e164); } catch (e) {
+        try { await sendMessage(messageBody, e164); } catch (e) {
             console.error('[calendar-invite] SMS failed:', e.message);
         }
     }
@@ -2560,7 +2583,7 @@ async function _sendCalendarInvite(ev) {
             await sendTransactionalCustomHtmlEmail({
                 toEmail: email,
                 subject: `הזמנה לפגישה — ${ev.title || 'פגישה'}`,
-                htmlBody: `<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.7">${body.replace(/\n/g, '<br/>')}</div>`,
+                htmlBody: `<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.7">${String(messageBody).replace(/\n/g, '<br/>')}</div>`,
                 logLabel: 'calendar-invite',
             });
         } catch (e) {
@@ -2700,6 +2723,20 @@ const getDayAgenda = async (req, res) => {
     }
 };
 
+/**
+ * GET /api/calendar/short-links/:slug — public resolve for /n/:slug SPA redirects
+ */
+const resolvePublicShortLink = async (req, res) => {
+    try {
+        const resolved = await resolveShortLink(req.params.slug);
+        if (!resolved?.url) return res.status(404).json({ message: 'not found' });
+        return res.json({ url: resolved.url, kind: resolved.kind || null });
+    } catch (err) {
+        console.error('[calendarController] resolvePublicShortLink:', err.message);
+        return res.status(500).json({ message: 'שגיאה פנימית' });
+    }
+};
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // Exports
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2723,6 +2760,7 @@ module.exports = {
     getInviteByToken,
     respondToInvite,
     resendInvite,
+    resolvePublicShortLink,
     // Agenda
     getDayAgenda,
     // iCal

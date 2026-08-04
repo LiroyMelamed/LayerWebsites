@@ -108,6 +108,12 @@
 .lw-calendarScreen__calendarCol {
     flex-direction: column;
     min-width: 0; // prevent FullCalendar from blowing out the grid
+    width: 100%;
+}
+
+.lw-calendarScreen__layout.is-sidebarClosed .lw-calendarScreen__calendarCol {
+    width: 100%;
+    max-width: 100%;
 }
 
 // ─── Filter groups ───────────────────────────────────────────────────────────

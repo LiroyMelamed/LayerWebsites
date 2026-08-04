@@ -461,11 +461,14 @@ export default function CalendarScreen() {
         });
     }, [apiFilters.scope]);
 
-    const handleEventSaved = useCallback((saved, { firmOnlyNotice } = {}) => {
+    const handleEventSaved = useCallback((saved, { firmOnlyNotice, reminderSyncWarning } = {}) => {
         upsertLocally(saved);
         fetchEvents(null);
         closePopup();
-        if (firmOnlyNotice) {
+        if (reminderSyncWarning) {
+            setCalendarMsg(reminderSyncWarning);
+            setTimeout(() => setCalendarMsg(""), 10000);
+        } else if (firmOnlyNotice) {
             setCalendarMsg(t("calendar.savedFirmOnlyNotice"));
             setTimeout(() => setCalendarMsg(""), 8000);
         }
@@ -901,28 +904,6 @@ export default function CalendarScreen() {
                     {/* ── Calendar column ── */}
                     <SimpleContainer className="lw-calendarScreen__calendarCol">
 
-                        {/* View switcher */}
-                        <SimpleContainer className="lw-calendarScreen__viewSwitcher">
-                            <SecondaryButton
-                                className={view === "dayGridMonth" ? "is-active" : ""}
-                                onPress={() => switchView("dayGridMonth")}
-                            >
-                                {t("calendar.monthView")}
-                            </SecondaryButton>
-                            <SecondaryButton
-                                className={view === "timeGridWeek" ? "is-active" : ""}
-                                onPress={() => switchView("timeGridWeek")}
-                            >
-                                {t("calendar.weekView")}
-                            </SecondaryButton>
-                            <SecondaryButton
-                                className={view === "timeGridDay" ? "is-active" : ""}
-                                onPress={() => switchView("timeGridDay")}
-                            >
-                                {t("calendar.dayView")}
-                            </SecondaryButton>
-                        </SimpleContainer>
-
                         {/* Calendar */}
                         <SimpleCard className="lw-calendarScreen__calendarCard">
                             <FullCalendar
@@ -934,8 +915,15 @@ export default function CalendarScreen() {
                                 headerToolbar={{
                                     start: "prev,next today",
                                     center: "title",
-                                    end: "",
+                                    end: "dayGridMonth,timeGridWeek,timeGridDay",
                                 }}
+                                buttonText={{
+                                    today: t("calendar.today", { defaultValue: "היום" }),
+                                    month: t("calendar.monthView"),
+                                    week: t("calendar.weekView"),
+                                    day: t("calendar.dayView"),
+                                }}
+                                slotEventOverlap={false}
                                 events={events}
                                 selectable
                                 selectMirror
@@ -1003,7 +991,10 @@ export default function CalendarScreen() {
                                         window.alert(err?.response?.data?.message || t("calendar.googleSyncError"));
                                     }
                                 }}
-                                datesSet={fetchEvents}
+                                datesSet={(arg) => {
+                                    if (arg?.view?.type) setView(arg.view.type);
+                                    fetchEvents(arg);
+                                }}
                                 longPressDelay={350}
                                 selectLongPressDelay={350}
                                 eventLongPressDelay={0}

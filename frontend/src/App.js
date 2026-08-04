@@ -19,6 +19,7 @@ import {
   PricingScreenName,
   PrivacyPageName,
   PublicSignScreenName,
+  ShortNavRedirectScreenName,
   ShortSignRedirectScreenName,
   SecurityScreenName,
   SigningScreenName,
@@ -30,6 +31,7 @@ import AdminStack from './navigation/AdminStack';
 import ClientStack from './navigation/ClientStack';
 import PublicSigningScreen from './screens/signingScreen/PublicSigningScreen';
 import ShortSignRedirectScreen from './screens/signingScreen/ShortSignRedirectScreen';
+import ShortNavRedirectScreen from './screens/calendarScreen/ShortNavRedirectScreen';
 import ViewSignedDocument from './screens/viewSignedDocument/ViewSignedDocument';
 import EvidenceVerifyScreen from './screens/verify/EvidenceVerifyScreen';
 import PricingScreen from './screens/pricingScreen/PricingScreen';
@@ -168,6 +170,7 @@ const App = () => {
       <Routes>
         <Route path={PublicSignScreenName} element={<PublicSigningScreen />} />
         <Route path={ShortSignRedirectScreenName} element={<ShortSignRedirectScreen />} />
+        <Route path={ShortNavRedirectScreenName} element={<ShortNavRedirectScreen />} />
         <Route path={ViewSignedDocumentName} element={<ViewSignedDocument />} />
         <Route path={CalendarInviteScreenName} element={<CalendarInviteScreen />} />
 
