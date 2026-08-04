@@ -37,15 +37,6 @@ function tryOpenNativeSigningApp(token) {
                 try { iframe.parentNode && iframe.parentNode.removeChild(iframe); } catch (_) { /* ignore */ }
             }, 1500);
         } catch (_) { /* ignore */ }
-        // Some WebViews block iframe schemes — also try location for a tick.
-        try {
-            const a = document.createElement("a");
-            a.href = target;
-            a.style.display = "none";
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => { try { a.remove(); } catch (_) { /* ignore */ } }, 0);
-        } catch (_) { /* ignore */ }
     };
 
     open(schemes[0]);
