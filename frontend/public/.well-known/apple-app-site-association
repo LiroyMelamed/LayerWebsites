@@ -12,9 +12,9 @@
                     "NOT /Verify/Evidence/*",
                     "NOT /ticket*",
                     "NOT /TicketScreen*",
-                    "NOT /PublicSign*",
-                    "NOT /PublicSignScreen*",
-                    "NOT /s/*",
+                    "/PublicSign*",
+                    "/PublicSignScreen*",
+                    "/s/*",
                     "*"
                 ]
             }
