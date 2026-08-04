@@ -8,7 +8,6 @@ import SimpleButton from "../../../components/simpleComponents/SimpleButton";
 import SearchInput from "../../../components/specializedComponents/containers/SearchInput";
 import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
-import TertiaryButton from "../../../components/styledComponents/buttons/TertiaryButton";
 import { Text12, Text14, Text24, TextBold14 } from "../../../components/specializedComponents/text/AllTextKindFile";
 import calendarApi from "../../../api/calendarApi";
 import platformSettingsApi from "../../../api/platformSettingsApi";
@@ -66,6 +65,30 @@ const CALENDAR_SMS_VARS = [
     "recipientName", "firmName", "date", "time", "address",
     "wazeUrl", "mapsUrl", "rsvpUrl", "firmPhone", "websiteUrl", "lawyerName", "title",
 ];
+
+const CALENDAR_SMS_VAR_LABELS = {
+    recipientName: "שם הלקוח",
+    firmName: "שם המשרד",
+    date: "תאריך",
+    time: "שעה",
+    address: "כתובת",
+    wazeUrl: "קישור וויז",
+    mapsUrl: "קישור מפות",
+    rsvpUrl: "קישור אישור הגעה",
+    firmPhone: "טלפון המשרד",
+    websiteUrl: "אתר המשרד",
+    lawyerName: "שם עורך הדין",
+    title: "כותרת האירוע",
+};
+
+/** Fill {{placeholders}} with real event data; unresolved ones fall back to the Hebrew label. */
+function renderSmsPreview(template, values) {
+    return String(template || "").replace(/\{\{\s*(\w+)\s*\}\}/g, (_m, key) => {
+        const val = values[key];
+        if (val != null && String(val).trim()) return String(val).trim();
+        return `"${CALENDAR_SMS_VAR_LABELS[key] || key}"`;
+    });
+}
 
 const INTAKE_EXISTING = "existing";
 const INTAKE_LEAD = "lead";
@@ -318,6 +341,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const [inviteSms, setInviteSms] = useState(
         () => String(event?.inviteSms || "").trim() || DEFAULT_INVITE_SMS
     );
+    const [smsFirmPhone, setSmsFirmPhone] = useState("");
     const [allowedReminderMinutes, setAllowedReminderMinutes] = useState(DEFAULT_ALLOWED_MINUTES);
     const [allowedReminderChannelKeys, setAllowedReminderChannelKeys] = useState(["push", "sms", "email"]);
     const [caseFormDraft, setCaseFormDraft] = useState(null);
@@ -533,7 +557,9 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 const branding = res?.data?.settings?.branding || res?.settings?.branding || {};
                 const firm = res?.data?.settings?.firm || res?.settings?.firm || {};
                 const templates = res?.data?.settings?.templates || res?.settings?.templates || {};
+                const contact = res?.data?.settings?.contact || res?.settings?.contact || {};
                 if (cancelled) return;
+                setSmsFirmPhone(String(contact?.WHATSAPP_PHONE?.effectiveValue || "").trim());
                 const allowed = parseAllowedOptionsFromSettings(cal);
                 setAllowedReminderMinutes(allowed);
                 const calChannelKeys = parseAllowedChannelsFromSettings(cal);
@@ -584,6 +610,30 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         })();
         return () => { cancelled = true; };
     }, [isEdit]);
+
+    const smsPreviewValues = useMemo(() => {
+        const start = startTime ? new Date(startTime) : null;
+        const validStart = start && !Number.isNaN(start.getTime()) ? start : null;
+        return {
+            recipientName: (clientName || leadName || "").trim(),
+            firmName: getFirmName() || "",
+            date: validStart
+                ? validStart.toLocaleDateString("he-IL", { day: "2-digit", month: "2-digit", year: "numeric" })
+                : "",
+            time: validStart
+                ? validStart.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })
+                : "",
+            address: (location || "").trim(),
+            // Short nav/RSVP links are generated on send — show Hebrew stand-ins in the preview.
+            wazeUrl: "",
+            mapsUrl: "",
+            rsvpUrl: "",
+            firmPhone: smsFirmPhone,
+            websiteUrl: typeof window !== "undefined" ? window.location.origin : "",
+            lawyerName: (managers?.[0]?.name || "").trim(),
+            title: (title || "").trim(),
+        };
+    }, [clientName, leadName, startTime, location, smsFirmPhone, managers, title]);
 
     const reminderPresets = presetsForAllowedMinutes(allowedReminderMinutes);
     const reminderChannelOptions = useMemo(
@@ -1515,18 +1565,19 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                     </SimpleButton>
                                 </SimpleContainer>
                             </SimpleContainer>
-                            {(reminderChannels.sms || reminderTargets.client) && (
+                            {reminderTargets.client && (
                                 <SimpleContainer className="lw-eventFormModal__smsTemplates">
                                     <TextBold14 color={NAVY}>{t("calendar.clientReminderSmsLabel")}</TextBold14>
                                     <Text12 color="#718096">{t("calendar.clientReminderSmsHint")}</Text12>
                                     <SimpleContainer className="lw-eventFormModal__smsVarRow">
                                         {CALENDAR_SMS_VARS.map((v) => (
-                                            <TertiaryButton
+                                            <SimpleButton
                                                 key={`rem-${v}`}
+                                                className="lw-eventFormModal__reminderChip"
                                                 onPress={() => setClientReminderSms((prev) => `${prev}{{${v}}}`)}
                                             >
-                                                {`{{${v}}}`}
-                                            </TertiaryButton>
+                                                <Text14>{CALENDAR_SMS_VAR_LABELS[v] || v}</Text14>
+                                            </SimpleButton>
                                         ))}
                                     </SimpleContainer>
                                     <SimpleTextArea
@@ -1534,16 +1585,23 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                         onChange={setClientReminderSms}
                                         rows={8}
                                     />
+                                    <SimpleContainer className="lw-eventFormModal__smsPreview">
+                                        <Text12 color="#718096">{t("calendar.smsPreviewTitle")}</Text12>
+                                        <Text14 className="lw-eventFormModal__smsPreviewBody">
+                                            {renderSmsPreview(clientReminderSms, smsPreviewValues)}
+                                        </Text14>
+                                    </SimpleContainer>
                                     <TextBold14 color={NAVY}>{t("calendar.inviteSmsLabel")}</TextBold14>
                                     <Text12 color="#718096">{t("calendar.inviteSmsHint")}</Text12>
                                     <SimpleContainer className="lw-eventFormModal__smsVarRow">
                                         {CALENDAR_SMS_VARS.map((v) => (
-                                            <TertiaryButton
+                                            <SimpleButton
                                                 key={`inv-${v}`}
+                                                className="lw-eventFormModal__reminderChip"
                                                 onPress={() => setInviteSms((prev) => `${prev}{{${v}}}`)}
                                             >
-                                                {`{{${v}}}`}
-                                            </TertiaryButton>
+                                                <Text14>{CALENDAR_SMS_VAR_LABELS[v] || v}</Text14>
+                                            </SimpleButton>
                                         ))}
                                     </SimpleContainer>
                                     <SimpleTextArea
@@ -1551,6 +1609,12 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                         onChange={setInviteSms}
                                         rows={7}
                                     />
+                                    <SimpleContainer className="lw-eventFormModal__smsPreview">
+                                        <Text12 color="#718096">{t("calendar.smsPreviewTitle")}</Text12>
+                                        <Text14 className="lw-eventFormModal__smsPreviewBody">
+                                            {renderSmsPreview(inviteSms, smsPreviewValues)}
+                                        </Text14>
+                                    </SimpleContainer>
                                 </SimpleContainer>
                             )}
                         </SimpleContainer>
