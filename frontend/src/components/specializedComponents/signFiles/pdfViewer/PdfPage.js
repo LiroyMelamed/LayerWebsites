@@ -1,47 +1,18 @@
 import React, { useEffect, useState } from "react";
 import "../../../../utils/pdfjsConfig";
-import { Document, Page } from "react-pdf";
+import { Page } from "react-pdf";
 import SimpleContainer from "../../../simpleComponents/SimpleContainer";
-import SimpleLoader from "../../../simpleComponents/SimpleLoader";
-import { useTranslation } from "react-i18next";
 
-export default function PdfPage({ pdfFile, pageNumber = 1, onLoadTotalPages, renderWidth = 800 }) {
-    const { t } = useTranslation();
-    const [objectUrl, setObjectUrl] = useState(null);
-
-    useEffect(() => {
-        if (!pdfFile) {
-            setObjectUrl(null);
-            return;
-        }
-
-        const url = URL.createObjectURL(pdfFile);
-        setObjectUrl(url);
-
-        return () => {
-            URL.revokeObjectURL(url);
-        };
-    }, [pdfFile]);
-
-    if (!objectUrl) return null;
-
+/** Renders one page inside a parent <Document>. Prefer PdfViewer for full documents. */
+export default function PdfPage({ pageNumber = 1, renderWidth = 800 }) {
     return (
         <SimpleContainer className="lw-signing-pdfPage">
-            <Document
-                file={objectUrl}
-                loading={<SimpleContainer className="lw-signing-pdfLoading"><SimpleLoader /></SimpleContainer>}
-                error={<div>{t("signing.pdf.loadError")}</div>}
-                onLoadSuccess={(pdf) => {
-                    if (onLoadTotalPages) onLoadTotalPages(pdf.numPages);
-                }}
-            >
-                <Page
-                    pageNumber={pageNumber}
-                    width={renderWidth}
-                    renderTextLayer={false}
-                    renderAnnotationLayer={false}
-                />
-            </Document>
+            <Page
+                pageNumber={pageNumber}
+                width={renderWidth}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+            />
         </SimpleContainer>
     );
 }
