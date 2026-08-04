@@ -766,7 +766,8 @@
     "public": {
       "closedTitle": "Closed",
       "closedHint": "You can close this window.",
-      "loadingDocument": "Loading document for signing..."
+      "loadingDocument": "Loading document for signing...",
+      "openInApp": "Open in app"
     },
     "pdf": {
       "loading": "Loading PDF…",

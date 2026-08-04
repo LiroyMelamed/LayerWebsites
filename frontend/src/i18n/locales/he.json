@@ -1034,7 +1034,8 @@
     "public": {
       "closedTitle": "נסגר",
       "closedHint": "ניתן לסגור את החלון.",
-      "loadingDocument": "טוען מסמך לחתימה..."
+      "loadingDocument": "טוען מסמך לחתימה...",
+      "openInApp": "פתח באפליקציה"
     },
     "pdf": {
       "loading": "טוען PDF…",
