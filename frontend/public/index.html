@@ -78,7 +78,10 @@
     }
   </script>
 
-  <!-- Soft app open: try native app if installed; never trap users in the App Store -->
+  <!-- Soft app open for portal pages only (try scheme if installed; never force App Store).
+       Public signing (/s/*, PublicSign*) is claimed by Universal Links / App Links:
+       - app installed → OS opens the native app
+       - app not installed → this page loads in the browser (skip soft-open below) -->
   <script>
     (function () {
       var path = window.location.pathname || '';
