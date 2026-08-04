@@ -870,7 +870,8 @@
     "public": {
       "closedTitle": "مغلق",
       "closedHint": "يمكنك إغلاق هذه النافذة.",
-      "loadingDocument": "جارٍ تحميل المستند للتوقيع..."
+      "loadingDocument": "جارٍ تحميل المستند للتوقيع...",
+      "openInApp": "افتح في التطبيق"
     },
     "pdf": {
       "loading": "جارٍ تحميل ملف PDF…",
