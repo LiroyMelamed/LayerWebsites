@@ -87,13 +87,32 @@ function _eventTypeFilterLabel(eventType, t) {
 // Map a raw calendar_events row → FullCalendar EventInput. The scope drives
 // whether we color by lawyer (firm view) or by event.color (personal view).
 
-/** FullCalendar all-day end is exclusive — extend by one calendar day. */
+/** FullCalendar all-day end is exclusive — extend inclusive DB end by one local day. */
+function toLocalYmd(value) {
+    if (!value) return "";
+    if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) {
+        return value.slice(0, 10);
+    }
+    const d = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(d.getTime())) return "";
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+}
+
+function addLocalDaysYmd(ymd, days) {
+    const base = String(ymd || "").slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(base)) return base;
+    const d = new Date(`${base}T12:00:00`);
+    d.setDate(d.getDate() + days);
+    return toLocalYmd(d);
+}
+
 function leaveAllDayRange(startTime, endTime) {
-    const start = String(startTime || "").slice(0, 10);
-    const endBase = new Date(endTime);
-    if (Number.isNaN(endBase.getTime())) return { start, end: start };
-    endBase.setUTCDate(endBase.getUTCDate() + 1);
-    return { start, end: endBase.toISOString().slice(0, 10) };
+    const start = toLocalYmd(startTime) || String(startTime || "").slice(0, 10);
+    const endInclusive = toLocalYmd(endTime) || start;
+    return { start, end: addLocalDaysYmd(endInclusive, 1) };
 }
 
 function buildInternalAllDayEvent(ev, { labelPrefix, color, className }) {
@@ -118,10 +137,8 @@ function buildHolidayHintEvent(h, t) {
     const date = String(h?.date || "").slice(0, 10);
     if (!date) return null;
     const title = h?.title || h?.titleEn || t?.("calendar.holidayHintPrefix") || "חג";
-    // FullCalendar exclusive end for all-day
-    const endDate = new Date(`${date}T12:00:00`);
-    endDate.setDate(endDate.getDate() + 1);
-    const end = endDate.toISOString().slice(0, 10);
+    // FullCalendar exclusive end for all-day (local calendar day)
+    const end = addLocalDaysYmd(date, 1);
     return {
         id: `holiday-hint-${h.id || date}-${title}`,
         title: `[חג] ${title}`,
@@ -160,16 +177,17 @@ function buildFullCalendarEvent(ev, { scope }) {
         });
     }
 
-    // Appointments: color by owner in firm view, otherwise honor a *custom*
-    // stored color. Stock / empty / legacy-navy colors follow platform type defaults.
+    // Appointments: honor a *custom* stored color when set. Stock / empty colors
+    // follow platform type defaults (personal) or lawyer palette (firm).
     const typeDefault = getEventTypeDefaultColor(ev?.eventType);
-    const personalInferred = isStockEventColor(ev?.color, ev?.eventType)
-        ? typeDefault
-        : String(ev.color).trim().toUpperCase();
+    const hasCustomColor = !isStockEventColor(ev?.color, ev?.eventType);
+    const personalInferred = hasCustomColor
+        ? String(ev.color).trim().toUpperCase()
+        : typeDefault;
 
-    // Firm view: color by manager (מי בפגישה?) so legend matches who handles the event.
+    // Firm view: manager palette by default; respect lawyer-picked custom color.
     const color = scope === SCOPE_FIRM
-        ? colorForKey(colorKeyForEvent(ev))
+        ? (hasCustomColor ? personalInferred : colorForKey(colorKeyForEvent(ev)))
         : personalInferred;
 
     const inviteStatus = ev?.inviteStatus;
@@ -958,10 +976,23 @@ export default function CalendarScreen() {
                                         return;
                                     }
                                     try {
+                                        const isAllDay = !!info.event.allDay;
+                                        let startIso = info.event.start?.toISOString();
+                                        let endIso = (info.event.end || info.event.start)?.toISOString();
+                                        if (isAllDay && info.event.start) {
+                                            const startYmd = toLocalYmd(info.event.start);
+                                            // FC exclusive end → inclusive end-of-day for DB
+                                            const endExclusive = info.event.end
+                                                ? toLocalYmd(info.event.end)
+                                                : addLocalDaysYmd(startYmd, 1);
+                                            const endInclusive = addLocalDaysYmd(endExclusive, -1) || startYmd;
+                                            startIso = new Date(`${startYmd}T00:00:00`).toISOString();
+                                            endIso = new Date(`${endInclusive}T23:59:00`).toISOString();
+                                        }
                                         const res = await calendarApi.updateEvent(id, {
-                                            start_time: info.event.start?.toISOString(),
-                                            end_time: (info.event.end || info.event.start)?.toISOString(),
-                                            all_day: !!info.event.allDay,
+                                            start_time: startIso,
+                                            end_time: endIso,
+                                            all_day: isAllDay,
                                         });
                                         if (!res?.success) {
                                             info.revert();
@@ -981,10 +1012,22 @@ export default function CalendarScreen() {
                                         return;
                                     }
                                     try {
+                                        const isAllDay = !!info.event.allDay;
+                                        let startIso = info.event.start?.toISOString();
+                                        let endIso = (info.event.end || info.event.start)?.toISOString();
+                                        if (isAllDay && info.event.start) {
+                                            const startYmd = toLocalYmd(info.event.start);
+                                            const endExclusive = info.event.end
+                                                ? toLocalYmd(info.event.end)
+                                                : addLocalDaysYmd(startYmd, 1);
+                                            const endInclusive = addLocalDaysYmd(endExclusive, -1) || startYmd;
+                                            startIso = new Date(`${startYmd}T00:00:00`).toISOString();
+                                            endIso = new Date(`${endInclusive}T23:59:00`).toISOString();
+                                        }
                                         const res = await calendarApi.updateEvent(id, {
-                                            start_time: info.event.start?.toISOString(),
-                                            end_time: (info.event.end || info.event.start)?.toISOString(),
-                                            all_day: !!info.event.allDay,
+                                            start_time: startIso,
+                                            end_time: endIso,
+                                            all_day: isAllDay,
                                         });
                                         if (!res?.success) {
                                             info.revert();

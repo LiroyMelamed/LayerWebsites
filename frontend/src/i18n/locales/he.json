@@ -127,7 +127,8 @@
       "viewSignatureSpots": "צפיה במיקומי חתימות",
       "deleteFile": "מחק מסמך",
       "rename": "שנה שם",
-      "resendInvite": "שלח שוב לחתימה"
+      "resendInvite": "שלח שוב לחתימה",
+      "deleteConfirm": "למחוק את המסמך מהמעקב? פעולה זו בלתי הפיכה (למשל מספר טלפון שגוי / מסמך שגוי)."
     },
     "signerStatus": {
       "title": "סטטוס חותמים",
@@ -665,7 +666,12 @@
     "type_leave": "חופשה",
     "type_holiday": "חג",
     "type_reminder": "תזכורת",
-    "eventTypeHolidaySingular": "חג"
+    "eventTypeHolidaySingular": "חג",
+    "reminderImmediate": "מיידי",
+    "inviteStatusBadgeAccepted": "אושר",
+    "inviteStatusBadgeDeclined": "נדחה",
+    "inviteStatusBadgePending": "ממתין",
+    "inviteRemindersIndependentHint": "הזמנת הגעה נשלחת מיד. תזכורות נשלחות לפי לוח הזמנים שנבחר — גם אם הלקוח כבר אישר או דחה."
   },
   "planUsage": {
     "title": "תכנית ושימוש",
@@ -1255,7 +1261,9 @@
         "waiverAckRequired": "כדי לשלוח ללא OTP יש לאשר במפורש את ההצהרה.",
         "duplicateSignerContact": "אימייל או טלפון זה כבר משויכים לחותם אחר במסמך. לכל חותם חייב להיות אימייל/טלפון ייחודי.",
         "manualSignerPhoneRequired": "כדי לשמור חותם כלקוח חדש יש להזין מספר טלפון ייחודי.",
-        "manualSignerCreateFailed": "לא הצלחנו ליצור לקוח חדש. בדקו שהטלפון אינו קיים כבר במערכת."
+        "manualSignerCreateFailed": "לא הצלחנו ליצור לקוח חדש. בדקו שהטלפון אינו קיים כבר במערכת.",
+        "manualSignerPhoneExists": "מספר הטלפון כבר קיים במערכת. חפשו את הלקוח והוסיפו אותו כחותם.",
+        "manualSignerAttachedExisting": "הטלפון כבר קיים במערכת — שייכנו את הלקוח הקיים כחותם."
       }
     }
   },
@@ -1567,7 +1575,7 @@
     "calendarRemindersEnabled": "מנגנון תזכורות Push פעיל",
     "calendarRemindersEnabledHint": "כאשר כבוי, לא יישלחו תזכורות גם אם נבחרו באירוע.",
     "calendarReminderOptionsTitle": "אפשרויות תזכורת לעורכי דין",
-    "calendarReminderOptionsHint": "בחר אילו מרווחי תזכורת יוצגו בעת יצירת אירוע.",
+    "calendarReminderOptionsHint": "בחר אילו מרווחי תזכורת יוצגו בעת יצירת אירוע (כולל מיידי). הזמנת הגעה נשלחת מיד; תזכורות אינן תלויות באישור RSVP.",
     "calendarRemindersPollMinutes": "תדירות בדיקה (דקות)",
     "calendarReminderChannelsTitle": "ערוצי שליחה זמינים לעורכי דין",
     "calendarReminderChannelsHint": "בחר אילו ערוצים יוצגו בעת יצירת תזכורות לאירוע (Push, SMS, אימייל).",
@@ -1626,7 +1634,8 @@
     "var_rsvpUrl": "קישור אישור הגעה",
     "var_firmPhone": "טלפון המשרד",
     "var_lawyerName": "שם עורך הדין",
-    "var_title": "כותרת האירוע"
+    "var_title": "כותרת האירוע",
+    "calendarInviteRsvpHint": "הזמנת הגעה נשלחת בהקדם. תזכורות נשלחות לפי לוח הזמנים שנבחר — ללא תלות בסטטוס RSVP."
   },
   "viewSignedDoc": {
     "invalidLink": "קישור לא תקין",

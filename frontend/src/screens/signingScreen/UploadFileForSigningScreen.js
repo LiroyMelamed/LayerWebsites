@@ -40,7 +40,7 @@ import "./UploadFileForSigningScreen.scss";
 import "../../components/specializedComponents/signFiles/fieldToolbar/fieldContextMenu.scss";
 import { MainScreenName } from "../mainScreen/MainScreen";
 import { useTranslation } from "react-i18next";
-import { SIGNING_OTP_ENABLED } from "../../featureFlags";
+import ApiUtils from "../../api/apiUtils";
 
 export const uploadFileForSigningScreenName = "/UploadFileForSigningScreen";
 
@@ -180,7 +180,32 @@ export default function UploadFileForSigningScreen() {
     const { isSmallScreen } = useScreenSize();
     const navigate = useNavigate();
     const { openPopup, closePopup } = usePopup();
-    const otpFeatureEnabled = SIGNING_OTP_ENABLED;
+    const [otpFeatureEnabled, setOtpFeatureEnabled] = useState(false);
+    const [otpDefaultRequire, setOtpDefaultRequire] = useState(true);
+
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await ApiUtils.get("platform-settings/public");
+                const data = res?.data || {};
+                const rawEnabled = data.SIGNING_OTP_ENABLED;
+                const rawDefault = data.SIGNING_REQUIRE_OTP_DEFAULT;
+                const enabled = rawEnabled === true || rawEnabled === "true" || rawEnabled === "1" || rawEnabled === 1;
+                const defaultRequire = !(
+                    rawDefault === false || rawDefault === "false" || rawDefault === "0" || rawDefault === 0
+                );
+                if (cancelled) return;
+                setOtpFeatureEnabled(enabled);
+                setOtpDefaultRequire(defaultRequire);
+                setOtpPolicy(enabled && defaultRequire ? "require" : "waive");
+                setOtpWaiverAck(!(enabled && defaultRequire));
+            } catch {
+                // Keep OTP UI off until settings load successfully.
+            }
+        })();
+        return () => { cancelled = true; };
+    }, []);
 
     const RETENTION_NOTICE_ACK_KEY = "lw_retention_notice_ack_v1";
 
@@ -769,7 +794,7 @@ export default function UploadFileForSigningScreen() {
                     Name: customer.Name || t('signing.signerFallback', { index: prev.length + 1 }),
                     Email: customer.Email || null,
                     Phone: customer.PhoneNumber || customer.Phone || null,
-                    deliveryMethod: 'both', // 'email' | 'phone' | 'both'
+                    deliveryMethod: 'phone', // 'email' | 'phone' | 'both' — default SMS only
                 },
             ];
         });
@@ -818,6 +843,42 @@ export default function UploadFileForSigningScreen() {
             return;
         }
 
+        const attachExistingSigner = (user) => {
+            const userId = user?.UserId;
+            if (!userId) return false;
+            setSelectedSigners((prev) => {
+                const exists = prev.some((s) => Number(s?.UserId) === Number(userId));
+                if (exists) return prev;
+                const resolvedEmail = user.Email || email || null;
+                const resolvedPhone = user.PhoneNumber || user.Phone || phone || null;
+                let deliveryMethod = 'phone';
+                if (resolvedEmail && !resolvedPhone) deliveryMethod = 'email';
+                else if (resolvedPhone && !resolvedEmail) deliveryMethod = 'phone';
+                return [
+                    ...prev,
+                    {
+                        UserId: userId,
+                        Name: user.Name || name,
+                        Email: resolvedEmail,
+                        Phone: resolvedPhone,
+                        deliveryMethod,
+                    },
+                ];
+            });
+            setManualSignerName("");
+            setManualSignerEmail("");
+            setManualSignerPhone("");
+            setShowManualSigner(false);
+            SearchCustomersByName(user.Name || name);
+            setMessage({
+                type: 'success',
+                text: t('signing.upload.validation.manualSignerAttachedExisting', {
+                    defaultValue: 'הטלפון כבר קיים במערכת — שייכנו את הלקוח הקיים כחותם.',
+                }),
+            });
+            return true;
+        };
+
         try {
             setMessage(null);
             const res = await customersApi.addCustomer({
@@ -827,6 +888,17 @@ export default function UploadFileForSigningScreen() {
                 companyName: '',
                 dateOfBirth: null,
             });
+
+            if (res?.status === 409 && (res?.data?.code === 'PHONE_ALREADY_EXISTS' || res?.data?.UserId)) {
+                if (attachExistingSigner(res.data)) return;
+                setMessage({
+                    type: 'error',
+                    text: res?.data?.message || t('signing.upload.validation.manualSignerPhoneExists', {
+                        defaultValue: 'מספר הטלפון כבר קיים במערכת. חפשו את הלקוח והוסיפו אותו כחותם.',
+                    }),
+                });
+                return;
+            }
 
             if (res?.status !== 200 && res?.status !== 201) {
                 setMessage({
@@ -849,9 +921,10 @@ export default function UploadFileForSigningScreen() {
             setSelectedSigners((prev) => {
                 const exists = prev.some((s) => Number(s?.UserId) === Number(userId));
                 if (exists) return prev;
-                let deliveryMethod = 'both';
+                let deliveryMethod = 'phone';
                 if (email && !phone) deliveryMethod = 'email';
                 else if (phone && !email) deliveryMethod = 'phone';
+                // When both contacts exist, still default to SMS only.
                 return [
                     ...prev,
                     {
@@ -870,9 +943,20 @@ export default function UploadFileForSigningScreen() {
             setShowManualSigner(false);
             SearchCustomersByName(name);
         } catch (err) {
+            const data = err?.data || err?.response?.data;
+            if (err?.status === 409 || data?.code === 'PHONE_ALREADY_EXISTS') {
+                if (attachExistingSigner(data || {})) return;
+                setMessage({
+                    type: 'error',
+                    text: data?.message || t('signing.upload.validation.manualSignerPhoneExists', {
+                        defaultValue: 'מספר הטלפון כבר קיים במערכת. חפשו את הלקוח והוסיפו אותו כחותם.',
+                    }),
+                });
+                return;
+            }
             setMessage({
                 type: 'error',
-                text: err?.data?.message || err?.message || t('signing.upload.validation.manualSignerCreateFailed'),
+                text: data?.message || err?.message || t('signing.upload.validation.manualSignerCreateFailed'),
             });
         }
     };
@@ -1063,8 +1147,8 @@ export default function UploadFileForSigningScreen() {
             setCompletionEmail("");
             setSignatureSpots([]);
             setUploadedFileKey(null);
-            setOtpPolicy(otpFeatureEnabled ? "require" : "waive");
-            setOtpWaiverAck(!otpFeatureEnabled);
+            setOtpPolicy(otpFeatureEnabled && otpDefaultRequire ? "require" : "waive");
+            setOtpWaiverAck(!(otpFeatureEnabled && otpDefaultRequire));
             setSigningOrder('parallel');
             setCaseSearchQuery("");
             setSelectedSpotIndex(null);

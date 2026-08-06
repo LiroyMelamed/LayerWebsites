@@ -98,7 +98,7 @@ async function notifyCaseManager({ caseId, caseName, title, message, smsBody, sm
             push: {
                 title: title || 'עדכון תיק',
                 body: finalMessage,
-                data: buildCasePushData({ caseId, type: mgrNotifType }),
+                data: buildCasePushData({ caseId }),
             },
             email: {
                 campaignKey: mgrNotifType,
@@ -595,7 +595,7 @@ const addCase = async (req, res) => {
                         push: {
                             title: notificationTitle,
                             body: notificationMessage,
-                            data: buildCasePushData({ caseId, type: 'CASE_CREATED' }),
+                            data: buildCasePushData({ caseId }),
                         },
                         email: {
                             campaignKey: 'CASE_CREATED',
@@ -891,7 +891,7 @@ const updateCase = async (req, res) => {
                         push: {
                             title: notificationTitle,
                             body: notificationMessage,
-                            data: buildCasePushData({ caseId, type: primaryType }),
+                            data: buildCasePushData({ caseId }),
                         },
                         email: {
                             campaignKey: primaryType,
@@ -1112,7 +1112,7 @@ const updateStage = async (req, res) => {
                         push: {
                             title,
                             body: message,
-                            data: buildCasePushData({ caseId, type: channelType, extra: { stage: String(CurrentStage) } }),
+                            data: buildCasePushData({ caseId, extra: { stage: String(CurrentStage) } }),
                         },
                         email: {
                             campaignKey: channelType,

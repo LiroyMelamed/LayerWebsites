@@ -1,23 +1,36 @@
 # SMTP setup for `mela-media.co.il` (Mor Levy + Ashraf Essa)
 
-## Current state (checked May 2026)
+## Current state (Jul 2026 — Brevo)
 
 | Item | Status |
 |------|--------|
-| `mela-media.co.il` MX | **None** — mail cannot work until MX/SPF/DKIM exist |
-| Mor Levy API SMTP | Uses `mail.melamedlaw.co.il` + `noreply@melamedlaw.co.il` |
-| Ashraf Essa API SMTP | Same MelamedLaw server (wrong domain for branding) |
-| App expects | `noreply@morlevy.mela-media.co.il`, `noreply@ashrafessa.mela-media.co.il` |
+| Transport | Brevo SMTP relay (`smtp-relay.brevo.com`) for both tenants |
+| Authenticated domain in Brevo | **`mela-media.co.il` only** (DKIM + SPF + brevo-code) |
+| Subdomain senders | **Rejected** — `noreply@ashrafessa.mela-media.co.il` / `noreply@morlevy.mela-media.co.il` get Brevo “sender is not valid” even though SMTP accepts |
+| Production FROM | `noreply-ashrafessa@mela-media.co.il`, `noreply-morlevy@mela-media.co.il` (display name = firm Hebrew name) |
 
-The backends are **separate** (`/root/MorLevi`, `/root/AshrafEssa`). Each has its own `backend/.env` SMTP block. They do **not** share config — only the mail server was shared.
+The backends are **separate** (`/root/MorLevi`, `/root/AshrafEssa`). Each has its own `backend/.env` SMTP block.
 
-**Important:** With cPanel-style SMTP, `SMTP_USER` and `SMTP_FROM_EMAIL` must be the **same mailbox** (the app enforces this in code).
+**Do not** set `SMTP_FROM_EMAIL` to `*@ashrafessa.mela-media.co.il` or `*@morlevy.mela-media.co.il` until those subdomains are fully authenticated in Brevo (DKIM CNAMEs + sender/domain validation). SPF alone on the subdomain is not enough.
 
 ---
 
-## Recommended layout
+## Recommended layout (while on Brevo)
 
-Create **two mailboxes** (same mail host, different addresses):
+Use addresses on the **authenticated** parent domain (display name still shows the firm):
+
+| Tenant | SMTP_FROM_EMAIL | Display name |
+|--------|-----------------|--------------|
+| Mor Levy | `noreply-morlevy@mela-media.co.il` | משרד עו"ד מור לוי |
+| Ashraf Essa | `noreply-ashrafessa@mela-media.co.il` | משרד עורכי דין אשראף עיסא |
+
+To use true subdomain senders later, authenticate each subdomain in Brevo (add `brevo1/2._domainkey` CNAMEs + validate), then point `SMTP_FROM_EMAIL` back to `noreply@<tenant>.mela-media.co.il`.
+
+---
+
+## Longer-term: dedicated mailboxes (optional)
+
+Create **two mailboxes** if moving off Brevo to cPanel/hosting SMTP:
 
 | Tenant | Mailbox | Display name (SMTP_FROM_NAME) |
 |--------|---------|-------------------------------|

@@ -29,7 +29,7 @@ import { usePopup } from "../../providers/PopUpProvider";
 import ErrorPopup from "../../components/styledComponents/popups/ErrorPopup";
 import { useTranslation } from "react-i18next";
 import { useFromApp } from "../../providers/FromAppProvider";
-import { SIGNING_OTP_ENABLED } from "../../featureFlags";
+import { useSigningOtpEnabled } from "../../services/firmSettings";
 
 import { AdminStackName } from "../../navigation/AdminStack";
 import { uploadFileForSigningScreenName } from "./UploadFileForSigningScreen";
@@ -703,7 +703,7 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
         }
     };
 
-    const showOtpUi = SIGNING_OTP_ENABLED;
+    const showOtpUi = useSigningOtpEnabled();
     const requireOtp = showOtpUi && Boolean(file?.RequireOtp);
     const isOtpWaived = showOtpUi && file?.RequireOtp === false;
     const otpChipText = requireOtp ? t('signing.otpRequiredBadge') : t('signing.otpWaivedBadge');
@@ -878,9 +878,16 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                             {t('signingManager.actions.resendInvite')}
                         </SecondaryButton>
                     )}
-                    {file?.Status === "pending" && onDelete && (
+                    {["pending", "signed", "rejected"].includes(String(file?.Status || "").toLowerCase()) && onDelete && (
                         <SecondaryButton
-                            onPress={() => onDelete(file.SigningFileId)}
+                            onPress={() => {
+                                const ok = window.confirm(
+                                    t('signingManager.actions.deleteConfirm', {
+                                        defaultValue: 'למחוק את המסמך מהמעקב? פעולה זו בלתי הפיכה (למשל מספר טלפון שגוי / מסמך שגוי).',
+                                    })
+                                );
+                                if (ok) onDelete(file.SigningFileId);
+                            }}
                             isPerforming={isDeleting}
                             className="lw-signingManagerScreen__deleteBtn"
                         >

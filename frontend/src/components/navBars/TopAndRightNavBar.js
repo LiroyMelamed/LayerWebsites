@@ -15,6 +15,7 @@ import { colors } from "../../constant/colors";
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../i18n/LanguageSwitcher';
 import ComplianceBadges from '../compliance/ComplianceBadges';
+import PoweredByMela from '../PoweredByMela';
 import "./TopAndRightNavBar.scss";
 
 const Logo = images.Logos.LogoSlangWhite;
@@ -91,6 +92,7 @@ export default function TopAndRightNavBar({ children, LogoNavigate, GetNavBarDat
                 {t('common.logout')}
               </GenericButton>
             </SimpleContainer>
+            <PoweredByMela />
           </SimpleContainer>
         </SimpleContainer>
       )}

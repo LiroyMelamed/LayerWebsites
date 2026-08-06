@@ -90,7 +90,7 @@ async function _claimDueReminders(pollMinutes, limit = 200) {
                  OR COALESCE(ce.reminder_channels->>'sms', 'false') IN ('true', '1')
                  OR COALESCE(ce.reminder_channels->>'email', 'false') IN ('true', '1')
               )
-              AND ce.start_time > NOW()
+              AND ce.start_time > NOW() - ($1::int * INTERVAL '1 minute')
               AND NOT COALESCE(ce.reminders_sent_offsets, '[]'::jsonb) @> to_jsonb((off.value)::int)
               AND ce.start_time - ((off.value)::int * INTERVAL '1 minute')
                   >= NOW() - ($1::int * INTERVAL '1 minute')

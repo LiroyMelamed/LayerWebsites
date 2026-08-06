@@ -4,6 +4,8 @@ import signingFilesApi from "../../../api/signingFilesApi";
 import ApiUtils from "../../../api/apiUtils";
 import PdfViewer from "./pdfViewer/PdfViewer";
 import { useTranslation } from "react-i18next";
+// OTP UI is driven by file.OtpEnabled / file.RequireOtp from the API
+// (platform setting SIGNING_OTP_ENABLED), not a build-time feature flag.
 
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import SimpleLoader from "../../simpleComponents/SimpleLoader";
@@ -16,6 +18,7 @@ import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 import { colors } from "../../../constant/colors";
 
 import "./signFiles.scss";
+import "../../../screens/signingScreen/PublicSigningScreen.scss";
 
 function uuidv4() {
     const cryptoObj = window.crypto || window.msCrypto;
@@ -50,7 +53,6 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const [loading, setLoading] = useState(true);
     const [fileDetails, setFileDetails] = useState(null);
     const [pdfFile, setPdfFile] = useState(null);
-    const [pdfSource, setPdfSource] = useState(null);
     const [pdfReady, setPdfReady] = useState(false);
     const [currentSpot, setCurrentSpot] = useState(null);
     const [message, setMessage] = useState(null);
@@ -78,11 +80,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const [signatureMode, setSignatureMode] = useState("draw"); // 'draw' | 'saved' | 'stamp' | 'savedStamp'
 
     // Court-ready: per-session identifier for audit trail + OTP binding.
-    const signingSessionIdRef = useRef(null);
-    if (!signingSessionIdRef.current) {
-        signingSessionIdRef.current = uuidv4();
-    }
-    const [signingSessionId, setSigningSessionId] = useState(signingSessionIdRef.current);
+    const signingSessionIdRef = useRef(uuidv4());
+    const signingSessionId = signingSessionIdRef.current;
 
     const [consentAccepted, setConsentAccepted] = useState(false);
     const [showConsentUi, setShowConsentUi] = useState(true);
@@ -92,6 +91,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const [otpBusy, setOtpBusy] = useState(false);
     const otpAutoSentRef = useRef(false);
     const otpAutoVerifyRef = useRef(false);
+    const otpLastFailedRef = useRef("");
+    const otpResendAtRef = useRef(0);
+    const otpInputRef = useRef(null);
     const [showCompletion, setShowCompletion] = useState(false);
     const [fieldValue, setFieldValue] = useState("");
     const [fieldChecked, setFieldChecked] = useState(false);
@@ -131,8 +133,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     };
 
     const isScreen = variant === "screen";
-    const otpRequired = Boolean(fileDetails?.file?.RequireOtp);
-    const signingBlockedByOtp = otpRequired && !otpVerified;
+    // Server sets OtpEnabled from platform setting SIGNING_OTP_ENABLED.
+    const otpEnabled = Boolean(fileDetails?.file?.OtpEnabled);
+    const otpRequired = otpEnabled && Boolean(fileDetails?.file?.RequireOtp);
 
     const consentStorageKey = useMemo(() => {
         const keyPart = isPublic
@@ -421,24 +424,16 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 headers.Authorization = `Bearer ${token}`;
             }
 
-            // Prefer ranged URL loading (pdf.js streams pages) — critical for Safari + large PDFs.
-            // Avoid downloading the entire PDF into a Blob up-front.
-            setPdfReady(false);
-            setPdfFile(null);
-            setPdfSource({
-                url,
-                httpHeaders: headers,
-                withCredentials: !isPublic,
+            const res = await fetch(url, {
+                method: "GET",
+                headers,
             });
+            if (!res.ok) throw new Error(`PDF fetch failed: ${res.status}`);
+            const blob = await res.blob();
+            setPdfFile(blob);
         } catch (err) {
-            console.error("Failed to prepare PDF source", err);
+            console.error("Failed to load PDF", err);
             setPdfFile(null);
-            setPdfSource(null);
-            setPdfReady(false);
-            setMessage({
-                type: "error",
-                text: t("signing.canvas.loadDocumentError") || t("signing.pdf.loadError"),
-            });
         }
     };
 
@@ -532,7 +527,6 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 setLoading(true);
                 setPdfReady(false);
                 setPdfFile(null);
-                setPdfSource(null);
 
                 // Restore consent from localStorage; OTP state is per session.
                 try {
@@ -554,6 +548,14 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 // Spec: first interaction jumps to first required spot.
                 setCurrentSpot(null);
                 setHasStartedNextFlow(false);
+                const fileStatus = String(data?.file?.Status || data?.file?.status || "").toLowerCase();
+                const readOnly = data?.readOnly === true
+                    || data?.file?.ReadOnly === true
+                    || fileStatus === "signed"
+                    || fileStatus === "rejected";
+                if (readOnly || fileStatus === "signed") {
+                    setShowCompletion(true);
+                }
                 const fileIdForPdf = data?.file?.SigningFileId || signingFileId;
                 await loadPdfFromFileKey(fileIdForPdf);
             } catch (err) {
@@ -761,6 +763,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         setOtpVerified(false);
         setOtpRequested(false);
         setOtpCode("");
+        otpAutoSentRef.current = false;
+        otpLastFailedRef.current = "";
         otpAutoVerifyRef.current = false;
         return true;
     };
@@ -1122,9 +1126,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         };
                     });
 
-                    // Only auto-advance through required spots. Optional fields are opt-in via tap.
+                    // Compute next unsigned spot from the updated list.
                     const unsignedRequired = getUnsignedRequiredSpots(updatedSpots);
-                    nextUnsignedSpot = unsignedRequired[0] || null;
+                    const unsignedOptional = getUnsignedOptionalSpots(updatedSpots);
+                    nextUnsignedSpot = (unsignedRequired.length > 0 ? unsignedRequired : unsignedOptional)[0] || null;
 
                     return { ...prev, signatureSpots: updatedSpots };
                 });
@@ -1132,14 +1137,13 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 // ignore
             }
 
-            // Advance to next required spot, or close the drawer when required work is done.
+            // Advance to next unsigned spot (or clear if all done) — outside updater to avoid batching issues.
             setCurrentSpot(nextUnsignedSpot);
             if (nextUnsignedSpot) {
                 scrollToSpot(nextUnsignedSpot);
                 setHasStartedNextFlow(true);
-                if (isScreen) setShowSpotPopup(true);
-            } else if (isScreen) {
-                setShowSpotPopup(false);
+            } else {
+                setShowCompletion(true);
             }
 
             setMessage({ type: "success", text: t("signing.canvas.fieldSavedSuccess") });
@@ -1476,7 +1480,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 .map((s) => Number(s.SignatureSpotId))
                 .filter((n) => Number.isFinite(n) && n > 0);
 
-            // Always batch when possible — one request signs the full list server-side
+            // Always batch — one request signs the full list server-side
             // (avoids per-spot rate limits and is much faster).
             if (signatureSpotIds.length >= 1) {
                 const config = { headers: { "x-signing-session-id": signingSessionId } };
@@ -1510,20 +1514,30 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         return false;
     };
 
+
     const requestOtp = async ({ silent = false } = {}) => {
         try {
             if (!otpRequired) return;
+            const now = Date.now();
+            if (!silent && now < otpResendAtRef.current) {
+                setMessage({ type: "warning", text: t("signing.canvas.otpWaitBeforeResend") || "נא להמתין לפני שליחה מחדש" });
+                return;
+            }
             setOtpBusy(true);
             const res = isPublic
                 ? await signingFilesApi.publicRequestSigningOtp(publicToken, signingSessionId)
                 : await signingFilesApi.requestSigningOtp(effectiveSigningFileId, signingSessionId);
             unwrapApi(res);
             setOtpRequested(true);
+            otpLastFailedRef.current = "";
+            otpAutoVerifyRef.current = false;
+            otpResendAtRef.current = Date.now() + 30_000;
             if (!silent) {
                 setMessage({ type: "success", text: t("signing.canvas.otpSent") });
             }
         } catch (err) {
             console.error("OTP request failed", err);
+            otpAutoSentRef.current = false;
             if (!silent) {
                 setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.otpSendError") });
             }
@@ -1532,7 +1546,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         }
     };
 
-    // Send OTP as soon as the signer opens an OTP-required document (while PDF loads).
+    // Send the first OTP once the document is ready.
     useEffect(() => {
         if (!fileDetails || !otpRequired || otpVerified || otpAutoSentRef.current) return;
         otpAutoSentRef.current = true;
@@ -1543,7 +1557,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const verifyOtp = async () => {
         try {
             if (!otpRequired) return;
-            const otp = String(otpCode || "").trim();
+            const otp = String(otpCode || "").replace(/\D/g, "").slice(0, 6);
             if (!/^[0-9]{6}$/.test(otp)) {
                 setMessage({ type: "error", text: t("signing.canvas.otpInvalidFormat") });
                 return;
@@ -1554,29 +1568,38 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 ? await signingFilesApi.publicVerifySigningOtp(publicToken, otp, signingSessionId)
                 : await signingFilesApi.verifySigningOtp(effectiveSigningFileId, otp, signingSessionId);
             unwrapApi(res);
-            // OTP verify endpoints intentionally return success:true even on failure
-            // (anti-enumeration). Only trust an explicit verified:true.
             const verifiedOk = res?.data?.verified === true || res?.verified === true;
             if (!verifiedOk) {
+                // Remember this code so auto-submit does not loop; input stays editable.
+                otpLastFailedRef.current = otp;
                 otpAutoVerifyRef.current = false;
                 setOtpVerified(false);
-                setMessage({ type: "error", text: t("signing.canvas.otpVerifyError") });
+                const rateLimited = Boolean(res?.data?.rateLimited || res?.rateLimited);
+                setMessage({
+                    type: "error",
+                    text: rateLimited
+                        ? (t("signing.canvas.otpRateLimited") || "נעשו יותר מדי ניסיונות. בקשו קוד חדש ונסו שוב.")
+                        : t("signing.canvas.otpVerifyError"),
+                });
+                try { otpInputRef.current?.focus?.(); otpInputRef.current?.select?.(); } catch (_) { /* ignore */ }
                 return;
             }
+            otpLastFailedRef.current = "";
             setOtpVerified(true);
             setMessage(null);
         } catch (err) {
             console.error("OTP verify failed", err);
-            setOtpVerified(false);
+            otpLastFailedRef.current = String(otpCode || "").replace(/\D/g, "").slice(0, 6);
             otpAutoVerifyRef.current = false;
             setOtpVerified(false);
             setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.otpVerifyError") });
+            try { otpInputRef.current?.focus?.(); otpInputRef.current?.select?.(); } catch (_) { /* ignore */ }
         } finally {
             setOtpBusy(false);
         }
     };
 
-    // Auto-verify as soon as 6 digits are present (typed or autofilled).
+    // Auto-submit when 6 digits are present. After a failure, wait until the client changes the code.
     useEffect(() => {
         if (!otpRequired || otpVerified || otpBusy || saving) return;
         const otp = String(otpCode || "").replace(/\D/g, "").slice(0, 6);
@@ -1584,6 +1607,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             otpAutoVerifyRef.current = false;
             return;
         }
+        if (otp === otpLastFailedRef.current) return;
         if (otpAutoVerifyRef.current) return;
         otpAutoVerifyRef.current = true;
         verifyOtp();
@@ -1691,13 +1715,22 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const allSpots = fileDetails.signatureSpots || [];
     // LawyerStamp spots are pre-signed by the lawyer — hide them from the client view entirely.
-    // Multi-signer: show everyone's canvases (unsigned boxes + signed images).
-    // Signing / next / sign-all stay limited to isMyActionableSpot.
-    const spots = allSpots.filter((s) => getSpotType(s) !== 'lawyerstamp');
+    // Multi-signer: show everyone's signed spots (so later signers see prior signatures),
+    // but only show unsigned spots the current user can actually sign.
+    const spots = allSpots.filter((s) => {
+        if (getSpotType(s) === 'lawyerstamp') return false;
+        if (s?.IsSigned) return true;
+        return isMyActionableSpot(s);
+    });
+    const fileStatus = String(fileDetails?.file?.Status || fileDetails?.file?.status || "").toLowerCase();
+    const isDocumentLocked = fileDetails?.readOnly === true
+        || fileDetails?.file?.ReadOnly === true
+        || fileStatus === "signed"
+        || fileStatus === "rejected";
     const requiredSpots = spots.filter((s) => isSpotRequired(s));
     const effectiveRequiredSpots = requiredSpots;
-    const unsignedRequiredSpots = getUnsignedRequiredSpots(spots);
-    const unsignedOptionalSpots = getUnsignedOptionalSpots(spots);
+    const unsignedRequiredSpots = isDocumentLocked ? [] : getUnsignedRequiredSpots(spots);
+    const unsignedOptionalSpots = isDocumentLocked ? [] : getUnsignedOptionalSpots(spots);
     const remainingCount = unsignedRequiredSpots.length;
     const remainingSignatureSpots = unsignedRequiredSpots.filter(
         (s) => isSignatureLike(getSpotType(s)),
@@ -1790,19 +1823,23 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                             pattern="[0-9]*"
                             placeholder={t("signing.canvas.otpPlaceholder")}
                             value={otpCode}
+                            ref={otpInputRef}
                             onChange={(e) => {
                                 const digits = String(e.target.value || "").replace(/\D/g, "").slice(0, 6);
+                                // Editing clears the failed-code lock so a corrected code can auto-submit.
+                                if (digits !== otpLastFailedRef.current) {
+                                    otpLastFailedRef.current = "";
+                                    otpAutoVerifyRef.current = false;
+                                }
                                 setOtpCode(digits);
                             }}
                             autoComplete="one-time-code"
-                            disabled={otpBusy || saving}
+                            disabled={saving || otpVerified}
+                            aria-label={t("signing.canvas.otpPlaceholder")}
                         />
-                        <PrimaryButton size={buttonSizes.SMALL} onPress={verifyOtp} disabled={otpBusy || saving}>
-                            {t("signing.canvas.verify")}
-                        </PrimaryButton>
                     </div>
                     <div className="lw-signing-actionsRow">
-                        <SecondaryButton size={buttonSizes.SMALL} onPress={() => requestOtp()} disabled={otpBusy || saving}>
+                        <SecondaryButton size={buttonSizes.SMALL} onPress={() => requestOtp()} disabled={otpBusy || saving || otpVerified}>
                             {otpRequested ? t("signing.canvas.resend") : t("signing.canvas.sendCode")}
                         </SecondaryButton>
                     </div>
@@ -1918,19 +1955,17 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                         await applySavedStampForNext(selectedSavedItem);
                                     }
                                 }}
-                                disabled={saving || signingBlockedByOtp}
+                                disabled={saving}
                             >
                                 {saving ? t("signing.canvas.saving") : t("signing.canvas.signOnly")}
                             </PrimaryButton>
-                            {remainingSignatureSpots >= 1 && (
+                            {remainingSignatureSpots > 1 && (
                                 <SecondaryButton
                                     size={buttonSizes.SMALL}
                                     onPress={async () => { await signAllRemainingSpots(selectedSavedItem); }}
-                                    disabled={saving || signingBlockedByOtp}
+                                    disabled={saving}
                                 >
-                                    {remainingSignatureSpots > 1
-                                        ? `${t("signing.canvas.signAll")} (${remainingSignatureSpots})`
-                                        : t("signing.canvas.signAll")}
+                                    {t("signing.canvas.signAll")}
                                 </SecondaryButton>
                             )}
                         </div>
@@ -1968,7 +2003,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         <SecondaryButton size={buttonSizes.MEDIUM} onPress={clearClientStamp} disabled={saving}>
                             {t("common.clear")}
                         </SecondaryButton>
-                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={saveClientStamp} disabled={saving || !clientStampFile || signingBlockedByOtp}>
+                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={saveClientStamp} disabled={saving || !clientStampFile}>
                             {saving ? t("signing.canvas.saving") : t("signing.canvas.nextStep")}
                         </PrimaryButton>
                     </div>
@@ -2005,7 +2040,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         <TertiaryButton size={buttonSizes.SMALL} onPress={clearClientStamp} disabled={saving}>
                             {t("signing.canvas.changeStamp")}
                         </TertiaryButton>
-                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { await saveStampWithSignature(); }} disabled={saving || signingBlockedByOtp}>
+                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { await saveStampWithSignature(); }} disabled={saving}>
                             {saving ? t("signing.canvas.saving") : t("signing.canvas.saveField")}
                         </PrimaryButton>
                     </div>
@@ -2092,7 +2127,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         <SecondaryButton size={buttonSizes.MEDIUM} onPress={clearClientStamp} disabled={saving}>
                             {t("common.clear")}
                         </SecondaryButton>
-                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={saveClientStamp} disabled={saving || !clientStampFile || signingBlockedByOtp}>
+                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={saveClientStamp} disabled={saving || !clientStampFile}>
                             {saving ? t("signing.canvas.saving") : t("signing.canvas.nextStep")}
                         </PrimaryButton>
                     </div>
@@ -2169,7 +2204,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         <SecondaryButton size={buttonSizes.MEDIUM} onPress={() => setFieldValue("")} disabled={saving}>
                             {t("common.clear")}
                         </SecondaryButton>
-                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { await saveFieldValue(); }} disabled={saving || signingBlockedByOtp}>
+                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { await saveFieldValue(); }} disabled={saving}>
                             {saving ? t("signing.canvas.saving") : t("signing.canvas.saveField")}
                         </PrimaryButton>
                     </div>
@@ -2195,7 +2230,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         <SecondaryButton size={buttonSizes.MEDIUM} onPress={clearCanvas} disabled={saving}>
                             {t("common.clear")}
                         </SecondaryButton>
-                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { await signOnly(); }} disabled={saving || signingBlockedByOtp}>
+                        <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { await signOnly(); }} disabled={saving}>
                             {saving
                                 ? t("signing.canvas.saving")
                                 : (currentSignMode === 'initials'
@@ -2203,19 +2238,17 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                     : t("signing.canvas.signOnly"))}
                         </PrimaryButton>
                         {!isPublic && currentSignMode === 'signature' && (
-                            <SecondaryButton size={buttonSizes.MEDIUM} onPress={async () => { await saveSignature(); }} disabled={saving || signingBlockedByOtp}>
+                            <SecondaryButton size={buttonSizes.MEDIUM} onPress={async () => { await saveSignature(); }} disabled={saving}>
                                 {saving ? t("signing.canvas.saving") : t("signing.canvas.saveSignature")}
                             </SecondaryButton>
                         )}
-                        {remainingSignatureSpots >= 1 && currentSignMode === 'signature' && (
+                        {remainingSignatureSpots > 1 && currentSignMode === 'signature' && (
                             <SecondaryButton
                                 size={buttonSizes.MEDIUM}
                                 onPress={async () => { await signAllRemainingSpots(); }}
-                                disabled={saving || signingBlockedByOtp}
+                                disabled={saving}
                             >
-                                {remainingSignatureSpots > 1
-                                    ? `${t("signing.canvas.signAll")} (${remainingSignatureSpots})`
-                                    : t("signing.canvas.signAll")}
+                                {t("signing.canvas.signAll")}
                             </SecondaryButton>
                         )}
                     </div>
@@ -2279,8 +2312,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 {message.text}
                             </div>
                         )}
-                        {renderConsentAndOtp()}
-                        {renderSigningControls()}
+                        {!isDocumentLocked && renderConsentAndOtp()}
+                        {!isDocumentLocked && renderSigningControls()}
                     </div>
                 </div>
             </div>
@@ -2341,9 +2374,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                             </div>
 
                             <SimpleContainer className="lw-signing-pdfContainer" ref={pdfScrollRef}>
-                                {pdfSource && fileDetails.file?.FileKey ? (
+                                {pdfFile && fileDetails.file?.FileKey ? (
                                     <PdfViewer
-                                        pdfSource={pdfSource}
                                         pdfFile={pdfFile}
                                         spots={spots}
                                         signers={[{ UserId: fileDetails.file.ClientId, Name: t("signing.canvas.you") }]}
@@ -2406,9 +2438,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
                     <SimpleContainer className="lw-signing-modalBody">
                         <SimpleContainer className="lw-signing-pdfContainer" ref={pdfScrollRef}>
-                            {pdfSource && fileDetails.file?.FileKey ? (
+                            {pdfFile && fileDetails.file?.FileKey ? (
                                 <PdfViewer
-                                    pdfSource={pdfSource}
                                     pdfFile={pdfFile}
                                     spots={spots}
                                     signers={[{ UserId: fileDetails.file.ClientId, Name: t("signing.canvas.you") }]}
@@ -2438,7 +2469,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 </SimpleContainer>
                             )}
 
-                            {renderConsentAndOtp()}
+                            {!isDocumentLocked && renderConsentAndOtp()}
 
                             {remainingCount > 1 && (
                                 <div>
@@ -2513,16 +2544,16 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 </div>
                             )}
 
-                            {renderSigningControls()}
+                            {!isDocumentLocked && renderSigningControls()}
 
-                            {allSpotsSignedByUser && spots.length > 0 && !showCompletion && (
+                            {(isDocumentLocked || (allSpotsSignedByUser && spots.length > 0)) && !showCompletion && (
                                 <div className="lw-signing-message is-success">{t("signing.canvas.allRequiredCompleted")}</div>
                             )}
                         </SimpleContainer>
                     </SimpleContainer>
 
                     <SimpleContainer className="lw-signing-modalFooter">
-                        {!allSpotsSignedByUser && (
+                        {!isDocumentLocked && !allSpotsSignedByUser && (
                             <TertiaryButton
                                 size={buttonSizes.SMALL}
                                 onPress={rejectFile}

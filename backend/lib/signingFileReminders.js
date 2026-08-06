@@ -12,11 +12,9 @@ const { getSetting } = require('../services/settingsService');
 const { notifyRecipient } = require('../services/notifications/notificationOrchestrator');
 const { renderTemplate } = require('../utils/templateRenderer');
 
-/** Suppress iMessage link-preview bubble; keep URL tappable. */
-function formatSmsUrlNoPreview(url) {
-    const u = String(url || '').trim();
-    if (!u) return u;
-    return `.${u}.`;
+/** Clean https short-link for SMS (rich preview + tappable URL). */
+function formatSmsSigningUrl(url) {
+    return String(url || '').trim();
 }
 
 function _isEnabled(raw) {
@@ -352,7 +350,7 @@ async function processDueSignReminders({ limit = 50 } = {}) {
                         messageBody: renderTemplate(smsTemplate, {
                             recipientName,
                             documentName,
-                            websiteUrl: formatSmsUrlNoPreview(publicUrl),
+                            websiteUrl: formatSmsSigningUrl(publicUrl),
                         }),
                     }
                     : null,

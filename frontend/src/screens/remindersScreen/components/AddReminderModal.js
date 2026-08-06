@@ -14,6 +14,8 @@ import ChooseButton from "../../../components/styledComponents/buttons/ChooseBut
 import { Text24, Text14 } from "../../../components/specializedComponents/text/AllTextKindFile";
 import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
 import useHttpRequest from "../../../hooks/useHttpRequest";
+import { buildReminderBodyPreview } from "../../../functions/reminders/buildReminderBodyPreview";
+import { getFirmName } from "../../../services/firmSettings";
 import "./AddReminderModal.scss";
 
 // Placeholders auto-filled by the system — no user input needed
@@ -118,6 +120,16 @@ export default function AddReminderModal({ closePopUpFunction, rePerformRequest 
     }, [extraVars]);
     const hasBody = extraVars.includes("body");
 
+    const bodyPreview = useMemo(
+        () => buildReminderBodyPreview(currentTemplate, {
+            ...templateData,
+            client_name: clientName.trim() || undefined,
+            subject: subject.trim() || undefined,
+            firm_name: getFirmName() || undefined,
+        }),
+        [currentTemplate, templateData, clientName, subject],
+    );
+
     if (success) {
         return (
             <SimpleContainer className="lw-addReminder lw-addReminder--success">
@@ -170,18 +182,10 @@ export default function AddReminderModal({ closePopUpFunction, rePerformRequest 
                     </SimpleContainer>
                 </SimpleContainer>
 
-                {/* Template description + body preview */}
-                {(currentTemplate?.description || currentTemplate?.bodyPreview) && (
+                {/* Template description */}
+                {currentTemplate?.description && (
                     <SimpleContainer className="lw-addReminder__templateInfo">
-                        {currentTemplate?.description && (
-                            <Text14 className="lw-addReminder__templateDesc">{currentTemplate.description}</Text14>
-                        )}
-                        {currentTemplate?.bodyPreview && (
-                            <SimpleContainer className="lw-addReminder__bodyPreview">
-                                <Text14 className="lw-addReminder__bodyPreviewLabel">{t("reminders.import.bodyPreviewLabel")}</Text14>
-                                <Text14 className="lw-addReminder__bodyPreviewText">{currentTemplate.bodyPreview}</Text14>
-                            </SimpleContainer>
-                        )}
+                        <Text14 className="lw-addReminder__templateDesc">{currentTemplate.description}</Text14>
                     </SimpleContainer>
                 )}
 
@@ -225,6 +229,16 @@ export default function AddReminderModal({ closePopUpFunction, rePerformRequest 
                             onChange={(val) => handleVarChange("body", val)}
                             rows={3}
                         />
+                    </SimpleContainer>
+                )}
+
+                {/* Live preview fills in as the lawyer types */}
+                {bodyPreview && (
+                    <SimpleContainer className="lw-addReminder__templateInfo">
+                        <SimpleContainer className="lw-addReminder__bodyPreview">
+                            <Text14 className="lw-addReminder__bodyPreviewLabel">{t("reminders.import.bodyPreviewLabel")}</Text14>
+                            <Text14 className="lw-addReminder__bodyPreviewText">{bodyPreview}</Text14>
+                        </SimpleContainer>
                     </SimpleContainer>
                 )}
 

@@ -186,6 +186,12 @@
     &__textarea {
         width: 100%;
         direction: rtl;
+
+        &--sms {
+            min-block-size: 10rem;
+            font-family: inherit;
+            line-height: 1.55;
+        }
     }
 
     // ── Calendar tab ────────────────────────────────────────────────
