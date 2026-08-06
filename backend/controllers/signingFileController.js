@@ -541,17 +541,10 @@ function decodeJwtExpDate(token) {
 }
 
 /**
-<<<<<<< HEAD
- * Prefer a short /s/<slug> link. Falls back to the long JWT URL if persistence fails.
- */
-async function buildPublicSigningUrl(token) {
-    const longUrl = buildLongPublicSigningUrl(token);
-=======
  * Persist JWT under /s/<slug>. Falls back to longUrl if insert fails.
  * Used for both signing invites and signed-document view links (DOC_SIGNED SMS).
  */
 async function persistSigningShortLink(token, longUrl) {
->>>>>>> main
     if (!token || !longUrl) return longUrl;
 
     const domain = getWebsiteDomain();
@@ -581,40 +574,19 @@ async function persistSigningShortLink(token, longUrl) {
 }
 
 /**
-<<<<<<< HEAD
- * iMessage builds a separate rich-preview bubble for bare https URLs (esp. with OG tags).
- * Surrounding the URL with periods suppresses that preview while keeping the link tappable.
- * Emails / push keep the clean URL.
- */
-function formatSmsUrlNoPreview(url) {
-    const u = String(url || '').trim();
-    if (!u) return u;
-    return `.${u}.`;
-=======
  * Prefer a short /s/<slug> link. Falls back to the long JWT URL if persistence fails.
  */
 async function buildPublicSigningUrl(token) {
     return persistSigningShortLink(token, buildLongPublicSigningUrl(token));
->>>>>>> main
 }
 
 /**
  * iMessage builds a separate rich-preview bubble for bare https URLs (esp. with OG tags).
-<<<<<<< HEAD
- * Surrounding the URL with periods suppresses that preview while keeping the link tappable.
- * Emails / push keep the clean URL.
- */
-function formatSmsUrlNoPreview(url) {
-    const u = String(url || '').trim();
-    if (!u) return u;
-    return `.${u}.`;
-=======
  * We intentionally keep the clean URL so SMS shows preview + tappable short link,
  * then ShortSignRedirectScreen loads the signing document.
  */
 function formatSmsSigningUrl(url) {
     return String(url || '').trim();
->>>>>>> main
 }
 
 /** Push payload that opens the native/public signing screen on tap. */
@@ -659,14 +631,6 @@ exports.resolvePublicSigningShortLink = async (req, res, next) => {
             return fail(next, 'TOKEN_EXPIRED', 410, { message: 'פג תוקף הקישור' });
         }
 
-<<<<<<< HEAD
-        const verified = verifyPublicSigningToken(row.token);
-        if (!verified.ok) {
-            return fail(next, verified.errorCode, verified.httpStatus);
-        }
-
-        return res.json({ token: row.token, slug });
-=======
         const signing = verifyPublicSigningToken(row.token);
         if (signing.ok) {
             return res.json({ token: row.token, slug, purpose: 'sign' });
@@ -683,7 +647,6 @@ exports.resolvePublicSigningShortLink = async (req, res, next) => {
             signing.errorCode || view.errorCode || 'INVALID_TOKEN',
             signing.httpStatus || view.httpStatus || 401
         );
->>>>>>> main
     } catch (err) {
         console.error('resolvePublicSigningShortLink error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בטעינת הקישור' });
@@ -1335,14 +1298,6 @@ function buildLongPublicViewUrl(viewToken) {
 async function buildPublicViewUrl(viewToken) {
     const longUrl = buildLongPublicViewUrl(viewToken);
     return persistSigningShortLink(viewToken, longUrl);
-}
-
-function buildPublicEvidenceUrl(viewToken) {
-    const domain = getWebsiteDomain();
-    if (!domain) return null;
-    // Opens the public signed-doc page which downloads evidence via the public API token route.
-    // Avoids 403 on the authenticated /signing-files/:id/evidence-certificate link from emails.
-    return `https://${domain}/ViewSignedDocument?token=${encodeURIComponent(String(viewToken))}&evidence=1`;
 }
 
 function buildPublicEvidenceUrl(viewToken) {
@@ -2945,11 +2900,7 @@ exports.uploadFileForSigning = async (req, res, next) => {
                         messageBody: renderTemplate(signInviteSmsTemplate, {
                             recipientName,
                             documentName: String(fileName || '').trim(),
-<<<<<<< HEAD
-                            websiteUrl: formatSmsUrlNoPreview(publicUrl),
-=======
                             websiteUrl: formatSmsSigningUrl(publicUrl),
->>>>>>> main
                         }),
                     }
                     : null,
@@ -4549,11 +4500,7 @@ exports.resendSigningInvite = async (req, res, next) => {
                         messageBody: renderTemplate(signInviteSmsTemplate, {
                             recipientName,
                             documentName: String(file.FileName || '').trim(),
-<<<<<<< HEAD
-                            websiteUrl: formatSmsUrlNoPreview(publicUrl),
-=======
                             websiteUrl: formatSmsSigningUrl(publicUrl),
->>>>>>> main
                         }),
                     }
                     : null,
@@ -4961,16 +4908,12 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
         const readOnly = status === 'signed' || status === 'rejected';
 
         return res.json({
-<<<<<<< HEAD
-            file: { ...file, RequireOtp: requireOtpEffective, OtpEnabled: (await getSigningOtpEnabled()) },
-=======
             file: {
                 ...file,
                 RequireOtp: requireOtpEffective,
                 OtpEnabled: (await getSigningOtpEnabled()),
                 ReadOnly: readOnly,
             },
->>>>>>> main
             signatureSpots,
             signerUserId,
             isLawyer,
@@ -6121,12 +6064,8 @@ async function runSigningFinalize({
         const domainForUrls = String(process.env.WEBSITE_DOMAIN || WEBSITE_DOMAIN || '').trim();
 
         const publicViewToken = createPublicViewToken(signingFileId);
-<<<<<<< HEAD
-        const signedDocumentUrl = buildPublicViewUrl(publicViewToken) || `https://${domainForUrls}/signing-files/${signingFileId}/download`;
-=======
         const signedDocumentUrl = (await buildPublicViewUrl(publicViewToken))
             || `https://${domainForUrls}/signing-files/${signingFileId}/download`;
->>>>>>> main
         const evidenceCertificateUrl = buildPublicEvidenceUrl(publicViewToken)
             || `https://${domainForUrls}/ViewSignedDocument?token=${encodeURIComponent(publicViewToken)}&evidence=1`;
 
@@ -6141,11 +6080,7 @@ async function runSigningFinalize({
             },
             email: {
                 campaignKey: 'DOC_SIGNED',
-<<<<<<< HEAD
-                fromEmail: lawyerEmailForFrom || undefined,
-=======
                 replyTo: lawyerEmailForFrom || undefined,
->>>>>>> main
                 attachments: emailAttachments || undefined,
                 contactFields: {
                     recipient_name: String(lawyerNameForTemplate || '').trim(),
@@ -6835,11 +6770,7 @@ exports.signFile = async (req, res, next) => {
                                             messageBody: renderTemplate(signInviteSmsTemplate, {
                                                 recipientName: nextSignerName,
                                                 documentName: String(file.FileName || '').trim(),
-<<<<<<< HEAD
-                                                websiteUrl: formatSmsUrlNoPreview(publicUrl),
-=======
                                                 websiteUrl: formatSmsSigningUrl(publicUrl),
->>>>>>> main
                                             }),
                                         }
                                         : null,
@@ -7344,11 +7275,7 @@ exports.reuploadFile = async (req, res, next) => {
                             messageBody: renderTemplate(signInviteSmsTemplateReup, {
                                 recipientName: String(recipientNameForTemplate || '').trim(),
                                 documentName: String(file.FileName || '').trim(),
-<<<<<<< HEAD
-                                websiteUrl: formatSmsUrlNoPreview(publicUrl),
-=======
                                 websiteUrl: formatSmsSigningUrl(publicUrl),
->>>>>>> main
                             }),
                         }
                         : null,
@@ -7402,11 +7329,7 @@ exports.reuploadFile = async (req, res, next) => {
                         messageBody: renderTemplate(signInviteSmsTemplateReup, {
                             recipientName: String(recipientNameForTemplate || '').trim(),
                             documentName: String(file.FileName || '').trim(),
-<<<<<<< HEAD
-                            websiteUrl: formatSmsUrlNoPreview(publicUrl),
-=======
                             websiteUrl: formatSmsSigningUrl(publicUrl),
->>>>>>> main
                         }),
                     }
                     : null,
