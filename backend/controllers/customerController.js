@@ -78,22 +78,37 @@ const addCustomer = async (req, res) => {
         }
 
         const existing = await pool.query(
-            `SELECT userid FROM users WHERE regexp_replace(phonenumber, '\\D', '', 'g') = $1 LIMIT 1`,
+            `SELECT userid, name, email, phonenumber, companyname, dateofbirth, role
+             FROM users
+             WHERE regexp_replace(phonenumber, '\\D', '', 'g') = $1
+             LIMIT 1`,
             [phoneDigits]
         );
         if (existing.rows.length > 0) {
-            return res.status(409).json({ message: "מספר פלאפון כבר קיים במערכת", code: 'PHONE_ALREADY_EXISTS' });
+            const row = existing.rows[0];
+            return res.status(409).json({
+                message: "מספר פלאפון כבר קיים במערכת — ניתן לשייך את הלקוח הקיים",
+                code: 'PHONE_ALREADY_EXISTS',
+                UserId: row.userid,
+                Name: row.name || null,
+                Email: row.email || null,
+                PhoneNumber: row.phonenumber || phoneNumber,
+                CompanyName: row.companyname || null,
+                DateOfBirth: row.dateofbirth || null,
+                Role: row.role || null,
+            });
         }
 
         const insertResult = await pool.query(
             `
             INSERT INTO users (name, email, phonenumber, passwordhash, role, companyname, dateofbirth, createdat)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            RETURNING userid
+            RETURNING userid, name, email, phonenumber, companyname, dateofbirth
             `,
             [name, email, phoneNumber, null, "User", companyName, parsedDob, new Date()]
         );
-        const newUserId = insertResult.rows[0]?.userid;
+        const created = insertResult.rows[0] || {};
+        const newUserId = created.userid;
 
         // Send welcome notification (SMS + email) via the orchestrator
         try {
@@ -132,7 +147,15 @@ const addCustomer = async (req, res) => {
             console.warn('Warning: failed to send welcome notification:', e?.message);
         }
 
-        res.status(201).json({ message: "לקוח הוקם בהצלחה" });
+        res.status(201).json({
+            message: "לקוח הוקם בהצלחה",
+            UserId: newUserId,
+            Name: created.name || name,
+            Email: created.email ?? email ?? null,
+            PhoneNumber: created.phonenumber || phoneNumber,
+            CompanyName: created.companyname ?? companyName ?? null,
+            DateOfBirth: created.dateofbirth ?? parsedDob ?? null,
+        });
 
     } catch (error) {
         console.error('Error adding customer:', error);
@@ -204,10 +227,18 @@ const getCustomerByName = async (req, res) => {
     if (!requireAdmin(req, res)) return;
     const rawUserName = req?.query?.userName;
     const userName = typeof rawUserName === 'string' ? rawUserName.trim() : '';
+    // Signing / staff pickers may need Admins & Lawyers (e.g. lawyer signing their own doc).
+    const includeStaff = ['1', 'true', 'yes'].includes(
+        String(req?.query?.includeStaff || '').trim().toLowerCase()
+    );
 
     try {
         const pagination = getPagination(req, res, { defaultLimit: 50, maxLimit: 200 });
         if (pagination === null) return;
+
+        const roleFilter = includeStaff
+            ? `role <> 'Deleted'`
+            : `role <> 'Admin' AND role <> 'Deleted'`;
 
         // If empty query: return a default list so dropdowns can preload.
         if (!userName) {
@@ -216,9 +247,9 @@ const getCustomerByName = async (req, res) => {
 
             const result = await pool.query(
                 `
-                SELECT userid, name, email, phonenumber, companyname, dateofbirth
+                SELECT userid, name, email, phonenumber, companyname, dateofbirth, role
                 FROM users
-                WHERE role <> 'Admin' AND role <> 'Deleted'
+                WHERE ${roleFilter}
                 ORDER BY userid DESC
                 LIMIT $1 OFFSET $2
                 `,
@@ -231,24 +262,48 @@ const getCustomerByName = async (req, res) => {
                 Email: row.email,
                 PhoneNumber: row.phonenumber,
                 CompanyName: row.companyname,
-                DateOfBirth: row.dateofbirth
+                DateOfBirth: row.dateofbirth,
+                Role: row.role,
             })));
         }
 
+        const phoneDigits = normalizePhoneDigits(userName);
+        let phoneAlt = null;
+        if (phoneDigits) {
+            if (phoneDigits.startsWith('972') && phoneDigits.length > 9) {
+                phoneAlt = `0${phoneDigits.slice(3)}`;
+            } else if (phoneDigits.startsWith('0') && phoneDigits.length >= 9) {
+                phoneAlt = `972${phoneDigits.slice(1)}`;
+            }
+        }
+
         const baseQuery = `
-            SELECT userid, name, email, phonenumber, companyname, dateofbirth
-                        FROM users
-                        WHERE role <> 'Admin' AND role <> 'Deleted'
-              AND (name ILIKE $1 OR email ILIKE $1 OR phonenumber ILIKE $1 OR companyname ILIKE $1)
+            SELECT userid, name, email, phonenumber, companyname, dateofbirth, role
+            FROM users
+            WHERE ${roleFilter}
+              AND (
+                name ILIKE $1
+                OR email ILIKE $1
+                OR phonenumber ILIKE $1
+                OR companyname ILIKE $1
+                OR (
+                  $2::text IS NOT NULL
+                  AND regexp_replace(coalesce(phonenumber, ''), '\\D', '', 'g') LIKE '%' || $2 || '%'
+                )
+                OR (
+                  $3::text IS NOT NULL
+                  AND regexp_replace(coalesce(phonenumber, ''), '\\D', '', 'g') LIKE '%' || $3 || '%'
+                )
+              )
         `;
 
         const query = pagination.enabled
-            ? `${baseQuery} ORDER BY userid DESC LIMIT $2 OFFSET $3`
-            : baseQuery;
+            ? `${baseQuery} ORDER BY userid DESC LIMIT $4 OFFSET $5`
+            : `${baseQuery} ORDER BY userid DESC`;
 
         const params = pagination.enabled
-            ? [`%${userName}%`, pagination.limit, pagination.offset]
-            : [`%${userName}%`];
+            ? [`%${userName}%`, phoneDigits, phoneAlt, pagination.limit, pagination.offset]
+            : [`%${userName}%`, phoneDigits, phoneAlt];
 
         const result = await pool.query(query, params);
 
@@ -262,7 +317,8 @@ const getCustomerByName = async (req, res) => {
             Email: row.email,
             PhoneNumber: row.phonenumber,
             CompanyName: row.companyname,
-            DateOfBirth: row.dateofbirth
+            DateOfBirth: row.dateofbirth,
+            Role: row.role,
         })));
     } catch (error) {
         console.error("Error retrieving users by name:", error);

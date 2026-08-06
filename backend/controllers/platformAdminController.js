@@ -294,3 +294,72 @@ exports.scheduleDeletionWarnings = async (req, res) => {
         return res.status(500).json({ message: 'שגיאה בתזמון התראות מחיקה' });
     }
 };
+
+/**
+ * Project-level master-admin summary (BarberBooking /admin/master pattern).
+ * One firm per DB — returns firm identity + aggregate counts.
+ */
+exports.getMasterStats = async (req, res) => {
+    try {
+        const firmName =
+            process.env.LAW_FIRM_NAME ||
+            process.env.FIRM_DISPLAY_NAME ||
+            process.env.FIRM_NAME ||
+            'Law Firm';
+        const firmSlug = String(process.env.FIRM_NAME || process.env.RUNTIME_TENANT || 'default')
+            .toLowerCase()
+            .replace(/\s+/g, '-');
+
+        let customers = 0;
+        let openCases = 0;
+        let totalCases = 0;
+        let admins = 0;
+
+        try {
+            const r = await pool.query(`SELECT COUNT(*)::int AS c FROM customers`);
+            customers = Number(r.rows[0]?.c ?? 0);
+        } catch {
+            /* ignore */
+        }
+        try {
+            const r = await pool.query(`SELECT COUNT(*)::int AS c FROM cases`);
+            totalCases = Number(r.rows[0]?.c ?? 0);
+        } catch {
+            /* ignore */
+        }
+        try {
+            const r = await pool.query(
+                `SELECT COUNT(*)::int AS c FROM cases WHERE COALESCE(isclosed, false) = false`,
+            );
+            openCases = Number(r.rows[0]?.c ?? 0);
+        } catch {
+            openCases = totalCases;
+        }
+        try {
+            const r = await pool.query(
+                `SELECT COUNT(*)::int AS c FROM users WHERE LOWER(COALESCE(role, '')) IN ('admin', 'lawyer', 'platformadmin')`,
+            );
+            admins = Number(r.rows[0]?.c ?? 0);
+        } catch {
+            /* ignore */
+        }
+
+        return res.status(200).json({
+            firm: { name: firmName, slug: firmSlug },
+            stats: {
+                customers,
+                openCases,
+                totalCases,
+                staffUsers: admins,
+            },
+            links: {
+                platformSettings: '/AdminStack/PlatformSettingsScreen',
+                clients: '/AdminStack/AllClientsScreen',
+                cases: '/AdminStack/AllCasesScreen',
+            },
+        });
+    } catch (e) {
+        console.error('getMasterStats error:', e);
+        return res.status(500).json({ message: 'שגיאה בשליפת נתוני master-admin' });
+    }
+};

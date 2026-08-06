@@ -14,9 +14,11 @@ import {
     SigningManagerScreenName,
     uploadFileForSigningScreenName,
 } from "../../../navigation/screenPaths";
-import { ENABLE_CALENDAR_MODULE } from "../../../featureFlags";
+import { getCalendarModuleEnabledCached, loadFirmSettings } from "../../../services/firmSettings";
 
 export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t) => {
+    loadFirmSettings();
+    const calendarEnabled = getCalendarModuleEnabledCached();
     const isPlatformAdmin = typeof window !== 'undefined' && localStorage.getItem('isPlatformAdmin') === 'true';
 
     const links = [
@@ -70,7 +72,7 @@ export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t) =>
             icon: null,
             onClick: () => navigate(AdminStackName + RemindersScreenName),
         },
-        ...(ENABLE_CALENDAR_MODULE ? [{
+        ...(calendarEnabled ? [{
             navKey: 'calendar',
             routeMatch: CalendarScreenName,
             buttonText: t('nav.calendar'),

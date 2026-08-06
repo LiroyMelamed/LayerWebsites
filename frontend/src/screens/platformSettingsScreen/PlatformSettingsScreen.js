@@ -65,6 +65,17 @@ const CATEGORIES = [
     { key: "knowledgeDocs", labelKey: "platformSettings.cat_knowledgeDocs", icon: "🤖" },
 ];
 
+// SMS sender keys
+const SMS_SENDER_NAME_KEY = "INFORU_SENDER_PHONE"; // alphanumeric name — direct save
+const SMS_SENDER_NUMBER_KEY = "INFORU_SENDER_NUMBER"; // phone — request/activate flow
+// Internal / legacy messaging keys not shown as editable rows
+const INTERNAL_MESSAGING_KEYS = [
+    "SMOOVE_SENDER_PHONE", // legacy key — same as name fallback
+    "INFORU_SENDER_PHONE_PENDING",
+    "INFORU_SENDER_PHONE_PENDING_REQUESTED_AT",
+    "INFORU_SENDER_PHONE_PENDING_REQUESTED_BY",
+];
+
 // ─── Setting Input Component ────────────────────────────────────────
 function SettingInput({ setting, value, onChange, isTemplate = false }) {
     const { t } = useTranslation();
@@ -116,11 +127,11 @@ function SettingInput({ setting, value, onChange, isTemplate = false }) {
     if (isTemplate) {
         return (
             <SimpleTextArea
-                className="lw-platformSettings__textarea"
+                className="lw-platformSettings__textarea lw-platformSettings__textarea--sms"
                 value={inputValue}
                 onChange={(val) => onChange(val)}
                 title={setting.label || ""}
-                rows={4}
+                rows={8}
                 dir="rtl"
             />
         );
@@ -137,6 +148,12 @@ function SettingInput({ setting, value, onChange, isTemplate = false }) {
         />
     );
 }
+
+// Notification types whose delivery channels are picked per-action by the
+// lawyer (SIGN_INVITE per signer, CALENDAR_REMINDER per event). These must
+// not appear in Platform Settings → ערוצי התראות — the lawyer's choice is
+// the only gate. Templates for these types remain editable.
+const PER_ACTION_CHANNEL_TYPES = new Set(["SIGN_INVITE", "CALENDAR_REMINDER"]);
 
 // ─── Channel Toggle Row ─────────────────────────────────────────────
 function ChannelRow({ channel, onToggle }) {
@@ -242,6 +259,23 @@ const SMS_TEMPLATE_VARS = {
     LICENSE_RENEWAL_SMS: ["recipientName", "firmName", "websiteUrl"],
     // ── Client ──
     NEW_CLIENT_SMS: ["recipientName", "firmName", "websiteUrl"],
+    // ── Calendar ──
+    CALENDAR_CLIENT_REMINDER_SMS: [
+        "recipientName", "firmName", "date", "time", "address",
+        "wazeUrl", "mapsUrl", "firmPhone", "websiteUrl", "lawyerName", "title",
+    ],
+    CALENDAR_CLIENT_REMINDER_SMS_HEARING: [
+        "recipientName", "firmName", "date", "time", "address",
+        "wazeUrl", "mapsUrl", "firmPhone", "websiteUrl", "lawyerName", "title",
+    ],
+    CALENDAR_INVITE_SMS: [
+        "recipientName", "firmName", "date", "time", "address",
+        "wazeUrl", "mapsUrl", "rsvpUrl", "firmPhone", "websiteUrl", "lawyerName", "title",
+    ],
+    CALENDAR_INVITE_SMS_HEARING: [
+        "recipientName", "firmName", "date", "time", "address",
+        "wazeUrl", "mapsUrl", "rsvpUrl", "firmPhone", "websiteUrl", "lawyerName", "title",
+    ],
 };
 
 // Available variables for reminder email templates
@@ -290,6 +324,10 @@ const SMS_KEY_TO_NOTIF_TYPE = {
     PAYMENT_SMS: 'PAYMENT',
     LICENSE_RENEWAL_SMS: 'LICENSE_RENEWAL',
     NEW_CLIENT_SMS: 'NEW_CLIENT',
+    CALENDAR_CLIENT_REMINDER_SMS: 'CALENDAR_REMINDER',
+    CALENDAR_CLIENT_REMINDER_SMS_HEARING: 'CALENDAR_REMINDER',
+    CALENDAR_INVITE_SMS: 'CALENDAR_REMINDER',
+    CALENDAR_INVITE_SMS_HEARING: 'CALENDAR_REMINDER',
 };
 
 function SmsVarButtons({ templateKey, onInsert }) {
@@ -907,16 +945,20 @@ export default function PlatformSettingsScreen() {
         setEditedValues(prev => ({ ...prev, [`${category}:${key}`]: { category, key, value } }));
     }, []);
 
-    // Save all edited settings + channels
-    const handleSave = useCallback(async () => {
-        const settingsArray = Object.values(editedValues);
-        const channelEntries = Object.entries(editedChannels);
-
-        if (settingsArray.length === 0 && channelEntries.length === 0) return;
-
+    // Persist a batch of settings + channels (+ optional guarded SMS phone-sender request).
+    const doSave = useCallback(async (settingsArray, channelEntries, { senderRequestPhone } = {}) => {
         setIsSaving(true);
         try {
-            // Save settings — call API directly so we can check response status
+            if (senderRequestPhone) {
+                const res = await platformSettingsApi.requestSmsSenderChange(senderRequestPhone);
+                if (res.status !== 200 && res.status !== 201) {
+                    const serverMsg = res.data?.message || t("platformSettings.saveError");
+                    setSaveMessage(`❌ ${serverMsg}`);
+                    setTimeout(() => setSaveMessage(""), 6000);
+                    setIsSaving(false);
+                    return;
+                }
+            }
             if (settingsArray.length > 0) {
                 const res = await platformSettingsApi.updateSettings(settingsArray);
                 if (res.status !== 200 && res.status !== 201) {
@@ -924,10 +966,9 @@ export default function PlatformSettingsScreen() {
                     setSaveMessage(`❌ ${serverMsg}`);
                     setTimeout(() => setSaveMessage(""), 6000);
                     setIsSaving(false);
-                    return; // Don't proceed — let the user fix the issue first
+                    return;
                 }
             }
-            // Save channels
             for (const [type, fields] of channelEntries) {
                 const res = await platformSettingsApi.updateChannel(type, fields);
                 if (res.status !== 200 && res.status !== 201) {
@@ -940,16 +981,73 @@ export default function PlatformSettingsScreen() {
             }
             setEditedChannels({});
             setEditedValues({});
-            setSaveMessage("✅ " + t("platformSettings.settingsSaved"));
+            setSaveMessage("✅ " + (senderRequestPhone
+                ? t("platformSettings.smsSenderRequestSent")
+                : t("platformSettings.settingsSaved")));
             reload();
-            setTimeout(() => setSaveMessage(""), 3000);
+            setTimeout(() => setSaveMessage(""), senderRequestPhone ? 5000 : 3000);
         } catch (err) {
             const serverMsg = err?.response?.data?.message || err?.data?.message || err?.message || '';
-            setSaveMessage(`❌ ${serverMsg || t("platformSettings.saveError")}`);            setTimeout(() => setSaveMessage(""), 6000);
+            setSaveMessage(`❌ ${serverMsg || t("platformSettings.saveError")}`);
+            setTimeout(() => setSaveMessage(""), 6000);
         } finally {
             setIsSaving(false);
         }
-    }, [editedValues, editedChannels, reload]);
+    }, [reload, t]);
+
+    // Save — phone sender changes use guarded request flow; name saves directly
+    const handleSave = useCallback(async () => {
+        const settingsArray = Object.values(editedValues);
+        const channelEntries = Object.entries(editedChannels);
+
+        if (settingsArray.length === 0 && channelEntries.length === 0) return;
+
+        const phoneEdit = editedValues[`messaging:${SMS_SENDER_NUMBER_KEY}`];
+        const activePhone = String(data?.settings?.messaging?.[SMS_SENDER_NUMBER_KEY]?.effectiveValue ?? "").trim();
+        const newPhone = String(phoneEdit?.value ?? "").trim();
+        const phoneChanged = !!phoneEdit && newPhone.length > 0 && newPhone !== activePhone;
+
+        if (phoneChanged) {
+            const restSettings = settingsArray.filter(
+                (s) => !(s.category === "messaging" && s.key === SMS_SENDER_NUMBER_KEY)
+            );
+            openPopup(
+                <ConfirmationDialog
+                    title={t("platformSettings.smsSenderChangeTitle")}
+                    message={t("platformSettings.smsSenderChangeMessage")}
+                    confirmText={t("platformSettings.smsSenderChangeConfirm")}
+                    cancelText={t("common.cancel")}
+                    onCancel={closePopup}
+                    onConfirm={async () => {
+                        closePopup();
+                        await doSave(restSettings, channelEntries, { senderRequestPhone: newPhone });
+                    }}
+                />
+            );
+            return;
+        }
+
+        // Drop empty/no-op phone edits so bulk save doesn't hit the blocked number key
+        const cleaned = settingsArray.filter(
+            (s) => !(s.category === "messaging" && s.key === SMS_SENDER_NUMBER_KEY)
+        );
+        await doSave(cleaned, channelEntries, {});
+    }, [editedValues, editedChannels, data, doSave, openPopup, closePopup, t]);
+
+    const handleActivateSender = useCallback(async () => {
+        try {
+            const res = await platformSettingsApi.activateSmsSender();
+            if (res.status === 200 || res.status === 201) {
+                setSaveMessage("✅ " + t("platformSettings.smsSenderActivated"));
+                reload();
+            } else {
+                setSaveMessage(`❌ ${res.data?.message || t("platformSettings.saveError")}`);
+            }
+        } catch (err) {
+            setSaveMessage(`❌ ${err?.response?.data?.message || err?.message || t("platformSettings.saveError")}`);
+        }
+        setTimeout(() => setSaveMessage(""), 4000);
+    }, [reload, t]);
 
     // Add admin
     const handleAddAdmin = useCallback(() => {
@@ -1035,7 +1133,9 @@ export default function PlatformSettingsScreen() {
                                 </SimpleContainer>
                             </SimpleContainer>
                         </SimpleContainer>
-                        {channels.map(ch => (
+                        {channels
+                            .filter((ch) => !PER_ACTION_CHANNEL_TYPES.has(ch.notification_type))
+                            .map((ch) => (
                             <ChannelRow
                                 key={ch.notification_type}
                                 channel={ch}
@@ -1116,6 +1216,8 @@ export default function PlatformSettingsScreen() {
             const filteredEmailTemplates = emailTemplates.filter(t => {
                 const notifType = EMAIL_KEY_TO_NOTIF_TYPE[t.template_key];
                 if (!notifType) return true; // unknown mapping → show by default
+                // Lawyer picks channels per-action — always show templates
+                if (PER_ACTION_CHANNEL_TYPES.has(notifType)) return true;
                 const ch = channelMap[notifType];
                 if (!ch) return true; // no channel config → show by default
                 return ch.email_enabled;
@@ -1187,6 +1289,39 @@ export default function PlatformSettingsScreen() {
                     <Text14 className="lw-platformSettings__subtitle">
                         {t("platformSettings.knowledgeDocsSubtitle")}
                     </Text14>
+
+                    {/* Chatbot module visibility */}
+                    {(() => {
+                        const botSettings = settings?.chatbot || {};
+                        const editKey = "chatbot:AI_CHATBOT_ENABLED";
+                        const edited = editedValues[editKey]?.value;
+                        const current =
+                            edited !== undefined
+                                ? edited
+                                : (botSettings.AI_CHATBOT_ENABLED?.effectiveValue ?? "false");
+                        return (
+                            <SimpleContainer className="lw-platformSettings__knowledgeNotifSection">
+                                <TextBold14>
+                                    {botSettings.AI_CHATBOT_ENABLED?.label
+                                        || t("platformSettings.aiChatbotEnabled", "צ׳אטבוט AI")}
+                                </TextBold14>
+                                <Text12 className="lw-platformSettings__knowledgeMeta">
+                                    {botSettings.AI_CHATBOT_ENABLED?.description
+                                        || t(
+                                            "platformSettings.aiChatbotEnabledDesc",
+                                            "הגדרת פלטפורמה (לא בילד). הניתוב /chatbot נשאר זמין ב-URL ישיר."
+                                        )}
+                                </Text12>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "boolean" }}
+                                        value={String(current)}
+                                        onChange={(val) => handleSettingChange("chatbot", "AI_CHATBOT_ENABLED", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                        );
+                    })()}
 
                     {/* Notification email setting */}
                     <SimpleContainer className="lw-platformSettings__knowledgeNotifSection">
@@ -1510,6 +1645,77 @@ export default function PlatformSettingsScreen() {
 
             return (
                 <SimpleContainer className="lw-platformSettings__calendarTab">
+                    {/* Module visibility */}
+                    <SimpleCard className="lw-platformSettings__card">
+                        <TextBold18>{t("platformSettings.calendarModuleTitle", "מודול יומן")}</TextBold18>
+                        <Text12 className="lw-platformSettings__settingDescription">
+                            {t(
+                                "platformSettings.calendarModuleHint",
+                                "כאשר כבוי: מסך היומן, ווידג׳ט בלוח הבקרה ופריט התפריט מוסתרים. אין צורך בבילד מחדש."
+                            )}
+                        </Text12>
+                        <SimpleContainer className="lw-platformSettings__settingsList">
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">
+                                        {calSettings.ENABLE_CALENDAR_MODULE?.label
+                                            || t("platformSettings.calendarModuleEnabled", "הצג מודול יומן")}
+                                    </TextBold14>
+                                    {calSettings.ENABLE_CALENDAR_MODULE?.description && (
+                                        <Text12 className="lw-platformSettings__settingDescription">
+                                            {calSettings.ENABLE_CALENDAR_MODULE.description}
+                                        </Text12>
+                                    )}
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "boolean" }}
+                                        value={getVal("ENABLE_CALENDAR_MODULE", "true")}
+                                        onChange={(val) => handleChange("ENABLE_CALENDAR_MODULE", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                        </SimpleContainer>
+                    </SimpleCard>
+
+                    {/* Visible clock range on the calendar grid */}
+                    <SimpleCard className="lw-platformSettings__card">
+                        <TextBold18>{t("platformSettings.calendarVisibleHoursTitle")}</TextBold18>
+                        <Text12 className="lw-platformSettings__settingDescription">
+                            {t("platformSettings.calendarVisibleHoursHint")}
+                        </Text12>
+                        <SimpleContainer className="lw-platformSettings__settingsList">
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">
+                                        {t("platformSettings.calendarVisibleHoursStart")}
+                                    </TextBold14>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "time", label: t("platformSettings.calendarVisibleHoursStart") }}
+                                        value={getVal("CALENDAR_VISIBLE_HOURS_START", "05:00")}
+                                        onChange={(val) => handleChange("CALENDAR_VISIBLE_HOURS_START", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">
+                                        {t("platformSettings.calendarVisibleHoursEnd")}
+                                    </TextBold14>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "time", label: t("platformSettings.calendarVisibleHoursEnd") }}
+                                        value={getVal("CALENDAR_VISIBLE_HOURS_END", "22:00")}
+                                        onChange={(val) => handleChange("CALENDAR_VISIBLE_HOURS_END", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                        </SimpleContainer>
+                    </SimpleCard>
+
                     {/* Per-day working hours */}
                     <SimpleCard className="lw-platformSettings__card">
                         <TextBold18>{t("platformSettings.workingHoursByDayTitle")}</TextBold18>
@@ -1656,11 +1862,14 @@ export default function PlatformSettingsScreen() {
                                     <Text12 className="lw-platformSettings__settingDescription">
                                         {t("platformSettings.calendarReminderOptionsHint")}
                                     </Text12>
+                                    <Text12 className="lw-platformSettings__settingDescription">
+                                        {t("platformSettings.calendarInviteRsvpHint")}
+                                    </Text12>
                                 </SimpleContainer>
                                 <SimpleContainer className="lw-platformSettings__reminderOptions">
                                     {REMINDER_PRESETS.map(({ minutes, labelKey }) => {
                                         const selected = new Set(
-                                            parseOffsetsList(getVal("CALENDAR_REMINDER_OPTIONS", "15,30,60,120,1440"))
+                                            parseOffsetsList(getVal("CALENDAR_REMINDER_OPTIONS", "0,15,30,60,120,1440"))
                                         );
                                         const active = selected.has(minutes);
                                         return (
@@ -1734,13 +1943,154 @@ export default function PlatformSettingsScreen() {
                             </SimpleContainer>
                         </SimpleContainer>
                     </SimpleCard>
+
+                    <SimpleCard className="lw-platformSettings__card">
+                        <TextBold18>{t("calendar.firmOfficeAddress")}</TextBold18>
+                        <Text12 color="#718096">{t("calendar.firmNavLinksHint")}</Text12>
+                        <SimpleContainer className="lw-platformSettings__settingsList">
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">
+                                        {t("calendar.firmOfficeAddress")}
+                                    </TextBold14>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "string", label: t("calendar.firmOfficeAddress") }}
+                                        value={getVal("FIRM_OFFICE_ADDRESS", "")}
+                                        onChange={(val) => handleChange("FIRM_OFFICE_ADDRESS", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">
+                                        {t("calendar.firmWazeUrl")}
+                                    </TextBold14>
+                                    <Text12 color="#718096">{t("calendar.firmWazeUrlHint")}</Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "string", label: t("calendar.firmWazeUrl") }}
+                                        value={getVal("FIRM_WAZE_URL", "")}
+                                        onChange={(val) => handleChange("FIRM_WAZE_URL", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                            <SimpleContainer className="lw-platformSettings__settingRow">
+                                <SimpleContainer className="lw-platformSettings__settingLabel">
+                                    <TextBold14 className="lw-platformSettings__settingName">
+                                        {t("calendar.firmMapsUrl")}
+                                    </TextBold14>
+                                    <Text12 color="#718096">{t("calendar.firmMapsUrlHint")}</Text12>
+                                </SimpleContainer>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "string", label: t("calendar.firmMapsUrl") }}
+                                        value={getVal("FIRM_MAPS_URL", "")}
+                                        onChange={(val) => handleChange("FIRM_MAPS_URL", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                        </SimpleContainer>
+                    </SimpleCard>
+
+                    <SimpleCard className="lw-platformSettings__card">
+                        <TextBold18>{t("calendar.eventTypeDefaultColors")}</TextBold18>
+                        <SimpleContainer className="lw-platformSettings__settingsList">
+                            {["appointment", "hearing", "leave", "holiday", "reminder"].map((typeKey) => {
+                                let colors = {};
+                                try {
+                                    const raw = getVal("CALENDAR_EVENT_TYPE_COLORS", "{}");
+                                    colors = typeof raw === "string" ? JSON.parse(raw || "{}") : (raw || {});
+                                } catch { colors = {}; }
+                                const presets = ["#2A4365", "#3182CE", "#2C7A7B", "#805AD5", "#B83280", "#C05621", "#2F855A", "#D69E2E", "#718096", "#B7791F"];
+                                const current = colors[typeKey] || presets[0];
+                                return (
+                                    <SimpleContainer key={typeKey} className="lw-platformSettings__settingRow">
+                                        <SimpleContainer className="lw-platformSettings__settingLabel">
+                                            <TextBold14 className="lw-platformSettings__settingName">
+                                                {t(`calendar.type_${typeKey}`, typeKey)}
+                                            </TextBold14>
+                                        </SimpleContainer>
+                                        <SimpleContainer className="lw-platformSettings__settingInput" style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+                                            {presets.map((hex) => {
+                                                const selected = current.toUpperCase() === hex.toUpperCase();
+                                                return (
+                                                <button
+                                                    key={hex}
+                                                    type="button"
+                                                    title={hex}
+                                                    aria-label={hex}
+                                                    aria-pressed={selected}
+                                                    onClick={() => {
+                                                        const next = { ...colors, [typeKey]: hex };
+                                                        handleChange("CALENDAR_EVENT_TYPE_COLORS", JSON.stringify(next));
+                                                    }}
+                                                    style={{
+                                                        width: "1.75rem",
+                                                        height: "1.75rem",
+                                                        borderRadius: "999px",
+                                                        border: selected ? "3px solid #1A202C" : "2px solid rgba(26, 32, 44, 0.15)",
+                                                        boxShadow: selected
+                                                            ? "0 0 0 3px #FFFFFF, 0 0 0 6px #2A4365"
+                                                            : "none",
+                                                        background: hex,
+                                                        cursor: "pointer",
+                                                        padding: 0,
+                                                        outline: "none",
+                                                        transform: selected ? "scale(1.08)" : "none",
+                                                    }}
+                                                />
+                                                );
+                                            })}
+                                        </SimpleContainer>
+                                    </SimpleContainer>
+                                );
+                            })}
+                        </SimpleContainer>
+                    </SimpleCard>
                 </SimpleContainer>
             );
         }
 
         // Settings tabs (messaging, signing, firm, reminders, security)
-        const categorySettings = settings[activeTab] || {};
+        let categorySettings = settings[activeTab] || {};
         let settingKeys = Object.keys(categorySettings);
+
+        // Hide internal sender-flow keys from the messaging tab
+        if (activeTab === "messaging") {
+            // Alias legacy SMOOVE_SENDER_PHONE → name key if needed
+            if (!categorySettings[SMS_SENDER_NAME_KEY] && categorySettings.SMOOVE_SENDER_PHONE) {
+                categorySettings = {
+                    ...categorySettings,
+                    [SMS_SENDER_NAME_KEY]: {
+                        ...categorySettings.SMOOVE_SENDER_PHONE,
+                        label: categorySettings.SMOOVE_SENDER_PHONE.label || "שם שולח SMS",
+                    },
+                };
+                settingKeys = Object.keys(categorySettings);
+            }
+            // Ensure phone-number row exists even before migration is reflected
+            if (!categorySettings[SMS_SENDER_NUMBER_KEY]) {
+                categorySettings = {
+                    ...categorySettings,
+                    [SMS_SENDER_NUMBER_KEY]: {
+                        category: "messaging",
+                        key: SMS_SENDER_NUMBER_KEY,
+                        valueType: "string",
+                        label: "מספר שולח SMS",
+                        description: "מספר טלפון שמוצג כשולח SMS (מאומת ב-InforU). שינוי דורש אישור צוות טכני.",
+                        effectiveValue: "",
+                    },
+                };
+                settingKeys = Object.keys(categorySettings);
+            }
+            settingKeys = settingKeys.filter((k) => !INTERNAL_MESSAGING_KEYS.includes(k));
+        }
+        const pendingSender = String(
+            settings.messaging?.INFORU_SENDER_PHONE_PENDING?.effectiveValue ?? ""
+        ).trim();
 
         // Filter SMS templates by channel config (sms_enabled)
         if (activeTab === "templates") {
@@ -1750,6 +2100,8 @@ export default function PlatformSettingsScreen() {
             settingKeys = settingKeys.filter(key => {
                 const notifType = SMS_KEY_TO_NOTIF_TYPE[key];
                 if (!notifType) return true; // unknown mapping → show by default
+                // Lawyer picks channels per-action — always show templates
+                if (PER_ACTION_CHANNEL_TYPES.has(notifType)) return true;
                 const ch = channelMap[notifType];
                 if (!ch) return true; // no channel config → show by default
                 return ch.sms_enabled;
@@ -1811,6 +2163,16 @@ export default function PlatformSettingsScreen() {
                                         />
                                     )}
                                 </SimpleContainer>
+                                {activeTab === "messaging" && key === SMS_SENDER_NUMBER_KEY && pendingSender && (
+                                    <SimpleContainer className="lw-platformSettings__senderPending">
+                                        <Text12 className="lw-platformSettings__senderPendingLabel">
+                                            {t("platformSettings.smsSenderPending")}: {pendingSender}
+                                        </Text12>
+                                        <SecondaryButton onPress={handleActivateSender}>
+                                            {t("platformSettings.smsSenderActivate")}
+                                        </SecondaryButton>
+                                    </SimpleContainer>
+                                )}
                                 {/* SMS template preview */}
                                 {activeTab === "templates" && currentValue && (
                                     <SimpleContainer className="lw-platformSettings__smsPreview">

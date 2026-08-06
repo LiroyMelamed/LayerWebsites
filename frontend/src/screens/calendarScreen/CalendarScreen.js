@@ -25,7 +25,7 @@ import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import { images } from "../../assets/images/images";
 import { AdminStackName } from "../../navigation/AdminStack";
 import { MainScreenName } from "../mainScreen/MainScreen";
-import { ENABLE_CALENDAR_MODULE } from "../../featureFlags";
+import { useCalendarModuleEnabled } from "../../services/firmSettings";
 
 import calendarApi from "../../api/calendarApi";
 import platformSettingsApi from "../../api/platformSettingsApi";
@@ -37,12 +37,12 @@ import SegmentedSwitch from "../../components/styledComponents/SegmentedSwitch";
 
 import EventFormModal from "./components/EventFormModal";
 import PersonalSyncModal from "./components/PersonalSyncModal";
-import { colorForKey, colorKeyForEvent, leaveColor, holidayColor, buildLawyerLegend } from "./utils/lawyerColors";
+import { colorForKey, colorKeyForEvent, leaveColor, holidayColor, buildLawyerLegend, getEventTypeDefaultColor, isStockEventColor } from "./utils/lawyerColors";
 import { buildNewEventPrefill } from "./utils/eventDefaults";
 import {
     defaultSchedule,
     parseScheduleFromCalendarSettings,
-    getHiddenDays,
+    parseVisibleSlotRangeFromSettings,
     getBusinessHours,
     getSlotRange,
 } from "./utils/workingHours";
@@ -87,13 +87,32 @@ function _eventTypeFilterLabel(eventType, t) {
 // Map a raw calendar_events row → FullCalendar EventInput. The scope drives
 // whether we color by lawyer (firm view) or by event.color (personal view).
 
-/** FullCalendar all-day end is exclusive — extend by one calendar day. */
+/** FullCalendar all-day end is exclusive — extend inclusive DB end by one local day. */
+function toLocalYmd(value) {
+    if (!value) return "";
+    if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) {
+        return value.slice(0, 10);
+    }
+    const d = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(d.getTime())) return "";
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+}
+
+function addLocalDaysYmd(ymd, days) {
+    const base = String(ymd || "").slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(base)) return base;
+    const d = new Date(`${base}T12:00:00`);
+    d.setDate(d.getDate() + days);
+    return toLocalYmd(d);
+}
+
 function leaveAllDayRange(startTime, endTime) {
-    const start = String(startTime || "").slice(0, 10);
-    const endBase = new Date(endTime);
-    if (Number.isNaN(endBase.getTime())) return { start, end: start };
-    endBase.setUTCDate(endBase.getUTCDate() + 1);
-    return { start, end: endBase.toISOString().slice(0, 10) };
+    const start = toLocalYmd(startTime) || String(startTime || "").slice(0, 10);
+    const endInclusive = toLocalYmd(endTime) || start;
+    return { start, end: addLocalDaysYmd(endInclusive, 1) };
 }
 
 function buildInternalAllDayEvent(ev, { labelPrefix, color, className }) {
@@ -111,6 +130,29 @@ function buildInternalAllDayEvent(ev, { labelPrefix, color, className }) {
         textColor: "#FFFFFF",
         classNames: [className],
         extendedProps: ev,
+    };
+}
+
+function buildHolidayHintEvent(h, t) {
+    const date = String(h?.date || "").slice(0, 10);
+    if (!date) return null;
+    const title = h?.title || h?.titleEn || t?.("calendar.holidayHintPrefix") || "חג";
+    // FullCalendar exclusive end for all-day (local calendar day)
+    const end = addLocalDaysYmd(date, 1);
+    return {
+        id: `holiday-hint-${h.id || date}-${title}`,
+        title: `[חג] ${title}`,
+        start: date,
+        end,
+        allDay: true,
+        display: "background",
+        backgroundColor: holidayColor(),
+        borderColor: holidayColor(),
+        classNames: ["lw-fcEvent--holiday", "lw-fcEvent--holidayHint"],
+        editable: false,
+        startEditable: false,
+        durationEditable: false,
+        extendedProps: { hint: true, holiday: true, ...h },
     };
 }
 
@@ -135,29 +177,44 @@ function buildFullCalendarEvent(ev, { scope }) {
         });
     }
 
-    // Appointments: color by owner in firm view, otherwise honor stored color
-    // (or infer from title heuristics for backwards compatibility).
-    const text = `${String(ev?.title || "")} ${String(ev?.description || "")}`;
-    const personalInferred =
-        ev?.color ||
-        (/(חופשה|vacation|pto|holiday)/i.test(text) ? "#2F855A"
-            : /(דיון|court|hearing)/i.test(text) ? "#B83280"
-                : "#2A4365");
+    // Appointments: honor a *custom* stored color when set. Stock / empty colors
+    // follow platform type defaults (personal) or lawyer palette (firm).
+    const typeDefault = getEventTypeDefaultColor(ev?.eventType);
+    const hasCustomColor = !isStockEventColor(ev?.color, ev?.eventType);
+    const personalInferred = hasCustomColor
+        ? String(ev.color).trim().toUpperCase()
+        : typeDefault;
 
-    // Firm view: color by manager (מנהל) so legend matches who handles the event.
+    // Firm view: manager palette by default; respect lawyer-picked custom color.
     const color = scope === SCOPE_FIRM
-        ? colorForKey(colorKeyForEvent(ev))
+        ? (hasCustomColor ? personalInferred : colorForKey(colorKeyForEvent(ev)))
         : personalInferred;
+
+    const inviteStatus = ev?.inviteStatus;
+    const inviteBadge =
+        inviteStatus === "accepted" ? " אושר"
+            : inviteStatus === "declined" ? " נדחה"
+                : inviteStatus === "pending" ? " ממתין"
+                    : "";
+    const inviteClass =
+        inviteStatus === "accepted" ? "lw-fcEvent--inviteAccepted"
+            : inviteStatus === "declined" ? "lw-fcEvent--inviteDeclined"
+                : inviteStatus === "pending" ? "lw-fcEvent--invitePending"
+                    : null;
 
     return {
         id: String(ev.id),
-        title: ev.title,
+        title: `${ev.title || ""}${inviteBadge}`,
         start: ev.startTime,
         end: ev.endTime,
         allDay: ev.allDay,
         backgroundColor: color,
         borderColor: color,
         textColor: "#FFFFFF",
+        classNames: inviteClass ? [inviteClass] : undefined,
+        editable: ev?.eventType !== "leave" && ev?.eventType !== "holiday",
+        startEditable: ev?.eventType !== "leave" && ev?.eventType !== "holiday",
+        durationEditable: ev?.eventType !== "leave" && ev?.eventType !== "holiday" && !ev?.allDay,
         extendedProps: ev,
     };
 }
@@ -189,13 +246,14 @@ export default function CalendarScreen() {
     const { isSmallScreen } = useScreenSize();
     const { openPopup, closePopup } = usePopup();
     const [searchParams, setSearchParams] = useSearchParams();
+    const calendarEnabled = useCalendarModuleEnabled();
 
     // Feature-flag guard: bounce to main screen if the module is disabled.
     useEffect(() => {
-        if (!ENABLE_CALENDAR_MODULE) {
+        if (!calendarEnabled) {
             navigate(AdminStackName + MainScreenName, { replace: true });
         }
-    }, [navigate]);
+    }, [navigate, calendarEnabled]);
 
     const role = _currentRole();
     const canUseFirmView = _isFirmManager(role);
@@ -207,7 +265,7 @@ export default function CalendarScreen() {
 
     // ── View / scope / filters ─────────────────────────────────────────────
     const [events, setEvents] = useState([]);
-    const [view, setView] = useState("dayGridMonth");
+    const [view, setView] = useState("timeGridWeek");
     const [scope, setScope] = useState(SCOPE_MINE);
     const [filters, setFilters] = useState({
         lawyer_id: null,
@@ -219,6 +277,7 @@ export default function CalendarScreen() {
 
     // ── Working-hours config (per weekday) ─────────────────────────────────
     const [workingSchedule, setWorkingSchedule] = useState(() => defaultSchedule());
+    const [visibleSlotRange, setVisibleSlotRange] = useState(() => getSlotRange());
 
     // ── Reference data for filter panel ────────────────────────────────────
     const [lawyers, setLawyers] = useState([]);
@@ -262,7 +321,7 @@ export default function CalendarScreen() {
         return () => { cancelled = true; };
     }, [canUseFirmView]);
 
-    // ── Load firm per-day working hours from platform settings ─────────────
+    // ── Load firm working hours + per-type default colors ─────────────────
     useEffect(() => {
         let cancelled = false;
         (async () => {
@@ -271,9 +330,36 @@ export default function CalendarScreen() {
                 const cal = res?.data?.settings?.calendar || res?.settings?.calendar || {};
                 if (cancelled) return;
                 setWorkingSchedule(parseScheduleFromCalendarSettings(cal));
+                setVisibleSlotRange(parseVisibleSlotRangeFromSettings(cal));
+                try {
+                    const raw = cal?.CALENDAR_EVENT_TYPE_COLORS?.effectiveValue;
+                    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+                    if (parsed && typeof parsed === "object") {
+                        window.__CALENDAR_TYPE_COLORS__ = parsed;
+                        // Rebuild colors now that admin defaults are available
+                        // (first fetch may have raced ahead of this settings call).
+                        setEvents((prev) => prev.map((fc) => {
+                            const rawEv = fc?.extendedProps;
+                            if (!rawEv || rawEv.hint) {
+                                if (rawEv?.holiday || fc?.classNames?.includes?.("lw-fcEvent--holidayHint")) {
+                                    return {
+                                        ...fc,
+                                        backgroundColor: holidayColor(),
+                                        borderColor: holidayColor(),
+                                    };
+                                }
+                                return fc;
+                            }
+                            return buildFullCalendarEvent(rawEv, {
+                                scope: apiFilters.scope || SCOPE_MINE,
+                            });
+                        }));
+                    }
+                } catch { /* ignore */ }
             } catch { /* keep defaults */ }
         })();
         return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- apply once on mount; scope rebuild happens via fetch
     }, []);
 
     // ── Filter assembly ─────────────────────────────────────────────────────
@@ -302,9 +388,20 @@ export default function CalendarScreen() {
         fetchRangeRef.current = { from, to };
 
         try {
-            const res = await calendarApi.listEvents({ from, to, limit: 500, ...apiFilters });
+            const [res, holidaysRes] = await Promise.all([
+                calendarApi.listEvents({ from, to, limit: 500, ...apiFilters }),
+                calendarApi.listHolidays({
+                    from: String(from).slice(0, 10),
+                    to: String(to).slice(0, 10),
+                }).catch(() => null),
+            ]);
             const list = res?.data?.events || [];
-            setEvents(list.map((ev) => buildFullCalendarEvent(ev, { scope: apiFilters.scope || SCOPE_MINE })));
+            const scopeKey = apiFilters.scope || SCOPE_MINE;
+            const built = list.map((ev) => buildFullCalendarEvent(ev, { scope: scopeKey }));
+            const holidayHints = (holidaysRes?.data?.holidays || [])
+                .map((h) => buildHolidayHintEvent(h))
+                .filter(Boolean);
+            setEvents([...holidayHints, ...built]);
         } catch {
             // leave the last successful calendar state visible
         }
@@ -370,12 +467,11 @@ export default function CalendarScreen() {
     }, [searchParams, setSearchParams]);
 
     // ── FullCalendar config ────────────────────────────────────────────────
-    // Hide closed weekdays everywhere (month / week / day) per platform settings.
-    const hiddenDays = useMemo(() => getHiddenDays(workingSchedule), [workingSchedule]);
-
+    // All weekdays stay visible. Working hours only shade non-open times
+    // (visual guidance) — they do not hide days or block creating events.
     const businessHours = useMemo(() => getBusinessHours(workingSchedule), [workingSchedule]);
 
-    const slotRange = useMemo(() => getSlotRange(workingSchedule), [workingSchedule]);
+    const slotRange = visibleSlotRange;
 
     // ── Modal helpers ──────────────────────────────────────────────────────
     const upsertLocally = useCallback((saved) => {
@@ -389,11 +485,14 @@ export default function CalendarScreen() {
         });
     }, [apiFilters.scope]);
 
-    const handleEventSaved = useCallback((saved, { firmOnlyNotice } = {}) => {
+    const handleEventSaved = useCallback((saved, { firmOnlyNotice, reminderSyncWarning } = {}) => {
         upsertLocally(saved);
         fetchEvents(null);
         closePopup();
-        if (firmOnlyNotice) {
+        if (reminderSyncWarning) {
+            setCalendarMsg(reminderSyncWarning);
+            setTimeout(() => setCalendarMsg(""), 10000);
+        } else if (firmOnlyNotice) {
             setCalendarMsg(t("calendar.savedFirmOnlyNotice"));
             setTimeout(() => setCalendarMsg(""), 8000);
         }
@@ -442,6 +541,8 @@ export default function CalendarScreen() {
 
     const openEditModal = useCallback((clickInfo) => {
         const ev = clickInfo.event.extendedProps || {};
+        // Hebcal holiday hints are display-only background events.
+        if (ev.hint) return;
         const eventPayload = {
             ...ev,
             id: Number(clickInfo.event.id),
@@ -600,7 +701,7 @@ export default function CalendarScreen() {
         ? (caseFilterLabel || `#${filters.case_id}`)
         : null;
 
-    if (!ENABLE_CALENDAR_MODULE) return null;
+    if (!calendarEnabled) return null;
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
@@ -827,28 +928,6 @@ export default function CalendarScreen() {
                     {/* ── Calendar column ── */}
                     <SimpleContainer className="lw-calendarScreen__calendarCol">
 
-                        {/* View switcher */}
-                        <SimpleContainer className="lw-calendarScreen__viewSwitcher">
-                            <SecondaryButton
-                                className={view === "dayGridMonth" ? "is-active" : ""}
-                                onPress={() => switchView("dayGridMonth")}
-                            >
-                                {t("calendar.monthView")}
-                            </SecondaryButton>
-                            <SecondaryButton
-                                className={view === "timeGridWeek" ? "is-active" : ""}
-                                onPress={() => switchView("timeGridWeek")}
-                            >
-                                {t("calendar.weekView")}
-                            </SecondaryButton>
-                            <SecondaryButton
-                                className={view === "timeGridDay" ? "is-active" : ""}
-                                onPress={() => switchView("timeGridDay")}
-                            >
-                                {t("calendar.dayView")}
-                            </SecondaryButton>
-                        </SimpleContainer>
-
                         {/* Calendar */}
                         <SimpleCard className="lw-calendarScreen__calendarCard">
                             <FullCalendar
@@ -860,8 +939,15 @@ export default function CalendarScreen() {
                                 headerToolbar={{
                                     start: "prev,next today",
                                     center: "title",
-                                    end: "",
+                                    end: "dayGridMonth,timeGridWeek,timeGridDay",
                                 }}
+                                buttonText={{
+                                    today: t("calendar.today", { defaultValue: "היום" }),
+                                    month: t("calendar.monthView"),
+                                    week: t("calendar.weekView"),
+                                    day: t("calendar.dayView"),
+                                }}
+                                slotEventOverlap={false}
                                 events={events}
                                 selectable
                                 selectMirror
@@ -880,12 +966,88 @@ export default function CalendarScreen() {
                                     openCreateModal({ start, end, allDay: info.allDay });
                                 }}
                                 eventClick={openEditModal}
-                                datesSet={fetchEvents}
+                                editable
+                                eventStartEditable
+                                eventDurationEditable
+                                eventDrop={async (info) => {
+                                    const id = parseInt(info.event.id, 10);
+                                    if (!Number.isFinite(id)) {
+                                        info.revert();
+                                        return;
+                                    }
+                                    try {
+                                        const isAllDay = !!info.event.allDay;
+                                        let startIso = info.event.start?.toISOString();
+                                        let endIso = (info.event.end || info.event.start)?.toISOString();
+                                        if (isAllDay && info.event.start) {
+                                            const startYmd = toLocalYmd(info.event.start);
+                                            // FC exclusive end → inclusive end-of-day for DB
+                                            const endExclusive = info.event.end
+                                                ? toLocalYmd(info.event.end)
+                                                : addLocalDaysYmd(startYmd, 1);
+                                            const endInclusive = addLocalDaysYmd(endExclusive, -1) || startYmd;
+                                            startIso = new Date(`${startYmd}T00:00:00`).toISOString();
+                                            endIso = new Date(`${endInclusive}T23:59:00`).toISOString();
+                                        }
+                                        const res = await calendarApi.updateEvent(id, {
+                                            start_time: startIso,
+                                            end_time: endIso,
+                                            all_day: isAllDay,
+                                        });
+                                        if (!res?.success) {
+                                            info.revert();
+                                            window.alert(res?.data?.message || res?.message || t("calendar.googleSyncError"));
+                                            return;
+                                        }
+                                        fetchEvents();
+                                    } catch (err) {
+                                        info.revert();
+                                        window.alert(err?.response?.data?.message || t("calendar.googleSyncError"));
+                                    }
+                                }}
+                                eventResize={async (info) => {
+                                    const id = parseInt(info.event.id, 10);
+                                    if (!Number.isFinite(id)) {
+                                        info.revert();
+                                        return;
+                                    }
+                                    try {
+                                        const isAllDay = !!info.event.allDay;
+                                        let startIso = info.event.start?.toISOString();
+                                        let endIso = (info.event.end || info.event.start)?.toISOString();
+                                        if (isAllDay && info.event.start) {
+                                            const startYmd = toLocalYmd(info.event.start);
+                                            const endExclusive = info.event.end
+                                                ? toLocalYmd(info.event.end)
+                                                : addLocalDaysYmd(startYmd, 1);
+                                            const endInclusive = addLocalDaysYmd(endExclusive, -1) || startYmd;
+                                            startIso = new Date(`${startYmd}T00:00:00`).toISOString();
+                                            endIso = new Date(`${endInclusive}T23:59:00`).toISOString();
+                                        }
+                                        const res = await calendarApi.updateEvent(id, {
+                                            start_time: startIso,
+                                            end_time: endIso,
+                                            all_day: isAllDay,
+                                        });
+                                        if (!res?.success) {
+                                            info.revert();
+                                            window.alert(res?.data?.message || res?.message || t("calendar.googleSyncError"));
+                                            return;
+                                        }
+                                        fetchEvents();
+                                    } catch (err) {
+                                        info.revert();
+                                        window.alert(err?.response?.data?.message || t("calendar.googleSyncError"));
+                                    }
+                                }}
+                                datesSet={(arg) => {
+                                    if (arg?.view?.type) setView(arg.view.type);
+                                    fetchEvents(arg);
+                                }}
                                 longPressDelay={350}
                                 selectLongPressDelay={350}
                                 eventLongPressDelay={0}
                                 height="auto"
-                                hiddenDays={hiddenDays}
                                 businessHours={businessHours}
                                 slotMinTime={slotRange.min}
                                 slotMaxTime={slotRange.max}

@@ -113,8 +113,8 @@ async function sendAndStoreNotification(userId, title, message, data = {}, optio
 
         const dedupeWindowSeconds = 10;
         const insertSql = `
-            INSERT INTO UserNotifications (UserId, Title, Message, CreatedAt, IsRead)
-            SELECT $1, $2::text, $3::text, NOW(), FALSE
+            INSERT INTO UserNotifications (UserId, Title, Message, CreatedAt, IsRead, Data)
+            SELECT $1, $2::text, $3::text, NOW(), FALSE, $7::jsonb
             WHERE NOT EXISTS (
                 SELECT 1
                 FROM UserNotifications
@@ -125,17 +125,36 @@ async function sendAndStoreNotification(userId, title, message, data = {}, optio
             )
         `;
 
+        const dataJson = JSON.stringify(data && typeof data === "object" ? data : {});
+
         try {
-            await pool.query(insertSql, [userId, title, message, title, message, dedupeWindowSeconds]);
+            await pool.query(insertSql, [userId, title, message, title, message, dedupeWindowSeconds, dataJson]);
         } catch (err) {
             if (isDuplicateNotificationPkError(err)) {
                 console.warn(
                     "Duplicate NotificationId detected; attempting to repair sequence and retry insert once..."
                 );
                 await repairUserNotificationsSequence();
-                await pool.query(insertSql, [userId, title, message, title, message, dedupeWindowSeconds]);
+                await pool.query(insertSql, [userId, title, message, title, message, dedupeWindowSeconds, dataJson]);
             } else {
-                throw err;
+                // Older DBs without the data column: fall back to title/message-only insert.
+                if (err?.code === "42703") {
+                    const legacySql = `
+                        INSERT INTO UserNotifications (UserId, Title, Message, CreatedAt, IsRead)
+                        SELECT $1, $2::text, $3::text, NOW(), FALSE
+                        WHERE NOT EXISTS (
+                            SELECT 1
+                            FROM UserNotifications
+                            WHERE UserId = $1
+                              AND Title = $4::text
+                              AND Message = $5::text
+                              AND CreatedAt > (NOW() - ($6 * INTERVAL '1 second'))
+                        )
+                    `;
+                    await pool.query(legacySql, [userId, title, message, title, message, dedupeWindowSeconds]);
+                } else {
+                    throw err;
+                }
             }
         }
         console.log(`Notification stored in DB for UserId: ${userId} - Title: ${title}`);

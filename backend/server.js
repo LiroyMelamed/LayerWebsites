@@ -7,8 +7,12 @@ const { initLicenseRenewalScheduler } = require('./tasks/licenseRenewal/schedule
 const { initEmailReminderScheduler } = require('./tasks/emailReminders/scheduler');
 const { initBirthdayGreetingsScheduler } = require('./tasks/birthdayGreetings/scheduler');
 const { initCalendarReminderScheduler } = require('./tasks/calendarReminders/scheduler');
+const { initSignReminderScheduler } = require('./tasks/signReminders/scheduler');
+const { startDailyAgendaScheduler } = require('./tasks/dailyAgenda/scheduler');
+const { startHebcalHolidaysScheduler } = require('./tasks/hebcalHolidays/scheduler');
 
 const PORT = process.env.PORT || 5000;
+const HOST = process.env.HOST || "127.0.0.1";
 
 const SERVER_REQUEST_TIMEOUT_MS = Number(process.env.SERVER_REQUEST_TIMEOUT_MS || 60_000);
 const SERVER_HEADERS_TIMEOUT_MS = Number(process.env.SERVER_HEADERS_TIMEOUT_MS || 65_000);
@@ -27,8 +31,8 @@ async function getPublicIp() {
     }
 }
 
-const server = app.listen(PORT, async () => {
-    console.log(`Server running on port ${PORT}`);
+const server = app.listen(PORT, HOST, async () => {
+    console.log(`Server running on ${HOST}:${PORT}`);
     await getPublicIp();
     await signingSchemaStartupCheck();
     await assertRuntimeTenantMatchesBranch(pool);
@@ -38,6 +42,9 @@ const server = app.listen(PORT, async () => {
     initEmailReminderScheduler();
     initBirthdayGreetingsScheduler();
     await initCalendarReminderScheduler();
+    initSignReminderScheduler();
+    startDailyAgendaScheduler();
+    startHebcalHolidaysScheduler();
 });
 
 // Hard timeouts at the Node server layer (useful behind Nginx).

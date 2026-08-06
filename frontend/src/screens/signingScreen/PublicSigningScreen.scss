@@ -3,8 +3,11 @@
 
 .lw-publicSigningScreen .lw-simpleScreen__content {
     width: 100%;
+    max-width: none;
     margin-right: 0;
-    align-items: center;
+    margin-left: 0;
+    padding: 0;
+    align-items: stretch;
 }
 
 .lw-publicSigningScreen__container {
@@ -19,6 +22,33 @@
     width: 100%;
     flex-direction: column;
     gap: 0.75rem;
+    align-items: center;
+    justify-content: center;
+    min-height: 40vh;
+}
+
+.lw-publicSigningScreen__spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid rgba(0, 0, 0, 0.12);
+    border-top-color: rgba(0, 0, 0, 0.55);
+    border-radius: 50%;
+    animation: lw-publicSigning-spin 0.8s linear infinite;
+}
+
+@keyframes lw-publicSigning-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Covers signing chrome until react-pdf Document is ready (one continuous loader) */
+.lw-signing-pdfBootstrap {
+    position: fixed;
+    inset: 0;
+    z-index: 10050;
+    background: linear-gradient(180deg, #f7f8fa 0%, #eef1f5 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .lw-publicSigningScreen .lw-signing-screen {
@@ -33,4 +63,16 @@
     max-height: none;
     border-radius: 0;
     margin: 0;
+}
+
+.lw-publicSigningScreen .lw-signing-pdfContainer {
+    border: none;
+    border-radius: 0;
+    width: 100%;
+    max-width: none;
+}
+
+.lw-publicSigningScreen .lw-signing-pageWrap {
+    max-width: none;
+    width: 100%;
 }

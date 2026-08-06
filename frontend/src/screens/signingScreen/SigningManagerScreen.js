@@ -29,7 +29,7 @@ import { usePopup } from "../../providers/PopUpProvider";
 import ErrorPopup from "../../components/styledComponents/popups/ErrorPopup";
 import { useTranslation } from "react-i18next";
 import { useFromApp } from "../../providers/FromAppProvider";
-import { SIGNING_OTP_ENABLED } from "../../featureFlags";
+import { useSigningOtpEnabled } from "../../services/firmSettings";
 
 import { AdminStackName } from "../../navigation/AdminStack";
 import { uploadFileForSigningScreenName } from "./UploadFileForSigningScreen";
@@ -580,6 +580,8 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
     const [isDownloadingEvidencePdf, setIsDownloadingEvidencePdf] = useState(false);
     const [isDownloadingEvidenceZip, setIsDownloadingEvidenceZip] = useState(false);
     const [isOpeningPdf, setIsOpeningPdf] = useState(false);
+    const [isOpeningSpotsPreview, setIsOpeningSpotsPreview] = useState(false);
+    const [spotsPreviewError, setSpotsPreviewError] = useState(null);
 
     const wrappedDownloadSigned = async () => {
         setIsDownloadingSigned(true);
@@ -596,6 +598,27 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
     const wrappedOpenPdf = async () => {
         setIsOpeningPdf(true);
         try { await onOpenPdf(); } finally { setIsOpeningPdf(false); }
+    };
+
+    const openSpotsPreview = () => {
+        const signingFileId = file?.SigningFileId;
+        if (!signingFileId) return;
+        setSpotsPreviewError(null);
+        setIsOpeningSpotsPreview(true);
+        try {
+            const path = `${AdminStackName}/SigningSpotsPreview/${encodeURIComponent(signingFileId)}`;
+            const url = `${window.location.origin}${path}`;
+            const opened = window.open(url, "_blank", "noopener,noreferrer");
+            if (!opened) {
+                // Popup blocked — navigate in the same tab.
+                window.location.assign(path);
+            }
+        } catch (err) {
+            console.error("Spots preview open failed", err);
+            setSpotsPreviewError(t('signingManager.spotsPreview.error'));
+        } finally {
+            setIsOpeningSpotsPreview(false);
+        }
     };
 
     // Resend state
@@ -622,10 +645,13 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
 
     const handleOpenResend = () => {
         setShowResend(true);
+        setSpotsPreviewError(null);
         loadSigners();
     };
 
     const toggleSignerId = (id) => {
+        const signer = signers.find((s) => s.SignerUserId === id);
+        if (signer?.AllSigned) return;
         setSelectedSignerIds(prev =>
             prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
         );
@@ -677,7 +703,7 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
         }
     };
 
-    const showOtpUi = SIGNING_OTP_ENABLED;
+    const showOtpUi = useSigningOtpEnabled();
     const requireOtp = showOtpUi && Boolean(file?.RequireOtp);
     const isOtpWaived = showOtpUi && file?.RequireOtp === false;
     const otpChipText = requireOtp ? t('signing.otpRequiredBadge') : t('signing.otpWaivedBadge');
@@ -762,19 +788,37 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                     <div className="lw-signingManagerScreen__detailValue">{signedSpots}/{totalSpots}</div>
                 </SimpleContainer>
 
-                <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                    <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.client')}</div>
-                    <div className="lw-signingManagerScreen__detailValue">
-                        {loadingSigners ? '...' : (
-                            (signers.length ? signers : []).map((s) => (
-                                <div key={s.SignerUserId}>
-                                    <div>{s.Name || `#${s.SignerUserId}`}</div>
-                                    <div>{s.Email || '-'}</div>
-                                    <div>{s.Phone || '-'}</div>
-                                </div>
-                            ))
-                        )}
+                <SimpleContainer className="lw-signingManagerScreen__signerStatusSection">
+                    <div className="lw-signingManagerScreen__signerStatusTitle">
+                        {t('signingManager.signerStatus.title')}
                     </div>
+                    {loadingSigners ? '...' : (
+                        <div className="lw-signingManagerScreen__signerStatusWrap">
+                            <div className="lw-signingManagerScreen__signerStatusTable">
+                                <div className="lw-signingManagerScreen__signerStatusHead">
+                                    <span>{t('signingManager.signerStatus.name')}</span>
+                                    <span>{t('signingManager.signerStatus.contact')}</span>
+                                    <span>{t('signingManager.signerStatus.sent')}</span>
+                                    <span>{t('signingManager.signerStatus.viewed')}</span>
+                                    <span>{t('signingManager.signerStatus.signed')}</span>
+                                </div>
+                                {(signers.length ? signers : []).map((s) => (
+                                    <div key={s.SignerUserId} className="lw-signingManagerScreen__signerStatusRow">
+                                        <span>{s.Name || `#${s.SignerUserId}`}</span>
+                                        <span>{[s.Email, s.Phone].filter(Boolean).join(' · ') || '-'}</span>
+                                        <span>{formatUtcDateTime(s.SentAt)}</span>
+                                        <span>{formatUtcDateTime(s.ViewedAt)}</span>
+                                        <span>{formatUtcDateTime(s.SignedAt)}</span>
+                                    </div>
+                                ))}
+                                {!signers.length && !loadingSigners && (
+                                    <div className="lw-signingManagerScreen__signerStatusRow">
+                                        <span>-</span><span>-</span><span>-</span><span>-</span><span>-</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </SimpleContainer>
 
                 {file?.Status === "rejected" && file?.RejectionReason && (
@@ -804,24 +848,46 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                 )}
 
                 <SimpleContainer className="lw-signingManagerScreen__actionsRow">
-                    <PrimaryButton onPress={wrappedDownloadEvidencePdf} disabled={!isSigned || isDownloadingEvidencePdf} isPerforming={isDownloadingEvidencePdf}>
-                        {t('signingManager.actions.downloadEvidencePdf')}
-                    </PrimaryButton>
-                    {file?.Status === "signed" && (
-                        <PrimaryButton onPress={wrappedDownloadSigned} disabled={isDownloadingSigned} isPerforming={isDownloadingSigned}>{t('signingManager.actions.downloadSigned')}</PrimaryButton>
+                    {isSigned && (
+                        <>
+                            <PrimaryButton onPress={wrappedDownloadEvidencePdf} disabled={isDownloadingEvidencePdf} isPerforming={isDownloadingEvidencePdf}>
+                                {t('signingManager.actions.downloadEvidencePdf')}
+                            </PrimaryButton>
+                            <PrimaryButton onPress={wrappedDownloadSigned} disabled={isDownloadingSigned} isPerforming={isDownloadingSigned}>
+                                {t('signingManager.actions.downloadSigned')}
+                            </PrimaryButton>
+                            <SecondaryButton onPress={wrappedDownloadEvidenceZip} disabled={isDownloadingEvidenceZip} isPerforming={isDownloadingEvidenceZip}>
+                                {t('signingManager.actions.downloadEvidenceZip')}
+                            </SecondaryButton>
+                            <SecondaryButton onPress={wrappedOpenPdf} disabled={isOpeningPdf} isPerforming={isOpeningPdf}>
+                                {t('signingManager.actions.openPdf')}
+                            </SecondaryButton>
+                        </>
                     )}
-                    <SecondaryButton onPress={wrappedDownloadEvidenceZip} disabled={!isSigned || isDownloadingEvidenceZip} isPerforming={isDownloadingEvidenceZip}>
-                        {t('signingManager.actions.downloadEvidenceZip')}
-                    </SecondaryButton>
-                    <SecondaryButton onPress={wrappedOpenPdf} disabled={isOpeningPdf} isPerforming={isOpeningPdf}>{t('signingManager.actions.openPdf')}</SecondaryButton>
+                    {!isSigned && (
+                        <SecondaryButton
+                            onPress={openSpotsPreview}
+                            disabled={isOpeningSpotsPreview}
+                            isPerforming={isOpeningSpotsPreview}
+                        >
+                            {t('signingManager.actions.viewSignatureSpots')}
+                        </SecondaryButton>
+                    )}
                     {isPending && (
                         <SecondaryButton onPress={handleOpenResend}>
                             {t('signingManager.actions.resendInvite')}
                         </SecondaryButton>
                     )}
-                    {file?.Status === "pending" && onDelete && (
+                    {["pending", "signed", "rejected"].includes(String(file?.Status || "").toLowerCase()) && onDelete && (
                         <SecondaryButton
-                            onPress={() => onDelete(file.SigningFileId)}
+                            onPress={() => {
+                                const ok = window.confirm(
+                                    t('signingManager.actions.deleteConfirm', {
+                                        defaultValue: 'למחוק את המסמך מהמעקב? פעולה זו בלתי הפיכה (למשל מספר טלפון שגוי / מסמך שגוי).',
+                                    })
+                                );
+                                if (ok) onDelete(file.SigningFileId);
+                            }}
                             isPerforming={isDeleting}
                             className="lw-signingManagerScreen__deleteBtn"
                         >
@@ -830,6 +896,10 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                     )}
                     <SecondaryButton onPress={onClose}>{t('common.close')}</SecondaryButton>
                 </SimpleContainer>
+
+                {spotsPreviewError && (
+                    <div className="lw-signingManagerScreen__spotsPreviewError">{spotsPreviewError}</div>
+                )}
 
                 {showResend && (
                     <SimpleContainer className="lw-signingManagerScreen__resendSection">
@@ -846,7 +916,7 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                                             type="checkbox"
                                             checked={selectedSignerIds.includes(signer.SignerUserId)}
                                             onChange={() => toggleSignerId(signer.SignerUserId)}
-                                            disabled={isResending}
+                                            disabled={isResending || Boolean(signer.AllSigned)}
                                         />
                                         <span className="lw-signingManagerScreen__resendSignerName">
                                             {signer.Name || signer.Email || signer.Phone || `#${signer.SignerUserId}`}

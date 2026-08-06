@@ -1,18 +1,16 @@
 // Global frontend feature flags.
-// Toggle these to control behavior across the entire app.
+// Prefer platform_settings for product toggles so platform admins can change
+// them anytime without a rebuild. Keep this file only for true build-time
+// compile switches (or deprecated shims).
 
-// Signing OTP (SMS verification) feature.
-// When false: no OTP UI is shown and signing flows will not require OTP on the client.
-// When true: OTP UI + client-side gating is enabled (server must also support/enforce it).
+// Signing OTP — deprecated build-time shim.
+// Runtime: platform setting SIGNING_OTP_ENABLED.
 export const SIGNING_OTP_ENABLED = false;
 
-// AI Chatbot feature.
-// When false: the /chatbot route is hidden from navigation (page still accessible via direct URL).
-// When true: chatbot link is visible in the app navigation.
-// Set to false until the navigation entry is wired up.
+// AI Chatbot nav — deprecated build-time shim.
+// Runtime: platform setting AI_CHATBOT_ENABLED.
 export const AI_CHATBOT_ENABLED = false;
 
-// Calendar module.
-// When true: CalendarScreen and the dashboard widget are visible.
-// Requires backend migration 2026-06-05_00_create_calendar_tables.sql to be applied.
+// Calendar module — deprecated build-time shim.
+// Runtime: platform setting ENABLE_CALENDAR_MODULE.
 export const ENABLE_CALENDAR_MODULE = true;

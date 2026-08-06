@@ -67,6 +67,9 @@ const TEMPLATE_REQUIRED_VARS = {
     LICENSE_RENEWAL_SMS: [],
     // ── Client ──
     NEW_CLIENT_SMS: ['recipientName', 'firmName', 'websiteUrl'],
+    // ── Calendar ──
+    CALENDAR_CLIENT_REMINDER_SMS: ['recipientName', 'date', 'time'],
+    CALENDAR_INVITE_SMS: ['recipientName', 'date', 'time', 'rsvpUrl'],
 };
 
 /**

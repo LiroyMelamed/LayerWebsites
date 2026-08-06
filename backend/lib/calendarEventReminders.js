@@ -1,21 +1,79 @@
+'use strict';
+
 /**
- * Per-event calendar push reminders.
- * Lawyers pick offsets (minutes before start) when creating/editing an event.
- * Platform admins configure which preset offsets are available.
+ * Per-event calendar push reminders + SMS template composition.
  */
 
-const DEFAULT_ALLOWED_OFFSETS = [15, 30, 60, 120, 1440];
+const settingsService = require('../services/settingsService');
+const { renderTemplate } = require('../utils/templateRenderer');
+const { getFirmDisplayName, getLawFirmNameHe } = require('./firmBranding');
+const {
+    getPublicAppBase,
+    getWebsiteDomain,
+    buildShortNavUrls,
+    buildShortRsvpUrl,
+    buildShortNavLinksBlock,
+    rawWazeUrl,
+    rawMapsUrl,
+} = require('./publicShortLinks');
+
+const DEFAULT_ALLOWED_OFFSETS = [0, 15, 30, 60, 120, 1440, 2880, 10080];
 const DEFAULT_ALLOWED_CHANNELS = ['push', 'sms', 'email'];
 const REMINDABLE_EVENT_TYPES = new Set(['appointment', 'hearing', 'reminder']);
 const MAX_OFFSETS_PER_EVENT = 8;
 const VALID_CHANNEL_KEYS = new Set(['push', 'sms', 'email']);
+
+const DEFAULT_CLIENT_REMINDER_SMS =
+    'שלום {{recipientName}},\n'
+    + 'זוהי תזכורת לפגישה שנקבעה עבורך ב{{firmName}}\n'
+    + 'בתאריך {{date}} בשעה {{time}}.\n'
+    + 'כתובתנו הינה {{address}}\n'
+    + 'להוראות הגעה בוויז {{wazeUrl}}\n'
+    + 'לבירור או שינוי נא להתקשר ל {{firmPhone}}\n'
+    + 'מידע נוסף ניתן למצוא באתר שלנו\n'
+    + '{{websiteUrl}}';
+
+const DEFAULT_INVITE_SMS =
+    'שלום {{recipientName}}, נקבעה לך פגישה, בתאריך {{date}} בשעה {{time}},\n'
+    + 'כתובתנו היא {{address}}. בברכה, {{firmName}},\n'
+    + 'לאישור הגעה, אנא לחץ/י על הקישור {{rsvpUrl}}\n'
+    + 'להוראות הגעה בוויז: {{wazeUrl}}\n'
+    + 'לבירור או שינוי נא להתקשר ל {{firmPhone}}';
+
+function defaultReminderTargets() {
+    return { client: true, managers: true };
+}
+
+function parseReminderTargets(raw) {
+    let src = raw;
+    if (typeof raw === 'string') {
+        try { src = JSON.parse(raw); } catch { src = null; }
+    }
+    if (!src || typeof src !== 'object') return defaultReminderTargets();
+    return {
+        client: src.client !== false && src.client !== 'false' && src.client !== 0,
+        managers: src.managers !== false && src.managers !== 'false' && src.managers !== 0,
+    };
+}
+
+function targetsToJson(targets) {
+    return JSON.stringify(parseReminderTargets(targets));
+}
+
+/** Legacy long nav links (kept for any callers that need sync). Prefer buildShortNavLinksBlock. */
+function buildNavLinks(location) {
+    const q = String(location || '').trim();
+    if (!q) return '';
+    const encoded = encodeURIComponent(q);
+    return `\nמיקום: ${q}\nWaze: https://waze.com/ul?q=${encoded}\nMaps: https://www.google.com/maps/search/?api=1&query=${encoded}`;
+}
 
 function parseOffsetsList(raw) {
     if (raw == null || raw === '') return [];
     if (Array.isArray(raw)) {
         return raw
             .map((v) => parseInt(v, 10))
-            .filter((n) => Number.isInteger(n) && n > 0);
+            .filter((n) => Number.isInteger(n) && n >= 0);
     }
     if (typeof raw === 'string') {
         const trimmed = raw.trim();
@@ -31,7 +89,7 @@ function parseOffsetsList(raw) {
         return trimmed
             .split(',')
             .map((s) => parseInt(s.trim(), 10))
-            .filter((n) => Number.isInteger(n) && n > 0);
+            .filter((n) => Number.isInteger(n) && n >= 0);
     }
     return [];
 }
@@ -40,8 +98,9 @@ function uniqueSortedDesc(offsets) {
     return [...new Set(offsets)].sort((a, b) => b - a);
 }
 
-async function loadAllowedReminderOffsets(settingsService) {
-    const raw = await settingsService.getSetting(
+async function loadAllowedReminderOffsets(settingsServiceArg) {
+    const svc = settingsServiceArg || settingsService;
+    const raw = await svc.getSetting(
         'calendar',
         'CALENDAR_REMINDER_OPTIONS',
         DEFAULT_ALLOWED_OFFSETS.join(',')
@@ -122,8 +181,9 @@ function parseStoredChannels(raw) {
     };
 }
 
-async function loadAllowedReminderChannels(settingsService) {
-    const raw = await settingsService.getSetting(
+async function loadAllowedReminderChannels(settingsServiceArg) {
+    const svc = settingsServiceArg || settingsService;
+    const raw = await svc.getSetting(
         'calendar',
         'CALENDAR_REMINDER_CHANNELS',
         DEFAULT_ALLOWED_CHANNELS.join(',')
@@ -153,6 +213,7 @@ function hasAnyReminderChannel(channels) {
 }
 
 function formatOffsetHebrew(minutes) {
+    if (Number(minutes) === 0) return 'עכשיו';
     if (minutes >= 1440 && minutes % 1440 === 0) {
         const days = minutes / 1440;
         if (days === 1) return 'מחר';
@@ -166,38 +227,138 @@ function formatOffsetHebrew(minutes) {
     return `בעוד ${minutes} דקות`;
 }
 
-function composeLawyerReminderMessage(offsetMinutes, ev) {
-    const timeStr = new Date(ev.start_time).toLocaleTimeString('he-IL', {
+function formatEventDate(startTime) {
+    return new Date(startTime).toLocaleDateString('he-IL', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+    });
+}
+
+function formatEventTime(startTime) {
+    return new Date(startTime).toLocaleTimeString('he-IL', {
         hour: '2-digit',
         minute: '2-digit',
         hour12: false,
     });
+}
+
+async function loadCalendarSmsContext(ev) {
+    const officeAddress = String(
+        await settingsService.getSetting('calendar', 'FIRM_OFFICE_ADDRESS', '') || ''
+    ).trim();
+    const firmWazeUrl = String(
+        await settingsService.getSetting('calendar', 'FIRM_WAZE_URL', '') || ''
+    ).trim();
+    const firmMapsUrl = String(
+        await settingsService.getSetting('calendar', 'FIRM_MAPS_URL', '') || ''
+    ).trim();
+    const address = String(ev.location || '').trim() || officeAddress;
+    const firmName = (await getFirmDisplayName()) || (await getLawFirmNameHe()) || 'המשרד';
+    const firmPhone = String(
+        await settingsService.getSetting('contact', 'WHATSAPP_PHONE', '')
+        || process.env.FIRM_PHONE
+        || ''
+    ).trim();
+    const domain = getWebsiteDomain();
+    const websiteUrl = domain ? `https://${domain}` : (getPublicAppBase() || '');
+    const nav = await buildShortNavUrls(address, {
+        officeAddress,
+        firmWazeUrl,
+        firmMapsUrl,
+    });
+    const rsvpUrl = ev.invite_token ? await buildShortRsvpUrl(ev.invite_token) : '';
+
+    return {
+        recipientName: String(ev.client_name || ev.lead_name || ev.recipient_name || '').trim() || 'לקוח/ה',
+        firmName,
+        date: formatEventDate(ev.start_time),
+        time: formatEventTime(ev.start_time),
+        address: nav.address || address,
+        wazeUrl: nav.wazeUrl || rawWazeUrl(address),
+        mapsUrl: nav.mapsUrl || rawMapsUrl(address),
+        rsvpUrl,
+        firmPhone,
+        websiteUrl,
+        lawyerName: String(ev.owner_name || '').trim() || 'עורך הדין',
+        title: String(ev.title || 'פגישה').trim(),
+    };
+}
+
+async function getClientReminderTemplate(ev) {
+    const override = String(ev.client_reminder_sms || '').trim();
+    if (override) return override;
+    const eventType = String(ev.event_type || ev.eventType || '').toLowerCase();
+    if (eventType === 'hearing') {
+        const hearingTpl = await settingsService.getSetting(
+            'templates',
+            'CALENDAR_CLIENT_REMINDER_SMS_HEARING',
+            ''
+        );
+        if (String(hearingTpl || '').trim()) return hearingTpl;
+    }
+    return settingsService.getSetting(
+        'templates',
+        'CALENDAR_CLIENT_REMINDER_SMS',
+        DEFAULT_CLIENT_REMINDER_SMS
+    );
+}
+
+async function getInviteSmsTemplate(ev) {
+    const override = String(ev.invite_sms || '').trim();
+    if (override) return override;
+    const eventType = String(ev.event_type || ev.eventType || '').toLowerCase();
+    if (eventType === 'hearing') {
+        const hearingTpl = await settingsService.getSetting(
+            'templates',
+            'CALENDAR_INVITE_SMS_HEARING',
+            ''
+        );
+        if (String(hearingTpl || '').trim()) return hearingTpl;
+    }
+    return settingsService.getSetting(
+        'templates',
+        'CALENDAR_INVITE_SMS',
+        DEFAULT_INVITE_SMS
+    );
+}
+
+async function composeLawyerReminderMessage(offsetMinutes, ev) {
+    const timeStr = formatEventTime(ev.start_time);
     const when = formatOffsetHebrew(offsetMinutes);
     const isReminderEvent = ev.event_type === 'reminder';
     const audience = ev.client_name || null;
     const title = isReminderEvent
         ? 'תזכורת מהיומן'
         : (offsetMinutes >= 1440 ? 'תזכורת לפגישה' : 'תזכורת לפגישה קרובה');
-    const body = isReminderEvent
+    let body = isReminderEvent
         ? `${ev.title || 'תזכורת'} — ${when} בשעה ${timeStr}`
         : (audience
             ? `פגישה עם הלקוח ${audience} — ${when} בשעה ${timeStr}`
             : `${ev.title} — ${when} בשעה ${timeStr}`);
+    body += await buildShortNavLinksBlock(ev.location, {
+        officeAddress: String(await settingsService.getSetting('calendar', 'FIRM_OFFICE_ADDRESS', '') || '').trim(),
+        firmWazeUrl: String(await settingsService.getSetting('calendar', 'FIRM_WAZE_URL', '') || '').trim(),
+        firmMapsUrl: String(await settingsService.getSetting('calendar', 'FIRM_MAPS_URL', '') || '').trim(),
+    });
     return { title, body };
 }
 
-function composeClientReminderMessage(offsetMinutes, ev) {
-    const timeStr = new Date(ev.start_time).toLocaleTimeString('he-IL', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-    });
-    const when = formatOffsetHebrew(offsetMinutes);
-    const lawyer = ev.owner_name || 'עורך הדין';
+async function composeClientReminderMessage(offsetMinutes, ev) {
+    const ctx = await loadCalendarSmsContext(ev);
+    const template = await getClientReminderTemplate(ev);
+    const body = renderTemplate(template, ctx).trim();
     return {
         title: offsetMinutes >= 1440 ? 'תזכורת לפגישה' : 'תזכורת לפגישה קרובה',
-        body: `פגישתך עם עו״ד ${lawyer} ${when} בשעה ${timeStr}`,
+        body: body || `תזכורת לפגישה בתאריך ${ctx.date} בשעה ${ctx.time}`,
     };
+}
+
+async function composeInviteSmsMessage(ev) {
+    const ctx = await loadCalendarSmsContext(ev);
+    const template = await getInviteSmsTemplate(ev);
+    const body = renderTemplate(template, ctx).trim();
+    return body || `הזמנה לפגישה בתאריך ${ctx.date} בשעה ${ctx.time}`;
 }
 
 module.exports = {
@@ -205,6 +366,8 @@ module.exports = {
     DEFAULT_ALLOWED_CHANNELS,
     REMINDABLE_EVENT_TYPES,
     MAX_OFFSETS_PER_EVENT,
+    DEFAULT_CLIENT_REMINDER_SMS,
+    DEFAULT_INVITE_SMS,
     parseOffsetsList,
     uniqueSortedDesc,
     loadAllowedReminderOffsets,
@@ -217,8 +380,16 @@ module.exports = {
     parseStoredSentOffsets,
     parseStoredChannels,
     defaultReminderChannels,
+    defaultReminderTargets,
+    parseReminderTargets,
+    targetsToJson,
     hasAnyReminderChannel,
     formatOffsetHebrew,
+    buildNavLinks,
     composeLawyerReminderMessage,
     composeClientReminderMessage,
+    composeInviteSmsMessage,
+    loadCalendarSmsContext,
+    getClientReminderTemplate,
+    getInviteSmsTemplate,
 };

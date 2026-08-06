@@ -24,16 +24,26 @@ function formatMoney(amount) {
     return `${safe} ${PRICING_CONFIG.currency}`;
 }
 
+// Single source of truth for the resource storage label (matches DB storage_mb_quota).
+function formatStorage(storageMb) {
+    if (storageMb === null || storageMb === undefined) return "לפי הסכם";
+    const mb = Number(storageMb);
+    if (!Number.isFinite(mb) || mb <= 0) return "לפי הסכם";
+    if (mb >= 1024 && mb % 1024 === 0) return `${mb / 1024} GB`;
+    return `${mb} MB`;
+}
+
 const DETAILS_BY_SECTION_AND_OPTION = {
     platforms: {
         site: ["גישה מלאה דרך דפדפן"],
         app: ["אפליקציית מובייל ייעודית"],
         site_app: ["דפדפן + אפליקציה", "חווית לקוח מלאה"],
     },
+    // Storage line is appended dynamically from each resource's storageMb (see OptionGroup).
     resources: {
-        basic: ["עד 2 מנהלי מערכת", "נפח אחסון: 100 MB"],
-        pro: ["עד 5 מנהלי מערכת", "נפח אחסון: 500 MB"],
-        enterprise: ["אין הגבלת מנהלי מערכת", "נפח אחסון לפי הסכם"],
+        basic: ["עד 2 מנהלי מערכת"],
+        pro: ["עד 5 מנהלי מערכת"],
+        enterprise: ["אין הגבלת מנהלי מערכת"],
     },
     signing: {
         none: ["ללא אפשרות חתימה דיגיטלית"],
@@ -47,8 +57,12 @@ function OptionGroup({ label, value, options, onChange, sectionKey }) {
     const selected = useMemo(() => options.find((o) => o.id === value) || options[0], [options, value]);
     const details = useMemo(() => {
         const section = DETAILS_BY_SECTION_AND_OPTION[String(sectionKey || "")] || {};
-        const lines = section[String(selected?.id || "")] || [];
-        return Array.isArray(lines) ? lines : [];
+        const baseLines = section[String(selected?.id || "")] || [];
+        const lines = Array.isArray(baseLines) ? [...baseLines] : [];
+        if (String(sectionKey) === "resources" && selected) {
+            lines.push(`נפח אחסון: ${formatStorage(selected.storageMb)}`);
+        }
+        return lines;
     }, [sectionKey, selected]);
 
     return (

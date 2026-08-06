@@ -125,6 +125,33 @@ const calendarApi = {
     syncOutlookEvents: async () => {
         return await ApiUtils.post(`${base}/outlook/sync`);
     },
+
+    /** Hebcal holiday hints for calendar grid */
+    listHolidays: async ({ from, to } = {}) => {
+        const query = new URLSearchParams();
+        if (from) query.append("from", from);
+        if (to) query.append("to", to);
+        const qs = query.toString();
+        return await ApiUtils.get(`${base}/holidays${qs ? `?${qs}` : ""}`);
+    },
+
+    getDailyAgendaSettings: async () => {
+        return await ApiUtils.get(`${base}/daily-agenda-settings`);
+    },
+
+    updateDailyAgendaSettings: async (payload) => {
+        return await ApiUtils.put(`${base}/daily-agenda-settings`, payload);
+    },
+
+    /** Authenticated day agenda (YYYY-MM-DD) */
+    getDayAgenda: async (date) => {
+        return await ApiUtils.get(`${base}/agenda/${encodeURIComponent(date)}`);
+    },
+
+    /** Resend client meeting invite */
+    resendInvite: async (eventId) => {
+        return await ApiUtils.post(`${base}/${eventId}/resend-invite`);
+    },
 };
 
 export default calendarApi;

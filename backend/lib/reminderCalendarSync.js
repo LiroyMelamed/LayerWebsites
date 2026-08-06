@@ -152,8 +152,13 @@ async function createReminderForCalendarEvent(event, payload = {}, opts = {}) {
     const dbClient = opts.client || pool;
     if (!event) return null;
 
-    const toEmail = _normalizeEmail(payload.toEmail);
-    const clientName = _trimOrNull(payload.clientName);
+    // Prefer explicit payload, then fall back to fields already stored on the event
+    // (lead_* for unregistered recipients, client_* when a user was linked).
+    const toEmail = _normalizeEmail(payload.toEmail)
+        || _normalizeEmail(event.lead_email);
+    const clientName = _trimOrNull(payload.clientName)
+        || _trimOrNull(event.client_name)
+        || _trimOrNull(event.lead_name);
     if (!toEmail || !clientName) return null;
 
     const scheduledFor = event.start_time;

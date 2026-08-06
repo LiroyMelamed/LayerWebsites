@@ -1,5 +1,5 @@
 // PopUpProvider.js
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useRef } from 'react';
 import SimplePopUp from '../components/simpleComponents/SimplePopUp';
 
 const PopupContext = createContext();
@@ -8,8 +8,15 @@ export const PopupProvider = ({ children }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [popupContent, setPopupContent] = useState(null);
     const [preventClose, setPreventClose] = useState(false);
+    const clearContentTimerRef = useRef(null);
 
     const openPopup = (content, options) => {
+        // Cancel a pending clear from closePopup() so chained open after close
+        // (e.g. context menu → field settings) does not wipe the new content.
+        if (clearContentTimerRef.current) {
+            clearTimeout(clearContentTimerRef.current);
+            clearContentTimerRef.current = null;
+        }
         setPopupContent(content);
         setPreventClose(!!options?.preventClose);
         setIsOpen(true);
@@ -19,7 +26,13 @@ export const PopupProvider = ({ children }) => {
         setIsOpen(false);
         setPreventClose(false);
         // Delay clearing content so the exit animation can play
-        setTimeout(() => setPopupContent(null), 300);
+        if (clearContentTimerRef.current) {
+            clearTimeout(clearContentTimerRef.current);
+        }
+        clearContentTimerRef.current = setTimeout(() => {
+            setPopupContent(null);
+            clearContentTimerRef.current = null;
+        }, 300);
     };
 
     return (

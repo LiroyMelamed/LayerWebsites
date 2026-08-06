@@ -221,8 +221,8 @@ BEGIN
     IF NOT FOUND THEN RAISE EXCEPTION 'Missing table: public.birthday_greetings_sent'; END IF;
 
     -- Verify key platform_settings rows exist
-    PERFORM 1 FROM platform_settings WHERE category='messaging' AND setting_key='SMOOVE_SENDER_PHONE';
-    IF NOT FOUND THEN RAISE EXCEPTION 'Missing platform_settings row: messaging/SMOOVE_SENDER_PHONE'; END IF;
+    PERFORM 1 FROM platform_settings WHERE category='messaging' AND setting_key='INFORU_SENDER_PHONE';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing platform_settings row: messaging/INFORU_SENDER_PHONE'; END IF;
 
     PERFORM 1 FROM platform_settings WHERE category='messaging' AND setting_key='WHATSAPP_DEFAULT_PHONE';
     IF NOT FOUND THEN RAISE EXCEPTION 'Missing platform_settings row: messaging/WHATSAPP_DEFAULT_PHONE'; END IF;

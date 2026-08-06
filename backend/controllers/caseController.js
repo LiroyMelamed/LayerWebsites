@@ -3,6 +3,7 @@ const { formatPhoneNumber } = require("../utils/phoneUtils");
 const { sendMessage, getWebsiteDomain } = require("../utils/sendMessage");
 const sendAndStoreNotification = require("../utils/sendAndStoreNotification"); // Import the new consolidated utility
 const { notifyRecipient } = require("../services/notifications/notificationOrchestrator");
+const { buildCasePushData } = require("../utils/appDeepLinks");
 const { requireInt } = require("../utils/paramValidation");
 const { getPagination } = require("../utils/pagination");
 const { getSetting, getChannelConfig, getPlatformAdmins } = require("../services/settingsService");
@@ -97,7 +98,7 @@ async function notifyCaseManager({ caseId, caseName, title, message, smsBody, sm
             push: {
                 title: title || 'עדכון תיק',
                 body: finalMessage,
-                data: { caseId: String(caseId) },
+                data: buildCasePushData({ caseId }),
             },
             email: {
                 campaignKey: mgrNotifType,
@@ -594,7 +595,7 @@ const addCase = async (req, res) => {
                         push: {
                             title: notificationTitle,
                             body: notificationMessage,
-                            data: { caseId: String(caseId) },
+                            data: buildCasePushData({ caseId }),
                         },
                         email: {
                             campaignKey: 'CASE_CREATED',
@@ -890,7 +891,7 @@ const updateCase = async (req, res) => {
                         push: {
                             title: notificationTitle,
                             body: notificationMessage,
-                            data: { caseId: String(caseId) },
+                            data: buildCasePushData({ caseId }),
                         },
                         email: {
                             campaignKey: primaryType,
@@ -1111,7 +1112,7 @@ const updateStage = async (req, res) => {
                         push: {
                             title,
                             body: message,
-                            data: { caseId: String(caseId), stage: String(CurrentStage) },
+                            data: buildCasePushData({ caseId, extra: { stage: String(CurrentStage) } }),
                         },
                         email: {
                             campaignKey: channelType,
@@ -1425,7 +1426,7 @@ const linkWhatsappGroup = async (req, res) => {
                     push: {
                         title: 'קבוצת וואטסאפ מקושרת',
                         body: msg,
-                        data: { caseId: String(caseId), type: 'whatsapp_group_linked' },
+                        data: buildCasePushData({ caseId, type: 'whatsapp_group_linked' }),
                     },
                     email: {
                         campaignKey: 'CASE_TAGGED',

@@ -17,8 +17,11 @@ export const customersApi = {
         return await ApiUtils.get(GET_CURRENT_CUSTOMER);
     },
 
-    getCustomersByName: async (userName) => {
-        return await ApiUtils.get(`${GET_CUSTOMERS_BY_NAME}?userName=${encodeURIComponent(userName)}`);
+    getCustomersByName: async (userName, options = {}) => {
+        const params = new URLSearchParams();
+        params.set('userName', userName == null ? '' : String(userName));
+        if (options?.includeStaff) params.set('includeStaff', '1');
+        return await ApiUtils.get(`${GET_CUSTOMERS_BY_NAME}?${params.toString()}`);
     },
 
     addCustomer: async (customerData) => {

@@ -2,13 +2,20 @@ import React, { useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
 import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
+import SimpleInput from "../../../components/simpleComponents/SimpleInput";
+import SimpleButton from "../../../components/simpleComponents/SimpleButton";
 import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
+import SegmentedSwitch from "../../../components/styledComponents/SegmentedSwitch";
 import { Text14, Text12, Text24, TextBold14 } from "../../../components/specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../constant/colors";
 import calendarApi from "../../../api/calendarApi";
 import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
 import "./PersonalSyncModal.scss";
+
+const NAVY = "#2A4365";
+const WHITE = "#FFFFFF";
+const CHIP_IDLE = "#2A4365";
 
 function toWebcalUrl(webcalOrHttps) {
     const raw = String(webcalOrHttps || "").trim();
@@ -25,7 +32,6 @@ function buildGoogleCalendarSubscribeUrl(webcalUrl) {
     return `https://www.google.com/calendar/render?cid=${encodeURIComponent(webcalUrl)}`;
 }
 
-/** Open webcal/https links without navigating the SPA away (required for iOS Calendar). */
 function openExternalSubscribeUrl(url) {
     if (!url) return;
     const anchor = document.createElement("a");
@@ -37,11 +43,29 @@ function openExternalSubscribeUrl(url) {
     document.body.removeChild(anchor);
 }
 
+function parseChannelSet(raw) {
+    return new Set(
+        String(raw || "email")
+            .toLowerCase()
+            .split(/[,;\s]+/)
+            .map((s) => s.trim())
+            .filter(Boolean)
+    );
+}
+
+function channelsToString(set) {
+    const ordered = [];
+    if (set.has("push")) ordered.push("push");
+    if (set.has("email")) ordered.push("email");
+    if (set.has("sms")) ordered.push("sms");
+    return ordered.join(",") || "email";
+}
+
 /**
- * Per-lawyer calendar sync — Google OAuth, manual sync, personal iCal feed.
+ * Per-lawyer calendar sync + personal daily agenda digest.
  * Opened from CalendarScreen only (not Platform Settings).
  */
-export default function PersonalSyncModal({ closePopUpFunction, onEventsChanged }) {
+export default function PersonalSyncModal({ onEventsChanged }) {
     const { t } = useTranslation();
 
     const [icalToken, setIcalToken] = useState(null);
@@ -51,6 +75,14 @@ export default function PersonalSyncModal({ closePopUpFunction, onEventsChanged 
     const [icalLoading, setIcalLoading] = useState(false);
     const [icalRotating, setIcalRotating] = useState(false);
     const [icalError, setIcalError] = useState("");
+
+    const [agendaEnabled, setAgendaEnabled] = useState(false);
+    const [agendaChannels, setAgendaChannels] = useState(() => new Set(["email"]));
+    const [agendaSendTime, setAgendaSendTime] = useState("07:30");
+    const [agendaLoading, setAgendaLoading] = useState(false);
+    const [agendaSaving, setAgendaSaving] = useState(false);
+    const [agendaMsg, setAgendaMsg] = useState("");
+    const [agendaError, setAgendaError] = useState(false);
 
     const applyIcalPayload = useCallback((data) => {
         if (!data) return;
@@ -73,9 +105,60 @@ export default function PersonalSyncModal({ closePopUpFunction, onEventsChanged 
         }
     }, [applyIcalPayload, t]);
 
+    const loadAgenda = useCallback(async () => {
+        setAgendaLoading(true);
+        try {
+            const res = await calendarApi.getDailyAgendaSettings();
+            const s = res?.data?.settings || res?.settings || {};
+            setAgendaEnabled(!!s.enabled);
+            setAgendaChannels(parseChannelSet(s.channels || "email"));
+            setAgendaSendTime(s.sendTime || "07:30");
+        } catch {
+            /* keep defaults */
+        } finally {
+            setAgendaLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
         loadIcal();
-    }, [loadIcal]);
+        loadAgenda();
+    }, [loadIcal, loadAgenda]);
+
+    const toggleAgendaChannel = (key) => {
+        setAgendaChannels((prev) => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
+        });
+    };
+
+    const handleSaveAgenda = async () => {
+        setAgendaSaving(true);
+        setAgendaMsg("");
+        setAgendaError(false);
+        try {
+            const res = await calendarApi.updateDailyAgendaSettings({
+                enabled: agendaEnabled,
+                channels: channelsToString(agendaChannels),
+                recipients: "", // always self — lawyer email/phone from profile
+                sendTime: agendaSendTime,
+            });
+            const s = res?.data?.settings || res?.settings;
+            if (s) {
+                setAgendaEnabled(!!s.enabled);
+                setAgendaChannels(parseChannelSet(s.channels || "email"));
+                setAgendaSendTime(s.sendTime || "07:30");
+            }
+            setAgendaMsg(t("calendar.dailyAgendaSaved"));
+        } catch (err) {
+            setAgendaError(true);
+            setAgendaMsg(err?.response?.data?.message || t("calendar.dailyAgendaSaveError"));
+        } finally {
+            setAgendaSaving(false);
+        }
+    };
 
     const ensureIcalReady = useCallback(async () => {
         const existing = toWebcalUrl(icalUrl || icalHttpsUrl);
@@ -266,6 +349,66 @@ export default function PersonalSyncModal({ closePopUpFunction, onEventsChanged 
                 <Text12 color="#718096">{t("calendar.personalSyncHint")}</Text12>
 
                 <SimpleContainer className="lw-personalSyncModal__section">
+                    <SegmentedSwitch
+                        className="lw-personalSyncModal__agendaSwitch"
+                        title={t("calendar.dailyAgendaEnabled")}
+                        ariaLabel={t("calendar.dailyAgendaEnabled")}
+                        value={agendaEnabled ? "on" : "off"}
+                        onChange={(next) => setAgendaEnabled(next === "on")}
+                        options={[
+                            { value: "on", label: t("platformSettings.active") },
+                            { value: "off", label: t("platformSettings.inactive") },
+                        ]}
+                    />
+
+                    <TextBold14 color={NAVY}>{t("calendar.dailyAgendaChannel")}</TextBold14>
+                    <SimpleContainer className="lw-personalSyncModal__chips">
+                        <SimpleButton
+                            className={`lw-personalSyncModal__chip ${agendaChannels.has("push") ? "is-active" : ""}`}
+                            onPress={() => toggleAgendaChannel("push")}
+                            aria-pressed={agendaChannels.has("push")}
+                        >
+                            <Text14 color={agendaChannels.has("push") ? WHITE : CHIP_IDLE}>
+                                {t("calendar.reminderChannelPush")}
+                            </Text14>
+                        </SimpleButton>
+                        <SimpleButton
+                            className={`lw-personalSyncModal__chip ${agendaChannels.has("email") ? "is-active" : ""}`}
+                            onPress={() => toggleAgendaChannel("email")}
+                            aria-pressed={agendaChannels.has("email")}
+                        >
+                            <Text14 color={agendaChannels.has("email") ? WHITE : CHIP_IDLE}>
+                                {t("calendar.reminderChannelEmail")}
+                            </Text14>
+                        </SimpleButton>
+                        <SimpleButton
+                            className={`lw-personalSyncModal__chip ${agendaChannels.has("sms") ? "is-active" : ""}`}
+                            onPress={() => toggleAgendaChannel("sms")}
+                            aria-pressed={agendaChannels.has("sms")}
+                        >
+                            <Text14 color={agendaChannels.has("sms") ? WHITE : CHIP_IDLE}>
+                                {t("calendar.reminderChannelSms")}
+                            </Text14>
+                        </SimpleButton>
+                    </SimpleContainer>
+
+                    <SimpleInput
+                        title={t("calendar.dailyAgendaSendTime")}
+                        value={agendaSendTime}
+                        onChange={(e) => setAgendaSendTime(e.target.value)}
+                        timeToWaitInMilli={0}
+                        placeholder="07:30"
+                    />
+
+                    <PrimaryButton onPress={handleSaveAgenda} isPerforming={agendaSaving || agendaLoading}>
+                        {t("calendar.dailyAgendaSave")}
+                    </PrimaryButton>
+                    {agendaMsg && (
+                        <Text14 color={agendaError ? "#E53E3E" : colors.positive}>{agendaMsg}</Text14>
+                    )}
+                </SimpleContainer>
+
+                <SimpleContainer className="lw-personalSyncModal__section lw-personalSyncModal__section--border">
                     <TextBold14 color={colors.primary}>{t("calendar.icalSubscribe")}</TextBold14>
                     <Text12 color={colors.winter}>{t("calendar.icalSubscribeHint")}</Text12>
 
@@ -367,10 +510,6 @@ export default function PersonalSyncModal({ closePopUpFunction, onEventsChanged 
                             )}
                         </>
                     )}
-                </SimpleContainer>
-
-                <SimpleContainer className="lw-personalSyncModal__buttonsRow">
-                    <SecondaryButton onPress={closePopUpFunction}>{t("common.close")}</SecondaryButton>
                 </SimpleContainer>
             </SimpleScrollView>
         </SimpleContainer>

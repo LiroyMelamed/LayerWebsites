@@ -11,14 +11,18 @@ import SimpleContainer from './SimpleContainer';
 import { useNavigate } from 'react-router-dom';
 import { usePopup } from '../../providers/PopUpProvider';
 import { buttonSizes } from '../../styles/buttons/buttonSizes';
+import { useCalendarModuleEnabled } from '../../services/firmSettings';
+import { useTranslation } from 'react-i18next';
 
 import './SimpleNav.scss';
 
 const SimpleNav = ({ activeButton }) => {
   const { isSmallScreen } = useScreenSize();
-  const { openPopup } = usePopup();
-  const navigate = useNavigate()
-  const { NavBarLinks } = getNavBarData(navigate, openPopup);
+  const { openPopup, closePopup } = usePopup();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  useCalendarModuleEnabled(); // re-render when platform setting loads/changes
+  const { NavBarLinks } = getNavBarData(navigate, openPopup, closePopup, false, t);
 
   return (
     <SimpleContainer className="lw-simpleNav">

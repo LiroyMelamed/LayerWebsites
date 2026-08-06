@@ -9,6 +9,7 @@ export const REMINDER_CHANNEL_OPTIONS = [
 const DEFAULT_ALLOWED_CHANNELS = ["push", "sms", "email"];
 
 export const REMINDER_PRESETS = [
+    { minutes: 0, labelKey: "calendar.reminderImmediate" },
     { minutes: 15, labelKey: "calendar.reminder15m" },
     { minutes: 30, labelKey: "calendar.reminder30m" },
     { minutes: 60, labelKey: "calendar.reminder1h" },
@@ -18,12 +19,37 @@ export const REMINDER_PRESETS = [
     { minutes: 10080, labelKey: "calendar.reminder1w" },
 ];
 
-const DEFAULT_ALLOWED = [15, 30, 60, 120, 1440];
+const DEFAULT_ALLOWED = [0, 15, 30, 60, 120, 1440, 2880, 10080];
+
+/** Yellow-marked create defaults: 30m, 1h, 2h, 1d, 2d (not 15m / 1w). */
+export const DEFAULT_CREATE_REMINDER_OFFSETS = [30, 60, 120, 1440, 2880];
+
+/** Default offsets selected on new appointment/hearing create. */
+export function defaultReminderOffsets(allowedMinutes = DEFAULT_ALLOWED) {
+    return normalizeSelectedOffsets(DEFAULT_CREATE_REMINDER_OFFSETS, allowedMinutes);
+}
+
+/** Default channels on new create — SMS on. */
+export function defaultReminderChannels(allowedKeys = DEFAULT_ALLOWED_CHANNELS) {
+    return normalizeSelectedChannels({ push: false, sms: true, email: false }, allowedKeys);
+}
+
+export function defaultReminderTargets() {
+    return { client: true, managers: true };
+}
+
+export function parseReminderTargets(raw) {
+    if (!raw || typeof raw !== 'object') return defaultReminderTargets();
+    return {
+        client: raw.client !== false && raw.client !== 'false' && raw.client !== 0,
+        managers: raw.managers !== false && raw.managers !== 'false' && raw.managers !== 0,
+    };
+}
 
 export function parseOffsetsList(raw) {
     if (raw == null || raw === "") return [];
     if (Array.isArray(raw)) {
-        return raw.map((v) => parseInt(v, 10)).filter((n) => Number.isInteger(n) && n > 0);
+        return raw.map((v) => parseInt(v, 10)).filter((n) => Number.isInteger(n) && n >= 0);
     }
     if (typeof raw === "string") {
         const trimmed = raw.trim();
@@ -38,7 +64,7 @@ export function parseOffsetsList(raw) {
         return trimmed
             .split(",")
             .map((s) => parseInt(s.trim(), 10))
-            .filter((n) => Number.isInteger(n) && n > 0);
+            .filter((n) => Number.isInteger(n) && n >= 0);
     }
     return [];
 }
@@ -114,19 +140,13 @@ export function channelsForAllowedKeys(allowedKeys) {
     return REMINDER_CHANNEL_OPTIONS.filter((c) => allowed.has(c.key));
 }
 
-/** Push reminders apply only to תזכורת (reminder) events — SMS/email still for meetings. */
-export function channelsForEventType(eventType, allowedKeys) {
-    const options = channelsForAllowedKeys(allowedKeys);
-    if (eventType === "reminder") return options;
-    return options.filter((c) => c.key !== "push");
+/** Channel chips follow platform CALENDAR_REMINDER_CHANNELS for every event type. */
+export function channelsForEventType(_eventType, allowedKeys) {
+    return channelsForAllowedKeys(allowedKeys);
 }
 
-export function normalizeChannelsForEventType(eventType, selected, allowedKeys) {
-    const normalized = normalizeSelectedChannels(selected, allowedKeys);
-    if (eventType !== "reminder") {
-        normalized.push = false;
-    }
-    return normalized;
+export function normalizeChannelsForEventType(_eventType, selected, allowedKeys) {
+    return normalizeSelectedChannels(selected, allowedKeys);
 }
 
 export function normalizeSelectedChannels(selected, allowedKeys) {

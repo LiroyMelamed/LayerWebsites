@@ -92,7 +92,7 @@ const getNotifications = async (req, res) => {
     try {
         const result = await pool.query(
             `
-            SELECT NotificationId, Title, Message, IsRead, CreatedAt
+            SELECT NotificationId, Title, Message, IsRead, CreatedAt, Data
             FROM UserNotifications
             WHERE UserId = $1
             ORDER BY CreatedAt DESC
@@ -102,7 +102,15 @@ const getNotifications = async (req, res) => {
             [userId, limit, offset]
         );
 
-        res.json(result.rows);
+        const rows = (result.rows || []).map((row) => {
+            const data = row.Data ?? row.data ?? null;
+            return {
+                ...row,
+                data: data && typeof data === "object" ? data : (typeof data === "string" ? (() => { try { return JSON.parse(data); } catch { return null; } })() : data),
+            };
+        });
+
+        res.json(rows);
     } catch (error) {
         console.error("Error fetching notifications:", error);
         res.status(500).json({ message: "שגיאה בקבלת ההתראות" });

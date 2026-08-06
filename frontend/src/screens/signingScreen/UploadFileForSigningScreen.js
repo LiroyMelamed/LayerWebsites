@@ -37,9 +37,10 @@ import ClientPopup from "../mainScreen/components/ClientPopUp";
 import LawyerStampPopup from "../../components/specializedComponents/signFiles/LawyerStampPopup";
 
 import "./UploadFileForSigningScreen.scss";
+import "../../components/specializedComponents/signFiles/fieldToolbar/fieldContextMenu.scss";
 import { MainScreenName } from "../mainScreen/MainScreen";
 import { useTranslation } from "react-i18next";
-import { SIGNING_OTP_ENABLED } from "../../featureFlags";
+import ApiUtils from "../../api/apiUtils";
 
 export const uploadFileForSigningScreenName = "/UploadFileForSigningScreen";
 
@@ -179,7 +180,32 @@ export default function UploadFileForSigningScreen() {
     const { isSmallScreen } = useScreenSize();
     const navigate = useNavigate();
     const { openPopup, closePopup } = usePopup();
-    const otpFeatureEnabled = SIGNING_OTP_ENABLED;
+    const [otpFeatureEnabled, setOtpFeatureEnabled] = useState(false);
+    const [otpDefaultRequire, setOtpDefaultRequire] = useState(true);
+
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await ApiUtils.get("platform-settings/public");
+                const data = res?.data || {};
+                const rawEnabled = data.SIGNING_OTP_ENABLED;
+                const rawDefault = data.SIGNING_REQUIRE_OTP_DEFAULT;
+                const enabled = rawEnabled === true || rawEnabled === "true" || rawEnabled === "1" || rawEnabled === 1;
+                const defaultRequire = !(
+                    rawDefault === false || rawDefault === "false" || rawDefault === "0" || rawDefault === 0
+                );
+                if (cancelled) return;
+                setOtpFeatureEnabled(enabled);
+                setOtpDefaultRequire(defaultRequire);
+                setOtpPolicy(enabled && defaultRequire ? "require" : "waive");
+                setOtpWaiverAck(!(enabled && defaultRequire));
+            } catch {
+                // Keep OTP UI off until settings load successfully.
+            }
+        })();
+        return () => { cancelled = true; };
+    }, []);
 
     const RETENTION_NOTICE_ACK_KEY = "lw_retention_notice_ack_v1";
 
@@ -312,7 +338,7 @@ export default function UploadFileForSigningScreen() {
             <SimpleContainer className="lw-fieldContextMenu">
                 <SecondaryButton
                     className="lw-fieldContextMenu__action"
-                    onPress={() => { closePopup(); openFieldEditor(index); }}
+                    onPress={() => openFieldEditor(index)}
                 >
                     {t('signing.context.edit')}
                 </SecondaryButton>
@@ -338,7 +364,7 @@ export default function UploadFileForSigningScreen() {
                 </SecondaryButton>
                 <SecondaryButton
                     className="lw-fieldContextMenu__action"
-                    onPress={() => { closePopup(); openFieldEditor(index); }}
+                    onPress={() => openFieldEditor(index)}
                 >
                     {t('signing.context.pageRange')}
                 </SecondaryButton>
@@ -354,7 +380,11 @@ export default function UploadFileForSigningScreen() {
     };
 
     const { result: casesByName, isPerforming: isPerformingCasesById, performRequest: SearchCaseByName } = useHttpRequest(casesApi.getCaseByName, null, () => { });
-    const { result: customersByName, isPerforming: isPerformingCustomersByName, performRequest: SearchCustomersByName } = useHttpRequest(customersApi.getCustomersByName, null, () => { });
+    const { result: customersByName, isPerforming: isPerformingCustomersByName, performRequest: SearchCustomersByName } = useHttpRequest(
+        (userName) => customersApi.getCustomersByName(userName, { includeStaff: true }),
+        null,
+        () => { }
+    );
 
     const [caseId, setCaseId] = useState("");
     const [selectedCase, setSelectedCase] = useState(null);
@@ -370,10 +400,23 @@ export default function UploadFileForSigningScreen() {
     const [manualSignerName, setManualSignerName] = useState("");
     const [manualSignerEmail, setManualSignerEmail] = useState("");
     const [manualSignerPhone, setManualSignerPhone] = useState("");
-    const nextManualIdRef = useRef(-1);
     const [selectedFile, setSelectedFile] = useState(null);
     const [documentName, setDocumentName] = useState("");
     const [completionEmail, setCompletionEmail] = useState("");
+
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await customersApi.getCurrentCustomer();
+                const email = String(res?.data?.Email || res?.data?.email || "").trim();
+                if (!cancelled && email) setCompletionEmail((prev) => prev || email);
+            } catch {
+                // best-effort default only
+            }
+        })();
+        return () => { cancelled = true; };
+    }, []);
 
     const [signatureSpots, setSignatureSpots] = useState([]);
     const [selectedFieldType, setSelectedFieldType] = useState('signature');
@@ -730,6 +773,17 @@ export default function UploadFileForSigningScreen() {
     const addSigner = (customer) => {
         if (!customer?.UserId) return;
 
+        if (contactsCollideWithSelected({
+            email: customer.Email,
+            phone: customer.PhoneNumber || customer.Phone,
+        })) {
+            setMessage({
+                type: 'error',
+                text: t('signing.upload.validation.duplicateSignerContact'),
+            });
+            return;
+        }
+
         setSelectedSigners((prev) => {
             const exists = prev.some((s) => Number(s?.UserId) === Number(customer.UserId));
             if (exists) return prev;
@@ -740,42 +794,171 @@ export default function UploadFileForSigningScreen() {
                     Name: customer.Name || t('signing.signerFallback', { index: prev.length + 1 }),
                     Email: customer.Email || null,
                     Phone: customer.PhoneNumber || customer.Phone || null,
-                    deliveryMethod: 'both', // 'email' | 'phone' | 'both'
+                    deliveryMethod: 'phone', // 'email' | 'phone' | 'both' — default SMS only
                 },
             ];
         });
     };
 
-    const addManualSigner = () => {
+    const normalizePhoneDigits = (phone) => String(phone || '').replace(/\D/g, '');
+    const normalizeEmail = (email) => String(email || '').trim().toLowerCase();
+
+    const contactsCollideWithSelected = ({ email, phone, excludeUserId = null }) => {
+        const emailNorm = normalizeEmail(email);
+        const phoneDigits = normalizePhoneDigits(phone);
+        return (selectedSigners || []).some((s) => {
+            if (excludeUserId != null && Number(s?.UserId) === Number(excludeUserId)) return false;
+            const sEmail = normalizeEmail(s?.Email);
+            const sPhone = normalizePhoneDigits(s?.Phone || s?.PhoneNumber);
+            if (emailNorm && sEmail && emailNorm === sEmail) return true;
+            if (phoneDigits && sPhone && phoneDigits === sPhone) return true;
+            // Treat +972... and 0... as the same Israeli mobile when both are present.
+            if (phoneDigits && sPhone) {
+                const a = phoneDigits.startsWith('972') ? `0${phoneDigits.slice(3)}` : phoneDigits;
+                const b = sPhone.startsWith('972') ? `0${sPhone.slice(3)}` : sPhone;
+                if (a && b && a === b) return true;
+            }
+            return false;
+        });
+    };
+
+    const addManualSigner = async () => {
         const name = manualSignerName.trim();
         const email = manualSignerEmail.trim();
         const phone = manualSignerPhone.trim();
         if (!name) return;
-        if (!email && !phone) return;
+        if (!phone) {
+            setMessage({
+                type: 'error',
+                text: t('signing.upload.validation.manualSignerPhoneRequired'),
+            });
+            return;
+        }
 
-        const tempId = nextManualIdRef.current;
-        nextManualIdRef.current -= 1;
+        if (contactsCollideWithSelected({ email, phone })) {
+            setMessage({
+                type: 'error',
+                text: t('signing.upload.validation.duplicateSignerContact'),
+            });
+            return;
+        }
 
-        let deliveryMethod = 'both';
-        if (email && !phone) deliveryMethod = 'email';
-        else if (phone && !email) deliveryMethod = 'phone';
+        const attachExistingSigner = (user) => {
+            const userId = user?.UserId;
+            if (!userId) return false;
+            setSelectedSigners((prev) => {
+                const exists = prev.some((s) => Number(s?.UserId) === Number(userId));
+                if (exists) return prev;
+                const resolvedEmail = user.Email || email || null;
+                const resolvedPhone = user.PhoneNumber || user.Phone || phone || null;
+                let deliveryMethod = 'phone';
+                if (resolvedEmail && !resolvedPhone) deliveryMethod = 'email';
+                else if (resolvedPhone && !resolvedEmail) deliveryMethod = 'phone';
+                return [
+                    ...prev,
+                    {
+                        UserId: userId,
+                        Name: user.Name || name,
+                        Email: resolvedEmail,
+                        Phone: resolvedPhone,
+                        deliveryMethod,
+                    },
+                ];
+            });
+            setManualSignerName("");
+            setManualSignerEmail("");
+            setManualSignerPhone("");
+            setShowManualSigner(false);
+            SearchCustomersByName(user.Name || name);
+            setMessage({
+                type: 'success',
+                text: t('signing.upload.validation.manualSignerAttachedExisting', {
+                    defaultValue: 'הטלפון כבר קיים במערכת — שייכנו את הלקוח הקיים כחותם.',
+                }),
+            });
+            return true;
+        };
 
-        setSelectedSigners((prev) => [
-            ...prev,
-            {
-                UserId: tempId,
-                Name: name,
-                Email: email || null,
-                Phone: phone || null,
-                deliveryMethod,
-                isManual: true,
-            },
-        ]);
+        try {
+            setMessage(null);
+            const res = await customersApi.addCustomer({
+                name,
+                phoneNumber: phone,
+                email: email || '',
+                companyName: '',
+                dateOfBirth: null,
+            });
 
-        setManualSignerName("");
-        setManualSignerEmail("");
-        setManualSignerPhone("");
-        setShowManualSigner(false);
+            if (res?.status === 409 && (res?.data?.code === 'PHONE_ALREADY_EXISTS' || res?.data?.UserId)) {
+                if (attachExistingSigner(res.data)) return;
+                setMessage({
+                    type: 'error',
+                    text: res?.data?.message || t('signing.upload.validation.manualSignerPhoneExists', {
+                        defaultValue: 'מספר הטלפון כבר קיים במערכת. חפשו את הלקוח והוסיפו אותו כחותם.',
+                    }),
+                });
+                return;
+            }
+
+            if (res?.status !== 200 && res?.status !== 201) {
+                setMessage({
+                    type: 'error',
+                    text: res?.data?.message || t('signing.upload.validation.manualSignerCreateFailed'),
+                });
+                return;
+            }
+
+            const created = res?.data || {};
+            const userId = created.UserId;
+            if (!userId) {
+                setMessage({
+                    type: 'error',
+                    text: t('signing.upload.validation.manualSignerCreateFailed'),
+                });
+                return;
+            }
+
+            setSelectedSigners((prev) => {
+                const exists = prev.some((s) => Number(s?.UserId) === Number(userId));
+                if (exists) return prev;
+                let deliveryMethod = 'phone';
+                if (email && !phone) deliveryMethod = 'email';
+                else if (phone && !email) deliveryMethod = 'phone';
+                // When both contacts exist, still default to SMS only.
+                return [
+                    ...prev,
+                    {
+                        UserId: userId,
+                        Name: created.Name || name,
+                        Email: created.Email || email || null,
+                        Phone: created.PhoneNumber || phone || null,
+                        deliveryMethod,
+                    },
+                ];
+            });
+
+            setManualSignerName("");
+            setManualSignerEmail("");
+            setManualSignerPhone("");
+            setShowManualSigner(false);
+            SearchCustomersByName(name);
+        } catch (err) {
+            const data = err?.data || err?.response?.data;
+            if (err?.status === 409 || data?.code === 'PHONE_ALREADY_EXISTS') {
+                if (attachExistingSigner(data || {})) return;
+                setMessage({
+                    type: 'error',
+                    text: data?.message || t('signing.upload.validation.manualSignerPhoneExists', {
+                        defaultValue: 'מספר הטלפון כבר קיים במערכת. חפשו את הלקוח והוסיפו אותו כחותם.',
+                    }),
+                });
+                return;
+            }
+            setMessage({
+                type: 'error',
+                text: data?.message || err?.message || t('signing.upload.validation.manualSignerCreateFailed'),
+            });
+        }
     };
 
     const removeSigner = (userId) => {
@@ -949,6 +1132,9 @@ export default function UploadFileForSigningScreen() {
                     type: "success",
                     text: `ההזמנה נשלחה בהצלחה ל-${sentCount || targetCount} נמענים.`,
                 });
+                // Navigate to pending documents after successful send.
+                navigate(AdminStackName + SigningManagerScreenName);
+                return;
             }
 
             setCaseId("");
@@ -961,8 +1147,8 @@ export default function UploadFileForSigningScreen() {
             setCompletionEmail("");
             setSignatureSpots([]);
             setUploadedFileKey(null);
-            setOtpPolicy(otpFeatureEnabled ? "require" : "waive");
-            setOtpWaiverAck(!otpFeatureEnabled);
+            setOtpPolicy(otpFeatureEnabled && otpDefaultRequire ? "require" : "waive");
+            setOtpWaiverAck(!(otpFeatureEnabled && otpDefaultRequire));
             setSigningOrder('parallel');
             setCaseSearchQuery("");
             setSelectedSpotIndex(null);
@@ -1021,7 +1207,18 @@ export default function UploadFileForSigningScreen() {
             <ClientPopup
                 initialName={query}
                 closePopUpFunction={closePopup}
-                rePerformRequest={() => SearchCustomersByName(query)}
+                rePerformRequest={(savedClient) => {
+                    if (savedClient?.UserId) {
+                        addSigner({
+                            UserId: savedClient.UserId,
+                            Name: savedClient.Name,
+                            Email: savedClient.Email,
+                            PhoneNumber: savedClient.PhoneNumber || savedClient.Phone,
+                            Phone: savedClient.PhoneNumber || savedClient.Phone,
+                        });
+                    }
+                    SearchCustomersByName(query || savedClient?.Name || '');
+                }}
             />
         );
     };
@@ -1065,7 +1262,11 @@ export default function UploadFileForSigningScreen() {
                                 titleFontSize={20}
                                 isPerforming={isPerformingCustomersByName}
                                 queryResult={customersByName}
-                                getButtonTextFunction={(item) => `${item.Name}`}
+                                getButtonTextFunction={(item) => {
+                                    const name = String(item?.Name || '').trim();
+                                    const phone = String(item?.PhoneNumber || item?.Phone || '').trim();
+                                    return phone ? `${name} | ${phone}` : name;
+                                }}
                                 className="lw-uploadSigningScreen__search"
                                 buttonPressFunction={handleAddSignerFromSearch}
                                 emptyActionText={t('customers.addCustomer')}
@@ -1084,30 +1285,32 @@ export default function UploadFileForSigningScreen() {
                                 <SimpleContainer className="lw-uploadSigningScreen__manualSignerForm">
                                     <label className="lw-uploadSigningScreen__label">{t('signing.upload.addManualSigner')}</label>
                                     <SimpleContainer className="lw-uploadSigningScreen__manualSignerFields">
-                                        <SearchInput
-                                            placeholder={t('signing.upload.manualSignerName')}
+                                        <SimpleInput
+                                            title={t('signing.upload.manualSignerName')}
                                             value={manualSignerName}
-                                            onSearch={setManualSignerName}
+                                            onChange={(e) => setManualSignerName(e.target.value)}
                                             className="lw-uploadSigningScreen__manualInput"
                                             timeToWaitInMilli={0}
                                         />
-                                        <SearchInput
-                                            placeholder={t('signing.upload.manualSignerEmail')}
+                                        <SimpleInput
+                                            title={t('signing.upload.manualSignerEmail')}
                                             value={manualSignerEmail}
-                                            onSearch={setManualSignerEmail}
+                                            onChange={(e) => setManualSignerEmail(e.target.value)}
                                             className="lw-uploadSigningScreen__manualInput"
                                             timeToWaitInMilli={0}
+                                            type="email"
                                         />
-                                        <SearchInput
-                                            placeholder={t('signing.upload.manualSignerPhone')}
+                                        <SimpleInput
+                                            title={t('signing.upload.manualSignerPhone')}
                                             value={manualSignerPhone}
-                                            onSearch={setManualSignerPhone}
+                                            onChange={(e) => setManualSignerPhone(e.target.value)}
                                             className="lw-uploadSigningScreen__manualInput"
                                             timeToWaitInMilli={0}
+                                            type="tel"
                                         />
                                     </SimpleContainer>
                                     <SimpleContainer className="lw-uploadSigningScreen__manualSignerActions">
-                                        <PrimaryButton onPress={addManualSigner} disabled={!manualSignerName.trim() || (!manualSignerEmail.trim() && !manualSignerPhone.trim())}>
+                                        <PrimaryButton onPress={addManualSigner} disabled={!manualSignerName.trim() || !manualSignerPhone.trim()}>
                                             {t('signing.upload.addSignerBtn')}
                                         </PrimaryButton>
                                         <SecondaryButton onPress={() => { setShowManualSigner(false); setManualSignerName(""); setManualSignerEmail(""); setManualSignerPhone(""); }}>
@@ -1177,14 +1380,31 @@ export default function UploadFileForSigningScreen() {
                                                     const editedName = window.prompt(t('signing.upload.manualSignerName'), s.Name || '') || s.Name || '';
                                                     const editedEmail = window.prompt(t('signing.upload.manualSignerEmail'), s.Email || '') || '';
                                                     const editedPhone = window.prompt(t('signing.upload.manualSignerPhone'), s.Phone || '') || '';
+                                                    const nextEmail = editedEmail.trim() || null;
+                                                    const nextPhone = editedPhone.trim() || null;
+                                                    if (contactsCollideWithSelected({
+                                                        email: nextEmail,
+                                                        phone: nextPhone,
+                                                        excludeUserId: s.UserId,
+                                                    })) {
+                                                        setMessage({
+                                                            type: 'error',
+                                                            text: t('signing.upload.validation.duplicateSignerContact'),
+                                                        });
+                                                        return;
+                                                    }
+                                                    const contactChanged =
+                                                        normalizeEmail(nextEmail) !== normalizeEmail(s.Email) ||
+                                                        normalizePhoneDigits(nextPhone) !== normalizePhoneDigits(s.Phone);
                                                     setSelectedSigners((prev) =>
                                                         prev.map((sig) =>
                                                             Number(sig.UserId) === Number(s.UserId)
                                                                 ? {
                                                                     ...sig,
                                                                     Name: editedName.trim() || sig.Name,
-                                                                    Email: editedEmail.trim() || null,
-                                                                    Phone: editedPhone.trim() || null,
+                                                                    Email: nextEmail,
+                                                                    Phone: nextPhone,
+                                                                    ...(contactChanged ? { isManual: true } : {}),
                                                                 }
                                                                 : sig
                                                         )
@@ -1342,7 +1562,7 @@ export default function UploadFileForSigningScreen() {
                             </>
                         )}
 
-                        <SimpleContainer className="lw-uploadSigningScreen__actionsRow">
+                        <SimpleContainer className="lw-uploadSigningScreen__actionsRow lw-uploadSigningScreen__actionsRow--inline">
                             <SecondaryButton
                                 onPress={() => navigate(AdminStackName + SigningManagerScreenName)}
                             >
@@ -1468,6 +1688,19 @@ export default function UploadFileForSigningScreen() {
                     )}
                 </SimpleContainer>
             </SimpleScrollView>
+
+            {selectedFile && (
+                <SimpleContainer className="lw-uploadSigningScreen__stickySendBar">
+                    <SecondaryButton
+                        onPress={() => navigate(AdminStackName + SigningManagerScreenName)}
+                    >
+                        {t('common.back')}
+                    </SecondaryButton>
+                    <PrimaryButton onPress={handleSubmit} disabled={loading} isPerforming={loading}>
+                        {loading ? t('signing.upload.sending') : t('signing.upload.sendToClient')}
+                    </PrimaryButton>
+                </SimpleContainer>
+            )}
 
             {message && (
                 <div

@@ -1,5 +1,6 @@
 {
   "common": {
+    "loading": "Loading…",
     "language": "Language",
     "hebrew": "Hebrew",
     "arabic": "Arabic",
@@ -90,7 +91,22 @@
       "details": "Document details",
       "uploadNew": "Send new document for signing",
       "openPdf": "Open PDF",
+      "viewSignatureSpots": "View signature locations",
       "deleteFile": "Delete document"
+    },
+    "signerStatus": {
+      "title": "Signer status",
+      "name": "Name",
+      "contact": "Email/Phone",
+      "sent": "Sent",
+      "viewed": "Viewed",
+      "signed": "Signed"
+    },
+    "spotsPreview": {
+      "title": "Signature locations",
+      "loading": "Loading preview…",
+      "error": "Failed to load signature locations preview",
+      "close": "Close"
     },
     "planAndRetention": {
       "title": "Plan & retention",
@@ -749,7 +765,9 @@
     },
     "public": {
       "closedTitle": "Closed",
-      "closedHint": "You can close this window."
+      "closedHint": "You can close this window.",
+      "loadingDocument": "Loading document for signing...",
+      "openInApp": "Open in app"
     },
     "pdf": {
       "loading": "Loading PDF…",
@@ -803,6 +821,7 @@
       "otpInvalidFormat": "Please enter a 6-digit code",
       "otpVerified": "Code verified successfully",
       "otpVerifyError": "Error verifying code",
+      "otpWaitBeforeResend": "Please wait 30 seconds before requesting another code",
       "rejectReasonPrompt": "What is the reason for rejecting the document?",
       "documentRejected": "The document was rejected and the lawyer was notified",
       "rejectError": "Error rejecting the document",
@@ -813,6 +832,7 @@
       "sendCode": "Send code",
       "verified": "Verified",
       "nextSignature": "Next signature",
+      "nextField": "Next field",
       "remainingSignatures": "{{count}} signatures remaining",
       "hideAllSpots": "Hide all spots",
       "showAllSpots": "Show all spots",
@@ -851,6 +871,9 @@
       "savedStampLabel": "Stamp",
       "spotAlreadySigned": "This signature spot is already signed by you",
       "allRequiredCompleted": "You have completed all required signatures!",
+      "signingCompleteTitle": "Signing complete",
+      "signingCompleteSubtitle": "All signature locations were completed successfully. Thank you!",
+      "signingCompleteClose": "Done",
       "rejectDocument": "Reject document",
       "failedToLoadSignatureImage": "Failed to load signature image",
       "clientStampSavedSuccess": "Client stamp saved successfully",
@@ -880,7 +903,7 @@
     "upload": {
       "signerSelectorLabel": "Signer",
       "title": "Send document for signing",
-      "searchSignerTitle": "Search signer (customer)",
+      "searchSignerTitle": "Saved customers",
       "addManualSigner": "Add signer manually",
       "manualSignerName": "Signer name *",
       "manualSignerEmail": "Email",
@@ -894,6 +917,9 @@
       "fileHintPdfOnly": "(PDF only for now)",
       "documentNameTitle": "Document Name",
       "notesTitle": "Notes to customer (optional)",
+      "completionEmailLabel": "Email for signed document",
+      "completionEmailPlaceholder": "example@email.com",
+      "completionEmailHint": "Email address that will receive the signed document and evidence certificate when signing is complete",
       "viewerTitle": "Document preview & signature setup",
       "spotHelpText": "Each page has a \"+ Add signature\" button. Drag the boxes to the desired location or delete",
       "sending": "Sending...",
@@ -922,7 +948,10 @@
         "selectAtLeastOneSigner": "Please select at least one signer.",
         "atLeastOneSpot": "At least one signature spot is required.",
         "selectOtpPolicy": "Please choose an OTP policy.",
-        "waiverAckRequired": "To send without OTP, you must explicitly acknowledge the statement."
+        "waiverAckRequired": "To send without OTP, you must explicitly acknowledge the statement.",
+        "duplicateSignerContact": "This email or phone is already used by another signer on this document. Each signer needs a unique email/phone.",
+        "manualSignerPhoneRequired": "To save a signer as a new client, enter a unique phone number.",
+        "manualSignerCreateFailed": "Could not create a new client. Check that the phone number is not already in the system."
       }
     }
   },
@@ -1082,8 +1111,8 @@
     }
   },
   "chatbot": {
-    "title": "AI Assistant - Mor Levy Law Office",
-    "welcomeTitle": "Hello! I'm the AI Assistant of Mor Levy Law Office",
+    "title": "AI Assistant - {{firmName}}",
+    "welcomeTitle": "Hello! I'm the AI assistant of {{firmName}}",
     "welcomeSubtitle": "You can ask me general legal questions. To ask about your personal case, please verify your phone number.",
     "inputPlaceholder": "Type your question here...",
     "verifiedBadge": "Verified",
@@ -1099,12 +1128,20 @@
     "otpInvalid": "Invalid verification code. Please try again.",
     "errorGeneric": "An error occurred. Please try again later.",
     "sessionExpired": "Session expired. Please verify your phone number again.",
-    "greetingMorning": "Good morning! 🌞 I'm the AI assistant of Mor Levy Law Office. How can I help you today?",
-    "greetingAfternoon": "Good afternoon! ☀️ I'm the AI assistant of Mor Levy Law Office. How can I help you?",
-    "greetingEvening": "Good evening! 🌆 I'm the AI assistant of Mor Levy Law Office. How can I help you?",
-    "greetingNight": "Good night! 🌙 I'm the AI assistant of Mor Levy Law Office. How can I help you?"
+    "greetingMorning": "Good morning! 🌞 I'm the AI assistant of {{firmName}}. How can I help you today?",
+    "greetingAfternoon": "Good afternoon! ☀️ I'm the AI assistant of {{firmName}}. How can I help you?",
+    "greetingEvening": "Good evening! 🌆 I'm the AI assistant of {{firmName}}. How can I help you?",
+    "greetingNight": "Good night! 🌙 I'm the AI assistant of {{firmName}}. How can I help you?",
+    "firmNameFallback": "the law firm"
   },
   "platformSettings": {
+    "smsSenderChangeTitle": "Update SMS sender number",
+    "smsSenderChangeMessage": "Changing the SMS sender number may take up to 24 hours, and our technical team will call to verify. The current number stays active until approval. The alphanumeric sender name (if set) is separate.",
+    "smsSenderChangeConfirm": "Send request",
+    "smsSenderRequestSent": "Request sent. Our technical team will contact you.",
+    "smsSenderPending": "Pending verification",
+    "smsSenderActivate": "Activate sender number",
+    "smsSenderActivated": "SMS sender number activated successfully",
     "docTitlePlaceholder": "Document name (optional)",
     "chooseFile": "Choose File",
     "uploading": "Uploading and processing document...",
@@ -1122,7 +1159,11 @@
     "emailOverridePlaceholder": "Override email (empty = use default)",
     "smsOverridePlaceholder": "Override SMS (empty = use default)",
     "workingHoursByDayTitle": "Working hours by day",
-    "workingHoursByDayHint": "Set whether the firm is open each weekday and the hours for that day. Closed days are hidden from the calendar.",
+    "workingHoursByDayHint": "Visual guidance only (hours outside these times are shaded on the calendar). All weekdays stay visible, and events can be created outside these hours.",
+    "calendarVisibleHoursTitle": "Calendar visible hours",
+    "calendarVisibleHoursHint": "From which hour to which hour the calendar time axis is shown (e.g. 05:00–22:00).",
+    "calendarVisibleHoursStart": "From",
+    "calendarVisibleHoursEnd": "Until",
     "workingHoursDayCol": "Day",
     "workingHoursOpenCol": "Open",
     "workingHoursStartCol": "Start",

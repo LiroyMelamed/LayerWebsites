@@ -40,7 +40,7 @@ async function main() {
     console.log('SMTP verify OK:', host, port, user);
 
     const info = await transporter.sendMail({
-        from: `${fromName} <${fromEmail}>`,
+        from: { name: fromName, address: fromEmail },
         to,
         subject: `[test] ${fromEmail} via ${host}`,
         text: `SMTP test from ${fromEmail} at ${new Date().toISOString()}`,

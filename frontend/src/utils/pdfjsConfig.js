@@ -11,6 +11,7 @@ if (!URL.parse) {
     };
 }
 
-// workerSrc - must match runtime pdfjs version
-pdfjs.GlobalWorkerOptions.workerSrc =
-    `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+// Local worker matching installed pdfjs-dist (see scripts/copy-pdf-worker.js).
+// Prefer .js over .mjs: some hosts serve .mjs as application/octet-stream, which
+// breaks module workers in Safari ("Error loading PDF").
+pdfjs.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL || ""}/pdf.worker.min.js`;

@@ -7,7 +7,7 @@ const useHttpRequest = (requestFunction, onSuccess, onFailure) => {
   const { openPopup, closePopup } = usePopup();
   const [result, setResult] = useState(null);
 
-  const isPerformingRef = useRef(false);
+  const requestSeqRef = useRef(0);
   const isMountedRef = useRef(true);
   const requestFunctionRef = useRef(requestFunction);
   const onSuccessRef = useRef(onSuccess);
@@ -41,15 +41,14 @@ const useHttpRequest = (requestFunction, onSuccess, onFailure) => {
   );
 
   const performRequest = useCallback(async (...args) => {
-    if (isPerformingRef.current) return;
-
-    isPerformingRef.current = true;
+    // Latest-wins: rapid typing must not keep an older search's results.
+    const seq = ++requestSeqRef.current;
     setIsPerforming(true);
 
     try {
       const data = await requestFunctionRef.current(...args);
 
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current || seq !== requestSeqRef.current) return;
 
       if (data.status !== 200 && data.status !== 201) {
 
@@ -64,7 +63,7 @@ const useHttpRequest = (requestFunction, onSuccess, onFailure) => {
       }
     } catch (err) {
 
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current || seq !== requestSeqRef.current) return;
 
       setResult([]);
 
@@ -72,8 +71,9 @@ const useHttpRequest = (requestFunction, onSuccess, onFailure) => {
       else defaultOnFailure(err);
 
     } finally {
-      isPerformingRef.current = false;
-      if (isMountedRef.current) setIsPerforming(false);
+      if (seq === requestSeqRef.current && isMountedRef.current) {
+        setIsPerforming(false);
+      }
     }
   }, [defaultOnFailure]);
 

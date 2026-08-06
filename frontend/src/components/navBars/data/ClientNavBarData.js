@@ -3,6 +3,7 @@ import {
     NotificationsScreenName,
     ProfileScreenName,
     SigningScreenName,
+    ClientTicketScreenName,
 } from "../../../navigation/screenPaths";
 import TermsOfConditons from "../../termsAndConditions/TermsOfConditons";
 import { openExternalUrl } from "../../../utils/externalNavigation";
@@ -30,6 +31,14 @@ export const getClientNavBarData = (navigate, openPopup, closePopup, isFromApp =
             buttonScreen: null,
             icon: null,
             onClick: () => { navigate(ClientStackName + SigningScreenName) }
+        },
+        {
+            navKey: 'supportTicket',
+            routeMatch: ClientTicketScreenName,
+            buttonText: t('nav.supportTicket', { defaultValue: 'פנייה לתמיכה' }),
+            buttonScreen: null,
+            icon: null,
+            onClick: () => { navigate(ClientStackName + ClientTicketScreenName) }
         },
         ...(!isFromApp
             ? [

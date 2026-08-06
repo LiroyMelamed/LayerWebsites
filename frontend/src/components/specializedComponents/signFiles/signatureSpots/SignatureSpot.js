@@ -71,25 +71,87 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
     const signerIdForColor = spot?.signerUserId ?? spot?.SignerUserId ?? spot?.signerIndex ?? spot?.signerIdx ?? signerIndex;
     const colorClass = signerPaletteClass(signerIdForColor);
 
-    const startDragFromClientPoint = (startClientX, startClientY, onEnd) => {
+    const startDragFromClientPoint = (startClientX, startClientY) => {
         const startX = Number(startClientX);
         const startY = Number(startClientY);
         const baseX = Number(spot.x || 0);
         const baseY = Number(spot.y || 0);
+        const basePage = Number(spot.pageNum ?? spot.PageNumber ?? 1) || 1;
         const safeScale = scale || 1;
+        const spotW = Number(spot.width || 130);
+        const spotH = Number(spot.height || 48);
+
+        const startPageEl = document.querySelector(`.lw-signing-pageInner[data-page-number="${basePage}"]`);
+        const startRect = startPageEl?.getBoundingClientRect();
+        let grabOffsetX = startRect ? startX - (startRect.left + baseX * safeScale) : 0;
+        let grabOffsetY = startRect ? startY - (startRect.top + baseY * safeScale) : 0;
+        let lastPageNumber = basePage;
+
+        const findPageUnderPoint = (clientX, clientY) => {
+            const hit = document.elementsFromPoint(clientX, clientY)
+                .map((el) => el?.closest?.(".lw-signing-pageInner"))
+                .find(Boolean);
+            if (hit) return hit;
+
+            // Between-page gutters: snap to nearest page by vertical distance
+            // so spots can keep moving across pages.
+            const pages = Array.from(document.querySelectorAll(".lw-signing-pageInner[data-page-number]"));
+            let best = null;
+            let bestDist = Infinity;
+            for (const page of pages) {
+                const rect = page.getBoundingClientRect();
+                let dist = 0;
+                if (clientY < rect.top) dist = rect.top - clientY;
+                else if (clientY > rect.bottom) dist = clientY - rect.bottom;
+                // Prefer a page the cursor is horizontally over when close in Y.
+                if (clientX < rect.left || clientX > rect.right) {
+                    dist += Math.min(Math.abs(clientX - rect.left), Math.abs(clientX - rect.right));
+                }
+                if (dist < bestDist) {
+                    bestDist = dist;
+                    best = page;
+                }
+            }
+            return best;
+        };
 
         const moveFromClientPoint = (clientX, clientY) => {
-            const dx = Number(clientX) - startX;
-            const dy = Number(clientY) - startY;
+            const pageEl = findPageUnderPoint(clientX, clientY) || startPageEl;
+            if (!pageEl) {
+                onUpdateSpot?.(index, {
+                    x: baseX + (Number(clientX) - startX) / safeScale,
+                    y: baseY + (Number(clientY) - startY) / safeScale,
+                });
+                return;
+            }
+
+            const pageNumber = Number(pageEl.getAttribute("data-page-number")) || basePage;
+            const rect = pageEl.getBoundingClientRect();
+
+            // When crossing onto another page, re-anchor the grab offset so the
+            // spot doesn't jump (page boxes used to differ in width).
+            if (pageNumber !== lastPageNumber) {
+                grabOffsetX = Math.max(0, Math.min(Number(clientX) - rect.left, spotW * safeScale));
+                grabOffsetY = Math.max(0, Math.min(Number(clientY) - rect.top, spotH * safeScale));
+                lastPageNumber = pageNumber;
+            }
+
+            const pageW = rect.width / safeScale;
+            const pageH = rect.height / safeScale;
+            const nextX = (Number(clientX) - rect.left - grabOffsetX) / safeScale;
+            const nextY = (Number(clientY) - rect.top - grabOffsetY) / safeScale;
+            const clampedX = Math.max(0, Math.min(nextX, Math.max(0, pageW - spotW)));
+            const clampedY = Math.max(0, Math.min(nextY, Math.max(0, pageH - spotH)));
 
             onUpdateSpot?.(index, {
-                // dx/dy are in screen pixels; convert to base coordinate space.
-                x: baseX + dx / safeScale,
-                y: baseY + dy / safeScale,
+                x: clampedX,
+                y: clampedY,
+                pageNum: pageNumber,
+                PageNumber: pageNumber,
             });
         };
 
-        return { moveFromClientPoint, onEnd };
+        return { moveFromClientPoint };
     };
 
     const startDragPointer = (e) => {
@@ -326,7 +388,8 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                     X
                 </span>
             )}
-            {/* overlay for editor + context menu */}
+            {/* overlay for editor + context menu — signed spots are display-only */}
+            {!isSigned && (
             <div
                 onClick={(e) => {
                     if (canEditSpot) return;
@@ -385,6 +448,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                 aria-hidden
                 className="lw-signing-spotOverlay"
             />
+            )}
         </SimpleContainer>
     );
 }

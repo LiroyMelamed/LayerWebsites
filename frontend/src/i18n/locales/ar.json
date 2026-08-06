@@ -1,5 +1,6 @@
 {
   "common": {
+    "loading": "جارٍ التحميل…",
     "language": "اللغة",
     "hebrew": "עברית",
     "arabic": "العربية",
@@ -116,9 +117,24 @@
       "details": "تفاصيل المستند",
       "uploadNew": "إرسال مستند جديد للتوقيع",
       "openPdf": "فتح PDF",
+      "viewSignatureSpots": "عرض مواقع التوقيع",
       "deleteFile": "حذف المستند",
       "rename": "تغيير الاسم",
       "resendInvite": "إعادة الإرسال للتوقيع"
+    },
+    "signerStatus": {
+      "title": "حالة الموقّعين",
+      "name": "الاسم",
+      "contact": "البريد/الهاتف",
+      "sent": "أُرسل",
+      "viewed": "عُرض",
+      "signed": "وُقّع"
+    },
+    "spotsPreview": {
+      "title": "مواقع التوقيع",
+      "loading": "جارٍ التحميل…",
+      "error": "فشل تحميل معاينة مواقع التوقيع",
+      "close": "إغلاق"
     },
     "resend": {
       "title": "إعادة الإرسال للتوقيع",
@@ -853,7 +869,9 @@
     },
     "public": {
       "closedTitle": "مغلق",
-      "closedHint": "يمكنك إغلاق هذه النافذة."
+      "closedHint": "يمكنك إغلاق هذه النافذة.",
+      "loadingDocument": "جارٍ تحميل المستند للتوقيع...",
+      "openInApp": "افتح في التطبيق"
     },
     "pdf": {
       "loading": "جارٍ تحميل ملف PDF…",
@@ -909,6 +927,7 @@
       "otpInvalidFormat": "يرجى إدخال رمز مكوّن من 6 أرقام",
       "otpVerified": "تم التحقق من الرمز بنجاح",
       "otpVerifyError": "حدث خطأ أثناء التحقق من الرمز",
+      "otpWaitBeforeResend": "يرجى الانتظار 30 ثانية قبل إعادة إرسال الرمز",
       "rejectReasonPrompt": "ما سبب رفض المستند؟",
       "documentRejected": "تم رفض المستند وإخطار المحامي",
       "rejectError": "حدث خطأ أثناء رفض المستند",
@@ -919,6 +938,7 @@
       "sendCode": "إرسال الرمز",
       "verified": "تم التحقق",
       "nextSignature": "التوقيع التالي",
+      "nextField": "الحقل التالي",
       "remainingSignatures": "تبقى {{count}} تواقيع",
       "hideAllSpots": "إخفاء كل الأماكن",
       "showAllSpots": "إظهار كل الأماكن",
@@ -957,6 +977,9 @@
       "savedStampLabel": "ختم",
       "spotAlreadySigned": "تم توقيع مكان التوقيع هذا بالفعل بواسطةك",
       "allRequiredCompleted": "لقد أكملت جميع التواقيع المطلوبة!",
+      "signingCompleteTitle": "اكتمل التوقيع",
+      "signingCompleteSubtitle": "تم إكمال جميع مواقع التوقيع بنجاح. شكرًا لك!",
+      "signingCompleteClose": "إنهاء",
       "rejectDocument": "رفض المستند",
       "failedToLoadSignatureImage": "فشل تحميل صورة التوقيع",
       "clientStampSavedSuccess": "تم حفظ الختم بنجاح",
@@ -986,7 +1009,7 @@
     "upload": {
       "signerSelectorLabel": "الموقّع",
       "title": "إرسال مستند للتوقيع",
-      "searchSignerTitle": "بحث عن الموقّع (عميل)",
+      "searchSignerTitle": "عملاء محفوظون",
       "addManualSigner": "إضافة موقّع يدوياً",
       "manualSignerName": "اسم الموقّع *",
       "manualSignerEmail": "البريد الإلكتروني",
@@ -1038,7 +1061,10 @@
         "selectAtLeastOneSigner": "يرجى اختيار موقّع واحد على الأقل.",
         "atLeastOneSpot": "مطلوب مكان توقيع واحد على الأقل.",
         "selectOtpPolicy": "يرجى اختيار سياسة OTP.",
-        "waiverAckRequired": "للإرسال بدون OTP يجب تأكيد الإقرار صراحةً."
+        "waiverAckRequired": "للإرسال بدون OTP يجب تأكيد الإقرار صراحةً.",
+        "duplicateSignerContact": "البريد الإلكتروني أو الهاتف مستخدم بالفعل لموّقع آخر في هذا المستند. يجب أن يكون لكل موقّع بريد/هاتف فريد.",
+        "manualSignerPhoneRequired": "لحفظ الموقّع كعميل جديد يجب إدخال رقم هاتف فريد.",
+        "manualSignerCreateFailed": "تعذر إنشاء عميل جديد. تحقق من أن رقم الهاتف غير موجود مسبقاً في النظام."
       }
     }
   },
@@ -1107,7 +1133,8 @@
         "COURT_DATE": "تذكير بموعد جلسة",
         "DOCUMENT_REQUIRED": "تذكير بتقديم مستند",
         "LICENSE_RENEWAL": "تذكير بتجديد ترخيص",
-        "PAYMENT": "تذكير بالدفع"
+        "PAYMENT": "تذكير بالدفع",
+        "SIGN_REMINDER": "تذكير بالتوقيع"
       },
       "scheduledFor": "مجدول لـ",
       "status": "الحالة",
@@ -1225,8 +1252,8 @@
     }
   },
   "chatbot": {
-    "title": "مساعد AI - مكتب المحاماة لياف ملمد",
-    "welcomeTitle": "مرحبًا! أنا مساعد الـ AI الخاص بمكتب المحاماة لياف ملمد",
+    "title": "مساعد الذكاء الاصطناعي - {{firmName}}",
+    "welcomeTitle": "مرحباً! أنا مساعد الـ AI الخاص بـ {{firmName}}",
     "welcomeSubtitle": "يمكنك طرح أسئلة قانونية عامة. للاستفسار عن قضيتك الشخصية، يرجى التحقق من رقم هاتفك.",
     "inputPlaceholder": "اكتب سؤالك هنا...",
     "verifiedBadge": "تم التحقق",
@@ -1242,10 +1269,11 @@
     "otpInvalid": "رمز التحقق غير صحيح. حاول مرة أخرى.",
     "errorGeneric": "حدث خطأ. حاول مرة أخرى لاحقًا.",
     "sessionExpired": "انتهت الجلسة. يرجى التحقق من رقم هاتفك مرة أخرى.",
-    "greetingMorning": "صباح الخير! 🌞 أنا مساعد الـ AI الخاص بمكتب المحاماة. كيف يمكنني مساعدتك اليوم؟",
-    "greetingAfternoon": "مرحبًا! ☀️ أنا مساعد الـ AI الخاص بمكتب المحاماة. كيف يمكنني مساعدتك؟",
-    "greetingEvening": "مساء الخير! 🌆 أنا مساعد الـ AI الخاص بمكتب المحاماة. كيف يمكنني مساعدتك؟",
-    "greetingNight": "مساء الخير! 🌙 أنا مساعد الـ AI الخاص بمكتب المحاماة. كيف يمكنني مساعدتك؟"
+    "greetingMorning": "صباح الخير! 🌞 أنا مساعد الـ AI الخاص بـ {{firmName}}. كيف يمكنني مساعدتك اليوم؟",
+    "greetingAfternoon": "طاب يومك! ☀️ أنا مساعد الـ AI الخاص بـ {{firmName}}. كيف يمكنني مساعدتك؟",
+    "greetingEvening": "مساء الخير! 🌆 أنا مساعد الـ AI الخاص بـ {{firmName}}. كيف يمكنني مساعدتك؟",
+    "greetingNight": "مساء الخير! 🌙 أنا مساعد الـ AI الخاص بـ {{firmName}}. كيف يمكنني مساعدتك؟",
+    "firmNameFallback": "المكتب"
   },
   "platformSettings": {
     "docTitlePlaceholder": "اسم المستند (اختياري)",
@@ -1306,6 +1334,13 @@
     "channelUpdateError": "خطأ في تحديث قناة الإشعارات",
     "settingsSaved": "تم حفظ الإعدادات بنجاح",
     "saveError": "خطأ في الحفظ",
+    "smsSenderChangeTitle": "تحديث رقم مُرسِل الرسائل القصيرة",
+    "smsSenderChangeMessage": "قد يستغرق تغيير رقم مُرسِل الرسائل القصيرة حتى 24 ساعة، وسيتواصل معك الفريق الفني هاتفياً للتحقق. سيظل الرقم الحالي فعالاً حتى الموافقة. اسم المُرسِل (إن وُجد) منفصل.",
+    "smsSenderChangeConfirm": "إرسال الطلب",
+    "smsSenderRequestSent": "تم إرسال الطلب. سيتواصل معك الفريق الفني.",
+    "smsSenderPending": "بانتظار التحقق",
+    "smsSenderActivate": "تفعيل رقم المُرسِل",
+    "smsSenderActivated": "تم تفعيل رقم مُرسِل الرسائل القصيرة بنجاح",
     "notifEmailSaved": "تم حفظ بريد الإشعارات",
     "notifEmailSaveError": "خطأ في حفظ بريد الإشعارات",
     "docUploaded": "تم رفع المستند",

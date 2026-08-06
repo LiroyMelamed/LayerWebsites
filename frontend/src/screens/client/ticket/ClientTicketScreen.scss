@@ -1,0 +1,111 @@
+.client-ticket {
+  direction: rtl;
+  text-align: right;
+  min-height: 70vh;
+  padding: 2rem 1.25rem 3rem;
+  display: flex;
+  justify-content: center;
+  background: linear-gradient(180deg, #f4f6fb 0%, #e8ecf6 100%);
+  font-family: "Segoe UI", "Rubik", "Heebo", system-ui, sans-serif;
+  color: #1a1f36;
+}
+
+.client-ticket__card {
+  width: 100%;
+  max-width: 520px;
+  background: #fff;
+  border-radius: 1.25rem;
+  border: 1px solid #d8deef;
+  box-shadow: 0 18px 50px rgba(40, 50, 100, 0.08);
+  padding: 1.75rem 1.5rem;
+}
+
+.client-ticket__eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  color: #6b7cff;
+  font-weight: 600;
+}
+
+.client-ticket__card h1 {
+  margin: 0.4rem 0 0;
+  font-size: 1.65rem;
+}
+
+.client-ticket__muted {
+  margin: 0.5rem 0 1.25rem;
+  color: #6b728a;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.client-ticket__ok {
+  margin-bottom: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.75rem;
+  background: rgba(46, 160, 100, 0.1);
+  border: 1px solid rgba(46, 160, 100, 0.35);
+  color: #1f7a4a;
+  font-size: 0.95rem;
+}
+
+.client-ticket__err {
+  margin-bottom: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.75rem;
+  background: rgba(200, 60, 60, 0.08);
+  border: 1px solid rgba(200, 60, 60, 0.3);
+  color: #b42318;
+  font-size: 0.9rem;
+}
+
+.client-ticket__form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.client-ticket__form label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.client-ticket__form span {
+  color: #5b6478;
+}
+
+.client-ticket__form input,
+.client-ticket__form textarea {
+  width: 100%;
+  border: 1px solid #cfd6e8;
+  border-radius: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  font: inherit;
+  background: #fafbff;
+}
+
+.client-ticket__form button {
+  margin-top: 0.25rem;
+  border: none;
+  border-radius: 0.65rem;
+  padding: 0.75rem 1rem;
+  background: #6b7cff;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.client-ticket__form button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.client-ticket__back {
+  display: inline-block;
+  margin-top: 1.25rem;
+  color: #6b728a;
+  text-decoration: none;
+  font-size: 0.875rem;
+}

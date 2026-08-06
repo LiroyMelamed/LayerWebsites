@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
 import TopAndRightNavBar from "../components/navBars/TopAndRightNavBar";
 import RouteFallback from "../components/simpleComponents/RouteFallback";
 import { Navigate, Route, Routes } from "react-router-dom";
@@ -8,6 +8,7 @@ import {
     AllClientsScreenName,
     AllMangerScreenName,
     CalendarScreenName,
+    DailyAgendaScreenName,
     EvidenceDocumentsScreenName,
     MainScreenName,
     MyCasesScreenName,
@@ -16,30 +17,32 @@ import {
     PlatformSettingsScreenName,
     RemindersScreenName,
     SigningManagerScreenName,
+    SigningSpotsPreviewScreenName,
     TaggedCasesScreenName,
     uploadFileForSigningScreenName,
     LoginScreenName,
 } from "./screenPaths";
-import { ENABLE_CALENDAR_MODULE } from "../featureFlags";
+import { useCalendarModuleEnabled } from "../services/firmSettings";
 import { LoginStackName } from "./LoginStack";
+import MainScreen from "../screens/mainScreen/MainScreen";
+import TaggedCasesScreen from "../screens/taggedCasesScreen/TaggedCasesScreen";
+import AllCasesScreen from "../screens/allCasesScreen/AllCasesScreen";
+import AllClientsScreen from "../screens/allClientsScreen/AllClientsScreen";
+import MyCasesScreen from "../screens/myCasesScreen/MyCasesScreen";
+import AllMangerScreen from "../screens/allMangerScreen/AllMangerScreen";
+import AllCasesTypeScreen from "../screens/allCasesTypeScreen/AllCasesTypeScreen";
+import SigningManagerScreen from "../screens/signingScreen/SigningManagerScreen";
+import SigningSpotsPreviewScreen from "../screens/signingScreen/SigningSpotsPreviewScreen";
+import UploadFileForSigningScreen from "../screens/signingScreen/UploadFileForSigningScreen";
+import EvidenceDocumentsScreen from "../screens/evidenceDocuments/EvidenceDocumentsScreen";
+import PlanUsageScreen from "../screens/billingScreen/PlanUsageScreen";
+import PlansPricingScreen from "../screens/billingScreen/PlansPricingScreen";
+import RemindersScreen from "../screens/remindersScreen/RemindersScreen";
+import PlatformSettingsScreen from "../screens/platformSettingsScreen/PlatformSettingsScreen";
+import CalendarScreen from "../screens/calendarScreen/CalendarScreen";
+import DailyAgendaScreen from "../screens/calendarScreen/DailyAgendaScreen";
 
 export const AdminStackName = "/AdminStack";
-
-const MainScreen = lazy(() => import("../screens/mainScreen/MainScreen"));
-const TaggedCasesScreen = lazy(() => import("../screens/taggedCasesScreen/TaggedCasesScreen"));
-const AllCasesScreen = lazy(() => import("../screens/allCasesScreen/AllCasesScreen"));
-const AllClientsScreen = lazy(() => import("../screens/allClientsScreen/AllClientsScreen"));
-const MyCasesScreen = lazy(() => import("../screens/myCasesScreen/MyCasesScreen"));
-const AllMangerScreen = lazy(() => import("../screens/allMangerScreen/AllMangerScreen"));
-const AllCasesTypeScreen = lazy(() => import("../screens/allCasesTypeScreen/AllCasesTypeScreen"));
-const SigningManagerScreen = lazy(() => import("../screens/signingScreen/SigningManagerScreen"));
-const UploadFileForSigningScreen = lazy(() => import("../screens/signingScreen/UploadFileForSigningScreen"));
-const EvidenceDocumentsScreen = lazy(() => import("../screens/evidenceDocuments/EvidenceDocumentsScreen"));
-const PlanUsageScreen = lazy(() => import("../screens/billingScreen/PlanUsageScreen"));
-const PlansPricingScreen = lazy(() => import("../screens/billingScreen/PlansPricingScreen"));
-const RemindersScreen = lazy(() => import("../screens/remindersScreen/RemindersScreen"));
-const PlatformSettingsScreen = lazy(() => import("../screens/platformSettingsScreen/PlatformSettingsScreen"));
-const CalendarScreen = lazy(() => import("../screens/calendarScreen/CalendarScreen"));
 
 function toRelativePath(pathname) {
     const p = String(pathname || "");
@@ -48,6 +51,7 @@ function toRelativePath(pathname) {
 
 function AdminStack() {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const calendarEnabled = useCalendarModuleEnabled();
     if (!token) return <Navigate to={LoginStackName + LoginScreenName} replace />;
 
     return (
@@ -62,14 +66,18 @@ function AdminStack() {
                     <Route path={toRelativePath(AllMangerScreenName)} element={<AllMangerScreen />} />
                     <Route path={toRelativePath(AllCasesTypeScreenName)} element={<AllCasesTypeScreen />} />
                     <Route path={toRelativePath(SigningManagerScreenName)} element={<SigningManagerScreen />} />
+                    <Route path={toRelativePath(SigningSpotsPreviewScreenName)} element={<SigningSpotsPreviewScreen />} />
                     <Route path={toRelativePath(EvidenceDocumentsScreenName)} element={<EvidenceDocumentsScreen />} />
                     <Route path={toRelativePath(PlanUsageScreenName)} element={<PlanUsageScreen />} />
                     <Route path={toRelativePath(PlansPricingScreenName)} element={<PlansPricingScreen />} />
                     <Route path={toRelativePath(uploadFileForSigningScreenName)} element={<UploadFileForSigningScreen />} />
                     <Route path={toRelativePath(RemindersScreenName)} element={<RemindersScreen />} />
                     <Route path={toRelativePath(PlatformSettingsScreenName)} element={<PlatformSettingsScreen />} />
-                    {ENABLE_CALENDAR_MODULE && (
-                        <Route path={toRelativePath(CalendarScreenName)} element={<CalendarScreen />} />
+                    {calendarEnabled && (
+                        <>
+                            <Route path={toRelativePath(CalendarScreenName)} element={<CalendarScreen />} />
+                            <Route path={toRelativePath(DailyAgendaScreenName)} element={<DailyAgendaScreen />} />
+                        </>
                     )}
                 </Routes>
             </Suspense>

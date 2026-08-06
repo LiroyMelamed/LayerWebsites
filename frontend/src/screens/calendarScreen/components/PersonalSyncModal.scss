@@ -53,8 +53,52 @@
     flex-wrap: wrap;
 }
 
-.lw-personalSyncModal__buttonsRow {
-    @include m.row(v.$space-2);
-    justify-content: flex-end;
-    margin-block-start: v.$space-2;
+.lw-personalSyncModal__chips {
+    @include m.row(0.5rem);
+    flex-wrap: wrap;
+}
+
+.lw-personalSyncModal__agendaSwitch {
+    width: 100%;
+
+    .lw-segmentedSwitch__track {
+        width: 100%;
+        display: flex;
+    }
+
+    .lw-segmentedSwitch__option {
+        flex: 1 1 0;
+        text-align: center;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+/* Same chip pattern as EventFormModal reminder channels */
+.lw-personalSyncModal__chip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    padding: 0.45rem 0.75rem;
+    background: #FFFFFF;
+    border: 0.0625rem solid #CBD5E0;
+    border-radius: 62.4375rem;
+    cursor: pointer;
+    transition: border-color 120ms ease, background-color 120ms ease;
+
+    &:hover:not(:disabled) {
+        border-color: #2A4365;
+        background: #F7FAFC;
+    }
+
+    &.is-active {
+        background: #2A4365;
+        border-color: #2A4365;
+
+        .lw-simpleText {
+            color: #FFFFFF !important;
+        }
+    }
 }

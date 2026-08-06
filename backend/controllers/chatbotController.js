@@ -334,7 +334,7 @@ const requestOtp = async (req, res) => {
         // Send SMS
         try {
             const smsBody = `קוד האימות שלך לצ׳אט הוא ${otp}`;
-            sendMessage(smsBody, formattedPhone);
+            sendMessage(smsBody, formattedPhone, { fast: true });
         } catch (smsErr) {
             console.warn('[chatbot] SMS send failed:', smsErr?.message);
         }

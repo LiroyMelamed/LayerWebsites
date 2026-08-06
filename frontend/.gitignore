@@ -1,2 +1,4 @@
 .vercel
 /build
+.env.ftp.local
+.env*.local

@@ -39,7 +39,8 @@
 
 .lw-simpleInput__label {
     position: absolute;
-    pointer-events: none;
+    pointer-events: auto;
+    cursor: text;
     background-color: var(--lw-color-white);
 
     inset-inline-start: 0.5rem;
@@ -176,50 +177,85 @@
 .lw-simpleInput__field[type='datetime-local'],
 .lw-simpleInput__field[type='time'],
 .lw-simpleInput__field[type='month'],
-.lw-simpleInput__field[type='week'] {
+.lw-simpleInput__field[type='week'],
+.lw-simpleInput__field--temporalText {
     direction: ltr;
-    text-align: left;
+    text-align: right;
     unicode-bidi: isolate;
+    position: relative;
+    // Calendar icon sits on the physical left; date text stays right-aligned.
+    padding-inline-start: 2.75rem;
+    padding-inline-end: 0.75rem;
+    color-scheme: light;
+    color: var(--lw-color-text);
+    -webkit-text-fill-color: var(--lw-color-text);
+    caret-color: var(--lw-color-text);
 }
 
-// While not focused, hide the browser's OS-locale rendering of date/time values
-// and show our deterministic dd/mm/yyyy HH:mm overlay instead (site language wins).
-.lw-simpleInput.is-temporalMasked .lw-simpleInput__field {
-    color: transparent;
-
-    &::-webkit-datetime-edit {
-        color: transparent;
-    }
+.lw-simpleInput__field--temporalText {
+    // Real editable text — select/highlight digits like any other input.
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
 }
 
-.lw-simpleInput__temporalDisplay {
+.lw-simpleInput__field[type='date']::-webkit-calendar-picker-indicator,
+.lw-simpleInput__field[type='datetime-local']::-webkit-calendar-picker-indicator,
+.lw-simpleInput__field[type='month']::-webkit-calendar-picker-indicator,
+.lw-simpleInput__field[type='week']::-webkit-calendar-picker-indicator {
     position: absolute;
-    inset-inline: 0;
+    left: 0.45rem;
+    right: auto;
     top: 50%;
     transform: translateY(-50%);
+    width: 1.75rem;
+    height: 1.75rem;
+    opacity: 0;
+    cursor: pointer;
+}
+
+// Off-screen native picker used only by the calendar button.
+.lw-simpleInput__nativePicker {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
     pointer-events: none;
-
-    padding-inline-start: 1rem;
-    padding-inline-end: 1rem;
-
-    direction: ltr;
-    text-align: left;
-    white-space: nowrap;
+    border: 0;
+    padding: 0;
+    margin: 0;
     overflow: hidden;
-
-    font-family: inherit;
-    font-size: 1rem;
-    color: var(--lw-color-text);
 }
 
-.lw-simpleInput--small .lw-simpleInput__temporalDisplay {
-    font-size: 0.75rem;
+.lw-simpleInput__calendarBtn {
+    position: absolute;
+    left: 0.45rem;
+    right: auto;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    margin: 0;
+
+    border: none;
+    border-radius: 0.35rem;
+    background: transparent;
+    color: #4a5568;
+    cursor: pointer;
 }
 
-.lw-simpleInput--big .lw-simpleInput__temporalDisplay {
-    font-size: 1.5rem;
+.lw-simpleInput__calendarBtn:hover:not(:disabled) {
+    color: var(--lw-color-primary-highlighted);
+    background: rgba(0, 0, 0, 0.04);
 }
 
-.lw-simpleInput.is-disabled .lw-simpleInput__temporalDisplay {
-    color: var(--lw-color-disabled);
+.lw-simpleInput__calendarBtn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
 }

@@ -48,6 +48,10 @@ const signingFilesApi = {
         return await ApiUtils.get(`${base}/public/${encodeURIComponent(token)}`);
     },
 
+    resolvePublicSigningShortLink: async (slug) => {
+        return await ApiUtils.get(`${base}/public/short/${encodeURIComponent(slug)}`);
+    },
+
     publicRequestSigningOtp: async (token, signingSessionId) => {
         return await ApiUtils.post(
             `${base}/public/${encodeURIComponent(token)}/otp/request`,
@@ -66,6 +70,10 @@ const signingFilesApi = {
 
     publicSignFile: async (token, body, config = undefined) => {
         return await ApiUtils.post(`${base}/public/${encodeURIComponent(token)}/sign`, body, config);
+    },
+
+    publicSignFileBatch: async (token, body, config = undefined) => {
+        return await ApiUtils.post(`${base}/public/${encodeURIComponent(token)}/sign-batch`, body, config);
     },
 
     publicRejectSigning: async (token, body) => {
@@ -143,6 +151,10 @@ const signingFilesApi = {
         return await ApiUtils.post(`${base}/${signingFileId}/sign`, body, config);
     },
 
+    signFileBatch: async (signingFileId, body, config = undefined) => {
+        return await ApiUtils.post(`${base}/${signingFileId}/sign-batch`, body, config);
+    },
+
     requestSigningOtp: async (signingFileId, signingSessionId) => {
         return await ApiUtils.post(
             `${base}/${signingFileId}/otp/request`,
@@ -190,6 +202,11 @@ const signingFilesApi = {
     // Public view of signed document (no auth, uses view token)
     getPublicSignedDocumentView: async (viewToken) => {
         return await ApiUtils.get(`${base}/public/view/${encodeURIComponent(viewToken)}`);
+    },
+
+    getPublicEvidenceCertificateUrl: (viewToken) => {
+        const apiBase = String(ApiUtils?.defaults?.baseURL || '').replace(/\/+$/, '');
+        return `${apiBase}/${base}/public/view/${encodeURIComponent(viewToken)}/evidence-certificate`;
     },
 };
 

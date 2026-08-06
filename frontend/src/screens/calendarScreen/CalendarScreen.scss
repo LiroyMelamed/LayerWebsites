@@ -108,6 +108,12 @@
 .lw-calendarScreen__calendarCol {
     flex-direction: column;
     min-width: 0; // prevent FullCalendar from blowing out the grid
+    width: 100%;
+}
+
+.lw-calendarScreen__layout.is-sidebarClosed .lw-calendarScreen__calendarCol {
+    width: 100%;
+    max-width: 100%;
 }
 
 // ─── Filter groups ───────────────────────────────────────────────────────────
@@ -566,6 +572,13 @@
 
 // ─── Holiday event styling ───────────────────────────────────────────────────
 
+// Holiday hints must not flood the whole day column in week/day views —
+// the holiday chip in the all-day row (top) is enough. Month-view tint stays.
+.fc .fc-timegrid-col-bg .fc-bg-event.lw-fcEvent--holidayHint,
+.fc .fc-timegrid-body .fc-bg-event.lw-fcEvent--holidayHint {
+    display: none;
+}
+
 .lw-calendarScreen__calendarCard .fc-event.lw-fcEvent--holiday,
 .fc .fc-event.lw-fcEvent--holiday {
     background-color: #B7791F !important;
@@ -591,6 +604,21 @@
 .fc .fc-event.lw-fcEvent--holiday .fc-event-title {
     color: #FFFFFF;
     padding-inline-start: 0.375rem;
+}
+
+// ─── Client RSVP status on appointments ──────────────────────────────────────
+
+.fc .fc-event.lw-fcEvent--inviteAccepted {
+    box-shadow: inset 0 0 0 2px rgba(47, 133, 90, 0.95);
+}
+
+.fc .fc-event.lw-fcEvent--inviteDeclined {
+    box-shadow: inset 0 0 0 2px rgba(192, 86, 33, 0.95);
+    opacity: 0.88;
+}
+
+.fc .fc-event.lw-fcEvent--invitePending {
+    box-shadow: inset 0 0 0 2px rgba(214, 158, 46, 0.95);
 }
 
 // ─── Touch / mobile interaction ───────────────────────────────────────────────

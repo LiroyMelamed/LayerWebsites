@@ -6,6 +6,33 @@ const pool = require('../config/db');
 const path = require('path');
 const settingsService = require('../services/settingsService');
 const { validateTemplate, TEMPLATE_REQUIRED_VARS } = require('../utils/templateRenderer');
+const { sendTransactionalCustomHtmlEmail } = require('../utils/smooveEmailCampaignService');
+const { getFirmDisplayName } = require('../lib/firmBranding');
+
+// Fixed recipient for SMS-sender-change requests (technical owner who handles InforU verification).
+const SMS_SENDER_CHANGE_NOTIFY_EMAIL = 'liroymelamed@icloud.com';
+const ACTIVE_SENDER_NAME_KEY = 'INFORU_SENDER_PHONE'; // alphanumeric sender name
+const ACTIVE_SENDER_NUMBER_KEY = 'INFORU_SENDER_NUMBER'; // verified phone sender
+const PENDING_SENDER_KEY = 'INFORU_SENDER_PHONE_PENDING';
+const PENDING_AT_KEY = 'INFORU_SENDER_PHONE_PENDING_REQUESTED_AT';
+const PENDING_BY_KEY = 'INFORU_SENDER_PHONE_PENDING_REQUESTED_BY';
+
+/**
+ * Validate a candidate InforU sender name.
+ * Alphanumeric ID only (up to 11 chars, no spaces, optional leading "*").
+ * Empty is allowed (clears the name).
+ */
+function isValidInforuSenderName(value) {
+    const v = String(value || '').trim();
+    if (!v) return true; // empty = clear
+    return /^\*?[A-Za-z0-9]{1,11}$/.test(v);
+}
+
+/** Phone sender: 1–14 digits (InforU numeric sender). */
+function isValidInforuSenderPhone(value) {
+    const v = String(value || '').trim();
+    return /^\d{1,14}$/.test(v);
+}
 
 // ── Settings CRUD ───────────────────────────────────────────────────
 
@@ -45,9 +72,46 @@ const updateSettings = async (req, res) => {
                     });
                 }
             }
+            // SMS sender name: alphanumeric only (empty clears). Phone uses request/activate flow.
+            if (s.category === 'messaging' && s.key === ACTIVE_SENDER_NAME_KEY) {
+                if (!isValidInforuSenderName(s.value)) {
+                    return res.status(400).json({
+                        message: 'שם שולח SMS לא תקין. יש להזין שם באנגלית/ספרות עד 11 תווים (ללא רווחים), או להשאיר ריק.',
+                    });
+                }
+            }
+            // Phone sender must not be saved directly — use sms-sender-request flow.
+            if (s.category === 'messaging' && s.key === ACTIVE_SENDER_NUMBER_KEY) {
+                return res.status(400).json({
+                    message: 'שינוי מספר שולח SMS דורש שליחת בקשה לאימות. השתמשו בכפתור השמירה לאחר עדכון המספר.',
+                });
+            }
         }
 
         const results = await settingsService.bulkUpsert(settings, req.user?.UserId);
+
+        // Sign-reminder platform settings side-effects
+        try {
+            const {
+                rescheduleUnmodifiedReminders,
+                cancelAllAutoManagedPending,
+            } = require('../lib/signingFileReminders');
+            for (const s of settings) {
+                if (s.category !== 'signing') continue;
+                if (s.key === 'SIGN_REMINDER_OFFSET_HOURS') {
+                    await rescheduleUnmodifiedReminders(s.value);
+                }
+                if (s.key === 'SIGN_REMINDER_AUTO_ENABLED') {
+                    const v = String(s.value ?? '').trim().toLowerCase();
+                    if (v !== 'true' && v !== '1' && v !== 'yes') {
+                        await cancelAllAutoManagedPending();
+                    }
+                }
+            }
+        } catch (sideErr) {
+            console.warn('[platformSettings] sign-reminder side-effect failed:', sideErr?.message || sideErr);
+        }
+
         return res.json({ message: 'ההגדרות עודכנו בהצלחה', count: results.length });
     } catch (err) {
         console.error('[platformSettings] updateSettings error:', err?.message || err);
@@ -79,14 +143,161 @@ const updateSingleSetting = async (req, res) => {
                 });
             }
         }
+        if (category === 'messaging' && key === ACTIVE_SENDER_NAME_KEY && !isValidInforuSenderName(value)) {
+            return res.status(400).json({
+                message: 'שם שולח SMS לא תקין. יש להזין שם באנגלית/ספרות עד 11 תווים (ללא רווחים), או להשאיר ריק.',
+            });
+        }
+        if (category === 'messaging' && key === ACTIVE_SENDER_NUMBER_KEY) {
+            return res.status(400).json({
+                message: 'שינוי מספר שולח SMS דורש שליחת בקשה לאימות.',
+            });
+        }
 
         const result = await settingsService.upsertSetting(category, key, value, {
             updatedBy: req.user?.UserId,
         });
+
+        try {
+            if (category === 'signing') {
+                const {
+                    rescheduleUnmodifiedReminders,
+                    cancelAllAutoManagedPending,
+                } = require('../lib/signingFileReminders');
+                if (key === 'SIGN_REMINDER_OFFSET_HOURS') {
+                    await rescheduleUnmodifiedReminders(value);
+                }
+                if (key === 'SIGN_REMINDER_AUTO_ENABLED') {
+                    const v = String(value ?? '').trim().toLowerCase();
+                    if (v !== 'true' && v !== '1' && v !== 'yes') {
+                        await cancelAllAutoManagedPending();
+                    }
+                }
+            }
+        } catch (sideErr) {
+            console.warn('[platformSettings] sign-reminder single side-effect failed:', sideErr?.message || sideErr);
+        }
+
         return res.json({ message: 'ההגדרה עודכנה', setting: result });
     } catch (err) {
         console.error('[platformSettings] updateSingleSetting error:', err);
         return res.status(500).json({ message: 'שגיאה בעדכון הגדרה' });
+    }
+};
+
+// ── SMS sender change (InforU verification flow) ────────────────────
+
+/**
+ * POST /api/platform-settings/sms-sender-request
+ * Store the requested SMS phone sender as PENDING (live number is untouched) and
+ * email the technical owner the details needed to whitelist + verify it on InforU.
+ */
+const requestSmsSenderChange = async (req, res) => {
+    try {
+        const phone = String(req.body?.phone || '').trim();
+        if (!isValidInforuSenderPhone(phone)) {
+            return res.status(400).json({
+                message: 'מספר שולח לא תקין. יש להזין מספר טלפון עד 14 ספרות.',
+            });
+        }
+
+        const requestedBy = req.user?.UserId;
+        const nowIso = new Date().toISOString();
+
+        // Persist pending value + metadata (does NOT change the live sender number)
+        await settingsService.upsertSetting('messaging', PENDING_SENDER_KEY, phone, { updatedBy: requestedBy });
+        await settingsService.upsertSetting('messaging', PENDING_AT_KEY, nowIso, { updatedBy: requestedBy });
+        await settingsService.upsertSetting('messaging', PENDING_BY_KEY, String(requestedBy ?? ''), { updatedBy: requestedBy });
+
+        // Gather context for the notification email (best-effort)
+        let requester = { name: '', email: '', phonenumber: '' };
+        try {
+            if (requestedBy) {
+                const { rows } = await pool.query(
+                    `SELECT name, email, phonenumber FROM users WHERE userid = $1`,
+                    [requestedBy]
+                );
+                if (rows[0]) requester = rows[0];
+            }
+        } catch (e) {
+            console.warn('[platformSettings] requester lookup failed:', e?.message);
+        }
+
+        let firmName = '';
+        try { firmName = await getFirmDisplayName(); } catch (_) { /* ignore */ }
+
+        const currentNumber = await settingsService.getSetting('messaging', ACTIVE_SENDER_NUMBER_KEY, null);
+        const currentName = await settingsService.getSetting('messaging', ACTIVE_SENDER_NAME_KEY, process.env.INFORU_SENDER_PHONE);
+        const requestedAtIl = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
+
+        const htmlBody = `
+            <div dir="rtl" style="font-family: Arial, sans-serif; font-size: 15px; color: #222; line-height: 1.6;">
+                <h2 style="margin: 0 0 12px;">בקשת שינוי מספר שולח SMS</h2>
+                <p>מנהל פלטפורמה ביקש לשנות את מספר השולח של הודעות ה-SMS.</p>
+                <table cellpadding="6" style="border-collapse: collapse; margin: 12px 0;">
+                    <tr><td style="font-weight:bold;">משרד:</td><td>${firmName || '—'}</td></tr>
+                    <tr><td style="font-weight:bold;">מספר מבוקש:</td><td><strong>${phone}</strong></td></tr>
+                    <tr><td style="font-weight:bold;">מספר נוכחי:</td><td>${currentNumber || '—'}</td></tr>
+                    <tr><td style="font-weight:bold;">שם שולח נוכחי:</td><td>${currentName || '—'}</td></tr>
+                    <tr><td style="font-weight:bold;">מבקש:</td><td>${requester.name || '—'}</td></tr>
+                    <tr><td style="font-weight:bold;">טלפון מבקש:</td><td>${requester.phonenumber || '—'}</td></tr>
+                    <tr><td style="font-weight:bold;">אימייל מבקש:</td><td>${requester.email || '—'}</td></tr>
+                    <tr><td style="font-weight:bold;">מועד הבקשה:</td><td>${requestedAtIl}</td></tr>
+                </table>
+                <h3 style="margin: 16px 0 8px;">מה צריך לעשות מול InforU:</h3>
+                <ol style="margin: 0; padding-inline-start: 20px;">
+                    <li>להוסיף את המספר <strong>${phone}</strong> לרשימת ההיתרים ב-InforU (Whitelist → Sender).</li>
+                    <li>להשלים את תהליך האימות מול InforU (עד 24 שעות, כולל שיחת אימות מהצוות הטכני של InforU).</li>
+                    <li>לאחר אישור InforU — להיכנס להגדרות הפלטפורמה וללחוץ על "הפעל מספר שולח" כדי להחיל את השינוי בפועל.</li>
+                </ol>
+                <p style="color:#666; font-size: 13px; margin-top: 16px;">המספר הנוכחי ימשיך לפעול עד להפעלת המספר החדש. אם מוגדר שם שולח — הוא עדיין קודם למספר בשליחה.</p>
+            </div>`;
+
+        try {
+            await sendTransactionalCustomHtmlEmail({
+                toEmail: SMS_SENDER_CHANGE_NOTIFY_EMAIL,
+                subject: `בקשת שינוי מספר שולח SMS — ${firmName || 'Melamedia'}`,
+                htmlBody,
+                logLabel: 'SMS_SENDER_CHANGE_REQUEST',
+            });
+        } catch (emailErr) {
+            // Email failure must not fail the request — the pending value is already saved.
+            console.error('[platformSettings] sms-sender-request email failed:', emailErr?.message || emailErr);
+        }
+
+        return res.json({ message: 'הבקשה נשלחה. צוות טכני יצור איתך קשר.', pending: phone });
+    } catch (err) {
+        console.error('[platformSettings] requestSmsSenderChange error:', err?.message || err);
+        return res.status(500).json({ message: 'שגיאה בשליחת בקשת שינוי מספר שולח' });
+    }
+};
+
+/**
+ * POST /api/platform-settings/sms-sender-activate
+ * Promote the pending phone sender to the live number (call only after InforU confirms).
+ */
+const activateSmsSenderChange = async (req, res) => {
+    try {
+        const pending = await settingsService.getSetting('messaging', PENDING_SENDER_KEY, null);
+        if (!pending) {
+            return res.status(400).json({ message: 'אין מספר שולח ממתין להפעלה.' });
+        }
+
+        const updatedBy = req.user?.UserId;
+        await settingsService.upsertSetting('messaging', ACTIVE_SENDER_NUMBER_KEY, pending, {
+            updatedBy,
+            label: 'מספר שולח SMS',
+            description: 'מספר טלפון שמוצג כשולח SMS (מאומת ב-InforU). שינוי דורש אישור צוות טכני.',
+        });
+        // Clear pending metadata
+        await settingsService.upsertSetting('messaging', PENDING_SENDER_KEY, '', { updatedBy });
+        await settingsService.upsertSetting('messaging', PENDING_AT_KEY, '', { updatedBy });
+        await settingsService.upsertSetting('messaging', PENDING_BY_KEY, '', { updatedBy });
+
+        return res.json({ message: 'מספר השולח הופעל בהצלחה.', sender: pending });
+    } catch (err) {
+        console.error('[platformSettings] activateSmsSenderChange error:', err?.message || err);
+        return res.status(500).json({ message: 'שגיאה בהפעלת מספר שולח' });
     }
 };
 
@@ -96,19 +307,22 @@ const updateSingleSetting = async (req, res) => {
  * GET /api/platform-settings/channels-lite
  *
  * Lawyer-readable allowlist of which channels (push/email/sms) are enabled
- * per notification type. The per-action UIs (signing upload, calendar
- * event reminder picker) use this to show only the channels the platform
- * admin enabled. admin_cc / manager_cc are intentionally NOT exposed.
+ * per notification type. Types whose channels are picked per-action by the
+ * lawyer (SIGN_INVITE, CALENDAR_REMINDER) are excluded — those UIs do not
+ * consult this endpoint. admin_cc / manager_cc are intentionally NOT exposed.
  */
 const getNotificationChannelsLite = async (req, res) => {
     try {
+        const PER_ACTION = new Set(['SIGN_INVITE', 'CALENDAR_REMINDER']);
         const channels = await settingsService.getNotificationChannels();
-        const lite = (Array.isArray(channels) ? channels : []).map((c) => ({
-            notification_type: c.notification_type,
-            push_enabled: !!c.push_enabled,
-            email_enabled: !!c.email_enabled,
-            sms_enabled: !!c.sms_enabled,
-        }));
+        const lite = (Array.isArray(channels) ? channels : [])
+            .filter((c) => !PER_ACTION.has(c.notification_type))
+            .map((c) => ({
+                notification_type: c.notification_type,
+                push_enabled: !!c.push_enabled,
+                email_enabled: !!c.email_enabled,
+                sms_enabled: !!c.sms_enabled,
+            }));
         return res.json({ channels: lite });
     } catch (err) {
         console.error('[platformSettings] getChannelsLite error:', err);
@@ -280,6 +494,11 @@ const PUBLIC_SETTINGS_KEYS = [
     'contact:OFFICE_PHONE',
     'contact:WHATSAPP_PHONE',
     'contact:SMS_PHONE',
+    'signing:SHOW_PUBLIC_SIGNING_CONSENT',
+    'signing:SIGNING_OTP_ENABLED',
+    'signing:SIGNING_REQUIRE_OTP_DEFAULT',
+    'calendar:ENABLE_CALENDAR_MODULE',
+    'chatbot:AI_CHATBOT_ENABLED',
 ];
 
 /** GET /api/platform-settings/public — no admin required */
@@ -367,6 +586,8 @@ module.exports = {
     getAllSettings,
     updateSettings,
     updateSingleSetting,
+    requestSmsSenderChange,
+    activateSmsSenderChange,
     getNotificationChannels,
     getNotificationChannelsLite,
     updateNotificationChannel,

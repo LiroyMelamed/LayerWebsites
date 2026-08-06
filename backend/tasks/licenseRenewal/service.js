@@ -1,5 +1,6 @@
 const pool = require('../../config/db');
 const sendAndStoreNotification = require('../../utils/sendAndStoreNotification');
+const { buildCasePushData } = require('../../utils/appDeepLinks');
 const { sendTransactionalCustomHtmlEmail } = require('../../utils/smooveEmailCampaignService');
 const { getPlatformAdmins } = require('../../services/settingsService');
 const { DEFAULTS } = require('./templates');
@@ -300,11 +301,11 @@ async function sendClientReminder({ reminderKey, row, todayKey }) {
         if (hasPush) {
             const pushTitle = renderTemplate(DEFAULTS.client.pushTitle, fields, { escapeHtml: false });
             const pushBody = renderTemplate(DEFAULTS.client.pushBody, fields, { escapeHtml: false });
-            await sendAndStoreNotification(clientUserId, pushTitle, pushBody, {
-                caseId: String(row.CaseId),
+            await sendAndStoreNotification(clientUserId, pushTitle, pushBody, buildCasePushData({
+                caseId: row.CaseId,
                 type: 'LICENSE_RENEWAL',
-                reminderKey,
-            });
+                extra: { reminderKey },
+            }));
             channels.push = true;
             channels.inApp = true;
         }
