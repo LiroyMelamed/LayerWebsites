@@ -127,11 +127,11 @@ function SettingInput({ setting, value, onChange, isTemplate = false }) {
     if (isTemplate) {
         return (
             <SimpleTextArea
-                className="lw-platformSettings__textarea"
+                className="lw-platformSettings__textarea lw-platformSettings__textarea--sms"
                 value={inputValue}
                 onChange={(val) => onChange(val)}
                 title={setting.label || ""}
-                rows={4}
+                rows={8}
                 dir="rtl"
             />
         );
@@ -264,7 +264,15 @@ const SMS_TEMPLATE_VARS = {
         "recipientName", "firmName", "date", "time", "address",
         "wazeUrl", "mapsUrl", "firmPhone", "websiteUrl", "lawyerName", "title",
     ],
+    CALENDAR_CLIENT_REMINDER_SMS_HEARING: [
+        "recipientName", "firmName", "date", "time", "address",
+        "wazeUrl", "mapsUrl", "firmPhone", "websiteUrl", "lawyerName", "title",
+    ],
     CALENDAR_INVITE_SMS: [
+        "recipientName", "firmName", "date", "time", "address",
+        "wazeUrl", "mapsUrl", "rsvpUrl", "firmPhone", "websiteUrl", "lawyerName", "title",
+    ],
+    CALENDAR_INVITE_SMS_HEARING: [
         "recipientName", "firmName", "date", "time", "address",
         "wazeUrl", "mapsUrl", "rsvpUrl", "firmPhone", "websiteUrl", "lawyerName", "title",
     ],
@@ -317,7 +325,9 @@ const SMS_KEY_TO_NOTIF_TYPE = {
     LICENSE_RENEWAL_SMS: 'LICENSE_RENEWAL',
     NEW_CLIENT_SMS: 'NEW_CLIENT',
     CALENDAR_CLIENT_REMINDER_SMS: 'CALENDAR_REMINDER',
+    CALENDAR_CLIENT_REMINDER_SMS_HEARING: 'CALENDAR_REMINDER',
     CALENDAR_INVITE_SMS: 'CALENDAR_REMINDER',
+    CALENDAR_INVITE_SMS_HEARING: 'CALENDAR_REMINDER',
 };
 
 function SmsVarButtons({ templateKey, onInsert }) {
@@ -1852,11 +1862,14 @@ export default function PlatformSettingsScreen() {
                                     <Text12 className="lw-platformSettings__settingDescription">
                                         {t("platformSettings.calendarReminderOptionsHint")}
                                     </Text12>
+                                    <Text12 className="lw-platformSettings__settingDescription">
+                                        {t("platformSettings.calendarInviteRsvpHint")}
+                                    </Text12>
                                 </SimpleContainer>
                                 <SimpleContainer className="lw-platformSettings__reminderOptions">
                                     {REMINDER_PRESETS.map(({ minutes, labelKey }) => {
                                         const selected = new Set(
-                                            parseOffsetsList(getVal("CALENDAR_REMINDER_OPTIONS", "15,30,60,120,1440"))
+                                            parseOffsetsList(getVal("CALENDAR_REMINDER_OPTIONS", "0,15,30,60,120,1440"))
                                         );
                                         const active = selected.has(minutes);
                                         return (

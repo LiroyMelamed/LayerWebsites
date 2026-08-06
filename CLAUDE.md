@@ -85,3 +85,9 @@ Rules:
 - JWT stored in localStorage on frontend
 - Feature flags in `frontend/src/featureFlags.js`
 - ISO 27001/27701/22301 compliance alignment
+
+## Branch / deploy workflow (critical)
+- **`main` is the single source of truth** for product code. All fixes land on `main` first.
+- Deploy path: merge `main` → each tenant branch → `apply-tenant-branding.js` + tenant env → build → deploy.
+- Never build MelamedLaw (or another tenant) from a different tenant tip without branding + merge from `main`.
+- See [docs/DEPLOY_TENANTS_FROM_MAIN.md](docs/DEPLOY_TENANTS_FROM_MAIN.md).

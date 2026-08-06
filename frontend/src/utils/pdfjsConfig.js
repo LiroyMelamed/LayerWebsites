@@ -11,5 +11,7 @@ if (!URL.parse) {
     };
 }
 
-// Local worker (avoids CDN latency on first PDF open)
-pdfjs.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL || ""}/pdf.worker.min.mjs`;
+// Local worker matching installed pdfjs-dist (see scripts/copy-pdf-worker.js).
+// Prefer .js over .mjs: some hosts serve .mjs as application/octet-stream, which
+// breaks module workers in Safari ("Error loading PDF").
+pdfjs.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL || ""}/pdf.worker.min.js`;

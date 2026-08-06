@@ -11,6 +11,31 @@ const { getFirmDisplayName } = require('../lib/firmBranding');
 
 // Fixed recipient for SMS-sender-change requests (technical owner who handles InforU verification).
 const SMS_SENDER_CHANGE_NOTIFY_EMAIL = 'liroymelamed@icloud.com';
+<<<<<<< HEAD
+=======
+const ACTIVE_SENDER_NAME_KEY = 'INFORU_SENDER_PHONE'; // alphanumeric sender name
+const ACTIVE_SENDER_NUMBER_KEY = 'INFORU_SENDER_NUMBER'; // verified phone sender
+const PENDING_SENDER_KEY = 'INFORU_SENDER_PHONE_PENDING';
+const PENDING_AT_KEY = 'INFORU_SENDER_PHONE_PENDING_REQUESTED_AT';
+const PENDING_BY_KEY = 'INFORU_SENDER_PHONE_PENDING_REQUESTED_BY';
+
+/**
+ * Validate a candidate InforU sender name.
+ * Alphanumeric ID only (up to 11 chars, no spaces, optional leading "*").
+ * Empty is allowed (clears the name).
+ */
+function isValidInforuSenderName(value) {
+    const v = String(value || '').trim();
+    if (!v) return true; // empty = clear
+    return /^\*?[A-Za-z0-9]{1,11}$/.test(v);
+}
+
+/** Phone sender: 1–14 digits (InforU numeric sender). */
+function isValidInforuSenderPhone(value) {
+    const v = String(value || '').trim();
+    return /^\d{1,14}$/.test(v);
+}
+>>>>>>> main
 
 // ── Settings CRUD ───────────────────────────────────────────────────
 
@@ -49,6 +74,20 @@ const updateSettings = async (req, res) => {
                         templateKey: s.key,
                     });
                 }
+            }
+            // SMS sender name: alphanumeric only (empty clears). Phone uses request/activate flow.
+            if (s.category === 'messaging' && s.key === ACTIVE_SENDER_NAME_KEY) {
+                if (!isValidInforuSenderName(s.value)) {
+                    return res.status(400).json({
+                        message: 'שם שולח SMS לא תקין. יש להזין שם באנגלית/ספרות עד 11 תווים (ללא רווחים), או להשאיר ריק.',
+                    });
+                }
+            }
+            // Phone sender must not be saved directly — use sms-sender-request flow.
+            if (s.category === 'messaging' && s.key === ACTIVE_SENDER_NUMBER_KEY) {
+                return res.status(400).json({
+                    message: 'שינוי מספר שולח SMS דורש שליחת בקשה לאימות. השתמשו בכפתור השמירה לאחר עדכון המספר.',
+                });
             }
         }
 
@@ -107,6 +146,16 @@ const updateSingleSetting = async (req, res) => {
                 });
             }
         }
+        if (category === 'messaging' && key === ACTIVE_SENDER_NAME_KEY && !isValidInforuSenderName(value)) {
+            return res.status(400).json({
+                message: 'שם שולח SMS לא תקין. יש להזין שם באנגלית/ספרות עד 11 תווים (ללא רווחים), או להשאיר ריק.',
+            });
+        }
+        if (category === 'messaging' && key === ACTIVE_SENDER_NUMBER_KEY) {
+            return res.status(400).json({
+                message: 'שינוי מספר שולח SMS דורש שליחת בקשה לאימות.',
+            });
+        }
 
         const result = await settingsService.upsertSetting(category, key, value, {
             updatedBy: req.user?.UserId,
@@ -141,6 +190,7 @@ const updateSingleSetting = async (req, res) => {
 
 // ── SMS sender change (InforU verification flow) ────────────────────
 
+<<<<<<< HEAD
 const ACTIVE_SENDER_KEY = 'INFORU_SENDER_PHONE';
 const PENDING_SENDER_KEY = 'INFORU_SENDER_PHONE_PENDING';
 const PENDING_AT_KEY = 'INFORU_SENDER_PHONE_PENDING_REQUESTED_AT';
@@ -161,21 +211,36 @@ function isValidInforuSender(value) {
 /**
  * POST /api/platform-settings/sms-sender-request
  * Store the requested SMS sender as PENDING (live sender is untouched) and
+=======
+/**
+ * POST /api/platform-settings/sms-sender-request
+ * Store the requested SMS phone sender as PENDING (live number is untouched) and
+>>>>>>> main
  * email the technical owner the details needed to whitelist + verify it on InforU.
  */
 const requestSmsSenderChange = async (req, res) => {
     try {
         const phone = String(req.body?.phone || '').trim();
+<<<<<<< HEAD
         if (!isValidInforuSender(phone)) {
             return res.status(400).json({
                 message: 'מספר/מזהה שולח לא תקין. יש להזין מספר (עד 14 ספרות) או שם שולח באנגלית/ספרות (עד 11 תווים, ללא רווחים).',
+=======
+        if (!isValidInforuSenderPhone(phone)) {
+            return res.status(400).json({
+                message: 'מספר שולח לא תקין. יש להזין מספר טלפון עד 14 ספרות.',
+>>>>>>> main
             });
         }
 
         const requestedBy = req.user?.UserId;
         const nowIso = new Date().toISOString();
 
+<<<<<<< HEAD
         // Persist pending value + metadata (does NOT change the live sender)
+=======
+        // Persist pending value + metadata (does NOT change the live sender number)
+>>>>>>> main
         await settingsService.upsertSetting('messaging', PENDING_SENDER_KEY, phone, { updatedBy: requestedBy });
         await settingsService.upsertSetting('messaging', PENDING_AT_KEY, nowIso, { updatedBy: requestedBy });
         await settingsService.upsertSetting('messaging', PENDING_BY_KEY, String(requestedBy ?? ''), { updatedBy: requestedBy });
@@ -197,17 +262,31 @@ const requestSmsSenderChange = async (req, res) => {
         let firmName = '';
         try { firmName = await getFirmDisplayName(); } catch (_) { /* ignore */ }
 
+<<<<<<< HEAD
         const currentSender = await settingsService.getSetting('messaging', ACTIVE_SENDER_KEY, process.env.INFORU_SENDER_PHONE);
+=======
+        const currentNumber = await settingsService.getSetting('messaging', ACTIVE_SENDER_NUMBER_KEY, null);
+        const currentName = await settingsService.getSetting('messaging', ACTIVE_SENDER_NAME_KEY, process.env.INFORU_SENDER_PHONE);
+>>>>>>> main
         const requestedAtIl = new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' });
 
         const htmlBody = `
             <div dir="rtl" style="font-family: Arial, sans-serif; font-size: 15px; color: #222; line-height: 1.6;">
                 <h2 style="margin: 0 0 12px;">בקשת שינוי מספר שולח SMS</h2>
+<<<<<<< HEAD
                 <p>מנהל פלטפורמה ביקש לשנות את מספר/מזהה השולח של הודעות ה-SMS.</p>
                 <table cellpadding="6" style="border-collapse: collapse; margin: 12px 0;">
                     <tr><td style="font-weight:bold;">משרד:</td><td>${firmName || '—'}</td></tr>
                     <tr><td style="font-weight:bold;">שולח מבוקש:</td><td><strong>${phone}</strong></td></tr>
                     <tr><td style="font-weight:bold;">שולח נוכחי (פעיל):</td><td>${currentSender || '—'}</td></tr>
+=======
+                <p>מנהל פלטפורמה ביקש לשנות את מספר השולח של הודעות ה-SMS.</p>
+                <table cellpadding="6" style="border-collapse: collapse; margin: 12px 0;">
+                    <tr><td style="font-weight:bold;">משרד:</td><td>${firmName || '—'}</td></tr>
+                    <tr><td style="font-weight:bold;">מספר מבוקש:</td><td><strong>${phone}</strong></td></tr>
+                    <tr><td style="font-weight:bold;">מספר נוכחי:</td><td>${currentNumber || '—'}</td></tr>
+                    <tr><td style="font-weight:bold;">שם שולח נוכחי:</td><td>${currentName || '—'}</td></tr>
+>>>>>>> main
                     <tr><td style="font-weight:bold;">מבקש:</td><td>${requester.name || '—'}</td></tr>
                     <tr><td style="font-weight:bold;">טלפון מבקש:</td><td>${requester.phonenumber || '—'}</td></tr>
                     <tr><td style="font-weight:bold;">אימייל מבקש:</td><td>${requester.email || '—'}</td></tr>
@@ -215,11 +294,19 @@ const requestSmsSenderChange = async (req, res) => {
                 </table>
                 <h3 style="margin: 16px 0 8px;">מה צריך לעשות מול InforU:</h3>
                 <ol style="margin: 0; padding-inline-start: 20px;">
+<<<<<<< HEAD
                     <li>להוסיף את השולח <strong>${phone}</strong> לרשימת ההיתרים ב-InforU (Whitelist → Sender).</li>
                     <li>להשלים את תהליך האימות מול InforU (עד 24 שעות, כולל שיחת אימות מהצוות הטכני של InforU).</li>
                     <li>לאחר אישור InforU — להיכנס להגדרות הפלטפורמה וללחוץ על "הפעל מספר שולח" כדי להחיל את השינוי בפועל.</li>
                 </ol>
                 <p style="color:#666; font-size: 13px; margin-top: 16px;">השולח הנוכחי ימשיך לפעול עד להפעלת השולח החדש.</p>
+=======
+                    <li>להוסיף את המספר <strong>${phone}</strong> לרשימת ההיתרים ב-InforU (Whitelist → Sender).</li>
+                    <li>להשלים את תהליך האימות מול InforU (עד 24 שעות, כולל שיחת אימות מהצוות הטכני של InforU).</li>
+                    <li>לאחר אישור InforU — להיכנס להגדרות הפלטפורמה וללחוץ על "הפעל מספר שולח" כדי להחיל את השינוי בפועל.</li>
+                </ol>
+                <p style="color:#666; font-size: 13px; margin-top: 16px;">המספר הנוכחי ימשיך לפעול עד להפעלת המספר החדש. אם מוגדר שם שולח — הוא עדיין קודם למספר בשליחה.</p>
+>>>>>>> main
             </div>`;
 
         try {
@@ -243,7 +330,11 @@ const requestSmsSenderChange = async (req, res) => {
 
 /**
  * POST /api/platform-settings/sms-sender-activate
+<<<<<<< HEAD
  * Promote the pending sender to the live sender (call this only after InforU confirms).
+=======
+ * Promote the pending phone sender to the live number (call only after InforU confirms).
+>>>>>>> main
  */
 const activateSmsSenderChange = async (req, res) => {
     try {
@@ -253,10 +344,17 @@ const activateSmsSenderChange = async (req, res) => {
         }
 
         const updatedBy = req.user?.UserId;
+<<<<<<< HEAD
         await settingsService.upsertSetting('messaging', ACTIVE_SENDER_KEY, pending, {
             updatedBy,
             label: 'מספר שולח SMS',
             description: 'מספר הטלפון ממנו נשלחות הודעות SMS',
+=======
+        await settingsService.upsertSetting('messaging', ACTIVE_SENDER_NUMBER_KEY, pending, {
+            updatedBy,
+            label: 'מספר שולח SMS',
+            description: 'מספר טלפון שמוצג כשולח SMS (מאומת ב-InforU). שינוי דורש אישור צוות טכני.',
+>>>>>>> main
         });
         // Clear pending metadata
         await settingsService.upsertSetting('messaging', PENDING_SENDER_KEY, '', { updatedBy });

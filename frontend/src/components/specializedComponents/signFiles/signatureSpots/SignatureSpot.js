@@ -83,8 +83,9 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
 
         const startPageEl = document.querySelector(`.lw-signing-pageInner[data-page-number="${basePage}"]`);
         const startRect = startPageEl?.getBoundingClientRect();
-        const grabOffsetX = startRect ? startX - (startRect.left + baseX * safeScale) : 0;
-        const grabOffsetY = startRect ? startY - (startRect.top + baseY * safeScale) : 0;
+        let grabOffsetX = startRect ? startX - (startRect.left + baseX * safeScale) : 0;
+        let grabOffsetY = startRect ? startY - (startRect.top + baseY * safeScale) : 0;
+        let lastPageNumber = basePage;
 
         const findPageUnderPoint = (clientX, clientY) => {
             const hit = document.elementsFromPoint(clientX, clientY)
@@ -92,6 +93,8 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                 .find(Boolean);
             if (hit) return hit;
 
+            // Between-page gutters: snap to nearest page by vertical distance
+            // so spots can keep moving across pages.
             const pages = Array.from(document.querySelectorAll(".lw-signing-pageInner[data-page-number]"));
             let best = null;
             let bestDist = Infinity;
@@ -100,6 +103,10 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                 let dist = 0;
                 if (clientY < rect.top) dist = rect.top - clientY;
                 else if (clientY > rect.bottom) dist = clientY - rect.bottom;
+                // Prefer a page the cursor is horizontally over when close in Y.
+                if (clientX < rect.left || clientX > rect.right) {
+                    dist += Math.min(Math.abs(clientX - rect.left), Math.abs(clientX - rect.right));
+                }
                 if (dist < bestDist) {
                     bestDist = dist;
                     best = page;
@@ -120,6 +127,15 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
 
             const pageNumber = Number(pageEl.getAttribute("data-page-number")) || basePage;
             const rect = pageEl.getBoundingClientRect();
+
+            // When crossing onto another page, re-anchor the grab offset so the
+            // spot doesn't jump (page boxes used to differ in width).
+            if (pageNumber !== lastPageNumber) {
+                grabOffsetX = Math.max(0, Math.min(Number(clientX) - rect.left, spotW * safeScale));
+                grabOffsetY = Math.max(0, Math.min(Number(clientY) - rect.top, spotH * safeScale));
+                lastPageNumber = pageNumber;
+            }
+
             const pageW = rect.width / safeScale;
             const pageH = rect.height / safeScale;
             const nextX = (Number(clientX) - rect.left - grabOffsetX) / safeScale;

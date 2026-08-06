@@ -50,49 +50,20 @@ function safeErrorData(err) {
 }
 
 /**
- * Sanitize a brand name into an InforU alphanumeric Sender ID:
- * Latin letters + digits only, max 11 chars, optional leading "*".
- */
-function sanitizeAlphanumericSender(name) {
-    const raw = String(name || '').trim();
-    if (!raw) return null;
-    const cleaned = raw.replace(/[^A-Za-z0-9]/g, '');
-    if (!cleaned) return null;
-    return cleaned.slice(0, 11);
-}
-
-function isPhoneLikeSender(value) {
-    const cleaned = String(value || '').replace(/[\s\-()]/g, '');
-    return /^\+?\d{6,}$/.test(cleaned);
-}
-
-/**
  * Resolve the active InforU/Smoove Sender.
- * Prefer alphanumeric firm brand (firm:COMPANY_NAME) so SMS shows the office
- * name. Explicit alphanumeric overrides in platform_settings/env still win.
- * Numeric-only INFORU_SENDER_PHONE values are treated as legacy fallbacks.
- * Pending requests live under INFORU_SENDER_PHONE_PENDING and are never used.
+ * Prefer alphanumeric sender name; fall back to verified sender phone; then env.
+ * Pending phone requests (INFORU_SENDER_PHONE_PENDING) are never used until activated.
  */
 async function getActiveSender() {
-    const fromInforu = await getSetting("messaging", "INFORU_SENDER_PHONE", null);
+    const fromName = await getSetting("messaging", "INFORU_SENDER_PHONE", null);
+    if (fromName) return String(fromName).trim() || null;
+    const fromNumber = await getSetting("messaging", "INFORU_SENDER_NUMBER", null);
+    if (fromNumber) return String(fromNumber).trim() || null;
     const fromLegacy = await getSetting("messaging", "SMOOVE_SENDER_PHONE", null);
+    if (fromLegacy) return String(fromLegacy).trim() || null;
     const fromEnv = process.env.INFORU_SENDER_PHONE || process.env.SMOOVE_SENDER_PHONE || null;
-    const configured = String(fromInforu || fromLegacy || fromEnv || '').trim() || null;
-
-    let fromFirm = null;
-    try {
-        const enName = await getFirmNameEn();
-        fromFirm = sanitizeAlphanumericSender(enName) || sanitizeAlphanumericSender(COMPANY_NAME);
-    } catch (err) {
-        console.warn('[sms] derive sender from COMPANY_NAME failed:', err?.message || err);
-        fromFirm = sanitizeAlphanumericSender(COMPANY_NAME);
-    }
-
-    // Explicit alphanumeric brand override (e.g. "AshrafEssa") wins.
-    if (configured && !isPhoneLikeSender(configured)) return configured;
-    // Prefer firm name over a legacy numeric sender.
-    if (fromFirm) return fromFirm;
-    return configured;
+    if (fromEnv) return String(fromEnv).trim() || null;
+    return null;
 }
 
 // ── InforU provider ─────────────────────────────────────────────────
@@ -126,24 +97,22 @@ async function sendViaInforU(messageBody, formattedPhone, fast) {
         return;
     }
 
-    const senderPhone = await getActiveSender();
-    if (!senderPhone) {
-        console.error("INFORU_SENDER_PHONE not configured in platform_settings or .env. Cannot send SMS.");
-        return;
-    }
+    const senderName = await getActiveSender(); // null/empty → send without a sender name
 
     const baseUrl = process.env.INFORU_BASE_URL.replace(/\/$/, ""); // trim trailing slash
     const url = `${baseUrl}/api/v2/SMS/SendSms`;
+
+    const settings = {
+        // 0 = normal, -1 = high priority (single message — used for OTP)
+        Priority: fast ? -1 : 0,
+    };
+    if (senderName) settings.Sender = String(senderName);
 
     const requestBody = {
         Data: {
             Message: String(messageBody ?? ""),
             Recipients: [{ Phone: toInforuPhone(formattedPhone) }],
-            Settings: {
-                Sender: String(senderPhone),
-                // 0 = normal, -1 = high priority (single message — used for OTP)
-                Priority: fast ? -1 : 0,
-            },
+            Settings: settings,
         },
     };
 
@@ -195,11 +164,7 @@ async function sendViaSmoove(messageBody, formattedPhone) {
         return;
     }
 
-    const senderPhone = await getActiveSender();
-    if (!senderPhone) {
-        console.error("INFORU_SENDER_PHONE not configured in platform_settings or .env. Cannot send SMS.");
-        return;
-    }
+    const senderName = await getActiveSender(); // null/empty → omit fromNumber
 
     const baseUrl = process.env.SMOOVE_BASE_URL.replace(/\/$/, ""); // trim trailing slash
     const url = `${baseUrl}/v1/Messages`;
@@ -208,9 +173,9 @@ async function sendViaSmoove(messageBody, formattedPhone) {
 
     const messageRequest = {
         toMembersByCell: [toPhone],
-        fromNumber: String(senderPhone),
         body: String(messageBody ?? ""),
     };
+    if (senderName) messageRequest.fromNumber = String(senderName);
 
     const requestHeaders = {
         "Content-Type": "application/json",

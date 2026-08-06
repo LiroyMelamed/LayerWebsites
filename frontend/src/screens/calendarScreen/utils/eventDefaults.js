@@ -32,6 +32,27 @@ export function buildNewEventPrefill(selectInfo, { workingSchedule, workingHours
     const hoursStart = dayEntry?.open ? dayEntry.start : (workingHoursStart || "08:00");
     const hoursEnd = dayEntry?.open ? dayEntry.end : (workingHoursEnd || "18:00");
 
+    // Month / all-day selection: FullCalendar end is exclusive → convert to inclusive local day.
+    if (selectInfo?.allDay && selectInfo?.start) {
+        const start = new Date(selectInfo.start);
+        start.setHours(0, 0, 0, 0);
+        let endInclusive = selectInfo.end ? new Date(selectInfo.end) : new Date(start);
+        if (selectInfo.end) {
+            endInclusive = new Date(selectInfo.end);
+            endInclusive.setDate(endInclusive.getDate() - 1);
+        }
+        endInclusive.setHours(23, 59, 0, 0);
+        if (endInclusive < start) {
+            endInclusive = new Date(start);
+            endInclusive.setHours(23, 59, 0, 0);
+        }
+        return {
+            startTime: toDatetimeLocal(start),
+            endTime: toDatetimeLocal(endInclusive),
+            allDay: true,
+        };
+    }
+
     if (selectInfo?.start && selectInfo?.end && !selectInfo.allDay) {
         const start = new Date(selectInfo.start);
         let end = new Date(selectInfo.end);

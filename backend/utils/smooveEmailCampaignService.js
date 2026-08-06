@@ -20,6 +20,52 @@ async function resolveEmailFromName() {
     return getEmailFromName();
 }
 
+/**
+ * Brevo (and most relays) only authenticate From addresses on verified domains.
+ * Using a lawyer's personal domain as From (e.g. @levylaw.co.il) passes SMTP but
+ * fails SPF/DKIM at the recipient → silent drops / spam. Keep From verified;
+ * put the lawyer address in Reply-To instead.
+ */
+async function resolveVerifiedFromAndReplyTo(fromEmailOverride, replyToHint) {
+    const verifiedFrom = String(await getEmailFromEmail() || '').trim();
+    const override = String(fromEmailOverride || '').trim();
+    const replyHint = String(replyToHint || '').trim();
+
+    if (!override) {
+        return { fromEmail: verifiedFrom, replyTo: replyHint || undefined };
+    }
+    if (verifiedFrom && override.toLowerCase() === verifiedFrom.toLowerCase()) {
+        return { fromEmail: verifiedFrom, replyTo: replyHint || undefined };
+    }
+
+    const allowedDomains = new Set(
+        [
+            verifiedFrom.includes('@') ? verifiedFrom.split('@')[1] : '',
+            'mela-media.co.il',
+            String(process.env.WEBSITE_DOMAIN || WEBSITE_DOMAIN || '')
+                .replace(/^https?:\/\//i, '')
+                .replace(/\/.*$/, '')
+                .replace(/^www\./i, ''),
+        ]
+            .map((d) => String(d || '').trim().toLowerCase())
+            .filter(Boolean)
+    );
+
+    const overrideDomain = override.includes('@') ? override.split('@')[1].toLowerCase() : '';
+    if (overrideDomain && allowedDomains.has(overrideDomain)) {
+        return { fromEmail: override, replyTo: replyHint || undefined };
+    }
+
+    console.warn(
+        `[email] Ignoring unverified From="${override}"; using verified From="${verifiedFrom}"` +
+            (override ? ` (Reply-To=${override})` : '')
+    );
+    return {
+        fromEmail: verifiedFrom,
+        replyTo: replyHint || override || undefined,
+    };
+}
+
 const ALLOWED_CAMPAIGN_KEYS = [
     'SIGN_INVITE', 'SIGN_REMINDER', 'DOC_SIGNED', 'DOC_SIGNED_ATTACHMENTS', 'DOC_REJECTED',
     'CASE_CREATED', 'CASE_NAME_CHANGE', 'CASE_TYPE_CHANGE',
@@ -88,7 +134,7 @@ const ALLOWED_CUSTOM_FIELD_KEYS = [
  * @param {string} args.campaignKey
  * @param {object} args.contactFields
  */
-async function sendEmailCampaign({ toEmail, campaignKey, contactFields, attachments, fromEmail } = {}) {
+async function sendEmailCampaign({ toEmail, campaignKey, contactFields, attachments, fromEmail, replyTo } = {}) {
     const email = String(toEmail || '').trim();
     const key = String(campaignKey || '').trim().toUpperCase();
 
@@ -167,6 +213,7 @@ async function sendEmailCampaign({ toEmail, campaignKey, contactFields, attachme
             attachments: allAttachments,
             logLabel: 'DOC_SIGNED',
             fromEmail: fromEmail || undefined,
+            replyTo: replyTo || undefined,
         });
     }
 
@@ -179,6 +226,7 @@ async function sendEmailCampaign({ toEmail, campaignKey, contactFields, attachme
             attachments: allAttachments,
             logLabel: key,
             fromEmail: fromEmail || undefined,
+            replyTo: replyTo || undefined,
         });
     }
 
@@ -190,6 +238,8 @@ async function sendEmailCampaign({ toEmail, campaignKey, contactFields, attachme
         fields: allowedFields,
         shouldSendRealEmail,
         logLabel: key,
+        fromEmail: fromEmail || undefined,
+        replyTo: replyTo || undefined,
     });
 }
 
@@ -200,7 +250,11 @@ async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shou
     // CC list: optional array of email strings passed by callers (replaces old global CEO CC)
     const ccList = (Array.isArray(ccEmails) ? ccEmails : []).map(e => String(e || '').trim()).filter(Boolean);
     const ccEmail = ccList.length > 0 ? ccList.join(', ') : '';
-    const replyToEmail = String(replyTo || '').trim();
+    const { fromEmail: smtpFrom, replyTo: safeReplyTo } = await resolveVerifiedFromAndReplyTo(
+        fromEmailOverride,
+        replyTo
+    );
+    const replyToEmail = String(safeReplyTo || '').trim();
 
     if (!shouldSendRealEmail) {
         console.log('--- EMAIL Transactional Simulation (Dev Mode) ---');
@@ -218,7 +272,6 @@ async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shou
     const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
     const smtpUser = String(process.env.SMTP_USER || '').trim();
     const smtpPass = String(process.env.SMTP_PASS || '').trim();
-    const smtpFrom = String(fromEmailOverride || '').trim() || await getEmailFromEmail();
 
     if (!smtpHost || !smtpUser || !smtpPass) {
         console.error('SMTP env vars missing (SMTP_HOST/SMTP_USER/SMTP_PASS). Cannot send email.');
@@ -234,8 +287,10 @@ async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shou
         });
 
         const plainText = String(htmlBody || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        // Pass From as {name,address} so nodemailer RFC2047-encodes Hebrew /
+        // quotes (e.g. עו"ד). A raw `"Name" <addr>` string breaks Brevo (451 Invalid from).
         const mailOptions = {
-            from: fromName ? `${fromName} <${smtpFrom}>` : smtpFrom,
+            from: fromName ? { name: fromName, address: smtpFrom } : smtpFrom,
             to: email,
             ...(replyToEmail ? { replyTo: replyToEmail } : {}),
             ...(ccEmail && ccEmail.toLowerCase() !== email.toLowerCase() ? { cc: ccEmail } : {}),
@@ -288,12 +343,14 @@ async function sendTransactionalCustomHtmlEmail({ toEmail, subject, htmlBody, lo
 async function sendEmailWithAttachments({ toEmail, subject, htmlBody, attachments, logLabel, fromEmail: fromEmailOverride, ccEmails, replyTo, fromName: fromNameOverride } = {}) {
     const email = String(toEmail || '').trim();
     const fromName = String(fromNameOverride || '').trim() || await resolveEmailFromName();
-    // Always send FROM the SMTP account (noreply@) – cPanel rejects mismatched senders.
-    const fromEmail = String(fromEmailOverride || '').trim() || await getEmailFromEmail();
+    const { fromEmail, replyTo: safeReplyTo } = await resolveVerifiedFromAndReplyTo(
+        fromEmailOverride,
+        replyTo
+    );
     // CC list: optional array of email strings passed by callers (replaces old global CEO CC)
     const ccList = (Array.isArray(ccEmails) ? ccEmails : []).map(e => String(e || '').trim()).filter(Boolean);
     const ccEmail = ccList.length > 0 ? ccList.join(', ') : '';
-    const replyToEmail = String(replyTo || '').trim();
+    const replyToEmail = String(safeReplyTo || '').trim();
 
     const smtpHost = String(process.env.SMTP_HOST || '').trim();
     const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
@@ -325,8 +382,10 @@ async function sendEmailWithAttachments({ toEmail, subject, htmlBody, attachment
             auth: { user: smtpUser, pass: smtpPass },
         });
 
+        // Pass From as {name,address} so nodemailer RFC2047-encodes Hebrew /
+        // quotes (e.g. עו"ד). A raw `"Name" <addr>` string breaks Brevo (451 Invalid from).
         const mailOptions = {
-            from: fromName ? `${fromName} <${fromEmail}>` : fromEmail,
+            from: fromName ? { name: fromName, address: fromEmail } : fromEmail,
             to: email,
             ...(replyToEmail ? { replyTo: replyToEmail } : {}),
             ...(ccEmail && ccEmail.toLowerCase() !== email.toLowerCase() ? { cc: ccEmail } : {}),
@@ -400,6 +459,11 @@ function replaceEmailPlaceholders(template, fields, forHtml = true) {
     out = replaceAllSafe(out, '[[evidence_certificate_url]]', evidenceUrl);
     out = replaceAllSafe(out, '[[firm_name]]', safeFirmName);
     out = replaceAllSafe(out, '[[firm_logo_url]]', firmLogoUrl);
+    // Empty logo URL → remove broken <img src=""> (junk / phishing signal).
+    if (!firmLogoUrl) {
+        out = out.replace(/<img\b[^>]*\bsrc=(["'])\1[^>]*>/gi, '');
+        out = out.replace(/<img\b[^>]*\bsrc=["']\s*["'][^>]*>/gi, '');
+    }
     return out;
 }
 
@@ -432,9 +496,15 @@ function filterAllowedContactFieldsForCampaign(campaignKey, contactFields) {
     const input = contactFields || {};
     const baseFiltered = filterAllowedContactFields(input);
 
-    if (key === 'SIGN_INVITE') {
+    // Always keep firm branding — templates include logo/name; dropping them leaves
+    // empty <img src=""> which Apple/iCloud treat as a strong junk signal.
+    const brandingKeys = ['firm_name', 'firm_logo_url'];
+
+    if (key === 'SIGN_INVITE' || key === 'SIGN_REMINDER') {
+        const required =
+            key === 'SIGN_INVITE' ? SIGN_INVITE_REQUIRED_CUSTOM_FIELDS : SIGN_REMINDER_REQUIRED_CUSTOM_FIELDS;
         const only = {};
-        for (const k of SIGN_INVITE_REQUIRED_CUSTOM_FIELDS) {
+        for (const k of [...required, ...brandingKeys]) {
             if (Object.prototype.hasOwnProperty.call(baseFiltered, k)) {
                 only[k] = baseFiltered[k];
             }

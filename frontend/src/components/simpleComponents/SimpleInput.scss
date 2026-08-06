@@ -39,7 +39,8 @@
 
 .lw-simpleInput__label {
     position: absolute;
-    pointer-events: none;
+    pointer-events: auto;
+    cursor: text;
     background-color: var(--lw-color-white);
 
     inset-inline-start: 0.5rem;

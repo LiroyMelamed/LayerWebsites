@@ -36,11 +36,26 @@ async function getFirmDisplayName() {
     return String(process.env.FIRM_DISPLAY_NAME || '').trim();
 }
 
-/** Email "From" display name — same as firm display name, then SMTP_FROM_NAME env. */
+/** Email "From" display name — prefer explicit SMTP_FROM_NAME, then firm name. */
 async function getEmailFromName() {
-    const display = await getFirmDisplayName();
-    if (display) return display;
-    return String(process.env.SMTP_FROM_NAME || '').trim();
+    const explicit = String(
+        (await getSetting('messaging', 'SMTP_FROM_NAME', null))
+        || process.env.SMTP_FROM_NAME
+        || ''
+    ).trim();
+    if (explicit) return sanitizeEmailFromDisplayName(explicit);
+    return sanitizeEmailFromDisplayName(await getFirmDisplayName());
+}
+
+/**
+ * ASCII " inside From display names (e.g. עו"ד) historically broke Brevo and
+ * still hurts filtering. Prefer Hebrew gershayim or drop the quote.
+ */
+function sanitizeEmailFromDisplayName(name) {
+    return String(name || '')
+        .replace(/"/g, '״')
+        .replace(/\s+/g, ' ')
+        .trim();
 }
 
 async function getEmailFromEmail() {
@@ -57,4 +72,5 @@ module.exports = {
     getFirmDisplayName,
     getEmailFromName,
     getEmailFromEmail,
+    sanitizeEmailFromDisplayName,
 };

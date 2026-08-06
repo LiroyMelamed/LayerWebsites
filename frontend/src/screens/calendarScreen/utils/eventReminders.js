@@ -9,6 +9,7 @@ export const REMINDER_CHANNEL_OPTIONS = [
 const DEFAULT_ALLOWED_CHANNELS = ["push", "sms", "email"];
 
 export const REMINDER_PRESETS = [
+    { minutes: 0, labelKey: "calendar.reminderImmediate" },
     { minutes: 15, labelKey: "calendar.reminder15m" },
     { minutes: 30, labelKey: "calendar.reminder30m" },
     { minutes: 60, labelKey: "calendar.reminder1h" },
@@ -18,7 +19,7 @@ export const REMINDER_PRESETS = [
     { minutes: 10080, labelKey: "calendar.reminder1w" },
 ];
 
-const DEFAULT_ALLOWED = [15, 30, 60, 120, 1440, 2880, 10080];
+const DEFAULT_ALLOWED = [0, 15, 30, 60, 120, 1440, 2880, 10080];
 
 /** Yellow-marked create defaults: 30m, 1h, 2h, 1d, 2d (not 15m / 1w). */
 export const DEFAULT_CREATE_REMINDER_OFFSETS = [30, 60, 120, 1440, 2880];
@@ -48,7 +49,7 @@ export function parseReminderTargets(raw) {
 export function parseOffsetsList(raw) {
     if (raw == null || raw === "") return [];
     if (Array.isArray(raw)) {
-        return raw.map((v) => parseInt(v, 10)).filter((n) => Number.isInteger(n) && n > 0);
+        return raw.map((v) => parseInt(v, 10)).filter((n) => Number.isInteger(n) && n >= 0);
     }
     if (typeof raw === "string") {
         const trimmed = raw.trim();
@@ -63,7 +64,7 @@ export function parseOffsetsList(raw) {
         return trimmed
             .split(",")
             .map((s) => parseInt(s.trim(), 10))
-            .filter((n) => Number.isInteger(n) && n > 0);
+            .filter((n) => Number.isInteger(n) && n >= 0);
     }
     return [];
 }

@@ -17,7 +17,7 @@
     "axios": "^1.7.9",
     "chart.js": "^4.1.1",
     "i18next": "^25.7.3",
-    "pdfjs-dist": "^4.4.168",
+    "pdfjs-dist": "5.4.296",
     "react": "^18.3.1",
     "react-chartjs-2": "^5.3.0",
     "react-dom": "^18.3.1",
@@ -43,13 +43,20 @@
     "form-data": "^4.0.5"
   },
   "scripts": {
+    "prestart": "node scripts/copy-pdf-worker.js",
     "start": "react-scripts start",
+    "prebuild": "node scripts/copy-pdf-worker.js",
     "build": "react-scripts build",
-    "build:morlevy": "cp public/tenants/morlevy/firm-logo.png public/firm-logo.png && cp .env.production.morlevy .env && react-scripts build",
-    "build:ashrafessa": "cp public/tenants/ashrafessa/firm-logo.png public/firm-logo.png && cp .env.production.ashrafessa .env && react-scripts build",
+    "prebuild:morlevy": "node scripts/copy-pdf-worker.js && node scripts/apply-tenant-branding.js morlevy",
+    "build:morlevy": "cp .env.production.morlevy .env && react-scripts build",
+    "prebuild:ashrafessa": "node scripts/copy-pdf-worker.js && node scripts/apply-tenant-branding.js ashrafessa",
+    "build:ashrafessa": "cp .env.production.ashrafessa .env && react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "i18n:extract": "node scripts/extract-hebrew-i18n.js"
+    "i18n:extract": "node scripts/extract-hebrew-i18n.js",
+    "copy-pdf-worker": "node scripts/copy-pdf-worker.js",
+    "prebuild:melamedlaw": "node scripts/copy-pdf-worker.js && node scripts/apply-tenant-branding.js melamedlaw",
+    "build:melamedlaw": "cp .env.production.melamedlaw .env && react-scripts build"
   },
   "eslintConfig": {
     "extends": [

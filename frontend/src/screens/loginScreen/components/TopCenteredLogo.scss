@@ -3,11 +3,16 @@
 .lw-topCenteredLogo {
     display: flex;
     flex-direction: column;
+    align-items: center;
     width: 100%;
     position: relative;
 }
 
-.lw-topCenteredLogo__cornerLogo {}
+.lw-topCenteredLogo__cornerLogo {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
 
 .lw-topCenteredLogo__logoImage {
     @include m.fluid-size(width, 48, 12vw, 72);
@@ -19,6 +24,11 @@
     text-align: center !important;
     width: 100%;
     align-self: center !important;
+}
+
+.lw-topCenteredLogo__titleText {
+    text-align: center !important;
+    width: 100%;
 }
 
 .lw-topCenteredLogo__isoBadgeWrap {
