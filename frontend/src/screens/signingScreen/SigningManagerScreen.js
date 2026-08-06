@@ -878,9 +878,16 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                             {t('signingManager.actions.resendInvite')}
                         </SecondaryButton>
                     )}
-                    {file?.Status === "pending" && onDelete && (
+                    {["pending", "signed", "rejected"].includes(String(file?.Status || "").toLowerCase()) && onDelete && (
                         <SecondaryButton
-                            onPress={() => onDelete(file.SigningFileId)}
+                            onPress={() => {
+                                const ok = window.confirm(
+                                    t('signingManager.actions.deleteConfirm', {
+                                        defaultValue: 'למחוק את המסמך מהמעקב? פעולה זו בלתי הפיכה (למשל מספר טלפון שגוי / מסמך שגוי).',
+                                    })
+                                );
+                                if (ok) onDelete(file.SigningFileId);
+                            }}
                             isPerforming={isDeleting}
                             className="lw-signingManagerScreen__deleteBtn"
                         >

@@ -843,6 +843,42 @@ export default function UploadFileForSigningScreen() {
             return;
         }
 
+        const attachExistingSigner = (user) => {
+            const userId = user?.UserId;
+            if (!userId) return false;
+            setSelectedSigners((prev) => {
+                const exists = prev.some((s) => Number(s?.UserId) === Number(userId));
+                if (exists) return prev;
+                const resolvedEmail = user.Email || email || null;
+                const resolvedPhone = user.PhoneNumber || user.Phone || phone || null;
+                let deliveryMethod = 'phone';
+                if (resolvedEmail && !resolvedPhone) deliveryMethod = 'email';
+                else if (resolvedPhone && !resolvedEmail) deliveryMethod = 'phone';
+                return [
+                    ...prev,
+                    {
+                        UserId: userId,
+                        Name: user.Name || name,
+                        Email: resolvedEmail,
+                        Phone: resolvedPhone,
+                        deliveryMethod,
+                    },
+                ];
+            });
+            setManualSignerName("");
+            setManualSignerEmail("");
+            setManualSignerPhone("");
+            setShowManualSigner(false);
+            SearchCustomersByName(user.Name || name);
+            setMessage({
+                type: 'success',
+                text: t('signing.upload.validation.manualSignerAttachedExisting', {
+                    defaultValue: 'הטלפון כבר קיים במערכת — שייכנו את הלקוח הקיים כחותם.',
+                }),
+            });
+            return true;
+        };
+
         try {
             setMessage(null);
             const res = await customersApi.addCustomer({
@@ -852,6 +888,17 @@ export default function UploadFileForSigningScreen() {
                 companyName: '',
                 dateOfBirth: null,
             });
+
+            if (res?.status === 409 && (res?.data?.code === 'PHONE_ALREADY_EXISTS' || res?.data?.UserId)) {
+                if (attachExistingSigner(res.data)) return;
+                setMessage({
+                    type: 'error',
+                    text: res?.data?.message || t('signing.upload.validation.manualSignerPhoneExists', {
+                        defaultValue: 'מספר הטלפון כבר קיים במערכת. חפשו את הלקוח והוסיפו אותו כחותם.',
+                    }),
+                });
+                return;
+            }
 
             if (res?.status !== 200 && res?.status !== 201) {
                 setMessage({
@@ -896,9 +943,20 @@ export default function UploadFileForSigningScreen() {
             setShowManualSigner(false);
             SearchCustomersByName(name);
         } catch (err) {
+            const data = err?.data || err?.response?.data;
+            if (err?.status === 409 || data?.code === 'PHONE_ALREADY_EXISTS') {
+                if (attachExistingSigner(data || {})) return;
+                setMessage({
+                    type: 'error',
+                    text: data?.message || t('signing.upload.validation.manualSignerPhoneExists', {
+                        defaultValue: 'מספר הטלפון כבר קיים במערכת. חפשו את הלקוח והוסיפו אותו כחותם.',
+                    }),
+                });
+                return;
+            }
             setMessage({
                 type: 'error',
-                text: err?.data?.message || err?.message || t('signing.upload.validation.manualSignerCreateFailed'),
+                text: data?.message || err?.message || t('signing.upload.validation.manualSignerCreateFailed'),
             });
         }
     };

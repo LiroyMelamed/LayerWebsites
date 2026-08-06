@@ -7,7 +7,7 @@ import SignatureSpotsLayer from "../signatureSpots/SignatureSpotsLayer";
 import { useTranslation } from "react-i18next";
 
 /** Spot coordinates are authored against this width; display may be wider. */
-const BASE_RENDER_WIDTH = 800;
+export const BASE_RENDER_WIDTH = 800;
 
 function LazyPdfPage({
     pageNumber,
@@ -22,8 +22,6 @@ function LazyPdfPage({
     signers,
     selectedSpotIndex,
     selectedSpotId,
-    isFirst,
-    pageContainerRef,
 }) {
     const wrapRef = useRef(null);
     const [visible, setVisible] = useState(pageNumber <= 2);
@@ -48,14 +46,12 @@ function LazyPdfPage({
     const placeholderHeight = Math.round(renderWidth * 1.35);
 
     return (
-        <div
-            ref={(node) => {
-                wrapRef.current = node;
-                if (isFirst && pageContainerRef) pageContainerRef.current = node;
-            }}
-            className="lw-signing-pageWrap"
-        >
-            <SimpleContainer className="lw-signing-pageInner" data-page-number={pageNumber}>
+        <div ref={wrapRef} className="lw-signing-pageWrap">
+            <SimpleContainer
+                className="lw-signing-pageInner"
+                data-page-number={pageNumber}
+                style={{ width: renderWidth, maxWidth: "100%" }}
+            >
                 {visible ? (
                     <>
                         <SimpleContainer className="lw-signing-pdfPage">
@@ -83,7 +79,7 @@ function LazyPdfPage({
                 ) : (
                     <div
                         className="lw-signing-pagePlaceholder"
-                        style={{ width: "100%", maxWidth: renderWidth, height: placeholderHeight }}
+                        style={{ width: renderWidth, height: placeholderHeight }}
                         aria-hidden="true"
                     />
                 )}
@@ -94,7 +90,8 @@ function LazyPdfPage({
 
 /**
  * Single react-pdf Document for all pages — critical on iOS Safari.
- * Lazy-mounts off-screen pages for faster first paint; full container width.
+ * Lazy-mounts off-screen pages for faster first paint.
+ * Every page uses the same renderWidth so spotScale matches the canvas on all pages.
  */
 export default function PdfViewer({
     pdfFile,
@@ -117,7 +114,6 @@ export default function PdfViewer({
     const [numPages, setNumPages] = useState(0);
     const [objectUrl, setObjectUrl] = useState(null);
 
-    const pageContainerRef = useRef(null);
     const viewerRef = useRef(null);
     const [containerWidth, setContainerWidth] = useState(BASE_RENDER_WIDTH);
 
@@ -224,11 +220,6 @@ export default function PdfViewer({
     const spotScale = useMemo(() => renderWidth / BASE_RENDER_WIDTH, [renderWidth]);
 
     useEffect(() => {
-        if (!pageContainerRef.current) return;
-        pageContainerRef.current.style.setProperty("--lw-pdf-render-width", `${renderWidth}px`);
-    }, [renderWidth, numPages]);
-
-    useEffect(() => {
         setNumPages(0);
     }, [file]);
 
@@ -237,7 +228,11 @@ export default function PdfViewer({
     const pagesToRender = numPages > 0 ? numPages : 0;
 
     return (
-        <SimpleContainer className="lw-signing-pdfViewer" ref={viewerRef}>
+        <SimpleContainer
+            className="lw-signing-pdfViewer"
+            ref={viewerRef}
+            style={{ ["--lw-pdf-render-width"]: `${renderWidth}px` }}
+        >
             <Document
                 file={file}
                 loading={
@@ -254,7 +249,8 @@ export default function PdfViewer({
                     setNumPages(pdf.numPages || 0);
                     if (typeof onDocumentReady === "function") onDocumentReady();
                 }}
-                onLoadError={() => {
+                onLoadError={(err) => {
+                    console.error("PdfViewer Document load error:", err);
                     if (typeof onDocumentReady === "function") onDocumentReady();
                 }}
             >
@@ -275,8 +271,6 @@ export default function PdfViewer({
                             signers={signers}
                             selectedSpotIndex={selectedSpotIndex}
                             selectedSpotId={selectedSpotId}
-                            isFirst={pageNumber === 1}
-                            pageContainerRef={pageContainerRef}
                         />
                     );
                 })}

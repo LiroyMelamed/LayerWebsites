@@ -533,6 +533,25 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         if (!colorTouchedRef.current) {
             setColor(getEventTypeDefaultColor(eventType));
         }
+        if (isLeaveOrHolidayEventType(eventType)) {
+            setAllDay(true);
+        }
+        // Switch SMS defaults by event type on create (unless the lawyer already customized).
+        if (!isEdit) {
+            const tpl = (typeof window !== "undefined" && window.__CALENDAR_SMS_TEMPLATES__) || {};
+            if (!String(event?.clientReminderSms || "").trim()) {
+                const nextSms = eventType === EVENT_TYPE_HEARING
+                    ? (tpl.hearingReminder || tpl.appointmentReminder)
+                    : tpl.appointmentReminder;
+                if (nextSms) setClientReminderSms(nextSms);
+            }
+            if (!String(event?.inviteSms || "").trim()) {
+                const nextInvite = eventType === EVENT_TYPE_HEARING
+                    ? (tpl.hearingInvite || tpl.appointmentInvite)
+                    : tpl.appointmentInvite;
+                if (nextInvite) setInviteSms(nextInvite);
+            }
+        }
         if (!isReminderCapableEventType(eventType)) return;
         // Coming from leave/holiday (or empty offsets): seed yellow defaults.
         setReminderOffsets((prev) => (
@@ -583,14 +602,33 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 const platformClientSms = String(
                     templates?.CALENDAR_CLIENT_REMINDER_SMS?.effectiveValue || ""
                 ).trim();
+                const platformClientSmsHearing = String(
+                    templates?.CALENDAR_CLIENT_REMINDER_SMS_HEARING?.effectiveValue || ""
+                ).trim();
                 const platformInviteSms = String(
                     templates?.CALENDAR_INVITE_SMS?.effectiveValue || ""
                 ).trim();
-                if (!String(event?.clientReminderSms || "").trim() && platformClientSms) {
-                    setClientReminderSms(platformClientSms);
+                const platformInviteSmsHearing = String(
+                    templates?.CALENDAR_INVITE_SMS_HEARING?.effectiveValue || ""
+                ).trim();
+                window.__CALENDAR_SMS_TEMPLATES__ = {
+                    appointmentReminder: platformClientSms,
+                    hearingReminder: platformClientSmsHearing || platformClientSms,
+                    appointmentInvite: platformInviteSms,
+                    hearingInvite: platformInviteSmsHearing || platformInviteSms,
+                };
+                const et = String(eventTypeRef.current || "").toLowerCase();
+                const pickReminder = et === "hearing"
+                    ? (platformClientSmsHearing || platformClientSms)
+                    : platformClientSms;
+                const pickInvite = et === "hearing"
+                    ? (platformInviteSmsHearing || platformInviteSms)
+                    : platformInviteSms;
+                if (!String(event?.clientReminderSms || "").trim() && pickReminder) {
+                    setClientReminderSms(pickReminder);
                 }
-                if (!String(event?.inviteSms || "").trim() && platformInviteSms) {
-                    setInviteSms(platformInviteSms);
+                if (!String(event?.inviteSms || "").trim() && pickInvite) {
+                    setInviteSms(pickInvite);
                 }
                 try {
                     const rawColors = cal?.CALENDAR_EVENT_TYPE_COLORS?.effectiveValue;
@@ -844,9 +882,41 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 : null;
             // Reminder events are zero-duration in concept, but we give the calendar
             // a 15-minute slot so listEvents window queries (tstzrange '[)') match.
-            const reminderEndIso = isReminderEventType
-                ? new Date(new Date(startTime).getTime() + 15 * 60 * 1000).toISOString()
-                : new Date(endTime).toISOString();
+            const toLocalYmd = (val) => {
+                const s = String(val || "");
+                if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+                const d = new Date(val);
+                if (Number.isNaN(d.getTime())) return "";
+                const pad = (n) => String(n).padStart(2, "0");
+                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+            };
+            let startIso;
+            let endIso;
+            if (forceAllDay || allDay) {
+                const startYmd = toLocalYmd(startTime);
+                let endYmd = toLocalYmd(endTime) || startYmd;
+                // Guard: if end looks like FC exclusive (next midnight / same as start+1 with 00:00), pull back one day.
+                try {
+                    const endLocal = new Date(endTime);
+                    if (!Number.isNaN(endLocal.getTime())
+                        && endLocal.getHours() === 0
+                        && endLocal.getMinutes() === 0
+                        && endYmd > startYmd) {
+                        const pulled = new Date(endLocal);
+                        pulled.setDate(pulled.getDate() - 1);
+                        endYmd = toLocalYmd(pulled) || endYmd;
+                    }
+                } catch { /* ignore */ }
+                if (endYmd < startYmd) endYmd = startYmd;
+                startIso = new Date(`${startYmd}T00:00:00`).toISOString();
+                endIso = new Date(`${endYmd}T23:59:00`).toISOString();
+            } else if (isReminderEventType) {
+                startIso = new Date(startTime).toISOString();
+                endIso = new Date(new Date(startTime).getTime() + 15 * 60 * 1000).toISOString();
+            } else {
+                startIso = new Date(startTime).toISOString();
+                endIso = new Date(endTime).toISOString();
+            }
             const payload = {
                 title: title.trim() || reminderTitleFallback || (eventType === EVENT_TYPE_LEAVE
                     ? t("calendar.leaveLabel")
@@ -867,8 +937,8 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     if (isStockEventColor(picked, eventType)) return null;
                     return picked;
                 })(),
-                start_time: new Date(startTime).toISOString(),
-                end_time: reminderEndIso,
+                start_time: startIso,
+                end_time: endIso,
                 all_day: forceAllDay ? true : allDay,
                 manager_user_id: primaryManager?.userId || null,
                 manager_name: managers.length
@@ -1211,8 +1281,30 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const showConflictBanner = !isInternalScopedType && (conflictState.hasConflict || conflictState.hasLeaveConflict);
 
     const modalRootRef = useRef(null);
+    const leadNameInputRef = useRef(null);
+    const leadPhoneInputRef = useRef(null);
+    const leadEmailInputRef = useRef(null);
     const prevPopupHeightRef = useRef(null);
     const sizeMorphCleanupRef = useRef(null);
+
+    /** Keep Tab inside the lead fields instead of jumping to chips/toggles behind them. */
+    const focusLeadField = useCallback((ref) => {
+        const el = ref?.current;
+        if (el && typeof el.focus === "function") el.focus();
+    }, []);
+
+    const handleLeadFieldTab = useCallback((e, { next, prev }) => {
+        if (e.key !== "Tab") return;
+        if (e.shiftKey) {
+            if (!prev) return;
+            e.preventDefault();
+            focusLeadField(prev);
+            return;
+        }
+        if (!next) return;
+        e.preventDefault();
+        focusLeadField(next);
+    }, [focusLeadField]);
     // Compact (חופשה/חג) ↔ full form is the size jump users notice.
     const layoutMode = caseFormDraft
         ? "case"
@@ -1354,6 +1446,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                     className={`lw-eventFormModal__segmentedBtn ${eventType === value ? "is-active" : ""}`}
                                     onPress={() => setEventType(value)}
                                     aria-pressed={eventType === value}
+                                    tabIndex={-1}
                                 >
                                     {t(labelKey)}
                                 </SimpleButton>
@@ -1523,6 +1616,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                             className={`lw-eventFormModal__reminderChip ${active ? "is-active" : ""}`}
                                             onPress={() => toggleReminderOffset(minutes)}
                                             aria-pressed={active}
+                                            tabIndex={-1}
                                         >
                                             <Text14>{t(labelKey)}</Text14>
                                         </SimpleButton>
@@ -1544,6 +1638,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                                     className={`lw-eventFormModal__reminderChip ${active ? "is-active" : ""}`}
                                                     onPress={() => toggleReminderChannel(key)}
                                                     aria-pressed={active}
+                                                    tabIndex={-1}
                                                 >
                                                     <Text14>{t(labelKey)}</Text14>
                                                 </SimpleButton>
@@ -1560,6 +1655,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                         className={`lw-eventFormModal__reminderChip ${reminderTargets.client ? "is-active" : ""}`}
                                         onPress={() => toggleReminderTarget("client")}
                                         aria-pressed={!!reminderTargets.client}
+                                        tabIndex={-1}
                                     >
                                         <Text14>{t("calendar.reminderTargetClient")}</Text14>
                                     </SimpleButton>
@@ -1567,6 +1663,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                         className={`lw-eventFormModal__reminderChip ${reminderTargets.managers ? "is-active" : ""}`}
                                         onPress={() => toggleReminderTarget("managers")}
                                         aria-pressed={!!reminderTargets.managers}
+                                        tabIndex={-1}
                                     >
                                         <Text14>{t("calendar.reminderTargetManagers")}</Text14>
                                     </SimpleButton>
@@ -1576,12 +1673,14 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                 <SimpleContainer className="lw-eventFormModal__smsTemplates">
                                     <TextBold14 color={NAVY}>{t("calendar.clientReminderSmsLabel")}</TextBold14>
                                     <Text12 color="#718096">{t("calendar.clientReminderSmsHint")}</Text12>
+                                    <Text12 color="#718096">{t("calendar.inviteRemindersIndependentHint")}</Text12>
                                     <SimpleContainer className="lw-eventFormModal__smsVarRow">
                                         {CALENDAR_SMS_VARS.map((v) => (
                                             <SimpleButton
                                                 key={`rem-${v}`}
                                                 className="lw-eventFormModal__reminderChip"
                                                 onPress={() => setClientReminderSms((prev) => `${prev}{{${v}}}`)}
+                                                tabIndex={-1}
                                             >
                                                 <Text14>{CALENDAR_SMS_VAR_LABELS[v] || v}</Text14>
                                             </SimpleButton>
@@ -1606,6 +1705,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                                 key={`inv-${v}`}
                                                 className="lw-eventFormModal__reminderChip"
                                                 onPress={() => setInviteSms((prev) => `${prev}{{${v}}}`)}
+                                                tabIndex={-1}
                                             >
                                                 <Text14>{CALENDAR_SMS_VAR_LABELS[v] || v}</Text14>
                                             </SimpleButton>
@@ -1631,7 +1731,16 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     {showManagersField && (
                     <SimpleContainer className="lw-eventFormModal__managersCol">
                         {isEdit && event?.inviteStatus && event.inviteStatus !== "none" && (
-                            <SimpleContainer className="lw-eventFormModal__inviteStatus">
+                            <SimpleContainer
+                                className={`lw-eventFormModal__inviteStatus lw-eventFormModal__inviteStatus--${event.inviteStatus}`}
+                            >
+                                <span className="lw-eventFormModal__inviteBadge">
+                                    {event.inviteStatus === "accepted"
+                                        ? t("calendar.inviteStatusBadgeAccepted", { defaultValue: "אושר" })
+                                        : event.inviteStatus === "declined"
+                                            ? t("calendar.inviteStatusBadgeDeclined", { defaultValue: "נדחה" })
+                                            : t("calendar.inviteStatusBadgePending", { defaultValue: "ממתין" })}
+                                </span>
                                 <TextBold14 color={NAVY}>
                                     {event.inviteStatus === "accepted"
                                         ? t("calendar.inviteStatusAccepted")
@@ -1676,6 +1785,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                         <button
                                             type="button"
                                             className="lw-eventFormModal__chipRemove"
+                                            tabIndex={-1}
                                             onClick={() => handleRemoveManager(m.userId)}
                                             aria-label={t("calendar.removeManager")}
                                         >
@@ -1690,7 +1800,16 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
 
                     {/* Invite status for reminder-type edits (managers block hidden) */}
                     {!showManagersField && isEdit && event?.inviteStatus && event.inviteStatus !== "none" && (
-                        <SimpleContainer className="lw-eventFormModal__inviteStatus">
+                        <SimpleContainer
+                            className={`lw-eventFormModal__inviteStatus lw-eventFormModal__inviteStatus--${event.inviteStatus}`}
+                        >
+                            <span className="lw-eventFormModal__inviteBadge">
+                                {event.inviteStatus === "accepted"
+                                    ? t("calendar.inviteStatusBadgeAccepted", { defaultValue: "אושר" })
+                                    : event.inviteStatus === "declined"
+                                        ? t("calendar.inviteStatusBadgeDeclined", { defaultValue: "נדחה" })
+                                        : t("calendar.inviteStatusBadgePending", { defaultValue: "ממתין" })}
+                            </span>
                             <TextBold14 color={NAVY}>
                                 {event.inviteStatus === "accepted"
                                     ? t("calendar.inviteStatusAccepted")
@@ -1711,6 +1830,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                     onPress={() => setIntakeMode(INTAKE_EXISTING)}
                                     aria-pressed={intakeMode === INTAKE_EXISTING}
                                     disabled={isEdit && !!clientUserId}
+                                    tabIndex={-1}
                                 >
                                     {t("calendar.intakeExistingClient")}
                                 </SimpleButton>
@@ -1719,6 +1839,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                     onPress={() => setIntakeMode(INTAKE_LEAD)}
                                     aria-pressed={intakeMode === INTAKE_LEAD}
                                     disabled={isEdit && !!clientUserId}
+                                    tabIndex={-1}
                                 >
                                     {t("calendar.intakeNewLead")}
                                 </SimpleButton>
@@ -1809,20 +1930,36 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                 value={leadName}
                                 onChange={(e) => setLeadName(e.target.value)}
                                 timeToWaitInMilli={0}
+                                inputRef={leadNameInputRef}
+                                autoComplete="name"
+                                onKeyDown={(e) => handleLeadFieldTab(e, { next: leadPhoneInputRef })}
                             />
                             <SimpleInput
                                 title={t("calendar.leadPhone")}
-                                type="tel"
+                                // text + inputMode avoids Safari tel-autofill stealing focus on Tab
+                                type="text"
+                                inputMode="tel"
+                                autoComplete="off"
                                 value={leadPhone}
                                 onChange={(e) => setLeadPhone(e.target.value)}
                                 timeToWaitInMilli={0}
+                                inputRef={leadPhoneInputRef}
+                                onKeyDown={(e) => handleLeadFieldTab(e, {
+                                    next: leadEmailInputRef,
+                                    prev: leadNameInputRef,
+                                })}
                             />
                             <SimpleInput
                                 title={t("calendar.leadEmail")}
                                 type="email"
+                                autoComplete="off"
                                 value={leadEmail}
                                 onChange={(e) => setLeadEmail(e.target.value)}
                                 timeToWaitInMilli={0}
+                                inputRef={leadEmailInputRef}
+                                onKeyDown={(e) => handleLeadFieldTab(e, {
+                                    prev: leadPhoneInputRef,
+                                })}
                             />
                             <SimpleInput
                                 title={t("calendar.convertLeadOptionalCaseName")}
@@ -1867,6 +2004,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                     type="button"
                                     className={`lw-eventFormModal__colorSwatch ${String(color).toUpperCase() === hex.toUpperCase() ? "is-active" : ""}`}
                                     style={{ backgroundColor: hex }}
+                                    tabIndex={-1}
                                     onClick={() => {
                                         colorTouchedRef.current = true;
                                         setColor(hex);

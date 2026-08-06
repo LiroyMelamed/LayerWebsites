@@ -181,7 +181,43 @@ const SimpleInput = forwardRef(
         };
 
         const handleTextChange = (e) => {
-            const next = e.target.value;
+            let next = String(e.target.value ?? "");
+            // Digits / separators only for temporal text entry.
+            next = next.replace(/[^\d/:.\s-]/g, "");
+
+            if (type === "time") {
+                const digits = next.replace(/\D/g, "").slice(0, 4);
+                next = digits.length <= 2
+                    ? digits
+                    : `${digits.slice(0, 2)}:${digits.slice(2)}`;
+            } else if (type === "date" || type === "datetime-local") {
+                const hasTime = type === "datetime-local";
+                const spaced = next.trimStart();
+                const match = spaced.match(/^([^\s]*)(?:\s+(.*))?$/);
+                let datePart = match?.[1] || "";
+                let timePart = hasTime ? (match?.[2] || "") : "";
+                const dateDigits = datePart.replace(/\D/g, "").slice(0, 8);
+                if (dateDigits.length <= 2) datePart = dateDigits;
+                else if (dateDigits.length <= 4) datePart = `${dateDigits.slice(0, 2)}/${dateDigits.slice(2)}`;
+                else datePart = `${dateDigits.slice(0, 2)}/${dateDigits.slice(2, 4)}/${dateDigits.slice(4)}`;
+
+                if (hasTime) {
+                    // After a full dd/mm/yyyy, keep a trailing space so HH→MM can auto-advance.
+                    const timeDigits = timePart.replace(/\D/g, "").slice(0, 4);
+                    if (dateDigits.length < 8) {
+                        next = datePart;
+                    } else if (timeDigits.length === 0) {
+                        next = `${datePart} `;
+                    } else if (timeDigits.length <= 2) {
+                        next = `${datePart} ${timeDigits}`;
+                    } else {
+                        next = `${datePart} ${timeDigits.slice(0, 2)}:${timeDigits.slice(2)}`;
+                    }
+                } else {
+                    next = datePart;
+                }
+            }
+
             setTextValue(next);
             const parsed = parseTemporalText(type, next);
             if (parsed === null) return;
@@ -269,6 +305,11 @@ const SimpleInput = forwardRef(
                             fontSize: `${Number(titleFontSize || 16) / 16}rem`,
                             borderColor: getBorderColor(),
                             backgroundColor: getBackgroundColor(),
+                        }}
+                        onMouseDown={(e) => {
+                            // Label overlays the field; focus the real input on click/tap.
+                            e.preventDefault();
+                            if (!disabled) textInputRef.current?.focus();
                         }}
                     >
                         {error || title}

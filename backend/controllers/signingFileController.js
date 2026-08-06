@@ -541,10 +541,10 @@ function decodeJwtExpDate(token) {
 }
 
 /**
- * Prefer a short /s/<slug> link. Falls back to the long JWT URL if persistence fails.
+ * Persist JWT under /s/<slug>. Falls back to longUrl if insert fails.
+ * Used for both signing invites and signed-document view links (DOC_SIGNED SMS).
  */
-async function buildPublicSigningUrl(token) {
-    const longUrl = buildLongPublicSigningUrl(token);
+async function persistSigningShortLink(token, longUrl) {
     if (!token || !longUrl) return longUrl;
 
     const domain = getWebsiteDomain();
@@ -574,14 +574,19 @@ async function buildPublicSigningUrl(token) {
 }
 
 /**
- * iMessage builds a separate rich-preview bubble for bare https URLs (esp. with OG tags).
- * Surrounding the URL with periods suppresses that preview while keeping the link tappable.
- * Emails / push keep the clean URL.
+ * Prefer a short /s/<slug> link. Falls back to the long JWT URL if persistence fails.
  */
-function formatSmsUrlNoPreview(url) {
-    const u = String(url || '').trim();
-    if (!u) return u;
-    return `.${u}.`;
+async function buildPublicSigningUrl(token) {
+    return persistSigningShortLink(token, buildLongPublicSigningUrl(token));
+}
+
+/**
+ * iMessage builds a separate rich-preview bubble for bare https URLs (esp. with OG tags).
+ * We intentionally keep the clean URL so SMS shows preview + tappable short link,
+ * then ShortSignRedirectScreen loads the signing document.
+ */
+function formatSmsSigningUrl(url) {
+    return String(url || '').trim();
 }
 
 /** Push payload that opens the native/public signing screen on tap. */
@@ -626,12 +631,22 @@ exports.resolvePublicSigningShortLink = async (req, res, next) => {
             return fail(next, 'TOKEN_EXPIRED', 410, { message: 'פג תוקף הקישור' });
         }
 
-        const verified = verifyPublicSigningToken(row.token);
-        if (!verified.ok) {
-            return fail(next, verified.errorCode, verified.httpStatus);
+        const signing = verifyPublicSigningToken(row.token);
+        if (signing.ok) {
+            return res.json({ token: row.token, slug, purpose: 'sign' });
         }
 
-        return res.json({ token: row.token, slug });
+        const view = verifyPublicViewToken(row.token);
+        if (view.ok) {
+            return res.json({ token: row.token, slug, purpose: 'view' });
+        }
+
+        // Prefer signing error codes when both fail (expired/invalid).
+        return fail(
+            next,
+            signing.errorCode || view.errorCode || 'INVALID_TOKEN',
+            signing.httpStatus || view.httpStatus || 401
+        );
     } catch (err) {
         console.error('resolvePublicSigningShortLink error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בטעינת הקישור' });
@@ -1273,10 +1288,16 @@ function verifyPublicViewToken(rawToken) {
     }
 }
 
-function buildPublicViewUrl(viewToken) {
+function buildLongPublicViewUrl(viewToken) {
     const domain = getWebsiteDomain();
-    if (!domain) return null;
+    if (!domain || !viewToken) return null;
     return `https://${domain}/ViewSignedDocument?token=${encodeURIComponent(String(viewToken))}`;
+}
+
+/** Prefer short /s/<slug> for SMS; falls back to long JWT view URL. */
+async function buildPublicViewUrl(viewToken) {
+    const longUrl = buildLongPublicViewUrl(viewToken);
+    return persistSigningShortLink(viewToken, longUrl);
 }
 
 function buildPublicEvidenceUrl(viewToken) {
@@ -2879,7 +2900,7 @@ exports.uploadFileForSigning = async (req, res, next) => {
                         messageBody: renderTemplate(signInviteSmsTemplate, {
                             recipientName,
                             documentName: String(fileName || '').trim(),
-                            websiteUrl: formatSmsUrlNoPreview(publicUrl),
+                            websiteUrl: formatSmsSigningUrl(publicUrl),
                         }),
                     }
                     : null,
@@ -4479,7 +4500,7 @@ exports.resendSigningInvite = async (req, res, next) => {
                         messageBody: renderTemplate(signInviteSmsTemplate, {
                             recipientName,
                             documentName: String(file.FileName || '').trim(),
-                            websiteUrl: formatSmsUrlNoPreview(publicUrl),
+                            websiteUrl: formatSmsSigningUrl(publicUrl),
                         }),
                     }
                     : null,
@@ -4883,13 +4904,22 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
             console.error('[signing] Sequential turn check in details error (non-fatal):', seqErr?.message);
         }
 
+        const status = String(file.Status || '').toLowerCase();
+        const readOnly = status === 'signed' || status === 'rejected';
+
         return res.json({
-            file: { ...file, RequireOtp: requireOtpEffective, OtpEnabled: (await getSigningOtpEnabled()) },
+            file: {
+                ...file,
+                RequireOtp: requireOtpEffective,
+                OtpEnabled: (await getSigningOtpEnabled()),
+                ReadOnly: readOnly,
+            },
             signatureSpots,
             signerUserId,
             isLawyer,
             signingOrder,
             isMyTurn,
+            readOnly,
         });
     } catch (err) {
         console.error('getPublicSigningFileDetails error:', err);
@@ -5732,7 +5762,7 @@ async function verifySigningOtpImpl({ req, res, next, signingFileId, signerUserI
                 },
             },
         });
-        return res.json({ success: true });
+        return res.json({ success: true, verified: false, rateLimited: true });
     }
 
     const file = await loadSigningPolicyForFile(signingFileId);
@@ -6034,7 +6064,8 @@ async function runSigningFinalize({
         const domainForUrls = String(process.env.WEBSITE_DOMAIN || WEBSITE_DOMAIN || '').trim();
 
         const publicViewToken = createPublicViewToken(signingFileId);
-        const signedDocumentUrl = buildPublicViewUrl(publicViewToken) || `https://${domainForUrls}/signing-files/${signingFileId}/download`;
+        const signedDocumentUrl = (await buildPublicViewUrl(publicViewToken))
+            || `https://${domainForUrls}/signing-files/${signingFileId}/download`;
         const evidenceCertificateUrl = buildPublicEvidenceUrl(publicViewToken)
             || `https://${domainForUrls}/ViewSignedDocument?token=${encodeURIComponent(publicViewToken)}&evidence=1`;
 
@@ -6049,7 +6080,7 @@ async function runSigningFinalize({
             },
             email: {
                 campaignKey: 'DOC_SIGNED',
-                fromEmail: lawyerEmailForFrom || undefined,
+                replyTo: lawyerEmailForFrom || undefined,
                 attachments: emailAttachments || undefined,
                 contactFields: {
                     recipient_name: String(lawyerNameForTemplate || '').trim(),
@@ -6739,7 +6770,7 @@ exports.signFile = async (req, res, next) => {
                                             messageBody: renderTemplate(signInviteSmsTemplate, {
                                                 recipientName: nextSignerName,
                                                 documentName: String(file.FileName || '').trim(),
-                                                websiteUrl: formatSmsUrlNoPreview(publicUrl),
+                                                websiteUrl: formatSmsSigningUrl(publicUrl),
                                             }),
                                         }
                                         : null,
@@ -7244,7 +7275,7 @@ exports.reuploadFile = async (req, res, next) => {
                             messageBody: renderTemplate(signInviteSmsTemplateReup, {
                                 recipientName: String(recipientNameForTemplate || '').trim(),
                                 documentName: String(file.FileName || '').trim(),
-                                websiteUrl: formatSmsUrlNoPreview(publicUrl),
+                                websiteUrl: formatSmsSigningUrl(publicUrl),
                             }),
                         }
                         : null,
@@ -7298,7 +7329,7 @@ exports.reuploadFile = async (req, res, next) => {
                         messageBody: renderTemplate(signInviteSmsTemplateReup, {
                             recipientName: String(recipientNameForTemplate || '').trim(),
                             documentName: String(file.FileName || '').trim(),
-                            websiteUrl: formatSmsUrlNoPreview(publicUrl),
+                            websiteUrl: formatSmsSigningUrl(publicUrl),
                         }),
                     }
                     : null,
@@ -7723,7 +7754,7 @@ exports.detectSignatureSpots = async (req, res, next) => {
     }
 };
 
-// ─── Delete a pending signing file ───────────────────────────────────
+// ─── Delete a signing file (pending / signed / rejected) ─────────────
 exports.deleteSigningFile = async (req, res, next) => {
     try {
         const { signingFileId } = req.params;
@@ -7733,7 +7764,6 @@ exports.deleteSigningFile = async (req, res, next) => {
         const role = req.user?.Role;
         if (!requesterId) return fail(next, 'UNAUTHORIZED', 401);
 
-        // Fetch file record (only allow deletion of pending files)
         const { rows } = await pool.query(
             `SELECT signingfileid  AS "SigningFileId",
                     lawyerid       AS "LawyerId",
@@ -7754,8 +7784,9 @@ exports.deleteSigningFile = async (req, res, next) => {
         if (!canManageSigningFile({ file, requesterId, role })) {
             return fail(next, 'FORBIDDEN', 403);
         }
-        if (file.Status !== 'pending') {
-            return fail(next, 'ONLY_PENDING_FILES_CAN_BE_DELETED', 400);
+        const status = String(file.Status || '').toLowerCase();
+        if (!['pending', 'signed', 'rejected'].includes(status)) {
+            return fail(next, 'FILE_STATUS_NOT_DELETABLE', 400);
         }
 
         // Delete from R2/S3 storage (ignore errors — best-effort cleanup)

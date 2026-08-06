@@ -78,11 +78,25 @@ const addCustomer = async (req, res) => {
         }
 
         const existing = await pool.query(
-            `SELECT userid FROM users WHERE regexp_replace(phonenumber, '\\D', '', 'g') = $1 LIMIT 1`,
+            `SELECT userid, name, email, phonenumber, companyname, dateofbirth, role
+             FROM users
+             WHERE regexp_replace(phonenumber, '\\D', '', 'g') = $1
+             LIMIT 1`,
             [phoneDigits]
         );
         if (existing.rows.length > 0) {
-            return res.status(409).json({ message: "מספר פלאפון כבר קיים במערכת", code: 'PHONE_ALREADY_EXISTS' });
+            const row = existing.rows[0];
+            return res.status(409).json({
+                message: "מספר פלאפון כבר קיים במערכת — ניתן לשייך את הלקוח הקיים",
+                code: 'PHONE_ALREADY_EXISTS',
+                UserId: row.userid,
+                Name: row.name || null,
+                Email: row.email || null,
+                PhoneNumber: row.phonenumber || phoneNumber,
+                CompanyName: row.companyname || null,
+                DateOfBirth: row.dateofbirth || null,
+                Role: row.role || null,
+            });
         }
 
         const insertResult = await pool.query(

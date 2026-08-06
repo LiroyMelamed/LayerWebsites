@@ -17,7 +17,7 @@ const {
     rawMapsUrl,
 } = require('./publicShortLinks');
 
-const DEFAULT_ALLOWED_OFFSETS = [15, 30, 60, 120, 1440, 2880, 10080];
+const DEFAULT_ALLOWED_OFFSETS = [0, 15, 30, 60, 120, 1440, 2880, 10080];
 const DEFAULT_ALLOWED_CHANNELS = ['push', 'sms', 'email'];
 const REMINDABLE_EVENT_TYPES = new Set(['appointment', 'hearing', 'reminder']);
 const MAX_OFFSETS_PER_EVENT = 8;
@@ -73,7 +73,7 @@ function parseOffsetsList(raw) {
     if (Array.isArray(raw)) {
         return raw
             .map((v) => parseInt(v, 10))
-            .filter((n) => Number.isInteger(n) && n > 0);
+            .filter((n) => Number.isInteger(n) && n >= 0);
     }
     if (typeof raw === 'string') {
         const trimmed = raw.trim();
@@ -89,7 +89,7 @@ function parseOffsetsList(raw) {
         return trimmed
             .split(',')
             .map((s) => parseInt(s.trim(), 10))
-            .filter((n) => Number.isInteger(n) && n > 0);
+            .filter((n) => Number.isInteger(n) && n >= 0);
     }
     return [];
 }
@@ -213,6 +213,7 @@ function hasAnyReminderChannel(channels) {
 }
 
 function formatOffsetHebrew(minutes) {
+    if (Number(minutes) === 0) return 'עכשיו';
     if (minutes >= 1440 && minutes % 1440 === 0) {
         const days = minutes / 1440;
         if (days === 1) return 'מחר';
@@ -287,6 +288,15 @@ async function loadCalendarSmsContext(ev) {
 async function getClientReminderTemplate(ev) {
     const override = String(ev.client_reminder_sms || '').trim();
     if (override) return override;
+    const eventType = String(ev.event_type || ev.eventType || '').toLowerCase();
+    if (eventType === 'hearing') {
+        const hearingTpl = await settingsService.getSetting(
+            'templates',
+            'CALENDAR_CLIENT_REMINDER_SMS_HEARING',
+            ''
+        );
+        if (String(hearingTpl || '').trim()) return hearingTpl;
+    }
     return settingsService.getSetting(
         'templates',
         'CALENDAR_CLIENT_REMINDER_SMS',
@@ -297,6 +307,15 @@ async function getClientReminderTemplate(ev) {
 async function getInviteSmsTemplate(ev) {
     const override = String(ev.invite_sms || '').trim();
     if (override) return override;
+    const eventType = String(ev.event_type || ev.eventType || '').toLowerCase();
+    if (eventType === 'hearing') {
+        const hearingTpl = await settingsService.getSetting(
+            'templates',
+            'CALENDAR_INVITE_SMS_HEARING',
+            ''
+        );
+        if (String(hearingTpl || '').trim()) return hearingTpl;
+    }
     return settingsService.getSetting(
         'templates',
         'CALENDAR_INVITE_SMS',

@@ -548,6 +548,14 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 // Spec: first interaction jumps to first required spot.
                 setCurrentSpot(null);
                 setHasStartedNextFlow(false);
+                const fileStatus = String(data?.file?.Status || data?.file?.status || "").toLowerCase();
+                const readOnly = data?.readOnly === true
+                    || data?.file?.ReadOnly === true
+                    || fileStatus === "signed"
+                    || fileStatus === "rejected";
+                if (readOnly || fileStatus === "signed") {
+                    setShowCompletion(true);
+                }
                 const fileIdForPdf = data?.file?.SigningFileId || signingFileId;
                 await loadPdfFromFileKey(fileIdForPdf);
             } catch (err) {
@@ -1134,6 +1142,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             if (nextUnsignedSpot) {
                 scrollToSpot(nextUnsignedSpot);
                 setHasStartedNextFlow(true);
+            } else {
+                setShowCompletion(true);
             }
 
             setMessage({ type: "success", text: t("signing.canvas.fieldSavedSuccess") });
@@ -1712,10 +1722,15 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         if (s?.IsSigned) return true;
         return isMyActionableSpot(s);
     });
+    const fileStatus = String(fileDetails?.file?.Status || fileDetails?.file?.status || "").toLowerCase();
+    const isDocumentLocked = fileDetails?.readOnly === true
+        || fileDetails?.file?.ReadOnly === true
+        || fileStatus === "signed"
+        || fileStatus === "rejected";
     const requiredSpots = spots.filter((s) => isSpotRequired(s));
     const effectiveRequiredSpots = requiredSpots;
-    const unsignedRequiredSpots = getUnsignedRequiredSpots(spots);
-    const unsignedOptionalSpots = getUnsignedOptionalSpots(spots);
+    const unsignedRequiredSpots = isDocumentLocked ? [] : getUnsignedRequiredSpots(spots);
+    const unsignedOptionalSpots = isDocumentLocked ? [] : getUnsignedOptionalSpots(spots);
     const remainingCount = unsignedRequiredSpots.length;
     const remainingSignatureSpots = unsignedRequiredSpots.filter(
         (s) => isSignatureLike(getSpotType(s)),
@@ -1820,10 +1835,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                             }}
                             autoComplete="one-time-code"
                             disabled={saving || otpVerified}
+                            aria-label={t("signing.canvas.otpPlaceholder")}
                         />
-                        <PrimaryButton size={buttonSizes.SMALL} onPress={verifyOtp} disabled={otpBusy || saving || otpVerified}>
-                            {t("signing.canvas.verify")}
-                        </PrimaryButton>
                     </div>
                     <div className="lw-signing-actionsRow">
                         <SecondaryButton size={buttonSizes.SMALL} onPress={() => requestOtp()} disabled={otpBusy || saving || otpVerified}>
@@ -2299,8 +2312,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 {message.text}
                             </div>
                         )}
-                        {renderConsentAndOtp()}
-                        {renderSigningControls()}
+                        {!isDocumentLocked && renderConsentAndOtp()}
+                        {!isDocumentLocked && renderSigningControls()}
                     </div>
                 </div>
             </div>
@@ -2456,7 +2469,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 </SimpleContainer>
                             )}
 
-                            {renderConsentAndOtp()}
+                            {!isDocumentLocked && renderConsentAndOtp()}
 
                             {remainingCount > 1 && (
                                 <div>
@@ -2531,16 +2544,16 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 </div>
                             )}
 
-                            {renderSigningControls()}
+                            {!isDocumentLocked && renderSigningControls()}
 
-                            {allSpotsSignedByUser && spots.length > 0 && !showCompletion && (
+                            {(isDocumentLocked || (allSpotsSignedByUser && spots.length > 0)) && !showCompletion && (
                                 <div className="lw-signing-message is-success">{t("signing.canvas.allRequiredCompleted")}</div>
                             )}
                         </SimpleContainer>
                     </SimpleContainer>
 
                     <SimpleContainer className="lw-signing-modalFooter">
-                        {!allSpotsSignedByUser && (
+                        {!isDocumentLocked && !allSpotsSignedByUser && (
                             <TertiaryButton
                                 size={buttonSizes.SMALL}
                                 onPress={rejectFile}

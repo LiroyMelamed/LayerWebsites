@@ -51,7 +51,7 @@ export function getEventTypeDefaultColor(eventType) {
 }
 
 /**
- * True when the stored color is empty / the type default / a legacy navy default —
+ * True when the stored color is empty or exactly the type default —
  * i.e. not a lawyer-chosen custom swatch.
  */
 export function isStockEventColor(storedRaw, eventType) {
@@ -61,8 +61,6 @@ export function isStockEventColor(storedRaw, eventType) {
     const typeDefault = getEventTypeDefaultColor(key).toUpperCase();
     const builtin = (DEFAULT_EVENT_TYPE_COLORS[key] || '').toUpperCase();
     if (stored === typeDefault || stored === builtin) return true;
-    // Legacy form always saved navy — not a real custom pick when type default differs.
-    if (stored === '#2A4365' && typeDefault !== '#2A4365') return true;
     return false;
 }
 
