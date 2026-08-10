@@ -134,8 +134,16 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const isScreen = variant === "screen";
     // Server sets OtpEnabled from platform setting SIGNING_OTP_ENABLED.
+    // Skip OTP when the document/signer is already complete (read-only success view).
+    const fileStatusEarly = String(fileDetails?.file?.Status || fileDetails?.file?.status || "").toLowerCase();
+    const alreadyComplete =
+        fileDetails?.readOnly === true
+        || fileDetails?.file?.ReadOnly === true
+        || fileDetails?.signerCompleted === true
+        || fileStatusEarly === "signed"
+        || fileStatusEarly === "rejected";
     const otpEnabled = Boolean(fileDetails?.file?.OtpEnabled);
-    const otpRequired = otpEnabled && Boolean(fileDetails?.file?.RequireOtp);
+    const otpRequired = otpEnabled && Boolean(fileDetails?.file?.RequireOtp) && !alreadyComplete;
 
     const consentStorageKey = useMemo(() => {
         const keyPart = isPublic
@@ -550,10 +558,12 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 const fileStatus = String(data?.file?.Status || data?.file?.status || "").toLowerCase();
                 const readOnly = data?.readOnly === true
                     || data?.file?.ReadOnly === true
+                    || data?.signerCompleted === true
                     || fileStatus === "signed"
                     || fileStatus === "rejected";
-                if (readOnly || fileStatus === "signed") {
+                if (readOnly || fileStatus === "signed" || data?.signerCompleted === true) {
                     setShowCompletion(true);
+                    setOtpVerified(true);
                 }
                 const fileIdForPdf = data?.file?.SigningFileId || signingFileId;
                 await loadPdfFromFileKey(fileIdForPdf);
@@ -1579,13 +1589,13 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         }
     };
 
-    // Send the first OTP once the document is ready.
+    // Send the first OTP once the document is ready (never for completed/read-only views).
     useEffect(() => {
-        if (!fileDetails || !otpRequired || otpVerified || otpAutoSentRef.current) return;
+        if (!fileDetails || !otpRequired || otpVerified || otpAutoSentRef.current || alreadyComplete) return;
         otpAutoSentRef.current = true;
         requestOtp({ silent: false });
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [fileDetails, otpRequired, otpVerified]);
+    }, [fileDetails, otpRequired, otpVerified, alreadyComplete]);
 
     const verifyOtp = async () => {
         try {
@@ -1758,6 +1768,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const fileStatus = String(fileDetails?.file?.Status || fileDetails?.file?.status || "").toLowerCase();
     const isDocumentLocked = fileDetails?.readOnly === true
         || fileDetails?.file?.ReadOnly === true
+        || fileDetails?.signerCompleted === true
         || fileStatus === "signed"
         || fileStatus === "rejected";
     const requiredSpots = spots.filter((s) => isSpotRequired(s));
