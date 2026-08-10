@@ -10,12 +10,13 @@ import { Text12, Text14, TextBold14 } from "../../../components/specializedCompo
 import "./CalendarSmsTemplateEditor.scss";
 
 export const CALENDAR_SMS_VARS = [
-    "recipientName", "firmName", "date", "time", "address",
+    "recipientName", "clientsNames", "firmName", "date", "time", "address",
     "wazeUrl", "mapsUrl", "rsvpUrl", "firmPhone", "websiteUrl", "lawyerName", "title",
 ];
 
 export const CALENDAR_SMS_VAR_LABELS = {
     recipientName: "שם הלקוח",
+    clientsNames: "כל הלקוחות",
     firmName: "שם המשרד",
     date: "תאריך",
     time: "שעה",
@@ -33,7 +34,7 @@ const CHIP_GROUPS = [
     {
         id: "event",
         labelKey: "calendar.smsVarGroupEvent",
-        keys: ["recipientName", "firmName", "title", "lawyerName"],
+        keys: ["recipientName", "clientsNames", "firmName", "title", "lawyerName"],
     },
     {
         id: "whenWhere",
@@ -117,6 +118,7 @@ export default function CalendarSmsTemplateEditor({
                     text: renderSmsPreview(value, {
                         ...previewValues,
                         recipientName: name,
+                        clientsNames: previewValues?.clientsNames || name,
                     }),
                 };
             });

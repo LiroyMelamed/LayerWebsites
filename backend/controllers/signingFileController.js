@@ -2009,13 +2009,39 @@ async function generateSignedPdfBuffer({ pdfKey, spots }) {
                 : await pdfDoc.embedJpg(imgBuffer);
 
             // Contain-fit image inside the spot rect (preserve stamp/signature aspect).
+            // Stamp/signature spots are often undersized in older docs — expand the
+            // draw box to a professional minimum and slight boost so seals stay readable.
+            const isStampLike = ['clientstamp', 'lawyerstamp', 'stamp'].includes(fieldType);
+            const isSignatureLike = fieldType === 'signature' || fieldType === 'initials' || isStampLike;
+            let boxW = w;
+            let boxH = h;
+            let boxX = x;
+            let boxY = y;
+            if (isSignatureLike) {
+                const minW = isStampLike ? 170 : 130;
+                const minH = isStampLike ? 75 : 45;
+                const boost = isStampLike ? 1.45 : 1.25;
+                const scaleUp = Math.max(1, minW / Math.max(boxW, 1), minH / Math.max(boxH, 1)) * boost;
+                const newW = boxW * scaleUp;
+                const newH = boxH * scaleUp;
+                boxX = x - (newW - boxW) / 2;
+                boxY = y - (newH - boxH) / 2;
+                boxW = newW;
+                boxH = newH;
+                // Keep inside page bounds
+                if (boxX < 0) boxX = 0;
+                if (boxY < 0) boxY = 0;
+                if (boxX + boxW > pageWidth) boxX = Math.max(0, pageWidth - boxW);
+                if (boxY + boxH > pageHeight) boxY = Math.max(0, pageHeight - boxH);
+            }
+
             const imgW = embedded.width || 1;
             const imgH = embedded.height || 1;
-            const fit = Math.min(w / imgW, h / imgH);
+            const fit = Math.min(boxW / imgW, boxH / imgH);
             const drawW = imgW * fit;
             const drawH = imgH * fit;
-            const drawX = x + (w - drawW) / 2;
-            const drawY = y + (h - drawH) / 2;
+            const drawX = boxX + (boxW - drawW) / 2;
+            const drawY = boxY + (boxH - drawH) / 2;
 
             page.drawImage(embedded, {
                 x: drawX,
