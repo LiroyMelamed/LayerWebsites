@@ -14,7 +14,9 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
 
     const dragMovedRef = useRef(false);
     const pointerStartRef = useRef({ x: 0, y: 0 });
+    const pressStartedAtRef = useRef(0);
     const DRAG_THRESHOLD_PX = 8;
+    const TAP_MAX_MS = 350;
 
     const canEditSpot = typeof onUpdateSpot === "function";
     const canRemoveSpot = typeof onRemoveSpot === "function";
@@ -60,11 +62,9 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
 
     const spotStyle = {
         top: (spot.y || 0) * (scale || 1),
-        // Physical left edge of the PDF page (never RTL logical inset).
+        // Physical left only — never set inset-inline-* here (conflicts with left in LTR).
         left: (spot.x || 0) * (scale || 1),
         right: "auto",
-        insetInlineStart: "auto",
-        insetInlineEnd: "auto",
         width: (spot.width || 130) * (scale || 1),
         height: (spot.height || 48) * (scale || 1),
         ...(hasSignatureImage ? { backgroundColor: "transparent" } : null),
@@ -171,6 +171,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
 
         dragMovedRef.current = false;
         pointerStartRef.current = { x: Number(e.clientX), y: Number(e.clientY) };
+        pressStartedAtRef.current = Date.now();
 
         const target = e.currentTarget;
         const pointerId = e.pointerId;
@@ -196,8 +197,9 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
             } catch {
                 // ignore
             }
-            // Deliberate tap only (no drag) → open field settings.
-            if (!dragMovedRef.current && typeof onSelectSpot === 'function') {
+            // Settings only on a short deliberate tap — never after drag or long-press.
+            const heldMs = Date.now() - pressStartedAtRef.current;
+            if (!dragMovedRef.current && heldMs <= TAP_MAX_MS && typeof onSelectSpot === 'function') {
                 onSelectSpot(index);
             }
         };
@@ -223,6 +225,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
 
         dragMovedRef.current = false;
         pointerStartRef.current = { x: Number(touch.clientX), y: Number(touch.clientY) };
+        pressStartedAtRef.current = Date.now();
         const { moveFromClientPoint } = startDragFromClientPoint(touch.clientX, touch.clientY);
 
         const onTouchMove = (ev) => {
@@ -240,7 +243,8 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
             window.removeEventListener("touchmove", onTouchMove);
             window.removeEventListener("touchend", stop);
             window.removeEventListener("touchcancel", stop);
-            if (!dragMovedRef.current && typeof onSelectSpot === 'function') {
+            const heldMs = Date.now() - pressStartedAtRef.current;
+            if (!dragMovedRef.current && heldMs <= TAP_MAX_MS && typeof onSelectSpot === 'function') {
                 onSelectSpot(index);
             }
         };
@@ -377,8 +381,13 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                     if (typeof onSelectSpot === 'function') onSelectSpot(index);
                 }}
                 onContextMenu={(e) => {
+                    // macOS trackpad long-press synthesizes contextmenu — must NOT open settings.
                     e.preventDefault();
                     e.stopPropagation();
+                    // Explicit right-click only (button 2): optional context menu.
+                    // Drag / long-press / tap never open settings via this path.
+                    if (!canEditSpot) return;
+                    if (e.button !== 2 && e.which !== 3) return;
                     if (typeof onRequestContext === 'function') onRequestContext(index, e);
                 }}
                 aria-hidden
