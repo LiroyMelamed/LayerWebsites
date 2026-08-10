@@ -320,9 +320,9 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                 </div>
             )}
 
-            {isStampType && stampImageUrl ? (
+            {isStampType && (stampImageUrl || hasSignatureImage) ? (
                 <img
-                    src={stampImageUrl}
+                    src={stampImageUrl || spot.SignatureUrl || spot.signatureUrl}
                     alt={isClientStamp ? t("signing.fields.clientStamp") : t("signing.fields.lawyerStamp")}
                     className="lw-signing-spotImg lw-signing-spotImg--stamp"
                     draggable={false}

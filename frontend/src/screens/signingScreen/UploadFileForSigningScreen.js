@@ -1264,6 +1264,7 @@ export default function UploadFileForSigningScreen() {
                                 onEmptyAction={handleOpenAddCustomerPopup}
                                 value={signerSearchQuery}
                                 clearOnSelect
+                                timeToWaitInMilli={0}
                             />
 
                             {!showManualSigner ? (

@@ -17,7 +17,16 @@ const {
     cancelRemindersForFile,
     cancelReminderForSigner,
 } = require("../lib/signingFileReminders");
-const { PDFDocument, StandardFonts, rgb } = require("pdf-lib");
+const {
+    PDFDocument,
+    StandardFonts,
+    rgb,
+    pushGraphicsState,
+    popGraphicsState,
+    rectangle,
+    clip,
+    endPath,
+} = require("pdf-lib");
 let fontkit = null;
 try {
     fontkit = require('@pdf-lib/fontkit');
@@ -2047,19 +2056,40 @@ async function generateSignedPdfBuffer({ pdfKey, spots }) {
 
             const imgW = embedded.width || 1;
             const imgH = embedded.height || 1;
-            const fit = Math.min(boxW / imgW, boxH / imgH);
+            // Stamps: cover-fit (fill box, crop overflow). Signatures: contain-fit.
+            const fit = isStampLike
+                ? Math.max(boxW / imgW, boxH / imgH)
+                : Math.min(boxW / imgW, boxH / imgH);
             const drawW = imgW * fit;
             const drawH = imgH * fit;
             const drawX = boxX + (boxW - drawW) / 2;
             const drawY = boxY + (boxH - drawH) / 2;
 
-            page.drawImage(embedded, {
-                x: drawX,
-                y: drawY,
-                width: drawW,
-                height: drawH,
-                opacity: 1,
-            });
+            if (isStampLike) {
+                // Clip to the stamp box so cover-crop does not spill onto PDF text.
+                page.pushOperators(
+                    pushGraphicsState(),
+                    rectangle(boxX, boxY, boxW, boxH),
+                    clip(),
+                    endPath(),
+                );
+                page.drawImage(embedded, {
+                    x: drawX,
+                    y: drawY,
+                    width: drawW,
+                    height: drawH,
+                    opacity: 1,
+                });
+                page.pushOperators(popGraphicsState());
+            } else {
+                page.drawImage(embedded, {
+                    x: drawX,
+                    y: drawY,
+                    width: drawW,
+                    height: drawH,
+                    opacity: 1,
+                });
+            }
         } else if (fieldValue !== null && fieldValue !== undefined && String(fieldValue).length > 0) {
             let text = String(fieldValue);
             // Format dates as DD/MM/YYYY for display in the PDF
