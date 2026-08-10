@@ -2,10 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Base UI toast viewport — bottom-right enterprise stack */
+/* Base UI toast viewport — above all modals/popups */
 .lw-toast-viewport {
   position: fixed;
-  z-index: 9999;
+  z-index: 99999;
   bottom: 1rem;
   right: 1rem;
   display: flex;
@@ -21,6 +21,16 @@
   top: 1rem;
   bottom: auto;
   flex-direction: column;
+}
+
+.lw-toast-viewport[data-position="top-center"] {
+  top: 1rem;
+  bottom: auto;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .lw-toast-viewport[data-position="bottom-left"] {
@@ -108,7 +118,7 @@
 @keyframes lw-toast-in {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.98);
+    transform: translateY(-8px) scale(0.98);
   }
   to {
     opacity: 1;

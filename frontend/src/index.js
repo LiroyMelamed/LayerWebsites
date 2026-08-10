@@ -19,7 +19,7 @@ root.render(
     <FromAppProvider>
       <PopupProvider>
         <ScreenSizeProvider>
-          <ToastProvider position="bottom-right">
+          <ToastProvider position="top-center">
             <App />
           </ToastProvider>
         </ScreenSizeProvider>
