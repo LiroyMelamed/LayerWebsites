@@ -63,8 +63,8 @@ function ToastList() {
 
 export type ToastProviderProps = {
   children: React.ReactNode;
-  /** Visual stack corner. Default bottom-right. */
-  position?: "bottom-right" | "bottom-left" | "top-right" | "top-left";
+  /** Visual stack placement. Default top-center. */
+  position?: "bottom-right" | "bottom-left" | "top-right" | "top-left" | "top-center";
   timeout?: number;
   limit?: number;
 };
@@ -75,7 +75,7 @@ export type ToastProviderProps = {
  */
 export function ToastProvider({
   children,
-  position = "bottom-right",
+  position = "top-center",
   timeout = 5000,
   limit = 4,
 }: ToastProviderProps) {

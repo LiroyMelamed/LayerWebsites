@@ -72,9 +72,9 @@ function emitChange(onChange, nativeValue) {
 }
 
 /**
- * Date/time fields: plain text while typing (no live mask / caret surgery).
- * Format + validate only on blur. Calendar button drives a hidden native picker.
- * focusedRef (not state) guards parent→draft sync to avoid race-driven digit duplication.
+ * Date/time: plain text while typing; format/validate on blur only.
+ * All fields: pending debounce is flushed synchronously on blur so Tab never
+ * drops the last keystrokes (ref-backed draft, not stale React state).
  */
 const SimpleInput = forwardRef(
     ({
@@ -114,10 +114,17 @@ const SimpleInput = forwardRef(
             isEditableTemporal ? formatTemporalDisplay(type, value ?? '') : ''
         );
         const timeoutRef = useRef(null);
+        const pendingEmitRef = useRef(null);
         const textInputRef = useRef(null);
         const pickerRef = useRef(null);
-        // Synchronous focus flag — useState lags one render and caused draft overwrites mid-type.
+        // Sync flags/drafts — state alone races with Tab (blur before last setState commits).
         const focusedRef = useRef(false);
+        const delayedValueRef = useRef(value ?? '');
+        const textValueRef = useRef(
+            isEditableTemporal ? formatTemporalDisplay(type, value ?? '') : ''
+        );
+        const onChangeRef = useRef(onChange);
+        onChangeRef.current = onChange;
 
         useEffect(() => {
             return () => {
@@ -140,6 +147,18 @@ const SimpleInput = forwardRef(
             return colors.white;
         }
 
+        /** Cancel debounce timer and immediately push the latest draft to the parent. */
+        const flushPendingEmit = () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+                timeoutRef.current = null;
+            }
+            if (pendingEmitRef.current == null) return;
+            const next = pendingEmitRef.current;
+            pendingEmitRef.current = null;
+            emitChange(onChangeRef.current, next);
+        };
+
         function handleFocus(e) {
             focusedRef.current = true;
             onFocus?.(e);
@@ -147,66 +166,106 @@ const SimpleInput = forwardRef(
         }
 
         function handleBlur(e) {
-            if (isEditableTemporal) {
-                const parsed = parseTemporalText(type, textValue);
+            // 1) Flush any pending debounced native emit BEFORE clearing focus,
+            //    so parent never re-syncs a stale value over the latest keystrokes.
+            if (!isEditableTemporal) {
+                // Prefer the live DOM value (covers IME / last key not yet in React state).
+                const live = textInputRef.current?.value;
+                if (live != null && live !== delayedValueRef.current) {
+                    delayedValueRef.current = live;
+                    setDelayedValue(live);
+                    pendingEmitRef.current = live;
+                }
+                flushPendingEmit();
+            } else {
+                // Temporal: commit from ref (not possibly-stale textValue state).
+                const draft = textValueRef.current;
+                const parsed = parseTemporalText(type, draft);
                 if (parsed !== null && parsed !== '') {
+                    delayedValueRef.current = parsed;
+                    textValueRef.current = formatTemporalDisplay(type, parsed);
                     setDelayedValue(parsed);
-                    setTextValue(formatTemporalDisplay(type, parsed));
-                    if (parsed !== String(value ?? '')) emitChange(onChange, parsed);
-                } else if (String(textValue || '').trim() === '') {
+                    setTextValue(textValueRef.current);
+                    pendingEmitRef.current = parsed;
+                    flushPendingEmit();
+                } else if (String(draft || '').trim() === '') {
+                    delayedValueRef.current = '';
+                    textValueRef.current = '';
                     setDelayedValue('');
                     setTextValue('');
-                    if (String(value ?? '') !== '') emitChange(onChange, '');
+                    pendingEmitRef.current = '';
+                    flushPendingEmit();
                 } else {
-                    // Incomplete — restore last committed native value.
-                    setTextValue(formatTemporalDisplay(type, value ?? delayedValue));
+                    // Incomplete — discard pending debounce, restore last committed.
+                    if (timeoutRef.current) {
+                        clearTimeout(timeoutRef.current);
+                        timeoutRef.current = null;
+                    }
+                    pendingEmitRef.current = null;
+                    const restored = formatTemporalDisplay(type, value ?? delayedValueRef.current);
+                    textValueRef.current = restored;
+                    setTextValue(restored);
                 }
             }
+
+            // 2) Only then release the focus guard so parent→child sync may run.
             focusedRef.current = false;
             onBlur?.(e);
             setIsFocused(false);
         }
 
         const commitNativeValue = (nativeValue) => {
+            delayedValueRef.current = nativeValue;
             setDelayedValue(nativeValue);
             if (isEditableTemporal) {
-                setTextValue(formatTemporalDisplay(type, nativeValue));
+                const formatted = formatTemporalDisplay(type, nativeValue);
+                textValueRef.current = formatted;
+                setTextValue(formatted);
             }
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
                 timeoutRef.current = null;
             }
+            pendingEmitRef.current = nativeValue;
             if (isEditableTemporal || timeToWaitInMilli <= 0) {
-                emitChange(onChange, nativeValue);
+                flushPendingEmit();
                 return;
             }
             timeoutRef.current = setTimeout(() => {
-                emitChange(onChange, nativeValue);
-                timeoutRef.current = null;
+                flushPendingEmit();
             }, timeToWaitInMilli);
         };
 
         const handleNativeInputChange = (e) => {
             const newValue = e.target.value;
+            delayedValueRef.current = newValue;
             setDelayedValue(newValue);
+            pendingEmitRef.current = newValue;
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            if (timeToWaitInMilli <= 0) {
+                flushPendingEmit();
+                return;
+            }
             timeoutRef.current = setTimeout(() => {
-                onChange?.(e);
-                timeoutRef.current = null;
+                flushPendingEmit();
             }, timeToWaitInMilli);
         };
 
         const handleTextChange = (e) => {
-            // Natural typing only — no masks, no auto-slashes, no parent emit.
-            setTextValue(e.target.value);
+            const next = e.target.value;
+            textValueRef.current = next;
+            setTextValue(next);
         };
 
         useEffect(() => {
             if (focusedRef.current) return;
             const next = value ?? '';
+            delayedValueRef.current = next;
             setDelayedValue(next);
             if (isEditableTemporal) {
-                setTextValue(formatTemporalDisplay(type, next));
+                const formatted = formatTemporalDisplay(type, next);
+                textValueRef.current = formatted;
+                setTextValue(formatted);
             }
         }, [value, type, isEditableTemporal]);
 
@@ -260,7 +319,6 @@ const SimpleInput = forwardRef(
             .filter(Boolean)
             .join(' ');
 
-        // Strip value/onChange/onFocus/onBlur from props so they cannot fight our handlers.
         const {
             value: _ignoredValue,
             onChange: _ignoredOnChange,
