@@ -608,17 +608,53 @@
 
 // ─── Client RSVP status on appointments ──────────────────────────────────────
 
-.fc .fc-event.lw-fcEvent--inviteAccepted {
-    box-shadow: inset 0 0 0 2px rgba(47, 133, 90, 0.95);
+.fc .fc-event {
+    position: relative;
+    overflow: visible;
+}
+
+.fc .fc-event .lw-fcEventContent {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.05rem;
+    min-height: 100%;
+    padding-inline-end: 0.85rem;
+    overflow: hidden;
+}
+
+.fc .fc-event .lw-fcEventRsvpBadge {
+    position: absolute;
+    top: 0.1rem;
+    inset-inline-end: 0.1rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 0.9rem;
+    height: 0.9rem;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    line-height: 1;
+    box-shadow: 0 0 0 0.08rem rgba(255, 255, 255, 0.85);
+}
+
+.fc .fc-event .lw-fcEventRsvpBadge--accepted {
+    background: #2F855A;
+    color: #FFFFFF;
+}
+
+.fc .fc-event .lw-fcEventRsvpBadge--pending {
+    background: #D69E2E;
+}
+
+.fc .fc-event .lw-fcEventRsvpBadge--declined {
+    background: #C53030;
 }
 
 .fc .fc-event.lw-fcEvent--inviteDeclined {
-    box-shadow: inset 0 0 0 2px rgba(192, 86, 33, 0.95);
     opacity: 0.88;
-}
-
-.fc .fc-event.lw-fcEvent--invitePending {
-    box-shadow: inset 0 0 0 2px rgba(214, 158, 46, 0.95);
 }
 
 // ─── Touch / mobile interaction ───────────────────────────────────────────────

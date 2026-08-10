@@ -110,6 +110,8 @@ const SimpleInput = forwardRef(
             isEditableTemporal ? formatTemporalDisplay(type, value ?? '') : ''
         );
         const timeoutRef = useRef(null);
+        const pendingEmitRef = useRef(null);
+        const caretRef = useRef(null);
         const textInputRef = useRef(null);
         const pickerRef = useRef(null);
 
@@ -139,7 +141,19 @@ const SimpleInput = forwardRef(
             setIsFocused(true);
         }
 
+        const flushPendingEmit = () => {
+            if (!timeoutRef.current) return;
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+            if (pendingEmitRef.current != null) {
+                emitChange(onChange, pendingEmitRef.current);
+                pendingEmitRef.current = null;
+            }
+        };
+
         function handleBlur(e) {
+            // Tab/blur must flush pending debounce before parent re-syncs from stale value.
+            flushPendingEmit();
             if (isEditableTemporal) {
                 const parsed = parseTemporalText(type, textValue);
                 if (parsed !== null) {
@@ -164,10 +178,17 @@ const SimpleInput = forwardRef(
                 clearTimeout(timeoutRef.current);
                 timeoutRef.current = null;
             }
+            pendingEmitRef.current = nativeValue;
+            if (isEditableTemporal || timeToWaitInMilli <= 0) {
+                emitChange(onChange, nativeValue);
+                pendingEmitRef.current = null;
+                return;
+            }
             timeoutRef.current = setTimeout(() => {
                 emitChange(onChange, nativeValue);
+                pendingEmitRef.current = null;
                 timeoutRef.current = null;
-            }, isEditableTemporal ? 0 : timeToWaitInMilli);
+            }, timeToWaitInMilli);
         };
 
         const handleNativeInputChange = (e) => {
@@ -181,15 +202,20 @@ const SimpleInput = forwardRef(
         };
 
         const handleTextChange = (e) => {
+            const inputEl = e.target;
             let next = String(e.target.value ?? "");
             // Digits / separators only for temporal text entry.
             next = next.replace(/[^\d/:.\s-]/g, "");
 
+            let caretHint = null;
             if (type === "time") {
                 const digits = next.replace(/\D/g, "").slice(0, 4);
                 next = digits.length <= 2
                     ? digits
                     : `${digits.slice(0, 2)}:${digits.slice(2)}`;
+                // After HH auto-insert ":", place caret after colon.
+                if (digits.length === 2) caretHint = 3;
+                else if (digits.length > 2) caretHint = next.length;
             } else if (type === "date" || type === "datetime-local") {
                 const hasTime = type === "datetime-local";
                 const spaced = next.trimStart();
@@ -206,38 +232,61 @@ const SimpleInput = forwardRef(
                     const timeDigits = timePart.replace(/\D/g, "").slice(0, 4);
                     if (dateDigits.length < 8) {
                         next = datePart;
+                        if (dateDigits.length === 2 || dateDigits.length === 4) caretHint = datePart.length;
                     } else if (timeDigits.length === 0) {
                         next = `${datePart} `;
+                        caretHint = next.length;
                     } else if (timeDigits.length <= 2) {
                         next = `${datePart} ${timeDigits}`;
+                        if (timeDigits.length === 2) caretHint = next.length + 1; // after upcoming :
                     } else {
                         next = `${datePart} ${timeDigits.slice(0, 2)}:${timeDigits.slice(2)}`;
+                        caretHint = next.length;
                     }
                 } else {
                     next = datePart;
+                    if (dateDigits.length === 2 || dateDigits.length === 4) caretHint = datePart.length;
                 }
             }
 
             setTextValue(next);
+            caretRef.current = caretHint;
+            // Restore caret after React paints the formatted value.
+            if (caretHint != null) {
+                requestAnimationFrame(() => {
+                    const el = textInputRef.current || inputEl;
+                    if (el && typeof el.setSelectionRange === 'function') {
+                        try { el.setSelectionRange(caretHint, caretHint); } catch { /* ignore */ }
+                    }
+                });
+            }
+
             const parsed = parseTemporalText(type, next);
             if (parsed === null) return;
             setDelayedValue(parsed);
+            pendingEmitRef.current = parsed;
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            // Temporal fields: emit immediately so Tab/blur never races a debounce.
+            if (isEditableTemporal || timeToWaitInMilli <= 0) {
+                emitChange(onChange, parsed);
+                pendingEmitRef.current = null;
+                timeoutRef.current = null;
+                return;
+            }
             timeoutRef.current = setTimeout(() => {
                 emitChange(onChange, parsed);
+                pendingEmitRef.current = null;
                 timeoutRef.current = null;
             }, timeToWaitInMilli);
         };
 
         useEffect(() => {
             const next = value ?? '';
+            // Don't clobber in-progress typing or wipe a pending emit on focus change.
+            if (pendingEmitRef.current != null) return;
             setDelayedValue(next);
             if (isEditableTemporal && !isFocused) {
                 setTextValue(formatTemporalDisplay(type, next));
-            }
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-                timeoutRef.current = null;
             }
         }, [value, type, isEditableTemporal, isFocused]);
 

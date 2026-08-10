@@ -14,4 +14,5 @@ if (!URL.parse) {
 // Local worker matching installed pdfjs-dist (see scripts/copy-pdf-worker.js).
 // Prefer .js over .mjs: some hosts serve .mjs as application/octet-stream, which
 // breaks module workers in Safari ("Error loading PDF").
-pdfjs.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL || ""}/pdf.worker.min.js`;
+// Version query busts CDN/nginx 1y immutable cache when the unhashed worker updates.
+pdfjs.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL || ""}/pdf.worker.min.js?v=${pdfjs.version}`;

@@ -42,7 +42,9 @@ const {
     targetsToJson,
     defaultReminderTargets,
     composeInviteSmsMessage,
+    uniqueSortedDesc,
 } = require('../lib/calendarEventReminders');
+const { deferToMotzeiShabbat } = require('../lib/shabbatDeferral');
 const { resolveShortLink } = require('../lib/publicShortLinks');
 const { lawyerMatchSql, personalCalendarSql } = require('../lib/calendarVisibility');
 const { signOAuthState, verifyOAuthState } = require('../lib/calendarOAuthState');
@@ -170,6 +172,73 @@ async function _resolveReminderOffsets(body, eventType) {
     return normalizeReminderOffsets(body.reminder_offsets, allowed);
 }
 
+/**
+ * Resolve split lawyer/client reminder offsets.
+ * Returns null fields when the body did not touch that side (update: keep existing).
+ * Always writes legacy `reminder_offsets` as the union of both sides when changed.
+ */
+async function _resolveSplitReminderOffsets(body, eventType) {
+    if (!REMINDABLE_EVENT_TYPES.has(eventType)) {
+        return { lawyer: [], client: [], combined: [], touched: true };
+    }
+    const hasLawyer = body?.lawyer_reminder_offsets !== undefined;
+    const hasClient = body?.client_reminder_offsets !== undefined;
+    const hasLegacy = body?.reminder_offsets !== undefined;
+    if (!hasLawyer && !hasClient && !hasLegacy) {
+        return { lawyer: null, client: null, combined: null, touched: false };
+    }
+    const allowed = await loadAllowedReminderOffsets(settingsService);
+    const lawyer = hasLawyer
+        ? normalizeReminderOffsets(body.lawyer_reminder_offsets, allowed)
+        : (hasLegacy ? normalizeReminderOffsets(body.reminder_offsets, allowed) : null);
+    const client = hasClient
+        ? normalizeReminderOffsets(body.client_reminder_offsets, allowed)
+        : (hasLegacy ? normalizeReminderOffsets(body.reminder_offsets, allowed) : null);
+    // Caller merges null sides with existing values before writing the legacy union.
+    const combinedParts = [];
+    if (lawyer) combinedParts.push(...lawyer);
+    if (client) combinedParts.push(...client);
+    const combined = uniqueSortedDesc(combinedParts);
+    return { lawyer, client, combined, touched: true };
+}
+
+function _parseClientUserIds(body) {
+    const raw = body?.client_user_ids;
+    if (Array.isArray(raw)) {
+        return [...new Set(
+            raw.map((id) => parseInt(id, 10)).filter((id) => Number.isFinite(id))
+        )];
+    }
+    const single = body?.client_user_id != null && body?.client_user_id !== ''
+        ? parseInt(body.client_user_id, 10)
+        : null;
+    return Number.isFinite(single) ? [single] : [];
+}
+
+/** Whether the update body touches clients and the resolved id list for junction sync. */
+function _resolveClientIdsForUpdate(body) {
+    if (body?.client_user_ids !== undefined) {
+        return { sync: true, ids: _parseClientUserIds(body) };
+    }
+    if (body?.client_user_id !== undefined) {
+        const single = body.client_user_id != null && body.client_user_id !== ''
+            ? parseInt(body.client_user_id, 10)
+            : null;
+        return { sync: true, ids: Number.isFinite(single) ? [single] : [] };
+    }
+    return { sync: false, ids: [] };
+}
+
+function _toE164Phone(raw) {
+    const digits = String(raw || '').replace(/\D/g, '');
+    if (!digits) return null;
+    if (digits.startsWith('972') && digits.length >= 11) return `+${digits}`;
+    if (digits.startsWith('0') && digits.length >= 9) return `+972${digits.slice(1)}`;
+    if (digits.length >= 8 && digits.length <= 10) return `+972${digits}`;
+    if (String(raw).startsWith('+')) return String(raw).replace(/\s+/g, '');
+    return null;
+}
+
 function _calendarFkErrorMessage(err) {
     if (err?.code !== '23503') return null;
     const detail = String(err.detail || err.message || '');
@@ -210,9 +279,6 @@ async function _resolveReminderChannels(body, eventType, reminderOffsets) {
     }
     const allowed = await loadAllowedReminderChannels(settingsService);
     const channels = normalizeReminderChannels(body.reminder_channels, allowed);
-    if (eventType !== 'reminder') {
-        channels.push = false;
-    }
     if (reminderOffsets.length > 0 && !hasAnyReminderChannel(channels)) {
         return { error: 'נבחרו תזכורות אך לא נבחר ערוץ שליחה (Push, SMS או אימייל).' };
     }
@@ -220,6 +286,13 @@ async function _resolveReminderChannels(body, eventType, reminderOffsets) {
 }
 
 function _sanitizeEvent(row) {
+    const legacyOffsets = parseStoredOffsets(row.reminder_offsets);
+    const lawyerReminderOffsets = row.lawyer_reminder_offsets != null
+        ? parseStoredOffsets(row.lawyer_reminder_offsets)
+        : legacyOffsets;
+    const clientReminderOffsets = row.client_reminder_offsets != null
+        ? parseStoredOffsets(row.client_reminder_offsets)
+        : legacyOffsets;
     return {
         id: row.id,
         ownerId: row.owner_id,
@@ -233,6 +306,7 @@ function _sanitizeEvent(row) {
         clientUserId: row.client_user_id,
         clientName: row.client_name,
         clientDisplayName: row.client_display_name ?? null,
+        clients: [],
         managerUserId: row.manager_user_id,
         managerName: row.manager_name,
         color: row.color,
@@ -247,7 +321,12 @@ function _sanitizeEvent(row) {
         leadEmail: row.lead_email ?? null,
         leadCaseName: row.lead_case_name ?? null,
         lastReminderSentAt: row.last_reminder_sent_at ?? null,
-        reminderOffsets: parseStoredOffsets(row.reminder_offsets),
+        reminderOffsets: legacyOffsets.length ? legacyOffsets : uniqueSortedDesc([
+            ...lawyerReminderOffsets,
+            ...clientReminderOffsets,
+        ]),
+        lawyerReminderOffsets,
+        clientReminderOffsets,
         reminderChannels: parseStoredChannels(row.reminder_channels),
         reminderTargets: parseReminderTargets(row.reminder_targets),
         remindersSentOffsets: parseStoredOffsets(row.reminders_sent_offsets),
@@ -339,6 +418,144 @@ async function _syncEventManagers(eventId, userIds, dbClient = pool) {
     };
 }
 
+async function _fetchEventClients(eventIds) {
+    const map = new Map();
+    if (!eventIds?.length) return map;
+    try {
+        const { rows } = await pool.query(
+            `SELECT cec.event_id,
+                    cec.user_id,
+                    u.name,
+                    u.phonenumber AS phone,
+                    cec.invite_status,
+                    cec.invite_token
+             FROM calendar_event_clients cec
+             JOIN users u ON u.userid = cec.user_id
+             WHERE cec.event_id = ANY($1::int[])
+             ORDER BY cec.event_id, cec.sort_order, cec.user_id`,
+            [eventIds]
+        );
+        for (const row of rows) {
+            if (!map.has(row.event_id)) map.set(row.event_id, []);
+            map.get(row.event_id).push({
+                userId: row.user_id,
+                name: row.name,
+                phone: row.phone || null,
+                inviteStatus: row.invite_status || 'none',
+                inviteToken: row.invite_token || null,
+            });
+        }
+    } catch (err) {
+        // Table may not exist yet mid-migrate — callers fall back to legacy client fields.
+        console.error('[calendarController] _fetchEventClients:', err.message);
+    }
+    return map;
+}
+
+/**
+ * Replace calendar_event_clients for an event (delete+insert with sort_order).
+ * Preserves invite_token/status for users that already had a row; mints tokens for
+ * new rows when mintInvites is true. Syncs calendar_events.client_user_id/name (and
+ * primary invite fields) to the first client.
+ */
+async function _syncEventClients(eventId, userIds, dbClient = pool, { mintInvites = false } = {}) {
+    const uniqueIds = [...new Set((userIds || []).filter((id) => Number.isFinite(id)))];
+    let existingByUser = new Map();
+    try {
+        const { rows: existing } = await dbClient.query(
+            `SELECT user_id, invite_token, invite_status, invite_responded_at
+             FROM calendar_event_clients WHERE event_id = $1`,
+            [eventId]
+        );
+        existingByUser = new Map(existing.map((r) => [r.user_id, r]));
+    } catch (err) {
+        console.error('[calendarController] _syncEventClients read:', err.message);
+        return { clientUserId: null, clientName: null, clients: [], inviteToken: null, inviteStatus: 'none' };
+    }
+
+    await dbClient.query('DELETE FROM calendar_event_clients WHERE event_id = $1', [eventId]);
+
+    for (let i = 0; i < uniqueIds.length; i++) {
+        const uid = uniqueIds[i];
+        const prev = existingByUser.get(uid);
+        let inviteToken = prev?.invite_token || null;
+        let inviteStatus = prev?.invite_status || 'none';
+        let inviteRespondedAt = prev?.invite_responded_at || null;
+        if (mintInvites && !inviteToken) {
+            inviteToken = crypto.randomBytes(24).toString('hex');
+            inviteStatus = 'pending';
+            inviteRespondedAt = null;
+        } else if (mintInvites && inviteStatus === 'none') {
+            inviteStatus = 'pending';
+        }
+        await dbClient.query(
+            `INSERT INTO calendar_event_clients
+               (event_id, user_id, invite_token, invite_status, invite_responded_at, sort_order)
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+            [eventId, uid, inviteToken, inviteStatus, inviteRespondedAt, i]
+        );
+    }
+
+    if (!uniqueIds.length) {
+        await dbClient.query(
+            `UPDATE calendar_events
+             SET client_user_id = NULL, client_name = NULL
+             WHERE id = $1`,
+            [eventId]
+        );
+        return {
+            clientUserId: null,
+            clientName: null,
+            clients: [],
+            inviteToken: null,
+            inviteStatus: 'none',
+        };
+    }
+
+    const { rows } = await dbClient.query(
+        `SELECT cec.user_id, u.name, u.phonenumber AS phone,
+                cec.invite_status, cec.invite_token
+         FROM calendar_event_clients cec
+         JOIN users u ON u.userid = cec.user_id
+         WHERE cec.event_id = $1
+         ORDER BY cec.sort_order, cec.user_id`,
+        [eventId]
+    );
+    const clients = rows.map((r) => ({
+        userId: r.user_id,
+        name: r.name,
+        phone: r.phone || null,
+        inviteStatus: r.invite_status || 'none',
+        inviteToken: r.invite_token || null,
+    }));
+    const primary = clients[0];
+    await dbClient.query(
+        `UPDATE calendar_events
+         SET client_user_id = $1,
+             client_name = $2,
+             invite_token = COALESCE($3, invite_token),
+             invite_status = CASE
+                 WHEN $4::text IS NOT NULL AND $4::text <> 'none' THEN $4
+                 ELSE invite_status
+             END
+         WHERE id = $5`,
+        [
+            primary.userId,
+            primary.name,
+            primary.inviteToken,
+            primary.inviteStatus,
+            eventId,
+        ]
+    );
+    return {
+        clientUserId: primary.userId,
+        clientName: primary.name,
+        clients,
+        inviteToken: primary.inviteToken,
+        inviteStatus: primary.inviteStatus,
+    };
+}
+
 function _applyManagersToEvent(sanitized, managers) {
     if (!managers?.length) {
         if (sanitized.managerUserId) {
@@ -357,10 +574,35 @@ function _applyManagersToEvent(sanitized, managers) {
     return sanitized;
 }
 
-async function _sanitizeEventWithManagers(row, managersMap) {
+function _applyClientsToEvent(sanitized, clients) {
+    if (!clients?.length) {
+        if (sanitized.clientUserId) {
+            sanitized.clients = [{
+                userId: sanitized.clientUserId,
+                name: sanitized.clientName || '',
+                phone: null,
+                inviteStatus: sanitized.inviteStatus || 'none',
+                inviteToken: sanitized.inviteToken || null,
+            }];
+        } else {
+            sanitized.clients = [];
+        }
+        return sanitized;
+    }
+    sanitized.clients = clients;
+    sanitized.clientUserId = clients[0].userId;
+    sanitized.clientName = clients[0].name;
+    // Legacy aggregate fields mirror the primary (first) client.
+    if (clients[0].inviteStatus) sanitized.inviteStatus = clients[0].inviteStatus;
+    if (clients[0].inviteToken) sanitized.inviteToken = clients[0].inviteToken;
+    return sanitized;
+}
+
+async function _sanitizeEventWithManagers(row, managersMap, clientsMap) {
     const ev = _sanitizeEvent(row);
-    const managers = managersMap?.get(row.id);
-    return _applyManagersToEvent(ev, managers);
+    _applyManagersToEvent(ev, managersMap?.get(row.id));
+    _applyClientsToEvent(ev, clientsMap?.get(row.id));
+    return ev;
 }
 
 /** SQL fragment: event belongs to lawyer (owner, legacy manager column, or junction). */
@@ -608,9 +850,12 @@ const listEvents = async (req, res) => {
             params
         );
         const eventIds = rows.map((r) => r.id);
-        const managersMap = await _fetchEventManagers(eventIds);
+        const [managersMap, clientsMap] = await Promise.all([
+            _fetchEventManagers(eventIds),
+            _fetchEventClients(eventIds),
+        ]);
         const events = await Promise.all(
-            rows.map((r) => _sanitizeEventWithManagers(r, managersMap))
+            rows.map((r) => _sanitizeEventWithManagers(r, managersMap, clientsMap))
         );
         return res.json({ events });
     } catch (err) {
@@ -635,7 +880,15 @@ const getTodayAndTomorrow = async (req, res) => {
              LIMIT 20`,
             [userId]
         );
-        return res.json({ events: rows.map(_sanitizeEvent) });
+        const eventIds = rows.map((r) => r.id);
+        const [managersMap, clientsMap] = await Promise.all([
+            _fetchEventManagers(eventIds),
+            _fetchEventClients(eventIds),
+        ]);
+        const events = await Promise.all(
+            rows.map((r) => _sanitizeEventWithManagers(r, managersMap, clientsMap))
+        );
+        return res.json({ events });
     } catch (err) {
         console.error('[calendarController] getTodayAndTomorrow error:', err.message);
         return res.status(500).json({ message: 'שגיאה פנימית בשרת' });
@@ -815,10 +1068,16 @@ const createEvent = async (req, res) => {
     if (case_id && !Number.isFinite(caseId)) {
         return res.status(400).json({ message: 'מזהה תיק לא תקין' });
     }
-    let clientUserId = client_user_id ? parseInt(client_user_id, 10) : null;
-    if (client_user_id && !Number.isFinite(clientUserId)) {
+    const clientIds = hasLead ? [] : _parseClientUserIds(req.body);
+    if (
+        !hasLead
+        && (req.body?.client_user_ids !== undefined || client_user_id)
+        && clientIds.length === 0
+        && (Array.isArray(req.body?.client_user_ids) ? req.body.client_user_ids.length > 0 : !!client_user_id)
+    ) {
         return res.status(400).json({ message: 'מזהה לקוח לא תקין' });
     }
+    let clientUserId = clientIds[0] ?? null;
     if (hasLead) {
         caseId = null;
         clientUserId = null;
@@ -835,7 +1094,7 @@ const createEvent = async (req, res) => {
     if (color && !/^#[0-9a-fA-F]{6}$/.test(String(color))) {
         return res.status(400).json({ message: 'צבע אירוע לא תקין' });
     }
-    const hasClientLink = !!(clientUserId || caseId);
+    const hasClientLink = !!(clientUserId || clientIds.length || caseId);
     if (hasLead && hasClientLink) {
         return res.status(400).json({
             message: 'לא ניתן לשמור פרטי ליד לצד תיק/לקוח קיים',
@@ -852,23 +1111,32 @@ const createEvent = async (req, res) => {
     // Working hours are visual guidance on the calendar grid only — do not block saves.
     const storedAllDay = _isAllDayInternalEventType(eventType) ? true : !!all_day;
 
-    const reminderOffsets = await _resolveReminderOffsets(req.body, eventType);
-    const storedReminderOffsets = reminderOffsets ?? [];
+    const splitOffsets = await _resolveSplitReminderOffsets(req.body, eventType);
+    const storedLawyerOffsets = splitOffsets.lawyer ?? [];
+    const storedClientOffsets = splitOffsets.client ?? [];
+    const storedReminderOffsets = uniqueSortedDesc([
+        ...storedLawyerOffsets,
+        ...storedClientOffsets,
+    ]);
     const resolvedChannels = await _resolveReminderChannels(req.body, eventType, storedReminderOffsets);
     if (resolvedChannels?.error) {
         return res.status(400).json({ message: resolvedChannels.error });
     }
     const storedReminderChannels = resolvedChannels ?? { push: false, sms: false, email: false };
-    const storedReminderTargets = req.body?.reminder_targets !== undefined
+    let storedReminderTargets = req.body?.reminder_targets !== undefined
         ? parseReminderTargets(req.body.reminder_targets)
         : defaultReminderTargets();
+    // No clients and no lead → do not target client reminders unless explicitly requested.
+    if (req.body?.reminder_targets === undefined && !clientIds.length && !hasLead) {
+        storedReminderTargets = { ...storedReminderTargets, client: false };
+    }
     const ownerId = _resolveEventOwnerId(userId, eventType, managerUserId, managerIds);
 
     const shouldInviteClient = (
         (eventType === 'appointment' || eventType === 'hearing')
         && storedReminderTargets.client
         && hasAnyReminderChannel(storedReminderChannels)
-        && (clientUserId || lead_phone || lead_email)
+        && (clientIds.length > 0 || lead_phone || lead_email)
     );
     const inviteToken = shouldInviteClient ? crypto.randomBytes(24).toString('hex') : null;
     const inviteStatus = shouldInviteClient ? 'pending' : 'none';
@@ -887,9 +1155,11 @@ const createEvent = async (req, res) => {
                 start_time, end_time, all_day, rrule,
                 lead_name, lead_phone, lead_email, lead_case_name,
                 reminder_offsets, reminder_channels, reminder_targets, reminders_sent_offsets,
-                invite_status, invite_token, client_reminder_sms, invite_sms)
+                invite_status, invite_token, client_reminder_sms, invite_sms,
+                lawyer_reminder_offsets, client_reminder_offsets)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
-                     $20::jsonb, $21::jsonb, $22::jsonb, '[]'::jsonb, $23, $24, $25, $26)
+                     $20::jsonb, $21::jsonb, $22::jsonb, '[]'::jsonb, $23, $24, $25, $26,
+                     $27::jsonb, $28::jsonb)
              RETURNING *`,
             [
                 ownerId,
@@ -918,6 +1188,8 @@ const createEvent = async (req, res) => {
                 inviteToken,
                 clientReminderSms,
                 inviteSms,
+                offsetsToJson(storedLawyerOffsets),
+                offsetsToJson(storedClientOffsets),
             ]
         );
         const created = rows[0];
@@ -929,6 +1201,19 @@ const createEvent = async (req, res) => {
             );
             created.manager_user_id = mgrMeta.managerUserId;
             created.manager_name = mgrMeta.managerName;
+        }
+
+        const clientMeta = await _syncEventClients(
+            created.id,
+            hasLead ? [] : clientIds,
+            pool,
+            { mintInvites: shouldInviteClient && !hasLead }
+        );
+        if (clientMeta.clientUserId != null) {
+            created.client_user_id = clientMeta.clientUserId;
+            created.client_name = clientMeta.clientName;
+            if (clientMeta.inviteToken) created.invite_token = clientMeta.inviteToken;
+            if (clientMeta.inviteStatus) created.invite_status = clientMeta.inviteStatus;
         }
 
         // For reminder-type events, mirror to scheduled_email_reminders so the
@@ -957,10 +1242,13 @@ const createEvent = async (req, res) => {
             }
         }
 
-        const sanitized = _applyManagersToEvent(_sanitizeEvent(created), mgrMeta.managers);
+        const sanitized = _applyClientsToEvent(
+            _applyManagersToEvent(_sanitizeEvent(created), mgrMeta.managers),
+            clientMeta.clients
+        );
         if (linkedReminderId) sanitized.linkedReminderId = linkedReminderId;
 
-        if (shouldInviteClient && inviteToken) {
+        if (shouldInviteClient && (created.invite_token || clientMeta.clients.some((c) => c.inviteToken))) {
             try {
                 await _sendCalendarInvite(created);
             } catch (inviteErr) {
@@ -1008,7 +1296,8 @@ const getEvent = async (req, res) => {
             [eventId]
         );
         const managersMap = await _fetchEventManagers([eventId]);
-        const event = await _sanitizeEventWithManagers(rows[0], managersMap);
+        const clientsMap = await _fetchEventClients([eventId]);
+        const event = await _sanitizeEventWithManagers(rows[0], managersMap, clientsMap);
         return res.json({ event });
     } catch (err) {
         console.error('[calendarController] getEvent error:', err.message);
@@ -1066,6 +1355,9 @@ const updateEvent = async (req, res) => {
     if (client_user_id !== undefined && client_user_id !== null && client_user_id !== '' && !Number.isFinite(parseInt(client_user_id, 10))) {
         return res.status(400).json({ message: 'מזהה לקוח לא תקין' });
     }
+    if (Array.isArray(req.body?.client_user_ids) && req.body.client_user_ids.some((id) => id != null && id !== '' && !Number.isFinite(parseInt(id, 10)))) {
+        return res.status(400).json({ message: 'מזהה לקוח לא תקין' });
+    }
     if (manager_user_id !== undefined && manager_user_id !== null && manager_user_id !== '' && !Number.isFinite(parseInt(manager_user_id, 10))) {
         return res.status(400).json({ message: 'מזהה מנהל לא תקין' });
     }
@@ -1089,13 +1381,30 @@ const updateEvent = async (req, res) => {
         const timeChanged =
             (start_time && new Date(start_time).getTime() !== new Date(ev.start_time).getTime()) ||
             (end_time && new Date(end_time).getTime() !== new Date(ev.end_time).getTime());
-        const resolvedReminderOffsets = await _resolveReminderOffsets(req.body, newEventType);
-        const nextReminderOffsets = resolvedReminderOffsets !== null
-            ? resolvedReminderOffsets
+
+        const splitOffsets = await _resolveSplitReminderOffsets(req.body, newEventType);
+        const currentLawyerOffsets = ev.lawyer_reminder_offsets != null
+            ? parseStoredOffsets(ev.lawyer_reminder_offsets)
             : parseStoredOffsets(ev.reminder_offsets);
-        const currentReminderOffsets = parseStoredOffsets(ev.reminder_offsets);
-        const remindersChanged = resolvedReminderOffsets !== null
-            && offsetsToJson(nextReminderOffsets) !== offsetsToJson(currentReminderOffsets);
+        const currentClientOffsets = ev.client_reminder_offsets != null
+            ? parseStoredOffsets(ev.client_reminder_offsets)
+            : parseStoredOffsets(ev.reminder_offsets);
+        const nextLawyerOffsets = splitOffsets.lawyer !== null
+            ? (splitOffsets.lawyer ?? [])
+            : currentLawyerOffsets;
+        const nextClientOffsets = splitOffsets.client !== null
+            ? (splitOffsets.client ?? [])
+            : currentClientOffsets;
+        const nextReminderOffsets = uniqueSortedDesc([
+            ...nextLawyerOffsets,
+            ...nextClientOffsets,
+        ]);
+        const remindersChanged = splitOffsets.touched && (
+            offsetsToJson(nextLawyerOffsets) !== offsetsToJson(currentLawyerOffsets)
+            || offsetsToJson(nextClientOffsets) !== offsetsToJson(currentClientOffsets)
+            || offsetsToJson(nextReminderOffsets) !== offsetsToJson(parseStoredOffsets(ev.reminder_offsets))
+        );
+
         const resolvedChannels = await _resolveReminderChannels(req.body, newEventType, nextReminderOffsets);
         if (resolvedChannels?.error) {
             return res.status(400).json({ message: resolvedChannels.error });
@@ -1110,7 +1419,13 @@ const updateEvent = async (req, res) => {
 
         // Working hours are visual guidance only — do not block updates/drag-resize.
 
-        const nextClientUserId = client_user_id !== undefined ? (parseInt(client_user_id, 10) || null) : ev.client_user_id;
+        const clientUpdate = _resolveClientIdsForUpdate(req.body);
+        if (clientUpdate.sync && clientUpdate.ids.some((id) => !Number.isFinite(id))) {
+            return res.status(400).json({ message: 'מזהה לקוח לא תקין' });
+        }
+        const nextClientUserId = clientUpdate.sync
+            ? (clientUpdate.ids[0] ?? null)
+            : (client_user_id !== undefined ? (parseInt(client_user_id, 10) || null) : ev.client_user_id);
         const nextCaseId = case_id !== undefined ? (parseInt(case_id, 10) || null) : ev.case_id;
         const nextLeadName = lead_name !== undefined ? (lead_name ? String(lead_name).trim() : null) : ev.lead_name;
         const nextLeadPhone = lead_phone !== undefined ? (lead_phone ? String(lead_phone).trim() : null) : ev.lead_phone;
@@ -1123,16 +1438,13 @@ const updateEvent = async (req, res) => {
 
         // Lead vs client mutual exclusion (mirrors DB CHECK for a clearer error)
         const hasLead = !!(nextLeadName || nextLeadPhone || nextLeadEmail);
-        let resolvedClientUserId = nextClientUserId;
-        let resolvedCaseId = nextCaseId;
-        if (hasLead) {
-            resolvedClientUserId = null;
-            resolvedCaseId = null;
-        }
+        let resolvedClientUserId = hasLead ? null : nextClientUserId;
+        let resolvedCaseId = hasLead ? null : nextCaseId;
+        const resolvedClientIds = hasLead ? [] : (clientUpdate.sync ? clientUpdate.ids : null);
         const resolvedClientName = hasLead
             ? null
             : (client_name !== undefined ? (client_name || null) : ev.client_name);
-        const hasClientLink = !!(resolvedClientUserId || resolvedCaseId);
+        const hasClientLink = !!(resolvedClientUserId || (resolvedClientIds && resolvedClientIds.length) || resolvedCaseId);
         if (hasLead && hasClientLink) {
             return res.status(400).json({
                 message: 'לא ניתן לשמור פרטי ליד לצד תיק/לקוח קיים',
@@ -1159,9 +1471,19 @@ const updateEvent = async (req, res) => {
             managerUpdate.sync ? managerUpdate.ids : (nextManagerUserId ? [nextManagerUserId] : [])
         );
 
-        const nextReminderTargets = req.body?.reminder_targets !== undefined
+        let nextReminderTargets = req.body?.reminder_targets !== undefined
             ? parseReminderTargets(req.body.reminder_targets)
             : parseReminderTargets(ev.reminder_targets);
+        const effectiveClientCount = resolvedClientIds
+            ? resolvedClientIds.length
+            : (resolvedClientUserId ? 1 : 0);
+        if (
+            req.body?.reminder_targets === undefined
+            && !effectiveClientCount
+            && !hasLead
+        ) {
+            nextReminderTargets = { ...nextReminderTargets, client: false };
+        }
 
         const nextClientReminderSms = req.body?.client_reminder_sms !== undefined
             ? (String(req.body.client_reminder_sms || '').trim() || null)
@@ -1197,7 +1519,9 @@ const updateEvent = async (req, res) => {
                last_reminder_sent_at  = $23,
                owner_id               = $24,
                client_reminder_sms    = $25,
-               invite_sms             = $26
+               invite_sms             = $26,
+               lawyer_reminder_offsets = $28::jsonb,
+               client_reminder_offsets = $29::jsonb
              WHERE id = $27
              RETURNING *`,
             [
@@ -1228,6 +1552,8 @@ const updateEvent = async (req, res) => {
                 nextClientReminderSms,
                 nextInviteSms,
                 eventId,
+                offsetsToJson(REMINDABLE_EVENT_TYPES.has(newEventType) ? nextLawyerOffsets : []),
+                offsetsToJson(REMINDABLE_EVENT_TYPES.has(newEventType) ? nextClientOffsets : []),
             ]
         );
         let updated = rows[0];
@@ -1242,6 +1568,22 @@ const updateEvent = async (req, res) => {
                 updated = { ...updated, manager_user_id: mgrMeta.managerUserId, manager_name: mgrMeta.managerName };
             }
         }
+        let clientMeta = null;
+        if (hasLead) {
+            clientMeta = await _syncEventClients(eventId, [], pool, { mintInvites: false });
+            updated = {
+                ...updated,
+                client_user_id: null,
+                client_name: null,
+            };
+        } else if (clientUpdate.sync) {
+            clientMeta = await _syncEventClients(eventId, clientUpdate.ids, pool, { mintInvites: false });
+            updated = {
+                ...updated,
+                client_user_id: clientMeta.clientUserId,
+                client_name: clientMeta.clientName || resolvedClientName,
+            };
+        }
         await _syncReminderForUpdatedEvent(updated, req.body, {
             reminder_to_email,
             reminder_client_name,
@@ -1249,9 +1591,20 @@ const updateEvent = async (req, res) => {
             reminder_template_data,
             reminder_subject,
         });
-        const sanitized = mgrMeta
-            ? _applyManagersToEvent(_sanitizeEvent(updated), mgrMeta.managers)
-            : await _sanitizeEventWithManagers(updated, await _fetchEventManagers([eventId]));
+        let sanitized;
+        if (mgrMeta || clientMeta) {
+            sanitized = _sanitizeEvent(updated);
+            if (mgrMeta) _applyManagersToEvent(sanitized, mgrMeta.managers);
+            else _applyManagersToEvent(sanitized, (await _fetchEventManagers([eventId])).get(eventId));
+            if (clientMeta) _applyClientsToEvent(sanitized, clientMeta.clients);
+            else _applyClientsToEvent(sanitized, (await _fetchEventClients([eventId])).get(eventId));
+        } else {
+            sanitized = await _sanitizeEventWithManagers(
+                updated,
+                await _fetchEventManagers([eventId]),
+                await _fetchEventClients([eventId])
+            );
+        }
         await _attachLinkedReminderId(sanitized);
         return res.json({ event: sanitized });
     } catch (err) {
@@ -2541,55 +2894,220 @@ async function _publicAppBase() {
     ).replace(/\/$/, '');
 }
 
-async function _sendCalendarInvite(ev) {
-    if (!ev?.invite_token) return;
-
-    let phone = ev.lead_phone || null;
-    let email = ev.lead_email || null;
-    let clientName = ev.client_name || ev.lead_name || null;
-    if (ev.client_user_id) {
-        const { rows } = await pool.query(
-            'SELECT phonenumber AS phone, email, name FROM users WHERE userid = $1',
-            [ev.client_user_id]
-        );
-        phone = phone || rows[0]?.phone || null;
-        email = email || rows[0]?.email || null;
-        clientName = clientName || rows[0]?.name || null;
-    }
-
-    const messageBody = await composeInviteSmsMessage({
-        ...ev,
-        client_name: clientName,
-    });
-
-    const toE164 = (raw) => {
-        const digits = String(raw || '').replace(/\D/g, '');
-        if (!digits) return null;
-        if (digits.startsWith('972') && digits.length >= 11) return `+${digits}`;
-        if (digits.startsWith('0') && digits.length >= 9) return `+972${digits.slice(1)}`;
-        if (digits.length >= 8 && digits.length <= 10) return `+972${digits}`;
-        if (String(raw).startsWith('+')) return String(raw).replace(/\s+/g, '');
-        return null;
+/**
+ * Send meeting invite SMS/email to all junction clients (or legacy single client) + lead.
+ * @param {object} ev - calendar_events row
+ * @param {{ force?: boolean }} [opts] - force=true skips Shabbat quiet-window deferral
+ * @returns {Promise<{ sentSms: number, sentEmail: number, deferred: boolean, error: string|null, recipients: object[] }>}
+ */
+async function _sendCalendarInvite(ev, { force = false } = {}) {
+    const result = {
+        sentSms: 0,
+        sentEmail: 0,
+        deferred: false,
+        error: null,
+        recipients: [],
     };
+    if (!ev?.id) {
+        result.error = 'אירוע לא תקין';
+        return result;
+    }
 
-    const e164 = toE164(phone);
-    if (e164) {
-        try { await sendMessage(messageBody, e164); } catch (e) {
-            console.error('[calendar-invite] SMS failed:', e.message);
+    if (!force) {
+        const deferredUntil = deferToMotzeiShabbat(new Date());
+        if (deferredUntil) {
+            try {
+                await pool.query(
+                    `UPDATE calendar_events
+                     SET invite_deferred_until = $1, updated_at = NOW()
+                     WHERE id = $2`,
+                    [deferredUntil, ev.id]
+                );
+            } catch (err) {
+                console.error('[calendar-invite] deferral persist failed:', err.message);
+            }
+            result.deferred = true;
+            return result;
         }
     }
-    if (email) {
-        try {
-            await sendTransactionalCustomHtmlEmail({
-                toEmail: email,
-                subject: `הזמנה לפגישה — ${ev.title || 'פגישה'}`,
-                htmlBody: `<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.7">${String(messageBody).replace(/\n/g, '<br/>')}</div>`,
-                logLabel: 'calendar-invite',
+
+    try {
+        await pool.query(
+            `UPDATE calendar_events SET invite_deferred_until = NULL WHERE id = $1`,
+            [ev.id]
+        );
+    } catch (_) { /* column may not exist mid-migrate */ }
+
+    const recipients = [];
+
+    try {
+        const { rows } = await pool.query(
+            `SELECT cec.user_id, cec.invite_token, u.phonenumber AS phone, u.email, u.name
+             FROM calendar_event_clients cec
+             JOIN users u ON u.userid = cec.user_id
+             WHERE cec.event_id = $1
+             ORDER BY cec.sort_order, cec.user_id`,
+            [ev.id]
+        );
+        for (const r of rows) {
+            recipients.push({
+                userId: r.user_id,
+                phone: r.phone || null,
+                email: r.email || null,
+                name: r.name || null,
+                inviteToken: r.invite_token || ev.invite_token || null,
+                kind: 'client',
             });
-        } catch (e) {
-            console.error('[calendar-invite] email failed:', e.message);
+        }
+    } catch (err) {
+        console.error('[calendar-invite] clients lookup failed:', err.message);
+    }
+
+    if (!recipients.length && ev.client_user_id) {
+        try {
+            const { rows } = await pool.query(
+                'SELECT phonenumber AS phone, email, name FROM users WHERE userid = $1',
+                [ev.client_user_id]
+            );
+            recipients.push({
+                userId: ev.client_user_id,
+                phone: rows[0]?.phone || null,
+                email: rows[0]?.email || null,
+                name: rows[0]?.name || ev.client_name || null,
+                inviteToken: ev.invite_token || null,
+                kind: 'client',
+            });
+        } catch (err) {
+            console.error('[calendar-invite] legacy client lookup failed:', err.message);
+            result.error = err.message;
         }
     }
+
+    if (ev.lead_phone || ev.lead_email) {
+        recipients.push({
+            userId: null,
+            phone: ev.lead_phone || null,
+            email: ev.lead_email || null,
+            name: ev.lead_name || ev.client_name || null,
+            inviteToken: ev.invite_token || null,
+            kind: 'lead',
+        });
+    }
+
+    if (!recipients.length) {
+        result.error = 'לא נמצאו נמענים לשליחת הזמנה';
+        return result;
+    }
+
+    // Ensure every recipient has an invite token (mint on junction / event as needed).
+    for (const recipient of recipients) {
+        if (recipient.inviteToken) continue;
+        const token = crypto.randomBytes(24).toString('hex');
+        recipient.inviteToken = token;
+        if (recipient.kind === 'client' && recipient.userId) {
+            try {
+                await pool.query(
+                    `UPDATE calendar_event_clients
+                     SET invite_token = $1,
+                         invite_status = CASE WHEN invite_status = 'none' THEN 'pending' ELSE invite_status END
+                     WHERE event_id = $2 AND user_id = $3`,
+                    [token, ev.id, recipient.userId]
+                );
+            } catch (err) {
+                console.error('[calendar-invite] mint client token failed:', err.message);
+            }
+        } else if (recipient.kind === 'lead' || !ev.invite_token) {
+            try {
+                await pool.query(
+                    `UPDATE calendar_events
+                     SET invite_token = $1,
+                         invite_status = CASE WHEN invite_status = 'none' THEN 'pending' ELSE invite_status END,
+                         updated_at = NOW()
+                     WHERE id = $2`,
+                    [token, ev.id]
+                );
+                ev.invite_token = token;
+            } catch (err) {
+                console.error('[calendar-invite] mint event token failed:', err.message);
+            }
+        }
+    }
+
+    const errors = [];
+    for (const recipient of recipients) {
+        const entry = {
+            userId: recipient.userId,
+            kind: recipient.kind,
+            phone: recipient.phone,
+            email: recipient.email,
+            sentSms: false,
+            sentEmail: false,
+            error: null,
+        };
+        let messageBody;
+        try {
+            messageBody = await composeInviteSmsMessage({
+                ...ev,
+                client_name: recipient.name,
+                invite_token: recipient.inviteToken,
+            });
+        } catch (err) {
+            entry.error = err.message;
+            errors.push(err.message);
+            result.recipients.push(entry);
+            continue;
+        }
+
+        const e164 = _toE164Phone(recipient.phone);
+        if (e164) {
+            try {
+                await sendMessage(messageBody, e164);
+                entry.sentSms = true;
+                result.sentSms += 1;
+            } catch (e) {
+                console.error('[calendar-invite] SMS failed:', e.message);
+                entry.error = e.message;
+                errors.push(e.message);
+            }
+        }
+        if (recipient.email) {
+            try {
+                await sendTransactionalCustomHtmlEmail({
+                    toEmail: recipient.email,
+                    subject: `הזמנה לפגישה — ${ev.title || 'פגישה'}`,
+                    htmlBody: `<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.7">${String(messageBody).replace(/\n/g, '<br/>')}</div>`,
+                    logLabel: 'calendar-invite',
+                });
+                entry.sentEmail = true;
+                result.sentEmail += 1;
+            } catch (e) {
+                console.error('[calendar-invite] email failed:', e.message);
+                entry.error = entry.error || e.message;
+                errors.push(e.message);
+            }
+        }
+        if (!entry.sentSms && !entry.sentEmail && !entry.error) {
+            entry.error = 'חסר טלפון או אימייל';
+            errors.push(entry.error);
+        }
+        result.recipients.push(entry);
+    }
+
+    if (!result.sentSms && !result.sentEmail) {
+        result.error = errors[0] || 'שליחת ההזמנה נכשלה';
+    } else if (errors.length) {
+        result.error = errors[0];
+    }
+    return result;
+}
+
+/** Flush a Shabbat-deferred invite (called by calendar reminders scheduler). */
+async function sendDeferredCalendarInvite(eventId) {
+    const id = parseInt(eventId, 10);
+    if (!Number.isFinite(id)) throw new Error('invalid eventId');
+    const { rows } = await pool.query('SELECT * FROM calendar_events WHERE id = $1', [id]);
+    if (!rows.length) throw new Error('event not found');
+    return _sendCalendarInvite(rows[0], { force: true });
 }
 
 /**
@@ -2599,12 +3117,52 @@ const getInviteByToken = async (req, res) => {
     const token = String(req.params.token || '').trim();
     if (!token) return res.status(400).json({ message: 'token required' });
     try {
-        const { rows } = await pool.query(
+        let { rows } = await pool.query(
             `SELECT id, title, description, location, start_time, end_time, all_day,
                     invite_status, invite_responded_at, client_name, lead_name
              FROM calendar_events WHERE invite_token = $1 LIMIT 1`,
             [token]
         );
+        let clientName = null;
+        let status = null;
+        let respondedAt = null;
+
+        if (rows.length) {
+            const ev = rows[0];
+            clientName = ev.client_name || ev.lead_name || null;
+            status = ev.invite_status;
+            respondedAt = ev.invite_responded_at;
+            return res.json({
+                invite: {
+                    title: ev.title,
+                    description: ev.description,
+                    location: ev.location,
+                    startTime: ev.start_time,
+                    endTime: ev.end_time,
+                    allDay: ev.all_day,
+                    status,
+                    respondedAt,
+                    clientName,
+                },
+            });
+        }
+
+        try {
+            const clientLookup = await pool.query(
+                `SELECT ce.title, ce.description, ce.location, ce.start_time, ce.end_time, ce.all_day,
+                        cec.invite_status, cec.invite_responded_at, u.name AS client_name, ce.lead_name
+                 FROM calendar_event_clients cec
+                 JOIN calendar_events ce ON ce.id = cec.event_id
+                 LEFT JOIN users u ON u.userid = cec.user_id
+                 WHERE cec.invite_token = $1
+                 LIMIT 1`,
+                [token]
+            );
+            rows = clientLookup.rows;
+        } catch (err) {
+            console.error('[calendarController] getInviteByToken client lookup:', err.message);
+        }
+
         if (!rows.length) return res.status(404).json({ message: 'הזמנה לא נמצאה' });
         const ev = rows[0];
         return res.json({
@@ -2638,6 +3196,42 @@ const respondToInvite = async (req, res) => {
     }
     const nextStatus = action === 'accept' ? 'accepted' : 'declined';
     try {
+        // Per-client token first
+        try {
+            const { rows: clientRows } = await pool.query(
+                `UPDATE calendar_event_clients
+                 SET invite_status = $1, invite_responded_at = NOW()
+                 WHERE invite_token = $2
+                 RETURNING event_id, user_id, invite_status, invite_responded_at`,
+                [nextStatus, token]
+            );
+            if (clientRows.length) {
+                const row = clientRows[0];
+                // Keep legacy event-level fields in sync when the primary client responds.
+                await pool.query(
+                    `UPDATE calendar_events ce
+                     SET invite_status = $1,
+                         invite_responded_at = NOW(),
+                         updated_at = NOW()
+                     WHERE ce.id = $2
+                       AND (ce.client_user_id IS NULL OR ce.client_user_id = $3)`,
+                    [nextStatus, row.event_id, row.user_id]
+                );
+                const { rows: titleRows } = await pool.query(
+                    'SELECT title FROM calendar_events WHERE id = $1',
+                    [row.event_id]
+                );
+                return res.json({
+                    ok: true,
+                    status: row.invite_status,
+                    respondedAt: row.invite_responded_at,
+                    title: titleRows[0]?.title || null,
+                });
+            }
+        } catch (err) {
+            console.error('[calendarController] respondToInvite client:', err.message);
+        }
+
         const { rows } = await pool.query(
             `UPDATE calendar_events
              SET invite_status = $1, invite_responded_at = NOW(), updated_at = NOW()
@@ -2668,8 +3262,29 @@ const resendInvite = async (req, res) => {
     const ownership = await _requireEventAccess(eventId, userId, req.user?.Role);
     if (!ownership.ok) return res.status(ownership.status).json({ message: ownership.message });
     try {
-        let ev = ownership.event;
-        if (!ev.invite_token) {
+        const { rows: existing } = await pool.query(
+            'SELECT * FROM calendar_events WHERE id = $1',
+            [eventId]
+        );
+        if (!existing.length) return res.status(404).json({ message: 'אירוע לא נמצא' });
+        let ev = existing[0];
+
+        // Ensure junction clients have invite tokens when present.
+        const clientsMap = await _fetchEventClients([eventId]);
+        const clients = clientsMap.get(eventId) || [];
+        if (clients.length) {
+            await _syncEventClients(
+                eventId,
+                clients.map((c) => c.userId),
+                pool,
+                { mintInvites: true }
+            );
+            const { rows: refreshed } = await pool.query(
+                'SELECT * FROM calendar_events WHERE id = $1',
+                [eventId]
+            );
+            ev = refreshed[0] || ev;
+        } else if (!ev.invite_token && (ev.lead_phone || ev.lead_email || ev.client_user_id)) {
             const token = crypto.randomBytes(24).toString('hex');
             const { rows } = await pool.query(
                 `UPDATE calendar_events
@@ -2686,11 +3301,157 @@ const resendInvite = async (req, res) => {
             );
             ev = rows[0];
         }
-        await _sendCalendarInvite(ev);
-        return res.json({ event: _sanitizeEvent(ev) });
+
+        const sendResult = await _sendCalendarInvite(ev);
+        const sanitized = await _sanitizeEventWithManagers(
+            ev,
+            await _fetchEventManagers([eventId]),
+            await _fetchEventClients([eventId])
+        );
+
+        if (!sendResult.sentSms && !sendResult.sentEmail && !sendResult.deferred) {
+            return res.status(400).json({
+                message: sendResult.error || 'לא ניתן לשלוח הזמנה — חסר טלפון או אימייל ללקוח',
+                event: sanitized,
+                ...sendResult,
+            });
+        }
+
+        return res.json({
+            event: sanitized,
+            ...sendResult,
+        });
     } catch (err) {
         console.error('[calendarController] resendInvite:', err.message);
         return res.status(500).json({ message: 'שגיאה פנימית' });
+    }
+};
+
+/**
+ * POST /api/calendar/:id/duplicate — clone event (managers, clients, reminders); new invite tokens.
+ */
+const duplicateEvent = async (req, res) => {
+    const userId = req.user.UserId;
+    const eventId = parseInt(req.params.id, 10);
+    if (!Number.isFinite(eventId)) return res.status(400).json({ message: 'מזהה אירוע לא תקין' });
+    const ownership = await _requireEventAccess(eventId, userId, req.user?.Role);
+    if (!ownership.ok) return res.status(ownership.status).json({ message: ownership.message });
+
+    try {
+        const { rows: srcRows } = await pool.query(
+            'SELECT * FROM calendar_events WHERE id = $1',
+            [eventId]
+        );
+        if (!srcRows.length) return res.status(404).json({ message: 'אירוע לא נמצא' });
+        const src = srcRows[0];
+
+        const needsInvite = !!(src.invite_token || src.client_user_id || src.lead_phone || src.lead_email);
+        const newInviteToken = needsInvite ? crypto.randomBytes(24).toString('hex') : null;
+
+        const { rows } = await pool.query(
+            `INSERT INTO calendar_events
+               (owner_id, case_id, title, description, location, event_type,
+                client_user_id, client_name, manager_user_id, manager_name, color,
+                start_time, end_time, all_day, rrule,
+                lead_name, lead_phone, lead_email, lead_case_name,
+                reminder_offsets, reminder_channels, reminder_targets, reminders_sent_offsets,
+                invite_status, invite_token, invite_responded_at,
+                client_reminder_sms, invite_sms,
+                lawyer_reminder_offsets, client_reminder_offsets,
+                last_reminder_sent_at, invite_deferred_until)
+             VALUES (
+                $1, $2, $3, $4, $5, $6,
+                $7, $8, $9, $10, $11,
+                $12, $13, $14, $15,
+                $16, $17, $18, $19,
+                $20::jsonb, $21::jsonb, $22::jsonb, '[]'::jsonb,
+                $23, $24, NULL,
+                $25, $26,
+                $27::jsonb, $28::jsonb,
+                NULL, NULL
+             )
+             RETURNING *`,
+            [
+                src.owner_id,
+                src.case_id,
+                src.title,
+                src.description,
+                src.location,
+                src.event_type,
+                src.client_user_id,
+                src.client_name,
+                src.manager_user_id,
+                src.manager_name,
+                src.color,
+                src.start_time,
+                src.end_time,
+                src.all_day,
+                src.rrule,
+                src.lead_name,
+                src.lead_phone,
+                src.lead_email,
+                src.lead_case_name,
+                offsetsToJson(parseStoredOffsets(src.reminder_offsets)),
+                channelsToJson(parseStoredChannels(src.reminder_channels)),
+                targetsToJson(parseReminderTargets(src.reminder_targets)),
+                needsInvite ? 'pending' : (src.invite_status === 'none' ? 'none' : 'pending'),
+                newInviteToken,
+                src.client_reminder_sms,
+                src.invite_sms,
+                offsetsToJson(
+                    src.lawyer_reminder_offsets != null
+                        ? parseStoredOffsets(src.lawyer_reminder_offsets)
+                        : parseStoredOffsets(src.reminder_offsets)
+                ),
+                offsetsToJson(
+                    src.client_reminder_offsets != null
+                        ? parseStoredOffsets(src.client_reminder_offsets)
+                        : parseStoredOffsets(src.reminder_offsets)
+                ),
+            ]
+        );
+        const created = rows[0];
+
+        const managersMap = await _fetchEventManagers([eventId]);
+        const managerIds = (managersMap.get(eventId) || []).map((m) => m.userId);
+        if (!managerIds.length && src.manager_user_id) managerIds.push(src.manager_user_id);
+        const mgrMeta = await _syncEventManagers(created.id, managerIds);
+
+        const clientsMap = await _fetchEventClients([eventId]);
+        let clientIds = (clientsMap.get(eventId) || []).map((c) => c.userId);
+        if (!clientIds.length && src.client_user_id) clientIds = [src.client_user_id];
+        const clientMeta = await _syncEventClients(
+            created.id,
+            clientIds,
+            pool,
+            { mintInvites: needsInvite && clientIds.length > 0 }
+        );
+        if (clientMeta.clientUserId != null) {
+            created.client_user_id = clientMeta.clientUserId;
+            created.client_name = clientMeta.clientName;
+            if (clientMeta.inviteToken) created.invite_token = clientMeta.inviteToken;
+            if (clientMeta.inviteStatus) created.invite_status = clientMeta.inviteStatus;
+        }
+
+        if (mgrMeta.managerUserId && mgrMeta.managerUserId !== created.manager_user_id) {
+            await pool.query(
+                'UPDATE calendar_events SET manager_user_id = $1, manager_name = $2 WHERE id = $3',
+                [mgrMeta.managerUserId, mgrMeta.managerName, created.id]
+            );
+            created.manager_user_id = mgrMeta.managerUserId;
+            created.manager_name = mgrMeta.managerName;
+        }
+
+        const sanitized = _applyClientsToEvent(
+            _applyManagersToEvent(_sanitizeEvent(created), mgrMeta.managers),
+            clientMeta.clients
+        );
+        return res.status(201).json({ event: sanitized });
+    } catch (err) {
+        const fkMsg = _calendarFkErrorMessage(err);
+        if (fkMsg) return res.status(400).json({ message: fkMsg });
+        console.error('[calendarController] duplicateEvent:', err.message);
+        return res.status(500).json({ message: 'שגיאה פנימית בשרת' });
     }
 };
 
@@ -2714,8 +3475,13 @@ const getDayAgenda = async (req, res) => {
             [userId, dateStr]
         );
         const ids = rows.map((r) => r.id);
-        const managersMap = await _fetchEventManagers(ids);
-        const events = rows.map((r) => _applyManagersToEvent(_sanitizeEvent(r), managersMap.get(r.id) || []));
+        const [managersMap, clientsMap] = await Promise.all([
+            _fetchEventManagers(ids),
+            _fetchEventClients(ids),
+        ]);
+        const events = await Promise.all(
+            rows.map((r) => _sanitizeEventWithManagers(r, managersMap, clientsMap))
+        );
         return res.json({ date: dateStr, events });
     } catch (err) {
         console.error('[calendarController] getDayAgenda:', err.message);
@@ -2751,6 +3517,7 @@ module.exports = {
     getEvent,
     updateEvent,
     deleteEvent,
+    duplicateEvent,
     // CRM (Step 2)
     checkConflict,
     getClientCases,
@@ -2760,6 +3527,7 @@ module.exports = {
     getInviteByToken,
     respondToInvite,
     resendInvite,
+    sendDeferredCalendarInvite,
     resolvePublicShortLink,
     // Agenda
     getDayAgenda,

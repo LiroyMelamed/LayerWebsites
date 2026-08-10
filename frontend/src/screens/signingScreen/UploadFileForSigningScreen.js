@@ -637,8 +637,8 @@ export default function UploadFileForSigningScreen() {
                 pageNum: pageNumber,
                 x,
                 y,
-                width: 160,
-                height: 60,
+                width: fieldType === 'clientStamp' || fieldType === 'lawyerStamp' ? 280 : 160,
+                height: fieldType === 'clientStamp' || fieldType === 'lawyerStamp' ? 120 : 60,
                 signerIndex: signerIdx,
                 signerUserId: signer?.UserId,
                 signerName,
@@ -710,8 +710,8 @@ export default function UploadFileForSigningScreen() {
                 pageNum: pageNumber,
                 x,
                 y,
-                width: 200,
-                height: 100,
+                width: 280,
+                height: 120,
                 signerIndex: signerIdx,
                 signerUserId: signer?.UserId,
                 signerName,
@@ -1495,16 +1495,17 @@ export default function UploadFileForSigningScreen() {
                                         <SimpleContainer className="lw-uploadSigningScreen__signerSticky">
                                             <SimpleContainer className="lw-fieldTypeNavbar__signerRow">
                                                 <SimpleContainer className="lw-fieldTypeNavbar__signerButtons">
-                                                    {selectedSigners.map((s) => {
+                                                    {selectedSigners.map((s, signerIdx) => {
                                                         const isSelected = Number(s?.UserId) === Number(selectedSignerId);
                                                         const Button = isSelected ? PrimaryButton : SecondaryButton;
+                                                        const paletteClass = `lw-signer-palette-${signerIdx % 4}`;
                                                         return (
                                                             <Button
                                                                 key={s?.UserId}
                                                                 onPress={() => setSelectedSignerId(s?.UserId)}
-                                                                className="lw-fieldTypeNavbar__signerButton"
+                                                                className={`lw-fieldTypeNavbar__signerButton ${paletteClass}${isSelected ? ' is-activeSigner' : ''}`}
                                                             >
-                                                                {s?.Name || t('signing.signerFallback', { index: 1 })}
+                                                                {s?.Name || t('signing.signerFallback', { index: signerIdx + 1 })}
                                                             </Button>
                                                         );
                                                     })}
