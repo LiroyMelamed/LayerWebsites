@@ -619,25 +619,25 @@
     flex-direction: column;
     gap: 0.05rem;
     min-height: 100%;
-    padding-inline-end: 0.85rem;
+    padding-inline-end: 0.7rem;
     overflow: hidden;
 }
 
 .fc .fc-event .lw-fcEventRsvpBadge {
     position: absolute;
-    top: 0.1rem;
-    inset-inline-end: 0.1rem;
+    top: 0.08rem;
+    inset-inline-end: 0.08rem;
     z-index: 2;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 0.9rem;
-    height: 0.9rem;
+    width: 0.68rem;
+    height: 0.68rem;
     border-radius: 999px;
-    font-size: 0.65rem;
-    font-weight: 800;
+    font-size: 0.48rem;
+    font-weight: 700;
     line-height: 1;
-    box-shadow: 0 0 0 0.08rem rgba(255, 255, 255, 0.85);
+    box-shadow: 0 0 0 0.06rem rgba(255, 255, 255, 0.85);
 }
 
 .fc .fc-event .lw-fcEventRsvpBadge--accepted {

@@ -8,6 +8,9 @@ import {
     parseTemporalText,
     temporalPlaceholder,
     isTemporalMaskComplete,
+    editTemporalDigits,
+    deleteTemporalDigit,
+    snapCaretToDigitSlot,
 } from './temporalMask';
 
 import './SimpleInput.scss';
@@ -20,6 +23,7 @@ function emitChange(onChange, nativeValue) {
 /**
  * Controlled input with rock-solid digit-slot masking for date/time.
  * Digits are capped to DD/MM/YYYY [HH:mm] slots — floods like 20308/08/2026 are impossible.
+ * Mid-field edits overwrite the focused digit slot and restore the caret (no jump-to-end corruption).
  * Debounced text fields flush pending values synchronously on blur (Tab-safe).
  */
 const SimpleInput = forwardRef(
@@ -68,6 +72,7 @@ const SimpleInput = forwardRef(
         const textValueRef = useRef(
             isEditableTemporal ? formatTemporalDisplay(type, value ?? '') : ''
         );
+        const caretRestoreRef = useRef(null);
         const onChangeRef = useRef(onChange);
         onChangeRef.current = onChange;
 
@@ -76,6 +81,22 @@ const SimpleInput = forwardRef(
                 if (timeoutRef.current) clearTimeout(timeoutRef.current);
             };
         }, []);
+
+        useEffect(() => {
+            if (!isEditableTemporal) return;
+            const caret = caretRestoreRef.current;
+            if (caret == null) return;
+            caretRestoreRef.current = null;
+            const el = textInputRef.current;
+            if (!el) return;
+            requestAnimationFrame(() => {
+                try {
+                    el.setSelectionRange(caret, caret);
+                } catch {
+                    /* ignore */
+                }
+            });
+        }, [textValue, isEditableTemporal]);
 
         const style = _style;
         const textStyle = _textStyle;
@@ -109,6 +130,30 @@ const SimpleInput = forwardRef(
             setIsFocused(true);
         }
 
+        function applyTemporalResult(result) {
+            textValueRef.current = result.display;
+            setTextValue(result.display);
+            caretRestoreRef.current = result.caret;
+
+            if (!result.display) {
+                delayedValueRef.current = '';
+                setDelayedValue('');
+                pendingEmitRef.current = '';
+                flushPendingEmit();
+                return;
+            }
+
+            if (!isTemporalMaskComplete(type, result.display)) return;
+
+            const parsed = parseTemporalText(type, result.display);
+            if (parsed === null) return;
+
+            delayedValueRef.current = parsed;
+            setDelayedValue(parsed);
+            pendingEmitRef.current = parsed;
+            flushPendingEmit();
+        }
+
         function commitTemporalDraft(draft) {
             const masked = applyTemporalDigitMask(type, draft);
             textValueRef.current = masked;
@@ -123,13 +168,11 @@ const SimpleInput = forwardRef(
             }
 
             if (!isTemporalMaskComplete(type, masked)) {
-                // Incomplete — keep draft visible, don't emit, don't revert yet.
                 return false;
             }
 
             const parsed = parseTemporalText(type, masked);
             if (parsed === null) {
-                // Full length but invalid calendar values — revert to last good.
                 const restored = formatTemporalDisplay(type, value ?? delayedValueRef.current);
                 textValueRef.current = restored;
                 setTextValue(restored);
@@ -158,7 +201,6 @@ const SimpleInput = forwardRef(
                 const draft = textValueRef.current;
                 const ok = commitTemporalDraft(draft);
                 if (!ok && String(draft || '').trim() !== '' && !isTemporalMaskComplete(type, draft)) {
-                    // Incomplete on Tab — revert to last committed (don't keep garbage).
                     if (timeoutRef.current) {
                         clearTimeout(timeoutRef.current);
                         timeoutRef.current = null;
@@ -212,13 +254,81 @@ const SimpleInput = forwardRef(
             }, timeToWaitInMilli);
         };
 
+        const handleTemporalKeyDown = (e) => {
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+            if (e.key === 'Backspace' || e.key === 'Delete') {
+                e.preventDefault();
+                const start = e.target.selectionStart ?? 0;
+                const end = e.target.selectionEnd ?? start;
+                const result = deleteTemporalDigit(
+                    type,
+                    textValueRef.current,
+                    start,
+                    end,
+                    e.key === 'Delete' ? 'delete' : 'backspace'
+                );
+                applyTemporalResult(result);
+                return;
+            }
+
+            if (/^\d$/.test(e.key)) {
+                e.preventDefault();
+                const start = e.target.selectionStart ?? 0;
+                const end = e.target.selectionEnd ?? start;
+                const result = editTemporalDigits(type, textValueRef.current, e.key, start, end);
+                applyTemporalResult(result);
+            }
+        };
+
+        const handleTemporalBeforeInput = (e) => {
+            const data = e.data;
+            if (data == null) return;
+            if (!/^\d+$/.test(data)) {
+                if (e.inputType && String(e.inputType).startsWith('insert')) {
+                    e.preventDefault();
+                }
+                return;
+            }
+            e.preventDefault();
+            const start = e.target.selectionStart ?? 0;
+            const end = e.target.selectionEnd ?? start;
+            const result = editTemporalDigits(type, textValueRef.current, data, start, end);
+            applyTemporalResult(result);
+        };
+
+        const handleTemporalPaste = (e) => {
+            e.preventDefault();
+            const pasted = e.clipboardData?.getData('text') || '';
+            const digits = pasted.replace(/\D/g, '');
+            if (!digits) return;
+            const start = e.target.selectionStart ?? 0;
+            const end = e.target.selectionEnd ?? start;
+            const result = editTemporalDigits(type, textValueRef.current, digits, start, end);
+            applyTemporalResult(result);
+        };
+
+        const handleTemporalClick = (e) => {
+            const display = textValueRef.current || '';
+            if (!display) return;
+            const rawCaret = e.target.selectionStart ?? 0;
+            const snapped = snapCaretToDigitSlot(type, display, rawCaret);
+            if (snapped !== rawCaret) {
+                try {
+                    e.target.setSelectionRange(snapped, snapped);
+                } catch {
+                    /* ignore */
+                }
+            }
+        };
+
         const handleTextChange = (e) => {
-            // Strict digit-slot mask — extra digits are dropped, separators auto-inserted.
+            // Fallback path (autofill / rare browsers) — still digit-capped.
             const masked = applyTemporalDigitMask(type, e.target.value);
             textValueRef.current = masked;
             setTextValue(masked);
+            caretRestoreRef.current = masked.length;
 
-            // Live-commit when the mask is complete and valid (smooth calendar UX).
             if (isTemporalMaskComplete(type, masked)) {
                 const parsed = parseTemporalText(type, masked);
                 if (parsed !== null) {
@@ -376,6 +486,10 @@ const SimpleInput = forwardRef(
                             }}
                             value={textValue}
                             onChange={handleTextChange}
+                            onKeyDown={handleTemporalKeyDown}
+                            onBeforeInput={handleTemporalBeforeInput}
+                            onPaste={handleTemporalPaste}
+                            onClick={handleTemporalClick}
                             onFocus={handleFocus}
                             onBlur={handleBlur}
                             disabled={disabled}
