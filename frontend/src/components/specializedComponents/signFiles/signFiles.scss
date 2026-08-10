@@ -561,10 +561,9 @@
 
 .lw-signing-spot {
     position: absolute;
-    /* Physical anchors only — never flip under Hebrew RTL ancestors. */
-    right: auto !important;
-    inset-inline-start: auto !important;
-    inset-inline-end: auto !important;
+    /* Use physical left/top only (set via inline style). Do NOT set
+       inset-inline-start with !important — in LTR it aliases `left` and
+       overrides the inline X, which made spots vertical-only draggable. */
     border-radius: 0.4375rem;
     cursor: move;
     pointer-events: auto;
