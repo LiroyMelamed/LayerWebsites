@@ -157,8 +157,15 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
         return { moveFromClientPoint };
     };
 
+    /**
+     * Drag MUST start from the top overlay (not the spot root).
+     * On iOS, touching child labels without touch-action:none lets the PDF
+     * scroll parent steal the gesture — which looked like "can't drag at all".
+     */
     const startDragPointer = (e) => {
-        // Pointer events support mouse + touch + pen.
+        if (!canEditSpot) return;
+        if (e.button != null && e.button !== 0) return;
+
         e.preventDefault();
         e.stopPropagation();
 
@@ -167,7 +174,6 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
 
         const target = e.currentTarget;
         const pointerId = e.pointerId;
-
         const { moveFromClientPoint } = startDragFromClientPoint(e.clientX, e.clientY);
 
         const onPointerMove = (ev) => {
@@ -190,7 +196,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
             } catch {
                 // ignore
             }
-            // Deliberate tap only (no drag) → open field settings. Never open mid-drag.
+            // Deliberate tap only (no drag) → open field settings.
             if (!dragMovedRef.current && typeof onSelectSpot === 'function') {
                 onSelectSpot(index);
             }
@@ -208,19 +214,25 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
     };
 
     const startDragTouchFallback = (e) => {
-        // Fallback for browsers without Pointer Events.
+        if (!canEditSpot) return;
         e.preventDefault();
         e.stopPropagation();
 
         const touch = e.touches?.[0];
         if (!touch) return;
 
+        dragMovedRef.current = false;
+        pointerStartRef.current = { x: Number(touch.clientX), y: Number(touch.clientY) };
         const { moveFromClientPoint } = startDragFromClientPoint(touch.clientX, touch.clientY);
 
         const onTouchMove = (ev) => {
             const t = ev.touches?.[0];
             if (!t) return;
             ev.preventDefault();
+            const dx = Math.abs(Number(t.clientX) - pointerStartRef.current.x);
+            const dy = Math.abs(Number(t.clientY) - pointerStartRef.current.y);
+            if (dx <= DRAG_THRESHOLD_PX && dy <= DRAG_THRESHOLD_PX) return;
+            dragMovedRef.current = true;
             moveFromClientPoint(t.clientX, t.clientY);
         };
 
@@ -228,6 +240,9 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
             window.removeEventListener("touchmove", onTouchMove);
             window.removeEventListener("touchend", stop);
             window.removeEventListener("touchcancel", stop);
+            if (!dragMovedRef.current && typeof onSelectSpot === 'function') {
+                onSelectSpot(index);
+            }
         };
 
         window.addEventListener("touchmove", onTouchMove, { passive: false });
@@ -268,13 +283,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
     return (
         <SimpleContainer
             ref={ref}
-            onPointerDown={canEditSpot ? startDragPointer : undefined}
-            onTouchStart={
-                canEditSpot && typeof window !== "undefined" && !window.PointerEvent
-                    ? startDragTouchFallback
-                    : undefined
-            }
-            className={`lw-signing-spot ${colorClass} lw-signing-spot--type-${fieldType} ${isRequired ? 'is-required' : 'is-optional'}${isSigned ? ' is-signed' : ''}${isSelected ? ' is-selected' : ''}`}
+            className={`lw-signing-spot ${colorClass} lw-signing-spot--type-${fieldType} ${isRequired ? 'is-required' : 'is-optional'}${isSigned ? ' is-signed' : ''}${isSelected ? ' is-selected' : ''}${canEditSpot ? ' is-editable' : ''}`}
             style={spotStyle}
             title={t("signing.spot.signedByTitle", { name: signerNameSafe })}
         >
@@ -312,12 +321,14 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                     src={stampImageUrl}
                     alt={isClientStamp ? t("signing.fields.clientStamp") : t("signing.fields.lawyerStamp")}
                     className="lw-signing-spotImg lw-signing-spotImg--stamp"
+                    draggable={false}
                 />
             ) : hasSignatureImage ? (
                 <img
                     src={spot.SignatureUrl || spot.signatureUrl}
                     alt={t("signing.spot.signatureAlt")}
                     className="lw-signing-spotImg"
+                    draggable={false}
                 />
             ) : !showFieldValue && (
                 <div className="lw-signing-spotLabel">
@@ -347,14 +358,17 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                     X
                 </span>
             )}
-            {/*
-              Overlay is for client/select hit-targets only.
-              While editing (drag enabled), it MUST NOT capture pointers — that
-              blocked touch drag (browser stole the gesture for scroll).
-            */}
-            {!isSigned && !canEditSpot && (
+            {/* Top hit-layer: owns drag on edit, select on client. touch-action:none is critical on iOS. */}
+            {!isSigned && (
             <div
+                onPointerDown={canEditSpot ? startDragPointer : undefined}
+                onTouchStart={
+                    canEditSpot && typeof window !== "undefined" && !window.PointerEvent
+                        ? startDragTouchFallback
+                        : undefined
+                }
                 onClick={(e) => {
+                    if (canEditSpot) return; // edit mode uses pointerup tap detection
                     e.stopPropagation();
                     if (typeof onSelectSpot === 'function') onSelectSpot(index);
                 }}
@@ -368,18 +382,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                     if (typeof onRequestContext === 'function') onRequestContext(index, e);
                 }}
                 aria-hidden
-                className="lw-signing-spotOverlay"
-            />
-            )}
-            {!isSigned && canEditSpot && (
-            <div
-                onContextMenu={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (typeof onRequestContext === 'function') onRequestContext(index, e);
-                }}
-                aria-hidden
-                className="lw-signing-spotOverlay lw-signing-spotOverlay--passthrough"
+                className={`lw-signing-spotOverlay${canEditSpot ? ' lw-signing-spotOverlay--drag' : ''}`}
             />
             )}
         </SimpleContainer>
