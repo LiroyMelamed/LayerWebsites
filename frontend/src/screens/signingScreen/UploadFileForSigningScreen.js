@@ -40,6 +40,7 @@ import "./UploadFileForSigningScreen.scss";
 import "../../components/specializedComponents/signFiles/fieldToolbar/fieldContextMenu.scss";
 import { MainScreenName } from "../mainScreen/MainScreen";
 import { useTranslation } from "react-i18next";
+import { showAppToast } from "../../components/ui/showAppToast";
 import ApiUtils from "../../api/apiUtils";
 
 export const uploadFileForSigningScreenName = "/UploadFileForSigningScreen";
@@ -435,16 +436,6 @@ export default function UploadFileForSigningScreen() {
     const seqTouchDrag = useRef({ active: false });
 
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState(null);
-    const messageTimerRef = useRef(null);
-
-    useEffect(() => {
-        if (message) {
-            clearTimeout(messageTimerRef.current);
-            messageTimerRef.current = setTimeout(() => setMessage(null), 3000);
-        }
-        return () => clearTimeout(messageTimerRef.current);
-    }, [message]);
 
     const [uploadedFileKey, setUploadedFileKey] = useState(null);
     const [detecting, setDetecting] = useState(false);
@@ -746,25 +737,25 @@ export default function UploadFileForSigningScreen() {
 
     const validateForm = () => {
         if (!selectedFile) {
-            setMessage({ type: "error", text: t('signing.upload.validation.selectFile') });
+            showAppToast({ type: "error", text: t('signing.upload.validation.selectFile') });
             return false;
         }
         if (!selectedSigners || selectedSigners.length === 0) {
-            setMessage({ type: "error", text: t('signing.upload.validation.selectAtLeastOneSigner') });
+            showAppToast({ type: "error", text: t('signing.upload.validation.selectAtLeastOneSigner') });
             return false;
         }
         if (signatureSpots.length === 0) {
-            setMessage({ type: "error", text: t('signing.upload.validation.atLeastOneSpot') });
+            showAppToast({ type: "error", text: t('signing.upload.validation.atLeastOneSpot') });
             return false;
         }
 
         if (otpFeatureEnabled && otpPolicy !== "waive" && otpPolicy !== "require") {
-            setMessage({ type: "error", text: t('signing.upload.validation.selectOtpPolicy') });
+            showAppToast({ type: "error", text: t('signing.upload.validation.selectOtpPolicy') });
             return false;
         }
 
         if (otpFeatureEnabled && otpPolicy === "waive" && !otpWaiverAck) {
-            setMessage({ type: "error", text: t('signing.upload.validation.waiverAckRequired') });
+            showAppToast({ type: "error", text: t('signing.upload.validation.waiverAckRequired') });
             return false;
         }
         return true;
@@ -777,7 +768,7 @@ export default function UploadFileForSigningScreen() {
             email: customer.Email,
             phone: customer.PhoneNumber || customer.Phone,
         })) {
-            setMessage({
+            showAppToast({
                 type: 'error',
                 text: t('signing.upload.validation.duplicateSignerContact'),
             });
@@ -828,7 +819,7 @@ export default function UploadFileForSigningScreen() {
         const phone = manualSignerPhone.trim();
         if (!name) return;
         if (!phone) {
-            setMessage({
+            showAppToast({
                 type: 'error',
                 text: t('signing.upload.validation.manualSignerPhoneRequired'),
             });
@@ -836,7 +827,7 @@ export default function UploadFileForSigningScreen() {
         }
 
         if (contactsCollideWithSelected({ email, phone })) {
-            setMessage({
+            showAppToast({
                 type: 'error',
                 text: t('signing.upload.validation.duplicateSignerContact'),
             });
@@ -870,7 +861,7 @@ export default function UploadFileForSigningScreen() {
             setManualSignerPhone("");
             setShowManualSigner(false);
             SearchCustomersByName(user.Name || name);
-            setMessage({
+            showAppToast({
                 type: 'success',
                 text: t('signing.upload.validation.manualSignerAttachedExisting', {
                     defaultValue: 'הטלפון כבר קיים במערכת — שייכנו את הלקוח הקיים כחותם.',
@@ -880,7 +871,7 @@ export default function UploadFileForSigningScreen() {
         };
 
         try {
-            setMessage(null);
+            
             const res = await customersApi.addCustomer({
                 name,
                 phoneNumber: phone,
@@ -891,7 +882,7 @@ export default function UploadFileForSigningScreen() {
 
             if (res?.status === 409 && (res?.data?.code === 'PHONE_ALREADY_EXISTS' || res?.data?.UserId)) {
                 if (attachExistingSigner(res.data)) return;
-                setMessage({
+                showAppToast({
                     type: 'error',
                     text: res?.data?.message || t('signing.upload.validation.manualSignerPhoneExists', {
                         defaultValue: 'מספר הטלפון כבר קיים במערכת. חפשו את הלקוח והוסיפו אותו כחותם.',
@@ -901,7 +892,7 @@ export default function UploadFileForSigningScreen() {
             }
 
             if (res?.status !== 200 && res?.status !== 201) {
-                setMessage({
+                showAppToast({
                     type: 'error',
                     text: res?.data?.message || t('signing.upload.validation.manualSignerCreateFailed'),
                 });
@@ -911,7 +902,7 @@ export default function UploadFileForSigningScreen() {
             const created = res?.data || {};
             const userId = created.UserId;
             if (!userId) {
-                setMessage({
+                showAppToast({
                     type: 'error',
                     text: t('signing.upload.validation.manualSignerCreateFailed'),
                 });
@@ -946,7 +937,7 @@ export default function UploadFileForSigningScreen() {
             const data = err?.data || err?.response?.data;
             if (err?.status === 409 || data?.code === 'PHONE_ALREADY_EXISTS') {
                 if (attachExistingSigner(data || {})) return;
-                setMessage({
+                showAppToast({
                     type: 'error',
                     text: data?.message || t('signing.upload.validation.manualSignerPhoneExists', {
                         defaultValue: 'מספר הטלפון כבר קיים במערכת. חפשו את הלקוח והוסיפו אותו כחותם.',
@@ -954,7 +945,7 @@ export default function UploadFileForSigningScreen() {
                 });
                 return;
             }
-            setMessage({
+            showAppToast({
                 type: 'error',
                 text: data?.message || err?.message || t('signing.upload.validation.manualSignerCreateFailed'),
             });
@@ -1043,7 +1034,7 @@ export default function UploadFileForSigningScreen() {
 
         try {
             setDetecting(true);
-            setMessage(null);
+            
 
             const key = await ensureUploadedKey();
 
@@ -1063,21 +1054,21 @@ export default function UploadFileForSigningScreen() {
             setSignatureSpots(spots);
 
             if (!spots.length) {
-                setMessage({
+                showAppToast({
                     type: "error",
                     text: t('signing.upload.detect.noneFound'),
                 });
             }
         } catch (err) {
             console.error(err);
-            setMessage({ type: "error", text: t('signing.upload.detect.error') });
+            showAppToast({ type: "error", text: t('signing.upload.detect.error') });
         } finally {
             setDetecting(false);
         }
     };
 
     const handleSubmit = async () => {
-        setMessage(null);
+        
 
         if (!validateForm()) return;
 
@@ -1123,12 +1114,12 @@ export default function UploadFileForSigningScreen() {
             const targetCount = Number(uploadRes?.data?.targetCount || selectedSigners.length || 0);
             const failedCount = Number(uploadRes?.data?.failedCount || Math.max(0, targetCount - sentCount));
             if (failedCount > 0) {
-                setMessage({
+                showAppToast({
                     type: "error",
                     text: `נשלח ל-${sentCount} מתוך ${targetCount}. חלק מהנמענים לא קיבלו הזמנה.`,
                 });
             } else {
-                setMessage({
+                showAppToast({
                     type: "success",
                     text: `ההזמנה נשלחה בהצלחה ל-${sentCount || targetCount} נמענים.`,
                 });
@@ -1155,7 +1146,7 @@ export default function UploadFileForSigningScreen() {
         } catch (err) {
             console.error(err);
             const backendMessage = err?.data?.message || err?.message;
-            setMessage({ type: "error", text: backendMessage || t('signing.upload.errorSending') });
+            showAppToast({ type: "error", text: backendMessage || t('signing.upload.errorSending') });
         } finally {
             setLoading(false);
         }
@@ -1387,7 +1378,7 @@ export default function UploadFileForSigningScreen() {
                                                         phone: nextPhone,
                                                         excludeUserId: s.UserId,
                                                     })) {
-                                                        setMessage({
+                                                        showAppToast({
                                                             type: 'error',
                                                             text: t('signing.upload.validation.duplicateSignerContact'),
                                                         });
@@ -1701,15 +1692,6 @@ export default function UploadFileForSigningScreen() {
                         {loading ? t('signing.upload.sending') : t('signing.upload.sendToClient')}
                     </PrimaryButton>
                 </SimpleContainer>
-            )}
-
-            {message && (
-                <div
-                    className={`lw-uploadSigningScreen__message ${message.type === "error" ? "is-error" : "is-success"}`}
-                    onClick={() => setMessage(null)}
-                >
-                    {message.text}
-                </div>
             )}
         </SimpleScreen>
     );

@@ -16,7 +16,6 @@ import SimpleImage from "../../../components/simpleComponents/SimpleImage";
 import SimpleButton from "../../../components/simpleComponents/SimpleButton";
 
 import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryButton";
-import Separator from "../../../components/styledComponents/separators/Separator";
 
 import TopToolBarSmallScreen from "../../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
 import { getClientNavBarData } from "../../../components/navBars/data/ClientNavBarData";
@@ -24,11 +23,12 @@ import { getClientNavBarData } from "../../../components/navBars/data/ClientNavB
 import { ClientStackName } from "../../../navigation/ClientStack";
 import { ClientMainScreenName } from "../clientMainScreen/ClientMainScreen";
 import { useScreenSize } from "../../../providers/ScreenSizeProvider";
-import { usePopup } from "../../../providers/PopUpProvider";
-import { Text12, Text14, TextBold16, TextBold24 } from "../../../components/specializedComponents/text/AllTextKindFile";
+import { Text12, TextBold24 } from "../../../components/specializedComponents/text/AllTextKindFile";
 
 import { formatDateForInput, parseDateInput } from "../../../functions/date/formatDateForInput";
 import { uploadFileToR2, getFileReadUrl } from "../../../utils/fileUploadUtils";
+import { toastFromApiError } from "../../../components/ui/showAppToast";
+import { toastSuccess } from "../../../components/ui/toast";
 
 
 import "./ProfileScreen.scss";
@@ -38,7 +38,6 @@ export const ProfileScreenName = "/ProfileScreen";
 export default function ProfileScreen() {
     const { t } = useTranslation();
     const { isSmallScreen } = useScreenSize();
-    const { openPopup, closePopup } = usePopup();
 
     const fileInputRef = useRef(null);
 
@@ -59,18 +58,7 @@ export default function ProfileScreen() {
         if (data?.ProfilePicReadUrl) {
             setProfile((p) => ({ ...p, photoUri: data.ProfilePicReadUrl }));
         }
-
-        openPopup(
-            <SimpleContainer className="lw-profileScreen__successPopup">
-                <TextBold16>{t("profile.successTitle")}</TextBold16>
-                <Separator className="lw-profileScreen__popupSep" />
-                <Text14>{t("profile.updatedSuccess")}</Text14>
-                <Separator className="lw-profileScreen__popupSep" />
-                <PrimaryButton className="lw-profileScreen__popupOk" onPress={() => closePopup()}>
-                    {t("common.ok")}
-                </PrimaryButton>
-            </SimpleContainer>
-        );
+        toastSuccess(t("profile.updatedSuccess"));
     };
 
     const { isPerforming: isSaving, performRequest: performSave } = useHttpRequest(
@@ -119,17 +107,7 @@ export default function ProfileScreen() {
             setProfile((p) => ({ ...p, photoKey: key, photoUri: readUrl }));
         } catch (err) {
             console.error("Failed to upload profile image", err);
-            openPopup(
-                <SimpleContainer className="lw-profileScreen__errorPopup">
-                    <TextBold16>{t("errors.oopsTitle")}</TextBold16>
-                    <Separator className="lw-profileScreen__popupSep" />
-                    <Text14>{String(err?.message ?? err)}</Text14>
-                    <Separator className="lw-profileScreen__popupSep" />
-                    <PrimaryButton className="lw-profileScreen__popupOk" onPress={() => closePopup()}>
-                        {t("common.ok")}
-                    </PrimaryButton>
-                </SimpleContainer>
-            );
+            toastFromApiError(err, t("errors.unexpected"));
         } finally {
             if (fileInputRef.current) {
                 fileInputRef.current.value = "";

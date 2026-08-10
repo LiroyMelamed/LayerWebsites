@@ -38,6 +38,7 @@ import SegmentedSwitch from "../../components/styledComponents/SegmentedSwitch";
 import EventFormModal from "./components/EventFormModal";
 import PersonalSyncModal from "./components/PersonalSyncModal";
 import { colorForKey, colorKeyForEvent, leaveColor, holidayColor, buildLawyerLegend, getEventTypeDefaultColor, isStockEventColor } from "./utils/lawyerColors";
+import { toastError, toastSuccess, toastWarning } from "../../components/ui/toast";
 import { buildNewEventPrefill } from "./utils/eventDefaults";
 import {
     defaultSchedule,
@@ -178,19 +179,31 @@ function aggregateInviteStatus(ev) {
 
 function clientPhoneTooltip(ev) {
     const parts = [];
+    const statusLabel = (s) => {
+        if (s === "accepted") return "אישר הגעה ✓";
+        if (s === "declined") return "דחה הגעה";
+        if (s === "pending") return "ממתין לאישור ⏳";
+        return "";
+    };
     if (Array.isArray(ev?.clients) && ev.clients.length) {
         ev.clients.forEach((c) => {
-            const name = String(c.name || "").trim();
+            const name = String(c.name || "").trim() || "לקוח";
             const phone = String(c.phone || "").trim();
-            if (name && phone) parts.push(`${name} · ${phone}`);
-            else if (phone) parts.push(phone);
-            else if (name) parts.push(name);
+            const st = statusLabel(c.inviteStatus || c.invite_status);
+            const bits = [name];
+            if (phone) bits.push(phone);
+            if (st) bits.push(st);
+            parts.push(bits.join(" · "));
         });
     } else {
         const name = String(ev?.clientName || ev?.clientDisplayName || "").trim();
         const phone = String(ev?.clientPhone || "").trim();
-        if (name && phone) parts.push(`${name} · ${phone}`);
-        else if (phone) parts.push(phone);
+        const st = statusLabel(aggregateInviteStatus(ev) || ev?.inviteStatus);
+        const bits = [];
+        if (name) bits.push(name);
+        if (phone) bits.push(phone);
+        if (st) bits.push(st);
+        if (bits.length) parts.push(bits.join(" · "));
     }
     if (!parts.length && ev?.leadPhone) {
         const lead = String(ev.leadName || "").trim();
@@ -342,9 +355,8 @@ export default function CalendarScreen() {
         performRequest: searchCases,
     } = useAutoHttpRequest(casesApi.getCaseByName, { onFailure: () => { } });
 
-    // ── Status toasts (OAuth + save notices) ───────────────────────────────
-    const [googleMsg, setGoogleMsg] = useState("");
-    const [calendarMsg, setCalendarMsg] = useState("");
+    // OAuth / save notices → global toasts
+    // (legacy inline banners removed)
 
     // ── Load lawyer list (for filter + legend) ─────────────────────────────
     useEffect(() => {
@@ -476,32 +488,28 @@ export default function CalendarScreen() {
         setSearchParams(nextParams, { replace: true });
 
         if (googleConnected) {
-            setGoogleMsg("Google Calendar חובר בהצלחה ✓");
+            toastSuccess("Google Calendar חובר בהצלחה ✓");
             (async () => {
                 try {
                     await calendarApi.syncGoogleEvents();
                 } catch { /* status toast still shown */ }
                 fetchEventsRef.current?.(null);
             })();
-            setTimeout(() => setGoogleMsg(""), 4000);
         }
         if (googleError) {
-            setGoogleMsg("חיבור Google Calendar נכשל. נסה שוב.");
-            setTimeout(() => setGoogleMsg(""), 4000);
+            toastError("חיבור Google Calendar נכשל. נסה שוב.");
         }
         if (outlookConnected) {
-            setGoogleMsg("Outlook Calendar חובר בהצלחה ✓");
+            toastSuccess("Outlook Calendar חובר בהצלחה ✓");
             (async () => {
                 try {
                     await calendarApi.syncOutlookEvents();
                 } catch { /* status toast still shown */ }
                 fetchEventsRef.current?.(null);
             })();
-            setTimeout(() => setGoogleMsg(""), 4000);
         }
         if (outlookError) {
-            setGoogleMsg("חיבור Outlook Calendar נכשל. נסה שוב.");
-            setTimeout(() => setGoogleMsg(""), 4000);
+            toastError("חיבור Outlook Calendar נכשל. נסה שוב.");
         }
     }, [searchParams, setSearchParams]);
 
@@ -529,11 +537,9 @@ export default function CalendarScreen() {
         fetchEvents(null);
         closePopup();
         if (reminderSyncWarning) {
-            setCalendarMsg(reminderSyncWarning);
-            setTimeout(() => setCalendarMsg(""), 10000);
+            toastWarning(reminderSyncWarning);
         } else if (firmOnlyNotice) {
-            setCalendarMsg(t("calendar.savedFirmOnlyNotice"));
-            setTimeout(() => setCalendarMsg(""), 8000);
+            toastWarning(t("calendar.savedFirmOnlyNotice"));
         }
     }, [upsertLocally, fetchEvents, closePopup, t]);
 
@@ -653,10 +659,16 @@ export default function CalendarScreen() {
         const ev = arg.event.extendedProps || {};
         if (ev.hint) return true;
         const status = aggregateInviteStatus(ev) || (ev.inviteStatus !== "none" ? ev.inviteStatus : null);
+        const multi = Array.isArray(ev.clients) && ev.clients.length > 1;
+        const acceptedCount = multi
+            ? ev.clients.filter((c) => (c.inviteStatus || c.invite_status) === "accepted").length
+            : 0;
         return (
             <div className="lw-fcEventContent">
                 {status === "accepted" && (
-                    <span className="lw-fcEventRsvpBadge lw-fcEventRsvpBadge--accepted" aria-hidden="true">✓</span>
+                    <span className="lw-fcEventRsvpBadge lw-fcEventRsvpBadge--accepted" aria-hidden="true">
+                        {multi && acceptedCount > 0 ? `${acceptedCount}` : "✓"}
+                    </span>
                 )}
                 {status === "pending" && (
                     <span className="lw-fcEventRsvpBadge lw-fcEventRsvpBadge--pending" aria-hidden="true" />
@@ -822,20 +834,6 @@ export default function CalendarScreen() {
                         </PrimaryButton>
                     </SimpleContainer>
                 </SimpleContainer>
-
-                {/* ── Status toasts (OAuth + save notices) ── */}
-                {googleMsg && (
-                    <SimpleContainer className="lw-calendarScreen__toast">
-                        <Text14 color={googleMsg.includes("נכשל") ? "#E53E3E" : "#38A169"}>
-                            {googleMsg}
-                        </Text14>
-                    </SimpleContainer>
-                )}
-                {calendarMsg && (
-                    <SimpleContainer className="lw-calendarScreen__toast">
-                        <Text14 color="#744210">{calendarMsg}</Text14>
-                    </SimpleContainer>
-                )}
 
                 {/* ── Active filter chips ── */}
                 {hasActiveFilters && (
@@ -1067,13 +1065,13 @@ export default function CalendarScreen() {
                                         });
                                         if (!res?.success) {
                                             info.revert();
-                                            window.alert(res?.data?.message || res?.message || t("calendar.googleSyncError"));
+                                            toastError(res?.data?.message || res?.message || t("calendar.googleSyncError"));
                                             return;
                                         }
                                         fetchEvents();
                                     } catch (err) {
                                         info.revert();
-                                        window.alert(err?.response?.data?.message || t("calendar.googleSyncError"));
+                                        toastError(err?.response?.data?.message || t("calendar.googleSyncError"));
                                     }
                                 }}
                                 eventResize={async (info) => {
@@ -1102,13 +1100,13 @@ export default function CalendarScreen() {
                                         });
                                         if (!res?.success) {
                                             info.revert();
-                                            window.alert(res?.data?.message || res?.message || t("calendar.googleSyncError"));
+                                            toastError(res?.data?.message || res?.message || t("calendar.googleSyncError"));
                                             return;
                                         }
                                         fetchEvents();
                                     } catch (err) {
                                         info.revert();
-                                        window.alert(err?.response?.data?.message || t("calendar.googleSyncError"));
+                                        toastError(err?.response?.data?.message || t("calendar.googleSyncError"));
                                     }
                                 }}
                                 datesSet={(arg) => {

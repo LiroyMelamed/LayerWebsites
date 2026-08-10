@@ -22,6 +22,7 @@ import { LoginStackName } from "../../navigation/LoginStack";
 import { LoginScreenName } from "../loginScreen/LoginScreen";
 import { useTranslation } from "react-i18next";
 import { useFromApp } from "../../providers/FromAppProvider";
+import { toastError } from "../../components/ui/toast";
 import "./SigningScreen.scss";
 import SimpleCard from "../../components/simpleComponents/SimpleCard";
 import Separator from "../../components/styledComponents/separators/Separator";
@@ -100,7 +101,7 @@ export default function SigningScreen() {
             const response = await signingFilesApi.downloadSignedFile(signingFileId);
             const url = response?.data?.downloadUrl;
             if (!url) {
-                alert(t('signing.screen.downloadMissingUrl'));
+                toastError(t('signing.screen.downloadMissingUrl'));
                 return;
             }
 
@@ -124,7 +125,7 @@ export default function SigningScreen() {
             }
         } catch (err) {
             console.error("Download error:", err);
-            alert(t('signing.screen.downloadError'));
+            toastError(t('signing.screen.downloadError'));
         }
     };
 

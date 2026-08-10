@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { usePopup } from '../providers/PopUpProvider';
-import ErrorPopup from '../components/styledComponents/popups/ErrorPopup';
+import { toastFromApiError } from '../components/ui/showAppToast';
 
 const useHttpRequest = (requestFunction, onSuccess, onFailure) => {
   const [isPerforming, setIsPerforming] = useState(false);
-  const { openPopup, closePopup } = usePopup();
   const [result, setResult] = useState(null);
 
   const requestSeqRef = useRef(0);
@@ -32,13 +30,9 @@ const useHttpRequest = (requestFunction, onSuccess, onFailure) => {
     onFailureRef.current = onFailure;
   }, [onFailure]);
 
-  const defaultOnFailure = useCallback(
-    (error) => {
-      const errorText = error?.data?.message || (typeof error?.data === 'string' ? error.data : null) || error?.message || 'שגיאה בלתי צפויה';
-      openPopup(<ErrorPopup closePopup={closePopup} errorText={errorText} />)
-    },
-    [openPopup, closePopup]
-  );
+  const defaultOnFailure = useCallback((error) => {
+    toastFromApiError(error, 'שגיאה בלתי צפויה');
+  }, []);
 
   const performRequest = useCallback(async (...args) => {
     // Latest-wins: rapid typing must not keep an older search's results.

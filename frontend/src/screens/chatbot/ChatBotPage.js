@@ -14,6 +14,7 @@ import ChatWindow from '../../components/chatbot/ChatWindow';
 import ChatInput from '../../components/chatbot/ChatInput';
 import chatbotApi from '../../api/chatbotApi';
 import { useFirmName } from '../../services/firmSettings';
+import { toastError } from '../../components/ui/toast';
 import './ChatBotPage.scss';
 
 export const ChatBotPageName = '/ChatBot';
@@ -27,7 +28,6 @@ export default function ChatBotPage() {
     const [isTyping, setIsTyping] = useState(false);
     const [sessionId, setSessionId] = useState(null);
     const [verified, setVerified] = useState(false);
-    const [error, setError] = useState(null);
 
     // OTP verification state
     const [showOtpModal, setShowOtpModal] = useState(false);
@@ -62,8 +62,6 @@ export default function ChatBotPage() {
     }, [firmName, t]);
 
     const handleSend = useCallback(async (text) => {
-        setError(null);
-
         const userMsg = { role: 'user', content: text, timestamp: new Date().toISOString() };
         setMessages((prev) => [...prev, userMsg]);
         setIsTyping(true);
@@ -89,14 +87,14 @@ export default function ChatBotPage() {
                 setMessages((prev) => [...prev, assistantMsg]);
             } else {
                 const errMsg = res.data?.message || t('chatbot.errorGeneric');
-                setError(errMsg);
+                toastError(errMsg);
                 setMessages((prev) => [
                     ...prev,
                     { role: 'assistant', content: errMsg, timestamp: new Date().toISOString() },
                 ]);
             }
         } catch {
-            setError(t('chatbot.errorGeneric'));
+            toastError(t('chatbot.errorGeneric'));
             setMessages((prev) => [
                 ...prev,
                 { role: 'assistant', content: t('chatbot.errorGeneric'), timestamp: new Date().toISOString() },
@@ -180,12 +178,6 @@ export default function ChatBotPage() {
             </SimpleContainer>
 
             <ChatWindow messages={messages} isTyping={isTyping} />
-
-            {error && (
-                <SimpleContainer className="lw-chatbotPage__error">
-                    <ErrorText>{error}</ErrorText>
-                </SimpleContainer>
-            )}
 
             <ChatInput onSend={handleSend} disabled={isTyping} />
 

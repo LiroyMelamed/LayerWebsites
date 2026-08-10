@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import ApiUtils from "../../api/apiUtils";
+import { toastError, toastSuccess } from "../../components/ui/toast";
+import { buildGoogleCalendarUrl, downloadIcsFile } from "./utils/calendarExport";
 import "./CalendarInviteScreen.scss";
 
 export default function CalendarInviteScreen() {
@@ -39,17 +41,16 @@ export default function CalendarInviteScreen() {
     const respond = async (action) => {
         if (busy) return;
         setBusy(true);
-        setError("");
         setAnim(action === "accept" ? "accept" : "decline");
         try {
             const res = await ApiUtils.post(`calendar/invite/${encodeURIComponent(token)}`, { action });
             const next = res?.data?.status || res?.status;
-            // Let the animation play, then lock status
             await new Promise((r) => setTimeout(r, 480));
             if (next) setStatus(next);
+            toastSuccess(action === "accept" ? t("calendar.inviteStatusAccepted") : t("calendar.inviteStatusDeclined"));
         } catch (e) {
             setAnim("");
-            setError(e?.response?.data?.message || "שגיאה בשמירת התשובה");
+            toastError(e?.response?.data?.message || "שגיאה בשמירת התשובה");
         } finally {
             setBusy(false);
         }
@@ -67,6 +68,21 @@ export default function CalendarInviteScreen() {
             hour12: false,
         });
     }, [invite?.startTime]);
+
+    const googleCalUrl = useMemo(
+        () => (invite ? buildGoogleCalendarUrl(invite) : ""),
+        [invite]
+    );
+
+    const handleAppleOutlook = () => {
+        if (!invite) return;
+        const ok = downloadIcsFile(
+            { ...invite, uid: `invite-${token}@ashrafessa` },
+            "meeting.ics"
+        );
+        if (ok) toastSuccess(t("calendar.addToAppleStarted"));
+        else toastError(t("calendar.addToCalendarError"));
+    };
 
     const wazeHref = invite?.location
         ? `https://waze.com/ul?q=${encodeURIComponent(invite.location)}`
@@ -140,8 +156,6 @@ export default function CalendarInviteScreen() {
                             </div>
                         )}
 
-                        {error && <p className="lw-calendarInvite__error">{error}</p>}
-
                         {status === "pending" && (
                             <div className="lw-calendarInvite__actions">
                                 <button
@@ -173,6 +187,25 @@ export default function CalendarInviteScreen() {
                                 </div>
                                 <h2>{t("calendar.inviteAcceptedTitle")}</h2>
                                 <p>{t("calendar.inviteAcceptedBody")}</p>
+                                <div className="lw-calendarInvite__addToCal">
+                                    {googleCalUrl ? (
+                                        <a
+                                            className="lw-calendarInvite__calBtn lw-calendarInvite__calBtn--google"
+                                            href={googleCalUrl}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                        >
+                                            {t("calendar.addToGoogle")}
+                                        </a>
+                                    ) : null}
+                                    <button
+                                        type="button"
+                                        className="lw-calendarInvite__calBtn lw-calendarInvite__calBtn--apple"
+                                        onClick={handleAppleOutlook}
+                                    >
+                                        {t("calendar.addToApple")}
+                                    </button>
+                                </div>
                             </div>
                         )}
 

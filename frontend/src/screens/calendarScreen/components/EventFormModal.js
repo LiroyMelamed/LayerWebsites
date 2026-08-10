@@ -119,6 +119,7 @@ function _initialClients(event) {
                 userId: c.userId ?? c.user_id ?? null,
                 name: c.name || c.clientName || "",
                 phone: c.phone || c.PhoneNumber || c.phonenumber || "",
+                inviteStatus: c.inviteStatus || c.invite_status || event?.inviteStatus || "none",
             }))
             .filter((c) => c.userId != null);
     }
@@ -127,9 +128,17 @@ function _initialClients(event) {
             userId: event.clientUserId,
             name: event.clientName || event.clientDisplayName || "",
             phone: event.clientPhone || "",
+            inviteStatus: event.inviteStatus || "none",
         }];
     }
     return [];
+}
+
+function _clientRsvpLabel(status, t) {
+    if (status === "accepted") return t("calendar.clientRsvpAccepted");
+    if (status === "declined") return t("calendar.clientRsvpDeclined");
+    if (status === "pending") return t("calendar.clientRsvpPending");
+    return "";
 }
 
 function _resolveSplitReminderOffsets(event, isEdit, isCreateCapable) {
@@ -332,8 +341,12 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const [startTime, setStartTime] = useState(toDatetimeLocal(event?.startTime) || "");
     const [endTime, setEndTime] = useState(toDatetimeLocal(event?.endTime) || "");
     const [allDay, setAllDay] = useState(event?.allDay || false);
+    const [recurring, setRecurring] = useState(false);
+    const [recurrenceFreq, setRecurrenceFreq] = useState("weekly");
+    const [recurrenceUntil, setRecurrenceUntil] = useState("");
     const [color, setColor] = useState(() => resolveFormColor(event, event?.eventType || EVENT_TYPE_APPT));
     const colorTouchedRef = useRef(!isStockEventColor(event?.color, event?.eventType || EVENT_TYPE_APPT));
+    const [colorCollision, setColorCollision] = useState(false);
 
     // Existing-client / manager fields
     const [clients, setClients] = useState(() => _initialClients(event));
@@ -357,21 +370,16 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const [leadEmail, setLeadEmail] = useState(event?.leadEmail || "");
 
     // Async lifecycle state
-    const [error, setError] = useState("");
-    const [successMsg, setSuccessMsg] = useState("");
-
     const notifyError = (msg) => {
         const text = typeof msg === "function"
             ? String(msg("") || "").trim()
             : String(msg || "").trim();
         const finalText = text || "שגיאה";
-        setError(finalText);
         toastError(finalText);
     };
     const notifySuccess = (msg) => {
         const text = String(msg || "").trim();
         if (!text) return;
-        setSuccessMsg(text);
         toastSuccess(text);
     };
     const notifyWarning = (msg) => {
@@ -379,10 +387,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         if (!text) return;
         toastWarning(text);
     };
-    const clearNotices = () => {
-        setError("");
-        setSuccessMsg("");
-    };
+    const clearNotices = () => { };
     const [saving, setSaving] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [duplicating, setDuplicating] = useState(false);
@@ -910,6 +915,13 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     hasConflict: !!data.hasConflict,
                     hasLeaveConflict: !!data.hasLeaveConflict,
                 });
+                const picked = String(color || "").trim().toUpperCase();
+                const collidingColor = Array.isArray(data.conflicts)
+                    && data.conflicts.some((c) => {
+                        const hex = String(c.color || "").trim().toUpperCase();
+                        return hex && picked && hex === picked;
+                    });
+                setColorCollision(!!collidingColor);
             } catch {
                 if (!cancelled) {
                     setConflictState({ loading: false, hasConflict: false, hasLeaveConflict: false });
@@ -918,7 +930,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         }, 400);
 
         return () => { cancelled = true; clearTimeout(handle); };
-    }, [startTime, endTime, managers, eventType, isEdit, event?.id]);
+    }, [startTime, endTime, managers, eventType, isEdit, event?.id, color]);
 
     // ─── Effect: load active cases for the linked client ──────────────────
     const loadClientCases = useCallback(async (cuid) => {
@@ -1090,6 +1102,14 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 invite_sms: showReminderPicker ? inviteSms : null,
             };
 
+            if (!isEdit && recurring && recurrenceUntil && !isReminderEventType && !isInternalScopedEventType(eventType)) {
+                payload.recurrence = {
+                    enabled: true,
+                    frequency: recurrenceFreq || "weekly",
+                    until: recurrenceUntil,
+                };
+            }
+
             if (isReminderEventType) {
                 Object.assign(payload, {
                     reminder_to_email: reminderToEmail.trim(),
@@ -1187,6 +1207,11 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     notifyError(immediateReminderResult.errors[0]);
                 } else if (immediateReminderResult?.sent > 0) {
                     toastSuccess(t("calendar.immediateReminderSent", "תזכורת מיידית נשלחה"));
+                }
+
+                const seriesCount = Number(res?.data?.seriesCount || 0);
+                if (seriesCount > 1) {
+                    toastSuccess(t("calendar.recurrenceCreated", { count: seriesCount }));
                 }
 
                 onSaved(saved, { firmOnlyNotice, reminderSyncWarning });
@@ -1712,6 +1737,54 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                         )}
                     </SimpleContainer>
 
+                    {!isEdit && !isReminderEventType && !isInternalScopedType && (
+                        <SimpleContainer className="lw-eventFormModal__recurrence">
+                            <SimpleContainer className="lw-eventFormModal__allDay">
+                                <input
+                                    type="checkbox"
+                                    id="recurring"
+                                    checked={recurring}
+                                    onChange={(e) => setRecurring(e.target.checked)}
+                                />
+                                <label htmlFor="recurring">
+                                    <Text14>{t("calendar.recurringMeeting")}</Text14>
+                                </label>
+                            </SimpleContainer>
+                            {recurring && (
+                                <SimpleContainer className="lw-eventFormModal__recurrenceFields">
+                                    <div className="lw-eventFormModal__field">
+                                        <Text14 color={NAVY}>{t("calendar.recurrenceFrequency")}</Text14>
+                                        <div className="lw-eventFormModal__segmented" role="group">
+                                            {[
+                                                { value: "daily", labelKey: "calendar.recurrenceDaily" },
+                                                { value: "weekly", labelKey: "calendar.recurrenceWeekly" },
+                                                { value: "monthly", labelKey: "calendar.recurrenceMonthly" },
+                                            ].map(({ value, labelKey }) => (
+                                                <SimpleButton
+                                                    key={value}
+                                                    className={`lw-eventFormModal__segmentedBtn ${recurrenceFreq === value ? "is-active" : ""}`}
+                                                    onPress={() => setRecurrenceFreq(value)}
+                                                    aria-pressed={recurrenceFreq === value}
+                                                    tabIndex={-1}
+                                                >
+                                                    {t(labelKey)}
+                                                </SimpleButton>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <SimpleInput
+                                        title={t("calendar.recurrenceUntil")}
+                                        type="date"
+                                        value={recurrenceUntil}
+                                        onChange={(e) => setRecurrenceUntil(e.target.value)}
+                                        timeToWaitInMilli={0}
+                                    />
+                                    <Text12 color="#718096">{t("calendar.recurrenceHint")}</Text12>
+                                </SimpleContainer>
+                            )}
+                        </SimpleContainer>
+                    )}
+
                     {!isReminderEventType && (
                         <SimpleInput
                             title={t("calendar.location")}
@@ -1964,37 +2037,35 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     {/* ─── Managers (meeting attendees) — not for תזכורת כללית / leave / holiday ─── */}
                     {showManagersField && (
                     <SimpleContainer className="lw-eventFormModal__managersCol">
-                        {isEdit && event?.inviteStatus && event.inviteStatus !== "none" && (
-                            <SimpleContainer
-                                className={`lw-eventFormModal__inviteStatus lw-eventFormModal__inviteStatus--${event.inviteStatus}`}
-                            >
-                                <span className="lw-eventFormModal__inviteBadge">
-                                    {event.inviteStatus === "accepted"
-                                        ? t("calendar.inviteStatusBadgeAccepted", { defaultValue: "אושר" })
-                                        : event.inviteStatus === "declined"
-                                            ? t("calendar.inviteStatusBadgeDeclined", { defaultValue: "נדחה" })
-                                            : t("calendar.inviteStatusBadgePending", { defaultValue: "ממתין" })}
-                                </span>
-                                <TextBold14 color={NAVY}>
-                                    {event.inviteStatus === "accepted"
-                                        ? t("calendar.inviteStatusAccepted")
-                                        : event.inviteStatus === "declined"
-                                            ? t("calendar.inviteStatusDeclined")
-                                            : t("calendar.inviteStatusPending")}
-                                </TextBold14>
-                                {(event.inviteStatus === "pending" || event.inviteStatus === "declined") && (
+                        {isEdit && (
+                            clients.some((c) => c.inviteStatus && c.inviteStatus !== "none")
+                            || (event?.inviteStatus && event.inviteStatus !== "none")
+                        ) && (
+                            <SimpleContainer className="lw-eventFormModal__inviteStatus lw-eventFormModal__inviteStatus--breakdown">
+                                <TextBold14 color={NAVY}>{t("calendar.clientRsvpBreakdown")}</TextBold14>
+                                <SimpleContainer className="lw-eventFormModal__rsvpList">
+                                    {(clients.length
+                                        ? clients
+                                        : [{
+                                            userId: event?.clientUserId || "legacy",
+                                            name: event?.clientName || event?.clientDisplayName || "לקוח",
+                                            inviteStatus: event?.inviteStatus,
+                                        }]
+                                    ).map((c) => {
+                                        const st = c.inviteStatus || "pending";
+                                        const label = _clientRsvpLabel(st, t);
+                                        if (!label) return null;
+                                        return (
+                                            <Text14 key={c.userId} className={`lw-eventFormModal__rsvpRow is-${st}`}>
+                                                <strong>{c.name || "לקוח"}:</strong> {label}
+                                            </Text14>
+                                        );
+                                    })}
+                                </SimpleContainer>
+                                {clients.some((c) => c.inviteStatus === "pending" || c.inviteStatus === "declined") && (
                                     <SecondaryButton onPress={handleResendInvite}>
                                         {t("calendar.inviteResend")}
                                     </SecondaryButton>
-                                )}
-                                {clients.some((c) => c.phone) && (
-                                    <SimpleContainer className="lw-eventFormModal__clientPhones">
-                                        {clients.filter((c) => c.phone).map((c) => (
-                                            <Text12 key={c.userId} color="#4A5568">
-                                                {t("calendar.clientPhoneLabel")}: {clientChipLabel(c)}
-                                            </Text12>
-                                        ))}
-                                    </SimpleContainer>
                                 )}
                             </SimpleContainer>
                         )}
@@ -2033,24 +2104,31 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     )}
 
                     {/* Invite status for reminder-type edits (managers block hidden) */}
-                    {!showManagersField && isEdit && event?.inviteStatus && event.inviteStatus !== "none" && (
-                        <SimpleContainer
-                            className={`lw-eventFormModal__inviteStatus lw-eventFormModal__inviteStatus--${event.inviteStatus}`}
-                        >
-                            <span className="lw-eventFormModal__inviteBadge">
-                                {event.inviteStatus === "accepted"
-                                    ? t("calendar.inviteStatusBadgeAccepted", { defaultValue: "אושר" })
-                                    : event.inviteStatus === "declined"
-                                        ? t("calendar.inviteStatusBadgeDeclined", { defaultValue: "נדחה" })
-                                        : t("calendar.inviteStatusBadgePending", { defaultValue: "ממתין" })}
-                            </span>
-                            <TextBold14 color={NAVY}>
-                                {event.inviteStatus === "accepted"
-                                    ? t("calendar.inviteStatusAccepted")
-                                    : event.inviteStatus === "declined"
-                                        ? t("calendar.inviteStatusDeclined")
-                                        : t("calendar.inviteStatusPending")}
-                            </TextBold14>
+                    {!showManagersField && isEdit && (
+                        clients.some((c) => c.inviteStatus && c.inviteStatus !== "none")
+                        || (event?.inviteStatus && event.inviteStatus !== "none")
+                    ) && (
+                        <SimpleContainer className="lw-eventFormModal__inviteStatus lw-eventFormModal__inviteStatus--breakdown">
+                            <TextBold14 color={NAVY}>{t("calendar.clientRsvpBreakdown")}</TextBold14>
+                            <SimpleContainer className="lw-eventFormModal__rsvpList">
+                                {(clients.length
+                                    ? clients
+                                    : [{
+                                        userId: event?.clientUserId || "legacy",
+                                        name: event?.clientName || event?.clientDisplayName || "לקוח",
+                                        inviteStatus: event?.inviteStatus,
+                                    }]
+                                ).map((c) => {
+                                    const st = c.inviteStatus || "pending";
+                                    const label = _clientRsvpLabel(st, t);
+                                    if (!label) return null;
+                                    return (
+                                        <Text14 key={c.userId} className={`lw-eventFormModal__rsvpRow is-${st}`}>
+                                            <strong>{c.name || "לקוח"}:</strong> {label}
+                                        </Text14>
+                                    );
+                                })}
+                            </SimpleContainer>
                         </SimpleContainer>
                     )}
 
@@ -2100,20 +2178,25 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                             />
                             {clients.length > 0 && (
                                 <SimpleContainer className="lw-eventFormModal__managerChips lw-eventFormModal__clientChips">
-                                    {clients.map((c) => (
-                                        <span key={c.userId} className="lw-eventFormModal__managerChip">
-                                            {clientChipLabel(c)}
-                                            <button
-                                                type="button"
-                                                className="lw-eventFormModal__chipRemove"
-                                                tabIndex={-1}
-                                                onClick={() => handleRemoveClient(c.userId)}
-                                                aria-label={t("calendar.removeClient")}
-                                            >
-                                                &times;
-                                            </button>
-                                        </span>
-                                    ))}
+                                    {clients.map((c) => {
+                                        const st = c.inviteStatus || "none";
+                                        const rsvp = _clientRsvpLabel(st, t);
+                                        return (
+                                            <span key={c.userId} className={`lw-eventFormModal__managerChip ${st !== "none" ? `is-rsvp-${st}` : ""}`}>
+                                                {clientChipLabel(c)}
+                                                {rsvp ? <em className="lw-eventFormModal__chipRsvp"> · {rsvp}</em> : null}
+                                                <button
+                                                    type="button"
+                                                    className="lw-eventFormModal__chipRemove"
+                                                    tabIndex={-1}
+                                                    onClick={() => handleRemoveClient(c.userId)}
+                                                    aria-label={t("calendar.removeClient")}
+                                                >
+                                                    &times;
+                                                </button>
+                                            </span>
+                                        );
+                                    })}
                                 </SimpleContainer>
                             )}
                             <Text12 color="#718096">{t("calendar.clientsHint")}</Text12>
@@ -2272,6 +2355,11 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                 />
                             ))}
                         </SimpleContainer>
+                        {colorCollision && (
+                            <Text12 className="lw-eventFormModal__colorCollision" color="#C05621">
+                                {t("calendar.colorCollisionWarning")}
+                            </Text12>
+                        )}
                     </SimpleContainer>
 
                     <SimpleTextArea

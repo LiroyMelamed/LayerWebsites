@@ -296,3 +296,43 @@
   margin: 0;
   font-size: 1.2rem;
 }
+
+.lw-calendarInvite__addToCal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-block-start: 1.1rem;
+  width: 100%;
+}
+
+.lw-calendarInvite__calBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.65rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.lw-calendarInvite__calBtn:hover {
+  transform: translateY(-1px);
+}
+
+.lw-calendarInvite__calBtn--google {
+  background: #2B6CB0;
+  color: #fff;
+  box-shadow: 0 0.35rem 0.9rem rgba(43, 108, 176, 0.28);
+}
+
+.lw-calendarInvite__calBtn--apple {
+  background: #1A202C;
+  color: #fff;
+  box-shadow: 0 0.35rem 0.9rem rgba(26, 32, 44, 0.22);
+}
