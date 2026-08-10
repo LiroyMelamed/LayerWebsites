@@ -569,6 +569,7 @@
     cursor: move;
     pointer-events: auto;
     touch-action: none;
+    -ms-touch-action: none;
     -webkit-user-select: none;
     user-select: none;
     display: flex;
@@ -583,6 +584,11 @@
     background-color: var(--spot-bg, rgba(42, 67, 101, 0.14));
     border: 0.0625rem solid var(--spot-border, var(--lw-color-primary, #2A4365));
     color: var(--spot-border, var(--lw-color-primary, #2A4365));
+
+    /* Labels/images must not become the touch target (iOS would scroll the PDF). */
+    &.is-editable > *:not(.lw-signing-spotOverlay):not(.lw-signing-spotRemove) {
+        pointer-events: none;
+    }
 
     &.is-optional {
         border-style: dashed;
@@ -611,11 +617,15 @@
     z-index: 3;
     pointer-events: auto;
     touch-action: none;
+    -ms-touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
-/* Editing/drag mode: let pointer events hit the spot itself so drag works. */
-.lw-signing-spotOverlay--passthrough {
-    pointer-events: none;
+/* Edit mode: dedicated drag hit-layer above labels (must remain pointer-events:auto). */
+.lw-signing-spotOverlay--drag {
+    cursor: move;
+    z-index: 4;
 }
 
 .lw-signing-spot.is-selected {
@@ -971,8 +981,9 @@
     cursor: pointer;
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
     border: 0.125rem solid #fff;
-    z-index: 2;
+    z-index: 5;
     pointer-events: auto;
+    touch-action: manipulation;
 }
 
 /* Signing file card */
