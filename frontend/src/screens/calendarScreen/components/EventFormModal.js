@@ -37,6 +37,7 @@ import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
 import CaseFullView from "../../../components/styledComponents/cases/CaseFullView";
 import { EVENT_COLOR_PRESETS, getEventTypeDefaultColor, isStockEventColor } from "../utils/lawyerColors";
 import CalendarSmsTemplateEditor from "./CalendarSmsTemplateEditor";
+import { toast, toastError, toastSuccess, toastWarning } from "../../../components/ui/toast";
 import "./EventFormModal.scss";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -118,6 +119,7 @@ function _initialClients(event) {
                 userId: c.userId ?? c.user_id ?? null,
                 name: c.name || c.clientName || "",
                 phone: c.phone || c.PhoneNumber || c.phonenumber || "",
+                inviteStatus: c.inviteStatus || c.invite_status || event?.inviteStatus || "none",
             }))
             .filter((c) => c.userId != null);
     }
@@ -126,9 +128,17 @@ function _initialClients(event) {
             userId: event.clientUserId,
             name: event.clientName || event.clientDisplayName || "",
             phone: event.clientPhone || "",
+            inviteStatus: event.inviteStatus || "none",
         }];
     }
     return [];
+}
+
+function _clientRsvpLabel(status, t) {
+    if (status === "accepted") return t("calendar.clientRsvpAccepted");
+    if (status === "declined") return t("calendar.clientRsvpDeclined");
+    if (status === "pending") return t("calendar.clientRsvpPending");
+    return "";
 }
 
 function _resolveSplitReminderOffsets(event, isEdit, isCreateCapable) {
@@ -331,8 +341,12 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const [startTime, setStartTime] = useState(toDatetimeLocal(event?.startTime) || "");
     const [endTime, setEndTime] = useState(toDatetimeLocal(event?.endTime) || "");
     const [allDay, setAllDay] = useState(event?.allDay || false);
+    const [recurring, setRecurring] = useState(false);
+    const [recurrenceFreq, setRecurrenceFreq] = useState("weekly");
+    const [recurrenceUntil, setRecurrenceUntil] = useState("");
     const [color, setColor] = useState(() => resolveFormColor(event, event?.eventType || EVENT_TYPE_APPT));
     const colorTouchedRef = useRef(!isStockEventColor(event?.color, event?.eventType || EVENT_TYPE_APPT));
+    const [colorCollision, setColorCollision] = useState(false);
 
     // Existing-client / manager fields
     const [clients, setClients] = useState(() => _initialClients(event));
@@ -356,8 +370,24 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const [leadEmail, setLeadEmail] = useState(event?.leadEmail || "");
 
     // Async lifecycle state
-    const [error, setError] = useState("");
-    const [successMsg, setSuccessMsg] = useState("");
+    const notifyError = (msg) => {
+        const text = typeof msg === "function"
+            ? String(msg("") || "").trim()
+            : String(msg || "").trim();
+        const finalText = text || "שגיאה";
+        toastError(finalText);
+    };
+    const notifySuccess = (msg) => {
+        const text = String(msg || "").trim();
+        if (!text) return;
+        toastSuccess(text);
+    };
+    const notifyWarning = (msg) => {
+        const text = String(msg || "").trim();
+        if (!text) return;
+        toastWarning(text);
+    };
+    const clearNotices = () => { };
     const [saving, setSaving] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [duplicating, setDuplicating] = useState(false);
@@ -427,7 +457,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         isPerforming: isSearchingCustomers,
         performRequest: searchCustomers,
     } = useAutoHttpRequest(customersApi.getCustomersByName, {
-        onFailure: () => { setError((prev) => prev || "שגיאה בחיפוש לקוחות"); },
+        onFailure: () => { notifyError("שגיאה בחיפוש לקוחות"); },
     });
 
     const {
@@ -471,8 +501,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         linkedClientLabelRef.current = s.clients[0]?.name || s.clientName || "";
         setCaseFormDraft(null);
         setClientCases([]);
-        setError("");
-        setSuccessMsg("");
+        clearNotices();
         setConfirmDelete(false);
         setDuplicating(false);
         lastConflictKeyRef.current = null;
@@ -724,8 +753,18 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         const addr = (location || "").trim() || smsOfficeAddress;
         const useFirmLinks = !(location || "").trim() || (smsOfficeAddress && addr === smsOfficeAddress);
         const primaryClientName = (clients[0]?.name || clientName || leadName || "").trim();
+        const allClientNames = (Array.isArray(clients) ? clients : [])
+            .map((c) => String(c?.name || "").trim())
+            .filter(Boolean);
+        if (!allClientNames.length && primaryClientName) allClientNames.push(primaryClientName);
+        const clientsNames = allClientNames.length <= 1
+            ? (allClientNames[0] || "")
+            : allClientNames.length === 2
+                ? `${allClientNames[0]} ו-${allClientNames[1]}`
+                : `${allClientNames.slice(0, -1).join(", ")} ו-${allClientNames[allClientNames.length - 1]}`;
         return {
             recipientName: primaryClientName,
+            clientsNames,
             firmName: getFirmName() || "",
             date: validStart
                 ? validStart.toLocaleDateString("he-IL", { day: "2-digit", month: "2-digit", year: "numeric" })
@@ -876,6 +915,13 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     hasConflict: !!data.hasConflict,
                     hasLeaveConflict: !!data.hasLeaveConflict,
                 });
+                const picked = String(color || "").trim().toUpperCase();
+                const collidingColor = Array.isArray(data.conflicts)
+                    && data.conflicts.some((c) => {
+                        const hex = String(c.color || "").trim().toUpperCase();
+                        return hex && picked && hex === picked;
+                    });
+                setColorCollision(!!collidingColor);
             } catch {
                 if (!cancelled) {
                     setConflictState({ loading: false, hasConflict: false, hasLeaveConflict: false });
@@ -884,7 +930,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         }, 400);
 
         return () => { cancelled = true; clearTimeout(handle); };
-    }, [startTime, endTime, managers, eventType, isEdit, event?.id]);
+    }, [startTime, endTime, managers, eventType, isEdit, event?.id, color]);
 
     // ─── Effect: load active cases for the linked client ──────────────────
     const loadClientCases = useCallback(async (cuid) => {
@@ -910,30 +956,30 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     // ─── Validation ───────────────────────────────────────────────────────
     const validate = () => {
         if (!title.trim() && !isInternalScopedEventType(eventType)) {
-            setError("חובה להזין כותרת לאירוע");
+            notifyError("חובה להזין כותרת לאירוע");
             return false;
         }
-        if (!startTime) { setError("חובה להזין שעת התחלה"); return false; }
+        if (!startTime) { notifyError("חובה להזין שעת התחלה"); return false; }
         if (isReminderEventType) {
             // Reminder events are a single-moment marker — end_time auto-mirrors start_time.
             if (!reminderClientName.trim()) {
-                setError(t("reminders.add.error"));
+                notifyError(t("reminders.add.error"));
                 return false;
             }
             if (!reminderToEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(reminderToEmail.trim())) {
-                setError(t("reminders.add.error"));
+                notifyError(t("reminders.add.error"));
                 return false;
             }
         } else {
-            if (!endTime) { setError("חובה להזין שעת סיום"); return false; }
+            if (!endTime) { notifyError("חובה להזין שעת סיום"); return false; }
             if (new Date(endTime) <= new Date(startTime)) {
-                setError("שעת הסיום חייבת להיות אחרי שעת ההתחלה");
+                notifyError("שעת הסיום חייבת להיות אחרי שעת ההתחלה");
                 return false;
             }
         }
         if (intakeMode === INTAKE_LEAD && (eventType === EVENT_TYPE_APPT || eventType === EVENT_TYPE_HEARING)) {
             if (!leadName.trim() && !leadPhone.trim() && !leadEmail.trim()) {
-                setError("חובה להזין לפחות שם, טלפון או דוא״ל לליד");
+                notifyError("חובה להזין לפחות שם, טלפון או דוא״ל לליד");
                 return false;
             }
         }
@@ -942,10 +988,10 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             ? normalizeSelectedOffsets(clientReminderOffsets, allowedReminderMinutes)
             : [];
         if (showReminderPicker && (lawyerOff.length > 0 || clientOff.length > 0) && !hasAnyReminderChannel(reminderChannels)) {
-            setError(t("calendar.eventRemindersChannelRequired"));
+            notifyError(t("calendar.eventRemindersChannelRequired"));
             return false;
         }
-        setError("");
+        clearNotices();
         return true;
     };
 
@@ -953,7 +999,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const handleSave = async () => {
         if (!validate()) return;
         setSaving(true);
-        setError("");
+        clearNotices();
         try {
             const isClientScoped = eventType === EVENT_TYPE_APPT || eventType === EVENT_TYPE_HEARING;
             const isLeadMode = intakeMode === INTAKE_LEAD && isClientScoped;
@@ -1056,6 +1102,14 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 invite_sms: showReminderPicker ? inviteSms : null,
             };
 
+            if (!isEdit && recurring && recurrenceUntil && !isReminderEventType && !isInternalScopedEventType(eventType)) {
+                payload.recurrence = {
+                    enabled: true,
+                    frequency: recurrenceFreq || "weekly",
+                    until: recurrenceUntil,
+                };
+            }
+
             if (isReminderEventType) {
                 Object.assign(payload, {
                     reminder_to_email: reminderToEmail.trim(),
@@ -1133,12 +1187,39 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     _currentUserIdFromToken()
                 );
                 const reminderSyncWarning = res?.data?.reminderSyncWarning || null;
+                const inviteSendResult = res?.data?.inviteSendResult || null;
+                const immediateReminderResult = res?.data?.immediateReminderResult || null;
+
+                if (reminderSyncWarning) notifyWarning(reminderSyncWarning);
+                if (inviteSendResult?.deferred) {
+                    notifyWarning(t("calendar.inviteResendDeferred"));
+                } else if (inviteSendResult?.error) {
+                    notifyError(inviteSendResult.error);
+                } else if (inviteSendResult && (inviteSendResult.sentSms || inviteSendResult.sentEmail)) {
+                    toastSuccess(t("calendar.inviteSentSuccess", "ההזמנה נשלחה ללקוחות"));
+                } else if (inviteSendResult && Array.isArray(inviteSendResult.recipients) && inviteSendResult.recipients.length && !inviteSendResult.sentSms && !inviteSendResult.sentEmail) {
+                    notifyError(t("calendar.inviteSendFailed", "שליחת ההזמנה נכשלה — בדקו מספר טלפון/אימייל"));
+                }
+
+                if (immediateReminderResult?.deferred) {
+                    notifyWarning(t("calendar.immediateReminderDeferred", "תזכורת מיידית תישלח לאחר חלון השקט"));
+                } else if (immediateReminderResult?.errors?.length) {
+                    notifyError(immediateReminderResult.errors[0]);
+                } else if (immediateReminderResult?.sent > 0) {
+                    toastSuccess(t("calendar.immediateReminderSent", "תזכורת מיידית נשלחה"));
+                }
+
+                const seriesCount = Number(res?.data?.seriesCount || 0);
+                if (seriesCount > 1) {
+                    toastSuccess(t("calendar.recurrenceCreated", { count: seriesCount }));
+                }
+
                 onSaved(saved, { firmOnlyNotice, reminderSyncWarning });
             } else {
-                setError(res?.data?.message || res?.message || "שגיאה. נסה שוב.");
+                notifyError(res?.data?.message || res?.message || "שגיאה. נסה שוב.");
             }
         } catch (err) {
-            setError(err?.response?.data?.message || "שגיאה. נסה שוב.");
+            notifyError(err?.response?.data?.message || "שגיאה. נסה שוב.");
         } finally {
             setSaving(false);
         }
@@ -1153,12 +1234,12 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             if (res?.success) {
                 onDeleted(event.id);
             } else {
-                setError(res?.data?.message || res?.message || "שגיאה במחיקה.");
+                notifyError(res?.data?.message || res?.message || "שגיאה במחיקה.");
                 setDeleting(false);
                 setConfirmDelete(false);
             }
         } catch (err) {
-            setError(err?.response?.data?.message || "שגיאה במחיקה.");
+            notifyError(err?.response?.data?.message || "שגיאה במחיקה.");
             setDeleting(false);
             setConfirmDelete(false);
         }
@@ -1191,7 +1272,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setCaseId(ev.caseId || null);
         setCaseName(ev.caseName || "");
         setOptionalConvertCaseName("");
-        setSuccessMsg(alreadyConverted
+        notifySuccess(alreadyConverted
             ? t("calendar.convertLeadAlreadyDone")
             : t("calendar.convertLeadSuccess"));
         onUpdated?.(ev);
@@ -1240,8 +1321,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const handleConvertLead = async () => {
         if (!isEdit) return;
         setConverting(true);
-        setError("");
-        setSuccessMsg("");
+        clearNotices();
         const savedLeadName = leadName;
         const savedLeadPhone = leadPhone;
         const savedLeadEmail = leadEmail;
@@ -1259,13 +1339,13 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             } else {
                 const code = res?.data?.code;
                 if (code === "PHONE_ALREADY_EXISTS") {
-                    setError(res?.data?.message || t("calendar.convertLeadPhoneExists"));
+                    notifyError(res?.data?.message || t("calendar.convertLeadPhoneExists"));
                 } else {
-                    setError(res?.data?.message || res?.message || t("calendar.convertLeadError"));
+                    notifyError(res?.data?.message || res?.message || t("calendar.convertLeadError"));
                 }
             }
         } catch (err) {
-            setError(err?.response?.data?.message || t("calendar.convertLeadError"));
+            notifyError(err?.response?.data?.message || t("calendar.convertLeadError"));
         } finally {
             setConverting(false);
         }
@@ -1283,21 +1363,20 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             return;
         }
         setLinkingCase(true);
-        setError("");
-        setSuccessMsg("");
+        clearNotices();
         try {
             const res = await calendarApi.linkCase(event.id, newCaseId);
             if (res?.success && res?.data?.event) {
                 const ev = res.data.event;
                 setCaseId(ev.caseId || null);
                 setCaseName(ev.caseName || "");
-                setSuccessMsg(newCaseId ? t("calendar.linkCaseSuccess") : t("calendar.unlinkCaseSuccess"));
+                notifySuccess(newCaseId ? t("calendar.linkCaseSuccess") : t("calendar.unlinkCaseSuccess"));
                 onUpdated?.(ev);
             } else {
-                setError(res?.data?.message || res?.message || t("calendar.linkCaseError"));
+                notifyError(res?.data?.message || res?.message || t("calendar.linkCaseError"));
             }
         } catch (err) {
-            setError(err?.response?.data?.message || t("calendar.linkCaseError"));
+            notifyError(err?.response?.data?.message || t("calendar.linkCaseError"));
         } finally {
             setLinkingCase(false);
         }
@@ -1382,12 +1461,11 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
 
     const handleResendInvite = async () => {
         if (!isEdit || !event?.id) return;
-        setError("");
-        setSuccessMsg("");
+        clearNotices();
         try {
             const res = await calendarApi.resendInvite(event.id);
             if (!res?.success) {
-                setError(
+                notifyError(
                     res?.data?.message
                     || res?.message
                     || t("calendar.inviteResendFailed")
@@ -1396,13 +1474,13 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             }
             const data = res.data || {};
             if (data.deferred) {
-                setSuccessMsg(t("calendar.inviteResendDeferred"));
+                notifySuccess(t("calendar.inviteResendDeferred"));
             } else {
-                setSuccessMsg(t("calendar.inviteResendSuccess"));
+                notifySuccess(t("calendar.inviteResendSuccess"));
             }
             if (data.event) onUpdated?.(data.event);
         } catch (e) {
-            setError(
+            notifyError(
                 e?.response?.data?.message
                 || t("calendar.inviteResendFailed")
             );
@@ -1412,13 +1490,13 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const handleDuplicate = async () => {
         if (!isEdit || !event?.id) return;
         setDuplicating(true);
-        setError("");
+        clearNotices();
         try {
             const res = await calendarApi.duplicateEvent(event.id);
             if (res?.success && res?.data?.event) {
                 onSaved?.(res.data.event);
             } else {
-                setError(
+                notifyError(
                     res?.data?.message
                     || res?.message
                     || t("calendar.duplicateEventError")
@@ -1426,7 +1504,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 setDuplicating(false);
             }
         } catch (err) {
-            setError(
+            notifyError(
                 err?.response?.data?.message
                 || t("calendar.duplicateEventError")
             );
@@ -1537,15 +1615,12 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             <SimpleContainer ref={modalRootRef} className="lw-eventFormModal lw-eventFormModal--caseForm">
                 <SimpleContainer className="lw-eventFormModal__header">
                     <Text24>{t("calendar.createCaseFromLead")}</Text24>
-                    {successMsg && (
-                        <Text12 color="#276749">{successMsg}</Text12>
-                    )}
                 </SimpleContainer>
                 <SimpleScrollView className="lw-eventFormModal__caseFormScroll">
                     <CaseFullView
                         initialDraft={caseFormDraft}
                         closePopUpFunction={() => setCaseFormDraft(null)}
-                        onFailureFunction={(err) => setError(err?.data?.message || err?.message || t("calendar.linkCaseError"))}
+                        onFailureFunction={(err) => notifyError(err?.data?.message || err?.message || t("calendar.linkCaseError"))}
                         onCaseCreated={async (createdCaseId) => {
                             const linkRes = await calendarApi.linkCase(event.id, createdCaseId);
                             if (!linkRes?.success || !linkRes?.data?.event) {
@@ -1554,11 +1629,10 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                             const linked = linkRes.data.event;
                             setCaseId(linked.caseId || createdCaseId);
                             setCaseName(linked.caseName || "");
-                            setSuccessMsg(t("calendar.linkCaseSuccess"));
+                            notifySuccess(t("calendar.linkCaseSuccess"));
                             onUpdated?.(linked);
                         }}
                     />
-                    {error && <Text14 color="#E53E3E">{error}</Text14>}
                 </SimpleScrollView>
             </SimpleContainer>
         );
@@ -1595,13 +1669,6 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                 )}
                             </Text14>
                         </SimpleContainer>
-                    </SimpleContainer>
-                )}
-
-                {/* ─── Success toast (in-modal) ─── */}
-                {successMsg && (
-                    <SimpleContainer className="lw-eventFormModal__successBanner" role="status" aria-live="polite">
-                        <Text14 color="#22543D">{successMsg}</Text14>
                     </SimpleContainer>
                 )}
 
@@ -1669,6 +1736,54 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                             </Text12>
                         )}
                     </SimpleContainer>
+
+                    {!isEdit && !isReminderEventType && !isInternalScopedType && (
+                        <SimpleContainer className="lw-eventFormModal__recurrence">
+                            <SimpleContainer className="lw-eventFormModal__allDay">
+                                <input
+                                    type="checkbox"
+                                    id="recurring"
+                                    checked={recurring}
+                                    onChange={(e) => setRecurring(e.target.checked)}
+                                />
+                                <label htmlFor="recurring">
+                                    <Text14>{t("calendar.recurringMeeting")}</Text14>
+                                </label>
+                            </SimpleContainer>
+                            {recurring && (
+                                <SimpleContainer className="lw-eventFormModal__recurrenceFields">
+                                    <div className="lw-eventFormModal__field">
+                                        <Text14 color={NAVY}>{t("calendar.recurrenceFrequency")}</Text14>
+                                        <div className="lw-eventFormModal__segmented" role="group">
+                                            {[
+                                                { value: "daily", labelKey: "calendar.recurrenceDaily" },
+                                                { value: "weekly", labelKey: "calendar.recurrenceWeekly" },
+                                                { value: "monthly", labelKey: "calendar.recurrenceMonthly" },
+                                            ].map(({ value, labelKey }) => (
+                                                <SimpleButton
+                                                    key={value}
+                                                    className={`lw-eventFormModal__segmentedBtn ${recurrenceFreq === value ? "is-active" : ""}`}
+                                                    onPress={() => setRecurrenceFreq(value)}
+                                                    aria-pressed={recurrenceFreq === value}
+                                                    tabIndex={-1}
+                                                >
+                                                    {t(labelKey)}
+                                                </SimpleButton>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <SimpleInput
+                                        title={t("calendar.recurrenceUntil")}
+                                        type="date"
+                                        value={recurrenceUntil}
+                                        onChange={(e) => setRecurrenceUntil(e.target.value)}
+                                        timeToWaitInMilli={0}
+                                    />
+                                    <Text12 color="#718096">{t("calendar.recurrenceHint")}</Text12>
+                                </SimpleContainer>
+                            )}
+                        </SimpleContainer>
+                    )}
 
                     {!isReminderEventType && (
                         <SimpleInput
@@ -1889,6 +2004,13 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                         value={clientReminderSms}
                                         onChange={setClientReminderSms}
                                         previewValues={smsPreviewValues}
+                                        previewRecipients={
+                                            clients.length
+                                                ? clients
+                                                : (leadName.trim() || leadPhone.trim()
+                                                    ? [{ name: leadName.trim(), phone: leadPhone.trim() }]
+                                                    : null)
+                                        }
                                         excludeVars={["rsvpUrl"]}
                                         defaultValue={DEFAULT_CLIENT_REMINDER_SMS}
                                     />
@@ -1898,6 +2020,13 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                         value={inviteSms}
                                         onChange={setInviteSms}
                                         previewValues={smsPreviewValues}
+                                        previewRecipients={
+                                            clients.length
+                                                ? clients
+                                                : (leadName.trim() || leadPhone.trim()
+                                                    ? [{ name: leadName.trim(), phone: leadPhone.trim() }]
+                                                    : null)
+                                        }
                                         defaultValue={DEFAULT_INVITE_SMS}
                                     />
                                 </SimpleContainer>
@@ -1908,37 +2037,35 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     {/* ─── Managers (meeting attendees) — not for תזכורת כללית / leave / holiday ─── */}
                     {showManagersField && (
                     <SimpleContainer className="lw-eventFormModal__managersCol">
-                        {isEdit && event?.inviteStatus && event.inviteStatus !== "none" && (
-                            <SimpleContainer
-                                className={`lw-eventFormModal__inviteStatus lw-eventFormModal__inviteStatus--${event.inviteStatus}`}
-                            >
-                                <span className="lw-eventFormModal__inviteBadge">
-                                    {event.inviteStatus === "accepted"
-                                        ? t("calendar.inviteStatusBadgeAccepted", { defaultValue: "אושר" })
-                                        : event.inviteStatus === "declined"
-                                            ? t("calendar.inviteStatusBadgeDeclined", { defaultValue: "נדחה" })
-                                            : t("calendar.inviteStatusBadgePending", { defaultValue: "ממתין" })}
-                                </span>
-                                <TextBold14 color={NAVY}>
-                                    {event.inviteStatus === "accepted"
-                                        ? t("calendar.inviteStatusAccepted")
-                                        : event.inviteStatus === "declined"
-                                            ? t("calendar.inviteStatusDeclined")
-                                            : t("calendar.inviteStatusPending")}
-                                </TextBold14>
-                                {(event.inviteStatus === "pending" || event.inviteStatus === "declined") && (
+                        {isEdit && (
+                            clients.some((c) => c.inviteStatus && c.inviteStatus !== "none")
+                            || (event?.inviteStatus && event.inviteStatus !== "none")
+                        ) && (
+                            <SimpleContainer className="lw-eventFormModal__inviteStatus lw-eventFormModal__inviteStatus--breakdown">
+                                <TextBold14 color={NAVY}>{t("calendar.clientRsvpBreakdown")}</TextBold14>
+                                <SimpleContainer className="lw-eventFormModal__rsvpList">
+                                    {(clients.length
+                                        ? clients
+                                        : [{
+                                            userId: event?.clientUserId || "legacy",
+                                            name: event?.clientName || event?.clientDisplayName || "לקוח",
+                                            inviteStatus: event?.inviteStatus,
+                                        }]
+                                    ).map((c) => {
+                                        const st = c.inviteStatus || "pending";
+                                        const label = _clientRsvpLabel(st, t);
+                                        if (!label) return null;
+                                        return (
+                                            <Text14 key={c.userId} className={`lw-eventFormModal__rsvpRow is-${st}`}>
+                                                <strong>{c.name || "לקוח"}:</strong> {label}
+                                            </Text14>
+                                        );
+                                    })}
+                                </SimpleContainer>
+                                {clients.some((c) => c.inviteStatus === "pending" || c.inviteStatus === "declined") && (
                                     <SecondaryButton onPress={handleResendInvite}>
                                         {t("calendar.inviteResend")}
                                     </SecondaryButton>
-                                )}
-                                {clients.some((c) => c.phone) && (
-                                    <SimpleContainer className="lw-eventFormModal__clientPhones">
-                                        {clients.filter((c) => c.phone).map((c) => (
-                                            <Text12 key={c.userId} color="#4A5568">
-                                                {t("calendar.clientPhoneLabel")}: {clientChipLabel(c)}
-                                            </Text12>
-                                        ))}
-                                    </SimpleContainer>
                                 )}
                             </SimpleContainer>
                         )}
@@ -1977,24 +2104,31 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     )}
 
                     {/* Invite status for reminder-type edits (managers block hidden) */}
-                    {!showManagersField && isEdit && event?.inviteStatus && event.inviteStatus !== "none" && (
-                        <SimpleContainer
-                            className={`lw-eventFormModal__inviteStatus lw-eventFormModal__inviteStatus--${event.inviteStatus}`}
-                        >
-                            <span className="lw-eventFormModal__inviteBadge">
-                                {event.inviteStatus === "accepted"
-                                    ? t("calendar.inviteStatusBadgeAccepted", { defaultValue: "אושר" })
-                                    : event.inviteStatus === "declined"
-                                        ? t("calendar.inviteStatusBadgeDeclined", { defaultValue: "נדחה" })
-                                        : t("calendar.inviteStatusBadgePending", { defaultValue: "ממתין" })}
-                            </span>
-                            <TextBold14 color={NAVY}>
-                                {event.inviteStatus === "accepted"
-                                    ? t("calendar.inviteStatusAccepted")
-                                    : event.inviteStatus === "declined"
-                                        ? t("calendar.inviteStatusDeclined")
-                                        : t("calendar.inviteStatusPending")}
-                            </TextBold14>
+                    {!showManagersField && isEdit && (
+                        clients.some((c) => c.inviteStatus && c.inviteStatus !== "none")
+                        || (event?.inviteStatus && event.inviteStatus !== "none")
+                    ) && (
+                        <SimpleContainer className="lw-eventFormModal__inviteStatus lw-eventFormModal__inviteStatus--breakdown">
+                            <TextBold14 color={NAVY}>{t("calendar.clientRsvpBreakdown")}</TextBold14>
+                            <SimpleContainer className="lw-eventFormModal__rsvpList">
+                                {(clients.length
+                                    ? clients
+                                    : [{
+                                        userId: event?.clientUserId || "legacy",
+                                        name: event?.clientName || event?.clientDisplayName || "לקוח",
+                                        inviteStatus: event?.inviteStatus,
+                                    }]
+                                ).map((c) => {
+                                    const st = c.inviteStatus || "pending";
+                                    const label = _clientRsvpLabel(st, t);
+                                    if (!label) return null;
+                                    return (
+                                        <Text14 key={c.userId} className={`lw-eventFormModal__rsvpRow is-${st}`}>
+                                            <strong>{c.name || "לקוח"}:</strong> {label}
+                                        </Text14>
+                                    );
+                                })}
+                            </SimpleContainer>
                         </SimpleContainer>
                     )}
 
@@ -2044,20 +2178,25 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                             />
                             {clients.length > 0 && (
                                 <SimpleContainer className="lw-eventFormModal__managerChips lw-eventFormModal__clientChips">
-                                    {clients.map((c) => (
-                                        <span key={c.userId} className="lw-eventFormModal__managerChip">
-                                            {clientChipLabel(c)}
-                                            <button
-                                                type="button"
-                                                className="lw-eventFormModal__chipRemove"
-                                                tabIndex={-1}
-                                                onClick={() => handleRemoveClient(c.userId)}
-                                                aria-label={t("calendar.removeClient")}
-                                            >
-                                                &times;
-                                            </button>
-                                        </span>
-                                    ))}
+                                    {clients.map((c) => {
+                                        const st = c.inviteStatus || "none";
+                                        const rsvp = _clientRsvpLabel(st, t);
+                                        return (
+                                            <span key={c.userId} className={`lw-eventFormModal__managerChip ${st !== "none" ? `is-rsvp-${st}` : ""}`}>
+                                                {clientChipLabel(c)}
+                                                {rsvp ? <em className="lw-eventFormModal__chipRsvp"> · {rsvp}</em> : null}
+                                                <button
+                                                    type="button"
+                                                    className="lw-eventFormModal__chipRemove"
+                                                    tabIndex={-1}
+                                                    onClick={() => handleRemoveClient(c.userId)}
+                                                    aria-label={t("calendar.removeClient")}
+                                                >
+                                                    &times;
+                                                </button>
+                                            </span>
+                                        );
+                                    })}
                                 </SimpleContainer>
                             )}
                             <Text12 color="#718096">{t("calendar.clientsHint")}</Text12>
@@ -2216,17 +2355,19 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                 />
                             ))}
                         </SimpleContainer>
+                        {colorCollision && (
+                            <Text12 className="lw-eventFormModal__colorCollision" color="#C05621">
+                                {t("calendar.colorCollisionWarning")}
+                            </Text12>
+                        )}
                     </SimpleContainer>
 
-                    {/* ─── Description ─── */}
                     <SimpleTextArea
                         title={t("calendar.description")}
                         value={description}
                         onChange={(val) => setDescription(val)}
                         rows={3}
                     />
-
-                    {error && <Text14 color="#E53E3E">{error}</Text14>}
                 </SimpleContainer>
 
                 {/* ─── Footer actions ─── */}

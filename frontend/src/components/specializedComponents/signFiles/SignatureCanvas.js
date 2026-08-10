@@ -18,6 +18,7 @@ import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 import { colors } from "../../../constant/colors";
 
 import "./signFiles.scss";
+import { showAppToast } from "../../ui/showAppToast";
 import "../../../screens/signingScreen/PublicSigningScreen.scss";
 
 function uuidv4() {
@@ -55,7 +56,6 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const [pdfFile, setPdfFile] = useState(null);
     const [pdfReady, setPdfReady] = useState(false);
     const [currentSpot, setCurrentSpot] = useState(null);
-    const [message, setMessage] = useState(null);
     const [saving, setSaving] = useState(false);
     const [isDrawing, setIsDrawing] = useState(false);
     const [hasUserDrawn, setHasUserDrawn] = useState(false);
@@ -511,12 +511,11 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 ? await signingFilesApi.deletePublicSavedItem(publicToken, type, index)
                 : await signingFilesApi.deleteSavedItem(type, index);
             unwrapApi(res);
-            setMessage({ type: "success", text: t("signing.canvas.deleteSavedSuccess") });
+            showAppToast({ type: "success", text: t("signing.canvas.deleteSavedSuccess") });
             await refreshSavedItems();
-            setTimeout(() => setMessage(null), 2000);
         } catch (err) {
             console.error("Failed to delete saved item", err);
-            setMessage({ type: "error", text: t("signing.canvas.deleteSavedError") });
+            showAppToast({ type: "error", text: t("signing.canvas.deleteSavedError") });
         }
     };
 
@@ -560,7 +559,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 await loadPdfFromFileKey(fileIdForPdf);
             } catch (err) {
                 console.error("Failed to fetch file details", err);
-                if (isMounted) setMessage({ type: "error", text: t("signing.canvas.loadDocumentError") });
+                if (isMounted) showAppToast({ type: "error", text: t("signing.canvas.loadDocumentError") });
             } finally {
                 if (isMounted) setLoading(false);
             }
@@ -846,7 +845,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = "high";
         ctx.drawImage(img, 0, 0, drawW, drawH);
-        return c.toDataURL("image/png");
+        // Always strip letterbox so saved stamps stay transparent in PDF.
+        return removeImageBackground(c.toDataURL("image/png"));
     };
 
     const fetchSavedItemDataUrl = async (savedItem) => {
@@ -895,11 +895,11 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         const consentVersion = String(fileDetails?.file?.SigningPolicyVersion || "2026-01-11");
 
         if (!consentAccepted) {
-            setMessage({ type: "warning", text: t("signing.canvas.consentRequired") });
+            showAppToast({ type: "warning", text: t("signing.canvas.consentRequired") });
             return false;
         }
         if (requireOtp && !otpVerified) {
-            setMessage({ type: "warning", text: t("signing.canvas.otpRequired") });
+            showAppToast({ type: "warning", text: t("signing.canvas.otpRequired") });
             return false;
         }
 
@@ -947,17 +947,17 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         const consentVersion = String(fileDetails?.file?.SigningPolicyVersion || "2026-01-11");
 
         if (!consentAccepted) {
-            setMessage({ type: "warning", text: t("signing.canvas.consentRequired") });
+            showAppToast({ type: "warning", text: t("signing.canvas.consentRequired") });
             return false;
         }
         if (requireOtp && !otpVerified) {
-            setMessage({ type: "warning", text: t("signing.canvas.otpRequired") });
+            showAppToast({ type: "warning", text: t("signing.canvas.otpRequired") });
             return false;
         }
 
         const cleaned = sanitizeFieldValue(spotType, value);
         if (isSpotRequired(spot) && !cleaned) {
-            setMessage({ type: "warning", text: t("signing.canvas.fieldRequired") });
+            showAppToast({ type: "warning", text: t("signing.canvas.fieldRequired") });
             return false;
         }
 
@@ -1031,7 +1031,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             if (!hasUserDrawn) {
                 const spotType = getSpotType(currentSpot);
                 const signMode = getSignModeForSpotType(spotType);
-                setMessage({
+                showAppToast({
                     type: "error",
                     text: signMode === 'initials'
                         ? t("signing.canvas.pleaseInitialBeforeSave")
@@ -1052,21 +1052,20 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 await saveSignatureAsDefault(dataUrl);
             }
 
-            setMessage({
+            showAppToast({
                 type: "success",
                 text: signMode === 'initials'
                     ? t("signing.canvas.initialsSavedSuccess")
                     : t("signing.canvas.signatureSavedSuccess"),
             });
             await reloadDetailsAndAdvance();
-            setTimeout(() => setMessage(null), 2000);
             return true;
         } catch (err) {
             console.error("Failed to save signature", err);
             resetOtpAfterServerReject(err);
             const spotType = currentSpot ? getSpotType(currentSpot) : 'signature';
             const signMode = getSignModeForSpotType(spotType);
-            setMessage({
+            showAppToast({
                 type: "error",
                 text: getApiErrorMessage(err) || (signMode === 'initials'
                     ? t("signing.canvas.initialsSaveError")
@@ -1083,7 +1082,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         setSaving(true);
         try {
             if (!hasUserDrawn) {
-                setMessage({ type: "error", text: t("signing.canvas.pleaseSignBeforeSave") });
+                showAppToast({ type: "error", text: t("signing.canvas.pleaseSignBeforeSave") });
                 return;
             }
 
@@ -1098,14 +1097,13 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 await saveSignatureAsDefault(dataUrl);
             }
 
-            setMessage({ type: "success", text: t("signing.canvas.signatureSavedSuccess") });
+            showAppToast({ type: "success", text: t("signing.canvas.signatureSavedSuccess") });
             await reloadDetailsAndAdvance();
-            setTimeout(() => setMessage(null), 2000);
             return true;
         } catch (err) {
             console.error("Failed to sign", err);
             resetOtpAfterServerReject(err);
-            setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.signatureSaveError") });
+            showAppToast({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.signatureSaveError") });
         } finally {
             setSaving(false);
         }
@@ -1123,7 +1121,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             }
             const validation = validateFieldValue(currentSpotType, sanitized);
             if (!validation.ok) {
-                setMessage({ type: 'error', text: validation.message || t('errors.unexpected') });
+                showAppToast({ type: 'error', text: validation.message || t('errors.unexpected') });
                 return;
             }
             const didSign = await signCurrentSpotWithValue(sanitized);
@@ -1179,16 +1177,15 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 setShowCompletion(true);
             }
 
-            setMessage({ type: "success", text: t("signing.canvas.fieldSavedSuccess") });
+            showAppToast({ type: "success", text: t("signing.canvas.fieldSavedSuccess") });
             // NOTE: Intentionally no reloadDetailsAndAdvance() here.
             // If the DB schema lacks signaturespots.fieldvalue, the backend won't return FieldValue,
             // and an immediate reload would erase the visible value from the overlay.
-            setTimeout(() => setMessage(null), 2000);
             return true;
         } catch (err) {
             console.error("Failed to save field value", err);
             resetOtpAfterServerReject(err);
-            setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.fieldSaveError") });
+            showAppToast({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.fieldSaveError") });
         } finally {
             setSaving(false);
         }
@@ -1236,18 +1233,21 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 bgG = Math.round(gSum / validCorners);
                 bgB = Math.round(bSum / validCorners);
             }
-            // Make pixels similar to background transparent
-            const threshold = 60;
+            // Make pixels similar to background transparent (aggressive for white letterbox).
+            const threshold = 48;
             for (let i = 0; i < d.length; i += 4) {
-                const dr = Math.abs(d[i] - bgR);
-                const dg = Math.abs(d[i + 1] - bgG);
-                const db = Math.abs(d[i + 2] - bgB);
+                const r = d[i];
+                const g = d[i + 1];
+                const b = d[i + 2];
+                const nearWhite = r >= 245 && g >= 245 && b >= 245;
+                const dr = Math.abs(r - bgR);
+                const dg = Math.abs(g - bgG);
+                const db = Math.abs(b - bgB);
                 const dist = Math.sqrt(dr * dr + dg * dg + db * db);
-                if (dist < threshold) {
+                if (nearWhite || dist < threshold) {
                     d[i + 3] = 0; // fully transparent
-                } else if (dist < threshold + 30) {
-                    // Feather the edge
-                    const alpha = Math.round(((dist - threshold) / 30) * d[i + 3]);
+                } else if (dist < threshold + 28) {
+                    const alpha = Math.round(((dist - threshold) / 28) * d[i + 3]);
                     d[i + 3] = alpha;
                 }
             }
@@ -1288,7 +1288,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 dataUrl = await removeImageBackground(normalized);
             }
             if (!dataUrl) {
-                setMessage({ type: "error", text: t("signing.canvas.clientStampUploadError") });
+                showAppToast({ type: "error", text: t("signing.canvas.clientStampUploadError") });
                 return;
             }
             // Enter "sign on stamp" phase: show canvas with stamp as background
@@ -1298,7 +1298,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             setHasUserDrawn(false);
         } catch (err) {
             console.error("Failed to process client stamp", err);
-            setMessage({ type: "error", text: t("signing.canvas.clientStampUploadError") });
+            showAppToast({ type: "error", text: t("signing.canvas.clientStampUploadError") });
         } finally {
             setSaving(false);
         }
@@ -1344,15 +1344,14 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             // Save the composited stamp+signature so the preview includes the drawn signature
             saveStampAsDefault(finalDataUrl);
 
-            setMessage({ type: "success", text: t("signing.canvas.clientStampSavedSuccess") });
+            showAppToast({ type: "success", text: t("signing.canvas.clientStampSavedSuccess") });
             clearClientStamp();
             await reloadDetailsAndAdvance();
-            setTimeout(() => setMessage(null), 2000);
             return true;
         } catch (err) {
             console.error("Failed to save client stamp", err);
             resetOtpAfterServerReject(err);
-            setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.clientStampUploadError") });
+            showAppToast({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.clientStampUploadError") });
         } finally {
             setSaving(false);
         }
@@ -1367,7 +1366,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             if (!target) return;
 
             if (getSpotType(target) !== 'signature') {
-                setMessage({ type: "error", text: t("signing.canvas.useSavedSignatureSignatureOnly") });
+                showAppToast({ type: "error", text: t("signing.canvas.useSavedSignatureSignatureOnly") });
                 return;
             }
 
@@ -1392,7 +1391,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             }
 
             if (!dataUrl) {
-                setMessage({ type: "error", text: t("signing.canvas.noSavedSignature") });
+                showAppToast({ type: "error", text: t("signing.canvas.noSavedSignature") });
                 return;
             }
 
@@ -1400,14 +1399,13 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             const didSign = await signCurrentSpotWithImage(dataUrl, target);
             if (!didSign) return;
 
-            setMessage({ type: "success", text: t("signing.canvas.signatureSavedSuccess") });
+            showAppToast({ type: "success", text: t("signing.canvas.signatureSavedSuccess") });
             await reloadDetailsAndAdvance();
-            setTimeout(() => setMessage(null), 2000);
             return true;
         } catch (err) {
             console.error("Failed to use saved signature", err);
             resetOtpAfterServerReject(err);
-            setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.useSavedSignatureError") });
+            showAppToast({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.useSavedSignatureError") });
         } finally {
             setSaving(false);
         }
@@ -1442,7 +1440,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             }
 
             if (!dataUrl) {
-                setMessage({ type: "error", text: t("signing.canvas.noSavedStamp") });
+                showAppToast({ type: "error", text: t("signing.canvas.noSavedStamp") });
                 return;
             }
 
@@ -1450,14 +1448,13 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             const didSign = await signCurrentSpotWithImage(dataUrl, target);
             if (!didSign) return;
 
-            setMessage({ type: "success", text: t("signing.canvas.clientStampSavedSuccess") });
+            showAppToast({ type: "success", text: t("signing.canvas.clientStampSavedSuccess") });
             await reloadDetailsAndAdvance();
-            setTimeout(() => setMessage(null), 2000);
             return true;
         } catch (err) {
             console.error("Failed to use saved stamp", err);
             resetOtpAfterServerReject(err);
-            setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.useSavedStampError") });
+            showAppToast({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.useSavedStampError") });
         } finally {
             setSaving(false);
         }
@@ -1467,11 +1464,11 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const signAllRemainingSpots = async (savedItem = null) => {
         try {
             if (!consentAccepted) {
-                setMessage({ type: "warning", text: t("signing.canvas.consentRequired") });
+                showAppToast({ type: "warning", text: t("signing.canvas.consentRequired") });
                 return false;
             }
             if (otpRequired && !otpVerified) {
-                setMessage({ type: "warning", text: t("signing.canvas.otpRequired") });
+                showAppToast({ type: "warning", text: t("signing.canvas.otpRequired") });
                 return false;
             }
             const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
@@ -1503,12 +1500,12 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 const rawDataUrl = sigRes?.data?.dataUrl;
                 dataUrl = await normalizeSignatureDataUrl(rawDataUrl);
             } else {
-                setMessage({ type: "error", text: t("signing.canvas.signAllRequiresSignature") });
+                showAppToast({ type: "error", text: t("signing.canvas.signAllRequiresSignature") });
                 return;
             }
 
             if (!dataUrl) {
-                setMessage({ type: "error", text: t("signing.canvas.noSignatureToUse") });
+                showAppToast({ type: "error", text: t("signing.canvas.noSignatureToUse") });
                 return;
             }
 
@@ -1534,15 +1531,14 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 unwrapApi(res);
             }
 
-            setMessage({ type: "success", text: t("signing.canvas.signedAllSuccess") });
+            showAppToast({ type: "success", text: t("signing.canvas.signedAllSuccess") });
             await reloadDetailsAndAdvance();
             setShowCompletion(true);
-            setTimeout(() => setMessage(null), 2000);
             return true;
         } catch (err) {
             console.error("Failed to sign all spots", err);
             resetOtpAfterServerReject(err);
-            setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.signAllError") });
+            showAppToast({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.signAllError") });
             // Reload to reflect any partially signed spots
             try { await reloadDetailsAndAdvance(); } catch (_) { /* ignore */ }
         } finally {
@@ -1557,7 +1553,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             if (!otpRequired) return;
             const now = Date.now();
             if (!silent && now < otpResendAtRef.current) {
-                setMessage({ type: "warning", text: t("signing.canvas.otpWaitBeforeResend") || "נא להמתין לפני שליחה מחדש" });
+                showAppToast({ type: "warning", text: t("signing.canvas.otpWaitBeforeResend") || "נא להמתין לפני שליחה מחדש" });
                 return;
             }
             setOtpBusy(true);
@@ -1570,13 +1566,13 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             otpAutoVerifyRef.current = false;
             otpResendAtRef.current = Date.now() + 30_000;
             if (!silent) {
-                setMessage({ type: "success", text: t("signing.canvas.otpSent") });
+                showAppToast({ type: "success", text: t("signing.canvas.otpSent") });
             }
         } catch (err) {
             console.error("OTP request failed", err);
             otpAutoSentRef.current = false;
             if (!silent) {
-                setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.otpSendError") });
+                showAppToast({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.otpSendError") });
             }
         } finally {
             setOtpBusy(false);
@@ -1596,7 +1592,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             if (!otpRequired) return;
             const otp = String(otpCode || "").replace(/\D/g, "").slice(0, 6);
             if (!/^[0-9]{6}$/.test(otp)) {
-                setMessage({ type: "error", text: t("signing.canvas.otpInvalidFormat") });
+                showAppToast({ type: "error", text: t("signing.canvas.otpInvalidFormat") });
                 return;
             }
 
@@ -1612,7 +1608,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 otpAutoVerifyRef.current = false;
                 setOtpVerified(false);
                 const rateLimited = Boolean(res?.data?.rateLimited || res?.rateLimited);
-                setMessage({
+                showAppToast({
                     type: "error",
                     text: rateLimited
                         ? (t("signing.canvas.otpRateLimited") || "נעשו יותר מדי ניסיונות. בקשו קוד חדש ונסו שוב.")
@@ -1623,13 +1619,13 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             }
             otpLastFailedRef.current = "";
             setOtpVerified(true);
-            setMessage(null);
+            
         } catch (err) {
             console.error("OTP verify failed", err);
             otpLastFailedRef.current = String(otpCode || "").replace(/\D/g, "").slice(0, 6);
             otpAutoVerifyRef.current = false;
             setOtpVerified(false);
-            setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.otpVerifyError") });
+            showAppToast({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.otpVerifyError") });
             try { otpInputRef.current?.focus?.(); otpInputRef.current?.select?.(); } catch (_) { /* ignore */ }
         } finally {
             setOtpBusy(false);
@@ -1663,11 +1659,11 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 const res = await signingFilesApi.rejectSigning(effectiveSigningFileId, { rejectionReason: reason, signingSessionId });
                 unwrapApi(res);
             }
-            setMessage({ type: "success", text: t("signing.canvas.documentRejected") });
+            showAppToast({ type: "success", text: t("signing.canvas.documentRejected") });
             setTimeout(() => onClose(), 1200);
         } catch (err) {
             console.error("Failed to reject file", err);
-            setMessage({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.rejectError") });
+            showAppToast({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.rejectError") });
         } finally {
             setSaving(false);
         }
@@ -2071,15 +2067,15 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         />
                     </div>
                     <div className="lw-signing-actionsRow">
-                        <SecondaryButton size={buttonSizes.MEDIUM} onPress={clearCanvas} disabled={saving}>
-                            {t("common.clear")}
-                        </SecondaryButton>
-                        <TertiaryButton size={buttonSizes.SMALL} onPress={clearClientStamp} disabled={saving}>
-                            {t("signing.canvas.changeStamp")}
-                        </TertiaryButton>
                         <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { await saveStampWithSignature(); }} disabled={saving}>
                             {saving ? t("signing.canvas.saving") : t("signing.canvas.saveField")}
                         </PrimaryButton>
+                        <SecondaryButton size={buttonSizes.MEDIUM} onPress={clearClientStamp} disabled={saving}>
+                            {t("signing.canvas.changeStamp")}
+                        </SecondaryButton>
+                        <SecondaryButton size={buttonSizes.MEDIUM} onPress={clearCanvas} disabled={saving}>
+                            {t("common.clear")}
+                        </SecondaryButton>
                     </div>
                 </div>
             )}
@@ -2344,11 +2340,6 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         </TertiaryButton>
                     </div>
                     <div className="lw-signing-popupBody">
-                        {message && (
-                            <div className={"lw-signing-message " + (message.type === "success" ? "is-success" : message.type === "error" ? "is-error" : "is-warning")}>
-                                {message.text}
-                            </div>
-                        )}
                         {!isDocumentLocked && renderConsentAndOtp()}
                         {!isDocumentLocked && renderSigningControls()}
                     </div>
@@ -2428,13 +2419,6 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 ) : null}
                             </SimpleContainer>
 
-                            {message && !showSpotPopup && (
-                                <div className="lw-signing-floatingMessage">
-                                    <div className={"lw-signing-message " + (message.type === "success" ? "is-success" : message.type === "error" ? "is-error" : "is-warning")}>
-                                        {message.text}
-                                    </div>
-                                </div>
-                            )}
                         </SimpleContainer>
 
                         {renderSpotPopup()}
@@ -2495,16 +2479,6 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         </SimpleContainer>
 
                         <SimpleContainer className="lw-signing-sidePanel">
-                            {message && (
-                                <SimpleContainer
-                                    className={
-                                        "lw-signing-message " +
-                                        (message.type === "success" ? "is-success" : message.type === "error" ? "is-error" : "is-warning")
-                                    }
-                                >
-                                    {message.text}
-                                </SimpleContainer>
-                            )}
 
                             {!isDocumentLocked && renderConsentAndOtp()}
 

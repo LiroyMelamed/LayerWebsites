@@ -25,7 +25,6 @@ function generateSlug(len = 8) {
 
 /**
  * Persist target URL under /n/<slug>. Returns absolute short URL, or targetUrl on failure.
- * Used for RSVP only — Waze/Maps go direct to the nav app.
  */
 async function createShortLink(targetUrl, kind = 'nav', { expiresAt = null } = {}) {
     const url = String(targetUrl || '').trim();
@@ -68,18 +67,6 @@ async function resolveShortLink(slug) {
     return { url: row.target_url, kind: row.kind };
 }
 
-function rawWazeUrl(location) {
-    const q = String(location || '').trim();
-    if (!q) return '';
-    return `https://waze.com/ul?q=${encodeURIComponent(q)}`;
-}
-
-function rawMapsUrl(location) {
-    const q = String(location || '').trim();
-    if (!q) return '';
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
-}
-
 function normalizeHttpUrl(url) {
     const s = String(url || '').trim();
     if (!s) return '';
@@ -88,8 +75,82 @@ function normalizeHttpUrl(url) {
     return '';
 }
 
+/** Parse "lat, lng" (optional spaces). */
+function parseLatLng(location) {
+    const q = String(location || '').trim();
+    const m = q.match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
+    if (!m) return null;
+    const lat = Number(m[1]);
+    const lng = Number(m[2]);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+    return { lat, lng };
+}
+
 /**
- * Direct Waze/Maps URLs for SMS (never wrapped in /n/).
+ * Official-style Waze deep link.
+ * Prefer coordinate form (short, no Hebrew % encoding). Query form is a fallback
+ * that should be wrapped via toCleanNavUrl before SMS/email.
+ */
+function rawWazeUrl(location) {
+    const q = String(location || '').trim();
+    if (!q) return '';
+    const coord = parseLatLng(q);
+    if (coord) {
+        return `https://waze.com/ul?ll=${coord.lat},${coord.lng}&navigate=yes`;
+    }
+    return `https://waze.com/ul?q=${encodeURIComponent(q)}`;
+}
+
+/**
+ * Clean Google Maps link (maps.google.com/?q=… is shorter than the search API form).
+ */
+function rawMapsUrl(location) {
+    const q = String(location || '').trim();
+    if (!q) return '';
+    const coord = parseLatLng(q);
+    if (coord) {
+        return `https://maps.google.com/?q=${coord.lat},${coord.lng}`;
+    }
+    return `https://maps.google.com/?q=${encodeURIComponent(q)}`;
+}
+
+/**
+ * True when the URL is already a short official place permalink / coord link
+ * that is safe to put in SMS as-is (no giant %D7 Hebrew query string).
+ */
+function isAlreadyCleanNavUrl(url) {
+    const u = String(url || '').trim();
+    if (!u) return false;
+    // Waze place permalink: https://waze.com/ul/hsv9n8gwrw
+    if (/^https?:\/\/(www\.)?waze\.com\/ul\/[a-z0-9]+\/?$/i.test(u)) return true;
+    // Waze coordinate navigate link
+    if (/^https?:\/\/(www\.)?waze\.com\/ul\?ll=-?\d/i.test(u)) return true;
+    // Google short share links
+    if (/^https?:\/\/(maps\.app\.goo\.gl|goo\.gl\/maps)\//i.test(u)) return true;
+    // Coordinate-only Google link (no encoded text)
+    if (/^https?:\/\/(www\.)?maps\.google\.com\/\?q=-?\d+(\.\d+)?,-?\d+(\.\d+)?$/i.test(u)) return true;
+    if (/^https?:\/\/(www\.)?google\.com\/maps\?q=-?\d+(\.\d+)?,-?\d+(\.\d+)?$/i.test(u)) return true;
+    // Our own short links
+    if (/\/n\/[A-Za-z0-9_-]{6,16}\/?$/i.test(u)) return true;
+    return false;
+}
+
+/**
+ * Never put raw Hebrew-encoded map query strings in SMS/email.
+ * Keep official place permalinks & coordinate links; wrap everything else in /n/.
+ */
+async function toCleanNavUrl(targetUrl, kind = 'nav') {
+    const url = normalizeHttpUrl(targetUrl);
+    if (!url) return '';
+    if (isAlreadyCleanNavUrl(url)) return url;
+    // Avoid wrapping if URL has no ugly percent-encoding and is reasonably short
+    if (!/%[0-9A-Fa-f]{2}/.test(url) && url.length <= 80) return url;
+    return createShortLink(url, kind);
+}
+
+/**
+ * Direct Waze/Maps URLs for SMS/email — always SMS-safe length.
  * Prefer firm place links when address is empty or matches the office address.
  * @returns {Promise<{ address: string, wazeUrl: string, mapsUrl: string }>}
  */
@@ -108,8 +169,11 @@ async function buildShortNavUrls(location, {
     const firmWaze = normalizeHttpUrl(firmWazeUrl);
     const firmMaps = normalizeHttpUrl(firmMapsUrl);
 
-    const wazeUrl = (useFirmLinks && firmWaze) ? firmWaze : rawWazeUrl(address);
-    const mapsUrl = (useFirmLinks && firmMaps) ? firmMaps : rawMapsUrl(address);
+    let wazeUrl = (useFirmLinks && firmWaze) ? firmWaze : rawWazeUrl(address);
+    let mapsUrl = (useFirmLinks && firmMaps) ? firmMaps : rawMapsUrl(address);
+
+    wazeUrl = await toCleanNavUrl(wazeUrl, 'waze');
+    mapsUrl = await toCleanNavUrl(mapsUrl, 'maps');
 
     return { address, wazeUrl, mapsUrl };
 }
@@ -143,4 +207,7 @@ module.exports = {
     buildShortNavUrls,
     buildShortRsvpUrl,
     buildShortNavLinksBlock,
+    toCleanNavUrl,
+    isAlreadyCleanNavUrl,
+    parseLatLng,
 };

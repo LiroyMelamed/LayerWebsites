@@ -76,11 +76,50 @@ async function _enrichWithNames(rows) {
         [ids]
     );
     const nameById = new Map(enriched.map((r) => [r.id, r]));
-    return rows.map((r) => ({
-        ...r,
-        owner_name: nameById.get(r.id)?.owner_name || null,
-        client_name: nameById.get(r.id)?.client_name || null,
-    }));
+
+    // Multi-client names for lawyer SMS/email copy
+    let clientsByEvent = new Map();
+    try {
+        const { rows: clientRows } = await pool.query(
+            `SELECT cec.event_id, u.name
+             FROM calendar_event_clients cec
+             JOIN users u ON u.userid = cec.user_id
+             WHERE cec.event_id = ANY($1::int[])
+             ORDER BY cec.event_id, cec.sort_order, cec.user_id`,
+            [ids]
+        );
+        for (const r of clientRows) {
+            if (!clientsByEvent.has(r.event_id)) clientsByEvent.set(r.event_id, []);
+            if (r.name) clientsByEvent.get(r.event_id).push(r.name);
+        }
+    } catch (err) {
+        console.error('[calendar-reminders] multi-client enrich failed:', err.message);
+    }
+
+    return rows.map((r) => {
+        const names = clientsByEvent.get(r.id) || [];
+        const legacy = nameById.get(r.id)?.client_name || r.client_name || null;
+        if (!names.length && legacy) names.push(legacy);
+        return {
+            ...r,
+            owner_name: nameById.get(r.id)?.owner_name || null,
+            client_name: names[0] || legacy || null,
+            clients_names: names,
+        };
+    });
+}
+
+async function _eventHasClientAudience(ev) {
+    if (ev.client_user_id || ev.lead_phone || ev.lead_email) return true;
+    try {
+        const { rows } = await pool.query(
+            'SELECT 1 FROM calendar_event_clients WHERE event_id = $1 LIMIT 1',
+            [ev.id]
+        );
+        return rows.length > 0;
+    } catch {
+        return false;
+    }
 }
 
 async function _claimDueReminders(pollMinutes, limit = 200) {
@@ -140,7 +179,7 @@ async function _claimDueReminders(pollMinutes, limit = 200) {
         if (targets.client && row.event_type !== 'reminder') roles.push('client');
 
         for (const role of roles) {
-            if (role === 'client' && !row.client_user_id && !row.lead_phone && !row.lead_email) {
+            if (role === 'client' && !(await _eventHasClientAudience(row))) {
                 continue;
             }
             for (const offsetMinutes of _offsetsForRole(row, role)) {
@@ -293,6 +332,13 @@ async function _dispatchOne(ev) {
                     title: lawyerMsg.title,
                     body: lawyerMsg.body,
                     payload,
+                    emailTemplateKey: 'CALENDAR_LAWYER_REMINDER',
+                    emailEvent: ev,
+                    emailOpts: {
+                        clientsNames: ev.clients_names,
+                        whenLabel: lawyerMsg.whenLabel,
+                        bodyText: lawyerMsg.body.split('\n')[0] || lawyerMsg.body,
+                    },
                 });
                 if (result.sent) anySent = true;
             } catch (err) {
@@ -307,11 +353,19 @@ async function _dispatchOne(ev) {
     const recipients = await _resolveClientRecipients(ev);
     if (!recipients.length) return;
 
+    const allClientNames = recipients.map((r) => r.name).filter(Boolean);
+    if (Array.isArray(ev.clients_names) && ev.clients_names.length) {
+        for (const n of ev.clients_names) {
+            if (n && !allClientNames.includes(n)) allClientNames.push(n);
+        }
+    }
+
     let anySent = false;
     for (const recipient of recipients) {
         const clientMsg = await composeClientReminderMessage(ev.offset_minutes, {
             ...ev,
             client_name: recipient.name || ev.client_name || ev.lead_name,
+            clients_names: allClientNames,
         });
         try {
             const result = await dispatchCalendarReminder({
@@ -324,6 +378,16 @@ async function _dispatchOne(ev) {
                 title: clientMsg.title,
                 body: clientMsg.body,
                 payload,
+                emailTemplateKey: 'CALENDAR_REMINDER',
+                emailEvent: {
+                    ...ev,
+                    client_name: recipient.name || ev.client_name || ev.lead_name,
+                    clients_names: allClientNames,
+                },
+                emailOpts: {
+                    recipientName: recipient.name || ev.client_name || ev.lead_name,
+                    clientsNames: allClientNames,
+                },
             });
             if (result.sent) anySent = true;
         } catch (err) {
@@ -350,10 +414,10 @@ async function _processClaimedRows(rows) {
     }
 }
 
-/** Flush invite SMS deferred to Motzaei Shabbat. */
+/** Flush invite SMS deferred past Shabbat / nighttime quiet windows. */
 async function processDeferredInvites() {
-    const { isInShabbatQuietWindow } = require('../../lib/shabbatDeferral');
-    if (isInShabbatQuietWindow(new Date())) return;
+    const { isInQuietWindow } = require('../../lib/shabbatDeferral');
+    if (isInQuietWindow(new Date())) return;
 
     const { rows } = await pool.query(
         `SELECT id FROM calendar_events
@@ -376,6 +440,8 @@ async function processDeferredInvites() {
 
     for (const row of rows) {
         try {
+            // Re-check at send time — never flush during a quiet window.
+            if (isInQuietWindow(new Date())) return;
             await sendFn(row.id);
             await pool.query(
                 `UPDATE calendar_events SET invite_deferred_until = NULL WHERE id = $1`,
@@ -389,6 +455,13 @@ async function processDeferredInvites() {
 
 async function processCalendarReminders() {
     const { pollMinutes } = await _readSchedulerSettings();
+    try {
+        const { warmShabbatCache } = require('../../lib/shabbatDeferral');
+        await warmShabbatCache(new Date());
+    } catch (err) {
+        console.error('[calendar-reminders] Shabbat cache warm failed (using fail-closed fallback):', err.message);
+    }
+
     let claimed;
     try {
         claimed = await _claimDueReminders(pollMinutes);
@@ -405,6 +478,95 @@ async function processCalendarReminders() {
     } catch (err) {
         console.error('[calendar-reminders] deferred invites failed:', err.message);
     }
+}
+
+/**
+ * Fire offset=0 ("מיידי") reminders immediately after create/update.
+ * Respects quiet windows via effectiveFireAt — if deferred, leave for the poller.
+ * Returns { attempted, sent, deferred, errors[] }.
+ */
+async function fireImmediateRemindersForEvent(eventId) {
+    const id = parseInt(eventId, 10);
+    const result = { attempted: 0, sent: 0, deferred: false, errors: [] };
+    if (!Number.isFinite(id)) return result;
+
+    const { rows } = await pool.query(
+        `SELECT ce.*,
+                ce.reminders_sent_offsets AS prev_sent
+         FROM calendar_events ce
+         WHERE ce.id = $1`,
+        [id]
+    );
+    if (!rows.length) return result;
+    const row = rows[0];
+    if (!['appointment', 'hearing', 'reminder'].includes(String(row.event_type || ''))) {
+        return result;
+    }
+
+    const { effectiveFireAt, deferQuietSendUntil } = require('../../lib/shabbatDeferral');
+    const now = new Date();
+    const quietUntil = deferQuietSendUntil(now);
+    if (quietUntil) {
+        result.deferred = true;
+        return result;
+    }
+
+    const targets = parseReminderTargets(row.reminder_targets);
+    const sent = _parseSentKeys(row.prev_sent);
+    const jobs = [];
+
+    if (targets.managers && _offsetsForRole(row, 'lawyer').includes(0)) {
+        const key = _sentKey('lawyer', 0);
+        if (!sent.has(key)) jobs.push({ role: 'lawyer', offset_minutes: 0, sent_key: key });
+    }
+    if (targets.client && row.event_type !== 'reminder' && _offsetsForRole(row, 'client').includes(0)) {
+        const key = _sentKey('client', 0);
+        if (!sent.has(key) && (await _eventHasClientAudience(row))) {
+            jobs.push({ role: 'client', offset_minutes: 0, sent_key: key });
+        }
+    }
+
+    if (!jobs.length) return result;
+
+    // Ensure "now" is the effective fire (offset 0 at create ≠ start_time).
+    for (const job of jobs) {
+        const fireAt = effectiveFireAt(now);
+        if (fireAt.getTime() > now.getTime() + 60 * 1000) {
+            result.deferred = true;
+            continue;
+        }
+        result.attempted += 1;
+        const { rows: updated } = await pool.query(
+            `
+            UPDATE calendar_events
+            SET reminders_sent_offsets = COALESCE(reminders_sent_offsets, '[]'::jsonb)
+                || to_jsonb($2::text)
+            WHERE id = $1
+              AND NOT COALESCE(reminders_sent_offsets, '[]'::jsonb) @> to_jsonb($2::text)
+            RETURNING id, owner_id, manager_user_id, client_user_id, case_id, title, event_type, location, start_time,
+                      lead_phone, lead_email, lead_name, client_name, reminder_channels, reminder_targets,
+                      invite_token, client_reminder_sms, reminders_sent_offsets
+            `,
+            [id, job.sent_key]
+        );
+        if (!updated.length) continue;
+        const ev = {
+            ...updated[0],
+            role: job.role,
+            offset_minutes: 0,
+            sent_key: job.sent_key,
+            prev_sent: row.prev_sent,
+        };
+        const [enriched] = await _enrichWithNames([ev]);
+        try {
+            await _dispatchOne(enriched || ev);
+            result.sent += 1;
+        } catch (err) {
+            result.errors.push(err.message || String(err));
+            await _revertSentKey(id, job.sent_key, row.prev_sent);
+        }
+    }
+    return result;
 }
 
 function _minutesToCronExpression(minutes) {
@@ -464,4 +626,8 @@ async function initCalendarReminderScheduler() {
     return { ok: true, enabled: true, pollMinutes, cronExpr, taskStarted: !!task };
 }
 
-module.exports = { initCalendarReminderScheduler, processCalendarReminders };
+module.exports = {
+    initCalendarReminderScheduler,
+    processCalendarReminders,
+    fireImmediateRemindersForEvent,
+};

@@ -1,0 +1,165 @@
+.lw-shortNavRedirect {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  direction: rtl;
+  font-family: Heebo, "Segoe UI", Arial, sans-serif;
+  color: #1a202c;
+  overflow: hidden;
+}
+
+.lw-shortNavRedirect__bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(42, 67, 101, 0.18), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 90% 80%, rgba(183, 121, 31, 0.14), transparent 50%),
+    linear-gradient(165deg, #f7fafc 0%, #edf2f7 45%, #e2e8f0 100%);
+  z-index: 0;
+}
+
+.lw-shortNavRedirect__card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 22rem;
+  padding: 2rem 1.5rem 1.75rem;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(42, 67, 101, 0.08);
+  border-radius: 1.25rem;
+  box-shadow:
+    0 1px 2px rgba(26, 32, 44, 0.04),
+    0 18px 40px rgba(42, 67, 101, 0.12);
+  backdrop-filter: blur(8px);
+  text-align: center;
+  animation: lw-shortNav-card-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes lw-shortNav-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.lw-shortNavRedirect__brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
+}
+
+.lw-shortNavRedirect__logo {
+  max-width: 10.5rem;
+  max-height: 3.5rem;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.lw-shortNavRedirect__firm {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #2a4365;
+  letter-spacing: 0.01em;
+}
+
+.lw-shortNavRedirect__anim {
+  display: flex;
+  justify-content: center;
+  margin: 0.5rem 0 1rem;
+}
+
+.lw-shortNavRedirect__radar {
+  position: relative;
+  width: 5.5rem;
+  height: 5.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lw-shortNavRedirect__radarRing {
+  position: absolute;
+  inset: 0.35rem;
+  border-radius: 50%;
+  border: 2px solid rgba(42, 67, 101, 0.28);
+  animation: lw-shortNav-radar 1.6s ease-out infinite;
+}
+
+.lw-shortNavRedirect__radarRing--delay {
+  animation-delay: 0.55s;
+}
+
+@keyframes lw-shortNav-radar {
+  0% {
+    transform: scale(0.55);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
+
+.lw-shortNavRedirect__pin {
+  position: relative;
+  z-index: 1;
+  color: #2a4365;
+  animation: lw-shortNav-pin 1.2s ease-in-out infinite;
+  filter: drop-shadow(0 4px 8px rgba(42, 67, 101, 0.25));
+}
+
+@keyframes lw-shortNav-pin {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.lw-shortNavRedirect__status {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.55;
+  color: #2d3748;
+}
+
+.lw-shortNavRedirect__status.is-error {
+  color: #c53030;
+}
+
+.lw-shortNavRedirect__manual {
+  display: inline-block;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #2a4365;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.lw-shortNavRedirect__manual:hover {
+  color: #1a365d;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lw-shortNavRedirect__card,
+  .lw-shortNavRedirect__radarRing,
+  .lw-shortNavRedirect__pin {
+    animation: none;
+  }
+}

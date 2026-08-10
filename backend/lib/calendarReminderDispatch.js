@@ -8,6 +8,7 @@ const { sendMessage } = require('../utils/sendMessage');
 const { sendTransactionalCustomHtmlEmail } = require('../utils/smooveEmailCampaignService');
 const { formatPhoneNumber } = require('../utils/phoneUtils');
 const { parseStoredChannels } = require('./calendarEventReminders');
+const { composeCalendarEmail } = require('./calendarEmail');
 
 const NOTIFICATION_TYPE = 'CALENDAR_REMINDER';
 
@@ -44,6 +45,11 @@ async function dispatchCalendarReminder({
     title,
     body,
     payload = {},
+    emailHtml = null,
+    emailSubject = null,
+    emailTemplateKey = null,
+    emailEvent = null,
+    emailOpts = null,
 }) {
     const selected = parseStoredChannels(eventChannels);
     // General "תזכורת" events: push OK. Appointments/hearings: lawyers may use push;
@@ -97,14 +103,31 @@ async function dispatchCalendarReminder({
 
     if (wantEmail) {
         tasks.push(
-            sendTransactionalCustomHtmlEmail({
-                toEmail: resolvedEmail,
-                subject: title,
-                htmlBody: `<div dir="rtl" style="font-family:Arial,sans-serif">${body.replace(/\n/g, '<br>')}</div>`,
-                logLabel: 'CALENDAR_REMINDER',
-            }).then((r) => {
+            (async () => {
+                let subject = emailSubject || title;
+                let htmlBody = emailHtml;
+                if (!htmlBody && emailTemplateKey && emailEvent) {
+                    const contact = userId ? await _getUserContact(userId) : null;
+                    const composed = await composeCalendarEmail(emailTemplateKey, emailEvent, {
+                        recipientName: emailOpts?.recipientName || contact?.name || '',
+                        clientsNames: emailOpts?.clientsNames,
+                        whenLabel: emailOpts?.whenLabel,
+                        bodyText: emailOpts?.bodyText || body,
+                    });
+                    subject = composed.subject || subject;
+                    htmlBody = composed.htmlBody;
+                }
+                if (!htmlBody) {
+                    htmlBody = `<div dir="rtl" style="font-family:Arial,sans-serif">${String(body || '').replace(/\n/g, '<br>')}</div>`;
+                }
+                const r = await sendTransactionalCustomHtmlEmail({
+                    toEmail: resolvedEmail,
+                    subject,
+                    htmlBody,
+                    logLabel: emailTemplateKey || 'CALENDAR_REMINDER',
+                });
                 if (!r?.ok) throw new Error(r?.errorCode || 'email_failed');
-            })
+            })()
         );
     }
 
