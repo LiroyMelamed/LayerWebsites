@@ -9,6 +9,7 @@ import { Text14, Text24, TextBold14, Text12 } from "../../components/specialized
 import calendarApi from "../../api/calendarApi";
 import { AdminStackName } from "../../navigation/AdminStack";
 import { CalendarScreenName } from "../../navigation/screenPaths";
+import { toastError } from "../../components/ui/toast";
 
 function todayIso() {
     const d = new Date();
@@ -24,7 +25,6 @@ export default function DailyAgendaScreen() {
     const { date: dateParam } = useParams();
     const date = dateParam || todayIso();
     const [events, setEvents] = useState([]);
-    const [error, setError] = useState("");
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -36,7 +36,10 @@ export default function DailyAgendaScreen() {
                 const list = res?.data?.events || res?.events || [];
                 if (!cancelled) setEvents(Array.isArray(list) ? list : []);
             } catch (e) {
-                if (!cancelled) setError(e?.response?.data?.message || "שגיאה בטעינת היומן");
+                if (!cancelled) {
+                    setEvents([]);
+                    toastError(e?.response?.data?.message || "שגיאה בטעינת היומן");
+                }
             } finally {
                 if (!cancelled) setLoading(false);
             }
@@ -60,7 +63,6 @@ export default function DailyAgendaScreen() {
                     {t("calendar.title")}
                 </PrimaryButton>
                 {loading && <Text12>טוען...</Text12>}
-                {error && <Text14 color="#E53E3E">{error}</Text14>}
                 {!loading && !events.length && <Text14>{t("calendar.noEvents")}</Text14>}
                 {events.map((ev) => {
                     const start = ev.startTime ? new Date(ev.startTime).toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit", hour12: false }) : "";

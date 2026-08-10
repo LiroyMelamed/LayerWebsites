@@ -357,21 +357,16 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const [leadEmail, setLeadEmail] = useState(event?.leadEmail || "");
 
     // Async lifecycle state
-    const [error, setError] = useState("");
-    const [successMsg, setSuccessMsg] = useState("");
-
     const notifyError = (msg) => {
         const text = typeof msg === "function"
             ? String(msg("") || "").trim()
             : String(msg || "").trim();
         const finalText = text || "שגיאה";
-        setError(finalText);
         toastError(finalText);
     };
     const notifySuccess = (msg) => {
         const text = String(msg || "").trim();
         if (!text) return;
-        setSuccessMsg(text);
         toastSuccess(text);
     };
     const notifyWarning = (msg) => {
@@ -379,10 +374,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         if (!text) return;
         toastWarning(text);
     };
-    const clearNotices = () => {
-        setError("");
-        setSuccessMsg("");
-    };
+    const clearNotices = () => { };
     const [saving, setSaving] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [duplicating, setDuplicating] = useState(false);

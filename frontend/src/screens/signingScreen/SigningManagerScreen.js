@@ -26,7 +26,7 @@ import { Text14, TextBold24 } from "../../components/specializedComponents/text/
 import { images } from "../../assets/images/images";
 import ApiUtils from "../../api/apiUtils";
 import { usePopup } from "../../providers/PopUpProvider";
-import ErrorPopup from "../../components/styledComponents/popups/ErrorPopup";
+import { toastError, toastSuccess } from "../../components/ui/toast";
 import { useTranslation } from "react-i18next";
 import { useFromApp } from "../../providers/FromAppProvider";
 import { useSigningOtpEnabled } from "../../services/firmSettings";
@@ -145,12 +145,7 @@ export default function SigningManagerScreen() {
             setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
         } catch (err) {
             console.error("Open PDF error:", err);
-            openPopup(
-                <ErrorPopup
-                    closePopup={closePopup}
-                    messageKey="signingManager.errors.openPdf"
-                />
-            );
+            toastError(t("signingManager.errors.openPdf"));
         }
     };
 
@@ -164,14 +159,10 @@ export default function SigningManagerScreen() {
     };
 
     const showError = ({ messageKey, messageValues, message }) => {
-        openPopup(
-            <ErrorPopup
-                closePopup={closePopup}
-                messageKey={messageKey}
-                messageValues={messageValues}
-                errorText={message}
-            />
-        );
+        const text = message
+            || (messageKey ? t(messageKey, messageValues || {}) : null)
+            || t('errors.unexpected');
+        toastError(String(text));
     };
 
     const parseFilenameFromContentDisposition = (headerValue) => {
@@ -627,7 +618,6 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
     const [loadingSigners, setLoadingSigners] = useState(false);
     const [selectedSignerIds, setSelectedSignerIds] = useState([]);
     const [isResending, setIsResending] = useState(false);
-    const [resendMessage, setResendMessage] = useState(null);
 
     const loadSigners = async () => {
         setLoadingSigners(true);
@@ -660,21 +650,20 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
     const handleResend = async () => {
         if (selectedSignerIds.length === 0) return;
         setIsResending(true);
-        setResendMessage(null);
         try {
             const resendRes = await signingFilesApi.resendSigningInvite(file.SigningFileId, selectedSignerIds);
             const sent = Number(resendRes?.data?.sentCount || 0);
             const total = Number(resendRes?.data?.targetCount || selectedSignerIds.length || 0);
             const failed = Number(resendRes?.data?.failedCount || Math.max(0, total - sent));
             if (failed > 0) {
-                setResendMessage({ type: 'error', text: `נשלח ל-${sent} מתוך ${total}. חלק מהנמענים לא קיבלו הזמנה.` });
+                toastError(`נשלח ל-${sent} מתוך ${total}. חלק מהנמענים לא קיבלו הזמנה.`);
             } else {
-                setResendMessage({ type: 'success', text: `ההזמנה נשלחה ל-${sent || total} נמענים.` });
+                toastSuccess(`ההזמנה נשלחה ל-${sent || total} נמענים.`);
             }
             setTimeout(() => setShowResend(false), 1500);
         } catch (e) {
             console.error('Resend failed', e);
-            setResendMessage({ type: 'error', text: e?.data?.message || t('signingManager.resend.error') });
+            toastError(e?.data?.message || t('signingManager.resend.error'));
         } finally {
             setIsResending(false);
         }
@@ -940,11 +929,6 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                                         {t('common.cancel')}
                                     </SecondaryButton>
                                 </SimpleContainer>
-                                {resendMessage && (
-                                    <div className={`lw-signingManagerScreen__resendMessage ${resendMessage.type === 'success' ? 'is-success' : 'is-error'}`}>
-                                        {resendMessage.text}
-                                    </div>
-                                )}
                             </>
                         )}
                     </SimpleContainer>

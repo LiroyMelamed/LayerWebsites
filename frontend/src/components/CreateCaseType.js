@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { casesTypeApi } from '../api/casesApi';
+import { toastError, toastSuccess } from './ui/toast';
 
 const CreateCaseType = () => {
   const { t } = useTranslation();
@@ -11,8 +12,6 @@ const CreateCaseType = () => {
     case_type: '',
     discriptions: {} // For holding descriptions
   });
-  const [error, setError] = useState(null);
-
   const handleDescriptionChange = (index, value) => {
     setCaseTypeData(prevState => ({
       ...prevState,
@@ -26,9 +25,9 @@ const CreateCaseType = () => {
   const handleSubmit = async () => {
     try {
       await casesTypeApi.createOrUpdateCaseType(caseTypeId, caseTypeData);
-      alert(t('caseTypes.createCaseType.success'));
+      toastSuccess(t('caseTypes.createCaseType.success'));
     } catch (err) {
-      setError(err.message);
+      toastError(err?.message || t('errors.unexpected'));
     }
   };
 
@@ -63,7 +62,6 @@ const CreateCaseType = () => {
         />
       ))}
       <button onClick={handleSubmit}>{t('common.submit')}</button>
-      {error && <p>{t('errors.errorPrefix')}{error}</p>}
     </div>
   );
 };

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import ApiUtils from "../../api/apiUtils";
+import { toastError, toastSuccess } from "../../components/ui/toast";
 import "./CalendarInviteScreen.scss";
 
 export default function CalendarInviteScreen() {
@@ -39,7 +40,6 @@ export default function CalendarInviteScreen() {
     const respond = async (action) => {
         if (busy) return;
         setBusy(true);
-        setError("");
         setAnim(action === "accept" ? "accept" : "decline");
         try {
             const res = await ApiUtils.post(`calendar/invite/${encodeURIComponent(token)}`, { action });
@@ -47,9 +47,10 @@ export default function CalendarInviteScreen() {
             // Let the animation play, then lock status
             await new Promise((r) => setTimeout(r, 480));
             if (next) setStatus(next);
+            toastSuccess(action === "accept" ? t("calendar.inviteStatusAccepted") : t("calendar.inviteStatusDeclined"));
         } catch (e) {
             setAnim("");
-            setError(e?.response?.data?.message || "שגיאה בשמירת התשובה");
+            toastError(e?.response?.data?.message || "שגיאה בשמירת התשובה");
         } finally {
             setBusy(false);
         }
@@ -139,8 +140,6 @@ export default function CalendarInviteScreen() {
                                 </div>
                             </div>
                         )}
-
-                        {error && <p className="lw-calendarInvite__error">{error}</p>}
 
                         {status === "pending" && (
                             <div className="lw-calendarInvite__actions">

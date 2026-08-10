@@ -17,6 +17,7 @@ import { getClientNavBarData } from "../../../components/navBars/data/ClientNavB
 import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
 import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 import { useTranslation } from 'react-i18next';
+import { toastError } from "../../../components/ui/toast";
 
 
 import "./NotificationsScreen.scss";
@@ -51,17 +52,18 @@ export default function NotificationsScreen() {
     const { t } = useTranslation();
     const { isSmallScreen } = useScreenSize();
     const [notifications, setNotifications] = useState([]);
-    const [error, setError] = useState(null);
+    const [loadFailed, setLoadFailed] = useState(false);
 
     const onSuccessFetchNotifications = (data) => {
         const list = Array.isArray(data) ? data : [];
         const sorted = list.sort((a, b) => new Date(b.createdat) - new Date(a.createdat));
         setNotifications(sorted);
-        setError(null);
+        setLoadFailed(false);
     };
 
     const onFailureFetchNotifications = () => {
-        setError(t('notifications.loadError'));
+        toastError(t('notifications.loadError'));
+        setLoadFailed(true);
         setNotifications([]);
     };
 
@@ -89,7 +91,7 @@ export default function NotificationsScreen() {
             <SimpleScrollView className="lw-notificationsScreen__scroll">
 
                 <SimpleContainer className="lw-notificationsScreen__content">
-                    {isFetching && !hasNotifications && !error && (
+                    {isFetching && !hasNotifications && !loadFailed && (
                         <SimpleContainer className="lw-notificationsScreen__loading">
                             <ProgressBar
                                 IsClosed
@@ -102,9 +104,9 @@ export default function NotificationsScreen() {
                         </SimpleContainer>
                     )}
 
-                    {error && (
-                        <SimpleContainer className="lw-notificationsScreen__error">
-                            <Text12 className="lw-notificationsScreen__errorText">{error}</Text12>
+                    {loadFailed && !isFetching && (
+                        <SimpleContainer className="lw-notificationsScreen__empty">
+                            <TextBold14 className="lw-notificationsScreen__emptyText">{t('notifications.loadError')}</TextBold14>
                             <PrimaryButton
                                 size={buttonSizes.MEDIUM}
                                 onPress={refetchNotifications}
@@ -115,13 +117,13 @@ export default function NotificationsScreen() {
                         </SimpleContainer>
                     )}
 
-                    {!error && !isFetching && !hasNotifications && (
+                    {!loadFailed && !isFetching && !hasNotifications && (
                         <SimpleContainer className="lw-notificationsScreen__empty">
                             <TextBold14 className="lw-notificationsScreen__emptyText">{t('notifications.empty')}</TextBold14>
                         </SimpleContainer>
                     )}
 
-                    {!error && hasNotifications && (
+                    {!loadFailed && hasNotifications && (
                         <SimpleContainer className="lw-notificationsScreen__list">
                             {notifications.map((item) => {
                                 const isRead = Boolean(item?.isread);
