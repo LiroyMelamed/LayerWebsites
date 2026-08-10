@@ -6,7 +6,7 @@ import SimpleIcon from './SimpleIcon';
 import './SimpleInput.scss';
 
 /**
- * Format native date/time values as dd/mm/yyyy HH:mm for display/editing.
+ * Format native date/time values as dd/mm/yyyy HH:mm for display.
  * Pure string parsing — no Date object — to avoid timezone shifts.
  */
 function formatTemporalDisplay(type, rawValue) {
@@ -71,6 +71,11 @@ function emitChange(onChange, nativeValue) {
     onChange({ target: { value: nativeValue } });
 }
 
+/**
+ * Date/time fields: plain text while typing (no live mask / caret surgery).
+ * Format + validate only on blur. Calendar button drives a hidden native picker.
+ * focusedRef (not state) guards parent→draft sync to avoid race-driven digit duplication.
+ */
 const SimpleInput = forwardRef(
     ({
         title,
@@ -101,7 +106,6 @@ const SimpleInput = forwardRef(
         const temporalTypes = ['date', 'datetime-local', 'time', 'month', 'week'];
         const isTemporalInput = temporalTypes.includes(type);
         const showCalendarButton = type === 'date' || type === 'datetime-local' || type === 'month' || type === 'week';
-        // month/week keep native control; date/time/datetime become editable text.
         const isEditableTemporal = type === 'date' || type === 'datetime-local' || type === 'time';
 
         const [isFocused, setIsFocused] = useState(false);
@@ -110,9 +114,10 @@ const SimpleInput = forwardRef(
             isEditableTemporal ? formatTemporalDisplay(type, value ?? '') : ''
         );
         const timeoutRef = useRef(null);
-        const pendingEmitRef = useRef(null);
         const textInputRef = useRef(null);
         const pickerRef = useRef(null);
+        // Synchronous focus flag — useState lags one render and caused draft overwrites mid-type.
+        const focusedRef = useRef(false);
 
         useEffect(() => {
             return () => {
@@ -136,26 +141,15 @@ const SimpleInput = forwardRef(
         }
 
         function handleFocus(e) {
+            focusedRef.current = true;
             onFocus?.(e);
             setIsFocused(true);
         }
 
-        const flushPendingEmit = () => {
-            if (!timeoutRef.current) return;
-            clearTimeout(timeoutRef.current);
-            timeoutRef.current = null;
-            if (pendingEmitRef.current != null) {
-                emitChange(onChange, pendingEmitRef.current);
-                pendingEmitRef.current = null;
-            }
-        };
-
         function handleBlur(e) {
-            flushPendingEmit();
             if (isEditableTemporal) {
-                // Validate + pretty-format only on blur so caret never jumps while typing.
                 const parsed = parseTemporalText(type, textValue);
-                if (parsed !== null) {
+                if (parsed !== null && parsed !== '') {
                     setDelayedValue(parsed);
                     setTextValue(formatTemporalDisplay(type, parsed));
                     if (parsed !== String(value ?? '')) emitChange(onChange, parsed);
@@ -164,10 +158,11 @@ const SimpleInput = forwardRef(
                     setTextValue('');
                     if (String(value ?? '') !== '') emitChange(onChange, '');
                 } else {
-                    // Incomplete/invalid — restore last committed value.
-                    setTextValue(formatTemporalDisplay(type, delayedValue));
+                    // Incomplete — restore last committed native value.
+                    setTextValue(formatTemporalDisplay(type, value ?? delayedValue));
                 }
             }
+            focusedRef.current = false;
             onBlur?.(e);
             setIsFocused(false);
         }
@@ -181,15 +176,12 @@ const SimpleInput = forwardRef(
                 clearTimeout(timeoutRef.current);
                 timeoutRef.current = null;
             }
-            pendingEmitRef.current = nativeValue;
             if (isEditableTemporal || timeToWaitInMilli <= 0) {
                 emitChange(onChange, nativeValue);
-                pendingEmitRef.current = null;
                 return;
             }
             timeoutRef.current = setTimeout(() => {
                 emitChange(onChange, nativeValue);
-                pendingEmitRef.current = null;
                 timeoutRef.current = null;
             }, timeToWaitInMilli);
         };
@@ -205,22 +197,18 @@ const SimpleInput = forwardRef(
         };
 
         const handleTextChange = (e) => {
-            // Free digit editing: strip illegal chars only. Do NOT reformat or emit here.
-            let next = String(e.target.value ?? "");
-            next = next.replace(/[^\d/:.\s-]/g, "");
-            setTextValue(next);
-            pendingEmitRef.current = null;
+            // Natural typing only — no masks, no auto-slashes, no parent emit.
+            setTextValue(e.target.value);
         };
 
         useEffect(() => {
+            if (focusedRef.current) return;
             const next = value ?? '';
-            // Never overwrite in-progress typing (focus) — parent sync only when idle.
-            if (isFocused) return;
             setDelayedValue(next);
             if (isEditableTemporal) {
                 setTextValue(formatTemporalDisplay(type, next));
             }
-        }, [value, type, isEditableTemporal, isFocused]);
+        }, [value, type, isEditableTemporal]);
 
         const shouldFloatLabel = isFocused || !!delayedValue || !!textValue || type === 'date' || type === 'datetime-local';
 
@@ -272,6 +260,16 @@ const SimpleInput = forwardRef(
             .filter(Boolean)
             .join(' ');
 
+        // Strip value/onChange/onFocus/onBlur from props so they cannot fight our handlers.
+        const {
+            value: _ignoredValue,
+            onChange: _ignoredOnChange,
+            onFocus: _ignoredOnFocus,
+            onBlur: _ignoredOnBlur,
+            defaultValue: _ignoredDefault,
+            ...safeProps
+        } = props;
+
         return (
             <SimpleContainer
                 ref={ref}
@@ -288,7 +286,6 @@ const SimpleInput = forwardRef(
                             backgroundColor: getBackgroundColor(),
                         }}
                         onMouseDown={(e) => {
-                            // Label overlays the field; focus the real input on click/tap.
                             e.preventDefault();
                             if (!disabled) textInputRef.current?.focus();
                         }}
@@ -336,12 +333,14 @@ const SimpleInput = forwardRef(
                             dir="ltr"
                             inputMode="numeric"
                             autoComplete="off"
+                            autoCorrect="off"
+                            autoCapitalize="off"
                             spellCheck={false}
-                            {...props}
+                            {...safeProps}
                             style={{
                                 textAlign: 'right',
                                 ...(textStyle || {}),
-                                ...(props.style || {}),
+                                ...(safeProps.style || {}),
                             }}
                             value={textValue}
                             onChange={handleTextChange}
@@ -357,14 +356,13 @@ const SimpleInput = forwardRef(
                                         : 'dd/mm/yyyy HH:mm'
                             }
                         />
-                        {/* Hidden native picker — calendar button / optional sync only */}
                         <input
                             type={type}
                             className="lw-simpleInput__nativePicker"
                             tabIndex={-1}
                             aria-hidden="true"
                             disabled={disabled}
-                            value={delayedValue}
+                            value={delayedValue || ''}
                             onChange={(e) => commitNativeValue(e.target.value)}
                             ref={pickerRef}
                         />
@@ -374,11 +372,11 @@ const SimpleInput = forwardRef(
                         type={type}
                         className="lw-simpleInput__field"
                         dir={inputDir}
-                        {...props}
+                        {...safeProps}
                         style={{
-                            ...(isTemporalInput ? { textAlign: 'right' } : { textAlign: 'right' }),
+                            textAlign: 'right',
                             ...(textStyle || {}),
-                            ...(props.style || {}),
+                            ...(safeProps.style || {}),
                         }}
                         value={delayedValue}
                         onChange={handleNativeInputChange}

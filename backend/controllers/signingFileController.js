@@ -1999,28 +1999,39 @@ async function generateSignedPdfBuffer({ pdfKey, spots }) {
         const y = pageHeight - yTop - h;
 
         if (signatureKey) {
-            const { buffer: imgBuffer, contentType } = await getR2ObjectBuffer(signatureKey);
-            const isPng =
-                (contentType || "").toLowerCase().includes("png") ||
-                String(signatureKey).toLowerCase().endsWith(".png");
+            const { buffer: rawBuffer, contentType } = await getR2ObjectBuffer(signatureKey);
+            const fieldTypeLower = fieldType;
+            const isStampLike = ['clientstamp', 'lawyerstamp', 'stamp'].includes(fieldTypeLower);
+            const isSignatureLike = fieldTypeLower === 'signature' || fieldTypeLower === 'initials' || isStampLike;
 
-            const embedded = isPng
+            // Punch out white/background letterbox so the stamp does not cover PDF text.
+            let imgBuffer = rawBuffer;
+            let embedAsPng = (contentType || '').toLowerCase().includes('png')
+                || String(signatureKey).toLowerCase().endsWith('.png');
+            if (isSignatureLike) {
+                try {
+                    const { ensureTransparentStampPng } = require('../lib/stampImageAlpha');
+                    const alpha = await ensureTransparentStampPng(rawBuffer);
+                    imgBuffer = alpha.buffer;
+                    embedAsPng = true;
+                } catch (alphaErr) {
+                    console.warn('[pdf-sign] stamp alpha pass skipped:', alphaErr.message);
+                }
+            }
+
+            const embedded = embedAsPng
                 ? await pdfDoc.embedPng(imgBuffer)
                 : await pdfDoc.embedJpg(imgBuffer);
 
-            // Contain-fit image inside the spot rect (preserve stamp/signature aspect).
-            // Stamp/signature spots are often undersized in older docs — expand the
-            // draw box to a professional minimum and slight boost so seals stay readable.
-            const isStampLike = ['clientstamp', 'lawyerstamp', 'stamp'].includes(fieldType);
-            const isSignatureLike = fieldType === 'signature' || fieldType === 'initials' || isStampLike;
+            // Contain-fit image inside an enlarged spot rect (professional stamp size).
             let boxW = w;
             let boxH = h;
             let boxX = x;
             let boxY = y;
             if (isSignatureLike) {
-                const minW = isStampLike ? 170 : 130;
-                const minH = isStampLike ? 75 : 45;
-                const boost = isStampLike ? 1.45 : 1.25;
+                const minW = isStampLike ? 220 : 150;
+                const minH = isStampLike ? 100 : 55;
+                const boost = isStampLike ? 1.85 : 1.4;
                 const scaleUp = Math.max(1, minW / Math.max(boxW, 1), minH / Math.max(boxH, 1)) * boost;
                 const newW = boxW * scaleUp;
                 const newH = boxH * scaleUp;
@@ -2028,7 +2039,6 @@ async function generateSignedPdfBuffer({ pdfKey, spots }) {
                 boxY = y - (newH - boxH) / 2;
                 boxW = newW;
                 boxH = newH;
-                // Keep inside page bounds
                 if (boxX < 0) boxX = 0;
                 if (boxY < 0) boxY = 0;
                 if (boxX + boxW > pageWidth) boxX = Math.max(0, pageWidth - boxW);
@@ -2048,6 +2058,7 @@ async function generateSignedPdfBuffer({ pdfKey, spots }) {
                 y: drawY,
                 width: drawW,
                 height: drawH,
+                opacity: 1,
             });
         } else if (fieldValue !== null && fieldValue !== undefined && String(fieldValue).length > 0) {
             let text = String(fieldValue);

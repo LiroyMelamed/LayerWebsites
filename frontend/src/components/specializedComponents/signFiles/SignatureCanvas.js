@@ -846,7 +846,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = "high";
         ctx.drawImage(img, 0, 0, drawW, drawH);
-        return c.toDataURL("image/png");
+        // Always strip letterbox so saved stamps stay transparent in PDF.
+        return removeImageBackground(c.toDataURL("image/png"));
     };
 
     const fetchSavedItemDataUrl = async (savedItem) => {
@@ -1236,18 +1237,21 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 bgG = Math.round(gSum / validCorners);
                 bgB = Math.round(bSum / validCorners);
             }
-            // Make pixels similar to background transparent
-            const threshold = 60;
+            // Make pixels similar to background transparent (aggressive for white letterbox).
+            const threshold = 48;
             for (let i = 0; i < d.length; i += 4) {
-                const dr = Math.abs(d[i] - bgR);
-                const dg = Math.abs(d[i + 1] - bgG);
-                const db = Math.abs(d[i + 2] - bgB);
+                const r = d[i];
+                const g = d[i + 1];
+                const b = d[i + 2];
+                const nearWhite = r >= 245 && g >= 245 && b >= 245;
+                const dr = Math.abs(r - bgR);
+                const dg = Math.abs(g - bgG);
+                const db = Math.abs(b - bgB);
                 const dist = Math.sqrt(dr * dr + dg * dg + db * db);
-                if (dist < threshold) {
+                if (nearWhite || dist < threshold) {
                     d[i + 3] = 0; // fully transparent
-                } else if (dist < threshold + 30) {
-                    // Feather the edge
-                    const alpha = Math.round(((dist - threshold) / 30) * d[i + 3]);
+                } else if (dist < threshold + 28) {
+                    const alpha = Math.round(((dist - threshold) / 28) * d[i + 3]);
                     d[i + 3] = alpha;
                 }
             }
