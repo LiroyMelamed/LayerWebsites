@@ -111,7 +111,6 @@ const SimpleInput = forwardRef(
         );
         const timeoutRef = useRef(null);
         const pendingEmitRef = useRef(null);
-        const caretRef = useRef(null);
         const textInputRef = useRef(null);
         const pickerRef = useRef(null);
 
@@ -152,16 +151,20 @@ const SimpleInput = forwardRef(
         };
 
         function handleBlur(e) {
-            // Tab/blur must flush pending debounce before parent re-syncs from stale value.
             flushPendingEmit();
             if (isEditableTemporal) {
+                // Validate + pretty-format only on blur so caret never jumps while typing.
                 const parsed = parseTemporalText(type, textValue);
                 if (parsed !== null) {
                     setDelayedValue(parsed);
                     setTextValue(formatTemporalDisplay(type, parsed));
                     if (parsed !== String(value ?? '')) emitChange(onChange, parsed);
+                } else if (String(textValue || '').trim() === '') {
+                    setDelayedValue('');
+                    setTextValue('');
+                    if (String(value ?? '') !== '') emitChange(onChange, '');
                 } else {
-                    // Restore last valid value if typing was incomplete/invalid.
+                    // Incomplete/invalid — restore last committed value.
                     setTextValue(formatTemporalDisplay(type, delayedValue));
                 }
             }
@@ -202,90 +205,19 @@ const SimpleInput = forwardRef(
         };
 
         const handleTextChange = (e) => {
-            const inputEl = e.target;
+            // Free digit editing: strip illegal chars only. Do NOT reformat or emit here.
             let next = String(e.target.value ?? "");
-            // Digits / separators only for temporal text entry.
             next = next.replace(/[^\d/:.\s-]/g, "");
-
-            let caretHint = null;
-            if (type === "time") {
-                const digits = next.replace(/\D/g, "").slice(0, 4);
-                next = digits.length <= 2
-                    ? digits
-                    : `${digits.slice(0, 2)}:${digits.slice(2)}`;
-                // After HH auto-insert ":", place caret after colon.
-                if (digits.length === 2) caretHint = 3;
-                else if (digits.length > 2) caretHint = next.length;
-            } else if (type === "date" || type === "datetime-local") {
-                const hasTime = type === "datetime-local";
-                const spaced = next.trimStart();
-                const match = spaced.match(/^([^\s]*)(?:\s+(.*))?$/);
-                let datePart = match?.[1] || "";
-                let timePart = hasTime ? (match?.[2] || "") : "";
-                const dateDigits = datePart.replace(/\D/g, "").slice(0, 8);
-                if (dateDigits.length <= 2) datePart = dateDigits;
-                else if (dateDigits.length <= 4) datePart = `${dateDigits.slice(0, 2)}/${dateDigits.slice(2)}`;
-                else datePart = `${dateDigits.slice(0, 2)}/${dateDigits.slice(2, 4)}/${dateDigits.slice(4)}`;
-
-                if (hasTime) {
-                    // After a full dd/mm/yyyy, keep a trailing space so HH→MM can auto-advance.
-                    const timeDigits = timePart.replace(/\D/g, "").slice(0, 4);
-                    if (dateDigits.length < 8) {
-                        next = datePart;
-                        if (dateDigits.length === 2 || dateDigits.length === 4) caretHint = datePart.length;
-                    } else if (timeDigits.length === 0) {
-                        next = `${datePart} `;
-                        caretHint = next.length;
-                    } else if (timeDigits.length <= 2) {
-                        next = `${datePart} ${timeDigits}`;
-                        if (timeDigits.length === 2) caretHint = next.length + 1; // after upcoming :
-                    } else {
-                        next = `${datePart} ${timeDigits.slice(0, 2)}:${timeDigits.slice(2)}`;
-                        caretHint = next.length;
-                    }
-                } else {
-                    next = datePart;
-                    if (dateDigits.length === 2 || dateDigits.length === 4) caretHint = datePart.length;
-                }
-            }
-
             setTextValue(next);
-            caretRef.current = caretHint;
-            // Restore caret after React paints the formatted value.
-            if (caretHint != null) {
-                requestAnimationFrame(() => {
-                    const el = textInputRef.current || inputEl;
-                    if (el && typeof el.setSelectionRange === 'function') {
-                        try { el.setSelectionRange(caretHint, caretHint); } catch { /* ignore */ }
-                    }
-                });
-            }
-
-            const parsed = parseTemporalText(type, next);
-            if (parsed === null) return;
-            setDelayedValue(parsed);
-            pendingEmitRef.current = parsed;
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
-            // Temporal fields: emit immediately so Tab/blur never races a debounce.
-            if (isEditableTemporal || timeToWaitInMilli <= 0) {
-                emitChange(onChange, parsed);
-                pendingEmitRef.current = null;
-                timeoutRef.current = null;
-                return;
-            }
-            timeoutRef.current = setTimeout(() => {
-                emitChange(onChange, parsed);
-                pendingEmitRef.current = null;
-                timeoutRef.current = null;
-            }, timeToWaitInMilli);
+            pendingEmitRef.current = null;
         };
 
         useEffect(() => {
             const next = value ?? '';
-            // Don't clobber in-progress typing or wipe a pending emit on focus change.
-            if (pendingEmitRef.current != null) return;
+            // Never overwrite in-progress typing (focus) — parent sync only when idle.
+            if (isFocused) return;
             setDelayedValue(next);
-            if (isEditableTemporal && !isFocused) {
+            if (isEditableTemporal) {
                 setTextValue(formatTemporalDisplay(type, next));
             }
         }, [value, type, isEditableTemporal, isFocused]);

@@ -37,6 +37,7 @@ import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
 import CaseFullView from "../../../components/styledComponents/cases/CaseFullView";
 import { EVENT_COLOR_PRESETS, getEventTypeDefaultColor, isStockEventColor } from "../utils/lawyerColors";
 import CalendarSmsTemplateEditor from "./CalendarSmsTemplateEditor";
+import { toast, toastError, toastSuccess, toastWarning } from "../../../components/ui/toast";
 import "./EventFormModal.scss";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -358,6 +359,30 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     // Async lifecycle state
     const [error, setError] = useState("");
     const [successMsg, setSuccessMsg] = useState("");
+
+    const notifyError = (msg) => {
+        const text = typeof msg === "function"
+            ? String(msg("") || "").trim()
+            : String(msg || "").trim();
+        const finalText = text || "שגיאה";
+        setError(finalText);
+        toastError(finalText);
+    };
+    const notifySuccess = (msg) => {
+        const text = String(msg || "").trim();
+        if (!text) return;
+        setSuccessMsg(text);
+        toastSuccess(text);
+    };
+    const notifyWarning = (msg) => {
+        const text = String(msg || "").trim();
+        if (!text) return;
+        toastWarning(text);
+    };
+    const clearNotices = () => {
+        setError("");
+        setSuccessMsg("");
+    };
     const [saving, setSaving] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [duplicating, setDuplicating] = useState(false);
@@ -427,7 +452,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         isPerforming: isSearchingCustomers,
         performRequest: searchCustomers,
     } = useAutoHttpRequest(customersApi.getCustomersByName, {
-        onFailure: () => { setError((prev) => prev || "שגיאה בחיפוש לקוחות"); },
+        onFailure: () => { notifyError("שגיאה בחיפוש לקוחות"); },
     });
 
     const {
@@ -471,8 +496,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         linkedClientLabelRef.current = s.clients[0]?.name || s.clientName || "";
         setCaseFormDraft(null);
         setClientCases([]);
-        setError("");
-        setSuccessMsg("");
+        clearNotices();
         setConfirmDelete(false);
         setDuplicating(false);
         lastConflictKeyRef.current = null;
@@ -910,30 +934,30 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     // ─── Validation ───────────────────────────────────────────────────────
     const validate = () => {
         if (!title.trim() && !isInternalScopedEventType(eventType)) {
-            setError("חובה להזין כותרת לאירוע");
+            notifyError("חובה להזין כותרת לאירוע");
             return false;
         }
-        if (!startTime) { setError("חובה להזין שעת התחלה"); return false; }
+        if (!startTime) { notifyError("חובה להזין שעת התחלה"); return false; }
         if (isReminderEventType) {
             // Reminder events are a single-moment marker — end_time auto-mirrors start_time.
             if (!reminderClientName.trim()) {
-                setError(t("reminders.add.error"));
+                notifyError(t("reminders.add.error"));
                 return false;
             }
             if (!reminderToEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(reminderToEmail.trim())) {
-                setError(t("reminders.add.error"));
+                notifyError(t("reminders.add.error"));
                 return false;
             }
         } else {
-            if (!endTime) { setError("חובה להזין שעת סיום"); return false; }
+            if (!endTime) { notifyError("חובה להזין שעת סיום"); return false; }
             if (new Date(endTime) <= new Date(startTime)) {
-                setError("שעת הסיום חייבת להיות אחרי שעת ההתחלה");
+                notifyError("שעת הסיום חייבת להיות אחרי שעת ההתחלה");
                 return false;
             }
         }
         if (intakeMode === INTAKE_LEAD && (eventType === EVENT_TYPE_APPT || eventType === EVENT_TYPE_HEARING)) {
             if (!leadName.trim() && !leadPhone.trim() && !leadEmail.trim()) {
-                setError("חובה להזין לפחות שם, טלפון או דוא״ל לליד");
+                notifyError("חובה להזין לפחות שם, טלפון או דוא״ל לליד");
                 return false;
             }
         }
@@ -942,10 +966,10 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             ? normalizeSelectedOffsets(clientReminderOffsets, allowedReminderMinutes)
             : [];
         if (showReminderPicker && (lawyerOff.length > 0 || clientOff.length > 0) && !hasAnyReminderChannel(reminderChannels)) {
-            setError(t("calendar.eventRemindersChannelRequired"));
+            notifyError(t("calendar.eventRemindersChannelRequired"));
             return false;
         }
-        setError("");
+        clearNotices();
         return true;
     };
 
@@ -953,7 +977,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const handleSave = async () => {
         if (!validate()) return;
         setSaving(true);
-        setError("");
+        clearNotices();
         try {
             const isClientScoped = eventType === EVENT_TYPE_APPT || eventType === EVENT_TYPE_HEARING;
             const isLeadMode = intakeMode === INTAKE_LEAD && isClientScoped;
@@ -1133,12 +1157,34 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     _currentUserIdFromToken()
                 );
                 const reminderSyncWarning = res?.data?.reminderSyncWarning || null;
+                const inviteSendResult = res?.data?.inviteSendResult || null;
+                const immediateReminderResult = res?.data?.immediateReminderResult || null;
+
+                if (reminderSyncWarning) notifyWarning(reminderSyncWarning);
+                if (inviteSendResult?.deferred) {
+                    notifyWarning(t("calendar.inviteResendDeferred"));
+                } else if (inviteSendResult?.error) {
+                    notifyError(inviteSendResult.error);
+                } else if (inviteSendResult && (inviteSendResult.sentSms || inviteSendResult.sentEmail)) {
+                    toastSuccess(t("calendar.inviteSentSuccess", "ההזמנה נשלחה ללקוחות"));
+                } else if (inviteSendResult && Array.isArray(inviteSendResult.recipients) && inviteSendResult.recipients.length && !inviteSendResult.sentSms && !inviteSendResult.sentEmail) {
+                    notifyError(t("calendar.inviteSendFailed", "שליחת ההזמנה נכשלה — בדקו מספר טלפון/אימייל"));
+                }
+
+                if (immediateReminderResult?.deferred) {
+                    notifyWarning(t("calendar.immediateReminderDeferred", "תזכורת מיידית תישלח לאחר חלון השקט"));
+                } else if (immediateReminderResult?.errors?.length) {
+                    notifyError(immediateReminderResult.errors[0]);
+                } else if (immediateReminderResult?.sent > 0) {
+                    toastSuccess(t("calendar.immediateReminderSent", "תזכורת מיידית נשלחה"));
+                }
+
                 onSaved(saved, { firmOnlyNotice, reminderSyncWarning });
             } else {
-                setError(res?.data?.message || res?.message || "שגיאה. נסה שוב.");
+                notifyError(res?.data?.message || res?.message || "שגיאה. נסה שוב.");
             }
         } catch (err) {
-            setError(err?.response?.data?.message || "שגיאה. נסה שוב.");
+            notifyError(err?.response?.data?.message || "שגיאה. נסה שוב.");
         } finally {
             setSaving(false);
         }
@@ -1153,12 +1199,12 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             if (res?.success) {
                 onDeleted(event.id);
             } else {
-                setError(res?.data?.message || res?.message || "שגיאה במחיקה.");
+                notifyError(res?.data?.message || res?.message || "שגיאה במחיקה.");
                 setDeleting(false);
                 setConfirmDelete(false);
             }
         } catch (err) {
-            setError(err?.response?.data?.message || "שגיאה במחיקה.");
+            notifyError(err?.response?.data?.message || "שגיאה במחיקה.");
             setDeleting(false);
             setConfirmDelete(false);
         }
@@ -1191,7 +1237,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setCaseId(ev.caseId || null);
         setCaseName(ev.caseName || "");
         setOptionalConvertCaseName("");
-        setSuccessMsg(alreadyConverted
+        notifySuccess(alreadyConverted
             ? t("calendar.convertLeadAlreadyDone")
             : t("calendar.convertLeadSuccess"));
         onUpdated?.(ev);
@@ -1240,8 +1286,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const handleConvertLead = async () => {
         if (!isEdit) return;
         setConverting(true);
-        setError("");
-        setSuccessMsg("");
+        clearNotices();
         const savedLeadName = leadName;
         const savedLeadPhone = leadPhone;
         const savedLeadEmail = leadEmail;
@@ -1259,13 +1304,13 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             } else {
                 const code = res?.data?.code;
                 if (code === "PHONE_ALREADY_EXISTS") {
-                    setError(res?.data?.message || t("calendar.convertLeadPhoneExists"));
+                    notifyError(res?.data?.message || t("calendar.convertLeadPhoneExists"));
                 } else {
-                    setError(res?.data?.message || res?.message || t("calendar.convertLeadError"));
+                    notifyError(res?.data?.message || res?.message || t("calendar.convertLeadError"));
                 }
             }
         } catch (err) {
-            setError(err?.response?.data?.message || t("calendar.convertLeadError"));
+            notifyError(err?.response?.data?.message || t("calendar.convertLeadError"));
         } finally {
             setConverting(false);
         }
@@ -1283,21 +1328,20 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             return;
         }
         setLinkingCase(true);
-        setError("");
-        setSuccessMsg("");
+        clearNotices();
         try {
             const res = await calendarApi.linkCase(event.id, newCaseId);
             if (res?.success && res?.data?.event) {
                 const ev = res.data.event;
                 setCaseId(ev.caseId || null);
                 setCaseName(ev.caseName || "");
-                setSuccessMsg(newCaseId ? t("calendar.linkCaseSuccess") : t("calendar.unlinkCaseSuccess"));
+                notifySuccess(newCaseId ? t("calendar.linkCaseSuccess") : t("calendar.unlinkCaseSuccess"));
                 onUpdated?.(ev);
             } else {
-                setError(res?.data?.message || res?.message || t("calendar.linkCaseError"));
+                notifyError(res?.data?.message || res?.message || t("calendar.linkCaseError"));
             }
         } catch (err) {
-            setError(err?.response?.data?.message || t("calendar.linkCaseError"));
+            notifyError(err?.response?.data?.message || t("calendar.linkCaseError"));
         } finally {
             setLinkingCase(false);
         }
@@ -1382,12 +1426,11 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
 
     const handleResendInvite = async () => {
         if (!isEdit || !event?.id) return;
-        setError("");
-        setSuccessMsg("");
+        clearNotices();
         try {
             const res = await calendarApi.resendInvite(event.id);
             if (!res?.success) {
-                setError(
+                notifyError(
                     res?.data?.message
                     || res?.message
                     || t("calendar.inviteResendFailed")
@@ -1396,13 +1439,13 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             }
             const data = res.data || {};
             if (data.deferred) {
-                setSuccessMsg(t("calendar.inviteResendDeferred"));
+                notifySuccess(t("calendar.inviteResendDeferred"));
             } else {
-                setSuccessMsg(t("calendar.inviteResendSuccess"));
+                notifySuccess(t("calendar.inviteResendSuccess"));
             }
             if (data.event) onUpdated?.(data.event);
         } catch (e) {
-            setError(
+            notifyError(
                 e?.response?.data?.message
                 || t("calendar.inviteResendFailed")
             );
@@ -1412,13 +1455,13 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const handleDuplicate = async () => {
         if (!isEdit || !event?.id) return;
         setDuplicating(true);
-        setError("");
+        clearNotices();
         try {
             const res = await calendarApi.duplicateEvent(event.id);
             if (res?.success && res?.data?.event) {
                 onSaved?.(res.data.event);
             } else {
-                setError(
+                notifyError(
                     res?.data?.message
                     || res?.message
                     || t("calendar.duplicateEventError")
@@ -1426,7 +1469,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 setDuplicating(false);
             }
         } catch (err) {
-            setError(
+            notifyError(
                 err?.response?.data?.message
                 || t("calendar.duplicateEventError")
             );
@@ -1537,15 +1580,12 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             <SimpleContainer ref={modalRootRef} className="lw-eventFormModal lw-eventFormModal--caseForm">
                 <SimpleContainer className="lw-eventFormModal__header">
                     <Text24>{t("calendar.createCaseFromLead")}</Text24>
-                    {successMsg && (
-                        <Text12 color="#276749">{successMsg}</Text12>
-                    )}
                 </SimpleContainer>
                 <SimpleScrollView className="lw-eventFormModal__caseFormScroll">
                     <CaseFullView
                         initialDraft={caseFormDraft}
                         closePopUpFunction={() => setCaseFormDraft(null)}
-                        onFailureFunction={(err) => setError(err?.data?.message || err?.message || t("calendar.linkCaseError"))}
+                        onFailureFunction={(err) => notifyError(err?.data?.message || err?.message || t("calendar.linkCaseError"))}
                         onCaseCreated={async (createdCaseId) => {
                             const linkRes = await calendarApi.linkCase(event.id, createdCaseId);
                             if (!linkRes?.success || !linkRes?.data?.event) {
@@ -1554,11 +1594,10 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                             const linked = linkRes.data.event;
                             setCaseId(linked.caseId || createdCaseId);
                             setCaseName(linked.caseName || "");
-                            setSuccessMsg(t("calendar.linkCaseSuccess"));
+                            notifySuccess(t("calendar.linkCaseSuccess"));
                             onUpdated?.(linked);
                         }}
                     />
-                    {error && <Text14 color="#E53E3E">{error}</Text14>}
                 </SimpleScrollView>
             </SimpleContainer>
         );
@@ -1595,13 +1634,6 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                 )}
                             </Text14>
                         </SimpleContainer>
-                    </SimpleContainer>
-                )}
-
-                {/* ─── Success toast (in-modal) ─── */}
-                {successMsg && (
-                    <SimpleContainer className="lw-eventFormModal__successBanner" role="status" aria-live="polite">
-                        <Text14 color="#22543D">{successMsg}</Text14>
                     </SimpleContainer>
                 )}
 
@@ -1889,6 +1921,13 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                         value={clientReminderSms}
                                         onChange={setClientReminderSms}
                                         previewValues={smsPreviewValues}
+                                        previewRecipients={
+                                            clients.length
+                                                ? clients
+                                                : (leadName.trim() || leadPhone.trim()
+                                                    ? [{ name: leadName.trim(), phone: leadPhone.trim() }]
+                                                    : null)
+                                        }
                                         excludeVars={["rsvpUrl"]}
                                         defaultValue={DEFAULT_CLIENT_REMINDER_SMS}
                                     />
@@ -1898,6 +1937,13 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                         value={inviteSms}
                                         onChange={setInviteSms}
                                         previewValues={smsPreviewValues}
+                                        previewRecipients={
+                                            clients.length
+                                                ? clients
+                                                : (leadName.trim() || leadPhone.trim()
+                                                    ? [{ name: leadName.trim(), phone: leadPhone.trim() }]
+                                                    : null)
+                                        }
                                         defaultValue={DEFAULT_INVITE_SMS}
                                     />
                                 </SimpleContainer>
@@ -2218,15 +2264,12 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                         </SimpleContainer>
                     </SimpleContainer>
 
-                    {/* ─── Description ─── */}
                     <SimpleTextArea
                         title={t("calendar.description")}
                         value={description}
                         onChange={(val) => setDescription(val)}
                         rows={3}
                     />
-
-                    {error && <Text14 color="#E53E3E">{error}</Text14>}
                 </SimpleContainer>
 
                 {/* ─── Footer actions ─── */}

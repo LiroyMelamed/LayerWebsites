@@ -416,6 +416,96 @@ async function processCalendarReminders() {
     }
 }
 
+/**
+ * Fire offset=0 ("מיידי") reminders immediately after create/update.
+ * Respects quiet windows via effectiveFireAt — if deferred, leave for the poller.
+ * Returns { attempted, sent, deferred, errors[] }.
+ */
+async function fireImmediateRemindersForEvent(eventId) {
+    const id = parseInt(eventId, 10);
+    const result = { attempted: 0, sent: 0, deferred: false, errors: [] };
+    if (!Number.isFinite(id)) return result;
+
+    const { rows } = await pool.query(
+        `SELECT ce.*,
+                ce.reminders_sent_offsets AS prev_sent
+         FROM calendar_events ce
+         WHERE ce.id = $1`,
+        [id]
+    );
+    if (!rows.length) return result;
+    const row = rows[0];
+    if (!['appointment', 'hearing', 'reminder'].includes(String(row.event_type || ''))) {
+        return result;
+    }
+
+    const { effectiveFireAt, deferQuietSendUntil } = require('../../lib/shabbatDeferral');
+    const now = new Date();
+    const quietUntil = deferQuietSendUntil(now);
+    if (quietUntil) {
+        result.deferred = true;
+        return result;
+    }
+
+    const targets = parseReminderTargets(row.reminder_targets);
+    const sent = _parseSentKeys(row.prev_sent);
+    const jobs = [];
+
+    if (targets.managers && _offsetsForRole(row, 'lawyer').includes(0)) {
+        const key = _sentKey('lawyer', 0);
+        if (!sent.has(key)) jobs.push({ role: 'lawyer', offset_minutes: 0, sent_key: key });
+    }
+    if (targets.client && row.event_type !== 'reminder' && _offsetsForRole(row, 'client').includes(0)) {
+        const key = _sentKey('client', 0);
+        if (!sent.has(key)
+            && (row.client_user_id || row.lead_phone || row.lead_email)) {
+            jobs.push({ role: 'client', offset_minutes: 0, sent_key: key });
+        }
+    }
+
+    if (!jobs.length) return result;
+
+    // Ensure "now" is the effective fire (offset 0 at create ≠ start_time).
+    for (const job of jobs) {
+        const fireAt = effectiveFireAt(now);
+        if (fireAt.getTime() > now.getTime() + 60 * 1000) {
+            result.deferred = true;
+            continue;
+        }
+        result.attempted += 1;
+        const { rows: updated } = await pool.query(
+            `
+            UPDATE calendar_events
+            SET reminders_sent_offsets = COALESCE(reminders_sent_offsets, '[]'::jsonb)
+                || to_jsonb($2::text)
+            WHERE id = $1
+              AND NOT COALESCE(reminders_sent_offsets, '[]'::jsonb) @> to_jsonb($2::text)
+            RETURNING id, owner_id, manager_user_id, client_user_id, case_id, title, event_type, location, start_time,
+                      lead_phone, lead_email, lead_name, client_name, reminder_channels, reminder_targets,
+                      invite_token, client_reminder_sms, reminders_sent_offsets
+            `,
+            [id, job.sent_key]
+        );
+        if (!updated.length) continue;
+        const ev = {
+            ...updated[0],
+            role: job.role,
+            offset_minutes: 0,
+            sent_key: job.sent_key,
+            prev_sent: row.prev_sent,
+        };
+        const [enriched] = await _enrichWithNames([ev]);
+        try {
+            await _dispatchOne(enriched || ev);
+            result.sent += 1;
+        } catch (err) {
+            result.errors.push(err.message || String(err));
+            await _revertSentKey(id, job.sent_key, row.prev_sent);
+        }
+    }
+    return result;
+}
+
 function _minutesToCronExpression(minutes) {
     const m = Number.parseInt(String(minutes || ''), 10);
     if (!Number.isFinite(m) || m <= 0) return '*/5 * * * *';
@@ -473,4 +563,8 @@ async function initCalendarReminderScheduler() {
     return { ok: true, enabled: true, pollMinutes, cronExpr, taskStarted: !!task };
 }
 
-module.exports = { initCalendarReminderScheduler, processCalendarReminders };
+module.exports = {
+    initCalendarReminderScheduler,
+    processCalendarReminders,
+    fireImmediateRemindersForEvent,
+};

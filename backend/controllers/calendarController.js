@@ -1248,17 +1248,30 @@ const createEvent = async (req, res) => {
         );
         if (linkedReminderId) sanitized.linkedReminderId = linkedReminderId;
 
+        let inviteSendResult = null;
         if (shouldInviteClient && (created.invite_token || clientMeta.clients.some((c) => c.inviteToken))) {
             try {
-                await _sendCalendarInvite(created);
+                inviteSendResult = await _sendCalendarInvite(created);
             } catch (inviteErr) {
                 console.error('[calendarController] invite send failed:', inviteErr.message);
+                inviteSendResult = { sentSms: 0, sentEmail: 0, deferred: false, error: inviteErr.message, recipients: [] };
             }
+        }
+
+        let immediateReminderResult = null;
+        try {
+            const { fireImmediateRemindersForEvent } = require('../tasks/calendarReminders/scheduler');
+            immediateReminderResult = await fireImmediateRemindersForEvent(created.id);
+        } catch (immErr) {
+            console.error('[calendarController] immediate reminder fire failed:', immErr.message);
+            immediateReminderResult = { attempted: 0, sent: 0, deferred: false, errors: [immErr.message] };
         }
 
         return res.status(201).json({
             event: sanitized,
             ...(reminderSyncWarning ? { reminderSyncWarning } : {}),
+            inviteSendResult,
+            immediateReminderResult,
         });
     } catch (err) {
         // Unique violation on partial lead index = duplicate active lead for this lawyer
@@ -1606,7 +1619,17 @@ const updateEvent = async (req, res) => {
             );
         }
         await _attachLinkedReminderId(sanitized);
-        return res.json({ event: sanitized });
+
+        let immediateReminderResult = null;
+        try {
+            const { fireImmediateRemindersForEvent } = require('../tasks/calendarReminders/scheduler');
+            immediateReminderResult = await fireImmediateRemindersForEvent(eventId);
+        } catch (immErr) {
+            console.error('[calendarController] update immediate reminder fire failed:', immErr.message);
+            immediateReminderResult = { attempted: 0, sent: 0, deferred: false, errors: [immErr.message] };
+        }
+
+        return res.json({ event: sanitized, immediateReminderResult });
     } catch (err) {
         if (err?.code === '23505' && /uq_calendar_events_owner_active_lead_phone/.test(err.message || '')) {
             return res.status(409).json({
