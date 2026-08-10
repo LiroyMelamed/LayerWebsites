@@ -11,7 +11,8 @@ import SimpleCard from "../../../components/simpleComponents/SimpleCard";
 import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
 import ChooseButton from "../../../components/styledComponents/buttons/ChooseButton";
-import { Text24, Text14 } from "../../../components/specializedComponents/text/AllTextKindFile";
+import { Text24, Text14, TextBold14 } from "../../../components/specializedComponents/text/AllTextKindFile";
+import { toastError, toastSuccess } from "../../../components/ui/toast";
 import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
 import useHttpRequest from "../../../hooks/useHttpRequest";
 import { buildReminderBodyPreview } from "../../../functions/reminders/buildReminderBodyPreview";
@@ -51,8 +52,6 @@ export default function AddReminderModal({ closePopUpFunction, rePerformRequest 
     const [selectedTemplate, setSelectedTemplate] = useState("GENERAL");
     const [scheduledFor, setScheduledFor] = useState("");
     const [templateData, setTemplateData] = useState({});
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState(false);
 
     const { result: templatesResult, isPerforming: loadingTemplates } = useAutoHttpRequest(
         remindersApi.getTemplates,
@@ -95,15 +94,15 @@ export default function AddReminderModal({ closePopUpFunction, rePerformRequest 
                     : undefined,
             }),
         () => {
-            setSuccess(true);
+            toastSuccess(t("reminders.add.success"));
             if (rePerformRequest) rePerformRequest();
+            closePopUpFunction?.();
         },
     );
 
     const handleSubmit = () => {
-        setError("");
         if (!clientName.trim() || !email.trim() || !scheduledFor) {
-            setError(t("reminders.add.error"));
+            toastError(t("reminders.add.error"));
             return;
         }
         doSubmit();
@@ -129,18 +128,6 @@ export default function AddReminderModal({ closePopUpFunction, rePerformRequest 
         }),
         [currentTemplate, templateData, clientName, subject],
     );
-
-    if (success) {
-        return (
-            <SimpleContainer className="lw-addReminder lw-addReminder--success">
-                <SimpleContainer className="lw-addReminder__successIcon">✔</SimpleContainer>
-                <Text24 className="lw-addReminder__title">{t("reminders.add.success")}</Text24>
-                <SimpleContainer className="lw-addReminder__buttonsRow">
-                    <PrimaryButton onPress={closePopUpFunction}>{t("common.close")}</PrimaryButton>
-                </SimpleContainer>
-            </SimpleContainer>
-        );
-    }
 
     return (
         <SimpleContainer className="lw-addReminder">
@@ -253,8 +240,6 @@ export default function AddReminderModal({ closePopUpFunction, rePerformRequest 
                         timeToWaitInMilli={0}
                     />
                 </SimpleContainer>
-
-                {error && <Text14 className="lw-addReminder__error">{error}</Text14>}
 
                 <SimpleContainer className="lw-addReminder__buttonsRow">
                     <PrimaryButton onPress={handleSubmit} disabled={submitting} isPerforming={submitting}>

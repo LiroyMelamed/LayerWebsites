@@ -329,11 +329,47 @@
 }
 
 .lw-signing-actionsRow {
-    margin-top: 0.625rem;
+    margin-top: 0.75rem;
     display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-direction: row-reverse; // RTL: primary action on the right
+    align-items: stretch;
+    justify-content: stretch;
+    gap: 0.625rem;
+    flex-wrap: nowrap;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0 0.75rem 0.25rem;
+
+    > * {
+        flex: 1 1 0;
+        min-width: 0;
+        min-height: 2.75rem;
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+    }
+
+    // Force equal visual weight regardless of Primary/Secondary/Tertiary variants
+    button,
+    .lw-genericButton,
+    [class*="Button"] {
+        width: 100%;
+        min-height: 2.75rem;
+        padding-inline: 0.75rem !important;
+        font-size: 0.9rem !important;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 420px) {
+    .lw-signing-actionsRow {
+        flex-wrap: wrap;
+
+        > * {
+            flex: 1 1 calc(50% - 0.4rem);
+        }
+    }
 }
 
 .lw-signing-message {

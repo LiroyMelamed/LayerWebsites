@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ClientStackName } from "../../../navigation/ClientStack";
 import { ClientMainScreenName } from "../../../navigation/screenPaths";
+import { toastError, toastSuccess } from "../../../components/ui/toast";
 import "./ClientTicketScreen.scss";
 
 const CENTRAL = (
@@ -14,8 +15,6 @@ export default function ClientTicketScreen() {
   const [description, setDescription] = useState("");
   const [errorDetails, setErrorDetails] = useState("");
   const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState(null);
-  const [error, setError] = useState(null);
 
   const clientId = useMemo(() => {
     try {
@@ -28,8 +27,6 @@ export default function ClientTicketScreen() {
   async function onSubmit(e) {
     e.preventDefault();
     setBusy(true);
-    setError(null);
-    setDone(null);
     try {
       const res = await fetch(`${CENTRAL}/api/v1/tickets`, {
         method: "POST",
@@ -53,12 +50,12 @@ export default function ClientTicketScreen() {
       if (!res.ok) {
         throw new Error(data?.message || data?.error || `שגיאה ${res.status}`);
       }
-      setDone(data.message || "הפנייה התקבלה בהצלחה ותטופל בהקדם");
+      toastSuccess(data.message || "הפנייה התקבלה בהצלחה ותטופל בהקדם");
       setTitle("");
       setDescription("");
       setErrorDetails("");
     } catch (err) {
-      setError(err?.message || String(err));
+      toastError(err?.message || String(err));
     } finally {
       setBusy(false);
     }
@@ -72,17 +69,6 @@ export default function ClientTicketScreen() {
         <p className="client-ticket__muted">
           דווח על תקלה באזור האישי. הפנייה תגיע לצוות ותטופל בהקדם.
         </p>
-
-        {done ? (
-          <div className="client-ticket__ok" role="status">
-            {done}
-          </div>
-        ) : null}
-        {error ? (
-          <div className="client-ticket__err" role="alert">
-            {error}
-          </div>
-        ) : null}
 
         <form onSubmit={onSubmit} className="client-ticket__form">
           <label>

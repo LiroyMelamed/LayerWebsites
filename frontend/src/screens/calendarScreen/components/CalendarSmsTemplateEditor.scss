@@ -30,12 +30,18 @@
 .lw-calendarSmsEditor__preview {
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
+    gap: 0.55rem;
 }
 
 .lw-calendarSmsEditor__previewLabel {
     color: #718096;
     font-weight: 600;
+}
+
+.lw-calendarSmsEditor__recipientTag {
+    color: #2A4365;
+    font-weight: 700;
+    margin-bottom: 0.2rem;
 }
 
 .lw-calendarSmsEditor__bubble {

@@ -2,75 +2,30 @@ import React, { forwardRef, useState, useEffect, useRef } from 'react';
 import SimpleContainer from './SimpleContainer';
 import { colors } from '../../constant/colors';
 import SimpleIcon from './SimpleIcon';
+import {
+    applyTemporalDigitMask,
+    formatTemporalDisplay,
+    parseTemporalText,
+    temporalPlaceholder,
+    isTemporalMaskComplete,
+    editTemporalDigits,
+    deleteTemporalDigit,
+    snapCaretToDigitSlot,
+} from './temporalMask';
 
 import './SimpleInput.scss';
-
-/**
- * Format native date/time values as dd/mm/yyyy HH:mm for display/editing.
- * Pure string parsing — no Date object — to avoid timezone shifts.
- */
-function formatTemporalDisplay(type, rawValue) {
-    const v = String(rawValue ?? '');
-    if (!v) return '';
-    if (type === 'date') {
-        const m = v.match(/^(\d{4})-(\d{2})-(\d{2})/);
-        return m ? `${m[3]}/${m[2]}/${m[1]}` : v;
-    }
-    if (type === 'datetime-local') {
-        const m = v.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
-        return m ? `${m[3]}/${m[2]}/${m[1]} ${m[4]}:${m[5]}` : v;
-    }
-    if (type === 'time') {
-        const m = v.match(/^(\d{2}):(\d{2})/);
-        return m ? `${m[1]}:${m[2]}` : v;
-    }
-    return '';
-}
-
-/** Parse user-typed dd/mm/yyyy [HH:mm] back to native input value. */
-function parseTemporalText(type, text) {
-    const raw = String(text ?? '').trim().replace(/\s+/g, ' ');
-    if (!raw) return '';
-
-    if (type === 'time') {
-        const m = raw.match(/^(\d{1,2}):(\d{2})$/);
-        if (!m) return null;
-        const hh = Number(m[1]);
-        const mm = Number(m[2]);
-        if (hh > 23 || mm > 59) return null;
-        return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
-    }
-
-    if (type === 'date') {
-        const m = raw.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/);
-        if (!m) return null;
-        const dd = Number(m[1]);
-        const mo = Number(m[2]);
-        const yyyy = Number(m[3]);
-        if (mo < 1 || mo > 12 || dd < 1 || dd > 31) return null;
-        return `${yyyy}-${String(mo).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
-    }
-
-    if (type === 'datetime-local') {
-        const m = raw.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})[ T](\d{1,2}):(\d{2})$/);
-        if (!m) return null;
-        const dd = Number(m[1]);
-        const mo = Number(m[2]);
-        const yyyy = Number(m[3]);
-        const hh = Number(m[4]);
-        const mi = Number(m[5]);
-        if (mo < 1 || mo > 12 || dd < 1 || dd > 31 || hh > 23 || mi > 59) return null;
-        return `${yyyy}-${String(mo).padStart(2, '0')}-${String(dd).padStart(2, '0')}T${String(hh).padStart(2, '0')}:${String(mi).padStart(2, '0')}`;
-    }
-
-    return null;
-}
 
 function emitChange(onChange, nativeValue) {
     if (!onChange) return;
     onChange({ target: { value: nativeValue } });
 }
 
+/**
+ * Controlled input with rock-solid digit-slot masking for date/time.
+ * Digits are capped to DD/MM/YYYY [HH:mm] slots — floods like 20308/08/2026 are impossible.
+ * Mid-field edits overwrite the focused digit slot and restore the caret (no jump-to-end corruption).
+ * Debounced text fields flush pending values synchronously on blur (Tab-safe).
+ */
 const SimpleInput = forwardRef(
     ({
         title,
@@ -101,7 +56,6 @@ const SimpleInput = forwardRef(
         const temporalTypes = ['date', 'datetime-local', 'time', 'month', 'week'];
         const isTemporalInput = temporalTypes.includes(type);
         const showCalendarButton = type === 'date' || type === 'datetime-local' || type === 'month' || type === 'week';
-        // month/week keep native control; date/time/datetime become editable text.
         const isEditableTemporal = type === 'date' || type === 'datetime-local' || type === 'time';
 
         const [isFocused, setIsFocused] = useState(false);
@@ -111,15 +65,38 @@ const SimpleInput = forwardRef(
         );
         const timeoutRef = useRef(null);
         const pendingEmitRef = useRef(null);
-        const caretRef = useRef(null);
         const textInputRef = useRef(null);
         const pickerRef = useRef(null);
+        const focusedRef = useRef(false);
+        const delayedValueRef = useRef(value ?? '');
+        const textValueRef = useRef(
+            isEditableTemporal ? formatTemporalDisplay(type, value ?? '') : ''
+        );
+        const caretRestoreRef = useRef(null);
+        const onChangeRef = useRef(onChange);
+        onChangeRef.current = onChange;
 
         useEffect(() => {
             return () => {
                 if (timeoutRef.current) clearTimeout(timeoutRef.current);
             };
         }, []);
+
+        useEffect(() => {
+            if (!isEditableTemporal) return;
+            const caret = caretRestoreRef.current;
+            if (caret == null) return;
+            caretRestoreRef.current = null;
+            const el = textInputRef.current;
+            if (!el) return;
+            requestAnimationFrame(() => {
+                try {
+                    el.setSelectionRange(caret, caret);
+                } catch {
+                    /* ignore */
+                }
+            });
+        }, [textValue, isEditableTemporal]);
 
         const style = _style;
         const textStyle = _textStyle;
@@ -136,43 +113,130 @@ const SimpleInput = forwardRef(
             return colors.white;
         }
 
-        function handleFocus(e) {
-            onFocus?.(e);
-            setIsFocused(true);
-        }
-
         const flushPendingEmit = () => {
-            if (!timeoutRef.current) return;
-            clearTimeout(timeoutRef.current);
-            timeoutRef.current = null;
-            if (pendingEmitRef.current != null) {
-                emitChange(onChange, pendingEmitRef.current);
-                pendingEmitRef.current = null;
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+                timeoutRef.current = null;
             }
+            if (pendingEmitRef.current == null) return;
+            const next = pendingEmitRef.current;
+            pendingEmitRef.current = null;
+            emitChange(onChangeRef.current, next);
         };
 
-        function handleBlur(e) {
-            // Tab/blur must flush pending debounce before parent re-syncs from stale value.
+        function handleFocus(e) {
+            focusedRef.current = true;
+            onFocus?.(e);
+            setIsFocused(true);
+            if (isEditableTemporal && isTemporalMaskComplete(type, textValueRef.current)) {
+                // Select all so the first keystroke replaces cleanly; mid-click still overwrites slots.
+                requestAnimationFrame(() => {
+                    try {
+                        const el = textInputRef.current;
+                        if (el && document.activeElement === el) {
+                            el.select();
+                        }
+                    } catch {
+                        /* ignore */
+                    }
+                });
+            }
+        }
+
+        function applyTemporalResult(result) {
+            textValueRef.current = result.display;
+            setTextValue(result.display);
+            caretRestoreRef.current = result.caret;
+
+            if (!result.display) {
+                delayedValueRef.current = '';
+                setDelayedValue('');
+                pendingEmitRef.current = '';
+                flushPendingEmit();
+                return;
+            }
+
+            if (!isTemporalMaskComplete(type, result.display)) return;
+
+            const parsed = parseTemporalText(type, result.display);
+            if (parsed === null) return;
+
+            delayedValueRef.current = parsed;
+            setDelayedValue(parsed);
+            pendingEmitRef.current = parsed;
             flushPendingEmit();
-            if (isEditableTemporal) {
-                const parsed = parseTemporalText(type, textValue);
-                if (parsed !== null) {
-                    setDelayedValue(parsed);
-                    setTextValue(formatTemporalDisplay(type, parsed));
-                    if (parsed !== String(value ?? '')) emitChange(onChange, parsed);
-                } else {
-                    // Restore last valid value if typing was incomplete/invalid.
-                    setTextValue(formatTemporalDisplay(type, delayedValue));
+        }
+
+        function commitTemporalDraft(draft) {
+            const masked = applyTemporalDigitMask(type, draft);
+            textValueRef.current = masked;
+            setTextValue(masked);
+
+            if (!masked) {
+                delayedValueRef.current = '';
+                setDelayedValue('');
+                pendingEmitRef.current = '';
+                flushPendingEmit();
+                return true;
+            }
+
+            if (!isTemporalMaskComplete(type, masked)) {
+                return false;
+            }
+
+            const parsed = parseTemporalText(type, masked);
+            if (parsed === null) {
+                const restored = formatTemporalDisplay(type, value ?? delayedValueRef.current);
+                textValueRef.current = restored;
+                setTextValue(restored);
+                return false;
+            }
+
+            delayedValueRef.current = parsed;
+            setDelayedValue(parsed);
+            textValueRef.current = formatTemporalDisplay(type, parsed);
+            setTextValue(textValueRef.current);
+            pendingEmitRef.current = parsed;
+            flushPendingEmit();
+            return true;
+        }
+
+        function handleBlur(e) {
+            if (!isEditableTemporal) {
+                const live = textInputRef.current?.value;
+                if (live != null && live !== delayedValueRef.current) {
+                    delayedValueRef.current = live;
+                    setDelayedValue(live);
+                    pendingEmitRef.current = live;
+                }
+                flushPendingEmit();
+            } else {
+                const draft = textValueRef.current;
+                const ok = commitTemporalDraft(draft);
+                if (!ok && String(draft || '').trim() !== '' && !isTemporalMaskComplete(type, draft)) {
+                    if (timeoutRef.current) {
+                        clearTimeout(timeoutRef.current);
+                        timeoutRef.current = null;
+                    }
+                    pendingEmitRef.current = null;
+                    const restored = formatTemporalDisplay(type, value ?? delayedValueRef.current);
+                    textValueRef.current = restored;
+                    setTextValue(restored);
                 }
             }
+
+            focusedRef.current = false;
             onBlur?.(e);
             setIsFocused(false);
         }
 
         const commitNativeValue = (nativeValue) => {
+            delayedValueRef.current = nativeValue;
             setDelayedValue(nativeValue);
             if (isEditableTemporal) {
-                setTextValue(formatTemporalDisplay(type, nativeValue));
+                const formatted = formatTemporalDisplay(type, nativeValue);
+                textValueRef.current = formatted;
+                setTextValue(formatted);
             }
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
@@ -180,115 +244,131 @@ const SimpleInput = forwardRef(
             }
             pendingEmitRef.current = nativeValue;
             if (isEditableTemporal || timeToWaitInMilli <= 0) {
-                emitChange(onChange, nativeValue);
-                pendingEmitRef.current = null;
+                flushPendingEmit();
                 return;
             }
             timeoutRef.current = setTimeout(() => {
-                emitChange(onChange, nativeValue);
-                pendingEmitRef.current = null;
-                timeoutRef.current = null;
+                flushPendingEmit();
             }, timeToWaitInMilli);
         };
 
         const handleNativeInputChange = (e) => {
             const newValue = e.target.value;
+            delayedValueRef.current = newValue;
             setDelayedValue(newValue);
+            pendingEmitRef.current = newValue;
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
-            timeoutRef.current = setTimeout(() => {
-                onChange?.(e);
-                timeoutRef.current = null;
-            }, timeToWaitInMilli);
-        };
-
-        const handleTextChange = (e) => {
-            const inputEl = e.target;
-            let next = String(e.target.value ?? "");
-            // Digits / separators only for temporal text entry.
-            next = next.replace(/[^\d/:.\s-]/g, "");
-
-            let caretHint = null;
-            if (type === "time") {
-                const digits = next.replace(/\D/g, "").slice(0, 4);
-                next = digits.length <= 2
-                    ? digits
-                    : `${digits.slice(0, 2)}:${digits.slice(2)}`;
-                // After HH auto-insert ":", place caret after colon.
-                if (digits.length === 2) caretHint = 3;
-                else if (digits.length > 2) caretHint = next.length;
-            } else if (type === "date" || type === "datetime-local") {
-                const hasTime = type === "datetime-local";
-                const spaced = next.trimStart();
-                const match = spaced.match(/^([^\s]*)(?:\s+(.*))?$/);
-                let datePart = match?.[1] || "";
-                let timePart = hasTime ? (match?.[2] || "") : "";
-                const dateDigits = datePart.replace(/\D/g, "").slice(0, 8);
-                if (dateDigits.length <= 2) datePart = dateDigits;
-                else if (dateDigits.length <= 4) datePart = `${dateDigits.slice(0, 2)}/${dateDigits.slice(2)}`;
-                else datePart = `${dateDigits.slice(0, 2)}/${dateDigits.slice(2, 4)}/${dateDigits.slice(4)}`;
-
-                if (hasTime) {
-                    // After a full dd/mm/yyyy, keep a trailing space so HH→MM can auto-advance.
-                    const timeDigits = timePart.replace(/\D/g, "").slice(0, 4);
-                    if (dateDigits.length < 8) {
-                        next = datePart;
-                        if (dateDigits.length === 2 || dateDigits.length === 4) caretHint = datePart.length;
-                    } else if (timeDigits.length === 0) {
-                        next = `${datePart} `;
-                        caretHint = next.length;
-                    } else if (timeDigits.length <= 2) {
-                        next = `${datePart} ${timeDigits}`;
-                        if (timeDigits.length === 2) caretHint = next.length + 1; // after upcoming :
-                    } else {
-                        next = `${datePart} ${timeDigits.slice(0, 2)}:${timeDigits.slice(2)}`;
-                        caretHint = next.length;
-                    }
-                } else {
-                    next = datePart;
-                    if (dateDigits.length === 2 || dateDigits.length === 4) caretHint = datePart.length;
-                }
-            }
-
-            setTextValue(next);
-            caretRef.current = caretHint;
-            // Restore caret after React paints the formatted value.
-            if (caretHint != null) {
-                requestAnimationFrame(() => {
-                    const el = textInputRef.current || inputEl;
-                    if (el && typeof el.setSelectionRange === 'function') {
-                        try { el.setSelectionRange(caretHint, caretHint); } catch { /* ignore */ }
-                    }
-                });
-            }
-
-            const parsed = parseTemporalText(type, next);
-            if (parsed === null) return;
-            setDelayedValue(parsed);
-            pendingEmitRef.current = parsed;
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
-            // Temporal fields: emit immediately so Tab/blur never races a debounce.
-            if (isEditableTemporal || timeToWaitInMilli <= 0) {
-                emitChange(onChange, parsed);
-                pendingEmitRef.current = null;
-                timeoutRef.current = null;
+            if (timeToWaitInMilli <= 0) {
+                flushPendingEmit();
                 return;
             }
             timeoutRef.current = setTimeout(() => {
-                emitChange(onChange, parsed);
-                pendingEmitRef.current = null;
-                timeoutRef.current = null;
+                flushPendingEmit();
             }, timeToWaitInMilli);
         };
 
-        useEffect(() => {
-            const next = value ?? '';
-            // Don't clobber in-progress typing or wipe a pending emit on focus change.
-            if (pendingEmitRef.current != null) return;
-            setDelayedValue(next);
-            if (isEditableTemporal && !isFocused) {
-                setTextValue(formatTemporalDisplay(type, next));
+        const handleTemporalKeyDown = (e) => {
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+            if (e.key === 'Backspace' || e.key === 'Delete') {
+                e.preventDefault();
+                const start = e.target.selectionStart ?? 0;
+                const end = e.target.selectionEnd ?? start;
+                const result = deleteTemporalDigit(
+                    type,
+                    textValueRef.current,
+                    start,
+                    end,
+                    e.key === 'Delete' ? 'delete' : 'backspace'
+                );
+                applyTemporalResult(result);
+                return;
             }
-        }, [value, type, isEditableTemporal, isFocused]);
+
+            // Digits are handled in beforeinput to avoid double-apply with IME/mobile.
+            if (/^\d$/.test(e.key) && typeof InputEvent !== 'undefined') {
+                return;
+            }
+
+            if (/^\d$/.test(e.key)) {
+                e.preventDefault();
+                const start = e.target.selectionStart ?? 0;
+                const end = e.target.selectionEnd ?? start;
+                const result = editTemporalDigits(type, textValueRef.current, e.key, start, end);
+                applyTemporalResult(result);
+            }
+        };
+
+        const handleTemporalBeforeInput = (e) => {
+            const data = e.data;
+            if (data == null) return;
+            if (!/^\d+$/.test(data)) {
+                if (e.inputType && String(e.inputType).startsWith('insert')) {
+                    e.preventDefault();
+                }
+                return;
+            }
+            e.preventDefault();
+            const start = e.target.selectionStart ?? 0;
+            const end = e.target.selectionEnd ?? start;
+            const result = editTemporalDigits(type, textValueRef.current, data, start, end);
+            applyTemporalResult(result);
+        };
+
+        const handleTemporalPaste = (e) => {
+            e.preventDefault();
+            const pasted = e.clipboardData?.getData('text') || '';
+            const digits = pasted.replace(/\D/g, '');
+            if (!digits) return;
+            const start = e.target.selectionStart ?? 0;
+            const end = e.target.selectionEnd ?? start;
+            const result = editTemporalDigits(type, textValueRef.current, digits, start, end);
+            applyTemporalResult(result);
+        };
+
+        const handleTemporalClick = (e) => {
+            const display = textValueRef.current || '';
+            if (!display) return;
+            const rawCaret = e.target.selectionStart ?? 0;
+            const snapped = snapCaretToDigitSlot(type, display, rawCaret);
+            if (snapped !== rawCaret) {
+                try {
+                    e.target.setSelectionRange(snapped, snapped);
+                } catch {
+                    /* ignore */
+                }
+            }
+        };
+
+        const handleTextChange = (e) => {
+            // Fallback path (autofill / rare browsers) — still digit-capped.
+            const masked = applyTemporalDigitMask(type, e.target.value);
+            textValueRef.current = masked;
+            setTextValue(masked);
+            caretRestoreRef.current = masked.length;
+
+            if (isTemporalMaskComplete(type, masked)) {
+                const parsed = parseTemporalText(type, masked);
+                if (parsed !== null) {
+                    delayedValueRef.current = parsed;
+                    setDelayedValue(parsed);
+                    pendingEmitRef.current = parsed;
+                    flushPendingEmit();
+                }
+            }
+        };
+
+        useEffect(() => {
+            if (focusedRef.current) return;
+            const next = value ?? '';
+            delayedValueRef.current = next;
+            setDelayedValue(next);
+            if (isEditableTemporal) {
+                const formatted = formatTemporalDisplay(type, next);
+                textValueRef.current = formatted;
+                setTextValue(formatted);
+            }
+        }, [value, type, isEditableTemporal]);
 
         const shouldFloatLabel = isFocused || !!delayedValue || !!textValue || type === 'date' || type === 'datetime-local';
 
@@ -340,6 +420,15 @@ const SimpleInput = forwardRef(
             .filter(Boolean)
             .join(' ');
 
+        const {
+            value: _ignoredValue,
+            onChange: _ignoredOnChange,
+            onFocus: _ignoredOnFocus,
+            onBlur: _ignoredOnBlur,
+            defaultValue: _ignoredDefault,
+            ...safeProps
+        } = props;
+
         return (
             <SimpleContainer
                 ref={ref}
@@ -356,7 +445,6 @@ const SimpleInput = forwardRef(
                             backgroundColor: getBackgroundColor(),
                         }}
                         onMouseDown={(e) => {
-                            // Label overlays the field; focus the real input on click/tap.
                             e.preventDefault();
                             if (!disabled) textInputRef.current?.focus();
                         }}
@@ -404,35 +492,35 @@ const SimpleInput = forwardRef(
                             dir="ltr"
                             inputMode="numeric"
                             autoComplete="off"
+                            autoCorrect="off"
+                            autoCapitalize="off"
                             spellCheck={false}
-                            {...props}
+                            maxLength={type === 'datetime-local' ? 16 : type === 'date' ? 10 : 5}
+                            {...safeProps}
                             style={{
                                 textAlign: 'right',
                                 ...(textStyle || {}),
-                                ...(props.style || {}),
+                                ...(safeProps.style || {}),
                             }}
                             value={textValue}
                             onChange={handleTextChange}
+                            onKeyDown={handleTemporalKeyDown}
+                            onBeforeInput={handleTemporalBeforeInput}
+                            onPaste={handleTemporalPaste}
+                            onClick={handleTemporalClick}
                             onFocus={handleFocus}
                             onBlur={handleBlur}
                             disabled={disabled}
                             ref={setTextFieldRef}
-                            placeholder={
-                                type === 'time'
-                                    ? 'HH:mm'
-                                    : type === 'date'
-                                        ? 'dd/mm/yyyy'
-                                        : 'dd/mm/yyyy HH:mm'
-                            }
+                            placeholder={temporalPlaceholder(type)}
                         />
-                        {/* Hidden native picker — calendar button / optional sync only */}
                         <input
                             type={type}
                             className="lw-simpleInput__nativePicker"
                             tabIndex={-1}
                             aria-hidden="true"
                             disabled={disabled}
-                            value={delayedValue}
+                            value={delayedValue || ''}
                             onChange={(e) => commitNativeValue(e.target.value)}
                             ref={pickerRef}
                         />
@@ -442,11 +530,11 @@ const SimpleInput = forwardRef(
                         type={type}
                         className="lw-simpleInput__field"
                         dir={inputDir}
-                        {...props}
+                        {...safeProps}
                         style={{
-                            ...(isTemporalInput ? { textAlign: 'right' } : { textAlign: 'right' }),
+                            textAlign: 'right',
                             ...(textStyle || {}),
-                            ...(props.style || {}),
+                            ...(safeProps.style || {}),
                         }}
                         value={delayedValue}
                         onChange={handleNativeInputChange}

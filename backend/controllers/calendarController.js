@@ -44,12 +44,13 @@ const {
     composeInviteSmsMessage,
     uniqueSortedDesc,
 } = require('../lib/calendarEventReminders');
-const { deferToMotzeiShabbat } = require('../lib/shabbatDeferral');
+const { deferQuietSendUntil } = require('../lib/shabbatDeferral');
 const { resolveShortLink } = require('../lib/publicShortLinks');
 const { lawyerMatchSql, personalCalendarSql } = require('../lib/calendarVisibility');
 const { signOAuthState, verifyOAuthState } = require('../lib/calendarOAuthState');
 const { sendMessage } = require('../utils/sendMessage');
 const { sendTransactionalCustomHtmlEmail } = require('../utils/smooveEmailCampaignService');
+const { composeCalendarEmail } = require('../lib/calendarEmail');
 
 // ─── Optional peer deps (graceful-fail if not yet installed) ──────────────────
 let ical;
@@ -1138,8 +1139,6 @@ const createEvent = async (req, res) => {
         && hasAnyReminderChannel(storedReminderChannels)
         && (clientIds.length > 0 || lead_phone || lead_email)
     );
-    const inviteToken = shouldInviteClient ? crypto.randomBytes(24).toString('hex') : null;
-    const inviteStatus = shouldInviteClient ? 'pending' : 'none';
     const clientReminderSms = req.body?.client_reminder_sms != null
         ? String(req.body.client_reminder_sms).trim() || null
         : null;
@@ -1147,8 +1146,49 @@ const createEvent = async (req, res) => {
         ? String(req.body.invite_sms).trim() || null
         : null;
 
+    const { expandRecurrenceOccurrences, buildRruleString, MAX_OCCURRENCES } = require('../lib/calendarRecurrence');
+    const recurrence = req.body?.recurrence && typeof req.body.recurrence === 'object'
+        ? req.body.recurrence
+        : null;
+    const recurrenceEnabled = !!(
+        recurrence?.enabled
+        && recurrence?.until
+        && (eventType === 'appointment' || eventType === 'hearing' || eventType === 'reminder')
+    );
+    const seriesId = recurrenceEnabled ? crypto.randomBytes(8).toString('hex') : null;
+    const occurrences = recurrenceEnabled
+        ? expandRecurrenceOccurrences({
+            startTime: start_time,
+            endTime: end_time,
+            frequency: recurrence.frequency || 'weekly',
+            until: recurrence.until,
+        })
+        : [{ start: new Date(start_time), end: new Date(end_time) }];
+    if (recurrenceEnabled && occurrences.length > MAX_OCCURRENCES) {
+        return res.status(400).json({ message: `לא ניתן ליצור יותר מ-${MAX_OCCURRENCES} מופעים בסדרה` });
+    }
+    const seriesRrule = recurrenceEnabled
+        ? buildRruleString(recurrence.frequency || 'weekly', recurrence.until, seriesId)
+        : (rrule || null);
+
     try {
-        const { rows } = await pool.query(
+        let firstSanitized = null;
+        let firstCreated = null;
+        let firstClientMeta = null;
+        let firstMgrMeta = null;
+        let linkedReminderId = null;
+        let reminderSyncWarning = null;
+        let inviteSendResult = null;
+        let immediateReminderResult = null;
+
+        for (let i = 0; i < occurrences.length; i += 1) {
+            const occ = occurrences[i];
+            const occStart = occ.start.toISOString();
+            const occEnd = occ.end.toISOString();
+            const occInviteToken = shouldInviteClient ? crypto.randomBytes(24).toString('hex') : null;
+            const occInviteStatus = shouldInviteClient ? 'pending' : 'none';
+
+            const { rows } = await pool.query(
             `INSERT INTO calendar_events
                (owner_id, case_id, title, description, location, event_type,
                 client_user_id, client_name, manager_user_id, manager_name, color,
@@ -1173,10 +1213,10 @@ const createEvent = async (req, res) => {
                 managerUserId,
                 manager_name || null,
                 color || null,
-                start_time,
-                end_time,
+                occStart,
+                occEnd,
                 storedAllDay,
-                rrule || null,
+                seriesRrule,
                 lead_name ? String(lead_name).trim() : null,
                 lead_phone ? String(lead_phone).trim() : null,
                 lead_email ? String(lead_email).trim().toLowerCase() : null,
@@ -1184,8 +1224,8 @@ const createEvent = async (req, res) => {
                 offsetsToJson(storedReminderOffsets),
                 channelsToJson(storedReminderChannels),
                 targetsToJson(storedReminderTargets),
-                inviteStatus,
-                inviteToken,
+                occInviteStatus,
+                occInviteToken,
                 clientReminderSms,
                 inviteSms,
                 offsetsToJson(storedLawyerOffsets),
@@ -1216,49 +1256,63 @@ const createEvent = async (req, res) => {
             if (clientMeta.inviteStatus) created.invite_status = clientMeta.inviteStatus;
         }
 
-        // For reminder-type events, mirror to scheduled_email_reminders so the
-        // reminders worker actually sends the email at start_time.
-        let linkedReminderId = null;
-        let reminderSyncWarning = null;
-        if (eventType === 'reminder') {
-            try {
-                linkedReminderId = await reminderCalendarSync.createReminderForCalendarEvent(
-                    created,
-                    {
-                        toEmail: reminder_to_email,
-                        clientName: reminder_client_name,
-                        templateKey: reminder_template_key,
-                        templateData: reminder_template_data,
-                        subject: reminder_subject,
-                        createdBy: userId,
+        if (i === 0) {
+            firstCreated = created;
+            firstClientMeta = clientMeta;
+            firstMgrMeta = mgrMeta;
+            if (eventType === 'reminder') {
+                try {
+                    linkedReminderId = await reminderCalendarSync.createReminderForCalendarEvent(
+                        created,
+                        {
+                            toEmail: reminder_to_email,
+                            clientName: reminder_client_name,
+                            templateKey: reminder_template_key,
+                            templateData: reminder_template_data,
+                            subject: reminder_subject,
+                            createdBy: userId,
+                        }
+                    );
+                    if (!linkedReminderId) {
+                        reminderSyncWarning = 'האירוע נשמר אך חסרים אימייל או שם לקוח — התזכורת לא נוספה למסך התזכורות.';
                     }
-                );
-                if (!linkedReminderId) {
-                    reminderSyncWarning = 'האירוע נשמר אך חסרים אימייל או שם לקוח — התזכורת לא נוספה למסך התזכורות.';
+                } catch (syncErr) {
+                    console.error('[calendarController] createEvent reminder sync failed:', syncErr.message);
+                    reminderSyncWarning = 'האירוע נשמר אך לא נוצרה תזכורת מקושרת.';
                 }
-            } catch (syncErr) {
-                console.error('[calendarController] createEvent reminder sync failed:', syncErr.message);
-                reminderSyncWarning = 'האירוע נשמר אך לא נוצרה תזכורת מקושרת.';
+            }
+
+            firstSanitized = _applyClientsToEvent(
+                _applyManagersToEvent(_sanitizeEvent(created), mgrMeta.managers),
+                clientMeta.clients
+            );
+            if (linkedReminderId) firstSanitized.linkedReminderId = linkedReminderId;
+
+            if (shouldInviteClient && (created.invite_token || clientMeta.clients.some((c) => c.inviteToken))) {
+                try {
+                    inviteSendResult = await _sendCalendarInvite(created);
+                } catch (inviteErr) {
+                    console.error('[calendarController] invite send failed:', inviteErr.message);
+                    inviteSendResult = { sentSms: 0, sentEmail: 0, deferred: false, error: inviteErr.message, recipients: [] };
+                }
+            }
+
+            try {
+                const { fireImmediateRemindersForEvent } = require('../tasks/calendarReminders/scheduler');
+                immediateReminderResult = await fireImmediateRemindersForEvent(created.id);
+            } catch (immErr) {
+                console.error('[calendarController] immediate reminder fire failed:', immErr.message);
+                immediateReminderResult = { attempted: 0, sent: 0, deferred: false, errors: [immErr.message] };
             }
         }
-
-        const sanitized = _applyClientsToEvent(
-            _applyManagersToEvent(_sanitizeEvent(created), mgrMeta.managers),
-            clientMeta.clients
-        );
-        if (linkedReminderId) sanitized.linkedReminderId = linkedReminderId;
-
-        if (shouldInviteClient && (created.invite_token || clientMeta.clients.some((c) => c.inviteToken))) {
-            try {
-                await _sendCalendarInvite(created);
-            } catch (inviteErr) {
-                console.error('[calendarController] invite send failed:', inviteErr.message);
-            }
         }
 
         return res.status(201).json({
-            event: sanitized,
+            event: firstSanitized,
+            seriesCount: occurrences.length,
             ...(reminderSyncWarning ? { reminderSyncWarning } : {}),
+            inviteSendResult,
+            immediateReminderResult,
         });
     } catch (err) {
         // Unique violation on partial lead index = duplicate active lead for this lawyer
@@ -1606,7 +1660,17 @@ const updateEvent = async (req, res) => {
             );
         }
         await _attachLinkedReminderId(sanitized);
-        return res.json({ event: sanitized });
+
+        let immediateReminderResult = null;
+        try {
+            const { fireImmediateRemindersForEvent } = require('../tasks/calendarReminders/scheduler');
+            immediateReminderResult = await fireImmediateRemindersForEvent(eventId);
+        } catch (immErr) {
+            console.error('[calendarController] update immediate reminder fire failed:', immErr.message);
+            immediateReminderResult = { attempted: 0, sent: 0, deferred: false, errors: [immErr.message] };
+        }
+
+        return res.json({ event: sanitized, immediateReminderResult });
     } catch (err) {
         if (err?.code === '23505' && /uq_calendar_events_owner_active_lead_phone/.test(err.message || '')) {
             return res.status(409).json({
@@ -2914,7 +2978,7 @@ async function _sendCalendarInvite(ev, { force = false } = {}) {
     }
 
     if (!force) {
-        const deferredUntil = deferToMotzeiShabbat(new Date());
+        const deferredUntil = deferQuietSendUntil(new Date());
         if (deferredUntil) {
             try {
                 await pool.query(
@@ -3034,6 +3098,7 @@ async function _sendCalendarInvite(ev, { force = false } = {}) {
     }
 
     const errors = [];
+    const allClientNames = recipients.map((r) => r.name).filter(Boolean);
     for (const recipient of recipients) {
         const entry = {
             userId: recipient.userId,
@@ -3049,6 +3114,7 @@ async function _sendCalendarInvite(ev, { force = false } = {}) {
             messageBody = await composeInviteSmsMessage({
                 ...ev,
                 client_name: recipient.name,
+                clients_names: allClientNames,
                 invite_token: recipient.inviteToken,
             });
         } catch (err) {
@@ -3072,11 +3138,20 @@ async function _sendCalendarInvite(ev, { force = false } = {}) {
         }
         if (recipient.email) {
             try {
+                const composed = await composeCalendarEmail('CALENDAR_INVITE', {
+                    ...ev,
+                    client_name: recipient.name,
+                    clients_names: allClientNames,
+                    invite_token: recipient.inviteToken,
+                }, {
+                    recipientName: recipient.name,
+                    clientsNames: allClientNames,
+                });
                 await sendTransactionalCustomHtmlEmail({
                     toEmail: recipient.email,
-                    subject: `הזמנה לפגישה — ${ev.title || 'פגישה'}`,
-                    htmlBody: `<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.7">${String(messageBody).replace(/\n/g, '<br/>')}</div>`,
-                    logLabel: 'calendar-invite',
+                    subject: composed.subject,
+                    htmlBody: composed.htmlBody,
+                    logLabel: 'CALENDAR_INVITE',
                 });
                 entry.sentEmail = true;
                 result.sentEmail += 1;

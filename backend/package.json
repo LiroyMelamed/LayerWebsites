@@ -16,6 +16,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.995.0",
     "@aws-sdk/s3-request-presigner": "^3.995.0",
+    "@hebcal/core": "^6.9.2",
     "@pdf-lib/fontkit": "^1.1.1",
     "archiver": "^7.0.1",
     "axios": "^1.13.3",

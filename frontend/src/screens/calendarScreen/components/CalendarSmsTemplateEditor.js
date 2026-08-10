@@ -10,12 +10,13 @@ import { Text12, Text14, TextBold14 } from "../../../components/specializedCompo
 import "./CalendarSmsTemplateEditor.scss";
 
 export const CALENDAR_SMS_VARS = [
-    "recipientName", "firmName", "date", "time", "address",
+    "recipientName", "clientsNames", "firmName", "date", "time", "address",
     "wazeUrl", "mapsUrl", "rsvpUrl", "firmPhone", "websiteUrl", "lawyerName", "title",
 ];
 
 export const CALENDAR_SMS_VAR_LABELS = {
     recipientName: "שם הלקוח",
+    clientsNames: "כל הלקוחות",
     firmName: "שם המשרד",
     date: "תאריך",
     time: "שעה",
@@ -33,7 +34,7 @@ const CHIP_GROUPS = [
     {
         id: "event",
         labelKey: "calendar.smsVarGroupEvent",
-        keys: ["recipientName", "firmName", "title", "lawyerName"],
+        keys: ["recipientName", "clientsNames", "firmName", "title", "lawyerName"],
     },
     {
         id: "whenWhere",
@@ -64,7 +65,9 @@ export function renderSmsPreview(template, values) {
  * @param {string} [props.hint]
  * @param {string} props.value
  * @param {(next: string) => void} props.onChange
- * @param {Record<string, string>} [props.previewValues]
+ * @param {Record<string, string>} [props.previewValues] — shared tokens (date, firm, …)
+ * @param {{ name?: string, phone?: string, userId?: number|string }[]} [props.previewRecipients]
+ *        When set, preview loops each client with their own {{recipientName}}.
  * @param {string[]} [props.vars]
  * @param {string[]} [props.excludeVars] — e.g. hide rsvpUrl on reminder templates
  * @param {string} [props.defaultValue] — for reset
@@ -76,6 +79,7 @@ export default function CalendarSmsTemplateEditor({
     value,
     onChange,
     previewValues = {},
+    previewRecipients = null,
     vars = CALENDAR_SMS_VARS,
     excludeVars = [],
     defaultValue = "",
@@ -98,10 +102,34 @@ export default function CalendarSmsTemplateEditor({
         [allowed]
     );
 
-    const previewText = useMemo(
-        () => renderSmsPreview(value, previewValues),
-        [value, previewValues]
-    );
+    const recipientPreviews = useMemo(() => {
+        const list = Array.isArray(previewRecipients)
+            ? previewRecipients.filter((r) => r && (r.name || r.phone || r.userId))
+            : [];
+        if (list.length > 0) {
+            return list.map((r, idx) => {
+                const name = String(r.name || "").trim()
+                    || String(r.phone || "").trim()
+                    || t("calendar.smsRecipientFallback", { index: idx + 1 });
+                return {
+                    key: String(r.userId || r.phone || name || idx),
+                    label: name,
+                    phone: r.phone || "",
+                    text: renderSmsPreview(value, {
+                        ...previewValues,
+                        recipientName: name,
+                        clientsNames: previewValues?.clientsNames || name,
+                    }),
+                };
+            });
+        }
+        return [{
+            key: "primary",
+            label: previewValues?.recipientName || "",
+            phone: "",
+            text: renderSmsPreview(value, previewValues),
+        }];
+    }, [previewRecipients, previewValues, value, t]);
 
     const rememberSelection = () => {
         const el = textareaRef.current;
@@ -153,10 +181,21 @@ export default function CalendarSmsTemplateEditor({
             <SimpleContainer className="lw-calendarSmsEditor__preview" aria-live="polite">
                 <Text12 className="lw-calendarSmsEditor__previewLabel">
                     {t("calendar.smsPreviewTitle")}
+                    {recipientPreviews.length > 1
+                        ? ` (${recipientPreviews.length})`
+                        : ""}
                 </Text12>
-                <div className="lw-calendarSmsEditor__bubble">
-                    <Text14 className="lw-calendarSmsEditor__bubbleBody">{previewText}</Text14>
-                </div>
+                {recipientPreviews.map((item) => (
+                    <div key={item.key} className="lw-calendarSmsEditor__bubble">
+                        {(recipientPreviews.length > 1 || item.label) ? (
+                            <Text12 className="lw-calendarSmsEditor__recipientTag">
+                                {item.label}
+                                {item.phone ? ` · ${item.phone}` : ""}
+                            </Text12>
+                        ) : null}
+                        <Text14 className="lw-calendarSmsEditor__bubbleBody">{item.text}</Text14>
+                    </div>
+                ))}
             </SimpleContainer>
 
             <SimpleContainer className="lw-calendarSmsEditor__actions">

@@ -18,10 +18,10 @@ import ChooseButton from "../../components/styledComponents/buttons/ChooseButton
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
 import TertiaryButton from "../../components/styledComponents/buttons/TertiaryButton";
-import ErrorPopup from "../../components/styledComponents/popups/ErrorPopup";
 import Separator from "../../components/styledComponents/separators/Separator";
 import { buttonSizes } from "../../styles/buttons/buttonSizes";
 import { icons } from "../../assets/icons/icons";
+import { toastError } from "../../components/ui/toast";
 
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
 import { getNavBarData } from "../../components/navBars/data/NavBarData";
@@ -91,15 +91,12 @@ export default function EvidenceDocumentsScreen() {
 
     const showError = useCallback(
         (err, messageKey) => {
-            openPopup(
-                <ErrorPopup
-                    closePopup={closePopup}
-                    errorText={err?.data?.message}
-                    messageKey={err?.data?.message ? undefined : messageKey}
-                />
-            );
+            const text = err?.data?.message
+                || (messageKey ? t(messageKey) : null)
+                || t("errors.unexpected");
+            toastError(String(text));
         },
-        [closePopup, openPopup]
+        [t]
     );
 
     const handleListSuccess = useCallback(

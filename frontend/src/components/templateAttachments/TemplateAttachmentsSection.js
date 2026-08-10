@@ -4,6 +4,7 @@ import { Text12, Text14 } from "../specializedComponents/text/AllTextKindFile";
 import TertiaryButton from "../styledComponents/buttons/TertiaryButton";
 import SimpleLoader from "../simpleComponents/SimpleLoader";
 import FileUploadBox from "../styledComponents/fileUpload/FileUploadBox";
+import { toastError, toastSuccess } from "../ui/toast";
 import templateAttachmentsApi from "../../api/templateAttachmentsApi";
 
 import "./TemplateAttachmentsSection.scss";
@@ -18,7 +19,6 @@ export default function TemplateAttachmentsSection({ templateType, templateKey }
     const [attachments, setAttachments] = useState([]);
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
-    const [error, setError] = useState("");
     const fileInputRef = useRef(null);
 
     const loadAttachments = useCallback(async () => {
@@ -40,13 +40,12 @@ export default function TemplateAttachmentsSection({ templateType, templateKey }
     const handleUpload = useCallback(async (file) => {
         if (!file) return;
         setUploading(true);
-        setError("");
         try {
             await templateAttachmentsApi.upload(templateType, templateKey, file);
             await loadAttachments();
+            toastSuccess("הקובץ הועלה בהצלחה");
         } catch (err) {
-            setError(err?.response?.data?.error || "שגיאה בהעלאת קובץ");
-            setTimeout(() => setError(""), 4000);
+            toastError(err?.response?.data?.error || "שגיאה בהעלאת קובץ");
         }
         setUploading(false);
     }, [templateType, templateKey, loadAttachments]);
@@ -55,9 +54,9 @@ export default function TemplateAttachmentsSection({ templateType, templateKey }
         try {
             await templateAttachmentsApi.delete(id);
             setAttachments(prev => prev.filter(a => a.id !== id));
+            toastSuccess("הקובץ נמחק");
         } catch {
-            setError("שגיאה במחיקת קובץ");
-            setTimeout(() => setError(""), 4000);
+            toastError("שגיאה במחיקת קובץ");
         }
     }, []);
 
@@ -95,8 +94,6 @@ export default function TemplateAttachmentsSection({ templateType, templateKey }
                         uploading={uploading}
                         label="צרף קובץ"
                     />
-
-                    {error && <Text12 className="lw-templateAttachments__error">{error}</Text12>}
                 </>
             )}
         </SimpleContainer>
