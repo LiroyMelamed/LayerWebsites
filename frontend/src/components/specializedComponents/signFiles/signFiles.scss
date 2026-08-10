@@ -1090,6 +1090,9 @@
     --spot-signature-border: #1e3a8a;
     /* blue */
     --spot-signature-bg: rgba(30, 58, 138, 0.2);
+    --spot-border: var(--spot-signature-border);
+    --spot-bg: var(--spot-signature-bg);
+    --spot-badge-bg: var(--spot-signature-border);
     --spot-email-border: #1d4ed8;
     --spot-email-bg: rgba(29, 78, 216, 0.2);
     --spot-phone-border: #0f766e;
@@ -1110,6 +1113,9 @@
     --spot-signature-border: #92400e;
     /* amber */
     --spot-signature-bg: rgba(146, 64, 14, 0.2);
+    --spot-border: var(--spot-signature-border);
+    --spot-bg: var(--spot-signature-bg);
+    --spot-badge-bg: var(--spot-signature-border);
     --spot-email-border: #b45309;
     --spot-email-bg: rgba(180, 83, 9, 0.2);
     --spot-phone-border: #7c6f16;
@@ -1130,6 +1136,9 @@
     --spot-signature-border: #991b1b;
     /* red */
     --spot-signature-bg: rgba(153, 27, 27, 0.2);
+    --spot-border: var(--spot-signature-border);
+    --spot-bg: var(--spot-signature-bg);
+    --spot-badge-bg: var(--spot-signature-border);
     --spot-email-border: #b91c1c;
     --spot-email-bg: rgba(185, 28, 28, 0.2);
     --spot-phone-border: #0f766e;
@@ -1150,6 +1159,9 @@
     --spot-signature-border: #4c1d95;
     /* purple */
     --spot-signature-bg: rgba(76, 29, 149, 0.2);
+    --spot-border: var(--spot-signature-border);
+    --spot-bg: var(--spot-signature-bg);
+    --spot-badge-bg: var(--spot-signature-border);
     --spot-email-border: #5b21b6;
     --spot-email-bg: rgba(91, 33, 182, 0.2);
     --spot-phone-border: #0f766e;

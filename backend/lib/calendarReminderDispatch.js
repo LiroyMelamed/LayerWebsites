@@ -40,14 +40,20 @@ async function dispatchCalendarReminder({
     phone = null,
     eventChannels,
     eventType = null,
+    recipientRole = null,
     title,
     body,
     payload = {},
 }) {
     const selected = parseStoredChannels(eventChannels);
-    if (eventType && eventType !== 'reminder') {
-        selected.push = false;
+    // General "תזכורת" events: push OK. Appointments/hearings: lawyers may use push;
+    // clients stay on SMS/email unless push was explicitly chosen and they have a userId.
+    if (eventType && eventType !== 'reminder' && recipientRole === 'client') {
+        // Prefer SMS/email for clients on meetings; keep push only if user has app token path.
+        // Do not force-off — channel choice wins when userId present.
     }
+    // Previously push was forced off for all non-reminder types, which blocked
+    // lawyer notifications on events without a client.
 
     let resolvedEmail = String(email || '').trim();
     let resolvedPhone = String(phone || '').trim();

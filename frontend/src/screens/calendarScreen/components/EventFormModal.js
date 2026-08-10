@@ -36,6 +36,7 @@ import { adminApi } from "../../../api/adminApi";
 import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
 import CaseFullView from "../../../components/styledComponents/cases/CaseFullView";
 import { EVENT_COLOR_PRESETS, getEventTypeDefaultColor, isStockEventColor } from "../utils/lawyerColors";
+import CalendarSmsTemplateEditor from "./CalendarSmsTemplateEditor";
 import "./EventFormModal.scss";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -60,35 +61,6 @@ const DEFAULT_INVITE_SMS =
     + "לאישור הגעה, אנא לחץ/י על הקישור {{rsvpUrl}}\n"
     + "להוראות הגעה בוויז: {{wazeUrl}}\n"
     + "לבירור או שינוי נא להתקשר ל {{firmPhone}}";
-
-const CALENDAR_SMS_VARS = [
-    "recipientName", "firmName", "date", "time", "address",
-    "wazeUrl", "mapsUrl", "rsvpUrl", "firmPhone", "websiteUrl", "lawyerName", "title",
-];
-
-const CALENDAR_SMS_VAR_LABELS = {
-    recipientName: "שם הלקוח",
-    firmName: "שם המשרד",
-    date: "תאריך",
-    time: "שעה",
-    address: "כתובת",
-    wazeUrl: "קישור וויז",
-    mapsUrl: "קישור מפות",
-    rsvpUrl: "קישור אישור הגעה",
-    firmPhone: "טלפון המשרד",
-    websiteUrl: "אתר המשרד",
-    lawyerName: "שם עורך הדין",
-    title: "כותרת האירוע",
-};
-
-/** Fill {{placeholders}} with real event data; unresolved ones fall back to the Hebrew label. */
-function renderSmsPreview(template, values) {
-    return String(template || "").replace(/\{\{\s*(\w+)\s*\}\}/g, (_m, key) => {
-        const val = values[key];
-        if (val != null && String(val).trim()) return String(val).trim();
-        return `"${CALENDAR_SMS_VAR_LABELS[key] || key}"`;
-    });
-}
 
 const INTAKE_EXISTING = "existing";
 const INTAKE_LEAD = "lead";
@@ -126,6 +98,68 @@ function customerDisplayName(item) {
 
 function customerUserId(item) {
     return item?.UserId ?? item?.userid ?? item?.id ?? null;
+}
+
+function customerPhone(item) {
+    return String(item?.PhoneNumber ?? item?.phonenumber ?? item?.Phone ?? item?.phone ?? "").trim();
+}
+
+function clientChipLabel(client) {
+    const name = String(client?.name || "").trim();
+    const phone = String(client?.phone || "").trim();
+    if (name && phone) return `${name} · ${phone}`;
+    return name || phone || "";
+}
+
+function _initialClients(event) {
+    if (Array.isArray(event?.clients) && event.clients.length) {
+        return event.clients
+            .map((c) => ({
+                userId: c.userId ?? c.user_id ?? null,
+                name: c.name || c.clientName || "",
+                phone: c.phone || c.PhoneNumber || c.phonenumber || "",
+            }))
+            .filter((c) => c.userId != null);
+    }
+    if (event?.clientUserId) {
+        return [{
+            userId: event.clientUserId,
+            name: event.clientName || event.clientDisplayName || "",
+            phone: event.clientPhone || "",
+        }];
+    }
+    return [];
+}
+
+function _resolveSplitReminderOffsets(event, isEdit, isCreateCapable) {
+    const legacy = parseOffsetsList(event?.reminderOffsets);
+    const lawyerRaw = event?.lawyerReminderOffsets ?? event?.lawyer_reminder_offsets;
+    const clientRaw = event?.clientReminderOffsets ?? event?.client_reminder_offsets;
+    const hasSplit = lawyerRaw != null || clientRaw != null;
+
+    if (isEdit) {
+        return {
+            lawyerReminderOffsets: hasSplit
+                ? parseOffsetsList(lawyerRaw ?? legacy)
+                : legacy,
+            clientReminderOffsets: hasSplit
+                ? parseOffsetsList(clientRaw ?? legacy)
+                : legacy,
+        };
+    }
+
+    if (isCreateCapable || isReminderCapableEventType(event?.eventType)) {
+        const defaults = defaultReminderOffsets(DEFAULT_ALLOWED_MINUTES);
+        return {
+            lawyerReminderOffsets: defaults,
+            clientReminderOffsets: defaults,
+        };
+    }
+
+    return {
+        lawyerReminderOffsets: parseOffsetsList(lawyerRaw ?? legacy),
+        clientReminderOffsets: parseOffsetsList(clientRaw ?? legacy),
+    };
 }
 
 // Placeholders auto-filled by the backend / system — never asked from the user.
@@ -224,7 +258,8 @@ function _initialManagers(event) {
 /** Decide initial intake mode for a given event. Lead data wins; otherwise existing. */
 function _initialIntakeMode(event) {
     if (!event) return INTAKE_EXISTING;
-    if (event.clientUserId) return INTAKE_EXISTING;
+    const clients = _initialClients(event);
+    if (clients.length || event.clientUserId) return INTAKE_EXISTING;
     if (event.leadName || event.leadPhone || event.leadEmail) return INTAKE_LEAD;
     return INTAKE_EXISTING;
 }
@@ -237,6 +272,8 @@ function _formStateFromEvent(event) {
         (event?.eventType === EVENT_TYPE_APPT ||
             event?.eventType === EVENT_TYPE_HEARING ||
             !event?.eventType);
+    const clients = _initialClients(event);
+    const splitReminders = _resolveSplitReminderOffsets(event, isEdit, isCreateCapable);
 
     return {
         eventType: event?.eventType || EVENT_TYPE_APPT,
@@ -247,8 +284,10 @@ function _formStateFromEvent(event) {
         endTime: toDatetimeLocal(event?.endTime) || "",
         allDay: event?.allDay || false,
         color: resolveFormColor(event, event?.eventType || EVENT_TYPE_APPT),
-        clientName: event?.clientName || "",
-        clientUserId: event?.clientUserId || null,
+        clients,
+        clientSearch: "",
+        clientName: clients[0]?.name || event?.clientName || "",
+        clientUserId: clients[0]?.userId || event?.clientUserId || null,
         managerName: event?.managerName || "",
         managerUserId: event?.managerUserId || null,
         caseId: event?.caseId || null,
@@ -258,13 +297,8 @@ function _formStateFromEvent(event) {
         leadPhone: event?.leadPhone || "",
         leadEmail: event?.leadEmail || "",
         leadCaseName: event?.leadCaseName || "",
-        reminderOffsets: isEdit
-            ? parseOffsetsList(event?.reminderOffsets)
-            : (isCreateCapable
-                ? defaultReminderOffsets(DEFAULT_ALLOWED_MINUTES)
-                : (isReminderCapableEventType(event?.eventType)
-                    ? defaultReminderOffsets(DEFAULT_ALLOWED_MINUTES)
-                    : parseOffsetsList(event?.reminderOffsets))),
+        lawyerReminderOffsets: splitReminders.lawyerReminderOffsets,
+        clientReminderOffsets: splitReminders.clientReminderOffsets,
         reminderChannels: isEdit
             ? parseStoredChannels(event?.reminderChannels)
             : (isCreateCapable || isReminderCapableEventType(event?.eventType)
@@ -301,8 +335,15 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const colorTouchedRef = useRef(!isStockEventColor(event?.color, event?.eventType || EVENT_TYPE_APPT));
 
     // Existing-client / manager fields
-    const [clientName, setClientName] = useState(event?.clientName || "");
-    const [clientUserId, setClientUserId] = useState(event?.clientUserId || null);
+    const [clients, setClients] = useState(() => _initialClients(event));
+    const [clientSearch, setClientSearch] = useState("");
+    // Reminder-type search field + linked user (single recipient for email reminders)
+    const [clientName, setClientName] = useState(
+        () => _initialClients(event)[0]?.name || event?.clientName || ""
+    );
+    const [clientUserId, setClientUserId] = useState(
+        () => _initialClients(event)[0]?.userId || event?.clientUserId || null
+    );
     const [managers, setManagers] = useState(() => _initialManagers(event));
     const [managerSearch, setManagerSearch] = useState("");
     const [caseId, setCaseId] = useState(event?.caseId || null);
@@ -319,13 +360,18 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const [successMsg, setSuccessMsg] = useState("");
     const [saving, setSaving] = useState(false);
     const [deleting, setDeleting] = useState(false);
+    const [duplicating, setDuplicating] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [converting, setConverting] = useState(false);
     const [linkingCase, setLinkingCase] = useState(false);
     const [optionalConvertCaseName, setOptionalConvertCaseName] = useState(event?.leadCaseName || "");
-    const [reminderOffsets, setReminderOffsets] = useState(() => {
+    const [lawyerReminderOffsets, setLawyerReminderOffsets] = useState(() => {
         const s = _formStateFromEvent(event);
-        return s.reminderOffsets;
+        return s.lawyerReminderOffsets;
+    });
+    const [clientReminderOffsets, setClientReminderOffsets] = useState(() => {
+        const s = _formStateFromEvent(event);
+        return s.clientReminderOffsets;
     });
     const [reminderChannels, setReminderChannels] = useState(() => {
         const s = _formStateFromEvent(event);
@@ -348,7 +394,9 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const [allowedReminderMinutes, setAllowedReminderMinutes] = useState(DEFAULT_ALLOWED_MINUTES);
     const [allowedReminderChannelKeys, setAllowedReminderChannelKeys] = useState(["push", "sms", "email"]);
     const [caseFormDraft, setCaseFormDraft] = useState(null);
-    const linkedClientLabelRef = useRef(event?.clientName || "");
+    const linkedClientLabelRef = useRef(
+        _initialClients(event)[0]?.name || event?.clientName || ""
+    );
 
     // ─── Reminder-event fields (event_type === 'reminder') ────────────────
     const [reminderClientName, setReminderClientName] = useState("");
@@ -401,6 +449,8 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setAllDay(s.allDay);
         setColor(s.color);
         colorTouchedRef.current = !isStockEventColor(event?.color, s.eventType);
+        setClients(s.clients);
+        setClientSearch("");
         setClientName(s.clientName);
         setClientUserId(s.clientUserId);
         setManagers(_initialManagers(event));
@@ -412,17 +462,19 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setLeadPhone(s.leadPhone);
         setLeadEmail(s.leadEmail);
         setOptionalConvertCaseName(s.leadCaseName || "");
-        setReminderOffsets(s.reminderOffsets);
+        setLawyerReminderOffsets(s.lawyerReminderOffsets);
+        setClientReminderOffsets(s.clientReminderOffsets);
         setReminderChannels(s.reminderChannels);
         setReminderTargets(s.reminderTargets);
         setClientReminderSms(String(event?.clientReminderSms || "").trim() || DEFAULT_CLIENT_REMINDER_SMS);
         setInviteSms(String(event?.inviteSms || "").trim() || DEFAULT_INVITE_SMS);
-        linkedClientLabelRef.current = s.clientName || "";
+        linkedClientLabelRef.current = s.clients[0]?.name || s.clientName || "";
         setCaseFormDraft(null);
         setClientCases([]);
         setError("");
         setSuccessMsg("");
         setConfirmDelete(false);
+        setDuplicating(false);
         lastConflictKeyRef.current = null;
         // Reset reminder-event fields; the dedicated load-reminder effect prefills them on edit.
         setReminderClientName(event?.clientName || event?.leadName || "");
@@ -493,6 +545,8 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             setLeadEmail("");
         } else {
             // Switching to lead mode → strip any prior client/case wiring
+            setClients([]);
+            setClientSearch("");
             setClientName("");
             setClientUserId(null);
             setCaseId(null);
@@ -506,6 +560,8 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         // Reminder type keeps its own client link fields — only leave/holiday wipe them.
         if (isLeaveOrHolidayEventType(eventType)) {
             setIntakeMode(INTAKE_EXISTING);
+            setClients([]);
+            setClientSearch("");
             setClientName("");
             setClientUserId(null);
             setCaseId(null);
@@ -513,7 +569,8 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             setLeadName("");
             setLeadPhone("");
             setLeadEmail("");
-            setReminderOffsets([]);
+            setLawyerReminderOffsets([]);
+            setClientReminderOffsets([]);
             setReminderChannels({ push: false, sms: false, email: false });
             return;
         }
@@ -554,7 +611,12 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         }
         if (!isReminderCapableEventType(eventType)) return;
         // Coming from leave/holiday (or empty offsets): seed yellow defaults.
-        setReminderOffsets((prev) => (
+        setLawyerReminderOffsets((prev) => (
+            prev?.length
+                ? normalizeSelectedOffsets(prev, allowedReminderMinutes)
+                : defaultReminderOffsets(allowedReminderMinutes)
+        ));
+        setClientReminderOffsets((prev) => (
             prev?.length
                 ? normalizeSelectedOffsets(prev, allowedReminderMinutes)
                 : defaultReminderOffsets(allowedReminderMinutes)
@@ -643,7 +705,8 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 }
                 // On create, re-apply defaults against the firm allowlist once settings load.
                 if (!isEdit) {
-                    setReminderOffsets((prev) => (prev?.length ? normalizeSelectedOffsets(prev, allowed) : defaultReminderOffsets(allowed)));
+                    setLawyerReminderOffsets((prev) => (prev?.length ? normalizeSelectedOffsets(prev, allowed) : defaultReminderOffsets(allowed)));
+                    setClientReminderOffsets((prev) => (prev?.length ? normalizeSelectedOffsets(prev, allowed) : defaultReminderOffsets(allowed)));
                     setReminderChannels((prev) => normalizeChannelsForEventType(
                         eventTypeRef.current,
                         hasAnyReminderChannel(prev) ? prev : defaultReminderChannels(calChannelKeys),
@@ -660,8 +723,9 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         const validStart = start && !Number.isNaN(start.getTime()) ? start : null;
         const addr = (location || "").trim() || smsOfficeAddress;
         const useFirmLinks = !(location || "").trim() || (smsOfficeAddress && addr === smsOfficeAddress);
+        const primaryClientName = (clients[0]?.name || clientName || leadName || "").trim();
         return {
-            recipientName: (clientName || leadName || "").trim(),
+            recipientName: primaryClientName,
             firmName: getFirmName() || "",
             date: validStart
                 ? validStart.toLocaleDateString("he-IL", { day: "2-digit", month: "2-digit", year: "numeric" })
@@ -678,7 +742,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             lawyerName: (managers?.[0]?.name || "").trim(),
             title: (title || "").trim(),
         };
-    }, [clientName, leadName, startTime, location, smsFirmPhone, smsFirmWazeUrl, smsFirmMapsUrl, smsOfficeAddress, managers, title]);
+    }, [clients, clientName, leadName, startTime, location, smsFirmPhone, smsFirmWazeUrl, smsFirmMapsUrl, smsOfficeAddress, managers, title]);
 
     const reminderPresets = presetsForAllowedMinutes(allowedReminderMinutes);
     const reminderChannelOptions = useMemo(
@@ -690,6 +754,11 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const isReminderEventType = eventType === EVENT_TYPE_REMINDER;
     // Meeting attendees only make sense for appointments/hearings — not תזכורת כללית.
     const showManagersField = !isInternalScopedEventType(eventType);
+    const hasClientRecipient = clients.length > 0
+        || !!(leadName.trim() || leadPhone.trim() || leadEmail.trim())
+        || (intakeMode === INTAKE_LEAD);
+    const anyReminderOffsets = lawyerReminderOffsets.length > 0
+        || (hasClientRecipient && clientReminderOffsets.length > 0);
     const reminderTemplateItems = useMemo(
         () => reminderTemplates.map((tpl) => ({ value: tpl.key, label: tpl.label })),
         [reminderTemplates]
@@ -728,8 +797,18 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setReminderTemplateData((prev) => ({ ...prev, [key]: value }));
     };
 
-    const toggleReminderOffset = (minutes) => {
-        setReminderOffsets((prev) => {
+    const toggleLawyerReminderOffset = (minutes) => {
+        setLawyerReminderOffsets((prev) => {
+            const set = new Set(prev);
+            if (set.has(minutes)) set.delete(minutes);
+            else set.add(minutes);
+            return normalizeSelectedOffsets([...set], allowedReminderMinutes);
+        });
+    };
+
+    const toggleClientReminderOffset = (minutes) => {
+        if (!hasClientRecipient) return;
+        setClientReminderOffsets((prev) => {
             const set = new Set(prev);
             if (set.has(minutes)) set.delete(minutes);
             else set.add(minutes);
@@ -823,9 +902,10 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     }, []);
 
     useEffect(() => {
-        if (clientUserId) loadClientCases(clientUserId);
+        const primaryId = clients[0]?.userId || clientUserId;
+        if (primaryId) loadClientCases(primaryId);
         else setClientCases([]);
-    }, [clientUserId, loadClientCases]);
+    }, [clients, clientUserId, loadClientCases]);
 
     // ─── Validation ───────────────────────────────────────────────────────
     const validate = () => {
@@ -857,7 +937,11 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 return false;
             }
         }
-        if (showReminderPicker && reminderOffsets.length > 0 && !hasAnyReminderChannel(reminderChannels)) {
+        const lawyerOff = normalizeSelectedOffsets(lawyerReminderOffsets, allowedReminderMinutes);
+        const clientOff = hasClientRecipient
+            ? normalizeSelectedOffsets(clientReminderOffsets, allowedReminderMinutes)
+            : [];
+        if (showReminderPicker && (lawyerOff.length > 0 || clientOff.length > 0) && !hasAnyReminderChannel(reminderChannels)) {
             setError(t("calendar.eventRemindersChannelRequired"));
             return false;
         }
@@ -917,6 +1001,22 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 startIso = new Date(startTime).toISOString();
                 endIso = new Date(endTime).toISOString();
             }
+            const primaryClient = clients[0] || null;
+            const clientUserIds = clients.map((c) => c.userId).filter(Boolean);
+            const lawyerOff = showReminderPicker
+                ? normalizeSelectedOffsets(lawyerReminderOffsets, allowedReminderMinutes)
+                : [];
+            const clientOff = showReminderPicker && hasClientRecipient
+                ? normalizeSelectedOffsets(clientReminderOffsets, allowedReminderMinutes)
+                : [];
+            const unionOffsets = [...new Set([...lawyerOff, ...clientOff])]
+                .sort((a, b) => b - a);
+            const nextReminderTargets = showReminderPicker
+                ? {
+                    ...reminderTargets,
+                    ...(hasClientRecipient ? {} : { client: false }),
+                }
+                : { client: false, managers: false };
             const payload = {
                 title: title.trim() || reminderTitleFallback || (eventType === EVENT_TYPE_LEAVE
                     ? t("calendar.leaveLabel")
@@ -945,15 +1045,13 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     ? managers.map((m) => m.name).filter(Boolean).join(", ")
                     : null,
                 manager_user_ids: managers.map((m) => m.userId).filter(Boolean),
-                reminder_offsets: showReminderPicker
-                    ? normalizeSelectedOffsets(reminderOffsets, allowedReminderMinutes)
-                    : [],
+                reminder_offsets: unionOffsets,
+                lawyer_reminder_offsets: lawyerOff,
+                client_reminder_offsets: clientOff,
                 reminder_channels: showReminderPicker
                     ? normalizeChannelsForEventType(eventType, reminderChannels, allowedReminderChannelKeys)
                     : { push: false, sms: false, email: false },
-                reminder_targets: showReminderPicker
-                    ? reminderTargets
-                    : { client: false, managers: false },
+                reminder_targets: nextReminderTargets,
                 client_reminder_sms: showReminderPicker ? clientReminderSms : null,
                 invite_sms: showReminderPicker ? inviteSms : null,
             };
@@ -971,6 +1069,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             if (isLeadMode) {
                 Object.assign(payload, {
                     client_user_id: null,
+                    client_user_ids: [],
                     client_name: null,
                     case_id: null,
                     lead_name: leadName.trim() || null,
@@ -980,8 +1079,9 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 });
             } else if (isClientScoped) {
                 Object.assign(payload, {
-                    client_user_id: clientUserId,
-                    client_name: clientName || null,
+                    client_user_id: primaryClient?.userId || null,
+                    client_user_ids: clientUserIds,
+                    client_name: primaryClient?.name || null,
                     case_id: caseId,
                     lead_name: null,
                     lead_phone: null,
@@ -995,6 +1095,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 const linkedClientId = clientUserId || null;
                 Object.assign(payload, {
                     client_user_id: linkedClientId,
+                    client_user_ids: linkedClientId ? [linkedClientId] : [],
                     client_name: linkedClientId
                         ? (reminderClientName.trim() || clientName || null)
                         : null,
@@ -1011,6 +1112,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             } else {
                 Object.assign(payload, {
                     client_user_id: null,
+                    client_user_ids: [],
                     client_name: null,
                     case_id: null,
                     lead_name: null,
@@ -1077,6 +1179,12 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setLeadName("");
         setLeadPhone("");
         setLeadEmail("");
+        setClients(clientId ? [{
+            userId: clientId,
+            name: clientDisplayName,
+            phone: newClient.phone || savedLeadPhone || "",
+        }] : []);
+        setClientSearch("");
         setClientUserId(clientId);
         setClientName(clientDisplayName);
         linkedClientLabelRef.current = clientDisplayName;
@@ -1108,21 +1216,21 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     }, [managers, onUpdated, t]);
 
     const handleOpenCaseForm = () => {
-        const clientId = clientUserId || event?.clientUserId || null;
+        const clientId = clients[0]?.userId || clientUserId || event?.clientUserId || null;
         if (!clientId) return;
-        const clientDisplayName = clientName || event?.clientName || "";
+        const clientDisplayName = clients[0]?.name || clientName || event?.clientName || "";
         const suggestedCaseName = optionalConvertCaseName.trim() || event?.leadCaseName || "";
         setCaseFormDraft({
             CaseName: suggestedCaseName || `תיק — ${clientDisplayName}`,
             CustomerName: clientDisplayName,
             CustomerMail: leadEmail || "",
-            PhoneNumber: leadPhone || "",
+            PhoneNumber: clients[0]?.phone || leadPhone || "",
             UserId: clientId,
             Users: [{
                 UserId: clientId,
                 Name: clientDisplayName,
                 Email: leadEmail || "",
-                PhoneNumber: leadPhone || "",
+                PhoneNumber: clients[0]?.phone || leadPhone || "",
             }],
             CaseManager: managers[0]?.name || "",
             CaseManagerId: managers[0]?.userId || "",
@@ -1203,12 +1311,34 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         if (!selectedUser) return;
         const displayName = customerDisplayName(selectedUser) || String(selectedCustomerName ?? "").trim();
         const uid = customerUserId(selectedUser);
-        setClientName(displayName);
-        setClientUserId(uid);
-        linkedClientLabelRef.current = displayName;
-        // Reset case selection — it must come from the new client's case list.
-        setCaseId(null);
-        setCaseName("");
+        if (uid == null) return;
+        const phone = customerPhone(selectedUser);
+        setClients((prev) => {
+            if (prev.some((c) => Number(c.userId) === Number(uid))) return prev;
+            const next = [...prev, { userId: uid, name: displayName, phone }];
+            if (prev.length === 0) {
+                setCaseId(null);
+                setCaseName("");
+                linkedClientLabelRef.current = displayName;
+            }
+            return next;
+        });
+        setClientSearch("");
+        searchCustomers("");
+    };
+
+    const handleRemoveClient = (userId) => {
+        setClients((prev) => {
+            const next = prev.filter((c) => Number(c.userId) !== Number(userId));
+            if (!next.length) {
+                setCaseId(null);
+                setCaseName("");
+                linkedClientLabelRef.current = "";
+            } else {
+                linkedClientLabelRef.current = next[0]?.name || "";
+            }
+            return next;
+        });
     };
 
     const handleReminderClientSelected = (_selectedName, resultItem) => {
@@ -1225,24 +1355,10 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         searchCustomers("");
     };
 
-    const handleClientNameSearch = useCallback((name) => {
-        setClientName(name);
-        const trimmed = String(name ?? "").trim();
-        const linkedTrimmed = String(linkedClientLabelRef.current ?? "").trim();
-
-        if (clientUserId && trimmed !== linkedTrimmed) {
-            setClientUserId(null);
-            setCaseId(null);
-            setCaseName("");
-        }
-
-        if (clientUserId && trimmed === linkedTrimmed) {
-            searchCustomers("");
-            return;
-        }
-
-        searchCustomers(trimmed);
-    }, [clientUserId, searchCustomers]);
+    const handleClientSearch = useCallback((name) => {
+        setClientSearch(name);
+        searchCustomers(String(name ?? "").trim());
+    }, [searchCustomers]);
 
     const handleManagerSelected = (selectedManagerName, resultItem) => {
         const selectedAdmin = resultItem || (Array.isArray(admins)
@@ -1264,12 +1380,66 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setManagers((prev) => prev.filter((m) => m.userId !== userId));
     };
 
+    const handleResendInvite = async () => {
+        if (!isEdit || !event?.id) return;
+        setError("");
+        setSuccessMsg("");
+        try {
+            const res = await calendarApi.resendInvite(event.id);
+            if (!res?.success) {
+                setError(
+                    res?.data?.message
+                    || res?.message
+                    || t("calendar.inviteResendFailed")
+                );
+                return;
+            }
+            const data = res.data || {};
+            if (data.deferred) {
+                setSuccessMsg(t("calendar.inviteResendDeferred"));
+            } else {
+                setSuccessMsg(t("calendar.inviteResendSuccess"));
+            }
+            if (data.event) onUpdated?.(data.event);
+        } catch (e) {
+            setError(
+                e?.response?.data?.message
+                || t("calendar.inviteResendFailed")
+            );
+        }
+    };
+
+    const handleDuplicate = async () => {
+        if (!isEdit || !event?.id) return;
+        setDuplicating(true);
+        setError("");
+        try {
+            const res = await calendarApi.duplicateEvent(event.id);
+            if (res?.success && res?.data?.event) {
+                onSaved?.(res.data.event);
+            } else {
+                setError(
+                    res?.data?.message
+                    || res?.message
+                    || t("calendar.duplicateEventError")
+                );
+                setDuplicating(false);
+            }
+        } catch (err) {
+            setError(
+                err?.response?.data?.message
+                || t("calendar.duplicateEventError")
+            );
+            setDuplicating(false);
+        }
+    };
+
     // ─── Derived flags ────────────────────────────────────────────────────
     const isInternalScopedType = isInternalScopedEventType(eventType);
     const showIntakeToggle = !isInternalScopedType;
     const showLeadFields = showIntakeToggle && intakeMode === INTAKE_LEAD;
     const showExistingClientFields = showIntakeToggle && intakeMode === INTAKE_EXISTING;
-    const linkedClientId = clientUserId || event?.clientUserId || null;
+    const linkedClientId = clients[0]?.userId || clientUserId || event?.clientUserId || null;
     const linkedCaseId = caseId || event?.caseId || null;
     const hasLeadDataPersisted = isEdit
         && !linkedClientId
@@ -1279,6 +1449,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const showOpenCaseCta = isEdit && !!linkedClientId && !linkedCaseId && !showConvertCta && !caseFormDraft;
     const showCaseLinker = showExistingClientFields && !!linkedClientId;
     const showConflictBanner = !isInternalScopedType && (conflictState.hasConflict || conflictState.hasLeaveConflict);
+    const hasLinkedClients = clients.length > 0;
 
     const modalRootRef = useRef(null);
     const leadNameInputRef = useRef(null);
@@ -1607,26 +1778,63 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                         <SimpleContainer className="lw-eventFormModal__reminders">
                             <TextBold14 color={NAVY}>{t("calendar.eventRemindersTitle")}</TextBold14>
                             <Text12 color="#718096">{t("calendar.eventRemindersHint")}</Text12>
-                            <SimpleContainer className="lw-eventFormModal__reminderChips">
-                                {reminderPresets.map(({ minutes, labelKey }) => {
-                                    const active = reminderOffsets.includes(minutes);
-                                    return (
-                                        <SimpleButton
-                                            key={minutes}
-                                            className={`lw-eventFormModal__reminderChip ${active ? "is-active" : ""}`}
-                                            onPress={() => toggleReminderOffset(minutes)}
-                                            aria-pressed={active}
-                                            tabIndex={-1}
-                                        >
-                                            <Text14>{t(labelKey)}</Text14>
-                                        </SimpleButton>
-                                    );
-                                })}
+
+                            <SimpleContainer className="lw-eventFormModal__reminderGroup">
+                                <TextBold14 color={NAVY}>{t("calendar.lawyerRemindersLabel")}</TextBold14>
+                                <SimpleContainer className="lw-eventFormModal__reminderChips">
+                                    {reminderPresets.map(({ minutes, labelKey }) => {
+                                        const active = lawyerReminderOffsets.includes(minutes);
+                                        return (
+                                            <SimpleButton
+                                                key={`lawyer-${minutes}`}
+                                                className={`lw-eventFormModal__reminderChip ${active ? "is-active" : ""}`}
+                                                onPress={() => toggleLawyerReminderOffset(minutes)}
+                                                aria-pressed={active}
+                                                tabIndex={-1}
+                                            >
+                                                <Text14>{t(labelKey)}</Text14>
+                                            </SimpleButton>
+                                        );
+                                    })}
+                                </SimpleContainer>
+                                {lawyerReminderOffsets.length === 0 && (
+                                    <Text12 color="#718096">{t("calendar.eventRemindersNone")}</Text12>
+                                )}
                             </SimpleContainer>
-                            {reminderOffsets.length === 0 && (
-                                <Text12 color="#718096">{t("calendar.eventRemindersNone")}</Text12>
-                            )}
-                            {reminderOffsets.length > 0 && (
+
+                            <SimpleContainer
+                                className={`lw-eventFormModal__reminderGroup ${!hasClientRecipient ? "is-disabled" : ""}`}
+                            >
+                                <TextBold14 color={NAVY}>{t("calendar.clientRemindersLabel")}</TextBold14>
+                                {!hasClientRecipient ? (
+                                    <Text12 color="#718096">{t("calendar.clientRemindersDisabledHint")}</Text12>
+                                ) : (
+                                    <>
+                                        <SimpleContainer className="lw-eventFormModal__reminderChips">
+                                            {reminderPresets.map(({ minutes, labelKey }) => {
+                                                const active = clientReminderOffsets.includes(minutes);
+                                                return (
+                                                    <SimpleButton
+                                                        key={`client-${minutes}`}
+                                                        className={`lw-eventFormModal__reminderChip ${active ? "is-active" : ""}`}
+                                                        onPress={() => toggleClientReminderOffset(minutes)}
+                                                        aria-pressed={active}
+                                                        tabIndex={-1}
+                                                        disabled={!hasClientRecipient}
+                                                    >
+                                                        <Text14>{t(labelKey)}</Text14>
+                                                    </SimpleButton>
+                                                );
+                                            })}
+                                        </SimpleContainer>
+                                        {clientReminderOffsets.length === 0 && (
+                                            <Text12 color="#718096">{t("calendar.eventRemindersNone")}</Text12>
+                                        )}
+                                    </>
+                                )}
+                            </SimpleContainer>
+
+                            {anyReminderOffsets && (
                                 <SimpleContainer className="lw-eventFormModal__reminderChannels">
                                     <TextBold14 color={NAVY}>{t("calendar.eventRemindersChannelsTitle")}</TextBold14>
                                     <SimpleContainer className="lw-eventFormModal__reminderChips">
@@ -1656,6 +1864,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                         onPress={() => toggleReminderTarget("client")}
                                         aria-pressed={!!reminderTargets.client}
                                         tabIndex={-1}
+                                        disabled={!hasClientRecipient}
                                     >
                                         <Text14>{t("calendar.reminderTargetClient")}</Text14>
                                     </SimpleButton>
@@ -1669,59 +1878,28 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                     </SimpleButton>
                                 </SimpleContainer>
                             </SimpleContainer>
-                            {reminderTargets.client && (
+                            {reminderTargets.client && hasClientRecipient && (
                                 <SimpleContainer className="lw-eventFormModal__smsTemplates">
-                                    <TextBold14 color={NAVY}>{t("calendar.clientReminderSmsLabel")}</TextBold14>
-                                    <Text12 color="#718096">{t("calendar.clientReminderSmsHint")}</Text12>
-                                    <Text12 color="#718096">{t("calendar.inviteRemindersIndependentHint")}</Text12>
-                                    <SimpleContainer className="lw-eventFormModal__smsVarRow">
-                                        {CALENDAR_SMS_VARS.map((v) => (
-                                            <SimpleButton
-                                                key={`rem-${v}`}
-                                                className="lw-eventFormModal__reminderChip"
-                                                onPress={() => setClientReminderSms((prev) => `${prev}{{${v}}}`)}
-                                                tabIndex={-1}
-                                            >
-                                                <Text14>{CALENDAR_SMS_VAR_LABELS[v] || v}</Text14>
-                                            </SimpleButton>
-                                        ))}
-                                    </SimpleContainer>
-                                    <SimpleTextArea
+                                    <Text12 color="#718096">
+                                        {t("calendar.inviteRemindersIndependentHint")}
+                                    </Text12>
+                                    <CalendarSmsTemplateEditor
+                                        title={t("calendar.clientReminderSmsLabel")}
+                                        hint={t("calendar.clientReminderSmsHint")}
                                         value={clientReminderSms}
                                         onChange={setClientReminderSms}
-                                        rows={8}
+                                        previewValues={smsPreviewValues}
+                                        excludeVars={["rsvpUrl"]}
+                                        defaultValue={DEFAULT_CLIENT_REMINDER_SMS}
                                     />
-                                    <SimpleContainer className="lw-eventFormModal__smsPreview">
-                                        <Text12 color="#718096">{t("calendar.smsPreviewTitle")}</Text12>
-                                        <Text14 className="lw-eventFormModal__smsPreviewBody">
-                                            {renderSmsPreview(clientReminderSms, smsPreviewValues)}
-                                        </Text14>
-                                    </SimpleContainer>
-                                    <TextBold14 color={NAVY}>{t("calendar.inviteSmsLabel")}</TextBold14>
-                                    <Text12 color="#718096">{t("calendar.inviteSmsHint")}</Text12>
-                                    <SimpleContainer className="lw-eventFormModal__smsVarRow">
-                                        {CALENDAR_SMS_VARS.map((v) => (
-                                            <SimpleButton
-                                                key={`inv-${v}`}
-                                                className="lw-eventFormModal__reminderChip"
-                                                onPress={() => setInviteSms((prev) => `${prev}{{${v}}}`)}
-                                                tabIndex={-1}
-                                            >
-                                                <Text14>{CALENDAR_SMS_VAR_LABELS[v] || v}</Text14>
-                                            </SimpleButton>
-                                        ))}
-                                    </SimpleContainer>
-                                    <SimpleTextArea
+                                    <CalendarSmsTemplateEditor
+                                        title={t("calendar.inviteSmsLabel")}
+                                        hint={t("calendar.inviteSmsHint")}
                                         value={inviteSms}
                                         onChange={setInviteSms}
-                                        rows={7}
+                                        previewValues={smsPreviewValues}
+                                        defaultValue={DEFAULT_INVITE_SMS}
                                     />
-                                    <SimpleContainer className="lw-eventFormModal__smsPreview">
-                                        <Text12 color="#718096">{t("calendar.smsPreviewTitle")}</Text12>
-                                        <Text14 className="lw-eventFormModal__smsPreviewBody">
-                                            {renderSmsPreview(inviteSms, smsPreviewValues)}
-                                        </Text14>
-                                    </SimpleContainer>
                                 </SimpleContainer>
                             )}
                         </SimpleContainer>
@@ -1749,18 +1927,18 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                             : t("calendar.inviteStatusPending")}
                                 </TextBold14>
                                 {(event.inviteStatus === "pending" || event.inviteStatus === "declined") && (
-                                    <SecondaryButton
-                                        onPress={async () => {
-                                            try {
-                                                await calendarApi.resendInvite(event.id);
-                                                setSuccessMsg(t("calendar.inviteResend"));
-                                            } catch (e) {
-                                                setError(e?.response?.data?.message || "שגיאה בשליחת הזמנה");
-                                            }
-                                        }}
-                                    >
+                                    <SecondaryButton onPress={handleResendInvite}>
                                         {t("calendar.inviteResend")}
                                     </SecondaryButton>
+                                )}
+                                {clients.some((c) => c.phone) && (
+                                    <SimpleContainer className="lw-eventFormModal__clientPhones">
+                                        {clients.filter((c) => c.phone).map((c) => (
+                                            <Text12 key={c.userId} color="#4A5568">
+                                                {t("calendar.clientPhoneLabel")}: {clientChipLabel(c)}
+                                            </Text12>
+                                        ))}
+                                    </SimpleContainer>
                                 )}
                             </SimpleContainer>
                         )}
@@ -1829,7 +2007,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                     className={`lw-eventFormModal__segmentedBtn ${intakeMode === INTAKE_EXISTING ? "is-active" : ""}`}
                                     onPress={() => setIntakeMode(INTAKE_EXISTING)}
                                     aria-pressed={intakeMode === INTAKE_EXISTING}
-                                    disabled={isEdit && !!clientUserId}
+                                    disabled={isEdit && hasLinkedClients}
                                     tabIndex={-1}
                                 >
                                     {t("calendar.intakeExistingClient")}
@@ -1838,7 +2016,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                     className={`lw-eventFormModal__segmentedBtn ${intakeMode === INTAKE_LEAD ? "is-active" : ""}`}
                                     onPress={() => setIntakeMode(INTAKE_LEAD)}
                                     aria-pressed={intakeMode === INTAKE_LEAD}
-                                    disabled={isEdit && !!clientUserId}
+                                    disabled={isEdit && hasLinkedClients}
                                     tabIndex={-1}
                                 >
                                     {t("calendar.intakeNewLead")}
@@ -1851,14 +2029,38 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     {showExistingClientFields && (
                         <>
                             <SearchInput
-                                title={t("calendar.client")}
-                                value={clientName}
-                                onSearch={handleClientNameSearch}
+                                title={t("calendar.addClient")}
+                                value={clientSearch}
+                                onSearch={handleClientSearch}
                                 isPerforming={isSearchingCustomers}
                                 queryResult={customers}
-                                getButtonTextFunction={(item) => customerDisplayName(item)}
+                                getButtonTextFunction={(item) => {
+                                    const name = customerDisplayName(item);
+                                    const phone = customerPhone(item);
+                                    return phone ? `${name} · ${phone}` : name;
+                                }}
                                 buttonPressFunction={handleCustomerSelected}
+                                clearOnSelect
                             />
+                            {clients.length > 0 && (
+                                <SimpleContainer className="lw-eventFormModal__managerChips lw-eventFormModal__clientChips">
+                                    {clients.map((c) => (
+                                        <span key={c.userId} className="lw-eventFormModal__managerChip">
+                                            {clientChipLabel(c)}
+                                            <button
+                                                type="button"
+                                                className="lw-eventFormModal__chipRemove"
+                                                tabIndex={-1}
+                                                onClick={() => handleRemoveClient(c.userId)}
+                                                aria-label={t("calendar.removeClient")}
+                                            >
+                                                &times;
+                                            </button>
+                                        </span>
+                                    ))}
+                                </SimpleContainer>
+                            )}
+                            <Text12 color="#718096">{t("calendar.clientsHint")}</Text12>
 
                             {/* Linked-case display + grid ─── */}
                             {showCaseLinker && (
@@ -2035,6 +2237,14 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     <SecondaryButton onPress={onClose}>
                         {t("calendar.cancel")}
                     </SecondaryButton>
+                    {isEdit && (
+                        <SecondaryButton
+                            onPress={handleDuplicate}
+                            isPerforming={duplicating}
+                        >
+                            {t("calendar.duplicateEvent")}
+                        </SecondaryButton>
+                    )}
                     {isEdit && (
                         <SecondaryButton
                             onPress={handleDelete}

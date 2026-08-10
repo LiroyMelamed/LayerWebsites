@@ -3,10 +3,10 @@ import React, { useRef } from "react";
 import SimpleContainer from "../../../simpleComponents/SimpleContainer";
 import SimpleIcon from "../../../simpleComponents/SimpleIcon";
 import { useTranslation } from "react-i18next";
-import { signerPaletteClass } from '../../../../utils/signerColorMap';
+import { signerPaletteClassByIndex } from '../../../../utils/signerColorMap';
 import { icons } from "../../../../assets/icons/icons";
 
-// Color classes are defined in SCSS and mapped via signerColorClass
+// Color classes are defined in SCSS (lw-signer-palette-N) and keyed by signer index
 
 export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot, onRequestRemove, onSelectSpot, onRequestContext, signerIndex = 0, signerName, scale = 1, isSelected = false }) {
     const { t } = useTranslation();
@@ -67,9 +67,9 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
         ...(hasSignatureImage ? { backgroundColor: "transparent" } : null),
     };
 
-    // Determine color class using signerUserId fallback to signerIndex
-    const signerIdForColor = spot?.signerUserId ?? spot?.SignerUserId ?? spot?.signerIndex ?? spot?.signerIdx ?? signerIndex;
-    const colorClass = signerPaletteClass(signerIdForColor);
+    // Color by signer ordinal in the document (0,1,2…) — never hash user ids
+    // (hashing into 4 slots made different signers share the same amber/tan).
+    const colorClass = signerPaletteClassByIndex(signerIndex);
 
     const startDragFromClientPoint = (startClientX, startClientY) => {
         const startX = Number(startClientX);

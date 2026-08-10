@@ -557,6 +557,14 @@
     gap: v.$space-2;
 }
 
+.lw-fieldTypeNavbar__signerButton {
+    border-inline-start: 0.35rem solid var(--spot-signature-border, var(--lw-color-primary, #2A4365)) !important;
+
+    &.is-activeSigner {
+        box-shadow: 0 0 0 0.125rem var(--spot-signature-border, var(--lw-color-primary, #2A4365));
+    }
+}
+
 .lw-uploadSigningScreen__viewerHeaderRow> :last-child {
     margin-inline-start: auto;
 }
