@@ -1139,8 +1139,6 @@ const createEvent = async (req, res) => {
         && hasAnyReminderChannel(storedReminderChannels)
         && (clientIds.length > 0 || lead_phone || lead_email)
     );
-    const inviteToken = shouldInviteClient ? crypto.randomBytes(24).toString('hex') : null;
-    const inviteStatus = shouldInviteClient ? 'pending' : 'none';
     const clientReminderSms = req.body?.client_reminder_sms != null
         ? String(req.body.client_reminder_sms).trim() || null
         : null;
