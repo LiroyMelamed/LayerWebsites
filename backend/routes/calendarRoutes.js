@@ -18,6 +18,8 @@
  *     POST   /api/calendar/check-conflict                – soft overlap detector for the conflict banner
  *     GET    /api/calendar/clients/:clientUserId/cases   – active cases for a client (case-link dropdown)
  *     PATCH  /api/calendar/:id/link-case                 – attach/clear a case on an event (owner|admin)
+ *     POST   /api/calendar/:id/resend-invite             – resend client invite SMS/email
+ *     POST   /api/calendar/:id/duplicate                 – clone event (new invite tokens)
  *     POST   /api/calendar/convert-lead                  – atomic lead→client+case promotion
  *
  *   iCal / WebCal feed
@@ -76,6 +78,7 @@ router.post('/convert-lead', ...protect, cal.convertLead);
 router.get('/clients/:clientUserId/cases', ...protect, cal.getClientCases);
 router.patch('/:id/link-case', ...protect, cal.linkCase);
 router.post('/:id/resend-invite', ...protect, cal.resendInvite);
+router.post('/:id/duplicate', ...protect, cal.duplicateEvent);
 
 router.get('/:id', ...protect, cal.getEvent);
 router.put('/:id', ...protect, cal.updateEvent);

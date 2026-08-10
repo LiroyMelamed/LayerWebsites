@@ -816,6 +816,39 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         return c.toDataURL("image/png");
     };
 
+    /** Stamp: tight aspect-preserving canvas (no forced 400×180 letterbox that shrinks wide stamps). */
+    const normalizeStampDataUrl = async (dataUrl) => {
+        const raw = String(dataUrl || "");
+        if (!raw.startsWith("data:image/")) return raw;
+
+        const img = new Image();
+        const loaded = new Promise((resolve, reject) => {
+            img.onload = () => resolve();
+            img.onerror = () => reject(new Error(t("signing.canvas.failedToLoadSignatureImage")));
+        });
+        img.src = raw;
+        await loaded;
+
+        const iw = Math.max(1, img.naturalWidth || 1);
+        const ih = Math.max(1, img.naturalHeight || 1);
+        const MAX_W = 560;
+        const MAX_H = 280;
+        const scale = Math.min(MAX_W / iw, MAX_H / ih, 1);
+        const drawW = Math.max(1, Math.round(iw * scale));
+        const drawH = Math.max(1, Math.round(ih * scale));
+
+        const c = document.createElement("canvas");
+        c.width = drawW;
+        c.height = drawH;
+        const ctx = c.getContext("2d");
+        if (!ctx) return raw;
+        ctx.clearRect(0, 0, drawW, drawH);
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(img, 0, 0, drawW, drawH);
+        return c.toDataURL("image/png");
+    };
+
     const fetchSavedItemDataUrl = async (savedItem) => {
         if (!savedItem || savedItem.type == null || savedItem.index == null) return null;
         const res = isPublic
@@ -1250,7 +1283,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 dataUrl = await fileToDataUrl(clientStampFile);
             } else {
                 const rawDataUrl = await fileToDataUrl(clientStampFile);
-                const normalized = await normalizeSignatureDataUrl(rawDataUrl);
+                const normalized = await normalizeStampDataUrl(rawDataUrl);
                 // Remove background (white/colored) from uploaded stamp
                 dataUrl = await removeImageBackground(normalized);
             }
@@ -1277,25 +1310,29 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         try {
             let finalDataUrl = stampNormalizedDataUrl;
 
-            // If user drew on top, composite stamp + drawing
+            // If user drew on top, composite stamp + drawing (preserve stamp aspect)
             if (hasUserDrawn && canvasRef.current) {
-                const W = 400;
-                const H = 180;
+                const stampImg = new Image();
+                await new Promise((res, rej) => { stampImg.onload = res; stampImg.onerror = rej; stampImg.src = stampNormalizedDataUrl; });
+                const W = Math.max(1, stampImg.naturalWidth || 400);
+                const H = Math.max(1, stampImg.naturalHeight || 180);
                 const comp = document.createElement('canvas');
                 comp.width = W;
                 comp.height = H;
                 const ctx = comp.getContext('2d');
                 if (ctx) {
-                    // Draw stamp background
-                    const stampImg = new Image();
-                    await new Promise((res, rej) => { stampImg.onload = res; stampImg.onerror = rej; stampImg.src = stampNormalizedDataUrl; });
                     ctx.drawImage(stampImg, 0, 0, W, H);
 
-                    // Draw the user's strokes on top
+                    // Draw the user's strokes on top (contain-fit from signature canvas)
                     const drawingDataUrl = canvasRef.current.toDataURL('image/png');
                     const drawImg = new Image();
                     await new Promise((res, rej) => { drawImg.onload = res; drawImg.onerror = rej; drawImg.src = drawingDataUrl; });
-                    ctx.drawImage(drawImg, 0, 0, W, H);
+                    const dw = drawImg.naturalWidth || W;
+                    const dh = drawImg.naturalHeight || H;
+                    const s = Math.min(W / dw, H / dh);
+                    const ow = Math.round(dw * s);
+                    const oh = Math.round(dh * s);
+                    ctx.drawImage(drawImg, Math.round((W - ow) / 2), Math.round((H - oh) / 2), ow, oh);
 
                     finalDataUrl = comp.toDataURL('image/png');
                 }
@@ -1401,7 +1438,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                     : await signingFilesApi.getSavedStampDataUrl();
                 unwrapApi(stampRes);
                 const rawDataUrl = stampRes?.data?.dataUrl;
-                dataUrl = await normalizeSignatureDataUrl(rawDataUrl);
+                dataUrl = await normalizeStampDataUrl(rawDataUrl);
             }
 
             if (!dataUrl) {

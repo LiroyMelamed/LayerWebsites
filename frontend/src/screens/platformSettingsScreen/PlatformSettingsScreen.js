@@ -46,6 +46,10 @@ import {
     parseOffsetsList,
     parseChannelsList,
 } from "../calendarScreen/utils/eventReminders";
+import CalendarSmsTemplateEditor, {
+    CALENDAR_SMS_VARS,
+} from "../calendarScreen/components/CalendarSmsTemplateEditor";
+import { getFirmName } from "../../services/firmSettings";
 
 import "./PlatformSettingsScreen.scss";
 
@@ -329,6 +333,30 @@ const SMS_KEY_TO_NOTIF_TYPE = {
     CALENDAR_INVITE_SMS: 'CALENDAR_REMINDER',
     CALENDAR_INVITE_SMS_HEARING: 'CALENDAR_REMINDER',
 };
+
+const CALENDAR_SMS_SETTING_KEYS = new Set([
+    "CALENDAR_CLIENT_REMINDER_SMS",
+    "CALENDAR_CLIENT_REMINDER_SMS_HEARING",
+    "CALENDAR_INVITE_SMS",
+    "CALENDAR_INVITE_SMS_HEARING",
+]);
+
+function platformCalendarSmsPreviewValues() {
+    return {
+        recipientName: "לירוי",
+        firmName: getFirmName() || "שם המשרד",
+        date: "05.08.2026",
+        time: "11:00",
+        address: "כתובת המשרד",
+        wazeUrl: "https://waze.com/ul",
+        mapsUrl: "https://maps.google.com",
+        rsvpUrl: "https://example.com/rsvp",
+        firmPhone: "0550000000",
+        websiteUrl: typeof window !== "undefined" ? window.location.origin : "https://example.com",
+        lawyerName: "עורך הדין",
+        title: "כותרת האירוע",
+    };
+}
 
 function SmsVarButtons({ templateKey, onInsert }) {
     const { t } = useTranslation();
@@ -2135,52 +2163,66 @@ export default function PlatformSettingsScreen() {
 
                         return (
                             <SimpleContainer key={key} className="lw-platformSettings__settingRow">
-                                <SimpleContainer className="lw-platformSettings__settingLabel">
-                                    <TextBold14 className="lw-platformSettings__settingName">
-                                        {setting.label || key}
-                                    </TextBold14>
-                                    {activeTab !== "templates" && setting.description && (
-                                        <Text12 className="lw-platformSettings__settingDescription">
-                                            {setting.description}
-                                        </Text12>
-                                    )}
-                                </SimpleContainer>
-                                <SimpleContainer className="lw-platformSettings__settingInput">
-                                    <SettingInput
-                                        setting={setting}
-                                        value={editedValue}
+                                {CALENDAR_SMS_SETTING_KEYS.has(key) ? (
+                                    <CalendarSmsTemplateEditor
+                                        title={setting.label || key}
+                                        hint={setting.description || ""}
+                                        value={currentValue}
                                         onChange={(val) => handleSettingChange(activeTab, key, val)}
-                                        isTemplate={activeTab === "templates"}
+                                        previewValues={platformCalendarSmsPreviewValues()}
+                                        vars={SMS_TEMPLATE_VARS[key] || CALENDAR_SMS_VARS}
+                                        excludeVars={
+                                            String(key).includes("REMINDER") ? ["rsvpUrl"] : []
+                                        }
                                     />
-                                    {/* SMS variable insertion buttons for templates tab */}
-                                    {activeTab === "templates" && SMS_TEMPLATE_VARS[key] && (
-                                        <SmsVarButtons
-                                            templateKey={key}
-                                            onInsert={(varStr) => {
-                                                const newVal = currentValue + varStr;
-                                                handleSettingChange(activeTab, key, newVal);
-                                            }}
-                                        />
-                                    )}
-                                </SimpleContainer>
-                                {activeTab === "messaging" && key === SMS_SENDER_NUMBER_KEY && pendingSender && (
-                                    <SimpleContainer className="lw-platformSettings__senderPending">
-                                        <Text12 className="lw-platformSettings__senderPendingLabel">
-                                            {t("platformSettings.smsSenderPending")}: {pendingSender}
-                                        </Text12>
-                                        <SecondaryButton onPress={handleActivateSender}>
-                                            {t("platformSettings.smsSenderActivate")}
-                                        </SecondaryButton>
-                                    </SimpleContainer>
-                                )}
-                                {/* SMS template preview */}
-                                {activeTab === "templates" && currentValue && (
-                                    <SimpleContainer className="lw-platformSettings__smsPreview">
-                                        <Text12 className="lw-platformSettings__smsPreviewLabel">{t("platformSettings.preview")}</Text12>
-                                        <SimpleContainer className="lw-platformSettings__smsPreviewBox">
-                                            <Text12>{currentValue}</Text12>
+                                ) : (
+                                    <>
+                                        <SimpleContainer className="lw-platformSettings__settingLabel">
+                                            <TextBold14 className="lw-platformSettings__settingName">
+                                                {setting.label || key}
+                                            </TextBold14>
+                                            {activeTab !== "templates" && setting.description && (
+                                                <Text12 className="lw-platformSettings__settingDescription">
+                                                    {setting.description}
+                                                </Text12>
+                                            )}
                                         </SimpleContainer>
-                                    </SimpleContainer>
+                                        <SimpleContainer className="lw-platformSettings__settingInput">
+                                            <SettingInput
+                                                setting={setting}
+                                                value={editedValue}
+                                                onChange={(val) => handleSettingChange(activeTab, key, val)}
+                                                isTemplate={activeTab === "templates"}
+                                            />
+                                            {activeTab === "templates" && SMS_TEMPLATE_VARS[key] && (
+                                                <SmsVarButtons
+                                                    templateKey={key}
+                                                    onInsert={(varStr) => {
+                                                        const newVal = currentValue + varStr;
+                                                        handleSettingChange(activeTab, key, newVal);
+                                                    }}
+                                                />
+                                            )}
+                                        </SimpleContainer>
+                                        {activeTab === "messaging" && key === SMS_SENDER_NUMBER_KEY && pendingSender && (
+                                            <SimpleContainer className="lw-platformSettings__senderPending">
+                                                <Text12 className="lw-platformSettings__senderPendingLabel">
+                                                    {t("platformSettings.smsSenderPending")}: {pendingSender}
+                                                </Text12>
+                                                <SecondaryButton onPress={handleActivateSender}>
+                                                    {t("platformSettings.smsSenderActivate")}
+                                                </SecondaryButton>
+                                            </SimpleContainer>
+                                        )}
+                                        {activeTab === "templates" && currentValue && (
+                                            <SimpleContainer className="lw-platformSettings__smsPreview">
+                                                <Text12 className="lw-platformSettings__smsPreviewLabel">{t("platformSettings.preview")}</Text12>
+                                                <SimpleContainer className="lw-platformSettings__smsPreviewBox">
+                                                    <Text12>{currentValue}</Text12>
+                                                </SimpleContainer>
+                                            </SimpleContainer>
+                                        )}
+                                    </>
                                 )}
                             </SimpleContainer>
                         );

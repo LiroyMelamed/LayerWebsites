@@ -156,6 +156,49 @@ function buildHolidayHintEvent(h, t) {
     };
 }
 
+/** Aggregate multi-client RSVP: any accepted → accepted; else any pending → pending; else declined. */
+function aggregateInviteStatus(ev) {
+    const clients = Array.isArray(ev?.clients) ? ev.clients : null;
+    if (clients?.length) {
+        const statuses = clients
+            .map((c) => c.inviteStatus || c.invite_status)
+            .filter((s) => s && s !== "none");
+        if (!statuses.length) {
+            const legacy = ev?.inviteStatus;
+            return legacy && legacy !== "none" ? legacy : null;
+        }
+        if (statuses.some((s) => s === "accepted")) return "accepted";
+        if (statuses.some((s) => s === "pending")) return "pending";
+        if (statuses.some((s) => s === "declined")) return "declined";
+        return null;
+    }
+    const legacy = ev?.inviteStatus;
+    return legacy && legacy !== "none" ? legacy : null;
+}
+
+function clientPhoneTooltip(ev) {
+    const parts = [];
+    if (Array.isArray(ev?.clients) && ev.clients.length) {
+        ev.clients.forEach((c) => {
+            const name = String(c.name || "").trim();
+            const phone = String(c.phone || "").trim();
+            if (name && phone) parts.push(`${name} · ${phone}`);
+            else if (phone) parts.push(phone);
+            else if (name) parts.push(name);
+        });
+    } else {
+        const name = String(ev?.clientName || ev?.clientDisplayName || "").trim();
+        const phone = String(ev?.clientPhone || "").trim();
+        if (name && phone) parts.push(`${name} · ${phone}`);
+        else if (phone) parts.push(phone);
+    }
+    if (!parts.length && ev?.leadPhone) {
+        const lead = String(ev.leadName || "").trim();
+        parts.push(lead ? `${lead} · ${ev.leadPhone}` : String(ev.leadPhone));
+    }
+    return parts.join("\n");
+}
+
 function buildFullCalendarEvent(ev, { scope }) {
     const isLeave = ev?.eventType === "leave";
     const isHoliday = ev?.eventType === "holiday";
@@ -190,21 +233,17 @@ function buildFullCalendarEvent(ev, { scope }) {
         ? (hasCustomColor ? personalInferred : colorForKey(colorKeyForEvent(ev)))
         : personalInferred;
 
-    const inviteStatus = ev?.inviteStatus;
-    const inviteBadge =
-        inviteStatus === "accepted" ? " אושר"
-            : inviteStatus === "declined" ? " נדחה"
-                : inviteStatus === "pending" ? " ממתין"
-                    : "";
+    const inviteStatus = aggregateInviteStatus(ev);
     const inviteClass =
         inviteStatus === "accepted" ? "lw-fcEvent--inviteAccepted"
             : inviteStatus === "declined" ? "lw-fcEvent--inviteDeclined"
                 : inviteStatus === "pending" ? "lw-fcEvent--invitePending"
                     : null;
+    const phoneTip = clientPhoneTooltip(ev);
 
     return {
         id: String(ev.id),
-        title: `${ev.title || ""}${inviteBadge}`,
+        title: ev.title || "",
         start: ev.startTime,
         end: ev.endTime,
         allDay: ev.allDay,
@@ -215,7 +254,7 @@ function buildFullCalendarEvent(ev, { scope }) {
         editable: ev?.eventType !== "leave" && ev?.eventType !== "holiday",
         startEditable: ev?.eventType !== "leave" && ev?.eventType !== "holiday",
         durationEditable: ev?.eventType !== "leave" && ev?.eventType !== "holiday" && !ev?.allDay,
-        extendedProps: ev,
+        extendedProps: { ...ev, inviteStatus: inviteStatus || ev?.inviteStatus || "none", _phoneTip: phoneTip },
     };
 }
 
@@ -610,6 +649,36 @@ export default function CalendarScreen() {
         return { html: `<span class="lw-fcNowBadge">${label}</span>` };
     }, []);
 
+    const renderEventContent = useCallback((arg) => {
+        const ev = arg.event.extendedProps || {};
+        if (ev.hint) return true;
+        const status = aggregateInviteStatus(ev) || (ev.inviteStatus !== "none" ? ev.inviteStatus : null);
+        return (
+            <div className="lw-fcEventContent">
+                {status === "accepted" && (
+                    <span className="lw-fcEventRsvpBadge lw-fcEventRsvpBadge--accepted" aria-hidden="true">✓</span>
+                )}
+                {status === "pending" && (
+                    <span className="lw-fcEventRsvpBadge lw-fcEventRsvpBadge--pending" aria-hidden="true" />
+                )}
+                {status === "declined" && (
+                    <span className="lw-fcEventRsvpBadge lw-fcEventRsvpBadge--declined" aria-hidden="true" />
+                )}
+                {arg.timeText ? (
+                    <div className="fc-event-time">{arg.timeText}</div>
+                ) : null}
+                <div className="fc-event-title">{arg.event.title}</div>
+            </div>
+        );
+    }, []);
+
+    const handleEventDidMount = useCallback((info) => {
+        const tip = info.event.extendedProps?._phoneTip;
+        if (tip) {
+            info.el.setAttribute("title", tip);
+        }
+    }, []);
+
     // ── Filter handlers ────────────────────────────────────────────────────
     const setFilter = (key, value) => setFilters((prev) => ({ ...prev, [key]: value }));
 
@@ -966,6 +1035,8 @@ export default function CalendarScreen() {
                                     openCreateModal({ start, end, allDay: info.allDay });
                                 }}
                                 eventClick={openEditModal}
+                                eventContent={renderEventContent}
+                                eventDidMount={handleEventDidMount}
                                 editable
                                 eventStartEditable
                                 eventDurationEditable

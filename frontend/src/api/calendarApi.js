@@ -152,6 +152,11 @@ const calendarApi = {
     resendInvite: async (eventId) => {
         return await ApiUtils.post(`${base}/${eventId}/resend-invite`);
     },
+
+    /** Duplicate an event (new invite tokens; clears RSVP / sent reminders) */
+    duplicateEvent: async (eventId) => {
+        return await ApiUtils.post(`${base}/${eventId}/duplicate`);
+    },
 };
 
 export default calendarApi;

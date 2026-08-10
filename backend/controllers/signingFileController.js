@@ -2008,11 +2008,20 @@ async function generateSignedPdfBuffer({ pdfKey, spots }) {
                 ? await pdfDoc.embedPng(imgBuffer)
                 : await pdfDoc.embedJpg(imgBuffer);
 
+            // Contain-fit image inside the spot rect (preserve stamp/signature aspect).
+            const imgW = embedded.width || 1;
+            const imgH = embedded.height || 1;
+            const fit = Math.min(w / imgW, h / imgH);
+            const drawW = imgW * fit;
+            const drawH = imgH * fit;
+            const drawX = x + (w - drawW) / 2;
+            const drawY = y + (h - drawH) / 2;
+
             page.drawImage(embedded, {
-                x,
-                y,
-                width: w,
-                height: h,
+                x: drawX,
+                y: drawY,
+                width: drawW,
+                height: drawH,
             });
         } else if (fieldValue !== null && fieldValue !== undefined && String(fieldValue).length > 0) {
             let text = String(fieldValue);

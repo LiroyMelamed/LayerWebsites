@@ -1,0 +1,136 @@
+@use '../../../styles/variables' as v;
+
+.lw-calendarSmsEditor {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 0.0625rem solid #E2E8F0;
+    border-radius: 0.75rem;
+    background: #fff;
+    box-sizing: border-box;
+}
+
+.lw-calendarSmsEditor__header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.lw-calendarSmsEditor__title {
+    color: #2A4365;
+}
+
+.lw-calendarSmsEditor__hint {
+    color: #718096;
+    line-height: 1.4;
+}
+
+.lw-calendarSmsEditor__preview {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.lw-calendarSmsEditor__previewLabel {
+    color: #718096;
+    font-weight: 600;
+}
+
+.lw-calendarSmsEditor__bubble {
+    position: relative;
+    padding: 0.85rem 1rem;
+    border-radius: 1rem 1rem 0.25rem 1rem;
+    background: linear-gradient(180deg, #EDF2F7 0%, #E2E8F0 100%);
+    border: 0.0625rem solid #CBD5E0;
+    box-shadow: 0 0.125rem 0.5rem rgba(26, 32, 44, 0.06);
+}
+
+.lw-calendarSmsEditor__bubbleBody {
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    direction: rtl;
+    text-align: right;
+    color: #1A202C;
+    line-height: 1.55;
+}
+
+.lw-calendarSmsEditor__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.lw-calendarSmsEditor__edit {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-top: 0.25rem;
+    border-top: 0.0625rem solid #EDF2F7;
+}
+
+.lw-calendarSmsEditor__insertHint {
+    color: #4A5568;
+}
+
+.lw-calendarSmsEditor__group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.lw-calendarSmsEditor__groupLabel {
+    color: #2D3748;
+    font-weight: 700;
+}
+
+.lw-calendarSmsEditor__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.lw-calendarSmsEditor__chip {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
+    padding: 0.4rem 0.65rem;
+    border-radius: 0.5rem;
+    border: 0.0625rem solid #E2E8F0;
+    background: #F7FAFC;
+    cursor: pointer;
+    min-inline-size: 0;
+
+    &:hover {
+        background: #EDF2F7;
+        border-color: #CBD5E0;
+    }
+}
+
+.lw-calendarSmsEditor__chipLabel {
+    font-size: 0.875rem;
+    color: #1A202C;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.lw-calendarSmsEditor__chipKey {
+    font-size: 0.7rem;
+    color: #A0AEC0;
+    direction: ltr;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    line-height: 1.2;
+}
+
+.lw-calendarSmsEditor__textarea {
+    width: 100%;
+
+    .lw-simpleTextArea__field {
+        min-block-size: 9rem;
+        line-height: 1.55;
+        font-size: 0.95rem;
+    }
+}

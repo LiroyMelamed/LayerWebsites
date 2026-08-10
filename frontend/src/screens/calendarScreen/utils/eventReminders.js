@@ -29,9 +29,9 @@ export function defaultReminderOffsets(allowedMinutes = DEFAULT_ALLOWED) {
     return normalizeSelectedOffsets(DEFAULT_CREATE_REMINDER_OFFSETS, allowedMinutes);
 }
 
-/** Default channels on new create — SMS on. */
+/** Default channels on new create — push + SMS (managers get notified even without a client). */
 export function defaultReminderChannels(allowedKeys = DEFAULT_ALLOWED_CHANNELS) {
-    return normalizeSelectedChannels({ push: false, sms: true, email: false }, allowedKeys);
+    return normalizeSelectedChannels({ push: true, sms: true, email: false }, allowedKeys);
 }
 
 export function defaultReminderTargets() {
