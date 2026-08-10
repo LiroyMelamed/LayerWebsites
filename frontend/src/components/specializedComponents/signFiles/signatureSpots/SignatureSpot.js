@@ -12,10 +12,9 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
     const { t } = useTranslation();
     const ref = useRef(null);
 
-    const longPressRef = useRef({ timer: null, startX: 0, startY: 0, fired: false });
     const dragMovedRef = useRef(false);
-    const LONG_PRESS_MS = 550;
-    const MOVE_TOL_PX = 10;
+    const pointerStartRef = useRef({ x: 0, y: 0 });
+    const DRAG_THRESHOLD_PX = 8;
 
     const canEditSpot = typeof onUpdateSpot === "function";
     const canRemoveSpot = typeof onRemoveSpot === "function";
@@ -61,7 +60,11 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
 
     const spotStyle = {
         top: (spot.y || 0) * (scale || 1),
+        // Physical left edge of the PDF page (never RTL logical inset).
         left: (spot.x || 0) * (scale || 1),
+        right: "auto",
+        insetInlineStart: "auto",
+        insetInlineEnd: "auto",
         width: (spot.width || 130) * (scale || 1),
         height: (spot.height || 48) * (scale || 1),
         ...(hasSignatureImage ? { backgroundColor: "transparent" } : null),
@@ -160,6 +163,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
         e.stopPropagation();
 
         dragMovedRef.current = false;
+        pointerStartRef.current = { x: Number(e.clientX), y: Number(e.clientY) };
 
         const target = e.currentTarget;
         const pointerId = e.pointerId;
@@ -169,7 +173,11 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
         const onPointerMove = (ev) => {
             if (ev.pointerId !== pointerId) return;
             ev.preventDefault();
-            dragMovedRef.current = true;
+            const dx = Math.abs(Number(ev.clientX) - pointerStartRef.current.x);
+            const dy = Math.abs(Number(ev.clientY) - pointerStartRef.current.y);
+            if (dx > DRAG_THRESHOLD_PX || dy > DRAG_THRESHOLD_PX) {
+                dragMovedRef.current = true;
+            }
             moveFromClientPoint(ev.clientX, ev.clientY);
         };
 
@@ -183,7 +191,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
             } catch {
                 // ignore
             }
-            // If no drag movement occurred, treat as a click → open field settings
+            // Deliberate tap only (no drag) → open field settings. Never open mid-drag.
             if (!dragMovedRef.current && typeof onSelectSpot === 'function') {
                 onSelectSpot(index);
             }
@@ -226,54 +234,6 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
         window.addEventListener("touchmove", onTouchMove, { passive: false });
         window.addEventListener("touchend", stop);
         window.addEventListener("touchcancel", stop);
-    };
-
-    const clearLongPress = () => {
-        const s = longPressRef.current;
-        if (s.timer) {
-            clearTimeout(s.timer);
-            s.timer = null;
-        }
-        s.fired = false;
-    };
-
-    const startLongPressFromClientPoint = (clientX, clientY) => {
-        if (typeof onRequestContext !== 'function' && typeof onSelectSpot !== 'function') return;
-        const s = longPressRef.current;
-        clearLongPress();
-        s.startX = Number(clientX);
-        s.startY = Number(clientY);
-        s.fired = false;
-        s.timer = setTimeout(() => {
-            s.timer = null;
-            s.fired = true;
-
-            // Prefer opening the context menu (same as right-click) on mobile.
-            if (typeof onRequestContext === 'function') {
-                const pseudoEvent = {
-                    type: 'longpress',
-                    clientX: s.startX,
-                    clientY: s.startY,
-                    preventDefault: () => { },
-                    stopPropagation: () => { },
-                };
-                onRequestContext(index, pseudoEvent);
-                return;
-            }
-
-            // Fallback: open the field editor if context menu isn't wired.
-            onSelectSpot?.(index);
-        }, LONG_PRESS_MS);
-    };
-
-    const maybeCancelLongPressOnMove = (clientX, clientY) => {
-        const s = longPressRef.current;
-        if (!s.timer) return;
-        const dx = Math.abs(Number(clientX) - s.startX);
-        const dy = Math.abs(Number(clientY) - s.startY);
-        if (dx > MOVE_TOL_PX || dy > MOVE_TOL_PX) {
-            clearLongPress();
-        }
     };
 
     // Some API responses include both FieldValue and fieldvalue/fieldValue.
@@ -400,49 +360,9 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                     e.stopPropagation();
                     if (typeof onSelectSpot === 'function') onSelectSpot(index);
                 }}
-                onPointerDown={(e) => {
-                    // Mobile: long-press opens field settings. Keep drag behavior intact.
-                    if (!canEditSpot) return;
-                    if (!e || e.button === 2) return; // ignore right-click
-                    if (e.pointerType && e.pointerType !== 'touch' && e.pointerType !== 'pen') return;
-                    startLongPressFromClientPoint(e.clientX, e.clientY);
-                }}
-                onPointerMove={(e) => {
-                    if (!canEditSpot) return;
-                    if (e.pointerType && e.pointerType !== 'touch' && e.pointerType !== 'pen') return;
-                    maybeCancelLongPressOnMove(e.clientX, e.clientY);
-                }}
-                onPointerUp={() => {
-                    clearLongPress();
-                }}
-                onPointerCancel={() => {
-                    clearLongPress();
-                }}
-                onTouchStart={(e) => {
-                    // Fallback for browsers without Pointer Events.
-                    if (!canEditSpot) return;
-                    if (typeof window !== 'undefined' && window.PointerEvent) return;
-                    const touch = e.touches?.[0];
-                    if (!touch) return;
-                    startLongPressFromClientPoint(touch.clientX, touch.clientY);
-                }}
-                onTouchMove={(e) => {
-                    if (!canEditSpot) return;
-                    if (typeof window !== 'undefined' && window.PointerEvent) return;
-                    const touch = e.touches?.[0];
-                    if (!touch) return;
-                    maybeCancelLongPressOnMove(touch.clientX, touch.clientY);
-                }}
-                onTouchEnd={() => {
-                    clearLongPress();
-                }}
-                onTouchCancel={() => {
-                    clearLongPress();
-                }}
                 onContextMenu={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    clearLongPress();
                     if (typeof onRequestContext === 'function') onRequestContext(index, e);
                 }}
                 aria-hidden

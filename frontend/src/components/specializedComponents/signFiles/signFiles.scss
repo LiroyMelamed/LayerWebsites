@@ -551,14 +551,20 @@
     left: 0;
     right: 0;
     bottom: 0;
+    inset-inline: 0;
     pointer-events: none;
     z-index: 2;
     /* Match PDF canvas: physical left is x=0 regardless of Hebrew RTL chrome. */
-    direction: ltr;
+    direction: ltr !important;
+    unicode-bidi: isolate;
 }
 
 .lw-signing-spot {
     position: absolute;
+    /* Physical anchors only — never flip under Hebrew RTL ancestors. */
+    right: auto !important;
+    inset-inline-start: auto !important;
+    inset-inline-end: auto !important;
     border-radius: 0.4375rem;
     cursor: move;
     pointer-events: auto;
