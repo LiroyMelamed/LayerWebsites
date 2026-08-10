@@ -128,6 +128,19 @@ const SimpleInput = forwardRef(
             focusedRef.current = true;
             onFocus?.(e);
             setIsFocused(true);
+            if (isEditableTemporal && isTemporalMaskComplete(type, textValueRef.current)) {
+                // Select all so the first keystroke replaces cleanly; mid-click still overwrites slots.
+                requestAnimationFrame(() => {
+                    try {
+                        const el = textInputRef.current;
+                        if (el && document.activeElement === el) {
+                            el.select();
+                        }
+                    } catch {
+                        /* ignore */
+                    }
+                });
+            }
         }
 
         function applyTemporalResult(result) {
@@ -269,6 +282,11 @@ const SimpleInput = forwardRef(
                     e.key === 'Delete' ? 'delete' : 'backspace'
                 );
                 applyTemporalResult(result);
+                return;
+            }
+
+            // Digits are handled in beforeinput to avoid double-apply with IME/mobile.
+            if (/^\d$/.test(e.key) && typeof InputEvent !== 'undefined') {
                 return;
             }
 

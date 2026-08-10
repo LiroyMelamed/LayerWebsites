@@ -1148,8 +1148,49 @@ const createEvent = async (req, res) => {
         ? String(req.body.invite_sms).trim() || null
         : null;
 
+    const { expandRecurrenceOccurrences, buildRruleString, MAX_OCCURRENCES } = require('../lib/calendarRecurrence');
+    const recurrence = req.body?.recurrence && typeof req.body.recurrence === 'object'
+        ? req.body.recurrence
+        : null;
+    const recurrenceEnabled = !!(
+        recurrence?.enabled
+        && recurrence?.until
+        && (eventType === 'appointment' || eventType === 'hearing' || eventType === 'reminder')
+    );
+    const seriesId = recurrenceEnabled ? crypto.randomBytes(8).toString('hex') : null;
+    const occurrences = recurrenceEnabled
+        ? expandRecurrenceOccurrences({
+            startTime: start_time,
+            endTime: end_time,
+            frequency: recurrence.frequency || 'weekly',
+            until: recurrence.until,
+        })
+        : [{ start: new Date(start_time), end: new Date(end_time) }];
+    if (recurrenceEnabled && occurrences.length > MAX_OCCURRENCES) {
+        return res.status(400).json({ message: `לא ניתן ליצור יותר מ-${MAX_OCCURRENCES} מופעים בסדרה` });
+    }
+    const seriesRrule = recurrenceEnabled
+        ? buildRruleString(recurrence.frequency || 'weekly', recurrence.until, seriesId)
+        : (rrule || null);
+
     try {
-        const { rows } = await pool.query(
+        let firstSanitized = null;
+        let firstCreated = null;
+        let firstClientMeta = null;
+        let firstMgrMeta = null;
+        let linkedReminderId = null;
+        let reminderSyncWarning = null;
+        let inviteSendResult = null;
+        let immediateReminderResult = null;
+
+        for (let i = 0; i < occurrences.length; i += 1) {
+            const occ = occurrences[i];
+            const occStart = occ.start.toISOString();
+            const occEnd = occ.end.toISOString();
+            const occInviteToken = shouldInviteClient ? crypto.randomBytes(24).toString('hex') : null;
+            const occInviteStatus = shouldInviteClient ? 'pending' : 'none';
+
+            const { rows } = await pool.query(
             `INSERT INTO calendar_events
                (owner_id, case_id, title, description, location, event_type,
                 client_user_id, client_name, manager_user_id, manager_name, color,
@@ -1174,10 +1215,10 @@ const createEvent = async (req, res) => {
                 managerUserId,
                 manager_name || null,
                 color || null,
-                start_time,
-                end_time,
+                occStart,
+                occEnd,
                 storedAllDay,
-                rrule || null,
+                seriesRrule,
                 lead_name ? String(lead_name).trim() : null,
                 lead_phone ? String(lead_phone).trim() : null,
                 lead_email ? String(lead_email).trim().toLowerCase() : null,
@@ -1185,8 +1226,8 @@ const createEvent = async (req, res) => {
                 offsetsToJson(storedReminderOffsets),
                 channelsToJson(storedReminderChannels),
                 targetsToJson(storedReminderTargets),
-                inviteStatus,
-                inviteToken,
+                occInviteStatus,
+                occInviteToken,
                 clientReminderSms,
                 inviteSms,
                 offsetsToJson(storedLawyerOffsets),
@@ -1217,59 +1258,60 @@ const createEvent = async (req, res) => {
             if (clientMeta.inviteStatus) created.invite_status = clientMeta.inviteStatus;
         }
 
-        // For reminder-type events, mirror to scheduled_email_reminders so the
-        // reminders worker actually sends the email at start_time.
-        let linkedReminderId = null;
-        let reminderSyncWarning = null;
-        if (eventType === 'reminder') {
-            try {
-                linkedReminderId = await reminderCalendarSync.createReminderForCalendarEvent(
-                    created,
-                    {
-                        toEmail: reminder_to_email,
-                        clientName: reminder_client_name,
-                        templateKey: reminder_template_key,
-                        templateData: reminder_template_data,
-                        subject: reminder_subject,
-                        createdBy: userId,
+        if (i === 0) {
+            firstCreated = created;
+            firstClientMeta = clientMeta;
+            firstMgrMeta = mgrMeta;
+            if (eventType === 'reminder') {
+                try {
+                    linkedReminderId = await reminderCalendarSync.createReminderForCalendarEvent(
+                        created,
+                        {
+                            toEmail: reminder_to_email,
+                            clientName: reminder_client_name,
+                            templateKey: reminder_template_key,
+                            templateData: reminder_template_data,
+                            subject: reminder_subject,
+                            createdBy: userId,
+                        }
+                    );
+                    if (!linkedReminderId) {
+                        reminderSyncWarning = 'האירוע נשמר אך חסרים אימייל או שם לקוח — התזכורת לא נוספה למסך התזכורות.';
                     }
-                );
-                if (!linkedReminderId) {
-                    reminderSyncWarning = 'האירוע נשמר אך חסרים אימייל או שם לקוח — התזכורת לא נוספה למסך התזכורות.';
+                } catch (syncErr) {
+                    console.error('[calendarController] createEvent reminder sync failed:', syncErr.message);
+                    reminderSyncWarning = 'האירוע נשמר אך לא נוצרה תזכורת מקושרת.';
                 }
-            } catch (syncErr) {
-                console.error('[calendarController] createEvent reminder sync failed:', syncErr.message);
-                reminderSyncWarning = 'האירוע נשמר אך לא נוצרה תזכורת מקושרת.';
             }
-        }
 
-        const sanitized = _applyClientsToEvent(
-            _applyManagersToEvent(_sanitizeEvent(created), mgrMeta.managers),
-            clientMeta.clients
-        );
-        if (linkedReminderId) sanitized.linkedReminderId = linkedReminderId;
+            firstSanitized = _applyClientsToEvent(
+                _applyManagersToEvent(_sanitizeEvent(created), mgrMeta.managers),
+                clientMeta.clients
+            );
+            if (linkedReminderId) firstSanitized.linkedReminderId = linkedReminderId;
 
-        let inviteSendResult = null;
-        if (shouldInviteClient && (created.invite_token || clientMeta.clients.some((c) => c.inviteToken))) {
+            if (shouldInviteClient && (created.invite_token || clientMeta.clients.some((c) => c.inviteToken))) {
+                try {
+                    inviteSendResult = await _sendCalendarInvite(created);
+                } catch (inviteErr) {
+                    console.error('[calendarController] invite send failed:', inviteErr.message);
+                    inviteSendResult = { sentSms: 0, sentEmail: 0, deferred: false, error: inviteErr.message, recipients: [] };
+                }
+            }
+
             try {
-                inviteSendResult = await _sendCalendarInvite(created);
-            } catch (inviteErr) {
-                console.error('[calendarController] invite send failed:', inviteErr.message);
-                inviteSendResult = { sentSms: 0, sentEmail: 0, deferred: false, error: inviteErr.message, recipients: [] };
+                const { fireImmediateRemindersForEvent } = require('../tasks/calendarReminders/scheduler');
+                immediateReminderResult = await fireImmediateRemindersForEvent(created.id);
+            } catch (immErr) {
+                console.error('[calendarController] immediate reminder fire failed:', immErr.message);
+                immediateReminderResult = { attempted: 0, sent: 0, deferred: false, errors: [immErr.message] };
             }
         }
-
-        let immediateReminderResult = null;
-        try {
-            const { fireImmediateRemindersForEvent } = require('../tasks/calendarReminders/scheduler');
-            immediateReminderResult = await fireImmediateRemindersForEvent(created.id);
-        } catch (immErr) {
-            console.error('[calendarController] immediate reminder fire failed:', immErr.message);
-            immediateReminderResult = { attempted: 0, sent: 0, deferred: false, errors: [immErr.message] };
         }
 
         return res.status(201).json({
-            event: sanitized,
+            event: firstSanitized,
+            seriesCount: occurrences.length,
             ...(reminderSyncWarning ? { reminderSyncWarning } : {}),
             inviteSendResult,
             immediateReminderResult,

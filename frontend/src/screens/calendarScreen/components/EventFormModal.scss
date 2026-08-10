@@ -449,6 +449,70 @@
     background: #D69E2E;
 }
 
+.lw-eventFormModal__inviteStatus--breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.lw-eventFormModal__rsvpList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.lw-eventFormModal__rsvpRow.is-accepted {
+    color: #276749;
+}
+
+.lw-eventFormModal__rsvpRow.is-pending {
+    color: #975A16;
+}
+
+.lw-eventFormModal__rsvpRow.is-declined {
+    color: #C53030;
+}
+
+.lw-eventFormModal__chipRsvp {
+    font-style: normal;
+    font-weight: 600;
+    font-size: 0.78em;
+    opacity: 0.9;
+}
+
+.lw-eventFormModal__managerChip.is-rsvp-accepted {
+    border-color: #68D391;
+}
+
+.lw-eventFormModal__managerChip.is-rsvp-pending {
+    border-color: #F6E05E;
+}
+
+.lw-eventFormModal__managerChip.is-rsvp-declined {
+    border-color: #FC8181;
+}
+
+.lw-eventFormModal__recurrence {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    margin-block-end: 0.35rem;
+}
+
+.lw-eventFormModal__recurrenceFields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: 0.5rem;
+    background: #F7FAFC;
+    border: 0.0625rem solid #E2E8F0;
+}
+
+.lw-eventFormModal__colorCollision {
+    margin-block-start: 0.35rem;
+}
+
 .lw-eventFormModal__colorSwatch {
     width: 1.75rem;
     height: 1.75rem;

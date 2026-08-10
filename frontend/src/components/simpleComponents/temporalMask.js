@@ -178,6 +178,8 @@ export function editTemporalDigits(type, prevDisplay, incomingDigits, selectionS
 
 /**
  * Backspace/Delete within a masked temporal field.
+ * Complete values truncate from the caret (no left-shift corruption like 10/82/0261).
+ * Incomplete values remove one digit at the caret.
  * @param {'backspace'|'delete'} direction
  */
 export function deleteTemporalDigit(type, prevDisplay, selectionStart, selectionEnd = selectionStart, direction = 'backspace') {
@@ -189,6 +191,8 @@ export function deleteTemporalDigit(type, prevDisplay, selectionStart, selection
     let digits = extractTemporalDigits(type, prevDisplay).split('');
     let digStart = caretToDigitIndex(prevDisplay, selectionStart);
     let digEnd = caretToDigitIndex(prevDisplay, selectionEnd);
+    const max = hashCount(template);
+    const wasComplete = digits.length >= max;
 
     if (digEnd < digStart) {
         const tmp = digStart;
@@ -197,7 +201,15 @@ export function deleteTemporalDigit(type, prevDisplay, selectionStart, selection
     }
 
     if (digEnd > digStart) {
-        digits.splice(digStart, digEnd - digStart);
+        digits = digits.slice(0, digStart).concat(digits.slice(digEnd));
+    } else if (wasComplete) {
+        // Truncate from the edited slot so later groups are not reshuffled.
+        const cut = direction === 'backspace' ? digStart - 1 : digStart;
+        if (cut < 0) {
+            return { display: applyTemporalDigitMask(type, digits.join('')), caret: 0, digits: digits.join('') };
+        }
+        digits = digits.slice(0, cut);
+        digStart = cut;
     } else if (direction === 'backspace') {
         if (digStart <= 0) {
             const display = applyTemporalDigitMask(type, digits.join(''));

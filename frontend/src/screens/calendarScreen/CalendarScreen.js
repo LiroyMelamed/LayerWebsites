@@ -179,19 +179,31 @@ function aggregateInviteStatus(ev) {
 
 function clientPhoneTooltip(ev) {
     const parts = [];
+    const statusLabel = (s) => {
+        if (s === "accepted") return "אישר הגעה ✓";
+        if (s === "declined") return "דחה הגעה";
+        if (s === "pending") return "ממתין לאישור ⏳";
+        return "";
+    };
     if (Array.isArray(ev?.clients) && ev.clients.length) {
         ev.clients.forEach((c) => {
-            const name = String(c.name || "").trim();
+            const name = String(c.name || "").trim() || "לקוח";
             const phone = String(c.phone || "").trim();
-            if (name && phone) parts.push(`${name} · ${phone}`);
-            else if (phone) parts.push(phone);
-            else if (name) parts.push(name);
+            const st = statusLabel(c.inviteStatus || c.invite_status);
+            const bits = [name];
+            if (phone) bits.push(phone);
+            if (st) bits.push(st);
+            parts.push(bits.join(" · "));
         });
     } else {
         const name = String(ev?.clientName || ev?.clientDisplayName || "").trim();
         const phone = String(ev?.clientPhone || "").trim();
-        if (name && phone) parts.push(`${name} · ${phone}`);
-        else if (phone) parts.push(phone);
+        const st = statusLabel(aggregateInviteStatus(ev) || ev?.inviteStatus);
+        const bits = [];
+        if (name) bits.push(name);
+        if (phone) bits.push(phone);
+        if (st) bits.push(st);
+        if (bits.length) parts.push(bits.join(" · "));
     }
     if (!parts.length && ev?.leadPhone) {
         const lead = String(ev.leadName || "").trim();
@@ -647,10 +659,16 @@ export default function CalendarScreen() {
         const ev = arg.event.extendedProps || {};
         if (ev.hint) return true;
         const status = aggregateInviteStatus(ev) || (ev.inviteStatus !== "none" ? ev.inviteStatus : null);
+        const multi = Array.isArray(ev.clients) && ev.clients.length > 1;
+        const acceptedCount = multi
+            ? ev.clients.filter((c) => (c.inviteStatus || c.invite_status) === "accepted").length
+            : 0;
         return (
             <div className="lw-fcEventContent">
                 {status === "accepted" && (
-                    <span className="lw-fcEventRsvpBadge lw-fcEventRsvpBadge--accepted" aria-hidden="true">✓</span>
+                    <span className="lw-fcEventRsvpBadge lw-fcEventRsvpBadge--accepted" aria-hidden="true">
+                        {multi && acceptedCount > 0 ? `${acceptedCount}` : "✓"}
+                    </span>
                 )}
                 {status === "pending" && (
                     <span className="lw-fcEventRsvpBadge lw-fcEventRsvpBadge--pending" aria-hidden="true" />
