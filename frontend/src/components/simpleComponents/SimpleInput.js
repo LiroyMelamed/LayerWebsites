@@ -359,8 +359,18 @@ const SimpleInput = forwardRef(
         };
 
         useEffect(() => {
-            if (focusedRef.current) return;
             const next = value ?? '';
+            // While focused, ignore parent lag behind typing — but always accept
+            // external clears (e.g. SearchInput clearOnSelect) so the field resets.
+            if (focusedRef.current) {
+                if (next !== '' && next !== delayedValueRef.current) return;
+                if (next === delayedValueRef.current) return;
+            }
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+                timeoutRef.current = null;
+            }
+            pendingEmitRef.current = null;
             delayedValueRef.current = next;
             setDelayedValue(next);
             if (isEditableTemporal) {
