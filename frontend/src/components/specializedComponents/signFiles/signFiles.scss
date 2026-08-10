@@ -610,6 +610,12 @@
     inset: 0;
     z-index: 3;
     pointer-events: auto;
+    touch-action: none;
+}
+
+/* Editing/drag mode: let pointer events hit the spot itself so drag works. */
+.lw-signing-spotOverlay--passthrough {
+    pointer-events: none;
 }
 
 .lw-signing-spot.is-selected {
