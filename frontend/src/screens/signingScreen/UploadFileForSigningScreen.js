@@ -437,11 +437,6 @@ export default function UploadFileForSigningScreen() {
 
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        if (message) {
-        }
-    }, [message]);
-
     const [uploadedFileKey, setUploadedFileKey] = useState(null);
     const [detecting, setDetecting] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
