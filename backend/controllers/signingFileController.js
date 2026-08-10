@@ -4909,11 +4909,12 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
         );
 
         const otpSystemEnabled = await getSigningOtpEnabled();
-        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file, otpSystemEnabled);
+        let requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file, otpSystemEnabled);
 
         // Sequential signing: check if it's this signer's turn
         let signingOrder = 'parallel';
         let isMyTurn = true;
+        let signerCompleted = false;
         try {
             const orderRes = await pool.query(
                 `select signingorder as "signingorder" from signingfiles where signingfileid = $1`,
@@ -4950,8 +4951,39 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
             console.error('[signing] Sequential turn check in details error (non-fatal):', seqErr?.message);
         }
 
+        // Has this signer already finished all of their required spots?
+        try {
+            if (schemaSupport.signaturespotsSignerUserId) {
+                const doneRes = await pool.query(
+                    `select
+                        count(*) filter (
+                            where isrequired = true
+                              and lower(coalesce(fieldtype, 'signature')) != 'lawyerstamp'
+                        )::int as "total",
+                        count(*) filter (
+                            where isrequired = true
+                              and issigned = false
+                              and lower(coalesce(fieldtype, 'signature')) != 'lawyerstamp'
+                        )::int as "remaining"
+                     from signaturespots
+                     where signingfileid = $1
+                       and signeruserid = $2`,
+                    [signingFileId, signerUserId]
+                );
+                const total = Number(doneRes.rows[0]?.total || 0);
+                const remaining = Number(doneRes.rows[0]?.remaining || 0);
+                signerCompleted = total > 0 && remaining === 0;
+            }
+        } catch (doneErr) {
+            console.error('[signing] signerCompleted check error (non-fatal):', doneErr?.message);
+        }
+
         const status = String(file.Status || '').toLowerCase();
-        const readOnly = status === 'signed' || status === 'rejected';
+        const readOnly = status === 'signed' || status === 'rejected' || signerCompleted;
+        // Already-finished signers (or fully signed docs) must not be challenged with OTP again.
+        if (readOnly) {
+            requireOtpEffective = false;
+        }
 
         return res.json({
             file: {
@@ -4965,6 +4997,7 @@ exports.getPublicSigningFileDetails = async (req, res, next) => {
             isLawyer,
             signingOrder,
             isMyTurn,
+            signerCompleted,
             readOnly,
         });
     } catch (err) {
@@ -5392,6 +5425,12 @@ exports.publicSignFileBatch = async (req, res, next) => {
             } catch (remErr) {
                 console.warn('[signing] cancelReminderForSigner failed:', remErr?.message || remErr);
             }
+            // Batch path previously skipped this — sequential next-signer invites never fired.
+            await notifyNextSequentialSignerIfNeeded({
+                signingFileId,
+                finishedSignerUserId: signerUserId,
+                file,
+            });
         }
 
         timings.totalMs = Date.now() - t0;
@@ -5549,6 +5588,7 @@ async function loadSigningPolicyForFile(signingFileId) {
             clientid as "ClientId",
             filename as "FileName",
             filekey as "FileKey",
+            status as "Status",
             requireotp as "RequireOtp",
             signingpolicyversion as "SigningPolicyVersion",
             policyselectedatutc as "PolicySelectedAtUtc",
@@ -5641,6 +5681,57 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
             metadata: { kind: 'otp_request', reason: 'DOCUMENT_NOT_FOUND' },
         });
         return res.json({ success: true });
+    }
+
+    const fileStatus = String(file.Status || '').toLowerCase();
+    if (fileStatus === 'signed' || fileStatus === 'rejected') {
+        await auditOtpBlocked({
+            req,
+            signingFileId,
+            actorUserId: signerUserId,
+            actorType,
+            signingSessionId,
+            metadata: { kind: 'otp_request', reason: 'DOCUMENT_ALREADY_COMPLETE' },
+        });
+        return res.json({ success: true, skipped: true, reason: 'DOCUMENT_ALREADY_COMPLETE' });
+    }
+
+    // Skip OTP when this signer has already finished all required spots.
+    try {
+        const schemaSupportForDone = schemaSupport || await getSchemaSupport();
+        if (schemaSupportForDone.signaturespotsSignerUserId) {
+            const doneRes = await pool.query(
+                `select
+                    count(*) filter (
+                        where isrequired = true
+                          and lower(coalesce(fieldtype, 'signature')) != 'lawyerstamp'
+                    )::int as "total",
+                    count(*) filter (
+                        where isrequired = true
+                          and issigned = false
+                          and lower(coalesce(fieldtype, 'signature')) != 'lawyerstamp'
+                    )::int as "remaining"
+                 from signaturespots
+                 where signingfileid = $1
+                   and signeruserid = $2`,
+                [signingFileId, signerUserId]
+            );
+            const total = Number(doneRes.rows[0]?.total || 0);
+            const remaining = Number(doneRes.rows[0]?.remaining || 0);
+            if (total > 0 && remaining === 0) {
+                await auditOtpBlocked({
+                    req,
+                    signingFileId,
+                    actorUserId: signerUserId,
+                    actorType,
+                    signingSessionId,
+                    metadata: { kind: 'otp_request', reason: 'SIGNER_ALREADY_COMPLETED' },
+                });
+                return res.json({ success: true, skipped: true, reason: 'SIGNER_ALREADY_COMPLETED' });
+            }
+        }
+    } catch (doneErr) {
+        console.warn('[signing] OTP skip-if-completed check failed:', doneErr?.message || doneErr);
     }
 
     if (!(await getSigningOtpEnabled())) {
@@ -6254,6 +6345,137 @@ function scheduleSigningFinalize(args) {
 }
 
 /**
+ * Sequential signing: after the current signer finishes all their required spots,
+ * invite the next signer (lowest signerindex with remaining unsigned required spots).
+ * Safe to call from single-sign and batch-sign paths.
+ */
+async function notifyNextSequentialSignerIfNeeded({
+    signingFileId,
+    finishedSignerUserId,
+    file,
+}) {
+    try {
+        const orderResult = await pool.query(
+            `select signingorder as "signingorder" from signingfiles where signingfileid = $1`,
+            [signingFileId]
+        );
+        if (orderResult.rows[0]?.signingorder !== 'sequential') return;
+
+        const schemaSupport = await getSchemaSupport();
+        if (!schemaSupport.signaturespotsSignerUserId) return;
+
+        const myRemaining = await pool.query(
+            `select count(*)::int as "count"
+             from signaturespots
+             where signingfileid = $1
+               and signeruserid = $2
+               and isrequired = true
+               and issigned = false
+               and lower(coalesce(fieldtype, 'signature')) != 'lawyerstamp'`,
+            [signingFileId, finishedSignerUserId]
+        );
+        if (Number(myRemaining.rows[0]?.count || 0) > 0) return;
+
+        const nextSignerResult = await pool.query(
+            `select signeruserid as "signerUserId", min(signerindex) as "signerIndex"
+             from signaturespots
+             where signingfileid = $1
+               and isrequired = true
+               and issigned = false
+               and lower(coalesce(fieldtype, 'signature')) != 'lawyerstamp'
+               and signeruserid is not null
+             group by signeruserid
+             order by min(signerindex) asc
+             limit 1`,
+            [signingFileId]
+        );
+        if (!nextSignerResult.rows.length) return;
+
+        const nextSignerUserId = nextSignerResult.rows[0].signerUserId;
+        if (!nextSignerUserId || Number(nextSignerUserId) === Number(finishedSignerUserId)) return;
+
+        const token = createPublicSigningToken({
+            signingFileId,
+            signerUserId: nextSignerUserId,
+            fileExpiresAt: null,
+        });
+        const publicUrl = await buildPublicSigningUrl(token);
+
+        let nextSignerName = 'לקוח';
+        try {
+            const nr = await pool.query(
+                'select name as "Name" from users where userid = $1',
+                [nextSignerUserId]
+            );
+            nextSignerName = String(nr.rows?.[0]?.Name || '').trim() || 'לקוח';
+        } catch { /* best-effort */ }
+
+        let lawyerName = 'עו"ד';
+        try {
+            const lr = await pool.query(
+                'select name as "Name" from users where userid = $1',
+                [file.LawyerId]
+            );
+            lawyerName = String(lr.rows?.[0]?.Name || '').trim() || 'עו"ד';
+        } catch { /* best-effort */ }
+
+        const signInviteSmsTemplate = await getSetting(
+            'templates',
+            'SIGN_INVITE_SMS',
+            'שלום {{recipientName}}, המסמך "{{documentName}}" מחכה לחתימתך. {{websiteUrl}}'
+        );
+
+        const message = publicUrl
+            ? `מסמך "${file.FileName}" מחכה לחתימה.\n${publicUrl}`
+            : `מסמך "${file.FileName}" מחכה לחתימה.`;
+
+        await notifyRecipient({
+            recipientUserId: nextSignerUserId,
+            notificationType: 'SIGN_INVITE',
+            respectExplicitChannelChoice: true,
+            push: {
+                title: 'מסמך מחכה לחתימה',
+                body: message,
+                data: buildSigningInvitePushData({ signingFileId, token, publicUrl }),
+            },
+            email: publicUrl
+                ? {
+                    campaignKey: 'SIGN_INVITE',
+                    contactFields: {
+                        recipient_name: nextSignerName,
+                        document_name: String(file.FileName || '').trim(),
+                        action_url: String(publicUrl || '').trim(),
+                        lawyer_name: lawyerName,
+                    },
+                }
+                : null,
+            sms: publicUrl
+                ? {
+                    messageBody: renderTemplate(signInviteSmsTemplate, {
+                        recipientName: nextSignerName,
+                        documentName: String(file.FileName || '').trim(),
+                        websiteUrl: formatSmsSigningUrl(publicUrl),
+                    }),
+                }
+                : null,
+        });
+
+        try {
+            await scheduleRemindersForSigners({
+                signingFileId,
+                signerUserIds: [nextSignerUserId],
+            });
+        } catch (remErr) {
+            console.warn('[signing] sequential scheduleReminders failed:', remErr?.message || remErr);
+        }
+
+        console.log(`[signing] Sequential: notified next signer userId=${nextSignerUserId} for file ${signingFileId}`);
+    } catch (seqErr) {
+        console.error('[signing] Sequential notify next signer error (non-fatal):', seqErr?.message);
+    }
+}
+
+/**
  * Mark file signed + snapshot retention, then enqueue async PDF/notify finalize.
  * Returns { didFinalizeStatus: boolean }.
  */
@@ -6720,127 +6942,6 @@ exports.signFile = async (req, res, next) => {
 
         const remaining = remainingResult.rows[0].count;
 
-        // Sequential signing: when current signer finishes all their spots, notify the next signer
-        if (remaining > 0) {
-            try {
-                const orderResult = await pool.query(
-                    `select signingorder as "signingorder" from signingfiles where signingfileid = $1`,
-                    [signingFileId]
-                );
-                const signingOrderMode = orderResult.rows[0]?.signingorder;
-
-                if (signingOrderMode === 'sequential') {
-                    // Check if the current signer (userId) still has unsigned spots
-                    const myRemaining = await pool.query(
-                        `select count(*)::int as "count"
-                         from signaturespots
-                         where signingfileid = $1
-                           and signeruserid = $2
-                           and isrequired = true
-                           and issigned = false
-                           and lower(coalesce(fieldtype, 'signature')) != 'lawyerstamp'`,
-                        [signingFileId, userId]
-                    );
-
-                    if (myRemaining.rows[0].count === 0) {
-                        // Current signer finished — find the next signer index with unsigned spots
-                        const nextSignerResult = await pool.query(
-                            `select distinct signeruserid as "signerUserId", signerindex as "signerIndex"
-                             from signaturespots
-                             where signingfileid = $1
-                               and isrequired = true
-                               and issigned = false
-                               and lower(coalesce(fieldtype, 'signature')) != 'lawyerstamp'
-                             order by signerindex asc
-                             limit 1`,
-                            [signingFileId]
-                        );
-
-                        if (nextSignerResult.rows.length > 0) {
-                            const nextSignerUserId = nextSignerResult.rows[0].signerUserId;
-                            if (nextSignerUserId) {
-                                const token = createPublicSigningToken({
-                                    signingFileId,
-                                    signerUserId: nextSignerUserId,
-                                    fileExpiresAt: null,
-                                });
-                                const publicUrl = await buildPublicSigningUrl(token);
-
-                                let nextSignerName = 'לקוח';
-                                try {
-                                    const nr = await pool.query(
-                                        'select name as "Name" from users where userid = $1',
-                                        [nextSignerUserId]
-                                    );
-                                    nextSignerName = String(nr.rows?.[0]?.Name || '').trim() || 'לקוח';
-                                } catch { /* best-effort */ }
-
-                                let lawyerName = 'עו"ד';
-                                try {
-                                    const lr = await pool.query(
-                                        'select name as "Name" from users where userid = $1',
-                                        [file.LawyerId]
-                                    );
-                                    lawyerName = String(lr.rows?.[0]?.Name || '').trim() || 'עו"ד';
-                                } catch { /* best-effort */ }
-
-                                const signInviteSmsTemplate = await getSetting('templates', 'SIGN_INVITE_SMS',
-                                    'שלום {{recipientName}}, המסמך "{{documentName}}" מחכה לחתימתך. {{websiteUrl}}');
-
-                                const message = publicUrl
-                                    ? `מסמך "${file.FileName}" מחכה לחתימה.\n${publicUrl}`
-                                    : `מסמך "${file.FileName}" מחכה לחתימה.`;
-
-                                await notifyRecipient({
-                                    recipientUserId: nextSignerUserId,
-                                    notificationType: 'SIGN_INVITE',
-                                    respectExplicitChannelChoice: true,
-                                    push: {
-                                        title: 'מסמך מחכה לחתימה',
-                                        body: message,
-                                        data: buildSigningInvitePushData({ signingFileId, token, publicUrl }),
-                                    },
-                                    email: publicUrl
-                                        ? {
-                                            campaignKey: 'SIGN_INVITE',
-                                            contactFields: {
-                                                recipient_name: nextSignerName,
-                                                document_name: String(file.FileName || '').trim(),
-                                                action_url: String(publicUrl || '').trim(),
-                                                lawyer_name: lawyerName,
-                                            },
-                                        }
-                                        : null,
-                                    sms: publicUrl
-                                        ? {
-                                            messageBody: renderTemplate(signInviteSmsTemplate, {
-                                                recipientName: nextSignerName,
-                                                documentName: String(file.FileName || '').trim(),
-                                                websiteUrl: formatSmsSigningUrl(publicUrl),
-                                            }),
-                                        }
-                                        : null,
-                                });
-
-                                try {
-                                    await scheduleRemindersForSigners({
-                                        signingFileId,
-                                        signerUserIds: [nextSignerUserId],
-                                    });
-                                } catch (remErr) {
-                                    console.warn('[signing] sequential scheduleReminders failed:', remErr?.message || remErr);
-                                }
-
-                                console.log(`[signing] Sequential: notified next signer userId=${nextSignerUserId} for file ${signingFileId}`);
-                            }
-                        }
-                    }
-                }
-            } catch (seqErr) {
-                console.error('[signing] Sequential notify next signer error (non-fatal):', seqErr?.message);
-            }
-        }
-
         if (remaining === 0) {
             await markFileSignedAndScheduleFinalize({
                 signingFileId,
@@ -6866,6 +6967,11 @@ exports.signFile = async (req, res, next) => {
             } catch (remErr) {
                 console.warn('[signing] cancelReminderForSigner (signFile) failed:', remErr?.message || remErr);
             }
+            await notifyNextSequentialSignerIfNeeded({
+                signingFileId,
+                finishedSignerUserId: userId,
+                file,
+            });
         }
 
         if (res.headersSent) return;
