@@ -2071,15 +2071,15 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         />
                     </div>
                     <div className="lw-signing-actionsRow">
-                        <SecondaryButton size={buttonSizes.MEDIUM} onPress={clearCanvas} disabled={saving}>
-                            {t("common.clear")}
-                        </SecondaryButton>
-                        <TertiaryButton size={buttonSizes.SMALL} onPress={clearClientStamp} disabled={saving}>
-                            {t("signing.canvas.changeStamp")}
-                        </TertiaryButton>
                         <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { await saveStampWithSignature(); }} disabled={saving}>
                             {saving ? t("signing.canvas.saving") : t("signing.canvas.saveField")}
                         </PrimaryButton>
+                        <SecondaryButton size={buttonSizes.MEDIUM} onPress={clearClientStamp} disabled={saving}>
+                            {t("signing.canvas.changeStamp")}
+                        </SecondaryButton>
+                        <SecondaryButton size={buttonSizes.MEDIUM} onPress={clearCanvas} disabled={saving}>
+                            {t("common.clear")}
+                        </SecondaryButton>
                     </div>
                 </div>
             )}

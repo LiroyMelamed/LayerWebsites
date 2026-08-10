@@ -748,8 +748,18 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         const addr = (location || "").trim() || smsOfficeAddress;
         const useFirmLinks = !(location || "").trim() || (smsOfficeAddress && addr === smsOfficeAddress);
         const primaryClientName = (clients[0]?.name || clientName || leadName || "").trim();
+        const allClientNames = (Array.isArray(clients) ? clients : [])
+            .map((c) => String(c?.name || "").trim())
+            .filter(Boolean);
+        if (!allClientNames.length && primaryClientName) allClientNames.push(primaryClientName);
+        const clientsNames = allClientNames.length <= 1
+            ? (allClientNames[0] || "")
+            : allClientNames.length === 2
+                ? `${allClientNames[0]} ו-${allClientNames[1]}`
+                : `${allClientNames.slice(0, -1).join(", ")} ו-${allClientNames[allClientNames.length - 1]}`;
         return {
             recipientName: primaryClientName,
+            clientsNames,
             firmName: getFirmName() || "",
             date: validStart
                 ? validStart.toLocaleDateString("he-IL", { day: "2-digit", month: "2-digit", year: "numeric" })

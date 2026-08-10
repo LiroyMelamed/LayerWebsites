@@ -50,6 +50,7 @@ const { lawyerMatchSql, personalCalendarSql } = require('../lib/calendarVisibili
 const { signOAuthState, verifyOAuthState } = require('../lib/calendarOAuthState');
 const { sendMessage } = require('../utils/sendMessage');
 const { sendTransactionalCustomHtmlEmail } = require('../utils/smooveEmailCampaignService');
+const { composeCalendarEmail } = require('../lib/calendarEmail');
 
 // ─── Optional peer deps (graceful-fail if not yet installed) ──────────────────
 let ical;
@@ -3057,6 +3058,7 @@ async function _sendCalendarInvite(ev, { force = false } = {}) {
     }
 
     const errors = [];
+    const allClientNames = recipients.map((r) => r.name).filter(Boolean);
     for (const recipient of recipients) {
         const entry = {
             userId: recipient.userId,
@@ -3072,6 +3074,7 @@ async function _sendCalendarInvite(ev, { force = false } = {}) {
             messageBody = await composeInviteSmsMessage({
                 ...ev,
                 client_name: recipient.name,
+                clients_names: allClientNames,
                 invite_token: recipient.inviteToken,
             });
         } catch (err) {
@@ -3095,11 +3098,20 @@ async function _sendCalendarInvite(ev, { force = false } = {}) {
         }
         if (recipient.email) {
             try {
+                const composed = await composeCalendarEmail('CALENDAR_INVITE', {
+                    ...ev,
+                    client_name: recipient.name,
+                    clients_names: allClientNames,
+                    invite_token: recipient.inviteToken,
+                }, {
+                    recipientName: recipient.name,
+                    clientsNames: allClientNames,
+                });
                 await sendTransactionalCustomHtmlEmail({
                     toEmail: recipient.email,
-                    subject: `הזמנה לפגישה — ${ev.title || 'פגישה'}`,
-                    htmlBody: `<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.7">${String(messageBody).replace(/\n/g, '<br/>')}</div>`,
-                    logLabel: 'calendar-invite',
+                    subject: composed.subject,
+                    htmlBody: composed.htmlBody,
+                    logLabel: 'CALENDAR_INVITE',
                 });
                 entry.sentEmail = true;
                 result.sentEmail += 1;

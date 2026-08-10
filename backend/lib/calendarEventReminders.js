@@ -271,6 +271,7 @@ async function loadCalendarSmsContext(ev) {
 
     return {
         recipientName: String(ev.client_name || ev.lead_name || ev.recipient_name || '').trim() || 'לקוח/ה',
+        clientsNames: formatClientsList(ev.clients_names || ev.client_names || ev.client_name || ev.lead_name),
         firmName,
         date: formatEventDate(ev.start_time),
         time: formatEventTime(ev.start_time),
@@ -327,21 +328,39 @@ async function composeLawyerReminderMessage(offsetMinutes, ev) {
     const timeStr = formatEventTime(ev.start_time);
     const when = formatOffsetHebrew(offsetMinutes);
     const isReminderEvent = ev.event_type === 'reminder';
-    const audience = ev.client_name || null;
+    const clientsLabel = formatClientsList(
+        ev.clients_names
+        || (ev.client_names ? String(ev.client_names) : null)
+        || ev.client_name
+    );
     const title = isReminderEvent
         ? 'תזכורת מהיומן'
         : (offsetMinutes >= 1440 ? 'תזכורת לפגישה' : 'תזכורת לפגישה קרובה');
     let body = isReminderEvent
         ? `${ev.title || 'תזכורת'} — ${when} בשעה ${timeStr}`
-        : (audience
-            ? `פגישה עם הלקוח ${audience} — ${when} בשעה ${timeStr}`
+        : (clientsLabel
+            ? `פגישה עם ${clientsLabel.includes(' ו-') || clientsLabel.includes(',') ? 'הלקוחות' : 'הלקוח'} ${clientsLabel} — ${when} בשעה ${timeStr}`
             : `${ev.title} — ${when} בשעה ${timeStr}`);
     body += await buildShortNavLinksBlock(ev.location, {
         officeAddress: String(await settingsService.getSetting('calendar', 'FIRM_OFFICE_ADDRESS', '') || '').trim(),
         firmWazeUrl: String(await settingsService.getSetting('calendar', 'FIRM_WAZE_URL', '') || '').trim(),
         firmMapsUrl: String(await settingsService.getSetting('calendar', 'FIRM_MAPS_URL', '') || '').trim(),
     });
-    return { title, body };
+    return { title, body, whenLabel: when, clientsLabel };
+}
+
+function formatClientsList(raw) {
+    if (Array.isArray(raw)) {
+        const list = [...new Set(raw.map((n) => String(n || '').trim()).filter(Boolean))];
+        if (!list.length) return '';
+        if (list.length === 1) return list[0];
+        if (list.length === 2) return `${list[0]} ו-${list[1]}`;
+        return `${list.slice(0, -1).join(', ')} ו-${list[list.length - 1]}`;
+    }
+    const s = String(raw || '').trim();
+    if (!s) return '';
+    if (s.includes(',') || s.includes(' ו-')) return s;
+    return s;
 }
 
 async function composeClientReminderMessage(offsetMinutes, ev) {
@@ -392,4 +411,5 @@ module.exports = {
     loadCalendarSmsContext,
     getClientReminderTemplate,
     getInviteSmsTemplate,
+    formatClientsList,
 };
