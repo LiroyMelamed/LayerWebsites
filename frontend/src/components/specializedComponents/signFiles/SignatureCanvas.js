@@ -103,6 +103,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const [stampNormalizedDataUrl, setStampNormalizedDataUrl] = useState(null);
     const [showSpotPopup, setShowSpotPopup] = useState(false);
     const [selectedSavedItem, setSelectedSavedItem] = useState(null); // { type: 'signature'|'stamp', url, index }
+    const autoOpenedFirstSpotRef = useRef(false);
 
     const getSignModeForSpotType = (type) => {
         const t0 = String(type || 'signature').toLowerCase();
@@ -555,6 +556,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 // Spec: first interaction jumps to first required spot.
                 setCurrentSpot(null);
                 setHasStartedNextFlow(false);
+                autoOpenedFirstSpotRef.current = false;
                 const fileStatus = String(data?.file?.Status || data?.file?.status || "").toLowerCase();
                 const readOnly = data?.readOnly === true
                     || data?.file?.ReadOnly === true
@@ -580,6 +582,33 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [signingFileId, isPublic, publicToken]);
+
+    // Public/signing link: auto-open the first required signature spot once the PDF is ready.
+    useEffect(() => {
+        if (!isScreen || !pdfReady || !fileDetails || autoOpenedFirstSpotRef.current) return;
+
+        const fileStatus = String(fileDetails?.file?.Status || fileDetails?.file?.status || "").toLowerCase();
+        const locked = fileDetails?.readOnly === true
+            || fileDetails?.file?.ReadOnly === true
+            || fileDetails?.signerCompleted === true
+            || fileStatus === "signed"
+            || fileStatus === "rejected"
+            || showCompletion;
+        if (locked) return;
+
+        const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
+        const unsignedRequired = getUnsignedRequiredSpots(allSpots);
+        if (unsignedRequired.length === 0) return;
+
+        autoOpenedFirstSpotRef.current = true;
+        const first = unsignedRequired[0];
+        setCurrentSpot(first);
+        setHasStartedNextFlow(true);
+        setShowSpotPopup(true);
+        const t = setTimeout(() => scrollToSpot(first), 80);
+        return () => clearTimeout(t);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isScreen, pdfReady, fileDetails, showCompletion]);
 
     useEffect(() => {
         setSavedSignature((p) => ({ ...p, loading: true }));
@@ -825,7 +854,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         return c.toDataURL("image/png");
     };
 
-    /** Stamp: tight aspect-preserving canvas (no forced 400×180 letterbox that shrinks wide stamps). */
+    /**
+     * Stamp: cover-crop into a landscape stamp canvas so phone screenshots / tall
+     * photos fill the field instead of appearing as a tiny vertical strip.
+     */
     const normalizeStampDataUrl = async (dataUrl) => {
         const raw = String(dataUrl || "");
         if (!raw.startsWith("data:image/")) return raw;
@@ -840,21 +872,24 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
         const iw = Math.max(1, img.naturalWidth || 1);
         const ih = Math.max(1, img.naturalHeight || 1);
-        const MAX_W = 560;
-        const MAX_H = 280;
-        const scale = Math.min(MAX_W / iw, MAX_H / ih, 1);
+        const TARGET_W = 560;
+        const TARGET_H = 280;
+        // Cover-fit: scale up enough to fill the stamp box, then center-crop.
+        const scale = Math.max(TARGET_W / iw, TARGET_H / ih);
         const drawW = Math.max(1, Math.round(iw * scale));
         const drawH = Math.max(1, Math.round(ih * scale));
+        const dx = Math.round((TARGET_W - drawW) / 2);
+        const dy = Math.round((TARGET_H - drawH) / 2);
 
         const c = document.createElement("canvas");
-        c.width = drawW;
-        c.height = drawH;
+        c.width = TARGET_W;
+        c.height = TARGET_H;
         const ctx = c.getContext("2d");
         if (!ctx) return raw;
-        ctx.clearRect(0, 0, drawW, drawH);
+        ctx.clearRect(0, 0, TARGET_W, TARGET_H);
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = "high";
-        ctx.drawImage(img, 0, 0, drawW, drawH);
+        ctx.drawImage(img, dx, dy, drawW, drawH);
         // Always strip letterbox so saved stamps stay transparent in PDF.
         return removeImageBackground(c.toDataURL("image/png"));
     };
