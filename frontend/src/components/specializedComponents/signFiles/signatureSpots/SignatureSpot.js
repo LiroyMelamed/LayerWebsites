@@ -175,9 +175,8 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
             ev.preventDefault();
             const dx = Math.abs(Number(ev.clientX) - pointerStartRef.current.x);
             const dy = Math.abs(Number(ev.clientY) - pointerStartRef.current.y);
-            if (dx > DRAG_THRESHOLD_PX || dy > DRAG_THRESHOLD_PX) {
-                dragMovedRef.current = true;
-            }
+            if (dx <= DRAG_THRESHOLD_PX && dy <= DRAG_THRESHOLD_PX) return;
+            dragMovedRef.current = true;
             moveFromClientPoint(ev.clientX, ev.clientY);
         };
 
@@ -348,11 +347,14 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                     X
                 </span>
             )}
-            {/* overlay for editor + context menu — signed spots are display-only */}
-            {!isSigned && (
+            {/*
+              Overlay is for client/select hit-targets only.
+              While editing (drag enabled), it MUST NOT capture pointers — that
+              blocked touch drag (browser stole the gesture for scroll).
+            */}
+            {!isSigned && !canEditSpot && (
             <div
                 onClick={(e) => {
-                    if (canEditSpot) return;
                     e.stopPropagation();
                     if (typeof onSelectSpot === 'function') onSelectSpot(index);
                 }}
@@ -367,6 +369,17 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                 }}
                 aria-hidden
                 className="lw-signing-spotOverlay"
+            />
+            )}
+            {!isSigned && canEditSpot && (
+            <div
+                onContextMenu={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof onRequestContext === 'function') onRequestContext(index, e);
+                }}
+                aria-hidden
+                className="lw-signing-spotOverlay lw-signing-spotOverlay--passthrough"
             />
             )}
         </SimpleContainer>
