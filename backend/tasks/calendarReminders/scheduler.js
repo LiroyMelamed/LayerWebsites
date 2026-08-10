@@ -350,10 +350,10 @@ async function _processClaimedRows(rows) {
     }
 }
 
-/** Flush invite SMS deferred to Motzaei Shabbat. */
+/** Flush invite SMS deferred past Shabbat / nighttime quiet windows. */
 async function processDeferredInvites() {
-    const { isInShabbatQuietWindow } = require('../../lib/shabbatDeferral');
-    if (isInShabbatQuietWindow(new Date())) return;
+    const { isInQuietWindow } = require('../../lib/shabbatDeferral');
+    if (isInQuietWindow(new Date())) return;
 
     const { rows } = await pool.query(
         `SELECT id FROM calendar_events
@@ -376,6 +376,8 @@ async function processDeferredInvites() {
 
     for (const row of rows) {
         try {
+            // Re-check at send time — never flush during a quiet window.
+            if (isInQuietWindow(new Date())) return;
             await sendFn(row.id);
             await pool.query(
                 `UPDATE calendar_events SET invite_deferred_until = NULL WHERE id = $1`,
@@ -389,6 +391,13 @@ async function processDeferredInvites() {
 
 async function processCalendarReminders() {
     const { pollMinutes } = await _readSchedulerSettings();
+    try {
+        const { warmShabbatCache } = require('../../lib/shabbatDeferral');
+        await warmShabbatCache(new Date());
+    } catch (err) {
+        console.error('[calendar-reminders] Shabbat cache warm failed (using fail-closed fallback):', err.message);
+    }
+
     let claimed;
     try {
         claimed = await _claimDueReminders(pollMinutes);

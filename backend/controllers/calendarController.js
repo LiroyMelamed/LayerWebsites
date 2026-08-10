@@ -44,7 +44,7 @@ const {
     composeInviteSmsMessage,
     uniqueSortedDesc,
 } = require('../lib/calendarEventReminders');
-const { deferToMotzeiShabbat } = require('../lib/shabbatDeferral');
+const { deferQuietSendUntil } = require('../lib/shabbatDeferral');
 const { resolveShortLink } = require('../lib/publicShortLinks');
 const { lawyerMatchSql, personalCalendarSql } = require('../lib/calendarVisibility');
 const { signOAuthState, verifyOAuthState } = require('../lib/calendarOAuthState');
@@ -2914,7 +2914,7 @@ async function _sendCalendarInvite(ev, { force = false } = {}) {
     }
 
     if (!force) {
-        const deferredUntil = deferToMotzeiShabbat(new Date());
+        const deferredUntil = deferQuietSendUntil(new Date());
         if (deferredUntil) {
             try {
                 await pool.query(
