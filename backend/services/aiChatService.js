@@ -621,7 +621,7 @@ function _formatCaseBlock(c, stages, stageFiles, signingFiles, caseTypeStages) {
 
 function _fmtDate(d) {
     if (!d) return 'לא ידוע';
-    try { return new Date(d).toLocaleDateString('he-IL'); } catch { return String(d); }
+    try { return new Date(d).toLocaleDateString('he-IL', { timeZone: 'Asia/Jerusalem' }); } catch { return String(d); }
 }
 
 // ── LLM call ──────────────────────────────────────────────────────────

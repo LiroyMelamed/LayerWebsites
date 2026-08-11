@@ -227,11 +227,14 @@ function formatOffsetHebrew(minutes) {
     return `בעוד ${minutes} דקות`;
 }
 
+const TENANT_TZ = 'Asia/Jerusalem';
+
 function formatEventDate(startTime) {
     return new Date(startTime).toLocaleDateString('he-IL', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
+        timeZone: TENANT_TZ,
     });
 }
 
@@ -240,6 +243,7 @@ function formatEventTime(startTime) {
         hour: '2-digit',
         minute: '2-digit',
         hour12: false,
+        timeZone: TENANT_TZ,
     });
 }
 
