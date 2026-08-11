@@ -91,7 +91,12 @@ async function processEmailReminders() {
             const firmLogoUrl = await getSetting('firm', 'FIRM_LOGO_URL', null) || '';
             const fields = {
                 client_name: reminder.client_name,
-                date: new Date(reminder.scheduled_for).toLocaleDateString('he-IL'),
+                date: new Date(reminder.scheduled_for).toLocaleDateString('he-IL', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    timeZone: 'Asia/Jerusalem',
+                }),
                 firm_name: firmName,
                 ...data,
             };

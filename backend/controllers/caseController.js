@@ -1613,7 +1613,7 @@ const createLicenseReminders = async (req, res) => {
             }
 
             for (const recipient of recipients) {
-                const expiryFormatted = expiry.toLocaleDateString('he-IL');
+                const expiryFormatted = expiry.toLocaleDateString('he-IL', { timeZone: 'Asia/Jerusalem' });
                 const { rows } = await pool.query(
                     `INSERT INTO scheduled_email_reminders
                         (user_id, client_name, to_email, subject, template_key, template_data, scheduled_for, created_by)
