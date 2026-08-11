@@ -2038,7 +2038,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                             >
                                 {saving ? t("signing.canvas.saving") : t("signing.canvas.signOnly")}
                             </PrimaryButton>
-                            {remainingSignatureSpots > 1 && (
+                            {remainingSignatureSpots >= 1 && (
                                 <SecondaryButton
                                     size={buttonSizes.SMALL}
                                     onPress={async () => { await signAllRemainingSpots(selectedSavedItem); }}
@@ -2293,22 +2293,36 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             {/* ─── Draw mode ─── */}
             {signatureMode === "draw" && currentSpot && !currentSpot.IsSigned && currentSpotIsSignature && (
                 <div className="lw-signing-canvasSection">
-                    <canvas
-                        ref={canvasRef}
-                        className="lw-signing-canvas"
-                        onPointerDown={startDrawing}
-                        onPointerMove={drawMove}
-                        onPointerUp={endDrawing}
-                        onPointerCancel={endDrawing}
-                        onPointerLeave={endDrawing}
-                        onTouchStart={startDrawing}
-                        onTouchMove={drawMove}
-                        onTouchEnd={endDrawing}
-                    />
-                    <div className="lw-signing-actionsRow">
-                        <SecondaryButton size={buttonSizes.MEDIUM} onPress={clearCanvas} disabled={saving}>
-                            {t("common.clear")}
-                        </SecondaryButton>
+                    <div className="lw-signing-canvasWrap">
+                        <canvas
+                            ref={canvasRef}
+                            className="lw-signing-canvas"
+                            onPointerDown={startDrawing}
+                            onPointerMove={drawMove}
+                            onPointerUp={endDrawing}
+                            onPointerCancel={endDrawing}
+                            onPointerLeave={endDrawing}
+                            onTouchStart={startDrawing}
+                            onTouchMove={drawMove}
+                            onTouchEnd={endDrawing}
+                        />
+                        <button
+                            type="button"
+                            className="lw-signing-canvasClearBtn"
+                            onClick={clearCanvas}
+                            disabled={saving || !hasUserDrawn}
+                            title={t("common.clear")}
+                            aria-label={t("common.clear")}
+                        >
+                            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+                                <path
+                                    fill="currentColor"
+                                    d="M12 5V2L8 6l4 4V7c3.31 0 6 2.69 6 6a6 6 0 0 1-9.33 5 1 1 0 1 1 1.18-1.62A4 4 0 1 0 12 5z"
+                                />
+                            </svg>
+                        </button>
+                    </div>
+                    <div className="lw-signing-actionsRow lw-signing-actionsRow--sign">
                         <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { await signOnly(); }} disabled={saving}>
                             {saving
                                 ? t("signing.canvas.saving")
@@ -2321,7 +2335,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 {saving ? t("signing.canvas.saving") : t("signing.canvas.saveSignature")}
                             </SecondaryButton>
                         )}
-                        {remainingSignatureSpots > 1 && currentSignMode === 'signature' && (
+                        {currentSignMode === 'signature' && remainingSignatureSpots >= 1 && (
                             <SecondaryButton
                                 size={buttonSizes.MEDIUM}
                                 onPress={async () => { await signAllRemainingSpots(); }}
