@@ -311,8 +311,8 @@ const importReminders = async (req, res, next) => {
                 }
             }
             templateData.date = contentDate
-                ? contentDate.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' })
-                : scheduledFor.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                ? contentDate.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Jerusalem' })
+                : scheduledFor.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Jerusalem' });
             if (notes) templateData.notes = notes;
             if (subject) templateData.subject = subject;
             if (body) templateData.body = body;
