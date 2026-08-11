@@ -103,7 +103,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const [stampNormalizedDataUrl, setStampNormalizedDataUrl] = useState(null);
     const [showSpotPopup, setShowSpotPopup] = useState(false);
     const [selectedSavedItem, setSelectedSavedItem] = useState(null); // { type: 'signature'|'stamp', url, index }
+    const [canvasClearSpinning, setCanvasClearSpinning] = useState(false);
     const autoOpenedFirstSpotRef = useRef(false);
+    const canvasClearSpinTimerRef = useRef(null);
 
     const getSignModeForSpotType = (type) => {
         const t0 = String(type || 'signature').toLowerCase();
@@ -579,6 +581,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         load();
         return () => {
             isMounted = false;
+            if (canvasClearSpinTimerRef.current) {
+                clearTimeout(canvasClearSpinTimerRef.current);
+                canvasClearSpinTimerRef.current = null;
+            }
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [signingFileId, isPublic, publicToken]);
@@ -771,6 +777,24 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         ctx.textAlign = "center";
         ctx.fillText(t("signing.canvas.signHere"), canvas.width / 2, canvas.height / 2);
         setHasUserDrawn(false);
+    };
+
+    const handleClearCanvasClick = () => {
+        if (saving || !hasUserDrawn) return;
+        if (canvasClearSpinTimerRef.current) {
+            clearTimeout(canvasClearSpinTimerRef.current);
+            canvasClearSpinTimerRef.current = null;
+        }
+        // Retrigger CSS animation even on rapid taps.
+        setCanvasClearSpinning(false);
+        requestAnimationFrame(() => {
+            setCanvasClearSpinning(true);
+            clearCanvas();
+            canvasClearSpinTimerRef.current = setTimeout(() => {
+                setCanvasClearSpinning(false);
+                canvasClearSpinTimerRef.current = null;
+            }, 550);
+        });
     };
 
     const getApiErrorMessage = (err) => {
@@ -2038,7 +2062,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                             >
                                 {saving ? t("signing.canvas.saving") : t("signing.canvas.signOnly")}
                             </PrimaryButton>
-                            {remainingSignatureSpots > 1 && (
+                            {remainingSignatureSpots >= 1 && (
                                 <SecondaryButton
                                     size={buttonSizes.SMALL}
                                     onPress={async () => { await signAllRemainingSpots(selectedSavedItem); }}
@@ -2293,22 +2317,50 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             {/* ─── Draw mode ─── */}
             {signatureMode === "draw" && currentSpot && !currentSpot.IsSigned && currentSpotIsSignature && (
                 <div className="lw-signing-canvasSection">
-                    <canvas
-                        ref={canvasRef}
-                        className="lw-signing-canvas"
-                        onPointerDown={startDrawing}
-                        onPointerMove={drawMove}
-                        onPointerUp={endDrawing}
-                        onPointerCancel={endDrawing}
-                        onPointerLeave={endDrawing}
-                        onTouchStart={startDrawing}
-                        onTouchMove={drawMove}
-                        onTouchEnd={endDrawing}
-                    />
-                    <div className="lw-signing-actionsRow">
-                        <SecondaryButton size={buttonSizes.MEDIUM} onPress={clearCanvas} disabled={saving}>
-                            {t("common.clear")}
-                        </SecondaryButton>
+                    <div className="lw-signing-canvasWrap">
+                        <canvas
+                            ref={canvasRef}
+                            className="lw-signing-canvas"
+                            onPointerDown={startDrawing}
+                            onPointerMove={drawMove}
+                            onPointerUp={endDrawing}
+                            onPointerCancel={endDrawing}
+                            onPointerLeave={endDrawing}
+                            onTouchStart={startDrawing}
+                            onTouchMove={drawMove}
+                            onTouchEnd={endDrawing}
+                        />
+                        <button
+                            type="button"
+                            className={`lw-signing-canvasClearBtn${canvasClearSpinning ? ' is-spinning' : ''}`}
+                            onClick={handleClearCanvasClick}
+                            disabled={saving || !hasUserDrawn}
+                            title={t("common.clear")}
+                            aria-label={t("common.clear")}
+                        >
+                            <svg
+                                className="lw-signing-canvasClearBtn__icon"
+                                viewBox="0 0 24 24"
+                                width="18"
+                                height="18"
+                                aria-hidden="true"
+                                focusable="false"
+                            >
+                                <path
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2.4"
+                                    strokeLinecap="round"
+                                    d="M20.6 12a8.6 8.6 0 1 1-2.55-6.05"
+                                />
+                                <path
+                                    fill="currentColor"
+                                    d="M17.05 2.85l4.55 1.35-1.35 4.55-3.2-5.9z"
+                                />
+                            </svg>
+                        </button>
+                    </div>
+                    <div className="lw-signing-actionsRow lw-signing-actionsRow--sign">
                         <PrimaryButton size={buttonSizes.MEDIUM} onPress={async () => { await signOnly(); }} disabled={saving}>
                             {saving
                                 ? t("signing.canvas.saving")
@@ -2321,7 +2373,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 {saving ? t("signing.canvas.saving") : t("signing.canvas.saveSignature")}
                             </SecondaryButton>
                         )}
-                        {remainingSignatureSpots > 1 && currentSignMode === 'signature' && (
+                        {currentSignMode === 'signature' && remainingSignatureSpots >= 1 && (
                             <SecondaryButton
                                 size={buttonSizes.MEDIUM}
                                 onPress={async () => { await signAllRemainingSpots(); }}
