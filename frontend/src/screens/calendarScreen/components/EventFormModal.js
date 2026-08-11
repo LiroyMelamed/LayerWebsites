@@ -767,10 +767,20 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             clientsNames,
             firmName: getFirmName() || "",
             date: validStart
-                ? validStart.toLocaleDateString("he-IL", { day: "2-digit", month: "2-digit", year: "numeric" })
+                ? validStart.toLocaleDateString("he-IL", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    timeZone: "Asia/Jerusalem",
+                })
                 : "",
             time: validStart
-                ? validStart.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })
+                ? validStart.toLocaleTimeString("he-IL", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: false,
+                    timeZone: "Asia/Jerusalem",
+                })
                 : "",
             address: addr,
             wazeUrl: (useFirmLinks && smsFirmWazeUrl) ? smsFirmWazeUrl : "",
