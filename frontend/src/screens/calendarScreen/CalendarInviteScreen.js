@@ -66,6 +66,7 @@ export default function CalendarInviteScreen() {
             hour: "2-digit",
             minute: "2-digit",
             hour12: false,
+            timeZone: "Asia/Jerusalem",
         });
     }, [invite?.startTime]);
 

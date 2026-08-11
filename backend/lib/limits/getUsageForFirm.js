@@ -17,7 +17,30 @@ async function safeSumBytes(sql) {
 }
 
 function monthStartUtcIso() {
-    return new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+    // Billing month boundary in Israel civil time (server may be Europe/Berlin).
+    const tz = 'Asia/Jerusalem';
+    const nowParts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: tz,
+        year: 'numeric',
+        month: '2-digit',
+    }).formatToParts(new Date());
+    const map = Object.fromEntries(nowParts.map((p) => [p.type, p.value]));
+    const y = Number(map.year);
+    const m = Number(map.month);
+    // UTC midnight of that civil date, then subtract Jerusalem's offset that day.
+    const utcGuess = Date.UTC(y, m - 1, 1, 0, 0, 0);
+    const seen = new Intl.DateTimeFormat('en-CA', {
+        timeZone: tz,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+    }).formatToParts(new Date(utcGuess));
+    const s = Object.fromEntries(seen.map((p) => [p.type, p.value]));
+    const localMinutes = Number(s.hour) * 60 + Number(s.minute);
+    return new Date(utcGuess - localMinutes * 60 * 1000).toISOString();
 }
 
 /**
