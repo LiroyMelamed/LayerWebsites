@@ -876,11 +876,11 @@ export default function CalendarScreen() {
 
                 {/* ── Manager / client / case filters (one row) ── */}
                 {filtersPanelOpen && (
-                    <SimpleContainer
+                    <div
                         className={`lw-calendarScreen__filterRow ${canUseFirmView && scope === SCOPE_FIRM ? "lw-calendarScreen__filterRow--three" : "lw-calendarScreen__filterRow--two"}`}
                     >
                         {canUseFirmView && scope === SCOPE_FIRM && (
-                            <SimpleContainer className="lw-calendarScreen__filterGroup">
+                            <div className="lw-calendarScreen__filterGroup">
                                 <SearchInput
                                     title={t("calendar.filterByManager")}
                                     value={managerFilterLabel}
@@ -891,10 +891,10 @@ export default function CalendarScreen() {
                                     buttonPressFunction={handleManagerFilterSelected}
                                     clearOnSelect={false}
                                 />
-                            </SimpleContainer>
+                            </div>
                         )}
 
-                        <SimpleContainer className="lw-calendarScreen__filterGroup">
+                        <div className="lw-calendarScreen__filterGroup">
                             <SearchInput
                                 title={t("calendar.filterByClient")}
                                 value={clientFilterLabel}
@@ -905,9 +905,9 @@ export default function CalendarScreen() {
                                 buttonPressFunction={handleClientFilterSelected}
                                 clearOnSelect={false}
                             />
-                        </SimpleContainer>
+                        </div>
 
-                        <SimpleContainer className="lw-calendarScreen__filterGroup">
+                        <div className="lw-calendarScreen__filterGroup">
                             <SearchInput
                                 title={t("calendar.filterByCase")}
                                 value={caseFilterLabel}
@@ -918,8 +918,8 @@ export default function CalendarScreen() {
                                 buttonPressFunction={handleCaseFilterSelected}
                                 clearOnSelect={false}
                             />
-                        </SimpleContainer>
-                    </SimpleContainer>
+                        </div>
+                    </div>
                 )}
 
                 {/* ── Layout: sidebar + calendar ── */}
