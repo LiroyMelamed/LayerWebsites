@@ -49,7 +49,12 @@ export default function DailyAgendaScreen() {
 
     const title = useMemo(() => {
         try {
-            return new Date(`${date}T12:00:00`).toLocaleDateString("he-IL", { weekday: "long", day: "numeric", month: "long" });
+            return new Date(`${date}T12:00:00`).toLocaleDateString("he-IL", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                timeZone: "Asia/Jerusalem",
+            });
         } catch {
             return date;
         }
@@ -65,8 +70,22 @@ export default function DailyAgendaScreen() {
                 {loading && <Text12>טוען...</Text12>}
                 {!loading && !events.length && <Text14>{t("calendar.noEvents")}</Text14>}
                 {events.map((ev) => {
-                    const start = ev.startTime ? new Date(ev.startTime).toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit", hour12: false }) : "";
-                    const end = ev.endTime ? new Date(ev.endTime).toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit", hour12: false }) : "";
+                    const start = ev.startTime
+                        ? new Date(ev.startTime).toLocaleTimeString("he-IL", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                            timeZone: "Asia/Jerusalem",
+                        })
+                        : "";
+                    const end = ev.endTime
+                        ? new Date(ev.endTime).toLocaleTimeString("he-IL", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                            timeZone: "Asia/Jerusalem",
+                        })
+                        : "";
                     const invite =
                         ev.inviteStatus === "accepted" ? t("calendar.inviteStatusAccepted")
                             : ev.inviteStatus === "declined" ? t("calendar.inviteStatusDeclined")
