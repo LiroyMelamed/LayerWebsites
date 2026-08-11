@@ -328,12 +328,12 @@
     top: 0.4rem;
     left: 0.4rem;
     z-index: 3;
-    width: 2rem;
-    height: 2rem;
+    width: 2.125rem;
+    height: 2.125rem;
     border: 0.0625rem solid rgba(0, 0, 0, 0.18);
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.92);
-    color: #334155;
+    background: rgba(255, 255, 255, 0.94);
+    color: #1f2937;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -349,6 +349,27 @@
 
     &:not(:disabled):active {
         transform: scale(0.96);
+    }
+
+    &__icon {
+        display: block;
+        transform-origin: center;
+    }
+
+    &.is-spinning .lw-signing-canvasClearBtn__icon {
+        animation: lw-signing-clear-spin 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+}
+
+@keyframes lw-signing-clear-spin {
+    0% {
+        transform: rotate(0deg) scale(1);
+    }
+    45% {
+        transform: rotate(200deg) scale(1.08);
+    }
+    100% {
+        transform: rotate(360deg) scale(1);
     }
 }
 

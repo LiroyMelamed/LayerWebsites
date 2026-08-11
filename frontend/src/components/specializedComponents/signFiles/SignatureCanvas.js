@@ -103,7 +103,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const [stampNormalizedDataUrl, setStampNormalizedDataUrl] = useState(null);
     const [showSpotPopup, setShowSpotPopup] = useState(false);
     const [selectedSavedItem, setSelectedSavedItem] = useState(null); // { type: 'signature'|'stamp', url, index }
+    const [canvasClearSpinning, setCanvasClearSpinning] = useState(false);
     const autoOpenedFirstSpotRef = useRef(false);
+    const canvasClearSpinTimerRef = useRef(null);
 
     const getSignModeForSpotType = (type) => {
         const t0 = String(type || 'signature').toLowerCase();
@@ -579,6 +581,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         load();
         return () => {
             isMounted = false;
+            if (canvasClearSpinTimerRef.current) {
+                clearTimeout(canvasClearSpinTimerRef.current);
+                canvasClearSpinTimerRef.current = null;
+            }
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [signingFileId, isPublic, publicToken]);
@@ -771,6 +777,24 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         ctx.textAlign = "center";
         ctx.fillText(t("signing.canvas.signHere"), canvas.width / 2, canvas.height / 2);
         setHasUserDrawn(false);
+    };
+
+    const handleClearCanvasClick = () => {
+        if (saving || !hasUserDrawn) return;
+        if (canvasClearSpinTimerRef.current) {
+            clearTimeout(canvasClearSpinTimerRef.current);
+            canvasClearSpinTimerRef.current = null;
+        }
+        // Retrigger CSS animation even on rapid taps.
+        setCanvasClearSpinning(false);
+        requestAnimationFrame(() => {
+            setCanvasClearSpinning(true);
+            clearCanvas();
+            canvasClearSpinTimerRef.current = setTimeout(() => {
+                setCanvasClearSpinning(false);
+                canvasClearSpinTimerRef.current = null;
+            }, 550);
+        });
     };
 
     const getApiErrorMessage = (err) => {
@@ -2308,16 +2332,30 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         />
                         <button
                             type="button"
-                            className="lw-signing-canvasClearBtn"
-                            onClick={clearCanvas}
+                            className={`lw-signing-canvasClearBtn${canvasClearSpinning ? ' is-spinning' : ''}`}
+                            onClick={handleClearCanvasClick}
                             disabled={saving || !hasUserDrawn}
                             title={t("common.clear")}
                             aria-label={t("common.clear")}
                         >
-                            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+                            <svg
+                                className="lw-signing-canvasClearBtn__icon"
+                                viewBox="0 0 24 24"
+                                width="18"
+                                height="18"
+                                aria-hidden="true"
+                                focusable="false"
+                            >
+                                <path
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2.4"
+                                    strokeLinecap="round"
+                                    d="M20.6 12a8.6 8.6 0 1 1-2.55-6.05"
+                                />
                                 <path
                                     fill="currentColor"
-                                    d="M12 5V2L8 6l4 4V7c3.31 0 6 2.69 6 6a6 6 0 0 1-9.33 5 1 1 0 1 1 1.18-1.62A4 4 0 1 0 12 5z"
+                                    d="M17.05 2.85l4.55 1.35-1.35 4.55-3.2-5.9z"
                                 />
                             </svg>
                         </button>
