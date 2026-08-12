@@ -1,14 +1,16 @@
 # Deploy tenants from `main`
 
-**Rule:** all product work lands on `main` first. Tenant branches (`MelamedLaw`, `MorLevi`, `AshrafEssa`) only receive merges from `main`, then branded builds and deploy. Never build MelamedLaw (or another tenant) from a different tenant tip.
+**Rule:** all product work lands on `main` first. Tenant branches (`MelamedLaw`, `MorLevi`, `AshrafEssa`, `Melamedia`) only receive merges from `main`, then branded builds and deploy. Never build MelamedLaw (or another tenant) from a different tenant tip — including **never** building production tenants from the `Melamedia` QA tip.
+
+**Melamedia** is the QA / sales-demo tenant (wipeable demo DB). Production client data must never be copied into it.
 
 ## Flow
 
 ```
-main  →  merge into MelamedLaw / MorLevi / AshrafEssa
+main  →  merge into MelamedLaw / MorLevi / AshrafEssa / Melamedia
       →  apply-tenant-branding.js + tenant .env
       →  build
-      →  deploy (FTP MelamedLaw / rsync MorLevi+AshrafEssa)
+      →  deploy (FTP MelamedLaw / rsync MorLevi+AshrafEssa+Melamedia)
 ```
 
 ## Build (per tenant)
@@ -20,7 +22,7 @@ cd frontend
 # Avoid .env.production.local overriding the tenant API (move aside if present)
 [ -f .env.production.local ] && mv .env.production.local .env.production.local.bak
 
-npm run build:melamedlaw   # or build:morlevy / build:ashrafessa
+npm run build:melamedlaw   # or build:morlevy / build:ashrafessa / build:melamedia
 ```
 
 `prebuild:*` runs `apply-tenant-branding.js` and copies the PDF worker.
@@ -28,8 +30,19 @@ npm run build:melamedlaw   # or build:morlevy / build:ashrafessa
 ## Deploy
 
 - **MelamedLaw frontend:** FTP to client host (see `frontend/.env.ftp.local`)
-- **MorLevi / AshrafEssa frontend:** `scripts/deploy-tenant-frontend.sh morlevy|ashrafessa` (prefer SSH key; do not add new sshpass usage)
-- **Backend:** deploy only the matching tenant directory/process on `37.60.230.148` — never `pm2 restart all`
+- **MorLevi / AshrafEssa / Melamedia frontend:** `scripts/deploy-tenant-frontend.sh morlevy|ashrafessa|melamedia` (SSH key; do not add new sshpass usage)
+- **Backend:** `scripts/deploy-tenant-backend.sh morlevy|ashrafessa|melamedia` — never `pm2 restart all`
+
+## Melamedia hosts
+
+| Role | Host | Notes |
+|------|------|--------|
+| SPA | `melamedia.mela-media.co.il` → `/var/www/melamedia` | Frontend VPS `84.46.253.85` |
+| API | `api-melamedia.mela-media.co.il` → PM2 `melamedia-api` :3003 | Backend VPS `37.60.230.148`, dir `/root/Melamedia` |
+
+After Cloudflare A records point at those IPs, run `scripts/finalize-melamedia-dns.sh` to expand TLS certs and redeploy the SPA.
+
+Demo login phones / seed notes: [DEMO_MELAMEDIA.md](./DEMO_MELAMEDIA.md).
 
 ## Smoke after deploy
 

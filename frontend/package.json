@@ -66,7 +66,9 @@
     "i18n:extract": "node scripts/extract-hebrew-i18n.js",
     "copy-pdf-worker": "node scripts/copy-pdf-worker.js",
     "prebuild:melamedlaw": "node scripts/copy-pdf-worker.js && node scripts/apply-tenant-branding.js melamedlaw",
-    "build:melamedlaw": "cp .env.production.melamedlaw .env && react-scripts build"
+    "build:melamedlaw": "cp .env.production.melamedlaw .env && react-scripts build",
+    "prebuild:melamedia": "node scripts/copy-pdf-worker.js && node scripts/apply-tenant-branding.js melamedia",
+    "build:melamedia": "cp .env.production.melamedia .env && react-scripts build"
   },
   "eslintConfig": {
     "extends": [

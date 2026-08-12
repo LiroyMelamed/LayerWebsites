@@ -34,18 +34,22 @@ Hebrew-first UI. Example client domain: client.melamedlaw.co.il
 - Admin, Lawyer, Client (customer), PlatformAdmin (super-admin)
 
 ## Deployment — CRITICAL
-Backend server (37.60.230.148) hosts all 3 LayerWebsites tenants + BarberBooking API:
+Backend server (37.60.230.148) hosts LayerWebsites tenants + BarberBooking API:
 - **MelamedLaw**: /root/LayerWebsites, branch `MelamedLaw`, PM2 `melamed-backend`, port 3000, nginx `api.calls.melamedlaw.co.il`
 - **MorLevi**: /root/MorLevi, branch `MorLevi`, PM2 `morlevy-api`, port 3001, nginx `api-morlevy.mela-media.co.il`
 - **AshrafEssa**: /root/AshrafEssa, branch `AshrafEssa`, PM2 `ashrafessa-api`, port 3002, nginx `api-ashrafessa.mela-media.co.il`
+- **Melamedia** (QA/sales demo, wipeable): /root/Melamedia, branch `Melamedia`, PM2 `melamedia-api`, port 3003, nginx `api-melamedia.mela-media.co.il`
 - **BarberBooking API**: PM2 `barber-api`, port 4000, nginx `api-barber.mela-media.co.il`
 - **Other**: PM2 `contractor-monitor` (helper service)
 
 Frontend server (84.46.253.85) — separate VPS:
 - **MorLevi** SPA: nginx `morlevy.mela-media.co.il` → /var/www/morlevy/
 - **AshrafEssa** SPA: nginx `ashrafessa.mela-media.co.il` → /var/www/ashrafessa/
+- **Melamedia** SPA (QA/demo): nginx `melamedia.mela-media.co.il` → /var/www/melamedia/
 - **BarberBooking web**: PM2 `barber-web` (Next.js 14, port 3000), nginx `barber.mela-media.co.il`
 - MelamedLaw frontend NOT on this server.
+
+Product flow: land on GitHub `main` first, then merge into tenant branches (`MelamedLaw` / `MorLevi` / `AshrafEssa` / `Melamedia`). Never build other tenants from the Melamedia tip. See `docs/DEPLOY_TENANTS_FROM_MAIN.md` and `docs/DEMO_MELAMEDIA.md`.
 
 Rules:
 - NEVER run `pm2 restart all` — always restart specific process only
@@ -60,7 +64,7 @@ Rules:
 - Do NOT add new `sshpass` calls in scripts — use the key instead. Existing scripts in `backend/scripts/sync-prod-to-*-neon.sh` use `SSH_KEY` env var (defaults to `~/.ssh/id_ed25519`).
 
 ## Firewall & intrusion prevention (both servers)
-- **UFW active**: default deny incoming, allow outgoing. Only 22/80/443 open publicly. PM2 ports (3000/3001/3002/4000) and Postgres (5432) are bound to 0.0.0.0 but firewall-blocked from outside.
+- **UFW active**: default deny incoming, allow outgoing. Only 22/80/443 open publicly. PM2 ports (3000/3001/3002/3003/4000) and Postgres (5432) are bound to 0.0.0.0 but firewall-blocked from outside.
 - **fail2ban active**: `/etc/fail2ban/jail.d/sshd-local.conf` — sshd jail, maxretry=5, findtime=10m, bantime=1h, backend=systemd.
 - **CUPS disabled** on backend (was exposed on 0.0.0.0:631): `snap stop --disable cups`.
 - User's known SSH source IPs (do NOT lock out): 46.210.218.181, 141.226.89.32.
@@ -73,10 +77,10 @@ Rules:
   - Verifies with `pg_restore -l` before upload
   - Uploads to `s3://<S3_BUCKET>/db-backups/<tenant>/<tenant>_<TS>.dump` using snap `aws` CLI
   - Local retention: 14 days
-- **Cron**: `/etc/cron.d/melamedia-tenant-backups` — staggered 02:10 / 02:25 / 02:40 (snap aws CLI is memory-heavy; concurrent runs OOM)
+- **Cron**: `/etc/cron.d/melamedia-tenant-backups` — staggered 02:10 / 02:25 / 02:40 / 02:55 (snap aws CLI is memory-heavy; concurrent runs OOM)
 - **Logs**: `/var/log/backups/<tenant>.log`
 - **DO NOT use the legacy scripts**: `melamedlaw_pg_backup.sh`, `<tenant>/backend/scripts/backup-db-to-r2.sh` — these were broken (sourced .env and crashed on Hebrew / unquoted parens). Root crontab is now empty; only `/etc/cron.d/melamedia-tenant-backups` runs backups.
-- R2 buckets: `melamedlaw-files`, `morlevy-files`, `ashrafessa-files` (creds in each tenant's `backend/.env` as `S3_*`)
+- R2 buckets: `melamedlaw-files`, `morlevy-files`, `ashrafessa-files`, `melamedia-files` (creds in each tenant's `backend/.env` as `S3_*`)
 - BarberBooking does not have a PG backup yet.
 
 ## Conventions
