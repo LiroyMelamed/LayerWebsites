@@ -213,18 +213,32 @@ function hasAnyReminderChannel(channels) {
 }
 
 function formatOffsetHebrew(minutes) {
-    if (Number(minutes) === 0) return 'עכשיו';
-    if (minutes >= 1440 && minutes % 1440 === 0) {
-        const days = minutes / 1440;
+    const m = Math.max(0, Math.round(Number(minutes) || 0));
+    if (m === 0) return 'עכשיו';
+    if (m >= 1440 && m % 1440 === 0) {
+        const days = m / 1440;
         if (days === 1) return 'מחר';
         return `בעוד ${days} ימים`;
     }
-    if (minutes >= 60 && minutes % 60 === 0) {
-        const hours = minutes / 60;
+    if (m >= 60 && m % 60 === 0) {
+        const hours = m / 60;
         if (hours === 1) return 'בעוד שעה';
         return `בעוד ${hours} שעות`;
     }
-    return `בעוד ${minutes} דקות`;
+    // Near whole hours: prefer "שעה" wording when within ~2 minutes.
+    if (m >= 58 && m <= 62) return 'בעוד שעה';
+    return `בעוד ${m} דקות`;
+}
+
+/** Actual minutes remaining until event start (Asia/Jerusalem clock via Date). */
+function minutesUntilStart(startTime, now = new Date()) {
+    const startMs = new Date(startTime).getTime();
+    if (!Number.isFinite(startMs)) return 0;
+    return Math.max(0, Math.round((startMs - now.getTime()) / 60000));
+}
+
+function formatRemainingHebrew(startTime, now = new Date()) {
+    return formatOffsetHebrew(minutesUntilStart(startTime, now));
 }
 
 const TENANT_TZ = 'Asia/Jerusalem';
@@ -330,16 +344,20 @@ async function getInviteSmsTemplate(ev) {
 
 async function composeLawyerReminderMessage(offsetMinutes, ev) {
     const timeStr = formatEventTime(ev.start_time);
-    const when = formatOffsetHebrew(offsetMinutes);
+    // Prefer actual remaining time at send moment over the configured offset.
+    const when = ev?.start_time
+        ? formatRemainingHebrew(ev.start_time)
+        : formatOffsetHebrew(offsetMinutes);
     const isReminderEvent = ev.event_type === 'reminder';
     const clientsLabel = formatClientsList(
         ev.clients_names
         || (ev.client_names ? String(ev.client_names) : null)
         || ev.client_name
     );
+    const remainingMins = ev?.start_time ? minutesUntilStart(ev.start_time) : Number(offsetMinutes) || 0;
     const title = isReminderEvent
         ? 'תזכורת מהיומן'
-        : (offsetMinutes >= 1440 ? 'תזכורת לפגישה' : 'תזכורת לפגישה קרובה');
+        : (remainingMins >= 1440 ? 'תזכורת לפגישה' : 'תזכורת לפגישה קרובה');
     let body = isReminderEvent
         ? `${ev.title || 'תזכורת'} — ${when} בשעה ${timeStr}`
         : (clientsLabel
@@ -369,11 +387,16 @@ function formatClientsList(raw) {
 
 async function composeClientReminderMessage(offsetMinutes, ev) {
     const ctx = await loadCalendarSmsContext(ev);
+    const remainingMins = ev?.start_time ? minutesUntilStart(ev.start_time) : Number(offsetMinutes) || 0;
+    ctx.when = ev?.start_time
+        ? formatRemainingHebrew(ev.start_time)
+        : formatOffsetHebrew(offsetMinutes);
     const template = await getClientReminderTemplate(ev);
     const body = renderTemplate(template, ctx).trim();
     return {
-        title: offsetMinutes >= 1440 ? 'תזכורת לפגישה' : 'תזכורת לפגישה קרובה',
+        title: remainingMins >= 1440 ? 'תזכורת לפגישה' : 'תזכורת לפגישה קרובה',
         body: body || `תזכורת לפגישה בתאריך ${ctx.date} בשעה ${ctx.time}`,
+        whenLabel: ctx.when,
     };
 }
 
@@ -408,6 +431,8 @@ module.exports = {
     targetsToJson,
     hasAnyReminderChannel,
     formatOffsetHebrew,
+    formatRemainingHebrew,
+    minutesUntilStart,
     buildNavLinks,
     composeLawyerReminderMessage,
     composeClientReminderMessage,
