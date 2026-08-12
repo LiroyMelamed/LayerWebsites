@@ -39,7 +39,15 @@ if (fs.existsSync(path.join(src, "manifest.json"))) {
   fs.copyFileSync(path.join(src, "manifest.json"), path.join(root, "public", "manifest.json"));
 }
 fs.copyFileSync(path.join(src, "firm-logo.png"), path.join(root, "public", "firm-logo.png"));
-for (const icon of ["logo192.png", "logo512.png"]) {
+for (const icon of [
+  "logo192.png",
+  "logo512.png",
+  "favicon.ico",
+  "favicon.png",
+  "favicon-16x16.png",
+  "favicon-32x32.png",
+  "apple-touch-icon.png",
+]) {
   const iconSrc = path.join(src, icon);
   if (fs.existsSync(iconSrc)) {
     fs.copyFileSync(iconSrc, path.join(root, "public", icon));

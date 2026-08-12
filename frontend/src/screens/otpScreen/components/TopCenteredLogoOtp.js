@@ -7,6 +7,9 @@ import { useTranslation } from "react-i18next";
 
 import "./TopCenteredLogoOtp.scss";
 
+const useNaturalLogoColors =
+    String(process.env.REACT_APP_APP_NAME || "").toLowerCase() === "melamedia";
+
 export default function TopCenteredLogoOtp({ logoSrc = images.Logos.LogoSlang, logoWidth = 100, style: _style }) {
     const { t } = useTranslation();
 
@@ -15,7 +18,7 @@ export default function TopCenteredLogoOtp({ logoSrc = images.Logos.LogoSlang, l
             <SimpleContainer className="lw-topCenteredLogoOtp__cornerLogo">
                 <SimpleImage
                     src={logoSrc}
-                    tintColor={colors.text}
+                    tintColor={useNaturalLogoColors ? null : colors.text}
                     className="lw-topCenteredLogoOtp__logoImage"
                 />
             </SimpleContainer>
