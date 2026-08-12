@@ -423,7 +423,8 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                     X
                 </span>
             )}
-            {canEditSpot && isSelected && !isSigned && (
+            {/* Admin/edit mode only (canEditSpot). Always show — no need to select first. */}
+            {canEditSpot && !isSigned && (
                 <span
                     className="lw-signing-spotResize"
                     title={t('signing.fieldSettings.resize', { defaultValue: 'שנה גודל' })}

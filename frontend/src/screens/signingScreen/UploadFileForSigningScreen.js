@@ -77,9 +77,6 @@ function FieldSettingsPopup({
     const [isRequired, setIsRequired] = useState(
         typeof storedRequired === 'boolean' ? storedRequired : true
     );
-    const initialSize = clampSpotSize(spot?.width || 240, spot?.height || 90);
-    const [spotWidth, setSpotWidth] = useState(String(Math.round(initialSize.width)));
-    const [spotHeight, setSpotHeight] = useState(String(Math.round(initialSize.height)));
     const [rangeFrom, setRangeFrom] = useState("");
     const [rangeTo, setRangeTo] = useState("");
     const [rangeError, setRangeError] = useState("");
@@ -103,8 +100,7 @@ function FieldSettingsPopup({
     };
 
     const handleSave = () => {
-        const size = clampSpotSize(Number(spotWidth), Number(spotHeight));
-        onSave?.(index, { isRequired, width: size.width, height: size.height });
+        onSave?.(index, { isRequired });
     };
 
     return (
@@ -131,26 +127,6 @@ function FieldSettingsPopup({
                             {isRequired ? t('signing.fieldSettings.required') : t('signing.fieldSettings.optional')}
                         </span>
                     </label>
-                </SimpleContainer>
-
-                <SimpleContainer className="lw-fieldSettingsPopup__row">
-                    <Text14 className="lw-fieldSettingsPopup__label">{t('signing.fieldSettings.size', { defaultValue: 'גודל' })}</Text14>
-                    <SimpleContainer className="lw-fieldSettingsPopup__rangeRow">
-                        <SimpleInput
-                            title={t('signing.fieldSettings.width', { defaultValue: 'רוחב' })}
-                            type="number"
-                            value={spotWidth}
-                            onChange={(e) => setSpotWidth(e.target.value)}
-                            className="lw-fieldSettingsPopup__rangeInput"
-                        />
-                        <SimpleInput
-                            title={t('signing.fieldSettings.height', { defaultValue: 'גובה' })}
-                            type="number"
-                            value={spotHeight}
-                            onChange={(e) => setSpotHeight(e.target.value)}
-                            className="lw-fieldSettingsPopup__rangeInput"
-                        />
-                    </SimpleContainer>
                 </SimpleContainer>
 
                 <SimpleContainer className="lw-fieldSettingsPopup__section">
