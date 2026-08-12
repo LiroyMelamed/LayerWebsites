@@ -123,10 +123,12 @@ async function _eventHasClientAudience(ev) {
 }
 
 async function _claimDueReminders(pollMinutes, limit = 200) {
-    const grace = Math.max(5, Number.parseInt(String(pollMinutes || 5), 10) || 5);
+    // Late-only grace: claim when fireAt is due or slightly overdue.
+    // Do NOT look ahead by the poll interval (that caused "in 30 minutes" at +29 min early).
+    const lateGrace = 5;
     const now = Date.now();
-    const windowStart = now - grace * 60 * 1000;
-    const windowEnd = now + grace * 60 * 1000;
+    const windowStart = now - lateGrace * 60 * 1000;
+    const windowEnd = now;
 
     const { rows } = await pool.query(
         `

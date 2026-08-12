@@ -670,7 +670,7 @@
     color: var(--spot-border, var(--lw-color-primary, #2A4365));
 
     /* Labels/images must not become the touch target (iOS would scroll the PDF). */
-    &.is-editable > *:not(.lw-signing-spotOverlay):not(.lw-signing-spotRemove) {
+    &.is-editable > *:not(.lw-signing-spotOverlay):not(.lw-signing-spotRemove):not(.lw-signing-spotResize) {
         pointer-events: none;
     }
 
@@ -693,6 +693,22 @@
         min-width: 5.625rem !important;
         min-height: 2.25rem !important;
     }
+}
+
+.lw-signing-spotResize {
+    position: absolute;
+    right: -0.35rem;
+    bottom: -0.35rem;
+    width: 0.9rem;
+    height: 0.9rem;
+    border-radius: 0.15rem;
+    background: #1976d2;
+    border: 0.125rem solid #fff;
+    box-shadow: 0 0.0625rem 0.25rem rgba(0, 0, 0, 0.35);
+    cursor: nwse-resize;
+    z-index: 6;
+    pointer-events: auto;
+    touch-action: none;
 }
 
 .lw-signing-spotOverlay {
