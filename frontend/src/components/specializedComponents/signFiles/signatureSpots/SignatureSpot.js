@@ -425,12 +425,31 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
             )}
             {/* Admin/edit mode only (canEditSpot). Always show — no need to select first. */}
             {canEditSpot && !isSigned && (
-                <span
+                <button
+                    type="button"
                     className="lw-signing-spotResize"
+                    aria-label={t('signing.fieldSettings.resize', { defaultValue: 'שנה גודל' })}
                     title={t('signing.fieldSettings.resize', { defaultValue: 'שנה גודל' })}
                     onPointerDown={startResizePointer}
                     onClick={(e) => e.stopPropagation()}
-                />
+                >
+                    <svg
+                        className="lw-signing-spotResize__icon"
+                        viewBox="0 0 16 16"
+                        width="12"
+                        height="12"
+                        aria-hidden="true"
+                        focusable="false"
+                    >
+                        <path
+                            d="M4.5 11.5 L11.5 4.5 M7.5 12.5 L12.5 7.5 M3.5 8.5 L8.5 3.5"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.6"
+                            strokeLinecap="round"
+                        />
+                    </svg>
+                </button>
             )}
             {/* Top hit-layer: owns drag on edit, select on client. touch-action:none is critical on iOS. */}
             {!isSigned && (

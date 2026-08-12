@@ -696,19 +696,97 @@
 }
 
 .lw-signing-spotResize {
+    --lw-resize-accent: var(--spot-border, var(--lw-color-primary, #1E3A8A));
     position: absolute;
-    right: -0.35rem;
-    bottom: -0.35rem;
-    width: 0.9rem;
-    height: 0.9rem;
-    border-radius: 0.15rem;
-    background: #1976d2;
+    right: -0.55rem;
+    bottom: -0.55rem;
+    width: 1.375rem;
+    height: 1.375rem;
+    margin: 0;
+    padding: 0;
     border: 0.125rem solid #fff;
-    box-shadow: 0 0.0625rem 0.25rem rgba(0, 0, 0, 0.35);
+    border-radius: 0.35rem;
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.22) 0%, transparent 55%),
+        var(--lw-resize-accent);
+    color: #fff;
+    box-shadow:
+        0 0.0625rem 0.125rem rgba(15, 23, 42, 0.18),
+        0 0.25rem 0.625rem rgba(15, 23, 42, 0.22);
     cursor: nwse-resize;
     z-index: 6;
     pointer-events: auto;
     touch-action: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    appearance: none;
+    -webkit-appearance: none;
+    transition:
+        transform 180ms ease,
+        box-shadow 180ms ease,
+        background-color 180ms ease,
+        opacity 180ms ease;
+    opacity: 0.92;
+
+    /* Expand hit area to ~44px without enlarging the visible chip (UX touch target). */
+    &::before {
+        content: "";
+        position: absolute;
+        inset: -0.7rem;
+        border-radius: 0.75rem;
+    }
+
+    .lw-signing-spotResize__icon {
+        display: block;
+        flex-shrink: 0;
+        pointer-events: none;
+    }
+
+    &:hover,
+    &:focus-visible {
+        opacity: 1;
+        transform: translateY(-0.0625rem);
+        box-shadow:
+            0 0 0 0.1875rem rgba(30, 58, 138, 0.22),
+            0 0.35rem 0.85rem rgba(15, 23, 42, 0.28);
+        outline: none;
+    }
+
+    &:active {
+        transform: translateY(0) scale(0.96);
+        box-shadow:
+            0 0 0 0.125rem rgba(30, 58, 138, 0.28),
+            0 0.125rem 0.35rem rgba(15, 23, 42, 0.25);
+    }
+
+    @media (max-width: 30rem) {
+        width: 1.5rem;
+        height: 1.5rem;
+        right: -0.65rem;
+        bottom: -0.65rem;
+
+        &::before {
+            inset: -0.75rem;
+        }
+    }
+}
+
+.lw-signing-spot.is-editable:hover .lw-signing-spotResize,
+.lw-signing-spot.is-selected .lw-signing-spotResize {
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lw-signing-spotResize {
+        transition: none;
+
+        &:hover,
+        &:focus-visible,
+        &:active {
+            transform: none;
+        }
+    }
 }
 
 .lw-signing-spotOverlay {
@@ -729,7 +807,15 @@
 }
 
 .lw-signing-spot.is-selected {
-    box-shadow: 0 0 0 0.1875rem rgba(25, 118, 210, 0.35), 0 0.125rem 0.625rem rgba(0, 0, 0, 0.2);
+    box-shadow:
+        0 0 0 0.1875rem rgba(30, 58, 138, 0.28),
+        0 0.25rem 0.85rem rgba(15, 23, 42, 0.2);
+}
+
+.lw-signing-spot.is-editable:not(.is-signed):hover {
+    box-shadow:
+        0 0 0 0.125rem rgba(30, 58, 138, 0.16),
+        0 0.3rem 0.9rem rgba(15, 23, 42, 0.18);
 }
 
 /* ─── Full-screen public signing layout (variant="screen") ─── */
@@ -1078,7 +1164,9 @@
     inset-inline-end: -0.75rem;
     width: 1.5rem;
     height: 1.5rem;
-    background-color: var(--lw-color-negative, #C53030);
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.18) 0%, transparent 55%),
+        var(--lw-color-negative, #C53030);
     color: #fff;
     border-radius: 50%;
     font-size: 0.75rem;
@@ -1087,11 +1175,48 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
+    box-shadow:
+        0 0.0625rem 0.125rem rgba(15, 23, 42, 0.18),
+        0 0.2rem 0.45rem rgba(197, 48, 48, 0.35);
     border: 0.125rem solid #fff;
     z-index: 5;
     pointer-events: auto;
     touch-action: manipulation;
+    transition:
+        transform 180ms ease,
+        box-shadow 180ms ease;
+
+    &::before {
+        content: "";
+        position: absolute;
+        inset: -0.55rem;
+        border-radius: 50%;
+    }
+
+    &:hover,
+    &:focus-visible {
+        transform: translateY(-0.0625rem);
+        box-shadow:
+            0 0 0 0.1875rem rgba(197, 48, 48, 0.22),
+            0 0.3rem 0.7rem rgba(197, 48, 48, 0.4);
+        outline: none;
+    }
+
+    &:active {
+        transform: scale(0.96);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lw-signing-spotRemove {
+        transition: none;
+
+        &:hover,
+        &:focus-visible,
+        &:active {
+            transform: none;
+        }
+    }
 }
 
 /* Signing file card */
