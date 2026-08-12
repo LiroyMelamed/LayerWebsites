@@ -609,8 +609,8 @@ function buildSigningInvitePushData({ signingFileId, token, publicUrl, type = 's
         data.url = publicUrl;
     }
     if (token) {
-        // melamedia:// is registered in every LawyerApp tenant linking config.
-        data.deepLink = `melamedia://PublicSigning?token=${encodeURIComponent(String(token))}`;
+        // Triple-slash so Linking parses PublicSigning as path (not hostname).
+        data.deepLink = `melamedia:///PublicSigning?token=${encodeURIComponent(String(token))}`;
     } else if (publicUrl) {
         data.deepLink = publicUrl;
     }
@@ -1733,16 +1733,19 @@ async function getVerifiedOtpChallengeIdOrNull({ signingFileId, signerUserId, si
     const failClosed = String(process.env.IS_PRODUCTION || 'false').toLowerCase() === 'true';
 
     try {
+        // Prefer a challenge that matches the presented PDF hash; fall back to any
+        // verified challenge for this signing session so one OTP covers the full session.
         const res = await pool.query(
             `select challengeid as "ChallengeId"
              from signing_otp_challenges
              where signingfileid = $1
                and signeruserid = $2
                and signingsessionid = $3
-               and presentedpdfsha256 = $4
                and verified = true
                and verified_at_utc is not null
-             order by verified_at_utc desc
+             order by
+               case when presentedpdfsha256 = $4 then 0 else 1 end,
+               verified_at_utc desc
              limit 1`,
             [signingFileId, signerUserId, signingSessionId, String(presentedPdfSha256 || '')]
         );
@@ -1834,8 +1837,16 @@ async function createSigningOtpChallenge({ signingFileId, signerUserId, signingS
         ]
     );
 
-    // Send SMS (provider id is not currently captured by sendMessage); audit log still captures send time.
-    await sendMessage(`קוד אימות לחתימה: ${otp}`, phoneE164, { fast: true });
+    // Send SMS; fail the challenge creation if the provider did not accept the message.
+    const smsResult = await sendMessage(`קוד אימות לחתימה: ${otp}`, phoneE164, { fast: true });
+    if (!smsResult || smsResult.ok === false) {
+        try {
+            await pool.query(`delete from signing_otp_challenges where challengeid = $1`, [challengeId]);
+        } catch (cleanupErr) {
+            console.warn('[signing_otp] failed to delete undelivered challenge:', cleanupErr?.message || cleanupErr);
+        }
+        return { ok: false, httpStatus: 502, errorCode: 'SMS_SEND_FAILED' };
+    }
 
     // SMS metering is a no-op in single-tenant mode (firm_usage_events removed)
 
@@ -2911,7 +2922,8 @@ exports.uploadFileForSigning = async (req, res, next) => {
                 continue;
             }
 
-            const deliveryMethod = String(signer.deliveryMethod || 'phone').trim();
+            const deliveryRaw = String(signer.deliveryMethod || 'phone').trim().toLowerCase();
+            const deliveryMethod = deliveryRaw === 'sms' ? 'phone' : deliveryRaw;
 
             const token = createPublicSigningToken({
                 signingFileId,
@@ -2948,10 +2960,26 @@ exports.uploadFileForSigning = async (req, res, next) => {
             const sendEmail = deliveryMethod === 'email' || deliveryMethod === 'both';
             const sendSms = deliveryMethod === 'phone' || deliveryMethod === 'both';
 
+            let recipientPhone = String(signer.phone || '').trim() || undefined;
+            let recipientEmail = String(signer.email || '').trim() || undefined;
+            if (sendSms && !recipientPhone) {
+                recipientPhone = (await lookupUserPhoneE164OrNull(signerUserId)) || undefined;
+            }
+            if (sendSms && !recipientPhone) {
+                deliveryResults.push({
+                    signerUserId,
+                    ok: false,
+                    reason: 'MISSING_PHONE',
+                    errorCode: 'MISSING_PHONE',
+                    errors: [{ channel: 'sms', error: 'missing_phone' }],
+                });
+                continue;
+            }
+
             const notifyResult = await notifyRecipient({
                 recipientUserId: signerUserId,
-                recipientEmail: String(signer.email || '').trim() || undefined,
-                recipientPhone: String(signer.phone || '').trim() || undefined,
+                recipientEmail,
+                recipientPhone,
                 caseId: normalizedCaseId,
                 notificationType: 'SIGN_INVITE',
                 respectExplicitChannelChoice: true,
@@ -2982,12 +3010,18 @@ exports.uploadFileForSigning = async (req, res, next) => {
                     : null,
             });
 
-            const ok = Boolean(notifyResult?.ok);
+            const smsAttempted = Boolean(notifyResult?.outcomes?.sms?.attempted);
+            const smsOk = !sendSms || notifyResult?.outcomes?.sms?.ok === true;
+            const emailOk = !sendEmail || notifyResult?.outcomes?.email?.ok === true;
+            // When SMS was explicitly selected, push-only success is not enough.
+            const ok = Boolean(notifyResult?.ok) && smsOk && emailOk && (!sendSms || smsAttempted);
             if (ok) sentCount++;
             deliveryResults.push({
                 signerUserId,
                 ok,
-                errorCode: notifyResult?.errorCode || null,
+                errorCode: ok
+                    ? null
+                    : (notifyResult?.errorCode || (!smsOk ? 'SMS_FAILED' : 'DELIVERY_FAILED')),
                 errors: Array.isArray(notifyResult?.errors) ? notifyResult.errors : [],
             });
         }
@@ -5644,6 +5678,15 @@ async function loadSigningPolicyForFile(signingFileId) {
 }
 
 async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUserId, actorType, genericResponse = false }) {
+    const otpRequestFail = (errorCode, httpStatus, message) => {
+        return res.status(httpStatus || 400).json({
+            success: false,
+            errorCode,
+            message: message || null,
+            delivered: false,
+        });
+    };
+
     const signingSessionId = getSigningSessionIdFromReq(req);
     if (!signingSessionId) {
         await auditOtpBlocked({
@@ -5654,7 +5697,7 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
             signingSessionId: null,
             metadata: { kind: 'otp_request', reason: 'SIGNING_SESSION_REQUIRED' },
         });
-        return res.json({ success: true });
+        return otpRequestFail('SIGNING_SESSION_REQUIRED', 400, 'חסר מזהה סשן חתימה');
     }
 
     const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId, next, req, genericOk: genericResponse });
@@ -5671,11 +5714,13 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
                 policySource: enabledCheck.policy?.source || null,
             },
         });
-        if (enabledCheck.genericOk) return res.json({ success: true });
+        if (enabledCheck.genericOk) {
+            return otpRequestFail('SIGNING_DISABLED', 403, 'שליחת קוד אימות אינה זמינה כרגע');
+        }
         return;
     }
 
-    // Dual-scope rate limits (token + signingFileId). Always return generic response.
+    // Dual-scope rate limits (token + signingFileId).
     const tokenId = hashTokenId(req?.params?.token);
     const windowMs = 60 * 60 * 1000;
     const max = 5;
@@ -5695,7 +5740,7 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
                 },
             },
         });
-        return res.json({ success: true });
+        return otpRequestFail('RATE_LIMITED', 429, 'נשלחו יותר מדי בקשות. נסו שוב בעוד מספר דקות');
     }
 
     const schemaSupport = await getSchemaSupport();
@@ -5709,7 +5754,9 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
             signingSessionId,
             metadata: { kind: 'otp_request', reason: authz.errorCode || 'FORBIDDEN' },
         });
-        return res.json({ success: true });
+        // Avoid leaking authz details on public token routes.
+        if (genericResponse) return otpRequestFail('FORBIDDEN', 403, 'לא ניתן לשלוח קוד אימות');
+        return otpRequestFail(authz.errorCode || 'FORBIDDEN', 403, 'לא ניתן לשלוח קוד אימות');
     }
 
     const file = await loadSigningPolicyForFile(signingFileId);
@@ -5722,7 +5769,7 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
             signingSessionId,
             metadata: { kind: 'otp_request', reason: 'DOCUMENT_NOT_FOUND' },
         });
-        return res.json({ success: true });
+        return otpRequestFail('DOCUMENT_NOT_FOUND', 404, 'המסמך לא נמצא');
     }
 
     const fileStatus = String(file.Status || '').toLowerCase();
@@ -5735,7 +5782,7 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
             signingSessionId,
             metadata: { kind: 'otp_request', reason: 'DOCUMENT_ALREADY_COMPLETE' },
         });
-        return res.json({ success: true, skipped: true, reason: 'DOCUMENT_ALREADY_COMPLETE' });
+        return res.json({ success: true, skipped: true, reason: 'DOCUMENT_ALREADY_COMPLETE', delivered: false });
     }
 
     // Skip OTP when this signer has already finished all required spots.
@@ -5769,7 +5816,7 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
                     signingSessionId,
                     metadata: { kind: 'otp_request', reason: 'SIGNER_ALREADY_COMPLETED' },
                 });
-                return res.json({ success: true, skipped: true, reason: 'SIGNER_ALREADY_COMPLETED' });
+                return res.json({ success: true, skipped: true, reason: 'SIGNER_ALREADY_COMPLETED', delivered: false });
             }
         }
     } catch (doneErr) {
@@ -5785,7 +5832,7 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
             signingSessionId,
             metadata: { kind: 'otp_request', reason: 'OTP_DISABLED' },
         });
-        return res.json({ success: true });
+        return otpRequestFail('OTP_DISABLED', 403, 'אימות ב-SMS אינו פעיל כרגע');
     }
 
     const otpSystemEnabled = await getSigningOtpEnabled();
@@ -5799,7 +5846,7 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
             signingSessionId,
             metadata: { kind: 'otp_request', reason: 'OTP_NOT_REQUIRED' },
         });
-        return res.json({ success: true });
+        return res.json({ success: true, skipped: true, reason: 'OTP_NOT_REQUIRED', delivered: false });
     }
 
     const presentedPdfSha256 = await ensurePresentedHashOrCompute({ signingFileId, fileKey: file.FileKey });
@@ -5812,7 +5859,7 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
             signingSessionId,
             metadata: { kind: 'otp_request', reason: 'MISSING_PRESENTED_HASH' },
         });
-        return res.json({ success: true });
+        return otpRequestFail('MISSING_PRESENTED_HASH', 500, 'לא ניתן לשלוח קוד אימות כרגע');
     }
 
     const created = await createSigningOtpChallenge({
@@ -5841,8 +5888,14 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
             success: false,
             metadata: { failure: created.errorCode },
         });
-        // Silent failure by design (always generic response)
-        return res.json({ success: true });
+        const code = created.errorCode || 'OTP_BLOCKED';
+        const status = created.httpStatus || 400;
+        const messages = {
+            MISSING_PHONE: 'לא נמצא מספר טלפון לשליחת קוד האימות',
+            LIMIT_EXCEEDED: 'חרגתם ממכסת הודעות ה-SMS לחודש זה',
+            SMS_SEND_FAILED: 'שליחת ה-SMS נכשלה. נסו שוב בעוד רגע',
+        };
+        return otpRequestFail(code, status, messages[code] || 'שליחת קוד האימות נכשלה');
     }
 
     await insertAuditEvent({
@@ -5864,7 +5917,7 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
         },
     });
 
-    return res.json({ success: true });
+    return res.json({ success: true, delivered: true });
 }
 
 async function verifySigningOtpImpl({ req, res, next, signingFileId, signerUserId, actorType, genericResponse = false }) {
