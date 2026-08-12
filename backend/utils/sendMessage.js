@@ -219,7 +219,7 @@ async function sendMessage(messageBody, formattedPhone, { fast = false } = {}) {
 
     if (!formattedPhone || !e164Regex.test(String(formattedPhone))) {
         console.error(`Invalid phone for SMS (expected E.164):`, formattedPhone);
-        return;
+        return { ok: false, error: "invalid_phone" };
     }
 
     const shouldSendRealSms = isProduction || FORCE_SEND_SMS_ALL;
@@ -232,13 +232,15 @@ async function sendMessage(messageBody, formattedPhone, { fast = false } = {}) {
         console.log("---------------------------------");
         // Record even in dev so local usage counters are realistic
         await recordUsageEvent("SMS", "dev-simulation", { phone: formattedPhone });
-        return;
+        return { ok: true, simulated: true };
     }
 
     if (SMS_PROVIDER === "smoove") {
-        return sendViaSmoove(messageBody, formattedPhone);
+        const data = await sendViaSmoove(messageBody, formattedPhone);
+        return data ? { ok: true, data } : { ok: false, error: "provider_rejected" };
     }
-    return sendViaInforU(messageBody, formattedPhone, fast);
+    const data = await sendViaInforU(messageBody, formattedPhone, fast);
+    return data ? { ok: true, data } : { ok: false, error: "provider_rejected" };
 }
 
 module.exports = { sendMessage, COMPANY_NAME, WEBSITE_DOMAIN, getWebsiteDomain, getCompanyName, isProduction, FORCE_SEND_SMS_ALL };

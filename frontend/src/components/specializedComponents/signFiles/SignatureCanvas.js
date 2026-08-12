@@ -95,6 +95,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const otpResendAtRef = useRef(0);
     const otpInputRef = useRef(null);
     const [showCompletion, setShowCompletion] = useState(false);
+    const [showOptionalRemaining, setShowOptionalRemaining] = useState(false);
     const [fieldValue, setFieldValue] = useState("");
     const [fieldChecked, setFieldChecked] = useState(false);
     const [clientStampFile, setClientStampFile] = useState(null);
@@ -264,8 +265,13 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const isSpotRequired = (spot) => {
         const raw = spot?.IsRequired ?? spot?.isRequired;
         if (typeof raw === 'boolean') return raw;
+        if (raw === true || raw === false || raw === 'true' || raw === 'false') {
+            return raw === true || raw === 'true';
+        }
         const type = getSpotType(spot);
-        return isSignatureLike(type);
+        if (type === 'lawyerstamp') return false;
+        // Default fillable fields to required (matches lawyer create defaults).
+        return true;
     };
     const getInputTypeForField = (type) => {
         switch (type) {
@@ -822,10 +828,25 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             || /OTP_REQUIRED/i.test(msg)
             || /אימות בקוד חד/.test(msg);
         if (!isOtpRequired) return false;
+
+        // Hard re-auth only when the challenge is gone/expired — not on every field submit.
+        const hardReset = code === "OTP_EXPIRED"
+            || code === "OTP_NOT_FOUND"
+            || /OTP_EXPIRED/i.test(msg)
+            || /OTP_NOT_FOUND/i.test(msg)
+            || /פג תוקף/.test(msg);
+
+        if (!hardReset && otpVerified) {
+            // Keep the verified session; avoid SMS re-send loop.
+            return true;
+        }
+
         setOtpVerified(false);
         setOtpRequested(false);
         setOtpCode("");
-        otpAutoSentRef.current = false;
+        if (hardReset) {
+            otpAutoSentRef.current = false;
+        }
         otpLastFailedRef.current = "";
         otpAutoVerifyRef.current = false;
         return true;
@@ -837,6 +858,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             const msg = /[\u0590-\u05FF]/.test(rawMsg) ? rawMsg : t("errors.unexpected");
             const err = new Error(msg);
             err.data = res?.data || null;
+            err.response = { data: res?.data || { message: rawMsg, errorCode: res?.data?.errorCode } };
             throw err;
         }
         return res;
@@ -1063,6 +1085,40 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         return true;
     };
 
+    const advanceAfterSpotsChange = (spots) => {
+        const unsignedRequired = getUnsignedRequiredSpots(spots);
+        const unsignedOptional = getUnsignedOptionalSpots(spots);
+        if (unsignedRequired.length > 0) {
+            const next = unsignedRequired[0];
+            setShowOptionalRemaining(false);
+            setShowCompletion(false);
+            setCurrentSpot(next);
+            scrollToSpot(next);
+            setHasStartedNextFlow(true);
+            if (isScreen) setShowSpotPopup(true);
+            return;
+        }
+        if (unsignedOptional.length > 0) {
+            const next = unsignedOptional[0];
+            setShowCompletion(false);
+            setShowOptionalRemaining(true);
+            setCurrentSpot(next);
+            scrollToSpot(next);
+            setHasStartedNextFlow(true);
+            // Keep session open; do not navigate away. Popup stays available to fill optionals.
+            if (isScreen) setShowSpotPopup(false);
+            setSelectedSavedItem(null);
+            return;
+        }
+        if (isScreen) setShowSpotPopup(false);
+        setSelectedSavedItem(null);
+        setShowOptionalRemaining(false);
+        if (spots.length > 0) {
+            setShowCompletion(true);
+        }
+        setCurrentSpot(null);
+    };
+
     const reloadDetailsAndAdvance = async () => {
         const res = isPublic
             ? await signingFilesApi.getPublicSigningFileDetails(publicToken)
@@ -1073,23 +1129,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         setFileDetails(mergedData);
 
         const spots = mergedData?.signatureSpots || [];
-        const unsignedRequired = getUnsignedRequiredSpots(spots);
-        // Only auto-advance to required spots; optional spots are filled manually by tapping on them.
-        const nextUnsigned = unsignedRequired[0] || null;
-        setCurrentSpot(nextUnsigned);
-        if (nextUnsigned) {
-            scrollToSpot(nextUnsigned);
-            setHasStartedNextFlow(true);
-            // Auto-open the signing popup for the next spot (mobile screen mode)
-            if (isScreen) setShowSpotPopup(true);
-        } else {
-            // All spots signed — close popup and celebrate
-            if (isScreen) setShowSpotPopup(false);
-            setSelectedSavedItem(null);
-            if (spots.length > 0) {
-                setShowCompletion(true);
-            }
-        }
+        advanceAfterSpotsChange(spots);
         clearCanvas();
     };
 
@@ -1237,13 +1277,26 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 // ignore
             }
 
-            // Advance to next unsigned spot (or clear if all done) — outside updater to avoid batching issues.
-            setCurrentSpot(nextUnsignedSpot);
+            // Advance outside updater to avoid batching issues; keep session if optionals remain.
             if (nextUnsignedSpot) {
+                const stillHasRequired = getUnsignedRequiredSpots(
+                    (fileDetails?.signatureSpots || []).map((s) => (
+                        s?.SignatureSpotId === currentSpot?.SignatureSpotId
+                            ? { ...s, IsSigned: true }
+                            : s
+                    ))
+                ).length > 0;
+                setCurrentSpot(nextUnsignedSpot);
                 scrollToSpot(nextUnsignedSpot);
                 setHasStartedNextFlow(true);
+                if (!stillHasRequired) {
+                    setShowOptionalRemaining(true);
+                    setShowCompletion(false);
+                }
             } else {
+                setShowOptionalRemaining(false);
                 setShowCompletion(true);
+                setCurrentSpot(null);
             }
 
             showAppToast({ type: "success", text: t("signing.canvas.fieldSavedSuccess") });
@@ -1602,7 +1655,6 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
             showAppToast({ type: "success", text: t("signing.canvas.signedAllSuccess") });
             await reloadDetailsAndAdvance();
-            setShowCompletion(true);
             return true;
         } catch (err) {
             console.error("Failed to sign all spots", err);
@@ -1630,12 +1682,20 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 ? await signingFilesApi.publicRequestSigningOtp(publicToken, signingSessionId)
                 : await signingFilesApi.requestSigningOtp(effectiveSigningFileId, signingSessionId);
             unwrapApi(res);
+            const skipped = Boolean(res?.skipped || res?.data?.skipped);
+            const delivered = res?.delivered === true || res?.data?.delivered === true;
             setOtpRequested(true);
             otpLastFailedRef.current = "";
             otpAutoVerifyRef.current = false;
             otpResendAtRef.current = Date.now() + 30_000;
             if (!silent) {
-                showAppToast({ type: "success", text: t("signing.canvas.otpSent") });
+                if (skipped) {
+                    // No SMS expected (already complete / not required).
+                } else if (delivered) {
+                    showAppToast({ type: "success", text: t("signing.canvas.otpSent") });
+                } else {
+                    showAppToast({ type: "error", text: t("signing.canvas.otpSendError") });
+                }
             }
         } catch (err) {
             console.error("OTP request failed", err);
@@ -1853,11 +1913,13 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const currentSignMode = getSignModeForSpotType(currentSpotType);
 
     const goToNextSigningSpot = () => {
-        // Only cycle through required spots — optional spots are not navigated to.
-        if (unsignedRequiredSpots.length === 0) return;
+        const queue = unsignedRequiredSpots.length > 0
+            ? unsignedRequiredSpots
+            : unsignedOptionalSpots;
+        if (queue.length === 0) return;
 
         if (!hasStartedNextFlow) {
-            const first = unsignedRequiredSpots[0];
+            const first = queue[0];
             setCurrentSpot(first);
             scrollToSpot(first);
             setHasStartedNextFlow(true);
@@ -1866,9 +1928,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         }
 
         const currentId = currentSpot?.SignatureSpotId;
-        const currentIdx = unsignedRequiredSpots.findIndex((s) => s.SignatureSpotId === currentId);
-        const nextIdx = currentIdx >= 0 ? (currentIdx + 1) % unsignedRequiredSpots.length : 0;
-        const nextSpot = unsignedRequiredSpots[nextIdx];
+        const currentIdx = queue.findIndex((s) => s.SignatureSpotId === currentId);
+        const nextIdx = currentIdx >= 0 ? (currentIdx + 1) % queue.length : 0;
+        const nextSpot = queue[nextIdx];
         setCurrentSpot(nextSpot);
         scrollToSpot(nextSpot);
         if (isScreen) setShowSpotPopup(true);
@@ -2523,6 +2585,37 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                     </div>
                 </div>
 
+                {showOptionalRemaining && !showCompletion && (
+                    <div className="lw-signing-completeOverlay" role="dialog" aria-modal="true">
+                        <div className="lw-signing-completeCard">
+                            <h2 className="lw-signing-completeTitle">{t("signing.canvas.optionalRemainingTitle")}</h2>
+                            <p className="lw-signing-completeSubtitle">{t("signing.canvas.optionalRemainingSubtitle")}</p>
+                            <div className="lw-signing-completeActions">
+                                <PrimaryButton
+                                    onPress={() => {
+                                        setShowOptionalRemaining(false);
+                                        if (unsignedOptionalSpots[0]) {
+                                            setCurrentSpot(unsignedOptionalSpots[0]);
+                                            scrollToSpot(unsignedOptionalSpots[0]);
+                                            if (isScreen) setShowSpotPopup(true);
+                                        }
+                                    }}
+                                >
+                                    {t("signing.canvas.optionalRemainingContinue")}
+                                </PrimaryButton>
+                                <SecondaryButton
+                                    onPress={() => {
+                                        setShowOptionalRemaining(false);
+                                        setShowCompletion(true);
+                                    }}
+                                >
+                                    {t("signing.canvas.optionalRemainingSkip")}
+                                </SecondaryButton>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {showCompletion && (
                     <div className="lw-signing-completeOverlay" role="dialog" aria-modal="true">
                         <div className="lw-signing-completeCard">
@@ -2655,8 +2748,11 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
                             {!isDocumentLocked && renderSigningControls()}
 
-                            {(isDocumentLocked || (allSpotsSignedByUser && spots.length > 0)) && !showCompletion && (
+                            {(isDocumentLocked || (allSpotsSignedByUser && spots.length > 0 && optionalRemainingCount === 0)) && !showCompletion && !showOptionalRemaining && (
                                 <div className="lw-signing-message is-success">{t("signing.canvas.allRequiredCompleted")}</div>
+                            )}
+                            {allSpotsSignedByUser && optionalRemainingCount > 0 && !showCompletion && !showOptionalRemaining && (
+                                <div className="lw-signing-message is-success">{t("signing.canvas.optionalRemainingHint")}</div>
                             )}
                         </SimpleContainer>
                     </SimpleContainer>
@@ -2679,6 +2775,36 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                     </SimpleContainer>
                 </div>
             </div>
+
+            {showOptionalRemaining && !showCompletion && (
+                <div className="lw-signing-completeOverlay" role="dialog" aria-modal="true">
+                    <div className="lw-signing-completeCard">
+                        <h2 className="lw-signing-completeTitle">{t("signing.canvas.optionalRemainingTitle")}</h2>
+                        <p className="lw-signing-completeSubtitle">{t("signing.canvas.optionalRemainingSubtitle")}</p>
+                        <div className="lw-signing-completeActions">
+                            <PrimaryButton
+                                onPress={() => {
+                                    setShowOptionalRemaining(false);
+                                    if (unsignedOptionalSpots[0]) {
+                                        setCurrentSpot(unsignedOptionalSpots[0]);
+                                        scrollToSpot(unsignedOptionalSpots[0]);
+                                    }
+                                }}
+                            >
+                                {t("signing.canvas.optionalRemainingContinue")}
+                            </PrimaryButton>
+                            <SecondaryButton
+                                onPress={() => {
+                                    setShowOptionalRemaining(false);
+                                    setShowCompletion(true);
+                                }}
+                            >
+                                {t("signing.canvas.optionalRemainingSkip")}
+                            </SecondaryButton>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {showCompletion && (
                 <div className="lw-signing-completeOverlay" role="dialog" aria-modal="true">

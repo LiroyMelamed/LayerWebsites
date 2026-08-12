@@ -5,6 +5,12 @@ import SimpleIcon from "../../../simpleComponents/SimpleIcon";
 import { useTranslation } from "react-i18next";
 import { signerPaletteClassByIndex } from '../../../../utils/signerColorMap';
 import { icons } from "../../../../assets/icons/icons";
+import {
+    SPOT_MIN_HEIGHT,
+    SPOT_MIN_WIDTH,
+    SPOT_MAX_HEIGHT,
+    SPOT_MAX_WIDTH,
+} from "../../../../utils/signingSpotGeometry";
 
 // Color classes are defined in SCSS (lw-signer-palette-N) and keyed by signer index
 
@@ -32,7 +38,7 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
     const isStampType = isLawyerStamp || isClientStamp;
     const stampImageUrl = spot?.stampImageDataUrl || spot?.StampImageDataUrl;
     const isRequiredRaw = spot?.isRequired ?? spot?.IsRequired;
-    const isRequired = typeof isRequiredRaw === 'boolean' ? isRequiredRaw : isSignatureLike;
+    const isRequired = typeof isRequiredRaw === 'boolean' ? isRequiredRaw : true;
 
     const fieldTypeLabels = {
         signature: t('signing.fields.signature'),
@@ -254,6 +260,61 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
         window.addEventListener("touchcancel", stop);
     };
 
+    const startResizePointer = (e) => {
+        if (!canEditSpot) return;
+        if (e.button != null && e.button !== 0) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        const pointerId = e.pointerId;
+        const target = e.currentTarget;
+        const safeScale = scale || 1;
+        const startX = Number(e.clientX);
+        const startY = Number(e.clientY);
+        const baseW = Number(spot.width || 130);
+        const baseH = Number(spot.height || 48);
+        const baseX = Number(spot.x || 0);
+        const baseY = Number(spot.y || 0);
+        const pageNumber = Number(spot.pageNum ?? spot.PageNumber ?? 1) || 1;
+        const pageEl = document.querySelector(`.lw-signing-pageInner[data-page-number="${pageNumber}"]`);
+        const pageRect = pageEl?.getBoundingClientRect();
+        const pageW = pageRect ? pageRect.width / safeScale : 800;
+        const pageH = pageRect ? pageRect.height / safeScale : 1000;
+
+        const onPointerMove = (ev) => {
+            if (ev.pointerId !== pointerId) return;
+            ev.preventDefault();
+            const dw = (Number(ev.clientX) - startX) / safeScale;
+            const dh = (Number(ev.clientY) - startY) / safeScale;
+            let nextW = Math.max(SPOT_MIN_WIDTH, Math.min(SPOT_MAX_WIDTH, baseW + dw));
+            let nextH = Math.max(SPOT_MIN_HEIGHT, Math.min(SPOT_MAX_HEIGHT, baseH + dh));
+            nextW = Math.min(nextW, Math.max(SPOT_MIN_WIDTH, pageW - baseX));
+            nextH = Math.min(nextH, Math.max(SPOT_MIN_HEIGHT, pageH - baseY));
+            onUpdateSpot?.(index, { width: nextW, height: nextH });
+        };
+
+        const stop = (ev) => {
+            if (ev && ev.pointerId !== pointerId) return;
+            window.removeEventListener("pointermove", onPointerMove);
+            window.removeEventListener("pointerup", stop);
+            window.removeEventListener("pointercancel", stop);
+            try {
+                target?.releasePointerCapture?.(pointerId);
+            } catch {
+                // ignore
+            }
+        };
+
+        try {
+            target?.setPointerCapture?.(pointerId);
+        } catch {
+            // ignore
+        }
+        window.addEventListener("pointermove", onPointerMove, { passive: false });
+        window.addEventListener("pointerup", stop);
+        window.addEventListener("pointercancel", stop);
+    };
+
     // Some API responses include both FieldValue and fieldvalue/fieldValue.
     // Prefer a non-empty value to avoid empty-string masking.
     const pickNonEmpty = (...candidates) => {
@@ -361,6 +422,14 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                 >
                     X
                 </span>
+            )}
+            {canEditSpot && isSelected && !isSigned && (
+                <span
+                    className="lw-signing-spotResize"
+                    title={t('signing.fieldSettings.resize', { defaultValue: 'שנה גודל' })}
+                    onPointerDown={startResizePointer}
+                    onClick={(e) => e.stopPropagation()}
+                />
             )}
             {/* Top hit-layer: owns drag on edit, select on client. touch-action:none is critical on iOS. */}
             {!isSigned && (

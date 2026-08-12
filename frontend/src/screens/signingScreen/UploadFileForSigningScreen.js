@@ -42,6 +42,11 @@ import { MainScreenName } from "../mainScreen/MainScreen";
 import { useTranslation } from "react-i18next";
 import { showAppToast } from "../../components/ui/showAppToast";
 import ApiUtils from "../../api/apiUtils";
+import {
+    clampSpotSize,
+    isFillableFieldType,
+    spotCollidesWithOthers,
+} from "../../utils/signingSpotGeometry";
 
 export const uploadFileForSigningScreenName = "/UploadFileForSigningScreen";
 
@@ -68,7 +73,13 @@ function FieldSettingsPopup({
     onReplaceStamp,
 }) {
     const { t } = useTranslation();
-    const [isRequired, setIsRequired] = useState(spot?.isRequired !== false);
+    const storedRequired = spot?.isRequired ?? spot?.IsRequired;
+    const [isRequired, setIsRequired] = useState(
+        typeof storedRequired === 'boolean' ? storedRequired : true
+    );
+    const initialSize = clampSpotSize(spot?.width || 240, spot?.height || 90);
+    const [spotWidth, setSpotWidth] = useState(String(Math.round(initialSize.width)));
+    const [spotHeight, setSpotHeight] = useState(String(Math.round(initialSize.height)));
     const [rangeFrom, setRangeFrom] = useState("");
     const [rangeTo, setRangeTo] = useState("");
     const [rangeError, setRangeError] = useState("");
@@ -89,6 +100,11 @@ function FieldSettingsPopup({
         }
         setRangeError("");
         handleDuplicate('range', [from, to]);
+    };
+
+    const handleSave = () => {
+        const size = clampSpotSize(Number(spotWidth), Number(spotHeight));
+        onSave?.(index, { isRequired, width: size.width, height: size.height });
     };
 
     return (
@@ -115,6 +131,26 @@ function FieldSettingsPopup({
                             {isRequired ? t('signing.fieldSettings.required') : t('signing.fieldSettings.optional')}
                         </span>
                     </label>
+                </SimpleContainer>
+
+                <SimpleContainer className="lw-fieldSettingsPopup__row">
+                    <Text14 className="lw-fieldSettingsPopup__label">{t('signing.fieldSettings.size', { defaultValue: 'גודל' })}</Text14>
+                    <SimpleContainer className="lw-fieldSettingsPopup__rangeRow">
+                        <SimpleInput
+                            title={t('signing.fieldSettings.width', { defaultValue: 'רוחב' })}
+                            type="number"
+                            value={spotWidth}
+                            onChange={(e) => setSpotWidth(e.target.value)}
+                            className="lw-fieldSettingsPopup__rangeInput"
+                        />
+                        <SimpleInput
+                            title={t('signing.fieldSettings.height', { defaultValue: 'גובה' })}
+                            type="number"
+                            value={spotHeight}
+                            onChange={(e) => setSpotHeight(e.target.value)}
+                            className="lw-fieldSettingsPopup__rangeInput"
+                        />
+                    </SimpleContainer>
                 </SimpleContainer>
 
                 <SimpleContainer className="lw-fieldSettingsPopup__section">
@@ -169,7 +205,7 @@ function FieldSettingsPopup({
                 </SecondaryButton>
                 <SimpleContainer className="lw-fieldSettingsPopup__footerActions">
                     <SecondaryButton onPress={onCancel}>{t('common.cancel')}</SecondaryButton>
-                    <PrimaryButton onPress={() => onSave?.(index, { isRequired })}>{t('common.save')}</PrimaryButton>
+                    <PrimaryButton onPress={handleSave}>{t('common.save')}</PrimaryButton>
                 </SimpleContainer>
             </SimpleContainer>
         </SimpleContainer>
@@ -605,7 +641,7 @@ export default function UploadFileForSigningScreen() {
     const handleAddSpotForPage = (pageNumber, signerIdx = 0, fieldType = 'signature', anchor = {}) => {
         const signer = selectedSigners?.[signerIdx] || null;
         const signerName = signer?.Name || t('signing.signerFallback', { index: Number(signerIdx) + 1 });
-        const isRequired = fieldType === 'signature';
+        const isRequired = isFillableFieldType(fieldType);
 
         let x = 120;
         let y = 160;
@@ -714,9 +750,19 @@ export default function UploadFileForSigningScreen() {
     };
 
     const handleUpdateSpot = (index, updates) => {
-        setSignatureSpots((prev) =>
-            prev.map((s, i) => (i === index ? { ...s, ...updates } : s))
-        );
+        setSignatureSpots((prev) => {
+            const current = prev[index];
+            if (!current) return prev;
+            let next = { ...current, ...updates };
+            if (updates.width != null || updates.height != null) {
+                const size = clampSpotSize(next.width, next.height);
+                next = { ...next, ...size };
+            }
+            if (spotCollidesWithOthers(prev, index, next)) {
+                return prev;
+            }
+            return prev.map((s, i) => (i === index ? next : s));
+        });
     };
 
     const handleRemoveSpot = (index) => {
