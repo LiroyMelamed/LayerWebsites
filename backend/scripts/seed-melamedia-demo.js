@@ -365,12 +365,13 @@ async function main() {
   const planCount = Number((await db.query(`SELECT count(*)::int AS c FROM subscription_plans`)).rows[0].c);
   if (planCount === 0) {
     await db.query(`
-      INSERT INTO subscription_plans (plan_key, name, users_quota, created_at, updated_at)
-      VALUES
-        ('BASIC', 'Basic', 3, now(), now()),
-        ('PRO', 'Pro', 10, now(), now()),
-        ('ENTERPRISE', 'Enterprise', NULL, now(), now())
-      ON CONFLICT DO NOTHING
+      INSERT INTO subscription_plans (
+        plan_key, name, documents_retention_days, users_quota, feature_flags, created_at, updated_at
+      ) VALUES
+        ('BASIC', 'Basic', 365, 3, '{}'::jsonb, now(), now()),
+        ('PRO', 'Pro', 730, 10, '{}'::jsonb, now(), now()),
+        ('ENTERPRISE', 'Enterprise', 2555, NULL, '{}'::jsonb, now(), now())
+      ON CONFLICT (plan_key) DO NOTHING
     `);
   }
   await db.query(
