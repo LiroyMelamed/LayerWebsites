@@ -121,6 +121,7 @@ async function main() {
   await db.query(`UPDATE casetypes SET casetypename = 'נדל״ן', numberofstages = 4 WHERE casetypeid = 3`);
   await db.query(`UPDATE casetypes SET casetypename = 'תאונת דרכים - נזק גוף', numberofstages = 4 WHERE casetypeid = 2`);
   await db.query(`UPDATE casetypes SET casetypename = 'כללי', numberofstages = 3 WHERE casetypeid = 1`);
+  await db.query(`SELECT setval(pg_get_serial_sequence('casetypes','casetypeid'), (SELECT COALESCE(MAX(casetypeid),1) FROM casetypes))`);
   await db.query(`
     INSERT INTO casetypes (casetypename, numberofstages)
     SELECT 'חוזים מסחריים', 3
