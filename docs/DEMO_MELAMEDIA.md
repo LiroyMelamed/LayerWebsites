@@ -4,8 +4,15 @@ Wipeable demo for sales walkthroughs and QA. **Do not** copy MelamedLaw (or othe
 
 ## URLs
 
-- SPA: https://melamedia.mela-media.co.il (interim: `https://melamedia.84.46.253.85.sslip.io` until DNS is live)
-- API: https://api-melamedia.mela-media.co.il (interim: `https://api-melamedia.37.60.230.148.sslip.io`)
+Preferred (after Cloudflare A records → `84.46.253.85` / `37.60.230.148`, then `scripts/finalize-melamedia-dns.sh`):
+
+- SPA: https://melamedia.mela-media.co.il
+- API: https://api-melamedia.mela-media.co.il
+
+Working now (sslip interim TLS):
+
+- SPA: https://melamedia.84.46.253.85.sslip.io
+- API: https://api-melamedia.37.60.230.148.sslip.io/health
 
 ## OTP login phones (seed)
 
