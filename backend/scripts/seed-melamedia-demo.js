@@ -83,22 +83,23 @@ async function main() {
   await db.query(`
     INSERT INTO users (name, email, phonenumber, role, companyname)
     SELECT 'לירוי מלמד', 'liroy@melamedia.co.il', '0507299064', 'Admin', 'Melamedia'
-    WHERE NOT EXISTS (SELECT 1 FROM users WHERE phonenumber = '0507299064');
+    WHERE NOT EXISTS (SELECT 1 FROM users WHERE phonenumber = '0507299064')`);
+  await db.query(`
     UPDATE users SET role = 'Admin', name = COALESCE(NULLIF(name,''), 'לירוי מלמד'), companyname = 'Melamedia'
-    WHERE phonenumber = '0507299064';
-
+    WHERE phonenumber = '0507299064'`);
+  await db.query(`
     INSERT INTO users (name, email, phonenumber, role, companyname)
     SELECT 'יוסי כהן', 'client1@example.com', '0501234567', 'Client', NULL
-    WHERE NOT EXISTS (SELECT 1 FROM users WHERE phonenumber = '0501234567');
-    UPDATE users SET role = 'Client', name = 'יוסי כהן' WHERE phonenumber = '0501234567';
-
+    WHERE NOT EXISTS (SELECT 1 FROM users WHERE phonenumber = '0501234567')`);
+  await db.query(`UPDATE users SET role = 'Client', name = 'יוסי כהן' WHERE phonenumber = '0501234567'`);
+  await db.query(`
     INSERT INTO users (name, email, phonenumber, role, companyname)
     SELECT 'עו״ד דנה שמש', 'dana@melamedia.co.il', '0504111111', 'Lawyer', 'Melamedia'
-    WHERE NOT EXISTS (SELECT 1 FROM users WHERE phonenumber = '0504111111');
+    WHERE NOT EXISTS (SELECT 1 FROM users WHERE phonenumber = '0504111111')`);
+  await db.query(`
     INSERT INTO users (name, email, phonenumber, role, companyname)
     SELECT 'עו״ד אמיר גולן', 'amir@melamedia.co.il', '0505111111', 'Lawyer', 'Melamedia'
-    WHERE NOT EXISTS (SELECT 1 FROM users WHERE phonenumber = '0505111111');
-  `);
+    WHERE NOT EXISTS (SELECT 1 FROM users WHERE phonenumber = '0505111111')`);
 
   const users = (await db.query(`
     SELECT userid, phonenumber, role FROM users
@@ -113,19 +114,18 @@ async function main() {
   await db.query(`
     INSERT INTO platform_admins (user_id, name, is_active)
     SELECT $1, 'Platform Admin', true
-    WHERE NOT EXISTS (SELECT 1 FROM platform_admins WHERE user_id = $1);
-    UPDATE platform_admins SET is_active = true WHERE user_id = $1;
-  `, [adminId]);
+    WHERE NOT EXISTS (SELECT 1 FROM platform_admins WHERE user_id = $1)`, [adminId]);
+  await db.query(`UPDATE platform_admins SET is_active = true WHERE user_id = $1`, [adminId]);
 
   console.log('[seed] case types + stage labels…');
+  await db.query(`UPDATE casetypes SET casetypename = 'נדל״ן', numberofstages = 4 WHERE casetypeid = 3`);
+  await db.query(`UPDATE casetypes SET casetypename = 'תאונת דרכים - נזק גוף', numberofstages = 4 WHERE casetypeid = 2`);
+  await db.query(`UPDATE casetypes SET casetypename = 'כללי', numberofstages = 3 WHERE casetypeid = 1`);
   await db.query(`
-    UPDATE casetypes SET casetypename = 'נדל״ן', numberofstages = 4 WHERE casetypeid = 3;
-    UPDATE casetypes SET casetypename = 'תאונת דרכים - נזק גוף', numberofstages = 4 WHERE casetypeid = 2;
-    UPDATE casetypes SET casetypename = 'כללי', numberofstages = 3 WHERE casetypeid = 1;
     INSERT INTO casetypes (casetypename, numberofstages)
     SELECT 'חוזים מסחריים', 3
-    WHERE NOT EXISTS (SELECT 1 FROM casetypes WHERE casetypename = 'חוזים מסחריים');
-  `);
+    WHERE NOT EXISTS (SELECT 1 FROM casetypes WHERE casetypename = 'חוזים מסחריים')`);
+
 
   // Wipe & reinsert stage labels for known types (idempotent by delete+insert for melamedia demo)
   await db.query(`DELETE FROM casetypedescriptions WHERE casetypeid IN (SELECT casetypeid FROM casetypes)`);
@@ -152,20 +152,17 @@ async function main() {
   );
 
   console.log('[seed] rebuild demo cases for client 0501234567…');
-  // Remove previous thin demo cases owned by anyone for clean showcase (Melamedia only)
-  await db.query(`
-    DELETE FROM calendar_events WHERE owner_id = $1 OR client_user_id = $2;
-    DELETE FROM signaturespots WHERE signingfileid IN (SELECT signingfileid FROM signingfiles WHERE clientid = $2 OR lawyerid = $1);
-    DELETE FROM signingfiles WHERE clientid = $2 OR lawyerid = $1;
-    DELETE FROM stage_files WHERE caseid IN (SELECT caseid FROM cases);
-    DELETE FROM uploadedfiles WHERE caseid IN (SELECT caseid FROM cases);
-    DELETE FROM casedescriptions WHERE caseid IN (SELECT caseid FROM cases);
-    DELETE FROM case_users;
-    DELETE FROM cases;
-    DELETE FROM scheduled_email_reminders WHERE user_id IN ($1, $2);
-    DELETE FROM usernotifications WHERE userid IN ($1, $2);
-    DELETE FROM reminder_templates WHERE template_key LIKE 'melamedia_demo_%';
-  `, [adminId, clientId]);
+  await db.query(`DELETE FROM calendar_events WHERE owner_id = $1 OR client_user_id = $2`, [adminId, clientId]);
+  await db.query(`DELETE FROM signaturespots WHERE signingfileid IN (SELECT signingfileid FROM signingfiles WHERE clientid = $1 OR lawyerid = ANY($2::int[]))`, [clientId, [adminId, lawyerDana, lawyerAmir]]);
+  await db.query(`DELETE FROM signingfiles WHERE clientid = $1 OR lawyerid = ANY($2::int[])`, [clientId, [adminId, lawyerDana, lawyerAmir]]);
+  await db.query(`DELETE FROM stage_files WHERE caseid IN (SELECT caseid FROM cases)`);
+  await db.query(`DELETE FROM uploadedfiles WHERE caseid IN (SELECT caseid FROM cases)`);
+  await db.query(`DELETE FROM casedescriptions WHERE caseid IN (SELECT caseid FROM cases)`);
+  await db.query(`DELETE FROM case_users`);
+  await db.query(`DELETE FROM cases`);
+  await db.query(`DELETE FROM scheduled_email_reminders WHERE user_id IN ($1, $2)`, [adminId, clientId]);
+  await db.query(`DELETE FROM usernotifications WHERE userid IN ($1, $2)`, [adminId, clientId]);
+  await db.query(`DELETE FROM reminder_templates WHERE template_key LIKE 'melamedia_demo_%'`);
 
   const casesSpec = [
     {
@@ -385,12 +382,13 @@ async function main() {
   // Firm branding sanity
   await db.query(`
     UPDATE platform_settings SET setting_value = 'Melamedia', updated_at = now()
-      WHERE category = 'firm' AND setting_key = 'COMPANY_NAME';
+      WHERE category = 'firm' AND setting_key = 'COMPANY_NAME'`);
+  await db.query(`
     UPDATE platform_settings SET setting_value = 'משרד עו"ד מלמדיה', updated_at = now()
-      WHERE category = 'firm' AND setting_key = 'LAW_FIRM_NAME';
+      WHERE category = 'firm' AND setting_key = 'LAW_FIRM_NAME'`);
+  await db.query(`
     UPDATE platform_settings SET setting_value = 'https://melamedia.mela-media.co.il/firm-logo.png?v=4', updated_at = now()
-      WHERE category = 'firm' AND setting_key = 'FIRM_LOGO_URL';
-  `);
+      WHERE category = 'firm' AND setting_key = 'FIRM_LOGO_URL'`);
 
   const summary = await db.query(`
     SELECT
