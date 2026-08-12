@@ -31,3 +31,7 @@ OTP is SMS (Smoove). Use real reachable numbers for the demo admins/lawyers you 
 - Branch: `Melamedia` (merge `main` → `Melamedia` → build/deploy)
 - Backend: `/root/Melamedia`, PM2 `melamedia-api`, port `3003`
 - Destructive cleanup of the Melamedia demo DB is allowed **only when explicitly requested**. Never wipe MelamedLaw / MorLevi / AshrafEssa.
+
+## Storage
+
+Demo file storage currently uses the `morlevy-files` R2 bucket (shared account token cannot create `melamedia-files`). DB backups land under `db-backups/melamedia/`.
