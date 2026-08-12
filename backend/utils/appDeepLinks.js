@@ -68,7 +68,8 @@ function buildAppDeepLinkData({
 
     if (t === 'signing_pending' || t === 'file_reuploaded' || t === 'sign_invite') {
         if (token) {
-            deepLink = `${APP_SCHEME}://PublicSigning?token=${encodeURIComponent(String(token))}`;
+            // Triple-slash so Expo Linking treats PublicSigning as path, not hostname.
+            deepLink = `${APP_SCHEME}:///PublicSigning?token=${encodeURIComponent(String(token))}`;
         } else if (publicUrl) {
             deepLink = publicUrl;
         }

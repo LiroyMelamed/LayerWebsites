@@ -266,7 +266,12 @@ async function notifyRecipient({
                         errors.push({ channel: 'sms', error: 'invalid_phone' });
                         return;
                     }
-                    await sendMessage(String(sms.messageBody || '').trim(), formatted);
+                    const smsResult = await sendMessage(String(sms.messageBody || '').trim(), formatted);
+                    if (!smsResult || smsResult.ok === false) {
+                        outcomes.sms.ok = false;
+                        errors.push({ channel: 'sms', error: smsResult?.error || 'sms_failed' });
+                        return;
+                    }
                     outcomes.sms.ok = true;
                 } catch (e) {
                     outcomes.sms.ok = false;
