@@ -834,6 +834,8 @@
       "nextSignature": "Next signature",
       "nextField": "Next field",
       "remainingSignatures": "{{count}} signatures remaining",
+      "oneSignatureRemainingOnPage": "One signature left on page {{page}} — sign to finish",
+      "nextSignatureOnPage": "{{count}} signatures left — next on page {{page}}",
       "hideAllSpots": "Hide all spots",
       "showAllSpots": "Show all spots",
       "noSpotsToShow": "No signature spots to display",
