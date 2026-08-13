@@ -991,7 +991,7 @@ export default function UploadFileForSigningScreen() {
         const name = String(spot?.signerName || spot?.SignerName || '').trim();
         if (name) {
             const byName = list.findIndex(
-                (s) => String(s?.Name ?? s?.name || '').trim() === name
+                (s) => String((s?.Name ?? s?.name) || '').trim() === name
             );
             if (byName >= 0) return byName;
         }
