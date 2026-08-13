@@ -1153,7 +1153,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         return true;
     };
 
-    const advanceAfterSpotsChange = (spots) => {
+    const advanceAfterSpotsChange = (spots, { quiet = false } = {}) => {
         const unsignedRequired = getUnsignedRequiredSpots(spots);
         const unsignedOptional = getUnsignedOptionalSpots(spots);
         if (unsignedRequired.length > 0) {
@@ -1167,19 +1167,21 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             setHasStartedNextFlow(true);
             if (isScreen) setShowSpotPopup(true);
             // Multi-page docs: make it obvious another canvas remains (empty pad ≠ finished).
-            if (unsignedRequired.length === 1) {
-                showAppToast({
-                    type: "info",
-                    text: t("signing.canvas.oneSignatureRemainingOnPage", { page: toPage }),
-                });
-            } else if (toPage !== fromPage) {
-                showAppToast({
-                    type: "info",
-                    text: t("signing.canvas.nextSignatureOnPage", {
-                        count: unsignedRequired.length,
-                        page: toPage,
-                    }),
-                });
+            if (!quiet) {
+                if (unsignedRequired.length === 1) {
+                    showAppToast({
+                        type: "info",
+                        text: t("signing.canvas.oneSignatureRemainingOnPage", { page: toPage }),
+                    });
+                } else if (toPage !== fromPage) {
+                    showAppToast({
+                        type: "info",
+                        text: t("signing.canvas.nextSignatureOnPage", {
+                            count: unsignedRequired.length,
+                            page: toPage,
+                        }),
+                    });
+                }
             }
             return;
         }
@@ -1204,7 +1206,42 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         setCurrentSpot(null);
     };
 
-    const reloadDetailsAndAdvance = async () => {
+    /** Mark spots signed in local state immediately so remaining/finish UI don't wait on slow reload. */
+    const applyOptimisticSignedSpots = (spotIds, previewDataUrl = null) => {
+        const idSet = new Set(
+            (Array.isArray(spotIds) ? spotIds : [])
+                .map((id) => Number(id))
+                .filter((n) => Number.isFinite(n) && n > 0)
+        );
+        if (idSet.size === 0) return null;
+
+        let nextSpots = null;
+        setFileDetails((prev) => {
+            if (!prev?.signatureSpots) return prev;
+            nextSpots = prev.signatureSpots.map((s) => {
+                const id = Number(s?.SignatureSpotId ?? s?.signatureSpotId);
+                if (!idSet.has(id)) return s;
+                return {
+                    ...s,
+                    IsSigned: true,
+                    SignatureUrl: previewDataUrl || s.SignatureUrl || s.signatureUrl || null,
+                    signatureUrl: previewDataUrl || s.signatureUrl || s.SignatureUrl || null,
+                };
+            });
+            return { ...prev, signatureSpots: nextSpots };
+        });
+        return nextSpots;
+    };
+
+    const reloadDetailsAndAdvance = async ({ optimisticSpotIds = null, previewDataUrl = null } = {}) => {
+        // Finish / next-spot UI immediately from optimistic state when possible.
+        if (optimisticSpotIds) {
+            const optimisticSpots = applyOptimisticSignedSpots(optimisticSpotIds, previewDataUrl);
+            if (optimisticSpots) {
+                advanceAfterSpotsChange(optimisticSpots);
+            }
+        }
+
         const res = isPublic
             ? await signingFilesApi.getPublicSigningFileDetails(publicToken)
             : await signingFilesApi.getSigningFileDetails(effectiveSigningFileId);
@@ -1214,7 +1251,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         setFileDetails(mergedData);
 
         const spots = mergedData?.signatureSpots || [];
-        advanceAfterSpotsChange(spots);
+        // Reconcile with server (quiet if we already advanced optimistically).
+        advanceAfterSpotsChange(spots, { quiet: Boolean(optimisticSpotIds) });
         clearCanvas();
     };
 
@@ -1252,7 +1290,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                     ? t("signing.canvas.initialsSavedSuccess")
                     : t("signing.canvas.signatureSavedSuccess"),
             });
-            await reloadDetailsAndAdvance();
+            await reloadDetailsAndAdvance({
+                optimisticSpotIds: [currentSpot.SignatureSpotId],
+                previewDataUrl: dataUrl,
+            });
             return true;
         } catch (err) {
             console.error("Failed to save signature", err);
@@ -1292,7 +1333,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             }
 
             showAppToast({ type: "success", text: t("signing.canvas.signatureSavedSuccess") });
-            await reloadDetailsAndAdvance();
+            await reloadDetailsAndAdvance({
+                optimisticSpotIds: [currentSpot.SignatureSpotId],
+                previewDataUrl: dataUrl,
+            });
             return true;
         } catch (err) {
             console.error("Failed to sign", err);
@@ -1553,7 +1597,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
             showAppToast({ type: "success", text: t("signing.canvas.clientStampSavedSuccess") });
             clearClientStamp();
-            await reloadDetailsAndAdvance();
+            await reloadDetailsAndAdvance({
+                optimisticSpotIds: [currentSpot?.SignatureSpotId],
+                previewDataUrl: finalDataUrl,
+            });
             return true;
         } catch (err) {
             console.error("Failed to save client stamp", err);
@@ -1607,7 +1654,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             if (!didSign) return;
 
             showAppToast({ type: "success", text: t("signing.canvas.signatureSavedSuccess") });
-            await reloadDetailsAndAdvance();
+            await reloadDetailsAndAdvance({
+                optimisticSpotIds: [target.SignatureSpotId],
+                previewDataUrl: dataUrl,
+            });
             return true;
         } catch (err) {
             console.error("Failed to use saved signature", err);
@@ -1656,7 +1706,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             if (!didSign) return;
 
             showAppToast({ type: "success", text: t("signing.canvas.clientStampSavedSuccess") });
-            await reloadDetailsAndAdvance();
+            await reloadDetailsAndAdvance({
+                optimisticSpotIds: [target.SignatureSpotId],
+                previewDataUrl: dataUrl,
+            });
             return true;
         } catch (err) {
             console.error("Failed to use saved stamp", err);
@@ -1739,7 +1792,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             }
 
             showAppToast({ type: "success", text: t("signing.canvas.signedAllSuccess") });
-            await reloadDetailsAndAdvance();
+            await reloadDetailsAndAdvance({
+                optimisticSpotIds: signatureSpotIds,
+                previewDataUrl: dataUrl,
+            });
             return true;
         } catch (err) {
             console.error("Failed to sign all spots", err);
@@ -1988,6 +2044,16 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const hasUnsignedSignatureSpots = unsignedRequiredSpots.some((s) =>
         isSignatureLike(getSpotType(s)),
     );
+    const remainingHintPage = remainingCount > 0
+        ? Number(getSpotPage(unsignedRequiredSpots[0]) || 1)
+        : null;
+    const remainingHintText = remainingCount > 0
+        ? (remainingCount === 1 && remainingHintPage
+            ? t("signing.canvas.oneSignatureRemainingOnPage", { page: remainingHintPage })
+            : t("signing.canvas.remainingSignatures", { count: remainingCount }))
+        : (allSpotsSignedByUser && spots.length > 0
+            ? t("signing.canvas.allRequiredCompleted")
+            : "");
 
     const nextSpotButtonLabel = hasUnsignedSignatureSpots
         ? t("signing.canvas.nextSignature")
@@ -2618,11 +2684,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         <SimpleContainer className="lw-signing-screenBody">
                             <div className="lw-signing-floatingBar">
                                 <div className="lw-signing-progressHint">
-                                    {remainingCount > 0
-                                        ? t("signing.canvas.remainingSignatures", { count: remainingCount })
-                                        : allSpotsSignedByUser && spots.length > 0
-                                            ? t("signing.canvas.allRequiredCompleted")
-                                            : ""}
+                                    {remainingHintText}
                                 </div>
                                 {remainingCount > 0 && (
                                     <PrimaryButton
@@ -2774,9 +2836,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                         </PrimaryButton>
 
                                         <div className="lw-signing-progressHint">
-                                            {effectiveRequiredSpots.length > 0
-                                                ? t("signing.canvas.remainingSignatures", { count: remainingCount })
-                                                : ""}
+                                            {effectiveRequiredSpots.length > 0 ? remainingHintText : ""}
                                         </div>
                                     </div>
                                 </div>
