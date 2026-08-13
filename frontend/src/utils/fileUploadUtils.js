@@ -1,8 +1,8 @@
 // frontend/src/utils/fileUploadUtils.js
 import filesApi from "../api/filesApi";
 
-// Prefer server-side upload (avoids browser→R2 CORS on new buckets).
-// Fall back to presigned PUT when the direct endpoint is unavailable.
+// uploads a file to r2 using the existing backend presign endpoints
+// note: we intentionally don't use axios in screens; for the presigned url PUT we use fetch
 
 export const uploadFileToR2 = async (file) => {
     try {
@@ -15,35 +15,6 @@ export const uploadFileToR2 = async (file) => {
         const ext = (parts.length > 1 ? parts[parts.length - 1] : "pdf").toLowerCase();
         const mime = file.type || "application/octet-stream";
 
-        // 1) Direct API upload
-        try {
-            const direct = await filesApi.uploadFile(file);
-            const key = direct?.data?.key;
-            if (direct?.success && key) {
-                return {
-                    success: true,
-                    data: {
-                        key,
-                        fileName: direct?.data?.fileName || fileName,
-                        ext: direct?.data?.ext || ext,
-                        mime: direct?.data?.mime || mime,
-                        size: direct?.data?.size ?? file.size,
-                    },
-                };
-            }
-            // If the route exists but failed, surface that — don't hide behind CORS fallback noise.
-            if (direct && direct.status && direct.status !== 404) {
-                return {
-                    success: false,
-                    data: null,
-                    message: direct?.data?.message || direct?.message || "upload failed",
-                };
-            }
-        } catch (directErr) {
-            console.warn("direct upload unavailable, trying presign:", directErr?.message || directErr);
-        }
-
-        // 2) Presigned PUT (needs R2 bucket CORS for the SPA origin)
         const presignResponse = await filesApi.presignUpload({ ext, mime });
         const uploadUrl = presignResponse?.data?.uploadUrl;
         const key = presignResponse?.data?.key;
@@ -52,7 +23,7 @@ export const uploadFileToR2 = async (file) => {
             return {
                 success: false,
                 data: null,
-                message: presignResponse?.data?.message || presignResponse?.message || "failed to get upload url",
+                message: presignResponse?.message || "failed to get upload url",
             };
         }
 
