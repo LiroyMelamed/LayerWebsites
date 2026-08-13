@@ -981,12 +981,51 @@ export default function UploadFileForSigningScreen() {
     };
 
     // ── Sequential signer reorder (drag-and-drop) ────────────────
+    const resolveSignerIndexInList = (signers, spot) => {
+        const list = Array.isArray(signers) ? signers : [];
+        const uid = spot?.signerUserId ?? spot?.SignerUserId;
+        if (uid != null && uid !== '' && Number(uid) > 0) {
+            const byId = list.findIndex((s) => Number(s?.UserId ?? s?.userId) === Number(uid));
+            if (byId >= 0) return byId;
+        }
+        const name = String(spot?.signerName || spot?.SignerName || '').trim();
+        if (name) {
+            const byName = list.findIndex(
+                (s) => String(s?.Name ?? s?.name || '').trim() === name
+            );
+            if (byName >= 0) return byName;
+        }
+        const raw = spot?.signerIndex ?? spot?.SignerIndex;
+        const n = Number(raw);
+        if (Number.isFinite(n) && n >= 0 && n < list.length) return n;
+        return null;
+    };
+
     const moveSignerOrder = useCallback((fromIdx, toIdx) => {
         if (fromIdx === toIdx) return;
         setSelectedSigners((prev) => {
             const next = [...prev];
             const [moved] = next.splice(fromIdx, 1);
             next.splice(toIdx, 0, moved);
+            // Keep spot ownership on the same person when list order changes.
+            setSignatureSpots((spots) =>
+                (spots || []).map((spot) => {
+                    const newIdx = (() => {
+                        const uid = spot?.signerUserId ?? spot?.SignerUserId;
+                        if (uid != null && uid !== '' && Number(uid) > 0) {
+                            const byId = next.findIndex((s) => Number(s?.UserId) === Number(uid));
+                            if (byId >= 0) return byId;
+                        }
+                        const name = String(spot?.signerName || '').trim();
+                        if (name) {
+                            const byName = next.findIndex((s) => String(s?.Name || '').trim() === name);
+                            if (byName >= 0) return byName;
+                        }
+                        return spot?.signerIndex;
+                    })();
+                    return newIdx === spot?.signerIndex ? spot : { ...spot, signerIndex: newIdx };
+                })
+            );
             return next;
         });
     }, []);
@@ -1110,6 +1149,13 @@ export default function UploadFileForSigningScreen() {
                 ...(s.isManual && s.Phone ? { phone: s.Phone } : {}),
             }));
 
+            // Recompute signerIndex from current list identity so reorder cannot swap ownership.
+            const signatureLocations = (signatureSpots || []).map((spot) => {
+                const idx = resolveSignerIndexInList(signersPayload, spot);
+                if (idx == null) return spot;
+                return { ...spot, signerIndex: idx };
+            });
+
             const primaryClientId = signersPayload?.[0]?.userId || Number(clientId) || null;
 
             const normalizedCaseId = caseId ? Number(caseId) : null;
@@ -1124,7 +1170,7 @@ export default function UploadFileForSigningScreen() {
                 clientId: primaryClientId,
                 fileName: documentName.trim() ? `${documentName.trim()}.pdf` : selectedFile.name,
                 fileKey: key,
-                signatureLocations: signatureSpots,
+                signatureLocations,
                 notes: notes || null,
                 signers: signersPayload,
                 requireOtp,
