@@ -1178,6 +1178,8 @@
       "nextSignature": "לחתימה הבאה",
       "nextField": "לשדה הבא",
       "remainingSignatures": "נותרו {{count}} חתימות",
+      "oneSignatureRemainingOnPage": "נותרה חתימה אחת בעמוד {{page}} — חתום כדי לסיים",
+      "nextSignatureOnPage": "נותרו {{count}} חתימות — הבאה בעמוד {{page}}",
       "hideAllSpots": "הסתר את כל המקומות",
       "showAllSpots": "הצג את כל המקומות",
       "noSpotsToShow": "אין מקומות חתימה להצגה",
