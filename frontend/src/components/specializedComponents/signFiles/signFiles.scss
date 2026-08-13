@@ -1628,7 +1628,8 @@
 .lw-signing-completeOverlay {
     position: fixed;
     inset: 0;
-    z-index: 1000;
+    /* Above spot popup (20001) so finish animation is never hidden behind the pad. */
+    z-index: 30000;
     display: flex;
     align-items: center;
     justify-content: center;
