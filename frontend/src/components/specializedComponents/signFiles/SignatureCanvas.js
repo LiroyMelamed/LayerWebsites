@@ -876,6 +876,48 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         img.src = raw;
         await loaded;
 
+        const iw0 = img.naturalWidth || 1;
+        const ih0 = img.naturalHeight || 1;
+
+        // Trim transparent margins so letterboxed empty PNG space does not shrink ink.
+        const measure = document.createElement("canvas");
+        measure.width = iw0;
+        measure.height = ih0;
+        const mctx = measure.getContext("2d", { willReadFrequently: true });
+        if (!mctx) return raw;
+        mctx.clearRect(0, 0, iw0, ih0);
+        mctx.drawImage(img, 0, 0);
+        let sx = 0;
+        let sy = 0;
+        let sw = iw0;
+        let sh = ih0;
+        try {
+            const data = mctx.getImageData(0, 0, iw0, ih0).data;
+            let minX = iw0;
+            let minY = ih0;
+            let maxX = -1;
+            let maxY = -1;
+            for (let y = 0; y < ih0; y += 1) {
+                for (let x = 0; x < iw0; x += 1) {
+                    const a = data[(y * iw0 + x) * 4 + 3];
+                    if (a > 8) {
+                        if (x < minX) minX = x;
+                        if (y < minY) minY = y;
+                        if (x > maxX) maxX = x;
+                        if (y > maxY) maxY = y;
+                    }
+                }
+            }
+            if (maxX >= minX && maxY >= minY) {
+                sx = minX;
+                sy = minY;
+                sw = Math.max(1, maxX - minX + 1);
+                sh = Math.max(1, maxY - minY + 1);
+            }
+        } catch {
+            // Cross-origin / tainted canvas — keep full image.
+        }
+
         const targetW = 400;
         const targetH = 180;
         const c = document.createElement("canvas");
@@ -885,18 +927,15 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         if (!ctx) return raw;
 
         ctx.clearRect(0, 0, targetW, targetH);
-        ctx.fillStyle = "rgba(255,255,255,0)";
-
-        const iw = img.naturalWidth || targetW;
-        const ih = img.naturalHeight || targetH;
-        const scale = Math.min(targetW / iw, targetH / ih);
-        const drawW = Math.max(1, Math.round(iw * scale));
-        const drawH = Math.max(1, Math.round(ih * scale));
+        // Cover-fit trimmed ink into storage canvas (slight crop OK).
+        const scale = Math.max(targetW / sw, targetH / sh);
+        const drawW = Math.max(1, Math.round(sw * scale));
+        const drawH = Math.max(1, Math.round(sh * scale));
         const dx = Math.round((targetW - drawW) / 2);
         const dy = Math.round((targetH - drawH) / 2);
 
         ctx.imageSmoothingEnabled = true;
-        ctx.drawImage(img, dx, dy, drawW, drawH);
+        ctx.drawImage(img, sx, sy, sw, sh, dx, dy, drawW, drawH);
         return c.toDataURL("image/png");
     };
 

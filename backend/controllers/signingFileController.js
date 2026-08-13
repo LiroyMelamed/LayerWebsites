@@ -2067,17 +2067,15 @@ async function generateSignedPdfBuffer({ pdfKey, spots }) {
 
             const imgW = embedded.width || 1;
             const imgH = embedded.height || 1;
-            // Stamps: cover-fit (fill box, crop overflow). Signatures: contain-fit.
-            const fit = isStampLike
-                ? Math.max(boxW / imgW, boxH / imgH)
-                : Math.min(boxW / imgW, boxH / imgH);
+            // Cover-fit for signatures/initials/stamps so ink fills the spot box.
+            const fit = Math.max(boxW / imgW, boxH / imgH);
             const drawW = imgW * fit;
             const drawH = imgH * fit;
             const drawX = boxX + (boxW - drawW) / 2;
             const drawY = boxY + (boxH - drawH) / 2;
 
-            if (isStampLike) {
-                // Clip to the stamp box so cover-crop does not spill onto PDF text.
+            if (isSignatureLike) {
+                // Clip to the spot box so cover-crop does not spill onto PDF text.
                 page.pushOperators(
                     pushGraphicsState(),
                     rectangle(boxX, boxY, boxW, boxH),
@@ -2764,43 +2762,65 @@ exports.uploadFileForSigning = async (req, res, next) => {
         if (Array.isArray(signatureLocations)) {
             console.log('[controller] Processing', signatureLocations.length, 'signature locations...');
             for (const spot of signatureLocations) {
-                // Resolve signer from the authoritative signersList.
-                // signerIndex is the source of truth (spot.signerUserId may be a temp manual id
-                // or stale after reorder / contact resolution).
+                // Prefer stable signer identity (userId / name). signerIndex is derived for
+                // sequential order — never remap ownership solely from a stale index after reorder.
                 let signerName = spot.signerName || "חתימה ✍️";
                 let signerUserId = null;
+                let resolvedSignerIndex = null;
 
-                const idxRaw = spot.signerIndex ?? spot.SignerIndex;
-                if (idxRaw !== undefined && idxRaw !== null && idxRaw !== '') {
-                    const idx = Number(idxRaw);
-                    if (!Number.isNaN(idx) && idx >= 0 && idx < signersList.length) {
-                        signerUserId = Number(signersList[idx].userId);
-                        signerName = signersList[idx].name || signerName;
+                const spotUidRaw = spot.signerUserId ?? spot.SignerUserId ?? spot.signeruserid;
+                if (spotUidRaw !== undefined && spotUidRaw !== null && spotUidRaw !== '') {
+                    const n = Number(spotUidRaw);
+                    if (Number.isFinite(n) && n > 0) {
+                        const matchIdx = signersList.findIndex((s) => Number(s?.userId) === n);
+                        if (matchIdx >= 0) {
+                            signerUserId = Number(signersList[matchIdx].userId);
+                            signerName = signersList[matchIdx].name || signerName;
+                            resolvedSignerIndex = matchIdx;
+                        } else {
+                            signerUserId = n;
+                        }
                     }
                 }
 
                 if (signerUserId === null || Number.isNaN(signerUserId)) {
-                    if (spot.signerUserId !== undefined && spot.signerUserId !== null && spot.signerUserId !== '') {
-                        signerUserId = Number(spot.signerUserId);
-                    } else if (spot.signeruserid !== undefined && spot.signeruserid !== null && spot.signeruserid !== '') {
-                        signerUserId = Number(spot.signeruserid);
-                    }
-                    if (Number.isNaN(signerUserId) || (signerUserId !== null && signerUserId < 0)) {
-                        signerUserId = null;
+                    const nameHint = String(spot.signerName || signerName || '').trim();
+                    if (nameHint && signersList.length > 0) {
+                        const matchIdx = signersList.findIndex(
+                            (s) => (s?.name || '').trim() === nameHint
+                        );
+                        if (matchIdx >= 0) {
+                            signerUserId = Number(signersList[matchIdx].userId);
+                            signerName = signersList[matchIdx].name || signerName;
+                            resolvedSignerIndex = matchIdx;
+                        }
                     }
                 }
 
-                // If we still don't have a userId, try to match by signerName
-                if ((signerUserId === null || Number.isNaN(signerUserId)) && signerName && signersList.length > 0) {
-                    const match = signersList.find((s) => (s?.name || '').trim() === String(signerName).trim());
-                    if (match?.userId) signerUserId = Number(match.userId);
+                if (resolvedSignerIndex === null) {
+                    const idxRaw = spot.signerIndex ?? spot.SignerIndex;
+                    if (idxRaw !== undefined && idxRaw !== null && idxRaw !== '') {
+                        const idx = Number(idxRaw);
+                        if (!Number.isNaN(idx) && idx >= 0 && idx < signersList.length) {
+                            if (signerUserId === null || Number.isNaN(signerUserId)) {
+                                signerUserId = Number(signersList[idx].userId);
+                                signerName = signersList[idx].name || signerName;
+                            }
+                            resolvedSignerIndex = idx;
+                        }
+                    }
+                }
+
+                if (resolvedSignerIndex === null && signerUserId != null && Number.isFinite(Number(signerUserId))) {
+                    const matchIdx = signersList.findIndex((s) => Number(s?.userId) === Number(signerUserId));
+                    if (matchIdx >= 0) resolvedSignerIndex = matchIdx;
                 }
 
                 if (Number.isNaN(signerUserId) || (signerUserId !== null && signerUserId < 0)) {
                     signerUserId = null;
                 }
 
-                console.log(`[controller]   Spot page ${spot.pageNum}: signerIndex=${spot.signerIndex}, signerName="${signerName}", signerUserId=${signerUserId}`);
+                console.log(`[controller]   Spot page ${spot.pageNum}: signerIndex=${resolvedSignerIndex ?? spot.signerIndex}, signerName="${signerName}", signerUserId=${signerUserId}`);
 
                 const spotType = String(spot.fieldType || spot.type || spot.FieldType || 'signature').toLowerCase();
                 const spotLabel = spot.fieldLabel || spot.label || null;
@@ -2842,7 +2862,11 @@ exports.uploadFileForSigning = async (req, res, next) => {
 
                     if (schemaSupport.signaturespotsSignerIndex) {
                         insertColumns.push('signerindex');
-                        insertValues.push(spot.signerIndex ?? null);
+                        insertValues.push(
+                            resolvedSignerIndex != null
+                                ? resolvedSignerIndex
+                                : (spot.signerIndex ?? null)
+                        );
                     }
 
                     if (schemaSupport.signaturespotsFieldLabel) {
@@ -7320,34 +7344,55 @@ exports.reuploadFile = async (req, res, next) => {
             for (const spot of signatureLocations) {
                 let signerUserId = null;
                 let signerName = spot.signerName || "חתימה";
+                let resolvedSignerIndex = null;
 
-                // signerIndex is authoritative when signersList is provided
-                const idxRaw = spot.signerIndex ?? spot.SignerIndex;
-                if (signersList.length > 0 && idxRaw !== undefined && idxRaw !== null && idxRaw !== '') {
-                    const idx = Number(idxRaw);
-                    if (!Number.isNaN(idx) && idx >= 0 && idx < signersList.length) {
-                        signerUserId = Number(signersList[idx].userId);
-                        signerName = signersList[idx].name || signerName;
+                // Prefer stable signer identity (userId / name); derive index for sequential order.
+                const spotUidRaw = spot.signerUserId ?? spot.SignerUserId ?? spot.signeruserid;
+                if (spotUidRaw !== undefined && spotUidRaw !== null && spotUidRaw !== '') {
+                    const n = Number(spotUidRaw);
+                    if (Number.isFinite(n) && n > 0) {
+                        const matchIdx = signersList.findIndex((s) => Number(s?.userId) === n);
+                        if (matchIdx >= 0) {
+                            signerUserId = Number(signersList[matchIdx].userId);
+                            signerName = signersList[matchIdx].name || signerName;
+                            resolvedSignerIndex = matchIdx;
+                        } else {
+                            signerUserId = n;
+                        }
                     }
                 }
 
                 if (signerUserId === null || Number.isNaN(signerUserId)) {
-                    if (spot.signerUserId !== undefined && spot.signerUserId !== null && spot.signerUserId !== '') {
-                        signerUserId = Number(spot.signerUserId);
-                    } else if (spot.SignerUserId !== undefined && spot.SignerUserId !== null && spot.SignerUserId !== '') {
-                        signerUserId = Number(spot.SignerUserId);
-                    } else if (spot.signeruserid !== undefined && spot.signeruserid !== null && spot.signeruserid !== '') {
-                        signerUserId = Number(spot.signeruserid);
-                    }
-                    if (Number.isNaN(signerUserId) || (signerUserId !== null && signerUserId < 0)) {
-                        signerUserId = null;
+                    const nameHint = String(spot.signerName || signerName || '').trim();
+                    if (nameHint && signersList.length > 0) {
+                        const matchIdx = signersList.findIndex(
+                            (s) => (s?.name || '').trim() === nameHint
+                        );
+                        if (matchIdx >= 0) {
+                            signerUserId = Number(signersList[matchIdx].userId);
+                            signerName = signersList[matchIdx].name || signerName;
+                            resolvedSignerIndex = matchIdx;
+                        }
                     }
                 }
 
-                // Fallback to signerName match
-                if ((signerUserId === null || Number.isNaN(signerUserId)) && signerName && signersList.length > 0) {
-                    const match = signersList.find((s) => (s?.name || '').trim() === String(signerName).trim());
-                    if (match?.userId) signerUserId = Number(match.userId);
+                if (resolvedSignerIndex === null) {
+                    const idxRaw = spot.signerIndex ?? spot.SignerIndex;
+                    if (signersList.length > 0 && idxRaw !== undefined && idxRaw !== null && idxRaw !== '') {
+                        const idx = Number(idxRaw);
+                        if (!Number.isNaN(idx) && idx >= 0 && idx < signersList.length) {
+                            if (signerUserId === null || Number.isNaN(signerUserId)) {
+                                signerUserId = Number(signersList[idx].userId);
+                                signerName = signersList[idx].name || signerName;
+                            }
+                            resolvedSignerIndex = idx;
+                        }
+                    }
+                }
+
+                if (resolvedSignerIndex === null && signerUserId != null && Number.isFinite(Number(signerUserId))) {
+                    const matchIdx = signersList.findIndex((s) => Number(s?.userId) === Number(signerUserId));
+                    if (matchIdx >= 0) resolvedSignerIndex = matchIdx;
                 }
 
                 if (Number.isNaN(signerUserId) || (signerUserId !== null && signerUserId < 0)) {
@@ -7356,6 +7401,9 @@ exports.reuploadFile = async (req, res, next) => {
 
                 const spotType = String(spot.fieldType || spot.type || spot.FieldType || 'signature').toLowerCase();
                 const spotLabel = spot.fieldLabel || spot.label || null;
+                const isRequiredEffective = typeof spot.isRequired === 'boolean'
+                    ? spot.isRequired
+                    : (spotType === 'signature' || spotType === 'initials');
 
                 if (schemaSupport.signaturespotsSignerUserId || schemaSupport.signaturespotsFieldType || schemaSupport.signaturespotsSignerIndex || schemaSupport.signaturespotsFieldLabel) {
                     const insertColumns = [
@@ -7391,7 +7439,11 @@ exports.reuploadFile = async (req, res, next) => {
 
                     if (schemaSupport.signaturespotsSignerIndex) {
                         insertColumns.push('signerindex');
-                        insertValues.push(spot.signerIndex ?? null);
+                        insertValues.push(
+                            resolvedSignerIndex != null
+                                ? resolvedSignerIndex
+                                : (spot.signerIndex ?? null)
+                        );
                     }
 
                     if (schemaSupport.signaturespotsFieldLabel) {
