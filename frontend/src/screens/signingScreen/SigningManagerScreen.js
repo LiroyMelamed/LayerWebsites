@@ -737,6 +737,11 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                     <SecondaryButton size={buttonSizes.SMALL} onPress={() => { setIsEditingName(false); setEditName(file?.FileName || ''); }}>
                         {t('common.cancel')}
                     </SecondaryButton>
+                    {showOtpUi && (
+                        <SimpleContainer className={`${otpChipClassName} lw-signingManagerScreen__chip--titleEnd`}>
+                            {otpChipText}
+                        </SimpleContainer>
+                    )}
                 </SimpleContainer>
             ) : (
                 <SimpleContainer className="lw-signingManagerScreen__titleRow">
@@ -744,11 +749,12 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                     <SecondaryButton size={buttonSizes.SMALL} onPress={() => { setEditName(file?.FileName || ''); setIsEditingName(true); }}>
                         {t('signingManager.actions.rename')}
                     </SecondaryButton>
+                    {showOtpUi && (
+                        <SimpleContainer className={`${otpChipClassName} lw-signingManagerScreen__chip--titleEnd`}>
+                            {otpChipText}
+                        </SimpleContainer>
+                    )}
                 </SimpleContainer>
-            )}
-
-            {showOtpUi && (
-                <SimpleContainer className={otpChipClassName}>{otpChipText}</SimpleContainer>
             )}
 
             <>
