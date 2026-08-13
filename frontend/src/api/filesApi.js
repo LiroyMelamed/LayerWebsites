@@ -1,6 +1,14 @@
 import apiUtils from "./apiUtils";
 
 export const filesApi = {
+    uploadFile: async (file) => {
+        const form = new FormData();
+        form.append("file", file);
+        return await apiUtils.post("files/upload", form, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+    },
+
     presignUpload: async ({ ext, mime }) => {
         return await apiUtils.get(
             `files/presign-upload?ext=${encodeURIComponent(ext)}&mime=${encodeURIComponent(mime)}`

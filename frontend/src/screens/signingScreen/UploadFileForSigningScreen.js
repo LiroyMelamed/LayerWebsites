@@ -1045,7 +1045,9 @@ export default function UploadFileForSigningScreen() {
 
         const uploadRes = await uploadFileToR2(selectedFile);
         const key = uploadRes?.key || uploadRes?.data?.key;
-        if (!key) throw new Error("missing key from uploadFileToR2");
+        if (!key) {
+            throw new Error(uploadRes?.message || "missing key from uploadFileToR2");
+        }
 
         setUploadedFileKey(key);
         return key;
