@@ -622,6 +622,35 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isScreen, pdfReady, fileDetails, showCompletion]);
 
+    // If required spots are done (reload / lock), always surface the finish overlay.
+    useEffect(() => {
+        if (!fileDetails || loading || showCompletion) return;
+        const fileStatus = String(fileDetails?.file?.Status || fileDetails?.file?.status || "").toLowerCase();
+        const locked = fileDetails?.readOnly === true
+            || fileDetails?.file?.ReadOnly === true
+            || fileDetails?.signerCompleted === true
+            || fileStatus === "signed"
+            || fileStatus === "rejected";
+        const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
+        const unsignedRequired = getUnsignedRequiredSpots(allSpots);
+        const unsignedOptional = getUnsignedOptionalSpots(allSpots);
+        if (!locked && unsignedRequired.length > 0) return;
+        if (unsignedOptional.length > 0 && !locked) {
+            if (!showOptionalRemaining) {
+                setShowSpotPopup(false);
+                setShowOptionalRemaining(true);
+            }
+            return;
+        }
+        if (locked || allSpots.length > 0) {
+            setShowSpotPopup(false);
+            setShowOptionalRemaining(false);
+            setShowCompletion(true);
+            setCurrentSpot(null);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [fileDetails, loading, showCompletion, showOptionalRemaining]);
+
     useEffect(() => {
         setSavedSignature((p) => ({ ...p, loading: true }));
         setSavedStamp((p) => ({ ...p, loading: true }));
@@ -1129,12 +1158,29 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         const unsignedOptional = getUnsignedOptionalSpots(spots);
         if (unsignedRequired.length > 0) {
             const next = unsignedRequired[0];
+            const fromPage = Number(getSpotPage(currentSpot) || 1);
+            const toPage = Number(getSpotPage(next) || 1);
             setShowOptionalRemaining(false);
             setShowCompletion(false);
             setCurrentSpot(next);
             scrollToSpot(next);
             setHasStartedNextFlow(true);
             if (isScreen) setShowSpotPopup(true);
+            // Multi-page docs: make it obvious another canvas remains (empty pad ≠ finished).
+            if (unsignedRequired.length === 1) {
+                showAppToast({
+                    type: "info",
+                    text: t("signing.canvas.oneSignatureRemainingOnPage", { page: toPage }),
+                });
+            } else if (toPage !== fromPage) {
+                showAppToast({
+                    type: "info",
+                    text: t("signing.canvas.nextSignatureOnPage", {
+                        count: unsignedRequired.length,
+                        page: toPage,
+                    }),
+                });
+            }
             return;
         }
         if (unsignedOptional.length > 0) {
@@ -2520,7 +2566,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     );
 
     const renderSpotPopup = () => {
-        if (!showSpotPopup || !currentSpot) return null;
+        // Never keep the pad open over the finish / optional overlays.
+        if (!showSpotPopup || !currentSpot || showCompletion || showOptionalRemaining || isDocumentLocked) {
+            return null;
+        }
         const spotType = getSpotType(currentSpot);
         const fieldTypeLabel = t(`signing.fields.${getFieldTypeKey(spotType)}`);
         const title = currentSpot.IsSigned
