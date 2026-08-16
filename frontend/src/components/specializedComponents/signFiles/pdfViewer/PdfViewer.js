@@ -18,6 +18,7 @@ function LazyPdfPage({
     onRemoveSpot,
     onRequestRemove,
     onSelectSpot,
+    onEditSpot,
     onRequestContext,
     signers,
     selectedSpotIndex,
@@ -69,6 +70,7 @@ function LazyPdfPage({
                             onRemoveSpot={onRemoveSpot}
                             onRequestRemove={onRequestRemove}
                             onSelectSpot={onSelectSpot}
+                            onEditSpot={onEditSpot}
                             onRequestContext={onRequestContext}
                             signers={signers}
                             scale={spotScale}
@@ -101,6 +103,7 @@ export default function PdfViewer({
     onRemoveSpot,
     onRequestRemove,
     onSelectSpot,
+    onEditSpot,
     onRequestContext,
     onAddSpotForPage,
     signers = [],
@@ -267,6 +270,7 @@ export default function PdfViewer({
                             onRemoveSpot={onRemoveSpot}
                             onRequestRemove={onRequestRemove}
                             onSelectSpot={onSelectSpot}
+                            onEditSpot={onEditSpot}
                             onRequestContext={onRequestContext}
                             signers={signers}
                             selectedSpotIndex={selectedSpotIndex}

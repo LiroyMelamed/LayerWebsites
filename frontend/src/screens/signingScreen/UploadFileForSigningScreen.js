@@ -85,7 +85,6 @@ function FieldSettingsPopup({
 
     const handleDuplicate = (mode, range) => {
         onDuplicate?.(index, mode, range);
-        onCancel?.();
     };
 
     const handleApplyRange = () => {
@@ -253,7 +252,7 @@ export default function UploadFileForSigningScreen() {
                     closePopup();
                 }}
                 onDuplicate={(i, mode, range) => {
-                    duplicateSpotToPages(i, mode, range);
+                    confirmDuplicateSpotToPages(i, mode, range);
                 }}
                 onDelete={() => {
                     closePopup();
@@ -344,6 +343,35 @@ export default function UploadFileForSigningScreen() {
         setSignatureSpots((prev) => [...prev, ...newSpots]);
     };
 
+    const confirmDuplicateSpotToPages = (index, mode, range) => {
+        const pageCount = getPageCount();
+        const extra = Math.max(0, pageCount - 1);
+        const needsConfirm = mode === 'all' || mode === 'even' || mode === 'odd';
+        if (!needsConfirm || extra <= 0) {
+            duplicateSpotToPages(index, mode, range);
+            return;
+        }
+        openPopup(
+            <SimpleContainer className="lw-fieldConfirmPopup">
+                <TextBold24>{t('signing.duplicate.confirmTitle')}</TextBold24>
+                <Text14 className="lw-fieldConfirmPopup__text">
+                    {t('signing.duplicate.confirmAllPages', { count: extra, pages: pageCount })}
+                </Text14>
+                <SimpleContainer className="lw-fieldConfirmPopup__actions">
+                    <SecondaryButton onPress={closePopup}>{t('common.cancel')}</SecondaryButton>
+                    <PrimaryButton
+                        onPress={() => {
+                            closePopup();
+                            duplicateSpotToPages(index, mode, range);
+                        }}
+                    >
+                        {t('signing.duplicate.confirmAction')}
+                    </PrimaryButton>
+                </SimpleContainer>
+            </SimpleContainer>
+        );
+    };
+
     const handleSpotContext = (index, ev) => {
         // open popup menu using popup provider; reuse SimplePopUp as modal menu
         setSelectedSpotIndex(index);
@@ -359,19 +387,19 @@ export default function UploadFileForSigningScreen() {
                 <div className="lw-fieldContextMenu__groupTitle">{t('signing.context.duplicate')}</div>
                 <SecondaryButton
                     className="lw-fieldContextMenu__action"
-                    onPress={() => { closePopup(); duplicateSpotToPages(index, 'all'); }}
+                    onPress={() => { closePopup(); confirmDuplicateSpotToPages(index, 'all'); }}
                 >
                     {t('signing.context.allPages')}
                 </SecondaryButton>
                 <SecondaryButton
                     className="lw-fieldContextMenu__action"
-                    onPress={() => { closePopup(); duplicateSpotToPages(index, 'even'); }}
+                    onPress={() => { closePopup(); confirmDuplicateSpotToPages(index, 'even'); }}
                 >
                     {t('signing.context.evenPages')}
                 </SecondaryButton>
                 <SecondaryButton
                     className="lw-fieldContextMenu__action"
-                    onPress={() => { closePopup(); duplicateSpotToPages(index, 'odd'); }}
+                    onPress={() => { closePopup(); confirmDuplicateSpotToPages(index, 'odd'); }}
                 >
                     {t('signing.context.oddPages')}
                 </SecondaryButton>
@@ -1588,7 +1616,8 @@ export default function UploadFileForSigningScreen() {
                                                 onUpdateSpot={handleUpdateSpot}
                                                 onRemoveSpot={handleRemoveSpot}
                                                 onRequestRemove={(i) => openConfirmRemove(i)}
-                                                onSelectSpot={openFieldEditor}
+                                                onSelectSpot={(i) => setSelectedSpotIndex(i)}
+                                                onEditSpot={openFieldEditor}
                                                 onRequestContext={handleSpotContext}
                                                 onAddSpotForPage={handleAddSpotForPage}
                                                 signers={selectedSigners}
