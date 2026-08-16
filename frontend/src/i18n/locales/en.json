@@ -907,6 +907,7 @@
       "tabSigned": "Signed ({{count}})",
       "emptyPending": "No documents are currently pending your signature",
       "emptySigned": "No signed documents to display",
+      "documentLabel": "Document:",
       "caseLabel": "Case:",
       "lawyerLabel": "Lawyer:",
       "uploadedAtLabel": "Upload date:",
@@ -915,7 +916,7 @@
       "notesLabel": "Lawyer notes:",
       "signDocument": "Sign the document",
       "downloadSigned": "Download signed file",
-      "details": "Details",
+      "details": "Document details",
       "downloadMissingUrl": "Unable to download the file",
       "downloadError": "Error downloading the file"
     },

@@ -19,7 +19,6 @@ import SecondaryButton from "../../components/styledComponents/buttons/Secondary
 import { buttonSizes } from "../../styles/buttons/buttonSizes";
 import SearchInput from "../../components/specializedComponents/containers/SearchInput";
 import SimpleInput from "../../components/simpleComponents/SimpleInput";
-import ProgressBar from "../../components/specializedComponents/containers/ProgressBar";
 import SegmentedSwitch from "../../components/styledComponents/SegmentedSwitch";
 
 import { Text14, TextBold24 } from "../../components/specializedComponents/text/AllTextKindFile";
@@ -452,92 +451,24 @@ export default function SigningManagerScreen() {
                     filteredFiles.map((file) => {
                         const chip = getStatusChip(file.Status);
                         const isFullySigned = file.TotalSpots > 0 && file.SignedSpots === file.TotalSpots;
-                        const totalSpots = Number(file.TotalSpots || 0);
-                        const signedSpots = Number(file.SignedSpots || 0);
-                        const cardClassName = `lw-signingManagerScreen__fileCard${isFullySigned ? " is-fullySigned" : ""}`;
+                        const rowClassName = `lw-signingManagerScreen__fileRow${isFullySigned ? " is-fullySigned" : ""}`;
 
                         return (
-                            <SimpleCard
+                            <button
+                                type="button"
                                 key={file.SigningFileId}
-                                className={cardClassName}
+                                className={rowClassName}
+                                onClick={() => handleOpenDetails(file)}
                             >
-                                <SimpleContainer className="lw-signingManagerScreen__fileHeaderRow">
-                                    <h3 className="lw-signingManagerScreen__fileName">
-                                        {file.FileName}
-                                    </h3>
-                                    <SimpleContainer className={chip.className}>{chip.text}</SimpleContainer>
-                                </SimpleContainer>
-
-                                {scope === "office" && (
-                                    <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                        <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.lawyer')}</div>
-                                        <div className="lw-signingManagerScreen__detailValue">{file.LawyerName || "-"}</div>
-                                    </SimpleContainer>
-                                )}
-                                <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                    <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.case')}</div>
-                                    <div className="lw-signingManagerScreen__detailValue">{file.CaseName || "-"}</div>
-                                </SimpleContainer>
-                                <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                    <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.client')}</div>
-                                    <div className="lw-signingManagerScreen__detailValue">{file.ClientName || "-"}</div>
-                                </SimpleContainer>
-                                <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                    <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.uploadedAt')}</div>
-                                    <div className="lw-signingManagerScreen__detailValue">{formatDotDate(file.CreatedAt)}</div>
-                                </SimpleContainer>
-
-                                {(file.Status === "pending" ||
-                                    file.Status === "rejected") && (
-                                        <>
-                                            <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                                <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.signatures')}</div>
-                                                <div className="lw-signingManagerScreen__detailValue">{signedSpots}/{totalSpots}</div>
-                                            </SimpleContainer>
-
-                                            <ProgressBar
-                                                IsClosed
-                                                currentStage={signedSpots}
-                                                totalStages={totalSpots}
-                                                labelKey="signing.progress.label"
-                                            />
-
-                                            {file.Status === "rejected" &&
-                                                file.RejectionReason && (
-                                                    <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                                        <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.rejectionReason')}</div>
-                                                        <div className="lw-signingManagerScreen__detailValue">{file.RejectionReason}</div>
-                                                    </SimpleContainer>
-                                                )}
-                                        </>
-                                    )}
-
-                                {file.Status === "signed" && (
-                                    <SimpleContainer className="lw-signingManagerScreen__detailRow">
-                                        <div className="lw-signingManagerScreen__detailLabel">{t('signingManager.labels.signedAt')}</div>
-                                        <div className="lw-signingManagerScreen__detailValue">{formatDotDate(file.SignedAt)}</div>
-                                    </SimpleContainer>
-                                )}
-
-                                <SimpleContainer className="lw-signingManagerScreen__actionsRow">
-                                    {file.Status === "signed" && (
-                                        <PrimaryButton
-                                            onPress={() =>
-                                                handleDownload(file.SigningFileId, file.FileName)
-                                            }
-                                            disabled={isDownloadingSigned}
-                                            isPerforming={isDownloadingSigned}
-                                        >
-                                            {t('signingManager.actions.downloadSigned')}
-                                        </PrimaryButton>
-                                    )}
-                                    <SecondaryButton
-                                        onPress={() => handleOpenDetails(file)}
-                                    >
-                                        {t('signingManager.actions.details')}
-                                    </SecondaryButton>
-                                </SimpleContainer>
-                            </SimpleCard>
+                                <span className="lw-signingManagerScreen__fileRowName">{file.FileName}</span>
+                                <span className="lw-signingManagerScreen__fileRowMeta">
+                                    {file.ClientName || file.CaseName || ""}
+                                </span>
+                                <span className={chip.className}>{chip.text}</span>
+                                <span className="lw-signingManagerScreen__fileRowDate">
+                                    {formatDotDate(file.Status === "signed" ? file.SignedAt : file.CreatedAt)}
+                                </span>
+                            </button>
                         );
                     })
                 )}

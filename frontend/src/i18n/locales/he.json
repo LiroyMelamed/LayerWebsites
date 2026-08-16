@@ -1251,6 +1251,7 @@
       "tabSigned": "חתומים ({{count}})",
       "emptyPending": "אין כרגע מסמכים בהמתנה לחתימתך",
       "emptySigned": "אין מסמכים חתומים להצגה",
+      "documentLabel": "מסמך:",
       "caseLabel": "תיק:",
       "lawyerLabel": "עורך דין:",
       "uploadedAtLabel": "תאריך העלאה:",
@@ -1259,7 +1260,7 @@
       "notesLabel": "הערות עו\"ד:",
       "signDocument": "חתום על המסמך",
       "downloadSigned": "הורד קובץ חתום",
-      "details": "פרטים",
+      "details": "פרטי מסמך",
       "downloadMissingUrl": "לא ניתן להוריד את הקובץ",
       "downloadError": "שגיאה בהורדת הקובץ"
     },
