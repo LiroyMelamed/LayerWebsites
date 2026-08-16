@@ -1228,6 +1228,8 @@
       "optionalRemainingHint": "יש שדות רשות שטרם מולאו — אפשר להמשיך או לסיים.",
       "signingCompleteTitle": "חתימה הושלמה",
       "signingCompleteSubtitle": "כל מיקומי החתימה הושלמו בהצלחה. תודה!",
+      "signingCompleteFieldsRemainSubtitle": "החתימות הושלמו. נותרו {{count}} שדות למילוי.",
+      "signingCompleteContinueFields": "המשך למילוי שדות",
       "signingCompleteClose": "סיום",
       "rejectDocument": "דחה מסמך",
       "failedToLoadSignatureImage": "שגיאה בטעינת תמונת החתימה",
