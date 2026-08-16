@@ -1,7 +1,7 @@
 module.exports = {
     apps: [
         {
-            name: 'ashrafessa-api',
+            name: 'idm-api',
             cwd: __dirname,
             script: 'server.js',
 
@@ -19,8 +19,8 @@ module.exports = {
             min_uptime: 5000,
             time: true,
 
-            out_file: '/var/log/ashrafessa-api/out.log',
-            error_file: '/var/log/ashrafessa-api/err.log',
+            out_file: '/var/log/idm-api/out.log',
+            error_file: '/var/log/idm-api/err.log',
             log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
             merge_logs: true,
 
