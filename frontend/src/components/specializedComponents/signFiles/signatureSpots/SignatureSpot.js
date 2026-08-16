@@ -14,7 +14,7 @@ import {
 
 // Color classes are defined in SCSS (lw-signer-palette-N) and keyed by signer index
 
-export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot, onRequestRemove, onSelectSpot, onRequestContext, signerIndex = 0, signerName, scale = 1, isSelected = false }) {
+export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot, onRequestRemove, onSelectSpot, onEditSpot, onRequestContext, signerIndex = 0, signerName, scale = 1, isSelected = false }) {
     const { t } = useTranslation();
     const ref = useRef(null);
 
@@ -467,6 +467,10 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
                 }}
                 onDoubleClick={(e) => {
                     e.stopPropagation();
+                    if (canEditSpot && typeof onEditSpot === 'function') {
+                        onEditSpot(index);
+                        return;
+                    }
                     if (typeof onSelectSpot === 'function') onSelectSpot(index);
                 }}
                 onContextMenu={(e) => {

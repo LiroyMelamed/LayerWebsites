@@ -857,7 +857,10 @@
       "pageRange": "نطاق الصفحات"
     },
     "duplicate": {
-      "noneAdded": "لم تتم إضافة حقول جديدة"
+      "noneAdded": "لم تتم إضافة حقول جديدة",
+      "confirmTitle": "نسخ إلى كل الصفحات؟",
+      "confirmAllPages": "سيتم نسخ الحقل إلى {{count}} صفحات إضافية ({{pages}} صفحات في المستند). استخدم هذا فقط إذا كان نفس الحقل مطلوباً في كل صفحة.",
+      "confirmAction": "تكرار"
     },
     "progress": {
       "label": "تقدّم التواقيع"
@@ -942,6 +945,9 @@
       "remainingSignatures": "تبقى {{count}} تواقيع",
       "remainingFields": "تبقى {{count}} حقول",
       "remainingSignaturesAndFields": "تبقى {{signatures}} تواقيع و{{fields}} حقول",
+      "remainingSignaturesOnPageWithTotal": "تبقى {{pageCount}} تواقيع في هذه الصفحة ({{count}} في المستند)",
+      "remainingFieldsOnPageWithTotal": "تبقى {{pageCount}} حقول في هذه الصفحة ({{count}} في المستند)",
+      "remainingSignaturesAndFieldsOnPageWithTotal": "تبقى {{signatures}} تواقيع و{{fields}} حقول في هذه الصفحة ({{count}} في المستند)",
       "oneSignatureRemainingOnPage": "توقيع واحد متبقٍ في الصفحة {{page}} — وقّع للإنهاء",
       "oneFieldRemainingOnPage": "حقل واحد متبقٍ في الصفحة {{page}} — املأه للإنهاء",
       "nextSignatureOnPage": "تبقى {{count}} تواقيع — التالي في الصفحة {{page}}",
