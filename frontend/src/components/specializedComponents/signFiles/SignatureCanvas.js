@@ -986,8 +986,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         if (!ctx) return raw;
 
         ctx.clearRect(0, 0, targetW, targetH);
-        // Cover-fit trimmed ink into storage canvas (slight crop OK).
-        const scale = Math.max(targetW / sw, targetH / sh);
+        // Contain-fit trimmed ink so strokes are never cropped in storage.
+        const scale = Math.min(targetW / sw, targetH / sh);
         const drawW = Math.max(1, Math.round(sw * scale));
         const drawH = Math.max(1, Math.round(sh * scale));
         const dx = Math.round((targetW - drawW) / 2);
