@@ -2067,15 +2067,17 @@ async function generateSignedPdfBuffer({ pdfKey, spots }) {
 
             const imgW = embedded.width || 1;
             const imgH = embedded.height || 1;
-            // Cover-fit for signatures/initials/stamps so ink fills the spot box.
-            const fit = Math.max(boxW / imgW, boxH / imgH);
+            // Stamps: cover-fit (fill box, crop overflow). Signatures: contain-fit so ink is never cut.
+            const fit = isStampLike
+                ? Math.max(boxW / imgW, boxH / imgH)
+                : Math.min(boxW / imgW, boxH / imgH);
             const drawW = imgW * fit;
             const drawH = imgH * fit;
             const drawX = boxX + (boxW - drawW) / 2;
             const drawY = boxY + (boxH - drawH) / 2;
 
-            if (isSignatureLike) {
-                // Clip to the spot box so cover-crop does not spill onto PDF text.
+            if (isStampLike) {
+                // Clip to the stamp box so cover-crop does not spill onto PDF text.
                 page.pushOperators(
                     pushGraphicsState(),
                     rectangle(boxX, boxY, boxW, boxH),
