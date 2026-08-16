@@ -30,6 +30,70 @@
     flex-direction: column;
 }
 
+.lw-signingScreen__fileRow {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    margin: 0 0 0.375rem;
+    padding: 0.7rem 0.9rem;
+    border: 0.0625rem solid #e0e0e0;
+    border-radius: 0.5rem;
+    background: #fff;
+    box-shadow: 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.06);
+    cursor: pointer;
+    text-align: start;
+    font: inherit;
+    color: inherit;
+    appearance: none;
+    min-inline-size: 0;
+
+    &:hover,
+    &:focus-visible {
+        border-color: var(--lw-color-primary, #2A4365);
+        outline: none;
+    }
+}
+
+.lw-signingScreen__fileRowName {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lw-signingScreen__fileRowDate {
+    flex: 0 0 auto;
+    font-size: 0.75rem;
+    color: #888;
+    white-space: nowrap;
+}
+
+.lw-signingScreen__fileRow .lw-signingScreen__chip {
+    flex: 0 0 auto;
+    margin: 0;
+}
+
+.lw-signingScreen__detailsPopup {
+    width: 100%;
+    max-width: 36rem;
+    flex-direction: column;
+}
+
+.lw-signingScreen__detailsHeader {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    min-inline-size: 0;
+}
+
 .lw-signingScreen__fileHeaderRow {
     @include m.row(v.$space-2, nowrap, flex-start);
     margin-bottom: 0.625rem;
@@ -139,6 +203,10 @@
 }
 
 @media (max-width: v.$bp-narrow) {
+    .lw-signingScreen__fileRowDate {
+        display: none;
+    }
+
     .lw-signingScreen__tabsRow {
         gap: v.$space-2;
     }
