@@ -7,11 +7,10 @@ import signingFilesApi from "../../api/signingFilesApi";
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
 import SimpleScrollView from "../../components/simpleComponents/SimpleScrollView";
-import { Text14 } from "../../components/specializedComponents/text/AllTextKindFile";
+import { Text14, TextBold24 } from "../../components/specializedComponents/text/AllTextKindFile";
 import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
-import ProgressBar from "../../components/specializedComponents/containers/ProgressBar";
 import { images } from "../../assets/images/images";
 import { ClientStackName } from "../../navigation/ClientStack";
 import { ClientMainScreenName } from "../client/clientMainScreen/ClientMainScreen";
@@ -22,10 +21,12 @@ import { LoginStackName } from "../../navigation/LoginStack";
 import { LoginScreenName } from "../loginScreen/LoginScreen";
 import { useTranslation } from "react-i18next";
 import { useFromApp } from "../../providers/FromAppProvider";
+import { usePopup } from "../../providers/PopUpProvider";
 import { toastError } from "../../components/ui/toast";
 import "./SigningScreen.scss";
 import SimpleCard from "../../components/simpleComponents/SimpleCard";
 import Separator from "../../components/styledComponents/separators/Separator";
+import { PublicSignScreenName } from "../../navigation/screenPaths";
 
 export const SigningScreenName = "/SigningScreen";
 
@@ -35,6 +36,7 @@ export default function SigningScreen() {
     const location = useLocation();
     const navigate = useNavigate();
     const { isFromApp } = useFromApp();
+    const { openPopup, closePopup } = usePopup();
     const [activeTab, setActiveTab] = useState("pending");
     const [selectedFileId, setSelectedFileId] = useState(null);
     const [isPublicSigningSession, setIsPublicSigningSession] = useState(false);
@@ -94,6 +96,47 @@ export default function SigningScreen() {
             rejected: { text: t('signing.status.rejected'), className: "lw-signingScreen__chip lw-signingScreen__chip--rejected" },
         };
         return map[status] || map.pending;
+    };
+
+    const openSigningPad = (file) => {
+        closePopup();
+        setSelectedFileId(file.SigningFileId);
+        setIsPublicSigningSession(false);
+    };
+
+    const openSigning = async (file) => {
+        if (!file?.SigningFileId) return;
+        if (isFromApp && window.ReactNativeWebView) {
+            try {
+                const res = await signingFilesApi.createPublicSigningLink(file.SigningFileId);
+                const token = res?.data?.token || res?.token;
+                if (token) {
+                    const nativeUrl = `${window.location.origin}${PublicSignScreenName}?token=${encodeURIComponent(token)}`;
+                    window.ReactNativeWebView.postMessage(JSON.stringify({
+                        type: "OPEN_URL",
+                        payload: { url: nativeUrl },
+                    }));
+                    closePopup();
+                    return;
+                }
+            } catch (err) {
+                console.warn("Native public-sign open failed, falling back to in-app pad", err);
+            }
+        }
+        openSigningPad(file);
+    };
+
+    const handleOpenDetails = (file) => {
+        if (!file) return;
+        openPopup(
+            <ClientSigningFileDetails
+                file={file}
+                formatDotDate={formatDotDate}
+                onClose={closePopup}
+                onSign={() => openSigning(file)}
+                onDownload={() => handleDownload(file.SigningFileId, file.FileName)}
+            />
+        );
     };
 
     const handleDownload = async (signingFileId, fileName) => {
@@ -178,80 +221,19 @@ export default function SigningScreen() {
                     ) : (
                         currentList.map((file) => {
                             const chip = getStatusChip(file.Status);
-                            const totalSpots = Number(file.TotalSpots || 0);
-                            const signedSpots = Number(file.SignedSpots || 0);
-
                             return (
-                                <SimpleCard key={file.SigningFileId} className="lw-signingScreen__fileCard">
-                                    <SimpleContainer className="lw-signingScreen__fileHeaderRow">
-                                        <h3 className="lw-signingScreen__fileName">{file.FileName}</h3>
-                                        <SimpleContainer className={chip.className}>{chip.text}</SimpleContainer>
-                                    </SimpleContainer>
-
-                                    <SimpleContainer className="lw-signingScreen__detailRow">
-                                        <div className="lw-signingScreen__detailLabel">{t('signing.screen.caseLabel')}</div>
-                                        <div className="lw-signingScreen__detailValue">{file.CaseName || "-"}</div>
-                                    </SimpleContainer>
-
-                                    <SimpleContainer className="lw-signingScreen__detailRow">
-                                        <div className="lw-signingScreen__detailLabel">{t('signing.screen.lawyerLabel')}</div>
-                                        <div className="lw-signingScreen__detailValue">{file.LawyerName || "-"}</div>
-                                    </SimpleContainer>
-
-                                    <SimpleContainer className="lw-signingScreen__detailRow">
-                                        <div className="lw-signingScreen__detailLabel">{t('signing.screen.uploadedAtLabel')}</div>
-                                        <div className="lw-signingScreen__detailValue">{formatDotDate(file.CreatedAt)}</div>
-                                    </SimpleContainer>
-
-                                    {(file.Status === "pending" || file.Status === "rejected") && (
-                                        <>
-                                            <SimpleContainer className="lw-signingScreen__detailRow">
-                                                <div className="lw-signingScreen__detailLabel">{t('signing.screen.signaturesLabel')}</div>
-                                                <div className="lw-signingScreen__detailValue">{signedSpots}/{totalSpots}</div>
-                                            </SimpleContainer>
-
-                                            <ProgressBar
-                                                IsClosed
-                                                currentStage={signedSpots}
-                                                totalStages={totalSpots}
-                                                labelKey="signing.progress.label"
-                                            />
-
-                                            {file.Notes && (
-                                                <SimpleContainer className="lw-signingScreen__detailRow">
-                                                    <div className="lw-signingScreen__detailLabel">{t('signing.screen.notesLabel')}</div>
-                                                    <div className="lw-signingScreen__detailValue">{file.Notes}</div>
-                                                </SimpleContainer>
-                                            )}
-                                        </>
-                                    )}
-
-                                    <SimpleContainer className="lw-signingScreen__actionsRow">
-                                        {activeTab === "pending" && (
-                                            <PrimaryButton
-                                                onPress={() => setSelectedFileId(file.SigningFileId)}
-                                            >
-                                                {t('signing.screen.signDocument')}
-                                            </PrimaryButton>
-                                        )}
-
-                                        {activeTab === "signed" && (
-                                            <PrimaryButton
-                                                onPress={() =>
-                                                    handleDownload(file.SigningFileId, file.FileName)
-                                                }
-                                            >
-                                                {t('signing.screen.downloadSigned')}
-                                            </PrimaryButton>
-                                        )}
-
-                                        <SecondaryButton
-                                            onPress={() => setSelectedFileId(file.SigningFileId)}
-                                        >
-                                            {t('signing.screen.details')}
-                                        </SecondaryButton>
-                                    </SimpleContainer>
-                                </SimpleCard>
+                                <button
+                                    type="button"
+                                    key={file.SigningFileId}
+                                    className="lw-signingScreen__fileRow"
+                                    onClick={() => handleOpenDetails(file)}
+                                >
+                                    <span className="lw-signingScreen__fileRowName">{file.FileName}</span>
+                                    <span className={chip.className}>{chip.text}</span>
+                                    <span className="lw-signingScreen__fileRowDate">
+                                        {formatDotDate(file.Status === "signed" ? file.SignedAt : file.CreatedAt)}
+                                    </span>
+                                </button>
                             );
                         })
                     )}
@@ -285,3 +267,64 @@ const TabButton = ({ active, label, onPress }) => {
         <SecondaryButton onPress={onPress}>{label}</SecondaryButton>
     );
 };
+
+function ClientSigningFileDetails({ file, formatDotDate, onClose, onSign, onDownload }) {
+    const { t } = useTranslation();
+    const status = String(file?.Status || "pending").toLowerCase();
+    const isPending = status === "pending" || status === "rejected";
+    const isSigned = status === "signed";
+    const totalSpots = Number(file?.TotalSpots || 0);
+    const signedSpots = Number(file?.SignedSpots || 0);
+    const chipMap = {
+        pending: { text: t("signing.status.pending"), className: "lw-signingScreen__chip lw-signingScreen__chip--pending" },
+        signed: { text: t("signing.status.signed"), className: "lw-signingScreen__chip lw-signingScreen__chip--signed" },
+        rejected: { text: t("signing.status.rejected"), className: "lw-signingScreen__chip lw-signingScreen__chip--rejected" },
+    };
+    const chip = chipMap[status] || chipMap.pending;
+
+    return (
+        <SimpleContainer className="lw-signingScreen__detailsPopup">
+            <SimpleContainer className="lw-signingScreen__detailsHeader">
+                <TextBold24>{t("signing.screen.details")}</TextBold24>
+                <span className={chip.className}>{chip.text}</span>
+            </SimpleContainer>
+            <SimpleContainer className="lw-signingScreen__detailRow">
+                <div className="lw-signingScreen__detailLabel">{t("signing.screen.documentLabel")}</div>
+                <div className="lw-signingScreen__detailValue">{file?.FileName || "-"}</div>
+            </SimpleContainer>
+            <SimpleContainer className="lw-signingScreen__detailRow">
+                <div className="lw-signingScreen__detailLabel">{t("signing.screen.caseLabel")}</div>
+                <div className="lw-signingScreen__detailValue">{file?.CaseName || "-"}</div>
+            </SimpleContainer>
+            <SimpleContainer className="lw-signingScreen__detailRow">
+                <div className="lw-signingScreen__detailLabel">{t("signing.screen.lawyerLabel")}</div>
+                <div className="lw-signingScreen__detailValue">{file?.LawyerName || "-"}</div>
+            </SimpleContainer>
+            <SimpleContainer className="lw-signingScreen__detailRow">
+                <div className="lw-signingScreen__detailLabel">{t("signing.screen.uploadedAtLabel")}</div>
+                <div className="lw-signingScreen__detailValue">{formatDotDate?.(file?.CreatedAt)}</div>
+            </SimpleContainer>
+            {isPending && (
+                <SimpleContainer className="lw-signingScreen__detailRow">
+                    <div className="lw-signingScreen__detailLabel">{t("signing.screen.signaturesLabel")}</div>
+                    <div className="lw-signingScreen__detailValue">{signedSpots}/{totalSpots}</div>
+                </SimpleContainer>
+            )}
+            {file?.Notes && (
+                <SimpleContainer className="lw-signingScreen__detailRow">
+                    <div className="lw-signingScreen__detailLabel">{t("signing.screen.notesLabel")}</div>
+                    <div className="lw-signingScreen__detailValue">{file.Notes}</div>
+                </SimpleContainer>
+            )}
+            <SimpleContainer className="lw-signingScreen__actionsRow">
+                {isPending && (
+                    <PrimaryButton onPress={onSign}>{t("signing.screen.signDocument")}</PrimaryButton>
+                )}
+                {isSigned && (
+                    <PrimaryButton onPress={onDownload}>{t("signing.screen.downloadSigned")}</PrimaryButton>
+                )}
+                <SecondaryButton onPress={onClose}>{t("common.close")}</SecondaryButton>
+            </SimpleContainer>
+        </SimpleContainer>
+    );
+}
