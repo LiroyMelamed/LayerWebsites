@@ -2246,7 +2246,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                             aria-label={t("signing.canvas.otpPlaceholder")}
                         />
                     </div>
-                    <div className="lw-signing-actionsRow">
+                    <div className="lw-signing-otpActions">
                         <SecondaryButton size={buttonSizes.SMALL} onPress={() => requestOtp()} disabled={otpBusy || saving || otpVerified}>
                             {otpRequested ? t("signing.canvas.resend") : t("signing.canvas.sendCode")}
                         </SecondaryButton>
