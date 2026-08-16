@@ -1168,18 +1168,27 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             if (isScreen) setShowSpotPopup(true);
             // Multi-page docs: make it obvious another canvas remains (empty pad ≠ finished).
             if (!quiet) {
+                const remainingSigs = unsignedRequired.filter((s) => isSignatureLike(getSpotType(s))).length;
+                const remainingFields = unsignedRequired.length - remainingSigs;
+                const nextIsSignature = isSignatureLike(getSpotType(next));
                 if (unsignedRequired.length === 1) {
                     showAppToast({
                         type: "info",
-                        text: t("signing.canvas.oneSignatureRemainingOnPage", { page: toPage }),
+                        text: nextIsSignature
+                            ? t("signing.canvas.oneSignatureRemainingOnPage", { page: toPage })
+                            : t("signing.canvas.oneFieldRemainingOnPage", { page: toPage }),
                     });
                 } else if (toPage !== fromPage) {
                     showAppToast({
                         type: "info",
-                        text: t("signing.canvas.nextSignatureOnPage", {
-                            count: unsignedRequired.length,
-                            page: toPage,
-                        }),
+                        text: remainingSigs > 0 && remainingFields === 0
+                            ? t("signing.canvas.nextSignatureOnPage", { count: remainingSigs, page: toPage })
+                            : remainingSigs === 0
+                                ? t("signing.canvas.nextFieldOnPage", { count: remainingFields, page: toPage })
+                                : t("signing.canvas.remainingSignaturesAndFields", {
+                                    signatures: remainingSigs,
+                                    fields: remainingFields,
+                                }),
                     });
                 }
             }
@@ -2039,18 +2048,26 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const remainingSignatureSpots = unsignedRequiredSpots.filter(
         (s) => isSignatureLike(getSpotType(s)),
     ).length;
+    const remainingFieldSpots = remainingCount - remainingSignatureSpots;
     const optionalRemainingCount = unsignedOptionalSpots.length;
     const allSpotsSignedByUser = remainingCount === 0;
-    const hasUnsignedSignatureSpots = unsignedRequiredSpots.some((s) =>
-        isSignatureLike(getSpotType(s)),
-    );
+    const hasUnsignedSignatureSpots = remainingSignatureSpots > 0;
     const remainingHintPage = remainingCount > 0
         ? Number(getSpotPage(unsignedRequiredSpots[0]) || 1)
         : null;
     const remainingHintText = remainingCount > 0
-        ? (remainingCount === 1 && remainingHintPage
-            ? t("signing.canvas.oneSignatureRemainingOnPage", { page: remainingHintPage })
-            : t("signing.canvas.remainingSignatures", { count: remainingCount }))
+        ? (remainingSignatureSpots > 0 && remainingFieldSpots > 0
+            ? t("signing.canvas.remainingSignaturesAndFields", {
+                signatures: remainingSignatureSpots,
+                fields: remainingFieldSpots,
+            })
+            : remainingSignatureSpots > 0
+                ? (remainingSignatureSpots === 1 && remainingHintPage
+                    ? t("signing.canvas.oneSignatureRemainingOnPage", { page: remainingHintPage })
+                    : t("signing.canvas.remainingSignatures", { count: remainingSignatureSpots }))
+                : (remainingFieldSpots === 1 && remainingHintPage
+                    ? t("signing.canvas.oneFieldRemainingOnPage", { page: remainingHintPage })
+                    : t("signing.canvas.remainingFields", { count: remainingFieldSpots })))
         : (allSpotsSignedByUser && spots.length > 0
             ? t("signing.canvas.allRequiredCompleted")
             : "");
