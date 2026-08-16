@@ -106,6 +106,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const [selectedSavedItem, setSelectedSavedItem] = useState(null); // { type: 'signature'|'stamp', url, index }
     const [canvasClearSpinning, setCanvasClearSpinning] = useState(false);
     const autoOpenedFirstSpotRef = useRef(false);
+    const signaturesCelebratedRef = useRef(false);
     const canvasClearSpinTimerRef = useRef(null);
 
     const getSignModeForSpotType = (type) => {
@@ -570,6 +571,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 setCurrentSpot(null);
                 setHasStartedNextFlow(false);
                 autoOpenedFirstSpotRef.current = false;
+                signaturesCelebratedRef.current = false;
                 const fileStatus = String(data?.file?.Status || data?.file?.status || "").toLowerCase();
                 const readOnly = data?.readOnly === true
                     || data?.file?.ReadOnly === true
@@ -615,7 +617,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
         const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
         const unsignedRequired = getUnsignedRequiredSpots(allSpots);
-        if (unsignedRequired.length === 0) return;
+        const remainingSigs = unsignedRequired.filter((s) => isSignatureLike(getSpotType(s))).length;
+        // Signatures already done: completion overlay offers continue-to-fields. Don't auto-open a field pad.
+        if (unsignedRequired.length === 0 || remainingSigs === 0) return;
 
         autoOpenedFirstSpotRef.current = true;
         const first = unsignedRequired[0];
@@ -627,13 +631,24 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isScreen, pdfReady, fileDetails, showCompletion]);
 
-    // If required spots are done (reload / lock), always surface the finish overlay.
+    // Celebrate when signatures are done (even if data fields remain).
     useEffect(() => {
         if (!fileDetails || loading || showCompletion) return;
         const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
         const unsignedRequired = getUnsignedRequiredSpots(allSpots);
-        // Never auto-finish while this signer still has required canvases (signatures or data fields).
-        if (unsignedRequired.length > 0) return;
+        const remainingSigs = unsignedRequired.filter((s) => isSignatureLike(getSpotType(s))).length;
+        if (remainingSigs > 0) return;
+
+        if (unsignedRequired.length > 0) {
+            if (signaturesCelebratedRef.current) return;
+            signaturesCelebratedRef.current = true;
+            setShowSpotPopup(false);
+            setShowOptionalRemaining(false);
+            setShowCompletion(true);
+            setCurrentSpot(null);
+            return;
+        }
+
         const unsignedOptional = getUnsignedOptionalSpots(allSpots);
         if (unsignedOptional.length > 0) {
             if (!showOptionalRemaining) {
@@ -1163,6 +1178,17 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         const unsignedRequired = getUnsignedRequiredSpots(spots);
         const unsignedOptional = getUnsignedOptionalSpots(spots);
         if (unsignedRequired.length > 0) {
+            const remainingSigs = unsignedRequired.filter((s) => isSignatureLike(getSpotType(s))).length;
+            const remainingFields = unsignedRequired.length - remainingSigs;
+            // All signatures done, data fields still open: celebrate, then let them continue.
+            if (remainingSigs === 0 && !signaturesCelebratedRef.current) {
+                signaturesCelebratedRef.current = true;
+                setShowOptionalRemaining(false);
+                setShowCompletion(true);
+                setShowSpotPopup(false);
+                setCurrentSpot(null);
+                return;
+            }
             const next = unsignedRequired[0];
             const fromPage = Number(getSpotPage(currentSpot) || 1);
             const toPage = Number(getSpotPage(next) || 1);
@@ -1174,8 +1200,6 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             if (isScreen) setShowSpotPopup(true);
             // Multi-page docs: make it obvious another canvas remains (empty pad ≠ finished).
             if (!quiet) {
-                const remainingSigs = unsignedRequired.filter((s) => isSignatureLike(getSpotType(s))).length;
-                const remainingFields = unsignedRequired.length - remainingSigs;
                 const nextIsSignature = isSignatureLike(getSpotType(next));
                 if (unsignedRequired.length === 1) {
                     showAppToast({
@@ -2082,6 +2106,59 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         if (isScreen) setShowSpotPopup(true);
     };
 
+    const continueToRemainingFields = () => {
+        signaturesCelebratedRef.current = true;
+        setShowCompletion(false);
+        const next = unsignedRequiredSpots[0] || unsignedOptionalSpots[0];
+        if (!next) return;
+        setCurrentSpot(next);
+        scrollToSpot(next);
+        setHasStartedNextFlow(true);
+        if (isScreen) setShowSpotPopup(true);
+    };
+
+    const remainingFieldsForComplete = remainingFieldSpots > 0
+        ? remainingFieldSpots
+        : optionalRemainingCount;
+    const renderCompletionOverlay = () => {
+        if (!showCompletion) return null;
+        const hasMoreFields = remainingFieldsForComplete > 0;
+        return (
+            <div className="lw-signing-completeOverlay" role="dialog" aria-modal="true">
+                <div className="lw-signing-completeCard">
+                    <div className="lw-signing-completeCheck" aria-hidden="true">
+                        <svg viewBox="0 0 52 52">
+                            <circle className="lw-signing-completeCheck__circle" cx="26" cy="26" r="24" fill="none" />
+                            <path className="lw-signing-completeCheck__mark" fill="none" d="M14 27 l8 8 16-16" />
+                        </svg>
+                    </div>
+                    <h2 className="lw-signing-completeTitle">{t("signing.canvas.signingCompleteTitle")}</h2>
+                    <p className="lw-signing-completeSubtitle">
+                        {hasMoreFields
+                            ? t("signing.canvas.signingCompleteFieldsRemainSubtitle", { count: remainingFieldsForComplete })
+                            : t("signing.canvas.signingCompleteSubtitle")}
+                    </p>
+                    <div className="lw-signing-completeActions">
+                        {hasMoreFields && (
+                            <PrimaryButton onPress={continueToRemainingFields}>
+                                {t("signing.canvas.signingCompleteContinueFields")}
+                            </PrimaryButton>
+                        )}
+                        {hasMoreFields ? (
+                            <SecondaryButton onPress={onClose}>
+                                {t("signing.canvas.signingCompleteClose")}
+                            </SecondaryButton>
+                        ) : (
+                            <PrimaryButton onPress={onClose}>
+                                {t("signing.canvas.signingCompleteClose")}
+                            </PrimaryButton>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     const handleSpotSelect = (index) => {
         const spot = spots[index];
         if (!spot || spot.IsSigned) return;
@@ -2761,25 +2838,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                     </div>
                 )}
 
-                {showCompletion && (
-                    <div className="lw-signing-completeOverlay" role="dialog" aria-modal="true">
-                        <div className="lw-signing-completeCard">
-                            <div className="lw-signing-completeCheck" aria-hidden="true">
-                                <svg viewBox="0 0 52 52">
-                                    <circle className="lw-signing-completeCheck__circle" cx="26" cy="26" r="24" fill="none" />
-                                    <path className="lw-signing-completeCheck__mark" fill="none" d="M14 27 l8 8 16-16" />
-                                </svg>
-                            </div>
-                            <h2 className="lw-signing-completeTitle">{t("signing.canvas.signingCompleteTitle")}</h2>
-                            <p className="lw-signing-completeSubtitle">{t("signing.canvas.signingCompleteSubtitle")}</p>
-                            <div className="lw-signing-completeActions">
-                                <PrimaryButton onPress={onClose}>
-                                    {t("signing.canvas.signingCompleteClose")}
-                                </PrimaryButton>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                {renderCompletionOverlay()}
             </div>
         );
     }
@@ -2949,25 +3008,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 </div>
             )}
 
-            {showCompletion && (
-                <div className="lw-signing-completeOverlay" role="dialog" aria-modal="true">
-                    <div className="lw-signing-completeCard">
-                        <div className="lw-signing-completeCheck" aria-hidden="true">
-                            <svg viewBox="0 0 52 52">
-                                <circle className="lw-signing-completeCheck__circle" cx="26" cy="26" r="24" fill="none" />
-                                <path className="lw-signing-completeCheck__mark" fill="none" d="M14 27 l8 8 16-16" />
-                            </svg>
-                        </div>
-                        <h2 className="lw-signing-completeTitle">{t("signing.canvas.signingCompleteTitle")}</h2>
-                        <p className="lw-signing-completeSubtitle">{t("signing.canvas.signingCompleteSubtitle")}</p>
-                        <div className="lw-signing-completeActions">
-                            <PrimaryButton onPress={onClose}>
-                                {t("signing.canvas.signingCompleteClose")}
-                            </PrimaryButton>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {renderCompletionOverlay()}
         </div>
     );
 };
