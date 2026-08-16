@@ -2043,15 +2043,15 @@ async function generateSignedPdfBuffer({ pdfKey, spots }) {
                 ? await pdfDoc.embedPng(imgBuffer)
                 : await pdfDoc.embedJpg(imgBuffer);
 
-            // Contain-fit image inside an enlarged spot rect (professional stamp size).
+            // Stamps may enlarge slightly so photos read well. Signatures stay in the placed canvas.
             let boxW = w;
             let boxH = h;
             let boxX = x;
             let boxY = y;
-            if (isSignatureLike) {
-                const minW = isStampLike ? 220 : 150;
-                const minH = isStampLike ? 100 : 55;
-                const boost = isStampLike ? 1.85 : 1.4;
+            if (isStampLike) {
+                const minW = 220;
+                const minH = 100;
+                const boost = 1.85;
                 const scaleUp = Math.max(1, minW / Math.max(boxW, 1), minH / Math.max(boxH, 1)) * boost;
                 const newW = boxW * scaleUp;
                 const newH = boxH * scaleUp;
@@ -2067,7 +2067,7 @@ async function generateSignedPdfBuffer({ pdfKey, spots }) {
 
             const imgW = embedded.width || 1;
             const imgH = embedded.height || 1;
-            // Stamps: cover-fit (fill box, crop overflow). Signatures: contain-fit so ink is never cut.
+            // Stamps: cover-fit (fill box, crop overflow). Signatures: contain-fit so ink stays inside the canvas.
             const fit = isStampLike
                 ? Math.max(boxW / imgW, boxH / imgH)
                 : Math.min(boxW / imgW, boxH / imgH);
@@ -2076,31 +2076,21 @@ async function generateSignedPdfBuffer({ pdfKey, spots }) {
             const drawX = boxX + (boxW - drawW) / 2;
             const drawY = boxY + (boxH - drawH) / 2;
 
-            if (isStampLike) {
-                // Clip to the stamp box so cover-crop does not spill onto PDF text.
-                page.pushOperators(
-                    pushGraphicsState(),
-                    rectangle(boxX, boxY, boxW, boxH),
-                    clip(),
-                    endPath(),
-                );
-                page.drawImage(embedded, {
-                    x: drawX,
-                    y: drawY,
-                    width: drawW,
-                    height: drawH,
-                    opacity: 1,
-                });
-                page.pushOperators(popGraphicsState());
-            } else {
-                page.drawImage(embedded, {
-                    x: drawX,
-                    y: drawY,
-                    width: drawW,
-                    height: drawH,
-                    opacity: 1,
-                });
-            }
+            // Clip to the target box so ink never spills past the canvas onto PDF text.
+            page.pushOperators(
+                pushGraphicsState(),
+                rectangle(boxX, boxY, boxW, boxH),
+                clip(),
+                endPath(),
+            );
+            page.drawImage(embedded, {
+                x: drawX,
+                y: drawY,
+                width: drawW,
+                height: drawH,
+                opacity: 1,
+            });
+            page.pushOperators(popGraphicsState());
         } else if (fieldValue !== null && fieldValue !== undefined && String(fieldValue).length > 0) {
             let text = String(fieldValue);
             // Format dates as DD/MM/YYYY for display in the PDF
