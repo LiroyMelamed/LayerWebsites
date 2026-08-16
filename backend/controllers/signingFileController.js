@@ -4660,20 +4660,29 @@ exports.createPublicSigningLink = async (req, res, next) => {
         }
 
         const file = fileResult.rows[0];
+        const isManager = canManageSigningFile({ file, requesterId, role: req.user?.Role });
+        const schemaSupport = await getSchemaSupport();
 
-        if (!canManageSigningFile({ file, requesterId, role: req.user?.Role })) {
-            return fail(next, 'FORBIDDEN', 403);
+        let targetSignerUserId = signerUserId || file.ClientId;
+        if (!isManager) {
+            // Assigned signer (client) may mint a link only for themselves — used by the
+            // in-app WebView to open native PublicSigning.
+            const selfAssigned = await isSignerAssignedToFile({
+                signingFileId,
+                signerUserId: requesterId,
+                clientId: file.ClientId,
+                schemaSupport,
+            });
+            if (!selfAssigned) {
+                return fail(next, 'FORBIDDEN', 403);
+            }
+            targetSignerUserId = requesterId;
         }
 
-        const otpSystemEnabled = await getSigningOtpEnabled();
-        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file, otpSystemEnabled);
-
-        const targetSignerUserId = signerUserId || file.ClientId;
         if (!targetSignerUserId) {
             return fail(next, 'INVALID_PARAMETER', 422, { meta: { name: 'signerUserId' } });
         }
 
-        const schemaSupport = await getSchemaSupport();
         const assigned = await isSignerAssignedToFile({
             signingFileId,
             signerUserId: targetSignerUserId,
@@ -4687,6 +4696,9 @@ exports.createPublicSigningLink = async (req, res, next) => {
         if (isSigningDocumentExpired(file)) {
             return fail(next, 'DOCUMENT_EXPIRED', 410);
         }
+
+        const otpSystemEnabled = await getSigningOtpEnabled();
+        const requireOtpEffective = computeRequireOtpEffectiveFromFirmPolicy(enabledCheck.policy, file, otpSystemEnabled);
 
         // Keep the public-link endpoint behavior consistent with notifications.
         const token = createPublicSigningToken({
@@ -4707,7 +4719,7 @@ exports.createPublicSigningLink = async (req, res, next) => {
             eventType: 'PUBLIC_LINK_ISSUED',
             signingFileId,
             actorUserId: requesterId,
-            actorType: 'lawyer',
+            actorType: isManager ? 'lawyer' : 'client',
             success: true,
             metadata: {
                 signingPolicyVersion: file.SigningPolicyVersion || SIGNING_POLICY_VERSION,
