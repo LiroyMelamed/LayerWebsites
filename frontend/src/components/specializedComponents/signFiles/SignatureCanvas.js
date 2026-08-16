@@ -107,6 +107,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const [canvasClearSpinning, setCanvasClearSpinning] = useState(false);
     const autoOpenedFirstSpotRef = useRef(false);
     const signaturesCelebratedRef = useRef(false);
+    const holdSignatureCompleteOverlayRef = useRef(false);
     const canvasClearSpinTimerRef = useRef(null);
 
     const getSignModeForSpotType = (type) => {
@@ -572,6 +573,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 setHasStartedNextFlow(false);
                 autoOpenedFirstSpotRef.current = false;
                 signaturesCelebratedRef.current = false;
+                holdSignatureCompleteOverlayRef.current = false;
                 const fileStatus = String(data?.file?.Status || data?.file?.status || "").toLowerCase();
                 const readOnly = data?.readOnly === true
                     || data?.file?.ReadOnly === true
@@ -640,8 +642,15 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         if (remainingSigs > 0) return;
 
         if (unsignedRequired.length > 0) {
+            if (holdSignatureCompleteOverlayRef.current) {
+                setShowCompletion(true);
+                setShowSpotPopup(false);
+                setCurrentSpot(null);
+                return;
+            }
             if (signaturesCelebratedRef.current) return;
             signaturesCelebratedRef.current = true;
+            holdSignatureCompleteOverlayRef.current = true;
             setShowSpotPopup(false);
             setShowOptionalRemaining(false);
             setShowCompletion(true);
@@ -1181,13 +1190,23 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             const remainingSigs = unsignedRequired.filter((s) => isSignatureLike(getSpotType(s))).length;
             const remainingFields = unsignedRequired.length - remainingSigs;
             // All signatures done, data fields still open: celebrate, then let them continue.
-            if (remainingSigs === 0 && !signaturesCelebratedRef.current) {
-                signaturesCelebratedRef.current = true;
-                setShowOptionalRemaining(false);
-                setShowCompletion(true);
-                setShowSpotPopup(false);
-                setCurrentSpot(null);
-                return;
+            if (remainingSigs === 0) {
+                if (!signaturesCelebratedRef.current) {
+                    signaturesCelebratedRef.current = true;
+                    holdSignatureCompleteOverlayRef.current = true;
+                    setShowOptionalRemaining(false);
+                    setShowCompletion(true);
+                    setShowSpotPopup(false);
+                    setCurrentSpot(null);
+                    return;
+                }
+                // Reload after the last signature must not steal the overlay.
+                if (holdSignatureCompleteOverlayRef.current) {
+                    setShowCompletion(true);
+                    setShowSpotPopup(false);
+                    setCurrentSpot(null);
+                    return;
+                }
             }
             const next = unsignedRequired[0];
             const fromPage = Number(getSpotPage(currentSpot) || 1);
@@ -2108,6 +2127,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const continueToRemainingFields = () => {
         signaturesCelebratedRef.current = true;
+        holdSignatureCompleteOverlayRef.current = false;
         setShowCompletion(false);
         const next = unsignedRequiredSpots[0] || unsignedOptionalSpots[0];
         if (!next) return;
