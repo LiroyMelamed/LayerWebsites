@@ -340,6 +340,12 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     };
     const isSignatureLike = (spotType) => spotType === 'signature' || spotType === 'initials';
 
+    const getSpotId = (spot) => {
+        const n = Number(spot?.SignatureSpotId ?? spot?.signatureSpotId ?? spot?.id);
+        return Number.isFinite(n) && n > 0 ? n : null;
+    };
+    const isSpotSigned = (spot) => Boolean(spot?.IsSigned ?? spot?.isSigned ?? spot?.issigned);
+
     const isMyActionableSpot = (spot) => {
         // Prefer explicit backend flag (public + authenticated details).
         const flag = spot?.CanSign ?? spot?.canSign ?? spot?.IsMine ?? spot?.isMine;
@@ -358,13 +364,12 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const getUnsignedRequiredSpots = (spots) => {
         const list = Array.isArray(spots) ? spots : [];
-        const required = list.filter((s) => isSpotRequired(s) && isMyActionableSpot(s));
-        return required.filter((s) => !s.IsSigned);
+        return list.filter((s) => isSpotRequired(s) && isMyActionableSpot(s) && !isSpotSigned(s));
     };
 
     const getUnsignedOptionalSpots = (spots) => {
         const list = Array.isArray(spots) ? spots : [];
-        return list.filter((s) => !isSpotRequired(s) && !s.IsSigned && isMyActionableSpot(s));
+        return list.filter((s) => !isSpotRequired(s) && !isSpotSigned(s) && isMyActionableSpot(s));
     };
 
     const focusNextUnsignedSpot = () => {
@@ -625,23 +630,24 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     // If required spots are done (reload / lock), always surface the finish overlay.
     useEffect(() => {
         if (!fileDetails || loading || showCompletion) return;
-        const fileStatus = String(fileDetails?.file?.Status || fileDetails?.file?.status || "").toLowerCase();
-        const locked = fileDetails?.readOnly === true
-            || fileDetails?.file?.ReadOnly === true
-            || fileDetails?.signerCompleted === true
-            || fileStatus === "signed"
-            || fileStatus === "rejected";
         const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
         const unsignedRequired = getUnsignedRequiredSpots(allSpots);
+        // Never auto-finish while this signer still has required canvases (signatures or data fields).
+        if (unsignedRequired.length > 0) return;
         const unsignedOptional = getUnsignedOptionalSpots(allSpots);
-        if (!locked && unsignedRequired.length > 0) return;
-        if (unsignedOptional.length > 0 && !locked) {
+        if (unsignedOptional.length > 0) {
             if (!showOptionalRemaining) {
                 setShowSpotPopup(false);
                 setShowOptionalRemaining(true);
             }
             return;
         }
+        const fileStatus = String(fileDetails?.file?.Status || fileDetails?.file?.status || "").toLowerCase();
+        const locked = fileDetails?.readOnly === true
+            || fileDetails?.file?.ReadOnly === true
+            || fileDetails?.signerCompleted === true
+            || fileStatus === "signed"
+            || fileStatus === "rejected";
         if (locked || allSpots.length > 0) {
             setShowSpotPopup(false);
             setShowOptionalRemaining(false);
@@ -1389,53 +1395,21 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             }
 
             // Optimistic: update current spot value immediately so overlay shows it even before reload.
-            let nextUnsignedSpot = null;
-            try {
-                setFileDetails((prev) => {
-                    if (!prev?.signatureSpots || !currentSpot?.SignatureSpotId) return prev;
-                    const updatedSpots = prev.signatureSpots.map((s) => {
-                        if (s?.SignatureSpotId !== currentSpot.SignatureSpotId) return s;
-                        return {
-                            ...s,
-                            IsSigned: true,
-                            FieldValue: sanitized,
-                            fieldValue: sanitized,
-                            fieldvalue: sanitized,
-                        };
-                    });
-
-                    // Compute next unsigned spot from the updated list.
-                    const unsignedRequired = getUnsignedRequiredSpots(updatedSpots);
-                    const unsignedOptional = getUnsignedOptionalSpots(updatedSpots);
-                    nextUnsignedSpot = (unsignedRequired.length > 0 ? unsignedRequired : unsignedOptional)[0] || null;
-
-                    return { ...prev, signatureSpots: updatedSpots };
-                });
-            } catch {
-                // ignore
-            }
-
-            // Advance outside updater to avoid batching issues; keep session if optionals remain.
-            if (nextUnsignedSpot) {
-                const stillHasRequired = getUnsignedRequiredSpots(
-                    (fileDetails?.signatureSpots || []).map((s) => (
-                        s?.SignatureSpotId === currentSpot?.SignatureSpotId
-                            ? { ...s, IsSigned: true }
-                            : s
-                    ))
-                ).length > 0;
-                setCurrentSpot(nextUnsignedSpot);
-                scrollToSpot(nextUnsignedSpot);
-                setHasStartedNextFlow(true);
-                if (!stillHasRequired) {
-                    setShowOptionalRemaining(true);
-                    setShowCompletion(false);
-                }
-            } else {
-                setShowOptionalRemaining(false);
-                setShowCompletion(true);
-                setCurrentSpot(null);
-            }
+            const currentId = getSpotId(currentSpot);
+            const updatedSpots = (fileDetails?.signatureSpots || []).map((s) => {
+                if (currentId == null || getSpotId(s) !== currentId) return s;
+                return {
+                    ...s,
+                    IsSigned: true,
+                    FieldValue: sanitized,
+                    fieldValue: sanitized,
+                    fieldvalue: sanitized,
+                };
+            });
+            setFileDetails((prev) => (
+                prev ? { ...prev, signatureSpots: updatedSpots } : prev
+            ));
+            advanceAfterSpotsChange(updatedSpots);
 
             showAppToast({ type: "success", text: t("signing.canvas.fieldSavedSuccess") });
             // NOTE: Intentionally no reloadDetailsAndAdvance() here.
@@ -2035,15 +2009,19 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         return isMyActionableSpot(s);
     });
     const fileStatus = String(fileDetails?.file?.Status || fileDetails?.file?.status || "").toLowerCase();
-    const isDocumentLocked = fileDetails?.readOnly === true
+    const unsignedRequiredSpotsRaw = getUnsignedRequiredSpots(spots);
+    const unsignedOptionalSpotsRaw = getUnsignedOptionalSpots(spots);
+    const isDocumentLocked = (
+        fileDetails?.readOnly === true
         || fileDetails?.file?.ReadOnly === true
         || fileDetails?.signerCompleted === true
         || fileStatus === "signed"
-        || fileStatus === "rejected";
+        || fileStatus === "rejected"
+    ) && unsignedRequiredSpotsRaw.length === 0;
     const requiredSpots = spots.filter((s) => isSpotRequired(s));
     const effectiveRequiredSpots = requiredSpots;
-    const unsignedRequiredSpots = isDocumentLocked ? [] : getUnsignedRequiredSpots(spots);
-    const unsignedOptionalSpots = isDocumentLocked ? [] : getUnsignedOptionalSpots(spots);
+    const unsignedRequiredSpots = isDocumentLocked ? [] : unsignedRequiredSpotsRaw;
+    const unsignedOptionalSpots = isDocumentLocked ? [] : unsignedOptionalSpotsRaw;
     const remainingCount = unsignedRequiredSpots.length;
     const remainingSignatureSpots = unsignedRequiredSpots.filter(
         (s) => isSignatureLike(getSpotType(s)),
