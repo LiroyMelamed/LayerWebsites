@@ -884,6 +884,8 @@
       "optionalRemainingHint": "Optional fields are still empty — continue or finish.",
       "signingCompleteTitle": "Signing complete",
       "signingCompleteSubtitle": "All signature locations were completed successfully. Thank you!",
+      "signingCompleteFieldsRemainSubtitle": "Signatures are done. {{count}} fields still need to be filled.",
+      "signingCompleteContinueFields": "Continue to remaining fields",
       "signingCompleteClose": "Done",
       "rejectDocument": "Reject document",
       "failedToLoadSignatureImage": "Failed to load signature image",

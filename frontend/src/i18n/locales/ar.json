@@ -985,6 +985,8 @@
       "allRequiredCompleted": "لقد أكملت جميع التواقيع المطلوبة!",
       "signingCompleteTitle": "اكتمل التوقيع",
       "signingCompleteSubtitle": "تم إكمال جميع مواقع التوقيع بنجاح. شكرًا لك!",
+      "signingCompleteFieldsRemainSubtitle": "اكتملت التواقيع. تبقى {{count}} حقول للتعبئة.",
+      "signingCompleteContinueFields": "متابعة تعبئة الحقول",
       "signingCompleteClose": "إنهاء",
       "rejectDocument": "رفض المستند",
       "failedToLoadSignatureImage": "فشل تحميل صورة التوقيع",
