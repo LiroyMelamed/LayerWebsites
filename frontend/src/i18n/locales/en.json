@@ -753,7 +753,10 @@
       "pageRange": "Page range"
     },
     "duplicate": {
-      "noneAdded": "No new fields were added"
+      "noneAdded": "No new fields were added",
+      "confirmTitle": "Copy to all pages?",
+      "confirmAllPages": "This field will be copied to {{count}} more pages ({{pages}} pages in the document). Use this only if the same field is needed on every page.",
+      "confirmAction": "Duplicate"
     },
     "progress": {
       "label": "Signatures progress"
@@ -836,6 +839,9 @@
       "remainingSignatures": "{{count}} signatures remaining",
       "remainingFields": "{{count}} fields remaining",
       "remainingSignaturesAndFields": "{{signatures}} signatures and {{fields}} fields remaining",
+      "remainingSignaturesOnPageWithTotal": "{{pageCount}} signatures on this page ({{count}} in the document)",
+      "remainingFieldsOnPageWithTotal": "{{pageCount}} fields on this page ({{count}} in the document)",
+      "remainingSignaturesAndFieldsOnPageWithTotal": "{{signatures}} signatures and {{fields}} fields on this page ({{count}} in the document)",
       "oneSignatureRemainingOnPage": "One signature left on page {{page}} — sign to finish",
       "oneFieldRemainingOnPage": "One field left on page {{page}} — fill to finish",
       "nextSignatureOnPage": "{{count}} signatures left — next on page {{page}}",

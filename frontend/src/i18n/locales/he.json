@@ -1094,7 +1094,10 @@
       "pageRange": "טווח עמודים"
     },
     "duplicate": {
-      "noneAdded": "לא נוספו שדות חדשים"
+      "noneAdded": "לא נוספו שדות חדשים",
+      "confirmTitle": "שכפול לכל העמודים?",
+      "confirmAllPages": "השדה יועתק ל-{{count}} עמודים נוספים ({{pages}} עמודים במסמך). רק אם באמת צריך את אותו שדה בכל עמוד.",
+      "confirmAction": "שכפל"
     },
     "progress": {
       "label": "התקדמות חתימות"
@@ -1180,6 +1183,9 @@
       "remainingSignatures": "נותרו {{count}} חתימות",
       "remainingFields": "נותרו {{count}} שדות",
       "remainingSignaturesAndFields": "נותרו {{signatures}} חתימות ו-{{fields}} שדות",
+      "remainingSignaturesOnPageWithTotal": "נותרו {{pageCount}} חתימות בעמוד זה ({{count}} במסמך)",
+      "remainingFieldsOnPageWithTotal": "נותרו {{pageCount}} שדות בעמוד זה ({{count}} במסמך)",
+      "remainingSignaturesAndFieldsOnPageWithTotal": "נותרו {{signatures}} חתימות ו-{{fields}} שדות בעמוד זה ({{count}} במסמך)",
       "oneSignatureRemainingOnPage": "נותרה חתימה אחת בעמוד {{page}} — חתום כדי לסיים",
       "oneFieldRemainingOnPage": "נותר שדה אחד בעמוד {{page}} — מלא כדי לסיים",
       "nextSignatureOnPage": "נותרו {{count}} חתימות — הבאה בעמוד {{page}}",
