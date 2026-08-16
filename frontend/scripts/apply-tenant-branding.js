@@ -8,11 +8,11 @@ const path = require("path");
 
 const tenant = process.argv[2];
 if (!tenant) {
-  console.error("Usage: node scripts/apply-tenant-branding.js <melamedlaw|morlevy|ashrafessa|melamedia>");
+  console.error("Usage: node scripts/apply-tenant-branding.js <melamedlaw|morlevy|ashrafessa|melamedia|idm>");
   process.exit(1);
 }
 
-const ALLOWED = new Set(["melamedlaw", "morlevy", "ashrafessa", "melamedia"]);
+const ALLOWED = new Set(["melamedlaw", "morlevy", "ashrafessa", "melamedia", "idm"]);
 if (!ALLOWED.has(tenant)) {
   console.error(`[apply-tenant-branding] unknown tenant: ${tenant}`);
   process.exit(1);

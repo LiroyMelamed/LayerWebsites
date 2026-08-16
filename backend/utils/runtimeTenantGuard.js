@@ -5,6 +5,7 @@ const BRANCH_TENANT_HINTS = {
     MelamedLaw: ['melamed', 'ליאב מלמד'],
     MorLevi: ['mor levy', 'מור לוי'],
     AshrafEssa: ['ashraf', 'ashrafessa', 'עיסא', 'אשראף', 'עאשרף'],
+    Idm: ['idm', 'איתמר', 'דוד משה'],
 };
 
 function detectCurrentBranch() {
