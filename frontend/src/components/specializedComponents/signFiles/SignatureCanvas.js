@@ -102,6 +102,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const [clientStampPreview, setClientStampPreview] = useState(null);
     const [stampSignPhase, setStampSignPhase] = useState(false); // true = drawing on top of stamp
     const [stampNormalizedDataUrl, setStampNormalizedDataUrl] = useState(null);
+    const [viewedPage, setViewedPage] = useState(1);
     const [showSpotPopup, setShowSpotPopup] = useState(false);
     const [selectedSavedItem, setSelectedSavedItem] = useState(null); // { type: 'signature'|'stamp', url, index }
     const [canvasClearSpinning, setCanvasClearSpinning] = useState(false);
@@ -2076,19 +2077,50 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const remainingHintPage = remainingCount > 0
         ? Number(getSpotPage(unsignedRequiredSpots[0]) || 1)
         : null;
+    const remainingSigsOnViewedPage = unsignedRequiredSpots.filter(
+        (s) => isSignatureLike(getSpotType(s)) && Number(getSpotPage(s)) === Number(viewedPage),
+    ).length;
+    const remainingFieldsOnViewedPage = unsignedRequiredSpots.filter(
+        (s) => !isSignatureLike(getSpotType(s)) && Number(getSpotPage(s)) === Number(viewedPage),
+    ).length;
     const remainingHintText = remainingCount > 0
         ? (remainingSignatureSpots > 0 && remainingFieldSpots > 0
-            ? t("signing.canvas.remainingSignaturesAndFields", {
-                signatures: remainingSignatureSpots,
-                fields: remainingFieldSpots,
-            })
+            ? (remainingSigsOnViewedPage + remainingFieldsOnViewedPage > 0
+                && remainingCount > remainingSigsOnViewedPage + remainingFieldsOnViewedPage
+                ? t("signing.canvas.remainingSignaturesAndFieldsOnPageWithTotal", {
+                    signatures: remainingSigsOnViewedPage,
+                    fields: remainingFieldsOnViewedPage,
+                    count: remainingCount,
+                    page: viewedPage,
+                })
+                : t("signing.canvas.remainingSignaturesAndFields", {
+                    signatures: remainingSignatureSpots,
+                    fields: remainingFieldSpots,
+                }))
             : remainingSignatureSpots > 0
                 ? (remainingSignatureSpots === 1 && remainingHintPage
                     ? t("signing.canvas.oneSignatureRemainingOnPage", { page: remainingHintPage })
-                    : t("signing.canvas.remainingSignatures", { count: remainingSignatureSpots }))
+                    : remainingSigsOnViewedPage > 0 && remainingSignatureSpots > remainingSigsOnViewedPage
+                        ? t("signing.canvas.remainingSignaturesOnPageWithTotal", {
+                            pageCount: remainingSigsOnViewedPage,
+                            page: viewedPage,
+                            count: remainingSignatureSpots,
+                        })
+                        : remainingSigsOnViewedPage === 0 && remainingHintPage
+                            ? t("signing.canvas.nextSignatureOnPage", {
+                                count: remainingSignatureSpots,
+                                page: remainingHintPage,
+                            })
+                            : t("signing.canvas.remainingSignatures", { count: remainingSignatureSpots }))
                 : (remainingFieldSpots === 1 && remainingHintPage
                     ? t("signing.canvas.oneFieldRemainingOnPage", { page: remainingHintPage })
-                    : t("signing.canvas.remainingFields", { count: remainingFieldSpots })))
+                    : remainingFieldsOnViewedPage > 0 && remainingFieldSpots > remainingFieldsOnViewedPage
+                        ? t("signing.canvas.remainingFieldsOnPageWithTotal", {
+                            pageCount: remainingFieldsOnViewedPage,
+                            page: viewedPage,
+                            count: remainingFieldSpots,
+                        })
+                        : t("signing.canvas.remainingFields", { count: remainingFieldSpots })))
         : (allSpotsSignedByUser && spots.length > 0
             ? t("signing.canvas.allRequiredCompleted")
             : "");
@@ -2815,6 +2847,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                         onAddSpotForPage={undefined}
                                         showAddSpotButtons={false}
                                         selectedSpotId={currentSpot?.SignatureSpotId || currentSpot?.signatureSpotId || null}
+                                        onPageChange={setViewedPage}
                                         onDocumentReady={() => setPdfReady(true)}
                                         suppressLoadingUI
                                     />
@@ -2885,6 +2918,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                     onAddSpotForPage={undefined}
                                     showAddSpotButtons={false}
                                     selectedSpotId={currentSpot?.SignatureSpotId || currentSpot?.signatureSpotId || null}
+                                    onPageChange={setViewedPage}
                                 />
                             ) : (
                                 <SimpleContainer className="lw-signing-pdfLoading">
