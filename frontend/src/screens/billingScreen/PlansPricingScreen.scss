@@ -1,5 +1,11 @@
 @use '../../styles/variables' as v;
 
+.lw-plansPricingScreen__scroll {
+    box-sizing: border-box;
+    padding: v.$space-4;
+    overflow-x: hidden;
+}
+
 .lw-plansPricingScreen__saveButton {
     margin-top: v.$space-3;
     align-self: flex-end;
@@ -48,6 +54,7 @@
 .lw-plansPricingScreen__card {
     flex-direction: column;
     justify-content: flex-start;
+    margin-inline: 0;
 }
 
 .lw-plansPricingScreen__card--current {
