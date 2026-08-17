@@ -52,8 +52,8 @@ function formatDateHe(value) {
 function buildSms({ displayName, total, complimentaryUntil }) {
     const date = formatDateHe(complimentaryUntil);
     const dateLine = date
-        ? `מחיר: ₪${formatIls(total)} לחודש + מע״מ (חיוב מלא מ-${date})`
-        : `מחיר: ₪${formatIls(total)} לחודש + מע״מ`;
+        ? `מחיר: ₪${formatIls(total)} לחודש (חיוב מלא מ-${date})`
+        : `מחיר: ₪${formatIls(total)} לחודש`;
     return [
         'שלום, עדכנו את חבילת המשרד לפי השימוש בפועל.',
         `חבילה: ${displayName}`,
