@@ -93,6 +93,12 @@ function addCalendarMonth(from = new Date()) {
     return d;
 }
 
+function addCalendarYear(from = new Date()) {
+    const d = new Date(from.getTime());
+    d.setUTCFullYear(d.getUTCFullYear() + 1);
+    return d;
+}
+
 function getPublicApiBaseUrl() {
     const explicit = String(process.env.PUBLIC_API_BASE_URL || '').trim().replace(/\/+$/, '');
     if (explicit) return explicit;
@@ -126,6 +132,7 @@ module.exports = {
     isDateInFuture,
     computeFlags,
     addCalendarMonth,
+    addCalendarYear,
     getPublicApiBaseUrl,
     getFrontendBaseUrl,
     getPayUrl,
