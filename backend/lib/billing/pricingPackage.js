@@ -5,25 +5,32 @@
 
 const PRICING = {
     currency: 'ILS',
-    system: { id: 'system', label: 'מערכת', amount: 249 },
+    system: { id: 'system', label: 'מערכת', amount: 349 },
     platforms: [
         { id: 'none', label: 'ללא', amount: 0 },
-        { id: 'site', label: 'אתר', amount: 149 },
-        { id: 'app', label: 'אפליקציה', amount: 199 },
-        { id: 'site_app', label: 'אתר + אפליקציה', amount: 299 },
+        { id: 'site', label: 'אתר', amount: 179 },
+        { id: 'app', label: 'אפליקציה', amount: 229 },
+        { id: 'site_app', label: 'אתר + אפליקציה', amount: 349 },
     ],
     resources: [
-        { id: 'basic', label: 'בסיסי', amount: 0, storageMb: 250, usersQuota: 2, planKey: 'BASIC' },
-        { id: 'pro', label: 'פרו', amount: 149, storageMb: 1024, usersQuota: 5, planKey: 'PRO' },
-        { id: 'enterprise', label: 'ארגוני', amount: 399, storageMb: null, usersQuota: null, planKey: 'ENTERPRISE' },
+        { id: 'basic', label: 'בסיסי', amount: 99, storageMb: 250, usersQuota: 2, planKey: 'BASIC' },
+        { id: 'pro', label: 'פרו', amount: 249, storageMb: 1024, usersQuota: 5, planKey: 'PRO' },
+        { id: 'enterprise', label: 'ארגוני', amount: 699, storageMb: null, usersQuota: null, planKey: 'ENTERPRISE' },
     ],
     signing: [
         { id: 'none', label: 'ללא חתימות', amount: 0, includedSignatures: 0 },
-        { id: '500', label: '500 חתימות', amount: 129, includedSignatures: 500 },
-        { id: '1500', label: '1500 חתימות', amount: 299, includedSignatures: 1500 },
-        { id: '5000', label: '5000 חתימות', amount: 599, includedSignatures: 5000 },
-        { id: 'unlimited', label: 'חתימות ללא הגבלה', amount: 999, includedSignatures: null },
+        { id: '500', label: '500 חתימות', amount: 199, includedSignatures: 500 },
+        { id: '1500', label: '1500 חתימות', amount: 399, includedSignatures: 1500 },
+        { id: '5000', label: '5000 חתימות', amount: 799, includedSignatures: 5000 },
+        { id: 'unlimited', label: 'חתימות ללא הגבלה', amount: 1299, includedSignatures: null },
     ],
+};
+
+/** SMS monthly caps by resource pack. Enterprise is capped (not unlimited). */
+const RESOURCE_SMS_MONTHLY_QUOTA = {
+    basic: 200,
+    pro: 2000,
+    enterprise: 5000,
 };
 
 const DEFAULT_SELECTION = {
@@ -75,6 +82,9 @@ function quotasForPackage({ resourceId, signingId } = {}) {
         documentsMonthlyQuota: signing.includedSignatures,
         storageMbQuota: storageMb,
         usersQuota: resource.usersQuota,
+        otpSmsMonthlyQuota: Object.prototype.hasOwnProperty.call(RESOURCE_SMS_MONTHLY_QUOTA, resource.id)
+            ? RESOURCE_SMS_MONTHLY_QUOTA[resource.id]
+            : null,
         storageBytesQuota:
             storageMb == null ? null : Number(storageMb) * 1024 * 1024,
     };
@@ -94,13 +104,6 @@ function quotaExceeded(used, quota) {
     const u = Number(used || 0);
     return u > q;
 }
-
-/** SMS monthly caps follow subscription_plans for the resource plan_key. */
-const RESOURCE_SMS_MONTHLY_QUOTA = {
-    basic: 200,
-    pro: 2000,
-    enterprise: null,
-};
 
 const SIGNING_FLOOR_ID = '500';
 
@@ -179,6 +182,7 @@ function evaluatePackageChange({ current, next, usage } = {}) {
     const docsUsed = Number(usage?.documents?.createdThisMonth || 0);
     const seatsUsed = Number(usage?.seats?.used || 0);
     const storageBytes = Number(usage?.storage?.bytesTotal || 0);
+    const smsUsed = Number(usage?.sms?.sentThisMonth || 0);
 
     if (quotaExceeded(docsUsed, nextQuotas.documentsMonthlyQuota)) {
         blocks.push({
@@ -197,6 +201,12 @@ function evaluatePackageChange({ current, next, usage } = {}) {
         blocks.push({
             field: 'resourceId',
             message: `לא ניתן לרדת בחבילת המשאבים: בשימוש ${usedMb} MB, והחבילה כוללת ${nextQuotas.storageMbQuota} MB.`,
+        });
+    }
+    if (quotaExceeded(smsUsed, nextQuotas.otpSmsMonthlyQuota)) {
+        blocks.push({
+            field: 'resourceId',
+            message: `לא ניתן לרדת בחבילת המשאבים: נשלחו ${smsUsed} SMS החודש, והחבילה כוללת ${nextQuotas.otpSmsMonthlyQuota}.`,
         });
     }
 
