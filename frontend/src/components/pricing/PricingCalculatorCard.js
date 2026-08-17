@@ -119,13 +119,15 @@ export default function PricingCalculatorCard({
     const [platformId, setPlatformId] = useState(value?.platformId || defaults.platformId);
     const [resourceId, setResourceId] = useState(value?.resourceId || defaults.resourceId);
     const [signingId, setSigningId] = useState(value?.signingId || defaults.signingId);
+    const [billingInterval, setBillingInterval] = useState(value?.billingInterval || defaults.billingInterval || "monthly");
 
     useEffect(() => {
         if (!value) return;
         if (value.platformId) setPlatformId(value.platformId);
         if (value.resourceId) setResourceId(value.resourceId);
         if (value.signingId) setSigningId(value.signingId);
-    }, [value?.platformId, value?.resourceId, value?.signingId]);
+        if (value.billingInterval) setBillingInterval(value.billingInterval);
+    }, [value?.platformId, value?.resourceId, value?.signingId, value?.billingInterval]);
 
     const emit = (next) => {
         onChange?.(next);
@@ -170,7 +172,7 @@ export default function PricingCalculatorCard({
                     options={PRICING_CONFIG.platforms.filter((p) => p.id !== "none")}
                     onChange={(id) => {
                         setPlatformId(id);
-                        emit({ platformId: id, resourceId, signingId });
+                        emit({ platformId: id, resourceId, signingId, billingInterval });
                     }}
                     sectionKey="platforms"
                     disabledIds={disabledIds?.platformIds || []}
@@ -181,7 +183,7 @@ export default function PricingCalculatorCard({
                     options={PRICING_CONFIG.resources}
                     onChange={(id) => {
                         setResourceId(id);
-                        emit({ platformId, resourceId: id, signingId });
+                        emit({ platformId, resourceId: id, signingId, billingInterval });
                     }}
                     sectionKey="resources"
                     disabledIds={disabledIds?.resourceIds || []}
@@ -192,24 +194,46 @@ export default function PricingCalculatorCard({
                     options={PRICING_CONFIG.signing.filter((s) => ["none", "500", "1500", "5000", "unlimited"].includes(String(s.id)))}
                     onChange={(id) => {
                         setSigningId(id);
-                        emit({ platformId, resourceId, signingId: id });
+                        emit({ platformId, resourceId, signingId: id, billingInterval });
                     }}
                     sectionKey="signing"
                     disabledIds={disabledIds?.signingIds || []}
+                />
+                <OptionGroup
+                    label="תשלום"
+                    value={billingInterval}
+                    options={[
+                        { id: "monthly", label: "חודשי" },
+                        { id: "yearly", label: "שנתי · 10% הנחה" },
+                    ]}
+                    onChange={(id) => {
+                        setBillingInterval(id);
+                        emit({ platformId, resourceId, signingId, billingInterval: id });
+                    }}
+                    sectionKey="interval"
                 />
             </div>
 
             <Separator className={`${dividerClassName} lw-pricingCalculatorCard__divider`} />
 
             <SimpleCard className="lw-pricingCalculatorCard__summaryCard">
-                <TextBold24>סה״כ לחודש + מע״מ</TextBold24>
+                <TextBold24>{billingInterval === "yearly" ? "סה״כ לשנה + מע״מ" : "סה״כ לחודש + מע״מ"}</TextBold24>
 
                 <SimpleContainer className="lw-pricingCalculatorCard__totalRow">
                     <TextBold14 className="lw-pricingCalculatorCard__totalLabel">סה״כ + מע״מ</TextBold14>
                     <TextBold32 className="lw-pricingCalculatorCard__totalAmount">
-                        {formatMoney(resolved.total)}
+                        {formatMoney(billingInterval === "yearly" ? resolved.yearlyTotal : resolved.total)}
                     </TextBold32>
                 </SimpleContainer>
+                {billingInterval === "yearly" ? (
+                    <Text14 className="lw-pricingCalculatorCard__yearlyHint">
+                        {`במקום ${formatMoney(resolved.total * 12)} · חסכון ${formatMoney(resolved.yearlySavings)} (10%)`}
+                    </Text14>
+                ) : (
+                    <Text14 className="lw-pricingCalculatorCard__yearlyHint">
+                        {`או ${formatMoney(resolved.yearlyTotal)} לשנה · 10% הנחה`}
+                    </Text14>
+                )}
 
                 <SimpleContainer className="lw-pricingCalculatorCard__breakdown" role="table" aria-label="פירוט מחיר">
                     {resolved.breakdown.map((it, index) => (

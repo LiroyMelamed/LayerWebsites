@@ -738,6 +738,13 @@
     "planKey": "מפתח תכנית:",
     "price": "מחיר:",
     "priceMonthly": "{{currency}}{{amount}} / חודש + מע״מ",
+    "priceYearly": "{{currency}}{{amount}} / שנה + מע״מ · 10% הנחה",
+    "priceYearlyLabel": "מחיר שנתי:",
+    "billingInterval": "מחזור חיוב:",
+    "intervalMonthly": "חודשי",
+    "intervalYearly": "שנתי · 10% הנחה",
+    "intervalSaved": "מחזור החיוב עודכן",
+    "payYearNow": "שלם שנה מראש · {{amount}} ₪ (10% הנחה)",
     "exclVat": "+ מע״מ",
     "commercialPricingHint": "איך עובד התמחור (מסחרי):\n1) Core (חובה): {{currency}}{{coreAmount}} / חודש\n2) ערוצי לקוח (חובה לבחור לפחות אחד): Portal / App / Bundle\n3) חבילת משאבים (חובה): Basic / Pro / Enterprise — קובעת מגבלות שימוש (אחסון, משתמשים, שמירה)\n4) חתימות + ראיות (תוסף אופציונלי): בוחרים חבילה חודשית (Starter / Pro / Office / Unlimited). מחיר-למסמך שמופיע הוא להסבר בלבד (מחיר החבילה ÷ הכמות הכלולה).",
     "scope": "היקף:",
@@ -827,6 +834,7 @@
     "paymentKind": {
       "setup": "שמירת כרטיס",
       "renewal": "חיוב חודשי",
+      "annual": "חיוב שנתי",
       "upgrade": "שדרוג",
       "retry": "ניסיון חוזר",
       "upcoming": "חיוב עתידי"
@@ -841,7 +849,7 @@
   },
   "planPricing": {
     "title": "חבילות ותמחור",
-    "subtitle": "כל מה שמשלמים עליו — מוסבר בצורה ברורה.",
+    "subtitle": "כל מה שמשלמים עליו — מוסבר בצורה ברורה. תשלום שנתי חוסך 10%.",
     "saveAndPay": "שמירה ותשלום",
     "saveFailed": "לא ניתן לשמור את החבילה",
     "savedOk": "החבילה נשמרה",
