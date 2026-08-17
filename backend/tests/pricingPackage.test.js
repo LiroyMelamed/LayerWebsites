@@ -8,6 +8,9 @@ const {
     quotasForPackage,
     recommendCheapestPackage,
     RESOURCE_SMS_MONTHLY_QUOTA,
+    yearlyTotalIls,
+    yearlySavingsIls,
+    normalizeBillingInterval,
 } = require('../lib/billing/pricingPackage');
 
 test('evaluatePackageChange blocks cheaper signing when documents exceed pack', () => {
@@ -126,4 +129,27 @@ test('recommendCheapestPackage: SMS above pro cap 2000 needs enterprise', () => 
     });
     assert.equal(rec.recommended.resourceId, 'enterprise');
     assert.equal(rec.recommended.total, 349 + 349 + 699 + 199);
+});
+
+test('yearly billing is 10% off 12 months, rounded', () => {
+    assert.equal(normalizeBillingInterval('yearly'), 'yearly');
+    assert.equal(normalizeBillingInterval('YEARLY'), 'yearly');
+    assert.equal(normalizeBillingInterval('monthly'), 'monthly');
+    assert.equal(normalizeBillingInterval(null), 'monthly');
+
+    assert.equal(yearlyTotalIls(1596), 17237);
+    assert.equal(yearlySavingsIls(1596), 1915);
+    assert.equal(yearlyTotalIls(1146), 12377);
+    assert.equal(yearlySavingsIls(1146), 1375);
+    assert.equal(yearlyTotalIls(996), 10757);
+    assert.equal(yearlySavingsIls(996), 1195);
+
+    const enterprise = resolvePricingLineItems({
+        platformId: 'site_app',
+        resourceId: 'enterprise',
+        signingId: '500',
+    });
+    assert.equal(enterprise.total, 1596);
+    assert.equal(enterprise.yearlyTotal, 17237);
+    assert.equal(enterprise.yearlySavings, 1915);
 });

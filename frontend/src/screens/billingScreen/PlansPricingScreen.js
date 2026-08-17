@@ -52,14 +52,15 @@ export default function PlansPricingScreen() {
 
     useEffect(() => {
         const pkg = plan?.package;
-        if (pkg?.platformId || pkg?.resourceId || pkg?.signingId) {
+        if (pkg?.platformId || pkg?.resourceId || pkg?.signingId || plan?.billing?.billingInterval) {
             setSelection({
-                platformId: pkg.platformId || defaults.platformId,
-                resourceId: pkg.resourceId || defaults.resourceId,
-                signingId: pkg.signingId || defaults.signingId,
+                platformId: pkg?.platformId || defaults.platformId,
+                resourceId: pkg?.resourceId || defaults.resourceId,
+                signingId: pkg?.signingId || defaults.signingId,
+                billingInterval: plan?.billing?.billingInterval || defaults.billingInterval,
             });
         }
-    }, [plan, defaults.platformId, defaults.resourceId, defaults.signingId]);
+    }, [plan, defaults.platformId, defaults.resourceId, defaults.signingId, defaults.billingInterval]);
 
     const disabledIds = plan?.disabledOptions || { platformIds: [], resourceIds: [], signingIds: [] };
 

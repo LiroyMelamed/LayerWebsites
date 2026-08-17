@@ -143,6 +143,8 @@ export default function PlanUsageScreen() {
                     amountIls: Number(billing.upcomingPayment.amountIls || priceIls || 0),
                 }
                 : null,
+            billingInterval: billing.billingInterval === "yearly" ? "yearly" : "monthly",
+            priceYearlyIls: billing.priceYearlyIls ?? null,
 
             monthStartUtc,
             meters: {
@@ -170,45 +172,79 @@ export default function PlanUsageScreen() {
         setSearchParams(next, { replace: true });
     }, [searchParams, refreshLock, reloadPlan, setSearchParams, t]);
 
-    const startCheckout = async () => {
+    const chargeSaved = async (kind = "retry") => {
         setPayBusy(true);
         try {
-            const res = await billingApi.createCheckout({ kind: 'setup' });
-            if (res?.success && res.data?.redirectUrl) {
-                setCheckoutUrl(res.data.redirectUrl);
+            const res = await billingApi.chargeNow({ kind });
+            if (res?.data?.skipped) {
+                showAppToast({ type: "info", text: t("planUsage.chargeSkipped") });
                 return;
             }
-            toastFromApiError(res, t('planUsage.checkoutFailed'));
+            if (!res?.success || res?.data?.ok === false) {
+                toastFromApiError(res, t("planUsage.chargeFailed"));
+                setPayNotice({ type: "error", text: t("planUsage.chargeFailed") });
+                return;
+            }
+            showAppToast({ type: "success", text: t("planUsage.chargeOk") });
+            setPayNotice({ type: "success", text: t("planUsage.chargeOk") });
+            billingApi.invalidateCaches();
+            void reloadPlan([]);
+            void refreshLock();
         } catch (e) {
-            toastFromApiError(e, t('planUsage.checkoutFailed'));
+            toastFromApiError(e, t("planUsage.chargeFailed"));
         } finally {
             setPayBusy(false);
         }
     };
 
-    const chargeSaved = async () => {
+    const startCheckout = async (kind = "setup") => {
         setPayBusy(true);
         try {
-            const res = await billingApi.chargeNow({ kind: 'retry' });
-            if (res?.data?.skipped) {
-                showAppToast({ type: 'info', text: t('planUsage.chargeSkipped') });
+            const res = await billingApi.createCheckout({ kind });
+            if (res?.success && res.data?.redirectUrl) {
+                setCheckoutUrl(res.data.redirectUrl);
                 return;
             }
-            if (!res?.success) {
-                toastFromApiError(res, t('planUsage.chargeFailed'));
-                setPayNotice({ type: 'error', text: t('planUsage.chargeFailed') });
-                return;
-            }
-            showAppToast({ type: 'success', text: t('planUsage.chargeOk') });
-            setPayNotice({ type: 'success', text: t('planUsage.chargeOk') });
-            billingApi.invalidateCaches();
-            void reloadPlan([]);
-            void refreshLock();
+            toastFromApiError(res, t("planUsage.checkoutFailed"));
         } catch (e) {
-            toastFromApiError(e, t('planUsage.chargeFailed'));
+            toastFromApiError(e, t("planUsage.checkoutFailed"));
         } finally {
             setPayBusy(false);
         }
+    };
+
+    const saveBillingInterval = async (nextInterval) => {
+        const pkg = normalized.pkg || {};
+        if (!pkg.platformId || !pkg.resourceId || !pkg.signingId) return;
+        if (nextInterval === normalized.billingInterval) return;
+        setPayBusy(true);
+        try {
+            const res = await billingApi.savePackage({
+                platformId: pkg.platformId,
+                resourceId: pkg.resourceId,
+                signingId: pkg.signingId,
+                billingInterval: nextInterval,
+            });
+            if (!res?.success) {
+                toastFromApiError(res, t("planUsage.checkoutFailed"));
+                return;
+            }
+            showAppToast({ type: "success", text: t("planUsage.intervalSaved") });
+            billingApi.invalidateCaches();
+            void reloadPlan([]);
+        } catch (e) {
+            toastFromApiError(e, t("planUsage.checkoutFailed"));
+        } finally {
+            setPayBusy(false);
+        }
+    };
+
+    const payYearNow = async () => {
+        if (normalized.billing?.card) {
+            await chargeSaved("annual");
+            return;
+        }
+        await startCheckout("annual");
     };
 
     const renderRow = (label, value) => (
@@ -250,11 +286,18 @@ export default function PlanUsageScreen() {
     const priceText = monthlyIls
         ? t('planUsage.priceMonthly', { amount: monthlyIls.replace(' ₪', ''), currency: '₪' })
         : t('planUsage.quotaNotAvailable');
+    const yearlyAmount = Number(normalized.priceYearlyIls || normalized.billing?.priceYearlyIls || 0);
+    const yearlyIls = yearlyAmount > 0 ? formatIls(yearlyAmount) : null;
+    const yearlyText = yearlyIls
+        ? t('planUsage.priceYearly', { amount: yearlyIls.replace(' ₪', ''), currency: '₪' })
+        : null;
+    const billingInterval = normalized.billingInterval || 'monthly';
     const statusText = normalized.billing?.status
         ? t(`planUsage.statusValues.${normalized.billing.status}`, { defaultValue: String(normalized.billing.status) })
         : "-";
     const nextChargeAmount = formatIls(
         normalized.billing?.nextChargeIls
+        || (billingInterval === 'yearly' ? yearlyAmount : null)
         || (normalized.billing?.stillComplimentary ? normalized.priceIls : null)
         || normalized.priceIls
     );
@@ -299,6 +342,13 @@ export default function PlanUsageScreen() {
                             {renderRow(t('planUsage.status'), statusText)}
                             {renderRow(t('planUsage.planName'), normalized.planName)}
                             {renderRow(t('planUsage.price'), priceText)}
+                            {yearlyText && renderRow(t('planUsage.priceYearlyLabel'), yearlyText)}
+                            {renderRow(
+                                t('planUsage.billingInterval'),
+                                billingInterval === 'yearly'
+                                    ? t('planUsage.intervalYearly')
+                                    : t('planUsage.intervalMonthly')
+                            )}
                             {normalized.billing?.stillComplimentary && normalized.billing?.complimentaryUntil && (
                                 renderRow(
                                     t('planUsage.complimentaryUntil'),
@@ -320,16 +370,42 @@ export default function PlanUsageScreen() {
                                 renderRow(line.label, `${line.amount} ₪`)
                             ))}
 
+                            <SimpleContainer className="lw-planUsageScreen__intervalRow" role="group">
+                                <SimpleButton
+                                    className={`lw-planUsageScreen__intervalButton${billingInterval === 'monthly' ? ' is-selected' : ''}`}
+                                    onPress={() => saveBillingInterval('monthly')}
+                                    disabled={payBusy}
+                                >
+                                    <Text14>{t('planUsage.intervalMonthly')}</Text14>
+                                </SimpleButton>
+                                <SimpleButton
+                                    className={`lw-planUsageScreen__intervalButton${billingInterval === 'yearly' ? ' is-selected' : ''}`}
+                                    onPress={() => saveBillingInterval('yearly')}
+                                    disabled={payBusy}
+                                >
+                                    <Text14>{t('planUsage.intervalYearly')}</Text14>
+                                </SimpleButton>
+                            </SimpleContainer>
+
                             <SimpleButton
                                 className="lw-planUsageScreen__upgradeButton"
                                 onPress={() => navigate(AdminStackName + PlansPricingScreenName)}
                             >
                                 <Text14>{t('planUsage.upgradeButton')}</Text14>
                             </SimpleButton>
+                            {normalized.billing?.billingEnabled !== false && yearlyAmount > 0 && (
+                                <SimpleButton
+                                    className="lw-planUsageScreen__upgradeButton"
+                                    onPress={payYearNow}
+                                    disabled={payBusy}
+                                >
+                                    <Text14>{t('planUsage.payYearNow', { amount: yearlyAmount })}</Text14>
+                                </SimpleButton>
+                            )}
                             {!normalized.billing?.stillComplimentary && (
                                 <SimpleButton
                                     className="lw-planUsageScreen__upgradeButton"
-                                    onPress={normalized.billing?.card ? chargeSaved : startCheckout}
+                                    onPress={() => (normalized.billing?.card ? chargeSaved() : startCheckout())}
                                     disabled={payBusy}
                                 >
                                     <Text14>
@@ -342,7 +418,7 @@ export default function PlanUsageScreen() {
                             {!normalized.billing?.card && normalized.billing?.stillComplimentary && (
                                 <SimpleButton
                                     className="lw-planUsageScreen__upgradeButton"
-                                    onPress={startCheckout}
+                                    onPress={() => startCheckout()}
                                     disabled={payBusy}
                                 >
                                     <Text14>{t('planUsage.addCard')}</Text14>
@@ -351,7 +427,7 @@ export default function PlanUsageScreen() {
                             {normalized.billing?.card && (
                                 <SimpleButton
                                     className="lw-planUsageScreen__upgradeButton"
-                                    onPress={startCheckout}
+                                    onPress={() => startCheckout()}
                                     disabled={payBusy}
                                 >
                                     <Text14>{t('planUsage.replaceCard')}</Text14>
