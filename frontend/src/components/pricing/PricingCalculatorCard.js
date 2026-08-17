@@ -217,10 +217,10 @@ export default function PricingCalculatorCard({
             <Separator className={`${dividerClassName} lw-pricingCalculatorCard__divider`} />
 
             <SimpleCard className="lw-pricingCalculatorCard__summaryCard">
-                <TextBold24>{billingInterval === "yearly" ? "סה״כ לשנה + מע״מ" : "סה״כ לחודש + מע״מ"}</TextBold24>
+                <TextBold24>{billingInterval === "yearly" ? "סה״כ לשנה" : "סה״כ לחודש"}</TextBold24>
 
                 <SimpleContainer className="lw-pricingCalculatorCard__totalRow">
-                    <TextBold14 className="lw-pricingCalculatorCard__totalLabel">סה״כ + מע״מ</TextBold14>
+                    <TextBold14 className="lw-pricingCalculatorCard__totalLabel">סה״כ</TextBold14>
                     <TextBold32 className="lw-pricingCalculatorCard__totalAmount">
                         {formatMoney(billingInterval === "yearly" ? resolved.yearlyTotal : resolved.total)}
                     </TextBold32>
