@@ -5,24 +5,24 @@
 
 const PRICING = {
     currency: 'ILS',
-    system: { id: 'system', label: 'מערכת', amount: 349 },
+    system: { id: 'system', label: 'מערכת', amount: 296 },
     platforms: [
         { id: 'none', label: 'ללא', amount: 0 },
-        { id: 'site', label: 'אתר', amount: 179 },
-        { id: 'app', label: 'אפליקציה', amount: 229 },
-        { id: 'site_app', label: 'אתר + אפליקציה', amount: 349 },
+        { id: 'site', label: 'אתר', amount: 152 },
+        { id: 'app', label: 'אפליקציה', amount: 194 },
+        { id: 'site_app', label: 'אתר + אפליקציה', amount: 296 },
     ],
     resources: [
-        { id: 'basic', label: 'בסיסי', amount: 99, storageMb: 250, usersQuota: 2, planKey: 'BASIC' },
-        { id: 'pro', label: 'פרו', amount: 249, storageMb: 1024, usersQuota: 5, planKey: 'PRO' },
-        { id: 'enterprise', label: 'ארגוני', amount: 699, storageMb: null, usersQuota: null, planKey: 'ENTERPRISE' },
+        { id: 'basic', label: 'בסיסי', amount: 84, storageMb: 250, usersQuota: 2, planKey: 'BASIC' },
+        { id: 'pro', label: 'פרו', amount: 211, storageMb: 1024, usersQuota: 5, planKey: 'PRO' },
+        { id: 'enterprise', label: 'ארגוני', amount: 592, storageMb: null, usersQuota: null, planKey: 'ENTERPRISE' },
     ],
     signing: [
         { id: 'none', label: 'ללא חתימות', amount: 0, includedSignatures: 0 },
-        { id: '500', label: '500 חתימות', amount: 199, includedSignatures: 500 },
-        { id: '1500', label: '1500 חתימות', amount: 399, includedSignatures: 1500 },
-        { id: '5000', label: '5000 חתימות', amount: 799, includedSignatures: 5000 },
-        { id: 'unlimited', label: 'חתימות ללא הגבלה', amount: 1299, includedSignatures: null },
+        { id: '500', label: '500 חתימות', amount: 169, includedSignatures: 500 },
+        { id: '1500', label: '1500 חתימות', amount: 338, includedSignatures: 1500 },
+        { id: '5000', label: '5000 חתימות', amount: 677, includedSignatures: 5000 },
+        { id: 'unlimited', label: 'חתימות ללא הגבלה', amount: 1101, includedSignatures: null },
     ],
 };
 
