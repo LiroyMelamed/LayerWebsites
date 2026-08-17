@@ -21,6 +21,7 @@ import TakbullCheckoutDialog from "../../components/billing/TakbullCheckoutDialo
 
 import billingApi from "../../api/billingApi";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
+import { showAppToast, toastFromApiError } from "../../components/ui/showAppToast";
 
 import { images } from "../../assets/images/images";
 import { AdminStackName } from "../../navigation/AdminStack";
@@ -79,19 +80,31 @@ export default function PlansPricingScreen() {
         try {
             const saved = await billingApi.savePackage(selection);
             if (!saved?.success) {
-                setMessage(saved?.data?.message || saved?.message || t('planPricing.saveFailed'));
+                const text = saved?.data?.message || saved?.message || t('planPricing.saveFailed');
+                setMessage(text);
+                toastFromApiError(saved, text);
                 return;
             }
             if (saved.data?.checkout?.redirectUrl) {
                 setCheckoutUrl(saved.data.checkout.redirectUrl);
                 return;
             }
-            const checkout = await billingApi.createCheckout({ kind: 'retry' });
+            if (saved.data?.snapshot?.card) {
+                setMessage(t('planPricing.savedOk'));
+                showAppToast({ type: 'success', text: t('planPricing.savedOk') });
+                return;
+            }
+            const checkout = await billingApi.createCheckout({ kind: 'setup' });
             if (checkout?.success && checkout.data?.redirectUrl) {
                 setCheckoutUrl(checkout.data.redirectUrl);
                 return;
             }
-            setMessage(checkout?.data?.message || t('planPricing.savedOk'));
+            const text = checkout?.data?.message || checkout?.message || t('planPricing.checkoutFailed');
+            setMessage(text);
+            toastFromApiError(checkout, text);
+        } catch (e) {
+            toastFromApiError(e, t('planPricing.saveFailed'));
+            setMessage(t('planPricing.saveFailed'));
         } finally {
             setBusy(false);
         }

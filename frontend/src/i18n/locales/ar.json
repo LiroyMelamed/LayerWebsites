@@ -569,6 +569,35 @@
     "addCard": "إضافة بطاقة / دفع",
     "chargeNow": "تحصيل البطاقة المحفوظة",
     "replaceCard": "استبدال البطاقة",
+    "status": "الحالة:",
+    "noCard": "لا توجد بطاقة محفوظة",
+    "checkoutFailed": "تعذر فتح نافذة الدفع",
+    "chargeFailed": "فشل التحصيل",
+    "chargeOk": "تم التحصيل",
+    "paymentsTitle": "المدفوعات",
+    "noPayments": "لا توجد مدفوعات بعد",
+    "paymentDate": "التاريخ:",
+    "paymentError": "سبب الفشل:",
+    "statusValues": {
+      "complimentary": "بدون دفع",
+      "active": "نشط",
+      "past_due": "فشل الدفع",
+      "suspended": "محظور"
+    },
+    "paymentKind": {
+      "setup": "حفظ البطاقة",
+      "renewal": "تحصيل شهري",
+      "upgrade": "ترقية",
+      "retry": "إعادة المحاولة",
+      "upcoming": "تحصيل قادم"
+    },
+    "paymentStatus": {
+      "pending": "قيد الانتظار",
+      "succeeded": "مدفوع",
+      "failed": "فشل",
+      "cancelled": "ملغى",
+      "scheduled": "مجدول"
+    },
     "systemPlansTitle": "حزم الموارد (إلزامي)",
     "systemPlansSubtitle": "حزمة الموارد تحدد سعة النظام (التخزين، المستخدمون، الاحتفاظ بالبيانات ومستوى الحمل). إلزامي اختيار حزمة واحدة.",
     "commercialPricingTitle": "التسعير التجاري (لكل مكتب)",
@@ -602,6 +631,7 @@
     "saveAndPay": "حفظ ودفع",
     "saveFailed": "تعذر حفظ الحزمة",
     "savedOk": "تم حفظ الحزمة",
+    "checkoutFailed": "تعذر فتح نافذة الدفع",
     "baseAndChannelsTitle": "الأساس + قنوات العميل",
     "baseAndChannelsSubtitle": "إلزامي: أساس النظام + قناة عميل واحدة على الأقل.",
     "systemPlansTitle": "حزم الموارد (إلزامي)",

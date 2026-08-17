@@ -23,6 +23,8 @@ function billingPayload(snap, extra = {}) {
             nextChargeIls: snap.nextChargeIls,
             card: snap.card,
             payUrl: snap.payUrl,
+            payments: snap.payments || [],
+            upcomingPayment: snap.upcomingPayment || null,
         },
         package: snap.package,
         ...extra,
@@ -53,18 +55,40 @@ exports.getCurrentPlan = async (req, res) => {
             return res.status(401).json({ message: 'נדרש להתחבר' });
         }
 
-        const [limits, snap, usage] = await Promise.all([
+        const settled = await Promise.allSettled([
             getLimitsForFirm(null),
             billing.getBillingSnapshot(),
             getUsageForFirm(null),
         ]);
+        const limits = settled[0].status === 'fulfilled' ? settled[0].value : null;
+        const snap = settled[1].status === 'fulfilled' ? settled[1].value : null;
+        const usage = settled[2].status === 'fulfilled' ? settled[2].value : null;
+        if (settled[0].status === 'rejected') {
+            console.error('getLimitsForFirm error:', settled[0].reason);
+        }
+        if (settled[1].status === 'rejected') {
+            console.error('getBillingSnapshot error:', settled[1].reason);
+        }
         if (!limits && !snap?.available) {
             return res.status(404).json({ message: 'לא נמצאה תוכנית' });
         }
 
-        const disabledOptions = await billing.getDisabledOptions(usage);
+        const pkg = snap?.package || limits?.package || null;
+        const disabledOptions = snap
+            ? await billing.getDisabledOptions(usage)
+            : { platformIds: [], resourceIds: [], signingIds: [] };
+
         return res.status(200).json({
-            ...(limits || {}),
+            scope: 'firm',
+            planKey: limits?.planKey || pkg?.resource?.planKey || null,
+            name: limits?.name || pkg?.displayName || null,
+            priceMonthlyCents: limits?.priceMonthlyCents
+                ?? (pkg ? Math.round(Number(pkg.total || 0) * 100) : null),
+            priceCurrency: limits?.priceCurrency || pkg?.currency || 'ILS',
+            effectiveDocumentsRetentionDaysCore: limits?.effectiveDocumentsRetentionDaysCore ?? null,
+            effectiveDocumentsRetentionDaysPii: limits?.effectiveDocumentsRetentionDaysPii ?? null,
+            quotas: limits?.quotas || snap?.quotas || {},
+            featureFlags: limits?.featureFlags || {},
             enforcementMode: (snap?.stillComplimentary || snap?.billingEnabled === false)
                 ? 'warn'
                 : (snap?.billingEnabled ? 'block' : enforcementMode()),

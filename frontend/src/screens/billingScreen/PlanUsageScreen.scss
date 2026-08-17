@@ -37,3 +37,9 @@
     align-self: flex-end;
     padding: 0.625rem 0.875rem;
 }
+
+.lw-planUsageScreen__paymentRow {
+    flex-direction: column;
+    padding-block: 0.5rem;
+    border-block-end: 0.0625rem solid rgba(15, 23, 42, 0.08);
+}
