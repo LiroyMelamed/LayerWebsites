@@ -73,6 +73,20 @@ function isDateInFuture(date, now = new Date()) {
     return d.getTime() > now.getTime();
 }
 
+function computeFlags(row, now = new Date()) {
+    const billingEnabled = row?.billingEnabled !== false;
+    const complimentaryUntil = row?.complimentaryUntil || null;
+    const stillComplimentary = !billingEnabled || isDateInFuture(complimentaryUntil, now);
+    const graceUntil = row?.graceUntil ? new Date(row.graceUntil) : null;
+    const graceExpired = Boolean(
+        row?.status === 'past_due' && graceUntil && graceUntil.getTime() <= now.getTime()
+    );
+    const locked = Boolean(
+        billingEnabled && !stillComplimentary && (row?.status === 'suspended' || graceExpired)
+    );
+    return { billingEnabled, stillComplimentary, graceExpired, locked, complimentaryUntil };
+}
+
 function addCalendarMonth(from = new Date()) {
     const d = new Date(from.getTime());
     d.setUTCMonth(d.getUTCMonth() + 1);
@@ -110,6 +124,7 @@ module.exports = {
     defaultComplimentaryUntil,
     defaultBillingEnabled,
     isDateInFuture,
+    computeFlags,
     addCalendarMonth,
     getPublicApiBaseUrl,
     getFrontendBaseUrl,
