@@ -4,6 +4,7 @@
 export const PRICING_CONFIG = {
     currency: "₪",
     billingPeriodLabel: "לחודש + מע״מ",
+    yearlyDiscountRate: 0.10,
 
     // Contact numbers — loaded dynamically at runtime via firmSettings.
     // These static values are kept only as ultimate fallbacks.
@@ -148,7 +149,20 @@ export function getPricingSelectionDefaults() {
         platformId: PRICING_CONFIG.platforms[3]?.id || "site_app",
         resourceId: PRICING_CONFIG.resources[1]?.id || "pro",
         signingId: PRICING_CONFIG.signing[1]?.id || "500",
+        billingInterval: "monthly",
     };
+}
+
+export function yearlyTotalIls(monthlyAmount) {
+    const monthly = Number(monthlyAmount || 0);
+    if (!Number.isFinite(monthly) || monthly <= 0) return 0;
+    return Math.round(monthly * 12 * (1 - Number(PRICING_CONFIG.yearlyDiscountRate || 0)));
+}
+
+export function yearlySavingsIls(monthlyAmount) {
+    const monthly = Number(monthlyAmount || 0);
+    if (!Number.isFinite(monthly) || monthly <= 0) return 0;
+    return Math.round(monthly * 12) - yearlyTotalIls(monthly);
 }
 
 export function resolvePricingLineItems({ platformId, resourceId, signingId }) {
@@ -190,5 +204,7 @@ export function resolvePricingLineItems({ platformId, resourceId, signingId }) {
         signing,
         breakdown,
         total,
+        yearlyTotal: yearlyTotalIls(total),
+        yearlySavings: yearlySavingsIls(total),
     };
 }
