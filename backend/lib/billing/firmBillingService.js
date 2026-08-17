@@ -241,17 +241,16 @@ async function getBillingSnapshot() {
     });
     const quotas = quotasForPackage(pkg);
     const card = publicCard(await getActiveCard());
-    const chargeAmount = flags.stillComplimentary ? 0 : pkg.total;
     const payments = await listPaymentHistory();
     const upcomingPayment = row.renewsAt
         ? {
             id: 'upcoming',
             kind: 'upcoming',
             status: 'scheduled',
-            amountIls: chargeAmount,
+            amountIls: Number(pkg.total || 0),
             currency: 'ILS',
             purpose: flags.stillComplimentary
-                ? 'תחילת חיוב אחרי תקופת ההמתנה'
+                ? 'חיוב חודשי ראשון אחרי תקופת ההמתנה'
                 : 'חיוב חודשי הבא',
             createdAt: row.renewsAt,
             settledAt: null,
@@ -270,7 +269,7 @@ async function getBillingSnapshot() {
         payments,
         upcomingPayment,
         priceMonthlyIls: pkg.total,
-        nextChargeIls: chargeAmount,
+        nextChargeIls: Number(pkg.total || 0),
         payUrl: `${getFrontendBaseUrl()}/AdminStack/PlanUsage`,
     };
 }
@@ -422,6 +421,12 @@ async function settleSuccessfulPayment({ intent, tokenInfo, transactionId } = {}
             return getBillingSnapshot();
         }
         await recordEvent(intent.id, 'payment_succeeded', { transactionId: transactionId || null });
+        await pool.query(
+            `UPDATE firm_payment_intents
+             SET status = 'cancelled', updated_at = now()
+             WHERE status = 'pending' AND id <> $1`,
+            [intent.id]
+        );
     }
 
     if (tokenInfo?.token) {

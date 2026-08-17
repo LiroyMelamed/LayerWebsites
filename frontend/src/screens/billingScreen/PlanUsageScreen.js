@@ -67,10 +67,11 @@ export default function PlanUsageScreen() {
     const { t } = useTranslation();
     const { isSmallScreen } = useScreenSize();
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const { refresh: refreshLock } = useBillingLock();
     const [checkoutUrl, setCheckoutUrl] = useState(null);
     const [payBusy, setPayBusy] = useState(false);
+    const [payNotice, setPayNotice] = useState(null);
 
     const { result: planResult, isPerforming: isPlanLoading, performRequest: reloadPlan } = useAutoHttpRequest(
         billingApi.getPlan,
@@ -136,7 +137,12 @@ export default function PlanUsageScreen() {
             billing,
             pkg,
             payments: Array.isArray(billing.payments) ? billing.payments : [],
-            upcomingPayment: billing.upcomingPayment || null,
+            upcomingPayment: billing.upcomingPayment
+                ? {
+                    ...billing.upcomingPayment,
+                    amountIls: Number(billing.upcomingPayment.amountIls || priceIls || 0),
+                }
+                : null,
 
             monthStartUtc,
             meters: {
@@ -150,12 +156,19 @@ export default function PlanUsageScreen() {
     }, [plan, usage]);
 
     useEffect(() => {
-        if (searchParams.get('paid') === '1') {
-            billingApi.invalidateCaches();
-            void reloadPlan([]);
-            void refreshLock();
-        }
-    }, [searchParams, refreshLock, reloadPlan]);
+        const paid = searchParams.get('paid');
+        if (paid !== '1' && paid !== '0') return;
+        const ok = paid === '1';
+        const text = ok ? t('planUsage.paySuccess') : t('planUsage.payFailed');
+        setPayNotice({ type: ok ? 'success' : 'error', text });
+        showAppToast({ type: ok ? 'success' : 'error', text });
+        billingApi.invalidateCaches();
+        void reloadPlan([]);
+        void refreshLock();
+        const next = new URLSearchParams(searchParams);
+        next.delete('paid');
+        setSearchParams(next, { replace: true });
+    }, [searchParams, refreshLock, reloadPlan, setSearchParams, t]);
 
     const startCheckout = async () => {
         setPayBusy(true);
@@ -177,11 +190,17 @@ export default function PlanUsageScreen() {
         setPayBusy(true);
         try {
             const res = await billingApi.chargeNow({ kind: 'retry' });
+            if (res?.data?.skipped) {
+                showAppToast({ type: 'info', text: t('planUsage.chargeSkipped') });
+                return;
+            }
             if (!res?.success) {
                 toastFromApiError(res, t('planUsage.chargeFailed'));
+                setPayNotice({ type: 'error', text: t('planUsage.chargeFailed') });
                 return;
             }
             showAppToast({ type: 'success', text: t('planUsage.chargeOk') });
+            setPayNotice({ type: 'success', text: t('planUsage.chargeOk') });
             billingApi.invalidateCaches();
             void reloadPlan([]);
             void refreshLock();
@@ -234,7 +253,11 @@ export default function PlanUsageScreen() {
     const statusText = normalized.billing?.status
         ? t(`planUsage.statusValues.${normalized.billing.status}`, { defaultValue: String(normalized.billing.status) })
         : "-";
-    const nextChargeAmount = formatIls(normalized.billing?.nextChargeIls);
+    const nextChargeAmount = formatIls(
+        normalized.billing?.nextChargeIls
+        || (normalized.billing?.stillComplimentary ? normalized.priceIls : null)
+        || normalized.priceIls
+    );
     const paymentRows = [
         ...(normalized.upcomingPayment ? [normalized.upcomingPayment] : []),
         ...normalized.payments,
@@ -254,6 +277,11 @@ export default function PlanUsageScreen() {
             )}
 
             <SimpleScrollView>
+                {payNotice?.text && (
+                    <SimpleCard className={`lw-planUsageScreen__banner lw-planUsageScreen__banner--${payNotice.type}`}>
+                        <TextBold14>{payNotice.text}</TextBold14>
+                    </SimpleCard>
+                )}
                 {(isPlanLoading && !plan) ? (
                     <SimpleCard className="lw-planUsageScreen__card">
                         <Skeleton width={120} height={20} borderRadius={6} />
@@ -298,17 +326,28 @@ export default function PlanUsageScreen() {
                             >
                                 <Text14>{t('planUsage.upgradeButton')}</Text14>
                             </SimpleButton>
-                            <SimpleButton
-                                className="lw-planUsageScreen__upgradeButton"
-                                onPress={normalized.billing?.card ? chargeSaved : startCheckout}
-                                disabled={payBusy}
-                            >
-                                <Text14>
-                                    {normalized.billing?.card
-                                        ? t('planUsage.chargeNow')
-                                        : t('planUsage.addCard')}
-                                </Text14>
-                            </SimpleButton>
+                            {!normalized.billing?.stillComplimentary && (
+                                <SimpleButton
+                                    className="lw-planUsageScreen__upgradeButton"
+                                    onPress={normalized.billing?.card ? chargeSaved : startCheckout}
+                                    disabled={payBusy}
+                                >
+                                    <Text14>
+                                        {normalized.billing?.card
+                                            ? t('planUsage.chargeNow')
+                                            : t('planUsage.addCard')}
+                                    </Text14>
+                                </SimpleButton>
+                            )}
+                            {!normalized.billing?.card && normalized.billing?.stillComplimentary && (
+                                <SimpleButton
+                                    className="lw-planUsageScreen__upgradeButton"
+                                    onPress={startCheckout}
+                                    disabled={payBusy}
+                                >
+                                    <Text14>{t('planUsage.addCard')}</Text14>
+                                </SimpleButton>
+                            )}
                             {normalized.billing?.card && (
                                 <SimpleButton
                                     className="lw-planUsageScreen__upgradeButton"
@@ -405,6 +444,15 @@ export default function PlanUsageScreen() {
                     void reloadPlan([]);
                     void refreshLock();
                     setCheckoutUrl(null);
+                    const text = t('planUsage.paySuccess');
+                    setPayNotice({ type: 'success', text });
+                    showAppToast({ type: 'success', text });
+                }}
+                onFailed={(description) => {
+                    setCheckoutUrl(null);
+                    const text = description || t('planUsage.payFailed');
+                    setPayNotice({ type: 'error', text });
+                    showAppToast({ type: 'error', text });
                 }}
             />
         </SimpleScreen>

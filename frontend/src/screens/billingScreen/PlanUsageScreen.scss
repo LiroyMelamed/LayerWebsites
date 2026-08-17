@@ -38,6 +38,24 @@
     padding: 0.625rem 0.875rem;
 }
 
+.lw-planUsageScreen__banner {
+    flex-direction: column;
+    margin-bottom: 1rem;
+    padding: 0.875rem 1rem;
+}
+
+.lw-planUsageScreen__banner--success {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 0.0625rem solid #a7f3d0;
+}
+
+.lw-planUsageScreen__banner--error {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 0.0625rem solid #fecaca;
+}
+
 .lw-planUsageScreen__paymentRow {
     flex-direction: column;
     padding-block: 0.5rem;

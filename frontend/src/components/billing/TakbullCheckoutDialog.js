@@ -5,7 +5,7 @@ import SimpleButton from '../simpleComponents/SimpleButton';
 import { Text14, TextBold20 } from '../specializedComponents/text/AllTextKindFile';
 import './TakbullCheckoutDialog.scss';
 
-export default function TakbullCheckoutDialog({ open, gatewayUrl, onClose, onPaid }) {
+export default function TakbullCheckoutDialog({ open, gatewayUrl, onClose, onPaid, onFailed }) {
     const { t } = useTranslation();
     const [height, setHeight] = useState(640);
 
@@ -22,12 +22,22 @@ export default function TakbullCheckoutDialog({ open, gatewayUrl, onClose, onPai
                 if (code === 0) {
                     onPaid?.();
                     onClose?.();
+                    return;
+                }
+                if (code != null) {
+                    const description =
+                        data.value?.InternalDescription
+                        || data.value?.Description
+                        || data.value?.description
+                        || null;
+                    onFailed?.(description);
+                    onClose?.();
                 }
             }
         }
         window.addEventListener('message', onMessage);
         return () => window.removeEventListener('message', onMessage);
-    }, [open, onClose, onPaid]);
+    }, [open, onClose, onPaid, onFailed]);
 
     if (!open) return null;
 
