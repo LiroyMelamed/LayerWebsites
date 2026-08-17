@@ -62,13 +62,13 @@ test('disabledOptionsForUsage marks cheaper signing packs', () => {
     assert.ok(!disabled.signingIds.includes('1500'));
 });
 
-test('resolvePricingLineItems default site_app + pro + 500 totals 1146', () => {
+test('resolvePricingLineItems default site_app + pro + 500 totals 972', () => {
     const resolved = resolvePricingLineItems({
         platformId: 'site_app',
         resourceId: 'pro',
         signingId: '500',
     });
-    assert.equal(resolved.total, 349 + 349 + 249 + 199);
+    assert.equal(resolved.total, 296 + 296 + 211 + 169);
     assert.equal(resolved.displayName, 'פרו · אתר + אפליקציה · 500 חתימות');
     const q = quotasForPackage(resolved);
     assert.equal(q.usersQuota, 5);
@@ -83,7 +83,7 @@ test('enterprise SMS monthly quota is 5000 not unlimited', () => {
     assert.equal(q.otpSmsMonthlyQuota, 5000);
 });
 
-test('recommendCheapestPackage: MelamedLaw-shaped usage needs enterprise 1596', () => {
+test('recommendCheapestPackage: MelamedLaw-shaped usage needs enterprise 1353', () => {
     const rec = recommendCheapestPackage({
         current: { platformId: 'site_app', resourceId: 'pro', signingId: '500' },
         usage: {
@@ -96,11 +96,11 @@ test('recommendCheapestPackage: MelamedLaw-shaped usage needs enterprise 1596', 
     assert.equal(rec.recommended.platformId, 'site_app');
     assert.equal(rec.recommended.resourceId, 'enterprise');
     assert.equal(rec.recommended.signingId, '500');
-    assert.equal(rec.recommended.total, 349 + 349 + 699 + 199);
+    assert.equal(rec.recommended.total, 296 + 296 + 592 + 169);
     assert.equal(rec.changed, true);
 });
 
-test('recommendCheapestPackage: MorLevi-shaped usage fits basic 996', () => {
+test('recommendCheapestPackage: MorLevi-shaped usage fits basic 845', () => {
     const rec = recommendCheapestPackage({
         current: { platformId: 'site_app', resourceId: 'pro', signingId: '500' },
         usage: {
@@ -113,7 +113,7 @@ test('recommendCheapestPackage: MorLevi-shaped usage fits basic 996', () => {
     assert.equal(rec.recommended.platformId, 'site_app');
     assert.equal(rec.recommended.resourceId, 'basic');
     assert.equal(rec.recommended.signingId, '500');
-    assert.equal(rec.recommended.total, 349 + 349 + 99 + 199);
+    assert.equal(rec.recommended.total, 296 + 296 + 84 + 169);
     assert.equal(rec.changed, true);
 });
 
@@ -128,7 +128,7 @@ test('recommendCheapestPackage: SMS above pro cap 2000 needs enterprise', () => 
         },
     });
     assert.equal(rec.recommended.resourceId, 'enterprise');
-    assert.equal(rec.recommended.total, 349 + 349 + 699 + 199);
+    assert.equal(rec.recommended.total, 296 + 296 + 592 + 169);
 });
 
 test('yearly billing is 10% off 12 months, rounded', () => {
@@ -137,19 +137,19 @@ test('yearly billing is 10% off 12 months, rounded', () => {
     assert.equal(normalizeBillingInterval('monthly'), 'monthly');
     assert.equal(normalizeBillingInterval(null), 'monthly');
 
-    assert.equal(yearlyTotalIls(1596), 17237);
-    assert.equal(yearlySavingsIls(1596), 1915);
-    assert.equal(yearlyTotalIls(1146), 12377);
-    assert.equal(yearlySavingsIls(1146), 1375);
-    assert.equal(yearlyTotalIls(996), 10757);
-    assert.equal(yearlySavingsIls(996), 1195);
+    assert.equal(yearlyTotalIls(1353), 14612);
+    assert.equal(yearlySavingsIls(1353), 1624);
+    assert.equal(yearlyTotalIls(972), 10498);
+    assert.equal(yearlySavingsIls(972), 1166);
+    assert.equal(yearlyTotalIls(845), 9126);
+    assert.equal(yearlySavingsIls(845), 1014);
 
     const enterprise = resolvePricingLineItems({
         platformId: 'site_app',
         resourceId: 'enterprise',
         signingId: '500',
     });
-    assert.equal(enterprise.total, 1596);
-    assert.equal(enterprise.yearlyTotal, 17237);
-    assert.equal(enterprise.yearlySavings, 1915);
+    assert.equal(enterprise.total, 1353);
+    assert.equal(enterprise.yearlyTotal, 14612);
+    assert.equal(enterprise.yearlySavings, 1624);
 });
