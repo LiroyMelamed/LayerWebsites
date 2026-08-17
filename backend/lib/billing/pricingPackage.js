@@ -39,6 +39,24 @@ const DEFAULT_SELECTION = {
     signingId: '500',
 };
 
+const YEARLY_DISCOUNT_RATE = 0.10;
+
+function normalizeBillingInterval(value) {
+    return String(value || '').trim().toLowerCase() === 'yearly' ? 'yearly' : 'monthly';
+}
+
+function yearlyTotalIls(monthlyAmount) {
+    const monthly = Number(monthlyAmount || 0);
+    if (!Number.isFinite(monthly) || monthly <= 0) return 0;
+    return Math.round(monthly * 12 * (1 - YEARLY_DISCOUNT_RATE));
+}
+
+function yearlySavingsIls(monthlyAmount) {
+    const monthly = Number(monthlyAmount || 0);
+    if (!Number.isFinite(monthly) || monthly <= 0) return 0;
+    return Math.round(monthly * 12) - yearlyTotalIls(monthly);
+}
+
 function findById(list, id, fallbackId) {
     return list.find((x) => x.id === id) || list.find((x) => x.id === fallbackId) || list[0];
 }
@@ -67,6 +85,8 @@ function resolvePricingLineItems({ platformId, resourceId, signingId } = {}) {
         signing,
         breakdown,
         total,
+        yearlyTotal: yearlyTotalIls(total),
+        yearlySavings: yearlySavingsIls(total),
         currency: PRICING.currency,
         displayName: `${resource.label} · ${platform.label} · ${signing.label}`,
     };
@@ -259,6 +279,10 @@ module.exports = {
     PRICING,
     DEFAULT_SELECTION,
     RESOURCE_SMS_MONTHLY_QUOTA,
+    YEARLY_DISCOUNT_RATE,
+    normalizeBillingInterval,
+    yearlyTotalIls,
+    yearlySavingsIls,
     resolvePricingLineItems,
     quotasForPackage,
     platformRank,
