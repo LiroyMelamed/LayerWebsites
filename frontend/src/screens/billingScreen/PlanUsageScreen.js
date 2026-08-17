@@ -310,7 +310,7 @@ export default function PlanUsageScreen() {
                                 : renderRow(t('planUsage.savedCard'), t('planUsage.noCard'))}
                             {normalized.billing?.renewsAt && renderRow(
                                 t('planUsage.nextCharge'),
-                                `${formatDisplayDate(normalized.billing.renewsAt)}${nextChargeAmount ? ` · ${nextChargeAmount}` : ''}`
+                                `${formatDisplayDate(normalized.billing.renewsAt)}${nextChargeAmount ? ` · ${nextChargeAmount} ${t('planUsage.exclVat')}` : ''}`
                             )}
                             {normalized.billing?.status === 'past_due' && normalized.billing?.graceUntil && renderRow(
                                 t('planUsage.graceUntil'),
