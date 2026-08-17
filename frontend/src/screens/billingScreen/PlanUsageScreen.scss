@@ -195,6 +195,11 @@
     padding: 0.875rem 1rem;
 }
 
+.lw-planUsageScreen__primaryAction,
+.lw-planUsageScreen__primaryAction * {
+    color: #fff !important;
+}
+
 .lw-planUsageScreen__secondaryAction {
     border: 0.125rem solid rgba(15, 23, 42, 0.14);
     padding: 0.75rem 1rem;
