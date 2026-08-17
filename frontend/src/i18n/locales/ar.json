@@ -67,6 +67,19 @@
     "enterOtpInstruction": "أدخل الرمز الذي استلمته في الرسالة",
     "tagline": "كل معلومات قضيتك في مكان واحد!"
   },
+  "billingLock": {
+    "title": "تم حظر الوصول إلى النظام",
+    "body": "لم يكتمل الدفع الشهري. سيُفتح النظام فور تسوية الدفع.",
+    "deadline": "يرجى الدفع حتى {{date}}",
+    "payCta": "ادفع الآن",
+    "contactAdmin": "تواصل مع مدير المنصة في المكتب لتسوية الدفع."
+  },
+  "billing": {
+    "checkoutTitle": "دفع آمن",
+    "checkoutHint": "أكمل الدفع في نافذة السداد. سيتم حفظ البطاقة للفوترة الشهرية.",
+    "openInNewTab": "فتح في نافذة جديدة",
+    "closeCheckout": "إغلاق"
+  },
   "errors": {
     "invalidPhone": "رقم الهاتف غير صالح",
     "invalidOtp": "رمز غير صالح",
@@ -549,6 +562,13 @@
     },
     "storageApprox": "~ {{size}} مستخدم",
     "loadingUsage": "جارٍ تحميل بيانات الاستخدام...",
+    "complimentaryUntil": "بدون دفع حتى:",
+    "savedCard": "بطاقة محفوظة:",
+    "nextCharge": "التحصيل التالي:",
+    "graceUntil": "يُحظر إن لم يُدفع حتى:",
+    "addCard": "إضافة بطاقة / دفع",
+    "chargeNow": "تحصيل البطاقة المحفوظة",
+    "replaceCard": "استبدال البطاقة",
     "systemPlansTitle": "حزم الموارد (إلزامي)",
     "systemPlansSubtitle": "حزمة الموارد تحدد سعة النظام (التخزين، المستخدمون، الاحتفاظ بالبيانات ومستوى الحمل). إلزامي اختيار حزمة واحدة.",
     "commercialPricingTitle": "التسعير التجاري (لكل مكتب)",
@@ -579,6 +599,9 @@
   "planPricing": {
     "title": "الخطط والأسعار",
     "subtitle": "كل ما تدفعه — واضح وبسيط.",
+    "saveAndPay": "حفظ ودفع",
+    "saveFailed": "تعذر حفظ الحزمة",
+    "savedOk": "تم حفظ الحزمة",
     "baseAndChannelsTitle": "الأساس + قنوات العميل",
     "baseAndChannelsSubtitle": "إلزامي: أساس النظام + قناة عميل واحدة على الأقل.",
     "systemPlansTitle": "حزم الموارد (إلزامي)",

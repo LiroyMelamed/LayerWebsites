@@ -1,0 +1,41 @@
+@use '../../styles/variables' as v;
+
+.lw-takbullCheckout {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    background: rgba(15, 23, 42, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: v.$space-3;
+}
+
+.lw-takbullCheckout__panel {
+    width: min(96vw, 45rem);
+    max-height: 92vh;
+    overflow: auto;
+    background: #fff;
+    border-radius: 1rem;
+    padding: v.$space-3;
+    flex-direction: column;
+    gap: v.$space-2;
+}
+
+.lw-takbullCheckout__hint {
+    opacity: 0.85;
+}
+
+.lw-takbullCheckout__iframe {
+    width: 100%;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    background: #fff;
+}
+
+.lw-takbullCheckout__actions {
+    display: flex;
+    gap: v.$space-2;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
