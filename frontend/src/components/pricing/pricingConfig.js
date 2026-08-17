@@ -3,7 +3,7 @@
 
 export const PRICING_CONFIG = {
     currency: "₪",
-    billingPeriodLabel: "לחודש + מע״מ",
+    billingPeriodLabel: "לחודש",
     yearlyDiscountRate: 0.10,
 
     // Contact numbers — loaded dynamically at runtime via firmSettings.
