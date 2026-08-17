@@ -5,7 +5,7 @@
 const COMPLIMENTARY_UNTIL = {
     ashrafessa: '2026-12-31T21:59:59.999+02:00',
     morlevy: '2026-12-31T21:59:59.999+02:00',
-    melamedlaw: '2026-09-01T20:59:59.999+03:00',
+    melamedlaw: '2026-09-01T23:59:59.999+03:00',
 };
 
 const UNBILLED_SLUGS = new Set(['melamedia', 'idm']);
