@@ -67,6 +67,19 @@
     "enterOtpInstruction": "הקלד את הקוד שקיבלת בהודעה",
     "tagline": "כל המידע על התיק שלך במקום אחד!"
   },
+  "billingLock": {
+    "title": "הגישה למערכת נחסמה",
+    "body": "התשלום החודשי לא הושלם. המערכת תיפתח מיד לאחר הסדרת התשלום.",
+    "deadline": "יש לשלם עד {{date}}",
+    "payCta": "לתשלום עכשיו",
+    "contactAdmin": "פנו למנהל הפלטפורמה במשרד כדי להסדיר את התשלום."
+  },
+  "billing": {
+    "checkoutTitle": "תשלום מאובטח",
+    "checkoutHint": "השלימו את התשלום בחלון הסליקה. הכרטיס יישמר לחיוב החודשי.",
+    "openInNewTab": "פתיחה בחלון חדש",
+    "closeCheckout": "סגירה"
+  },
   "errors": {
     "invalidPhone": "מספר פלאפון לא תקין",
     "invalidOtp": "קוד לא תקין",
@@ -784,11 +797,21 @@
       "sms": "SMS"
     },
     "storageApprox": "~ {{size}} בשימוש",
-    "loadingUsage": "טוען נתוני שימוש..."
+    "loadingUsage": "טוען נתוני שימוש...",
+    "complimentaryUntil": "ללא תשלום עד:",
+    "savedCard": "כרטיס שמור:",
+    "nextCharge": "חיוב הבא:",
+    "graceUntil": "חסימה אם לא ישולם עד:",
+    "addCard": "הוספת כרטיס / תשלום",
+    "chargeNow": "חיוב הכרטיס השמור",
+    "replaceCard": "החלפת כרטיס"
   },
   "planPricing": {
     "title": "חבילות ותמחור",
     "subtitle": "כל מה שמשלמים עליו — מוסבר בצורה ברורה.",
+    "saveAndPay": "שמירה ותשלום",
+    "saveFailed": "לא ניתן לשמור את החבילה",
+    "savedOk": "החבילה נשמרה",
     "baseAndChannelsTitle": "בסיס מערכת + ערוצי לקוח",
     "baseAndChannelsSubtitle": "חובה: בסיס מערכת + לפחות ערוץ לקוח אחד.",
     "systemPlansTitle": "חבילות משאבים (חובה)",

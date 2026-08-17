@@ -1,8 +1,10 @@
 // src/screens/billingScreen/PlanUsageScreen.js
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import TakbullCheckoutDialog from "../../components/billing/TakbullCheckoutDialog";
+import { useBillingLock } from "../../providers/BillingLockProvider";
 
 import Skeleton from "../../components/simpleComponents/Skeleton";
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
@@ -63,8 +65,12 @@ export default function PlanUsageScreen() {
     const { t } = useTranslation();
     const { isSmallScreen } = useScreenSize();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const { refresh: refreshLock } = useBillingLock();
+    const [checkoutUrl, setCheckoutUrl] = useState(null);
+    const [payBusy, setPayBusy] = useState(false);
 
-    const { result: plan, isPerforming: isPlanLoading } = useAutoHttpRequest(
+    const { result: plan, isPerforming: isPlanLoading, performRequest: reloadPlan } = useAutoHttpRequest(
         billingApi.getPlan,
         {
             onFailure: () => {
@@ -106,6 +112,8 @@ export default function PlanUsageScreen() {
         const smsThisMonth = usage?.sms?.sentThisMonth ?? usage?.otp?.smsThisMonth ?? null;
 
         const monthStartUtc = usage?.monthStartUtc ?? usage?.period?.monthStartUtc ?? null;
+        const billing = plan?.billing || {};
+        const pkg = plan?.package || {};
 
         return {
             scope,
@@ -119,6 +127,8 @@ export default function PlanUsageScreen() {
             retentionCoreDays,
             retentionPiiDays,
             quotas,
+            billing,
+            pkg,
 
             monthStartUtc,
             meters: {
@@ -130,6 +140,37 @@ export default function PlanUsageScreen() {
             },
         };
     }, [plan, usage]);
+
+    useEffect(() => {
+        if (searchParams.get('paid') === '1') {
+            billingApi.invalidateCaches();
+            void reloadPlan([]);
+            void refreshLock();
+        }
+    }, [searchParams, refreshLock, reloadPlan]);
+
+    const startCheckout = async () => {
+        setPayBusy(true);
+        try {
+            const res = await billingApi.createCheckout({ kind: 'retry' });
+            if (res?.success && res.data?.redirectUrl) {
+                setCheckoutUrl(res.data.redirectUrl);
+            }
+        } finally {
+            setPayBusy(false);
+        }
+    };
+
+    const chargeSaved = async () => {
+        setPayBusy(true);
+        try {
+            await billingApi.chargeNow({ kind: 'retry' });
+            billingApi.invalidateCaches();
+            void refreshLock();
+        } finally {
+            setPayBusy(false);
+        }
+    };
 
     const renderRow = (label, value) => (
         <SimpleContainer className="lw-planUsageScreen__row">
@@ -209,6 +250,27 @@ export default function PlanUsageScreen() {
                             {renderRow(t('planUsage.planName'), normalized.planName)}
                             {renderRow(t('planUsage.planKey'), normalized.planKey)}
                             {renderRow(t('planUsage.price'), priceText)}
+                            {normalized.billing?.stillComplimentary && normalized.billing?.complimentaryUntil && (
+                                renderRow(
+                                    t('planUsage.complimentaryUntil'),
+                                    formatDisplayDate(normalized.billing.complimentaryUntil)
+                                )
+                            )}
+                            {normalized.billing?.card?.last4 && renderRow(
+                                t('planUsage.savedCard'),
+                                `**** ${normalized.billing.card.last4}`
+                            )}
+                            {normalized.billing?.renewsAt && renderRow(
+                                t('planUsage.nextCharge'),
+                                formatDisplayDate(normalized.billing.renewsAt)
+                            )}
+                            {normalized.billing?.status === 'past_due' && normalized.billing?.graceUntil && renderRow(
+                                t('planUsage.graceUntil'),
+                                formatDisplayDate(normalized.billing.graceUntil)
+                            )}
+                            {normalized.pkg?.breakdown?.length > 0 && normalized.pkg.breakdown.map((line) => (
+                                renderRow(line.label, `${line.amount} ₪`)
+                            ))}
                             {renderRow(t('planUsage.scope'), scopeText)}
                             {normalized.firmId != null && renderRow(t('planUsage.firmId'), String(normalized.firmId))}
                             {enforcementModeText && renderRow(t('planUsage.enforcementMode'), enforcementModeText)}
@@ -219,6 +281,46 @@ export default function PlanUsageScreen() {
                             >
                                 <Text14>{t('planUsage.upgradeButton')}</Text14>
                             </SimpleButton>
+                            <SimpleButton
+                                className="lw-planUsageScreen__upgradeButton"
+                                onPress={normalized.billing?.card ? chargeSaved : startCheckout}
+                                disabled={payBusy}
+                            >
+                                <Text14>
+                                    {normalized.billing?.card
+                                        ? t('planUsage.chargeNow')
+                                        : t('planUsage.addCard')}
+                                </Text14>
+                            </SimpleButton>
+                            {normalized.billing?.card && (
+                                <SimpleButton
+                                    className="lw-planUsageScreen__upgradeButton"
+                                    onPress={startCheckout}
+                                    disabled={payBusy}
+                                >
+                                    <Text14>{t('planUsage.replaceCard')}</Text14>
+                                </SimpleButton>
+                            )}
+                            <SimpleButton
+                                className="lw-planUsageScreen__upgradeButton"
+                                onPress={normalized.billing?.card ? chargeSaved : startCheckout}
+                                disabled={payBusy}
+                            >
+                                <Text14>
+                                    {normalized.billing?.card
+                                        ? t('planUsage.chargeNow')
+                                        : t('planUsage.addCard')}
+                                </Text14>
+                            </SimpleButton>
+                            {normalized.billing?.card && (
+                                <SimpleButton
+                                    className="lw-planUsageScreen__upgradeButton"
+                                    onPress={startCheckout}
+                                    disabled={payBusy}
+                                >
+                                    <Text14>{t('planUsage.replaceCard')}</Text14>
+                                </SimpleButton>
+                            )}
                         </SimpleCard>
 
                         <SimpleCard className="lw-planUsageScreen__card">
@@ -276,6 +378,17 @@ export default function PlanUsageScreen() {
                     </>
                 )}
             </SimpleScrollView>
+            <TakbullCheckoutDialog
+                open={Boolean(checkoutUrl)}
+                gatewayUrl={checkoutUrl}
+                onClose={() => setCheckoutUrl(null)}
+                onPaid={() => {
+                    billingApi.invalidateCaches();
+                    void reloadPlan([]);
+                    void refreshLock();
+                    setCheckoutUrl(null);
+                }}
+            />
         </SimpleScreen>
     );
 }

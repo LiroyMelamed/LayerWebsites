@@ -1,4 +1,5 @@
-const pool = require('../../config/db');
+const { quotasForPackage, resolvePricingLineItems } = require('../billing/pricingPackage');
+const { isDateInFuture, defaultComplimentaryUntil } = require('../billing/tenantBillingDefaults');
 
 function normalizePlanRow(row) {
     if (!row) return null;
@@ -104,7 +105,7 @@ async function resolveFirmPlan(_firmId) {
             planRow = basic.rows?.[0] || null;
         }
 
-        // Unlimited override via env (for initial deployments)
+        // Complimentary / unlimited: env, then firm_billing row, then tenant default dates.
         let isUnlimited = false;
         const envVal = String(process.env.FIRM_DEFAULT_UNLIMITED_UNTIL_UTC || '').trim();
         if (envVal) {
@@ -112,11 +113,46 @@ async function resolveFirmPlan(_firmId) {
             if (!Number.isNaN(d.getTime()) && d.getTime() > Date.now()) isUnlimited = true;
         }
 
+        let billingPackage = null;
+        try {
+            const billingRes = await pool.query(
+                `SELECT platform_id, resource_id, signing_id, billing_enabled, complimentary_until, status
+                 FROM firm_billing WHERE id = 1 LIMIT 1`
+            );
+            const b = billingRes.rows?.[0];
+            if (b) {
+                billingPackage = resolvePricingLineItems({
+                    platformId: b.platform_id,
+                    resourceId: b.resource_id,
+                    signingId: b.signing_id,
+                });
+                if (b.billing_enabled === false) isUnlimited = true;
+                if (isDateInFuture(b.complimentary_until)) isUnlimited = true;
+            }
+        } catch (e) {
+            if (!isRelationMissingError(e)) throw e;
+        }
+
+        if (!isUnlimited && isDateInFuture(defaultComplimentaryUntil())) {
+            isUnlimited = true;
+        }
+
         const plan = normalizePlanRow(planRow) || {
             planKey: 'UNKNOWN',
             name: 'Unknown',
             featureFlags: {},
         };
+
+        const packageQuotas = billingPackage ? quotasForPackage(billingPackage) : null;
+        if (packageQuotas) {
+            plan.planKey = packageQuotas.planKey || plan.planKey;
+            plan.name = billingPackage.resource?.label || plan.name;
+            plan.documentsMonthlyQuota = packageQuotas.documentsMonthlyQuota;
+            plan.storageMbQuota = packageQuotas.storageMbQuota;
+            plan.usersQuota = packageQuotas.usersQuota;
+            plan.priceMonthlyCents = Math.round(Number(billingPackage.total || 0) * 100);
+            plan.priceCurrency = 'ILS';
+        }
 
         const { effectiveDocumentsRetentionDaysCore, effectiveDocumentsRetentionDaysPii } = applyRetentionFloor({
             coreDays: plan.documentsRetentionDaysCore,
@@ -158,6 +194,7 @@ async function resolveFirmPlan(_firmId) {
             effectiveDocumentsRetentionDaysPii,
 
             quotas: effectiveQuotas,
+            package: billingPackage || null,
         };
     } catch (e) {
         if (isRelationMissingError(e)) return null;

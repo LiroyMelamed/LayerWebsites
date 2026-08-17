@@ -1,8 +1,9 @@
 const pool = require('../../config/db');
+const { parseHiddenAdminIds, excludedSeatPhones } = require('./seatExclusions');
 
 function isRelationMissingError(e) {
     const msg = String(e?.message || '');
-    return msg.includes('does not exist');
+    return e?.code === '42P01' || msg.includes('does not exist');
 }
 
 // Sum a single `bytes` column, tolerating a missing table (returns 0).
@@ -43,6 +44,49 @@ function monthStartUtcIso() {
     return new Date(utcGuess - localMinutes * 60 * 1000).toISOString();
 }
 
+async function countBillableSeats() {
+    const hidden = parseHiddenAdminIds();
+    const phones = excludedSeatPhones();
+    const params = [phones];
+    let hiddenSql = '';
+    if (hidden.length > 0) {
+        params.push(hidden);
+        hiddenSql = ` AND u.userid <> ALL($${params.length}::int[])`;
+    }
+
+    const phoneSql = `right(regexp_replace(regexp_replace(coalesce(u.phonenumber, ''), '\\D', '', 'g'), '^(972|0)', ''), 9) <> ALL($1::text[])`;
+
+    const withPlatformAdmins = `
+        SELECT count(*)::int AS "SeatsUsed"
+        FROM users u
+        WHERE u.role = 'Admin'
+          AND ${phoneSql}
+          ${hiddenSql}
+          AND NOT EXISTS (
+              SELECT 1 FROM platform_admins pa
+              WHERE pa.user_id = u.userid AND pa.is_active = TRUE
+          )
+    `;
+    const withoutPlatformAdmins = `
+        SELECT count(*)::int AS "SeatsUsed"
+        FROM users u
+        WHERE u.role = 'Admin'
+          AND ${phoneSql}
+          ${hiddenSql}
+    `;
+
+    try {
+        const res = await pool.query(withPlatformAdmins, params);
+        return res.rows?.[0] || { SeatsUsed: 0 };
+    } catch (e) {
+        if (isRelationMissingError(e)) {
+            const res = await pool.query(withoutPlatformAdmins, params);
+            return res.rows?.[0] || { SeatsUsed: 0 };
+        }
+        throw e;
+    }
+}
+
 /**
  * Get usage metrics for this single-tenant DB.
  * Each DB is per-firm so no firm scoping is needed.
@@ -60,12 +104,7 @@ async function getUsageForFirm(_firmId) {
                  from signingfiles`,
                 [startIso]
             ),
-            // seats = admins (Admin role only) – each DB is per-firm
-            pool.query(
-                `select count(*)::int as "SeatsUsed"
-                 from users
-                 where role = 'Admin'`
-            ),
+            countBillableSeats(),
             // SMS sent this month from message_delivery_events
             pool.query(
                 `select count(*)::int as "SmsSentThisMonth"
@@ -92,7 +131,7 @@ async function getUsageForFirm(_firmId) {
         ]);
 
         const docs = docsRes.rows?.[0] || {};
-        const seats = seatsRes.rows?.[0] || {};
+        const seats = seatsRes || {};
         const sms = smsRes.rows?.[0] || {};
         const storageBytesTotal = signingBytes + stageBytes + templateBytes;
 

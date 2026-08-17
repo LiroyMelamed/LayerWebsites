@@ -1,9 +1,12 @@
 /**
  * App deep-link payloads for Expo push / stored notifications.
- * All LawyerApp tenants register melamedia:// in linking.prefixes.
+ * Scheme comes from APP_SCHEME (default melamedia so existing tenants keep working).
  */
 
-const APP_SCHEME = 'melamedia';
+function getAppScheme() {
+    const raw = String(process.env.APP_SCHEME || 'melamedia').trim().toLowerCase();
+    return raw.replace(/[^a-z0-9]/g, '') || 'melamedia';
+}
 
 function toPositiveId(value) {
     const n = Number(value);
@@ -12,18 +15,18 @@ function toPositiveId(value) {
 
 function appointmentDeepLink(eventId) {
     const id = toPositiveId(eventId);
-    return id ? `${APP_SCHEME}://appointment/${id}` : null;
+    return id ? `${getAppScheme()}://appointment/${id}` : null;
 }
 
 function caseDeepLink(caseId) {
     const id = toPositiveId(caseId);
-    return id ? `${APP_SCHEME}://case/${id}` : null;
+    return id ? `${getAppScheme()}://case/${id}` : null;
 }
 
 function signingDeepLink(signingFileId = null) {
     const id = toPositiveId(signingFileId);
-    if (id) return `${APP_SCHEME}://signing?signingFileId=${encodeURIComponent(id)}`;
-    return `${APP_SCHEME}://signing`;
+    if (id) return `${getAppScheme()}://signing?signingFileId=${encodeURIComponent(id)}`;
+    return `${getAppScheme()}://signing`;
 }
 
 /**
@@ -69,7 +72,7 @@ function buildAppDeepLinkData({
     if (t === 'signing_pending' || t === 'file_reuploaded' || t === 'sign_invite') {
         if (token) {
             // Triple-slash so Expo Linking treats PublicSigning as path, not hostname.
-            deepLink = `${APP_SCHEME}:///PublicSigning?token=${encodeURIComponent(String(token))}`;
+            deepLink = `${getAppScheme()}:///PublicSigning?token=${encodeURIComponent(String(token))}`;
         } else if (publicUrl) {
             deepLink = publicUrl;
         }
@@ -125,7 +128,10 @@ function buildSignedDocPushData({
 }
 
 module.exports = {
-    APP_SCHEME,
+    getAppScheme,
+    get APP_SCHEME() {
+        return getAppScheme();
+    },
     appointmentDeepLink,
     caseDeepLink,
     signingDeepLink,

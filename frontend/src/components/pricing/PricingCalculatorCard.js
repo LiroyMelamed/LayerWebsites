@@ -50,10 +50,11 @@ const DETAILS_BY_SECTION_AND_OPTION = {
         "500": ["עד 500 חתימות בחודש", "כולל OTP", "כולל קובץ ראיות"],
         "1500": ["עד 1500 חתימות בחודש", "כולל OTP", "כולל קובץ ראיות"],
         "5000": ["עד 5000 חתימות בחודש", "כולל OTP", "כולל קובץ ראיות"],
+        unlimited: ["חתימות ללא הגבלה", "כולל OTP", "כולל קובץ ראיות"],
     },
 };
 
-function OptionGroup({ label, value, options, onChange, sectionKey }) {
+function OptionGroup({ label, value, options, onChange, sectionKey, disabledIds = [] }) {
     const selected = useMemo(() => options.find((o) => o.id === value) || options[0], [options, value]);
     const details = useMemo(() => {
         const section = DETAILS_BY_SECTION_AND_OPTION[String(sectionKey || "")] || {};
@@ -71,15 +72,21 @@ function OptionGroup({ label, value, options, onChange, sectionKey }) {
             <SimpleContainer className="lw-pricingCalculatorCard__optionButtons" role="group">
                 {options.map((opt) => {
                     const isSelected = value === opt.id;
+                    const isDisabled = disabledIds.includes(opt.id);
                     const Button = isSelected ? PrimaryButton : SecondaryButton;
 
                     return (
                         <Button
                             key={opt.id}
                             size={buttonSizes.MEDIUM}
-                            className="lw-pricingCalculatorCard__optionButton"
-                            onPress={() => onChange(opt.id)}
+                            className={`lw-pricingCalculatorCard__optionButton${isDisabled ? " is-disabled" : ""}`}
+                            onPress={() => {
+                                if (!isDisabled) onChange(opt.id);
+                            }}
+                            disabled={isDisabled}
                             aria-pressed={isSelected}
+                            aria-disabled={isDisabled}
+                            title={isDisabled ? "לא ניתן לבחור חבילה נמוכה יותר מהשימוש הנוכחי" : undefined}
                         >
                             {opt.label}
                         </Button>
@@ -103,11 +110,26 @@ export default function PricingCalculatorCard({
     subtitleClassName = "",
     dividerClassName = "",
     bulletsClassName = "",
+    value = null,
+    onChange = null,
+    disabledIds = null,
+    footer = null,
 }) {
     const defaults = useMemo(() => getPricingSelectionDefaults(), []);
-    const [platformId, setPlatformId] = useState(defaults.platformId);
-    const [resourceId, setResourceId] = useState(defaults.resourceId);
-    const [signingId, setSigningId] = useState(defaults.signingId);
+    const [platformId, setPlatformId] = useState(value?.platformId || defaults.platformId);
+    const [resourceId, setResourceId] = useState(value?.resourceId || defaults.resourceId);
+    const [signingId, setSigningId] = useState(value?.signingId || defaults.signingId);
+
+    useEffect(() => {
+        if (!value) return;
+        if (value.platformId) setPlatformId(value.platformId);
+        if (value.resourceId) setResourceId(value.resourceId);
+        if (value.signingId) setSigningId(value.signingId);
+    }, [value?.platformId, value?.resourceId, value?.signingId]);
+
+    const emit = (next) => {
+        onChange?.(next);
+    };
 
     const resolved = useMemo(
         () => resolvePricingLineItems({ platformId, resourceId, signingId }),
@@ -146,22 +168,34 @@ export default function PricingCalculatorCard({
                     label="פלטפורמות"
                     value={platformId}
                     options={PRICING_CONFIG.platforms.filter((p) => p.id !== "none")}
-                    onChange={setPlatformId}
+                    onChange={(id) => {
+                        setPlatformId(id);
+                        emit({ platformId: id, resourceId, signingId });
+                    }}
                     sectionKey="platforms"
+                    disabledIds={disabledIds?.platformIds || []}
                 />
                 <OptionGroup
                     label="חבילת משאבים"
                     value={resourceId}
                     options={PRICING_CONFIG.resources}
-                    onChange={setResourceId}
+                    onChange={(id) => {
+                        setResourceId(id);
+                        emit({ platformId, resourceId: id, signingId });
+                    }}
                     sectionKey="resources"
+                    disabledIds={disabledIds?.resourceIds || []}
                 />
                 <OptionGroup
                     label="חבילת חתימות"
                     value={signingId}
-                    options={PRICING_CONFIG.signing.filter((s) => ["none", "500", "1500", "5000"].includes(String(s.id)))}
-                    onChange={setSigningId}
+                    options={PRICING_CONFIG.signing.filter((s) => ["none", "500", "1500", "5000", "unlimited"].includes(String(s.id)))}
+                    onChange={(id) => {
+                        setSigningId(id);
+                        emit({ platformId, resourceId, signingId: id });
+                    }}
                     sectionKey="signing"
+                    disabledIds={disabledIds?.signingIds || []}
                 />
             </div>
 
@@ -193,6 +227,7 @@ export default function PricingCalculatorCard({
                     ))}
                 </SimpleContainer>
             </SimpleCard>
+            {footer}
         </SimpleCard>
     );
 }
