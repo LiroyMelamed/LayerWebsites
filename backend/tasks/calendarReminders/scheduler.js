@@ -18,15 +18,15 @@ const {
 } = require('../../lib/calendarEventReminders');
 const { dispatchCalendarReminder } = require('../../lib/calendarReminderDispatch');
 const { effectiveFireAt } = require('../../lib/shabbatDeferral');
-
-const DEEP_LINK_SCHEME = 'melamedia://appointment/';
+const { getAppScheme } = require('../../utils/appDeepLinks');
 
 function _buildDeepLinkPayload(eventId) {
+    const url = `${getAppScheme()}://appointment/${eventId}`;
     return {
         screen: 'appointment',
         eventId: String(eventId),
-        url: `${DEEP_LINK_SCHEME}${eventId}`,
-        deepLink: `${DEEP_LINK_SCHEME}${eventId}`,
+        url,
+        deepLink: url,
     };
 }
 
