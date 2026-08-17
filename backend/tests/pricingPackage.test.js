@@ -7,6 +7,7 @@ const {
     resolvePricingLineItems,
     quotasForPackage,
     recommendCheapestPackage,
+    RESOURCE_SMS_MONTHLY_QUOTA,
 } = require('../lib/billing/pricingPackage');
 
 test('evaluatePackageChange blocks cheaper signing when documents exceed pack', () => {
@@ -58,21 +59,28 @@ test('disabledOptionsForUsage marks cheaper signing packs', () => {
     assert.ok(!disabled.signingIds.includes('1500'));
 });
 
-test('resolvePricingLineItems default site_app + pro + 500 totals 826', () => {
+test('resolvePricingLineItems default site_app + pro + 500 totals 1146', () => {
     const resolved = resolvePricingLineItems({
         platformId: 'site_app',
         resourceId: 'pro',
         signingId: '500',
     });
-    assert.equal(resolved.total, 249 + 299 + 149 + 129);
+    assert.equal(resolved.total, 349 + 349 + 249 + 199);
     assert.equal(resolved.displayName, 'פרו · אתר + אפליקציה · 500 חתימות');
     const q = quotasForPackage(resolved);
     assert.equal(q.usersQuota, 5);
     assert.equal(q.storageMbQuota, 1024);
     assert.equal(q.documentsMonthlyQuota, 500);
+    assert.equal(q.otpSmsMonthlyQuota, 2000);
 });
 
-test('recommendCheapestPackage: MelamedLaw-shaped usage needs enterprise 1076', () => {
+test('enterprise SMS monthly quota is 5000 not unlimited', () => {
+    assert.equal(RESOURCE_SMS_MONTHLY_QUOTA.enterprise, 5000);
+    const q = quotasForPackage({ resourceId: 'enterprise', signingId: '500' });
+    assert.equal(q.otpSmsMonthlyQuota, 5000);
+});
+
+test('recommendCheapestPackage: MelamedLaw-shaped usage needs enterprise 1596', () => {
     const rec = recommendCheapestPackage({
         current: { platformId: 'site_app', resourceId: 'pro', signingId: '500' },
         usage: {
@@ -85,11 +93,11 @@ test('recommendCheapestPackage: MelamedLaw-shaped usage needs enterprise 1076', 
     assert.equal(rec.recommended.platformId, 'site_app');
     assert.equal(rec.recommended.resourceId, 'enterprise');
     assert.equal(rec.recommended.signingId, '500');
-    assert.equal(rec.recommended.total, 249 + 299 + 399 + 129);
+    assert.equal(rec.recommended.total, 349 + 349 + 699 + 199);
     assert.equal(rec.changed, true);
 });
 
-test('recommendCheapestPackage: MorLevi-shaped usage fits basic 677', () => {
+test('recommendCheapestPackage: MorLevi-shaped usage fits basic 996', () => {
     const rec = recommendCheapestPackage({
         current: { platformId: 'site_app', resourceId: 'pro', signingId: '500' },
         usage: {
@@ -102,6 +110,20 @@ test('recommendCheapestPackage: MorLevi-shaped usage fits basic 677', () => {
     assert.equal(rec.recommended.platformId, 'site_app');
     assert.equal(rec.recommended.resourceId, 'basic');
     assert.equal(rec.recommended.signingId, '500');
-    assert.equal(rec.recommended.total, 249 + 299 + 0 + 129);
+    assert.equal(rec.recommended.total, 349 + 349 + 99 + 199);
     assert.equal(rec.changed, true);
+});
+
+test('recommendCheapestPackage: SMS above pro cap 2000 needs enterprise', () => {
+    const rec = recommendCheapestPackage({
+        current: { platformId: 'site_app', resourceId: 'pro', signingId: '500' },
+        usage: {
+            documents: { createdThisMonth: 0 },
+            seats: { used: 1 },
+            storage: { bytesTotal: 0 },
+            sms: { sentThisMonth: 2001 },
+        },
+    });
+    assert.equal(rec.recommended.resourceId, 'enterprise');
+    assert.equal(rec.recommended.total, 349 + 349 + 699 + 199);
 });
