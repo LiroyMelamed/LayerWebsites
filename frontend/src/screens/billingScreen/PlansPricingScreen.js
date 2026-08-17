@@ -1,6 +1,7 @@
 // src/screens/billingScreen/PlansPricingScreen.js
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 
@@ -24,6 +25,7 @@ import { showAppToast, toastFromApiError } from "../../components/ui/showAppToas
 import { images } from "../../assets/images/images";
 import { AdminStackName } from "../../navigation/AdminStack";
 import { MainScreenName } from "../mainScreen/MainScreen";
+import { PlanUsageScreenName } from "../../navigation/screenPaths";
 import { setLanguage } from "../../i18n/i18n";
 
 import "./PlansPricingScreen.scss";
@@ -33,6 +35,7 @@ export const PlansPricingScreenName = "/PlansPricing";
 export default function PlansPricingScreen() {
     const { t } = useTranslation();
     const { isSmallScreen } = useScreenSize();
+    const navigate = useNavigate();
     const defaults = useMemo(() => getPricingSelectionDefaults(), []);
     const [selection, setSelection] = useState(defaults);
     const [busy, setBusy] = useState(false);
@@ -76,8 +79,8 @@ export default function PlansPricingScreen() {
                 return;
             }
             if (saved.data?.snapshot?.card) {
-                setMessage(t('planPricing.savedOk'));
                 showAppToast({ type: 'success', text: t('planPricing.savedOk') });
+                navigate(`${AdminStackName}${PlanUsageScreenName}?paid=1`);
                 return;
             }
             const checkout = await billingApi.createCheckout({ kind: 'setup' });
@@ -139,7 +142,14 @@ export default function PlansPricingScreen() {
                 onPaid={() => {
                     billingApi.invalidateCaches();
                     setCheckoutUrl(null);
-                    setMessage(t('planPricing.savedOk'));
+                    showAppToast({ type: 'success', text: t('planUsage.paySuccess') });
+                    navigate(`${AdminStackName}${PlanUsageScreenName}?paid=1`);
+                }}
+                onFailed={(description) => {
+                    setCheckoutUrl(null);
+                    const text = description || t('planUsage.payFailed');
+                    setMessage(text);
+                    showAppToast({ type: 'error', text });
                 }}
             />
         </SimpleScreen>
