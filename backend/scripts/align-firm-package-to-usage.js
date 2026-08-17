@@ -52,8 +52,8 @@ function formatDateHe(value) {
 function buildSms({ displayName, total, complimentaryUntil }) {
     const date = formatDateHe(complimentaryUntil);
     const dateLine = date
-        ? `מחיר: ₪${formatIls(total)} לחודש (חיוב מלא מ-${date})`
-        : `מחיר: ₪${formatIls(total)} לחודש`;
+        ? `מחיר: ₪${formatIls(total)} לחודש + מע״מ (חיוב מלא מ-${date})`
+        : `מחיר: ₪${formatIls(total)} לחודש + מע״מ`;
     return [
         'שלום, עדכנו את חבילת המשרד לפי השימוש בפועל.',
         `חבילה: ${displayName}`,
@@ -97,8 +97,12 @@ async function main() {
     });
 
     const billingEnabled = row.billingEnabled !== false && defaultBillingEnabled(slug);
-    const skipApply = slug === 'melamedia';
+    const skipPackChange = slug === 'melamedia';
     const skipSms = !billingEnabled || slug === 'idm' || slug === 'melamedia';
+    const storedTotal = Number(row.priceMonthlyIls);
+    const catalogTotal = Number(rec.current.total);
+    const priceChanged = Number.isFinite(storedTotal) && storedTotal !== catalogTotal;
+    const packChanged = rec.changed && !skipPackChange;
 
     const seats = Number(usage?.seats?.used || 0);
     const storageMb = (Number(usage?.storage?.bytesTotal || 0) / (1024 * 1024)).toFixed(1);
@@ -109,8 +113,10 @@ async function main() {
         slug,
         apply: APPLY,
         sms: SEND_SMS,
-        skipApply,
+        skipPackChange,
         skipSms,
+        priceChanged,
+        packChanged,
         billingEnabled,
         complimentaryUntil: row.complimentaryUntil,
         usage: { seats, storageMb, docs, sms },
@@ -129,31 +135,32 @@ async function main() {
             displayName: rec.recommended.displayName,
         },
         changed: rec.changed,
+        shouldWrite: packChanged || priceChanged,
     }, null, 2));
-
-    if (skipApply) {
-        console.log('Skip apply: Melamedia QA demo stays on current pack');
-        return;
-    }
 
     if (!APPLY) {
         console.log('Dry-run. Re-run with --apply to write, --sms to notify platform admins.');
         return;
     }
 
-    if (rec.changed) {
+    const target = skipPackChange ? rec.current : rec.recommended;
+    const shouldWrite = packChanged || priceChanged;
+
+    if (shouldWrite) {
         await updateBilling({
-            platform_id: rec.recommended.platformId,
-            resource_id: rec.recommended.resourceId,
-            signing_id: rec.recommended.signingId,
-            price_monthly_ils: rec.recommended.total,
+            platform_id: target.platformId,
+            resource_id: target.resourceId,
+            signing_id: target.signingId,
+            price_monthly_ils: target.total,
         });
-        console.log('Updated firm_billing');
+        console.log(skipPackChange
+            ? 'Melamedia QA: kept current pack, refreshed catalog price'
+            : 'Updated firm_billing');
     } else {
-        console.log('Pack already matches usage; still syncing tenant_subscriptions');
+        console.log('Pack and catalog price already match');
     }
-    await syncTenantSubscription(rec.recommended);
-    console.log('Synced tenant_subscriptions to', rec.recommended.resource?.planKey);
+    await syncTenantSubscription(target);
+    console.log('Synced tenant_subscriptions to', target.resource?.planKey);
 
     if (!SEND_SMS) {
         console.log('No SMS (pass --sms to send)');
@@ -163,8 +170,8 @@ async function main() {
         console.log('Skip SMS: unbilled tenant or QA');
         return;
     }
-    if (!rec.changed) {
-        console.log('Skip SMS: pack unchanged');
+    if (!shouldWrite) {
+        console.log('Skip SMS: pack and price unchanged');
         return;
     }
 

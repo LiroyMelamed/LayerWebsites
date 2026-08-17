@@ -41,9 +41,9 @@ const DETAILS_BY_SECTION_AND_OPTION = {
     },
     // Storage line is appended dynamically from each resource's storageMb (see OptionGroup).
     resources: {
-        basic: ["עד 2 מנהלי מערכת"],
-        pro: ["עד 5 מנהלי מערכת"],
-        enterprise: ["אין הגבלת מנהלי מערכת"],
+        basic: ["עד 2 מנהלי מערכת", "עד 200 SMS בחודש"],
+        pro: ["עד 5 מנהלי מערכת", "עד 2000 SMS בחודש"],
+        enterprise: ["אין הגבלת מנהלי מערכת", "עד 5000 SMS בחודש"],
     },
     signing: {
         none: ["ללא אפשרות חתימה דיגיטלית"],
@@ -202,10 +202,10 @@ export default function PricingCalculatorCard({
             <Separator className={`${dividerClassName} lw-pricingCalculatorCard__divider`} />
 
             <SimpleCard className="lw-pricingCalculatorCard__summaryCard">
-                <TextBold24>סה״כ לחודש</TextBold24>
+                <TextBold24>סה״כ לחודש + מע״מ</TextBold24>
 
                 <SimpleContainer className="lw-pricingCalculatorCard__totalRow">
-                    <TextBold14 className="lw-pricingCalculatorCard__totalLabel">סה״כ</TextBold14>
+                    <TextBold14 className="lw-pricingCalculatorCard__totalLabel">סה״כ + מע״מ</TextBold14>
                     <TextBold32 className="lw-pricingCalculatorCard__totalAmount">
                         {formatMoney(resolved.total)}
                     </TextBold32>

@@ -151,6 +151,9 @@ async function resolveFirmPlan(_firmId) {
             plan.documentsMonthlyQuota = packageQuotas.documentsMonthlyQuota;
             plan.storageMbQuota = packageQuotas.storageMbQuota;
             plan.usersQuota = packageQuotas.usersQuota;
+            if (Object.prototype.hasOwnProperty.call(packageQuotas, 'otpSmsMonthlyQuota')) {
+                plan.otpSmsMonthlyQuota = packageQuotas.otpSmsMonthlyQuota;
+            }
             plan.priceMonthlyCents = Math.round(Number(billingPackage.total || 0) * 100);
             plan.priceCurrency = 'ILS';
         }
