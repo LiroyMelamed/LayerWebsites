@@ -9,7 +9,7 @@ const {
 const { isExemptPath } = require('../middlewares/requireBillingAccess');
 const { nationalLast9, excludedSeatPhones } = require('../lib/limits/seatExclusions');
 
-test('tenant defaults: ashrafessa complimentary through 31/12/2026', () => {
+test('tenant defaults: ashrafessa complimentary through 01/01/2027', () => {
     const prev = { ...process.env };
     process.env.FIRM_NAME = 'AshrafEssa';
     process.env.COMPANY_NAME = 'AshrafEssa';
@@ -23,7 +23,26 @@ test('tenant defaults: ashrafessa complimentary through 31/12/2026', () => {
         assert.ok(until);
         assert.equal(
             until.toISOString(),
-            new Date('2026-12-31T21:59:59.999+02:00').toISOString()
+            new Date('2027-01-01T23:59:59.999+02:00').toISOString()
+        );
+    } finally {
+        Object.assign(process.env, prev);
+    }
+});
+
+test('tenant defaults: morlevy complimentary through 01/01/2027', () => {
+    const prev = { ...process.env };
+    process.env.FIRM_NAME = 'MorLevi';
+    process.env.COMPANY_NAME = 'MorLevi';
+    process.env.RUNTIME_TENANT = 'morlevy';
+    delete process.env.FIRM_DEFAULT_UNLIMITED_UNTIL_UTC;
+    try {
+        assert.equal(getTenantSlug(), 'morlevy');
+        const until = defaultComplimentaryUntil();
+        assert.ok(until);
+        assert.equal(
+            until.toISOString(),
+            new Date('2027-01-01T23:59:59.999+02:00').toISOString()
         );
     } finally {
         Object.assign(process.env, prev);
