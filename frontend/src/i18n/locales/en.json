@@ -508,7 +508,36 @@
     "graceUntil": "Blocked unless paid by:",
     "addCard": "Add card / pay",
     "chargeNow": "Charge saved card",
-    "replaceCard": "Replace card"
+    "replaceCard": "Replace card",
+    "status": "Status:",
+    "noCard": "No card on file",
+    "checkoutFailed": "Could not open the payment window",
+    "chargeFailed": "Charge failed",
+    "chargeOk": "Charge completed",
+    "paymentsTitle": "Payments",
+    "noPayments": "No payments yet",
+    "paymentDate": "Date:",
+    "paymentError": "Failure reason:",
+    "statusValues": {
+      "complimentary": "Complimentary",
+      "active": "Active",
+      "past_due": "Payment failed",
+      "suspended": "Blocked"
+    },
+    "paymentKind": {
+      "setup": "Card setup",
+      "renewal": "Monthly charge",
+      "upgrade": "Upgrade",
+      "retry": "Retry",
+      "upcoming": "Upcoming charge"
+    },
+    "paymentStatus": {
+      "pending": "Pending",
+      "succeeded": "Paid",
+      "failed": "Failed",
+      "cancelled": "Cancelled",
+      "scheduled": "Scheduled"
+    }
   },
   "planPricing": {
     "title": "Plans & pricing",
@@ -516,6 +545,7 @@
     "saveAndPay": "Save and pay",
     "saveFailed": "Could not save the package",
     "savedOk": "Package saved",
+    "checkoutFailed": "Could not open the payment window",
     "baseAndChannelsTitle": "Base system + client channels",
     "baseAndChannelsSubtitle": "Mandatory: Base + at least one client channel.",
     "systemPlansTitle": "Resource Packages (mandatory)",

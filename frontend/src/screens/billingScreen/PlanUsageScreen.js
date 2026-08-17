@@ -21,8 +21,8 @@ import ProgressBar from "../../components/specializedComponents/containers/Progr
 
 import billingApi from "../../api/billingApi";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
-import { normalizeCurrencySymbol } from "../../constant/commercialPricing";
 import { formatDisplayDate } from "../../functions/date/formatDateForInput";
+import { showAppToast, toastFromApiError } from "../../components/ui/showAppToast";
 
 import { images } from "../../assets/images/images";
 import { AdminStackName } from "../../navigation/AdminStack";
@@ -32,8 +32,6 @@ import { PlansPricingScreenName } from "./PlansPricingScreen";
 import "./PlanUsageScreen.scss";
 
 export const PlanUsageScreenName = "/PlanUsage";
-
-const normalizeCurrency = normalizeCurrencySymbol;
 
 function bytesToMb(bytes) {
     const b = Number(bytes || 0);
@@ -50,15 +48,19 @@ function formatStorageDisplay(bytes) {
     return `${gb.toFixed(2)} GB`;
 }
 
-function formatMoneyCents(cents) {
-    const n = Number(cents);
-    if (!Number.isFinite(n)) return null;
-    return (n / 100).toFixed(2);
-}
-
 function safeNumber(value) {
     const n = Number(value);
     return Number.isFinite(n) ? n : null;
+}
+
+function asRecord(value) {
+    return value && typeof value === "object" && !Array.isArray(value) ? value : null;
+}
+
+function formatIls(amount) {
+    const n = Number(amount);
+    if (!Number.isFinite(n)) return null;
+    return `${n} ₪`;
 }
 
 export default function PlanUsageScreen() {
@@ -70,7 +72,7 @@ export default function PlanUsageScreen() {
     const [checkoutUrl, setCheckoutUrl] = useState(null);
     const [payBusy, setPayBusy] = useState(false);
 
-    const { result: plan, isPerforming: isPlanLoading, performRequest: reloadPlan } = useAutoHttpRequest(
+    const { result: planResult, isPerforming: isPlanLoading, performRequest: reloadPlan } = useAutoHttpRequest(
         billingApi.getPlan,
         {
             onFailure: () => {
@@ -79,7 +81,7 @@ export default function PlanUsageScreen() {
         }
     );
 
-    const { result: usage, isPerforming: isUsageLoading } = useAutoHttpRequest(
+    const { result: usageResult, isPerforming: isUsageLoading } = useAutoHttpRequest(
         billingApi.getUsage,
         {
             onFailure: () => {
@@ -88,14 +90,19 @@ export default function PlanUsageScreen() {
         }
     );
 
+    const plan = asRecord(planResult);
+    const usage = asRecord(usageResult);
+
     const normalized = useMemo(() => {
         const scope = plan?.scope || (plan?.firmId ? "firm" : "tenant");
+        const pkg = asRecord(plan?.package) || {};
+        const billing = asRecord(plan?.billing) || {};
 
-        const planKey = plan?.planKey || "-";
-        const planName = plan?.name || plan?.planName || "-";
-
+        const planName = pkg.displayName || plan?.name || plan?.planName || pkg.resource?.label || "-";
+        const planKey = plan?.planKey || pkg.resource?.planKey || "-";
+        const priceIls = pkg.total ?? billing.priceMonthlyIls ?? null;
         const priceCents = plan?.priceMonthlyCents ?? plan?.pricing?.priceMonthlyCents ?? null;
-        const priceCurrency = plan?.priceCurrency ?? plan?.pricing?.currency ?? plan?.pricing?.priceCurrency ?? null;
+        const priceCurrency = plan?.priceCurrency ?? pkg.currency ?? plan?.pricing?.currency ?? "ILS";
 
         const retentionCoreDays =
             plan?.retention?.documentsCoreDays ?? plan?.effectiveDocumentsRetentionDaysCore ?? null;
@@ -112,8 +119,6 @@ export default function PlanUsageScreen() {
         const smsThisMonth = usage?.sms?.sentThisMonth ?? usage?.otp?.smsThisMonth ?? null;
 
         const monthStartUtc = usage?.monthStartUtc ?? usage?.period?.monthStartUtc ?? null;
-        const billing = plan?.billing || {};
-        const pkg = plan?.package || {};
 
         return {
             scope,
@@ -122,6 +127,7 @@ export default function PlanUsageScreen() {
 
             planKey,
             planName,
+            priceIls,
             priceCents,
             priceCurrency,
             retentionCoreDays,
@@ -129,6 +135,8 @@ export default function PlanUsageScreen() {
             quotas,
             billing,
             pkg,
+            payments: Array.isArray(billing.payments) ? billing.payments : [],
+            upcomingPayment: billing.upcomingPayment || null,
 
             monthStartUtc,
             meters: {
@@ -152,10 +160,14 @@ export default function PlanUsageScreen() {
     const startCheckout = async () => {
         setPayBusy(true);
         try {
-            const res = await billingApi.createCheckout({ kind: 'retry' });
+            const res = await billingApi.createCheckout({ kind: 'setup' });
             if (res?.success && res.data?.redirectUrl) {
                 setCheckoutUrl(res.data.redirectUrl);
+                return;
             }
+            toastFromApiError(res, t('planUsage.checkoutFailed'));
+        } catch (e) {
+            toastFromApiError(e, t('planUsage.checkoutFailed'));
         } finally {
             setPayBusy(false);
         }
@@ -164,9 +176,17 @@ export default function PlanUsageScreen() {
     const chargeSaved = async () => {
         setPayBusy(true);
         try {
-            await billingApi.chargeNow({ kind: 'retry' });
+            const res = await billingApi.chargeNow({ kind: 'retry' });
+            if (!res?.success) {
+                toastFromApiError(res, t('planUsage.chargeFailed'));
+                return;
+            }
+            showAppToast({ type: 'success', text: t('planUsage.chargeOk') });
             billingApi.invalidateCaches();
+            void reloadPlan([]);
             void refreshLock();
+        } catch (e) {
+            toastFromApiError(e, t('planUsage.chargeFailed'));
         } finally {
             setPayBusy(false);
         }
@@ -205,22 +225,23 @@ export default function PlanUsageScreen() {
         );
     };
 
-    const priceAmount = (isPlanLoading || !plan) ? null : (normalized.priceCents != null ? formatMoneyCents(normalized.priceCents) : null);
-    const priceCurrency = normalizeCurrency(normalized.priceCurrency);
-    const priceText = priceAmount && priceCurrency
-        ? t('planUsage.priceMonthly', { amount: priceAmount, currency: priceCurrency })
+    const monthlyIls = normalized.priceIls != null
+        ? formatIls(normalized.priceIls)
+        : (normalized.priceCents != null ? formatIls(Number(normalized.priceCents) / 100) : null);
+    const priceText = monthlyIls
+        ? t('planUsage.priceMonthly', { amount: monthlyIls.replace(' ₪', ''), currency: '₪' })
         : t('planUsage.quotaNotAvailable');
+    const statusText = normalized.billing?.status
+        ? t(`planUsage.statusValues.${normalized.billing.status}`, { defaultValue: String(normalized.billing.status) })
+        : "-";
+    const nextChargeAmount = formatIls(normalized.billing?.nextChargeIls);
+    const paymentRows = [
+        ...(normalized.upcomingPayment ? [normalized.upcomingPayment] : []),
+        ...normalized.payments,
+    ];
 
     const coreRetentionText = normalized.retentionCoreDays ?? "-";
     const piiRetentionText = normalized.retentionPiiDays ?? "-";
-
-    const scopeText = normalized.scope
-        ? t(`planUsage.scopeValues.${String(normalized.scope).toLowerCase()}`, { defaultValue: String(normalized.scope) })
-        : "-";
-
-    const enforcementModeText = normalized.enforcementMode
-        ? t(`planUsage.enforcementModeValues.${String(normalized.enforcementMode).toLowerCase()}`, { defaultValue: String(normalized.enforcementMode) })
-        : null;
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
@@ -247,8 +268,8 @@ export default function PlanUsageScreen() {
                     <>
                         <SimpleCard className="lw-planUsageScreen__card">
                             <TextBold24>{t('planUsage.planCardTitle')}</TextBold24>
+                            {renderRow(t('planUsage.status'), statusText)}
                             {renderRow(t('planUsage.planName'), normalized.planName)}
-                            {renderRow(t('planUsage.planKey'), normalized.planKey)}
                             {renderRow(t('planUsage.price'), priceText)}
                             {normalized.billing?.stillComplimentary && normalized.billing?.complimentaryUntil && (
                                 renderRow(
@@ -256,13 +277,12 @@ export default function PlanUsageScreen() {
                                     formatDisplayDate(normalized.billing.complimentaryUntil)
                                 )
                             )}
-                            {normalized.billing?.card?.last4 && renderRow(
-                                t('planUsage.savedCard'),
-                                `**** ${normalized.billing.card.last4}`
-                            )}
+                            {normalized.billing?.card?.last4
+                                ? renderRow(t('planUsage.savedCard'), `**** ${normalized.billing.card.last4}`)
+                                : renderRow(t('planUsage.savedCard'), t('planUsage.noCard'))}
                             {normalized.billing?.renewsAt && renderRow(
                                 t('planUsage.nextCharge'),
-                                formatDisplayDate(normalized.billing.renewsAt)
+                                `${formatDisplayDate(normalized.billing.renewsAt)}${nextChargeAmount ? ` · ${nextChargeAmount}` : ''}`
                             )}
                             {normalized.billing?.status === 'past_due' && normalized.billing?.graceUntil && renderRow(
                                 t('planUsage.graceUntil'),
@@ -271,9 +291,6 @@ export default function PlanUsageScreen() {
                             {normalized.pkg?.breakdown?.length > 0 && normalized.pkg.breakdown.map((line) => (
                                 renderRow(line.label, `${line.amount} ₪`)
                             ))}
-                            {renderRow(t('planUsage.scope'), scopeText)}
-                            {normalized.firmId != null && renderRow(t('planUsage.firmId'), String(normalized.firmId))}
-                            {enforcementModeText && renderRow(t('planUsage.enforcementMode'), enforcementModeText)}
 
                             <SimpleButton
                                 className="lw-planUsageScreen__upgradeButton"
@@ -301,25 +318,26 @@ export default function PlanUsageScreen() {
                                     <Text14>{t('planUsage.replaceCard')}</Text14>
                                 </SimpleButton>
                             )}
-                            <SimpleButton
-                                className="lw-planUsageScreen__upgradeButton"
-                                onPress={normalized.billing?.card ? chargeSaved : startCheckout}
-                                disabled={payBusy}
-                            >
-                                <Text14>
-                                    {normalized.billing?.card
-                                        ? t('planUsage.chargeNow')
-                                        : t('planUsage.addCard')}
-                                </Text14>
-                            </SimpleButton>
-                            {normalized.billing?.card && (
-                                <SimpleButton
-                                    className="lw-planUsageScreen__upgradeButton"
-                                    onPress={startCheckout}
-                                    disabled={payBusy}
-                                >
-                                    <Text14>{t('planUsage.replaceCard')}</Text14>
-                                </SimpleButton>
+                        </SimpleCard>
+
+                        <SimpleCard className="lw-planUsageScreen__card">
+                            <TextBold24>{t('planUsage.paymentsTitle')}</TextBold24>
+                            {paymentRows.length === 0 ? (
+                                <Text14>{t('planUsage.noPayments')}</Text14>
+                            ) : (
+                                paymentRows.map((row) => {
+                                    const when = formatDisplayDate(row.settledAt || row.createdAt);
+                                    const kind = t(`planUsage.paymentKind.${row.kind}`, { defaultValue: row.purpose || row.kind });
+                                    const status = t(`planUsage.paymentStatus.${row.status}`, { defaultValue: row.status });
+                                    const amount = formatIls(row.amountIls) || '-';
+                                    return (
+                                        <SimpleContainer key={row.id} className="lw-planUsageScreen__paymentRow">
+                                            {renderRow(kind, `${amount} · ${status}`)}
+                                            {renderRow(t('planUsage.paymentDate'), when)}
+                                            {row.errorMessage ? renderRow(t('planUsage.paymentError'), row.errorMessage) : null}
+                                        </SimpleContainer>
+                                    );
+                                })
                             )}
                         </SimpleCard>
 

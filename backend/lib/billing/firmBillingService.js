@@ -189,6 +189,34 @@ async function expireGraceIfNeeded(row, now = new Date()) {
     return row;
 }
 
+async function listPaymentHistory(limit = 25) {
+    try {
+        const res = await pool.query(
+            `SELECT id, kind, status, amount_ils, currency, purpose, error_message,
+                    created_at, settled_at, takbull_transaction_id
+             FROM firm_payment_intents
+             ORDER BY created_at DESC
+             LIMIT $1`,
+            [Math.min(Math.max(Number(limit) || 25, 1), 100)]
+        );
+        return (res.rows || []).map((row) => ({
+            id: row.id,
+            kind: row.kind,
+            status: row.status,
+            amountIls: Number(row.amount_ils || 0),
+            currency: row.currency || 'ILS',
+            purpose: row.purpose,
+            errorMessage: row.error_message,
+            createdAt: row.created_at,
+            settledAt: row.settled_at,
+            transactionId: row.takbull_transaction_id,
+        }));
+    } catch (e) {
+        if (isRelationMissingError(e)) return [];
+        throw e;
+    }
+}
+
 async function getBillingSnapshot() {
     let row = await ensureBillingRow();
     if (!row) {
@@ -200,6 +228,8 @@ async function getBillingSnapshot() {
             package: resolvePricingLineItems(DEFAULT_SELECTION),
             quotas: quotasForPackage(DEFAULT_SELECTION),
             card: null,
+            payments: [],
+            upcomingPayment: null,
         };
     }
     row = await expireGraceIfNeeded(row);
@@ -212,6 +242,22 @@ async function getBillingSnapshot() {
     const quotas = quotasForPackage(pkg);
     const card = publicCard(await getActiveCard());
     const chargeAmount = flags.stillComplimentary ? 0 : pkg.total;
+    const payments = await listPaymentHistory();
+    const upcomingPayment = row.renewsAt
+        ? {
+            id: 'upcoming',
+            kind: 'upcoming',
+            status: 'scheduled',
+            amountIls: chargeAmount,
+            currency: 'ILS',
+            purpose: flags.stillComplimentary
+                ? 'תחילת חיוב אחרי תקופת ההמתנה'
+                : 'חיוב חודשי הבא',
+            createdAt: row.renewsAt,
+            settledAt: null,
+            errorMessage: null,
+        }
+        : null;
 
     return {
         available: true,
@@ -221,6 +267,8 @@ async function getBillingSnapshot() {
         package: pkg,
         quotas,
         card,
+        payments,
+        upcomingPayment,
         priceMonthlyIls: pkg.total,
         nextChargeIls: chargeAmount,
         payUrl: `${getFrontendBaseUrl()}/AdminStack/PlanUsage`,
@@ -560,6 +608,11 @@ async function savePackage({ platformId, resourceId, signingId, usage, customer 
     await syncTenantSubscription(pkg);
 
     const flags = computeFlags(await getBillingRow());
+    const card = await getActiveCard();
+    if (!card) {
+        const checkout = await createCheckout({ kind: 'setup', customer });
+        return { saved: true, charged: false, checkout, snapshot: await getBillingSnapshot(), evaluation };
+    }
     if (flags.billingEnabled && !flags.stillComplimentary && evaluation.priceIncreased) {
         const charged = await chargeSavedCard({
             kind: 'upgrade',
@@ -703,6 +756,7 @@ module.exports = {
     ensureBillingRow,
     getBillingRow,
     getBillingSnapshot,
+    listPaymentHistory,
     getActiveCard,
     savePackage,
     createCheckout,

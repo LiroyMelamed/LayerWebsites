@@ -1,3 +1,4 @@
+const pool = require('../../config/db');
 const { quotasForPackage, resolvePricingLineItems } = require('../billing/pricingPackage');
 const { isDateInFuture, defaultComplimentaryUntil } = require('../billing/tenantBillingDefaults');
 
@@ -146,7 +147,7 @@ async function resolveFirmPlan(_firmId) {
         const packageQuotas = billingPackage ? quotasForPackage(billingPackage) : null;
         if (packageQuotas) {
             plan.planKey = packageQuotas.planKey || plan.planKey;
-            plan.name = billingPackage.resource?.label || plan.name;
+            plan.name = billingPackage.displayName || billingPackage.resource?.label || plan.name;
             plan.documentsMonthlyQuota = packageQuotas.documentsMonthlyQuota;
             plan.storageMbQuota = packageQuotas.storageMbQuota;
             plan.usersQuota = packageQuotas.usersQuota;

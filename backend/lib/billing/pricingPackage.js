@@ -61,6 +61,7 @@ function resolvePricingLineItems({ platformId, resourceId, signingId } = {}) {
         breakdown,
         total,
         currency: PRICING.currency,
+        displayName: `${resource.label} · ${platform.label} · ${signing.label}`,
     };
 }
 

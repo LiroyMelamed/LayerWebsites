@@ -64,6 +64,7 @@ test('resolvePricingLineItems default site_app + pro + 500 totals 826', () => {
         signingId: '500',
     });
     assert.equal(resolved.total, 249 + 299 + 149 + 129);
+    assert.equal(resolved.displayName, 'פרו · אתר + אפליקציה · 500 חתימות');
     const q = quotasForPackage(resolved);
     assert.equal(q.usersQuota, 5);
     assert.equal(q.storageMbQuota, 1024);
