@@ -13,6 +13,7 @@ const {
     defaultComplimentaryUntil,
     defaultBillingEnabled,
     isDateInFuture,
+    computeFlags,
     addCalendarMonth,
     getPublicApiBaseUrl,
     getFrontendBaseUrl,
@@ -167,22 +168,18 @@ function publicCard(card) {
     };
 }
 
-function computeFlags(row, now = new Date()) {
-    const billingEnabled = row?.billingEnabled !== false;
-    const complimentaryUntil = row?.complimentaryUntil || null;
-    const stillComplimentary = !billingEnabled || isDateInFuture(complimentaryUntil, now);
-    const graceUntil = row?.graceUntil ? new Date(row.graceUntil) : null;
-    const graceExpired = Boolean(
-        row?.status === 'past_due' && graceUntil && graceUntil.getTime() <= now.getTime()
-    );
-    const locked = Boolean(
-        billingEnabled && !stillComplimentary && (row?.status === 'suspended' || graceExpired)
-    );
-    return { billingEnabled, stillComplimentary, graceExpired, locked, complimentaryUntil };
-}
-
 async function expireGraceIfNeeded(row, now = new Date()) {
     const flags = computeFlags(row, now);
+    if (flags.stillComplimentary) {
+        if (row.status === 'past_due' || row.status === 'suspended' || row.graceUntil) {
+            return updateBilling({
+                status: 'complimentary',
+                grace_until: null,
+                last_failed_at: null,
+            });
+        }
+        return row;
+    }
     if (flags.graceExpired && row.status !== 'suspended') {
         return updateBilling({ status: 'suspended' });
     }
@@ -374,7 +371,8 @@ async function markPaymentFailed({ intent, errorMessage, skipEmail } = {}) {
     }
 
     const flags = computeFlags(row, now);
-    if (!flags.billingEnabled || flags.stillComplimentary) {
+    const setupIntent = String(intent?.kind || '') === 'setup';
+    if (!flags.billingEnabled || flags.stillComplimentary || setupIntent) {
         await updateBilling({ last_payment_error: String(errorMessage || '').slice(0, 500) });
         return getBillingSnapshot();
     }

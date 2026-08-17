@@ -5,6 +5,7 @@ const {
     getTenantSlug,
     defaultComplimentaryUntil,
     defaultBillingEnabled,
+    computeFlags,
 } = require('../lib/billing/tenantBillingDefaults');
 const { isExemptPath } = require('../middlewares/requireBillingAccess');
 const { nationalLast9, excludedSeatPhones } = require('../lib/limits/seatExclusions');
@@ -100,4 +101,44 @@ test('excluded seat phones include owner 0507299064 as last-9 507299064', () => 
     assert.equal(nationalLast9('+972507299064'), '507299064');
     assert.equal(nationalLast9('972507299064'), '507299064');
     assert.ok(excludedSeatPhones().includes('507299064'));
+});
+
+test('complimentary firm is never locked even after a failed pay attempt', () => {
+    const now = new Date('2026-08-17T12:00:00.000Z');
+    const flags = computeFlags({
+        billingEnabled: true,
+        status: 'past_due',
+        complimentaryUntil: '2027-01-01T21:59:59.999Z',
+        graceUntil: '2026-08-16T12:00:00.000Z',
+        lastPaymentError: 'INVALID',
+    }, now);
+    assert.equal(flags.stillComplimentary, true);
+    assert.equal(flags.locked, false);
+});
+
+test('setup-style failure during complimentary does not lock', () => {
+    const now = new Date('2026-08-17T12:00:00.000Z');
+    const flags = computeFlags({
+        billingEnabled: true,
+        status: 'complimentary',
+        complimentaryUntil: '2026-09-01T20:59:59.999Z',
+        graceUntil: null,
+        lastPaymentError: 'לא שמור כרטיס אשראי',
+    }, now);
+    assert.equal(flags.stillComplimentary, true);
+    assert.equal(flags.graceExpired, false);
+    assert.equal(flags.locked, false);
+});
+
+test('after complimentary ends, expired grace locks the firm', () => {
+    const now = new Date('2026-09-05T12:00:00.000Z');
+    const flags = computeFlags({
+        billingEnabled: true,
+        status: 'past_due',
+        complimentaryUntil: '2026-09-01T20:59:59.999Z',
+        graceUntil: '2026-09-04T12:00:00.000Z',
+    }, now);
+    assert.equal(flags.stillComplimentary, false);
+    assert.equal(flags.graceExpired, true);
+    assert.equal(flags.locked, true);
 });
