@@ -6,9 +6,7 @@ import { useScreenSize } from "../../providers/ScreenSizeProvider";
 
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
 import SimpleScrollView from "../../components/simpleComponents/SimpleScrollView";
-import SimpleCard from "../../components/simpleComponents/SimpleCard";
 import SimpleButton from "../../components/simpleComponents/SimpleButton";
-import Separator from "../../components/styledComponents/separators/Separator";
 
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
 import { getNavBarData } from "../../components/navBars/data/NavBarData";
@@ -16,7 +14,7 @@ import { getNavBarData } from "../../components/navBars/data/NavBarData";
 import { Text14, TextBold24 } from "../../components/specializedComponents/text/AllTextKindFile";
 
 import PricingCalculatorCard from "../../components/pricing/PricingCalculatorCard";
-import { PRICING_CONFIG, getPricingSelectionDefaults } from "../../components/pricing/pricingConfig";
+import { getPricingSelectionDefaults } from "../../components/pricing/pricingConfig";
 import TakbullCheckoutDialog from "../../components/billing/TakbullCheckoutDialog";
 
 import billingApi from "../../api/billingApi";
@@ -31,18 +29,6 @@ import { setLanguage } from "../../i18n/i18n";
 import "./PlansPricingScreen.scss";
 
 export const PlansPricingScreenName = "/PlansPricing";
-
-function safeDiv(numerator, denominator) {
-    const n = Number(numerator);
-    const d = Number(denominator);
-    if (!Number.isFinite(n) || !Number.isFinite(d) || d === 0) return null;
-    return n / d;
-}
-
-function formatRate(rate) {
-    if (rate == null) return null;
-    return rate.toFixed(2);
-}
 
 export default function PlansPricingScreen() {
     const { t } = useTranslation();
@@ -145,70 +131,6 @@ export default function PlansPricingScreen() {
                         </>
                     )}
                 />
-
-                <TextBold24 className="lw-plansPricingScreen__sectionTitle lw-plansPricingScreen__sectionTitle--spaced">{t('planPricing.signingSectionTitle')}</TextBold24>
-                <Text14 className="lw-plansPricingScreen__sectionSubtitle">{t('planPricing.signingSectionSubtitle')}</Text14>
-
-                <SimpleCard className="lw-plansPricingScreen__card">
-                    <TextBold24>{t('planPricing.signing.title')}</TextBold24>
-                    <ul className="lw-plansPricingScreen__bullets">
-                        <li><Text14>{t('planPricing.signing.b1')}</Text14></li>
-                        <li><Text14>{t('planPricing.signing.b2')}</Text14></li>
-                        <li><Text14>{t('planPricing.signing.b3')}</Text14></li>
-                        <li><Text14>{t('planPricing.signing.b4')}</Text14></li>
-                    </ul>
-
-                    <Separator className="lw-plansPricingScreen__divider" />
-
-                    {(() => {
-                        const currency = PRICING_CONFIG.currency;
-
-                        const packages = PRICING_CONFIG.signing
-                            .filter((p) => p.id !== 'none' && p.id !== 'unlimited')
-                            .map((p) => ({
-                                key: p.id,
-                                packageName: p.label,
-                                included: p.includedSignatures,
-                                amount: p.amount,
-                            }));
-
-                        const unlimited = PRICING_CONFIG.signing.find((p) => p.id === 'unlimited');
-
-                        return (
-                            <ul className="lw-plansPricingScreen__bullets">
-                                {packages.map((p) => {
-                                    const rate = formatRate(safeDiv(p.amount, p.included));
-                                    return (
-                                        <li key={p.key}>
-                                            <Text14>
-                                                {t('planPricing.signing.packageLine', {
-                                                    packageName: p.packageName,
-                                                    included: p.included,
-                                                    currency,
-                                                    amount: p.amount,
-                                                    rate,
-                                                })}
-                                            </Text14>
-                                        </li>
-                                    );
-                                })}
-                                {unlimited && (
-                                    <li key="signingUnlimited">
-                                        <Text14>
-                                            {t('planPricing.signing.unlimitedLine', {
-                                                currency,
-                                                amount: unlimited.amount,
-                                            })}
-                                        </Text14>
-                                    </li>
-                                )}
-                            </ul>
-                        );
-                    })()}
-
-                    <Text14 className="lw-plansPricingScreen__commercialNote">{t('planPricing.signing.overageExplanation')}</Text14>
-                    <Text14 className="lw-plansPricingScreen__commercialNote">{t('planPricing.signing.fairUseExplanation')}</Text14>
-                </SimpleCard>
             </SimpleScrollView>
             <TakbullCheckoutDialog
                 open={Boolean(checkoutUrl)}
