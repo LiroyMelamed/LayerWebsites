@@ -773,4 +773,6 @@ module.exports = {
     getDisabledOptions,
     computeFlags,
     findIntentById,
+    updateBilling,
+    syncTenantSubscription,
 };
