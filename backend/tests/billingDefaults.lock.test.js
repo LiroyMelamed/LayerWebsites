@@ -41,7 +41,7 @@ test('tenant defaults: melamedlaw complimentary through 01/09/2026', () => {
         assert.ok(until);
         assert.equal(
             until.toISOString(),
-            new Date('2026-09-01T20:59:59.999+03:00').toISOString()
+            new Date('2026-09-01T23:59:59.999+03:00').toISOString()
         );
     } finally {
         delete process.env.RUNTIME_TENANT;

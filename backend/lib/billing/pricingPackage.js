@@ -95,6 +95,70 @@ function quotaExceeded(used, quota) {
     return u > q;
 }
 
+/** SMS monthly caps follow subscription_plans for the resource plan_key. */
+const RESOURCE_SMS_MONTHLY_QUOTA = {
+    basic: 200,
+    pro: 2000,
+    enterprise: null,
+};
+
+const SIGNING_FLOOR_ID = '500';
+
+function signingRank(signingId) {
+    const idx = PRICING.signing.findIndex((s) => s.id === signingId);
+    return idx < 0 ? 0 : idx;
+}
+
+/**
+ * Cheapest pack that fits current usage.
+ * Platform stays as-is (already deployed). Signing never drops below 500.
+ * Resource considers seats, storage, and SMS volume.
+ */
+function recommendCheapestPackage({ current, usage } = {}) {
+    const cur = resolvePricingLineItems(current || DEFAULT_SELECTION);
+    const platformId = cur.platformId;
+    const smsUsed = Number(usage?.sms?.sentThisMonth || 0);
+
+    let resourceId = 'enterprise';
+    for (const resource of PRICING.resources) {
+        const ev = evaluatePackageChange({
+            current: cur,
+            next: { platformId, resourceId: resource.id, signingId: cur.signingId },
+            usage,
+        });
+        const smsOk = !quotaExceeded(smsUsed, RESOURCE_SMS_MONTHLY_QUOTA[resource.id]);
+        if (ev.allowed && smsOk) {
+            resourceId = resource.id;
+            break;
+        }
+    }
+
+    const floorRank = signingRank(SIGNING_FLOOR_ID);
+    let signingId = 'unlimited';
+    for (const signing of PRICING.signing) {
+        if (signingRank(signing.id) < floorRank) continue;
+        const ev = evaluatePackageChange({
+            current: cur,
+            next: { platformId, resourceId, signingId: signing.id },
+            usage,
+        });
+        if (ev.allowed) {
+            signingId = signing.id;
+            break;
+        }
+    }
+
+    const recommended = resolvePricingLineItems({ platformId, resourceId, signingId });
+    return {
+        current: cur,
+        recommended,
+        changed:
+            cur.platformId !== recommended.platformId
+            || cur.resourceId !== recommended.resourceId
+            || cur.signingId !== recommended.signingId,
+    };
+}
+
 /**
  * Cheaper resource/signing packs are blocked when current usage would not fit.
  * Platform add-on cannot be decreased (already deployed).
@@ -184,9 +248,11 @@ function disabledOptionsForUsage({ current, usage } = {}) {
 module.exports = {
     PRICING,
     DEFAULT_SELECTION,
+    RESOURCE_SMS_MONTHLY_QUOTA,
     resolvePricingLineItems,
     quotasForPackage,
     platformRank,
     evaluatePackageChange,
     disabledOptionsForUsage,
+    recommendCheapestPackage,
 };
