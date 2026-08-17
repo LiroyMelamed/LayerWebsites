@@ -19,6 +19,8 @@ import SigningScreen from "../screens/signingScreen/SigningScreen";
 import NotificationsScreen from "../screens/client/notifications/NotificationsScreen";
 import ProfileScreen from "../screens/client/profile/ProfileScreen";
 import ClientTicketScreen from "../screens/client/ticket/ClientTicketScreen";
+import BillingLockedScreen from "../components/billing/BillingLockedScreen";
+import { useBillingLock } from "../providers/BillingLockProvider";
 
 export const ClientStackName = "/ClientStack";
 
@@ -29,7 +31,9 @@ function toRelativePath(pathname) {
 
 function ClientStack() {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const { locked, loaded } = useBillingLock();
     if (!token) return <Navigate to={LoginStackName + LoginScreenName} replace />;
+    if (loaded && locked) return <BillingLockedScreen />;
 
     return (
         <TopAndRightNavBar LogoNavigate={ClientStackName + ClientMainScreenName} GetNavBarData={getClientNavBarData}>

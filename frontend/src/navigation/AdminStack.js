@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import TopAndRightNavBar from "../components/navBars/TopAndRightNavBar";
 import RouteFallback from "../components/simpleComponents/RouteFallback";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import {
     AllCasesScreenName,
     AllCasesTypeScreenName,
@@ -41,6 +41,8 @@ import RemindersScreen from "../screens/remindersScreen/RemindersScreen";
 import PlatformSettingsScreen from "../screens/platformSettingsScreen/PlatformSettingsScreen";
 import CalendarScreen from "../screens/calendarScreen/CalendarScreen";
 import DailyAgendaScreen from "../screens/calendarScreen/DailyAgendaScreen";
+import BillingLockedScreen from "../components/billing/BillingLockedScreen";
+import { useBillingLock } from "../providers/BillingLockProvider";
 
 export const AdminStackName = "/AdminStack";
 
@@ -52,7 +54,18 @@ function toRelativePath(pathname) {
 function AdminStack() {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     const calendarEnabled = useCalendarModuleEnabled();
+    const location = useLocation();
+    const { locked, loaded } = useBillingLock();
+    const isPlatformAdmin = typeof window !== "undefined" && localStorage.getItem("isPlatformAdmin") === "true";
     if (!token) return <Navigate to={LoginStackName + LoginScreenName} replace />;
+
+    const onBillingRoute = /PlanUsage|PlansPricing/i.test(location.pathname || "");
+    if (loaded && locked && !(isPlatformAdmin && onBillingRoute)) {
+        if (isPlatformAdmin) {
+            return <Navigate to={`${AdminStackName}${PlanUsageScreenName}`} replace />;
+        }
+        return <BillingLockedScreen />;
+    }
 
     return (
         <TopAndRightNavBar LogoNavigate={AdminStackName + MainScreenName}>

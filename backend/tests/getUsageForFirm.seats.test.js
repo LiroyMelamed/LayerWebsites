@@ -6,7 +6,7 @@ process.env.NODE_ENV = 'test';
 const pool = require('../config/db');
 
 /** Shared stub factory – returns a pool.query replacement that handles
- *  all four getUsageForFirm queries (docs, storage, seats, sms). */
+ *  getUsageForFirm queries (docs, storage bytes, seats, sms). */
 function makeQueryStub(overrides = {}) {
     const seenSql = [];
 
@@ -17,8 +17,8 @@ function makeQueryStub(overrides = {}) {
         if (s.includes('"DocumentsCreatedThisMonth"')) {
             return { rows: [{ DocumentsCreatedThisMonth: '0', DocumentsTotal: '0' }] };
         }
-        if (s.includes('"StorageBytesTotal"')) {
-            return { rows: [{ StorageBytesTotal: '0' }] };
+        if (/\bas bytes\b/i.test(s) || s.includes('"StorageBytesTotal"')) {
+            return { rows: [{ bytes: '0', StorageBytesTotal: '0' }] };
         }
         if (s.includes('"SeatsUsed"')) {
             return { rows: [{ SeatsUsed: overrides.seats ?? 2 }] };
@@ -39,7 +39,7 @@ test('getUsageForFirm counts seats using only Admin role (system administrators)
     pool.query = stub;
 
     try {
-        // Require after stubbing to ensure module loads cleanly in test env.
+        delete require.cache[require.resolve('../lib/limits/getUsageForFirm')];
         const { getUsageForFirm } = require('../lib/limits/getUsageForFirm');
 
         const usage = await getUsageForFirm(null);
@@ -51,6 +51,8 @@ test('getUsageForFirm counts seats using only Admin role (system administrators)
         assert.ok(seatsSql, 'expected SeatsUsed query');
         assert.match(seatsSql, /from\s+users/i);
         assert.match(seatsSql, /role\s*=\s*'Admin'/i);
+        assert.match(seatsSql, /platform_admins/i);
+        assert.match(seatsSql, /phonenumber/i);
     } finally {
         pool.query = originalQuery;
     }
@@ -62,7 +64,6 @@ test('getUsageForFirm returns real SMS count from message_delivery_events', asyn
     pool.query = stub;
 
     try {
-        // Re-require to pick up fresh module
         delete require.cache[require.resolve('../lib/limits/getUsageForFirm')];
         const { getUsageForFirm } = require('../lib/limits/getUsageForFirm');
 

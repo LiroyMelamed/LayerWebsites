@@ -67,6 +67,19 @@
     "enterOtpInstruction": "הקלד את הקוד שקיבלת בהודעה",
     "tagline": "כל המידע על התיק שלך במקום אחד!"
   },
+  "billingLock": {
+    "title": "הגישה למערכת נחסמה",
+    "body": "התשלום החודשי לא הושלם. המערכת תיפתח מיד לאחר הסדרת התשלום.",
+    "deadline": "יש לשלם עד {{date}}",
+    "payCta": "לתשלום עכשיו",
+    "contactAdmin": "פנו למנהל הפלטפורמה במשרד כדי להסדיר את התשלום."
+  },
+  "billing": {
+    "checkoutTitle": "תשלום מאובטח",
+    "checkoutHint": "השלימו את התשלום בחלון הסליקה. הכרטיס יישמר לחיוב החודשי.",
+    "openInNewTab": "פתיחה בחלון חדש",
+    "closeCheckout": "סגירה"
+  },
   "errors": {
     "invalidPhone": "מספר פלאפון לא תקין",
     "invalidOtp": "קוד לא תקין",
@@ -784,11 +797,54 @@
       "sms": "SMS"
     },
     "storageApprox": "~ {{size}} בשימוש",
-    "loadingUsage": "טוען נתוני שימוש..."
+    "loadingUsage": "טוען נתוני שימוש...",
+    "complimentaryUntil": "ללא תשלום עד:",
+    "savedCard": "כרטיס שמור:",
+    "nextCharge": "חיוב הבא:",
+    "graceUntil": "חסימה אם לא ישולם עד:",
+    "addCard": "הוספת כרטיס / תשלום",
+    "chargeNow": "חיוב הכרטיס השמור",
+    "replaceCard": "החלפת כרטיס",
+    "status": "סטטוס:",
+    "noCard": "לא שמור כרטיס",
+    "checkoutFailed": "לא ניתן לפתוח את חלון התשלום",
+    "chargeFailed": "החיוב לא בוצע",
+    "chargeOk": "החיוב בוצע",
+    "chargeSkipped": "אין חיוב כרגע — התקופה ללא תשלום עדיין פעילה",
+    "paySuccess": "התשלום בוצע בהצלחה",
+    "payFailed": "התשלום לא בוצע",
+    "paymentsTitle": "חיובים",
+    "noPayments": "אין חיובים עדיין",
+    "paymentDate": "תאריך:",
+    "paymentError": "סיבת כישלון:",
+    "statusValues": {
+      "complimentary": "ללא תשלום",
+      "active": "פעיל",
+      "past_due": "תשלום נכשל",
+      "suspended": "חסום"
+    },
+    "paymentKind": {
+      "setup": "שמירת כרטיס",
+      "renewal": "חיוב חודשי",
+      "upgrade": "שדרוג",
+      "retry": "ניסיון חוזר",
+      "upcoming": "חיוב עתידי"
+    },
+    "paymentStatus": {
+      "pending": "ממתין",
+      "succeeded": "שולם",
+      "failed": "נכשל",
+      "cancelled": "בוטל",
+      "scheduled": "מתוכנן"
+    }
   },
   "planPricing": {
     "title": "חבילות ותמחור",
     "subtitle": "כל מה שמשלמים עליו — מוסבר בצורה ברורה.",
+    "saveAndPay": "שמירה ותשלום",
+    "saveFailed": "לא ניתן לשמור את החבילה",
+    "savedOk": "החבילה נשמרה",
+    "checkoutFailed": "לא ניתן לפתוח את חלון התשלום",
     "baseAndChannelsTitle": "בסיס מערכת + ערוצי לקוח",
     "baseAndChannelsSubtitle": "חובה: בסיס מערכת + לפחות ערוץ לקוח אחד.",
     "systemPlansTitle": "חבילות משאבים (חובה)",
