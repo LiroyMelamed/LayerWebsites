@@ -20,6 +20,8 @@ function billingPayload(snap, extra = {}) {
             lastPaymentError: snap.lastPaymentError,
             lastPaidAt: snap.lastPaidAt,
             priceMonthlyIls: snap.priceMonthlyIls,
+            priceYearlyIls: snap.priceYearlyIls,
+            billingInterval: snap.billingInterval || 'monthly',
             nextChargeIls: snap.nextChargeIls,
             card: snap.card,
             payUrl: snap.payUrl,
@@ -149,6 +151,7 @@ exports.savePackage = async (req, res) => {
             platformId: req.body?.platformId,
             resourceId: req.body?.resourceId,
             signingId: req.body?.signingId,
+            billingInterval: req.body?.billingInterval,
             usage,
             customer: {
                 name: req.user?.Name || null,

@@ -525,6 +525,13 @@
     "planKey": "مفتاح الخطة:",
     "price": "السعر:",
     "priceMonthly": "{{currency}}{{amount}} / شهر + ض.ق.م",
+    "priceYearly": "{{currency}}{{amount}} / سنة + ض.ق.م · خصم 10%",
+    "priceYearlyLabel": "السعر السنوي:",
+    "billingInterval": "دورة الفوترة:",
+    "intervalMonthly": "شهري",
+    "intervalYearly": "سنوي · خصم 10%",
+    "intervalSaved": "تم تحديث دورة الفوترة",
+    "payYearNow": "ادفع سنة مقدماً · {{amount}} ₪ (خصم 10%)",
     "exclVat": "+ ض.ق.م",
     "commercialPricingHint": "كيف يعمل التسعير (تجاري):\n1) Core (إجباري): {{currency}}{{coreAmount}} / شهر\n2) قنوات العميل (اختر واحدة على الأقل): Portal / App / Bundle\n3) حزمة الموارد (إجباري): Basic / Pro / Enterprise — تحدد حدود الاستخدام (التخزين، المقاعد، الاحتفاظ)\n4) التوقيع + الأدلة (اختياري): اختر حزمة شهرية (Starter / Pro / Office / Unlimited). يتم عرض السعر الفعّال لكل مستند للتوضيح فقط (سعر الحزمة ÷ العدد المضمن).",
     "scope": "النطاق:",
@@ -591,6 +598,7 @@
     "paymentKind": {
       "setup": "حفظ البطاقة",
       "renewal": "تحصيل شهري",
+      "annual": "تحصيل سنوي",
       "upgrade": "ترقية",
       "retry": "إعادة المحاولة",
       "upcoming": "تحصيل قادم"
@@ -631,7 +639,7 @@
   },
   "planPricing": {
     "title": "الخطط والأسعار",
-    "subtitle": "كل ما تدفعه — واضح وبسيط.",
+    "subtitle": "كل ما تدفعه — واضح وبسيط. الدفع السنوي يوفر 10%.",
     "saveAndPay": "حفظ ودفع",
     "saveFailed": "تعذر حفظ الحزمة",
     "savedOk": "تم حفظ الحزمة",

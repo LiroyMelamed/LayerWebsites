@@ -7,6 +7,8 @@ const {
     evaluatePackageChange,
     disabledOptionsForUsage,
     DEFAULT_SELECTION,
+    normalizeBillingInterval,
+    yearlyTotalIls,
 } = require('./pricingPackage');
 const {
     getTenantSlug,
@@ -15,6 +17,7 @@ const {
     isDateInFuture,
     computeFlags,
     addCalendarMonth,
+    addCalendarYear,
     getPublicApiBaseUrl,
     getFrontendBaseUrl,
 } = require('./tenantBillingDefaults');
@@ -43,6 +46,7 @@ function mapBillingRow(row) {
         resourceId: row.resource_id,
         signingId: row.signing_id,
         priceMonthlyIls: Number(row.price_monthly_ils || 0),
+        billingInterval: normalizeBillingInterval(row.billing_interval),
         status: row.status,
         billingEnabled: row.billing_enabled !== false,
         complimentaryUntil: row.complimentary_until,
@@ -239,16 +243,21 @@ async function getBillingSnapshot() {
     const quotas = quotasForPackage(pkg);
     const card = publicCard(await getActiveCard());
     const payments = await listPaymentHistory();
+    const billingInterval = normalizeBillingInterval(row.billingInterval);
+    const priceYearlyIls = yearlyTotalIls(pkg.total);
+    const nextChargeIls = billingInterval === 'yearly' ? priceYearlyIls : Number(pkg.total || 0);
     const upcomingPayment = row.renewsAt
         ? {
             id: 'upcoming',
             kind: 'upcoming',
             status: 'scheduled',
-            amountIls: Number(pkg.total || 0),
+            amountIls: nextChargeIls,
             currency: 'ILS',
             purpose: flags.stillComplimentary
-                ? 'חיוב חודשי ראשון אחרי תקופת ההמתנה'
-                : 'חיוב חודשי הבא',
+                ? (billingInterval === 'yearly'
+                    ? 'חיוב שנתי ראשון אחרי תקופת ההמתנה'
+                    : 'חיוב חודשי ראשון אחרי תקופת ההמתנה')
+                : (billingInterval === 'yearly' ? 'חיוב שנתי הבא' : 'חיוב חודשי הבא'),
             createdAt: row.renewsAt,
             settledAt: null,
             errorMessage: null,
@@ -266,7 +275,9 @@ async function getBillingSnapshot() {
         payments,
         upcomingPayment,
         priceMonthlyIls: pkg.total,
-        nextChargeIls: Number(pkg.total || 0),
+        priceYearlyIls,
+        billingInterval,
+        nextChargeIls,
         payUrl: `${getFrontendBaseUrl()}/AdminStack/PlanUsage`,
     };
 }
@@ -442,12 +453,28 @@ async function settleSuccessfulPayment({ intent, tokenInfo, transactionId } = {}
         signingId: row.signingId,
     });
     const flags = computeFlags(row);
-    const renewsAt = flags.stillComplimentary
-        ? (row.complimentaryUntil || addCalendarMonth(new Date()))
-        : addCalendarMonth(new Date());
+    const interval = normalizeBillingInterval(
+        intent?.kind === 'annual' ? 'yearly' : row.billingInterval
+    );
+    const paidAnnual = Boolean(
+        intent && (intent.kind === 'annual' || (interval === 'yearly' && intent.kind !== 'setup'))
+    );
+    let renewsAt;
+    if (paidAnnual) {
+        const times = [Date.now()];
+        if (row.renewsAt) times.push(new Date(row.renewsAt).getTime());
+        if (row.complimentaryUntil) times.push(new Date(row.complimentaryUntil).getTime());
+        const start = new Date(Math.max(...times.filter((n) => Number.isFinite(n))));
+        renewsAt = addCalendarYear(start);
+    } else if (flags.stillComplimentary) {
+        renewsAt = row.complimentaryUntil || addCalendarMonth(new Date());
+    } else {
+        renewsAt = addCalendarMonth(new Date());
+    }
 
     await updateBilling({
         status: flags.stillComplimentary ? 'complimentary' : 'active',
+        billing_interval: interval,
         grace_until: null,
         last_payment_error: null,
         last_failed_at: null,
@@ -468,21 +495,28 @@ async function createCheckout({ kind, customer } = {}) {
     }
 
     const snap = await getBillingSnapshot();
-    const isSetup = snap.stillComplimentary || kind === 'setup';
-    const amount = isSetup ? SETUP_AMOUNT_ILS : Number(snap.package.total || 0);
+    const interval = normalizeBillingInterval(
+        kind === 'annual' ? 'yearly' : snap.billingInterval
+    );
+    const isSetup = kind === 'setup' || (snap.stillComplimentary && kind !== 'annual');
+    const amount = isSetup
+        ? SETUP_AMOUNT_ILS
+        : (interval === 'yearly' ? Number(snap.priceYearlyIls || 0) : Number(snap.package.total || 0));
     if (!isSetup && amount <= 0) {
         const err = new Error('אין סכום לחיוב');
         err.code = 'NO_AMOUNT';
         throw err;
     }
 
-    const intentKind = isSetup ? 'setup' : (kind === 'retry' ? 'retry' : 'renewal');
-    const purpose = isSetup ? 'אימות כרטיס אשראי — מנוי מערכת' : 'מנוי חודשי — מערכת עורכי דין';
+    const intentKind = isSetup ? 'setup' : (kind === 'annual' ? 'annual' : (kind === 'retry' ? 'retry' : 'renewal'));
+    const purpose = isSetup
+        ? 'אימות כרטיס אשראי — מנוי מערכת'
+        : (interval === 'yearly' ? 'מנוי שנתי — מערכת עורכי דין (10% הנחה)' : 'מנוי חודשי — מערכת עורכי דין');
     const intent = await createIntent({
         kind: intentKind,
         amountIls: amount,
         purpose,
-        packageSnapshot: snap.package,
+        packageSnapshot: { ...snap.package, billingInterval: interval },
     });
 
     const page = await createTakbullPaymentPage({
@@ -523,7 +557,7 @@ async function chargeSavedCard({ kind, amountOverride, skipEmail } = {}) {
     if (!snap.billingEnabled) {
         return { skipped: true, reason: 'billing_disabled', snapshot: snap };
     }
-    if (snap.stillComplimentary && kind !== 'setup') {
+    if (snap.stillComplimentary && kind !== 'setup' && kind !== 'annual') {
         return { skipped: true, reason: 'complimentary', snapshot: snap };
     }
     if (!creds) {
@@ -533,7 +567,14 @@ async function chargeSavedCard({ kind, amountOverride, skipEmail } = {}) {
         return markPaymentFailed({ errorMessage: 'לא שמור כרטיס אשראי', skipEmail });
     }
 
-    const amount = Number(amountOverride != null ? amountOverride : snap.package.total || 0);
+    const interval = normalizeBillingInterval(
+        kind === 'annual' ? 'yearly' : snap.billingInterval
+    );
+    const amount = Number(
+        amountOverride != null
+            ? amountOverride
+            : (interval === 'yearly' ? snap.priceYearlyIls : snap.package.total || 0)
+    );
     if (amount <= 0) {
         return { skipped: true, reason: 'zero_amount', snapshot: snap };
     }
@@ -546,10 +587,10 @@ async function chargeSavedCard({ kind, amountOverride, skipEmail } = {}) {
     }
 
     const intent = await createIntent({
-        kind: kind || 'renewal',
+        kind: kind === 'annual' ? 'annual' : (kind || 'renewal'),
         amountIls: amount,
-        purpose: 'מנוי חודשי — מערכת עורכי דין',
-        packageSnapshot: snap.package,
+        purpose: interval === 'yearly' ? 'מנוי שנתי — מערכת עורכי דין (10% הנחה)' : 'מנוי חודשי — מערכת עורכי דין',
+        packageSnapshot: { ...snap.package, billingInterval: interval },
     });
 
     const charged = await chargeTakbullToken({
@@ -561,7 +602,7 @@ async function chargeSavedCard({ kind, amountOverride, skipEmail } = {}) {
         ipnAddress: ipnAddress(),
         redirectAddress: returnAddress(),
         cancelReturnAddress: cancelAddress(),
-        purpose: 'מנוי חודשי — מערכת עורכי דין',
+        purpose: interval === 'yearly' ? 'מנוי שנתי — מערכת עורכי דין (10% הנחה)' : 'מנוי חודשי — מערכת עורכי דין',
     });
 
     await pool.query(
@@ -585,7 +626,7 @@ async function chargeSavedCard({ kind, amountOverride, skipEmail } = {}) {
     return { ok: true, snapshot };
 }
 
-async function savePackage({ platformId, resourceId, signingId, usage, customer } = {}) {
+async function savePackage({ platformId, resourceId, signingId, billingInterval, usage, customer } = {}) {
     const row = await ensureBillingRow();
     const current = {
         platformId: row.platformId,
@@ -602,13 +643,25 @@ async function savePackage({ platformId, resourceId, signingId, usage, customer 
     }
 
     const pkg = evaluation.next;
+    const interval = billingInterval != null
+        ? normalizeBillingInterval(billingInterval)
+        : normalizeBillingInterval(row.billingInterval);
+    const packChanged = current.platformId !== pkg.platformId
+        || current.resourceId !== pkg.resourceId
+        || current.signingId !== pkg.signingId;
+
     await updateBilling({
         platform_id: pkg.platformId,
         resource_id: pkg.resourceId,
         signing_id: pkg.signingId,
         price_monthly_ils: pkg.total,
+        billing_interval: interval,
     });
     await syncTenantSubscription(pkg);
+
+    if (!packChanged) {
+        return { saved: true, charged: false, snapshot: await getBillingSnapshot(), evaluation };
+    }
 
     const flags = computeFlags(await getBillingRow());
     const card = await getActiveCard();
@@ -618,12 +671,12 @@ async function savePackage({ platformId, resourceId, signingId, usage, customer 
     }
     if (flags.billingEnabled && !flags.stillComplimentary && evaluation.priceIncreased) {
         const charged = await chargeSavedCard({
-            kind: 'upgrade',
-            amountOverride: pkg.total,
+            kind: interval === 'yearly' ? 'annual' : 'upgrade',
+            amountOverride: interval === 'yearly' ? yearlyTotalIls(pkg.total) : pkg.total,
             skipEmail: false,
         });
         if (charged?.ok === false || charged?.snapshot?.status === 'past_due') {
-            const checkout = await createCheckout({ kind: 'retry', customer });
+            const checkout = await createCheckout({ kind: interval === 'yearly' ? 'annual' : 'retry', customer });
             return { saved: true, charged: false, checkout, snapshot: await getBillingSnapshot(), evaluation };
         }
         return { saved: true, charged: true, snapshot: charged.snapshot || await getBillingSnapshot(), evaluation };
@@ -732,8 +785,9 @@ async function runBillingMaintenance({ now = new Date() } = {}) {
     }
 
     if (latest.status === 'complimentary' || due || pastDueRetry) {
+        const yearly = normalizeBillingInterval(latest.billingInterval) === 'yearly';
         const result = await chargeSavedCard({
-            kind: latest.status === 'past_due' ? 'retry' : 'renewal',
+            kind: latest.status === 'past_due' ? 'retry' : (yearly ? 'annual' : 'renewal'),
         });
         return { charged: true, result };
     }
