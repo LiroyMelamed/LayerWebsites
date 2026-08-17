@@ -431,7 +431,7 @@ export default function PlanUsageScreen() {
                                         onPress={payYearNow}
                                         disabled={payBusy}
                                     >
-                                        <TextBold14>{t('planUsage.payYearNow')}</TextBold14>
+                                        <TextBold14 style={{ color: "#fff" }}>{t('planUsage.payYearNow')}</TextBold14>
                                     </SimpleButton>
                                 )}
                                 <SimpleButton
