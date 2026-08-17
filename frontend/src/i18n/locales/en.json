@@ -44,6 +44,19 @@
     "enterOtpInstruction": "Enter the code you received in the message",
     "tagline": "All your case information in one place!"
   },
+  "billingLock": {
+    "title": "Access to the system is blocked",
+    "body": "The monthly payment was not completed. Access will resume as soon as payment is settled.",
+    "deadline": "Please pay by {{date}}",
+    "payCta": "Pay now",
+    "contactAdmin": "Ask your office platform admin to settle the payment."
+  },
+  "billing": {
+    "checkoutTitle": "Secure payment",
+    "checkoutHint": "Complete payment in the checkout window. The card will be saved for monthly billing.",
+    "openInNewTab": "Open in a new tab",
+    "closeCheckout": "Close"
+  },
   "errors": {
     "invalidPhone": "Invalid phone number",
     "invalidOtp": "Invalid code",
@@ -488,11 +501,54 @@
       "sms": "SMS"
     },
     "storageApprox": "~ {{size}} used",
-    "loadingUsage": "Loading usage data..."
+    "loadingUsage": "Loading usage data...",
+    "complimentaryUntil": "Complimentary until:",
+    "savedCard": "Saved card:",
+    "nextCharge": "Next charge:",
+    "graceUntil": "Blocked unless paid by:",
+    "addCard": "Add card / pay",
+    "chargeNow": "Charge saved card",
+    "replaceCard": "Replace card",
+    "status": "Status:",
+    "noCard": "No card on file",
+    "checkoutFailed": "Could not open the payment window",
+    "chargeFailed": "Charge failed",
+    "chargeOk": "Charge completed",
+    "chargeSkipped": "No charge right now — the complimentary period is still active",
+    "paySuccess": "Payment completed successfully",
+    "payFailed": "Payment was not completed",
+    "paymentsTitle": "Payments",
+    "noPayments": "No payments yet",
+    "paymentDate": "Date:",
+    "paymentError": "Failure reason:",
+    "statusValues": {
+      "complimentary": "Complimentary",
+      "active": "Active",
+      "past_due": "Payment failed",
+      "suspended": "Blocked"
+    },
+    "paymentKind": {
+      "setup": "Card setup",
+      "renewal": "Monthly charge",
+      "upgrade": "Upgrade",
+      "retry": "Retry",
+      "upcoming": "Upcoming charge"
+    },
+    "paymentStatus": {
+      "pending": "Pending",
+      "succeeded": "Paid",
+      "failed": "Failed",
+      "cancelled": "Cancelled",
+      "scheduled": "Scheduled"
+    }
   },
   "planPricing": {
     "title": "Plans & pricing",
     "subtitle": "Everything you pay for, explained clearly.",
+    "saveAndPay": "Save and pay",
+    "saveFailed": "Could not save the package",
+    "savedOk": "Package saved",
+    "checkoutFailed": "Could not open the payment window",
     "baseAndChannelsTitle": "Base system + client channels",
     "baseAndChannelsSubtitle": "Mandatory: Base + at least one client channel.",
     "systemPlansTitle": "Resource Packages (mandatory)",

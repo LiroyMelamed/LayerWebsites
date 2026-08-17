@@ -67,6 +67,19 @@
     "enterOtpInstruction": "أدخل الرمز الذي استلمته في الرسالة",
     "tagline": "كل معلومات قضيتك في مكان واحد!"
   },
+  "billingLock": {
+    "title": "تم حظر الوصول إلى النظام",
+    "body": "لم يكتمل الدفع الشهري. سيُفتح النظام فور تسوية الدفع.",
+    "deadline": "يرجى الدفع حتى {{date}}",
+    "payCta": "ادفع الآن",
+    "contactAdmin": "تواصل مع مدير المنصة في المكتب لتسوية الدفع."
+  },
+  "billing": {
+    "checkoutTitle": "دفع آمن",
+    "checkoutHint": "أكمل الدفع في نافذة السداد. سيتم حفظ البطاقة للفوترة الشهرية.",
+    "openInNewTab": "فتح في نافذة جديدة",
+    "closeCheckout": "إغلاق"
+  },
   "errors": {
     "invalidPhone": "رقم الهاتف غير صالح",
     "invalidOtp": "رمز غير صالح",
@@ -549,6 +562,45 @@
     },
     "storageApprox": "~ {{size}} مستخدم",
     "loadingUsage": "جارٍ تحميل بيانات الاستخدام...",
+    "complimentaryUntil": "بدون دفع حتى:",
+    "savedCard": "بطاقة محفوظة:",
+    "nextCharge": "التحصيل التالي:",
+    "graceUntil": "يُحظر إن لم يُدفع حتى:",
+    "addCard": "إضافة بطاقة / دفع",
+    "chargeNow": "تحصيل البطاقة المحفوظة",
+    "replaceCard": "استبدال البطاقة",
+    "status": "الحالة:",
+    "noCard": "لا توجد بطاقة محفوظة",
+    "checkoutFailed": "تعذر فتح نافذة الدفع",
+    "chargeFailed": "فشل التحصيل",
+    "chargeOk": "تم التحصيل",
+    "chargeSkipped": "لا يوجد تحصيل الآن — الفترة بدون دفع ما زالت سارية",
+    "paySuccess": "تم الدفع بنجاح",
+    "payFailed": "لم يتم الدفع",
+    "paymentsTitle": "المدفوعات",
+    "noPayments": "لا توجد مدفوعات بعد",
+    "paymentDate": "التاريخ:",
+    "paymentError": "سبب الفشل:",
+    "statusValues": {
+      "complimentary": "بدون دفع",
+      "active": "نشط",
+      "past_due": "فشل الدفع",
+      "suspended": "محظور"
+    },
+    "paymentKind": {
+      "setup": "حفظ البطاقة",
+      "renewal": "تحصيل شهري",
+      "upgrade": "ترقية",
+      "retry": "إعادة المحاولة",
+      "upcoming": "تحصيل قادم"
+    },
+    "paymentStatus": {
+      "pending": "قيد الانتظار",
+      "succeeded": "مدفوع",
+      "failed": "فشل",
+      "cancelled": "ملغى",
+      "scheduled": "مجدول"
+    },
     "systemPlansTitle": "حزم الموارد (إلزامي)",
     "systemPlansSubtitle": "حزمة الموارد تحدد سعة النظام (التخزين، المستخدمون، الاحتفاظ بالبيانات ومستوى الحمل). إلزامي اختيار حزمة واحدة.",
     "commercialPricingTitle": "التسعير التجاري (لكل مكتب)",
@@ -579,6 +631,10 @@
   "planPricing": {
     "title": "الخطط والأسعار",
     "subtitle": "كل ما تدفعه — واضح وبسيط.",
+    "saveAndPay": "حفظ ودفع",
+    "saveFailed": "تعذر حفظ الحزمة",
+    "savedOk": "تم حفظ الحزمة",
+    "checkoutFailed": "تعذر فتح نافذة الدفع",
     "baseAndChannelsTitle": "الأساس + قنوات العميل",
     "baseAndChannelsSubtitle": "إلزامي: أساس النظام + قناة عميل واحدة على الأقل.",
     "systemPlansTitle": "حزم الموارد (إلزامي)",
