@@ -16,7 +16,7 @@ import SimpleButton from "../../components/simpleComponents/SimpleButton";
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
 import { getNavBarData } from "../../components/navBars/data/NavBarData";
 
-import { Text14, TextBold14, TextBold24 } from "../../components/specializedComponents/text/AllTextKindFile";
+import { Text14, TextBold14, TextBold24, TextBold32 } from "../../components/specializedComponents/text/AllTextKindFile";
 import ProgressBar from "../../components/specializedComponents/containers/ProgressBar";
 
 import billingApi from "../../api/billingApi";
@@ -60,7 +60,7 @@ function asRecord(value) {
 function formatIls(amount) {
     const n = Number(amount);
     if (!Number.isFinite(n)) return null;
-    return `${n} ₪`;
+    return `${Math.round(n).toLocaleString("he-IL")} ₪`;
 }
 
 export default function PlanUsageScreen() {
@@ -137,12 +137,6 @@ export default function PlanUsageScreen() {
             billing,
             pkg,
             payments: Array.isArray(billing.payments) ? billing.payments : [],
-            upcomingPayment: billing.upcomingPayment
-                ? {
-                    ...billing.upcomingPayment,
-                    amountIls: Number(billing.upcomingPayment.amountIls || priceIls || 0),
-                }
-                : null,
             billingInterval: billing.billingInterval === "yearly" ? "yearly" : "monthly",
             priceYearlyIls: billing.priceYearlyIls ?? null,
 
@@ -280,31 +274,32 @@ export default function PlanUsageScreen() {
         );
     };
 
-    const monthlyIls = normalized.priceIls != null
-        ? formatIls(normalized.priceIls)
-        : (normalized.priceCents != null ? formatIls(Number(normalized.priceCents) / 100) : null);
-    const priceText = monthlyIls
-        ? t('planUsage.priceMonthly', { amount: monthlyIls.replace(' ₪', ''), currency: '₪' })
-        : t('planUsage.quotaNotAvailable');
-    const yearlyAmount = Number(normalized.priceYearlyIls || normalized.billing?.priceYearlyIls || 0);
-    const yearlyIls = yearlyAmount > 0 ? formatIls(yearlyAmount) : null;
-    const yearlyText = yearlyIls
-        ? t('planUsage.priceYearly', { amount: yearlyIls.replace(' ₪', ''), currency: '₪' })
-        : null;
-    const billingInterval = normalized.billingInterval || 'monthly';
-    const statusText = normalized.billing?.status
-        ? t(`planUsage.statusValues.${normalized.billing.status}`, { defaultValue: String(normalized.billing.status) })
-        : "-";
-    const nextChargeAmount = formatIls(
-        normalized.billing?.nextChargeIls
-        || (billingInterval === 'yearly' ? yearlyAmount : null)
-        || (normalized.billing?.stillComplimentary ? normalized.priceIls : null)
-        || normalized.priceIls
+    const monthlyAmount = Number(
+        normalized.priceIls
+        ?? (normalized.priceCents != null ? Number(normalized.priceCents) / 100 : 0)
     );
-    const paymentRows = [
-        ...(normalized.upcomingPayment ? [normalized.upcomingPayment] : []),
-        ...normalized.payments,
-    ];
+    const yearlyAmount = Number(normalized.priceYearlyIls || normalized.billing?.priceYearlyIls || 0);
+    const billingInterval = normalized.billingInterval || 'monthly';
+    const isYearly = billingInterval === 'yearly';
+    const heroAmount = isYearly ? yearlyAmount : monthlyAmount;
+    const monthlyIls = formatIls(monthlyAmount);
+    const yearlyIls = yearlyAmount > 0 ? formatIls(yearlyAmount) : null;
+    const heroIls = formatIls(heroAmount);
+    const complimentaryUntil = normalized.billing?.stillComplimentary && normalized.billing?.complimentaryUntil
+        ? formatDisplayDate(normalized.billing.complimentaryUntil)
+        : null;
+    const nextChargeDate = normalized.billing?.renewsAt
+        ? formatDisplayDate(normalized.billing.renewsAt)
+        : complimentaryUntil;
+    const nextChargeCopy = nextChargeDate && (isYearly ? yearlyIls : monthlyIls)
+        ? t(
+            normalized.billing?.stillComplimentary
+                ? (isYearly ? 'planUsage.nextChargeComplimentaryYearly' : 'planUsage.nextChargeComplimentaryMonthly')
+                : (isYearly ? 'planUsage.nextChargeActiveYearly' : 'planUsage.nextChargeActiveMonthly'),
+            { date: nextChargeDate, amount: isYearly ? yearlyIls : monthlyIls }
+        )
+        : null;
+    const paymentRows = normalized.payments;
 
     const coreRetentionText = normalized.retentionCoreDays ?? "-";
     const piiRetentionText = normalized.retentionPiiDays ?? "-";
@@ -319,7 +314,7 @@ export default function PlanUsageScreen() {
                 />
             )}
 
-            <SimpleScrollView>
+            <SimpleScrollView className="lw-planUsageScreen__scroll">
                 {payNotice?.text && (
                     <SimpleCard className={`lw-planUsageScreen__banner lw-planUsageScreen__banner--${payNotice.type}`}>
                         <TextBold14>{payNotice.text}</TextBold14>
@@ -337,108 +332,156 @@ export default function PlanUsageScreen() {
                     </SimpleCard>
                 ) : (
                     <>
-                        <SimpleCard className="lw-planUsageScreen__card">
-                            <TextBold24>{t('planUsage.planCardTitle')}</TextBold24>
-                            {renderRow(t('planUsage.status'), statusText)}
-                            {renderRow(t('planUsage.planName'), normalized.planName)}
-                            {renderRow(t('planUsage.price'), priceText)}
-                            {yearlyText && renderRow(t('planUsage.priceYearlyLabel'), yearlyText)}
-                            {renderRow(
-                                t('planUsage.billingInterval'),
-                                billingInterval === 'yearly'
-                                    ? t('planUsage.intervalYearly')
-                                    : t('planUsage.intervalMonthly')
-                            )}
-                            {normalized.billing?.stillComplimentary && normalized.billing?.complimentaryUntil && (
-                                renderRow(
-                                    t('planUsage.complimentaryUntil'),
-                                    formatDisplayDate(normalized.billing.complimentaryUntil)
-                                )
-                            )}
-                            {normalized.billing?.card?.last4
-                                ? renderRow(t('planUsage.savedCard'), `**** ${normalized.billing.card.last4}`)
-                                : renderRow(t('planUsage.savedCard'), t('planUsage.noCard'))}
-                            {normalized.billing?.renewsAt && renderRow(
-                                t('planUsage.nextCharge'),
-                                `${formatDisplayDate(normalized.billing.renewsAt)}${nextChargeAmount ? ` · ${nextChargeAmount} ${t('planUsage.exclVat')}` : ''}`
-                            )}
-                            {normalized.billing?.status === 'past_due' && normalized.billing?.graceUntil && renderRow(
-                                t('planUsage.graceUntil'),
-                                formatDisplayDate(normalized.billing.graceUntil)
-                            )}
-                            {normalized.pkg?.breakdown?.length > 0 && normalized.pkg.breakdown.map((line) => (
-                                renderRow(line.label, `${line.amount} ₪`)
-                            ))}
-
-                            <SimpleContainer className="lw-planUsageScreen__intervalRow" role="group">
-                                <SimpleButton
-                                    className={`lw-planUsageScreen__intervalButton${billingInterval === 'monthly' ? ' is-selected' : ''}`}
-                                    onPress={() => saveBillingInterval('monthly')}
-                                    disabled={payBusy}
-                                >
-                                    <Text14>{t('planUsage.intervalMonthly')}</Text14>
-                                </SimpleButton>
-                                <SimpleButton
-                                    className={`lw-planUsageScreen__intervalButton${billingInterval === 'yearly' ? ' is-selected' : ''}`}
-                                    onPress={() => saveBillingInterval('yearly')}
-                                    disabled={payBusy}
-                                >
-                                    <Text14>{t('planUsage.intervalYearly')}</Text14>
-                                </SimpleButton>
+                        <SimpleCard className="lw-planUsageScreen__card lw-planUsageScreen__planCard">
+                            <SimpleContainer className="lw-planUsageScreen__planHeader">
+                                <SimpleContainer className="lw-planUsageScreen__titleRow">
+                                    <TextBold24>{t('planUsage.planCardTitle')}</TextBold24>
+                                    {complimentaryUntil ? (
+                                        <span className="lw-planUsageScreen__badge">
+                                            {t('planUsage.complimentaryBadge', { date: complimentaryUntil })}
+                                        </span>
+                                    ) : (
+                                        <span className={`lw-planUsageScreen__badge lw-planUsageScreen__badge--${normalized.billing?.status || 'active'}`}>
+                                            {t(`planUsage.statusValues.${normalized.billing?.status || 'active'}`, {
+                                                defaultValue: String(normalized.billing?.status || ''),
+                                            })}
+                                        </span>
+                                    )}
+                                </SimpleContainer>
+                                <Text14 className="lw-planUsageScreen__planName">{normalized.planName}</Text14>
                             </SimpleContainer>
 
-                            <SimpleButton
-                                className="lw-planUsageScreen__upgradeButton"
-                                onPress={() => navigate(AdminStackName + PlansPricingScreenName)}
-                            >
-                                <Text14>{t('planUsage.upgradeButton')}</Text14>
-                            </SimpleButton>
-                            {normalized.billing?.billingEnabled !== false && yearlyAmount > 0 && (
-                                <SimpleButton
-                                    className="lw-planUsageScreen__upgradeButton"
-                                    onPress={payYearNow}
-                                    disabled={payBusy}
-                                >
-                                    <Text14>{t('planUsage.payYearNow', { amount: yearlyAmount })}</Text14>
-                                </SimpleButton>
+                            <SimpleContainer className="lw-planUsageScreen__priceHero">
+                                <TextBold32 className="lw-planUsageScreen__priceAmount">
+                                    {heroIls || t('planUsage.quotaNotAvailable')}
+                                </TextBold32>
+                                <Text14 className="lw-planUsageScreen__priceCaption">
+                                    {isYearly ? t('planUsage.priceHeroYearly') : t('planUsage.priceHeroMonthly')}
+                                </Text14>
+                                {isYearly ? (
+                                    <Text14 className="lw-planUsageScreen__priceHint">{t('planUsage.priceHeroYearlyHint')}</Text14>
+                                ) : (
+                                    yearlyIls && (
+                                        <Text14 className="lw-planUsageScreen__priceHint">
+                                            {t('planUsage.priceHeroMonthlyHint', { amount: yearlyIls })}
+                                        </Text14>
+                                    )
+                                )}
+                            </SimpleContainer>
+
+                            <SimpleContainer className="lw-planUsageScreen__intervalBlock">
+                                <TextBold14>{t('planUsage.howToPay')}</TextBold14>
+                                <SimpleContainer className="lw-planUsageScreen__segmented" role="radiogroup" aria-label={t('planUsage.howToPay')}>
+                                    <button
+                                        type="button"
+                                        role="radio"
+                                        aria-checked={billingInterval === 'monthly'}
+                                        className={`lw-planUsageScreen__segment${billingInterval === 'monthly' ? ' is-selected' : ''}`}
+                                        onClick={() => saveBillingInterval('monthly')}
+                                        disabled={payBusy}
+                                    >
+                                        <span className="lw-planUsageScreen__segmentLabel">{t('planUsage.intervalMonthlyShort')}</span>
+                                        <span className="lw-planUsageScreen__segmentPrice">{monthlyIls || '—'}</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        role="radio"
+                                        aria-checked={billingInterval === 'yearly'}
+                                        className={`lw-planUsageScreen__segment${billingInterval === 'yearly' ? ' is-selected' : ''}`}
+                                        onClick={() => saveBillingInterval('yearly')}
+                                        disabled={payBusy}
+                                    >
+                                        <span className="lw-planUsageScreen__segmentLabel">{t('planUsage.intervalYearlyShort')}</span>
+                                        <span className="lw-planUsageScreen__segmentPrice">{yearlyIls || '—'}</span>
+                                        <span className="lw-planUsageScreen__segmentSave">{t('planUsage.intervalYearlySave')}</span>
+                                    </button>
+                                </SimpleContainer>
+                            </SimpleContainer>
+
+                            {nextChargeCopy && (
+                                <Text14 className="lw-planUsageScreen__nextCopy">{nextChargeCopy}</Text14>
                             )}
-                            {!normalized.billing?.stillComplimentary && (
-                                <SimpleButton
-                                    className="lw-planUsageScreen__upgradeButton"
-                                    onPress={() => (normalized.billing?.card ? chargeSaved() : startCheckout())}
-                                    disabled={payBusy}
-                                >
-                                    <Text14>
-                                        {normalized.billing?.card
-                                            ? t('planUsage.chargeNow')
-                                            : t('planUsage.addCard')}
-                                    </Text14>
-                                </SimpleButton>
+                            {normalized.billing?.status === 'past_due' && normalized.billing?.graceUntil && (
+                                <Text14 className="lw-planUsageScreen__warnCopy">
+                                    {t('planUsage.graceUntil')} {formatDisplayDate(normalized.billing.graceUntil)}
+                                </Text14>
                             )}
-                            {!normalized.billing?.card && normalized.billing?.stillComplimentary && (
-                                <SimpleButton
-                                    className="lw-planUsageScreen__upgradeButton"
-                                    onPress={() => startCheckout()}
-                                    disabled={payBusy}
-                                >
-                                    <Text14>{t('planUsage.addCard')}</Text14>
-                                </SimpleButton>
+                            <Text14 className="lw-planUsageScreen__cardCopy">
+                                {normalized.billing?.card?.last4
+                                    ? t('planUsage.savedCardHint', { last4: normalized.billing.card.last4 })
+                                    : t('planUsage.noCardHint')}
+                            </Text14>
+
+                            {normalized.pkg?.breakdown?.length > 0 && (
+                                <SimpleContainer className="lw-planUsageScreen__breakdown">
+                                    <TextBold14>{t('planUsage.breakdownTitle')}</TextBold14>
+                                    {normalized.pkg.breakdown.map((line) => (
+                                        <SimpleContainer key={line.id || line.label} className="lw-planUsageScreen__breakRow">
+                                            <Text14 className="lw-planUsageScreen__breakLabel">{line.label}</Text14>
+                                            <TextBold14 className="lw-planUsageScreen__breakAmount">{formatIls(line.amount)}</TextBold14>
+                                        </SimpleContainer>
+                                    ))}
+                                </SimpleContainer>
                             )}
-                            {normalized.billing?.card && (
+
+                            <SimpleContainer className="lw-planUsageScreen__actions">
+                                {normalized.billing?.billingEnabled !== false && yearlyAmount > 0 && (
+                                    <SimpleButton
+                                        className="lw-planUsageScreen__primaryAction"
+                                        onPress={payYearNow}
+                                        disabled={payBusy}
+                                    >
+                                        <TextBold14>{t('planUsage.payYearNow')}</TextBold14>
+                                    </SimpleButton>
+                                )}
                                 <SimpleButton
-                                    className="lw-planUsageScreen__upgradeButton"
-                                    onPress={() => startCheckout()}
-                                    disabled={payBusy}
+                                    className="lw-planUsageScreen__secondaryAction"
+                                    onPress={() => navigate(AdminStackName + PlansPricingScreenName)}
                                 >
-                                    <Text14>{t('planUsage.replaceCard')}</Text14>
+                                    <Text14>{t('planUsage.upgradeButton')}</Text14>
                                 </SimpleButton>
-                            )}
+                                {!normalized.billing?.stillComplimentary && (
+                                    <SimpleButton
+                                        className="lw-planUsageScreen__tertiaryAction"
+                                        onPress={() => (normalized.billing?.card ? chargeSaved() : startCheckout())}
+                                        disabled={payBusy}
+                                    >
+                                        <Text14>
+                                            {normalized.billing?.card
+                                                ? t('planUsage.chargeNow')
+                                                : t('planUsage.addCard')}
+                                        </Text14>
+                                    </SimpleButton>
+                                )}
+                                {!normalized.billing?.card && normalized.billing?.stillComplimentary && (
+                                    <SimpleButton
+                                        className="lw-planUsageScreen__tertiaryAction"
+                                        onPress={() => startCheckout()}
+                                        disabled={payBusy}
+                                    >
+                                        <Text14>{t('planUsage.addCard')}</Text14>
+                                    </SimpleButton>
+                                )}
+                                {normalized.billing?.card && (
+                                    <SimpleButton
+                                        className="lw-planUsageScreen__tertiaryAction"
+                                        onPress={() => startCheckout()}
+                                        disabled={payBusy}
+                                    >
+                                        <Text14>{t('planUsage.replaceCard')}</Text14>
+                                    </SimpleButton>
+                                )}
+                            </SimpleContainer>
                         </SimpleCard>
 
                         <SimpleCard className="lw-planUsageScreen__card">
                             <TextBold24>{t('planUsage.paymentsTitle')}</TextBold24>
                             {paymentRows.length === 0 ? (
-                                <Text14>{t('planUsage.noPayments')}</Text14>
+                                <Text14>
+                                    {nextChargeDate
+                                        ? t('planUsage.firstChargeOn', { date: nextChargeDate })
+                                        : t('planUsage.noPayments')}
+                                </Text14>
                             ) : (
                                 paymentRows.map((row) => {
                                     const when = formatDisplayDate(row.settledAt || row.createdAt);
