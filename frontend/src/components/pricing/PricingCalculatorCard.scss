@@ -57,6 +57,12 @@
     width: 100%;
     height: 100%;
     min-height: 3.25rem;
+
+    &.is-disabled,
+    &:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
 }
 
 .lw-pricingCalculatorCard__description {

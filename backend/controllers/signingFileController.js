@@ -6,7 +6,7 @@ const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const { r2, BUCKET } = require("../utils/r2");
 const sendAndStoreNotification = require("../utils/sendAndStoreNotification");
 const { notifyRecipient } = require("../services/notifications/notificationOrchestrator");
-const { buildSignedDocPushData } = require("../utils/appDeepLinks");
+const { buildSignedDocPushData, getAppScheme } = require("../utils/appDeepLinks");
 const { formatPhoneNumber } = require("../utils/phoneUtils");
 const { sendMessage, WEBSITE_DOMAIN } = require("../utils/sendMessage");
 const { detectHebrewSignatureSpotsFromPdfBuffer, streamToBuffer } = require("../utils/signatureDetection");
@@ -610,7 +610,7 @@ function buildSigningInvitePushData({ signingFileId, token, publicUrl, type = 's
     }
     if (token) {
         // Triple-slash so Linking parses PublicSigning as path (not hostname).
-        data.deepLink = `melamedia:///PublicSigning?token=${encodeURIComponent(String(token))}`;
+        data.deepLink = `${getAppScheme()}:///PublicSigning?token=${encodeURIComponent(String(token))}`;
     } else if (publicUrl) {
         data.deepLink = publicUrl;
     }

@@ -20,6 +20,7 @@ async function getLimitsForFirm(_firmId) {
 
         quotas: plan.quotas,
         featureFlags: plan.featureFlags || {},
+        package: plan.package || null,
     };
 }
 

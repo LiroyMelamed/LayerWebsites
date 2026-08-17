@@ -103,6 +103,10 @@ ApiUtils.interceptors.response.use(
         const status = error.response?.status || 500;
         const originalRequest = error.config;
 
+        if (status === 402 && (error.response?.data?.errorCode === 'BILLING_LOCKED' || error.response?.data?.billingLocked)) {
+            window.dispatchEvent(new CustomEvent('lw-billing-locked', { detail: error.response.data || {} }));
+        }
+
         if (status !== 401 || originalRequest._retried) {
             return formatError(error);
         }

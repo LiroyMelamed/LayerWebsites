@@ -8,6 +8,9 @@ import ComplianceBadges from "../../../components/compliance/ComplianceBadges";
 
 import "./TopCenteredLogo.scss";
 
+const appName = String(process.env.REACT_APP_APP_NAME || "").toLowerCase();
+const useNaturalLogoColors = appName === "melamedia" || appName === "idm";
+
 export default function TopCenteredLogo({ logoSrc = images.Logos.LogoSlang, logoWidth = 100, style }) {
     const { t } = useTranslation();
 
@@ -16,7 +19,7 @@ export default function TopCenteredLogo({ logoSrc = images.Logos.LogoSlang, logo
             <SimpleContainer className="lw-topCenteredLogo__cornerLogo">
                 <SimpleImage
                     src={logoSrc}
-                    tintColor={colors.text}
+                    tintColor={useNaturalLogoColors ? null : colors.text}
                     className="lw-topCenteredLogo__logoImage"
                 />
             </SimpleContainer>

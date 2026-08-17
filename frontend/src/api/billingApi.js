@@ -18,7 +18,20 @@ let plansCache = null;
 let plansCacheAt = 0;
 let plansInFlight = null;
 
+function invalidateBillingCaches() {
+    planCache = null;
+    planCacheAt = 0;
+    usageCache = null;
+    usageCacheAt = 0;
+    plansCache = null;
+    plansCacheAt = 0;
+}
+
 const billingApi = {
+    invalidateCaches: invalidateBillingCaches,
+
+    getLockStatus: async () => ApiUtils.get(`${base}/lock-status`),
+
     getPlan: async () => {
         const now = Date.now();
         if (planCache && now - planCacheAt < PLAN_TTL_MS) return planCache;
@@ -71,6 +84,21 @@ const billingApi = {
         });
 
         return plansInFlight;
+    },
+
+    savePackage: async (body) => {
+        invalidateBillingCaches();
+        return ApiUtils.post(`${base}/package`, body);
+    },
+
+    createCheckout: async (body) => {
+        invalidateBillingCaches();
+        return ApiUtils.post(`${base}/checkout`, body || {});
+    },
+
+    chargeNow: async (body) => {
+        invalidateBillingCaches();
+        return ApiUtils.post(`${base}/charge`, body || {});
     },
 };
 

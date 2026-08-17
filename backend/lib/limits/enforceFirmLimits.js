@@ -20,6 +20,19 @@ async function checkFirmLimitsOrNull({ action, increments } = {}) {
     const usage = await getUsageForFirm(null);
     if (!limits || !usage) return null;
 
+    let mode = enforcementMode();
+    try {
+        const { getBillingSnapshot } = require('../billing/firmBillingService');
+        const snap = await getBillingSnapshot();
+        if (snap?.stillComplimentary || snap?.billingEnabled === false) {
+            mode = 'warn';
+        } else if (snap?.billingEnabled) {
+            mode = 'block';
+        }
+    } catch {
+        // keep env mode
+    }
+
     const quotas = limits.quotas || {};
 
     const warnings = [];
@@ -77,7 +90,7 @@ async function checkFirmLimitsOrNull({ action, increments } = {}) {
     }
 
     return {
-        enforcementMode: enforcementMode(),
+        enforcementMode: mode,
         limits,
         usage,
         warnings,

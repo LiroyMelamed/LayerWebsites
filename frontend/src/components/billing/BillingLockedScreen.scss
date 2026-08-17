@@ -1,0 +1,22 @@
+@use '../../styles/variables' as v;
+
+.lw-billingLockedScreen__card {
+    flex-direction: column;
+    gap: v.$space-3;
+    max-width: 32rem;
+    margin: 4rem auto;
+    padding: v.$space-4;
+    text-align: center;
+}
+
+.lw-billingLockedScreen__body,
+.lw-billingLockedScreen__deadline,
+.lw-billingLockedScreen__hint {
+    opacity: 0.9;
+}
+
+.lw-billingLockedScreen__button {
+    align-self: center;
+    margin-top: v.$space-2;
+    padding: 0.75rem 1.25rem;
+}
