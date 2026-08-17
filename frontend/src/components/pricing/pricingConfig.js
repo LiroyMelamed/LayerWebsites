@@ -30,7 +30,7 @@ export const PRICING_CONFIG = {
     system: {
         id: "system",
         label: "מערכת",
-        amount: 349,
+        amount: 296,
         description: "המערכת כלולה תמיד במחיר הבסיס ומתאימה לניהול משרד.",
         bullets: ["ניהול תיקים", "ניהול לקוחות", "קבצים ומסמכים"],
     },
@@ -46,21 +46,21 @@ export const PRICING_CONFIG = {
         {
             id: "site",
             label: "אתר",
-            amount: 179,
+            amount: 152,
             description: "אתר תדמיתי ושיווקי למשרד, עם דפי שירותים ועמודי תוכן.",
             bullets: ["אתר תדמיתי/שיווקי", "טפסי יצירת קשר", "עמודי שירותים/צוות"],
         },
         {
             id: "app",
             label: "אפליקציה",
-            amount: 229,
+            amount: 194,
             description: "אפליקציה ללקוחות ולעדכונים שוטפים – ללא אתר שיווקי.",
             bullets: ["אפליקציה ללקוח", "התראות ועדכונים", "חוויית משתמש נוחה"],
         },
         {
             id: "site_app",
             label: "אתר + אפליקציה",
-            amount: 349,
+            amount: 296,
             description: "השילוב המלא: אתר שיווקי + אפליקציה על גבי המערכת.",
             bullets: ["כולל אתר + אפליקציה", "חוויית לקוח מלאה", "נוכחות דיגיטלית מלאה"],
         },
@@ -71,7 +71,7 @@ export const PRICING_CONFIG = {
         {
             id: "basic",
             label: "בסיסי",
-            amount: 99,
+            amount: 84,
             storageMb: 250,
             description: "מתאים להתחלה או למשרד קטן עם שימוש מתון.",
             bullets: ["מתאים להתחלה", "נפח עבודה נמוך-בינוני", "עד 200 SMS בחודש"],
@@ -79,7 +79,7 @@ export const PRICING_CONFIG = {
         {
             id: "pro",
             label: "פרו",
-            amount: 249,
+            amount: 211,
             storageMb: 1024,
             description: "למשרדים פעילים יותר שצריכים יותר קיבולת ותמיכה.",
             bullets: ["קצב עבודה גבוה יותר", "יותר משתמשים/תיקים", "עד 2000 SMS בחודש"],
@@ -87,7 +87,7 @@ export const PRICING_CONFIG = {
         {
             id: "enterprise",
             label: "ארגוני",
-            amount: 699,
+            amount: 592,
             storageMb: null,
             description: "למשרדים גדולים או שימוש אינטנסיבי עם צרכים מתקדמים.",
             bullets: ["למשרדים גדולים", "נפחי שימוש גבוהים", "עד 5000 SMS בחודש"],
@@ -107,7 +107,7 @@ export const PRICING_CONFIG = {
         {
             id: "500",
             label: "500 חתימות",
-            amount: 199,
+            amount: 169,
             includedSignatures: 500,
             description: "חבילת חתימות בסיסית עם יכולות חתימה דיגיטלית.",
             bullets: ["כולל OTP", "ניהול שדות חתימה", "קובץ ראיות בסיסי"],
@@ -115,7 +115,7 @@ export const PRICING_CONFIG = {
         {
             id: "1500",
             label: "1500 חתימות",
-            amount: 399,
+            amount: 338,
             includedSignatures: 1500,
             description: "חבילת חתימות למשרדים עם נפח חתימות גבוה וצרכי עומסים.",
             bullets: ["כולל OTP", "תמיכה בעומסים", "קובץ ראיות מתקדם"],
@@ -123,7 +123,7 @@ export const PRICING_CONFIG = {
         {
             id: "5000",
             label: "5000 חתימות",
-            amount: 799,
+            amount: 677,
             includedSignatures: 5000,
             description: "חבילת חתימות לנפחים גבוהים במיוחד.",
             bullets: ["כולל OTP", "נפח גבוה", "קובץ ראיות מתקדם"],
@@ -131,7 +131,7 @@ export const PRICING_CONFIG = {
         {
             id: "unlimited",
             label: "חתימות ללא הגבלה",
-            amount: 1299,
+            amount: 1101,
             includedSignatures: null,
             description: "חבילת חתימות ללא הגבלה לנפחי עבודה גבוהים מאוד.",
             bullets: ["כולל OTP", "ללא הגבלה", "קובץ ראיות מתקדם"],
