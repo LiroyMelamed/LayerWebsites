@@ -23,6 +23,7 @@
 const fs = require('fs');
 const path = require('path');
 const nodemailer = require('nodemailer');
+const { loadOutreachSkipList, skipReasonFor } = require('../lib/outreachLists');
 
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
@@ -281,6 +282,8 @@ async function main() {
         await transporter.verify();
     }
 
+    const skipList = loadOutreachSkipList();
+
     console.log('---------------------------------------------');
     console.log('Law-firm outreach run (REAL sender)');
     console.log('Mode:        ', shouldSend ? 'SEND' : 'DRY RUN');
@@ -298,6 +301,7 @@ async function main() {
     console.log('From:        ', `${fromName} <${fromEmail}>`);
     console.log('SMTP host:   ', shouldSend ? smtp.host : '(dry-run, no SMTP)');
     if (onlyEmail) console.log('Only email:  ', onlyEmail);
+    console.log('Skip lists:  ', `${skipList.suppressCount} suppress + ${skipList.warmCount} warm`);
     console.log('---------------------------------------------');
 
     const emailKeys = ['email', 'e-mail', 'mail', 'אימייל', 'מייל', 'כתובת אימייל', 'דואר אלקטרוני'];
@@ -338,6 +342,12 @@ async function main() {
         }
         if (onlyEmail && toEmail !== onlyEmail) {
             skipped++;
+            continue;
+        }
+        const skipWhy = skipReasonFor(skipList, toEmail);
+        if (skipWhy) {
+            skipped++;
+            console.log(`[SKIP] row=${excelRowNumber} ${skipWhy} ${maskEmail(toEmail)}`);
             continue;
         }
         if (seen.has(toEmail)) {
