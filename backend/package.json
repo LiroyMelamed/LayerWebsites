@@ -30,6 +30,7 @@
     "googleapis": "^173.0.0",
     "helmet": "^8.1.0",
     "ical-generator": "^11.0.0",
+    "ioredis": "^5.4.1",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
     "node-cron": "^4.2.1",
@@ -50,6 +51,9 @@
     "http-proxy-agent": "^7.0.0",
     "@tootallnate/once": "^3.0.1",
     "fast-xml-parser": "^5.5.1",
-    "minimatch": "^9.0.9"
+    "minimatch": "^9.0.9",
+    "exceljs": {
+      "uuid": "^11.1.1"
+    }
   }
 }
