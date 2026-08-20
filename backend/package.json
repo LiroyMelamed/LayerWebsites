@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node --test",
+    "test": "node --test 'tests/**/*.test.js'",
     "email:outreach": "node scripts/send-law-firm-outreach.js",
     "chatbot:seed": "node scripts/seedChatbotTestData.js",
     "chatbot:test": "npm run chatbot:seed && npm test"

@@ -4,7 +4,8 @@ const compression = require("compression");
 const helmet = require("helmet");
 const cors = require("cors");
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '.env'), override: true });
+// Fill missing keys from .env; do not clobber process env (tests / PM2 / FORCE_* flags).
+require('dotenv').config({ path: path.join(__dirname, '.env'), override: false });
 
 const pool = require("./config/db");
 
