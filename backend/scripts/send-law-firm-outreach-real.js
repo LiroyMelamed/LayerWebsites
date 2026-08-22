@@ -240,7 +240,7 @@ async function main() {
 
     const subjectTemplate = getArgValue('--subject', 'שאלה קצרה לגבי עדכון לקוחות במשרד שלך');
     const signatureName = getArgValue('--signature-name', 'לירוי מלמד');
-    const replyTo = getArgValue('--reply-to', 'liroymelamed@icloud.com');
+    const replyTo = getArgValue('--reply-to', 'liroy@mela-media.co.il');
     const fromName = getArgValue('--from-name', 'לירוי מלמד · Melamedia');
     const platformUrl = getArgValue('--platform-url', 'https://mela-media.co.il/platform/');
     const salesDeckPath = resolveOptionalSalesDeckPath(getArgValue('--sales-deck', ''));

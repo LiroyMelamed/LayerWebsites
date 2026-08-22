@@ -49,7 +49,7 @@ node scripts/send-law-firm-outreach-real.js \
   --sales-deck "./data/מצגת מכירות.pdf" \
   --platform-url "https://mela-media.co.il/platform/" \
   --from-name "לירוי מלמד · Melamedia" \
-  --reply-to "liroymelamed@icloud.com" \
+  --reply-to "liroy@mela-media.co.il" \
   --delay-ms 5000 \
   2>&1 | tee -a "$RUN_LOG" | tee -a "$SCHED_LOG"
 
