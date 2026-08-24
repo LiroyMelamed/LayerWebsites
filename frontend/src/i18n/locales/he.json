@@ -512,6 +512,7 @@
     "collapseCalendarAria": "צמצם את תצוגת היומן",
     "client": "לקוח",
     "addClient": "הוסף לקוח",
+    "clientsHintReminder": "ניתן להוסיף מספר לקוחות לתזכורת",
     "removeClient": "הסר לקוח",
     "clientsHint": "ניתן להוסיף מספר לקוחות לפגישה",
     "clientPhoneLabel": "טלפון",

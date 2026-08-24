@@ -108,6 +108,10 @@ function customerPhone(item) {
     return String(item?.PhoneNumber ?? item?.phonenumber ?? item?.Phone ?? item?.phone ?? "").trim();
 }
 
+function customerEmail(item) {
+    return String(item?.Email ?? item?.email ?? "").trim();
+}
+
 function clientChipLabel(client) {
     const name = String(client?.name || "").trim();
     const phone = String(client?.phone || "").trim();
@@ -122,6 +126,7 @@ function _initialClients(event) {
                 userId: c.userId ?? c.user_id ?? null,
                 name: c.name || c.clientName || "",
                 phone: c.phone || c.PhoneNumber || c.phonenumber || "",
+                email: c.email || c.Email || "",
                 inviteStatus: c.inviteStatus || c.invite_status || event?.inviteStatus || "none",
             }))
             .filter((c) => c.userId != null);
@@ -131,6 +136,7 @@ function _initialClients(event) {
             userId: event.clientUserId,
             name: event.clientName || event.clientDisplayName || "",
             phone: event.clientPhone || "",
+            email: event.clientEmail || event.leadEmail || "",
             inviteStatus: event.inviteStatus || "none",
         }];
     }
@@ -854,7 +860,8 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const hasClientRecipient = clients.length > 0
         || leadParticipants.some((p) => p.name?.trim() || p.phone?.trim() || p.email?.trim())
         || !!(leadName.trim() || leadPhone.trim() || leadEmail.trim())
-        || intakeMode === INTAKE_LEAD;
+        || intakeMode === INTAKE_LEAD
+        || (isReminderEventType && !!(reminderClientName.trim() || reminderToEmail.trim()));
     const anyReminderOffsets = lawyerReminderOffsets.length > 0
         || (hasClientRecipient && clientReminderOffsets.length > 0);
     const reminderTemplateItems = useMemo(
@@ -1204,15 +1211,20 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     lead_case_name: null,
                 });
             } else if (isReminderEventType) {
-                // Registered client → client_* only. Unregistered recipient → lead_*
+                // Registered clients → client_* (+ junction). Unregistered recipient → lead_*
                 // (reminderCalendarSync mirrors the same split). Never mix both —
                 // the DB CHECK rejects lead + client_user_id together.
-                const linkedClientId = clientUserId || null;
+                // Scheduled email remains 1:1 with the primary name/email fields;
+                // push/SMS/email calendar reminders go to every linked client.
+                const linkedIds = clientUserIds.length
+                    ? clientUserIds
+                    : (clientUserId ? [clientUserId] : []);
+                const linkedClientId = linkedIds[0] || null;
                 Object.assign(payload, {
                     client_user_id: linkedClientId,
-                    client_user_ids: linkedClientId ? [linkedClientId] : [],
+                    client_user_ids: linkedIds,
                     client_name: linkedClientId
-                        ? (reminderClientName.trim() || clientName || null)
+                        ? (reminderClientName.trim() || primaryClient?.name || null)
                         : null,
                     case_id: null,
                     lead_name: linkedClientId
@@ -1453,9 +1465,10 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         const uid = customerUserId(selectedUser);
         if (uid == null) return;
         const phone = customerPhone(selectedUser);
+        const email = customerEmail(selectedUser);
         setClients((prev) => {
             if (prev.some((c) => Number(c.userId) === Number(uid))) return prev;
-            const next = [...prev, { userId: uid, name: displayName, phone }];
+            const next = [...prev, { userId: uid, name: displayName, phone, email }];
             if (prev.length === 0) {
                 setCaseId(null);
                 setCaseName("");
@@ -1474,23 +1487,37 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 setCaseId(null);
                 setCaseName("");
                 linkedClientLabelRef.current = "";
+                setClientUserId(null);
             } else {
                 linkedClientLabelRef.current = next[0]?.name || "";
+                setClientUserId(next[0]?.userId || null);
+                setReminderClientName(next[0]?.name || "");
+                if (next[0]?.email) setReminderToEmail(next[0].email);
             }
             return next;
         });
     };
 
+    /** Append client to תזכורת (multi-select). Primary fills name/email for the linked email reminder. */
     const handleReminderClientSelected = (_selectedName, resultItem) => {
         const selectedUser = resultItem || null;
         if (!selectedUser) return;
         const displayName = customerDisplayName(selectedUser);
-        const email = selectedUser?.Email || selectedUser?.email || "";
-        setClientUserId(customerUserId(selectedUser));
-        setReminderClientName(displayName);
-        if (email) setReminderToEmail(email);
-        linkedClientLabelRef.current = displayName;
-        // Clear search field after pick — selected name lives in "שם לקוח".
+        const uid = customerUserId(selectedUser);
+        if (uid == null) return;
+        const phone = customerPhone(selectedUser);
+        const email = customerEmail(selectedUser);
+        setClients((prev) => {
+            if (prev.some((c) => Number(c.userId) === Number(uid))) return prev;
+            const next = [...prev, { userId: uid, name: displayName, phone, email }];
+            if (prev.length === 0) {
+                setClientUserId(uid);
+                setReminderClientName(displayName);
+                if (email) setReminderToEmail(email);
+                linkedClientLabelRef.current = displayName;
+            }
+            return next;
+        });
         setClientName("");
         searchCustomers("");
     };
@@ -1927,7 +1954,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                             <Text12 color="#718096">{t("calendar.eventRemindersHintReminderType")}</Text12>
 
                             <SearchInput
-                                title={t("calendar.client")}
+                                title={t("calendar.addClient")}
                                 value={clientName}
                                 onSearch={(name) => {
                                     setClientName(name);
@@ -1935,20 +1962,43 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                 }}
                                 isPerforming={isSearchingCustomers}
                                 queryResult={customers}
-                                getButtonTextFunction={(item) => customerDisplayName(item)}
+                                getButtonTextFunction={(item) => {
+                                    const name = customerDisplayName(item);
+                                    const phone = customerPhone(item);
+                                    return phone ? `${name} · ${phone}` : name;
+                                }}
                                 buttonPressFunction={handleReminderClientSelected}
                                 clearOnSelect
                             />
+                            {clients.length > 0 && (
+                                <SimpleContainer className="lw-eventFormModal__managerChips lw-eventFormModal__clientChips">
+                                    {clients.map((c) => (
+                                        <span key={c.userId} className="lw-eventFormModal__managerChip">
+                                            {clientChipLabel(c)}
+                                            <button
+                                                type="button"
+                                                className="lw-eventFormModal__chipRemove"
+                                                tabIndex={-1}
+                                                onClick={() => handleRemoveClient(c.userId)}
+                                                aria-label={t("calendar.removeClient")}
+                                            >
+                                                &times;
+                                            </button>
+                                        </span>
+                                    ))}
+                                </SimpleContainer>
+                            )}
+                            <Text12 color="#718096">{t("calendar.clientsHintReminder")}</Text12>
 
                             <SimpleContainer className="lw-eventFormModal__reminderEmailRow">
                                 <SimpleInput
-                                    title={t("reminders.add.clientName") + " *"}
+                                    title={t("reminders.add.clientName") + (clients.length ? "" : " *")}
                                     value={reminderClientName}
                                     onChange={(e) => setReminderClientName(e.target.value)}
                                     timeToWaitInMilli={0}
                                 />
                                 <SimpleInput
-                                    title={t("reminders.add.email") + " *"}
+                                    title={t("reminders.add.email") + (clients.length ? "" : " *")}
                                     type="email"
                                     value={reminderToEmail}
                                     onChange={(e) => setReminderToEmail(e.target.value)}

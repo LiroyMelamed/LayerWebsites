@@ -460,6 +460,7 @@ async function _fetchEventClients(eventIds) {
                     cec.user_id,
                     u.name,
                     u.phonenumber AS phone,
+                    u.email,
                     cec.invite_status,
                     cec.invite_token
              FROM calendar_event_clients cec
@@ -474,6 +475,7 @@ async function _fetchEventClients(eventIds) {
                 userId: row.user_id,
                 name: row.name,
                 phone: row.phone || null,
+                email: row.email || null,
                 inviteStatus: row.invite_status || 'none',
                 inviteToken: row.invite_token || null,
             });
@@ -546,7 +548,7 @@ async function _syncEventClients(eventId, userIds, dbClient = pool, { mintInvite
     }
 
     const { rows } = await dbClient.query(
-        `SELECT cec.user_id, u.name, u.phonenumber AS phone,
+        `SELECT cec.user_id, u.name, u.phonenumber AS phone, u.email,
                 cec.invite_status, cec.invite_token
          FROM calendar_event_clients cec
          JOIN users u ON u.userid = cec.user_id
@@ -558,6 +560,7 @@ async function _syncEventClients(eventId, userIds, dbClient = pool, { mintInvite
         userId: r.user_id,
         name: r.name,
         phone: r.phone || null,
+        email: r.email || null,
         inviteStatus: r.invite_status || 'none',
         inviteToken: r.invite_token || null,
     }));
