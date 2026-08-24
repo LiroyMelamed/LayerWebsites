@@ -379,9 +379,24 @@
         font-size: 0.6875rem;
     }
 
+    /* Fill the day column on small screens — no side gap / end padding. */
+    .lw-calendarScreen__calendarCard .fc-timegrid-event-harness .fc-event,
+    .lw-calendarScreen__calendarCard .fc-timegrid-event-harness-inset .fc-event {
+        margin-inline: 0;
+        padding-inline: 0.2rem;
+    }
+
+    .lw-calendarScreen__calendarCard .fc .fc-timegrid-col-events {
+        margin: 0 !important;
+    }
+
     .fc .fc-event .lw-fcEventContent {
         gap: 0;
         padding-inline-end: 0;
+    }
+
+    .fc .fc-event .lw-fcEventRsvpBadge {
+        inset-inline-end: 0.02rem;
     }
 }
 
