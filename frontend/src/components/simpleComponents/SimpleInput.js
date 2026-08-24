@@ -29,7 +29,7 @@ function emitChange(onChange, nativeValue) {
  *
  * type="date" / "datetime-local" delegate to BlockDateInput (segmented DD/MM/YYYY[/HH:mm]).
  */
-const SimpleInput = forwardRef(
+const SimpleInputCore = forwardRef(
     ({
         title,
         titleFontSize = 16,
@@ -56,23 +56,6 @@ const SimpleInput = forwardRef(
         timeToWaitInMilli = 500,
         ...props
     }, ref) => {
-        if (type === 'date' || type === 'datetime-local') {
-            return (
-                <BlockDateInput
-                    ref={ref}
-                    title={title}
-                    mode={type}
-                    value={value}
-                    onChange={onChange}
-                    disabled={disabled}
-                    error={error}
-                    className={className}
-                    timeToWaitInMilli={timeToWaitInMilli}
-                    containerDir={containerDir}
-                />
-            );
-        }
-
         const temporalTypes = ['date', 'datetime-local', 'time', 'month', 'week'];
         const isTemporalInput = temporalTypes.includes(type);
         const showCalendarButton = type === 'date' || type === 'datetime-local' || type === 'month' || type === 'week';
@@ -590,6 +573,39 @@ const SimpleInput = forwardRef(
         );
     }
 );
+
+const SimpleInput = forwardRef((props, ref) => {
+    const {
+        type = 'text',
+        title,
+        value,
+        onChange,
+        disabled = false,
+        error,
+        className,
+        timeToWaitInMilli = 500,
+        containerDir,
+    } = props;
+
+    if (type === 'date' || type === 'datetime-local') {
+        return (
+            <BlockDateInput
+                ref={ref}
+                title={title}
+                mode={type}
+                value={value}
+                onChange={onChange}
+                disabled={disabled}
+                error={error}
+                className={className}
+                timeToWaitInMilli={timeToWaitInMilli}
+                containerDir={containerDir}
+            />
+        );
+    }
+
+    return <SimpleInputCore ref={ref} {...props} />;
+});
 
 export default SimpleInput;
 
