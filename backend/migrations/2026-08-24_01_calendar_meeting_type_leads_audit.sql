@@ -16,8 +16,22 @@ COMMENT ON COLUMN calendar_events.updated_by IS
 ALTER TABLE otps
     ADD COLUMN IF NOT EXISTS email VARCHAR(255);
 
+-- phonenumber was the PK; email OTP rows need nullable phone + separate unique keys
+ALTER TABLE otps
+    ADD COLUMN IF NOT EXISTS id SERIAL;
+
+ALTER TABLE otps
+    DROP CONSTRAINT IF EXISTS otps_pkey;
+
+ALTER TABLE otps
+    ADD PRIMARY KEY (id);
+
 ALTER TABLE otps
     ALTER COLUMN phonenumber DROP NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_otps_phonenumber
+    ON otps (phonenumber)
+    WHERE phonenumber IS NOT NULL;
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_otps_email_lower
     ON otps (LOWER(email))
