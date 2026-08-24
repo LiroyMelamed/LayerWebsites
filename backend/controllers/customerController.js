@@ -352,10 +352,8 @@ const getCustomerByName = async (req, res) => {
 
         const result = await pool.query(query, params);
 
-        if (result.rows.length === 0) {
-            return res.status(404).json({ message: "לא נמצאו משתמשים" });
-        }
-
+        // Empty search is a normal outcome — return [] so the UI shows "no results"
+        // instead of treating 404 as a hard error toast.
         res.json(result.rows.map(row => ({
             UserId: row.userid,
             Name: row.name,

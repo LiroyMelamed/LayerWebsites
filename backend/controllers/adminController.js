@@ -71,12 +71,7 @@ const getAdminByName = async (req, res) => {
         query += " ORDER BY createdat DESC";
         const result = await pool.query(query, params);
 
-        // Check if any rows were returned
-        if (result.rows.length === 0) {
-            return res.status(404).json({ message: "לא נמצא מנהל עם שם זה" });
-        }
-
-        // Return the found rows
+        // Empty search is normal — return [] (do not 404).
         res.json(result.rows);
     } catch (error) {
         console.error("Error retrieving admin:", error);
