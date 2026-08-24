@@ -7698,6 +7698,23 @@ exports.getSignedFileDownload = async (req, res, next) => {
         }
 
         if (file.Status !== "signed" && !file.SignedFileKey) {
+            // Allow download when at least one signature/field value exists (partial signing).
+            try {
+                const partialKey = await ensureSignedPdfKey({
+                    signingFileId,
+                    lawyerId: file.LawyerId,
+                    pdfKey: file.FileKey,
+                });
+                if (partialKey) {
+                    file.SignedStorageKey = partialKey;
+                    file.SignedFileKey = partialKey;
+                }
+            } catch (partialErr) {
+                console.warn('[getSignedFileDownload] partial PDF generation failed:', partialErr?.message);
+            }
+        }
+
+        if (file.Status !== "signed" && !file.SignedFileKey && !file.SignedStorageKey) {
             return fail(next, 'DOCUMENT_NOT_SIGNED', 409);
         }
 

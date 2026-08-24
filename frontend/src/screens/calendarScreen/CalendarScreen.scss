@@ -343,22 +343,40 @@
         padding: v.$space-2;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
+
+        &.is-expanded {
+            position: fixed;
+            inset: 0;
+            z-index: 120;
+            border-radius: 0;
+            max-height: 100vh;
+            overflow: auto;
+        }
     }
 
-    .lw-calendarScreen__calendarCard .fc .fc-scrollgrid,
-    .lw-calendarScreen__calendarCard .fc .fc-scrollgrid-sync-table,
-    .lw-calendarScreen__calendarCard .fc .fc-daygrid-body,
-    .lw-calendarScreen__calendarCard .fc .fc-col-header {
-        width: 100% !important;
+    .lw-calendarScreen__layout.is-calendarExpanded {
+        grid-template-columns: 1fr;
     }
 
-    .lw-calendarScreen__calendarCard .fc .fc-daygrid-day-number {
+    .lw-calendarScreen__calendarToolbar {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: v.$space-2;
+    }
+
+    .lw-calendarScreen__calendarCard .fc .fc-timegrid-event .fc-event-title,
+    .lw-calendarScreen__calendarCard .fc .fc-timegrid-event .fc-event-time {
         font-size: 0.75rem;
+        line-height: 1.2;
+        white-space: normal;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
     }
 
-    .lw-calendarScreen__calendarCard .fc .fc-col-header-cell-cushion {
+    .lw-calendarScreen__calendarCard .fc .fc-timegrid-slot-label-cushion {
         font-size: 0.6875rem;
-        padding: 0.25rem;
     }
 }
 

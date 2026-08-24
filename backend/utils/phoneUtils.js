@@ -29,4 +29,7 @@ const formatPhoneNumber = (phone) => {
     return null;
 };
 
-module.exports = { formatPhoneNumber };
+/** True when the string looks like a complete Israeli mobile/landline (not "0" alone). */
+const isValidIsraeliPhone = (phone) => Boolean(formatPhoneNumber(phone));
+
+module.exports = { formatPhoneNumber, isValidIsraeliPhone };

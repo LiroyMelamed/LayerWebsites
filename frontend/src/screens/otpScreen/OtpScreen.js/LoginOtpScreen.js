@@ -23,15 +23,27 @@ export { AppRoles };
 export const LoginOtpScreenName = "/LoginOtpScreen";
 
 export default function LoginOtpScreen() {
-    const { otpNumber, setOtpNumber, otpError, phoneNumber } = useLoginVerifyOtpCodeFieldsProvider();
+    const {
+        otpNumber,
+        setOtpNumber,
+        otpError,
+        phoneNumber,
+        email,
+        loginChannel,
+    } = useLoginVerifyOtpCodeFieldsProvider();
     const navigate = useNavigate();
     const { t } = useTranslation();
 
     const otpInputRef = useRef(null);
-
     const didAutoSubmitRef = useRef(false);
 
     const { isPerforming, performRequest } = useHttpRequest(loginApi.verifyOtp, navigateTo);
+
+    const verifyPayload = () => (
+        loginChannel === "email"
+            ? { email: String(email || "").trim().toLowerCase() }
+            : { phoneNumber }
+    );
 
     const handleInputChange = (event) => {
         const raw = event?.target?.value ?? "";
@@ -39,34 +51,34 @@ export default function LoginOtpScreen() {
         setOtpNumber(digitsOnly);
     };
 
+    const submitOtp = (code) => {
+        performRequest(verifyPayload(), code);
+    };
+
     const handleKeyDown = (event) => {
         if (event.key === 'Enter' && !isPerforming && otpError == null) {
-            performRequest(phoneNumber, otpNumber);
+            submitOtp(otpNumber);
         }
     };
 
     useEffect(() => {
-        // Auto-submit when the user typed/pasted/autofilled all 6 digits.
         if (isPerforming) return;
         const code = String(otpNumber || "").replace(/\D/g, "").slice(0, 6);
         if (code.length !== 6) {
             didAutoSubmitRef.current = false;
             return;
         }
-        if (otpError != null) {
-            // Allow retry after a failed verify once the user edits the code.
-            return;
-        }
+        if (otpError != null) return;
         if (didAutoSubmitRef.current) return;
-        if (!phoneNumber) return;
+        if (loginChannel === "email" ? !email : !phoneNumber) return;
         didAutoSubmitRef.current = true;
-        performRequest(phoneNumber, code);
-    }, [otpNumber, phoneNumber, isPerforming, otpError, performRequest]);
+        submitOtp(code);
+    }, [otpNumber, phoneNumber, email, loginChannel, isPerforming, otpError, performRequest]);
 
     useEffect(() => {
-        // Web OTP API (mainly Android/Chrome). Requires HTTPS and SMS containing: "@domain #123456".
         if (didAutoSubmitRef.current) return;
         if (typeof window === "undefined") return;
+        if (loginChannel === "email") return;
         if (!("OTPCredential" in window)) return;
         if (!navigator?.credentials?.get) return;
 
@@ -86,9 +98,9 @@ export default function LoginOtpScreen() {
 
                 if (code.length === 6 && phoneNumber && !didAutoSubmitRef.current) {
                     didAutoSubmitRef.current = true;
-                    performRequest(phoneNumber, code);
+                    submitOtp(code);
                 }
-            } catch (err) {
+            } catch {
                 // Ignore abort / unsupported / user denied
             }
         })();
@@ -96,10 +108,9 @@ export default function LoginOtpScreen() {
         return () => {
             abortController.abort();
         };
-    }, [phoneNumber, performRequest, setOtpNumber]);
+    }, [phoneNumber, loginChannel, performRequest, setOtpNumber]);
 
     useEffect(() => {
-        // iOS QuickType “one-time code” suggestion is most reliable when the OTP field is focused.
         const id = setTimeout(() => {
             otpInputRef.current?.focus?.();
         }, 0);
@@ -107,7 +118,7 @@ export default function LoginOtpScreen() {
     }, []);
 
     function navigateTo(data) {
-        setOtpNumber('')
+        setOtpNumber('');
         localStorage.setItem("token", data.token);
         localStorage.setItem("role", data.role);
         localStorage.setItem("isPlatformAdmin", data.isPlatformAdmin ? "true" : "false");
@@ -115,8 +126,8 @@ export default function LoginOtpScreen() {
             localStorage.setItem("refreshToken", data.refreshToken);
         }
 
-        if (data.role == AppRoles.Admin) navigate(AdminStackName + MainScreenName, { replace: true })
-        else navigate(ClientStackName + ClientMainScreenName, { replace: true })
+        if (data.role == AppRoles.Admin) navigate(AdminStackName + MainScreenName, { replace: true });
+        else navigate(ClientStackName + ClientMainScreenName, { replace: true });
     }
 
     return (
@@ -127,7 +138,7 @@ export default function LoginOtpScreen() {
                 <NextLoginButton
                     isPerforming={isPerforming}
                     buttonText={t('common.send')}
-                    onPress={() => performRequest(phoneNumber, otpNumber)}
+                    onPress={() => submitOtp(otpNumber)}
                     disabled={otpError != null}
                 />
             }

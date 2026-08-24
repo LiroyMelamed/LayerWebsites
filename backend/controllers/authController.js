@@ -1,8 +1,9 @@
 const pool = require("../config/db"); // pg pool
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
-const { formatPhoneNumber } = require("../utils/phoneUtils");
+const { formatPhoneNumber, isValidIsraeliPhone } = require("../utils/phoneUtils");
 const { sendMessage } = require("../utils/sendMessage");
+const { sendTransactionalCustomHtmlEmail } = require("../utils/smooveEmailCampaignService");
 const { isLocked, recordFailure, recordSuccess } = require("../utils/otpBruteForce");
 const { logSecurityEvent, extractIp } = require("../utils/securityAuditLogger");
 require("dotenv").config();
@@ -145,14 +146,61 @@ function buildOtpSmsBodyForRequest(req, otp) {
 }
 
 const requestOtp = async (req, res) => {
-    let { phoneNumber } = req.body;
+    let { phoneNumber, email } = req.body;
+    const emailNorm = String(email || "").trim().toLowerCase();
+    const useEmail = !phoneNumber && !!emailNorm;
 
-    if (!phoneNumber) {
-        console.log("RequestOtp-!phoneNumber");
-        return res.status(400).json({ message: "נא להזין מספר פלאפון תקין" });
+    if (!phoneNumber && !emailNorm) {
+        return res.status(400).json({ message: "נא להזין מספר טלפון או דוא״ל תקין" });
     }
 
     try {
+        if (useEmail) {
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm)) {
+                return res.status(400).json({ message: "נא להזין כתובת דוא״ל תקינה" });
+            }
+
+            const otp = crypto.randomInt(100000, 999999).toString();
+            const expiry = new Date(Date.now() + 5 * 60 * 1000);
+
+            const userResult = await pool.query(
+                `SELECT userid, name FROM users WHERE LOWER(email) = $1`,
+                [emailNorm]
+            );
+            if (userResult.rows.length === 0) {
+                return res.status(404).json({ message: "משתמש אינו קיים" });
+            }
+            const userId = userResult.rows[0].userid;
+            const userName = userResult.rows[0].name || "";
+
+            await pool.query(
+                `DELETE FROM otps WHERE LOWER(email) = $1`,
+                [emailNorm]
+            );
+            await pool.query(
+                `INSERT INTO otps (email, phonenumber, otp, expiry, userid)
+                 VALUES ($1, NULL, $2, $3, $4)`,
+                [emailNorm, hashOtp(otp), expiry, userId]
+            );
+
+            try {
+                await sendTransactionalCustomHtmlEmail({
+                    toEmail: emailNorm,
+                    subject: "קוד כניסה למערכת",
+                    htmlBody: `<p>שלום ${userName || ""},</p><p>קוד האימות שלך: <strong>${otp}</strong></p><p>הקוד תקף ל-5 דקות.</p>`,
+                    logLabel: "login-email-otp",
+                });
+            } catch (e) {
+                console.warn("Email OTP send failed:", e?.message);
+            }
+
+            return res.status(200).json({ message: "קוד נשלח לדוא״ל", otpSent: true, channel: "email" });
+        }
+
+        if (!phoneNumber) {
+            return res.status(400).json({ message: "נא להזין מספר פלאפון תקין" });
+        }
+
         let formatedPhoneNumber = formatPhoneNumber(phoneNumber);
 
         const isDemo = DEMO_OTP_PHONES.has(phoneNumber);
@@ -192,19 +240,22 @@ const requestOtp = async (req, res) => {
             }
         }
 
-        return res.status(200).json({ message: "קוד נשלח בהצלחה", otpSent: true });
+        return res.status(200).json({ message: "קוד נשלח בהצלחה", otpSent: true, channel: "phone" });
     } catch (error) {
         console.error("שגיאה בשליחת הקוד:", error);
-        logSecurityEvent({ type: 'OTP_REQUEST_ERROR', phone: phoneNumber, ip: extractIp(req), success: false });
+        logSecurityEvent({ type: 'OTP_REQUEST_ERROR', phone: phoneNumber, email: emailNorm, ip: extractIp(req), success: false });
         return res.status(500).json({ message: "שגיאה בשליחת הקוד" });
     }
 };
 
 const verifyOtp = async (req, res) => {
-    let { phoneNumber, otp } = req.body;
+    let { phoneNumber, email, otp } = req.body;
+    const emailNorm = String(email || "").trim().toLowerCase();
+    const useEmail = !phoneNumber && !!emailNorm;
+    const lockKey = useEmail ? emailNorm : phoneNumber;
 
     // ── Brute-force lockout check (ISO 27001 A.9.4.2) ──
-    const lockStatus = isLocked(phoneNumber);
+    const lockStatus = isLocked(lockKey);
     if (lockStatus.locked) {
         logSecurityEvent({
             type: 'OTP_VERIFY_BLOCKED_LOCKOUT',
@@ -222,23 +273,36 @@ const verifyOtp = async (req, res) => {
 
     try {
         const otpHash = hashOtp(otp);
-        const result = await pool.query(
-            `
-            SELECT U.userid, U.role, U.phonenumber
+        const result = useEmail
+            ? await pool.query(
+                `
+            SELECT U.userid, U.role, U.phonenumber, U.email
+            FROM otps O
+            JOIN users U ON O.userid = U.userid
+            WHERE LOWER(O.email) = $1
+              AND O.otp = $2
+              AND O.expiry > NOW()
+            `,
+                [emailNorm, otpHash]
+            )
+            : await pool.query(
+                `
+            SELECT U.userid, U.role, U.phonenumber, U.email
             FROM otps O
             JOIN users U ON O.userid = U.userid
             WHERE O.phonenumber = $1
               AND O.otp = $2
               AND O.expiry > NOW()
             `,
-            [phoneNumber, otpHash]
-        );
+                [phoneNumber, otpHash]
+            );
 
         if (result.rows.length === 0) {
-            recordFailure(phoneNumber);
+            recordFailure(lockKey);
             logSecurityEvent({
                 type: 'OTP_VERIFY_FAIL',
                 phone: phoneNumber,
+                email: emailNorm,
                 ip: extractIp(req),
                 userAgent: req.headers?.['user-agent'],
                 success: false,
@@ -246,13 +310,14 @@ const verifyOtp = async (req, res) => {
             return res.status(401).json({ message: "קוד לא תקין" });
         }
 
-        recordSuccess(phoneNumber);
+        recordSuccess(lockKey);
         const { userid, role, phonenumber } = result.rows[0];
         const token = signAccessToken({ userid, role, phonenumber });
 
         logSecurityEvent({
             type: 'OTP_VERIFY_SUCCESS',
             phone: phoneNumber,
+            email: emailNorm,
             userId: userid,
             ip: extractIp(req),
             userAgent: req.headers?.['user-agent'],
@@ -261,10 +326,17 @@ const verifyOtp = async (req, res) => {
 
         // Invalidate the OTP after successful verification to prevent replay
         try {
-            await pool.query(
-                `DELETE FROM otps WHERE phonenumber = $1 AND otp = $2`,
-                [phoneNumber, otpHash]
-            );
+            if (useEmail) {
+                await pool.query(
+                    `DELETE FROM otps WHERE LOWER(email) = $1 AND otp = $2`,
+                    [emailNorm, otpHash]
+                );
+            } else {
+                await pool.query(
+                    `DELETE FROM otps WHERE phonenumber = $1 AND otp = $2`,
+                    [phoneNumber, otpHash]
+                );
+            }
         } catch (delErr) {
             console.warn('Warning: failed to delete OTP after verification', delErr?.message);
         }

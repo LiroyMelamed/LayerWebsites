@@ -40,6 +40,7 @@ import "./UploadFileForSigningScreen.scss";
 import "../../components/specializedComponents/signFiles/fieldToolbar/fieldContextMenu.scss";
 import { MainScreenName } from "../mainScreen/MainScreen";
 import { useTranslation } from "react-i18next";
+import IsraeliPhoneNumberValidation from "../../functions/validation/IsraeliPhoneNumberValidation";
 import { showAppToast } from "../../components/ui/showAppToast";
 import ApiUtils from "../../api/apiUtils";
 import {
@@ -66,11 +67,13 @@ function FieldSettingsPopup({
     spot,
     index,
     fieldTypeOptions,
+    signers = [],
     onSave,
     onCancel,
     onDuplicate,
     onDelete,
     onReplaceStamp,
+    onChangeSigner,
 }) {
     const { t } = useTranslation();
     const storedRequired = spot?.isRequired ?? spot?.IsRequired;
@@ -80,6 +83,7 @@ function FieldSettingsPopup({
     const [rangeFrom, setRangeFrom] = useState("");
     const [rangeTo, setRangeTo] = useState("");
     const [rangeError, setRangeError] = useState("");
+    const [signerIndex, setSignerIndex] = useState(() => Number(spot?.signerIndex ?? 0) || 0);
 
     const typeMeta = fieldTypeOptions.find((opt) => opt.id === (spot?.type || 'signature'));
 
@@ -99,7 +103,13 @@ function FieldSettingsPopup({
     };
 
     const handleSave = () => {
-        onSave?.(index, { isRequired });
+        const signer = signers[signerIndex] || null;
+        onSave?.(index, {
+            isRequired,
+            signerIndex,
+            signerUserId: signer?.UserId ?? spot?.signerUserId,
+            signerName: signer?.Name || spot?.signerName,
+        });
     };
 
     return (
@@ -127,6 +137,23 @@ function FieldSettingsPopup({
                         </span>
                     </label>
                 </SimpleContainer>
+
+                {signers.length > 1 && (
+                    <SimpleContainer className="lw-fieldSettingsPopup__row">
+                        <Text14 className="lw-fieldSettingsPopup__label">{t('signing.fieldSettings.signerLabel')}</Text14>
+                        <select
+                            className="lw-fieldSettingsPopup__select"
+                            value={signerIndex}
+                            onChange={(e) => setSignerIndex(Number(e.target.value))}
+                        >
+                            {signers.map((s, idx) => (
+                                <option key={s?.UserId ?? idx} value={idx}>
+                                    {s?.Name || t('signing.signerFallback', { index: idx + 1 })}
+                                </option>
+                            ))}
+                        </select>
+                    </SimpleContainer>
+                )}
 
                 <SimpleContainer className="lw-fieldSettingsPopup__section">
                     <Text14 className="lw-fieldSettingsPopup__sectionTitle">{t('signing.fieldSettings.duplicateTitle')}</Text14>
@@ -242,6 +269,7 @@ export default function UploadFileForSigningScreen() {
                 spot={spot}
                 index={index}
                 fieldTypeOptions={fieldTypeOptions}
+                signers={selectedSigners}
                 onSave={(i, updates) => {
                     handleUpdateSpot(i, updates);
                     setSelectedSpotIndex(null);
@@ -668,8 +696,8 @@ export default function UploadFileForSigningScreen() {
                 pageNum: pageNumber,
                 x,
                 y,
-                width: fieldType === 'clientStamp' || fieldType === 'lawyerStamp' ? 420 : 240,
-                height: fieldType === 'clientStamp' || fieldType === 'lawyerStamp' ? 180 : 90,
+                width: fieldType === 'clientStamp' || fieldType === 'lawyerStamp' ? 420 : 130,
+                height: fieldType === 'clientStamp' || fieldType === 'lawyerStamp' ? 180 : 48,
                 signerIndex: signerIdx,
                 signerUserId: signer?.UserId,
                 signerName,
@@ -785,6 +813,36 @@ export default function UploadFileForSigningScreen() {
         if (file) setDocumentName(file.name.replace(/\.pdf$/i, ''));
     };
 
+    const validateSignerContact = ({ email, phone, nameForError }) => {
+        const emailNorm = String(email || "").trim();
+        const phoneNorm = String(phone || "").trim();
+        if (!emailNorm && !phoneNorm) {
+            showAppToast({
+                type: "error",
+                text: t("signing.upload.validation.signerContactRequired"),
+            });
+            return false;
+        }
+        if (phoneNorm) {
+            const err = IsraeliPhoneNumberValidation(phoneNorm);
+            if (err) {
+                showAppToast({
+                    type: "error",
+                    text: t("signing.upload.validation.invalidSignerPhone", { name: nameForError || "" }),
+                });
+                return false;
+            }
+        }
+        if (emailNorm && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm)) {
+            showAppToast({
+                type: "error",
+                text: t("signing.upload.validation.invalidSignerEmail"),
+            });
+            return false;
+        }
+        return true;
+    };
+
     const validateForm = () => {
         if (!selectedFile) {
             showAppToast({ type: "error", text: t('signing.upload.validation.selectFile') });
@@ -793,6 +851,14 @@ export default function UploadFileForSigningScreen() {
         if (!selectedSigners || selectedSigners.length === 0) {
             showAppToast({ type: "error", text: t('signing.upload.validation.selectAtLeastOneSigner') });
             return false;
+        }
+        for (const s of selectedSigners) {
+            const method = s.deliveryMethod || "both";
+            const needsEmail = method === "email" || method === "both";
+            const needsPhone = method === "phone" || method === "both";
+            const email = needsEmail ? s.Email : "";
+            const phone = needsPhone ? (s.Phone || s.PhoneNumber) : "";
+            if (!validateSignerContact({ email, phone, nameForError: s.Name })) return false;
         }
         if (signatureSpots.length === 0) {
             showAppToast({ type: "error", text: t('signing.upload.validation.atLeastOneSpot') });
@@ -868,13 +934,7 @@ export default function UploadFileForSigningScreen() {
         const email = manualSignerEmail.trim();
         const phone = manualSignerPhone.trim();
         if (!name) return;
-        if (!phone) {
-            showAppToast({
-                type: 'error',
-                text: t('signing.upload.validation.manualSignerPhoneRequired'),
-            });
-            return;
-        }
+        if (!validateSignerContact({ email, phone, nameForError: name })) return;
 
         if (contactsCollideWithSelected({ email, phone })) {
             showAppToast({
@@ -1398,7 +1458,7 @@ export default function UploadFileForSigningScreen() {
                                         />
                                     </SimpleContainer>
                                     <SimpleContainer className="lw-uploadSigningScreen__manualSignerActions">
-                                        <PrimaryButton onPress={addManualSigner} disabled={!manualSignerName.trim() || !manualSignerPhone.trim()}>
+                                        <PrimaryButton onPress={addManualSigner} disabled={!manualSignerName.trim() || (!manualSignerEmail.trim() && !manualSignerPhone.trim())}>
                                             {t('signing.upload.addSignerBtn')}
                                         </PrimaryButton>
                                         <SecondaryButton onPress={() => { setShowManualSigner(false); setManualSignerName(""); setManualSignerEmail(""); setManualSignerPhone(""); }}>

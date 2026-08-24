@@ -233,15 +233,50 @@ function buildFullCalendarEvent(ev, { scope }) {
         });
     }
 
-    // Appointments: honor a *custom* stored color when set. Stock / empty colors
-    // follow platform type defaults (personal) or lawyer palette (firm).
+    if (isHoliday) {
+        return buildInternalAllDayEvent(ev, {
+            labelPrefix: "[חג]",
+            color: holidayColor(),
+            className: "lw-fcEvent--holiday",
+        });
+    }
+
     const typeDefault = getEventTypeDefaultColor(ev?.eventType);
     const hasCustomColor = !isStockEventColor(ev?.color, ev?.eventType);
     const personalInferred = hasCustomColor
         ? String(ev.color).trim().toUpperCase()
         : typeDefault;
 
-    // Firm view: manager palette by default; respect lawyer-picked custom color.
+    if (ev.allDay) {
+        const { start, end } = leaveAllDayRange(ev.startTime, ev.endTime);
+        const color = scope === SCOPE_FIRM
+            ? (hasCustomColor ? personalInferred : colorForKey(colorKeyForEvent(ev)))
+            : personalInferred;
+        const inviteStatus = aggregateInviteStatus(ev);
+        const inviteClass =
+            inviteStatus === "accepted" ? "lw-fcEvent--inviteAccepted"
+                : inviteStatus === "declined" ? "lw-fcEvent--inviteDeclined"
+                    : inviteStatus === "pending" ? "lw-fcEvent--invitePending"
+                        : null;
+        return {
+            id: String(ev.id),
+            title: ev.title || "",
+            start,
+            end,
+            allDay: true,
+            backgroundColor: color,
+            borderColor: color,
+            textColor: "#FFFFFF",
+            classNames: inviteClass ? [inviteClass] : undefined,
+            editable: ev?.eventType !== "leave" && ev?.eventType !== "holiday",
+            startEditable: ev?.eventType !== "leave" && ev?.eventType !== "holiday",
+            durationEditable: false,
+            extendedProps: { ...ev, inviteStatus: inviteStatus || ev?.inviteStatus || "none", _phoneTip: clientPhoneTooltip(ev) },
+        };
+    }
+
+    // Appointments: honor a *custom* stored color when set. Stock / empty colors
+    // follow platform type defaults (personal) or lawyer palette (firm).
     const color = scope === SCOPE_FIRM
         ? (hasCustomColor ? personalInferred : colorForKey(colorKeyForEvent(ev)))
         : personalInferred;
@@ -317,7 +352,7 @@ export default function CalendarScreen() {
 
     // ── View / scope / filters ─────────────────────────────────────────────
     const [events, setEvents] = useState([]);
-    const [view, setView] = useState("timeGridWeek");
+    const [view, setView] = useState(isSmallScreen ? "timeGridDay" : "timeGridWeek");
     const [scope, setScope] = useState(SCOPE_MINE);
     const [filters, setFilters] = useState({
         lawyer_id: null,
@@ -326,6 +361,7 @@ export default function CalendarScreen() {
         event_type: EVENT_TYPE_ALL, // 'all' is UI-only; we don't send it to the API
     });
     const [filtersPanelOpen, setFiltersPanelOpen] = useState(!isSmallScreen);
+    const [calendarExpanded, setCalendarExpanded] = useState(false);
 
     // ── Working-hours config (per weekday) ─────────────────────────────────
     const [workingSchedule, setWorkingSchedule] = useState(() => defaultSchedule());
@@ -543,6 +579,23 @@ export default function CalendarScreen() {
         }
     }, [upsertLocally, fetchEvents, closePopup, t]);
 
+    const openDuplicateDraft = useCallback((draft) => {
+        closePopup();
+        window.setTimeout(() => {
+            openPopup(
+                <EventFormModal
+                    key={_eventFormModalKey(draft)}
+                    event={draft}
+                    onUpdated={upsertLocally}
+                    onSaved={handleEventSaved}
+                    onDuplicatePrefill={openDuplicateDraft}
+                    onDeleted={() => closePopup()}
+                    onClose={closePopup}
+                />
+            );
+        }, 0);
+    }, [openPopup, closePopup, upsertLocally, handleEventSaved, openDuplicateDraft]);
+
     const openPersonalSyncModal = useCallback(() => {
         openPopup(
             <PersonalSyncModal
@@ -578,11 +631,12 @@ export default function CalendarScreen() {
                     handleEventSaved(saved, opts);
                     selectInfo?.view?.calendar?.unselect?.();
                 }}
+                onDuplicatePrefill={openDuplicateDraft}
                 onDeleted={() => closePopup()}
                 onClose={closePopup}
             />
         );
-    }, [openPopup, closePopup, upsertLocally, handleEventSaved, workingSchedule]);
+    }, [openPopup, closePopup, upsertLocally, handleEventSaved, workingSchedule, openDuplicateDraft]);
 
     const openEditModal = useCallback((clickInfo) => {
         const ev = clickInfo.event.extendedProps || {};
@@ -602,6 +656,7 @@ export default function CalendarScreen() {
                 event={eventPayload}
                 onUpdated={upsertLocally}
                 onSaved={handleEventSaved}
+                onDuplicatePrefill={openDuplicateDraft}
                 onDeleted={(deletedId) => {
                     setEvents((prev) => prev.filter((e) => e.id !== String(deletedId)));
                     closePopup();
@@ -609,7 +664,7 @@ export default function CalendarScreen() {
                 onClose={closePopup}
             />
         );
-    }, [openPopup, closePopup, upsertLocally, handleEventSaved]);
+    }, [openPopup, closePopup, upsertLocally, handleEventSaved, openDuplicateDraft]);
 
     // ── Deep-link: /CalendarScreen?eventId=<id> ────────────────────────────
     useEffect(() => {
@@ -634,6 +689,7 @@ export default function CalendarScreen() {
                 event={eventPayload}
                 onUpdated={upsertLocally}
                 onSaved={handleEventSaved}
+                onDuplicatePrefill={openDuplicateDraft}
                 onDeleted={(deletedId) => {
                     setEvents((prev) => prev.filter((e) => e.id !== String(deletedId)));
                     closePopup();
@@ -923,10 +979,10 @@ export default function CalendarScreen() {
                 )}
 
                 {/* ── Layout: sidebar + calendar ── */}
-                <SimpleContainer className={`lw-calendarScreen__layout ${filtersPanelOpen ? "is-sidebarOpen" : "is-sidebarClosed"}`}>
+                <SimpleContainer className={`lw-calendarScreen__layout ${filtersPanelOpen && !calendarExpanded ? "is-sidebarOpen" : "is-sidebarClosed"}${calendarExpanded ? " is-calendarExpanded" : ""}`}>
 
                     {/* ── Sidebar filter panel ── */}
-                    {filtersPanelOpen && (
+                    {filtersPanelOpen && !calendarExpanded && (
                         <SimpleCard className="lw-calendarScreen__sidebar">
                             <SimpleContainer className="lw-calendarScreen__sidebarHeader">
                                 <TextBold14 color="#2A4365">{t("calendar.filtersTitle")}</TextBold14>
@@ -996,7 +1052,15 @@ export default function CalendarScreen() {
                     <SimpleContainer className="lw-calendarScreen__calendarCol">
 
                         {/* Calendar */}
-                        <SimpleCard className="lw-calendarScreen__calendarCard">
+                        <SimpleCard className={`lw-calendarScreen__calendarCard${calendarExpanded ? " is-expanded" : ""}`}>
+                            <SimpleContainer className="lw-calendarScreen__calendarToolbar">
+                                <SecondaryButton
+                                    onPress={() => setCalendarExpanded((v) => !v)}
+                                    aria-label={calendarExpanded ? t("calendar.collapseCalendarAria") : t("calendar.expandCalendarAria")}
+                                >
+                                    {calendarExpanded ? t("calendar.collapseCalendar") : t("calendar.expandCalendar")}
+                                </SecondaryButton>
+                            </SimpleContainer>
                             <FullCalendar
                                 ref={calendarRef}
                                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -1116,7 +1180,9 @@ export default function CalendarScreen() {
                                 longPressDelay={350}
                                 selectLongPressDelay={350}
                                 eventLongPressDelay={0}
-                                height="auto"
+                                height={calendarExpanded ? "auto" : (isSmallScreen ? "auto" : 780)}
+                                slotDuration="00:30:00"
+                                expandRows
                                 businessHours={businessHours}
                                 slotMinTime={slotRange.min}
                                 slotMaxTime={slotRange.max}

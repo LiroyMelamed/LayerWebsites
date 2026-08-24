@@ -215,18 +215,26 @@ function hasAnyReminderChannel(channels) {
 function formatOffsetHebrew(minutes) {
     const m = Math.max(0, Math.round(Number(minutes) || 0));
     if (m === 0) return 'עכשיו';
-    if (m >= 1440 && m % 1440 === 0) {
-        const days = m / 1440;
-        if (days === 1) return 'מחר';
-        return `בעוד ${days} ימים`;
+    if (m >= 1440) {
+        const days = Math.floor(m / 1440);
+        const remHours = Math.floor((m % 1440) / 60);
+        if (days === 1 && remHours === 0) return 'מחר';
+        if (remHours === 0) {
+            return days === 1 ? 'בעוד יום' : `בעוד ${days} ימים`;
+        }
+        const dayPart = days === 1 ? 'יום' : `${days} ימים`;
+        const hourPart = remHours === 1 ? 'שעה' : `${remHours} שעות`;
+        return `בעוד ${dayPart} ו-${hourPart}`;
     }
-    if (m >= 60 && m % 60 === 0) {
-        const hours = m / 60;
-        if (hours === 1) return 'בעוד שעה';
-        return `בעוד ${hours} שעות`;
+    if (m >= 60) {
+        const hours = Math.floor(m / 60);
+        const remMins = m % 60;
+        if (remMins === 0) {
+            return hours === 1 ? 'בעוד שעה' : `בעוד ${hours} שעות`;
+        }
+        if (hours === 1) return `בעוד שעה ו-${remMins} דקות`;
+        return `בעוד ${hours} שעות ו-${remMins} דקות`;
     }
-    // Near whole hours: prefer "שעה" wording when within ~2 minutes.
-    if (m >= 58 && m <= 62) return 'בעוד שעה';
     return `בעוד ${m} דקות`;
 }
 

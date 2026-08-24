@@ -152,7 +152,34 @@ const GOOGLE_SCOPES = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const VALID_EVENT_TYPES = Object.freeze(['appointment', 'leave', 'hearing', 'reminder', 'holiday']);
+const VALID_MEETING_TYPES = Object.freeze(['frontal', 'zoom', 'phone', 'other']);
 const INTERNAL_SCOPED_EVENT_TYPES = Object.freeze(['leave', 'reminder', 'holiday']);
+
+function _parseMeetingType(value) {
+    const v = String(value || '').trim().toLowerCase();
+    if (!v) return null;
+    return VALID_MEETING_TYPES.includes(v) ? v : null;
+}
+
+function _parseLeadParticipants(raw) {
+    if (!raw) return [];
+    let list = raw;
+    if (typeof raw === 'string') {
+        try { list = JSON.parse(raw); } catch { return []; }
+    }
+    if (!Array.isArray(list)) return [];
+    return list
+        .map((p) => ({
+            name: String(p?.name || '').trim() || null,
+            phone: String(p?.phone || '').trim() || null,
+            email: String(p?.email || '').trim().toLowerCase() || null,
+        }))
+        .filter((p) => p.name || p.phone || p.email);
+}
+
+function _leadParticipantsToJson(list) {
+    return JSON.stringify(_parseLeadParticipants(list));
+}
 
 function _isValidEventType(value) {
     return VALID_EVENT_TYPES.includes(value);
@@ -303,6 +330,7 @@ function _sanitizeEvent(row) {
         title: row.title,
         description: row.description,
         location: row.location,
+        meetingType: row.meeting_type ?? null,
         eventType: row.event_type || 'appointment',
         clientUserId: row.client_user_id,
         clientName: row.client_name,
@@ -321,6 +349,7 @@ function _sanitizeEvent(row) {
         leadPhone: row.lead_phone ?? null,
         leadEmail: row.lead_email ?? null,
         leadCaseName: row.lead_case_name ?? null,
+        leadParticipants: _parseLeadParticipants(row.lead_participants),
         lastReminderSentAt: row.last_reminder_sent_at ?? null,
         reminderOffsets: legacyOffsets.length ? legacyOffsets : uniqueSortedDesc([
             ...lawyerReminderOffsets,
@@ -339,6 +368,9 @@ function _sanitizeEvent(row) {
         linkedReminderId: row.linked_reminder_id ?? null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
+        createdByName: row.owner_name ?? null,
+        updatedBy: row.updated_by ?? null,
+        updatedByName: row.updated_by_name ?? null,
     };
 }
 
@@ -836,11 +868,13 @@ const listEvents = async (req, res) => {
         const { rows } = await pool.query(
             `SELECT ce.*,
                     u_owner.name  AS owner_name,
+                    u_updated.name AS updated_by_name,
                     u_client.name AS client_display_name,
                     c.casename    AS case_name,
                     ser.id        AS linked_reminder_id
              FROM   calendar_events ce
              LEFT JOIN users u_owner  ON u_owner.userid  = ce.owner_id
+             LEFT JOIN users u_updated ON u_updated.userid = ce.updated_by
              LEFT JOIN users u_client ON u_client.userid = ce.client_user_id
              LEFT JOIN cases c        ON c.caseid        = ce.case_id
              LEFT JOIN scheduled_email_reminders ser
@@ -1029,6 +1063,8 @@ const createEvent = async (req, res) => {
         title,
         description,
         location,
+        meeting_type,
+        lead_participants,
         event_type,
         client_user_id,
         client_name,
@@ -1111,6 +1147,8 @@ const createEvent = async (req, res) => {
 
     // Working hours are visual guidance on the calendar grid only — do not block saves.
     const storedAllDay = _isAllDayInternalEventType(eventType) ? true : !!all_day;
+    const storedMeetingType = _parseMeetingType(meeting_type);
+    const storedLeadParticipants = _leadParticipantsToJson(lead_participants);
 
     const splitOffsets = await _resolveSplitReminderOffsets(req.body, eventType);
     const storedLawyerOffsets = splitOffsets.lawyer ?? [];
@@ -1190,16 +1228,16 @@ const createEvent = async (req, res) => {
 
             const { rows } = await pool.query(
             `INSERT INTO calendar_events
-               (owner_id, case_id, title, description, location, event_type,
+               (owner_id, case_id, title, description, location, meeting_type, event_type,
                 client_user_id, client_name, manager_user_id, manager_name, color,
                 start_time, end_time, all_day, rrule,
-                lead_name, lead_phone, lead_email, lead_case_name,
+                lead_name, lead_phone, lead_email, lead_case_name, lead_participants,
                 reminder_offsets, reminder_channels, reminder_targets, reminders_sent_offsets,
                 invite_status, invite_token, client_reminder_sms, invite_sms,
-                lawyer_reminder_offsets, client_reminder_offsets)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
-                     $20::jsonb, $21::jsonb, $22::jsonb, '[]'::jsonb, $23, $24, $25, $26,
-                     $27::jsonb, $28::jsonb)
+                lawyer_reminder_offsets, client_reminder_offsets, updated_by)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
+                     $21::jsonb, $22::jsonb, $23::jsonb, $24::jsonb, '[]'::jsonb, $25, $26, $27, $28,
+                     $29::jsonb, $30::jsonb, $31)
              RETURNING *`,
             [
                 ownerId,
@@ -1207,6 +1245,7 @@ const createEvent = async (req, res) => {
                 title.trim(),
                 description || null,
                 location || null,
+                storedMeetingType,
                 eventType,
                 clientUserId,
                 hasLead ? null : (client_name || null),
@@ -1221,6 +1260,7 @@ const createEvent = async (req, res) => {
                 lead_phone ? String(lead_phone).trim() : null,
                 lead_email ? String(lead_email).trim().toLowerCase() : null,
                 hasLead ? (leadCaseName || null) : null,
+                storedLeadParticipants,
                 offsetsToJson(storedReminderOffsets),
                 channelsToJson(storedReminderChannels),
                 targetsToJson(storedReminderTargets),
@@ -1230,6 +1270,7 @@ const createEvent = async (req, res) => {
                 inviteSms,
                 offsetsToJson(storedLawyerOffsets),
                 offsetsToJson(storedClientOffsets),
+                userId,
             ]
         );
         const created = rows[0];
@@ -1545,43 +1586,53 @@ const updateEvent = async (req, res) => {
         const nextInviteSms = req.body?.invite_sms !== undefined
             ? (String(req.body.invite_sms || '').trim() || null)
             : ev.invite_sms;
+        const nextMeetingType = req.body?.meeting_type !== undefined
+            ? _parseMeetingType(req.body.meeting_type)
+            : ev.meeting_type;
+        const nextLeadParticipants = req.body?.lead_participants !== undefined
+            ? _leadParticipantsToJson(req.body.lead_participants)
+            : (ev.lead_participants ?? '[]');
 
         const { rows } = await pool.query(
             `UPDATE calendar_events SET
                title                  = $1,
                description            = $2,
                location               = $3,
-               event_type             = $4,
-               client_user_id         = $5,
-               client_name            = $6,
-               manager_user_id        = $7,
-               manager_name           = $8,
-               color                  = $9,
-               start_time             = $10,
-               end_time               = $11,
-               all_day                = $12,
-               rrule                  = $13,
-               case_id                = $14,
-               lead_name              = $15,
-               lead_phone             = $16,
-               lead_email             = $17,
-               lead_case_name         = $18,
-               reminder_offsets       = $19::jsonb,
-               reminder_channels      = $20::jsonb,
-               reminder_targets       = $21::jsonb,
-               reminders_sent_offsets = $22::jsonb,
-               last_reminder_sent_at  = $23,
-               owner_id               = $24,
-               client_reminder_sms    = $25,
-               invite_sms             = $26,
-               lawyer_reminder_offsets = $28::jsonb,
-               client_reminder_offsets = $29::jsonb
-             WHERE id = $27
+               meeting_type           = $4,
+               event_type             = $5,
+               client_user_id         = $6,
+               client_name            = $7,
+               manager_user_id        = $8,
+               manager_name           = $9,
+               color                  = $10,
+               start_time             = $11,
+               end_time               = $12,
+               all_day                = $13,
+               rrule                  = $14,
+               case_id                = $15,
+               lead_name              = $16,
+               lead_phone             = $17,
+               lead_email             = $18,
+               lead_case_name         = $19,
+               lead_participants      = $20::jsonb,
+               reminder_offsets       = $21::jsonb,
+               reminder_channels      = $22::jsonb,
+               reminder_targets       = $23::jsonb,
+               reminders_sent_offsets = $24::jsonb,
+               last_reminder_sent_at  = $25,
+               owner_id               = $26,
+               client_reminder_sms    = $27,
+               invite_sms             = $28,
+               lawyer_reminder_offsets = $30::jsonb,
+               client_reminder_offsets = $31::jsonb,
+               updated_by             = $32
+             WHERE id = $29
              RETURNING *`,
             [
                 (title || ev.title).trim(),
                 description !== undefined ? description : ev.description,
                 location !== undefined ? location : ev.location,
+                nextMeetingType,
                 newEventType,
                 resolvedClientUserId,
                 resolvedClientName,
@@ -1597,6 +1648,7 @@ const updateEvent = async (req, res) => {
                 nextLeadPhone,
                 nextLeadEmail,
                 hasLead ? nextLeadCaseName : null,
+                nextLeadParticipants,
                 offsetsToJson(REMINDABLE_EVENT_TYPES.has(newEventType) ? nextReminderOffsets : []),
                 channelsToJson(REMINDABLE_EVENT_TYPES.has(newEventType) ? nextReminderChannels : { push: false, sms: false, email: false }),
                 targetsToJson(REMINDABLE_EVENT_TYPES.has(newEventType) ? nextReminderTargets : { client: false, managers: false }),
@@ -1608,6 +1660,7 @@ const updateEvent = async (req, res) => {
                 eventId,
                 offsetsToJson(REMINDABLE_EVENT_TYPES.has(newEventType) ? nextLawyerOffsets : []),
                 offsetsToJson(REMINDABLE_EVENT_TYPES.has(newEventType) ? nextClientOffsets : []),
+                userId,
             ]
         );
         let updated = rows[0];

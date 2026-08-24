@@ -38,6 +38,8 @@ import CaseFullView from "../../../components/styledComponents/cases/CaseFullVie
 import { EVENT_COLOR_PRESETS, getEventTypeDefaultColor, isStockEventColor } from "../utils/lawyerColors";
 import CalendarSmsTemplateEditor from "./CalendarSmsTemplateEditor";
 import { toast, toastError, toastSuccess, toastWarning } from "../../../components/ui/toast";
+import { parseDatetimeLocal, toDatetimeLocal, toLocalYmdFromInput } from "../../../functions/date/datetimeLocal";
+import { formatDisplayDateTime } from "../../../functions/date/formatDateForInput";
 import "./EventFormModal.scss";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -207,13 +209,30 @@ const EVENT_TYPE_OPTIONS = [
     { value: EVENT_TYPE_HOLIDAY, labelKey: "calendar.eventTypeHolidaySingular" },
 ];
 
-/** ISO/Date → "YYYY-MM-DDTHH:MM" for <input type="datetime-local">. */
-function toDatetimeLocal(val) {
-    if (!val) return "";
-    const d = new Date(val);
-    if (isNaN(d)) return "";
-    const pad = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const MEETING_TYPE_OPTIONS = [
+    { value: "frontal", labelKey: "calendar.meetingTypeFrontal" },
+    { value: "zoom", labelKey: "calendar.meetingTypeZoom" },
+    { value: "phone", labelKey: "calendar.meetingTypePhone" },
+    { value: "other", labelKey: "calendar.meetingTypeOther" },
+];
+
+function _initialLeadParticipants(event) {
+    const fromJson = Array.isArray(event?.leadParticipants) ? event.leadParticipants : [];
+    if (fromJson.length) {
+        return fromJson.map((p) => ({
+            name: p?.name || "",
+            phone: p?.phone || "",
+            email: p?.email || "",
+        }));
+    }
+    if (event?.leadName || event?.leadPhone || event?.leadEmail) {
+        return [{
+            name: event.leadName || "",
+            phone: event.leadPhone || "",
+            email: event.leadEmail || "",
+        }];
+    }
+    return [];
 }
 
 function _shallowEqualConflictKey(a, b) {
@@ -329,7 +348,7 @@ function _formStateFromEvent(event) {
  *  - onDeleted  : (deletedEventId) → void
  *  - onClose    : () → void
  */
-export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, onClose }) {
+export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, onClose, onDuplicatePrefill }) {
     const { t } = useTranslation();
     const isEdit = event?.id != null;
 
@@ -338,6 +357,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const [title, setTitle] = useState(event?.title || "");
     const [description, setDescription] = useState(event?.description || "");
     const [location, setLocation] = useState(event?.location || "");
+    const [meetingType, setMeetingType] = useState(event?.meetingType || event?.meeting_type || "");
     const [startTime, setStartTime] = useState(toDatetimeLocal(event?.startTime) || "");
     const [endTime, setEndTime] = useState(toDatetimeLocal(event?.endTime) || "");
     const [allDay, setAllDay] = useState(event?.allDay || false);
@@ -368,6 +388,10 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const [leadName, setLeadName] = useState(event?.leadName || "");
     const [leadPhone, setLeadPhone] = useState(event?.leadPhone || "");
     const [leadEmail, setLeadEmail] = useState(event?.leadEmail || "");
+    const [leadParticipants, setLeadParticipants] = useState(() => _initialLeadParticipants(event));
+    const [draftLeadName, setDraftLeadName] = useState("");
+    const [draftLeadPhone, setDraftLeadPhone] = useState("");
+    const [draftLeadEmail, setDraftLeadEmail] = useState("");
 
     // Async lifecycle state
     const notifyError = (msg) => {
@@ -804,8 +828,9 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     // Meeting attendees only make sense for appointments/hearings — not תזכורת כללית.
     const showManagersField = !isInternalScopedEventType(eventType);
     const hasClientRecipient = clients.length > 0
+        || leadParticipants.some((p) => p.name?.trim() || p.phone?.trim() || p.email?.trim())
         || !!(leadName.trim() || leadPhone.trim() || leadEmail.trim())
-        || (intakeMode === INTAKE_LEAD);
+        || intakeMode === INTAKE_LEAD;
     const anyReminderOffsets = lawyerReminderOffsets.length > 0
         || (hasClientRecipient && clientReminderOffsets.length > 0);
     const reminderTemplateItems = useMemo(
@@ -971,24 +996,27 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         }
         if (!startTime) { notifyError("חובה להזין שעת התחלה"); return false; }
         if (isReminderEventType) {
-            // Reminder events are a single-moment marker — end_time auto-mirrors start_time.
-            if (!reminderClientName.trim()) {
-                notifyError(t("reminders.add.error"));
-                return false;
-            }
-            if (!reminderToEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(reminderToEmail.trim())) {
+            // General reminders may be created without a linked client.
+            if (reminderToEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(reminderToEmail.trim())) {
                 notifyError(t("reminders.add.error"));
                 return false;
             }
         } else {
             if (!endTime) { notifyError("חובה להזין שעת סיום"); return false; }
-            if (new Date(endTime) <= new Date(startTime)) {
+            const startDt = parseDatetimeLocal(startTime);
+            const endDt = parseDatetimeLocal(endTime);
+            if (!startDt || !endDt || endDt <= startDt) {
                 notifyError("שעת הסיום חייבת להיות אחרי שעת ההתחלה");
                 return false;
             }
         }
         if (intakeMode === INTAKE_LEAD && (eventType === EVENT_TYPE_APPT || eventType === EVENT_TYPE_HEARING)) {
-            if (!leadName.trim() && !leadPhone.trim() && !leadEmail.trim()) {
+            const primaryLead = leadParticipants[0] || {
+                name: leadName,
+                phone: leadPhone,
+                email: leadEmail,
+            };
+            if (!primaryLead.name?.trim() && !primaryLead.phone?.trim() && !primaryLead.email?.trim()) {
                 notifyError("חובה להזין לפחות שם, טלפון או דוא״ל לליד");
                 return false;
             }
@@ -1022,40 +1050,32 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 : null;
             // Reminder events are zero-duration in concept, but we give the calendar
             // a 15-minute slot so listEvents window queries (tstzrange '[)') match.
-            const toLocalYmd = (val) => {
-                const s = String(val || "");
-                if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
-                const d = new Date(val);
-                if (Number.isNaN(d.getTime())) return "";
-                const pad = (n) => String(n).padStart(2, "0");
-                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-            };
+            const toLocalYmd = (val) => toLocalYmdFromInput(val);
             let startIso;
             let endIso;
             if (forceAllDay || allDay) {
                 const startYmd = toLocalYmd(startTime);
                 let endYmd = toLocalYmd(endTime) || startYmd;
-                // Guard: if end looks like FC exclusive (next midnight / same as start+1 with 00:00), pull back one day.
                 try {
-                    const endLocal = new Date(endTime);
-                    if (!Number.isNaN(endLocal.getTime())
+                    const endLocal = parseDatetimeLocal(endTime);
+                    if (endLocal
                         && endLocal.getHours() === 0
                         && endLocal.getMinutes() === 0
                         && endYmd > startYmd) {
                         const pulled = new Date(endLocal);
                         pulled.setDate(pulled.getDate() - 1);
-                        endYmd = toLocalYmd(pulled) || endYmd;
+                        endYmd = toLocalYmdFromInput(pulled) || endYmd;
                     }
                 } catch { /* ignore */ }
                 if (endYmd < startYmd) endYmd = startYmd;
                 startIso = new Date(`${startYmd}T00:00:00`).toISOString();
                 endIso = new Date(`${endYmd}T23:59:00`).toISOString();
             } else if (isReminderEventType) {
-                startIso = new Date(startTime).toISOString();
-                endIso = new Date(new Date(startTime).getTime() + 15 * 60 * 1000).toISOString();
+                startIso = parseDatetimeLocal(startTime)?.toISOString();
+                endIso = new Date((parseDatetimeLocal(startTime)?.getTime() || Date.now()) + 15 * 60 * 1000).toISOString();
             } else {
-                startIso = new Date(startTime).toISOString();
-                endIso = new Date(endTime).toISOString();
+                startIso = parseDatetimeLocal(startTime)?.toISOString();
+                endIso = parseDatetimeLocal(endTime)?.toISOString();
             }
             const primaryClient = clients[0] || null;
             const clientUserIds = clients.map((c) => c.userId).filter(Boolean);
@@ -1082,7 +1102,8 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                             ? t("calendar.holidayLabel")
                             : ""),
                 description: description || null,
-                location: location || null,
+                location: isLeaveOrHolidayEventType(eventType) ? null : (location || null),
+                meeting_type: isLeaveOrHolidayEventType(eventType) ? null : (meetingType || null),
                 event_type: eventType,
                 // Persist null when using the platform type default so admin color
                 // changes keep applying until the lawyer picks a custom swatch.
@@ -1131,14 +1152,20 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             }
 
             if (isLeadMode) {
+                const primaryLead = leadParticipants[0] || {
+                    name: leadName,
+                    phone: leadPhone,
+                    email: leadEmail,
+                };
                 Object.assign(payload, {
                     client_user_id: null,
                     client_user_ids: [],
                     client_name: null,
                     case_id: null,
-                    lead_name: leadName.trim() || null,
-                    lead_phone: leadPhone.trim() || null,
-                    lead_email: leadEmail.trim() || null,
+                    lead_name: (primaryLead.name || "").trim() || null,
+                    lead_phone: (primaryLead.phone || "").trim() || null,
+                    lead_email: (primaryLead.email || "").trim() || null,
+                    lead_participants: leadParticipants.filter((p) => p.name || p.phone || p.email),
                     lead_case_name: optionalConvertCaseName.trim() || null,
                 });
             } else if (isClientScoped) {
@@ -1497,29 +1524,42 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         }
     };
 
-    const handleDuplicate = async () => {
-        if (!isEdit || !event?.id) return;
-        setDuplicating(true);
-        clearNotices();
-        try {
-            const res = await calendarApi.duplicateEvent(event.id);
-            if (res?.success && res?.data?.event) {
-                onSaved?.(res.data.event);
-            } else {
-                notifyError(
-                    res?.data?.message
-                    || res?.message
-                    || t("calendar.duplicateEventError")
-                );
-                setDuplicating(false);
-            }
-        } catch (err) {
-            notifyError(
-                err?.response?.data?.message
-                || t("calendar.duplicateEventError")
-            );
-            setDuplicating(false);
-        }
+    const handleDuplicate = () => {
+        if (!isEdit) return;
+        const copyTitle = `${title.trim() || event?.title || ""}`.trim();
+        const draft = {
+            eventType,
+            title: copyTitle ? `${copyTitle} (עותק)` : t("calendar.duplicateEvent"),
+            description,
+            location,
+            meetingType,
+            startTime: parseDatetimeLocal(startTime)?.toISOString() || event?.startTime,
+            endTime: parseDatetimeLocal(endTime)?.toISOString() || event?.endTime,
+            allDay,
+            color,
+            clients: clients.map((c) => ({ ...c, inviteStatus: "none" })),
+            clientName,
+            clientUserId,
+            managers,
+            managerUserId: managers[0]?.userId || null,
+            managerName: managers.map((m) => m.name).filter(Boolean).join(", "),
+            caseId,
+            caseName,
+            intakeMode,
+            leadName: leadParticipants[0]?.name || leadName,
+            leadPhone: leadParticipants[0]?.phone || leadPhone,
+            leadEmail: leadParticipants[0]?.email || leadEmail,
+            leadParticipants,
+            leadCaseName: optionalConvertCaseName,
+            lawyerReminderOffsets,
+            clientReminderOffsets,
+            reminderChannels,
+            reminderTargets,
+            clientReminderSms,
+            inviteSms,
+            inviteStatus: "none",
+        };
+        onDuplicatePrefill?.(draft);
     };
 
     // ─── Derived flags ────────────────────────────────────────────────────
@@ -1658,6 +1698,18 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 {/* ─── Header ─── */}
                 <SimpleContainer className="lw-eventFormModal__header">
                     <Text24>{isEdit ? t("calendar.editEvent") : t("calendar.addEvent")}</Text24>
+                    {isEdit && (event?.createdByName || event?.ownerName || event?.updatedByName) && (
+                        <SimpleContainer className="lw-eventFormModal__auditTrail">
+                            <Text12 color="#718096">
+                                {t("calendar.createdByLabel")}: {event?.createdByName || event?.ownerName || "—"}
+                                {event?.createdAt ? ` · ${formatDisplayDateTime(event.createdAt)}` : ""}
+                            </Text12>
+                            <Text12 color="#718096">
+                                {t("calendar.updatedByLabel")}: {event?.updatedByName || event?.createdByName || event?.ownerName || "—"}
+                                {event?.updatedAt ? ` · ${formatDisplayDateTime(event.updatedAt)}` : ""}
+                            </Text12>
+                        </SimpleContainer>
+                    )}
                 </SimpleContainer>
 
                 {/* ─── Conflict banner (top, non-blocking) ─── */}
@@ -1795,13 +1847,31 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                         </SimpleContainer>
                     )}
 
-                    {!isReminderEventType && (
-                        <SimpleInput
-                            title={t("calendar.location")}
-                            value={location}
-                            onChange={(e) => setLocation(e.target.value)}
-                            timeToWaitInMilli={0}
-                        />
+                    {!isReminderEventType && !isLeaveOrHolidayEventType(eventType) && (
+                        <>
+                            <div className="lw-eventFormModal__field">
+                                <Text14 color={NAVY}>{t("calendar.meetingType")}</Text14>
+                                <div className="lw-eventFormModal__segmented lw-eventFormModal__segmented--quad" role="group">
+                                    {MEETING_TYPE_OPTIONS.map(({ value, labelKey }) => (
+                                        <SimpleButton
+                                            key={value}
+                                            className={`lw-eventFormModal__segmentedBtn ${meetingType === value ? "is-active" : ""}`}
+                                            onPress={() => setMeetingType(value)}
+                                            aria-pressed={meetingType === value}
+                                            tabIndex={-1}
+                                        >
+                                            {t(labelKey)}
+                                        </SimpleButton>
+                                    ))}
+                                </div>
+                            </div>
+                            <SimpleInput
+                                title={meetingType === "zoom" ? t("calendar.zoomLink") : t("calendar.location")}
+                                value={location}
+                                onChange={(e) => setLocation(e.target.value)}
+                                timeToWaitInMilli={0}
+                            />
+                        </>
                     )}
 
                     {isReminderEventType && (
@@ -2276,42 +2346,66 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                         <SimpleContainer className="lw-eventFormModal__leadBox">
                             <TextBold14 color={NAVY}>{t("calendar.intakeNewLead")}</TextBold14>
                             <Text12 color="#718096">{t("calendar.leadHint")}</Text12>
+                            {leadParticipants.length > 0 && (
+                                <SimpleContainer className="lw-eventFormModal__managerChips lw-eventFormModal__clientChips">
+                                    {leadParticipants.map((p, idx) => (
+                                        <span key={`lead-${idx}-${p.phone || p.email || p.name}`} className="lw-eventFormModal__managerChip">
+                                            {[p.name, p.phone, p.email].filter(Boolean).join(" · ")}
+                                            <button
+                                                type="button"
+                                                className="lw-eventFormModal__chipRemove"
+                                                tabIndex={-1}
+                                                onClick={() => setLeadParticipants((prev) => prev.filter((_, i) => i !== idx))}
+                                                aria-label={t("calendar.removeLead")}
+                                            >
+                                                &times;
+                                            </button>
+                                        </span>
+                                    ))}
+                                </SimpleContainer>
+                            )}
                             <SimpleInput
                                 title={t("calendar.leadName")}
-                                value={leadName}
-                                onChange={(e) => setLeadName(e.target.value)}
+                                value={draftLeadName}
+                                onChange={(e) => setDraftLeadName(e.target.value)}
                                 timeToWaitInMilli={0}
-                                inputRef={leadNameInputRef}
-                                autoComplete="name"
-                                onKeyDown={(e) => handleLeadFieldTab(e, { next: leadPhoneInputRef })}
                             />
                             <SimpleInput
                                 title={t("calendar.leadPhone")}
-                                // text + inputMode avoids Safari tel-autofill stealing focus on Tab
                                 type="text"
                                 inputMode="tel"
                                 autoComplete="off"
-                                value={leadPhone}
-                                onChange={(e) => setLeadPhone(e.target.value)}
+                                value={draftLeadPhone}
+                                onChange={(e) => setDraftLeadPhone(e.target.value)}
                                 timeToWaitInMilli={0}
-                                inputRef={leadPhoneInputRef}
-                                onKeyDown={(e) => handleLeadFieldTab(e, {
-                                    next: leadEmailInputRef,
-                                    prev: leadNameInputRef,
-                                })}
                             />
                             <SimpleInput
                                 title={t("calendar.leadEmail")}
                                 type="email"
                                 autoComplete="off"
-                                value={leadEmail}
-                                onChange={(e) => setLeadEmail(e.target.value)}
+                                value={draftLeadEmail}
+                                onChange={(e) => setDraftLeadEmail(e.target.value)}
                                 timeToWaitInMilli={0}
-                                inputRef={leadEmailInputRef}
-                                onKeyDown={(e) => handleLeadFieldTab(e, {
-                                    prev: leadPhoneInputRef,
-                                })}
                             />
+                            <SecondaryButton
+                                onPress={() => {
+                                    const next = {
+                                        name: draftLeadName.trim(),
+                                        phone: draftLeadPhone.trim(),
+                                        email: draftLeadEmail.trim(),
+                                    };
+                                    if (!next.name && !next.phone && !next.email) return;
+                                    setLeadParticipants((prev) => [...prev, next]);
+                                    setLeadName(next.name);
+                                    setLeadPhone(next.phone);
+                                    setLeadEmail(next.email);
+                                    setDraftLeadName("");
+                                    setDraftLeadPhone("");
+                                    setDraftLeadEmail("");
+                                }}
+                            >
+                                {t("calendar.addLeadParticipant")}
+                            </SecondaryButton>
                             <SimpleInput
                                 title={t("calendar.convertLeadOptionalCaseName")}
                                 value={optionalConvertCaseName}
@@ -2391,7 +2485,6 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     {isEdit && (
                         <SecondaryButton
                             onPress={handleDuplicate}
-                            isPerforming={duplicating}
                         >
                             {t("calendar.duplicateEvent")}
                         </SecondaryButton>

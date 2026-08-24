@@ -12,19 +12,33 @@ import { images } from "../../assets/images/images";
 import { useNavigate } from "react-router-dom";
 import loginApi from "../../api/loginApi";
 import { useTranslation } from "react-i18next";
+import SimpleButton from "../../components/simpleComponents/SimpleButton";
+import { Text14 } from "../../components/specializedComponents/text/AllTextKindFile";
 
 import "./LoginScreen.scss";
 
 export const LoginScreenName = "/LoginScreen";
 
 export default function LoginScreen() {
-    const { phoneNumber, setPhoneNumber, phoneNumberError } = useLoginVerifyOtpCodeFieldsProvider();
+    const {
+        loginChannel,
+        setLoginChannel,
+        phoneNumber,
+        setPhoneNumber,
+        phoneNumberError,
+        email,
+        setEmail,
+        emailError,
+    } = useLoginVerifyOtpCodeFieldsProvider();
     const navigate = useNavigate();
     const { t } = useTranslation();
 
-    const { isPerforming, performRequest } = useHttpRequest(loginApi.sendOtp, () => navigate(LoginStackName + LoginOtpScreenName));
+    const { isPerforming, performRequest } = useHttpRequest(
+        loginApi.sendOtp,
+        () => navigate(LoginStackName + LoginOtpScreenName)
+    );
 
-    const handleInputChange = (event) => {
+    const handlePhoneChange = (event) => {
         const raw = event?.target?.value ?? "";
         const digitsOnly = String(raw).replace(/\D/g, "");
 
@@ -36,11 +50,22 @@ export default function LoginScreen() {
         setPhoneNumber(normalized.slice(0, 10));
     };
 
+    const handleSubmit = () => {
+        if (loginChannel === "email") {
+            performRequest({ email: String(email || "").trim().toLowerCase() });
+            return;
+        }
+        performRequest({ phoneNumber });
+    };
+
     const handleKeyDown = (event) => {
-        if (event.key === 'Enter' && !isPerforming && phoneNumberError == null) {
-            performRequest(phoneNumber);
+        const blocked = loginChannel === "email" ? emailError != null : phoneNumberError != null;
+        if (event.key === "Enter" && !isPerforming && !blocked) {
+            handleSubmit();
         }
     };
+
+    const inputError = loginChannel === "email" ? emailError : phoneNumberError;
 
     return (
         <LoginSimpleScreen
@@ -51,25 +76,53 @@ export default function LoginScreen() {
                     <NextLoginButton
                         isPerforming={isPerforming}
                         buttonText={t('auth.login')}
-                        onPress={() => performRequest(phoneNumber)}
-                        disabled={phoneNumberError != null}
+                        onPress={handleSubmit}
+                        disabled={inputError != null}
                     />
                     <PoweredByMela />
                 </>
             }
         >
             <SimpleContainer className="lw-loginScreen__center">
-                <SimpleInput
-                    title={t('auth.enterPhone')}
-                    type="tel"
-                    className="lw-loginScreen__input"
-                    value={phoneNumber}
-                    onChange={handleInputChange}
-                    onKeyDown={handleKeyDown}
-                    error={phoneNumberError}
-                    textStyle={{ textAlign: 'center' }}
-                    maxLength={10}
-                />
+                <SimpleContainer className="lw-loginScreen__channelSwitch">
+                    <SimpleButton
+                        className={`lw-loginScreen__channelBtn ${loginChannel === "phone" ? "is-active" : ""}`}
+                        onPress={() => setLoginChannel("phone")}
+                    >
+                        <Text14>{t('auth.loginByPhone')}</Text14>
+                    </SimpleButton>
+                    <SimpleButton
+                        className={`lw-loginScreen__channelBtn ${loginChannel === "email" ? "is-active" : ""}`}
+                        onPress={() => setLoginChannel("email")}
+                    >
+                        <Text14>{t('auth.loginByEmail')}</Text14>
+                    </SimpleButton>
+                </SimpleContainer>
+
+                {loginChannel === "email" ? (
+                    <SimpleInput
+                        title={t('auth.enterEmail')}
+                        type="email"
+                        className="lw-loginScreen__input"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        error={emailError}
+                        textStyle={{ textAlign: 'center' }}
+                    />
+                ) : (
+                    <SimpleInput
+                        title={t('auth.enterPhone')}
+                        type="tel"
+                        className="lw-loginScreen__input"
+                        value={phoneNumber}
+                        onChange={handlePhoneChange}
+                        onKeyDown={handleKeyDown}
+                        error={phoneNumberError}
+                        textStyle={{ textAlign: 'center' }}
+                        maxLength={10}
+                    />
+                )}
             </SimpleContainer>
         </LoginSimpleScreen>
     );
