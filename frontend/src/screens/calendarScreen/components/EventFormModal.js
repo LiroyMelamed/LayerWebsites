@@ -2,6 +2,7 @@ import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMe
 import { useTranslation } from "react-i18next";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
 import SimpleInput from "../../../components/simpleComponents/SimpleInput";
+import BlockDateInput from "../../../components/simpleComponents/BlockDateInput";
 import SimpleTextArea from "../../../components/simpleComponents/SimpleTextArea";
 import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
 import SimpleButton from "../../../components/simpleComponents/SimpleButton";
@@ -1775,12 +1776,14 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     />
 
                     {/* ─── Time fields ─── */}
-                    <SimpleInput
+                    <BlockDateInput
                         title={(isReminderEventType
                             ? t("reminders.add.scheduledFor")
                             : t("calendar.startTime")) + " *"}
-                        type={useDateOnlyInputs ? "date" : "datetime-local"}
-                        value={useDateOnlyInputs ? (startTime.slice(0, 10) || "") : startTime}
+                        mode={useDateOnlyInputs ? "date" : "datetime-local"}
+                        value={useDateOnlyInputs
+                            ? toLocalYmdFromInput(startTime)
+                            : startTime}
                         onChange={(e) => {
                             const raw = e.target.value;
                             if (useDateOnlyInputs) {
@@ -1792,10 +1795,12 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                         timeToWaitInMilli={0}
                     />
                     {!isReminderEventType && (
-                        <SimpleInput
+                        <BlockDateInput
                             title={t("calendar.endTime") + " *"}
-                            type={useDateOnlyInputs ? "date" : "datetime-local"}
-                            value={useDateOnlyInputs ? (endTime.slice(0, 10) || startTime.slice(0, 10) || "") : endTime}
+                            mode={useDateOnlyInputs ? "date" : "datetime-local"}
+                            value={useDateOnlyInputs
+                                ? toLocalYmdFromInput(endTime || startTime)
+                                : endTime}
                             onChange={(e) => {
                                 const raw = e.target.value;
                                 if (useDateOnlyInputs) {
@@ -1860,9 +1865,9 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                             ))}
                                         </div>
                                     </div>
-                                    <SimpleInput
+                                    <BlockDateInput
                                         title={t("calendar.recurrenceUntil")}
-                                        type="date"
+                                        mode="date"
                                         value={recurrenceUntil}
                                         onChange={(e) => setRecurrenceUntil(e.target.value)}
                                         timeToWaitInMilli={0}
