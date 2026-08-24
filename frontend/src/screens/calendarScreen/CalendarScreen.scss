@@ -715,19 +715,19 @@
     .lw-calendarScreen__calendarCard .fc-event.lw-fcEvent--inviteAccepted,
     .fc .fc-event.lw-fcEvent--inviteAccepted {
         box-shadow: none;
-        border: 2px solid #2F855A !important;
+        border: 3px solid #2F855A !important;
     }
 
     .lw-calendarScreen__calendarCard .fc-event.lw-fcEvent--invitePending,
     .fc .fc-event.lw-fcEvent--invitePending {
         box-shadow: none;
-        border: 2px solid #D69E2E !important;
+        border: 3px solid #D69E2E !important;
     }
 
     .lw-calendarScreen__calendarCard .fc-event.lw-fcEvent--inviteDeclined,
     .fc .fc-event.lw-fcEvent--inviteDeclined {
         box-shadow: none;
-        border: 2px solid #C53030 !important;
+        border: 3px solid #C53030 !important;
     }
 }
 
