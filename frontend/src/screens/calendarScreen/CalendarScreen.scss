@@ -639,9 +639,21 @@
     display: flex;
     flex-direction: column;
     gap: 0.05rem;
-    min-height: 100%;
+    height: 100%;
+    box-sizing: border-box;
     padding-inline-end: 0.7rem;
     overflow: hidden;
+}
+
+.lw-calendarScreen__calendarCard .fc-timegrid-event-harness .fc-event,
+.lw-calendarScreen__calendarCard .fc-timegrid-event-harness-inset .fc-event {
+    height: 100%;
+    min-height: 100%;
+}
+
+.fc .fc-event-mirror .lw-fcEventContent,
+.fc .fc-event-resizing .lw-fcEventContent {
+    height: 100%;
 }
 
 .fc .fc-event .lw-fcEventRsvpBadge {

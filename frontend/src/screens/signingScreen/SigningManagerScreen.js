@@ -492,6 +492,7 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
     const signedSpots = Number(file?.SignedSpots || 0);
     const isSigned = String(file?.Status || '').toLowerCase() === 'signed';
     const isPending = String(file?.Status || '').toLowerCase() === 'pending';
+    const hasPartialSignatures = signedSpots > 0 && !isSigned;
 
     const [isEditingName, setIsEditingName] = useState(false);
     const [editName, setEditName] = useState(file?.FileName || '');
@@ -774,23 +775,29 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                 )}
 
                 <SimpleContainer className="lw-signingManagerScreen__actionsRow">
-                    {isSigned && (
+                    {(isSigned || hasPartialSignatures) && (
                         <>
-                            <PrimaryButton onPress={wrappedDownloadEvidencePdf} disabled={isDownloadingEvidencePdf} isPerforming={isDownloadingEvidencePdf}>
-                                {t('signingManager.actions.downloadEvidencePdf')}
-                            </PrimaryButton>
+                            {isSigned && (
+                                <>
+                                    <PrimaryButton onPress={wrappedDownloadEvidencePdf} disabled={isDownloadingEvidencePdf} isPerforming={isDownloadingEvidencePdf}>
+                                        {t('signingManager.actions.downloadEvidencePdf')}
+                                    </PrimaryButton>
+                                    <SecondaryButton onPress={wrappedDownloadEvidenceZip} disabled={isDownloadingEvidenceZip} isPerforming={isDownloadingEvidenceZip}>
+                                        {t('signingManager.actions.downloadEvidenceZip')}
+                                    </SecondaryButton>
+                                </>
+                            )}
                             <PrimaryButton onPress={wrappedDownloadSigned} disabled={isDownloadingSigned} isPerforming={isDownloadingSigned}>
-                                {t('signingManager.actions.downloadSigned')}
+                                {hasPartialSignatures && !isSigned
+                                    ? t('signingManager.actions.downloadPartialSigned', { defaultValue: 'הורדת מסמך (חתימות חלקיות)' })
+                                    : t('signingManager.actions.downloadSigned')}
                             </PrimaryButton>
-                            <SecondaryButton onPress={wrappedDownloadEvidenceZip} disabled={isDownloadingEvidenceZip} isPerforming={isDownloadingEvidenceZip}>
-                                {t('signingManager.actions.downloadEvidenceZip')}
-                            </SecondaryButton>
                             <SecondaryButton onPress={wrappedOpenPdf} disabled={isOpeningPdf} isPerforming={isOpeningPdf}>
                                 {t('signingManager.actions.openPdf')}
                             </SecondaryButton>
                         </>
                     )}
-                    {!isSigned && (
+                    {!isSigned && !hasPartialSignatures && (
                         <SecondaryButton
                             onPress={openSpotsPreview}
                             disabled={isOpeningSpotsPreview}

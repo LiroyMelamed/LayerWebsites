@@ -64,8 +64,24 @@ const addCustomer = async (req, res) => {
 
     try {
         const phoneDigits = normalizePhoneDigits(phoneNumber);
-        if (!phoneDigits) {
-            return res.status(400).json({ message: "נא להזין מספר פלאפון תקין", code: 'INVALID_PHONE' });
+        const emailNorm = String(email || "").trim().toLowerCase();
+
+        if (!phoneDigits && !emailNorm) {
+            return res.status(400).json({
+                message: "נא להזין מספר טלפון או דוא״ל",
+                code: 'CONTACT_REQUIRED',
+            });
+        }
+
+        if (emailNorm && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm)) {
+            return res.status(400).json({ message: "נא להזין כתובת דוא״ל תקינה", code: 'INVALID_EMAIL' });
+        }
+
+        if (phoneDigits) {
+            const invalidPhone = phoneNumber && String(phoneNumber).trim() === "0";
+            if (invalidPhone || (phoneNumber && !formatPhoneNumber(phoneNumber))) {
+                return res.status(400).json({ message: "נא להזין מספר פלאפון תקין", code: 'INVALID_PHONE' });
+            }
         }
 
         let parsedDob = null;
@@ -77,27 +93,56 @@ const addCustomer = async (req, res) => {
             parsedDob = d;
         }
 
-        const existing = await pool.query(
-            `SELECT userid, name, email, phonenumber, companyname, dateofbirth, role
-             FROM users
-             WHERE regexp_replace(phonenumber, '\\D', '', 'g') = $1
-             LIMIT 1`,
-            [phoneDigits]
-        );
-        if (existing.rows.length > 0) {
-            const row = existing.rows[0];
-            return res.status(409).json({
-                message: "מספר פלאפון כבר קיים במערכת — ניתן לשייך את הלקוח הקיים",
-                code: 'PHONE_ALREADY_EXISTS',
-                UserId: row.userid,
-                Name: row.name || null,
-                Email: row.email || null,
-                PhoneNumber: row.phonenumber || phoneNumber,
-                CompanyName: row.companyname || null,
-                DateOfBirth: row.dateofbirth || null,
-                Role: row.role || null,
-            });
+        if (phoneDigits) {
+            const existing = await pool.query(
+                `SELECT userid, name, email, phonenumber, companyname, dateofbirth, role
+                 FROM users
+                 WHERE regexp_replace(phonenumber, '\\D', '', 'g') = $1
+                 LIMIT 1`,
+                [phoneDigits]
+            );
+            if (existing.rows.length > 0) {
+                const row = existing.rows[0];
+                return res.status(409).json({
+                    message: "מספר פלאפון כבר קיים במערכת — ניתן לשייך את הלקוח הקיים",
+                    code: 'PHONE_ALREADY_EXISTS',
+                    UserId: row.userid,
+                    Name: row.name || null,
+                    Email: row.email || null,
+                    PhoneNumber: row.phonenumber || phoneNumber,
+                    CompanyName: row.companyname || null,
+                    DateOfBirth: row.dateofbirth || null,
+                    Role: row.role || null,
+                });
+            }
         }
+
+        if (emailNorm) {
+            const existingEmail = await pool.query(
+                `SELECT userid, name, email, phonenumber, companyname, dateofbirth, role
+                 FROM users
+                 WHERE LOWER(email) = $1
+                 LIMIT 1`,
+                [emailNorm]
+            );
+            if (existingEmail.rows.length > 0) {
+                const row = existingEmail.rows[0];
+                return res.status(409).json({
+                    message: "דוא״ל כבר קיים במערכת — ניתן לשייך את הלקוח הקיים",
+                    code: 'EMAIL_ALREADY_EXISTS',
+                    UserId: row.userid,
+                    Name: row.name || null,
+                    Email: row.email || null,
+                    PhoneNumber: row.phonenumber || null,
+                    CompanyName: row.companyname || null,
+                    DateOfBirth: row.dateofbirth || null,
+                    Role: row.role || null,
+                });
+            }
+        }
+
+        const roleToCreate = phoneDigits ? "User" : "ExternalSigner";
+        const phoneToStore = phoneNumber ? String(phoneNumber).trim() : null;
 
         const insertResult = await pool.query(
             `
@@ -105,7 +150,7 @@ const addCustomer = async (req, res) => {
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING userid, name, email, phonenumber, companyname, dateofbirth
             `,
-            [name, email, phoneNumber, null, "User", companyName, parsedDob, new Date()]
+            [name, emailNorm || null, phoneToStore, null, roleToCreate, companyName, parsedDob, new Date()]
         );
         const created = insertResult.rows[0] || {};
         const newUserId = created.userid;

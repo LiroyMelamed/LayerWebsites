@@ -581,14 +581,23 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         return () => { cancelled = true; };
     }, [event?.linkedReminderId]);
 
-    // ─── Effect: snap allDay times to full-day window ─────────────────────
+    // ─── Effect: when toggling all-day ON, snap once to day boundaries ─────
+    const prevAllDayRef = useRef(allDay);
     useEffect(() => {
-        if (allDay) {
-            if (startTime) setStartTime(startTime.slice(0, 10) + "T00:00");
-            if (endTime) setEndTime(endTime.slice(0, 10) + "T23:59");
+        if (allDay && !prevAllDayRef.current) {
+            if (startTime) setStartTime(`${startTime.slice(0, 10)}T00:00`);
+            const day = (endTime || startTime || "").slice(0, 10) || startTime.slice(0, 10);
+            if (day) setEndTime(`${day}T23:59`);
         }
+        prevAllDayRef.current = allDay;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [allDay]);
+
+    useEffect(() => {
+        if (meetingType === "phone") {
+            setLocation("");
+        }
+    }, [meetingType]);
 
     // ─── Effect: clear lead fields when switching to existing-client mode ─
     useEffect(() => {
@@ -1608,6 +1617,9 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const layoutMode = caseFormDraft
         ? "case"
         : (isInternalScopedType ? "compact" : "full");
+    const useDateOnlyInputs = allDay || isLeaveOrHolidayEventType(eventType);
+    const showLocationField = !isLeaveOrHolidayEventType(eventType)
+        && meetingType !== "phone";
 
     // Smoothly morph the outer SimplePopUp card height when form density changes.
     useLayoutEffect(() => {
@@ -1767,17 +1779,31 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                         title={(isReminderEventType
                             ? t("reminders.add.scheduledFor")
                             : t("calendar.startTime")) + " *"}
-                        type="datetime-local"
-                        value={startTime}
-                        onChange={(e) => setStartTime(e.target.value)}
+                        type={useDateOnlyInputs ? "date" : "datetime-local"}
+                        value={useDateOnlyInputs ? (startTime.slice(0, 10) || "") : startTime}
+                        onChange={(e) => {
+                            const raw = e.target.value;
+                            if (useDateOnlyInputs) {
+                                setStartTime(raw ? `${raw}T00:00` : "");
+                            } else {
+                                setStartTime(raw);
+                            }
+                        }}
                         timeToWaitInMilli={0}
                     />
                     {!isReminderEventType && (
                         <SimpleInput
                             title={t("calendar.endTime") + " *"}
-                            type="datetime-local"
-                            value={endTime}
-                            onChange={(e) => setEndTime(e.target.value)}
+                            type={useDateOnlyInputs ? "date" : "datetime-local"}
+                            value={useDateOnlyInputs ? (endTime.slice(0, 10) || startTime.slice(0, 10) || "") : endTime}
+                            onChange={(e) => {
+                                const raw = e.target.value;
+                                if (useDateOnlyInputs) {
+                                    setEndTime(raw ? `${raw}T23:59` : "");
+                                } else {
+                                    setEndTime(raw);
+                                }
+                            }}
                             timeToWaitInMilli={0}
                         />
                     )}
@@ -1865,12 +1891,14 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                     ))}
                                 </div>
                             </div>
-                            <SimpleInput
-                                title={meetingType === "zoom" ? t("calendar.zoomLink") : t("calendar.location")}
-                                value={location}
-                                onChange={(e) => setLocation(e.target.value)}
-                                timeToWaitInMilli={0}
-                            />
+                            {showLocationField && (
+                                <SimpleInput
+                                    title={meetingType === "zoom" ? t("calendar.zoomLink") : t("calendar.location")}
+                                    value={location}
+                                    onChange={(e) => setLocation(e.target.value)}
+                                    timeToWaitInMilli={0}
+                                />
+                            )}
                         </>
                     )}
 
@@ -2439,7 +2467,8 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                         </SimpleContainer>
                     )}
 
-                    {/* ─── Color row (preset swatches only) ─── */}
+                    {/* ─── Color row (preset swatches only) — not for leave/holiday ─── */}
+                    {!isLeaveOrHolidayEventType(eventType) && (
                     <SimpleContainer className="lw-eventFormModal__colorRow">
                         <Text14>{t("calendar.eventColor")}</Text14>
                         <SimpleContainer className="lw-eventFormModal__colorSwatches">
@@ -2465,6 +2494,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                             </Text12>
                         )}
                     </SimpleContainer>
+                    )}
 
                     <SimpleTextArea
                         title={t("calendar.description")}

@@ -40,6 +40,7 @@ import PersonalSyncModal from "./components/PersonalSyncModal";
 import { colorForKey, colorKeyForEvent, leaveColor, holidayColor, buildLawyerLegend, getEventTypeDefaultColor, isStockEventColor } from "./utils/lawyerColors";
 import { toastError, toastSuccess, toastWarning } from "../../components/ui/toast";
 import { buildNewEventPrefill } from "./utils/eventDefaults";
+import { parseDatetimeLocal } from "../../functions/date/datetimeLocal";
 import {
     defaultSchedule,
     parseScheduleFromCalendarSettings,
@@ -110,9 +111,27 @@ function addLocalDaysYmd(ymd, days) {
     return toLocalYmd(d);
 }
 
-function leaveAllDayRange(startTime, endTime) {
+function normalizeAllDayEndInclusive(startTime, endTime) {
     const start = toLocalYmd(startTime) || String(startTime || "").slice(0, 10);
-    const endInclusive = toLocalYmd(endTime) || start;
+    let endInclusive = toLocalYmd(endTime) || start;
+    try {
+        const endLocal = parseDatetimeLocal(endTime)
+            || (endTime instanceof Date ? endTime : new Date(endTime));
+        if (endLocal && !Number.isNaN(endLocal.getTime())
+            && endLocal.getHours() === 0
+            && endLocal.getMinutes() === 0
+            && endInclusive > start) {
+            const pulled = new Date(endLocal);
+            pulled.setDate(pulled.getDate() - 1);
+            endInclusive = toLocalYmd(pulled) || endInclusive;
+        }
+    } catch { /* ignore */ }
+    if (endInclusive < start) endInclusive = start;
+    return { start, endInclusive };
+}
+
+function leaveAllDayRange(startTime, endTime) {
+    const { start, endInclusive } = normalizeAllDayEndInclusive(startTime, endTime);
     return { start, end: addLocalDaysYmd(endInclusive, 1) };
 }
 
@@ -248,7 +267,8 @@ function buildFullCalendarEvent(ev, { scope }) {
         : typeDefault;
 
     if (ev.allDay) {
-        const { start, end } = leaveAllDayRange(ev.startTime, ev.endTime);
+        const { start, endInclusive } = normalizeAllDayEndInclusive(ev.startTime, ev.endTime);
+        const end = addLocalDaysYmd(endInclusive, 1);
         const color = scope === SCOPE_FIRM
             ? (hasCustomColor ? personalInferred : colorForKey(colorKeyForEvent(ev)))
             : personalInferred;
@@ -568,13 +588,11 @@ export default function CalendarScreen() {
         });
     }, [apiFilters.scope]);
 
-    const handleEventSaved = useCallback((saved, { firmOnlyNotice, reminderSyncWarning } = {}) => {
+    const handleEventSaved = useCallback((saved, { firmOnlyNotice } = {}) => {
         upsertLocally(saved);
         fetchEvents(null);
         closePopup();
-        if (reminderSyncWarning) {
-            toastWarning(reminderSyncWarning);
-        } else if (firmOnlyNotice) {
+        if (firmOnlyNotice) {
             toastWarning(t("calendar.savedFirmOnlyNotice"));
         }
     }, [upsertLocally, fetchEvents, closePopup, t]);
@@ -1117,13 +1135,11 @@ export default function CalendarScreen() {
                                         let startIso = info.event.start?.toISOString();
                                         let endIso = (info.event.end || info.event.start)?.toISOString();
                                         if (isAllDay && info.event.start) {
-                                            const startYmd = toLocalYmd(info.event.start);
-                                            // FC exclusive end → inclusive end-of-day for DB
-                                            const endExclusive = info.event.end
-                                                ? toLocalYmd(info.event.end)
-                                                : addLocalDaysYmd(startYmd, 1);
-                                            const endInclusive = addLocalDaysYmd(endExclusive, -1) || startYmd;
-                                            startIso = new Date(`${startYmd}T00:00:00`).toISOString();
+                                            const { start, endInclusive } = normalizeAllDayEndInclusive(
+                                                info.event.start,
+                                                info.event.end || info.event.start
+                                            );
+                                            startIso = new Date(`${start}T00:00:00`).toISOString();
                                             endIso = new Date(`${endInclusive}T23:59:00`).toISOString();
                                         }
                                         const res = await calendarApi.updateEvent(id, {
@@ -1148,19 +1164,37 @@ export default function CalendarScreen() {
                                         info.revert();
                                         return;
                                     }
+                                    const patchLocalEvent = () => {
+                                        const startIso = info.event.start?.toISOString?.();
+                                        const endIso = (info.event.end || info.event.start)?.toISOString?.();
+                                        if (!startIso) return;
+                                        setEvents((prev) => prev.map((fcEv) => {
+                                            if (String(fcEv.id) !== String(id)) return fcEv;
+                                            const base = fcEv.extendedProps || {};
+                                            return buildFullCalendarEvent(
+                                                {
+                                                    ...base,
+                                                    startTime: startIso,
+                                                    endTime: endIso || startIso,
+                                                    allDay: !!info.event.allDay,
+                                                },
+                                                { scope: apiFilters.scope || SCOPE_MINE }
+                                            );
+                                        }));
+                                    };
                                     try {
                                         const isAllDay = !!info.event.allDay;
                                         let startIso = info.event.start?.toISOString();
                                         let endIso = (info.event.end || info.event.start)?.toISOString();
                                         if (isAllDay && info.event.start) {
-                                            const startYmd = toLocalYmd(info.event.start);
-                                            const endExclusive = info.event.end
-                                                ? toLocalYmd(info.event.end)
-                                                : addLocalDaysYmd(startYmd, 1);
-                                            const endInclusive = addLocalDaysYmd(endExclusive, -1) || startYmd;
-                                            startIso = new Date(`${startYmd}T00:00:00`).toISOString();
+                                            const { start, endInclusive } = normalizeAllDayEndInclusive(
+                                                info.event.start,
+                                                info.event.end || info.event.start
+                                            );
+                                            startIso = new Date(`${start}T00:00:00`).toISOString();
                                             endIso = new Date(`${endInclusive}T23:59:00`).toISOString();
                                         }
+                                        patchLocalEvent();
                                         const res = await calendarApi.updateEvent(id, {
                                             start_time: startIso,
                                             end_time: endIso,

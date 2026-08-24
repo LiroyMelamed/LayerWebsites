@@ -1314,7 +1314,10 @@ const createEvent = async (req, res) => {
                             createdBy: userId,
                         }
                     );
-                    if (!linkedReminderId) {
+                    const wantedLinkedReminder = Boolean(
+                        String(reminder_to_email || "").trim() || String(reminder_client_name || "").trim()
+                    );
+                    if (!linkedReminderId && wantedLinkedReminder) {
                         reminderSyncWarning = 'האירוע נשמר אך חסרים אימייל או שם לקוח — התזכורת לא נוספה למסך התזכורות.';
                     }
                 } catch (syncErr) {

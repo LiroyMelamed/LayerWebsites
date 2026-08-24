@@ -53,9 +53,24 @@
 
 .lw-eventFormModal__header {
     flex-direction: column;
+    align-items: stretch;
     padding-block-end: v.$space-4;
     border-block-end: 0.0625rem solid rgba(226, 232, 240, 0.8);
     margin-block-end: v.$space-4;
+}
+
+.lw-eventFormModal__auditTrail {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    width: 100%;
+    margin-block-start: 0.5rem;
+
+    > * {
+        display: block;
+        width: 100%;
+        line-height: 1.45;
+    }
 }
 
 .lw-eventFormModal__body {

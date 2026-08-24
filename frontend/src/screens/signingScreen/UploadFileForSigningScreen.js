@@ -696,8 +696,8 @@ export default function UploadFileForSigningScreen() {
                 pageNum: pageNumber,
                 x,
                 y,
-                width: fieldType === 'clientStamp' || fieldType === 'lawyerStamp' ? 420 : 130,
-                height: fieldType === 'clientStamp' || fieldType === 'lawyerStamp' ? 180 : 48,
+                width: fieldType === 'clientStamp' || fieldType === 'lawyerStamp' ? 420 : 160,
+                height: fieldType === 'clientStamp' || fieldType === 'lawyerStamp' ? 180 : 56,
                 signerIndex: signerIdx,
                 signerUserId: signer?.UserId,
                 signerName,
@@ -990,7 +990,7 @@ export default function UploadFileForSigningScreen() {
                 dateOfBirth: null,
             });
 
-            if (res?.status === 409 && (res?.data?.code === 'PHONE_ALREADY_EXISTS' || res?.data?.UserId)) {
+            if (res?.status === 409 && (res?.data?.code === 'PHONE_ALREADY_EXISTS' || res?.data?.code === 'EMAIL_ALREADY_EXISTS' || res?.data?.UserId)) {
                 if (attachExistingSigner(res.data)) return;
                 showAppToast({
                     type: 'error',
