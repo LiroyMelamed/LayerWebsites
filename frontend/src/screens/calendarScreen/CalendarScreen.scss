@@ -364,15 +364,21 @@
         margin-bottom: v.$space-2;
     }
 
-    .lw-calendarScreen__calendarCard .fc .fc-timegrid-event .fc-event-title,
     .lw-calendarScreen__calendarCard .fc .fc-timegrid-event .fc-event-time {
         font-size: 0.75rem;
         line-height: 1.2;
         white-space: normal;
+        flex-shrink: 0;
+    }
+
+    .lw-calendarScreen__calendarCard .fc .fc-timegrid-event .fc-event-title {
+        font-size: 0.75rem;
+        line-height: 1.2;
+        white-space: normal;
         overflow: hidden;
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
+        /* Use remaining event height — do not hard-cap at 3 lines. */
+        flex: 1 1 auto;
+        min-height: 0;
     }
 
     .lw-calendarScreen__calendarCard .fc .fc-timegrid-slot-label-cushion {
@@ -659,6 +665,13 @@
     box-sizing: border-box;
     padding-inline-end: 0.7rem;
     overflow: hidden;
+}
+
+.fc .fc-event .lw-fcEventContent .fc-event-title {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    white-space: normal;
 }
 
 .lw-calendarScreen__calendarCard .fc-timegrid-event-harness .fc-event,
