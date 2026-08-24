@@ -642,6 +642,23 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setManagerSearch("");
     }, [eventType]);
 
+    // ─── Effect: all-day default for leave only; clear when switching to meetings ─
+    const prevEventTypeForAllDayRef = useRef(eventType);
+    useEffect(() => {
+        const prevType = prevEventTypeForAllDayRef.current;
+        prevEventTypeForAllDayRef.current = eventType;
+        if (prevType === eventType) return;
+
+        if (eventType === EVENT_TYPE_LEAVE) {
+            setAllDay(true);
+        } else if (
+            (prevType === EVENT_TYPE_LEAVE || prevType === EVENT_TYPE_HOLIDAY)
+            && !isLeaveOrHolidayEventType(eventType)
+        ) {
+            setAllDay(false);
+        }
+    }, [eventType]);
+
     // ─── Effect: apply yellow defaults when switching into a remindable type on create ─
     const prevEventTypeRef = useRef(eventType);
     useEffect(() => {
@@ -652,9 +669,6 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         // Follow platform type-default color unless the lawyer picked a custom swatch.
         if (!colorTouchedRef.current) {
             setColor(getEventTypeDefaultColor(eventType));
-        }
-        if (isLeaveOrHolidayEventType(eventType)) {
-            setAllDay(true);
         }
         // Switch SMS defaults by event type on create (unless the lawyer already customized).
         if (!isEdit) {

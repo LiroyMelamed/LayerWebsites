@@ -378,6 +378,11 @@
     .lw-calendarScreen__calendarCard .fc .fc-timegrid-slot-label-cushion {
         font-size: 0.6875rem;
     }
+
+    .fc .fc-event .lw-fcEventContent {
+        gap: 0;
+        padding-inline-end: 0;
+    }
 }
 
 // ─── FullCalendar theme overrides (navy palette, RTL) ─────────────────────────
