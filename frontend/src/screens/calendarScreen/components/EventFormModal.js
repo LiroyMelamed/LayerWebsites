@@ -119,6 +119,47 @@ function clientChipLabel(client) {
     return name || phone || "";
 }
 
+/** Format deferred-until for quiet-window toasts (Asia/Jerusalem clock). */
+function formatQuietDeferralTime(isoOrDate) {
+    if (!isoOrDate) return "";
+    const d = isoOrDate instanceof Date ? isoOrDate : new Date(isoOrDate);
+    if (Number.isNaN(d.getTime())) return "";
+    try {
+        return new Intl.DateTimeFormat("he-IL", {
+            timeZone: "Asia/Jerusalem",
+            weekday: "short",
+            day: "numeric",
+            month: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+        }).format(d);
+    } catch {
+        return "";
+    }
+}
+
+function quietDeferralToast(t, kind, result) {
+    const reason = result?.deferredReason || "";
+    const time = formatQuietDeferralTime(result?.deferredUntil);
+    if (kind === "invite") {
+        if (reason === "shabbat") {
+            return t("calendar.inviteDeferredShabbat", { time: time || "מוצאי שבת" });
+        }
+        if (reason === "night") {
+            return t("calendar.inviteDeferredNight", { time: time || "07:00" });
+        }
+        return t("calendar.inviteResendDeferred");
+    }
+    if (reason === "shabbat") {
+        return t("calendar.immediateReminderDeferredShabbat", { time: time || "מוצאי שבת" });
+    }
+    if (reason === "night") {
+        return t("calendar.immediateReminderDeferredNight", { time: time || "07:00" });
+    }
+    return t("calendar.immediateReminderDeferred");
+}
+
 function _initialClients(event) {
     if (Array.isArray(event?.clients) && event.clients.length) {
         return event.clients
@@ -1270,7 +1311,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
 
                 if (reminderSyncWarning) notifyWarning(reminderSyncWarning);
                 if (inviteSendResult?.deferred) {
-                    notifyWarning(t("calendar.inviteResendDeferred"));
+                    notifyWarning(quietDeferralToast(t, "invite", inviteSendResult));
                 } else if (inviteSendResult?.error) {
                     notifyError(inviteSendResult.error);
                 } else if (inviteSendResult && (inviteSendResult.sentSms || inviteSendResult.sentEmail)) {
@@ -1280,7 +1321,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 }
 
                 if (immediateReminderResult?.deferred) {
-                    notifyWarning(t("calendar.immediateReminderDeferred", "תזכורת מיידית תישלח לאחר חלון השקט"));
+                    notifyWarning(quietDeferralToast(t, "immediate", immediateReminderResult));
                 } else if (immediateReminderResult?.errors?.length) {
                     notifyError(immediateReminderResult.errors[0]);
                 } else if (immediateReminderResult?.sent > 0) {
@@ -1567,7 +1608,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             }
             const data = res.data || {};
             if (data.deferred) {
-                notifySuccess(t("calendar.inviteResendDeferred"));
+                notifySuccess(quietDeferralToast(t, "invite", data));
             } else {
                 notifySuccess(t("calendar.inviteResendSuccess"));
             }

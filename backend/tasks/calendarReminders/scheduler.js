@@ -489,7 +489,14 @@ async function processCalendarReminders() {
  */
 async function fireImmediateRemindersForEvent(eventId) {
     const id = parseInt(eventId, 10);
-    const result = { attempted: 0, sent: 0, deferred: false, errors: [] };
+    const result = {
+        attempted: 0,
+        sent: 0,
+        deferred: false,
+        deferredReason: null,
+        deferredUntil: null,
+        errors: [],
+    };
     if (!Number.isFinite(id)) return result;
 
     const { rows } = await pool.query(
@@ -505,11 +512,13 @@ async function fireImmediateRemindersForEvent(eventId) {
         return result;
     }
 
-    const { effectiveFireAt, deferQuietSendUntil } = require('../../lib/shabbatDeferral');
+    const { effectiveFireAt, describeQuietDeferral } = require('../../lib/shabbatDeferral');
     const now = new Date();
-    const quietUntil = deferQuietSendUntil(now);
-    if (quietUntil) {
+    const quiet = describeQuietDeferral(now);
+    if (quiet) {
         result.deferred = true;
+        result.deferredReason = quiet.reason;
+        result.deferredUntil = quiet.until.toISOString();
         return result;
     }
 
@@ -534,7 +543,10 @@ async function fireImmediateRemindersForEvent(eventId) {
     for (const job of jobs) {
         const fireAt = effectiveFireAt(now);
         if (fireAt.getTime() > now.getTime() + 60 * 1000) {
+            const late = describeQuietDeferral(now);
             result.deferred = true;
+            result.deferredReason = late?.reason || 'quiet';
+            result.deferredUntil = (late?.until || fireAt).toISOString();
             continue;
         }
         result.attempted += 1;

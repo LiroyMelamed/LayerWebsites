@@ -44,7 +44,7 @@ const {
     composeInviteSmsMessage,
     uniqueSortedDesc,
 } = require('../lib/calendarEventReminders');
-const { deferQuietSendUntil } = require('../lib/shabbatDeferral');
+const { deferQuietSendUntil, describeQuietDeferral } = require('../lib/shabbatDeferral');
 const { resolveShortLink } = require('../lib/publicShortLinks');
 const { lawyerMatchSql, personalCalendarSql } = require('../lib/calendarVisibility');
 const { signOAuthState, verifyOAuthState } = require('../lib/calendarOAuthState');
@@ -3045,6 +3045,8 @@ async function _sendCalendarInvite(ev, { force = false } = {}) {
         sentSms: 0,
         sentEmail: 0,
         deferred: false,
+        deferredReason: null,
+        deferredUntil: null,
         error: null,
         recipients: [],
     };
@@ -3054,19 +3056,21 @@ async function _sendCalendarInvite(ev, { force = false } = {}) {
     }
 
     if (!force) {
-        const deferredUntil = deferQuietSendUntil(new Date());
-        if (deferredUntil) {
+        const quiet = describeQuietDeferral(new Date());
+        if (quiet) {
             try {
                 await pool.query(
                     `UPDATE calendar_events
                      SET invite_deferred_until = $1, updated_at = NOW()
                      WHERE id = $2`,
-                    [deferredUntil, ev.id]
+                    [quiet.until, ev.id]
                 );
             } catch (err) {
                 console.error('[calendar-invite] deferral persist failed:', err.message);
             }
             result.deferred = true;
+            result.deferredReason = quiet.reason;
+            result.deferredUntil = quiet.until.toISOString();
             return result;
         }
     }
