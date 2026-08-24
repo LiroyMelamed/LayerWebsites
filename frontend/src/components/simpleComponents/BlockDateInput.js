@@ -278,7 +278,7 @@ const BlockDateInput = forwardRef(function BlockDateInput(
             value={segments[key] || ''}
             disabled={disabled}
             aria-label={t(`calendar.${SEGMENT_ARIA[key]}`, key)}
-            placeholder={key === 'yyyy' ? 'yyyy' : '00'}
+            placeholder={isFocused ? (key === 'yyyy' ? 'yyyy' : key === 'dd' ? 'dd' : key === 'mm' ? 'mm' : key === 'hh' ? 'hh' : 'mm') : ''}
             onChange={handleSegmentChange(key)}
             onFocus={handleSegmentFocus(key)}
             onBlur={handleSegmentBlur}
@@ -295,6 +295,7 @@ const BlockDateInput = forwardRef(function BlockDateInput(
                 'lw-blockDateInput',
                 shouldFloat ? 'is-floated' : '',
                 isFocused ? 'is-focused' : '',
+                !hasDisplay && !isFocused ? 'is-empty' : '',
                 error ? 'has-error' : '',
                 disabled ? 'is-disabled' : '',
                 className,

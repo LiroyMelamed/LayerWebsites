@@ -88,6 +88,12 @@
     padding: 0.35rem 0.1rem;
     min-width: 0;
 
+    &::placeholder {
+        color: #A0AEC0;
+        opacity: 0.85;
+        font-size: 0.8125rem;
+    }
+
     &:focus {
         outline: none;
         background: rgba(42, 67, 101, 0.06);
@@ -117,8 +123,13 @@
     flex-shrink: 0;
 }
 
-.lw-blockDateInput__sep--time {
-    margin-inline-start: 0.35rem;
+.lw-blockDateInput.is-empty .lw-blockDateInput__sep {
+    visibility: hidden;
+}
+
+.lw-blockDateInput.is-empty .lw-blockDateInput__segment {
+    color: transparent;
+    caret-color: var(--lw-color-text);
 }
 
 .lw-blockDateInput__calendarBtn {
