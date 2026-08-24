@@ -488,7 +488,12 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         isPerforming: isSearchingCustomers,
         performRequest: searchCustomers,
     } = useAutoHttpRequest(customersApi.getCustomersByName, {
-        onFailure: () => { notifyError("שגיאה בחיפוש לקוחות"); },
+        // Empty search returns [] (200). Only toast on real server/network failures.
+        onFailure: (err) => {
+            const status = err?.status || err?.response?.status;
+            if (status === 404) return;
+            notifyError("שגיאה בחיפוש לקוחות");
+        },
     });
 
     const {
