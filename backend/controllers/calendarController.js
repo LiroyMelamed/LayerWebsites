@@ -1209,6 +1209,7 @@ const createEvent = async (req, res) => {
         ? buildRruleString(recurrence.frequency || 'weekly', recurrence.until, seriesId)
         : (rrule || null);
 
+    const dbClient = await pool.connect();
     try {
         let firstSanitized = null;
         let firstCreated = null;
@@ -1219,136 +1220,150 @@ const createEvent = async (req, res) => {
         let inviteSendResult = null;
         let immediateReminderResult = null;
 
-        for (let i = 0; i < occurrences.length; i += 1) {
-            const occ = occurrences[i];
-            const occStart = occ.start.toISOString();
-            const occEnd = occ.end.toISOString();
-            const occInviteToken = shouldInviteClient ? crypto.randomBytes(24).toString('hex') : null;
-            const occInviteStatus = shouldInviteClient ? 'pending' : 'none';
+        await dbClient.query('BEGIN');
+        try {
+            for (let i = 0; i < occurrences.length; i += 1) {
+                const occ = occurrences[i];
+                const occStart = occ.start.toISOString();
+                const occEnd = occ.end.toISOString();
+                const occInviteToken = shouldInviteClient ? crypto.randomBytes(24).toString('hex') : null;
+                const occInviteStatus = shouldInviteClient ? 'pending' : 'none';
 
-            const { rows } = await pool.query(
-            `INSERT INTO calendar_events
-               (owner_id, case_id, title, description, location, meeting_type, event_type,
-                client_user_id, client_name, manager_user_id, manager_name, color,
-                start_time, end_time, all_day, rrule,
-                lead_name, lead_phone, lead_email, lead_case_name, lead_participants,
-                reminder_offsets, reminder_channels, reminder_targets, reminders_sent_offsets,
-                invite_status, invite_token, client_reminder_sms, invite_sms,
-                lawyer_reminder_offsets, client_reminder_offsets, updated_by)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
-                     $21::jsonb, $22::jsonb, $23::jsonb, $24::jsonb, '[]'::jsonb, $25, $26, $27, $28,
-                     $29::jsonb, $30::jsonb, $31)
-             RETURNING *`,
-            [
-                ownerId,
-                caseId,
-                title.trim(),
-                description || null,
-                location || null,
-                storedMeetingType,
-                eventType,
-                clientUserId,
-                hasLead ? null : (client_name || null),
-                managerUserId,
-                manager_name || null,
-                color || null,
-                occStart,
-                occEnd,
-                storedAllDay,
-                seriesRrule,
-                lead_name ? String(lead_name).trim() : null,
-                lead_phone ? String(lead_phone).trim() : null,
-                lead_email ? String(lead_email).trim().toLowerCase() : null,
-                hasLead ? (leadCaseName || null) : null,
-                storedLeadParticipants,
-                offsetsToJson(storedReminderOffsets),
-                channelsToJson(storedReminderChannels),
-                targetsToJson(storedReminderTargets),
-                occInviteStatus,
-                occInviteToken,
-                clientReminderSms,
-                inviteSms,
-                offsetsToJson(storedLawyerOffsets),
-                offsetsToJson(storedClientOffsets),
-                userId,
-            ]
-        );
-        const created = rows[0];
-        const mgrMeta = await _syncEventManagers(created.id, managerIds.length ? managerIds : (managerUserId ? [managerUserId] : []));
-        if (mgrMeta.managerUserId && (mgrMeta.managerUserId !== created.manager_user_id || mgrMeta.managerName !== created.manager_name)) {
-            await pool.query(
-                'UPDATE calendar_events SET manager_user_id = $1, manager_name = $2 WHERE id = $3',
-                [mgrMeta.managerUserId, mgrMeta.managerName, created.id]
+                const { rows } = await dbClient.query(
+                `INSERT INTO calendar_events
+                   (owner_id, case_id, title, description, location, meeting_type, event_type,
+                    client_user_id, client_name, manager_user_id, manager_name, color,
+                    start_time, end_time, all_day, rrule,
+                    lead_name, lead_phone, lead_email, lead_case_name, lead_participants,
+                    reminder_offsets, reminder_channels, reminder_targets, reminders_sent_offsets,
+                    invite_status, invite_token, client_reminder_sms, invite_sms,
+                    lawyer_reminder_offsets, client_reminder_offsets, updated_by)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
+                         $21::jsonb, $22::jsonb, $23::jsonb, $24::jsonb, '[]'::jsonb, $25, $26, $27, $28,
+                         $29::jsonb, $30::jsonb, $31)
+                 RETURNING *`,
+                [
+                    ownerId,
+                    caseId,
+                    title.trim(),
+                    description || null,
+                    location || null,
+                    storedMeetingType,
+                    eventType,
+                    clientUserId,
+                    hasLead ? null : (client_name || null),
+                    managerUserId,
+                    manager_name || null,
+                    color || null,
+                    occStart,
+                    occEnd,
+                    storedAllDay,
+                    seriesRrule,
+                    lead_name ? String(lead_name).trim() : null,
+                    lead_phone ? String(lead_phone).trim() : null,
+                    lead_email ? String(lead_email).trim().toLowerCase() : null,
+                    hasLead ? (leadCaseName || null) : null,
+                    storedLeadParticipants,
+                    offsetsToJson(storedReminderOffsets),
+                    channelsToJson(storedReminderChannels),
+                    targetsToJson(storedReminderTargets),
+                    occInviteStatus,
+                    occInviteToken,
+                    clientReminderSms,
+                    inviteSms,
+                    offsetsToJson(storedLawyerOffsets),
+                    offsetsToJson(storedClientOffsets),
+                    userId,
+                ]
             );
-            created.manager_user_id = mgrMeta.managerUserId;
-            created.manager_name = mgrMeta.managerName;
+            const created = rows[0];
+            const mgrMeta = await _syncEventManagers(
+                created.id,
+                managerIds.length ? managerIds : (managerUserId ? [managerUserId] : []),
+                dbClient
+            );
+            if (mgrMeta.managerUserId && (mgrMeta.managerUserId !== created.manager_user_id || mgrMeta.managerName !== created.manager_name)) {
+                await dbClient.query(
+                    'UPDATE calendar_events SET manager_user_id = $1, manager_name = $2 WHERE id = $3',
+                    [mgrMeta.managerUserId, mgrMeta.managerName, created.id]
+                );
+                created.manager_user_id = mgrMeta.managerUserId;
+                created.manager_name = mgrMeta.managerName;
+            }
+
+            const clientMeta = await _syncEventClients(
+                created.id,
+                hasLead ? [] : clientIds,
+                dbClient,
+                { mintInvites: shouldInviteClient && !hasLead }
+            );
+            if (clientMeta.clientUserId != null) {
+                created.client_user_id = clientMeta.clientUserId;
+                created.client_name = clientMeta.clientName;
+                if (clientMeta.inviteToken) created.invite_token = clientMeta.inviteToken;
+                if (clientMeta.inviteStatus) created.invite_status = clientMeta.inviteStatus;
+            }
+
+            if (i === 0) {
+                firstCreated = created;
+                firstClientMeta = clientMeta;
+                firstMgrMeta = mgrMeta;
+                firstSanitized = _applyClientsToEvent(
+                    _applyManagersToEvent(_sanitizeEvent(created), mgrMeta.managers),
+                    clientMeta.clients
+                );
+            }
+            }
+            await dbClient.query('COMMIT');
+        } catch (txErr) {
+            try { await dbClient.query('ROLLBACK'); } catch (_) { /* ignore */ }
+            throw txErr;
         }
 
-        const clientMeta = await _syncEventClients(
-            created.id,
-            hasLead ? [] : clientIds,
-            pool,
-            { mintInvites: shouldInviteClient && !hasLead }
-        );
-        if (clientMeta.clientUserId != null) {
-            created.client_user_id = clientMeta.clientUserId;
-            created.client_name = clientMeta.clientName;
-            if (clientMeta.inviteToken) created.invite_token = clientMeta.inviteToken;
-            if (clientMeta.inviteStatus) created.invite_status = clientMeta.inviteStatus;
-        }
-
-        if (i === 0) {
-            firstCreated = created;
-            firstClientMeta = clientMeta;
-            firstMgrMeta = mgrMeta;
-            if (eventType === 'reminder') {
-                try {
-                    linkedReminderId = await reminderCalendarSync.createReminderForCalendarEvent(
-                        created,
-                        {
-                            toEmail: reminder_to_email,
-                            clientName: reminder_client_name,
-                            templateKey: reminder_template_key,
-                            templateData: reminder_template_data,
-                            subject: reminder_subject,
-                            createdBy: userId,
-                        }
-                    );
-                    const wantedLinkedReminder = Boolean(
-                        String(reminder_to_email || "").trim() || String(reminder_client_name || "").trim()
-                    );
-                    if (!linkedReminderId && wantedLinkedReminder) {
-                        reminderSyncWarning = 'האירוע נשמר אך חסרים אימייל או שם לקוח — התזכורת לא נוספה למסך התזכורות.';
+        // Side-effects after commit (SMS / email / reminder sync must not leave orphan rows).
+        if (firstCreated && eventType === 'reminder') {
+            try {
+                linkedReminderId = await reminderCalendarSync.createReminderForCalendarEvent(
+                    firstCreated,
+                    {
+                        toEmail: reminder_to_email,
+                        clientName: reminder_client_name,
+                        templateKey: reminder_template_key,
+                        templateData: reminder_template_data,
+                        subject: reminder_subject,
+                        createdBy: userId,
                     }
-                } catch (syncErr) {
-                    console.error('[calendarController] createEvent reminder sync failed:', syncErr.message);
-                    reminderSyncWarning = 'האירוע נשמר אך לא נוצרה תזכורת מקושרת.';
+                );
+                const wantedLinkedReminder = Boolean(
+                    String(reminder_to_email || "").trim() || String(reminder_client_name || "").trim()
+                );
+                if (!linkedReminderId && wantedLinkedReminder) {
+                    reminderSyncWarning = 'האירוע נשמר אך חסרים אימייל או שם לקוח — התזכורת לא נוספה למסך התזכורות.';
                 }
+            } catch (syncErr) {
+                console.error('[calendarController] createEvent reminder sync failed:', syncErr.message);
+                reminderSyncWarning = 'האירוע נשמר אך לא נוצרה תזכורת מקושרת.';
             }
+            if (linkedReminderId && firstSanitized) firstSanitized.linkedReminderId = linkedReminderId;
+        }
 
-            firstSanitized = _applyClientsToEvent(
-                _applyManagersToEvent(_sanitizeEvent(created), mgrMeta.managers),
-                clientMeta.clients
-            );
-            if (linkedReminderId) firstSanitized.linkedReminderId = linkedReminderId;
-
-            if (shouldInviteClient && (created.invite_token || clientMeta.clients.some((c) => c.inviteToken))) {
-                try {
-                    inviteSendResult = await _sendCalendarInvite(created);
-                } catch (inviteErr) {
-                    console.error('[calendarController] invite send failed:', inviteErr.message);
-                    inviteSendResult = { sentSms: 0, sentEmail: 0, deferred: false, error: inviteErr.message, recipients: [] };
-                }
+        if (firstCreated && shouldInviteClient && (firstCreated.invite_token || firstClientMeta?.clients?.some((c) => c.inviteToken))) {
+            try {
+                inviteSendResult = await _sendCalendarInvite(firstCreated);
+            } catch (inviteErr) {
+                console.error('[calendarController] invite send failed:', inviteErr.message);
+                inviteSendResult = { sentSms: 0, sentEmail: 0, deferred: false, error: inviteErr.message, recipients: [] };
             }
+        }
 
+        if (firstCreated) {
             try {
                 const { fireImmediateRemindersForEvent } = require('../tasks/calendarReminders/scheduler');
-                immediateReminderResult = await fireImmediateRemindersForEvent(created.id);
+                immediateReminderResult = await fireImmediateRemindersForEvent(firstCreated.id);
             } catch (immErr) {
                 console.error('[calendarController] immediate reminder fire failed:', immErr.message);
                 immediateReminderResult = { attempted: 0, sent: 0, deferred: false, errors: [immErr.message] };
             }
-        }
         }
 
         return res.status(201).json({
@@ -1370,6 +1385,8 @@ const createEvent = async (req, res) => {
         if (fkMsg) return res.status(400).json({ message: fkMsg });
         console.error('[calendarController] createEvent error:', err.message);
         return res.status(500).json({ message: 'שגיאה פנימית בשרת' });
+    } finally {
+        dbClient.release();
     }
 };
 
