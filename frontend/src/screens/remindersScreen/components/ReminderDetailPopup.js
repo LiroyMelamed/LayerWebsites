@@ -8,7 +8,7 @@ import { Text20, Text14, Text12 } from "../../../components/specializedComponent
 import useHttpRequest from "../../../hooks/useHttpRequest";
 import remindersApi from "../../../api/remindersApi";
 
-import { formatDateTimeForInput, parseDateTimeInput } from "../../../functions/date/formatDateForInput";
+import { formatDateTimeForInput, parseDateTimeInput, toNativeDateTimeValue } from "../../../functions/date/formatDateForInput";
 import "./ReminderDetailPopup.scss";
 
 function DetailRow({ label, children }) {
@@ -30,7 +30,7 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
         client_name: reminder?.client_name || "",
         to_email: reminder?.to_email || "",
         subject: reminder?.subject || "",
-        scheduled_for: formatDateTimeForInput(reminder?.scheduled_for),
+        scheduled_for: toNativeDateTimeValue(reminder?.scheduled_for),
     });
     const [displayData, setDisplayData] = useState({
         client_name: reminder?.client_name || "",
@@ -113,7 +113,7 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
                 <DetailRow label={t("reminders.col.scheduledFor")}>
                     {editing ? (
                         <SimpleInput
-                            placeholder="dd/mm/yyyy, HH:mm"
+                            type="datetime-local"
                             value={editData.scheduled_for}
                             onChange={(e) => setEditData((prev) => ({ ...prev, scheduled_for: e.target.value }))}
                             className="lw-reminderDetail__editInput"

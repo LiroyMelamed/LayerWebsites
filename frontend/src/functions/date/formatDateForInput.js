@@ -85,3 +85,31 @@ export function parseDateTimeInput(displayStr) {
     if (!m) return displayStr;
     return `${m[3]}-${m[2]}-${m[1]}T${m[4]}:${m[5]}`;
 }
+
+/** ISO / Date → YYYY-MM-DD for BlockDateInput mode="date". */
+export function toNativeDateValue(dateString, { timeZone = 'Asia/Jerusalem' } = {}) {
+    if (!dateString) return '';
+    const raw = String(dateString).trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10);
+    const fromDisplay = parseDateInput(raw);
+    if (fromDisplay && /^\d{4}-\d{2}-\d{2}$/.test(fromDisplay)) return fromDisplay;
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return '';
+    const p = _toDateParts(d, timeZone);
+    return `${p.year}-${p.month}-${p.day}`;
+}
+
+/** ISO / Date → YYYY-MM-DDTHH:MM for BlockDateInput mode="datetime-local". */
+export function toNativeDateTimeValue(dateString, { timeZone = 'Asia/Jerusalem' } = {}) {
+    if (!dateString) return '';
+    const raw = String(dateString).trim();
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(raw)) return raw.slice(0, 16);
+    const fromDisplay = parseDateTimeInput(raw);
+    if (fromDisplay && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(fromDisplay)) {
+        return fromDisplay.slice(0, 16);
+    }
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return '';
+    const p = _toDateParts(d, timeZone);
+    return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
+}

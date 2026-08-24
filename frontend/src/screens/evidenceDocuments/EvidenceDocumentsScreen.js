@@ -300,7 +300,7 @@ export default function EvidenceDocumentsScreen() {
 
                     <SimpleInput
                         title={t("evidenceDocuments.filters.from")}
-                        placeholder="dd/mm/yyyy"
+                        type="date"
                         value={inputFrom}
                         onChange={(e) => setInputFrom(e.target.value)}
                         onKeyDown={onKeyDownSearch}
@@ -308,7 +308,7 @@ export default function EvidenceDocumentsScreen() {
 
                     <SimpleInput
                         title={t("evidenceDocuments.filters.to")}
-                        placeholder="dd/mm/yyyy"
+                        type="date"
                         value={inputTo}
                         onChange={(e) => setInputTo(e.target.value)}
                         onKeyDown={onKeyDownSearch}

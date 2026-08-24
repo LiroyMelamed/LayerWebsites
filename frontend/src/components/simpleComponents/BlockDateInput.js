@@ -342,7 +342,7 @@ const BlockDateInput = forwardRef(function BlockDateInput(
                 {renderSegment('yyyy', 'yyyy')}
                 {mode === 'datetime-local' && (
                     <>
-                        <span className="lw-blockDateInput__sep lw-blockDateInput__sep--time" aria-hidden="true">&nbsp;</span>
+                        <span className="lw-blockDateInput__sep lw-blockDateInput__sep--time" aria-hidden="true" />
                         {renderSegment('hh', 'hh')}
                         <span className="lw-blockDateInput__sep" aria-hidden="true">:</span>
                         {renderSegment('mi', 'mi')}

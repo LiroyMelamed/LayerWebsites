@@ -1,5 +1,6 @@
 import React, { forwardRef, useState, useEffect, useRef } from 'react';
 import SimpleContainer from './SimpleContainer';
+import BlockDateInput from './BlockDateInput';
 import { colors } from '../../constant/colors';
 import SimpleIcon from './SimpleIcon';
 import {
@@ -25,6 +26,8 @@ function emitChange(onChange, nativeValue) {
  * Digits are capped to DD/MM/YYYY [HH:mm] slots — floods like 20308/08/2026 are impossible.
  * Mid-field edits overwrite the focused digit slot and restore the caret (no jump-to-end corruption).
  * Debounced text fields flush pending values synchronously on blur (Tab-safe).
+ *
+ * type="date" / "datetime-local" delegate to BlockDateInput (segmented DD/MM/YYYY[/HH:mm]).
  */
 const SimpleInput = forwardRef(
     ({
@@ -53,6 +56,23 @@ const SimpleInput = forwardRef(
         timeToWaitInMilli = 500,
         ...props
     }, ref) => {
+        if (type === 'date' || type === 'datetime-local') {
+            return (
+                <BlockDateInput
+                    ref={ref}
+                    title={title}
+                    mode={type}
+                    value={value}
+                    onChange={onChange}
+                    disabled={disabled}
+                    error={error}
+                    className={className}
+                    timeToWaitInMilli={timeToWaitInMilli}
+                    containerDir={containerDir}
+                />
+            );
+        }
+
         const temporalTypes = ['date', 'datetime-local', 'time', 'month', 'week'];
         const isTemporalInput = temporalTypes.includes(type);
         const showCalendarButton = type === 'date' || type === 'datetime-local' || type === 'month' || type === 'week';

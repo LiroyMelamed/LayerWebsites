@@ -67,7 +67,7 @@
     flex-direction: row;
     align-items: center;
     justify-content: flex-end;
-    gap: 0.15rem;
+    gap: 0;
     flex: 1;
     min-width: 0;
     /* Calendar lives on the physical left; date text packs to the physical right (RTL). */
@@ -85,7 +85,7 @@
     font-size: 1rem;
     color: var(--lw-color-text);
     text-align: center;
-    padding: 0.35rem 0.1rem;
+    padding: 0.35rem 0;
     min-width: 0;
 
     &::placeholder {
@@ -109,18 +109,27 @@
 .lw-blockDateInput__segment--mm,
 .lw-blockDateInput__segment--hh,
 .lw-blockDateInput__segment--mi {
-    width: 1.65rem;
+    width: 1.35rem;
 }
 
 .lw-blockDateInput__segment--yyyy {
-    width: 2.75rem;
+    width: 2.4rem;
 }
 
 .lw-blockDateInput__sep {
     color: var(--lw-color-secondary-highlighted);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+    line-height: 1;
     user-select: none;
     flex-shrink: 0;
+    margin: 0;
+    padding: 0;
+    width: 0.45rem;
+    text-align: center;
+}
+
+.lw-blockDateInput__sep--time {
+    width: 0.4rem;
 }
 
 .lw-blockDateInput.is-empty .lw-blockDateInput__sep {

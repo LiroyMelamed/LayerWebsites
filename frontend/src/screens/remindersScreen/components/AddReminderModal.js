@@ -234,7 +234,7 @@ export default function AddReminderModal({ closePopUpFunction, rePerformRequest 
                     <SimpleInput
                         className="lw-addReminder__field"
                         title={t("reminders.add.scheduledFor")}
-                        placeholder="dd/mm/yyyy, HH:mm"
+                        type="datetime-local"
                         value={scheduledFor}
                         onChange={(e) => setScheduledFor(e.target.value)}
                         timeToWaitInMilli={0}

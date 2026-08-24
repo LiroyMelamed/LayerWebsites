@@ -17,7 +17,7 @@ import SimplePopUp from "../../../components/simpleComponents/SimplePopUp";
 import SearchInput from "../../../components/specializedComponents/containers/SearchInput";
 import { Text14 } from "../../../components/specializedComponents/text/AllTextKindFile";
 
-import { formatDateForInput, parseDateInput } from "../../../functions/date/formatDateForInput";
+import { parseDateInput, toNativeDateValue } from "../../../functions/date/formatDateForInput";
 import "./ClientPopUp.scss";
 
 export default function ClientPopup({ clientDetails, initialName, rePerformRequest, onFailureFunction, closePopUpFunction, style: _style }) {
@@ -30,7 +30,7 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
     const [companyName, setCompanyName, companyNameError] = useFieldState(HebrewCharsValidationWithNumbers, clientDetails?.companyname || "");
     const [email, setEmail, emailError] = useFieldState(emailValidation, clientDetails?.email || "");
     const [phoneNumber, setPhoneNumber, phoneNumberError] = useFieldState(IsraeliPhoneNumberValidation, clientDetails?.phonenumber || "");
-    const [dateOfBirth, setDateOfBirth] = useState(clientDetails?.dateofbirth ? formatDateForInput(clientDetails.dateofbirth) : "");
+    const [dateOfBirth, setDateOfBirth] = useState(clientDetails?.dateofbirth ? toNativeDateValue(clientDetails.dateofbirth) : "");
     const [similarCompanyDismissed, setSimilarCompanyDismissed] = useState(false);
 
     const { result: allCustomers } = useAutoHttpRequest(customersApi.getAllCustomers);
@@ -68,7 +68,7 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
         setPhoneNumber(customer.PhoneNumber || customer.phonenumber || "");
         setEmail(customer.Email || customer.email || "");
         setCompanyName(customer.CompanyName || customer.companyname || "");
-        setDateOfBirth(customer.DateOfBirth || customer.dateofbirth ? formatDateForInput(customer.DateOfBirth || customer.dateofbirth) : "");
+        setDateOfBirth(customer.DateOfBirth || customer.dateofbirth ? toNativeDateValue(customer.DateOfBirth || customer.dateofbirth) : "");
         setSimilarCompanyDismissed(true);
     };
 
@@ -83,7 +83,7 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
         setPhoneNumber(customer.PhoneNumber || customer.phonenumber || "");
         setEmail(customer.Email || customer.email || "");
         setCompanyName(customer.CompanyName || customer.companyname || "");
-        setDateOfBirth(customer.DateOfBirth || customer.dateofbirth ? formatDateForInput(customer.DateOfBirth || customer.dateofbirth) : "");
+        setDateOfBirth(customer.DateOfBirth || customer.dateofbirth ? toNativeDateValue(customer.DateOfBirth || customer.dateofbirth) : "");
     };
 
     const [hasError, setHasError] = useState(false);
@@ -277,7 +277,7 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
                     <SimpleInput
                         className="lw-clientPopup__input"
                         title={t("profile.dateOfBirth")}
-                        placeholder="dd/mm/yyyy"
+                        type="date"
                         value={dateOfBirth || ""}
                         onChange={(e) => setDateOfBirth(e.target.value)}
                     />

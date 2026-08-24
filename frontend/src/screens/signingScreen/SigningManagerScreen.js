@@ -389,14 +389,14 @@ export default function SigningManagerScreen() {
                     </SimpleContainer>
                     <SimpleContainer className="lw-signingManagerScreen__dateFilters">
                         <SimpleInput
-                            placeholder="dd/mm/yyyy"
+                            type="date"
                             title={t('signingManager.dateFrom')}
                             value={dateFrom}
                             onChange={(e) => setDateFrom(e.target.value)}
                             className="lw-signingManagerScreen__dateInput"
                         />
                         <SimpleInput
-                            placeholder="dd/mm/yyyy"
+                            type="date"
                             title={t('signingManager.dateTo')}
                             value={dateTo}
                             onChange={(e) => setDateTo(e.target.value)}
