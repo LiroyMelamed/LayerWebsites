@@ -579,6 +579,9 @@ export default function CalendarScreen() {
         }
     }, [upsertLocally, fetchEvents, closePopup, t]);
 
+    // Ref avoids TDZ / "Cannot access before initialization" when the duplicate
+    // handler re-opens EventFormModal with itself as onDuplicatePrefill.
+    const openDuplicateDraftRef = useRef(null);
     const openDuplicateDraft = useCallback((draft) => {
         closePopup();
         window.setTimeout(() => {
@@ -588,13 +591,14 @@ export default function CalendarScreen() {
                     event={draft}
                     onUpdated={upsertLocally}
                     onSaved={handleEventSaved}
-                    onDuplicatePrefill={openDuplicateDraft}
+                    onDuplicatePrefill={(next) => openDuplicateDraftRef.current?.(next)}
                     onDeleted={() => closePopup()}
                     onClose={closePopup}
                 />
             );
         }, 0);
-    }, [openPopup, closePopup, upsertLocally, handleEventSaved, openDuplicateDraft]);
+    }, [openPopup, closePopup, upsertLocally, handleEventSaved]);
+    openDuplicateDraftRef.current = openDuplicateDraft;
 
     const openPersonalSyncModal = useCallback(() => {
         openPopup(
