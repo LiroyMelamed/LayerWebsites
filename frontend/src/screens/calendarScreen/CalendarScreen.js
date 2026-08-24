@@ -40,7 +40,7 @@ import PersonalSyncModal from "./components/PersonalSyncModal";
 import { colorForKey, colorKeyForEvent, leaveColor, holidayColor, buildLawyerLegend, getEventTypeDefaultColor, isStockEventColor } from "./utils/lawyerColors";
 import { toastError, toastSuccess, toastWarning } from "../../components/ui/toast";
 import { buildNewEventPrefill } from "./utils/eventDefaults";
-import { parseDatetimeLocal } from "../../functions/date/datetimeLocal";
+import { parseDatetimeLocal, toLocalYmdFromApi } from "../../functions/date/datetimeLocal";
 import {
     defaultSchedule,
     parseScheduleFromCalendarSettings,
@@ -91,16 +91,7 @@ function _eventTypeFilterLabel(eventType, t) {
 
 /** FullCalendar all-day end is exclusive — extend inclusive DB end by one local day. */
 function toLocalYmd(value) {
-    if (!value) return "";
-    if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) {
-        return value.slice(0, 10);
-    }
-    const d = value instanceof Date ? value : new Date(value);
-    if (Number.isNaN(d.getTime())) return "";
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${y}-${m}-${day}`;
+    return toLocalYmdFromApi(value);
 }
 
 function addLocalDaysYmd(ymd, days) {
@@ -112,7 +103,7 @@ function addLocalDaysYmd(ymd, days) {
 }
 
 function normalizeAllDayEndInclusive(startTime, endTime) {
-    const start = toLocalYmd(startTime) || String(startTime || "").slice(0, 10);
+    const start = toLocalYmd(startTime);
     let endInclusive = toLocalYmd(endTime) || start;
     try {
         const endLocal = parseDatetimeLocal(endTime)
