@@ -394,29 +394,6 @@
         gap: 0;
         padding-inline-end: 0;
     }
-
-    /* Small screens: RSVP as colored solid border (not the corner circle). */
-    .fc .fc-event .lw-fcEventRsvpBadge {
-        display: none;
-    }
-
-    .lw-calendarScreen__calendarCard .fc-event.lw-fcEvent--inviteAccepted,
-    .fc .fc-event.lw-fcEvent--inviteAccepted {
-        box-shadow: none;
-        border: 2px solid #2F855A !important;
-    }
-
-    .lw-calendarScreen__calendarCard .fc-event.lw-fcEvent--invitePending,
-    .fc .fc-event.lw-fcEvent--invitePending {
-        box-shadow: none;
-        border: 2px solid #D69E2E !important;
-    }
-
-    .lw-calendarScreen__calendarCard .fc-event.lw-fcEvent--inviteDeclined,
-    .fc .fc-event.lw-fcEvent--inviteDeclined {
-        box-shadow: none;
-        border: 2px solid #C53030 !important;
-    }
 }
 
 // ─── FullCalendar theme overrides (navy palette, RTL) ─────────────────────────
@@ -727,6 +704,31 @@
 
 .fc .fc-event.lw-fcEvent--inviteDeclined {
     opacity: 0.88;
+}
+
+/* Must come AFTER base badge rules so display:none wins the cascade. */
+@media (max-width: 48rem) {
+    .fc .fc-event .lw-fcEventRsvpBadge {
+        display: none !important;
+    }
+
+    .lw-calendarScreen__calendarCard .fc-event.lw-fcEvent--inviteAccepted,
+    .fc .fc-event.lw-fcEvent--inviteAccepted {
+        box-shadow: none;
+        border: 2px solid #2F855A !important;
+    }
+
+    .lw-calendarScreen__calendarCard .fc-event.lw-fcEvent--invitePending,
+    .fc .fc-event.lw-fcEvent--invitePending {
+        box-shadow: none;
+        border: 2px solid #D69E2E !important;
+    }
+
+    .lw-calendarScreen__calendarCard .fc-event.lw-fcEvent--inviteDeclined,
+    .fc .fc-event.lw-fcEvent--inviteDeclined {
+        box-shadow: none;
+        border: 2px solid #C53030 !important;
+    }
 }
 
 // ─── Touch / mobile interaction ───────────────────────────────────────────────
