@@ -8,6 +8,7 @@ const { getEmailTemplate, getSetting } = require('../services/settingsService');
 const { wrapEmailHtml } = require('../tasks/emailReminders/templates');
 const { getFirmDisplayName, getLawFirmNameHe } = require('./firmBranding');
 const { loadCalendarSmsContext } = require('./calendarEventReminders');
+const { meetingPlaceMode } = require('./publicShortLinks');
 
 function escapeHtml(str) {
     return String(str ?? '')
@@ -56,9 +57,45 @@ function buildRsvpButtonHtml(rsvpUrl) {
         + `</div>`;
 }
 
+function buildAddressLineHtml(locationLabel, address, placeMode = '') {
+    if (placeMode === 'none') return '';
+    const label = String(locationLabel || '').trim();
+    const addr = String(address || '').trim();
+    if (!label || !addr) return '';
+    return `<br>${escapeHtml(label)}: <span style="font-weight:600;">${escapeHtml(addr)}</span>`;
+}
+
+/** Phone: no address/nav; Zoom: link label only; strip legacy "כתובת:" orphans from custom templates. */
+function polishCalendarEmailHtml(html, { placeMode, address, locationLabel } = {}) {
+    let out = String(html || '');
+    const mode = placeMode || 'place';
+    const hasAddress = Boolean(String(address || '').trim());
+
+    if (mode === 'none' || !hasAddress) {
+        out = out.replace(/<br>\s*כתובת\s*:\s*(?:<span[^>]*>\s*<\/span>)?/gi, '');
+        out = out.replace(/<br>\s*מיקום\s*:\s*(?:<span[^>]*>\s*<\/span>)?/gi, '');
+        out = out.replace(/<br>\s*קישור לזום\s*:\s*(?:<span[^>]*>\s*<\/span>)?/gi, '');
+        out = out.replace(/<br>\s*קישור לפגישה\s*:\s*(?:<span[^>]*>\s*<\/span>)?/gi, '');
+        out = out.replace(/כתובת\s*:\s*<span[^>]*>\s*<\/span>/gi, '');
+        out = out.replace(/מיקום\s*:\s*<span[^>]*>\s*<\/span>/gi, '');
+        if (mode === 'none' || !hasAddress) {
+            out = out.replace(/<div style="text-align:center;padding:8px 0 4px 0;">[\s\S]*?<\/div>/gi, '');
+        }
+    } else if (mode === 'link' && locationLabel && locationLabel !== 'כתובת') {
+        const escAddr = escapeHtml(String(address));
+        const addrPat = escAddr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const replacement = buildAddressLineHtml(locationLabel, address, mode);
+        out = out.replace(new RegExp(`<br>כתובת\\s*:\\s*<span[^>]*>${addrPat}</span>`, 'gi'), replacement);
+        out = out.replace(new RegExp(`<br>מיקום\\s*:\\s*<span[^>]*>${addrPat}</span>`, 'gi'), replacement);
+        out = out.replace(new RegExp(`כתובת\\s*:\\s*<span[^>]*>${addrPat}</span>`, 'gi'), replacement.replace(/^<br>/, ''));
+    }
+
+    return out;
+}
+
 function replaceCalendarPlaceholders(template, fields) {
     const textKeys = [
-        'recipient_name', 'clients_names', 'date', 'time', 'address', 'title',
+        'recipient_name', 'clients_names', 'date', 'time', 'address', 'location_label', 'title',
         'lawyer_name', 'firm_name', 'firm_phone', 'website_url', 'when_label', 'body_text',
     ];
     const urlKeys = ['waze_url', 'maps_url', 'rsvp_url', 'action_url', 'firm_logo_url'];
@@ -73,6 +110,7 @@ function replaceCalendarPlaceholders(template, fields) {
         out = out.split(`[[${key}]]`).join(key === 'firm_logo_url' ? raw : escapeAttrUrl(raw));
     }
     // Pre-built trusted HTML fragments
+    out = out.split('[[address_line]]').join(fields.address_line || '');
     out = out.split('[[nav_buttons]]').join(fields.nav_buttons || '');
     out = out.split('[[rsvp_button]]').join(fields.rsvp_button || '');
 
@@ -105,12 +143,22 @@ async function buildCalendarEmailFields(ev, { recipientName, clientsNames, whenL
         || [ctx.recipientName]
     );
 
+    const placeMode = ctx.placeMode || meetingPlaceMode(ev.meeting_type || ev.meetingType || '');
+    const locationLabel = placeMode === 'none'
+        ? ''
+        : (ctx.locationLabel
+            || (placeMode === 'place' ? 'כתובת' : placeMode === 'link' ? 'קישור לזום' : ''));
+    const address = placeMode === 'none' ? '' : (ctx.address || '');
+
     return {
         recipient_name: recipientName || ctx.recipientName,
         clients_names: clients,
         date: ctx.date,
         time: ctx.time,
-        address: ctx.address,
+        address,
+        location_label: locationLabel,
+        place_mode: placeMode,
+        address_line: buildAddressLineHtml(locationLabel, address, placeMode),
         title: ctx.title,
         lawyer_name: ctx.lawyerName,
         firm_name: firmName,
@@ -122,7 +170,7 @@ async function buildCalendarEmailFields(ev, { recipientName, clientsNames, whenL
         firm_logo_url: firmLogoUrl,
         when_label: whenLabel || '',
         body_text: bodyText || '',
-        nav_buttons: buildNavButtonsHtml(ctx.wazeUrl, ctx.mapsUrl),
+        nav_buttons: placeMode === 'place' ? buildNavButtonsHtml(ctx.wazeUrl, ctx.mapsUrl) : '',
         rsvp_button: buildRsvpButtonHtml(ctx.rsvpUrl),
     };
 }
@@ -147,7 +195,9 @@ async function composeCalendarEmail(templateKey, ev, opts = {}) {
                 ? `נקבעה לך פגישה: <strong>${escapeHtml(fields.title)}</strong>`
                 : `תזכורת לפגישה: <strong>${escapeHtml(fields.title)}</strong>`,
             `תאריך: <strong>${escapeHtml(fields.date)}</strong> בשעה <strong>${escapeHtml(fields.time)}</strong>`,
-            fields.address ? `כתובת: ${escapeHtml(fields.address)}` : '',
+            fields.address && fields.location_label
+                ? `${escapeHtml(fields.location_label)}: ${escapeHtml(fields.address)}`
+                : '',
             fields.clients_names && fields.clients_names !== fields.recipient_name
                 ? `משתתפים: ${escapeHtml(fields.clients_names)}`
                 : '',
@@ -160,10 +210,14 @@ async function composeCalendarEmail(templateKey, ev, opts = {}) {
 
         return {
             subject: defaultSubject,
-            htmlBody: wrapEmailHtml(fallbackBody, {
+            htmlBody: polishCalendarEmailHtml(wrapEmailHtml(fallbackBody, {
                 firmName: fields.firm_name,
                 firmLogoUrl: fields.firm_logo_url,
                 title: templateKey === 'CALENDAR_INVITE' ? 'הזמנה לפגישה' : 'תזכורת לפגישה',
+            }), {
+                placeMode: fields.place_mode,
+                address: fields.address,
+                locationLabel: fields.location_label,
             }),
         };
     }
@@ -174,6 +228,11 @@ async function composeCalendarEmail(templateKey, ev, opts = {}) {
     ).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() || defaultSubject;
 
     let htmlBody = replaceCalendarPlaceholders(dbTemplate.html_body, fields);
+    htmlBody = polishCalendarEmailHtml(htmlBody, {
+        placeMode: fields.place_mode,
+        address: fields.address,
+        locationLabel: fields.location_label,
+    });
     if (!/<!DOCTYPE/i.test(htmlBody) && !/<html[\s>]/i.test(htmlBody)) {
         htmlBody = wrapEmailHtml(htmlBody, {
             firmName: fields.firm_name,
@@ -187,6 +246,8 @@ async function composeCalendarEmail(templateKey, ev, opts = {}) {
 module.exports = {
     composeCalendarEmail,
     buildCalendarEmailFields,
+    buildAddressLineHtml,
+    polishCalendarEmailHtml,
     buildNavButtonsHtml,
     buildRsvpButtonHtml,
     formatClientsNames,

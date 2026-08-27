@@ -17,7 +17,7 @@ import SimplePopUp from "../../../components/simpleComponents/SimplePopUp";
 import SearchInput from "../../../components/specializedComponents/containers/SearchInput";
 import { Text14 } from "../../../components/specializedComponents/text/AllTextKindFile";
 
-import { formatDateForInput, parseDateInput } from "../../../functions/date/formatDateForInput";
+import { parseDateInput, toNativeDateValue } from "../../../functions/date/formatDateForInput";
 import "./ClientPopUp.scss";
 
 export default function ClientPopup({ clientDetails, initialName, rePerformRequest, onFailureFunction, closePopUpFunction, style: _style }) {
@@ -30,7 +30,7 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
     const [companyName, setCompanyName, companyNameError] = useFieldState(HebrewCharsValidationWithNumbers, clientDetails?.companyname || "");
     const [email, setEmail, emailError] = useFieldState(emailValidation, clientDetails?.email || "");
     const [phoneNumber, setPhoneNumber, phoneNumberError] = useFieldState(IsraeliPhoneNumberValidation, clientDetails?.phonenumber || "");
-    const [dateOfBirth, setDateOfBirth] = useState(clientDetails?.dateofbirth ? formatDateForInput(clientDetails.dateofbirth) : "");
+    const [dateOfBirth, setDateOfBirth] = useState(clientDetails?.dateofbirth ? toNativeDateValue(clientDetails.dateofbirth) : "");
     const [similarCompanyDismissed, setSimilarCompanyDismissed] = useState(false);
 
     const { result: allCustomers } = useAutoHttpRequest(customersApi.getAllCustomers);
@@ -68,7 +68,7 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
         setPhoneNumber(customer.PhoneNumber || customer.phonenumber || "");
         setEmail(customer.Email || customer.email || "");
         setCompanyName(customer.CompanyName || customer.companyname || "");
-        setDateOfBirth(customer.DateOfBirth || customer.dateofbirth ? formatDateForInput(customer.DateOfBirth || customer.dateofbirth) : "");
+        setDateOfBirth(customer.DateOfBirth || customer.dateofbirth ? toNativeDateValue(customer.DateOfBirth || customer.dateofbirth) : "");
         setSimilarCompanyDismissed(true);
     };
 
@@ -83,7 +83,7 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
         setPhoneNumber(customer.PhoneNumber || customer.phonenumber || "");
         setEmail(customer.Email || customer.email || "");
         setCompanyName(customer.CompanyName || customer.companyname || "");
-        setDateOfBirth(customer.DateOfBirth || customer.dateofbirth ? formatDateForInput(customer.DateOfBirth || customer.dateofbirth) : "");
+        setDateOfBirth(customer.DateOfBirth || customer.dateofbirth ? toNativeDateValue(customer.DateOfBirth || customer.dateofbirth) : "");
     };
 
     const [hasError, setHasError] = useState(false);
@@ -91,11 +91,12 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
     const [legalDeleteMessage, setLegalDeleteMessage] = useState("");
 
     useEffect(() => {
-        if (!name || !phoneNumber || !email || nameError || phoneNumberError || emailError) {
-            setHasError(true)
-        } else {
-            setHasError(false)
-        }
+        const hasName = Boolean((name || '').trim());
+        const hasPhone = Boolean((phoneNumber || '').trim());
+        const hasEmail = Boolean((email || '').trim());
+        const contactOk = hasPhone || hasEmail;
+        const fieldErrors = Boolean(nameError || phoneNumberError || emailError || companyNameError);
+        setHasError(!hasName || !contactOk || fieldErrors);
     }, [name, phoneNumber, email, companyName, nameError, phoneNumberError, emailError, companyNameError])
 
     const { isPerforming, performRequest } = useHttpRequest(
@@ -106,15 +107,15 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
                 ? {
                     UserId: selectedClient.UserId || selectedClient.userid,
                     Name: (name || '').trim() || selectedClient.Name || selectedClient.name,
-                    Email: (email || '').trim() || selectedClient.Email || selectedClient.email || null,
-                    PhoneNumber: (phoneNumber || '').trim() || selectedClient.PhoneNumber || selectedClient.phonenumber || null,
-                    CompanyName: (companyName || '').trim() || selectedClient.CompanyName || selectedClient.companyname || null,
+                    Email: (email || '').trim() || null,
+                    PhoneNumber: (phoneNumber || '').trim() || null,
+                    CompanyName: (companyName || '').trim() || null,
                 }
                 : {
                     UserId: data?.UserId,
                     Name: data?.Name || (name || '').trim(),
                     Email: data?.Email ?? ((email || '').trim() || null),
-                    PhoneNumber: data?.PhoneNumber || (phoneNumber || '').trim(),
+                    PhoneNumber: data?.PhoneNumber ?? ((phoneNumber || '').trim() || null),
                     CompanyName: data?.CompanyName ?? ((companyName || '').trim() || null),
                 };
             rePerformRequest?.(savedClient);
@@ -244,6 +245,12 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
                     />
                 </SimpleContainer>
 
+                <Text14 className="lw-clientPopup__contactHint">
+                    {t('customers.contactRequiredHint', {
+                        defaultValue: 'חובה למלא טלפון או דוא״ל (או שניהם)',
+                    })}
+                </Text14>
+
                 {similarCompanies.length > 0 && (
                     <SimpleContainer className="lw-clientPopup__similarCompanies">
                         <Text14 className="lw-clientPopup__similarTitle">
@@ -277,7 +284,7 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
                     <SimpleInput
                         className="lw-clientPopup__input"
                         title={t("profile.dateOfBirth")}
-                        placeholder="dd/mm/yyyy"
+                        type="date"
                         value={dateOfBirth || ""}
                         onChange={(e) => setDateOfBirth(e.target.value)}
                     />

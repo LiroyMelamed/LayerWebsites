@@ -171,7 +171,7 @@ async function main() {
     const signatureName = getArgValue('--signature-name', 'לירוי מלמד');
     const signatureTitle = getArgValue('--signature-title', 'מנהל חברת Melamedia');
     const referralPhrase = getArgValue('--referral-phrase', 'קיבלתי את האימייל שלך מאחי');
-    const replyTo = getArgValue('--reply-to', 'liroymelamed@icloud.com');
+    const replyTo = getArgValue('--reply-to', 'liroy@mela-media.co.il');
     const fromName = getArgValue('--from-name', 'Melamedia | לירוי מלמד');
     const fromEmailArg = getArgValue('--from-email', '');
     const salesDeckPath = resolveOptionalSalesDeckPath(getArgValue('--sales-deck', ''));

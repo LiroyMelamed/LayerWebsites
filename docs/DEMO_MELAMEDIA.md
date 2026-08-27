@@ -55,7 +55,7 @@ node scripts/seed-melamedia-demo.js
 
 ## Storage
 
-Demo PDFs live under R2 prefix `melamedia/demo/` (bucket currently `morlevy-files` until a dedicated Melamedia bucket exists). DB backups: `db-backups/melamedia/`.
+Demo PDFs live under R2 prefix `melamedia/demo/` in dedicated bucket `melamedia`. DB backups: `db-backups/melamedia/`.
 
 ## Ops
 

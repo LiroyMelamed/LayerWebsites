@@ -8,8 +8,16 @@ import { Text20, Text14, Text12 } from "../../../components/specializedComponent
 import useHttpRequest from "../../../hooks/useHttpRequest";
 import remindersApi from "../../../api/remindersApi";
 
-import { formatDateTimeForInput, parseDateTimeInput } from "../../../functions/date/formatDateForInput";
+import { formatDateTimeForInput, parseDateTimeInput, toNativeDateTimeValue } from "../../../functions/date/formatDateForInput";
+import { parseDatetimeLocal } from "../../../functions/date/datetimeLocal";
 import "./ReminderDetailPopup.scss";
+
+function wallToIso(wallValue) {
+    if (!wallValue) return undefined;
+    const wall = parseDateTimeInput(wallValue) || wallValue;
+    const d = parseDatetimeLocal(wall);
+    return d ? d.toISOString() : undefined;
+}
 
 function DetailRow({ label, children }) {
     return (
@@ -30,7 +38,7 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
         client_name: reminder?.client_name || "",
         to_email: reminder?.to_email || "",
         subject: reminder?.subject || "",
-        scheduled_for: formatDateTimeForInput(reminder?.scheduled_for),
+        scheduled_for: toNativeDateTimeValue(reminder?.scheduled_for),
     });
     const [displayData, setDisplayData] = useState({
         client_name: reminder?.client_name || "",
@@ -46,7 +54,7 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
                 client_name: editData.client_name,
                 to_email: editData.to_email,
                 subject: editData.subject,
-                scheduled_for: editData.scheduled_for ? new Date(parseDateTimeInput(editData.scheduled_for)).toISOString() : displayData.scheduled_for,
+                scheduled_for: wallToIso(editData.scheduled_for) || displayData.scheduled_for,
             });
             setEditing(false);
             onUpdated?.();
@@ -57,17 +65,13 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
     const handleSave = () => {
         const payload = isSigningReminder
             ? {
-                scheduled_for: editData.scheduled_for
-                    ? new Date(parseDateTimeInput(editData.scheduled_for)).toISOString()
-                    : undefined,
+                scheduled_for: wallToIso(editData.scheduled_for),
             }
             : {
                 client_name: editData.client_name,
                 to_email: editData.to_email,
                 subject: editData.subject,
-                scheduled_for: editData.scheduled_for
-                    ? new Date(parseDateTimeInput(editData.scheduled_for)).toISOString()
-                    : undefined,
+                scheduled_for: wallToIso(editData.scheduled_for),
             };
         saveReminder(reminder.id, payload);
     };
@@ -113,7 +117,7 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
                 <DetailRow label={t("reminders.col.scheduledFor")}>
                     {editing ? (
                         <SimpleInput
-                            placeholder="dd/mm/yyyy, HH:mm"
+                            type="datetime-local"
                             value={editData.scheduled_for}
                             onChange={(e) => setEditData((prev) => ({ ...prev, scheduled_for: e.target.value }))}
                             className="lw-reminderDetail__editInput"

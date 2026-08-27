@@ -25,7 +25,7 @@ import { ClientMainScreenName } from "../clientMainScreen/ClientMainScreen";
 import { useScreenSize } from "../../../providers/ScreenSizeProvider";
 import { Text12, TextBold24 } from "../../../components/specializedComponents/text/AllTextKindFile";
 
-import { formatDateForInput, parseDateInput } from "../../../functions/date/formatDateForInput";
+import { parseDateInput, toNativeDateValue } from "../../../functions/date/formatDateForInput";
 import { uploadFileToR2, getFileReadUrl } from "../../../utils/fileUploadUtils";
 import { toastFromApiError } from "../../../components/ui/showAppToast";
 import { toastSuccess } from "../../../components/ui/toast";
@@ -76,7 +76,7 @@ export default function ProfileScreen() {
                 email: data?.Email ?? "",
                 companyName: data?.CompanyName ?? "",
                 phoneNumber: data?.PhoneNumber ?? "",
-                dateOfBirth: data?.DateOfBirth ? formatDateForInput(data.DateOfBirth) : "",
+                dateOfBirth: data?.DateOfBirth ? toNativeDateValue(data.DateOfBirth) : "",
                 photoKey: data?.PhotoKey || (data?.ProfilePicUrl?.startsWith("users/") ? data.ProfilePicUrl : null),
                 photoUri: data?.ProfilePicReadUrl || null,
             }));
@@ -219,7 +219,7 @@ export default function ProfileScreen() {
                                     <SimpleInput
                                         className="lw-profileScreen__input"
                                         title={t("profile.dateOfBirth")}
-                                        placeholder="dd/mm/yyyy"
+                                        type="date"
                                         value={profile.dateOfBirth || ""}
                                         onChange={(e) => setProfile((p) => ({ ...p, dateOfBirth: e.target.value }))}
                                     />

@@ -53,9 +53,24 @@
 
 .lw-eventFormModal__header {
     flex-direction: column;
+    align-items: stretch;
     padding-block-end: v.$space-4;
     border-block-end: 0.0625rem solid rgba(226, 232, 240, 0.8);
     margin-block-end: v.$space-4;
+}
+
+.lw-eventFormModal__auditTrail {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    width: 100%;
+    margin-block-start: 0.5rem;
+
+    > * {
+        display: block;
+        width: 100%;
+        line-height: 1.45;
+    }
 }
 
 .lw-eventFormModal__body {
@@ -360,6 +375,16 @@
     flex-direction: column;
     gap: v.$space-3;
     width: 100%;
+}
+
+.lw-eventFormModal__reminderClientPanel {
+    display: flex;
+    flex-direction: column;
+    gap: v.$space-3;
+    width: 100%;
+    padding: v.$space-3;
+    border: 0.0625rem dashed var(--lw-color-disabled);
+    border-radius: 0.5rem;
 }
 
 .lw-eventFormModal__reminderEmailRow {

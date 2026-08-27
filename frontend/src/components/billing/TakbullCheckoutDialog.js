@@ -57,13 +57,8 @@ export default function TakbullCheckoutDialog({ open, gatewayUrl, onClose, onPai
                     />
                 ) : null}
                 <SimpleContainer className="lw-takbullCheckout__actions">
-                    {gatewayUrl ? (
-                        <SimpleButton onPress={() => window.open(gatewayUrl, '_blank', 'noopener,noreferrer')}>
-                            <Text14>{t('billing.openInNewTab')}</Text14>
-                        </SimpleButton>
-                    ) : null}
                     <SimpleButton onPress={onClose}>
-                        <Text14>{t('billing.closeCheckout')}</Text14>
+                        <Text14>{t('common.cancel')}</Text14>
                     </SimpleButton>
                 </SimpleContainer>
             </SimpleContainer>

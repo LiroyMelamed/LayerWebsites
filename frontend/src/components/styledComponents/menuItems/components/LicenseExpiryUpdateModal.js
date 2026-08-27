@@ -9,7 +9,7 @@ import { buttonSizes } from "../../../../styles/buttons/buttonSizes";
 import SimpleLoader from "../../../simpleComponents/SimpleLoader";
 import casesApi from "../../../../api/casesApi";
 import { DateDDMMYY } from "../../../../functions/date/DateDDMMYY";
-import { formatDateForInput, parseDateInput } from "../../../../functions/date/formatDateForInput";
+import { parseDateInput, toNativeDateValue } from "../../../../functions/date/formatDateForInput";
 
 import "./LicenseExpiryUpdateModal.scss";
 
@@ -26,7 +26,7 @@ export default function LicenseExpiryUpdateModal({ fullCase, onDone, onClose }) 
     const [step, setStep] = useState(1); // 1 = update expiry, 2 = reminder intervals
     const [newExpiry, setNewExpiry] = useState(
         fullCase.LicenseExpiryDate
-            ? formatDateForInput(fullCase.LicenseExpiryDate)
+            ? toNativeDateValue(fullCase.LicenseExpiryDate)
             : ""
     );
     const [selectedIntervals, setSelectedIntervals] = useState(["2w"]);
@@ -110,7 +110,7 @@ export default function LicenseExpiryUpdateModal({ fullCase, onDone, onClose }) 
                 <SimpleInput
                     className="lw-licenseExpiryModal__dateInput"
                     title={t("cases.licenseRenewal.newExpiry")}
-                    placeholder="dd/mm/yyyy"
+                    type="date"
                     value={newExpiry}
                     onChange={(e) => setNewExpiry(e.target.value)}
                     inputSize="Medium"
