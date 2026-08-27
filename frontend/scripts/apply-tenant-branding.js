@@ -47,6 +47,9 @@ for (const icon of [
   "favicon-16x16.png",
   "favicon-32x32.png",
   "apple-touch-icon.png",
+  "android-chrome-192x192.png",
+  "android-chrome-512x512.png",
+  "site.webmanifest",
 ]) {
   const iconSrc = path.join(src, icon);
   if (fs.existsSync(iconSrc)) {

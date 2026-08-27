@@ -1,7 +1,13 @@
 import React, { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import remindersApi from "../../../api/remindersApi";
-import { formatDateTimeForInput, parseDateTimeInput, formatDateForInput, parseDateInput } from "../../../functions/date/formatDateForInput";
+import {
+    formatDateTimeForInput,
+    parseDateTimeInput,
+    toNativeDateValue,
+    normalizeTemplateDateFields,
+} from "../../../functions/date/formatDateForInput";
+import { parseDatetimeLocal } from "../../../functions/date/datetimeLocal";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
 import SimpleInput from "../../../components/simpleComponents/SimpleInput";
 import SimpleTextArea from "../../../components/simpleComponents/SimpleTextArea";
@@ -88,9 +94,13 @@ export default function AddReminderModal({ closePopUpFunction, rePerformRequest 
                 to_email: email,
                 subject: subject || undefined,
                 templateKey: selectedTemplate,
-                scheduled_for: parseDateTimeInput(scheduledFor) ? new Date(parseDateTimeInput(scheduledFor)).toISOString() : scheduledFor,
+                scheduled_for: (() => {
+                    const wall = parseDateTimeInput(scheduledFor) || scheduledFor;
+                    const d = parseDatetimeLocal(wall);
+                    return d ? d.toISOString() : scheduledFor;
+                })(),
                 template_data: Object.keys(templateData).length > 0
-                    ? Object.fromEntries(Object.entries(templateData).map(([k, v]) => [k, k === 'date' ? (parseDateInput(v) || v) : v]))
+                    ? normalizeTemplateDateFields(templateData)
                     : undefined,
             }),
         () => {
@@ -121,7 +131,7 @@ export default function AddReminderModal({ closePopUpFunction, rePerformRequest 
 
     const bodyPreview = useMemo(
         () => buildReminderBodyPreview(currentTemplate, {
-            ...templateData,
+            ...normalizeTemplateDateFields(templateData),
             client_name: clientName.trim() || undefined,
             subject: subject.trim() || undefined,
             firm_name: getFirmName() || undefined,
@@ -197,8 +207,12 @@ export default function AddReminderModal({ closePopUpFunction, rePerformRequest 
                                 key={varKey}
                                 className="lw-addReminder__field"
                                 title={VAR_LABELS[varKey] || varKey}
-                                placeholder={varKey === "date" ? "dd/mm/yyyy" : undefined}
-                                value={varKey === "date" ? (templateData[varKey] || "") : (templateData[varKey] || "")}
+                                type={varKey === "date" ? "date" : "text"}
+                                value={
+                                    varKey === "date"
+                                        ? toNativeDateValue(templateData[varKey])
+                                        : (templateData[varKey] || "")
+                                }
                                 onChange={(e) => handleVarChange(varKey, e.target.value)}
                                 timeToWaitInMilli={0}
                             />
@@ -234,7 +248,7 @@ export default function AddReminderModal({ closePopUpFunction, rePerformRequest 
                     <SimpleInput
                         className="lw-addReminder__field"
                         title={t("reminders.add.scheduledFor")}
-                        placeholder="dd/mm/yyyy, HH:mm"
+                        type="datetime-local"
                         value={scheduledFor}
                         onChange={(e) => setScheduledFor(e.target.value)}
                         timeToWaitInMilli={0}

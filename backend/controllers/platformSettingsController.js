@@ -10,7 +10,7 @@ const { sendTransactionalCustomHtmlEmail } = require('../utils/smooveEmailCampai
 const { getFirmDisplayName } = require('../lib/firmBranding');
 
 // Fixed recipient for SMS-sender-change requests (technical owner who handles InforU verification).
-const SMS_SENDER_CHANGE_NOTIFY_EMAIL = 'liroymelamed@icloud.com';
+const SMS_SENDER_CHANGE_NOTIFY_EMAIL = 'liroy@mela-media.co.il';
 const ACTIVE_SENDER_NAME_KEY = 'INFORU_SENDER_PHONE'; // alphanumeric sender name
 const ACTIVE_SENDER_NUMBER_KEY = 'INFORU_SENDER_NUMBER'; // verified phone sender
 const PENDING_SENDER_KEY = 'INFORU_SENDER_PHONE_PENDING';

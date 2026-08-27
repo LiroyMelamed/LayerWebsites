@@ -1,10 +1,49 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+
 import ApiUtils from "../../api/apiUtils";
+import { images } from "../../assets/images/images";
+import { colors } from "../../constant/colors";
+import { buttonSizes } from "../../styles/buttons/buttonSizes";
 import { toastError, toastSuccess } from "../../components/ui/toast";
+
+import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
+import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
+import SimpleCard from "../../components/simpleComponents/SimpleCard";
+import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
+import TertiaryButton from "../../components/styledComponents/buttons/TertiaryButton";
+import {
+    Text12,
+    Text14,
+    TextBold14,
+    TextBold16,
+    TextBold20,
+    TextBold24,
+} from "../../components/specializedComponents/text/AllTextKindFile";
+
 import { buildGoogleCalendarUrl, downloadIcsFile } from "./utils/calendarExport";
+import {
+    AppleCalendarIcon,
+    GoogleCalendarIcon,
+    GoogleMapsIcon,
+    InviteIconButton,
+    WazeIcon,
+} from "./components/CalendarInviteActionIcons";
 import "./CalendarInviteScreen.scss";
+
+function isHttpUrl(value) {
+    return /^https?:\/\//i.test(String(value || "").trim())
+        || /^[\w.-]+\.[a-z]{2,}([/:?#].*)?$/i.test(String(value || "").trim());
+}
+
+function coerceHttpUrl(value) {
+    const s = String(value || "").trim();
+    if (!s) return "";
+    if (/^https?:\/\//i.test(s)) return s;
+    if (/^[\w.-]+\.[a-z]{2,}([/:?#].*)?$/i.test(s)) return `https://${s}`;
+    return s;
+}
 
 export default function CalendarInviteScreen() {
     const { token } = useParams();
@@ -56,6 +95,16 @@ export default function CalendarInviteScreen() {
         }
     };
 
+    const meetingType = String(invite?.meetingType || invite?.meeting_type || "").trim().toLowerCase();
+    const placeMode = meetingType === "phone" ? "none" : (meetingType === "zoom" ? "link" : "place");
+    const rawLocation = String(invite?.location || "").trim();
+    const showPlace = placeMode !== "none" && Boolean(rawLocation);
+    const locationIsLink = placeMode === "link" || isHttpUrl(rawLocation);
+    const locationHref = locationIsLink ? coerceHttpUrl(rawLocation) : "";
+    const locationLabel = placeMode === "link" || /\bzoom\.us\b/i.test(rawLocation)
+        ? t("calendar.zoomLink", { defaultValue: "קישור זום" })
+        : t("calendar.inviteWhere");
+
     const startLabel = useMemo(() => {
         if (!invite?.startTime) return "";
         return new Date(invite.startTime).toLocaleString("he-IL", {
@@ -78,148 +127,185 @@ export default function CalendarInviteScreen() {
     const handleAppleOutlook = () => {
         if (!invite) return;
         const ok = downloadIcsFile(
-            { ...invite, uid: `invite-${token}@ashrafessa` },
+            { ...invite, uid: `invite-${token}@melamedia` },
             "meeting.ics"
         );
         if (ok) toastSuccess(t("calendar.addToAppleStarted"));
         else toastError(t("calendar.addToCalendarError"));
     };
 
-    const wazeHref = invite?.location
-        ? `https://waze.com/ul?q=${encodeURIComponent(invite.location)}`
+    const openGoogleCalendar = () => {
+        if (!googleCalUrl) {
+            toastError(t("calendar.addToCalendarError"));
+            return;
+        }
+        window.open(googleCalUrl, "_blank", "noopener,noreferrer");
+    };
+
+    const wazeHref = showPlace && !locationIsLink
+        ? `https://waze.com/ul?q=${encodeURIComponent(rawLocation)}`
         : "";
-    const mapsHref = invite?.location
-        ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(invite.location)}`
+    const mapsHref = showPlace && !locationIsLink
+        ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rawLocation)}`
         : "";
+
+    const showNavIcons = showPlace && !locationIsLink && Boolean(wazeHref || mapsHref);
 
     const statusClass =
         status === "accepted" ? "is-accepted"
             : status === "declined" ? "is-declined"
                 : "is-pending";
 
+    const showAddToCalendar = Boolean(invite) && status !== "declined";
+
     return (
-        <div className={`lw-calendarInvite ${statusClass} ${anim ? `is-anim-${anim}` : ""}`}>
-            <div className="lw-calendarInvite__bg" aria-hidden="true" />
-            <div className="lw-calendarInvite__card">
-                <p className="lw-calendarInvite__eyebrow">{t("calendar.inviteHeroTitle")}</p>
+        <SimpleScreen
+            imageBackgroundSource={images.Backgrounds.AppBackground}
+            className={`lw-calendarInvite ${statusClass} ${anim ? `is-anim-${anim}` : ""}`}
+        >
+            <SimpleContainer className="lw-calendarInvite__wrap">
+                <SimpleCard className="lw-calendarInvite__card">
+                    <TextBold14 color={colors.primary} className="lw-calendarInvite__eyebrow">
+                        {t("calendar.inviteHeroTitle")}
+                    </TextBold14>
 
-                {loading && (
-                    <div className="lw-calendarInvite__loading">
-                        <div className="lw-calendarInvite__spinner" aria-hidden="true" />
-                        <p>{t("calendar.inviteLoading")}</p>
-                    </div>
-                )}
+                    {loading && (
+                        <SimpleContainer className="lw-calendarInvite__loading">
+                            <div className="lw-calendarInvite__spinner" aria-hidden="true" />
+                            <Text14 color={colors.winter}>{t("calendar.inviteLoading")}</Text14>
+                        </SimpleContainer>
+                    )}
 
-                {!loading && error && !invite && (
-                    <div className="lw-calendarInvite__empty">
-                        <div className="lw-calendarInvite__emptyIcon" aria-hidden="true">!</div>
-                        <h1>{t("calendar.inviteNotFound")}</h1>
-                        <p>{error}</p>
-                    </div>
-                )}
+                    {!loading && error && !invite && (
+                        <SimpleContainer className="lw-calendarInvite__empty">
+                            <div className="lw-calendarInvite__emptyIcon" aria-hidden="true">!</div>
+                            <TextBold20>{t("calendar.inviteNotFound")}</TextBold20>
+                            <Text14 color={colors.winter}>{error}</Text14>
+                        </SimpleContainer>
+                    )}
 
-                {!loading && invite && (
-                    <>
-                        <h1 className="lw-calendarInvite__title">{invite.title}</h1>
+                    {!loading && invite && (
+                        <>
+                            <TextBold24 className="lw-calendarInvite__title">{invite.title}</TextBold24>
 
-                        {invite.clientName && (
-                            <p className="lw-calendarInvite__meta">
-                                <span>{t("calendar.inviteFor")}</span>
-                                <strong>{invite.clientName}</strong>
-                            </p>
-                        )}
+                            {invite.clientName ? (
+                                <SimpleContainer className="lw-calendarInvite__meta">
+                                    <Text12 color={colors.winter}>{t("calendar.inviteFor")}</Text12>
+                                    <TextBold16>{invite.clientName}</TextBold16>
+                                </SimpleContainer>
+                            ) : null}
 
-                        {startLabel && (
-                            <p className="lw-calendarInvite__meta">
-                                <span>{t("calendar.inviteWhen")}</span>
-                                <strong>{startLabel}</strong>
-                            </p>
-                        )}
+                            {startLabel ? (
+                                <SimpleContainer className="lw-calendarInvite__meta">
+                                    <Text12 color={colors.winter}>{t("calendar.inviteWhen")}</Text12>
+                                    <TextBold16>{startLabel}</TextBold16>
+                                </SimpleContainer>
+                            ) : null}
 
-                        {invite.location && (
-                            <div className="lw-calendarInvite__location">
-                                <p className="lw-calendarInvite__meta">
-                                    <span>{t("calendar.inviteWhere")}</span>
-                                    <strong>{invite.location}</strong>
-                                </p>
-                                <div className="lw-calendarInvite__nav">
-                                    {wazeHref && (
-                                        <a href={wazeHref} target="_blank" rel="noreferrer">
-                                            {t("calendar.openInWaze")}
-                                        </a>
-                                    )}
-                                    {mapsHref && (
-                                        <a href={mapsHref} target="_blank" rel="noreferrer">
-                                            {t("calendar.openInMaps")}
-                                        </a>
-                                    )}
-                                </div>
-                            </div>
-                        )}
+                            {showPlace ? (
+                                <SimpleContainer className="lw-calendarInvite__location">
+                                    <SimpleContainer className="lw-calendarInvite__meta">
+                                        <Text12 color={colors.winter}>{locationLabel}</Text12>
+                                        {locationHref ? (
+                                            <a
+                                                className="lw-calendarInvite__linkValue"
+                                                href={locationHref}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                            >
+                                                <TextBold16 color={colors.primary}>{rawLocation}</TextBold16>
+                                            </a>
+                                        ) : (
+                                            <TextBold16>{rawLocation}</TextBold16>
+                                        )}
+                                    </SimpleContainer>
+                                </SimpleContainer>
+                            ) : null}
 
-                        {status === "pending" && (
-                            <div className="lw-calendarInvite__actions">
-                                <button
-                                    type="button"
-                                    className="lw-calendarInvite__btn lw-calendarInvite__btn--accept"
-                                    disabled={busy}
-                                    onClick={() => respond("accept")}
-                                >
-                                    {t("calendar.inviteAccept")}
-                                </button>
-                                <button
-                                    type="button"
-                                    className="lw-calendarInvite__btn lw-calendarInvite__btn--decline"
-                                    disabled={busy}
-                                    onClick={() => respond("decline")}
-                                >
-                                    {t("calendar.inviteDecline")}
-                                </button>
-                            </div>
-                        )}
-
-                        {status === "accepted" && (
-                            <div className="lw-calendarInvite__result lw-calendarInvite__result--ok" role="status">
-                                <div className="lw-calendarInvite__check" aria-hidden="true">
-                                    <svg viewBox="0 0 52 52">
-                                        <circle cx="26" cy="26" r="24" fill="none" />
-                                        <path fill="none" d="M14 27l8 8 16-16" />
-                                    </svg>
-                                </div>
-                                <h2>{t("calendar.inviteAcceptedTitle")}</h2>
-                                <p>{t("calendar.inviteAcceptedBody")}</p>
-                                <div className="lw-calendarInvite__addToCal">
-                                    {googleCalUrl ? (
-                                        <a
-                                            className="lw-calendarInvite__calBtn lw-calendarInvite__calBtn--google"
-                                            href={googleCalUrl}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                        >
-                                            {t("calendar.addToGoogle")}
-                                        </a>
-                                    ) : null}
-                                    <button
-                                        type="button"
-                                        className="lw-calendarInvite__calBtn lw-calendarInvite__calBtn--apple"
-                                        onClick={handleAppleOutlook}
+                            {status === "pending" && (
+                                <SimpleContainer className="lw-calendarInvite__actions">
+                                    <PrimaryButton
+                                        disabled={busy}
+                                        isPerforming={busy && anim === "accept"}
+                                        onPress={() => respond("accept")}
                                     >
-                                        {t("calendar.addToApple")}
-                                    </button>
-                                </div>
-                            </div>
-                        )}
+                                        {t("calendar.inviteAccept")}
+                                    </PrimaryButton>
+                                    <TertiaryButton
+                                        className="lw-calendarInvite__decline"
+                                        size={buttonSizes.SMALL}
+                                        disabled={busy}
+                                        isPerforming={busy && anim === "decline"}
+                                        innerTextColor={colors.negative}
+                                        onPress={() => respond("decline")}
+                                    >
+                                        {t("calendar.inviteDecline")}
+                                    </TertiaryButton>
+                                </SimpleContainer>
+                            )}
 
-                        {status === "declined" && (
-                            <div className="lw-calendarInvite__result lw-calendarInvite__result--no" role="status">
-                                <div className="lw-calendarInvite__cross" aria-hidden="true">✕</div>
-                                <h2>{t("calendar.inviteDeclinedTitle")}</h2>
-                                <p>{t("calendar.inviteDeclinedBody")}</p>
-                            </div>
-                        )}
-                    </>
-                )}
-            </div>
-        </div>
+                            {status === "accepted" && (
+                                <SimpleContainer className="lw-calendarInvite__result lw-calendarInvite__result--ok" role="status">
+                                    <div className="lw-calendarInvite__check" aria-hidden="true">
+                                        <svg viewBox="0 0 52 52">
+                                            <circle cx="26" cy="26" r="24" fill="none" />
+                                            <path fill="none" d="M14 27l8 8 16-16" />
+                                        </svg>
+                                    </div>
+                                    <TextBold20>{t("calendar.inviteAcceptedTitle")}</TextBold20>
+                                    <Text14 color={colors.winter}>{t("calendar.inviteAcceptedBody")}</Text14>
+                                </SimpleContainer>
+                            )}
+
+                            {status === "declined" && (
+                                <SimpleContainer className="lw-calendarInvite__result lw-calendarInvite__result--no" role="status">
+                                    <div className="lw-calendarInvite__cross" aria-hidden="true">✕</div>
+                                    <TextBold20>{t("calendar.inviteDeclinedTitle")}</TextBold20>
+                                    <Text14 color={colors.winter}>{t("calendar.inviteDeclinedBody")}</Text14>
+                                </SimpleContainer>
+                            )}
+
+                            {(showAddToCalendar || showNavIcons) && (
+                                <SimpleContainer className="lw-calendarInvite__iconRow">
+                                    {showAddToCalendar ? (
+                                        <>
+                                            <InviteIconButton
+                                                label={t("calendar.addToGoogle")}
+                                                onPress={openGoogleCalendar}
+                                                disabled={!googleCalUrl}
+                                            >
+                                                <GoogleCalendarIcon size={26} />
+                                            </InviteIconButton>
+                                            <InviteIconButton
+                                                label={t("calendar.addToApple")}
+                                                onPress={handleAppleOutlook}
+                                            >
+                                                <AppleCalendarIcon size={26} />
+                                            </InviteIconButton>
+                                        </>
+                                    ) : null}
+                                    {showNavIcons && mapsHref ? (
+                                        <InviteIconButton
+                                            label={t("calendar.openInMaps")}
+                                            onPress={() => window.open(mapsHref, "_blank", "noopener,noreferrer")}
+                                        >
+                                            <GoogleMapsIcon size={26} />
+                                        </InviteIconButton>
+                                    ) : null}
+                                    {showNavIcons && wazeHref ? (
+                                        <InviteIconButton
+                                            label={t("calendar.openInWaze")}
+                                            onPress={() => window.open(wazeHref, "_blank", "noopener,noreferrer")}
+                                        >
+                                            <WazeIcon size={26} />
+                                        </InviteIconButton>
+                                    ) : null}
+                                </SimpleContainer>
+                            )}
+                        </>
+                    )}
+                </SimpleCard>
+            </SimpleContainer>
+        </SimpleScreen>
     );
 }

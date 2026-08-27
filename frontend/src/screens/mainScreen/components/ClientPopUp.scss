@@ -65,6 +65,11 @@
     margin-block-end: v.$space-4;
 }
 
+.lw-clientPopup__contactHint {
+    margin-block: calc(-1 * v.$space-2) v.$space-4;
+    opacity: 0.75;
+}
+
 .lw-clientPopup__input {
     flex: 1;
     flex: 1 1 9.375rem;

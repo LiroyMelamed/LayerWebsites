@@ -102,7 +102,7 @@ async function main() {
   console.log('Outreach TEST send (new copy, no state write)');
   console.log('SMTP host: ', host, 'port:', port);
   console.log('From:      ', `לירוי מלמד · Melamedia <${fromEmail}>`);
-  console.log('Reply-To:  ', 'liroymelamed@icloud.com');
+  console.log('Reply-To:  ', 'liroy@mela-media.co.il');
   console.log('To:        ', TO);
   console.log('Subject:   ', SUBJECT);
   console.log('--------------------------------------------');
@@ -113,7 +113,7 @@ async function main() {
   const info = await transporter.sendMail({
     from: `"לירוי מלמד · Melamedia" <${fromEmail}>`,
     to: TO,
-    replyTo: 'liroymelamed@icloud.com',
+    replyTo: 'liroy@mela-media.co.il',
     subject: SUBJECT,
     text: TEXT,
     html: HTML,
