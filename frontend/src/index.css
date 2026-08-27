@@ -54,7 +54,7 @@
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: 0.75rem;
-  align-items: start;
+  align-items: center;
   padding: 0.875rem 1rem;
   border-radius: 0.75rem;
   border: 1px solid rgba(15, 23, 42, 0.08);
@@ -100,7 +100,19 @@
   white-space: pre-wrap;
 }
 
+.lw-toast-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
 .lw-toast-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
   border: 0;
   background: transparent;
   color: #64748b;

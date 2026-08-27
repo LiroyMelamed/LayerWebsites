@@ -10,7 +10,7 @@ const PALETTE = [
     '#2A4365', // deep navy (primary)
     '#3182CE', // royal blue
     '#2C7A7B', // teal
-    '#805AD5', // royal purple
+    '#7C3AED', // vivid purple (distinct from leave gray)
     '#B83280', // magenta
     '#C05621', // burnt orange
     '#2F855A', // emerald

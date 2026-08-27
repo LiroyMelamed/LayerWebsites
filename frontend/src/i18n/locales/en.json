@@ -99,6 +99,7 @@
     },
     "actions": {
       "downloadSigned": "Download signed file",
+      "downloadPartialSigned": "Download partial document",
       "downloadEvidencePdf": "Download evidence PDF",
       "downloadEvidenceZip": "Download evidence ZIP",
       "details": "Document details",
@@ -343,7 +344,8 @@
     "screenTitle": "All Clients",
     "addNewCustomer": "Add new customer",
     "customerPhone": "Phone",
-    "customerEmail": "Email"
+    "customerEmail": "Email",
+    "contactRequiredHint": "Phone or email is required (or both)"
   },
   "admins": {
     "searchAdmin": "Search admin",
@@ -886,7 +888,7 @@
       "you": "You",
       "consentText": "I confirm that I have read the displayed document, and I consent to sign it electronically. I understand that signing without OTP verification may reduce the strength of the evidence in the event of a dispute.",
       "consentRequired": "You must accept the consent before continuing.",
-      "otpRequired": "SMS verification is required before signing.",
+      "otpRequired": "Verification is required before signing.",
       "signHere": "Sign here",
       "pleaseSignBeforeSave": "Please sign before saving",
       "pleaseInitialBeforeSave": "Please draw initials before saving",
@@ -902,7 +904,9 @@
       "noSignatureToUse": "No signature found to use",
       "signedAllSuccess": "All spots were signed successfully",
       "signAllError": "Error signing all spots",
-      "otpSent": "Verification code sent via SMS",
+      "otpSent": "Verification code sent",
+      "otpSentSms": "Verification code sent via SMS",
+      "otpSentEmail": "Verification code sent via email",
       "otpSendError": "Error sending code",
       "otpInvalidFormat": "Please enter a 6-digit code",
       "otpVerified": "Code verified successfully",
@@ -911,7 +915,9 @@
       "rejectReasonPrompt": "What is the reason for rejecting the document?",
       "documentRejected": "The document was rejected and the lawyer was notified",
       "rejectError": "Error rejecting the document",
-      "otpTitle": "SMS verification (OTP) is required before signing",
+      "otpTitle": "Verification (OTP) is required before signing",
+      "otpTitleSms": "SMS verification (OTP) is required before signing",
+      "otpTitleEmail": "Email verification (OTP) is required before signing",
       "otpPlaceholder": "Code (6 digits)",
       "verify": "Verify",
       "resend": "Resend",

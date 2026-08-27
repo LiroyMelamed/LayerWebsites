@@ -3,6 +3,7 @@ import ApiUtils from "./apiUtils";
 const GET_ADMINS_ENDPOINT = "Admins/GetAdmins";
 const ADD_ADMIN_ENDPOINT = "Admins/AddAdmin";
 const GET_ADMIN_BY_NAME_ENDPOINT = "Admins/GetAdminByName?name=";
+const GET_STAFF_BY_NAME_ENDPOINT = "Admins/GetStaffByName?name=";
 const UPDATE_ADMIN_BY_ID_ENDPOINT = "Admins/UpdateAdmin/";
 const DELETE_ADMIN_BY_ID_ENDPOINT = "Admins/DeleteAdmin/";
 
@@ -17,6 +18,11 @@ export const adminApi = {
 
     getAdminByName: async (name) => {
         return await ApiUtils.get(`${GET_ADMIN_BY_NAME_ENDPOINT}${encodeURIComponent(name)}`);
+    },
+
+    /** Admin + Lawyer + PlatformAdmin — calendar / case staff pickers. */
+    getStaffByName: async (name) => {
+        return await ApiUtils.get(`${GET_STAFF_BY_NAME_ENDPOINT}${encodeURIComponent(name || "")}`);
     },
 
     updateAdmin: async (adminId, adminData) => {

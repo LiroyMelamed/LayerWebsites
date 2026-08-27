@@ -9,6 +9,8 @@ import { useTranslation } from "react-i18next";
 
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import SimpleLoader from "../../simpleComponents/SimpleLoader";
+import BlockDateInput from "../../simpleComponents/BlockDateInput";
+import { toNativeDateValue } from "../../../functions/date/formatDateForInput";
 import { Text12, Text14 } from "../../specializedComponents/text/AllTextKindFile";
 
 import PrimaryButton from "../../styledComponents/buttons/PrimaryButton";
@@ -89,6 +91,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const [otpCode, setOtpCode] = useState("");
     const [otpVerified, setOtpVerified] = useState(false);
     const [otpBusy, setOtpBusy] = useState(false);
+    const [otpChannel, setOtpChannel] = useState(null); // 'sms' | 'email' | null
     const otpAutoSentRef = useRef(false);
     const otpAutoVerifyRef = useRef(false);
     const otpLastFailedRef = useRef("");
@@ -1852,15 +1855,23 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             unwrapApi(res);
             const skipped = Boolean(res?.skipped || res?.data?.skipped);
             const delivered = res?.delivered === true || res?.data?.delivered === true;
+            const channel = String(res?.channel || res?.data?.channel || '').toLowerCase();
+            if (channel === 'email' || channel === 'sms') setOtpChannel(channel);
             setOtpRequested(true);
             otpLastFailedRef.current = "";
             otpAutoVerifyRef.current = false;
             otpResendAtRef.current = Date.now() + 30_000;
             if (!silent) {
                 if (skipped) {
-                    // No SMS expected (already complete / not required).
+                    // No delivery expected (already complete / not required).
                 } else if (delivered) {
-                    showAppToast({ type: "success", text: t("signing.canvas.otpSent") });
+                    const sentKey =
+                        channel === 'email'
+                            ? 'signing.canvas.otpSentEmail'
+                            : channel === 'sms'
+                                ? 'signing.canvas.otpSentSms'
+                                : 'signing.canvas.otpSent';
+                    showAppToast({ type: "success", text: t(sentKey) });
                 } else {
                     showAppToast({ type: "error", text: t("signing.canvas.otpSendError") });
                 }
@@ -2255,7 +2266,13 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
             {otpRequired && !otpVerified && (
                 <div className="lw-signing-otpBox">
-                    <div className="lw-signing-otpTitle">{t("signing.canvas.otpTitle")}</div>
+                    <div className="lw-signing-otpTitle">
+                        {otpChannel === 'email'
+                            ? t("signing.canvas.otpTitleEmail")
+                            : otpChannel === 'sms'
+                                ? t("signing.canvas.otpTitleSms")
+                                : t("signing.canvas.otpTitle")}
+                    </div>
                     <div className="lw-signing-otpRow">
                         <input
                             className="lw-signing-otpInput"
@@ -2595,38 +2612,13 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 <span>{t("signing.canvas.checkboxLabel")}</span>
                             </label>
                         ) : currentSpotType === 'date' ? (
-                            <input
-                                className="lw-signing-fieldInputControl"
-                                type="text"
-                                inputMode="numeric"
-                                placeholder="DD/MM/YYYY"
-                                value={(() => {
-                                    if (/^\d{4}-\d{2}-\d{2}$/.test(fieldValue)) {
-                                        const [y, m, d] = fieldValue.split('-');
-                                        return `${d}/${m}/${y}`;
-                                    }
-                                    return fieldValue;
-                                })()}
-                                onChange={(e) => {
-                                    const raw = e.target.value.replace(/[^\d/]/g, '');
-                                    let formatted = raw;
-                                    const digits = raw.replace(/\//g, '');
-                                    if (digits.length <= 2) {
-                                        formatted = digits;
-                                    } else if (digits.length <= 4) {
-                                        formatted = digits.slice(0, 2) + '/' + digits.slice(2);
-                                    } else {
-                                        formatted = digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4, 8);
-                                    }
-                                    if (/^\d{2}\/\d{2}\/\d{4}$/.test(formatted)) {
-                                        const [dd, mm, yyyy] = formatted.split('/');
-                                        setFieldValue(`${yyyy}-${mm}-${dd}`);
-                                    } else {
-                                        setFieldValue(formatted);
-                                    }
-                                }}
-                                maxLength={10}
+                            <BlockDateInput
+                                className="lw-signing-fieldDateInput"
+                                mode="date"
+                                value={toNativeDateValue(fieldValue)}
+                                onChange={(e) => setFieldValue(e.target.value)}
                                 disabled={saving}
+                                timeToWaitInMilli={0}
                             />
                         ) : (
                             <input

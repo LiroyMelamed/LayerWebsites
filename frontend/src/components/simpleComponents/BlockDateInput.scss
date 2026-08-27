@@ -1,0 +1,183 @@
+.lw-blockDateInput {
+    position: relative;
+    flex-direction: row;
+    align-items: center;
+    height: 2rem;
+    margin-top: 0.5rem;
+    border-radius: 0.75rem;
+    border: 0.0625rem solid var(--lw-color-secondary-highlighted);
+    background-color: var(--lw-color-white);
+    direction: inherit;
+}
+
+.lw-blockDateInput.is-focused {
+    border-color: var(--lw-color-primary-highlighted);
+}
+
+.lw-blockDateInput.has-error {
+    border-color: var(--lw-color-error);
+}
+
+.lw-blockDateInput.is-disabled {
+    border-color: var(--lw-color-disabled-highlighted);
+    background-color: var(--lw-color-disabled);
+}
+
+.lw-blockDateInput__label {
+    position: absolute;
+    pointer-events: auto;
+    cursor: text;
+    background-color: var(--lw-color-white);
+    inset-inline-start: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.6;
+    font-size: 1rem;
+    display: inline-block;
+    max-inline-size: calc(100% - 3rem);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+    padding-inline: 0.25rem;
+    padding-block: 0.125rem;
+    font-family: inherit;
+    color: var(--lw-color-primary-highlighted);
+    border: none;
+    border-radius: 624.9375rem;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.lw-blockDateInput.is-floated .lw-blockDateInput__label {
+    opacity: 1;
+    transform: translateY(-110%) scale(0.7);
+}
+
+.lw-blockDateInput.has-error .lw-blockDateInput__label {
+    color: var(--lw-color-error);
+}
+
+.lw-blockDateInput.is-disabled .lw-blockDateInput__label {
+    background-color: var(--lw-color-disabled);
+    color: var(--lw-color-disabled-highlighted);
+}
+
+.lw-blockDateInput__segments {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0;
+    flex: 1;
+    min-width: 0;
+    /* Calendar lives on the physical left; date text packs to the physical right (RTL). */
+    padding-left: 2.25rem;
+    padding-right: 0.75rem;
+    direction: ltr;
+    unicode-bidi: isolate;
+}
+
+.lw-blockDateInput__segment {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-family: inherit;
+    font-size: 1rem;
+    color: var(--lw-color-text);
+    text-align: center;
+    padding: 0.35rem 0;
+    min-width: 0;
+
+    &::placeholder {
+        color: #A0AEC0;
+        opacity: 0.85;
+        font-size: 0.8125rem;
+    }
+
+    &:focus {
+        outline: none;
+        background: rgba(42, 67, 101, 0.06);
+        border-radius: 0.25rem;
+    }
+
+    &:disabled {
+        color: var(--lw-color-disabled);
+    }
+}
+
+.lw-blockDateInput__segment--dd,
+.lw-blockDateInput__segment--mm,
+.lw-blockDateInput__segment--hh,
+.lw-blockDateInput__segment--mi {
+    width: 1.35rem;
+}
+
+.lw-blockDateInput__segment--yyyy {
+    width: 2.4rem;
+}
+
+.lw-blockDateInput__sep {
+    color: var(--lw-color-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1;
+    user-select: none;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
+    width: 0.55rem;
+    text-align: center;
+}
+
+.lw-blockDateInput__sep--time {
+    width: 0.5rem;
+}
+
+.lw-blockDateInput.is-empty .lw-blockDateInput__sep {
+    visibility: hidden;
+}
+
+.lw-blockDateInput.is-empty .lw-blockDateInput__segment {
+    color: transparent;
+    caret-color: var(--lw-color-text);
+}
+
+.lw-blockDateInput__calendarBtn {
+    position: absolute;
+    left: 0.45rem;
+    right: auto;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    margin: 0;
+    border: none;
+    background: transparent;
+    color: #4a5568;
+    cursor: pointer;
+    border-radius: 0.35rem;
+
+    &:hover:not(:disabled) {
+        color: var(--lw-color-primary-highlighted);
+        background: rgba(0, 0, 0, 0.04);
+    }
+
+    &:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+}
+
+.lw-blockDateInput__nativePicker {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
+}

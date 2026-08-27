@@ -64,8 +64,14 @@ test('aiChatService — formatContextForPrompt handles empty context', () => {
     const { formatContextForPrompt } = require('../services/aiChatService');
 
     assert.equal(formatContextForPrompt(null), '');
-    assert.equal(formatContextForPrompt({}), '');
-    assert.equal(formatContextForPrompt({ cases: [], recentNotifications: [] }), '');
+
+    // Authenticated context with no cases must still tell the model not to invent cases.
+    const emptyObject = formatContextForPrompt({});
+    assert.ok(emptyObject.includes('לא נמצאו תיקים'));
+
+    const emptyCases = formatContextForPrompt({ cases: [], recentNotifications: [] });
+    assert.ok(emptyCases.includes('לא נמצאו תיקים'));
+    assert.ok(emptyCases.includes('הקשר מערכת'));
 });
 
 test('aiChatService — formatContextForPrompt formats case data correctly', () => {

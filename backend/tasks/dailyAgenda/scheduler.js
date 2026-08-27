@@ -88,8 +88,8 @@ async function _sendForUser(row, date) {
         `SELECT ce.title, ce.location, ce.start_time, ce.end_time, ce.invite_status
          FROM calendar_events ce
          WHERE ${personalCalendarSql(2)}
-           AND ce.start_time >= ($1::date)
-           AND ce.start_time < ($1::date + INTERVAL '1 day')
+           AND ce.start_time >= ($1::date AT TIME ZONE 'Asia/Jerusalem')
+           AND ce.start_time < (($1::date + INTERVAL '1 day') AT TIME ZONE 'Asia/Jerusalem')
            AND ce.event_type NOT IN ('leave')
          ORDER BY ce.start_time ASC
          LIMIT 200`,

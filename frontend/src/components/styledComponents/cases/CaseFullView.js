@@ -11,7 +11,7 @@ import { customersApi } from '../../../api/customersApi';
 import casesApi, { casesTypeApi } from '../../../api/casesApi';
 import { buttonSizes } from '../../../styles/buttons/buttonSizes';
 import { adminApi } from '../../../api/adminApi';
-import { formatDateForInput, parseDateInput } from '../../../functions/date/formatDateForInput';
+import { toNativeDateValue } from '../../../functions/date/formatDateForInput';
 import IsraeliPhoneNumberValidation from '../../../functions/validation/IsraeliPhoneNumberValidation';
 import emailValidation from '../../../functions/validation/EmailValidation';
 
@@ -138,7 +138,7 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
 
     const { result: caseTypes, isPerforming: isPerformingCaseTypes, performRequest: searchCaseTypes } = useAutoHttpRequest(casesTypeApi.getCaseTypeByName, { onFailure: () => { } });
 
-    const { result: adminByName, isPerforming: isPerformingGetAdmin, performRequest: getAdminByName } = useAutoHttpRequest(adminApi.getAdminByName, { onFailure: () => { } });
+    const { result: adminByName, isPerforming: isPerformingGetAdmin, performRequest: getAdminByName } = useAutoHttpRequest(adminApi.getStaffByName, { onFailure: () => { } });
 
     const { result: cases, isPerforming: isPerformingCases, performRequest: searchCases } = useAutoHttpRequest(casesApi.getCaseByName, { onFailure: () => { } });
 
@@ -473,9 +473,9 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
                     <SimpleInput
                         className="lw-caseFullView__field"
                         title={t('cases.estimatedCompletionDate')}
-                        placeholder="dd/mm/yyyy"
-                        value={formatDateForInput(caseData.EstimatedCompletionDate)}
-                        onChange={(e) => handleInputChange('EstimatedCompletionDate', parseDateInput(e.target.value))}
+                        type="date"
+                        value={toNativeDateValue(caseData.EstimatedCompletionDate)}
+                        onChange={(e) => handleInputChange('EstimatedCompletionDate', e.target.value || null)}
                     />
                     <SimpleContainer className="lw-caseFullView__field lw-caseFullView__licenseToggleField">
                         <label className="lw-caseFullView__toggleLabel">
@@ -499,9 +499,9 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
                         <SimpleInput
                             className="lw-caseFullView__field"
                             title={t('cases.licenseExpiryDate')}
-                            placeholder="dd/mm/yyyy"
-                            value={formatDateForInput(caseData.LicenseExpiryDate)}
-                            onChange={(e) => handleInputChange('LicenseExpiryDate', parseDateInput(e.target.value))}
+                            type="date"
+                            value={toNativeDateValue(caseData.LicenseExpiryDate)}
+                            onChange={(e) => handleInputChange('LicenseExpiryDate', e.target.value || null)}
                         />
                     </SimpleContainer>
                 )}

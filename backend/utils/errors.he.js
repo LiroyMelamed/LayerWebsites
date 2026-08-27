@@ -36,6 +36,7 @@ const MESSAGES = {
     OTP_NOT_FOUND: 'לא נמצא קוד אימות פעיל. בקש קוד חדש.',
 
     MISSING_PHONE: 'חסר מספר טלפון עבור המאמת/ת.',
+    MISSING_CONTACT: 'חסר טלפון או אימייל לשליחת קוד האימות.',
     MISSING_PRESENTED_HASH: 'טביעת האצבע של המסמך חסרה. נסה שוב מאוחר יותר.',
 
     CONSENT_REQUIRED: 'יש לאשר תנאים לפני חתימה.',

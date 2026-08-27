@@ -24,7 +24,9 @@ export default function BillingLockedScreen() {
                 <Text14 className="lw-billingLockedScreen__body">{t('billingLock.body')}</Text14>
                 {graceUntil && (
                     <Text14 className="lw-billingLockedScreen__deadline">
-                        {t('billingLock.deadline', { date: new Date(graceUntil).toLocaleString('he-IL') })}
+                        {t('billingLock.deadline', {
+                            date: new Date(graceUntil).toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' }),
+                        })}
                     </Text14>
                 )}
                 {isPlatformAdmin ? (

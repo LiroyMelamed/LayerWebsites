@@ -12,6 +12,7 @@ import "./CalendarSmsTemplateEditor.scss";
 export const CALENDAR_SMS_VARS = [
     "recipientName", "clientsNames", "firmName", "date", "time", "address",
     "wazeUrl", "mapsUrl", "rsvpUrl", "firmPhone", "websiteUrl", "lawyerName", "title",
+    "meetingTypeLabel",
 ];
 
 export const CALENDAR_SMS_VAR_LABELS = {
@@ -28,6 +29,7 @@ export const CALENDAR_SMS_VAR_LABELS = {
     websiteUrl: "אתר המשרד",
     lawyerName: "שם עורך הדין",
     title: "כותרת האירוע",
+    meetingTypeLabel: "סוג פגישה",
 };
 
 const CHIP_GROUPS = [
@@ -50,11 +52,68 @@ const CHIP_GROUPS = [
 
 /** Fill {{placeholders}} with real event data; unresolved ones fall back to the Hebrew label. */
 export function renderSmsPreview(template, values) {
-    return String(template || "").replace(/\{\{\s*(\w+)\s*\}\}/g, (_m, key) => {
+    const filled = String(template || "").replace(/\{\{\s*(\w+)\s*\}\}/g, (_m, key) => {
         const val = values?.[key];
         if (val != null && String(val).trim()) return String(val).trim();
         return `"${CALENDAR_SMS_VAR_LABELS[key] || key}"`;
     });
+    return polishSmsPreviewText(filled, values);
+}
+
+/**
+ * Phone: strip every place/nav line. Zoom: "קישור לזום" (not "כתובתנו"), no Waze/Maps.
+ * Mirrors backend polishCalendarSmsBody + meetingPlaceMode.
+ */
+export function polishSmsPreviewText(text, values = {}) {
+    let out = String(text || "");
+    const address = String(values.address || "").trim();
+    const meetingType = String(values.meetingType || "").trim().toLowerCase();
+    const placeMode = values.placeMode
+        || (meetingType === "phone" ? "none"
+            : (meetingType === "zoom" ? "link" : "place"));
+    const isRemote = values.isRemoteMeeting === true
+        || placeMode === "link"
+        || placeMode === "none"
+        || /\bzoom\.us\b|\bmeet\.google\.com\b|\bteams\.(microsoft|live)\.com\b/i.test(address);
+    const hasAddress = Boolean(address);
+
+    if (placeMode === "none" || !hasAddress) {
+        out = out
+            .replace(/כתובתנו\s+(?:הינה|היא)\s*[^\n]*/g, "")
+            .replace(/^כתובת\s*:.*$/gm, "")
+            .replace(/^מיקום\s*:.*$/gm, "")
+            .replace(/^קישור לזום\s*:?\s*$/gm, "")
+            .replace(/^קישור לפגישה\s*:?\s*$/gm, "")
+            .replace(/^טלפון\s*:.*$/gm, "");
+    } else if (isRemote) {
+        const label = String(values.locationLabel || "").trim()
+            || (meetingType === "zoom" || /\bzoom\.us\b/i.test(address) ? "קישור לזום" : "קישור לפגישה");
+        out = out.replace(/כתובתנו\s+(?:הינה|היא)\s+/g, `${label}: `);
+        out = out.replace(/^מיקום\s*:/gm, `${label}:`);
+    }
+
+    const wazeFilled = String(values.wazeUrl || "").trim();
+    const mapsFilled = String(values.mapsUrl || "").trim();
+
+    out = out
+        .split("\n")
+        .filter((line) => {
+            const t = line.trim();
+            if (!t) return true;
+            if ((placeMode !== "place" || !hasAddress) && /להוראות הגעה בוויז/i.test(t)) return false;
+            if ((placeMode !== "place" || !hasAddress) && /^וויז\s*:/i.test(t)) return false;
+            if ((placeMode !== "place" || !hasAddress) && /^מפות\s*:/i.test(t)) return false;
+            if (/להוראות הגעה בוויז/i.test(t) && (!wazeFilled || /"קישור וויז"/.test(t))) return false;
+            if (/^וויז\s*:/i.test(t) && (!wazeFilled || /"קישור וויז"/.test(t))) return false;
+            if (/^מפות\s*:/i.test(t) && (!mapsFilled || /"קישור מפות"/.test(t))) return false;
+            if (placeMode === "none" && /^(מיקום|קישור לזום|קישור לפגישה|כתובת|כתובתנו)\b/i.test(t)) return false;
+            if (/^כתובתנו\s+(?:הינה|היא)\s*\.?$/i.test(t)) return false;
+            return true;
+        })
+        .join("\n")
+        .replace(/\n{3,}/g, "\n\n");
+
+    return out.trim();
 }
 
 /**
