@@ -6,6 +6,7 @@ const requireAdmin = require("../middlewares/requireAdmin");
 
 router.get("/GetAdmins", authMiddleware, requireAdmin, adminController.getAdmins);
 router.get("/GetAdminByName", authMiddleware, requireAdmin, adminController.getAdminByName);
+router.get("/GetStaffByName", authMiddleware, requireAdmin, adminController.getStaffByName);
 router.put("/UpdateAdmin/:adminId", authMiddleware, requireAdmin, adminController.updateAdmin);
 router.delete("/DeleteAdmin/:adminId", authMiddleware, requireAdmin, adminController.deleteAdmin);
 router.post("/AddAdmin", authMiddleware, requireAdmin, adminController.addAdmin);

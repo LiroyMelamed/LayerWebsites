@@ -79,6 +79,7 @@ async function _enrichWithNames(rows) {
 
     // Multi-client names for lawyer SMS/email copy
     let clientsByEvent = new Map();
+    let reminderMetaByEvent = new Map();
     try {
         const { rows: clientRows } = await pool.query(
             `SELECT cec.event_id, u.name
@@ -96,15 +97,32 @@ async function _enrichWithNames(rows) {
         console.error('[calendar-reminders] multi-client enrich failed:', err.message);
     }
 
+    try {
+        const { rows: reminderRows } = await pool.query(
+            `SELECT calendar_event_id, template_key, subject
+             FROM scheduled_email_reminders
+             WHERE calendar_event_id = ANY($1::int[])`,
+            [ids]
+        );
+        for (const r of reminderRows) {
+            reminderMetaByEvent.set(r.calendar_event_id, r);
+        }
+    } catch (err) {
+        console.error('[calendar-reminders] reminder template enrich failed:', err.message);
+    }
+
     return rows.map((r) => {
         const names = clientsByEvent.get(r.id) || [];
         const legacy = nameById.get(r.id)?.client_name || r.client_name || null;
         if (!names.length && legacy) names.push(legacy);
+        const reminderMeta = reminderMetaByEvent.get(r.id);
         return {
             ...r,
             owner_name: nameById.get(r.id)?.owner_name || null,
             client_name: names[0] || legacy || null,
             clients_names: names,
+            reminder_template_key: reminderMeta?.template_key || r.reminder_template_key || null,
+            reminder_subject: reminderMeta?.subject || r.reminder_subject || null,
         };
     });
 }
@@ -140,10 +158,12 @@ async function _claimDueReminders(pollMinutes, limit = 200) {
                ce.title,
                ce.event_type,
                ce.location,
+               ce.meeting_type,
                ce.start_time,
                ce.lead_phone,
                ce.lead_email,
                ce.lead_name,
+               ce.lead_participants,
                ce.client_name,
                ce.reminder_channels,
                ce.reminder_targets,
@@ -178,7 +198,7 @@ async function _claimDueReminders(pollMinutes, limit = 200) {
         const targets = parseReminderTargets(row.reminder_targets);
         const roles = [];
         if (targets.managers) roles.push('lawyer');
-        if (targets.client && row.event_type !== 'reminder') roles.push('client');
+        if (targets.client) roles.push('client');
 
         for (const role of roles) {
             if (role === 'client' && !(await _eventHasClientAudience(row))) {
@@ -219,8 +239,8 @@ async function _claimDueReminders(pollMinutes, limit = 200) {
                 WHERE id = $1
                   AND NOT COALESCE(reminders_sent_offsets, '[]'::jsonb) @> to_jsonb($2::text)
                   AND NOT COALESCE(reminders_sent_offsets, '[]'::jsonb) @> to_jsonb($3::int)
-                RETURNING id, owner_id, manager_user_id, client_user_id, case_id, title, event_type, location, start_time,
-                          lead_phone, lead_email, lead_name, client_name, reminder_channels, reminder_targets,
+                RETURNING id, owner_id, manager_user_id, client_user_id, case_id, title, event_type, location, meeting_type, start_time,
+                          lead_phone, lead_email, lead_name, lead_participants, client_name, reminder_channels, reminder_targets,
                           invite_token, client_reminder_sms, reminders_sent_offsets
                 `,
                 [row.id, row.sent_key, row.offset_minutes]
@@ -304,13 +324,34 @@ async function _resolveClientRecipients(ev) {
     if (!clients.length && ev.client_user_id) {
         clients.push({ userId: ev.client_user_id, phone: null, email: null, name: ev.client_name });
     }
-    if (!clients.length && (ev.lead_phone || ev.lead_email)) {
-        clients.push({
+    const leadList = [];
+    try {
+        // Prefer multi-lead JSON when present; fall back to primary lead_* columns.
+        if (ev.lead_participants) {
+            let raw = ev.lead_participants;
+            if (typeof raw === 'string') {
+                try { raw = JSON.parse(raw); } catch { raw = []; }
+            }
+            if (Array.isArray(raw)) {
+                for (const p of raw) {
+                    const phone = String(p?.phone || '').trim() || null;
+                    const email = String(p?.email || '').trim() || null;
+                    const name = String(p?.name || '').trim() || null;
+                    if (phone || email) leadList.push({ userId: null, phone, email, name });
+                }
+            }
+        }
+    } catch (_) { /* ignore */ }
+    if (!leadList.length && (ev.lead_phone || ev.lead_email)) {
+        leadList.push({
             userId: null,
             phone: ev.lead_phone,
             email: ev.lead_email,
             name: ev.client_name || ev.lead_name,
         });
+    }
+    for (const lead of leadList) {
+        clients.push(lead);
     }
     return clients;
 }
@@ -530,7 +571,7 @@ async function fireImmediateRemindersForEvent(eventId) {
         const key = _sentKey('lawyer', 0);
         if (!sent.has(key)) jobs.push({ role: 'lawyer', offset_minutes: 0, sent_key: key });
     }
-    if (targets.client && row.event_type !== 'reminder' && _offsetsForRole(row, 'client').includes(0)) {
+    if (targets.client && _offsetsForRole(row, 'client').includes(0)) {
         const key = _sentKey('client', 0);
         if (!sent.has(key) && (await _eventHasClientAudience(row))) {
             jobs.push({ role: 'client', offset_minutes: 0, sent_key: key });
@@ -557,8 +598,8 @@ async function fireImmediateRemindersForEvent(eventId) {
                 || to_jsonb($2::text)
             WHERE id = $1
               AND NOT COALESCE(reminders_sent_offsets, '[]'::jsonb) @> to_jsonb($2::text)
-            RETURNING id, owner_id, manager_user_id, client_user_id, case_id, title, event_type, location, start_time,
-                      lead_phone, lead_email, lead_name, client_name, reminder_channels, reminder_targets,
+            RETURNING id, owner_id, manager_user_id, client_user_id, case_id, title, event_type, location, meeting_type, start_time,
+                      lead_phone, lead_email, lead_name, lead_participants, client_name, reminder_channels, reminder_targets,
                       invite_token, client_reminder_sms, reminders_sent_offsets
             `,
             [id, job.sent_key]

@@ -31,6 +31,20 @@
   overflow: hidden;
 }
 
+.lw-simpleScreen__content.is-calendarFullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  margin: 0;
+  margin-inline: 0;
+  align-items: stretch;
+  background: #fff;
+  overflow: hidden;
+}
+
 @media (min-width: v.$bp-lg) {
   .lw-simpleScreen__content {
     width: calc(100% - 15.625rem);

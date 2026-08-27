@@ -219,8 +219,24 @@ const updateCustomerById = async (req, res) => {
     const { name, email, phoneNumber, companyName, dateOfBirth } = req.body;
     try {
         const phoneDigits = normalizePhoneDigits(phoneNumber);
-        if (!phoneDigits) {
-            return res.status(400).json({ message: "נא להזין מספר פלאפון תקין", code: 'INVALID_PHONE' });
+        const emailNorm = String(email || "").trim().toLowerCase();
+
+        if (!phoneDigits && !emailNorm) {
+            return res.status(400).json({
+                message: "נא להזין מספר טלפון או דוא״ל",
+                code: 'CONTACT_REQUIRED',
+            });
+        }
+
+        if (emailNorm && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm)) {
+            return res.status(400).json({ message: "נא להזין כתובת דוא״ל תקינה", code: 'INVALID_EMAIL' });
+        }
+
+        if (phoneDigits) {
+            const invalidPhone = phoneNumber && String(phoneNumber).trim() === "0";
+            if (invalidPhone || (phoneNumber && !formatPhoneNumber(phoneNumber))) {
+                return res.status(400).json({ message: "נא להזין מספר פלאפון תקין", code: 'INVALID_PHONE' });
+            }
         }
 
         let parsedDob = null;
@@ -232,13 +248,28 @@ const updateCustomerById = async (req, res) => {
             parsedDob = d;
         }
 
-        const existing = await pool.query(
-            `SELECT userid FROM users WHERE regexp_replace(phonenumber, '\\D', '', 'g') = $1 AND userid <> $2 LIMIT 1`,
-            [phoneDigits, customerId]
-        );
-        if (existing.rows.length > 0) {
-            return res.status(409).json({ message: "מספר פלאפון כבר קיים במערכת", code: 'PHONE_ALREADY_EXISTS' });
+        if (phoneDigits) {
+            const existing = await pool.query(
+                `SELECT userid FROM users WHERE regexp_replace(phonenumber, '\\D', '', 'g') = $1 AND userid <> $2 LIMIT 1`,
+                [phoneDigits, customerId]
+            );
+            if (existing.rows.length > 0) {
+                return res.status(409).json({ message: "מספר פלאפון כבר קיים במערכת", code: 'PHONE_ALREADY_EXISTS' });
+            }
         }
+
+        if (emailNorm) {
+            const existingEmail = await pool.query(
+                `SELECT userid FROM users WHERE LOWER(email) = $1 AND userid <> $2 LIMIT 1`,
+                [emailNorm, customerId]
+            );
+            if (existingEmail.rows.length > 0) {
+                return res.status(409).json({ message: "דוא״ל כבר קיים במערכת", code: 'EMAIL_ALREADY_EXISTS' });
+            }
+        }
+
+        const phoneToStore = phoneNumber ? String(phoneNumber).trim() : null;
+        const roleToSet = phoneDigits ? "User" : "ExternalSigner";
 
         const result = await pool.query(
             `
@@ -248,10 +279,14 @@ const updateCustomerById = async (req, res) => {
                 email = $2,
                 phonenumber = $3,
                 companyname = $4,
-                dateofbirth = $5
+                dateofbirth = $5,
+                role = CASE
+                    WHEN role IN ('User', 'ExternalSigner') THEN $7
+                    ELSE role
+                END
             WHERE userid = $6
             `,
-            [name, email, phoneNumber, companyName, parsedDob, customerId]
+            [name, emailNorm || null, phoneToStore, companyName, parsedDob, customerId, roleToSet]
         );
 
         if (result.rowCount === 0) {

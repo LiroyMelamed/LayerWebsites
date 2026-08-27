@@ -9,7 +9,15 @@ import useHttpRequest from "../../../hooks/useHttpRequest";
 import remindersApi from "../../../api/remindersApi";
 
 import { formatDateTimeForInput, parseDateTimeInput, toNativeDateTimeValue } from "../../../functions/date/formatDateForInput";
+import { parseDatetimeLocal } from "../../../functions/date/datetimeLocal";
 import "./ReminderDetailPopup.scss";
+
+function wallToIso(wallValue) {
+    if (!wallValue) return undefined;
+    const wall = parseDateTimeInput(wallValue) || wallValue;
+    const d = parseDatetimeLocal(wall);
+    return d ? d.toISOString() : undefined;
+}
 
 function DetailRow({ label, children }) {
     return (
@@ -46,7 +54,7 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
                 client_name: editData.client_name,
                 to_email: editData.to_email,
                 subject: editData.subject,
-                scheduled_for: editData.scheduled_for ? new Date(parseDateTimeInput(editData.scheduled_for)).toISOString() : displayData.scheduled_for,
+                scheduled_for: wallToIso(editData.scheduled_for) || displayData.scheduled_for,
             });
             setEditing(false);
             onUpdated?.();
@@ -57,17 +65,13 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
     const handleSave = () => {
         const payload = isSigningReminder
             ? {
-                scheduled_for: editData.scheduled_for
-                    ? new Date(parseDateTimeInput(editData.scheduled_for)).toISOString()
-                    : undefined,
+                scheduled_for: wallToIso(editData.scheduled_for),
             }
             : {
                 client_name: editData.client_name,
                 to_email: editData.to_email,
                 subject: editData.subject,
-                scheduled_for: editData.scheduled_for
-                    ? new Date(parseDateTimeInput(editData.scheduled_for)).toISOString()
-                    : undefined,
+                scheduled_for: wallToIso(editData.scheduled_for),
             };
         saveReminder(reminder.id, payload);
     };

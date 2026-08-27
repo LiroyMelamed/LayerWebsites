@@ -91,11 +91,12 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
     const [legalDeleteMessage, setLegalDeleteMessage] = useState("");
 
     useEffect(() => {
-        if (!name || !phoneNumber || !email || nameError || phoneNumberError || emailError) {
-            setHasError(true)
-        } else {
-            setHasError(false)
-        }
+        const hasName = Boolean((name || '').trim());
+        const hasPhone = Boolean((phoneNumber || '').trim());
+        const hasEmail = Boolean((email || '').trim());
+        const contactOk = hasPhone || hasEmail;
+        const fieldErrors = Boolean(nameError || phoneNumberError || emailError || companyNameError);
+        setHasError(!hasName || !contactOk || fieldErrors);
     }, [name, phoneNumber, email, companyName, nameError, phoneNumberError, emailError, companyNameError])
 
     const { isPerforming, performRequest } = useHttpRequest(
@@ -106,15 +107,15 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
                 ? {
                     UserId: selectedClient.UserId || selectedClient.userid,
                     Name: (name || '').trim() || selectedClient.Name || selectedClient.name,
-                    Email: (email || '').trim() || selectedClient.Email || selectedClient.email || null,
-                    PhoneNumber: (phoneNumber || '').trim() || selectedClient.PhoneNumber || selectedClient.phonenumber || null,
-                    CompanyName: (companyName || '').trim() || selectedClient.CompanyName || selectedClient.companyname || null,
+                    Email: (email || '').trim() || null,
+                    PhoneNumber: (phoneNumber || '').trim() || null,
+                    CompanyName: (companyName || '').trim() || null,
                 }
                 : {
                     UserId: data?.UserId,
                     Name: data?.Name || (name || '').trim(),
                     Email: data?.Email ?? ((email || '').trim() || null),
-                    PhoneNumber: data?.PhoneNumber || (phoneNumber || '').trim(),
+                    PhoneNumber: data?.PhoneNumber ?? ((phoneNumber || '').trim() || null),
                     CompanyName: data?.CompanyName ?? ((companyName || '').trim() || null),
                 };
             rePerformRequest?.(savedClient);
@@ -243,6 +244,12 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
                         error={companyNameError}
                     />
                 </SimpleContainer>
+
+                <Text14 className="lw-clientPopup__contactHint">
+                    {t('customers.contactRequiredHint', {
+                        defaultValue: 'חובה למלא טלפון או דוא״ל (או שניהם)',
+                    })}
+                </Text14>
 
                 {similarCompanies.length > 0 && (
                     <SimpleContainer className="lw-clientPopup__similarCompanies">

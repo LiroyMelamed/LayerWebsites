@@ -853,7 +853,7 @@ export default function UploadFileForSigningScreen() {
             return false;
         }
         for (const s of selectedSigners) {
-            const method = s.deliveryMethod || "both";
+            const method = clampDeliveryMethod(s, s.deliveryMethod);
             const needsEmail = method === "email" || method === "both";
             const needsPhone = method === "phone" || method === "both";
             const email = needsEmail ? s.Email : "";
@@ -894,21 +894,38 @@ export default function UploadFileForSigningScreen() {
         setSelectedSigners((prev) => {
             const exists = prev.some((s) => Number(s?.UserId) === Number(customer.UserId));
             if (exists) return prev;
-            return [
-                ...prev,
-                {
-                    UserId: customer.UserId,
-                    Name: customer.Name || t('signing.signerFallback', { index: prev.length + 1 }),
-                    Email: customer.Email || null,
-                    Phone: customer.PhoneNumber || customer.Phone || null,
-                    deliveryMethod: 'phone', // 'email' | 'phone' | 'both' — default SMS only
-                },
-            ];
+            const next = {
+                UserId: customer.UserId,
+                Name: customer.Name || t('signing.signerFallback', { index: prev.length + 1 }),
+                Email: customer.Email || null,
+                Phone: customer.PhoneNumber || customer.Phone || null,
+            };
+            next.deliveryMethod = clampDeliveryMethod(next, 'phone');
+            return [...prev, next];
         });
     };
 
     const normalizePhoneDigits = (phone) => String(phone || '').replace(/\D/g, '');
     const normalizeEmail = (email) => String(email || '').trim().toLowerCase();
+    const hasEmail = (value) => !!normalizeEmail(value);
+    const hasPhone = (value) => normalizePhoneDigits(value).length >= 9;
+
+    /** Allowed delivery methods based on which contacts the signer has. */
+    const getAllowedDeliveryMethods = (signer) => {
+        const emailOk = hasEmail(signer?.Email);
+        const phoneOk = hasPhone(signer?.Phone || signer?.PhoneNumber);
+        if (emailOk && phoneOk) return ['both', 'email', 'phone'];
+        if (emailOk) return ['email'];
+        if (phoneOk) return ['phone'];
+        return [];
+    };
+
+    const clampDeliveryMethod = (signer, preferred) => {
+        const allowed = getAllowedDeliveryMethods(signer);
+        if (!allowed.length) return preferred || 'both';
+        if (preferred && allowed.includes(preferred)) return preferred;
+        return allowed[0];
+    };
 
     const contactsCollideWithSelected = ({ email, phone, excludeUserId = null }) => {
         const emailNorm = normalizeEmail(email);
@@ -944,7 +961,7 @@ export default function UploadFileForSigningScreen() {
             return;
         }
 
-        const attachExistingSigner = (user) => {
+        const attachExistingSigner = (user, conflictCode = null) => {
             const userId = user?.UserId;
             if (!userId) return false;
             setSelectedSigners((prev) => {
@@ -971,11 +988,16 @@ export default function UploadFileForSigningScreen() {
             setManualSignerPhone("");
             setShowManualSigner(false);
             SearchCustomersByName(user.Name || name);
+            const byEmail = conflictCode === 'EMAIL_ALREADY_EXISTS' || (!phone && !!email);
             showAppToast({
                 type: 'success',
-                text: t('signing.upload.validation.manualSignerAttachedExisting', {
-                    defaultValue: 'הטלפון כבר קיים במערכת — שייכנו את הלקוח הקיים כחותם.',
-                }),
+                text: byEmail
+                    ? t('signing.upload.validation.manualSignerAttachedExistingEmail', {
+                        defaultValue: 'הדוא״ל כבר קיים במערכת — שייכנו את הלקוח הקיים כחותם.',
+                    })
+                    : t('signing.upload.validation.manualSignerAttachedExisting', {
+                        defaultValue: 'הטלפון כבר קיים במערכת — שייכנו את הלקוח הקיים כחותם.',
+                    }),
             });
             return true;
         };
@@ -991,12 +1013,17 @@ export default function UploadFileForSigningScreen() {
             });
 
             if (res?.status === 409 && (res?.data?.code === 'PHONE_ALREADY_EXISTS' || res?.data?.code === 'EMAIL_ALREADY_EXISTS' || res?.data?.UserId)) {
-                if (attachExistingSigner(res.data)) return;
+                if (attachExistingSigner(res.data, res?.data?.code)) return;
+                const byEmail = res?.data?.code === 'EMAIL_ALREADY_EXISTS';
                 showAppToast({
                     type: 'error',
-                    text: res?.data?.message || t('signing.upload.validation.manualSignerPhoneExists', {
-                        defaultValue: 'מספר הטלפון כבר קיים במערכת. חפשו את הלקוח והוסיפו אותו כחותם.',
-                    }),
+                    text: res?.data?.message || (byEmail
+                        ? t('signing.upload.validation.manualSignerEmailExists', {
+                            defaultValue: 'כתובת הדוא״ל כבר קיימת במערכת. חפשו את הלקוח והוסיפו אותו כחותם.',
+                        })
+                        : t('signing.upload.validation.manualSignerPhoneExists', {
+                            defaultValue: 'מספר הטלפון כבר קיים במערכת. חפשו את הלקוח והוסיפו אותו כחותם.',
+                        })),
                 });
                 return;
             }
@@ -1045,13 +1072,19 @@ export default function UploadFileForSigningScreen() {
             SearchCustomersByName(name);
         } catch (err) {
             const data = err?.data || err?.response?.data;
-            if (err?.status === 409 || data?.code === 'PHONE_ALREADY_EXISTS') {
-                if (attachExistingSigner(data || {})) return;
+            const code = data?.code;
+            if (err?.status === 409 || code === 'PHONE_ALREADY_EXISTS' || code === 'EMAIL_ALREADY_EXISTS') {
+                if (attachExistingSigner(data || {}, code)) return;
+                const byEmail = code === 'EMAIL_ALREADY_EXISTS';
                 showAppToast({
                     type: 'error',
-                    text: data?.message || t('signing.upload.validation.manualSignerPhoneExists', {
-                        defaultValue: 'מספר הטלפון כבר קיים במערכת. חפשו את הלקוח והוסיפו אותו כחותם.',
-                    }),
+                    text: data?.message || (byEmail
+                        ? t('signing.upload.validation.manualSignerEmailExists', {
+                            defaultValue: 'כתובת הדוא״ל כבר קיימת במערכת. חפשו את הלקוח והוסיפו אותו כחותם.',
+                        })
+                        : t('signing.upload.validation.manualSignerPhoneExists', {
+                            defaultValue: 'מספר הטלפון כבר קיים במערכת. חפשו את הלקוח והוסיפו אותו כחותם.',
+                        })),
                 });
                 return;
             }
@@ -1232,7 +1265,7 @@ export default function UploadFileForSigningScreen() {
             const signersPayload = (selectedSigners || []).map((s) => ({
                 userId: s.isManual ? null : Number(s.UserId),
                 name: s.Name,
-                deliveryMethod: s.deliveryMethod || 'both',
+                deliveryMethod: clampDeliveryMethod(s, s.deliveryMethod),
                 ...(s.isManual && s.Email ? { email: s.Email } : {}),
                 ...(s.isManual && s.Phone ? { phone: s.Phone } : {}),
             }));
@@ -1503,24 +1536,46 @@ export default function UploadFileForSigningScreen() {
                                                     </span>
                                                 )}
                                             </span>
-                                            <select
-                                                className="lw-uploadSigningScreen__deliverySelect"
-                                                value={s.deliveryMethod || 'both'}
-                                                onChange={(e) => {
-                                                    const method = e.target.value;
-                                                    setSelectedSigners((prev) =>
-                                                        prev.map((sig) =>
-                                                            Number(sig.UserId) === Number(s.UserId)
-                                                                ? { ...sig, deliveryMethod: method }
-                                                                : sig
-                                                        )
+                                            {(() => {
+                                                const allowed = getAllowedDeliveryMethods(s);
+                                                const deliveryValue = clampDeliveryMethod(s, s.deliveryMethod);
+                                                if (allowed.length <= 1) {
+                                                    return (
+                                                        <span className="lw-uploadSigningScreen__deliverySelect lw-uploadSigningScreen__deliverySelect--locked" title={t('signing.upload.deliveryLockedHint')}>
+                                                            {deliveryValue === 'phone'
+                                                                ? t('signing.upload.deliveryPhone')
+                                                                : t('signing.upload.deliveryEmail')}
+                                                        </span>
                                                     );
-                                                }}
-                                            >
-                                                <option value="both">{t('signing.upload.deliveryBoth')}</option>
-                                                <option value="email">{t('signing.upload.deliveryEmail')}</option>
-                                                <option value="phone">{t('signing.upload.deliveryPhone')}</option>
-                                            </select>
+                                                }
+                                                return (
+                                                    <select
+                                                        className="lw-uploadSigningScreen__deliverySelect"
+                                                        value={deliveryValue}
+                                                        onChange={(e) => {
+                                                            const method = e.target.value;
+                                                            if (!allowed.includes(method)) return;
+                                                            setSelectedSigners((prev) =>
+                                                                prev.map((sig) =>
+                                                                    Number(sig.UserId) === Number(s.UserId)
+                                                                        ? { ...sig, deliveryMethod: method }
+                                                                        : sig
+                                                                )
+                                                            );
+                                                        }}
+                                                    >
+                                                        {allowed.includes('both') && (
+                                                            <option value="both">{t('signing.upload.deliveryBoth')}</option>
+                                                        )}
+                                                        {allowed.includes('email') && (
+                                                            <option value="email">{t('signing.upload.deliveryEmail')}</option>
+                                                        )}
+                                                        {allowed.includes('phone') && (
+                                                            <option value="phone">{t('signing.upload.deliveryPhone')}</option>
+                                                        )}
+                                                    </select>
+                                                );
+                                            })()}
                                             <button
                                                 type="button"
                                                 className="lw-uploadSigningScreen__signerChipEdit"
@@ -1544,16 +1599,18 @@ export default function UploadFileForSigningScreen() {
                                                     const contactChanged =
                                                         normalizeEmail(nextEmail) !== normalizeEmail(s.Email) ||
                                                         normalizePhoneDigits(nextPhone) !== normalizePhoneDigits(s.Phone);
+                                                    const nextSigner = {
+                                                        ...s,
+                                                        Name: editedName.trim() || s.Name,
+                                                        Email: nextEmail,
+                                                        Phone: nextPhone,
+                                                        ...(contactChanged ? { isManual: true } : {}),
+                                                    };
+                                                    nextSigner.deliveryMethod = clampDeliveryMethod(nextSigner, s.deliveryMethod);
                                                     setSelectedSigners((prev) =>
                                                         prev.map((sig) =>
                                                             Number(sig.UserId) === Number(s.UserId)
-                                                                ? {
-                                                                    ...sig,
-                                                                    Name: editedName.trim() || sig.Name,
-                                                                    Email: nextEmail,
-                                                                    Phone: nextPhone,
-                                                                    ...(contactChanged ? { isManual: true } : {}),
-                                                                }
+                                                                ? nextSigner
                                                                 : sig
                                                         )
                                                     );

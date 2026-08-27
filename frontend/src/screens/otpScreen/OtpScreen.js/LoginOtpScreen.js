@@ -39,11 +39,13 @@ export default function LoginOtpScreen() {
 
     const { isPerforming, performRequest } = useHttpRequest(loginApi.verifyOtp, navigateTo);
 
-    const verifyPayload = () => (
-        loginChannel === "email"
-            ? { email: String(email || "").trim().toLowerCase() }
-            : { phoneNumber }
-    );
+    // Email login disabled for now (public signing only). Always verify by phone.
+    const verifyPayload = () => ({ phoneNumber });
+    // const verifyPayload = () => (
+    //     loginChannel === "email"
+    //         ? { email: String(email || "").trim().toLowerCase() }
+    //         : { phoneNumber }
+    // );
 
     const handleInputChange = (event) => {
         const raw = event?.target?.value ?? "";
@@ -70,7 +72,8 @@ export default function LoginOtpScreen() {
         }
         if (otpError != null) return;
         if (didAutoSubmitRef.current) return;
-        if (loginChannel === "email" ? !email : !phoneNumber) return;
+        if (!phoneNumber) return;
+        // if (loginChannel === "email" ? !email : !phoneNumber) return;
         didAutoSubmitRef.current = true;
         submitOtp(code);
     }, [otpNumber, phoneNumber, email, loginChannel, isPerforming, otpError, performRequest]);

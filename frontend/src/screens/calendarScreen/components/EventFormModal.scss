@@ -377,6 +377,16 @@
     width: 100%;
 }
 
+.lw-eventFormModal__reminderClientPanel {
+    display: flex;
+    flex-direction: column;
+    gap: v.$space-3;
+    width: 100%;
+    padding: v.$space-3;
+    border: 0.0625rem dashed var(--lw-color-disabled);
+    border-radius: 0.5rem;
+}
+
 .lw-eventFormModal__reminderEmailRow {
     display: grid;
     grid-template-columns: 1fr 1fr;

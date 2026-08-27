@@ -67,7 +67,7 @@ async function resolveVerifiedFromAndReplyTo(fromEmailOverride, replyToHint) {
 }
 
 const ALLOWED_CAMPAIGN_KEYS = [
-    'SIGN_INVITE', 'SIGN_REMINDER', 'DOC_SIGNED', 'DOC_SIGNED_ATTACHMENTS', 'DOC_REJECTED',
+    'SIGN_INVITE', 'SIGN_REMINDER', 'SIGNING_OTP', 'DOC_SIGNED', 'DOC_SIGNED_ATTACHMENTS', 'DOC_REJECTED',
     'CASE_CREATED', 'CASE_NAME_CHANGE', 'CASE_TYPE_CHANGE',
     'CASE_STAGE_CHANGE', 'CASE_CLOSED', 'CASE_REOPENED',
     'CASE_MANAGER_CHANGE', 'CASE_EST_DATE_CHANGE',
@@ -102,6 +102,13 @@ const DOC_REJECTED_REQUIRED_CUSTOM_FIELDS = [
     'rejection_reason',
 ];
 
+const SIGNING_OTP_REQUIRED_CUSTOM_FIELDS = [
+    'recipient_name',
+    'document_name',
+    'otp_code',
+    'otp_ttl_minutes',
+];
+
 const TRANSACTIONAL_EMAIL_REQUIRED_ENV = [
     'SMTP_HOST',
     'SMTP_USER',
@@ -122,6 +129,8 @@ const ALLOWED_CUSTOM_FIELD_KEYS = [
     'evidence_certificate_url',
     'firm_name',
     'firm_logo_url',
+    'otp_code',
+    'otp_ttl_minutes',
 ];
 
 /**
@@ -444,6 +453,8 @@ function replaceEmailPlaceholders(template, fields, forHtml = true) {
     const safeFirmName = esc(String(fields.firm_name || '').trim());
     // firm_logo_url is a URL — no HTML escaping (used inside src="...")
     const firmLogoUrl = String(fields.firm_logo_url || '').trim();
+    const safeOtpCode = esc(String(fields.otp_code || '').trim());
+    const safeOtpTtl = esc(String(fields.otp_ttl_minutes || '').trim());
 
     let out = String(template || '');
     out = replaceAllSafe(out, '[[recipient_name]]', safeRecipient);
@@ -459,6 +470,8 @@ function replaceEmailPlaceholders(template, fields, forHtml = true) {
     out = replaceAllSafe(out, '[[evidence_certificate_url]]', evidenceUrl);
     out = replaceAllSafe(out, '[[firm_name]]', safeFirmName);
     out = replaceAllSafe(out, '[[firm_logo_url]]', firmLogoUrl);
+    out = replaceAllSafe(out, '[[otp_code]]', safeOtpCode);
+    out = replaceAllSafe(out, '[[otp_ttl_minutes]]', safeOtpTtl);
     // Empty logo URL → remove broken <img src=""> (junk / phishing signal).
     if (!firmLogoUrl) {
         out = out.replace(/<img\b[^>]*\bsrc=(["'])\1[^>]*>/gi, '');
@@ -500,9 +513,13 @@ function filterAllowedContactFieldsForCampaign(campaignKey, contactFields) {
     // empty <img src=""> which Apple/iCloud treat as a strong junk signal.
     const brandingKeys = ['firm_name', 'firm_logo_url'];
 
-    if (key === 'SIGN_INVITE' || key === 'SIGN_REMINDER') {
+    if (key === 'SIGN_INVITE' || key === 'SIGN_REMINDER' || key === 'SIGNING_OTP') {
         const required =
-            key === 'SIGN_INVITE' ? SIGN_INVITE_REQUIRED_CUSTOM_FIELDS : SIGN_REMINDER_REQUIRED_CUSTOM_FIELDS;
+            key === 'SIGN_INVITE'
+                ? SIGN_INVITE_REQUIRED_CUSTOM_FIELDS
+                : key === 'SIGN_REMINDER'
+                    ? SIGN_REMINDER_REQUIRED_CUSTOM_FIELDS
+                    : SIGNING_OTP_REQUIRED_CUSTOM_FIELDS;
         const only = {};
         for (const k of [...required, ...brandingKeys]) {
             if (Object.prototype.hasOwnProperty.call(baseFiltered, k)) {
@@ -569,6 +586,10 @@ function sanitizeFieldsForLog(fields) {
             // Avoid leaking signed URLs / tokens into logs.
             const idx = s.indexOf('?');
             out[k] = idx >= 0 ? `${s.slice(0, idx)}?…` : s;
+            continue;
+        }
+        if (k === 'otp_code') {
+            out[k] = '******';
             continue;
         }
         out[k] = v;

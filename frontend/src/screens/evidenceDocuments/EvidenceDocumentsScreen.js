@@ -35,7 +35,7 @@ import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 
 import { useSigningOtpEnabled } from "../../services/firmSettings";
 
-import { parseDateInput } from "../../functions/date/formatDateForInput";
+import { parseDateInput, formatDisplayDate } from "../../functions/date/formatDateForInput";
 import "./EvidenceDocumentsScreen.scss";
 
 export const EvidenceDocumentsScreenName = "/EvidenceDocumentsScreen";
@@ -49,13 +49,12 @@ function clientNameOnly(displayName) {
 }
 
 function formatDateDdMmYy(iso) {
-    if (!iso) return "-";
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return "-";
-    const dd = String(d.getDate()).padStart(2, '0');
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const yy = String(d.getFullYear()).slice(-2);
-    return `${dd}/${mm}/${yy}`;
+    const formatted = formatDisplayDate(iso);
+    if (!formatted) return "-";
+    // DD/MM/YYYY → DD/MM/YY
+    const m = formatted.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (!m) return formatted;
+    return `${m[1]}/${m[2]}/${m[3].slice(-2)}`;
 }
 
 function otpLabel(item, t, otpFeatureEnabled) {

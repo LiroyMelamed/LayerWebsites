@@ -138,7 +138,7 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
 
     const { result: caseTypes, isPerforming: isPerformingCaseTypes, performRequest: searchCaseTypes } = useAutoHttpRequest(casesTypeApi.getCaseTypeByName, { onFailure: () => { } });
 
-    const { result: adminByName, isPerforming: isPerformingGetAdmin, performRequest: getAdminByName } = useAutoHttpRequest(adminApi.getAdminByName, { onFailure: () => { } });
+    const { result: adminByName, isPerforming: isPerformingGetAdmin, performRequest: getAdminByName } = useAutoHttpRequest(adminApi.getStaffByName, { onFailure: () => { } });
 
     const { result: cases, isPerforming: isPerformingCases, performRequest: searchCases } = useAutoHttpRequest(casesApi.getCaseByName, { onFailure: () => { } });
 

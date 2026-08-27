@@ -222,12 +222,11 @@ const requestOtp = async (req, res) => {
         }
         const userId = userResult.rows[0].userid;
 
+        await pool.query(`DELETE FROM otps WHERE phonenumber = $1`, [phoneNumber]);
         await pool.query(
             `
             INSERT INTO otps (phonenumber, otp, expiry, userid)
             VALUES ($1, $2, $3, $4)
-            ON CONFLICT (phonenumber) DO UPDATE
-            SET otp = EXCLUDED.otp, expiry = EXCLUDED.expiry, userid = EXCLUDED.userid;
             `,
             [phoneNumber, hashOtp(otp), expiry, userId]
         );
@@ -569,12 +568,11 @@ const register = async (req, res) => {
         );
         const userId = ures.rows[0]?.userid;
 
+        await pool.query(`DELETE FROM otps WHERE phonenumber = $1`, [phoneNumber]);
         await pool.query(
             `
             INSERT INTO otps (phonenumber, otp, expiry, userid)
             VALUES ($1, $2, $3, $4)
-            ON CONFLICT (phonenumber) DO UPDATE
-            SET otp = EXCLUDED.otp, expiry = EXCLUDED.expiry, userid = EXCLUDED.userid
             `,
             [phoneNumber, hashOtp(otp), expiry, userId]
         );

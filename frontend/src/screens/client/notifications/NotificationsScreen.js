@@ -18,23 +18,14 @@ import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
 import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 import { useTranslation } from 'react-i18next';
 import { toastError } from "../../../components/ui/toast";
-
+import { formatDisplayDateTime } from "../../../functions/date/formatDateForInput";
 
 import "./NotificationsScreen.scss";
 
 export const NotificationsScreenName = "/Notifications";
 
 function formatNotificationDate(createdAt) {
-    if (!createdAt) return "";
-    const date = new Date(createdAt);
-    if (Number.isNaN(date.getTime())) return "";
-
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${day}/${month}/${year}, ${hours}:${minutes}`;
+    return formatDisplayDateTime(createdAt) || "";
 }
 
 function extractFirstUrl(text) {

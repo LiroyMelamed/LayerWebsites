@@ -276,7 +276,7 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
                 </div>
               </td>
               <td>
-                Phone: ${s.phone || "-"}\nOTP Phone: ${s.otpPhoneE164 || "-"}\nEmail: ${s.email || "-"}
+                Phone: ${s.phone || "-"}\nOTP: ${s.otpChannel || "sms"} ${s.otpPhoneE164 || s.otpEmail || "-"}\nEmail: ${s.email || "-"}
               </td>
               <td>
                 OTP used: ${typeof s.otpUsed === 'boolean' ? (s.otpUsed ? 'true' : 'false') : (s.otpUsed || "-")}\nOTP verified at: ${s.otpVerifiedAtUtc || "-"}\nProvider: ${s.authProvider || "-"}

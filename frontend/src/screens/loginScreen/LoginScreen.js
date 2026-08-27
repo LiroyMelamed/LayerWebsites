@@ -12,8 +12,9 @@ import { images } from "../../assets/images/images";
 import { useNavigate } from "react-router-dom";
 import loginApi from "../../api/loginApi";
 import { useTranslation } from "react-i18next";
-import SimpleButton from "../../components/simpleComponents/SimpleButton";
-import { Text14 } from "../../components/specializedComponents/text/AllTextKindFile";
+// Email login UI is disabled for now — email-only contacts are for public signing only.
+// import SimpleButton from "../../components/simpleComponents/SimpleButton";
+// import { Text14 } from "../../components/specializedComponents/text/AllTextKindFile";
 
 import "./LoginScreen.scss";
 
@@ -21,14 +22,14 @@ export const LoginScreenName = "/LoginScreen";
 
 export default function LoginScreen() {
     const {
-        loginChannel,
-        setLoginChannel,
+        // loginChannel,
+        // setLoginChannel,
         phoneNumber,
         setPhoneNumber,
         phoneNumberError,
-        email,
-        setEmail,
-        emailError,
+        // email,
+        // setEmail,
+        // emailError,
     } = useLoginVerifyOtpCodeFieldsProvider();
     const navigate = useNavigate();
     const { t } = useTranslation();
@@ -51,21 +52,19 @@ export default function LoginScreen() {
     };
 
     const handleSubmit = () => {
-        if (loginChannel === "email") {
-            performRequest({ email: String(email || "").trim().toLowerCase() });
-            return;
-        }
+        // Email-channel login disabled — public signing covers email-only recipients.
+        // if (loginChannel === "email") {
+        //     performRequest({ email: String(email || "").trim().toLowerCase() });
+        //     return;
+        // }
         performRequest({ phoneNumber });
     };
 
     const handleKeyDown = (event) => {
-        const blocked = loginChannel === "email" ? emailError != null : phoneNumberError != null;
-        if (event.key === "Enter" && !isPerforming && !blocked) {
+        if (event.key === "Enter" && !isPerforming && phoneNumberError == null) {
             handleSubmit();
         }
     };
-
-    const inputError = loginChannel === "email" ? emailError : phoneNumberError;
 
     return (
         <LoginSimpleScreen
@@ -77,13 +76,16 @@ export default function LoginScreen() {
                         isPerforming={isPerforming}
                         buttonText={t('auth.login')}
                         onPress={handleSubmit}
-                        disabled={inputError != null}
+                        disabled={phoneNumberError != null}
                     />
                     <PoweredByMela />
                 </>
             }
         >
             <SimpleContainer className="lw-loginScreen__center">
+                {/*
+                  Email login toggle — re-enable when product supports email-only app login.
+                  Email-only users are currently for public signing links only.
                 <SimpleContainer className="lw-loginScreen__channelSwitch">
                     <SimpleButton
                         className={`lw-loginScreen__channelBtn ${loginChannel === "phone" ? "is-active" : ""}`}
@@ -111,6 +113,7 @@ export default function LoginScreen() {
                         textStyle={{ textAlign: 'center' }}
                     />
                 ) : (
+                */}
                     <SimpleInput
                         title={t('auth.enterPhone')}
                         type="tel"
@@ -122,7 +125,7 @@ export default function LoginScreen() {
                         textStyle={{ textAlign: 'center' }}
                         maxLength={10}
                     />
-                )}
+                {/* )} */}
             </SimpleContainer>
         </LoginSimpleScreen>
     );

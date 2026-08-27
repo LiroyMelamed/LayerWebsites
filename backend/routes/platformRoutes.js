@@ -187,24 +187,60 @@ router.get('/tenants', async (req, res) => {
 router.get('/metrics', async (req, res) => {
   if (!requireCentralService(req, res)) return;
   try {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
     let openCases = 0;
     let customers = 0;
+    let staffUsers = 0;
+    let documentsSignedToday = 0;
+    let pendingSignatures = 0;
+    let totalCases = 0;
+
     try {
       const r = await pool.query(
         `SELECT COUNT(*)::int AS c FROM cases WHERE COALESCE(isclosed, false) = false`,
       );
       openCases = Number(r.rows[0]?.c ?? 0);
     } catch {
-      try {
-        const r = await pool.query(`SELECT COUNT(*)::int AS c FROM cases`);
-        openCases = Number(r.rows[0]?.c ?? 0);
-      } catch {
-        /* ignore */
-      }
+      /* ignore */
     }
     try {
       const r = await pool.query(`SELECT COUNT(*)::int AS c FROM customers`);
       customers = Number(r.rows[0]?.c ?? 0);
+    } catch {
+      /* ignore */
+    }
+    try {
+      const r = await pool.query(
+        `SELECT COUNT(*)::int AS c FROM users WHERE role <> 'Deleted' AND role <> 'Admin'`,
+      );
+      staffUsers = Number(r.rows[0]?.c ?? 0);
+    } catch {
+      /* ignore */
+    }
+    try {
+      const r = await pool.query(`SELECT COUNT(*)::int AS c FROM cases`);
+      totalCases = Number(r.rows[0]?.c ?? 0);
+    } catch {
+      /* ignore */
+    }
+    try {
+      const r = await pool.query(
+        `SELECT COUNT(*)::int AS c FROM signingfiles
+         WHERE signedat IS NOT NULL AND signedat >= $1`,
+        [startOfDay.toISOString()],
+      );
+      documentsSignedToday = Number(r.rows[0]?.c ?? 0);
+    } catch {
+      /* ignore */
+    }
+    try {
+      const r = await pool.query(
+        `SELECT COUNT(*)::int AS c FROM signingfiles
+         WHERE signedat IS NULL AND COALESCE(isdeleted, false) = false`,
+      );
+      pendingSignatures = Number(r.rows[0]?.c ?? 0);
     } catch {
       /* ignore */
     }
@@ -217,6 +253,10 @@ router.get('/metrics', async (req, res) => {
       extras: {
         openCases,
         customers,
+        staffUsers,
+        totalCases,
+        documentsSignedToday,
+        pendingSignatures,
         firm: process.env.FIRM_NAME || process.env.LAW_FIRM_NAME || null,
       },
     });

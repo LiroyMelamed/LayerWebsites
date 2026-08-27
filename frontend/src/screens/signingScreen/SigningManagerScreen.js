@@ -35,7 +35,7 @@ import { uploadFileForSigningScreenName } from "./UploadFileForSigningScreen";
 import "./SigningManagerScreen.scss";
 import { MainScreenName } from "../mainScreen/MainScreen";
 import SimpleCard from "../../components/simpleComponents/SimpleCard";
-import { formatDateForInput, parseDateInput } from "../../functions/date/formatDateForInput";
+import { parseDateInput } from "../../functions/date/formatDateForInput";
 
 
 export const SigningManagerScreenName = "/SigningManagerScreen";
@@ -789,7 +789,7 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                             )}
                             <PrimaryButton onPress={wrappedDownloadSigned} disabled={isDownloadingSigned} isPerforming={isDownloadingSigned}>
                                 {hasPartialSignatures && !isSigned
-                                    ? t('signingManager.actions.downloadPartialSigned', { defaultValue: 'הורדת מסמך (חתימות חלקיות)' })
+                                    ? t('signingManager.actions.downloadPartialSigned')
                                     : t('signingManager.actions.downloadSigned')}
                             </PrimaryButton>
                             <SecondaryButton onPress={wrappedOpenPdf} disabled={isOpeningPdf} isPerforming={isOpeningPdf}>

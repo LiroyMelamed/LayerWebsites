@@ -9,6 +9,7 @@ const { notifyRecipient } = require("../services/notifications/notificationOrche
 const { buildSignedDocPushData, getAppScheme } = require("../utils/appDeepLinks");
 const { formatPhoneNumber } = require("../utils/phoneUtils");
 const { sendMessage, WEBSITE_DOMAIN } = require("../utils/sendMessage");
+const { sendEmailCampaign } = require("../utils/smooveEmailCampaignService");
 const { detectHebrewSignatureSpotsFromPdfBuffer, streamToBuffer } = require("../utils/signatureDetection");
 const { renderTemplate } = require("../utils/templateRenderer");
 const { getSetting } = require("../services/settingsService");
@@ -275,6 +276,8 @@ async function loadEvidenceRowsForZip(signingFileId) {
                 signeruserid as "SignerUserId",
                 signingsessionid as "SigningSessionId",
                 phone_e164 as "PhoneE164",
+                email as "Email",
+                delivery_channel as "DeliveryChannel",
                 presentedpdfsha256 as "PresentedPdfSha256",
                 sent_at_utc as "SentAtUtc",
                 expires_at_utc as "ExpiresAtUtc",
@@ -1786,24 +1789,52 @@ async function lookupUserPhoneE164OrNull(userId) {
     return formatted || null;
 }
 
+async function lookupUserEmailOrNull(userId) {
+    const emailRes = await pool.query(
+        `select email as "Email", name as "Name"
+         from users
+         where userid = $1`,
+        [userId]
+    );
+    const row = emailRes.rows?.[0];
+    const email = String(row?.Email || '').trim().toLowerCase();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return { email: null, name: row?.Name || null };
+    }
+    return { email, name: row?.Name || null };
+}
+
+async function lookupSigningFileNameOrNull(signingFileId) {
+    const res = await pool.query(
+        `select filename as "FileName" from signingfiles where signingfileid = $1`,
+        [signingFileId]
+    );
+    return res.rows?.[0]?.FileName || null;
+}
+
 async function createSigningOtpChallenge({ signingFileId, signerUserId, signingSessionId, presentedPdfSha256, req }) {
-    // Check limits (single-tenant)
-    const check = await checkFirmLimitsOrNull({
-        action: 'send_otp_sms',
-        increments: { otpSmsThisMonth: 1 },
-    });
+    const phoneE164 = await lookupUserPhoneE164OrNull(signerUserId);
+    const { email: signerEmail, name: signerName } = await lookupUserEmailOrNull(signerUserId);
+    const deliveryChannel = phoneE164 ? 'sms' : (signerEmail ? 'email' : null);
 
-    if (check && (check.blocks || []).length > 0) {
-        if (check.enforcementMode === 'block') {
-            return { ok: false, httpStatus: 402, errorCode: 'LIMIT_EXCEEDED' };
-        }
-
-        console.warn('[limits] send_otp_sms warnings:', check.warnings);
+    if (!deliveryChannel) {
+        return { ok: false, httpStatus: 422, errorCode: 'MISSING_CONTACT' };
     }
 
-    const phoneE164 = await lookupUserPhoneE164OrNull(signerUserId);
-    if (!phoneE164) {
-        return { ok: false, httpStatus: 422, errorCode: 'MISSING_PHONE' };
+    // SMS OTP counts toward SMS quota; email OTP does not.
+    if (deliveryChannel === 'sms') {
+        const check = await checkFirmLimitsOrNull({
+            action: 'send_otp_sms',
+            increments: { otpSmsThisMonth: 1 },
+        });
+
+        if (check && (check.blocks || []).length > 0) {
+            if (check.enforcementMode === 'block') {
+                return { ok: false, httpStatus: 402, errorCode: 'LIMIT_EXCEEDED' };
+            }
+
+            console.warn('[limits] send_otp_sms warnings:', check.warnings);
+        }
     }
 
     const otp = generateNumericOtp6();
@@ -1812,20 +1843,23 @@ async function createSigningOtpChallenge({ signingFileId, signerUserId, signingS
     const otpHash = computeSigningOtpHash({ otp, salt });
     const sentAtUtc = new Date();
     const expiresAtUtc = new Date(sentAtUtc.getTime() + SIGNING_OTP_TTL_SECONDS * 1000);
+    const ttlMinutes = Math.max(1, Math.round(SIGNING_OTP_TTL_SECONDS / 60));
 
     await pool.query(
         `insert into signing_otp_challenges
-         (challengeid, signingfileid, signeruserid, signingsessionid, phone_e164, presentedpdfsha256,
-          otp_hash, otp_salt, provider_message_id, sent_at_utc, expires_at_utc,
+         (challengeid, signingfileid, signeruserid, signingsessionid, phone_e164, email, delivery_channel,
+          presentedpdfsha256, otp_hash, otp_salt, provider_message_id, sent_at_utc, expires_at_utc,
           attempt_count, locked_until_utc, verified, request_ip, request_user_agent)
          values
-         ($1,$2,$3,$4::uuid,$5,$6,$7,$8,$9, $10, $11, 0, null, false, $12::inet, $13)`,
+         ($1,$2,$3,$4::uuid,$5,$6,$7,$8,$9,$10,$11, $12, $13, 0, null, false, $14::inet, $15)`,
         [
             challengeId,
             signingFileId,
             signerUserId,
             signingSessionId,
-            phoneE164,
+            deliveryChannel === 'sms' ? phoneE164 : null,
+            deliveryChannel === 'email' ? signerEmail : null,
+            deliveryChannel,
             String(presentedPdfSha256),
             otpHash,
             salt,
@@ -1837,23 +1871,44 @@ async function createSigningOtpChallenge({ signingFileId, signerUserId, signingS
         ]
     );
 
-    // Send SMS; fail the challenge creation if the provider did not accept the message.
-    const smsResult = await sendMessage(`קוד אימות לחתימה: ${otp}`, phoneE164, { fast: true });
-    if (!smsResult || smsResult.ok === false) {
-        try {
-            await pool.query(`delete from signing_otp_challenges where challengeid = $1`, [challengeId]);
-        } catch (cleanupErr) {
-            console.warn('[signing_otp] failed to delete undelivered challenge:', cleanupErr?.message || cleanupErr);
+    if (deliveryChannel === 'sms') {
+        const smsResult = await sendMessage(`קוד אימות לחתימה: ${otp}`, phoneE164, { fast: true });
+        if (!smsResult || smsResult.ok === false) {
+            try {
+                await pool.query(`delete from signing_otp_challenges where challengeid = $1`, [challengeId]);
+            } catch (cleanupErr) {
+                console.warn('[signing_otp] failed to delete undelivered challenge:', cleanupErr?.message || cleanupErr);
+            }
+            return { ok: false, httpStatus: 502, errorCode: 'SMS_SEND_FAILED' };
         }
-        return { ok: false, httpStatus: 502, errorCode: 'SMS_SEND_FAILED' };
+    } else {
+        const documentName = (await lookupSigningFileNameOrNull(signingFileId)) || 'מסמך לחתימה';
+        const emailResult = await sendEmailCampaign({
+            toEmail: signerEmail,
+            campaignKey: 'SIGNING_OTP',
+            contactFields: {
+                recipient_name: String(signerName || '').trim() || 'חותם/ת',
+                document_name: String(documentName).trim(),
+                otp_code: otp,
+                otp_ttl_minutes: String(ttlMinutes),
+            },
+        });
+        if (!emailResult || emailResult.ok === false) {
+            try {
+                await pool.query(`delete from signing_otp_challenges where challengeid = $1`, [challengeId]);
+            } catch (cleanupErr) {
+                console.warn('[signing_otp] failed to delete undelivered email challenge:', cleanupErr?.message || cleanupErr);
+            }
+            return { ok: false, httpStatus: 502, errorCode: 'EMAIL_SEND_FAILED' };
+        }
     }
-
-    // SMS metering is a no-op in single-tenant mode (firm_usage_events removed)
 
     return {
         ok: true,
         challengeId,
-        phoneE164,
+        channel: deliveryChannel,
+        phoneE164: deliveryChannel === 'sms' ? phoneE164 : null,
+        email: deliveryChannel === 'email' ? signerEmail : null,
         expiresAtUtc: expiresAtUtc.toISOString(),
     };
 }
@@ -3628,6 +3683,8 @@ exports.getEvidencePackage = async (req, res, next) => {
                 signeruserid as "SignerUserId",
                 signingsessionid as "SigningSessionId",
                 phone_e164 as "PhoneE164",
+                email as "Email",
+                delivery_channel as "DeliveryChannel",
                 presentedpdfsha256 as "PresentedPdfSha256",
                 sent_at_utc as "SentAtUtc",
                 expires_at_utc as "ExpiresAtUtc",
@@ -4086,6 +4143,8 @@ async function generateEvidenceCertificateBuffer(signingFileId) {
             signingSessionId: s.SigningSessionId || '-',
             phone: userInfo?.Phone || '-',
             otpPhoneE164: (await getSigningOtpEnabled()) ? (otpRow?.PhoneE164 || '-') : 'N/A',
+            otpEmail: (await getSigningOtpEnabled()) ? (otpRow?.Email || '-') : 'N/A',
+            otpChannel: (await getSigningOtpEnabled()) ? (otpRow?.DeliveryChannel || (otpRow?.PhoneE164 ? 'sms' : (otpRow?.Email ? 'email' : '-'))) : 'N/A',
             email: userInfo?.Email || '-',
             otpUsed: (await getSigningOtpEnabled()) ? Boolean(s.OtpVerificationId || (otpRow && otpRow.Verified)) : false,
             otpVerifiedAtUtc: (await getSigningOtpEnabled()) ? normalizeUtc(otpRow?.VerifiedAtUtc) : 'N/A',
@@ -4113,6 +4172,10 @@ async function generateEvidenceCertificateBuffer(signingFileId) {
         next.signingSessionId = next.signingSessionId !== '-' ? next.signingSessionId : (s.SigningSessionId || next.signingSessionId);
         if ((await getSigningOtpEnabled())) {
             next.otpPhoneE164 = next.otpPhoneE164 !== '-' ? next.otpPhoneE164 : (otpRow?.PhoneE164 || next.otpPhoneE164);
+            next.otpEmail = next.otpEmail !== '-' ? next.otpEmail : (otpRow?.Email || next.otpEmail);
+            if (!next.otpChannel || next.otpChannel === '-') {
+                next.otpChannel = otpRow?.DeliveryChannel || (otpRow?.PhoneE164 ? 'sms' : (otpRow?.Email ? 'email' : next.otpChannel));
+            }
         }
         next.viewIp = next.viewIp !== '-' ? next.viewIp : (viewedEvent?.Ip || next.viewIp);
         next.signIp = next.signIp !== '-' ? next.signIp : (s.SignerIp || next.signIp);
@@ -5907,9 +5970,11 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
         const code = created.errorCode || 'OTP_BLOCKED';
         const status = created.httpStatus || 400;
         const messages = {
+            MISSING_CONTACT: 'לא נמצא טלפון או אימייל לשליחת קוד האימות',
             MISSING_PHONE: 'לא נמצא מספר טלפון לשליחת קוד האימות',
             LIMIT_EXCEEDED: 'חרגתם ממכסת הודעות ה-SMS לחודש זה',
             SMS_SEND_FAILED: 'שליחת ה-SMS נכשלה. נסו שוב בעוד רגע',
+            EMAIL_SEND_FAILED: 'שליחת האימייל נכשלה. נסו שוב בעוד רגע',
         };
         return otpRequestFail(code, status, messages[code] || 'שליחת קוד האימות נכשלה');
     }
@@ -5930,10 +5995,15 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
             presentedPdfSha256,
             challengeId: created.challengeId,
             expiresAtUtc: created.expiresAtUtc,
+            channel: created.channel || 'sms',
         },
     });
 
-    return res.json({ success: true, delivered: true });
+    return res.json({
+        success: true,
+        delivered: true,
+        channel: created.channel || 'sms',
+    });
 }
 
 async function verifySigningOtpImpl({ req, res, next, signingFileId, signerUserId, actorType, genericResponse = false }) {
@@ -7871,8 +7941,9 @@ exports.getPublicSignedDocumentView = async (req, res, next) => {
     }
 };
 
-// Streams the original PDF (filekey) for in-app viewing (react-pdf/pdfjs).
-// Supports Range requests so pdf.js can efficiently load pages.
+// Streams the PDF for in-app / manager viewing (react-pdf/pdfjs).
+// Serves the flattened signed (or partially signed) PDF when signatures exist;
+// otherwise the original file. Supports Range requests for pdf.js.
 exports.getSigningFilePdf = async (req, res, next) => {
     try {
         const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
@@ -7940,12 +8011,53 @@ exports.getSigningFilePdf = async (req, res, next) => {
             return fail(next, 'FILEKEY_MISSING', 404);
         }
 
-        // If the document is signed, serve the flattened signed PDF (with signatures overlaid).
+        // Prefer flattened PDF with burned-in signatures whenever any exist —
+        // including partial (status still pending). Matches downloadSigned behavior.
         let pdfKey = file.FileKey;
         let pdfBucket = BUCKET;
-        if (String(file.Status || '').toLowerCase() === 'signed') {
-            let signedKey = file.SignedStorageKey || file.SignedFileKey;
-            if (!signedKey) {
+        const statusLower = String(file.Status || '').toLowerCase();
+        let signedKey = file.SignedStorageKey || file.SignedFileKey;
+
+        let hasSignedSpots = statusLower === 'signed' || Boolean(signedKey);
+        if (!hasSignedSpots) {
+            try {
+                const signedSpotsRes = await pool.query(
+                    `select 1
+                     from signaturespots
+                     where signingfileid = $1
+                       and issigned = true
+                       and (signaturedata is not null or (fieldvalue is not null and length(trim(fieldvalue::text)) > 0))
+                     limit 1`,
+                    [signingFileId]
+                );
+                hasSignedSpots = signedSpotsRes.rows.length > 0;
+            } catch (spotsErr) {
+                console.warn('getSigningFilePdf: signed-spots check failed:', spotsErr?.message || spotsErr);
+            }
+        }
+
+        if (hasSignedSpots) {
+            // Regenerate when field values are present so text/date/checkbox stay current.
+            let shouldRegenerate = false;
+            if (schemaSupport.signaturespotsFieldValue) {
+                try {
+                    const hasFieldRes = await pool.query(
+                        `select 1
+                         from signaturespots
+                         where signingfileid = $1
+                           and issigned = true
+                           and fieldvalue is not null
+                           and length(trim(fieldvalue::text)) > 0
+                         limit 1`,
+                        [signingFileId]
+                    );
+                    shouldRegenerate = hasFieldRes.rows.length > 0;
+                } catch {
+                    shouldRegenerate = false;
+                }
+            }
+
+            if (!signedKey || shouldRegenerate) {
                 try {
                     signedKey = await ensureSignedPdfKey({
                         signingFileId,

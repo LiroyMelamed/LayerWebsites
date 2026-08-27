@@ -79,6 +79,42 @@ const getAdminByName = async (req, res) => {
     }
 };
 
+/** Firm staff for calendar / case assignment: Admin, Lawyer, PlatformAdmin. */
+const STAFF_ROLES = Object.freeze(['Admin', 'Lawyer', 'PlatformAdmin']);
+
+/**
+ * Partial name search across firm staff roles (not Admin-only).
+ * Used by calendar "מי בפגישה / את מי לתזכר / מי בחופשה".
+ */
+const getStaffByName = async (req, res) => {
+    const rawName = req?.query?.name;
+    const name = typeof rawName === 'string' ? rawName.trim() : '';
+
+    try {
+        const hidden = _getHiddenAdminIds();
+        const params = [STAFF_ROLES];
+        let query = `
+            SELECT userid, name, email, phonenumber, companyname, role, createdat
+            FROM users
+            WHERE role = ANY($1::text[])
+        `;
+        if (hidden.length > 0) {
+            params.push(hidden);
+            query += ` AND userid <> ALL($${params.length}::int[])`;
+        }
+        if (name) {
+            params.push(`%${name}%`);
+            query += ` AND name ILIKE $${params.length}`;
+        }
+        query += ' ORDER BY createdat DESC';
+        const result = await pool.query(query, params);
+        return res.json(result.rows);
+    } catch (error) {
+        console.error('Error retrieving staff by name:', error);
+        return res.status(500).json({ message: 'שגיאה בשליפת אנשי צוות' });
+    }
+};
+
 /**
  * Updates an admin's details.
  */
@@ -274,6 +310,7 @@ const setTenantPlan = async (req, res) => {
 module.exports = {
     getAdmins,
     getAdminByName,
+    getStaffByName,
     updateAdmin,
     deleteAdmin,
     addAdmin,

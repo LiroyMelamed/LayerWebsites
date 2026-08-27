@@ -17,6 +17,7 @@ import SimpleButton from "../../components/simpleComponents/SimpleButton";
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
+import { buttonSizes } from "../../styles/buttons/buttonSizes";
 import SearchInput from "../../components/specializedComponents/containers/SearchInput";
 import { Text24, Text14, Text12, TextBold14 } from "../../components/specializedComponents/text/AllTextKindFile";
 import { usePopup } from "../../providers/PopUpProvider";
@@ -40,7 +41,7 @@ import PersonalSyncModal from "./components/PersonalSyncModal";
 import { colorForKey, colorKeyForEvent, leaveColor, holidayColor, buildLawyerLegend, getEventTypeDefaultColor, isStockEventColor } from "./utils/lawyerColors";
 import { toastError, toastSuccess, toastWarning } from "../../components/ui/toast";
 import { buildNewEventPrefill } from "./utils/eventDefaults";
-import { parseDatetimeLocal, toLocalYmdFromApi } from "../../functions/date/datetimeLocal";
+import { parseDatetimeLocal, toLocalYmdFromApi, jerusalemParts, zonedJerusalemInstant } from "../../functions/date/datetimeLocal";
 import {
     defaultSchedule,
     parseScheduleFromCalendarSettings,
@@ -66,6 +67,9 @@ const SCOPE_MINE = "mine";
 const SCOPE_FIRM = "firm";
 
 const EVENT_TYPE_ALL = "all";
+
+/** FullCalendar day indices: hide Fri/Sat in expanded (work-week) view. */
+const EXPANDED_HIDDEN_WEEKDAYS = [5, 6];
 const EVENT_TYPE_APPT = "appointment";
 const EVENT_TYPE_LEAVE = "leave";
 const EVENT_TYPE_HEARING = "hearing";
@@ -97,9 +101,18 @@ function toLocalYmd(value) {
 function addLocalDaysYmd(ymd, days) {
     const base = String(ymd || "").slice(0, 10);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(base)) return base;
-    const d = new Date(`${base}T12:00:00`);
-    d.setDate(d.getDate() + days);
-    return toLocalYmd(d);
+    const [y, m, d] = base.split("-").map(Number);
+    const noon = zonedJerusalemInstant(y, m, d, 12, 0, 0);
+    return toLocalYmd(new Date(noon.getTime() + days * 24 * 60 * 60 * 1000));
+}
+
+function allDayRangeToIso(startYmd, endInclusiveYmd) {
+    const [sy, sm, sd] = String(startYmd).split("-").map(Number);
+    const [ey, em, ed] = String(endInclusiveYmd).split("-").map(Number);
+    return {
+        startIso: zonedJerusalemInstant(sy, sm, sd, 0, 0, 0).toISOString(),
+        endIso: zonedJerusalemInstant(ey, em, ed, 23, 59, 0).toISOString(),
+    };
 }
 
 function normalizeAllDayEndInclusive(startTime, endTime) {
@@ -108,13 +121,15 @@ function normalizeAllDayEndInclusive(startTime, endTime) {
     try {
         const endLocal = parseDatetimeLocal(endTime)
             || (endTime instanceof Date ? endTime : new Date(endTime));
-        if (endLocal && !Number.isNaN(endLocal.getTime())
-            && endLocal.getHours() === 0
-            && endLocal.getMinutes() === 0
+        const endParts = endLocal ? jerusalemParts(endLocal) : null;
+        if (endParts
+            && endParts.hour === 0
+            && endParts.minute === 0
             && endInclusive > start) {
-            const pulled = new Date(endLocal);
-            pulled.setDate(pulled.getDate() - 1);
-            endInclusive = toLocalYmd(pulled) || endInclusive;
+            const noon = new Date(`${endInclusive}T12:00:00`);
+            // Pull back one Jerusalem calendar day for exclusive midnight ends.
+            const pulledYmd = toLocalYmd(new Date(noon.getTime() - 24 * 60 * 60 * 1000));
+            endInclusive = pulledYmd || endInclusive;
         }
     } catch { /* ignore */ }
     if (endInclusive < start) endInclusive = start;
@@ -185,6 +200,20 @@ function aggregateInviteStatus(ev) {
     }
     const legacy = ev?.inviteStatus;
     return legacy && legacy !== "none" ? legacy : null;
+}
+
+function inviteStatusClass(inviteStatus, ev) {
+    const eventType = String(ev?.eventType || ev?.event_type || "").trim().toLowerCase();
+    if (eventType !== "appointment" && eventType !== "hearing") return null;
+    if (inviteStatus === "accepted") return "lw-fcEvent--inviteAccepted";
+    if (inviteStatus === "declined") return "lw-fcEvent--inviteDeclined";
+    if (inviteStatus === "pending") return "lw-fcEvent--invitePending";
+    return null;
+}
+
+function eventShowsRsvpIndicator(ev) {
+    const eventType = String(ev?.eventType || ev?.event_type || "").trim().toLowerCase();
+    return eventType === "appointment" || eventType === "hearing";
 }
 
 function clientPhoneTooltip(ev) {
@@ -264,11 +293,7 @@ function buildFullCalendarEvent(ev, { scope }) {
             ? (hasCustomColor ? personalInferred : colorForKey(colorKeyForEvent(ev)))
             : personalInferred;
         const inviteStatus = aggregateInviteStatus(ev);
-        const inviteClass =
-            inviteStatus === "accepted" ? "lw-fcEvent--inviteAccepted"
-                : inviteStatus === "declined" ? "lw-fcEvent--inviteDeclined"
-                    : inviteStatus === "pending" ? "lw-fcEvent--invitePending"
-                        : null;
+        const inviteClass = inviteStatusClass(inviteStatus, ev);
         return {
             id: String(ev.id),
             title: ev.title || "",
@@ -293,11 +318,7 @@ function buildFullCalendarEvent(ev, { scope }) {
         : personalInferred;
 
     const inviteStatus = aggregateInviteStatus(ev);
-    const inviteClass =
-        inviteStatus === "accepted" ? "lw-fcEvent--inviteAccepted"
-            : inviteStatus === "declined" ? "lw-fcEvent--inviteDeclined"
-                : inviteStatus === "pending" ? "lw-fcEvent--invitePending"
-                    : null;
+    const inviteClass = inviteStatusClass(inviteStatus, ev);
     const phoneTip = clientPhoneTooltip(ev);
 
     return {
@@ -324,11 +345,11 @@ function _currentRole() {
 }
 function _isFirmManager(role) { return role && role !== "User"; }
 
-/** HH:MM pill label for the FullCalendar now-indicator axis. */
+/** HH:MM pill label for the FullCalendar now-indicator axis (Asia/Jerusalem). */
 function _formatNowBadgeTime(date) {
-    const h = String(date.getHours()).padStart(2, "0");
-    const m = String(date.getMinutes()).padStart(2, "0");
-    return `${h}:${m}`;
+    const p = jerusalemParts(date);
+    if (!p) return "";
+    return `${String(p.hour).padStart(2, "0")}:${String(p.minute).padStart(2, "0")}`;
 }
 
 /** Stable React key — forces modal remount so client/case state never leaks between events. */
@@ -360,10 +381,15 @@ export default function CalendarScreen() {
     const fetchRangeRef = useRef({ from: null, to: null });
     const hasAutoOpenedEventRef = useRef(false);
     const fetchEventsRef = useRef(null);
+    const lastFetchKeyRef = useRef("");
+    const fetchInFlightKeyRef = useRef(null);
+    const fetchDebounceRef = useRef(null);
+    const viewRef = useRef(null);
 
     // ── View / scope / filters ─────────────────────────────────────────────
     const [events, setEvents] = useState([]);
     const [view, setView] = useState(isSmallScreen ? "timeGridDay" : "timeGridWeek");
+    viewRef.current = view;
     const [scope, setScope] = useState(SCOPE_MINE);
     const [filters, setFilters] = useState({
         lawyer_id: null,
@@ -373,6 +399,28 @@ export default function CalendarScreen() {
     });
     const [filtersPanelOpen, setFiltersPanelOpen] = useState(!isSmallScreen);
     const [calendarExpanded, setCalendarExpanded] = useState(false);
+
+    useEffect(() => {
+        if (!calendarExpanded) return undefined;
+        const prevOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        return () => {
+            document.body.style.overflow = prevOverflow;
+        };
+    }, [calendarExpanded]);
+
+    useEffect(() => {
+        const api = calendarRef.current?.getApi?.();
+        if (!api) return undefined;
+        const handle = requestAnimationFrame(() => {
+            try {
+                api.updateSize();
+            } catch {
+                /* ignore */
+            }
+        });
+        return () => cancelAnimationFrame(handle);
+    }, [calendarExpanded, view]);
 
     // ── Working-hours config (per weekday) ─────────────────────────────────
     const [workingSchedule, setWorkingSchedule] = useState(() => defaultSchedule());
@@ -388,7 +436,7 @@ export default function CalendarScreen() {
         result: adminResults,
         isPerforming: isSearchingAdmins,
         performRequest: searchAdmins,
-    } = useAutoHttpRequest(adminApi.getAdminByName, { onFailure: () => { } });
+    } = useAutoHttpRequest(adminApi.getStaffByName, { onFailure: () => { } });
 
     const {
         result: customerResults,
@@ -476,7 +524,7 @@ export default function CalendarScreen() {
     }, [scope, filters, canUseFirmView]);
 
     // ── Fetch events for the visible date range ────────────────────────────
-    const fetchEvents = useCallback(async (range) => {
+    const fetchEvents = useCallback(async (range, { force = false } = {}) => {
         // FullCalendar passes the full range via datesSet; we cache so filter
         // changes can re-fetch without needing FullCalendar to fire again.
         const from = range?.startStr || fetchRangeRef.current.from
@@ -485,6 +533,11 @@ export default function CalendarScreen() {
             || new Date(new Date().getFullYear(), new Date().getMonth() + 2, 0).toISOString();
         fetchRangeRef.current = { from, to };
 
+        const fetchKey = `${from}|${to}|${JSON.stringify(apiFilters)}`;
+        if (!force && fetchKey === lastFetchKeyRef.current) return;
+        if (fetchInFlightKeyRef.current === fetchKey) return;
+
+        fetchInFlightKeyRef.current = fetchKey;
         try {
             const [res, holidaysRes] = await Promise.all([
                 calendarApi.listEvents({ from, to, limit: 500, ...apiFilters }),
@@ -500,15 +553,34 @@ export default function CalendarScreen() {
                 .map((h) => buildHolidayHintEvent(h))
                 .filter(Boolean);
             setEvents([...holidayHints, ...built]);
+            lastFetchKeyRef.current = fetchKey;
         } catch {
             // leave the last successful calendar state visible
+        } finally {
+            if (fetchInFlightKeyRef.current === fetchKey) {
+                fetchInFlightKeyRef.current = null;
+            }
         }
     }, [apiFilters]);
 
     fetchEventsRef.current = fetchEvents;
 
+    const scheduleFetchEvents = useCallback((range, opts) => {
+        if (fetchDebounceRef.current) clearTimeout(fetchDebounceRef.current);
+        fetchDebounceRef.current = setTimeout(() => {
+            fetchEventsRef.current?.(range, opts);
+        }, 300);
+    }, []);
+
+    useEffect(() => () => {
+        if (fetchDebounceRef.current) clearTimeout(fetchDebounceRef.current);
+    }, []);
+
     // Re-fetch whenever filters/scope change (range is reused from the last datesSet).
-    useEffect(() => { fetchEvents(null); }, [fetchEvents]);
+    useEffect(() => {
+        lastFetchKeyRef.current = "";
+        fetchEvents(null, { force: true });
+    }, [fetchEvents]);
 
     // Lawyer filter is firm-view only — drop it if scope is personal.
     useEffect(() => {
@@ -540,7 +612,7 @@ export default function CalendarScreen() {
                 try {
                     await calendarApi.syncGoogleEvents();
                 } catch { /* status toast still shown */ }
-                fetchEventsRef.current?.(null);
+                fetchEventsRef.current?.(null, { force: true });
             })();
         }
         if (googleError) {
@@ -552,7 +624,7 @@ export default function CalendarScreen() {
                 try {
                     await calendarApi.syncOutlookEvents();
                 } catch { /* status toast still shown */ }
-                fetchEventsRef.current?.(null);
+                fetchEventsRef.current?.(null, { force: true });
             })();
         }
         if (outlookError) {
@@ -581,7 +653,7 @@ export default function CalendarScreen() {
 
     const handleEventSaved = useCallback((saved, { firmOnlyNotice } = {}) => {
         upsertLocally(saved);
-        fetchEvents(null);
+        fetchEvents(null, { force: true });
         closePopup();
         if (firmOnlyNotice) {
             toastWarning(t("calendar.savedFirmOnlyNotice"));
@@ -613,7 +685,7 @@ export default function CalendarScreen() {
         openPopup(
             <PersonalSyncModal
                 closePopUpFunction={closePopup}
-                onEventsChanged={() => fetchEvents(null)}
+                onEventsChanged={() => fetchEvents(null, { force: true })}
             />
         );
     }, [openPopup, closePopup, fetchEvents]);
@@ -727,7 +799,10 @@ export default function CalendarScreen() {
     const renderEventContent = useCallback((arg) => {
         const ev = arg.event.extendedProps || {};
         if (ev.hint) return true;
-        const status = aggregateInviteStatus(ev) || (ev.inviteStatus !== "none" ? ev.inviteStatus : null);
+        const showRsvp = eventShowsRsvpIndicator(ev);
+        const status = showRsvp
+            ? (aggregateInviteStatus(ev) || (ev.inviteStatus !== "none" ? ev.inviteStatus : null))
+            : null;
         const multi = Array.isArray(ev.clients) && ev.clients.length > 1;
         const acceptedCount = multi
             ? ev.clients.filter((c) => (c.inviteStatus || c.invite_status) === "accepted").length
@@ -745,9 +820,6 @@ export default function CalendarScreen() {
                 {status === "declined" && (
                     <span className="lw-fcEventRsvpBadge lw-fcEventRsvpBadge--declined" aria-hidden="true" />
                 )}
-                {arg.timeText ? (
-                    <div className="fc-event-time">{arg.timeText}</div>
-                ) : null}
                 <div className="fc-event-title">{arg.event.title}</div>
             </div>
         );
@@ -854,12 +926,15 @@ export default function CalendarScreen() {
     if (!calendarEnabled) return null;
 
     return (
-        <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
-            {isSmallScreen && (
+        <SimpleScreen
+            imageBackgroundSource={images.Backgrounds.AppBackground}
+            contentClassName={calendarExpanded ? "is-calendarFullscreen" : undefined}
+        >
+            {isSmallScreen && !calendarExpanded && (
                 <TopToolBarSmallScreen LogoNavigate={AdminStackName + MainScreenName} />
             )}
 
-            <SimpleScrollView className="lw-calendarScreen__scroll">
+            <SimpleScrollView className={`lw-calendarScreen__scroll${calendarExpanded ? " is-calendarExpanded" : ""}`}>
                 {/* ── Page header ── */}
                 <SimpleContainer className="lw-calendarScreen__header">
                     <Text24>{t("calendar.title")}</Text24>
@@ -1068,6 +1143,8 @@ export default function CalendarScreen() {
                         <SimpleCard className={`lw-calendarScreen__calendarCard${calendarExpanded ? " is-expanded" : ""}`}>
                             <SimpleContainer className="lw-calendarScreen__calendarToolbar">
                                 <SecondaryButton
+                                    size={buttonSizes.SMALL}
+                                    className="lw-calendarScreen__expandBtn"
                                     onPress={() => setCalendarExpanded((v) => !v)}
                                     aria-label={calendarExpanded ? t("calendar.collapseCalendarAria") : t("calendar.expandCalendarAria")}
                                 >
@@ -1112,6 +1189,7 @@ export default function CalendarScreen() {
                                 eventClick={openEditModal}
                                 eventContent={renderEventContent}
                                 eventDidMount={handleEventDidMount}
+                                displayEventTime={false}
                                 editable
                                 eventStartEditable
                                 eventDurationEditable
@@ -1130,8 +1208,7 @@ export default function CalendarScreen() {
                                                 info.event.start,
                                                 info.event.end || info.event.start
                                             );
-                                            startIso = new Date(`${start}T00:00:00`).toISOString();
-                                            endIso = new Date(`${endInclusive}T23:59:00`).toISOString();
+                                            ({ startIso, endIso } = allDayRangeToIso(start, endInclusive));
                                         }
                                         const res = await calendarApi.updateEvent(id, {
                                             start_time: startIso,
@@ -1143,7 +1220,7 @@ export default function CalendarScreen() {
                                             toastError(res?.data?.message || res?.message || t("calendar.googleSyncError"));
                                             return;
                                         }
-                                        fetchEvents();
+                                        fetchEvents(null, { force: true });
                                     } catch (err) {
                                         info.revert();
                                         toastError(err?.response?.data?.message || t("calendar.googleSyncError"));
@@ -1182,8 +1259,7 @@ export default function CalendarScreen() {
                                                 info.event.start,
                                                 info.event.end || info.event.start
                                             );
-                                            startIso = new Date(`${start}T00:00:00`).toISOString();
-                                            endIso = new Date(`${endInclusive}T23:59:00`).toISOString();
+                                            ({ startIso, endIso } = allDayRangeToIso(start, endInclusive));
                                         }
                                         patchLocalEvent();
                                         const res = await calendarApi.updateEvent(id, {
@@ -1196,20 +1272,24 @@ export default function CalendarScreen() {
                                             toastError(res?.data?.message || res?.message || t("calendar.googleSyncError"));
                                             return;
                                         }
-                                        fetchEvents();
+                                        fetchEvents(null, { force: true });
                                     } catch (err) {
                                         info.revert();
                                         toastError(err?.response?.data?.message || t("calendar.googleSyncError"));
                                     }
                                 }}
                                 datesSet={(arg) => {
-                                    if (arg?.view?.type) setView(arg.view.type);
-                                    fetchEvents(arg);
+                                    const nextView = arg?.view?.type;
+                                    if (nextView && nextView !== viewRef.current) {
+                                        setView(nextView);
+                                    }
+                                    scheduleFetchEvents(arg);
                                 }}
                                 longPressDelay={350}
                                 selectLongPressDelay={350}
                                 eventLongPressDelay={0}
-                                height={calendarExpanded ? "auto" : (isSmallScreen ? "auto" : 780)}
+                                hiddenDays={calendarExpanded ? EXPANDED_HIDDEN_WEEKDAYS : []}
+                                height={calendarExpanded ? "100%" : (isSmallScreen ? "auto" : 780)}
                                 slotDuration="00:30:00"
                                 expandRows
                                 businessHours={businessHours}

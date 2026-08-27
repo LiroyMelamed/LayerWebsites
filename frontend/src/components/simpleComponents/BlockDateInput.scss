@@ -117,19 +117,20 @@
 }
 
 .lw-blockDateInput__sep {
-    color: var(--lw-color-secondary-highlighted);
-    font-size: 0.9rem;
+    color: var(--lw-color-primary);
+    font-size: 1rem;
+    font-weight: 600;
     line-height: 1;
     user-select: none;
     flex-shrink: 0;
     margin: 0;
     padding: 0;
-    width: 0.45rem;
+    width: 0.55rem;
     text-align: center;
 }
 
 .lw-blockDateInput__sep--time {
-    width: 0.4rem;
+    width: 0.5rem;
 }
 
 .lw-blockDateInput.is-empty .lw-blockDateInput__sep {
