@@ -283,6 +283,20 @@ function deferQuietSendUntil(when = new Date(), timeZone = TENANT_TZ) {
 }
 
 /**
+ * Classify why a quiet deferral applies at `when`.
+ * @returns {{ until: Date, reason: 'shabbat'|'night'|'quiet' } | null}
+ */
+function describeQuietDeferral(when = new Date(), timeZone = TENANT_TZ) {
+    const base = when instanceof Date ? when : new Date(when);
+    const until = deferQuietSendUntil(base, timeZone);
+    if (!until) return null;
+    let reason = 'quiet';
+    if (isInShabbatQuietWindow(base, timeZone)) reason = 'shabbat';
+    else if (isInNightQuietWindow(base, timeZone)) reason = 'night';
+    return { until, reason };
+}
+
+/**
  * Effective fire time for a reminder that would otherwise fire at `naturalFireAt`.
  * Always returns a Date (never null).
  */
@@ -318,6 +332,7 @@ module.exports = {
     isInQuietWindow,
     deferToMotzeiShabbat,
     deferQuietSendUntil,
+    describeQuietDeferral,
     effectiveFireAt,
     getShabbatWindow,
     getShabbatWindowAsync,

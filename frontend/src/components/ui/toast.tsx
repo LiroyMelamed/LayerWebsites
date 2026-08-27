@@ -40,7 +40,7 @@ function ToastList() {
             className={cn("lw-toast-root")}
             data-type={type}
           >
-            <div className="mt-0.5">{ICONS[type] || ICONS.info}</div>
+            <div className="lw-toast-icon">{ICONS[type] || ICONS.info}</div>
             <Toast.Content className="min-w-0">
               {toast.title ? (
                 <Toast.Title className="lw-toast-title">{toast.title}</Toast.Title>

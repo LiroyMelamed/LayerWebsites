@@ -82,7 +82,7 @@ Rules:
 - **Cron**: `/etc/cron.d/melamedia-tenant-backups` — staggered 02:10 / 02:25 / 02:40 / 02:55 / 03:10 (snap aws CLI is memory-heavy; concurrent runs OOM)
 - **Logs**: `/var/log/backups/<tenant>.log`
 - **DO NOT use the legacy scripts**: `melamedlaw_pg_backup.sh`, `<tenant>/backend/scripts/backup-db-to-r2.sh` — these were broken (sourced .env and crashed on Hebrew / unquoted parens). Root crontab is now empty; only `/etc/cron.d/melamedia-tenant-backups` runs backups.
-- R2 buckets: `melamedlaw-files`, `morlevy-files`, `ashrafessa-files`, `idm-files` (creds in each tenant's `backend/.env` as `S3_*`). Melamedia demo currently uses `morlevy-files` with `db-backups/melamedia/` prefix until a dedicated `melamedia-files` bucket is created in Cloudflare.
+- R2 buckets: `melamedlaw-files`, `morlevy-files`, `ashrafessa-files`, `idm-files`, `melamedia` (creds in each tenant's `backend/.env` as `S3_*`)
 - BarberBooking does not have a PG backup yet.
 
 ## Conventions

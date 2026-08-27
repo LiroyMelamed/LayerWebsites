@@ -3,11 +3,16 @@
 .lw-topCenteredLogoOtp {
     display: flex;
     flex-direction: column;
+    align-items: center;
     width: 100%;
     position: relative;
 }
 
-.lw-topCenteredLogoOtp__cornerLogo {}
+.lw-topCenteredLogoOtp__cornerLogo {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
 
 .lw-topCenteredLogoOtp__logoImage {
     @include m.fluid-size(width, 48, 12vw, 72);

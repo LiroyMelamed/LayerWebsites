@@ -75,6 +75,97 @@ function normalizeHttpUrl(url) {
     return '';
 }
 
+/** Trim + unwrap accidental `[url]` wrapping from pasted Zoom links. */
+function unwrapLocation(location) {
+    let s = String(location || '').trim();
+    if (/^\[.+\]$/.test(s)) s = s.slice(1, -1).trim();
+    return s;
+}
+
+function isZoomMeetingUrl(location) {
+    const s = unwrapLocation(location);
+    return /\bzoom\.us\b/i.test(s);
+}
+
+/** Zoom / Meet / Teams URLs — not a physical place for Waze/Maps. */
+function isRemoteMeetingUrl(location) {
+    const s = unwrapLocation(location);
+    if (!s) return false;
+    return isZoomMeetingUrl(s)
+        || /\bmeet\.google\.com\b/i.test(s)
+        || /\bteams\.microsoft\.com\b/i.test(s)
+        || /\bteams\.live\.com\b/i.test(s);
+}
+
+/**
+ * Place / nav policy by meeting type:
+ * - phone  → none (never location / waze / maps / office fallback)
+ * - zoom   → link only (no office fallback, no waze/maps)
+ * - else   → physical place (office fallback ok)
+ */
+function meetingPlaceMode(meetingType) {
+    const mt = String(meetingType || '').trim().toLowerCase();
+    if (mt === 'phone') return 'none';
+    if (mt === 'zoom') return 'link';
+    return 'place';
+}
+
+/**
+ * Hebrew label for the location line in SMS.
+ * Zoom → "קישור לזום"; other video links → "קישור לפגישה"; else "מיקום".
+ */
+function remoteMeetingLabel(location, meetingType) {
+    const mt = String(meetingType || '').trim().toLowerCase();
+    if (mt === 'zoom' || isZoomMeetingUrl(location)) return 'קישור לזום';
+    if (mt === 'phone') return '';
+    if (isRemoteMeetingUrl(location)) return 'קישור לפגישה';
+    return 'מיקום';
+}
+
+const { reminderKindLabelHe } = require('./reminderKindLabelHe');
+
+/** Hebrew meeting-kind phrase for SMS/push body lines (not always "פגישה"). */
+function meetingTypeLabelHe(meetingType, eventType = '', title = '', reminderTemplateKey = '', subject = '', templateLabel = '') {
+    const et = String(eventType || '').trim().toLowerCase();
+    const eventTitle = String(title || '').trim();
+
+    if (et === 'hearing') return 'דיון';
+    if (et === 'reminder') {
+        return reminderKindLabelHe(reminderTemplateKey, {
+            title: eventTitle,
+            subject,
+            templateLabel,
+        });
+    }
+    if (et === 'holiday') return eventTitle || 'חג';
+    if (et === 'leave') return eventTitle || 'חופשה';
+
+    const mt = String(meetingType || '').trim().toLowerCase();
+    if (mt === 'zoom') return 'פגישת זום';
+    if (mt === 'frontal') return 'פגישה פרונטלית';
+    if (mt === 'phone') return 'פגישה טלפונית';
+    if (mt === 'other') return eventTitle || 'פגישה';
+
+    if (eventTitle) return eventTitle;
+    return 'אירוע';
+}
+
+function isRemoteMeeting(location, meetingType) {
+    const mode = meetingPlaceMode(meetingType);
+    if (mode === 'none' || mode === 'link') return true;
+    return isRemoteMeetingUrl(location);
+}
+
+/** Ensure bare domains become https:// links for SMS. */
+function coerceHttpUrl(raw) {
+    const s = unwrapLocation(raw);
+    if (!s) return '';
+    const normalized = normalizeHttpUrl(s);
+    if (normalized) return normalized;
+    if (/^[\w.-]+\.[a-z]{2,}([/:?#].*)?$/i.test(s)) return `https://${s}`;
+    return s;
+}
+
 /** Parse "lat, lng" (optional spaces). */
 function parseLatLng(location) {
     const q = String(location || '').trim();
@@ -158,12 +249,43 @@ async function buildShortNavUrls(location, {
     officeAddress = '',
     firmWazeUrl = '',
     firmMapsUrl = '',
+    meetingType = '',
 } = {}) {
-    const address = String(location || '').trim() || String(officeAddress || '').trim();
-    if (!address) return { address: '', wazeUrl: '', mapsUrl: '' };
+    const mode = meetingPlaceMode(meetingType);
+    const rawLocation = unwrapLocation(location);
+
+    // Phone: never emit place / link / maps.
+    if (mode === 'none') {
+        return {
+            address: '',
+            wazeUrl: '',
+            mapsUrl: '',
+            isRemote: true,
+            label: '',
+            mode,
+        };
+    }
+
+    // Zoom / video: link only — never office fallback, never Waze/Maps.
+    if (mode === 'link' || isRemoteMeetingUrl(rawLocation)) {
+        const url = coerceHttpUrl(rawLocation);
+        return {
+            address: url,
+            wazeUrl: '',
+            mapsUrl: '',
+            isRemote: true,
+            label: remoteMeetingLabel(rawLocation, meetingType || 'zoom'),
+            mode: 'link',
+        };
+    }
+
+    const address = rawLocation || String(officeAddress || '').trim();
+    if (!address) {
+        return { address: '', wazeUrl: '', mapsUrl: '', isRemote: false, label: 'מיקום', mode };
+    }
 
     const office = String(officeAddress || '').trim();
-    const useFirmLinks = !String(location || '').trim()
+    const useFirmLinks = !rawLocation
         || (office && address === office);
 
     const firmWaze = normalizeHttpUrl(firmWazeUrl);
@@ -175,7 +297,7 @@ async function buildShortNavUrls(location, {
     wazeUrl = await toCleanNavUrl(wazeUrl, 'waze');
     mapsUrl = await toCleanNavUrl(mapsUrl, 'maps');
 
-    return { address, wazeUrl, mapsUrl };
+    return { address, wazeUrl, mapsUrl, isRemote: false, label: 'מיקום', mode };
 }
 
 async function buildShortRsvpUrl(inviteToken) {
@@ -189,11 +311,16 @@ async function buildShortRsvpUrl(inviteToken) {
 
 /** Compact nav block for lawyer auto SMS (not template-driven). */
 async function buildShortNavLinksBlock(location, opts = {}) {
-    const { address, wazeUrl, mapsUrl } = await buildShortNavUrls(location, opts);
+    if (meetingPlaceMode(opts.meetingType) === 'none') return '';
+    const { address, wazeUrl, mapsUrl, isRemote, label } = await buildShortNavUrls(location, opts);
     if (!address) return '';
-    let block = `\nמיקום: ${address}`;
-    if (wazeUrl) block += `\nוויז: ${wazeUrl}`;
-    if (mapsUrl) block += `\nמפות: ${mapsUrl}`;
+    const lineLabel = label || (isRemote ? remoteMeetingLabel(address, opts.meetingType) : 'מיקום');
+    if (!lineLabel) return '';
+    let block = `\n${lineLabel}: ${address}`;
+    if (!isRemote) {
+        if (wazeUrl) block += `\nוויז: ${wazeUrl}`;
+        if (mapsUrl) block += `\nמפות: ${mapsUrl}`;
+    }
     return block;
 }
 
@@ -210,4 +337,11 @@ module.exports = {
     toCleanNavUrl,
     isAlreadyCleanNavUrl,
     parseLatLng,
+    unwrapLocation,
+    isZoomMeetingUrl,
+    isRemoteMeetingUrl,
+    isRemoteMeeting,
+    remoteMeetingLabel,
+    meetingTypeLabelHe,
+    meetingPlaceMode,
 };

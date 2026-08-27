@@ -5,16 +5,18 @@ const VERIFY_OTP_DATA_ENDPOINT = 'Auth/VerifyOtp';
 const ADMIN_LOGIN_OTP_DATA_ENDPOINT = 'Auth/Login';
 
 const loginApi = {
-    sendOtp: async (phoneNumber) => {
-        return await ApiUtils.post(REQUEST_API_DATA_ENDPOINT, { phoneNumber });
+    sendOtp: async (payload) => {
+        const body = typeof payload === "string"
+            ? { phoneNumber: payload }
+            : payload;
+        return await ApiUtils.post(REQUEST_API_DATA_ENDPOINT, body);
     },
 
-    verifyOtp: async (phoneNumber, otp) => {
-        const data = {
-            phoneNumber,
-            otp
-        }
-        return await ApiUtils.post(VERIFY_OTP_DATA_ENDPOINT, data);;
+    verifyOtp: async (phoneNumberOrPayload, otp) => {
+        const body = typeof phoneNumberOrPayload === "object" && phoneNumberOrPayload !== null
+            ? { ...phoneNumberOrPayload, otp }
+            : { phoneNumber: phoneNumberOrPayload, otp };
+        return await ApiUtils.post(VERIFY_OTP_DATA_ENDPOINT, body);
     },
 
     login: async (username, password) => {

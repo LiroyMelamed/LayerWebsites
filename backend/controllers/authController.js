@@ -1,8 +1,9 @@
 const pool = require("../config/db"); // pg pool
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
-const { formatPhoneNumber } = require("../utils/phoneUtils");
+const { formatPhoneNumber, isValidIsraeliPhone } = require("../utils/phoneUtils");
 const { sendMessage } = require("../utils/sendMessage");
+const { sendTransactionalCustomHtmlEmail } = require("../utils/smooveEmailCampaignService");
 const { isLocked, recordFailure, recordSuccess } = require("../utils/otpBruteForce");
 const { logSecurityEvent, extractIp } = require("../utils/securityAuditLogger");
 require("dotenv").config();
@@ -21,42 +22,11 @@ const REFRESH_TOKEN_PEPPER = String(process.env.REFRESH_TOKEN_PEPPER || "");
 const ANDROID_SMS_RETRIEVER_HASH = String(process.env.ANDROID_SMS_RETRIEVER_HASH || "").trim();
 const WEBSITE_DOMAIN_FALLBACK = String(process.env.WEBSITE_DOMAIN || "").trim();
 
-// Demo phones: skip real SMS, use fixed OTP "123456" (App Store / Google Play review).
-// Accept multiple input shapes for the same IL number (050..., 972..., +972...).
+// Demo phones: skip real SMS, use fixed OTP "123456"
 const DEMO_OTP_PHONES = new Set(
     (process.env.DEMO_OTP_PHONES || "").split(",").map(p => p.trim()).filter(Boolean)
 );
 const DEMO_OTP_CODE = "123456";
-
-/** Normalize an IL mobile to local 05XXXXXXXX digits for DB/demo matching. */
-function normalizeIlMobileLocal(phone) {
-    const digits = String(phone || "").replace(/\D/g, "");
-    if (!digits) return "";
-    if (digits.startsWith("972") && digits.length >= 11) {
-        return `0${digits.slice(3)}`;
-    }
-    if (digits.startsWith("0") && digits.length >= 9 && digits.length <= 10) {
-        return digits;
-    }
-    // Bare 5XXXXXXXX (9 digits) → 05XXXXXXXX
-    if (digits.length === 9 && digits.startsWith("5")) {
-        return `0${digits}`;
-    }
-    return digits;
-}
-
-const DEMO_OTP_PHONES_NORMALIZED = new Set(
-    [...DEMO_OTP_PHONES].map(normalizeIlMobileLocal).filter(Boolean)
-);
-
-function isDemoOtpPhone(phone) {
-    const local = normalizeIlMobileLocal(phone);
-    return DEMO_OTP_PHONES.has(String(phone || "").trim()) || DEMO_OTP_PHONES_NORMALIZED.has(local);
-}
-
-function normalizeOtpCode(otp) {
-    return String(otp || "").replace(/\D/g, "").trim();
-}
 
 // Hash OTP before storing in DB (ISO 27001 A.10 — never store secrets in plaintext)
 const OTP_PEPPER = String(process.env.SIGNING_OTP_PEPPER || "");
@@ -176,18 +146,64 @@ function buildOtpSmsBodyForRequest(req, otp) {
 }
 
 const requestOtp = async (req, res) => {
-    let { phoneNumber } = req.body;
+    let { phoneNumber, email } = req.body;
+    const emailNorm = String(email || "").trim().toLowerCase();
+    const useEmail = !phoneNumber && !!emailNorm;
 
-    if (!phoneNumber) {
-        console.log("RequestOtp-!phoneNumber");
-        return res.status(400).json({ message: "נא להזין מספר פלאפון תקין" });
+    if (!phoneNumber && !emailNorm) {
+        return res.status(400).json({ message: "נא להזין מספר טלפון או דוא״ל תקין" });
     }
 
     try {
-        const localPhone = normalizeIlMobileLocal(phoneNumber) || String(phoneNumber).trim();
-        let formatedPhoneNumber = formatPhoneNumber(localPhone);
+        if (useEmail) {
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm)) {
+                return res.status(400).json({ message: "נא להזין כתובת דוא״ל תקינה" });
+            }
 
-        const isDemo = isDemoOtpPhone(localPhone);
+            const otp = crypto.randomInt(100000, 999999).toString();
+            const expiry = new Date(Date.now() + 5 * 60 * 1000);
+
+            const userResult = await pool.query(
+                `SELECT userid, name FROM users WHERE LOWER(email) = $1`,
+                [emailNorm]
+            );
+            if (userResult.rows.length === 0) {
+                return res.status(404).json({ message: "משתמש אינו קיים" });
+            }
+            const userId = userResult.rows[0].userid;
+            const userName = userResult.rows[0].name || "";
+
+            await pool.query(
+                `DELETE FROM otps WHERE LOWER(email) = $1`,
+                [emailNorm]
+            );
+            await pool.query(
+                `INSERT INTO otps (email, phonenumber, otp, expiry, userid)
+                 VALUES ($1, NULL, $2, $3, $4)`,
+                [emailNorm, hashOtp(otp), expiry, userId]
+            );
+
+            try {
+                await sendTransactionalCustomHtmlEmail({
+                    toEmail: emailNorm,
+                    subject: "קוד כניסה למערכת",
+                    htmlBody: `<p>שלום ${userName || ""},</p><p>קוד האימות שלך: <strong>${otp}</strong></p><p>הקוד תקף ל-5 דקות.</p>`,
+                    logLabel: "login-email-otp",
+                });
+            } catch (e) {
+                console.warn("Email OTP send failed:", e?.message);
+            }
+
+            return res.status(200).json({ message: "קוד נשלח לדוא״ל", otpSent: true, channel: "email" });
+        }
+
+        if (!phoneNumber) {
+            return res.status(400).json({ message: "נא להזין מספר פלאפון תקין" });
+        }
+
+        let formatedPhoneNumber = formatPhoneNumber(phoneNumber);
+
+        const isDemo = DEMO_OTP_PHONES.has(phoneNumber);
         if (!isDemo && !formatedPhoneNumber) {
             return res.status(400).json({ message: "נא להזין מספר פלאפון תקין" });
         }
@@ -198,7 +214,7 @@ const requestOtp = async (req, res) => {
 
         const userResult = await pool.query(
             `SELECT userid FROM users WHERE phonenumber = $1`,
-            [localPhone]
+            [phoneNumber]
         );
         if (userResult.rows.length === 0) {
             console.log("משתמש אינו קיים");
@@ -206,14 +222,13 @@ const requestOtp = async (req, res) => {
         }
         const userId = userResult.rows[0].userid;
 
+        await pool.query(`DELETE FROM otps WHERE phonenumber = $1`, [phoneNumber]);
         await pool.query(
             `
             INSERT INTO otps (phonenumber, otp, expiry, userid)
             VALUES ($1, $2, $3, $4)
-            ON CONFLICT (phonenumber) DO UPDATE
-            SET otp = EXCLUDED.otp, expiry = EXCLUDED.expiry, userid = EXCLUDED.userid;
             `,
-            [localPhone, hashOtp(otp), expiry, userId]
+            [phoneNumber, hashOtp(otp), expiry, userId]
         );
 
         if (!isDemo) {
@@ -224,27 +239,26 @@ const requestOtp = async (req, res) => {
             }
         }
 
-        return res.status(200).json({ message: "קוד נשלח בהצלחה", otpSent: true });
+        return res.status(200).json({ message: "קוד נשלח בהצלחה", otpSent: true, channel: "phone" });
     } catch (error) {
         console.error("שגיאה בשליחת הקוד:", error);
-        logSecurityEvent({ type: 'OTP_REQUEST_ERROR', phone: phoneNumber, ip: extractIp(req), success: false });
+        logSecurityEvent({ type: 'OTP_REQUEST_ERROR', phone: phoneNumber, email: emailNorm, ip: extractIp(req), success: false });
         return res.status(500).json({ message: "שגיאה בשליחת הקוד" });
     }
 };
 
 const verifyOtp = async (req, res) => {
-    let { phoneNumber, otp } = req.body;
-    const localPhone = normalizeIlMobileLocal(phoneNumber) || String(phoneNumber || "").trim();
-    const otpCode = normalizeOtpCode(otp);
+    let { phoneNumber, email, otp } = req.body;
+    const emailNorm = String(email || "").trim().toLowerCase();
+    const useEmail = !phoneNumber && !!emailNorm;
+    const lockKey = useEmail ? emailNorm : phoneNumber;
 
     // ── Brute-force lockout check (ISO 27001 A.9.4.2) ──
-    // Demo review accounts are never lockout-blocked (App Review retries).
-    const demoPhone = isDemoOtpPhone(localPhone);
-    const lockStatus = demoPhone ? { locked: false } : isLocked(localPhone);
+    const lockStatus = isLocked(lockKey);
     if (lockStatus.locked) {
         logSecurityEvent({
             type: 'OTP_VERIFY_BLOCKED_LOCKOUT',
-            phone: localPhone,
+            phone: phoneNumber,
             ip: extractIp(req),
             userAgent: req.headers?.['user-agent'],
             success: false,
@@ -257,87 +271,37 @@ const verifyOtp = async (req, res) => {
     }
 
     try {
-        // App Review path: demo phone + fixed code always works (no SMS, no expiry race).
-        if (demoPhone && otpCode === DEMO_OTP_CODE) {
-            const userResult = await pool.query(
-                `SELECT userid, role, phonenumber FROM users WHERE phonenumber = $1`,
-                [localPhone]
-            );
-            if (userResult.rows.length === 0) {
-                return res.status(401).json({ message: "קוד לא תקין" });
-            }
-            recordSuccess(localPhone);
-            const { userid, role, phonenumber } = userResult.rows[0];
-            const token = signAccessToken({ userid, role, phonenumber });
-            logSecurityEvent({
-                type: 'OTP_VERIFY_SUCCESS_DEMO',
-                phone: localPhone,
-                userId: userid,
-                ip: extractIp(req),
-                userAgent: req.headers?.['user-agent'],
-                success: true,
-            });
-            try {
-                await pool.query(`DELETE FROM otps WHERE phonenumber = $1`, [localPhone]);
-            } catch (_) { /* ignore */ }
-
-            let refreshToken = null;
-            try {
-                const client = await pool.connect();
-                try {
-                    const userAgent = String(req?.headers?.['user-agent'] || "").slice(0, 400) || null;
-                    const ipAddress = String(req?.ip || "").slice(0, 200) || null;
-                    const row = await createRefreshTokenRow({ client, userid, userAgent, ipAddress });
-                    refreshToken = row.refreshToken;
-                } finally {
-                    client.release();
-                }
-            } catch (rtErr) {
-                if (rtErr?.code === '42P01') {
-                    console.warn('refresh_tokens table missing; skipping refresh token issuance');
-                } else {
-                    console.warn('failed to issue refresh token:', rtErr?.message);
-                }
-            }
-
-            const platformAdminIds = String(process.env.PLATFORM_ADMIN_USER_IDS || '').trim();
-            let isPlatformAdmin = false;
-            if (role === 'Admin') {
-                if (platformAdminIds) {
-                    const allowSet = new Set(platformAdminIds.split(',').map(s => Number(s.trim())).filter(n => Number.isFinite(n) && n > 0));
-                    isPlatformAdmin = allowSet.has(userid);
-                } else if (String(process.env.NODE_ENV || '').toLowerCase() !== 'production') {
-                    isPlatformAdmin = true;
-                }
-            }
-
-            return res.status(200).json({
-                message: "קוד אומת בהצלחה",
-                token,
-                role,
-                refreshToken,
-                isPlatformAdmin,
-            });
-        }
-
-        const otpHash = hashOtp(otpCode);
-        const result = await pool.query(
-            `
-            SELECT U.userid, U.role, U.phonenumber
+        const otpHash = hashOtp(otp);
+        const result = useEmail
+            ? await pool.query(
+                `
+            SELECT U.userid, U.role, U.phonenumber, U.email
+            FROM otps O
+            JOIN users U ON O.userid = U.userid
+            WHERE LOWER(O.email) = $1
+              AND O.otp = $2
+              AND O.expiry > NOW()
+            `,
+                [emailNorm, otpHash]
+            )
+            : await pool.query(
+                `
+            SELECT U.userid, U.role, U.phonenumber, U.email
             FROM otps O
             JOIN users U ON O.userid = U.userid
             WHERE O.phonenumber = $1
               AND O.otp = $2
               AND O.expiry > NOW()
             `,
-            [localPhone, otpHash]
-        );
+                [phoneNumber, otpHash]
+            );
 
         if (result.rows.length === 0) {
-            recordFailure(localPhone);
+            recordFailure(lockKey);
             logSecurityEvent({
                 type: 'OTP_VERIFY_FAIL',
-                phone: localPhone,
+                phone: phoneNumber,
+                email: emailNorm,
                 ip: extractIp(req),
                 userAgent: req.headers?.['user-agent'],
                 success: false,
@@ -345,13 +309,14 @@ const verifyOtp = async (req, res) => {
             return res.status(401).json({ message: "קוד לא תקין" });
         }
 
-        recordSuccess(localPhone);
+        recordSuccess(lockKey);
         const { userid, role, phonenumber } = result.rows[0];
         const token = signAccessToken({ userid, role, phonenumber });
 
         logSecurityEvent({
             type: 'OTP_VERIFY_SUCCESS',
-            phone: localPhone,
+            phone: phoneNumber,
+            email: emailNorm,
             userId: userid,
             ip: extractIp(req),
             userAgent: req.headers?.['user-agent'],
@@ -360,10 +325,17 @@ const verifyOtp = async (req, res) => {
 
         // Invalidate the OTP after successful verification to prevent replay
         try {
-            await pool.query(
-                `DELETE FROM otps WHERE phonenumber = $1 AND otp = $2`,
-                [localPhone, otpHash]
-            );
+            if (useEmail) {
+                await pool.query(
+                    `DELETE FROM otps WHERE LOWER(email) = $1 AND otp = $2`,
+                    [emailNorm, otpHash]
+                );
+            } else {
+                await pool.query(
+                    `DELETE FROM otps WHERE phonenumber = $1 AND otp = $2`,
+                    [phoneNumber, otpHash]
+                );
+            }
         } catch (delErr) {
             console.warn('Warning: failed to delete OTP after verification', delErr?.message);
         }
@@ -596,12 +568,11 @@ const register = async (req, res) => {
         );
         const userId = ures.rows[0]?.userid;
 
+        await pool.query(`DELETE FROM otps WHERE phonenumber = $1`, [phoneNumber]);
         await pool.query(
             `
             INSERT INTO otps (phonenumber, otp, expiry, userid)
             VALUES ($1, $2, $3, $4)
-            ON CONFLICT (phonenumber) DO UPDATE
-            SET otp = EXCLUDED.otp, expiry = EXCLUDED.expiry, userid = EXCLUDED.userid
             `,
             [phoneNumber, hashOtp(otp), expiry, userId]
         );
