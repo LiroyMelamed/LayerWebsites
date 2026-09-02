@@ -376,6 +376,7 @@
     "similarCompanyExplain": "Loading an existing client fills the form for editing — saving updates that client and does not create a duplicate.",
     "selectExisting": "Load existing client to edit",
     "continueNew": "Continue as new client"
+  },
   "admins": {
     "searchAdmin": "Search admin",
     "addAdmin": "Add admin",
