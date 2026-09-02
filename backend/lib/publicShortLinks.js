@@ -75,11 +75,26 @@ function normalizeHttpUrl(url) {
     return '';
 }
 
-/** Trim + unwrap accidental `[url]` wrapping from pasted Zoom links. */
+/** Trim + unwrap `[url]` or markdown `[label](url)` from pasted meeting links. */
 function unwrapLocation(location) {
     let s = String(location || '').trim();
+    if (!s) return '';
+    const markdown = s.match(/^\[([^\]]*)\]\(([^)]+)\)$/);
+    if (markdown) {
+        const url = String(markdown[2] || '').trim();
+        return url || String(markdown[1] || '').trim();
+    }
     if (/^\[.+\]$/.test(s)) s = s.slice(1, -1).trim();
     return s;
+}
+
+/** meeting_type + resolved nav mode + raw location → place | link | none */
+function resolveEffectivePlaceMode(meetingType, location, navMode) {
+    const fromType = meetingPlaceMode(meetingType);
+    if (fromType === 'none') return 'none';
+    if (navMode === 'link' || navMode === 'none') return navMode;
+    if (isRemoteMeetingUrl(location)) return 'link';
+    return fromType;
 }
 
 function isZoomMeetingUrl(location) {
@@ -338,6 +353,7 @@ module.exports = {
     isAlreadyCleanNavUrl,
     parseLatLng,
     unwrapLocation,
+    resolveEffectivePlaceMode,
     isZoomMeetingUrl,
     isRemoteMeetingUrl,
     isRemoteMeeting,

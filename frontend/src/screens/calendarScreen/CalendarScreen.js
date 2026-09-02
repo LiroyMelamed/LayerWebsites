@@ -345,6 +345,18 @@ function _currentRole() {
 }
 function _isFirmManager(role) { return role && role !== "User"; }
 
+function _currentUserIdFromToken() {
+    try {
+        const token = localStorage.getItem("token");
+        if (!token) return null;
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const id = payload?.userid ?? payload?.UserId;
+        return id != null ? Number(id) : null;
+    } catch {
+        return null;
+    }
+}
+
 /** HH:MM pill label for the FullCalendar now-indicator axis (Asia/Jerusalem). */
 function _formatNowBadgeTime(date) {
     const p = jerusalemParts(date);
@@ -376,6 +388,8 @@ export default function CalendarScreen() {
 
     const role = _currentRole();
     const canUseFirmView = _isFirmManager(role);
+    const currentUserId = _currentUserIdFromToken();
+    const urlCalendarInitRef = useRef(false);
 
     const calendarRef = useRef(null);
     const fetchRangeRef = useRef({ from: null, to: null });
@@ -399,6 +413,52 @@ export default function CalendarScreen() {
     });
     const [filtersPanelOpen, setFiltersPanelOpen] = useState(!isSmallScreen);
     const [calendarExpanded, setCalendarExpanded] = useState(false);
+
+    useEffect(() => {
+        if (!canUseFirmView || urlCalendarInitRef.current) return;
+        urlCalendarInitRef.current = true;
+        const urlLawyerId = searchParams.get("lawyer_id");
+        const urlScope = searchParams.get("scope");
+        if (urlScope === SCOPE_FIRM || urlLawyerId) {
+            setScope(SCOPE_FIRM);
+        }
+        if (urlLawyerId) {
+            const id = parseInt(urlLawyerId, 10);
+            if (Number.isFinite(id) && id > 0) {
+                setFilters((prev) => ({ ...prev, lawyer_id: id }));
+            }
+        }
+    }, [canUseFirmView, searchParams]);
+
+    useEffect(() => {
+        if (!canUseFirmView) return;
+        if (filters.lawyer_id && lawyers.length) {
+            const match = lawyers.find((l) => {
+                const id = l.userid ?? l.UserId ?? l.id;
+                return Number(id) === Number(filters.lawyer_id);
+            });
+            const name = match?.name ?? match?.Name;
+            if (name && name !== managerFilterLabel) {
+                setManagerFilterLabel(name);
+            }
+        }
+    }, [canUseFirmView, filters.lawyer_id, lawyers, managerFilterLabel]);
+
+    useEffect(() => {
+        if (!canUseFirmView) return;
+        const next = new URLSearchParams(searchParams);
+        if (scope === SCOPE_FIRM && filters.lawyer_id) {
+            next.set("scope", SCOPE_FIRM);
+            next.set("lawyer_id", String(filters.lawyer_id));
+        } else {
+            next.delete("lawyer_id");
+            if (scope === SCOPE_FIRM) next.set("scope", SCOPE_FIRM);
+            else next.delete("scope");
+        }
+        if (next.toString() !== searchParams.toString()) {
+            setSearchParams(next, { replace: true });
+        }
+    }, [canUseFirmView, scope, filters.lawyer_id, searchParams, setSearchParams]);
 
     useEffect(() => {
         if (!calendarExpanded) return undefined;
@@ -870,6 +930,7 @@ export default function CalendarScreen() {
         const id = selectedAdmin?.userid ?? selectedAdmin?.UserId ?? selectedAdmin?.id;
         const name = selectedAdmin?.name ?? selectedAdmin?.Name ?? selectedName ?? "";
         if (id == null) return;
+        setScope(SCOPE_FIRM);
         setFilter("lawyer_id", id);
         setManagerFilterLabel(name);
     }, [adminResults]);
@@ -922,6 +983,13 @@ export default function CalendarScreen() {
     const activeCaseName = filters.case_id
         ? (caseFilterLabel || `#${filters.case_id}`)
         : null;
+    const viewingOtherEmployee = Boolean(
+        canUseFirmView
+        && scope === SCOPE_FIRM
+        && filters.lawyer_id
+        && currentUserId
+        && Number(filters.lawyer_id) !== Number(currentUserId)
+    );
 
     if (!calendarEnabled) return null;
 
@@ -979,6 +1047,17 @@ export default function CalendarScreen() {
                     </SimpleContainer>
                 </SimpleContainer>
 
+                {viewingOtherEmployee && (
+                    <SimpleContainer className="lw-calendarScreen__employeeBanner">
+                        <Text14>
+                            {t("calendar.viewingEmployeeCalendar", {
+                                name: activeManagerName || `#${filters.lawyer_id}`,
+                                defaultValue: `צפייה ביומן של ${activeManagerName || filters.lawyer_id} — לעריכה יש לפתוח את האירוע (הרשאות קיימות חלות).`,
+                            })}
+                        </Text14>
+                    </SimpleContainer>
+                )}
+
                 {/* ── Active filter chips ── */}
                 {hasActiveFilters && (
                     <SimpleContainer className="lw-calendarScreen__chips">
@@ -1026,7 +1105,7 @@ export default function CalendarScreen() {
                         {canUseFirmView && scope === SCOPE_FIRM && (
                             <div className="lw-calendarScreen__filterGroup">
                                 <SearchInput
-                                    title={t("calendar.filterByManager")}
+                                    title={t("calendar.employeeCalendarPicker", { defaultValue: "יומן של עובד" })}
                                     value={managerFilterLabel}
                                     onSearch={handleManagerFilterSearch}
                                     isPerforming={isSearchingAdmins}

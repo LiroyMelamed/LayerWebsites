@@ -86,18 +86,38 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
         setDateOfBirth(customer.DateOfBirth || customer.dateofbirth ? toNativeDateValue(customer.DateOfBirth || customer.dateofbirth) : "");
     };
 
-    const [hasError, setHasError] = useState(false);
+    const [saveDisabledReason, setSaveDisabledReason] = useState('');
     const [isLegalDeleteConfirmOpen, setIsLegalDeleteConfirmOpen] = useState(false);
     const [legalDeleteMessage, setLegalDeleteMessage] = useState("");
+
+    const hasError = Boolean(saveDisabledReason);
 
     useEffect(() => {
         const hasName = Boolean((name || '').trim());
         const hasPhone = Boolean((phoneNumber || '').trim());
         const hasEmail = Boolean((email || '').trim());
         const contactOk = hasPhone || hasEmail;
-        const fieldErrors = Boolean(nameError || phoneNumberError || emailError || companyNameError);
-        setHasError(!hasName || !contactOk || fieldErrors);
-    }, [name, phoneNumber, email, companyName, nameError, phoneNumberError, emailError, companyNameError])
+        const fieldErrors = Boolean(
+            nameError
+            || companyNameError
+            || (hasPhone && phoneNumberError)
+            || (hasEmail && emailError)
+        );
+
+        if (!hasName) {
+            setSaveDisabledReason(t('customers.saveBlockedMissingName', { defaultValue: 'נא למלא שם לקוח' }));
+        } else if (!contactOk) {
+            setSaveDisabledReason(t('customers.contactRequiredHint'));
+        } else if (hasPhone && phoneNumberError) {
+            setSaveDisabledReason(phoneNumberError);
+        } else if (hasEmail && emailError) {
+            setSaveDisabledReason(emailError);
+        } else if (fieldErrors) {
+            setSaveDisabledReason(t('customers.saveBlockedInvalidFields', { defaultValue: 'נא לתקן את השדות המסומנים' }));
+        } else {
+            setSaveDisabledReason('');
+        }
+    }, [name, phoneNumber, email, companyName, nameError, phoneNumberError, emailError, companyNameError, t]);
 
     const { isPerforming, performRequest } = useHttpRequest(
         selectedClient ? customersApi.updateCustomerById : customersApi.addCustomer,
@@ -250,11 +270,21 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
                         defaultValue: 'חובה למלא טלפון או דוא״ל (או שניהם)',
                     })}
                 </Text14>
+                {saveDisabledReason && (
+                    <Text14 className="lw-clientPopup__saveBlockedHint" role="status">
+                        {saveDisabledReason}
+                    </Text14>
+                )}
 
                 {similarCompanies.length > 0 && (
                     <SimpleContainer className="lw-clientPopup__similarCompanies">
                         <Text14 className="lw-clientPopup__similarTitle">
                             {t('customers.similarCompanyFound', { defaultValue: 'נמצאו חברות דומות במערכת:' })}
+                        </Text14>
+                        <Text14 className="lw-clientPopup__similarExplain">
+                            {t('customers.similarCompanyExplain', {
+                                defaultValue: 'טעינת לקוח קיים ממלאה את הטופס לעריכה — שמירה תעדכן את הלקוח הקיים ולא תיצור כפילות.',
+                            })}
                         </Text14>
                         {similarCompanies.map((c, i) => (
                             <SimpleContainer key={c.userid || c.UserId || i} className="lw-clientPopup__similarItem">
@@ -266,7 +296,7 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
                                     className="lw-clientPopup__similarBtn"
                                     onPress={() => handleSelectSimilarCompany(c)}
                                 >
-                                    {t('customers.selectExisting', { defaultValue: 'בחר קיים' })}
+                                    {t('customers.selectExisting', { defaultValue: 'טען לקוח קיים לעריכה' })}
                                 </SecondaryButton>
                             </SimpleContainer>
                         ))}

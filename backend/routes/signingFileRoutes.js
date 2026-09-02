@@ -93,6 +93,9 @@ router.get("/:signingFileId/signers", authMiddleware, requireSigningEnabledForSi
 // Resend signing invitations to selected signers
 router.post("/:signingFileId/resend", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.resendSigningInvite);
 
+// Update signer contact + delivery channel while pending
+router.patch("/:signingFileId/signers/:signerUserId", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.updateSigningSignerContact);
+
 // Lawyer signing policy configuration (explicit OTP on/off + waiver ack)
 router.patch("/:signingFileId/policy", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.updateSigningPolicy);
 

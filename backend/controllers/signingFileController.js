@@ -1521,6 +1521,42 @@ function canViewAllSigningSpots({ file, requesterId, role }) {
     return isSigningFileOwner({ file, requesterId }) || canViewSigningFileAsOfficeStaff({ file, requesterId, role });
 }
 
+function normalizeSignerDeliveryMethod(raw) {
+    const m = String(raw || 'phone').trim().toLowerCase();
+    if (m === 'sms') return 'phone';
+    if (m === 'email' || m === 'phone' || m === 'both') return m;
+    return 'phone';
+}
+
+async function loadSignerDeliveryMethod(signingFileId, signerUserId) {
+    try {
+        const { rows } = await pool.query(
+            `SELECT delivery_method FROM signing_signer_delivery
+             WHERE signing_file_id = $1 AND signer_user_id = $2`,
+            [signingFileId, signerUserId]
+        );
+        return normalizeSignerDeliveryMethod(rows[0]?.delivery_method);
+    } catch {
+        return 'phone';
+    }
+}
+
+async function saveSignerDeliveryMethod(signingFileId, signerUserId, deliveryMethod) {
+    const method = normalizeSignerDeliveryMethod(deliveryMethod);
+    try {
+        await pool.query(
+            `INSERT INTO signing_signer_delivery (signing_file_id, signer_user_id, delivery_method, updated_at)
+             VALUES ($1, $2, $3, NOW())
+             ON CONFLICT (signing_file_id, signer_user_id)
+             DO UPDATE SET delivery_method = EXCLUDED.delivery_method, updated_at = NOW()`,
+            [signingFileId, signerUserId, method]
+        );
+    } catch (err) {
+        console.warn('[signing] saveSignerDeliveryMethod failed:', err?.message || err);
+    }
+    return method;
+}
+
 function buildLawyerSigningFilesListQuery({ scope, pagination }) {
     const isOffice = scope === 'office';
     const selectColumns = `
@@ -2098,34 +2134,15 @@ async function generateSignedPdfBuffer({ pdfKey, spots }) {
                 ? await pdfDoc.embedPng(imgBuffer)
                 : await pdfDoc.embedJpg(imgBuffer);
 
-            // Stamps may enlarge slightly so photos read well. Signatures stay in the placed canvas.
+            // Keep stamp/signature placement aligned with the authoring canvas (contain in box).
             let boxW = w;
             let boxH = h;
             let boxX = x;
             let boxY = y;
-            if (isStampLike) {
-                const minW = 220;
-                const minH = 100;
-                const boost = 1.85;
-                const scaleUp = Math.max(1, minW / Math.max(boxW, 1), minH / Math.max(boxH, 1)) * boost;
-                const newW = boxW * scaleUp;
-                const newH = boxH * scaleUp;
-                boxX = x - (newW - boxW) / 2;
-                boxY = y - (newH - boxH) / 2;
-                boxW = newW;
-                boxH = newH;
-                if (boxX < 0) boxX = 0;
-                if (boxY < 0) boxY = 0;
-                if (boxX + boxW > pageWidth) boxX = Math.max(0, pageWidth - boxW);
-                if (boxY + boxH > pageHeight) boxY = Math.max(0, pageHeight - boxH);
-            }
 
             const imgW = embedded.width || 1;
             const imgH = embedded.height || 1;
-            // Stamps: cover-fit (fill box, crop overflow). Signatures: contain-fit so ink stays inside the canvas.
-            const fit = isStampLike
-                ? Math.max(boxW / imgW, boxH / imgH)
-                : Math.min(boxW / imgW, boxH / imgH);
+            const fit = Math.min(boxW / imgW, boxH / imgH);
             const drawW = imgW * fit;
             const drawH = imgH * fit;
             const drawX = boxX + (boxW - drawW) / 2;
@@ -2196,7 +2213,7 @@ async function generateSignedPdfBuffer({ pdfKey, spots }) {
     return Buffer.from(bytes);
 }
 
-async function ensureSignedPdfKey({ signingFileId, lawyerId, pdfKey }) {
+async function ensureSignedPdfKey({ signingFileId, lawyerId, pdfKey, persist = true }) {
     // Pull signed spots with signature images
     const spotsRes = await pool.query(
         `select
@@ -2238,6 +2255,7 @@ async function ensureSignedPdfKey({ signingFileId, lawyerId, pdfKey }) {
 
     const schemaSupport = await getSchemaSupport();
 
+    if (persist) {
     if (schemaSupport.signingfilesSignedPdfBytes) {
         await pool.query(
             `update signingfiles
@@ -2282,6 +2300,7 @@ async function ensureSignedPdfKey({ signingFileId, lawyerId, pdfKey }) {
                 signedSha,
             ]
         );
+    }
     }
 
     return signedKey;
@@ -3095,6 +3114,9 @@ exports.uploadFileForSigning = async (req, res, next) => {
                     : (notifyResult?.errorCode || (!smsOk ? 'SMS_FAILED' : 'DELIVERY_FAILED')),
                 errors: Array.isArray(notifyResult?.errors) ? notifyResult.errors : [],
             });
+            if (ok) {
+                await saveSignerDeliveryMethod(signingFileId, signerUserId, deliveryMethod);
+            }
         }
 
         if (sentCount <= 0) {
@@ -4513,6 +4535,24 @@ exports.getSigningFileSigners = async (req, res, next) => {
             }
         }
 
+        const deliveryBySigner = new Map();
+        try {
+            const deliveryRes = await pool.query(
+                `SELECT signer_user_id, delivery_method
+                 FROM signing_signer_delivery
+                 WHERE signing_file_id = $1`,
+                [signingFileId]
+            );
+            for (const row of deliveryRes.rows || []) {
+                deliveryBySigner.set(
+                    Number(row.signer_user_id),
+                    normalizeSignerDeliveryMethod(row.delivery_method)
+                );
+            }
+        } catch (deliveryErr) {
+            console.warn('[signing] getSigningFileSigners delivery enrich failed:', deliveryErr?.message || deliveryErr);
+        }
+
         const signers = (signersResult.rows || []).map((s) => {
             const uid = Number(s.SignerUserId);
             return {
@@ -4520,6 +4560,7 @@ exports.getSigningFileSigners = async (req, res, next) => {
                 SentAt: sentBySigner.get(uid) || null,
                 ViewedAt: viewedBySigner.get(uid) || null,
                 SignedAt: s.SignedAt || null,
+                DeliveryMethod: deliveryBySigner.get(uid) || 'phone',
             };
         });
 
@@ -4661,6 +4702,10 @@ exports.resendSigningInvite = async (req, res, next) => {
 
             const recipientName = String(signer.Name || '').trim() || 'לקוח';
 
+            const deliveryMethod = await loadSignerDeliveryMethod(signingFileId, uid);
+            const sendEmail = deliveryMethod === 'email' || deliveryMethod === 'both';
+            const sendSms = deliveryMethod === 'phone' || deliveryMethod === 'both';
+
             const notifyResult = await notifyRecipient({
                 recipientUserId: uid,
                 recipientEmail: String(signer.Email || '').trim() || undefined,
@@ -4673,7 +4718,7 @@ exports.resendSigningInvite = async (req, res, next) => {
                     body: publicUrl ? `מסמך "${file.FileName}" מחכה לחתימה.\n${publicUrl}` : `מסמך "${file.FileName}" מחכה לחתימה.`,
                     data: buildSigningInvitePushData({ signingFileId, token, publicUrl }),
                 },
-                email: publicUrl
+                email: (sendEmail && publicUrl)
                     ? {
                         campaignKey: 'SIGN_INVITE',
                         contactFields: {
@@ -4684,7 +4729,7 @@ exports.resendSigningInvite = async (req, res, next) => {
                         },
                     }
                     : null,
-                sms: publicUrl
+                sms: (sendSms && publicUrl)
                     ? {
                         messageBody: renderTemplate(signInviteSmsTemplate, {
                             recipientName,
@@ -4703,6 +4748,9 @@ exports.resendSigningInvite = async (req, res, next) => {
                 errorCode: notifyResult?.errorCode || null,
                 errors: Array.isArray(notifyResult?.errors) ? notifyResult.errors : [],
             });
+            if (ok) {
+                await saveSignerDeliveryMethod(signingFileId, uid, deliveryMethod);
+            }
         }
 
         if (sentCount <= 0) {
@@ -4738,6 +4786,90 @@ exports.resendSigningInvite = async (req, res, next) => {
     } catch (err) {
         console.error('resendSigningInvite error:', err);
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בשליחה מחדש' });
+    }
+};
+
+/** Update signer contact + delivery channel while document is pending; optional resend. */
+exports.updateSigningSignerContact = async (req, res, next) => {
+    try {
+        const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
+        const signerUserId = requireInt(req, res, { source: 'params', name: 'signerUserId' });
+        if (signingFileId === null || signerUserId === null) return;
+
+        const requesterId = req.user?.UserId;
+        const { email, phone, deliveryMethod } = req.body || {};
+
+        const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId, next });
+        if (!enabledCheck.ok) return;
+
+        const fileResult = await pool.query(
+            `SELECT signingfileid AS "SigningFileId", lawyerid AS "LawyerId", clientid AS "ClientId",
+                    filename AS "FileName", status AS "Status", expiresat AS "ExpiresAt", caseid AS "CaseId"
+             FROM signingfiles WHERE signingfileid = $1`,
+            [signingFileId]
+        );
+        if (!fileResult.rows.length) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
+        const file = fileResult.rows[0];
+        if (!canManageSigningFile({ file, requesterId, role: req.user?.Role })) {
+            return fail(next, 'FORBIDDEN', 403);
+        }
+        if (file.Status !== 'pending') {
+            return fail(next, 'VALIDATION_ERROR', 422, { message: 'ניתן לעדכן חותם רק במסמך ממתין' });
+        }
+
+        const schemaSupport = await getSchemaSupport();
+        const assigned = await isSignerAssignedToFile({
+            signingFileId,
+            signerUserId,
+            clientId: file.ClientId,
+            schemaSupport,
+        });
+        if (!assigned) {
+            return fail(next, 'VALIDATION_ERROR', 422, { message: 'החותם לא משויך למסמך זה' });
+        }
+
+        const emailNorm = email !== undefined ? String(email || '').trim().toLowerCase() || null : undefined;
+        const phoneNorm = phone !== undefined ? String(phone || '').trim().replace(/\D/g, '') || null : undefined;
+        if (emailNorm !== undefined || phoneNorm !== undefined) {
+            const sets = [];
+            const vals = [];
+            let idx = 1;
+            if (emailNorm !== undefined) {
+                sets.push(`email = $${idx++}`);
+                vals.push(emailNorm);
+            }
+            if (phoneNorm !== undefined) {
+                sets.push(`phonenumber = $${idx++}`);
+                vals.push(phoneNorm);
+            }
+            vals.push(signerUserId);
+            await pool.query(
+                `UPDATE users SET ${sets.join(', ')} WHERE userid = $${idx}`,
+                vals
+            );
+        }
+
+        let savedDelivery = null;
+        if (deliveryMethod !== undefined) {
+            savedDelivery = await saveSignerDeliveryMethod(signingFileId, signerUserId, deliveryMethod);
+        } else {
+            savedDelivery = await loadSignerDeliveryMethod(signingFileId, signerUserId);
+        }
+
+        const signerRow = await pool.query(
+            `SELECT userid AS "UserId", name AS "Name", email AS "Email", phonenumber AS "Phone"
+             FROM users WHERE userid = $1`,
+            [signerUserId]
+        );
+
+        return res.json({
+            success: true,
+            signer: signerRow.rows[0] || null,
+            deliveryMethod: savedDelivery,
+        });
+    } catch (err) {
+        console.error('updateSigningSignerContact error:', err);
+        return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בעדכון פרטי חותם' });
     }
 };
 
@@ -6302,22 +6434,16 @@ async function runSigningFinalize({
     const t0 = Date.now();
     let signedPdfKey = null;
     try {
-        // Idempotent: skip burn if signed output already exists.
-        const existing = await pool.query(
-            `select signedfilekey as "SignedFileKey"
-             from signingfiles
-             where signingfileid = $1`,
-            [signingFileId]
-        );
-        signedPdfKey = existing.rows?.[0]?.SignedFileKey || null;
-
-        if (!signedPdfKey) {
-            try {
-                signedPdfKey = await ensureSignedPdfKey({
-                    signingFileId,
-                    lawyerId: file.LawyerId,
-                    pdfKey: file.FileKey,
-                });
+        // Always (re)burn with every signed spot — a partial preview download must not
+        // leave a stale signedfilekey that omits later signers.
+        try {
+            signedPdfKey = await ensureSignedPdfKey({
+                signingFileId,
+                lawyerId: file.LawyerId,
+                pdfKey: file.FileKey,
+                persist: true,
+            });
+            if (signedPdfKey) {
                 await insertAuditEvent({
                     req,
                     eventType: 'SIGNED_PDF_GENERATED',
@@ -6331,9 +6457,9 @@ async function runSigningFinalize({
                         async: true,
                     },
                 });
-            } catch (e) {
-                console.error('[signingFinalize] Failed to generate signed PDF:', e?.message || e);
             }
+        } catch (e) {
+            console.error('[signingFinalize] Failed to generate signed PDF:', e?.message || e);
         }
 
         let emailAttachments;
@@ -7774,6 +7900,7 @@ exports.getSignedFileDownload = async (req, res, next) => {
                     signingFileId,
                     lawyerId: file.LawyerId,
                     pdfKey: file.FileKey,
+                    persist: false,
                 });
                 if (partialKey) {
                     file.SignedStorageKey = partialKey;
@@ -7810,14 +7937,18 @@ exports.getSignedFileDownload = async (req, res, next) => {
             }
         }
 
-        const shouldRegenerate = schemaSupport.signaturespotsFieldValue && hasSignedFieldValues;
+        const shouldRegenerate =
+            String(file.Status || '').toLowerCase() === 'signed'
+            || !key
+            || (schemaSupport.signaturespotsFieldValue && hasSignedFieldValues);
 
-        if (!key || shouldRegenerate) {
+        if (shouldRegenerate) {
             try {
                 key = await ensureSignedPdfKey({
                     signingFileId,
                     lawyerId: file.LawyerId,
                     pdfKey: file.FileKey,
+                    persist: String(file.Status || '').toLowerCase() === 'signed',
                 });
             } catch (e) {
                 console.error("Failed to generate signed PDF; falling back to original", e);
@@ -7903,9 +8034,15 @@ exports.getPublicSignedDocumentView = async (req, res, next) => {
                 hasSignedFieldValues = fvRes.rows.length > 0;
             } catch { hasSignedFieldValues = false; }
         }
-        if (!key || (schemaSupport.signaturespotsFieldValue && hasSignedFieldValues)) {
+        const statusLower = String(file.Status || '').toLowerCase();
+        if (!key || (schemaSupport.signaturespotsFieldValue && hasSignedFieldValues) || statusLower === 'signed') {
             try {
-                key = await ensureSignedPdfKey({ signingFileId, lawyerId: file.LawyerId, pdfKey: file.FileKey });
+                key = await ensureSignedPdfKey({
+                    signingFileId,
+                    lawyerId: file.LawyerId,
+                    pdfKey: file.FileKey,
+                    persist: statusLower === 'signed',
+                });
             } catch (e) {
                 console.error('Public view: failed to generate signed PDF', e);
             }
@@ -8057,12 +8194,13 @@ exports.getSigningFilePdf = async (req, res, next) => {
                 }
             }
 
-            if (!signedKey || shouldRegenerate) {
+            if (!signedKey || shouldRegenerate || statusLower === 'signed') {
                 try {
                     signedKey = await ensureSignedPdfKey({
                         signingFileId,
                         lawyerId: file.LawyerId,
                         pdfKey: file.FileKey,
+                        persist: statusLower === 'signed',
                     });
                 } catch (e) {
                     console.error('getSigningFilePdf: ensureSignedPdfKey failed, falling back to original:', e?.message);

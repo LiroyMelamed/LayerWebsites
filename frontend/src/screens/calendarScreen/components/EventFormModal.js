@@ -594,8 +594,31 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         performRequest: searchAdmins,
     } = useAutoHttpRequest(adminApi.getStaffByName, { onFailure: () => { } });
 
+    useEffect(() => {
+        if (isEdit) return;
+        searchAdmins("");
+    }, [isEdit, searchAdmins]);
+
     // ─── Effect: reset entire form when a different event is opened in the popup ─
     const eventIdentity = event?.id ?? `${event?.startTime || ""}|${event?.endTime || ""}|new`;
+
+    useEffect(() => {
+        if (isEdit) return;
+        if (eventType !== EVENT_TYPE_APPT && eventType !== EVENT_TYPE_HEARING) return;
+        const uid = _currentUserIdFromToken();
+        if (!uid) return;
+        setManagers((prev) => {
+            if (prev.length > 0) return prev;
+            const me = Array.isArray(admins)
+                ? admins.find((a) => Number(a.userid ?? a.UserId) === uid)
+                : null;
+            return [{
+                userId: uid,
+                name: me?.name || me?.Name || "",
+            }];
+        });
+    }, [isEdit, eventType, eventIdentity, admins]);
+
     useEffect(() => {
         const s = _formStateFromEvent(event);
         setEventType(s.eventType);
@@ -1063,6 +1086,13 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         reminderSubject,
     ]);
 
+    useEffect(() => {
+        if (!isReminderEventType || !startTime || endTime) return;
+        const startDt = parseDatetimeLocal(startTime);
+        if (!startDt) return;
+        setEndTime(toDatetimeLocal(new Date(startDt.getTime() + 15 * 60 * 1000).toISOString()));
+    }, [isReminderEventType, startTime, endTime]);
+
     const handleReminderTemplateChange = (value) => {
         if (!value) return;
         setReminderTemplateKey(value);
@@ -1207,6 +1237,13 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     return false;
                 }
             }
+            if (!endTime) { notifyError("חובה להזין שעת סיום"); return false; }
+            const startDt = parseDatetimeLocal(startTime);
+            const endDt = parseDatetimeLocal(endTime);
+            if (!startDt || !endDt || endDt <= startDt) {
+                notifyError("שעת הסיום חייבת להיות אחרי שעת ההתחלה");
+                return false;
+            }
         } else {
             if (!endTime) { notifyError("חובה להזין שעת סיום"); return false; }
             const startDt = parseDatetimeLocal(startTime);
@@ -1304,7 +1341,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 endIso = zonedJerusalemInstant(ey, em, ed, 23, 59, 0).toISOString();
             } else if (isReminderEventType) {
                 startIso = parseDatetimeLocal(startTime)?.toISOString();
-                endIso = new Date((parseDatetimeLocal(startTime)?.getTime() || Date.now()) + 15 * 60 * 1000).toISOString();
+                endIso = parseDatetimeLocal(endTime)?.toISOString();
             } else {
                 startIso = parseDatetimeLocal(startTime)?.toISOString();
                 endIso = parseDatetimeLocal(endTime)?.toISOString();
@@ -1827,6 +1864,8 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setManagers((prev) => prev.filter((m) => m.userId !== userId));
     };
 
+    const [markingRsvpUserId, setMarkingRsvpUserId] = useState(null);
+
     const handleResendInvite = async () => {
         if (!isEdit || !event?.id) return;
         clearNotices();
@@ -1852,6 +1891,40 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 e?.response?.data?.message
                 || t("calendar.inviteResendFailed")
             );
+        }
+    };
+
+    const handleStaffMarkRsvp = async (clientUserId) => {
+        if (!isEdit || !event?.id || !clientUserId || clientUserId === "legacy") return;
+        setMarkingRsvpUserId(clientUserId);
+        clearNotices();
+        try {
+            const res = await calendarApi.staffSetClientRsvp(event.id, {
+                clientUserId,
+                status: "accepted",
+            });
+            const data = res?.data || res;
+            if (!data?.ok) {
+                notifyError(data?.message || t("calendar.staffRsvpFailed"));
+                return;
+            }
+            notifySuccess(t("calendar.staffRsvpSuccess"));
+            setClients((prev) => prev.map((c) => (
+                Number(c.userId) === Number(clientUserId)
+                    ? { ...c, inviteStatus: "accepted" }
+                    : c
+            )));
+            try {
+                const refreshed = await calendarApi.getEvent(event.id);
+                const saved = refreshed?.data?.event || refreshed?.data;
+                if (saved) onUpdated?.(saved);
+            } catch {
+                /* best-effort refresh */
+            }
+        } catch (e) {
+            notifyError(e?.response?.data?.message || t("calendar.staffRsvpFailed"));
+        } finally {
+            setMarkingRsvpUserId(null);
         }
     };
 
@@ -2116,24 +2189,24 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                         }}
                         timeToWaitInMilli={0}
                     />
-                    {!isReminderEventType && (
-                        <BlockDateInput
-                            title={t("calendar.endTime") + " *"}
-                            mode={useDateOnlyInputs ? "date" : "datetime-local"}
-                            value={useDateOnlyInputs
-                                ? toLocalYmdFromInput(endTime || startTime)
-                                : endTime}
-                            onChange={(e) => {
-                                const raw = e.target.value;
-                                if (useDateOnlyInputs) {
-                                    setEndTime(raw ? `${raw}T23:59` : "");
-                                } else {
-                                    setEndTime(raw);
-                                }
-                            }}
-                            timeToWaitInMilli={0}
-                        />
-                    )}
+                    <BlockDateInput
+                        title={(isReminderEventType
+                            ? t("calendar.endTime")
+                            : t("calendar.endTime")) + " *"}
+                        mode={useDateOnlyInputs ? "date" : "datetime-local"}
+                        value={useDateOnlyInputs
+                            ? toLocalYmdFromInput(endTime || startTime)
+                            : endTime}
+                        onChange={(e) => {
+                            const raw = e.target.value;
+                            if (useDateOnlyInputs) {
+                                setEndTime(raw ? `${raw}T23:59` : "");
+                            } else {
+                                setEndTime(raw);
+                            }
+                        }}
+                        timeToWaitInMilli={0}
+                    />
 
                     <SimpleContainer className="lw-eventFormModal__allDay">
                         <input
@@ -2598,9 +2671,20 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                         const label = _clientRsvpLabel(st, t);
                                         if (!label) return null;
                                         return (
-                                            <Text14 key={c.userId} className={`lw-eventFormModal__rsvpRow is-${st}`}>
-                                                <strong>{c.name || "לקוח"}:</strong> {label}
-                                            </Text14>
+                                            <SimpleContainer key={c.userId} className={`lw-eventFormModal__rsvpRow is-${st}`}>
+                                                <Text14>
+                                                    <strong>{c.name || "לקוח"}:</strong> {label}
+                                                </Text14>
+                                                {st === "pending" && c.userId && c.userId !== "legacy" && (
+                                                    <SecondaryButton
+                                                        onPress={() => handleStaffMarkRsvp(c.userId)}
+                                                        isPerforming={markingRsvpUserId === c.userId}
+                                                        disabled={!!markingRsvpUserId}
+                                                    >
+                                                        {t("calendar.staffMarkAcceptedPhone")}
+                                                    </SecondaryButton>
+                                                )}
+                                            </SimpleContainer>
                                         );
                                     })}
                                 </SimpleContainer>
@@ -2668,9 +2752,20 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                                     const label = _clientRsvpLabel(st, t);
                                     if (!label) return null;
                                     return (
-                                        <Text14 key={c.userId} className={`lw-eventFormModal__rsvpRow is-${st}`}>
-                                            <strong>{c.name || "לקוח"}:</strong> {label}
-                                        </Text14>
+                                        <SimpleContainer key={c.userId} className={`lw-eventFormModal__rsvpRow is-${st}`}>
+                                            <Text14>
+                                                <strong>{c.name || "לקוח"}:</strong> {label}
+                                            </Text14>
+                                            {st === "pending" && c.userId && c.userId !== "legacy" && (
+                                                <SecondaryButton
+                                                    onPress={() => handleStaffMarkRsvp(c.userId)}
+                                                    isPerforming={markingRsvpUserId === c.userId}
+                                                    disabled={!!markingRsvpUserId}
+                                                >
+                                                    {t("calendar.staffMarkAcceptedPhone")}
+                                                </SecondaryButton>
+                                            )}
+                                        </SimpleContainer>
                                     );
                                 })}
                             </SimpleContainer>

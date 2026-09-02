@@ -550,6 +550,11 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
     const [loadingSigners, setLoadingSigners] = useState(false);
     const [selectedSignerIds, setSelectedSignerIds] = useState([]);
     const [isResending, setIsResending] = useState(false);
+    const [editingSigner, setEditingSigner] = useState(null);
+    const [editSignerEmail, setEditSignerEmail] = useState("");
+    const [editSignerPhone, setEditSignerPhone] = useState("");
+    const [editSignerDelivery, setEditSignerDelivery] = useState("phone");
+    const [isSavingSigner, setIsSavingSigner] = useState(false);
 
     const loadSigners = async () => {
         setLoadingSigners(true);
@@ -593,11 +598,49 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                 toastSuccess(`ההזמנה נשלחה ל-${sent || total} נמענים.`);
             }
             setTimeout(() => setShowResend(false), 1500);
+            loadSigners();
         } catch (e) {
             console.error('Resend failed', e);
             toastError(e?.data?.message || t('signingManager.resend.error'));
         } finally {
             setIsResending(false);
+        }
+    };
+
+    const openEditSigner = (signer) => {
+        if (!signer || signer.AllSigned) return;
+        setEditingSigner(signer);
+        setEditSignerEmail(String(signer.Email || "").trim());
+        setEditSignerPhone(String(signer.Phone || "").trim());
+        setEditSignerDelivery(String(signer.DeliveryMethod || "phone").toLowerCase());
+    };
+
+    const handleSaveSignerContact = async ({ resendAfterSave = false } = {}) => {
+        if (!editingSigner?.SignerUserId) return;
+        setIsSavingSigner(true);
+        try {
+            await signingFilesApi.updateSigningSignerContact(
+                file.SigningFileId,
+                editingSigner.SignerUserId,
+                {
+                    email: editSignerEmail.trim() || null,
+                    phone: editSignerPhone.trim() || null,
+                    deliveryMethod: editSignerDelivery,
+                }
+            );
+            if (resendAfterSave) {
+                await signingFilesApi.resendSigningInvite(file.SigningFileId, [editingSigner.SignerUserId]);
+                toastSuccess(t('signingManager.replaceSigner.resendSuccess'));
+            } else {
+                toastSuccess(t('signingManager.replaceSigner.saveSuccess'));
+            }
+            setEditingSigner(null);
+            loadSigners();
+        } catch (e) {
+            console.error('Update signer failed', e);
+            toastError(e?.data?.message || t('signingManager.replaceSigner.error'));
+        } finally {
+            setIsSavingSigner(false);
         }
     };
 
@@ -728,6 +771,7 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                                     <span>{t('signingManager.signerStatus.sent')}</span>
                                     <span>{t('signingManager.signerStatus.viewed')}</span>
                                     <span>{t('signingManager.signerStatus.signed')}</span>
+                                    {isPending && <span>{t('signingManager.replaceSigner.actions')}</span>}
                                 </div>
                                 {(signers.length ? signers : []).map((s) => (
                                     <div key={s.SignerUserId} className="lw-signingManagerScreen__signerStatusRow">
@@ -736,6 +780,18 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                                         <span>{formatUtcDateTime(s.SentAt)}</span>
                                         <span>{formatUtcDateTime(s.ViewedAt)}</span>
                                         <span>{formatUtcDateTime(s.SignedAt)}</span>
+                                        {isPending && (
+                                            <span>
+                                                {!s.AllSigned && (
+                                                    <SecondaryButton
+                                                        size={buttonSizes.SMALL}
+                                                        onPress={() => openEditSigner(s)}
+                                                    >
+                                                        {t('signingManager.replaceSigner.button')}
+                                                    </SecondaryButton>
+                                                )}
+                                            </span>
+                                        )}
                                     </div>
                                 ))}
                                 {!signers.length && !loadingSigners && (
@@ -832,6 +888,52 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
 
                 {spotsPreviewError && (
                     <div className="lw-signingManagerScreen__spotsPreviewError">{spotsPreviewError}</div>
+                )}
+
+                {editingSigner && (
+                    <SimpleContainer className="lw-signingManagerScreen__replaceSignerSection">
+                        <div className="lw-signingManagerScreen__resendTitle">
+                            {t('signingManager.replaceSigner.title', { name: editingSigner.Name || editingSigner.SignerUserId })}
+                        </div>
+                        <SimpleInput
+                            title={t('signingManager.replaceSigner.email')}
+                            value={editSignerEmail}
+                            onChange={(e) => setEditSignerEmail(e.target.value)}
+                        />
+                        <SimpleInput
+                            title={t('signingManager.replaceSigner.phone')}
+                            value={editSignerPhone}
+                            onChange={(e) => setEditSignerPhone(e.target.value)}
+                        />
+                        <SegmentedSwitch
+                            ariaLabel={t('signingManager.replaceSigner.delivery')}
+                            value={editSignerDelivery}
+                            onChange={setEditSignerDelivery}
+                            options={[
+                                { value: 'phone', label: t('signingManager.replaceSigner.deliveryPhone') },
+                                { value: 'email', label: t('signingManager.replaceSigner.deliveryEmail') },
+                                { value: 'both', label: t('signingManager.replaceSigner.deliveryBoth') },
+                            ]}
+                        />
+                        <SimpleContainer className="lw-signingManagerScreen__resendActions">
+                            <PrimaryButton
+                                onPress={() => handleSaveSignerContact({ resendAfterSave: true })}
+                                disabled={isSavingSigner}
+                                isPerforming={isSavingSigner}
+                            >
+                                {t('signingManager.replaceSigner.saveAndResend')}
+                            </PrimaryButton>
+                            <SecondaryButton
+                                onPress={() => handleSaveSignerContact({ resendAfterSave: false })}
+                                disabled={isSavingSigner}
+                            >
+                                {t('signingManager.replaceSigner.saveOnly')}
+                            </SecondaryButton>
+                            <SecondaryButton onPress={() => setEditingSigner(null)} disabled={isSavingSigner}>
+                                {t('common.cancel')}
+                            </SecondaryButton>
+                        </SimpleContainer>
+                    </SimpleContainer>
                 )}
 
                 {showResend && (

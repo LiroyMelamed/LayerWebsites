@@ -17,6 +17,7 @@ const {
     rawWazeUrl,
     rawMapsUrl,
     unwrapLocation,
+    resolveEffectivePlaceMode,
     isRemoteMeeting,
     remoteMeetingLabel,
     meetingTypeLabelHe,
@@ -423,6 +424,30 @@ function formatRemainingHebrew(startTime, now = new Date()) {
     return formatOffsetHebrew(minutesUntilStart(startTime, now));
 }
 
+/** dd/mm/yy in Asia/Jerusalem — used in reminder when-lines. */
+function formatEventDateShort(startTime) {
+    const d = new Date(startTime);
+    if (!Number.isFinite(d.getTime())) return '';
+    const parts = new Intl.DateTimeFormat('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit',
+        timeZone: TENANT_TZ,
+    }).formatToParts(d);
+    const get = (type) => parts.find((p) => p.type === type)?.value || '';
+    return `${get('day')}/${get('month')}/${get('year')}`;
+}
+
+/** e.g. "בעוד 9 ימים בתאריך 25/08/26" */
+function formatWhenWithDate(startTime, offsetMinutes) {
+    const when = startTime
+        ? formatRemainingHebrew(startTime)
+        : formatOffsetHebrew(offsetMinutes);
+    const dateStr = startTime ? formatEventDateShort(startTime) : '';
+    if (!dateStr) return when;
+    return `${when} בתאריך ${dateStr}`;
+}
+
 function formatEventDate(startTime) {
     return new Date(startTime).toLocaleDateString('he-IL', {
         day: '2-digit',
@@ -506,9 +531,10 @@ async function loadCalendarSmsContext(ev) {
         firmMapsUrl: placeMode === 'place' ? firmMapsUrl : '',
         meetingType,
     });
+    const effectivePlaceMode = resolveEffectivePlaceMode(meetingType, rawLocation, nav.mode);
     const rsvpUrl = ev.invite_token ? await buildShortRsvpUrl(ev.invite_token) : '';
-    const isRemote = placeMode !== 'place' || Boolean(nav.isRemote);
-    const locationLabel = placeMode === 'none'
+    const isRemote = effectivePlaceMode === 'link' || Boolean(nav.isRemote);
+    const locationLabel = effectivePlaceMode === 'none'
         ? ''
         : (nav.label || remoteMeetingLabel(nav.address || locationForNav, meetingType));
     const eventTypeNorm = String(eventType || '').trim().toLowerCase();
@@ -532,7 +558,7 @@ async function loadCalendarSmsContext(ev) {
         reminderSubject,
         reminderTemplateLabel
     );
-    const address = placeMode === 'none' ? '' : (nav.address || '');
+    const address = effectivePlaceMode === 'none' ? '' : (nav.address || '');
 
     return {
         recipientName: String(ev.client_name || ev.lead_name || ev.recipient_name || '').trim() || 'לקוח/ה',
@@ -541,8 +567,8 @@ async function loadCalendarSmsContext(ev) {
         date: formatEventDate(ev.start_time),
         time: formatEventTime(ev.start_time),
         address,
-        wazeUrl: placeMode === 'place' ? (nav.wazeUrl || '') : '',
-        mapsUrl: placeMode === 'place' ? (nav.mapsUrl || '') : '',
+        wazeUrl: effectivePlaceMode === 'place' ? (nav.wazeUrl || '') : '',
+        mapsUrl: effectivePlaceMode === 'place' ? (nav.mapsUrl || '') : '',
         rsvpUrl,
         firmPhone,
         websiteUrl,
@@ -552,7 +578,7 @@ async function loadCalendarSmsContext(ev) {
         locationLabel,
         meetingType: String(meetingType || '').trim(),
         meetingTypeLabel,
-        placeMode,
+        placeMode: effectivePlaceMode,
     };
 }
 
@@ -661,9 +687,7 @@ async function getInviteSmsTemplate(ev) {
 async function composeLawyerReminderMessage(offsetMinutes, ev) {
     const timeStr = formatEventTime(ev.start_time);
     // Prefer actual remaining time at send moment over the configured offset.
-    const when = ev?.start_time
-        ? formatRemainingHebrew(ev.start_time)
-        : formatOffsetHebrew(offsetMinutes);
+    const when = formatWhenWithDate(ev?.start_time, offsetMinutes);
     const isReminderEvent = ev.event_type === 'reminder';
     const meetingType = ev.meeting_type || ev.meetingType || '';
     let reminderTemplateKey = String(ev.reminder_template_key || ev.reminderTemplateKey || '').trim();
@@ -739,9 +763,7 @@ function formatClientsList(raw) {
 async function composeClientReminderMessage(offsetMinutes, ev) {
     const ctx = await loadCalendarSmsContext(ev);
     const remainingMins = ev?.start_time ? minutesUntilStart(ev.start_time) : Number(offsetMinutes) || 0;
-    ctx.when = ev?.start_time
-        ? formatRemainingHebrew(ev.start_time)
-        : formatOffsetHebrew(offsetMinutes);
+    ctx.when = formatWhenWithDate(ev?.start_time, offsetMinutes);
     const template = await getClientReminderTemplate(ev);
     const body = polishCalendarSmsBody(renderTemplate(template, ctx).trim(), ctx);
     const kind = ctx.meetingTypeLabel || 'אירוע';
@@ -799,6 +821,8 @@ module.exports = {
     hasAnyReminderChannel,
     formatOffsetHebrew,
     formatRemainingHebrew,
+    formatEventDateShort,
+    formatWhenWithDate,
     minutesUntilStart,
     buildNavLinks,
     composeLawyerReminderMessage,

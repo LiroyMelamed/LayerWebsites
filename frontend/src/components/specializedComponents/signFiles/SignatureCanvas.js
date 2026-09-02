@@ -1316,6 +1316,13 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         // Reconcile with server (quiet if we already advanced optimistically).
         advanceAfterSpotsChange(spots, { quiet: Boolean(optimisticSpotIds) });
         clearCanvas();
+        if (effectiveSigningFileId) {
+            try {
+                await loadPdfFromFileKey(effectiveSigningFileId);
+            } catch (pdfErr) {
+                console.warn('[SignatureCanvas] PDF reload after sign failed:', pdfErr?.message || pdfErr);
+            }
+        }
     };
 
     const saveSignature = async () => {
