@@ -16,10 +16,12 @@ const SearchInput = ({
     queryResult,
     isPerforming,
     getButtonTextFunction,
+    getSelectValueFunction,
     buttonPressFunction,
     emptyActionText,
     onEmptyAction,
     clearOnSelect,
+    usePortal = true,
     title,
     error,
     style: _style,
@@ -31,6 +33,7 @@ const SearchInput = ({
     const [showResults, setShowResults] = useState(false);
     const [isOpening, setIsOpening] = useState(false);
     const targetRef = useRef(null);
+    const inputRef = useRef(null);
     const blurTimerRef = useRef(null);
 
     useEffect(() => {
@@ -77,7 +80,7 @@ const SearchInput = ({
             blurTimerRef.current = null;
             setShowResults(false);
             setIsOpening(false);
-        }, 150);
+        }, 250);
     };
 
     useEffect(() => {
@@ -102,14 +105,20 @@ const SearchInput = ({
             blurTimerRef.current = null;
         }
         const cleanedText = String(text ?? '').trimEnd();
-        buttonPressFunction?.(cleanedText, result);
+        const fieldValue = String(getSelectValueFunction?.(result) ?? cleanedText).trimEnd();
         setShowResults(false);
+        buttonPressFunction?.(fieldValue, result);
         if (clearOnSelect) {
             setQuery('');
             onSearch?.('');
         } else {
-            setQuery(cleanedText);
+            setQuery(fieldValue);
+            onSearch?.(fieldValue);
         }
+        // Close mobile keyboard; value already committed via onSearch above.
+        requestAnimationFrame(() => {
+            inputRef.current?.blur?.();
+        });
     }
 
     return (
@@ -117,6 +126,8 @@ const SearchInput = ({
             <SimpleInput
                 title={title}
                 ref={targetRef}
+                inputRef={inputRef}
+                acceptExternalValueWhileFocused
                 value={query}
                 leftIcon={leftIcon}
                 rightIcon={rightIcon}
@@ -127,12 +138,14 @@ const SearchInput = ({
                 onFocus={handleFocus}
                 onBlur={handleBlur}
                 error={error}
+                timeToWaitInMilli={0}
                 {...props}
             />
             {hasDropdown && showResults && (
                 <HoverContainer
                     targetRef={targetRef}
                     className="lw-searchInput__hover"
+                    usePortal={usePortal}
                     queryResult={queryResult}
                     isPerforming={Boolean(isPerforming) || isOpening}
                     getButtonTextFunction={getButtonTextFunction}

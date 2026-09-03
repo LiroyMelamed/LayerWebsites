@@ -1,5 +1,9 @@
 // Route path constants only — import from here (not screen modules) to keep lazy chunks small.
 
+export const AdminStackName = "/AdminStack";
+export const LoginStackName = "/LoginStack";
+export const ClientStackName = "/ClientStack";
+
 export const MainScreenName = "/MainScreen";
 export const TaggedCasesScreenName = "/TaggedCasesScreen";
 export const AllCasesScreenName = "/AllCasesScreen";

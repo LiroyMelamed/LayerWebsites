@@ -153,6 +153,11 @@ const calendarApi = {
         return await ApiUtils.post(`${base}/${eventId}/resend-invite`);
     },
 
+    /** Staff marks client RSVP (e.g. after phone call) */
+    staffSetClientRsvp: async (eventId, { clientUserId, status }) => {
+        return await ApiUtils.post(`${base}/${eventId}/rsvp`, { clientUserId, status });
+    },
+
     /** Duplicate an event (new invite tokens; clears RSVP / sent reminders) */
     duplicateEvent: async (eventId) => {
         return await ApiUtils.post(`${base}/${eventId}/duplicate`);

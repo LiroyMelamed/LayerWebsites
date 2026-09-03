@@ -49,10 +49,7 @@ export default function PublicSigningScreen() {
                     <SignatureCanvas
                         publicToken={token}
                         variant="screen"
-                        onClose={() => {
-                            setClosed(true);
-                            goToLogin();
-                        }}
+                        onClose={() => setClosed(true)}
                     />
                 )}
             </SimpleContainer>

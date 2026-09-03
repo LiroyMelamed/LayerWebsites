@@ -48,9 +48,10 @@ export default function SigningSpotsPreviewScreen() {
                 const blob = await pdfRes.blob();
                 const name = detailsRes?.data?.file?.FileName || detailsRes?.data?.FileName || "document.pdf";
                 const nextSpots = detailsRes?.data?.signatureSpots || detailsRes?.data?.SignatureSpots || [];
+                const overlaySpots = nextSpots.filter((s) => !(s.IsSigned || s.issigned));
                 if (cancelled) return;
                 setFileName(name);
-                setSpots(nextSpots);
+                setSpots(overlaySpots);
                 setPdfFile(new File([blob], name, { type: blob.type || "application/pdf" }));
             } catch (err) {
                 console.error("SigningSpotsPreview load failed", err);

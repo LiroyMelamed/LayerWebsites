@@ -396,7 +396,8 @@ async function markPaymentFailed({ intent, errorMessage, skipEmail } = {}) {
         last_payment_error: String(errorMessage || '').slice(0, 500),
     });
 
-    if (!skipEmail) {
+    // Notify once when entering past_due — not on every scheduler retry.
+    if (!skipEmail && !alreadyPastDue) {
         const card = await getActiveCard();
         try {
             await sendFailedPaymentEmails({
@@ -780,19 +781,25 @@ async function runBillingMaintenance({ now = new Date() } = {}) {
         latest.status === 'past_due' &&
         (!latest.lastFailedAt || now.getTime() - new Date(latest.lastFailedAt).getTime() >= RETRY_GAP_MS);
 
-    if (!due && !pastDueRetry && latest.status === 'active') {
-        return { skipped: true, reason: 'not_due' };
+    const shouldRenew = latest.status === 'active' && due;
+    const shouldRetryPastDue = latest.status === 'past_due' && pastDueRetry;
+
+    if (!shouldRenew && !shouldRetryPastDue) {
+        if (latest.status === 'past_due') {
+            return { skipped: true, reason: 'past_due_waiting_retry' };
+        }
+        if (latest.status === 'active' && !due) {
+            return { skipped: true, reason: 'not_due' };
+        }
+        return { skipped: true, reason: 'noop', flags: latestFlags };
     }
 
-    if (latest.status === 'complimentary' || due || pastDueRetry) {
-        const yearly = normalizeBillingInterval(latest.billingInterval) === 'yearly';
-        const result = await chargeSavedCard({
-            kind: latest.status === 'past_due' ? 'retry' : (yearly ? 'annual' : 'renewal'),
-        });
-        return { charged: true, result };
-    }
-
-    return { skipped: true, reason: 'noop', flags: latestFlags };
+    const yearly = normalizeBillingInterval(latest.billingInterval) === 'yearly';
+    const result = await chargeSavedCard({
+        kind: shouldRetryPastDue ? 'retry' : (yearly ? 'annual' : 'renewal'),
+        skipEmail: shouldRetryPastDue,
+    });
+    return { charged: true, result };
 }
 
 async function getDisabledOptions(usage) {

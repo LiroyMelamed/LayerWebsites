@@ -59,3 +59,12 @@
   justify-content: center;
   text-align: center;
 }
+
+.lw-hoverContainer--inline {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  inset-inline: 0;
+  width: 100%;
+  min-width: 0;
+  z-index: 99999;
+}

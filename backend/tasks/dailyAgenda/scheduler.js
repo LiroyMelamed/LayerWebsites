@@ -11,6 +11,7 @@ const { sendMessage } = require('../../utils/sendMessage');
 const { sendTransactionalCustomHtmlEmail } = require('../../utils/smooveEmailCampaignService');
 const sendAndStoreNotification = require('../../utils/sendAndStoreNotification');
 const { personalCalendarSql } = require('../../lib/calendarVisibility');
+const { listHolidaysInRange } = require('../../lib/hebcalHolidays');
 
 function _israelNowParts() {
     const fmt = new Intl.DateTimeFormat('en-GB', {
@@ -55,6 +56,17 @@ function _isEmail(s) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 }
 
+function _eventTypePrefix(eventType) {
+    const map = {
+        leave: '[חופשה]',
+        holiday: '[חג]',
+        reminder: '[תזכורת]',
+        hearing: '[דיון]',
+        appointment: '[פגישה]',
+    };
+    return map[String(eventType || '').toLowerCase()] || '';
+}
+
 function _formatEventLine(ev) {
     const start = new Date(ev.start_time).toLocaleTimeString('he-IL', {
         hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Jerusalem',
@@ -64,7 +76,9 @@ function _formatEventLine(ev) {
     });
     const invite = ev.invite_status && ev.invite_status !== 'none' ? ` [${ev.invite_status}]` : '';
     const loc = ev.location ? ` @ ${ev.location}` : '';
-    return `${start}–${end} ${ev.title || 'אירוע'}${loc}${invite}`;
+    const prefix = _eventTypePrefix(ev.event_type);
+    const title = ev.title || 'אירוע';
+    return `${start}–${end} ${prefix ? `${prefix} ` : ''}${title}${loc}${invite}`;
 }
 
 function _resolveRecipients(row, channels) {
@@ -85,24 +99,31 @@ async function _sendForUser(row, date) {
     if (!recipients.length && !channels.push) return false;
 
     const { rows: events } = await pool.query(
-        `SELECT ce.title, ce.location, ce.start_time, ce.end_time, ce.invite_status
+        `SELECT ce.title, ce.location, ce.start_time, ce.end_time, ce.invite_status, ce.event_type
          FROM calendar_events ce
          WHERE ${personalCalendarSql(2)}
            AND ce.start_time >= ($1::date AT TIME ZONE 'Asia/Jerusalem')
            AND ce.start_time < (($1::date + INTERVAL '1 day') AT TIME ZONE 'Asia/Jerusalem')
-           AND ce.event_type NOT IN ('leave')
          ORDER BY ce.start_time ASC
          LIMIT 200`,
         [date, row.user_id]
     );
 
-    const lines = events.length
-        ? events.map(_formatEventLine)
-        : ['אין אירועים להיום'];
+    let holidayLines = [];
+    try {
+        const holidays = await listHolidaysInRange(date, date);
+        holidayLines = (holidays || []).map((h) => `[חג] ${h.title || h.titleEn || 'חג'}`);
+    } catch (holidayErr) {
+        console.warn('[dailyAgenda] holiday enrich failed:', holidayErr?.message || holidayErr);
+    }
+
+    const eventLines = events.length ? events.map(_formatEventLine) : [];
+    const lines = [...holidayLines, ...eventLines];
+    if (!lines.length) lines.push('אין אירועים להיום');
     const body = `יומן ליום ${date}\n\n${lines.join('\n')}`;
     const html = `<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.7"><h3>יומן ליום ${date}</h3><pre style="font-family:inherit;white-space:pre-wrap">${lines.join('\n')}</pre></div>`;
-    const pushBody = events.length
-        ? `${events.length} אירועים להיום`
+    const pushBody = (holidayLines.length + events.length) > 0
+        ? `${holidayLines.length + events.length} פריטים ביומן להיום`
         : 'אין אירועים להיום';
 
     let sentAny = false;
