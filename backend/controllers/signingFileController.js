@@ -4844,7 +4844,7 @@ exports.updateSigningSignerContact = async (req, res, next) => {
         if (signingFileId === null || signerUserId === null) return;
 
         const requesterId = req.user?.UserId;
-        const { email, phone, deliveryMethod } = req.body || {};
+        const { email, phone, deliveryMethod, replaceWithUserId } = req.body || {};
 
         const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId, next });
         if (!enabledCheck.ok) return;
@@ -4875,6 +4875,74 @@ exports.updateSigningSignerContact = async (req, res, next) => {
             return fail(next, 'VALIDATION_ERROR', 422, { message: 'החותם לא משויך למסמך זה' });
         }
 
+        let effectiveSignerUserId = signerUserId;
+        const replaceTargetId = parsePositiveIntStrict(replaceWithUserId) ?? null;
+        if (replaceTargetId && replaceTargetId !== signerUserId) {
+            if (!schemaSupport?.signaturespotsSignerUserId) {
+                return fail(next, 'VALIDATION_ERROR', 422, { message: 'החלפת חותם אינה נתמכת במערכת זו' });
+            }
+
+            const newUserRes = await pool.query(
+                `SELECT userid AS "UserId", name AS "Name", email AS "Email", phonenumber AS "Phone"
+                 FROM users WHERE userid = $1`,
+                [replaceTargetId]
+            );
+            if (!newUserRes.rows.length) {
+                return fail(next, 'VALIDATION_ERROR', 422, { message: 'הלקוח שנבחר לא נמצא' });
+            }
+
+            const signedCheck = await pool.query(
+                `SELECT EXISTS (
+                    SELECT 1 FROM signaturespots
+                    WHERE signingfileid = $1 AND signeruserid = $2
+                      AND issigned = true AND isrequired = true
+                 ) AS "HasSigned"`,
+                [signingFileId, signerUserId]
+            );
+            if (signedCheck.rows[0]?.HasSigned) {
+                return fail(next, 'VALIDATION_ERROR', 422, { message: 'לא ניתן להחליף חותם שכבר חתם על המסמך' });
+            }
+
+            const duplicateSigner = await pool.query(
+                `SELECT 1 FROM signaturespots
+                 WHERE signingfileid = $1 AND signeruserid = $2
+                   AND lower(coalesce(fieldtype, 'signature')) != 'lawyerstamp'
+                 LIMIT 1`,
+                [signingFileId, replaceTargetId]
+            );
+            if (duplicateSigner.rows.length > 0) {
+                return fail(next, 'VALIDATION_ERROR', 422, { message: 'הלקוח שנבחר כבר משויך כחותם במסמך זה' });
+            }
+
+            await pool.query(
+                `UPDATE signaturespots
+                 SET signeruserid = $1
+                 WHERE signingfileid = $2 AND signeruserid = $3 AND issigned = false`,
+                [replaceTargetId, signingFileId, signerUserId]
+            );
+
+            const oldDelivery = await loadSignerDeliveryMethod(signingFileId, signerUserId);
+            try {
+                await pool.query(
+                    `DELETE FROM signing_signer_delivery
+                     WHERE signing_file_id = $1 AND signer_user_id = $2`,
+                    [signingFileId, signerUserId]
+                );
+                await saveSignerDeliveryMethod(signingFileId, replaceTargetId, oldDelivery);
+            } catch (deliveryMigrateErr) {
+                console.warn('[signing] replace signer delivery migrate failed:', deliveryMigrateErr?.message || deliveryMigrateErr);
+            }
+
+            if (Number(file.ClientId) === Number(signerUserId)) {
+                await pool.query(
+                    `UPDATE signingfiles SET clientid = $1 WHERE signingfileid = $2`,
+                    [replaceTargetId, signingFileId]
+                );
+            }
+
+            effectiveSignerUserId = replaceTargetId;
+        }
+
         const emailNorm = email !== undefined ? String(email || '').trim().toLowerCase() || null : undefined;
         const phoneNorm = phone !== undefined ? String(phone || '').trim().replace(/\D/g, '') || null : undefined;
         if (emailNorm !== undefined || phoneNorm !== undefined) {
@@ -4889,7 +4957,7 @@ exports.updateSigningSignerContact = async (req, res, next) => {
                 sets.push(`phonenumber = $${idx++}`);
                 vals.push(phoneNorm);
             }
-            vals.push(signerUserId);
+            vals.push(effectiveSignerUserId);
             await pool.query(
                 `UPDATE users SET ${sets.join(', ')} WHERE userid = $${idx}`,
                 vals
@@ -4898,19 +4966,21 @@ exports.updateSigningSignerContact = async (req, res, next) => {
 
         let savedDelivery = null;
         if (deliveryMethod !== undefined) {
-            savedDelivery = await saveSignerDeliveryMethod(signingFileId, signerUserId, deliveryMethod);
+            savedDelivery = await saveSignerDeliveryMethod(signingFileId, effectiveSignerUserId, deliveryMethod);
         } else {
-            savedDelivery = await loadSignerDeliveryMethod(signingFileId, signerUserId);
+            savedDelivery = await loadSignerDeliveryMethod(signingFileId, effectiveSignerUserId);
         }
 
         const signerRow = await pool.query(
             `SELECT userid AS "UserId", name AS "Name", email AS "Email", phonenumber AS "Phone"
              FROM users WHERE userid = $1`,
-            [signerUserId]
+            [effectiveSignerUserId]
         );
 
         return res.json({
             success: true,
+            signerUserId: effectiveSignerUserId,
+            replacedFromUserId: effectiveSignerUserId !== signerUserId ? signerUserId : null,
             signer: signerRow.rows[0] || null,
             deliveryMethod: savedDelivery,
         });

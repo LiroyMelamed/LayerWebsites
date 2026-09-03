@@ -130,6 +130,7 @@
       "buttonShort": "Change delivery",
       "title": "Update signer — {{name}}",
       "titleLabel": "Update signer details",
+      "client": "Signer / client",
       "email": "Email",
       "phone": "Phone",
       "delivery": "Delivery channel",

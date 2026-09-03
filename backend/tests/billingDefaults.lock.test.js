@@ -50,7 +50,7 @@ test('tenant defaults: morlevy complimentary through 01/01/2027', () => {
     }
 });
 
-test('tenant defaults: melamedlaw complimentary through 01/09/2026', () => {
+test('tenant defaults: melamedlaw complimentary through 12/09/2026', () => {
     process.env.FIRM_NAME = 'MelamedLaw';
     process.env.COMPANY_NAME = 'MelamedLaw';
     process.env.RUNTIME_TENANT = 'melamedlaw';
@@ -61,7 +61,7 @@ test('tenant defaults: melamedlaw complimentary through 01/09/2026', () => {
         assert.ok(until);
         assert.equal(
             until.toISOString(),
-            new Date('2026-09-01T23:59:59.999+03:00').toISOString()
+            new Date('2026-09-12T23:59:59.999+03:00').toISOString()
         );
     } finally {
         delete process.env.RUNTIME_TENANT;

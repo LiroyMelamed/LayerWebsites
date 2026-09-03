@@ -181,7 +181,7 @@ function buildHolidayHintEvent(h, t) {
     };
 }
 
-/** Aggregate multi-client RSVP: any accepted → accepted; else any pending → pending; else declined. */
+/** Aggregate multi-client RSVP for calendar chrome (border/badge). */
 function aggregateInviteStatus(ev) {
     const clients = Array.isArray(ev?.clients) ? ev.clients : null;
     if (clients?.length) {
@@ -192,7 +192,9 @@ function aggregateInviteStatus(ev) {
             const legacy = ev?.inviteStatus;
             return legacy && legacy !== "none" ? legacy : null;
         }
-        if (statuses.some((s) => s === "accepted")) return "accepted";
+        const acceptedCount = statuses.filter((s) => s === "accepted").length;
+        if (acceptedCount > 0 && acceptedCount < statuses.length) return "partial";
+        if (acceptedCount === statuses.length) return "accepted";
         if (statuses.some((s) => s === "pending")) return "pending";
         if (statuses.some((s) => s === "declined")) return "declined";
         return null;
@@ -205,6 +207,7 @@ function inviteStatusClass(inviteStatus, ev) {
     const eventType = String(ev?.eventType || ev?.event_type || "").trim().toLowerCase();
     if (eventType !== "appointment" && eventType !== "hearing") return null;
     if (inviteStatus === "accepted") return "lw-fcEvent--inviteAccepted";
+    if (inviteStatus === "partial") return "lw-fcEvent--invitePartial";
     if (inviteStatus === "declined") return "lw-fcEvent--inviteDeclined";
     if (inviteStatus === "pending") return "lw-fcEvent--invitePending";
     return null;
@@ -344,6 +347,15 @@ function _currentRole() {
 }
 function _isFirmManager(role) { return role && role !== "User"; }
 
+function _canPickEmployeeCalendar(role) {
+    if (role === "Admin" || role === "PlatformAdmin") return true;
+    try {
+        return typeof window !== "undefined" && localStorage.getItem("isPlatformAdmin") === "true";
+    } catch {
+        return false;
+    }
+}
+
 function _currentUserIdFromToken() {
     try {
         const token = localStorage.getItem("token");
@@ -387,6 +399,7 @@ export default function CalendarScreen() {
 
     const role = _currentRole();
     const canUseFirmView = _isFirmManager(role);
+    const canPickEmployeeCalendar = _canPickEmployeeCalendar(role);
     const currentUserId = _currentUserIdFromToken();
     const urlCalendarInitRef = useRef(false);
 
@@ -862,14 +875,26 @@ export default function CalendarScreen() {
             ? (aggregateInviteStatus(ev) || (ev.inviteStatus !== "none" ? ev.inviteStatus : null))
             : null;
         const multi = Array.isArray(ev.clients) && ev.clients.length > 1;
+        const invitedClients = multi
+            ? ev.clients.filter((c) => {
+                const st = c.inviteStatus || c.invite_status;
+                return st && st !== "none";
+            })
+            : [];
         const acceptedCount = multi
-            ? ev.clients.filter((c) => (c.inviteStatus || c.invite_status) === "accepted").length
+            ? invitedClients.filter((c) => (c.inviteStatus || c.invite_status) === "accepted").length
             : 0;
+        const invitedCount = invitedClients.length;
         return (
             <div className="lw-fcEventContent">
                 {status === "accepted" && (
                     <span className="lw-fcEventRsvpBadge lw-fcEventRsvpBadge--accepted" aria-hidden="true">
                         {multi && acceptedCount > 0 ? `${acceptedCount}` : "✓"}
+                    </span>
+                )}
+                {status === "partial" && (
+                    <span className="lw-fcEventRsvpBadge lw-fcEventRsvpBadge--partial" aria-hidden="true">
+                        {invitedCount > 0 ? `${acceptedCount}/${invitedCount}` : "½"}
                     </span>
                 )}
                 {status === "pending" && (
@@ -982,7 +1007,7 @@ export default function CalendarScreen() {
         ? (caseFilterLabel || `#${filters.case_id}`)
         : null;
     const viewingOtherEmployee = Boolean(
-        canUseFirmView
+        canPickEmployeeCalendar
         && scope === SCOPE_FIRM
         && filters.lawyer_id
         && currentUserId
@@ -1053,6 +1078,9 @@ export default function CalendarScreen() {
                                 defaultValue: `צפייה ביומן של ${activeManagerName || filters.lawyer_id} — לעריכה יש לפתוח את האירוע (הרשאות קיימות חלות).`,
                             })}
                         </Text14>
+                        <SecondaryButton size={buttonSizes.SMALL} onPress={switchToMineScope}>
+                            {t("calendar.backToMyCalendar", { defaultValue: "חזרה ליומן שלי" })}
+                        </SecondaryButton>
                     </SimpleContainer>
                 )}
 
@@ -1097,24 +1125,7 @@ export default function CalendarScreen() {
 
                 {/* ── Manager / client / case filters (one row) ── */}
                 {filtersPanelOpen && (
-                    <div
-                        className={`lw-calendarScreen__filterRow ${canUseFirmView && scope === SCOPE_FIRM ? "lw-calendarScreen__filterRow--three" : "lw-calendarScreen__filterRow--two"}`}
-                    >
-                        {canUseFirmView && scope === SCOPE_FIRM && (
-                            <div className="lw-calendarScreen__filterGroup">
-                                <SearchInput
-                                    title={t("calendar.employeeCalendarPicker", { defaultValue: "יומן של עובד" })}
-                                    value={managerFilterLabel}
-                                    onSearch={handleManagerFilterSearch}
-                                    isPerforming={isSearchingAdmins}
-                                    queryResult={adminResults}
-                                    getButtonTextFunction={(item) => item.name}
-                                    buttonPressFunction={handleManagerFilterSelected}
-                                    clearOnSelect={false}
-                                />
-                            </div>
-                        )}
-
+                    <div className="lw-calendarScreen__filterRow lw-calendarScreen__filterRow--two">
                         <div className="lw-calendarScreen__filterGroup">
                             <SearchInput
                                 title={t("calendar.filterByClient")}
@@ -1161,6 +1172,21 @@ export default function CalendarScreen() {
                                     </SimpleButton>
                                 )}
                             </SimpleContainer>
+
+                            {canPickEmployeeCalendar && (
+                                <div className="lw-calendarScreen__filterGroup">
+                                    <SearchInput
+                                        title={t("calendar.employeeCalendarPicker", { defaultValue: "יומן של עובד" })}
+                                        value={managerFilterLabel}
+                                        onSearch={handleManagerFilterSearch}
+                                        isPerforming={isSearchingAdmins}
+                                        queryResult={adminResults}
+                                        getButtonTextFunction={(item) => item.name}
+                                        buttonPressFunction={handleManagerFilterSelected}
+                                        clearOnSelect={false}
+                                    />
+                                </div>
+                            )}
 
                             {/* Event type filter */}
                             <div className="lw-calendarScreen__filterGroup">

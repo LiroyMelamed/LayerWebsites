@@ -217,6 +217,39 @@
   width: 100%;
 }
 
+.lw-calendarInvite__iconBtnWrap {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+.lw-calendarInvite__iconBtnTip {
+  position: absolute;
+  z-index: 3;
+  bottom: calc(100% + 0.4rem);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 14rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: 0.375rem;
+  background: rgba(45, 55, 72, 0.92);
+  color: #fff;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  text-align: center;
+  white-space: normal;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.12s ease, visibility 0.12s ease;
+}
+
+.lw-calendarInvite__iconBtnWrap:hover .lw-calendarInvite__iconBtnTip,
+.lw-calendarInvite__iconBtnWrap:focus-visible .lw-calendarInvite__iconBtnTip {
+  opacity: 1;
+  visibility: visible;
+}
+
 .lw-calendarInvite__iconBtn {
   display: inline-flex;
   align-items: center;

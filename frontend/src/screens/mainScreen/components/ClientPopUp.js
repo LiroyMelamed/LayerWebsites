@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
 import SimpleInput from "../../../components/simpleComponents/SimpleInput";
 import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
@@ -7,7 +7,6 @@ import PrimaryButton from "../../../components/styledComponents/buttons/PrimaryB
 import { buttonSizes } from "../../../styles/buttons/buttonSizes";
 import { customersApi } from "../../../api/customersApi";
 import useHttpRequest from "../../../hooks/useHttpRequest";
-import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
 import useFieldState from "../../../hooks/useFieldState";
 import { HebrewCharsValidationWithNumbers } from "../../../functions/validation/HebrewCharsValidation";
 import emailValidation from "../../../functions/validation/EmailValidation";
@@ -15,7 +14,6 @@ import IsraeliPhoneNumberValidation from "../../../functions/validation/IsraeliP
 import { useTranslation } from "react-i18next";
 import SimplePopUp from "../../../components/simpleComponents/SimplePopUp";
 import SearchInput from "../../../components/specializedComponents/containers/SearchInput";
-import { Text14 } from "../../../components/specializedComponents/text/AllTextKindFile";
 
 import { parseDateInput, toNativeDateValue } from "../../../functions/date/formatDateForInput";
 import "./ClientPopUp.scss";
@@ -32,34 +30,8 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
     const [phoneNumber, setPhoneNumber, phoneNumberError] = useFieldState(IsraeliPhoneNumberValidation, clientDetails?.phonenumber || "");
     const [dateOfBirth, setDateOfBirth] = useState(clientDetails?.dateofbirth ? toNativeDateValue(clientDetails.dateofbirth) : "");
 
-    const { result: allCustomers } = useAutoHttpRequest(customersApi.getAllCustomers);
     const { result: customersByName, isPerforming: isPerformingCustomersByName, performRequest: searchCustomersByName } = useHttpRequest(customersApi.getCustomersByName, null, () => { });
-
-    const companySearchResults = useMemo(() => {
-        if (!companyName || !allCustomers?.length) return [];
-        const q = companyName.trim().toLowerCase();
-        if (q.length < 2) return [];
-        return allCustomers
-            .filter((c) => {
-                const cn = (c.companyname || c.CompanyName || '').trim().toLowerCase();
-                if (!cn) return false;
-                return cn.includes(q) || q.includes(cn) || _companyNameClose(cn, q);
-            })
-            .slice(0, 8);
-    }, [companyName, allCustomers]);
-
-    function _companyNameClose(a, b) {
-        if (Math.abs(a.length - b.length) > 3) return false;
-        let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
-        for (let i = 1; i <= a.length; i++) {
-            const curr = [i];
-            for (let j = 1; j <= b.length; j++) {
-                curr[j] = a[i - 1] === b[j - 1] ? prev[j - 1] : 1 + Math.min(prev[j - 1], prev[j], curr[j - 1]);
-            }
-            prev = curr;
-        }
-        return prev[b.length] <= 2;
-    }
+    const { result: companiesByName, isPerforming: isPerformingCompaniesByName, performRequest: searchCompaniesByName } = useHttpRequest(customersApi.getCompaniesByName, null, () => { });
 
     const handleSelectCustomer = (_text, customer) => {
         setSelectedClient(customer);
@@ -70,6 +42,10 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
         setDateOfBirth(customer.DateOfBirth || customer.dateofbirth ? toNativeDateValue(customer.DateOfBirth || customer.dateofbirth) : "");
     };
 
+    const handleSelectCompany = (_text, company) => {
+        setCompanyName(_text || company?.Name || company?.CompanyName || "");
+    };
+
     const handleSearchCustomer = (query) => {
         setName(query);
         searchCustomersByName(query);
@@ -77,13 +53,7 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
 
     const handleSearchCompany = (query) => {
         setCompanyName(query);
-    };
-
-    const companyResultLabel = (item) => {
-        const company = (item.companyname || item.CompanyName || '').trim();
-        const clientName = (item.name || item.Name || '').trim();
-        if (company && clientName) return `${company} — ${clientName}`;
-        return company || clientName;
+        searchCompaniesByName(query);
     };
 
     const [saveDisabledReason, setSaveDisabledReason] = useState('');
@@ -261,24 +231,14 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
                         title={t("customers.companyName")}
                         value={companyName}
                         onSearch={handleSearchCompany}
-                        queryResult={companySearchResults}
-                        getButtonTextFunction={companyResultLabel}
-                        buttonPressFunction={handleSelectCustomer}
+                        isPerforming={isPerformingCompaniesByName}
+                        queryResult={companiesByName}
+                        getButtonTextFunction={(item) => item.Name || item.name}
+                        buttonPressFunction={handleSelectCompany}
                         error={companyNameError}
                         clearOnSelect={false}
                     />
                 </SimpleContainer>
-
-                <Text14 className="lw-clientPopup__contactHint">
-                    {t('customers.contactRequiredHint', {
-                        defaultValue: 'חובה למלא טלפון או דוא״ל (או שניהם)',
-                    })}
-                </Text14>
-                {saveDisabledReason && (
-                    <Text14 className="lw-clientPopup__saveBlockedHint" role="status">
-                        {saveDisabledReason}
-                    </Text14>
-                )}
 
                 <SimpleContainer className="lw-clientPopup__row">
                     <SimpleInput

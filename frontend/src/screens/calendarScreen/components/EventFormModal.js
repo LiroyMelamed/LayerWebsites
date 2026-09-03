@@ -38,6 +38,7 @@ import useAutoHttpRequest from "../../../hooks/useAutoHttpRequest";
 import CaseFullView from "../../../components/styledComponents/cases/CaseFullView";
 import { EVENT_COLOR_PRESETS, getEventTypeDefaultColor, isStockEventColor } from "../utils/lawyerColors";
 import CalendarSmsTemplateEditor from "./CalendarSmsTemplateEditor";
+import { InviteIconButton } from "./CalendarInviteActionIcons";
 import IsraeliPhoneNumberValidation from "../../../functions/validation/IsraeliPhoneNumberValidation";
 import emailValidation from "../../../functions/validation/EmailValidation";
 import { toast, toastError, toastSuccess, toastWarning } from "../../../components/ui/toast";
@@ -55,6 +56,7 @@ import {
     normalizeTemplateDateFields,
 } from "../../../functions/date/formatDateForInput";
 import "./EventFormModal.scss";
+import "../CalendarInviteScreen.scss";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -216,6 +218,30 @@ function _clientRsvpLabel(status, t) {
     if (status === "declined") return t("calendar.clientRsvpDeclined");
     if (status === "pending") return t("calendar.clientRsvpPending");
     return "";
+}
+
+function _endTimeFromStart(startLocal, { isReminder = false } = {}) {
+    const startDt = parseDatetimeLocal(startLocal);
+    if (!startDt) return "";
+    const minutes = isReminder ? 15 : 30;
+    return toDatetimeLocal(new Date(startDt.getTime() + minutes * 60 * 1000).toISOString());
+}
+
+function RsvpCheckIcon() {
+    return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    );
+}
+
+function RsvpResendIcon() {
+    return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M1 4v6h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    );
 }
 
 function _resolveSplitReminderOffsets(event, isEdit, isCreateCapable) {
@@ -455,6 +481,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const [recurrenceUntil, setRecurrenceUntil] = useState("");
     const [color, setColor] = useState(() => resolveFormColor(event, event?.eventType || EVENT_TYPE_APPT));
     const colorTouchedRef = useRef(!isStockEventColor(event?.color, event?.eventType || EVENT_TYPE_APPT));
+    const endTimeTouchedRef = useRef(Boolean(isEdit && event?.endTime));
     const [colorCollision, setColorCollision] = useState(false);
 
     // Existing-client / manager fields
@@ -637,6 +664,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setLocation(s.location);
         setStartTime(s.startTime);
         setEndTime(s.endTime);
+        endTimeTouchedRef.current = Boolean(isEdit && s.endTime);
         setAllDay(s.allDay);
         setColor(s.color);
         colorTouchedRef.current = !isStockEventColor(event?.color, s.eventType);
@@ -1097,11 +1125,10 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     ]);
 
     useEffect(() => {
-        if (!isReminderEventType || !startTime || endTime) return;
-        const startDt = parseDatetimeLocal(startTime);
-        if (!startDt) return;
-        setEndTime(toDatetimeLocal(new Date(startDt.getTime() + 15 * 60 * 1000).toISOString()));
-    }, [isReminderEventType, startTime, endTime]);
+        if (allDay || !startTime || endTimeTouchedRef.current) return;
+        const nextEnd = _endTimeFromStart(startTime, { isReminder: isReminderEventType });
+        if (nextEnd && nextEnd !== endTime) setEndTime(nextEnd);
+    }, [allDay, isReminderEventType, startTime, endTime]);
 
     const handleReminderTemplateChange = (value) => {
         if (!value) return;
@@ -1938,6 +1965,70 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         }
     };
 
+    const renderClientRsvpSection = () => {
+        const hasInvite = clients.some((c) => c.inviteStatus && c.inviteStatus !== "none")
+            || (event?.inviteStatus && event.inviteStatus !== "none");
+        if (!isEdit || !hasInvite) return null;
+
+        const rsvpClients = clients.length
+            ? clients
+            : [{
+                userId: event?.clientUserId || "legacy",
+                name: event?.clientName || event?.clientDisplayName || "לקוח",
+                inviteStatus: event?.inviteStatus,
+            }];
+
+        return (
+            <SimpleContainer className="lw-eventFormModal__inviteStatus lw-eventFormModal__inviteStatus--breakdown">
+                <TextBold14 color={NAVY}>{t("calendar.clientRsvpBreakdown")}</TextBold14>
+                <SimpleContainer className="lw-eventFormModal__rsvpList">
+                    {rsvpClients.map((c) => {
+                        const st = c.inviteStatus || "pending";
+                        const label = _clientRsvpLabel(st, t);
+                        if (!label) return null;
+                        const canMark = st === "pending" && c.userId && c.userId !== "legacy";
+                        const canResend = st === "pending" || st === "declined";
+                        return (
+                            <SimpleContainer key={c.userId} className={`lw-eventFormModal__rsvpRow is-${st}`}>
+                                <Text14 className="lw-eventFormModal__rsvpLabel">
+                                    <strong>{c.name || "לקוח"}:</strong> {label}
+                                </Text14>
+                                {(canMark || canResend) && (
+                                    <SimpleContainer className="lw-eventFormModal__rsvpActions">
+                                        {canMark && (
+                                            <InviteIconButton
+                                                label={t("calendar.staffMarkAcceptedPhone")}
+                                                onPress={() => handleStaffMarkRsvp(c.userId)}
+                                                disabled={!!markingRsvpUserId}
+                                                className="lw-eventFormModal__rsvpIconBtn"
+                                            >
+                                                {markingRsvpUserId === c.userId ? (
+                                                    <span className="lw-eventFormModal__rsvpSpinner" aria-hidden="true" />
+                                                ) : (
+                                                    <RsvpCheckIcon />
+                                                )}
+                                            </InviteIconButton>
+                                        )}
+                                        {canResend && (
+                                            <InviteIconButton
+                                                label={t("calendar.inviteResend")}
+                                                onPress={handleResendInvite}
+                                                disabled={!!markingRsvpUserId}
+                                                className="lw-eventFormModal__rsvpIconBtn"
+                                            >
+                                                <RsvpResendIcon />
+                                            </InviteIconButton>
+                                        )}
+                                    </SimpleContainer>
+                                )}
+                            </SimpleContainer>
+                        );
+                    })}
+                </SimpleContainer>
+            </SimpleContainer>
+        );
+    };
+
     const handleDuplicate = () => {
         if (!isEdit) return;
         const copyTitle = `${title.trim() || event?.title || ""}`.trim();
@@ -2192,9 +2283,16 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                         onChange={(e) => {
                             const raw = e.target.value;
                             if (useDateOnlyInputs) {
-                                setStartTime(raw ? `${raw}T00:00` : "");
+                                const nextStart = raw ? `${raw}T00:00` : "";
+                                setStartTime(nextStart);
+                                if (!endTimeTouchedRef.current && nextStart) {
+                                    setEndTime(raw ? `${raw}T23:59` : "");
+                                }
                             } else {
                                 setStartTime(raw);
+                                if (!endTimeTouchedRef.current && raw) {
+                                    setEndTime(_endTimeFromStart(raw, { isReminder: isReminderEventType }));
+                                }
                             }
                         }}
                         timeToWaitInMilli={0}
@@ -2208,6 +2306,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                             ? toLocalYmdFromInput(endTime || startTime)
                             : endTime}
                         onChange={(e) => {
+                            endTimeTouchedRef.current = true;
                             const raw = e.target.value;
                             if (useDateOnlyInputs) {
                                 setEndTime(raw ? `${raw}T23:59` : "");
@@ -2662,49 +2761,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     {/* ─── Managers: meeting attendees, or who is on leave ─── */}
                     {showManagersField && (
                     <SimpleContainer className="lw-eventFormModal__managersCol">
-                        {isEdit && !isLeaveEventType && (
-                            clients.some((c) => c.inviteStatus && c.inviteStatus !== "none")
-                            || (event?.inviteStatus && event.inviteStatus !== "none")
-                        ) && (
-                            <SimpleContainer className="lw-eventFormModal__inviteStatus lw-eventFormModal__inviteStatus--breakdown">
-                                <TextBold14 color={NAVY}>{t("calendar.clientRsvpBreakdown")}</TextBold14>
-                                <SimpleContainer className="lw-eventFormModal__rsvpList">
-                                    {(clients.length
-                                        ? clients
-                                        : [{
-                                            userId: event?.clientUserId || "legacy",
-                                            name: event?.clientName || event?.clientDisplayName || "לקוח",
-                                            inviteStatus: event?.inviteStatus,
-                                        }]
-                                    ).map((c) => {
-                                        const st = c.inviteStatus || "pending";
-                                        const label = _clientRsvpLabel(st, t);
-                                        if (!label) return null;
-                                        return (
-                                            <SimpleContainer key={c.userId} className={`lw-eventFormModal__rsvpRow is-${st}`}>
-                                                <Text14>
-                                                    <strong>{c.name || "לקוח"}:</strong> {label}
-                                                </Text14>
-                                                {st === "pending" && c.userId && c.userId !== "legacy" && (
-                                                    <SecondaryButton
-                                                        onPress={() => handleStaffMarkRsvp(c.userId)}
-                                                        isPerforming={markingRsvpUserId === c.userId}
-                                                        disabled={!!markingRsvpUserId}
-                                                    >
-                                                        {t("calendar.staffMarkAcceptedPhone")}
-                                                    </SecondaryButton>
-                                                )}
-                                            </SimpleContainer>
-                                        );
-                                    })}
-                                </SimpleContainer>
-                                {clients.some((c) => c.inviteStatus === "pending" || c.inviteStatus === "declined") && (
-                                    <SecondaryButton onPress={handleResendInvite}>
-                                        {t("calendar.inviteResend")}
-                                    </SecondaryButton>
-                                )}
-                            </SimpleContainer>
-                        )}
+                        {isEdit && !isLeaveEventType && renderClientRsvpSection()}
                         <SearchInput
                             title={isLeaveEventType ? t("calendar.leaveWho") : t("calendar.manager")}
                             value={managerSearch}
@@ -2743,44 +2800,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     )}
 
                     {/* Invite status for reminder-type edits (managers block hidden) */}
-                    {!showManagersField && isEdit && (
-                        clients.some((c) => c.inviteStatus && c.inviteStatus !== "none")
-                        || (event?.inviteStatus && event.inviteStatus !== "none")
-                    ) && (
-                        <SimpleContainer className="lw-eventFormModal__inviteStatus lw-eventFormModal__inviteStatus--breakdown">
-                            <TextBold14 color={NAVY}>{t("calendar.clientRsvpBreakdown")}</TextBold14>
-                            <SimpleContainer className="lw-eventFormModal__rsvpList">
-                                {(clients.length
-                                    ? clients
-                                    : [{
-                                        userId: event?.clientUserId || "legacy",
-                                        name: event?.clientName || event?.clientDisplayName || "לקוח",
-                                        inviteStatus: event?.inviteStatus,
-                                    }]
-                                ).map((c) => {
-                                    const st = c.inviteStatus || "pending";
-                                    const label = _clientRsvpLabel(st, t);
-                                    if (!label) return null;
-                                    return (
-                                        <SimpleContainer key={c.userId} className={`lw-eventFormModal__rsvpRow is-${st}`}>
-                                            <Text14>
-                                                <strong>{c.name || "לקוח"}:</strong> {label}
-                                            </Text14>
-                                            {st === "pending" && c.userId && c.userId !== "legacy" && (
-                                                <SecondaryButton
-                                                    onPress={() => handleStaffMarkRsvp(c.userId)}
-                                                    isPerforming={markingRsvpUserId === c.userId}
-                                                    disabled={!!markingRsvpUserId}
-                                                >
-                                                    {t("calendar.staffMarkAcceptedPhone")}
-                                                </SecondaryButton>
-                                            )}
-                                        </SimpleContainer>
-                                    );
-                                })}
-                            </SimpleContainer>
-                        </SimpleContainer>
-                    )}
+                    {!showManagersField && renderClientRsvpSection()}
 
                     {/* ─── Clients + leads (appointment / hearing) ─── */}
                     {showIntakeToggle && (
