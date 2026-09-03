@@ -4,8 +4,8 @@ import {
   createSupportTicket,
   getSupportTicket,
   listSupportTickets,
-} from '../../api/supportApi';
-import { AdminStackName, MainScreenName } from '../../navigation/screenPaths';
+} from '../../../api/supportApi';
+import { AdminStackName, MainScreenName } from '../../../navigation/screenPaths';
 import { useNavigate } from 'react-router-dom';
 import './AdminSupportScreen.scss';
 
