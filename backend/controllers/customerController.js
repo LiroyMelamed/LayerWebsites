@@ -404,6 +404,47 @@ const getCustomerByName = async (req, res) => {
     }
 };
 
+const getCompaniesByName = async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const rawCompanyName = req?.query?.companyName;
+    const companyName = typeof rawCompanyName === 'string' ? rawCompanyName.trim() : '';
+
+    try {
+        const pagination = getPagination(req, res, { defaultLimit: 50, maxLimit: 200 });
+        if (pagination === null) return;
+
+        if (!companyName) {
+            return res.json([]);
+        }
+
+        const limit = pagination.enabled ? pagination.limit : 50;
+        const offset = pagination.enabled ? pagination.offset : 0;
+
+        const result = await pool.query(
+            `
+            SELECT TRIM(companyname) AS companyname, MAX(userid) AS latest_userid
+            FROM users
+            WHERE role <> 'Admin' AND role <> 'Deleted'
+              AND companyname IS NOT NULL
+              AND TRIM(companyname) <> ''
+              AND TRIM(companyname) ILIKE $1
+            GROUP BY LOWER(TRIM(companyname)), TRIM(companyname)
+            ORDER BY latest_userid DESC
+            LIMIT $2 OFFSET $3
+            `,
+            [`%${companyName}%`, limit, offset]
+        );
+
+        res.json(result.rows.map(row => ({
+            Name: row.companyname,
+            CompanyName: row.companyname,
+        })));
+    } catch (error) {
+        console.error("Error retrieving companies by name:", error);
+        res.status(500).json({ message: "שגיאה בשליפת שמות חברות" });
+    }
+};
+
 const getCurrentCustomer = async (req, res) => {
     try {
         const userId = req.user.UserId;
@@ -952,6 +993,7 @@ module.exports = {
     addCustomer,
     updateCustomerById,
     getCustomerByName,
+    getCompaniesByName,
     getCurrentCustomer,
     updateCurrentCustomer,
     deleteCustomer,

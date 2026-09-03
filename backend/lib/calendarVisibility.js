@@ -46,14 +46,8 @@ function personalCalendarSql(lawyerParamIdx) {
         OR (
             ce.event_type = 'leave'
             AND (
-                (
-                    ce.owner_id = ${p}
-                    AND (ce.manager_user_id IS NULL OR ce.manager_user_id = ${p})
-                )
-                OR (
-                    ce.owner_id <> ${p}
-                    AND ${managedByLawyer}
-                )
+                ce.owner_id = ${p}
+                OR ${managedByLawyer}
             )
         )
         OR (

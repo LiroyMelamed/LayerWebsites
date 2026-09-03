@@ -99,7 +99,8 @@ const App = () => {
     // The PublicSignScreen route uses ?token= for a signing JWT, not an auth
     // token.  Skip URL-param extraction so we don't overwrite the real auth
     // token in localStorage.
-    const isPublicSignRoute = /^\/PublicSign/i.test(location?.pathname || '');
+    const isPublicSignRoute = /^\/PublicSign/i.test(location?.pathname || '')
+      || /^\/s(?:\/|$)/i.test(location?.pathname || '');
 
     // Auth credentials: prefer URL params (legacy/deep-links), fall back to
     // localStorage (injected by mobile WebView before page load).

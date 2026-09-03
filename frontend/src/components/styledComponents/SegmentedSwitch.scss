@@ -54,6 +54,22 @@
         color: #ffffff;
         box-shadow: 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.18);
     }
+
+    &.is-disabled {
+        opacity: 0.42;
+        cursor: not-allowed;
+        color: #a0aec0;
+
+        &:hover:not(.is-active) {
+            background-color: transparent;
+            color: #a0aec0;
+        }
+
+        &.is-active {
+            background-color: #718096;
+            color: #ffffff;
+        }
+    }
 }
 
 @media (max-width: v.$bp-narrow) {

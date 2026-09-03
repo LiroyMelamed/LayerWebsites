@@ -771,7 +771,13 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         const clientX = e?.clientX ?? e?.touches?.[0]?.clientX;
         const clientY = e?.clientY ?? e?.touches?.[0]?.clientY;
         if (clientX == null || clientY == null) return null;
-        return { x: clientX - rect.left, y: clientY - rect.top };
+        // Canvas bitmap is 400×180 but CSS may scale display size — map pointer to bitmap coords.
+        const scaleX = rect.width > 0 ? canvas.width / rect.width : 1;
+        const scaleY = rect.height > 0 ? canvas.height / rect.height : 1;
+        return {
+            x: (clientX - rect.left) * scaleX,
+            y: (clientY - rect.top) * scaleY,
+        };
     };
 
     const startDrawing = (e) => {
@@ -1003,8 +1009,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     };
 
     /**
-     * Stamp: cover-crop into a landscape stamp canvas so phone screenshots / tall
-     * photos fill the field instead of appearing as a tiny vertical strip.
+     * Stamp: contain-fit into a landscape stamp canvas so the full artwork
+     * (signature + watermark) stays visible; only white letterbox is removed.
      */
     const normalizeStampDataUrl = async (dataUrl) => {
         const raw = String(dataUrl || "");
@@ -1022,8 +1028,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         const ih = Math.max(1, img.naturalHeight || 1);
         const TARGET_W = 560;
         const TARGET_H = 280;
-        // Cover-fit: scale up enough to fill the stamp box, then center-crop.
-        const scale = Math.max(TARGET_W / iw, TARGET_H / ih);
+        // Contain-fit: keep the full stamp artwork (signatures, watermarks) inside the box.
+        const scale = Math.min(TARGET_W / iw, TARGET_H / ih);
         const drawW = Math.max(1, Math.round(iw * scale));
         const drawH = Math.max(1, Math.round(ih * scale));
         const dx = Math.round((TARGET_W - drawW) / 2);
@@ -1316,6 +1322,13 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         // Reconcile with server (quiet if we already advanced optimistically).
         advanceAfterSpotsChange(spots, { quiet: Boolean(optimisticSpotIds) });
         clearCanvas();
+        if (effectiveSigningFileId) {
+            try {
+                await loadPdfFromFileKey(effectiveSigningFileId);
+            } catch (pdfErr) {
+                console.warn('[SignatureCanvas] PDF reload after sign failed:', pdfErr?.message || pdfErr);
+            }
+        }
     };
 
     const saveSignature = async () => {
@@ -1493,19 +1506,24 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             ctx.drawImage(img, 0, 0, w, h);
             const imageData = ctx.getImageData(0, 0, w, h);
             const d = imageData.data;
-            // Sample corner pixels to detect background color
             const corners = [
-                0,                          // top-left
-                (w - 1) * 4,               // top-right
-                ((h - 1) * w) * 4,         // bottom-left
-                ((h - 1) * w + w - 1) * 4, // bottom-right
+                0,
+                (w - 1) * 4,
+                ((h - 1) * w) * 4,
+                ((h - 1) * w + (w - 1)) * 4,
             ];
-            let bgR = 255, bgG = 255, bgB = 255;
+            let bgR = 255;
+            let bgG = 255;
+            let bgB = 255;
             let validCorners = 0;
-            let rSum = 0, gSum = 0, bSum = 0;
+            let rSum = 0;
+            let gSum = 0;
+            let bSum = 0;
             for (const idx of corners) {
                 if (idx >= 0 && idx + 2 < d.length) {
-                    rSum += d[idx]; gSum += d[idx + 1]; bSum += d[idx + 2];
+                    rSum += d[idx];
+                    gSum += d[idx + 1];
+                    bSum += d[idx + 2];
                     validCorners++;
                 }
             }
@@ -1514,22 +1532,36 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 bgG = Math.round(gSum / validCorners);
                 bgB = Math.round(bSum / validCorners);
             }
-            // Make pixels similar to background transparent (aggressive for white letterbox).
-            const threshold = 48;
+
+            const whitePunch = 245;
+            const whiteFeather = 232;
+            const threshold = 36;
+            const feather = 24;
+
             for (let i = 0; i < d.length; i += 4) {
                 const r = d[i];
                 const g = d[i + 1];
                 const b = d[i + 2];
-                const nearWhite = r >= 245 && g >= 245 && b >= 245;
-                const dr = Math.abs(r - bgR);
-                const dg = Math.abs(g - bgG);
-                const db = Math.abs(b - bgB);
-                const dist = Math.sqrt(dr * dr + dg * dg + db * db);
-                if (nearWhite || dist < threshold) {
-                    d[i + 3] = 0; // fully transparent
-                } else if (dist < threshold + 28) {
-                    const alpha = Math.round(((dist - threshold) / 28) * d[i + 3]);
-                    d[i + 3] = alpha;
+                const a = d[i + 3];
+                if (a === 0) continue;
+
+                const minRgb = Math.min(r, g, b);
+                const nearWhite = r >= whitePunch && g >= whitePunch && b >= whitePunch;
+                if (nearWhite) {
+                    d[i + 3] = 0;
+                    continue;
+                }
+
+                if (minRgb >= whiteFeather) {
+                    const dr = Math.abs(r - bgR);
+                    const dg = Math.abs(g - bgG);
+                    const db = Math.abs(b - bgB);
+                    const dist = Math.sqrt(dr * dr + dg * dg + db * db);
+                    if (dist < threshold) {
+                        d[i + 3] = 0;
+                    } else if (dist < threshold + feather) {
+                        d[i + 3] = Math.round(((dist - threshold) / feather) * a);
+                    }
                 }
             }
             ctx.putImageData(imageData, 0, 0);
@@ -1564,9 +1596,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 dataUrl = await fileToDataUrl(clientStampFile);
             } else {
                 const rawDataUrl = await fileToDataUrl(clientStampFile);
-                const normalized = await normalizeStampDataUrl(rawDataUrl);
-                // Remove background (white/colored) from uploaded stamp
-                dataUrl = await removeImageBackground(normalized);
+                dataUrl = await normalizeStampDataUrl(rawDataUrl);
             }
             if (!dataUrl) {
                 showAppToast({ type: "error", text: t("signing.canvas.clientStampUploadError") });

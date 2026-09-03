@@ -429,7 +429,7 @@ async function _fetchEventManagers(eventIds) {
     return map;
 }
 
-async function _syncEventManagers(eventId, userIds, dbClient = pool) {
+async function _syncEventManagers(eventId, userIds, dbClient = pool, { primaryUserId = null } = {}) {
     const uniqueIds = [...new Set(userIds.filter((id) => Number.isFinite(id)))];
     await dbClient.query('DELETE FROM calendar_event_managers WHERE event_id = $1', [eventId]);
     for (const uid of uniqueIds) {
@@ -444,12 +444,19 @@ async function _syncEventManagers(eventId, userIds, dbClient = pool) {
         return { managerUserId: null, managerName: null, managers: [] };
     }
     const { rows } = await dbClient.query(
-        `SELECT userid, name FROM users WHERE userid = ANY($1::int[]) ORDER BY name`,
+        `SELECT userid, name FROM users WHERE userid = ANY($1::int[])`,
         [uniqueIds]
     );
-    const managers = rows.map((r) => ({ userId: r.userid, name: r.name }));
+    const byId = new Map(rows.map((r) => [r.userid, r.name]));
+    const managers = uniqueIds
+        .filter((id) => byId.has(id))
+        .map((id) => ({ userId: id, name: byId.get(id) }));
+    const primaryId = Number.isFinite(primaryUserId) && uniqueIds.includes(primaryUserId)
+        ? primaryUserId
+        : uniqueIds[0];
+    const primary = managers.find((m) => m.userId === primaryId) || managers[0];
     return {
-        managerUserId: managers[0]?.userId || null,
+        managerUserId: primary?.userId || null,
         managerName: managers.map((m) => m.name).join(', ') || null,
         managers,
     };
@@ -1282,7 +1289,8 @@ const createEvent = async (req, res) => {
             const mgrMeta = await _syncEventManagers(
                 created.id,
                 managerIds.length ? managerIds : (managerUserId ? [managerUserId] : []),
-                dbClient
+                dbClient,
+                { primaryUserId: eventType === 'leave' ? ownerId : null }
             );
             if (mgrMeta.managerUserId && (mgrMeta.managerUserId !== created.manager_user_id || mgrMeta.managerName !== created.manager_name)) {
                 await dbClient.query(
@@ -1707,7 +1715,9 @@ const updateEvent = async (req, res) => {
         let updated = rows[0];
         let mgrMeta = null;
         if (managerUpdate.sync) {
-            mgrMeta = await _syncEventManagers(eventId, managerUpdate.ids);
+            mgrMeta = await _syncEventManagers(eventId, managerUpdate.ids, pool, {
+                primaryUserId: newEventType === 'leave' ? nextOwnerId : null,
+            });
             if (mgrMeta.managerUserId !== updated.manager_user_id || mgrMeta.managerName !== updated.manager_name) {
                 await pool.query(
                     'UPDATE calendar_events SET manager_user_id = $1, manager_name = $2 WHERE id = $3',
@@ -3387,6 +3397,82 @@ const getInviteByToken = async (req, res) => {
 };
 
 /**
+ * POST /api/calendar/:id/rsvp  body: { clientUserId, status: 'accepted'|'declined' }
+ * Staff marks client RSVP after phone call (authenticated lawyer/admin).
+ */
+const staffSetClientRsvp = async (req, res) => {
+    const eventId = parseInt(req.params.id, 10);
+    const clientUserId = parseInt(req.body?.clientUserId, 10);
+    const status = String(req.body?.status || '').trim().toLowerCase();
+    const requesterId = req.user?.UserId;
+    const role = req.user?.Role;
+
+    if (!Number.isFinite(eventId) || eventId <= 0) {
+        return res.status(400).json({ message: 'event id required' });
+    }
+    if (!Number.isFinite(clientUserId) || clientUserId <= 0) {
+        return res.status(400).json({ message: 'clientUserId required' });
+    }
+    if (!['accepted', 'declined'].includes(status)) {
+        return res.status(400).json({ message: 'status must be accepted or declined' });
+    }
+
+    try {
+        const access = await _requireEventAccess(eventId, requesterId, role);
+        if (!access.ok) {
+            return res.status(access.status || 403).json({ message: access.message || 'אין הרשאה' });
+        }
+
+        const { rows: clientRows } = await pool.query(
+            `UPDATE calendar_event_clients
+             SET invite_status = $1, invite_responded_at = NOW()
+             WHERE event_id = $2 AND user_id = $3
+             RETURNING event_id, user_id, invite_status, invite_responded_at`,
+            [status, eventId, clientUserId]
+        );
+
+        if (clientRows.length) {
+            const row = clientRows[0];
+            await pool.query(
+                `UPDATE calendar_events ce
+                 SET invite_status = $1,
+                     invite_responded_at = NOW(),
+                     updated_at = NOW()
+                 WHERE ce.id = $2
+                   AND (ce.client_user_id IS NULL OR ce.client_user_id = $3)`,
+                [status, eventId, clientUserId]
+            );
+            return res.json({
+                ok: true,
+                clientUserId: row.user_id,
+                status: row.invite_status,
+                respondedAt: row.invite_responded_at,
+            });
+        }
+
+        const { rows: legacyRows } = await pool.query(
+            `UPDATE calendar_events
+             SET invite_status = $1, invite_responded_at = NOW(), updated_at = NOW()
+             WHERE id = $2 AND client_user_id = $3
+             RETURNING id, client_user_id, invite_status, invite_responded_at`,
+            [status, eventId, clientUserId]
+        );
+        if (!legacyRows.length) {
+            return res.status(404).json({ message: 'לקוח לא משויך לאירוע זה' });
+        }
+        return res.json({
+            ok: true,
+            clientUserId: legacyRows[0].client_user_id,
+            status: legacyRows[0].invite_status,
+            respondedAt: legacyRows[0].invite_responded_at,
+        });
+    } catch (err) {
+        console.error('[calendarController] staffSetClientRsvp:', err.message);
+        return res.status(500).json({ message: 'שגיאה פנימית' });
+    }
+};
+
+/**
  * POST /api/calendar/invite/:token  body: { action: 'accept'|'decline' }
  */
 const respondToInvite = async (req, res) => {
@@ -3619,7 +3705,9 @@ const duplicateEvent = async (req, res) => {
         const managersMap = await _fetchEventManagers([eventId]);
         const managerIds = (managersMap.get(eventId) || []).map((m) => m.userId);
         if (!managerIds.length && src.manager_user_id) managerIds.push(src.manager_user_id);
-        const mgrMeta = await _syncEventManagers(created.id, managerIds);
+        const mgrMeta = await _syncEventManagers(created.id, managerIds, pool, {
+            primaryUserId: src.event_type === 'leave' ? src.owner_id : null,
+        });
 
         const clientsMap = await _fetchEventClients([eventId]);
         let clientIds = (clientsMap.get(eventId) || []).map((c) => c.userId);
@@ -3730,6 +3818,7 @@ module.exports = {
     // Invite RSVP
     getInviteByToken,
     respondToInvite,
+    staffSetClientRsvp,
     resendInvite,
     sendDeferredCalendarInvite,
     resolvePublicShortLink,

@@ -59,6 +59,11 @@ async function tryRefreshToken() {
     return _refreshPromise;
 }
 
+function isPublicSigningApiRequest(config) {
+    const url = String(config?.url || "");
+    return /\/SigningFiles\/public\//i.test(url);
+}
+
 function clearAuthAndRedirect() {
     localStorage.removeItem("token");
     localStorage.removeItem("refreshToken");
@@ -111,6 +116,11 @@ ApiUtils.interceptors.response.use(
             return formatError(error);
         }
 
+        // Public signing endpoints use their own JWT — never treat 401 as session expiry.
+        if (isPublicSigningApiRequest(originalRequest)) {
+            return formatError(error);
+        }
+
         // Try refreshing the token once
         originalRequest._retried = true;
         const newToken = await tryRefreshToken();
@@ -125,7 +135,9 @@ ApiUtils.interceptors.response.use(
         try {
             return formatSuccess(await axios(originalRequest));
         } catch (retryErr) {
-            if (retryErr.response?.status === 401) clearAuthAndRedirect();
+            if (retryErr.response?.status === 401 && !isPublicSigningApiRequest(retryErr.config)) {
+                clearAuthAndRedirect();
+            }
             return formatError(retryErr);
         }
     }
