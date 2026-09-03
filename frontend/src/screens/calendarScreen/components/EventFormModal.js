@@ -359,6 +359,17 @@ function _initialManagers(event) {
     return [];
 }
 
+/** Create-mode default: pre-select the logged-in staff member for meetings/hearings. */
+function _defaultManagersForForm(event) {
+    const fromEvent = _initialManagers(event);
+    if (fromEvent.length) return fromEvent;
+    const type = event?.eventType || EVENT_TYPE_APPT;
+    if (type !== EVENT_TYPE_APPT && type !== EVENT_TYPE_HEARING) return [];
+    const uid = _currentUserIdFromToken();
+    if (!uid) return [];
+    return [{ userId: uid, name: "" }];
+}
+
 /** Decide initial intake mode for a given event. Lead data wins; otherwise existing. */
 function _initialIntakeMode(event) {
     if (!event) return INTAKE_EXISTING;
@@ -604,20 +615,19 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
 
     useEffect(() => {
         if (isEdit) return;
-        if (eventType !== EVENT_TYPE_APPT && eventType !== EVENT_TYPE_HEARING) return;
         const uid = _currentUserIdFromToken();
-        if (!uid) return;
+        if (!uid || !Array.isArray(admins) || !admins.length) return;
         setManagers((prev) => {
-            if (prev.length > 0) return prev;
-            const me = Array.isArray(admins)
-                ? admins.find((a) => Number(a.userid ?? a.UserId) === uid)
-                : null;
-            return [{
-                userId: uid,
-                name: me?.name || me?.Name || "",
-            }];
+            const idx = prev.findIndex((m) => Number(m.userId) === uid);
+            if (idx === -1 || prev[idx].name) return prev;
+            const me = admins.find((a) => Number(a.userid ?? a.UserId ?? a.id) === uid);
+            const name = me?.name ?? me?.Name ?? "";
+            if (!name) return prev;
+            const next = prev.slice();
+            next[idx] = { ...next[idx], name };
+            return next;
         });
-    }, [isEdit, eventType, eventIdentity, admins]);
+    }, [isEdit, admins]);
 
     useEffect(() => {
         const s = _formStateFromEvent(event);
@@ -634,7 +644,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setClientSearch("");
         setClientName(s.clientName);
         setClientUserId(s.clientUserId);
-        setManagers(_initialManagers(event));
+        setManagers(isEdit ? _initialManagers(event) : _defaultManagersForForm(event));
         setManagerSearch("");
         setCaseId(s.caseId);
         setCaseName(s.caseName);

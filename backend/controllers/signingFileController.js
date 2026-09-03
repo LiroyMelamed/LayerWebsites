@@ -326,11 +326,40 @@ async function loadEvidenceRowsForZip(signingFileId) {
 }
 
 async function loadSignedPdfStreamOrPlaceholder({ signingFileId, fileRow }) {
-    // Prefer explicit signed-storage key, then signed file key.
+    const statusLower = String(fileRow?.Status || '').toLowerCase();
+    const hasStoredKey = Boolean(fileRow?.SignedStorageKey || fileRow?.SignedFileKey);
+
+    if (statusLower === 'signed' || hasStoredKey) {
+        try {
+            const delivered = await getDeliverableSignedPdf({
+                signingFileId,
+                lawyerId: fileRow?.LawyerId,
+                pdfKey: fileRow?.FileKey,
+                persist: statusLower === 'signed',
+            });
+            if (delivered?.buffer) {
+                return {
+                    stream: Readable.from(delivered.buffer),
+                    storage: {
+                        bucket: fileRow?.SignedStorageBucket || BUCKET,
+                        key: delivered.key,
+                        etag: null,
+                        versionId: null,
+                        sizeBytes: delivered.buffer.length,
+                    },
+                    isPlaceholder: false,
+                };
+            }
+        } catch (e) {
+            if (isProductionFailClosed()) throw e;
+        }
+    }
+
+    // Prefer explicit signed-storage key, then signed file key (legacy fallback).
     let key = fileRow?.SignedStorageKey || fileRow?.SignedFileKey;
 
     // If signed output is missing but the status is signed, try to generate a flattened signed PDF on-demand.
-    if (!key && String(fileRow?.Status || '').toLowerCase() === 'signed') {
+    if (!key && statusLower === 'signed') {
         try {
             key = await ensureSignedPdfKey({
                 signingFileId,
@@ -2171,7 +2200,6 @@ async function generateSignedPdfBuffer({ pdfKey, spots }) {
                 text = `${da}/${mo}/${yr}`;
             }
             const baseFont = (hebrewFont && isLikelyHebrew(text)) ? hebrewFont : latinFont;
-            const fontSize = clamp(h * 0.6, 8, 14);
             if (fieldType === 'checkbox') {
                 const checked = text === 'true' || text === '1' || text.toLowerCase() === 'yes' || text === '✓';
                 if (checked) {
@@ -2198,12 +2226,19 @@ async function generateSignedPdfBuffer({ pdfKey, spots }) {
                 }
             } else {
                 const maxWidth = Math.max(0, w - 8);
-                const fitted = fitTextToWidth(baseFont, text, fontSize, maxWidth);
+                let fontSize = clamp(h * 0.6, 8, 14);
+                while (fontSize > 6 && baseFont.widthOfTextAtSize(text, fontSize) > maxWidth) {
+                    fontSize -= 0.5;
+                }
+                const fitted = baseFont.widthOfTextAtSize(text, fontSize) <= maxWidth
+                    ? text
+                    : fitTextToWidth(baseFont, text, fontSize, maxWidth);
                 page.drawText(fitted, {
                     x: x + 4,
                     y: y + Math.max(2, h - fontSize - 2),
                     size: fontSize,
                     font: baseFont,
+                    maxWidth,
                 });
             }
         }
@@ -2304,6 +2339,18 @@ async function ensureSignedPdfKey({ signingFileId, lawyerId, pdfKey, persist = t
     }
 
     return signedKey;
+}
+
+/**
+ * Single delivery path for signed PDF bytes — download, email attachments, public view, evidence.
+ * Always burns from current signaturespots via generateSignedPdfBuffer.
+ */
+async function getDeliverableSignedPdf({ signingFileId, lawyerId, pdfKey, persist = true }) {
+    const key = await ensureSignedPdfKey({ signingFileId, lawyerId, pdfKey, persist });
+    if (!key) return null;
+    const { buffer } = await getR2ObjectBuffer(key);
+    if (!buffer) return null;
+    return { key, buffer };
 }
 
 let _schemaSupportCache = {
@@ -6433,16 +6480,19 @@ async function runSigningFinalize({
 }) {
     const t0 = Date.now();
     let signedPdfKey = null;
+    let signedPdfBuffer = null;
     try {
         // Always (re)burn with every signed spot — a partial preview download must not
         // leave a stale signedfilekey that omits later signers.
         try {
-            signedPdfKey = await ensureSignedPdfKey({
+            const delivered = await getDeliverableSignedPdf({
                 signingFileId,
                 lawyerId: file.LawyerId,
                 pdfKey: file.FileKey,
                 persist: true,
             });
+            signedPdfKey = delivered?.key || null;
+            signedPdfBuffer = delivered?.buffer || null;
             if (signedPdfKey) {
                 await insertAuditEvent({
                     req,
@@ -6465,15 +6515,12 @@ async function runSigningFinalize({
         let emailAttachments;
         try {
             const attachments = [];
-            if (signedPdfKey) {
-                const signedObj = await getR2ObjectBuffer(signedPdfKey);
-                if (signedObj?.buffer) {
-                    attachments.push({
-                        filename: `${String(file.FileName || 'document').replace(/\.pdf$/i, '')}_signed.pdf`,
-                        content: signedObj.buffer,
-                        contentType: 'application/pdf',
-                    });
-                }
+            if (signedPdfBuffer) {
+                attachments.push({
+                    filename: `${String(file.FileName || 'document').replace(/\.pdf$/i, '')}_signed.pdf`,
+                    content: signedPdfBuffer,
+                    contentType: 'application/pdf',
+                });
             }
             const evResult = await generateEvidenceCertificateBuffer(signingFileId);
             if (evResult?.pdfBuffer) {
@@ -7944,12 +7991,13 @@ exports.getSignedFileDownload = async (req, res, next) => {
 
         if (shouldRegenerate) {
             try {
-                key = await ensureSignedPdfKey({
+                const delivered = await getDeliverableSignedPdf({
                     signingFileId,
                     lawyerId: file.LawyerId,
                     pdfKey: file.FileKey,
                     persist: String(file.Status || '').toLowerCase() === 'signed',
                 });
+                if (delivered?.key) key = delivered.key;
             } catch (e) {
                 console.error("Failed to generate signed PDF; falling back to original", e);
             }
@@ -8037,12 +8085,13 @@ exports.getPublicSignedDocumentView = async (req, res, next) => {
         const statusLower = String(file.Status || '').toLowerCase();
         if (!key || (schemaSupport.signaturespotsFieldValue && hasSignedFieldValues) || statusLower === 'signed') {
             try {
-                key = await ensureSignedPdfKey({
+                const delivered = await getDeliverableSignedPdf({
                     signingFileId,
                     lawyerId: file.LawyerId,
                     pdfKey: file.FileKey,
                     persist: statusLower === 'signed',
                 });
+                if (delivered?.key) key = delivered.key;
             } catch (e) {
                 console.error('Public view: failed to generate signed PDF', e);
             }
@@ -8196,12 +8245,13 @@ exports.getSigningFilePdf = async (req, res, next) => {
 
             if (!signedKey || shouldRegenerate || statusLower === 'signed') {
                 try {
-                    signedKey = await ensureSignedPdfKey({
+                    const delivered = await getDeliverableSignedPdf({
                         signingFileId,
                         lawyerId: file.LawyerId,
                         pdfKey: file.FileKey,
                         persist: statusLower === 'signed',
                     });
+                    if (delivered?.key) signedKey = delivered.key;
                 } catch (e) {
                     console.error('getSigningFilePdf: ensureSignedPdfKey failed, falling back to original:', e?.message);
                 }

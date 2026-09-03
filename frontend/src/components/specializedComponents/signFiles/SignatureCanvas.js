@@ -771,7 +771,13 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         const clientX = e?.clientX ?? e?.touches?.[0]?.clientX;
         const clientY = e?.clientY ?? e?.touches?.[0]?.clientY;
         if (clientX == null || clientY == null) return null;
-        return { x: clientX - rect.left, y: clientY - rect.top };
+        // Canvas bitmap is 400×180 but CSS may scale display size — map pointer to bitmap coords.
+        const scaleX = rect.width > 0 ? canvas.width / rect.width : 1;
+        const scaleY = rect.height > 0 ? canvas.height / rect.height : 1;
+        return {
+            x: (clientX - rect.left) * scaleX,
+            y: (clientY - rect.top) * scaleY,
+        };
     };
 
     const startDrawing = (e) => {
