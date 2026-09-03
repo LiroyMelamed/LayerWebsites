@@ -174,7 +174,30 @@ test('personal calendar — creator sees event when explicitly tagged as attende
     );
 });
 
-test('personal calendar — production regression: untagged creator does not see owned meeting', async () => {
+test('personal calendar — leave owner visible even when manager_user_id differs', async (t) => {
+    const { start, end } = nextSundaySlot(8);
+    const created = await createEvent(CREATOR_ID, {
+        title: 'E2E visibility — leave for lawyer B',
+        event_type: 'leave',
+        start_time: start,
+        end_time: end,
+        all_day: true,
+        manager_user_ids: [LAWYER_B, LAWYER_A],
+    });
+
+    t.after(async () => {
+        await deleteEvent(CREATOR_ID, created.id);
+    });
+
+    assert.equal(created.owner_id, LAWYER_B, 'leave owner should be tagged lawyer');
+    assert.equal(
+        await isVisibleInPersonalCalendar(LAWYER_B, created.id),
+        true,
+        'lawyer on leave must see leave in personal calendar'
+    );
+});
+
+test('personal calendar — production regression: untagged creator does not see owned meeting', async (t) => {
     const { rows } = await pool.query(
         `SELECT ce.id, ce.owner_id
          FROM calendar_events ce

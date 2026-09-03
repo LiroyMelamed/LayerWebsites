@@ -54,6 +54,7 @@ const SimpleInputCore = forwardRef(
         inputRef,
 
         timeToWaitInMilli = 500,
+        acceptExternalValueWhileFocused = false,
         ...props
     }, ref) => {
         const temporalTypes = ['date', 'datetime-local', 'time', 'month', 'week'];
@@ -206,11 +207,17 @@ const SimpleInputCore = forwardRef(
 
         function handleBlur(e) {
             if (!isEditableTemporal) {
-                const live = textInputRef.current?.value;
-                if (live != null && live !== delayedValueRef.current) {
-                    delayedValueRef.current = live;
-                    setDelayedValue(live);
-                    pendingEmitRef.current = live;
+                if (acceptExternalValueWhileFocused) {
+                    // Search/autocomplete commits via props while focused; DOM can still
+                    // show the partial query until the next paint — never re-emit that.
+                    pendingEmitRef.current = null;
+                } else {
+                    const live = textInputRef.current?.value;
+                    if (live != null && live !== delayedValueRef.current) {
+                        delayedValueRef.current = live;
+                        setDelayedValue(live);
+                        pendingEmitRef.current = live;
+                    }
                 }
                 flushPendingEmit();
             } else {
@@ -365,7 +372,8 @@ const SimpleInputCore = forwardRef(
             const next = value ?? '';
             // While focused, ignore parent lag behind typing — but always accept
             // external clears (e.g. SearchInput clearOnSelect) so the field resets.
-            if (focusedRef.current) {
+            // Search/autocomplete picks pass acceptExternalValueWhileFocused.
+            if (focusedRef.current && !acceptExternalValueWhileFocused) {
                 if (next !== '' && next !== delayedValueRef.current) return;
                 if (next === delayedValueRef.current) return;
             }
@@ -381,7 +389,7 @@ const SimpleInputCore = forwardRef(
                 textValueRef.current = formatted;
                 setTextValue(formatted);
             }
-        }, [value, type, isEditableTemporal]);
+        }, [value, type, isEditableTemporal, acceptExternalValueWhileFocused]);
 
         const shouldFloatLabel = isFocused || !!delayedValue || !!textValue || type === 'date' || type === 'datetime-local';
 

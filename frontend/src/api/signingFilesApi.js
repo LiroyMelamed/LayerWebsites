@@ -44,6 +44,10 @@ const signingFilesApi = {
         return await ApiUtils.post(`${base}/${signingFileId}/resend`, { signerUserIds });
     },
 
+    updateSigningSignerContact: async (signingFileId, signerUserId, payload) => {
+        return await ApiUtils.patch(`${base}/${signingFileId}/signers/${signerUserId}`, payload);
+    },
+
     getPublicSigningFileDetails: async (token) => {
         return await ApiUtils.get(`${base}/public/${encodeURIComponent(token)}`);
     },

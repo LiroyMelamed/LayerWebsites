@@ -70,6 +70,11 @@
     opacity: 0.75;
 }
 
+.lw-clientPopup__saveBlockedHint {
+    margin-block: calc(-1 * v.$space-2) v.$space-4;
+    color: #c53030;
+}
+
 .lw-clientPopup__input {
     flex: 1;
     flex: 1 1 9.375rem;
@@ -85,42 +90,6 @@
 .lw-clientPopup__actions .lw-textButtonWithTwoOptionalIcons {
     min-block-size: 2.75rem;
     flex: 1 1 12rem;
-}
-
-.lw-clientPopup__similarCompanies {
-    background: #fff8e1;
-    border: 0.0625rem solid #ffcc02;
-    border-radius: 0.5rem;
-    padding: v.$space-3;
-    margin-block-end: v.$space-4;
-    flex-direction: column;
-    gap: v.$space-2;
-}
-
-.lw-clientPopup__similarTitle {
-    font-weight: 600;
-    color: #7a5d00;
-    margin-block-end: v.$space-1;
-}
-
-.lw-clientPopup__similarItem {
-    @include m.row(v.$space-2, nowrap, center, center);
-    justify-content: space-between;
-    padding: v.$space-1 0;
-}
-
-.lw-clientPopup__similarText {
-    flex: 1;
-    color: #333;
-}
-
-.lw-clientPopup__similarBtn {
-    white-space: nowrap;
-}
-
-.lw-clientPopup__similarDismiss {
-    align-self: flex-start;
-    margin-block-start: v.$space-1;
 }
 
 @media (max-width: v.$bp-narrow) {

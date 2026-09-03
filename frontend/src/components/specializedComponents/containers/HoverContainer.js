@@ -19,18 +19,26 @@ const HoverContainer = ({
     onEmptyAction,
     targetRef,
     onClose,
+    usePortal = true,
     style: _style,
     className,
 }) => {
     const { t } = useTranslation();
     const hoverRef = useRef(null);
 
+    const handleOptionPointerDown = (event, result) => {
+        // Keep focus on the input until the value is committed (prevents blur-before-click).
+        event.preventDefault();
+        event.stopPropagation();
+        onPressButtonFunction(getButtonTextFunction?.(result), result);
+    };
+
     // useLayoutEffect: runs after DOM commit but BEFORE browser paint.
     // This guarantees hoverRef.current is set and getBoundingClientRect() is valid,
     // and positions the element before the first visible frame (no flash at 0,0).
     useLayoutEffect(() => {
         const el = hoverRef.current;
-        if (!el) return;
+        if (!el || !usePortal) return;
 
         const adjustPosition = () => {
             const target = targetRef?.current;
@@ -104,23 +112,32 @@ const HoverContainer = ({
             vv?.removeEventListener('scroll', adjustPosition);
             resizeObserver?.disconnect();
         };
-    }, [targetRef, queryResult, isPerforming, query]);
+    }, [targetRef, queryResult, isPerforming, query, usePortal]);
 
     // Separate effect for click-outside so it doesn't re-run just because onClose changes reference
     useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (hoverRef.current && !hoverRef.current.contains(event.target)) {
-                onClose();
-            }
+        const handlePointerDownOutside = (event) => {
+            const target = event.target;
+            if (hoverRef.current?.contains(target)) return;
+            if (targetRef?.current?.contains(target)) return;
+            onClose();
         };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [onClose]);
+        document.addEventListener('mousedown', handlePointerDownOutside);
+        document.addEventListener('touchstart', handlePointerDownOutside);
+        return () => {
+            document.removeEventListener('mousedown', handlePointerDownOutside);
+            document.removeEventListener('touchstart', handlePointerDownOutside);
+        };
+    }, [onClose, targetRef]);
 
-    return createPortal(
+    const panel = (
         <SimpleContainer
             ref={hoverRef}
-            className={['lw-hoverContainer', className].filter(Boolean).join(' ')}
+            className={[
+                'lw-hoverContainer',
+                !usePortal ? 'lw-hoverContainer--inline' : null,
+                className,
+            ].filter(Boolean).join(' ')}
         >
             <SimpleScrollView className="lw-hoverContainer__scroll">
                 {isPerforming ? (
@@ -134,10 +151,7 @@ const HoverContainer = ({
                                 <SimpleButton
                                     key={`choiceNumber${index}`}
                                     className="lw-hoverContainer__option"
-                                    onPressIn={(e) => {
-                                        e.preventDefault();
-                                    }}
-                                    onPress={() => onPressButtonFunction(getButtonTextFunction?.(result), result)}
+                                    onPointerDown={(e) => handleOptionPointerDown(e, result)}
                                 >
                                     <Text20 className="lw-hoverContainer__optionText">{getButtonTextFunction?.(result)}</Text20>
                                 </SimpleButton>
@@ -149,8 +163,9 @@ const HoverContainer = ({
                             <SimpleContainer className="lw-hoverContainer__list">
                                 <SimpleButton
                                     className="lw-hoverContainer__option"
-                                    onPressIn={(e) => {
+                                    onPointerDown={(e) => {
                                         e.preventDefault();
+                                        e.stopPropagation();
                                     }}
                                     onPress={() => {
                                         onEmptyAction(query);
@@ -168,9 +183,12 @@ const HoverContainer = ({
                     )
                 )}
             </SimpleScrollView>
-        </SimpleContainer>,
-        document.body
+        </SimpleContainer>
     );
+
+    if (!usePortal) return panel;
+
+    return createPortal(panel, document.body);
 };
 
 export default HoverContainer;

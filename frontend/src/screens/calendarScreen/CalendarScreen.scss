@@ -18,6 +18,15 @@
     flex-wrap: wrap;
 }
 
+.lw-calendarScreen__employeeBanner {
+    @include m.row(v.$space-3, wrap, center, space-between);
+    background: #EBF8FF;
+    border: 0.0625rem solid #BEE3F8;
+    border-radius: 0.5rem;
+    padding: v.$space-3 v.$space-4;
+    margin-block-end: v.$space-3;
+}
+
 .lw-calendarScreen__syncBtn {
     flex-shrink: 0;
 }
@@ -356,8 +365,7 @@
 
 .lw-calendarScreen__calendarToolbar {
     display: flex;
-    /* RTL: flex-end = physical left (away from the right sidebar). */
-    justify-content: flex-end;
+    justify-content: center;
     margin-bottom: v.$space-2;
     flex-shrink: 0;
 }
@@ -365,10 +373,6 @@
 .lw-calendarScreen__expandBtn {
     font-size: 0.8125rem;
     min-height: 0;
-}
-
-.lw-calendarScreen__calendarCard.is-expanded .lw-calendarScreen__calendarToolbar {
-    justify-content: center;
 }
 
 .lw-calendarScreen__scroll.is-calendarExpanded {
@@ -428,7 +432,7 @@
     }
 
     .lw-calendarScreen__calendarToolbar {
-        justify-content: flex-end;
+        justify-content: center;
         margin-bottom: v.$space-2;
     }
 
@@ -773,6 +777,7 @@ $calendar-rsvp-desktop-min: 80rem;
 
 @media (min-width: $calendar-rsvp-desktop-min) {
     .fc .fc-event .lw-fcEventRsvpBadge--accepted,
+    .fc .fc-event .lw-fcEventRsvpBadge--partial,
     .fc .fc-event .lw-fcEventRsvpBadge--pending,
     .fc .fc-event .lw-fcEventRsvpBadge--declined {
         display: inline-flex !important;
@@ -782,6 +787,14 @@ $calendar-rsvp-desktop-min: 80rem;
 .fc .fc-event .lw-fcEventRsvpBadge--accepted {
     background: #2F855A;
     color: #FFFFFF;
+}
+
+.fc .fc-event .lw-fcEventRsvpBadge--partial {
+    background: linear-gradient(135deg, #2F855A 0 50%, #D69E2E 50% 100%);
+    color: #FFFFFF;
+    font-size: 0.42rem;
+    min-width: 0.85rem;
+    padding-inline: 0.08rem;
 }
 
 .fc .fc-event .lw-fcEventRsvpBadge--pending {
@@ -816,6 +829,34 @@ $calendar-rsvp-desktop-min: 80rem;
             0 0 0 1px rgba(47, 133, 90, 0.25),
             0 0 10px rgba(47, 133, 90, 0.45),
             inset 0 0 6px rgba(47, 133, 90, 0.12) !important;
+    }
+
+    .lw-calendarScreen__calendarCard .fc-event.lw-fcEvent--invitePartial,
+    .fc .fc-event.lw-fcEvent--invitePartial {
+        border: 1px solid transparent !important;
+        box-shadow:
+            0 0 0 1px rgba(47, 133, 90, 0.25),
+            0 0 0 1px rgba(214, 158, 46, 0.22),
+            0 0 10px rgba(47, 133, 90, 0.45),
+            0 0 10px rgba(214, 158, 46, 0.42),
+            inset 0 0 6px rgba(47, 133, 90, 0.12),
+            inset 0 0 6px rgba(214, 158, 46, 0.1) !important;
+
+        &::after {
+            content: "";
+            position: absolute;
+            inset: -2px;
+            border-radius: inherit;
+            padding: 3px;
+            background: linear-gradient(to left, rgba(47, 133, 90, 0.88) 50%, rgba(214, 158, 46, 0.88) 50%);
+            -webkit-mask:
+                linear-gradient(#fff 0 0) content-box,
+                linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            z-index: 2;
+        }
     }
 
     .lw-calendarScreen__calendarCard .fc-event.lw-fcEvent--invitePending,

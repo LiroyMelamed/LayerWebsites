@@ -28,8 +28,8 @@ async function ensureTransparentStampPng(imgBuffer, opts = {}) {
         return { buffer: imgBuffer, contentType: 'image/png' };
     }
 
-    const threshold = Number.isFinite(opts.threshold) ? opts.threshold : 48;
-    const feather = Number.isFinite(opts.feather) ? opts.feather : 28;
+    const threshold = Number.isFinite(opts.threshold) ? opts.threshold : 36;
+    const feather = Number.isFinite(opts.feather) ? opts.feather : 24;
 
     try {
         const { createCanvas, loadImage } = canvasApi;
@@ -68,8 +68,9 @@ async function ensureTransparentStampPng(imgBuffer, opts = {}) {
         const bgG = n ? Math.round(gSum / n) : 255;
         const bgB = n ? Math.round(bSum / n) : 255;
 
-        // Also punch out near-white regardless of corner sample (JPEG washout).
+        // Punch out near-white only — keep colored stamp artwork (e.g. light-blue lines).
         const whitePunch = 245;
+        const whiteFeather = 232;
 
         for (let i = 0; i < d.length; i += 4) {
             const r = d[i];
@@ -78,17 +79,28 @@ async function ensureTransparentStampPng(imgBuffer, opts = {}) {
             const a = d[i + 3];
             if (a === 0) continue;
 
+            const minRgb = Math.min(r, g, b);
             const nearWhite = r >= whitePunch && g >= whitePunch && b >= whitePunch;
-            const dr = r - bgR;
-            const dg = g - bgG;
-            const db = b - bgB;
-            const dist = Math.sqrt(dr * dr + dg * dg + db * db);
 
-            if (nearWhite || dist < threshold) {
+            if (nearWhite) {
                 d[i + 3] = 0;
-            } else if (dist < threshold + feather) {
-                const t = (dist - threshold) / feather;
-                d[i + 3] = Math.round(a * t);
+                continue;
+            }
+
+            // Feather only very light edge pixels against white letterbox.
+            if (minRgb >= whiteFeather) {
+                const dr = r - bgR;
+                const dg = g - bgG;
+                const db = b - bgB;
+                const dist = Math.sqrt(dr * dr + dg * dg + db * db);
+                const threshold = 36;
+                const feather = 24;
+                if (dist < threshold) {
+                    d[i + 3] = 0;
+                } else if (dist < threshold + feather) {
+                    const t = (dist - threshold) / feather;
+                    d[i + 3] = Math.round(a * t);
+                }
             }
         }
 
