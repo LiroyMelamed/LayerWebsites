@@ -24,8 +24,7 @@ import { usePopup } from "../../providers/PopUpProvider";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import { images } from "../../assets/images/images";
-import { AdminStackName } from "../../navigation/AdminStack";
-import { MainScreenName } from "../mainScreen/MainScreen";
+import { AdminStackName, MainScreenName } from "../../navigation/screenPaths";
 import { useCalendarModuleEnabled } from "../../services/firmSettings";
 
 import calendarApi from "../../api/calendarApi";
@@ -513,7 +512,7 @@ export default function CalendarScreen() {
 
     useEffect(() => {
         if (!canUseFirmView) return;
-        const next = new URLSearchParams(searchParams);
+        const next = new URLSearchParams(window.location.search);
         if (scope === SCOPE_FIRM && filters.lawyer_id) {
             next.set("scope", SCOPE_FIRM);
             next.set("lawyer_id", String(filters.lawyer_id));
@@ -522,10 +521,27 @@ export default function CalendarScreen() {
             if (scope === SCOPE_FIRM) next.set("scope", SCOPE_FIRM);
             else next.delete("scope");
         }
-        if (next.toString() !== searchParams.toString()) {
+        const nextStr = next.toString();
+        const currentStr = window.location.search.replace(/^\?/, "");
+        if (nextStr !== currentStr) {
             setSearchParams(next, { replace: true });
         }
-    }, [canUseFirmView, scope, filters.lawyer_id, searchParams, setSearchParams]);
+    }, [canUseFirmView, scope, filters.lawyer_id, setSearchParams]);
+
+    // ── Filter assembly ─────────────────────────────────────────────────────
+    const apiFilters = useMemo(() => {
+        const f = {};
+        const isFirmScope = canUseFirmView && scope === SCOPE_FIRM;
+        f.scope = isFirmScope ? SCOPE_FIRM : SCOPE_MINE;
+        // Lawyer pin is firm-view only — must not leak into "היומן שלי".
+        if (isFirmScope && filters.lawyer_id) f.lawyer_id = filters.lawyer_id;
+        if (filters.client_id) f.client_id = filters.client_id;
+        if (filters.case_id) f.case_id = filters.case_id;
+        if (filters.event_type && filters.event_type !== EVENT_TYPE_ALL) {
+            f.event_type = filters.event_type;
+        }
+        return f;
+    }, [scope, filters, canUseFirmView]);
 
     // ── Load firm working hours + per-type default colors ─────────────────
     useEffect(() => {
@@ -542,8 +558,7 @@ export default function CalendarScreen() {
                     const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
                     if (parsed && typeof parsed === "object") {
                         window.__CALENDAR_TYPE_COLORS__ = parsed;
-                        // Rebuild colors now that admin defaults are available
-                        // (first fetch may have raced ahead of this settings call).
+                        const scopeKey = (canUseFirmView && scope === SCOPE_FIRM) ? SCOPE_FIRM : SCOPE_MINE;
                         setEvents((prev) => prev.map((fc) => {
                             const rawEv = fc?.extendedProps;
                             if (!rawEv || rawEv.hint) {
@@ -556,9 +571,7 @@ export default function CalendarScreen() {
                                 }
                                 return fc;
                             }
-                            return buildFullCalendarEvent(rawEv, {
-                                scope: apiFilters.scope || SCOPE_MINE,
-                            });
+                            return buildFullCalendarEvent(rawEv, { scope: scopeKey });
                         }));
                     }
                 } catch { /* ignore */ }
@@ -567,21 +580,6 @@ export default function CalendarScreen() {
         return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- apply once on mount; scope rebuild happens via fetch
     }, []);
-
-    // ── Filter assembly ─────────────────────────────────────────────────────
-    const apiFilters = useMemo(() => {
-        const f = {};
-        const isFirmScope = canUseFirmView && scope === SCOPE_FIRM;
-        f.scope = isFirmScope ? SCOPE_FIRM : SCOPE_MINE;
-        // Lawyer pin is firm-view only — must not leak into "היומן שלי".
-        if (isFirmScope && filters.lawyer_id) f.lawyer_id = filters.lawyer_id;
-        if (filters.client_id) f.client_id = filters.client_id;
-        if (filters.case_id) f.case_id = filters.case_id;
-        if (filters.event_type && filters.event_type !== EVENT_TYPE_ALL) {
-            f.event_type = filters.event_type;
-        }
-        return f;
-    }, [scope, filters, canUseFirmView]);
 
     // ── Fetch events for the visible date range ────────────────────────────
     const fetchEvents = useCallback(async (range, { force = false } = {}) => {
@@ -610,7 +608,7 @@ export default function CalendarScreen() {
             const scopeKey = apiFilters.scope || SCOPE_MINE;
             const built = list.map((ev) => buildFullCalendarEvent(ev, { scope: scopeKey }));
             const holidayHints = (holidaysRes?.data?.holidays || [])
-                .map((h) => buildHolidayHintEvent(h))
+                .map((h) => buildHolidayHintEvent(h, t))
                 .filter(Boolean);
             setEvents([...holidayHints, ...built]);
             lastFetchKeyRef.current = fetchKey;
@@ -621,7 +619,7 @@ export default function CalendarScreen() {
                 fetchInFlightKeyRef.current = null;
             }
         }
-    }, [apiFilters]);
+    }, [apiFilters, t]);
 
     fetchEventsRef.current = fetchEvents;
 
@@ -776,12 +774,12 @@ export default function CalendarScreen() {
                     handleEventSaved(saved, opts);
                     selectInfo?.view?.calendar?.unselect?.();
                 }}
-                onDuplicatePrefill={openDuplicateDraft}
+                onDuplicatePrefill={(next) => openDuplicateDraftRef.current?.(next)}
                 onDeleted={() => closePopup()}
                 onClose={closePopup}
             />
         );
-    }, [openPopup, closePopup, upsertLocally, handleEventSaved, workingSchedule, openDuplicateDraft]);
+    }, [openPopup, closePopup, upsertLocally, handleEventSaved, workingSchedule]);
 
     const openEditModal = useCallback((clickInfo) => {
         const ev = clickInfo.event.extendedProps || {};
@@ -801,7 +799,7 @@ export default function CalendarScreen() {
                 event={eventPayload}
                 onUpdated={upsertLocally}
                 onSaved={handleEventSaved}
-                onDuplicatePrefill={openDuplicateDraft}
+                onDuplicatePrefill={(next) => openDuplicateDraftRef.current?.(next)}
                 onDeleted={(deletedId) => {
                     setEvents((prev) => prev.filter((e) => e.id !== String(deletedId)));
                     closePopup();
@@ -809,7 +807,7 @@ export default function CalendarScreen() {
                 onClose={closePopup}
             />
         );
-    }, [openPopup, closePopup, upsertLocally, handleEventSaved, openDuplicateDraft]);
+    }, [openPopup, closePopup, upsertLocally, handleEventSaved]);
 
     // ── Deep-link: /CalendarScreen?eventId=<id> ────────────────────────────
     useEffect(() => {
@@ -834,7 +832,7 @@ export default function CalendarScreen() {
                 event={eventPayload}
                 onUpdated={upsertLocally}
                 onSaved={handleEventSaved}
-                onDuplicatePrefill={openDuplicateDraft}
+                onDuplicatePrefill={(next) => openDuplicateDraftRef.current?.(next)}
                 onDeleted={(deletedId) => {
                     setEvents((prev) => prev.filter((e) => e.id !== String(deletedId)));
                     closePopup();
