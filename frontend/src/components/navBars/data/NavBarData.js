@@ -11,6 +11,7 @@ import {
     PlansPricingScreenName,
     PlatformSettingsScreenName,
     RemindersScreenName,
+    AdminSupportScreenName,
     SigningManagerScreenName,
     uploadFileForSigningScreenName,
 } from "../../../navigation/screenPaths";
@@ -71,6 +72,14 @@ export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t) =>
             buttonScreen: t('nav.reminders'),
             icon: null,
             onClick: () => navigate(AdminStackName + RemindersScreenName),
+        },
+        {
+            navKey: 'support',
+            routeMatch: AdminSupportScreenName,
+            buttonText: t('nav.support', 'תמיכה'),
+            buttonScreen: t('nav.support', 'תמיכה'),
+            icon: null,
+            onClick: () => navigate(AdminStackName + AdminSupportScreenName),
         },
         ...(calendarEnabled ? [{
             navKey: 'calendar',

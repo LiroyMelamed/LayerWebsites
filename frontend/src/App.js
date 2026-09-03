@@ -41,7 +41,6 @@ import ContinuityPage from './screens/compliance/ContinuityPage';
 import CompliancePage from './screens/compliance/CompliancePage';
 import ChatBotPage from './screens/chatbot/ChatBotPage';
 import MasterAdminScreen from './screens/masterAdmin/MasterAdminScreen';
-import ClientTicketScreen from './screens/client/ticket/ClientTicketScreen';
 import CalendarInviteScreen from './screens/calendarScreen/CalendarInviteScreen';
 
 const STACK_SUFFIX = "/*"
@@ -187,7 +186,7 @@ const App = () => {
         <Route path={ChatBotPageName} element={<ChatBotPage />} />
 
         <Route path="/admin/master" element={<MasterAdminScreen />} />
-        <Route path="/ticket" element={<ClientTicketScreen />} />
+        <Route path="/ticket" element={<Navigate to="/AdminStack/support" replace />} />
 
         <Route path={LoginStackName + STACK_SUFFIX} element={<LoginStack />} />
 

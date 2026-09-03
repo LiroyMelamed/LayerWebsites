@@ -16,6 +16,7 @@ import {
     PlansPricingScreenName,
     PlatformSettingsScreenName,
     RemindersScreenName,
+    AdminSupportScreenName,
     SigningManagerScreenName,
     SigningSpotsPreviewScreenName,
     TaggedCasesScreenName,
@@ -41,6 +42,7 @@ import RemindersScreen from "../screens/remindersScreen/RemindersScreen";
 import PlatformSettingsScreen from "../screens/platformSettingsScreen/PlatformSettingsScreen";
 import CalendarScreen from "../screens/calendarScreen/CalendarScreen";
 import DailyAgendaScreen from "../screens/calendarScreen/DailyAgendaScreen";
+import AdminSupportScreen from "../screens/admin/support/AdminSupportScreen";
 import BillingLockedScreen from "../components/billing/BillingLockedScreen";
 import { useBillingLock } from "../providers/BillingLockProvider";
 
@@ -85,6 +87,7 @@ function AdminStack() {
                     <Route path={toRelativePath(PlansPricingScreenName)} element={<PlansPricingScreen />} />
                     <Route path={toRelativePath(uploadFileForSigningScreenName)} element={<UploadFileForSigningScreen />} />
                     <Route path={toRelativePath(RemindersScreenName)} element={<RemindersScreen />} />
+                    <Route path={toRelativePath(AdminSupportScreenName)} element={<AdminSupportScreen />} />
                     <Route path={toRelativePath(PlatformSettingsScreenName)} element={<PlatformSettingsScreen />} />
                     {calendarEnabled && (
                         <>

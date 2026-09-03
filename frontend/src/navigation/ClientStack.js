@@ -13,12 +13,12 @@ import {
     ClientTicketScreenName,
 } from "./screenPaths";
 import { LoginStackName } from "./LoginStack";
+import { AdminStackName } from "../navigation/AdminStack";
 import ClientMainScreen from "../screens/client/clientMainScreen/ClientMainScreen";
 import ClientCasesScreen from "../screens/client/clientCasesScreen/ClientCasesScreen";
 import SigningScreen from "../screens/signingScreen/SigningScreen";
 import NotificationsScreen from "../screens/client/notifications/NotificationsScreen";
 import ProfileScreen from "../screens/client/profile/ProfileScreen";
-import ClientTicketScreen from "../screens/client/ticket/ClientTicketScreen";
 import BillingLockedScreen from "../components/billing/BillingLockedScreen";
 import { useBillingLock } from "../providers/BillingLockProvider";
 
@@ -44,7 +44,7 @@ function ClientStack() {
                     <Route path={toRelativePath(NotificationsScreenName)} element={<NotificationsScreen />} />
                     <Route path={toRelativePath(SigningScreenName)} element={<SigningScreen />} />
                     <Route path={toRelativePath(ProfileScreenName)} element={<ProfileScreen />} />
-                    <Route path={toRelativePath(ClientTicketScreenName)} element={<ClientTicketScreen />} />
+                    <Route path={toRelativePath(ClientTicketScreenName)} element={<Navigate to={`${AdminStackName}/support`} replace />} />
                 </Routes>
             </Suspense>
         </TopAndRightNavBar>

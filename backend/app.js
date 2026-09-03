@@ -30,6 +30,7 @@ const platformSettingsRoutes = require("./routes/platformSettingsRoutes");
 const chatbotRoutes = require("./routes/chatbotRoutes");
 const templateAttachmentRoutes = require("./routes/templateAttachmentRoutes"); const calendarRoutes = require('./routes/calendarRoutes');
 const platformRoutes = require('./routes/platformRoutes');
+const supportRoutes = require('./routes/supportRoutes');
 const paymentWebhookRoutes = require('./routes/paymentWebhookRoutes');
 const authMiddleware = require("./middlewares/authMiddleware");
 const { requireBillingAccess } = require('./middlewares/requireBillingAccess');
@@ -181,6 +182,7 @@ app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/template-attachments", templateAttachmentRoutes);
 app.use("/api/calendar", calendarRoutes);
 app.use("/api/platform/v1", platformRoutes);
+app.use("/api/support", supportRoutes);
 
 // Lightweight health endpoint for prereq checks
 app.get("/health", (req, res) => {
