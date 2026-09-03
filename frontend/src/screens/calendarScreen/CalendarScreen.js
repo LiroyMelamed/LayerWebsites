@@ -431,36 +431,6 @@ export default function CalendarScreen() {
     }, [canUseFirmView, searchParams]);
 
     useEffect(() => {
-        if (!canUseFirmView) return;
-        if (filters.lawyer_id && lawyers.length) {
-            const match = lawyers.find((l) => {
-                const id = l.userid ?? l.UserId ?? l.id;
-                return Number(id) === Number(filters.lawyer_id);
-            });
-            const name = match?.name ?? match?.Name;
-            if (name && name !== managerFilterLabel) {
-                setManagerFilterLabel(name);
-            }
-        }
-    }, [canUseFirmView, filters.lawyer_id, lawyers, managerFilterLabel]);
-
-    useEffect(() => {
-        if (!canUseFirmView) return;
-        const next = new URLSearchParams(searchParams);
-        if (scope === SCOPE_FIRM && filters.lawyer_id) {
-            next.set("scope", SCOPE_FIRM);
-            next.set("lawyer_id", String(filters.lawyer_id));
-        } else {
-            next.delete("lawyer_id");
-            if (scope === SCOPE_FIRM) next.set("scope", SCOPE_FIRM);
-            else next.delete("scope");
-        }
-        if (next.toString() !== searchParams.toString()) {
-            setSearchParams(next, { replace: true });
-        }
-    }, [canUseFirmView, scope, filters.lawyer_id, searchParams, setSearchParams]);
-
-    useEffect(() => {
         if (!calendarExpanded) return undefined;
         const prevOverflow = document.body.style.overflow;
         document.body.style.overflow = "hidden";
@@ -526,6 +496,36 @@ export default function CalendarScreen() {
         })();
         return () => { cancelled = true; };
     }, [canUseFirmView]);
+
+    useEffect(() => {
+        if (!canUseFirmView) return;
+        if (filters.lawyer_id && lawyers.length) {
+            const match = lawyers.find((l) => {
+                const id = l.userid ?? l.UserId ?? l.id;
+                return Number(id) === Number(filters.lawyer_id);
+            });
+            const name = match?.name ?? match?.Name;
+            if (name && name !== managerFilterLabel) {
+                setManagerFilterLabel(name);
+            }
+        }
+    }, [canUseFirmView, filters.lawyer_id, lawyers, managerFilterLabel]);
+
+    useEffect(() => {
+        if (!canUseFirmView) return;
+        const next = new URLSearchParams(searchParams);
+        if (scope === SCOPE_FIRM && filters.lawyer_id) {
+            next.set("scope", SCOPE_FIRM);
+            next.set("lawyer_id", String(filters.lawyer_id));
+        } else {
+            next.delete("lawyer_id");
+            if (scope === SCOPE_FIRM) next.set("scope", SCOPE_FIRM);
+            else next.delete("scope");
+        }
+        if (next.toString() !== searchParams.toString()) {
+            setSearchParams(next, { replace: true });
+        }
+    }, [canUseFirmView, scope, filters.lawyer_id, searchParams, setSearchParams]);
 
     // ── Load firm working hours + per-type default colors ─────────────────
     useEffect(() => {
