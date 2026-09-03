@@ -432,6 +432,15 @@
     flex-direction: column;
     gap: 0.25rem;
     min-width: 36rem;
+
+    &.is-withActions {
+
+        .lw-signingManagerScreen__signerStatusHead,
+        .lw-signingManagerScreen__signerStatusRow {
+            grid-template-columns: 1.1fr 1.25fr 0.85fr 0.85fr 0.85fr minmax(7rem, auto);
+            align-items: center;
+        }
+    }
 }
 
 .lw-signingManagerScreen__signerStatusHead,
@@ -441,6 +450,83 @@
     gap: 0.5rem;
     align-items: start;
     font-size: 0.8125rem;
+}
+
+.lw-signingManagerScreen__signerStatusCell {
+    min-width: 0;
+    word-break: break-word;
+}
+
+.lw-signingManagerScreen__signerStatusActions {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.lw-signingManagerScreen__replaceSignerBtn {
+    white-space: nowrap;
+    padding-inline: 0.5rem;
+    min-height: 2rem;
+    font-size: 0.75rem;
+}
+
+.lw-signingManagerScreen__replaceSignerBtnIcon {
+    width: 0.875rem;
+    height: 0.875rem;
+    flex-shrink: 0;
+}
+
+.lw-signingManagerScreen__replaceSignerSection {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding: 1rem;
+    border: 0.0625rem solid #e0e0e0;
+    border-radius: 0.5rem;
+    background-color: #f9f9f9;
+    width: 100%;
+}
+
+.lw-signingManagerScreen__replaceSignerTitle {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+    width: 100%;
+}
+
+.lw-signingManagerScreen__replaceSignerTitleLabel {
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: #4C6690;
+}
+
+.lw-signingManagerScreen__replaceSignerTitleName {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #2A4365;
+    line-height: 1.35;
+    word-break: break-word;
+}
+
+.lw-signingManagerScreen__replaceSignerFields {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+@media (min-width: 640px) {
+    .lw-signingManagerScreen__replaceSignerFields {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+    }
+
+    .lw-signingManagerScreen__replaceSignerFields .lw-segmentedSwitch {
+        grid-column: 1 / -1;
+    }
 }
 
 .lw-signingManagerScreen__signerStatusHead {

@@ -127,7 +127,9 @@
     "replaceSigner": {
       "actions": "Actions",
       "button": "Replace signer / change delivery",
+      "buttonShort": "Change delivery",
       "title": "Update signer — {{name}}",
+      "titleLabel": "Update signer details",
       "email": "Email",
       "phone": "Phone",
       "delivery": "Delivery channel",

@@ -764,7 +764,7 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                     </div>
                     {loadingSigners ? '...' : (
                         <div className="lw-signingManagerScreen__signerStatusWrap">
-                            <div className="lw-signingManagerScreen__signerStatusTable">
+                            <div className={`lw-signingManagerScreen__signerStatusTable${isPending ? " is-withActions" : ""}`}>
                                 <div className="lw-signingManagerScreen__signerStatusHead">
                                     <span>{t('signingManager.signerStatus.name')}</span>
                                     <span>{t('signingManager.signerStatus.contact')}</span>
@@ -775,21 +775,35 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                                 </div>
                                 {(signers.length ? signers : []).map((s) => (
                                     <div key={s.SignerUserId} className="lw-signingManagerScreen__signerStatusRow">
-                                        <span>{s.Name || `#${s.SignerUserId}`}</span>
-                                        <span>{[s.Email, s.Phone].filter(Boolean).join(' · ') || '-'}</span>
-                                        <span>{formatUtcDateTime(s.SentAt)}</span>
-                                        <span>{formatUtcDateTime(s.ViewedAt)}</span>
-                                        <span>{formatUtcDateTime(s.SignedAt)}</span>
+                                        <span className="lw-signingManagerScreen__signerStatusCell">{s.Name || `#${s.SignerUserId}`}</span>
+                                        <span className="lw-signingManagerScreen__signerStatusCell">{[s.Email, s.Phone].filter(Boolean).join(' · ') || '-'}</span>
+                                        <span className="lw-signingManagerScreen__signerStatusCell">{formatUtcDateTime(s.SentAt)}</span>
+                                        <span className="lw-signingManagerScreen__signerStatusCell">{formatUtcDateTime(s.ViewedAt)}</span>
+                                        <span className="lw-signingManagerScreen__signerStatusCell">{formatUtcDateTime(s.SignedAt)}</span>
                                         {isPending && (
-                                            <span>
-                                                {!s.AllSigned && (
+                                            <span className="lw-signingManagerScreen__signerStatusActions">
+                                                {!s.AllSigned ? (
                                                     <SecondaryButton
                                                         size={buttonSizes.SMALL}
+                                                        className="lw-signingManagerScreen__replaceSignerBtn"
+                                                        leftIcon={(
+                                                            <svg
+                                                                className="lw-signingManagerScreen__replaceSignerBtnIcon"
+                                                                viewBox="0 0 16 16"
+                                                                aria-hidden="true"
+                                                                focusable="false"
+                                                            >
+                                                                <path
+                                                                    fill="currentColor"
+                                                                    d="M11.5 1.5a1.8 1.8 0 0 1 2.5 2.5L5.8 12.2l-3.3.8.8-3.3L11.5 1.5zm1.1 1.1L12.4 4.8l1.2-1.2-1-1zm-8.2 8.2-.5 2 2-.5 6.2-6.2-1.5-1.5-6.2 6.2z"
+                                                                />
+                                                            </svg>
+                                                        )}
                                                         onPress={() => openEditSigner(s)}
                                                     >
-                                                        {t('signingManager.replaceSigner.button')}
+                                                        {t('signingManager.replaceSigner.buttonShort')}
                                                     </SecondaryButton>
-                                                )}
+                                                ) : null}
                                             </span>
                                         )}
                                     </div>
@@ -797,6 +811,7 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                                 {!signers.length && !loadingSigners && (
                                     <div className="lw-signingManagerScreen__signerStatusRow">
                                         <span>-</span><span>-</span><span>-</span><span>-</span><span>-</span>
+                                        {isPending && <span>-</span>}
                                     </div>
                                 )}
                             </div>
@@ -892,9 +907,15 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
 
                 {editingSigner && (
                     <SimpleContainer className="lw-signingManagerScreen__replaceSignerSection">
-                        <div className="lw-signingManagerScreen__resendTitle">
-                            {t('signingManager.replaceSigner.title', { name: editingSigner.Name || editingSigner.SignerUserId })}
+                        <div className="lw-signingManagerScreen__replaceSignerTitle">
+                            <span className="lw-signingManagerScreen__replaceSignerTitleLabel">
+                                {t('signingManager.replaceSigner.titleLabel')}
+                            </span>
+                            <span className="lw-signingManagerScreen__replaceSignerTitleName">
+                                {editingSigner.Name || `#${editingSigner.SignerUserId}`}
+                            </span>
                         </div>
+                        <SimpleContainer className="lw-signingManagerScreen__replaceSignerFields">
                         <SimpleInput
                             title={t('signingManager.replaceSigner.email')}
                             value={editSignerEmail}
@@ -915,6 +936,7 @@ function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned,
                                 { value: 'both', label: t('signingManager.replaceSigner.deliveryBoth') },
                             ]}
                         />
+                        </SimpleContainer>
                         <SimpleContainer className="lw-signingManagerScreen__resendActions">
                             <PrimaryButton
                                 onPress={() => handleSaveSignerContact({ resendAfterSave: true })}

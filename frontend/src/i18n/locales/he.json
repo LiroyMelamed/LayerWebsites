@@ -172,7 +172,9 @@
     "replaceSigner": {
       "actions": "פעולות",
       "button": "החלף חותם / שנה שליחה",
+      "buttonShort": "שנה שליחה",
       "title": "עדכון פרטי חותם — {{name}}",
+      "titleLabel": "עדכון פרטי חותם",
       "email": "דוא״ל",
       "phone": "טלפון",
       "delivery": "ערוץ שליחה",
