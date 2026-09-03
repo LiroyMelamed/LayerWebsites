@@ -1,4 +1,4 @@
-import ApiUtils from '../../api/apiUtils';
+import ApiUtils from './apiUtils';
 
 export async function listSupportTickets() {
   const { data } = await ApiUtils.get('/support/tickets');
