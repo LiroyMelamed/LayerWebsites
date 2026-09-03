@@ -8,7 +8,7 @@ const { getEmailTemplate, getSetting } = require('../services/settingsService');
 const { wrapEmailHtml } = require('../tasks/emailReminders/templates');
 const { getFirmDisplayName, getLawFirmNameHe } = require('./firmBranding');
 const { loadCalendarSmsContext } = require('./calendarEventReminders');
-const { meetingPlaceMode } = require('./publicShortLinks');
+const { meetingPlaceMode, isRemoteMeetingUrl, resolveEffectivePlaceMode } = require('./publicShortLinks');
 
 function escapeHtml(str) {
     return String(str ?? '')
@@ -65,11 +65,21 @@ function buildAddressLineHtml(locationLabel, address, placeMode = '') {
     return `<br>${escapeHtml(label)}: <span style="font-weight:600;">${escapeHtml(addr)}</span>`;
 }
 
+function stripNavButtonBlocks(html) {
+    return String(html || '').replace(
+        /<div style="text-align:center;padding:8px 0 4px 0;">[\s\S]*?(?:ניווט בוויז|Google Maps|Waze)[\s\S]*?<\/div>/gi,
+        ''
+    );
+}
+
 /** Phone: no address/nav; Zoom: link label only; strip legacy "כתובת:" orphans from custom templates. */
 function polishCalendarEmailHtml(html, { placeMode, address, locationLabel } = {}) {
     let out = String(html || '');
-    const mode = placeMode || 'place';
-    const hasAddress = Boolean(String(address || '').trim());
+    const addr = String(address || '').trim();
+    const hasAddress = Boolean(addr);
+    const mode = resolveEffectivePlaceMode('', addr, placeMode || 'place');
+    const label = locationLabel
+        || (mode === 'link' ? (isRemoteMeetingUrl(addr) ? 'קישור לזום' : 'קישור לפגישה') : mode === 'place' ? 'כתובת' : '');
 
     if (mode === 'none' || !hasAddress) {
         out = out.replace(/<br>\s*כתובת\s*:\s*(?:<span[^>]*>\s*<\/span>)?/gi, '');
@@ -78,16 +88,19 @@ function polishCalendarEmailHtml(html, { placeMode, address, locationLabel } = {
         out = out.replace(/<br>\s*קישור לפגישה\s*:\s*(?:<span[^>]*>\s*<\/span>)?/gi, '');
         out = out.replace(/כתובת\s*:\s*<span[^>]*>\s*<\/span>/gi, '');
         out = out.replace(/מיקום\s*:\s*<span[^>]*>\s*<\/span>/gi, '');
-        if (mode === 'none' || !hasAddress) {
-            out = out.replace(/<div style="text-align:center;padding:8px 0 4px 0;">[\s\S]*?<\/div>/gi, '');
+        out = stripNavButtonBlocks(out);
+    } else if (mode === 'link') {
+        out = stripNavButtonBlocks(out);
+        if (label && label !== 'כתובת') {
+            const escAddr = escapeHtml(addr);
+            const addrPat = escAddr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const replacement = buildAddressLineHtml(label, addr, mode);
+            out = out.replace(new RegExp(`<br>כתובת\\s*:\\s*<span[^>]*>${addrPat}</span>`, 'gi'), replacement);
+            out = out.replace(new RegExp(`<br>מיקום\\s*:\\s*<span[^>]*>${addrPat}</span>`, 'gi'), replacement);
+            out = out.replace(new RegExp(`כתובת\\s*:\\s*<span[^>]*>${addrPat}</span>`, 'gi'), replacement.replace(/^<br>/, ''));
+            // Legacy templates with unescaped [[address]] already substituted
+            out = out.replace(/<br>\s*כתובת\s*:\s*<span[^>]*>[\s\S]*?<\/span>/gi, replacement);
         }
-    } else if (mode === 'link' && locationLabel && locationLabel !== 'כתובת') {
-        const escAddr = escapeHtml(String(address));
-        const addrPat = escAddr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const replacement = buildAddressLineHtml(locationLabel, address, mode);
-        out = out.replace(new RegExp(`<br>כתובת\\s*:\\s*<span[^>]*>${addrPat}</span>`, 'gi'), replacement);
-        out = out.replace(new RegExp(`<br>מיקום\\s*:\\s*<span[^>]*>${addrPat}</span>`, 'gi'), replacement);
-        out = out.replace(new RegExp(`כתובת\\s*:\\s*<span[^>]*>${addrPat}</span>`, 'gi'), replacement.replace(/^<br>/, ''));
     }
 
     return out;
@@ -143,7 +156,11 @@ async function buildCalendarEmailFields(ev, { recipientName, clientsNames, whenL
         || [ctx.recipientName]
     );
 
-    const placeMode = ctx.placeMode || meetingPlaceMode(ev.meeting_type || ev.meetingType || '');
+    const placeMode = resolveEffectivePlaceMode(
+        ev.meeting_type || ev.meetingType || ctx.meetingType || '',
+        ctx.address || ev.location || '',
+        ctx.placeMode || meetingPlaceMode(ev.meeting_type || ev.meetingType || '')
+    );
     const locationLabel = placeMode === 'none'
         ? ''
         : (ctx.locationLabel

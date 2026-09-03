@@ -6,8 +6,7 @@ import SimpleContainer from "../../../components/simpleComponents/SimpleContaine
 import Skeleton from "../../../components/simpleComponents/Skeleton";
 import { Text12, Text14, TextBold14, TextBold16 } from "../../../components/specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../constant/colors";
-import { AdminStackName } from "../../../navigation/AdminStack";
-import { CalendarScreenName } from "../../calendarScreen/CalendarScreen";
+import { AdminStackName, CalendarScreenName } from "../../../navigation/screenPaths";
 import { formatDisplayTime } from "../../../functions/date/formatDateForInput";
 import { useCalendarModuleEnabled } from "../../../services/firmSettings";
 import { leaveColor } from "../../calendarScreen/utils/lawyerColors";

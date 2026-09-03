@@ -24,8 +24,7 @@ import { usePopup } from "../../providers/PopUpProvider";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import { images } from "../../assets/images/images";
-import { AdminStackName } from "../../navigation/AdminStack";
-import { MainScreenName } from "../mainScreen/MainScreen";
+import { AdminStackName, MainScreenName } from "../../navigation/screenPaths";
 import { useCalendarModuleEnabled } from "../../services/firmSettings";
 
 import calendarApi from "../../api/calendarApi";
@@ -182,7 +181,7 @@ function buildHolidayHintEvent(h, t) {
     };
 }
 
-/** Aggregate multi-client RSVP: any accepted → accepted; else any pending → pending; else declined. */
+/** Aggregate multi-client RSVP for calendar chrome (border/badge). */
 function aggregateInviteStatus(ev) {
     const clients = Array.isArray(ev?.clients) ? ev.clients : null;
     if (clients?.length) {
@@ -193,7 +192,9 @@ function aggregateInviteStatus(ev) {
             const legacy = ev?.inviteStatus;
             return legacy && legacy !== "none" ? legacy : null;
         }
-        if (statuses.some((s) => s === "accepted")) return "accepted";
+        const acceptedCount = statuses.filter((s) => s === "accepted").length;
+        if (acceptedCount > 0 && acceptedCount < statuses.length) return "partial";
+        if (acceptedCount === statuses.length) return "accepted";
         if (statuses.some((s) => s === "pending")) return "pending";
         if (statuses.some((s) => s === "declined")) return "declined";
         return null;
@@ -206,6 +207,7 @@ function inviteStatusClass(inviteStatus, ev) {
     const eventType = String(ev?.eventType || ev?.event_type || "").trim().toLowerCase();
     if (eventType !== "appointment" && eventType !== "hearing") return null;
     if (inviteStatus === "accepted") return "lw-fcEvent--inviteAccepted";
+    if (inviteStatus === "partial") return "lw-fcEvent--invitePartial";
     if (inviteStatus === "declined") return "lw-fcEvent--inviteDeclined";
     if (inviteStatus === "pending") return "lw-fcEvent--invitePending";
     return null;
@@ -345,6 +347,27 @@ function _currentRole() {
 }
 function _isFirmManager(role) { return role && role !== "User"; }
 
+function _canPickEmployeeCalendar(role) {
+    if (role === "Admin" || role === "PlatformAdmin") return true;
+    try {
+        return typeof window !== "undefined" && localStorage.getItem("isPlatformAdmin") === "true";
+    } catch {
+        return false;
+    }
+}
+
+function _currentUserIdFromToken() {
+    try {
+        const token = localStorage.getItem("token");
+        if (!token) return null;
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const id = payload?.userid ?? payload?.UserId;
+        return id != null ? Number(id) : null;
+    } catch {
+        return null;
+    }
+}
+
 /** HH:MM pill label for the FullCalendar now-indicator axis (Asia/Jerusalem). */
 function _formatNowBadgeTime(date) {
     const p = jerusalemParts(date);
@@ -376,6 +399,9 @@ export default function CalendarScreen() {
 
     const role = _currentRole();
     const canUseFirmView = _isFirmManager(role);
+    const canPickEmployeeCalendar = _canPickEmployeeCalendar(role);
+    const currentUserId = _currentUserIdFromToken();
+    const urlCalendarInitRef = useRef(false);
 
     const calendarRef = useRef(null);
     const fetchRangeRef = useRef({ from: null, to: null });
@@ -399,6 +425,22 @@ export default function CalendarScreen() {
     });
     const [filtersPanelOpen, setFiltersPanelOpen] = useState(!isSmallScreen);
     const [calendarExpanded, setCalendarExpanded] = useState(false);
+
+    useEffect(() => {
+        if (!canUseFirmView || urlCalendarInitRef.current) return;
+        urlCalendarInitRef.current = true;
+        const urlLawyerId = searchParams.get("lawyer_id");
+        const urlScope = searchParams.get("scope");
+        if (urlScope === SCOPE_FIRM || urlLawyerId) {
+            setScope(SCOPE_FIRM);
+        }
+        if (urlLawyerId) {
+            const id = parseInt(urlLawyerId, 10);
+            if (Number.isFinite(id) && id > 0) {
+                setFilters((prev) => ({ ...prev, lawyer_id: id }));
+            }
+        }
+    }, [canUseFirmView, searchParams]);
 
     useEffect(() => {
         if (!calendarExpanded) return undefined;
@@ -467,46 +509,37 @@ export default function CalendarScreen() {
         return () => { cancelled = true; };
     }, [canUseFirmView]);
 
-    // ── Load firm working hours + per-type default colors ─────────────────
     useEffect(() => {
-        let cancelled = false;
-        (async () => {
-            try {
-                const res = await platformSettingsApi.getAll();
-                const cal = res?.data?.settings?.calendar || res?.settings?.calendar || {};
-                if (cancelled) return;
-                setWorkingSchedule(parseScheduleFromCalendarSettings(cal));
-                setVisibleSlotRange(parseVisibleSlotRangeFromSettings(cal));
-                try {
-                    const raw = cal?.CALENDAR_EVENT_TYPE_COLORS?.effectiveValue;
-                    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
-                    if (parsed && typeof parsed === "object") {
-                        window.__CALENDAR_TYPE_COLORS__ = parsed;
-                        // Rebuild colors now that admin defaults are available
-                        // (first fetch may have raced ahead of this settings call).
-                        setEvents((prev) => prev.map((fc) => {
-                            const rawEv = fc?.extendedProps;
-                            if (!rawEv || rawEv.hint) {
-                                if (rawEv?.holiday || fc?.classNames?.includes?.("lw-fcEvent--holidayHint")) {
-                                    return {
-                                        ...fc,
-                                        backgroundColor: holidayColor(),
-                                        borderColor: holidayColor(),
-                                    };
-                                }
-                                return fc;
-                            }
-                            return buildFullCalendarEvent(rawEv, {
-                                scope: apiFilters.scope || SCOPE_MINE,
-                            });
-                        }));
-                    }
-                } catch { /* ignore */ }
-            } catch { /* keep defaults */ }
-        })();
-        return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- apply once on mount; scope rebuild happens via fetch
-    }, []);
+        if (!canUseFirmView) return;
+        if (filters.lawyer_id && lawyers.length) {
+            const match = lawyers.find((l) => {
+                const id = l.userid ?? l.UserId ?? l.id;
+                return Number(id) === Number(filters.lawyer_id);
+            });
+            const name = match?.name ?? match?.Name;
+            if (name && name !== managerFilterLabel) {
+                setManagerFilterLabel(name);
+            }
+        }
+    }, [canUseFirmView, filters.lawyer_id, lawyers, managerFilterLabel]);
+
+    useEffect(() => {
+        if (!canUseFirmView) return;
+        const next = new URLSearchParams(window.location.search);
+        if (scope === SCOPE_FIRM && filters.lawyer_id) {
+            next.set("scope", SCOPE_FIRM);
+            next.set("lawyer_id", String(filters.lawyer_id));
+        } else {
+            next.delete("lawyer_id");
+            if (scope === SCOPE_FIRM) next.set("scope", SCOPE_FIRM);
+            else next.delete("scope");
+        }
+        const nextStr = next.toString();
+        const currentStr = window.location.search.replace(/^\?/, "");
+        if (nextStr !== currentStr) {
+            setSearchParams(next, { replace: true });
+        }
+    }, [canUseFirmView, scope, filters.lawyer_id, setSearchParams]);
 
     // ── Filter assembly ─────────────────────────────────────────────────────
     const apiFilters = useMemo(() => {
@@ -522,6 +555,44 @@ export default function CalendarScreen() {
         }
         return f;
     }, [scope, filters, canUseFirmView]);
+
+    // ── Load firm working hours + per-type default colors ─────────────────
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await platformSettingsApi.getAll();
+                const cal = res?.data?.settings?.calendar || res?.settings?.calendar || {};
+                if (cancelled) return;
+                setWorkingSchedule(parseScheduleFromCalendarSettings(cal));
+                setVisibleSlotRange(parseVisibleSlotRangeFromSettings(cal));
+                try {
+                    const raw = cal?.CALENDAR_EVENT_TYPE_COLORS?.effectiveValue;
+                    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+                    if (parsed && typeof parsed === "object") {
+                        window.__CALENDAR_TYPE_COLORS__ = parsed;
+                        const scopeKey = (canUseFirmView && scope === SCOPE_FIRM) ? SCOPE_FIRM : SCOPE_MINE;
+                        setEvents((prev) => prev.map((fc) => {
+                            const rawEv = fc?.extendedProps;
+                            if (!rawEv || rawEv.hint) {
+                                if (rawEv?.holiday || fc?.classNames?.includes?.("lw-fcEvent--holidayHint")) {
+                                    return {
+                                        ...fc,
+                                        backgroundColor: holidayColor(),
+                                        borderColor: holidayColor(),
+                                    };
+                                }
+                                return fc;
+                            }
+                            return buildFullCalendarEvent(rawEv, { scope: scopeKey });
+                        }));
+                    }
+                } catch { /* ignore */ }
+            } catch { /* keep defaults */ }
+        })();
+        return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- apply once on mount; scope rebuild happens via fetch
+    }, []);
 
     // ── Fetch events for the visible date range ────────────────────────────
     const fetchEvents = useCallback(async (range, { force = false } = {}) => {
@@ -550,7 +621,7 @@ export default function CalendarScreen() {
             const scopeKey = apiFilters.scope || SCOPE_MINE;
             const built = list.map((ev) => buildFullCalendarEvent(ev, { scope: scopeKey }));
             const holidayHints = (holidaysRes?.data?.holidays || [])
-                .map((h) => buildHolidayHintEvent(h))
+                .map((h) => buildHolidayHintEvent(h, t))
                 .filter(Boolean);
             setEvents([...holidayHints, ...built]);
             lastFetchKeyRef.current = fetchKey;
@@ -561,7 +632,7 @@ export default function CalendarScreen() {
                 fetchInFlightKeyRef.current = null;
             }
         }
-    }, [apiFilters]);
+    }, [apiFilters, t]);
 
     fetchEventsRef.current = fetchEvents;
 
@@ -716,12 +787,12 @@ export default function CalendarScreen() {
                     handleEventSaved(saved, opts);
                     selectInfo?.view?.calendar?.unselect?.();
                 }}
-                onDuplicatePrefill={openDuplicateDraft}
+                onDuplicatePrefill={(next) => openDuplicateDraftRef.current?.(next)}
                 onDeleted={() => closePopup()}
                 onClose={closePopup}
             />
         );
-    }, [openPopup, closePopup, upsertLocally, handleEventSaved, workingSchedule, openDuplicateDraft]);
+    }, [openPopup, closePopup, upsertLocally, handleEventSaved, workingSchedule]);
 
     const openEditModal = useCallback((clickInfo) => {
         const ev = clickInfo.event.extendedProps || {};
@@ -741,7 +812,7 @@ export default function CalendarScreen() {
                 event={eventPayload}
                 onUpdated={upsertLocally}
                 onSaved={handleEventSaved}
-                onDuplicatePrefill={openDuplicateDraft}
+                onDuplicatePrefill={(next) => openDuplicateDraftRef.current?.(next)}
                 onDeleted={(deletedId) => {
                     setEvents((prev) => prev.filter((e) => e.id !== String(deletedId)));
                     closePopup();
@@ -749,7 +820,7 @@ export default function CalendarScreen() {
                 onClose={closePopup}
             />
         );
-    }, [openPopup, closePopup, upsertLocally, handleEventSaved, openDuplicateDraft]);
+    }, [openPopup, closePopup, upsertLocally, handleEventSaved]);
 
     // ── Deep-link: /CalendarScreen?eventId=<id> ────────────────────────────
     useEffect(() => {
@@ -774,7 +845,7 @@ export default function CalendarScreen() {
                 event={eventPayload}
                 onUpdated={upsertLocally}
                 onSaved={handleEventSaved}
-                onDuplicatePrefill={openDuplicateDraft}
+                onDuplicatePrefill={(next) => openDuplicateDraftRef.current?.(next)}
                 onDeleted={(deletedId) => {
                     setEvents((prev) => prev.filter((e) => e.id !== String(deletedId)));
                     closePopup();
@@ -804,14 +875,26 @@ export default function CalendarScreen() {
             ? (aggregateInviteStatus(ev) || (ev.inviteStatus !== "none" ? ev.inviteStatus : null))
             : null;
         const multi = Array.isArray(ev.clients) && ev.clients.length > 1;
+        const invitedClients = multi
+            ? ev.clients.filter((c) => {
+                const st = c.inviteStatus || c.invite_status;
+                return st && st !== "none";
+            })
+            : [];
         const acceptedCount = multi
-            ? ev.clients.filter((c) => (c.inviteStatus || c.invite_status) === "accepted").length
+            ? invitedClients.filter((c) => (c.inviteStatus || c.invite_status) === "accepted").length
             : 0;
+        const invitedCount = invitedClients.length;
         return (
             <div className="lw-fcEventContent">
                 {status === "accepted" && (
                     <span className="lw-fcEventRsvpBadge lw-fcEventRsvpBadge--accepted" aria-hidden="true">
                         {multi && acceptedCount > 0 ? `${acceptedCount}` : "✓"}
+                    </span>
+                )}
+                {status === "partial" && (
+                    <span className="lw-fcEventRsvpBadge lw-fcEventRsvpBadge--partial" aria-hidden="true">
+                        {invitedCount > 0 ? `${acceptedCount}/${invitedCount}` : "½"}
                     </span>
                 )}
                 {status === "pending" && (
@@ -870,6 +953,7 @@ export default function CalendarScreen() {
         const id = selectedAdmin?.userid ?? selectedAdmin?.UserId ?? selectedAdmin?.id;
         const name = selectedAdmin?.name ?? selectedAdmin?.Name ?? selectedName ?? "";
         if (id == null) return;
+        setScope(SCOPE_FIRM);
         setFilter("lawyer_id", id);
         setManagerFilterLabel(name);
     }, [adminResults]);
@@ -922,6 +1006,13 @@ export default function CalendarScreen() {
     const activeCaseName = filters.case_id
         ? (caseFilterLabel || `#${filters.case_id}`)
         : null;
+    const viewingOtherEmployee = Boolean(
+        canPickEmployeeCalendar
+        && scope === SCOPE_FIRM
+        && filters.lawyer_id
+        && currentUserId
+        && Number(filters.lawyer_id) !== Number(currentUserId)
+    );
 
     if (!calendarEnabled) return null;
 
@@ -979,6 +1070,20 @@ export default function CalendarScreen() {
                     </SimpleContainer>
                 </SimpleContainer>
 
+                {viewingOtherEmployee && (
+                    <SimpleContainer className="lw-calendarScreen__employeeBanner">
+                        <Text14>
+                            {t("calendar.viewingEmployeeCalendar", {
+                                name: activeManagerName || `#${filters.lawyer_id}`,
+                                defaultValue: `צפייה ביומן של ${activeManagerName || filters.lawyer_id} — לעריכה יש לפתוח את האירוע (הרשאות קיימות חלות).`,
+                            })}
+                        </Text14>
+                        <SecondaryButton size={buttonSizes.SMALL} onPress={switchToMineScope}>
+                            {t("calendar.backToMyCalendar", { defaultValue: "חזרה ליומן שלי" })}
+                        </SecondaryButton>
+                    </SimpleContainer>
+                )}
+
                 {/* ── Active filter chips ── */}
                 {hasActiveFilters && (
                     <SimpleContainer className="lw-calendarScreen__chips">
@@ -1020,24 +1125,7 @@ export default function CalendarScreen() {
 
                 {/* ── Manager / client / case filters (one row) ── */}
                 {filtersPanelOpen && (
-                    <div
-                        className={`lw-calendarScreen__filterRow ${canUseFirmView && scope === SCOPE_FIRM ? "lw-calendarScreen__filterRow--three" : "lw-calendarScreen__filterRow--two"}`}
-                    >
-                        {canUseFirmView && scope === SCOPE_FIRM && (
-                            <div className="lw-calendarScreen__filterGroup">
-                                <SearchInput
-                                    title={t("calendar.filterByManager")}
-                                    value={managerFilterLabel}
-                                    onSearch={handleManagerFilterSearch}
-                                    isPerforming={isSearchingAdmins}
-                                    queryResult={adminResults}
-                                    getButtonTextFunction={(item) => item.name}
-                                    buttonPressFunction={handleManagerFilterSelected}
-                                    clearOnSelect={false}
-                                />
-                            </div>
-                        )}
-
+                    <div className="lw-calendarScreen__filterRow lw-calendarScreen__filterRow--two">
                         <div className="lw-calendarScreen__filterGroup">
                             <SearchInput
                                 title={t("calendar.filterByClient")}
@@ -1084,6 +1172,21 @@ export default function CalendarScreen() {
                                     </SimpleButton>
                                 )}
                             </SimpleContainer>
+
+                            {canPickEmployeeCalendar && (
+                                <div className="lw-calendarScreen__filterGroup">
+                                    <SearchInput
+                                        title={t("calendar.employeeCalendarPicker", { defaultValue: "יומן של עובד" })}
+                                        value={managerFilterLabel}
+                                        onSearch={handleManagerFilterSearch}
+                                        isPerforming={isSearchingAdmins}
+                                        queryResult={adminResults}
+                                        getButtonTextFunction={(item) => item.name}
+                                        buttonPressFunction={handleManagerFilterSelected}
+                                        clearOnSelect={false}
+                                    />
+                                </div>
+                            )}
 
                             {/* Event type filter */}
                             <div className="lw-calendarScreen__filterGroup">

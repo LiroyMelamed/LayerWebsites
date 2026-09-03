@@ -2,6 +2,7 @@ import ApiUtils from "./apiUtils";
 
 const UPDATE_CURRENT_CUSTOMER = "Customers/UpdateCurrentCustomer/";
 const GET_CUSTOMERS_BY_NAME = "Customers/GetCustomerByName";
+const GET_COMPANIES_BY_NAME = "Customers/GetCompaniesByName";
 const GET_CURRENT_CUSTOMER = "Customers/GetCurrentCustomer";
 const UPDATE_CUSTOMER = "Customers/UpdateCustomer/";
 const DELETE_CUSTOMER = "Customers/DeleteCustomer/";
@@ -22,6 +23,12 @@ export const customersApi = {
         params.set('userName', userName == null ? '' : String(userName));
         if (options?.includeStaff) params.set('includeStaff', '1');
         return await ApiUtils.get(`${GET_CUSTOMERS_BY_NAME}?${params.toString()}`);
+    },
+
+    getCompaniesByName: async (companyName) => {
+        const params = new URLSearchParams();
+        params.set('companyName', companyName == null ? '' : String(companyName));
+        return await ApiUtils.get(`${GET_COMPANIES_BY_NAME}?${params.toString()}`);
     },
 
     addCustomer: async (customerData) => {

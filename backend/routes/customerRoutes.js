@@ -29,6 +29,7 @@ router.get("/GetCustomers", authMiddleware, requireAdmin, customerController.get
 router.post("/AddCustomer", authMiddleware, requireAdmin, customerController.addCustomer);
 router.put("/UpdateCustomer/:customerId", authMiddleware, requireAdmin, customerController.updateCustomerById);
 router.get("/GetCustomerByName", authMiddleware, requireAdmin, customerController.getCustomerByName);
+router.get("/GetCompaniesByName", authMiddleware, requireAdmin, customerController.getCompaniesByName);
 router.post("/import", authMiddleware, requireAdmin, upload.single('file'), customerController.importCustomers);
 
 // Current User Profile APIs

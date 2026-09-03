@@ -78,6 +78,7 @@ router.post('/convert-lead', ...protect, cal.convertLead);
 router.get('/clients/:clientUserId/cases', ...protect, cal.getClientCases);
 router.patch('/:id/link-case', ...protect, cal.linkCase);
 router.post('/:id/resend-invite', ...protect, cal.resendInvite);
+router.post('/:id/rsvp', ...protect, cal.staffSetClientRsvp);
 router.post('/:id/duplicate', ...protect, cal.duplicateEvent);
 
 router.get('/:id', ...protect, cal.getEvent);

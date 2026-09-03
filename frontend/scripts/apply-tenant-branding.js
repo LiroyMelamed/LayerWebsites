@@ -18,10 +18,25 @@ if (!ALLOWED.has(tenant)) {
   process.exit(1);
 }
 
+const { generateTenantIcons } = require("./generate-tenant-icons");
+
 const root = path.join(__dirname, "..");
 const src = path.join(root, "public", "tenants", tenant);
 const logosSrc = path.join(src, "logos");
 const logosDst = path.join(root, "src", "assets", "images", "logos");
+
+const OPTIONAL_PUBLIC_ICONS = [
+  "logo192.png",
+  "logo512.png",
+  "favicon.ico",
+  "favicon.png",
+  "favicon-16x16.png",
+  "favicon-32x32.png",
+  "apple-touch-icon.png",
+  "android-chrome-192x192.png",
+  "android-chrome-512x512.png",
+  "site.webmanifest",
+];
 
 function mustExist(p) {
   if (!fs.existsSync(p)) {
@@ -34,26 +49,22 @@ mustExist(path.join(src, "index.html"));
 mustExist(path.join(src, "firm-logo.png"));
 mustExist(logosSrc);
 
+if (!fs.existsSync(path.join(src, "logo512.png"))) {
+  generateTenantIcons(tenant);
+}
+
 fs.copyFileSync(path.join(src, "index.html"), path.join(root, "public", "index.html"));
 if (fs.existsSync(path.join(src, "manifest.json"))) {
   fs.copyFileSync(path.join(src, "manifest.json"), path.join(root, "public", "manifest.json"));
 }
 fs.copyFileSync(path.join(src, "firm-logo.png"), path.join(root, "public", "firm-logo.png"));
-for (const icon of [
-  "logo192.png",
-  "logo512.png",
-  "favicon.ico",
-  "favicon.png",
-  "favicon-16x16.png",
-  "favicon-32x32.png",
-  "apple-touch-icon.png",
-  "android-chrome-192x192.png",
-  "android-chrome-512x512.png",
-  "site.webmanifest",
-]) {
+for (const icon of OPTIONAL_PUBLIC_ICONS) {
   const iconSrc = path.join(src, icon);
+  const iconDst = path.join(root, "public", icon);
   if (fs.existsSync(iconSrc)) {
-    fs.copyFileSync(iconSrc, path.join(root, "public", icon));
+    fs.copyFileSync(iconSrc, iconDst);
+  } else if (fs.existsSync(iconDst)) {
+    fs.unlinkSync(iconDst);
   }
 }
 

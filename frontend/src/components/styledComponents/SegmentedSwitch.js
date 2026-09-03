@@ -28,14 +28,21 @@ export default function SegmentedSwitch({
             >
                 {options.map((opt) => {
                     const isActive = opt.value === value;
+                    const isDisabled = Boolean(opt.disabled);
                     return (
                         <button
                             key={opt.value}
                             type="button"
                             role="radio"
                             aria-checked={isActive}
-                            className={`lw-segmentedSwitch__option${isActive ? " is-active" : ""}`}
-                            onClick={() => handleSelect(opt.value)}
+                            aria-disabled={isDisabled || undefined}
+                            disabled={isDisabled}
+                            title={isDisabled ? (opt.disabledTitle || undefined) : undefined}
+                            className={`lw-segmentedSwitch__option${isActive ? " is-active" : ""}${isDisabled ? " is-disabled" : ""}`}
+                            onClick={() => {
+                                if (isDisabled) return;
+                                handleSelect(opt.value);
+                            }}
                         >
                             {opt.label}
                         </button>
