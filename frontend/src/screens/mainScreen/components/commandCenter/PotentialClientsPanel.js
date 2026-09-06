@@ -16,13 +16,12 @@ export default function PotentialClientsPanel({ items = [], isPerforming }) {
         <SimpleCard className="lw-commandCenter__section">
             <SimpleContainer className="lw-commandCenter__sectionHeader">
                 <TextBold18 color={colors.primary}>{t("managerHome.potentialClients.title")}</TextBold18>
-                <Text12
-                    color={colors.primary}
+                <SimpleContainer
                     className="lw-commandCenter__link"
-                    onClick={() => navigateCalendar(navigate)}
+                    onPress={() => navigateCalendar(navigate)}
                 >
-                    {t("managerHome.actions.openCalendar")}
-                </Text12>
+                    <Text12 color={colors.primary}>{t("managerHome.actions.openCalendar")}</Text12>
+                </SimpleContainer>
             </SimpleContainer>
 
             {isPerforming ? (
@@ -35,7 +34,7 @@ export default function PotentialClientsPanel({ items = [], isPerforming }) {
                         <SimpleContainer
                             key={item.eventId}
                             className="lw-commandCenter__potentialItem"
-                            onClick={() => navigateCalendar(navigate)}
+                            onPress={() => navigateCalendar(navigate)}
                         >
                             <TextBold14 numberOfLines={1}>
                                 {item.leadName || item.title}

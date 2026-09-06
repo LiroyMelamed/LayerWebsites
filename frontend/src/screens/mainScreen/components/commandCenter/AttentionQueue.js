@@ -17,13 +17,12 @@ export default function AttentionQueue({ items = [], isPerforming }) {
             <SimpleContainer className="lw-commandCenter__sectionHeader">
                 <TextBold18 color={colors.primary}>{t("managerHome.attention.title")}</TextBold18>
                 {!isPerforming && items.length > 0 && (
-                    <Text12
-                        color={colors.primary}
+                    <SimpleContainer
                         className="lw-commandCenter__link"
-                        onClick={() => navigateOpenCases(navigate)}
+                        onPress={() => navigateOpenCases(navigate)}
                     >
-                        {t("managerHome.actions.viewAllCases")}
-                    </Text12>
+                        <Text12 color={colors.primary}>{t("managerHome.actions.viewAllCases")}</Text12>
+                    </SimpleContainer>
                 )}
             </SimpleContainer>
 

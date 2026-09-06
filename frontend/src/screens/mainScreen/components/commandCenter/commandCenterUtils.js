@@ -15,6 +15,8 @@ const GROUP_LIST_ROUTES = {
     rsvp_pending: CalendarScreenName,
 };
 
+const SIGNING_EXPIRING_MS = 3 * 24 * 60 * 60 * 1000;
+
 function buildPath(screen, query = "") {
     return `${AdminStackName}${screen}${query}`;
 }
@@ -84,6 +86,23 @@ export function navigateOpenCases(navigate, query = "?status=open") {
 
 export function priorityClassName(priority) {
     return `is-${priority || "medium"}`;
+}
+
+export function signalTypeClassName(signalType) {
+    if (!signalType) return "";
+    return `is-signal-${String(signalType).replace(/_/g, "-")}`;
+}
+
+export function resolveSigningQueueState(row, now = new Date()) {
+    const status = String(row?.status || "").toLowerCase();
+    if (status === "rejected") return "rejected";
+
+    const expiresAt = row?.expiresAt ? new Date(row.expiresAt) : null;
+    if (status === "pending" && expiresAt && expiresAt < now) return "expired";
+    if (status === "pending" && expiresAt && (expiresAt - now) <= SIGNING_EXPIRING_MS) {
+        return "expiring";
+    }
+    return "pending";
 }
 
 export function attentionMetaLine(item, t) {

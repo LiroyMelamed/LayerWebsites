@@ -476,7 +476,29 @@
       "expiring": "פג בקרוב",
       "expired": "פג תוקף",
       "rejected": "נדחה",
-      "empty": "אין מסמכים ממתינים לחתימה."
+      "empty": "אין מסמכים ממתינים לחתימה.",
+      "queueStatus": {
+        "pending": "ממתין לחתימה",
+        "expiring": "פג בקרוב",
+        "expired": "פג תוקף",
+        "rejected": "נדחה"
+      }
+    },
+    "signalTags": {
+      "license_expired": "רישיון פג",
+      "license_expiring_critical": "רישיון דחוף",
+      "license_expiring_warning": "רישיון בקרוב",
+      "signing_expired": "פג תוקף",
+      "signing_expiring": "פג בקרוב",
+      "signing_pending": "ממתין",
+      "signing_rejected": "נדחה",
+      "unassigned_case": "ללא מנהל",
+      "no_activity": "ללא פעילות",
+      "long_in_stage": "שלב ממושך",
+      "completion_passed": "יעד עבר",
+      "completion_approaching": "יעד מתקרב",
+      "rsvp_pending": "ממתין לאישור",
+      "reminder_failed": "תזכורת נכשלה"
     },
     "potentialClients": {
       "title": "לקוחות פוטנציאליים",

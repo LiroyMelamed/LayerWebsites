@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import SimpleContainer from "../../../../components/simpleComponents/SimpleContainer";
 import { Text12, TextBold14 } from "../../../../components/specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../../constant/colors";
-import { attentionMetaLine, priorityClassName } from "./commandCenterUtils";
+import { attentionMetaLine, priorityClassName, signalTypeClassName } from "./commandCenterUtils";
 
 export default function AttentionItem({ item, onPress }) {
     const { t } = useTranslation();
@@ -10,11 +10,18 @@ export default function AttentionItem({ item, onPress }) {
     const title = t(item.titleKey, item.reasonParams || {});
     const reason = t(item.reasonKey, item.reasonParams || {});
     const meta = attentionMetaLine(item, t);
+    const tagKey = `managerHome.signalTags.${item.signalType}`;
+    const tagLabel = t(tagKey, { defaultValue: title });
 
     return (
         <SimpleContainer
-            className={`lw-commandCenter__attentionItem ${priorityClassName(item.priority)}${isGroup ? " is-group" : ""}`}
-            onClick={onPress}
+            className={[
+                "lw-commandCenter__attentionItem",
+                priorityClassName(item.priority),
+                signalTypeClassName(item.signalType),
+                isGroup ? "is-group" : "",
+            ].filter(Boolean).join(" ")}
+            onPress={onPress}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
@@ -25,6 +32,9 @@ export default function AttentionItem({ item, onPress }) {
             }}
         >
             <SimpleContainer className="lw-commandCenter__attentionItemTop">
+                <SimpleContainer className={`lw-commandCenter__signalTag ${signalTypeClassName(item.signalType)}`}>
+                    <Text12>{tagLabel}</Text12>
+                </SimpleContainer>
                 <TextBold14 color={colors.primary} numberOfLines={1} className="lw-commandCenter__attentionTitle">
                     {title}
                 </TextBold14>

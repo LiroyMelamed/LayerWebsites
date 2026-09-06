@@ -5,7 +5,7 @@ import SimpleContainer from "../../../../components/simpleComponents/SimpleConta
 import Skeleton from "../../../../components/simpleComponents/Skeleton";
 import { Text12, Text14, TextBold14, TextBold18 } from "../../../../components/specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../../constant/colors";
-import { navigateCaseRow, navigateSigningRow } from "./commandCenterUtils";
+import { navigateCaseRow, navigateOpenCases, navigateSigningRow, resolveSigningQueueState, signalTypeClassName } from "./commandCenterUtils";
 
 export default function SigningOperationsPanel({ signing, isPerforming }) {
     const { t } = useTranslation();
@@ -14,23 +14,22 @@ export default function SigningOperationsPanel({ signing, isPerforming }) {
     const queue = signing?.queue || [];
 
     const stats = [
-        { label: t("managerHome.signing.pending"), value: summary.pending ?? 0 },
-        { label: t("managerHome.signing.expiring"), value: summary.expiring ?? 0 },
-        { label: t("managerHome.signing.expired"), value: summary.expired ?? 0, warn: true },
-        { label: t("managerHome.signing.rejected"), value: summary.rejected ?? 0 },
+        { key: "pending", label: t("managerHome.signing.pending"), value: summary.pending ?? 0 },
+        { key: "expiring", label: t("managerHome.signing.expiring"), value: summary.expiring ?? 0, warn: true },
+        { key: "expired", label: t("managerHome.signing.expired"), value: summary.expired ?? 0, critical: true },
+        { key: "rejected", label: t("managerHome.signing.rejected"), value: summary.rejected ?? 0 },
     ];
 
     return (
         <SimpleCard className="lw-commandCenter__section" id="manager-home-signing">
             <SimpleContainer className="lw-commandCenter__sectionHeader">
                 <TextBold18 color={colors.primary}>{t("managerHome.signing.title")}</TextBold18>
-                <Text12
-                    color={colors.primary}
-                    onClick={() => navigateSigningRow(navigate)}
+                <SimpleContainer
                     className="lw-commandCenter__link"
+                    onPress={() => navigateSigningRow(navigate)}
                 >
-                    {t("managerHome.actions.viewAll")}
-                </Text12>
+                    <Text12 color={colors.primary}>{t("managerHome.actions.viewAll")}</Text12>
+                </SimpleContainer>
             </SimpleContainer>
 
             {isPerforming ? (
@@ -40,11 +39,17 @@ export default function SigningOperationsPanel({ signing, isPerforming }) {
                     <SimpleContainer className="lw-commandCenter__signingStats">
                         {stats.map((s) => (
                             <SimpleContainer
-                                key={s.label}
-                                className="lw-commandCenter__signingStat"
-                                onClick={() => navigateSigningRow(navigate)}
+                                key={s.key}
+                                className={`lw-commandCenter__signingStat ${signalTypeClassName(`signing_${s.key}`)}`}
+                                onPress={() => navigateSigningRow(navigate)}
                             >
-                                <TextBold14 color={s.warn && s.value > 0 ? colors.negative : colors.primary}>
+                                <TextBold14 color={
+                                    s.critical && s.value > 0
+                                        ? colors.negative
+                                        : s.warn && s.value > 0
+                                            ? "#B7791F"
+                                            : colors.primary
+                                }>
                                     {s.value}
                                 </TextBold14>
                                 <Text12 color={colors.winter}>{s.label}</Text12>
@@ -56,24 +61,36 @@ export default function SigningOperationsPanel({ signing, isPerforming }) {
                         <Text14 color={colors.winter}>{t("managerHome.signing.empty")}</Text14>
                     ) : (
                         <SimpleContainer className="lw-commandCenter__signingQueue">
-                            {queue.slice(0, 5).map((row) => (
-                                <SimpleContainer
-                                    key={row.signingFileId}
-                                    className="lw-commandCenter__signingRow"
-                                    onClick={() => {
-                                        if (row.caseId) {
-                                            navigateCaseRow(navigate, row.caseId);
-                                        } else {
-                                            navigateSigningRow(navigate);
-                                        }
-                                    }}
-                                >
-                                    <TextBold14 numberOfLines={1}>{row.filename}</TextBold14>
-                                    <Text12 color={colors.winter} numberOfLines={1}>
-                                        {[row.caseName, row.clientName].filter(Boolean).join(" · ")}
-                                    </Text12>
-                                </SimpleContainer>
-                            ))}
+                            {queue.slice(0, 5).map((row) => {
+                                const queueState = resolveSigningQueueState(row);
+                                return (
+                                    <SimpleContainer
+                                        key={row.signingFileId}
+                                        className={`lw-commandCenter__signingRow ${signalTypeClassName(`signing_${queueState}`)}`}
+                                        onPress={() => {
+                                            if (row.caseId) {
+                                                navigateCaseRow(navigate, row.caseId);
+                                            } else {
+                                                navigateSigningRow(navigate);
+                                            }
+                                        }}
+                                    >
+                                        <SimpleContainer className="lw-commandCenter__signingRowTop">
+                                            <SimpleContainer className={`lw-commandCenter__statusPill ${signalTypeClassName(`signing_${queueState}`)}`}>
+                                                <Text12>
+                                                    {t(`managerHome.signing.queueStatus.${queueState}`)}
+                                                </Text12>
+                                            </SimpleContainer>
+                                            <TextBold14 numberOfLines={1} className="lw-commandCenter__signingFilename">
+                                                {row.filename}
+                                            </TextBold14>
+                                        </SimpleContainer>
+                                        <Text12 color={colors.winter} numberOfLines={1}>
+                                            {[row.caseName, row.clientName].filter(Boolean).join(" · ")}
+                                        </Text12>
+                                    </SimpleContainer>
+                                );
+                            })}
                         </SimpleContainer>
                     )}
                 </SimpleContainer>
