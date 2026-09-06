@@ -431,6 +431,147 @@
     "unreadNotifications": "התראות שלא נקראו",
     "moreDataForAnalytics": "כשהיה לנו יותר מידע נציג לך פילוח נתונים"
   },
+  "managerHome": {
+    "greeting": "בוקר טוב",
+    "greetingNamed": "בוקר טוב, {{name}}",
+    "subtitle": "הנה מה שדורש את תשומת לבך היום.",
+    "summary": {
+      "urgent": "דחוף",
+      "needsAttention": "דורש טיפול",
+      "today": "היום",
+      "signing": "ממתין לחתימה",
+      "signingExpired": "{{count}} פג תוקף",
+      "unassigned": "ללא מנהל"
+    },
+    "attention": {
+      "title": "דורש תשומת לב",
+      "count": "{{count}} פריטים",
+      "emptyBadge": "הכל שקט",
+      "allClearTitle": "✓ הכל שקט כרגע",
+      "allClearBody": "אין פריטים דחופים הדורשים טיפול.",
+      "moreInGroup": "+{{count}} נוספים"
+    },
+    "today": {
+      "title": "היום",
+      "count": "{{count}} אירועים",
+      "empty": "אין אירועים מתוכננים להיום.",
+      "potentialClient": "לקוח פוטנציאלי",
+      "rsvpPending": "ממתין לאישור הגעה"
+    },
+    "operations": {
+      "title": "תפעול תיקים",
+      "byManager": "תיקים לפי מנהל",
+      "byStage": "תיקים לפי שלב",
+      "noManagers": "אין תיקים פתוחים.",
+      "unassignedLabel": "ללא מנהל תיק",
+      "needsAttentionShort": "{{count}} דורשים טיפול",
+      "urgentShort": "{{count}} דחופים",
+      "unassignedBanner": "{{count}} תיקים פתוחים ללא מנהל תיק",
+      "stageLabel": "שלב {{stage}} · {{count}}"
+    },
+    "signing": {
+      "title": "תפעול חתימות",
+      "pending": "ממתין",
+      "expiring": "פג בקרוב",
+      "expired": "פג תוקף",
+      "rejected": "נדחה",
+      "empty": "אין מסמכים ממתינים לחתימה."
+    },
+    "potentialClients": {
+      "title": "לקוחות פוטנציאליים",
+      "subtitle": "פגישות קרובות עם פרטי ליד",
+      "empty": "אין פגישות עם לקוחות פוטנציאליים בתקופה הקרובה."
+    },
+    "activity": {
+      "title": "פעילות אחרונה",
+      "empty": "אין פעילות מתועדת לאחרונה.",
+      "types": {
+        "stage_update": "עדכון שלב בתיק",
+        "signing_completed": "חתימה הושלמה",
+        "signing_rejected": "חתימה נדחתה",
+        "document_uploaded": "מסמך הועלה לתיק"
+      }
+    },
+    "labels": {
+      "case": "תיק",
+      "client": "לקוח",
+      "manager": "מנהל תיק"
+    },
+    "actions": {
+      "open": "פתח",
+      "viewAll": "הצג הכל",
+      "expand": "הרחב",
+      "collapse": "צמצם"
+    },
+    "signals": {
+      "unassignedCase": "תיק ללא מנהל",
+      "licenseExpired": "רישיון פג",
+      "licenseExpiringCritical": "רישיון פג בקרוב",
+      "licenseExpiringWarning": "רישיון מתקרב לפקיעה",
+      "completionPassed": "תאריך הסיום המשוער חלף",
+      "completionApproaching": "תאריך סיום משוער מתקרב",
+      "noActivity": "ללא פעילות משמעותית",
+      "longInStage": "זמן ממושך בשלב הנוכחי",
+      "signingExpired": "חתימה פגה",
+      "signingExpiring": "חתימה פגה בקרוב",
+      "signingPending": "ממתין לחתימת לקוח",
+      "signingRejected": "חתימה נדחתה",
+      "rsvpPending": "ממתין לאישור הגעה",
+      "reminderFailed": "תזכורת נכשלה"
+    },
+    "reasons": {
+      "unassignedCase": "לתיק זה לא שויך מנהל תיק במערכת.",
+      "licenseExpired": "תאריך פקיעת הרישיון: {{date}}.",
+      "licenseExpiringCritical": "הרישיון פג בעוד {{days}} ימים ({{date}}).",
+      "licenseExpiringWarning": "הרישיון פג בעוד {{days}} ימים ({{date}}).",
+      "completionPassed": "תאריך הסיום המשוער חלף ({{date}}) — אינו מועד משפטי.",
+      "completionApproaching": "תאריך סיום משוער בעוד {{days}} ימים ({{date}}) — אינו מועד משפטי.",
+      "noActivity": "לא נרשמה פעילות משמעותית במערכת ב-{{days}} הימים האחרונים.",
+      "longInStage": "התיק נמצא בשלב {{stage}} זמן ממושך ({{days}} ימים) — אינו מועד משפטי.",
+      "signingExpired": "המסמך \"{{filename}}\" פג תוקף ועדיין ממתין לחתימה.",
+      "signingExpiring": "המסמך \"{{filename}}\" פג בעוד {{hours}} שעות.",
+      "signingPending": "המסמך \"{{filename}}\" ממתין לחתימה כ-{{days}} ימים.",
+      "signingRejected": "המסמך \"{{filename}}\" נדחה על ידי החותם.",
+      "rsvpPending": "לפגישה \"{{title}}\" ({{when}}) לא התקבל אישור הגעה.",
+      "reminderFailed": "שליחת \"{{label}}\" נכשלה."
+    },
+    "groups": {
+      "signing_pending": "{{count}} חתימות ממתינות",
+      "no_activity": "{{count}} תיקים ללא פעילות משמעותית",
+      "long_in_stage": "{{count}} תיקים בשלב הנוכחי זמן ממושך",
+      "completion_approaching": "{{count}} תיקים עם תאריך סיום משוער מתקרב",
+      "rsvp_pending": "{{count}} הזמנות ממתינות לאישור"
+    },
+    "groupReasons": {
+      "signing_pending": "מסמכים הממתינים לחתימת לקוח — לחצו להרחבה ולמעבר לתיקים",
+      "no_activity": "תיקים ללא פעילות משמעותית במערכת — לחצו להרחבה",
+      "long_in_stage": "תיקים בשלב הנוכחי זמן ממושך — לחצו להרחבה",
+      "completion_approaching": "תיקים עם תאריך סיום משוער מתקרב — לחצו להרחבה",
+      "rsvp_pending": "פגישות ללא אישור הגעה — לחצו להרחבה"
+    },
+    "brief": {
+      "allClear": "הכל שקט — אין נושאים דחופים להיום.",
+      "calmWithToday": "הכל שקט — אין נושאים דחופים. היום {{todayCount}} אירועים ביומן.",
+      "todayNote": "בנוסף, היום {{todayCount}} אירועים ביומן.",
+      "todayNoteWithPotential": "בנוסף, היום {{todayCount}} אירועים ביומן, מתוכם {{potentialCount}} עם לקוחות פוטנציאליים.",
+      "items": {
+        "license_expired": "רישיון שפג תוקפו — {{caseName}}",
+        "license_expiring_critical": "רישיון שפג בעוד {{days}} ימים — {{caseName}}",
+        "license_expiring_warning": "רישיון מתקרב לפקיעה — {{caseName}}",
+        "signing_expired": "חתימה שפג תוקפה — {{filename}} ({{caseName}})",
+        "signing_expiring": "חתימה שפגה בקרוב — {{filename}}",
+        "signing_rejected": "חתימה שנדחתה — {{filename}}",
+        "signing_pending": "חתימה ממתינה — {{filename}}",
+        "unassigned_case": "תיק ללא מנהל — {{caseName}}",
+        "no_activity": "תיק ללא פעילות משמעותית — {{caseName}} ({{days}} ימים)",
+        "long_in_stage": "תיק בשלב הנוכחי זמן ממושך — {{caseName}}",
+        "completion_passed": "תאריך סיום משוער חלף — {{caseName}}",
+        "completion_approaching": "תאריך סיום משוער מתקרב — {{caseName}}",
+        "rsvp_pending": "הזמנה ממתינה לאישור — {{title}}",
+        "reminder_failed": "תזכורת שנכשלה — {{label}}"
+      }
+    }
+  },
   "terms": {
     "title": "תנאי שימוש לאפליקציה {{appName}}",
     "lastUpdated": "תאריך עדכון אחרון: {{date}}",
