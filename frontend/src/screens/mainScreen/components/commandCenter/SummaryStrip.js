@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import SimpleCard from "../../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../../components/simpleComponents/SimpleContainer";
 import Skeleton from "../../../../components/simpleComponents/Skeleton";
-import { Text12, TextBold14, TextBold28 } from "../../../../components/specializedComponents/text/AllTextKindFile";
+import { Text12, TextBold14, TextBold20 } from "../../../../components/specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../../constant/colors";
 
 export default function SummaryStrip({ summary, isPerforming, onNavigate }) {
@@ -55,11 +55,11 @@ export default function SummaryStrip({ summary, isPerforming, onNavigate }) {
                     onPress={chip.onClick}
                 >
                     {isPerforming ? (
-                        <Skeleton width="100%" height={52} borderRadius={8} />
+                        <Skeleton width="100%" height={44} borderRadius={8} />
                     ) : (
                         <>
-                            <TextBold28 color={chip.accent}>{chip.value}</TextBold28>
-                            <TextBold14>{chip.label}</TextBold14>
+                            <TextBold20 color={chip.accent}>{chip.value}</TextBold20>
+                            <TextBold14 numberOfLines={1}>{chip.label}</TextBold14>
                             {chip.key === "signing" && (summary?.signingExpired > 0) && (
                                 <Text12 color={colors.negative}>
                                     {t("managerHome.summary.signingExpired", { count: summary.signingExpired })}

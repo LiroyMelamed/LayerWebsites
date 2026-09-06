@@ -449,7 +449,8 @@
       "emptyBadge": "הכל שקט",
       "allClearTitle": "✓ הכל שקט כרגע",
       "allClearBody": "אין פריטים דחופים הדורשים טיפול.",
-      "moreInGroup": "+{{count}} נוספים"
+      "moreInGroup": "+{{count}} נוספים",
+      "groupMeta": "{{lead}} +{{count}}"
     },
     "today": {
       "title": "היום",
@@ -500,6 +501,8 @@
     "actions": {
       "open": "פתח",
       "viewAll": "הצג הכל",
+      "viewAllCases": "כל התיקים",
+      "openCalendar": "פתח יומן",
       "expand": "הרחב",
       "collapse": "צמצם"
     },
