@@ -16,6 +16,7 @@
  */
 
 const pool = require('../config/db');
+const { invalidateOperationalDashboardCaches } = require('../utils/operationalDashboardCache');
 const { getLawFirmNameHe, getFirmNameEn } = require('../lib/firmBranding');
 const reminderCalendarSync = require('../lib/reminderCalendarSync');
 const crypto = require('crypto');
@@ -1376,6 +1377,7 @@ const createEvent = async (req, res) => {
             }
         }
 
+        invalidateOperationalDashboardCaches();
         return res.status(201).json({
             event: firstSanitized,
             seriesCount: occurrences.length,
@@ -1776,6 +1778,7 @@ const updateEvent = async (req, res) => {
             }
         }
 
+        invalidateOperationalDashboardCaches();
         return res.json({ event: sanitized, immediateReminderResult });
     } catch (err) {
         const fkMsg = _calendarFkErrorMessage(err);
@@ -1810,6 +1813,7 @@ const deleteEvent = async (req, res) => {
             return res.status(404).json({ message: 'אירוע לא נמצא' });
         }
         await dbClient.query('COMMIT');
+        invalidateOperationalDashboardCaches();
         return res.json({ ok: true });
     } catch (err) {
         try { await dbClient.query('ROLLBACK'); } catch (_) { /* ignore */ }
