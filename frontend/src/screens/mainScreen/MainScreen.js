@@ -1,4 +1,3 @@
-import { useRef } from 'react';
 import SimpleScreen from '../../components/simpleComponents/SimpleScreen';
 import { useScreenSize } from '../../providers/ScreenSizeProvider';
 import useAutoHttpRequest from '../../hooks/useAutoHttpRequest';
@@ -10,7 +9,6 @@ import { AdminStackName } from '../../navigation/AdminStack';
 import SimpleScrollView from '../../components/simpleComponents/SimpleScrollView';
 import { useNavigate } from 'react-router-dom';
 import { AllCasesScreenName } from '../allCasesScreen/AllCasesScreen';
-import ClientsCard from './components/ClientsCard';
 import CommandCenterHeader from './components/commandCenter/CommandCenterHeader';
 import SummaryStrip from './components/commandCenter/SummaryStrip';
 import AttentionQueue from './components/commandCenter/AttentionQueue';
@@ -34,19 +32,11 @@ function scrollToSection(id) {
 export default function MainScreen() {
     const navigate = useNavigate();
     const { isSmallScreen } = useScreenSize();
-    const clientsCardRef = useRef(null);
 
     const {
         result: managerHome,
         isPerforming: isLoadingHome,
-        performRequest: refreshClientsContext,
     } = useAutoHttpRequest(casesApi.getManagerHomeData);
-
-    const {
-        result: mainScreenData,
-        isPerforming: isLoadingClients,
-        performRequest: refreshMainScreen,
-    } = useAutoHttpRequest(casesApi.getMainScreenData);
 
     const handleSummaryNavigate = (key) => {
         if (key === "signing") {
@@ -62,11 +52,6 @@ export default function MainScreen() {
             return;
         }
         scrollToSection("manager-home-attention");
-    };
-
-    const refreshAll = () => {
-        refreshClientsContext([]);
-        refreshMainScreen([]);
     };
 
     return (
@@ -87,7 +72,7 @@ export default function MainScreen() {
                         onNavigate={handleSummaryNavigate}
                     />
 
-                    <SimpleContainer id="manager-home-attention">
+                    <SimpleContainer id="manager-home-attention" className="lw-commandCenter__panelBody">
                         <AttentionQueue
                             items={managerHome?.attentionItems || []}
                             isPerforming={isLoadingHome}
@@ -123,13 +108,6 @@ export default function MainScreen() {
                         />
                     </SimpleContainer>
                 </SimpleContainer>
-
-                <ClientsCard
-                    ref={clientsCardRef}
-                    customerList={mainScreenData?.AllCustomersData}
-                    rePerformRequest={refreshAll}
-                    isPerforming={isLoadingClients}
-                />
             </SimpleScrollView>
         </SimpleScreen>
     );

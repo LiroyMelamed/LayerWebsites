@@ -36,7 +36,7 @@ export default function SigningOperationsPanel({ signing, isPerforming }) {
             {isPerforming ? (
                 <Skeleton width="100%" height={140} borderRadius={8} />
             ) : (
-                <>
+                <SimpleContainer className="lw-commandCenter__panelBody">
                     <SimpleContainer className="lw-commandCenter__signingStats">
                         {stats.map((s) => (
                             <SimpleContainer key={s.label} className="lw-commandCenter__signingStat">
@@ -69,7 +69,7 @@ export default function SigningOperationsPanel({ signing, isPerforming }) {
                             ))}
                         </SimpleContainer>
                     )}
-                </>
+                </SimpleContainer>
             )}
         </SimpleCard>
     );

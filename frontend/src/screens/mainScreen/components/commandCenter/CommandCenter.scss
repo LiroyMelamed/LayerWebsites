@@ -2,6 +2,8 @@
 @use '../../../../styles/mixins' as m;
 
 .lw-commandCenter {
+    flex-direction: column;
+    align-items: stretch;
     inline-size: 100%;
     max-inline-size: 72rem;
     margin-inline: auto;
@@ -25,6 +27,7 @@
 
 .lw-commandCenter__summaryChip {
     flex: 1 1 9rem;
+    flex-direction: column;
     min-inline-size: 8.5rem;
     align-items: flex-start;
     gap: v.$space-1;
@@ -32,6 +35,9 @@
 }
 
 .lw-commandCenter__section {
+    flex-direction: column;
+    align-items: stretch;
+    inline-size: 100%;
     margin-inline: v.$space-2;
     margin-block-end: v.$space-3;
 }
@@ -152,13 +158,27 @@
 }
 
 .lw-commandCenter__grid {
-    @include m.row(v.$space-3);
-    flex-wrap: wrap;
-    align-items: flex-start;
+    flex-direction: column;
+    align-items: stretch;
+    gap: v.$space-3;
+    inline-size: 100%;
 
     > * {
-        flex: 1 1 20rem;
-        min-inline-size: min(100%, 20rem);
+        flex: 1 1 auto;
+        min-inline-size: 0;
+    }
+}
+
+@media (min-width: 769px) {
+    .lw-commandCenter__grid {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: flex-start;
+
+        > * {
+            flex: 1 1 20rem;
+            min-inline-size: min(100%, 20rem);
+        }
     }
 }
 
@@ -240,10 +260,18 @@
 
 .lw-commandCenter__stageChip {
     flex: 1 1 8rem;
+    flex-direction: column;
     padding: v.$space-2;
     border-radius: 0.5rem;
     background: var(--lw-color-secondary-highlighted);
     gap: 0.125rem;
+}
+
+.lw-commandCenter__panelBody {
+    flex-direction: column;
+    align-items: stretch;
+    gap: v.$space-2;
+    inline-size: 100%;
 }
 
 .lw-commandCenter__signingStats {
@@ -254,6 +282,7 @@
 
 .lw-commandCenter__signingStat {
     flex: 1 1 4.5rem;
+    flex-direction: column;
     align-items: center;
     padding: v.$space-2;
     border-radius: 0.5rem;
