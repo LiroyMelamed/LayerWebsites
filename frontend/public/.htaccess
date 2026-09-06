@@ -12,11 +12,23 @@
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]
 
+  # Missing hashed bundles must 404 — never serve index.html as JavaScript.
+  RewriteCond %{REQUEST_URI} ^/static/
+  RewriteRule ^ - [R=404,L]
+
   RewriteRule ^ index.html [L]
 </IfModule>
 
-# ─── Deep Linking: serve .well-known files with correct Content-Type ───
+# ─── Cache: always revalidate entry HTML; hashed assets are long-lived ───
 <IfModule mod_headers.c>
+  <Files "index.html">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </Files>
+  <FilesMatch "\.(js|css|woff2?|png|jpe?g|webp|svg|ico)$">
+    Header set Cache-Control "public, max-age=604800, immutable"
+  </FilesMatch>
   <Files "apple-app-site-association">
     Header set Content-Type "application/json"
   </Files>

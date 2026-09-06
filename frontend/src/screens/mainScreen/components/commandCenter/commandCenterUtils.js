@@ -56,7 +56,13 @@ export function navigateAttentionItem(navigate, item) {
         return;
     }
     if (route === "calendar") {
-        navigate(buildPath(CalendarScreenName));
+        const eventId = params.eventId;
+        navigate(
+            buildPath(
+                CalendarScreenName,
+                eventId ? `?eventId=${encodeURIComponent(String(eventId))}` : ""
+            )
+        );
         return;
     }
     if (route === "reminders") {
@@ -82,6 +88,49 @@ export function navigateCalendar(navigate) {
 export function navigateOpenCases(navigate, query = "?status=open") {
     if (!navigate) return;
     navigate(buildPath(AllCasesScreenName, query));
+}
+
+export function navigateOpenCasesByManager(navigate, manager) {
+    if (!navigate) return;
+    if (manager?.unassigned) {
+        navigateOpenCases(navigate, "?status=open&unassigned=1");
+        return;
+    }
+    if (manager?.managerName) {
+        navigateOpenCases(
+            navigate,
+            `?status=open&manager=${encodeURIComponent(manager.managerName)}`
+        );
+        return;
+    }
+    navigateOpenCases(navigate);
+}
+
+export function getIsraelGreetingKey(now = new Date()) {
+    const hour = Number(
+        new Intl.DateTimeFormat("en-US", {
+            timeZone: "Asia/Jerusalem",
+            hour: "numeric",
+            hour12: false,
+        }).format(now)
+    );
+
+    if (hour >= 5 && hour < 12) return "morning";
+    if (hour >= 12 && hour < 17) return "afternoon";
+    if (hour >= 17 && hour < 21) return "evening";
+    return "night";
+}
+
+export function memberAttentionLabel(member, t) {
+    if (!member) return "—";
+    const parts = [];
+    if (member.caseName) parts.push(member.caseName);
+    else if (member.subtitle) parts.push(member.subtitle);
+    if (member.clientName) parts.push(member.clientName);
+    if (parts.length === 0 && member.reasonParams?.filename) {
+        parts.push(member.reasonParams.filename);
+    }
+    return parts.length ? parts.join(" · ") : t("managerHome.actions.open");
 }
 
 export function priorityClassName(priority) {

@@ -1,62 +1,132 @@
+import { Fragment, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import SimpleContainer from "../../../../components/simpleComponents/SimpleContainer";
+import Separator from "../../../../components/styledComponents/separators/Separator";
 import { Text12, TextBold14 } from "../../../../components/specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../../constant/colors";
-import { attentionMetaLine, priorityClassName, signalTypeClassName } from "./commandCenterUtils";
+import {
+    attentionMetaLine,
+    memberAttentionLabel,
+    navigateAttentionItem,
+    priorityClassName,
+    signalTypeClassName,
+} from "./commandCenterUtils";
 
-export default function AttentionItem({ item, onPress }) {
+export default function AttentionItem({ item }) {
     const { t } = useTranslation();
-    const isGroup = item.kind === "group";
+    const navigate = useNavigate();
+    const [expanded, setExpanded] = useState(false);
+
+    const isGroup = item.kind === "group" && item.count > 1;
     const title = t(item.titleKey, item.reasonParams || {});
     const reason = t(item.reasonKey, item.reasonParams || {});
     const meta = attentionMetaLine(item, t);
-    const tagKey = `managerHome.signalTags.${item.signalType}`;
-    const tagLabel = t(tagKey, { defaultValue: title });
+    const dotClass = [
+        "lw-commandCenter__attentionDot",
+        priorityClassName(item.priority),
+        signalTypeClassName(item.signalType),
+    ].filter(Boolean).join(" ");
+
+    const handlePress = () => {
+        if (isGroup) {
+            setExpanded((prev) => !prev);
+            return;
+        }
+        navigateAttentionItem(navigate, item);
+    };
 
     return (
-        <SimpleContainer
-            className={[
-                "lw-commandCenter__attentionItem",
-                priorityClassName(item.priority),
-                signalTypeClassName(item.signalType),
-                isGroup ? "is-group" : "",
-            ].filter(Boolean).join(" ")}
-            onPress={onPress}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onPress?.();
-                }
-            }}
-        >
-            <SimpleContainer className="lw-commandCenter__attentionItemTop">
-                <SimpleContainer className={`lw-commandCenter__signalTag ${signalTypeClassName(item.signalType)}`}>
-                    <Text12>{tagLabel}</Text12>
-                </SimpleContainer>
-                <TextBold14 color={colors.primary} numberOfLines={1} className="lw-commandCenter__attentionTitle">
-                    {title}
-                </TextBold14>
-                {isGroup && item.count > 1 && (
-                    <SimpleContainer className="lw-commandCenter__attentionBadge">
-                        <Text12 color={colors.primary}>{item.count}</Text12>
+        <SimpleContainer className="lw-commandCenter__attentionBlock">
+            <SimpleContainer
+                className={[
+                    "lw-commandCenter__attentionItem",
+                    priorityClassName(item.priority),
+                    signalTypeClassName(item.signalType),
+                    isGroup ? "is-group" : "",
+                    expanded ? "is-expanded" : "",
+                ].filter(Boolean).join(" ")}
+                onPress={handlePress}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handlePress();
+                    }
+                }}
+            >
+                <SimpleContainer className={dotClass} aria-hidden />
+
+                <SimpleContainer className="lw-commandCenter__attentionContent">
+                    <SimpleContainer className="lw-commandCenter__attentionItemTop">
+                        <TextBold14
+                            color={colors.primary}
+                            numberOfLines={2}
+                            className="lw-commandCenter__attentionTitle"
+                        >
+                            {title}
+                        </TextBold14>
+                        {isGroup && (
+                            <SimpleContainer className="lw-commandCenter__attentionBadge">
+                                <Text12 color={colors.primary}>{item.count}</Text12>
+                            </SimpleContainer>
+                        )}
+                        <Text12 color={colors.winter} className="lw-commandCenter__attentionChevron" aria-hidden>
+                            {isGroup ? (expanded ? "▾" : "◂") : "←"}
+                        </Text12>
                     </SimpleContainer>
-                )}
-                <Text12 color={colors.winter} className="lw-commandCenter__attentionChevron" aria-hidden>
-                    ←
-                </Text12>
+
+                    {!expanded && meta && (
+                        <Text12 color={colors.winter} numberOfLines={2} className="lw-commandCenter__attentionMeta">
+                            {meta}
+                        </Text12>
+                    )}
+
+                    {!expanded && (
+                        <Text12 color={colors.text} numberOfLines={2} className="lw-commandCenter__attentionReason">
+                            {isGroup ? t("managerHome.attention.tapToExpand") : reason}
+                        </Text12>
+                    )}
+                </SimpleContainer>
             </SimpleContainer>
 
-            {meta && (
-                <Text12 color={colors.winter} numberOfLines={1} className="lw-commandCenter__attentionMeta">
-                    {meta}
-                </Text12>
+            {isGroup && expanded && (
+                <SimpleContainer className="lw-commandCenter__attentionMembers">
+                    {(item.members || []).map((member, idx) => (
+                        <Fragment key={`${member.entityId ?? member.caseId ?? idx}-${idx}`}>
+                            {idx > 0 && (
+                                <Separator className="lw-commandCenter__attentionSeparator lw-commandCenter__attentionSeparator--nested" />
+                            )}
+                            <SimpleContainer
+                                className={`lw-commandCenter__attentionMember ${signalTypeClassName(item.signalType)}`}
+                                onPress={() => navigateAttentionItem(navigate, member)}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" || e.key === " ") {
+                                        e.preventDefault();
+                                        navigateAttentionItem(navigate, member);
+                                    }
+                                }}
+                            >
+                                <SimpleContainer
+                                    className={`lw-commandCenter__attentionDot lw-commandCenter__attentionDot--sm ${signalTypeClassName(item.signalType)} ${priorityClassName(member.priority || item.priority)}`}
+                                    aria-hidden
+                                />
+                                <SimpleContainer className="lw-commandCenter__attentionContent">
+                                    <TextBold14 color={colors.primary} numberOfLines={1}>
+                                        {memberAttentionLabel(member, t)}
+                                    </TextBold14>
+                                    <Text12 color={colors.winter} numberOfLines={2}>
+                                        {t(member.reasonKey || item.reasonKey, member.reasonParams || item.reasonParams || {})}
+                                    </Text12>
+                                </SimpleContainer>
+                            </SimpleContainer>
+                        </Fragment>
+                    ))}
+                </SimpleContainer>
             )}
-
-            <Text12 color={colors.text} numberOfLines={2} className="lw-commandCenter__attentionReason">
-                {reason}
-            </Text12>
         </SimpleContainer>
     );
 }

@@ -23,6 +23,13 @@
     margin-block-end: v.$space-1;
 }
 
+.lw-commandCenter__briefLines {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    line-height: 1.45;
+}
+
 .lw-commandCenter__brief {
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -84,46 +91,139 @@
     flex-shrink: 0;
 }
 
+.lw-commandCenter__attentionCard {
+    flex-direction: column;
+    align-items: stretch;
+    inline-size: 100%;
+
+    &:hover {
+        transform: none;
+    }
+}
+
+.lw-commandCenter__attentionPanel {
+    flex-direction: column;
+    align-items: stretch;
+    inline-size: 100%;
+    padding: v.$space-3;
+    margin: 0;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 0.75rem;
+    border-inline-start: 0.25rem solid var(--lw-color-primary);
+}
+
 .lw-commandCenter__attention {
     border-inline-start: 0.25rem solid var(--lw-color-primary);
 }
 
 .lw-commandCenter__attentionList {
     flex-direction: column;
-    gap: v.$space-1;
+    gap: 0;
+}
+
+.lw-commandCenter__attentionSeparator {
+    --lw-separator-margin-block: 0;
+}
+
+.lw-commandCenter__attentionSeparator--nested {
+    margin-inline-start: 1.125rem;
+}
+
+.lw-commandCenter__attentionBlock {
+    flex-direction: column;
 }
 
 .lw-commandCenter__attentionItem {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.125rem;
-    padding: v.$space-2 v.$space-3;
-    border-radius: 0.625rem;
-    border: 0.0625rem solid rgba(226, 232, 240, 0.95);
-    background: #fff;
+    @include m.row(v.$space-2);
+    align-items: flex-start;
+    padding: v.$space-2 0;
+    border: none;
+    background: transparent;
     cursor: pointer;
-    transition: border-color 0.15s ease, background 0.15s ease;
+    transition: background 0.15s ease;
 
     &:hover {
-        background: rgba(247, 250, 252, 0.95);
-        border-color: rgba(42, 67, 101, 0.12);
+        background: rgba(247, 250, 252, 0.65);
     }
 
-    &.is-critical {
-        border-inline-start: 0.2rem solid var(--lw-color-negative);
-        background: rgba(197, 48, 48, 0.03);
+    &.is-expanded {
+        padding-block-end: v.$space-1;
+    }
+}
+
+.lw-commandCenter__attentionDot {
+    flex-shrink: 0;
+    inline-size: 0.5rem;
+    block-size: 0.5rem;
+    border-radius: 50%;
+    margin-block-start: 0.35rem;
+    background: var(--lw-color-primary);
+
+    &--sm {
+        inline-size: 0.375rem;
+        block-size: 0.375rem;
+        margin-block-start: 0.4rem;
     }
 
-    &.is-high {
-        border-inline-start: 0.2rem solid #B7791F;
+    &.is-critical,
+    &.is-signal-signing-expired,
+    &.is-signal-license-expired,
+    &.is-signal-signing-rejected {
+        background: var(--lw-color-negative);
+    }
+
+    &.is-high,
+    &.is-signal-signing-expiring,
+    &.is-signal-license-expiring-critical,
+    &.is-signal-license-expiring-warning {
+        background: #B7791F;
     }
 
     &.is-medium {
-        border-inline-start: 0.2rem solid var(--lw-color-primary);
+        background: var(--lw-color-primary);
     }
 
-    &.is-low {
-        border-inline-start: 0.2rem solid rgba(42, 67, 101, 0.2);
+    &.is-low,
+    &.is-signal-no-activity,
+    &.is-signal-long-in-stage,
+    &.is-signal-completion-approaching,
+    &.is-signal-completion-passed {
+        background: #718096;
+    }
+
+    &.is-signal-signing-pending {
+        background: var(--lw-color-primary);
+    }
+
+    &.is-signal-rsvp-pending {
+        background: #3182CE;
+    }
+}
+
+.lw-commandCenter__attentionContent {
+    flex: 1;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.125rem;
+    min-inline-size: 0;
+}
+
+.lw-commandCenter__attentionMembers {
+    flex-direction: column;
+    gap: 0;
+    margin-inline-start: 0.75rem;
+    padding-inline-start: v.$space-2;
+    border-inline-start: 0.0625rem solid rgba(226, 232, 240, 0.95);
+}
+
+.lw-commandCenter__attentionMember {
+    @include m.row(v.$space-2);
+    align-items: flex-start;
+    padding: v.$space-2 0;
+    cursor: pointer;
+
+    &:hover {
+        background: rgba(247, 250, 252, 0.85);
     }
 }
 
@@ -152,58 +252,6 @@
 .lw-commandCenter__attentionChevron {
     flex-shrink: 0;
     opacity: 0.45;
-}
-
-.lw-commandCenter__signalTag {
-    flex-shrink: 0;
-    padding: 0.125rem 0.5rem;
-    border-radius: 999px;
-    background: rgba(42, 67, 101, 0.08);
-
-    &.is-signal-signing-expired,
-    &.is-signal-license-expired {
-        background: rgba(197, 48, 48, 0.12);
-        color: var(--lw-color-negative);
-    }
-
-    &.is-signal-signing-expiring,
-    &.is-signal-license-expiring-critical,
-    &.is-signal-license-expiring-warning {
-        background: rgba(183, 121, 31, 0.12);
-        color: #B7791F;
-    }
-
-    &.is-signal-signing-rejected {
-        background: rgba(197, 48, 48, 0.1);
-        color: var(--lw-color-negative);
-    }
-
-    &.is-signal-signing-pending {
-        background: rgba(42, 67, 101, 0.1);
-        color: var(--lw-color-primary);
-    }
-
-    &.is-signal-no-activity,
-    &.is-signal-long-in-stage,
-    &.is-signal-completion-approaching {
-        background: rgba(113, 128, 150, 0.12);
-        color: #718096;
-    }
-
-    &.is-signal-rsvp-pending {
-        background: rgba(49, 130, 206, 0.12);
-        color: #3182CE;
-    }
-}
-
-.lw-commandCenter__attentionItem.is-signal-signing-expired,
-.lw-commandCenter__attentionItem.is-signal-license-expired {
-    border-inline-start-color: var(--lw-color-negative);
-}
-
-.lw-commandCenter__attentionItem.is-signal-signing-expiring,
-.lw-commandCenter__attentionItem.is-signal-license-expiring-critical {
-    border-inline-start-color: #B7791F;
 }
 
 .lw-commandCenter__attentionMeta,
@@ -235,6 +283,10 @@
     grid-template-columns: 1fr;
     gap: v.$space-2;
     padding-inline: v.$space-2;
+}
+
+.lw-commandCenter__grid--single {
+    grid-template-columns: 1fr;
 }
 
 .lw-commandCenter__todayList,

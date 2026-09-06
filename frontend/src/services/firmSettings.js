@@ -15,6 +15,7 @@ let _signingOtpEnabled = false;
 let _signingRequireOtpDefault = true;
 let _calendarModuleEnabled = true;
 let _aiChatbotEnabled = false;
+let _managerHomeAiInsightsEnabled = false;
 let _loaded = false;
 let _loadPromise = null;
 const _listeners = new Set();
@@ -47,6 +48,7 @@ export async function loadFirmSettings() {
             _signingRequireOtpDefault = toBool(data.SIGNING_REQUIRE_OTP_DEFAULT, true);
             _calendarModuleEnabled = toBool(data.ENABLE_CALENDAR_MODULE, true);
             _aiChatbotEnabled = toBool(data.AI_CHATBOT_ENABLED, false);
+            _managerHomeAiInsightsEnabled = toBool(data.MANAGER_HOME_AI_INSIGHTS_ENABLED, false);
             _loaded = true;
             notifyListeners();
         })
@@ -99,6 +101,11 @@ export function getCalendarModuleEnabledCached() {
 export function getAiChatbotEnabledCached() {
     if (!_loaded && !_loadPromise) loadFirmSettings();
     return _aiChatbotEnabled;
+}
+
+export function getManagerHomeAiInsightsEnabledCached() {
+    if (!_loaded && !_loadPromise) loadFirmSettings();
+    return _managerHomeAiInsightsEnabled;
 }
 
 function useCachedBool(getter, initial) {
@@ -169,4 +176,9 @@ export function useCalendarModuleEnabled() {
 /** Hook: platform setting AI_CHATBOT_ENABLED. */
 export function useAiChatbotEnabled() {
     return useCachedBool(getAiChatbotEnabledCached, false);
+}
+
+/** Hook: platform setting MANAGER_HOME_AI_INSIGHTS_ENABLED. */
+export function useManagerHomeAiInsightsEnabled() {
+    return useCachedBool(getManagerHomeAiInsightsEnabledCached, false);
 }

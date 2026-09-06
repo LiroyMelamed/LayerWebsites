@@ -15,6 +15,7 @@ const GET_TAGGED_CASES_BY_NAME = "Cases/TaggedCasesByName?caseName=";
 
 const GET_MAIN_SCREEN_DATA = "Data/GetMainScreenData";
 const GET_MANAGER_HOME_DATA = "Data/GetManagerHomeData";
+const GET_MANAGER_HOME_AI_BRIEF = "Data/GetManagerHomeAiBrief";
 const GET_CLIENT_DASHBOARD_DATA = "Data/GetClientDashboardData";
 
 const GET_CASE_TYPE_BY_NAME = "CaseTypes/GetCaseTypeByName?caseTypeName=";
@@ -32,6 +33,10 @@ const casesApi = {
 
   getManagerHomeData: async () => {
     return await ApiUtils.get(GET_MANAGER_HOME_DATA);
+  },
+
+  getManagerHomeAiBrief: async () => {
+    return await ApiUtils.get(GET_MANAGER_HOME_AI_BRIEF);
   },
 
   getClientDashboardData: async () => {

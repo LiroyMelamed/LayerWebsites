@@ -54,6 +54,15 @@ const App = () => {
   // Eagerly load public firm settings (WhatsApp phone, etc.)
   useEffect(() => { loadFirmSettings(); }, []);
 
+  // Clear one-shot boot recovery flag after a successful React mount.
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem('lw_boot_retry');
+    } catch {
+      // ignore
+    }
+  }, []);
+
   useEffect(() => {
     // On signing flows, disable overscroll-based pull-to-refresh (browser-level).
     const p = String(location?.pathname || "");

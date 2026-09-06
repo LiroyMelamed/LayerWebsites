@@ -785,6 +785,7 @@ async function processMessage({ message, verified, userId, history = [], session
 
 module.exports = {
     processMessage,
+    callLLM,
     detectsPersonalIntent,
     containsInjectionAttempt,
     retrieveUserContext,

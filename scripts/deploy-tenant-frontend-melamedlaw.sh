@@ -29,7 +29,52 @@ if [[ ! -f "$TENANT_LOGO" ]]; then
 fi
 
 cp "$TENANT_LOGO" public/firm-logo.png
+
+PRESERVE_DIR="$(mktemp -d)"
+trap 'rm -rf "$PRESERVE_DIR"' EXIT
+
+echo "# Preserving remote hashed JS bundles (cached index.html may still reference them)..."
+export LFTP_PASSWORD="$MELAMED_LAW_FTP_PASSWORD"
+lftp -u "$MELAMED_LAW_FTP_USERNAME,$MELAMED_LAW_FTP_PASSWORD" "$MELAMED_LAW_FTP_SERVER" <<EOF || true
+set ssl:verify-certificate no
+set ftp:passive-mode true
+cd $MELAMED_LAW_FTP_REMOTE_PATH/static/js
+mget -O "$PRESERVE_DIR" main.*.js
+cd $MELAMED_LAW_FTP_REMOTE_PATH/static/css
+mget -O "$PRESERVE_DIR" main.*.css
+bye
+EOF
+
 npm run build:melamedlaw
+
+CURRENT_MAIN="$(basename build/static/js/main.*.js)"
+for preserved in "$PRESERVE_DIR"/main.*.js; do
+  [[ -f "$preserved" ]] || continue
+  base="$(basename "$preserved")"
+  if [[ "$base" != "$CURRENT_MAIN" && ! -f "build/static/js/$base" ]]; then
+    cp "$preserved" "build/static/js/$base"
+    echo "# Kept previous bundle: $base"
+  fi
+done
+
+for preserved in "$ROOT/scripts/preserved-bundles"/main.*.js; do
+  [[ -f "$preserved" ]] || continue
+  base="$(basename "$preserved")"
+  if [[ "$base" != "$CURRENT_MAIN" && ! -f "build/static/js/$base" ]]; then
+    cp "$preserved" "build/static/js/$base"
+    echo "# Kept preserved bundle: $base"
+  fi
+done
+
+CURRENT_CSS="$(basename build/static/css/main.*.css)"
+for preserved in "$PRESERVE_DIR"/main.*.css "$ROOT/scripts/preserved-bundles"/main.*.css; do
+  [[ -f "$preserved" ]] || continue
+  base="$(basename "$preserved")"
+  if [[ "$base" != "$CURRENT_CSS" && ! -f "build/static/css/$base" ]]; then
+    cp "$preserved" "build/static/css/$base"
+    echo "# Kept preserved stylesheet: $base"
+  fi
+done
 
 DEPLOY_API="$(grep -o 'https://api[^"]*' build/static/js/main.*.js | sort -u || true)"
 echo "# Built API: $DEPLOY_API"

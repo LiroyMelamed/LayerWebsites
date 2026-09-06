@@ -434,6 +434,14 @@
   "managerHome": {
     "greeting": "בוקר טוב",
     "greetingNamed": "בוקר טוב, {{name}}",
+    "greetingMorning": "בוקר טוב",
+    "greetingMorningNamed": "בוקר טוב, {{name}}",
+    "greetingAfternoon": "צהריים טובים",
+    "greetingAfternoonNamed": "צהריים טובים, {{name}}",
+    "greetingEvening": "ערב טוב",
+    "greetingEveningNamed": "ערב טוב, {{name}}",
+    "greetingNight": "לילה טוב",
+    "greetingNightNamed": "לילה טוב, {{name}}",
     "subtitle": "הנה מה שדורש את תשומת לבך היום.",
     "summary": {
       "urgent": "דחוף",
@@ -450,7 +458,8 @@
       "allClearTitle": "✓ הכל שקט כרגע",
       "allClearBody": "אין פריטים דחופים הדורשים טיפול.",
       "moreInGroup": "+{{count}} נוספים",
-      "groupMeta": "{{lead}} +{{count}}"
+      "groupMeta": "{{lead}} +{{count}}",
+      "tapToExpand": "לחצו להרחבה — ואז בחרו פריט לפתיחה"
     },
     "today": {
       "title": "היום",
@@ -2026,7 +2035,9 @@
     "var_firmPhone": "טלפון המשרד",
     "var_lawyerName": "שם עורך הדין",
     "var_title": "כותרת האירוע",
-    "calendarInviteRsvpHint": "הזמנת הגעה נשלחת בהקדם. תזכורות נשלחות לפי לוח הזמנים שנבחר — ללא תלות בסטטוס RSVP."
+    "calendarInviteRsvpHint": "הזמנת הגעה נשלחת בהקדם. תזכורות נשלחות לפי לוח הזמנים שנבחר — ללא תלות בסטטוס RSVP.",
+    "managerHomeAiInsightsEnabled": "תובנות AI בלוח הבקרה",
+    "managerHomeAiInsightsEnabledDesc": "סיכום בוקר בלוח הבקרה נוצר ב-AI מתוך נתונים תפעוליים קיימים."
   },
   "viewSignedDoc": {
     "invalidLink": "קישור לא תקין",

@@ -1,6 +1,8 @@
 import SimpleScreen from '../../components/simpleComponents/SimpleScreen';
 import { useScreenSize } from '../../providers/ScreenSizeProvider';
 import useAutoHttpRequest from '../../hooks/useAutoHttpRequest';
+import useHttpRequest from '../../hooks/useHttpRequest';
+import { useEffect } from 'react';
 import { images } from '../../assets/images/images';
 import SimpleContainer from '../../components/simpleComponents/SimpleContainer';
 import TopToolBarSmallScreen from '../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen';
@@ -15,8 +17,8 @@ import TodaySection from './components/commandCenter/TodaySection';
 import CaseOperationsPanel from './components/commandCenter/CaseOperationsPanel';
 import SigningOperationsPanel from './components/commandCenter/SigningOperationsPanel';
 import PotentialClientsPanel from './components/commandCenter/PotentialClientsPanel';
-import RecentActivityFeed from './components/commandCenter/RecentActivityFeed';
 import { navigateCalendar, navigateOpenCases, navigateSigningRow } from './components/commandCenter/commandCenterUtils';
+import { useManagerHomeAiInsightsEnabled } from '../../services/firmSettings';
 
 import "./MainScreen.scss";
 import "./components/commandCenter/CommandCenter.scss";
@@ -31,11 +33,32 @@ function scrollToSection(id) {
 export default function MainScreen() {
     const navigate = useNavigate();
     const { isSmallScreen } = useScreenSize();
+    const aiInsightsEnabled = useManagerHomeAiInsightsEnabled();
 
     const {
         result: managerHome,
         isPerforming: isLoadingHome,
     } = useAutoHttpRequest(casesApi.getManagerHomeData);
+
+    const {
+        result: aiBriefResponse,
+        isPerforming: isLoadingAiBrief,
+        performRequest: fetchAiBrief,
+    } = useHttpRequest(casesApi.getManagerHomeAiBrief);
+
+    useEffect(() => {
+        if (aiInsightsEnabled) {
+            fetchAiBrief();
+        }
+    }, [aiInsightsEnabled, fetchAiBrief]);
+
+    const aiBrief = aiInsightsEnabled
+        && aiBriefResponse?.enabled
+        && aiBriefResponse?.source === 'ai'
+        && Array.isArray(aiBriefResponse?.lines)
+        && aiBriefResponse.lines.length > 0
+        ? aiBriefResponse
+        : null;
 
     const handleSummaryNavigate = (key) => {
         if (key === "signing") {
@@ -62,6 +85,9 @@ export default function MainScreen() {
                     <CommandCenterHeader
                         managerName={managerHome?.greeting?.managerName}
                         morningBrief={managerHome?.morningBrief}
+                        aiBrief={aiBrief}
+                        aiBriefEnabled={aiInsightsEnabled}
+                        aiBriefLoading={aiInsightsEnabled && isLoadingAiBrief}
                         isPerforming={isLoadingHome}
                     />
 
@@ -99,13 +125,9 @@ export default function MainScreen() {
                         />
                     </SimpleContainer>
 
-                    <SimpleContainer className="lw-commandCenter__grid">
+                    <SimpleContainer className="lw-commandCenter__grid lw-commandCenter__grid--single">
                         <PotentialClientsPanel
                             items={managerHome?.potentialClients || []}
-                            isPerforming={isLoadingHome}
-                        />
-                        <RecentActivityFeed
-                            items={managerHome?.recentActivity || []}
                             isPerforming={isLoadingHome}
                         />
                     </SimpleContainer>

@@ -2,6 +2,7 @@
 const pool = require("../config/db");
 const { getMainScreenDataCached } = require("../utils/mainScreenDataCache");
 const { getManagerHomeData } = require("../services/managerHome/managerHome.service");
+const { isAiBriefEnabled, generateAiMorningBrief } = require("../services/managerHome/aiBrief.service");
 
 /**
  * Retrieves and aggregates all necessary data for the main dashboard screen.
@@ -141,8 +142,35 @@ const getManagerHomeDataHandler = async (req, res) => {
     }
 };
 
+
+/**
+ * AI morning brief for Manager Home — grounded summary of operational signals.
+ * Separate from GetManagerHomeData to avoid blocking dashboard load on LLM latency.
+ */
+const getManagerHomeAiBriefHandler = async (req, res) => {
+    try {
+        const userId = req.user?.UserId;
+        const enabled = await isAiBriefEnabled();
+        if (!enabled) {
+            return res.status(200).json({ enabled: false });
+        }
+
+        const payload = await getManagerHomeData({ userId });
+        const aiBrief = await generateAiMorningBrief({ userId, payload });
+        if (!aiBrief) {
+            return res.status(200).json({ enabled: true, source: 'fallback' });
+        }
+
+        return res.status(200).json({ enabled: true, ...aiBrief });
+    } catch (error) {
+        console.error("Error retrieving manager home AI brief:", error);
+        return res.status(200).json({ enabled: true, source: 'fallback' });
+    }
+};
+
 module.exports = {
     getMainScreenData,
     getClientDashboardData,
     getManagerHomeData: getManagerHomeDataHandler,
+    getManagerHomeAiBrief: getManagerHomeAiBriefHandler,
 };

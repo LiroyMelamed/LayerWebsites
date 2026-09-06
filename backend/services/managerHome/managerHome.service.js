@@ -7,6 +7,7 @@ const {
     summarizeAttention,
     flattenAttentionItems,
 } = require('./scoring');
+const { invalidateAiBriefCache } = require('./aiBrief.service');
 const { MemoryCache } = require('../../utils/memoryCache');
 
 const cache = new MemoryCache({ name: 'managerHome', maxEntries: 5 });
@@ -572,6 +573,7 @@ async function getManagerHomeData({ userId, ttlMs = C.MANAGER_HOME_CACHE_TTL_MS 
 
 function invalidateManagerHomeCache() {
     cache.deleteByPrefix('managerHome:');
+    invalidateAiBriefCache();
 }
 
 function __testReset() {

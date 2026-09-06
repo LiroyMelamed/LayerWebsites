@@ -3,9 +3,20 @@ import SimpleContainer from "../../../../components/simpleComponents/SimpleConta
 import Skeleton from "../../../../components/simpleComponents/Skeleton";
 import { Text14, TextBold24 } from "../../../../components/specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../../constant/colors";
+import { getIsraelGreetingKey } from "./commandCenterUtils";
 
-export default function CommandCenterHeader({ managerName, morningBrief, isPerforming }) {
+export default function CommandCenterHeader({
+    managerName,
+    morningBrief,
+    aiBrief,
+    aiBriefEnabled = false,
+    aiBriefLoading = false,
+    isPerforming,
+}) {
     const { t } = useTranslation();
+    const greetingKey = getIsraelGreetingKey();
+
+    const showBriefSkeleton = isPerforming || (aiBriefEnabled && aiBriefLoading && !aiBrief);
 
     return (
         <SimpleContainer className="lw-commandCenter__header">
@@ -18,30 +29,90 @@ export default function CommandCenterHeader({ managerName, morningBrief, isPerfo
                 <>
                     <TextBold24 color={colors.primary}>
                         {managerName
-                            ? t("managerHome.greetingNamed", { name: managerName })
-                            : t("managerHome.greeting")}
+                            ? t(`managerHome.greeting${capitalize(greetingKey)}Named`, { name: managerName })
+                            : t(`managerHome.greeting${capitalize(greetingKey)}`)}
                     </TextBold24>
-                    <Text14 color={colors.SideBarSelected || colors.primary} className="lw-commandCenter__brief">
-                        {renderBrief(t, morningBrief)}
-                    </Text14>
+                    <SimpleContainer className="lw-commandCenter__briefLines">
+                        {showBriefSkeleton ? (
+                            <>
+                                <Skeleton width="92%" height={16} borderRadius={4} />
+                                <Skeleton width="78%" height={16} borderRadius={4} />
+                            </>
+                        ) : aiBrief?.lines?.length ? (
+                            renderAiBriefLines(aiBrief.lines)
+                        ) : (
+                            renderBriefLines(t, morningBrief)
+                        )}
+                    </SimpleContainer>
                 </>
             )}
         </SimpleContainer>
     );
 }
 
-function renderBrief(t, brief) {
-    if (!brief) return t("managerHome.subtitle");
-    if (brief.key) return t(brief.key, brief.params || {});
+function capitalize(value) {
+    return value.charAt(0).toUpperCase() + value.slice(1);
+}
 
-    const parts = [];
-    if (Array.isArray(brief.sentences) && brief.sentences.length > 0) {
-        parts.push(
-            brief.sentences.map((s) => t(s.key, s.params || {})).join(" ")
+function renderAiBriefLines(lines) {
+    return lines.map((line, idx) => (
+        <Text14
+            key={`ai-brief-${idx}`}
+            color={colors.SideBarSelected || colors.primary}
+        >
+            {line}
+        </Text14>
+    ));
+}
+
+function renderBriefLines(t, brief) {
+    if (!brief) {
+        return (
+            <Text14 color={colors.SideBarSelected || colors.primary}>
+                {t("managerHome.subtitle")}
+            </Text14>
         );
     }
-    if (brief.todayNote) {
-        parts.push(t(brief.todayNote.key, brief.todayNote.params || {}));
+
+    if (brief.key) {
+        return (
+            <Text14 color={colors.SideBarSelected || colors.primary}>
+                {t(brief.key, brief.params || {})}
+            </Text14>
+        );
     }
-    return parts.length > 0 ? parts.join(" ") : t("managerHome.subtitle");
+
+    const lines = [];
+    if (Array.isArray(brief.sentences)) {
+        brief.sentences.forEach((s, idx) => {
+            lines.push(
+                <Text14
+                    key={`brief-s-${idx}`}
+                    color={colors.SideBarSelected || colors.primary}
+                >
+                    {t(s.key, s.params || {})}
+                </Text14>
+            );
+        });
+    }
+    if (brief.todayNote) {
+        lines.push(
+            <Text14
+                key="brief-today"
+                color={colors.SideBarSelected || colors.primary}
+            >
+                {t(brief.todayNote.key, brief.todayNote.params || {})}
+            </Text14>
+        );
+    }
+
+    if (lines.length === 0) {
+        return (
+            <Text14 color={colors.SideBarSelected || colors.primary}>
+                {t("managerHome.subtitle")}
+            </Text14>
+        );
+    }
+
+    return lines;
 }

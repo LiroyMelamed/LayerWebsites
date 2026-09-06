@@ -19,6 +19,7 @@ module.exports = {
     /** Raw signals collected before grouping (safety cap) */
     ATTENTION_RAW_LIMIT: 80,
     MANAGER_HOME_CACHE_TTL_MS: 30 * 1000,
+    AI_BRIEF_CACHE_TTL_MS: 30 * 60 * 1000,
 };
 
 /**

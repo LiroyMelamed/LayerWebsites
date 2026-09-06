@@ -1318,7 +1318,9 @@
     "calendarReminderOptionsHint": "Choose which reminder intervals appear when creating an event.",
     "calendarRemindersPollMinutes": "Poll interval (minutes)",
     "calendarReminderChannelsTitle": "Delivery channels for lawyers",
-    "calendarReminderChannelsHint": "Choose which channels appear when lawyers set event reminders."
+    "calendarReminderChannelsHint": "Choose which channels appear when lawyers set event reminders.",
+    "managerHomeAiInsightsEnabled": "Manager Home AI insights",
+    "managerHomeAiInsightsEnabledDesc": "When enabled, the dashboard morning brief is AI-generated from existing operational data."
   },
   "viewSignedDoc": {
     "invalidLink": "Invalid link",

@@ -5,7 +5,7 @@ import SimpleContainer from "../../../../components/simpleComponents/SimpleConta
 import Skeleton from "../../../../components/simpleComponents/Skeleton";
 import { Text12, Text14, TextBold14, TextBold18 } from "../../../../components/specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../../constant/colors";
-import { navigateCaseRow, navigateOpenCases, navigateSigningRow } from "./commandCenterUtils";
+import { navigateOpenCases, navigateOpenCasesByManager } from "./commandCenterUtils";
 
 function WorkloadBar({ label, value, max, sublabel, onClick }) {
     const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
@@ -74,7 +74,7 @@ export default function CaseOperationsPanel({
                                                 ? t("managerHome.operations.needsAttentionShort", { count: m.needsAttention })
                                                 : null
                                     }
-                                    onPress={() => navigateOpenCases(navigate)}
+                                    onPress={() => navigateOpenCasesByManager(navigate, m)}
                                 />
                             ))
                         )}
@@ -83,7 +83,7 @@ export default function CaseOperationsPanel({
                     {unassignedCases?.count > 0 && (
                         <SimpleContainer
                             className="lw-commandCenter__unassignedBanner"
-                            onPress={() => navigateOpenCases(navigate)}
+                            onPress={() => navigateOpenCasesByManager(navigate, { unassigned: true })}
                         >
                             <TextBold14 color={colors.negative}>
                                 {t("managerHome.operations.unassignedBanner", { count: unassignedCases.count })}

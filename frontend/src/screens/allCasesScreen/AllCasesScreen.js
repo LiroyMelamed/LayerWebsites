@@ -29,6 +29,8 @@ export default function AllCasesScreen() {
     const [searchParams, setSearchParams] = useSearchParams();
     const initialStatus = searchParams.get('status') === 'closed' ? 'closed' : 'open';
     const deepCaseId = String(searchParams.get('caseId') || '').trim();
+    const initialManager = searchParams.get('manager') || null;
+    const initialUnassigned = searchParams.get('unassigned') === '1';
     const deepLinkHandledRef = useRef(false);
 
     const { isSmallScreen } = useScreenSize();
@@ -36,7 +38,8 @@ export default function AllCasesScreen() {
     const [selectedCaseType, setSelectedCaseType] = useState(null);
     const [selectedStatus, setSelectedStatus] = useState(initialStatus);
     const [selectedClient, setSelectedClient] = useState(null);
-    const [selectedManager, setSelectedManager] = useState(null);
+    const [selectedManager, setSelectedManager] = useState(initialManager);
+    const [selectedUnassigned, setSelectedUnassigned] = useState(initialUnassigned);
     const [selectedCompany, setSelectedCompany] = useState(null);
     const [selectedCaseName, setSelectedCaseName] = useState(null);
     const [filteredCases, setFilteredCases] = useState(null);
@@ -79,7 +82,7 @@ export default function AllCasesScreen() {
         return () => { cancelled = true; };
     }, [deepCaseId, openPopup, closePopup, reperformAfterSave, clearDeepCaseId]);
 
-    const applyFilters = useCallback((typeFilter, statusFilter, clientFilter, managerFilter, companyFilter, caseNameFilter) => {
+    const applyFilters = useCallback((typeFilter, statusFilter, clientFilter, managerFilter, companyFilter, caseNameFilter, unassignedFilter) => {
         let filtered = allCases;
 
         if (caseNameFilter) {
@@ -112,13 +115,17 @@ export default function AllCasesScreen() {
             filtered = filtered.filter(item => item.CaseManager === managerFilter);
         }
 
+        if (unassignedFilter) {
+            filtered = filtered.filter(item => !item.CaseManager);
+        }
+
         if (companyFilter) {
             filtered = filtered.filter(item =>
                 item.CompanyName && item.CompanyName.toLowerCase().includes(companyFilter.toLowerCase())
             );
         }
 
-        if (!typeFilter && !statusFilter && !clientFilter && !managerFilter && !companyFilter && !caseNameFilter) {
+        if (!typeFilter && !statusFilter && !clientFilter && !managerFilter && !companyFilter && !caseNameFilter && !unassignedFilter) {
             setFilteredCases(null);
         } else {
             setFilteredCases(filtered);
@@ -127,38 +134,39 @@ export default function AllCasesScreen() {
 
     useEffect(() => {
         if (allCases?.length > 0) {
-            applyFilters(selectedCaseType, selectedStatus, selectedClient, selectedManager, selectedCompany, selectedCaseName);
+            applyFilters(selectedCaseType, selectedStatus, selectedClient, selectedManager, selectedCompany, selectedCaseName, selectedUnassigned);
         }
-    }, [allCases, selectedCaseType, selectedStatus, selectedClient, selectedManager, selectedCompany, selectedCaseName, applyFilters]);
+    }, [allCases, selectedCaseType, selectedStatus, selectedClient, selectedManager, selectedCompany, selectedCaseName, selectedUnassigned, applyFilters]);
 
     const handleFilterByCaseName = (caseName) => {
         setSelectedCaseName(caseName);
-        applyFilters(selectedCaseType, selectedStatus, selectedClient, selectedManager, selectedCompany, caseName);
+        applyFilters(selectedCaseType, selectedStatus, selectedClient, selectedManager, selectedCompany, caseName, selectedUnassigned);
     };
 
     const handleFilterByType = (type) => {
         setSelectedCaseType(type);
-        applyFilters(type, selectedStatus, selectedClient, selectedManager, selectedCompany, selectedCaseName);
+        applyFilters(type, selectedStatus, selectedClient, selectedManager, selectedCompany, selectedCaseName, selectedUnassigned);
     };
 
     const handleFilterByStatus = (status) => {
         setSelectedStatus(status);
-        applyFilters(selectedCaseType, status, selectedClient, selectedManager, selectedCompany, selectedCaseName);
+        applyFilters(selectedCaseType, status, selectedClient, selectedManager, selectedCompany, selectedCaseName, selectedUnassigned);
     };
 
     const handleFilterByClient = (client) => {
         setSelectedClient(client);
-        applyFilters(selectedCaseType, selectedStatus, client, selectedManager, selectedCompany, selectedCaseName);
+        applyFilters(selectedCaseType, selectedStatus, client, selectedManager, selectedCompany, selectedCaseName, selectedUnassigned);
     };
 
     const handleFilterByManager = (manager) => {
         setSelectedManager(manager);
-        applyFilters(selectedCaseType, selectedStatus, selectedClient, manager, selectedCompany, selectedCaseName);
+        setSelectedUnassigned(false);
+        applyFilters(selectedCaseType, selectedStatus, selectedClient, manager, selectedCompany, selectedCaseName, false);
     };
 
     const handleFilterByCompany = (company) => {
         setSelectedCompany(company);
-        applyFilters(selectedCaseType, selectedStatus, selectedClient, selectedManager, company, selectedCaseName);
+        applyFilters(selectedCaseType, selectedStatus, selectedClient, selectedManager, company, selectedCaseName, selectedUnassigned);
     };
 
     const caseNames = [...new Set((allCases || []).map(c => c.CaseName).filter(Boolean))].sort();
