@@ -38,6 +38,7 @@ export default function MainScreen() {
     const {
         result: managerHome,
         isPerforming: isLoadingHome,
+        performRequest: refreshManagerHome,
     } = useAutoHttpRequest(casesApi.getManagerHomeData);
 
     const {
@@ -59,6 +60,13 @@ export default function MainScreen() {
         && aiBriefResponse.lines.length > 0
         ? aiBriefResponse
         : null;
+
+    const handleManagerHomeRefresh = () => {
+        refreshManagerHome();
+        if (aiInsightsEnabled) {
+            fetchAiBrief();
+        }
+    };
 
     const handleSummaryNavigate = (key) => {
         if (key === "signing") {
@@ -102,12 +110,14 @@ export default function MainScreen() {
                             <AttentionQueue
                                 items={managerHome?.attentionItems || []}
                                 isPerforming={isLoadingHome}
+                                onEventChanged={handleManagerHomeRefresh}
                             />
                         </SimpleContainer>
                         <SimpleContainer className="lw-commandCenter__dashboardCol">
                             <TodaySection
                                 events={managerHome?.today || []}
                                 isPerforming={isLoadingHome}
+                                onEventChanged={handleManagerHomeRefresh}
                             />
                         </SimpleContainer>
                     </SimpleContainer>

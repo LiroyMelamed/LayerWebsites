@@ -1,10 +1,11 @@
-import { Fragment, useState } from "react";
+import { Fragment, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import SimpleContainer from "../../../../components/simpleComponents/SimpleContainer";
 import Separator from "../../../../components/styledComponents/separators/Separator";
 import { Text12, TextBold14 } from "../../../../components/specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../../constant/colors";
+import { usePopup } from "../../../../providers/PopUpProvider";
 import {
     attentionMetaLine,
     memberAttentionLabel,
@@ -13,9 +14,10 @@ import {
     signalTypeClassName,
 } from "./commandCenterUtils";
 
-export default function AttentionItem({ item }) {
+export default function AttentionItem({ item, onEventChanged }) {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const { openPopup, closePopup } = usePopup();
     const [expanded, setExpanded] = useState(false);
 
     const isGroup = item.kind === "group" && item.count > 1;
@@ -28,12 +30,23 @@ export default function AttentionItem({ item }) {
         signalTypeClassName(item.signalType),
     ].filter(Boolean).join(" ");
 
-    const handlePress = () => {
+    const modalHandlers = {
+        openPopup,
+        closePopup,
+        onEventSaved: onEventChanged,
+        onEventDeleted: onEventChanged,
+    };
+
+    const openAttentionTarget = useCallback(async (target) => {
+        await navigateAttentionItem(navigate, target, modalHandlers);
+    }, [navigate, openPopup, closePopup, onEventChanged]);
+
+    const handlePress = async () => {
         if (isGroup) {
             setExpanded((prev) => !prev);
             return;
         }
-        navigateAttentionItem(navigate, item);
+        await openAttentionTarget(item);
     };
 
     return (
@@ -100,13 +113,13 @@ export default function AttentionItem({ item }) {
                             )}
                             <SimpleContainer
                                 className={`lw-commandCenter__attentionMember ${signalTypeClassName(item.signalType)}`}
-                                onPress={() => navigateAttentionItem(navigate, member)}
+                                onPress={() => openAttentionTarget(member)}
                                 role="button"
                                 tabIndex={0}
                                 onKeyDown={(e) => {
                                     if (e.key === "Enter" || e.key === " ") {
                                         e.preventDefault();
-                                        navigateAttentionItem(navigate, member);
+                                        openAttentionTarget(member);
                                     }
                                 }}
                             >

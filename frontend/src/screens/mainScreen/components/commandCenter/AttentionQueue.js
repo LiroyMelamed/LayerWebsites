@@ -10,7 +10,7 @@ import { colors } from "../../../../constant/colors";
 import AttentionItem from "./AttentionItem";
 import { navigateOpenCases } from "./commandCenterUtils";
 
-export default function AttentionQueue({ items = [], isPerforming }) {
+export default function AttentionQueue({ items = [], isPerforming, onEventChanged }) {
     const { t } = useTranslation();
     const navigate = useNavigate();
 
@@ -49,7 +49,7 @@ export default function AttentionQueue({ items = [], isPerforming }) {
                             {idx > 0 && (
                                 <Separator className="lw-commandCenter__attentionSeparator" />
                             )}
-                            <AttentionItem item={item} />
+                            <AttentionItem item={item} onEventChanged={onEventChanged} />
                         </Fragment>
                     ))}
                 </SimpleContainer>

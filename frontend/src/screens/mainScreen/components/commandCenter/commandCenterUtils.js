@@ -5,6 +5,7 @@ import {
     RemindersScreenName,
     SigningManagerScreenName,
 } from "../../../../navigation/screenPaths";
+import { openCalendarEventModal } from "./openCalendarEventModal";
 
 const GROUP_LIST_ROUTES = {
     signing_pending: SigningManagerScreenName,
@@ -21,12 +22,29 @@ function buildPath(screen, query = "") {
     return `${AdminStackName}${screen}${query}`;
 }
 
-export function navigateAttentionItem(navigate, item) {
+export async function navigateAttentionItem(navigate, item, modalHandlers = {}) {
     if (!item || !navigate) return;
+
+    const { openPopup, closePopup, onEventSaved, onEventDeleted } = modalHandlers;
+
+    const tryOpenCalendarEvent = async (targetItem) => {
+        const eventId = targetItem?.actionParams?.eventId;
+        if (targetItem?.actionRoute !== "calendar" || !eventId || !openPopup || !closePopup) {
+            return false;
+        }
+        return openCalendarEventModal({
+            eventId,
+            openPopup,
+            closePopup,
+            onSaved: onEventSaved,
+            onDeleted: onEventDeleted,
+        });
+    };
 
     if (item.kind === "group") {
         if (item.count === 1 && item.members?.[0]) {
-            navigateAttentionItem(navigate, item.members[0]);
+            if (await tryOpenCalendarEvent(item.members[0])) return;
+            await navigateAttentionItem(navigate, item.members[0], modalHandlers);
             return;
         }
         const listRoute = GROUP_LIST_ROUTES[item.signalType];
@@ -39,7 +57,8 @@ export function navigateAttentionItem(navigate, item) {
             return;
         }
         if (item.members?.[0]) {
-            navigateAttentionItem(navigate, item.members[0]);
+            if (await tryOpenCalendarEvent(item.members[0])) return;
+            await navigateAttentionItem(navigate, item.members[0], modalHandlers);
         }
         return;
     }
@@ -56,6 +75,7 @@ export function navigateAttentionItem(navigate, item) {
         return;
     }
     if (route === "calendar") {
+        if (await tryOpenCalendarEvent(item)) return;
         const eventId = params.eventId;
         navigate(
             buildPath(

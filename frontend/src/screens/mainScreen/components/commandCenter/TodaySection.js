@@ -6,11 +6,32 @@ import Skeleton from "../../../../components/simpleComponents/Skeleton";
 import { Text12, Text14, TextBold14, TextBold18 } from "../../../../components/specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../../constant/colors";
 import { formatDisplayTime } from "../../../../functions/date/formatDateForInput";
+import { usePopup } from "../../../../providers/PopUpProvider";
 import { navigateCalendar, navigateCaseRow } from "./commandCenterUtils";
+import { openCalendarEventModal } from "./openCalendarEventModal";
 
-export default function TodaySection({ events = [], isPerforming }) {
+export default function TodaySection({ events = [], isPerforming, onEventChanged }) {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const { openPopup, closePopup } = usePopup();
+
+    const handleEventPress = async (ev) => {
+        if (ev.caseId) {
+            navigateCaseRow(navigate, ev.caseId);
+            return;
+        }
+        if (ev.id) {
+            const opened = await openCalendarEventModal({
+                eventId: ev.id,
+                openPopup,
+                closePopup,
+                onSaved: onEventChanged,
+                onDeleted: onEventChanged,
+            });
+            if (opened) return;
+        }
+        navigateCalendar(navigate);
+    };
 
     return (
         <SimpleCard className="lw-commandCenter__section lw-commandCenter__dashboardTile" id="manager-home-today">
@@ -38,13 +59,7 @@ export default function TodaySection({ events = [], isPerforming }) {
                         <SimpleContainer
                             key={ev.id}
                             className="lw-commandCenter__todayItem"
-                            onPress={() => {
-                                if (ev.caseId) {
-                                    navigateCaseRow(navigate, ev.caseId);
-                                } else {
-                                    navigateCalendar(navigate);
-                                }
-                            }}
+                            onPress={() => handleEventPress(ev)}
                         >
                             <SimpleContainer className="lw-commandCenter__todayTime">
                                 <TextBold14 color={colors.primary}>{formatDisplayTime(ev.startTime)}</TextBold14>
