@@ -6,7 +6,7 @@ import Skeleton from "../../../../components/simpleComponents/Skeleton";
 import { Text12, Text14, TextBold14, TextBold18 } from "../../../../components/specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../../constant/colors";
 import { formatDisplayTime } from "../../../../functions/date/formatDateForInput";
-import { AdminStackName, CalendarScreenName } from "../../../../navigation/screenPaths";
+import { navigateCalendar } from "./commandCenterUtils";
 
 export default function PotentialClientsPanel({ items = [], isPerforming }) {
     const { t } = useTranslation();
@@ -16,13 +16,17 @@ export default function PotentialClientsPanel({ items = [], isPerforming }) {
         <SimpleCard className="lw-commandCenter__section">
             <SimpleContainer className="lw-commandCenter__sectionHeader">
                 <TextBold18 color={colors.primary}>{t("managerHome.potentialClients.title")}</TextBold18>
-                {!isPerforming && (
-                    <Text12 color={colors.winter}>{t("managerHome.potentialClients.subtitle")}</Text12>
-                )}
+                <Text12
+                    color={colors.primary}
+                    className="lw-commandCenter__link"
+                    onClick={() => navigateCalendar(navigate)}
+                >
+                    {t("managerHome.actions.openCalendar")}
+                </Text12>
             </SimpleContainer>
 
             {isPerforming ? (
-                <Skeleton width="100%" height={100} borderRadius={8} />
+                <Skeleton width="100%" height={80} borderRadius={8} />
             ) : items.length === 0 ? (
                 <Text14 color={colors.winter}>{t("managerHome.potentialClients.empty")}</Text14>
             ) : (
@@ -31,7 +35,7 @@ export default function PotentialClientsPanel({ items = [], isPerforming }) {
                         <SimpleContainer
                             key={item.eventId}
                             className="lw-commandCenter__potentialItem"
-                            onClick={() => navigate(`${AdminStackName}${CalendarScreenName}`)}
+                            onClick={() => navigateCalendar(navigate)}
                         >
                             <TextBold14 numberOfLines={1}>
                                 {item.leadName || item.title}
@@ -42,11 +46,6 @@ export default function PotentialClientsPanel({ items = [], isPerforming }) {
                             </Text12>
                             {item.leadPhone && (
                                 <Text12 color={colors.winter}>{item.leadPhone}</Text12>
-                            )}
-                            {item.managerName && (
-                                <Text12 color={colors.winter}>
-                                    {t("managerHome.labels.manager")}: {item.managerName}
-                                </Text12>
                             )}
                         </SimpleContainer>
                     ))}

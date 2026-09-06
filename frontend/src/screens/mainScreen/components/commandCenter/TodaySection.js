@@ -3,27 +3,33 @@ import { useNavigate } from "react-router-dom";
 import SimpleCard from "../../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../../components/simpleComponents/SimpleContainer";
 import Skeleton from "../../../../components/simpleComponents/Skeleton";
-import { Text12, Text14, TextBold14, TextBold18 } from "../../../../components/specializedComponents/text/AllTextKindFile";
+import { Text12, Text14, TextBold14, TextBold18, TextBold22 } from "../../../../components/specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../../constant/colors";
 import { formatDisplayTime } from "../../../../functions/date/formatDateForInput";
-import { AdminStackName, AllCasesScreenName, CalendarScreenName } from "../../../../navigation/screenPaths";
+import { navigateCalendar, navigateCaseRow } from "./commandCenterUtils";
 
 export default function TodaySection({ events = [], isPerforming }) {
     const { t } = useTranslation();
     const navigate = useNavigate();
 
     return (
-        <SimpleCard className="lw-commandCenter__section" id="manager-home-today">
+        <SimpleCard className="lw-commandCenter__section lw-commandCenter__dashboardTile" id="manager-home-today">
             <SimpleContainer className="lw-commandCenter__sectionHeader">
                 <TextBold18 color={colors.primary}>{t("managerHome.today.title")}</TextBold18>
                 {!isPerforming && (
-                    <Text12 color={colors.winter}>{t("managerHome.today.count", { count: events.length })}</Text12>
+                    <Text12
+                        color={colors.primary}
+                        className="lw-commandCenter__link"
+                        onClick={() => navigateCalendar(navigate)}
+                    >
+                        {t("managerHome.actions.openCalendar")}
+                    </Text12>
                 )}
             </SimpleContainer>
 
             {isPerforming ? (
                 <SimpleContainer className="lw-commandCenter__skeletonList">
-                    {[0, 1].map((i) => <Skeleton key={i} width="100%" height={64} borderRadius={8} />)}
+                    {[0, 1].map((i) => <Skeleton key={i} width="100%" height={48} borderRadius={6} />)}
                 </SimpleContainer>
             ) : events.length === 0 ? (
                 <SimpleContainer className="lw-commandCenter__emptyState lw-commandCenter__emptyState--compact">
@@ -37,9 +43,9 @@ export default function TodaySection({ events = [], isPerforming }) {
                             className="lw-commandCenter__todayItem"
                             onClick={() => {
                                 if (ev.caseId) {
-                                    navigate(`${AdminStackName}${AllCasesScreenName}?caseId=${ev.caseId}`);
+                                    navigateCaseRow(navigate, ev.caseId);
                                 } else {
-                                    navigate(`${AdminStackName}${CalendarScreenName}`);
+                                    navigateCalendar(navigate);
                                 }
                             }}
                         >
@@ -51,11 +57,6 @@ export default function TodaySection({ events = [], isPerforming }) {
                                 {(ev.caseName || ev.clientDisplayName) && (
                                     <Text12 color={colors.winter} numberOfLines={1}>
                                         {[ev.caseName, ev.clientDisplayName].filter(Boolean).join(" · ")}
-                                    </Text12>
-                                )}
-                                {ev.managerName && (
-                                    <Text12 color={colors.winter} numberOfLines={1}>
-                                        {t("managerHome.labels.manager")}: {ev.managerName}
                                     </Text12>
                                 )}
                                 {ev.isPotentialClient && (

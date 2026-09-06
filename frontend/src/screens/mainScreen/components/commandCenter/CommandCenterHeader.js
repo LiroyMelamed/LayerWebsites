@@ -21,7 +21,7 @@ export default function CommandCenterHeader({ managerName, morningBrief, isPerfo
                             ? t("managerHome.greetingNamed", { name: managerName })
                             : t("managerHome.greeting")}
                     </TextBold24>
-                    <Text14 color={colors.SideBarSelected || colors.primary}>
+                    <Text14 color={colors.SideBarSelected || colors.primary} className="lw-commandCenter__brief">
                         {renderBrief(t, morningBrief)}
                     </Text14>
                 </>
