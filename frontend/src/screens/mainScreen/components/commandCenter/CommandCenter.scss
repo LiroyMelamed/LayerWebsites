@@ -91,10 +91,6 @@
 .lw-commandCenter__attentionList {
     flex-direction: column;
     gap: v.$space-1;
-    max-block-size: min(18rem, 42vh);
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-inline-end: 0.125rem;
 }
 
 .lw-commandCenter__attentionItem {
@@ -158,6 +154,58 @@
     opacity: 0.45;
 }
 
+.lw-commandCenter__signalTag {
+    flex-shrink: 0;
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    background: rgba(42, 67, 101, 0.08);
+
+    &.is-signal-signing-expired,
+    &.is-signal-license-expired {
+        background: rgba(197, 48, 48, 0.12);
+        color: var(--lw-color-negative);
+    }
+
+    &.is-signal-signing-expiring,
+    &.is-signal-license-expiring-critical,
+    &.is-signal-license-expiring-warning {
+        background: rgba(183, 121, 31, 0.12);
+        color: #B7791F;
+    }
+
+    &.is-signal-signing-rejected {
+        background: rgba(197, 48, 48, 0.1);
+        color: var(--lw-color-negative);
+    }
+
+    &.is-signal-signing-pending {
+        background: rgba(42, 67, 101, 0.1);
+        color: var(--lw-color-primary);
+    }
+
+    &.is-signal-no-activity,
+    &.is-signal-long-in-stage,
+    &.is-signal-completion-approaching {
+        background: rgba(113, 128, 150, 0.12);
+        color: #718096;
+    }
+
+    &.is-signal-rsvp-pending {
+        background: rgba(49, 130, 206, 0.12);
+        color: #3182CE;
+    }
+}
+
+.lw-commandCenter__attentionItem.is-signal-signing-expired,
+.lw-commandCenter__attentionItem.is-signal-license-expired {
+    border-inline-start-color: var(--lw-color-negative);
+}
+
+.lw-commandCenter__attentionItem.is-signal-signing-expiring,
+.lw-commandCenter__attentionItem.is-signal-license-expiring-critical {
+    border-inline-start-color: #B7791F;
+}
+
 .lw-commandCenter__attentionMeta,
 .lw-commandCenter__attentionReason {
     min-inline-size: 0;
@@ -196,9 +244,56 @@
 .lw-commandCenter__workloadList {
     flex-direction: column;
     gap: v.$space-1;
-    max-block-size: min(14rem, 32vh);
-    overflow-y: auto;
-    overflow-x: hidden;
+}
+
+.lw-commandCenter__signingRowTop {
+    @include m.row(v.$space-2);
+    align-items: center;
+    min-inline-size: 0;
+}
+
+.lw-commandCenter__signingFilename {
+    flex: 1;
+    min-inline-size: 0;
+}
+
+.lw-commandCenter__statusPill {
+    flex-shrink: 0;
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    background: rgba(42, 67, 101, 0.08);
+
+    &.is-signal-signing-expired {
+        background: rgba(197, 48, 48, 0.12);
+        color: var(--lw-color-negative);
+    }
+
+    &.is-signal-signing-expiring {
+        background: rgba(183, 121, 31, 0.12);
+        color: #B7791F;
+    }
+
+    &.is-signal-signing-pending {
+        background: rgba(42, 67, 101, 0.1);
+        color: var(--lw-color-primary);
+    }
+
+    &.is-signal-signing-rejected {
+        background: rgba(197, 48, 48, 0.1);
+        color: var(--lw-color-negative);
+    }
+}
+
+.lw-commandCenter__signingRow.is-signal-signing-expired {
+    border-inline-start: 0.2rem solid var(--lw-color-negative);
+}
+
+.lw-commandCenter__signingRow.is-signal-signing-expiring {
+    border-inline-start: 0.2rem solid #B7791F;
+}
+
+.lw-commandCenter__signingRow.is-signal-signing-rejected {
+    border-inline-start: 0.2rem solid var(--lw-color-negative);
 }
 
 .lw-commandCenter__todayItem {
@@ -318,6 +413,7 @@
     padding: v.$space-2;
     border-radius: 0.5rem;
     cursor: pointer;
+    border-inline-start: 0.2rem solid transparent;
 
     &:hover {
         background: var(--lw-color-secondary-highlighted);
@@ -349,18 +445,6 @@
 @media (max-width: 768px) {
     .lw-commandCenter__signingStats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .lw-commandCenter__attentionList {
-        max-block-size: none;
-    }
-
-    .lw-commandCenter__todayList,
-    .lw-commandCenter__signingQueue,
-    .lw-commandCenter__potentialList,
-    .lw-commandCenter__activityList,
-    .lw-commandCenter__workloadList {
-        max-block-size: none;
     }
 
     .lw-commandCenter__workloadMeta {

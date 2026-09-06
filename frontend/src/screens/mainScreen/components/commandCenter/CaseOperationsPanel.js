@@ -10,7 +10,7 @@ import { navigateCaseRow, navigateOpenCases, navigateSigningRow } from "./comman
 function WorkloadBar({ label, value, max, sublabel, onClick }) {
     const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
     return (
-        <SimpleContainer className="lw-commandCenter__workloadRow" onClick={onClick}>
+        <SimpleContainer className="lw-commandCenter__workloadRow" onPress={onClick}>
             <SimpleContainer className="lw-commandCenter__workloadMeta">
                 <TextBold14 numberOfLines={1}>{label}</TextBold14>
                 {sublabel && <Text12 color={colors.winter}>{sublabel}</Text12>}
@@ -44,13 +44,12 @@ export default function CaseOperationsPanel({
         <SimpleCard className="lw-commandCenter__section" id="manager-home-operations">
             <SimpleContainer className="lw-commandCenter__sectionHeader">
                 <TextBold18 color={colors.primary}>{t("managerHome.operations.title")}</TextBold18>
-                <Text12
-                    color={colors.primary}
+                <SimpleContainer
                     className="lw-commandCenter__link"
-                    onClick={() => navigateOpenCases(navigate)}
+                    onPress={() => navigateOpenCases(navigate)}
                 >
-                    {t("managerHome.actions.viewAllCases")}
-                </Text12>
+                    <Text12 color={colors.primary}>{t("managerHome.actions.viewAllCases")}</Text12>
+                </SimpleContainer>
             </SimpleContainer>
 
             {isPerforming ? (
@@ -75,7 +74,7 @@ export default function CaseOperationsPanel({
                                                 ? t("managerHome.operations.needsAttentionShort", { count: m.needsAttention })
                                                 : null
                                     }
-                                    onClick={() => navigateOpenCases(navigate)}
+                                    onPress={() => navigateOpenCases(navigate)}
                                 />
                             ))
                         )}
@@ -84,7 +83,7 @@ export default function CaseOperationsPanel({
                     {unassignedCases?.count > 0 && (
                         <SimpleContainer
                             className="lw-commandCenter__unassignedBanner"
-                            onClick={() => navigateOpenCases(navigate)}
+                            onPress={() => navigateOpenCases(navigate)}
                         >
                             <TextBold14 color={colors.negative}>
                                 {t("managerHome.operations.unassignedBanner", { count: unassignedCases.count })}
@@ -100,7 +99,7 @@ export default function CaseOperationsPanel({
                                     <SimpleContainer
                                         key={`${s.case_type}-${s.stage}`}
                                         className="lw-commandCenter__stageChip"
-                                        onClick={() => navigateOpenCases(navigate)}
+                                        onPress={() => navigateOpenCases(navigate)}
                                     >
                                         <Text12 color={colors.winter} numberOfLines={1}>{s.case_type}</Text12>
                                         <TextBold14>

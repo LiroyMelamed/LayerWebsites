@@ -44,7 +44,7 @@ export default function RecentActivityFeed({ items = [], isPerforming }) {
                         <SimpleContainer
                             key={`${item.activityType}-${item.caseId}-${idx}`}
                             className="lw-commandCenter__activityItem"
-                            onClick={() => {
+                            onPress={() => {
                                 if (item.caseId) navigateCaseRow(navigate, item.caseId);
                             }}
                         >

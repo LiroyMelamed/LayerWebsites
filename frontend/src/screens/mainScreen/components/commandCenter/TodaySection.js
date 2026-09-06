@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import SimpleCard from "../../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../../components/simpleComponents/SimpleContainer";
 import Skeleton from "../../../../components/simpleComponents/Skeleton";
-import { Text12, Text14, TextBold14, TextBold18, TextBold22 } from "../../../../components/specializedComponents/text/AllTextKindFile";
+import { Text12, Text14, TextBold14, TextBold18 } from "../../../../components/specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../../constant/colors";
 import { formatDisplayTime } from "../../../../functions/date/formatDateForInput";
 import { navigateCalendar, navigateCaseRow } from "./commandCenterUtils";
@@ -16,15 +16,12 @@ export default function TodaySection({ events = [], isPerforming }) {
         <SimpleCard className="lw-commandCenter__section lw-commandCenter__dashboardTile" id="manager-home-today">
             <SimpleContainer className="lw-commandCenter__sectionHeader">
                 <TextBold18 color={colors.primary}>{t("managerHome.today.title")}</TextBold18>
-                {!isPerforming && (
-                    <Text12
-                        color={colors.primary}
-                        className="lw-commandCenter__link"
-                        onClick={() => navigateCalendar(navigate)}
-                    >
-                        {t("managerHome.actions.openCalendar")}
-                    </Text12>
-                )}
+                <SimpleContainer
+                    className="lw-commandCenter__link"
+                    onPress={() => navigateCalendar(navigate)}
+                >
+                    <Text12 color={colors.primary}>{t("managerHome.actions.openCalendar")}</Text12>
+                </SimpleContainer>
             </SimpleContainer>
 
             {isPerforming ? (
@@ -41,7 +38,7 @@ export default function TodaySection({ events = [], isPerforming }) {
                         <SimpleContainer
                             key={ev.id}
                             className="lw-commandCenter__todayItem"
-                            onClick={() => {
+                            onPress={() => {
                                 if (ev.caseId) {
                                     navigateCaseRow(navigate, ev.caseId);
                                 } else {
