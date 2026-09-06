@@ -49,7 +49,7 @@ export default function CaseOperationsPanel({
             {isPerforming ? (
                 <Skeleton width="100%" height={160} borderRadius={8} />
             ) : (
-                <>
+                <SimpleContainer className="lw-commandCenter__panelBody">
                     <TextBold14 color={colors.primary}>{t("managerHome.operations.byManager")}</TextBold14>
                     <SimpleContainer className="lw-commandCenter__workloadList">
                         {managerWorkload.length === 0 ? (
@@ -106,7 +106,7 @@ export default function CaseOperationsPanel({
                             </SimpleContainer>
                         </>
                     )}
-                </>
+                </SimpleContainer>
             )}
         </SimpleCard>
     );
