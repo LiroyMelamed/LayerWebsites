@@ -28,6 +28,42 @@
     align-items: flex-start;
     gap: 0.25rem;
     line-height: 1.45;
+    inline-size: 100%;
+}
+
+.lw-commandCenter__aiBrief {
+    @include m.row(v.$space-2);
+    align-items: flex-start;
+    inline-size: 100%;
+}
+
+.lw-commandCenter__aiBriefBadge {
+    @include m.row(0.25rem);
+    align-items: center;
+    flex-shrink: 0;
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    background: rgba(49, 130, 206, 0.1);
+    color: #3182CE;
+    margin-block-start: 0.125rem;
+}
+
+.lw-commandCenter__aiBriefIconSvg {
+    inline-size: 0.875rem;
+    block-size: 0.875rem;
+}
+
+.lw-commandCenter__aiBriefBadgeText {
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.lw-commandCenter__aiBriefContent {
+    flex: 1;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    min-inline-size: 0;
 }
 
 .lw-commandCenter__brief {

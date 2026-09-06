@@ -604,7 +604,8 @@
         "rsvp_pending": "הזמנה ממתינה לאישור — {{title}}",
         "reminder_failed": "תזכורת שנכשלה — {{label}}"
       }
-    }
+    },
+    "aiBriefLabel": "AI"
   },
   "terms": {
     "title": "תנאי שימוש לאפליקציה {{appName}}",

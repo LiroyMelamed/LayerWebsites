@@ -1330,5 +1330,8 @@
     "loading": "Loading document...",
     "signedAt": "Signed on",
     "download": "Download Signed Document"
+  },
+  "managerHome": {
+    "aiBriefLabel": "AI"
   }
 }

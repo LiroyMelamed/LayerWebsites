@@ -82,8 +82,10 @@ function buildPrompt(facts) {
             content: [
                 'אתה אנalist תפעולי למשרד עורכי דין.',
                 'קיבלת JSON עם נתונים תפעוליים בלבד מהמערכת.',
-                'כתוב 2-4 משפטים קצרים בעברית לסיכום בוקר למנהל/ת המשרד.',
+                'כתוב 2-4 משפטים קצרים בעברית לסיכום תפעולי למנהל/ת המשרד.',
                 'חובה: השתמש רק בנתונים שסופקו. אל תמציא מספרים, שמות תיקים, מועדים או מסקנות.',
+                'ברכת שלום ושם המנהל/ת כבר מוצגים בכותרת — אל תפתח בברכה, אל תכתוב "בוקר טוב", "ערב טוב" ואל תפנה בשם.',
+                'התחל ישר בתוכן התפעולי (מה דורש תשומת לב, מה מתוכנן היום).',
                 'אם אין נושאים דחופים — ציין זאת בקצרה.',
                 'טון: מקצועי, רגוע, ממוקד פעולה.',
                 'החזר JSON בלבד בפורמט: {"lines":["משפט 1","משפט 2"]}',
@@ -94,6 +96,28 @@ function buildPrompt(facts) {
             content: JSON.stringify(facts, null, 2),
         },
     ];
+}
+
+
+const GREETING_PREFIX = /^(?:בוקר טוב|צהריים טובים|ערב טוב|לילה טוב|שלום)(?:[,.!\s]|$)/i;
+
+function sanitizeAiBriefLines(lines, facts = {}) {
+    if (!Array.isArray(lines)) return [];
+
+    const managerName = String(facts.managerName || '').trim();
+    const firstName = managerName.split(/\s+/)[0] || '';
+
+    return lines
+        .map((line) => String(line || '').trim())
+        .filter(Boolean)
+        .filter((line) => {
+            if (GREETING_PREFIX.test(line)) return false;
+            if (firstName && line.includes(firstName) && line.length <= firstName.length + 24) {
+                return false;
+            }
+            return true;
+        })
+        .slice(0, 4);
 }
 
 function parseLlmLines(raw) {
@@ -185,7 +209,8 @@ async function generateAiMorningBrief({ userId, payload, callLlmFn, getSettingFn
 
     const llm = callLlmFn || require('../aiChatService').callLLM;
     const raw = await llm(buildPrompt(facts));
-    const lines = parseLlmLines(raw);
+    const parsed = parseLlmLines(raw);
+    const lines = sanitizeAiBriefLines(parsed, facts);
     if (!lines?.length || !validateLinesAgainstFacts(lines, facts)) {
         console.warn('[aiBrief] generation failed or did not pass fact validation');
         return null;
@@ -214,6 +239,7 @@ module.exports = {
     generateAiMorningBrief,
     invalidateAiBriefCache,
     parseLlmLines,
+    sanitizeAiBriefLines,
     validateLinesAgainstFacts,
     factsFingerprint,
     __testReset,

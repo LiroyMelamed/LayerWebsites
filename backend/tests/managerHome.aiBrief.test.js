@@ -204,6 +204,20 @@ test('invalidateAiBriefCache clears cached briefs', async () => {
     }
 });
 
+test('sanitizeAiBriefLines removes greeting duplicates', () => {
+    const { sanitizeAiBriefLines } = require('../services/managerHome/aiBrief.service');
+    const facts = { managerName: 'לירוי' };
+    const lines = sanitizeAiBriefLines([
+        'בוקר טוב לירוי,',
+        'אין נושאים דחופים היום.',
+        '14 חתימות ממתינות.',
+    ], facts);
+    assert.deepEqual(lines, [
+        'אין נושאים דחופים היום.',
+        '14 חתימות ממתינות.',
+    ]);
+});
+
 test('factsFingerprint is stable for identical facts', () => {
     const a = buildFactsSnapshot(samplePayload);
     const b = buildFactsSnapshot(samplePayload);
