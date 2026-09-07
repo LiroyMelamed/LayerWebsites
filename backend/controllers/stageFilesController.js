@@ -3,6 +3,7 @@ const { requireInt } = require("../utils/paramValidation");
 const { GetObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const { r2, BUCKET } = require("../utils/r2");
+const { invalidateOperationalDashboardCaches } = require("../utils/operationalDashboardCache");
 
 /**
  * GET /api/Files/stage-files/:caseId
@@ -80,6 +81,7 @@ exports.addStageFile = async (req, res) => {
             [caseId, stage, fileKey, fileName, fileExt || null, fileMime || null, fileSize || null, userId]
         );
 
+        invalidateOperationalDashboardCaches();
         return res.status(201).json(result.rows[0]);
     } catch (err) {
         console.error("addStageFile error:", err);
@@ -104,6 +106,7 @@ exports.deleteStageFile = async (req, res) => {
         if (result.rowCount === 0) {
             return res.status(404).json({ message: "קובץ שלב לא נמצא" });
         }
+        invalidateOperationalDashboardCaches();
         return res.json({ message: "נמחק", id: fileId });
     } catch (err) {
         console.error("deleteStageFile error:", err);

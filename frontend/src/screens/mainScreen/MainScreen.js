@@ -5,107 +5,132 @@ import useAutoHttpRequest from '../../hooks/useAutoHttpRequest';
 import { images } from '../../assets/images/images';
 import SimpleContainer from '../../components/simpleComponents/SimpleContainer';
 import TopToolBarSmallScreen from '../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen';
-import ShowDataCard from './components/ShowDataCard';
-import ComprasionDataCard from './components/ComprasionDataCard';
-import { colors } from '../../constant/colors';
-import ClientsCard from './components/ClientsCard';
 import casesApi from '../../api/casesApi';
-import calendarApi from '../../api/calendarApi';
 import { AdminStackName } from '../../navigation/AdminStack';
 import SimpleScrollView from '../../components/simpleComponents/SimpleScrollView';
 import { useNavigate } from 'react-router-dom';
-import { TaggedCasesScreenName } from '../taggedCasesScreen/TaggedCasesScreen';
 import { AllCasesScreenName } from '../allCasesScreen/AllCasesScreen';
-import { AllClientsScreenName } from '../allClientsScreen/AllClientsScreen';
-import CalendarWidget from './components/CalendarWidget';
-import { useCalendarModuleEnabled } from '../../services/firmSettings';
-import { useTranslation } from "react-i18next";
+import ClientsCard from './components/ClientsCard';
+import CommandCenterHeader from './components/commandCenter/CommandCenterHeader';
+import SummaryStrip from './components/commandCenter/SummaryStrip';
+import AttentionQueue from './components/commandCenter/AttentionQueue';
+import TodaySection from './components/commandCenter/TodaySection';
+import CaseOperationsPanel from './components/commandCenter/CaseOperationsPanel';
+import SigningOperationsPanel from './components/commandCenter/SigningOperationsPanel';
+import PotentialClientsPanel from './components/commandCenter/PotentialClientsPanel';
+import RecentActivityFeed from './components/commandCenter/RecentActivityFeed';
+import { SigningManagerScreenName } from '../../navigation/screenPaths';
 
 import "./MainScreen.scss";
+import "./components/commandCenter/CommandCenter.scss";
 
 export const MainScreenName = "/MainScreen";
 
+function scrollToSection(id) {
+    if (typeof document === "undefined") return;
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 export default function MainScreen() {
-    const { t } = useTranslation();
-    const navigate = useNavigate()
+    const navigate = useNavigate();
     const { isSmallScreen } = useScreenSize();
-    const calendarEnabled = useCalendarModuleEnabled();
-    const { result: mainScreenData, isPerforming: isPerformingMainScreenData, performRequest } = useAutoHttpRequest(casesApi.getMainScreenData);
-    const { result: calendarTodayData, isPerforming: isPerformingCalendar } = useAutoHttpRequest(
-        calendarEnabled ? calendarApi.getTodayAndTomorrow : () => Promise.resolve(null)
-    );
     const clientsCardRef = useRef(null);
+
+    const {
+        result: managerHome,
+        isPerforming: isLoadingHome,
+        performRequest: refreshClientsContext,
+    } = useAutoHttpRequest(casesApi.getManagerHomeData);
+
+    const {
+        result: mainScreenData,
+        isPerforming: isLoadingClients,
+        performRequest: refreshMainScreen,
+    } = useAutoHttpRequest(casesApi.getMainScreenData);
+
+    const handleSummaryNavigate = (key) => {
+        if (key === "signing") {
+            navigate(AdminStackName + SigningManagerScreenName);
+            return;
+        }
+        if (key === "unassigned") {
+            navigate(AdminStackName + AllCasesScreenName + "?status=open");
+            return;
+        }
+        if (key === "today") {
+            scrollToSection("manager-home-today");
+            return;
+        }
+        scrollToSection("manager-home-attention");
+    };
+
+    const refreshAll = () => {
+        refreshClientsContext([]);
+        refreshMainScreen([]);
+    };
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
             {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={AdminStackName + MainScreenName} />}
 
             <SimpleScrollView>
-                {calendarEnabled && (
-                    <SimpleContainer className="lw-mainScreen__row lw-mainScreen__row--full">
-                        <CalendarWidget
-                            events={calendarTodayData?.events || []}
-                            isPerforming={isPerformingCalendar}
-                        />
-                    </SimpleContainer>
-                )}
-
-                <SimpleContainer className="lw-mainScreen__chartWrap">
-                    <ComprasionDataCard
-                        colors={colors.doughnutChartColorScale}
-                        labels={[t("cases.openCases"), t("cases.closedCases")]}
-                        data={[mainScreenData?.OpenCases ?? 0, mainScreenData?.NumberOfClosedCases ?? 0]}
-                        title={t("mainScreen.caseSummary")}
-                        centerText={`${mainScreenData?.TotalCases ?? 0}`}
-                        subText={t("mainScreen.totalCases")}
-                        className="lw-mainScreen__comparisonCard"
-                        onPress={() => { navigate(AdminStackName + AllCasesScreenName + '?status=open') }}
-                        isPerforming={isPerformingMainScreenData}
+                <SimpleContainer className="lw-commandCenter">
+                    <CommandCenterHeader
+                        managerName={managerHome?.greeting?.managerName}
+                        morningBrief={managerHome?.morningBrief}
+                        isPerforming={isLoadingHome}
                     />
-                </SimpleContainer>
 
-                <SimpleContainer className="lw-mainScreen__cards">
-                    <SimpleContainer className="lw-mainScreen__row">
-                        <ShowDataCard
-                            numberText={mainScreenData?.OpenCases ?? 0}
-                            title={t("cases.openCases")}
-                            optionalOnClick={() => { navigate(AdminStackName + AllCasesScreenName + '?status=open') }}
-                            isPerforming={isPerformingMainScreenData}
-                        />
+                    <SummaryStrip
+                        summary={managerHome?.summary}
+                        isPerforming={isLoadingHome}
+                        onNavigate={handleSummaryNavigate}
+                    />
 
-                        <ShowDataCard
-                            numberText={mainScreenData?.NumberOfClosedCases ?? 0}
-                            title={t("cases.closedCases")}
-                            optionalOnClick={() => { navigate(AdminStackName + AllCasesScreenName + '?status=closed') }}
-                            isPerforming={isPerformingMainScreenData}
+                    <SimpleContainer id="manager-home-attention">
+                        <AttentionQueue
+                            items={managerHome?.attentionItems || []}
+                            isPerforming={isLoadingHome}
                         />
                     </SimpleContainer>
 
-                    <SimpleContainer className="lw-mainScreen__row lw-mainScreen__row--wrap">
-                        <ShowDataCard
-                            numberText={mainScreenData?.NumberOfTaggedCases ?? 0}
-                            title={t("mainScreen.taggedCases")}
-                            optionalOnClick={() => { navigate(AdminStackName + TaggedCasesScreenName) }}
-                            isPerforming={isPerformingMainScreenData}
+                    <TodaySection
+                        events={managerHome?.today || []}
+                        isPerforming={isLoadingHome}
+                    />
+
+                    <SimpleContainer className="lw-commandCenter__grid">
+                        <CaseOperationsPanel
+                            managerWorkload={managerHome?.managerWorkload || []}
+                            casesByStage={managerHome?.casesByStage || []}
+                            unassignedCases={managerHome?.unassignedCases}
+                            isPerforming={isLoadingHome}
                         />
-                        <ShowDataCard
-                            numberText={mainScreenData?.NumberOfActiveCustomers ?? 0}
-                            title={t("mainScreen.activeCustomers")}
-                            optionalOnClick={() => { navigate(AdminStackName + AllClientsScreenName) }}
-                            isPerforming={isPerformingMainScreenData}
+                        <SigningOperationsPanel
+                            signing={managerHome?.signing}
+                            isPerforming={isLoadingHome}
                         />
                     </SimpleContainer>
 
+                    <SimpleContainer className="lw-commandCenter__grid">
+                        <PotentialClientsPanel
+                            items={managerHome?.potentialClients || []}
+                            isPerforming={isLoadingHome}
+                        />
+                        <RecentActivityFeed
+                            items={managerHome?.recentActivity || []}
+                            isPerforming={isLoadingHome}
+                        />
+                    </SimpleContainer>
                 </SimpleContainer>
 
                 <ClientsCard
                     ref={clientsCardRef}
                     customerList={mainScreenData?.AllCustomersData}
-                    rePerformRequest={performRequest}
-                    isPerforming={isPerformingMainScreenData}
+                    rePerformRequest={refreshAll}
+                    isPerforming={isLoadingClients}
                 />
             </SimpleScrollView>
-
-        </SimpleScreen >
+        </SimpleScreen>
     );
 }

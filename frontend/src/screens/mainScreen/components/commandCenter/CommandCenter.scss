@@ -1,0 +1,294 @@
+@use '../../../../styles/variables' as v;
+@use '../../../../styles/mixins' as m;
+
+.lw-commandCenter {
+    inline-size: 100%;
+    max-inline-size: 72rem;
+    margin-inline: auto;
+    padding-block-end: v.$space-6;
+}
+
+.lw-commandCenter__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: v.$space-2;
+    padding-inline: v.$space-3;
+    margin-block: v.$space-3 v.$space-4;
+}
+
+.lw-commandCenter__summaryStrip {
+    @include m.row(v.$space-3);
+    flex-wrap: wrap;
+    padding-inline: v.$space-2;
+    margin-block-end: v.$space-2;
+}
+
+.lw-commandCenter__summaryChip {
+    flex: 1 1 9rem;
+    min-inline-size: 8.5rem;
+    align-items: flex-start;
+    gap: v.$space-1;
+    cursor: pointer;
+}
+
+.lw-commandCenter__section {
+    margin-inline: v.$space-2;
+    margin-block-end: v.$space-3;
+}
+
+.lw-commandCenter__sectionHeader {
+    @include m.row(v.$space-3);
+    justify-content: space-between;
+    align-items: baseline;
+    margin-block-end: v.$space-3;
+    flex-wrap: wrap;
+}
+
+.lw-commandCenter__attention {
+    border-inline-start: 0.25rem solid var(--lw-color-primary);
+}
+
+.lw-commandCenter__attentionList {
+    flex-direction: column;
+    gap: v.$space-2;
+}
+
+.lw-commandCenter__attentionItem {
+    @include m.row(v.$space-3);
+    align-items: stretch;
+    padding: v.$space-3;
+    border-radius: 0.75rem;
+    border: 0.0625rem solid rgba(226, 232, 240, 0.95);
+    background: #fff;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &:hover {
+        box-shadow: 0 0.25rem 0.75rem rgba(42, 67, 101, 0.08);
+    }
+
+    &.is-critical {
+        border-inline-start: 0.25rem solid var(--lw-color-negative);
+        background: linear-gradient(90deg, rgba(197, 48, 48, 0.04), #fff 30%);
+    }
+
+    &.is-high {
+        border-inline-start: 0.25rem solid #B7791F;
+    }
+
+    &.is-medium {
+        border-inline-start: 0.25rem solid var(--lw-color-primary);
+    }
+}
+
+.lw-commandCenter__attentionItemMain {
+    flex: 1;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-inline-size: 0;
+}
+
+.lw-commandCenter__attentionItemAction {
+    align-items: center;
+    justify-content: center;
+    padding-inline-start: v.$space-2;
+}
+
+.lw-commandCenter__attentionItemTitleRow {
+    @include m.row(v.$space-2);
+    align-items: baseline;
+    justify-content: space-between;
+}
+
+.lw-commandCenter__attentionCount {
+    flex-shrink: 0;
+    padding-inline: 0.375rem;
+    border-radius: 999px;
+    background: rgba(42, 67, 101, 0.08);
+}
+
+.lw-commandCenter__attentionSamples {
+    flex-direction: column;
+    gap: v.$space-2;
+    margin-block-start: v.$space-2;
+    padding-block-start: v.$space-2;
+    border-block-start: 0.0625rem solid rgba(226, 232, 240, 0.95);
+}
+
+.lw-commandCenter__attentionSample {
+    flex-direction: column;
+    gap: 0.125rem;
+    padding: v.$space-2;
+    border-radius: 0.5rem;
+    background: rgba(247, 250, 252, 0.9);
+    cursor: pointer;
+
+    &:hover {
+        background: rgba(237, 242, 247, 0.95);
+    }
+}
+
+.lw-commandCenter__attentionItem.is-group.is-expanded {
+    border-color: rgba(42, 67, 101, 0.15);
+}
+
+.lw-commandCenter__emptyState {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: v.$space-2;
+    padding: v.$space-4;
+    border-radius: 0.75rem;
+    background: rgba(56, 161, 105, 0.06);
+}
+
+.lw-commandCenter__emptyState--compact {
+    padding: v.$space-3;
+    background: transparent;
+}
+
+.lw-commandCenter__skeletonList {
+    flex-direction: column;
+    gap: v.$space-2;
+}
+
+.lw-commandCenter__grid {
+    @include m.row(v.$space-3);
+    flex-wrap: wrap;
+    align-items: flex-start;
+
+    > * {
+        flex: 1 1 20rem;
+        min-inline-size: min(100%, 20rem);
+    }
+}
+
+.lw-commandCenter__todayList,
+.lw-commandCenter__signingQueue,
+.lw-commandCenter__potentialList,
+.lw-commandCenter__activityList,
+.lw-commandCenter__workloadList {
+    flex-direction: column;
+    gap: v.$space-2;
+}
+
+.lw-commandCenter__todayItem {
+    @include m.row(v.$space-3);
+    align-items: flex-start;
+    padding: v.$space-2;
+    border-radius: 0.5rem;
+    cursor: pointer;
+
+    &:hover {
+        background: var(--lw-color-secondary-highlighted);
+    }
+}
+
+.lw-commandCenter__todayTime {
+    min-inline-size: 3.5rem;
+}
+
+.lw-commandCenter__todayBody {
+    flex: 1;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-inline-size: 0;
+}
+
+.lw-commandCenter__workloadRow {
+    @include m.row(v.$space-3);
+    align-items: center;
+    cursor: pointer;
+    padding-block: 0.35rem;
+}
+
+.lw-commandCenter__workloadMeta {
+    flex: 0 0 7.5rem;
+    flex-direction: column;
+    min-inline-size: 0;
+}
+
+.lw-commandCenter__workloadBarTrack {
+    flex: 1;
+    block-size: 0.5rem;
+    border-radius: 999px;
+    background: var(--lw-color-secondary-highlighted);
+    overflow: hidden;
+}
+
+.lw-commandCenter__workloadBarFill {
+    inline-size: 100%;
+    block-size: 100%;
+    border-radius: 999px;
+    background: var(--lw-color-primary);
+    transform-origin: inline-start;
+    transform: scaleX(0);
+}
+
+.lw-commandCenter__unassignedBanner {
+    margin-block: v.$space-3;
+    padding: v.$space-3;
+    border-radius: 0.5rem;
+    background: rgba(197, 48, 48, 0.06);
+    cursor: pointer;
+}
+
+.lw-commandCenter__stageGrid {
+    @include m.row(v.$space-2);
+    flex-wrap: wrap;
+    margin-block-start: v.$space-2;
+}
+
+.lw-commandCenter__stageChip {
+    flex: 1 1 8rem;
+    padding: v.$space-2;
+    border-radius: 0.5rem;
+    background: var(--lw-color-secondary-highlighted);
+    gap: 0.125rem;
+}
+
+.lw-commandCenter__signingStats {
+    @include m.row(v.$space-3);
+    flex-wrap: wrap;
+    margin-block-end: v.$space-3;
+}
+
+.lw-commandCenter__signingStat {
+    flex: 1 1 4.5rem;
+    align-items: center;
+    padding: v.$space-2;
+    border-radius: 0.5rem;
+    background: var(--lw-color-secondary-highlighted);
+}
+
+.lw-commandCenter__signingRow,
+.lw-commandCenter__potentialItem,
+.lw-commandCenter__activityItem {
+    flex-direction: column;
+    gap: 0.125rem;
+    padding: v.$space-2;
+    border-radius: 0.5rem;
+    cursor: pointer;
+
+    &:hover {
+        background: var(--lw-color-secondary-highlighted);
+    }
+}
+
+.lw-commandCenter__link {
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .lw-commandCenter__summaryChip {
+        flex: 1 1 calc(50% - #{v.$space-3});
+    }
+
+    .lw-commandCenter__attentionItem {
+        flex-direction: column;
+    }
+
+    .lw-commandCenter__workloadMeta {
+        flex-basis: 100%;
+    }
+}
