@@ -14,6 +14,7 @@
     "save": "حفظ",
     "close": "إغلاق",
     "search": "بحث",
+    "listTitleWithCount": "{{title}} ({{count}})",
     "all": "الكل",
     "choose": "اختر",
     "yes": "نعم",

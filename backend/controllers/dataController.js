@@ -150,7 +150,7 @@ const getManagerHomeDataHandler = async (req, res) => {
 const getManagerHomeAiBriefHandler = async (req, res) => {
     try {
         const userId = req.user?.UserId;
-        const enabled = await isAiBriefEnabled();
+        const enabled = await isAiBriefEnabled({ userId });
         if (!enabled) {
             return res.status(200).json({ enabled: false });
         }

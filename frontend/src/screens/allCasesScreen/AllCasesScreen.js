@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import casesApi, { casesTypeApi } from "../../api/casesApi";
 import { images } from "../../assets/images/images";
@@ -42,7 +42,6 @@ export default function AllCasesScreen() {
     const [selectedUnassigned, setSelectedUnassigned] = useState(initialUnassigned);
     const [selectedCompany, setSelectedCompany] = useState(null);
     const [selectedCaseName, setSelectedCaseName] = useState(null);
-    const [filteredCases, setFilteredCases] = useState(null);
 
     const { result: allCasesTypes } = useAutoHttpRequest(casesTypeApi.getAllCasesTypeForFilter);
     const { result: allCases, isPerforming: isPerformingAllCases, performRequest: reperformAfterSave } = useAutoHttpRequest(casesApi.getAllCases);
@@ -82,27 +81,43 @@ export default function AllCasesScreen() {
         return () => { cancelled = true; };
     }, [deepCaseId, openPopup, closePopup, reperformAfterSave, clearDeepCaseId]);
 
-    const applyFilters = useCallback((typeFilter, statusFilter, clientFilter, managerFilter, companyFilter, caseNameFilter, unassignedFilter) => {
+    useEffect(() => {
+        const managerParam = searchParams.get('manager');
+        const unassigned = searchParams.get('unassigned') === '1';
+        const statusParam = searchParams.get('status');
+
+        setSelectedManager(managerParam ? decodeURIComponent(managerParam) : null);
+        setSelectedUnassigned(unassigned);
+        if (statusParam === 'closed' || statusParam === 'open') {
+            setSelectedStatus(statusParam);
+        } else if (managerParam || unassigned) {
+            setSelectedStatus('open');
+        }
+    }, [searchParams]);
+
+    const displayCases = useMemo(() => {
+        if (!Array.isArray(allCases)) return [];
+
         let filtered = allCases;
 
-        if (caseNameFilter) {
+        if (selectedCaseName) {
             filtered = filtered.filter(item =>
-                item.CaseName && item.CaseName.toLowerCase().includes(caseNameFilter.toLowerCase())
+                item.CaseName && item.CaseName.toLowerCase().includes(selectedCaseName.toLowerCase())
             );
         }
 
-        if (typeFilter) {
-            filtered = filtered.filter(item => item.CaseTypeName === typeFilter);
+        if (selectedCaseType) {
+            filtered = filtered.filter(item => item.CaseTypeName === selectedCaseType);
         }
 
-        if (statusFilter === "open") {
+        if (selectedStatus === "open") {
             filtered = filtered.filter(item => item.IsClosed === false);
-        } else if (statusFilter === "closed") {
+        } else if (selectedStatus === "closed") {
             filtered = filtered.filter(item => item.IsClosed === true);
         }
 
-        if (clientFilter) {
-            const q = clientFilter.toLowerCase();
+        if (selectedClient) {
+            const q = selectedClient.toLowerCase();
             filtered = filtered.filter(item => {
                 if (Array.isArray(item.Users) && item.Users.length > 0) {
                     return item.Users.some(u => u.Name && u.Name.toLowerCase().includes(q));
@@ -111,62 +126,55 @@ export default function AllCasesScreen() {
             });
         }
 
-        if (managerFilter) {
-            filtered = filtered.filter(item => item.CaseManager === managerFilter);
+        if (selectedManager) {
+            filtered = filtered.filter(item => item.CaseManager === selectedManager);
         }
 
-        if (unassignedFilter) {
+        if (selectedUnassigned) {
             filtered = filtered.filter(item => !item.CaseManager);
         }
 
-        if (companyFilter) {
+        if (selectedCompany) {
             filtered = filtered.filter(item =>
-                item.CompanyName && item.CompanyName.toLowerCase().includes(companyFilter.toLowerCase())
+                item.CompanyName && item.CompanyName.toLowerCase().includes(selectedCompany.toLowerCase())
             );
         }
 
-        if (!typeFilter && !statusFilter && !clientFilter && !managerFilter && !companyFilter && !caseNameFilter && !unassignedFilter) {
-            setFilteredCases(null);
-        } else {
-            setFilteredCases(filtered);
-        }
-    }, [allCases]);
-
-    useEffect(() => {
-        if (allCases?.length > 0) {
-            applyFilters(selectedCaseType, selectedStatus, selectedClient, selectedManager, selectedCompany, selectedCaseName, selectedUnassigned);
-        }
-    }, [allCases, selectedCaseType, selectedStatus, selectedClient, selectedManager, selectedCompany, selectedCaseName, selectedUnassigned, applyFilters]);
+        return filtered;
+    }, [
+        allCases,
+        selectedCaseName,
+        selectedCaseType,
+        selectedStatus,
+        selectedClient,
+        selectedManager,
+        selectedUnassigned,
+        selectedCompany,
+    ]);
 
     const handleFilterByCaseName = (caseName) => {
         setSelectedCaseName(caseName);
-        applyFilters(selectedCaseType, selectedStatus, selectedClient, selectedManager, selectedCompany, caseName, selectedUnassigned);
     };
 
     const handleFilterByType = (type) => {
         setSelectedCaseType(type);
-        applyFilters(type, selectedStatus, selectedClient, selectedManager, selectedCompany, selectedCaseName, selectedUnassigned);
     };
 
     const handleFilterByStatus = (status) => {
         setSelectedStatus(status);
-        applyFilters(selectedCaseType, status, selectedClient, selectedManager, selectedCompany, selectedCaseName, selectedUnassigned);
     };
 
     const handleFilterByClient = (client) => {
         setSelectedClient(client);
-        applyFilters(selectedCaseType, selectedStatus, client, selectedManager, selectedCompany, selectedCaseName, selectedUnassigned);
     };
 
     const handleFilterByManager = (manager) => {
         setSelectedManager(manager);
         setSelectedUnassigned(false);
-        applyFilters(selectedCaseType, selectedStatus, selectedClient, manager, selectedCompany, selectedCaseName, false);
     };
 
     const handleFilterByCompany = (company) => {
         setSelectedCompany(company);
-        applyFilters(selectedCaseType, selectedStatus, selectedClient, selectedManager, company, selectedCaseName, selectedUnassigned);
     };
 
     const caseNames = [...new Set((allCases || []).map(c => c.CaseName).filter(Boolean))].sort();
@@ -189,7 +197,7 @@ export default function AllCasesScreen() {
                             { value: 'closed', label: t('cases.closedCases') },
                             { value: 'open', label: t('cases.openCases') },
                         ]}
-                        defaultValue={initialStatus}
+                        defaultValue={selectedStatus}
                         className="lw-allCasesScreen__choose lw-allCasesScreen__choose--openClose"
                         OnPressChoiceFunction={handleFilterByStatus}
                     />
@@ -202,8 +210,13 @@ export default function AllCasesScreen() {
                     />
 
                     <ChooseButton
-                        buttonText={t('cases.caseManager')}
+                        buttonText={
+                            selectedUnassigned
+                                ? t('managerHome.summary.unassigned')
+                                : t('cases.caseManager')
+                        }
                         items={managerNames.map((name) => ({ value: name, label: name }))}
+                        defaultValue={selectedUnassigned ? null : selectedManager}
                         className="lw-allCasesScreen__choose"
                         OnPressChoiceFunction={handleFilterByManager}
                     />
@@ -236,7 +249,7 @@ export default function AllCasesScreen() {
                 </SimpleContainer>
 
                 <AllCasesCard
-                    allCases={filteredCases || allCases}
+                    allCases={displayCases}
                     reperformAfterSave={reperformAfterSave}
                     isPerforming={isPerformingAllCases}
                 />

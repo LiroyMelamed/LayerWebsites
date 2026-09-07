@@ -17,7 +17,11 @@ export default function TodaySection({ events = [], isPerforming, onEventChanged
 
     const handleEventPress = async (ev) => {
         if (ev.caseId) {
-            navigateCaseRow(navigate, ev.caseId);
+            navigateCaseRow(navigate, ev.caseId, {
+                openPopup,
+                closePopup,
+                onDataChanged: onEventChanged,
+            });
             return;
         }
         if (ev.id) {

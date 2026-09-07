@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { icons } from "../../../assets/icons/icons";
@@ -35,6 +35,10 @@ export default function ChooseButton({
     const [chosenValue, setChosenValue] = useState(defaultValue);
     const [showResults, setShowResults] = useState(false);
     const buttonRef = useRef()
+
+    useEffect(() => {
+        setChosenValue(defaultValue ?? null);
+    }, [defaultValue]);
 
     const chosenItem = computedItems.find((it) => it.value === chosenValue) || computedItems[0];
 

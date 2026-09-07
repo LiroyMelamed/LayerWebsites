@@ -1,56 +1,31 @@
-import calendarApi from "../../../../api/calendarApi";
-import EventFormModal from "../../../calendarScreen/components/EventFormModal";
-import { toastFromApiError } from "../../../../components/ui/showAppToast";
-
-function eventFormModalKey(event) {
-    return `event-${event?.id ?? "new"}-${event?.startTime ?? ""}`;
-}
+import CalendarEventModalLoader from "./CalendarEventModalLoader";
+import { resolveShowPopup } from "../../../../utils/popupStackUtils";
 
 /**
  * Open a calendar event in EventFormModal without leaving the current page.
  */
-export async function openCalendarEventModal({
+export function openCalendarEventModal({
     eventId,
     openPopup,
+    pushPopup,
     closePopup,
+    popPopup,
     onSaved,
     onDeleted,
     onDuplicatePrefill,
 }) {
-    if (!eventId || !openPopup || !closePopup) return false;
+    const showPopup = resolveShowPopup({ pushPopup, openPopup });
+    if (!eventId || !showPopup) return false;
 
-    try {
-        const res = await calendarApi.getEvent(eventId);
-        const event = res?.data?.event;
-        if (res.status !== 200 || !event) {
-            throw new Error("Event not found");
-        }
-
-        const eventPayload = {
-            ...event,
-            id: Number(event.id),
-        };
-
-        openPopup(
-            <EventFormModal
-                key={eventFormModalKey(eventPayload)}
-                event={eventPayload}
-                onUpdated={() => {}}
-                onSaved={(saved) => {
-                    onSaved?.(saved);
-                    closePopup();
-                }}
-                onDuplicatePrefill={onDuplicatePrefill}
-                onDeleted={(deletedId) => {
-                    onDeleted?.(deletedId);
-                    closePopup();
-                }}
-                onClose={closePopup}
-            />
-        );
-        return true;
-    } catch (err) {
-        toastFromApiError(err, "לא ניתן לפתוח את הפגישה");
-        return false;
-    }
+    showPopup(
+        <CalendarEventModalLoader
+            eventId={eventId}
+            closePopup={closePopup}
+            popPopup={popPopup}
+            onSaved={onSaved}
+            onDeleted={onDeleted}
+            onDuplicatePrefill={onDuplicatePrefill}
+        />,
+    );
+    return true;
 }

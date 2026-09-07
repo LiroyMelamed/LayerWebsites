@@ -4,6 +4,7 @@ import SimpleCard from "../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
 import Skeleton from "../../../components/simpleComponents/Skeleton";
 import { Text14, TextBold14 } from "../../../components/specializedComponents/text/AllTextKindFile";
+import ListPageTitle from "../../../components/specializedComponents/text/ListPageTitle";
 import DefaultState from "../../../components/styledComponents/defaultState/DefaultState";
 import AdminMenuItem from "../../../components/styledComponents/menuItems/AdminMenuItem";
 import Separator from "../../../components/styledComponents/separators/Separator";
@@ -41,18 +42,26 @@ export default function AdminsCard({ adminList, isPerforming, performGetAdmins, 
 
     if (adminList?.length === 0 || !adminList) {
         return (
-            <DefaultState
-                content={t("admins.emptyList")}
-                imageStyle={{ height: 156 }}
-                imageSrc={images.Defaults.Managers}
-                className="lw-adminsCard__empty"
-                imageClassName="lw-adminsCard__emptyImage"
-            />
+            <SimpleCard className="lw-adminsCard lw-adminsCard__empty">
+                <ListPageTitle title={t("nav.allManagers")} count={0} className="lw-adminsCard__pageTitle" />
+                <DefaultState
+                    content={t("admins.emptyList")}
+                    imageStyle={{ height: 156 }}
+                    imageSrc={images.Defaults.Managers}
+                    className="lw-adminsCard__empty"
+                    imageClassName="lw-adminsCard__emptyImage"
+                />
+            </SimpleCard>
         )
     }
 
     return (
         <SimpleCard className="lw-adminsCard">
+            <ListPageTitle
+                title={t("nav.allManagers")}
+                count={adminList?.length ?? 0}
+                className="lw-adminsCard__pageTitle"
+            />
             <SimpleContainer className="lw-adminsCard__headerRow">
                 <TextBold14 className="lw-adminsCard__headerCell">{t("admins.adminName")}</TextBold14>
 

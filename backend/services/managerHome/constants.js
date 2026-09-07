@@ -14,6 +14,8 @@ module.exports = {
     RSVP_LOOKAHEAD_DAYS: 14,
     RSVP_URGENT_HOURS: 48,
     RECENT_ACTIVITY_LIMIT: 15,
+    /** Max rows in dashboard drill-down popups */
+    DRILL_DOWN_LIST_LIMIT: 100,
     /** Max items shown in Needs Attention after grouping */
     ATTENTION_DISPLAY_LIMIT: 12,
     /** Raw signals collected before grouping (safety cap) */
@@ -52,7 +54,7 @@ const SIGNAL_DEFINITIONS = {
     signing_pending: { tier: 'soft', priority: 'medium', groupable: true },
     no_activity: { tier: 'soft', priority: 'low', groupable: true },
     long_in_stage: { tier: 'soft', priority: 'low', groupable: true },
-    completion_passed: { tier: 'soft', priority: 'medium', groupable: false },
+    completion_passed: { tier: 'soft', priority: 'medium', groupable: true },
     completion_approaching: { tier: 'soft', priority: 'low', groupable: true },
     rsvp_pending: { tier: 'soft', priority: 'medium', groupable: true },
 };

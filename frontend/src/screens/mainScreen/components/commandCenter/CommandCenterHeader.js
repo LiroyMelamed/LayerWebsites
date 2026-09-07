@@ -84,10 +84,6 @@ function renderAiBriefBlock(t, lines) {
 
     return (
         <SimpleContainer className="lw-commandCenter__aiBrief">
-            <SimpleContainer className="lw-commandCenter__aiBriefBadge" aria-label={t("managerHome.aiBriefLabel")}>
-                <AiBriefIcon />
-                <Text12 className="lw-commandCenter__aiBriefBadgeText">{t("managerHome.aiBriefLabel")}</Text12>
-            </SimpleContainer>
             <SimpleContainer className="lw-commandCenter__aiBriefContent">
                 {displayLines.map((line, idx) => (
                     <Text14
@@ -97,6 +93,10 @@ function renderAiBriefBlock(t, lines) {
                         {line}
                     </Text14>
                 ))}
+            </SimpleContainer>
+            <SimpleContainer className="lw-commandCenter__aiBriefBadge" aria-label={t("managerHome.aiBriefLabel")}>
+                <AiBriefIcon />
+                <Text12 className="lw-commandCenter__aiBriefBadgeText">{t("managerHome.aiBriefLabel")}</Text12>
             </SimpleContainer>
         </SimpleContainer>
     );

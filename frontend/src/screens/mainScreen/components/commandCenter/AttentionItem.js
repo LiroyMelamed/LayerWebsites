@@ -1,24 +1,28 @@
-import { Fragment, useState, useCallback } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
 import SimpleContainer from "../../../../components/simpleComponents/SimpleContainer";
 import Separator from "../../../../components/styledComponents/separators/Separator";
 import { Text12, TextBold14 } from "../../../../components/specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../../constant/colors";
-import { usePopup } from "../../../../providers/PopUpProvider";
 import {
     attentionMetaLine,
     memberAttentionLabel,
-    navigateAttentionItem,
     priorityClassName,
     signalTypeClassName,
 } from "./commandCenterUtils";
+import { openAttentionMember } from "./openAttentionMember";
 
-export default function AttentionItem({ item, onEventChanged }) {
+export default function AttentionItem({
+    item,
+    onEventChanged,
+    modalHandlers: modalHandlersProp = {},
+}) {
     const { t } = useTranslation();
-    const navigate = useNavigate();
-    const { openPopup, closePopup } = usePopup();
     const [expanded, setExpanded] = useState(false);
+    const [membersInteractive, setMembersInteractive] = useState(true);
+    const suppressMembersUntilRef = useRef(0);
+
+    const modalHandlers = useMemo(() => modalHandlersProp, [modalHandlersProp]);
 
     const isGroup = item.kind === "group" && item.count > 1;
     const title = t(item.titleKey, item.reasonParams || {});
@@ -30,24 +34,53 @@ export default function AttentionItem({ item, onEventChanged }) {
         signalTypeClassName(item.signalType),
     ].filter(Boolean).join(" ");
 
-    const modalHandlers = {
-        openPopup,
-        closePopup,
-        onEventSaved: onEventChanged,
-        onEventDeleted: onEventChanged,
-    };
+    const openAttentionTarget = useCallback((target) => {
+        void openAttentionMember(target, modalHandlers);
+    }, [modalHandlers]);
 
-    const openAttentionTarget = useCallback(async (target) => {
-        await navigateAttentionItem(navigate, target, modalHandlers);
-    }, [navigate, openPopup, closePopup, onEventChanged]);
-
-    const handlePress = async () => {
-        if (isGroup) {
-            setExpanded((prev) => !prev);
+    const handleMemberPress = useCallback((member, e) => {
+        if (Date.now() < suppressMembersUntilRef.current) {
+            e?.preventDefault?.();
+            e?.stopPropagation?.();
             return;
         }
-        await openAttentionTarget(item);
+        e?.preventDefault?.();
+        e?.stopPropagation?.();
+        openAttentionTarget(member);
+    }, [openAttentionTarget]);
+
+    const handlePress = () => {
+        if (isGroup) {
+            const nextExpanded = !expanded;
+            setExpanded(nextExpanded);
+            if (nextExpanded) {
+                suppressMembersUntilRef.current = Date.now() + 350;
+                setMembersInteractive(false);
+            } else {
+                suppressMembersUntilRef.current = 0;
+                setMembersInteractive(true);
+            }
+            return;
+        }
+        openAttentionTarget(item);
     };
+
+    useEffect(() => {
+        if (membersInteractive) return undefined;
+
+        const enableMembers = () => {
+            suppressMembersUntilRef.current = 0;
+            setMembersInteractive(true);
+        };
+
+        window.addEventListener("pointerup", enableMembers, { once: true });
+        const timer = window.setTimeout(enableMembers, 350);
+
+        return () => {
+            window.removeEventListener("pointerup", enableMembers);
+            window.clearTimeout(timer);
+        };
+    }, [membersInteractive]);
 
     return (
         <SimpleContainer className="lw-commandCenter__attentionBlock">
@@ -105,21 +138,27 @@ export default function AttentionItem({ item, onEventChanged }) {
             </SimpleContainer>
 
             {isGroup && expanded && (
-                <SimpleContainer className="lw-commandCenter__attentionMembers">
+                <SimpleContainer
+                    className={[
+                        "lw-commandCenter__attentionMembers",
+                        membersInteractive ? null : "lw-commandCenter__attentionMembers--inactive",
+                    ].filter(Boolean).join(" ")}
+                >
                     {(item.members || []).map((member, idx) => (
-                        <Fragment key={`${member.entityId ?? member.caseId ?? idx}-${idx}`}>
+                        <Fragment key={`${member.entityId ?? member.caseId ?? member.signingFileId ?? idx}-${idx}`}>
                             {idx > 0 && (
                                 <Separator className="lw-commandCenter__attentionSeparator lw-commandCenter__attentionSeparator--nested" />
                             )}
                             <SimpleContainer
                                 className={`lw-commandCenter__attentionMember ${signalTypeClassName(item.signalType)}`}
-                                onPress={() => openAttentionTarget(member)}
+                                onPress={(e) => handleMemberPress(member, e)}
                                 role="button"
                                 tabIndex={0}
                                 onKeyDown={(e) => {
                                     if (e.key === "Enter" || e.key === " ") {
                                         e.preventDefault();
-                                        openAttentionTarget(member);
+                                        e.stopPropagation();
+                                        handleMemberPress(member, e);
                                     }
                                 }}
                             >
