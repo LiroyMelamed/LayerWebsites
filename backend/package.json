@@ -41,7 +41,8 @@
     "pg": "^8.16.3",
     "puppeteer": "^25.8.0",
     "qrcode": "^1.5.4",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "@cursor/sdk": "^1.0.31"
   },
   "devDependencies": {
     "adm-zip": "^0.6.0",
