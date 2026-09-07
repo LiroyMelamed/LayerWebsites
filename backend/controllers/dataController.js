@@ -1,6 +1,7 @@
 // Direct import of the pg pool instance from a local configuration file
 const pool = require("../config/db");
 const { getMainScreenDataCached } = require("../utils/mainScreenDataCache");
+const { getManagerHomeData } = require("../services/managerHome/managerHome.service");
 
 /**
  * Retrieves and aggregates all necessary data for the main dashboard screen.
@@ -125,7 +126,23 @@ const getClientDashboardData = async (req, res) => {
     }
 };
 
+/**
+ * Manager operational command center — aggregated signals, priorities, and actions.
+ * Source: services/managerHome (derived from existing tables; no new schema).
+ */
+const getManagerHomeDataHandler = async (req, res) => {
+    try {
+        const userId = req.user?.UserId;
+        const payload = await getManagerHomeData({ userId });
+        return res.status(200).json(payload);
+    } catch (error) {
+        console.error("Error retrieving manager home data:", error);
+        res.status(500).json({ message: "שגיאה בקבלת נתוני מסך הבית" });
+    }
+};
+
 module.exports = {
     getMainScreenData,
     getClientDashboardData,
+    getManagerHomeData: getManagerHomeDataHandler,
 };
