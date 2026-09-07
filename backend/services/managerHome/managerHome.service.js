@@ -1,5 +1,7 @@
 const pool = require('../../config/db');
 const C = require('./constants');
+const { personalCalendarSql } = require('../../lib/calendarVisibility');
+const { isPlatformAdmin } = require('../settingsService');
 const {
     buildAttentionItems,
     buildMorningBrief,
@@ -7,6 +9,7 @@ const {
     summarizeAttention,
     flattenAttentionItems,
 } = require('./scoring');
+const { invalidateAiBriefCache } = require('./aiBrief.service');
 const { MemoryCache } = require('../../utils/memoryCache');
 
 const cache = new MemoryCache({ name: 'managerHome', maxEntries: 5 });
@@ -235,7 +238,16 @@ async function fetchFailedReminders() {
     return rows;
 }
 
-async function fetchTodayEvents() {
+async function fetchTodayEvents(userId, { firmWide = false } = {}) {
+    const params = [];
+    let visibilityClause = '';
+
+    if (!firmWide) {
+        if (!userId) return [];
+        params.push(userId);
+        visibilityClause = `AND ${personalCalendarSql(1)}`;
+    }
+
     const { rows } = await pool.query(`
         SELECT
             ce.id,
@@ -263,9 +275,10 @@ async function fetchTodayEvents() {
         LEFT JOIN users cl ON cl.userid = ce.client_user_id
         WHERE ce.start_time >= ${JERUSALEM_TODAY}::timestamptz AT TIME ZONE 'Asia/Jerusalem'
           AND ce.start_time < (${JERUSALEM_TODAY} + INTERVAL '1 day')::timestamptz AT TIME ZONE 'Asia/Jerusalem'
+          ${visibilityClause}
         ORDER BY ce.start_time ASC
         LIMIT 40
-    `);
+    `, params);
     return rows;
 }
 
@@ -297,6 +310,221 @@ async function fetchPotentialClients() {
         LIMIT 15
     `, [String(C.RSVP_LOOKAHEAD_DAYS)]);
     return rows;
+}
+
+function jerusalemDayBoundsSql() {
+    const dayStart = `${JERUSALEM_TODAY}::timestamptz AT TIME ZONE 'Asia/Jerusalem'`;
+    const dayEnd = `(${JERUSALEM_TODAY} + INTERVAL '1 day')::timestamptz AT TIME ZONE 'Asia/Jerusalem'`;
+    return { dayStart, dayEnd };
+}
+
+function mapCaseListItem(row) {
+    return {
+        caseId: row.caseid,
+        caseName: row.casename,
+        managerId: row.casemanagerid || null,
+        managerName: row.casemanager || null,
+        clientName: row.client_name || null,
+        currentStage: row.currentstage ?? null,
+        createdAt: row.createdat || null,
+        closedAt: row.updatedat || null,
+    };
+}
+
+async function fetchCasesOpenedTodayList() {
+    const { dayStart, dayEnd } = jerusalemDayBoundsSql();
+    const { rows } = await pool.query(`
+        SELECT
+            c.caseid,
+            c.casename,
+            c.currentstage,
+            c.casemanager,
+            c.casemanagerid,
+            c.createdat,
+            u.name AS client_name
+        FROM cases c
+        LEFT JOIN users u ON u.userid = c.userid
+        WHERE c.createdat >= ${dayStart}
+          AND c.createdat < ${dayEnd}
+        ORDER BY c.createdat DESC
+        LIMIT $1
+    `, [C.DRILL_DOWN_LIST_LIMIT]);
+    return rows.map(mapCaseListItem);
+}
+
+async function fetchCasesClosedTodayList() {
+    const { dayStart, dayEnd } = jerusalemDayBoundsSql();
+    const { rows } = await pool.query(`
+        SELECT
+            c.caseid,
+            c.casename,
+            c.currentstage,
+            c.casemanager,
+            c.casemanagerid,
+            c.updatedat,
+            u.name AS client_name
+        FROM cases c
+        LEFT JOIN users u ON u.userid = c.userid
+        WHERE c.isclosed = true
+          AND c.updatedat >= ${dayStart}
+          AND c.updatedat < ${dayEnd}
+        ORDER BY c.updatedat DESC
+        LIMIT $1
+    `, [C.DRILL_DOWN_LIST_LIMIT]);
+    return rows.map(mapCaseListItem);
+}
+
+async function fetchTodayActivityLog() {
+    const { dayStart, dayEnd } = jerusalemDayBoundsSql();
+    const { rows } = await pool.query(`
+        SELECT * FROM (
+            SELECT
+                'stage_update' AS activity_type,
+                cd.timestamp AS occurred_at,
+                c.caseid,
+                c.casename,
+                c.casemanagerid AS manager_id,
+                c.casemanager AS manager_name,
+                jsonb_build_object('stage', cd.stage) AS meta
+            FROM casedescriptions cd
+            JOIN cases c ON c.caseid = cd.caseid
+            WHERE cd.timestamp >= ${dayStart}
+              AND cd.timestamp < ${dayEnd}
+
+            UNION ALL
+
+            SELECT
+                'case_opened' AS activity_type,
+                c.createdat AS occurred_at,
+                c.caseid,
+                c.casename,
+                c.casemanagerid AS manager_id,
+                c.casemanager AS manager_name,
+                '{}'::jsonb AS meta
+            FROM cases c
+            WHERE c.createdat >= ${dayStart}
+              AND c.createdat < ${dayEnd}
+
+            UNION ALL
+
+            SELECT
+                'case_closed' AS activity_type,
+                c.updatedat AS occurred_at,
+                c.caseid,
+                c.casename,
+                c.casemanagerid AS manager_id,
+                c.casemanager AS manager_name,
+                '{}'::jsonb AS meta
+            FROM cases c
+            WHERE c.isclosed = true
+              AND c.updatedat >= ${dayStart}
+              AND c.updatedat < ${dayEnd}
+
+            UNION ALL
+
+            SELECT
+                'signing_completed' AS activity_type,
+                sf.signedat AS occurred_at,
+                sf.caseid,
+                c.casename,
+                c.casemanagerid AS manager_id,
+                c.casemanager AS manager_name,
+                jsonb_build_object('filename', sf.filename) AS meta
+            FROM signingfiles sf
+            LEFT JOIN cases c ON c.caseid = sf.caseid
+            WHERE sf.status = 'signed'
+              AND sf.signedat >= ${dayStart}
+              AND sf.signedat < ${dayEnd}
+
+            UNION ALL
+
+            SELECT
+                'document_uploaded' AS activity_type,
+                sf.created_at AS occurred_at,
+                sf.caseid,
+                c.casename,
+                c.casemanagerid AS manager_id,
+                c.casemanager AS manager_name,
+                jsonb_build_object('filename', sf.file_name) AS meta
+            FROM stage_files sf
+            JOIN cases c ON c.caseid = sf.caseid
+            WHERE sf.created_at >= ${dayStart}
+              AND sf.created_at < ${dayEnd}
+        ) combined
+        ORDER BY occurred_at DESC NULLS LAST
+        LIMIT $1
+    `, [C.DRILL_DOWN_LIST_LIMIT]);
+    return rows.map((r) => ({
+        activityType: r.activity_type,
+        occurredAt: r.occurred_at,
+        caseId: r.caseid,
+        caseName: r.casename,
+        managerId: r.manager_id,
+        managerName: r.manager_name,
+        meta: r.meta || {},
+    }));
+}
+
+async function fetchFirmDailyStats() {
+    const { dayStart, dayEnd } = jerusalemDayBoundsSql();
+
+    const { rows: openedRows } = await pool.query(`
+        SELECT COUNT(*)::int AS count
+        FROM cases
+        WHERE createdat >= ${dayStart}
+          AND createdat < ${dayEnd}
+    `);
+
+    const { rows: closedRows } = await pool.query(`
+        SELECT COUNT(*)::int AS count
+        FROM cases
+        WHERE isclosed = true
+          AND updatedat >= ${dayStart}
+          AND updatedat < ${dayEnd}
+    `);
+
+    const { rows: activityRows } = await pool.query(`
+        WITH acts AS (
+            SELECT c.casemanagerid AS manager_id, c.casemanager AS manager_name
+            FROM casedescriptions cd
+            JOIN cases c ON c.caseid = cd.caseid
+            WHERE cd.timestamp >= ${dayStart}
+              AND cd.timestamp < ${dayEnd}
+              AND c.casemanagerid IS NOT NULL
+            UNION ALL
+            SELECT casemanagerid, casemanager
+            FROM cases
+            WHERE createdat >= ${dayStart}
+              AND createdat < ${dayEnd}
+              AND casemanagerid IS NOT NULL
+            UNION ALL
+            SELECT c.casemanagerid, c.casemanager
+            FROM signingfiles sf
+            JOIN cases c ON c.caseid = sf.caseid
+            WHERE sf.signedat >= ${dayStart}
+              AND sf.signedat < ${dayEnd}
+              AND c.casemanagerid IS NOT NULL
+        )
+        SELECT manager_id, manager_name, COUNT(*)::int AS activity_count
+        FROM acts
+        WHERE manager_id IS NOT NULL
+        GROUP BY manager_id, manager_name
+        ORDER BY activity_count DESC
+        LIMIT 1
+    `);
+
+    const top = activityRows[0];
+    return {
+        casesOpenedToday: openedRows[0]?.count ?? 0,
+        casesClosedToday: closedRows[0]?.count ?? 0,
+        mostActiveManager: top
+            ? {
+                managerId: top.manager_id,
+                managerName: top.manager_name,
+                activityCount: top.activity_count,
+            }
+            : null,
+    };
 }
 
 async function fetchManagerWorkload(caseRows, attentionItems) {
@@ -469,6 +697,8 @@ function buildCaseHealthList(caseRows, attentionItems) {
 }
 
 async function buildManagerHomePayload({ userId } = {}) {
+    const firmWideEvents = userId ? await isPlatformAdmin(userId) : false;
+
     const [
         greeting,
         caseRows,
@@ -480,6 +710,10 @@ async function buildManagerHomePayload({ userId } = {}) {
         potentialClients,
         casesByStage,
         recentActivity,
+        firmDailyStats,
+        casesOpenedTodayList,
+        casesClosedTodayList,
+        todayActivityLog,
     ] = await Promise.all([
         fetchManagerGreeting(userId),
         fetchOpenCasesWithActivity(),
@@ -487,10 +721,14 @@ async function buildManagerHomePayload({ userId } = {}) {
         fetchSigningSummary(),
         fetchPendingRsvpEvents(),
         fetchFailedReminders(),
-        fetchTodayEvents(),
+        fetchTodayEvents(userId, { firmWide: firmWideEvents }),
         fetchPotentialClients(),
         fetchCasesByStage(),
         fetchRecentActivity(),
+        fetchFirmDailyStats(),
+        fetchCasesOpenedTodayList(),
+        fetchCasesClosedTodayList(),
+        fetchTodayActivityLog(),
     ]);
 
     const attentionItems = buildAttentionItems({
@@ -513,6 +751,19 @@ async function buildManagerHomePayload({ userId } = {}) {
             managerName: greeting.managerName,
         },
         summary,
+        firmStats: {
+            ...firmDailyStats,
+            openCases: caseRows.length,
+            urgentCount: summary.urgentCount ?? 0,
+            needsAttentionCount: summary.needsAttentionCount ?? 0,
+            attentionQueueCount: summary.attentionRawCount ?? 0,
+            noActivityCases: summary.noActivityCases ?? 0,
+            signingPending: summary.signingPending ?? 0,
+            signingExpired: summary.signingExpired ?? 0,
+            signedToday: signingSummary.signed_today ?? 0,
+            todayEventCount: summary.todayEventCount ?? 0,
+            unassignedCases: unassignedCount,
+        },
         morningBrief: buildMorningBrief({
             attentionItems,
             today,
@@ -560,6 +811,16 @@ async function buildManagerHomePayload({ userId } = {}) {
             caseName: r.casename,
             meta: r.meta || {},
         })),
+        drillDown: {
+            casesOpenedToday: casesOpenedTodayList,
+            casesClosedToday: casesClosedTodayList,
+            openCases: caseRows.map(mapCaseListItem).slice(0, C.DRILL_DOWN_LIST_LIMIT),
+            unassignedCases: caseRows
+                .filter((r) => !r.casemanagerid)
+                .map(mapCaseListItem)
+                .slice(0, C.DRILL_DOWN_LIST_LIMIT),
+            todayActivityLog,
+        },
         generatedAt: new Date().toISOString(),
     };
 }
@@ -572,6 +833,7 @@ async function getManagerHomeData({ userId, ttlMs = C.MANAGER_HOME_CACHE_TTL_MS 
 
 function invalidateManagerHomeCache() {
     cache.deleteByPrefix('managerHome:');
+    invalidateAiBriefCache();
 }
 
 function __testReset() {
