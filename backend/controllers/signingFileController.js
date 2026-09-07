@@ -13,6 +13,7 @@ const { sendEmailCampaign } = require("../utils/smooveEmailCampaignService");
 const { detectHebrewSignatureSpotsFromPdfBuffer, streamToBuffer } = require("../utils/signatureDetection");
 const { renderTemplate } = require("../utils/templateRenderer");
 const { getSetting } = require("../services/settingsService");
+const { invalidateOperationalDashboardCaches } = require("../utils/operationalDashboardCache");
 const {
     scheduleRemindersForSigners,
     cancelRemindersForFile,
@@ -3190,6 +3191,7 @@ exports.uploadFileForSigning = async (req, res, next) => {
             console.warn('[signing] scheduleRemindersForSigners failed:', remErr?.message || remErr);
         }
 
+        invalidateOperationalDashboardCaches();
         return res.json({
             success: true,
             signingFileId,
@@ -7403,6 +7405,7 @@ exports.signFile = async (req, res, next) => {
         if (signMs > 800) {
             console.log('[signing] signFile slow', { signingFileId, signatureSpotId, remaining, signMs });
         }
+        invalidateOperationalDashboardCaches();
         return res.json({ success: true, message: "✓ החתימה נשמרה בהצלחה", timings: { signMs } });
     } catch (err) {
         console.error("signFile error:", err);
@@ -7545,6 +7548,7 @@ exports.rejectSigning = async (req, res, next) => {
             },
         });
 
+        invalidateOperationalDashboardCaches();
         return res.json({ success: true, message: "✓ המסמך נדחה בהצלחה" });
     } catch (err) {
         console.error("rejectSigning error:", err);
@@ -7950,6 +7954,7 @@ exports.reuploadFile = async (req, res, next) => {
             console.warn('[signing] reupload scheduleReminders failed:', remErr?.message || remErr);
         }
 
+        invalidateOperationalDashboardCaches();
         return res.json({ success: true, message: "הקובץ הועלה מחדש לחתימה" });
     } catch (err) {
         console.error("reuploadFile error:", err);
@@ -8493,6 +8498,7 @@ exports.deleteSigningFile = async (req, res, next) => {
             client.release();
         }
 
+        invalidateOperationalDashboardCaches();
         return res.json({ ok: true });
     } catch (err) {
         console.error('[controller] deleteSigningFile error:', err?.message || err);

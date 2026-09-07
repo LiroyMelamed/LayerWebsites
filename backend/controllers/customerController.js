@@ -14,7 +14,7 @@ const { createAppError } = require('../utils/appError');
 const { getHebrewMessage } = require('../utils/errors.he');
 const { userHasLegalData } = require('../utils/legalData');
 const { insertAuditEvent, getRequestIp, getRequestUserAgent } = require('../utils/auditEvents');
-const { invalidateMainScreenDataCache } = require('../utils/mainScreenDataCache');
+const { invalidateOperationalDashboardCaches } = require('../utils/operationalDashboardCache');
 
 function requireAdmin(req, res) {
     if (req.user?.Role !== 'Admin') {
@@ -706,7 +706,7 @@ const deleteCustomer = async (req, res, next) => {
             await client.query('COMMIT');
 
             // Ensure dashboard reflects the change immediately.
-            invalidateMainScreenDataCache();
+            invalidateOperationalDashboardCaches();
 
             if (shouldAuditConfirmedDelete && deleteResult.rowCount > 0) {
                 await insertAuditEvent({
@@ -978,7 +978,7 @@ const importCustomers = async (req, res, next) => {
         }
 
         // Invalidate main screen cache
-        try { invalidateMainScreenDataCache(); } catch (_) { /* ignore */ }
+        try { invalidateOperationalDashboardCaches(); } catch (_) { /* ignore */ }
 
         return res.status(200).json(results);
     } catch (error) {

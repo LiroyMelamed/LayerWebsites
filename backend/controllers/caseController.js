@@ -8,6 +8,7 @@ const { requireInt } = require("../utils/paramValidation");
 const { getPagination } = require("../utils/pagination");
 const { getSetting, getChannelConfig, getPlatformAdmins } = require("../services/settingsService");
 const { renderTemplate } = require("../utils/templateRenderer");
+const { invalidateOperationalDashboardCaches } = require("../utils/operationalDashboardCache");
 
 /**
  * Notify the case manager (casemanagerid) about a case change,
@@ -634,6 +635,7 @@ const addCase = async (req, res) => {
         });
 
         if (!res.headersSent) {
+            invalidateOperationalDashboardCaches();
             res.status(201).json({ message: "התיק נוצר בהצלחה", caseId });
         }
 
@@ -933,6 +935,7 @@ const updateCase = async (req, res) => {
             });
         }
 
+        invalidateOperationalDashboardCaches();
         res.status(200).json({ message: "התיק עודכן בהצלחה" });
     } catch (error) {
         console.error("Error updating case:", error);
@@ -1159,6 +1162,7 @@ const updateStage = async (req, res) => {
 
         await client.query('COMMIT');
 
+        invalidateOperationalDashboardCaches();
         res.status(200).json({ message: "השלב עודכן בהצלחה" });
 
     } catch (error) {
@@ -1192,6 +1196,7 @@ const deleteCase = async (req, res) => {
             return res.status(404).json({ message: "לא נמצא תיק עם מזהה זה" });
         }
 
+        invalidateOperationalDashboardCaches();
         res.status(200).json({ message: "התיק נמחק בהצלחה" });
 
     } catch (error) {
@@ -1222,6 +1227,7 @@ const tagCase = async (req, res) => {
             [IsTagged ? true : false, caseId]
         );
 
+        invalidateOperationalDashboardCaches();
         res.status(200).json({ message: "התיק תויג בהצלחה" });
     } catch (error) {
         console.error("Error updating case tag:", error);
