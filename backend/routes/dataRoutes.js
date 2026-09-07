@@ -6,6 +6,7 @@ const requireAdmin = require("../middlewares/requireAdmin");
 
 router.get("/GetMainScreenData", authMiddleware, requireAdmin, dataController.getMainScreenData);
 router.get("/GetManagerHomeData", authMiddleware, requireAdmin, dataController.getManagerHomeData);
+router.get("/GetManagerHomeAiBrief", authMiddleware, requireAdmin, dataController.getManagerHomeAiBrief);
 router.get("/GetClientDashboardData", authMiddleware, dataController.getClientDashboardData);
 
 module.exports = router;
