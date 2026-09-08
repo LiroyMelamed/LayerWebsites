@@ -207,6 +207,27 @@ export default function PlanUsageScreen() {
         }
     };
 
+    const cancelSubscription = async () => {
+        if (!window.confirm(t('planUsage.cancelSubscriptionConfirm'))) return;
+        setPayBusy(true);
+        try {
+            const res = await billingApi.cancelSubscription();
+            if (!res?.success) {
+                toastFromApiError(res, t('planUsage.checkoutFailed'));
+                return;
+            }
+            showAppToast({ type: 'success', text: t('planUsage.cancelSubscriptionOk') });
+            setPayNotice({ type: 'success', text: t('planUsage.subscriptionCancelled') });
+            billingApi.invalidateCaches();
+            void reloadPlan([]);
+            void refreshLock();
+        } catch (e) {
+            toastFromApiError(e, t('planUsage.checkoutFailed'));
+        } finally {
+            setPayBusy(false);
+        }
+    };
+
     const saveBillingInterval = async (nextInterval) => {
         const pkg = normalized.pkg || {};
         if (!pkg.platformId || !pkg.resourceId || !pkg.signingId) return;
@@ -469,6 +490,15 @@ export default function PlanUsageScreen() {
                                         disabled={payBusy}
                                     >
                                         <Text14>{t('planUsage.replaceCard')}</Text14>
+                                    </SimpleButton>
+                                )}
+                                {normalized.billing?.billingEnabled !== false && (
+                                    <SimpleButton
+                                        className="lw-planUsageScreen__cancelAction"
+                                        onPress={cancelSubscription}
+                                        disabled={payBusy}
+                                    >
+                                        <Text14>{t('planUsage.cancelSubscription')}</Text14>
                                     </SimpleButton>
                                 )}
                             </SimpleContainer>

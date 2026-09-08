@@ -333,6 +333,10 @@ async function completeSignupFromPaymentIntent(paymentIntentId, tokenInfo) {
     return provisionTenantFromSignup(signupIntentId, { tokenInfo });
 }
 
+async function completeSignupWithoutPayment(intentId) {
+    return provisionTenantFromSignup(intentId, {});
+}
+
 module.exports = {
     TRIAL_DAYS,
     createSignupIntent,
@@ -340,5 +344,6 @@ module.exports = {
     createSignupCheckout,
     provisionTenantFromSignup,
     completeSignupFromPaymentIntent,
+    completeSignupWithoutPayment,
     mapSignupRow,
 };

@@ -512,6 +512,7 @@
 .lw-commandCenter__section {
     flex-direction: column;
     align-items: stretch;
+    justify-content: flex-start;
     inline-size: 100%;
     min-inline-size: 0;
     margin-inline: v.$space-2;
@@ -746,6 +747,7 @@
     grid-template-columns: 1fr;
     gap: v.$space-2;
     padding-inline: v.$space-2;
+    align-items: start;
 }
 
 .lw-commandCenter__grid--single {

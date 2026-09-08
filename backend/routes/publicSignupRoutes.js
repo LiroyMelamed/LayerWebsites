@@ -17,6 +17,7 @@ router.use(
 );
 
 router.post('/start', controller.startSignup);
+router.post('/:intentId/complete', controller.completeSignup);
 router.post('/:intentId/checkout', controller.checkoutSignup);
 router.get('/:intentId/status', controller.getSignupStatus);
 router.get('/takbull/return', controller.takbullReturn);

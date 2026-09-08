@@ -78,7 +78,8 @@
     "prebuild:idm": "node scripts/copy-pdf-worker.js && node scripts/apply-tenant-branding.js idm",
     "build:idm": "cp .env.production.idm .env && react-scripts build",
     "prebuild:lawyer": "node scripts/copy-pdf-worker.js && node scripts/apply-tenant-branding.js lawyer",
-    "build:lawyer": "cp .env.production.lawyer .env && react-scripts build"
+    "build:lawyer": "cp .env.production.lawyer .env && react-scripts build",
+    "analyze": "npm run build:melamedia && npx --yes source-map-explorer 'build/static/js/*.js' --html build/bundle-report.html && echo 'Report: build/bundle-report.html'"
   },
   "eslintConfig": {
     "extends": [

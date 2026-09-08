@@ -66,7 +66,7 @@ app.use(helmet({
 }));
 app.use(bodyParser.json({ limit: API_JSON_LIMIT }));
 app.use(bodyParser.urlencoded({ limit: API_URLENCODED_LIMIT, extended: true }));
-app.use(compression());
+app.use(compression({ threshold: 1024 }));
 
 const isProduction = process.env.IS_PRODUCTION === 'true';
 

@@ -5,7 +5,7 @@ import SimpleButton from '../simpleComponents/SimpleButton';
 import { Text14, TextBold20 } from '../specializedComponents/text/AllTextKindFile';
 import './TakbullCheckoutDialog.scss';
 
-export default function TakbullCheckoutDialog({ open, gatewayUrl, onClose, onPaid, onFailed }) {
+export default function TakbullCheckoutDialog({ open, gatewayUrl, onClose, onPaid, onFailed, title, hint }) {
     const { t } = useTranslation();
     const [height, setHeight] = useState(640);
 
@@ -44,8 +44,8 @@ export default function TakbullCheckoutDialog({ open, gatewayUrl, onClose, onPai
     return (
         <div className="lw-takbullCheckout" role="dialog" aria-modal="true">
             <SimpleContainer className="lw-takbullCheckout__panel">
-                <TextBold20>{t('billing.checkoutTitle')}</TextBold20>
-                <Text14 className="lw-takbullCheckout__hint">{t('billing.checkoutHint')}</Text14>
+                <TextBold20>{title || t('billing.checkoutTitle')}</TextBold20>
+                <Text14 className="lw-takbullCheckout__hint">{hint || t('billing.checkoutHint')}</Text14>
                 {gatewayUrl ? (
                     <iframe
                         title="Takbull checkout"
