@@ -85,6 +85,20 @@ export function enrichAttentionMember(member) {
     };
 }
 
+function buildNoActivityGroupParams(members) {
+    const dayValues = members
+        .map((member) => Number(member.reasonParams?.days))
+        .filter((days) => Number.isFinite(days) && days > 0);
+
+    if (!dayValues.length) {
+        return { days: 7, minDays: 7, maxDays: 7 };
+    }
+
+    const minDays = Math.min(...dayValues);
+    const maxDays = Math.max(...dayValues);
+    return { days: minDays, minDays, maxDays };
+}
+
 function buildSignalGroup(signalType, members) {
     if (members.length <= 1) {
         return { ...members[0], kind: "single" };
@@ -97,15 +111,27 @@ function buildSignalGroup(signalType, members) {
         ),
         members[0].priority,
     );
+
+    const reasonParams = { count: members.length };
+    let titleKey = `managerHome.groups.${signalType}`;
+
+    if (signalType === "no_activity") {
+        const dayParams = buildNoActivityGroupParams(members);
+        Object.assign(reasonParams, dayParams);
+        titleKey = dayParams.minDays === dayParams.maxDays
+            ? "managerHome.groups.no_activity"
+            : "managerHome.groups.no_activity_range";
+    }
+
     return {
         kind: "group",
         signalType,
         signalTier: members[0].signalTier || "soft",
         priority: topPriority,
         count: members.length,
-        titleKey: `managerHome.groups.${signalType}`,
+        titleKey,
         reasonKey: `managerHome.groupReasons.${signalType}`,
-        reasonParams: { count: members.length },
+        reasonParams,
         members,
         actionRoute: members[0].actionRoute,
         actionParams: members[0].actionParams,
