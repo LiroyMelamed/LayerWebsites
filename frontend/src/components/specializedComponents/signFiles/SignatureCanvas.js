@@ -905,11 +905,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             || /OTP_NOT_FOUND/i.test(msg)
             || /פג תוקף/.test(msg);
 
-        if (!hardReset && otpVerified) {
-            // Keep the verified session; avoid SMS re-send loop.
-            return true;
-        }
-
+        // Always reset verified state when server says OTP_REQUIRED.
+        // The server is the source of truth — if it rejected the request,
+        // the client-side verified flag is stale.
         setOtpVerified(false);
         setOtpRequested(false);
         setOtpCode("");
@@ -1870,21 +1868,26 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     };
 
 
+    const otpRequestInFlightRef = useRef(false);
+
     const requestOtp = async ({ silent = false } = {}) => {
         try {
             if (!otpRequired) return;
+            if (otpRequestInFlightRef.current) return;
             const now = Date.now();
             if (!silent && now < otpResendAtRef.current) {
                 showAppToast({ type: "warning", text: t("signing.canvas.otpWaitBeforeResend") || "נא להמתין לפני שליחה מחדש" });
                 return;
             }
+            otpRequestInFlightRef.current = true;
             setOtpBusy(true);
             const res = isPublic
                 ? await signingFilesApi.publicRequestSigningOtp(publicToken, signingSessionId)
                 : await signingFilesApi.requestSigningOtp(effectiveSigningFileId, signingSessionId);
             unwrapApi(res);
             const skipped = Boolean(res?.skipped || res?.data?.skipped);
-            const delivered = res?.delivered === true || res?.data?.delivered === true;
+            const reused = Boolean(res?.reused || res?.data?.reused);
+            const delivered = (res?.delivered === true || res?.data?.delivered === true) || reused;
             const channel = String(res?.channel || res?.data?.channel || '').toLowerCase();
             if (channel === 'email' || channel === 'sms') setOtpChannel(channel);
             setOtpRequested(true);
@@ -1913,6 +1916,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 showAppToast({ type: "error", text: getApiErrorMessage(err) || t("signing.canvas.otpSendError") });
             }
         } finally {
+            otpRequestInFlightRef.current = false;
             setOtpBusy(false);
         }
     };

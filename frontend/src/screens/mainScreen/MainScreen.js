@@ -49,6 +49,14 @@ export default function MainScreen() {
     } = useAutoHttpRequest(casesApi.getMainScreenData);
 
     const handleSummaryNavigate = (key) => {
+        if (key === "totalCases") {
+            navigateOpenCases(navigate, "");
+            return;
+        }
+        if (key === "activeCases") {
+            navigateOpenCases(navigate, "?status=open");
+            return;
+        }
         if (key === "signing") {
             navigate(AdminStackName + SigningManagerScreenName);
             return;
@@ -83,6 +91,7 @@ export default function MainScreen() {
 
                     <SummaryStrip
                         summary={managerHome?.summary}
+                        firmStats={managerHome?.firmStats}
                         isPerforming={isLoadingHome}
                         onNavigate={handleSummaryNavigate}
                     />

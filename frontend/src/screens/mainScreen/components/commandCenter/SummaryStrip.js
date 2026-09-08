@@ -5,10 +5,24 @@ import Skeleton from "../../../../components/simpleComponents/Skeleton";
 import { Text12, TextBold14, TextBold28 } from "../../../../components/specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../../constant/colors";
 
-export default function SummaryStrip({ summary, isPerforming, onNavigate }) {
+export default function SummaryStrip({ summary, firmStats, isPerforming, onNavigate }) {
     const { t } = useTranslation();
 
     const chips = [
+        {
+            key: "totalCases",
+            label: t("managerHome.summary.totalCases"),
+            value: firmStats?.totalCases ?? 0,
+            accent: colors.primary,
+            onClick: () => onNavigate?.("totalCases"),
+        },
+        {
+            key: "activeCases",
+            label: t("managerHome.summary.activeCases"),
+            value: firmStats?.activeCases ?? 0,
+            accent: colors.SideBarSelected || "#2B6CB0",
+            onClick: () => onNavigate?.("activeCases"),
+        },
         {
             key: "urgent",
             label: t("managerHome.summary.urgent"),

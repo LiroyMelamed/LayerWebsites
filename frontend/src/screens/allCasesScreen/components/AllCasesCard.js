@@ -17,7 +17,7 @@ export default function AllCasesCard({ allCases, isPerforming, reperformAfterSav
     const { t } = useTranslation();
     const cardTitle = String(title || '').trim() || t('cases.allCases');
 
-    if (isPerforming) {
+    if (isPerforming && (!allCases || allCases.length === 0)) {
         return (
             <SimpleCard className="lw-allCasesCard">
                 {[1, 2, 3].map(i => (

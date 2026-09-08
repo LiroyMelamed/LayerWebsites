@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
 import SimpleInput from "../../../components/simpleComponents/SimpleInput";
 import SimpleScrollView from "../../../components/simpleComponents/SimpleScrollView";
@@ -32,6 +32,60 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
 
     const { result: customersByName, isPerforming: isPerformingCustomersByName, performRequest: searchCustomersByName } = useHttpRequest(customersApi.getCustomersByName, null, () => { });
     const { result: companiesByName, isPerforming: isPerformingCompaniesByName, performRequest: searchCompaniesByName } = useHttpRequest(customersApi.getCompaniesByName, null, () => { });
+
+    const [existingMatch, setExistingMatch] = useState(null);
+    const detectPhoneTimerRef = useRef(null);
+    const detectEmailTimerRef = useRef(null);
+
+    const detectExisting = useCallback(async (query) => {
+        if (!query || query.length < 3) { setExistingMatch(null); return; }
+        try {
+            const results = await customersApi.getCustomersByName(query);
+            const list = Array.isArray(results) ? results : (results?.data || []);
+            if (list.length > 0) {
+                const match = list[0];
+                const matchId = match.UserId || match.userid;
+                const currentId = selectedClient?.UserId || selectedClient?.userid;
+                if (matchId && matchId !== currentId) {
+                    setExistingMatch(match);
+                    return;
+                }
+            }
+            setExistingMatch(null);
+        } catch { setExistingMatch(null); }
+    }, [selectedClient]);
+
+    useEffect(() => {
+        if (detectPhoneTimerRef.current) clearTimeout(detectPhoneTimerRef.current);
+        const phone = (phoneNumber || '').trim();
+        const digits = phone.replace(/\D/g, '');
+        if (digits.length >= 7) {
+            detectPhoneTimerRef.current = setTimeout(() => detectExisting(phone), 500);
+        } else {
+            setExistingMatch(null);
+        }
+        return () => { if (detectPhoneTimerRef.current) clearTimeout(detectPhoneTimerRef.current); };
+    }, [phoneNumber, detectExisting]);
+
+    useEffect(() => {
+        if (detectEmailTimerRef.current) clearTimeout(detectEmailTimerRef.current);
+        const emailVal = (email || '').trim();
+        if (emailVal && emailVal.includes('@') && emailVal.includes('.')) {
+            detectEmailTimerRef.current = setTimeout(() => detectExisting(emailVal), 500);
+        }
+        return () => { if (detectEmailTimerRef.current) clearTimeout(detectEmailTimerRef.current); };
+    }, [email, detectExisting]);
+
+    const loadExistingClient = () => {
+        if (!existingMatch) return;
+        setSelectedClient(existingMatch);
+        setName(existingMatch.Name || existingMatch.name || "");
+        setPhoneNumber(existingMatch.PhoneNumber || existingMatch.phonenumber || "");
+        setEmail(existingMatch.Email || existingMatch.email || "");
+        setCompanyName(existingMatch.CompanyName || existingMatch.companyname || "");
+        setDateOfBirth(existingMatch.DateOfBirth || existingMatch.dateofbirth ? toNativeDateValue(existingMatch.DateOfBirth || existingMatch.dateofbirth) : "");
+        setExistingMatch(null);
+    };
 
     const handleSelectCustomer = (_text, customer) => {
         setSelectedClient(customer);
@@ -195,6 +249,19 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
                 </SimpleContainer>
             </SimplePopUp>
             <SimpleScrollView>
+                {existingMatch && (
+                    <SimpleContainer className="lw-clientPopup__existingBanner" onClick={loadExistingClient}>
+                        <span className="lw-clientPopup__existingIcon">ℹ️</span>
+                        <span>
+                            {t('customers.existingClientFound', {
+                                defaultValue: 'לקוח קיים במערכת: {{name}}',
+                                name: existingMatch.Name || existingMatch.name,
+                            })}
+                            {' — '}
+                            {t('customers.clickToLoad', { defaultValue: 'לחץ לטעינה' })}
+                        </span>
+                    </SimpleContainer>
+                )}
                 <SimpleContainer className="lw-clientPopup__row">
                     <SearchInput
                         className="lw-clientPopup__input"
