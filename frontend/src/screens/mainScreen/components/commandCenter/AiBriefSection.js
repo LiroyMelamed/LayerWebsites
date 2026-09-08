@@ -159,40 +159,50 @@ export default function AiBriefSection({
     aiBrief,
     aiBriefEnabled = false,
     aiBriefLoading = false,
+    settingsLoaded = true,
     isPerforming,
 }) {
     const { t } = useTranslation();
-    const showSkeleton = isPerforming || (aiBriefEnabled && aiBriefLoading && !aiBrief);
     const isAiBrief = Boolean(aiBrief?.lines?.length);
-    const useSparkleShell = aiBriefEnabled || showSkeleton || isAiBrief;
+    const showSkeleton = !settingsLoaded
+        || isPerforming
+        || (aiBriefEnabled && aiBriefLoading && !isAiBrief);
 
-    const content = showSkeleton ? (
-        <SimpleContainer className="lw-commandCenter__aiBriefSkeleton">
-            <Skeleton width="100%" height={16} borderRadius={4} />
-            <Skeleton width="92%" height={16} borderRadius={4} />
-            <Skeleton width="84%" height={16} borderRadius={4} />
-            <Skeleton width="76%" height={16} borderRadius={4} />
-        </SimpleContainer>
-    ) : isAiBrief
-        ? renderAiBriefContent(t, aiBrief.lines, aiBrief.recommendations || [])
-        : renderBriefLines(t, morningBrief);
+    if (aiBriefEnabled) {
+        if (!showSkeleton && !isAiBrief) {
+            return null;
+        }
 
-    if (!useSparkleShell) {
+        const content = showSkeleton
+            ? (
+                <SimpleContainer className="lw-commandCenter__aiBriefSkeleton">
+                    <Skeleton width="100%" height={16} borderRadius={4} />
+                    <Skeleton width="92%" height={16} borderRadius={4} />
+                    <Skeleton width="84%" height={16} borderRadius={4} />
+                    <Skeleton width="76%" height={16} borderRadius={4} />
+                </SimpleContainer>
+            )
+            : renderAiBriefContent(t, aiBrief.lines, aiBrief.recommendations || []);
+
         return (
-            <SimpleContainer className="lw-commandCenter__briefSection">
-                {content}
+            <SimpleContainer className="lw-commandCenter__aiBriefSparkle">
+                <AiBriefBadge t={t} />
+                <SimpleContainer className="lw-commandCenter__aiBriefSparkleRing">
+                    <SimpleCard className="lw-commandCenter__aiBriefCard">
+                        {content}
+                    </SimpleCard>
+                </SimpleContainer>
             </SimpleContainer>
         );
     }
 
+    if (!settingsLoaded || showSkeleton) {
+        return null;
+    }
+
     return (
-        <SimpleContainer className="lw-commandCenter__aiBriefSparkle">
-            <AiBriefBadge t={t} />
-            <SimpleContainer className="lw-commandCenter__aiBriefSparkleRing">
-                <SimpleCard className="lw-commandCenter__aiBriefCard">
-                    {content}
-                </SimpleCard>
-            </SimpleContainer>
+        <SimpleContainer className="lw-commandCenter__briefSection">
+            {renderBriefLines(t, morningBrief)}
         </SimpleContainer>
     );
 }
