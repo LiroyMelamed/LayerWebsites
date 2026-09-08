@@ -23,6 +23,7 @@ import SimpleInput from "../../components/simpleComponents/SimpleInput";
 import SegmentedSwitch from "../../components/styledComponents/SegmentedSwitch";
 
 import { Text14, TextBold24 } from "../../components/specializedComponents/text/AllTextKindFile";
+import ListPageTitle from "../../components/specializedComponents/text/ListPageTitle";
 import { images } from "../../assets/images/images";
 import ApiUtils from "../../api/apiUtils";
 import { usePopup } from "../../providers/PopUpProvider";
@@ -384,6 +385,12 @@ export default function SigningManagerScreen() {
             )}
 
             <SimpleScrollView className="lw-signingManagerScreen__scroll">
+                <ListPageTitle
+                    title={t("nav.signingFiles")}
+                    count={filteredFiles.length}
+                    isLoading={isPerforming}
+                    className="lw-signingManagerScreen__pageTitle"
+                />
 
                 <SimpleContainer className="lw-signingManagerScreen__topRow">
                     <SimpleContainer className="lw-signingManagerScreen__searchContainer">

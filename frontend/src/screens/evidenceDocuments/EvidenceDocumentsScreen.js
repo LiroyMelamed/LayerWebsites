@@ -14,6 +14,7 @@ import SimpleInput from "../../components/simpleComponents/SimpleInput";
 
 import SearchInput from "../../components/specializedComponents/containers/SearchInput";
 import { Text14, TextBold14 } from "../../components/specializedComponents/text/AllTextKindFile";
+import ListPageTitle from "../../components/specializedComponents/text/ListPageTitle";
 import ChooseButton from "../../components/styledComponents/buttons/ChooseButton";
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
@@ -263,6 +264,13 @@ export default function EvidenceDocumentsScreen() {
             )}
 
             <SimpleScrollView>
+                <ListPageTitle
+                    title={t("nav.evidenceDocuments")}
+                    count={filteredItems.length}
+                    isLoading={isLoading && items.length === 0}
+                    className="lw-evidenceDocuments__pageTitle"
+                />
+
                 <SimpleContainer className="lw-evidenceDocuments__topRow">
                     <SearchInput
                         value={inputQ}

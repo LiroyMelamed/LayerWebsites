@@ -14,6 +14,7 @@ import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButt
 import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
 import ChooseButton from "../../components/styledComponents/buttons/ChooseButton";
 import { Text24, Text14 } from "../../components/specializedComponents/text/AllTextKindFile";
+import ListPageTitle from "../../components/specializedComponents/text/ListPageTitle";
 import ReminderMenuItem from "../../components/specializedComponents/menuItems/ReminderMenuItem";
 import { images } from "../../assets/images/images";
 
@@ -199,6 +200,13 @@ export default function RemindersScreen() {
             )}
 
             <SimpleScrollView>
+                <ListPageTitle
+                    title={t("nav.reminders")}
+                    count={total}
+                    isLoading={isPerforming && !result}
+                    className="lw-reminders__pageTitle"
+                />
+
                 <SimpleContainer className="lw-reminders__filtersRow">
                     <ChooseButton
                         buttonText={t("reminders.statusFilter")}

@@ -10,12 +10,15 @@ import { DateDDMMYY } from "../../../functions/date/DateDDMMYY";
 import { caseClientNames, caseMenuTitle } from "../../../functions/cases/caseMenuTitle";
 import { useTranslation } from 'react-i18next';
 import i18next from 'i18next';
+import formatListPageTitle from '../../../functions/i18n/formatListPageTitle';
 
 import './AllCasesCard.scss';
 
 export default function AllCasesCard({ allCases, isPerforming, reperformAfterSave, title }) {
     const { t } = useTranslation();
-    const cardTitle = String(title || '').trim() || t('cases.allCases');
+    const baseTitle = String(title || '').trim() || t('cases.allCases');
+    const itemCount = allCases?.length ?? 0;
+    const cardTitle = isPerforming ? baseTitle : formatListPageTitle(t, baseTitle, itemCount);
 
     if (isPerforming && (!allCases || allCases.length === 0)) {
         return (
@@ -36,11 +39,14 @@ export default function AllCasesCard({ allCases, isPerforming, reperformAfterSav
 
     if (allCases?.length === 0 || !allCases) {
         return (
-            <DefaultState
-                content={t('cases.noCases')}
-                imageClassName="lw-defaultState__image--h156"
-                imageSrc={images.Defaults.Cases}
-            />
+            <SimpleCard className="lw-allCasesCard">
+                <TextBold20>{formatListPageTitle(t, baseTitle, 0)}</TextBold20>
+                <DefaultState
+                    content={t('cases.noCases')}
+                    imageClassName="lw-defaultState__image--h156"
+                    imageSrc={images.Defaults.Cases}
+                />
+            </SimpleCard>
         )
     }
 
