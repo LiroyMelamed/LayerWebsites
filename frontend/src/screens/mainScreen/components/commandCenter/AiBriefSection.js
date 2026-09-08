@@ -196,13 +196,5 @@ export default function AiBriefSection({
         );
     }
 
-    if (!settingsLoaded || showSkeleton) {
-        return null;
-    }
-
-    return (
-        <SimpleContainer className="lw-commandCenter__briefSection">
-            {renderBriefLines(t, morningBrief)}
-        </SimpleContainer>
-    );
+    return null;
 }
