@@ -4,22 +4,23 @@ import SimpleImage from "../../../components/simpleComponents/SimpleImage";
 import { images } from "../../../assets/images/images";
 import { colors } from "../../../constant/colors";
 import { useTranslation } from "react-i18next";
+import { getPublicFirmLogoUrl, useNaturalLogoColors } from "../../../lib/tenantBranding";
 
 import "./TopCenteredLogoOtp.scss";
 
-const appName = String(process.env.REACT_APP_APP_NAME || "").toLowerCase();
-const useNaturalLogoColors = appName === "melamedia" || appName === "idm";
-
-export default function TopCenteredLogoOtp({ logoSrc = images.Logos.LogoSlang, logoWidth = 100, style: _style }) {
+export default function TopCenteredLogoOtp({ logoSrc, logoWidth = 100, style: _style }) {
     const { t } = useTranslation();
+    const naturalColors = useNaturalLogoColors();
+    const resolvedLogo = logoSrc || (naturalColors ? getPublicFirmLogoUrl() : images.Logos.LogoSlang);
 
     return (
         <SimpleContainer className="lw-topCenteredLogoOtp">
             <SimpleContainer className="lw-topCenteredLogoOtp__cornerLogo">
                 <SimpleImage
-                    src={logoSrc}
-                    tintColor={useNaturalLogoColors ? null : colors.text}
+                    src={resolvedLogo}
+                    tintColor={naturalColors ? null : colors.text}
                     className="lw-topCenteredLogoOtp__logoImage"
+                    style={{ width: logoWidth, maxWidth: 'min(80vw, 280px)', height: 'auto' }}
                 />
             </SimpleContainer>
 

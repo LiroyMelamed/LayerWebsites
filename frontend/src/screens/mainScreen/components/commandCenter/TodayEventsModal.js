@@ -10,16 +10,9 @@ import { leaveColor } from "../../../calendarScreen/utils/lawyerColors";
 const NAVY = "#2A4365";
 const SLATE = "#4C6690";
 
-function jerusalemDateKey(value) {
-    const d = new Date(value);
-    if (!Number.isFinite(d.getTime())) return null;
-    return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(d);
-}
-
-function filterTodayEvents(events = []) {
-    const todayKey = jerusalemDateKey(new Date());
-    return (events || [])
-        .filter((ev) => ev?.startTime && jerusalemDateKey(ev.startTime) === todayKey)
+function sortTodayEvents(events = []) {
+    return [...(events || [])]
+        .filter((ev) => ev?.startTime)
         .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
 }
 
@@ -66,7 +59,7 @@ function EventRow({ ev, onPress }) {
 
 export default function TodayEventsModal({ events = [], onEventPress }) {
     const { t } = useTranslation();
-    const todayEvents = useMemo(() => filterTodayEvents(events), [events]);
+    const todayEvents = useMemo(() => sortTodayEvents(events), [events]);
 
     return (
         <SimpleContainer className="lw-commandCenter__todayEventsModal">

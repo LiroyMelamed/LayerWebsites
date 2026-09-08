@@ -27,13 +27,16 @@ cd $DIR
 git fetch origin $BRANCH
 git checkout $BRANCH
 git pull origin $BRANCH
-# Apply any pending migrations (idempotent / ignore already-applied where scripts allow)
-if [ -d backend/migrations ]; then
-  for f in backend/migrations/*.sql; do
-    [ -f "\$f" ] || continue
-    sudo -u postgres psql -d $DB -v ON_ERROR_STOP=1 -f "\$f" >/dev/null 2>&1 || true
-  done
-fi
+chmod +x backend/migrations/migration-run.sh backend/migrations/migration-backfill-applied.sh 2>/dev/null || true
+DBNAME=\$(grep '^DB_NAME=' backend/.env | head -1 | cut -d= -f2- | sed 's/^["'\'']//;s/["'\'']$//')
+cd backend
+MIGRATION_PGDATABASE="\$DBNAME" bash migrations/migration-backfill-applied.sh
+MIGRATION_PGDATABASE="\$DBNAME" bash migrations/migration-run.sh
 pm2 restart $PM2
 echo "Backend $TENANT restarted"
 EOF
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=../../scripts/deploy-notify.sh
+source "$ROOT/../scripts/deploy-notify.sh"
+DEPLOY_ROOT="$ROOT" notify_central_deploy layerwebsites "backend:${TENANT}"

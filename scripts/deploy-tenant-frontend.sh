@@ -34,8 +34,15 @@ rsync -az --delete -e "$RSYNC_SSH" build/ "${FRONTEND_HOST}:/var/www/${TENANT}/"
 
 # Always re-apply tenant logo after rsync (build may embed a stale public/firm-logo.png).
 scp -i "$SSH_KEY" -o BatchMode=yes "$TENANT_LOGO" "${FRONTEND_HOST}:/var/www/${TENANT}/firm-logo.png"
+if [[ -f "public/tenants/${TENANT}/melamedia-mark.png" ]]; then
+  scp -i "$SSH_KEY" -o BatchMode=yes "public/tenants/${TENANT}/melamedia-mark.png" "${FRONTEND_HOST}:/var/www/${TENANT}/melamedia-mark.png"
+fi
 echo "# Deployed logo: $(file -b "$TENANT_LOGO")"
 
 REMOTE_API="$(ssh -i "$SSH_KEY" -o BatchMode=yes "${FRONTEND_HOST}" "grep -o 'https://api-[^\"]*' /var/www/${TENANT}/static/js/main.*.js | sort -u")"
 echo "# Deployed API: $REMOTE_API"
 echo "# Done: https://${TENANT}.mela-media.co.il"
+
+# shellcheck source=../../scripts/deploy-notify.sh
+source "$ROOT/../scripts/deploy-notify.sh"
+DEPLOY_ROOT="$ROOT" notify_central_deploy layerwebsites "frontend:${TENANT}"

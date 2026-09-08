@@ -81,6 +81,7 @@
   "billing": {
     "checkoutTitle": "תשלום מאובטח",
     "checkoutHint": "השלימו את התשלום בחלון הסליקה. הכרטיס יישמר לחיוב החודשי.",
+    "checkoutHintSignup": "אימות כרטיס ב-₪1 בלבד בחלון הסליקה. הכרטיס יישמר לחיוב רק לאחר 3 חודשים חינם.",
     "openInNewTab": "פתיחה בחלון חדש",
     "closeCheckout": "סגירה"
   },
@@ -540,6 +541,7 @@
       "needsAttentionShort": "{{count}} דורשים טיפול",
       "urgentShort": "{{count}} דחופים",
       "totalActive": "תיקים פתוחים",
+      "casesShare": "{{pct}}% מהסה\"כ",
       "unassignedBanner": "{{count}} תיקים פתוחים ללא מנהל תיק",
       "stageLabel": "שלב {{stage}} · {{count}}"
     },
@@ -754,7 +756,31 @@
     "contact": "יצירת קשר",
     "contactMessage": "שלום, אשמח ליצירת קשר",
     "platformSettings": "הגדרות פלטפורמה",
-    "calendar": "יומן"
+    "calendar": "יומן",
+    "support": "תמיכה"
+  },
+  "support": {
+    "eyebrow": "{{firm}} · תמיכה",
+    "title": "פניות תמיכה",
+    "subtitle": "פתיחת פנייה ומעקב סטטוס מול צוות MelaMedia.",
+    "newTicket": "פתיחת פנייה חדשה",
+    "titleLabel": "כותרת",
+    "descriptionLabel": "תיאור",
+    "submit": "שליחת פנייה",
+    "sending": "שולח…",
+    "createSuccess": "הפנייה נשלחה בהצלחה",
+    "ticketsHeading": "הפניות ({{count}})",
+    "noTickets": "אין פניות.",
+    "selectTicket": "בחרו פנייה מהרשימה.",
+    "commentLabel": "הערה",
+    "commentSubmit": "שליחה",
+    "commentSuccess": "ההערה נשלחה",
+    "status": {
+      "open": "פתוח",
+      "inProgress": "בתהליך",
+      "resolved": "טופל",
+      "closed": "סגור"
+    }
   },
   "myCases": {
     "title": "התיקים שלי"
@@ -1149,6 +1175,10 @@
     "addCard": "שמירת כרטיס",
     "chargeNow": "חיוב הכרטיס השמור",
     "replaceCard": "החלפת כרטיס",
+    "cancelSubscription": "ביטול מנוי",
+    "cancelSubscriptionConfirm": "לבטל את המנוי? לא יחויבו תשלומים עתידיים. המערכת תמשיך לעבוד עד סוף תקופת הניסיון (אם עדיין בתוכה).",
+    "cancelSubscriptionOk": "המנוי בוטל",
+    "subscriptionCancelled": "המנוי בוטל — לא יחויבו תשלומים עתידיים",
     "status": "סטטוס:",
     "noCard": "לא שמור כרטיס",
     "checkoutFailed": "לא ניתן לפתוח את חלון התשלום",

@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { usePopup } from '../../../providers/PopUpProvider';
 import ConfirmationDialog from '../popups/ConfirmationDialog';
 import ClientPopup from '../../../screens/mainScreen/components/ClientPopUp';
+import SimplePopUp from '../../simpleComponents/SimplePopUp';
 
 function _buildInitialCaseData(caseDetails, initialDraft) {
     const source = caseDetails?.CaseId ? caseDetails : (initialDraft || caseDetails || {});
@@ -135,13 +136,18 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
         setFieldErrors(validateCaseData(nextData));
     };
 
-    const [showInlineAddClient, setShowInlineAddClient] = useState(false);
+    const [showAddClientPopup, setShowAddClientPopup] = useState(false);
+    const [addClientInitialName, setAddClientInitialName] = useState('');
+    const [clientSearchDraft, setClientSearchDraft] = useState('');
 
-    const handleInlineClientSaved = useCallback((savedClient) => {
-        if (!savedClient?.UserId) {
-            setShowInlineAddClient(false);
-            return;
-        }
+    const handleOpenAddClientPopup = useCallback((draftName) => {
+        const name = String(draftName ?? clientSearchDraft ?? caseData.CustomerName ?? '').trim();
+        setAddClientInitialName(name);
+        setShowAddClientPopup(true);
+    }, [clientSearchDraft, caseData.CustomerName]);
+
+    const handleClientSavedFromPopup = useCallback((savedClient) => {
+        if (!savedClient?.UserId) return;
         setCaseData((prev) => {
             if (prev.Users.some(u => u.UserId === savedClient.UserId)) return prev;
             const updatedUsers = [...prev.Users, {
@@ -168,10 +174,14 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
             delete next.PhoneNumber;
             return next;
         });
-        setShowInlineAddClient(false);
     }, []);
 
     const { result: customers, isPerforming: isPerformingCustomers, performRequest: searchCustomers } = useAutoHttpRequest(customersApi.getCustomersByName, { onFailure: () => { } });
+
+    const handleCustomerSearch = useCallback((query) => {
+        setClientSearchDraft(query);
+        searchCustomers(query);
+    }, [searchCustomers]);
 
     const { result: caseTypes, isPerforming: isPerformingCaseTypes, performRequest: searchCaseTypes } = useAutoHttpRequest(casesTypeApi.getCaseTypeByName, { onFailure: () => { } });
 
@@ -392,6 +402,7 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
     };
 
     return (
+        <>
         <SimpleContainer className="lw-caseFullView">
             <SimpleScrollView>
                 <SimpleContainer className="lw-caseFullView__row">
@@ -439,9 +450,9 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
 
                 <SimpleContainer className="lw-caseFullView__row">
                     <SimpleContainer className="lw-caseFullView__field lw-caseFullView__clientsCol">
-                        <SimpleContainer className="lw-caseFullView__clientSearchRow">
+                        <SimpleContainer className="lw-caseFullView__clientFieldWrap">
                             <SearchInput
-                                onSearch={searchCustomers}
+                                onSearch={handleCustomerSearch}
                                 title={t('cases.customerSearchHint', { defaultValue: 'שם לקוח' })}
                                 placeholder={t('cases.customerSearchPlaceholder', { defaultValue: 'חיפוש לפי שם, טלפון, אימייל או חברה' })}
                                 value={caseData.CustomerName}
@@ -452,14 +463,17 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
                                 queryResult={customers}
                                 error={fieldErrors?.CustomerName}
                                 emptyActionText={t('cases.addNewClient', { defaultValue: '+ הוספת לקוח חדש' })}
-                                onEmptyAction={() => setShowInlineAddClient(true)}
+                                onEmptyAction={handleOpenAddClientPopup}
                             />
                             <button
                                 type="button"
                                 className="lw-caseFullView__addClientBtn"
-                                onClick={() => setShowInlineAddClient(true)}
+                                onClick={handleOpenAddClientPopup}
                                 title={t('cases.addNewClient', { defaultValue: '+ הוספת לקוח חדש' })}
-                            >+</button>
+                                aria-label={t('cases.addNewClient', { defaultValue: '+ הוספת לקוח חדש' })}
+                            >
+                                +
+                            </button>
                         </SimpleContainer>
                         {caseData.Users.length > 0 && (
                             <SimpleContainer className="lw-caseFullView__clientChips">
@@ -469,15 +483,6 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
                                         <button type="button" className="lw-caseFullView__chipRemove" onClick={() => handleRemoveUser(u.UserId)}>&times;</button>
                                     </span>
                                 ))}
-                            </SimpleContainer>
-                        )}
-                        {showInlineAddClient && (
-                            <SimpleContainer className="lw-caseFullView__inlineClient">
-                                <ClientPopup
-                                    initialName={caseData.CustomerName}
-                                    rePerformRequest={handleInlineClientSaved}
-                                    closePopUpFunction={() => setShowInlineAddClient(false)}
-                                />
                             </SimpleContainer>
                         )}
                     </SimpleContainer>
@@ -669,5 +674,17 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
                 </SimpleContainer>
             </SimpleScrollView>
         </SimpleContainer>
+        <SimplePopUp
+            isOpen={showAddClientPopup}
+            onClose={() => setShowAddClientPopup(false)}
+        >
+            <ClientPopup
+                key={addClientInitialName || 'new-client'}
+                initialName={addClientInitialName}
+                rePerformRequest={handleClientSavedFromPopup}
+                closePopUpFunction={() => setShowAddClientPopup(false)}
+            />
+        </SimplePopUp>
+    </>
     );
 }

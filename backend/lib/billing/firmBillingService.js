@@ -908,6 +908,36 @@ async function getDisabledOptions(usage) {
     });
 }
 
+async function cancelSubscription() {
+    const row = await ensureBillingRow();
+    if (!row) {
+        const err = new Error('לא נמצא מנוי');
+        err.code = 'NO_BILLING';
+        throw err;
+    }
+    if (row.billingEnabled === false) {
+        return getBillingSnapshot();
+    }
+
+    await updateBilling({ billing_enabled: false });
+
+    const tenantId = getCurrentTenantId();
+    if (tenantId) {
+        await pool.query(
+            `UPDATE firm_payment_methods SET is_active = false, updated_at = now()
+             WHERE law_firm_tenant_id = $1 AND is_active = true`,
+            [tenantId]
+        );
+    } else {
+        await pool.query(
+            `UPDATE firm_payment_methods SET is_active = false, updated_at = now()
+             WHERE law_firm_tenant_id IS NULL AND is_active = true`
+        );
+    }
+
+    return getBillingSnapshot();
+}
+
 module.exports = {
     GRACE_MS,
     SETUP_AMOUNT_ILS,
@@ -924,6 +954,7 @@ module.exports = {
     handleTakbullCancel,
     runBillingMaintenance,
     getDisabledOptions,
+    cancelSubscription,
     computeFlags,
     findIntentById,
     updateBilling,

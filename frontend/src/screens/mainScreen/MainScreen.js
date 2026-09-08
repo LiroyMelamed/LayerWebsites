@@ -2,12 +2,11 @@ import SimpleScreen from '../../components/simpleComponents/SimpleScreen';
 import { useScreenSize } from '../../providers/ScreenSizeProvider';
 import useAutoHttpRequest from '../../hooks/useAutoHttpRequest';
 import useHttpRequest from '../../hooks/useHttpRequest';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { images } from '../../assets/images/images';
 import SimpleContainer from '../../components/simpleComponents/SimpleContainer';
 import TopToolBarSmallScreen from '../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen';
 import casesApi from '../../api/casesApi';
-import calendarApi from '../../api/calendarApi';
 import { AdminStackName } from '../../navigation/AdminStack';
 import { SigningManagerScreenName } from '../signingScreen/SigningManagerScreen';
 import { AllCasesScreenName } from '../allCasesScreen/AllCasesScreen';
@@ -48,12 +47,6 @@ export default function MainScreen() {
         isPerforming: isLoadingHome,
         performRequest: refreshManagerHome,
     } = useAutoHttpRequest(casesApi.getManagerHomeData);
-
-    const {
-        result: calendarResponse,
-        isPerforming: isLoadingCalendar,
-        performRequest: refreshCalendar,
-    } = useAutoHttpRequest(calendarApi.getTodayAndTomorrow);
 
     const {
         result: aiBriefResponse,
@@ -99,15 +92,17 @@ export default function MainScreen() {
         ? aiBriefResponse
         : null;
 
-    const calendarEvents = calendarResponse?.events || calendarResponse?.data?.events || [];
+    const calendarEvents = useMemo(
+        () => [...(managerHome?.today || []), ...(managerHome?.tomorrow || [])],
+        [managerHome?.today, managerHome?.tomorrow],
+    );
 
     const handleRefresh = useCallback(() => {
         refreshManagerHome();
-        refreshCalendar();
         if (aiInsightsEnabled) {
             fetchAiBrief();
         }
-    }, [refreshManagerHome, refreshCalendar, aiInsightsEnabled, fetchAiBrief]);
+    }, [refreshManagerHome, aiInsightsEnabled, fetchAiBrief]);
 
     const handleCalendarEventPress = useCallback(async (ev, { usePush = false } = {}) => {
         if (ev?.caseId) {
@@ -149,7 +144,7 @@ export default function MainScreen() {
                 <SimpleContainer className="lw-commandCenter">
                     <CalendarWidget
                         events={calendarEvents}
-                        isPerforming={isLoadingCalendar}
+                        isPerforming={isLoadingHome}
                         onEventPress={handleCalendarEventPress}
                     />
 
@@ -164,6 +159,7 @@ export default function MainScreen() {
                     <SummaryStrip
                         summary={managerHome?.summary}
                         firmStats={managerHome?.firmStats}
+                        todayCount={managerHome?.today?.length ?? 0}
                         isPerforming={isLoadingHome}
                         onNavigate={handleSummaryNavigate}
                     />

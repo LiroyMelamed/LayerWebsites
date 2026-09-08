@@ -1,25 +1,32 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiUtils from '../../api/apiUtils';
-import { PRICING_CONFIG, resolvePricingLineItems, yearlyTotalIls } from '../../components/pricing/pricingConfig';
+import { getPricingSelectionDefaults } from '../../components/pricing/pricingConfig';
+import PoweredByMela from '../../components/PoweredByMela';
+import SimpleCard from '../../components/simpleComponents/SimpleCard';
+import SimpleContainer from '../../components/simpleComponents/SimpleContainer';
+import SimpleInput from '../../components/simpleComponents/SimpleInput';
+import PrimaryButton from '../../components/styledComponents/buttons/PrimaryButton';
+import SecondaryButton from '../../components/styledComponents/buttons/SecondaryButton';
+import { Text14, TextBold14, TextBold24 } from '../../components/specializedComponents/text/AllTextKindFile';
+import MelaMediaLogo from '../../components/branding/MelaMediaLogo';
+import { isSignupEmbedded, navigateAfterSignup } from '../../lib/signupEmbed';
 import { tenantPath } from '../../lib/tenantSlug';
+import LoginSimpleScreen from '../loginScreen/components/LoginSimpleScreen';
 import './SignupScreen.scss';
 
-const STEPS = ['firm', 'contact', 'package', 'payment'];
-const PRACTICE_AREAS = [
-    'דיני משפחה',
-    'דיני עבודה',
-    'נזיקין',
-    'מקרקעין',
-    'פלילי',
-    'מסחרי',
-    'Other',
-];
-
+const STEPS = ['firm', 'contact', 'confirm'];
 const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
+const TRIAL_POINTS = [
+    '3 חודשים חינם — ללא התחייבות',
+    'כניסה מיידית עם OTP לטלפון',
+    'בחירת חבילה ותמחור — אחרי תקופת הניסיון, מהגדרות המערכת',
+    'ניתן לבטל את המנוי בכל עת — ללא חיובים עתידיים',
+];
 
 export default function SignupScreen() {
     const navigate = useNavigate();
+    const embedded = isSignupEmbedded();
     const [step, setStep] = useState(0);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -29,32 +36,19 @@ export default function SignupScreen() {
         adminName: '',
         adminPhone: '',
         adminEmail: '',
-        lawyerCount: '1',
-        practiceAreas: [],
-        platformId: 'site_app',
-        resourceId: 'pro',
-        signingId: '500',
-        billingInterval: 'monthly',
+        ...getPricingSelectionDefaults(),
     });
-
-    const pricing = useMemo(
-        () => resolvePricingLineItems({
-            platformId: form.platformId,
-            resourceId: form.resourceId,
-            signingId: form.signingId,
-        }),
-        [form.platformId, form.resourceId, form.signingId]
-    );
 
     const update = (patch) => setForm((prev) => ({ ...prev, ...patch }));
 
-    const toggleArea = (area) => {
-        setForm((prev) => ({
-            ...prev,
-            practiceAreas: prev.practiceAreas.includes(area)
-                ? prev.practiceAreas.filter((a) => a !== area)
-                : [...prev.practiceAreas, area],
-        }));
+    const handlePhoneChange = (event) => {
+        const raw = event?.target?.value ?? '';
+        const digitsOnly = String(raw).replace(/\D/g, '');
+        let normalized = digitsOnly;
+        if (normalized.startsWith('972') && normalized.length >= 11) {
+            normalized = `0${normalized.slice(3)}`;
+        }
+        update({ adminPhone: normalized.slice(0, 10) });
     };
 
     const validateStep = () => {
@@ -88,20 +82,23 @@ export default function SignupScreen() {
                 adminName: form.adminName.trim(),
                 adminPhone: form.adminPhone.trim(),
                 adminEmail: form.adminEmail.trim() || null,
-                lawyerCount: Number(form.lawyerCount) || 1,
-                practiceAreas: form.practiceAreas,
                 platformId: form.platformId,
                 resourceId: form.resourceId,
                 signingId: form.signingId,
                 billingInterval: form.billingInterval,
             });
             const intentId = res.data?.intentId;
-            const checkout = await ApiUtils.post(`/public/signup/${intentId}/checkout`);
-            if (checkout.data?.redirectUrl) {
-                window.location.href = checkout.data.redirectUrl;
+            if (!intentId) {
+                setError('הרשמה נכשלה');
                 return;
             }
-            setError('לא התקבלה כתובת תשלום');
+            const complete = await ApiUtils.post(`/public/signup/${intentId}/complete`);
+            const slug = complete.data?.slug;
+            if (slug) {
+                navigateAfterSignup(slug, navigate);
+                return;
+            }
+            setError('פתיחת המשרד נכשלה');
         } catch (e) {
             setError(e?.response?.data?.message || e?.response?.data?.error || 'הרשמה נכשלה');
         } finally {
@@ -109,122 +106,126 @@ export default function SignupScreen() {
         }
     };
 
+    const footer = (
+        <SimpleContainer className="lw-signup__footer">
+            {step > 0 && (
+                <SecondaryButton onPress={back} disabled={loading}>
+                    חזרה
+                </SecondaryButton>
+            )}
+            {step < STEPS.length - 1 ? (
+                <PrimaryButton onPress={next}>
+                    המשך
+                </PrimaryButton>
+            ) : (
+                <PrimaryButton isPerforming={loading} onPress={submitSignup} disabled={loading}>
+                    התחילו 3 חודשים חינם
+                </PrimaryButton>
+            )}
+        </SimpleContainer>
+    );
+
     return (
-        <div className="lw-signup" dir="rtl">
-            <div className="lw-signup__card">
-                <header className="lw-signup__header">
-                    <h1>פתיחת משרד עורכי דין</h1>
-                    <p>3 חודשים חינם · נדרש כרטיס אשראי לאימות (₪1)</p>
-                </header>
+        <LoginSimpleScreen
+            unScrollableTopComponent={(
+                <MelaMediaLogo markSize={embedded ? 56 : 72} className="lw-melaMediaLogo--signup" />
+            )}
+            unScrollableBottomComponent={(
+                <>
+                    {footer}
+                    {!embedded && <PoweredByMela />}
+                </>
+            )}
+        >
+            <SimpleContainer className={embedded ? 'lw-signup__content lw-signup__content--embed' : 'lw-signup__content'}>
+                <TextBold24 className="lw-signup__title">פתיחת משרד עורכי דין</TextBold24>
+                <Text14 className="lw-signup__subtitle">
+                    3 חודשים חינם · ביטול בכל עת · ללא כרטיס אשראי
+                </Text14>
 
-                <div className="lw-signup__steps">
+                <SimpleContainer className="lw-signup__steps" aria-label="שלבי הרשמה">
                     {STEPS.map((id, i) => (
-                        <span key={id} className={i <= step ? 'active' : ''}>{i + 1}</span>
+                        <span key={id} className={i <= step ? 'is-active' : ''}>{i + 1}</span>
                     ))}
-                </div>
+                </SimpleContainer>
 
-                {error && <div className="lw-signup__error">{error}</div>}
+                {error && <SimpleContainer className="lw-signup__error">{error}</SimpleContainer>}
 
                 {step === 0 && (
-                    <section>
-                        <label>שם המשרד</label>
-                        <input value={form.firmName} onChange={(e) => update({ firmName: e.target.value })} />
-                        <label>כתובת המשרד (באנגלית)</label>
-                        <div className="lw-signup__slug">
-                            <span>lawyer.mela-media.co.il/</span>
-                            <input
+                    <SimpleContainer className="lw-signup__fields">
+                        <SimpleInput
+                            title="שם המשרד"
+                            className="lw-signup__input"
+                            value={form.firmName}
+                            onChange={(e) => update({ firmName: e.target.value })}
+                        />
+                        <SimpleContainer className="lw-signup__slugBlock">
+                            <Text14 className="lw-signup__slugHint">כתובת המשרד</Text14>
+                            <Text14 className="lw-signup__slugPrefix" dir="ltr">
+                                lawyer.mela-media.co.il/
+                            </Text14>
+                            <SimpleInput
+                                title="שם בכתובת"
+                                className="lw-signup__input lw-signup__input--slug"
                                 value={form.slug}
-                                onChange={(e) => update({ slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
+                                onChange={(e) => update({
+                                    slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''),
+                                })}
                                 placeholder="cohen-law"
                             />
-                        </div>
-                    </section>
+                            <Text14 className="lw-signup__slugExample">לדוגמה: cohen-law</Text14>
+                        </SimpleContainer>
+                    </SimpleContainer>
                 )}
 
                 {step === 1 && (
-                    <section>
-                        <label>שם מנהל/ת המשרד</label>
-                        <input value={form.adminName} onChange={(e) => update({ adminName: e.target.value })} />
-                        <label>טלפון (לכניסה עם OTP)</label>
-                        <input value={form.adminPhone} onChange={(e) => update({ adminPhone: e.target.value })} />
-                        <label>דוא״ל (אופציונלי)</label>
-                        <input type="email" value={form.adminEmail} onChange={(e) => update({ adminEmail: e.target.value })} />
-                        <label>מספר עורכי דין במשרד</label>
-                        <input type="number" min={1} value={form.lawyerCount} onChange={(e) => update({ lawyerCount: e.target.value })} />
-                        <label>תחומי עיסוק</label>
-                        <div className="lw-signup__tags">
-                            {PRACTICE_AREAS.map((area) => (
-                                <button
-                                    key={area}
-                                    type="button"
-                                    className={form.practiceAreas.includes(area) ? 'selected' : ''}
-                                    onClick={() => toggleArea(area)}
-                                >
-                                    {area}
-                                </button>
-                            ))}
-                        </div>
-                    </section>
+                    <SimpleContainer className="lw-signup__fields">
+                        <SimpleInput
+                            title="שם מנהל/ת המשרד"
+                            className="lw-signup__input"
+                            value={form.adminName}
+                            onChange={(e) => update({ adminName: e.target.value })}
+                        />
+                        <SimpleInput
+                            title="טלפון (לכניסה עם OTP)"
+                            type="tel"
+                            className="lw-signup__input"
+                            value={form.adminPhone}
+                            onChange={handlePhoneChange}
+                            maxLength={10}
+                        />
+                        <SimpleInput
+                            title="דוא״ל (אופציונלי)"
+                            type="email"
+                            className="lw-signup__input"
+                            value={form.adminEmail}
+                            onChange={(e) => update({ adminEmail: e.target.value })}
+                        />
+                    </SimpleContainer>
                 )}
 
                 {step === 2 && (
-                    <section className="lw-signup__package">
-                        <p className="lw-signup__price">
-                            {PRICING_CONFIG.currency}{pricing.total}
-                            <span>/חודש</span>
-                        </p>
-                        <label>פלטפורמה</label>
-                        <select value={form.platformId} onChange={(e) => update({ platformId: e.target.value })}>
-                            {PRICING_CONFIG.platforms.map((p) => (
-                                <option key={p.id} value={p.id}>{p.label} (+{p.amount}₪)</option>
-                            ))}
-                        </select>
-                        <label>משאבים</label>
-                        <select value={form.resourceId} onChange={(e) => update({ resourceId: e.target.value })}>
-                            {PRICING_CONFIG.resources.map((r) => (
-                                <option key={r.id} value={r.id}>{r.label} (+{r.amount}₪)</option>
-                            ))}
-                        </select>
-                        <label>חתימות</label>
-                        <select value={form.signingId} onChange={(e) => update({ signingId: e.target.value })}>
-                            {PRICING_CONFIG.signing.map((s) => (
-                                <option key={s.id} value={s.id}>{s.label} (+{s.amount}₪)</option>
-                            ))}
-                        </select>
-                        <label>מחזור חיוב</label>
-                        <select value={form.billingInterval} onChange={(e) => update({ billingInterval: e.target.value })}>
-                            <option value="monthly">חודשי</option>
-                            <option value="yearly">שנתי (10% הנחה — {PRICING_CONFIG.currency}{yearlyTotalIls(pricing.total)})</option>
-                        </select>
-                    </section>
-                )}
+                    <SimpleContainer className="lw-signup__confirm">
+                        <SimpleCard className="lw-signup__trialCard">
+                            <TextBold14>מה מקבלים עכשיו</TextBold14>
+                            <ul className="lw-signup__trialList">
+                                {TRIAL_POINTS.map((line) => (
+                                    <li key={line}><Text14>{line}</Text14></li>
+                                ))}
+                            </ul>
+                        </SimpleCard>
 
-                {step === 3 && (
-                    <section>
-                        <p>לאחר לחיצה תועברו לדף תשלום מאובטח (Takbull) לאימות כרטיס ב-₪1.</p>
-                        <p>החיוב החודשי יתחיל רק לאחר 3 חודשים חינם.</p>
+                        <Text14>לאחר לחיצה המשרד ייפתח מיד ותועברו למסך ההתחברות.</Text14>
+
                         <ul className="lw-signup__summary">
-                            <li>משרד: {form.firmName}</li>
-                            <li>כתובת: lawyer.mela-media.co.il/{form.slug}</li>
-                            <li>חבילה: {PRICING_CONFIG.currency}{pricing.total}/חודש</li>
+                            <li><Text14>משרד: {form.firmName}</Text14></li>
+                            <li><Text14>כתובת: lawyer.mela-media.co.il/{form.slug}</Text14></li>
+                            <li><Text14>מנהל/ת: {form.adminName}</Text14></li>
                         </ul>
-                    </section>
+                    </SimpleContainer>
                 )}
-
-                <footer className="lw-signup__footer">
-                    {step > 0 && (
-                        <button type="button" className="secondary" onClick={back} disabled={loading}>חזרה</button>
-                    )}
-                    {step < STEPS.length - 1 ? (
-                        <button type="button" className="primary" onClick={next}>המשך</button>
-                    ) : (
-                        <button type="button" className="primary" onClick={submitSignup} disabled={loading}>
-                            {loading ? 'מעבד...' : 'אימות כרטיס ופתיחת משרד'}
-                        </button>
-                    )}
-                </footer>
-            </div>
-        </div>
+            </SimpleContainer>
+        </LoginSimpleScreen>
     );
 }
 
@@ -240,7 +241,7 @@ export function SignupCompleteScreen() {
             try {
                 const res = await ApiUtils.get(`/public/signup/${intentId}/status`);
                 if (res.data?.status === 'completed' && res.data?.slug) {
-                    navigate(tenantPath(res.data.slug, '/LoginStack/LoginScreen'), { replace: true });
+                    navigateAfterSignup(res.data.slug, navigate);
                     return;
                 }
             } catch (_) { /* retry */ }
@@ -251,11 +252,15 @@ export function SignupCompleteScreen() {
     }, [intentId, navigate]);
 
     return (
-        <div className="lw-signup" dir="rtl">
-            <div className="lw-signup__card">
-                <h1>מאמתים את התשלום...</h1>
-                <p>המשרד שלכם נפתח. מיד תועברו להתחברות.</p>
-            </div>
-        </div>
+        <LoginSimpleScreen
+            unScrollableTopComponent={(
+                <MelaMediaLogo markSize={72} className="lw-melaMediaLogo--signup" />
+            )}
+        >
+            <SimpleContainer className="lw-signup__content lw-signup__content--center">
+                <TextBold24>פותחים את המשרד...</TextBold24>
+                <Text14 className="lw-signup__subtitle">מיד תועברו להתחברות.</Text14>
+            </SimpleContainer>
+        </LoginSimpleScreen>
     );
 }

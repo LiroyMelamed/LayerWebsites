@@ -75,6 +75,15 @@
     opacity: 1;
 }
 
+.lw-simpleInput__labelAccessory {
+    position: absolute;
+    inset-inline-end: 100%;
+    inset-block-start: 0;
+    transform: translate(35%, -42%);
+    pointer-events: auto;
+    line-height: 0;
+}
+
 .lw-simpleInput.is-floated .lw-simpleInput__field::placeholder {
     opacity: 0.5;
 }

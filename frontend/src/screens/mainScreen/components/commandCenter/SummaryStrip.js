@@ -5,7 +5,7 @@ import Skeleton from "../../../../components/simpleComponents/Skeleton";
 import { Text12, TextBold14, TextBold20 } from "../../../../components/specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../../constant/colors";
 
-export default function SummaryStrip({ summary, firmStats, isPerforming, onNavigate }) {
+export default function SummaryStrip({ summary, firmStats, todayCount = 0, isPerforming, onNavigate }) {
     const { t } = useTranslation();
 
     const chips = [
@@ -40,7 +40,7 @@ export default function SummaryStrip({ summary, firmStats, isPerforming, onNavig
         {
             key: "today",
             label: t("managerHome.summary.today"),
-            value: summary?.todayEventCount ?? 0,
+            value: todayCount,
             accent: colors.SideBarSelected,
             onClick: () => onNavigate?.("today"),
         },

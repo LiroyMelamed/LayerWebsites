@@ -25,6 +25,8 @@ const src = path.join(root, "public", "tenants", tenant);
 const logosSrc = path.join(src, "logos");
 const logosDst = path.join(root, "src", "assets", "images", "logos");
 
+const OPTIONAL_PUBLIC_BRAND = ["melamedia-mark.png"];
+
 const OPTIONAL_PUBLIC_ICONS = [
   "logo192.png",
   "logo512.png",
@@ -58,6 +60,15 @@ if (fs.existsSync(path.join(src, "manifest.json"))) {
   fs.copyFileSync(path.join(src, "manifest.json"), path.join(root, "public", "manifest.json"));
 }
 fs.copyFileSync(path.join(src, "firm-logo.png"), path.join(root, "public", "firm-logo.png"));
+for (const brandFile of OPTIONAL_PUBLIC_BRAND) {
+  const brandSrc = path.join(src, brandFile);
+  const brandDst = path.join(root, "public", brandFile);
+  if (fs.existsSync(brandSrc)) {
+    fs.copyFileSync(brandSrc, brandDst);
+  } else if (fs.existsSync(brandDst)) {
+    fs.unlinkSync(brandDst);
+  }
+}
 for (const icon of OPTIONAL_PUBLIC_ICONS) {
   const iconSrc = path.join(src, icon);
   const iconDst = path.join(root, "public", icon);

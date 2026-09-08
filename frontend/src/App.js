@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import RouteFallback from './components/simpleComponents/RouteFallback';
 import { AdminStackName } from './navigation/AdminStack';
@@ -40,12 +40,13 @@ import PrivacyPage from './screens/compliance/PrivacyPage';
 import ContinuityPage from './screens/compliance/ContinuityPage';
 import CompliancePage from './screens/compliance/CompliancePage';
 import ChatBotPage from './screens/chatbot/ChatBotPage';
-import MasterAdminScreen from './screens/masterAdmin/MasterAdminScreen';
 import CalendarInviteScreen from './screens/calendarScreen/CalendarInviteScreen';
 import SignupScreen, { SignupCompleteScreen } from './screens/signup/SignupScreen';
 import TenantShell from './components/tenant/TenantShell';
 import TenantAdminRedirect from './components/tenant/TenantAdminRedirect';
 import { isMultiTenantApp } from './lib/tenantSlug';
+
+const MasterAdminScreen = lazy(() => import('./screens/masterAdmin/MasterAdminScreen'));
 
 const STACK_SUFFIX = "/*"
 
@@ -216,7 +217,7 @@ const App = () => {
               element={<TenantShell><ClientStack /></TenantShell>}
             />
             <Route path="/:tenantSlug/admin" element={<TenantAdminRedirect />} />
-            <Route path="/" element={<Navigate to="/melamedia/LoginStack/LoginScreen" replace />} />
+            <Route path="/" element={<Navigate to="/signup" replace />} />
           </>
         ) : (
           <>

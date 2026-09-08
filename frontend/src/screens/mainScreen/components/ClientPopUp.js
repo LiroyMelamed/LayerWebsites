@@ -250,7 +250,7 @@ export default function ClientPopup({ clientDetails, initialName, rePerformReque
             </SimplePopUp>
             <SimpleScrollView>
                 {existingMatch && (
-                    <SimpleContainer className="lw-clientPopup__existingBanner" onClick={loadExistingClient}>
+                    <SimpleContainer className="lw-clientPopup__existingBanner" onPress={loadExistingClient}>
                         <span className="lw-clientPopup__existingIcon">ℹ️</span>
                         <span>
                             {t('customers.existingClientFound', {

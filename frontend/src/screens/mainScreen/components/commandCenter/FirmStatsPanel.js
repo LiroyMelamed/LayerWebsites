@@ -122,7 +122,7 @@ export default function FirmStatsPanel({
         {
             key: "todayEvents",
             label: t("managerHome.stats.todayEvents"),
-            value: firmStats?.todayEventCount ?? 0,
+            value: todayEvents.length,
             onClick: () => openTodayEventsModal({
                 events: todayEvents,
                 openPopup,
