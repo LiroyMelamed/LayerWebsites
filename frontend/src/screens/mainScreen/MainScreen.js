@@ -154,7 +154,6 @@ export default function MainScreen() {
                     />
 
                     <AiBriefSection
-                        morningBrief={managerHome?.morningBrief}
                         aiBrief={aiBrief}
                         aiBriefEnabled={aiInsightsEnabled}
                         aiBriefLoading={aiInsightsEnabled && isLoadingAiBrief}
