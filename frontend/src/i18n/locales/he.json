@@ -437,13 +437,13 @@
     "subtitle": "הנה מה שדורש את תשומת לבך היום.",
     "summary": {
       "totalCases": "סה\"כ תיקים",
-      "activeCases": "תיקים פעילים",
-      "urgent": "דחוף",
-      "needsAttention": "דורש טיפול",
-      "today": "היום",
-      "signing": "ממתין לחתימה",
+      "activeCases": "תיקים פתוחים",
+      "urgent": "תיקים דחופים",
+      "needsAttention": "דורשים טיפול",
+      "today": "אירועים היום",
+      "signing": "ממתינים לחתימה",
       "signingExpired": "{{count}} פג תוקף",
-      "unassigned": "ללא מנהל"
+      "unassigned": "תיקים ללא מנהל"
     },
     "attention": {
       "title": "דורש תשומת לב",
@@ -537,7 +537,7 @@
       "licenseExpiringWarning": "רישיון מתקרב לפקיעה",
       "completionPassed": "תאריך הסיום המשוער חלף",
       "completionApproaching": "תאריך סיום משוער מתקרב",
-      "noActivity": "ללא פעילות משמעותית",
+      "noActivity": "ללא שינוי מעל {{days}} ימים",
       "longInStage": "זמן ממושך בשלב הנוכחי",
       "signingExpired": "חתימה פגה",
       "signingExpiring": "חתימה פגה בקרוב",
@@ -553,7 +553,7 @@
       "licenseExpiringWarning": "הרישיון פג בעוד {{days}} ימים ({{date}}).",
       "completionPassed": "תאריך הסיום המשוער חלף ({{date}}) — אינו מועד משפטי.",
       "completionApproaching": "תאריך סיום משוער בעוד {{days}} ימים ({{date}}) — אינו מועד משפטי.",
-      "noActivity": "לא נרשמה פעילות משמעותית במערכת ב-{{days}} הימים האחרונים.",
+      "noActivity": "לא בוצע שינוי בתיק מעל {{days}} ימים.",
       "longInStage": "התיק נמצא בשלב {{stage}} זמן ממושך ({{days}} ימים) — אינו מועד משפטי.",
       "signingExpired": "המסמך \"{{filename}}\" פג תוקף ועדיין ממתין לחתימה.",
       "signingExpiring": "המסמך \"{{filename}}\" פג בעוד {{hours}} שעות.",
