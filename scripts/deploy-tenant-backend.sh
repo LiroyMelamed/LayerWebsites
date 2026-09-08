@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Pull branch and restart PM2 API on 37.60.230.148.
-# Usage: ./scripts/deploy-tenant-backend.sh melamedlaw|morlevy|ashrafessa|melamedia|idm
+# Usage: ./scripts/deploy-tenant-backend.sh melamedlaw|morlevy|ashrafessa|melamedia|idm|lawyer
 # Prefers SSH key (SSH_KEY, default ~/.ssh/id_ed25519). Do not add new sshpass usage.
 set -euo pipefail
 
@@ -14,8 +14,9 @@ case "$TENANT" in
   ashrafessa) DIR=/root/AshrafEssa; BRANCH=AshrafEssa; PM2=ashrafessa-api; DB=ashrafessa ;;
   melamedia) DIR=/root/Melamedia; BRANCH=Melamedia; PM2=melamedia-api; DB=melamedia ;;
   idm) DIR=/root/Idm; BRANCH=Idm; PM2=idm-api; DB=idm ;;
+  lawyer) DIR=/root/LawyerPlatform; BRANCH=Melamedia; PM2=lawyer-api; DB=lawyer ;;
   *)
-    echo "Usage: $0 melamedlaw|morlevy|ashrafessa|melamedia|idm" >&2
+    echo "Usage: $0 melamedlaw|morlevy|ashrafessa|melamedia|idm|lawyer" >&2
     exit 1
     ;;
 esac

@@ -57,7 +57,8 @@
     "submit": "שלח",
     "simpleImageAlt": "תמונה",
     "chooseFilePrompt": "לחץ או גרור קובץ לכאן",
-    "uploading": "מעלה..."
+    "uploading": "מעלה...",
+    "listTitleWithCount": "{{title}} ({{count}})"
   },
   "auth": {
     "login": "התחברות",
@@ -434,28 +435,98 @@
   "managerHome": {
     "greeting": "בוקר טוב",
     "greetingNamed": "בוקר טוב, {{name}}",
+    "greetingMorning": "בוקר טוב",
+    "greetingMorningNamed": "בוקר טוב, {{name}}",
+    "greetingAfternoon": "צהריים טובים",
+    "greetingAfternoonNamed": "צהריים טובים, {{name}}",
+    "greetingEvening": "ערב טוב",
+    "greetingEveningNamed": "ערב טוב, {{name}}",
+    "greetingNight": "לילה טוב",
+    "greetingNightNamed": "לילה טוב, {{name}}",
     "subtitle": "הנה מה שדורש את תשומת לבך היום.",
+    "aiBriefLabel": "AI",
+    "aiRecommendations": "טיפים להצטיינות",
+    "stats": {
+      "title": "מבט על המשרד",
+      "casesOpenedToday": "תיקים שנפתחו היום",
+      "casesClosedToday": "תיקים שנסגרו היום",
+      "mostActiveManager": "המנהל/ת הפעיל/ה ביותר היום",
+      "activityCount_one": "פעולה {{count}}",
+      "activityCount_two": "{{count}} פעולות",
+      "activityCount_many": "{{count}} פעולות",
+      "activityCount_other": "{{count}} פעולות",
+      "noActivityToday": "אין פעילות מתועדת היום",
+      "openCases": "תיקים פתוחים",
+      "needsAttention": "פריטים לטיפול",
+      "urgentCount_one": "{{count}} דחוף",
+      "urgentCount_two": "{{count}} דחופים",
+      "urgentCount_many": "{{count}} דחופים",
+      "urgentCount_other": "{{count}} דחופים",
+      "noActivityInQueue_one": "{{count}} ללא שינוי מעל 7 ימים",
+      "noActivityInQueue_two": "{{count}} ללא שינוי מעל 7 ימים",
+      "noActivityInQueue_many": "{{count}} ללא שינוי מעל 7 ימים",
+      "noActivityInQueue_other": "{{count}} ללא שינוי מעל 7 ימים",
+      "signingPending": "ממתינים לחתימה",
+      "signedToday": "{{count}} נחתמו היום",
+      "todayEvents": "אירועים היום",
+      "unassigned": "ללא מנהל תיק"
+    },
     "summary": {
       "totalCases": "סה\"כ תיקים",
-      "activeCases": "תיקים פעילים",
-      "urgent": "דחוף",
-      "needsAttention": "דורש טיפול",
-      "today": "היום",
-      "signing": "ממתין לחתימה",
+      "activeCases": "תיקים פתוחים",
+      "urgent": "תיקים דחופים",
+      "needsAttention": "דורשים טיפול",
+      "today": "אירועים היום",
+      "signing": "ממתינים לחתימה",
       "signingExpired": "{{count}} פג תוקף",
-      "unassigned": "ללא מנהל"
+      "unassigned": "תיקים ללא מנהל"
     },
     "attention": {
       "title": "דורש תשומת לב",
-      "count": "{{count}} פריטים",
+      "count_one": "פריט {{count}}",
+      "count_two": "{{count}} פריטים",
+      "count_many": "{{count}} פריטים",
+      "count_other": "{{count}} פריטים",
       "emptyBadge": "הכל שקט",
       "allClearTitle": "✓ הכל שקט כרגע",
       "allClearBody": "אין פריטים דחופים הדורשים טיפול.",
-      "moreInGroup": "+{{count}} נוספים"
+      "moreInGroup": "+{{count}} נוספים",
+      "groupMeta": "{{lead}} +{{count}}",
+      "tapToExpand": "לחצו להרחבה — ואז בחרו פריט לפתיחה",
+      "managerCount_one": "פריט {{count}}",
+      "managerCount_two": "{{count}} פריטים",
+      "managerCount_many": "{{count}} פריטים",
+      "managerCount_other": "{{count}} פריטים",
+      "signingSection": "חתימות"
+    },
+    "todayEventsModal": {
+      "count_one": "אירוע {{count}}",
+      "count_two": "{{count}} אירועים",
+      "count_many": "{{count}} אירועים",
+      "count_other": "{{count}} אירועים"
+    },
+    "drillDown": {
+      "count_one": "פריט {{count}}",
+      "count_two": "{{count}} פריטים",
+      "count_many": "{{count}} פריטים",
+      "count_other": "{{count}} פריטים",
+      "casesOpenedTodayEmpty": "לא נפתחו תיקים חדשים היום.",
+      "casesClosedTodayEmpty": "לא נסגרו תיקים היום.",
+      "openCasesEmpty": "אין תיקים פתוחים.",
+      "unassignedEmpty": "אין תיקים ללא מנהל.",
+      "managerActivityTitle": "יומן פעילות — {{name}}",
+      "managerActivitySubtitle_one": "פעולה {{count}} היום",
+      "managerActivitySubtitle_two": "{{count}} פעולות היום",
+      "managerActivitySubtitle_many": "{{count}} פעולות היום",
+      "managerActivitySubtitle_other": "{{count}} פעולות היום",
+      "managerActivityEmpty": "אין פעילות מתועדת היום."
     },
     "today": {
       "title": "היום",
-      "count": "{{count}} אירועים",
+      "count_one": "אירוע {{count}}",
+      "count_two": "{{count}} אירועים",
+      "count_many": "{{count}} אירועים",
+      "count_other": "{{count}} אירועים",
       "empty": "אין אירועים מתוכננים להיום.",
       "potentialClient": "לקוח פוטנציאלי",
       "rsvpPending": "ממתין לאישור הגעה"
@@ -468,6 +539,7 @@
       "unassignedLabel": "ללא מנהל תיק",
       "needsAttentionShort": "{{count}} דורשים טיפול",
       "urgentShort": "{{count}} דחופים",
+      "totalActive": "תיקים פתוחים",
       "unassignedBanner": "{{count}} תיקים פתוחים ללא מנהל תיק",
       "stageLabel": "שלב {{stage}} · {{count}}"
     },
@@ -477,7 +549,34 @@
       "expiring": "פג בקרוב",
       "expired": "פג תוקף",
       "rejected": "נדחה",
-      "empty": "אין מסמכים ממתינים לחתימה."
+      "empty": "אין מסמכים ממתינים לחתימה.",
+      "remindAll": "תזכורת לכולם",
+      "remindAllLoading": "שולח תזכורות...",
+      "remindAllSuccess": "נשלחו תזכורות ל-{{signers}} חותמים ב-{{files}} מסמכים",
+      "remindAllEmpty": "אין חותמים ממתינים לתזכורת",
+      "remindAllError": "שליחת התזכורות נכשלה",
+      "queueStatus": {
+        "pending": "ממתין לחתימה",
+        "expiring": "פג בקרוב",
+        "expired": "פג תוקף",
+        "rejected": "נדחה"
+      }
+    },
+    "signalTags": {
+      "license_expired": "רישיון פג",
+      "license_expiring_critical": "רישיון דחוף",
+      "license_expiring_warning": "רישיון בקרוב",
+      "signing_expired": "פג תוקף",
+      "signing_expiring": "פג בקרוב",
+      "signing_pending": "ממתין",
+      "signing_rejected": "נדחה",
+      "unassigned_case": "ללא מנהל",
+      "no_activity": "ללא שינוי",
+      "long_in_stage": "שלב ממושך",
+      "completion_passed": "יעד עבר",
+      "completion_approaching": "יעד מתקרב",
+      "rsvp_pending": "ממתין לאישור",
+      "reminder_failed": "תזכורת נכשלה"
     },
     "potentialClients": {
       "title": "לקוחות פוטנציאליים",
@@ -489,6 +588,8 @@
       "empty": "אין פעילות מתועדת לאחרונה.",
       "types": {
         "stage_update": "עדכון שלב בתיק",
+        "case_opened": "תיק נפתח",
+        "case_closed": "תיק נסגר",
         "signing_completed": "חתימה הושלמה",
         "signing_rejected": "חתימה נדחתה",
         "document_uploaded": "מסמך הועלה לתיק"
@@ -502,6 +603,8 @@
     "actions": {
       "open": "פתח",
       "viewAll": "הצג הכל",
+      "viewAllCases": "כל התיקים",
+      "openCalendar": "פתח יומן",
       "expand": "הרחב",
       "collapse": "צמצם"
     },
@@ -512,7 +615,7 @@
       "licenseExpiringWarning": "רישיון מתקרב לפקיעה",
       "completionPassed": "תאריך הסיום המשוער חלף",
       "completionApproaching": "תאריך סיום משוער מתקרב",
-      "noActivity": "ללא פעילות משמעותית",
+      "noActivity": "ללא שינוי — {{days}} ימים",
       "longInStage": "זמן ממושך בשלב הנוכחי",
       "signingExpired": "חתימה פגה",
       "signingExpiring": "חתימה פגה בקרוב",
@@ -528,7 +631,7 @@
       "licenseExpiringWarning": "הרישיון פג בעוד {{days}} ימים ({{date}}).",
       "completionPassed": "תאריך הסיום המשוער חלף ({{date}}) — אינו מועד משפטי.",
       "completionApproaching": "תאריך סיום משוער בעוד {{days}} ימים ({{date}}) — אינו מועד משפטי.",
-      "noActivity": "לא נרשמה פעילות משמעותית במערכת ב-{{days}} הימים האחרונים.",
+      "noActivity": "לא בוצע עדכון שלב, הערה, העלאת מסמך או חתימה בתיק מעל {{days}} ימים.",
       "longInStage": "התיק נמצא בשלב {{stage}} זמן ממושך ({{days}} ימים) — אינו מועד משפטי.",
       "signingExpired": "המסמך \"{{filename}}\" פג תוקף ועדיין ממתין לחתימה.",
       "signingExpiring": "המסמך \"{{filename}}\" פג בעוד {{hours}} שעות.",
@@ -539,17 +642,20 @@
     },
     "groups": {
       "signing_pending": "{{count}} חתימות ממתינות",
-      "no_activity": "{{count}} תיקים ללא פעילות משמעותית",
+      "no_activity": "{{count}} תיקים — לא בוצע שינוי מעל {{days}} ימים",
+      "no_activity_range": "{{count}} תיקים — לא בוצע שינוי ({{minDays}}–{{maxDays}} ימים)",
       "long_in_stage": "{{count}} תיקים בשלב הנוכחי זמן ממושך",
       "completion_approaching": "{{count}} תיקים עם תאריך סיום משוער מתקרב",
-      "rsvp_pending": "{{count}} הזמנות ממתינות לאישור"
+      "rsvp_pending": "{{count}} הזמנות ממתינות לאישור",
+      "completion_passed": "{{count}} תיקים עם תאריך סיום משוער שחלף"
     },
     "groupReasons": {
       "signing_pending": "מסמכים הממתינים לחתימת לקוח — לחצו להרחבה ולמעבר לתיקים",
-      "no_activity": "תיקים ללא פעילות משמעותית במערכת — לחצו להרחבה",
+      "no_activity": "לא בוצע עדכון שלב, הערה, העלאת מסמך או חתימה — לחצו לפירוט לפי תיק",
       "long_in_stage": "תיקים בשלב הנוכחי זמן ממושך — לחצו להרחבה",
       "completion_approaching": "תיקים עם תאריך סיום משוער מתקרב — לחצו להרחבה",
-      "rsvp_pending": "פגישות ללא אישור הגעה — לחצו להרחבה"
+      "rsvp_pending": "פגישות ללא אישור הגעה — לחצו להרחבה",
+      "completion_passed": "תיקים שתאריך הסיום המשוער שלהם חלף — לחצו להרחבה"
     },
     "brief": {
       "allClear": "הכל שקט — אין נושאים דחופים להיום.",
@@ -565,7 +671,7 @@
         "signing_rejected": "חתימה שנדחתה — {{filename}}",
         "signing_pending": "חתימה ממתינה — {{filename}}",
         "unassigned_case": "תיק ללא מנהל — {{caseName}}",
-        "no_activity": "תיק ללא פעילות משמעותית — {{caseName}} ({{days}} ימים)",
+        "no_activity": "לא בוצע שינוי בתיק — {{caseName}} ({{days}} ימים)",
         "long_in_stage": "תיק בשלב הנוכחי זמן ממושך — {{caseName}}",
         "completion_passed": "תאריך סיום משוער חלף — {{caseName}}",
         "completion_approaching": "תאריך סיום משוער מתקרב — {{caseName}}",

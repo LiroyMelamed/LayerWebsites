@@ -9,8 +9,9 @@ import TopCenteredLogo from "./components/TopCenteredLogo";
 import useHttpRequest from "../../hooks/useHttpRequest";
 import PoweredByMela from "../../components/PoweredByMela";
 import { images } from "../../assets/images/images";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import loginApi from "../../api/loginApi";
+import { getActiveTenantSlug } from "../../lib/tenantSlug";
 import { useTranslation } from "react-i18next";
 // Email login UI is disabled for now — email-only contacts are for public signing only.
 // import SimpleButton from "../../components/simpleComponents/SimpleButton";
@@ -57,7 +58,10 @@ export default function LoginScreen() {
         //     performRequest({ email: String(email || "").trim().toLowerCase() });
         //     return;
         // }
-        performRequest({ phoneNumber });
+        performRequest({
+            phoneNumber,
+            tenantSlug: getActiveTenantSlug() || undefined,
+        });
     };
 
     const handleKeyDown = (event) => {

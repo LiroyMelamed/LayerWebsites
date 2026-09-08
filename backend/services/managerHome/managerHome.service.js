@@ -1,5 +1,7 @@
 const pool = require('../../config/db');
 const C = require('./constants');
+const { personalCalendarSql } = require('../../lib/calendarVisibility');
+const { isPlatformAdmin } = require('../settingsService');
 const {
     buildAttentionItems,
     buildMorningBrief,
@@ -7,6 +9,7 @@ const {
     summarizeAttention,
     flattenAttentionItems,
 } = require('./scoring');
+const { invalidateAiBriefCache } = require('./aiBrief.service');
 const { MemoryCache } = require('../../utils/memoryCache');
 
 const cache = new MemoryCache({ name: 'managerHome', maxEntries: 5 });
@@ -235,7 +238,16 @@ async function fetchFailedReminders() {
     return rows;
 }
 
-async function fetchTodayEvents() {
+async function fetchTodayEvents(userId, { firmWide = false } = {}) {
+    const params = [];
+    let visibilityClause = '';
+
+    if (!firmWide) {
+        if (!userId) return [];
+        params.push(userId);
+        visibilityClause = `AND ${personalCalendarSql(1)}`;
+    }
+
     const { rows } = await pool.query(`
         SELECT
             ce.id,
@@ -263,9 +275,10 @@ async function fetchTodayEvents() {
         LEFT JOIN users cl ON cl.userid = ce.client_user_id
         WHERE ce.start_time >= ${JERUSALEM_TODAY}::timestamptz AT TIME ZONE 'Asia/Jerusalem'
           AND ce.start_time < (${JERUSALEM_TODAY} + INTERVAL '1 day')::timestamptz AT TIME ZONE 'Asia/Jerusalem'
+          ${visibilityClause}
         ORDER BY ce.start_time ASC
         LIMIT 40
-    `);
+    `, params);
     return rows;
 }
 
@@ -696,6 +709,8 @@ function buildCaseHealthList(caseRows, attentionItems) {
 }
 
 async function buildManagerHomePayload({ userId } = {}) {
+    const firmWideEvents = userId ? await isPlatformAdmin(userId) : false;
+
     const [
         greeting,
         caseRows,
@@ -707,6 +722,10 @@ async function buildManagerHomePayload({ userId } = {}) {
         potentialClients,
         casesByStage,
         recentActivity,
+        firmDailyStats,
+        casesOpenedTodayList,
+        casesClosedTodayList,
+        todayActivityLog,
     ] = await Promise.all([
         fetchManagerGreeting(userId),
         fetchOpenCasesWithActivity(),
@@ -714,10 +733,14 @@ async function buildManagerHomePayload({ userId } = {}) {
         fetchSigningSummary(),
         fetchPendingRsvpEvents(),
         fetchFailedReminders(),
-        fetchTodayEvents(),
+        fetchTodayEvents(userId, { firmWide: firmWideEvents }),
         fetchPotentialClients(),
         fetchCasesByStage(),
         fetchRecentActivity(),
+        fetchFirmDailyStats(),
+        fetchCasesOpenedTodayList(),
+        fetchCasesClosedTodayList(),
+        fetchTodayActivityLog(),
     ]);
 
     const attentionItems = buildAttentionItems({
@@ -740,6 +763,19 @@ async function buildManagerHomePayload({ userId } = {}) {
             managerName: greeting.managerName,
         },
         summary,
+        firmStats: {
+            ...firmDailyStats,
+            openCases: caseRows.length,
+            urgentCount: summary.urgentCount ?? 0,
+            needsAttentionCount: summary.needsAttentionCount ?? 0,
+            attentionQueueCount: summary.attentionRawCount ?? 0,
+            noActivityCases: summary.noActivityCases ?? 0,
+            signingPending: summary.signingPending ?? 0,
+            signingExpired: summary.signingExpired ?? 0,
+            signedToday: signingSummary.signed_today ?? 0,
+            todayEventCount: summary.todayEventCount ?? 0,
+            unassignedCases: unassignedCount,
+        },
         morningBrief: buildMorningBrief({
             attentionItems,
             today,
@@ -787,6 +823,16 @@ async function buildManagerHomePayload({ userId } = {}) {
             caseName: r.casename,
             meta: r.meta || {},
         })),
+        drillDown: {
+            casesOpenedToday: casesOpenedTodayList,
+            casesClosedToday: casesClosedTodayList,
+            openCases: caseRows.map(mapCaseListItem).slice(0, C.DRILL_DOWN_LIST_LIMIT),
+            unassignedCases: caseRows
+                .filter((r) => !r.casemanagerid)
+                .map(mapCaseListItem)
+                .slice(0, C.DRILL_DOWN_LIST_LIMIT),
+            todayActivityLog,
+        },
         generatedAt: new Date().toISOString(),
     };
 }
@@ -799,6 +845,7 @@ async function getManagerHomeData({ userId, ttlMs = C.MANAGER_HOME_CACHE_TTL_MS 
 
 function invalidateManagerHomeCache() {
     cache.deleteByPrefix('managerHome:');
+    invalidateAiBriefCache();
 }
 
 function __testReset() {
