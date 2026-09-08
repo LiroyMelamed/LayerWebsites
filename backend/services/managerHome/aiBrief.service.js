@@ -110,14 +110,11 @@ async function defaultBriefLlmCall(messages) {
     return require('../aiChatService').callLLM(messages);
 }
 
-async function isAiBriefEnabled({ getSettingFn, userId, isPlatformAdminFn } = {}) {
+async function isAiBriefEnabled({ getSettingFn, userId } = {}) {
     const getSetting = getSettingFn || require('../settingsService').getSetting;
     const flag = await getSetting('managerHome', 'MANAGER_HOME_AI_INSIGHTS_ENABLED', false);
     if (!Boolean(flag) || !hasBriefLlmCredentials()) return false;
-    if (userId == null) return true;
-    const checkAdmin = isPlatformAdminFn
-        || ((id) => require('../settingsService').isPlatformAdmin(id));
-    return checkAdmin(userId);
+    return true;
 }
 
 function buildFactsSnapshot(payload, { now = new Date() } = {}) {
@@ -240,31 +237,36 @@ function buildPrompt(facts) {
         {
             role: 'system',
             content: [
-                'אתה אנalist תפעולי למשרד עורכי דין.',
-                'קיבלת JSON עם נתונים תפעוליים בלבד מהמערכת, כולל שדה insights עם ניתוח מובנה.',
-                'כתוב 4-6 משפטים קצרים בעברית לסיכום תפעולי למנהל/ת המשרד.',
-                'בנוסף, הוסף recommendations: 2-3 פעולות מומלצות קצרות בצורת פקודה (למשל "טפלו ב-X חתימות שפג תוקפן").',
-                'חובה: השתמש רק בנתונים שסופקו. אל תמציא מספרים, שמות תיקים, מועדים או מסקנות.',
-                'השתמש ב-insights לזיהוי סיכונים (signingPressure, workloadHotspots, inactivityBurden, focusAreas).',
-                'לגבי מנהלים: השתמש בשדה attentionSummaryHe — הסבר שמתוך X תיקים פתוחים, Y מסומנים כדורשים טיפול.',
-                'אל תכתוב שמנהל נמצא "בעומס גבוה" או "תחת לחץ" — זה שיפוטי ולא מועיל. במקום זה, הצע פעולה קונקרטית: "אפשר להעביר תיקים מ-[שם] ל-[שם אחר] כדי לאזן את העבודה" או "שקלו לחלק תיקים בין המנהלים".',
-                'המלצות צריכות להיות ברות-ביצוע ולא ביקורתיות.',
-                'לגבי תור תשומת לב: summary.attentionQueueCount הוא מספר הפריטים שמוצג בכרטיס "פריטים לטיפול" בלוח הבקרה.',
-                `summary.noActivityCases הוא תת-קבוצה בתוך התור — תיקים שלא בוצע בהם שינוי מעל ${C.NO_ACTIVITY_DAYS} ימים, לא סכום נפרד.`,
-                `כשאתה מציין תיקים ללא פעילות, השתמש בניסוח ברור עם מספר ימים (למשל: "מתוך 275 פריטים שדורשים טיפול, 133 הם תיקים שלא בוצע בהם שינוי מעל ${C.NO_ACTIVITY_DAYS} ימים").`,
-                'אל תשתמש בביטוי "ללא פעילות משמעותית" — זה לא מובן. תמיד ציין מספר ימים ספציפי.',
-                'אל תציג את noActivityCases כאילו הוא מחליף את attentionQueueCount — אלו מדדים שונים.',
-                'אל תשתמש במונחים "יחס תשומת לב", "attention ratio" או "attentionRatio" — ניסוח לא מובן למשתמש.',
-                'שדה contextNow מציין את השעה הנוכחית בישראל — התייחס אליו לקביעת מה קרוב, מה עבר, ומה רלוונטי עכשיו.',
-                'לפגישות: השתמש רק ב-today.upcomingEvents ו-upcomingClientMeetings לפגישות תפעוליות. אל תציין פגישות מ-today.pastCount כאילו הן עדיין מתוכננות.',
-                'אל תציין חופשות, חגים, או אירועי יומן פנימיים (leave/holiday/reminder) כפגישות — הם לא מופיעים בנתונים התפעוליים.',
-                'אל תמציא פגישות עתידיות שלא מופיעות ב-upcomingEvents או upcomingClientMeetings.',
-                'אם contextNow.period הוא evening או night — אל תדבר על פגישות שכבר עברו היום; התמקד בחתימות, תיקים, וחלוקת עבודה בין מנהלים.',
-                'אל תפתח בברכה, אל תכתוב "בוקר טוב", "ערב טוב", "לילה טוב" ואל תפנה בשם.',
-                'התחל ישר בתוכן התפעולי (מה דורש תשומת לב עכשיו).',
-                'אם אין נושאים דחופים — ציין זאת בקצרה.',
-                'טון: מקצועי, רגוע, ממוקד פעולה.',
-                'החזר JSON בלבד בפורמט: {"lines":["משפט 1","משפט 2"],"recommendations":["פעולה 1","פעולה 2"]}',
+                'אתה יועץ ביצועים למשרד עורכי דין. אתה כותב תובנות קצרות וחדות שעוזרות לעורכי הדין להצטיין ולהוביל.',
+                'קיבלת JSON עם נתונים תפעוליים מהמערכת, כולל שדה insights עם ניתוח מובנה.',
+                'כתוב 3-5 משפטים קצרים בעברית — תובנות תחרותיות ומוטיבציוניות.',
+                'בנוסף, הוסף recommendations: 2-3 טיפים קצרים שיעזרו לעורך הדין להתקדם (למשל "סגרו את 3 התיקים שקרובים לסיום — תקפצו ב-3 סגירות השבוע").',
+                '',
+                '--- כללי טון ---',
+                'הטון הוא תחרותי, מוטיבציוני, ואנרגטי — כמו מאמן ספורט.',
+                'תמקד בהישגים, הזדמנויות לסגור תיקים, ויעדים קרובים.',
+                'דוגמאות לניסוח טוב:',
+                '  - "היום נפתחו 3 תיקים חדשים — מי סוגר ראשון?"',
+                '  - "יש 4 חתימות ממתינות — תשלימו אותן ותסמנו V."',
+                '  - "11 מסמכים מחכים לחתימה — הזדמנות להוריד את הרשימה."',
+                '  - "כבר סגרתם 2 תיקים היום — עוד אחד ושברתם שיא!"',
+                '  - "יש תיקים שלא זזו מעל שבוע — תנו להם דחיפה והם ירוצו."',
+                '',
+                '--- מה לא לכתוב ---',
+                'אל תכתוב על "עומס", "לחץ", "סיכון", או "בעיה" — רק הזדמנויות.',
+                'אל תציע לחלק עבודה בין מנהלים או להעביר תיקים — זה לא המקום.',
+                'אל תכתוב כמנהל — כתוב כמאמן שמדבר לכל הצוות.',
+                'אל תפתח בברכה, אל תכתוב "בוקר טוב" ואל תפנה בשם.',
+                '',
+                '--- כללי נתונים ---',
+                'חובה: השתמש רק בנתונים שסופקו. אל תמציא מספרים.',
+                'שדה contextNow מציין את השעה הנוכחית בישראל.',
+                'אם contextNow.period הוא evening או night — התמקד במה שהושג היום ומה מחכה מחר.',
+                'לפגישות: השתמש רק ב-today.upcomingEvents. אל תציין פגישות שעברו.',
+                'אל תציין חופשות, חגים, או אירועי יומן פנימיים כפגישות.',
+                `תיקים "ללא שינוי" = תיקים שלא בוצע בהם שינוי מעל ${C.NO_ACTIVITY_DAYS} ימים.`,
+                '',
+                'החזר JSON בלבד בפורמט: {"lines":["משפט 1","משפט 2"],"recommendations":["טיפ 1","טיפ 2"]}',
             ].join('\n'),
         },
         {
@@ -412,7 +414,10 @@ function lineMatchesFacts(line, facts) {
         'אין',
         'מנהל',
         'טיפול',
-        'עומס',
+        'סגר',
+        'הזדמנות',
+        'ממתינ',
+        'נפתח',
     ];
     return keywords.some((kw) => line.includes(kw));
 }
@@ -436,10 +441,9 @@ async function generateAiMorningBrief({
     payload,
     callLlmFn,
     getSettingFn,
-    isPlatformAdminFn,
     now,
 } = {}) {
-    const enabled = await isAiBriefEnabled({ getSettingFn, userId, isPlatformAdminFn });
+    const enabled = await isAiBriefEnabled({ getSettingFn, userId });
     if (!enabled) return null;
 
     const referenceNow = now instanceof Date ? now : new Date();

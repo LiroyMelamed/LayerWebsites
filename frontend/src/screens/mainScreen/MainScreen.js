@@ -40,10 +40,8 @@ export default function MainScreen() {
     const navigate = useNavigate();
     const { isSmallScreen } = useScreenSize();
     const { openPopup, closePopup, pushPopup, popPopup } = usePopup();
-    const isPlatformAdmin = typeof window !== "undefined"
-        && localStorage.getItem("isPlatformAdmin") === "true";
     const aiInsightsSettingEnabled = useManagerHomeAiInsightsEnabled();
-    const aiInsightsEnabled = aiInsightsSettingEnabled && isPlatformAdmin;
+    const aiInsightsEnabled = aiInsightsSettingEnabled;
 
     const {
         result: managerHome,
