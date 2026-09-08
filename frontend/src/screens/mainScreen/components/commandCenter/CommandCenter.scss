@@ -984,6 +984,7 @@
     border-radius: 0.5rem;
     cursor: pointer;
     border-inline-start: 0.2rem solid transparent;
+    background: transparent;
 
     &:hover {
         background: var(--lw-color-secondary-highlighted);
