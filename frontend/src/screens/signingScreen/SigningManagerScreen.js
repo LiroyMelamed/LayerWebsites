@@ -493,7 +493,7 @@ export default function SigningManagerScreen() {
     );
 }
 
-function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned, onDownloadEvidencePdf, onDownloadEvidenceZip, onDelete, isDeleting, formatDotDate, onRenamed }) {
+export function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned, onDownloadEvidencePdf, onDownloadEvidenceZip, onDelete, isDeleting, formatDotDate, onRenamed }) {
     const { t } = useTranslation();
     const totalSpots = Number(file?.TotalSpots || 0);
     const signedSpots = Number(file?.SignedSpots || 0);
