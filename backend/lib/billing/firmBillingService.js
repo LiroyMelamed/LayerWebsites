@@ -29,6 +29,7 @@ const {
     extractTokenFromValidated,
 } = require('../payments/takbullClient');
 const { sendFailedPaymentEmails } = require('./billingEmails');
+const { getCurrentTenantId } = require('../tenant/tenantContext');
 
 const GRACE_MS = 72 * 60 * 60 * 1000;
 const SETUP_AMOUNT_ILS = 1;
@@ -59,9 +60,25 @@ function mapBillingRow(row) {
     };
 }
 
+function billingScopeSql(paramOffset = 0) {
+    const tenantId = getCurrentTenantId();
+    if (tenantId) {
+        return {
+            clause: `law_firm_tenant_id = $${paramOffset + 1}`,
+            param: tenantId,
+        };
+    }
+    return { clause: 'id = 1', param: null };
+}
+
 async function getBillingRow() {
     try {
-        const res = await pool.query(`SELECT * FROM firm_billing WHERE id = 1 LIMIT 1`);
+        const scope = billingScopeSql();
+        const params = scope.param != null ? [scope.param] : [];
+        const res = await pool.query(
+            `SELECT * FROM firm_billing WHERE ${scope.clause} LIMIT 1`,
+            params
+        );
         return mapBillingRow(res.rows?.[0] || null);
     } catch (e) {
         if (isRelationMissingError(e)) return null;
@@ -74,6 +91,7 @@ async function ensureBillingRow() {
     if (existing) return existing;
 
     const slug = getTenantSlug();
+    const tenantId = getCurrentTenantId();
     const complimentaryUntil = defaultComplimentaryUntil(slug);
     const billingEnabled = defaultBillingEnabled(slug);
     const pkg = resolvePricingLineItems(DEFAULT_SELECTION);
@@ -81,23 +99,44 @@ async function ensureBillingRow() {
     const renewsAt = complimentaryUntil || addCalendarMonth(new Date());
 
     try {
-        await pool.query(
-            `INSERT INTO firm_billing (
-                id, platform_id, resource_id, signing_id, price_monthly_ils,
-                status, billing_enabled, complimentary_until, renews_at
-             ) VALUES (1, $1, $2, $3, $4, $5, $6, $7, $8)
-             ON CONFLICT (id) DO NOTHING`,
-            [
-                pkg.platformId,
-                pkg.resourceId,
-                pkg.signingId,
-                pkg.total,
-                status,
-                billingEnabled,
-                complimentaryUntil,
-                renewsAt,
-            ]
-        );
+        if (tenantId) {
+            await pool.query(
+                `INSERT INTO firm_billing (
+                    platform_id, resource_id, signing_id, price_monthly_ils,
+                    status, billing_enabled, complimentary_until, renews_at, law_firm_tenant_id
+                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                 ON CONFLICT DO NOTHING`,
+                [
+                    pkg.platformId,
+                    pkg.resourceId,
+                    pkg.signingId,
+                    pkg.total,
+                    status,
+                    billingEnabled,
+                    complimentaryUntil,
+                    renewsAt,
+                    tenantId,
+                ]
+            );
+        } else {
+            await pool.query(
+                `INSERT INTO firm_billing (
+                    id, platform_id, resource_id, signing_id, price_monthly_ils,
+                    status, billing_enabled, complimentary_until, renews_at
+                 ) VALUES (1, $1, $2, $3, $4, $5, $6, $7, $8)
+                 ON CONFLICT (id) DO NOTHING`,
+                [
+                    pkg.platformId,
+                    pkg.resourceId,
+                    pkg.signingId,
+                    pkg.total,
+                    status,
+                    billingEnabled,
+                    complimentaryUntil,
+                    renewsAt,
+                ]
+            );
+        }
     } catch (e) {
         if (isRelationMissingError(e)) return null;
         throw e;
@@ -114,19 +153,34 @@ async function updateBilling(fields) {
         vals.push(val);
     }
     sets.push('updated_at = now()');
-    await pool.query(`UPDATE firm_billing SET ${sets.join(', ')} WHERE id = 1`, vals);
+    const scope = billingScopeSql(vals.length);
+    const allParams = scope.param != null ? [...vals, scope.param] : vals;
+    await pool.query(
+        `UPDATE firm_billing SET ${sets.join(', ')} WHERE ${scope.clause}`,
+        allParams
+    );
     return getBillingRow();
 }
 
 async function getActiveCard() {
     try {
-        const res = await pool.query(
-            `SELECT id, last4, exp_month, exp_year, card_brand, token_encrypted, is_active
-             FROM firm_payment_methods
-             WHERE is_active = true
-             ORDER BY updated_at DESC
-             LIMIT 1`
-        );
+        const tenantId = getCurrentTenantId();
+        const res = tenantId
+            ? await pool.query(
+                `SELECT id, last4, exp_month, exp_year, card_brand, token_encrypted, is_active
+                 FROM firm_payment_methods
+                 WHERE is_active = true AND law_firm_tenant_id = $1
+                 ORDER BY updated_at DESC
+                 LIMIT 1`,
+                [tenantId]
+            )
+            : await pool.query(
+                `SELECT id, last4, exp_month, exp_year, card_brand, token_encrypted, is_active
+                 FROM firm_payment_methods
+                 WHERE is_active = true AND law_firm_tenant_id IS NULL
+                 ORDER BY updated_at DESC
+                 LIMIT 1`
+            );
         const row = res.rows?.[0];
         if (!row) return null;
         return {
@@ -146,7 +200,29 @@ async function getActiveCard() {
 async function saveCardFromToken(tokenInfo) {
     if (!tokenInfo?.token) return null;
     const encrypted = encryptSecret(tokenInfo.token);
-    await pool.query(`UPDATE firm_payment_methods SET is_active = false, updated_at = now() WHERE is_active = true`);
+    const tenantId = getCurrentTenantId();
+    if (tenantId) {
+        await pool.query(
+            `UPDATE firm_payment_methods SET is_active = false, updated_at = now()
+             WHERE is_active = true AND law_firm_tenant_id = $1`,
+            [tenantId]
+        );
+        const res = await pool.query(
+            `INSERT INTO firm_payment_methods (provider, token_encrypted, last4, exp_month, exp_year, card_brand, is_active, law_firm_tenant_id)
+             VALUES ('takbull', $1, $2, $3, $4, $5, true, $6)
+             RETURNING id, last4, exp_month, exp_year, card_brand`,
+            [
+                encrypted,
+                tokenInfo.last4Digits || tokenInfo.last4 || null,
+                tokenInfo.expMonth || null,
+                tokenInfo.expYear || null,
+                tokenInfo.cardBrand || null,
+                tenantId,
+            ]
+        );
+        return res.rows[0];
+    }
+    await pool.query(`UPDATE firm_payment_methods SET is_active = false, updated_at = now() WHERE is_active = true AND law_firm_tenant_id IS NULL`);
     const res = await pool.query(
         `INSERT INTO firm_payment_methods (provider, token_encrypted, last4, exp_month, exp_year, card_brand, is_active)
          VALUES ('takbull', $1, $2, $3, $4, $5, true)
@@ -415,6 +491,24 @@ async function markPaymentFailed({ intent, errorMessage, skipEmail } = {}) {
 }
 
 async function settleSuccessfulPayment({ intent, tokenInfo, transactionId } = {}) {
+    if (intent?.signup_intent_id) {
+        if (intent?.id) {
+            await pool.query(
+                `UPDATE firm_payment_intents
+                 SET status = 'succeeded',
+                     takbull_transaction_id = COALESCE($2, takbull_transaction_id),
+                     settled_at = now(),
+                     updated_at = now(),
+                     error_message = NULL
+                 WHERE id = $1`,
+                [intent.id, transactionId || null]
+            );
+        }
+        const { completeSignupFromPaymentIntent } = require('../tenant/signupService');
+        const provisioned = await completeSignupFromPaymentIntent(intent.id, tokenInfo);
+        return { signup: true, provisioned };
+    }
+
     if (intent?.id) {
         const updated = await pool.query(
             `UPDATE firm_payment_intents

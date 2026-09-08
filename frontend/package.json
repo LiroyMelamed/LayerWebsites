@@ -76,7 +76,9 @@
     "prebuild:melamedia": "node scripts/copy-pdf-worker.js && node scripts/apply-tenant-branding.js melamedia",
     "build:melamedia": "cp .env.production.melamedia .env && react-scripts build",
     "prebuild:idm": "node scripts/copy-pdf-worker.js && node scripts/apply-tenant-branding.js idm",
-    "build:idm": "cp .env.production.idm .env && react-scripts build"
+    "build:idm": "cp .env.production.idm .env && react-scripts build",
+    "prebuild:lawyer": "node scripts/copy-pdf-worker.js && node scripts/apply-tenant-branding.js lawyer",
+    "build:lawyer": "cp .env.production.lawyer .env && react-scripts build"
   },
   "eslintConfig": {
     "extends": [

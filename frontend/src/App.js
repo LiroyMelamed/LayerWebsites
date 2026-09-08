@@ -42,6 +42,10 @@ import CompliancePage from './screens/compliance/CompliancePage';
 import ChatBotPage from './screens/chatbot/ChatBotPage';
 import MasterAdminScreen from './screens/masterAdmin/MasterAdminScreen';
 import CalendarInviteScreen from './screens/calendarScreen/CalendarInviteScreen';
+import SignupScreen, { SignupCompleteScreen } from './screens/signup/SignupScreen';
+import TenantShell from './components/tenant/TenantShell';
+import TenantAdminRedirect from './components/tenant/TenantAdminRedirect';
+import { isMultiTenantApp } from './lib/tenantSlug';
 
 const STACK_SUFFIX = "/*"
 
@@ -165,6 +169,8 @@ const App = () => {
     }
   }, []);
 
+  const multiTenant = isMultiTenantApp();
+
   return (
     <Suspense fallback={<RouteFallback />}>
       <Routes>
@@ -185,16 +191,41 @@ const App = () => {
 
         <Route path={ChatBotPageName} element={<ChatBotPage />} />
 
+        {multiTenant && (
+          <>
+            <Route path="/signup" element={<SignupScreen />} />
+            <Route path="/signup/complete" element={<SignupCompleteScreen />} />
+          </>
+        )}
+
         <Route path="/admin/master" element={<MasterAdminScreen />} />
         <Route path="/ticket" element={<Navigate to="/AdminStack/support" replace />} />
 
-        <Route path={LoginStackName + STACK_SUFFIX} element={<LoginStack />} />
-
-        <Route path={AdminStackName + STACK_SUFFIX} element={<AdminStack />} />
-
-        <Route path={ClientStackName + STACK_SUFFIX} element={<ClientStack />} />
-
-        <Route path="/*" element={<Navigate to={LoginStackName} replace />} />
+        {multiTenant ? (
+          <>
+            <Route
+              path="/:tenantSlug/LoginStack/*"
+              element={<TenantShell><LoginStack /></TenantShell>}
+            />
+            <Route
+              path="/:tenantSlug/AdminStack/*"
+              element={<TenantShell><AdminStack /></TenantShell>}
+            />
+            <Route
+              path="/:tenantSlug/ClientStack/*"
+              element={<TenantShell><ClientStack /></TenantShell>}
+            />
+            <Route path="/:tenantSlug/admin" element={<TenantAdminRedirect />} />
+            <Route path="/" element={<Navigate to="/melamedia/LoginStack/LoginScreen" replace />} />
+          </>
+        ) : (
+          <>
+            <Route path={LoginStackName + STACK_SUFFIX} element={<LoginStack />} />
+            <Route path={AdminStackName + STACK_SUFFIX} element={<AdminStack />} />
+            <Route path={ClientStackName + STACK_SUFFIX} element={<ClientStack />} />
+            <Route path="/*" element={<Navigate to={LoginStackName} replace />} />
+          </>
+        )}
       </Routes>
     </Suspense>
   );

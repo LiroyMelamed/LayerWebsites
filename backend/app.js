@@ -32,6 +32,9 @@ const templateAttachmentRoutes = require("./routes/templateAttachmentRoutes"); c
 const platformRoutes = require('./routes/platformRoutes');
 const supportRoutes = require('./routes/supportRoutes');
 const paymentWebhookRoutes = require('./routes/paymentWebhookRoutes');
+const publicSignupRoutes = require('./routes/publicSignupRoutes');
+const masterAdminRoutes = require('./routes/masterAdminRoutes');
+const resolveTenant = require('./middlewares/resolveTenant');
 const authMiddleware = require("./middlewares/authMiddleware");
 const { requireBillingAccess } = require('./middlewares/requireBillingAccess');
 const { createRateLimitMiddleware, getClientIp } = require("./utils/rateLimiter");
@@ -160,6 +163,10 @@ app.use(
 app.use(requireBillingAccess);
 
 app.use("/api/webhooks/payments", paymentWebhookRoutes);
+app.use("/api/public/signup", publicSignupRoutes);
+app.use("/api/master-admin", masterAdminRoutes);
+
+app.use(resolveTenant);
 
 app.use("/api/Customers", customerRoutes);
 app.use("/api/Cases", caseRoutes);
