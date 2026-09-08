@@ -483,6 +483,14 @@ async function fetchFirmDailyStats() {
           AND updatedat < ${dayEnd}
     `);
 
+    const { rows: totalRows } = await pool.query(`
+        SELECT
+            COUNT(*)::int AS total,
+            COUNT(*) FILTER (WHERE isclosed = false)::int AS active,
+            COUNT(*) FILTER (WHERE isclosed = true)::int AS closed
+        FROM cases
+    `);
+
     const { rows: activityRows } = await pool.query(`
         WITH acts AS (
             SELECT c.casemanagerid AS manager_id, c.casemanager AS manager_name
@@ -514,9 +522,13 @@ async function fetchFirmDailyStats() {
     `);
 
     const top = activityRows[0];
+    const totals = totalRows[0] || {};
     return {
         casesOpenedToday: openedRows[0]?.count ?? 0,
         casesClosedToday: closedRows[0]?.count ?? 0,
+        totalCases: totals.total ?? 0,
+        activeCases: totals.active ?? 0,
+        closedCases: totals.closed ?? 0,
         mostActiveManager: top
             ? {
                 managerId: top.manager_id,

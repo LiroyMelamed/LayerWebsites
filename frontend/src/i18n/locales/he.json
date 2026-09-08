@@ -436,6 +436,8 @@
     "greetingNamed": "בוקר טוב, {{name}}",
     "subtitle": "הנה מה שדורש את תשומת לבך היום.",
     "summary": {
+      "totalCases": "סה\"כ תיקים",
+      "activeCases": "תיקים פעילים",
       "urgent": "דחוף",
       "needsAttention": "דורש טיפול",
       "today": "היום",

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import SimpleContainer from '../../simpleComponents/SimpleContainer';
 import SimpleInput from '../../simpleComponents/SimpleInput';
 import SimpleScrollView from '../../simpleComponents/SimpleScrollView';
@@ -20,6 +20,7 @@ import useAutoHttpRequest from '../../../hooks/useAutoHttpRequest';
 import { useTranslation } from 'react-i18next';
 import { usePopup } from '../../../providers/PopUpProvider';
 import ConfirmationDialog from '../popups/ConfirmationDialog';
+import ClientPopup from '../../../screens/mainScreen/components/ClientPopUp';
 
 function _buildInitialCaseData(caseDetails, initialDraft) {
     const source = caseDetails?.CaseId ? caseDetails : (initialDraft || caseDetails || {});
@@ -133,6 +134,42 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
         const nextData = { ...caseData, ...partialUpdates };
         setFieldErrors(validateCaseData(nextData));
     };
+
+    const [showInlineAddClient, setShowInlineAddClient] = useState(false);
+
+    const handleInlineClientSaved = useCallback((savedClient) => {
+        if (!savedClient?.UserId) {
+            setShowInlineAddClient(false);
+            return;
+        }
+        setCaseData((prev) => {
+            if (prev.Users.some(u => u.UserId === savedClient.UserId)) return prev;
+            const updatedUsers = [...prev.Users, {
+                UserId: savedClient.UserId,
+                Name: savedClient.Name,
+                Email: savedClient.Email,
+                PhoneNumber: savedClient.PhoneNumber,
+            }];
+            const primary = updatedUsers[0];
+            return {
+                ...prev,
+                Users: updatedUsers,
+                UserId: primary.UserId,
+                CustomerName: primary.Name,
+                CustomerMail: primary.Email || prev.CustomerMail,
+                PhoneNumber: primary.PhoneNumber || prev.PhoneNumber,
+                CompanyName: savedClient.CompanyName || prev.CompanyName,
+            };
+        });
+        setFieldErrors((prev) => {
+            if (!prev.CustomerName && !prev.PhoneNumber) return prev;
+            const next = { ...prev };
+            delete next.CustomerName;
+            delete next.PhoneNumber;
+            return next;
+        });
+        setShowInlineAddClient(false);
+    }, []);
 
     const { result: customers, isPerforming: isPerformingCustomers, performRequest: searchCustomers } = useAutoHttpRequest(customersApi.getCustomersByName, { onFailure: () => { } });
 
@@ -402,16 +439,28 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
 
                 <SimpleContainer className="lw-caseFullView__row">
                     <SimpleContainer className="lw-caseFullView__field lw-caseFullView__clientsCol">
-                        <SearchInput
-                            onSearch={searchCustomers}
-                            title={t('cases.customerName')}
-                            value={caseData.CustomerName}
-                            isPerforming={isPerformingCustomers}
-                            getButtonTextFunction={(item) => item.Name}
-                            buttonPressFunction={handleCustomerSelect}
-                            queryResult={customers}
-                            error={fieldErrors?.CustomerName}
-                        />
+                        <SimpleContainer className="lw-caseFullView__clientSearchRow">
+                            <SearchInput
+                                onSearch={searchCustomers}
+                                title={t('cases.customerSearchHint', { defaultValue: 'שם לקוח' })}
+                                placeholder={t('cases.customerSearchPlaceholder', { defaultValue: 'חיפוש לפי שם, טלפון, אימייל או חברה' })}
+                                value={caseData.CustomerName}
+                                isPerforming={isPerformingCustomers}
+                                getButtonTextFunction={(item) => `${item.Name}${item.PhoneNumber ? ` - ${item.PhoneNumber}` : ''}`}
+                                getSelectValueFunction={(item) => item.Name}
+                                buttonPressFunction={handleCustomerSelect}
+                                queryResult={customers}
+                                error={fieldErrors?.CustomerName}
+                                emptyActionText={t('cases.addNewClient', { defaultValue: '+ הוספת לקוח חדש' })}
+                                onEmptyAction={() => setShowInlineAddClient(true)}
+                            />
+                            <button
+                                type="button"
+                                className="lw-caseFullView__addClientBtn"
+                                onClick={() => setShowInlineAddClient(true)}
+                                title={t('cases.addNewClient', { defaultValue: '+ הוספת לקוח חדש' })}
+                            >+</button>
+                        </SimpleContainer>
                         {caseData.Users.length > 0 && (
                             <SimpleContainer className="lw-caseFullView__clientChips">
                                 {caseData.Users.map((u) => (
@@ -420,6 +469,15 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
                                         <button type="button" className="lw-caseFullView__chipRemove" onClick={() => handleRemoveUser(u.UserId)}>&times;</button>
                                     </span>
                                 ))}
+                            </SimpleContainer>
+                        )}
+                        {showInlineAddClient && (
+                            <SimpleContainer className="lw-caseFullView__inlineClient">
+                                <ClientPopup
+                                    initialName={caseData.CustomerName}
+                                    rePerformRequest={handleInlineClientSaved}
+                                    closePopUpFunction={() => setShowInlineAddClient(false)}
+                                />
                             </SimpleContainer>
                         )}
                     </SimpleContainer>
