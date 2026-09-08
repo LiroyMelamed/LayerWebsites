@@ -21,6 +21,7 @@
     "retry": "Try again",
     "notSpecified": "Not specified",
     "unassigned": "Unassigned",
+    "listTitleWithCount": "{{title}} ({{count}})",
     "refreshPull": "Pull down to refresh",
     "refreshing": "Refreshing…",
     "send": "Send",

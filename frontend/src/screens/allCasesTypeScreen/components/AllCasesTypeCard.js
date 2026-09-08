@@ -6,11 +6,15 @@ import DefaultState from "../../../components/styledComponents/defaultState/Defa
 import CaseTypeMenuItem from "../../../components/styledComponents/menuItems/CaseTypeMenuItem";
 import Separator from "../../../components/styledComponents/separators/Separator";
 import { useTranslation } from 'react-i18next';
+import formatListPageTitle from '../../../functions/i18n/formatListPageTitle';
+import ListPageTitle from '../../../components/specializedComponents/text/ListPageTitle';
 
 import './AllCasesTypeCard.scss';
 
 export default function AllCasesTypeCard({ allCasesType, reperformAfterSave, isPerforming }) {
     const { t } = useTranslation();
+    const pageTitle = t('nav.allCaseTypes');
+    const itemCount = allCasesType?.length ?? 0;
 
     if (isPerforming) {
         return (
@@ -31,16 +35,20 @@ export default function AllCasesTypeCard({ allCasesType, reperformAfterSave, isP
 
     if (allCasesType?.length === 0 || !allCasesType) {
         return (
-            <DefaultState
-                content={t('cases.noCaseTypes')}
-                imageClassName="lw-defaultState__image--h156"
-                imageSrc={images.Defaults.Cases}
-            />
+            <SimpleCard className="lw-allCasesTypeCard">
+                <ListPageTitle title={pageTitle} count={0} />
+                <DefaultState
+                    content={t('cases.noCaseTypes')}
+                    imageClassName="lw-defaultState__image--h156"
+                    imageSrc={images.Defaults.Cases}
+                />
+            </SimpleCard>
         )
     }
 
     return (
         <SimpleCard className="lw-allCasesTypeCard">
+            <ListPageTitle title={pageTitle} count={itemCount} />
 
             <SimpleContainer className="lw-allCasesTypeCard__list">
                 {allCasesType.map((item, index) => (
