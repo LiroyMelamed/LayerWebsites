@@ -9,6 +9,8 @@ import TopToolBarSmallScreen from '../../components/navBars/topToolBarSmallScree
 import casesApi from '../../api/casesApi';
 import calendarApi from '../../api/calendarApi';
 import { AdminStackName } from '../../navigation/AdminStack';
+import { SigningManagerScreenName } from '../signingScreen/SigningManagerScreen';
+import { AllCasesScreenName } from '../allCasesScreen/AllCasesScreen';
 import SimpleScrollView from '../../components/simpleComponents/SimpleScrollView';
 import { useNavigate } from 'react-router-dom';
 import AiBriefSection from './components/commandCenter/AiBriefSection';
@@ -17,7 +19,8 @@ import FirmStatsPanel from './components/commandCenter/FirmStatsPanel';
 import CaseOperationsPanel from './components/commandCenter/CaseOperationsPanel';
 import SigningOperationsPanel from './components/commandCenter/SigningOperationsPanel';
 import PotentialClientsPanel from './components/commandCenter/PotentialClientsPanel';
-import { navigateCalendar, navigateCaseRow } from './components/commandCenter/commandCenterUtils';
+import { navigateCalendar, navigateCaseRow, navigateOpenCases } from './components/commandCenter/commandCenterUtils';
+import SummaryStrip from './components/commandCenter/SummaryStrip';
 import { openCalendarEventModal } from './components/commandCenter/openCalendarEventModal';
 import { openCaseMenuModal } from './components/commandCenter/openCaseMenuModal';
 import { useManagerHomeAiInsightsEnabled } from '../../services/firmSettings';
@@ -27,6 +30,11 @@ import "./MainScreen.scss";
 import "./components/commandCenter/CommandCenter.scss";
 
 export const MainScreenName = "/MainScreen";
+
+function scrollToSection(id) {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 
 export default function MainScreen() {
     const navigate = useNavigate();
@@ -54,6 +62,30 @@ export default function MainScreen() {
         isPerforming: isLoadingAiBrief,
         performRequest: fetchAiBrief,
     } = useHttpRequest(casesApi.getManagerHomeAiBrief);
+
+    const handleSummaryNavigate = (key) => {
+        if (key === "totalCases") {
+            navigateOpenCases(navigate, "");
+            return;
+        }
+        if (key === "activeCases") {
+            navigateOpenCases(navigate, "?status=open");
+            return;
+        }
+        if (key === "signing") {
+            navigate(AdminStackName + SigningManagerScreenName);
+            return;
+        }
+        if (key === "unassigned") {
+            navigate(AdminStackName + AllCasesScreenName + "?status=open");
+            return;
+        }
+        if (key === "today") {
+            scrollToSection("manager-home-today");
+            return;
+        }
+        scrollToSection("manager-home-attention");
+    };
 
     useEffect(() => {
         if (aiInsightsEnabled) {
@@ -129,6 +161,13 @@ export default function MainScreen() {
                         aiBriefEnabled={aiInsightsEnabled}
                         aiBriefLoading={aiInsightsEnabled && isLoadingAiBrief}
                         isPerforming={isLoadingHome}
+                    />
+
+                    <SummaryStrip
+                        summary={managerHome?.summary}
+                        firmStats={managerHome?.firmStats}
+                        isPerforming={isLoadingHome}
+                        onNavigate={handleSummaryNavigate}
                     />
 
                     <FirmStatsPanel

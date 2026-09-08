@@ -20,7 +20,7 @@ export default function AllCasesCard({ allCases, isPerforming, reperformAfterSav
     const itemCount = allCases?.length ?? 0;
     const cardTitle = isPerforming ? baseTitle : formatListPageTitle(t, baseTitle, itemCount);
 
-    if (isPerforming) {
+    if (isPerforming && (!allCases || allCases.length === 0)) {
         return (
             <SimpleCard className="lw-allCasesCard">
                 {[1, 2, 3].map(i => (

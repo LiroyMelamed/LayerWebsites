@@ -472,6 +472,8 @@
       "unassigned": "ללא מנהל תיק"
     },
     "summary": {
+      "totalCases": "סה\"כ תיקים",
+      "activeCases": "תיקים פעילים",
       "urgent": "דחוף",
       "needsAttention": "דורש טיפול",
       "today": "היום",

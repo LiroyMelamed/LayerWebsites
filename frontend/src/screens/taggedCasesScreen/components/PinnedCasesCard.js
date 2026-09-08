@@ -15,7 +15,7 @@ import './PinnedCasesCard.scss';
 export default function PinnedCasesCard({ taggedCases, isPerforming, rePerformFunction }) {
     const { t } = useTranslation();
 
-    if (isPerforming) {
+    if (isPerforming && (!taggedCases || taggedCases.length === 0)) {
         return (
             <SimpleCard className="lw-pinnedCasesCard">
                 {[1, 2, 3].map(i => (
