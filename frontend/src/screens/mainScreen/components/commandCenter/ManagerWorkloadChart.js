@@ -79,7 +79,7 @@ export default function ManagerWorkloadChart({ managers = [], onManagerPress }) 
                             </SimpleContainer>
                             <SimpleContainer className="lw-commandCenter__managerChartLegendMeta">
                                 <TextBold14>{item.value}</TextBold14>
-                                <Text12 color={colors.winter}>{`${pct}%`}</Text12>
+                                <Text12 color={colors.winter}>{`${pct}% מהתיקים`}</Text12>
                             </SimpleContainer>
                         </SimpleContainer>
                     );
