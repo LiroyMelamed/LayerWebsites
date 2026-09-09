@@ -33,6 +33,7 @@ const SimpleInputCore = forwardRef(
     ({
         title,
         titleFontSize = 16,
+        labelAccessory,
         leftIcon,
         rightIcon,
         className,
@@ -470,6 +471,14 @@ const SimpleInputCore = forwardRef(
                             if (!disabled) textInputRef.current?.focus();
                         }}
                     >
+                        {labelAccessory && (
+                            <SimpleContainer
+                                className="lw-simpleInput__labelAccessory"
+                                onMouseDown={(e) => e.stopPropagation()}
+                            >
+                                {labelAccessory}
+                            </SimpleContainer>
+                        )}
                         {error || title}
                     </SimpleContainer>
                 )}

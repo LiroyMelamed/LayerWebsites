@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Deploy frontend build to 84.46.253.85 for morlevy, ashrafessa, melamedia, or idm.
-# Usage: ./scripts/deploy-tenant-frontend.sh morlevy|ashrafessa|melamedia|idm
+# Usage: ./scripts/deploy-tenant-frontend.sh morlevy|ashrafessa|melamedia|idm|lawyer
 # Prefers SSH key (SSH_KEY, default ~/.ssh/id_ed25519). Do not add new sshpass usage.
 set -euo pipefail
 
@@ -10,8 +10,8 @@ FRONTEND_HOST="${FRONTEND_HOST:-root@84.46.253.85}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 RSYNC_SSH="ssh -i ${SSH_KEY} -o BatchMode=yes"
 
-if [[ "$TENANT" != "morlevy" && "$TENANT" != "ashrafessa" && "$TENANT" != "melamedia" && "$TENANT" != "idm" ]]; then
-  echo "Usage: $0 morlevy|ashrafessa|melamedia|idm" >&2
+if [[ "$TENANT" != "morlevy" && "$TENANT" != "ashrafessa" && "$TENANT" != "melamedia" && "$TENANT" != "idm" && "$TENANT" != "lawyer" ]]; then
+  echo "Usage: $0 morlevy|ashrafessa|melamedia|idm|lawyer" >&2
   exit 1
 fi
 
@@ -34,8 +34,15 @@ rsync -az --delete -e "$RSYNC_SSH" build/ "${FRONTEND_HOST}:/var/www/${TENANT}/"
 
 # Always re-apply tenant logo after rsync (build may embed a stale public/firm-logo.png).
 scp -i "$SSH_KEY" -o BatchMode=yes "$TENANT_LOGO" "${FRONTEND_HOST}:/var/www/${TENANT}/firm-logo.png"
+if [[ -f "public/tenants/${TENANT}/melamedia-mark.png" ]]; then
+  scp -i "$SSH_KEY" -o BatchMode=yes "public/tenants/${TENANT}/melamedia-mark.png" "${FRONTEND_HOST}:/var/www/${TENANT}/melamedia-mark.png"
+fi
 echo "# Deployed logo: $(file -b "$TENANT_LOGO")"
 
 REMOTE_API="$(ssh -i "$SSH_KEY" -o BatchMode=yes "${FRONTEND_HOST}" "grep -o 'https://api-[^\"]*' /var/www/${TENANT}/static/js/main.*.js | sort -u")"
 echo "# Deployed API: $REMOTE_API"
 echo "# Done: https://${TENANT}.mela-media.co.il"
+
+# shellcheck source=../../scripts/deploy-notify.sh
+source "$ROOT/../scripts/deploy-notify.sh"
+DEPLOY_ROOT="$ROOT" notify_central_deploy layerwebsites "frontend:${TENANT}"

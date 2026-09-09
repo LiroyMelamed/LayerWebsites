@@ -1,0 +1,18 @@
+---
+description: Prevent accidental full-tenant data wipes; require scoped deletes and confirmation
+alwaysApply: true
+---
+
+# Destructive data operations (signing / DB / R2)
+
+## Hard rules
+
+1. **Never** `TRUNCATE` / wipe an entire signing stack (`signingfiles`, spots, consents, OTP, short links, `stage_files`, or `signatures/` on R2) across a tenant unless the user explicitly says **all documents for that tenant** (or equivalent) **and** confirms after seeing a count preview.
+2. If the user names a **phone, user id, lawyer, or “documents I sent”**, delete **only** rows matching that scope. Example: phone `0507299064` → only `lawyerid` / sender in `users` with that phone.
+3. **Before any delete**, print a preview: tenant, match criteria, file ids + filenames + counts. Wait for explicit go-ahead if the scope is ambiguous.
+4. Prefer restore-from-backup rehearsal over broad delete when unsure.
+5. MelamedLaw / MorLevi production signing data is **real firm documents**. Treat full wipes as production incidents.
+
+## Incident lesson (2026-08-11)
+
+User asked to delete only docs they sent (phone `0507299064`). Agent truncated **all** MelamedLaw signing tables + purged `signatures/` on R2. Restored from Aug 10 dump excluding that phone. Do not repeat.

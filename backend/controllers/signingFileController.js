@@ -1887,6 +1887,40 @@ async function createSigningOtpChallenge({ signingFileId, signerUserId, signingS
         return { ok: false, httpStatus: 422, errorCode: 'MISSING_CONTACT' };
     }
 
+    // Deduplicate: if a valid, unexpired challenge already exists for this
+    // session + document, skip SMS/email and return the existing one.
+    // This prevents duplicate OTP messages when the frontend fires concurrent
+    // or near-simultaneous requests (e.g., auto-send + manual press).
+    try {
+        const existingRes = await pool.query(
+            `select challengeid as "ChallengeId", delivery_channel as "Channel",
+                    expires_at_utc as "ExpiresAtUtc"
+             from signing_otp_challenges
+             where signingfileid = $1
+               and signeruserid = $2
+               and signingsessionid = $3
+               and verified = false
+               and expires_at_utc > now()
+             order by sent_at_utc desc
+             limit 1`,
+            [signingFileId, signerUserId, signingSessionId]
+        );
+        const existing = existingRes.rows?.[0];
+        if (existing) {
+            return {
+                ok: true,
+                challengeId: existing.ChallengeId,
+                channel: existing.Channel || deliveryChannel,
+                phoneE164: deliveryChannel === 'sms' ? phoneE164 : null,
+                email: deliveryChannel === 'email' ? signerEmail : null,
+                expiresAtUtc: existing.ExpiresAtUtc,
+                reused: true,
+            };
+        }
+    } catch (dedupErr) {
+        console.warn('[signing_otp] dedup check failed, proceeding:', dedupErr?.message);
+    }
+
     // SMS OTP counts toward SMS quota; email OTP does not.
     if (deliveryChannel === 'sms') {
         const check = await checkFirmLimitsOrNull({
@@ -1911,13 +1945,31 @@ async function createSigningOtpChallenge({ signingFileId, signerUserId, signingS
     const expiresAtUtc = new Date(sentAtUtc.getTime() + SIGNING_OTP_TTL_SECONDS * 1000);
     const ttlMinutes = Math.max(1, Math.round(SIGNING_OTP_TTL_SECONDS / 60));
 
-    await pool.query(
+    // Remove expired unverified challenges for this session so the partial
+    // unique index slot is free for the new challenge.
+    try {
+        await pool.query(
+            `delete from signing_otp_challenges
+             where signingfileid = $1 and signeruserid = $2 and signingsessionid = $3
+               and verified = false and expires_at_utc <= now()`,
+            [signingFileId, signerUserId, signingSessionId]
+        );
+    } catch (cleanupErr) {
+        console.warn('[signing_otp] expired challenge cleanup failed, proceeding:', cleanupErr?.message);
+    }
+
+    // Use ON CONFLICT DO NOTHING against the partial unique index
+    // (signing_otp_challenges_active_session_uniq) to atomically prevent
+    // duplicate active challenges for the same session.
+    const insertRes = await pool.query(
         `insert into signing_otp_challenges
          (challengeid, signingfileid, signeruserid, signingsessionid, phone_e164, email, delivery_channel,
           presentedpdfsha256, otp_hash, otp_salt, provider_message_id, sent_at_utc, expires_at_utc,
           attempt_count, locked_until_utc, verified, request_ip, request_user_agent)
          values
-         ($1,$2,$3,$4::uuid,$5,$6,$7,$8,$9,$10,$11, $12, $13, 0, null, false, $14::inet, $15)`,
+         ($1,$2,$3,$4::uuid,$5,$6,$7,$8,$9,$10,$11, $12, $13, 0, null, false, $14::inet, $15)
+         on conflict (signingfileid, signeruserid, signingsessionid) where verified = false
+         do nothing`,
         [
             challengeId,
             signingFileId,
@@ -1936,6 +1988,43 @@ async function createSigningOtpChallenge({ signingFileId, signerUserId, signingS
             getRequestUserAgent(req),
         ]
     );
+
+    // If ON CONFLICT fired, another concurrent request already created a
+    // challenge. Return that existing one instead of sending a duplicate SMS.
+    if (insertRes.rowCount === 0) {
+        try {
+            const fallbackRes = await pool.query(
+                `select challengeid as "ChallengeId", delivery_channel as "Channel",
+                        expires_at_utc as "ExpiresAtUtc"
+                 from signing_otp_challenges
+                 where signingfileid = $1
+                   and signeruserid = $2
+                   and signingsessionid = $3
+                   and verified = false
+                   and expires_at_utc > now()
+                 order by sent_at_utc desc
+                 limit 1`,
+                [signingFileId, signerUserId, signingSessionId]
+            );
+            const fb = fallbackRes.rows?.[0];
+            if (fb) {
+                return {
+                    ok: true,
+                    challengeId: fb.ChallengeId,
+                    channel: fb.Channel || deliveryChannel,
+                    phoneE164: deliveryChannel === 'sms' ? phoneE164 : null,
+                    email: deliveryChannel === 'email' ? signerEmail : null,
+                    expiresAtUtc: fb.ExpiresAtUtc,
+                    reused: true,
+                };
+            }
+        } catch (fbErr) {
+            console.warn('[signing_otp] conflict fallback lookup failed:', fbErr?.message);
+        }
+        // Very unlikely: conflict fired but challenge already expired/verified.
+        // Let the caller retry.
+        return { ok: false, httpStatus: 409, errorCode: 'OTP_CONCURRENT_CONFLICT' };
+    }
 
     if (deliveryChannel === 'sms') {
         const smsResult = await sendMessage(`קוד אימות לחתימה: ${otp}`, phoneE164, { fast: true });
@@ -2122,22 +2211,60 @@ async function generateSignedPdfBuffer({ pdfKey, spots }) {
         const fieldType = String(spot.FieldType || spot.fieldtype || 'signature').toLowerCase();
         const fieldValue = spot.FieldValue ?? spot.fieldvalue ?? null;
 
-        const pageWidth = page.getWidth();
-        const pageHeight = page.getHeight();
+        const rotation = page.getRotation()?.angle || 0;
 
-        // Spots are stored in BASE_RENDER_WIDTH pixel space (top-left origin)
-        // Convert to PDF points (bottom-left origin)
-        const scale = BASE_RENDER_WIDTH / pageWidth;
+        // pdfjs-dist (react-pdf) renders the CropBox area. Spots are placed in
+        // that visual space (BASE_RENDER_WIDTH = 800). pdf-lib draws in the
+        // MediaBox coordinate system, so we must offset by the CropBox origin.
+        const cropBox = page.getCropBox();
+        const cropW = cropBox.width;
+        const cropH = cropBox.height;
+        const cropX = cropBox.x;
+        const cropY = cropBox.y;
+
+        // Visual dimensions are CropBox dimensions, swapped when rotated.
+        const isRotated = rotation === 90 || rotation === 270;
+        const visualWidth = isRotated ? cropH : cropW;
+        const visualHeight = isRotated ? cropW : cropH;
+
+        const scale = BASE_RENDER_WIDTH / visualWidth;
         const xPx = Number(spot.X ?? spot.x ?? 0);
         const yTopPx = Number(spot.Y ?? spot.y ?? 0);
         const wPx = Number(spot.Width ?? spot.width ?? 130);
         const hPx = Number(spot.Height ?? spot.height ?? 48);
 
-        const x = xPx / scale;
-        const w = wPx / scale;
-        const h = hPx / scale;
-        const yTop = yTopPx / scale;
-        const y = pageHeight - yTop - h;
+        // Convert from 800-pixel visual space to visual PDF points
+        const xVis = xPx / scale;
+        const yTopVis = yTopPx / scale;
+        const wVis = wPx / scale;
+        const hVis = hPx / scale;
+        const yBottomVis = visualHeight - yTopVis - hVis;
+
+        // Transform from visual coordinates to MediaBox coordinates.
+        // CropBox offset (cropX, cropY) shifts everything into the full page space.
+        let x, y, w, h;
+        if (rotation === 90) {
+            x = cropX + yBottomVis;
+            y = cropY + (visualWidth - xVis - wVis);
+            w = hVis;
+            h = wVis;
+        } else if (rotation === 180) {
+            x = cropX + (visualWidth - xVis - wVis);
+            y = cropY + yTopVis;
+            w = wVis;
+            h = hVis;
+        } else if (rotation === 270) {
+            x = cropX + (visualHeight - yBottomVis - hVis);
+            y = cropY + xVis;
+            w = hVis;
+            h = wVis;
+        } else {
+            // rotation === 0 (standard, vast majority of documents)
+            x = cropX + xVis;
+            y = cropY + yBottomVis;
+            w = wVis;
+            h = hVis;
+        }
 
         if (signatureKey) {
             const { buffer: rawBuffer, contentType } = await getR2ObjectBuffer(signatureKey);
@@ -6230,6 +6357,8 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
         return otpRequestFail(code, status, messages[code] || 'שליחת קוד האימות נכשלה');
     }
 
+    const wasReused = Boolean(created.reused);
+
     await insertAuditEvent({
         req,
         eventType: 'OTP_SENT',
@@ -6247,12 +6376,14 @@ async function requestSigningOtpImpl({ req, res, next, signingFileId, signerUser
             challengeId: created.challengeId,
             expiresAtUtc: created.expiresAtUtc,
             channel: created.channel || 'sms',
+            reused: wasReused,
         },
     });
 
     return res.json({
         success: true,
-        delivered: true,
+        delivered: !wasReused,
+        reused: wasReused,
         channel: created.channel || 'sms',
     });
 }

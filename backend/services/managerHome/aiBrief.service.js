@@ -13,6 +13,29 @@ const TIER_RANK = { hard: 0, soft: 1 };
 const CALENDAR_SIGNAL_TYPES = new Set(['rsvp_pending']);
 const NON_OPERATIONAL_EVENT_TYPES = new Set(['leave', 'holiday', 'reminder']);
 
+/** Hebrew labels for LLM facts — avoid raw English keys like rsvp_pending in output. */
+const SIGNAL_TYPE_LABELS_HE = {
+    license_expired: 'רישיון פג תוקף',
+    license_expiring_critical: 'רישיון פג בקרוב',
+    license_expiring_warning: 'רישיון לחידוש',
+    signing_expired: 'חתימה פגה',
+    signing_expiring: 'חתימה פגה בקרוב',
+    signing_rejected: 'חתימה נדחתה',
+    signing_pending: 'ממתין לחתימה',
+    unassigned_case: 'תיק ללא מנהל',
+    reminder_failed: 'תזכורת נכשלה',
+    no_activity: 'ללא פעילות',
+    long_in_stage: 'זמן רב בשלב',
+    completion_passed: 'מועד סיום עבר',
+    completion_approaching: 'מועד סיום מתקרב',
+    rsvp_pending: 'ממתין לאישור הגעה',
+};
+
+function signalTypeLabelHe(signalType) {
+    const key = String(signalType || '').trim();
+    return SIGNAL_TYPE_LABELS_HE[key] || key.replace(/_/g, ' ');
+}
+
 function isOperationalCalendarEvent(event) {
     const eventType = String(event?.eventType || event?.event_type || '').trim().toLowerCase();
     if (NON_OPERATIONAL_EVENT_TYPES.has(eventType)) return false;
@@ -144,6 +167,7 @@ function buildFactsSnapshot(payload, { now = new Date() } = {}) {
 
     const topAttention = sorted.slice(0, 5).map((item) => ({
         signalType: item.signalType,
+        signalLabel: signalTypeLabelHe(item.signalType),
         priority: item.priority,
         signalTier: item.signalTier,
         caseName: item.caseName || item.subtitle || null,
@@ -261,6 +285,7 @@ function buildPrompt(facts) {
                 'התחל ישר בתוכן התפעולי (מה דורש תשומת לב עכשיו).',
                 'אם אין נושאים דחופים — ציין זאת בקצרה.',
                 'טון: מקצועי, רגוע, ממוקד פעולה.',
+                'כתוב בעברית בלבד. ב-topAttention השתמש ב-signalLabel — אל תעתיק signalType באנגלית (למשל RSVP).',
                 'החזר JSON בלבד בפורמט: {"lines":["משפט 1","משפט 2"],"recommendations":["פעולה 1","פעולה 2"]}',
             ].join('\n'),
         },

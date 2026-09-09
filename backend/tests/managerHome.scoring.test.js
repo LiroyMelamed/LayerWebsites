@@ -245,6 +245,17 @@ test('estimated completion approaching and passed are soft signals', () => {
 
 // --- Grouping ---
 
+test('groupAttentionItems collapses completion_passed signals', () => {
+    const singles = [
+        { signalType: 'completion_passed', signalTier: 'soft', priority: 'medium', kind: 'single', caseId: 1 },
+        { signalType: 'completion_passed', signalTier: 'soft', priority: 'medium', kind: 'single', caseId: 2 },
+    ];
+    const grouped = groupAttentionItems(singles);
+    assert.equal(grouped.length, 1);
+    assert.equal(grouped[0].kind, 'group');
+    assert.equal(grouped[0].count, 2);
+});
+
 test('groupAttentionItems collapses multiple soft signals of same type', () => {
     const singles = [
         { signalType: 'no_activity', signalTier: 'soft', priority: 'low', kind: 'single', caseId: 1 },

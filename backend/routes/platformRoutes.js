@@ -2,6 +2,9 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 const { verifyAndConsumeCentralHandoff } = require('../utils/centralHandoff');
+const { isMultiTenantMode } = require('../lib/tenant/tenantContext');
+const { listTenantsWithStats } = require('../lib/tenant/tenantService');
+const firmBilling = require('../lib/billing/firmBillingService');
 
 const router = express.Router();
 
@@ -140,6 +143,20 @@ router.get('/health', async (req, res) => {
 router.get('/tenants', async (req, res) => {
   if (!requireCentralService(req, res)) return;
   try {
+    if (isMultiTenantMode()) {
+      const tenants = await listTenantsWithStats();
+      sendJson(res, null, {
+        tenants: tenants.map((t) => ({
+          id: t.id,
+          slug: t.slug,
+          name: t.name,
+          status: t.isActive ? 'active' : 'suspended',
+          metrics: { userCount: t.userCount },
+        })),
+      });
+      return;
+    }
+
     const firmName =
       process.env.LAW_FIRM_NAME || process.env.FIRM_DISPLAY_NAME || process.env.FIRM_NAME || 'Firm';
     const firmSlug = String(process.env.FIRM_NAME || process.env.RUNTIME_TENANT || 'default')
@@ -266,6 +283,37 @@ router.get('/metrics', async (req, res) => {
       ts: new Date().toISOString(),
       extras: { unavailable: true, message: err?.message || String(err) },
     });
+  }
+});
+
+router.get('/billing/summary', async (req, res) => {
+  if (!requireCentralService(req, res)) return;
+  try {
+    const snap = await firmBilling.getBillingSnapshot();
+    sendJson(res, null, {
+      mrrCents: Math.round(Number(snap?.package?.total || 0) * 100),
+      billingStatus: snap?.status || 'unknown',
+      plan: snap?.package ? `${snap.package.platformId}/${snap.package.resourceId}` : 'manual',
+      complimentaryUntil: snap?.complimentaryUntil || null,
+    });
+  } catch (err) {
+    sendJson(res, 200, {
+      mrrCents: 0,
+      billingStatus: 'none',
+      plan: 'manual/off-platform',
+      error: err?.message,
+    });
+  }
+});
+
+router.get('/billing/payments', async (req, res) => {
+  if (!requireCentralService(req, res)) return;
+  try {
+    const limit = Math.min(Number(req.query.limit) || 25, 100);
+    const payments = await firmBilling.listPaymentHistory(limit);
+    sendJson(res, null, { payments });
+  } catch (err) {
+    sendJson(res, 200, { payments: [], error: err?.message });
   }
 });
 

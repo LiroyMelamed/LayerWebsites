@@ -15,6 +15,7 @@ import { ClientStackName } from "../../../navigation/ClientStack";
 import { ClientMainScreenName } from "../../client/clientMainScreen/ClientMainScreen";
 import { useTranslation } from "react-i18next";
 import { AppRoles } from "../../../constant/appRoles";
+import { getActiveTenantSlug, isMultiTenantApp, tenantPath } from "../../../lib/tenantSlug";
 
 import "./LoginOtpScreen.scss";
 
@@ -40,7 +41,10 @@ export default function LoginOtpScreen() {
     const { isPerforming, performRequest } = useHttpRequest(loginApi.verifyOtp, navigateTo);
 
     // Email login disabled for now (public signing only). Always verify by phone.
-    const verifyPayload = () => ({ phoneNumber });
+    const verifyPayload = () => ({
+        phoneNumber,
+        tenantSlug: getActiveTenantSlug() || undefined,
+    });
     // const verifyPayload = () => (
     //     loginChannel === "email"
     //         ? { email: String(email || "").trim().toLowerCase() }
@@ -129,8 +133,16 @@ export default function LoginOtpScreen() {
             localStorage.setItem("refreshToken", data.refreshToken);
         }
 
-        if (data.role == AppRoles.Admin) navigate(AdminStackName + MainScreenName, { replace: true });
-        else navigate(ClientStackName + ClientMainScreenName, { replace: true });
+        const slug = getActiveTenantSlug();
+        const adminPath = isMultiTenantApp() && slug
+            ? tenantPath(slug, `${AdminStackName}${MainScreenName}`)
+            : AdminStackName + MainScreenName;
+        const clientPath = isMultiTenantApp() && slug
+            ? tenantPath(slug, `${ClientStackName}${ClientMainScreenName}`)
+            : ClientStackName + ClientMainScreenName;
+
+        if (data.role == AppRoles.Admin) navigate(adminPath, { replace: true });
+        else navigate(clientPath, { replace: true });
     }
 
     return (

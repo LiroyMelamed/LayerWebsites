@@ -24,6 +24,7 @@ const SearchInput = ({
     usePortal = true,
     title,
     error,
+    labelAccessory,
     style: _style,
     className,
     ...props
@@ -125,6 +126,7 @@ const SearchInput = ({
         <SimpleContainer className={['lw-searchInput', className].filter(Boolean).join(' ')}>
             <SimpleInput
                 title={title}
+                labelAccessory={labelAccessory}
                 ref={targetRef}
                 inputRef={inputRef}
                 acceptExternalValueWhileFocused

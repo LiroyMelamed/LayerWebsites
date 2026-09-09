@@ -6,6 +6,8 @@ const { sendMessage } = require("../utils/sendMessage");
 const { sendTransactionalCustomHtmlEmail } = require("../utils/smooveEmailCampaignService");
 const { isLocked, recordFailure, recordSuccess } = require("../utils/otpBruteForce");
 const { logSecurityEvent, extractIp } = require("../utils/securityAuditLogger");
+const { isMultiTenantMode } = require("../lib/tenant/tenantContext");
+const { getTenantBySlug } = require("../lib/tenant/tenantService");
 require("dotenv").config();
 
 if (!process.env.JWT_SECRET) {
@@ -146,9 +148,25 @@ function buildOtpSmsBodyForRequest(req, otp) {
 }
 
 const requestOtp = async (req, res) => {
-    let { phoneNumber, email } = req.body;
+    let { phoneNumber, email, tenantSlug } = req.body;
     const emailNorm = String(email || "").trim().toLowerCase();
     const useEmail = !phoneNumber && !!emailNorm;
+    let tenantId = req.tenant?.id || null;
+
+    if (isMultiTenantMode() && !tenantId && tenantSlug) {
+        const tenant = await getTenantBySlug(tenantSlug);
+        if (!tenant) {
+            return res.status(404).json({ message: "משרד לא נמצא" });
+        }
+        if (!tenant.isActive) {
+            return res.status(403).json({ message: "משרד מושבת" });
+        }
+        tenantId = tenant.id;
+    }
+
+    if (isMultiTenantMode() && !tenantId) {
+        return res.status(400).json({ message: "נדרש מזהה משרד (tenantSlug)" });
+    }
 
     if (!phoneNumber && !emailNorm) {
         return res.status(400).json({ message: "נא להזין מספר טלפון או דוא״ל תקין" });
@@ -163,10 +181,15 @@ const requestOtp = async (req, res) => {
             const otp = crypto.randomInt(100000, 999999).toString();
             const expiry = new Date(Date.now() + 5 * 60 * 1000);
 
-            const userResult = await pool.query(
-                `SELECT userid, name FROM users WHERE LOWER(email) = $1`,
-                [emailNorm]
-            );
+            const userResult = tenantId
+                ? await pool.query(
+                    `SELECT userid, name FROM users WHERE LOWER(email) = $1 AND law_firm_tenant_id = $2`,
+                    [emailNorm, tenantId]
+                )
+                : await pool.query(
+                    `SELECT userid, name FROM users WHERE LOWER(email) = $1`,
+                    [emailNorm]
+                );
             if (userResult.rows.length === 0) {
                 return res.status(404).json({ message: "משתמש אינו קיים" });
             }
@@ -212,10 +235,15 @@ const requestOtp = async (req, res) => {
 
         const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
-        const userResult = await pool.query(
-            `SELECT userid FROM users WHERE phonenumber = $1`,
-            [phoneNumber]
-        );
+        const userResult = tenantId
+            ? await pool.query(
+                `SELECT userid FROM users WHERE phonenumber = $1 AND law_firm_tenant_id = $2`,
+                [phoneNumber, tenantId]
+            )
+            : await pool.query(
+                `SELECT userid FROM users WHERE phonenumber = $1`,
+                [phoneNumber]
+            );
         if (userResult.rows.length === 0) {
             console.log("משתמש אינו קיים");
             return res.status(404).json({ message: "משתמש אינו קיים" });
@@ -248,10 +276,19 @@ const requestOtp = async (req, res) => {
 };
 
 const verifyOtp = async (req, res) => {
-    let { phoneNumber, email, otp } = req.body;
+    let { phoneNumber, email, otp, tenantSlug } = req.body;
     const emailNorm = String(email || "").trim().toLowerCase();
     const useEmail = !phoneNumber && !!emailNorm;
     const lockKey = useEmail ? emailNorm : phoneNumber;
+    let tenantId = req.tenant?.id || null;
+
+    if (isMultiTenantMode() && !tenantId && tenantSlug) {
+        const tenant = await getTenantBySlug(tenantSlug);
+        if (!tenant) {
+            return res.status(404).json({ message: "משרד לא נמצא" });
+        }
+        tenantId = tenant.id;
+    }
 
     // ── Brute-force lockout check (ISO 27001 A.9.4.2) ──
     const lockStatus = isLocked(lockKey);
@@ -274,26 +311,30 @@ const verifyOtp = async (req, res) => {
         const otpHash = hashOtp(otp);
         const result = useEmail
             ? await pool.query(
-                `
-            SELECT U.userid, U.role, U.phonenumber, U.email
-            FROM otps O
-            JOIN users U ON O.userid = U.userid
-            WHERE LOWER(O.email) = $1
-              AND O.otp = $2
-              AND O.expiry > NOW()
-            `,
-                [emailNorm, otpHash]
+                tenantId
+                    ? `SELECT U.userid, U.role, U.phonenumber, U.email
+                       FROM otps O
+                       JOIN users U ON O.userid = U.userid
+                       WHERE LOWER(O.email) = $1 AND O.otp = $2 AND O.expiry > NOW()
+                         AND U.law_firm_tenant_id = $3`
+                    : `SELECT U.userid, U.role, U.phonenumber, U.email
+                       FROM otps O
+                       JOIN users U ON O.userid = U.userid
+                       WHERE LOWER(O.email) = $1 AND O.otp = $2 AND O.expiry > NOW()`,
+                tenantId ? [emailNorm, otpHash, tenantId] : [emailNorm, otpHash]
             )
             : await pool.query(
-                `
-            SELECT U.userid, U.role, U.phonenumber, U.email
-            FROM otps O
-            JOIN users U ON O.userid = U.userid
-            WHERE O.phonenumber = $1
-              AND O.otp = $2
-              AND O.expiry > NOW()
-            `,
-                [phoneNumber, otpHash]
+                tenantId
+                    ? `SELECT U.userid, U.role, U.phonenumber, U.email
+                       FROM otps O
+                       JOIN users U ON O.userid = U.userid
+                       WHERE O.phonenumber = $1 AND O.otp = $2 AND O.expiry > NOW()
+                         AND U.law_firm_tenant_id = $3`
+                    : `SELECT U.userid, U.role, U.phonenumber, U.email
+                       FROM otps O
+                       JOIN users U ON O.userid = U.userid
+                       WHERE O.phonenumber = $1 AND O.otp = $2 AND O.expiry > NOW()`,
+                tenantId ? [phoneNumber, otpHash, tenantId] : [phoneNumber, otpHash]
             );
 
         if (result.rows.length === 0) {

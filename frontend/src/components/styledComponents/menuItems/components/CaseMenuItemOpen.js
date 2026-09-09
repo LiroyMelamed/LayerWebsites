@@ -81,7 +81,7 @@ function WhatsappGroupLinkModal({
     );
 }
 
-export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, isPerformingUpdateStage, editCase, isClient, rePerformFunction }) {
+export default function CaseMenuItemOpen({ fullCase, isOpen, alwaysExpanded = false, updateStage, isPerformingUpdateStage, editCase, isClient, rePerformFunction }) {
     const { t } = useTranslation();
     const { isPerforming: isPerformingTagCase, performRequest: tagCase } = useHttpRequest(
         casesApi.tagCaseById
@@ -103,8 +103,10 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, isPerf
     }, [fullCase.CaseId]);
 
     useEffect(() => {
-        if (isOpen) fetchStageFiles();
-    }, [isOpen, fetchStageFiles]);
+        if (isOpen || alwaysExpanded) fetchStageFiles();
+    }, [isOpen, alwaysExpanded, fetchStageFiles]);
+
+    const stagesExpanded = alwaysExpanded || isStagesOpen;
 
     function unTag() {
         setIsTagged(!IsTagged)
@@ -152,15 +154,20 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, updateStage, isPerf
                 </SimpleContainer>
 
                 <SimpleContainer className="lw-caseMenuItemOpen__section">
-                    <SimpleContainer className="lw-caseMenuItemOpen__accordionHeader" onPress={() => setIsStagesOpen(!isStagesOpen)}>
-                        <ImageButton
-                            src={icons.Button.DownArrow}
-                            className={"lw-caseMenuItemOpen__dropDownBtn" + (isStagesOpen ? " is-open" : "")}
-                        />
+                    <SimpleContainer
+                        className="lw-caseMenuItemOpen__accordionHeader"
+                        onPress={alwaysExpanded ? undefined : () => setIsStagesOpen(!isStagesOpen)}
+                    >
+                        {!alwaysExpanded && (
+                            <ImageButton
+                                src={icons.Button.DownArrow}
+                                className={"lw-caseMenuItemOpen__dropDownBtn" + (stagesExpanded ? " is-open" : "")}
+                            />
+                        )}
                         <TextBold12 className="lw-caseMenuItemOpen__sectionTitle">{t("common.stages")}</TextBold12>
                     </SimpleContainer>
 
-                    <SimpleContainer className={`lw-caseMenuItemOpen__timelineWrap${isStagesOpen ? ' is-open' : ''}`}>
+                    <SimpleContainer className={`lw-caseMenuItemOpen__timelineWrap${stagesExpanded ? " is-open" : ""}`}>
                         <CaseTimeline
                             stages={fullCase.Descriptions}
                             currentStage={fullCase.CurrentStage}

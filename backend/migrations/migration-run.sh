@@ -88,10 +88,18 @@ PY
 }
 
 load_dotenv_file "$ENV_FILE"
-derive_database_url
+if [[ -z "${MIGRATION_PGDATABASE:-}" ]]; then
+  derive_database_url
+fi
 
 PSQL=(psql -v ON_ERROR_STOP=1)
-if [[ -n "${DATABASE_URL:-}" ]]; then
+if [[ -n "${MIGRATION_PGDATABASE:-}" ]]; then
+  if [[ "$(id -u)" -eq 0 ]] && command -v sudo >/dev/null 2>&1; then
+    PSQL=(sudo -u postgres psql -v ON_ERROR_STOP=1 -d "$MIGRATION_PGDATABASE")
+  else
+    PSQL+=(-d "$MIGRATION_PGDATABASE")
+  fi
+elif [[ -n "${DATABASE_URL:-}" ]]; then
   PSQL+=("${DATABASE_URL}")
 fi
 
@@ -120,7 +128,11 @@ apply_one() {
   fi
 
   echo "[migrations] Applying: ${base}"
-  "${PSQL[@]}" -f "${file}"
+  local tmp="/tmp/lw-mig-${base}"
+  cp "${file}" "${tmp}"
+  chmod 644 "${tmp}"
+  "${PSQL[@]}" -f "${tmp}"
+  rm -f "${tmp}"
   "${PSQL[@]}" -c "insert into public.schema_migrations(filename) values ('$base');"
   echo "[migrations] Applied: ${base}"
 }

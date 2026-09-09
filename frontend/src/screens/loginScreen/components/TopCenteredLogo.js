@@ -5,32 +5,46 @@ import { images } from "../../../assets/images/images";
 import { colors } from "../../../constant/colors";
 import { useTranslation } from "react-i18next";
 import ComplianceBadges from "../../../components/compliance/ComplianceBadges";
+import { getPublicFirmLogoUrl, useNaturalLogoColors } from "../../../lib/tenantBranding";
 
 import "./TopCenteredLogo.scss";
 
-const appName = String(process.env.REACT_APP_APP_NAME || "").toLowerCase();
-const useNaturalLogoColors = appName === "melamedia" || appName === "idm";
-
-export default function TopCenteredLogo({ logoSrc = images.Logos.LogoSlang, logoWidth = 100, style }) {
+export default function TopCenteredLogo({
+    logoSrc,
+    logoWidth = 100,
+    style,
+    className = '',
+    showCompliance = true,
+    showTagline = true,
+}) {
     const { t } = useTranslation();
+    const naturalColors = useNaturalLogoColors();
+    const resolvedLogo = logoSrc || (naturalColors ? getPublicFirmLogoUrl() : images.Logos.LogoSlang);
+
+    const rootClass = ['lw-topCenteredLogo', className].filter(Boolean).join(' ');
 
     return (
-        <SimpleContainer className="lw-topCenteredLogo" style={style}>
+        <SimpleContainer className={rootClass} style={style}>
             <SimpleContainer className="lw-topCenteredLogo__cornerLogo">
                 <SimpleImage
-                    src={logoSrc}
-                    tintColor={useNaturalLogoColors ? null : colors.text}
+                    src={resolvedLogo}
+                    tintColor={naturalColors ? null : colors.text}
                     className="lw-topCenteredLogo__logoImage"
+                    style={{ width: logoWidth, maxWidth: 'min(80vw, 280px)', height: 'auto' }}
                 />
             </SimpleContainer>
 
-            <Text32 className="lw-topCenteredLogo__title">
-                {t('auth.tagline')}
-            </Text32>
+            {showTagline && (
+                <Text32 className="lw-topCenteredLogo__title">
+                    {t('auth.tagline')}
+                </Text32>
+            )}
 
-            <SimpleContainer className="lw-topCenteredLogo__isoBadgeWrap">
-                <ComplianceBadges size="small" layout="row" showLabels={false} />
-            </SimpleContainer>
+            {showCompliance && (
+                <SimpleContainer className="lw-topCenteredLogo__isoBadgeWrap">
+                    <ComplianceBadges size="small" layout="row" showLabels={false} />
+                </SimpleContainer>
+            )}
         </SimpleContainer>
     );
 }

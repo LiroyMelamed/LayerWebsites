@@ -1354,6 +1354,39 @@ export default function PlatformSettingsScreen() {
                         );
                     })()}
 
+                    {/* Manager Home AI insights */}
+                    {(() => {
+                        const managerHomeSettings = settings?.managerHome || {};
+                        const editKey = "managerHome:MANAGER_HOME_AI_INSIGHTS_ENABLED";
+                        const edited = editedValues[editKey]?.value;
+                        const current =
+                            edited !== undefined
+                                ? edited
+                                : (managerHomeSettings.MANAGER_HOME_AI_INSIGHTS_ENABLED?.effectiveValue ?? "false");
+                        return (
+                            <SimpleContainer className="lw-platformSettings__knowledgeNotifSection">
+                                <TextBold14>
+                                    {managerHomeSettings.MANAGER_HOME_AI_INSIGHTS_ENABLED?.label
+                                        || t("platformSettings.managerHomeAiInsightsEnabled", "תובנות AI בלוח הבקרה")}
+                                </TextBold14>
+                                <Text12 className="lw-platformSettings__knowledgeMeta">
+                                    {managerHomeSettings.MANAGER_HOME_AI_INSIGHTS_ENABLED?.description
+                                        || t(
+                                            "platformSettings.managerHomeAiInsightsEnabledDesc",
+                                            "סיכום בוקר בלוח הבקרה נוצר ב-AI מתוך נתונים תפעוליים קיימים."
+                                        )}
+                                </Text12>
+                                <SimpleContainer className="lw-platformSettings__settingInput">
+                                    <SettingInput
+                                        setting={{ valueType: "boolean" }}
+                                        value={String(current)}
+                                        onChange={(val) => handleSettingChange("managerHome", "MANAGER_HOME_AI_INSIGHTS_ENABLED", val)}
+                                    />
+                                </SimpleContainer>
+                            </SimpleContainer>
+                        );
+                    })()}
+
                     {/* Notification email setting */}
                     <SimpleContainer className="lw-platformSettings__knowledgeNotifSection">
                         <TextBold14>{t("platformSettings.leadNotifEmail")}</TextBold14>

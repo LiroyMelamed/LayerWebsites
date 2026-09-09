@@ -21,6 +21,7 @@
     "retry": "Try again",
     "notSpecified": "Not specified",
     "unassigned": "Unassigned",
+    "listTitleWithCount": "{{title}} ({{count}})",
     "refreshPull": "Pull down to refresh",
     "refreshing": "Refreshing…",
     "send": "Send",
@@ -490,7 +491,31 @@
     "reminders": "Reminders",
     "addOrUpdateClient": "Add / Update Client",
     "allClients": "All Clients",
-    "platformSettings": "Platform Settings"
+    "platformSettings": "Platform Settings",
+    "support": "Support"
+  },
+  "support": {
+    "eyebrow": "{{firm}} · Support",
+    "title": "Support tickets",
+    "subtitle": "Open a ticket and track status with the MelaMedia team.",
+    "newTicket": "New ticket",
+    "titleLabel": "Title",
+    "descriptionLabel": "Description",
+    "submit": "Submit ticket",
+    "sending": "Sending…",
+    "createSuccess": "Ticket submitted successfully",
+    "ticketsHeading": "Tickets ({{count}})",
+    "noTickets": "No tickets yet.",
+    "selectTicket": "Select a ticket from the list.",
+    "commentLabel": "Comment",
+    "commentSubmit": "Send",
+    "commentSuccess": "Comment sent",
+    "status": {
+      "open": "Open",
+      "inProgress": "In progress",
+      "resolved": "Resolved",
+      "closed": "Closed"
+    }
   },
   "planUsage": {
     "title": "Plan & usage",
@@ -1288,6 +1313,8 @@
     "chooseFile": "Choose File",
     "uploading": "Uploading and processing document...",
     "noDocsYet": "No knowledge documents yet. Upload a document so the chatbot can answer questions.",
+    "managerHomeAiInsightsEnabled": "Manager Home AI insights",
+    "managerHomeAiInsightsEnabledDesc": "When enabled, the dashboard morning brief is AI-generated from existing operational data.",
     "deleteDocTitle": "Delete Document",
     "deleteDocMessage": "Delete this document? All its knowledge chunks will be removed.",
     "docDeleted": "Document deleted successfully",
