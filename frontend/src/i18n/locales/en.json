@@ -1313,6 +1313,8 @@
     "chooseFile": "Choose File",
     "uploading": "Uploading and processing document...",
     "noDocsYet": "No knowledge documents yet. Upload a document so the chatbot can answer questions.",
+    "managerHomeAiInsightsEnabled": "Manager Home AI insights",
+    "managerHomeAiInsightsEnabledDesc": "When enabled, the dashboard morning brief is AI-generated from existing operational data.",
     "deleteDocTitle": "Delete Document",
     "deleteDocMessage": "Delete this document? All its knowledge chunks will be removed.",
     "docDeleted": "Document deleted successfully",
