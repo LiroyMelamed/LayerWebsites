@@ -13,6 +13,29 @@ const TIER_RANK = { hard: 0, soft: 1 };
 const CALENDAR_SIGNAL_TYPES = new Set(['rsvp_pending']);
 const NON_OPERATIONAL_EVENT_TYPES = new Set(['leave', 'holiday', 'reminder']);
 
+/** Hebrew labels for LLM facts — avoid raw English keys like rsvp_pending in output. */
+const SIGNAL_TYPE_LABELS_HE = {
+    license_expired: 'רישיון פג תוקף',
+    license_expiring_critical: 'רישיון פג בקרוב',
+    license_expiring_warning: 'רישיון לחידוש',
+    signing_expired: 'חתימה פגה',
+    signing_expiring: 'חתימה פגה בקרוב',
+    signing_rejected: 'חתימה נדחתה',
+    signing_pending: 'ממתין לחתימה',
+    unassigned_case: 'תיק ללא מנהל',
+    reminder_failed: 'תזכורת נכשלה',
+    no_activity: 'ללא פעילות',
+    long_in_stage: 'זמן רב בשלב',
+    completion_passed: 'מועד סיום עבר',
+    completion_approaching: 'מועד סיום מתקרב',
+    rsvp_pending: 'ממתין לאישור הגעה',
+};
+
+function signalTypeLabelHe(signalType) {
+    const key = String(signalType || '').trim();
+    return SIGNAL_TYPE_LABELS_HE[key] || key.replace(/_/g, ' ');
+}
+
 function isOperationalCalendarEvent(event) {
     const eventType = String(event?.eventType || event?.event_type || '').trim().toLowerCase();
     if (NON_OPERATIONAL_EVENT_TYPES.has(eventType)) return false;
@@ -110,11 +133,14 @@ async function defaultBriefLlmCall(messages) {
     return require('../aiChatService').callLLM(messages);
 }
 
-async function isAiBriefEnabled({ getSettingFn, userId } = {}) {
+async function isAiBriefEnabled({ getSettingFn, userId, isPlatformAdminFn } = {}) {
     const getSetting = getSettingFn || require('../settingsService').getSetting;
     const flag = await getSetting('managerHome', 'MANAGER_HOME_AI_INSIGHTS_ENABLED', false);
     if (!Boolean(flag) || !hasBriefLlmCredentials()) return false;
-    return true;
+    if (userId == null) return true;
+    const checkAdmin = isPlatformAdminFn
+        || ((id) => require('../settingsService').isPlatformAdmin(id));
+    return checkAdmin(userId);
 }
 
 function buildFactsSnapshot(payload, { now = new Date() } = {}) {
@@ -141,6 +167,7 @@ function buildFactsSnapshot(payload, { now = new Date() } = {}) {
 
     const topAttention = sorted.slice(0, 5).map((item) => ({
         signalType: item.signalType,
+        signalLabel: signalTypeLabelHe(item.signalType),
         priority: item.priority,
         signalTier: item.signalTier,
         caseName: item.caseName || item.subtitle || null,
@@ -162,7 +189,7 @@ function buildFactsSnapshot(payload, { now = new Date() } = {}) {
                 urgentCases: m.urgentCases,
                 unassigned: m.unassigned,
                 attentionSummaryHe: m.activeCases > 0
-                    ? `מתוך ${m.activeCases} תיקים פתוחים, ${m.needsAttention} דורשים טיפול`
+                    ? `מתוך ${m.activeCases} תיקים פתוחים, ${m.needsAttention} (${attentionRatio}%) מסומנים כדורשים טיפול`
                     : `${m.needsAttention} פריטים דורשים טיפול`,
             };
         });
@@ -237,36 +264,29 @@ function buildPrompt(facts) {
         {
             role: 'system',
             content: [
-                'אתה יועץ ביצועים למשרד עורכי דין. אתה כותב תובנות קצרות וחדות שעוזרות לעורכי הדין להצטיין ולהוביל.',
-                'קיבלת JSON עם נתונים תפעוליים מהמערכת, כולל שדה insights עם ניתוח מובנה.',
-                'כתוב 3-5 משפטים קצרים בעברית — תובנות תחרותיות ומוטיבציוניות.',
-                'בנוסף, הוסף recommendations: 2-3 טיפים קצרים שיעזרו לעורך הדין להתקדם (למשל "סגרו את 3 התיקים שקרובים לסיום — תקפצו ב-3 סגירות השבוע").',
-                '',
-                '--- כללי טון ---',
-                'הטון הוא תחרותי, מוטיבציוני, ואנרגטי — כמו מאמן ספורט.',
-                'תמקד בהישגים, הזדמנויות לסגור תיקים, ויעדים קרובים.',
-                'דוגמאות לניסוח טוב:',
-                '  - "היום נפתחו 3 תיקים חדשים — מי סוגר ראשון?"',
-                '  - "יש 4 חתימות ממתינות — תשלימו אותן ותסמנו V."',
-                '  - "11 מסמכים מחכים לחתימה — הזדמנות להוריד את הרשימה."',
-                '  - "כבר סגרתם 2 תיקים היום — עוד אחד ושברתם שיא!"',
-                '  - "יש תיקים שלא זזו מעל שבוע — תנו להם דחיפה והם ירוצו."',
-                '',
-                '--- מה לא לכתוב ---',
-                'אל תכתוב על "עומס", "לחץ", "סיכון", או "בעיה" — רק הזדמנויות.',
-                'אל תציע לחלק עבודה בין מנהלים או להעביר תיקים — זה לא המקום.',
-                'אל תכתוב כמנהל — כתוב כמאמן שמדבר לכל הצוות.',
-                'אל תפתח בברכה, אל תכתוב "בוקר טוב" ואל תפנה בשם.',
-                '',
-                '--- כללי נתונים ---',
-                'חובה: השתמש רק בנתונים שסופקו. אל תמציא מספרים.',
-                'שדה contextNow מציין את השעה הנוכחית בישראל.',
-                'אם contextNow.period הוא evening או night — התמקד במה שהושג היום ומה מחכה מחר.',
-                'לפגישות: השתמש רק ב-today.upcomingEvents. אל תציין פגישות שעברו.',
-                'אל תציין חופשות, חגים, או אירועי יומן פנימיים כפגישות.',
-                `תיקים "ללא שינוי" = תיקים שלא בוצע בהם שינוי מעל ${C.NO_ACTIVITY_DAYS} ימים.`,
-                '',
-                'החזר JSON בלבד בפורמט: {"lines":["משפט 1","משפט 2"],"recommendations":["טיפ 1","טיפ 2"]}',
+                'אתה אנalist תפעולי למשרד עורכי דין.',
+                'קיבלת JSON עם נתונים תפעוליים בלבד מהמערכת, כולל שדה insights עם ניתוח מובנה.',
+                'כתוב 4-6 משפטים קצרים בעברית לסיכום תפעולי למנהל/ת המשרד.',
+                'בנוסף, הוסף recommendations: 2-3 פעולות מומלצות קצרות בצורת פקודה (למשל "טפלו ב-X חתימות שפג תוקפן").',
+                'חובה: השתמש רק בנתונים שסופקו. אל תמציא מספרים, שמות תיקים, מועדים או מסקנות.',
+                'השתמש ב-insights לזיהוי סיכונים (signingPressure, workloadHotspots, inactivityBurden, focusAreas).',
+                'לגבי עומס מנהלים: השתמש בשדה attentionSummaryHe — הסבר שמתוך X תיקים פתוחים, Y מסומנים כדורשים טיפול.',
+                'לגבי תור תשומת לב: summary.attentionQueueCount הוא מספר הפריטים שמוצג בכרטיס "פריטים לטיפול" בלוח הבקרה.',
+                'summary.noActivityCases הוא תת-קבוצה בתוך התור — תיקים ללא פעילות משמעותית, לא סכום נפרד.',
+                'כשאתה מציין תיקים ללא פעילות, ציין במפורש שמדובר מתוך attentionQueueCount (למשל: "מתוך 275 פריטים שדורשים טיפול, 133 הם תיקים ללא פעילות").',
+                'אל תציג את noActivityCases כאילו הוא מחליף את attentionQueueCount — אלו מדדים שונים.',
+                'אל תשתמש במונחים "יחס תשומת לב", "attention ratio" או "attentionRatio" — ניסוח לא מובן למשתמש.',
+                'שדה contextNow מציין את השעה הנוכחית בישראל — התייחס אליו לקביעת מה קרוב, מה עבר, ומה רלוונטי עכשיו.',
+                'לפגישות: השתמש רק ב-today.upcomingEvents ו-upcomingClientMeetings לפגישות תפעוליות. אל תציין פגישות מ-today.pastCount כאילו הן עדיין מתוכננות.',
+                'אל תציין חופשות, חגים, או אירועי יומן פנימיים (leave/holiday/reminder) כפגישות — הם לא מופיעים בנתונים התפעוליים.',
+                'אל תמציא פגישות עתידיות שלא מופיעות ב-upcomingEvents או upcomingClientMeetings.',
+                'אם contextNow.period הוא evening או night — אל תדבר על פגישות שכבר עברו היום; התמקד בחתימות, תיקים, ועומס מנהלים.',
+                'אל תפתח בברכה, אל תכתוב "בוקר טוב", "ערב טוב", "לילה טוב" ואל תפנה בשם.',
+                'התחל ישר בתוכן התפעולי (מה דורש תשומת לב עכשיו).',
+                'אם אין נושאים דחופים — ציין זאת בקצרה.',
+                'טון: מקצועי, רגוע, ממוקד פעולה.',
+                'כתוב בעברית בלבד. ב-topAttention השתמש ב-signalLabel — אל תעתיק signalType באנגלית (למשל RSVP).',
+                'החזר JSON בלבד בפורמט: {"lines":["משפט 1","משפט 2"],"recommendations":["פעולה 1","פעולה 2"]}',
             ].join('\n'),
         },
         {
@@ -414,10 +434,7 @@ function lineMatchesFacts(line, facts) {
         'אין',
         'מנהל',
         'טיפול',
-        'סגר',
-        'הזדמנות',
-        'ממתינ',
-        'נפתח',
+        'עומס',
     ];
     return keywords.some((kw) => line.includes(kw));
 }
@@ -441,9 +458,10 @@ async function generateAiMorningBrief({
     payload,
     callLlmFn,
     getSettingFn,
+    isPlatformAdminFn,
     now,
 } = {}) {
-    const enabled = await isAiBriefEnabled({ getSettingFn, userId });
+    const enabled = await isAiBriefEnabled({ getSettingFn, userId, isPlatformAdminFn });
     if (!enabled) return null;
 
     const referenceNow = now instanceof Date ? now : new Date();
