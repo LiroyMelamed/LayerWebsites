@@ -2064,6 +2064,8 @@
     "selectFromList": "בחר תבנית מהרשימה",
     "knowledgeDocsTitle": "מסמכי ידע לצ'אטבוט",
     "knowledgeDocsSubtitle": "העלה מסמכים (PDF או TXT) שהצ'אטבוט ישתמש בהם כדי לענות על שאלות",
+    "managerHomeAiInsightsEnabled": "תובנות AI בלוח הבקרה",
+    "managerHomeAiInsightsEnabledDesc": "סיכום בוקר בלוח הבקרה נוצר ב-AI מתוך נתונים תפעוליים קיימים.",
     "workingHoursByDayTitle": "שעות פעילות לפי יום",
     "workingHoursByDayHint": "לסימון ויזואלי בלבד בלוח השנה (שעות מחוץ לפעילות מוצגות באפור). כל ימי השבוע תמיד מוצגים, וניתן ליצור אירועים גם מחוץ לשעות האלה.",
     "calendarVisibleHoursTitle": "שעות תצוגה בלוח השנה",
