@@ -16,16 +16,21 @@ export function reminderKindLabelHe(reminderTemplateKey = 'GENERAL', {
     subject = '',
     templateLabel = '',
 } = {}) {
+    const eventTitle = String(title || subject || '').trim();
+    const key = String(reminderTemplateKey || 'GENERAL').trim().toUpperCase();
+
+    if (eventTitle) {
+        if (key !== 'GENERAL' && REMINDER_KIND_LABELS[key]) {
+            return `${REMINDER_KIND_LABELS[key]}: ${eventTitle}`;
+        }
+        return eventTitle;
+    }
+
     const customLabel = String(templateLabel || '').trim();
     if (customLabel) return customLabel;
 
-    const key = String(reminderTemplateKey || 'GENERAL').trim().toUpperCase();
     if (REMINDER_KIND_LABELS[key]) return REMINDER_KIND_LABELS[key];
 
-    const fallback = String(title || subject || '').trim();
-    if (fallback) {
-        return /^תזכורת(\s|:|$)/i.test(fallback) ? fallback : `תזכורת ${fallback}`;
-    }
     return REMINDER_KIND_LABELS.GENERAL;
 }
 

@@ -131,7 +131,9 @@ export default function AttentionItem({
 
                     {!expanded && (
                         <Text12 color={colors.text} numberOfLines={2} className="lw-commandCenter__attentionReason">
-                            {isGroup ? t("managerHome.attention.tapToExpand") : reason}
+                            {isGroup && item.signalType !== "no_activity"
+                                ? t("managerHome.attention.tapToExpand")
+                                : reason}
                         </Text12>
                     )}
                 </SimpleContainer>

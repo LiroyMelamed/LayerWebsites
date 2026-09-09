@@ -182,3 +182,21 @@ export function useAiChatbotEnabled() {
 export function useManagerHomeAiInsightsEnabled() {
     return useCachedBool(getManagerHomeAiInsightsEnabledCached, false);
 }
+
+/** Hook: true once public firm settings have been fetched at least once. */
+export function useFirmSettingsLoaded() {
+    const [loaded, setLoaded] = useState(_loaded);
+
+    useEffect(() => {
+        const sync = () => setLoaded(_loaded);
+        if (_loaded) {
+            sync();
+            return undefined;
+        }
+        loadFirmSettings().then(sync);
+        _listeners.add(sync);
+        return () => { _listeners.delete(sync); };
+    }, []);
+
+    return loaded;
+}

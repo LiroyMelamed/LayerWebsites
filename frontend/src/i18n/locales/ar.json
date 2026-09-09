@@ -22,6 +22,7 @@
     "retry": "أعد المحاولة",
     "notSpecified": "غير محدد",
     "unassigned": "غير مُسند",
+    "listTitleWithCount": "{{title}} ({{count}})",
     "refreshPull": "اسحب للأسفل للتحديث",
     "refreshing": "جارٍ التحديث…",
     "send": "إرسال",

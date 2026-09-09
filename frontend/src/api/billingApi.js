@@ -100,6 +100,11 @@ const billingApi = {
         invalidateBillingCaches();
         return ApiUtils.post(`${base}/charge`, body || {});
     },
+
+    cancelSubscription: async () => {
+        invalidateBillingCaches();
+        return ApiUtils.post(`${base}/cancel-subscription`, {});
+    },
 };
 
 export default billingApi;

@@ -102,3 +102,7 @@ EOF
 
 echo "# Deployed logo512: $LOGO512_HASH"
 echo "# Done: https://client.melamedlaw.co.il"
+
+# shellcheck source=../../scripts/deploy-notify.sh
+source "$ROOT/../scripts/deploy-notify.sh"
+DEPLOY_ROOT="$ROOT" notify_central_deploy layerwebsites "frontend:melamedlaw"

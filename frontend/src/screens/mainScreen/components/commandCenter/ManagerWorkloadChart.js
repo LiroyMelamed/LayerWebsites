@@ -37,6 +37,7 @@ export default function ManagerWorkloadChart({ managers = [], onManagerPress }) 
     );
 
     const total = chartItems.reduce((sum, item) => sum + item.value, 0);
+    const showShare = chartItems.length > 1;
 
     if (total === 0) {
         return null;
@@ -79,7 +80,11 @@ export default function ManagerWorkloadChart({ managers = [], onManagerPress }) 
                             </SimpleContainer>
                             <SimpleContainer className="lw-commandCenter__managerChartLegendMeta">
                                 <TextBold14>{item.value}</TextBold14>
-                                <Text12 color={colors.winter}>{`${pct}% מהתיקים`}</Text12>
+                                {showShare && (
+                                    <Text12 color={colors.winter}>
+                                        {t("managerHome.operations.casesShare", { pct })}
+                                    </Text12>
+                                )}
                             </SimpleContainer>
                         </SimpleContainer>
                     );
