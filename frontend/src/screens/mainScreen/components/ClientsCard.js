@@ -13,6 +13,7 @@ import { usePopup } from "../../../providers/PopUpProvider";
 import ClientPopup from "./ClientPopUp";
 import ImportClientsModal from "./ImportClientsModal";
 import { useTranslation } from "react-i18next";
+import ListPageTitle from "../../../components/specializedComponents/text/ListPageTitle";
 
 import "./ClientsCard.scss";
 import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
@@ -48,20 +49,28 @@ const ClientsCard = forwardRef(({ rePerformRequest, customerList, style: _style,
 
     if (customerList?.length === 0 || !customerList) {
         return (
-            <DefaultState
-                content={t("customers.emptyList")}
-                imageStyle={{ height: 156 }}
-                imageSrc={images.Defaults.SearchingClient}
-                className="lw-clientsCard__empty"
-                imageClassName="lw-clientsCard__emptyImage"
-                actionButton={t("customers.addCustomer")}
-                actionButtonPressFunction={() => openPopup(<ClientPopup closePopUpFunction={closePopup} rePerformRequest={rePerformRequest} />)}
-            />
+            <SimpleCard className="lw-clientsCard lw-clientsCard__empty" ref={ref} style={_style}>
+                <ListPageTitle title={t("nav.allClients")} count={0} className="lw-clientsCard__pageTitle" />
+                <DefaultState
+                    content={t("customers.emptyList")}
+                    imageStyle={{ height: 156 }}
+                    imageSrc={images.Defaults.SearchingClient}
+                    className="lw-clientsCard__empty"
+                    imageClassName="lw-clientsCard__emptyImage"
+                    actionButton={t("customers.addCustomer")}
+                    actionButtonPressFunction={() => openPopup(<ClientPopup closePopUpFunction={closePopup} rePerformRequest={rePerformRequest} />)}
+                />
+            </SimpleCard>
         )
     }
 
     return (
         <SimpleCard className="lw-clientsCard" ref={ref} style={_style}>
+            <ListPageTitle
+                title={t("nav.allClients")}
+                count={customerList?.length ?? 0}
+                className="lw-clientsCard__pageTitle"
+            />
             <SimpleContainer className="lw-clientsCard__headerRow">
                 <TextBold14 className="lw-clientsCard__headerCell">{t("customers.companyName")}</TextBold14>
 

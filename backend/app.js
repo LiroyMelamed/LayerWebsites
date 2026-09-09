@@ -30,7 +30,11 @@ const platformSettingsRoutes = require("./routes/platformSettingsRoutes");
 const chatbotRoutes = require("./routes/chatbotRoutes");
 const templateAttachmentRoutes = require("./routes/templateAttachmentRoutes"); const calendarRoutes = require('./routes/calendarRoutes');
 const platformRoutes = require('./routes/platformRoutes');
+const supportRoutes = require('./routes/supportRoutes');
 const paymentWebhookRoutes = require('./routes/paymentWebhookRoutes');
+const publicSignupRoutes = require('./routes/publicSignupRoutes');
+const masterAdminRoutes = require('./routes/masterAdminRoutes');
+const resolveTenant = require('./middlewares/resolveTenant');
 const authMiddleware = require("./middlewares/authMiddleware");
 const { requireBillingAccess } = require('./middlewares/requireBillingAccess');
 const { createRateLimitMiddleware, getClientIp } = require("./utils/rateLimiter");
@@ -62,7 +66,7 @@ app.use(helmet({
 }));
 app.use(bodyParser.json({ limit: API_JSON_LIMIT }));
 app.use(bodyParser.urlencoded({ limit: API_URLENCODED_LIMIT, extended: true }));
-app.use(compression());
+app.use(compression({ threshold: 1024 }));
 
 const isProduction = process.env.IS_PRODUCTION === 'true';
 
@@ -159,6 +163,10 @@ app.use(
 app.use(requireBillingAccess);
 
 app.use("/api/webhooks/payments", paymentWebhookRoutes);
+app.use("/api/public/signup", publicSignupRoutes);
+app.use("/api/master-admin", masterAdminRoutes);
+
+app.use(resolveTenant);
 
 app.use("/api/Customers", customerRoutes);
 app.use("/api/Cases", caseRoutes);
@@ -181,6 +189,7 @@ app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/template-attachments", templateAttachmentRoutes);
 app.use("/api/calendar", calendarRoutes);
 app.use("/api/platform/v1", platformRoutes);
+app.use("/api/support", supportRoutes);
 
 // Lightweight health endpoint for prereq checks
 app.get("/health", (req, res) => {

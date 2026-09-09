@@ -713,10 +713,10 @@ async function composeLawyerReminderMessage(offsetMinutes, ev) {
         || ev.client_name
     );
     const remainingMins = ev?.start_time ? minutesUntilStart(ev.start_time) : Number(offsetMinutes) || 0;
-    const title = isReminderEvent
-        ? 'תזכורת מהיומן'
-        : (remainingMins >= 1440 ? `תזכורת ל${kind}` : `תזכורת ל${kind} קרובה`);
     const eventTitle = String(ev.title || '').trim();
+    const title = isReminderEvent
+        ? (eventTitle || kind || 'תזכורת מהיומן')
+        : (remainingMins >= 1440 ? `תזכורת ל${kind}` : `תזכורת ל${kind} קרובה`);
     let body;
     if (isReminderEvent) {
         body = `${kind} — ${when} בשעה ${timeStr}`;

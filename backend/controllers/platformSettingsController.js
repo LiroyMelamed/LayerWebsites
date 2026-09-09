@@ -499,6 +499,7 @@ const PUBLIC_SETTINGS_KEYS = [
     'signing:SIGNING_REQUIRE_OTP_DEFAULT',
     'calendar:ENABLE_CALENDAR_MODULE',
     'chatbot:AI_CHATBOT_ENABLED',
+    'managerHome:MANAGER_HOME_AI_INSIGHTS_ENABLED',
 ];
 
 /** GET /api/platform-settings/public — no admin required */

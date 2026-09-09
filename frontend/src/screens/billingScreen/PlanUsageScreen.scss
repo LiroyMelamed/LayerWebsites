@@ -181,7 +181,8 @@
 
 .lw-planUsageScreen__primaryAction,
 .lw-planUsageScreen__secondaryAction,
-.lw-planUsageScreen__tertiaryAction {
+.lw-planUsageScreen__tertiaryAction,
+.lw-planUsageScreen__cancelAction {
     display: flex;
     width: 100%;
     justify-content: center;
@@ -205,10 +206,15 @@
     padding: 0.75rem 1rem;
 }
 
-.lw-planUsageScreen__tertiaryAction {
+.lw-planUsageScreen__tertiaryAction,
+.lw-planUsageScreen__cancelAction {
     opacity: 0.8;
     text-decoration: underline;
     text-underline-offset: 0.1875rem;
+}
+
+.lw-planUsageScreen__cancelAction * {
+    color: var(--lw-color-negative, #c53030) !important;
 }
 
 .lw-planUsageScreen__meter {

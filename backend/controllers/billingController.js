@@ -201,6 +201,22 @@ exports.chargeNow = async (req, res) => {
     }
 };
 
+exports.cancelSubscription = async (req, res) => {
+    try {
+        const snap = await billing.cancelSubscription();
+        return res.status(200).json({
+            success: true,
+            ...billingPayload(snap),
+        });
+    } catch (e) {
+        if (e?.code === 'NO_BILLING') {
+            return res.status(404).json({ message: e.message });
+        }
+        console.error('cancelSubscription error:', e);
+        return res.status(500).json({ message: e.message || 'שגיאה בביטול מנוי' });
+    }
+};
+
 exports.takbullReturn = async (req, res) => {
     try {
         const uniqId = String(req.query?.uniqId || req.query?.orderUniqId || '').trim();

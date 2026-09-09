@@ -5,6 +5,7 @@ import SimpleContainer from './SimpleContainer';
 import SimpleButton from './SimpleButton';
 
 import './SimplePopUp.scss';
+import { popupContentUsesEmbeddedScroll } from '../../utils/popupStackUtils';
 
 const FOCUSABLE_SELECTOR = [
     'a[href]',
@@ -15,7 +16,7 @@ const FOCUSABLE_SELECTOR = [
     '[tabindex]:not([tabindex="-1"])',
 ].join(',');
 
-const SimplePopUp = ({ isOpen, children, onClose, className, ...props }) => {
+const SimplePopUp = ({ isOpen, children, onClose, onBack, backEnabled = true, className, ...props }) => {
     const popupRef = useRef(null);
     const [shouldRender, setShouldRender] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
@@ -35,6 +36,19 @@ const SimplePopUp = ({ isOpen, children, onClose, className, ...props }) => {
     // Keep Tab/Shift+Tab inside the modal so focus can't escape to the page behind
     // (e.g. FullCalendar), which makes typing appear broken after Tab.
     const handleKeyDown = useCallback((e) => {
+        if (e.key === 'Escape') {
+            if (onBack && backEnabled) {
+                e.preventDefault();
+                onBack();
+                return;
+            }
+            if (onClose) {
+                e.preventDefault();
+                onClose();
+            }
+            return;
+        }
+
         if (e.key !== 'Tab' || !popupRef.current) return;
         const focusables = Array.from(popupRef.current.querySelectorAll(FOCUSABLE_SELECTOR))
             .filter((el) => {
@@ -55,7 +69,7 @@ const SimplePopUp = ({ isOpen, children, onClose, className, ...props }) => {
             e.preventDefault();
             first.focus();
         }
-    }, []);
+    }, [onBack, backEnabled, onClose]);
 
     useEffect(() => {
         if (!isOpen || !shouldRender) return undefined;
@@ -81,6 +95,7 @@ const SimplePopUp = ({ isOpen, children, onClose, className, ...props }) => {
 
     const contentClassName = isValidElement(children) ? children.props?.className : '';
     const isFloatingMenu = typeof contentClassName === 'string' && contentClassName.includes('lw-fieldContextMenu--floating');
+    const hasEmbeddedScroll = popupContentUsesEmbeddedScroll(contentClassName);
 
     // Portal the overlay to document.body so it shares the same stacking context
     // as other portals (e.g. HoverContainer). This prevents backdrop-filter
@@ -116,8 +131,27 @@ const SimplePopUp = ({ isOpen, children, onClose, className, ...props }) => {
                         </svg>
                     </SimpleButton>
                 )}
+                {!isFloatingMenu && onBack && (
+                    <SimpleButton
+                        onPress={backEnabled ? onBack : undefined}
+                        className={[
+                            'lw-simplePopUp__back',
+                            backEnabled ? null : 'lw-simplePopUp__back--disabled',
+                        ].filter(Boolean).join(' ')}
+                        tabIndex={-1}
+                        aria-label="חזרה"
+                        aria-disabled={!backEnabled}
+                    >
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M5.5 2.5L10.5 7L5.5 11.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                    </SimpleButton>
+                )}
                 {isFloatingMenu ? children : (
-                    <SimpleContainer className="lw-simplePopUp__content">
+                    <SimpleContainer className={[
+                        'lw-simplePopUp__content',
+                        hasEmbeddedScroll ? 'lw-simplePopUp__content--embeddedScroll' : null,
+                    ].filter(Boolean).join(' ')}>
                         {children}
                     </SimpleContainer>
                 )}

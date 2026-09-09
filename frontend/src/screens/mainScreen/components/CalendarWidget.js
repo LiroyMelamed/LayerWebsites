@@ -1,4 +1,3 @@
-import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import SimpleCard from "../../../components/simpleComponents/SimpleCard";
@@ -10,6 +9,7 @@ import { AdminStackName, CalendarScreenName } from "../../../navigation/screenPa
 import { formatDisplayTime } from "../../../functions/date/formatDateForInput";
 import { useCalendarModuleEnabled } from "../../../services/firmSettings";
 import { leaveColor } from "../../calendarScreen/utils/lawyerColors";
+import { useMemo } from "react";
 import "./CalendarWidget.scss";
 
 const NAVY = "#2A4365";
@@ -50,11 +50,25 @@ function bucketEvents(events) {
     return { today: inTodayBucket, tomorrow: inTomorrowBucket };
 }
 
-function EventRow({ ev }) {
+function EventRow({ ev, onPress }) {
     const isLeave = ev?.eventType === "leave";
     const dotColor = isLeave ? leaveColor() : (ev?.color || NAVY);
     return (
-        <SimpleContainer className={`lw-calendarWidget__item ${isLeave ? "lw-calendarWidget__item--leave" : ""}`}>
+        <SimpleContainer
+            className={`lw-calendarWidget__item ${isLeave ? "lw-calendarWidget__item--leave" : ""}`}
+            onPress={(e) => {
+                e?.stopPropagation?.();
+                onPress?.(ev);
+            }}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onPress?.(ev);
+                }
+            }}
+        >
             <SimpleContainer className="lw-calendarWidget__itemTime">
                 <TextBold14 color={NAVY}>{formatDisplayTime(ev.startTime)}</TextBold14>
             </SimpleContainer>
@@ -79,7 +93,7 @@ function EventRow({ ev }) {
     );
 }
 
-function BucketSection({ heading, events, t }) {
+function BucketSection({ heading, events, t, onEventPress }) {
     return (
         <SimpleContainer className="lw-calendarWidget__bucket">
             <SimpleContainer className="lw-calendarWidget__bucketHeader">
@@ -92,14 +106,16 @@ function BucketSection({ heading, events, t }) {
                 </SimpleContainer>
             ) : (
                 <SimpleContainer className="lw-calendarWidget__list">
-                    {events.map((ev) => <EventRow key={ev.id} ev={ev} />)}
+                    {events.map((ev) => (
+                        <EventRow key={ev.id} ev={ev} onPress={onEventPress} />
+                    ))}
                 </SimpleContainer>
             )}
         </SimpleContainer>
     );
 }
 
-export default function CalendarWidget({ events = [], isPerforming }) {
+export default function CalendarWidget({ events = [], isPerforming, onEventPress }) {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const calendarEnabled = useCalendarModuleEnabled();
@@ -109,15 +125,17 @@ export default function CalendarWidget({ events = [], isPerforming }) {
 
     if (!calendarEnabled) return null;
 
-    const handleNavigate = () => navigate(AdminStackName + CalendarScreenName);
+    if (!isPerforming && totalCount === 0) return null;
+
+    const handleOpenCalendar = () => navigate(AdminStackName + CalendarScreenName);
 
     return (
-        <SimpleCard className="lw-calendarWidget" onPress={handleNavigate}>
+        <SimpleCard className="lw-calendarWidget lw-calendarWidget--home">
             <SimpleContainer className="lw-calendarWidget__header">
                 <TextBold16 color={colors.primary}>{t("calendar.widgetTitle")}</TextBold16>
-                {!isPerforming && totalCount > 0 && (
-                    <Text12 color={SLATE}>{totalCount}</Text12>
-                )}
+                <SimpleContainer className="lw-commandCenter__link" onPress={handleOpenCalendar}>
+                    <Text12 color={colors.primary}>{t("managerHome.actions.openCalendar")}</Text12>
+                </SimpleContainer>
             </SimpleContainer>
 
             {isPerforming ? (
@@ -135,9 +153,19 @@ export default function CalendarWidget({ events = [], isPerforming }) {
                 </SimpleContainer>
             ) : (
                 <SimpleContainer className="lw-calendarWidget__split">
-                    <BucketSection heading={t("calendar.widgetTodayHeading")} events={buckets.today} t={t} />
+                    <BucketSection
+                        heading={t("calendar.widgetTodayHeading")}
+                        events={buckets.today}
+                        t={t}
+                        onEventPress={onEventPress}
+                    />
                     <SimpleContainer className="lw-calendarWidget__divider" />
-                    <BucketSection heading={t("calendar.widgetTomorrowHeading")} events={buckets.tomorrow} t={t} />
+                    <BucketSection
+                        heading={t("calendar.widgetTomorrowHeading")}
+                        events={buckets.tomorrow}
+                        t={t}
+                        onEventPress={onEventPress}
+                    />
                 </SimpleContainer>
             )}
         </SimpleCard>

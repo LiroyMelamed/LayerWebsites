@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { Suspense, lazy } from "react";
 import TopAndRightNavBar from "../components/navBars/TopAndRightNavBar";
 import RouteFallback from "../components/simpleComponents/RouteFallback";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
@@ -16,6 +16,7 @@ import {
     PlansPricingScreenName,
     PlatformSettingsScreenName,
     RemindersScreenName,
+    AdminSupportScreenName,
     SigningManagerScreenName,
     SigningSpotsPreviewScreenName,
     TaggedCasesScreenName,
@@ -31,18 +32,20 @@ import AllClientsScreen from "../screens/allClientsScreen/AllClientsScreen";
 import MyCasesScreen from "../screens/myCasesScreen/MyCasesScreen";
 import AllMangerScreen from "../screens/allMangerScreen/AllMangerScreen";
 import AllCasesTypeScreen from "../screens/allCasesTypeScreen/AllCasesTypeScreen";
-import SigningManagerScreen from "../screens/signingScreen/SigningManagerScreen";
-import SigningSpotsPreviewScreen from "../screens/signingScreen/SigningSpotsPreviewScreen";
-import UploadFileForSigningScreen from "../screens/signingScreen/UploadFileForSigningScreen";
-import EvidenceDocumentsScreen from "../screens/evidenceDocuments/EvidenceDocumentsScreen";
-import PlanUsageScreen from "../screens/billingScreen/PlanUsageScreen";
-import PlansPricingScreen from "../screens/billingScreen/PlansPricingScreen";
 import RemindersScreen from "../screens/remindersScreen/RemindersScreen";
-import PlatformSettingsScreen from "../screens/platformSettingsScreen/PlatformSettingsScreen";
-import CalendarScreen from "../screens/calendarScreen/CalendarScreen";
-import DailyAgendaScreen from "../screens/calendarScreen/DailyAgendaScreen";
+import AdminSupportScreen from "../screens/admin/support/AdminSupportScreen";
 import BillingLockedScreen from "../components/billing/BillingLockedScreen";
 import { useBillingLock } from "../providers/BillingLockProvider";
+
+const SigningManagerScreen = lazy(() => import("../screens/signingScreen/SigningManagerScreen"));
+const SigningSpotsPreviewScreen = lazy(() => import("../screens/signingScreen/SigningSpotsPreviewScreen"));
+const UploadFileForSigningScreen = lazy(() => import("../screens/signingScreen/UploadFileForSigningScreen"));
+const EvidenceDocumentsScreen = lazy(() => import("../screens/evidenceDocuments/EvidenceDocumentsScreen"));
+const PlanUsageScreen = lazy(() => import("../screens/billingScreen/PlanUsageScreen"));
+const PlansPricingScreen = lazy(() => import("../screens/billingScreen/PlansPricingScreen"));
+const PlatformSettingsScreen = lazy(() => import("../screens/platformSettingsScreen/PlatformSettingsScreen"));
+const CalendarScreen = lazy(() => import("../screens/calendarScreen/CalendarScreen"));
+const DailyAgendaScreen = lazy(() => import("../screens/calendarScreen/DailyAgendaScreen"));
 
 export const AdminStackName = "/AdminStack";
 
@@ -85,6 +88,7 @@ function AdminStack() {
                     <Route path={toRelativePath(PlansPricingScreenName)} element={<PlansPricingScreen />} />
                     <Route path={toRelativePath(uploadFileForSigningScreenName)} element={<UploadFileForSigningScreen />} />
                     <Route path={toRelativePath(RemindersScreenName)} element={<RemindersScreen />} />
+                    <Route path={toRelativePath(AdminSupportScreenName)} element={<AdminSupportScreen />} />
                     <Route path={toRelativePath(PlatformSettingsScreenName)} element={<PlatformSettingsScreen />} />
                     {calendarEnabled && (
                         <>

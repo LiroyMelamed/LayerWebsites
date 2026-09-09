@@ -1,0 +1,167 @@
+{
+  "label": "after",
+  "date": "2026-09-08",
+  "authTests": false,
+  "tenants": {
+    "melamedlaw": {
+      "frontendUrl": "https://client.melamedlaw.co.il",
+      "apiBase": "https://api.calls.melamedlaw.co.il",
+      "html": {
+        "ttfbSec": 0.0539,
+        "totalSec": 0.0575,
+        "httpCode": 200,
+        "bytes": 8085
+      },
+      "mainJs": {
+        "url": "https://client.melamedlaw.co.il/static/js/main.01e46aa7.js",
+        "ttfbSec": 0.0446,
+        "totalSec": 0.2189,
+        "bytes": 2148846,
+        "gzipBytes": 606763,
+        "httpCode": 200
+      },
+      "mainCss": {
+        "url": "https://client.melamedlaw.co.il/static/css/main.f0e36ffa.css",
+        "totalSec": 0.1331,
+        "bytes": 212264,
+        "httpCode": 200,
+        "cacheControl": "cache-control: public, max-age=604800"
+      },
+      "health": {
+        "p50": 0.2331,
+        "p95": 0.284,
+        "min": 0.2207,
+        "max": 0.2922,
+        "n": 10
+      }
+    },
+    "morlevy": {
+      "frontendUrl": "https://morlevy.mela-media.co.il",
+      "apiBase": "https://api-morlevy.mela-media.co.il",
+      "html": {
+        "ttfbSec": 2.3399,
+        "totalSec": 2.3404,
+        "httpCode": 200,
+        "bytes": 7671
+      },
+      "mainJs": {
+        "url": "https://morlevy.mela-media.co.il/static/js/main.8d087e6f.js",
+        "ttfbSec": 1.0354,
+        "totalSec": 1.4336,
+        "bytes": 2148079,
+        "gzipBytes": 606368,
+        "httpCode": 200
+      },
+      "mainCss": {
+        "url": "https://morlevy.mela-media.co.il/static/css/main.f0e36ffa.css",
+        "totalSec": 0.4711,
+        "bytes": 212264,
+        "httpCode": 200,
+        "cacheControl": "cache-control: public, max-age=31536000, immutable"
+      },
+      "health": {
+        "p50": 0.3318,
+        "p95": 0.4059,
+        "min": 0.2104,
+        "max": 0.4076,
+        "n": 10
+      }
+    },
+    "ashrafessa": {
+      "frontendUrl": "https://ashrafessa.mela-media.co.il",
+      "apiBase": "https://api-ashrafessa.mela-media.co.il",
+      "html": {
+        "ttfbSec": 0.3414,
+        "totalSec": 0.3417,
+        "httpCode": 200,
+        "bytes": 7821
+      },
+      "mainJs": {
+        "url": "https://ashrafessa.mela-media.co.il/static/js/main.b7eaa6f1.js",
+        "ttfbSec": 0.3252,
+        "totalSec": 0.7295,
+        "bytes": 2132708,
+        "gzipBytes": 594789,
+        "httpCode": 200
+      },
+      "mainCss": {
+        "url": "https://ashrafessa.mela-media.co.il/static/css/main.f0e36ffa.css",
+        "totalSec": 0.5463,
+        "bytes": 212264,
+        "httpCode": 200,
+        "cacheControl": "cache-control: public, max-age=31536000, immutable"
+      },
+      "health": {
+        "p50": 0.2958,
+        "p95": 0.514,
+        "min": 0.252,
+        "max": 0.5963,
+        "n": 10
+      }
+    },
+    "melamedia": {
+      "frontendUrl": "https://melamedia.mela-media.co.il",
+      "apiBase": "https://api-melamedia.mela-media.co.il",
+      "html": {
+        "ttfbSec": 1.3641,
+        "totalSec": 1.3643,
+        "httpCode": 200,
+        "bytes": 2846
+      },
+      "mainJs": {
+        "url": "https://melamedia.mela-media.co.il/static/js/main.92cf11dd.js",
+        "ttfbSec": 0.2843,
+        "totalSec": 0.674,
+        "bytes": 2132384,
+        "gzipBytes": 594680,
+        "httpCode": 200
+      },
+      "mainCss": {
+        "url": "https://melamedia.mela-media.co.il/static/css/main.f0e36ffa.css",
+        "totalSec": 0.4086,
+        "bytes": 212264,
+        "httpCode": 200,
+        "cacheControl": "cache-control: public, max-age=31536000, immutable"
+      },
+      "health": {
+        "p50": 0.2591,
+        "p95": 0.4405,
+        "min": 0.2216,
+        "max": 0.4783,
+        "n": 10
+      }
+    },
+    "idm": {
+      "frontendUrl": "https://idm.mela-media.co.il",
+      "apiBase": "https://api-idm.mela-media.co.il",
+      "html": {
+        "ttfbSec": 0.3406,
+        "totalSec": 0.3409,
+        "httpCode": 200,
+        "bytes": 6232
+      },
+      "mainJs": {
+        "url": "https://idm.mela-media.co.il/static/js/main.9a22e92a.js",
+        "ttfbSec": 0.2865,
+        "totalSec": 0.6841,
+        "bytes": 2132568,
+        "gzipBytes": 594731,
+        "httpCode": 200
+      },
+      "mainCss": {
+        "url": "https://idm.mela-media.co.il/static/css/main.f0e36ffa.css",
+        "totalSec": 0.5255,
+        "bytes": 212264,
+        "httpCode": 200,
+        "cacheControl": "cache-control: public, max-age=31536000, immutable"
+      },
+      "health": {
+        "p50": 0.2552,
+        "p95": 0.3696,
+        "min": 0.2208,
+        "max": 0.3826,
+        "n": 10
+      }
+    }
+  }
+}

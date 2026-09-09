@@ -1,0 +1,185 @@
+@use '../../styles/variables' as v;
+
+// Center signup body vertically between logo (top) and action button (bottom)
+.lw-loginSimpleScreen__layout:has(.lw-signup__content) {
+    flex: 1;
+    min-height: 100%;
+}
+
+.lw-loginSimpleScreen__main:has(.lw-signup__content) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 0;
+    padding-block: v.$space-2;
+}
+
+.lw-loginSimpleScreen__content:has(.lw-signup__content--embed) {
+    padding-block: 1.25rem;
+}
+
+.lw-signup__content {
+    flex-direction: column;
+    align-items: center;
+    gap: v.$space-3;
+    inline-size: 100%;
+    max-inline-size: 40rem;
+    margin-inline: auto;
+    padding-block: 0;
+}
+
+.lw-signup__content--embed {
+    padding-block-start: 0;
+    padding-block-end: v.$space-2;
+    max-inline-size: 100%;
+}
+
+.lw-signup__content--center {
+    text-align: center;
+    padding-block: v.$space-6;
+}
+
+.lw-signup__title,
+.lw-signup__subtitle {
+    text-align: center;
+}
+
+.lw-signup__subtitle {
+    color: var(--lw-color-text);
+    opacity: 0.85;
+}
+
+.lw-signup__steps {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-block: v.$space-2;
+
+    span {
+        inline-size: 2rem;
+        block-size: 2rem;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        background: var(--lw-color-disabled);
+        color: var(--lw-color-text);
+        font-weight: 700;
+        font-size: 0.85rem;
+
+        &.is-active {
+            background: var(--lw-color-primary);
+            color: var(--lw-color-white);
+        }
+    }
+}
+
+.lw-signup__fields {
+    flex-direction: column;
+    align-items: center;
+    gap: v.$space-3;
+    inline-size: 100%;
+    text-align: center;
+}
+
+.lw-signup__input {
+    inline-size: 100%;
+    max-inline-size: 26.25rem;
+    margin-inline: auto;
+    --lw-simpleInput-height: 3.5rem;
+}
+
+.lw-signup__slugBlock {
+    flex-direction: column;
+    align-items: center;
+    gap: v.$space-2;
+    inline-size: 100%;
+    max-inline-size: 26.25rem;
+    margin-inline: auto;
+}
+
+.lw-signup__slugHint {
+    text-align: center;
+    margin-block-start: v.$space-2;
+    font-weight: 600;
+}
+
+.lw-signup__slugPrefix {
+    color: var(--lw-color-text);
+    opacity: 0.7;
+    font-size: 0.85rem;
+    text-align: center;
+    inline-size: 100%;
+}
+
+.lw-signup__slugExample {
+    color: var(--lw-color-text);
+    opacity: 0.65;
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+.lw-signup__input--slug {
+    max-inline-size: 100%;
+}
+
+.lw-signup__pricingCard {
+    inline-size: 100%;
+}
+
+.lw-signup__confirm {
+    flex-direction: column;
+    gap: v.$space-3;
+    inline-size: 100%;
+    max-inline-size: 26.25rem;
+    text-align: center;
+}
+
+.lw-signup__trialCard {
+    flex-direction: column;
+    gap: v.$space-2;
+    padding: v.$space-4;
+    text-align: start;
+}
+
+.lw-signup__trialList {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: v.$space-2;
+}
+
+.lw-signup__summary {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: v.$space-2;
+}
+
+.lw-signup__error {
+    inline-size: 100%;
+    max-inline-size: 26.25rem;
+    background: #fef2f2;
+    color: var(--lw-color-error);
+    border-radius: 0.625rem;
+    padding: 0.65rem 0.75rem;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.lw-signup__footer {
+    display: flex;
+    gap: v.$space-3;
+    justify-content: center;
+    flex-wrap: wrap;
+    inline-size: 100%;
+    max-inline-size: 26.25rem;
+    margin-inline: auto;
+    padding-block: v.$space-3 v.$space-2;
+    flex-shrink: 0;
+}

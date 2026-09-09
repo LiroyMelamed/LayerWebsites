@@ -1,5 +1,6 @@
 import axios from "axios";
 import i18n from "../i18n/i18n";
+import { getActiveTenantSlug } from "../lib/tenantSlug";
 
 const stageURL = "http://localhost:5001/api";
 
@@ -30,6 +31,10 @@ ApiUtils.interceptors.request.use((config) => {
         config.headers.Authorization = `Bearer ${token}`;
     }
     config.headers["x-client-platform"] = "web";
+    const tenantSlug = getActiveTenantSlug();
+    if (tenantSlug) {
+        config.headers["x-tenant-slug"] = tenantSlug;
+    }
     return config;
 });
 
