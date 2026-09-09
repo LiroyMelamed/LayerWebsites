@@ -51,7 +51,7 @@ Frontend server (84.46.253.85) — separate VPS:
 - **BarberBooking web**: PM2 `barber-web` (Next.js 14, port 3000), nginx `barber.mela-media.co.il`
 - MelamedLaw frontend NOT on this server.
 
-Product flow: land on GitHub `main` first, then merge into tenant branches (`MelamedLaw` / `MorLevi` / `AshrafEssa` / `Melamedia` / `Idm`). Never build other tenants from the Melamedia tip. See `docs/DEPLOY_TENANTS_FROM_MAIN.md` and `docs/DEMO_MELAMEDIA.md`.
+Product flow: land on GitHub `main` first, QA on **Melamedia**, then client tenants. See `docs/DEPLOY_TENANTS_FROM_MAIN.md` and `docs/DEMO_MELAMEDIA.md`. Each tenant has isolated branding in `frontend/public/tenants/<tenant>/` — never merge icons between MelamedLaw and Melamedia.
 
 Rules:
 - NEVER run `pm2 restart all` — always restart specific process only
@@ -94,6 +94,9 @@ Rules:
 
 ## Branch / deploy workflow (critical)
 - **`main` is the single source of truth** for product code. All fixes land on `main` first.
-- Deploy path: merge `main` → each tenant branch → `apply-tenant-branding.js` + tenant env → build → deploy.
-- Never build MelamedLaw (or another tenant) from a different tenant tip without branding + merge from `main`.
+- **QA gate:** merge `main` → `Melamedia` → deploy Melamedia only → smoke test → then merge `main` into client branches (`MelamedLaw` / `MorLevi` / `AshrafEssa` / `Idm`) and deploy each.
+- **Melamedia** = QA/demo platform. **MelamedLaw** = production client. They never share branding.
+- Branding lives in `frontend/public/tenants/<tenant>/`. `frontend/public/*` root is build scratch — do not commit after `npm run build:*`. Run `frontend/scripts/restore-public-baseline.sh` after local builds.
+- Never build MelamedLaw (or another client) from the Melamedia branch tip without merging `main` first.
+- Prod tag goes on `main` after Melamedia QA passes.
 - See [docs/DEPLOY_TENANTS_FROM_MAIN.md](docs/DEPLOY_TENANTS_FROM_MAIN.md).

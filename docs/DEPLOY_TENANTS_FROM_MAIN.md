@@ -1,16 +1,36 @@
 # Deploy tenants from `main`
 
-**Rule:** all product work lands on `main` first. Tenant branches (`MelamedLaw`, `MorLevi`, `AshrafEssa`, `Melamedia`, `Idm`) only receive merges from `main`, then branded builds and deploy. Never build MelamedLaw (or another tenant) from a different tenant tip — including **never** building production tenants from the `Melamedia` QA tip.
+**Rule:** all product work lands on `main` first. **Melamedia is QA** — deploy and smoke-test there before any production client. Tenant branches only receive merges from `main`, then branded builds and deploy. Never build MelamedLaw (or another client) from a different tenant tip.
 
-**Melamedia** is the QA / sales-demo tenant (wipeable demo DB). Production client data must never be copied into it.
+**Melamedia** is the QA / sales-demo tenant (wipeable demo DB). **MelamedLaw** is a production client. They are independent — branding, icons, and env never merge between them.
 
-## Flow
+## Flow (QA gate)
 
 ```
-main  →  merge into MelamedLaw / MorLevi / AshrafEssa / Melamedia / Idm
-      →  apply-tenant-branding.js + tenant .env
-      →  build
-      →  deploy (FTP MelamedLaw / rsync MorLevi+AshrafEssa+Melamedia+Idm)
+main  →  commit + push
+      →  merge main into Melamedia
+      →  build:melamedia + deploy Melamedia
+      →  QA smoke on melamedia.mela-media.co.il
+      →  if OK: merge main into MelamedLaw / MorLevi / AshrafEssa / Idm
+      →  apply-tenant-branding.js + tenant .env (per tenant)
+      →  build + deploy each client
+      →  prod tag on main
+```
+
+Do **not** skip Melamedia QA and deploy all clients in one batch.
+
+## Branding (per tenant — do not mix)
+
+| Committed (yes) | Build scratch (never commit) |
+|-----------------|------------------------------|
+| `frontend/public/tenants/<tenant>/` | `frontend/public/index.html`, favicons, `firm-logo.png`, `manifest.json` |
+| `frontend/public/tenants/<tenant>/logos/` | `frontend/src/assets/images/logos/*` |
+| `frontend/.env.production.<tenant>` | |
+
+`prebuild:*` runs `apply-tenant-branding.js`, which copies tenant → scratch before CRA build. After local builds, run:
+
+```bash
+./frontend/scripts/restore-public-baseline.sh
 ```
 
 ## Build (per tenant)
