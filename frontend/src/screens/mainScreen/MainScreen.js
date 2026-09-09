@@ -2,11 +2,12 @@ import SimpleScreen from '../../components/simpleComponents/SimpleScreen';
 import { useScreenSize } from '../../providers/ScreenSizeProvider';
 import useAutoHttpRequest from '../../hooks/useAutoHttpRequest';
 import useHttpRequest from '../../hooks/useHttpRequest';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect } from 'react';
 import { images } from '../../assets/images/images';
 import SimpleContainer from '../../components/simpleComponents/SimpleContainer';
 import TopToolBarSmallScreen from '../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen';
 import casesApi from '../../api/casesApi';
+import calendarApi from '../../api/calendarApi';
 import { AdminStackName } from '../../navigation/AdminStack';
 import { SigningManagerScreenName } from '../signingScreen/SigningManagerScreen';
 import { AllCasesScreenName } from '../allCasesScreen/AllCasesScreen';
@@ -22,7 +23,7 @@ import { navigateCalendar, navigateCaseRow, navigateOpenCases } from './componen
 import SummaryStrip from './components/commandCenter/SummaryStrip';
 import { openCalendarEventModal } from './components/commandCenter/openCalendarEventModal';
 import { openCaseMenuModal } from './components/commandCenter/openCaseMenuModal';
-import { useFirmSettingsLoaded, useManagerHomeAiInsightsEnabled } from '../../services/firmSettings';
+import { useManagerHomeAiInsightsEnabled } from '../../services/firmSettings';
 import { usePopup } from '../../providers/PopUpProvider';
 
 import "./MainScreen.scss";
@@ -39,14 +40,22 @@ export default function MainScreen() {
     const navigate = useNavigate();
     const { isSmallScreen } = useScreenSize();
     const { openPopup, closePopup, pushPopup, popPopup } = usePopup();
-    const settingsLoaded = useFirmSettingsLoaded();
-    const aiInsightsEnabled = useManagerHomeAiInsightsEnabled();
+    const isPlatformAdmin = typeof window !== "undefined"
+        && localStorage.getItem("isPlatformAdmin") === "true";
+    const aiInsightsSettingEnabled = useManagerHomeAiInsightsEnabled();
+    const aiInsightsEnabled = aiInsightsSettingEnabled && isPlatformAdmin;
 
     const {
         result: managerHome,
         isPerforming: isLoadingHome,
         performRequest: refreshManagerHome,
     } = useAutoHttpRequest(casesApi.getManagerHomeData);
+
+    const {
+        result: calendarResponse,
+        isPerforming: isLoadingCalendar,
+        performRequest: refreshCalendar,
+    } = useAutoHttpRequest(calendarApi.getTodayAndTomorrow);
 
     const {
         result: aiBriefResponse,
@@ -92,17 +101,15 @@ export default function MainScreen() {
         ? aiBriefResponse
         : null;
 
-    const calendarEvents = useMemo(
-        () => [...(managerHome?.today || []), ...(managerHome?.tomorrow || [])],
-        [managerHome?.today, managerHome?.tomorrow],
-    );
+    const calendarEvents = calendarResponse?.events || calendarResponse?.data?.events || [];
 
     const handleRefresh = useCallback(() => {
         refreshManagerHome();
+        refreshCalendar();
         if (aiInsightsEnabled) {
             fetchAiBrief();
         }
-    }, [refreshManagerHome, aiInsightsEnabled, fetchAiBrief]);
+    }, [refreshManagerHome, refreshCalendar, aiInsightsEnabled, fetchAiBrief]);
 
     const handleCalendarEventPress = useCallback(async (ev, { usePush = false } = {}) => {
         if (ev?.caseId) {
@@ -144,22 +151,21 @@ export default function MainScreen() {
                 <SimpleContainer className="lw-commandCenter">
                     <CalendarWidget
                         events={calendarEvents}
-                        isPerforming={isLoadingHome}
+                        isPerforming={isLoadingCalendar}
                         onEventPress={handleCalendarEventPress}
                     />
 
                     <AiBriefSection
+                        morningBrief={managerHome?.morningBrief}
                         aiBrief={aiBrief}
                         aiBriefEnabled={aiInsightsEnabled}
                         aiBriefLoading={aiInsightsEnabled && isLoadingAiBrief}
-                        settingsLoaded={settingsLoaded}
                         isPerforming={isLoadingHome}
                     />
 
                     <SummaryStrip
                         summary={managerHome?.summary}
                         firmStats={managerHome?.firmStats}
-                        todayCount={managerHome?.today?.length ?? 0}
                         isPerforming={isLoadingHome}
                         onNavigate={handleSummaryNavigate}
                     />
