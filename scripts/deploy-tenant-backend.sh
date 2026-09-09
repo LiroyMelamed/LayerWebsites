@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Pull branch and restart PM2 API on 37.60.230.148.
-# Usage: ./scripts/deploy-tenant-backend.sh melamedlaw|morlevy|ashrafessa|melamedia|idm
+# Usage: ./scripts/deploy-tenant-backend.sh melamedlaw|morlevy|ashrafessa|melamedia|idm|lawyer
 # Prefers SSH key (SSH_KEY, default ~/.ssh/id_ed25519). Do not add new sshpass usage.
 set -euo pipefail
 
@@ -14,8 +14,9 @@ case "$TENANT" in
   ashrafessa) DIR=/root/AshrafEssa; BRANCH=AshrafEssa; PM2=ashrafessa-api; DB=ashrafessa ;;
   melamedia) DIR=/root/Melamedia; BRANCH=Melamedia; PM2=melamedia-api; DB=melamedia ;;
   idm) DIR=/root/Idm; BRANCH=Idm; PM2=idm-api; DB=idm ;;
+  lawyer) DIR=/root/LawyerPlatform; BRANCH=Melamedia; PM2=lawyer-api; DB=lawyer ;;
   *)
-    echo "Usage: $0 melamedlaw|morlevy|ashrafessa|melamedia|idm" >&2
+    echo "Usage: $0 melamedlaw|morlevy|ashrafessa|melamedia|idm|lawyer" >&2
     exit 1
     ;;
 esac
@@ -26,13 +27,16 @@ cd $DIR
 git fetch origin $BRANCH
 git checkout $BRANCH
 git pull origin $BRANCH
-# Apply any pending migrations (idempotent / ignore already-applied where scripts allow)
-if [ -d backend/migrations ]; then
-  for f in backend/migrations/*.sql; do
-    [ -f "\$f" ] || continue
-    sudo -u postgres psql -d $DB -v ON_ERROR_STOP=1 -f "\$f" >/dev/null 2>&1 || true
-  done
-fi
+chmod +x backend/migrations/migration-run.sh backend/migrations/migration-backfill-applied.sh 2>/dev/null || true
+DBNAME=\$(grep '^DB_NAME=' backend/.env | head -1 | cut -d= -f2- | sed 's/^["'\'']//;s/["'\'']$//')
+cd backend
+MIGRATION_PGDATABASE="\$DBNAME" bash migrations/migration-backfill-applied.sh
+MIGRATION_PGDATABASE="\$DBNAME" bash migrations/migration-run.sh
 pm2 restart $PM2
 echo "Backend $TENANT restarted"
 EOF
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=../../scripts/deploy-notify.sh
+source "$ROOT/../scripts/deploy-notify.sh"
+DEPLOY_ROOT="$ROOT" notify_central_deploy layerwebsites "backend:${TENANT}"

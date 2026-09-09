@@ -59,6 +59,9 @@ if $BACKEND; then
   run ./scripts/deploy-tenant-backend.sh ashrafessa
   run ./scripts/deploy-tenant-backend.sh melamedia
   run ./scripts/deploy-tenant-backend.sh idm
+  echo ""
+  echo "== Backend overlay (local → all tenants, same code + migrations) =="
+  run ./scripts/sync-local-backend-all-tenants.sh
 fi
 
 if $FRONTEND; then
@@ -82,3 +85,7 @@ fi
 
 echo ""
 echo "# Done: $(date -Iseconds)"
+
+# shellcheck source=../../scripts/deploy-notify.sh
+source "$ROOT/../scripts/deploy-notify.sh"
+DEPLOY_ROOT="$ROOT" notify_central_deploy layerwebsites "all-tenants backend=${BACKEND} frontend=${FRONTEND}"

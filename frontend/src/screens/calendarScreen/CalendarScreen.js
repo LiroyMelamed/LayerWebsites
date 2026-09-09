@@ -158,6 +158,12 @@ function buildInternalAllDayEvent(ev, { labelPrefix, color, className }) {
     };
 }
 
+function holidayEventCoversDate(ev, dateYmd) {
+    if (String(ev?.eventType || "").trim().toLowerCase() !== "holiday") return false;
+    const { start, endInclusive } = normalizeAllDayEndInclusive(ev.startTime, ev.endTime);
+    return dateYmd >= start && dateYmd <= endInclusive;
+}
+
 function buildHolidayHintEvent(h, t) {
     const date = String(h?.date || "").slice(0, 10);
     if (!date) return null;
@@ -170,9 +176,9 @@ function buildHolidayHintEvent(h, t) {
         start: date,
         end,
         allDay: true,
-        display: "background",
         backgroundColor: holidayColor(),
         borderColor: holidayColor(),
+        textColor: "#FFFFFF",
         classNames: ["lw-fcEvent--holiday", "lw-fcEvent--holidayHint"],
         editable: false,
         startEditable: false,
@@ -622,7 +628,11 @@ export default function CalendarScreen() {
             const built = list.map((ev) => buildFullCalendarEvent(ev, { scope: scopeKey }));
             const holidayHints = (holidaysRes?.data?.holidays || [])
                 .map((h) => buildHolidayHintEvent(h, t))
-                .filter(Boolean);
+                .filter(Boolean)
+                .filter((hint) => {
+                    const dateYmd = String(hint.start || "").slice(0, 10);
+                    return !list.some((ev) => holidayEventCoversDate(ev, dateYmd));
+                });
             setEvents([...holidayHints, ...built]);
             lastFetchKeyRef.current = fetchKey;
         } catch {

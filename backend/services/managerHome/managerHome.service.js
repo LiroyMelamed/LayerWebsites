@@ -238,7 +238,7 @@ async function fetchFailedReminders() {
     return rows;
 }
 
-async function fetchTodayEvents(userId, { firmWide = false } = {}) {
+async function fetchEventsOnJerusalemDay(userId, { firmWide = false, dayOffset = 0 } = {}) {
     const params = [];
     let visibilityClause = '';
 
@@ -247,6 +247,10 @@ async function fetchTodayEvents(userId, { firmWide = false } = {}) {
         params.push(userId);
         visibilityClause = `AND ${personalCalendarSql(1)}`;
     }
+
+    const dayExpr = dayOffset === 0
+        ? JERUSALEM_TODAY
+        : `(${JERUSALEM_TODAY} + ${Number(dayOffset)})`;
 
     const { rows } = await pool.query(`
         SELECT
@@ -273,13 +277,20 @@ async function fetchTodayEvents(userId, { firmWide = false } = {}) {
         LEFT JOIN cases c ON c.caseid = ce.case_id
         LEFT JOIN users mgr ON mgr.userid = ce.manager_user_id
         LEFT JOIN users cl ON cl.userid = ce.client_user_id
-        WHERE ce.start_time >= ${JERUSALEM_TODAY}::timestamptz AT TIME ZONE 'Asia/Jerusalem'
-          AND ce.start_time < (${JERUSALEM_TODAY} + INTERVAL '1 day')::timestamptz AT TIME ZONE 'Asia/Jerusalem'
+        WHERE (ce.start_time AT TIME ZONE 'Asia/Jerusalem')::date = ${dayExpr}
           ${visibilityClause}
         ORDER BY ce.start_time ASC
         LIMIT 40
     `, params);
     return rows;
+}
+
+async function fetchTodayEvents(userId, opts = {}) {
+    return fetchEventsOnJerusalemDay(userId, { ...opts, dayOffset: 0 });
+}
+
+async function fetchTomorrowEvents(userId, opts = {}) {
+    return fetchEventsOnJerusalemDay(userId, { ...opts, dayOffset: 1 });
 }
 
 async function fetchPotentialClients() {
@@ -483,6 +494,14 @@ async function fetchFirmDailyStats() {
           AND updatedat < ${dayEnd}
     `);
 
+    const { rows: totalRows } = await pool.query(`
+        SELECT
+            COUNT(*)::int AS total,
+            COUNT(*) FILTER (WHERE isclosed = false)::int AS active,
+            COUNT(*) FILTER (WHERE isclosed = true)::int AS closed
+        FROM cases
+    `);
+
     const { rows: activityRows } = await pool.query(`
         WITH acts AS (
             SELECT c.casemanagerid AS manager_id, c.casemanager AS manager_name
@@ -514,9 +533,13 @@ async function fetchFirmDailyStats() {
     `);
 
     const top = activityRows[0];
+    const totals = totalRows[0] || {};
     return {
         casesOpenedToday: openedRows[0]?.count ?? 0,
         casesClosedToday: closedRows[0]?.count ?? 0,
+        totalCases: totals.total ?? 0,
+        activeCases: totals.active ?? 0,
+        closedCases: totals.closed ?? 0,
         mostActiveManager: top
             ? {
                 managerId: top.manager_id,
@@ -707,6 +730,7 @@ async function buildManagerHomePayload({ userId } = {}) {
         rsvpRows,
         failedReminders,
         todayRows,
+        tomorrowRows,
         potentialClients,
         casesByStage,
         recentActivity,
@@ -722,6 +746,7 @@ async function buildManagerHomePayload({ userId } = {}) {
         fetchPendingRsvpEvents(),
         fetchFailedReminders(),
         fetchTodayEvents(userId, { firmWide: firmWideEvents }),
+        fetchTomorrowEvents(userId, { firmWide: firmWideEvents }),
         fetchPotentialClients(),
         fetchCasesByStage(),
         fetchRecentActivity(),
@@ -743,6 +768,7 @@ async function buildManagerHomePayload({ userId } = {}) {
     summary.todayEventCount = todayRows.length;
 
     const today = todayRows.map(mapTodayEvent);
+    const tomorrow = tomorrowRows.map(mapTodayEvent);
     const managerWorkload = await fetchManagerWorkload(caseRows, attentionItems);
     const unassignedCount = caseRows.filter((r) => !r.casemanagerid).length;
 
@@ -771,6 +797,7 @@ async function buildManagerHomePayload({ userId } = {}) {
         }),
         attentionItems,
         today,
+        tomorrow,
         caseHealth: buildCaseHealthList(caseRows, attentionItems),
         managerWorkload,
         casesByStage,

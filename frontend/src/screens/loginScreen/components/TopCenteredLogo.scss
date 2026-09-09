@@ -19,6 +19,18 @@
     @include m.fluid-size(height, 48, 12vw, 72);
 }
 
+.lw-topCenteredLogo--signup {
+    .lw-topCenteredLogo__logoImage {
+        width: auto !important;
+        height: auto !important;
+        max-height: 5.5rem;
+    }
+
+    .lw-topCenteredLogo__title {
+        margin-top: 1.5rem !important;
+    }
+}
+
 .lw-topCenteredLogo__title {
     margin-top: 5rem !important;
     text-align: center !important;

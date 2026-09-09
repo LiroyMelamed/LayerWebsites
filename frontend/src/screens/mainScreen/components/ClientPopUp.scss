@@ -60,6 +60,31 @@
     // min-width: 8.75rem;
 }
 
+.lw-clientPopup__existingBanner {
+    display: flex;
+    align-items: center;
+    gap: v.$space-2;
+    padding: v.$space-2 v.$space-3;
+    margin-block-end: v.$space-3;
+    background: #ebf8ff;
+    border: 0.0625rem solid #90cdf4;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: #2b6cb0;
+    direction: rtl;
+    transition: background 0.15s;
+
+    &:hover {
+        background: #bee3f8;
+    }
+}
+
+.lw-clientPopup__existingIcon {
+    font-size: 1.125rem;
+    flex-shrink: 0;
+}
+
 .lw-clientPopup__row {
     @include m.row(v.$space-3, wrap);
     margin-block-end: v.$space-4;

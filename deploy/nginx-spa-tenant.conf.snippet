@@ -1,0 +1,31 @@
+# Include inside SPA server { } block for tenant frontends (84.46.253.85).
+# Apply via scripts/apply-nginx-perf-all-tenants.sh
+
+gzip on;
+gzip_vary on;
+gzip_proxied any;
+gzip_comp_level 5;
+gzip_min_length 256;
+gzip_types
+    text/plain
+    text/css
+    text/javascript
+    application/javascript
+    application/json
+    application/xml
+    image/svg+xml;
+
+location /static/ {
+    expires 1y;
+    add_header Cache-Control "public, max-age=31536000, immutable";
+    try_files $uri =404;
+}
+
+location = /index.html {
+    add_header Cache-Control "no-cache, no-store, must-revalidate";
+    try_files $uri =404;
+}
+
+location / {
+    try_files $uri $uri/ /index.html;
+}

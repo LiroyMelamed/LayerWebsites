@@ -1,61 +1,56 @@
-import { useState } from "react";
+import { Fragment } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import SimpleCard from "../../../../components/simpleComponents/SimpleCard";
 import SimpleContainer from "../../../../components/simpleComponents/SimpleContainer";
 import Skeleton from "../../../../components/simpleComponents/Skeleton";
+import Separator from "../../../../components/styledComponents/separators/Separator";
 import { Text12, Text14, TextBold16, TextBold18 } from "../../../../components/specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../../constant/colors";
 import AttentionItem from "./AttentionItem";
-import { navigateAttentionItem } from "./commandCenterUtils";
+import { navigateOpenCases } from "./commandCenterUtils";
 
-export default function AttentionQueue({ items = [], isPerforming }) {
+export default function AttentionQueue({ items = [], isPerforming, onEventChanged }) {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const [expandedGroups, setExpandedGroups] = useState({});
-
-    const toggleGroup = (signalType) => {
-        setExpandedGroups((prev) => ({
-            ...prev,
-            [signalType]: !prev[signalType],
-        }));
-    };
 
     return (
-        <SimpleCard className="lw-commandCenter__attention lw-commandCenter__section">
+        <SimpleCard
+            className="lw-commandCenter__attentionCard lw-commandCenter__section lw-commandCenter__dashboardTile"
+            id="manager-home-attention-panel"
+        >
             <SimpleContainer className="lw-commandCenter__sectionHeader">
                 <TextBold18 color={colors.primary}>{t("managerHome.attention.title")}</TextBold18>
-                {!isPerforming && (
-                    <Text12 color={colors.winter}>
-                        {items.length
-                            ? t("managerHome.attention.count", { count: items.length })
-                            : t("managerHome.attention.emptyBadge")}
-                    </Text12>
+                {!isPerforming && items.length > 0 && (
+                    <SimpleContainer
+                        className="lw-commandCenter__link"
+                        onPress={() => navigateOpenCases(navigate)}
+                    >
+                        <Text12 color={colors.primary}>{t("managerHome.actions.viewAllCases")}</Text12>
+                    </SimpleContainer>
                 )}
             </SimpleContainer>
 
             {isPerforming ? (
                 <SimpleContainer className="lw-commandCenter__skeletonList">
                     {[0, 1, 2].map((i) => (
-                        <Skeleton key={i} width="100%" height={88} borderRadius={10} />
+                        <Skeleton key={i} width="100%" height={56} borderRadius={8} />
                     ))}
                 </SimpleContainer>
             ) : items.length === 0 ? (
-                <SimpleContainer className="lw-commandCenter__emptyState">
+                <SimpleContainer className="lw-commandCenter__emptyState lw-commandCenter__emptyState--compact">
                     <TextBold16 color={colors.positive}>{t("managerHome.attention.allClearTitle")}</TextBold16>
                     <Text14 color={colors.winter}>{t("managerHome.attention.allClearBody")}</Text14>
                 </SimpleContainer>
             ) : (
                 <SimpleContainer className="lw-commandCenter__attentionList">
                     {items.map((item, idx) => (
-                        <AttentionItem
-                            key={`${item.kind}-${item.signalType}-${item.entityId ?? idx}`}
-                            item={item}
-                            expanded={Boolean(expandedGroups[item.signalType])}
-                            onToggleExpand={() => toggleGroup(item.signalType)}
-                            onPress={() => navigateAttentionItem(navigate, item)}
-                            onSamplePress={(sample) => navigateAttentionItem(navigate, sample)}
-                        />
+                        <Fragment key={`${item.kind}-${item.signalType}-${item.entityId ?? idx}`}>
+                            {idx > 0 && (
+                                <Separator className="lw-commandCenter__attentionSeparator" />
+                            )}
+                            <AttentionItem item={item} onEventChanged={onEventChanged} />
+                        </Fragment>
                     ))}
                 </SimpleContainer>
             )}

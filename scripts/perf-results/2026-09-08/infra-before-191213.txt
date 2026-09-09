@@ -1,0 +1,115 @@
+=== Infra snapshot label=before 2026-09-08T19:12:13Z ===
+
+========== BACKEND root@37.60.230.148 ==========
+--- uptime / memory / disk ---
+ 21:12:16 up 2 days, 17:11,  1 user,  load average: 0.05, 0.09, 0.15
+               total        used        free      shared  buff/cache   available
+Mem:           7.8Gi       2.2Gi       4.3Gi       151Mi       1.8Gi       5.6Gi
+Swap:          2.0Gi          0B       2.0Gi
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1        72G   18G   55G  25% /
+/dev/sda1        72G   18G   55G  25% /
+/dev/sda1        72G   18G   55G  25% /
+
+--- PM2 ---
+┌────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 3  │ ashrafessa-api        │ default     │ 1.0.0   │ fork    │ 396958   │ 17m    │ 7    │ online    │ 0%       │ 199.9mb  │ root     │ disabled │
+│ 11 │ central-admin         │ default     │ N/A     │ fork    │ 373035   │ 4h     │ 0    │ online    │ 0%       │ 109.0mb  │ root     │ disabled │
+│ 10 │ central-api           │ default     │ N/A     │ fork    │ 373871   │ 4h     │ 1    │ online    │ 0%       │ 109.6mb  │ root     │ disabled │
+│ 2  │ contractor-monitor    │ default     │ 1.0.0   │ fork    │ 1489     │ 2D     │ 0    │ online    │ 0%       │ 154.4mb  │ root     │ disabled │
+│ 8  │ idm-api               │ default     │ 1.0.0   │ fork    │ 397010   │ 17m    │ 8    │ online    │ 0%       │ 196.9mb  │ root     │ disabled │
+│ 9  │ lawyer-api            │ default     │ 1.0.0   │ fork    │ 377158   │ 3h     │ 34   │ online    │ 0%       │ 207.7mb  │ root     │ disabled │
+│ 1  │ melamed-backend       │ default     │ 1.0.0   │ fork    │ 396908   │ 17m    │ 36   │ online    │ 0%       │ 255.7mb  │ root     │ disabled │
+│ 7  │ melamedia-api         │ default     │ 1.0.0   │ fork    │ 396983   │ 17m    │ 14   │ online    │ 0%       │ 231.7mb  │ root     │ disabled │
+│ 6  │ morlevy-api           │ default     │ 1.0.0   │ fork    │ 396931   │ 17m    │ 7    │ online    │ 0%       │ 201.7mb  │ root     │ disabled │
+└────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+Module
+┌────┬──────────────────────────────┬───────────────┬──────────┬──────────┬──────┬──────────┬──────────┬──────────┐
+│ id │ module                       │ version       │ pid      │ status   │ ↺    │ cpu      │ mem      │ user     │
+├────┼──────────────────────────────┼───────────────┼──────────┼──────────┼──────┼──────────┼──────────┼──────────┤
+│ 0  │ pm2-logrotate                │ 3.0.0         │ 1440     │ online   │ 0    │ 0%       │ 78.1mb   │ root     │
+└────┴──────────────────────────────┴───────────────┴──────────┴──────────┴──────┴──────────┴──────────┴──────────┘
+
+--- pm2 describe melamed-backend (restarts/memory) ---
+│ status            │ online                                    │
+│ restarts          │ 36                                        │
+│ uptime            │ 17m                                       │
+│ node.js version   │ 22.23.2                                   │
+│ unstable restarts │ 0                                         │
+--- pm2 describe morlevy-api (restarts/memory) ---
+│ status            │ online                            │
+│ restarts          │ 7                                 │
+│ uptime            │ 17m                               │
+│ node.js version   │ 22.23.2                           │
+│ unstable restarts │ 0                                 │
+--- pm2 describe ashrafessa-api (restarts/memory) ---
+│ status            │ online                                   │
+│ restarts          │ 7                                        │
+│ uptime            │ 17m                                      │
+│ node.js version   │ 22.23.2                                  │
+│ unstable restarts │ 0                                        │
+--- pm2 describe melamedia-api (restarts/memory) ---
+│ status            │ online                              │
+│ restarts          │ 14                                  │
+│ uptime            │ 17m                                 │
+│ node.js version   │ 22.23.2                             │
+│ unstable restarts │ 0                                   │
+--- pm2 describe idm-api (restarts/memory) ---
+│ status            │ online                        │
+│ restarts          │ 8                             │
+│ uptime            │ 17m                           │
+│ node.js version   │ 22.23.2                       │
+│ unstable restarts │ 0                             │
+
+--- nginx gzip/proxy (api sample) ---
+    client_max_body_size 26m;
+        proxy_read_timeout 60s;
+    client_max_body_size 26m;
+        proxy_read_timeout 60s;
+    client_max_body_size 10m;
+        proxy_read_timeout 120s;
+    client_max_body_size 26m;
+        proxy_read_timeout 60s;
+    client_max_body_size 26m;
+        proxy_read_timeout 60s;
+    client_max_body_size 26m;
+        proxy_read_timeout 60s;
+
+--- DB pool settings (grep only) ---
+LayerWebsites: DB_POOL_MAX=20 SERVER_KEEPALIVE_TIMEOUT_MS=5000 
+MorLevi: DB_POOL_MAX=15 SERVER_KEEPALIVE_TIMEOUT_MS=5000 
+AshrafEssa: SERVER_KEEPALIVE_TIMEOUT_MS=5000 DB_POOL_MAX=15 
+Melamedia: DB_POOL_MAX=20 SERVER_KEEPALIVE_TIMEOUT_MS=5000 
+Idm: DB_POOL_MAX=15 SERVER_KEEPALIVE_TIMEOUT_MS=5000 
+
+--- pg_stat_statements ---
+t
+
+========== FRONTEND root@84.46.253.85 ==========
+--- uptime / memory / disk ---
+ 21:12:20 up 2 days, 17:12,  1 user,  load average: 0.21, 0.10, 0.02
+               total        used        free      shared  buff/cache   available
+Mem:            11Gi       4.1Gi       3.7Gi        51Mi       4.2Gi       7.6Gi
+Swap:          2.0Gi          0B       2.0Gi
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       193G   19G  175G  10% /
+
+--- nginx static cache (sample morlevy) ---
+        add_header Cache-Control "no-cache" always;
+        add_header Cache-Control "no-cache" always;
+        add_header Cache-Control "no-cache" always;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript image/svg+xml;
+
+--- deployed bundle sizes ---
+morlevy js=main.9430b0f1.js 2542480B css=main.4e8fef86.css 258307B
+ashrafessa js=main.0a493054.js 2527109B css=main.4e8fef86.css 258307B
+melamedia js=main.d33b8660.js 2526785B css=main.4e8fef86.css 258307B
+idm js=main.2e59fc20.js 2526969B css=main.4e8fef86.css 258307B

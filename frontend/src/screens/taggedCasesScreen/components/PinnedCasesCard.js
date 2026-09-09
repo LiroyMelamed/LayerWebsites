@@ -7,6 +7,7 @@ import DefaultState from "../../../components/styledComponents/defaultState/Defa
 import CaseMenuItem from "../../../components/styledComponents/menuItems/CaseMenuItem";
 import Separator from "../../../components/styledComponents/separators/Separator";
 import { useTranslation } from "react-i18next";
+import formatListPageTitle from "../../../functions/i18n/formatListPageTitle";
 import { caseClientNames, caseMenuTitle } from "../../../functions/cases/caseMenuTitle";
 
 import './PinnedCasesCard.scss';
@@ -14,7 +15,7 @@ import './PinnedCasesCard.scss';
 export default function PinnedCasesCard({ taggedCases, isPerforming, rePerformFunction }) {
     const { t } = useTranslation();
 
-    if (isPerforming) {
+    if (isPerforming && (!taggedCases || taggedCases.length === 0)) {
         return (
             <SimpleCard className="lw-pinnedCasesCard">
                 {[1, 2, 3].map(i => (
@@ -33,17 +34,20 @@ export default function PinnedCasesCard({ taggedCases, isPerforming, rePerformFu
 
     if (taggedCases?.length === 0 || !taggedCases) {
         return (
-            <DefaultState
-                content={t('taggedCases.emptyPinnedCases')}
-                imageClassName="lw-defaultState__image--h156"
-                imageSrc={images.Defaults.TaggedCase}
-            />
+            <SimpleCard className="lw-pinnedCasesCard">
+                <TextBold20>{formatListPageTitle(t, t('taggedCases.pinnedCasesTitle'), 0)}</TextBold20>
+                <DefaultState
+                    content={t('taggedCases.emptyPinnedCases')}
+                    imageClassName="lw-defaultState__image--h156"
+                    imageSrc={images.Defaults.TaggedCase}
+                />
+            </SimpleCard>
         )
     }
 
     return (
         <SimpleCard className="lw-pinnedCasesCard">
-            <TextBold20>{t('taggedCases.pinnedCasesTitle')}</TextBold20>
+            <TextBold20>{formatListPageTitle(t, t('taggedCases.pinnedCasesTitle'), taggedCases.length)}</TextBold20>
 
             <SimpleContainer className="lw-pinnedCasesCard__list">
                 {taggedCases.map((item, index) => (

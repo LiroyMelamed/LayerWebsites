@@ -5,7 +5,7 @@ import SimpleContainer from "../../../../components/simpleComponents/SimpleConta
 import Skeleton from "../../../../components/simpleComponents/Skeleton";
 import { Text12, Text14, TextBold14, TextBold18 } from "../../../../components/specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../../constant/colors";
-import { AdminStackName, AllCasesScreenName } from "../../../../navigation/screenPaths";
+import { navigateCaseRow } from "./commandCenterUtils";
 
 function formatWhen(iso) {
     if (!iso) return "";
@@ -44,10 +44,8 @@ export default function RecentActivityFeed({ items = [], isPerforming }) {
                         <SimpleContainer
                             key={`${item.activityType}-${item.caseId}-${idx}`}
                             className="lw-commandCenter__activityItem"
-                            onClick={() => {
-                                if (item.caseId) {
-                                    navigate(`${AdminStackName}${AllCasesScreenName}?caseId=${item.caseId}`);
-                                }
+                            onPress={() => {
+                                if (item.caseId) navigateCaseRow(navigate, item.caseId);
                             }}
                         >
                             <Text12 color={colors.winter}>{formatWhen(item.occurredAt)}</Text12>

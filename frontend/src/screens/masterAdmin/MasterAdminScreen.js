@@ -3,6 +3,7 @@ import { Link, Navigate, useSearchParams } from "react-router-dom";
 import ApiUtils from "../../api/apiUtils";
 import { LoginStackName } from "../../navigation/LoginStack";
 import { LoginScreenName } from "../../navigation/screenPaths";
+import { isMultiTenantApp, tenantPath } from "../../lib/tenantSlug";
 import "./MasterAdminScreen.scss";
 
 /**
@@ -25,6 +26,8 @@ export default function MasterAdminScreen() {
     const [handoffError, setHandoffError] = useState(null);
 
     const [data, setData] = useState(null);
+    const [tenants, setTenants] = useState([]);
+    const [masterStats, setMasterStats] = useState(null);
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -85,9 +88,18 @@ export default function MasterAdminScreen() {
         let cancelled = false;
         (async () => {
             try {
-                const res = await ApiUtils.get("/admin/master-stats");
+                const requests = [ApiUtils.get("/admin/master-stats")];
+                if (isMultiTenantApp()) {
+                    requests.push(ApiUtils.get("/master-admin/tenants"));
+                    requests.push(ApiUtils.get("/master-admin/stats"));
+                }
+                const results = await Promise.all(requests);
                 if (!cancelled) {
-                    setData(res.data);
+                    setData(results[0].data);
+                    if (isMultiTenantApp()) {
+                        setTenants(results[1]?.data?.tenants || []);
+                        setMasterStats(results[2]?.data || null);
+                    }
                     setError(null);
                 }
             } catch (err) {
@@ -180,31 +192,53 @@ export default function MasterAdminScreen() {
             ) : null}
 
             <section className="lw-master__card">
-                <h2>דיירים</h2>
+                <h2>דיירים {isMultiTenantApp() ? `(${tenants.length})` : ""}</h2>
+                {masterStats ? (
+                    <p className="lw-master__muted">
+                        הרשמות ממתינות: {masterStats.pendingSignups ?? 0}
+                    </p>
+                ) : null}
                 <p className="lw-master__muted">
-                    הארכיטקטורה היא מסד נתונים אחד לכל משרד. מופע זה הוא הדייר היחיד לפריסה
-                    הנוכחית.
+                    {isMultiTenantApp()
+                        ? "פלטפורמת lawyer.mela-media.co.il — משרדים רבים במסד משותף."
+                        : "הארכיטקטורה היא מסד נתונים אחד לכל משרד. מופע זה הוא הדייר היחיד לפריסה הנוכחית."}
                 </p>
                 <table className="lw-master__table">
                     <thead>
                         <tr>
                             <th>שם</th>
                             <th>סלאג</th>
-                            <th>לקוחות</th>
-                            <th>תיקים פתוחים</th>
+                            <th>משתמשים</th>
+                            <th>סטטוס</th>
+                            <th>קישור</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>{data?.firm?.name || "—"}</td>
-                            <td>
-                                <code dir="ltr">{data?.firm?.slug || "—"}</code>
-                            </td>
-                            <td>{data?.stats?.customers ?? "—"}</td>
-                            <td>{data?.stats?.openCases ?? "—"}</td>
-                        </tr>
+                        {(isMultiTenantApp() ? tenants : [{
+                            name: data?.firm?.name,
+                            slug: data?.firm?.slug,
+                            userCount: data?.stats?.staffUsers,
+                            isActive: true,
+                        }]).map((row) => (
+                            <tr key={row.slug || row.name}>
+                                <td>{row.name || "—"}</td>
+                                <td><code dir="ltr">{row.slug || "—"}</code></td>
+                                <td>{row.userCount ?? data?.stats?.customers ?? "—"}</td>
+                                <td>{row.isActive === false ? "מושבת" : "פעיל"}</td>
+                                <td>
+                                    {row.slug && isMultiTenantApp() ? (
+                                        <a href={tenantPath(row.slug, "/LoginStack/LoginScreen")}>כניסה</a>
+                                    ) : "—"}
+                                </td>
+                            </tr>
+                        ))}
                     </tbody>
                 </table>
+                {isMultiTenantApp() ? (
+                    <p className="lw-master__muted">
+                        <a href="/signup">פתיחת משרד חדש (self-serve)</a>
+                    </p>
+                ) : null}
             </section>
         </div>
     );

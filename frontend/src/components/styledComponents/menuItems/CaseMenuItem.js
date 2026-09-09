@@ -30,7 +30,9 @@ export default function CaseMenuItem({
 
     rePerformFunction,
     isClient = false,
-    style
+    style,
+    defaultOpen = false,
+    alwaysExpanded = false,
 }) {
     const { t } = useTranslation();
     const { isPerforming: isPerformingSetCase, performRequest: setCase } = useHttpRequest(
@@ -38,7 +40,8 @@ export default function CaseMenuItem({
     );
     const { openPopup, closePopup } = usePopup();
     const [fullCaseListener, setFullCaseListener] = useState(fullCase);
-    const [isOpen, setIsOpen] = useState(false);
+    const [isOpen, setIsOpen] = useState(defaultOpen || alwaysExpanded);
+    const isExpanded = alwaysExpanded || isOpen;
 
     useEffect(() => {
         setFullCaseListener(fullCase);
@@ -104,13 +107,18 @@ export default function CaseMenuItem({
 
     return (
         <SimpleContainer className="lw-caseMenuItem">
-            <SimpleContainer className="lw-caseMenuItem__header" onPress={() => setIsOpen(!isOpen)}>
-                <ImageButton
-                    src={icons.Button.DownArrow}
-                    className={
-                        "lw-caseMenuItem__toggle" + (isOpen ? " is-open" : "")
-                    }
-                />
+            <SimpleContainer
+                className="lw-caseMenuItem__header"
+                onPress={alwaysExpanded ? undefined : () => setIsOpen(!isOpen)}
+            >
+                {!alwaysExpanded && (
+                    <ImageButton
+                        src={icons.Button.DownArrow}
+                        className={
+                            "lw-caseMenuItem__toggle" + (isExpanded ? " is-open" : "")
+                        }
+                    />
+                )}
 
                 <SimpleContainer className="lw-caseMenuItem__content">
                     <SimpleContainer className="lw-caseMenuItem__row lw-caseMenuItem__row--top">
@@ -149,7 +157,8 @@ export default function CaseMenuItem({
             </SimpleContainer>
 
             <CaseMenuItemOpen
-                isOpen={isOpen}
+                isOpen={isExpanded}
+                alwaysExpanded={alwaysExpanded}
                 fullCase={fullCaseListener}
                 updateStage={() => updateStage()}
                 isPerformingUpdateStage={isPerformingSetCase}

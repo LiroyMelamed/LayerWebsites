@@ -646,11 +646,16 @@ function _applyClientsToEvent(sanitized, clients) {
     return sanitized;
 }
 
-async function _sanitizeEventWithManagers(row, managersMap, clientsMap) {
+function _sanitizeEventWithManagers(row, managersMap, clientsMap) {
     const ev = _sanitizeEvent(row);
     _applyManagersToEvent(ev, managersMap?.get(row.id));
     _applyClientsToEvent(ev, clientsMap?.get(row.id));
     return ev;
+}
+
+/** Map rows to sanitized events using pre-fetched relation maps (sync — no per-row I/O). */
+function _mapEventsWithRelations(rows, managersMap, clientsMap) {
+    return rows.map((r) => _sanitizeEventWithManagers(r, managersMap, clientsMap));
 }
 
 /** SQL fragment: event belongs to lawyer (owner, legacy manager column, or junction). */
@@ -904,9 +909,7 @@ const listEvents = async (req, res) => {
             _fetchEventManagers(eventIds),
             _fetchEventClients(eventIds),
         ]);
-        const events = await Promise.all(
-            rows.map((r) => _sanitizeEventWithManagers(r, managersMap, clientsMap))
-        );
+        const events = _mapEventsWithRelations(rows, managersMap, clientsMap);
         return res.json({ events });
     } catch (err) {
         console.error('[calendarController] listEvents error:', err.message);
@@ -921,23 +924,30 @@ const listEvents = async (req, res) => {
 const getTodayAndTomorrow = async (req, res) => {
     const userId = req.user.UserId;
     try {
+        const firmWide = await settingsService.isPlatformAdmin(userId);
+        const params = [];
+        let visibilityClause = '';
+        if (!firmWide) {
+            params.push(userId);
+            visibilityClause = `AND ${_personalCalendarSql(1)}`;
+        }
+
         const { rows } = await pool.query(
             `SELECT ce.* FROM calendar_events ce
-             WHERE ${_personalCalendarSql(1)}
-               AND ce.start_time >= (NOW() AT TIME ZONE 'Asia/Jerusalem')::date AT TIME ZONE 'Asia/Jerusalem'
-               AND ce.start_time <  ((NOW() AT TIME ZONE 'Asia/Jerusalem')::date + INTERVAL '2 days') AT TIME ZONE 'Asia/Jerusalem'
+             WHERE (ce.start_time AT TIME ZONE 'Asia/Jerusalem')::date
+                   BETWEEN (NOW() AT TIME ZONE 'Asia/Jerusalem')::date
+                       AND (NOW() AT TIME ZONE 'Asia/Jerusalem')::date + 1
+               ${visibilityClause}
              ORDER BY ce.start_time ASC
              LIMIT 20`,
-            [userId]
+            params
         );
         const eventIds = rows.map((r) => r.id);
         const [managersMap, clientsMap] = await Promise.all([
             _fetchEventManagers(eventIds),
             _fetchEventClients(eventIds),
         ]);
-        const events = await Promise.all(
-            rows.map((r) => _sanitizeEventWithManagers(r, managersMap, clientsMap))
-        );
+        const events = _mapEventsWithRelations(rows, managersMap, clientsMap);
         return res.json({ events });
     } catch (err) {
         console.error('[calendarController] getTodayAndTomorrow error:', err.message);
@@ -1417,7 +1427,7 @@ const getEvent = async (req, res) => {
         );
         const managersMap = await _fetchEventManagers([eventId]);
         const clientsMap = await _fetchEventClients([eventId]);
-        const event = await _sanitizeEventWithManagers(rows[0], managersMap, clientsMap);
+        const event = _sanitizeEventWithManagers(rows[0], managersMap, clientsMap);
         return res.json({ event });
     } catch (err) {
         console.error('[calendarController] getEvent error:', err.message);
@@ -1759,11 +1769,11 @@ const updateEvent = async (req, res) => {
             if (clientMeta) _applyClientsToEvent(sanitized, clientMeta.clients);
             else _applyClientsToEvent(sanitized, (await _fetchEventClients([eventId])).get(eventId));
         } else {
-            sanitized = await _sanitizeEventWithManagers(
-                updated,
-                await _fetchEventManagers([eventId]),
-                await _fetchEventClients([eventId])
-            );
+            const [managersMap, clientsMap] = await Promise.all([
+                _fetchEventManagers([eventId]),
+                _fetchEventClients([eventId]),
+            ]);
+            sanitized = _sanitizeEventWithManagers(updated, managersMap, clientsMap);
         }
         await _attachLinkedReminderId(sanitized);
 
@@ -3595,11 +3605,11 @@ const resendInvite = async (req, res) => {
         }
 
         const sendResult = await _sendCalendarInvite(ev);
-        const sanitized = await _sanitizeEventWithManagers(
-            ev,
-            await _fetchEventManagers([eventId]),
-            await _fetchEventClients([eventId])
-        );
+        const [managersMap, refreshedClientsMap] = await Promise.all([
+            _fetchEventManagers([eventId]),
+            _fetchEventClients([eventId]),
+        ]);
+        const sanitized = _sanitizeEventWithManagers(ev, managersMap, refreshedClientsMap);
 
         if (!sendResult.sentSms && !sendResult.sentEmail && !sendResult.deferred) {
             return res.status(400).json({
@@ -3775,9 +3785,7 @@ const getDayAgenda = async (req, res) => {
             _fetchEventManagers(ids),
             _fetchEventClients(ids),
         ]);
-        const events = await Promise.all(
-            rows.map((r) => _sanitizeEventWithManagers(r, managersMap, clientsMap))
-        );
+        const events = _mapEventsWithRelations(rows, managersMap, clientsMap);
         return res.json({ date: dateStr, events });
     } catch (err) {
         console.error('[calendarController] getDayAgenda:', err.message);
