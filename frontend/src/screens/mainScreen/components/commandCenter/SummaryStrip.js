@@ -24,6 +24,13 @@ export default function SummaryStrip({ summary, firmStats, isPerforming, onNavig
             onClick: () => onNavigate?.("activeCases"),
         },
         {
+            key: "closedCases",
+            label: t("managerHome.summary.closedCases"),
+            value: firmStats?.closedCases ?? 0,
+            accent: colors.winter,
+            onClick: () => onNavigate?.("closedCases"),
+        },
+        {
             key: "urgent",
             label: t("managerHome.summary.urgent"),
             value: summary?.urgentCount ?? 0,

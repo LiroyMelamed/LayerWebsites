@@ -17,6 +17,7 @@ import filesApi from "../../../../api/filesApi";
 import SimpleButton from "../../../simpleComponents/SimpleButton";
 import SimpleInput from "../../../simpleComponents/SimpleInput";
 import { DateDDMMYY } from "../../../../functions/date/DateDDMMYY";
+import { DateDDMMYY_HHMM } from "../../../../functions/date/DateDDMMYY_HHMM";
 import { usePopup } from "../../../../providers/PopUpProvider";
 import { openExternalUrl } from "../../../../utils/externalNavigation";
 import { useFirmPhone } from "../../../../services/firmSettings";
@@ -284,6 +285,34 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, alwaysExpanded = fa
                                 <SimpleContainer className="lw-caseMenuItemOpen__item">
                                     <TextBold12 className="lw-caseMenuItemOpen__itemLabel">{t("cases.licenseExpiryDate") + ":"}</TextBold12>
                                     <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.LicenseExpiryDate ? DateDDMMYY(fullCase.LicenseExpiryDate) : t("common.notSpecified")}</Text12>
+                                </SimpleContainer>
+                            )}
+
+                            {!isClient && fullCase.IsClosed && fullCase.ClosedAt && (
+                                <SimpleContainer className="lw-caseMenuItemOpen__item">
+                                    <TextBold12 className="lw-caseMenuItemOpen__itemLabel">{t("cases.closedAt") + ":"}</TextBold12>
+                                    <Text12 className="lw-caseMenuItemOpen__itemValue">{DateDDMMYY_HHMM(fullCase.ClosedAt) || DateDDMMYY(fullCase.ClosedAt)}</Text12>
+                                </SimpleContainer>
+                            )}
+
+                            {!isClient && fullCase.IsClosed && (
+                                <SimpleContainer className="lw-caseMenuItemOpen__item">
+                                    <TextBold12 className="lw-caseMenuItemOpen__itemLabel">{t("cases.closedBy") + ":"}</TextBold12>
+                                    <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.ClosedByName || t("common.notSpecified")}</Text12>
+                                </SimpleContainer>
+                            )}
+
+                            {!isClient && fullCase.ReopenedAt && (
+                                <SimpleContainer className="lw-caseMenuItemOpen__item">
+                                    <TextBold12 className="lw-caseMenuItemOpen__itemLabel">{t("cases.reopenedAt") + ":"}</TextBold12>
+                                    <Text12 className="lw-caseMenuItemOpen__itemValue">{DateDDMMYY_HHMM(fullCase.ReopenedAt) || DateDDMMYY(fullCase.ReopenedAt)}</Text12>
+                                </SimpleContainer>
+                            )}
+
+                            {!isClient && fullCase.ReopenedByName && (
+                                <SimpleContainer className="lw-caseMenuItemOpen__item">
+                                    <TextBold12 className="lw-caseMenuItemOpen__itemLabel">{t("cases.reopenedBy") + ":"}</TextBold12>
+                                    <Text12 className="lw-caseMenuItemOpen__itemValue">{fullCase.ReopenedByName}</Text12>
                                 </SimpleContainer>
                             )}
                         </SimpleContainer>

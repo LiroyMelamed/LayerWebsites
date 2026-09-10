@@ -91,7 +91,7 @@ function buildNoActivityGroupParams(members) {
         .filter((days) => Number.isFinite(days) && days > 0);
 
     if (!dayValues.length) {
-        return { days: 7, minDays: 7, maxDays: 7 };
+        return { days: 90, minDays: 90, maxDays: 90 };
     }
 
     const minDays = Math.min(...dayValues);

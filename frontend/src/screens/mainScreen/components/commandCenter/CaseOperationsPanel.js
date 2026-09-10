@@ -48,7 +48,7 @@ export default function CaseOperationsPanel({
                     ) : (
                         <ManagerWorkloadChart
                             managers={managerWorkload}
-                            onManagerPress={(manager) => navigateOpenCasesByManager(navigate, manager)}
+                            onManagerPress={(manager, viewMode) => navigateOpenCasesByManager(navigate, manager, viewMode)}
                         />
                     )}
 
