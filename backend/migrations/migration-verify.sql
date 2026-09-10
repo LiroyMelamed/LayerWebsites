@@ -197,6 +197,22 @@ BEGIN
     PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='cases' AND column_name='whatsappgrouplink';
     IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.cases.whatsappgrouplink'; END IF;
 
+    -- Case closure audit (2026-09-10)
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='cases' AND column_name='closed_at';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.cases.closed_at'; END IF;
+
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='cases' AND column_name='closed_by_userid';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.cases.closed_by_userid'; END IF;
+
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='cases' AND column_name='reopened_at';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.cases.reopened_at'; END IF;
+
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='cases' AND column_name='reopened_by_userid';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.cases.reopened_by_userid'; END IF;
+
+    PERFORM 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='casedescriptions' AND column_name='updated_by_userid';
+    IF NOT FOUND THEN RAISE EXCEPTION 'Missing column: public.casedescriptions.updated_by_userid'; END IF;
+
     -- Ensure notifications primary key sequence exists (required for auto-repair logic)
     IF COALESCE(pg_get_serial_sequence('public.usernotifications','notificationid'), '') = '' THEN
         RAISE EXCEPTION 'usernotifications.notificationid has no serial/identity sequence (pg_get_serial_sequence returned NULL)';

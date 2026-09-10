@@ -13,7 +13,7 @@ import "./DoughnutChart.scss";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const DoughnutChart = ({ data, colors, labels, centerText, subText, className }) => {
+const DoughnutChart = ({ data, colors, labels, centerText, subText, className, onCenterPress }) => {
     const chartData = {
         labels: labels,
         datasets: [
@@ -41,7 +41,11 @@ const DoughnutChart = ({ data, colors, labels, centerText, subText, className })
 
     return (
         <SimpleContainer className={mergedClassName}>
-            <SimpleContainer className="lw-doughnutChart__centerText">
+            <SimpleContainer
+                className="lw-doughnutChart__centerText"
+                onPress={onCenterPress}
+                role={onCenterPress ? 'button' : undefined}
+            >
                 <TextBold16 className="lw-doughnutChart__mainText">{centerText}</TextBold16>
                 {subText && <Text12 className="lw-doughnutChart__subText">{subText}</Text12>}
             </SimpleContainer>

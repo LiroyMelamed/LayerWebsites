@@ -377,9 +377,9 @@ async function fetchCasesClosedTodayList() {
         FROM cases c
         LEFT JOIN users u ON u.userid = c.userid
         WHERE c.isclosed = true
-          AND c.updatedat >= ${dayStart}
-          AND c.updatedat < ${dayEnd}
-        ORDER BY c.updatedat DESC
+          AND c.closed_at >= ${dayStart}
+          AND c.closed_at < ${dayEnd}
+        ORDER BY c.closed_at DESC
         LIMIT $1
     `, [C.DRILL_DOWN_LIST_LIMIT]);
     return rows.map(mapCaseListItem);
@@ -396,9 +396,12 @@ async function fetchTodayActivityLog() {
                 c.casename,
                 c.casemanagerid AS manager_id,
                 c.casemanager AS manager_name,
+                cd.updated_by_userid AS actor_id,
+                actor.name AS actor_name,
                 jsonb_build_object('stage', cd.stage) AS meta
             FROM casedescriptions cd
             JOIN cases c ON c.caseid = cd.caseid
+            LEFT JOIN users actor ON actor.userid = cd.updated_by_userid
             WHERE cd.timestamp >= ${dayStart}
               AND cd.timestamp < ${dayEnd}
 
@@ -411,6 +414,8 @@ async function fetchTodayActivityLog() {
                 c.casename,
                 c.casemanagerid AS manager_id,
                 c.casemanager AS manager_name,
+                c.casemanagerid AS actor_id,
+                c.casemanager AS actor_name,
                 '{}'::jsonb AS meta
             FROM cases c
             WHERE c.createdat >= ${dayStart}
@@ -420,16 +425,19 @@ async function fetchTodayActivityLog() {
 
             SELECT
                 'case_closed' AS activity_type,
-                c.updatedat AS occurred_at,
+                c.closed_at AS occurred_at,
                 c.caseid,
                 c.casename,
                 c.casemanagerid AS manager_id,
                 c.casemanager AS manager_name,
+                c.closed_by_userid AS actor_id,
+                closer.name AS actor_name,
                 '{}'::jsonb AS meta
             FROM cases c
+            LEFT JOIN users closer ON closer.userid = c.closed_by_userid
             WHERE c.isclosed = true
-              AND c.updatedat >= ${dayStart}
-              AND c.updatedat < ${dayEnd}
+              AND c.closed_at >= ${dayStart}
+              AND c.closed_at < ${dayEnd}
 
             UNION ALL
 
@@ -440,9 +448,12 @@ async function fetchTodayActivityLog() {
                 c.casename,
                 c.casemanagerid AS manager_id,
                 c.casemanager AS manager_name,
+                sf.lawyerid AS actor_id,
+                lawyer.name AS actor_name,
                 jsonb_build_object('filename', sf.filename) AS meta
             FROM signingfiles sf
             LEFT JOIN cases c ON c.caseid = sf.caseid
+            LEFT JOIN users lawyer ON lawyer.userid = sf.lawyerid
             WHERE sf.status = 'signed'
               AND sf.signedat >= ${dayStart}
               AND sf.signedat < ${dayEnd}
@@ -456,6 +467,8 @@ async function fetchTodayActivityLog() {
                 c.casename,
                 c.casemanagerid AS manager_id,
                 c.casemanager AS manager_name,
+                NULL::int AS actor_id,
+                NULL::text AS actor_name,
                 jsonb_build_object('filename', sf.file_name) AS meta
             FROM stage_files sf
             JOIN cases c ON c.caseid = sf.caseid
@@ -472,6 +485,8 @@ async function fetchTodayActivityLog() {
         caseName: r.casename,
         managerId: r.manager_id,
         managerName: r.manager_name,
+        actorId: r.actor_id,
+        actorName: r.actor_name,
         meta: r.meta || {},
     }));
 }
@@ -490,8 +505,8 @@ async function fetchFirmDailyStats() {
         SELECT COUNT(*)::int AS count
         FROM cases
         WHERE isclosed = true
-          AND updatedat >= ${dayStart}
-          AND updatedat < ${dayEnd}
+          AND closed_at >= ${dayStart}
+          AND closed_at < ${dayEnd}
     `);
 
     const { rows: totalRows } = await pool.query(`
@@ -504,30 +519,34 @@ async function fetchFirmDailyStats() {
 
     const { rows: activityRows } = await pool.query(`
         WITH acts AS (
-            SELECT c.casemanagerid AS manager_id, c.casemanager AS manager_name
+            SELECT cd.updated_by_userid AS actor_id
             FROM casedescriptions cd
-            JOIN cases c ON c.caseid = cd.caseid
             WHERE cd.timestamp >= ${dayStart}
               AND cd.timestamp < ${dayEnd}
-              AND c.casemanagerid IS NOT NULL
+              AND cd.updated_by_userid IS NOT NULL
             UNION ALL
-            SELECT casemanagerid, casemanager
+            SELECT casemanagerid AS actor_id
             FROM cases
             WHERE createdat >= ${dayStart}
               AND createdat < ${dayEnd}
               AND casemanagerid IS NOT NULL
             UNION ALL
-            SELECT c.casemanagerid, c.casemanager
+            SELECT closed_by_userid AS actor_id
+            FROM cases
+            WHERE closed_at >= ${dayStart}
+              AND closed_at < ${dayEnd}
+              AND closed_by_userid IS NOT NULL
+            UNION ALL
+            SELECT sf.lawyerid AS actor_id
             FROM signingfiles sf
-            JOIN cases c ON c.caseid = sf.caseid
             WHERE sf.signedat >= ${dayStart}
               AND sf.signedat < ${dayEnd}
-              AND c.casemanagerid IS NOT NULL
+              AND sf.lawyerid IS NOT NULL
         )
-        SELECT manager_id, manager_name, COUNT(*)::int AS activity_count
+        SELECT u.userid AS manager_id, u.name AS manager_name, COUNT(*)::int AS activity_count
         FROM acts
-        WHERE manager_id IS NOT NULL
-        GROUP BY manager_id, manager_name
+        JOIN users u ON u.userid = acts.actor_id
+        GROUP BY u.userid, u.name
         ORDER BY activity_count DESC
         LIMIT 1
     `);
@@ -550,8 +569,28 @@ async function fetchFirmDailyStats() {
     };
 }
 
+async function fetchClosedCasesByManager() {
+    const { rows } = await pool.query(`
+        SELECT casemanagerid, casemanager, COUNT(*)::int AS closed_count
+        FROM cases
+        WHERE COALESCE(isclosed, false) = true
+          AND casemanagerid IS NOT NULL
+        GROUP BY casemanagerid, casemanager
+    `);
+    const map = new Map();
+    for (const row of rows) {
+        map.set(String(row.casemanagerid), {
+            closedCount: row.closed_count ?? 0,
+            managerName: row.casemanager,
+            managerId: row.casemanagerid,
+        });
+    }
+    return map;
+}
+
 async function fetchManagerWorkload(caseRows, attentionItems) {
     const flatItems = flattenAttentionItems(attentionItems);
+    const closedByManager = await fetchClosedCasesByManager();
     const byManager = new Map();
 
     for (const row of caseRows) {
@@ -563,12 +602,27 @@ async function fetchManagerWorkload(caseRows, attentionItems) {
                 managerId: id || null,
                 managerName: id ? name : null,
                 activeCases: 0,
+                closedCases: id ? (closedByManager.get(key)?.closedCount ?? 0) : 0,
                 needsAttention: 0,
                 urgentCases: 0,
                 unassigned: !id,
             });
         }
         byManager.get(key).activeCases += 1;
+    }
+
+    for (const [key, closedInfo] of closedByManager.entries()) {
+        if (!byManager.has(key)) {
+            byManager.set(key, {
+                managerId: closedInfo.managerId,
+                managerName: closedInfo.managerName,
+                activeCases: 0,
+                closedCases: closedInfo.closedCount,
+                needsAttention: 0,
+                urgentCases: 0,
+                unassigned: false,
+            });
+        }
     }
 
     const caseIdsNeedingAttention = new Set();
@@ -590,8 +644,8 @@ async function fetchManagerWorkload(caseRows, attentionItems) {
     }
 
     return [...byManager.values()]
-        .filter((m) => m.activeCases > 0)
-        .sort((a, b) => b.activeCases - a.activeCases);
+        .filter((m) => m.activeCases > 0 || m.closedCases > 0)
+        .sort((a, b) => (b.activeCases + b.closedCases) - (a.activeCases + a.closedCases));
 }
 
 async function fetchCasesByStage() {
@@ -789,6 +843,7 @@ async function buildManagerHomePayload({ userId } = {}) {
             signedToday: signingSummary.signed_today ?? 0,
             todayEventCount: summary.todayEventCount ?? 0,
             unassignedCases: unassignedCount,
+            noActivityDays: C.NO_ACTIVITY_DAYS,
         },
         morningBrief: buildMorningBrief({
             attentionItems,

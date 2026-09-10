@@ -72,6 +72,10 @@ export default function MainScreen() {
             navigateOpenCases(navigate, "?status=open");
             return;
         }
+        if (key === "closedCases") {
+            navigateOpenCases(navigate, "?status=closed");
+            return;
+        }
         if (key === "signing") {
             navigate(AdminStackName + SigningManagerScreenName);
             return;

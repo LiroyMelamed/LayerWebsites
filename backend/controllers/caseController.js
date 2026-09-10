@@ -9,6 +9,124 @@ const { getPagination } = require("../utils/pagination");
 const { getSetting, getChannelConfig, getPlatformAdmins } = require("../services/settingsService");
 const { renderTemplate } = require("../utils/templateRenderer");
 const { invalidateOperationalDashboardCaches } = require("../utils/operationalDashboardCache");
+const { resolveActorId, computeClosureAudit } = require("../lib/caseClosureAudit");
+
+async function sendUpdateStageNotifications({
+    caseId,
+    notificationType,
+    channelType,
+    CaseName,
+    CurrentStage,
+    Descriptions,
+    PhoneNumber,
+    CustomerName,
+}) {
+    if (!notificationType) return;
+
+    const channelCfg = await getChannelConfig(channelType);
+    const shouldNotifyClient = channelCfg.push_enabled || channelCfg.email_enabled || channelCfg.sms_enabled;
+
+    const linkedUsersResult = await pool.query(
+        `SELECT U.userid AS "UserId", U.name AS "Name", U.phonenumber AS "PhoneNumber"
+         FROM case_users CU JOIN users U ON CU.userid = U.userid
+         WHERE CU.caseid = $1`,
+        [caseId]
+    );
+    const linkedUsers = linkedUsersResult.rows;
+    const domain = await getWebsiteDomain();
+    const websiteUrl = `https://${domain}`;
+    const currentStageName = Descriptions?.[CurrentStage - 1]?.Text || String(CurrentStage);
+
+    let managerName = '';
+    const mgrIdRes = await pool.query('SELECT casemanagerid FROM cases WHERE caseid = $1', [caseId]);
+    const mgIdVal = mgrIdRes.rows?.[0]?.casemanagerid;
+    if (mgIdVal) {
+        const mgrNameRes = await pool.query('SELECT name FROM users WHERE userid = $1', [mgIdVal]);
+        managerName = String(mgrNameRes.rows?.[0]?.name || '').trim();
+    }
+
+    const templateData = { caseName: CaseName, stageName: currentStageName, managerName, websiteUrl };
+
+    let smsTemplateKey = 'CASE_STAGE_CHANGED_SMS';
+    let smsTemplateDefault = 'היי {{recipientName}}, בתיק {{caseName}} התעדכן שלב: {{stageName}}. היכנס לאתר למעקב. {{websiteUrl}}';
+    if (notificationType === 'case_closed') {
+        smsTemplateKey = 'CASE_CLOSED_SMS';
+        smsTemplateDefault = 'היי {{recipientName}}, תיק {{caseName}} הסתיים בהצלחה. היכנס לאתר למעקב. {{websiteUrl}}';
+    } else if (notificationType === 'case_reopened') {
+        smsTemplateKey = 'CASE_REOPENED_SMS';
+        smsTemplateDefault = 'היי {{recipientName}}, תיק {{caseName}} נפתח מחדש. היכנס לאתר למעקב. {{websiteUrl}}';
+    }
+    const smsTemplate = await getSetting('templates', smsTemplateKey, smsTemplateDefault);
+
+    if (shouldNotifyClient) {
+        for (const u of linkedUsers) {
+            const recipientName = u.Name || CustomerName || '';
+            let title = '';
+            let message = '';
+
+            if (notificationType === 'stage_changed') {
+                title = "עדכון שלב בתיק";
+                message = `היי ${recipientName}, \n\nבתיק "${CaseName}" התעדכן שלב, תיקך נמצא בשלב - ${currentStageName}, היכנס לאתר או לאפליקציה למעקב.`;
+            } else if (notificationType === 'case_closed') {
+                title = "תיק הסתיים";
+                message = `היי ${recipientName}, \n\nתיק "${CaseName}" הסתיים בהצלחה, היכנס לאתר או לאפליקציה למעקב.`;
+            } else if (notificationType === 'case_reopened') {
+                title = "תיק נפתח מחדש";
+                message = `היי ${recipientName}, \n\nתיק "${CaseName}" נפתח מחדש, היכנס לאתר או לאפליקציה למעקב.`;
+            }
+
+            const smsBody = renderTemplate(smsTemplate, { ...templateData, recipientName });
+
+            await notifyRecipient({
+                recipientUserId: u.UserId,
+                recipientPhone: u.PhoneNumber || PhoneNumber,
+                notificationType: channelType,
+                push: {
+                    title,
+                    body: message,
+                    data: buildCasePushData({ caseId, extra: { stage: String(CurrentStage) } }),
+                },
+                email: {
+                    campaignKey: channelType,
+                    contactFields: {
+                        recipient_name: String(recipientName).trim(),
+                        case_title: String(CaseName || '').trim(),
+                        case_stage: currentStageName,
+                        manager_name: managerName,
+                        action_url: websiteUrl,
+                    },
+                },
+                sms: {
+                    messageBody: smsBody,
+                },
+            });
+        }
+    }
+
+    const notifiedStageIds = new Set(linkedUsers.map(u => u.UserId));
+    let mgrTitle = 'עדכון תיק';
+    let mgrMessage = `תיק "${CaseName}" עודכן. היכנס לאתר או לאפליקציה למעקב.`;
+    if (notificationType === 'stage_changed') {
+        mgrTitle = 'עדכון שלב בתיק';
+        mgrMessage = `בתיק "${CaseName}" התעדכן שלב, התיק נמצא בשלב - ${currentStageName}. היכנס לאתר או לאפליקציה למעקב.`;
+    } else if (notificationType === 'case_closed') {
+        mgrTitle = 'תיק הסתיים';
+        mgrMessage = `תיק "${CaseName}" הסתיים בהצלחה. היכנס לאתר או לאפליקציה למעקב.`;
+    } else if (notificationType === 'case_reopened') {
+        mgrTitle = 'תיק נפתח מחדש';
+        mgrMessage = `תיק "${CaseName}" נפתח מחדש. היכנס לאתר או לאפליקציה למעקב.`;
+    }
+    await notifyCaseManager({
+        caseId,
+        caseName: CaseName,
+        title: mgrTitle,
+        message: mgrMessage,
+        smsTemplate,
+        smsTemplateData: templateData,
+        alreadyNotifiedUserIds: notifiedStageIds,
+        changedTypes: [channelType],
+    });
+}
 
 /**
  * Notify the case manager (casemanagerid) about a case change,
@@ -144,16 +262,27 @@ const _buildBaseCaseQuery = () => `
         C.estimatedcompletiondate,
         C.licenseexpirydate,
         C.haslicenseexpiry,
+        C.closed_at,
+        C.closed_by_userid,
+        C.reopened_at,
+        C.reopened_by_userid,
+        CLOSER.name AS closed_by_name,
+        REOPENER.name AS reopened_by_name,
         CD.descriptionid,
         CD.stage,
         CD.text,
         CD.timestamp,
-        CD.isnew
+        CD.isnew,
+        CD.updated_by_userid,
+        UPDATER.name AS updated_by_name
     FROM cases C
     LEFT JOIN users U ON C.userid = U.userid
     LEFT JOIN users MGR ON C.casemanagerid = MGR.userid
+    LEFT JOIN users CLOSER ON C.closed_by_userid = CLOSER.userid
+    LEFT JOIN users REOPENER ON C.reopened_by_userid = REOPENER.userid
     LEFT JOIN casetypes CT ON C.casetypeid = CT.casetypeid
     LEFT JOIN casedescriptions CD ON C.caseid = CD.caseid
+    LEFT JOIN users UPDATER ON CD.updated_by_userid = UPDATER.userid
 `;
 
 const _mapCaseResults = (rows, caseUsersMap) => {
@@ -184,6 +313,12 @@ const _mapCaseResults = (rows, caseUsersMap) => {
                 EstimatedCompletionDate: row.estimatedcompletiondate,
                 LicenseExpiryDate: row.licenseexpirydate,
                 HasLicenseExpiry: row.haslicenseexpiry || false,
+                ClosedAt: row.closed_at,
+                ClosedByUserId: row.closed_by_userid,
+                ClosedByName: row.closed_by_name || null,
+                ReopenedAt: row.reopened_at,
+                ReopenedByUserId: row.reopened_by_userid,
+                ReopenedByName: row.reopened_by_name || null,
                 Descriptions: [],
                 Users: [],
             });
@@ -198,7 +333,9 @@ const _mapCaseResults = (rows, caseUsersMap) => {
                     Stage: row.stage,
                     Text: row.text,
                     Timestamp: row.timestamp,
-                    IsNew: row.isnew
+                    IsNew: row.isnew,
+                    UpdatedByUserId: row.updated_by_userid,
+                    UpdatedByName: row.updated_by_name || null,
                 });
             }
         }
@@ -662,6 +799,8 @@ const updateCase = async (req, res) => {
     const caseId = requireInt(req, res, { source: 'params', name: 'caseId' });
     if (caseId === null) return;
     const { CaseName, CurrentStage, IsClosed, IsTagged, Descriptions, PhoneNumber, CustomerName, CompanyName, CaseTypeId, UserId, UserIds, CaseManager, CaseManagerId, CaseTypeName, EstimatedCompletionDate, LicenseExpiryDate, HasLicenseExpiry } = req.body;
+    const actorId = resolveActorId(req);
+    const isClosedProvided = IsClosed !== undefined;
 
     // Build resolved user list: prefer UserIds array, fall back to single UserId
     const resolvedUserIds = Array.isArray(UserIds) && UserIds.length > 0
@@ -676,7 +815,8 @@ const updateCase = async (req, res) => {
         // ── Fetch old case data for change detection ──
         const oldCaseResult = await client.query(
             `SELECT casename, currentstage, isclosed, istagged, companyname, casetypeid,
-                    casemanagerid, casetypename, estimatedcompletiondate, licenseexpirydate
+                    casemanagerid, casetypename, estimatedcompletiondate, licenseexpirydate,
+                    closed_at, closed_by_userid, reopened_at, reopened_by_userid
              FROM cases WHERE caseid = $1`,
             [caseId]
         );
@@ -701,10 +841,19 @@ const updateCase = async (req, res) => {
 
         // Check if substantive (client-facing) fields changed
         const stageChanged = oldCase && String(oldCase.currentstage ?? '') !== String(CurrentStage ?? '');
-        const closedChanged = oldCase && Boolean(oldCase.isclosed) !== Boolean(IsClosed);
+        const effectiveIsClosed = isClosedProvided ? Boolean(IsClosed) : Boolean(oldCase.isclosed);
+        const closedChanged = isClosedProvided && Boolean(oldCase.isclosed) !== Boolean(IsClosed);
         const nameChanged = oldCase && (oldCase.casename ?? '') !== (CaseName ?? '');
         const typeChanged = oldCase && CaseTypeId !== undefined && String(oldCase.casetypeid ?? '') !== String(CaseTypeId ?? '');
         const companyChanged = oldCase && CompanyName !== undefined && (oldCase.companyname ?? '') !== (CompanyName ?? '');
+
+        const closureAudit = computeClosureAudit({
+            wasClosed: Boolean(oldCase.isclosed),
+            nowClosed: effectiveIsClosed,
+            isClosedProvided,
+            actorId,
+            previous: oldCase,
+        });
 
         await client.query(
             `
@@ -722,10 +871,20 @@ const updateCase = async (req, res) => {
                 estimatedcompletiondate = $11,
                 licenseexpirydate = $12,
                 haslicenseexpiry = $13,
+                closed_at = $14,
+                closed_by_userid = $15,
+                reopened_at = $16,
+                reopened_by_userid = $17,
                 updatedat = NOW()
-            WHERE caseid = $14
+            WHERE caseid = $18
             `,
-            [CaseName, CurrentStage, IsClosed, IsTagged, CompanyName, CaseTypeId, resolvedUserIds[0] || UserId, CaseManager || null, CaseManagerId ? Number(CaseManagerId) || null : null, CaseTypeName, EstimatedCompletionDate || null, LicenseExpiryDate || null, HasLicenseExpiry ? true : false, caseId]
+            [
+                CaseName, CurrentStage, effectiveIsClosed, IsTagged, CompanyName, CaseTypeId,
+                resolvedUserIds[0] || UserId, CaseManager || null, CaseManagerId ? Number(CaseManagerId) || null : null,
+                CaseTypeName, EstimatedCompletionDate || null, LicenseExpiryDate || null, HasLicenseExpiry ? true : false,
+                closureAudit.closedAt, closureAudit.closedByUserId, closureAudit.reopenedAt, closureAudit.reopenedByUserId,
+                caseId,
+            ]
         );
 
         // Sync case_users junction table
@@ -765,6 +924,9 @@ const updateCase = async (req, res) => {
             }
 
             for (const desc of Descriptions) {
+                const descTimestamp = desc.Timestamp ? new Date(desc.Timestamp) : null;
+                const updatedByUserId = descTimestamp ? actorId : null;
+
                 if (desc.DescriptionId) {
                     // Update existing description
                     await client.query(
@@ -773,19 +935,20 @@ const updateCase = async (req, res) => {
                         SET stage = $1,
                             text = $2,
                             timestamp = $3,
-                            isnew = $4
-                        WHERE descriptionid = $5 AND caseid = $6
+                            isnew = $4,
+                            updated_by_userid = $5
+                        WHERE descriptionid = $6 AND caseid = $7
                         `,
-                        [desc.Stage, desc.Text, desc.Timestamp ? new Date(desc.Timestamp) : null, desc.IsNew ? true : false, desc.DescriptionId, caseId]
+                        [desc.Stage, desc.Text, descTimestamp, desc.IsNew ? true : false, updatedByUserId, desc.DescriptionId, caseId]
                     );
                 } else {
                     // Insert new description (added via "הוסף שלב")
                     await client.query(
                         `
-                        INSERT INTO casedescriptions (caseid, stage, text, timestamp, isnew)
-                        VALUES ($1, $2, $3, $4, $5)
+                        INSERT INTO casedescriptions (caseid, stage, text, timestamp, isnew, updated_by_userid)
+                        VALUES ($1, $2, $3, $4, $5, $6)
                         `,
-                        [caseId, desc.Stage, desc.Text, desc.Timestamp ? new Date(desc.Timestamp) : null, desc.IsNew ? true : false]
+                        [caseId, desc.Stage, desc.Text, descTimestamp, desc.IsNew ? true : false, updatedByUserId]
                     );
                 }
             }
@@ -852,7 +1015,9 @@ const updateCase = async (req, res) => {
             'CASE_LICENSE_CHANGE_SMS': 'שלום {{recipientName}}, רישיון בתיק "{{caseName}}" עודכן. {{websiteUrl}}',
             'CASE_COMPANY_CHANGE_SMS': 'שלום {{recipientName}}, חברה בתיק "{{caseName}}" עודכנה. {{websiteUrl}}',
         };
-        const primaryType = changedTypes[0] || 'CASE_NAME_CHANGE';
+        const primaryType = closedChanged
+            ? (IsClosed ? 'CASE_CLOSED' : 'CASE_REOPENED')
+            : (changedTypes[0] || 'CASE_NAME_CHANGE');
         const templateKey = SMS_TEMPLATE_MAP[primaryType] || 'CASE_NAME_CHANGE_SMS';
         const defaultFallback = SMS_TEMPLATE_DEFAULTS[templateKey]
             || 'היי {{recipientName}}, תיק {{caseName}} התעדכן, היכנס לאתר למעקב. {{websiteUrl}}';
@@ -880,9 +1045,17 @@ const updateCase = async (req, res) => {
         if (!skipClientNotifications) {
             for (const u of linkedUsers) {
                 const recipientName = u.Name || CustomerName || '';
-                const notificationMessage = stageName
+                let pushTitle = notificationTitle;
+                let notificationMessage = stageName
                     ? `היי ${recipientName}, \n\nתיק "${CaseName}" עודכן לשלב - ${stageName}. היכנס לאתר או לאפליקציה למעקב.`
                     : `תיק "${CaseName}" עודכן. היכנס לאתר או לאפליקציה למעקב.`;
+                if (primaryType === 'CASE_CLOSED') {
+                    pushTitle = 'תיק הסתיים';
+                    notificationMessage = `היי ${recipientName}, \n\nתיק "${CaseName}" הסתיים בהצלחה, היכנס לאתר או לאפליקציה למעקב.`;
+                } else if (primaryType === 'CASE_REOPENED') {
+                    pushTitle = 'תיק נפתח מחדש';
+                    notificationMessage = `היי ${recipientName}, \n\nתיק "${CaseName}" נפתח מחדש, היכנס לאתר או לאפליקציה למעקב.`;
+                }
                 const smsBody = renderTemplate(updatedSmsTemplate, { ...templateData, recipientName });
 
                 try {
@@ -891,7 +1064,7 @@ const updateCase = async (req, res) => {
                         recipientPhone: u.PhoneNumber || PhoneNumber,
                         notificationType: primaryType,
                         push: {
-                            title: notificationTitle,
+                            title: pushTitle,
                             body: notificationMessage,
                             data: buildCasePushData({ caseId }),
                         },
@@ -954,6 +1127,7 @@ const updateStage = async (req, res) => {
     const caseId = requireInt(req, res, { source: 'params', name: 'caseId' });
     if (caseId === null) return;
     const { CurrentStage, IsClosed, PhoneNumber, CustomerName, Descriptions, CaseName } = req.body;
+    const actorId = resolveActorId(req);
 
     // --- Stage validation ---
     if (CurrentStage != null) {
@@ -972,7 +1146,8 @@ const updateStage = async (req, res) => {
         await client.query('BEGIN');
 
         const currentData = await client.query(
-            "SELECT currentstage, isclosed, userid FROM cases WHERE caseid = $1",
+            `SELECT currentstage, isclosed, userid, closed_at, closed_by_userid, reopened_at, reopened_by_userid
+             FROM cases WHERE caseid = $1`,
             [caseId]
         );
 
@@ -981,9 +1156,10 @@ const updateStage = async (req, res) => {
             return res.status(404).json({ message: "תיק לא נמצא" });
         }
 
-        const currentStageValue = currentData.rows[0]?.currentstage;
-        const currentlyClosed = currentData.rows[0]?.isclosed;
-        const caseUserId = currentData.rows[0]?.userid;
+        const currentRow = currentData.rows[0];
+        const currentStageValue = currentRow?.currentstage;
+        const currentlyClosed = currentRow?.isclosed;
+        const caseUserId = currentRow?.userid;
 
         // Prevent stage changes on already-closed cases (unless reopening)
         if (currentlyClosed && !IsClosed && CurrentStage !== undefined) {
@@ -993,15 +1169,32 @@ const updateStage = async (req, res) => {
             return res.status(400).json({ message: "אין אפשרות לעדכן תיק שנסגר" });
         }
 
+        const closureAudit = computeClosureAudit({
+            wasClosed: Boolean(currentlyClosed),
+            nowClosed: Boolean(IsClosed),
+            isClosedProvided: true,
+            actorId,
+            previous: currentRow,
+        });
+
         await client.query(
             `
             UPDATE cases
             SET currentstage = $1,
                 isclosed = $2,
+                closed_at = $3,
+                closed_by_userid = $4,
+                reopened_at = $5,
+                reopened_by_userid = $6,
                 updatedat = NOW()
-            WHERE caseid = $3
+            WHERE caseid = $7
             `,
-            [CurrentStage, IsClosed, caseId]
+            [
+                CurrentStage, IsClosed,
+                closureAudit.closedAt, closureAudit.closedByUserId,
+                closureAudit.reopenedAt, closureAudit.reopenedByUserId,
+                caseId,
+            ]
         );
 
         if (Descriptions && Descriptions.length > 0) {
@@ -1015,16 +1208,19 @@ const updateStage = async (req, res) => {
                 const timestamp = isFutureStage ? null : (desc.Timestamp ? new Date(desc.Timestamp) : null);
                 const isNew = isFutureStage ? false : (desc.IsNew ? true : false);
 
+                const updatedByUserId = timestamp ? actorId : null;
+
                 await client.query(
                     `
                     UPDATE casedescriptions
                     SET stage = $1,
                         text = $2,
                         timestamp = $3,
-                        isnew = $4
-                    WHERE descriptionid = $5 AND caseid = $6
+                        isnew = $4,
+                        updated_by_userid = $5
+                    WHERE descriptionid = $6 AND caseid = $7
                     `,
-                    [desc.Stage, desc.Text, timestamp, isNew, desc.DescriptionId, caseId]
+                    [desc.Stage, desc.Text, timestamp, isNew, updatedByUserId, desc.DescriptionId, caseId]
                 );
             }
         }
@@ -1046,121 +1242,22 @@ const updateStage = async (req, res) => {
             channelType = 'CASE_REOPENED';
         }
 
+        await client.query('COMMIT');
+        client.release();
+        client = null;
+
         if (notificationType) {
-            // Check channel config for this specific change type
-            const channelCfg = await getChannelConfig(channelType);
-            const shouldNotifyClient = channelCfg.push_enabled || channelCfg.email_enabled || channelCfg.sms_enabled;
-            // ── ONE notification per user with the current (final) stage ──
-            const linkedUsersResult = await client.query(
-                `SELECT U.userid AS "UserId", U.name AS "Name", U.phonenumber AS "PhoneNumber"
-                 FROM case_users CU JOIN users U ON CU.userid = U.userid
-                 WHERE CU.caseid = $1`,
-                [caseId]
-            );
-            const linkedUsers = linkedUsersResult.rows;
-            const domain = await getWebsiteDomain();
-            const websiteUrl = `https://${domain}`;
-            const currentStageName = Descriptions?.[CurrentStage - 1]?.Text || String(CurrentStage);
-
-            // Fetch manager name for template variables
-            let managerName = '';
-            const mgrIdRes = await client.query('SELECT casemanagerid FROM cases WHERE caseid = $1', [caseId]);
-            const mgIdVal = mgrIdRes.rows?.[0]?.casemanagerid;
-            if (mgIdVal) {
-                const mgrNameRes = await client.query('SELECT name FROM users WHERE userid = $1', [mgIdVal]);
-                managerName = String(mgrNameRes.rows?.[0]?.name || '').trim();
-            }
-
-            // Common template data
-            const templateData = { caseName: CaseName, stageName: currentStageName, managerName, websiteUrl };
-
-            // Load appropriate SMS template
-            let smsTemplateKey = 'CASE_STAGE_CHANGED_SMS';
-            let smsTemplateDefault = 'היי {{recipientName}}, בתיק {{caseName}} התעדכן שלב: {{stageName}}. היכנס לאתר למעקב. {{websiteUrl}}';
-            if (notificationType === 'stage_changed') {
-                smsTemplateKey = 'CASE_STAGE_CHANGED_SMS';
-                smsTemplateDefault = 'היי {{recipientName}}, בתיק {{caseName}} התעדכן שלב: {{stageName}}. היכנס לאתר למעקב. {{websiteUrl}}';
-            } else if (notificationType === 'case_closed') {
-                smsTemplateKey = 'CASE_CLOSED_SMS';
-                smsTemplateDefault = 'היי {{recipientName}}, תיק {{caseName}} הסתיים בהצלחה. היכנס לאתר למעקב. {{websiteUrl}}';
-            } else if (notificationType === 'case_reopened') {
-                smsTemplateKey = 'CASE_REOPENED_SMS';
-                smsTemplateDefault = 'היי {{recipientName}}, תיק {{caseName}} נפתח מחדש. היכנס לאתר למעקב. {{websiteUrl}}';
-            }
-            const smsTemplate = await getSetting('templates', smsTemplateKey, smsTemplateDefault);
-
-            if (shouldNotifyClient) {
-                for (const u of linkedUsers) {
-                    const recipientName = u.Name || CustomerName || '';
-                    let title = '';
-                    let message = '';
-
-                    if (notificationType === 'stage_changed') {
-                        title = "עדכון שלב בתיק";
-                        message = `היי ${recipientName}, \n\nבתיק "${CaseName}" התעדכן שלב, תיקך נמצא בשלב - ${currentStageName}, היכנס לאתר או לאפליקציה למעקב.`;
-                    } else if (notificationType === 'case_closed') {
-                        title = "תיק הסתיים";
-                        message = `היי ${recipientName}, \n\nתיק "${CaseName}" הסתיים בהצלחה, היכנס לאתר או לאפליקציה למעקב.`;
-                    } else if (notificationType === 'case_reopened') {
-                        title = "תיק נפתח מחדש";
-                        message = `היי ${recipientName}, \n\nתיק "${CaseName}" נפתח מחדש, היכנס לאתר או לאפליקציה למעקב.`;
-                    }
-
-                    const smsBody = renderTemplate(smsTemplate, { ...templateData, recipientName });
-
-                    await notifyRecipient({
-                        recipientUserId: u.UserId,
-                        recipientPhone: u.PhoneNumber || PhoneNumber,
-                        notificationType: channelType,
-                        push: {
-                            title,
-                            body: message,
-                            data: buildCasePushData({ caseId, extra: { stage: String(CurrentStage) } }),
-                        },
-                        email: {
-                            campaignKey: channelType,
-                            contactFields: {
-                                recipient_name: String(recipientName).trim(),
-                                case_title: String(CaseName || '').trim(),
-                                case_stage: currentStageName,
-                                manager_name: managerName,
-                                action_url: websiteUrl,
-                            },
-                        },
-                        sms: {
-                            messageBody: smsBody,
-                        },
-                    });
-                }
-            }
-
-            // Notify case manager if not already notified as a linked user
-            const notifiedStageIds = new Set(linkedUsers.map(u => u.UserId));
-            let mgrTitle = 'עדכון תיק';
-            let mgrMessage = `תיק "${CaseName}" עודכן. היכנס לאתר או לאפליקציה למעקב.`;
-            if (notificationType === 'stage_changed') {
-                mgrTitle = 'עדכון שלב בתיק';
-                mgrMessage = `בתיק "${CaseName}" התעדכן שלב, התיק נמצא בשלב - ${currentStageName}. היכנס לאתר או לאפליקציה למעקב.`;
-            } else if (notificationType === 'case_closed') {
-                mgrTitle = 'תיק הסתיים';
-                mgrMessage = `תיק "${CaseName}" הסתיים בהצלחה. היכנס לאתר או לאפליקציה למעקב.`;
-            } else if (notificationType === 'case_reopened') {
-                mgrTitle = 'תיק נפתח מחדש';
-                mgrMessage = `תיק "${CaseName}" נפתח מחדש. היכנס לאתר או לאפליקציה למעקב.`;
-            }
-            await notifyCaseManager({
+            await sendUpdateStageNotifications({
                 caseId,
-                caseName: CaseName,
-                title: mgrTitle,
-                message: mgrMessage,
-                smsTemplate,
-                smsTemplateData: templateData,
-                alreadyNotifiedUserIds: notifiedStageIds,
-                changedTypes: [channelType],
+                notificationType,
+                channelType,
+                CaseName,
+                CurrentStage,
+                Descriptions,
+                PhoneNumber,
+                CustomerName,
             });
         }
-
-        await client.query('COMMIT');
 
         invalidateOperationalDashboardCaches();
         res.status(200).json({ message: "השלב עודכן בהצלחה" });

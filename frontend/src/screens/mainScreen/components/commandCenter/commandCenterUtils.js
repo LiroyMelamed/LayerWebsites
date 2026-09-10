@@ -234,20 +234,21 @@ export function navigateOpenCases(navigate, query = "?status=open") {
     navigate(buildPath(AllCasesScreenName, query));
 }
 
-export function navigateOpenCasesByManager(navigate, manager) {
+export function navigateOpenCasesByManager(navigate, manager, viewMode = "open") {
     if (!navigate) return;
+    const status = viewMode === "all" ? "all" : viewMode === "closed" ? "closed" : "open";
     if (manager?.unassigned) {
-        navigateOpenCases(navigate, "?status=open&unassigned=1");
+        navigateOpenCases(navigate, `?status=${status}&unassigned=1`);
         return;
     }
     if (manager?.managerName) {
         navigateOpenCases(
             navigate,
-            `?status=open&manager=${encodeURIComponent(manager.managerName)}`
+            `?status=${status}&manager=${encodeURIComponent(manager.managerName)}`
         );
         return;
     }
-    navigateOpenCases(navigate);
+    navigateOpenCases(navigate, `?status=${status}`);
 }
 
 export function getIsraelGreetingKey(now = new Date()) {
