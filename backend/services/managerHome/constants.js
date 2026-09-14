@@ -3,7 +3,7 @@
  * Adjust here — not scattered across queries/components.
  */
 module.exports = {
-    NO_ACTIVITY_DAYS: 7,
+    NO_ACTIVITY_DAYS: 90,
     LONG_STAGE_DAYS: 30,
     LICENSE_CRITICAL_DAYS: 7,
     LICENSE_WARNING_DAYS: 30,

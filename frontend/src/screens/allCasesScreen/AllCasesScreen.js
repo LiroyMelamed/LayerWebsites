@@ -27,7 +27,8 @@ export const AllCasesScreenName = "/AllCasesScreen";
 export default function AllCasesScreen() {
     const { t } = useTranslation();
     const [searchParams, setSearchParams] = useSearchParams();
-    const initialStatus = searchParams.get('status') === 'closed' ? 'closed' : 'open';
+    const statusParam = searchParams.get('status');
+    const initialStatus = statusParam === 'closed' ? 'closed' : statusParam === 'all' ? 'all' : 'open';
     const deepCaseId = String(searchParams.get('caseId') || '').trim();
     const initialManager = searchParams.get('manager') || null;
     const initialUnassigned = searchParams.get('unassigned') === '1';
@@ -88,7 +89,7 @@ export default function AllCasesScreen() {
 
         setSelectedManager(managerParam ? decodeURIComponent(managerParam) : null);
         setSelectedUnassigned(unassigned);
-        if (statusParam === 'closed' || statusParam === 'open') {
+        if (statusParam === 'closed' || statusParam === 'open' || statusParam === 'all') {
             setSelectedStatus(statusParam);
         } else if (managerParam || unassigned) {
             setSelectedStatus('open');
@@ -115,6 +116,7 @@ export default function AllCasesScreen() {
         } else if (selectedStatus === "closed") {
             filtered = filtered.filter(item => item.IsClosed === true);
         }
+        // "all" — no open/closed filter
 
         if (selectedClient) {
             const q = selectedClient.toLowerCase();
@@ -194,8 +196,9 @@ export default function AllCasesScreen() {
                     <ChooseButton
                         buttonText={t('cases.statusFilter')}
                         items={[
-                            { value: 'closed', label: t('cases.closedCases') },
+                            { value: 'all', label: t('cases.allCasesFilter') },
                             { value: 'open', label: t('cases.openCases') },
+                            { value: 'closed', label: t('cases.closedCases') },
                         ]}
                         defaultValue={selectedStatus}
                         className="lw-allCasesScreen__choose lw-allCasesScreen__choose--openClose"

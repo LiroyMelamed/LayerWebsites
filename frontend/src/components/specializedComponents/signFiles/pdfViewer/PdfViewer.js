@@ -5,14 +5,18 @@ import SimpleContainer from "../../../simpleComponents/SimpleContainer";
 import SimpleLoader from "../../../simpleComponents/SimpleLoader";
 import SignatureSpotsLayer from "../signatureSpots/SignatureSpotsLayer";
 import { useTranslation } from "react-i18next";
+import { SPOT_BASE_WIDTH, spotSpaceScale } from "../../../../utils/signingSpotGeometry";
 
 /** Spot coordinates are authored against this width; display may be wider. */
-export const BASE_RENDER_WIDTH = 800;
+export const BASE_RENDER_WIDTH = SPOT_BASE_WIDTH;
+
+/** A4 ratio, used only until a page's real dimensions are known. */
+const FALLBACK_PAGE_ASPECT = 841.89 / 595.276;
 
 function LazyPdfPage({
     pageNumber,
     renderWidth,
-    spotScale,
+    pdfProxy,
     spots,
     onUpdateSpot,
     onRemoveSpot,
@@ -25,7 +29,11 @@ function LazyPdfPage({
     selectedSpotId,
 }) {
     const wrapRef = useRef(null);
+    const pageBoxRef = useRef(null);
     const [visible, setVisible] = useState(pageNumber <= 2);
+    const [measuredWidth, setMeasuredWidth] = useState(0);
+    const [renderToken, setRenderToken] = useState(0);
+    const [pageAspect, setPageAspect] = useState(0);
 
     useEffect(() => {
         if (visible) return undefined;
@@ -44,39 +52,92 @@ function LazyPdfPage({
         return () => io.disconnect();
     }, [visible]);
 
-    const placeholderHeight = Math.round(renderWidth * 1.35);
+    /**
+     * Measure the canvas that was actually drawn, never the width we asked for.
+     * Spot coordinates are persisted against this measurement, so an assumed
+     * width here silently rescales every spot on the page.
+     */
+    useEffect(() => {
+        if (!visible) return undefined;
+        const host = pageBoxRef.current;
+        if (!host) return undefined;
+
+        const measure = () => {
+            const canvas = host.querySelector("canvas");
+            if (!canvas) return;
+            const w = canvas.getBoundingClientRect().width;
+            if (w > 0) {
+                setMeasuredWidth((prev) => (Math.abs(prev - w) < 0.01 ? prev : w));
+            }
+        };
+
+        measure();
+
+        let ro;
+        if (typeof ResizeObserver !== "undefined") {
+            ro = new ResizeObserver(() => measure());
+            ro.observe(host);
+            const canvas = host.querySelector("canvas");
+            if (canvas) ro.observe(canvas);
+        }
+        return () => ro?.disconnect();
+    }, [visible, renderWidth, renderToken]);
+
+    // Real page aspect ratio, so the lazy placeholder reserves the correct
+    // height and page hit-testing is not thrown off by a guessed one.
+    useEffect(() => {
+        if (!pdfProxy || pageAspect > 0) return undefined;
+        let cancelled = false;
+        pdfProxy
+            .getPage(pageNumber)
+            .then((page) => {
+                if (cancelled) return;
+                const viewport = page.getViewport({ scale: 1 });
+                if (viewport?.width > 0) setPageAspect(viewport.height / viewport.width);
+            })
+            .catch(() => {});
+        return () => {
+            cancelled = true;
+        };
+    }, [pdfProxy, pageNumber, pageAspect]);
+
+    const placeholderHeight = Math.round(renderWidth * (pageAspect || FALLBACK_PAGE_ASPECT));
+    const spotScale = spotSpaceScale(measuredWidth);
 
     return (
         <div ref={wrapRef} className="lw-signing-pageWrap">
             <SimpleContainer
                 className="lw-signing-pageInner"
                 data-page-number={pageNumber}
-                style={{ width: renderWidth, maxWidth: "100%" }}
+                data-measured-width={measuredWidth || undefined}
             >
                 {visible ? (
                     <>
-                        <SimpleContainer className="lw-signing-pdfPage">
+                        <SimpleContainer className="lw-signing-pdfPage" ref={pageBoxRef}>
                             <Page
                                 pageNumber={pageNumber}
                                 width={renderWidth}
                                 renderTextLayer={false}
                                 renderAnnotationLayer={false}
+                                onRenderSuccess={() => setRenderToken((n) => n + 1)}
                             />
                         </SimpleContainer>
-                        <SignatureSpotsLayer
-                            pageNumber={pageNumber}
-                            spots={spots}
-                            onUpdateSpot={onUpdateSpot}
-                            onRemoveSpot={onRemoveSpot}
-                            onRequestRemove={onRequestRemove}
-                            onSelectSpot={onSelectSpot}
-                            onEditSpot={onEditSpot}
-                            onRequestContext={onRequestContext}
-                            signers={signers}
-                            scale={spotScale}
-                            selectedSpotIndex={selectedSpotIndex}
-                            selectedSpotId={selectedSpotId}
-                        />
+                        {spotScale > 0 ? (
+                            <SignatureSpotsLayer
+                                pageNumber={pageNumber}
+                                spots={spots}
+                                onUpdateSpot={onUpdateSpot}
+                                onRemoveSpot={onRemoveSpot}
+                                onRequestRemove={onRequestRemove}
+                                onSelectSpot={onSelectSpot}
+                                onEditSpot={onEditSpot}
+                                onRequestContext={onRequestContext}
+                                signers={signers}
+                                scale={spotScale}
+                                selectedSpotIndex={selectedSpotIndex}
+                                selectedSpotId={selectedSpotId}
+                            />
+                        ) : null}
                     </>
                 ) : (
                     <div
@@ -93,7 +154,9 @@ function LazyPdfPage({
 /**
  * Single react-pdf Document for all pages — critical on iOS Safari.
  * Lazy-mounts off-screen pages for faster first paint.
- * Every page uses the same renderWidth so spotScale matches the canvas on all pages.
+ * renderWidth is only a request; each page derives its own spot scale from the
+ * canvas it actually rendered, so a clamped or rounded page cannot persist spots
+ * against a scale the page was not drawn at.
  */
 export default function PdfViewer({
     pdfFile,
@@ -116,6 +179,7 @@ export default function PdfViewer({
     const { t } = useTranslation();
     const [numPages, setNumPages] = useState(0);
     const [objectUrl, setObjectUrl] = useState(null);
+    const [pdfProxy, setPdfProxy] = useState(null);
 
     const viewerRef = useRef(null);
     const [containerWidth, setContainerWidth] = useState(BASE_RENDER_WIDTH);
@@ -220,10 +284,9 @@ export default function PdfViewer({
         return Math.floor(Math.min(safe - 16, 1400));
     }, [containerWidth]);
 
-    const spotScale = useMemo(() => renderWidth / BASE_RENDER_WIDTH, [renderWidth]);
-
     useEffect(() => {
         setNumPages(0);
+        setPdfProxy(null);
     }, [file]);
 
     if (!file) return null;
@@ -234,7 +297,6 @@ export default function PdfViewer({
         <SimpleContainer
             className="lw-signing-pdfViewer"
             ref={viewerRef}
-            style={{ ["--lw-pdf-render-width"]: `${renderWidth}px` }}
         >
             <Document
                 file={file}
@@ -250,6 +312,7 @@ export default function PdfViewer({
                 error={<div className="lw-signing-pdfLoading">{t("signing.pdf.loadError")}</div>}
                 onLoadSuccess={(pdf) => {
                     setNumPages(pdf.numPages || 0);
+                    setPdfProxy(pdf);
                     if (typeof onDocumentReady === "function") onDocumentReady();
                 }}
                 onLoadError={(err) => {
@@ -264,7 +327,7 @@ export default function PdfViewer({
                             key={pageNumber}
                             pageNumber={pageNumber}
                             renderWidth={renderWidth}
-                            spotScale={spotScale}
+                            pdfProxy={pdfProxy}
                             spots={spots}
                             onUpdateSpot={onUpdateSpot}
                             onRemoveSpot={onRemoveSpot}

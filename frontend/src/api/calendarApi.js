@@ -74,6 +74,11 @@ const calendarApi = {
         return await ApiUtils.delete(`${base}/${id}`);
     },
 
+    /** Mark meeting cancelled — stops future reminders while keeping the event */
+    cancelEvent: async (id) => {
+        return await ApiUtils.post(`${base}/${id}/cancel`, {});
+    },
+
     // ── iCal / WebCal ──────────────────────────────────────────────────────────
 
     /** Get (or auto-create) the user's iCal subscription token + URL */

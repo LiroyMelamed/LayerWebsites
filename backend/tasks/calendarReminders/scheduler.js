@@ -19,6 +19,7 @@ const {
 const { dispatchCalendarReminder } = require('../../lib/calendarReminderDispatch');
 const { effectiveFireAt } = require('../../lib/shabbatDeferral');
 const { getAppScheme } = require('../../utils/appDeepLinks');
+const { activeEventStatusSql, isEventCancelled } = require('../../lib/calendarEventStatus');
 
 function _buildDeepLinkPayload(eventId) {
     const url = `${getAppScheme()}://appointment/${eventId}`;
@@ -175,6 +176,7 @@ async function _claimDueReminders(pollMinutes, limit = 200) {
                ce.reminders_sent_offsets AS prev_sent
         FROM calendar_events ce
         WHERE ce.event_type IN ('appointment', 'hearing', 'reminder')
+          AND ${activeEventStatusSql('ce.event_status')}
           AND (
                 jsonb_array_length(COALESCE(ce.lawyer_reminder_offsets, '[]'::jsonb)) > 0
              OR jsonb_array_length(COALESCE(ce.client_reminder_offsets, '[]'::jsonb)) > 0
@@ -466,6 +468,7 @@ async function processDeferredInvites() {
         `SELECT id FROM calendar_events
          WHERE invite_deferred_until IS NOT NULL
            AND invite_deferred_until <= NOW()
+           AND ${activeEventStatusSql('event_status')}
          ORDER BY invite_deferred_until ASC
          LIMIT 50`
     );
@@ -549,6 +552,7 @@ async function fireImmediateRemindersForEvent(eventId) {
     );
     if (!rows.length) return result;
     const row = rows[0];
+    if (isEventCancelled(row.event_status)) return result;
     if (!['appointment', 'hearing', 'reminder'].includes(String(row.event_type || ''))) {
         return result;
     }

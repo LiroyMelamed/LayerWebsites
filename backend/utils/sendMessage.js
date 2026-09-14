@@ -2,6 +2,7 @@ const axios = require("axios");
 require("dotenv").config();
 const { recordUsageEvent } = require("../lib/usage/recordFirmUsage");
 const { getSetting } = require("../services/settingsService");
+const { formatPhoneNumber } = require("./phoneUtils");
 const { getFirmNameEn } = require("../lib/firmBranding");
 
 // ── Static defaults (kept for backward-compatible imports) ──────────
@@ -216,8 +217,9 @@ async function sendViaSmoove(messageBody, formattedPhone) {
  */
 async function sendMessage(messageBody, formattedPhone, { fast = false } = {}) {
     const e164Regex = /^\+[1-9]\d{7,14}$/;
+    const normalizedPhone = formatPhoneNumber(formattedPhone) || String(formattedPhone || "").trim();
 
-    if (!formattedPhone || !e164Regex.test(String(formattedPhone))) {
+    if (!normalizedPhone || !e164Regex.test(normalizedPhone)) {
         console.error(`Invalid phone for SMS (expected E.164):`, formattedPhone);
         return { ok: false, error: "invalid_phone" };
     }
@@ -226,20 +228,20 @@ async function sendMessage(messageBody, formattedPhone, { fast = false } = {}) {
 
     if (!shouldSendRealSms) {
         console.log("--- SMS Simulation (Dev Mode) ---");
-        console.log("To:", formattedPhone);
+        console.log("To:", normalizedPhone);
         console.log("Priority:", fast ? "high (OTP)" : "normal");
         console.log("Body:", messageBody);
         console.log("---------------------------------");
         // Record even in dev so local usage counters are realistic
-        await recordUsageEvent("SMS", "dev-simulation", { phone: formattedPhone });
+        await recordUsageEvent("SMS", "dev-simulation", { phone: normalizedPhone });
         return { ok: true, simulated: true };
     }
 
     if (SMS_PROVIDER === "smoove") {
-        const data = await sendViaSmoove(messageBody, formattedPhone);
+        const data = await sendViaSmoove(messageBody, normalizedPhone);
         return data ? { ok: true, data } : { ok: false, error: "provider_rejected" };
     }
-    const data = await sendViaInforU(messageBody, formattedPhone, fast);
+    const data = await sendViaInforU(messageBody, normalizedPhone, fast);
     return data ? { ok: true, data } : { ok: false, error: "provider_rejected" };
 }
 
