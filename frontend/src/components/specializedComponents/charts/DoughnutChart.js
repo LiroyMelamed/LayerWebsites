@@ -37,14 +37,19 @@ const DoughnutChart = ({ data, colors, labels, centerText, subText, className, o
         },
     };
 
-    const mergedClassName = ["lw-doughnutChart", className].filter(Boolean).join(" ");
+    const mergedClassName = [
+        "lw-doughnutChart",
+        onCenterPress ? "lw-doughnutChart--centerPressable" : null,
+        className,
+    ].filter(Boolean).join(" ");
 
     return (
         <SimpleContainer className={mergedClassName}>
             <SimpleContainer
                 className="lw-doughnutChart__centerText"
                 onPress={onCenterPress}
-                role={onCenterPress ? 'button' : undefined}
+                role={onCenterPress ? "button" : undefined}
+                aria-label={onCenterPress ? subText : undefined}
             >
                 <TextBold16 className="lw-doughnutChart__mainText">{centerText}</TextBold16>
                 {subText && <Text12 className="lw-doughnutChart__subText">{subText}</Text12>}

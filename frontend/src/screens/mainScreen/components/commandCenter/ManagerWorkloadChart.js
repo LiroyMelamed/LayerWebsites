@@ -36,12 +36,22 @@ export default function ManagerWorkloadChart({ managers = [], onManagerPress }) 
     const { t } = useTranslation();
     const [viewMode, setViewMode] = useState("open");
 
+    const setViewModeSafe = (mode) => {
+        if (VIEW_MODES.includes(mode)) setViewMode(mode);
+    };
+
     const cycleViewMode = () => {
         setViewMode((prev) => {
             const idx = VIEW_MODES.indexOf(prev);
             return VIEW_MODES[(idx + 1) % VIEW_MODES.length];
         });
     };
+
+    const viewModeLabels = useMemo(() => ({
+        open: t("managerHome.operations.viewModeOpen"),
+        closed: t("managerHome.operations.viewModeClosed"),
+        all: t("managerHome.operations.viewModeAll"),
+    }), [t]);
 
     const centerSubText = useMemo(() => {
         if (viewMode === "closed") return t("managerHome.operations.totalClosed");
@@ -70,7 +80,26 @@ export default function ManagerWorkloadChart({ managers = [], onManagerPress }) 
     }
 
     return (
-        <SimpleContainer className="lw-commandCenter__managerChart">
+        <SimpleContainer className="lw-commandCenter__managerChartWrap">
+            <SimpleContainer className="lw-commandCenter__managerChartToggle" role="tablist" aria-label={t("managerHome.operations.viewModeLabel")}>
+                {VIEW_MODES.map((mode) => (
+                    <SimpleContainer
+                        key={mode}
+                        className={
+                            mode === viewMode
+                                ? "lw-commandCenter__managerChartToggleBtn lw-commandCenter__managerChartToggleBtn--active"
+                                : "lw-commandCenter__managerChartToggleBtn"
+                        }
+                        role="tab"
+                        aria-selected={mode === viewMode}
+                        onPress={() => setViewModeSafe(mode)}
+                    >
+                        <Text12>{viewModeLabels[mode]}</Text12>
+                    </SimpleContainer>
+                ))}
+            </SimpleContainer>
+
+            <SimpleContainer className="lw-commandCenter__managerChart">
             <SimpleContainer className="lw-commandCenter__managerChartDonut">
                 <DoughnutChart
                     data={chartItems.map((item) => item.value)}
@@ -116,6 +145,7 @@ export default function ManagerWorkloadChart({ managers = [], onManagerPress }) 
                         </SimpleContainer>
                     );
                 })}
+            </SimpleContainer>
             </SimpleContainer>
         </SimpleContainer>
     );
