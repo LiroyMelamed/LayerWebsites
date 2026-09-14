@@ -10,6 +10,10 @@ import {
     SPOT_MIN_WIDTH,
     SPOT_MAX_HEIGHT,
     SPOT_MAX_WIDTH,
+    clampSpotToPage,
+    clientPointToSpotSpace,
+    measuredPageWidth,
+    pageSizeInSpotSpace,
 } from "../../../../utils/signingSpotGeometry";
 
 // Color classes are defined in SCSS (lw-signer-palette-N) and keyed by signer index
@@ -136,25 +140,45 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
 
             const pageNumber = Number(pageEl.getAttribute("data-page-number")) || basePage;
             const rect = pageEl.getBoundingClientRect();
+            // Measured page width, not the width the viewer asked for.
+            const measuredWidth = measuredPageWidth(pageEl);
+            if (!(measuredWidth > 0)) return;
 
             // When crossing onto another page, re-anchor the grab offset so the
-            // spot doesn't jump (page boxes used to differ in width).
+            // spot doesn't jump (page boxes may differ in size).
             if (pageNumber !== lastPageNumber) {
                 grabOffsetX = Math.max(0, Math.min(Number(clientX) - rect.left, spotW * safeScale));
                 grabOffsetY = Math.max(0, Math.min(Number(clientY) - rect.top, spotH * safeScale));
                 lastPageNumber = pageNumber;
             }
 
-            const pageW = rect.width / safeScale;
-            const pageH = rect.height / safeScale;
-            const nextX = (Number(clientX) - rect.left - grabOffsetX) / safeScale;
-            const nextY = (Number(clientY) - rect.top - grabOffsetY) / safeScale;
-            const clampedX = Math.max(0, Math.min(nextX, Math.max(0, pageW - spotW)));
-            const clampedY = Math.max(0, Math.min(nextY, Math.max(0, pageH - spotH)));
+            // Canonical conversion: pointer -> spot space, via the measured page.
+            const point = clientPointToSpotSpace({
+                clientX: Number(clientX) - grabOffsetX,
+                clientY: Number(clientY) - grabOffsetY,
+                rectLeft: rect.left,
+                rectTop: rect.top,
+                measuredWidth,
+            });
+            if (!point) return;
+
+            const pageSize = pageSizeInSpotSpace({
+                measuredWidth,
+                measuredHeight: rect.height,
+            });
+
+            const clamped = clampSpotToPage({
+                x: point.x,
+                y: point.y,
+                width: spotW,
+                height: spotH,
+                pageWidth: pageSize.width,
+                pageHeight: pageSize.height,
+            });
 
             onUpdateSpot?.(index, {
-                x: clampedX,
-                y: clampedY,
+                x: clamped.x,
+                y: clamped.y,
                 pageNum: pageNumber,
                 PageNumber: pageNumber,
             });
@@ -278,8 +302,14 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
         const pageNumber = Number(spot.pageNum ?? spot.PageNumber ?? 1) || 1;
         const pageEl = document.querySelector(`.lw-signing-pageInner[data-page-number="${pageNumber}"]`);
         const pageRect = pageEl?.getBoundingClientRect();
-        const pageW = pageRect ? pageRect.width / safeScale : 800;
-        const pageH = pageRect ? pageRect.height / safeScale : 1000;
+        const measuredWidth = measuredPageWidth(pageEl);
+        const pageSize = pageRect && measuredWidth > 0
+            ? pageSizeInSpotSpace({ measuredWidth, measuredHeight: pageRect.height })
+            : null;
+        // Without a measured page there is no honest scale, so fall back to the
+        // spot-space page width and leave the height unconstrained.
+        const pageW = pageSize ? pageSize.width : SPOT_MAX_WIDTH + baseX;
+        const pageH = pageSize ? pageSize.height : SPOT_MAX_HEIGHT + baseY;
 
         const onPointerMove = (ev) => {
             if (ev.pointerId !== pointerId) return;
