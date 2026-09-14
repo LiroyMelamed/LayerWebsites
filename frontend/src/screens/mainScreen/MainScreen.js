@@ -2,7 +2,7 @@ import SimpleScreen from '../../components/simpleComponents/SimpleScreen';
 import { useScreenSize } from '../../providers/ScreenSizeProvider';
 import useAutoHttpRequest from '../../hooks/useAutoHttpRequest';
 import useHttpRequest from '../../hooks/useHttpRequest';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { images } from '../../assets/images/images';
 import SimpleContainer from '../../components/simpleComponents/SimpleContainer';
 import TopToolBarSmallScreen from '../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen';
@@ -19,7 +19,7 @@ import FirmStatsPanel from './components/commandCenter/FirmStatsPanel';
 import CaseOperationsPanel from './components/commandCenter/CaseOperationsPanel';
 import SigningOperationsPanel from './components/commandCenter/SigningOperationsPanel';
 import PotentialClientsPanel from './components/commandCenter/PotentialClientsPanel';
-import { navigateCalendar, navigateCaseRow, navigateOpenCases } from './components/commandCenter/commandCenterUtils';
+import { countJerusalemTodayEvents, navigateCalendar, navigateCaseRow, navigateOpenCases } from './components/commandCenter/commandCenterUtils';
 import SummaryStrip from './components/commandCenter/SummaryStrip';
 import { openCalendarEventModal } from './components/commandCenter/openCalendarEventModal';
 import { openCaseMenuModal } from './components/commandCenter/openCaseMenuModal';
@@ -41,7 +41,11 @@ export default function MainScreen() {
     const { isSmallScreen } = useScreenSize();
     const { openPopup, closePopup, pushPopup, popPopup } = usePopup();
     const settingsLoaded = useFirmSettingsLoaded();
-    const aiInsightsEnabled = useManagerHomeAiInsightsEnabled();
+    const aiInsightsSettingEnabled = useManagerHomeAiInsightsEnabled();
+    // Firm "Admin" role includes regular lawyers — workload AI brief is platform-owner only.
+    const isPlatformAdmin = typeof window !== "undefined"
+        && localStorage.getItem("isPlatformAdmin") === "true";
+    const aiInsightsEnabled = aiInsightsSettingEnabled && isPlatformAdmin;
 
     const {
         result: managerHome,
@@ -104,6 +108,10 @@ export default function MainScreen() {
         : null;
 
     const calendarEvents = calendarResponse?.events || calendarResponse?.data?.events || [];
+    const todayEventCount = useMemo(
+        () => countJerusalemTodayEvents(calendarEvents),
+        [calendarEvents],
+    );
 
     const handleRefresh = useCallback(() => {
         refreshManagerHome();
@@ -168,7 +176,8 @@ export default function MainScreen() {
                     <SummaryStrip
                         summary={managerHome?.summary}
                         firmStats={managerHome?.firmStats}
-                        isPerforming={isLoadingHome}
+                        todayCount={todayEventCount}
+                        isPerforming={isLoadingHome || isLoadingCalendar}
                         onNavigate={handleSummaryNavigate}
                     />
 

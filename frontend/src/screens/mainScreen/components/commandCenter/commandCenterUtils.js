@@ -299,6 +299,22 @@ export function resolveSigningQueueState(row, now = new Date()) {
     return "pending";
 }
 
+function jerusalemDateKey(value) {
+    const d = new Date(value);
+    if (!Number.isFinite(d.getTime())) return null;
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(d);
+}
+
+/** Count events on today's Jerusalem calendar day (matches CalendarWidget bucketing). */
+export function countJerusalemTodayEvents(events) {
+    const todayKey = jerusalemDateKey(new Date());
+    if (!todayKey) return 0;
+    return (Array.isArray(events) ? events : []).filter((ev) => {
+        if (!ev?.startTime) return false;
+        return jerusalemDateKey(ev.startTime) === todayKey;
+    }).length;
+}
+
 export function attentionMetaLine(item, t) {
     if (item.kind === "group") {
         const first = item.members?.[0];
