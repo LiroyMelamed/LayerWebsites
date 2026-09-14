@@ -1,8 +1,11 @@
 const fs = require("fs");
 const path = require("path");
 const { pathToFileURL } = require("url");
-
-const FRONTEND_PAGE_RENDER_WIDTH = 800;
+const {
+    BASE_RENDER_WIDTH: FRONTEND_PAGE_RENDER_WIDTH,
+    pageGeometryFromPdfjsPage,
+    pdfBoxToVisualBox,
+} = require("../lib/signingGeometry");
 
 function isTruthyEnv(value) {
     const v = String(value || "").trim().toLowerCase();
@@ -43,12 +46,15 @@ const KEYWORDS = [
 ];
 
 
+// Matching thresholds, in PDF points. These size or match things; none of them
+// corrects a coordinate.
 const MIN_TEXT_UNDERLINE_CHARS = 6;
 const MIN_TEXT_UNDERLINE_WIDTH = 30;
 
+// Dimensions of a generated signature box, in PDF points.
 const DEFAULT_SPOT_HEIGHT = 50;
-
-const SPOT_Y_OFFSET_PDF = 24;
+const MIN_SPOT_WIDTH = 120;
+const MAX_SPOT_WIDTH = 260;
 
 function normalizeHebrew(str) {
     if (!str) return "";
@@ -132,36 +138,29 @@ function isUnderlineText(str) {
     return false;
 }
 
+/**
+ * Build a signature box for a detected underline, in PDF user space.
+ *
+ * Both coordinates are derived from the underline's own geometry, not from
+ * tuned offsets:
+ *  - horizontally, the box is centred on the underline;
+ *  - vertically, the box's bottom edge sits on the underline baseline, so the
+ *    signature rests on the line the way a person signs it.
+ */
 function makeSpotFromLine(line, pageNum, signerName) {
-    const xOffset = -68;
+    const width = Math.min(Math.max(line.width, MIN_SPOT_WIDTH), MAX_SPOT_WIDTH);
+    const lineCentreX = line.x + ((line.width || 0) / 2);
 
     return {
         pageNum,
-        x: line.x + xOffset,
-        y: line.y + SPOT_Y_OFFSET_PDF,
-        width: Math.min(Math.max(line.width, 120), 260),
+        x: lineCentreX - (width / 2),
+        y: line.y,
+        width,
         height: DEFAULT_SPOT_HEIGHT,
         signerName,
         isRequired: true,
         confidence: line.source === "text-underline" ? 0.95 : 0.90,
         source: line.source,
-    };
-}
-
-function toFrontendCoords(rect, viewportWidth, viewportHeight) {
-    const scale = FRONTEND_PAGE_RENDER_WIDTH / viewportWidth;
-
-    const x = rect.x * scale;
-    const yTop = (viewportHeight - rect.y) * scale;
-    const w = rect.width * scale;
-    const h = rect.height * scale;
-
-    return {
-        x: Math.round(Math.max(0, x)),
-        y: Math.round(Math.max(0, yTop)),
-        width: Math.round(Math.max(20, w)),
-        height: Math.round(Math.max(20, h)),
-        scale,
     };
 }
 
@@ -217,7 +216,9 @@ async function detectHebrewSignatureSpotsFromPdfBuffer(buffer, signers = null) {
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
         try {
             const page = await pdf.getPage(pageNum);
-            const viewport = page.getViewport({ scale: 1 });
+            // Canonical transform for this page: CropBox clipped to MediaBox,
+            // /Rotate honoured, normalised to the 800px visual grid.
+            const geometry = pageGeometryFromPdfjsPage(page, FRONTEND_PAGE_RENDER_WIDTH);
 
             const textContent = await page.getTextContent();
             const items = (textContent.items || [])
@@ -289,18 +290,18 @@ async function detectHebrewSignatureSpotsFromPdfBuffer(buffer, signers = null) {
                         }
 
                         const spotPdf = makeSpotFromLine(ul, pageNum, signerName);
-                        const spotUi = toFrontendCoords(spotPdf, viewport.width, viewport.height);
+                        const spotUi = pdfBoxToVisualBox(geometry, spotPdf);
 
-                        const pageWidthPx = FRONTEND_PAGE_RENDER_WIDTH;
-                        const pageHeightPx = Math.round(viewport.height * spotUi.scale);
+                        const pageWidthPx = geometry.visualWidth;
+                        const pageHeightPx = geometry.visualHeight;
 
                         const clamped = clampToPage(
                             {
                                 pageNum,
-                                x: spotUi.x,
-                                y: spotUi.y,
-                                width: spotUi.width,
-                                height: spotUi.height,
+                                x: Math.round(spotUi.x),
+                                y: Math.round(spotUi.y),
+                                width: Math.round(spotUi.width),
+                                height: Math.round(spotUi.height),
                                 // Keep original PDF coordinates for accurate matching against PDF text items
                                 pdfX: spotPdf.x,
                                 pdfY: spotPdf.y,
