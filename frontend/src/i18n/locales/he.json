@@ -550,6 +550,10 @@
       "totalActive": "תיקים פתוחים",
       "totalClosed": "תיקים סגורים",
       "totalAll": "כל התיקים",
+      "viewModeLabel": "סינון תיקים לפי מנהל",
+      "viewModeOpen": "פתוחים",
+      "viewModeClosed": "סגורים",
+      "viewModeAll": "פתוחים+סגורים",
       "casesShare": "{{pct}}% מהסה\"כ",
       "unassignedBanner": "{{count}} תיקים פתוחים ללא מנהל תיק",
       "stageLabel": "שלב {{stage}} · {{count}}"
