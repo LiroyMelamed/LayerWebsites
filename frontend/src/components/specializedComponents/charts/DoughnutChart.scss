@@ -7,12 +7,21 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 1;
+  z-index: 2;
 
   text-align: center;
   flex-direction: column;
   pointer-events: none;
   max-width: 90%;
+}
+
+.lw-doughnutChart--centerPressable .lw-doughnutChart__centerText {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.lw-doughnutChart--centerPressable canvas {
+  pointer-events: none;
 }
 
 .lw-doughnutChart__mainText {

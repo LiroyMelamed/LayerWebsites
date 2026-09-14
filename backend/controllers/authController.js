@@ -8,7 +8,19 @@ const { isLocked, recordFailure, recordSuccess } = require("../utils/otpBruteFor
 const { logSecurityEvent, extractIp } = require("../utils/securityAuditLogger");
 const { isMultiTenantMode } = require("../lib/tenant/tenantContext");
 const { getTenantBySlug } = require("../lib/tenant/tenantService");
+const { isPlatformAdmin: isPlatformAdminUser } = require("../services/settingsService");
 require("dotenv").config();
+
+/** Login flag: DB platform_admins (+ env fallback), with dev all-Admins when unset. */
+async function resolveLoginPlatformAdminFlag(userid, role) {
+    if (String(role || "").trim() !== "Admin") return false;
+    if (await isPlatformAdminUser(userid)) return true;
+    const envList = String(process.env.PLATFORM_ADMIN_USER_IDS || "").trim();
+    if (!envList && String(process.env.NODE_ENV || "").toLowerCase() !== "production") {
+        return true;
+    }
+    return false;
+}
 
 if (!process.env.JWT_SECRET) {
     throw new Error("FATAL: JWT_SECRET env variable is not set. Server cannot start.");
@@ -403,17 +415,7 @@ const verifyOtp = async (req, res) => {
             }
         }
 
-        // Check if user is a platform admin (for frontend nav visibility)
-        const platformAdminIds = String(process.env.PLATFORM_ADMIN_USER_IDS || '').trim();
-        let isPlatformAdmin = false;
-        if (role === 'Admin') {
-            if (platformAdminIds) {
-                const allowSet = new Set(platformAdminIds.split(',').map(s => Number(s.trim())).filter(n => Number.isFinite(n) && n > 0));
-                isPlatformAdmin = allowSet.has(userid);
-            } else if (String(process.env.NODE_ENV || '').toLowerCase() !== 'production') {
-                isPlatformAdmin = true;
-            }
-        }
+        const isPlatformAdmin = await resolveLoginPlatformAdminFlag(userid, role);
 
         return res.status(200).json({ message: "קוד אומת בהצלחה", token, role, refreshToken, isPlatformAdmin });
     } catch (error) {
@@ -484,17 +486,7 @@ const refreshToken = async (req, res) => {
 
         const token = signAccessToken({ userid: row.userid, role: row.role, phonenumber: row.phonenumber });
 
-        // Check if user is a platform admin (for frontend nav visibility)
-        const platformAdminIds = String(process.env.PLATFORM_ADMIN_USER_IDS || '').trim();
-        let isPlatformAdmin = false;
-        if (row.role === 'Admin') {
-            if (platformAdminIds) {
-                const allowSet = new Set(platformAdminIds.split(',').map(s => Number(s.trim())).filter(n => Number.isFinite(n) && n > 0));
-                isPlatformAdmin = allowSet.has(row.userid);
-            } else if (String(process.env.NODE_ENV || '').toLowerCase() !== 'production') {
-                isPlatformAdmin = true;
-            }
-        }
+        const isPlatformAdmin = await resolveLoginPlatformAdminFlag(row.userid, row.role);
 
         return res.status(200).json({ token, role: row.role, refreshToken: newTokenRow.refreshToken, isPlatformAdmin });
     } catch (error) {

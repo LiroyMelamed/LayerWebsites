@@ -527,6 +527,10 @@
     flex-direction: column;
     align-items: center;
     direction: ltr;
+    /* Safety net: if a rendered page ends up wider than the container, scroll
+       to it instead of letting CSS rescale the canvas. Rescaling would break
+       the spot coordinate contract; a scrollbar only looks worse. */
+    overflow-x: auto;
 }
 
 .lw-signing-pageWrap {
@@ -570,9 +574,13 @@
     position: relative;
     justify-content: flex-start;
     margin-inline: auto;
-    /* Must match react-pdf Page width on EVERY page — spots use the same scale. */
-    width: var(--lw-pdf-render-width, 50rem);
-    max-width: min(100%, var(--lw-pdf-render-width, 50rem));
+    /* Shrink-wrap the rendered canvas so this box IS the page box. Do not clamp
+       it to a separate width: when this element and the canvas could size
+       independently, spots were positioned against one width and drawn against
+       another, shifting signatures up in proportion to their distance down the
+       page. Spot scale is measured from the canvas in PdfViewer. */
+    width: fit-content;
+    max-width: none;
     min-inline-size: 0;
     /* PDF coords are always LTR (x=0 = physical left). Keep overlay math stable in RTL UI. */
     direction: ltr;
@@ -582,8 +590,9 @@
 
 .lw-signing-pdfPage {
     position: relative;
-    width: 100%;
-    max-width: 100%;
+    /* Sized by the canvas, like .lw-signing-pageInner above. */
+    width: fit-content;
+    max-width: none;
     min-inline-size: 0;
     justify-content: flex-start;
     align-items: flex-start;
@@ -600,8 +609,9 @@
 }
 
 .lw-signing-pdfViewer .react-pdf__Page {
-    max-width: 100%;
-    width: auto !important;
+    /* Sized by its canvas. Never clamp with max-width: a clamped page is a
+       page rendered at a different scale than its spot coordinates assume. */
+    width: fit-content;
     direction: ltr;
 }
 
@@ -614,11 +624,14 @@
     min-height: 40vh;
 }
 
+/* The canvas keeps exactly the CSS size react-pdf gave it. The previous
+   `max-width: 100%` plus `width/height: auto !important` let the browser
+   rescale the drawn page independently of the width it was rendered at, so the
+   spot overlay and the canvas used different scales. If a page is ever wider
+   than the viewport it now scrolls (see overflow-x above) rather than being
+   silently rescaled, which would corrupt every coordinate on the page. */
 .lw-signing-pdfViewer canvas {
     display: block;
-    max-width: 100%;
-    width: auto !important;
-    height: auto !important;
     position: relative;
     z-index: 1;
 }

@@ -52,8 +52,11 @@ const { resolveTenantPlan } = require('../lib/plan/resolveTenantPlan');
 const { resolveFirmSigningPolicy } = require('../lib/firm/resolveFirmSigningPolicy');
 const { checkFirmLimitsOrNull, enforcementMode } = require('../lib/limits/enforceFirmLimits');
 const { consume } = require('../utils/rateLimiter');
-
-const BASE_RENDER_WIDTH = 800;
+const {
+    BASE_RENDER_WIDTH,
+    pageGeometryFromPdfLibPage,
+    visualBoxToPdfBox,
+} = require('../lib/signingGeometry');
 
 const MAX_SIGNING_PDF_BYTES = Number(
     process.env.MAX_SIGNING_PDF_BYTES || String(25 * 1024 * 1024)
@@ -2211,60 +2214,18 @@ async function generateSignedPdfBuffer({ pdfKey, spots }) {
         const fieldType = String(spot.FieldType || spot.fieldtype || 'signature').toLowerCase();
         const fieldValue = spot.FieldValue ?? spot.fieldvalue ?? null;
 
-        const rotation = page.getRotation()?.angle || 0;
-
-        // pdfjs-dist (react-pdf) renders the CropBox area. Spots are placed in
-        // that visual space (BASE_RENDER_WIDTH = 800). pdf-lib draws in the
-        // MediaBox coordinate system, so we must offset by the CropBox origin.
-        const cropBox = page.getCropBox();
-        const cropW = cropBox.width;
-        const cropH = cropBox.height;
-        const cropX = cropBox.x;
-        const cropY = cropBox.y;
-
-        // Visual dimensions are CropBox dimensions, swapped when rotated.
-        const isRotated = rotation === 90 || rotation === 270;
-        const visualWidth = isRotated ? cropH : cropW;
-        const visualHeight = isRotated ? cropW : cropH;
-
-        const scale = BASE_RENDER_WIDTH / visualWidth;
-        const xPx = Number(spot.X ?? spot.x ?? 0);
-        const yTopPx = Number(spot.Y ?? spot.y ?? 0);
-        const wPx = Number(spot.Width ?? spot.width ?? 130);
-        const hPx = Number(spot.Height ?? spot.height ?? 48);
-
-        // Convert from 800-pixel visual space to visual PDF points
-        const xVis = xPx / scale;
-        const yTopVis = yTopPx / scale;
-        const wVis = wPx / scale;
-        const hVis = hPx / scale;
-        const yBottomVis = visualHeight - yTopVis - hVis;
-
-        // Transform from visual coordinates to MediaBox coordinates.
-        // CropBox offset (cropX, cropY) shifts everything into the full page space.
-        let x, y, w, h;
-        if (rotation === 90) {
-            x = cropX + yBottomVis;
-            y = cropY + (visualWidth - xVis - wVis);
-            w = hVis;
-            h = wVis;
-        } else if (rotation === 180) {
-            x = cropX + (visualWidth - xVis - wVis);
-            y = cropY + yTopVis;
-            w = wVis;
-            h = hVis;
-        } else if (rotation === 270) {
-            x = cropX + (visualHeight - yBottomVis - hVis);
-            y = cropY + xVis;
-            w = hVis;
-            h = wVis;
-        } else {
-            // rotation === 0 (standard, vast majority of documents)
-            x = cropX + xVis;
-            y = cropY + yBottomVis;
-            w = wVis;
-            h = hVis;
-        }
+        // Spots are persisted in visual space: the 800px-wide, top-left-origin
+        // grid that pdfjs/react-pdf renders in the browser. signingGeometry owns
+        // the conversion into PDF user space, including CropBox clipping and
+        // /Rotate, so this path cannot drift from what the signer saw.
+        const geometry = pageGeometryFromPdfLibPage(page, BASE_RENDER_WIDTH);
+        const { x, y, width: w, height: h } = visualBoxToPdfBox(geometry, {
+            x: Number(spot.X ?? spot.x ?? 0),
+            y: Number(spot.Y ?? spot.y ?? 0),
+            // Fallback field dimensions, not coordinate corrections.
+            width: Number(spot.Width ?? spot.width ?? 130),
+            height: Number(spot.Height ?? spot.height ?? 48),
+        });
 
         if (signatureKey) {
             const { buffer: rawBuffer, contentType } = await getR2ObjectBuffer(signatureKey);

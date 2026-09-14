@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { icons } from "../../../assets/icons/icons";
@@ -35,8 +35,18 @@ export default function CaseMenuItem({
     alwaysExpanded = false,
 }) {
     const { t } = useTranslation();
+    const revertSnapshotRef = useRef(null);
     const { isPerforming: isPerformingSetCase, performRequest: setCase } = useHttpRequest(
-        casesApi.updateStageById
+        casesApi.updateStageById,
+        () => {
+            revertSnapshotRef.current = null;
+        },
+        () => {
+            if (revertSnapshotRef.current) {
+                setFullCaseListener(revertSnapshotRef.current);
+                revertSnapshotRef.current = null;
+            }
+        }
     );
     const { openPopup, closePopup } = usePopup();
     const [fullCaseListener, setFullCaseListener] = useState(fullCase);
@@ -46,6 +56,12 @@ export default function CaseMenuItem({
     useEffect(() => {
         setFullCaseListener(fullCase);
     }, [fullCase]);
+
+    function persistStageUpdate(updated) {
+        revertSnapshotRef.current = fullCaseListener;
+        setFullCaseListener(updated);
+        setCase(fullCaseListener.CaseId, updated);
+    }
 
     function updateStage() {
         if (fullCaseListener.IsClosed) return;
@@ -79,8 +95,7 @@ export default function CaseMenuItem({
                     <LicenseExpiryUpdateModal
                         fullCase={fullCaseListener}
                         onDone={() => {
-                            setFullCaseListener(updated);
-                            setCase(fullCaseListener.CaseId, updated);
+                            persistStageUpdate(updated);
                             closePopup();
                         }}
                         onClose={closePopup}
@@ -89,8 +104,7 @@ export default function CaseMenuItem({
                 );
             } else {
                 // No license expiry tracking — close the case directly
-                setFullCaseListener(updated);
-                setCase(fullCaseListener.CaseId, updated);
+                persistStageUpdate(updated);
             }
         } else {
             // Normal advance — move to next stage
@@ -100,8 +114,7 @@ export default function CaseMenuItem({
                 CurrentStage: nextStage,
                 Descriptions: tempDescription
             };
-            setFullCaseListener(updated);
-            setCase(fullCaseListener.CaseId, updated);
+            persistStageUpdate(updated);
         }
     }
 

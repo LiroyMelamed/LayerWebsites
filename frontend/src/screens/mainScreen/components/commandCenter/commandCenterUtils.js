@@ -234,20 +234,21 @@ export function navigateOpenCases(navigate, query = "?status=open") {
     navigate(buildPath(AllCasesScreenName, query));
 }
 
-export function navigateOpenCasesByManager(navigate, manager) {
+export function navigateOpenCasesByManager(navigate, manager, viewMode = "open") {
     if (!navigate) return;
+    const status = viewMode === "all" ? "all" : viewMode === "closed" ? "closed" : "open";
     if (manager?.unassigned) {
-        navigateOpenCases(navigate, "?status=open&unassigned=1");
+        navigateOpenCases(navigate, `?status=${status}&unassigned=1`);
         return;
     }
     if (manager?.managerName) {
         navigateOpenCases(
             navigate,
-            `?status=open&manager=${encodeURIComponent(manager.managerName)}`
+            `?status=${status}&manager=${encodeURIComponent(manager.managerName)}`
         );
         return;
     }
-    navigateOpenCases(navigate);
+    navigateOpenCases(navigate, `?status=${status}`);
 }
 
 export function getIsraelGreetingKey(now = new Date()) {
@@ -296,6 +297,22 @@ export function resolveSigningQueueState(row, now = new Date()) {
         return "expiring";
     }
     return "pending";
+}
+
+function jerusalemDateKey(value) {
+    const d = new Date(value);
+    if (!Number.isFinite(d.getTime())) return null;
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(d);
+}
+
+/** Count events on today's Jerusalem calendar day (matches CalendarWidget bucketing). */
+export function countJerusalemTodayEvents(events) {
+    const todayKey = jerusalemDateKey(new Date());
+    if (!todayKey) return 0;
+    return (Array.isArray(events) ? events : []).filter((ev) => {
+        if (!ev?.startTime) return false;
+        return jerusalemDateKey(ev.startTime) === todayKey;
+    }).length;
 }
 
 export function attentionMetaLine(item, t) {
