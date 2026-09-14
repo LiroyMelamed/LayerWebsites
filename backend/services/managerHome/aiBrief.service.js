@@ -133,17 +133,20 @@ async function defaultBriefLlmCall(messages) {
     return require('../aiChatService').callLLM(messages);
 }
 
-async function isAiBriefEnabled({ getSettingFn, userId, isPlatformAdminFn } = {}) {
+async function isAiBriefEnabled({ getSettingFn } = {}) {
     const getSetting = getSettingFn || require('../settingsService').getSetting;
     const flag = await getSetting('managerHome', 'MANAGER_HOME_AI_INSIGHTS_ENABLED', false);
-    if (!Boolean(flag) || !hasBriefLlmCredentials()) return false;
+    return Boolean(flag) && hasBriefLlmCredentials();
+}
+
+async function resolveIncludeManagerWorkload(userId, isPlatformAdminFn) {
     if (userId == null) return true;
     const checkAdmin = isPlatformAdminFn
         || ((id) => require('../settingsService').isPlatformAdmin(id));
     return checkAdmin(userId);
 }
 
-function buildFactsSnapshot(payload, { now = new Date() } = {}) {
+function buildFactsSnapshot(payload, { now = new Date(), includeManagerWorkload = true } = {}) {
     const summary = payload?.summary || {};
     const contextNow = buildContextNow(now);
     const flat = flattenAttentionItems(payload?.attentionItems || [])
@@ -175,24 +178,26 @@ function buildFactsSnapshot(payload, { now = new Date() } = {}) {
         reasonParams: item.reasonParams || {},
     }));
 
-    const workload = [...(payload?.managerWorkload || [])]
-        .sort((a, b) => b.needsAttention - a.needsAttention || b.activeCases - a.activeCases)
-        .slice(0, 5)
-        .map((m) => {
-            const attentionRatio = m.activeCases > 0
-                ? Math.round((m.needsAttention / m.activeCases) * 100)
-                : m.needsAttention;
-            return {
-                managerName: m.managerName,
-                activeCases: m.activeCases,
-                needsAttention: m.needsAttention,
-                urgentCases: m.urgentCases,
-                unassigned: m.unassigned,
-                attentionSummaryHe: m.activeCases > 0
-                    ? `מתוך ${m.activeCases} תיקים פתוחים, ${m.needsAttention} (${attentionRatio}%) מסומנים כדורשים טיפול`
-                    : `${m.needsAttention} פריטים דורשים טיפול`,
-            };
-        });
+    const workload = includeManagerWorkload
+        ? [...(payload?.managerWorkload || [])]
+            .sort((a, b) => b.needsAttention - a.needsAttention || b.activeCases - a.activeCases)
+            .slice(0, 5)
+            .map((m) => {
+                const attentionRatio = m.activeCases > 0
+                    ? Math.round((m.needsAttention / m.activeCases) * 100)
+                    : m.needsAttention;
+                return {
+                    managerName: m.managerName,
+                    activeCases: m.activeCases,
+                    needsAttention: m.needsAttention,
+                    urgentCases: m.urgentCases,
+                    unassigned: m.unassigned,
+                    attentionSummaryHe: m.activeCases > 0
+                        ? `מתוך ${m.activeCases} תיקים פתוחים, ${m.needsAttention} (${attentionRatio}%) מסומנים כדורשים טיפול`
+                        : `${m.needsAttention} פריטים דורשים טיפול`,
+                };
+            })
+        : [];
 
     const today = payload?.today || [];
     const todayFacts = today
@@ -218,10 +223,15 @@ function buildFactsSnapshot(payload, { now = new Date() } = {}) {
             };
         });
 
+    const insights = buildOperationalInsights(payload);
+    if (!includeManagerWorkload) {
+        insights.workloadHotspots = [];
+    }
+
     return {
         contextNow,
         managerName: payload?.greeting?.managerName || null,
-        insights: buildOperationalInsights(payload),
+        insights,
         summary: {
             urgentCount: summary.urgentCount || 0,
             needsAttentionCount: summary.needsAttentionCount || 0,
@@ -259,7 +269,42 @@ function factsFingerprint(facts) {
     return crypto.createHash('sha256').update(JSON.stringify(forHash)).digest('hex').slice(0, 16);
 }
 
-function buildPrompt(facts) {
+const WORKLOAD_REDIST_PATTERNS = [
+    /מתמודד(?:ים|ות)?\s+ע(?:ם|מו)\s+עומס/i,
+    /חלוק(?:ת|ה)\s+תיקים/i,
+    /הפח(?:ית|ת)ו\s+עומס/i,
+    /עומס\s+(?:גבוה|מוגבר|ייחודי|גבוהה)/i,
+];
+
+function collectManagerNamesFromPayload(payload) {
+    return [...new Set((payload?.managerWorkload || []).map((m) => m.managerName).filter(Boolean))];
+}
+
+function filterManagerWorkloadBriefContent(lines, managerNames = []) {
+    return (lines || []).filter((line) => {
+        const text = String(line || '').trim();
+        if (!text) return false;
+        if (WORKLOAD_REDIST_PATTERNS.some((re) => re.test(text))) return false;
+
+        const mentioned = managerNames.filter((name) => text.includes(name));
+        if (mentioned.length >= 2) return false;
+        if (mentioned.length === 1 && /עומס/.test(text)) return false;
+        return true;
+    });
+}
+
+function buildPrompt(facts, { includeManagerWorkload = true } = {}) {
+    const workloadRules = includeManagerWorkload
+        ? [
+            'השתמש ב-insights לזיהוי סיכונים (signingPressure, workloadHotspots, inactivityBurden, focusAreas).',
+            'לגבי עומס מנהלים: השתמש בשדה attentionSummaryHe — הסבר שמתוך X תיקים פתוחים, Y מסומנים כדורשים טיפול.',
+        ]
+        : [
+            'השתמש ב-insights לזיהוי סיכונים (signingPressure, inactivityBurden, focusAreas) — ללא workloadHotspots.',
+            'אל תציין עומס של עורכי דין אחרים, אל תשווה בין מנהלים, ואל תמליץ על חלוקת תיקים מחדש.',
+            'התמקד בחתימות, תיקים, פגישות ותור התשומת לב — לא בניהול עומס צוות.',
+        ];
+
     return [
         {
             role: 'system',
@@ -269,8 +314,7 @@ function buildPrompt(facts) {
                 'כתוב 4-6 משפטים קצרים בעברית לסיכום תפעולי למנהל/ת המשרד.',
                 'בנוסף, הוסף recommendations: 2-3 פעולות מומלצות קצרות בצורת פקודה (למשל "טפלו ב-X חתימות שפג תוקפן").',
                 'חובה: השתמש רק בנתונים שסופקו. אל תמציא מספרים, שמות תיקים, מועדים או מסקנות.',
-                'השתמש ב-insights לזיהוי סיכונים (signingPressure, workloadHotspots, inactivityBurden, focusAreas).',
-                'לגבי עומס מנהלים: השתמש בשדה attentionSummaryHe — הסבר שמתוך X תיקים פתוחים, Y מסומנים כדורשים טיפול.',
+                ...workloadRules,
                 'לגבי תור תשומת לב: summary.attentionQueueCount הוא מספר הפריטים שמוצג בכרטיס "פריטים לטיפול" בלוח הבקרה.',
                 'summary.noActivityCases הוא תת-קבוצה בתוך התור — תיקים ללא פעילות משמעותית, לא סכום נפרד.',
                 'כשאתה מציין תיקים ללא פעילות, ציין במפורש שמדובר מתוך attentionQueueCount (למשל: "מתוך 275 פריטים שדורשים טיפול, 133 הם תיקים ללא פעילות").',
@@ -461,23 +505,30 @@ async function generateAiMorningBrief({
     isPlatformAdminFn,
     now,
 } = {}) {
-    const enabled = await isAiBriefEnabled({ getSettingFn, userId, isPlatformAdminFn });
+    const enabled = await isAiBriefEnabled({ getSettingFn });
     if (!enabled) return null;
 
+    const includeManagerWorkload = await resolveIncludeManagerWorkload(userId, isPlatformAdminFn);
     const referenceNow = now instanceof Date ? now : new Date();
-    const facts = buildFactsSnapshot(payload, { now: referenceNow });
+    const facts = buildFactsSnapshot(payload, { now: referenceNow, includeManagerWorkload });
     const fingerprint = factsFingerprint(facts);
     const timeBucket = aiBriefTimeBucket(facts.contextNow);
-    const cacheKey = `managerHomeAiBrief:${userId || 'admin'}:${fingerprint}:${timeBucket}`;
+    const scope = includeManagerWorkload ? 'full' : 'firm';
+    const cacheKey = `managerHomeAiBrief:${userId || 'admin'}:${scope}:${fingerprint}:${timeBucket}`;
 
     const cached = cache.get(cacheKey);
     if (cached !== undefined) return cached;
 
     const llm = callLlmFn || defaultBriefLlmCall;
-    const raw = await llm(buildPrompt(facts));
+    const raw = await llm(buildPrompt(facts, { includeManagerWorkload }));
     const parsed = parseLlmBrief(raw);
-    const lines = sanitizeAiBriefLines(parsed?.lines, facts);
-    const recommendations = sanitizeAiBriefRecommendations(parsed?.recommendations, facts);
+    let lines = sanitizeAiBriefLines(parsed?.lines, facts);
+    let recommendations = sanitizeAiBriefRecommendations(parsed?.recommendations, facts);
+    if (!includeManagerWorkload) {
+        const managerNames = collectManagerNamesFromPayload(payload);
+        lines = filterManagerWorkloadBriefContent(lines, managerNames);
+        recommendations = filterManagerWorkloadBriefContent(recommendations, managerNames);
+    }
     if (!lines?.length || !validateLinesAgainstFacts(lines, facts)) {
         console.warn('[aiBrief] generation failed or did not pass fact validation');
         return null;
@@ -508,6 +559,7 @@ function __testReset() {
 
 module.exports = {
     isAiBriefEnabled,
+    resolveIncludeManagerWorkload,
     buildFactsSnapshot,
     buildContextNow,
     isOperationalCalendarEvent,
@@ -517,6 +569,8 @@ module.exports = {
     parseLlmLines,
     sanitizeAiBriefLines,
     sanitizeAiBriefRecommendations,
+    filterManagerWorkloadBriefContent,
+    collectManagerNamesFromPayload,
     validateLinesAgainstFacts,
     validateRecommendationsAgainstFacts,
     factsFingerprint,
