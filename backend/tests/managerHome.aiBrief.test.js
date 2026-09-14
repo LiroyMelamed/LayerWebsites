@@ -5,6 +5,7 @@ const {
     buildFactsSnapshot,
     generateAiMorningBrief,
     isAiBriefEnabled,
+    filterManagerWorkloadBriefContent,
     parseLlmBrief,
     parseLlmLines,
     validateLinesAgainstFacts,
@@ -223,26 +224,39 @@ test('generateAiMorningBrief returns parsed AI lines when enabled', async () => 
     }
 });
 
-test('isAiBriefEnabled requires platform admin when userId is provided', async () => {
+test('isAiBriefEnabled follows platform setting and LLM credentials only', async () => {
     const prevKey = process.env.CHATBOT_LLM_API_KEY;
     process.env.CHATBOT_LLM_API_KEY = 'test-key';
 
-    const enabledForOwner = await isAiBriefEnabled({
-        userId: 42,
-        getSettingFn: async () => true,
-        isPlatformAdminFn: async () => true,
-    });
-    const enabledForLawyer = await isAiBriefEnabled({
-        userId: 99,
-        getSettingFn: async () => true,
-        isPlatformAdminFn: async () => false,
-    });
+    const enabled = await isAiBriefEnabled({ getSettingFn: async () => true });
+    const disabled = await isAiBriefEnabled({ getSettingFn: async () => false });
 
-    assert.equal(enabledForOwner, true);
-    assert.equal(enabledForLawyer, false);
+    assert.equal(enabled, true);
+    assert.equal(disabled, false);
 
     if (prevKey === undefined) delete process.env.CHATBOT_LLM_API_KEY;
     else process.env.CHATBOT_LLM_API_KEY = prevKey;
+});
+
+test('buildFactsSnapshot omits manager workload for firm admins', () => {
+    const facts = buildFactsSnapshot(samplePayload, {
+        now: new Date('2026-09-06T08:00:00.000Z'),
+        includeManagerWorkload: false,
+    });
+
+    assert.deepEqual(facts.workload, []);
+    assert.deepEqual(facts.insights.workloadHotspots, []);
+});
+
+test('filterManagerWorkloadBriefContent removes cross-manager workload sentences', () => {
+    const names = ['נתנאל רוזנברג', 'אליה אלמקיאס'];
+    const filtered = filterManagerWorkloadBriefContent([
+        'נתנאל רוזנברג ואליה אלמקיאס מתמודדים עם עומס תיקים גבוה במיוחד.',
+        'יש 4 חתימות ממתינות לטיפול.',
+        'הפחיתו עומס מנתנאל רוזנברג ואליה אלמקיאס על ידי חלוקת תיקים מחדש.',
+    ], names);
+
+    assert.deepEqual(filtered, ['יש 4 חתימות ממתינות לטיפול.']);
 });
 
 test('generateAiMorningBrief returns null when disabled', async () => {
