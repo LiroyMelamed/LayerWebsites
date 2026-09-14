@@ -1418,9 +1418,10 @@ export default function UploadFileForSigningScreen() {
     };
 
     const handleOpenAddCustomerPopup = (query) => {
+        const safeQuery = typeof query === 'string' ? query : '';
         openPopup(
             <ClientPopup
-                initialName={query}
+                initialName={safeQuery}
                 closePopUpFunction={closePopup}
                 rePerformRequest={(savedClient) => {
                     if (savedClient?.UserId) {
@@ -1432,7 +1433,7 @@ export default function UploadFileForSigningScreen() {
                             Phone: savedClient.PhoneNumber || savedClient.Phone,
                         });
                     }
-                    SearchCustomersByName(query || savedClient?.Name || '');
+                    SearchCustomersByName(safeQuery || savedClient?.Name || '');
                 }}
             />
         );
