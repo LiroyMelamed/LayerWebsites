@@ -18,16 +18,35 @@ import SearchInput from "../../../components/specializedComponents/containers/Se
 import { parseDateInput, toNativeDateValue } from "../../../functions/date/formatDateForInput";
 import "./ClientPopUp.scss";
 
-export default function ClientPopup({ clientDetails, initialName, rePerformRequest, onFailureFunction, closePopUpFunction, style: _style }) {
+export default function ClientPopup({
+    clientDetails,
+    initialName,
+    initialPhone,
+    initialEmail,
+    initialCompanyName,
+    rePerformRequest,
+    onFailureFunction,
+    closePopUpFunction,
+    style: _style,
+}) {
     const { t } = useTranslation();
     const [selectedClient, setSelectedClient] = useState(clientDetails || null);
     const [name, setName, nameError] = useFieldState(
         HebrewCharsValidationWithNumbers,
         clientDetails?.name || initialName || ""
     );
-    const [companyName, setCompanyName, companyNameError] = useFieldState(HebrewCharsValidationWithNumbers, clientDetails?.companyname || "");
-    const [email, setEmail, emailError] = useFieldState(emailValidation, clientDetails?.email || "");
-    const [phoneNumber, setPhoneNumber, phoneNumberError] = useFieldState(IsraeliPhoneNumberValidation, clientDetails?.phonenumber || "");
+    const [companyName, setCompanyName, companyNameError] = useFieldState(
+        HebrewCharsValidationWithNumbers,
+        clientDetails?.companyname || initialCompanyName || ""
+    );
+    const [email, setEmail, emailError] = useFieldState(
+        emailValidation,
+        clientDetails?.email || initialEmail || ""
+    );
+    const [phoneNumber, setPhoneNumber, phoneNumberError] = useFieldState(
+        IsraeliPhoneNumberValidation,
+        clientDetails?.phonenumber || initialPhone || ""
+    );
     const [dateOfBirth, setDateOfBirth] = useState(clientDetails?.dateofbirth ? toNativeDateValue(clientDetails.dateofbirth) : "");
 
     const { result: customersByName, isPerforming: isPerformingCustomersByName, performRequest: searchCustomersByName } = useHttpRequest(customersApi.getCustomersByName, null, () => { });

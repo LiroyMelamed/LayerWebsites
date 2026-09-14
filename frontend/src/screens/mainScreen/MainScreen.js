@@ -2,7 +2,7 @@ import SimpleScreen from '../../components/simpleComponents/SimpleScreen';
 import { useScreenSize } from '../../providers/ScreenSizeProvider';
 import useAutoHttpRequest from '../../hooks/useAutoHttpRequest';
 import useHttpRequest from '../../hooks/useHttpRequest';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { images } from '../../assets/images/images';
 import SimpleContainer from '../../components/simpleComponents/SimpleContainer';
 import TopToolBarSmallScreen from '../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen';
@@ -19,11 +19,11 @@ import FirmStatsPanel from './components/commandCenter/FirmStatsPanel';
 import CaseOperationsPanel from './components/commandCenter/CaseOperationsPanel';
 import SigningOperationsPanel from './components/commandCenter/SigningOperationsPanel';
 import PotentialClientsPanel from './components/commandCenter/PotentialClientsPanel';
-import { navigateCalendar, navigateCaseRow, navigateOpenCases } from './components/commandCenter/commandCenterUtils';
+import { countJerusalemTodayEvents, navigateCalendar, navigateCaseRow, navigateOpenCases } from './components/commandCenter/commandCenterUtils';
 import SummaryStrip from './components/commandCenter/SummaryStrip';
 import { openCalendarEventModal } from './components/commandCenter/openCalendarEventModal';
 import { openCaseMenuModal } from './components/commandCenter/openCaseMenuModal';
-import { useManagerHomeAiInsightsEnabled } from '../../services/firmSettings';
+import { useFirmSettingsLoaded, useManagerHomeAiInsightsEnabled } from '../../services/firmSettings';
 import { usePopup } from '../../providers/PopUpProvider';
 
 import "./MainScreen.scss";
@@ -40,9 +40,11 @@ export default function MainScreen() {
     const navigate = useNavigate();
     const { isSmallScreen } = useScreenSize();
     const { openPopup, closePopup, pushPopup, popPopup } = usePopup();
+    const settingsLoaded = useFirmSettingsLoaded();
+    const aiInsightsSettingEnabled = useManagerHomeAiInsightsEnabled();
+    // Firm "Admin" role includes regular lawyers — workload AI brief is platform-owner only.
     const isPlatformAdmin = typeof window !== "undefined"
         && localStorage.getItem("isPlatformAdmin") === "true";
-    const aiInsightsSettingEnabled = useManagerHomeAiInsightsEnabled();
     const aiInsightsEnabled = aiInsightsSettingEnabled && isPlatformAdmin;
 
     const {
@@ -70,6 +72,10 @@ export default function MainScreen() {
         }
         if (key === "activeCases") {
             navigateOpenCases(navigate, "?status=open");
+            return;
+        }
+        if (key === "closedCases") {
+            navigateOpenCases(navigate, "?status=closed");
             return;
         }
         if (key === "signing") {
@@ -102,6 +108,10 @@ export default function MainScreen() {
         : null;
 
     const calendarEvents = calendarResponse?.events || calendarResponse?.data?.events || [];
+    const todayEventCount = useMemo(
+        () => countJerusalemTodayEvents(calendarEvents),
+        [calendarEvents],
+    );
 
     const handleRefresh = useCallback(() => {
         refreshManagerHome();
@@ -156,17 +166,18 @@ export default function MainScreen() {
                     />
 
                     <AiBriefSection
-                        morningBrief={managerHome?.morningBrief}
                         aiBrief={aiBrief}
                         aiBriefEnabled={aiInsightsEnabled}
                         aiBriefLoading={aiInsightsEnabled && isLoadingAiBrief}
+                        settingsLoaded={settingsLoaded}
                         isPerforming={isLoadingHome}
                     />
 
                     <SummaryStrip
                         summary={managerHome?.summary}
                         firmStats={managerHome?.firmStats}
-                        isPerforming={isLoadingHome}
+                        todayCount={todayEventCount}
+                        isPerforming={isLoadingHome || isLoadingCalendar}
                         onNavigate={handleSummaryNavigate}
                     />
 

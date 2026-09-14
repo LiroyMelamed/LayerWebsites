@@ -45,11 +45,52 @@ import { showAppToast } from "../../components/ui/showAppToast";
 import ApiUtils from "../../api/apiUtils";
 import {
     clampSpotSize,
+    clampSpotToPage,
     isFillableFieldType,
+    measuredPageSizeInSpotSpace,
+    pageBoxForNumber,
     spotCollidesWithOthers,
 } from "../../utils/signingSpotGeometry";
 
 export const uploadFileForSigningScreenName = "/UploadFileForSigningScreen";
+
+/* Field dimensions in spot space. These size a box; they do not correct a coordinate. */
+const SIGNATURE_FIELD_WIDTH = 160;
+const SIGNATURE_FIELD_HEIGHT = 56;
+const STAMP_FIELD_WIDTH = 420;
+const STAMP_FIELD_HEIGHT = 180;
+
+/** Left inset for a newly added field, before the user drags it. */
+const NEW_SPOT_X = 120;
+/** Vertical position for a new field when no anchor point is available. */
+const NEW_SPOT_FALLBACK_Y_RATIO = 0.2;
+
+/**
+ * Position for a newly added field, in spot space.
+ *
+ * The field is centred on the anchor point and then clamped to the page. Both
+ * come from the measured page, so there is nothing to hand-tune: the previous
+ * `- 30` / `- 60` / `- 100` nudges were approximations of half the field height
+ * and of the bottom clamp.
+ */
+function resolveNewSpotPosition({ pageNumber, width, height, yRatio }) {
+    const pageEl = pageBoxForNumber(pageNumber);
+    const pageSize = measuredPageSizeInSpotSpace(pageEl);
+    if (!pageSize) return { x: NEW_SPOT_X, y: NEW_SPOT_FALLBACK_Y_RATIO * height };
+
+    const rawRatio = Number(yRatio);
+    const ratio = Number.isFinite(rawRatio) ? rawRatio : NEW_SPOT_FALLBACK_Y_RATIO;
+    const anchorY = Math.max(0, Math.min(1, ratio)) * pageSize.height;
+
+    return clampSpotToPage({
+        x: NEW_SPOT_X,
+        y: anchorY - (height / 2),
+        width,
+        height,
+        pageWidth: pageSize.width,
+        pageHeight: pageSize.height,
+    });
+}
 
 const buildFieldTypeOptions = (t) => ([
     { id: 'signature', label: t('signing.fields.signature'), shortLabel: t('signing.fields.signatureShort') },
@@ -675,20 +716,16 @@ export default function UploadFileForSigningScreen() {
         const signerName = signer?.Name || t('signing.signerFallback', { index: Number(signerIdx) + 1 });
         const isRequired = isFillableFieldType(fieldType);
 
-        let x = 120;
-        let y = 160;
-        const pageEl = document.querySelector(`.lw-signing-pageInner[data-page-number="${pageNumber}"]`);
-        if (pageEl) {
-            const pageWidth = pageEl.getBoundingClientRect().width || 800;
-            const pageHeight = pageEl.getBoundingClientRect().height || 1000;
-            const scale = pageWidth / 800;
-            const ratio = Number(anchor?.yRatio);
-            if (Number.isFinite(ratio)) {
-                const yPx = Math.max(0, Math.min(pageHeight, ratio * pageHeight));
-                const yBase = yPx / (scale || 1);
-                y = Math.max(20, Math.min(yBase - 30, pageHeight / (scale || 1) - 60));
-            }
-        }
+        const isStamp = fieldType === 'clientStamp' || fieldType === 'lawyerStamp';
+        const width = isStamp ? STAMP_FIELD_WIDTH : SIGNATURE_FIELD_WIDTH;
+        const height = isStamp ? STAMP_FIELD_HEIGHT : SIGNATURE_FIELD_HEIGHT;
+
+        const { x, y } = resolveNewSpotPosition({
+            pageNumber,
+            width,
+            height,
+            yRatio: anchor?.yRatio,
+        });
 
         setSignatureSpots((prev) => [
             ...prev,
@@ -696,8 +733,8 @@ export default function UploadFileForSigningScreen() {
                 pageNum: pageNumber,
                 x,
                 y,
-                width: fieldType === 'clientStamp' || fieldType === 'lawyerStamp' ? 420 : 160,
-                height: fieldType === 'clientStamp' || fieldType === 'lawyerStamp' ? 180 : 56,
+                width,
+                height,
                 signerIndex: signerIdx,
                 signerUserId: signer?.UserId,
                 signerName,
@@ -754,14 +791,12 @@ export default function UploadFileForSigningScreen() {
         const signer = selectedSigners?.[signerIdx] || null;
         const signerName = signer?.Name || t('signing.signerFallback', { index: Number(signerIdx) + 1 });
 
-        let x = 120;
-        let y = 160;
-        const pageEl = document.querySelector(`.lw-signing-pageInner[data-page-number="${pageNumber}"]`);
-        if (pageEl) {
-            const pageHeight = pageEl.getBoundingClientRect().height || 1000;
-            const scale = (pageEl.getBoundingClientRect().width || 800) / 800;
-            y = Math.max(20, Math.min((pageHeight / 2) / (scale || 1), pageHeight / (scale || 1) - 100));
-        }
+        const { x, y } = resolveNewSpotPosition({
+            pageNumber,
+            width: STAMP_FIELD_WIDTH,
+            height: STAMP_FIELD_HEIGHT,
+            yRatio: 0.5,
+        });
 
         setSignatureSpots((prev) => [
             ...prev,
@@ -769,8 +804,8 @@ export default function UploadFileForSigningScreen() {
                 pageNum: pageNumber,
                 x,
                 y,
-                width: 420,
-                height: 180,
+                width: STAMP_FIELD_WIDTH,
+                height: STAMP_FIELD_HEIGHT,
                 signerIndex: signerIdx,
                 signerUserId: signer?.UserId,
                 signerName,
@@ -1383,9 +1418,10 @@ export default function UploadFileForSigningScreen() {
     };
 
     const handleOpenAddCustomerPopup = (query) => {
+        const safeQuery = typeof query === 'string' ? query : '';
         openPopup(
             <ClientPopup
-                initialName={query}
+                initialName={safeQuery}
                 closePopUpFunction={closePopup}
                 rePerformRequest={(savedClient) => {
                     if (savedClient?.UserId) {
@@ -1397,7 +1433,7 @@ export default function UploadFileForSigningScreen() {
                             Phone: savedClient.PhoneNumber || savedClient.Phone,
                         });
                     }
-                    SearchCustomersByName(query || savedClient?.Name || '');
+                    SearchCustomersByName(safeQuery || savedClient?.Name || '');
                 }}
             />
         );

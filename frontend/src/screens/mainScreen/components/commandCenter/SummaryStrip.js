@@ -5,7 +5,7 @@ import Skeleton from "../../../../components/simpleComponents/Skeleton";
 import { Text12, TextBold14, TextBold20 } from "../../../../components/specializedComponents/text/AllTextKindFile";
 import { colors } from "../../../../constant/colors";
 
-export default function SummaryStrip({ summary, firmStats, isPerforming, onNavigate }) {
+export default function SummaryStrip({ summary, firmStats, todayCount, isPerforming, onNavigate }) {
     const { t } = useTranslation();
 
     const chips = [
@@ -24,6 +24,13 @@ export default function SummaryStrip({ summary, firmStats, isPerforming, onNavig
             onClick: () => onNavigate?.("activeCases"),
         },
         {
+            key: "closedCases",
+            label: t("managerHome.summary.closedCases"),
+            value: firmStats?.closedCases ?? 0,
+            accent: colors.winter,
+            onClick: () => onNavigate?.("closedCases"),
+        },
+        {
             key: "urgent",
             label: t("managerHome.summary.urgent"),
             value: summary?.urgentCount ?? 0,
@@ -40,7 +47,7 @@ export default function SummaryStrip({ summary, firmStats, isPerforming, onNavig
         {
             key: "today",
             label: t("managerHome.summary.today"),
-            value: summary?.todayEventCount ?? 0,
+            value: todayCount ?? summary?.todayEventCount ?? 0,
             accent: colors.SideBarSelected,
             onClick: () => onNavigate?.("today"),
         },

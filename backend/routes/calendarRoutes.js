@@ -80,6 +80,7 @@ router.patch('/:id/link-case', ...protect, cal.linkCase);
 router.post('/:id/resend-invite', ...protect, cal.resendInvite);
 router.post('/:id/rsvp', ...protect, cal.staffSetClientRsvp);
 router.post('/:id/duplicate', ...protect, cal.duplicateEvent);
+router.post('/:id/cancel', ...protect, cal.cancelEvent);
 
 router.get('/:id', ...protect, cal.getEvent);
 router.put('/:id', ...protect, cal.updateEvent);

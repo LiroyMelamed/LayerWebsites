@@ -2,6 +2,7 @@ import React from "react";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { Text12, TextBold12 } from "../../specializedComponents/text/AllTextKindFile";
 import { DateDDMMYY } from "../../../functions/date/DateDDMMYY";
+import { DateDDMMYY_HHMM } from "../../../functions/date/DateDDMMYY_HHMM";
 import { useTranslation } from "react-i18next";
 import StageFileUpload from "./StageFileUpload";
 
@@ -52,7 +53,7 @@ export default function CaseTimeline({ stages, currentStage, isClosed = false, t
                                 ? `${t('cases.currentStage')} - ${arrivalDate}`
                                 : t('cases.currentStage');
                         } else if (isPast) {
-                            badgeText = DateDDMMYY(stage.Timestamp) || t('cases.stageCompleted');
+                            badgeText = DateDDMMYY_HHMM(stage.Timestamp) || DateDDMMYY(stage.Timestamp) || t('cases.stageCompleted');
                         } else {
                             // Future stage — never show old timestamps
                             badgeText = t('cases.stageContinues');
@@ -96,6 +97,11 @@ export default function CaseTimeline({ stages, currentStage, isClosed = false, t
                                         }
                                     </SimpleContainer>
                                     <TextBold12>{stage.Text}</TextBold12>
+                                    {!isClient && isPast && stage.UpdatedByName && (
+                                        <Text12 className="lw-caseTimeline__updatedBy">
+                                            {t('cases.stageUpdatedBy')}: {stage.UpdatedByName}
+                                        </Text12>
+                                    )}
                                     {caseId && stageFiles && (
                                         <StageFileUpload
                                             caseId={caseId}

@@ -42,6 +42,7 @@ async function resolveVerifiedFromAndReplyTo(fromEmailOverride, replyToHint) {
         [
             verifiedFrom.includes('@') ? verifiedFrom.split('@')[1] : '',
             'mela-media.co.il',
+            'melamedia.co.il',
             String(process.env.WEBSITE_DOMAIN || WEBSITE_DOMAIN || '')
                 .replace(/^https?:\/\//i, '')
                 .replace(/\/.*$/, '')
