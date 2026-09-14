@@ -8,6 +8,7 @@ const { initEmailReminderScheduler } = require('./tasks/emailReminders/scheduler
 const { initBirthdayGreetingsScheduler } = require('./tasks/birthdayGreetings/scheduler');
 const { initCalendarReminderScheduler } = require('./tasks/calendarReminders/scheduler');
 const { initSignReminderScheduler } = require('./tasks/signReminders/scheduler');
+const { initSignPendingCleanupScheduler } = require('./tasks/signPendingCleanup/scheduler');
 const { startDailyAgendaScheduler } = require('./tasks/dailyAgenda/scheduler');
 const { startHebcalHolidaysScheduler } = require('./tasks/hebcalHolidays/scheduler');
 const { initBillingRenewalScheduler } = require('./tasks/billingRenewal/scheduler');
@@ -44,6 +45,7 @@ const server = app.listen(PORT, HOST, async () => {
     initBirthdayGreetingsScheduler();
     await initCalendarReminderScheduler();
     initSignReminderScheduler();
+    initSignPendingCleanupScheduler();
     startDailyAgendaScheduler();
     startHebcalHolidaysScheduler();
     initBillingRenewalScheduler();

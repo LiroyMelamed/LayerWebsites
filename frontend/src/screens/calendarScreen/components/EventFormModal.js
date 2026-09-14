@@ -532,8 +532,12 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const clearNotices = () => { };
     const [saving, setSaving] = useState(false);
     const [deleting, setDeleting] = useState(false);
+    const [cancelling, setCancelling] = useState(false);
     const [duplicating, setDuplicating] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
+    const [confirmCancel, setConfirmCancel] = useState(false);
+    const [eventStatus, setEventStatus] = useState(event?.eventStatus || "scheduled");
+    const isCancelled = eventStatus === "cancelled";
     const [converting, setConverting] = useState(false);
     const [linkingCase, setLinkingCase] = useState(false);
     const [optionalConvertCaseName, setOptionalConvertCaseName] = useState(event?.leadCaseName || "");
@@ -1605,6 +1609,30 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         }
     };
 
+    const handleCancelMeeting = async () => {
+        if (!confirmCancel) { setConfirmCancel(true); return; }
+        setCancelling(true);
+        try {
+            const res = await calendarApi.cancelEvent(event.id);
+            const payload = res?.data ?? res;
+            if (payload?.ok) {
+                const saved = payload.event;
+                if (saved?.eventStatus) setEventStatus(saved.eventStatus);
+                toastSuccess(t("calendar.meetingCancelled"));
+                if (typeof onUpdated === "function" && saved) onUpdated(saved);
+                setConfirmCancel(false);
+            } else {
+                notifyError(payload?.message || "שגיאה בביטול הפגישה.");
+                setConfirmCancel(false);
+            }
+        } catch (err) {
+            notifyError(err?.response?.data?.message || "שגיאה בביטול הפגישה.");
+            setConfirmCancel(false);
+        } finally {
+            setCancelling(false);
+        }
+    };
+
     // ─── Lead → Client + Case conversion ──────────────────────────────────
     const applyConvertResult = useCallback((ev, newClient, {
         savedLeadName,
@@ -2207,6 +2235,11 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                 {/* ─── Header ─── */}
                 <SimpleContainer className="lw-eventFormModal__header">
                     <Text24>{isEdit ? t("calendar.editEvent") : t("calendar.addEvent")}</Text24>
+                    {isCancelled && (
+                        <Text12 className="lw-eventFormModal__cancelledBanner" color="#C05621">
+                            {t("calendar.meetingCancelled")}
+                        </Text12>
+                    )}
                     {isEdit && (event?.createdByName || event?.ownerName || event?.updatedByName) && (
                         <SimpleContainer className="lw-eventFormModal__auditTrail">
                             <Text12 color="#718096">
@@ -3133,6 +3166,15 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                             onPress={handleDuplicate}
                         >
                             {t("calendar.duplicateEvent")}
+                        </SecondaryButton>
+                    )}
+                    {isEdit && isReminderCapableEventType(eventType) && !isCancelled && (
+                        <SecondaryButton
+                            onPress={handleCancelMeeting}
+                            isPerforming={cancelling}
+                            style={{ color: "#C05621", borderColor: "#C05621" }}
+                        >
+                            {confirmCancel ? t("calendar.cancelMeetingConfirm") : t("calendar.cancelMeeting")}
                         </SecondaryButton>
                     )}
                     {isEdit && (
