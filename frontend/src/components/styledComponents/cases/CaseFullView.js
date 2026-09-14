@@ -141,7 +141,8 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
     const [clientSearchDraft, setClientSearchDraft] = useState('');
 
     const handleOpenAddClientPopup = useCallback((draftName) => {
-        const name = String(draftName ?? clientSearchDraft ?? caseData.CustomerName ?? '').trim();
+        const safeDraft = typeof draftName === 'string' ? draftName : '';
+        const name = String(safeDraft || clientSearchDraft || caseData.CustomerName || '').trim();
         setAddClientInitialName(name);
         setShowAddClientPopup(true);
     }, [clientSearchDraft, caseData.CustomerName]);
@@ -468,7 +469,7 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
                             <button
                                 type="button"
                                 className="lw-caseFullView__addClientBtn"
-                                onClick={handleOpenAddClientPopup}
+                                onClick={() => handleOpenAddClientPopup()}
                                 title={t('cases.addNewClient', { defaultValue: '+ הוספת לקוח חדש' })}
                                 aria-label={t('cases.addNewClient', { defaultValue: '+ הוספת לקוח חדש' })}
                             >
