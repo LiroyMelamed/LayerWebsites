@@ -137,15 +137,33 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
     };
 
     const [showAddClientPopup, setShowAddClientPopup] = useState(false);
-    const [addClientInitialName, setAddClientInitialName] = useState('');
+    const [addClientPopupKey, setAddClientPopupKey] = useState(0);
+    const [addClientInitials, setAddClientInitials] = useState({
+        name: '',
+        phone: '',
+        email: '',
+        companyName: '',
+    });
     const [clientSearchDraft, setClientSearchDraft] = useState('');
 
     const handleOpenAddClientPopup = useCallback((draftName) => {
         const safeDraft = typeof draftName === 'string' ? draftName : '';
         const name = String(safeDraft || clientSearchDraft || caseData.CustomerName || '').trim();
-        setAddClientInitialName(name);
+        setAddClientInitials({
+            name,
+            phone: String(caseData.PhoneNumber || '').trim(),
+            email: String(caseData.CustomerMail || '').trim(),
+            companyName: String(caseData.CompanyName || '').trim(),
+        });
+        setAddClientPopupKey((k) => k + 1);
         setShowAddClientPopup(true);
-    }, [clientSearchDraft, caseData.CustomerName]);
+    }, [
+        clientSearchDraft,
+        caseData.CustomerName,
+        caseData.PhoneNumber,
+        caseData.CustomerMail,
+        caseData.CompanyName,
+    ]);
 
     const handleClientSavedFromPopup = useCallback((savedClient) => {
         if (!savedClient?.UserId) return;
@@ -680,8 +698,11 @@ export default function CaseFullView({ caseDetails, initialDraft, rePerformReque
             onClose={() => setShowAddClientPopup(false)}
         >
             <ClientPopup
-                key={addClientInitialName || 'new-client'}
-                initialName={addClientInitialName}
+                key={addClientPopupKey}
+                initialName={addClientInitials.name}
+                initialPhone={addClientInitials.phone}
+                initialEmail={addClientInitials.email}
+                initialCompanyName={addClientInitials.companyName}
                 rePerformRequest={handleClientSavedFromPopup}
                 closePopUpFunction={() => setShowAddClientPopup(false)}
             />

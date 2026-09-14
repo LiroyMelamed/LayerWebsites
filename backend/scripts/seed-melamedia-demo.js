@@ -391,6 +391,15 @@ async function main() {
   await db.query(`
     UPDATE platform_settings SET setting_value = 'https://melamedia.mela-media.co.il/firm-logo.png?v=4', updated_at = now()
       WHERE category = 'firm' AND setting_key = 'FIRM_LOGO_URL'`);
+  await db.query(`
+    UPDATE platform_settings SET setting_value = 'noreply@melamedia.co.il', updated_at = now()
+      WHERE category = 'messaging' AND setting_key = 'SMTP_FROM_EMAIL'`);
+  await db.query(`
+    UPDATE platform_settings SET setting_value = 'Melamedia', updated_at = now()
+      WHERE category = 'messaging' AND setting_key = 'SMTP_FROM_NAME'`);
+  await db.query(`
+    UPDATE platform_settings SET setting_value = 'Melamedia', updated_at = now()
+      WHERE category = 'messaging' AND setting_key = 'INFORU_SENDER_PHONE'`);
 
   const summary = await db.query(`
     SELECT
