@@ -874,6 +874,36 @@
     cursor: pointer;
 }
 
+.lw-commandCenter__managerChartWrap {
+    flex-direction: column;
+    gap: v.$space-2;
+    inline-size: 100%;
+}
+
+.lw-commandCenter__managerChartToggle {
+    @include m.row(v.$space-1);
+    flex-wrap: wrap;
+    gap: v.$space-1;
+}
+
+.lw-commandCenter__managerChartToggleBtn {
+    padding: 0.25rem 0.625rem;
+    border-radius: 999px;
+    border: 1px solid var(--lw-color-border, #E2E8F0);
+    background: var(--lw-color-surface, #fff);
+    cursor: pointer;
+
+    &:hover {
+        background: var(--lw-color-secondary-highlighted);
+    }
+}
+
+.lw-commandCenter__managerChartToggleBtn--active {
+    border-color: var(--lw-color-primary, #2A4365);
+    background: rgba(42, 67, 101, 0.08);
+    font-weight: 600;
+}
+
 .lw-commandCenter__managerChart {
     @include m.row(v.$space-3);
     align-items: flex-start;

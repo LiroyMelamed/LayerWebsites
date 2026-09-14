@@ -1,15 +1,24 @@
 import { useEffect, useState } from "react";
 
+function normalizeFieldValue(value) {
+    if (value == null) return '';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number') return String(value);
+    return '';
+}
+
 export default function useFieldState(checkForErrorFunction, defaultValue = null) {
+    const initialValue = normalizeFieldValue(defaultValue);
 
     const [fieldState, setFieldState] = useState({
-        value: defaultValue,
-        error: errorFunction(defaultValue)
+        value: initialValue,
+        error: errorFunction(initialValue)
     })
 
     useEffect(() => {
-        if (defaultValue !== fieldState.value) {
-            setValueFunction(defaultValue)
+        const nextValue = normalizeFieldValue(defaultValue);
+        if (nextValue !== fieldState.value) {
+            setValueFunction(nextValue)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [defaultValue])

@@ -137,7 +137,7 @@ test('buildAttentionItems surfaces unassigned case and meaningful inactivity', (
             baseCase({
                 casemanagerid: null,
                 casemanager: null,
-                days_since_meaningful_activity: 10,
+                days_since_meaningful_activity: 91,
             }),
         ],
         now: NOW,
@@ -149,12 +149,12 @@ test('buildAttentionItems surfaces unassigned case and meaningful inactivity', (
 
 test('no_activity uses days_since_meaningful_activity not updatedat', () => {
     const items = buildAttentionItems({
-        caseRows: [baseCase({ days_since_meaningful_activity: 8 })],
+        caseRows: [baseCase({ days_since_meaningful_activity: 91 })],
         now: NOW,
     });
     const noAct = items.find((i) => i.signalType === 'no_activity');
     assert.ok(noAct);
-    assert.equal(noAct.reasonParams.days, 8);
+    assert.equal(noAct.reasonParams.days, 91);
 });
 
 // --- Signing priority ---

@@ -22,6 +22,10 @@ import { colors } from "../../../constant/colors";
 import "./signFiles.scss";
 import { showAppToast } from "../../ui/showAppToast";
 import "../../../screens/signingScreen/PublicSigningScreen.scss";
+import { measuredPageWidth, spotSpaceScale } from "../../../utils/signingSpotGeometry";
+
+/** Breathing room above a spot when scrolling it into view, in CSS pixels. */
+const SCROLL_TO_SPOT_MARGIN_PX = 120;
 
 function uuidv4() {
     const cryptoObj = window.crypto || window.msCrypto;
@@ -425,11 +429,16 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             : { top: 0 };
 
         const pageTopWithinContainer = pageRect.top - containerRect.top + (container.scrollTop || 0);
-        const pageWidth = pageRect.width || 800;
-        const scale = pageWidth / 800;
+        // Measured page width, so the scroll target tracks the same scale the
+        // spot overlay is positioned with.
+        const scale = spotSpaceScale(measuredPageWidth(pageEl));
+        if (!(scale > 0)) {
+            if (attempt < 15) setTimeout(() => scrollToSpot(spot, attempt + 1), 100);
+            return;
+        }
         const y = Number(getSpotY(spot) || 0) * scale;
 
-        const targetTop = Math.max(0, pageTopWithinContainer + y - 120);
+        const targetTop = Math.max(0, pageTopWithinContainer + y - SCROLL_TO_SPOT_MARGIN_PX);
         if (typeof container.scrollTo === "function") {
             container.scrollTo({ top: targetTop, behavior: "smooth" });
         } else {

@@ -103,7 +103,10 @@ export default function FirmStatsPanel({
             sublabel: firmStats?.urgentCount > 0
                 ? t("managerHome.stats.urgentCount", { count: firmStats.urgentCount })
                 : firmStats?.noActivityCases > 0
-                    ? t("managerHome.stats.noActivityInQueue", { count: firmStats.noActivityCases })
+                    ? t("managerHome.stats.noActivityInQueue", {
+                        count: firmStats.noActivityCases,
+                        days: firmStats.noActivityDays ?? 90,
+                    })
                     : null,
             onClick: handleAttentionPress,
         },

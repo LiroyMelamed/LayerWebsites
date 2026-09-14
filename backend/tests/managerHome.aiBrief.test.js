@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const {
     buildFactsSnapshot,
     generateAiMorningBrief,
+    isAiBriefEnabled,
     parseLlmBrief,
     parseLlmLines,
     validateLinesAgainstFacts,
@@ -220,6 +221,28 @@ test('generateAiMorningBrief returns parsed AI lines when enabled', async () => 
         else process.env.CHATBOT_LLM_API_KEY = prevKey;
         __testReset();
     }
+});
+
+test('isAiBriefEnabled requires platform admin when userId is provided', async () => {
+    const prevKey = process.env.CHATBOT_LLM_API_KEY;
+    process.env.CHATBOT_LLM_API_KEY = 'test-key';
+
+    const enabledForOwner = await isAiBriefEnabled({
+        userId: 42,
+        getSettingFn: async () => true,
+        isPlatformAdminFn: async () => true,
+    });
+    const enabledForLawyer = await isAiBriefEnabled({
+        userId: 99,
+        getSettingFn: async () => true,
+        isPlatformAdminFn: async () => false,
+    });
+
+    assert.equal(enabledForOwner, true);
+    assert.equal(enabledForLawyer, false);
+
+    if (prevKey === undefined) delete process.env.CHATBOT_LLM_API_KEY;
+    else process.env.CHATBOT_LLM_API_KEY = prevKey;
 });
 
 test('generateAiMorningBrief returns null when disabled', async () => {

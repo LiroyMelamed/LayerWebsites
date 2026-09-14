@@ -52,6 +52,7 @@ const {
 const { describeQuietDeferral } = require('../lib/shabbatDeferral');
 const { resolveShortLink } = require('../lib/publicShortLinks');
 const { lawyerMatchSql, personalCalendarSql } = require('../lib/calendarVisibility');
+const { isEventCancelled, normalizeEventStatus } = require('../lib/calendarEventStatus');
 const { signOAuthState, verifyOAuthState } = require('../lib/calendarOAuthState');
 const { sendMessage } = require('../utils/sendMessage');
 const { sendTransactionalCustomHtmlEmail } = require('../utils/smooveEmailCampaignService');
@@ -371,6 +372,9 @@ function _sanitizeEvent(row) {
         clientReminderSms: row.client_reminder_sms ?? null,
         inviteSms: row.invite_sms ?? null,
         linkedReminderId: row.linked_reminder_id ?? null,
+        eventStatus: normalizeEventStatus(row.event_status),
+        cancelledAt: row.cancelled_at ?? null,
+        cancelledBy: row.cancelled_by ?? null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
         createdByName: row.owner_name ?? null,
@@ -937,6 +941,7 @@ const getTodayAndTomorrow = async (req, res) => {
              WHERE (ce.start_time AT TIME ZONE 'Asia/Jerusalem')::date
                    BETWEEN (NOW() AT TIME ZONE 'Asia/Jerusalem')::date
                        AND (NOW() AT TIME ZONE 'Asia/Jerusalem')::date + 1
+               AND COALESCE(ce.event_status, 'scheduled') = 'scheduled'
                ${visibilityClause}
              ORDER BY ce.start_time ASC
              LIMIT 20`,
@@ -1795,6 +1800,76 @@ const updateEvent = async (req, res) => {
         if (fkMsg) return res.status(400).json({ message: fkMsg });
         console.error('[calendarController] updateEvent error:', err.message);
         return res.status(500).json({ message: 'שגיאה פנימית בשרת' });
+    }
+};
+
+/**
+ * POST /api/calendar/:id/cancel
+ * Mark a meeting as cancelled — keeps the event but stops future reminders/invites.
+ */
+const cancelEvent = async (req, res) => {
+    const userId = req.user.UserId;
+    const eventId = parseInt(req.params.id, 10);
+    if (!Number.isFinite(eventId)) return res.status(400).json({ message: 'מזהה אירוע לא תקין' });
+
+    const ownership = await _requireEventAccess(eventId, userId, req.user?.Role);
+    if (!ownership.ok) return res.status(ownership.status).json({ message: ownership.message });
+
+    const dbClient = await pool.connect();
+    try {
+        await dbClient.query('BEGIN');
+        const { rows: existing } = await dbClient.query(
+            'SELECT * FROM calendar_events WHERE id = $1 FOR UPDATE',
+            [eventId]
+        );
+        if (!existing.length) {
+            await dbClient.query('ROLLBACK');
+            return res.status(404).json({ message: 'אירוע לא נמצא' });
+        }
+        const ev = existing[0];
+        if (isEventCancelled(ev.event_status)) {
+            await dbClient.query('ROLLBACK');
+            const [managersMap, clientsMap] = await Promise.all([
+                _fetchEventManagers([eventId]),
+                _fetchEventClients([eventId]),
+            ]);
+            return res.json({
+                ok: true,
+                alreadyCancelled: true,
+                event: _sanitizeEventWithManagers(ev, managersMap, clientsMap),
+            });
+        }
+
+        await reminderCalendarSync.unlinkRemindersForCalendarEvent(eventId, { client: dbClient });
+
+        const { rows: updated } = await dbClient.query(
+            `UPDATE calendar_events
+             SET event_status = 'cancelled',
+                 cancelled_at = NOW(),
+                 cancelled_by = $2,
+                 invite_deferred_until = NULL,
+                 updated_at = NOW()
+             WHERE id = $1
+             RETURNING *`,
+            [eventId, userId]
+        );
+        await dbClient.query('COMMIT');
+
+        invalidateOperationalDashboardCaches();
+        const [managersMap, clientsMap] = await Promise.all([
+            _fetchEventManagers([eventId]),
+            _fetchEventClients([eventId]),
+        ]);
+        return res.json({
+            ok: true,
+            event: _sanitizeEventWithManagers(updated[0], managersMap, clientsMap),
+        });
+    } catch (err) {
+        try { await dbClient.query('ROLLBACK'); } catch (_) { /* ignore */ }
+        console.error('[calendarController] cancelEvent error:', err.message);
+        return res.status(500).json({ message: 'שגיאה פנימית בשרת' });
+    } finally {
+        dbClient.release();
     }
 };
 
@@ -3570,6 +3645,9 @@ const resendInvite = async (req, res) => {
         );
         if (!existing.length) return res.status(404).json({ message: 'אירוע לא נמצא' });
         let ev = existing[0];
+        if (isEventCancelled(ev.event_status)) {
+            return res.status(400).json({ message: 'לא ניתן לשלוח הזמנה לפגישה שבוטלה' });
+        }
 
         // Ensure junction clients have invite tokens when present.
         const clientsMap = await _fetchEventClients([eventId]);
@@ -3820,6 +3898,7 @@ module.exports = {
     createEvent,
     getEvent,
     updateEvent,
+    cancelEvent,
     deleteEvent,
     duplicateEvent,
     // CRM (Step 2)
