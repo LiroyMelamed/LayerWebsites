@@ -23,7 +23,7 @@ import { navigateCalendar, navigateCaseRow, navigateOpenCases } from './componen
 import SummaryStrip from './components/commandCenter/SummaryStrip';
 import { openCalendarEventModal } from './components/commandCenter/openCalendarEventModal';
 import { openCaseMenuModal } from './components/commandCenter/openCaseMenuModal';
-import { useManagerHomeAiInsightsEnabled } from '../../services/firmSettings';
+import { useFirmSettingsLoaded, useManagerHomeAiInsightsEnabled } from '../../services/firmSettings';
 import { usePopup } from '../../providers/PopUpProvider';
 
 import "./MainScreen.scss";
@@ -40,10 +40,8 @@ export default function MainScreen() {
     const navigate = useNavigate();
     const { isSmallScreen } = useScreenSize();
     const { openPopup, closePopup, pushPopup, popPopup } = usePopup();
-    const isPlatformAdmin = typeof window !== "undefined"
-        && localStorage.getItem("isPlatformAdmin") === "true";
-    const aiInsightsSettingEnabled = useManagerHomeAiInsightsEnabled();
-    const aiInsightsEnabled = aiInsightsSettingEnabled && isPlatformAdmin;
+    const settingsLoaded = useFirmSettingsLoaded();
+    const aiInsightsEnabled = useManagerHomeAiInsightsEnabled();
 
     const {
         result: managerHome,
@@ -160,10 +158,10 @@ export default function MainScreen() {
                     />
 
                     <AiBriefSection
-                        morningBrief={managerHome?.morningBrief}
                         aiBrief={aiBrief}
                         aiBriefEnabled={aiInsightsEnabled}
                         aiBriefLoading={aiInsightsEnabled && isLoadingAiBrief}
+                        settingsLoaded={settingsLoaded}
                         isPerforming={isLoadingHome}
                     />
 
