@@ -42,10 +42,7 @@ export default function MainScreen() {
     const { openPopup, closePopup, pushPopup, popPopup } = usePopup();
     const settingsLoaded = useFirmSettingsLoaded();
     const aiInsightsSettingEnabled = useManagerHomeAiInsightsEnabled();
-    // Firm "Admin" role includes regular lawyers — workload AI brief is platform-owner only.
-    const isPlatformAdmin = typeof window !== "undefined"
-        && localStorage.getItem("isPlatformAdmin") === "true";
-    const aiInsightsEnabled = aiInsightsSettingEnabled && isPlatformAdmin;
+    const aiInsightsEnabled = aiInsightsSettingEnabled;
 
     const {
         result: managerHome,
