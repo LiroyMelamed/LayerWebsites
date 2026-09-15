@@ -8,8 +8,8 @@ import { AppRoles } from './constant/appRoles';
 import { useFromApp } from './providers/FromAppProvider';
 import { loadFirmSettings } from './services/firmSettings';
 import {
-  CalendarScreenName,
   CalendarInviteScreenName,
+  CalendarScreenName,
   ChatBotPageName,
   ClientMainScreenName,
   CompliancePageName,
@@ -19,48 +19,49 @@ import {
   PricingScreenName,
   PrivacyPageName,
   PublicSignScreenName,
+  SecurityScreenName,
   ShortNavRedirectScreenName,
   ShortSignRedirectScreenName,
-  SecurityScreenName,
   SigningScreenName,
   ViewSignedDocumentName,
 } from './navigation/screenPaths';
-
-import LoginStack from './navigation/LoginStack';
-import AdminStack from './navigation/AdminStack';
-import ClientStack from './navigation/ClientStack';
-import PublicSigningScreen from './screens/signingScreen/PublicSigningScreen';
-import ShortSignRedirectScreen from './screens/signingScreen/ShortSignRedirectScreen';
-import ShortNavRedirectScreen from './screens/calendarScreen/ShortNavRedirectScreen';
-import ViewSignedDocument from './screens/viewSignedDocument/ViewSignedDocument';
-import EvidenceVerifyScreen from './screens/verify/EvidenceVerifyScreen';
-import PricingScreen from './screens/pricingScreen/PricingScreen';
-import SecurityScreen from './screens/compliance/SecurityScreen';
-import PrivacyPage from './screens/compliance/PrivacyPage';
-import ContinuityPage from './screens/compliance/ContinuityPage';
-import CompliancePage from './screens/compliance/CompliancePage';
-import ChatBotPage from './screens/chatbot/ChatBotPage';
-import CalendarInviteScreen from './screens/calendarScreen/CalendarInviteScreen';
-import SignupScreen, { SignupCompleteScreen } from './screens/signup/SignupScreen';
 import TenantShell from './components/tenant/TenantShell';
 import TenantAdminRedirect from './components/tenant/TenantAdminRedirect';
 import { isMultiTenantApp } from './lib/tenantSlug';
 
+const LoginStack = lazy(() => import('./navigation/LoginStack'));
+const AdminStack = lazy(() => import('./navigation/AdminStack'));
+const ClientStack = lazy(() => import('./navigation/ClientStack'));
+
+const PublicSigningScreen = lazy(() => import('./screens/signingScreen/PublicSigningScreen'));
+const ShortSignRedirectScreen = lazy(() => import('./screens/signingScreen/ShortSignRedirectScreen'));
+const ShortNavRedirectScreen = lazy(() => import('./screens/calendarScreen/ShortNavRedirectScreen'));
+const ViewSignedDocument = lazy(() => import('./screens/viewSignedDocument/ViewSignedDocument'));
+const EvidenceVerifyScreen = lazy(() => import('./screens/verify/EvidenceVerifyScreen'));
+const PricingScreen = lazy(() => import('./screens/pricingScreen/PricingScreen'));
+const SecurityScreen = lazy(() => import('./screens/compliance/SecurityScreen'));
+const PrivacyPage = lazy(() => import('./screens/compliance/PrivacyPage'));
+const ContinuityPage = lazy(() => import('./screens/compliance/ContinuityPage'));
+const CompliancePage = lazy(() => import('./screens/compliance/CompliancePage'));
+const ChatBotPage = lazy(() => import('./screens/chatbot/ChatBotPage'));
+const CalendarInviteScreen = lazy(() => import('./screens/calendarScreen/CalendarInviteScreen'));
+const SignupScreen = lazy(() => import('./screens/signup/SignupScreen'));
+const SignupCompleteScreen = lazy(() =>
+  import('./screens/signup/SignupScreen').then((m) => ({ default: m.SignupCompleteScreen }))
+);
 const MasterAdminScreen = lazy(() => import('./screens/masterAdmin/MasterAdminScreen'));
 
-const STACK_SUFFIX = "/*"
+const STACK_SUFFIX = '/*';
 
 const App = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isFromApp, setIsFromApp } = useFromApp();
 
-  // Eagerly load public firm settings (WhatsApp phone, etc.)
   useEffect(() => { loadFirmSettings(); }, []);
 
   useEffect(() => {
-    // On signing flows, disable overscroll-based pull-to-refresh (browser-level).
-    const p = String(location?.pathname || "");
+    const p = String(location?.pathname || '');
     const disable =
       /(?:^|\/)(SigningScreen|SigningManagerScreen)(?:$|\/)/i.test(p) ||
       /(?:^|\/)(upload-file-for-signing)(?:$|\/)/i.test(p) ||
@@ -70,11 +71,11 @@ const App = () => {
 
     const root = document?.documentElement;
     if (!root) return;
-    if (disable) root.classList.add("lw-noPullRefresh");
-    else root.classList.remove("lw-noPullRefresh");
+    if (disable) root.classList.add('lw-noPullRefresh');
+    else root.classList.remove('lw-noPullRefresh');
 
     return () => {
-      root.classList.remove("lw-noPullRefresh");
+      root.classList.remove('lw-noPullRefresh');
     };
   }, [location.pathname]);
 
@@ -100,58 +101,41 @@ const App = () => {
       setIsFromApp(false);
     }
 
-    // The PublicSignScreen route uses ?token= for a signing JWT, not an auth
-    // token.  Skip URL-param extraction so we don't overwrite the real auth
-    // token in localStorage.
     const isPublicSignRoute = /^\/PublicSign/i.test(location?.pathname || '')
       || /^\/s(?:\/|$)/i.test(location?.pathname || '');
 
-    // Auth credentials: prefer URL params (legacy/deep-links), fall back to
-    // localStorage (injected by mobile WebView before page load).
     const token = (!isPublicSignRoute && searchParams.get('token')) || localStorage.getItem('token');
     const role = (!isPublicSignRoute && searchParams.get('role')) || localStorage.getItem('role');
 
-    // Only navigate to default screen when credentials come from URL params
-    // (deep-link / mobile WebView). On normal page refreshes the token is
-    // already in localStorage and we should stay on the current route.
     const isDeepLink = !isPublicSignRoute && !!(searchParams.get('token') && searchParams.get('role'));
 
     if (token && role) {
       localStorage.setItem('token', token);
       localStorage.setItem('role', role);
 
-      // Platform admin flag — may come from URL param or already in localStorage
-      // (injected by mobile app's WebView).
       const isPlatformAdminParam = searchParams.get('isPlatformAdmin');
       if (isPlatformAdminParam === 'true') {
         localStorage.setItem('isPlatformAdmin', 'true');
       }
 
-      // If we have a deep-link target, store it before we clean the URL.
       if (signingFileId) {
         sessionStorage.setItem('lw_signing_deeplink_fileId', String(signingFileId));
         sessionStorage.setItem('lw_signing_deeplink_public', isPublicSigning ? '1' : '0');
       }
 
-      // Only redirect when arriving via deep-link with URL params.
-      // On normal refresh, stay on the current page.
       if (isDeepLink) {
-        // Remove query params from URL
         navigate(location.pathname, { replace: true });
 
-        // Check if the current path already points to a valid app route.
-        // If so, stay there instead of overriding to the default screen.
         const alreadyOnAdminRoute = location.pathname.startsWith(AdminStackName);
         const alreadyOnClientRoute = location.pathname.startsWith(ClientStackName);
 
         if (role === AppRoles.Admin) {
           if (appointmentId) {
             navigate(
-              `${AdminStackName + CalendarScreenName}?eventId=${encodeURIComponent(String(appointmentId))}`,
+              `${AdminStackName}${CalendarScreenName}?eventId=${encodeURIComponent(String(appointmentId))}`,
               { replace: true }
             );
           } else if (signingFileId) {
-            // Admin deep-link to signing – redirect to admin main (signing is client-side)
             navigate(AdminStackName + MainScreenName, { replace: true });
           } else if (!alreadyOnAdminRoute) {
             navigate(AdminStackName + MainScreenName, { replace: true });
@@ -180,16 +164,12 @@ const App = () => {
         <Route path={ShortNavRedirectScreenName} element={<ShortNavRedirectScreen />} />
         <Route path={ViewSignedDocumentName} element={<ViewSignedDocument />} />
         <Route path={CalendarInviteScreenName} element={<CalendarInviteScreen />} />
-
         <Route path={EvidenceVerifyScreenName} element={<EvidenceVerifyScreen />} />
-
         <Route path={PricingScreenName} element={<PricingScreen />} />
-
         <Route path={SecurityScreenName} element={<SecurityScreen />} />
         <Route path={PrivacyPageName} element={<PrivacyPage />} />
         <Route path={ContinuityPageName} element={<ContinuityPage />} />
         <Route path={CompliancePageName} element={<CompliancePage />} />
-
         <Route path={ChatBotPageName} element={<ChatBotPage />} />
 
         {multiTenant && (
