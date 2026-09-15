@@ -30,18 +30,53 @@ run ssh -i "$SSH_KEY" -o BatchMode=yes "$FRONTEND_HOST" bash -s <<'REMOTE'
 set -euo pipefail
 MARK="lw-spa-perf.conf"
 install -d /etc/nginx/snippets
+
+if ! dpkg -s libnginx-mod-http-brotli-filter >/dev/null 2>&1; then
+  echo "Installing nginx brotli modules…"
+  export DEBIAN_FRONTEND=noninteractive
+  apt-get update -qq
+  apt-get install -y -qq libnginx-mod-http-brotli-filter libnginx-mod-http-brotli-static brotli
+fi
+
+if ! command -v brotli >/dev/null; then
+  export DEBIAN_FRONTEND=noninteractive
+  apt-get install -y -qq brotli
+fi
+
+echo "Pre-compressing tenant main.js bundles (.br)…"
+for js in /var/www/*/static/js/main.*.js; do
+  [ -f "$js" ] || continue
+  brotli -f -q 6 "$js"
+done
+
 cp /tmp/lw-nginx-spa-gzip.snippet /etc/nginx/snippets/lw-spa-perf.conf
+
+strip_inline_compression() {
+  local site="$1"
+  sed -i '/^[[:space:]]*gzip[[:space:]]/d;/^[[:space:]]*gzip_/d;/^[[:space:]]*brotli[[:space:]]/d;/^[[:space:]]*brotli_/d' "$site"
+}
+
+ensure_static_brotli() {
+  local site="$1"
+  if grep -q 'brotli_static on' "$site"; then
+    return 0
+  fi
+  sed -i '/location ~\* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)\$ {/a\
+        brotli_static on;' "$site"
+}
 
 ensure_include() {
   local site="$1"
   [ -f "$site" ] || return 0
-  if grep -q "$MARK" "$site" || grep -q 'gzip on' "$site"; then
-    echo "skip (gzip present): $(basename "$site")"
-    return 0
-  fi
-  cp "$site" "${site}.bak-perf-$(date +%Y%m%d%H%M)"
+  install -d /etc/nginx/backups
+  cp "$site" "/etc/nginx/backups/$(basename "$site").bak-perf-$(date +%Y%m%d%H%M)"
+  strip_inline_compression "$site"
+  if grep -q "$MARK" "$site"; then
+    echo "refresh snippet include: $(basename "$site")"
+  else
+  sed -i '/include.*lw-spa-perf.conf/d' "$site"
   awk -v inc="    include /etc/nginx/snippets/lw-spa-perf.conf; # lw-perf-spa" '
-    /^[[:space:]]*server[[:space:]]*\{/ && !inserted {
+    /^[[:space:]]*listen[[:space:]]+443/ && !inserted {
       print
       print inc
       inserted=1
@@ -49,7 +84,9 @@ ensure_include() {
     }
     { print }
   ' "$site" > "${site}.tmp" && mv "${site}.tmp" "$site"
+  ensure_static_brotli "$site"
   echo "patched: $(basename "$site")"
+  fi
 }
 
 for name in morlevy ashrafessa melamedia idm lawyer.mela-media.co.il; do
@@ -66,33 +103,25 @@ REMOTE
 
 run ssh -i "$SSH_KEY" -o BatchMode=yes "$BACKEND_HOST" bash -s <<'REMOTE'
 set -euo pipefail
-install -d /etc/nginx/snippets
-declare -A PORTS=(
-  [api.calls.melamedlaw.co.il]=3000
-  [api-morlevy.mela-media.co.il]=3001
-  [api-ashrafessa.mela-media.co.il]=3002
-  [api-melamedia.mela-media.co.il]=3003
-  [api-idm.mela-media.co.il]=3004
-)
+install -d /etc/nginx/snippets /etc/nginx/backups
+API_SNIP="/etc/nginx/snippets/lw-api-perf-common.conf"
+grep -v '^#' /tmp/lw-nginx-api.snippet > "$API_SNIP"
 
-for site in /etc/nginx/sites-enabled/*; do
+strip_api_dupes() {
+  sed -i '/^[[:space:]]*gzip[[:space:]]/d;/^[[:space:]]*gzip_/d;/^[[:space:]]*include.*lw-api-perf/d' "$1"
+}
+
+for site in /etc/nginx/sites-enabled/*-api /etc/nginx/sites-enabled/melamedlaw.co.il; do
   [ -f "$site" ] || continue
-  port=""
-  for host in "${!PORTS[@]}"; do
-    if grep -q "$host" "$site" 2>/dev/null; then port="${PORTS[$host]}"; break; fi
-  done
-  [[ -n "$port" ]] || continue
-  snip="/etc/nginx/snippets/lw-api-perf-${port}.conf"
-  if [[ ! -f "$snip" ]]; then
-    sed 's/__PORT__/'"$port"'/g' /tmp/lw-nginx-api.snippet | grep -v '^#' > "$snip"
-  fi
-  if grep -q "lw-api-perf-${port}.conf" "$site" 2>/dev/null; then
-    echo "skip api: $(basename "$site")"
+  grep -qE 'api-|melamedlaw' "$site" 2>/dev/null || continue
+  cp "$site" "/etc/nginx/backups/$(basename "$site").bak-perf-$(date +%Y%m%d%H%M)"
+  strip_api_dupes "$site"
+  if grep -q 'lw-api-perf-common.conf' "$site"; then
+    echo "refresh api include: $(basename "$site")"
     continue
   fi
-  cp "$site" "${site}.bak-perf-$(date +%Y%m%d%H%M)"
-  awk -v inc="    include /etc/nginx/snippets/lw-api-perf-${port}.conf; # lw-perf-api" '
-    /^[[:space:]]*server[[:space:]]*\{/ && !inserted {
+  awk -v inc="    include /etc/nginx/snippets/lw-api-perf-common.conf; # lw-perf-api" '
+    /^[[:space:]]*listen[[:space:]]+443/ && !inserted {
       print
       print inc
       inserted=1
@@ -100,7 +129,7 @@ for site in /etc/nginx/sites-enabled/*; do
     }
     { print }
   ' "$site" > "${site}.tmp" && mv "${site}.tmp" "$site"
-  echo "patched api: $(basename "$site") port=$port"
+  echo "patched api: $(basename "$site")"
 done
 
 rm -f /etc/nginx/sites-enabled/*.bak-perf-*
