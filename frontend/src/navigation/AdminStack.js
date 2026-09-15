@@ -25,18 +25,18 @@ import {
 } from "./screenPaths";
 import { useCalendarModuleEnabled } from "../services/firmSettings";
 import { LoginStackName } from "./LoginStack";
-import MainScreen from "../screens/mainScreen/MainScreen";
-import TaggedCasesScreen from "../screens/taggedCasesScreen/TaggedCasesScreen";
-import AllCasesScreen from "../screens/allCasesScreen/AllCasesScreen";
-import AllClientsScreen from "../screens/allClientsScreen/AllClientsScreen";
-import MyCasesScreen from "../screens/myCasesScreen/MyCasesScreen";
-import AllMangerScreen from "../screens/allMangerScreen/AllMangerScreen";
-import AllCasesTypeScreen from "../screens/allCasesTypeScreen/AllCasesTypeScreen";
-import RemindersScreen from "../screens/remindersScreen/RemindersScreen";
-import AdminSupportScreen from "../screens/admin/support/AdminSupportScreen";
 import BillingLockedScreen from "../components/billing/BillingLockedScreen";
 import { useBillingLock } from "../providers/BillingLockProvider";
 
+const MainScreen = lazy(() => import("../screens/mainScreen/MainScreen"));
+const TaggedCasesScreen = lazy(() => import("../screens/taggedCasesScreen/TaggedCasesScreen"));
+const AllCasesScreen = lazy(() => import("../screens/allCasesScreen/AllCasesScreen"));
+const AllClientsScreen = lazy(() => import("../screens/allClientsScreen/AllClientsScreen"));
+const MyCasesScreen = lazy(() => import("../screens/myCasesScreen/MyCasesScreen"));
+const AllMangerScreen = lazy(() => import("../screens/allMangerScreen/AllMangerScreen"));
+const AllCasesTypeScreen = lazy(() => import("../screens/allCasesTypeScreen/AllCasesTypeScreen"));
+const RemindersScreen = lazy(() => import("../screens/remindersScreen/RemindersScreen"));
+const AdminSupportScreen = lazy(() => import("../screens/admin/support/AdminSupportScreen"));
 const SigningManagerScreen = lazy(() => import("../screens/signingScreen/SigningManagerScreen"));
 const SigningSpotsPreviewScreen = lazy(() => import("../screens/signingScreen/SigningSpotsPreviewScreen"));
 const UploadFileForSigningScreen = lazy(() => import("../screens/signingScreen/UploadFileForSigningScreen"));

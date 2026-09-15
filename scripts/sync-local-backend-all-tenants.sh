@@ -63,7 +63,8 @@ if $DRY_RUN; then
   for db in "${TENANT_DBS[@]}"; do
     echo "[dry-run] migrate db $db"
   done
-  echo "[dry-run] pm2 restart ${PM2_NAMES[*]}"
+  echo "[dry-run] rolling pm2 restart ${PM2_NAMES[*]} (5s gap + /health wait each)"
+  echo "[dry-run] pm2 save"
   exit 0
 fi
 
@@ -71,12 +72,16 @@ tar czf "$TARBALL" -C "$ROOT/backend" \
   controllers lib services routes middlewares migrations
 
 scp -i "$SSH_KEY" -o BatchMode=yes "$TARBALL" "$API_HOST:/tmp/lw-backend-sync.tgz"
+scp -i "$SSH_KEY" -o BatchMode=yes "$ROOT/scripts/lib/pm2-rolling-restart.sh" "$API_HOST:/tmp/pm2-rolling-restart.sh"
 
 ssh -i "$SSH_KEY" -o BatchMode=yes "$API_HOST" bash -s <<'REMOTE'
 set -euo pipefail
+# shellcheck source=/tmp/pm2-rolling-restart.sh
+source /tmp/pm2-rolling-restart.sh
 TENANT_DIRS=(LayerWebsites MorLevi AshrafEssa Melamedia Idm)
 TENANT_DBS=(melamedlaw morlevy ashrafessa melamedia idm)
 PM2_NAMES=(melamed-backend morlevy-api ashrafessa-api melamedia-api idm-api)
+PM2_PORTS=(3000 3001 3002 3003 3004)
 
 for dir in "${TENANT_DIRS[@]}"; do
   echo ">>> overlay /root/$dir/backend"
@@ -91,13 +96,14 @@ for i in "${!TENANT_DIRS[@]}"; do
   (cd "/root/$dir/backend" && MIGRATION_PGDATABASE="$DBNAME" bash migrations/migration-backfill-applied.sh && MIGRATION_PGDATABASE="$DBNAME" bash migrations/migration-run.sh)
 done
 
-for pm2 in "${PM2_NAMES[@]}"; do
-  echo ">>> pm2 restart $pm2"
-  pm2 restart "$pm2"
-  sleep 2
+for i in "${!PM2_NAMES[@]}"; do
+  rolling_pm2_restart "${PM2_NAMES[$i]}" "${PM2_PORTS[$i]}"
 done
 
-rm -f /tmp/lw-backend-sync.tgz
+pm2 save
+echo ">>> pm2 save complete"
+
+rm -f /tmp/lw-backend-sync.tgz /tmp/pm2-rolling-restart.sh
 echo "Backend sync complete"
 REMOTE
 
