@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { Suspense, lazy } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import TopAndRightNavBar from "../components/navBars/TopAndRightNavBar";
 import RouteFallback from "../components/simpleComponents/RouteFallback";
@@ -14,13 +14,14 @@ import {
 } from "./screenPaths";
 import { LoginStackName } from "./LoginStack";
 import { AdminStackName } from "../navigation/AdminStack";
-import ClientMainScreen from "../screens/client/clientMainScreen/ClientMainScreen";
-import ClientCasesScreen from "../screens/client/clientCasesScreen/ClientCasesScreen";
-import SigningScreen from "../screens/signingScreen/SigningScreen";
-import NotificationsScreen from "../screens/client/notifications/NotificationsScreen";
-import ProfileScreen from "../screens/client/profile/ProfileScreen";
 import BillingLockedScreen from "../components/billing/BillingLockedScreen";
 import { useBillingLock } from "../providers/BillingLockProvider";
+
+const ClientMainScreen = lazy(() => import("../screens/client/clientMainScreen/ClientMainScreen"));
+const ClientCasesScreen = lazy(() => import("../screens/client/clientCasesScreen/ClientCasesScreen"));
+const SigningScreen = lazy(() => import("../screens/signingScreen/SigningScreen"));
+const NotificationsScreen = lazy(() => import("../screens/client/notifications/NotificationsScreen"));
+const ProfileScreen = lazy(() => import("../screens/client/profile/ProfileScreen"));
 
 export const ClientStackName = "/ClientStack";
 
