@@ -572,12 +572,12 @@
 
 .lw-signing-pageInner {
     position: relative;
-    justify-content: flex-start;
+    display: block;
     margin-inline: auto;
-    /* Width is set inline to renderWidth so the overlay and canvas share
-       one coordinate space. max-width:100% prevents overflow when the
-       container is narrower than the rendered page. */
-    max-width: 100%;
+    /* Must match react-pdf Page width on EVERY page — spots use the same scale.
+       Inline style sets displayWidth once the canvas is measured. */
+    width: var(--lw-pdf-render-width, 50rem);
+    max-width: min(100%, var(--lw-pdf-render-width, 50rem));
     min-inline-size: 0;
     /* PDF coords are always LTR (x=0 = physical left). Keep overlay math stable in RTL UI. */
     direction: ltr;

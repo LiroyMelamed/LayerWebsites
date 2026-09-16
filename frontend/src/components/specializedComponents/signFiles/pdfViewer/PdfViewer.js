@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import "../../../../utils/pdfjsConfig";
 import { Document, Page } from "react-pdf";
 import SimpleContainer from "../../../simpleComponents/SimpleContainer";
@@ -95,7 +95,8 @@ function LazyPdfPage({
     }, [pdfProxy, pageNumber, pageAspect]);
 
     const placeholderHeight = Math.round(renderWidth * (pageAspect || FALLBACK_PAGE_ASPECT));
-    const spotScale = spotSpaceScale(measuredWidth);
+    const displayWidth = measuredWidth > 0 ? measuredWidth : renderWidth;
+    const spotScale = spotSpaceScale(measuredWidth) || (renderWidth / BASE_RENDER_WIDTH);
 
     return (
         <div ref={wrapRef} className="lw-signing-pageWrap">
@@ -103,7 +104,7 @@ function LazyPdfPage({
                 className="lw-signing-pageInner"
                 data-page-number={pageNumber}
                 data-measured-width={measuredWidth || undefined}
-                style={{ width: renderWidth, maxWidth: "100%" }}
+                style={{ width: displayWidth, maxWidth: "100%" }}
             >
                 {visible ? (
                     <>
@@ -116,22 +117,20 @@ function LazyPdfPage({
                                 onRenderSuccess={() => setRenderToken((n) => n + 1)}
                             />
                         </SimpleContainer>
-                        {spotScale > 0 ? (
-                            <SignatureSpotsLayer
-                                pageNumber={pageNumber}
-                                spots={spots}
-                                onUpdateSpot={onUpdateSpot}
-                                onRemoveSpot={onRemoveSpot}
-                                onRequestRemove={onRequestRemove}
-                                onSelectSpot={onSelectSpot}
-                                onEditSpot={onEditSpot}
-                                onRequestContext={onRequestContext}
-                                signers={signers}
-                                scale={spotScale}
-                                selectedSpotIndex={selectedSpotIndex}
-                                selectedSpotId={selectedSpotId}
-                            />
-                        ) : null}
+                        <SignatureSpotsLayer
+                            pageNumber={pageNumber}
+                            spots={spots}
+                            onUpdateSpot={onUpdateSpot}
+                            onRemoveSpot={onRemoveSpot}
+                            onRequestRemove={onRequestRemove}
+                            onSelectSpot={onSelectSpot}
+                            onEditSpot={onEditSpot}
+                            onRequestContext={onRequestContext}
+                            signers={signers}
+                            scale={spotScale}
+                            selectedSpotIndex={selectedSpotIndex}
+                            selectedSpotId={selectedSpotId}
+                        />
                     </>
                 ) : (
                     <div
@@ -178,6 +177,18 @@ export default function PdfViewer({
     const viewerRef = useRef(null);
     const [containerWidth, setContainerWidth] = useState(BASE_RENDER_WIDTH);
 
+    const measureContainerWidth = useCallback(() => {
+        const el = viewerRef.current;
+        if (!el) return;
+
+        const column = el.closest(".lw-signing-pdfViewerMain")
+            || el.closest(".lw-signing-pdfViewerRow")
+            || el.parentElement;
+        const target = column || el;
+        const w = target.clientWidth || target.getBoundingClientRect().width;
+        if (w && Number.isFinite(w) && w >= 280) setContainerWidth(w);
+    }, []);
+
     useEffect(() => {
         if (pdfSource || !pdfFile) {
             setObjectUrl(null);
@@ -190,38 +201,35 @@ export default function PdfViewer({
 
     const file = pdfSource || objectUrl;
 
+    useLayoutEffect(() => {
+        measureContainerWidth();
+    }, [file, numPages, measureContainerWidth]);
+
     useEffect(() => {
         const el = viewerRef.current;
         if (!el) return;
 
-        const update = () => {
-            // Measure the flex column the viewer lives in, not the viewer itself
-            // (the viewer shrink-wraps its content and creates a chicken-and-egg).
-            const column = el.closest(".lw-signing-pdfViewerMain")
-                || el.closest(".lw-signing-pdfViewerRow")
-                || el.parentElement;
-            const target = column || el;
-            const w = target.clientWidth || target.getBoundingClientRect().width;
-            if (w && Number.isFinite(w) && w >= 280) setContainerWidth(w);
-        };
-
-        update();
+        measureContainerWidth();
 
         let ro;
         if (typeof ResizeObserver !== "undefined") {
-            ro = new ResizeObserver(() => update());
-            const column = el.closest(".lw-signing-pdfViewerMain") || el;
-            ro.observe(column);
-            if (column !== el) ro.observe(el);
+            ro = new ResizeObserver(() => measureContainerWidth());
+            for (const target of [
+                el.closest(".lw-signing-pdfViewerMain"),
+                el.closest(".lw-signing-pdfViewerRow"),
+                el,
+            ].filter(Boolean)) {
+                ro.observe(target);
+            }
         } else {
-            window.addEventListener("resize", update);
+            window.addEventListener("resize", measureContainerWidth);
         }
 
         return () => {
             if (ro) ro.disconnect();
-            else window.removeEventListener("resize", update);
+            else window.removeEventListener("resize", measureContainerWidth);
         };
-    }, [numPages, file]);
+    }, [numPages, file, measureContainerWidth]);
 
     useEffect(() => {
         const container = viewerRef.current;
@@ -299,6 +307,7 @@ export default function PdfViewer({
         <SimpleContainer
             className="lw-signing-pdfViewer"
             ref={viewerRef}
+            style={{ "--lw-pdf-render-width": `${renderWidth}px` }}
         >
             <Document
                 file={file}
@@ -315,6 +324,9 @@ export default function PdfViewer({
                 onLoadSuccess={(pdf) => {
                     setNumPages(pdf.numPages || 0);
                     setPdfProxy(pdf);
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(measureContainerWidth);
+                    });
                     if (typeof onDocumentReady === "function") onDocumentReady();
                 }}
                 onLoadError={(err) => {
