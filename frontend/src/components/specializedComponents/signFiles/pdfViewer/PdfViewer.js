@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import "../../../../utils/pdfjsConfig";
 import { Document, Page } from "react-pdf";
 import SimpleContainer from "../../../simpleComponents/SimpleContainer";
@@ -104,27 +104,22 @@ function LazyPdfPage({
     const placeholderHeight = Math.round(renderWidth * (pageAspect || FALLBACK_PAGE_ASPECT));
     const spotScale = spotSpaceScale(measuredWidth);
 
-    const pageBoxWidth = measuredWidth > 0 ? measuredWidth : renderWidth;
-
     return (
         <div ref={wrapRef} className="lw-signing-pageWrap">
             <SimpleContainer
                 className="lw-signing-pageInner"
                 data-page-number={pageNumber}
                 data-measured-width={measuredWidth || undefined}
-                style={{ width: pageBoxWidth, maxWidth: "100%" }}
             >
                 {visible ? (
-                    <>
-                        <SimpleContainer className="lw-signing-pdfPage" ref={pageBoxRef}>
-                            <Page
-                                pageNumber={pageNumber}
-                                width={renderWidth}
-                                renderTextLayer={false}
-                                renderAnnotationLayer={false}
-                                onRenderSuccess={() => setRenderToken((n) => n + 1)}
-                            />
-                        </SimpleContainer>
+                    <SimpleContainer className="lw-signing-pdfPage" ref={pageBoxRef}>
+                        <Page
+                            pageNumber={pageNumber}
+                            width={renderWidth}
+                            renderTextLayer={false}
+                            renderAnnotationLayer={false}
+                            onRenderSuccess={() => setRenderToken((n) => n + 1)}
+                        />
                         {spotScale > 0 ? (
                             <SignatureSpotsLayer
                                 pageNumber={pageNumber}
@@ -141,7 +136,7 @@ function LazyPdfPage({
                                 selectedSpotId={selectedSpotId}
                             />
                         ) : null}
-                    </>
+                    </SimpleContainer>
                 ) : (
                     <div
                         className="lw-signing-pagePlaceholder"
@@ -190,11 +185,20 @@ export default function PdfViewer({
     const measureContainerWidth = useCallback(() => {
         const el = viewerRef.current;
         if (!el) return;
-        // Measure the flex column, not the shrink-wrapped PDF pages inside it.
-        const target = el.closest(".lw-signing-pdfViewerMain") || el;
-        const w = target.getBoundingClientRect().width;
-        if (w && Number.isFinite(w) && w >= 200) {
-            setContainerWidth(w);
+
+        const candidates = [
+            el.closest(".lw-signing-pdfViewerMain"),
+            el.closest(".lw-signing-pdfViewerRow"),
+            el.parentElement,
+            el,
+        ].filter(Boolean);
+
+        for (const target of candidates) {
+            const w = target.clientWidth || target.getBoundingClientRect().width;
+            if (w && Number.isFinite(w) && w >= 280) {
+                setContainerWidth(w);
+                return;
+            }
         }
     }, []);
 
@@ -210,6 +214,10 @@ export default function PdfViewer({
 
     const file = pdfSource || objectUrl;
 
+    useLayoutEffect(() => {
+        measureContainerWidth();
+    }, [file, numPages, measureContainerWidth]);
+
     useEffect(() => {
         const el = viewerRef.current;
         if (!el) return;
@@ -219,8 +227,13 @@ export default function PdfViewer({
         let ro;
         if (typeof ResizeObserver !== "undefined") {
             ro = new ResizeObserver(() => measureContainerWidth());
-            const target = el.closest(".lw-signing-pdfViewerMain") || el;
-            ro.observe(target);
+            for (const target of [
+                el.closest(".lw-signing-pdfViewerMain"),
+                el.closest(".lw-signing-pdfViewerRow"),
+                el,
+            ].filter(Boolean)) {
+                ro.observe(target);
+            }
         } else {
             window.addEventListener("resize", measureContainerWidth);
         }
