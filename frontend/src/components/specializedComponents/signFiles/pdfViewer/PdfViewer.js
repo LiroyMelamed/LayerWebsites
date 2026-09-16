@@ -52,11 +52,6 @@ function LazyPdfPage({
         return () => io.disconnect();
     }, [visible]);
 
-    /**
-     * Measure the canvas that was actually drawn, never the width we asked for.
-     * Spot coordinates are persisted against this measurement, so an assumed
-     * width here silently rescales every spot on the page.
-     */
     useEffect(() => {
         if (!visible) return undefined;
         const host = pageBoxRef.current;
@@ -83,8 +78,6 @@ function LazyPdfPage({
         return () => ro?.disconnect();
     }, [visible, renderWidth, renderToken]);
 
-    // Real page aspect ratio, so the lazy placeholder reserves the correct
-    // height and page hit-testing is not thrown off by a guessed one.
     useEffect(() => {
         if (!pdfProxy || pageAspect > 0) return undefined;
         let cancelled = false;
@@ -102,7 +95,8 @@ function LazyPdfPage({
     }, [pdfProxy, pageNumber, pageAspect]);
 
     const placeholderHeight = Math.round(renderWidth * (pageAspect || FALLBACK_PAGE_ASPECT));
-    const spotScale = spotSpaceScale(measuredWidth);
+    const displayWidth = measuredWidth > 0 ? measuredWidth : renderWidth;
+    const spotScale = spotSpaceScale(measuredWidth) || (renderWidth / BASE_RENDER_WIDTH);
 
     return (
         <div ref={wrapRef} className="lw-signing-pageWrap">
@@ -110,33 +104,34 @@ function LazyPdfPage({
                 className="lw-signing-pageInner"
                 data-page-number={pageNumber}
                 data-measured-width={measuredWidth || undefined}
+                style={{ width: displayWidth, maxWidth: "100%" }}
             >
                 {visible ? (
-                    <SimpleContainer className="lw-signing-pdfPage" ref={pageBoxRef}>
-                        <Page
-                            pageNumber={pageNumber}
-                            width={renderWidth}
-                            renderTextLayer={false}
-                            renderAnnotationLayer={false}
-                            onRenderSuccess={() => setRenderToken((n) => n + 1)}
-                        />
-                        {spotScale > 0 ? (
-                            <SignatureSpotsLayer
+                    <>
+                        <SimpleContainer className="lw-signing-pdfPage" ref={pageBoxRef}>
+                            <Page
                                 pageNumber={pageNumber}
-                                spots={spots}
-                                onUpdateSpot={onUpdateSpot}
-                                onRemoveSpot={onRemoveSpot}
-                                onRequestRemove={onRequestRemove}
-                                onSelectSpot={onSelectSpot}
-                                onEditSpot={onEditSpot}
-                                onRequestContext={onRequestContext}
-                                signers={signers}
-                                scale={spotScale}
-                                selectedSpotIndex={selectedSpotIndex}
-                                selectedSpotId={selectedSpotId}
+                                width={renderWidth}
+                                renderTextLayer={false}
+                                renderAnnotationLayer={false}
+                                onRenderSuccess={() => setRenderToken((n) => n + 1)}
                             />
-                        ) : null}
-                    </SimpleContainer>
+                        </SimpleContainer>
+                        <SignatureSpotsLayer
+                            pageNumber={pageNumber}
+                            spots={spots}
+                            onUpdateSpot={onUpdateSpot}
+                            onRemoveSpot={onRemoveSpot}
+                            onRequestRemove={onRequestRemove}
+                            onSelectSpot={onSelectSpot}
+                            onEditSpot={onEditSpot}
+                            onRequestContext={onRequestContext}
+                            signers={signers}
+                            scale={spotScale}
+                            selectedSpotIndex={selectedSpotIndex}
+                            selectedSpotId={selectedSpotId}
+                        />
+                    </>
                 ) : (
                     <div
                         className="lw-signing-pagePlaceholder"
@@ -186,20 +181,12 @@ export default function PdfViewer({
         const el = viewerRef.current;
         if (!el) return;
 
-        const candidates = [
-            el.closest(".lw-signing-pdfViewerMain"),
-            el.closest(".lw-signing-pdfViewerRow"),
-            el.parentElement,
-            el,
-        ].filter(Boolean);
-
-        for (const target of candidates) {
-            const w = target.clientWidth || target.getBoundingClientRect().width;
-            if (w && Number.isFinite(w) && w >= 280) {
-                setContainerWidth(w);
-                return;
-            }
-        }
+        const column = el.closest(".lw-signing-pdfViewerMain")
+            || el.closest(".lw-signing-pdfViewerRow")
+            || el.parentElement;
+        const target = column || el;
+        const w = target.clientWidth || target.getBoundingClientRect().width;
+        if (w && Number.isFinite(w) && w >= 280) setContainerWidth(w);
     }, []);
 
     useEffect(() => {
