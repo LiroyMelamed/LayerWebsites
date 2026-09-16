@@ -572,10 +572,11 @@
 
 .lw-signing-pageInner {
     position: relative;
-    display: block;
+    justify-content: flex-start;
     margin-inline: auto;
-    /* Shrink-wrap the rendered page only — never wider than the canvas. */
-    width: fit-content;
+    /* Width is set inline to renderWidth so the overlay and canvas share
+       one coordinate space. max-width:100% prevents overflow when the
+       container is narrower than the rendered page. */
     max-width: 100%;
     min-inline-size: 0;
     /* PDF coords are always LTR (x=0 = physical left). Keep overlay math stable in RTL UI. */
@@ -586,12 +587,11 @@
 
 .lw-signing-pdfPage {
     position: relative;
-    display: block;
-    line-height: 0;
-    /* Overlay + hit-testing share this box, which matches the canvas exactly. */
-    width: fit-content;
+    width: 100%;
     max-width: 100%;
     min-inline-size: 0;
+    justify-content: flex-start;
+    align-items: flex-start;
     direction: ltr;
 }
 
@@ -605,9 +605,9 @@
 }
 
 .lw-signing-pdfViewer .react-pdf__Page {
-    /* Sized by its canvas. Never clamp with max-width: a clamped page is a
-       page rendered at a different scale than its spot coordinates assume. */
-    width: fit-content;
+    /* Fit inside pageInner, never exceed it. */
+    max-width: 100%;
+    width: auto !important;
     direction: ltr;
 }
 
@@ -620,15 +620,15 @@
     min-height: 40vh;
 }
 
-/* Keep the canvas at react-pdf's rendered width. Global `canvas { max-width:100% }`
-   was shrinking the preview inside the wide viewer and desyncing the page box. */
+/* Canvas must stay inside the page box. max-width:100% lets it shrink when the
+   container is narrower than renderWidth. width/height auto keeps aspect ratio. */
 .lw-signing-pdfViewer canvas {
     display: block;
-    position: relative;
-    z-index: 1;
-    max-width: none;
+    max-width: 100%;
     width: auto !important;
     height: auto !important;
+    position: relative;
+    z-index: 1;
 }
 
 @media (max-width: 34rem) {
