@@ -750,7 +750,7 @@ export default function UploadFileForSigningScreen() {
         }
     };
 
-    const handleFieldPanelSelect = (fieldType) => {
+    const handleFieldPanelSelect = (fieldType, isRetry = false) => {
         const signerIdx = getSelectedSignerIndex();
         const pageNumber = currentPage || 1;
         setSelectedFieldType(fieldType);
@@ -771,6 +771,11 @@ export default function UploadFileForSigningScreen() {
 
         const container = document.querySelector('.lw-signing-pdfViewer');
         const pageEl = container?.querySelector(`[data-page-number="${pageNumber}"]`);
+        if (!isRetry && (!pageEl || !(Number(pageEl.dataset.measuredWidth) > 0))) {
+            requestAnimationFrame(() => handleFieldPanelSelect(fieldType, true));
+            return;
+        }
+
         let anchor = {};
         if (container && pageEl) {
             const pageRect = pageEl.getBoundingClientRect();
