@@ -572,13 +572,11 @@
 
 .lw-signing-pageInner {
     position: relative;
-    justify-content: flex-start;
+    display: block;
     margin-inline: auto;
-    /* Match react-pdf render width until the canvas is measured, then lock to
-       the measured display width so the overlay and PDF share one page box. */
+    /* Shrink-wrap the rendered page only — never wider than the canvas. */
     width: fit-content;
-    min-width: min(var(--lw-pdf-render-width, 50rem), 100%);
-    max-width: none;
+    max-width: 100%;
     min-inline-size: 0;
     /* PDF coords are always LTR (x=0 = physical left). Keep overlay math stable in RTL UI. */
     direction: ltr;
@@ -588,12 +586,12 @@
 
 .lw-signing-pdfPage {
     position: relative;
-    /* Sized by the canvas, like .lw-signing-pageInner above. */
+    display: block;
+    line-height: 0;
+    /* Overlay + hit-testing share this box, which matches the canvas exactly. */
     width: fit-content;
-    max-width: none;
+    max-width: 100%;
     min-inline-size: 0;
-    justify-content: flex-start;
-    align-items: flex-start;
     direction: ltr;
 }
 
