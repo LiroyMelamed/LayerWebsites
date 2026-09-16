@@ -574,8 +574,7 @@
     position: relative;
     display: block;
     margin-inline: auto;
-    /* Must match react-pdf Page width on EVERY page — spots use the same scale.
-       Inline style sets displayWidth once the canvas is measured. */
+    /* Must match react-pdf Page width on EVERY page — spots use the same scale. */
     width: var(--lw-pdf-render-width, 50rem);
     max-width: min(100%, var(--lw-pdf-render-width, 50rem));
     min-inline-size: 0;
@@ -636,6 +635,11 @@
         width: 100%;
         flex-basis: 100%;
     }
+}
+
+.lw-signing-pageInner.lw-simpleContainer,
+.lw-signing-pdfPage.lw-simpleContainer {
+    display: block;
 }
 
 .lw-signing-spotsLayer {
