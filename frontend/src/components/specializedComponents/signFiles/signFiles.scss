@@ -574,12 +574,10 @@
     position: relative;
     justify-content: flex-start;
     margin-inline: auto;
-    /* Shrink-wrap the rendered canvas so this box IS the page box. Do not clamp
-       it to a separate width: when this element and the canvas could size
-       independently, spots were positioned against one width and drawn against
-       another, shifting signatures up in proportion to their distance down the
-       page. Spot scale is measured from the canvas in PdfViewer. */
+    /* Match react-pdf render width until the canvas is measured, then lock to
+       the measured display width so the overlay and PDF share one page box. */
     width: fit-content;
+    min-width: min(var(--lw-pdf-render-width, 50rem), 100%);
     max-width: none;
     min-inline-size: 0;
     /* PDF coords are always LTR (x=0 = physical left). Keep overlay math stable in RTL UI. */
@@ -624,16 +622,15 @@
     min-height: 40vh;
 }
 
-/* The canvas keeps exactly the CSS size react-pdf gave it. The previous
-   `max-width: 100%` plus `width/height: auto !important` let the browser
-   rescale the drawn page independently of the width it was rendered at, so the
-   spot overlay and the canvas used different scales. If a page is ever wider
-   than the viewport it now scrolls (see overflow-x above) rather than being
-   silently rescaled, which would corrupt every coordinate on the page. */
+/* Keep the canvas at react-pdf's rendered width. Global `canvas { max-width:100% }`
+   was shrinking the preview inside the wide viewer and desyncing the page box. */
 .lw-signing-pdfViewer canvas {
     display: block;
     position: relative;
     z-index: 1;
+    max-width: none;
+    width: auto !important;
+    height: auto !important;
 }
 
 @media (max-width: 34rem) {

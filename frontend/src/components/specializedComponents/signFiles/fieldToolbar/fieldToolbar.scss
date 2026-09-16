@@ -12,11 +12,14 @@
   display: flex;
   gap: v.$space-3;
   align-items: flex-start;
+  width: 100%;
 }
 
 .lw-signing-pdfViewerMain {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
+  width: 100%;
+  align-self: stretch;
 }
 
 .lw-floatingAddField {
