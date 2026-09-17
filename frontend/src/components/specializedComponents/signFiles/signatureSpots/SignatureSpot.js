@@ -369,14 +369,16 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
             title={t("signing.spot.signedByTitle", { name: signerNameSafe })}
         >
             {!isSigned && (
-                <div className="lw-signing-spotMeta">
-                    <span className="lw-signing-spotType">
-                        <span className="lw-signing-spotTypeLabel">{fieldTypeLabels[fieldType] || t('signing.fields.signature')}</span>
-                    </span>
+                <>
+                    <div className="lw-signing-spotMeta">
+                        <span className="lw-signing-spotType">
+                            <span className="lw-signing-spotTypeLabel">{fieldTypeLabels[fieldType] || t('signing.fields.signature')}</span>
+                        </span>
+                    </div>
                     <span className={`lw-signing-spotRequired ${isRequired ? 'is-required' : 'is-optional'}`}>
                         {isRequired ? t('signing.fieldSettings.requiredShort') : t('signing.fieldSettings.optionalShort')}
                     </span>
-                </div>
+                </>
             )}
 
             {/* Value renderer (non-signature fields). Must render above click-capture overlay but not block clicks. */}
