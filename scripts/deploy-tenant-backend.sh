@@ -34,8 +34,20 @@ git fetch origin $BRANCH
 git checkout $BRANCH
 git pull origin $BRANCH
 chmod +x backend/migrations/migration-run.sh backend/migrations/migration-backfill-applied.sh 2>/dev/null || true
-DBNAME=\$(grep '^DB_NAME=' backend/.env | head -1 | cut -d= -f2- | sed 's/^["'\'']//;s/["'\'']$//')
 cd backend
+LOCK_HASH=\$(sha256sum package-lock.json | awk '{print \$1}')
+STORED_HASH=""
+if [[ -f .deploy-package-lock.sha ]]; then
+  STORED_HASH=\$(cat .deploy-package-lock.sha)
+fi
+if [[ "\$LOCK_HASH" != "\$STORED_HASH" ]]; then
+  echo ">>> package-lock.json changed — npm ci"
+  npm ci --omit=dev
+  echo "\$LOCK_HASH" > .deploy-package-lock.sha
+else
+  echo ">>> package-lock.json unchanged — skip npm ci"
+fi
+DBNAME=\$(grep '^DB_NAME=' .env | head -1 | cut -d= -f2- | sed 's/^["'\'']//;s/["'\'']$//')
 MIGRATION_PGDATABASE="\$DBNAME" bash migrations/migration-backfill-applied.sh
 MIGRATION_PGDATABASE="\$DBNAME" bash migrations/migration-run.sh
 rolling_pm2_restart $PM2 $PORT
