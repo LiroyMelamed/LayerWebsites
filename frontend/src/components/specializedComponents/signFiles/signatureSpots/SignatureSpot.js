@@ -1,10 +1,8 @@
 // src/components/specializedComponents/signFiles/signatureSpots/SignatureSpot.js
 import React, { useRef } from "react";
 import SimpleContainer from "../../../simpleComponents/SimpleContainer";
-import SimpleIcon from "../../../simpleComponents/SimpleIcon";
 import { useTranslation } from "react-i18next";
 import { signerPaletteClassByIndex } from '../../../../utils/signerColorMap';
-import { icons } from "../../../../assets/icons/icons";
 import {
     SPOT_MIN_HEIGHT,
     SPOT_MIN_WIDTH,
@@ -56,18 +54,6 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
         idnumber: t('signing.fields.idNumber'),
         lawyerstamp: t('signing.fields.lawyerStamp'),
         clientstamp: t('signing.fields.clientStamp'),
-    };
-
-    const fieldTypeIcons = {
-        signature: icons?.SigningFields?.signature,
-        email: icons?.SigningFields?.email,
-        phone: icons?.SigningFields?.phone,
-        initials: icons?.SigningFields?.initials,
-        text: icons?.SigningFields?.text,
-        date: icons?.SigningFields?.date,
-        checkbox: icons?.SigningFields?.checkbox,
-        number: icons?.SigningFields?.idnumber,
-        idnumber: icons?.SigningFields?.idnumber,
     };
 
     const spotStyle = {
@@ -383,21 +369,16 @@ export default function SignatureSpot({ spot, index, onUpdateSpot, onRemoveSpot,
             title={t("signing.spot.signedByTitle", { name: signerNameSafe })}
         >
             {!isSigned && (
-                <div className="lw-signing-spotMeta">
-                    <span className="lw-signing-spotType">
-                        {fieldTypeIcons[fieldType] && (
-                            <SimpleIcon
-                                src={fieldTypeIcons[fieldType]}
-                                alt={fieldTypeLabels[fieldType] || t('signing.fields.signature')}
-                                size={14}
-                            />
-                        )}
-                        <span className="lw-signing-spotTypeLabel">{fieldTypeLabels[fieldType] || t('signing.fields.signature')}</span>
-                    </span>
+                <>
+                    <div className="lw-signing-spotMeta">
+                        <span className="lw-signing-spotType">
+                            <span className="lw-signing-spotTypeLabel">{fieldTypeLabels[fieldType] || t('signing.fields.signature')}</span>
+                        </span>
+                    </div>
                     <span className={`lw-signing-spotRequired ${isRequired ? 'is-required' : 'is-optional'}`}>
                         {isRequired ? t('signing.fieldSettings.requiredShort') : t('signing.fieldSettings.optionalShort')}
                     </span>
-                </div>
+                </>
             )}
 
             {/* Value renderer (non-signature fields). Must render above click-capture overlay but not block clicks. */}
