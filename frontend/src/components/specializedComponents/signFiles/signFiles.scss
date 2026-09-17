@@ -527,10 +527,6 @@
     flex-direction: column;
     align-items: center;
     direction: ltr;
-    /* Safety net: if a rendered page ends up wider than the container, scroll
-       to it instead of letting CSS rescale the canvas. Rescaling would break
-       the spot coordinate contract; a scrollbar only looks worse. */
-    overflow-x: auto;
 }
 
 .lw-signing-pageWrap {
@@ -574,13 +570,9 @@
     position: relative;
     justify-content: flex-start;
     margin-inline: auto;
-    /* Shrink-wrap the rendered canvas so this box IS the page box. Do not clamp
-       it to a separate width: when this element and the canvas could size
-       independently, spots were positioned against one width and drawn against
-       another, shifting signatures up in proportion to their distance down the
-       page. Spot scale is measured from the canvas in PdfViewer. */
-    width: fit-content;
-    max-width: none;
+    /* Must match react-pdf Page width on EVERY page — spots use the same scale. */
+    width: var(--lw-pdf-render-width, 50rem);
+    max-width: min(100%, var(--lw-pdf-render-width, 50rem));
     min-inline-size: 0;
     /* PDF coords are always LTR (x=0 = physical left). Keep overlay math stable in RTL UI. */
     direction: ltr;
@@ -590,13 +582,16 @@
 
 .lw-signing-pdfPage {
     position: relative;
-    /* Sized by the canvas, like .lw-signing-pageInner above. */
-    width: fit-content;
-    max-width: none;
+    display: block;
+    line-height: 0;
+    width: 100%;
+    max-width: 100%;
     min-inline-size: 0;
-    justify-content: flex-start;
-    align-items: flex-start;
     direction: ltr;
+}
+
+.lw-signing-pdfPage .react-pdf__Page {
+    margin: 0;
 }
 
 /* Keep Page box sized to the canvas — do NOT stretch to 100% independently
@@ -609,9 +604,9 @@
 }
 
 .lw-signing-pdfViewer .react-pdf__Page {
-    /* Sized by its canvas. Never clamp with max-width: a clamped page is a
-       page rendered at a different scale than its spot coordinates assume. */
-    width: fit-content;
+    /* Fit inside pageInner, never exceed it. */
+    max-width: 100%;
+    width: auto !important;
     direction: ltr;
 }
 
@@ -624,14 +619,13 @@
     min-height: 40vh;
 }
 
-/* The canvas keeps exactly the CSS size react-pdf gave it. The previous
-   `max-width: 100%` plus `width/height: auto !important` let the browser
-   rescale the drawn page independently of the width it was rendered at, so the
-   spot overlay and the canvas used different scales. If a page is ever wider
-   than the viewport it now scrolls (see overflow-x above) rather than being
-   silently rescaled, which would corrupt every coordinate on the page. */
+/* Canvas must stay inside the page box. max-width:100% lets it shrink when the
+   container is narrower than renderWidth. width/height auto keeps aspect ratio. */
 .lw-signing-pdfViewer canvas {
     display: block;
+    max-width: 100%;
+    width: auto !important;
+    height: auto !important;
     position: relative;
     z-index: 1;
 }
@@ -641,6 +635,15 @@
         width: 100%;
         flex-basis: 100%;
     }
+}
+
+.lw-signing-pageInner.lw-simpleContainer {
+    display: block;
+}
+
+.lw-signing-pdfPage.lw-simpleContainer,
+.lw-signing-spotsLayer.lw-simpleContainer {
+    display: block;
 }
 
 .lw-signing-spotsLayer {
