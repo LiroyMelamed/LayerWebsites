@@ -527,10 +527,6 @@
     flex-direction: column;
     align-items: center;
     direction: ltr;
-    /* Safety net: if a rendered page ends up wider than the container, scroll
-       to it instead of letting CSS rescale the canvas. Rescaling would break
-       the spot coordinate contract; a scrollbar only looks worse. */
-    overflow-x: auto;
 }
 
 .lw-signing-pageWrap {
@@ -572,7 +568,7 @@
 
 .lw-signing-pageInner {
     position: relative;
-    display: block;
+    justify-content: flex-start;
     margin-inline: auto;
     /* Must match react-pdf Page width on EVERY page — spots use the same scale. */
     width: var(--lw-pdf-render-width, 50rem);
@@ -586,11 +582,11 @@
 
 .lw-signing-pdfPage {
     position: relative;
+    display: block;
+    line-height: 0;
     width: 100%;
     max-width: 100%;
     min-inline-size: 0;
-    justify-content: flex-start;
-    align-items: flex-start;
     direction: ltr;
 }
 
@@ -637,8 +633,7 @@
     }
 }
 
-.lw-signing-pageInner.lw-simpleContainer,
-.lw-signing-pdfPage.lw-simpleContainer {
+.lw-signing-pageInner.lw-simpleContainer {
     display: block;
 }
 
