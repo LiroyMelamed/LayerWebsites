@@ -590,6 +590,10 @@
     direction: ltr;
 }
 
+.lw-signing-pdfPage .react-pdf__Page {
+    margin: 0;
+}
+
 /* Keep Page box sized to the canvas — do NOT stretch to 100% independently
    (that made page 1 look wider than later pages and shifted spots). */
 .lw-signing-pdfViewer .react-pdf__Document {
@@ -634,6 +638,11 @@
 }
 
 .lw-signing-pageInner.lw-simpleContainer {
+    display: block;
+}
+
+.lw-signing-pdfPage.lw-simpleContainer,
+.lw-signing-spotsLayer.lw-simpleContainer {
     display: block;
 }
 

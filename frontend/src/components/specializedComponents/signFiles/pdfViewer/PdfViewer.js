@@ -6,6 +6,7 @@ import SimpleLoader from "../../../simpleComponents/SimpleLoader";
 import SignatureSpotsLayer from "../signatureSpots/SignatureSpotsLayer";
 import { useTranslation } from "react-i18next";
 import { SPOT_BASE_WIDTH, spotSpaceScale } from "../../../../utils/signingSpotGeometry";
+import "../signFiles.scss";
 
 /** Spot coordinates are authored against this width; display may be wider. */
 export const BASE_RENDER_WIDTH = SPOT_BASE_WIDTH;
@@ -96,7 +97,10 @@ function LazyPdfPage({
     }, [pdfProxy, pageNumber, pageAspect]);
 
     const placeholderHeight = Math.round(renderWidth * (pageAspect || FALLBACK_PAGE_ASPECT));
-    const overlayScale = spotSpaceScale(measuredWidth) || (renderWidth / BASE_RENDER_WIDTH);
+    const hasStableMeasure = measuredWidth >= 50;
+    const displayWidth = hasStableMeasure ? measuredWidth : renderWidth;
+    const overlayScale = (hasStableMeasure ? spotSpaceScale(measuredWidth) : 0)
+        || (renderWidth / BASE_RENDER_WIDTH);
 
     return (
         <div ref={wrapRef} className="lw-signing-pageWrap">
@@ -104,7 +108,7 @@ function LazyPdfPage({
                 className="lw-signing-pageInner"
                 data-page-number={pageNumber}
                 data-measured-width={measuredWidth || undefined}
-                style={{ width: renderWidth, maxWidth: "100%" }}
+                style={{ width: displayWidth, maxWidth: "100%" }}
             >
                 {visible ? (
                     <SimpleContainer className="lw-signing-pdfPage" ref={pageBoxRef}>
