@@ -5,7 +5,8 @@ import SimpleContainer from "../../../simpleComponents/SimpleContainer";
 import SimpleLoader from "../../../simpleComponents/SimpleLoader";
 import SignatureSpotsLayer from "../signatureSpots/SignatureSpotsLayer";
 import { useTranslation } from "react-i18next";
-import { SPOT_BASE_WIDTH } from "../../../../utils/signingSpotGeometry";
+import { SPOT_BASE_WIDTH, spotSpaceScale } from "../../../../utils/signingSpotGeometry";
+import "../signFiles.scss";
 
 /** Spot coordinates are authored against this width; display may be wider. */
 export const BASE_RENDER_WIDTH = SPOT_BASE_WIDTH;
@@ -16,7 +17,6 @@ const FALLBACK_PAGE_ASPECT = 841.89 / 595.276;
 function LazyPdfPage({
     pageNumber,
     renderWidth,
-    spotScale,
     pdfProxy,
     spots,
     onUpdateSpot,
@@ -53,8 +53,7 @@ function LazyPdfPage({
         return () => io.disconnect();
     }, [visible]);
 
-    // Publish the measured canvas width for drag/resize/placement only.
-    // Display sizing always uses renderWidth so the page box cannot collapse.
+    // Publish measured canvas width for drag/resize/placement (dc093a2 coordinate system).
     useEffect(() => {
         if (!visible) return undefined;
         const host = pageBoxRef.current;
@@ -98,6 +97,10 @@ function LazyPdfPage({
     }, [pdfProxy, pageNumber, pageAspect]);
 
     const placeholderHeight = Math.round(renderWidth * (pageAspect || FALLBACK_PAGE_ASPECT));
+    const hasStableMeasure = measuredWidth >= 50;
+    const displayWidth = hasStableMeasure ? measuredWidth : renderWidth;
+    const overlayScale = (hasStableMeasure ? spotSpaceScale(measuredWidth) : 0)
+        || (renderWidth / BASE_RENDER_WIDTH);
 
     return (
         <div ref={wrapRef} className="lw-signing-pageWrap">
@@ -105,19 +108,17 @@ function LazyPdfPage({
                 className="lw-signing-pageInner"
                 data-page-number={pageNumber}
                 data-measured-width={measuredWidth || undefined}
-                style={{ width: renderWidth, maxWidth: "100%" }}
+                style={{ width: displayWidth, maxWidth: "100%" }}
             >
                 {visible ? (
-                    <>
-                        <SimpleContainer className="lw-signing-pdfPage" ref={pageBoxRef}>
-                            <Page
-                                pageNumber={pageNumber}
-                                width={renderWidth}
-                                renderTextLayer={false}
-                                renderAnnotationLayer={false}
-                                onRenderSuccess={() => setRenderToken((n) => n + 1)}
-                            />
-                        </SimpleContainer>
+                    <SimpleContainer className="lw-signing-pdfPage" ref={pageBoxRef}>
+                        <Page
+                            pageNumber={pageNumber}
+                            width={renderWidth}
+                            renderTextLayer={false}
+                            renderAnnotationLayer={false}
+                            onRenderSuccess={() => setRenderToken((n) => n + 1)}
+                        />
                         <SignatureSpotsLayer
                             pageNumber={pageNumber}
                             spots={spots}
@@ -128,11 +129,11 @@ function LazyPdfPage({
                             onEditSpot={onEditSpot}
                             onRequestContext={onRequestContext}
                             signers={signers}
-                            scale={spotScale}
+                            scale={overlayScale}
                             selectedSpotIndex={selectedSpotIndex}
                             selectedSpotId={selectedSpotId}
                         />
-                    </>
+                    </SimpleContainer>
                 ) : (
                     <div
                         className="lw-signing-pagePlaceholder"
@@ -148,8 +149,8 @@ function LazyPdfPage({
 /**
  * Single react-pdf Document for all pages — critical on iOS Safari.
  * Lazy-mounts off-screen pages for faster first paint.
- * Overlay scale uses renderWidth; measured canvas width is published per page
- * for drag/resize persistence only.
+ * Layout width uses renderWidth; overlay scale uses measured canvas width
+ * so spots stay aligned across screen sizes (dc093a2 coordinate system).
  */
 export default function PdfViewer({
     pdfFile,
@@ -293,8 +294,6 @@ export default function PdfViewer({
         return Math.floor(Math.min(safe - 16, 1400));
     }, [containerWidth]);
 
-    const spotScale = useMemo(() => renderWidth / BASE_RENDER_WIDTH, [renderWidth]);
-
     useEffect(() => {
         setNumPages(0);
         setPdfProxy(null);
@@ -342,7 +341,6 @@ export default function PdfViewer({
                             key={pageNumber}
                             pageNumber={pageNumber}
                             renderWidth={renderWidth}
-                            spotScale={spotScale}
                             pdfProxy={pdfProxy}
                             spots={spots}
                             onUpdateSpot={onUpdateSpot}
