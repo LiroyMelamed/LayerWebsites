@@ -8,6 +8,8 @@ TENANT="${1:-}"
 SSH_KEY="${SSH_KEY:-$HOME/.ssh/id_ed25519}"
 FRONTEND_HOST="${FRONTEND_HOST:-root@84.46.253.85}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=lib/deploy-ssh-retry.sh
+source "$ROOT/scripts/lib/deploy-ssh-retry.sh"
 RSYNC_SSH="ssh -i ${SSH_KEY} -o BatchMode=yes"
 
 if [[ "$TENANT" != "morlevy" && "$TENANT" != "ashrafessa" && "$TENANT" != "melamedia" && "$TENANT" != "idm" && "$TENANT" != "lawyer" ]]; then
@@ -27,15 +29,17 @@ cp "$TENANT_LOGO" public/firm-logo.png
 
 npm run "build:$TENANT"
 
+"$ROOT/frontend/scripts/restore-public-baseline.sh"
+
 DEPLOY_API="$(grep -o 'https://api-[^"]*' build/static/js/main.*.js | sort -u || true)"
 echo "# Built API: $DEPLOY_API"
 
-rsync -az --delete -e "$RSYNC_SSH" build/ "${FRONTEND_HOST}:/var/www/${TENANT}/"
+rsync_with_retry -az --delete -e "$RSYNC_SSH" build/ "${FRONTEND_HOST}:/var/www/${TENANT}/"
 
 # Always re-apply tenant logo after rsync (build may embed a stale public/firm-logo.png).
-scp -i "$SSH_KEY" -o BatchMode=yes "$TENANT_LOGO" "${FRONTEND_HOST}:/var/www/${TENANT}/firm-logo.png"
+scp_with_retry -i "$SSH_KEY" -o BatchMode=yes "$TENANT_LOGO" "${FRONTEND_HOST}:/var/www/${TENANT}/firm-logo.png"
 if [[ -f "public/tenants/${TENANT}/melamedia-mark.png" ]]; then
-  scp -i "$SSH_KEY" -o BatchMode=yes "public/tenants/${TENANT}/melamedia-mark.png" "${FRONTEND_HOST}:/var/www/${TENANT}/melamedia-mark.png"
+  scp_with_retry -i "$SSH_KEY" -o BatchMode=yes "public/tenants/${TENANT}/melamedia-mark.png" "${FRONTEND_HOST}:/var/www/${TENANT}/melamedia-mark.png"
 fi
 echo "# Deployed logo: $(file -b "$TENANT_LOGO")"
 

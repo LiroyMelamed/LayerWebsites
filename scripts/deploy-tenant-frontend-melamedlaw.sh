@@ -31,6 +31,8 @@ fi
 cp "$TENANT_LOGO" public/firm-logo.png
 npm run build:melamedlaw
 
+"$ROOT/frontend/scripts/restore-public-baseline.sh"
+
 DEPLOY_API="$(grep -o 'https://api[^"]*' build/static/js/main.*.js | sort -u || true)"
 echo "# Built API: $DEPLOY_API"
 if ! grep -q 'api.calls.melamedlaw.co.il' build/static/js/main.*.js; then

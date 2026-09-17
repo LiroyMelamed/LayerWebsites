@@ -19,6 +19,28 @@ main  →  commit + push
 
 Do **not** skip Melamedia QA and deploy all clients in one batch.
 
+## Automation scripts (on `main`)
+
+| Script | Purpose |
+|--------|---------|
+| `./scripts/propagate-main-to-tenants.sh` | Merge `origin/main` into tenant branches (uses git worktrees; restores build scratch first) |
+| `./scripts/propagate-main-to-tenants.sh melamedia` | QA step only — merge main → Melamedia |
+| `./scripts/deploy-melamedia-qa.sh` | Full QA gate: propagate Melamedia + deploy backend + frontend |
+| `./scripts/deploy-all-tenants-prod.sh` | All tenants after QA pass (pauses between frontend rsyncs) |
+
+Example after landing a fix on `main`:
+
+```bash
+git push origin main
+./scripts/deploy-melamedia-qa.sh
+# smoke https://melamedia.mela-media.co.il
+./scripts/propagate-main-to-tenants.sh melamedlaw morlevy ashrafessa idm
+./scripts/deploy-all-tenants-prod.sh
+git tag PROD_DD_MM_YYYY_LIROY && git push origin PROD_DD_MM_YYYY_LIROY
+```
+
+Backend deploy runs `npm ci --omit=dev` when `backend/package-lock.json` changes on the server.
+
 ## Branding (per tenant — do not mix)
 
 | Committed (yes) | Build scratch (never commit) |
