@@ -17,6 +17,8 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
+# shellcheck source=lib/deploy-ssh-retry.sh
+source "$ROOT/scripts/lib/deploy-ssh-retry.sh"
 
 DRY_RUN=false
 BACKEND=true
@@ -76,10 +78,14 @@ if $FRONTEND; then
 
   if ! $ML_SKIP; then
     run ./scripts/deploy-tenant-frontend-melamedlaw.sh
+    if ! $DRY_RUN; then pause_between_frontend_deploys; fi
   fi
   run ./scripts/deploy-tenant-frontend.sh morlevy
+  if ! $DRY_RUN; then pause_between_frontend_deploys; fi
   run ./scripts/deploy-tenant-frontend.sh ashrafessa
+  if ! $DRY_RUN; then pause_between_frontend_deploys; fi
   run ./scripts/deploy-tenant-frontend.sh melamedia
+  if ! $DRY_RUN; then pause_between_frontend_deploys; fi
   run ./scripts/deploy-tenant-frontend.sh idm
 fi
 

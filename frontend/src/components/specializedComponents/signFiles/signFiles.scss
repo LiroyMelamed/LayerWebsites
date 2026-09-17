@@ -1105,13 +1105,12 @@
 .lw-signing-spotType {
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
     background: var(--spot-badge-bg, var(--spot-border, var(--lw-color-primary, #2A4365)));
     color: var(--spot-badge-fg, #fff);
-    font-size: 0.625rem;
+    font-size: 0.5rem;
     font-weight: 700;
-    padding: 0.1rem 0.35rem;
-    border-radius: 0.375rem;
+    padding: 0.0625rem 0.28rem;
+    border-radius: 0.3125rem;
 }
 
 .lw-signing-spotTypeLabel {
@@ -1119,9 +1118,10 @@
 }
 
 .lw-signing-spotRequired {
-    font-size: 0.625rem;
-    padding: 0.1rem 0.35rem;
-    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.4375rem;
     background: var(--lw-color-white);
     border: 0.0625rem solid var(--spot-border, var(--lw-color-primary, #2A4365));
     color: var(--spot-border, var(--lw-color-primary, #2A4365));
@@ -1185,16 +1185,16 @@
 
 .lw-signing-spotRemove {
     position: absolute;
-    top: -0.75rem;
-    inset-inline-end: -0.75rem;
-    width: 1.5rem;
-    height: 1.5rem;
+    top: -0.625rem;
+    inset-inline-end: -0.625rem;
+    width: 1.25rem;
+    height: 1.25rem;
     background:
         linear-gradient(145deg, rgba(255, 255, 255, 0.18) 0%, transparent 55%),
         var(--lw-color-negative, #C53030);
     color: #fff;
     border-radius: 50%;
-    font-size: 0.75rem;
+    font-size: 0.625rem;
     font-weight: 700;
     display: flex;
     align-items: center;
@@ -1203,7 +1203,7 @@
     box-shadow:
         0 0.0625rem 0.125rem rgba(15, 23, 42, 0.18),
         0 0.2rem 0.45rem rgba(197, 48, 48, 0.35);
-    border: 0.125rem solid #fff;
+    border: 0.1rem solid #fff;
     z-index: 5;
     pointer-events: auto;
     touch-action: manipulation;
