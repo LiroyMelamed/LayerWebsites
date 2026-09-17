@@ -56,6 +56,9 @@ import "./PlatformSettingsScreen.scss";
 export const PlatformSettingsScreenName = "/PlatformSettingsScreen";
 
 // ─── Category definitions ────────────────────────────────────────────
+const isMelamedLawTenant =
+    String(process.env.REACT_APP_APP_NAME || "").toLowerCase() === "melamedlaw";
+
 const CATEGORIES = [
     { key: "messaging", labelKey: "platformSettings.cat_messaging", icon: "📧" },
     { key: "signing", labelKey: "platformSettings.cat_signing", icon: "✍️" },
@@ -67,6 +70,9 @@ const CATEGORIES = [
     { key: "channels", labelKey: "platformSettings.cat_channels", icon: "📡" },
     { key: "admins", labelKey: "platformSettings.cat_admins", icon: "👤" },
     { key: "knowledgeDocs", labelKey: "platformSettings.cat_knowledgeDocs", icon: "🤖" },
+    ...(isMelamedLawTenant
+        ? [{ key: "contractor_monitor", labelKey: "platformSettings.cat_contractor_monitor", icon: "🏗️" }]
+        : []),
 ];
 
 // SMS sender keys

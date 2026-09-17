@@ -771,6 +771,7 @@ export default function UploadFileForSigningScreen() {
 
         const container = document.querySelector('.lw-signing-pdfViewer');
         const pageEl = container?.querySelector(`[data-page-number="${pageNumber}"]`);
+
         let anchor = {};
         if (container && pageEl) {
             const pageRect = pageEl.getBoundingClientRect();
