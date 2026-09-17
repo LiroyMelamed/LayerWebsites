@@ -2,6 +2,7 @@ import DashboardDrillDownModal from "./DashboardDrillDownModal";
 import { openCaseMenuModal } from "./openCaseMenuModal";
 import { openSigningFileModal } from "./openSigningFileModal";
 import { resolveSigningQueueState } from "./commandCenterUtils";
+import { filterTodayActivityByActor } from "./managerHomeDrillDownUtils";
 
 function openDrillDownModal({
     openPopup,
@@ -114,11 +115,8 @@ export function createDashboardModalHandlers({ openPopup, pushPopup, closePopup,
     });
 
     const openMostActiveManagerLog = (drillDown, manager) => {
-        const managerId = manager?.managerId;
-        const items = (drillDown?.todayActivityLog || []).filter((entry) => {
-            if (!managerId) return true;
-            return String(entry.managerId) === String(managerId);
-        });
+        const actorId = manager?.managerId;
+        const items = filterTodayActivityByActor(drillDown?.todayActivityLog, actorId);
 
         return openActivityList({
             title: t("managerHome.drillDown.managerActivityTitle", {
