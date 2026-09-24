@@ -27,6 +27,8 @@ const DoughnutChart = ({ data, colors, labels, centerText, subText, className, o
 
     const options = {
         cutout: "70%",
+        responsive: true,
+        maintainAspectRatio: false,
         plugins: {
             legend: {
                 display: false,
