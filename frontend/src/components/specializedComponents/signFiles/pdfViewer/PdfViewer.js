@@ -3,6 +3,7 @@ import "../../../../utils/pdfjsConfig";
 import { Document, Page } from "react-pdf";
 import SimpleContainer from "../../../simpleComponents/SimpleContainer";
 import SimpleLoader from "../../../simpleComponents/SimpleLoader";
+import SecondaryButton from "../../../styledComponents/buttons/SecondaryButton";
 import SignatureSpotsLayer from "../signatureSpots/SignatureSpotsLayer";
 import { useTranslation } from "react-i18next";
 import { SPOT_BASE_WIDTH, spotSpaceScale } from "../../../../utils/signingSpotGeometry";
@@ -174,6 +175,7 @@ export default function PdfViewer({
     const [numPages, setNumPages] = useState(0);
     const [objectUrl, setObjectUrl] = useState(null);
     const [pdfProxy, setPdfProxy] = useState(null);
+    const [retryCount, setRetryCount] = useState(0);
 
     const viewerRef = useRef(null);
     const [containerWidth, setContainerWidth] = useState(BASE_RENDER_WIDTH);
@@ -200,6 +202,20 @@ export default function PdfViewer({
     }, [pdfFile, pdfSource]);
 
     const file = pdfSource || objectUrl;
+    // A new document must not inherit page measurements or visibility from the old one.
+    // Keep this stable when only signature spots or container dimensions change.
+    const sourceKey = typeof file === "string" ? file : file?.url;
+
+    const handleDocumentError = (err) => {
+        console.error("PdfViewer Document load error:", err);
+        if (typeof onDocumentReady === "function") onDocumentReady();
+    };
+
+    const retryDocument = () => {
+        setNumPages(0);
+        setPdfProxy(null);
+        setRetryCount((count) => count + 1);
+    };
 
     useLayoutEffect(() => {
         measureContainerWidth();
@@ -310,6 +326,7 @@ export default function PdfViewer({
             style={{ "--lw-pdf-render-width": `${renderWidth}px` }}
         >
             <Document
+                key={`${sourceKey}:${retryCount}`}
                 file={file}
                 loading={
                     suppressLoadingUI
@@ -320,7 +337,14 @@ export default function PdfViewer({
                             </SimpleContainer>
                         )
                 }
-                error={<div className="lw-signing-pdfLoading">{t("signing.pdf.loadError")}</div>}
+                error={
+                    <div className="lw-signing-pdfLoading lw-signing-pdfLoadError" role="alert">
+                        <span>{t("signing.pdf.loadError")}</span>
+                        <SecondaryButton onPress={retryDocument}>
+                            {t("common.retry")}
+                        </SecondaryButton>
+                    </div>
+                }
                 onLoadSuccess={(pdf) => {
                     setNumPages(pdf.numPages || 0);
                     setPdfProxy(pdf);
@@ -329,10 +353,8 @@ export default function PdfViewer({
                     });
                     if (typeof onDocumentReady === "function") onDocumentReady();
                 }}
-                onLoadError={(err) => {
-                    console.error("PdfViewer Document load error:", err);
-                    if (typeof onDocumentReady === "function") onDocumentReady();
-                }}
+                onLoadError={handleDocumentError}
+                onSourceError={handleDocumentError}
             >
                 {Array.from({ length: pagesToRender }).map((_, i) => {
                     const pageNumber = i + 1;

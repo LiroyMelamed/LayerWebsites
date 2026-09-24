@@ -23,7 +23,7 @@ Do **not** skip Melamedia QA and deploy all clients in one batch.
 
 | Script | Purpose |
 |--------|---------|
-| `./scripts/propagate-main-to-tenants.sh` | Merge `origin/main` into tenant branches (uses git worktrees; restores build scratch first) |
+| `./scripts/propagate-main-to-tenants.sh` | Merge `origin/main` into `Melamedia` only (default QA target; uses git worktrees) |
 | `./scripts/propagate-main-to-tenants.sh melamedia` | QA step only — merge main → Melamedia |
 | `./scripts/deploy-melamedia-qa.sh` | Full QA gate: propagate Melamedia + deploy backend + frontend |
 | `./scripts/deploy-all-tenants-prod.sh` | All tenants after QA pass (pauses between frontend rsyncs) |

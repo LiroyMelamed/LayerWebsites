@@ -871,6 +871,11 @@
     margin: 0 auto;
 }
 
+.lw-signing-pdfLoadError {
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 .lw-signing-pdfLoading {
     display: flex;
     align-items: center;
