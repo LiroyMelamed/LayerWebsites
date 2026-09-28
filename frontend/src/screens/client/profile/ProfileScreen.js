@@ -29,6 +29,7 @@ import { parseDateInput, toNativeDateValue } from "../../../functions/date/forma
 import { uploadFileToR2, getFileReadUrl } from "../../../utils/fileUploadUtils";
 import { toastFromApiError } from "../../../components/ui/showAppToast";
 import { toastSuccess } from "../../../components/ui/toast";
+import RequestLoadError from '../../../components/ui/RequestLoadError';
 
 
 import "./ProfileScreen.scss";
@@ -67,7 +68,7 @@ export default function ProfileScreen() {
         null
     );
 
-    const { isPerforming: isFetching } = useAutoHttpRequest(customersApi.getCurrentCustomer, {
+    const { isPerforming: isFetching, error: fetchError, performRequest: reloadProfile } = useAutoHttpRequest(customersApi.getCurrentCustomer, {
         onSuccess: async (data) => {
             initialFetchDoneRef.current = true;
             setProfile((p) => ({
@@ -116,6 +117,7 @@ export default function ProfileScreen() {
     };
 
     const handleSave = () => {
+        if (!initialFetchDoneRef.current || isFetching || fetchError || isSaving) return;
         const payload = {
             Name: profile.name,
             Email: profile.email,
@@ -139,7 +141,7 @@ export default function ProfileScreen() {
             )}
 
             <SimpleScrollView className="lw-profileScreen__scroll">
-                {isFetching ? (
+                {fetchError ? <RequestLoadError onRetry={() => reloadProfile()} /> : isFetching ? (
                     <SimpleCard>
                         <SimpleContainer style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
                             <Skeleton circle height={64} />
@@ -227,7 +229,7 @@ export default function ProfileScreen() {
                                     <PrimaryButton
                                         className="lw-profileScreen__saveButton"
                                         onPress={handleSave}
-                                        disabled={isSaving}
+                                        disabled={isSaving || !initialFetchDoneRef.current}
                                     >
                                         {isSaving ? t("common.saving") : t("common.save")}
                                     </PrimaryButton>
