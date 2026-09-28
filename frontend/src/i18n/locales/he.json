@@ -86,6 +86,7 @@
     "closeCheckout": "סגירה"
   },
   "errors": {
+    "loadFailed": "לא ניתן לטעון את הנתונים. נסו שוב.",
     "invalidPhone": "מספר פלאפון לא תקין",
     "invalidOtp": "קוד לא תקין",
     "invalidEmail": "אימייל לא תקין",
