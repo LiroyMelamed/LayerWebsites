@@ -44,6 +44,7 @@ import {
     getAllowedSignerDeliveryMethods,
 } from "./signerDeliveryUtils";
 import "../calendarScreen/CalendarInviteScreen.scss";
+import RequestLoadError from '../../components/ui/RequestLoadError';
 
 
 export const SigningManagerScreenName = "/SigningManagerScreen";
@@ -63,7 +64,7 @@ export default function SigningManagerScreen() {
 
     const [isDownloadingSigned, setIsDownloadingSigned] = useState(false);
 
-    const { result: lawyerFilesData, isPerforming, performRequest: reloadFilesRaw } = useAutoHttpRequest(
+    const { result: lawyerFilesData, isPerforming, performRequest: reloadFilesRaw, error } = useAutoHttpRequest(
         signingFilesApi.getLawyerSigningFiles
     );
 
@@ -385,6 +386,7 @@ export default function SigningManagerScreen() {
             )}
 
             <SimpleScrollView className="lw-signingManagerScreen__scroll">
+                {error ? <RequestLoadError onRetry={reloadFiles} /> : <>
                 <ListPageTitle
                     title={t("nav.signingFiles")}
                     count={filteredFiles.length}
@@ -486,6 +488,7 @@ export default function SigningManagerScreen() {
                         );
                     })
                 )}
+                </>}
             </SimpleScrollView>
 
             <SimpleContainer className="lw-signingManagerScreen__footer">
