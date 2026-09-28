@@ -173,22 +173,6 @@ async function notifyRecipient({
         })
     );
 
-    // ── QA DEBUG: Full unmasked details for testing ──
-    console.log('\n========== [QA DEBUG] NOTIFICATION ==========');
-    console.log(`  TYPE:        ${type}`);
-    console.log(`  TO userId:   ${recipientUserId || 'N/A'}`);
-    console.log(`  TO email:    ${resolvedEmail || 'N/A'}`);
-    console.log(`  TO phone:    ${resolvedPhone || 'N/A'}`);
-    console.log(`  PUSH title:  ${push?.title || 'N/A'}`);
-    console.log(`  PUSH body:   ${push?.body || 'N/A'}`);
-    console.log(`  EMAIL key:   ${email?.campaignKey || 'N/A'}`);
-    console.log(`  EMAIL fields: ${JSON.stringify(email?.contactFields || {})}`);
-    console.log(`  SMS body:    ${sms?.messageBody || 'N/A'}`);
-    console.log(`  CHANNELS:    push=${wantPush} email=${wantEmail} sms=${wantSms}`);
-    console.log(`  CONFIG:      push_enabled=${channelCfg.push_enabled} email_enabled=${channelCfg.email_enabled} sms_enabled=${channelCfg.sms_enabled} admin_cc=${channelCfg.admin_cc} manager_cc=${channelCfg.manager_cc}`);
-    console.log(`  skipAdminCc: ${skipAdminCc}`);
-    console.log('==============================================\n');
-
     const tasks = [];
 
     if (wantStore && !wantPush) {
@@ -309,15 +293,6 @@ async function notifyRecipient({
                     const adminEmail = String(admin.Email || '').trim();
                     const adminPhone = formatPhoneNumber(String(admin.PhoneNumber || '').trim());
 
-                    // ── QA DEBUG: Admin CC details ──
-                    console.log('\n---------- [QA DEBUG] ADMIN CC ----------');
-                    console.log(`  CC TO admin: ${admin.Name} (userId=${admin.UserId})`);
-                    console.log(`  CC email:    ${adminEmail || 'N/A'}`);
-                    console.log(`  CC phone:    ${adminPhone || 'N/A'}`);
-                    console.log(`  Original TO: userId=${recipientUserId}`);
-                    console.log(`  Type:        ${type}`);
-                    console.log('------------------------------------------\n');
-
                     // Push notification for admin (store in their notification list)
                     if (push && admin.UserId) {
                         adminCcTasks.push(
@@ -327,7 +302,7 @@ async function notifyRecipient({
                                 String(push.body || '').trim(),
                                 { ...(push.data || {}), adminCc: true },
                                 { sendPush: await userHasValidPush(admin.UserId) }
-                            ).catch(e => console.warn('[orchestrator] admin CC push failed:', e?.message))
+                            ).catch(() => console.warn('[orchestrator] admin CC push failed:'))
                         );
                     }
 
@@ -344,7 +319,7 @@ async function notifyRecipient({
                                 attachments: email.attachments || undefined,
                                 fromEmail: email.fromEmail || undefined,
                                 replyTo: email.replyTo || undefined,
-                            }).catch(e => console.warn('[orchestrator] admin CC email failed:', e?.message))
+                            }).catch(() => console.warn('[orchestrator] admin CC email failed:'))
                         );
                     }
 
@@ -354,7 +329,7 @@ async function notifyRecipient({
                             sendMessage(
                                 `[העתק למנהל] ${String(sms.messageBody || '').trim()}`,
                                 adminPhone
-                            ).catch(e => console.warn('[orchestrator] admin CC sms failed:', e?.message))
+                            ).catch(() => console.warn('[orchestrator] admin CC sms failed:'))
                         );
                     }
 
@@ -369,7 +344,7 @@ async function notifyRecipient({
             }
         }
     } catch (ccErr) {
-        console.warn('[orchestrator] admin CC failed:', ccErr?.message);
+        console.warn('[orchestrator] admin CC failed:');
     }
 
     // ── CC case manager if manager_cc is enabled and a caseId is provided ──
@@ -391,15 +366,6 @@ async function notifyRecipient({
                     const managerEmail = String(managerUser.email || '').trim();
                     const managerPhone = formatPhoneNumber(String(managerUser.phoneNumber || '').trim());
 
-                    console.log('\n---------- [QA DEBUG] MANAGER CC ----------');
-                    console.log(`  CC TO manager: ${managerUser.name} (userId=${managerId})`);
-                    console.log(`  CC email:      ${managerEmail || 'N/A'}`);
-                    console.log(`  CC phone:      ${managerPhone || 'N/A'}`);
-                    console.log(`  CaseId:        ${caseId}`);
-                    console.log(`  Original TO:   userId=${recipientUserId}`);
-                    console.log(`  Type:          ${type}`);
-                    console.log('--------------------------------------------\n');
-
                     const managerCcTasks = [];
 
                     if (push && managerId) {
@@ -410,7 +376,7 @@ async function notifyRecipient({
                                 String(push.body || '').trim(),
                                 { ...(push.data || {}), managerCc: true },
                                 { sendPush: await userHasValidPush(managerId) }
-                            ).catch(e => console.warn('[orchestrator] manager CC push failed:', e?.message))
+                            ).catch(() => console.warn('[orchestrator] manager CC push failed:'))
                         );
                     }
 
@@ -426,7 +392,7 @@ async function notifyRecipient({
                                 attachments: email.attachments || undefined,
                                 fromEmail: email.fromEmail || undefined,
                                 replyTo: email.replyTo || undefined,
-                            }).catch(e => console.warn('[orchestrator] manager CC email failed:', e?.message))
+                            }).catch(() => console.warn('[orchestrator] manager CC email failed:'))
                         );
                     }
 
@@ -435,7 +401,7 @@ async function notifyRecipient({
                             sendMessage(
                                 `[העתק למנהל תיק] ${String(sms.messageBody || '').trim()}`,
                                 managerPhone
-                            ).catch(e => console.warn('[orchestrator] manager CC sms failed:', e?.message))
+                            ).catch(() => console.warn('[orchestrator] manager CC sms failed:'))
                         );
                     }
 
@@ -451,7 +417,7 @@ async function notifyRecipient({
             }
         }
     } catch (ccErr) {
-        console.warn('[orchestrator] manager CC failed:', ccErr?.message);
+        console.warn('[orchestrator] manager CC failed:');
     }
 
     const anyOk = [outcomes.store, outcomes.push, outcomes.email, outcomes.sms]

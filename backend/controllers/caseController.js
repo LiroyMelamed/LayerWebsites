@@ -154,7 +154,6 @@ async function notifyCaseManager({ caseId, caseName, title, message, smsBody, sm
 
         // Skip if already notified as a linked user
         if (alreadyNotifiedUserIds && alreadyNotifiedUserIds.has(managerId)) {
-            console.log(`\n[QA DEBUG] notifyCaseManager SKIP: manager ${managerId} already notified as linked user`);
             return;
         }
 
@@ -170,11 +169,9 @@ async function notifyCaseManager({ caseId, caseName, title, message, smsBody, sm
                     : [await getChannelConfig('CASE_STAGE_CHANGE')];
                 const adminCcEnabled = cfgs.some(c => c.admin_cc === true);
                 if (adminCcEnabled) {
-                    console.log(`\n[QA DEBUG] notifyCaseManager SKIP: manager ${managerId} is platform admin with admin_cc enabled — already CC'd`);
                     return;
                 }
             }
-            console.log(`\n[QA DEBUG] notifyCaseManager: manager ${managerId}, isPlatformAdmin=${isManagerPlatformAdmin}, changedTypes=${JSON.stringify(changedTypes)}`);
         } catch (e) {
             console.warn('[notifyCaseManager] Platform admin check failed (will still notify):', e?.message);
         }
@@ -197,16 +194,6 @@ async function notifyCaseManager({ caseId, caseName, title, message, smsBody, sm
         } else {
             finalSms = smsBody || finalMessage;
         }
-
-        console.log('\n---------- [QA DEBUG] CASE MANAGER NOTIFICATION ----------');
-        console.log(`  Manager:     ${recipientName} (userId=${mgr.UserId})`);
-        console.log(`  Phone:       ${mgr.PhoneNumber || 'N/A'}`);
-        console.log(`  Case:        ${caseName} (caseId=${caseId})`);
-        console.log(`  Title:       ${title}`);
-        console.log(`  Message:     ${finalMessage}`);
-        console.log(`  SMS:         ${finalSms}`);
-        console.log(`  ChangedTypes: ${JSON.stringify(changedTypes)}`);
-        console.log('-----------------------------------------------------------\n');
 
         const mgrNotifType = explicitType || (changedTypes && changedTypes[0]) || 'CASE_STAGE_CHANGE';
         const caseStage = smsTemplateData?.stageName || '';
@@ -972,19 +959,6 @@ const updateCase = async (req, res) => {
         if (estDateChanged) changedTypes.push('CASE_EST_DATE_CHANGE');
         if (licDateChanged) changedTypes.push('CASE_LICENSE_CHANGE');
         if (companyChanged) changedTypes.push('CASE_COMPANY_CHANGE');
-
-        console.log('\n========== [QA DEBUG] updateCase CHANGE DETECTION ==========');
-        console.log(`  caseId:         ${caseId}`);
-        console.log(`  nameChanged:    ${nameChanged} (old="${oldCase?.casename}" new="${CaseName}")`);
-        console.log(`  typeChanged:    ${typeChanged} (old="${oldCase?.casetypeid}" new="${CaseTypeId}")`);
-        console.log(`  stageChanged:   ${stageChanged} (old="${oldCase?.currentstage}" new="${CurrentStage}")`);
-        console.log(`  closedChanged:  ${closedChanged} (old=${oldCase?.isclosed} new=${IsClosed})`);
-        console.log(`  managerChanged: ${managerChanged} (old=${oldCase?.casemanagerid} new=${CaseManagerId})`);
-        console.log(`  estDateChanged: ${estDateChanged}`);
-        console.log(`  licDateChanged: ${licDateChanged}`);
-        console.log(`  companyChanged: ${companyChanged}`);
-        console.log(`  changedTypes:   ${JSON.stringify(changedTypes)}`);
-        console.log('=============================================================\n');
 
         let skipClientNotifications = true;
         if (changedTypes.length > 0) {

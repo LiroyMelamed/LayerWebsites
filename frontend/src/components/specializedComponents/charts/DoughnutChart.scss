@@ -1,5 +1,15 @@
 .lw-doughnutChart {
   position: relative;
+  display: block;
+  inline-size: 100%;
+  min-inline-size: 0;
+  aspect-ratio: 1;
+}
+
+// Keep the canvas's intrinsic height from stretching the square container.
+.lw-doughnutChart > canvas {
+  position: absolute;
+  inset: 0;
 }
 
 .lw-doughnutChart__centerText {

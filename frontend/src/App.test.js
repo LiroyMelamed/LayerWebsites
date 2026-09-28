@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { FromAppProvider } from "./providers/FromAppProvider";
 import App from "./App";
+import ApiUtils from "./api/apiUtils";
 
 jest.mock("./navigation/LoginStack", () => ({
   __esModule: true,
@@ -42,7 +43,8 @@ jest.mock("./screens/client/clientMainScreen/ClientMainScreen", () => ({
   ClientMainScreenName: "/ClientMainScreen",
 }));
 
-test("renders App routes without crashing", () => {
+test("renders App routes without crashing", async () => {
+  jest.spyOn(ApiUtils, "get").mockResolvedValue({ data: {} });
   render(
     <FromAppProvider>
       <MemoryRouter initialEntries={["/LoginStack"]}>
@@ -51,5 +53,5 @@ test("renders App routes without crashing", () => {
     </FromAppProvider>
   );
 
-  expect(screen.getByText("LoginStack")).toBeInTheDocument();
+  expect(await screen.findByText("LoginStack")).toBeInTheDocument();
 });

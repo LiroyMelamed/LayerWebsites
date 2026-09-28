@@ -3,6 +3,10 @@
 // expect(element).toHaveTextContent(/react/i)
 // learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom';
+import { TextDecoder, TextEncoder } from 'util';
+
+// React Router 7 uses these browser APIs; CRA's older jsdom does not provide them.
+Object.assign(global, { TextDecoder, TextEncoder });
 
 // CRA/Jest sometimes fails to run with ESM-only deps (e.g. axios).
 // Mock axios for the test environment so importing App doesn't crash.
