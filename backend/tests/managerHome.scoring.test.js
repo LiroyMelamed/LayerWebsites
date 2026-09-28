@@ -226,6 +226,20 @@ test('long_in_stage is soft signal with low priority', () => {
     assert.equal(stage.priority, 'low');
 });
 
+test('long_in_stage is not emitted when no_activity already applies (no double count)', () => {
+    const flat = flattenAttentionItems(buildAttentionItems({
+        caseRows: [baseCase({
+            days_since_meaningful_activity: 100,
+            days_in_current_stage: 45,
+            currentstage: 3,
+        })],
+        now: NOW,
+    }));
+    const types = flat.map((i) => i.signalType);
+    assert.ok(types.includes('no_activity'));
+    assert.ok(!types.includes('long_in_stage'));
+});
+
 // --- Estimated completion ---
 
 test('estimated completion approaching and passed are soft signals', () => {
