@@ -135,6 +135,9 @@ function signalsFromCase(row, today, now) {
     const daysSinceActivity = row.days_since_meaningful_activity != null
         ? Number(row.days_since_meaningful_activity)
         : null;
+    const daysInStage = row.days_in_current_stage != null ? Number(row.days_in_current_stage) : null;
+
+    // One inactivity signal per case: no_activity subsumes long_in_stage for queue counting
     if (daysSinceActivity != null && daysSinceActivity >= C.NO_ACTIVITY_DAYS) {
         out.push({
             ...base,
@@ -144,10 +147,7 @@ function signalsFromCase(row, today, now) {
             reasonParams: { days: daysSinceActivity, caseName: row.casename || '' },
             subtitle: row.casename || null,
         });
-    }
-
-    const daysInStage = row.days_in_current_stage != null ? Number(row.days_in_current_stage) : null;
-    if (daysInStage != null && daysInStage >= C.LONG_STAGE_DAYS) {
+    } else if (daysInStage != null && daysInStage >= C.LONG_STAGE_DAYS) {
         out.push({
             ...base,
             signalType: 'long_in_stage',
