@@ -555,7 +555,7 @@ async function run() {
 
         console.log(`  [result] Update OK`);
         console.log(`  [expect] client=${test.expect.client} | manager=${test.expect.manager} | adminCc=${test.expect.adminCc}${test.expect.managerSkipReason ? ' | managerSkipReason=' + test.expect.managerSkipReason : ''}${test.expect.channels ? ' | channels=' + JSON.stringify(test.expect.channels) : ''}${test.expect.note ? ' | NOTE: ' + test.expect.note : ''}`);
-        console.log(`  >>> CHECK SERVER CONSOLE FOR [QA DEBUG] OUTPUT <<<`);
+        console.log(`  >>> CHECK SERVER CONSOLE FOR [masked structured notification] OUTPUT <<<`);
         passed++;
     }
 
@@ -582,7 +582,7 @@ async function run() {
 
     console.log(`\n${'='.repeat(70)}`);
     console.log(`DONE: ${passed} tests executed, ${failed} failed`);
-    console.log(`Verify results by checking the server [QA DEBUG] console output.`);
+    console.log(`Verify results by checking the server [masked structured notification] console output.`);
     console.log('='.repeat(70));
 }
 
