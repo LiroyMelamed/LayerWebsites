@@ -14,6 +14,7 @@ import { colors } from "../../../constant/colors";
 import { ClientCasesScreenName } from "../clientCasesScreen/ClientCasesScreen";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import RequestLoadError from '../../../components/ui/RequestLoadError';
 
 import "./ClientMainScreen.scss";
 
@@ -23,7 +24,7 @@ export default function ClientMainScreen() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { isSmallScreen } = useScreenSize();
-    const { result: dashboardData, isPerforming: isPerformingDashboard } = useAutoHttpRequest(casesApi.getClientDashboardData);
+    const { result: dashboardData, isPerforming: isPerformingDashboard, error, performRequest } = useAutoHttpRequest(casesApi.getClientDashboardData);
 
     const totalCases = dashboardData?.totalCases ?? 0;
     const openCases = dashboardData?.openCases ?? 0;
@@ -34,6 +35,7 @@ export default function ClientMainScreen() {
             {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={ClientStackName + ClientMainScreenName} GetNavBarData={getClientNavBarData} isClient={true} />}
 
             <SimpleScrollView>
+                {error ? <RequestLoadError onRetry={() => performRequest()} /> : <>
                 <SimpleContainer className="lw-clientMainScreen__chartWrap">
                     <ComparisonDataCard
                         colors={colors.doughnutChartColorScale}
@@ -72,6 +74,7 @@ export default function ClientMainScreen() {
                         />
                     </SimpleContainer>
                 </SimpleContainer>
+                </>}
             </SimpleScrollView>
 
         </SimpleScreen >

@@ -83,6 +83,7 @@
     "closeCheckout": "إغلاق"
   },
   "errors": {
+    "loadFailed": "تعذر تحميل البيانات. يرجى المحاولة مرة أخرى.",
     "invalidPhone": "رقم الهاتف غير صالح",
     "invalidOtp": "رمز غير صالح",
     "invalidEmail": "البريد الإلكتروني غير صالح",

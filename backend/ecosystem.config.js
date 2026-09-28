@@ -14,9 +14,11 @@ module.exports = {
             autorestart: true,
             watch: false,
             max_memory_restart: '512M',
-            restart_delay: 2000,
-            exp_backoff_restart_delay: 100,
-            min_uptime: 5000,
+            // Stop retrying a persistently broken startup (for example, a syntax error).
+            min_uptime: '10s',
+            max_restarts: 15,
+            restart_delay: 3000,
+            exp_backoff_restart_delay: 200,
             time: true,
 
             out_file: '/var/log/melamed-backend/out.log',

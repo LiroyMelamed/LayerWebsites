@@ -11,7 +11,18 @@ import "./ShowDataCard.scss";
 
 export default function ShowDataCard({ title, icon, numberText, comprationNumber, comprationText, optionalOnClick, isPerforming }) {
     return (
-        <SimpleCard className="lw-showDataCard" onPress={optionalOnClick}>
+        <SimpleCard
+            className="lw-showDataCard"
+            onPress={optionalOnClick}
+            role={optionalOnClick ? 'button' : undefined}
+            tabIndex={optionalOnClick ? 0 : undefined}
+            onKeyDown={optionalOnClick ? (event) => {
+                if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
+                    event.preventDefault();
+                    if (!event.repeat) optionalOnClick(event);
+                }
+            } : undefined}
+        >
             <TextBold14 >{title}</TextBold14>
 
             {isPerforming ? (

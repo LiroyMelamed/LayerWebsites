@@ -60,6 +60,7 @@
     "closeCheckout": "Close"
   },
   "errors": {
+    "loadFailed": "Unable to load the data. Please try again.",
     "invalidPhone": "Invalid phone number",
     "invalidOtp": "Invalid code",
     "invalidEmail": "Invalid email",

@@ -27,6 +27,7 @@ import "./SigningScreen.scss";
 import SimpleCard from "../../components/simpleComponents/SimpleCard";
 import Separator from "../../components/styledComponents/separators/Separator";
 import { PublicSignScreenName } from "../../navigation/screenPaths";
+import RequestLoadError from '../../components/ui/RequestLoadError';
 
 export const SigningScreenName = "/SigningScreen";
 
@@ -41,7 +42,7 @@ export default function SigningScreen() {
     const [selectedFileId, setSelectedFileId] = useState(null);
     const [isPublicSigningSession, setIsPublicSigningSession] = useState(false);
 
-    const { result: clientFilesData, isPerforming, performRequest } = useAutoHttpRequest(
+    const { result: clientFilesData, isPerforming, performRequest, error } = useAutoHttpRequest(
         signingFilesApi.getClientSigningFiles
     );
 
@@ -185,6 +186,7 @@ export default function SigningScreen() {
             )}
 
             <SimpleScrollView className="lw-signingScreen__scroll">
+                {error ? <RequestLoadError onRetry={() => performRequest()} /> :
                 <SimpleContainer className="lw-signingScreen">
                     <SimpleContainer className="lw-signingScreen__tabsRow">
                         <TabButton
@@ -238,6 +240,7 @@ export default function SigningScreen() {
                         })
                     )}
                 </SimpleContainer>
+                }
             </SimpleScrollView>
 
             {selectedFileId && (
