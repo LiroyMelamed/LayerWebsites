@@ -11,9 +11,10 @@
 }
 
 .lw-doughnutChartWithDetails__chart {
-    flex: 1;
+    flex: 0 0 auto;
     display: flex;
     justify-content: center;
+    inline-size: 100%;
     max-inline-size: 100%;
     min-inline-size: 0;
 }

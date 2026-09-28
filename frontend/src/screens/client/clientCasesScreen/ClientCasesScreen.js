@@ -10,6 +10,7 @@ import casesApi from "../../../api/casesApi";
 import ClosedCasesCard from "../clientMainScreen/components/ClosedCasesCard";
 import OpenCasesCard from "../clientMainScreen/components/OpenCasesCard";
 import { images } from "../../../assets/images/images";
+import RequestLoadError from '../../../components/ui/RequestLoadError';
 
 import "./ClientCasesScreen.scss";
 
@@ -17,13 +18,14 @@ export const ClientCasesScreenName = "/ClientCasesScreen";
 
 export default function ClientCasesScreen() {
     const { isSmallScreen } = useScreenSize();
-    const { result: allCases, isPerforming: isPerformingAllCases } = useAutoHttpRequest(casesApi.getAllCases);
+    const { result: allCases, isPerforming: isPerformingAllCases, error, performRequest } = useAutoHttpRequest(casesApi.getAllCases);
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
             {isSmallScreen && <TopToolBarSmallScreen LogoNavigate={ClientStackName + ClientMainScreenName} GetNavBarData={getClientNavBarData} isClient={true} />}
 
             <SimpleScrollView>
+                {error ? <RequestLoadError onRetry={() => performRequest()} /> : <>
                 <OpenCasesCard
                     openCases={(allCases || []).filter(caseItem => caseItem.IsClosed === false)}
                     isPerforming={isPerformingAllCases}
@@ -34,6 +36,7 @@ export default function ClientCasesScreen() {
                     className="lw-clientCasesScreen__closedCard"
                     isPerforming={isPerformingAllCases}
                 />
+                </>}
             </SimpleScrollView>
         </SimpleScreen>
     );

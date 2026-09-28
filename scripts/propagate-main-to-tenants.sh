@@ -2,7 +2,7 @@
 # Merge origin/main into tenant branches (QA gate + client propagation).
 #
 # Usage:
-#   ./scripts/propagate-main-to-tenants.sh                    # all tenants
+#   ./scripts/propagate-main-to-tenants.sh                    # Melamedia QA only
 #   ./scripts/propagate-main-to-tenants.sh melamedia          # QA only
 #   ./scripts/propagate-main-to-tenants.sh melamedlaw morlevy # subset
 #   ./scripts/propagate-main-to-tenants.sh --dry-run          # print steps
@@ -49,7 +49,7 @@ for arg in "$@"; do
 done
 
 if ((${#TENANTS[@]} == 0)); then
-  TENANTS=(melamedia melamedlaw morlevy ashrafessa idm)
+  TENANTS=(melamedia)
 fi
 
 for tenant in "${TENANTS[@]}"; do
