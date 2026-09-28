@@ -83,4 +83,12 @@ for (const f of fs.readdirSync(logosSrc)) {
   fs.copyFileSync(path.join(logosSrc, f), path.join(logosDst, f));
 }
 
+// Domain associations must match the tenant and Google Play signing certificate.
+const tenantAssetLinks = path.join(src, ".well-known", "assetlinks.json");
+if (fs.existsSync(tenantAssetLinks)) {
+  const wellKnown = path.join(root, "public", ".well-known");
+  fs.mkdirSync(wellKnown, { recursive: true });
+  fs.copyFileSync(tenantAssetLinks, path.join(wellKnown, "assetlinks.json"));
+}
+
 console.log(`[apply-tenant-branding] applied branding for ${tenant}`);
