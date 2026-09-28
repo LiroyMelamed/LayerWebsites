@@ -260,6 +260,10 @@ async function expireGraceIfNeeded(row, now = new Date()) {
         }
         return row;
     }
+    if (row.status === 'complimentary') {
+        const renewsAt = row.renewsAt || row.complimentaryUntil || now;
+        return updateBilling({ status: 'active', renews_at: renewsAt });
+    }
     if (flags.graceExpired && row.status !== 'suspended') {
         return updateBilling({ status: 'suspended' });
     }
