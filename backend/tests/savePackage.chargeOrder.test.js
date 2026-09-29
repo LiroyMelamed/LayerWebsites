@@ -141,3 +141,43 @@ test('savePackage throws when persist fails after successful charge', async () =
         Object.assign(billing, stubs);
     }
 });
+
+test('savePackage no-card upgrade opens checkout with pending package snapshot', async () => {
+    const stubs = {
+        ensureBillingRow: billing.ensureBillingRow,
+        getBillingRow: billing.getBillingRow,
+        getActiveCard: billing.getActiveCard,
+        createCheckout: billing.createCheckout,
+        getBillingSnapshot: billing.getBillingSnapshot,
+        updateBilling: billing.updateBilling,
+    };
+
+    let checkoutArgs = null;
+    billing.ensureBillingRow = async () => ({ ...baseRow });
+    billing.getBillingRow = async () => ({ ...baseRow });
+    billing.getActiveCard = async () => null;
+    billing.createCheckout = async (args) => {
+        checkoutArgs = args;
+        return { intentId: 1, redirectUrl: 'https://pay.example' };
+    };
+    billing.getBillingSnapshot = async () => ({ status: 'past_due', package: { total: 100 } });
+    billing.updateBilling = async () => {
+        throw new Error('must not persist before checkout payment');
+    };
+
+    try {
+        const result = await billing.savePackage({
+            platformId: 'site_app',
+            resourceId: 'pro',
+            signingId: '1500',
+            usage: { documents: { createdThisMonth: 0 }, seats: { used: 1 }, storage: { bytesTotal: 0 } },
+        });
+        assert.ok(result.checkout);
+        assert.ok(checkoutArgs?.pendingPackage);
+        assert.equal(checkoutArgs.pendingPackage.platformId, 'site_app');
+        assert.equal(checkoutArgs.pendingPackage.resourceId, 'pro');
+        assert.equal(checkoutArgs.pendingPackage.signingId, '1500');
+    } finally {
+        Object.assign(billing, stubs);
+    }
+});

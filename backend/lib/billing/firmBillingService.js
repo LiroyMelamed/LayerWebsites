@@ -494,6 +494,40 @@ async function markPaymentFailed({ intent, errorMessage, skipEmail } = {}) {
     return getBillingSnapshot();
 }
 
+function parseIntentPackageSnapshot(raw) {
+    if (!raw) return null;
+    let snap = raw;
+    if (typeof snap === 'string') {
+        try {
+            snap = JSON.parse(snap);
+        } catch {
+            return null;
+        }
+    }
+    if (!snap || typeof snap !== 'object') return null;
+    const platformId = snap.platformId || snap.platform_id;
+    const resourceId = snap.resourceId || snap.resource_id;
+    const signingId = snap.signingId || snap.signing_id;
+    if (!platformId || !resourceId || !signingId) return null;
+    return { platformId, resourceId, signingId, billingInterval: snap.billingInterval };
+}
+
+async function applyIntentPackageSnapshot(intent) {
+    const pending = parseIntentPackageSnapshot(intent?.package_snapshot);
+    if (!pending) return false;
+    const priced = resolvePricingLineItems(pending);
+    const api = module.exports;
+    await api.updateBilling({
+        platform_id: pending.platformId,
+        resource_id: pending.resourceId,
+        signing_id: pending.signingId,
+        price_monthly_ils: priced.total,
+        billing_interval: normalizeBillingInterval(pending.billingInterval),
+    });
+    await api.syncTenantSubscription(priced);
+    return true;
+}
+
 async function settleSuccessfulPayment({ intent, tokenInfo, transactionId } = {}) {
     if (intent?.signup_intent_id) {
         if (intent?.id) {
@@ -545,6 +579,8 @@ async function settleSuccessfulPayment({ intent, tokenInfo, transactionId } = {}
         }
     }
 
+    await applyIntentPackageSnapshot(intent);
+
     const row = await ensureBillingRow();
     const pkg = resolvePricingLineItems({
         platformId: row.platformId,
@@ -585,7 +621,7 @@ async function settleSuccessfulPayment({ intent, tokenInfo, transactionId } = {}
     return getBillingSnapshot();
 }
 
-async function createCheckout({ kind, customer } = {}) {
+async function createCheckout({ kind, customer, pendingPackage } = {}) {
     const creds = getTakbullCredentialsFromEnv();
     if (!creds) {
         const err = new Error('סליקת Takbull לא הוגדרה');
@@ -595,12 +631,25 @@ async function createCheckout({ kind, customer } = {}) {
 
     const snap = await getBillingSnapshot();
     const interval = normalizeBillingInterval(
-        kind === 'annual' ? 'yearly' : snap.billingInterval
+        pendingPackage?.billingInterval
+            || (kind === 'annual' ? 'yearly' : snap.billingInterval)
     );
-    const isSetup = kind === 'setup' || (snap.stillComplimentary && kind !== 'annual');
-    const amount = isSetup
-        ? SETUP_AMOUNT_ILS
-        : (interval === 'yearly' ? Number(snap.priceYearlyIls || 0) : Number(snap.package.total || 0));
+    const pendingSelection = pendingPackage?.platformId
+        ? {
+            platformId: pendingPackage.platformId,
+            resourceId: pendingPackage.resourceId,
+            signingId: pendingPackage.signingId,
+        }
+        : null;
+    const pricedPending = pendingSelection
+        ? resolvePricingLineItems(pendingSelection)
+        : null;
+    let isSetup = !pendingSelection && (kind === 'setup' || (snap.stillComplimentary && kind !== 'annual'));
+    const amount = pendingSelection
+        ? (interval === 'yearly' ? yearlyTotalIls(pricedPending.total) : pricedPending.total)
+        : (isSetup
+            ? SETUP_AMOUNT_ILS
+            : (interval === 'yearly' ? Number(snap.priceYearlyIls || 0) : Number(snap.package.total || 0)));
     if (!isSetup && amount <= 0) {
         const err = new Error('אין סכום לחיוב');
         err.code = 'NO_AMOUNT';
@@ -615,7 +664,9 @@ async function createCheckout({ kind, customer } = {}) {
         kind: intentKind,
         amountIls: amount,
         purpose,
-        packageSnapshot: { ...snap.package, billingInterval: interval },
+        packageSnapshot: pendingSelection
+            ? { ...pricedPending, billingInterval: interval }
+            : { ...snap.package, billingInterval: interval },
     });
 
     const page = await createTakbullPaymentPage({
@@ -770,7 +821,16 @@ async function savePackage({ platformId, resourceId, signingId, billingInterval,
     if (requiresPaymentBeforePersist) {
         const card = await api.getActiveCard();
         if (!card) {
-            const checkout = await api.createCheckout({ kind: 'setup', customer });
+            const checkout = await api.createCheckout({
+                kind: interval === 'yearly' ? 'annual' : 'retry',
+                customer,
+                pendingPackage: {
+                    platformId: pkg.platformId,
+                    resourceId: pkg.resourceId,
+                    signingId: pkg.signingId,
+                    billingInterval: interval,
+                },
+            });
             return {
                 saved: true,
                 charged: false,
@@ -800,7 +860,14 @@ async function savePackage({ platformId, resourceId, signingId, billingInterval,
         try {
             await persistPackageRow();
         } catch (persistErr) {
-            console.error('[billing] package persist failed after successful charge:', persistErr?.message);
+            console.error('[billing] PACKAGE_PERSIST_AFTER_CHARGE', {
+                code: 'PACKAGE_PERSIST_AFTER_CHARGE',
+                platformId: pkg.platformId,
+                resourceId: pkg.resourceId,
+                signingId: pkg.signingId,
+                billingInterval: interval,
+                message: persistErr?.message,
+            });
             const err = new Error('החיוב בוצע אך עדכון החבילה נכשל. פנו לתמיכה.');
             err.code = 'PACKAGE_PERSIST_AFTER_CHARGE';
             throw err;
@@ -1001,4 +1068,6 @@ module.exports = {
     findIntentById,
     updateBilling,
     syncTenantSubscription,
+    parseIntentPackageSnapshot,
+    applyIntentPackageSnapshot,
 };

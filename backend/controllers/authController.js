@@ -265,22 +265,35 @@ const requestOtp = async (req, res) => {
         const userId = userResult.rows[0].userid;
 
         await pool.query(`DELETE FROM otps WHERE phonenumber = $1`, [phoneNumber]);
-        await pool.query(
+        const insertOtp = await pool.query(
             `
             INSERT INTO otps (phonenumber, otp, expiry, userid)
             VALUES ($1, $2, $3, $4)
+            RETURNING id
             `,
             [phoneNumber, hashOtp(otp), expiry, userId]
         );
+        const otpRowId = insertOtp.rows[0]?.id;
 
         if (!isDemo) {
-            const sent = await sendMessage(
-                buildOtpSmsBodyForRequest(req, otp),
-                formatedPhoneNumber,
-                { fast: true }
-            );
+            let sent;
+            try {
+                sent = await sendMessage(
+                    buildOtpSmsBodyForRequest(req, otp),
+                    formatedPhoneNumber,
+                    { fast: true }
+                );
+            } catch (e) {
+                if (otpRowId != null) {
+                    await pool.query(`DELETE FROM otps WHERE id = $1`, [otpRowId]);
+                }
+                console.warn("SMS send failed:", e?.message);
+                return res.status(503).json({ message: "שליחת הקוד נכשלה. נסו שוב בעוד רגע" });
+            }
             if (!sent?.ok) {
-                await pool.query(`DELETE FROM otps WHERE phonenumber = $1`, [phoneNumber]);
+                if (otpRowId != null) {
+                    await pool.query(`DELETE FROM otps WHERE id = $1`, [otpRowId]);
+                }
                 console.warn("SMS send failed:", sent?.error || 'provider_rejected');
                 return res.status(503).json({ message: "שליחת הקוד נכשלה. נסו שוב בעוד רגע" });
             }
@@ -609,21 +622,34 @@ const register = async (req, res) => {
         const userId = ures.rows[0]?.userid;
 
         await pool.query(`DELETE FROM otps WHERE phonenumber = $1`, [phoneNumber]);
-        await pool.query(
+        const insertOtp = await pool.query(
             `
             INSERT INTO otps (phonenumber, otp, expiry, userid)
             VALUES ($1, $2, $3, $4)
+            RETURNING id
             `,
             [phoneNumber, hashOtp(otp), expiry, userId]
         );
+        const otpRowId = insertOtp.rows[0]?.id;
 
-        const sent = await sendMessage(
-            buildOtpSmsBodyForRequest(req, otp),
-            formatedPhoneNumber,
-            { fast: true }
-        );
+        let sent;
+        try {
+            sent = await sendMessage(
+                buildOtpSmsBodyForRequest(req, otp),
+                formatedPhoneNumber,
+                { fast: true }
+            );
+        } catch (e) {
+            if (otpRowId != null) {
+                await pool.query(`DELETE FROM otps WHERE id = $1`, [otpRowId]);
+            }
+            console.warn("כשל בשליחת SMS לאחר הרשמה:", e?.message);
+            return res.status(503).json({ message: "שליחת הקוד נכשלה. נסו שוב בעוד רגע" });
+        }
         if (!sent?.ok) {
-            await pool.query(`DELETE FROM otps WHERE phonenumber = $1`, [phoneNumber]);
+            if (otpRowId != null) {
+                await pool.query(`DELETE FROM otps WHERE id = $1`, [otpRowId]);
+            }
             console.warn("כשל בשליחת SMS לאחר הרשמה:", sent?.error || 'provider_rejected');
             return res.status(503).json({ message: "שליחת הקוד נכשלה. נסו שוב בעוד רגע" });
         }
