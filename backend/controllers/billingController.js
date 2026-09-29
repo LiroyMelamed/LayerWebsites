@@ -167,6 +167,13 @@ exports.savePackage = async (req, res) => {
                 blocks: e.blocks || [],
             });
         }
+        if (e?.code === 'PACKAGE_PERSIST_AFTER_CHARGE') {
+            console.error('savePackage error:', e.code);
+            return res.status(500).json({
+                message: e.message,
+                errorCode: e.code,
+            });
+        }
         console.error('savePackage error:', e);
         return res.status(500).json({ message: e.message || 'שגיאה בשמירת חבילה' });
     }
