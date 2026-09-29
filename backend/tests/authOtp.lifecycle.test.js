@@ -3,10 +3,12 @@ process.env.NODE_ENV = 'test';
 const otpLifecycleEnvSnapshot = {
     DEMO_OTP_PHONES: process.env.DEMO_OTP_PHONES,
     JWT_SECRET: process.env.JWT_SECRET,
+    SIGNING_OTP_PEPPER: process.env.SIGNING_OTP_PEPPER,
 };
-// Prevent developer backend/.env demo phones from bypassing SMS in this suite.
+// Prevent developer backend/.env from affecting deterministic OTP lifecycle assertions.
 process.env.DEMO_OTP_PHONES = '';
-process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-otp-lifecycle';
+process.env.JWT_SECRET = 'test-secret-otp-lifecycle';
+process.env.SIGNING_OTP_PEPPER = '';
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -230,5 +232,10 @@ test.after(() => {
         delete process.env.JWT_SECRET;
     } else {
         process.env.JWT_SECRET = otpLifecycleEnvSnapshot.JWT_SECRET;
+    }
+    if (otpLifecycleEnvSnapshot.SIGNING_OTP_PEPPER === undefined) {
+        delete process.env.SIGNING_OTP_PEPPER;
+    } else {
+        process.env.SIGNING_OTP_PEPPER = otpLifecycleEnvSnapshot.SIGNING_OTP_PEPPER;
     }
 });
