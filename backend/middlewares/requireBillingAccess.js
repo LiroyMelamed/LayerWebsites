@@ -43,7 +43,11 @@ async function requireBillingAccess(req, res, next) {
             return next();
         }
         console.warn('[billing-lock] snapshot failed:', e?.message);
-        return next();
+        return sendError(res, {
+            httpStatus: 503,
+            errorCode: 'BILLING_UNAVAILABLE',
+            message: getHebrewMessage('INTERNAL_ERROR'),
+        });
     }
 }
 

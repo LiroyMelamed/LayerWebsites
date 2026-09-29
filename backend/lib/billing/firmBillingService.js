@@ -31,9 +31,26 @@ const {
 const { sendFailedPaymentEmails } = require('./billingEmails');
 const { getCurrentTenantId } = require('../tenant/tenantContext');
 
+let chargeTakbullTokenFn = chargeTakbullToken;
+
+function setChargeTakbullTokenForTests(fn) {
+    chargeTakbullTokenFn = fn || chargeTakbullToken;
+}
+
 const GRACE_MS = 72 * 60 * 60 * 1000;
 const SETUP_AMOUNT_ILS = 1;
 const RETRY_GAP_MS = 12 * 60 * 60 * 1000;
+const UPGRADE_RECOVERY_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+let chargeProviderCallCount = 0;
+
+function resetChargeProviderCallCountForTests() {
+    chargeProviderCallCount = 0;
+}
+
+function getChargeProviderCallCountForTests() {
+    return chargeProviderCallCount;
+}
 
 function isRelationMissingError(e) {
     return e?.code === '42P01' || String(e?.message || '').includes('does not exist');
@@ -406,10 +423,11 @@ function cancelAddress() {
     return `${getPublicApiBaseUrl()}/api/billing/takbull/cancel`;
 }
 
-async function createIntent({ kind, amountIls, purpose, packageSnapshot }) {
+async function createIntent({ kind, amountIls, purpose, packageSnapshot }, dbClient) {
     const id = crypto.randomUUID();
     const orderReference = `lw-${kind}-${id.replace(/-/g, '').slice(0, 18)}`;
-    const res = await pool.query(
+    const q = dbClient?.query?.bind(dbClient) || pool.query.bind(pool);
+    const res = await q(
         `INSERT INTO firm_payment_intents (
             id, kind, status, amount_ils, currency, order_reference, purpose, package_snapshot
          ) VALUES ($1, $2, 'pending', $3, 'ILS', $4, $5, $6::jsonb)
@@ -417,6 +435,130 @@ async function createIntent({ kind, amountIls, purpose, packageSnapshot }) {
         [id, kind, amountIls, orderReference, purpose || null, JSON.stringify(packageSnapshot || {})]
     );
     return res.rows[0];
+}
+
+function buildUpgradeOperationKey({
+    tenantId,
+    platformId,
+    resourceId,
+    signingId,
+    billingInterval,
+    amountIls,
+}) {
+    return [
+        tenantId != null ? String(tenantId) : 'legacy',
+        platformId,
+        resourceId,
+        signingId,
+        normalizeBillingInterval(billingInterval),
+        Number(amountIls).toFixed(2),
+    ].join('|');
+}
+
+function upgradePackageSnapshot({ targetPackage, interval, operationKey }) {
+    return {
+        platformId: targetPackage.platformId,
+        resourceId: targetPackage.resourceId,
+        signingId: targetPackage.signingId,
+        billingInterval: normalizeBillingInterval(interval),
+        upgradeOperationKey: operationKey,
+    };
+}
+
+function billingRowMatchesPackage(row, target) {
+    if (!row || !target) return false;
+    return row.platformId === target.platformId
+        && row.resourceId === target.resourceId
+        && row.signingId === target.signingId;
+}
+
+function upgradeAdvisoryLockKey(operationKey) {
+    return crypto.createHash('sha256').update(`lw-upgrade:${operationKey}`).digest().readInt32BE(0);
+}
+
+async function withUpgradeOperationLock(operationKey, fn) {
+    const client = await pool.connect();
+    const lockKey = upgradeAdvisoryLockKey(operationKey);
+    try {
+        await client.query('BEGIN');
+        await client.query('SELECT pg_advisory_xact_lock($1)', [lockKey]);
+        const result = await fn(client);
+        await client.query('COMMIT');
+        return result;
+    } catch (e) {
+        await client.query('ROLLBACK').catch(() => {});
+        throw e;
+    } finally {
+        client.release();
+    }
+}
+
+async function findSucceededUnappliedUpgradeIntent(operationKey, dbClient) {
+    const q = dbClient?.query?.bind(dbClient) || pool.query.bind(pool);
+    const res = await q(
+        `SELECT * FROM firm_payment_intents
+         WHERE status = 'succeeded'
+           AND kind IN ('upgrade', 'annual')
+           AND package_snapshot->>'upgradeOperationKey' = $1
+           AND created_at >= $2
+         ORDER BY created_at DESC
+         LIMIT 1`,
+        [operationKey, new Date(Date.now() - UPGRADE_RECOVERY_MAX_AGE_MS)]
+    );
+    const intent = res.rows?.[0];
+    if (!intent) return null;
+    const target = parseIntentPackageSnapshot(intent.package_snapshot);
+    if (!target) return null;
+    const row = await getBillingRow();
+    if (billingRowMatchesPackage(row, target)) return null;
+    return intent;
+}
+
+async function findPendingUpgradeIntentForUpdate(operationKey, dbClient) {
+    const q = dbClient?.query?.bind(dbClient) || pool.query.bind(pool);
+    const res = await q(
+        `SELECT * FROM firm_payment_intents
+         WHERE status = 'pending'
+           AND kind IN ('upgrade', 'annual')
+           AND package_snapshot->>'upgradeOperationKey' = $1
+         ORDER BY created_at DESC
+         LIMIT 1
+         FOR UPDATE`,
+        [operationKey]
+    );
+    return res.rows?.[0] || null;
+}
+
+async function recoverPaidUpgradeIntent(intent, logContext = {}) {
+    const target = parseIntentPackageSnapshot(intent?.package_snapshot);
+    console.error('[billing] UPGRADE_PACKAGE_RECOVERED', {
+        code: 'UPGRADE_PACKAGE_RECOVERED',
+        intentId: intent?.id || null,
+        orderReference: intent?.order_reference || null,
+        transactionId: intent?.takbull_transaction_id || null,
+        platformId: target?.platformId || null,
+        resourceId: target?.resourceId || null,
+        signingId: target?.signingId || null,
+        upgradeOperationKey: logContext.upgradeOperationKey || null,
+    });
+    await applyIntentPackageSnapshot(intent);
+    const row = await ensureBillingRow();
+    const flags = computeFlags(row);
+    await updateBilling({
+        status: flags.stillComplimentary ? 'complimentary' : 'active',
+        grace_until: null,
+        last_payment_error: null,
+        last_failed_at: null,
+        last_paid_at: intent?.settled_at || new Date(),
+    });
+    await recordEvent(intent.id, 'upgrade_package_recovered', {});
+    return {
+        ok: true,
+        recovered: true,
+        charged: false,
+        intentId: intent.id,
+        snapshot: await getBillingSnapshot(),
+    };
 }
 
 async function findIntentByUniqId(uniqId) {
@@ -494,6 +636,40 @@ async function markPaymentFailed({ intent, errorMessage, skipEmail } = {}) {
     return getBillingSnapshot();
 }
 
+function parseIntentPackageSnapshot(raw) {
+    if (!raw) return null;
+    let snap = raw;
+    if (typeof snap === 'string') {
+        try {
+            snap = JSON.parse(snap);
+        } catch {
+            return null;
+        }
+    }
+    if (!snap || typeof snap !== 'object') return null;
+    const platformId = snap.platformId || snap.platform_id;
+    const resourceId = snap.resourceId || snap.resource_id;
+    const signingId = snap.signingId || snap.signing_id;
+    if (!platformId || !resourceId || !signingId) return null;
+    return { platformId, resourceId, signingId, billingInterval: snap.billingInterval };
+}
+
+async function applyIntentPackageSnapshot(intent) {
+    const pending = parseIntentPackageSnapshot(intent?.package_snapshot);
+    if (!pending) return false;
+    const priced = resolvePricingLineItems(pending);
+    const api = module.exports;
+    await api.updateBilling({
+        platform_id: pending.platformId,
+        resource_id: pending.resourceId,
+        signing_id: pending.signingId,
+        price_monthly_ils: priced.total,
+        billing_interval: normalizeBillingInterval(pending.billingInterval),
+    });
+    await api.syncTenantSubscription(priced);
+    return true;
+}
+
 async function settleSuccessfulPayment({ intent, tokenInfo, transactionId } = {}) {
     if (intent?.signup_intent_id) {
         if (intent?.id) {
@@ -545,6 +721,8 @@ async function settleSuccessfulPayment({ intent, tokenInfo, transactionId } = {}
         }
     }
 
+    await applyIntentPackageSnapshot(intent);
+
     const row = await ensureBillingRow();
     const pkg = resolvePricingLineItems({
         platformId: row.platformId,
@@ -585,7 +763,7 @@ async function settleSuccessfulPayment({ intent, tokenInfo, transactionId } = {}
     return getBillingSnapshot();
 }
 
-async function createCheckout({ kind, customer } = {}) {
+async function createCheckout({ kind, customer, pendingPackage } = {}) {
     const creds = getTakbullCredentialsFromEnv();
     if (!creds) {
         const err = new Error('סליקת Takbull לא הוגדרה');
@@ -595,12 +773,25 @@ async function createCheckout({ kind, customer } = {}) {
 
     const snap = await getBillingSnapshot();
     const interval = normalizeBillingInterval(
-        kind === 'annual' ? 'yearly' : snap.billingInterval
+        pendingPackage?.billingInterval
+            || (kind === 'annual' ? 'yearly' : snap.billingInterval)
     );
-    const isSetup = kind === 'setup' || (snap.stillComplimentary && kind !== 'annual');
-    const amount = isSetup
-        ? SETUP_AMOUNT_ILS
-        : (interval === 'yearly' ? Number(snap.priceYearlyIls || 0) : Number(snap.package.total || 0));
+    const pendingSelection = pendingPackage?.platformId
+        ? {
+            platformId: pendingPackage.platformId,
+            resourceId: pendingPackage.resourceId,
+            signingId: pendingPackage.signingId,
+        }
+        : null;
+    const pricedPending = pendingSelection
+        ? resolvePricingLineItems(pendingSelection)
+        : null;
+    let isSetup = !pendingSelection && (kind === 'setup' || (snap.stillComplimentary && kind !== 'annual'));
+    const amount = pendingSelection
+        ? (interval === 'yearly' ? yearlyTotalIls(pricedPending.total) : pricedPending.total)
+        : (isSetup
+            ? SETUP_AMOUNT_ILS
+            : (interval === 'yearly' ? Number(snap.priceYearlyIls || 0) : Number(snap.package.total || 0)));
     if (!isSetup && amount <= 0) {
         const err = new Error('אין סכום לחיוב');
         err.code = 'NO_AMOUNT';
@@ -615,7 +806,9 @@ async function createCheckout({ kind, customer } = {}) {
         kind: intentKind,
         amountIls: amount,
         purpose,
-        packageSnapshot: { ...snap.package, billingInterval: interval },
+        packageSnapshot: pendingSelection
+            ? { ...pricedPending, billingInterval: interval }
+            : { ...snap.package, billingInterval: interval },
     });
 
     const page = await createTakbullPaymentPage({
@@ -648,7 +841,16 @@ async function createCheckout({ kind, customer } = {}) {
     };
 }
 
-async function chargeSavedCard({ kind, amountOverride, skipEmail } = {}) {
+async function chargeSavedCard({ kind, amountOverride, skipEmail, upgradeOperation } = {}) {
+    if (upgradeOperation?.targetPackage) {
+        return chargeSavedCardForPackageUpgrade({
+            kind,
+            amountOverride,
+            skipEmail,
+            upgradeOperation,
+        });
+    }
+
     const creds = getTakbullCredentialsFromEnv();
     const snap = await getBillingSnapshot();
     const card = await getActiveCard();
@@ -692,7 +894,7 @@ async function chargeSavedCard({ kind, amountOverride, skipEmail } = {}) {
         packageSnapshot: { ...snap.package, billingInterval: interval },
     });
 
-    const charged = await chargeTakbullToken({
+    const charged = await chargeTakbullTokenFn({
         credentials: creds,
         orderReference: intent.order_reference,
         amount,
@@ -725,8 +927,156 @@ async function chargeSavedCard({ kind, amountOverride, skipEmail } = {}) {
     return { ok: true, snapshot };
 }
 
+async function chargeSavedCardForPackageUpgrade({
+    kind,
+    amountOverride,
+    skipEmail,
+    upgradeOperation,
+} = {}) {
+    const creds = getTakbullCredentialsFromEnv();
+    const snap = await getBillingSnapshot();
+    const card = await getActiveCard();
+
+    if (!snap.billingEnabled) {
+        return { skipped: true, reason: 'billing_disabled', snapshot: snap };
+    }
+    if (snap.stillComplimentary && kind !== 'setup' && kind !== 'annual') {
+        return { skipped: true, reason: 'complimentary', snapshot: snap };
+    }
+    if (!creds) {
+        return markPaymentFailed({ errorMessage: 'סליקת Takbull לא הוגדרה', skipEmail });
+    }
+    if (!card?.tokenEncrypted) {
+        return markPaymentFailed({ errorMessage: 'לא שמור כרטיס אשראי', skipEmail });
+    }
+
+    const target = upgradeOperation.targetPackage;
+    const interval = normalizeBillingInterval(
+        upgradeOperation.interval || (kind === 'annual' ? 'yearly' : snap.billingInterval)
+    );
+    const amount = Number(amountOverride);
+    if (amount <= 0) {
+        return { skipped: true, reason: 'zero_amount', snapshot: snap };
+    }
+
+    let token;
+    try {
+        token = decryptSecret(card.tokenEncrypted);
+    } catch (e) {
+        return markPaymentFailed({ errorMessage: 'לא ניתן לפענח את הכרטיס השמור', skipEmail });
+    }
+
+    const operationKey = buildUpgradeOperationKey({
+        tenantId: getCurrentTenantId(),
+        platformId: target.platformId,
+        resourceId: target.resourceId,
+        signingId: target.signingId,
+        billingInterval: interval,
+        amountIls: amount,
+    });
+
+    const rowBefore = await getBillingRow();
+    if (billingRowMatchesPackage(rowBefore, target)) {
+        return {
+            ok: true,
+            alreadyApplied: true,
+            charged: false,
+            snapshot: await getBillingSnapshot(),
+        };
+    }
+
+    const purpose = interval === 'yearly'
+        ? 'מנוי שנתי — מערכת עורכי דין (10% הנחה)'
+        : 'מנוי חודשי — מערכת עורכי דין';
+    const intentKind = kind === 'annual' ? 'annual' : 'upgrade';
+
+    return withUpgradeOperationLock(operationKey, async (client) => {
+        const rowLocked = await getBillingRow();
+        if (billingRowMatchesPackage(rowLocked, target)) {
+            return {
+                ok: true,
+                alreadyApplied: true,
+                charged: false,
+                snapshot: await getBillingSnapshot(),
+            };
+        }
+
+        const paidUnapplied = await findSucceededUnappliedUpgradeIntent(operationKey, client);
+        if (paidUnapplied) {
+            return recoverPaidUpgradeIntent(paidUnapplied, { upgradeOperationKey: operationKey });
+        }
+
+        let intent = await findPendingUpgradeIntentForUpdate(operationKey, client);
+
+        if (intent?.status === 'pending' && intent.takbull_transaction_id) {
+            const snapshot = await settleSuccessfulPayment({
+                intent,
+                transactionId: intent.takbull_transaction_id,
+            });
+            return {
+                ok: true,
+                charged: false,
+                finalizedPending: true,
+                intentId: intent.id,
+                snapshot,
+            };
+        }
+
+        if (!intent || intent.status === 'failed' || intent.status === 'cancelled') {
+            const snapshotPayload = upgradePackageSnapshot({
+                targetPackage: target,
+                interval,
+                operationKey,
+            });
+            intent = await createIntent({
+                kind: intentKind,
+                amountIls: amount,
+                purpose,
+                packageSnapshot: snapshotPayload,
+            }, client);
+        } else if (intent.status === 'succeeded') {
+            return recoverPaidUpgradeIntent(intent, { upgradeOperationKey: operationKey });
+        }
+
+        chargeProviderCallCount += 1;
+        const charged = await chargeTakbullTokenFn({
+            credentials: creds,
+            orderReference: intent.order_reference,
+            amount,
+            currency: 'ILS',
+            cardExternalToken: token,
+            ipnAddress: ipnAddress(),
+            redirectAddress: returnAddress(),
+            cancelReturnAddress: cancelAddress(),
+            purpose,
+        });
+
+        const q = client.query.bind(client);
+        await q(
+            `UPDATE firm_payment_intents
+             SET takbull_transaction_id = $2, updated_at = now()
+             WHERE id = $1`,
+            [intent.id, charged.transactionInternalNumber]
+        );
+
+        if (!charged.ok) {
+            const msg = charged.internalDescription || `Takbull ${charged.internalCode}`;
+            await markPaymentFailed({ intent, errorMessage: msg, skipEmail });
+            return { ok: false, errorMessage: msg, snapshot: await getBillingSnapshot() };
+        }
+
+        const snapshot = await settleSuccessfulPayment({
+            intent,
+            tokenInfo: charged.token,
+            transactionId: charged.transactionInternalNumber,
+        });
+        return { ok: true, charged: true, intentId: intent.id, snapshot };
+    });
+}
+
 async function savePackage({ platformId, resourceId, signingId, billingInterval, usage, customer } = {}) {
-    const row = await ensureBillingRow();
+    const api = module.exports;
+    const row = await api.ensureBillingRow();
     const current = {
         platformId: row.platformId,
         resourceId: row.resourceId,
@@ -749,39 +1099,147 @@ async function savePackage({ platformId, resourceId, signingId, billingInterval,
         || current.resourceId !== pkg.resourceId
         || current.signingId !== pkg.signingId;
 
-    await updateBilling({
-        platform_id: pkg.platformId,
-        resource_id: pkg.resourceId,
-        signing_id: pkg.signingId,
-        price_monthly_ils: pkg.total,
-        billing_interval: interval,
-    });
-    await syncTenantSubscription(pkg);
+    const flags = computeFlags(await api.getBillingRow());
+    const requiresPaymentBeforePersist = packChanged
+        && flags.billingEnabled
+        && !flags.stillComplimentary
+        && evaluation.priceIncreased;
 
-    if (!packChanged) {
-        return { saved: true, charged: false, snapshot: await getBillingSnapshot(), evaluation };
+    async function persistPackageRow() {
+        await api.updateBilling({
+            platform_id: pkg.platformId,
+            resource_id: pkg.resourceId,
+            signing_id: pkg.signingId,
+            price_monthly_ils: pkg.total,
+            billing_interval: interval,
+        });
+        await api.syncTenantSubscription(pkg);
     }
 
-    const flags = computeFlags(await getBillingRow());
-    const card = await getActiveCard();
-    if (!card) {
-        const checkout = await createCheckout({ kind: 'setup', customer });
-        return { saved: true, charged: false, checkout, snapshot: await getBillingSnapshot(), evaluation };
-    }
-    if (flags.billingEnabled && !flags.stillComplimentary && evaluation.priceIncreased) {
-        const charged = await chargeSavedCard({
+    if (requiresPaymentBeforePersist) {
+        const card = await api.getActiveCard();
+        if (!card) {
+            const checkout = await api.createCheckout({
+                kind: interval === 'yearly' ? 'annual' : 'retry',
+                customer,
+                pendingPackage: {
+                    platformId: pkg.platformId,
+                    resourceId: pkg.resourceId,
+                    signingId: pkg.signingId,
+                    billingInterval: interval,
+                },
+            });
+            return {
+                saved: true,
+                charged: false,
+                checkout,
+                snapshot: await api.getBillingSnapshot(),
+                evaluation,
+            };
+        }
+        const charged = await api.chargeSavedCard({
             kind: interval === 'yearly' ? 'annual' : 'upgrade',
             amountOverride: interval === 'yearly' ? yearlyTotalIls(pkg.total) : pkg.total,
             skipEmail: false,
+            upgradeOperation: {
+                targetPackage: {
+                    platformId: pkg.platformId,
+                    resourceId: pkg.resourceId,
+                    signingId: pkg.signingId,
+                },
+                interval,
+            },
         });
         if (charged?.ok === false || charged?.snapshot?.status === 'past_due') {
-            const checkout = await createCheckout({ kind: interval === 'yearly' ? 'annual' : 'retry', customer });
-            return { saved: true, charged: false, checkout, snapshot: await getBillingSnapshot(), evaluation };
+            const checkout = await api.createCheckout({
+                kind: interval === 'yearly' ? 'annual' : 'retry',
+                customer,
+            });
+            return {
+                saved: true,
+                charged: false,
+                checkout,
+                snapshot: await api.getBillingSnapshot(),
+                evaluation,
+            };
         }
-        return { saved: true, charged: true, snapshot: charged.snapshot || await getBillingSnapshot(), evaluation };
+        if (charged?.alreadyApplied) {
+            try {
+                await persistPackageRow();
+            } catch (persistErr) {
+                console.error('[billing] PACKAGE_PERSIST_AFTER_CHARGE', {
+                    code: 'PACKAGE_PERSIST_AFTER_CHARGE',
+                    platformId: pkg.platformId,
+                    resourceId: pkg.resourceId,
+                    signingId: pkg.signingId,
+                    billingInterval: interval,
+                    message: persistErr?.message,
+                });
+                const err = new Error('החיוב בוצע אך עדכון החבילה נכשל. פנו לתמיכה.');
+                err.code = 'PACKAGE_PERSIST_AFTER_CHARGE';
+                throw err;
+            }
+            return {
+                saved: true,
+                charged: false,
+                snapshot: charged.snapshot || await api.getBillingSnapshot(),
+                evaluation,
+            };
+        }
+        if (charged?.recovered || charged?.finalizedPending) {
+            try {
+                await persistPackageRow();
+            } catch (persistErr) {
+                console.error('[billing] PACKAGE_PERSIST_AFTER_CHARGE', {
+                    code: 'PACKAGE_PERSIST_AFTER_CHARGE',
+                    platformId: pkg.platformId,
+                    resourceId: pkg.resourceId,
+                    signingId: pkg.signingId,
+                    billingInterval: interval,
+                    message: persistErr?.message,
+                });
+                const err = new Error('החיוב בוצע אך עדכון החבילה נכשל. פנו לתמיכה.');
+                err.code = 'PACKAGE_PERSIST_AFTER_CHARGE';
+                throw err;
+            }
+            return {
+                saved: true,
+                charged: false,
+                recovered: true,
+                snapshot: charged.snapshot || await api.getBillingSnapshot(),
+                evaluation,
+            };
+        }
+        try {
+            await persistPackageRow();
+        } catch (persistErr) {
+            console.error('[billing] PACKAGE_PERSIST_AFTER_CHARGE', {
+                code: 'PACKAGE_PERSIST_AFTER_CHARGE',
+                platformId: pkg.platformId,
+                resourceId: pkg.resourceId,
+                signingId: pkg.signingId,
+                billingInterval: interval,
+                message: persistErr?.message,
+            });
+            const err = new Error('החיוב בוצע אך עדכון החבילה נכשל. פנו לתמיכה.');
+            err.code = 'PACKAGE_PERSIST_AFTER_CHARGE';
+            throw err;
+        }
+        return {
+            saved: true,
+            charged: true,
+            snapshot: charged.snapshot || await api.getBillingSnapshot(),
+            evaluation,
+        };
     }
 
-    return { saved: true, charged: false, snapshot: await getBillingSnapshot(), evaluation };
+    await persistPackageRow();
+
+    if (!packChanged) {
+        return { saved: true, charged: false, snapshot: await api.getBillingSnapshot(), evaluation };
+    }
+
+    return { saved: true, charged: false, snapshot: await api.getBillingSnapshot(), evaluation };
 }
 
 async function handleTakbullNotification({ uniqId, query } = {}) {
@@ -963,4 +1421,10 @@ module.exports = {
     findIntentById,
     updateBilling,
     syncTenantSubscription,
+    parseIntentPackageSnapshot,
+    applyIntentPackageSnapshot,
+    buildUpgradeOperationKey,
+    resetChargeProviderCallCountForTests,
+    getChargeProviderCallCountForTests,
+    setChargeTakbullTokenForTests,
 };
