@@ -2,6 +2,7 @@
 # Shared Neon connection config for prod→Neon sync scripts.
 # Credentials MUST come from the environment — never hardcode or commit secrets.
 #
+# LOCAL DEV ONLY: copies prod → Neon for laptop testing. Production PM2 uses localhost Postgres.
 # Option A (preferred): export NEON_DATABASE_URL='postgresql://user:pass@host/neondb?sslmode=require'
 # Option B: export NEON_PASS='...' (plus optional NEON_HOST / NEON_USER / NEON_DB)
 
