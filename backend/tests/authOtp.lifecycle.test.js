@@ -1,4 +1,11 @@
 process.env.NODE_ENV = 'test';
+
+const otpLifecycleEnvSnapshot = {
+    DEMO_OTP_PHONES: process.env.DEMO_OTP_PHONES,
+    JWT_SECRET: process.env.JWT_SECRET,
+};
+// Prevent developer backend/.env demo phones from bypassing SMS in this suite.
+process.env.DEMO_OTP_PHONES = '';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-otp-lifecycle';
 
 const test = require('node:test');
@@ -211,4 +218,17 @@ test('OTP lifecycle: concurrent failure rollback does not delete newer challenge
     await slowPromise;
     assert.equal(slowRes.statusCode, 503);
     assert.equal(otpsByPhone.get(phone)?.id, survivingId);
+});
+
+test.after(() => {
+    if (otpLifecycleEnvSnapshot.DEMO_OTP_PHONES === undefined) {
+        delete process.env.DEMO_OTP_PHONES;
+    } else {
+        process.env.DEMO_OTP_PHONES = otpLifecycleEnvSnapshot.DEMO_OTP_PHONES;
+    }
+    if (otpLifecycleEnvSnapshot.JWT_SECRET === undefined) {
+        delete process.env.JWT_SECRET;
+    } else {
+        process.env.JWT_SECRET = otpLifecycleEnvSnapshot.JWT_SECRET;
+    }
 });

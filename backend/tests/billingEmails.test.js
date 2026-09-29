@@ -42,3 +42,35 @@ test('parseBillingAlertEmails splits comma-separated owner alerts', () => {
     const list = parseBillingAlertEmails('a@x.com, b@y.com; c@z.com');
     assert.deepEqual(list, ['a@x.com', 'b@y.com', 'c@z.com']);
 });
+
+test('sendFailedPaymentEmails uses branding name in fromName', async () => {
+    const prevName = process.env.BILLING_EMAIL_BRAND_NAME;
+    process.env.BILLING_EMAIL_BRAND_NAME = 'MelamedLaw';
+    const sent = [];
+    const smoovePath = require.resolve('../utils/smooveEmailCampaignService');
+    const billingPath = require.resolve('../lib/billing/billingEmails');
+    delete require.cache[billingPath];
+    delete require.cache[smoovePath];
+    const smoove = require('../utils/smooveEmailCampaignService');
+    smoove.sendEmailWithAttachments = async (payload) => {
+        sent.push(payload);
+        return { ok: true };
+    };
+    const billingEmails = require('../lib/billing/billingEmails');
+    const settingsService = require('../services/settingsService');
+    const prevAdmins = settingsService.getPlatformAdmins;
+    settingsService.getPlatformAdmins = async () => [{ email: 'admin@example.com' }];
+
+    try {
+        await billingEmails.sendFailedPaymentEmails({ amountIls: 50, last4: '4242' });
+        assert.equal(sent.length, 1);
+        assert.equal(sent[0].fromName, 'MelamedLaw Billing');
+    } finally {
+        smoove.sendEmailWithAttachments = require('../utils/smooveEmailCampaignService').sendEmailWithAttachments;
+        settingsService.getPlatformAdmins = prevAdmins;
+        delete require.cache[billingPath];
+        delete require.cache[smoovePath];
+        if (prevName === undefined) delete process.env.BILLING_EMAIL_BRAND_NAME;
+        else process.env.BILLING_EMAIL_BRAND_NAME = prevName;
+    }
+});

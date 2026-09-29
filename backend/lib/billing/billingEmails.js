@@ -114,7 +114,7 @@ async function sendFailedPaymentEmails({ amountIls, last4, graceUntil, errorMess
             subject: 'חיוב המנוי נכשל — נדרש תשלום תוך 72 שעות',
             htmlBody: html,
             logLabel: 'BILLING_PAYMENT_FAILED',
-            fromName: 'MelaMedia Billing',
+            fromName: `${firmName} Billing`,
         });
         results.push({ toEmail, ...r });
     }
