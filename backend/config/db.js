@@ -1,8 +1,10 @@
 const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
+const { assertProductionDatabaseNotNeon } = require('./dbTargetPolicy');
 // Fill missing keys from .env; do not clobber process env (tests / PM2 / FORCE_* flags).
 require('dotenv').config({ path: path.join(__dirname, '../.env'), override: false });
+assertProductionDatabaseNotNeon();
 
 function buildSslConfig() {
     if (process.env.DB_SSL !== 'true') return false;
