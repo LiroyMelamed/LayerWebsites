@@ -71,6 +71,11 @@ Rules:
 - **CUPS disabled** on backend (was exposed on 0.0.0.0:631): `snap stop --disable cups`.
 - User's known SSH source IPs (do NOT lock out): 46.210.218.181, 141.226.89.32.
 
+## PostgreSQL: production vs Neon (CRITICAL)
+- **Production** (MelamedLaw, MorLevi, AshrafEssa, Idm, Melamedia on VPS): PostgreSQL on **127.0.0.1 / localhost** on `37.60.230.148`. Each tenant has its own database (`melamedlaw`, `morlevy`, etc.).
+- **Neon** (`*.neon.tech`, `neondb`): **local development and automated tests only**. Use `backend/scripts/sync-prod-to-*-neon.sh` to refresh a dev clone — never point production `backend/.env` at Neon.
+- `backend/config/db.js` **refuses to start** when `NODE_ENV=production` or `IS_PRODUCTION=true` and `DB_HOST` / `DATABASE_URL` contains `neon.tech`.
+
 ## Database backups — CRITICAL (do not break)
 - **Unified script**: `/usr/local/bin/tenant_backup.sh` on backend server (mode 700). Usage: `tenant_backup.sh <tenant-key> <tenant-dir> [retention-days]`
   - Parses .env via `grep` (NEVER `source` it — Hebrew values and parens like `FIRM_DISPLAY_NAME=ליאב מלמד (MelamedLaw)` break shell parsing)
