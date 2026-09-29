@@ -2,7 +2,7 @@ const { sendEmailWithAttachments } = require('../../utils/smooveEmailCampaignSer
 const settingsService = require('../../services/settingsService');
 const { getPayUrl } = require('./tenantBillingDefaults');
 const { wrapEmailHtml } = require('../../tasks/emailReminders/templates');
-const { getLawFirmNameHe, getFirmNameEn } = require('../firmBranding');
+const { getBillingEmailBrandingFromEnv } = require('./billingEmailBranding');
 
 const FAILED_PAYMENT_TITLE = 'חיוב המנוי נכשל';
 
@@ -61,10 +61,15 @@ function buildFailedPaymentHtml({
     });
 }
 
-async function getBillingEmailBranding() {
-    const firmName = (await getLawFirmNameHe()) || (await getFirmNameEn()) || 'MelaMedia';
-    const firmLogoUrl = (await settingsService.getSetting('firm', 'FIRM_LOGO_URL', null)) || '';
-    return { firmName, firmLogoUrl };
+function getBillingEmailBranding() {
+    return getBillingEmailBrandingFromEnv(process.env);
+}
+
+function parseBillingAlertEmails(raw) {
+    return String(raw || '')
+        .split(/[,;\s]+/)
+        .map((part) => part.trim().toLowerCase())
+        .filter((email) => email.includes('@'));
 }
 
 async function collectBillingRecipients() {
@@ -78,14 +83,15 @@ async function collectBillingRecipients() {
     } catch (e) {
         console.warn('[billing-email] platform admins lookup failed:', e?.message);
     }
-    const alert = String(process.env.BILLING_ALERT_EMAIL || '').trim();
-    if (alert && alert.includes('@')) emails.add(alert.toLowerCase());
+    for (const email of parseBillingAlertEmails(process.env.BILLING_ALERT_EMAIL)) {
+        emails.add(email);
+    }
     return [...emails];
 }
 
 async function sendFailedPaymentEmails({ amountIls, last4, graceUntil, errorMessage } = {}) {
     const payUrl = getPayUrl();
-    const { firmName, firmLogoUrl } = await getBillingEmailBranding();
+    const { firmName, firmLogoUrl } = getBillingEmailBranding();
     const html = buildFailedPaymentHtml({
         amountIls,
         last4,
@@ -120,4 +126,5 @@ module.exports = {
     collectBillingRecipients,
     buildFailedPaymentHtml,
     getBillingEmailBranding,
+    parseBillingAlertEmails,
 };
