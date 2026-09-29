@@ -726,7 +726,8 @@ async function chargeSavedCard({ kind, amountOverride, skipEmail } = {}) {
 }
 
 async function savePackage({ platformId, resourceId, signingId, billingInterval, usage, customer } = {}) {
-    const row = await ensureBillingRow();
+    const api = module.exports;
+    const row = await api.ensureBillingRow();
     const current = {
         platformId: row.platformId,
         resourceId: row.resourceId,
@@ -749,39 +750,76 @@ async function savePackage({ platformId, resourceId, signingId, billingInterval,
         || current.resourceId !== pkg.resourceId
         || current.signingId !== pkg.signingId;
 
-    await updateBilling({
-        platform_id: pkg.platformId,
-        resource_id: pkg.resourceId,
-        signing_id: pkg.signingId,
-        price_monthly_ils: pkg.total,
-        billing_interval: interval,
-    });
-    await syncTenantSubscription(pkg);
+    const flags = computeFlags(await api.getBillingRow());
+    const requiresPaymentBeforePersist = packChanged
+        && flags.billingEnabled
+        && !flags.stillComplimentary
+        && evaluation.priceIncreased;
 
-    if (!packChanged) {
-        return { saved: true, charged: false, snapshot: await getBillingSnapshot(), evaluation };
+    async function persistPackageRow() {
+        await api.updateBilling({
+            platform_id: pkg.platformId,
+            resource_id: pkg.resourceId,
+            signing_id: pkg.signingId,
+            price_monthly_ils: pkg.total,
+            billing_interval: interval,
+        });
+        await api.syncTenantSubscription(pkg);
     }
 
-    const flags = computeFlags(await getBillingRow());
-    const card = await getActiveCard();
-    if (!card) {
-        const checkout = await createCheckout({ kind: 'setup', customer });
-        return { saved: true, charged: false, checkout, snapshot: await getBillingSnapshot(), evaluation };
-    }
-    if (flags.billingEnabled && !flags.stillComplimentary && evaluation.priceIncreased) {
-        const charged = await chargeSavedCard({
+    if (requiresPaymentBeforePersist) {
+        const card = await api.getActiveCard();
+        if (!card) {
+            const checkout = await api.createCheckout({ kind: 'setup', customer });
+            return {
+                saved: true,
+                charged: false,
+                checkout,
+                snapshot: await api.getBillingSnapshot(),
+                evaluation,
+            };
+        }
+        const charged = await api.chargeSavedCard({
             kind: interval === 'yearly' ? 'annual' : 'upgrade',
             amountOverride: interval === 'yearly' ? yearlyTotalIls(pkg.total) : pkg.total,
             skipEmail: false,
         });
         if (charged?.ok === false || charged?.snapshot?.status === 'past_due') {
-            const checkout = await createCheckout({ kind: interval === 'yearly' ? 'annual' : 'retry', customer });
-            return { saved: true, charged: false, checkout, snapshot: await getBillingSnapshot(), evaluation };
+            const checkout = await api.createCheckout({
+                kind: interval === 'yearly' ? 'annual' : 'retry',
+                customer,
+            });
+            return {
+                saved: true,
+                charged: false,
+                checkout,
+                snapshot: await api.getBillingSnapshot(),
+                evaluation,
+            };
         }
-        return { saved: true, charged: true, snapshot: charged.snapshot || await getBillingSnapshot(), evaluation };
+        try {
+            await persistPackageRow();
+        } catch (persistErr) {
+            console.error('[billing] package persist failed after successful charge:', persistErr?.message);
+            const err = new Error('החיוב בוצע אך עדכון החבילה נכשל. פנו לתמיכה.');
+            err.code = 'PACKAGE_PERSIST_AFTER_CHARGE';
+            throw err;
+        }
+        return {
+            saved: true,
+            charged: true,
+            snapshot: charged.snapshot || await api.getBillingSnapshot(),
+            evaluation,
+        };
     }
 
-    return { saved: true, charged: false, snapshot: await getBillingSnapshot(), evaluation };
+    await persistPackageRow();
+
+    if (!packChanged) {
+        return { saved: true, charged: false, snapshot: await api.getBillingSnapshot(), evaluation };
+    }
+
+    return { saved: true, charged: false, snapshot: await api.getBillingSnapshot(), evaluation };
 }
 
 async function handleTakbullNotification({ uniqId, query } = {}) {

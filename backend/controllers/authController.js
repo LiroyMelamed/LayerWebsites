@@ -226,7 +226,9 @@ const requestOtp = async (req, res) => {
                     logLabel: "login-email-otp",
                 });
             } catch (e) {
+                await pool.query(`DELETE FROM otps WHERE LOWER(email) = $1`, [emailNorm]);
                 console.warn("Email OTP send failed:", e?.message);
+                return res.status(503).json({ message: "שליחת הקוד לדוא״ל נכשלה. נסו שוב בעוד רגע" });
             }
 
             return res.status(200).json({ message: "קוד נשלח לדוא״ל", otpSent: true, channel: "email" });
@@ -272,10 +274,15 @@ const requestOtp = async (req, res) => {
         );
 
         if (!isDemo) {
-            try {
-                sendMessage(buildOtpSmsBodyForRequest(req, otp), formatedPhoneNumber, { fast: true });
-            } catch (e) {
-                console.warn("SMS send failed:", e?.message);
+            const sent = await sendMessage(
+                buildOtpSmsBodyForRequest(req, otp),
+                formatedPhoneNumber,
+                { fast: true }
+            );
+            if (!sent?.ok) {
+                await pool.query(`DELETE FROM otps WHERE phonenumber = $1`, [phoneNumber]);
+                console.warn("SMS send failed:", sent?.error || 'provider_rejected');
+                return res.status(503).json({ message: "שליחת הקוד נכשלה. נסו שוב בעוד רגע" });
             }
         }
 
@@ -610,10 +617,15 @@ const register = async (req, res) => {
             [phoneNumber, hashOtp(otp), expiry, userId]
         );
 
-        try {
-            sendMessage(buildOtpSmsBodyForRequest(req, otp), formatedPhoneNumber, { fast: true });
-        } catch (e) {
-            console.warn("כשל בשליחת SMS לאחר הרשמה:", e?.message);
+        const sent = await sendMessage(
+            buildOtpSmsBodyForRequest(req, otp),
+            formatedPhoneNumber,
+            { fast: true }
+        );
+        if (!sent?.ok) {
+            await pool.query(`DELETE FROM otps WHERE phonenumber = $1`, [phoneNumber]);
+            console.warn("כשל בשליחת SMS לאחר הרשמה:", sent?.error || 'provider_rejected');
+            return res.status(503).json({ message: "שליחת הקוד נכשלה. נסו שוב בעוד רגע" });
         }
 
         return res.status(201).json({ otpSent: true });
