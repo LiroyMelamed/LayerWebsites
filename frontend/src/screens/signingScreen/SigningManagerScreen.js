@@ -662,8 +662,6 @@ export function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownload
         setIsSavingSigner(true);
         try {
             const payload = {
-                email: editSignerEmail.trim() || null,
-                phone: editSignerPhone.trim() || null,
                 deliveryMethod: editSignerDelivery,
             };
             if (Number(editSignerUserId) !== Number(editingSigner.SignerUserId)) {
@@ -945,6 +943,7 @@ export function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownload
                                 {t('signingManager.replaceSigner.titleLabel')}
                             </span>
                         </div>
+                        <p>{t('signingManager.replaceSigner.contactReadOnly')}</p>
                         <SimpleContainer className="lw-signingManagerScreen__replaceSignerFields">
                             <SearchInput
                                 onSearch={handleSearchReplaceSignerClient}
@@ -966,14 +965,14 @@ export function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownload
                             <SimpleInput
                                 title={t('signingManager.replaceSigner.email')}
                                 value={editSignerEmail}
-                                onChange={(e) => setEditSignerEmail(e.target.value)}
+                                readOnly
                                 className="lw-signingManagerScreen__replaceSignerField"
                                 timeToWaitInMilli={0}
                             />
                             <SimpleInput
                                 title={t('signingManager.replaceSigner.phone')}
                                 value={editSignerPhone}
-                                onChange={(e) => setEditSignerPhone(e.target.value)}
+                                readOnly
                                 className="lw-signingManagerScreen__replaceSignerField"
                                 timeToWaitInMilli={0}
                                 type="tel"
