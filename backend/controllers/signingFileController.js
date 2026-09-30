@@ -7335,7 +7335,9 @@ exports.signFile = async (req, res, next) => {
         if (isSignatureLike && signatureImage) {
             const isPng = signatureImage.includes("png");
             const ext = isPng ? "png" : "jpg";
-            const key = `signatures/${file.LawyerId}/${userId}/${signingFileId}_${signatureSpotId}.${ext}`;
+            // Concurrent submissions must never overwrite the image referenced by
+            // the winning database update (including its evidence hash).
+            const key = `signatures/${file.LawyerId}/${userId}/${signingFileId}_${signatureSpotId}_${uuid()}.${ext}`;
 
             let buffer;
             try {
@@ -7397,6 +7399,11 @@ exports.signFile = async (req, res, next) => {
                 ]
             );
             if (!updRes.rowCount) {
+                try {
+                    await r2.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
+                } catch {
+                    console.warn('[signing] Failed to remove unused concurrent signature upload');
+                }
                 return fail(next, 'SIGNATURE_SPOT_ALREADY_SIGNED', 409);
             }
         } else {
