@@ -45,8 +45,9 @@ test('signing APIs preserve customer contacts and reject mismatched recipients b
         await pool.end();
     });
     for (let i = 0; i < 2; i++) {
-        const result = await pool.query(`INSERT INTO users(name,email,phonenumber,role)
-            VALUES ($1,$2,$3,'User') RETURNING userid`, [`Synthetic contact QA ${marker} ${i}`, `contact-${marker}-${i}@example.invalid`, `050999991${i}`]);
+        // Restored QA fixtures can have explicit IDs above the database sequence.
+        const result = await pool.query(`INSERT INTO users(userid,name,email,phonenumber,role)
+            VALUES ($1,$2,$3,$4,'User') RETURNING userid`, [crypto.randomInt(10000000, 2000000000), `Synthetic contact QA ${marker} ${i}`, `contact-${marker}-${i}@example.invalid`, `050999991${i}`]);
         ids.push(result.rows[0].userid);
     }
     const snapshot = async () => (await pool.query('SELECT userid,name,email,phonenumber,role FROM users WHERE userid=ANY($1::int[]) ORDER BY userid', [ids])).rows;
