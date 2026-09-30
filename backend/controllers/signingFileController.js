@@ -1,5 +1,6 @@
 // controllers/signingFileController.js
 const pool = require("../config/db");
+const { hasSigningContactOverride, CONTACT_EDIT_MESSAGE } = require("../lib/signingSignerContact");
 const jwt = require('jsonwebtoken');
 const { PutObjectCommand, GetObjectCommand, HeadObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
@@ -2622,7 +2623,16 @@ exports.uploadFileForSigning = async (req, res, next) => {
         const signersList = [];
         for (const signer of rawSignersList) {
             if (signer.userId) {
-                signersList.push(signer);
+                const customer = await pool.query(
+                    `SELECT userid AS "UserId", name AS "Name", email AS "Email", phonenumber AS "Phone"
+                     FROM users WHERE userid = $1`, [signer.userId]
+                );
+                const contact = customer.rows[0];
+                if (!contact) return fail(next, 'VALIDATION_ERROR', 422, { message: 'הלקוח שנבחר לא נמצא' });
+                if (hasSigningContactOverride(signer, contact)) {
+                    return fail(next, 'VALIDATION_ERROR', 409, { message: CONTACT_EDIT_MESSAGE });
+                }
+                signersList.push({ ...signer, userId: contact.UserId, name: contact.Name, email: contact.Email, phone: contact.Phone });
                 continue;
             }
 
@@ -2647,7 +2657,6 @@ exports.uploadFileForSigning = async (req, res, next) => {
             }
 
             let resolvedUserId = null;
-            let resolvedRole = null;
 
             // Try to find existing user by email
             if (signerEmail) {
@@ -2657,7 +2666,6 @@ exports.uploadFileForSigning = async (req, res, next) => {
                 );
                 if (emailSearch.rows.length > 0) {
                     resolvedUserId = emailSearch.rows[0].userid;
-                    resolvedRole = emailSearch.rows[0].role;
                 }
             }
 
@@ -2684,7 +2692,6 @@ exports.uploadFileForSigning = async (req, res, next) => {
                 );
                 if (phoneSearch.rows.length > 0) {
                     resolvedUserId = phoneSearch.rows[0].userid;
-                    resolvedRole = phoneSearch.rows[0].role;
                 }
             }
 
@@ -2698,34 +2705,22 @@ exports.uploadFileForSigning = async (req, res, next) => {
                     [signerName, signerEmail || null, signerPhone || null, roleToCreate]
                 );
                 resolvedUserId = insertUser.rows[0].userid;
-                resolvedRole = roleToCreate;
                 console.log(
                     `[signing] Created ${roleToCreate} signer: userId=${resolvedUserId}, name="${signerName}"`
                 );
-            } else if (
-                hasPhone &&
-                String(resolvedRole || '') === 'ExternalSigner'
-            ) {
-                // Promote legacy external signers who now have a phone into real clients.
-                await pool.query(
-                    `UPDATE users
-                     SET role = 'User',
-                         name = COALESCE(NULLIF(name, ''), $2),
-                         phonenumber = COALESCE(phonenumber, $3),
-                         email = COALESCE(email, $4)
-                     WHERE userid = $1`,
-                    [resolvedUserId, signerName, signerPhone || null, signerEmail || null]
-                );
-                console.log(
-                    `[signing] Promoted ExternalSigner->User: userId=${resolvedUserId}`
-                );
             }
 
-            signersList.push({
-                ...signer,
-                userId: resolvedUserId,
-                phone: signerPhone || signer.phone,
-            });
+            // A legacy/manual request can resolve to an existing customer too.
+            // Never combine one customer's email with another customer's phone.
+            const customer = await pool.query(
+                `SELECT userid AS "UserId", name AS "Name", email AS "Email", phonenumber AS "Phone"
+                 FROM users WHERE userid = $1`, [resolvedUserId]
+            );
+            const contact = customer.rows[0];
+            if (!contact || hasSigningContactOverride(signer, contact)) {
+                return fail(next, 'VALIDATION_ERROR', 409, { message: CONTACT_EDIT_MESSAGE });
+            }
+            signersList.push({ ...signer, userId: contact.UserId, name: contact.Name, email: contact.Email, phone: contact.Phone });
         }
 
         if (isSigningDebugEnabled()) {
@@ -4967,18 +4962,20 @@ exports.updateSigningSignerContact = async (req, res, next) => {
 
         let effectiveSignerUserId = signerUserId;
         const replaceTargetId = parsePositiveIntStrict(replaceWithUserId) ?? null;
+        // Validate before replacement writes so rejected legacy edits have no side effects.
+        const contactResult = await pool.query(
+            `SELECT userid AS "UserId", name AS "Name", email AS "Email", phonenumber AS "Phone"
+             FROM users WHERE userid = $1`,
+            [replaceTargetId || signerUserId]
+        );
+        const contact = contactResult.rows[0];
+        if (!contact) return fail(next, 'VALIDATION_ERROR', 422, { message: 'הלקוח שנבחר לא נמצא' });
+        if (hasSigningContactOverride({ email, phone }, contact)) {
+            return fail(next, 'VALIDATION_ERROR', 409, { message: CONTACT_EDIT_MESSAGE });
+        }
         if (replaceTargetId && replaceTargetId !== signerUserId) {
             if (!schemaSupport?.signaturespotsSignerUserId) {
                 return fail(next, 'VALIDATION_ERROR', 422, { message: 'החלפת חותם אינה נתמכת במערכת זו' });
-            }
-
-            const newUserRes = await pool.query(
-                `SELECT userid AS "UserId", name AS "Name", email AS "Email", phonenumber AS "Phone"
-                 FROM users WHERE userid = $1`,
-                [replaceTargetId]
-            );
-            if (!newUserRes.rows.length) {
-                return fail(next, 'VALIDATION_ERROR', 422, { message: 'הלקוח שנבחר לא נמצא' });
             }
 
             const signedCheck = await pool.query(
@@ -5031,27 +5028,6 @@ exports.updateSigningSignerContact = async (req, res, next) => {
             }
 
             effectiveSignerUserId = replaceTargetId;
-        }
-
-        const emailNorm = email !== undefined ? String(email || '').trim().toLowerCase() || null : undefined;
-        const phoneNorm = phone !== undefined ? String(phone || '').trim().replace(/\D/g, '') || null : undefined;
-        if (emailNorm !== undefined || phoneNorm !== undefined) {
-            const sets = [];
-            const vals = [];
-            let idx = 1;
-            if (emailNorm !== undefined) {
-                sets.push(`email = $${idx++}`);
-                vals.push(emailNorm);
-            }
-            if (phoneNorm !== undefined) {
-                sets.push(`phonenumber = $${idx++}`);
-                vals.push(phoneNorm);
-            }
-            vals.push(effectiveSignerUserId);
-            await pool.query(
-                `UPDATE users SET ${sets.join(', ')} WHERE userid = $${idx}`,
-                vals
-            );
         }
 
         let savedDelivery = null;
@@ -7335,7 +7311,9 @@ exports.signFile = async (req, res, next) => {
         if (isSignatureLike && signatureImage) {
             const isPng = signatureImage.includes("png");
             const ext = isPng ? "png" : "jpg";
-            const key = `signatures/${file.LawyerId}/${userId}/${signingFileId}_${signatureSpotId}.${ext}`;
+            // Concurrent submissions must never overwrite the image referenced by
+            // the winning database update (including its evidence hash).
+            const key = `signatures/${file.LawyerId}/${userId}/${signingFileId}_${signatureSpotId}_${uuid()}.${ext}`;
 
             let buffer;
             try {
@@ -7397,6 +7375,11 @@ exports.signFile = async (req, res, next) => {
                 ]
             );
             if (!updRes.rowCount) {
+                try {
+                    await r2.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
+                } catch {
+                    console.warn('[signing] Failed to remove unused concurrent signature upload');
+                }
                 return fail(next, 'SIGNATURE_SPOT_ALREADY_SIGNED', 409);
             }
         } else {

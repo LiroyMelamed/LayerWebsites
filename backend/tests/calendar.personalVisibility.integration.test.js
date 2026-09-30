@@ -189,7 +189,7 @@ test('personal calendar — leave owner visible even when manager_user_id differ
         await deleteEvent(CREATOR_ID, created.id);
     });
 
-    assert.equal(created.owner_id, LAWYER_B, 'leave owner should be tagged lawyer');
+    assert.equal(created.ownerId, LAWYER_B, 'leave owner should be tagged lawyer');
     assert.equal(
         await isVisibleInPersonalCalendar(LAWYER_B, created.id),
         true,
@@ -216,4 +216,38 @@ test('personal calendar — production regression: untagged creator does not see
         false,
         'creator who is not tagged must not see event in personal calendar'
     );
+});
+
+
+test('calendar API enforces event access and handles missing events for every role', async (t) => {
+    const app = require('../app');
+    const { start, end } = nextSundaySlot(10);
+    const created = await createEvent(CREATOR_ID, {
+        title: 'Synthetic API access lifecycle',
+        start_time: start, end_time: end,
+        manager_user_ids: [LAWYER_A],
+    });
+    t.after(() => deleteEvent(CREATOR_ID, created.id));
+    const call = (method, id, userid, role = 'Lawyer', body) => {
+        resetStore();
+        const req = request(app)[method](`/api/calendar/${id}`)
+            .set('Authorization', `Bearer ${makeToken({ userid, role })}`);
+        return body ? req.send(body) : req;
+    };
+    assert.equal((await call('get', created.id, LAWYER_A)).status, 200);
+    for (const method of ['get', 'put', 'delete']) {
+        const denied = await call(method, created.id, OUTSIDER_ID, 'Lawyer', method === 'put' ? { title: 'Unauthorized change' } : undefined);
+        assert.equal(denied.status, 403, `${method} must reject unrelated lawyer`);
+    }
+    const updated = await call('put', created.id, LAWYER_A, 'Lawyer', { title: 'Assigned lawyer update' });
+    assert.equal(updated.status, 200);
+    assert.equal(updated.body.event.title, 'Assigned lawyer update');
+    const missingId = 2147483647;
+    assert.equal((await pool.query('SELECT 1 FROM calendar_events WHERE id=$1', [missingId])).rowCount, 0);
+    for (const role of ['Admin', 'Lawyer']) {
+        for (const method of ['get', 'put', 'delete']) {
+            const missing = await call(method, missingId, CREATOR_ID, role, method === 'put' ? { title: 'Missing' } : undefined);
+            assert.equal(missing.status, 404, `${role} ${method} missing event must return404`);
+        }
+    }
 });
