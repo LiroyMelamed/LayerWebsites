@@ -1257,7 +1257,7 @@ export default function UploadFileForSigningScreen() {
             const key = await ensureUploadedKey();
 
             const signersPayload = (selectedSigners || []).map((s) => ({
-                userId: s.isManual ? null : Number(s.UserId),
+                userId: Number(s.UserId),
                 name: s.Name,
             }));
 
@@ -1299,11 +1299,9 @@ export default function UploadFileForSigningScreen() {
             const key = await ensureUploadedKey();
 
             const signersPayload = (selectedSigners || []).map((s) => ({
-                userId: s.isManual ? null : Number(s.UserId),
+                userId: Number(s.UserId),
                 name: s.Name,
                 deliveryMethod: clampDeliveryMethod(s, s.deliveryMethod),
-                ...(s.isManual && s.Email ? { email: s.Email } : {}),
-                ...(s.isManual && s.Phone ? { phone: s.Phone } : {}),
             }));
 
             // Recompute signerIndex from current list identity so reorder cannot swap ownership.
@@ -1615,50 +1613,6 @@ export default function UploadFileForSigningScreen() {
                                             })()}
                                             <button
                                                 type="button"
-                                                className="lw-uploadSigningScreen__signerChipEdit"
-                                                onClick={() => {
-                                                    const editedName = window.prompt(t('signing.upload.manualSignerName'), s.Name || '') || s.Name || '';
-                                                    const editedEmail = window.prompt(t('signing.upload.manualSignerEmail'), s.Email || '') || '';
-                                                    const editedPhone = window.prompt(t('signing.upload.manualSignerPhone'), s.Phone || '') || '';
-                                                    const nextEmail = editedEmail.trim() || null;
-                                                    const nextPhone = editedPhone.trim() || null;
-                                                    if (contactsCollideWithSelected({
-                                                        email: nextEmail,
-                                                        phone: nextPhone,
-                                                        excludeUserId: s.UserId,
-                                                    })) {
-                                                        showAppToast({
-                                                            type: 'error',
-                                                            text: t('signing.upload.validation.duplicateSignerContact'),
-                                                        });
-                                                        return;
-                                                    }
-                                                    const contactChanged =
-                                                        normalizeEmail(nextEmail) !== normalizeEmail(s.Email) ||
-                                                        normalizePhoneDigits(nextPhone) !== normalizePhoneDigits(s.Phone);
-                                                    const nextSigner = {
-                                                        ...s,
-                                                        Name: editedName.trim() || s.Name,
-                                                        Email: nextEmail,
-                                                        Phone: nextPhone,
-                                                        ...(contactChanged ? { isManual: true } : {}),
-                                                    };
-                                                    nextSigner.deliveryMethod = clampDeliveryMethod(nextSigner, s.deliveryMethod);
-                                                    setSelectedSigners((prev) =>
-                                                        prev.map((sig) =>
-                                                            Number(sig.UserId) === Number(s.UserId)
-                                                                ? nextSigner
-                                                                : sig
-                                                        )
-                                                    );
-                                                }}
-                                                aria-label={t('signing.context.edit')}
-                                                title={t('signing.context.edit')}
-                                            >
-                                                {t('signing.context.edit')}
-                                            </button>
-                                            <button
-                                                type="button"
                                                 className="lw-uploadSigningScreen__signerChipRemove"
                                                 onClick={() => removeSigner(s.UserId)}
                                                 aria-label={t('signing.upload.removeSignerAria', { name: s.Name })}
@@ -1672,6 +1626,7 @@ export default function UploadFileForSigningScreen() {
                             </SimpleContainer>
                         )}
 
+                        {selectedSigners.length > 0 && <p>{t('signingManager.replaceSigner.contactReadOnly')}</p>}
                         <SimpleContainer className="lw-uploadSigningScreen__formGroup lw-uploadSigningScreen__fileGroup">
                             <FileUploadBox
                                 accept=".pdf"
