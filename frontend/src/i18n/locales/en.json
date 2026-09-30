@@ -131,8 +131,8 @@
       "actions": "Actions",
       "button": "Replace signer / change delivery",
       "buttonShort": "Change delivery",
-      "title": "Update signer — {{name}}",
-      "titleLabel": "Update signer details",
+      "title": "Signer and delivery — {{name}}",
+      "titleLabel": "Signer and delivery channel",
       "client": "Signer / client",
       "email": "Email",
       "phone": "Phone",
@@ -142,9 +142,10 @@
       "deliveryBoth": "Both",
       "saveOnly": "Save",
       "saveAndResend": "Save & resend",
-      "saveSuccess": "Signer details updated",
-      "resendSuccess": "Signer updated and invite resent",
-      "error": "Failed to update signer"
+      "saveSuccess": "Signer and delivery channel updated",
+      "resendSuccess": "Signer and delivery channel updated and invite resent",
+      "error": "Failed to update signer",
+      "contactReadOnly": "Contact details come from the customer record. To change an email or phone number, update the customer on the Customers screen and select them again."
     },
     "spotsPreview": {
       "title": "Signature locations",
