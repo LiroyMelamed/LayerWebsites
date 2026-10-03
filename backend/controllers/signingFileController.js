@@ -8549,69 +8549,59 @@ exports.detectSignatureSpots = async (req, res, next) => {
 
 // ─── Delete a signing file (pending / signed / rejected) ─────────────
 exports.deleteSigningFile = async (req, res, next) => {
+    let client;
+    let transactionOpen = false;
+    let keysToDelete = [];
     try {
         const { signingFileId } = req.params;
         if (!signingFileId) return fail(next, 'MISSING_SIGNING_FILE_ID', 400);
-
         const requesterId = req.user?.UserId;
         const role = req.user?.Role;
         if (!requesterId) return fail(next, 'UNAUTHORIZED', 401);
 
-        const { rows } = await pool.query(
-            `SELECT signingfileid  AS "SigningFileId",
-                    lawyerid       AS "LawyerId",
-                    status         AS "Status",
-                    filekey        AS "FileKey",
-                    originalfilekey AS "OriginalFileKey",
-                    signedfilekey  AS "SignedFileKey"
-             FROM signingfiles
-             WHERE signingfileid = $1`,
-            [signingFileId],
-        );
-
-        if (rows.length === 0) {
-            return fail(next, 'NOT_FOUND', 404);
-        }
-
+        client = await pool.connect();
+        await client.query('BEGIN');
+        transactionOpen = true;
+        const { rows } = await client.query(
+            `SELECT signingfileid AS "SigningFileId", lawyerid AS "LawyerId",
+                    status AS "Status", filekey AS "FileKey",
+                    originalfilekey AS "OriginalFileKey", signedfilekey AS "SignedFileKey"
+             FROM signingfiles WHERE signingfileid = $1 FOR UPDATE`, [signingFileId]);
         const file = rows[0];
-        if (!canManageSigningFile({ file, requesterId, role })) {
-            return fail(next, 'FORBIDDEN', 403);
+        let rejection = null;
+        if (!file) rejection = ['NOT_FOUND', 404];
+        else if (!canManageSigningFile({ file, requesterId, role })) rejection = ['FORBIDDEN', 403];
+        else if (!['pending', 'signed', 'rejected'].includes(String(file.Status || '').toLowerCase())) {
+            rejection = ['FILE_STATUS_NOT_DELETABLE', 400];
         }
-        const status = String(file.Status || '').toLowerCase();
-        if (!['pending', 'signed', 'rejected'].includes(status)) {
-            return fail(next, 'FILE_STATUS_NOT_DELETABLE', 400);
-        }
-
-        // Delete from R2/S3 storage (ignore errors — best-effort cleanup)
-        const keysToDelete = [file.FileKey, file.OriginalFileKey, file.SignedFileKey].filter(Boolean);
-        for (const key of keysToDelete) {
-            try {
-                await r2.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
-            } catch (e) {
-                console.error(`[deleteSigningFile] Failed to delete R2 object ${key}:`, e?.message);
-            }
-        }
-
-        // Delete in a transaction with the audit_events override flag so that
-        // ON DELETE SET NULL FK cascades into audit_events are allowed.
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
-            await client.query("SET LOCAL app.audit_events_allow_delete = 'true'");
-            await client.query(`DELETE FROM signaturespots WHERE signingfileid = $1`, [signingFileId]);
-            await client.query(`DELETE FROM signingfiles WHERE signingfileid = $1`, [signingFileId]);
-            await client.query('COMMIT');
-        } catch (txErr) {
+        if (rejection) {
             await client.query('ROLLBACK');
-            throw txErr;
-        } finally {
-            client.release();
+            transactionOpen = false;
+            return fail(next, ...rejection);
         }
-
-        invalidateOperationalDashboardCaches();
-        return res.json({ ok: true });
+        keysToDelete = [...new Set([file.FileKey, file.OriginalFileKey, file.SignedFileKey].filter(Boolean))];
+        await client.query("SET LOCAL app.audit_events_allow_delete = 'true'");
+        await client.query('DELETE FROM signaturespots WHERE signingfileid = $1', [signingFileId]);
+        await client.query('DELETE FROM signingfiles WHERE signingfileid = $1', [signingFileId]);
+        await client.query('COMMIT');
+        transactionOpen = false;
     } catch (err) {
-        console.error('[controller] deleteSigningFile error:', err?.message || err);
+        if (transactionOpen) await client.query('ROLLBACK').catch(() => {});
+        console.error('[controller] deleteSigningFile error:', err?.code || 'DELETE_FAILED');
         return fail(next, 'INTERNAL_ERROR', 500);
+    } finally {
+        client?.release();
     }
+
+    // Storage is irreversible: only clean up after the database deletion commits.
+    // A failed database transaction must leave the retained document readable.
+    for (const key of keysToDelete) {
+        try {
+            await r2.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
+        } catch (err) {
+            console.error('[deleteSigningFile] Storage cleanup failed:', err?.name || 'STORAGE_ERROR');
+        }
+    }
+    invalidateOperationalDashboardCaches();
+    return res.json({ ok: true });
 };
