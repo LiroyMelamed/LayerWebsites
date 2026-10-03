@@ -466,6 +466,7 @@ async function insertAuditEvent({
     requestId = null,
     success = true,
     metadata = {},
+    db = pool,
 }) {
     // Legally relevant: append-only event log supports reliability/chain-of-custody arguments.
     const eventId = uuid();
@@ -478,7 +479,7 @@ async function insertAuditEvent({
     let prevHash = null;
     if (signingFileId) {
         try {
-            const prevRes = await pool.query(
+            const prevRes = await db.query(
                 `select event_hash as "EventHash"
                  from audit_events
                  where signingfileid = $1 and event_hash is not null
@@ -511,7 +512,7 @@ async function insertAuditEvent({
     const eventHash = sha256Hex(Buffer.from(baseForHash, 'utf8'));
 
     try {
-        await pool.query(
+        await db.query(
             `insert into audit_events
              (eventid, occurred_at_utc, event_type, signingfileid, signaturespotid,
               actor_userid, actor_type, ip, user_agent, signing_session_id, request_id,
@@ -543,7 +544,7 @@ async function insertAuditEvent({
         // For court-ready environments, audit logging should be fail-closed.
         // In dev/test, allow core flows to work while still emitting a loud warning.
         const failClosed = String(process.env.IS_PRODUCTION || 'false').toLowerCase() === 'true';
-        if (!failClosed && isPermissionDenied) {
+        if (db === pool && !failClosed && isPermissionDenied) {
             console.warn('[audit_events] write failed (permission denied); continuing in non-production');
             return { eventId, eventHash };
         }
@@ -1381,12 +1382,12 @@ function isSigningDocumentExpired(file) {
     return !Number.isNaN(exp.getTime()) && exp.getTime() <= Date.now();
 }
 
-async function isSignerAssignedToFile({ signingFileId, signerUserId, clientId, schemaSupport }) {
+async function isSignerAssignedToFile({ signingFileId, signerUserId, clientId, schemaSupport, db = pool }) {
     const uid = Number(signerUserId);
     if (!Number.isFinite(uid) || uid <= 0) return false;
     if (Number(clientId) === uid) return true;
     if (!schemaSupport?.signaturespotsSignerUserId) return Number(clientId) === uid;
-    const r = await pool.query(
+    const r = await db.query(
         `select 1 from signaturespots where signingfileid = $1 and signeruserid = $2 limit 1`,
         [signingFileId, uid]
     );
@@ -1562,23 +1563,24 @@ function normalizeSignerDeliveryMethod(raw) {
     return 'phone';
 }
 
-async function loadSignerDeliveryMethod(signingFileId, signerUserId) {
+async function loadSignerDeliveryMethod(signingFileId, signerUserId, db = pool) {
     try {
-        const { rows } = await pool.query(
+        const { rows } = await db.query(
             `SELECT delivery_method FROM signing_signer_delivery
              WHERE signing_file_id = $1 AND signer_user_id = $2`,
             [signingFileId, signerUserId]
         );
         return normalizeSignerDeliveryMethod(rows[0]?.delivery_method);
-    } catch {
+    } catch (err) {
+        if (db !== pool) throw err;
         return 'phone';
     }
 }
 
-async function saveSignerDeliveryMethod(signingFileId, signerUserId, deliveryMethod) {
+async function saveSignerDeliveryMethod(signingFileId, signerUserId, deliveryMethod, db = pool) {
     const method = normalizeSignerDeliveryMethod(deliveryMethod);
     try {
-        await pool.query(
+        await db.query(
             `INSERT INTO signing_signer_delivery (signing_file_id, signer_user_id, delivery_method, updated_at)
              VALUES ($1, $2, $3, NOW())
              ON CONFLICT (signing_file_id, signer_user_id)
@@ -1586,6 +1588,7 @@ async function saveSignerDeliveryMethod(signingFileId, signerUserId, deliveryMet
             [signingFileId, signerUserId, method]
         );
     } catch (err) {
+        if (db !== pool) throw err;
         console.warn('[signing] saveSignerDeliveryMethod failed:', err?.message || err);
     }
     return method;
@@ -4923,6 +4926,8 @@ exports.resendSigningInvite = async (req, res, next) => {
 
 /** Update signer contact + delivery channel while document is pending; optional resend. */
 exports.updateSigningSignerContact = async (req, res, next) => {
+    let db;
+    let committed = false;
     try {
         const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
         const signerUserId = requireInt(req, res, { source: 'params', name: 'signerUserId' });
@@ -4934,10 +4939,14 @@ exports.updateSigningSignerContact = async (req, res, next) => {
         const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId, next });
         if (!enabledCheck.ok) return;
 
-        const fileResult = await pool.query(
+        const schemaSupport = await getSchemaSupport();
+        db = await pool.connect();
+        await db.query('BEGIN');
+
+        const fileResult = await db.query(
             `SELECT signingfileid AS "SigningFileId", lawyerid AS "LawyerId", clientid AS "ClientId",
                     filename AS "FileName", status AS "Status", expiresat AS "ExpiresAt", caseid AS "CaseId"
-             FROM signingfiles WHERE signingfileid = $1`,
+             FROM signingfiles WHERE signingfileid = $1 FOR UPDATE`,
             [signingFileId]
         );
         if (!fileResult.rows.length) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
@@ -4949,23 +4958,33 @@ exports.updateSigningSignerContact = async (req, res, next) => {
             return fail(next, 'VALIDATION_ERROR', 422, { message: 'ניתן לעדכן חותם רק במסמך ממתין' });
         }
 
-        const schemaSupport = await getSchemaSupport();
         const assigned = await isSignerAssignedToFile({
             signingFileId,
             signerUserId,
             clientId: file.ClientId,
             schemaSupport,
+            db,
         });
         if (!assigned) {
             return fail(next, 'VALIDATION_ERROR', 422, { message: 'החותם לא משויך למסמך זה' });
         }
 
+        const oldSigner = await db.query(
+            'SELECT email, phonenumber FROM users WHERE userid = $1 FOR UPDATE', [signerUserId]
+        );
+        const oldDelivery = await loadSignerDeliveryMethod(signingFileId, signerUserId, db);
+        const before = {
+            signerUserId,
+            email: oldSigner.rows[0]?.email || null,
+            phone: oldSigner.rows[0]?.phonenumber || null,
+            deliveryMethod: oldDelivery,
+        };
         let effectiveSignerUserId = signerUserId;
         const replaceTargetId = parsePositiveIntStrict(replaceWithUserId) ?? null;
-        // Validate before replacement writes so rejected legacy edits have no side effects.
-        const contactResult = await pool.query(
+        // Preserve the customer-contact boundary, including legacy clients.
+        const contactResult = await db.query(
             `SELECT userid AS "UserId", name AS "Name", email AS "Email", phonenumber AS "Phone"
-             FROM users WHERE userid = $1`,
+             FROM users WHERE userid = $1 FOR UPDATE`,
             [replaceTargetId || signerUserId]
         );
         const contact = contactResult.rows[0];
@@ -4978,11 +4997,11 @@ exports.updateSigningSignerContact = async (req, res, next) => {
                 return fail(next, 'VALIDATION_ERROR', 422, { message: 'החלפת חותם אינה נתמכת במערכת זו' });
             }
 
-            const signedCheck = await pool.query(
+            const signedCheck = await db.query(
                 `SELECT EXISTS (
                     SELECT 1 FROM signaturespots
                     WHERE signingfileid = $1 AND signeruserid = $2
-                      AND issigned = true AND isrequired = true
+                      AND issigned = true
                  ) AS "HasSigned"`,
                 [signingFileId, signerUserId]
             );
@@ -4990,7 +5009,7 @@ exports.updateSigningSignerContact = async (req, res, next) => {
                 return fail(next, 'VALIDATION_ERROR', 422, { message: 'לא ניתן להחליף חותם שכבר חתם על המסמך' });
             }
 
-            const duplicateSigner = await pool.query(
+            const duplicateSigner = await db.query(
                 `SELECT 1 FROM signaturespots
                  WHERE signingfileid = $1 AND signeruserid = $2
                    AND lower(coalesce(fieldtype, 'signature')) != 'lawyerstamp'
@@ -5001,27 +5020,22 @@ exports.updateSigningSignerContact = async (req, res, next) => {
                 return fail(next, 'VALIDATION_ERROR', 422, { message: 'הלקוח שנבחר כבר משויך כחותם במסמך זה' });
             }
 
-            await pool.query(
+            await db.query(
                 `UPDATE signaturespots
                  SET signeruserid = $1
                  WHERE signingfileid = $2 AND signeruserid = $3 AND issigned = false`,
                 [replaceTargetId, signingFileId, signerUserId]
             );
 
-            const oldDelivery = await loadSignerDeliveryMethod(signingFileId, signerUserId);
-            try {
-                await pool.query(
-                    `DELETE FROM signing_signer_delivery
-                     WHERE signing_file_id = $1 AND signer_user_id = $2`,
-                    [signingFileId, signerUserId]
-                );
-                await saveSignerDeliveryMethod(signingFileId, replaceTargetId, oldDelivery);
-            } catch (deliveryMigrateErr) {
-                console.warn('[signing] replace signer delivery migrate failed:', deliveryMigrateErr?.message || deliveryMigrateErr);
-            }
+            await db.query(
+                `DELETE FROM signing_signer_delivery
+                 WHERE signing_file_id = $1 AND signer_user_id = $2`,
+                [signingFileId, signerUserId]
+            );
+            await saveSignerDeliveryMethod(signingFileId, replaceTargetId, oldDelivery, db);
 
             if (Number(file.ClientId) === Number(signerUserId)) {
-                await pool.query(
+                await db.query(
                     `UPDATE signingfiles SET clientid = $1 WHERE signingfileid = $2`,
                     [replaceTargetId, signingFileId]
                 );
@@ -5032,17 +5046,33 @@ exports.updateSigningSignerContact = async (req, res, next) => {
 
         let savedDelivery = null;
         if (deliveryMethod !== undefined) {
-            savedDelivery = await saveSignerDeliveryMethod(signingFileId, effectiveSignerUserId, deliveryMethod);
+            savedDelivery = await saveSignerDeliveryMethod(signingFileId, effectiveSignerUserId, deliveryMethod, db);
         } else {
-            savedDelivery = await loadSignerDeliveryMethod(signingFileId, effectiveSignerUserId);
+            savedDelivery = await loadSignerDeliveryMethod(signingFileId, effectiveSignerUserId, db);
         }
 
-        const signerRow = await pool.query(
+        const signerRow = await db.query(
             `SELECT userid AS "UserId", name AS "Name", email AS "Email", phonenumber AS "Phone"
              FROM users WHERE userid = $1`,
             [effectiveSignerUserId]
         );
 
+        await insertAuditEvent({
+            req, db, eventType: 'SIGNER_CONTACT_UPDATED', signingFileId,
+            actorUserId: requesterId, actorType: req.user?.Role || null,
+            metadata: {
+                contactScope: 'customer_reference',
+                before,
+                after: {
+                    signerUserId: effectiveSignerUserId,
+                    email: signerRow.rows[0]?.Email || null,
+                    phone: signerRow.rows[0]?.Phone || null,
+                    deliveryMethod: savedDelivery,
+                },
+            },
+        });
+        await db.query('COMMIT');
+        committed = true;
         return res.json({
             success: true,
             signerUserId: effectiveSignerUserId,
@@ -5051,8 +5081,13 @@ exports.updateSigningSignerContact = async (req, res, next) => {
             deliveryMethod: savedDelivery,
         });
     } catch (err) {
-        console.error('updateSigningSignerContact error:', err);
+        console.error('updateSigningSignerContact failed:', { code: err?.code || 'UNKNOWN' });
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בעדכון פרטי חותם' });
+    } finally {
+        if (db) {
+            try { if (!committed) await db.query('ROLLBACK'); }
+            finally { db.release(); }
+        }
     }
 };
 
