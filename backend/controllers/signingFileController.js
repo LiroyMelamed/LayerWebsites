@@ -8564,13 +8564,14 @@ exports.deleteSigningFile = async (req, res, next) => {
         transactionOpen = true;
         const { rows } = await client.query(
             `SELECT signingfileid AS "SigningFileId", lawyerid AS "LawyerId",
-                    status AS "Status", filekey AS "FileKey",
+                    status AS "Status", legalhold AS "LegalHold", filekey AS "FileKey",
                     originalfilekey AS "OriginalFileKey", signedfilekey AS "SignedFileKey"
              FROM signingfiles WHERE signingfileid = $1 FOR UPDATE`, [signingFileId]);
         const file = rows[0];
         let rejection = null;
         if (!file) rejection = ['NOT_FOUND', 404];
         else if (!canManageSigningFile({ file, requesterId, role })) rejection = ['FORBIDDEN', 403];
+        else if (file.LegalHold) rejection = ['FILE_UNDER_LEGAL_HOLD', 409];
         else if (!['pending', 'signed', 'rejected'].includes(String(file.Status || '').toLowerCase())) {
             rejection = ['FILE_STATUS_NOT_DELETABLE', 400];
         }
