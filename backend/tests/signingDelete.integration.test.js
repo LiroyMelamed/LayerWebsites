@@ -55,6 +55,12 @@ test('signing deletion never removes storage before a real database commit', {
         const result = await invoke({ UserId: 9999999, Role: 'User' });
         assert.ok(result.error); assert.deepEqual(calls, []);
     });
+    await t.test('legal hold blocks manual deletion even for the owner admin', async () => {
+        await pool.query('UPDATE signingfiles SET legalhold=true WHERE signingfileid=$1', [fileId]);
+        assert.ok((await invoke()).error); assert.deepEqual(calls, []);
+        assert.equal((await pool.query('SELECT 1 FROM signingfiles WHERE signingfileid=$1', [fileId])).rowCount, 1);
+        await pool.query('UPDATE signingfiles SET legalhold=false WHERE signingfileid=$1', [fileId]);
+    });
     await t.test('committed deletion cleans distinct keys exactly once', async () => {
         const result = await invoke();
         assert.equal(result.error, undefined); assert.deepEqual(result.body, { ok: true });
