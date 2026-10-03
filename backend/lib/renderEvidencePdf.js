@@ -42,7 +42,7 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
     .page {
       position: relative;
       border: 0.125rem solid #1b3a57;
-      padding: 10mm;
+      padding: 8mm;
       background: #fff;
     }
 
@@ -96,7 +96,7 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
     }
 
     .section {
-      margin-top: 0.875rem;
+      margin-top: 0.625rem;
       z-index: 1;
       position: relative;
     }
@@ -112,7 +112,7 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0.625rem 1.125rem;
+      gap: 0.375rem 1.125rem;
     }
 
     .kv {
@@ -122,7 +122,13 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
       align-items: baseline;
     }
     .k { color: #4a5568; font-weight: 700; }
-    .v { color: #111827; word-break: break-word; }
+    .v {
+      color: #111827;
+      word-break: break-word;
+      direction: ltr;
+      unicode-bidi: plaintext;
+      text-align: start;
+    }
 
     table {
       width: 100%;
@@ -135,7 +141,11 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
       padding: 0.375rem 0.375rem;
       vertical-align: top;
       word-break: break-word;
+      direction: ltr;
+      text-align: left;
     }
+
+    tr { break-inside: avoid; }
 
     th {
       background: #f8fafc;
@@ -191,6 +201,8 @@ const buildEvidenceHtml = ({ meta, sender, signers, doc, qrUrl, brand, consent, 
     .note {
       max-width: 70%;
       line-height: 1.35;
+      direction: ltr;
+      text-align: left;
     }
 
     .mono {

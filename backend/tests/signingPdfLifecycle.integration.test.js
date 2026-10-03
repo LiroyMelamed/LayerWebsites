@@ -4,7 +4,7 @@ const crypto = require('node:crypto');
 const { Readable } = require('node:stream');
 
 test('OTP and two-signer PDF lifecycle preserves both images after a partial preview', {
-    skip: process.env.LEGAL_DB_QA !== 'true', timeout: 30000,
+    skip: process.env.LEGAL_DB_QA !== 'true', timeout: 60000,
 }, async (t) => {
     assert.equal(process.env.DB_HOST, '127.0.0.1');
     assert.equal(process.env.DB_PORT, '55439');
@@ -46,7 +46,7 @@ test('OTP and two-signer PDF lifecycle preserves both images after a partial pre
         assert.equal(command.constructor.name, 'GetObjectCommand');
         return { Body: Readable.from(object.bytes), ContentType: object.type, ETag: hash(object.bytes) };
     };
-    // External boundaries only: no email/SMS/push or browser-rendered evidence certificate.
+    // Providers remain isolated; opt in to the actual certificate renderer separately.
     const notifications = require('../services/notifications/notificationOrchestrator');
     const messages = require('../utils/sendMessage');
     const originalMessage = messages.sendMessage;
@@ -61,7 +61,13 @@ test('OTP and two-signer PDF lifecycle preserves both images after a partial pre
     };
     const evidence = require('../lib/renderEvidencePdf');
     const originalRender = evidence.renderEvidencePdf;
-    evidence.renderEvidencePdf = async () => unsigned;
+    const certificates = [];
+    evidence.renderEvidencePdf = async (payload) => {
+        if (process.env.LEGAL_REAL_PDF_QA !== 'true') return unsigned;
+        const bytes = Buffer.from(await originalRender(payload));
+        certificates.push(bytes);
+        return bytes;
+    };
     t.after(() => { notifications.notifyRecipient = originalNotify; evidence.renderEvidencePdf = originalRender; });
     const app = require('../app');
     let fileId;
@@ -138,7 +144,7 @@ test('OTP and two-signer PDF lifecycle preserves both images after a partial pre
     assert.equal(preview.status, 200, JSON.stringify(preview.body));
     const second = await sign(spots[1], true);
     assert.equal(second.status, 200, JSON.stringify(second.body));
-    const deadline = Date.now() + 10000;
+    const deadline = Date.now() + 30000;
     while (delivered.filter((item) => item.notificationType === 'DOC_SIGNED').length < 2 && Date.now() < deadline) {
         await new Promise((resolve) => setTimeout(resolve, 25));
     }
@@ -158,4 +164,13 @@ test('OTP and two-signer PDF lifecycle preserves both images after a partial pre
     const download = await request(app).get(`/api/SigningFiles/${fileId}/download`).set('Authorization', `Bearer ${token(1092)}`);
     assert.equal(download.status, 200);
     assert.ok(download.body.downloadUrl);
+    if (process.env.LEGAL_REAL_PDF_QA === 'true') {
+        assert.ok(certificates.length > 0, 'Finalization must render a real evidence certificate');
+        const certificate = await PDFDocument.load(certificates[0]);
+        assert.equal(certificate.getPageCount(), 1, 'The two-signer fixture must not orphan the footer on another page');
+        assert.notDeepEqual(certificates[0], unsigned);
+        if (process.env.LEGAL_QA_PDF_OUTPUT) {
+            require('node:fs').writeFileSync(process.env.LEGAL_QA_PDF_OUTPUT, certificates[0]);
+        }
+    }
 });
