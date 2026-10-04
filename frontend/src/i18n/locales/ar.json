@@ -1535,6 +1535,80 @@
     "var_content_2": "محتوى 2",
     "var_content_3": "محتوى 3"
   },
+  "firmStaffRoles": {
+    "title": "الأدوار والصلاحيات",
+    "subtitle": "إدارة الأدوار والصلاحيات وربط الموظفين في المكتب",
+    "rolesSection": "الأدوار",
+    "createRole": "دور جديد",
+    "createRoleTitle": "دور جديد",
+    "editRoleTitle": "تعديل الدور",
+    "roleName": "اسم الدور",
+    "roleNamePlaceholder": "مثال: سكرتارية",
+    "employees": "الموظفون",
+    "addEmployee": "موظف جديد",
+    "addEmployeeTitle": "موظف جديد",
+    "editEmployeeTitle": "تعديل موظف",
+    "assignedRole": "الدور",
+    "assignedNone": "لا يوجد موظفون مرتبطون",
+    "assignedOne": "مرتبط بموظف واحد",
+    "assignedMany": "مرتبط بـ {{count}} موظفين",
+    "noPermissions": "بدون صلاحيات مفعّلة",
+    "noRoles": "لا توجد أدوار بعد",
+    "noEmployees": "لا يوجد موظفون",
+    "permissionsHint": "حدد أي مناطق في النظام يمكن للدور رؤيتها وما المسموح فعله.",
+    "dataScopeLabel": "نطاق البيانات",
+    "scopeAssigned": "السجلات المرتبطة فقط",
+    "scopeAllFirm": "كامل المكتب",
+    "deactivate": "تعطيل",
+    "deactivateBlocked": "لا يمكن التعطيل — يوجد موظفون مرتبطون",
+    "deactivateConfirm": "تعطيل الدور «{{name}}»؟ لا يمكن الاسترجاع من الواجهة.",
+    "deactivateFailed": "فشل تعطيل الدور",
+    "affectedCount": "{{count}} موظفين سيتأثرون بهذا التغيير",
+    "areas": {
+      "main": "لوحة التحكم",
+      "cases": "الملفات",
+      "caseTypes": "أنواع الملفات",
+      "clients": "العملاء",
+      "signing": "التوقيع",
+      "reminders": "التذكيرات",
+      "calendar": "التقويم",
+      "support": "الدعم"
+    },
+    "actions": {
+      "cases": {
+        "view": "عرض",
+        "create": "إنشاء",
+        "edit": "تعديل",
+        "delete": "حذف",
+        "tag": "وسم"
+      },
+      "caseTypes": {
+        "view": "عرض",
+        "manage": "إدارة"
+      },
+      "clients": {
+        "view": "عرض",
+        "edit": "تعديل",
+        "delete": "حذف"
+      },
+      "signing": {
+        "view": "عرض",
+        "manage": "إدارة",
+        "upload": "رفع"
+      },
+      "reminders": {
+        "view": "عرض",
+        "manage": "إدارة"
+      },
+      "calendar": {
+        "view": "عرض",
+        "manage": "إدارة"
+      },
+      "support": {
+        "view": "عرض"
+      }
+    }
+  },
   "viewSignedDoc": {
     "invalidLink": "رابط غير صالح",
     "expired": "انتهت صلاحية الرابط",
