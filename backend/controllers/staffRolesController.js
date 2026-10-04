@@ -1,17 +1,66 @@
-const bcrypt = require('bcrypt');
 const pool = require('../config/db');
 const { createAppError } = require('../utils/appError');
 const { getHebrewMessage } = require('../utils/errors.he');
 const { getCatalogForApi, normalizeRolePermissions } = require('../lib/firmRolePermissions');
 const { getSessionScopePayload } = require('../lib/firmPermissions/accessPure');
+const settingsService = require('../services/settingsService');
 const {
     assertPlatformAdminSameTenant,
     countUsersForRole,
     assertRoleInTenant,
     assertTargetUserInTenant,
 } = require('../lib/firmStaffTenant');
+const {
+    OFFICE_USER_LIST_ROLES,
+    FIRM_STAFF_ROLE_ASSIGNMENT_ROLES,
+    assertFirmStaffRoleCompatibleWithUser,
+} = require('../lib/firmStaffOfficeUsers');
 
-const STAFF_EMPLOYEE_ROLES = Object.freeze(['Staff']);
+function mapOfficeUserRow(row) {
+    return {
+        userId: row.userid,
+        name: row.name,
+        role: row.role,
+        phone: row.phonenumber,
+        email: row.email,
+        firmStaffRoleId: row.firm_staff_role_id || null,
+        firmStaffRoleName: row.firm_staff_role_name || null,
+        isPlatformAdmin: Boolean(row.is_platform_admin),
+        createdAt: row.createdat,
+    };
+}
+
+async function listOfficeUsers(req, res, next) {
+    try {
+        const { tenantId } = await assertPlatformAdminSameTenant(req);
+        const rawName = req?.query?.name;
+        const name = typeof rawName === 'string' ? rawName.trim() : '';
+        const params = [OFFICE_USER_LIST_ROLES];
+        let query = `
+            SELECT u.userid, u.name, u.email, u.phonenumber, u.role, u.createdat,
+                   u.firm_staff_role_id,
+                   r.name AS firm_staff_role_name,
+                   EXISTS (
+                       SELECT 1 FROM platform_admins pa
+                       WHERE pa.user_id = u.userid AND pa.is_active = TRUE
+                   ) AS is_platform_admin
+            FROM users u
+            LEFT JOIN firm_staff_roles r ON r.id = u.firm_staff_role_id AND r.is_active = TRUE
+            WHERE u.role = ANY($1::text[])
+              AND ($2::uuid IS NULL OR u.law_firm_tenant_id = $2)
+        `;
+        params.push(tenantId);
+        if (name) {
+            params.push(`%${name}%`);
+            query += ` AND u.name ILIKE $${params.length}`;
+        }
+        query += ' ORDER BY u.role ASC, u.name ASC';
+        const { rows } = await pool.query(query, params);
+        return res.json(rows.map(mapOfficeUserRow));
+    } catch (e) {
+        return next(e);
+    }
+}
 
 async function getPermissionCatalog(_req, res) {
     return res.json(getCatalogForApi());
@@ -179,82 +228,59 @@ async function deactivateRole(req, res, next) {
     }
 }
 
-async function listEmployees(req, res, next) {
-    try {
-        const { tenantId } = await assertPlatformAdminSameTenant(req);
-        const { rows } = await pool.query(
-            `SELECT u.userid, u.name, u.email, u.phonenumber, u.role, u.firm_staff_role_id,
-                    r.name AS firm_staff_role_name
-             FROM users u
-             LEFT JOIN firm_staff_roles r ON r.id = u.firm_staff_role_id
-             WHERE u.role = ANY($1::text[])
-               AND ($2::uuid IS NULL OR u.law_firm_tenant_id = $2)
-             ORDER BY u.createdat DESC NULLS LAST, u.userid DESC`,
-            [STAFF_EMPLOYEE_ROLES, tenantId],
-        );
-        return res.json(rows);
-    } catch (e) {
-        return next(e);
-    }
-}
-
-async function createEmployee(req, res, next) {
-    try {
-        const { tenantId } = await assertPlatformAdminSameTenant(req);
-        const { name, email, phoneNumber, password, firmStaffRoleId } = req.body || {};
-        const roleId = String(firmStaffRoleId || '').trim();
-        if (!name || !phoneNumber || !password || !roleId) {
-            return next(createAppError('VALIDATION_ERROR', 400, getHebrewMessage('VALIDATION_ERROR') || 'שדות חובה חסרים'));
-        }
-        const role = await assertRoleInTenant(roleId, tenantId);
-        if (!role) {
-            return next(createAppError('NOT_FOUND', 404, 'תפקיד לא נמצא במשרד זה'));
-        }
-        const hashedPassword = await bcrypt.hash(String(password), 10);
-        const { rows } = await pool.query(
-            `INSERT INTO users (name, email, phonenumber, passwordhash, role, law_firm_tenant_id, firm_staff_role_id)
-             VALUES ($1, $2, $3, $4, 'Staff', $5, $6)
-             RETURNING userid, name, email, phonenumber, role, firm_staff_role_id`,
-            [name, email || null, phoneNumber, hashedPassword, tenantId, roleId],
-        );
-        return res.status(201).json(rows[0]);
-    } catch (e) {
-        return next(e);
-    }
-}
-
-async function updateEmployee(req, res, next) {
+async function assignUserFirmStaffRole(req, res, next) {
     try {
         const { tenantId } = await assertPlatformAdminSameTenant(req);
         const userId = Number(req.params.userId);
+        if (!Number.isFinite(userId) || userId <= 0) {
+            return next(createAppError('VALIDATION_ERROR', 400, getHebrewMessage('VALIDATION_ERROR')));
+        }
         const target = await assertTargetUserInTenant(userId, tenantId);
-        if (!target || !STAFF_EMPLOYEE_ROLES.includes(target.role)) {
-            return next(createAppError('NOT_FOUND', 404, 'עובד לא נמצא'));
+        if (!target || !FIRM_STAFF_ROLE_ASSIGNMENT_ROLES.includes(target.role)) {
+            return next(createAppError('NOT_FOUND', 404, 'משתמש לא נמצא'));
         }
-        const { name, email, phoneNumber, password, firmStaffRoleId } = req.body || {};
-        let roleId = target.firm_staff_role_id;
-        if (firmStaffRoleId !== undefined) {
-            const nextRole = await assertRoleInTenant(String(firmStaffRoleId), tenantId);
-            if (!nextRole) {
-                return next(createAppError('NOT_FOUND', 404, 'תפקיד לא נמצא במשרד זה'));
+        if (await settingsService.isPlatformAdmin(userId)) {
+            return next(
+                createAppError(
+                    'FORBIDDEN',
+                    403,
+                    'לא ניתן לשייך תפקיד מותאם למנהל פלטפורמה — ההרשאות נשארות לפי מנהל הפלטפורמה.',
+                ),
+            );
+        }
+        const body = req.body || {};
+        const extraKeys = Object.keys(body).filter((k) => k !== 'firmStaffRoleId');
+        if (extraKeys.length > 0) {
+            return next(createAppError('VALIDATION_ERROR', 400, 'שדות לא נתמכים בבקשה'));
+        }
+        if (!Object.prototype.hasOwnProperty.call(body, 'firmStaffRoleId')) {
+            return next(createAppError('VALIDATION_ERROR', 400, 'firmStaffRoleId נדרש (UUID או null)'));
+        }
+        const raw = body.firmStaffRoleId;
+        if (raw === null || raw === '') {
+            await pool.query(`UPDATE users SET firm_staff_role_id = NULL WHERE userid = $1`, [userId]);
+            return res.json({ ok: true, firmStaffRoleId: null, firmStaffRoleName: null });
+        }
+        const roleId = String(raw).trim();
+        const role = await assertRoleInTenant(roleId, tenantId);
+        if (!role) {
+            const inactive = await pool.query(
+                `SELECT id FROM firm_staff_roles WHERE id = $1 AND is_active = FALSE LIMIT 1`,
+                [roleId],
+            );
+            if (inactive.rows.length > 0) {
+                return next(createAppError('ROLE_INACTIVE', 409, 'לא ניתן לשייך תפקיד שאינו פעיל'));
             }
-            roleId = nextRole.id;
+            return next(createAppError('NOT_FOUND', 404, 'תפקיד לא נמצא במשרד זה'));
         }
-        if (!roleId) {
-            return next(createAppError('VALIDATION_ERROR', 400, 'יש לבחור תפקיד'));
-        }
-        const hashedPassword = password ? await bcrypt.hash(String(password), 10) : null;
-        await pool.query(
-            `UPDATE users
-             SET name = COALESCE($2, name),
-                 email = COALESCE($3, email),
-                 phonenumber = COALESCE($4, phonenumber),
-                 passwordhash = COALESCE($5, passwordhash),
-                 firm_staff_role_id = $6
-             WHERE userid = $1`,
-            [userId, name || null, email ?? null, phoneNumber || null, hashedPassword, roleId],
-        );
-        return res.json({ ok: true });
+        const compatErr = assertFirmStaffRoleCompatibleWithUser(target.role, role);
+        if (compatErr) return next(compatErr);
+        await pool.query(`UPDATE users SET firm_staff_role_id = $2 WHERE userid = $1`, [userId, role.id]);
+        return res.json({
+            ok: true,
+            firmStaffRoleId: role.id,
+            firmStaffRoleName: role.name,
+        });
     } catch (e) {
         return next(e);
     }
@@ -267,7 +293,6 @@ module.exports = {
     createRole,
     updateRole,
     deactivateRole,
-    listEmployees,
-    createEmployee,
-    updateEmployee,
+    listOfficeUsers,
+    assignUserFirmStaffRole,
 };

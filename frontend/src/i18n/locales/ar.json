@@ -435,7 +435,10 @@
     "emptyList": "عند إضافة المدراء سيظهرون هنا",
     "saveAdmin": "حفظ المدير",
     "updateAdmin": "تحديث المدير",
-    "deleteAdmin": "حذف المدير"
+    "deleteAdmin": "حذف المدير",
+    "firmStaffRoleSection": "الدور والصلاحيات",
+    "firmStaffRoleNone": "بدون دور مخصص",
+    "firmStaffRoleHint": "بدون دور مخصص — تبقى الصلاحيات حسب نوع المستخدم الحالي."
   },
   "updates": {
     "notifications": "الإشعارات",

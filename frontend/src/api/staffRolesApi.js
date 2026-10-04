@@ -16,7 +16,14 @@ export const staffRolesApi = {
     createRole: async (payload) => unwrap(await ApiUtils.post(`${BASE}/roles`, payload)),
     updateRole: async (roleId, payload) => unwrap(await ApiUtils.patch(`${BASE}/roles/${roleId}`, payload)),
     deactivateRole: async (roleId) => unwrap(await ApiUtils.delete(`${BASE}/roles/${roleId}`)),
-    listEmployees: async () => unwrap(await ApiUtils.get(`${BASE}/employees`)),
-    createEmployee: async (payload) => unwrap(await ApiUtils.post(`${BASE}/employees`, payload)),
-    updateEmployee: async (userId, payload) => unwrap(await ApiUtils.patch(`${BASE}/employees/${userId}`, payload)),
+    listOfficeUsers: async (name = "") => {
+        const q = name ? `?name=${encodeURIComponent(name)}` : "";
+        return unwrap(await ApiUtils.get(`${BASE}/users${q}`));
+    },
+    assignUserFirmStaffRole: async (userId, firmStaffRoleId) =>
+        unwrap(
+            await ApiUtils.patch(`${BASE}/users/${userId}/firm-staff-role`, {
+                firmStaffRoleId: firmStaffRoleId ?? null,
+            }),
+        ),
 };

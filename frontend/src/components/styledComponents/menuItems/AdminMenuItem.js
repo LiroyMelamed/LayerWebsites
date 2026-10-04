@@ -12,6 +12,8 @@ export default function AdminMenuItem({
     CreatedAt,
     adminMail,
     adminPhone,
+    userTypeLabel,
+    customRoleLabel,
     admin,
     onPress,
     performGetAdmins,
@@ -36,9 +38,20 @@ export default function AdminMenuItem({
                         <TextBold14>{adminName}</TextBold14>
                     </SimpleContainer>
 
-                    <SimpleContainer className="lw-adminMenuItem__cell">
-                        <Text14>{DateDDMMYY(CreatedAt)}</Text14>
-                    </SimpleContainer>
+                    {userTypeLabel != null ? (
+                        <>
+                            <SimpleContainer className="lw-adminMenuItem__cell">
+                                <Text14>{userTypeLabel}</Text14>
+                            </SimpleContainer>
+                            <SimpleContainer className="lw-adminMenuItem__cell">
+                                <Text14 shouldApplyClamping>{customRoleLabel}</Text14>
+                            </SimpleContainer>
+                        </>
+                    ) : (
+                        <SimpleContainer className="lw-adminMenuItem__cell">
+                            <Text14>{DateDDMMYY(CreatedAt)}</Text14>
+                        </SimpleContainer>
+                    )}
 
                     <SimpleContainer className="lw-adminMenuItem__cell lw-adminMenuItem__cell--email">
                         <Text14 shouldApplyClamping>{adminMail}</Text14>

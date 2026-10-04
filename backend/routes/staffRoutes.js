@@ -12,8 +12,12 @@ router.post('/roles', authMiddleware, requirePlatformAdmin, staffRolesController
 router.patch('/roles/:roleId', authMiddleware, requirePlatformAdmin, staffRolesController.updateRole);
 router.delete('/roles/:roleId', authMiddleware, requirePlatformAdmin, staffRolesController.deactivateRole);
 
-router.get('/employees', authMiddleware, requirePlatformAdmin, staffRolesController.listEmployees);
-router.post('/employees', authMiddleware, requirePlatformAdmin, staffRolesController.createEmployee);
-router.patch('/employees/:userId', authMiddleware, requirePlatformAdmin, staffRolesController.updateEmployee);
+router.get('/users', authMiddleware, requirePlatformAdmin, staffRolesController.listOfficeUsers);
+router.patch(
+    '/users/:userId/firm-staff-role',
+    authMiddleware,
+    requirePlatformAdmin,
+    staffRolesController.assignUserFirmStaffRole,
+);
 
 module.exports = router;
