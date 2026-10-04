@@ -33,10 +33,17 @@ async function ensureFirmStaffRolesMigration() {
         const sql = fs.readFileSync(sqlPath, 'utf8');
         await pool.query(sql);
     }
-    const uniqPath = path.join(__dirname, '../../migrations/2026-10-04_00_firm_staff_roles_unique_nulls_not_distinct.sql');
-    if (fs.existsSync(uniqPath)) {
-        const uniqSql = fs.readFileSync(uniqPath, 'utf8');
-        await pool.query(uniqSql);
+    const idx = await pool.query(
+        `SELECT 1 FROM pg_indexes
+         WHERE schemaname = 'public' AND indexname = 'firm_staff_roles_tenant_name_uidx' LIMIT 1`,
+    );
+    const mig04 = path.join(__dirname, '../../migrations/2026-10-04_00_firm_staff_roles_unique_nulls_not_distinct.sql');
+    if (idx.rows.length === 0 && fs.existsSync(mig04)) {
+        await pool.query(fs.readFileSync(mig04, 'utf8'));
+    }
+    const mig05 = path.join(__dirname, '../../migrations/2026-10-05_00_firm_staff_roles_reassign_orphan_users.sql');
+    if (fs.existsSync(mig05)) {
+        await pool.query(fs.readFileSync(mig05, 'utf8'));
     }
 }
 
