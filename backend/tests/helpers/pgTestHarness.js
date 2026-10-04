@@ -28,11 +28,15 @@ async function ensureFirmStaffRolesMigration() {
     const pool = getPool();
     try {
         await pool.query('SELECT 1 FROM firm_staff_roles LIMIT 1');
-        return;
     } catch {
         const sqlPath = path.join(__dirname, '../../migrations/2026-10-03_00_firm_staff_roles.sql');
         const sql = fs.readFileSync(sqlPath, 'utf8');
         await pool.query(sql);
+    }
+    const uniqPath = path.join(__dirname, '../../migrations/2026-10-04_00_firm_staff_roles_unique_nulls_not_distinct.sql');
+    if (fs.existsSync(uniqPath)) {
+        const uniqSql = fs.readFileSync(uniqPath, 'utf8');
+        await pool.query(uniqSql);
     }
 }
 

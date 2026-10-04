@@ -130,6 +130,24 @@ function getCatalogForApi() {
 }
 
 /**
+ * Nav keys that represent routes/popups requiring specific actions (not implied by area.visible alone).
+ * @type {Record<string, (areaId: string, area: { visible: boolean, actions: string[] }) => boolean>}
+ */
+const NAV_KEY_ACTION_RULES = Object.freeze({
+    newOrUpdateCase: (_areaId, area) =>
+        (area.actions || []).includes('create') || (area.actions || []).includes('edit'),
+    uploadFileForSigning: (_areaId, area) =>
+        (area.actions || []).includes('upload') || (area.actions || []).includes('manage'),
+});
+
+function navKeyAllowedForArea(def, area, navKey) {
+    if (!area?.visible) return false;
+    const rule = NAV_KEY_ACTION_RULES[navKey];
+    if (rule) return rule(def.id, area);
+    return true;
+}
+
+/**
  * @param {{ version: number, areas: Record<string, { visible: boolean, actions: string[], dataScope?: string }> }} perms
  */
 function listVisiblePageKeys(perms) {
@@ -137,8 +155,13 @@ function listVisiblePageKeys(perms) {
     for (const def of PERMISSION_AREAS) {
         const area = perms.areas[def.id];
         if (!area?.visible) continue;
-        pages.add(def.pageKey);
-        for (const k of def.navKeys || []) pages.add(k);
+        if (navKeyAllowedForArea(def, area, def.pageKey)) {
+            pages.add(def.pageKey);
+        }
+        for (const k of def.navKeys || []) {
+            if (k === def.pageKey) continue;
+            if (navKeyAllowedForArea(def, area, k)) pages.add(k);
+        }
     }
     return [...pages];
 }
@@ -202,6 +225,8 @@ module.exports = {
     normalizeRolePermissions,
     getCatalogForApi,
     listVisiblePageKeys,
+    navKeyAllowedForArea,
+    NAV_KEY_ACTION_RULES,
     isAreaVisible,
     hasAreaAction,
     getCasesDataScope,
