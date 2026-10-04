@@ -18,11 +18,8 @@
 }
 
 .lw-firmStaffRoles__header {
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: v.$space-4;
+  flex-direction: column;
+  align-items: stretch;
   width: 100%;
 }
 
@@ -143,6 +140,9 @@
 .lw-firmStaffRoles__badge {
   display: inline-flex;
   align-items: center;
+  align-self: flex-start;
+  width: fit-content;
+  max-width: 100%;
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
   font-size: 0.8125rem;
@@ -225,7 +225,10 @@
 }
 
 // Prevent full-width “blue square” buttons inside cards / header
-.lw-firmStaffRoles__headerCta,
+.lw-firmStaffRoles__headerCta {
+  margin-top: v.$space-2;
+}
+
 .lw-firmStaffRoles__sectionCta,
 .lw-firmStaffRoles__btnInline {
   flex: 0 0 auto;
