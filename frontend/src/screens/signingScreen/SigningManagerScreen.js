@@ -43,6 +43,7 @@ import {
     clampSignerDeliveryMethod,
     getAllowedSignerDeliveryMethods,
 } from "./signerDeliveryUtils";
+import { useFirmPermissions } from "../../providers/FirmPermissionsProvider";
 import "../calendarScreen/CalendarInviteScreen.scss";
 import RequestLoadError from '../../components/ui/RequestLoadError';
 
@@ -50,6 +51,9 @@ import RequestLoadError from '../../components/ui/RequestLoadError';
 export const SigningManagerScreenName = "/SigningManagerScreen";
 
 export default function SigningManagerScreen() {
+    const { canAction } = useFirmPermissions() || { canAction: () => true };
+    const canSignUpload = canAction('signing', 'upload');
+    const canSignManage = canAction('signing', 'manage');
     const { isSmallScreen } = useScreenSize();
     const navigate = useNavigate();
     const { openPopup, closePopup } = usePopup();
@@ -365,10 +369,11 @@ export default function SigningManagerScreen() {
                 onDownloadSigned={() => handleDownload(file.SigningFileId, file.FileName)}
                 onDownloadEvidencePdf={() => handleDownloadEvidencePdf(file)}
                 onDownloadEvidenceZip={() => handleDownloadEvidenceZip(file)}
-                onDelete={(id) => deleteSigningFile(id)}
+                onDelete={canSignManage ? (id) => deleteSigningFile(id) : undefined}
                 isDeleting={isDeletingFile}
                 formatDotDate={formatDotDate}
                 onRenamed={() => { closePopup(); reloadFiles?.(); }}
+                canManage={canSignManage}
             />
         );
     };
@@ -491,6 +496,7 @@ export default function SigningManagerScreen() {
                 </>}
             </SimpleScrollView>
 
+            {canSignUpload && (
             <SimpleContainer className="lw-signingManagerScreen__footer">
                 <PrimaryButton
                     className="lw-signingManagerScreen__addButton"
@@ -499,11 +505,12 @@ export default function SigningManagerScreen() {
                     {t('signingManager.actions.uploadNew')}
                 </PrimaryButton>
             </SimpleContainer>
+            )}
         </SimpleScreen>
     );
 }
 
-export function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned, onDownloadEvidencePdf, onDownloadEvidenceZip, onDelete, isDeleting, formatDotDate, onRenamed }) {
+export function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned, onDownloadEvidencePdf, onDownloadEvidenceZip, onDelete, isDeleting, formatDotDate, onRenamed, canManage = true }) {
     const { t } = useTranslation();
     const totalSpots = Number(file?.TotalSpots || 0);
     const signedSpots = Number(file?.SignedSpots || 0);
@@ -770,9 +777,11 @@ export function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownload
             ) : (
                 <SimpleContainer className="lw-signingManagerScreen__titleRow">
                     <TextBold24>{file?.FileName || t('signingManager.details.titleFallback')}</TextBold24>
+                    {canManage && (
                     <SecondaryButton size={buttonSizes.SMALL} onPress={() => { setEditName(file?.FileName || ''); setIsEditingName(true); }}>
                         {t('signingManager.actions.rename')}
                     </SecondaryButton>
+                    )}
                     {showOtpUi && (
                         <SimpleContainer className={`${otpChipClassName} lw-signingManagerScreen__chip--titleEnd`}>
                             {otpChipText}
@@ -820,7 +829,7 @@ export function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownload
                                     <span>{t('signingManager.signerStatus.sent')}</span>
                                     <span>{t('signingManager.signerStatus.viewed')}</span>
                                     <span>{t('signingManager.signerStatus.signed')}</span>
-                                    {isPending && <span>{t('signingManager.replaceSigner.actions')}</span>}
+                                    {isPending && canManage && <span>{t('signingManager.replaceSigner.actions')}</span>}
                                 </div>
                                 {(signers.length ? signers : []).map((s) => (
                                     <div key={s.SignerUserId} className="lw-signingManagerScreen__signerStatusRow">
@@ -829,7 +838,7 @@ export function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownload
                                         <span className="lw-signingManagerScreen__signerStatusCell">{formatUtcDateTime(s.SentAt)}</span>
                                         <span className="lw-signingManagerScreen__signerStatusCell">{formatUtcDateTime(s.ViewedAt)}</span>
                                         <span className="lw-signingManagerScreen__signerStatusCell">{formatUtcDateTime(s.SignedAt)}</span>
-                                        {isPending && (
+                                        {isPending && canManage && (
                                             <span className="lw-signingManagerScreen__signerStatusActions">
                                                 {!s.AllSigned ? (
                                                     <InviteIconButton

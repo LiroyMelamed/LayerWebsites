@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middlewares/authMiddleware");
-const requireAdmin = require("../middlewares/requireAdmin");
+const requireFirmAction = require("../middlewares/requireFirmAction");
 const filesController = require("../controllers/filesController");
 const stageFilesController = require("../controllers/stageFilesController");
 
@@ -14,7 +14,7 @@ router.get("/stage-files/:caseId", authMiddleware, stageFilesController.getStage
 router.get("/stage-file-read/:fileId", authMiddleware, stageFilesController.readStageFile);
 
 // Stage files — admin only for add/delete
-router.post("/stage-files/:caseId/:stage", authMiddleware, requireAdmin, stageFilesController.addStageFile);
-router.delete("/stage-files/:fileId", authMiddleware, requireAdmin, stageFilesController.deleteStageFile);
+router.post("/stage-files/:caseId/:stage", authMiddleware, requireFirmAction('cases', 'edit', { legacy: 'admin' }), stageFilesController.addStageFile);
+router.delete("/stage-files/:fileId", authMiddleware, requireFirmAction('cases', 'edit', { legacy: 'admin' }), stageFilesController.deleteStageFile);
 
 module.exports = router;

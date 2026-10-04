@@ -1,0 +1,74 @@
+.lw-firmStaffRoles {
+  direction: rtl;
+  padding: 1rem 1.25rem 2rem;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.lw-firmStaffRoles__title {
+  font-size: 1.35rem;
+  margin-bottom: 1rem;
+}
+
+.lw-firmStaffRoles__roleCard,
+.lw-firmStaffRoles__empRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.lw-firmStaffRoles__areaBlock {
+  margin: 1rem 0;
+  padding: 0.75rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.lw-firmStaffRoles__areaTitle {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.lw-firmStaffRoles__action {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-inline-start: 1.25rem;
+  margin-top: 0.35rem;
+}
+
+.lw-firmStaffRoles__scopeRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0.5rem 1.25rem 0 0;
+}
+
+.lw-firmStaffRoles__affected {
+  color: #b45309;
+  font-size: 0.9rem;
+  margin: 0.5rem 0;
+}
+
+.lw-firmStaffRoles__editorActions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.lw-firmStaffRoles__roleSelect {
+  width: 100%;
+  padding: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.lw-firmStaffRoles__empForm {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+}

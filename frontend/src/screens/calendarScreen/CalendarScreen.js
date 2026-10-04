@@ -21,6 +21,7 @@ import { buttonSizes } from "../../styles/buttons/buttonSizes";
 import SearchInput from "../../components/specializedComponents/containers/SearchInput";
 import { Text24, Text14, Text12, TextBold14 } from "../../components/specializedComponents/text/AllTextKindFile";
 import { usePopup } from "../../providers/PopUpProvider";
+import { useFirmPermissions } from "../../providers/FirmPermissionsProvider";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import { images } from "../../assets/images/images";
@@ -395,6 +396,8 @@ export default function CalendarScreen() {
     const { openPopup, closePopup } = usePopup();
     const [searchParams, setSearchParams] = useSearchParams();
     const calendarEnabled = useCalendarModuleEnabled();
+    const { canAction } = useFirmPermissions() || { canAction: () => true };
+    const canManageCalendar = canAction("calendar", "manage");
 
     // Feature-flag guard: bounce to main screen if the module is disabled.
     useEffect(() => {
@@ -1074,9 +1077,11 @@ export default function CalendarScreen() {
                             {t("calendar.openPersonalSync")}
                         </SecondaryButton>
 
+                        {canManageCalendar && (
                         <PrimaryButton onPress={() => openCreateModal(null)}>
                             {t("calendar.addEvent")}
                         </PrimaryButton>
+                        )}
                     </SimpleContainer>
                 </SimpleContainer>
 

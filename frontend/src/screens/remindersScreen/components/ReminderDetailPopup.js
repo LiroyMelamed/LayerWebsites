@@ -28,7 +28,7 @@ function DetailRow({ label, children }) {
     );
 }
 
-export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCancel, onDelete, onUpdated, resolveTemplateLabel }) {
+export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCancel, onDelete, onUpdated, resolveTemplateLabel, readOnly = false }) {
     const { t } = useTranslation();
     const isPending = reminder?.status === "PENDING";
     const isSigningReminder = reminder?.source === "signing" || String(reminder?.id || "").startsWith("sfr-");
@@ -170,7 +170,7 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
                     </>
                 ) : (
                     <>
-                        {isPending && (
+                        {!readOnly && isPending && (
                             <PrimaryButton onPress={() => setEditing(true)}>
                                 {t("reminders.detail.edit")}
                             </PrimaryButton>

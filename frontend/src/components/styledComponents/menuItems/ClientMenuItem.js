@@ -16,6 +16,7 @@ export default function ClientMenuItem({
     closePopUpFunction,
     rePerformRequest,
     onPress,
+    allowEdit = true,
     style: _style
 }) {
     const { openPopup } = usePopup();
@@ -28,8 +29,7 @@ export default function ClientMenuItem({
         }
     }
 
-    return (
-        <SimpleButton onPress={() => clientPressHandle()}>
+    const content = (
             <SimpleContainer className="lw-clientMenuItem">
 
                 <SimpleContainer className="lw-clientMenuItem__row">
@@ -51,6 +51,14 @@ export default function ClientMenuItem({
                 </SimpleContainer>
 
             </SimpleContainer>
+    );
+
+    if (!allowEdit) {
+        return content;
+    }
+    return (
+        <SimpleButton onPress={() => clientPressHandle()}>
+            {content}
         </SimpleButton>
     );
 }

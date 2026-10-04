@@ -27,6 +27,7 @@ import ReminderDetailPopup from "./components/ReminderDetailPopup";
 import { formatDateTimeForInput } from "../../functions/date/formatDateForInput";
 import { AdminStackName } from "../../navigation/AdminStack";
 import { MainScreenName } from "../mainScreen/MainScreen";
+import { useFirmPermissions } from "../../providers/FirmPermissionsProvider";
 
 import "./RemindersScreen.scss";
 
@@ -45,6 +46,8 @@ function formatDate(dateStr) {
 
 export default function RemindersScreen() {
     const { t } = useTranslation();
+    const { canAction } = useFirmPermissions() || { canAction: () => true };
+    const canManageReminders = canAction('reminders', 'manage');
     const { openPopup, closePopup } = usePopup();
     const { isSmallScreen } = useScreenSize();
     const [statusFilter, setStatusFilter] = useState("ALL");
@@ -130,13 +133,14 @@ export default function RemindersScreen() {
             <ReminderDetailPopup
                 reminder={reminder}
                 closePopUpFunction={closePopup}
-                onCancel={(id) => { cancelRequest(id); }}
-                onDelete={(id) => { deleteRequest(id); }}
+                onCancel={canManageReminders ? (id) => { cancelRequest(id); } : undefined}
+                onDelete={canManageReminders ? (id) => { deleteRequest(id); } : undefined}
+                readOnly={!canManageReminders}
                 onUpdated={() => performRequest()}
                 resolveTemplateLabel={resolveTemplateLabel}
             />
         );
-    }, [reminders, openPopup, closePopup, cancelRequest]);
+    }, [reminders, openPopup, closePopup, cancelRequest, deleteRequest, canManageReminders, performRequest, resolveTemplateLabel]);
 
     // Responsive: fewer columns on small screens
     const tableTitles = useMemo(() => {
@@ -253,6 +257,7 @@ export default function RemindersScreen() {
                 </SimpleCard>
             </SimpleScrollView>
 
+            {canManageReminders && (
             <SimpleContainer className="lw-reminders__footer">
                 <PrimaryButton onPress={handleAddReminder}>
                     {t("reminders.add.button")}
@@ -262,6 +267,7 @@ export default function RemindersScreen() {
                     {t("reminders.importButton")}
                 </SecondaryButton>
             </SimpleContainer>
+            )}
         </SimpleScreen>
     );
 }
