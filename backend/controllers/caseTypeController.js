@@ -146,6 +146,25 @@ const getCaseTypeById = async (req, res) => {
     }
 };
 
+function useFirmWideCaseTypeCatalog(req) {
+    const userRole = String(req.user?.Role || '');
+    const mode = req.firmPermissionMode || 'legacy';
+    if (userRole === 'Admin' || mode === 'platform_admin') return true;
+    if (mode === 'legacy') {
+        return userRole === 'Staff' || userRole === 'Lawyer' || userRole === 'Admin';
+    }
+    if (mode === 'role' && req.firmPermissions) {
+        const { hasAreaAction, isAreaVisible } = require('../lib/firmRolePermissions');
+        const p = req.firmPermissions;
+        return (
+            hasAreaAction(p, 'cases', 'create') ||
+            hasAreaAction(p, 'cases', 'edit') ||
+            (isAreaVisible(p, 'caseTypes') && hasAreaAction(p, 'caseTypes', 'view'))
+        );
+    }
+    return false;
+}
+
 const getCaseTypeByName = async (req, res) => {
     try {
         const rawCaseTypeName = req?.query?.caseTypeName;
@@ -175,7 +194,7 @@ const getCaseTypeByName = async (req, res) => {
             paramIndex++;
         }
 
-        if (userRole !== 'Admin') {
+        if (!useFirmWideCaseTypeCatalog(req)) {
             whereClauses.push(
                 `ct.casetypeid IN (
                     SELECT DISTINCT c.casetypeid
