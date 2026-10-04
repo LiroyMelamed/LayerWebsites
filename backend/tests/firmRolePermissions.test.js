@@ -49,6 +49,54 @@ test('staff receives exactly what role JSON defines', () => {
     assert.ok(!pages.includes('allCases'));
 });
 
+test('cases.view only does not expose newOrUpdateCase in session pages', () => {
+    const perms = normalizeRolePermissions({
+        areas: {
+            main: { visible: true, actions: [] },
+            cases: { visible: true, actions: ['view'], dataScope: 'assigned_only' },
+        },
+    });
+    const pages = listVisiblePageKeys(perms);
+    assert.ok(pages.includes('allCases'));
+    assert.ok(pages.includes('taggedCases'));
+    assert.ok(pages.includes('myCases'));
+    assert.ok(!pages.includes('newOrUpdateCase'));
+});
+
+test('cases.create exposes newOrUpdateCase in session pages', () => {
+    const perms = normalizeRolePermissions({
+        areas: {
+            main: { visible: true, actions: [] },
+            cases: { visible: true, actions: ['view', 'create'], dataScope: 'all_firm' },
+        },
+    });
+    const pages = listVisiblePageKeys(perms);
+    assert.ok(pages.includes('newOrUpdateCase'));
+});
+
+test('signing.view only does not expose uploadFileForSigning', () => {
+    const perms = normalizeRolePermissions({
+        areas: {
+            main: { visible: true, actions: [] },
+            signing: { visible: true, actions: ['view'] },
+        },
+    });
+    const pages = listVisiblePageKeys(perms);
+    assert.ok(pages.includes('signingFiles'));
+    assert.ok(!pages.includes('uploadFileForSigning'));
+});
+
+test('signing.upload exposes uploadFileForSigning', () => {
+    const perms = normalizeRolePermissions({
+        areas: {
+            main: { visible: true, actions: [] },
+            signing: { visible: true, actions: ['view', 'upload'] },
+        },
+    });
+    const pages = listVisiblePageKeys(perms);
+    assert.ok(pages.includes('uploadFileForSigning'));
+});
+
 test('unknown actions are stripped', () => {
     const perms = normalizeRolePermissions({
         areas: {

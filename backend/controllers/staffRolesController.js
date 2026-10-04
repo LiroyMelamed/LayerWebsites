@@ -54,12 +54,28 @@ async function listRoles(req, res, next) {
     }
 }
 
+async function nameConflictExists(tenantId, name, excludeRoleId = null) {
+    const { rows } = await pool.query(
+        `SELECT 1 FROM firm_staff_roles
+         WHERE is_active = TRUE
+           AND lower(name) = lower($1)
+           AND law_firm_tenant_id IS NOT DISTINCT FROM $2
+           AND ($3::uuid IS NULL OR id <> $3)
+         LIMIT 1`,
+        [name, tenantId ?? null, excludeRoleId],
+    );
+    return rows.length > 0;
+}
+
 async function createRole(req, res, next) {
     try {
         const { tenantId } = await assertPlatformAdminSameTenant(req);
         const name = String(req.body?.name || '').trim();
         if (!name) {
             return next(createAppError('VALIDATION_ERROR', 400, 'שם תפקיד נדרש'));
+        }
+        if (await nameConflictExists(tenantId, name)) {
+            return next(createAppError('CONFLICT', 409, 'כבר קיים תפקיד עם שם זה במשרד'));
         }
         const permissions = normalizeRolePermissions(req.body?.permissions);
         const { rows } = await pool.query(
@@ -93,6 +109,14 @@ async function updateRole(req, res, next) {
         }
         const assignedUserCount = await countUsersForRole(roleId, tenantId);
         const name = req.body?.name !== undefined ? String(req.body.name).trim() : undefined;
+        if (name !== undefined) {
+            if (!name) {
+                return next(createAppError('VALIDATION_ERROR', 400, 'שם תפקיד נדרש'));
+            }
+            if (await nameConflictExists(tenantId, name, roleId)) {
+                return next(createAppError('CONFLICT', 409, 'כבר קיים תפקיד עם שם זה במשרד'));
+            }
+        }
         const permissions =
             req.body?.permissions !== undefined
                 ? normalizeRolePermissions(req.body.permissions)

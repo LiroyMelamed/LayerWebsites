@@ -194,6 +194,33 @@ export default function FirmStaffRolesScreen() {
         }
     };
 
+    const onDeactivateRole = async (role) => {
+        if (!role?.id || saving) return;
+        const count = role.assignedUserCount ?? 0;
+        if (count > 0) return;
+        const ok = window.confirm(
+            t(
+                "firmStaffRoles.deactivateConfirm",
+                "להשבית את התפקיד «{{name}}»? לא ניתן לשחזר מהממשק.",
+                { name: role.name },
+            ),
+        );
+        if (!ok) return;
+        setSaving(true);
+        try {
+            await staffRolesApi.deactivateRole(role.id);
+            if (editing?.id === role.id) {
+                setEditing(null);
+            }
+            await reload();
+        } catch (e) {
+            const msg = e?.data?.message || e?.message || t("firmStaffRoles.deactivateFailed", "השבתת התפקיד נכשלה");
+            window.alert(msg);
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const roleOptions = useMemo(() => roles.map((r) => ({ id: r.id, name: r.name })), [roles]);
 
     return (
@@ -222,6 +249,17 @@ export default function FirmStaffRolesScreen() {
                                     <SecondaryButton onPress={() => setEditing(r)}>
                                         {t("common.edit", "עריכה")}
                                     </SecondaryButton>
+                                    {(r.assignedUserCount ?? 0) > 0 ? (
+                                        <span className="lw-firmStaffRoles__deactivateHint" title={t("firmStaffRoles.deactivateBlocked", "לא ניתן להשבית — יש עובדים משויכים")}>
+                                            {t("firmStaffRoles.deactivateBlockedShort", "לא ניתן להשבית ({{count}} עובדים)", {
+                                                count: r.assignedUserCount,
+                                            })}
+                                        </span>
+                                    ) : (
+                                        <SecondaryButton disabled={saving} onPress={() => onDeactivateRole(r)}>
+                                            {t("firmStaffRoles.deactivate", "השבתת תפקיד")}
+                                        </SecondaryButton>
+                                    )}
                                 </SimpleContainer>
                             ))}
 
