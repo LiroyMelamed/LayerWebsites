@@ -2,28 +2,28 @@ import { Suspense, lazy } from "react";
 import LoginVerifyOtpCodeFieldsProvider from "../providers/LoginVerifyOtpCodeFieldsProvider";
 import RouteFallback from "../components/simpleComponents/RouteFallback";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { AdminStackName } from "./AdminStack";
-import { ClientStackName } from "./ClientStack";
-import { AppRoles } from "../constant/appRoles";
+import { AppRoles, isOfficeWebRole } from "../constant/appRoles";
 import {
+    AdminStackName,
+    ClientStackName,
     ClientMainScreenName,
     LoginOtpScreenName,
     LoginScreenName,
+    LoginStackName,
     MainScreenName,
 } from "./screenPaths";
 
 const LoginScreen = lazy(() => import("../screens/loginScreen/LoginScreen"));
 const LoginOtpScreen = lazy(() => import("../screens/otpScreen/OtpScreen.js/LoginOtpScreen"));
 
-export const LoginStackName = "/LoginStack";
+export { LoginStackName };
 
 function LoginStack() {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     const role = typeof window !== "undefined" ? localStorage.getItem("role") : null;
 
     if (token) {
-        const redirectTo =
-            role === AppRoles.Admin
+        const redirectTo = isOfficeWebRole(role)
                 ? AdminStackName + MainScreenName
                 : ClientStackName + ClientMainScreenName;
         return <Navigate to={redirectTo} replace />;

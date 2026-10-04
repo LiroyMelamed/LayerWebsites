@@ -11,9 +11,10 @@ import {
     ProfileScreenName,
     SigningScreenName,
     ClientTicketScreenName,
+    LoginStackName,
+    AdminStackName,
+    ClientStackName,
 } from "./screenPaths";
-import { LoginStackName } from "./LoginStack";
-import { AdminStackName } from "../navigation/AdminStack";
 import BillingLockedScreen from "../components/billing/BillingLockedScreen";
 import { useBillingLock } from "../providers/BillingLockProvider";
 
@@ -23,7 +24,7 @@ const SigningScreen = lazy(() => import("../screens/signingScreen/SigningScreen"
 const NotificationsScreen = lazy(() => import("../screens/client/notifications/NotificationsScreen"));
 const ProfileScreen = lazy(() => import("../screens/client/profile/ProfileScreen"));
 
-export const ClientStackName = "/ClientStack";
+export { ClientStackName };
 
 function toRelativePath(pathname) {
     const p = String(pathname || "");

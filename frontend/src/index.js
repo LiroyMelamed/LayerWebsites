@@ -9,6 +9,7 @@ import { PopupProvider } from './providers/PopUpProvider';
 import { FromAppProvider } from './providers/FromAppProvider';
 import { BillingLockProvider } from './providers/BillingLockProvider';
 import { ToastProvider } from './components/ui/toast';
+import { FirmPermissionsProvider } from './providers/FirmPermissionsProvider';
 
 // Initialize i18n exactly once (language + RTL/LTR handled centrally).
 import './i18n/i18n';
@@ -22,7 +23,9 @@ root.render(
       <PopupProvider>
         <ScreenSizeProvider>
           <ToastProvider position="top-center">
-            <App />
+            <FirmPermissionsProvider>
+              <App />
+            </FirmPermissionsProvider>
           </ToastProvider>
         </ScreenSizeProvider>
       </PopupProvider>

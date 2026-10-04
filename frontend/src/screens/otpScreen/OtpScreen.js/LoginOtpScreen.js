@@ -141,8 +141,11 @@ export default function LoginOtpScreen() {
             ? tenantPath(slug, `${ClientStackName}${ClientMainScreenName}`)
             : ClientStackName + ClientMainScreenName;
 
-        if (data.role == AppRoles.Admin) navigate(adminPath, { replace: true });
-        else navigate(clientPath, { replace: true });
+        if (data.role === AppRoles.Admin || data.role === AppRoles.Staff) {
+            navigate(adminPath, { replace: true });
+        } else {
+            navigate(clientPath, { replace: true });
+        }
     }
 
     return (

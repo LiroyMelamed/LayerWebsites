@@ -1537,10 +1537,14 @@ function isSigningFileOwner({ file, requesterId }) {
     return Number(ownerId) === Number(requesterId);
 }
 
-/** Read access for lawyers/admins viewing any office signing document. */
-function canViewSigningFileAsOfficeStaff({ file, requesterId, role }) {
+/** Read access for lawyers/admins (legacy) or firm Staff role with signing.view (scope enforced on route). */
+function canViewSigningFileAsOfficeStaff({ file, requesterId, role, req = null }) {
     if (!requesterId) return false;
     if (isSigningFileOwner({ file, requesterId })) return true;
+    if (req?.firmPermissionMode === 'role') {
+        const { hasAreaAction } = require('../lib/firmRolePermissions');
+        return Boolean(req.firmPermissions && hasAreaAction(req.firmPermissions, 'signing', 'view'));
+    }
     return isSigningOfficeStaffRole(role);
 }
 
@@ -1551,8 +1555,8 @@ function canManageSigningFile({ file, requesterId, role }) {
     return isSigningFileOwner({ file, requesterId });
 }
 
-function canViewAllSigningSpots({ file, requesterId, role }) {
-    return isSigningFileOwner({ file, requesterId }) || canViewSigningFileAsOfficeStaff({ file, requesterId, role });
+function canViewAllSigningSpots({ file, requesterId, role, req = null }) {
+    return isSigningFileOwner({ file, requesterId }) || canViewSigningFileAsOfficeStaff({ file, requesterId, role, req });
 }
 
 function normalizeSignerDeliveryMethod(raw) {
@@ -3566,7 +3570,7 @@ exports.getSigningFileDetails = async (req, res, next) => {
 
         const isLawyer = file.LawyerId === userId;
         const isPrimaryClient = file.ClientId === userId;
-        const isOfficeStaffView = canViewSigningFileAsOfficeStaff({ file, requesterId: userId, role });
+        const isOfficeStaffView = canViewSigningFileAsOfficeStaff({ file, requesterId: userId, role, req });
 
         // Multi-signer support: allow access if user is assigned to at least one spot
         let isAssignedSigner = false;
@@ -3585,7 +3589,7 @@ exports.getSigningFileDetails = async (req, res, next) => {
             return fail(next, 'FORBIDDEN', 403);
         }
 
-        const viewAllSpots = canViewAllSigningSpots({ file, requesterId: userId, role });
+        const viewAllSpots = canViewAllSigningSpots({ file, requesterId: userId, role, req });
 
         // If user is NOT viewing as owner/office staff, filter spots to only their assigned spots
         let spotsQuery = `select
@@ -3726,7 +3730,7 @@ exports.getEvidencePackage = async (req, res, next) => {
         const file = await loadSigningPolicyForFile(signingFileId);
         if (!file) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
 
-        if (!canViewSigningFileAsOfficeStaff({ file, requesterId, role })) {
+        if (!canViewSigningFileAsOfficeStaff({ file, requesterId, role, req })) {
             return fail(next, 'FORBIDDEN', 403);
         }
 
@@ -3922,7 +3926,7 @@ exports.getEvidencePackageZip = async (req, res, next) => {
         const filePolicy = await loadSigningPolicyForFile(signingFileId);
         if (!filePolicy) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
 
-        if (!canViewSigningFileAsOfficeStaff({ file: filePolicy, requesterId, role })) {
+        if (!canViewSigningFileAsOfficeStaff({ file: filePolicy, requesterId, role, req })) {
             return fail(next, 'FORBIDDEN', 403);
         }
 
@@ -4547,7 +4551,7 @@ exports.getEvidenceCertificate = async (req, res, next) => {
         const filePolicy = await loadSigningPolicyForFile(signingFileId);
         if (!filePolicy) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
 
-        if (!canViewSigningFileAsOfficeStaff({ file: filePolicy, requesterId, role })) {
+        if (!canViewSigningFileAsOfficeStaff({ file: filePolicy, requesterId, role, req })) {
             return fail(next, 'FORBIDDEN', 403);
         }
 
@@ -4599,7 +4603,7 @@ exports.getSigningFileSigners = async (req, res, next) => {
         );
         if (fileResult.rows.length === 0) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
         const ownerFile = fileResult.rows[0];
-        if (!canViewSigningFileAsOfficeStaff({ file: ownerFile, requesterId, role: req.user?.Role })) {
+        if (!canViewSigningFileAsOfficeStaff({ file: ownerFile, requesterId, role: req.user?.Role, req })) {
             return fail(next, 'FORBIDDEN', 403);
         }
 
@@ -8072,7 +8076,7 @@ exports.getSignedFileDownload = async (req, res, next) => {
 
         const isLawyer = file.LawyerId === userId;
         const isPrimaryClient = file.ClientId === userId;
-        const isOfficeStaffView = canViewSigningFileAsOfficeStaff({ file, requesterId: userId, role });
+        const isOfficeStaffView = canViewSigningFileAsOfficeStaff({ file, requesterId: userId, role, req });
         let isAssignedSigner = false;
 
         if (schemaSupport.signaturespotsSignerUserId && !isLawyer && !isPrimaryClient && !isOfficeStaffView) {
@@ -8314,7 +8318,7 @@ exports.getSigningFilePdf = async (req, res, next) => {
 
         const isLawyer = file.LawyerId === userId;
         const isPrimaryClient = file.ClientId === userId;
-        const isOfficeStaffView = canViewSigningFileAsOfficeStaff({ file, requesterId: userId, role });
+        const isOfficeStaffView = canViewSigningFileAsOfficeStaff({ file, requesterId: userId, role, req });
         let isAssignedSigner = false;
 
         if (schemaSupport.signaturespotsSignerUserId && !isLawyer && !isPrimaryClient && !isOfficeStaffView) {

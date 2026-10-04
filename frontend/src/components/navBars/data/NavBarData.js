@@ -7,6 +7,7 @@ import {
     AllMangerScreenName,
     CalendarScreenName,
     EvidenceDocumentsScreenName,
+    FirmStaffRolesScreenName,
     PlanUsageScreenName,
     PlansPricingScreenName,
     PlatformSettingsScreenName,
@@ -17,10 +18,13 @@ import {
 } from "../../../navigation/screenPaths";
 import { getCalendarModuleEnabledCached, loadFirmSettings } from "../../../services/firmSettings";
 
-export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t) => {
+export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t, permCtx = null) => {
     loadFirmSettings();
     const calendarEnabled = getCalendarModuleEnabledCached();
     const isPlatformAdmin = typeof window !== 'undefined' && localStorage.getItem('isPlatformAdmin') === 'true';
+    const permissionMode = permCtx?.permissionMode || 'legacy';
+    const canPage = permCtx?.canPage || (() => true);
+    const canAction = permCtx?.canAction || (() => true);
 
     const links = [
         // ── Cases ──
@@ -125,7 +129,28 @@ export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t) =>
             icon: null,
             onClick: () => navigate(AdminStackName + PlatformSettingsScreenName),
         }] : []),
+        ...(isPlatformAdmin ? [{
+            navKey: 'firmStaffRoles',
+            routeMatch: FirmStaffRolesScreenName,
+            buttonText: t('nav.firmStaffRoles', 'תפקידים והרשאות'),
+            buttonScreen: t('nav.firmStaffRoles', 'תפקידים והרשאות'),
+            icon: null,
+            onClick: () => navigate(AdminStackName + FirmStaffRolesScreenName),
+        }] : []),
     ];
 
-    return { NavBarLinks: links };
+    const filtered =
+        permissionMode === 'role'
+            ? links.filter((item) => {
+                  if (item.navKey === 'firmStaffRoles' || item.navKey === 'platformSettings' || item.navKey === 'planUsage' || item.navKey === 'evidenceDocuments') {
+                      return isPlatformAdmin;
+                  }
+                  if (item.navKey === 'newOrUpdateCase') {
+                      return canAction('cases', 'create') || canAction('cases', 'edit');
+                  }
+                  return canPage(item.navKey);
+              })
+            : links;
+
+    return { NavBarLinks: filtered };
 };

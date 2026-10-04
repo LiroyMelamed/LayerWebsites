@@ -17,6 +17,7 @@ import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButt
 import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
 import { usePopup } from "../../providers/PopUpProvider";
 import { useTranslation } from "react-i18next";
+import { useFirmPermissions } from "../../providers/FirmPermissionsProvider";
 
 
 import "./AllClientsScreen.scss";
@@ -25,6 +26,9 @@ export const AllClientsScreenName = "/AllClientsScreen";
 
 export default function AllClientsScreen() {
     const { t } = useTranslation();
+    const { canAction } = useFirmPermissions() || { canAction: () => true };
+    const canEditClients = canAction("clients", "edit");
+    const canDeleteClients = canAction("clients", "delete");
     const { isSmallScreen } = useScreenSize();
     const [selectedName, setSelectedName] = useState(null);
     const [selectedCompany, setSelectedCompany] = useState(null);
@@ -104,10 +108,13 @@ export default function AllClientsScreen() {
                     customerList={displayList}
                     rePerformRequest={reperformAfterSave}
                     isPerforming={isPerforming}
-                    hideButtons
+                    hideButtons={!canEditClients && !canDeleteClients}
+                    allowEdit={canEditClients}
+                    allowDelete={canDeleteClients}
                 />
             </SimpleScrollView>
 
+            {canEditClients && (
             <SimpleContainer className="lw-allClientsScreen__footer">
                 <PrimaryButton
                     onPress={() => openPopup(<ClientPopup closePopUpFunction={closePopup} rePerformRequest={reperformAfterSave} />)}
@@ -121,6 +128,7 @@ export default function AllClientsScreen() {
                     {t("clientImport.button")}
                 </SecondaryButton>
             </SimpleContainer>
+            )}
         </SimpleScreen>
     );
 }
