@@ -1,8 +1,8 @@
 import SimpleScreen from '../../components/simpleComponents/SimpleScreen';
 import { useScreenSize } from '../../providers/ScreenSizeProvider';
-import useAutoHttpRequest from '../../hooks/useAutoHttpRequest';
 import useHttpRequest from '../../hooks/useHttpRequest';
 import { useCallback, useEffect, useMemo } from 'react';
+import { useFirmPermissions } from '../../providers/FirmPermissionsProvider';
 import { images } from '../../assets/images/images';
 import SimpleContainer from '../../components/simpleComponents/SimpleContainer';
 import TopToolBarSmallScreen from '../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen';
@@ -44,24 +44,32 @@ export default function MainScreen() {
     const settingsLoaded = useFirmSettingsLoaded();
     const aiInsightsSettingEnabled = useManagerHomeAiInsightsEnabled();
     const aiInsightsEnabled = aiInsightsSettingEnabled;
+    const firmPerms = useFirmPermissions();
+    const dashboardEnabled = useMemo(() => {
+        if (!firmPerms?.loaded) return false;
+        if (firmPerms.permissionMode !== 'role') return true;
+        return firmPerms.canPage('main') && firmPerms.canAction('cases', 'view');
+    }, [firmPerms]);
+    const calendarEnabled = useMemo(() => {
+        if (!firmPerms?.loaded) return false;
+        if (firmPerms.permissionMode !== 'role') return true;
+        return firmPerms.canPage('calendar') && firmPerms.canAction('calendar', 'view');
+    }, [firmPerms]);
 
     const {
         result: managerHome,
         isPerforming: isLoadingHome,
         performRequest: refreshManagerHome,
-    } = useAutoHttpRequest(casesApi.getManagerHomeData, {
-        onFailure: (error) => {
-            // Avoid noisy toast while tenant backend catches up after deploy.
-            if (error?.status === 404) return;
-            toastFromApiError(error, 'שגיאה בקבלת נתוני לוח הבקרה');
-        },
+    } = useHttpRequest(casesApi.getManagerHomeData, null, (error) => {
+        if (error?.status === 404 || error?.status === 403) return;
+        toastFromApiError(error, 'שגיאה בקבלת נתוני לוח הבקרה');
     });
 
     const {
         result: calendarResponse,
         isPerforming: isLoadingCalendar,
         performRequest: refreshCalendar,
-    } = useAutoHttpRequest(calendarApi.getTodayAndTomorrow);
+    } = useHttpRequest(calendarApi.getTodayAndTomorrow, null, () => {});
 
     const {
         result: aiBriefResponse,
@@ -98,10 +106,22 @@ export default function MainScreen() {
     };
 
     useEffect(() => {
-        if (aiInsightsEnabled) {
+        if (dashboardEnabled) {
+            refreshManagerHome();
+        }
+    }, [dashboardEnabled, refreshManagerHome]);
+
+    useEffect(() => {
+        if (calendarEnabled) {
+            refreshCalendar();
+        }
+    }, [calendarEnabled, refreshCalendar]);
+
+    useEffect(() => {
+        if (dashboardEnabled && aiInsightsEnabled) {
             fetchAiBrief();
         }
-    }, [aiInsightsEnabled, fetchAiBrief]);
+    }, [dashboardEnabled, aiInsightsEnabled, fetchAiBrief]);
 
     const aiBrief = aiInsightsEnabled
         && aiBriefResponse?.enabled
