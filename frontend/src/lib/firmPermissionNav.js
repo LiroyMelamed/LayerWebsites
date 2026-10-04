@@ -16,6 +16,9 @@ export const ROUTE_SEGMENT_TO_NAV_KEY = Object.freeze({
     EvidenceDocumentsScreen: "evidenceDocuments",
     AllManger: "allManagers",
     FirmStaffRoles: "firmStaffRoles",
+    PlatformSettingsScreen: "platformSettings",
+    PlanUsage: "planUsage",
+    PlansPricing: "planUsage",
     NoPermissions: "noPermissions",
 });
 
