@@ -13,16 +13,28 @@ function _getHiddenAdminIds() {
     return raw.split(',').map(s => Number(s.trim())).filter(n => Number.isFinite(n) && n > 0);
 }
 
+const ADMIN_USER_SELECT = `
+    SELECT u.userid, u.name, u.email, u.phonenumber, u.companyname, u.createdat,
+           u.firm_staff_role_id,
+           r.name AS firm_staff_role_name,
+           EXISTS (
+               SELECT 1 FROM platform_admins pa
+               WHERE pa.user_id = u.userid AND pa.is_active = TRUE
+           ) AS is_platform_admin
+    FROM users u
+    LEFT JOIN firm_staff_roles r ON r.id = u.firm_staff_role_id AND r.is_active = TRUE
+`;
+
 /**
  * Retrieves all users with the 'Admin' role (excluding hidden admins).
  */
 const getAdmins = async (req, res) => {
     try {
         const hidden = _getHiddenAdminIds();
-        let query = "SELECT userid, name, email, phonenumber, companyname, createdat FROM users WHERE role = 'Admin'";
+        let query = `${ADMIN_USER_SELECT} WHERE u.role = 'Admin'`;
         const params = [];
         if (hidden.length > 0) {
-            query += " AND userid <> ALL($1::int[])";
+            query += " AND u.userid <> ALL($1::int[])";
             params.push(hidden);
         }
         const result = await pool.query(query, params);
@@ -45,13 +57,13 @@ const getAdminByName = async (req, res) => {
     if (!name) {
         try {
             const hidden = _getHiddenAdminIds();
-            let query = "SELECT userid, name, email, phonenumber, companyname, createdat FROM users WHERE role = 'Admin'";
+            let query = `${ADMIN_USER_SELECT} WHERE u.role = 'Admin'`;
             const params = [];
             if (hidden.length > 0) {
-                query += " AND userid <> ALL($1::int[])";
+                query += " AND u.userid <> ALL($1::int[])";
                 params.push(hidden);
             }
-            query += " ORDER BY createdat DESC";
+            query += " ORDER BY u.createdat DESC";
             const result = await pool.query(query, params);
             return res.json(result.rows);
         } catch (error) {
@@ -62,13 +74,13 @@ const getAdminByName = async (req, res) => {
 
     try {
         const hidden = _getHiddenAdminIds();
-        let query = "SELECT userid, name, email, phonenumber, companyname, createdat FROM users WHERE role = 'Admin' AND name ILIKE $1";
+        let query = `${ADMIN_USER_SELECT} WHERE u.role = 'Admin' AND u.name ILIKE $1`;
         const params = [`%${name}%`];
         if (hidden.length > 0) {
-            query += " AND userid <> ALL($2::int[])";
+            query += " AND u.userid <> ALL($2::int[])";
             params.push(hidden);
         }
-        query += " ORDER BY createdat DESC";
+        query += " ORDER BY u.createdat DESC";
         const result = await pool.query(query, params);
 
         // Empty search is normal — return [] (do not 404).

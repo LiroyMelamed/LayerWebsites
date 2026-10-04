@@ -51,6 +51,8 @@ test('Postgres firm staff permissions — full suite', async (t) => {
     let roleAssignedId;
     let roleAllFirmId;
     let roleTenantBId;
+    let roleClientsOnlyAId;
+    let roleEmptyId;
     let staffAssignedId;
     let staffAllFirmId;
     let legacyLawyerId;
@@ -88,8 +90,9 @@ test('Postgres firm staff permissions — full suite', async (t) => {
         roleAssignedId = await pg.insertRole(client, tenantA.id, `view_${tag}`, permsViewAssigned);
         roleAllFirmId = await pg.insertRole(client, tenantA.id, `all_${tag}`, permsAllFirmEdit);
         roleTenantBId = await pg.insertRole(client, tenantB.id, `b_${tag}`, permsClientsOnly);
-        const roleEmptyId = await pg.insertRole(client, tenantA.id, `empty_${tag}`, pg.makePermissions({}));
-        ids.roleIds.push(roleAssignedId, roleAllFirmId, roleTenantBId, roleEmptyId);
+        roleClientsOnlyAId = await pg.insertRole(client, tenantA.id, `clients_a_${tag}`, permsClientsOnly);
+        roleEmptyId = await pg.insertRole(client, tenantA.id, `empty_${tag}`, pg.makePermissions({}));
+        ids.roleIds.push(roleAssignedId, roleAllFirmId, roleTenantBId, roleClientsOnlyAId, roleEmptyId);
 
         staffAssignedId = await pg.insertUser(client, {
             tenantId: tenantA.id,
@@ -278,17 +281,63 @@ test('Postgres firm staff permissions — full suite', async (t) => {
         403,
     );
 
-    // Tenant isolation — platform admin tenant A cannot use role from tenant B
-    const createRoleB = await request(app)
-        .post('/api/staff/employees')
+    // Tenant isolation — cannot assign tenant B role to tenant A user
+    const assignCross = await request(app)
+        .patch(`/api/staff/users/${legacyLawyerId}/firm-staff-role`)
         .set('Authorization', `Bearer ${tokenPa}`)
-        .send({
-            name: 'Cross tenant',
-            phoneNumber: `059${String(tag).slice(-7)}`,
-            password: 'Test1234!',
-            firmStaffRoleId: roleTenantBId,
-        });
-    assert.equal(createRoleB.status, 404);
+        .send({ firmStaffRoleId: roleTenantBId });
+    assert.equal(assignCross.status, 404);
+
+    const assignOk = await request(app)
+        .patch(`/api/staff/users/${legacyLawyerId}/firm-staff-role`)
+        .set('Authorization', `Bearer ${tokenPa}`)
+        .send({ firmStaffRoleId: roleAssignedId });
+    assert.equal(assignOk.status, 200);
+
+    const lawyerRestricted = await request(app)
+        .get('/api/Customers/GetCustomers')
+        .set('Authorization', `Bearer ${tokenLawyer}`);
+    assert.equal(lawyerRestricted.status, 403);
+
+    const clearLawyerRole = await request(app)
+        .patch(`/api/staff/users/${legacyLawyerId}/firm-staff-role`)
+        .set('Authorization', `Bearer ${tokenPa}`)
+        .send({ firmStaffRoleId: null });
+    assert.equal(clearLawyerRole.status, 200);
+
+    const assignPaBlocked = await request(app)
+        .patch(`/api/staff/users/${paUserId}/firm-staff-role`)
+        .set('Authorization', `Bearer ${tokenPa}`)
+        .send({ firmStaffRoleId: roleAssignedId });
+    assert.equal(assignPaBlocked.status, 403);
+
+    assert.ok(roleClientsOnlyAId, 'roleClientsOnlyAId must be set in test setup');
+    const assignLawyerClientsOnly = await request(app)
+        .patch(`/api/staff/users/${legacyLawyerId}/firm-staff-role`)
+        .set('Authorization', `Bearer ${tokenPa}`)
+        .send({ firmStaffRoleId: roleClientsOnlyAId });
+    assert.equal(
+        assignLawyerClientsOnly.status,
+        409,
+        assignLawyerClientsOnly.body?.message || JSON.stringify(assignLawyerClientsOnly.body),
+    );
+
+    await pool.query(`UPDATE firm_staff_roles SET is_active = FALSE WHERE id = $1`, [roleEmptyId]);
+    const assignInactive = await request(app)
+        .patch(`/api/staff/users/${legacyLawyerId}/firm-staff-role`)
+        .set('Authorization', `Bearer ${tokenPa}`)
+        .send({ firmStaffRoleId: roleEmptyId });
+    assert.equal(assignInactive.status, 409);
+    await pool.query(`UPDATE firm_staff_roles SET is_active = TRUE WHERE id = $1`, [roleEmptyId]);
+
+    const listOffice = await request(app)
+        .get('/api/staff/users')
+        .set('Authorization', `Bearer ${tokenPa}`);
+    assert.equal(listOffice.status, 200);
+    assert.ok(Array.isArray(listOffice.body));
+    const lawyerRow = listOffice.body.find((u) => u.userId === legacyLawyerId);
+    assert.ok(lawyerRow);
+    assert.equal(lawyerRow.role, 'Lawyer');
 
     const patchCross = await request(app)
         .patch(`/api/staff/roles/${roleTenantBId}`)
