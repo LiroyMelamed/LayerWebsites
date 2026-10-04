@@ -49,7 +49,8 @@ export function FirmPermissionsProvider({ children }) {
             pages: scope?.pages,
             areas: scope?.areas,
             canPage: (navKey) => {
-                if (!scope || scope.permissionMode === "legacy" || scope.permissionMode === "platform_admin") {
+                if (!loaded || !scope) return false;
+                if (scope.permissionMode === "legacy" || scope.permissionMode === "platform_admin") {
                     return true;
                 }
                 if (scope.permissionMode === "role" && Array.isArray(scope.pages)) {
@@ -58,7 +59,8 @@ export function FirmPermissionsProvider({ children }) {
                 return false;
             },
             canAction: (areaId, action) => {
-                if (!scope || scope.permissionMode === "legacy" || scope.permissionMode === "platform_admin") {
+                if (!loaded || !scope) return false;
+                if (scope.permissionMode === "legacy" || scope.permissionMode === "platform_admin") {
                     return true;
                 }
                 if (scope.permissionMode !== "role" || !scope.areas?.[areaId]?.visible) return false;
