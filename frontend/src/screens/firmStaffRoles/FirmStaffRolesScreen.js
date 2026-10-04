@@ -352,19 +352,19 @@ export default function FirmStaffRolesScreen() {
                             <p className="lw-firmStaffRoles__subtitle">
                                 {t("firmStaffRoles.subtitle", "נהל תפקידים, הרשאות ושיוך עובדים במשרד")}
                             </p>
+                            {!loading && (
+                                <PrimaryButton
+                                    size={buttonSizes.MEDIUM}
+                                    className="lw-firmStaffRoles__headerCta"
+                                    onPress={() => {
+                                        setCreating(true);
+                                        setEditing(null);
+                                    }}
+                                >
+                                    {t("firmStaffRoles.createRole", "תפקיד חדש")}
+                                </PrimaryButton>
+                            )}
                         </SimpleContainer>
-                        {!loading && (
-                            <PrimaryButton
-                                size={buttonSizes.MEDIUM}
-                                className="lw-firmStaffRoles__headerCta"
-                                onPress={() => {
-                                    setCreating(true);
-                                    setEditing(null);
-                                }}
-                            >
-                                {t("firmStaffRoles.createRole", "תפקיד חדש")}
-                            </PrimaryButton>
-                        )}
                     </SimpleContainer>
 
                     {loading && <p className="lw-firmStaffRoles__loading">{t("common.loading", "טוען…")}</p>}
