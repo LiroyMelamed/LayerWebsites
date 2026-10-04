@@ -13,7 +13,6 @@ const {
 const {
     OFFICE_USER_LIST_ROLES,
     FIRM_STAFF_ROLE_ASSIGNMENT_ROLES,
-    assertFirmStaffRoleCompatibleWithUser,
 } = require('../lib/firmStaffOfficeUsers');
 
 function mapOfficeUserRow(row) {
@@ -273,8 +272,6 @@ async function assignUserFirmStaffRole(req, res, next) {
             }
             return next(createAppError('NOT_FOUND', 404, 'תפקיד לא נמצא במשרד זה'));
         }
-        const compatErr = assertFirmStaffRoleCompatibleWithUser(target.role, role);
-        if (compatErr) return next(compatErr);
         await pool.query(`UPDATE users SET firm_staff_role_id = $2 WHERE userid = $1`, [userId, role.id]);
         return res.json({
             ok: true,
@@ -286,9 +283,34 @@ async function assignUserFirmStaffRole(req, res, next) {
     }
 }
 
+async function getRolloutSummary(req, res, next) {
+    try {
+        const { tenantId } = await assertPlatformAdminSameTenant(req);
+        const { rows } = await pool.query(
+            `SELECT
+                COUNT(*) FILTER (WHERE u.firm_staff_role_id IS NULL)::int AS without_custom_role,
+                COUNT(*) FILTER (WHERE u.firm_staff_role_id IS NOT NULL)::int AS with_custom_role,
+                COUNT(*)::int AS total_office_users
+             FROM users u
+             WHERE u.role = ANY($1::text[])
+               AND ($2::uuid IS NULL OR u.law_firm_tenant_id = $2)`,
+            [OFFICE_USER_LIST_ROLES, tenantId],
+        );
+        const row = rows[0] || { without_custom_role: 0, with_custom_role: 0, total_office_users: 0 };
+        return res.json({
+            totalOfficeUsers: row.total_office_users,
+            withCustomRole: row.with_custom_role,
+            withoutCustomRole: row.without_custom_role,
+        });
+    } catch (e) {
+        return next(e);
+    }
+}
+
 module.exports = {
     getPermissionCatalog,
     getSessionScope,
+    getRolloutSummary,
     listRoles,
     createRole,
     updateRole,

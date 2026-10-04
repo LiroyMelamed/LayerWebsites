@@ -8,6 +8,7 @@ const { createRateLimitMiddleware } = require('../utils/rateLimiter');
 const { requireSigningEnabledForUser, requireSigningEnabledForSigningFile } = require('../middlewares/requireSigningEnabled');
 const requireLawyerOrAdmin = require('../middlewares/requireLawyerOrAdmin');
 const requireFirmAction = require('../middlewares/requireFirmAction');
+const requireFirmEvidencePackageAccess = require('../middlewares/requireFirmEvidencePackageAccess');
 const requireSigningOfficeAccess = require('../middlewares/requireSigningOfficeAccess');
 
 const signView = [authMiddleware, requireFirmAction('signing', 'view', { legacy: 'lawyerOrAdmin' })];
@@ -115,13 +116,20 @@ router.get("/:signingFileId/pdf", ...signView, requireSigningEnabledForSigningFi
 // פרטי קובץ + מקומות חתימה (גם עו"ד וגם לקוח)
 router.get("/:signingFileId", ...signView, requireSigningEnabledForSigningFile, ...signFileScope, signingFileController.getSigningFileDetails);
 
-// Evidence package for court (lawyer/admin)
-router.get("/:signingFileId/evidence", ...signView, requireSigningEnabledForSigningFile, ...signFileScope, signingFileController.getEvidencePackage);
+const evidencePackageAccess = [
+    authMiddleware,
+    requireFirmEvidencePackageAccess,
+    requireSigningEnabledForSigningFile,
+    ...signFileScope,
+];
 
-// Evidence package ZIP download (lawyer/admin)
-router.get("/:signingFileId/evidence-package", ...signView, requireSigningEnabledForSigningFile, ...signFileScope, signingFileController.getEvidencePackageZip);
+// Evidence package for court
+router.get("/:signingFileId/evidence", ...evidencePackageAccess, signingFileController.getEvidencePackage);
+
+// Evidence package ZIP download
+router.get("/:signingFileId/evidence-package", ...evidencePackageAccess, signingFileController.getEvidencePackageZip);
 // Evidence certificate (PDF) for quick human-readable record
-router.get("/:signingFileId/evidence-certificate", ...signView, requireSigningEnabledForSigningFile, ...signFileScope, signingFileController.getEvidenceCertificate);
+router.get("/:signingFileId/evidence-certificate", ...evidencePackageAccess, signingFileController.getEvidenceCertificate);
 
 // OTP for signing (authenticated flows)
 router.post("/:signingFileId/otp/request", authMiddleware, signingFileController.requestSigningOtp);

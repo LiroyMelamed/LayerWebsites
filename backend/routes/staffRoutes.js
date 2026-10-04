@@ -13,6 +13,7 @@ router.patch('/roles/:roleId', authMiddleware, requirePlatformAdmin, staffRolesC
 router.delete('/roles/:roleId', authMiddleware, requirePlatformAdmin, staffRolesController.deactivateRole);
 
 router.get('/users', authMiddleware, requirePlatformAdmin, staffRolesController.listOfficeUsers);
+router.get('/rollout-summary', authMiddleware, requirePlatformAdmin, staffRolesController.getRolloutSummary);
 router.patch(
     '/users/:userId/firm-staff-role',
     authMiddleware,

@@ -31,6 +31,7 @@ import BillingLockedScreen from "../components/billing/BillingLockedScreen";
 import { useBillingLock } from "../providers/BillingLockProvider";
 import AdminRouteGuard from "./AdminRouteGuard";
 import NoPermissionsScreen, { NoPermissionsScreenName } from "../screens/noPermissions/NoPermissionsScreen";
+import { useOfficeLogoNavigate } from "./useOfficeLogoNavigate";
 
 const MainScreen = lazy(() => import("../screens/mainScreen/MainScreen"));
 const TaggedCasesScreen = lazy(() => import("../screens/taggedCasesScreen/TaggedCasesScreen"));
@@ -65,6 +66,7 @@ function AdminStack() {
     const location = useLocation();
     const { locked, loaded } = useBillingLock();
     const isPlatformAdmin = typeof window !== "undefined" && localStorage.getItem("isPlatformAdmin") === "true";
+    const logoNavigate = useOfficeLogoNavigate();
     if (!token) return <Navigate to={LoginStackName + LoginScreenName} replace />;
 
     const onBillingRoute = /PlanUsage|PlansPricing/i.test(location.pathname || "");
@@ -76,7 +78,7 @@ function AdminStack() {
     }
 
     return (
-        <TopAndRightNavBar LogoNavigate={AdminStackName + MainScreenName}>
+        <TopAndRightNavBar LogoNavigate={logoNavigate}>
             <AdminRouteGuard>
             <Suspense fallback={<RouteFallback />}>
                 <Routes>

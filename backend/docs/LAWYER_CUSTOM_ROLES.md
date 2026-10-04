@@ -1,35 +1,30 @@
-# Lawyer + firm_staff_role_id (routing decision)
+# Office custom roles (v1)
 
-## Facts from code (MelamedLaw web)
+## Routing
 
-| Identity | Login stack | Permission UI enforcement |
-|----------|-------------|---------------------------|
-| `Admin` / `Staff` (office web) | **AdminStack** | `AdminRouteGuard` + `session-scope` nav filter |
-| `Lawyer` | **ClientStack** (not a separate LawyerStack module) | **Backend only** via `attachFirmPermissions` + `requireFirmAction` |
+| User | `firm_staff_role_id` | Shell |
+|------|----------------------|--------|
+| Platform Admin | any (ignored) | AdminStack — full access |
+| Admin / Lawyer / Staff | `NULL` | **Legacy:** Admin/Staff → AdminStack; Lawyer → ClientStack |
+| Admin / Lawyer / Staff | set | **Role mode:** AdminStack office shell, navbar/routes/API from `GET /api/staff/session-scope` |
 
-Lawyer OTP navigates to `ClientStack`, not `AdminStack` (`LoginOtpScreen.js`).
+After OTP: fetch **session-scope** (permissions are not in JWT).  
+`firstAllowedStaffPath` avoids landing on forbidden routes.  
+Lawyers with a custom role who hit ClientStack are redirected to AdminStack (`ClientStackRoleRedirect`).
 
-AdminStack-only areas in the permission catalog: `main`, `caseTypes`, `clients` (admin list), `support` (admin tickets), etc.
+## Authorization
 
-## Decision (v1 — minimal change)
+- **No Lawyer-compatible area whitelist.** Same `firm_staff_role_id` → same matrix whether `users.role` is Admin or Lawyer.
+- **`users.role`** does not limit which catalog areas PA can assign.
+- **PA-only:** role CRUD, assign roles on office users, platform settings, billing/plan usage, rollout summary.
 
-**Option C:** When assigning a custom role to a **`Lawyer`**, the API rejects roles whose visible areas include anything outside:
+## Assignment UI
 
-- `cases`
-- `signing`
-- `reminders`
-- `calendar`
+- **FirmStaffRolesScreen:** roles only.
+- **AllManger (PA):** Admin + Lawyer accounts; popup assigns dynamic role. PA row = «בעל מערכת», no selector.
 
-Implementation: `backend/lib/firmStaffOfficeUsers.js` → `assertFirmStaffRoleCompatibleWithUser`.
+## Rollout
 
-Effects:
-
-- Lawyer keeps `users.role = Lawyer` and ClientStack login.
-- Custom role **restricts API capabilities** that already apply to lawyers (cases/my, signing, calendar/reminders APIs with `legacy: lawyerOrAdmin`).
-- Platform admin cannot assign a role that implies AdminStack-only screens the lawyer cannot reach.
-
-Future (not v1): shared office shell or Lawyer nav driven by `session-scope`.
-
-## QA Staff A–D
-
-Legacy `AppRoles.Staff` test users remain for regression only; product UX is **Admin + Lawyer** via `/AllManger` + `/FirmStaffRoles`.
+`firm_staff_role_id IS NULL` → legacy until fully assigned.  
+`GET /api/staff/rollout-summary` (PA) counts users without custom role.  
+Do **not** enable `FIRM_ROLES_REQUIRE_ASSIGNMENT` until product decides.

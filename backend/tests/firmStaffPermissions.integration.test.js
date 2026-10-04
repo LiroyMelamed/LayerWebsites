@@ -56,6 +56,7 @@ test('Postgres firm staff permissions — full suite', async (t) => {
     let staffAssignedId;
     let staffAllFirmId;
     let legacyLawyerId;
+    let legacyAdminId;
     let caseAssigned;
     let caseOther;
     let signOther;
@@ -111,7 +112,12 @@ test('Postgres firm staff permissions — full suite', async (t) => {
             role: 'Lawyer',
             name: `Lawyer ${tag}`,
         });
-        ids.userIds.push(staffAssignedId, staffAllFirmId, legacyLawyerId);
+        legacyAdminId = await pg.insertUser(client, {
+            tenantId: tenantA.id,
+            role: 'Admin',
+            name: `Admin legacy ${tag}`,
+        });
+        ids.userIds.push(staffAssignedId, staffAllFirmId, legacyLawyerId, legacyAdminId);
 
         caseAssigned = await pg.insertCase(client, {
             name: `assigned_${tag}`,
@@ -316,11 +322,99 @@ test('Postgres firm staff permissions — full suite', async (t) => {
         .patch(`/api/staff/users/${legacyLawyerId}/firm-staff-role`)
         .set('Authorization', `Bearer ${tokenPa}`)
         .send({ firmStaffRoleId: roleClientsOnlyAId });
-    assert.equal(
-        assignLawyerClientsOnly.status,
-        409,
-        assignLawyerClientsOnly.body?.message || JSON.stringify(assignLawyerClientsOnly.body),
+    assert.equal(assignLawyerClientsOnly.status, 200);
+
+    const lawyerClientsOk = await request(app)
+        .get('/api/Customers/GetCustomers')
+        .set('Authorization', `Bearer ${tokenLawyer}`);
+    assert.equal(lawyerClientsOk.status, 200);
+
+    const lawyerScope = await request(app)
+        .get('/api/staff/session-scope')
+        .set('Authorization', `Bearer ${tokenLawyer}`);
+    assert.equal(lawyerScope.status, 200);
+    assert.equal(lawyerScope.body.permissionMode, 'role');
+    assert.ok(lawyerScope.body.pages.includes('allClients'));
+
+    await request(app)
+        .patch(`/api/staff/users/${legacyLawyerId}/firm-staff-role`)
+        .set('Authorization', `Bearer ${tokenPa}`)
+        .send({ firmStaffRoleId: null });
+
+    const roleViewCasesOnlyRes = await pool.query(
+        `INSERT INTO firm_staff_roles (law_firm_tenant_id, name, permissions, is_active)
+         VALUES ($1, $2, $3::jsonb, TRUE) RETURNING id`,
+        [
+            tenantA.id,
+            `view_only_${tag}`,
+            JSON.stringify(
+                pg.makePermissions({
+                    main: { visible: true, actions: [] },
+                    cases: { visible: true, actions: ['view'], dataScope: 'assigned_only' },
+                }),
+            ),
+        ],
     );
+    const viewOnlyRoleId = roleViewCasesOnlyRes.rows[0].id;
+    ids.roleIds.push(viewOnlyRoleId);
+
+    await request(app)
+        .patch(`/api/staff/users/${legacyAdminId}/firm-staff-role`)
+        .set('Authorization', `Bearer ${tokenPa}`)
+        .send({ firmStaffRoleId: viewOnlyRoleId });
+    await request(app)
+        .patch(`/api/staff/users/${legacyLawyerId}/firm-staff-role`)
+        .set('Authorization', `Bearer ${tokenPa}`)
+        .send({ firmStaffRoleId: viewOnlyRoleId });
+
+    const tokenAdminCustom = makeToken({ userid: legacyAdminId, role: 'Admin' });
+    const adminScope = await request(app)
+        .get('/api/staff/session-scope')
+        .set('Authorization', `Bearer ${tokenAdminCustom}`);
+    const lawyerScope2 = await request(app)
+        .get('/api/staff/session-scope')
+        .set('Authorization', `Bearer ${tokenLawyer}`);
+    assert.deepEqual(
+        [...(adminScope.body.pages || [])].sort(),
+        [...(lawyerScope2.body.pages || [])].sort(),
+        'Admin and Lawyer with same role must expose identical page keys',
+    );
+
+    for (const token of [tokenAdminCustom, tokenLawyer]) {
+        assert.equal(
+            (await request(app).get('/api/Customers/GetCustomers').set('Authorization', `Bearer ${token}`)).status,
+            403,
+        );
+        assert.equal(
+            (await request(app).get('/api/evidence-documents/').set('Authorization', `Bearer ${token}`)).status,
+            403,
+        );
+    }
+
+    const roleEvidenceId = await pool.query(
+        `INSERT INTO firm_staff_roles (law_firm_tenant_id, name, permissions, is_active)
+         VALUES ($1, $2, $3::jsonb, TRUE) RETURNING id`,
+        [
+            tenantA.id,
+            `evidence_${tag}`,
+            JSON.stringify(
+                pg.makePermissions({
+                    evidenceDocuments: { visible: true, actions: ['view', 'download'] },
+                }),
+            ),
+        ],
+    );
+    ids.roleIds.push(roleEvidenceId.rows[0].id);
+
+    await request(app)
+        .patch(`/api/staff/users/${legacyLawyerId}/firm-staff-role`)
+        .set('Authorization', `Bearer ${tokenPa}`)
+        .send({ firmStaffRoleId: roleEvidenceId.rows[0].id });
+
+    const evidenceList = await request(app)
+        .get('/api/evidence-documents/')
+        .set('Authorization', `Bearer ${tokenLawyer}`);
+    assert.equal(evidenceList.status, 200);
 
     await pool.query(`UPDATE firm_staff_roles SET is_active = FALSE WHERE id = $1`, [roleEmptyId]);
     const assignInactive = await request(app)

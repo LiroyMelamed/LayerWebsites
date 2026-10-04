@@ -17,6 +17,7 @@ import {
 } from "./screenPaths";
 import BillingLockedScreen from "../components/billing/BillingLockedScreen";
 import { useBillingLock } from "../providers/BillingLockProvider";
+import ClientStackRoleRedirect from "./ClientStackRoleRedirect";
 
 const ClientMainScreen = lazy(() => import("../screens/client/clientMainScreen/ClientMainScreen"));
 const ClientCasesScreen = lazy(() => import("../screens/client/clientCasesScreen/ClientCasesScreen"));
@@ -38,6 +39,7 @@ function ClientStack() {
     if (loaded && locked) return <BillingLockedScreen />;
 
     return (
+        <ClientStackRoleRedirect>
         <TopAndRightNavBar LogoNavigate={ClientStackName + ClientMainScreenName} GetNavBarData={getClientNavBarData}>
             <Suspense fallback={<RouteFallback />}>
                 <Routes>
@@ -50,6 +52,7 @@ function ClientStack() {
                 </Routes>
             </Suspense>
         </TopAndRightNavBar>
+        </ClientStackRoleRedirect>
     );
 }
 

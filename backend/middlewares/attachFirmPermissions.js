@@ -49,6 +49,11 @@ module.exports = async function attachFirmPermissions(req, res, next) {
         const row = rows[0];
         req.isPlatformAdminUser = Boolean(row.is_platform_admin);
 
+        if (req.isPlatformAdminUser) {
+            req.firmPermissionMode = 'platform_admin';
+            return next();
+        }
+
         if (row.firm_staff_role_id) {
             if (!row.role_id || !row.role_is_active) {
                 const err = createAppError(
@@ -73,10 +78,6 @@ module.exports = async function attachFirmPermissions(req, res, next) {
             req.firmPermissions = normalizeRolePermissions(row.role_permissions);
             req.firmPermissionMode = 'role';
             return next();
-        }
-
-        if (req.isPlatformAdminUser) {
-            req.firmPermissionMode = 'platform_admin';
         }
 
         return next();
