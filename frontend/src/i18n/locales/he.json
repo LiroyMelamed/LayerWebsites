@@ -2162,6 +2162,80 @@
     "var_title": "כותרת האירוע",
     "calendarInviteRsvpHint": "הזמנת הגעה נשלחת בהקדם. תזכורות נשלחות לפי לוח הזמנים שנבחר — ללא תלות בסטטוס RSVP."
   },
+  "firmStaffRoles": {
+    "title": "תפקידים והרשאות",
+    "subtitle": "נהל תפקידים, הרשאות ושיוך עובדים במשרד",
+    "rolesSection": "תפקידים",
+    "createRole": "תפקיד חדש",
+    "createRoleTitle": "תפקיד חדש",
+    "editRoleTitle": "עריכת תפקיד",
+    "roleName": "שם תפקיד",
+    "roleNamePlaceholder": "לדוגמה: מזכירות",
+    "employees": "עובדים",
+    "addEmployee": "עובד חדש",
+    "addEmployeeTitle": "עובד חדש",
+    "editEmployeeTitle": "עריכת עובד",
+    "assignedRole": "תפקיד",
+    "assignedNone": "אין עובדים משויכים",
+    "assignedOne": "משויך לעובד אחד",
+    "assignedMany": "משויך ל-{{count}} עובדים",
+    "noPermissions": "ללא הרשאות פעילות",
+    "noRoles": "אין תפקידים עדיין",
+    "noEmployees": "אין עובדים",
+    "permissionsHint": "סמן אילו אזורים במערכת התפקיד יכול לראות ומה מותר לו לעשות.",
+    "dataScopeLabel": "היקף נתונים",
+    "scopeAssigned": "רשומות משויכות בלבד",
+    "scopeAllFirm": "כל המשרד",
+    "deactivate": "השבתה",
+    "deactivateBlocked": "לא ניתן להשבית — יש עובדים משויכים לתפקיד",
+    "deactivateConfirm": "להשבית את התפקיד «{{name}}»? לא ניתן לשחזר מהממשק.",
+    "deactivateFailed": "השבתת התפקיד נכשלה",
+    "affectedCount": "{{count}} עובדים יושפעו משינוי זה",
+    "areas": {
+      "main": "לוח בקרה",
+      "cases": "תיקים",
+      "caseTypes": "סוגי תיקים",
+      "clients": "לקוחות",
+      "signing": "חתימות",
+      "reminders": "תזכורות",
+      "calendar": "יומן",
+      "support": "תמיכה"
+    },
+    "actions": {
+      "cases": {
+        "view": "צפייה",
+        "create": "יצירה",
+        "edit": "עריכה",
+        "delete": "מחיקה",
+        "tag": "סימון"
+      },
+      "caseTypes": {
+        "view": "צפייה",
+        "manage": "ניהול"
+      },
+      "clients": {
+        "view": "צפייה",
+        "edit": "עריכה",
+        "delete": "מחיקה"
+      },
+      "signing": {
+        "view": "צפייה",
+        "manage": "ניהול",
+        "upload": "העלאה"
+      },
+      "reminders": {
+        "view": "צפייה",
+        "manage": "ניהול"
+      },
+      "calendar": {
+        "view": "צפייה",
+        "manage": "ניהול"
+      },
+      "support": {
+        "view": "צפייה"
+      }
+    }
+  },
   "viewSignedDoc": {
     "invalidLink": "קישור לא תקין",
     "expired": "תוקף הקישור פג",

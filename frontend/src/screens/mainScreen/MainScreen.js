@@ -25,6 +25,7 @@ import { openCalendarEventModal } from './components/commandCenter/openCalendarE
 import { openCaseMenuModal } from './components/commandCenter/openCaseMenuModal';
 import { useFirmSettingsLoaded, useManagerHomeAiInsightsEnabled } from '../../services/firmSettings';
 import { usePopup } from '../../providers/PopUpProvider';
+import { toastFromApiError } from '../../components/ui/showAppToast';
 
 import "./MainScreen.scss";
 import "./components/commandCenter/CommandCenter.scss";
@@ -59,7 +60,10 @@ export default function MainScreen() {
         result: managerHome,
         isPerforming: isLoadingHome,
         performRequest: refreshManagerHome,
-    } = useHttpRequest(casesApi.getManagerHomeData, null, () => {});
+    } = useHttpRequest(casesApi.getManagerHomeData, null, (error) => {
+        if (error?.status === 404 || error?.status === 403) return;
+        toastFromApiError(error, 'שגיאה בקבלת נתוני לוח הבקרה');
+    });
 
     const {
         result: calendarResponse,
@@ -71,7 +75,7 @@ export default function MainScreen() {
         result: aiBriefResponse,
         isPerforming: isLoadingAiBrief,
         performRequest: fetchAiBrief,
-    } = useHttpRequest(casesApi.getManagerHomeAiBrief);
+    } = useHttpRequest(casesApi.getManagerHomeAiBrief, null, () => {});
 
     const handleSummaryNavigate = (key) => {
         if (key === "totalCases") {

@@ -524,6 +524,11 @@
     margin-block-end: 0;
 }
 
+.lw-simpleCard.lw-commandCenter__section {
+    justify-content: flex-start;
+    align-items: stretch;
+}
+
 .lw-commandCenter__sectionHeader {
     @include m.row(v.$space-2);
     justify-content: space-between;
@@ -906,7 +911,7 @@
 
 .lw-commandCenter__managerChart {
     @include m.row(v.$space-3);
-    align-items: flex-start;
+    align-items: center;
     inline-size: 100%;
     gap: v.$space-3;
 }
@@ -914,7 +919,13 @@
 .lw-commandCenter__managerChartDonut {
     flex-shrink: 0;
     inline-size: 8.75rem;
+    block-size: 8.75rem;
     max-inline-size: 40%;
+
+    .lw-doughnutChart {
+        inline-size: 100%;
+        block-size: 100%;
+    }
 }
 
 .lw-commandCenter__managerChartLegend {
