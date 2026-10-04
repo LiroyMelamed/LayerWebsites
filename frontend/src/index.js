@@ -20,15 +20,15 @@ root.render(
   <BrowserRouter>
     <FromAppProvider>
       <BillingLockProvider>
-      <PopupProvider>
-        <ScreenSizeProvider>
-          <ToastProvider position="top-center">
-            <FirmPermissionsProvider>
-              <App />
-            </FirmPermissionsProvider>
-          </ToastProvider>
-        </ScreenSizeProvider>
-      </PopupProvider>
+        <FirmPermissionsProvider>
+          <PopupProvider>
+            <ScreenSizeProvider>
+              <ToastProvider position="top-center">
+                <App />
+              </ToastProvider>
+            </ScreenSizeProvider>
+          </PopupProvider>
+        </FirmPermissionsProvider>
       </BillingLockProvider>
     </FromAppProvider>
   </BrowserRouter>
