@@ -13,6 +13,7 @@ export const ROUTE_SEGMENT_TO_NAV_KEY = Object.freeze({
     "calendar/day": "calendar",
     MyCases: "myCases",
     support: "support",
+    EvidenceDocumentsScreen: "evidenceDocuments",
     AllManger: "allManagers",
     FirmStaffRoles: "firmStaffRoles",
     NoPermissions: "noPermissions",

@@ -186,13 +186,19 @@ export default function FirmStaffRolesScreen() {
     const [editing, setEditing] = useState(null);
     const [creating, setCreating] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [rollout, setRollout] = useState(null);
 
     const reload = useCallback(async () => {
         setLoading(true);
         try {
-            const [cat, r] = await Promise.all([staffRolesApi.getPermissionCatalog(), staffRolesApi.listRoles()]);
+            const [cat, r, rolloutSummary] = await Promise.all([
+                staffRolesApi.getPermissionCatalog(),
+                staffRolesApi.listRoles(),
+                staffRolesApi.getRolloutSummary().catch(() => null),
+            ]);
             setCatalog(cat);
             setRoles(r);
+            setRollout(rolloutSummary);
         } finally {
             setLoading(false);
         }

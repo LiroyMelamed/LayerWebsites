@@ -4,6 +4,7 @@ import {
     AllCasesTypeScreenName,
     AllClientsScreenName,
     CalendarScreenName,
+    EvidenceDocumentsScreenName,
     MainScreenName,
     MyCasesScreenName,
     RemindersScreenName,
@@ -26,6 +27,7 @@ export const STAFF_LANDING_NAV_ORDER = Object.freeze([
     "reminders",
     "calendar",
     "support",
+    "evidenceDocuments",
 ]);
 
 export const NAV_KEY_TO_ADMIN_PATH = Object.freeze({
@@ -40,6 +42,7 @@ export const NAV_KEY_TO_ADMIN_PATH = Object.freeze({
     reminders: `${AdminStackName}${RemindersScreenName}`,
     calendar: `${AdminStackName}${CalendarScreenName}`,
     support: `${AdminStackName}${AdminSupportScreenName}`,
+    evidenceDocuments: `${AdminStackName}${EvidenceDocumentsScreenName}`,
 });
 
 export function firstAllowedStaffPath(pages) {

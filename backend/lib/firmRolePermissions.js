@@ -73,6 +73,13 @@ const PERMISSION_AREAS = Object.freeze([
         actions: ['view'],
         supportsDataScope: false,
     },
+    {
+        id: 'evidenceDocuments',
+        pageKey: 'evidenceDocuments',
+        navKeys: ['evidenceDocuments'],
+        actions: ['view', 'download'],
+        supportsDataScope: false,
+    },
 ]);
 
 const AREA_BY_ID = Object.freeze(

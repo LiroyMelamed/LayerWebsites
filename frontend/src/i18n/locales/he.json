@@ -2211,7 +2211,8 @@
       "signing": "חתימות",
       "reminders": "תזכורות",
       "calendar": "יומן",
-      "support": "תמיכה"
+      "support": "תמיכה",
+      "evidenceDocuments": "מסמכי ראיות"
     },
     "actions": {
       "cases": {

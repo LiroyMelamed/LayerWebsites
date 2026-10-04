@@ -35,6 +35,7 @@ import { MainScreenName } from "../mainScreen/MainScreen";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 
 import { useSigningOtpEnabled } from "../../services/firmSettings";
+import { useFirmPermissions } from "../../providers/FirmPermissionsProvider";
 
 import { parseDateInput, formatDisplayDate } from "../../functions/date/formatDateForInput";
 import "./EvidenceDocumentsScreen.scss";
@@ -74,6 +75,11 @@ export default function EvidenceDocumentsScreen() {
     const { openPopup, closePopup } = usePopup();
 
     const showOtpUi = useSigningOtpEnabled();
+    const firmPerms = useFirmPermissions();
+    const canDownloadEvidence =
+        !firmPerms?.loaded ||
+        firmPerms.permissionMode !== "role" ||
+        firmPerms.canAction("evidenceDocuments", "download");
 
     const [inputQ, setInputQ] = useState("");
     const [inputCaseId, setInputCaseId] = useState("");
@@ -396,6 +402,7 @@ export default function EvidenceDocumentsScreen() {
                                             <Text14 className="lw-evidenceDocuments__itemCell lw-evidenceDocuments__itemCell--otp">{otpLabel(it, t, showOtpUi)}</Text14>
                                         )}
                                         <SimpleContainer className="lw-evidenceDocuments__itemCell lw-evidenceDocuments__itemCell--actions">
+                                            {canDownloadEvidence ? (
                                             <TertiaryButton
                                                 onPress={() => downloadEvidenceZip(it.signingFileId)}
                                                 disabled={!it.evidenceZipAvailable}
@@ -406,6 +413,7 @@ export default function EvidenceDocumentsScreen() {
                                             >
                                                 {""}
                                             </TertiaryButton>
+                                            ) : null}
                                         </SimpleContainer>
                                     </SimpleContainer>
                                 </SimpleContainer>

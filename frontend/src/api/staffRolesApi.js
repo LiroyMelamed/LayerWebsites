@@ -16,6 +16,7 @@ export const staffRolesApi = {
     createRole: async (payload) => unwrap(await ApiUtils.post(`${BASE}/roles`, payload)),
     updateRole: async (roleId, payload) => unwrap(await ApiUtils.patch(`${BASE}/roles/${roleId}`, payload)),
     deactivateRole: async (roleId) => unwrap(await ApiUtils.delete(`${BASE}/roles/${roleId}`)),
+    getRolloutSummary: async () => unwrap(await ApiUtils.get(`${BASE}/rollout-summary`)),
     listOfficeUsers: async (name = "") => {
         const q = name ? `?name=${encodeURIComponent(name)}` : "";
         return unwrap(await ApiUtils.get(`${BASE}/users${q}`));

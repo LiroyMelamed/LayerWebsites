@@ -7,10 +7,18 @@ import RouteFallback from "../components/simpleComponents/RouteFallback";
 import { AdminStackName } from "./AdminStack";
 import { NoPermissionsScreenName } from "../screens/noPermissions/NoPermissionsScreen";
 
+const PLATFORM_ADMIN_ROUTE_KEYS = new Set([
+    "firmStaffRoles",
+    "platformSettings",
+    "planUsage",
+    "allManagers",
+]);
+
 export default function AdminRouteGuard({ children }) {
     const location = useLocation();
     const { permissionMode, canPage, loaded, pages, refresh } = useFirmPermissions() || {};
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const isPlatformAdmin = localStorage.getItem("isPlatformAdmin") === "true";
 
     useEffect(() => {
         if (permissionMode === "role" && typeof refresh === "function") {
@@ -22,9 +30,14 @@ export default function AdminRouteGuard({ children }) {
         return <RouteFallback />;
     }
 
-    if (permissionMode !== "role") return children;
+    if (permissionMode === "platform_admin") {
+        return children;
+    }
 
-    const isPlatformAdmin = localStorage.getItem("isPlatformAdmin") === "true";
+    if (permissionMode !== "role") {
+        return children;
+    }
+
     const navKey = navKeyForPathname(location.pathname);
     const landing = firstAllowedStaffPath(pages);
     const noPermissionsPath = `${AdminStackName}${NoPermissionsScreenName}`;
@@ -40,9 +53,11 @@ export default function AdminRouteGuard({ children }) {
         return <Navigate to={noPermissionsPath} replace />;
     }
 
-    if (!navKey) return children;
+    if (!navKey) {
+        return children;
+    }
 
-    if (navKey === "firmStaffRoles" || navKey === "platformSettings" || navKey === "planUsage" || navKey === "evidenceDocuments") {
+    if (PLATFORM_ADMIN_ROUTE_KEYS.has(navKey)) {
         if (!isPlatformAdmin) {
             return <Navigate to={landing || noPermissionsPath} replace />;
         }

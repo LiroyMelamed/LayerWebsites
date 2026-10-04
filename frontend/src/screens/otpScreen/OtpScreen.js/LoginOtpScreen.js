@@ -9,18 +9,14 @@ import useHttpRequest from "../../../hooks/useHttpRequest";
 import { images } from "../../../assets/images/images";
 import { useNavigate } from "react-router-dom";
 import loginApi from "../../../api/loginApi";
-import { AdminStackName } from "../../../navigation/AdminStack";
-import { MainScreenName } from "../../mainScreen/MainScreen";
-import { ClientStackName } from "../../../navigation/ClientStack";
-import { ClientMainScreenName } from "../../client/clientMainScreen/ClientMainScreen";
 import { useTranslation } from "react-i18next";
+import { resolvePostLoginPath } from "../../../lib/resolvePostLoginNavigation";
+import { getActiveTenantSlug } from "../../../lib/tenantSlug";
 import { AppRoles } from "../../../constant/appRoles";
-import { getActiveTenantSlug, isMultiTenantApp, tenantPath } from "../../../lib/tenantSlug";
 
 import "./LoginOtpScreen.scss";
 
 export { AppRoles };
-
 export const LoginOtpScreenName = "/LoginOtpScreen";
 
 export default function LoginOtpScreen() {
@@ -124,7 +120,7 @@ export default function LoginOtpScreen() {
         return () => clearTimeout(id);
     }, []);
 
-    function navigateTo(data) {
+    async function navigateTo(data) {
         setOtpNumber('');
         localStorage.setItem("token", data.token);
         localStorage.setItem("role", data.role);
@@ -133,19 +129,11 @@ export default function LoginOtpScreen() {
             localStorage.setItem("refreshToken", data.refreshToken);
         }
 
-        const slug = getActiveTenantSlug();
-        const adminPath = isMultiTenantApp() && slug
-            ? tenantPath(slug, `${AdminStackName}${MainScreenName}`)
-            : AdminStackName + MainScreenName;
-        const clientPath = isMultiTenantApp() && slug
-            ? tenantPath(slug, `${ClientStackName}${ClientMainScreenName}`)
-            : ClientStackName + ClientMainScreenName;
-
-        if (data.role === AppRoles.Admin || data.role === AppRoles.Staff) {
-            navigate(adminPath, { replace: true });
-        } else {
-            navigate(clientPath, { replace: true });
-        }
+        const target = await resolvePostLoginPath({
+            role: data.role,
+            isPlatformAdmin: Boolean(data.isPlatformAdmin),
+        });
+        navigate(target, { replace: true });
     }
 
     return (
