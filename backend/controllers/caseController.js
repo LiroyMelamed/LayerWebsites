@@ -815,9 +815,12 @@ const updateCase = async (req, res) => {
         await client.query('BEGIN');
 
         // ── Fetch old case data for change detection ──
+        // Keep SQL DATE values as calendar dates; local-midnight JS Dates can shift a day in UTC.
         const oldCaseResult = await client.query(
             `SELECT casename, currentstage, isclosed, istagged, companyname, casetypeid,
-                    casemanagerid, casetypename, estimatedcompletiondate, licenseexpirydate,
+                    casemanagerid, casetypename,
+                    estimatedcompletiondate::text AS estimatedcompletiondate,
+                    licenseexpirydate::text AS licenseexpirydate,
                     closed_at, closed_by_userid, reopened_at, reopened_by_userid
              FROM cases WHERE caseid = $1`,
             [caseId]
