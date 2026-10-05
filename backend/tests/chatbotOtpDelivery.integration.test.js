@@ -5,6 +5,7 @@ const crypto = require('node:crypto');
 const express = require('express');
 const request = require('supertest');
 const pool = require('../config/db');
+const settings = require('../services/settingsService');
 const { resetStore } = require('../utils/rateLimiter');
 const { recordSuccess } = require('../utils/otpBruteForce');
 let delivery = async () => ({ ok: true });
@@ -22,6 +23,7 @@ app.use(require('../middlewares/errorHandler'));
 test('chatbot OTP works with partial phone index and waits for delivery', { skip: process.env.LEGAL_DB_QA !== 'true' }, async t => {
     assert.equal(process.env.DB_HOST, '127.0.0.1');
     assert.ok(['legal_e2e_qa','codex_readiness_20261005'].includes(process.env.DB_NAME));
+    const originalEnabled = (await pool.query("SELECT * FROM platform_settings WHERE category='chatbot' AND setting_key='AI_CHATBOT_ENABLED'")).rows[0];
     const phone = '0508887755';
     assert.equal((await pool.query('SELECT userid FROM users WHERE phonenumber=$1',[phone])).rowCount, 0);
     const user = await pool.query("INSERT INTO users(name,email,phonenumber,passwordhash,role) VALUES('Synthetic chatbot delivery QA',$1,$2,'x','User') RETURNING userid",[crypto.randomUUID()+'@example.test',phone]);
@@ -31,8 +33,13 @@ test('chatbot OTP works with partial phone index and waits for delivery', { skip
         await pool.query('DELETE FROM chatbot_sessions WHERE user_id=$1',[userId]);
         await pool.query('DELETE FROM otps WHERE userid=$1',[userId]);
         await pool.query('DELETE FROM users WHERE userid=$1',[userId]);
+        if (originalEnabled) await settings.upsertSetting('chatbot', 'AI_CHATBOT_ENABLED', originalEnabled.setting_value, { valueType: originalEnabled.value_type });
+        else await pool.query("DELETE FROM platform_settings WHERE category='chatbot' AND setting_key='AI_CHATBOT_ENABLED'");
+        settings.invalidateCache();
         await pool.end();
     });
+    // Exercise delivery even when the isolated database previously tested the off switch.
+    await settings.upsertSetting('chatbot', 'AI_CHATBOT_ENABLED', 'true', { valueType: 'boolean' });
     const otpRows = () => pool.query('SELECT id,otp FROM otps WHERE userid=$1',[userId]);
     const send = () => { resetStore(); recordSuccess(phone); return request(app).post('/api/chatbot/request-otp').send({phoneNumber:phone}); };
     const verify = otp => { resetStore(); return request(app).post('/api/chatbot/verify-otp').send({phoneNumber:phone,otp}); };
