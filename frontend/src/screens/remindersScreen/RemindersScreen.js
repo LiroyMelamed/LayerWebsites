@@ -13,7 +13,7 @@ import { getNavBarData } from "../../components/navBars/data/NavBarData";
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
 import ChooseButton from "../../components/styledComponents/buttons/ChooseButton";
-import { Text24, Text14 } from "../../components/specializedComponents/text/AllTextKindFile";
+import { Text14 } from "../../components/specializedComponents/text/AllTextKindFile";
 import ListPageTitle from "../../components/specializedComponents/text/ListPageTitle";
 import ReminderMenuItem from "../../components/specializedComponents/menuItems/ReminderMenuItem";
 import { images } from "../../assets/images/images";
@@ -68,6 +68,8 @@ export default function RemindersScreen() {
     }, []);
 
     const resolveTemplateLabel = useCallback((key) => {
+        const calendarLabels = { CALENDAR_APPOINTMENT: 'תזכורת לפגישה', CALENDAR_HEARING: 'תזכורת לדיון', CALENDAR_REMINDER: 'תזכורת יומן' };
+        if (calendarLabels[key]) return calendarLabels[key];
         if (!key) return '—';
         const i18nLabel = t(`reminders.col.templateKeys.${key}`, { defaultValue: '' });
         return i18nLabel || templateLabelMap[key] || key;
@@ -87,7 +89,7 @@ export default function RemindersScreen() {
 
     useEffect(() => {
         performRequest();
-    }, [statusFilter, page]);
+    }, [statusFilter, page, performRequest]);
 
     const reminders = useMemo(() => result?.reminders || [], [result]);
     const total = result?.total || 0;
@@ -185,13 +187,13 @@ export default function RemindersScreen() {
                 </SimpleContainer>
             ),
             Column5: r.sent_at ? formatDate(r.sent_at) : "—",
-            Column6: r.status === "PENDING" ? (
+            Column6: canManageReminders && r.source !== "calendar" && r.status === "PENDING" ? (
                 <SecondaryButton onPress={(e) => { e?.stopPropagation?.(); cancelRequest(r.id); }}>
                     {t("reminders.cancel")}
                 </SecondaryButton>
             ) : null,
         }));
-    }, [reminders, t, cancelRequest, isSmallScreen]);
+    }, [reminders, t, cancelRequest, isSmallScreen, canManageReminders, resolveTemplateLabel]);
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>

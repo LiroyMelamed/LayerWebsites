@@ -151,7 +151,10 @@ export default function MainScreen() {
         ? aiBriefResponse
         : null;
 
-    const calendarEvents = calendarResponse?.events || calendarResponse?.data?.events || [];
+    const calendarEvents = useMemo(
+        () => calendarResponse?.events || calendarResponse?.data?.events || [],
+        [calendarResponse],
+    );
     const todayEventCount = useMemo(
         () => countJerusalemTodayEvents(calendarEvents),
         [calendarEvents],

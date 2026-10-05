@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect } from 'react';
+import { Suspense, lazy, useEffect, useRef } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import RouteFallback from './components/simpleComponents/RouteFallback';
 import { AdminStackName } from './navigation/AdminStack';
@@ -57,6 +57,7 @@ const App = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isFromApp, setIsFromApp } = useFromApp();
+  const initialLinkProcessedRef = useRef(false);
 
   useEffect(() => { loadFirmSettings(); }, []);
 
@@ -88,6 +89,10 @@ const App = () => {
   }, [isFromApp]);
 
   useEffect(() => {
+    // Bootstrap credentials only once. Router callbacks can change identity
+    // after navigation; replaying the entry query could restore an old session.
+    if (initialLinkProcessedRef.current) return;
+    initialLinkProcessedRef.current = true;
     const searchParams = new URLSearchParams(location.search);
     const fromAppParam = searchParams.get('fromApp');
     const signingFileId = searchParams.get('signingFileId');
@@ -152,7 +157,7 @@ const App = () => {
         }
       }
     }
-  }, []);
+  }, [location.pathname, location.search, navigate, setIsFromApp]);
 
   const multiTenant = isMultiTenantApp();
 

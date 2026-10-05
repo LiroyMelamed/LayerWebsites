@@ -5,6 +5,7 @@ import { ScreenSizeProvider } from './providers/ScreenSizeProvider';
 import { BrowserRouter } from 'react-router-dom';
 import './index.css';
 import './index.scss';
+import './styles/sharedScreenStyles';
 import { PopupProvider } from './providers/PopUpProvider';
 import { FromAppProvider } from './providers/FromAppProvider';
 import { BillingLockProvider } from './providers/BillingLockProvider';

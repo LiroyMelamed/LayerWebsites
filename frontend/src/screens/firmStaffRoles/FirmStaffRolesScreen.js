@@ -1,3 +1,4 @@
+import { toastFromApiError } from "../../components/ui/showAppToast";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { staffRolesApi } from "../../api/staffRolesApi";
@@ -183,13 +184,15 @@ export default function FirmStaffRolesScreen() {
     const [catalog, setCatalog] = useState(null);
     const [roles, setRoles] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(false);
     const [editing, setEditing] = useState(null);
     const [creating, setCreating] = useState(false);
     const [saving, setSaving] = useState(false);
-    const [rollout, setRollout] = useState(null);
+    const [, setRollout] = useState(null);
 
     const reload = useCallback(async () => {
         setLoading(true);
+        setLoadError(false);
         try {
             const [cat, r, rolloutSummary] = await Promise.all([
                 staffRolesApi.getPermissionCatalog(),
@@ -197,8 +200,12 @@ export default function FirmStaffRolesScreen() {
                 staffRolesApi.getRolloutSummary().catch(() => null),
             ]);
             setCatalog(cat);
+            if (!Array.isArray(r)) throw new Error("Invalid roles response");
             setRoles(r);
             setRollout(rolloutSummary);
+        } catch {
+            setLoadError(true);
+            setRoles([]);
         } finally {
             setLoading(false);
         }
@@ -219,6 +226,8 @@ export default function FirmStaffRolesScreen() {
             setEditing(null);
             setCreating(false);
             await reload();
+        } catch (error) {
+            toastFromApiError(error, t("errors.unexpected"));
         } finally {
             setSaving(false);
         }
@@ -269,7 +278,8 @@ export default function FirmStaffRolesScreen() {
                                     "הגדרת תפקידים והרשאות. שיוך למשתמשים מתבצע בכרטיס המנהל/עורך הדין.",
                                 )}
                             </p>
-                            {!loading && (
+                            {!loading && loadError && <p role="alert">{t("errors.unexpected")}</p>}
+                    {!loading && !loadError && (
                                 <PrimaryButton
                                     size={buttonSizes.MEDIUM}
                                     className="lw-firmStaffRoles__headerCta"
@@ -284,9 +294,10 @@ export default function FirmStaffRolesScreen() {
                         </SimpleContainer>
                     </SimpleContainer>
 
+                    {loadError && <p role="alert">{t("errors.unexpected")}</p>}
                     {loading && <p className="lw-firmStaffRoles__loading">{t("common.loading", "טוען…")}</p>}
 
-                    {!loading && (
+                    {!loading && !loadError && (
                         <>
                             <SimpleContainer className="lw-firmStaffRoles__rolesGrid">
                                 {roles.map((r) => {

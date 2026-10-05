@@ -66,7 +66,7 @@ async function tryRefreshToken() {
 
 function isPublicSigningApiRequest(config) {
     const url = String(config?.url || "");
-    return /\/SigningFiles\/public\//i.test(url);
+    return /(?:^|\/)SigningFiles\/public\//i.test(url);
 }
 
 function clearAuthAndRedirect() {
@@ -74,6 +74,11 @@ function clearAuthAndRedirect() {
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("role");
     localStorage.removeItem("isPlatformAdmin");
+    window.dispatchEvent(new Event('lw-auth-changed'));
+
+    // An expired office session must not interrupt a valid public signing link.
+    // Background permission requests can fail while this independent flow is open.
+    if (/^\/(?:PublicSignScreen|s)(?:\/|$)/i.test(window.location.pathname)) return;
 
     if (window.ReactNativeWebView?.postMessage) {
         window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'LOGOUT' }));
@@ -117,7 +122,7 @@ ApiUtils.interceptors.response.use(
             window.dispatchEvent(new CustomEvent('lw-billing-locked', { detail: error.response.data || {} }));
         }
 
-        if (status !== 401 || originalRequest._retried) {
+        if (status !== 401 || !originalRequest || originalRequest._retried || /(?:^|\/)Auth\/(?:RequestOtp|VerifyOtp|Login)(?:$|[?])/i.test(originalRequest.url || "")) {
             return formatError(error);
         }
 

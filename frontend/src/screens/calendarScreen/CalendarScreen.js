@@ -355,7 +355,7 @@ function _currentRole() {
 function _isFirmManager(role) { return role && role !== "User"; }
 
 function _canPickEmployeeCalendar(role) {
-    if (role === "Admin" || role === "PlatformAdmin") return true;
+    if (role === "Admin" || role === "Lawyer" || role === "PlatformAdmin") return true;
     try {
         return typeof window !== "undefined" && localStorage.getItem("isPlatformAdmin") === "true";
     } catch {
@@ -838,20 +838,21 @@ export default function CalendarScreen() {
     // ── Deep-link: /CalendarScreen?eventId=<id> ────────────────────────────
     useEffect(() => {
         const targetEventId = searchParams.get("eventId") || searchParams.get("appointmentId");
-        if (!targetEventId || hasAutoOpenedEventRef.current || !events.length) return;
+        if (!targetEventId || hasAutoOpenedEventRef.current) return;
 
+        let active = true;
+        const openTarget = async () => {
         const matched = events.find((e) => String(e.id) === String(targetEventId));
-        if (!matched) return;
-
+        let eventPayload;
+        if (matched) {
+            eventPayload = { id: Number(matched.id), title: matched.title, startTime: matched.start, endTime: matched.end, allDay: matched.allDay, ...matched.extendedProps };
+        } else {
+            const response = await calendarApi.getEvent(targetEventId);
+            if (!active || response.status !== 200 || !response.data?.event) return;
+            eventPayload = response.data.event;
+        }
+        if (!active || hasAutoOpenedEventRef.current) return;
         hasAutoOpenedEventRef.current = true;
-        const eventPayload = {
-            id: Number(matched.id),
-            title: matched.title,
-            startTime: matched.start,
-            endTime: matched.end,
-            allDay: matched.allDay,
-            ...matched.extendedProps,
-        };
         openPopup(
             <EventFormModal
                 key={_eventFormModalKey(eventPayload)}
@@ -866,13 +867,13 @@ export default function CalendarScreen() {
                 onClose={closePopup}
             />
         );
+        };
+        openTarget().catch(() => {});
+        return () => { active = false; };
     }, [events, searchParams, openPopup, closePopup, upsertLocally, handleEventSaved]);
 
     // ── View switcher ──────────────────────────────────────────────────────
-    const switchView = (v) => {
-        setView(v);
-        calendarRef.current?.getApi().changeView(v);
-    };
+    
 
     const renderNowIndicatorContent = useCallback((arg) => {
         if (!arg.isAxis) return null;

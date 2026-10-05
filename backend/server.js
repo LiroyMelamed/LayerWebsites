@@ -39,6 +39,12 @@ const server = app.listen(PORT, HOST, async () => {
     await signingSchemaStartupCheck();
     await assertRuntimeTenantMatchesBranch(pool);
 
+    // QA can disable the complete delivery/job boundary without changing provider credentials.
+    if (!require('./lib/backgroundJobsEnabled')(process.env)) {
+        console.log('[scheduled-jobs] disabled by BACKGROUND_JOBS_ENABLED');
+        return;
+    }
+
     // Scheduled jobs (best-effort; idempotent at DB layer)
     initLicenseRenewalScheduler();
     initEmailReminderScheduler();

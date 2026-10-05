@@ -1,3 +1,4 @@
+import { useFirmPermissions } from "../../../providers/FirmPermissionsProvider";
 import React, { useState } from "react";
 import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import { images } from "../../../assets/images/images";
@@ -28,7 +29,8 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, chosenNavKey, 
 
     const { openPopup, closePopup } = usePopup();
 
-    const { NavBarLinks } = GetNavBarData(navigate, openPopup, closePopup, isFromApp, t);
+    const firmPerms = useFirmPermissions();
+    const { NavBarLinks } = GetNavBarData(navigate, openPopup, closePopup, isFromApp, t, isClient ? null : firmPerms);
 
     // Determine which nav item is active — prefer navKey, fall back to chosenIndex
     const isActiveItem = (item, index) => {
@@ -37,7 +39,7 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, chosenNavKey, 
     };
 
     const toggleDrawer = () => {
-        setIsDrawerOpen(!isDrawerOpen);
+        setIsDrawerOpen((open) => !open);
     };
 
     return (
@@ -111,6 +113,10 @@ export default function TopToolBarSmallScreen({ chosenIndex = -1, chosenNavKey, 
                             className="lw-topToolBarSmallScreen__logoutButton"
                             onPress={() => {
                                 localStorage.removeItem("token");
+                                localStorage.removeItem("refreshToken");
+                                localStorage.removeItem("role");
+                                localStorage.removeItem("isPlatformAdmin");
+                                window.dispatchEvent(new Event("lw-auth-changed"));
                                 navigate('/');
                             }}
                         >

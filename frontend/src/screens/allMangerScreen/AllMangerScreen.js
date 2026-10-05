@@ -1,3 +1,4 @@
+import { useFirmPermissions } from '../../providers/FirmPermissionsProvider';
 import { useCallback, useMemo } from "react";
 import { adminApi } from "../../api/adminApi";
 import { staffRolesApi } from "../../api/staffRolesApi";
@@ -38,6 +39,8 @@ function mapOfficeUserToRow(u) {
 
 export default function AllMangerScreen() {
     const { t } = useTranslation();
+    const { permissionMode, canAction } = useFirmPermissions() || {};
+    const canManageOfficeUsers = permissionMode !== 'role' || Boolean(canAction?.('officeUsers', 'manage'));
     const isPlatformAdminSession =
         typeof window !== "undefined" && localStorage.getItem("isPlatformAdmin") === "true";
 
@@ -128,7 +131,7 @@ export default function AllMangerScreen() {
                 />
             </SimpleScrollView>
 
-            {!isPlatformAdminSession && (
+            {!isPlatformAdminSession && canManageOfficeUsers && (
                 <SimpleContainer className="lw-allMangerScreen__footer">
                     <PrimaryButton
                         onPress={() =>
