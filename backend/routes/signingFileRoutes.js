@@ -11,6 +11,9 @@ const requireFirmAction = require('../middlewares/requireFirmAction');
 const requireFirmEvidencePackageAccess = require('../middlewares/requireFirmEvidencePackageAccess');
 const requireSigningOfficeAccess = require('../middlewares/requireSigningOfficeAccess');
 
+const requireSigningReadAccess = require('../middlewares/requireSigningReadAccess');
+const signerRead = [authMiddleware, requireSigningReadAccess];
+
 const signView = [authMiddleware, requireFirmAction('signing', 'view', { legacy: 'lawyerOrAdmin' })];
 const signManage = [authMiddleware, requireFirmAction('signing', 'manage', { legacy: 'lawyerOrAdmin' })];
 const signUpload = [authMiddleware, requireFirmAction('signing', 'upload', { legacy: 'lawyerOrAdmin' })];
@@ -84,13 +87,13 @@ router.delete("/saved-items/:type/:index", authMiddleware, requireSigningEnabled
 router.post("/upload", ...signUpload, requireSigningEnabledForUser, signingFileController.uploadFileForSigning);
 
 // רשימת קבצים של הלקוח (pending/signed/rejected)
-router.get("/client-files", ...signView, requireSigningEnabledForUser, signingFileController.getClientSigningFiles);
+router.get("/client-files", ...signerRead, requireSigningEnabledForUser, signingFileController.getClientSigningFiles);
 
 // רשימת קבצים שעו"ד שלח ללקוחות
 router.get("/lawyer-files", ...signView, requireSigningEnabledForUser, signingFileController.getLawyerSigningFiles);
 
 // (אופציונלי) רק בהמתנה ללקוח
-router.get("/pending", ...signView, requireSigningEnabledForUser, signingFileController.getPendingSigningFiles);
+router.get("/pending", ...signerRead, requireSigningEnabledForUser, signingFileController.getPendingSigningFiles);
 
 // Generate a public signing link token (lawyer/admin)
 router.post("/:signingFileId/public-link", ...signManage, requireSigningEnabledForSigningFile, ...signFileScope, signingFileController.createPublicSigningLink);
@@ -111,10 +114,10 @@ router.patch("/:signingFileId/policy", ...signManage, requireSigningEnabledForSi
 router.patch("/:signingFileId/rename", ...signManage, requireSigningEnabledForSigningFile, ...signFileScope, signingFileController.renameSigningFile);
 
 // Stream original PDF for in-app viewing/signing
-router.get("/:signingFileId/pdf", ...signView, requireSigningEnabledForSigningFile, ...signFileScope, signingFileController.getSigningFilePdf);
+router.get("/:signingFileId/pdf", ...signerRead, requireSigningEnabledForSigningFile, ...signFileScope, signingFileController.getSigningFilePdf);
 
 // פרטי קובץ + מקומות חתימה (גם עו"ד וגם לקוח)
-router.get("/:signingFileId", ...signView, requireSigningEnabledForSigningFile, ...signFileScope, signingFileController.getSigningFileDetails);
+router.get("/:signingFileId", ...signerRead, requireSigningEnabledForSigningFile, ...signFileScope, signingFileController.getSigningFileDetails);
 
 const evidencePackageAccess = [
     authMiddleware,
