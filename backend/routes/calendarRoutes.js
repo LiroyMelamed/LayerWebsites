@@ -45,26 +45,26 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middlewares/authMiddleware');
-const requireLawyerOrAdmin = require('../middlewares/requireLawyerOrAdmin');
+const requireFirmAction = require('../middlewares/requireFirmAction');
 const cal = require('../controllers/calendarController');
 
-// Convenience shorthand — all protected calendar routes require JWT + Lawyer/Admin role
-const protect = [authMiddleware, requireLawyerOrAdmin];
+const calView = [authMiddleware, requireFirmAction('calendar', 'view', { legacy: 'lawyerOrAdmin' })];
+const calManage = [authMiddleware, requireFirmAction('calendar', 'manage', { legacy: 'lawyerOrAdmin' })];
 
 // ─── CRUD ─────────────────────────────────────────────────────────────────────
 // Canonical events list (Step 2 dynamic filters)
-router.get('/events', ...protect, cal.listEvents);
+router.get('/events', ...calView, cal.listEvents);
 // Legacy alias — keep until frontend (Step 4) migrates to /events
-router.get('/', ...protect, cal.listEvents);
+router.get('/', ...calView, cal.listEvents);
 
-router.post('/', ...protect, cal.createEvent);
+router.post('/', ...calManage, cal.createEvent);
 
 // Named routes BEFORE /:id so Express doesn't swallow them as id params
-router.get('/today', ...protect, cal.getTodayAndTomorrow);
-router.get('/holidays', ...protect, cal.listHolidays);
-router.get('/daily-agenda-settings', ...protect, cal.getDailyAgendaSettings);
-router.put('/daily-agenda-settings', ...protect, cal.updateDailyAgendaSettings);
-router.get('/agenda/:date', ...protect, cal.getDayAgenda);
+router.get('/today', ...calView, cal.getTodayAndTomorrow);
+router.get('/holidays', ...calView, cal.listHolidays);
+router.get('/daily-agenda-settings', ...calView, cal.getDailyAgendaSettings);
+router.put('/daily-agenda-settings', ...calManage, cal.updateDailyAgendaSettings);
+router.get('/agenda/:date', ...calView, cal.getDayAgenda);
 
 // Public invite RSVP (no auth)
 router.get('/invite/:token', cal.getInviteByToken);
@@ -73,41 +73,41 @@ router.get('/short-links/:slug', cal.resolvePublicShortLink);
 
 // ─── CRM (Step 2) ─────────────────────────────────────────────────────────────
 // All named routes go BEFORE the generic /:id handlers below.
-router.post('/check-conflict', ...protect, cal.checkConflict);
-router.post('/convert-lead', ...protect, cal.convertLead);
-router.get('/clients/:clientUserId/cases', ...protect, cal.getClientCases);
-router.patch('/:id/link-case', ...protect, cal.linkCase);
-router.post('/:id/resend-invite', ...protect, cal.resendInvite);
-router.post('/:id/rsvp', ...protect, cal.staffSetClientRsvp);
-router.post('/:id/duplicate', ...protect, cal.duplicateEvent);
-router.post('/:id/cancel', ...protect, cal.cancelEvent);
+router.post('/check-conflict', ...calView, cal.checkConflict);
+router.post('/convert-lead', ...calManage, cal.convertLead);
+router.get('/clients/:clientUserId/cases', ...calView, cal.getClientCases);
+router.patch('/:id/link-case', ...calManage, cal.linkCase);
+router.post('/:id/resend-invite', ...calManage, cal.resendInvite);
+router.post('/:id/rsvp', ...calManage, cal.staffSetClientRsvp);
+router.post('/:id/duplicate', ...calManage, cal.duplicateEvent);
+router.post('/:id/cancel', ...calManage, cal.cancelEvent);
 
-router.get('/:id', ...protect, cal.getEvent);
-router.put('/:id', ...protect, cal.updateEvent);
-router.delete('/:id', ...protect, cal.deleteEvent);
+router.get('/:id', ...calView, cal.getEvent);
+router.put('/:id', ...calManage, cal.updateEvent);
+router.delete('/:id', ...calManage, cal.deleteEvent);
 
 // ─── iCal / WebCal feed ───────────────────────────────────────────────────────
 // Auth-protected management routes come BEFORE the public :token route
-router.get('/feed/token', ...protect, cal.getIcalToken);
-router.post('/feed/rotate-token', ...protect, cal.rotateIcalToken);
+router.get('/feed/token', ...calView, cal.getIcalToken);
+router.post('/feed/rotate-token', ...calManage, cal.rotateIcalToken);
 
 // Public feed — no JWT; the opaque token IS the auth secret
 // Accepts both /feed/<token> and /feed/<token>.ics (the controller strips the suffix)
 router.get('/feed/:token', cal.serveIcalFeed);
 
 // ─── Google Calendar ──────────────────────────────────────────────────────────
-router.get('/google/auth-url', ...protect, cal.getGoogleAuthUrl);
+router.get('/google/auth-url', ...calManage, cal.getGoogleAuthUrl);
 // OAuth2 callback is PUBLIC — Google redirects the browser here after consent
 router.get('/google/callback', cal.handleGoogleCallback);
-router.get('/google/status', ...protect, cal.getGoogleStatus);
-router.delete('/google/disconnect', ...protect, cal.disconnectGoogle);
-router.post('/google/sync', ...protect, cal.syncGoogleEvents);
+router.get('/google/status', ...calView, cal.getGoogleStatus);
+router.delete('/google/disconnect', ...calManage, cal.disconnectGoogle);
+router.post('/google/sync', ...calManage, cal.syncGoogleEvents);
 
 // ─── Outlook Calendar ───────────────────────────────────────────────────────
-router.get('/outlook/auth-url', ...protect, cal.getOutlookAuthUrl);
+router.get('/outlook/auth-url', ...calManage, cal.getOutlookAuthUrl);
 router.get('/outlook/callback', cal.handleOutlookCallback);
-router.get('/outlook/status', ...protect, cal.getOutlookStatus);
-router.delete('/outlook/disconnect', ...protect, cal.disconnectOutlook);
-router.post('/outlook/sync', ...protect, cal.syncOutlookEvents);
+router.get('/outlook/status', ...calView, cal.getOutlookStatus);
+router.delete('/outlook/disconnect', ...calManage, cal.disconnectOutlook);
+router.post('/outlook/sync', ...calManage, cal.syncOutlookEvents);
 
 module.exports = router;

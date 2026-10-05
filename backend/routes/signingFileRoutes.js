@@ -7,6 +7,17 @@ const crypto = require('crypto');
 const { createRateLimitMiddleware } = require('../utils/rateLimiter');
 const { requireSigningEnabledForUser, requireSigningEnabledForSigningFile } = require('../middlewares/requireSigningEnabled');
 const requireLawyerOrAdmin = require('../middlewares/requireLawyerOrAdmin');
+const requireFirmAction = require('../middlewares/requireFirmAction');
+const requireFirmEvidencePackageAccess = require('../middlewares/requireFirmEvidencePackageAccess');
+const requireSigningOfficeAccess = require('../middlewares/requireSigningOfficeAccess');
+
+const requireSigningReadAccess = require('../middlewares/requireSigningReadAccess');
+const signerRead = [authMiddleware, requireSigningReadAccess];
+
+const signView = [authMiddleware, requireFirmAction('signing', 'view', { legacy: 'lawyerOrAdmin' })];
+const signManage = [authMiddleware, requireFirmAction('signing', 'manage', { legacy: 'lawyerOrAdmin' })];
+const signUpload = [authMiddleware, requireFirmAction('signing', 'upload', { legacy: 'lawyerOrAdmin' })];
+const signFileScope = [requireSigningOfficeAccess];
 
 function hashToken(raw) {
     const token = String(raw || '');
@@ -30,7 +41,7 @@ function extendTimeout(ms) {
 }
 
 
-router.post("/detect-spots", authMiddleware, requireSigningEnabledForUser, signingFileController.detectSignatureSpots);
+router.post("/detect-spots", ...signUpload, requireSigningEnabledForUser, signingFileController.detectSignatureSpots);
 
 // Public view of signed document (JWT view token, no auth)
 router.get("/public/view/:token", publicViewLimiter, signingFileController.getPublicSignedDocumentView);
@@ -73,48 +84,55 @@ router.get("/saved-items/:type/:index/data-url", authMiddleware, requireSigningE
 router.delete("/saved-items/:type/:index", authMiddleware, requireSigningEnabledForUser, signingFileController.deleteSavedItem);
 
 // עו"ד מעלה קובץ לחתימה
-router.post("/upload", authMiddleware, requireSigningEnabledForUser, signingFileController.uploadFileForSigning);
+router.post("/upload", ...signUpload, requireSigningOfficeAccess, requireSigningEnabledForUser, signingFileController.uploadFileForSigning);
 
 // רשימת קבצים של הלקוח (pending/signed/rejected)
-router.get("/client-files", authMiddleware, requireSigningEnabledForUser, signingFileController.getClientSigningFiles);
+router.get("/client-files", ...signerRead, requireSigningEnabledForUser, signingFileController.getClientSigningFiles);
 
 // רשימת קבצים שעו"ד שלח ללקוחות
-router.get("/lawyer-files", authMiddleware, requireLawyerOrAdmin, requireSigningEnabledForUser, signingFileController.getLawyerSigningFiles);
+router.get("/lawyer-files", ...signView, requireSigningEnabledForUser, signingFileController.getLawyerSigningFiles);
 
 // (אופציונלי) רק בהמתנה ללקוח
-router.get("/pending", authMiddleware, requireSigningEnabledForUser, signingFileController.getPendingSigningFiles);
+router.get("/pending", ...signerRead, requireSigningEnabledForUser, signingFileController.getPendingSigningFiles);
 
 // Generate a public signing link token (lawyer/admin)
-router.post("/:signingFileId/public-link", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.createPublicSigningLink);
+router.post("/:signingFileId/public-link", ...signManage, requireSigningEnabledForSigningFile, ...signFileScope, signingFileController.createPublicSigningLink);
 
 // Get signers for a signing file (for resend UI)
-router.get("/:signingFileId/signers", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.getSigningFileSigners);
+router.get("/:signingFileId/signers", ...signView, requireSigningEnabledForSigningFile, ...signFileScope, signingFileController.getSigningFileSigners);
 
 // Resend signing invitations to selected signers
-router.post("/:signingFileId/resend", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.resendSigningInvite);
+router.post("/:signingFileId/resend", ...signManage, requireSigningEnabledForSigningFile, ...signFileScope, signingFileController.resendSigningInvite);
 
 // Update signer contact + delivery channel while pending
-router.patch("/:signingFileId/signers/:signerUserId", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.updateSigningSignerContact);
+router.patch("/:signingFileId/signers/:signerUserId", ...signManage, requireSigningEnabledForSigningFile, ...signFileScope, signingFileController.updateSigningSignerContact);
 
 // Lawyer signing policy configuration (explicit OTP on/off + waiver ack)
-router.patch("/:signingFileId/policy", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.updateSigningPolicy);
+router.patch("/:signingFileId/policy", ...signManage, requireSigningEnabledForSigningFile, ...signFileScope, signingFileController.updateSigningPolicy);
 
 // Rename signing file
-router.patch("/:signingFileId/rename", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.renameSigningFile);
+router.patch("/:signingFileId/rename", ...signManage, requireSigningEnabledForSigningFile, ...signFileScope, signingFileController.renameSigningFile);
 
 // Stream original PDF for in-app viewing/signing
-router.get("/:signingFileId/pdf", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.getSigningFilePdf);
+router.get("/:signingFileId/pdf", ...signerRead, requireSigningEnabledForSigningFile, ...signFileScope, signingFileController.getSigningFilePdf);
 
 // פרטי קובץ + מקומות חתימה (גם עו"ד וגם לקוח)
-router.get("/:signingFileId", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.getSigningFileDetails);
+router.get("/:signingFileId", ...signerRead, requireSigningEnabledForSigningFile, ...signFileScope, signingFileController.getSigningFileDetails);
 
-// Evidence package for court (lawyer/admin)
-router.get("/:signingFileId/evidence", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.getEvidencePackage);
+const evidencePackageAccess = [
+    authMiddleware,
+    requireFirmEvidencePackageAccess,
+    requireSigningEnabledForSigningFile,
+    ...signFileScope,
+];
 
-// Evidence package ZIP download (lawyer/admin)
-router.get("/:signingFileId/evidence-package", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.getEvidencePackageZip);
+// Evidence package for court
+router.get("/:signingFileId/evidence", ...evidencePackageAccess, signingFileController.getEvidencePackage);
+
+// Evidence package ZIP download
+router.get("/:signingFileId/evidence-package", ...evidencePackageAccess, signingFileController.getEvidencePackageZip);
 // Evidence certificate (PDF) for quick human-readable record
-router.get("/:signingFileId/evidence-certificate", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.getEvidenceCertificate);
+router.get("/:signingFileId/evidence-certificate", ...evidencePackageAccess, signingFileController.getEvidenceCertificate);
 
 // OTP for signing (authenticated flows)
 router.post("/:signingFileId/otp/request", authMiddleware, signingFileController.requestSigningOtp);
@@ -130,12 +148,12 @@ router.post("/:signingFileId/sign-batch", extendTimeout(60_000), authMiddleware,
 router.post("/:signingFileId/reject", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.rejectSigning);
 
 // עו"ד מעלה גרסה חדשה למסמך שנדחה
-router.post("/:signingFileId/reupload", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.reuploadFile);
+router.post("/:signingFileId/reupload", ...signManage, requireSigningEnabledForSigningFile, ...signFileScope, signingFileController.reuploadFile);
 
 // הורדת קובץ
-router.get("/:signingFileId/download", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.getSignedFileDownload);
+router.get("/:signingFileId/download", ...signerRead, requireSigningEnabledForSigningFile, ...signFileScope, signingFileController.getSignedFileDownload);
 
 // מחיקת קובץ ממתין
-router.delete("/:signingFileId", authMiddleware, requireSigningEnabledForSigningFile, signingFileController.deleteSigningFile);
+router.delete("/:signingFileId", ...signManage, requireSigningEnabledForSigningFile, ...signFileScope, signingFileController.deleteSigningFile);
 
 module.exports = router;

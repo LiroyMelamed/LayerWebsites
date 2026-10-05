@@ -410,7 +410,22 @@ async function renderHtmlToPdf(html) {
 
   try {
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    // All certificate assets are embedded. Network-idle events can stall after
+    // document.write; wait for the resources needed by the PDF instead.
+    await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 15_000 });
+    await page.waitForFunction(
+      () => document.fonts.status === 'loaded'
+        && Array.from(document.images).every((image) => image.complete),
+      { timeout: 15_000 }
+    );
+    await page.evaluate(() => {
+      if (Array.from(document.fonts).some((font) => font.status !== 'loaded')) {
+        throw new Error('Evidence certificate font failed to load');
+      }
+      if (Array.from(document.images).some((image) => !image.naturalWidth)) {
+        throw new Error('Evidence certificate image failed to load');
+      }
+    });
 
     const pdfBuffer = await page.pdf({
       format: 'A4',

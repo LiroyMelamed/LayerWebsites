@@ -7,7 +7,7 @@ import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
 import SimpleScrollView from "../../components/simpleComponents/SimpleScrollView";
 import SimpleContainer from "../../components/simpleComponents/SimpleContainer";
 import Skeleton from "../../components/simpleComponents/Skeleton";
-import SimpleCard from "../../components/simpleComponents/SimpleCard";
+
 import SimpleInput from "../../components/simpleComponents/SimpleInput";
 
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
@@ -529,7 +529,7 @@ export default function UploadFileForSigningScreen() {
     }, []);
 
     const [signatureSpots, setSignatureSpots] = useState([]);
-    const [selectedFieldType, setSelectedFieldType] = useState('signature');
+    const [, setSelectedFieldType] = useState('signature');
     const [selectedSpotIndex, setSelectedSpotIndex] = useState(null);
 
     // Court-ready policy: OTP is required by default; waiver must be explicit + acknowledged.
