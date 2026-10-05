@@ -683,8 +683,6 @@ function _resolveEventOwnerId(userId, eventType, managerUserId, managerIds) {
 
 /** Ensure the user may read or mutate this event (owner, assigned manager, or Admin). */
 async function _requireEventAccess(eventId, userId, userRole) {
-    if (String(userRole) === 'Admin') return { ok: true };
-
     const { rows } = await pool.query(
         `SELECT ce.owner_id,
                 ce.manager_user_id,
@@ -697,6 +695,7 @@ async function _requireEventAccess(eventId, userId, userRole) {
         [eventId, userId]
     );
     if (!rows.length) return { ok: false, status: 404, message: 'אירוע לא נמצא' };
+    if (String(userRole) === 'Admin') return { ok: true };
 
     const row = rows[0];
     if (row.owner_id === userId || row.manager_user_id === userId || row.is_manager) {
