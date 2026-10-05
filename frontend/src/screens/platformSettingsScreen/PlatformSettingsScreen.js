@@ -2182,7 +2182,9 @@ export default function PlatformSettingsScreen() {
             const channelMap = {};
             channelsArr.forEach(ch => { channelMap[ch.notification_type] = ch; });
             settingKeys = settingKeys.filter(key => {
-                if (key === "CASE_UPDATED_SMS") return false; // retired in favor of per-action templates
+                // These legacy templates have no sending consumer. Case updates
+                // use per-action templates; license renewals use their own service.
+                if (["CASE_UPDATED_SMS", "GENERAL_SMS", "PAYMENT_SMS", "LICENSE_RENEWAL_SMS"].includes(key)) return false;
                 const notifType = SMS_KEY_TO_NOTIF_TYPE[key];
                 if (!notifType) return true; // unknown mapping → show by default
                 // Lawyer picks channels per-action — always show templates
