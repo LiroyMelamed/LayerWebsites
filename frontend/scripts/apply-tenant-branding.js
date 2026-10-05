@@ -91,4 +91,15 @@ if (fs.existsSync(tenantAssetLinks)) {
   fs.copyFileSync(tenantAssetLinks, path.join(wellKnown, "assetlinks.json"));
 }
 
+// Never copy another office's Apple association into this tenant's build.
+const tenantAppleAssociation = path.join(src, ".well-known", "apple-app-site-association");
+for (const destination of [path.join(root, "public", "apple-app-site-association"), path.join(root, "public", ".well-known", "apple-app-site-association")]) {
+  if (fs.existsSync(tenantAppleAssociation)) {
+    fs.mkdirSync(path.dirname(destination), { recursive: true });
+    fs.copyFileSync(tenantAppleAssociation, destination);
+  } else if (fs.existsSync(destination)) {
+    fs.unlinkSync(destination);
+  }
+}
+
 console.log(`[apply-tenant-branding] applied branding for ${tenant}`);
