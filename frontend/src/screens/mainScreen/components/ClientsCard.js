@@ -18,7 +18,7 @@ import ListPageTitle from "../../../components/specializedComponents/text/ListPa
 import "./ClientsCard.scss";
 import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
 
-const ClientsCard = forwardRef(({ rePerformRequest, customerList, style: _style, isPerforming, hideButtons }, ref) => {
+const ClientsCard = forwardRef(({ rePerformRequest, customerList, style: _style, isPerforming, hideButtons, allowEdit = true, allowDelete: _allowDelete = true }, ref) => {
     const { openPopup, closePopup } = usePopup();
     const { t } = useTranslation();
 
@@ -97,6 +97,7 @@ const ClientsCard = forwardRef(({ rePerformRequest, customerList, style: _style,
                             clientPhone={customer.phonenumber}
                             closePopUpFunction={closePopup}
                             rePerformRequest={rePerformRequest}
+                            allowEdit={allowEdit}
                         />
                     </SimpleContainer>
 

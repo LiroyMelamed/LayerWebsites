@@ -21,6 +21,7 @@ import { buttonSizes } from "../../styles/buttons/buttonSizes";
 import SearchInput from "../../components/specializedComponents/containers/SearchInput";
 import { Text24, Text14, Text12, TextBold14 } from "../../components/specializedComponents/text/AllTextKindFile";
 import { usePopup } from "../../providers/PopUpProvider";
+import { useFirmPermissions } from "../../providers/FirmPermissionsProvider";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 import { images } from "../../assets/images/images";
@@ -354,7 +355,7 @@ function _currentRole() {
 function _isFirmManager(role) { return role && role !== "User"; }
 
 function _canPickEmployeeCalendar(role) {
-    if (role === "Admin" || role === "PlatformAdmin") return true;
+    if (role === "Admin" || role === "Lawyer" || role === "PlatformAdmin") return true;
     try {
         return typeof window !== "undefined" && localStorage.getItem("isPlatformAdmin") === "true";
     } catch {
@@ -395,6 +396,8 @@ export default function CalendarScreen() {
     const { openPopup, closePopup } = usePopup();
     const [searchParams, setSearchParams] = useSearchParams();
     const calendarEnabled = useCalendarModuleEnabled();
+    const { canAction } = useFirmPermissions() || { canAction: () => true };
+    const canManageCalendar = canAction("calendar", "manage");
 
     // Feature-flag guard: bounce to main screen if the module is disabled.
     useEffect(() => {
@@ -835,20 +838,21 @@ export default function CalendarScreen() {
     // ── Deep-link: /CalendarScreen?eventId=<id> ────────────────────────────
     useEffect(() => {
         const targetEventId = searchParams.get("eventId") || searchParams.get("appointmentId");
-        if (!targetEventId || hasAutoOpenedEventRef.current || !events.length) return;
+        if (!targetEventId || hasAutoOpenedEventRef.current) return;
 
+        let active = true;
+        const openTarget = async () => {
         const matched = events.find((e) => String(e.id) === String(targetEventId));
-        if (!matched) return;
-
+        let eventPayload;
+        if (matched) {
+            eventPayload = { id: Number(matched.id), title: matched.title, startTime: matched.start, endTime: matched.end, allDay: matched.allDay, ...matched.extendedProps };
+        } else {
+            const response = await calendarApi.getEvent(targetEventId);
+            if (!active || response.status !== 200 || !response.data?.event) return;
+            eventPayload = response.data.event;
+        }
+        if (!active || hasAutoOpenedEventRef.current) return;
         hasAutoOpenedEventRef.current = true;
-        const eventPayload = {
-            id: Number(matched.id),
-            title: matched.title,
-            startTime: matched.start,
-            endTime: matched.end,
-            allDay: matched.allDay,
-            ...matched.extendedProps,
-        };
         openPopup(
             <EventFormModal
                 key={_eventFormModalKey(eventPayload)}
@@ -863,13 +867,13 @@ export default function CalendarScreen() {
                 onClose={closePopup}
             />
         );
+        };
+        openTarget().catch(() => {});
+        return () => { active = false; };
     }, [events, searchParams, openPopup, closePopup, upsertLocally, handleEventSaved]);
 
     // ── View switcher ──────────────────────────────────────────────────────
-    const switchView = (v) => {
-        setView(v);
-        calendarRef.current?.getApi().changeView(v);
-    };
+    
 
     const renderNowIndicatorContent = useCallback((arg) => {
         if (!arg.isAxis) return null;
@@ -1074,9 +1078,11 @@ export default function CalendarScreen() {
                             {t("calendar.openPersonalSync")}
                         </SecondaryButton>
 
+                        {canManageCalendar && (
                         <PrimaryButton onPress={() => openCreateModal(null)}>
                             {t("calendar.addEvent")}
                         </PrimaryButton>
+                        )}
                     </SimpleContainer>
                 </SimpleContainer>
 

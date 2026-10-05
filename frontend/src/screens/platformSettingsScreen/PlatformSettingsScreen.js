@@ -1,5 +1,6 @@
 import { formatDisplayDate, formatDisplayDateTime } from "../../functions/date/formatDateForInput";
 // src/screens/platformSettingsScreen/PlatformSettingsScreen.js
+import { loadFirmSettings } from "../../services/firmSettings";
 import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
@@ -489,13 +490,16 @@ function EmailTemplateEditor({ template, onSave, saving, firmSettings }) {
     const iframeRef = useRef(null);
     const textareaRef = useRef(null);
     const simpleTextareaRef = useRef(null);
+    const loadedTemplateKeyRef = useRef(template.template_key);
 
     useEffect(() => {
+        if (loadedTemplateKeyRef.current === template.template_key) return;
+        loadedTemplateKeyRef.current = template.template_key;
         setSubject(template.subject_template || "");
         setHtmlBody(template.html_body || "");
         setMessageText(htmlToPlainText(template.html_body || ""));
         setShowCode(false);
-    }, [template.template_key]);
+    }, [template.template_key, template.subject_template, template.html_body]);
 
     const availableVars = useMemo(() => {
         try {
@@ -745,7 +749,7 @@ export default function PlatformSettingsScreen() {
         } finally {
             setEmailSaving(false);
         }
-    }, [reloadEmailTemplates]);
+    }, [reloadEmailTemplates, t]);
 
     // ─── Reminder templates: load + CRUD ────────────────────────────
     useEffect(() => {
@@ -759,20 +763,30 @@ export default function PlatformSettingsScreen() {
             .finally(() => setLoadingReminderTpls(false));
     }, [activeTab]);
 
-    // Sync reminder plain-text when editing starts
+    // Sync once for each editing identity; field edits preserve code mode.
+    const loadedReminderIdentityRef = useRef(null);
     useEffect(() => {
+        if (!editingReminderTpl) { loadedReminderIdentityRef.current = null; return; }
+        const identity = JSON.stringify([editingReminderTpl.id, editingReminderTpl.key, editingReminderTpl.isNew]);
+        if (loadedReminderIdentityRef.current === identity) return;
+        loadedReminderIdentityRef.current = identity;
         if (editingReminderTpl) {
             setReminderMessageText(reminderHtmlToPlainText(editingReminderTpl.body_html || ""));
             setShowReminderCode(false);
         }
-    }, [editingReminderTpl?.id, editingReminderTpl?.key, editingReminderTpl?.isNew]);
+    }, [editingReminderTpl]);
 
+    const reminderPreviewBody = editingReminderTpl?.body_html;
+    const reminderPreviewSubject = editingReminderTpl?.subject_template;
+    const reminderPreviewLabel = editingReminderTpl?.label;
+    const reminderPreviewOpen = Boolean(editingReminderTpl);
+    const reminderPreviewFirm = data?.settings?.firm;
     // Update reminder preview iframe (wrapped in branded shell)
     useEffect(() => {
-        if (reminderIframeRef.current && editingReminderTpl) {
-            const subjectPreview = editingReminderTpl.subject_template || editingReminderTpl.label || '';
-            const firmS = data?.settings?.firm || {};
-            const fullHtml = wrapReminderPreviewHtml(editingReminderTpl.body_html || '', {
+        if (reminderIframeRef.current && reminderPreviewOpen) {
+            const subjectPreview = reminderPreviewSubject || reminderPreviewLabel || '';
+            const firmS = reminderPreviewFirm || {};
+            const fullHtml = wrapReminderPreviewHtml(reminderPreviewBody || '', {
                 title: subjectPreview,
                 firmName: firmS.LAW_FIRM_NAME?.effectiveValue || firmS.COMPANY_NAME?.effectiveValue || '',
                 firmLogoUrl: withLogoCacheBust(firmS.FIRM_LOGO_URL?.effectiveValue || ''),
@@ -782,7 +796,7 @@ export default function PlatformSettingsScreen() {
             doc.write(fullHtml);
             doc.close();
         }
-    }, [editingReminderTpl?.body_html, editingReminderTpl?.subject_template, editingReminderTpl?.label, data?.settings?.firm]);
+    }, [reminderPreviewOpen, reminderPreviewBody, reminderPreviewSubject, reminderPreviewLabel, reminderPreviewFirm]);
 
     // ─── Knowledge documents: load + upload + delete ────────────────
     const loadKnowledgeDocs = useCallback(async () => {
@@ -830,7 +844,7 @@ export default function PlatformSettingsScreen() {
         } finally {
             setUploadingDoc(false);
         }
-    }, [docTitle, loadKnowledgeDocs]);
+    }, [docTitle, loadKnowledgeDocs, t]);
 
     const handleDeleteKnowledgeDoc = useCallback((docId) => {
         openPopup(
@@ -867,7 +881,7 @@ export default function PlatformSettingsScreen() {
             setSaveMessage("❌ " + t("platformSettings.notifEmailSaveError"));
             setTimeout(() => setSaveMessage(""), 3000);
         }
-    }, [chatbotNotifEmail]);
+    }, [chatbotNotifEmail, t]);
 
     const handleSaveReminderTemplate = useCallback(async () => {
         if (!editingReminderTpl) return;
@@ -895,7 +909,7 @@ export default function PlatformSettingsScreen() {
         } finally {
             setReminderTplSaving(false);
         }
-    }, [editingReminderTpl]);
+    }, [editingReminderTpl, t]);
 
     const handleDeleteReminderTemplate = useCallback((id) => {
         openPopup(
@@ -930,7 +944,7 @@ export default function PlatformSettingsScreen() {
             setSaveMessage("❌ " + t("platformSettings.excelDownloadError"));
             setTimeout(() => setSaveMessage(""), 3000);
         }
-    }, []);
+    }, [t]);
 
     // Save state (manual — we call the API directly to properly handle errors)
     const [isSaving, setIsSaving] = useState(false);
@@ -1016,6 +1030,7 @@ export default function PlatformSettingsScreen() {
                     return;
                 }
             }
+            await loadFirmSettings({ force: true });
             setEditedChannels({});
             setEditedValues({});
             setSaveMessage("✅ " + (senderRequestPhone
@@ -1244,7 +1259,7 @@ export default function PlatformSettingsScreen() {
                 );
             }
 
-            const selectedTemplate = emailTemplates.find(t => t.template_key === selectedEmailKey);
+            
 
             // Filter email templates: only show templates whose notification type has email enabled
             const channelsArr = localChannels || data?.channels || [];
@@ -1343,11 +1358,7 @@ export default function PlatformSettingsScreen() {
                                         || t("platformSettings.aiChatbotEnabled", "צ׳אטבוט AI")}
                                 </TextBold14>
                                 <Text12 className="lw-platformSettings__knowledgeMeta">
-                                    {botSettings.AI_CHATBOT_ENABLED?.description
-                                        || t(
-                                            "platformSettings.aiChatbotEnabledDesc",
-                                            "הגדרת פלטפורמה (לא בילד). הניתוב /chatbot נשאר זמין ב-URL ישיר."
-                                        )}
+                                    הפעלה מאפשרת שימוש בצ׳אטבוט באתר ובאפליקציה. כיבוי מסתיר את הכפתור וחוסם גם גישה ישירה ושיחות קיימות.
                                 </Text12>
                                 <SimpleContainer className="lw-platformSettings__settingInput">
                                     <SettingInput
@@ -2127,6 +2138,9 @@ export default function PlatformSettingsScreen() {
         // Settings tabs (messaging, signing, firm, reminders, security)
         let categorySettings = settings[activeTab] || {};
         let settingKeys = Object.keys(categorySettings);
+        if (activeTab === "signing") {
+            settingKeys = settingKeys.filter((key) => key !== "SHOW_PUBLIC_SIGNING_CONSENT");
+        }
 
         // Hide internal sender-flow keys from the messaging tab
         if (activeTab === "messaging") {
@@ -2168,6 +2182,7 @@ export default function PlatformSettingsScreen() {
             const channelMap = {};
             channelsArr.forEach(ch => { channelMap[ch.notification_type] = ch; });
             settingKeys = settingKeys.filter(key => {
+                if (key === "CASE_UPDATED_SMS") return false; // retired in favor of per-action templates
                 const notifType = SMS_KEY_TO_NOTIF_TYPE[key];
                 if (!notifType) return true; // unknown mapping → show by default
                 // Lawyer picks channels per-action — always show templates

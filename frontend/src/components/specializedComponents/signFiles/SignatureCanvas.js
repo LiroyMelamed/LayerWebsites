@@ -11,7 +11,7 @@ import SimpleContainer from "../../simpleComponents/SimpleContainer";
 import SimpleLoader from "../../simpleComponents/SimpleLoader";
 import BlockDateInput from "../../simpleComponents/BlockDateInput";
 import { toNativeDateValue } from "../../../functions/date/formatDateForInput";
-import { Text12, Text14 } from "../../specializedComponents/text/AllTextKindFile";
+import { Text14 } from "../../specializedComponents/text/AllTextKindFile";
 
 import PrimaryButton from "../../styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../styledComponents/buttons/SecondaryButton";
@@ -54,6 +54,7 @@ function uuidv4() {
 const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal" }) => {
     const { t } = useTranslation();
     const canvasRef = useRef(null);
+    const initializedCanvasRef = useRef(null);
     const pdfScrollRef = useRef(null);
     const lastPointRef = useRef(null);
 
@@ -90,7 +91,6 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const signingSessionId = signingSessionIdRef.current;
 
     const [consentAccepted, setConsentAccepted] = useState(false);
-    const [showConsentUi, setShowConsentUi] = useState(true);
     const [otpRequested, setOtpRequested] = useState(false);
     const [otpCode, setOtpCode] = useState("");
     const [otpVerified, setOtpVerified] = useState(false);
@@ -159,13 +159,6 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const otpEnabled = Boolean(fileDetails?.file?.OtpEnabled);
     const otpRequired = otpEnabled && Boolean(fileDetails?.file?.RequireOtp) && !alreadyComplete;
 
-    const consentStorageKey = useMemo(() => {
-        const keyPart = isPublic
-            ? `public:${String(publicToken || "")}`
-            : `file:${String(signingFileId || "")}`;
-        return `lw_signing_consent_accepted:${keyPart}`;
-    }, [isPublic, publicToken, signingFileId]);
-
     const fieldValuesStorageKey = useMemo(() => {
         const keyPart = isPublic
             ? `public:${String(publicToken || "")}`
@@ -231,40 +224,6 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
         return { ...details, signatureSpots: merged };
     };
-
-    useEffect(() => {
-        let cancelled = false;
-        (async () => {
-            try {
-                const res = await ApiUtils.get("platform-settings/public");
-                const raw = res?.data?.SHOW_PUBLIC_SIGNING_CONSENT;
-                const enabled = !(raw === false || raw === "false" || raw === "0" || raw === 0);
-                if (cancelled) return;
-                setShowConsentUi(enabled);
-                if (!enabled) setConsentAccepted(true);
-            } catch {
-                // Default: keep consent UI visible.
-            }
-        })();
-        return () => { cancelled = true; };
-    }, []);
-
-    useEffect(() => {
-        if (!showConsentUi) {
-            setConsentAccepted(true);
-            return;
-        }
-        try {
-            const persisted = localStorage.getItem(consentStorageKey) === "true";
-            setConsentAccepted(persisted);
-        } catch {
-            // ignore (private mode / blocked storage)
-        }
-    }, [consentStorageKey, showConsentUi]);
-
-    useEffect(() => {
-        if (!showConsentUi) setConsentAccepted(true);
-    }, [showConsentUi]);
 
     const effectiveSigningFileId = useMemo(() => {
         return fileDetails?.file?.SigningFileId || signingFileId;
@@ -382,17 +341,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         return list.filter((s) => !isSpotRequired(s) && !isSpotSigned(s) && isMyActionableSpot(s));
     };
 
-    const focusNextUnsignedSpot = () => {
-        const allSpots = (fileDetails?.signatureSpots || []).filter((s) => getSpotType(s) !== 'lawyerstamp');
-        const unsignedRequired = getUnsignedRequiredSpots(allSpots);
-        const target = (!currentSpot || currentSpot.IsSigned) ? (unsignedRequired[0] || null) : currentSpot;
-        if (target) {
-            setCurrentSpot(target);
-            scrollToSpot(target);
-            setHasStartedNextFlow(true);
-        }
-        return target;
-    };
+    
 
     const findScrollableAncestor = (el) => {
         let cur = el;
@@ -474,41 +423,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         }
     };
 
-    const refreshSavedSignature = async () => {
-        try {
-            const res = isPublic
-                ? await signingFilesApi.getPublicSavedSignature(publicToken)
-                : await signingFilesApi.getSavedSignature();
-            unwrapApi(res);
-            const data = res?.data;
-            setSavedSignature({
-                loading: false,
-                exists: Boolean(data?.exists),
-                url: data?.url || null,
-            });
-        } catch (err) {
-            console.warn("Failed to refresh saved signature", err);
-            setSavedSignature({ loading: false, exists: false, url: null });
-        }
-    };
+    
 
-    const refreshSavedStamp = async () => {
-        try {
-            const res = isPublic
-                ? await signingFilesApi.getPublicSavedStamp(publicToken)
-                : await signingFilesApi.getSavedStamp();
-            unwrapApi(res);
-            const data = res?.data;
-            setSavedStamp({
-                loading: false,
-                exists: Boolean(data?.exists),
-                url: data?.url || null,
-            });
-        } catch (err) {
-            console.warn("Failed to refresh saved stamp", err);
-            setSavedStamp({ loading: false, exists: false, url: null });
-        }
-    };
+    
 
     const refreshSavedItems = async () => {
         try {
@@ -564,11 +481,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 setPdfReady(false);
                 setPdfFile(null);
 
-                // Restore consent from localStorage; OTP state is per session.
-                try {
-                    const persisted = localStorage.getItem(consentStorageKey) === "true";
-                    setConsentAccepted(persisted);
-                } catch { setConsentAccepted(false); }
+                // Consent belongs to this signing session, never to a cached flag.
+                setConsentAccepted(false);
                 setOtpRequested(false);
                 setOtpCode("");
                 setOtpVerified(false);
@@ -655,6 +569,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         if (remainingSigs > 0) return;
 
         if (unsignedRequired.length > 0) {
+            // A form containing only data fields has no completed signature
+            // phase to celebrate before those fields have been submitted.
+            if (!allSpots.some((spot) => isSignatureLike(getSpotType(spot))
+                && isSpotRequired(spot) && isMyActionableSpot(spot))) return;
             if (holdSignatureCompleteOverlayRef.current) {
                 setShowCompletion(true);
                 setShowSpotPopup(false);
@@ -735,6 +653,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     useEffect(() => {
         if (currentSpot && canvasRef.current) {
             const canvas = canvasRef.current;
+            const previous = initializedCanvasRef.current;
+            if (previous?.canvas === canvas && previous.spot === currentSpot && previous.phase === stampSignPhase) return;
+            initializedCanvasRef.current = { canvas, spot: currentSpot, phase: stampSignPhase };
             canvas.width = 400;
             canvas.height = 180;
             const ctx = canvas.getContext("2d");
@@ -749,7 +670,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             setHasUserDrawn(false);
             lastPointRef.current = null;
         }
-    }, [currentSpot, stampSignPhase]);
+    }, [currentSpot, stampSignPhase, t]);
 
     useEffect(() => {
         if (!currentSpot) return;
@@ -1207,7 +1128,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             const remainingSigs = unsignedRequired.filter((s) => isSignatureLike(getSpotType(s))).length;
             const remainingFields = unsignedRequired.length - remainingSigs;
             // All signatures done, data fields still open: celebrate, then let them continue.
-            if (remainingSigs === 0) {
+            if (remainingSigs === 0 && spots.some((spot) => isSignatureLike(getSpotType(spot))
+                && isSpotRequired(spot) && isMyActionableSpot(spot))) {
                 if (!signaturesCelebratedRef.current) {
                     signaturesCelebratedRef.current = true;
                     holdSignatureCompleteOverlayRef.current = true;
@@ -2286,7 +2208,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     // ─── Shared signing UI (used in side panel for modal, popup for screen) ───
     const renderConsentAndOtp = () => (
         <>
-            {!consentAccepted && showConsentUi && (
+            {!consentAccepted && (
                 <div className="lw-signing-legalBox">
                     <label className="lw-signing-legalRow">
                         <input
@@ -2296,9 +2218,6 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 const next = Boolean(e.target.checked);
                                 if (!next) return;
                                 setConsentAccepted(true);
-                                try {
-                                    localStorage.setItem(consentStorageKey, "true");
-                                } catch { /* ignore */ }
                             }}
                             disabled={saving}
                         />
@@ -2586,7 +2505,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         <div className="lw-signing-actionsRow">
                             <PrimaryButton
                                 size={buttonSizes.SMALL}
-                                onPress={applySavedStampForNext}
+                                onPress={() => applySavedStampForNext()}
                                 disabled={saving || !savedStamp.exists}
                             >
                                 {saving ? t("signing.canvas.saving") : t("signing.canvas.nextStep")}

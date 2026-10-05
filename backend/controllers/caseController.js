@@ -1,3 +1,4 @@
+const { queryScopedCases } = require('../lib/firmPermissions/caseScope');
 const pool = require("../config/db"); // Direct import of the pg pool
 const { formatPhoneNumber } = require("../utils/phoneUtils");
 const { sendMessage, getWebsiteDomain } = require("../utils/sendMessage");
@@ -10,6 +11,19 @@ const { getSetting, getChannelConfig, getPlatformAdmins } = require("../services
 const { renderTemplate } = require("../utils/templateRenderer");
 const { invalidateOperationalDashboardCaches } = require("../utils/operationalDashboardCache");
 const { resolveActorId, computeClosureAudit } = require("../lib/caseClosureAudit");
+const { canViewAllFirmCases, requireAreaAction } = require("../lib/firmPermissions/accessPure");
+const { assertCaseRecordAccess } = require("../lib/firmPermissions/caseAccess");
+
+function respondPermissionError(res, err) {
+    if (!err) return false;
+    res.status(err.httpStatus || 403).json({
+        success: false,
+        errorCode: err.errorCode,
+        code: err.errorCode,
+        message: err.message,
+    });
+    return true;
+}
 
 async function sendUpdateStageNotifications({
     caseId,
@@ -385,6 +399,10 @@ const getCases = async (req, res) => {
         return res.status(401).json({ message: "נדרש להתחבר" });
     }
 
+    if (respondPermissionError(res, requireAreaAction(req, 'cases', 'view'))) return;
+
+    const seeAllFirmCases = req.firmPermissionMode === 'role' || canViewAllFirmCases(req);
+
     try {
         const pagination = getPagination(req, res, { defaultLimit: 50, maxLimit: 200 });
         if (pagination === null) return;
@@ -393,13 +411,13 @@ const getCases = async (req, res) => {
             let query = _buildBaseCaseQuery();
             const params = [];
 
-            if (userRole !== "Admin") {
+            if (!seeAllFirmCases) {
                 query += " WHERE C.caseid IN (SELECT caseid FROM case_users WHERE userid = $1)";
                 params.push(userId);
             }
             query += " ORDER BY C.createdat DESC, C.caseid DESC, CD.stage";
 
-            const result = await pool.query(query, params);
+            const result = await queryScopedCases(req, query, params);
             const cases = _mapCaseResults(result.rows);
             const caseIds = cases.map(c => c.CaseId);
             const caseUsersMap = await _fetchCaseUsers(caseIds);
@@ -409,8 +427,7 @@ const getCases = async (req, res) => {
         const { limit, offset } = pagination;
 
         // Paginate by caseId (not joined rows) so descriptions aren't truncated.
-        const idsQuery =
-            userRole === 'Admin'
+        const idsQuery = seeAllFirmCases
                 ? `SELECT DISTINCT C.caseid, C.createdat
                    FROM cases C
                    ORDER BY C.createdat DESC, C.caseid DESC
@@ -422,15 +439,15 @@ const getCases = async (req, res) => {
                    ORDER BY C.createdat DESC, C.caseid DESC
                    LIMIT $2 OFFSET $3`;
 
-        const idsParams = userRole === 'Admin' ? [limit, offset] : [userId, limit, offset];
-        const idsResult = await pool.query(idsQuery, idsParams);
+        const idsParams = seeAllFirmCases ? [limit, offset] : [userId, limit, offset];
+        const idsResult = await queryScopedCases(req, idsQuery, idsParams);
         const ids = idsResult.rows.map((r) => r.caseid);
 
         if (ids.length === 0) return res.json([]);
 
         const detailsQuery = `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
 
-        const result = await pool.query(detailsQuery, [ids]);
+        const result = await queryScopedCases(req, detailsQuery, [ids]);
         const caseUsersMap = await _fetchCaseUsers(ids);
         return res.json(_mapCaseResults(result.rows, caseUsersMap));
 
@@ -445,18 +462,9 @@ const getCaseById = async (req, res) => {
         const caseId = requireInt(req, res, { source: 'params', name: 'caseId' });
         if (caseId === null) return;
         const userId = req.user?.UserId;
-        const userRole = req.user?.Role;
 
-        if (userRole !== "Admin") {
-            const ownership = await pool.query(
-                "SELECT 1 FROM case_users WHERE caseid = $1 AND userid = $2",
-                [caseId, userId]
-            );
-
-            if (ownership.rows.length === 0) {
-                return res.status(403).json({ message: "אין הרשאה", code: 'FORBIDDEN' });
-            }
-        }
+        const accessErr = await assertCaseRecordAccess(req, caseId, 'view');
+        if (respondPermissionError(res, accessErr)) return;
 
         const query = `${_buildBaseCaseQuery()} WHERE C.caseid = $1 ORDER BY CD.stage`;
         const result = await pool.query(query, [caseId]);
@@ -478,11 +486,14 @@ const getCaseByName = async (req, res) => {
     const normalizedCaseName = typeof caseName === 'string' ? caseName.trim() : '';
 
     const userId = req.user?.UserId;
-    const userRole = req.user?.Role;
 
     if (!userId) {
         return res.status(401).json({ message: "נדרש להתחבר" });
     }
+
+    if (respondPermissionError(res, requireAreaAction(req, 'cases', 'view'))) return;
+
+    const seeAllFirmCases = req.firmPermissionMode === 'role' || canViewAllFirmCases(req);
 
     try {
         // If empty query: return a default list so dropdowns can preload.
@@ -494,8 +505,7 @@ const getCaseByName = async (req, res) => {
             const offset = pagination.enabled ? pagination.offset : 0;
 
             // Paginate by caseId (not joined rows) so descriptions aren't truncated.
-            const idsQuery =
-                userRole === 'Admin'
+            const idsQuery = seeAllFirmCases
                     ? `SELECT DISTINCT C.caseid, C.createdat
                        FROM cases C
                        ORDER BY C.createdat DESC, C.caseid DESC
@@ -507,14 +517,14 @@ const getCaseByName = async (req, res) => {
                        ORDER BY C.createdat DESC, C.caseid DESC
                        LIMIT $2 OFFSET $3`;
 
-            const idsParams = userRole === 'Admin' ? [limit, offset] : [userId, limit, offset];
-            const idsResult = await pool.query(idsQuery, idsParams);
+            const idsParams = seeAllFirmCases ? [limit, offset] : [userId, limit, offset];
+            const idsResult = await queryScopedCases(req, idsQuery, idsParams);
             const ids = idsResult.rows.map((r) => r.caseid);
             if (ids.length === 0) return res.json([]);
 
             const detailsQuery = `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
 
-            const result = await pool.query(detailsQuery, [ids]);
+            const result = await queryScopedCases(req, detailsQuery, [ids]);
             const caseUsersMap = await _fetchCaseUsers(ids);
             return res.json(_mapCaseResults(result.rows, caseUsersMap));
         }
@@ -551,7 +561,7 @@ const getCaseByName = async (req, res) => {
 
         query += ` WHERE (${whereClauses.join(" OR ")})`;
 
-        if (userRole !== "Admin") {
+        if (!seeAllFirmCases) {
             query += ` AND C.caseid IN (SELECT caseid FROM case_users WHERE userid = $${paramIndex})`;
             params.push(userId);
             paramIndex++;
@@ -559,7 +569,7 @@ const getCaseByName = async (req, res) => {
 
         query += " ORDER BY C.createdat DESC, C.caseid DESC, CD.stage";
 
-        const result = await pool.query(query, params);
+        const result = await queryScopedCases(req, query, params);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ message: "לא נמצאו תיקים עם שם זה" });
@@ -641,6 +651,9 @@ const addCase = async (req, res) => {
         );
 
         const caseId = caseResult.rows[0].caseid;
+        if (req.firmPermissionMode === 'role' && req.firmTenantId) {
+            await client.query('UPDATE cases SET law_firm_tenant_id = $2 WHERE caseid = $1', [caseId, req.firmTenantId]);
+        }
 
         // Insert into case_users junction table for all linked clients
         for (const uid of resolvedUserIds) {
@@ -785,6 +798,8 @@ const addCase = async (req, res) => {
 const updateCase = async (req, res) => {
     const caseId = requireInt(req, res, { source: 'params', name: 'caseId' });
     if (caseId === null) return;
+    const updateAccessErr = await assertCaseRecordAccess(req, caseId, 'edit');
+    if (respondPermissionError(res, updateAccessErr)) return;
     const { CaseName, CurrentStage, IsClosed, IsTagged, Descriptions, PhoneNumber, CustomerName, CompanyName, CaseTypeId, UserId, UserIds, CaseManager, CaseManagerId, CaseTypeName, EstimatedCompletionDate, LicenseExpiryDate, HasLicenseExpiry } = req.body;
     const actorId = resolveActorId(req);
     const isClosedProvided = IsClosed !== undefined;
@@ -1100,6 +1115,8 @@ const updateCase = async (req, res) => {
 const updateStage = async (req, res) => {
     const caseId = requireInt(req, res, { source: 'params', name: 'caseId' });
     if (caseId === null) return;
+    const stageAccessErr = await assertCaseRecordAccess(req, caseId, 'edit');
+    if (respondPermissionError(res, stageAccessErr)) return;
     const { CurrentStage, IsClosed, PhoneNumber, CustomerName, Descriptions, CaseName } = req.body;
     const actorId = resolveActorId(req);
 
@@ -1252,6 +1269,8 @@ const updateStage = async (req, res) => {
 const deleteCase = async (req, res) => {
     const caseId = requireInt(req, res, { source: 'params', name: 'caseId' });
     if (caseId === null) return;
+    const deleteAccessErr = await assertCaseRecordAccess(req, caseId, 'delete');
+    if (respondPermissionError(res, deleteAccessErr)) return;
 
     let client;
     try {
@@ -1286,6 +1305,8 @@ const deleteCase = async (req, res) => {
 const tagCase = async (req, res) => {
     const caseId = requireInt(req, res, { source: 'params', name: 'caseId', aliases: ['CaseId'] });
     if (caseId === null) return;
+    const tagAccessErr = await assertCaseRecordAccess(req, caseId, 'tag');
+    if (respondPermissionError(res, tagAccessErr)) return;
     const { IsTagged } = req.body;
 
     try {
@@ -1309,19 +1330,25 @@ const tagCase = async (req, res) => {
 const getTaggedCases = async (req, res) => {
     try {
         const userId = req.user?.UserId;
-        const userRole = req.user?.Role;
 
         if (!userId) {
             return res.status(401).json({ message: "נדרש להתחבר" });
         }
 
+        if (respondPermissionError(res, requireAreaAction(req, 'cases', 'view'))) return;
+
+        const seeAllFirmCases = req.firmPermissionMode === 'role' || canViewAllFirmCases(req);
+        const taggedScopeSql = seeAllFirmCases
+            ? 'C.istagged = true'
+            : `(C.istagged = true AND (C.casemanagerid = $1 OR C.caseid IN (SELECT caseid FROM case_users WHERE userid = $1)))`;
+        const taggedScopeParams = seeAllFirmCases ? [] : [userId];
+
         const pagination = getPagination(req, res, { defaultLimit: 50, maxLimit: 200 });
         if (pagination === null) return;
 
-        // Each lawyer sees only their own tagged cases (by casemanagerid).
         if (!pagination.enabled) {
-            const query = `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.casemanagerid = $1 ORDER BY C.createdat DESC, C.caseid DESC, CD.stage;`;
-            const result = await pool.query(query, [userId]);
+            const query = `${_buildBaseCaseQuery()} WHERE ${taggedScopeSql} ORDER BY C.createdat DESC, C.caseid DESC, CD.stage;`;
+            const result = await queryScopedCases(req, query, taggedScopeParams);
             const ids = [...new Set(result.rows.map(r => r.caseid))];
             const caseUsersMap = await _fetchCaseUsers(ids);
             return res.json(_mapCaseResults(result.rows, caseUsersMap));
@@ -1329,20 +1356,19 @@ const getTaggedCases = async (req, res) => {
 
         const { limit, offset } = pagination;
 
-        const idsQuery = `SELECT DISTINCT C.caseid, C.createdat
-                   FROM cases C
-                   WHERE C.istagged = true AND C.casemanagerid = $1
-                   ORDER BY C.createdat DESC, C.caseid DESC
-                   LIMIT $2 OFFSET $3`;
+        const idsQuery = seeAllFirmCases
+            ? `SELECT DISTINCT C.caseid, C.createdat FROM cases C WHERE C.istagged = true ORDER BY C.createdat DESC, C.caseid DESC LIMIT $1 OFFSET $2`
+            : `SELECT DISTINCT C.caseid, C.createdat FROM cases C WHERE ${taggedScopeSql} ORDER BY C.createdat DESC, C.caseid DESC LIMIT $2 OFFSET $3`;
 
-        const idsResult = await pool.query(idsQuery, [userId, limit, offset]);
+        const idsParams = seeAllFirmCases ? [limit, offset] : [...taggedScopeParams, limit, offset];
+        const idsResult = await queryScopedCases(req, idsQuery, idsParams);
         const ids = idsResult.rows.map((r) => r.caseid);
 
         if (ids.length === 0) return res.json([]);
 
         const detailsQuery = `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.caseid = ANY($1::int[]) ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
 
-        const result = await pool.query(detailsQuery, [ids]);
+        const result = await queryScopedCases(req, detailsQuery, [ids]);
         const caseUsersMap = await _fetchCaseUsers(ids);
         return res.json(_mapCaseResults(result.rows, caseUsersMap));
     } catch (error) {
@@ -1357,11 +1383,15 @@ const getTaggedCasesByName = async (req, res) => {
     const normalizedCaseName = typeof caseName === 'string' ? caseName.trim() : '';
 
     const userId = req.user?.UserId;
-    const userRole = req.user?.Role;
 
     if (!userId) {
         return res.status(401).json({ message: "נדרש להתחבר" });
     }
+
+    if (respondPermissionError(res, requireAreaAction(req, 'cases', 'view'))) return;
+
+    const seeAllFirmCases = req.firmPermissionMode === 'role' || canViewAllFirmCases(req);
+    const taggedAssignSql = `(C.casemanagerid = $1 OR C.caseid IN (SELECT caseid FROM case_users WHERE userid = $1))`;
 
     try {
         // If empty query: return a default list so dropdowns can preload.
@@ -1372,19 +1402,18 @@ const getTaggedCasesByName = async (req, res) => {
             const limit = pagination.enabled ? pagination.limit : 200;
             const offset = pagination.enabled ? pagination.offset : 0;
 
-            const idsQuery = `SELECT DISTINCT C.caseid, C.createdat
-                       FROM cases C
-                       WHERE C.istagged = true AND C.casemanagerid = $1
-                       ORDER BY C.createdat DESC, C.caseid DESC
-                       LIMIT $2 OFFSET $3`;
+            const idsQuery = seeAllFirmCases
+                ? `SELECT DISTINCT C.caseid, C.createdat FROM cases C WHERE C.istagged = true ORDER BY C.createdat DESC, C.caseid DESC LIMIT $1 OFFSET $2`
+                : `SELECT DISTINCT C.caseid, C.createdat FROM cases C WHERE C.istagged = true AND ${taggedAssignSql} ORDER BY C.createdat DESC, C.caseid DESC LIMIT $2 OFFSET $3`;
 
-            const idsResult = await pool.query(idsQuery, [userId, limit, offset]);
+            const idsParams = seeAllFirmCases ? [limit, offset] : [userId, limit, offset];
+            const idsResult = await queryScopedCases(req, idsQuery, idsParams);
             const ids = idsResult.rows.map((r) => r.caseid);
             if (ids.length === 0) return res.json([]);
 
             const detailsQuery = `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.caseid = ANY($1::int[]) ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
 
-            const result = await pool.query(detailsQuery, [ids]);
+            const result = await queryScopedCases(req, detailsQuery, [ids]);
             const caseUsersMap = await _fetchCaseUsers(ids);
             return res.json(_mapCaseResults(result.rows, caseUsersMap));
         }
@@ -1394,12 +1423,10 @@ const getTaggedCasesByName = async (req, res) => {
 
         let whereClauses = [];
 
-        // Search in case name
         whereClauses.push(`C.casename ILIKE $${paramIndex}`);
         params.push(`%${normalizedCaseName}%`);
         paramIndex++;
 
-        // Add more columns for tagged case search
         whereClauses.push(`U.name ILIKE $${paramIndex}`);
         params.push(`%${normalizedCaseName}%`);
         paramIndex++;
@@ -1416,18 +1443,25 @@ const getTaggedCasesByName = async (req, res) => {
         params.push(`%${normalizedCaseName}%`);
         paramIndex++;
 
+        const scopeClause = seeAllFirmCases
+            ? ''
+            : ` AND ${taggedAssignSql.replace(/\$1/g, `$${paramIndex}`)}`;
+
+        if (!seeAllFirmCases) {
+            params.push(userId);
+            paramIndex++;
+        }
+
         let query = `
             ${_buildBaseCaseQuery()}
             WHERE (${whereClauses.join(" OR ")})
             AND C.istagged = true
-            AND C.casemanagerid = $${paramIndex}
+            ${scopeClause}
         `;
-        params.push(userId);
-        paramIndex++;
 
         query += " ORDER BY C.createdat DESC, C.caseid DESC, CD.stage";
 
-        const result = await pool.query(query, params);
+        const result = await queryScopedCases(req, query, params);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ message: "לא נמצאו תיקים מתויגים עם שם זה" });
@@ -1445,6 +1479,8 @@ const getTaggedCasesByName = async (req, res) => {
 const linkWhatsappGroup = async (req, res) => {
     const caseId = requireInt(req, res, { source: 'params', name: 'caseId', aliases: ['CaseId'] });
     if (caseId === null) return;
+    const linkAccessErr = await assertCaseRecordAccess(req, caseId, 'edit');
+    if (respondPermissionError(res, linkAccessErr)) return;
     const { WhatsappGroupLink } = req.body;
 
     const raw = WhatsappGroupLink;
@@ -1551,7 +1587,7 @@ const getMyCases = async (req, res) => {
         return res.status(401).json({ message: "נדרש להתחבר" });
     }
 
-    if (role !== 'Admin' && role !== 'Lawyer') {
+    if (req.firmPermissionMode === 'legacy' && role !== 'Admin' && role !== 'Lawyer') {
         return res.status(403).json({ message: "אין הרשאה", code: 'FORBIDDEN' });
     }
 
@@ -1561,7 +1597,7 @@ const getMyCases = async (req, res) => {
 
         if (!pagination.enabled) {
             const query = `${_buildBaseCaseQuery()} WHERE C.casemanagerid = $1 ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
-            const result = await pool.query(query, [userId]);
+            const result = await queryScopedCases(req, query, [userId]);
             const ids = [...new Set(result.rows.map(r => r.caseid))];
             const caseUsersMap = await _fetchCaseUsers(ids);
             return res.json(_mapCaseResults(result.rows, caseUsersMap));
@@ -1575,12 +1611,12 @@ const getMyCases = async (req, res) => {
                   ORDER BY C.createdat DESC, C.caseid DESC
                   LIMIT $2 OFFSET $3`;
 
-        const idsResult = await pool.query(idsQuery, [userId, limit, offset]);
+        const idsResult = await queryScopedCases(req, idsQuery, [userId, limit, offset]);
         const ids = idsResult.rows.map((r) => r.caseid);
         if (ids.length === 0) return res.json([]);
 
         const detailsQuery = `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) AND C.casemanagerid = $2 ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
-        const result = await pool.query(detailsQuery, [ids, userId]);
+        const result = await queryScopedCases(req, detailsQuery, [ids, userId]);
         const caseUsersMap = await _fetchCaseUsers(ids);
         return res.json(_mapCaseResults(result.rows, caseUsersMap));
     } catch (error) {
@@ -1600,6 +1636,13 @@ const createLicenseReminders = async (req, res) => {
     if (!caseId || !licenseExpiryDate || !Array.isArray(intervals) || intervals.length === 0) {
         return res.status(400).json({ message: 'חסרים פרטים ליצירת תזכורות' });
     }
+
+    const licenseCaseId = Number(caseId);
+    if (!Number.isFinite(licenseCaseId) || licenseCaseId <= 0) {
+        return res.status(400).json({ message: 'מזהה תיק לא תקין' });
+    }
+    const licenseAccessErr = await assertCaseRecordAccess(req, licenseCaseId, 'edit');
+    if (respondPermissionError(res, licenseAccessErr)) return;
 
     const expiry = new Date(licenseExpiryDate);
     if (isNaN(expiry.getTime())) {

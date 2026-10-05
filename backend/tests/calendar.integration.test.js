@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const identities = require('./helpers/identityFixture').useTestIdentities();
 
 // Ensure tests are not flaky due to low rate limits.
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -16,7 +17,8 @@ const jwt = require('jsonwebtoken');
 const request = require('supertest');
 const { resetStore } = require('../utils/rateLimiter');
 
-function makeToken({ userid = 1, role = 'Admin' } = {}) {
+function makeToken({ userid, role = 'Admin' } = {}) {
+    userid ??= role === 'User' ? identities.client : identities.admin;
     return jwt.sign(
         { userid, role, phoneNumber: '0500000000' },
         process.env.JWT_SECRET,
@@ -70,7 +72,7 @@ test('GET /api/calendar returns 403 for a non-lawyer/admin role', async () => {
     const app = require('../app');
     const res = await request(app)
         .get('/api/calendar')
-        .set('Authorization', `Bearer ${makeToken({ userid: 99999, role: 'User' })}`);
+        .set('Authorization', `Bearer ${makeToken({ userid: identities.client, role: 'User' })}`);
     assert.equal(res.status, 403);
 });
 
@@ -79,7 +81,7 @@ test('POST /api/calendar returns 403 for a non-lawyer/admin role', async () => {
     const app = require('../app');
     const res = await request(app)
         .post('/api/calendar')
-        .set('Authorization', `Bearer ${makeToken({ userid: 99999, role: 'User' })}`)
+        .set('Authorization', `Bearer ${makeToken({ userid: identities.client, role: 'User' })}`)
         .send({ title: 'x', start_time: new Date().toISOString(), end_time: new Date().toISOString() });
     assert.equal(res.status, 403);
 });
@@ -91,10 +93,10 @@ test('GET /api/calendar/:id rejects a non-numeric id (does not collide with /tod
     const app = require('../app');
     const res = await request(app)
         .get('/api/calendar/not-a-number')
-        .set('Authorization', `Bearer ${makeToken({ userid: 1, role: 'Admin' })}`);
+        .set('Authorization', `Bearer ${makeToken({ userid: identities.admin, role: 'Admin' })}`);
     // /today is matched by its own handler; a bogus id must NOT be treated as 'today'.
-    assert.notEqual(res.status, 401);
-    assert.ok(res.status === 400 || res.status === 404 || res.status === 422 || res.status === 500);
+    assert.equal(res.status, 400);
+    assert.equal(typeof res.body.message, 'string');
 });
 
 // ── Public iCal feed: unknown token must not leak data ──────────────────────

@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
@@ -28,8 +29,10 @@ function DetailRow({ label, children }) {
     );
 }
 
-export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCancel, onDelete, onUpdated, resolveTemplateLabel }) {
+export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCancel, onDelete, onUpdated, resolveTemplateLabel, readOnly = false }) {
     const { t } = useTranslation();
+    const navigate = useNavigate();
+    const isCalendarReminder = reminder?.source === "calendar";
     const isPending = reminder?.status === "PENDING";
     const isSigningReminder = reminder?.source === "signing" || String(reminder?.id || "").startsWith("sfr-");
 
@@ -158,6 +161,14 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
                 )}
             </SimpleContainer>
 
+            {isCalendarReminder && (
+                <SimpleContainer>
+                    <Text14>{reminder.audience === 'client' ? 'נמענים: לקוחות' : 'נמענים: צוות המשרד'}</Text14>
+                    <Text14>ערוצים: {Object.entries(reminder.channels || {}).filter(([, enabled]) => enabled === true || enabled === 'true' || enabled === 1 || enabled === '1').map(([key]) => ({ sms: 'SMS', email: 'אימייל', push: 'התראה באפליקציה' }[key] || key)).join(', ')}</Text14>
+                    {reminder.dispatch_not_before && new Date(reminder.dispatch_not_before).getTime() !== new Date(reminder.scheduled_for).getTime() && <Text14>השליחה תידחה לשעות הפעילות: {formatDateTimeForInput(reminder.dispatch_not_before)}</Text14>}
+                    <SecondaryButton onPress={() => { closePopUpFunction?.(); navigate(`/AdminStack/CalendarScreen?eventId=${reminder.calendar_event_id}`); }}>פתח את האירוע ביומן</SecondaryButton>
+                </SimpleContainer>
+            )}
             <SimpleContainer className="lw-reminderDetail__actions">
                 {editing ? (
                     <>
@@ -170,17 +181,17 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
                     </>
                 ) : (
                     <>
-                        {isPending && (
+                        {!readOnly && !isCalendarReminder && isPending && (
                             <PrimaryButton onPress={() => setEditing(true)}>
                                 {t("reminders.detail.edit")}
                             </PrimaryButton>
                         )}
-                        {isPending && onCancel && (
+                        {!isCalendarReminder && isPending && onCancel && (
                             <PrimaryButton onPress={() => { onCancel(reminder.id); closePopUpFunction?.(); }}>
                                 {t("reminders.cancel")}
                             </PrimaryButton>
                         )}
-                        {onDelete && (
+                        {!isCalendarReminder && onDelete && (
                             <PrimaryButton
                                 className="lw-reminderDetail__deleteBtn"
                                 onPress={() => { onDelete(reminder.id); closePopUpFunction?.(); }}

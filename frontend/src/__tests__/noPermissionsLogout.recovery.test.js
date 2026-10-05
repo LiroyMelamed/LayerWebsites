@@ -1,0 +1,10 @@
+import React from 'react';
+import {fireEvent,render,screen} from '@testing-library/react';
+import NoPermissionsScreen from '../screens/noPermissions/NoPermissionsScreen';
+const mockNavigate=jest.fn();
+jest.mock('react-router-dom',()=>({useNavigate:()=>mockNavigate}));
+jest.mock('react-i18next',()=>({useTranslation:()=>({t:key=>key})}));
+jest.mock('../components/simpleComponents/SimpleScreen',()=>({__esModule:true,default:({children})=><div>{children}</div>}));
+jest.mock('../components/simpleComponents/SimpleContainer',()=>({__esModule:true,default:({children})=><div>{children}</div>}));
+jest.mock('../components/styledComponents/buttons/SecondaryButton',()=>({__esModule:true,default:({children,onPress})=><button onClick={onPress}>{children}</button>}));
+test('a zero-grant user can leave the blocked screen and discard all session state',()=>{for(const key of ['token','refreshToken','role','isPlatformAdmin'])localStorage.setItem(key,'synthetic');const changed=jest.fn();window.addEventListener('lw-auth-changed',changed);render(<NoPermissionsScreen/>);fireEvent.click(screen.getByRole('button'));for(const key of ['token','refreshToken','role','isPlatformAdmin'])expect(localStorage.getItem(key)).toBeNull();expect(changed).toHaveBeenCalledTimes(1);expect(mockNavigate).toHaveBeenCalledWith('/',{replace:true});window.removeEventListener('lw-auth-changed',changed);});
