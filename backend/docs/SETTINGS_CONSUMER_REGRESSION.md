@@ -14,8 +14,11 @@ Run from `backend/`, sequentially:
 TZ=Asia/Jerusalem node --require ./tests/helpers/settingsIsolation.js --test tests/messageSettingsConsumers.integration.test.js
 TZ=Asia/Jerusalem node --require ./tests/helpers/settingsIsolation.js --test tests/caseNotificationSettings.integration.test.js
 TZ=UTC node --require ./tests/helpers/settingsIsolation.js --test tests/caseNotificationSettings.integration.test.js
+TZ=Asia/Jerusalem node --require ./tests/helpers/settingsIsolation.js --test tests/signingMessageSettings.integration.test.js
 ```
 
 The case suite catches calendar DATE conversion regressions: updating a company name or license date must not resend an estimated-completion notification when the calendar date did not change. The message suite checks appointment/hearing invitation/reminder templates, address/navigation changes, phone-meeting suppression, customer welcome and SMS sender selection.
 
 Validated on 2026-10-06: 8 message-consumer checks; 13 case-workflow checks in each timezone. Provider calls are captured at their boundary; real SMS delivery is a separate gate. Platform-setting UI, mobile visibility, PDF geometry and store delivery are separate acceptance tests, not implied by these results.
+
+Signing message coverage: new invitations, changed-template resend, due reminders, OTP-authorized completion for office and signer, and rejection reason. Five checks pass with synthetic PostgreSQL rows, in-memory object storage and captured provider calls. The consumer-only Express harness explicitly supplies synthetic roles; separate suites cover access control.
