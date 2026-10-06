@@ -2,7 +2,7 @@
  * Versioned permission catalog — defines what can be assigned to a role.
  * Role names (e.g. "מזכירה") are labels only; no semantic defaults by name.
  */
-const CATALOG_VERSION = 1;
+const CATALOG_VERSION = 3;
 
 /** @typedef {'all_firm' | 'assigned_only'} CasesDataScope */
 
@@ -39,6 +39,13 @@ const PERMISSION_AREAS = Object.freeze([
         supportsDataScope: false,
     },
     {
+        id: 'officeUsers',
+        pageKey: 'allManagers',
+        navKeys: ['allManagers'],
+        actions: ['view', 'manage'],
+        supportsDataScope: false,
+    },
+    {
         id: 'clients',
         pageKey: 'allClients',
         navKeys: ['allClients'],
@@ -50,7 +57,7 @@ const PERMISSION_AREAS = Object.freeze([
         pageKey: 'signingFiles',
         navKeys: ['signingFiles', 'uploadFileForSigning'],
         actions: ['view', 'manage', 'upload'],
-        supportsDataScope: false,
+        supportsDataScope: true,
     },
     {
         id: 'reminders',
@@ -117,7 +124,16 @@ function normalizeRolePermissions(raw) {
             const ds = src?.dataScope;
             dataScope = ds === 'all_firm' || ds === 'assigned_only' ? ds : 'assigned_only';
         }
-        areas[def.id] = { visible, actions, ...(dataScope ? { dataScope } : {}) };
+        let legacyCaseAssignment = false;
+        // Persisted v1 signing roles inherited case scope. Preserve those explicit grants until edited.
+        if (def.id === 'signing' && visible && raw?.version === 1 && !src?.dataScope) {
+            const oldCases = raw?.areas?.cases;
+            if (oldCases?.visible && oldCases.actions?.includes('view')) {
+                dataScope = oldCases.dataScope === 'all_firm' ? 'all_firm' : 'assigned_only';
+                legacyCaseAssignment = dataScope === 'assigned_only';
+            }
+        }
+        areas[def.id] = { visible, actions, ...(dataScope ? { dataScope } : {}), ...(legacyCaseAssignment ? { legacyCaseAssignment: true } : {}) };
     }
     return { version: CATALOG_VERSION, areas };
 }
@@ -184,6 +200,11 @@ function hasAreaAction(perms, areaId, action) {
 }
 
 /** @returns {'all_firm' | 'assigned_only'} */
+function getSigningDataScope(perms) {
+    const area = perms?.areas?.signing;
+    return area?.visible && area.dataScope === 'all_firm' ? 'all_firm' : 'assigned_only';
+}
+
 function getCasesDataScope(perms) {
     const area = perms?.areas?.cases;
     if (!area?.visible) return 'assigned_only';
@@ -198,6 +219,7 @@ function buildSessionScopeFromPermissions(perms, roleName) {
         pages: listVisiblePageKeys(perms),
         areas: perms.areas,
         casesDataScope: getCasesDataScope(perms),
+        signingDataScope: getSigningDataScope(perms),
     };
 }
 
@@ -237,6 +259,7 @@ module.exports = {
     isAreaVisible,
     hasAreaAction,
     getCasesDataScope,
+    getSigningDataScope,
     buildSessionScopeFromPermissions,
     buildPlatformAdminSessionScope,
     buildLegacySessionScope,

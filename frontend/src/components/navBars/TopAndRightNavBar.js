@@ -95,6 +95,10 @@ export default function TopAndRightNavBar({ children, LogoNavigate, GetNavBarDat
                 disabledContentColor={colors.disabledHighlighted}
                 onPress={() => {
                   localStorage.removeItem("token");
+                                localStorage.removeItem("refreshToken");
+                                localStorage.removeItem("role");
+                                localStorage.removeItem("isPlatformAdmin");
+                                window.dispatchEvent(new Event("lw-auth-changed"));
                   navigate('/');
                 }}
               >

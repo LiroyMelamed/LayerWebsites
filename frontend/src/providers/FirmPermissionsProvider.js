@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { staffRolesApi } from "../api/staffRolesApi";
 
 const FirmPermissionsContext = createContext(null);
@@ -7,7 +7,9 @@ export function FirmPermissionsProvider({ children }) {
     const [scope, setScope] = useState(null);
     const [loaded, setLoaded] = useState(false);
 
+    const requestRef = useRef(0);
     const refresh = useCallback(async () => {
+        const requestId = ++requestRef.current;
         const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
         if (!token) {
             setScope(null);
@@ -16,17 +18,19 @@ export function FirmPermissionsProvider({ children }) {
         }
         try {
             const data = await staffRolesApi.getSessionScope();
-            setScope(data);
+            if (requestId === requestRef.current && token === localStorage.getItem("token")) setScope(data);
         } catch {
-            setScope(null);
+            if (requestId === requestRef.current) setScope(null);
         } finally {
-            setLoaded(true);
+            if (requestId === requestRef.current && token === localStorage.getItem("token")) setLoaded(true);
         }
     }, []);
 
     useEffect(() => {
         refresh();
         const onFocus = () => refresh();
+        const onAuthChange = () => { setScope(null); setLoaded(false); refresh(); };
+        window.addEventListener("lw-auth-changed", onAuthChange);
         const onVisibility = () => {
             if (document.visibilityState === "visible") refresh();
         };
@@ -35,6 +39,7 @@ export function FirmPermissionsProvider({ children }) {
         const interval = setInterval(refresh, 60_000);
         return () => {
             window.removeEventListener("focus", onFocus);
+            window.removeEventListener("lw-auth-changed", onAuthChange);
             document.removeEventListener("visibilitychange", onVisibility);
             clearInterval(interval);
         };

@@ -46,6 +46,7 @@ test('Postgres firm staff permissions — full suite', async (t) => {
     const client = await pool.connect();
     const tag = Date.now();
     const ids = { userIds: [], roleIds: [], caseIds: [], tenantIds: [], signingFileIds: [] };
+    t.after(async () => { await pg.cleanupIds(pool, ids); await pool.end(); });
     let tenantA;
     let paUserId;
     let roleAssignedId;
@@ -57,6 +58,7 @@ test('Postgres firm staff permissions — full suite', async (t) => {
     let staffAllFirmId;
     let legacyLawyerId;
     let legacyAdminId;
+    let legacyStaffId;
     let caseAssigned;
     let caseOther;
     let signOther;
@@ -117,15 +119,18 @@ test('Postgres firm staff permissions — full suite', async (t) => {
             role: 'Admin',
             name: `Admin legacy ${tag}`,
         });
-        ids.userIds.push(staffAssignedId, staffAllFirmId, legacyLawyerId, legacyAdminId);
+        legacyStaffId = await pg.insertUser(client, {tenantId:tenantA.id, role:'Staff', name:`Unassigned staff ${tag}`});
+        ids.userIds.push(staffAssignedId, staffAllFirmId, legacyLawyerId, legacyAdminId, legacyStaffId);
 
         caseAssigned = await pg.insertCase(client, {
             name: `assigned_${tag}`,
+            tenantId: tenantA.id,
             managerId: staffAssignedId,
             linkUserIds: [staffAssignedId],
         });
         caseOther = await pg.insertCase(client, {
             name: `other_${tag}`,
+            tenantId: tenantA.id,
             managerId: null,
             linkUserIds: [],
         });
@@ -137,7 +142,7 @@ test('Postgres firm staff permissions — full suite', async (t) => {
         });
         signAssigned = await pg.insertSigningFile(client, {
             caseId: caseAssigned,
-            lawyerId: legacyLawyerId,
+            lawyerId: staffAssignedId,
         });
         ids.signingFileIds.push(signOther, signAssigned);
 
@@ -155,10 +160,10 @@ test('Postgres firm staff permissions — full suite', async (t) => {
     const tokenLawyer = makeToken({ userid: legacyLawyerId, role: 'Lawyer' });
     const tokenPa = makeToken({ userid: paUserId, role: 'Admin' });
 
-    // Legacy Staff without firm_staff_role_id (synthetic id — no user row)
+    // A real unassigned Staff identity is authenticated but forbidden.
     const legacyStaffDeny = await request(app)
         .get('/api/Customers/GetCustomers')
-        .set('Authorization', `Bearer ${makeToken({ userid: 88888881, role: 'Staff' })}`);
+        .set('Authorization', `Bearer ${makeToken({ userid: legacyStaffId, role: 'Staff' })}`);
     assert.equal(legacyStaffDeny.status, 403);
 
     const lawyerMy = await request(app)
@@ -466,11 +471,4 @@ test('Postgres firm staff permissions — full suite', async (t) => {
         .set('Authorization', `Bearer ${tokenAssigned}`);
     assert.equal(presignDeny.status, 403);
 
-    // cleanup
-    const cleanupClient = await pool.connect();
-    try {
-        await pg.cleanupIds(cleanupClient, ids);
-    } finally {
-        cleanupClient.release();
-    }
 });

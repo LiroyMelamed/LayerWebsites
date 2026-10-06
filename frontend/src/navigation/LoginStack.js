@@ -2,7 +2,7 @@ import { Suspense, lazy } from "react";
 import LoginVerifyOtpCodeFieldsProvider from "../providers/LoginVerifyOtpCodeFieldsProvider";
 import RouteFallback from "../components/simpleComponents/RouteFallback";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { AppRoles, isOfficeWebRole } from "../constant/appRoles";
+import { isOfficeWebRole } from "../constant/appRoles";
 import {
     AdminStackName,
     ClientStackName,

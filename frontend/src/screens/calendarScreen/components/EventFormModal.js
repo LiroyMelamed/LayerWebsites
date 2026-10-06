@@ -22,7 +22,6 @@ import {
     presetsForAllowedMinutes,
     channelsForEventType,
     normalizeSelectedOffsets,
-    normalizeSelectedChannels,
     normalizeChannelsForEventType,
     parseStoredChannels,
     parseOffsetsList,
@@ -41,7 +40,7 @@ import CalendarSmsTemplateEditor from "./CalendarSmsTemplateEditor";
 import { InviteIconButton } from "./CalendarInviteActionIcons";
 import IsraeliPhoneNumberValidation from "../../../functions/validation/IsraeliPhoneNumberValidation";
 import emailValidation from "../../../functions/validation/EmailValidation";
-import { toast, toastError, toastSuccess, toastWarning } from "../../../components/ui/toast";
+import { toastError, toastSuccess, toastWarning } from "../../../components/ui/toast";
 import { parseDatetimeLocal, toDatetimeLocal, toLocalYmdFromInput, jerusalemParts, zonedJerusalemInstant } from "../../../functions/date/datetimeLocal";
 import { meetingTypeLabelHe } from "../../../functions/calendar/meetingTypeLabelHe";
 import { supportsCalendarInviteSms } from "../../../functions/calendar/reminderKindLabelHe";
@@ -533,7 +532,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const [saving, setSaving] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [cancelling, setCancelling] = useState(false);
-    const [duplicating, setDuplicating] = useState(false);
+    const [, setDuplicating] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [confirmCancel, setConfirmCancel] = useState(false);
     const [eventStatus, setEventStatus] = useState(event?.eventStatus || "scheduled");
@@ -728,7 +727,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         setReminderSubject("");
         setReminderTemplateKey("GENERAL");
         setReminderTemplateData({});
-    }, [eventIdentity, event]);
+    }, [eventIdentity, event, isEdit]);
 
     // ─── Effect: load reminder email templates once ───────────────────────
     useEffect(() => {
@@ -889,7 +888,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
             hasAnyReminderChannel(prev) ? prev : defaultReminderChannels(allowedReminderChannelKeys),
             allowedReminderChannelKeys,
         ));
-    }, [eventType, isEdit, allowedReminderMinutes, allowedReminderChannelKeys, reminderTemplateKey]);
+    }, [eventType, isEdit, allowedReminderMinutes, allowedReminderChannelKeys, reminderTemplateKey, clients.length, reminderClientName, reminderToEmail]);
 
     // Re-apply hearing vs appointment SMS when email template switches to/from court date.
     useEffect(() => {
@@ -899,6 +898,11 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
         if (picked.clientReminder) setClientReminderSms(picked.clientReminder);
         if (picked.invite) setInviteSms(picked.invite);
     }, [reminderTemplateKey, eventType]);
+
+    // Settings load once per edit/create context; use the current template
+    // after an async response, without refetching on each selection.
+    const reminderTemplateKeyRef = useRef(reminderTemplateKey);
+    useEffect(() => { reminderTemplateKeyRef.current = reminderTemplateKey; }, [reminderTemplateKey]);
 
     // ─── Effect: load firm reminder options from platform settings ─────────
     // Channel allowlist comes from calendar.CALENDAR_REMINDER_CHANNELS only.
@@ -955,7 +959,7 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
                     const picked = pickCalendarSmsPair(
                         window.__CALENDAR_SMS_TEMPLATES__,
                         eventTypeRef.current,
-                        reminderTemplateKey
+                        reminderTemplateKeyRef.current
                     );
                     if (picked.clientReminder) setClientReminderSms(picked.clientReminder);
                     if (picked.invite) setInviteSms(picked.invite);
@@ -2114,30 +2118,15 @@ export default function EventFormModal({ event, onUpdated, onSaved, onDeleted, o
     const showConflictBanner = !isInternalScopedType && (conflictState.hasConflict || conflictState.hasLeaveConflict);
 
     const modalRootRef = useRef(null);
-    const leadNameInputRef = useRef(null);
-    const leadPhoneInputRef = useRef(null);
-    const leadEmailInputRef = useRef(null);
+    
+    
+    
     const prevPopupHeightRef = useRef(null);
     const sizeMorphCleanupRef = useRef(null);
 
-    /** Keep Tab inside the lead fields instead of jumping to chips/toggles behind them. */
-    const focusLeadField = useCallback((ref) => {
-        const el = ref?.current;
-        if (el && typeof el.focus === "function") el.focus();
-    }, []);
 
-    const handleLeadFieldTab = useCallback((e, { next, prev }) => {
-        if (e.key !== "Tab") return;
-        if (e.shiftKey) {
-            if (!prev) return;
-            e.preventDefault();
-            focusLeadField(prev);
-            return;
-        }
-        if (!next) return;
-        e.preventDefault();
-        focusLeadField(next);
-    }, [focusLeadField]);
+
+    
     // Compact (חופשה/חג) ↔ full form is the size jump users notice.
     const layoutMode = caseFormDraft
         ? "case"

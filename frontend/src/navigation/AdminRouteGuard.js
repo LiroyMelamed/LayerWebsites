@@ -1,3 +1,6 @@
+import { isOfficeWebRole } from "../constant/appRoles";
+import { ClientStackName, ClientMainScreenName } from "./screenPaths";
+import { getActiveTenantSlug, isMultiTenantApp, tenantPath } from "../lib/tenantSlug";
 import { useEffect } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useFirmPermissions } from "../providers/FirmPermissionsProvider";
@@ -11,7 +14,6 @@ const PLATFORM_ADMIN_ROUTE_KEYS = new Set([
     "firmStaffRoles",
     "platformSettings",
     "planUsage",
-    "allManagers",
 ]);
 
 export default function AdminRouteGuard({ children }) {
@@ -26,6 +28,11 @@ export default function AdminRouteGuard({ children }) {
         }
     }, [location.pathname, permissionMode, refresh]);
 
+    if (token && !isPlatformAdmin && !isOfficeWebRole(localStorage.getItem("role"))) {
+        const slug = getActiveTenantSlug();
+        const clientBase = isMultiTenantApp() && slug ? tenantPath(slug, ClientStackName) : ClientStackName;
+        return <Navigate to={clientBase + ClientMainScreenName} replace />;
+    }
     if (token && !loaded) {
         return <RouteFallback />;
     }

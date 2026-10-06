@@ -45,6 +45,8 @@ async function ensureFirmStaffRolesMigration() {
     if (fs.existsSync(mig05)) {
         await pool.query(fs.readFileSync(mig05, 'utf8'));
     }
+    const caseScopeMigration = path.join(__dirname, '../../migrations/2026-10-06_00_cases_tenant_scope.sql');
+    await pool.query(fs.readFileSync(caseScopeMigration, 'utf8'));
 }
 
 function makePermissions(areasPartial) {
@@ -93,12 +95,12 @@ async function insertRole(client, tenantId, name, permissionsObj) {
     return rows[0].id;
 }
 
-async function insertCase(client, { name, managerId, linkUserIds = [] }) {
+async function insertCase(client, { name, managerId, tenantId = null, linkUserIds = [] }) {
     const { rows } = await client.query(
-        `INSERT INTO cases (casename, casemanagerid, createdat, updatedat, isclosed, istagged)
-         VALUES ($1, $2, NOW(), NOW(), false, false)
+        `INSERT INTO cases (casename, casemanagerid, law_firm_tenant_id, createdat, updatedat, isclosed, istagged)
+         VALUES ($1, $2, $3, NOW(), NOW(), false, false)
          RETURNING caseid`,
-        [name, managerId || null],
+        [name, managerId || null, tenantId],
     );
     const caseId = rows[0].caseid;
     for (const uid of linkUserIds) {

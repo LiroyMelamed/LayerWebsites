@@ -154,7 +154,8 @@ export const getNavBarData = (navigate, openPopup, closePopup, _isFromApp, t, pe
     const platformLinks = buildPlatformAdminLinks({ navigate, t, isPlatformAdmin });
 
     if (permissionMode === "role") {
-        const filtered = businessLinks.filter((item) => {
+        const officeManagers = { navKey: 'allManagers', routeMatch: AllMangerScreenName, buttonText: t('nav.allManagers'), buttonScreen: t('nav.allManagers'), icon: null, onClick: () => navigate(AdminStackName + AllMangerScreenName) };
+        const filtered = [...businessLinks, officeManagers].filter((item) => {
             if (item.navKey === "newOrUpdateCase") {
                 return canAction("cases", "create") || canAction("cases", "edit");
             }

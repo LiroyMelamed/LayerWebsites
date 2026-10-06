@@ -1,3 +1,4 @@
+const requireUploadPermission = require("../middlewares/requireUploadPermission");
 const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middlewares/authMiddleware");
@@ -6,7 +7,7 @@ const filesController = require("../controllers/filesController");
 const stageFilesController = require("../controllers/stageFilesController");
 
 // Presigned URL endpoints
-router.get("/presign-upload", authMiddleware, filesController.presignUpload);
+router.get("/presign-upload", authMiddleware, requireUploadPermission, filesController.presignUpload);
 router.get("/presign-read", authMiddleware, filesController.presignRead);
 
 // Stage files — any authenticated user can list/read (access checks inside controller)

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useLoginVerifyOtpCodeFieldsProvider } from "../../../providers/LoginVerifyOtpCodeFieldsProvider";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
 import LoginSimpleScreen from "../../loginScreen/components/LoginSimpleScreen";
@@ -12,6 +12,7 @@ import loginApi from "../../../api/loginApi";
 import { useTranslation } from "react-i18next";
 import { resolvePostLoginPath } from "../../../lib/resolvePostLoginNavigation";
 import { getActiveTenantSlug } from "../../../lib/tenantSlug";
+import { toastFromApiError } from "../../../components/ui/showAppToast";
 import { AppRoles } from "../../../constant/appRoles";
 
 import "./LoginOtpScreen.scss";
@@ -33,19 +34,12 @@ export default function LoginOtpScreen() {
 
     const otpInputRef = useRef(null);
     const didAutoSubmitRef = useRef(false);
+    const submissionPendingRef = useRef(false);
 
-    const { isPerforming, performRequest } = useHttpRequest(loginApi.verifyOtp, navigateTo);
-
-    // Email login disabled for now (public signing only). Always verify by phone.
-    const verifyPayload = () => ({
-        phoneNumber,
-        tenantSlug: getActiveTenantSlug() || undefined,
+    const { isPerforming, performRequest } = useHttpRequest(loginApi.verifyOtp, navigateTo, (error) => {
+        submissionPendingRef.current = false;
+        toastFromApiError(error, "שגיאה בלתי צפויה");
     });
-    // const verifyPayload = () => (
-    //     loginChannel === "email"
-    //         ? { email: String(email || "").trim().toLowerCase() }
-    //         : { phoneNumber }
-    // );
 
     const handleInputChange = (event) => {
         const raw = event?.target?.value ?? "";
@@ -53,9 +47,14 @@ export default function LoginOtpScreen() {
         setOtpNumber(digitsOnly);
     };
 
-    const submitOtp = (code) => {
-        performRequest(verifyPayload(), code);
-    };
+    const submitOtp = useCallback((code) => {
+        const normalizedCode = String(code || "").replace(/\D/g, "");
+        if (submissionPendingRef.current || normalizedCode.length !== 6 || !phoneNumber || otpError != null) return;
+        submissionPendingRef.current = true;
+        didAutoSubmitRef.current = true;
+        // Email login remains disabled; verify the current phone context.
+        performRequest({ phoneNumber, tenantSlug: getActiveTenantSlug() || undefined }, normalizedCode);
+    }, [phoneNumber, otpError, performRequest]);
 
     const handleKeyDown = (event) => {
         if (event.key === 'Enter' && !isPerforming && otpError == null) {
@@ -76,7 +75,7 @@ export default function LoginOtpScreen() {
         // if (loginChannel === "email" ? !email : !phoneNumber) return;
         didAutoSubmitRef.current = true;
         submitOtp(code);
-    }, [otpNumber, phoneNumber, email, loginChannel, isPerforming, otpError, performRequest]);
+    }, [otpNumber, phoneNumber, email, loginChannel, isPerforming, otpError, submitOtp]);
 
     useEffect(() => {
         if (didAutoSubmitRef.current) return;
@@ -93,6 +92,8 @@ export default function LoginOtpScreen() {
                     otp: { transport: ["sms"] },
                     signal: abortController.signal,
                 });
+                // A resolved credential can race cleanup/account changes.
+                if (abortController.signal.aborted) return;
 
                 const code = String(cred?.code ?? "").replace(/\D/g, "").slice(0, 6);
                 if (!code) return;
@@ -111,7 +112,7 @@ export default function LoginOtpScreen() {
         return () => {
             abortController.abort();
         };
-    }, [phoneNumber, loginChannel, performRequest, setOtpNumber]);
+    }, [phoneNumber, loginChannel, submitOtp, setOtpNumber]);
 
     useEffect(() => {
         const id = setTimeout(() => {
@@ -129,6 +130,7 @@ export default function LoginOtpScreen() {
             localStorage.setItem("refreshToken", data.refreshToken);
         }
 
+        window.dispatchEvent(new Event("lw-auth-changed"));
         const target = await resolvePostLoginPath({
             role: data.role,
             isPlatformAdmin: Boolean(data.isPlatformAdmin),
@@ -145,7 +147,7 @@ export default function LoginOtpScreen() {
                     isPerforming={isPerforming}
                     buttonText={t('common.send')}
                     onPress={() => submitOtp(otpNumber)}
-                    disabled={otpError != null}
+                    disabled={isPerforming || otpError != null || String(otpNumber || "").length !== 6}
                 />
             }
         >

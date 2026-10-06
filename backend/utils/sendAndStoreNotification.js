@@ -1,3 +1,4 @@
+const { qaOutboundNoop } = require("../lib/qaOutboundNoop");
 const axios = require("axios");
 const pool = require("../config/db"); // Direct import of the pg pool
 
@@ -46,6 +47,8 @@ async function repairUserNotificationsSequence() {
  * @param {object} data - Optional data payload to send with the notification.
  */
 async function sendAndStoreNotification(userId, title, message, data = {}, options = {}) {
+    const suppressed = qaOutboundNoop('push');
+    if (suppressed) return suppressed;
     try {
         const sendPush = options?.sendPush !== false;
 

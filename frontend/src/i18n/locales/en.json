@@ -22,7 +22,6 @@
     "retry": "Try again",
     "notSpecified": "Not specified",
     "unassigned": "Unassigned",
-    "listTitleWithCount": "{{title}} ({{count}})",
     "refreshPull": "Pull down to refresh",
     "refreshing": "Refreshing…",
     "send": "Send",
@@ -1348,9 +1347,7 @@
     "calendarReminderOptionsHint": "Choose which reminder intervals appear when creating an event.",
     "calendarRemindersPollMinutes": "Poll interval (minutes)",
     "calendarReminderChannelsTitle": "Delivery channels for lawyers",
-    "calendarReminderChannelsHint": "Choose which channels appear when lawyers set event reminders.",
-    "managerHomeAiInsightsEnabled": "Manager Home AI insights",
-    "managerHomeAiInsightsEnabledDesc": "When enabled, the dashboard morning brief is AI-generated from existing operational data."
+    "calendarReminderChannelsHint": "Choose which channels appear when lawyers set event reminders."
   },
   "viewSignedDoc": {
     "invalidLink": "Invalid link",
@@ -1382,6 +1379,21 @@
       "activityCount_one": "{{count}} action",
       "activityCount_other": "{{count}} actions",
       "noActivityToday": "No recorded activity today"
+    }
+  },
+  "firmStaffRoles": {
+    "areas": {
+      "officeUsers": "Office administrators"
+    },
+    "actions": {
+      "officeUsers": {
+        "view": "View",
+        "manage": "Manage"
+      },
+      "evidenceDocuments": {
+        "view": "View",
+        "download": "Download"
+      }
     }
   }
 }
