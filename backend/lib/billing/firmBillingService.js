@@ -26,6 +26,8 @@ const {
     validateTakbullNotification,
     chargeTakbullToken,
     getTakbullCredentialsFromEnv,
+    getTakbullMode,
+    resolveSetupAmountIls,
     extractTokenFromValidated,
 } = require('../payments/takbullClient');
 const { sendFailedPaymentEmails } = require('./billingEmails');
@@ -38,7 +40,7 @@ function setChargeTakbullTokenForTests(fn) {
 }
 
 const GRACE_MS = 72 * 60 * 60 * 1000;
-const SETUP_AMOUNT_ILS = 1;
+const SETUP_AMOUNT_ILS = resolveSetupAmountIls();
 const RETRY_GAP_MS = 12 * 60 * 60 * 1000;
 const UPGRADE_RECOVERY_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -375,6 +377,8 @@ async function getBillingSnapshot() {
         priceYearlyIls,
         billingInterval,
         nextChargeIls,
+        setupCheckoutAmountIls: resolveSetupAmountIls(),
+        takbullMode: getTakbullMode(),
         payUrl: `${getFrontendBaseUrl()}/AdminStack/PlanUsage`,
     };
 }
@@ -1265,10 +1269,15 @@ async function handleTakbullNotification({ uniqId, query } = {}) {
         : extractTokenFromValidated(validated.raw);
 
     if (validated.paid) {
+        const txId = query?.transactionInternalNumber
+            || validated.raw?.transactionInternalNumber
+            || validated.raw?.TransactionInternalNumber
+            || validated.raw?.transaction?.transactionInternalNumber
+            || null;
         await settleSuccessfulPayment({
             intent,
             tokenInfo,
-            transactionId: query?.transactionInternalNumber || null,
+            transactionId: txId,
         });
         return { ok: true, paid: true };
     }
