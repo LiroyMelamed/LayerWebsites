@@ -1,0 +1,107 @@
+{
+  "status": "PASS",
+  "sourceCommit": "c33d1791f3ec87c9324ac906bdfea29b5f33586a",
+  "build": 14,
+  "fileId": 12,
+  "signedPdfSha256": "a8d850f7b386987c34d8b08d774abdeeb67ecfcf6a8dfacb1ebce496befdbb43",
+  "scope": "Native final PDF preview: all four signed pages including 90-degree rotation and nonzero CropBox; measured against contain-fit source signature",
+  "pages": [
+    {
+      "page": 1,
+      "pageViewportPixels": [
+        90,
+        161,
+        539,
+        720
+      ],
+      "expectedInkBounds800": [
+        144.0,
+        215.11111111111111,
+        291.1111111111111,
+        259.1111111111111
+      ],
+      "actualInkBounds800": [
+        142.4860853432282,
+        215.21335807050093,
+        290.90909090909093,
+        259.7402597402598
+      ],
+      "maxError800": 1.5139146567717887,
+      "maxErrorScreenPixels": 1.0199999999999927,
+      "rasterToleranceScreenPixels": 2
+    },
+    {
+      "page": 2,
+      "pageViewportPixels": [
+        0,
+        898,
+        720,
+        539
+      ],
+      "expectedInkBounds800": [
+        144.0,
+        215.11111111111111,
+        291.1111111111111,
+        259.1111111111111
+      ],
+      "actualInkBounds800": [
+        142.22222222222223,
+        213.33333333333331,
+        292.22222222222223,
+        258.88888888888886
+      ],
+      "maxError800": 1.7777777777777999,
+      "maxErrorScreenPixels": 1.6000000000000199,
+      "rasterToleranceScreenPixels": 2
+    },
+    {
+      "page": 5,
+      "pageViewportPixels": [
+        126,
+        342,
+        467,
+        611
+      ],
+      "expectedInkBounds800": [
+        144.0,
+        215.11111111111111,
+        291.1111111111111,
+        259.1111111111111
+      ],
+      "actualInkBounds800": [
+        142.18415417558887,
+        214.13276231263384,
+        291.220556745182,
+        258.6723768736617
+      ],
+      "maxError800": 1.8158458244111273,
+      "maxErrorScreenPixels": 1.0599999999999956,
+      "rasterToleranceScreenPixels": 2
+    },
+    {
+      "page": 6,
+      "pageViewportPixels": [
+        54,
+        970,
+        611,
+        467
+      ],
+      "expectedInkBounds800": [
+        144.0,
+        215.11111111111111,
+        291.1111111111111,
+        259.1111111111111
+      ],
+      "actualInkBounds800": [
+        142.71685761047462,
+        213.42062193126023,
+        290.671031096563,
+        259.2471358428805
+      ],
+      "maxError800": 1.6904891798508856,
+      "maxErrorScreenPixels": 1.291111111111114,
+      "rasterToleranceScreenPixels": 2
+    }
+  ],
+  "maxErrorScreenPixels": 1.6000000000000199
+}

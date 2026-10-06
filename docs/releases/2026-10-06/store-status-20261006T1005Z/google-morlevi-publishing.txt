@@ -1,0 +1,106 @@
+- progressbar
+- generic: מתבצעת טעינה של Google Play Console
+- banner:
+  - link "הלוגו של Google Play Console":
+    - /url: /console/u/0/developers/6928795478873529952/app-list
+    - button "הלוגו של Google Play Console"
+  - button "התראות שלא נקראו פתיחת מרכז ההתראות":
+    - img: notifications_unread
+    - generic: התראות שלא נקראו
+  - button "Morlevy Adv":
+    - generic: Morlevy Adv
+  - button "החלפת חשבון פיתוח":
+    - img "החלפת חשבון פיתוח"
+- navigation:
+  - link "כל האפליקציות":
+    - /url: /console/u/0/developers/6928795478873529952/app-list
+    - img: keyboard_backspace
+    - generic: כל האפליקציות
+  - list:
+    - listitem "מרכז שליטה":
+      - button "מרכז שליטה":
+        - img: dashboard
+        - generic: מרכז שליטה
+    - listitem "סטטיסטיקה":
+      - button "סטטיסטיקה":
+        - img: bar_chart
+        - generic: סטטיסטיקה
+    - listitem "סיכום השינויים לפרסום":
+      - button "סיכום השינויים לפרסום":
+        - img: overview
+        - generic: סיכום השינויים לפרסום
+    - listitem "מוגן על ידי Play":
+      - button "מוגן על ידי Play":
+        - img: shield
+        - generic: מוגן על ידי Play
+    - listitem "בדיקה ופרסום":
+      - button "בדיקה ופרסום":
+        - img: rocket_launch
+        - generic: בדיקה ופרסום
+    - listitem "מעקב ושיפור":
+      - button "מעקב ושיפור":
+        - img: vital_signs
+        - generic: מעקב ושיפור
+    - listitem "הגדלת מספר המשתמשים":
+      - button "הגדלת מספר המשתמשים":
+        - img: finance_mode
+        - generic: הגדלת מספר המשתמשים
+    - listitem "ייצור הכנסות עם Play":
+      - button "ייצור הכנסות עם Play":
+        - img: sell
+        - generic: ייצור הכנסות עם Play
+- heading "סיכום השינויים לפרסום" [level=1]
+- text: בדף הזה אפשר לראות סקירה כללית של השינויים שנערכו באפליקציה ולקבוע מתי הם יישלחו לבדיקה או לפרסום.
+- button "הצגת פרטים נוספים על סיכום השינויים לפרסום": יותר פריטים
+- button "הפרסום המנוהל כבוי":
+  - img: sync_disabled
+  - generic: הפרסום המנוהל כבוי
+  - img: arrow_drop_down
+- img: history
+- generic: פורסם לאחרונה בתאריך 28 בספטמבר 2026
+- link "פעילות שליחה":
+  - /url: /console/u/0/developers/6928795478873529952/app/4975757872082180717/publishing/submission-activity
+  - generic: פעילות שליחה
+  - img: arrow_right_alt
+- heading "השינויים בבדיקה" [level=2]
+- button "מידע נוסף על \"השינויים בבדיקה\"":
+  - img: help
+- button "הסרת השינויים": הסרת השינויים
+- 'button "הסתרת התוכן: השינויים בבדיקה" [expanded]':
+  - generic: הסתרה
+  - img: expand_less
+- img: inventory
+- generic: השינויים שביצעת נבדקים עכשיו. יכול להיות שנמצא בעיות נוספות במהלך בדיקת האפליקציה.
+- link "במרכז העזרה אפשר למצוא מידע נוסף על הבדיקות האוטומטיות שאנחנו מבצעים כדי לזהות בעיות לפני שליחת השינויים לבדיקה":
+  - /url: https://support.google.com/googleplay/android-developer/answer/14807773
+  - generic: למידע נוסף
+- grid "שינויים":
+  - row "הפריט השתנה תיאור":
+    - columnheader "הפריט השתנה"
+    - columnheader "תיאור"
+    - cell
+  - row "ייצור":
+    - img: rocket_launch
+    - gridcell "ייצור"
+  - row "1.0.5 התחלת השקה מלאה":
+    - gridcell "1.0.5":
+      - generic: 1.0.5
+    - gridcell "התחלת השקה מלאה":
+      - generic: התחלת השקה מלאה
+    - gridcell:
+      - listbox "עוד פעולות":
+        - button "עוד פעולות":
+          - img: more_vert
+- link "עדכוני מוצרים":
+  - /url: https://play.google.com/console/about/whats-new/
+- link "לוח הבקרה של סטטוס שירותי Play":
+  - /url: https://status.play.google.com/
+- link "עזרה":
+  - /url: /console/u/0/developers/6928795478873529952/help-and-support?app=4975757872082180717
+- generic: ‎© 2026 Google
+- link "פרטיות":
+  - /url: https://www.google.com/policies/privacy/
+- link "הסכם הפצה למפתחים":
+  - /url: https://play.google.com/about/developer-distribution-agreement.html
+- link "תנאים והגבלות":
+  - /url: https://play.google.com/about/console/terms-of-service/
