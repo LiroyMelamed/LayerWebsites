@@ -43,3 +43,7 @@ The accompanying manifest index points to frozen user-facing evidence in `/Users
 Native/frontend build-tool advisories remain, including critical proxy-addr in the frontend development-server tree. The production API version is patched and its runtime audit is clean. Production frontend hosting serves static files; no development server is deployed. This is not a clean overall audit or comprehensive exploitability claim. Third-party react-native-view-shot module lint errors remain; app lint passes. Biometric migration has focused code tests, not a physical-device upgrade proof with an old customer key. Store approval remains external.
 
 The next feature is reusable document templates and bulk signing. Its owner-provided specification is preserved; implementation follows completion of the current release.
+
+## Archived native harness
+
+`native-ui-harness/` preserves the ADB/XCTest controllers and PDF measurement scripts used in this run, with a SHA-256 manifest. These are QA-only tools requiring fresh owned fixtures and adjusted local paths; removed fixture credentials and session state are intentionally absent. `production-tags.json` records the pushed Web/API and monitor tags.
