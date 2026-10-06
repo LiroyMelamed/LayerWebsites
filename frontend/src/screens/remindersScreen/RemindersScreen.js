@@ -168,7 +168,7 @@ export default function RemindersScreen() {
         if (isSmallScreen) {
             return reminders.map((r) => ({
                 Column0: r.client_name || "—",
-                Column1: formatDate(r.scheduled_for),
+                Column1: <time dateTime={r.scheduled_for} dir="ltr">{formatDate(r.scheduled_for)}</time>,
                 Column2: (
                     <SimpleContainer className={`lw-reminders__badge lw-reminders__badge--${(r.status || "").toLowerCase()}`}>
                         <Text14>{t(`reminders.status.${(r.status || "").toLowerCase()}`)}</Text14>
@@ -225,7 +225,7 @@ export default function RemindersScreen() {
                     />
                 </SimpleContainer>
 
-                <SimpleCard className="lw-reminders__list">
+                <SimpleCard className={`lw-reminders__list${isSmallScreen ? ' lw-reminders__list--compact' : ''}`}>
                     <SimpleTable
                         titles={tableTitles}
                         data={tableData}
