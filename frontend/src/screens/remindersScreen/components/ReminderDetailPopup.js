@@ -162,14 +162,26 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
             </SimpleContainer>
 
             {isCalendarReminder && (
-                <SimpleContainer>
-                    <Text14>{reminder.audience === 'client' ? 'נמענים: לקוחות' : 'נמענים: צוות המשרד'}</Text14>
-                    <Text14>ערוצים: {Object.entries(reminder.channels || {}).filter(([, enabled]) => enabled === true || enabled === 'true' || enabled === 1 || enabled === '1').map(([key]) => ({ sms: 'SMS', email: 'אימייל', push: 'התראה באפליקציה' }[key] || key)).join(', ')}</Text14>
-                    {reminder.dispatch_not_before && new Date(reminder.dispatch_not_before).getTime() !== new Date(reminder.scheduled_for).getTime() && <Text14>השליחה תידחה לשעות הפעילות: {formatDateTimeForInput(reminder.dispatch_not_before)}</Text14>}
-                    <SecondaryButton onPress={() => { closePopUpFunction?.(); navigate(`/AdminStack/CalendarScreen?eventId=${reminder.calendar_event_id}`); }}>פתח את האירוע ביומן</SecondaryButton>
+                <SimpleContainer className="lw-reminderDetail__delivery">
+                    <dl className="lw-reminderDetail__deliveryInfo">
+                        <div>
+                            <dt>נמענים</dt>
+                            <dd>{reminder.audience === 'client' ? 'לקוחות' : 'צוות המשרד'}</dd>
+                        </div>
+                        <div>
+                            <dt>ערוצים</dt>
+                            <dd>{Object.entries(reminder.channels || {}).filter(([, enabled]) => enabled === true || enabled === 'true' || enabled === 1 || enabled === '1').map(([key]) => ({ sms: 'SMS', email: 'אימייל', push: 'התראה באפליקציה' }[key] || key)).join(', ') || '—'}</dd>
+                        </div>
+                    </dl>
+                    {reminder.dispatch_not_before && new Date(reminder.dispatch_not_before).getTime() !== new Date(reminder.scheduled_for).getTime() && (
+                        <p className="lw-reminderDetail__deliveryDelay">
+                            <span>השליחה תידחה לשעות הפעילות:</span>
+                            <time dateTime={reminder.dispatch_not_before} dir="ltr">{formatDateTimeForInput(reminder.dispatch_not_before)}</time>
+                        </p>
+                    )}
                 </SimpleContainer>
             )}
-            <SimpleContainer className="lw-reminderDetail__actions">
+            <SimpleContainer className={`lw-reminderDetail__actions${isCalendarReminder ? ' lw-reminderDetail__actions--calendar' : ''}`}>
                 {editing ? (
                     <>
                         <PrimaryButton onPress={handleSave} isPerforming={isSaving}>
@@ -181,6 +193,15 @@ export default function ReminderDetailPopup({ reminder, closePopUpFunction, onCa
                     </>
                 ) : (
                     <>
+                        {isCalendarReminder && (
+                            <SecondaryButton
+                                className="lw-reminderDetail__calendarButton"
+                                style={{ height: 'auto', minHeight: '2.75rem' }}
+                                onPress={() => { closePopUpFunction?.(); navigate(`/AdminStack/CalendarScreen?eventId=${reminder.calendar_event_id}`); }}
+                            >
+                                פתח את האירוע ביומן
+                            </SecondaryButton>
+                        )}
                         {!readOnly && !isCalendarReminder && isPending && (
                             <PrimaryButton onPress={() => setEditing(true)}>
                                 {t("reminders.detail.edit")}
