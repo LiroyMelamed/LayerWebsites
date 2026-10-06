@@ -9,6 +9,7 @@ const { encryptSecret } = require('../billing/secrets');
 const {
     createTakbullPaymentPage,
     getTakbullCredentialsFromEnv,
+    resolveSetupAmountIls,
 } = require('../payments/takbullClient');
 const { getPublicApiBaseUrl, getFrontendBaseUrl } = require('../billing/tenantBillingDefaults');
 const { createTenant, slugAvailable } = require('./tenantService');
@@ -16,7 +17,7 @@ const { isValidSlug, normalizeSlug } = require('./tenantContext');
 const { sendMessage } = require('../../utils/sendMessage');
 
 const TRIAL_DAYS = Number(process.env.SIGNUP_TRIAL_DAYS || 90);
-const SETUP_AMOUNT_ILS = 1;
+const SETUP_AMOUNT_ILS = resolveSetupAmountIls();
 
 function addDays(from, days) {
     const d = new Date(from.getTime());
