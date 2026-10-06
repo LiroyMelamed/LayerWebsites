@@ -27,6 +27,8 @@ function billingPayload(snap, extra = {}) {
             payUrl: snap.payUrl,
             payments: snap.payments || [],
             upcomingPayment: snap.upcomingPayment || null,
+            setupCheckoutAmountIls: snap.setupCheckoutAmountIls ?? 1,
+            takbullMode: snap.takbullMode || 'prod',
         },
         package: snap.package,
         ...extra,
@@ -195,6 +197,25 @@ exports.createCheckout = async (req, res) => {
         }
         console.error('createCheckout error:', e);
         return res.status(500).json({ message: e.message || 'שגיאה בפתיחת סליקה' });
+    }
+};
+
+exports.confirmCheckout = async (req, res) => {
+    try {
+        const intentId = req.body?.intentId || null;
+        const uniqId = req.body?.uniqId || null;
+        if (!intentId && !uniqId) {
+            return res.status(400).json({ message: 'חסר מזהה תשלום' });
+        }
+        await billing.handleTakbullReturn({ uniqId, intentId });
+        const snap = await billing.getBillingSnapshot();
+        return res.status(200).json({
+            success: true,
+            ...billingPayload(snap),
+        });
+    } catch (e) {
+        console.error('confirmCheckout error:', e);
+        return res.status(500).json({ message: e.message || 'שגיאה באימות התשלום' });
     }
 };
 
