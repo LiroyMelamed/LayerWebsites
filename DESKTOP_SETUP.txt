@@ -1,0 +1,7 @@
+Desktop setup
+
+Clone this repository and check out the desktop handoff branch listed in the handoff report. Install the Node/package-manager version declared by the repository and install dependencies with its lockfile. Follow its existing README for database and service setup.
+
+Actual .env files are intentionally excluded from Git. Use the corresponding .env.example templates for configuration and enter credentials locally. Never commit active env files. Run node scripts/check-env-safety.cjs before committing configuration changes.
+
+Frontend start/build creates .env from .env.example when missing; tenant build scripts select the corresponding production template or existing local override.
