@@ -299,12 +299,11 @@ async function chargeTakbullToken(input) {
     };
 }
 
-function getTakbullCredentialsFromEnv() {
-    const apiKey = String(process.env.TAKBULL_API_KEY || '').trim();
-    const apiSecret = String(process.env.TAKBULL_API_SECRET || '').trim();
-    if (!apiKey || !apiSecret) return null;
-    return { apiKey, apiSecret };
-}
+const {
+    getTakbullCredentialsFromEnv,
+    getTakbullMode,
+    resolveSetupAmountIls,
+} = require('./takbullCredentials');
 
 module.exports = {
     TAKBULL_API_BASE,
@@ -316,5 +315,7 @@ module.exports = {
     validateTakbullNotification,
     chargeTakbullToken,
     getTakbullCredentialsFromEnv,
+    getTakbullMode,
+    resolveSetupAmountIls,
     requireCreds,
 };
