@@ -17,6 +17,13 @@ async function assertCaseRecordAccess(req, caseId, action = 'view') {
         if (permErr) return permErr;
     }
 
+    if (req.firmPermissionMode === 'role') {
+        const { caseScopeFilter } = require('./caseScope');
+        const filter = caseScopeFilter(req, 'scope_case', 2);
+        const { rows } = await pool.query(`SELECT 1 FROM cases scope_case WHERE scope_case.caseid = $1 AND ${filter.sql} LIMIT 1`, [caseId, ...filter.params]);
+        return rows.length ? null : createAppError('FORBIDDEN', 403, getHebrewMessage('FORBIDDEN'));
+    }
+
     if (canViewAllFirmCases(req)) return null;
 
     const userId = req.user?.UserId;

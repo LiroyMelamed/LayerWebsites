@@ -84,7 +84,7 @@ router.get("/saved-items/:type/:index/data-url", authMiddleware, requireSigningE
 router.delete("/saved-items/:type/:index", authMiddleware, requireSigningEnabledForUser, signingFileController.deleteSavedItem);
 
 // עו"ד מעלה קובץ לחתימה
-router.post("/upload", ...signUpload, requireSigningEnabledForUser, signingFileController.uploadFileForSigning);
+router.post("/upload", ...signUpload, requireSigningOfficeAccess, requireSigningEnabledForUser, signingFileController.uploadFileForSigning);
 
 // רשימת קבצים של הלקוח (pending/signed/rejected)
 router.get("/client-files", ...signerRead, requireSigningEnabledForUser, signingFileController.getClientSigningFiles);
@@ -151,7 +151,7 @@ router.post("/:signingFileId/reject", authMiddleware, requireSigningEnabledForSi
 router.post("/:signingFileId/reupload", ...signManage, requireSigningEnabledForSigningFile, ...signFileScope, signingFileController.reuploadFile);
 
 // הורדת קובץ
-router.get("/:signingFileId/download", ...signView, requireSigningEnabledForSigningFile, ...signFileScope, signingFileController.getSignedFileDownload);
+router.get("/:signingFileId/download", ...signerRead, requireSigningEnabledForSigningFile, ...signFileScope, signingFileController.getSignedFileDownload);
 
 // מחיקת קובץ ממתין
 router.delete("/:signingFileId", ...signManage, requireSigningEnabledForSigningFile, ...signFileScope, signingFileController.deleteSigningFile);

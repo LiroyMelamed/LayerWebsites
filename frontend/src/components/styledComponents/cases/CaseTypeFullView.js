@@ -1,3 +1,4 @@
+import { useFirmPermissions } from "../../../providers/FirmPermissionsProvider";
 import { NumberOfStagesValidation } from "../../../functions/validation/NumberOfStagesValidation";
 import SecondaryButton from "../../../components/styledComponents/buttons/SecondaryButton";
 import HebrewCharsValidation from "../../../functions/validation/HebrewCharsValidation";
@@ -17,6 +18,7 @@ import TertiaryButton from "../buttons/TertiaryButton";
 
 export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, onFailureFunction, closePopUpFunction, initialValues, style: _style }) {
     const { t } = useTranslation();
+    const canManage = Boolean(useFirmPermissions()?.canAction("caseTypes", "manage"));
     const initName = caseTypeDetails?.CaseTypeName || initialValues?.CaseTypeName || "";
     const initStages = caseTypeDetails?.NumberOfStages || initialValues?.NumberOfStages || "";
     const initDescs = caseTypeDetails?.Descriptions || initialValues?.Descriptions || [{ Stage: 1, Text: "", Timestamp: "", New: false }];
@@ -53,6 +55,7 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
     );
 
     const handleSaveCaseType = () => {
+        if (!canManage) return;
         if (!caseTypeName || !numberOfStages) {
             return;
         }
@@ -71,10 +74,12 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
     };
 
     const handleDeleteCaseType = () => {
+        if (!canManage) return;
         deleteCaseType(caseTypeDetails.CaseTypeId);
     };
 
     const handleAddStage = () => {
+        if (!canManage) return;
         setNumberOfStages(prev => prev + 1);
 
         setDescriptions((prev) => {
@@ -153,6 +158,7 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
                 <SimpleContainer className="lw-caseTypeFullView__row">
                     <SimpleContainer className="lw-caseTypeFullView__inputWrap">
                         <SimpleInput
+                            disabled={!canManage}
                             title={t('caseTypes.caseTypeName')}
                             value={caseTypeName}
                             onChange={(e) => setCaseTypeName(e.target.value)}
@@ -161,6 +167,7 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
                     </SimpleContainer>
                     <SimpleContainer className="lw-caseTypeFullView__inputWrap">
                         <SimpleInput
+                            disabled={!canManage}
                             title={t('cases.stageCount')}
                             value={numberOfStages}
                             onChange={(e) => setNumberOfStages(Number(e.target.value))}
@@ -205,6 +212,7 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
                             )}
                         </SimpleContainer>
                         <SimpleTextArea
+                            disabled={!canManage}
                             title={t('cases.descriptionNumber', { number: index + 1 })}
                             value={description.Text || ""}
                             onChange={(text) => {
@@ -219,7 +227,7 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
                 ))}
 
                 <SimpleContainer className="lw-caseTypeFullView__buttonsRow">
-                    {caseTypeDetails && (
+                    {canManage && caseTypeDetails && (
                         <TertiaryButton
                             onPress={handleDeleteCaseType}
                             isPerforming={isDeleting}
@@ -227,18 +235,18 @@ export default function CaseTypeFullView({ caseTypeDetails, rePerformRequest, on
                             {isDeleting ? t('common.deleting') : t('caseTypes.deleteCaseType')}
                         </TertiaryButton>
                     )}
-                    <SecondaryButton
+                    {canManage && <SecondaryButton
                         onPress={handleAddStage}
                     >
                         {t('caseTypes.addStage')}
-                    </SecondaryButton>
-                    <PrimaryButton
+                    </SecondaryButton>}
+                    {canManage && <PrimaryButton
                         onPress={handleSaveCaseType}
                         isPerforming={isPerforming}
                         disabled={hasError}
                     >
                         {isPerforming ? t('common.saving') : caseTypeDetails ? t('caseTypes.updateCaseType') : t('caseTypes.saveCaseType')}
-                    </PrimaryButton>
+                    </PrimaryButton>}
                     <SecondaryButton
                         onPress={() => closePopUpFunction?.()}
                         className="lw-cancelButton"

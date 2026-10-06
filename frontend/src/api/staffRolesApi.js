@@ -3,6 +3,12 @@ import ApiUtils from "./apiUtils";
 const BASE = "staff";
 
 function unwrap(res) {
+    if (res?.success === false) {
+        const error = new Error(res.message || res.data?.message || "Request failed");
+        error.status = res.status;
+        error.data = res.data;
+        throw error;
+    }
     if (res && res.success === true && Object.prototype.hasOwnProperty.call(res, "data")) {
         return res.data;
     }

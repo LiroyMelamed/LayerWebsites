@@ -13,13 +13,30 @@ module.exports = async function attachFirmPermissions(req, res, next) {
     req.firmStaffRoleName = null;
     req.firmStaffRoleId = null;
     req.isPlatformAdminUser = false;
+    req.firmTenantId = null;
+    req.firmPermissionContextValidated = false;
 
     const userId = Number(req.user?.UserId);
     if (!Number.isFinite(userId) || userId <= 0) {
-        return next();
+        return next(createAppError('UNAUTHORIZED', 401, getHebrewMessage('UNAUTHORIZED')));
     }
 
     try {
+        // Customer identities validate their current base role without staff-schema dependencies.
+        if (['User', 'Client', 'ExternalSigner'].includes(req.user?.Role)) {
+            const identity = await pool.query('SELECT userid, role, law_firm_tenant_id FROM users WHERE userid = $1 LIMIT 1', [userId]);
+            const current = identity.rows[0];
+            if (!current || !['User', 'Client', 'ExternalSigner'].includes(current.role)) {
+                return next(createAppError('UNAUTHORIZED', 401, getHebrewMessage('UNAUTHORIZED')));
+            }
+            // Use the current DB customer role; do not force re-login for customer enum changes.
+            req.user.Role = current.role;
+            if (req.tenant?.id && String(current.law_firm_tenant_id || '') !== String(req.tenant.id)) {
+                return next(createAppError('FORBIDDEN', 403, getHebrewMessage('FORBIDDEN')));
+            }
+            req.firmTenantId = current.law_firm_tenant_id || null;
+            return next();
+        }
         const result = await pool.query(
             `SELECT u.userid,
                     u.role,
@@ -43,10 +60,19 @@ module.exports = async function attachFirmPermissions(req, res, next) {
         const rows = result.rows;
 
         if (!rows.length) {
-            return next();
+            return next(createAppError('UNAUTHORIZED', 401, getHebrewMessage('UNAUTHORIZED')));
         }
 
         const row = rows[0];
+        if (req.tenant?.id && String(row.law_firm_tenant_id || '') !== String(req.tenant.id)) {
+            return next(createAppError('FORBIDDEN', 403, getHebrewMessage('FORBIDDEN')));
+        }
+        if (row.role && !['Admin', 'Lawyer', 'Staff'].includes(row.role)) {
+            return next(createAppError('UNAUTHORIZED', 401, getHebrewMessage('UNAUTHORIZED')));
+        }
+        if (row.role) req.user.Role = row.role;
+        req.firmPermissionContextValidated = true;
+        req.firmTenantId = row.law_firm_tenant_id || null;
         req.isPlatformAdminUser = Boolean(row.is_platform_admin);
 
         if (req.isPlatformAdminUser) {
@@ -65,9 +91,7 @@ module.exports = async function attachFirmPermissions(req, res, next) {
                 return next(err);
             }
             if (
-                row.law_firm_tenant_id &&
-                row.role_tenant_id &&
-                String(row.law_firm_tenant_id) !== String(row.role_tenant_id)
+                String(row.law_firm_tenant_id || '') !== String(row.role_tenant_id || '')
             ) {
                 const err = createAppError('FORBIDDEN', 403, getHebrewMessage('FORBIDDEN'));
                 err.__firmPermissionBlocked = true;
@@ -82,15 +106,8 @@ module.exports = async function attachFirmPermissions(req, res, next) {
 
         return next();
     } catch (err) {
-        if (err?.code === '42P01' || err?.code === '42703') {
-            req.firmPermissionMode = 'legacy';
-            return next();
-        }
-        const connCodes = new Set(['ECONNREFUSED', 'ENOTFOUND', 'ETIMEDOUT', '57P01', '08006']);
-        if (connCodes.has(err?.code) || /connect/i.test(String(err?.message || ''))) {
-            req.firmPermissionMode = 'legacy';
-            return next();
-        }
+        // A failed permissions lookup must not turn an assigned role into legacy access.
+        // Forward transient database failures so protected handlers cannot run.
         return next(err);
     }
 };

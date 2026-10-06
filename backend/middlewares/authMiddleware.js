@@ -4,6 +4,7 @@ const { consume } = require("../utils/rateLimiter");
 const { createAppError } = require('../utils/appError');
 const { getHebrewMessage } = require('../utils/errors.he');
 const attachFirmPermissions = require('./attachFirmPermissions');
+const { applyLegacyOfficeRole } = require('../lib/officeRole');
 
 const SECRET_KEY = process.env.JWT_SECRET;
 if (!SECRET_KEY) {
@@ -86,8 +87,9 @@ const authMiddleware = (req, res, next) => {
             return next(jwtErr);
         }
         attachFirmPermissions(req, res, (permErr) => {
-            if (permErr?.__firmPermissionBlocked) return next(permErr);
-            return next(permErr);
+            if (permErr) return next(permErr);
+            applyLegacyOfficeRole(req);
+            return next();
         });
     });
 };

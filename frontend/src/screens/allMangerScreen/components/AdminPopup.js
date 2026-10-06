@@ -1,3 +1,4 @@
+import { useFirmPermissions } from '../../../providers/FirmPermissionsProvider';
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import SimpleContainer from "../../../components/simpleComponents/SimpleContainer";
@@ -23,6 +24,8 @@ function readInitialFirmStaffRoleId(details) {
 
 export default function AdminPopup({ adminDetails, rePerformRequest, onFailureFunction, closePopUpFunction, style }) {
     const { t } = useTranslation();
+    const { permissionMode, canAction } = useFirmPermissions() || {};
+    const canManageOfficeUsers = permissionMode !== 'role' || Boolean(canAction?.('officeUsers', 'manage'));
     const isPlatformAdminSession =
         typeof window !== "undefined" && localStorage.getItem("isPlatformAdmin") === "true";
     const userRole = adminDetails?.role || "Admin";
@@ -115,6 +118,7 @@ export default function AdminPopup({ adminDetails, rePerformRequest, onFailureFu
     const [savingAll, setSavingAll] = useState(false);
 
     const handleSave = async () => {
+        if (!canManageOfficeUsers) return;
         if (hasError || savingAll) return;
 
         const firmStaffRoleChanged =
@@ -168,6 +172,7 @@ export default function AdminPopup({ adminDetails, rePerformRequest, onFailureFu
     };
 
     const handleDeleteAdmin = () => {
+        if (!canManageOfficeUsers) return;
         deleteAdmin(adminDetails.userid);
         closePopUpFunction?.();
     };
@@ -274,6 +279,7 @@ export default function AdminPopup({ adminDetails, rePerformRequest, onFailureFu
                         <SecondaryButton
                             className="lw-adminPopup__actionButton"
                             size={buttonSizes.MEDIUM}
+                            disabled={!canManageOfficeUsers}
                             onPress={handleDeleteAdmin}
                         >
                             {isPerformingDeleteAdmin ? t("common.deleting") : t("admins.deleteAdmin")}
@@ -283,7 +289,7 @@ export default function AdminPopup({ adminDetails, rePerformRequest, onFailureFu
                         className="lw-adminPopup__actionButton"
                         size={buttonSizes.MEDIUM}
                         onPress={handleSave}
-                        disabled={hasError || savingAll}
+                        disabled={!canManageOfficeUsers || hasError || savingAll}
                     >
                         {savingAll
                             ? t("common.saving")

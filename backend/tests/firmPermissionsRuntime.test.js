@@ -8,9 +8,9 @@ test('legacy Admin sees all firm cases', () => {
     assert.equal(canViewAllFirmCases(req), true);
 });
 
-test('legacy Lawyer sees assigned only', () => {
+test('legacy Lawyer shares Admin firm-wide capabilities', () => {
     const req = { firmPermissionMode: 'legacy', user: { Role: 'Lawyer' } };
-    assert.equal(canViewAllFirmCases(req), false);
+    assert.equal(canViewAllFirmCases(req), true);
 });
 
 test('role mode uses dataScope not JWT role', () => {

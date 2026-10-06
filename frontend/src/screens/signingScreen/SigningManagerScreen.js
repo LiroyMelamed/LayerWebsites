@@ -51,7 +51,8 @@ import RequestLoadError from '../../components/ui/RequestLoadError';
 export const SigningManagerScreenName = "/SigningManagerScreen";
 
 export default function SigningManagerScreen() {
-    const { canAction } = useFirmPermissions() || { canAction: () => true };
+    const { canAction, scope: permissionScope, permissionMode, loaded } = useFirmPermissions() || { canAction: () => false };
+    const canViewOfficeFiles = loaded && (permissionMode === 'legacy' || permissionMode === 'platform_admin' || permissionScope?.signingDataScope === 'all_firm');
     const canSignUpload = canAction('signing', 'upload');
     const canSignManage = canAction('signing', 'manage');
     const { isSmallScreen } = useScreenSize();
@@ -62,6 +63,9 @@ export default function SigningManagerScreen() {
     const { isFromApp } = useFromApp();
     const [activeTab, setActiveTab] = useState("pending");
     const [scope, setScope] = useState("mine");
+    useEffect(() => {
+        if (!canViewOfficeFiles && scope === 'office') setScope('mine');
+    }, [canViewOfficeFiles, scope]);
     const [searchQuery, setSearchQuery] = useState("");
     const [dateFrom, setDateFrom] = useState("");
     const [dateTo, setDateTo] = useState("");
@@ -431,7 +435,7 @@ export default function SigningManagerScreen() {
                         onChange={setScope}
                         options={[
                             { value: "mine", label: t('signingManager.scope.mine', 'המסמכים שלי') },
-                            { value: "office", label: t('signingManager.scope.office', 'מסמכי המשרד') },
+                            ...(canViewOfficeFiles ? [{ value: "office", label: t('signingManager.scope.office', 'מסמכי המשרד') }] : []),
                         ]}
                     />
                 </SimpleContainer>

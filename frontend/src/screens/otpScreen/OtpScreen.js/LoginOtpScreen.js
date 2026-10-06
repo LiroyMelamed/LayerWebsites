@@ -12,6 +12,7 @@ import loginApi from "../../../api/loginApi";
 import { useTranslation } from "react-i18next";
 import { resolvePostLoginPath } from "../../../lib/resolvePostLoginNavigation";
 import { getActiveTenantSlug } from "../../../lib/tenantSlug";
+import { toastFromApiError } from "../../../components/ui/showAppToast";
 import { AppRoles } from "../../../constant/appRoles";
 
 import "./LoginOtpScreen.scss";
@@ -33,8 +34,12 @@ export default function LoginOtpScreen() {
 
     const otpInputRef = useRef(null);
     const didAutoSubmitRef = useRef(false);
+    const submissionPendingRef = useRef(false);
 
-    const { isPerforming, performRequest } = useHttpRequest(loginApi.verifyOtp, navigateTo);
+    const { isPerforming, performRequest } = useHttpRequest(loginApi.verifyOtp, navigateTo, (error) => {
+        submissionPendingRef.current = false;
+        toastFromApiError(error, "שגיאה בלתי צפויה");
+    });
 
     // Email login disabled for now (public signing only). Always verify by phone.
     const verifyPayload = () => ({
@@ -54,7 +59,11 @@ export default function LoginOtpScreen() {
     };
 
     const submitOtp = (code) => {
-        performRequest(verifyPayload(), code);
+        const normalizedCode = String(code || "").replace(/\D/g, "");
+        if (submissionPendingRef.current || normalizedCode.length !== 6 || !phoneNumber || otpError != null) return;
+        submissionPendingRef.current = true;
+        didAutoSubmitRef.current = true;
+        performRequest(verifyPayload(), normalizedCode);
     };
 
     const handleKeyDown = (event) => {
@@ -129,6 +138,7 @@ export default function LoginOtpScreen() {
             localStorage.setItem("refreshToken", data.refreshToken);
         }
 
+        window.dispatchEvent(new Event("lw-auth-changed"));
         const target = await resolvePostLoginPath({
             role: data.role,
             isPlatformAdmin: Boolean(data.isPlatformAdmin),
@@ -145,7 +155,7 @@ export default function LoginOtpScreen() {
                     isPerforming={isPerforming}
                     buttonText={t('common.send')}
                     onPress={() => submitOtp(otpNumber)}
-                    disabled={otpError != null}
+                    disabled={isPerforming || otpError != null || String(otpNumber || "").length !== 6}
                 />
             }
         >

@@ -117,7 +117,7 @@ ApiUtils.interceptors.response.use(
             window.dispatchEvent(new CustomEvent('lw-billing-locked', { detail: error.response.data || {} }));
         }
 
-        if (status !== 401 || originalRequest._retried) {
+        if (status !== 401 || !originalRequest || originalRequest._retried || /(?:^|\/)Auth\/(?:RequestOtp|VerifyOtp|Login)(?:$|[?])/i.test(originalRequest.url || "")) {
             return formatError(error);
         }
 
