@@ -31,6 +31,7 @@ const chatbotRoutes = require("./routes/chatbotRoutes");
 const templateAttachmentRoutes = require("./routes/templateAttachmentRoutes"); const calendarRoutes = require('./routes/calendarRoutes');
 const platformRoutes = require('./routes/platformRoutes');
 const supportRoutes = require('./routes/supportRoutes');
+const staffRoutes = require('./routes/staffRoutes');
 const paymentWebhookRoutes = require('./routes/paymentWebhookRoutes');
 const publicSignupRoutes = require('./routes/publicSignupRoutes');
 const masterAdminRoutes = require('./routes/masterAdminRoutes');
@@ -190,6 +191,7 @@ app.use("/api/template-attachments", templateAttachmentRoutes);
 app.use("/api/calendar", calendarRoutes);
 app.use("/api/platform/v1", platformRoutes);
 app.use("/api/support", supportRoutes);
+app.use("/api/staff", staffRoutes);
 
 // Lightweight health endpoint for prereq checks
 app.get("/health", (req, res) => {

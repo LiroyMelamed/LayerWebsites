@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import SimpleContainer from "../simpleComponents/SimpleContainer";
 import { Text12, Text14 } from "../specializedComponents/text/AllTextKindFile";
 import TertiaryButton from "../styledComponents/buttons/TertiaryButton";
@@ -19,7 +19,7 @@ export default function TemplateAttachmentsSection({ templateType, templateKey }
     const [attachments, setAttachments] = useState([]);
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
-    const fileInputRef = useRef(null);
+    
 
     const loadAttachments = useCallback(async () => {
         if (!templateType || !templateKey) return;

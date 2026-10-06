@@ -10,6 +10,7 @@ export const AllCasesScreenName = "/AllCasesScreen";
 export const AllClientsScreenName = "/AllClientsScreen";
 export const MyCasesScreenName = "/MyCases";
 export const AllMangerScreenName = "/AllManger";
+export const FirmStaffRolesScreenName = "/FirmStaffRoles";
 export const AllCasesTypeScreenName = "/AllCasesType";
 export const SigningManagerScreenName = "/SigningManagerScreen";
 export const SigningSpotsPreviewScreenName = "/SigningSpotsPreview/:signingFileId";

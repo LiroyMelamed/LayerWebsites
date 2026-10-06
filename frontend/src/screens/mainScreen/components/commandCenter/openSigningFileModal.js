@@ -1,3 +1,4 @@
+import { downloadBlobAsFile } from "../../../../utils/downloadBlobAsFile";
 import signingFilesApi from "../../../../api/signingFilesApi";
 import ApiUtils from "../../../../api/apiUtils";
 import { toastError, toastSuccess } from "../../../../components/ui/toast";
@@ -36,16 +37,6 @@ function parseFilenameFromContentDisposition(headerValue) {
     return raw ? raw.replace(/[\\/\r\n\t]/g, "_") : null;
 }
 
-function downloadBlobAsFile(blob, filename) {
-    const objectUrl = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = objectUrl;
-    a.download = filename || "download";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
-}
 
 async function downloadEvidenceAsset(file, suffix) {
     const signingFileId = file?.SigningFileId;
@@ -63,7 +54,7 @@ async function downloadEvidenceAsset(file, suffix) {
     const filename =
         parseFilenameFromContentDisposition(disposition)
         || `evidence_${file?.CaseId || "noCase"}_${signingFileId}.${ext}`;
-    downloadBlobAsFile(await res.blob(), filename);
+    await downloadBlobAsFile(await res.blob(), filename);
 }
 
 /**

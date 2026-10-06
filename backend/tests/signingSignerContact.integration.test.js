@@ -40,7 +40,17 @@ test('signing APIs preserve customer contacts and reject mismatched recipients b
     const ids = [];
     let fileId;
     t.after(async () => {
-        if (fileId) await pool.query('DELETE FROM signingfiles WHERE signingfileid=$1', [fileId]);
+        if (fileId) {
+            const db = await pool.connect();
+            try {
+                await db.query('BEGIN');
+                await db.query("SET LOCAL app.audit_events_allow_delete = 'true'");
+                await db.query('DELETE FROM audit_events WHERE signingfileid=$1', [fileId]);
+                await db.query('DELETE FROM signingfiles WHERE signingfileid=$1', [fileId]);
+                await db.query('COMMIT');
+            } catch (error) { await db.query('ROLLBACK'); throw error; }
+            finally { db.release(); }
+        }
         await pool.query('DELETE FROM users WHERE userid=ANY($1::int[])', [ids]);
         await pool.end();
     });

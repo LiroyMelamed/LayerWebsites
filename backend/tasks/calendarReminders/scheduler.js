@@ -57,7 +57,7 @@ function _parseSentKeys(raw) {
 function _offsetsForRole(row, role) {
     const col = role === 'lawyer' ? row.lawyer_reminder_offsets : row.client_reminder_offsets;
     const parsed = parseStoredOffsets(col);
-    if (parsed.length) return parsed;
+    if (col != null) return parsed;
     return parseStoredOffsets(row.reminder_offsets);
 }
 
@@ -500,7 +500,8 @@ async function processDeferredInvites() {
 }
 
 async function processCalendarReminders() {
-    const { pollMinutes } = await _readSchedulerSettings();
+    const { enabled, pollMinutes } = await _readSchedulerSettings();
+    if (enabled !== 'true' && enabled !== '1') return;
     try {
         const { warmShabbatCache } = require('../../lib/shabbatDeferral');
         await warmShabbatCache(new Date());
@@ -542,6 +543,8 @@ async function fireImmediateRemindersForEvent(eventId) {
         errors: [],
     };
     if (!Number.isFinite(id)) return result;
+    const { enabled } = await _readSchedulerSettings();
+    if (enabled !== 'true' && enabled !== '1') return result;
 
     const { rows } = await pool.query(
         `SELECT ce.*,
@@ -654,35 +657,29 @@ async function _readSchedulerSettings() {
 }
 
 async function initCalendarReminderScheduler() {
-    const { enabled, pollMinutes } = await _readSchedulerSettings();
-    if (enabled !== 'true' && enabled !== '1') {
-        console.log('[calendar-reminders] Disabled via calendar settings (platform_settings/env).');
-        return { ok: true, enabled: false };
-    }
-
-    const cronExpr = _minutesToCronExpression(pollMinutes);
     let running = false;
-
+    let lastRun = 0;
+    let lastEnabled = false;
     async function tick() {
         if (running) return;
         running = true;
         try {
+            const { enabled, pollMinutes } = await _readSchedulerSettings();
+            const active = enabled === 'true' || enabled === '1';
+            const interval = Math.max(1, Math.min(60, pollMinutes || 5)) * 60000;
+            if (!active) { lastEnabled = false; return; }
+            if (lastEnabled && Date.now() - lastRun < interval) return;
+            lastEnabled = true;
+            lastRun = Date.now();
             await processCalendarReminders();
         } catch (err) {
             console.error('[calendar-reminders] Unhandled tick error:', err.message);
-        } finally {
-            running = false;
-        }
+        } finally { running = false; }
     }
-
-    const task = cron.schedule(cronExpr, () => {
-        tick().catch(() => { /* logged inside */ });
-    });
-
-    tick().catch(() => { });
-
-    console.log(`[calendar-reminders] Started. cron="${cronExpr}" (${pollMinutes}m poll, split offsets + Shabbat deferral)`);
-    return { ok: true, enabled: true, pollMinutes, cronExpr, taskStarted: !!task };
+    // Keep the watcher alive while disabled so enabling never requires a restart.
+    const task = cron.schedule('* * * * *', () => { tick().catch(() => {}); });
+    await tick();
+    return { ok: true, enabled: lastEnabled, cronExpr: '* * * * *', taskStarted: !!task };
 }
 
 module.exports = {
