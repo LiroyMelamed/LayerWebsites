@@ -1,0 +1,82 @@
+{
+  "checkedUtc": "2026-10-06T10:05:24.006578+00:00",
+  "triggerUtc": "2026-10-06T09:57:58.242Z",
+  "status": "ANDROID_TWO_PUBLIC_ONE_IN_REVIEW_IOS_AUTH_PENDING",
+  "android": [
+    {
+      "tenant": "melamedlaw",
+      "package": "com.melamedia.melamedlaw",
+      "version": "1.0.11",
+      "build": 28,
+      "artifactSha256": "676b3e3a70d45ec124379c1da69bc6993d07fdca0e2ef0d986e028dd47a8bb67",
+      "easBuildId": "14cf6d04-ebdf-4836-9e73-d1dd9c99e542",
+      "sourceCommit": "cf4ef24db1ffd514cd24a83353feb150e29f83f2",
+      "status": "AVAILABLE_ON_GOOGLE_PLAY",
+      "rolloutPercent": 100,
+      "availabilityCountries": "1 of 1 configured countries/regions",
+      "consoleReleaseLocal": "2026-10-06 12:53",
+      "publicNewVersionVerified": true,
+      "publicUrl": "https://play.google.com/store/apps/details?id=com.melamedia.melamedlaw",
+      "evidence": [
+        "google-melamedlaw-release.txt",
+        "google-melamedlaw-public-version.txt"
+      ]
+    },
+    {
+      "tenant": "morlevi",
+      "package": "com.melamedia.morlevy",
+      "version": "1.0.5",
+      "build": 12,
+      "artifactSha256": "2a4a8251a9cbcde860053849e992b1960db4420a4d652e30a2ca83aaeb66810e",
+      "easBuildId": "aae8bde4-7e20-433b-a1ab-e645c1eb888d",
+      "sourceCommit": "a970e4930a7cbf9608ed1624d47ef8e1113ea3f3",
+      "status": "IN_REVIEW",
+      "managedPublishing": false,
+      "plannedRolloutPercent": 100,
+      "publicNewVersionVerified": false,
+      "evidence": [
+        "google-morlevi-publishing.txt"
+      ]
+    },
+    {
+      "tenant": "ashrafessa",
+      "package": "com.melamedia.ashrafessa",
+      "version": "1.0.8",
+      "build": 13,
+      "artifactSha256": "075dcec2681334717cd8786c86d3b33dd014444ea8baaaa419002b71418ed597",
+      "easBuildId": "f30d2bc4-3065-4f7f-aeca-322b9dd52197",
+      "sourceCommit": "9f069720c9b1c3856b88a1df63ce93419b0efaa8",
+      "status": "AVAILABLE_ON_GOOGLE_PLAY",
+      "rolloutPercent": 100,
+      "availabilityCountries": "1 of 1 configured countries/regions",
+      "consoleReleaseLocal": "2026-10-06 13:00",
+      "publicNewVersionVerified": true,
+      "publicUrl": "https://play.google.com/store/apps/details?id=com.melamedia.ashrafessa",
+      "evidence": [
+        "google-ashrafessa-release.txt",
+        "google-ashrafessa-public-version.txt"
+      ]
+    }
+  ],
+  "ios": {
+    "status": "UPLOADED_REVIEW_SUBMISSION_PENDING_AUTH",
+    "browserTabId": "25",
+    "observed": "Apple sign-in form; existing renewed-sign-in request remains pending. No credentials entered, no new submissions."
+  },
+  "mutations": {
+    "builds": 0,
+    "submissions": 0,
+    "deployments": 0,
+    "migrations": 0,
+    "realTestNotifications": 0
+  },
+  "limitations": [
+    "Google public listings and authenticated production release details were checked; no new on-device store installation was performed.",
+    "No native production tag until remaining store releases are verified."
+  ],
+  "next": [
+    "Monitor MorLevi Android review and public availability.",
+    "After owner renews Apple sign-in, select exact uploaded builds, preserve metadata/reviewer information and submit for automatic release after approval.",
+    "Complete native production tag and final documentation after all store releases are verified; then stop recurring follow-up and implement the saved next-feature specification."
+  ]
+}

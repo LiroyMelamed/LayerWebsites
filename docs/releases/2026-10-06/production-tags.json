@@ -1,0 +1,10 @@
+{
+  "tag": "PROD_06_10_2026_LIROY",
+  "pushed": true,
+  "webApiSource": "06b096662c829392cc541926f0a83452633e1adc",
+  "monitorSource": "1c33d2e5f2b10c6d80a7440a77ddfa0fb5dc4498",
+  "documentationCommit": "ba5655bbb96ab51487aa948994f00e5cbcb39602",
+  "documentationMainMerge": "41148846a889e7c6248283eae20a5d9226702555",
+  "documentationPR": "https://github.com/LiroyMelamed/LayerWebsites/pull/18",
+  "nativeProductionTag": "Deferred until store release state is verified; store uploads alone do not prove availability"
+}

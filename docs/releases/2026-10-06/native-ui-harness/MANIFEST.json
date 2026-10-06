@@ -1,0 +1,26 @@
+[
+  {
+    "file": "README.md",
+    "sha256": "81e3b753246321acfb836d730410653e6b8a871143ba7f0c353fddd8129d232a"
+  },
+  {
+    "file": "SignatureQAUITests.swift",
+    "sha256": "5e36e0114e514806b4731739c683500a895954a6f39d00e612ee834133001841"
+  },
+  {
+    "file": "adb-qa.py",
+    "sha256": "bfb629874c3b2b2938c7a3af0a38232ca663b49e0b22bec0bb44bfeaaa69fe74"
+  },
+  {
+    "file": "measure-android-v14-preview.py",
+    "sha256": "66a5c280f6684e273fb8650de61d0e7b24c6e67dd635d3a3102472a0dcd585c0"
+  },
+  {
+    "file": "measure-final.py",
+    "sha256": "6b121d4ed2ca97652bb7da77e785cb327dbcb34d6db64028e09acc9900097db2"
+  },
+  {
+    "file": "xctest-command.py",
+    "sha256": "ed70b28a8eb7f8d7077d83f544c2444d0717bfdac22fceb5286275a70f027c58"
+  }
+]
