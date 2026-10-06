@@ -1,10 +1,10 @@
-import { Suspense, lazy, useEffect } from 'react';
+import { Suspense, lazy, useEffect, useRef } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import RouteFallback from './components/simpleComponents/RouteFallback';
 import { AdminStackName } from './navigation/AdminStack';
 import { ClientStackName } from './navigation/ClientStack';
 import { LoginStackName } from './navigation/LoginStack';
-import { AppRoles } from './constant/appRoles';
+import { AppRoles, isOfficeWebRole } from './constant/appRoles';
 import { useFromApp } from './providers/FromAppProvider';
 import { loadFirmSettings } from './services/firmSettings';
 import {
@@ -57,6 +57,7 @@ const App = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isFromApp, setIsFromApp } = useFromApp();
+  const initialLinkProcessedRef = useRef(false);
 
   useEffect(() => { loadFirmSettings(); }, []);
 
@@ -88,6 +89,10 @@ const App = () => {
   }, [isFromApp]);
 
   useEffect(() => {
+    // Bootstrap credentials only once. Router callbacks can change identity
+    // after navigation; replaying the entry query could restore an old session.
+    if (initialLinkProcessedRef.current) return;
+    initialLinkProcessedRef.current = true;
     const searchParams = new URLSearchParams(location.search);
     const fromAppParam = searchParams.get('fromApp');
     const signingFileId = searchParams.get('signingFileId');
@@ -129,7 +134,7 @@ const App = () => {
         const alreadyOnAdminRoute = location.pathname.startsWith(AdminStackName);
         const alreadyOnClientRoute = location.pathname.startsWith(ClientStackName);
 
-        if (role === AppRoles.Admin) {
+        if (isOfficeWebRole(role)) {
           if (appointmentId) {
             navigate(
               `${AdminStackName}${CalendarScreenName}?eventId=${encodeURIComponent(String(appointmentId))}`,
@@ -152,7 +157,7 @@ const App = () => {
         }
       }
     }
-  }, []);
+  }, [location.pathname, location.search, navigate, setIsFromApp]);
 
   const multiTenant = isMultiTenantApp();
 

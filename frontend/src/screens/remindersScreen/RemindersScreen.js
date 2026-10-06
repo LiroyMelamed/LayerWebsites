@@ -13,7 +13,7 @@ import { getNavBarData } from "../../components/navBars/data/NavBarData";
 import PrimaryButton from "../../components/styledComponents/buttons/PrimaryButton";
 import SecondaryButton from "../../components/styledComponents/buttons/SecondaryButton";
 import ChooseButton from "../../components/styledComponents/buttons/ChooseButton";
-import { Text24, Text14 } from "../../components/specializedComponents/text/AllTextKindFile";
+import { Text14 } from "../../components/specializedComponents/text/AllTextKindFile";
 import ListPageTitle from "../../components/specializedComponents/text/ListPageTitle";
 import ReminderMenuItem from "../../components/specializedComponents/menuItems/ReminderMenuItem";
 import { images } from "../../assets/images/images";
@@ -27,6 +27,7 @@ import ReminderDetailPopup from "./components/ReminderDetailPopup";
 import { formatDateTimeForInput } from "../../functions/date/formatDateForInput";
 import { AdminStackName } from "../../navigation/AdminStack";
 import { MainScreenName } from "../mainScreen/MainScreen";
+import { useFirmPermissions } from "../../providers/FirmPermissionsProvider";
 
 import "./RemindersScreen.scss";
 
@@ -45,6 +46,8 @@ function formatDate(dateStr) {
 
 export default function RemindersScreen() {
     const { t } = useTranslation();
+    const { canAction } = useFirmPermissions() || { canAction: () => true };
+    const canManageReminders = canAction('reminders', 'manage');
     const { openPopup, closePopup } = usePopup();
     const { isSmallScreen } = useScreenSize();
     const [statusFilter, setStatusFilter] = useState("ALL");
@@ -65,6 +68,8 @@ export default function RemindersScreen() {
     }, []);
 
     const resolveTemplateLabel = useCallback((key) => {
+        const calendarLabels = { CALENDAR_APPOINTMENT: 'תזכורת לפגישה', CALENDAR_HEARING: 'תזכורת לדיון', CALENDAR_REMINDER: 'תזכורת יומן' };
+        if (calendarLabels[key]) return calendarLabels[key];
         if (!key) return '—';
         const i18nLabel = t(`reminders.col.templateKeys.${key}`, { defaultValue: '' });
         return i18nLabel || templateLabelMap[key] || key;
@@ -84,7 +89,7 @@ export default function RemindersScreen() {
 
     useEffect(() => {
         performRequest();
-    }, [statusFilter, page]);
+    }, [statusFilter, page, performRequest]);
 
     const reminders = useMemo(() => result?.reminders || [], [result]);
     const total = result?.total || 0;
@@ -130,13 +135,14 @@ export default function RemindersScreen() {
             <ReminderDetailPopup
                 reminder={reminder}
                 closePopUpFunction={closePopup}
-                onCancel={(id) => { cancelRequest(id); }}
-                onDelete={(id) => { deleteRequest(id); }}
+                onCancel={canManageReminders ? (id) => { cancelRequest(id); } : undefined}
+                onDelete={canManageReminders ? (id) => { deleteRequest(id); } : undefined}
+                readOnly={!canManageReminders}
                 onUpdated={() => performRequest()}
                 resolveTemplateLabel={resolveTemplateLabel}
             />
         );
-    }, [reminders, openPopup, closePopup, cancelRequest]);
+    }, [reminders, openPopup, closePopup, cancelRequest, deleteRequest, canManageReminders, performRequest, resolveTemplateLabel]);
 
     // Responsive: fewer columns on small screens
     const tableTitles = useMemo(() => {
@@ -181,13 +187,13 @@ export default function RemindersScreen() {
                 </SimpleContainer>
             ),
             Column5: r.sent_at ? formatDate(r.sent_at) : "—",
-            Column6: r.status === "PENDING" ? (
+            Column6: canManageReminders && r.source !== "calendar" && r.status === "PENDING" ? (
                 <SecondaryButton onPress={(e) => { e?.stopPropagation?.(); cancelRequest(r.id); }}>
                     {t("reminders.cancel")}
                 </SecondaryButton>
             ) : null,
         }));
-    }, [reminders, t, cancelRequest, isSmallScreen]);
+    }, [reminders, t, cancelRequest, isSmallScreen, canManageReminders, resolveTemplateLabel]);
 
     return (
         <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}>
@@ -253,6 +259,7 @@ export default function RemindersScreen() {
                 </SimpleCard>
             </SimpleScrollView>
 
+            {canManageReminders && (
             <SimpleContainer className="lw-reminders__footer">
                 <PrimaryButton onPress={handleAddReminder}>
                     {t("reminders.add.button")}
@@ -262,6 +269,7 @@ export default function RemindersScreen() {
                     {t("reminders.importButton")}
                 </SecondaryButton>
             </SimpleContainer>
+            )}
         </SimpleScreen>
     );
 }

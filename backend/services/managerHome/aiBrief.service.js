@@ -136,7 +136,10 @@ async function defaultBriefLlmCall(messages) {
 async function isAiBriefEnabled({ getSettingFn } = {}) {
     const getSetting = getSettingFn || require('../settingsService').getSetting;
     const flag = await getSetting('managerHome', 'MANAGER_HOME_AI_INSIGHTS_ENABLED', false);
-    return Boolean(flag) && hasBriefLlmCredentials();
+    // Legacy rows and environment fallbacks may contain the string "false".
+    const enabled = flag === true || flag === 1
+        || ['true', '1'].includes(String(flag ?? '').trim().toLowerCase());
+    return enabled && hasBriefLlmCredentials();
 }
 
 async function resolveIncludeManagerWorkload(userId, isPlatformAdminFn) {

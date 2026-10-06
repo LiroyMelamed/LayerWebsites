@@ -11,7 +11,7 @@ import SecondaryButton from '../../components/styledComponents/buttons/Secondary
 import { Text14, TextBold14, TextBold24 } from '../../components/specializedComponents/text/AllTextKindFile';
 import MelaMediaLogo from '../../components/branding/MelaMediaLogo';
 import { isSignupEmbedded, navigateAfterSignup } from '../../lib/signupEmbed';
-import { tenantPath } from '../../lib/tenantSlug';
+
 import LoginSimpleScreen from '../loginScreen/components/LoginSimpleScreen';
 import './SignupScreen.scss';
 

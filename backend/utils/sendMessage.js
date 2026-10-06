@@ -1,3 +1,4 @@
+const { qaOutboundNoop } = require("../lib/qaOutboundNoop");
 const axios = require("axios");
 require("dotenv").config();
 const { recordUsageEvent } = require("../lib/usage/recordFirmUsage");
@@ -216,6 +217,8 @@ async function sendViaSmoove(messageBody, formattedPhone) {
  * @param {{ fast?: boolean }} [options] - Set fast=true for high-priority OTP delivery.
  */
 async function sendMessage(messageBody, formattedPhone, { fast = false } = {}) {
+    const suppressed = qaOutboundNoop('sms');
+    if (suppressed) return suppressed;
     const e164Regex = /^\+[1-9]\d{7,14}$/;
     const normalizedPhone = formatPhoneNumber(formattedPhone) || String(formattedPhone || "").trim();
 

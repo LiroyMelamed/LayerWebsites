@@ -1,3 +1,4 @@
+import { downloadBlobAsFile } from "../../utils/downloadBlobAsFile";
 // src/screens/signingScreen/SigningManagerScreen.js
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -43,6 +44,7 @@ import {
     clampSignerDeliveryMethod,
     getAllowedSignerDeliveryMethods,
 } from "./signerDeliveryUtils";
+import { useFirmPermissions } from "../../providers/FirmPermissionsProvider";
 import "../calendarScreen/CalendarInviteScreen.scss";
 import RequestLoadError from '../../components/ui/RequestLoadError';
 
@@ -50,6 +52,10 @@ import RequestLoadError from '../../components/ui/RequestLoadError';
 export const SigningManagerScreenName = "/SigningManagerScreen";
 
 export default function SigningManagerScreen() {
+    const { canAction, scope: permissionScope, permissionMode, loaded } = useFirmPermissions() || { canAction: () => false };
+    const canViewOfficeFiles = loaded && (permissionMode === 'legacy' || permissionMode === 'platform_admin' || permissionScope?.signingDataScope === 'all_firm');
+    const canSignUpload = canAction('signing', 'upload');
+    const canSignManage = canAction('signing', 'manage');
     const { isSmallScreen } = useScreenSize();
     const navigate = useNavigate();
     const { openPopup, closePopup } = usePopup();
@@ -58,11 +64,14 @@ export default function SigningManagerScreen() {
     const { isFromApp } = useFromApp();
     const [activeTab, setActiveTab] = useState("pending");
     const [scope, setScope] = useState("mine");
+    useEffect(() => {
+        if (!canViewOfficeFiles && scope === 'office') setScope('mine');
+    }, [canViewOfficeFiles, scope]);
     const [searchQuery, setSearchQuery] = useState("");
     const [dateFrom, setDateFrom] = useState("");
     const [dateTo, setDateTo] = useState("");
 
-    const [isDownloadingSigned, setIsDownloadingSigned] = useState(false);
+    const [, setIsDownloadingSigned] = useState(false);
 
     const { result: lawyerFilesData, isPerforming, performRequest: reloadFilesRaw, error } = useAutoHttpRequest(
         signingFilesApi.getLawyerSigningFiles
@@ -180,35 +189,7 @@ export default function SigningManagerScreen() {
         return raw ? raw.replace(/[\\/\r\n\t]/g, "_") : null;
     };
 
-    const downloadBlobAsFile = (blob, filename) => {
-        const safeName = filename || "evidence.zip";
 
-        // Inside mobile app WebView: convert blob to base64 and send via
-        // native bridge so expo-file-system can write it to disk.
-        if (isFromApp && window.ReactNativeWebView) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64 = reader.result?.split(',')[1];
-                if (base64) {
-                    window.ReactNativeWebView.postMessage(JSON.stringify({
-                        type: "DOWNLOAD_BASE64",
-                        payload: { base64, fileName: safeName, mimeType: blob.type || 'application/octet-stream' }
-                    }));
-                }
-            };
-            reader.readAsDataURL(blob);
-            return;
-        }
-
-        const objectUrl = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = objectUrl;
-        a.download = safeName;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
-    };
 
     const handleDownloadEvidenceZip = async (file) => {
         try {
@@ -249,7 +230,7 @@ export default function SigningManagerScreen() {
             const disposition = res.headers.get("content-disposition");
             const filename = parseFilenameFromContentDisposition(disposition) || `evidence_${file?.CaseId || "noCase"}_${signingFileId}.zip`;
             const blob = await res.blob();
-            downloadBlobAsFile(blob, filename);
+            await downloadBlobAsFile(blob, filename);
         } catch (err) {
             console.error("Evidence ZIP download error:", err);
             showError({ messageKey: 'signingManager.errors.evidencePackageDownloadError' });
@@ -332,7 +313,7 @@ export default function SigningManagerScreen() {
             const disposition = res.headers.get("content-disposition");
             const filename = parseFilenameFromContentDisposition(disposition) || `evidence_${file?.CaseId || "noCase"}_${signingFileId}.pdf`;
             const blob = await res.blob();
-            downloadBlobAsFile(blob, filename);
+            await downloadBlobAsFile(blob, filename);
         } catch (err) {
             console.error("Evidence PDF download error:", err);
             showError({ messageKey: 'signingManager.errors.evidencePackageDownloadError' });
@@ -365,10 +346,11 @@ export default function SigningManagerScreen() {
                 onDownloadSigned={() => handleDownload(file.SigningFileId, file.FileName)}
                 onDownloadEvidencePdf={() => handleDownloadEvidencePdf(file)}
                 onDownloadEvidenceZip={() => handleDownloadEvidenceZip(file)}
-                onDelete={(id) => deleteSigningFile(id)}
+                onDelete={canSignManage ? (id) => deleteSigningFile(id) : undefined}
                 isDeleting={isDeletingFile}
                 formatDotDate={formatDotDate}
                 onRenamed={() => { closePopup(); reloadFiles?.(); }}
+                canManage={canSignManage}
             />
         );
     };
@@ -426,7 +408,7 @@ export default function SigningManagerScreen() {
                         onChange={setScope}
                         options={[
                             { value: "mine", label: t('signingManager.scope.mine', 'המסמכים שלי') },
-                            { value: "office", label: t('signingManager.scope.office', 'מסמכי המשרד') },
+                            ...(canViewOfficeFiles ? [{ value: "office", label: t('signingManager.scope.office', 'מסמכי המשרד') }] : []),
                         ]}
                     />
                 </SimpleContainer>
@@ -491,6 +473,7 @@ export default function SigningManagerScreen() {
                 </>}
             </SimpleScrollView>
 
+            {canSignUpload && (
             <SimpleContainer className="lw-signingManagerScreen__footer">
                 <PrimaryButton
                     className="lw-signingManagerScreen__addButton"
@@ -499,11 +482,12 @@ export default function SigningManagerScreen() {
                     {t('signingManager.actions.uploadNew')}
                 </PrimaryButton>
             </SimpleContainer>
+            )}
         </SimpleScreen>
     );
 }
 
-export function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned, onDownloadEvidencePdf, onDownloadEvidenceZip, onDelete, isDeleting, formatDotDate, onRenamed }) {
+export function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownloadSigned, onDownloadEvidencePdf, onDownloadEvidenceZip, onDelete, isDeleting, formatDotDate, onRenamed, canManage = true }) {
     const { t } = useTranslation();
     const totalSpots = Number(file?.TotalSpots || 0);
     const signedSpots = Number(file?.SignedSpots || 0);
@@ -770,9 +754,11 @@ export function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownload
             ) : (
                 <SimpleContainer className="lw-signingManagerScreen__titleRow">
                     <TextBold24>{file?.FileName || t('signingManager.details.titleFallback')}</TextBold24>
+                    {canManage && (
                     <SecondaryButton size={buttonSizes.SMALL} onPress={() => { setEditName(file?.FileName || ''); setIsEditingName(true); }}>
                         {t('signingManager.actions.rename')}
                     </SecondaryButton>
+                    )}
                     {showOtpUi && (
                         <SimpleContainer className={`${otpChipClassName} lw-signingManagerScreen__chip--titleEnd`}>
                             {otpChipText}
@@ -820,7 +806,7 @@ export function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownload
                                     <span>{t('signingManager.signerStatus.sent')}</span>
                                     <span>{t('signingManager.signerStatus.viewed')}</span>
                                     <span>{t('signingManager.signerStatus.signed')}</span>
-                                    {isPending && <span>{t('signingManager.replaceSigner.actions')}</span>}
+                                    {isPending && canManage && <span>{t('signingManager.replaceSigner.actions')}</span>}
                                 </div>
                                 {(signers.length ? signers : []).map((s) => (
                                     <div key={s.SignerUserId} className="lw-signingManagerScreen__signerStatusRow">
@@ -829,7 +815,7 @@ export function SigningManagerFileDetails({ file, onClose, onOpenPdf, onDownload
                                         <span className="lw-signingManagerScreen__signerStatusCell">{formatUtcDateTime(s.SentAt)}</span>
                                         <span className="lw-signingManagerScreen__signerStatusCell">{formatUtcDateTime(s.ViewedAt)}</span>
                                         <span className="lw-signingManagerScreen__signerStatusCell">{formatUtcDateTime(s.SignedAt)}</span>
-                                        {isPending && (
+                                        {isPending && canManage && (
                                             <span className="lw-signingManagerScreen__signerStatusActions">
                                                 {!s.AllSigned ? (
                                                     <InviteIconButton

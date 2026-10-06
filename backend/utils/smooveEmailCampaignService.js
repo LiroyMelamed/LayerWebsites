@@ -1,4 +1,5 @@
-﻿const nodemailer = require('nodemailer');
+const { qaOutboundNoop } = require("../lib/qaOutboundNoop");
+const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 // Constants for company name and website domain (mirror SMS module)
@@ -145,6 +146,8 @@ const ALLOWED_CUSTOM_FIELD_KEYS = [
  * @param {object} args.contactFields
  */
 async function sendEmailCampaign({ toEmail, campaignKey, contactFields, attachments, fromEmail, replyTo } = {}) {
+    const suppressed = qaOutboundNoop('email');
+    if (suppressed) return suppressed;
     const email = String(toEmail || '').trim();
     const key = String(campaignKey || '').trim().toUpperCase();
 
@@ -254,6 +257,8 @@ async function sendEmailCampaign({ toEmail, campaignKey, contactFields, attachme
 }
 
 async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shouldSendRealEmail, logLabel, ccEmails, replyTo, fromName: fromNameOverride, fromEmail: fromEmailOverride } = {}) {
+    const suppressed = qaOutboundNoop('email');
+    if (suppressed) return suppressed;
     const email = String(toEmail || '').trim();
 
     const fromName = String(fromNameOverride || '').trim() || await resolveEmailFromName();
@@ -323,6 +328,8 @@ async function sendTransactionalEmail({ toEmail, subject, htmlBody, fields, shou
  * Reuses the same SMTP transport as other transactional emails.
  */
 async function sendTransactionalCustomHtmlEmail({ toEmail, subject, htmlBody, logLabel, replyTo, fromName, fromEmail } = {}) {
+    const suppressed = qaOutboundNoop('email');
+    if (suppressed) return suppressed;
     const email = String(toEmail || '').trim();
     const s = String(subject || '').trim();
     const body = String(htmlBody || '');
@@ -351,6 +358,8 @@ async function sendTransactionalCustomHtmlEmail({ toEmail, subject, htmlBody, lo
  * Falls back gracefully if SMTP is not configured.
  */
 async function sendEmailWithAttachments({ toEmail, subject, htmlBody, attachments, logLabel, fromEmail: fromEmailOverride, ccEmails, replyTo, fromName: fromNameOverride } = {}) {
+    const suppressed = qaOutboundNoop('email');
+    if (suppressed) return suppressed;
     const email = String(toEmail || '').trim();
     const fromName = String(fromNameOverride || '').trim() || await resolveEmailFromName();
     const { fromEmail, replyTo: safeReplyTo } = await resolveVerifiedFromAndReplyTo(

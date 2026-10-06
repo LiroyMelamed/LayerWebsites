@@ -121,13 +121,16 @@ export default function PricingCalculatorCard({
     const [signingId, setSigningId] = useState(value?.signingId || defaults.signingId);
     const [billingInterval, setBillingInterval] = useState(value?.billingInterval || defaults.billingInterval || "monthly");
 
+    const controlledPlatformId = value?.platformId;
+    const controlledResourceId = value?.resourceId;
+    const controlledSigningId = value?.signingId;
+    const controlledBillingInterval = value?.billingInterval;
     useEffect(() => {
-        if (!value) return;
-        if (value.platformId) setPlatformId(value.platformId);
-        if (value.resourceId) setResourceId(value.resourceId);
-        if (value.signingId) setSigningId(value.signingId);
-        if (value.billingInterval) setBillingInterval(value.billingInterval);
-    }, [value?.platformId, value?.resourceId, value?.signingId, value?.billingInterval]);
+        if (controlledPlatformId) setPlatformId(controlledPlatformId);
+        if (controlledResourceId) setResourceId(controlledResourceId);
+        if (controlledSigningId) setSigningId(controlledSigningId);
+        if (controlledBillingInterval) setBillingInterval(controlledBillingInterval);
+    }, [controlledPlatformId, controlledResourceId, controlledSigningId, controlledBillingInterval]);
 
     const emit = (next) => {
         onChange?.(next);
