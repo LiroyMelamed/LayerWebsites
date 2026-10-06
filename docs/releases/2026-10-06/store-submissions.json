@@ -1,0 +1,84 @@
+{
+  "checkedUtc": "2026-10-06T09:09:55.911Z",
+  "submissions": [
+    {
+      "tenant": "melamedlaw",
+      "platform": "ios",
+      "version": "1.0.11",
+      "build": "11",
+      "easBuildId": "8780dbbf-3ee0-46f2-9de8-4c240a6ac698",
+      "sourceCommit": "5a1d9aed9424fb8b358634f6f48411dc00c432aa",
+      "artifactSha256": "d4a2fe9a29fabef845019fcbe1be931c16b8017bf995d9d80e20778d9765435a",
+      "submissionId": "b2e5a870-eec3-4cb0-848f-e6b6a0524e8d",
+      "status": "FINISHED",
+      "detailsUrl": "https://expo.dev/accounts/liroym/projects/MelamedLaw/submissions/b2e5a870-eec3-4cb0-848f-e6b6a0524e8d",
+      "error": null
+    },
+    {
+      "tenant": "morlevi",
+      "platform": "ios",
+      "version": "1.0.5",
+      "build": "22",
+      "easBuildId": "f33ddc57-f66f-46ad-88a0-57dcccbab79c",
+      "sourceCommit": "46eefb27df5223da9e035c4d7e8024150fd3d7c5",
+      "artifactSha256": "8fb5fe223cc3b97daf59be677df75d5b16c49ae3e8e3b618d42e042bd0f9da24",
+      "submissionId": "dbadc2b4-7621-4992-9d95-21346e9c373f",
+      "status": "FINISHED",
+      "detailsUrl": "https://expo.dev/accounts/liroym/projects/MorLevy/submissions/dbadc2b4-7621-4992-9d95-21346e9c373f",
+      "error": null
+    },
+    {
+      "tenant": "ashrafessa",
+      "platform": "ios",
+      "version": "1.0.8",
+      "build": "17",
+      "easBuildId": "751d69a3-00dd-4285-a920-c3f68d1ad4db",
+      "sourceCommit": "463571bd6644f2906ac44ba8756e3923f94cbb0b",
+      "artifactSha256": "0a22c4dc649d2d45d40fe85222bd9156d0169082544cbd1b0f14b97f84d9c606",
+      "submissionId": "137b1f8d-d6e4-458e-b304-5b805c215a13",
+      "status": "FINISHED",
+      "detailsUrl": "https://expo.dev/accounts/liroym/projects/AshrafEssa/submissions/137b1f8d-d6e4-458e-b304-5b805c215a13",
+      "error": null
+    },
+    {
+      "tenant": "melamedlaw",
+      "platform": "android",
+      "version": "1.0.11",
+      "build": 28,
+      "easBuildId": "14cf6d04-ebdf-4836-9e73-d1dd9c99e542",
+      "sourceCommit": "cf4ef24db1ffd514cd24a83353feb150e29f83f2",
+      "artifactSha256": "676b3e3a70d45ec124379c1da69bc6993d07fdca0e2ef0d986e028dd47a8bb67",
+      "submissionId": "2fe77b23-69e8-4734-ae83-7e2326132ace",
+      "status": "FINISHED",
+      "detailsUrl": "https://expo.dev/accounts/liroym/projects/MelamedLaw/submissions/2fe77b23-69e8-4734-ae83-7e2326132ace",
+      "error": null
+    },
+    {
+      "tenant": "morlevi",
+      "platform": "android",
+      "version": "1.0.5",
+      "build": 12,
+      "easBuildId": "aae8bde4-7e20-433b-a1ab-e645c1eb888d",
+      "sourceCommit": "a970e4930a7cbf9608ed1624d47ef8e1113ea3f3",
+      "artifactSha256": "2a4a8251a9cbcde860053849e992b1960db4420a4d652e30a2ca83aaeb66810e",
+      "submissionId": "399910f1-3b1a-40da-ae2f-37590f5e5a63",
+      "status": "FINISHED",
+      "detailsUrl": "https://expo.dev/accounts/liroym/projects/MorLevy/submissions/399910f1-3b1a-40da-ae2f-37590f5e5a63",
+      "error": null
+    },
+    {
+      "tenant": "ashrafessa",
+      "platform": "android",
+      "version": "1.0.8",
+      "build": 13,
+      "easBuildId": "f30d2bc4-3065-4f7f-aeca-322b9dd52197",
+      "sourceCommit": "9f069720c9b1c3856b88a1df63ce93419b0efaa8",
+      "artifactSha256": "075dcec2681334717cd8786c86d3b33dd014444ea8baaaa419002b71418ed597",
+      "submissionId": "7884233f-9c2d-4162-90ba-bea821bdf59f",
+      "status": "FINISHED",
+      "detailsUrl": "https://expo.dev/accounts/liroym/projects/AshrafEssa/submissions/7884233f-9c2d-4162-90ba-bea821bdf59f",
+      "error": null
+    }
+  ],
+  "note": "EAS FINISHED confirms upload/submission transport, not external store review approval or public availability."
+}

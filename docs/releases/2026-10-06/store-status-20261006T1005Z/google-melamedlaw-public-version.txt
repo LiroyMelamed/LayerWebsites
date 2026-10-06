@@ -1,0 +1,33 @@
+Public listing: https://play.google.com/store/apps/details?id=com.melamedia.melamedlaw
+Extract excludes unrelated recommendations and account/device details.
+- dialog:
+  - heading "MelamedLaw" [level=5]
+  - generic: מידע על האפליקציה הזו
+  - button "סגירה של תיבת הדו-שיח עם פרטי האפליקציה" [active]:
+    - generic: clear
+  - text: MelamedLaw מאפשר ללקוחות ולצוותים משפטיים להישאר מסודרים ומעודכנים בכל רגע.
+  - text: • התחברות מאובטחת באמצעות OTP לפי מספר טלפון
+  - text: • צפייה ועדכון של פרטי התיק שלך בזמן אמת
+  - text: • קבלת התראות והתעדכנות במצב התיקים שלך
+  - text: • יצירת קשר מהיר עם הצוות המשפטי – ב־WhatsApp, טלפון, SMS או אימייל
+  - text: • ניהול פרופיל אישי ופרטיות, כולל מחיקת משתמש מתוך האפליקציה
+  - text: האפליקציה מיועדת למתן שירות משפטי נגיש, מאובטח ונוח לכל לקוחות המשרד.
+  - text: השימוש פשוט, מהיר וכולל חיבור ישיר לצוות עורכי הדין המטפל בתיק שלך.
+  - generic: גרסה
+  - generic: 1.0.11
+  - generic: עדכון אחרון בתאריך
+  - generic: 6 באוק׳ 2026
+  - generic: נדרש Android
+  - generic: 7.0 ואילך
+  - generic: הורדות
+  - generic: +10 הורדות
+  - generic: סיווג תוכן
+  - text: PEGI 3
+  - link "למידע נוסף":
+    - /url: https://support.google.com/googleplay?p=appgame_ratings
+  - generic: הרשאות
+  - generic: הצגת הפרטים
+  - generic: תאריך הפרסום
+  - generic: 6 בפבר׳ 2026
+  - generic: מוצע על ידי
+  - generic: MelaMedia
