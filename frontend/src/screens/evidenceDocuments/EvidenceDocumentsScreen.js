@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import evidenceDocumentsApi from "../../api/evidenceDocumentsApi";
 import ApiUtils from "../../api/apiUtils";
+import { downloadBlobAsFile } from "../../utils/downloadBlobAsFile";
 import { images } from "../../assets/images/images";
 
 import SimpleScreen from "../../components/simpleComponents/SimpleScreen";
@@ -25,8 +26,6 @@ import { icons } from "../../assets/icons/icons";
 import { toastError } from "../../components/ui/toast";
 
 import TopToolBarSmallScreen from "../../components/navBars/topToolBarSmallScreen/TopToolBarSmallScreen";
-import { getNavBarData } from "../../components/navBars/data/NavBarData";
-import { usePopup } from "../../providers/PopUpProvider";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 
 import { AdminStackName } from "../../navigation/AdminStack";
@@ -35,6 +34,7 @@ import { MainScreenName } from "../mainScreen/MainScreen";
 import useAutoHttpRequest from "../../hooks/useAutoHttpRequest";
 
 import { useSigningOtpEnabled } from "../../services/firmSettings";
+import { useFirmPermissions } from "../../providers/FirmPermissionsProvider";
 
 import { parseDateInput, formatDisplayDate } from "../../functions/date/formatDateForInput";
 import "./EvidenceDocumentsScreen.scss";
@@ -71,9 +71,11 @@ function otpLabel(item, t, otpFeatureEnabled) {
 export default function EvidenceDocumentsScreen() {
     const { t } = useTranslation();
     const { isSmallScreen } = useScreenSize();
-    const { openPopup, closePopup } = usePopup();
 
     const showOtpUi = useSigningOtpEnabled();
+    const firmPerms = useFirmPermissions();
+    const canDownloadEvidence =
+        Boolean(firmPerms?.canAction("evidenceDocuments", "download"));
 
     const [inputQ, setInputQ] = useState("");
     const [inputCaseId, setInputCaseId] = useState("");
@@ -225,6 +227,7 @@ export default function EvidenceDocumentsScreen() {
     };
 
     const downloadEvidenceZip = async (signingFileId) => {
+        if (!canDownloadEvidence) return;
         try {
             const baseUrl = ApiUtils?.defaults?.baseURL || "";
             const token = localStorage.getItem("token");
@@ -237,16 +240,7 @@ export default function EvidenceDocumentsScreen() {
 
             if (!res.ok) throw new Error(`ZIP fetch failed: ${res.status}`);
             const blob = await res.blob();
-            const objectUrl = URL.createObjectURL(blob);
-
-            const a = document.createElement("a");
-            a.href = objectUrl;
-            a.download = `evidence_${signingFileId}.zip`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-
-            setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+            await downloadBlobAsFile(blob, `evidence_${signingFileId}.zip`);
         } catch (err) {
             console.error("Evidence ZIP download error:", err);
             showError(null, "evidenceDocuments.errors.downloadZip");
@@ -258,12 +252,12 @@ export default function EvidenceDocumentsScreen() {
             {isSmallScreen && (
                 <TopToolBarSmallScreen
                     LogoNavigate={AdminStackName + MainScreenName}
-                    GetNavBarData={getNavBarData}
                     chosenNavKey="evidenceDocuments"
                 />
             )}
 
-            <SimpleScrollView>
+            <SimpleScrollView className="lw-evidenceDocuments__scroll">
+                <SimpleCard className="lw-evidenceDocuments__filtersCard">
                 <ListPageTitle
                     title={t("nav.evidenceDocuments")}
                     count={filteredItems.length}
@@ -332,6 +326,8 @@ export default function EvidenceDocumentsScreen() {
                     )}
                 </SimpleContainer>
 
+                </SimpleCard>
+
                 {isLoading && items.length === 0 ? (
                     <SimpleCard className="lw-evidenceDocuments__card">
                         <SimpleContainer className="lw-evidenceDocuments__headerRow">
@@ -354,13 +350,14 @@ export default function EvidenceDocumentsScreen() {
                         ))}
                     </SimpleCard>
                 ) : hasLoadError && items.length === 0 ? (
-                    <SimpleContainer className="lw-evidenceDocuments__state">
-                        <Text14>{t("evidenceDocuments.errors.load")}</Text14>
-                    </SimpleContainer>
+                    <SimpleCard className="lw-evidenceDocuments__state">
+                        <Text14 role="alert">{t("evidenceDocuments.errors.load")}</Text14>
+                        <SecondaryButton onPress={onApplySearch}>{t("common.search")}</SecondaryButton>
+                    </SimpleCard>
                 ) : filteredItems.length === 0 ? (
-                    <SimpleContainer className="lw-evidenceDocuments__state">
+                    <SimpleCard className="lw-evidenceDocuments__state">
                         <Text14>{t("evidenceDocuments.empty")}</Text14>
-                    </SimpleContainer>
+                    </SimpleCard>
                 ) : (
                     <SimpleCard className="lw-evidenceDocuments__card">
                         <SimpleContainer className="lw-evidenceDocuments__headerRow">
@@ -386,16 +383,17 @@ export default function EvidenceDocumentsScreen() {
                                 >
                                     {index !== 0 && <Separator />}
                                     <SimpleContainer className="lw-evidenceDocuments__itemRow">
-                                        <Text14 className="lw-evidenceDocuments__itemCell" title={it.clientDisplayName || ""}>{clientNameOnly(it.clientDisplayName) || "-"}</Text14>
+                                        <Text14 className="lw-evidenceDocuments__itemCell" data-label={t("evidenceDocuments.columns.client")} title={it.clientDisplayName || ""}>{clientNameOnly(it.clientDisplayName) || "-"}</Text14>
                                         {!isSmallScreen && (
                                             <Text14 className="lw-evidenceDocuments__itemCell lw-evidenceDocuments__itemCell--case" title={String(it.caseId || "")}>{it.caseId ? String(it.caseId) : "-"}</Text14>
                                         )}
-                                        <Text14 className="lw-evidenceDocuments__itemCell" title={it.documentDisplayName || ""}>{it.documentDisplayName || "-"}</Text14>
-                                        <Text14 className="lw-evidenceDocuments__itemCell lw-evidenceDocuments__itemCell--date">{formatDateDdMmYy(it.signedAtUtc)}</Text14>
+                                        <Text14 className="lw-evidenceDocuments__itemCell lw-evidenceDocuments__itemCell--document" data-label={t("evidenceDocuments.columns.document")} title={it.documentDisplayName || ""}>{it.documentDisplayName || "-"}</Text14>
+                                        <Text14 className="lw-evidenceDocuments__itemCell lw-evidenceDocuments__itemCell--date" data-label={t("evidenceDocuments.columns.signedAt")}>{formatDateDdMmYy(it.signedAtUtc)}</Text14>
                                         {showOtpUi && (
-                                            <Text14 className="lw-evidenceDocuments__itemCell lw-evidenceDocuments__itemCell--otp">{otpLabel(it, t, showOtpUi)}</Text14>
+                                            <Text14 className="lw-evidenceDocuments__itemCell lw-evidenceDocuments__itemCell--otp" data-label={t("evidenceDocuments.columns.otp")}>{otpLabel(it, t, showOtpUi)}</Text14>
                                         )}
                                         <SimpleContainer className="lw-evidenceDocuments__itemCell lw-evidenceDocuments__itemCell--actions">
+                                            {canDownloadEvidence ? (
                                             <TertiaryButton
                                                 onPress={() => downloadEvidenceZip(it.signingFileId)}
                                                 disabled={!it.evidenceZipAvailable}
@@ -406,6 +404,7 @@ export default function EvidenceDocumentsScreen() {
                                             >
                                                 {""}
                                             </TertiaryButton>
+                                            ) : null}
                                         </SimpleContainer>
                                     </SimpleContainer>
                                 </SimpleContainer>
@@ -413,8 +412,6 @@ export default function EvidenceDocumentsScreen() {
                         </SimpleScrollView>
                     </SimpleCard>
                 )}
-            </SimpleScrollView>
-
             <SimpleContainer className="lw-evidenceDocuments__footer">
                 {nextCursor ? (
                     <SecondaryButton onPress={handleLoadMore} disabled={isLoading}>
@@ -424,6 +421,7 @@ export default function EvidenceDocumentsScreen() {
                     items.length > 0 && <Text14>{t("evidenceDocuments.end")}</Text14>
                 )}
             </SimpleContainer>
+            </SimpleScrollView>
         </SimpleScreen>
     );
 }

@@ -92,7 +92,9 @@ export const getFileReadUrl = async (key) => {
     }
 };
 
-export default {
+const fileUploadUtils = {
     uploadFileToR2,
     getFileReadUrl,
 };
+
+export default fileUploadUtils;

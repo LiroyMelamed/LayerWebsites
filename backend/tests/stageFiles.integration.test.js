@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const identities = require('./helpers/identityFixture').useTestIdentities();
 
 // Ensure tests are not flaky due to low rate limits.
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -61,7 +62,7 @@ test('POST /api/Files/stage-files/:caseId/:stage returns 403 for non-admin', asy
     const app = require('../app');
     const res = await request(app)
         .post('/api/Files/stage-files/1/1')
-        .set('Authorization', `Bearer ${makeToken({ userid: 99999, role: 'User' })}`)
+        .set('Authorization', `Bearer ${makeToken({ userid: identities.client, role: 'User' })}`)
         .send({ fileKey: 'test', fileName: 'test.pdf' });
     assert.equal(res.status, 403);
 });
@@ -71,7 +72,7 @@ test('DELETE /api/Files/stage-files/:fileId returns 403 for non-admin', async ()
     const app = require('../app');
     const res = await request(app)
         .delete('/api/Files/stage-files/1')
-        .set('Authorization', `Bearer ${makeToken({ userid: 99999, role: 'User' })}`)
+        .set('Authorization', `Bearer ${makeToken({ userid: identities.client, role: 'User' })}`)
     assert.equal(res.status, 403);
 });
 
@@ -130,17 +131,17 @@ test('POST /api/Files/stage-files/:caseId/:stage returns 400 when fileName missi
 test('stage-file lifecycle denies unrelated clients and cleans up deleted metadata', { skip: process.env.LEGAL_DB_QA !== 'true' }, async (t) => {
     const pool = require('../config/db');
     const app = require('../app');
-    const { rows } = await pool.query("INSERT INTO cases(casename,userid) VALUES('Synthetic file QA',1088) RETURNING caseid");
+    const { rows } = await pool.query("INSERT INTO cases(casename,userid) VALUES('Synthetic file QA',$1) RETURNING caseid",[identities.client]);
     const caseId = rows[0].caseid;
     t.after(async () => {
         await pool.query('DELETE FROM stage_files WHERE caseid=$1',[caseId]);
         await pool.query('DELETE FROM case_users WHERE caseid=$1',[caseId]);
         await pool.query('DELETE FROM cases WHERE caseid=$1',[caseId]);
     });
-    await pool.query('INSERT INTO case_users(caseid,userid) VALUES($1,1088)',[caseId]);
+    await pool.query('INSERT INTO case_users(caseid,userid) VALUES($1,$2)',[caseId,identities.client]);
     const admin = `Bearer ${makeToken({userid:1017,role:'Admin'})}`;
-    const client = `Bearer ${makeToken({userid:1088,role:'User'})}`;
-    const outsider = `Bearer ${makeToken({userid:1091,role:'User'})}`;
+    const client = `Bearer ${makeToken({userid:identities.client,role:'User'})}`;
+    const outsider = `Bearer ${makeToken({userid:identities.outsider,role:'User'})}`;
     const added = await request(app).post(`/api/Files/stage-files/${caseId}/1`).set('Authorization',admin)
         .send({fileKey:`synthetic-qa/${caseId}/test.pdf`,fileName:'synthetic.pdf',fileMime:'application/pdf',fileSize:24});
     assert.equal(added.status,201);

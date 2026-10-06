@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const identities = require('./helpers/identityFixture').useTestIdentities();
 
 // Ensure tests are not flaky due to low rate limits.
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -70,7 +71,7 @@ test('GET /api/calendar returns 403 for a non-lawyer/admin role', async () => {
     const app = require('../app');
     const res = await request(app)
         .get('/api/calendar')
-        .set('Authorization', `Bearer ${makeToken({ userid: 99999, role: 'User' })}`);
+        .set('Authorization', `Bearer ${makeToken({ userid: identities.client, role: 'User' })}`);
     assert.equal(res.status, 403);
 });
 
@@ -79,7 +80,7 @@ test('POST /api/calendar returns 403 for a non-lawyer/admin role', async () => {
     const app = require('../app');
     const res = await request(app)
         .post('/api/calendar')
-        .set('Authorization', `Bearer ${makeToken({ userid: 99999, role: 'User' })}`)
+        .set('Authorization', `Bearer ${makeToken({ userid: identities.client, role: 'User' })}`)
         .send({ title: 'x', start_time: new Date().toISOString(), end_time: new Date().toISOString() });
     assert.equal(res.status, 403);
 });

@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const identities = require('./helpers/identityFixture').useTestIdentities();
 
 // Ensure tests are not flaky due to low rate limits.
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -16,7 +17,8 @@ const jwt = require('jsonwebtoken');
 const request = require('supertest');
 const { resetStore } = require('../utils/rateLimiter');
 
-function makeToken({ userid = 99999999, role = 'Lawyer' } = {}) {
+function makeToken({ userid, role = 'Lawyer' } = {}) {
+    userid ??= role === 'User' ? identities.client : identities.lawyer;
     return jwt.sign({ userid, role, phoneNumber: '0000000000' }, process.env.JWT_SECRET, {
         expiresIn: '1h',
     });
@@ -49,7 +51,7 @@ test('GET /api/Cases/my returns 403 for non-lawyer user', async () => {
 });
 
 // Opt-in: requires an isolated database seeded with synthetic users1017/1088/1091.
-test('case pagination preserves ordering and user scope across list endpoints', { skip: process.env.LEGAL_DB_QA !== 'true' }, async (t) => {
+test('case pagination preserves personal-list scope and dedicated-office parity', { skip: process.env.LEGAL_DB_QA !== 'true' }, async (t) => {
     const pool = require('../config/db');
     const app = require('../app');
     const caseIds = [];
@@ -69,7 +71,8 @@ test('case pagination preserves ordering and user scope across list endpoints', 
             const res = await request(app).get(`/api/Cases/${route}?limit=1&offset=${offset}`)
                 .set('Authorization', `Bearer ${makeToken({ userid:1088, role:'Lawyer' })}`);
             assert.equal(res.status,200,`${route}: ${JSON.stringify(res.body)}`);
-            assert.deepEqual(res.body.map(c => c.CaseId), [caseIds[offset]], route);
+            const expected = route === 'my' ? [caseIds[0],caseIds[1]] : [caseIds[2],caseIds[0],caseIds[1]];
+            assert.deepEqual(res.body.map(c => c.CaseId), [expected[offset]], route);
         }
     }
     const admin = await request(app).get('/api/Cases/GetCases?limit=3&offset=0')

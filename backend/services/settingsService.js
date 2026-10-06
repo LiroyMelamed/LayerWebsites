@@ -146,13 +146,13 @@ async function upsertSetting(category, key, value, { valueType, label, descripti
          ON CONFLICT (category, setting_key)
          DO UPDATE SET
              setting_value = EXCLUDED.setting_value,
-             value_type    = COALESCE(EXCLUDED.value_type, platform_settings.value_type),
+             value_type    = COALESCE($4, platform_settings.value_type),
              label         = COALESCE(EXCLUDED.label, platform_settings.label),
              description   = COALESCE(EXCLUDED.description, platform_settings.description),
              updated_by    = EXCLUDED.updated_by,
              updated_at    = NOW()
          RETURNING *`,
-        [category, key, value === undefined ? null : String(value), valueType || null, label || null, description || null, safeUpdatedBy]
+        [category, key, value == null ? null : String(value), valueType || null, label || null, description || null, safeUpdatedBy]
     );
 
     // Invalidate cache
@@ -182,7 +182,7 @@ async function bulkUpsert(settings, updatedBy) {
                      updated_by    = EXCLUDED.updated_by,
                      updated_at    = NOW()
                  RETURNING *`,
-                [s.category, s.key, s.value === undefined ? null : String(s.value), safeUpdatedBy]
+                [s.category, s.key, s.value == null ? null : String(s.value), safeUpdatedBy]
             );
             results.push(r.rows[0]);
         }

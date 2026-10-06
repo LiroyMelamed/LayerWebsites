@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const identities = require('./helpers/identityFixture').useTestIdentities();
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.RATE_LIMIT_IP_WINDOW_MS = process.env.RATE_LIMIT_IP_WINDOW_MS || String(60 * 1000);
@@ -219,7 +220,7 @@ test('personal calendar — production regression: untagged creator does not see
 });
 
 
-test('calendar API enforces event access and handles missing events for every role', async (t) => {
+test('calendar API preserves office parity and rejects customers on event operations', async (t) => {
     const app = require('../app');
     const { start, end } = nextSundaySlot(10);
     const created = await createEvent(CREATOR_ID, {
@@ -235,9 +236,12 @@ test('calendar API enforces event access and handles missing events for every ro
         return body ? req.send(body) : req;
     };
     assert.equal((await call('get', created.id, LAWYER_A)).status, 200);
+    // Dedicated-office legacy Lawyers have the same office capabilities as Admins.
+    assert.equal((await call('get', created.id, OUTSIDER_ID, 'Lawyer')).status,200);
+    assert.equal((await call('put', created.id, OUTSIDER_ID, 'Lawyer', {title:'Office colleague update'})).status,200);
     for (const method of ['get', 'put', 'delete']) {
-        const denied = await call(method, created.id, OUTSIDER_ID, 'Lawyer', method === 'put' ? { title: 'Unauthorized change' } : undefined);
-        assert.equal(denied.status, 403, `${method} must reject unrelated lawyer`);
+        const denied = await call(method, created.id, identities.client, 'User', method === 'put' ? { title: 'Unauthorized change' } : undefined);
+        assert.equal(denied.status, 403, `${method} must reject customer`);
     }
     const updated = await call('put', created.id, LAWYER_A, 'Lawyer', { title: 'Assigned lawyer update' });
     assert.equal(updated.status, 200);
