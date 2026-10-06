@@ -44,9 +44,9 @@ async function listOfficeUsers(req, res, next) {
                        WHERE pa.user_id = u.userid AND pa.is_active = TRUE
                    ) AS is_platform_admin
             FROM users u
-            LEFT JOIN firm_staff_roles r ON r.id = u.firm_staff_role_id AND r.is_active = TRUE
+            LEFT JOIN firm_staff_roles r ON r.id = u.firm_staff_role_id AND r.is_active = TRUE AND r.law_firm_tenant_id IS NOT DISTINCT FROM u.law_firm_tenant_id
             WHERE u.role = ANY($1::text[])
-              AND ($2::uuid IS NULL OR u.law_firm_tenant_id = $2)
+              AND u.law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid
         `;
         params.push(tenantId);
         if (name) {
@@ -80,10 +80,10 @@ async function listRoles(req, res, next) {
             `SELECT r.id, r.name, r.permissions, r.is_active, r.created_at, r.updated_at,
                     (SELECT COUNT(*)::int FROM users u
                      WHERE u.firm_staff_role_id = r.id
-                       AND ($1::uuid IS NULL OR u.law_firm_tenant_id = $1)) AS assigned_user_count
+                       AND u.law_firm_tenant_id IS NOT DISTINCT FROM $1::uuid) AS assigned_user_count
              FROM firm_staff_roles r
              WHERE r.is_active = TRUE
-               AND ($1::uuid IS NULL OR r.law_firm_tenant_id = $1)
+               AND r.law_firm_tenant_id IS NOT DISTINCT FROM $1::uuid
              ORDER BY r.name ASC`,
             [tenantId],
         );
@@ -175,15 +175,17 @@ async function updateRole(req, res, next) {
              SET name = COALESCE($2, name),
                  permissions = COALESCE($3::jsonb, permissions),
                  updated_at = now()
-             WHERE id = $1
+             WHERE id = $1 AND law_firm_tenant_id IS NOT DISTINCT FROM $4::uuid AND is_active = TRUE
              RETURNING id, name, permissions, updated_at`,
             [
                 roleId,
                 name || null,
                 permissions ? JSON.stringify(permissions) : null,
+                tenantId,
             ],
         );
         const row = rows[0];
+        if (!row) return next(createAppError('NOT_FOUND', 404));
         return res.json({
             id: row.id,
             name: row.name,
@@ -199,14 +201,19 @@ async function updateRole(req, res, next) {
 }
 
 async function deactivateRole(req, res, next) {
+    let client;
+    let committed = false;
     try {
         const { tenantId } = await assertPlatformAdminSameTenant(req);
+        client = await pool.connect();
+        await client.query('BEGIN');
+        await client.query('LOCK TABLE users, firm_staff_roles IN SHARE ROW EXCLUSIVE MODE');
         const roleId = req.params.roleId;
-        const existing = await assertRoleInTenant(roleId, tenantId);
+        const existing = await assertRoleInTenant(roleId, tenantId, client);
         if (!existing) {
             return next(createAppError('NOT_FOUND', 404, 'תפקיד לא נמצא'));
         }
-        const assignedUserCount = await countUsersForRole(roleId, tenantId);
+        const assignedUserCount = await countUsersForRole(roleId, tenantId, client);
         if (assignedUserCount > 0) {
             return next(
                 createAppError(
@@ -217,24 +224,32 @@ async function deactivateRole(req, res, next) {
                 ),
             );
         }
-        await pool.query(
-            `UPDATE firm_staff_roles SET is_active = FALSE, updated_at = now() WHERE id = $1`,
-            [roleId],
+        await client.query(
+            `UPDATE firm_staff_roles SET is_active = FALSE, updated_at = now() WHERE id = $1 AND law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid`,
+            [roleId, tenantId],
         );
+        await client.query('COMMIT'); committed = true;
         return res.json({ ok: true, assignedUserCount: 0 });
     } catch (e) {
         return next(e);
+    } finally {
+        if (client) { if (!committed) await client.query('ROLLBACK'); client.release(); }
     }
 }
 
 async function assignUserFirmStaffRole(req, res, next) {
+    let client;
+    let committed = false;
     try {
         const { tenantId } = await assertPlatformAdminSameTenant(req);
+        client = await pool.connect();
+        await client.query('BEGIN');
+        await client.query('LOCK TABLE users, firm_staff_roles IN SHARE ROW EXCLUSIVE MODE');
         const userId = Number(req.params.userId);
         if (!Number.isFinite(userId) || userId <= 0) {
             return next(createAppError('VALIDATION_ERROR', 400, getHebrewMessage('VALIDATION_ERROR')));
         }
-        const target = await assertTargetUserInTenant(userId, tenantId);
+        const target = await assertTargetUserInTenant(userId, tenantId, client);
         if (!target || !FIRM_STAFF_ROLE_ASSIGNMENT_ROLES.includes(target.role)) {
             return next(createAppError('NOT_FOUND', 404, 'משתמש לא נמצא'));
         }
@@ -257,13 +272,14 @@ async function assignUserFirmStaffRole(req, res, next) {
         }
         const raw = body.firmStaffRoleId;
         if (raw === null || raw === '') {
-            await pool.query(`UPDATE users SET firm_staff_role_id = NULL WHERE userid = $1`, [userId]);
-            return res.json({ ok: true, firmStaffRoleId: null, firmStaffRoleName: null });
+            await client.query(`UPDATE users SET firm_staff_role_id = NULL WHERE userid = $1 AND law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid AND NOT EXISTS(SELECT 1 FROM platform_admins pa WHERE pa.user_id=users.userid AND pa.is_active=TRUE)`, [userId, tenantId]);
+            await client.query('COMMIT'); committed = true;
+        return res.json({ ok: true, firmStaffRoleId: null, firmStaffRoleName: null });
         }
         const roleId = String(raw).trim();
-        const role = await assertRoleInTenant(roleId, tenantId);
+        const role = await assertRoleInTenant(roleId, tenantId, client);
         if (!role) {
-            const inactive = await pool.query(
+            const inactive = await client.query(
                 `SELECT id FROM firm_staff_roles WHERE id = $1 AND is_active = FALSE LIMIT 1`,
                 [roleId],
             );
@@ -272,7 +288,8 @@ async function assignUserFirmStaffRole(req, res, next) {
             }
             return next(createAppError('NOT_FOUND', 404, 'תפקיד לא נמצא במשרד זה'));
         }
-        await pool.query(`UPDATE users SET firm_staff_role_id = $2 WHERE userid = $1`, [userId, role.id]);
+        await client.query(`UPDATE users SET firm_staff_role_id = $2 WHERE userid = $1 AND law_firm_tenant_id IS NOT DISTINCT FROM $3::uuid AND NOT EXISTS(SELECT 1 FROM platform_admins pa WHERE pa.user_id=users.userid AND pa.is_active=TRUE)`, [userId, role.id, tenantId]);
+        await client.query('COMMIT'); committed = true;
         return res.json({
             ok: true,
             firmStaffRoleId: role.id,
@@ -280,6 +297,8 @@ async function assignUserFirmStaffRole(req, res, next) {
         });
     } catch (e) {
         return next(e);
+    } finally {
+        if (client) { if (!committed) await client.query('ROLLBACK'); client.release(); }
     }
 }
 
@@ -293,7 +312,7 @@ async function getRolloutSummary(req, res, next) {
                 COUNT(*)::int AS total_office_users
              FROM users u
              WHERE u.role = ANY($1::text[])
-               AND ($2::uuid IS NULL OR u.law_firm_tenant_id = $2)`,
+               AND u.law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid`,
             [OFFICE_USER_LIST_ROLES, tenantId],
         );
         const row = rows[0] || { without_custom_role: 0, with_custom_role: 0, total_office_users: 0 };

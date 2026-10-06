@@ -269,6 +269,14 @@ export default function FirmStaffRolesScreen() {
                                     "הגדרת תפקידים והרשאות. שיוך למשתמשים מתבצע בכרטיס המנהל/עורך הדין.",
                                 )}
                             </p>
+                            {rollout && typeof rollout.withoutCustomRole === "number" ? (
+                                <p className="lw-firmStaffRoles__rollout">
+                                    {t("firmStaffRoles.rolloutSummary", "משתמשי משרד ללא תפקיד מותאם: {{count}} מתוך {{total}}", {
+                                        count: rollout.withoutCustomRole,
+                                        total: rollout.totalOfficeUsers,
+                                    })}
+                                </p>
+                            ) : null}
                             {!loading && (
                                 <PrimaryButton
                                     size={buttonSizes.MEDIUM}

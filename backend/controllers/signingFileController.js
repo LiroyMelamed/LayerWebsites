@@ -1,5 +1,6 @@
 // controllers/signingFileController.js
 const pool = require("../config/db");
+const { canOverridePublicSignerIdentity } = require("../lib/officeRole");
 const { hasSigningContactOverride, CONTACT_EDIT_MESSAGE } = require("../lib/signingSignerContact");
 const jwt = require('jsonwebtoken');
 const { PutObjectCommand, GetObjectCommand, HeadObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
@@ -466,6 +467,7 @@ async function insertAuditEvent({
     requestId = null,
     success = true,
     metadata = {},
+    db = pool,
 }) {
     // Legally relevant: append-only event log supports reliability/chain-of-custody arguments.
     const eventId = uuid();
@@ -478,7 +480,7 @@ async function insertAuditEvent({
     let prevHash = null;
     if (signingFileId) {
         try {
-            const prevRes = await pool.query(
+            const prevRes = await db.query(
                 `select event_hash as "EventHash"
                  from audit_events
                  where signingfileid = $1 and event_hash is not null
@@ -511,7 +513,7 @@ async function insertAuditEvent({
     const eventHash = sha256Hex(Buffer.from(baseForHash, 'utf8'));
 
     try {
-        await pool.query(
+        await db.query(
             `insert into audit_events
              (eventid, occurred_at_utc, event_type, signingfileid, signaturespotid,
               actor_userid, actor_type, ip, user_agent, signing_session_id, request_id,
@@ -543,7 +545,7 @@ async function insertAuditEvent({
         // For court-ready environments, audit logging should be fail-closed.
         // In dev/test, allow core flows to work while still emitting a loud warning.
         const failClosed = String(process.env.IS_PRODUCTION || 'false').toLowerCase() === 'true';
-        if (!failClosed && isPermissionDenied) {
+        if (db === pool && !failClosed && isPermissionDenied) {
             console.warn('[audit_events] write failed (permission denied); continuing in non-production');
             return { eventId, eventHash };
         }
@@ -1381,12 +1383,12 @@ function isSigningDocumentExpired(file) {
     return !Number.isNaN(exp.getTime()) && exp.getTime() <= Date.now();
 }
 
-async function isSignerAssignedToFile({ signingFileId, signerUserId, clientId, schemaSupport }) {
+async function isSignerAssignedToFile({ signingFileId, signerUserId, clientId, schemaSupport, db = pool }) {
     const uid = Number(signerUserId);
     if (!Number.isFinite(uid) || uid <= 0) return false;
     if (Number(clientId) === uid) return true;
     if (!schemaSupport?.signaturespotsSignerUserId) return Number(clientId) === uid;
-    const r = await pool.query(
+    const r = await db.query(
         `select 1 from signaturespots where signingfileid = $1 and signeruserid = $2 limit 1`,
         [signingFileId, uid]
     );
@@ -1540,23 +1542,27 @@ function isSigningFileOwner({ file, requesterId }) {
 /** Read access for lawyers/admins (legacy) or firm Staff role with signing.view (scope enforced on route). */
 function canViewSigningFileAsOfficeStaff({ file, requesterId, role, req = null }) {
     if (!requesterId) return false;
-    if (isSigningFileOwner({ file, requesterId })) return true;
     if (req?.firmPermissionMode === 'role') {
-        const { hasAreaAction } = require('../lib/firmRolePermissions');
-        return Boolean(req.firmPermissions && hasAreaAction(req.firmPermissions, 'signing', 'view'));
+        const { hasVerifiedSigningAction } = require('../lib/firmPermissions/signingAccess');
+        return hasVerifiedSigningAction(req, file, 'view');
     }
+    if (isSigningFileOwner({ file, requesterId })) return true;
     return isSigningOfficeStaffRole(role);
 }
 
 /** Mutations (delete, rename, resend, policy) — owner lawyer or firm admin only. */
-function canManageSigningFile({ file, requesterId, role }) {
+function canManageSigningFile({ file, requesterId, role, req = null }) {
     if (!requesterId) return false;
+    if (req?.firmPermissionMode === 'role') {
+        const { hasVerifiedSigningAction } = require('../lib/firmPermissions/signingAccess');
+        return hasVerifiedSigningAction(req, file, 'manage');
+    }
     if (String(role) === 'Admin') return true;
     return isSigningFileOwner({ file, requesterId });
 }
 
 function canViewAllSigningSpots({ file, requesterId, role, req = null }) {
-    return isSigningFileOwner({ file, requesterId }) || canViewSigningFileAsOfficeStaff({ file, requesterId, role, req });
+    return canViewSigningFileAsOfficeStaff({ file, requesterId, role, req });
 }
 
 function normalizeSignerDeliveryMethod(raw) {
@@ -1566,23 +1572,24 @@ function normalizeSignerDeliveryMethod(raw) {
     return 'phone';
 }
 
-async function loadSignerDeliveryMethod(signingFileId, signerUserId) {
+async function loadSignerDeliveryMethod(signingFileId, signerUserId, db = pool) {
     try {
-        const { rows } = await pool.query(
+        const { rows } = await db.query(
             `SELECT delivery_method FROM signing_signer_delivery
              WHERE signing_file_id = $1 AND signer_user_id = $2`,
             [signingFileId, signerUserId]
         );
         return normalizeSignerDeliveryMethod(rows[0]?.delivery_method);
-    } catch {
+    } catch (err) {
+        if (db !== pool) throw err;
         return 'phone';
     }
 }
 
-async function saveSignerDeliveryMethod(signingFileId, signerUserId, deliveryMethod) {
+async function saveSignerDeliveryMethod(signingFileId, signerUserId, deliveryMethod, db = pool) {
     const method = normalizeSignerDeliveryMethod(deliveryMethod);
     try {
-        await pool.query(
+        await db.query(
             `INSERT INTO signing_signer_delivery (signing_file_id, signer_user_id, delivery_method, updated_at)
              VALUES ($1, $2, $3, NOW())
              ON CONFLICT (signing_file_id, signer_user_id)
@@ -1590,12 +1597,13 @@ async function saveSignerDeliveryMethod(signingFileId, signerUserId, deliveryMet
             [signingFileId, signerUserId, method]
         );
     } catch (err) {
+        if (db !== pool) throw err;
         console.warn('[signing] saveSignerDeliveryMethod failed:', err?.message || err);
     }
     return method;
 }
 
-function buildLawyerSigningFilesListQuery({ scope, pagination }) {
+function buildLawyerSigningFilesListQuery({ scope, pagination, customFilter = null }) {
     const isOffice = scope === 'office';
     const selectColumns = `
                 sf.signingfileid      as "SigningFileId",
@@ -1631,7 +1639,7 @@ function buildLawyerSigningFilesListQuery({ scope, pagination }) {
         ? `left join users owner_u on owner_u.userid = sf.lawyerid`
         : '';
 
-    const whereClause = isOffice
+    const whereClause = customFilter ? `where ${customFilter.sql}` : isOffice
         ? `where exists (
                 select 1 from users owner_u2
                 where owner_u2.userid = sf.lawyerid
@@ -1653,7 +1661,8 @@ function buildLawyerSigningFilesListQuery({ scope, pagination }) {
                       sf.otpwaiveracknowledged, sf.otpwaiveracknowledgedatutc, sf.otpwaiveracknowledgedbyuserid,
                       c.casename`;
 
-    const limitClause = pagination.enabled ? ` limit $${isOffice ? 1 : 2} offset $${isOffice ? 2 : 3}` : '';
+    const baseParams = customFilter ? customFilter.params.length : (isOffice ? 0 : 1);
+    const limitClause = pagination.enabled ? ` limit $${baseParams + 1} offset $${baseParams + 2}` : '';
 
     return `
              select ${selectColumns}
@@ -3393,18 +3402,22 @@ exports.getLawyerSigningFiles = async (req, res, next) => {
         const lawyerId = req.user?.UserId;
         const role = req.user?.Role;
         if (!lawyerId) return fail(next, 'UNAUTHORIZED', 401);
-        if (!isSigningOfficeStaffRole(role)) {
+        if (req.firmPermissionMode !== 'role' && !isSigningOfficeStaffRole(role)) {
             return fail(next, 'FORBIDDEN', 403);
         }
 
         const scopeRaw = String(req.query.scope || 'mine').trim().toLowerCase();
-        const scope = scopeRaw === 'office' ? 'office' : 'mine';
+        let scope = scopeRaw === 'office' ? 'office' : 'mine';
+        const { signingScopeFilter } = require('../lib/firmPermissions/signingAccess');
+        const customFilter = signingScopeFilter(req, { forceMine: scope === 'mine' });
+        if (customFilter?.error) return next(customFilter.error);
+        if (customFilter?.own) scope = 'mine';
 
         const pagination = getPagination(req, res, { defaultLimit: 50, maxLimit: 200 });
         if (pagination === null) return;
 
-        const query = buildLawyerSigningFilesListQuery({ scope, pagination });
-        const params = pagination.enabled
+        const query = buildLawyerSigningFilesListQuery({ scope, pagination, customFilter });
+        const params = customFilter ? [...customFilter.params, ...(pagination.enabled ? [pagination.limit, pagination.offset] : [])] : pagination.enabled
             ? (scope === 'office'
                 ? [pagination.limit, pagination.offset]
                 : [lawyerId, pagination.limit, pagination.offset])
@@ -4735,7 +4748,7 @@ exports.resendSigningInvite = async (req, res, next) => {
         );
         if (fileResult.rows.length === 0) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
         const file = fileResult.rows[0];
-        if (!canManageSigningFile({ file, requesterId, role: req.user?.Role })) {
+        if (!canManageSigningFile({ file, requesterId, role: req.user?.Role, req })) {
             return fail(next, 'FORBIDDEN', 403);
         }
         if (file.Status !== 'pending') return fail(next, 'VALIDATION_ERROR', 422, { message: 'ניתן לשלוח מחדש רק מסמכים ממתינים' });
@@ -4927,6 +4940,8 @@ exports.resendSigningInvite = async (req, res, next) => {
 
 /** Update signer contact + delivery channel while document is pending; optional resend. */
 exports.updateSigningSignerContact = async (req, res, next) => {
+    let db;
+    let committed = false;
     try {
         const signingFileId = requireInt(req, res, { source: 'params', name: 'signingFileId' });
         const signerUserId = requireInt(req, res, { source: 'params', name: 'signerUserId' });
@@ -4938,38 +4953,52 @@ exports.updateSigningSignerContact = async (req, res, next) => {
         const enabledCheck = await enforceSigningEnabledForSigningFileId({ signingFileId, next });
         if (!enabledCheck.ok) return;
 
-        const fileResult = await pool.query(
+        const schemaSupport = await getSchemaSupport();
+        db = await pool.connect();
+        await db.query('BEGIN');
+
+        const fileResult = await db.query(
             `SELECT signingfileid AS "SigningFileId", lawyerid AS "LawyerId", clientid AS "ClientId",
                     filename AS "FileName", status AS "Status", expiresat AS "ExpiresAt", caseid AS "CaseId"
-             FROM signingfiles WHERE signingfileid = $1`,
+             FROM signingfiles WHERE signingfileid = $1 FOR UPDATE`,
             [signingFileId]
         );
         if (!fileResult.rows.length) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
         const file = fileResult.rows[0];
-        if (!canManageSigningFile({ file, requesterId, role: req.user?.Role })) {
+        if (!canManageSigningFile({ file, requesterId, role: req.user?.Role, req })) {
             return fail(next, 'FORBIDDEN', 403);
         }
         if (file.Status !== 'pending') {
             return fail(next, 'VALIDATION_ERROR', 422, { message: 'ניתן לעדכן חותם רק במסמך ממתין' });
         }
 
-        const schemaSupport = await getSchemaSupport();
         const assigned = await isSignerAssignedToFile({
             signingFileId,
             signerUserId,
             clientId: file.ClientId,
             schemaSupport,
+            db,
         });
         if (!assigned) {
             return fail(next, 'VALIDATION_ERROR', 422, { message: 'החותם לא משויך למסמך זה' });
         }
 
+        const oldSigner = await db.query(
+            'SELECT email, phonenumber FROM users WHERE userid = $1 FOR UPDATE', [signerUserId]
+        );
+        const oldDelivery = await loadSignerDeliveryMethod(signingFileId, signerUserId, db);
+        const before = {
+            signerUserId,
+            email: oldSigner.rows[0]?.email || null,
+            phone: oldSigner.rows[0]?.phonenumber || null,
+            deliveryMethod: oldDelivery,
+        };
         let effectiveSignerUserId = signerUserId;
         const replaceTargetId = parsePositiveIntStrict(replaceWithUserId) ?? null;
-        // Validate before replacement writes so rejected legacy edits have no side effects.
-        const contactResult = await pool.query(
+        // Preserve the customer-contact boundary, including legacy clients.
+        const contactResult = await db.query(
             `SELECT userid AS "UserId", name AS "Name", email AS "Email", phonenumber AS "Phone"
-             FROM users WHERE userid = $1`,
+             FROM users WHERE userid = $1 FOR UPDATE`,
             [replaceTargetId || signerUserId]
         );
         const contact = contactResult.rows[0];
@@ -4982,11 +5011,11 @@ exports.updateSigningSignerContact = async (req, res, next) => {
                 return fail(next, 'VALIDATION_ERROR', 422, { message: 'החלפת חותם אינה נתמכת במערכת זו' });
             }
 
-            const signedCheck = await pool.query(
+            const signedCheck = await db.query(
                 `SELECT EXISTS (
                     SELECT 1 FROM signaturespots
                     WHERE signingfileid = $1 AND signeruserid = $2
-                      AND issigned = true AND isrequired = true
+                      AND issigned = true
                  ) AS "HasSigned"`,
                 [signingFileId, signerUserId]
             );
@@ -4994,7 +5023,7 @@ exports.updateSigningSignerContact = async (req, res, next) => {
                 return fail(next, 'VALIDATION_ERROR', 422, { message: 'לא ניתן להחליף חותם שכבר חתם על המסמך' });
             }
 
-            const duplicateSigner = await pool.query(
+            const duplicateSigner = await db.query(
                 `SELECT 1 FROM signaturespots
                  WHERE signingfileid = $1 AND signeruserid = $2
                    AND lower(coalesce(fieldtype, 'signature')) != 'lawyerstamp'
@@ -5005,27 +5034,22 @@ exports.updateSigningSignerContact = async (req, res, next) => {
                 return fail(next, 'VALIDATION_ERROR', 422, { message: 'הלקוח שנבחר כבר משויך כחותם במסמך זה' });
             }
 
-            await pool.query(
+            await db.query(
                 `UPDATE signaturespots
                  SET signeruserid = $1
                  WHERE signingfileid = $2 AND signeruserid = $3 AND issigned = false`,
                 [replaceTargetId, signingFileId, signerUserId]
             );
 
-            const oldDelivery = await loadSignerDeliveryMethod(signingFileId, signerUserId);
-            try {
-                await pool.query(
-                    `DELETE FROM signing_signer_delivery
-                     WHERE signing_file_id = $1 AND signer_user_id = $2`,
-                    [signingFileId, signerUserId]
-                );
-                await saveSignerDeliveryMethod(signingFileId, replaceTargetId, oldDelivery);
-            } catch (deliveryMigrateErr) {
-                console.warn('[signing] replace signer delivery migrate failed:', deliveryMigrateErr?.message || deliveryMigrateErr);
-            }
+            await db.query(
+                `DELETE FROM signing_signer_delivery
+                 WHERE signing_file_id = $1 AND signer_user_id = $2`,
+                [signingFileId, signerUserId]
+            );
+            await saveSignerDeliveryMethod(signingFileId, replaceTargetId, oldDelivery, db);
 
             if (Number(file.ClientId) === Number(signerUserId)) {
-                await pool.query(
+                await db.query(
                     `UPDATE signingfiles SET clientid = $1 WHERE signingfileid = $2`,
                     [replaceTargetId, signingFileId]
                 );
@@ -5036,17 +5060,33 @@ exports.updateSigningSignerContact = async (req, res, next) => {
 
         let savedDelivery = null;
         if (deliveryMethod !== undefined) {
-            savedDelivery = await saveSignerDeliveryMethod(signingFileId, effectiveSignerUserId, deliveryMethod);
+            savedDelivery = await saveSignerDeliveryMethod(signingFileId, effectiveSignerUserId, deliveryMethod, db);
         } else {
-            savedDelivery = await loadSignerDeliveryMethod(signingFileId, effectiveSignerUserId);
+            savedDelivery = await loadSignerDeliveryMethod(signingFileId, effectiveSignerUserId, db);
         }
 
-        const signerRow = await pool.query(
+        const signerRow = await db.query(
             `SELECT userid AS "UserId", name AS "Name", email AS "Email", phonenumber AS "Phone"
              FROM users WHERE userid = $1`,
             [effectiveSignerUserId]
         );
 
+        await insertAuditEvent({
+            req, db, eventType: 'SIGNER_CONTACT_UPDATED', signingFileId,
+            actorUserId: requesterId, actorType: req.user?.Role || null,
+            metadata: {
+                contactScope: 'customer_reference',
+                before,
+                after: {
+                    signerUserId: effectiveSignerUserId,
+                    email: signerRow.rows[0]?.Email || null,
+                    phone: signerRow.rows[0]?.Phone || null,
+                    deliveryMethod: savedDelivery,
+                },
+            },
+        });
+        await db.query('COMMIT');
+        committed = true;
         return res.json({
             success: true,
             signerUserId: effectiveSignerUserId,
@@ -5055,8 +5095,13 @@ exports.updateSigningSignerContact = async (req, res, next) => {
             deliveryMethod: savedDelivery,
         });
     } catch (err) {
-        console.error('updateSigningSignerContact error:', err);
+        console.error('updateSigningSignerContact failed:', { code: err?.code || 'UNKNOWN' });
         return fail(next, 'INTERNAL_ERROR', 500, { message: 'שגיאה בעדכון פרטי חותם' });
+    } finally {
+        if (db) {
+            try { if (!committed) await db.query('ROLLBACK'); }
+            finally { db.release(); }
+        }
     }
 };
 
@@ -5092,7 +5137,7 @@ exports.createPublicSigningLink = async (req, res, next) => {
         }
 
         const file = fileResult.rows[0];
-        const isManager = canManageSigningFile({ file, requesterId, role: req.user?.Role });
+        const isManager = canManageSigningFile({ file, requesterId, role: req.user?.Role, req });
         const schemaSupport = await getSchemaSupport();
 
         let targetSignerUserId = signerUserId || file.ClientId;
@@ -5199,7 +5244,7 @@ exports.updateSigningPolicy = async (req, res, next) => {
         const file = await loadSigningPolicyForFile(signingFileId);
         if (!file) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
 
-        if (!canManageSigningFile({ file, requesterId, role })) {
+        if (!canManageSigningFile({ file, requesterId, role, req })) {
             return fail(next, 'FORBIDDEN', 403);
         }
 
@@ -5281,7 +5326,7 @@ exports.renameSigningFile = async (req, res, next) => {
             [signingFileId]
         );
         if (ownerRes.rows.length === 0) return fail(next, 'DOCUMENT_NOT_FOUND', 404);
-        if (!canManageSigningFile({ file: ownerRes.rows[0], requesterId, role })) {
+        if (!canManageSigningFile({ file: ownerRes.rows[0], requesterId, role, req })) {
             return fail(next, 'FORBIDDEN', 403);
         }
 
@@ -5529,8 +5574,7 @@ exports.publicSignFile = async (req, res, next) => {
         // Admins (lawyers) are exempt so they can test public signing links.
         if (!requireOtpEffective) {
             const authUserId = req.user?.UserId;
-            const authRole = req.user?.Role;
-            if (authUserId && authRole !== 'Admin' && Number(authUserId) !== Number(signerUserId)) {
+            if (authUserId && !canOverridePublicSignerIdentity(req) && Number(authUserId) !== Number(signerUserId)) {
                 await insertAuditEvent({
                     req,
                     eventType: 'SIGNING_FORBIDDEN',
@@ -7665,7 +7709,7 @@ exports.reuploadFile = async (req, res, next) => {
         const file = fileResult.rows[0];
 
         if (file.LawyerId !== lawyerId) {
-            if (!canManageSigningFile({ file, requesterId: lawyerId, role: req.user?.Role })) {
+            if (!canManageSigningFile({ file, requesterId: lawyerId, role: req.user?.Role, req })) {
                 return fail(next, 'FORBIDDEN', 403, { message: "אין הרשאה למסמך זה" });
             }
         }
@@ -8518,69 +8562,60 @@ exports.detectSignatureSpots = async (req, res, next) => {
 
 // ─── Delete a signing file (pending / signed / rejected) ─────────────
 exports.deleteSigningFile = async (req, res, next) => {
+    let client;
+    let transactionOpen = false;
+    let keysToDelete = [];
     try {
         const { signingFileId } = req.params;
         if (!signingFileId) return fail(next, 'MISSING_SIGNING_FILE_ID', 400);
-
         const requesterId = req.user?.UserId;
         const role = req.user?.Role;
         if (!requesterId) return fail(next, 'UNAUTHORIZED', 401);
 
-        const { rows } = await pool.query(
-            `SELECT signingfileid  AS "SigningFileId",
-                    lawyerid       AS "LawyerId",
-                    status         AS "Status",
-                    filekey        AS "FileKey",
-                    originalfilekey AS "OriginalFileKey",
-                    signedfilekey  AS "SignedFileKey"
-             FROM signingfiles
-             WHERE signingfileid = $1`,
-            [signingFileId],
-        );
-
-        if (rows.length === 0) {
-            return fail(next, 'NOT_FOUND', 404);
-        }
-
+        client = await pool.connect();
+        await client.query('BEGIN');
+        transactionOpen = true;
+        const { rows } = await client.query(
+            `SELECT signingfileid AS "SigningFileId", lawyerid AS "LawyerId",
+                    status AS "Status", legalhold AS "LegalHold", filekey AS "FileKey",
+                    originalfilekey AS "OriginalFileKey", signedfilekey AS "SignedFileKey"
+             FROM signingfiles WHERE signingfileid = $1 FOR UPDATE`, [signingFileId]);
         const file = rows[0];
-        if (!canManageSigningFile({ file, requesterId, role })) {
-            return fail(next, 'FORBIDDEN', 403);
+        let rejection = null;
+        if (!file) rejection = ['NOT_FOUND', 404];
+        else if (!canManageSigningFile({ file, requesterId, role, req })) rejection = ['FORBIDDEN', 403];
+        else if (file.LegalHold) rejection = ['FILE_UNDER_LEGAL_HOLD', 409];
+        else if (!['pending', 'signed', 'rejected'].includes(String(file.Status || '').toLowerCase())) {
+            rejection = ['FILE_STATUS_NOT_DELETABLE', 400];
         }
-        const status = String(file.Status || '').toLowerCase();
-        if (!['pending', 'signed', 'rejected'].includes(status)) {
-            return fail(next, 'FILE_STATUS_NOT_DELETABLE', 400);
-        }
-
-        // Delete from R2/S3 storage (ignore errors — best-effort cleanup)
-        const keysToDelete = [file.FileKey, file.OriginalFileKey, file.SignedFileKey].filter(Boolean);
-        for (const key of keysToDelete) {
-            try {
-                await r2.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
-            } catch (e) {
-                console.error(`[deleteSigningFile] Failed to delete R2 object ${key}:`, e?.message);
-            }
-        }
-
-        // Delete in a transaction with the audit_events override flag so that
-        // ON DELETE SET NULL FK cascades into audit_events are allowed.
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
-            await client.query("SET LOCAL app.audit_events_allow_delete = 'true'");
-            await client.query(`DELETE FROM signaturespots WHERE signingfileid = $1`, [signingFileId]);
-            await client.query(`DELETE FROM signingfiles WHERE signingfileid = $1`, [signingFileId]);
-            await client.query('COMMIT');
-        } catch (txErr) {
+        if (rejection) {
             await client.query('ROLLBACK');
-            throw txErr;
-        } finally {
-            client.release();
+            transactionOpen = false;
+            return fail(next, ...rejection);
         }
-
-        invalidateOperationalDashboardCaches();
-        return res.json({ ok: true });
+        keysToDelete = [...new Set([file.FileKey, file.OriginalFileKey, file.SignedFileKey].filter(Boolean))];
+        await client.query("SET LOCAL app.audit_events_allow_delete = 'true'");
+        await client.query('DELETE FROM signaturespots WHERE signingfileid = $1', [signingFileId]);
+        await client.query('DELETE FROM signingfiles WHERE signingfileid = $1', [signingFileId]);
+        await client.query('COMMIT');
+        transactionOpen = false;
     } catch (err) {
-        console.error('[controller] deleteSigningFile error:', err?.message || err);
+        if (transactionOpen) await client.query('ROLLBACK').catch(() => {});
+        console.error('[controller] deleteSigningFile error:', err?.code || 'DELETE_FAILED');
         return fail(next, 'INTERNAL_ERROR', 500);
+    } finally {
+        client?.release();
     }
+
+    // Storage is irreversible: only clean up after the database deletion commits.
+    // A failed database transaction must leave the retained document readable.
+    for (const key of keysToDelete) {
+        try {
+            await r2.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
+        } catch (err) {
+            console.error('[deleteSigningFile] Storage cleanup failed:', err?.name || 'STORAGE_ERROR');
+        }
+    }
+    invalidateOperationalDashboardCaches();
+    return res.json({ ok: true });
 };

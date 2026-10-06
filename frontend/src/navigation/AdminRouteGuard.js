@@ -11,7 +11,6 @@ const PLATFORM_ADMIN_ROUTE_KEYS = new Set([
     "firmStaffRoles",
     "platformSettings",
     "planUsage",
-    "allManagers",
 ]);
 
 export default function AdminRouteGuard({ children }) {

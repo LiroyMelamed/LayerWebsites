@@ -22,7 +22,6 @@
     "retry": "أعد المحاولة",
     "notSpecified": "غير محدد",
     "unassigned": "غير مُسند",
-    "listTitleWithCount": "{{title}} ({{count}})",
     "refreshPull": "اسحب للأسفل للتحديث",
     "refreshing": "جارٍ التحديث…",
     "send": "إرسال",
@@ -1575,7 +1574,8 @@
       "signing": "التوقيع",
       "reminders": "التذكيرات",
       "calendar": "التقويم",
-      "support": "الدعم"
+      "support": "الدعم",
+      "officeUsers": "مديرو المكتب"
     },
     "actions": {
       "cases": {
@@ -1609,6 +1609,10 @@
       },
       "support": {
         "view": "عرض"
+      },
+      "officeUsers": {
+        "view": "عرض",
+        "manage": "إدارة"
       }
     }
   },

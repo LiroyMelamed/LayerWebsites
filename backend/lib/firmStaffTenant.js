@@ -1,5 +1,5 @@
 const pool = require('../config/db');
-const { getCurrentTenantId } = require('./tenant/tenantContext');
+const { getCurrentTenantId, isMultiTenantMode } = require('./tenant/tenantContext');
 const { createAppError } = require('../utils/appError');
 const { getHebrewMessage } = require('../utils/errors.he');
 const settingsService = require('../services/settingsService');
@@ -27,21 +27,22 @@ async function assertPlatformAdminSameTenant(req) {
         throw createAppError('FORBIDDEN', 403, getHebrewMessage('FORBIDDEN'));
     }
     const tenantId = getCurrentTenantId() || actor.law_firm_tenant_id || null;
+    if (isMultiTenantMode() && (!getCurrentTenantId() || String(actor.law_firm_tenant_id || '') !== String(getCurrentTenantId()))) throw createAppError('FORBIDDEN', 403);
     return { actor, tenantId };
 }
 
-async function countUsersForRole(roleId, tenantId) {
-    const { rows } = await pool.query(
+async function countUsersForRole(roleId, tenantId, db = pool) {
+    const { rows } = await db.query(
         `SELECT COUNT(*)::int AS c FROM users
          WHERE firm_staff_role_id = $1
-           AND ($2::uuid IS NULL OR law_firm_tenant_id = $2)`,
+           AND law_firm_tenant_id IS NOT DISTINCT FROM $2::uuid`,
         [roleId, tenantId],
     );
     return rows[0]?.c ?? 0;
 }
 
-async function assertRoleInTenant(roleId, tenantId) {
-    const { rows } = await pool.query(
+async function assertRoleInTenant(roleId, tenantId, db = pool) {
+    const { rows } = await db.query(
         `SELECT id, name, permissions, is_active, law_firm_tenant_id
          FROM firm_staff_roles
          WHERE id = $1 AND is_active = TRUE
@@ -50,21 +51,21 @@ async function assertRoleInTenant(roleId, tenantId) {
     );
     const role = rows[0];
     if (!role) return null;
-    if (tenantId && role.law_firm_tenant_id && String(role.law_firm_tenant_id) !== String(tenantId)) {
+    if (String(role.law_firm_tenant_id || '') !== String(tenantId || '')) {
         return null;
     }
     return role;
 }
 
-async function assertTargetUserInTenant(userId, tenantId) {
-    const { rows } = await pool.query(
+async function assertTargetUserInTenant(userId, tenantId, db = pool) {
+    const { rows } = await db.query(
         `SELECT userid, role, law_firm_tenant_id, firm_staff_role_id, name, email, phonenumber
          FROM users WHERE userid = $1 LIMIT 1`,
         [userId],
     );
     const user = rows[0];
     if (!user) return null;
-    if (tenantId && user.law_firm_tenant_id && String(user.law_firm_tenant_id) !== String(tenantId)) {
+    if (String(user.law_firm_tenant_id || '') !== String(tenantId || '')) {
         return null;
     }
     return user;

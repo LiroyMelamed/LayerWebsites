@@ -1,4 +1,4 @@
-const { assertSigningFileOfficeAccess } = require('../lib/firmPermissions/signingAccess');
+const { assertSigningFileOfficeAccess, assertSigningUploadReferences } = require('../lib/firmPermissions/signingAccess');
 
 function actionFromMethod(req) {
     if (req.method === 'GET' || req.method === 'HEAD') return 'view';
@@ -9,6 +9,12 @@ function actionFromMethod(req) {
 module.exports = async function requireSigningOfficeAccess(req, res, next) {
     if (req.firmPermissionMode !== 'role') {
         return next();
+    }
+    if ((req.path || '').endsWith('/upload')) {
+        try {
+            const error = await assertSigningUploadReferences(req);
+            return next(error || undefined);
+        } catch (error) { return next(error); }
     }
     const signingFileId = Number(req.params?.signingFileId);
     if (!Number.isFinite(signingFileId) || signingFileId <= 0) {

@@ -160,3 +160,10 @@ Thumbs.db
 *_clean.sql
 backend/data/
 backend/scripts/.env.neon
+
+# QA browser automation (tokens — never commit)
+scripts/qa-browser/.qa-sessions.json
+scripts/qa-browser/results*/
+scripts/qa-browser/results-*/
+scripts/qa-browser/results-deep/
+scripts/qa-browser/node_modules/

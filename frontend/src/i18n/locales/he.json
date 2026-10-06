@@ -2212,7 +2212,8 @@
       "reminders": "תזכורות",
       "calendar": "יומן",
       "support": "תמיכה",
-      "evidenceDocuments": "מסמכי ראיות"
+      "evidenceDocuments": "מסמכי ראיות",
+      "officeUsers": "מנהלי משרד"
     },
     "actions": {
       "cases": {
@@ -2246,6 +2247,10 @@
       },
       "support": {
         "view": "צפייה"
+      },
+      "officeUsers": {
+        "view": "צפייה",
+        "manage": "ניהול"
       }
     }
   },

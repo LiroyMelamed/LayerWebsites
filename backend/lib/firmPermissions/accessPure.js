@@ -6,6 +6,7 @@ const {
     buildPlatformAdminSessionScope,
     buildLegacySessionScope,
 } = require('../firmRolePermissions');
+const { isMultiTenantMode } = require('../tenant/tenantContext');
 const { createAppError } = require('../../utils/appError');
 const { getHebrewMessage } = require('../../utils/errors.he');
 
@@ -22,7 +23,8 @@ function getSessionScopePayload(req) {
 function canViewAllFirmCases(req) {
     if (req.firmPermissionMode === 'platform_admin') return true;
     if (req.firmPermissionMode === 'legacy') {
-        return String(req.user?.Role || '') === 'Admin';
+        const role = String(req.user?.Role || '');
+        return role === 'Admin' || (role === 'Lawyer' && !isMultiTenantMode());
     }
     if (req.firmPermissionMode === 'role') {
         return getCasesDataScope(req.firmPermissions) === 'all_firm';

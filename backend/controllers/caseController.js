@@ -1,3 +1,4 @@
+const { queryScopedCases } = require('../lib/firmPermissions/caseScope');
 const pool = require("../config/db"); // Direct import of the pg pool
 const { formatPhoneNumber } = require("../utils/phoneUtils");
 const { sendMessage, getWebsiteDomain } = require("../utils/sendMessage");
@@ -400,7 +401,7 @@ const getCases = async (req, res) => {
 
     if (respondPermissionError(res, requireAreaAction(req, 'cases', 'view'))) return;
 
-    const seeAllFirmCases = canViewAllFirmCases(req);
+    const seeAllFirmCases = req.firmPermissionMode === 'role' || canViewAllFirmCases(req);
 
     try {
         const pagination = getPagination(req, res, { defaultLimit: 50, maxLimit: 200 });
@@ -416,7 +417,7 @@ const getCases = async (req, res) => {
             }
             query += " ORDER BY C.createdat DESC, C.caseid DESC, CD.stage";
 
-            const result = await pool.query(query, params);
+            const result = await queryScopedCases(req, query, params);
             const cases = _mapCaseResults(result.rows);
             const caseIds = cases.map(c => c.CaseId);
             const caseUsersMap = await _fetchCaseUsers(caseIds);
@@ -439,14 +440,14 @@ const getCases = async (req, res) => {
                    LIMIT $2 OFFSET $3`;
 
         const idsParams = seeAllFirmCases ? [limit, offset] : [userId, limit, offset];
-        const idsResult = await pool.query(idsQuery, idsParams);
+        const idsResult = await queryScopedCases(req, idsQuery, idsParams);
         const ids = idsResult.rows.map((r) => r.caseid);
 
         if (ids.length === 0) return res.json([]);
 
         const detailsQuery = `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
 
-        const result = await pool.query(detailsQuery, [ids]);
+        const result = await queryScopedCases(req, detailsQuery, [ids]);
         const caseUsersMap = await _fetchCaseUsers(ids);
         return res.json(_mapCaseResults(result.rows, caseUsersMap));
 
@@ -492,7 +493,7 @@ const getCaseByName = async (req, res) => {
 
     if (respondPermissionError(res, requireAreaAction(req, 'cases', 'view'))) return;
 
-    const seeAllFirmCases = canViewAllFirmCases(req);
+    const seeAllFirmCases = req.firmPermissionMode === 'role' || canViewAllFirmCases(req);
 
     try {
         // If empty query: return a default list so dropdowns can preload.
@@ -517,13 +518,13 @@ const getCaseByName = async (req, res) => {
                        LIMIT $2 OFFSET $3`;
 
             const idsParams = seeAllFirmCases ? [limit, offset] : [userId, limit, offset];
-            const idsResult = await pool.query(idsQuery, idsParams);
+            const idsResult = await queryScopedCases(req, idsQuery, idsParams);
             const ids = idsResult.rows.map((r) => r.caseid);
             if (ids.length === 0) return res.json([]);
 
             const detailsQuery = `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
 
-            const result = await pool.query(detailsQuery, [ids]);
+            const result = await queryScopedCases(req, detailsQuery, [ids]);
             const caseUsersMap = await _fetchCaseUsers(ids);
             return res.json(_mapCaseResults(result.rows, caseUsersMap));
         }
@@ -568,7 +569,7 @@ const getCaseByName = async (req, res) => {
 
         query += " ORDER BY C.createdat DESC, C.caseid DESC, CD.stage";
 
-        const result = await pool.query(query, params);
+        const result = await queryScopedCases(req, query, params);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ message: "לא נמצאו תיקים עם שם זה" });
@@ -650,6 +651,9 @@ const addCase = async (req, res) => {
         );
 
         const caseId = caseResult.rows[0].caseid;
+        if (req.firmPermissionMode === 'role' && req.firmTenantId) {
+            await client.query('UPDATE cases SET law_firm_tenant_id = $2 WHERE caseid = $1', [caseId, req.firmTenantId]);
+        }
 
         // Insert into case_users junction table for all linked clients
         for (const uid of resolvedUserIds) {
@@ -1333,7 +1337,7 @@ const getTaggedCases = async (req, res) => {
 
         if (respondPermissionError(res, requireAreaAction(req, 'cases', 'view'))) return;
 
-        const seeAllFirmCases = canViewAllFirmCases(req);
+        const seeAllFirmCases = req.firmPermissionMode === 'role' || canViewAllFirmCases(req);
         const taggedScopeSql = seeAllFirmCases
             ? 'C.istagged = true'
             : `(C.istagged = true AND (C.casemanagerid = $1 OR C.caseid IN (SELECT caseid FROM case_users WHERE userid = $1)))`;
@@ -1344,7 +1348,7 @@ const getTaggedCases = async (req, res) => {
 
         if (!pagination.enabled) {
             const query = `${_buildBaseCaseQuery()} WHERE ${taggedScopeSql} ORDER BY C.createdat DESC, C.caseid DESC, CD.stage;`;
-            const result = await pool.query(query, taggedScopeParams);
+            const result = await queryScopedCases(req, query, taggedScopeParams);
             const ids = [...new Set(result.rows.map(r => r.caseid))];
             const caseUsersMap = await _fetchCaseUsers(ids);
             return res.json(_mapCaseResults(result.rows, caseUsersMap));
@@ -1357,14 +1361,14 @@ const getTaggedCases = async (req, res) => {
             : `SELECT DISTINCT C.caseid, C.createdat FROM cases C WHERE ${taggedScopeSql} ORDER BY C.createdat DESC, C.caseid DESC LIMIT $2 OFFSET $3`;
 
         const idsParams = seeAllFirmCases ? [limit, offset] : [...taggedScopeParams, limit, offset];
-        const idsResult = await pool.query(idsQuery, idsParams);
+        const idsResult = await queryScopedCases(req, idsQuery, idsParams);
         const ids = idsResult.rows.map((r) => r.caseid);
 
         if (ids.length === 0) return res.json([]);
 
         const detailsQuery = `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.caseid = ANY($1::int[]) ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
 
-        const result = await pool.query(detailsQuery, [ids]);
+        const result = await queryScopedCases(req, detailsQuery, [ids]);
         const caseUsersMap = await _fetchCaseUsers(ids);
         return res.json(_mapCaseResults(result.rows, caseUsersMap));
     } catch (error) {
@@ -1386,7 +1390,7 @@ const getTaggedCasesByName = async (req, res) => {
 
     if (respondPermissionError(res, requireAreaAction(req, 'cases', 'view'))) return;
 
-    const seeAllFirmCases = canViewAllFirmCases(req);
+    const seeAllFirmCases = req.firmPermissionMode === 'role' || canViewAllFirmCases(req);
     const taggedAssignSql = `(C.casemanagerid = $1 OR C.caseid IN (SELECT caseid FROM case_users WHERE userid = $1))`;
 
     try {
@@ -1403,13 +1407,13 @@ const getTaggedCasesByName = async (req, res) => {
                 : `SELECT DISTINCT C.caseid, C.createdat FROM cases C WHERE C.istagged = true AND ${taggedAssignSql} ORDER BY C.createdat DESC, C.caseid DESC LIMIT $2 OFFSET $3`;
 
             const idsParams = seeAllFirmCases ? [limit, offset] : [userId, limit, offset];
-            const idsResult = await pool.query(idsQuery, idsParams);
+            const idsResult = await queryScopedCases(req, idsQuery, idsParams);
             const ids = idsResult.rows.map((r) => r.caseid);
             if (ids.length === 0) return res.json([]);
 
             const detailsQuery = `${_buildBaseCaseQuery()} WHERE C.istagged = true AND C.caseid = ANY($1::int[]) ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
 
-            const result = await pool.query(detailsQuery, [ids]);
+            const result = await queryScopedCases(req, detailsQuery, [ids]);
             const caseUsersMap = await _fetchCaseUsers(ids);
             return res.json(_mapCaseResults(result.rows, caseUsersMap));
         }
@@ -1457,7 +1461,7 @@ const getTaggedCasesByName = async (req, res) => {
 
         query += " ORDER BY C.createdat DESC, C.caseid DESC, CD.stage";
 
-        const result = await pool.query(query, params);
+        const result = await queryScopedCases(req, query, params);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ message: "לא נמצאו תיקים מתויגים עם שם זה" });
@@ -1593,7 +1597,7 @@ const getMyCases = async (req, res) => {
 
         if (!pagination.enabled) {
             const query = `${_buildBaseCaseQuery()} WHERE C.casemanagerid = $1 ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
-            const result = await pool.query(query, [userId]);
+            const result = await queryScopedCases(req, query, [userId]);
             const ids = [...new Set(result.rows.map(r => r.caseid))];
             const caseUsersMap = await _fetchCaseUsers(ids);
             return res.json(_mapCaseResults(result.rows, caseUsersMap));
@@ -1607,12 +1611,12 @@ const getMyCases = async (req, res) => {
                   ORDER BY C.createdat DESC, C.caseid DESC
                   LIMIT $2 OFFSET $3`;
 
-        const idsResult = await pool.query(idsQuery, [userId, limit, offset]);
+        const idsResult = await queryScopedCases(req, idsQuery, [userId, limit, offset]);
         const ids = idsResult.rows.map((r) => r.caseid);
         if (ids.length === 0) return res.json([]);
 
         const detailsQuery = `${_buildBaseCaseQuery()} WHERE C.caseid = ANY($1::int[]) AND C.casemanagerid = $2 ORDER BY C.createdat DESC, C.caseid DESC, CD.stage`;
-        const result = await pool.query(detailsQuery, [ids, userId]);
+        const result = await queryScopedCases(req, detailsQuery, [ids, userId]);
         const caseUsersMap = await _fetchCaseUsers(ids);
         return res.json(_mapCaseResults(result.rows, caseUsersMap));
     } catch (error) {

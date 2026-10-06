@@ -355,7 +355,7 @@ function _currentRole() {
 function _isFirmManager(role) { return role && role !== "User"; }
 
 function _canPickEmployeeCalendar(role) {
-    if (role === "Admin" || role === "PlatformAdmin") return true;
+    if (role === "Admin" || role === "Lawyer" || role === "PlatformAdmin") return true;
     try {
         return typeof window !== "undefined" && localStorage.getItem("isPlatformAdmin") === "true";
     } catch {
