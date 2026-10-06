@@ -1,6 +1,6 @@
 # Legal platform release — 2026-10-06
 
-Four customer Web/API deployments and contractor-monitor are live and verified. Six signed app binaries were uploaded. Google Play shows the three Android versions under review for full rollout with managed publishing disabled. Apple uploads finished; selecting builds and submitting versions for review still needs the owner's renewed App Store Connect sign-in. Store approval and public availability are not yet claimed.
+Four customer Web/API deployments and contractor-monitor are live and verified. Six signed app binaries were uploaded. At the 2026-10-06 10:05 UTC follow-up, MelamedLaw Android 1.0.11 (28) and AshrafEssa Android 1.0.8 (13) are available on Google Play at 100% rollout in all configured markets; the exact version names also appear on the public store listings. MorLevi Android 1.0.5 (12) remains in review with managed publishing disabled. Apple uploads finished, but selecting builds and submitting versions for review still needs the owner’s renewed App Store Connect sign-in. See `store-status-20261006T1005Z/STATUS.json` and its immutable hashed console/public-listing evidence. The earlier evidence keeps its original observed status.
 
 ## Exact provenance
 
@@ -12,7 +12,7 @@ Four customer Web/API deployments and contractor-monitor are live and verified. 
 - Monitor: `1c33d2e5f2b10c6d80a7440a77ddfa0fb5dc4498`.
 - Shared native: `7d3aa6244e4d8e61f4b1ad0d74295d6ecd1bdd3b`.
 
-The JSON records bind each signed store artifact to its exact tenant, source, version/build, EAS build/submission ID and SHA-256. Keep iOS v13 and Android v14; earlier Android candidates are superseded. The production tag identifies the deployed Web/API source. Native store availability remains pending independently.
+The JSON records bind each signed store artifact to its exact tenant, source, version/build, EAS build/submission ID and SHA-256. Keep iOS v13 and Android v14; earlier Android candidates are superseded. The production tag identifies the deployed Web/API source. Two Android releases are publicly verified; MorLevi Android and all three iOS releases remain pending independently.
 
 ## Executed regression checks
 

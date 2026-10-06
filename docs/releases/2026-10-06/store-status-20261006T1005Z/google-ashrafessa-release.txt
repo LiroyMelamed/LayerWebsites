@@ -1,0 +1,237 @@
+- progressbar
+- generic: מתבצעת טעינה של Google Play Console
+- banner:
+  - link "הלוגו של Google Play Console":
+    - /url: /console/u/0/developers/6928795478873529952/app-list
+    - button "הלוגו של Google Play Console"
+  - button "התראות שלא נקראו פתיחת מרכז ההתראות":
+    - img: notifications_unread
+    - generic: התראות שלא נקראו
+  - button "עו״ד אשרף עיסא - מעקב תיקים":
+    - generic: עו״ד אשרף עיסא - מעקב תיקים
+  - button "החלפת חשבון פיתוח":
+    - img "החלפת חשבון פיתוח"
+- navigation:
+  - link "כל האפליקציות":
+    - /url: /console/u/0/developers/6928795478873529952/app-list
+    - img: keyboard_backspace
+    - generic: כל האפליקציות
+  - list:
+    - listitem "מרכז שליטה":
+      - button "מרכז שליטה":
+        - img: dashboard
+        - generic: מרכז שליטה
+    - listitem "סטטיסטיקה":
+      - button "סטטיסטיקה":
+        - img: bar_chart
+        - generic: סטטיסטיקה
+    - listitem "סיכום השינויים לפרסום":
+      - button "סיכום השינויים לפרסום":
+        - img: overview
+        - generic: סיכום השינויים לפרסום
+    - listitem "מוגן על ידי Play":
+      - button "מוגן על ידי Play":
+        - img: shield
+        - generic: מוגן על ידי Play
+    - listitem "בדיקה ופרסום":
+      - button "בדיקה ופרסום":
+        - img: rocket_launch
+        - generic: בדיקה ופרסום
+      - list:
+        - listitem "הגרסאות והחבילות החדשות ביותר":
+          - button "הגרסאות והחבילות החדשות ביותר":
+            - generic: הגרסאות והחבילות החדשות ביותר
+        - listitem "ייצור":
+          - button "ייצור":
+            - generic: ייצור
+        - listitem "בדיקה":
+          - button "בדיקה":
+            - generic: בדיקה
+            - img: expand_more
+        - listitem "הרשמה מראש":
+          - button "הרשמה מראש":
+            - generic: הרשמה מראש
+        - listitem "שלמות האפליקציה":
+          - button "שלמות האפליקציה":
+            - generic: שלמות האפליקציה
+        - listitem "הגדרות מתקדמות":
+          - button "הגדרות מתקדמות":
+            - generic: הגדרות מתקדמות
+    - listitem "מעקב ושיפור":
+      - button "מעקב ושיפור":
+        - img: vital_signs
+        - generic: מעקב ושיפור
+    - listitem "הגדלת מספר המשתמשים":
+      - button "הגדלת מספר המשתמשים":
+        - img: finance_mode
+        - generic: הגדלת מספר המשתמשים
+    - listitem "ייצור הכנסות עם Play":
+      - button "ייצור הכנסות עם Play":
+        - img: sell
+        - generic: ייצור הכנסות עם Play
+- link "חזרה אל ייצור":
+  - /url: /console/u/0/developers/6928795478873529952/app/4973094757386468348/tracks/4697648413817243358?tab=releases
+  - img: keyboard_backspace
+  - generic: ייצור
+- heading "1.0.8" [level=1]
+- button "כלי שחזור":
+  - generic: כלי שחזור
+  - img: arrow_drop_down
+- heading "סיכום הגרסה" [level=2]
+- img: check_circle
+- generic: זמינה ב-Google Play
+- img: brightness_1
+- generic: ייצור
+- img: brightness_1
+- generic: הופצה בתאריך 6 באוק׳ 13:00
+- img: brightness_1
+- generic: זמינה ב-19,143 מכשירים
+- generic: אחוז ההשקה
+- generic: 100%
+- generic: זמינות ל-5 משתמשים
+- img: brightness_1
+- generic: זמינות במדינה אחת/אזור אחד (1) מתוך 1
+- generic "הושקה ל-100%":
+  - generic: 25%
+  - generic: 50%
+  - generic: 75%
+- button "הצגת היסטוריית השקה":
+  - generic: הצגת היסטוריית השקה
+  - img: expand_more
+- button "עדכון ההשקה" [disabled]:
+  - generic: עדכון ההשקה
+- button "הפסקת ההשקה":
+  - generic: הפסקת ההשקה
+- button "התקנה ועדכון של אירועים"
+- generic: "-"
+- button "שיעור הקריסות שבהן הבחינו המשתמשים"
+- generic: "-"
+- generic: "-"
+- generic: בהשוואה לכל הגרסאות הקודמות
+- button "שיעור מקרי ה-ANR שבהם הבחינו המשתמשים"
+- generic: "-"
+- generic: "-"
+- generic: בהשוואה לכל הגרסאות הקודמות
+- button "הצגה של מרכז בקרת הגרסאות":
+  - generic: הצגה של מרכז בקרת הגרסאות
+  - img: arrow_right_alt
+- heading "מסירת גרסה" [level=2]
+- button "גודל של התקנות חדשות"
+- generic: MB 26.4
+- button "משך זמן ההורדה"
+- generic: 15 שנ'
+- button "גודל העדכונים"
+- generic: MB 12.2
+- button "אחוז בסיס ההתקנות בגרסה הזו"
+- generic: 0.00%
+- link "הצגת הדוח של גודל האפליקציה":
+  - /url: /console/u/0/developers/6928795478873529952/app/4973094757386468348/vitals/app-size
+  - generic: הצגת הדוח של גודל האפליקציה
+  - img: arrow_right_alt
+- heading "ביצועי הגרסה" [level=2]
+- button "התקנה ועדכון של אירועים"
+- generic: "-"
+- button "שיעור הקריסות שבהן הבחינו המשתמשים"
+- generic: "-"
+- generic: "-"
+- generic: בהשוואה לכל הגרסאות הקודמות
+- button "שיעור מקרי ה-ANR שבהם הבחינו המשתמשים"
+- generic: "-"
+- generic: "-"
+- generic: בהשוואה לכל הגרסאות הקודמות
+- button "הצגה של מרכז בקרת הגרסאות":
+  - generic: הצגה של מרכז בקרת הגרסאות
+  - img: arrow_right_alt
+- heading "קובצי App Bundle" [level=2]
+- heading "קובצי App Bundle חדשים" [level=3]
+- grid "ממצא":
+  - row "סוג הקובץ גרסה רמות ממשק API גרסת יעד של SDK פריסות מסך ממשקי ABI תכונות נדרשות":
+    - columnheader "סוג הקובץ"
+    - columnheader "גרסה"
+    - columnheader "רמות ממשק API"
+    - columnheader "גרסת יעד של SDK"
+    - columnheader "פריסות מסך"
+    - columnheader "ממשקי ABI"
+    - columnheader "תכונות נדרשות"
+    - cell
+    - cell
+  - 'row "App bundle הקובץ הבא מצורף ל-app bundle: קובץ סמלים מקומיים של ניפוי באגים תצוגה משופרת 13 (1.0.8) 24+ 36 4 4 5 ניהול פריט מידע שנוצר בתהליך פיתוח (Artifact) הצגת הפרטים של App Bundle: 13 (1.0.8)"':
+    - 'gridcell "App bundle הקובץ הבא מצורף ל-app bundle: קובץ סמלים מקומיים של ניפוי באגים תצוגה משופרת"':
+      - generic: App bundle
+      - 'img "הקובץ הבא מצורף ל-app bundle: קובץ סמלים מקומיים של ניפוי באגים"': attachment
+      - button "תצוגה משופרת":
+        - img: info
+        - generic: תצוגה משופרת
+    - gridcell "13 (1.0.8)":
+      - generic: 13 (1.0.8)
+    - gridcell "24+":
+      - generic: 24+
+    - gridcell "36":
+      - generic: "36"
+    - gridcell "4":
+      - generic: "4"
+    - gridcell "4":
+      - generic: "4"
+    - gridcell "5":
+      - generic: "5"
+    - gridcell "ניהול פריט מידע שנוצר בתהליך פיתוח (Artifact)":
+      - button "ניהול פריט מידע שנוצר בתהליך פיתוח (Artifact)":
+        - img: more_vert
+    - 'gridcell "הצגת הפרטים של App Bundle: 13 (1.0.8)"':
+      - 'button "הצגת הפרטים של App Bundle: 13 (1.0.8)"':
+        - img: arrow_right_alt
+- heading "קובצי App Bundle שממשיכים מהגרסה הקודמת" [level=3]
+- img: rocket_launch
+- paragraph: אין קובצי App Bundle שממשיכים מהגרסה הקודמת
+- heading "קובצי App Bundle מושבתים" [level=3]
+- grid "ממצא":
+  - row "סוג הקובץ גרסה רמות ממשק API גרסת יעד של SDK פריסות מסך ממשקי ABI תכונות נדרשות":
+    - columnheader "סוג הקובץ"
+    - columnheader "גרסה"
+    - columnheader "רמות ממשק API"
+    - columnheader "גרסת יעד של SDK"
+    - columnheader "פריסות מסך"
+    - columnheader "ממשקי ABI"
+    - columnheader "תכונות נדרשות"
+    - cell
+  - 'row "App bundle הקובץ הבא מצורף ל-app bundle: קובץ סמלים מקומיים של ניפוי באגים תצוגה משופרת 10 (1.0.6) 24+ 36 4 4 5 הצגת הפרטים של App Bundle: 10 (1.0.6)"':
+    - 'gridcell "App bundle הקובץ הבא מצורף ל-app bundle: קובץ סמלים מקומיים של ניפוי באגים תצוגה משופרת"':
+      - generic: App bundle
+      - 'img "הקובץ הבא מצורף ל-app bundle: קובץ סמלים מקומיים של ניפוי באגים"': attachment
+      - button "תצוגה משופרת":
+        - img: info
+        - generic: תצוגה משופרת
+    - gridcell "10 (1.0.6)":
+      - generic: 10 (1.0.6)
+    - gridcell "24+":
+      - generic: 24+
+    - gridcell "36":
+      - generic: "36"
+    - gridcell "4":
+      - generic: "4"
+    - gridcell "4":
+      - generic: "4"
+    - gridcell "5":
+      - generic: "5"
+    - 'gridcell "הצגת הפרטים של App Bundle: 10 (1.0.6)"':
+      - 'button "הצגת הפרטים של App Bundle: 10 (1.0.6)"':
+        - img: arrow_right_alt
+- heading "נתוני גרסה" [level=2]
+- button "עריכת פרטי הגרסה":
+  - generic: עריכת פרטי הגרסה
+- img: rocket_launch
+- paragraph: כדאי לספר למשתמשים מה כלול בגרסה
+- button "הוספת נתוני הגרסה": הוספת נתוני הגרסה
+- link "עדכוני מוצרים":
+  - /url: https://play.google.com/console/about/whats-new/
+- link "לוח הבקרה של סטטוס שירותי Play":
+  - /url: https://status.play.google.com/
+- link "עזרה":
+  - /url: /console/u/0/developers/6928795478873529952/help-and-support?app=4973094757386468348
+- generic: ‎© 2026 Google
+- link "פרטיות":
+  - /url: https://www.google.com/policies/privacy/
+- link "הסכם הפצה למפתחים":
+  - /url: https://play.google.com/about/developer-distribution-agreement.html
+- link "תנאים והגבלות":
+  - /url: https://play.google.com/about/console/terms-of-service/
