@@ -1,3 +1,4 @@
+import { useFirmPermissions } from "../../../../providers/FirmPermissionsProvider";
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { buttonSizes } from "../../../../styles/buttons/buttonSizes";
@@ -84,6 +85,9 @@ function WhatsappGroupLinkModal({
 
 export default function CaseMenuItemOpen({ fullCase, isOpen, alwaysExpanded = false, updateStage, isPerformingUpdateStage, editCase, isClient, rePerformFunction }) {
     const { t } = useTranslation();
+    const firmPerms = useFirmPermissions();
+    const canEdit = !isClient && Boolean(firmPerms?.canAction('cases', 'edit'));
+    const canTag = !isClient && Boolean(firmPerms?.canAction('cases', 'tag'));
     const { isPerforming: isPerformingTagCase, performRequest: tagCase } = useHttpRequest(
         casesApi.tagCaseById
     );
@@ -110,6 +114,7 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, alwaysExpanded = fa
     const stagesExpanded = alwaysExpanded || isStagesOpen;
 
     function unTag() {
+        if (!canTag) return;
         setIsTagged(!IsTagged)
         tagCase(fullCase.CaseId, { IsTagged: !IsTagged })
     }
@@ -117,6 +122,7 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, alwaysExpanded = fa
     const totalStages = fullCase?.Descriptions?.length || 0;
 
     function openWhatsappGroupModal() {
+        if (!canEdit) return;
         openPopup(
             <WhatsappGroupLinkModal
                 caseId={fullCase.CaseId}
@@ -245,13 +251,13 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, alwaysExpanded = fa
                                             <PrimaryButton size={buttonSizes.SMALL} onPress={openWhatsappGroupLink}>
                                                 {t("common.whatsapp.goToGroup")}
                                             </PrimaryButton>
-                                            {!isClient && (
+                                            {canEdit && (
                                                 <SecondaryButton size={buttonSizes.SMALL} onPress={openWhatsappGroupModal}>
                                                     {t("common.whatsapp.editLink")}
                                                 </SecondaryButton>
                                             )}
                                         </SimpleContainer>
-                                    ) : !isClient ? (
+                                    ) : canEdit ? (
                                         <SecondaryButton size={buttonSizes.SMALL} onPress={openWhatsappGroupModal}>
                                             {t("common.whatsapp.linkTitle")}
                                         </SecondaryButton>
@@ -321,15 +327,15 @@ export default function CaseMenuItemOpen({ fullCase, isOpen, alwaysExpanded = fa
                 </SimpleContainer>
 
                 {/* Footer actions */}
-                {!isClient && (
+                {(canEdit || canTag) && (
                     <SimpleContainer className="lw-caseMenuItemOpen__footer">
-                        <TertiaryButton size={buttonSizes.SMALL} onPress={unTag} isPerforming={isPerformingTagCase}>
+                        {canTag && <TertiaryButton size={buttonSizes.SMALL} onPress={unTag} isPerforming={isPerformingTagCase}>
                             {IsTagged ? t("taggedCases.unpin") : t("taggedCases.pin")}
-                        </TertiaryButton>
-                        <SecondaryButton size={buttonSizes.SMALL} onPress={editCase} className="lw-caseMenuItemOpen__action">
+                        </TertiaryButton>}
+                        {canEdit && <SecondaryButton size={buttonSizes.SMALL} onPress={editCase} className="lw-caseMenuItemOpen__action">
                             {t("common.edit")}
-                        </SecondaryButton>
-                        {!fullCase.IsClosed && (
+                        </SecondaryButton>}
+                        {canEdit && !fullCase.IsClosed && (
                             <PrimaryButton size={buttonSizes.SMALL} onPress={updateStage} isPerforming={isPerformingUpdateStage} className="lw-caseMenuItemOpen__action" >
                                 {t("cases.advanceStage")}
                             </PrimaryButton>

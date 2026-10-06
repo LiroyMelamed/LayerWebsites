@@ -15,6 +15,7 @@ import {
     PlanUsageScreenName,
     PlansPricingScreenName,
     PlatformSettingsScreenName,
+    FirmStaffRolesScreenName,
     RemindersScreenName,
     AdminSupportScreenName,
     SigningManagerScreenName,
@@ -22,11 +23,15 @@ import {
     TaggedCasesScreenName,
     uploadFileForSigningScreenName,
     LoginScreenName,
+    LoginStackName,
+    AdminStackName,
 } from "./screenPaths";
 import { useCalendarModuleEnabled } from "../services/firmSettings";
-import { LoginStackName } from "./LoginStack";
 import BillingLockedScreen from "../components/billing/BillingLockedScreen";
 import { useBillingLock } from "../providers/BillingLockProvider";
+import AdminRouteGuard from "./AdminRouteGuard";
+import NoPermissionsScreen, { NoPermissionsScreenName } from "../screens/noPermissions/NoPermissionsScreen";
+import { useOfficeLogoNavigate } from "./useOfficeLogoNavigate";
 
 const MainScreen = lazy(() => import("../screens/mainScreen/MainScreen"));
 const TaggedCasesScreen = lazy(() => import("../screens/taggedCasesScreen/TaggedCasesScreen"));
@@ -44,10 +49,11 @@ const EvidenceDocumentsScreen = lazy(() => import("../screens/evidenceDocuments/
 const PlanUsageScreen = lazy(() => import("../screens/billingScreen/PlanUsageScreen"));
 const PlansPricingScreen = lazy(() => import("../screens/billingScreen/PlansPricingScreen"));
 const PlatformSettingsScreen = lazy(() => import("../screens/platformSettingsScreen/PlatformSettingsScreen"));
+const FirmStaffRolesScreen = lazy(() => import("../screens/firmStaffRoles/FirmStaffRolesScreen"));
 const CalendarScreen = lazy(() => import("../screens/calendarScreen/CalendarScreen"));
 const DailyAgendaScreen = lazy(() => import("../screens/calendarScreen/DailyAgendaScreen"));
 
-export const AdminStackName = "/AdminStack";
+export { AdminStackName };
 
 function toRelativePath(pathname) {
     const p = String(pathname || "");
@@ -60,6 +66,7 @@ function AdminStack() {
     const location = useLocation();
     const { locked, loaded } = useBillingLock();
     const isPlatformAdmin = typeof window !== "undefined" && localStorage.getItem("isPlatformAdmin") === "true";
+    const logoNavigate = useOfficeLogoNavigate();
     if (!token) return <Navigate to={LoginStackName + LoginScreenName} replace />;
 
     const onBillingRoute = /PlanUsage|PlansPricing/i.test(location.pathname || "");
@@ -71,9 +78,11 @@ function AdminStack() {
     }
 
     return (
-        <TopAndRightNavBar LogoNavigate={AdminStackName + MainScreenName}>
+        <TopAndRightNavBar LogoNavigate={logoNavigate}>
+            <AdminRouteGuard>
             <Suspense fallback={<RouteFallback />}>
                 <Routes>
+                    <Route path={toRelativePath(NoPermissionsScreenName)} element={<NoPermissionsScreen />} />
                     <Route path={toRelativePath(MainScreenName)} element={<MainScreen />} />
                     <Route path={toRelativePath(TaggedCasesScreenName)} element={<TaggedCasesScreen />} />
                     <Route path={toRelativePath(AllCasesScreenName)} element={<AllCasesScreen />} />
@@ -90,6 +99,7 @@ function AdminStack() {
                     <Route path={toRelativePath(RemindersScreenName)} element={<RemindersScreen />} />
                     <Route path={toRelativePath(AdminSupportScreenName)} element={<AdminSupportScreen />} />
                     <Route path={toRelativePath(PlatformSettingsScreenName)} element={<PlatformSettingsScreen />} />
+                    <Route path={toRelativePath(FirmStaffRolesScreenName)} element={<FirmStaffRolesScreen />} />
                     {calendarEnabled && (
                         <>
                             <Route path={toRelativePath(CalendarScreenName)} element={<CalendarScreen />} />
@@ -98,6 +108,7 @@ function AdminStack() {
                     )}
                 </Routes>
             </Suspense>
+            </AdminRouteGuard>
         </TopAndRightNavBar>
     );
 }

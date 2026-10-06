@@ -35,12 +35,13 @@ function notifyListeners() {
  * Fetch public settings from the server (called lazily on first access).
  * Subsequent calls return the same promise / cached data.
  */
-export async function loadFirmSettings() {
-    if (_loaded) return;
+export async function loadFirmSettings({ force = false } = {}) {
+    if (_loaded && !force) return;
     if (_loadPromise) return _loadPromise;
 
     _loadPromise = ApiUtils.get("platform-settings/public")
         .then((res) => {
+            if (res?.status !== 200) throw new Error("Public settings request failed");
             const data = res?.data || {};
             _whatsappPhone = data.WHATSAPP_DEFAULT_PHONE || "";
             _firmName = data.LAW_FIRM_NAME || "";
@@ -57,7 +58,9 @@ export async function loadFirmSettings() {
             _loadPromise = null; // allow retry on next access
         });
 
-    return _loadPromise;
+    const result = _loadPromise;
+    result.finally(() => { if (_loadPromise === result) _loadPromise = null; });
+    return result;
 }
 
 /** Return the cached WhatsApp phone (E.164 digits, e.g. "97236565004"). */
@@ -113,12 +116,9 @@ function useCachedBool(getter, initial) {
 
     useEffect(() => {
         const sync = () => setValue(getter());
-        if (_loaded) {
-            sync();
-            return undefined;
-        }
-        loadFirmSettings().then(sync);
         _listeners.add(sync);
+        if (_loaded) sync();
+        else loadFirmSettings().then(sync);
         return () => { _listeners.delete(sync); };
     }, [getter]);
 
@@ -133,12 +133,9 @@ export function useFirmPhone() {
 
     useEffect(() => {
         const sync = () => setPhone(_whatsappPhone);
-        if (_loaded) {
-            sync();
-            return undefined;
-        }
-        loadFirmSettings().then(sync);
         _listeners.add(sync);
+        if (_loaded) sync();
+        else loadFirmSettings().then(sync);
         return () => { _listeners.delete(sync); };
     }, []);
 
@@ -151,12 +148,9 @@ export function useFirmName() {
 
     useEffect(() => {
         const sync = () => setName(_firmName);
-        if (_loaded) {
-            sync();
-            return undefined;
-        }
-        loadFirmSettings().then(sync);
         _listeners.add(sync);
+        if (_loaded) sync();
+        else loadFirmSettings().then(sync);
         return () => { _listeners.delete(sync); };
     }, []);
 
@@ -189,14 +183,19 @@ export function useFirmSettingsLoaded() {
 
     useEffect(() => {
         const sync = () => setLoaded(_loaded);
-        if (_loaded) {
-            sync();
-            return undefined;
-        }
-        loadFirmSettings().then(sync);
         _listeners.add(sync);
+        if (_loaded) sync();
+        else loadFirmSettings().then(sync);
         return () => { _listeners.delete(sync); };
     }, []);
 
     return loaded;
+}
+
+// Keep other open sessions current; saved settings in this tab refresh immediately.
+if (typeof window !== 'undefined') {
+    window.addEventListener('focus', () => loadFirmSettings({ force: true }));
+    window.setInterval(() => {
+        if (_listeners.size && document.visibilityState !== 'hidden') loadFirmSettings({ force: true });
+    }, 30000);
 }

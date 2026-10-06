@@ -1,3 +1,4 @@
+const { getCurrentTenantId, isMultiTenantMode } = require("../lib/tenant/tenantContext");
 const pool = require("../config/db");
 const { requireInt } = require("../utils/paramValidation");
 const {
@@ -9,7 +10,7 @@ const {
 const getCaseTypes = async (req, res) => {
     try {
         const userId = req.user?.UserId;
-        const userRole = req.user?.Role;
+        const userRole = useIsolatedOfficeCaseTypeCatalog(req) ? 'Admin' : req.user?.Role;
 
         let query = `
             SELECT
@@ -76,7 +77,7 @@ const getCaseTypes = async (req, res) => {
 const getCaseTypesForFilter = async (req, res) => {
     try {
         const userId = req.user?.UserId;
-        const userRole = req.user?.Role;
+        const userRole = useIsolatedOfficeCaseTypeCatalog(req) ? 'Admin' : req.user?.Role;
 
         let query = `
             SELECT DISTINCT ct.casetypename
@@ -114,7 +115,7 @@ const getCaseTypeById = async (req, res) => {
     if (caseTypeIdInt === null) return;
     try {
         const userId = req.user?.UserId;
-        const userRole = req.user?.Role;
+        const userRole = useIsolatedOfficeCaseTypeCatalog(req) ? 'Admin' : req.user?.Role;
 
         const result = await getCaseTypeByIdCached({
             caseTypeId: caseTypeIdInt,
@@ -146,6 +147,33 @@ const getCaseTypeById = async (req, res) => {
     }
 };
 
+// Case types lack tenant ownership. Extend these older read paths only in an
+// explicitly identified NULL-tenant office, never in a multi-tenant request.
+function useIsolatedOfficeCaseTypeCatalog(req) {
+    if (req.firmTenantId !== null || req.tenant?.id || getCurrentTenantId() || isMultiTenantMode()) return false;
+    if (!['role', 'platform_admin'].includes(req.firmPermissionMode)) return false;
+    return useFirmWideCaseTypeCatalog(req);
+}
+
+function useFirmWideCaseTypeCatalog(req) {
+    const userRole = String(req.user?.Role || '');
+    const mode = req.firmPermissionMode || 'legacy';
+    if (userRole === 'Admin' || mode === 'platform_admin') return true;
+    if (mode === 'legacy') {
+        return userRole === 'Staff' || userRole === 'Lawyer' || userRole === 'Admin';
+    }
+    if (mode === 'role' && req.firmPermissions) {
+        const { hasAreaAction, isAreaVisible } = require('../lib/firmRolePermissions');
+        const p = req.firmPermissions;
+        return (
+            hasAreaAction(p, 'cases', 'create') ||
+            hasAreaAction(p, 'cases', 'edit') ||
+            (isAreaVisible(p, 'caseTypes') && hasAreaAction(p, 'caseTypes', 'view'))
+        );
+    }
+    return false;
+}
+
 const getCaseTypeByName = async (req, res) => {
     try {
         const rawCaseTypeName = req?.query?.caseTypeName;
@@ -175,7 +203,7 @@ const getCaseTypeByName = async (req, res) => {
             paramIndex++;
         }
 
-        if (userRole !== 'Admin') {
+        if (!useFirmWideCaseTypeCatalog(req)) {
             whereClauses.push(
                 `ct.casetypeid IN (
                     SELECT DISTINCT c.casetypeid

@@ -11,6 +11,7 @@ const { parseExcelBuffer } = require('../utils/parseExcel');
 const pool = require('../config/db');
 const { getAllTemplates } = require('../tasks/emailReminders/templates');
 const reminderCalendarSync = require('../lib/reminderCalendarSync');
+const { canViewCalendar, calendarReminderSql, decorateCalendarReminder } = require('../lib/calendarReminderListing');
 
 function _resolveCreatedBy(req) {
     return req.user?.UserId ?? req.user?.userid ?? null;
@@ -386,7 +387,9 @@ function parseSigningReminderId(rawId) {
 
 const listReminders = async (req, res, next) => {
     try {
-        const { status, page = 1, limit = 50 } = req.query;
+        const { status } = req.query;
+        const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+        const limit = Math.min(100, Math.max(1, Number.parseInt(req.query.limit, 10) || 50));
         const offset = (Math.max(1, Number(page)) - 1) * Number(limit);
         const params = [];
         let idx = 1;
@@ -412,10 +415,10 @@ const listReminders = async (req, res, next) => {
                     sent_at,
                     cancelled_at,
                     calendar_event_id,
-                    'email'::text AS source
+                    'email'::text AS source,
+                    NULL::text AS audience, NULL::jsonb AS channels, NULL::timestamptz AS event_start_time
                 FROM scheduled_email_reminders
                 WHERE 1=1
-                ${statusFilter}
 
                 UNION ALL
 
@@ -433,18 +436,19 @@ const listReminders = async (req, res, next) => {
                     sfr.sent_at,
                     sfr.cancelled_at,
                     NULL::integer AS calendar_event_id,
-                    'signing'::text AS source
+                    'signing'::text AS source,
+                    NULL::text AS audience, NULL::jsonb AS channels, NULL::timestamptz AS event_start_time
                 FROM signing_file_reminders sfr
                 LEFT JOIN users u ON u.userid = sfr.signer_user_id
                 LEFT JOIN signingfiles sf ON sf.signingfileid = sfr.signing_file_id
                 WHERE 1=1
-                ${statusFilter}
-            ) combined
+                ${canViewCalendar(req) ? `UNION ALL SELECT * FROM (${calendarReminderSql}) cal` : ''}
+            ) combined WHERE 1=1 ${statusFilter}
         `;
 
         const countQ = `SELECT COUNT(*)::int AS count FROM (${combinedSql}) c`;
         const dataQ = `${combinedSql}
-                       ORDER BY scheduled_for DESC
+                       ORDER BY scheduled_for DESC, id ASC
                        LIMIT $${idx++} OFFSET $${idx++}`;
         const dataParams = [...params, Number(limit), offset];
 
@@ -458,7 +462,7 @@ const listReminders = async (req, res, next) => {
             total: Number(countRows?.[0]?.count || 0),
             page: Number(page),
             limit: Number(limit),
-            reminders,
+            reminders: reminders.map(decorateCalendarReminder),
         });
     } catch (e) {
         return next(e);
@@ -470,6 +474,12 @@ const listReminders = async (req, res, next) => {
 const getReminderById = async (req, res, next) => {
     try {
         const { id } = req.params;
+        if (String(id).startsWith('cal-')) {
+            if (!canViewCalendar(req)) return res.status(403).json({ ok: false, error: 'Forbidden' });
+            const { rows } = await pool.query(`SELECT * FROM (${calendarReminderSql}) cal WHERE id = $1`, [id]);
+            if (!rows.length) return res.status(404).json({ ok: false, error: 'Reminder not found.' });
+            return res.json({ ok: true, reminder: decorateCalendarReminder(rows[0]) });
+        }
         const signingId = parseSigningReminderId(id);
         if (signingId != null) {
             const { rows } = await pool.query(
@@ -530,6 +540,9 @@ const getReminderById = async (req, res, next) => {
 const cancelReminder = async (req, res, next) => {
     try {
         const { id } = req.params;
+        if (String(id).startsWith('cal-')) {
+            return res.status(409).json({ ok: false, errorCode: 'CALENDAR_MANAGED_REMINDER', message: 'יש לעדכן או לבטל תזכורת זו דרך האירוע ביומן.' });
+        }
         const signingId = parseSigningReminderId(id);
         if (signingId != null) {
             const { rowCount } = await pool.query(
@@ -569,6 +582,9 @@ const cancelReminder = async (req, res, next) => {
 const deleteReminder = async (req, res, next) => {
     try {
         const { id } = req.params;
+        if (String(id).startsWith('cal-')) {
+            return res.status(409).json({ ok: false, errorCode: 'CALENDAR_MANAGED_REMINDER', message: 'יש לעדכן או לבטל תזכורת זו דרך האירוע ביומן.' });
+        }
         const signingId = parseSigningReminderId(id);
         if (signingId != null) {
             const { rowCount } = await pool.query(
@@ -608,6 +624,9 @@ const updateReminder = async (req, res, next) => {
         const { id } = req.params;
         const { client_name, to_email, subject, scheduled_for } = req.body;
 
+        if (String(id).startsWith('cal-')) {
+            return res.status(409).json({ ok: false, errorCode: 'CALENDAR_MANAGED_REMINDER', message: 'יש לעדכן או לבטל תזכורת זו דרך האירוע ביומן.' });
+        }
         const signingId = parseSigningReminderId(id);
         if (signingId != null) {
             if (scheduled_for === undefined) {

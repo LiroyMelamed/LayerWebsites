@@ -14,6 +14,7 @@
     "save": "Save",
     "close": "Close",
     "search": "Search",
+    "listTitleWithCount": "{{title}} ({{count}})",
     "all": "All",
     "choose": "Choose",
     "yes": "Yes",
@@ -21,7 +22,6 @@
     "retry": "Try again",
     "notSpecified": "Not specified",
     "unassigned": "Unassigned",
-    "listTitleWithCount": "{{title}} ({{count}})",
     "refreshPull": "Pull down to refresh",
     "refreshing": "Refreshing…",
     "send": "Send",
@@ -1357,5 +1357,43 @@
     "loading": "Loading document...",
     "signedAt": "Signed on",
     "download": "Download Signed Document"
+  },
+  "managerHome": {
+    "aiBriefLabel": "AI",
+    "aiRecommendations": "Recommended actions",
+    "attention": {
+      "count_one": "{{count}} item",
+      "count_other": "{{count}} items",
+      "managerCount_one": "{{count}} item",
+      "managerCount_other": "{{count}} items"
+    },
+    "todayEventsModal": {
+      "count_one": "{{count}} event",
+      "count_other": "{{count}} events"
+    },
+    "drillDown": {
+      "count_one": "{{count}} item",
+      "count_other": "{{count}} items"
+    },
+    "stats": {
+      "activityCount_one": "{{count}} action",
+      "activityCount_other": "{{count}} actions",
+      "noActivityToday": "No recorded activity today"
+    }
+  },
+  "firmStaffRoles": {
+    "areas": {
+      "officeUsers": "Office administrators"
+    },
+    "actions": {
+      "officeUsers": {
+        "view": "View",
+        "manage": "Manage"
+      },
+      "evidenceDocuments": {
+        "view": "View",
+        "download": "Download"
+      }
+    }
   }
 }
