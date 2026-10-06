@@ -1,0 +1,101 @@
+- progressbar
+- generic: מתבצעת טעינה של Google Play Console
+- banner:
+  - link "הלוגו של Google Play Console":
+    - /url: /console/u/0/developers/6928795478873529952/app-list
+    - button "הלוגו של Google Play Console"
+  - button "התראות שלא נקראו סגירת מרכז ההתראות":
+    - img: notifications_unread
+    - generic: התראות שלא נקראו
+  - dialog "חלון קופץ של התראות":
+    - list:
+      - generic "לא נקראה סה\"כ 2 אפליקציות 6 באוק׳ העדכון לאפליקציה פורסם. המשתמשים אמורים לראות את השינויים באופן מיידי, אבל לפעמים זה לוקח קצת יותר זמן. כיווץ ההתראה":
+        - generic: חדש
+        - img "עו״ד אשרף עיסא - מעקב תיקים"
+        - img "MelamedLaw"
+        - definition:
+          - generic: "2"
+        - generic: 6 באוק׳
+        - generic: העדכון לאפליקציה פורסם. המשתמשים אמורים לראות את השינויים באופן מיידי, אבל לפעמים זה לוקח קצת יותר זמן.
+      - button "מעבר לסקירה הכללית של הפרסום" [active]:
+        - generic: מעבר לסקירה הכללית של הפרסום
+      - button "לא נקראה MelaMedia 29 בספט׳ Manager your orders more effectively by filtering to view a specific app הרחבת ההתראה":
+        - img "MelaMedia"
+        - generic: MelaMedia
+        - generic: 29 בספט׳
+        - img: expand_more
+        - generic: Manager your orders more effectively by filtering to view a specific app
+      - button "לא נקראה MelaMedia 28 בספט׳ הגיע הזמן להירשם לתוכנית עמלת השירות בשיעור 15% הרחבת ההתראה":
+        - img "MelaMedia"
+        - generic: MelaMedia
+        - generic: 28 בספט׳
+        - img: expand_more
+        - generic: הגיע הזמן להירשם לתוכנית עמלת השירות בשיעור 15%
+  - button "MelamedLaw":
+    - generic: MelamedLaw
+  - button "החלפת חשבון פיתוח":
+    - img "החלפת חשבון פיתוח"
+- navigation:
+  - link "כל האפליקציות":
+    - /url: /console/u/0/developers/6928795478873529952/app-list
+    - img: keyboard_backspace
+    - generic: כל האפליקציות
+  - list:
+    - listitem "מרכז שליטה":
+      - button "מרכז שליטה":
+        - img: dashboard
+        - generic: מרכז שליטה
+    - listitem "סטטיסטיקה":
+      - button "סטטיסטיקה":
+        - img: bar_chart
+        - generic: סטטיסטיקה
+    - listitem "סיכום השינויים לפרסום":
+      - button "סיכום השינויים לפרסום":
+        - img: overview
+        - generic: סיכום השינויים לפרסום
+    - listitem "מוגן על ידי Play":
+      - button "מוגן על ידי Play":
+        - img: shield
+        - generic: מוגן על ידי Play
+    - listitem "בדיקה ופרסום":
+      - button "בדיקה ופרסום":
+        - img: rocket_launch
+        - generic: בדיקה ופרסום
+    - listitem "מעקב ושיפור":
+      - button "מעקב ושיפור":
+        - img: vital_signs
+        - generic: מעקב ושיפור
+    - listitem "הגדלת מספר המשתמשים":
+      - button "הגדלת מספר המשתמשים":
+        - img: finance_mode
+        - generic: הגדלת מספר המשתמשים
+    - listitem "ייצור הכנסות עם Play":
+      - button "ייצור הכנסות עם Play":
+        - img: sell
+        - generic: ייצור הכנסות עם Play
+- heading "סיכום השינויים לפרסום" [level=1]
+- text: בדף הזה אפשר לראות סקירה כללית של השינויים שנערכו באפליקציה ולקבוע מתי הם יישלחו לבדיקה או לפרסום.
+- button "הצגת פרטים נוספים על סיכום השינויים לפרסום": יותר פריטים
+- button "הפרסום המנוהל כבוי":
+  - img: sync_disabled
+  - generic: הפרסום המנוהל כבוי
+  - img: arrow_drop_down
+- img: history
+- generic: פורסם לאחרונה בתאריך 6 באוקטובר 2026
+- link "פעילות שליחה":
+  - /url: /console/u/0/developers/6928795478873529952/app/4974126654521529369/publishing/submission-activity
+  - generic: פעילות שליחה
+  - img: arrow_right_alt
+- link "עדכוני מוצרים":
+  - /url: https://play.google.com/console/about/whats-new/
+- link "לוח הבקרה של סטטוס שירותי Play":
+  - /url: https://status.play.google.com/
+- link "עזרה":
+  - /url: /console/u/0/developers/6928795478873529952/help-and-support?app=4974126654521529369
+- generic: ‎© 2026 Google
+- link "פרטיות":
+  - /url: https://www.google.com/policies/privacy/
+- link "הסכם הפצה למפתחים":
+  - /url: https://play.google.com/about/developer-distribution-agreement.html
+- link "תנאים והגבלות":
+  - /url: https://play.google.com/about/console/terms-of-service/
