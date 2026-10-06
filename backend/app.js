@@ -65,6 +65,8 @@ app.use(helmet({
     xssFilter: true,
     // Prevent MIME sniffing, DNS prefetch control, etc. (helmet defaults)
 }));
+// A bounded 2MB workbook becomes up to 2.8MB when encoded for preview.
+app.use('/api/signing-batches/workbook', bodyParser.json({ limit: '3mb' }));
 app.use(bodyParser.json({ limit: API_JSON_LIMIT }));
 app.use(bodyParser.urlencoded({ limit: API_URLENCODED_LIMIT, extended: true }));
 app.use(compression({ threshold: 1024 }));
@@ -178,6 +180,8 @@ app.use("/api/Data", dataRoutes);
 app.use("/api/Notifications", notificationRoutes);
 app.use("/api/Files", filesRoutes);
 app.use("/api/SigningFiles", signingFileRoutes);
+app.use('/api/signing-templates', require('./routes/signingTemplateRoutes'));
+app.use('/api/signing-batches', require('./routes/signingBatchRoutes'));
 app.use("/api/billing", billingRoutes);
 app.use("/api/audit-events", auditEventsRoutes);
 app.use("/api/evidence-documents", evidenceDocumentsRoutes);

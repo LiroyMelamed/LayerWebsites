@@ -67,6 +67,7 @@ const App = () => {
       /(?:^|\/)(SigningScreen|SigningManagerScreen)(?:$|\/)/i.test(p) ||
       /(?:^|\/)(upload-file-for-signing)(?:$|\/)/i.test(p) ||
       /(?:^|\/)(PublicSignScreen)(?:$|\/)/i.test(p) ||
+      /^\/ViewSignedDocument\/Package(?:$|\/)/i.test(p) ||
       /(?:^|\/)s(?:$|\/)/i.test(p) ||
       /(?:^|\/)(Verify\/Evidence)(?:$|\/)/i.test(p);
 
@@ -165,6 +166,7 @@ const App = () => {
     <Suspense fallback={<RouteFallback />}>
       <Routes>
         <Route path={PublicSignScreenName} element={<PublicSigningScreen />} />
+        <Route path="/ViewSignedDocument/Package" element={<PublicSigningScreen />} />
         <Route path={ShortSignRedirectScreenName} element={<ShortSignRedirectScreen />} />
         <Route path={ShortNavRedirectScreenName} element={<ShortNavRedirectScreen />} />
         <Route path={ViewSignedDocumentName} element={<ViewSignedDocument />} />

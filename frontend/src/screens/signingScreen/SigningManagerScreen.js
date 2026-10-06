@@ -47,6 +47,7 @@ import {
 import { useFirmPermissions } from "../../providers/FirmPermissionsProvider";
 import "../calendarScreen/CalendarInviteScreen.scss";
 import RequestLoadError from '../../components/ui/RequestLoadError';
+import TemplatesWorkspace from './templates/TemplatesWorkspace';
 
 
 export const SigningManagerScreenName = "/SigningManagerScreen";
@@ -63,6 +64,7 @@ export default function SigningManagerScreen() {
 
     const { isFromApp } = useFromApp();
     const [activeTab, setActiveTab] = useState("pending");
+    const [showTemplates, setShowTemplates] = useState(false);
     const [scope, setScope] = useState("mine");
     useEffect(() => {
         if (!canViewOfficeFiles && scope === 'office') setScope('mine');
@@ -355,6 +357,8 @@ export default function SigningManagerScreen() {
         );
     };
 
+    if (showTemplates) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><SimpleScrollView><TemplatesWorkspace canUpload={canSignUpload} canManage={canSignManage} onClose={() => { setShowTemplates(false);reloadFiles(); }} /></SimpleScrollView></SimpleScreen>;
+
     return (
         <SimpleScreen
             imageBackgroundSource={images.Backgrounds.AppBackground}
@@ -377,6 +381,7 @@ export default function SigningManagerScreen() {
                 />
 
                 <SimpleContainer className="lw-signingManagerScreen__topRow">
+                    <SecondaryButton onPress={() => setShowTemplates(true)}>תבניות ושליחה מרוכזת</SecondaryButton>
                     <SimpleContainer className="lw-signingManagerScreen__searchContainer">
                         <SearchInput
                             onSearch={handleSearch}

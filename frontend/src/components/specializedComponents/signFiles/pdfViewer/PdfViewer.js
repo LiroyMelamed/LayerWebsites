@@ -208,7 +208,7 @@ export default function PdfViewer({
 
     const handleDocumentError = (err) => {
         console.error("PdfViewer Document load error:", err);
-        if (typeof onDocumentReady === "function") onDocumentReady();
+        if (typeof onDocumentReady === "function") onDocumentReady(false);
     };
 
     const retryDocument = () => {
@@ -351,7 +351,7 @@ export default function PdfViewer({
                     requestAnimationFrame(() => {
                         requestAnimationFrame(measureContainerWidth);
                     });
-                    if (typeof onDocumentReady === "function") onDocumentReady();
+                    if (typeof onDocumentReady === "function") onDocumentReady(true);
                 }}
                 onLoadError={handleDocumentError}
                 onSourceError={handleDocumentError}
