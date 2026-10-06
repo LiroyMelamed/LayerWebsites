@@ -1,5 +1,6 @@
 // controllers/signingFileController.js
 const pool = require("../config/db");
+const { signingDetailsSummary } = require('../lib/signingDetailsSummary');
 const { canOverridePublicSignerIdentity } = require("../lib/officeRole");
 const { hasSigningContactOverride, CONTACT_EDIT_MESSAGE } = require("../lib/signingSignerContact");
 const jwt = require('jsonwebtoken');
@@ -3591,6 +3592,7 @@ exports.getSigningFileDetails = async (req, res, next) => {
             `select 
                 signingfileid   as "SigningFileId",
                 caseid          as "CaseId",
+                (select c.casename from cases c where c.caseid = signingfiles.caseid) as "CaseName",
                 lawyerid        as "LawyerId",
                 clientid        as "ClientId",
                 filename        as "FileName",
@@ -3762,7 +3764,7 @@ exports.getSigningFileDetails = async (req, res, next) => {
         }
 
         return res.json({
-            file: { ...file, OtpEnabled: (await getSigningOtpEnabled()) },
+            file: { ...file, ...signingDetailsSummary(signatureSpots), OtpEnabled: (await getSigningOtpEnabled()) },
             signatureSpots,
             signerUserId: userId,
             isLawyer: viewAllSpots,
