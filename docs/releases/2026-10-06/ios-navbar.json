@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "platform": "iOS",
+  "version": "1.0.6",
+  "build": 23,
+  "viewportPoints": [
+    402,
+    874
+  ],
+  "webViewBottomY": 777.7,
+  "navItemTopY": 789.7,
+  "topSpacingPoints": 12,
+  "chatButtonVisible": false,
+  "screenshotSha256": "506f93a053906791fb4a20df31deb740cdb1d1ec7facaab47b3123af1545aa3a",
+  "enabledButtonVisible": true,
+  "enabledLayoutVisualCheck": "PASS",
+  "chatPanelOpened": true,
+  "remoteDisableClosedOpenChat": true,
+  "remoteDisableRestored12ptSpacing": true,
+  "finalQaChatEnabled": false
+}

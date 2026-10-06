@@ -1,0 +1,47 @@
+{
+  "tenant": "morlevi",
+  "status": "PASS_PUBLIC_RELEASE",
+  "completedUtc": "2026-10-06T09:05:34.416780+00:00",
+  "checks": {
+    "health": {
+      "status": 200
+    },
+    "publicSettings": {
+      "status": 200,
+      "jsonValid": true
+    },
+    "anonymousSigning": {
+      "status": 401
+    },
+    "frontendIndex": {
+      "status": 200,
+      "rawPublicSha256": "b947a687b159545c9e75cbedff3220d8715eb559da998dbcd11c157923e50ceb",
+      "candidateSha256": "e4c33c17b7600946d96cd1390392090c0c5548500169f76852447abfd0ebc127",
+      "matchesCandidateAfterOnlyObservedCloudflareBeaconRemoval": true,
+      "hostInjectedBeaconCount": 1
+    },
+    "entryScripts": [
+      {
+        "path": "static/js/vendor-i18n.0f2904b7.js",
+        "sha256": "13c600137bcc89fe2f77ed33c2544105f6f9de996d95c7c2fef51bafc8c0d072",
+        "status": 200
+      },
+      {
+        "path": "static/js/vendor-react.9b52eb51.js",
+        "sha256": "2e4e58b8922d64f6ed2f0276116fc2b227470df08e1dea82ca241950bab74daa",
+        "status": 200
+      },
+      {
+        "path": "static/js/vendor.dc123bf9.js",
+        "sha256": "115901fa2d7378b08f287fdf68cf61f8d82aca08115c09221391505627e95d05",
+        "status": 200
+      },
+      {
+        "path": "static/js/main.0ac148e8.js",
+        "sha256": "98e4065ca0edbbfcecb9dbe85e47e304ae141b08215fd2d7b4b062598078cd0a",
+        "status": 200
+      }
+    ]
+  },
+  "noCustomerWritesOrNotifications": true
+}
