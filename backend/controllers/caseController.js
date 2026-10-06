@@ -13,6 +13,8 @@ const { invalidateOperationalDashboardCaches } = require("../utils/operationalDa
 const { resolveActorId, computeClosureAudit } = require("../lib/caseClosureAudit");
 const { canViewAllFirmCases, requireAreaAction } = require("../lib/firmPermissions/accessPure");
 const { assertCaseRecordAccess } = require("../lib/firmPermissions/caseAccess");
+const { getHebrewMessage } = require('../utils/errors.he');
+const { caseHasLegalData } = require('../utils/legalData');
 
 function respondPermissionError(res, err) {
     if (!err) return false;
@@ -1275,10 +1277,22 @@ const deleteCase = async (req, res) => {
     const deleteAccessErr = await assertCaseRecordAccess(req, caseId, 'delete');
     if (respondPermissionError(res, deleteAccessErr)) return;
 
+    const isProd = String(process.env.NODE_ENV || '').toLowerCase() === 'production';
+    const allowCaseHardDelete = String(process.env.ALLOW_CASE_HARD_DELETE || '').toLowerCase() === 'true';
+    if (isProd && !allowCaseHardDelete) {
+        return res.status(403).json({ code: 'FORBIDDEN', message: getHebrewMessage('CASE_HAS_LEGAL_DATA') });
+    }
+
     let client;
     try {
         client = await pool.connect();
         await client.query('BEGIN');
+        // Lock the parent so a concurrent FK insert cannot race the legal-data check.
+        await client.query('SELECT caseid FROM cases WHERE caseid = $1 FOR UPDATE', [caseId]);
+        if (await caseHasLegalData(client, caseId)) {
+            await client.query('ROLLBACK');
+            return res.status(409).json({ code: 'CASE_HAS_LEGAL_DATA', message: getHebrewMessage('CASE_HAS_LEGAL_DATA') });
+        }
 
         await client.query("DELETE FROM casedescriptions WHERE caseid = $1", [caseId]);
         const result = await client.query("DELETE FROM cases WHERE caseid = $1", [caseId]);
