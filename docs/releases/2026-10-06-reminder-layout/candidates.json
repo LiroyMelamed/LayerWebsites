@@ -1,0 +1,26 @@
+[
+  {
+    "tenant": "melamedlaw",
+    "branch": "MelamedLaw",
+    "worktree": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/reminder-layout-melamedlaw-20261006",
+    "sourceCommit": "9f14702e5b4f4592ee38e39586e24d60f2ee7baf"
+  },
+  {
+    "tenant": "morlevy",
+    "branch": "MorLevi",
+    "worktree": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/reminder-layout-morlevy-20261006",
+    "sourceCommit": "074ce3f3c4df75035cb51add35f98b5aeca6cde4"
+  },
+  {
+    "tenant": "ashrafessa",
+    "branch": "AshrafEssa",
+    "worktree": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/reminder-layout-ashrafessa-20261006",
+    "sourceCommit": "d7e008c78dc9bafbb76c1504a5443bdde88a9471"
+  },
+  {
+    "tenant": "idm",
+    "branch": "Idm",
+    "worktree": "/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/reminder-layout-idm-20261006",
+    "sourceCommit": "6332edb244b16f3f2991c6243a9e8c9893634c07"
+  }
+]
