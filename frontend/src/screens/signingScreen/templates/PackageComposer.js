@@ -1,5 +1,4 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
 import signingPackagesApi from '../../../api/signingPackagesApi';
 import PrimaryButton from '../../../components/styledComponents/buttons/PrimaryButton';
 import SecondaryButton from '../../../components/styledComponents/buttons/SecondaryButton';
@@ -355,7 +354,6 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         return { where, fieldLabel, message: t(`signingV2.compose.rowErrors.${item.code}`, { defaultValue: t('signingV2.compose.rowErrors.INVALID_ROW') }),
             target: parts[0] === 'shared' ? fieldId('shared', parts[1], field) : check.sentIds[Number(parts[1])] && (parts.length === 4 ? fieldId(check.sentIds[Number(parts[1])], parts[2], field) : fieldId(check.sentIds[Number(parts[1])], 'row', 'key')) };
     };
-    const BackIcon = direction === 'rtl' ? ArrowRight : ArrowLeft;
     const filledRows = rows.filter(rowFilled).length;
     const preview = check?.preview;
     const sharedNames = preview?.shared?.map(item => item.name).join(', ');
@@ -363,7 +361,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     return <section className="lw-signingPackages lw-signingCompose" dir={direction} aria-labelledby="signing-compose-title">
         <header className="lw-signingPackages__heading">
             <div>
-                <button type="button" className="lw-signingPackages__textButton lw-signingCompose__back" onClick={leave}><BackIcon size={16} aria-hidden="true" />{t('signingV2.compose.back')}</button>
+                <SecondaryButton onPress={leave}>{t('signingV2.compose.back')}</SecondaryButton>
                 <h1 id="signing-compose-title" ref={heading} tabIndex={-1}>{t('signingV2.compose.title')}</h1>
                 <p>{t('signingV2.compose.subtitle')}</p>
             </div>

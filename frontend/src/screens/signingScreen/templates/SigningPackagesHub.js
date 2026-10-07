@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import signingPackagesApi from '../../../api/signingPackagesApi';
 import SigningPackagesWorkspace from './SigningPackagesWorkspace';
 import PackageComposer from './PackageComposer';
@@ -15,8 +16,15 @@ export function useSigningV2Available(api = signingPackagesApi) {
 }
 
 export default function SigningPackagesHub({ onClose, canCreate, api = signingPackagesApi }) {
-    const [composing, setComposing] = useState(false);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const composing = searchParams.get('panel') === 'compose';
+    const setPanel = (value) => {
+        const next = new URLSearchParams(searchParams);
+        if (value) next.set('panel', value);
+        else next.delete('panel');
+        setSearchParams(next);
+    };
     useEffect(() => { window.scrollTo?.(0, 0); }, [composing]);
-    if (composing) return <PackageComposer api={api} onBack={() => setComposing(false)} onCreated={() => setComposing(false)} />;
-    return <SigningPackagesWorkspace api={api} onClose={onClose} onCreate={canCreate ? () => setComposing(true) : undefined} />;
+    if (composing) return <PackageComposer api={api} onBack={() => setPanel('runs')} onCreated={() => setPanel('runs')} />;
+    return <SigningPackagesWorkspace api={api} onClose={onClose} onCreate={canCreate ? () => setPanel('compose') : undefined} />;
 }
