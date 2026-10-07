@@ -197,16 +197,16 @@ export default function SigningPackagesWorkspace({ onClose, onCreate, api = sign
     const toggle = id => setExpanded(previous => {
         const next = new Set(previous); if (next.has(id)) next.delete(id); else next.add(id); return next;
     });
-    return <section className="lw-signingPackages" dir={direction}>
+    return <section className="lw-signingPackages" dir={direction} aria-labelledby="signing-packages-title">
         <header className="lw-signingPackages__heading">
-            <div><h1>{t('signingV2.title')}</h1><p>{t('signingV2.subtitle')}</p></div>
+            <div><h1 id="signing-packages-title">{t('signingV2.title')}</h1><p>{t('signingV2.subtitle')}</p></div>
             <div className="lw-signingPackages__actions">
                 {onCreate && <PrimaryButton onPress={onCreate}>{t('signingV2.newPackage')}</PrimaryButton>}
                 {onClose && <SecondaryButton onPress={onClose}>{t('signingV2.backToDocuments')}</SecondaryButton>}
             </div>
         </header>
         <div className="lw-signingPackages__toolbar">
-            <SearchInput title={t('signingV2.search')} value={query} onSearch={setQuery} containerDir={direction} textStyle={{ textAlign: 'start' }} />
+            <SearchInput title={t('signingV2.search')} aria-label={t('signingV2.search')} value={query} onSearch={setQuery} containerDir={direction} textStyle={{ textAlign: 'start' }} />
             <SegmentedSwitch value={state} onChange={setState} ariaLabel={t('signingV2.statusFilter')}
                 options={['pending', 'attention', 'complete', 'cancelled', 'all'].map(value => ({ value, label: t(`signingV2.filter.${value}`) }))} />
             <SecondaryButton disabled={resource.busy} onPress={resource.refresh}>{t('signingV2.refresh')}</SecondaryButton>

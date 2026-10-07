@@ -38,9 +38,9 @@ function fixture() {
 
 test.each(['he', 'ar', 'en'])('uses existing translated controls, correct direction and actual delivery state in %s', async language => {
     const i18n = await translations(language), { api } = fixture();
-    const { container } = render(<I18nextProvider i18n={i18n}><SigningPackagesWorkspace api={api} /></I18nextProvider>);
-    expect(container.querySelector('.lw-signingPackages').getAttribute('dir')).toBe(language === 'en' ? 'ltr' : 'rtl');
-    expect(container.querySelector('input').getAttribute('dir')).toBe(language === 'en' ? 'ltr' : 'rtl');
+    render(<I18nextProvider i18n={i18n}><SigningPackagesWorkspace api={api} /></I18nextProvider>);
+    expect(screen.getByRole('region', { name: i18n.t('signingV2.title') })).toHaveAttribute('dir', language === 'en' ? 'ltr' : 'rtl');
+    expect(screen.getByRole('textbox', { name: i18n.t('signingV2.search') })).toHaveAttribute('dir', language === 'en' ? 'ltr' : 'rtl');
     await screen.findByText('October employees');
     fireEvent.click(screen.getByRole('button', { name: /October employees/ }));
     await screen.findByText('Employee 001');
