@@ -1669,6 +1669,16 @@
       "documents": "المستندات",
       "delivery": "التسليم"
     },
+    "spot": "{{name}} · {{type}} · صفحة {{page}}",
+    "unknownSigner": "موقّع",
+    "fieldType": {
+      "signature": "توقيع",
+      "initials": "الأحرف الأولى",
+      "text": "نص",
+      "date": "تاريخ",
+      "number": "رقم",
+      "checkbox": "تحديد"
+    },
     "match": {
       "person": "تطابق في اسم الموقّع",
       "party": "تطابق في اسم الطرف"

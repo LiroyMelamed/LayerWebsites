@@ -1,5 +1,6 @@
 const { expect, fail } = require('../../lib/signingV2/errors');
 const { UUID } = require('../../lib/signingV2/compiler');
+const { digest, bytesHash } = require('../../lib/signingV2/canonical');
 const { packageScopeSql, scopeParams } = require('./access');
 
 const PAGE_SIZE = 25;
@@ -163,14 +164,40 @@ async function listPackages(db, scope, groupId, input) {
     return { rows, total: Number(result.rows[0].total), nextCursor: hasMore ? encodeCursor(rows.at(-1)) : null, summaryScope: 'matching_children' };
 }
 
-async function packageDetails(db, scope, packageId) {
+function documentSpots(bindings, participants) {
+    const people = new Map((participants || []).map((person, index) => [`${person.roleKey}:${person.occurrence}`, { ...person, index }]));
+    return (Array.isArray(bindings) ? bindings : []).filter(field => field && field.active !== false && field.type && field.type !== 'data').map(field => {
+        const matches = (participants || []).filter(person => person.roleKey === field.roleKey);
+        const person = people.get(`${field.roleKey}:${field.occurrence}`) || (matches.length === 1 ? { ...matches[0], index: participants.indexOf(matches[0]) } : null);
+        return {
+            id: field.id, pageNum: field.pageNum, x: field.x, y: field.y, width: field.width, height: field.height,
+            type: field.type, required: Boolean(field.required), label: field.label || null,
+            signerName: person?.name || null, signerIndex: person?.index ?? 0,
+        };
+    });
+}
+
+async function authorizedPackage(db, scope, packageId) {
     expect(UUID.test(packageId), 'INVALID_SUBMISSION');
     const header = await db.query(`WITH ${projectionCte(scope)} SELECT * FROM projected WHERE id=$5`, [...scopeParams(scope), packageId]);
     if (!header.rowCount) fail('NOT_FOUND', 404);
-    const pkg = header.rows[0];
+    return header.rows[0];
+}
+
+async function readReadyArtifact(db, contextId, artifactId, storage) {
+    const artifact = (await db.query(`SELECT object_key,bytes,content_sha256,kind FROM signing_artifacts
+        WHERE owner_context_id=$1 AND id=$2 AND state='ready'`, [contextId, artifactId])).rows[0];
+    if (!artifact) fail('ARTIFACT_NOT_READY', 409);
+    const bytes = await storage.read(artifact.object_key, Number(artifact.bytes));
+    expect(bytesHash(bytes) === artifact.content_sha256, 'ARTIFACT_HASH_MISMATCH');
+    return { bytes, kind: artifact.kind };
+}
+
+async function packageDetails(db, scope, packageId) {
+    const pkg = await authorizedPackage(db, scope, packageId);
     const result = await db.query(`SELECT
         COALESCE((SELECT jsonb_agg(jsonb_build_object('id',d.id,'name',d.name,'state',d.state,'informational',d.informational,
-            'prepared',d.prepared_artifact_id IS NOT NULL,'final',d.final_artifact_id IS NOT NULL) ORDER BY d.document_key)
+            'prepared',d.prepared_artifact_id IS NOT NULL,'final',d.final_artifact_id IS NOT NULL,'bindings',d.field_bindings) ORDER BY d.document_key)
             FROM signing_documents d WHERE d.owner_context_id=$1 AND d.revision_id=$2),'[]') AS documents,
         COALESCE((SELECT jsonb_agg(jsonb_build_object('id',p.id,'personId',p.person_id,'name',p.identity_snapshot->>'name',
             'partyName',p.identity_snapshot->>'partyName','roleKey',p.role_key,'capacity',p.capacity,'occurrence',p.occurrence,
@@ -185,7 +212,39 @@ async function packageDetails(db, scope, packageId) {
             ORDER BY d.created_at DESC,d.id)
             FROM signing_deliveries d JOIN signing_delivery_profiles p ON p.owner_context_id=d.owner_context_id AND p.id=d.profile_id
             WHERE p.owner_context_id=$1 AND p.revision_id=$2),'[]') AS deliveries`, [scope.contextId, pkg.active_revision_id]);
-    return { package: pkg, ...result.rows[0] };
+    const body = result.rows[0];
+    body.documents = body.documents.map(document => {
+        const spots = documentSpots(document.bindings, body.participants);
+        const { bindings, ...rest } = document;
+        return { ...rest, spots };
+    });
+    return { package: pkg, ...body };
 }
 
-module.exports = { listSubmissions, listPackages, packageDetails, filters, projectionCte, queryMatchesSql, stateMatchesSql };
+async function packageDocumentFile(db, scope, packageId, documentId, storage) {
+    const pkg = await authorizedPackage(db, scope, packageId);
+    if (!UUID.test(String(documentId))) fail('NOT_FOUND', 404);
+    const document = (await db.query(`SELECT name,final_artifact_id,prepared_artifact_id,source_artifact_id
+        FROM signing_documents WHERE owner_context_id=$1 AND revision_id=$2 AND id=$3`,
+    [scope.contextId, pkg.active_revision_id, documentId])).rows[0];
+    if (!document) fail('NOT_FOUND', 404);
+    const artifactId = document.final_artifact_id || document.prepared_artifact_id || document.source_artifact_id;
+    if (!artifactId) fail('ARTIFACT_NOT_READY', 409);
+    const file = await readReadyArtifact(db, scope.contextId, artifactId, storage);
+    return { bytes: file.bytes, name: document.name, final: Boolean(document.final_artifact_id) };
+}
+
+async function packageEvidenceFile(db, scope, packageId, storage) {
+    const pkg = await authorizedPackage(db, scope, packageId);
+    if (pkg.workflow_state !== 'complete') fail('NOT_FOUND', 404);
+    const artifact = (await db.query(`SELECT id FROM signing_artifacts
+        WHERE owner_context_id=$1 AND kind='evidence' AND state='ready' AND inputs_hash=$2`,
+    [scope.contextId, digest({ revisionId: pkg.active_revision_id, revisionHash: pkg.revision_hash, kind: 'evidence' })])).rows[0];
+    if (!artifact) fail('ARTIFACT_NOT_READY', 409);
+    return readReadyArtifact(db, scope.contextId, artifact.id, storage);
+}
+
+module.exports = {
+    listSubmissions, listPackages, packageDetails, packageDocumentFile, packageEvidenceFile,
+    filters, projectionCte, queryMatchesSql, stateMatchesSql, documentSpots,
+};

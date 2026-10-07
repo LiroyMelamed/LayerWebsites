@@ -14,6 +14,8 @@ const signingPackagesApi = {
     list: (filters, config) => signingRequest('get', `${root}/submissions?${query(filters)}`, null, config),
     packages: (id, filters, config) => signingRequest('get', `${root}/submissions/${id}/packages?${query(filters)}`, null, config),
     details: (id, config) => signingRequest('get', `${root}/packages/${id}`, null, config),
+    documentFile: (packageId, documentId, config) => signingRequest('get', `${root}/packages/${packageId}/documents/${documentId}`, null, { responseType: 'blob', ...config }),
+    evidenceFile: (packageId, config) => signingRequest('get', `${root}/packages/${packageId}/evidence`, null, { responseType: 'blob', ...config }),
     previewAction: (packageId, personId, body, config) => signingRequest('post', `${participant(packageId, personId)}/action-preview`, body, config),
     executeAction: (packageId, personId, body, idempotencyKey) => signingRequest('post', `${participant(packageId, personId)}/actions`, body,
         { headers: { 'Idempotency-Key': idempotencyKey } }),

@@ -68,7 +68,7 @@
 }
 .lw-signingPackages__panel {
   position: fixed; inset-block: 0; inset-inline-start: auto; inset-inline-end: 0; margin: 0;
-  inline-size: min(38rem, 100%); max-inline-size: 100%; block-size: 100dvh; max-block-size: 100dvh;
+  inline-size: min(52rem, 100%); max-inline-size: 100%; block-size: 100dvh; max-block-size: 100dvh;
   border: 0; border-inline-start: 1px solid #e2e8f0; padding: 1.25rem; background: #fff;
   color: var(--lw-color-text, #2d3748); box-sizing: border-box; text-align: start; overflow: auto;
   box-shadow: -4px 0 18px rgb(45 55 72 / 12%);
@@ -81,7 +81,10 @@
 .lw-signingPackages__panelHeader { justify-content: space-between; gap: 1rem; margin-block-end: 1.5rem; }
 .lw-signingPackages__panelSummary { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; margin-block-end: 1.5rem; p { flex-basis: 100%; font-size: .875rem; } }
 .lw-signingPackages__people > li { padding-block: 1.25rem; border-block-end: 1px solid #e2e8f0; }
-.lw-signingPackages__tasks > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .5rem; margin-block-start: .75rem; font-size: .875rem; time { grid-column: 1 / -1; } }
+.lw-signingPackages__tasks > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .5rem; margin-block-start: .75rem; font-size: .875rem; time, .lw-signingPackages__docActions { grid-column: 1 / -1; } }
+.lw-signingPackages__docActions { display: flex; flex-wrap: wrap; gap: .5rem; margin-block-start: .25rem; }
+.lw-signingPackages__spots { margin: .75rem 0 0; padding-inline-start: 1.1rem; font-size: .875rem; }
+.lw-signingPackages__viewer { margin-block-start: .75rem; max-block-size: 70vh; overflow: auto; border: 1px solid #e2e8f0; border-radius: .375rem; background: #f1f3f5; }
 .lw-signingPackages__personActions {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem;
   margin-block-start: 1rem; padding-block-start: .75rem; border-block-start: 1px dashed #e2e8f0; font-size: .8125rem;

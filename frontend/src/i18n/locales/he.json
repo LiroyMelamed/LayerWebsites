@@ -2307,6 +2307,16 @@
       "documents": "מסמכים",
       "delivery": "מסירה"
     },
+    "spot": "{{name}} · {{type}} · עמוד {{page}}",
+    "unknownSigner": "חותם",
+    "fieldType": {
+      "signature": "חתימה",
+      "initials": "ראשי תיבות",
+      "text": "טקסט",
+      "date": "תאריך",
+      "number": "מספר",
+      "checkbox": "סימון"
+    },
     "match": {
       "person": "נמצאה התאמה בשם החותם",
       "party": "נמצאה התאמה בשם הצד"
