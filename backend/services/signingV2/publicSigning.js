@@ -83,7 +83,7 @@ function createPublicSigningService({ pool, storage, otpKey, otpTransport = null
         return {
             person: { name: rows[0]?.person_name || '' },
             locale: LOCALES.has(profile?.locale) ? profile.locale : 'he',
-            consentVersion: CONSENT_VERSION, expiresAt: grant.expires_at, counts,
+            consentVersion: CONSENT_VERSION, expiresAt: grant.expires_at, counts, maxTasksPerSession: limits.manifestTasks,
             packages: [...packages.values()].map(item => ({ ...item, documents: [...item.documents.values()] })),
         };
     }

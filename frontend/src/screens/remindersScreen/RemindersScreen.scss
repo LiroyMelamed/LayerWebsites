@@ -1,6 +1,10 @@
 @use '../../styles/mixins' as m;
 @use '../../styles/variables' as v;
 
+.lw-reminders__pageTitle {
+    margin: 0 0 v.$space-3;
+}
+
 .lw-reminders__filtersRow {
     @include m.row(v.$space-3, wrap);
     align-items: center;

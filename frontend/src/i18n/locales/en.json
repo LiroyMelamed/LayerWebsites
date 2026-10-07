@@ -1619,9 +1619,13 @@
         "aside": "Not in this send",
         "review": "Left out of this send: {{names}}. The template was not changed."
       },
+      "order": {
+        "up": "Move {{name}} earlier",
+        "down": "Move {{name}} later"
+      },
       "shared": {
         "heading": "Shared signer",
-        "help": "This signer signs in every package of this run."
+        "help": "Choose one person to sign in every package: a client, representative, lawyer or anyone else."
       },
       "rows": {
         "heading": "Recipients",
@@ -1708,6 +1712,7 @@
       "rowErrors": {
         "NAME_REQUIRED": "Name is missing",
         "ROLE_REQUIRED": "This signer cannot be left out of the send",
+        "INVALID_SIGNING_ORDER": "The signing order does not match the signers",
         "NO_SIGNING_OBLIGATIONS": "Without this signer nobody is left to sign the document",
         "INVALID_EMAIL": "The email address is not valid",
         "INVALID_PHONE": "The phone number is not valid",
@@ -1856,7 +1861,94 @@
         "INVALID_VALUES": "One of the values you entered is not valid.",
         "IDEMPOTENCY_CONFLICT": "This request was already sent with different details. Reload the page.",
         "ARTIFACT_NOT_READY": "The document is still being prepared. Try again in a moment."
+      },
+      "group": {
+        "signAll": "Sign all documents",
+        "document": "Documents to sign ({{count}})",
+        "consent": "I have read the selected documents and agree to apply my signature to all {{count}} documents. Submission is completed only after all required fields are filled.",
+        "changeScope": "Switch to signing all documents? Unsubmitted values will be cleared and the new signing scope requires your consent."
+      }
+    },
+    "builder": {
+      "back": "Back to templates",
+      "new": "New signing template",
+      "edit": "Edit template",
+      "intro": "Prepare the documents once. Choose the people before sending.",
+      "name": "Template name",
+      "nameExample": "For example: agreement and power of attorney",
+      "roles": "Who needs to sign?",
+      "rolesHint": "A role can be a client, family member, employee, representative or any other person.",
+      "roleName": "Role name",
+      "roleLabel": "Role {{index}} name",
+      "roleDefault": "Signer {{index}}",
+      "audience": "When sending several packages",
+      "each": "A different person in each package",
+      "shared": "The same person in every package",
+      "professional": "Shared lawyer (existing template)",
+      "sharedHint": "Assign fields in each document to let one person sign all documents. Choose “the same person” to include them in every package too.",
+      "order": "Signing order",
+      "parallel": "Everyone at the same time",
+      "sequential": "One after another",
+      "orderHint": "The list sets the signing order. Move roles to change it.",
+      "up": "Move {{name}} earlier",
+      "down": "Move {{name}} later",
+      "earlier": "Earlier",
+      "later": "Later",
+      "removeRole": "Remove role",
+      "removeRoleHint": "Remove or reassign this role’s fields before removing it.",
+      "addRole": "Add signer",
+      "documents": "Documents and fields",
+      "documentTabs": "Template documents",
+      "addPdf": "Add PDF",
+      "emptyTitle": "Add your first document",
+      "emptyBody": "Upload a PDF and place fields for each signer.",
+      "documentName": "Document name",
+      "signer": "Signer role",
+      "fieldType": "Field type",
+      "page": "Page",
+      "addField": "Add field to page {{page}}",
+      "dragHint": "Drag a field into position. Select a field to edit it.",
+      "selectedField": "Edit field",
+      "label": "Label",
+      "required": "Required field",
+      "deleteField": "Delete field",
+      "removeDoc": "Remove document",
+      "loadingPdf": "Loading document…",
+      "otp": "Verify with a one-time code",
+      "waiver": "I explicitly approve sending without code verification",
+      "futureOnly": "Changes apply to new sends only.",
+      "save": "Save template",
+      "saving": "Saving…",
+      "pdfError": "Choose a PDF up to 20 MB",
+      "uploadError": "Upload failed. Try again.",
+      "leave": "Leave without saving template changes?",
+      "next": "Continue",
+      "previous": "Back",
+      "setup": "Name and signers",
+      "review": "Review and save",
+      "extra": "Additional settings",
+      "completionEmail": "Email for completed documents",
+      "completionMode": "Office completion notification",
+      "completionDocument": "For each completed document",
+      "completionPackage": "When the package is complete",
+      "fields": "Fields: {{count}}",
+      "missingFields": "Assign at least one field to each signer before saving.",
+      "types": {
+        "signature": "Signature",
+        "initials": "Initials",
+        "text": "Text",
+        "date": "Date",
+        "number": "Number",
+        "checkbox": "Checkbox"
       }
     }
+  },
+  "calendar": {
+    "dateSegmentDay": "Day",
+    "dateSegmentMonth": "Month",
+    "dateSegmentYear": "Year",
+    "dateSegmentHour": "Hour",
+    "dateSegmentMinute": "Minute",
+    "openDatePicker": "Open calendar"
   }
 }

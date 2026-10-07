@@ -22,9 +22,10 @@ export default function SigningPackagesHub({ onClose, canCreate, api = signingPa
         const next = new URLSearchParams(searchParams);
         if (value) next.set('panel', value);
         else next.delete('panel');
+        if (value !== 'compose') next.delete('template');
         setSearchParams(next);
     };
     useEffect(() => { window.scrollTo?.(0, 0); }, [composing]);
-    if (composing) return <PackageComposer api={api} onBack={() => setPanel('runs')} onCreated={() => setPanel('runs')} />;
+    if (composing) return <PackageComposer initialTemplateId={searchParams.get('template')} api={api} onBack={() => setPanel('runs')} onCreated={() => setPanel('runs')} />;
     return <SigningPackagesWorkspace api={api} onClose={onClose} onCreate={canCreate ? () => setPanel('compose') : undefined} />;
 }

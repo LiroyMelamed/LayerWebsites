@@ -88,6 +88,7 @@ test.each(['he', 'ar', 'en'])('explicit conversion, field errors linked to their
     await screen.findByRole('heading', { name: i18n.t('signingV2.compose.review.heading') });
     expect(screen.queryByRole('radio', { name: i18n.t('signingV2.compose.locale.template') })).not.toBeInTheDocument();
     expect(api.previewCreation).toHaveBeenLastCalledWith({ templateVersionId: 'v-1', name: 'Employment pack', omittedRoles: [],
+        signingOrder: { mode: 'parallel' },
         shared: { lawyer: { name: 'Synthetic lawyer', email: 'lawyer@example.invalid', phone: '', locale: language } },
         rows: [{ recipients: { first: { name: 'Synthetic employee', email: '', phone: '050-123-4567', channel: 'sms', locale: language } } }] });
 
@@ -120,6 +121,7 @@ test('a signer can be left out of this send and put back without changing the te
     fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.check') }));
     await screen.findByText(i18n.t('signingV2.compose.signers.review', { names: 'Lawyer' }));
     expect(api.previewCreation).toHaveBeenLastCalledWith({ templateVersionId: 'v-1', name: 'Employment pack', omittedRoles: ['lawyer'],
+        signingOrder: { mode: 'parallel' },
         shared: {},
         rows: [{ recipients: { first: { name: 'Synthetic employee', email: 'employee@example.invalid', phone: '', locale: 'he' } } }] });
 });
@@ -163,6 +165,29 @@ test('a change made elsewhere after the preview sends the user back to check aga
     expect(api.create).toHaveBeenCalledTimes(1);
 });
 
+test('sequential signing uses the same choice as a regular document and keeps the dragged order', async () => {
+    const i18n = await translations('he'), api = fakeApi();
+    await toRecipients(i18n, api);
+    expect(screen.getByRole('radio', { name: i18n.t('signing.upload.signingOrderParallel') })).toBeChecked();
+    fireEvent.click(screen.getByRole('radio', { name: i18n.t('signing.upload.signingOrderSequential') }));
+    expect(screen.getByText(i18n.t('signing.upload.sequentialOrderTitle'))).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.order.up', { name: 'Lawyer' }) }));
+    const row = screen.getByRole('group', { name: i18n.t('signingV2.compose.rows.row', { number: '1' }) });
+    fireEvent.change(field(row, i18n.t('signingV2.compose.fields.name')), { target: { value: 'Synthetic employee' } });
+    fireEvent.change(field(row, i18n.t('signingV2.compose.fields.phone')), { target: { value: '0501234567' } });
+    fireEvent.click(within(row).getByRole('radio', { name: i18n.t('signingV2.compose.channel.sms') }));
+    const shared = screen.getByRole('group', { name: 'Lawyer' });
+    fireEvent.change(field(shared, i18n.t('signingV2.compose.fields.name')), { target: { value: 'Synthetic lawyer' } });
+    fireEvent.change(field(shared, i18n.t('signingV2.compose.fields.email')), { target: { value: 'lawyer@example.invalid' } });
+    api.previewCreation.mockResolvedValueOnce(validPreview(1));
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.check') }));
+    await screen.findByRole('heading', { name: i18n.t('signingV2.compose.review.heading') });
+    expect(api.previewCreation).toHaveBeenLastCalledWith(expect.objectContaining({
+        signingOrder: { mode: 'sequential', roles: ['lawyer', 'first'] },
+    }));
+    expect(screen.getByText(i18n.t('signing.upload.signingOrderSequential'))).toBeInTheDocument();
+});
+
 test('requires a run name and at least one recipient before asking the server', async () => {
     const i18n = await translations('en'), api = fakeApi();
     await toRecipients(i18n, api);
@@ -177,4 +202,25 @@ test('requires a run name and at least one recipient before asking the server', 
     expect(field(screen.getByRole('group', { name: 'Row 2' }), 'Full name')).toHaveFocus();
     fireEvent.click(screen.getByRole('button', { name: 'Remove row 2' }));
     expect(screen.queryByRole('group', { name: 'Row 2' })).not.toBeInTheDocument();
+});
+
+test('sending from an existing template preselects its latest published import', async () => {
+    const i18n = await translations('en'), api = fakeApi();
+    api.templates.mockResolvedValue({ legacy: [], templates: [
+        { ...converted, versionId: 'older', name: 'Older version', origin: { templateId: 'legacy-1', version: 1 } },
+        { ...converted, versionId: 'newer', name: 'Latest version', origin: { templateId: 'legacy-1', version: 2 } },
+    ] });
+    render(<I18nextProvider i18n={i18n}><PackageComposer api={api} initialTemplateId="legacy-1" onBack={jest.fn()} /></I18nextProvider>);
+    await screen.findByRole('button', { name: /Latest version/, pressed: true });
+    expect(api.importLegacy).not.toHaveBeenCalled();
+});
+
+test('a newer unimported version keeps conversion explicit and never sends the older revision', async () => {
+    const i18n = await translations('he'), api = fakeApi();
+    api.templates.mockResolvedValue({ legacy: [{ id: 'legacy-1', name: 'Needs conversion', version: 2, documentCount: 1, roles: [] }],
+        templates: [{ ...converted, origin: { templateId: 'legacy-1', version: 1 } }] });
+    render(<I18nextProvider i18n={i18n}><PackageComposer api={api} initialTemplateId="legacy-1" onBack={jest.fn()} /></I18nextProvider>);
+    await screen.findByRole('button', { name: /Needs conversion/ });
+    expect(screen.queryByRole('button', { pressed: true })).toBeNull();
+    expect(api.importLegacy).not.toHaveBeenCalled();
 });

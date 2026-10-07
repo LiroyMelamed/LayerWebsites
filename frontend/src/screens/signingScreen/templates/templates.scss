@@ -67,3 +67,20 @@
   .lw-templates__actions { width: 100%; }
   .lw-templates__reviewList { display: flex; overflow-x: auto; gap: .6rem; li { flex: 0 0 14rem; } }
 }
+
+.lw-templates__steps {
+  display: flex; gap: .5rem; margin-block: 1.5rem 2rem; border-block-end: 1px solid #d9e0e9; padding-block-end: 1rem;
+  button { display: flex; align-items: center; gap: .5rem; flex: 1; border: 0 !important; background: transparent !important; font-weight: 400 !important; }
+  button[aria-current="step"] { color: var(--template-accent); background: #edf2f7 !important; font-weight: 600 !important; }
+  span { font-variant-numeric: tabular-nums; }
+}
+.lw-templates__roleActions { display: flex; flex-wrap: wrap; gap: .5rem; grid-column: auto; }
+.lw-templates__hint { color: #4a5568; margin-block: 1rem !important; }
+.lw-templates__review { li { padding-block: .5rem; } details { margin-block-start: 1.5rem; } }
+.lw-templates summary, .lw-signingCompose__optionalRoles summary { cursor: pointer; min-block-size: 2.75rem; display: list-item; align-content: center; font-weight: 500; }
+.lw-templates__footer [hidden] { display: none; }
+@media (max-width: 48rem) {
+  .lw-templates__steps { gap: .25rem; button { padding: .5rem !important; flex-direction: column; align-items: start; font-size: .8125rem; } }
+}
+
+@media (max-width: 48rem) { .lw-templates__roleActions { grid-column: 2; } }

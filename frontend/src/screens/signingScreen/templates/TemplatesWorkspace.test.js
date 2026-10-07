@@ -46,3 +46,14 @@ test('a double click on send invites recipients once', async () => {
     await act(async () => pending.resolve({ ...view, recipients: [{ ...view.recipients[0], status: 'sent' }] }));
     expect(screen.queryByRole('button', { name: 'שליחת ההזמנות לנמענים' })).toBeNull();
 });
+
+test('sending from a template hands off to the enabled package workflow instead of creating a legacy batch', async () => {
+    const template = { id: 'template-1', name: 'Family agreement', version: 2, document_count: 3 };
+    api.list.mockResolvedValue({ templates: [template] }); api.batches.mockResolvedValue({ batches: [] });
+    const onSendTemplate = jest.fn();
+    render(<TemplatesWorkspace canUpload canManage onClose={() => {}} onSendTemplate={onSendTemplate} />);
+    const send = await screen.findByRole('button', { name: 'שליחה מהתבנית' });
+    act(() => send.click());
+    await waitFor(() => expect(onSendTemplate).toHaveBeenCalledWith(template));
+    expect(api.create).not.toHaveBeenCalled();
+});

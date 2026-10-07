@@ -159,6 +159,30 @@ function validateDefinition(input) {
     return freeze(definition);
 }
 
+function signingStages(definition, input, omitted) {
+    const order = input.signingOrder;
+    if (order == null) return null;
+    expect(order.mode === 'parallel' || order.mode === 'sequential', 'INVALID_WORKFLOW', 'signingOrder');
+    const active = definition.roles.filter(role => !omitted.has(role.key)).map(role => role.key);
+    if (order.mode === 'parallel') {
+        return {
+            byRole: new Map(definition.roles.map(role => [role.key, 0])),
+            stages: [{ key: 'together', label: definition.name, after: null }],
+        };
+    }
+    const roles = order.roles;
+    expect(Array.isArray(roles) && roles.length === active.length && new Set(roles).size === active.length
+        && roles.every(key => active.includes(key)), 'INVALID_WORKFLOW', 'signingOrder.roles');
+    return {
+        byRole: new Map(roles.map((key, index) => [key, index])),
+        stages: roles.map((key, index) => ({
+            key: `order${index + 1}`,
+            label: definition.roles.find(role => role.key === key).label,
+            after: index ? `order${index}` : null,
+        })),
+    };
+}
+
 function compilePackage(definition, input, directory, now = new Date()) {
     const data = {};
     const provenance = {};
@@ -176,6 +200,7 @@ function compilePackage(definition, input, directory, now = new Date()) {
     const knownRoles = new Set(definition.roles.map(role => role.key));
     const omitted = new Set(Array.isArray(input.omitRoles) ? input.omitRoles : []);
     expect(input.omitRoles === undefined || (Array.isArray(input.omitRoles) && omitted.size === input.omitRoles.length && [...omitted].every(key => knownRoles.has(key)) && omitted.size < knownRoles.size), 'INVALID_ROLE_BINDING');
+    const chosenOrder = signingStages(definition, input, omitted);
     expect(Object.keys(input.roles || {}).every(key => knownRoles.has(key) && !omitted.has(key)), 'INVALID_ROLE_BINDING');
     for (const role of definition.roles) {
         const assignments = input.roles?.[role.key] || [];
@@ -199,7 +224,7 @@ function compilePackage(definition, input, directory, now = new Date()) {
                 expect(authority.scope?.roleKeys?.includes(role.key) || authority.scope?.allSigning === true, 'AUTHORITY_SCOPE_MISMATCH', role.key);
             }
             const participant = {
-                roleKey: role.key, occurrence, capacity: role.capacity, stage: role.stage,
+                roleKey: role.key, occurrence, capacity: role.capacity, stage: chosenOrder ? chosenOrder.byRole.get(role.key) : role.stage,
                 personId: person.id, partyId: party.id,
                 authorityId: authority?.id || null, authorityVersion: authority?.version || null,
                 identity: { name: person.name, personId: person.id, identityKey: person.identity_key || null, partyName: party.name, partyKind: party.kind },
@@ -279,7 +304,7 @@ function compilePackage(definition, input, directory, now = new Date()) {
     const deadline = input.deadline || null;
     if (deadline) expect(typeof deadline === 'string' && /Z$/.test(deadline) && new Date(deadline) > now, 'INVALID_DEADLINE');
     const snapshot = { schemaVersion: 2, definitionHash: digest(definition), locale: definition.locale, data, provenance,
-        participants, documents, exclusions, tasks, stages: definition.stages, signingRules: definition.signingRules,
+        participants, documents, exclusions, tasks, stages: chosenOrder ? chosenOrder.stages : definition.stages, signingRules: definition.signingRules,
         policy: definition.policy, delivery, deadline };
     expect(Buffer.byteLength(canonical(snapshot)) <= limits.snapshotBytes, 'CAPACITY_BUDGET_EXCEEDED');
     return freeze({ snapshot, hash: digest(snapshot), hashVersion: HASH_VERSION });

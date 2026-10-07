@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { createInstance } from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import signingPublicApi from '../../../api/signingPublicApi';
@@ -13,6 +14,8 @@ jest.mock('../../../api/signingPublicApi', () => {
 });
 jest.mock('../../../components/specializedComponents/signFiles/SignatureCanvas', () => (props) => (
     <div data-testid="signing-canvas">
+        {props.multiDocumentAction && <button onClick={props.multiDocumentAction.onPress}>{props.multiDocumentAction.label}</button>}
+        {props.documentGroup && <div data-testid="group">{props.documentGroup.documents.map(doc => doc.id).join(',')}</div>}
         {props.nextDocument && <button type="button" onClick={props.nextDocument.onPress}>{props.nextDocument.label}</button>}
         <button type="button" onClick={props.onClose}>close</button>
     </div>
@@ -43,11 +46,32 @@ test('a package link signs only the document whose turn has arrived', async () =
     signingPublicApi.describe.mockResolvedValue({ person: { name: 'לירוי' }, locale: 'he', consentVersion: 'consent-v',
         packages: [documentFor(1, 'ready'), documentFor(2, 'ready')] });
     window.history.replaceState({}, '', `/ViewSignedDocument/Sign#${TOKEN}`);
-    render(<I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider>);
+    render(<MemoryRouter><I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider></MemoryRouter>);
     expect(await screen.findByTestId('signing-canvas')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: i18n.t('signing.canvas.nextDocument') }));
     await waitFor(() => expect(signingPublicApi.describe).toHaveBeenCalledTimes(2));
     expect(screen.getByTestId('signing-canvas')).toBeTruthy();
+});
+
+function LocationProbe() {
+    const location = useLocation();
+    return <div data-testid="location">{location.pathname}</div>;
+}
+
+test.each([
+    ['Admin', '/AdminStack/MainScreen'],
+    ['User', '/ClientStack/ClientMainScreen'],
+])('closing leaves the package for the %s home even when another document is waiting', async (role, home) => {
+    const i18n = await translations();
+    localStorage.setItem('token', 'synthetic-session');
+    localStorage.setItem('role', role);
+    signingPublicApi.describe.mockResolvedValue({ person: { name: 'לירוי' }, locale: 'he', consentVersion: 'consent-v',
+        packages: [documentFor(1, 'ready'), documentFor(2, 'ready')] });
+    window.history.replaceState({}, '', `/ViewSignedDocument/Sign#${'D'.repeat(43)}`);
+    render(<MemoryRouter><I18nextProvider i18n={i18n}><PublicPackageSigning /><LocationProbe /></I18nextProvider></MemoryRouter>);
+    fireEvent.click(await screen.findByRole('button', { name: 'close' }));
+    expect(await screen.findByTestId('location')).toHaveTextContent(home);
+    expect(signingPublicApi.describe).toHaveBeenCalledTimes(1);
 });
 
 test('a document that is still waiting for someone else is not offered', async () => {
@@ -55,7 +79,7 @@ test('a document that is still waiting for someone else is not offered', async (
     signingPublicApi.describe.mockResolvedValue({ person: { name: 'לירוי' }, locale: 'he', consentVersion: 'consent-v',
         packages: [documentFor(1, 'waiting')] });
     window.history.replaceState({}, '', `/ViewSignedDocument/Sign#${'B'.repeat(43)}`);
-    render(<I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider>);
+    render(<MemoryRouter><I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider></MemoryRouter>);
     expect(await screen.findByTestId('signing-canvas')).toBeTruthy();
     expect(screen.queryByRole('button', { name: i18n.t('signing.canvas.nextDocument') })).toBeNull();
 });
@@ -65,7 +89,7 @@ test('an already signed document stays on the regular completion screen', async 
     signingPublicApi.describe.mockResolvedValue({ person: { name: 'לירוי' }, locale: 'he', consentVersion: 'consent-v',
         packages: [documentFor(1, 'accepted')] });
     window.history.replaceState({}, '', `/ViewSignedDocument/Sign#${'C'.repeat(43)}`);
-    render(<I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider>);
+    render(<MemoryRouter><I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider></MemoryRouter>);
     expect(await screen.findByTestId('signing-canvas')).toBeTruthy();
     expect(screen.queryByText(i18n.t('signing.public.closedTitle'))).toBeNull();
 });
@@ -74,7 +98,34 @@ test('a link without its token never calls the server', async () => {
     const i18n = await translations();
     window.history.replaceState({}, '', '/ViewSignedDocument/Sign');
     window.sessionStorage.removeItem('lw-signing-v2-grant');
-    render(<I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider>);
+    render(<MemoryRouter><I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider></MemoryRouter>);
     expect(await screen.findByText(i18n.t('signing.invalidLinkTitle'))).toBeTruthy();
     expect(signingPublicApi.describe).not.toHaveBeenCalled();
+});
+
+
+test.each([
+    ['one PDF with many pages and spots', [{ ...documentFor(1, 'ready'), documents: [{ ...documentFor(1, 'ready').documents[0], pages: [1, 2, 3, 4] }] }]],
+    ['two roles on the same PDF', [{ documents: [{ documentId: 'same', name: 'Same PDF', tasks: [{ taskId: 'a', state: 'ready' }, { taskId: 'b', state: 'ready' }] }] }]],
+    ['a second PDF whose signing turn has not arrived', [documentFor(1, 'ready'), documentFor(2, 'waiting')]],
+    ['a second PDF already signed', [documentFor(1, 'ready'), documentFor(2, 'accepted')]],
+])('sign-all-documents is absent for %s', async (_name, packages) => {
+    const i18n = await translations();
+    signingPublicApi.describe.mockResolvedValue({ consentVersion: 'v', packages });
+    window.history.replaceState({}, '', `/ViewSignedDocument/Sign#${TOKEN}`);
+    render(<MemoryRouter><I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider></MemoryRouter>);
+    await screen.findByTestId('signing-canvas');
+    expect(screen.queryByRole('button', { name: i18n.t('signingV2.public.group.signAll') })).toBeNull();
+});
+
+test('only multiple distinct ready PDFs offer grouping, still through the regular SignatureCanvas', async () => {
+    const i18n = await translations();
+    signingPublicApi.describe.mockResolvedValue({ consentVersion: 'v',
+        packages: [documentFor(1, 'ready'), documentFor(2, 'ready'), documentFor(3, 'waiting')] });
+    window.history.replaceState({}, '', `/ViewSignedDocument/Sign#${TOKEN}`);
+    render(<MemoryRouter><I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider></MemoryRouter>);
+    fireEvent.click(await screen.findByRole('button', { name: i18n.t('signingV2.public.group.signAll') }));
+    expect(await screen.findByTestId('group')).toHaveTextContent('d-1,d-2');
+    expect(screen.queryByRole('button', { name: i18n.t('signing.canvas.nextDocument') })).toBeNull();
+    expect(screen.getByTestId('signing-canvas')).toBeTruthy();
 });

@@ -58,17 +58,20 @@ function SuggestField({ id, label, value, error, errorText, dir, type, inputMode
     const [results, setResults] = useState([]);
     const [busy, setBusy] = useState(false);
     const timer = useRef(null);
-    useEffect(() => () => clearTimeout(timer.current), []);
+    const searchGeneration = useRef(0);
+    useEffect(() => () => { searchGeneration.current += 1; clearTimeout(timer.current); }, []);
     const search = next => {
         onValue(next);
+        const generation = ++searchGeneration.current;
+        setResults([]);
         clearTimeout(timer.current);
         const query = String(next || '').trim();
         timer.current = setTimeout(async () => {
             setBusy(true);
             try {
                 const data = await signingTemplatesApi.contacts(query, suggestLawyers ? 'lawyer' : 'client');
-                setResults(Array.isArray(data?.contacts) ? data.contacts : []);
-            } catch { setResults([]); } finally { setBusy(false); }
+                if (generation === searchGeneration.current) setResults(Array.isArray(data?.contacts) ? data.contacts : []);
+            } catch { if (generation === searchGeneration.current) setResults([]); } finally { if (generation === searchGeneration.current) setBusy(false); }
         }, 150);
     };
     return <div className="lw-signingCompose__field">
@@ -78,7 +81,7 @@ function SuggestField({ id, label, value, error, errorText, dir, type, inputMode
             acceptExternalValueWhileFocused isPerforming={busy} queryResult={results}
             getButtonTextFunction={item => [item.name, item.phone || item.email].filter(Boolean).join(' | ')}
             getSelectValueFunction={item => String(item[type === 'email' ? 'email' : type === 'tel' ? 'phone' : 'name'] || '')}
-            buttonPressFunction={(_text, item) => { onPick(item); setResults([]); }} onSearch={search} />
+            buttonPressFunction={(_text, item) => { searchGeneration.current += 1; clearTimeout(timer.current); onPick(item); setResults([]); setBusy(false); }} onSearch={search} />
         {errorText && <small id={`${id}-error`} className="lw-signingCompose__srError">{errorText}</small>}
     </div>;
 }
@@ -145,17 +148,27 @@ function Stepper({ step }) {
     </ol>;
 }
 
-function TemplateStep({ api, selected, onSelect }) {
+function TemplateStep({ api, selected, onSelect, initialTemplateId }) {
     const { t, number, language, errorMessage } = useSigningLocale();
     const [catalog, setCatalog] = useState(null);
     const [error, setError] = useState(null);
     const [converting, setConverting] = useState(null);
     const [filter, setFilter] = useState('');
+    const seeded = useRef(false);
     const load = useCallback(async () => {
         setError(null);
         try { setCatalog(await api.templates()); } catch (failure) { setError(failure); }
     }, [api]);
     useEffect(() => { load(); }, [load]);
+    useEffect(() => {
+        if (!catalog || !initialTemplateId || seeded.current) return;
+        seeded.current = true;
+        const unpublished = catalog.legacy.find(item => item.id === initialTemplateId);
+        if (unpublished) { setFilter(unpublished.name); return; }
+        const published = catalog.templates.filter(item => item.origin?.templateId === initialTemplateId)
+            .sort((a, b) => (b.origin.version || 0) - (a.origin.version || 0))[0];
+        if (published) onSelect(published);
+    }, [catalog, initialTemplateId, onSelect]);
     const convert = async legacy => {
         setConverting(legacy.id); setError(null);
         try {
@@ -221,7 +234,46 @@ function indexErrors(errors, sentIds) {
     return { byRow, shared };
 }
 
-export default function PackageComposer({ api = signingPackagesApi, onBack, onCreated }) {
+function SigningOrderFields({ mode, roles, onMode, onMove }) {
+    const { t } = useSigningLocale();
+    const drag = useRef(null);
+    return <fieldset className="lw-signingCompose__order">
+        <legend>{t('signing.upload.signingOrderLabel')}</legend>
+        <label className="lw-signingCompose__radio">
+            <input type="radio" name="signingOrder" checked={mode === 'parallel'} onChange={() => onMode('parallel')} />
+            {t('signing.upload.signingOrderParallel')}
+        </label>
+        <label className="lw-signingCompose__radio">
+            <input type="radio" name="signingOrder" checked={mode === 'sequential'} onChange={() => onMode('sequential')} />
+            {t('signing.upload.signingOrderSequential')}
+        </label>
+        {mode === 'sequential' && roles.length >= 2 && <div className="lw-signingCompose__orderList">
+            <p>{t('signing.upload.sequentialOrderTitle')}</p>
+            <ol>
+                {roles.map((role, index) => <li key={role.key} draggable
+                    onDragStart={() => { drag.current = index; }}
+                    onDragOver={event => event.preventDefault()}
+                    onDrop={() => { if (drag.current != null && drag.current !== index) onMove(drag.current, index); drag.current = null; }}>
+                    <span className="lw-signingCompose__orderHandle" aria-hidden="true">☰</span>
+                    <span className="lw-signingCompose__orderNum">{index + 1}</span>
+                    <span className="lw-signingCompose__orderName">{role.label}</span>
+                    <button type="button" disabled={index === 0} aria-label={t('signingV2.compose.order.up', { name: role.label })} onClick={() => onMove(index, index - 1)}>↑</button>
+                    <button type="button" disabled={index === roles.length - 1} aria-label={t('signingV2.compose.order.down', { name: role.label })} onClick={() => onMove(index, index + 1)}>↓</button>
+                </li>)}
+            </ol>
+        </div>}
+    </fieldset>;
+}
+
+function templateOrder(roles) {
+    const ordered = [...roles].sort((a, b) => (a.stage ?? 0) - (b.stage ?? 0));
+    return {
+        mode: new Set(ordered.map(role => role.stage ?? 0)).size > 1 ? 'sequential' : 'parallel',
+        roles: ordered.map(role => role.key),
+    };
+}
+
+export default function PackageComposer({ api = signingPackagesApi, onBack, onCreated, initialTemplateId }) {
     const { t, direction, number, language, errorMessage } = useSigningLocale();
     const heading = useRef(null);
     const errorSummary = useRef(null);
@@ -231,6 +283,8 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     const [shared, setShared] = useState({});
     const [rows, setRows] = useState([]);
     const [omitted, setOmitted] = useState(() => new Set());
+    const [orderMode, setOrderMode] = useState('parallel');
+    const [orderRoles, setOrderRoles] = useState([]);
     const [source, setSource] = useState('manual');
     const [importNote, setImportNote] = useState(null);
     const [check, setCheck] = useState(null);
@@ -260,10 +314,13 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
     const chooseTemplate = selected => {
         if (selected.versionId === template?.versionId) return;
         const roles = selected.roles.filter(role => role.audience !== 'shared');
+        const order = templateOrder(selected.roles);
         setTemplate(selected);
         setShared(Object.fromEntries(selected.roles.filter(role => role.audience === 'shared').map(role => [role.key, blankPerson()])));
         setRows([blankRow(roles)]);
         setOmitted(new Set());
+        setOrderMode(order.mode);
+        setOrderRoles(order.roles);
         setName(current => current || selected.name);
         setImportNote(null); invalidate();
     };
@@ -316,6 +373,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             next.add(key);
             return next;
         });
+        setOrderRoles(current => current.filter(item => item !== key));
         invalidate();
     };
     const restoreSigner = key => {
@@ -325,8 +383,21 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             next.delete(key);
             return next;
         });
+        setOrderRoles(current => current.includes(key) ? current : [...current, key]);
         invalidate();
     };
+    const moveRole = (from, to) => {
+        setOrderRoles(current => {
+            const visible = current.filter(key => !omitted.has(key));
+            if (to < 0 || to >= visible.length || from === to) return current;
+            const next = [...visible];
+            const [item] = next.splice(from, 1);
+            next.splice(to, 0, item);
+            return next;
+        });
+        invalidate();
+    };
+    const orderedRoles = orderRoles.map(key => template?.roles.find(role => role.key === key)).filter(role => role && !omitted.has(role.key));
     const payload = () => {
         const keptEach = new Set(activeEach.map(role => role.key));
         const sent = keptEach.size ? rows.filter(row => row.key.trim() || [...keptEach].some(key => filled(row.recipients[key]))) : rows.slice(0, 1);
@@ -336,6 +407,9 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             body: {
                 templateVersionId: template.versionId, name: name.trim(),
                 omittedRoles: [...omitted].sort(),
+                signingOrder: orderMode === 'sequential'
+                    ? { mode: 'sequential', roles: orderRoles.filter(key => !omitted.has(key)) }
+                    : { mode: 'parallel' },
                 shared: Object.fromEntries(activeShare.map(role => [role.key, clean(shared[role.key] || blankPerson(), language)])),
                 rows: sent.map(row => ({ ...(row.key.trim() ? { key: row.key.trim() } : {}), recipients: people(row.recipients) })),
             },
@@ -409,7 +483,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         {error && <StatusNotice><p>{t(`signingV2.compose.errors.${error.code}`, { defaultValue: errorMessage(error) })}</p></StatusNotice>}
 
         {step === 'template' && <SimpleCard className="lw-signingCompose__card">
-            <TemplateStep api={api} selected={template} onSelect={chooseTemplate} />
+            <TemplateStep api={api} initialTemplateId={initialTemplateId} selected={template} onSelect={chooseTemplate} />
             <footer className="lw-signingCompose__footer">
                 <PrimaryButton onPress={() => setStep('recipients')} disabled={!template}>{t('signingV2.compose.next')}</PrimaryButton>
             </footer>
@@ -422,7 +496,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                     <input value={name} maxLength={300} onChange={event => { setName(event.target.value); invalidate(); }} />
                 </Field>
                 <p className="lw-signingPackages__caption">{t('signingV2.compose.templateSummary', { name: template.name })}</p>
-                <h3>{t('signingV2.compose.signers.heading')}</h3>
+                <details className="lw-signingCompose__optionalRoles"><summary>{t('signingV2.compose.signers.heading')}</summary>
                 <p className="lw-signingCompose__hintLine">{t('signingV2.compose.signers.help')}</p>
                 <ul className="lw-signingCompose__signers">
                     {template.roles.filter(role => !omitted.has(role.key)).map(role => <li key={role.key}>
@@ -443,6 +517,8 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                         </li>)}
                     </ul>
                 </div>}
+                </details>
+                <SigningOrderFields mode={orderMode} roles={orderedRoles} onMode={mode => { setOrderMode(mode); invalidate(); }} onMove={moveRole} />
             </SimpleCard>
             {activeShare.length > 0 && <SimpleCard className="lw-signingCompose__card">
                 <h2>{t('signingV2.compose.shared.heading')}</h2>
@@ -535,6 +611,9 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                         <bdi>{roleLabel(person.roleKey)}</bdi>: <bdi>{person.name}</bdi> ({person.channels.map(channel => t(`signingV2.compose.channel.${channel}`)).join(', ')})
                     </React.Fragment>)}
                 </li>)}</ul>
+                <h3>{t('signing.upload.signingOrderLabel')}</h3>
+                <p className="lw-signingCompose__note">{orderMode === 'sequential' ? t('signing.upload.signingOrderSequential') : t('signing.upload.signingOrderParallel')}</p>
+                {orderMode === 'sequential' && orderedRoles.length >= 2 && <ol className="lw-signingCompose__plainList">{orderedRoles.map((role, index) => <li key={role.key}>{index + 1}. {role.label}</li>)}</ol>}
                 <p className="lw-signingCompose__note">{t('signingV2.compose.review.otp')}</p>
                 <p className="lw-signingCompose__note">{t('signingV2.compose.review.effect')}</p>
             </SimpleCard>

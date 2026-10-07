@@ -66,7 +66,8 @@ async function tryRefreshToken() {
 
 function isPublicSigningApiRequest(config) {
     const url = String(config?.url || "");
-    return /(?:^|\/)(?:SigningFiles|signing-batches)\/public\//i.test(url);
+    return /(?:^|\/)(?:SigningFiles|signing-batches)\/public\//i.test(url)
+        || /(?:^|\/)signing-v2\/public(?:\/|$)/i.test(url);
 }
 
 function clearAuthAndRedirect() {
