@@ -2,8 +2,7 @@
 @use '../../styles/variables' as v;
 
 .lw-reminders__pageTitle {
-    margin-block-start: v.$space-4;
-    margin-inline: calc(#{v.$space-3} + #{v.$space-4});
+    margin: 0 0 v.$space-3;
 }
 
 .lw-reminders__filtersRow {
