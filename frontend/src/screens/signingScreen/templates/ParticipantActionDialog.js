@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import PrimaryButton from '../../../components/styledComponents/buttons/PrimaryButton';
 import SecondaryButton from '../../../components/styledComponents/buttons/SecondaryButton';
+import StatusNotice from '../../../components/ui/StatusNotice';
 import useSigningLocale from './useSigningLocale';
 
 export function newKey() {
@@ -85,7 +86,7 @@ export default function ParticipantActionDialog({ api, packageId, personId, purp
         onCancel={dismiss} onKeyDown={event => { if (event.key === 'Escape') dismiss(event); }}>
         <h2 id={titleId} ref={title} tabIndex={-1}>{t(`signingV2.action.${purpose}.title`)}</h2>
         {phase === 'loading' && <p role="status">{t('common.loading')}</p>}
-        {error && <div className="lw-signingPackages__error" role="alert"><span>{errorMessage(error)}</span></div>}
+        {error && <StatusNotice embedded><p>{errorMessage(error)}</p></StatusNotice>}
         {preview && phase !== 'sent' && <div className="lw-signingPackages__actionBody">
             <dl>
                 <div><dt>{t('signingV2.action.recipient')}</dt><dd><strong>{preview.recipient.name}</strong>

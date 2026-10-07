@@ -7,6 +7,7 @@ import SegmentedSwitch from '../../../components/styledComponents/SegmentedSwitc
 import SimpleCard from '../../../components/simpleComponents/SimpleCard';
 import useSigningLocale from './useSigningLocale';
 import { newKey } from './ParticipantActionDialog';
+import StatusNotice from '../../../components/ui/StatusNotice';
 import './signingPackages.scss';
 import './signingCompose.scss';
 
@@ -124,7 +125,7 @@ function TemplateStep({ api, selected, onSelect }) {
     const needle = filter.trim().toLocaleLowerCase();
     const legacy = (catalog?.legacy || []).filter(item => !needle || item.name.toLocaleLowerCase().includes(needle));
     return <div className="lw-signingCompose__templates">
-        {error && <div className="lw-signingPackages__error" role="alert"><span>{errorMessage(error)}</span><SecondaryButton onPress={load}>{t('common.retry')}</SecondaryButton></div>}
+        {error && <StatusNotice embedded onAction={load} actionLabel={t('common.retry')}><p>{errorMessage(error)}</p></StatusNotice>}
         {catalog && <>
             <h2>{t('signingV2.compose.template.heading')}</h2>
             {!catalog.templates.length && <p>{t('signingV2.compose.template.empty')}</p>}
@@ -336,7 +337,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             </div>
         </div>}
         <Stepper step={step} />
-        {error && <div className="lw-signingPackages__error" role="alert"><span>{t(`signingV2.compose.errors.${error.code}`, { defaultValue: errorMessage(error) })}</span></div>}
+        {error && <StatusNotice><p>{t(`signingV2.compose.errors.${error.code}`, { defaultValue: errorMessage(error) })}</p></StatusNotice>}
 
         {step === 'template' && <SimpleCard className="lw-signingCompose__card">
             <TemplateStep api={api} selected={template} onSelect={chooseTemplate} />
@@ -390,7 +391,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                         </>}
                     </div>}
                 </div>}
-                {errorCount > 0 && <div className="lw-signingCompose__errorSummary" role="alert" tabIndex={-1} ref={errorSummary} aria-labelledby="compose-errors-title">
+                {errorCount > 0 && <StatusNotice className="lw-signingCompose__errorSummary" tabIndex={-1} ref={errorSummary} aria-labelledby="compose-errors-title">
                     <h3 id="compose-errors-title">{t('signingV2.compose.errorsHeading', { count: errorCount, formattedCount: number(errorCount) })}</h3>
                     <ul>{errorEntries.slice(0, 30).map((item, index) => {
                         const info = describeError(item);
@@ -401,7 +402,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                         </li>;
                     })}</ul>
                     {errorCount > 30 && <p>{t('signingV2.compose.moreErrors', { count: errorCount - 30, formattedCount: number(errorCount - 30) })}</p>}
-                </div>}
+                </StatusNotice>}
                 <ol className="lw-signingCompose__rows">{rows.map((row, index) =>
                     <RecipientRow key={row.id} row={row} index={index} roles={eachRoles} errors={check?.indexed.byRow[row.id]} onChange={changeRow} onRemove={removeRow} canRemove={rows.length > 1} />)}
                 </ol>

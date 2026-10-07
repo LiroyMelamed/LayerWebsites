@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import api from '../../../api/signingTemplatesApi';
 import { downloadBlobAsFile } from '../../../utils/downloadBlobAsFile';
+import StatusNotice from '../../../components/ui/StatusNotice';
 import RecipientFields from './RecipientFields';
 
 export default function BatchComposer({ template, onBack, onCreated }) {
@@ -33,7 +34,7 @@ export default function BatchComposer({ template, onBack, onCreated }) {
     const editRow = (index, patch) => setRows(prev => prev.map((row, i) => index === i ? { ...row, ...patch } : row));
     return <section className="lw-templates" dir="rtl">
         <header className="lw-templates__heading"><div><h1>שליחה מתבנית</h1><p>{template.name} · גרסה {template.version} · {definition.documents.length} מסמכים בכל חבילה</p></div><button type="button" onClick={onBack} disabled={busy}>חזרה לתבניות</button></header>
-        {error && <div className="lw-templates__error" role="alert"><p>{error}</p></div>}
+        {error && <StatusNotice><p>{error}</p></StatusNotice>}
         <fieldset disabled={busy || locked} className="lw-templates__unboxed">
             <label>שם השליחה<input value={name} maxLength={120} onChange={e => setName(e.target.value)} /></label>
             {roles.some(r => r.shared) && <><h2>חותמים קבועים לכל החבילות</h2><p>כל אחד יקבל קישור אחד שמרכז את המסמכים שלו.</p>{roles.filter(r => r.shared).map(role => <RecipientFields key={role.id} role={role} value={shared[role.id]} onChange={value => setShared(prev => ({ ...prev, [role.id]: value }))} />)}</>}
@@ -41,7 +42,7 @@ export default function BatchComposer({ template, onBack, onCreated }) {
                 <button type="button" onClick={async () => { try { await downloadBlobAsFile(await api.workbook(template.id), 'recipients.xlsx'); } catch (e) { setError(e.message); } }}>הורדת קובץ Excel למילוי</button>
                 <label className="lw-templates__file">ייבוא מאקסל<input type="file" accept=".xlsx" onChange={e => { importFile(e.target.files?.[0]);e.target.value = ''; }} /></label>
             </div></div>
-            {!!importErrors.length && <div className="lw-templates__error" role="alert"><strong>הקובץ לא יובא. תקן את השורות הבאות:</strong><ul>{importErrors.map(item => <li key={item.row}>שורה {item.row}: {item.message}</li>)}</ul></div>}
+            {!!importErrors.length && <StatusNotice><strong>הקובץ לא יובא. תקן את השורות הבאות:</strong><ul>{importErrors.map(item => <li key={item.row}>שורה {item.row}: {item.message}</li>)}</ul></StatusNotice>}
             {importPreview && <div className="lw-templates__importPreview"><h3>נמצאו {importPreview.length} חבילות תקינות</h3><ul>{importPreview.map((row, i) => <li key={i}>{row.label} — {Object.values(row.signers).map(s => s.name).join(', ')}</li>)}</ul><button type="button" className="is-primary" onClick={() => { setRows(importPreview);setImportPreview(null); }}>החלפת הרשימה בנמענים מהקובץ</button><button type="button" onClick={() => setImportPreview(null)}>ביטול הייבוא</button></div>}
             {rows.map((row, index) => <section className="lw-templates__package" key={index}>
                 <div className="lw-templates__heading"><h3>חבילה {index + 1}</h3><button type="button" disabled={rows.length === 1} onClick={() => setRows(prev => prev.filter((_, i) => i !== index))}>הסרת החבילה</button></div>

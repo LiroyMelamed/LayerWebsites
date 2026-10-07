@@ -4,6 +4,7 @@ import PrimaryButton from "../buttons/PrimaryButton";
 import Separator from "../separators/Separator";
 import { useTranslation } from "react-i18next";
 
+import "../../ui/StatusNotice.scss";
 import "./ErrorPopup.scss";
 
 export default function ErrorPopup({
@@ -27,7 +28,9 @@ export default function ErrorPopup({
     const resolvedOk = okKey ? t(okKey, okValues) : t("common.ok");
 
     return (
-        <SimpleContainer className="lw-errorPopup">
+        <SimpleContainer className="lw-errorPopup lw-statusNotice is-embedded">
+            <span className="lw-statusNotice__mark" aria-hidden="true" />
+            <SimpleContainer className="lw-statusNotice__body">
             <TextBold16>{resolvedTitle}</TextBold16>
 
             <Separator className="lw-errorPopup__separator" />
@@ -38,6 +41,7 @@ export default function ErrorPopup({
 
             <SimpleContainer className="lw-errorPopup__actions">
                 <PrimaryButton onPress={() => closePopup()}>{resolvedOk}</PrimaryButton>
+            </SimpleContainer>
             </SimpleContainer>
         </SimpleContainer>
     );

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import StatusNotice from '../../../components/ui/StatusNotice';
 import api from '../../../api/signingTemplatesApi';
 
 export default function RecipientFields({ role, value = {}, onChange, disabled }) {
@@ -15,7 +16,7 @@ export default function RecipientFields({ role, value = {}, onChange, disabled }
         <legend>{role.name}</legend>
         {value.userId ? <div className="lw-templates__chosen"><strong>{value.name || `משתמש ${value.userId}`}</strong><span dir="ltr">{value.email || value.phone}</span><button type="button" onClick={() => { onChange({ deliveryMethod: 'email' });setSearch(''); }}>החלפת נמען</button></div> : <>
             <label>{role.kind === 'lawyer' ? 'בחירת עורך דין מהמשרד' : 'חיפוש משתמש קיים (אפשר גם להזין נמען חדש)'}<input value={search} onChange={e => setSearch(e.target.value)} placeholder="חיפוש לפי שם או אימייל" autoComplete="off" /></label>
-            {error && <p role="alert">{error}</p>}
+            {error && <StatusNotice embedded><p>{error}</p></StatusNotice>}
             {!!matches.length && <ul className="lw-templates__matches">{matches.map(person => <li key={person.userId}><button type="button" onClick={() => { onChange({ ...person, deliveryMethod: person.email ? 'email' : 'phone' });setMatches([]);setSearch(''); }}>{person.name} <small dir="ltr">{person.email || person.phone}</small></button></li>)}</ul>}
             {role.kind !== 'lawyer' && <div className="lw-templates__contactGrid">
                 <label>שם מלא<input value={value.name || ''} maxLength={120} onChange={e => change({ name: e.target.value })} /></label>

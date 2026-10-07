@@ -15,6 +15,7 @@ import { AdminStackName, MainScreenName } from "../../navigation/screenPaths";
 import { useScreenSize } from "../../providers/ScreenSizeProvider";
 import { images } from "../../assets/images/images";
 import { buttonSizes } from "../../styles/buttons/buttonSizes";
+import StatusNotice from "../../components/ui/StatusNotice";
 import { colors } from "../../constant/colors";
 
 import "./FirmStaffRolesScreen.scss";
@@ -278,8 +279,7 @@ export default function FirmStaffRolesScreen() {
                                     "הגדרת תפקידים והרשאות. שיוך למשתמשים מתבצע בכרטיס המנהל/עורך הדין.",
                                 )}
                             </p>
-                            {!loading && loadError && <p role="alert">{t("errors.unexpected")}</p>}
-                    {!loading && !loadError && (
+                            {!loading && !loadError && (
                                 <PrimaryButton
                                     size={buttonSizes.MEDIUM}
                                     className="lw-firmStaffRoles__headerCta"
@@ -294,7 +294,7 @@ export default function FirmStaffRolesScreen() {
                         </SimpleContainer>
                     </SimpleContainer>
 
-                    {loadError && <p role="alert">{t("errors.unexpected")}</p>}
+                    {loadError && <StatusNotice><p>{t("errors.unexpected")}</p></StatusNotice>}
                     {loading && <p className="lw-firmStaffRoles__loading">{t("common.loading", "טוען…")}</p>}
 
                     {!loading && !loadError && (
