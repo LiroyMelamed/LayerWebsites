@@ -424,6 +424,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         } catch (err) {
             console.error("Failed to load PDF", err);
             setPdfFile(null);
+            setPdfReady(true);
         }
     };
 
@@ -538,6 +539,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     // Public/signing link: auto-open the first required signature spot once the PDF is ready.
     useEffect(() => {
         if (!isScreen || !pdfReady || !fileDetails || autoOpenedFirstSpotRef.current) return;
+        if (fileDetails?.signingOrder === 'sequential' && fileDetails?.isMyTurn === false) return;
 
         const fileStatus = String(fileDetails?.file?.Status || fileDetails?.file?.status || "").toLowerCase();
         const locked = fileDetails?.readOnly === true
@@ -1999,37 +2001,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         );
     }
 
-    // Sequential signing: show waiting message if not this signer's turn
-    if (fileDetails?.signingOrder === 'sequential' && fileDetails?.isMyTurn === false) {
-        return (
-            <div className="lw-signing-scope">
-                <div className={isScreen ? "lw-signing-screen" : "lw-signing-modal"} onClick={isScreen ? undefined : onClose}>
-                    <div
-                        className={isScreen ? "lw-signing-modalContent lw-signing-screenContent" : "lw-signing-modalContent"}
-                        onClick={isScreen ? undefined : (e) => e.stopPropagation()}
-                    >
-                        <div className="lw-signing-modalHeader">
-                            <h3>{t("signing.canvas.waitingForPreviousSigners")}</h3>
-                            <TertiaryButton className="lw-signing-closeButton" size={buttonSizes.SMALL} onPress={onClose}>
-                                {t("common.close")}
-                            </TertiaryButton>
-                        </div>
-                        <div className="lw-signing-modalBody" style={{ padding: '2rem', textAlign: 'center' }}>
-                            <Text14>{t("signing.canvas.waitingForPreviousSignersDesc")}</Text14>
-                            {nextDocument && (
-                                <div className="lw-signing-completeActions">
-                                    <PrimaryButton onPress={nextDocument.onPress}>
-                                        {nextDocument.label || t("signing.canvas.nextDocument")}
-                                    </PrimaryButton>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
+    const waitingForOthers = fileDetails?.signingOrder === 'sequential' && fileDetails?.isMyTurn === false;
     const allSpots = fileDetails.signatureSpots || [];
     // LawyerStamp spots are pre-signed by the lawyer — hide them from the client view entirely.
     // Multi-signer: show everyone's signed spots (so later signers see prior signatures),
@@ -2159,6 +2131,28 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const remainingFieldsForComplete = remainingFieldSpots > 0
         ? remainingFieldSpots
         : optionalRemainingCount;
+    const renderWaitingOverlay = () => {
+        if (!waitingForOthers || showCompletion) return null;
+        return (
+            <div className="lw-signing-completeOverlay" role="dialog" aria-modal="true">
+                <div className="lw-signing-completeCard">
+                    <h2 className="lw-signing-completeTitle">{t("signing.canvas.waitingForPreviousSigners")}</h2>
+                    <p className="lw-signing-completeSubtitle">{t("signing.canvas.waitingForPreviousSignersDesc")}</p>
+                    {(nextDocument || onClose) && (
+                        <div className="lw-signing-completeActions">
+                            {nextDocument && (
+                                <PrimaryButton onPress={nextDocument.onPress}>
+                                    {nextDocument.label || t("signing.canvas.nextDocument")}
+                                </PrimaryButton>
+                            )}
+                            <SecondaryButton onPress={onClose}>{t("common.close")}</SecondaryButton>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
     const renderCompletionOverlay = () => {
         if (!showCompletion) return null;
         const hasMoreFields = remainingFieldsForComplete > 0;
@@ -2806,7 +2800,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                             </div>
 
                             <SimpleContainer className="lw-signing-pdfContainer" ref={pdfScrollRef}>
-                                {pdfFile && fileDetails.file?.FileKey ? (
+                                {pdfFile && (fileDetails.file?.FileKey || loadPublicPdf) ? (
                                     <PdfViewer
                                         pdfFile={pdfFile}
                                         spots={spots}
@@ -2861,6 +2855,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                     </div>
                 )}
 
+                {renderWaitingOverlay()}
                 {renderCompletionOverlay()}
             </div>
         );
@@ -2877,7 +2872,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
                     <SimpleContainer className="lw-signing-modalBody">
                         <SimpleContainer className="lw-signing-pdfContainer" ref={pdfScrollRef}>
-                            {pdfFile && fileDetails.file?.FileKey ? (
+                            {pdfFile && (fileDetails.file?.FileKey || loadPublicPdf) ? (
                                 <PdfViewer
                                     pdfFile={pdfFile}
                                     spots={spots}
@@ -3032,6 +3027,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 </div>
             )}
 
+            {renderWaitingOverlay()}
             {renderCompletionOverlay()}
         </div>
     );
