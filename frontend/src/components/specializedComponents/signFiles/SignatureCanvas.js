@@ -51,7 +51,7 @@ function uuidv4() {
     }
 }
 
-const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal" }) => {
+const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal", filesApi = signingFilesApi, loadPublicPdf = null, nextDocument = null }) => {
     const { t } = useTranslation();
     const canvasRef = useRef(null);
     const initializedCanvasRef = useRef(null);
@@ -397,6 +397,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
     const loadPdfFromFileKey = async (fileIdForPdf) => {
         try {
+            if (isPublic && loadPublicPdf) {
+                setPdfFile(await loadPublicPdf());
+                return;
+            }
             const baseUrl = ApiUtils?.defaults?.baseURL || "";
             const token = localStorage.getItem("token");
             const url = isPublic
@@ -431,8 +435,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         try {
             setSavedItemsLoading(true);
             const res = isPublic
-                ? await signingFilesApi.listPublicSavedItems(publicToken)
-                : await signingFilesApi.listSavedItems();
+                ? await filesApi.listPublicSavedItems(publicToken)
+                : await filesApi.listSavedItems();
             unwrapApi(res);
             const data = res?.data || {};
             setSavedSignatures(data.signatures || []);
@@ -462,8 +466,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const deleteSavedItem = async (type, index) => {
         try {
             const res = isPublic
-                ? await signingFilesApi.deletePublicSavedItem(publicToken, type, index)
-                : await signingFilesApi.deleteSavedItem(type, index);
+                ? await filesApi.deletePublicSavedItem(publicToken, type, index)
+                : await filesApi.deleteSavedItem(type, index);
             unwrapApi(res);
             showAppToast({ type: "success", text: t("signing.canvas.deleteSavedSuccess") });
             await refreshSavedItems();
@@ -489,8 +493,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 otpAutoSentRef.current = false;
 
                 const res = isPublic
-                    ? await signingFilesApi.getPublicSigningFileDetails(publicToken)
-                    : await signingFilesApi.getSigningFileDetails(signingFileId);
+                    ? await filesApi.getPublicSigningFileDetails(publicToken)
+                    : await filesApi.getSigningFileDetails(signingFileId);
                 unwrapApi(res);
                 const data = res?.data;
                 if (!isMounted) return;
@@ -979,8 +983,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const fetchSavedItemDataUrl = async (savedItem) => {
         if (!savedItem || savedItem.type == null || savedItem.index == null) return null;
         const res = isPublic
-            ? await signingFilesApi.getPublicSavedItemDataUrl(publicToken, savedItem.type, savedItem.index)
-            : await signingFilesApi.getSavedItemDataUrl(savedItem.type, savedItem.index);
+            ? await filesApi.getPublicSavedItemDataUrl(publicToken, savedItem.type, savedItem.index)
+            : await filesApi.getSavedItemDataUrl(savedItem.type, savedItem.index);
         unwrapApi(res);
         const rawDataUrl = res?.data?.dataUrl;
         if (!rawDataUrl) return null;
@@ -990,9 +994,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
     const saveSignatureAsDefault = async (dataUrl) => {
         if (!dataUrl) return;
         if (isPublic) {
-            await signingFilesApi.savePublicSavedSignature(publicToken, dataUrl);
+            await filesApi.savePublicSavedSignature(publicToken, dataUrl);
         } else {
-            await signingFilesApi.saveSavedSignature(dataUrl);
+            await filesApi.saveSavedSignature(dataUrl);
         }
         await refreshSavedItems();
     };
@@ -1001,9 +1005,9 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         if (!dataUrl) return;
         try {
             if (isPublic) {
-                await signingFilesApi.savePublicSavedStamp(publicToken, dataUrl);
+                await filesApi.savePublicSavedStamp(publicToken, dataUrl);
             } else {
-                await signingFilesApi.saveSavedStamp(dataUrl);
+                await filesApi.saveSavedStamp(dataUrl);
             }
             await refreshSavedItems();
         } catch (err) {
@@ -1033,7 +1037,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         const config = { headers: { "x-signing-session-id": signingSessionId } };
 
         if (isPublic) {
-            const res = await signingFilesApi.publicSignFile(
+            const res = await filesApi.publicSignFile(
                 publicToken,
                 {
                     signatureSpotId: spot.SignatureSpotId,
@@ -1046,7 +1050,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             );
             unwrapApi(res);
         } else {
-            const res = await signingFilesApi.signFile(
+            const res = await filesApi.signFile(
                 effectiveSigningFileId,
                 {
                     signatureSpotId: spot.SignatureSpotId,
@@ -1091,7 +1095,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         const config = { headers: { "x-signing-session-id": signingSessionId } };
 
         if (isPublic) {
-            const res = await signingFilesApi.publicSignFile(
+            const res = await filesApi.publicSignFile(
                 publicToken,
                 {
                     signatureSpotId: spot.SignatureSpotId,
@@ -1104,7 +1108,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             );
             unwrapApi(res);
         } else {
-            const res = await signingFilesApi.signFile(
+            const res = await filesApi.signFile(
                 effectiveSigningFileId,
                 {
                     signatureSpotId: spot.SignatureSpotId,
@@ -1240,8 +1244,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         }
 
         const res = isPublic
-            ? await signingFilesApi.getPublicSigningFileDetails(publicToken)
-            : await signingFilesApi.getSigningFileDetails(effectiveSigningFileId);
+            ? await filesApi.getPublicSigningFileDetails(publicToken)
+            : await filesApi.getSigningFileDetails(effectiveSigningFileId);
         unwrapApi(res);
         const data = res?.data;
         const mergedData = mergeFieldValuesFromCache(data);
@@ -1626,8 +1630,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 dataUrl = await fetchSavedItemDataUrl(savedItem);
             } else if (savedSignature?.exists) {
                 const sigRes = isPublic
-                    ? await signingFilesApi.getPublicSavedSignatureDataUrl(publicToken)
-                    : await signingFilesApi.getSavedSignatureDataUrl();
+                    ? await filesApi.getPublicSavedSignatureDataUrl(publicToken)
+                    : await filesApi.getSavedSignatureDataUrl();
                 unwrapApi(sigRes);
                 const rawDataUrl = sigRes?.data?.dataUrl;
                 dataUrl = await normalizeSignatureDataUrl(rawDataUrl);
@@ -1678,8 +1682,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 dataUrl = await fetchSavedItemDataUrl(savedItem);
             } else if (savedStamp?.exists) {
                 const stampRes = isPublic
-                    ? await signingFilesApi.getPublicSavedStampDataUrl(publicToken)
-                    : await signingFilesApi.getSavedStampDataUrl();
+                    ? await filesApi.getPublicSavedStampDataUrl(publicToken)
+                    : await filesApi.getSavedStampDataUrl();
                 unwrapApi(stampRes);
                 const rawDataUrl = stampRes?.data?.dataUrl;
                 dataUrl = await normalizeStampDataUrl(rawDataUrl);
@@ -1743,8 +1747,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                 }
             } else if (savedSignature?.exists) {
                 const sigRes = isPublic
-                    ? await signingFilesApi.getPublicSavedSignatureDataUrl(publicToken)
-                    : await signingFilesApi.getSavedSignatureDataUrl();
+                    ? await filesApi.getPublicSavedSignatureDataUrl(publicToken)
+                    : await filesApi.getSavedSignatureDataUrl();
                 unwrapApi(sigRes);
                 const rawDataUrl = sigRes?.data?.dataUrl;
                 dataUrl = await normalizeSignatureDataUrl(rawDataUrl);
@@ -1775,8 +1779,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                     consentVersion,
                 };
                 const res = isPublic
-                    ? await signingFilesApi.publicSignFileBatch(publicToken, body, config)
-                    : await signingFilesApi.signFileBatch(fileDetails.file.SigningFileId, body, config);
+                    ? await filesApi.publicSignFileBatch(publicToken, body, config)
+                    : await filesApi.signFileBatch(fileDetails.file.SigningFileId, body, config);
                 unwrapApi(res);
             }
 
@@ -1813,8 +1817,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
             otpRequestInFlightRef.current = true;
             setOtpBusy(true);
             const res = isPublic
-                ? await signingFilesApi.publicRequestSigningOtp(publicToken, signingSessionId)
-                : await signingFilesApi.requestSigningOtp(effectiveSigningFileId, signingSessionId);
+                ? await filesApi.publicRequestSigningOtp(publicToken, signingSessionId)
+                : await filesApi.requestSigningOtp(effectiveSigningFileId, signingSessionId);
             unwrapApi(res);
             const skipped = Boolean(res?.skipped || res?.data?.skipped);
             const reused = Boolean(res?.reused || res?.data?.reused);
@@ -1871,8 +1875,8 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
 
             setOtpBusy(true);
             const res = isPublic
-                ? await signingFilesApi.publicVerifySigningOtp(publicToken, otp, signingSessionId)
-                : await signingFilesApi.verifySigningOtp(effectiveSigningFileId, otp, signingSessionId);
+                ? await filesApi.publicVerifySigningOtp(publicToken, otp, signingSessionId)
+                : await filesApi.verifySigningOtp(effectiveSigningFileId, otp, signingSessionId);
             unwrapApi(res);
             const verifiedOk = res?.data?.verified === true || res?.verified === true;
             if (!verifiedOk) {
@@ -1926,10 +1930,10 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
         try {
             setSaving(true);
             if (isPublic) {
-                const res = await signingFilesApi.publicRejectSigning(publicToken, { rejectionReason: reason, signingSessionId });
+                const res = await filesApi.publicRejectSigning(publicToken, { rejectionReason: reason, signingSessionId });
                 unwrapApi(res);
             } else {
-                const res = await signingFilesApi.rejectSigning(effectiveSigningFileId, { rejectionReason: reason, signingSessionId });
+                const res = await filesApi.rejectSigning(effectiveSigningFileId, { rejectionReason: reason, signingSessionId });
                 unwrapApi(res);
             }
             showAppToast({ type: "success", text: t("signing.canvas.documentRejected") });
@@ -2012,6 +2016,13 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                         </div>
                         <div className="lw-signing-modalBody" style={{ padding: '2rem', textAlign: 'center' }}>
                             <Text14>{t("signing.canvas.waitingForPreviousSignersDesc")}</Text14>
+                            {nextDocument && (
+                                <div className="lw-signing-completeActions">
+                                    <PrimaryButton onPress={nextDocument.onPress}>
+                                        {nextDocument.label || t("signing.canvas.nextDocument")}
+                                    </PrimaryButton>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -2172,7 +2183,12 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                                 {t("signing.canvas.signingCompleteContinueFields")}
                             </PrimaryButton>
                         )}
-                        {hasMoreFields ? (
+                        {!hasMoreFields && nextDocument && (
+                            <PrimaryButton onPress={nextDocument.onPress}>
+                                {nextDocument.label || t("signing.canvas.nextDocument")}
+                            </PrimaryButton>
+                        )}
+                        {hasMoreFields || nextDocument ? (
                             <SecondaryButton onPress={onClose}>
                                 {t("signing.canvas.signingCompleteClose")}
                             </SecondaryButton>
