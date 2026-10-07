@@ -75,11 +75,14 @@ test('the link token leaves the address bar and is sent only as a header', async
 });
 
 test('Hebrew shared signer: one session and one code sign every selected package', async () => {
-    const t = await open('he', [pkg(1), pkg(2), pkg(3)]);
+    const sameTemplate = () => [1, 2, 3].map(index => { const item = pkg(index); item.documents[0].name = 'הסכם'; return item; });
+    const t = await open('he', sameTemplate());
     expect(screen.getByRole('main')).toHaveAttribute('dir', 'rtl');
     expect(screen.getByRole('main')).toHaveAttribute('lang', 'he');
     const all = screen.getByRole('checkbox', { name: t('signingV2.public.selectAll', { count: 3, formattedCount: '3' }) });
     expect(all).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'הסכם · E2' })).toBeChecked();
+    expect(screen.getByRole('button', { name: `${t('signingV2.public.view')}: הסכם · E3` })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: t('signingV2.public.sign.continue', { count: 3, formattedCount: '3' }) }));
     const problems = await screen.findByRole('alert', { name: t('signingV2.public.problems', { count: 2, formattedCount: '2' }) });
@@ -117,7 +120,7 @@ test('Hebrew shared signer: one session and one code sign every selected package
 
     signingPublicApi.verify.mockResolvedValueOnce({ verified: true });
     signingPublicApi.accept.mockResolvedValue({ tasks: [{ taskId: 't-1' }, { taskId: 't-2' }, { taskId: 't-3' }], packages: [] });
-    const finished = view('he', [pkg(1), pkg(2), pkg(3)]);
+    const finished = view('he', sameTemplate());
     finished.packages.forEach(item => { item.documents[0].tasks[0].state = 'accepted'; item.state = 'complete'; item.evidence = true; item.documents[0].final = true; });
     signingPublicApi.describe.mockResolvedValue({ ...finished, counts: { ready: 0, accepted: 3, waiting: 0 } });
     fireEvent.change(code, { target: { value: '654321' } });
@@ -128,8 +131,10 @@ test('Hebrew shared signer: one session and one code sign every selected package
     expect(body).toEqual({ consent: true, signature: 'UE5HU0lHTkFUVVJF', values: { 't-1': {}, 't-2': {}, 't-3': {} } });
     expect(key).toMatch(/^[0-9a-f-]{36}$/);
     expect(await screen.findByText(t('signingV2.public.done.ready'))).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: t('signingV2.public.downloadFinal') })).toHaveLength(3);
-    expect(screen.getAllByRole('button', { name: t('signingV2.public.downloadEvidence') })).toHaveLength(3);
+    for (const reference of ['E1', 'E2', 'E3']) {
+        expect(screen.getByRole('button', { name: `${t('signingV2.public.downloadFinal')}: הסכם · ${reference}` })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: `${t('signingV2.public.downloadEvidence')}: ${reference}` })).toBeInTheDocument();
+    }
 });
 
 test('English employee: required text and tick box are checked before a session opens', async () => {

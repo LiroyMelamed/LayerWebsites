@@ -155,17 +155,19 @@ export default function PublicPackageSigning() {
     function validate() {
         const found = [];
         if (!chosen.length) found.push({ target: 'sign-selection', text: t('signingV2.public.errors.NOTHING_SELECTED') });
-        for (const { task, document } of chosen) {
+        for (const { pkg, task, document } of chosen) {
             for (const field of task.fields.filter(item => INPUT_TYPES.has(item.type) && item.required)) {
                 const value = values[task.taskId]?.[field.id];
-                if (field.type === 'text' && !String(value || '').trim()) found.push({ target: inputId(task.taskId, field.id), text: `${document.name}: ${fieldLabel(field)}`, code: 'FIELD_REQUIRED' });
-                if (field.type === 'checkbox' && value !== true) found.push({ target: inputId(task.taskId, field.id), text: `${document.name}: ${fieldLabel(field)}`, code: 'CHECK_REQUIRED' });
+                if (field.type === 'text' && !String(value || '').trim()) found.push({ target: inputId(task.taskId, field.id), text: `${where(pkg, document)}: ${fieldLabel(field)}`, code: 'FIELD_REQUIRED' });
+                if (field.type === 'checkbox' && value !== true) found.push({ target: inputId(task.taskId, field.id), text: `${where(pkg, document)}: ${fieldLabel(field)}`, code: 'CHECK_REQUIRED' });
             }
         }
         if (needsSignature && !signatureReady) found.push({ target: 'sign-pad', text: t('signingV2.public.errors.SIGNATURE_REQUIRED') });
         if (!consent) found.push({ target: 'sign-consent', text: t('signingV2.public.errors.CONSENT_REQUIRED') });
         return found;
     }
+    // A run usually repeats one template across packages, so names alone don't tell the controls apart.
+    const where = (pkg, document) => (view?.packages.length > 1 ? `${document.name} · ${pkg.reference || pkg.runName}` : document.name);
     const fieldLabel = field => field.label || t(`signingV2.public.field.${field.type}`, { page: formats.number.format(field.pageNum) });
     // After the first attempt the list follows the form, so a fixed field stops being reported at once.
     const problems = attempt && phase === 'review' ? validate() : [];
@@ -303,16 +305,18 @@ export default function PublicPackageSigning() {
                                 return <li key={document.documentId} className={`lw-publicSign__document${isChosen ? ' is-chosen' : ''}`}>
                                     <div className="lw-publicSign__documentRow">
                                         {selectable ? <label className="lw-publicSign__choose">
-                                            <input type="checkbox" checked={isChosen} onChange={() => toggle(task.taskId)} aria-describedby={`sign-state-${document.documentId}`} />
+                                            <input type="checkbox" checked={isChosen} onChange={() => toggle(task.taskId)} aria-describedby={`sign-state-${document.documentId}`}
+                                                aria-label={where(pkg, document)} />
                                             <span><bdi>{document.name}</bdi></span>
                                         </label> : <span className="lw-publicSign__documentName"><bdi>{document.name}</bdi></span>}
                                         <span id={`sign-state-${document.documentId}`} className={`lw-publicSign__state is-${state}`}>{t(`signingV2.public.state.${state}`)}</span>
                                         <div className="lw-publicSign__documentActions">
                                             <SecondaryButton onPress={() => preview(document)} aria-expanded={open} aria-controls={`sign-viewer-${document.documentId}`}
-                                                aria-label={`${t(open ? 'signingV2.public.hide' : 'signingV2.public.view')}: ${document.name}`}>
+                                                aria-label={`${t(open ? 'signingV2.public.hide' : 'signingV2.public.view')}: ${where(pkg, document)}`}>
                                                 {t(open ? 'signingV2.public.hide' : 'signingV2.public.view')}
                                             </SecondaryButton>
-                                            {document.final && <SecondaryButton onPress={() => download('document', document.documentId, document.name)}
+                                            {document.final && <SecondaryButton onPress={() => download('document', document.documentId, where(pkg, document))}
+                                                aria-label={`${t('signingV2.public.downloadFinal')}: ${where(pkg, document)}`}
                                                 disabled={busy === `document-${document.documentId}`}>{t('signingV2.public.downloadFinal')}</SecondaryButton>}
                                         </div>
                                     </div>
@@ -348,7 +352,8 @@ export default function PublicPackageSigning() {
                                 </li>;
                             })}
                         </ul>
-                        {pkg.evidence && <SecondaryButton onPress={() => download('evidence', pkg.packageId, `${pkg.runName} - ${t('signingV2.public.evidenceName')}`)}
+                        {pkg.evidence && <SecondaryButton onPress={() => download('evidence', pkg.packageId, `${pkg.reference || pkg.runName} - ${t('signingV2.public.evidenceName')}`)}
+                            aria-label={`${t('signingV2.public.downloadEvidence')}: ${pkg.reference || pkg.runName}`}
                             disabled={busy === `evidence-${pkg.packageId}`}>{t('signingV2.public.downloadEvidence')}</SecondaryButton>}
                     </li>)}
                 </ul>
@@ -385,7 +390,7 @@ export default function PublicPackageSigning() {
                 {challenge && <div className="lw-signingCompose__field lw-publicSign__code">
                     <label htmlFor="sign-code">{t('signingV2.public.code.label')}</label>
                     <input id="sign-code" dir="ltr" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code}
-                        onChange={event => setCode(latinDigits(event.target.value).replace(/\D/g, '').slice(0, 6))}
+                        onChange={event => { setCode(latinDigits(event.target.value).replace(/\D/g, '').slice(0, 6)); setCodeError(null); }}
                         onKeyDown={event => { if (event.key === 'Enter') confirm(); }}
                         aria-invalid={codeError ? true : undefined} aria-describedby={codeError ? 'sign-code-error' : undefined} />
                 </div>}
