@@ -8,6 +8,7 @@ import SearchInput from '../../../components/specializedComponents/containers/Se
 import SimpleCard from '../../../components/simpleComponents/SimpleCard';
 import useSigningLocale from './useSigningLocale';
 import ParticipantActionDialog from './ParticipantActionDialog';
+import StatusNotice from '../../../components/ui/StatusNotice';
 import './signingPackages.scss';
 
 function useDebounced(value, delay = 250) {
@@ -64,9 +65,9 @@ function Pager({ previous, next, onPrevious, onNext, busy }) {
 
 function ErrorNotice({ error, onRetry }) {
     const { t, errorMessage } = useSigningLocale();
-    return error ? <div className="lw-signingPackages__error" role="alert">
-        <span>{errorMessage(error)}</span><SecondaryButton onPress={onRetry}>{t('common.retry')}</SecondaryButton>
-    </div> : null;
+    return error ? <StatusNotice onAction={onRetry} actionLabel={t('common.retry')}>
+        <p>{errorMessage(error)}</p>
+    </StatusNotice> : null;
 }
 
 function Progress({ accepted, required }) {

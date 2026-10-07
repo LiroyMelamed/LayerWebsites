@@ -3,6 +3,7 @@ import api from '../../../api/signingTemplatesApi';
 import TemplateBuilder from './TemplateBuilder';
 import BatchComposer from './BatchComposer';
 import { downloadBlobAsFile } from '../../../utils/downloadBlobAsFile';
+import StatusNotice from '../../../components/ui/StatusNotice';
 import './templates.scss';
 
 const STATUS = { draft: 'טיוטה — טרם פורסם לנמען', ready: 'מפורסם — ממתין לחתימות', sending: 'השליחה מתבצעת', sent: 'ההזמנות נשלחו', partial: 'נדרשת בדיקת מסירה', pending: 'ממתין', uncertain: 'המסירה לא אושרה', signed: 'נחתם', rejected: 'נדחה', cancelled: 'בוטל' };
@@ -18,7 +19,7 @@ export default function TemplatesWorkspace({ onClose, canUpload, canManage }) {
     if (mode === 'compose') return <BatchComposer template={current} onBack={back} onCreated={openBatch} />;
     return <section className="lw-templates" dir="rtl">
         <header className="lw-templates__heading"><div><h1>{mode === 'batch' ? batch.batch.name : 'תבניות ושליחה מרוכזת'}</h1><p>{mode === 'batch' ? 'חבילות, הזמנות והתקדמות החתימות' : 'מסמכים מוכנים לשימוש חוזר, עם שדות ותפקידי חותמים קבועים.'}</p></div><button type="button" onClick={mode === 'batch' ? back : onClose}>חזרה {mode === 'batch' ? 'לתבניות' : 'למסמכים'}</button></header>
-        {error && <div className="lw-templates__error" role="alert">{error}<button type="button" onClick={() => mode === 'batch' ? openBatch(batch.batch.id) : refresh()}>רענון</button></div>}
+        {error && <StatusNotice onAction={() => mode === 'batch' ? openBatch(batch.batch.id) : refresh()} actionLabel="רענון"><p>{error}</p></StatusNotice>}
         {busy && <p role="status">טוען…</p>}
         {mode === 'list' ? <>
             <div className="lw-templates__toolbar"><h2>התבניות במשרד</h2>{canUpload && <button type="button" className="is-primary" onClick={() => { setCurrent(null);setMode('builder'); }}>תבנית חדשה</button>}</div>

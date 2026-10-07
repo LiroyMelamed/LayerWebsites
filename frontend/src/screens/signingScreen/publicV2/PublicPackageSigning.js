@@ -5,6 +5,7 @@ import PdfViewer from '../../../components/specializedComponents/signFiles/pdfVi
 import PrimaryButton from '../../../components/styledComponents/buttons/PrimaryButton';
 import SecondaryButton from '../../../components/styledComponents/buttons/SecondaryButton';
 import { newKey } from '../templates/ParticipantActionDialog';
+import StatusNotice from '../../../components/ui/StatusNotice';
 import SignaturePad from './SignaturePad';
 import '../templates/signingPackages.scss';
 import '../templates/signingCompose.scss';
@@ -237,11 +238,12 @@ export default function PublicPackageSigning() {
     if (loadError || !view) {
         return <main className="lw-publicSign" dir={direction} lang={language}>
             <div className="lw-publicSign__shell">
-                {loadError ? <div className="lw-publicSign__card" role="alert">
+                {loadError ? <StatusNotice
+                    onAction={loadError.code !== 'NOT_FOUND' && loadError.code !== 'MISSING_TOKEN' ? load : undefined}
+                    actionLabel={t('signingV2.public.retry')}>
                     <h1>{t('signingV2.public.unavailableTitle')}</h1>
                     <p>{message(loadError)}</p>
-                    {loadError.code !== 'NOT_FOUND' && loadError.code !== 'MISSING_TOKEN' && <SecondaryButton onPress={load}>{t('signingV2.public.retry')}</SecondaryButton>}
-                </div> : <p className="lw-publicSign__loading" role="status">{t('signingV2.public.loading')}</p>}
+                </StatusNotice> : <p className="lw-publicSign__loading" role="status">{t('signingV2.public.loading')}</p>}
             </div>
         </main>;
     }
@@ -257,14 +259,14 @@ export default function PublicPackageSigning() {
                     {waiting > 0 && <> {counted('signingV2.public.waitingNote', waiting)}</>}</p>
             </header>
 
-            {notice && <div className={`lw-publicSign__notice is-${notice.tone}`} role="alert">{notice.text}</div>}
-            {problems.length > 0 && phase === 'review' && <div className="lw-publicSign__problems" role="alert" aria-labelledby="sign-problems-heading" tabIndex={-1} ref={summary}>
+            {notice && <StatusNotice><p>{notice.text}</p></StatusNotice>}
+            {problems.length > 0 && phase === 'review' && <StatusNotice aria-labelledby="sign-problems-heading" tabIndex={-1} ref={summary}>
                 <h2 id="sign-problems-heading">{counted('signingV2.public.problems', problems.length)}</h2>
                 <ul>{problems.map(item => <li key={item.target}><a href={`#${item.target}`} onClick={event => {
                     event.preventDefault();
                     if (item.target === 'sign-pad') pad.current?.focus(); else document.getElementById(item.target)?.focus();
                 }}>{item.text}</a></li>)}</ul>
-            </div>}
+            </StatusNotice>}
 
             {phase === 'done' && <section className="lw-publicSign__card lw-publicSign__done" aria-labelledby="sign-done-heading">
                 <h2 id="sign-done-heading" ref={heading} tabIndex={-1}>{counted('signingV2.public.done.heading', signedCount)}</h2>
@@ -347,7 +349,7 @@ export default function PublicPackageSigning() {
                                         {pdf?.blob ? <PdfViewer pdfFile={pdf.blob} spots={document.final ? [] : document.tasks.filter(item => item.state === 'ready')
                                             .flatMap(item => item.fields).map(field => ({ pageNum: field.pageNum, x: field.x, y: field.y, width: field.width, height: field.height,
                                                 fieldType: field.type, isRequired: field.required, fieldLabel: field.label, signerName: view.person.name, signerIndex: 0 }))} /> : pdf?.error
-                                            ? <p role="alert">{message(pdf.error)}</p> : <p role="status">{t('signingV2.public.loadingDocument')}</p>}
+                                            ? <StatusNotice embedded><p>{message(pdf.error)}</p></StatusNotice> : <p role="status">{t('signingV2.public.loadingDocument')}</p>}
                                     </div>}
                                 </li>;
                             })}

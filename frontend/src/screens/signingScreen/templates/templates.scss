@@ -46,7 +46,6 @@
 .lw-templates__pdf { min-width: 0; padding: .8rem; background: #e7ecf2; border-radius: .75rem; overflow: hidden; }
 .lw-templates__footer { margin-top: 2rem; border-top: 1px solid #d0d9e4; padding-top: 1.5rem; > button { min-width: 12rem; } }
 .lw-templates__list { list-style: none; padding: 0; margin: 0; li { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1.15rem 0; border-bottom: 1px solid #d9e0e9; flex-wrap: wrap; } strong { font-size: 1.05rem; } }
-.lw-templates__error { padding: 1rem; margin-bottom: 1rem; border: 1px solid #ccadab; border-radius: .5rem; color: #7b2020; background: #fff4f2; button { margin-inline-start: .75rem; } }
 .lw-templates__recipient { margin: 1rem 0; display: flex; flex-direction: column; gap: .85rem; }
 .lw-templates__package { margin: 1.5rem 0; padding-block: 1.5rem; border-block-start: 1px solid #d0d9e4; .lw-templates__heading { margin-bottom: .7rem; } }
 .lw-templates__matches { list-style: none; padding: 0; margin: 0; max-height: 15rem; overflow: auto; button { display: flex; justify-content: space-between; width: 100%; text-align: start; gap: .7rem; flex-wrap: wrap; } }

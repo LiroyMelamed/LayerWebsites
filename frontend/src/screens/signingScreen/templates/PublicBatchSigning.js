@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { signingRequest } from '../../../api/signingTemplatesApi';
 import PdfViewer from '../../../components/specializedComponents/signFiles/pdfViewer/PdfViewer';
+import StatusNotice from '../../../components/ui/StatusNotice';
 import './templates.scss';
 
 const signatureLike = field => ['signature', 'initials'].includes(String(field.FieldType || 'signature').toLowerCase());
@@ -93,7 +94,7 @@ export default function PublicBatchSigning({ token }) {
     }
     return <main className="lw-templates" dir="rtl">
         <header className="lw-templates__heading"><div><h1>{data?.name || 'מסמכים לחתימה'}</h1><p>{data ? `שלום ${data.recipientName}, ${data.files.length} מסמכים מרוכזים כאן עבורך.` : 'טוען את המסמכים…'}</p></div></header>
-        {error && <div className="lw-templates__error" role="alert">{error}</div>}
+        {error && <StatusNotice><p>{error}</p></StatusNotice>}
         {['otp', 'sign'].includes(phase) && <button type="button" disabled={busy} onClick={restartReview}>חזרה למסמכים וחידוש האימות</button>}
         {phase === 'review' && data && <>
             <p>פתח כל מסמך, השלם את השדות ואשר שבדקת אותו. בסיום אפשר להחיל חתימה אחת על כל המסמכים שבחרת.</p>
