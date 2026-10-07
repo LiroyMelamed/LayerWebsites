@@ -79,7 +79,7 @@ test.each(['he', 'ar', 'en'])('explicit conversion, field errors linked to their
 
     fireEvent.change(email, { target: { value: '' } });
     fireEvent.change(field(row, i18n.t('signingV2.compose.fields.phone')), { target: { value: '050-123-4567' } });
-    fireEvent.change(field(row, i18n.t('signingV2.compose.fields.channel')), { target: { value: 'sms' } });
+    fireEvent.click(within(row).getByRole('radio', { name: i18n.t('signingV2.compose.channel.sms') }));
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     api.previewCreation.mockResolvedValueOnce(validPreview(1));
     fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.check') }));

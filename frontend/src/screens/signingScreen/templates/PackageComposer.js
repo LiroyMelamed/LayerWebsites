@@ -4,6 +4,8 @@ import signingPackagesApi from '../../../api/signingPackagesApi';
 import PrimaryButton from '../../../components/styledComponents/buttons/PrimaryButton';
 import SecondaryButton from '../../../components/styledComponents/buttons/SecondaryButton';
 import SegmentedSwitch from '../../../components/styledComponents/SegmentedSwitch';
+import SearchInput from '../../../components/specializedComponents/containers/SearchInput';
+import signingTemplatesApi from '../../../api/signingTemplatesApi';
 import SimpleCard from '../../../components/simpleComponents/SimpleCard';
 import useSigningLocale from './useSigningLocale';
 import { newKey } from './ParticipantActionDialog';
@@ -49,19 +51,57 @@ function Field({ id, label, help, error, className = '', children }) {
     </div>;
 }
 
-function PersonFields({ scope, roleKey, person, errors, onChange, compact }) {
-    const { t } = useSigningLocale();
-    const field = (name, control) => <Field key={name} id={fieldId(scope, roleKey, name)} label={t(`signingV2.compose.fields.${name}`)} error={errors?.[name]}>{control}</Field>;
-    const change = name => event => onChange(roleKey, name, event.target.value);
-    const choices = (name, first, values) => <select value={person[name]} onChange={change(name)}>
-        {[['', first], ...values.map(value => [value, t(`signingV2.compose.${name}.${value}`)])].map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-    </select>;
+function SuggestField({ id, label, value, error, errorText, dir, type, inputMode, maxLength, suggestLawyers, onValue, onPick }) {
+    const [results, setResults] = useState([]);
+    const [busy, setBusy] = useState(false);
+    const timer = useRef(null);
+    useEffect(() => () => clearTimeout(timer.current), []);
+    const search = next => {
+        onValue(next);
+        clearTimeout(timer.current);
+        const query = String(next || '').trim();
+        timer.current = setTimeout(async () => {
+            setBusy(true);
+            try {
+                const data = await signingTemplatesApi.contacts(query, suggestLawyers);
+                setResults(Array.isArray(data?.contacts) ? data.contacts : []);
+            } catch { setResults([]); } finally { setBusy(false); }
+        }, 150);
+    };
+    return <div className="lw-signingCompose__field">
+        <SearchInput id={id} title={label} aria-label={label} type={type} inputMode={inputMode} maxLength={maxLength}
+            dir={dir} containerDir={dir} value={value} error={errorText || undefined} timeToWaitInMilli={0}
+            aria-invalid={error ? true : undefined} aria-describedby={error ? `${id}-error` : undefined}
+            acceptExternalValueWhileFocused isPerforming={busy} queryResult={results}
+            getButtonTextFunction={item => [item.name, item.phone || item.email].filter(Boolean).join(' | ')}
+            getSelectValueFunction={item => String(item[type === 'email' ? 'email' : type === 'tel' ? 'phone' : 'name'] || '')}
+            buttonPressFunction={(_text, item) => { onPick(item); setResults([]); }} onSearch={search} />
+        {errorText && <small id={`${id}-error`} className="lw-signingCompose__srError">{errorText}</small>}
+    </div>;
+}
+
+function PersonFields({ scope, roleKey, person, errors, onChange, compact, suggestLawyers }) {
+    const { t, direction } = useSigningLocale();
+    const message = name => errors?.[name] ? t(`signingV2.compose.rowErrors.${errors[name]}`, { defaultValue: t('signingV2.compose.rowErrors.INVALID_ROW') }) : '';
+    const pick = item => {
+        onChange(roleKey, 'name', item?.name || '');
+        onChange(roleKey, 'email', item?.email || '');
+        onChange(roleKey, 'phone', item?.phone || '');
+    };
+    const suggest = (name, extra) => <SuggestField key={name} id={fieldId(scope, roleKey, name)} label={t(`signingV2.compose.fields.${name}`)}
+        value={person[name]} error={errors?.[name]} errorText={message(name)} suggestLawyers={suggestLawyers}
+        onValue={value => onChange(roleKey, name, value)} onPick={pick} {...extra} />;
+    const choice = (name, first, values) => <SegmentedSwitch key={name} title={t(`signingV2.compose.fields.${name}`)} ariaLabel={t(`signingV2.compose.fields.${name}`)}
+        value={person[name]} onChange={value => onChange(roleKey, name, value)}
+        options={[{ value: '', label: first }, ...values.map(value => ({ value, label: t(`signingV2.compose.${name}.${value}`) }))]} />;
     return <div className={`lw-signingCompose__person${compact ? ' is-compact' : ''}`}>
-        {field('name', <input value={person.name} maxLength={300} autoComplete="off" onChange={change('name')} />)}
-        {field('email', <input type="email" dir="ltr" value={person.email} maxLength={254} autoComplete="off" inputMode="email" onChange={change('email')} />)}
-        {field('phone', <input type="tel" dir="ltr" value={person.phone} maxLength={20} autoComplete="off" inputMode="tel" onChange={change('phone')} />)}
-        {field('channel', choices('channel', t('signingV2.compose.channel.auto'), ['email', 'sms', 'both']))}
-        {field('locale', choices('locale', t('signingV2.compose.locale.template'), ['he', 'ar', 'en']))}
+        {suggest('name', { maxLength: 300, dir: direction })}
+        {suggest('email', { type: 'email', inputMode: 'email', maxLength: 254, dir: 'ltr' })}
+        {suggest('phone', { type: 'tel', inputMode: 'tel', maxLength: 20, dir: 'ltr' })}
+        <div className="lw-signingCompose__choices">
+            {choice('channel', t('signingV2.compose.channel.auto'), ['email', 'sms', 'both'])}
+            {choice('locale', t('signingV2.compose.locale.template'), ['he', 'ar', 'en'])}
+        </div>
     </div>;
 }
 
@@ -83,7 +123,7 @@ const RecipientRow = memo(function RecipientRow({ row, index, roles, errors, onC
             {errors?.row?.general && <p className="lw-signingCompose__fieldError" role="note">{t(`signingV2.compose.rowErrors.${errors.row.general}`, { defaultValue: t('signingV2.compose.rowErrors.INVALID_ROW') })}</p>}
             {roles.map(role => <div key={role.key} className="lw-signingCompose__roleBlock">
                 {roles.length > 1 && <h4>{role.label}</h4>}
-                <PersonFields scope={row.id} roleKey={role.key} person={row.recipients[role.key]} errors={errors?.[role.key]} onChange={change} compact />
+                <PersonFields scope={row.id} roleKey={role.key} person={row.recipients[role.key]} errors={errors?.[role.key]} onChange={change} suggestLawyers={role.audience === 'shared' || role.key === 'lawyer'} compact />
             </div>)}
         </fieldset>
     </li>;
@@ -359,7 +399,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                 <p>{t('signingV2.compose.shared.help')}</p>
                 {shareRoles.map(role => <fieldset key={role.key} className="lw-signingCompose__shared">
                     <legend>{role.label}</legend>
-                    <PersonFields scope="shared" roleKey={role.key} person={shared[role.key] || blankPerson()} errors={check?.indexed.shared[role.key]} onChange={changeShared} />
+                    <PersonFields scope="shared" roleKey={role.key} person={shared[role.key] || blankPerson()} errors={check?.indexed.shared[role.key]} onChange={changeShared} suggestLawyers={role.audience === 'shared' || role.key === 'lawyer'} />
                 </fieldset>)}
             </SimpleCard>}
             <SimpleCard className="lw-signingCompose__card">
