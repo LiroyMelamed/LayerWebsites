@@ -174,10 +174,16 @@ function compilePackage(definition, input, directory, now = new Date()) {
     const participants = [];
     const byRole = new Map();
     const knownRoles = new Set(definition.roles.map(role => role.key));
-    expect(Object.keys(input.roles || {}).every(key => knownRoles.has(key)), 'INVALID_ROLE_BINDING');
+    const omitted = new Set(Array.isArray(input.omitRoles) ? input.omitRoles : []);
+    expect(input.omitRoles === undefined || (Array.isArray(input.omitRoles) && omitted.size === input.omitRoles.length && [...omitted].every(key => knownRoles.has(key)) && omitted.size < knownRoles.size), 'INVALID_ROLE_BINDING');
+    expect(Object.keys(input.roles || {}).every(key => knownRoles.has(key) && !omitted.has(key)), 'INVALID_ROLE_BINDING');
     for (const role of definition.roles) {
         const assignments = input.roles?.[role.key] || [];
         expect(Array.isArray(assignments), 'INVALID_ROLE_BINDING', role.key);
+        if (omitted.has(role.key)) {
+            expect(assignments.length === 0, 'ROLE_CAPACITY_EXCEEDED', role.key);
+            continue;
+        }
         const active = conditionMatches(role.when, data);
         expect(active ? assignments.length >= role.min && assignments.length <= role.max : assignments.length === 0, 'ROLE_CAPACITY_EXCEEDED', role.key);
         assignments.forEach((assignment, occurrence) => {
