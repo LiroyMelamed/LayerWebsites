@@ -18,16 +18,18 @@
 }
 
 .lw-firmStaffRoles__header {
+  flex: 0 0 auto;
   flex-direction: column;
   align-items: stretch;
   width: 100%;
 }
 
 .lw-firmStaffRoles__headerText {
+  flex: 0 0 auto;
   flex-direction: column;
   align-items: flex-start;
   gap: v.$space-2;
-  flex: 1 1 14rem;
+  width: 100%;
   min-inline-size: 0;
 }
 
@@ -227,6 +229,7 @@
 // Prevent full-width “blue square” buttons inside cards / header
 .lw-firmStaffRoles__headerCta {
   margin-top: v.$space-2;
+  align-self: flex-start;
 }
 
 .lw-firmStaffRoles__sectionCta,
