@@ -13,6 +13,13 @@ test('pending management groups sends, sums obligations and never exposes inacce
     const first = await createSubmission(pool, f.scope, f.input, options);
     const second = await createSubmission(pool, f.scope, { ...f.input, idempotencyKey: randomUUID(), name: 'Second send, same template' }, options);
     const packages = (await pool.query('SELECT * FROM signing_packages WHERE submission_id=$1 ORDER BY external_key', [first.submissionId])).rows;
+    await t.test('a direct run selection ignores other newer runs and still applies access before counts', async () => {
+        const selected = await listSubmissions(pool, f.scope, { state: 'all', submissionId: first.submissionId });
+        assert.equal(selected.total, 1); assert.equal(selected.rows[0].id, first.submissionId);
+        const hidden = await listSubmissions(pool, { ...f.scope, all: false, userId: -1 }, { state: 'all', submissionId: first.submissionId });
+        assert.equal(hidden.total, 0); assert.deepEqual(hidden.rows, []);
+        await assert.rejects(listSubmissions(pool, f.scope, { submissionId: 'invalid' }), { errorCode: 'INVALID_SUBMISSION' });
+    });
     await t.test('same-template sends are distinct and pagination is stable', async () => {
         const page1 = await listSubmissions(pool, f.scope, { state: 'all', limit: 1 });
         assert.equal(page1.total, 2); assert.equal(page1.rows.length, 1); assert.ok(page1.nextCursor);

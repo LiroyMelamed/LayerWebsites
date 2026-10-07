@@ -325,3 +325,54 @@ test('a preview response for earlier field values cannot advance to confirmation
     expect(name).toHaveValue('Current');
     expect(api.create).not.toHaveBeenCalled();
 });
+
+test.each(['he', 'ar', 'en'])('case contacts require a role choice and case association reaches approval in %s', async language => {
+    const i18n = await translations(language), api = fakeApi();
+    const record = { id: 42, name: 'Synthetic case', people: [{ id: 71, name: 'Synthetic buyer', email: 'buyer@example.invalid', phone: '0501234567' }] };
+    api.caseContext = jest.fn().mockResolvedValue(record); api.cases = jest.fn();
+    api.templates.mockResolvedValue({ templates: [converted], legacy: [] });
+    render(<I18nextProvider i18n={i18n}><PackageComposer api={api} initialCaseId="42" initialTemplateId="t-1" /></I18nextProvider>);
+    await screen.findByText('Synthetic case');
+    await screen.findByLabelText(i18n.t('signingV2.compose.runName'));
+    const row = screen.getByRole('group', { name: i18n.t('signingV2.compose.rows.row', { number: new Intl.NumberFormat({ he: 'he-IL', ar: 'ar-IL', en: 'en-GB' }[language]).format(1) }) });
+    expect(field(row, i18n.t('signingV2.compose.fields.name'))).toHaveValue('');
+    fireEvent.change(within(row).getByLabelText(i18n.t('signingV2.compose.context.fill')), { target: { value: '71' } });
+    expect(field(row, i18n.t('signingV2.compose.fields.name'))).toHaveValue('Synthetic buyer');
+    expect(field(row, i18n.t('signingV2.compose.fields.email'))).toHaveValue('buyer@example.invalid');
+    expect(field(screen.getByRole('group', { name: 'Lawyer' }), i18n.t('signingV2.compose.fields.name'))).toHaveValue('');
+    api.previewCreation.mockResolvedValue(validPreview(1));
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.check') }));
+    await screen.findByRole('heading', { name: i18n.t('signingV2.compose.review.heading') });
+    expect(api.previewCreation.mock.calls[0][0].caseId).toBe(42);
+    expect(screen.getAllByText('Synthetic case').some(el => !el.closest('[hidden]'))).toBe(true);
+    expect(api.cases).not.toHaveBeenCalled();
+});
+
+test('an unavailable deep-linked case blocks creation until explicitly removed', async () => {
+    const i18n = await translations('en'), api = fakeApi();
+    api.caseContext = jest.fn().mockRejectedValue({ code: 'NOT_FOUND' });
+    api.templates.mockResolvedValue({ templates: [converted], legacy: [] });
+    render(<I18nextProvider i18n={i18n}><PackageComposer api={api} initialCaseId="42" initialTemplateId="t-1" /></I18nextProvider>);
+    const check = await screen.findByRole('button', { name: 'Check data' });
+    expect(check).toBeDisabled();
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue without a case' }));
+    expect(check).toBeEnabled();
+    expect(api.create).not.toHaveBeenCalled();
+});
+
+test('choosing an existing case through the real search control does not cancel its detail request', async () => {
+    const i18n = await translations('en'), api = fakeApi();
+    const record = { id: 42, name: 'Synthetic case', people: [] };
+    api.cases = jest.fn().mockResolvedValue({ cases: [record] });
+    let resolve;
+    api.caseContext = jest.fn().mockReturnValue(new Promise(done => { resolve = done; }));
+    api.templates.mockResolvedValue({ templates: [converted], legacy: [] });
+    render(<I18nextProvider i18n={i18n}><PackageComposer api={api} initialTemplateId="t-1" /></I18nextProvider>);
+    fireEvent.change(screen.getByLabelText('Case for this send (optional)'), { target: { value: 'Synthetic' } });
+    fireEvent.pointerDown(await screen.findByRole('button', { name: 'Synthetic case · 42' }));
+    expect(api.caseContext).toHaveBeenCalledWith(42);
+    expect(screen.getByRole('button', { name: 'Check data' })).toBeDisabled();
+    await act(async () => resolve(record));
+    expect(await screen.findByText('Linked case:')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Check data' })).toBeEnabled();
+});

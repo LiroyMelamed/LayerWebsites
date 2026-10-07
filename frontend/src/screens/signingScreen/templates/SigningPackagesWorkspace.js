@@ -275,28 +275,30 @@ function PackagePanel({ id, api, onClose }) {
     </dialog>;
 }
 
-export default function SigningPackagesWorkspace({ onClose, onCreate, api = signingPackagesApi }) {
+export default function SigningPackagesWorkspace({ onClose, onCreate, api = signingPackagesApi, initialSubmissionId, onClearFocus, backLabel }) {
     const { t, direction, number, date } = useSigningLocale();
     const [query, setQuery] = useState('');
     const search = useDebounced(query);
-    const [state, setState] = useState('pending');
-    const [expanded, setExpanded] = useState(new Set());
+    const [focused, setFocused] = useState(initialSubmissionId || null);
+    const [state, setState] = useState(initialSubmissionId ? 'all' : 'pending');
+    const [expanded, setExpanded] = useState(() => new Set(initialSubmissionId ? [initialSubmissionId] : []));
     const [selectedPackage, setSelectedPackage] = useState(null);
     const [cursors, setCursors] = useState([null]);
     const cursor = cursors.at(-1);
-    const resource = usePagedResource(config => api.list({ state, query: search, cursor }, config), [api, state, search, cursor]);
+    const resource = usePagedResource(config => api.list({ state, query: search, cursor, ...(focused ? { submissionId: focused } : {}) }, config), [api, state, search, cursor, focused]);
     useEffect(() => setCursors([null]), [state, search]);
     const toggle = id => setExpanded(previous => {
         const next = new Set(previous); if (next.has(id)) next.delete(id); else next.add(id); return next;
     });
     return <section className="lw-signingPackages" dir={direction} aria-labelledby="signing-packages-title">
-        {onClose && <SigningBackButton onPress={onClose}>{t('signingV2.backToDocuments')}</SigningBackButton>}
+        {onClose && <SigningBackButton onPress={onClose}>{backLabel || t('signingV2.backToDocuments')}</SigningBackButton>}
         <header className="lw-signingPackages__heading">
             <div><h1 id="signing-packages-title">{t('signingV2.title')}</h1><p>{t('signingV2.subtitle')}</p></div>
             <div className="lw-signingPackages__actions">
                 {onCreate && <PrimaryButton onPress={onCreate}>{t('signingV2.newPackage')}</PrimaryButton>}
             </div>
         </header>
+        {focused && <SigningBackButton onPress={() => { setFocused(null); setCursors([null]); onClearFocus?.(); }}>{t('signingV2.showAllRuns')}</SigningBackButton>}
         <div className="lw-signingPackages__toolbar">
             <SearchInput title={t('signingV2.search')} aria-label={t('signingV2.search')} value={query} onSearch={setQuery} containerDir={direction} textStyle={{ textAlign: 'start' }} />
             <SegmentedSwitch value={state} onChange={setState} ariaLabel={t('signingV2.statusFilter')}

@@ -1708,7 +1708,7 @@
         "confirm_one": "Create 1 package",
         "confirm_other": "Create {{formattedCount}} packages",
         "creating": "Creating…",
-        "sharedInvitations_one": "{{name}} will receive one link for all {{formattedCount}} packages. Only documents whose signing turn has arrived can be signed together.",
+        "sharedInvitations_one": "{{name}} will receive one link for this package. Only documents that are ready for this signer can be signed together.",
         "sharedInvitations_other": "{{name}} will receive one link for all {{formattedCount}} packages. Only documents whose signing turn has arrived can be signed together."
       },
       "done": {
@@ -1755,7 +1755,8 @@
         "INVALID_RECIPIENT_LAYOUT": "The role assignments do not match the template. Review the signers for this send.",
         "INVALID_COLUMN_MAPPING": "Map each column to one field only. Check for duplicate columns.",
         "INCOMPLETE_COLUMN_MAPPING": "Map a name and an email or phone for every role that varies by package.",
-        "WORKBOOK_TOO_COMPLEX": "This file is too complex. Use up to 10 sheets, 128 columns and 5,000 rows per sheet, with at most 200 packages per import."
+        "WORKBOOK_TOO_COMPLEX": "This file is too complex. Use up to 10 sheets, 128 columns and 5,000 rows per sheet, with at most 200 packages per import.",
+        "INVALID_CASE": "The selected case is invalid. Please choose it again."
       },
       "audience": {
         "label": "Who fills {{name}}",
@@ -1779,6 +1780,18 @@
         "edit": "Edit mapping",
         "replace": "Replace recipients with file data",
         "apply": "Use these recipients"
+      },
+      "context": {
+        "label": "Case for this send (optional)",
+        "selected": "Linked case:",
+        "remove": "Remove case link",
+        "help": "The case link applies to every package in this send. Choose people from the case below; choosing a person does not establish signing authority or change their client record.",
+        "without": "Continue without a case",
+        "fill": "Fill from case contacts",
+        "choose": "Choose a person for this role",
+        "noContact": "Contact details missing",
+        "open": "Send documents for signing",
+        "back": "Back to case"
       }
     },
     "public": {
@@ -1981,7 +1994,8 @@
         "number": "Number",
         "checkbox": "Checkbox"
       }
-    }
+    },
+    "showAllRuns": "Show all runs"
   },
   "calendar": {
     "dateSegmentDay": "Day",

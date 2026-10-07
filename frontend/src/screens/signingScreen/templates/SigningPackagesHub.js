@@ -22,16 +22,17 @@ export default function SigningPackagesHub({ onClose, canCreate, api = signingPa
     const [searchParams, setSearchParams] = useSearchParams();
     const { t } = useSigningLocale();
     const composing = searchParams.get('panel') === 'compose';
-    const setPanel = (value) => {
+    const setPanel = (value, submissionId) => {
         const next = new URLSearchParams(searchParams);
         if (value) next.set('panel', value);
         else next.delete('panel');
-        if (value !== 'compose') { next.delete('template'); next.delete('templateVersion'); }
+        if (value !== 'compose') { next.delete('template'); next.delete('templateVersion'); next.delete('caseId'); }
+        if (submissionId) next.set('submission', submissionId); else next.delete('submission');
         setSearchParams(next);
     };
     useEffect(() => { window.scrollTo?.(0, 0); }, [composing]);
     if (composing && !canCreate) return <section><StatusNotice><p>{t('signingV2.errors.FORBIDDEN')}</p></StatusNotice>
         <SecondaryButton onPress={() => setPanel('runs')}>{t('signingV2.compose.back')}</SecondaryButton></section>;
-    if (composing) return <PackageComposer key={`${searchParams.get('template') || 'new'}:${searchParams.get('templateVersion') || ''}`} initialTemplateId={searchParams.get('template')} initialTemplateVersion={searchParams.get('templateVersion')} api={api} onBack={() => setPanel('runs')} onCreated={() => setPanel('runs')} />;
-    return <SigningPackagesWorkspace api={api} onClose={onClose} onCreate={canCreate ? () => setPanel('compose') : undefined} />;
+    if (composing) return <PackageComposer key={`${searchParams.get('template') || 'new'}:${searchParams.get('templateVersion') || ''}:${searchParams.get('caseId') || ''}`} initialTemplateId={searchParams.get('template')} initialTemplateVersion={searchParams.get('templateVersion')} initialCaseId={searchParams.get('caseId')} api={api} onBack={() => setPanel('runs')} onCreated={id => setPanel('runs', id)} />;
+    return <SigningPackagesWorkspace api={api} onClose={onClose} initialSubmissionId={searchParams.get('submission')} onClearFocus={() => setPanel('runs')} onCreate={canCreate ? () => setPanel('compose') : undefined} />;
 }

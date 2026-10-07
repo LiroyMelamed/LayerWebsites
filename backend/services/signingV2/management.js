@@ -111,8 +111,11 @@ function encodeCursor(row) {
 
 async function listSubmissions(db, scope, input) {
     const filter = filters(input);
+    const selectedId = input?.submissionId || null;
+    expect(selectedId === null || UUID.test(selectedId), 'INVALID_SUBMISSION');
     const result = await db.query(`WITH ${projectionCte(scope)}, matching_groups AS (
         SELECT DISTINCT group_id FROM projected p WHERE ${queryMatchesSql()} AND ${stateMatchesSql('p', 6)}
+            AND ($10::uuid IS NULL OR p.group_id=$10)
     ), grouped AS (
         SELECT p.group_id AS id,(array_agg(p.group_name))[1] AS name,min(p.group_created_at) AS created_at,
             bool_or(p.submission_id IS NOT NULL) AS is_batch,count(*) AS package_count,
@@ -133,7 +136,7 @@ async function listSubmissions(db, scope, input) {
         ORDER BY g.created_at DESC,g.id DESC LIMIT $9
     ) SELECT (SELECT count(*) FROM grouped) AS total,
         COALESCE((SELECT jsonb_agg(to_jsonb(page) ORDER BY created_at DESC,id DESC) FROM page),'[]') AS rows`,
-    [...scopeParams(scope), filter.pattern, filter.state, filter.cursor?.createdAt || null, filter.cursor?.id || null, filter.limit + 1]);
+    [...scopeParams(scope), filter.pattern, filter.state, filter.cursor?.createdAt || null, filter.cursor?.id || null, filter.limit + 1, selectedId]);
     const rows = result.rows[0].rows;
     const hasMore = rows.length > filter.limit;
     if (hasMore) rows.pop();

@@ -8,6 +8,8 @@ const { validateSources } = require('./templates');
 const { createSubmission, loadDirectory, previewHash } = require('./submissions');
 const { loadPerson } = require('./people');
 const { recipientRoles } = require('../../lib/signingV2/recipientLayout');
+const { assertCases } = require('./access');
+const { caseId } = require('./caseContext');
 
 const LEGACY_FIELD_TYPES = { signature: 'signature', initials: 'initials', text: 'text', date: 'date', checkbox: 'checkbox', number: 'text' };
 // An imported revision must not resurrect an archived source template for a new send.
@@ -222,11 +224,12 @@ function normalize(definition, input) {
         if (shared[role.key].personId) expect(UUID.test(shared[role.key].personId), 'INVALID_PERSON');
     }
     const keys = new Set();
+    const selectedCaseId = input.caseId == null ? null : caseId(input.caseId);
     const rows = input.rows.map((row, index) => {
         const key = typeof row?.key === 'string' && row.key.trim() ? row.key.trim().slice(0, 200) : `row-${index + 1}`;
         if (keys.has(key)) errors.push({ path: `rows.${index}.key`, code: 'DUPLICATE_ROW_KEY' });
         keys.add(key);
-        return { key, recipients: Object.fromEntries(each.map(role => [role.key, recipient(row?.recipients?.[role.key], definition, `rows.${index}.${role.key}`, errors)])) };
+        return { key, ...(selectedCaseId ? { caseId: selectedCaseId } : {}), recipients: Object.fromEntries(each.map(role => [role.key, recipient(row?.recipients?.[role.key], definition, `rows.${index}.${role.key}`, errors)])) };
     });
     return { name: input.name.trim(), roles, shared, rows, omitted, signingOrder: signingOrder(definition, input, omitted, errors), errors };
 }
@@ -240,7 +243,7 @@ function packagesFor(definition, plan, personFor) {
             roles[role.key] = [{ personId: ids.personId, partyId: ids.partyId }];
             delivery[ids.personId] = { locale: person.locale, channels: person.channels, ...(person.email ? { email: person.email } : {}), ...(person.phone ? { phone: person.phone } : {}) };
         }
-        return { externalKey: row.key, data: {}, roles, delivery,
+        return { externalKey: row.key, ...(row.caseId ? { caseId: row.caseId } : {}), data: {}, roles, delivery,
             ...(plan.signingOrder ? { signingOrder: plan.signingOrder } : {}),
             ...(plan.omitted.size ? { omitRoles: [...plan.omitted].sort() } : {}) };
     });
@@ -253,6 +256,7 @@ function rowsHash(template, plan) {
 async function previewCreation(pool, scope, input) {
     const { template, definition, sources } = await loadVersion(pool, scope, input.templateVersionId);
     const plan = normalize(definition, input);
+    await assertCases(pool, scope, [...new Set(plan.rows.map(row => row.caseId).filter(Boolean))]);
     const people = new Map(), parties = new Map();
     const personFor = (role, person, index) => {
         const personId = person.personId || stableUuid('preview', role.audience === 'shared' ? role.key : `${index}:${role.key}`);
@@ -279,6 +283,7 @@ async function previewCreation(pool, scope, input) {
         documentCount: capacity?.documents ?? null,
         recipientCount: people.size,
         omitted: [...plan.omitted].sort(),
+        caseId: plan.rows[0]?.caseId || null,
         shared: Object.entries(plan.shared).map(([roleKey, person]) => ({ roleKey, name: person.name, channels: person.channels })),
         sample: plan.rows.slice(0, 5).map(row => ({ key: row.key, recipients: Object.entries(row.recipients).map(([roleKey, person]) => ({ roleKey, name: person.name, channels: person.channels })) })),
         template: { versionId: template.id, name: definition.name, documents: definition.documents.map(document => ({ key: document.key, name: document.name })), roles: roleSummary(definition) },
@@ -289,6 +294,8 @@ async function createFromRows(pool, scope, input, { reserveCapacity }) {
     expect(UUID.test(input.idempotencyKey), 'INVALID_SUBMISSION');
     const { template, definition } = await loadVersion(pool, scope, input.templateVersionId);
     const plan = normalize(definition, input);
+    // Check before creating directory entries; createSubmission checks again in its transaction.
+    await assertCases(pool, scope, [...new Set(plan.rows.map(row => row.caseId).filter(Boolean))]);
     if (plan.errors.length) fail('INVALID_ROWS', 422, plan.errors.slice(0, 50));
     if (input.previewHash !== rowsHash(template, plan)) fail('PREVIEW_CHANGED', 412);
     const seed = [scope.contextId, scope.userId, input.idempotencyKey];

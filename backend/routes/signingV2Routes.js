@@ -7,6 +7,7 @@ const { actorScope } = require('../services/signingV2/access');
 const management = require('../services/signingV2/management');
 const actions = require('../services/signingV2/actions');
 const creation = require('../services/signingV2/creation');
+const caseContext = require('../services/signingV2/caseContext');
 const workbook = require('../lib/signingV2/workbook');
 const { objectStorage, officeQuota } = require('../services/signingV2/runtime');
 const { createAppError } = require('../utils/appError');
@@ -46,6 +47,8 @@ router.post('/packages/:id/participants/:personId/actions', send, run(async (req
     res.status(result.reused ? 200 : 202).json(result);
 }));
 router.get('/templates', view, run(async (req, res) => res.json(await creation.listTemplates(pool, await actorScope(pool, req, 'view')))));
+router.get('/creation/cases', send, run(async (req, res) => res.json(await caseContext.searchCases(pool, await actorScope(pool, req, 'upload'), req.query.q))));
+router.get('/creation/cases/:id', send, run(async (req, res) => res.json(await caseContext.loadCaseContext(pool, await actorScope(pool, req, 'upload'), req.params.id))));
 router.post('/templates/legacy/:id/import', send, run(async (req, res) => {
     const { r2, BUCKET } = require('../utils/r2');
     const result = await creation.importLegacyTemplate(pool, await actorScope(pool, req, 'upload'), req.params.id, {

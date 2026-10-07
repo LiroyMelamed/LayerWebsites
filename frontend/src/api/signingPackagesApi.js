@@ -21,6 +21,8 @@ const signingPackagesApi = {
         { headers: { 'Idempotency-Key': idempotencyKey } }),
     operation: (id, config) => signingRequest('get', `${root}/operations/${id}`, null, config),
     templates: config => signingRequest('get', `${root}/templates`, null, config),
+    cases: (q, config) => signingRequest('get', `${root}/creation/cases?${query({ q })}`, null, config),
+    caseContext: (id, config) => signingRequest('get', `${root}/creation/cases/${encodeURIComponent(id)}`, null, config),
     importLegacy: (id, locale, expectedVersion) => signingRequest('post', `${root}/templates/legacy/${id}/import`, { locale, ...(expectedVersion != null ? { expectedVersion } : {}) }),
     workbook: (versionId, locale, layout) => signingRequest('get', `${root}/templates/${versionId}/workbook?${query({ locale, ...(layout ? { layout: JSON.stringify(layout) } : {}) })}`, null, { responseType: 'blob' }),
     inspectWorkbook: (versionId, base64, layout) => signingRequest('post', `${root}/templates/${versionId}/workbook/inspect`, { base64, ...layout }),

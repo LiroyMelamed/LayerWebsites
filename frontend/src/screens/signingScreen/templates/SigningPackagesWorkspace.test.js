@@ -40,6 +40,18 @@ function fixture() {
     } };
 }
 
+test('opening a created run requests that exact submission and expands its packages immediately', async () => {
+    const i18n = await translations('en'), { api } = fixture();
+    const onClearFocus = jest.fn();
+    render(<I18nextProvider i18n={i18n}><SigningPackagesWorkspace api={api} initialSubmissionId="send-1" onClearFocus={onClearFocus} /></I18nextProvider>);
+    await screen.findByText('Employee 001');
+    expect(api.list).toHaveBeenCalledWith(expect.objectContaining({ state: 'all', submissionId: 'send-1' }), expect.any(Object));
+    expect(screen.getByRole('button', { name: /October employees/ })).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Show all runs' }));
+    await waitFor(() => expect(api.list).toHaveBeenLastCalledWith(expect.not.objectContaining({ submissionId: 'send-1' }), expect.any(Object)));
+    expect(onClearFocus).toHaveBeenCalledTimes(1);
+});
+
 test.each(['he', 'ar', 'en'])('uses existing translated controls, correct direction and actual delivery state in %s', async language => {
     const i18n = await translations(language), { api } = fixture();
     render(<I18nextProvider i18n={i18n}><SigningPackagesWorkspace api={api} /></I18nextProvider>);
