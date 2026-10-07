@@ -46,6 +46,8 @@ async function toRecipients(i18n, api) {
     expect(api.importLegacy).toHaveBeenCalledWith(7, i18n.language);
     fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.next') }));
     await screen.findByRole('heading', { name: i18n.t('signingV2.compose.rows.heading') });
+    expect(screen.queryByLabelText(i18n.t('signingV2.compose.rows.key'))).not.toBeInTheDocument();
+    expect(screen.getByText(i18n.t('signingV2.compose.directoryHelp.client'))).toBeInTheDocument();
 }
 const field = (container, label) => within(container).getByLabelText(label);
 

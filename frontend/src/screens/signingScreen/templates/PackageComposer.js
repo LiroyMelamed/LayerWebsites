@@ -4,6 +4,8 @@ import PrimaryButton from '../../../components/styledComponents/buttons/PrimaryB
 import SecondaryButton from '../../../components/styledComponents/buttons/SecondaryButton';
 import SegmentedSwitch from '../../../components/styledComponents/SegmentedSwitch';
 import SearchInput from '../../../components/specializedComponents/containers/SearchInput';
+import { Text12 } from '../../../components/specializedComponents/text/AllTextKindFile';
+import { colors } from '../../../constant/colors';
 import signingTemplatesApi from '../../../api/signingTemplatesApi';
 import SimpleCard from '../../../components/simpleComponents/SimpleCard';
 import useSigningLocale from './useSigningLocale';
@@ -96,13 +98,17 @@ function PersonFields({ scope, roleKey, person, errors, onChange, compact, sugge
         value={person[name]} onChange={value => onChange(roleKey, name, value)}
         options={[{ value: '', label: first }, ...values.map(value => ({ value, label: t(`signingV2.compose.${name}.${value}`) }))]} />;
     return <div className={`lw-signingCompose__person${compact ? ' is-compact' : ''}`}>
-        {suggest('name', { maxLength: 300, dir: direction })}
-        {suggest('email', { type: 'email', inputMode: 'email', maxLength: 254, dir: 'ltr' })}
-        {suggest('phone', { type: 'tel', inputMode: 'tel', maxLength: 20, dir: 'ltr' })}
+        <div className="lw-signingCompose__identity">
+            {suggest('name', { maxLength: 300, dir: direction })}
+            {suggest('email', { type: 'email', inputMode: 'email', maxLength: 254, dir: 'ltr' })}
+            {suggest('phone', { type: 'tel', inputMode: 'tel', maxLength: 20, dir: 'ltr' })}
+            <Text12 className="lw-signingCompose__hint" color={colors.winter}>
+                {t(suggestLawyers ? 'signingV2.compose.directoryHelp.lawyer' : 'signingV2.compose.directoryHelp.client')}
+            </Text12>
+        </div>
         <div className="lw-signingCompose__choices">
             {choice('channel', t('signingV2.compose.channel.auto'), ['email', 'sms', 'both'])}
         </div>
-        <p className="lw-signingCompose__note">{t(suggestLawyers ? 'signingV2.compose.directoryHelp.lawyer' : 'signingV2.compose.directoryHelp.client')}</p>
     </div>;
 }
 
@@ -113,15 +119,13 @@ const RecipientRow = memo(function RecipientRow({ row, index, roles, errors, onC
     return <li className="lw-signingCompose__row">
         <fieldset aria-invalid={errors ? true : undefined}>
             <legend>{t('signingV2.compose.rows.row', { number: rowNumber })}</legend>
-            <div className="lw-signingCompose__rowHeader">
-                <Field id={fieldId(row.id, 'row', 'key')} className="is-key" label={t('signingV2.compose.rows.key')} error={errors?.row?.key}>
-                    <input value={row.key} maxLength={200} autoComplete="off" onChange={event => onChange(row.id, null, 'key', event.target.value)} />
-                </Field>
-                {canRemove && <SecondaryButton onPress={() => onRemove(row.id)} aria-label={t('signingV2.compose.rows.remove', { number: rowNumber })}>
+            {canRemove && <div className="lw-signingCompose__rowHeader">
+                <SecondaryButton onPress={() => onRemove(row.id)} aria-label={t('signingV2.compose.rows.remove', { number: rowNumber })}>
                     {t('signingV2.compose.rows.removeShort')}
-                </SecondaryButton>}
-            </div>
+                </SecondaryButton>
+            </div>}
             {errors?.row?.general && <p className="lw-signingCompose__fieldError" role="note">{t(`signingV2.compose.rowErrors.${errors.row.general}`, { defaultValue: t('signingV2.compose.rowErrors.INVALID_ROW') })}</p>}
+            {errors?.row?.key && <p className="lw-signingCompose__fieldError" role="note">{t(`signingV2.compose.rowErrors.${errors.row.key}`, { defaultValue: t('signingV2.compose.rowErrors.INVALID_ROW') })}</p>}
             {roles.map(role => <div key={role.key} className="lw-signingCompose__roleBlock">
                 {roles.length > 1 && <h4>{role.label}</h4>}
                 <PersonFields scope={row.id} roleKey={role.key} person={row.recipients[role.key]} errors={errors?.[role.key]} onChange={change} suggestLawyers={role.key === 'lawyer'} compact />
@@ -354,7 +358,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
             : parts.length >= 2 ? t('signingV2.compose.rows.row', { number: number(Number(parts[1]) + 1) }) + (sentKey ? ` (${sentKey})` : '')
                 + (parts[2] && parts[2] !== 'key' && eachRoles.length > 1 ? ` · ${roleLabel(parts[2])}` : '') : '';
         return { where, fieldLabel, message: t(`signingV2.compose.rowErrors.${item.code}`, { defaultValue: t('signingV2.compose.rowErrors.INVALID_ROW') }),
-            target: parts[0] === 'shared' ? fieldId('shared', parts[1], field) : check.sentIds[Number(parts[1])] && (parts.length === 4 ? fieldId(check.sentIds[Number(parts[1])], parts[2], field) : fieldId(check.sentIds[Number(parts[1])], 'row', 'key')) };
+            target: parts[0] === 'shared' ? fieldId('shared', parts[1], field) : check.sentIds[Number(parts[1])] && (parts.length === 4 ? fieldId(check.sentIds[Number(parts[1])], parts[2], field) : fieldId(check.sentIds[Number(parts[1])], eachRoles[0]?.key, 'name')) };
     };
     const filledRows = rows.filter(rowFilled).length;
     const preview = check?.preview;

@@ -61,15 +61,18 @@
   > input[aria-invalid="true"], > select[aria-invalid="true"] { border-color: #c53030; box-shadow: inset 0 0 0 1px #c53030; }
   small { color: #4a5568; }
   &.is-wide { max-inline-size: 32rem; }
-  &.is-key { flex: 0 1 16rem; }
 }
 .lw-signingCompose__fieldError { color: #9b2c2c !important; font-weight: 600; font-size: 0.8125rem; line-height: 1.4; }
 .lw-signingCompose__person {
-  display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  display: grid; gap: .75rem;
   &.is-compact { gap: .625rem; }
 }
+.lw-signingCompose__identity {
+  display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+}
+.lw-signingCompose__hint { grid-column: 1 / -1; margin-block-start: -.375rem; }
 .lw-signingCompose__choices {
-  grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; align-items: flex-end;
+  display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; align-items: flex-end;
 }
 .lw-signingCompose__srError {
   position: absolute; inline-size: 1px; block-size: 1px; padding: 0; margin: -1px; overflow: hidden;
@@ -86,7 +89,7 @@
   &[aria-invalid="true"] { border-color: #feb2b2; background: #fffafa; }
   legend { font-weight: 700; font-size: .875rem; padding-inline: .25rem; }
 }
-.lw-signingCompose__rowHeader { display: flex; justify-content: space-between; align-items: flex-end; gap: .75rem; flex-wrap: wrap; margin-block-end: .75rem; }
+.lw-signingCompose__rowHeader { display: flex; justify-content: flex-end; align-items: flex-end; gap: .75rem; flex-wrap: wrap; margin-block-end: .75rem; }
 .lw-signingCompose__roleBlock + .lw-signingCompose__roleBlock { margin-block-start: .875rem; padding-block-start: .75rem; border-block-start: 1px dashed #e2e8f0; }
 .lw-signingCompose__excel {
   background: #f7fafc; border: 1px solid #e2e8f0; border-radius: .5rem; padding: .75rem 1rem; margin-block-end: 1rem; font-size: .875rem;
@@ -125,6 +128,5 @@
   .lw-signingCompose__footer.is-sticky > * { flex: 1 1 100%; }
   .lw-signingCompose__card.lw-simpleCard { padding: 1rem .875rem; }
   .lw-signingCompose__row fieldset { padding-inline: .75rem; }
-  .lw-signingCompose__field.is-key { flex-basis: 100%; }
 }
 @media (prefers-reduced-motion: reduce) { .lw-signingCompose__templateCard { transition: none; } }
