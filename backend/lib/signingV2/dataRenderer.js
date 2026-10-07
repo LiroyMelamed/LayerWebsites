@@ -6,16 +6,21 @@ const { bytesHash, digest } = require('./canonical');
 const { expect, fail } = require('./errors');
 const limits = require('./limits');
 
-const RENDERER_VERSION = 'signing-data-v2.2';
+const RENDERER_VERSION = 'signing-data-v2.3';
+const FONTS_DIR = path.join(__dirname, '../../assets/fonts');
+// Neither Noto file has Latin letters; without this font, English values would use whatever the host has installed.
+const LATIN_DIR = path.join(path.dirname(require.resolve('pdfjs-dist/package.json')), 'standard_fonts');
 const FONT_FILES = [
-    ['SigningArabic', 'NotoSansArabic-Regular.ttf'],
-    ['SigningHebrew', 'NotoSansHebrew-Regular.ttf'],
+    ['SigningArabic', FONTS_DIR, 'NotoSansArabic-Regular.ttf'],
+    ['SigningHebrew', FONTS_DIR, 'NotoSansHebrew-Regular.ttf'],
+    ['SigningLatin', LATIN_DIR, 'LiberationSans-Regular.ttf'],
 ];
+const FONT_STACK = FONT_FILES.map(([family]) => family).join(',');
 let assets;
 function rendererAssets() {
     if (!assets) {
-        const fonts = FONT_FILES.map(([family, file]) => {
-            const bytes = fs.readFileSync(path.join(__dirname, '../../assets/fonts', file));
+        const fonts = FONT_FILES.map(([family, dir, file]) => {
+            const bytes = fs.readFileSync(path.join(dir, file));
             return { family, hash: bytesHash(bytes), uri: `data:font/ttf;base64,${bytes.toString('base64')}` };
         });
         assets = Object.freeze({ fonts, version: RENDERER_VERSION,
@@ -46,8 +51,26 @@ function overlayHtml(pages, fields, locale, fonts) {
         ${cssPages}
         *{box-sizing:border-box}html,body{margin:0;padding:0;background:transparent}
         .sheet{position:relative;break-after:page;overflow:hidden}.sheet:last-child{break-after:auto}
-        .value{position:absolute;font-family:SigningArabic,SigningHebrew;line-height:normal;color:#000;font-weight:400;overflow:visible;overflow-wrap:normal}
+        .value{position:absolute;font-family:${FONT_STACK};line-height:normal;color:#000;font-weight:400;overflow:visible;overflow-wrap:normal}
         </style></head><body>${body}</body></html>`;
+}
+
+async function loadFonts() {
+    await Promise.all([document.fonts.load('14px SigningArabic', 'العربية'), document.fonts.load('14px SigningHebrew', 'עברית'),
+        document.fonts.load('14px SigningLatin', 'Latin')]);
+    await document.fonts.ready;
+}
+
+// Pages may only load inline data; nothing in a signing document can reach the network.
+async function isolatedPage(context) {
+    const page = await context.newPage();
+    await page.setRequestInterception(true);
+    page.on('request', request => {
+        if (request.url().startsWith('data:') || request.url() === 'about:blank') request.continue();
+        else request.abort('blockedbyclient');
+    });
+    await page.setJavaScriptEnabled(false);
+    return page;
 }
 
 async function createDataRenderer({ executablePath, noSandbox = false } = {}) {
@@ -84,18 +107,9 @@ async function createDataRenderer({ executablePath, noSandbox = false } = {}) {
                 const html = overlayHtml(geometries, dataFields, locale, fontAssets.fonts);
                 const context = await browser.createBrowserContext();
                 try {
-                    page = await context.newPage();
-                    await page.setRequestInterception(true);
-                    page.on('request', request => {
-                        if (request.url().startsWith('data:') || request.url() === 'about:blank') request.continue();
-                        else request.abort('blockedbyclient');
-                    });
-                    await page.setJavaScriptEnabled(false);
+                    page = await isolatedPage(context);
                     await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 15000 });
-                    await page.evaluate(async () => {
-                        await Promise.all([document.fonts.load('14px SigningArabic', 'العربية'), document.fonts.load('14px SigningHebrew', 'עברית')]);
-                        await document.fonts.ready;
-                    });
+                    await page.evaluate(loadFonts);
                     const measurement = await page.evaluate(() => ({
                         fontsReady: Array.from(document.fonts).every(font => font.status === 'loaded'),
                         overflow: Array.from(document.querySelectorAll('.value')).filter(element => {
@@ -136,7 +150,25 @@ async function createDataRenderer({ executablePath, noSandbox = false } = {}) {
                 active = false;
             }
         },
+        // Self-contained documents such as the evidence certificate. Fonts come from the same bundled set.
+        async renderHtml({ html }) {
+            expect(!active, 'RENDERER_BUSY');
+            expect(typeof html === 'string' && html.length > 0 && html.length <= 4 * 1024 * 1024, 'INVALID_DOCUMENT');
+            active = true;
+            const context = await browser.createBrowserContext();
+            try {
+                const page = await isolatedPage(context);
+                await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 15000 });
+                await page.evaluate(loadFonts);
+                expect(await page.evaluate(() => Array.from(document.fonts).every(font => font.status === 'loaded')), 'FONT_LOAD_FAILED');
+                const bytes = Buffer.from(await page.pdf({ format: 'A4', printBackground: true, preferCSSPageSize: true, timeout: 15000 }));
+                return { bytes, contentHash: bytesHash(bytes), rendererHash: fontAssets.hash };
+            } finally {
+                await context.close();
+                active = false;
+            }
+        },
     };
 }
 
-module.exports = { createDataRenderer, rendererAssets, overlayHtml, RENDERER_VERSION };
+module.exports = { createDataRenderer, rendererAssets, overlayHtml, RENDERER_VERSION, FONT_STACK };

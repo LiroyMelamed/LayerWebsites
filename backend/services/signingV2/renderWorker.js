@@ -22,7 +22,9 @@ parentPort.on('message', async message => {
             parentPort.postMessage({ type: 'browser_started', pid: renderer.browserProcess?.pid });
             renderer.browserProcess?.once('exit', () => parentPort.postMessage({ type: 'browser_closed' }));
         }
-        const result = await renderer.render({ ...message.input, sourceBytes: Buffer.from(message.input.sourceBytes) });
+        const result = message.input.html !== undefined
+            ? await renderer.renderHtml({ html: message.input.html })
+            : await renderer.render({ ...message.input, sourceBytes: Buffer.from(message.input.sourceBytes) });
         parentPort.postMessage({ id: message.id, result });
     } catch (error) {
         parentPort.postMessage({ id: message.id, error: { code: error.errorCode || 'RENDER_FAILED',

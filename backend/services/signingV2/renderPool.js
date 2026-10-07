@@ -19,9 +19,14 @@ class RenderPool {
         this.closed = false;
     }
 
+    renderHtml({ html }) {
+        expect(typeof html === 'string', 'INVALID_DOCUMENT');
+        return this.render({ html });
+    }
+
     render(input) {
         if (this.closed) fail('WORKER_STOPPED', 503);
-        const bytes = input.sourceBytes.byteLength;
+        const bytes = input.html !== undefined ? Buffer.byteLength(input.html) : input.sourceBytes.byteLength;
         if (this.queue.length >= this.maxQueued || this.bytes + bytes > this.maxBytes) fail('RENDERER_BUSY', 503);
         this.bytes += bytes;
         return new Promise((resolve, reject) => {
