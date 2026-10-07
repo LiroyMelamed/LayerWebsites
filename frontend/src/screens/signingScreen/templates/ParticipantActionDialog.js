@@ -3,7 +3,7 @@ import PrimaryButton from '../../../components/styledComponents/buttons/PrimaryB
 import SecondaryButton from '../../../components/styledComponents/buttons/SecondaryButton';
 import useSigningLocale from './useSigningLocale';
 
-function newKey() {
+export function newKey() {
     if (window.crypto?.randomUUID) return window.crypto.randomUUID();
     const bytes = window.crypto.getRandomValues(new Uint8Array(16));
     bytes[6] = (bytes[6] & 0x0f) | 0x40; bytes[8] = (bytes[8] & 0x3f) | 0x80;

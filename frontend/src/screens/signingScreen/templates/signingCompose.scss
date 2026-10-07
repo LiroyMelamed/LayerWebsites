@@ -1,0 +1,124 @@
+.lw-signingCompose {
+  select { font: inherit; }
+  select:focus-visible { outline: 2px solid var(--lw-color-primary, #2a4365); outline-offset: 3px; }
+  h1[tabindex="-1"]:focus:not(:focus-visible), [tabindex="-1"]:focus:not(:focus-visible) { outline: none; }
+  h4 { font-size: .875rem; margin: 0 0 .5rem; color: #4a5568; }
+}
+.lw-signingCompose__back { display: inline-flex; align-items: center; gap: .375rem; text-decoration: none; margin-block-end: .25rem; }
+.lw-signingCompose__steps {
+  display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; list-style: none; padding: 0; margin: 0 0 1.25rem; font-size: .875rem; color: #4a5568;
+  li { display: flex; align-items: center; gap: .5rem; }
+  li > span {
+    display: inline-grid; place-items: center; inline-size: 1.75rem; block-size: 1.75rem; border-radius: 50%;
+    border: 1px solid #cbd5e0; font-weight: 700; font-variant-numeric: tabular-nums;
+  }
+  .is-current { color: var(--lw-color-text, #2d3748); font-weight: 700; }
+  .is-current > span { background: var(--lw-color-primary, #2a4365); border-color: var(--lw-color-primary, #2a4365); color: #fff; }
+  .is-done > span { border-color: var(--lw-color-primary, #2a4365); color: var(--lw-color-primary, #2a4365); }
+}
+.lw-signingCompose__card.lw-simpleCard {
+  display: block; padding: 1.25rem; margin-block-end: 1rem; border-radius: .5rem;
+  box-shadow: 0 2px 5px rgb(45 55 72 / 6%);
+  &:hover { transform: none; box-shadow: 0 2px 5px rgb(45 55 72 / 6%); }
+  > h2 { margin-block-end: .75rem; }
+}
+.lw-signingCompose__templateList {
+  list-style: none; padding: 0; margin: 1rem 0; display: grid; gap: .75rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+}
+.lw-signingCompose__templateCard {
+  inline-size: 100%; min-block-size: 6.5rem; display: flex; flex-direction: column; align-items: flex-start; gap: .375rem;
+  padding: 1rem; text-align: start; background: #fff; color: inherit; cursor: pointer;
+  border: 1px solid #e2e8f0; border-radius: .5rem; transition: border-color .15s ease, box-shadow .15s ease;
+  strong { font-size: .9375rem; overflow-wrap: anywhere; }
+  span { font-size: .8125rem; color: #4a5568; overflow-wrap: anywhere; }
+  &:hover { border-color: #a0aec0; }
+  &.is-selected { border-color: var(--lw-color-primary, #2a4365); box-shadow: inset 0 0 0 1px var(--lw-color-primary, #2a4365); }
+  &:focus-visible { outline: 2px solid var(--lw-color-primary, #2a4365); outline-offset: 3px; }
+}
+.lw-signingCompose__badge { color: var(--lw-color-primary, #2a4365) !important; font-weight: 700; }
+.lw-signingCompose__legacy {
+  margin-block-start: 1.5rem; padding-block-start: 1rem; border-block-start: 1px solid #e2e8f0;
+  ul { list-style: none; padding: 0; margin: .75rem 0 0; }
+  li { display: flex; align-items: center; justify-content: space-between; gap: .75rem 1rem; flex-wrap: wrap; padding-block: .75rem; border-block-end: 1px solid #edf2f7; }
+  li > span { display: flex; flex-direction: column; gap: .25rem; min-inline-size: 0; }
+  small { color: #4a5568; font-size: .8125rem; }
+}
+.lw-signingCompose__footer {
+  display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .75rem; margin-block-start: 1rem;
+  &.is-sticky {
+    position: sticky; inset-block-end: 0; z-index: 2; padding: .75rem 1rem; margin-inline: -.25rem;
+    background: rgb(255 255 255 / 96%); border-block-start: 1px solid #e2e8f0; border-radius: .5rem .5rem 0 0;
+  }
+}
+.lw-signingCompose__field {
+  display: flex; flex-direction: column; gap: .375rem; font-size: .8125rem; min-inline-size: 0;
+  > label { color: #4a5568; font-weight: 600; }
+  input, select {
+    min-block-size: 2.75rem; box-sizing: border-box; inline-size: 100%; padding: .5rem .75rem;
+    border: 1px solid #cbd5e0; border-radius: .375rem; background: #fff; color: inherit; font-size: .9375rem;
+  }
+  input[aria-invalid="true"], select[aria-invalid="true"] { border-color: #c53030; box-shadow: inset 0 0 0 1px #c53030; }
+  small { color: #4a5568; }
+  &.is-wide { max-inline-size: 32rem; }
+  &.is-key { flex: 0 1 16rem; }
+}
+.lw-signingCompose__fieldError { color: #9b2c2c !important; font-weight: 600; }
+.lw-signingCompose__person {
+  display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  &.is-compact { gap: .625rem; }
+}
+.lw-signingCompose__shared {
+  border: 1px solid #e2e8f0; border-radius: .5rem; padding: .75rem 1rem 1rem; margin: .75rem 0 0;
+  legend { font-weight: 700; padding-inline: .25rem; }
+}
+.lw-signingCompose__rowsHeading { display: flex; justify-content: space-between; gap: .75rem 1.5rem; flex-wrap: wrap; align-items: flex-start; margin-block-end: .75rem; }
+.lw-signingCompose__rows { list-style: none; padding: 0; margin: 0 0 1rem; display: grid; gap: .75rem; }
+.lw-signingCompose__row fieldset {
+  border: 1px solid #e2e8f0; border-radius: .5rem; padding: .5rem 1rem 1rem; margin: 0; min-inline-size: 0;
+  &[aria-invalid="true"] { border-color: #feb2b2; background: #fffafa; }
+  legend { font-weight: 700; font-size: .875rem; padding-inline: .25rem; }
+}
+.lw-signingCompose__rowHeader { display: flex; justify-content: space-between; align-items: flex-end; gap: .75rem; flex-wrap: wrap; margin-block-end: .75rem; }
+.lw-signingCompose__roleBlock + .lw-signingCompose__roleBlock { margin-block-start: .875rem; padding-block-start: .75rem; border-block-start: 1px dashed #e2e8f0; }
+.lw-signingCompose__excel {
+  background: #f7fafc; border: 1px solid #e2e8f0; border-radius: .5rem; padding: .75rem 1rem; margin-block-end: 1rem; font-size: .875rem;
+  ol { margin: 0; padding-inline-start: 1.25rem; display: grid; gap: .75rem; }
+  li { line-height: 1.6; }
+  li > button { margin-inline-start: .5rem; }
+}
+.lw-signingCompose__file {
+  position: relative; display: inline-flex; align-items: center; min-block-size: 2.75rem; padding-inline: 1rem;
+  border: 1px dashed var(--lw-color-primary, #2a4365); border-radius: .375rem; color: var(--lw-color-primary, #2a4365);
+  font-weight: 700; cursor: pointer;
+  input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  &:focus-within { outline: 2px solid var(--lw-color-primary, #2a4365); outline-offset: 3px; }
+}
+.lw-signingCompose__importNote { margin-block-start: .75rem; ul { margin: .25rem 0 0; padding-inline-start: 1.25rem; } }
+.lw-signingCompose__errorSummary {
+  border: 1px solid #feb2b2; background: #fff5f5; color: #742a2a; border-radius: .5rem; padding: .75rem 1rem; margin-block-end: 1rem;
+  h3 { margin-block-end: .5rem; }
+  ul { margin: 0; padding-inline-start: 1.25rem; font-size: .875rem; }
+  li { line-height: 1.5; }
+  .lw-signingPackages__textButton { min-block-size: 2.75rem; }
+  &:focus-visible { outline: 2px solid #9b2c2c; outline-offset: 3px; }
+}
+.lw-signingCompose__confirm {
+  border: 1px solid #f6ad55; background: #fffaf0; border-radius: .5rem; padding: 1rem; margin-block-end: 1rem;
+  p { margin-block: .25rem .75rem; }
+}
+.lw-signingCompose__summary {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr)); gap: .75rem; margin: 0 0 1.25rem;
+  > div { border: 1px solid #e2e8f0; border-radius: .5rem; padding: .75rem; min-inline-size: 0; }
+  dt { font-size: .8125rem; color: #4a5568; }
+  dd { margin: .25rem 0 0; font-size: 1.125rem; font-weight: 700; overflow-wrap: anywhere; }
+}
+.lw-signingCompose__plainList { margin: .375rem 0 1rem; padding-inline-start: 1.25rem; font-size: .875rem; line-height: 1.6; li { overflow-wrap: anywhere; } }
+.lw-signingCompose__note { font-size: .875rem; color: #2d3748; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: .375rem; padding: .625rem .75rem; max-inline-size: none !important; }
+@media (max-width: 48rem) {
+  .lw-signingCompose__footer.is-sticky > * { flex: 1 1 100%; }
+  .lw-signingCompose__card.lw-simpleCard { padding: 1rem .875rem; }
+  .lw-signingCompose__row fieldset { padding-inline: .75rem; }
+  .lw-signingCompose__field.is-key { flex-basis: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { .lw-signingCompose__templateCard { transition: none; } }

@@ -181,7 +181,8 @@
       "evidencePackageSignedOnly": "Evidence package is available only after full signature",
       "evidencePackageDownloadError": "Error downloading evidence package",
       "deleteError": "Error deleting the document"
-    }
+    },
+    "signingRuns": "Signing runs"
   },
   "evidenceDocuments": {
     "pageTitle": "Evidence documents",
@@ -1559,6 +1560,149 @@
       "PREVIOUS_OUTCOME_UNCERTAIN": "We do not know whether the previous message went out. Check delivery before sending another.",
       "MESSAGE_ALREADY_QUEUED": "A message to this signer is already waiting to go out. Track it in the Delivery tab.",
       "COOLDOWN_ACTIVE": "A message was just sent to this signer. You can send again from {{time}}."
+    },
+    "compose": {
+      "title": "New signing run",
+      "subtitle": "Choose a template, add recipients by hand or from an Excel file, check, and approve. Each row becomes its own package.",
+      "back": "Back to signing runs",
+      "stepsLabel": "Creation steps",
+      "steps": {
+        "template": "Template",
+        "recipients": "Recipients",
+        "review": "Check and approve",
+        "done": "Created"
+      },
+      "next": "Continue",
+      "previous": "Previous",
+      "discardTitle": "Leave without creating?",
+      "discardBody": "The recipients you entered will not be saved.",
+      "discardConfirm": "Leave without saving",
+      "keepEditing": "Keep editing",
+      "template": {
+        "heading": "Choose a template",
+        "empty": "There are no templates ready for bulk sending yet. You can convert an existing template below.",
+        "documents_one": "1 document",
+        "documents_other": "{{formattedCount}} documents",
+        "selected": "Selected",
+        "legacyHeading": "Existing templates",
+        "legacyHelp": "Converting creates a copy for bulk sending. The original template does not change, and its documents and fields stay exactly as they are.",
+        "convert": "Convert and choose",
+        "converting": "Converting…"
+      },
+      "details": "Run details",
+      "runName": "Run name",
+      "runNameHelp": "The name appears in the list of pending runs",
+      "templateSummary": "Template: {{name}}",
+      "shared": {
+        "heading": "Shared signer",
+        "help": "This signer signs in every package of this run."
+      },
+      "rows": {
+        "heading": "Recipients",
+        "help": "One row per package: {{roles}}. Up to {{max}} rows.",
+        "source": "Recipient source",
+        "manual": "Enter manually",
+        "excel": "From Excel",
+        "add": "Add row",
+        "row": "Row {{number}}",
+        "key": "Row ID (optional)",
+        "remove": "Remove row {{number}}",
+        "removeShort": "Remove",
+        "count_one": "1 of {{max}} rows",
+        "count_other": "{{formattedCount}} of {{max}} rows"
+      },
+      "fields": {
+        "name": "Full name",
+        "email": "Email",
+        "phone": "Phone",
+        "channel": "Channel",
+        "locale": "Language"
+      },
+      "channel": {
+        "auto": "Based on the details entered",
+        "email": "Email",
+        "sms": "SMS",
+        "both": "Email and SMS"
+      },
+      "locale": {
+        "template": "Template language",
+        "he": "Hebrew",
+        "ar": "Arabic",
+        "en": "English"
+      },
+      "excel": {
+        "stepDownload": "Download a sample file that matches this template.",
+        "download": "Download sample file",
+        "stepFill": "Fill in one row per recipient, up to {{max}} rows. Do not change the column headings.",
+        "upload": "Upload the completed file",
+        "reading": "Reading the file…",
+        "imported_one": "1 row was loaded from the file and replaced the previous list.",
+        "imported_other": "{{formattedCount}} rows were loaded from the file and replaced the previous list.",
+        "issues_one": "1 row was not loaded:",
+        "issues_other": "{{formattedCount}} rows were not loaded:",
+        "issueRow": "Row {{row}} in the file"
+      },
+      "check": "Check data",
+      "checking": "Checking…",
+      "errorsHeading_one": "Fix 1 error before creating",
+      "errorsHeading_other": "Fix {{formattedCount}} errors before creating",
+      "moreErrors_one": "and 1 more error",
+      "moreErrors_other": "and {{formattedCount}} more errors",
+      "review": {
+        "heading": "Check before creating",
+        "run": "Run name",
+        "template": "Template",
+        "packages": "Packages",
+        "documents": "Documents",
+        "recipients": "Recipients",
+        "documentList": "Documents in each package",
+        "sample_one": "Sample from the first row",
+        "sample_other": "Sample from the first {{formattedCount}} rows",
+        "sharedInvitations_one": "{{name}} will receive an invitation for 1 package.",
+        "sharedInvitations_other": "{{name}} will receive a separate invitation for each of the {{formattedCount}} packages.",
+        "otp": "Every signer verifies with a one-time code before signing.",
+        "effect": "Approving creates all packages at once. Invitations are sent after the documents are ready, and you can follow them in the list of pending runs.",
+        "edit": "Back to editing",
+        "confirm_one": "Create 1 package",
+        "confirm_other": "Create {{formattedCount}} packages",
+        "creating": "Creating…"
+      },
+      "done": {
+        "heading": "The run was created",
+        "body_one": "1 package was saved and is ready for preparation and sending.",
+        "body_other": "{{formattedCount}} packages were saved and are ready for preparation and sending.",
+        "reused": "This run was already created by an earlier request. No duplicate packages were created.",
+        "open": "Open the run",
+        "another": "Create another run"
+      },
+      "rowErrors": {
+        "NAME_REQUIRED": "Name is missing",
+        "INVALID_EMAIL": "The email address is not valid",
+        "INVALID_PHONE": "The phone number is not valid",
+        "INVALID_CHANNEL": "The delivery channel is not valid",
+        "EMAIL_REQUIRED": "Email delivery needs an email address",
+        "PHONE_REQUIRED": "SMS delivery needs a phone number",
+        "INVALID_LOCALE": "This language is not supported",
+        "DUPLICATE_ROW_KEY": "This row ID is already used in another row",
+        "UNSUPPORTED_CELL": "The row contains a formula or a non-text cell. Enter plain values only",
+        "INVALID_ROW": "The documents for this row could not be prepared",
+        "TEXT_OVERFLOW": "The text is longer than the space in the document",
+        "DISTINCT_PEOPLE_REQUIRED": "The same person cannot fill two roles that need different signers",
+        "CAPACITY_BUDGET_EXCEEDED": "This run is too large. The limit is 200 rows"
+      },
+      "errors": {
+        "INVALID_WORKBOOK": "This file is not a valid Excel workbook",
+        "WORKBOOK_HEADERS_CHANGED": "The column headings in the file were changed. Download the sample file and fill it in again",
+        "EMPTY_WORKBOOK": "No rows were found in the file",
+        "WORKBOOK_TOO_LARGE": "Excel files can be up to 2MB",
+        "RUN_NAME_REQUIRED": "Give this run a name",
+        "ROWS_REQUIRED": "Add at least one recipient",
+        "LIMIT_EXCEEDED": "The office has reached the monthly document limit of its current plan",
+        "INVALID_ROWS": "Some rows have errors. Check them again",
+        "INVALID_SUBMISSION": "The run details are not valid",
+        "PARTICIPANT_NOT_AVAILABLE": "One of the signers is not available in this office",
+        "INVALID_SOURCE": "One of the template documents is not available. Check the template"
+      }
     }
   }
 }

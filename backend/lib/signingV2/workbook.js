@@ -29,7 +29,7 @@ async function makeWorkbook(definition, locale) {
 }
 
 async function parseWorkbook(buffer, definition) {
-    guardArchive(buffer);
+    try { guardArchive(buffer); } catch { expect(false, 'INVALID_WORKBOOK'); }
     const book = new ExcelJS.Workbook();
     try { await book.xlsx.load(buffer); } catch { expect(false, 'INVALID_WORKBOOK'); }
     const sheet = book.getWorksheet(SHEET);

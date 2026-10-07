@@ -221,7 +221,8 @@
       "evidencePackageSignedOnly": "חבילת ראיות זמינה רק לאחר חתימה מלאה",
       "evidencePackageDownloadError": "שגיאה בהורדת חבילת ראיות",
       "deleteError": "שגיאה במחיקת המסמך"
-    }
+    },
+    "signingRuns": "שליחות מרובות"
   },
   "audit": {
     "pageTitle": "יומן פעולות",
@@ -2435,6 +2436,159 @@
       "PREVIOUS_OUTCOME_UNCERTAIN": "לא ידוע אם ההודעה הקודמת יצאה. יש לברר את מצב המסירה לפני שליחה נוספת.",
       "MESSAGE_ALREADY_QUEUED": "כבר יש הודעה לחותם הזה שממתינה ליציאה. אפשר לעקוב אחריה בלשונית המסירה.",
       "COOLDOWN_ACTIVE": "נשלחה אליו הודעה ממש עכשיו. אפשר לשלוח שוב החל מ־{{time}}."
+    },
+    "compose": {
+      "title": "שליחה חדשה לחתימה",
+      "subtitle": "בוחרים תבנית, מוסיפים נמענים ידנית או מקובץ Excel, בודקים ומאשרים. כל שורה הופכת לחבילה נפרדת.",
+      "back": "חזרה לרשימת השליחות",
+      "stepsLabel": "שלבי היצירה",
+      "steps": {
+        "template": "תבנית",
+        "recipients": "נמענים",
+        "review": "בדיקה ואישור",
+        "done": "נוצר"
+      },
+      "next": "המשך",
+      "previous": "הקודם",
+      "discardTitle": "לצאת בלי ליצור?",
+      "discardBody": "הנמענים שהוזנו לא יישמרו.",
+      "discardConfirm": "יציאה בלי שמירה",
+      "keepEditing": "המשך עריכה",
+      "template": {
+        "heading": "בחירת תבנית",
+        "empty": "עדיין אין תבניות מוכנות לשליחה מרובה. אפשר להמיר תבנית קיימת למטה.",
+        "documents_one": "מסמך אחד",
+        "documents_two": "{{formattedCount}} מסמכים",
+        "documents_other": "{{formattedCount}} מסמכים",
+        "selected": "נבחרה",
+        "legacyHeading": "תבניות קיימות",
+        "legacyHelp": "המרה יוצרת עותק לשליחה מרובה. התבנית המקורית לא משתנה, והמסמכים והשדות נשמרים כפי שהם.",
+        "convert": "המרה ובחירה",
+        "converting": "ממיר…"
+      },
+      "details": "פרטי השליחה",
+      "runName": "שם השליחה",
+      "runNameHelp": "השם מופיע ברשימת השליחות הממתינות",
+      "templateSummary": "תבנית: {{name}}",
+      "shared": {
+        "heading": "חותם משותף",
+        "help": "החותם הזה חותם בכל החבילות של השליחה."
+      },
+      "rows": {
+        "heading": "נמענים",
+        "help": "שורה לכל חבילה: {{roles}}. עד {{max}} שורות.",
+        "source": "מקור הנמענים",
+        "manual": "הזנה ידנית",
+        "excel": "מקובץ Excel",
+        "add": "הוספת שורה",
+        "row": "שורה {{number}}",
+        "key": "מזהה שורה (לא חובה)",
+        "remove": "הסרת שורה {{number}}",
+        "removeShort": "הסרה",
+        "count_one": "שורה אחת מתוך {{max}}",
+        "count_two": "{{formattedCount}} שורות מתוך {{max}}",
+        "count_other": "{{formattedCount}} שורות מתוך {{max}}"
+      },
+      "fields": {
+        "name": "שם מלא",
+        "email": "אימייל",
+        "phone": "טלפון",
+        "channel": "ערוץ",
+        "locale": "שפה"
+      },
+      "channel": {
+        "auto": "לפי הפרטים שהוזנו",
+        "email": "אימייל",
+        "sms": "SMS",
+        "both": "אימייל ו־SMS"
+      },
+      "locale": {
+        "template": "שפת התבנית",
+        "he": "עברית",
+        "ar": "ערבית",
+        "en": "אנגלית"
+      },
+      "excel": {
+        "stepDownload": "מורידים קובץ לדוגמה שמתאים לתבנית.",
+        "download": "הורדת קובץ לדוגמה",
+        "stepFill": "ממלאים שורה לכל נמען, עד {{max}} שורות. לא משנים את כותרות העמודות.",
+        "upload": "העלאת הקובץ המלא",
+        "reading": "קורא את הקובץ…",
+        "imported_one": "שורה אחת נטענה מהקובץ והחליפה את הרשימה הקודמת.",
+        "imported_two": "{{formattedCount}} שורות נטענו מהקובץ והחליפו את הרשימה הקודמת.",
+        "imported_other": "{{formattedCount}} שורות נטענו מהקובץ והחליפו את הרשימה הקודמת.",
+        "issues_one": "שורה אחת לא נטענה:",
+        "issues_two": "{{formattedCount}} שורות לא נטענו:",
+        "issues_other": "{{formattedCount}} שורות לא נטענו:",
+        "issueRow": "שורה {{row}} בקובץ"
+      },
+      "check": "בדיקת הנתונים",
+      "checking": "בודק…",
+      "errorsHeading_one": "יש לתקן שגיאה אחת לפני היצירה",
+      "errorsHeading_two": "יש לתקן {{formattedCount}} שגיאות לפני היצירה",
+      "errorsHeading_other": "יש לתקן {{formattedCount}} שגיאות לפני היצירה",
+      "moreErrors_one": "ועוד שגיאה אחת",
+      "moreErrors_two": "ועוד {{formattedCount}} שגיאות",
+      "moreErrors_other": "ועוד {{formattedCount}} שגיאות",
+      "review": {
+        "heading": "בדיקה לפני יצירה",
+        "run": "שם השליחה",
+        "template": "תבנית",
+        "packages": "חבילות",
+        "documents": "מסמכים",
+        "recipients": "נמענים",
+        "documentList": "מסמכים בכל חבילה",
+        "sample_one": "דוגמה מהשורה הראשונה",
+        "sample_two": "דוגמה מ־{{formattedCount}} השורות הראשונות",
+        "sample_other": "דוגמה מ־{{formattedCount}} השורות הראשונות",
+        "sharedInvitations_one": "{{name}} יקבל הזמנה לחבילה אחת.",
+        "sharedInvitations_two": "{{name}} יקבל הזמנה נפרדת לכל אחת מ־{{formattedCount}} החבילות.",
+        "sharedInvitations_other": "{{name}} יקבל הזמנה נפרדת לכל אחת מ־{{formattedCount}} החבילות.",
+        "otp": "כל חותם יאמת את עצמו בקוד חד־פעמי לפני החתימה.",
+        "effect": "האישור יוצר את כל החבילות בבת אחת. ההזמנות יישלחו אחרי שהמסמכים יהיו מוכנים, ואפשר לעקוב אחריהן ברשימת השליחות הממתינות.",
+        "edit": "חזרה לעריכה",
+        "confirm_one": "יצירת חבילה אחת",
+        "confirm_two": "יצירת {{formattedCount}} חבילות",
+        "confirm_other": "יצירת {{formattedCount}} חבילות",
+        "creating": "יוצר…"
+      },
+      "done": {
+        "heading": "השליחה נוצרה",
+        "body_one": "חבילה אחת נשמרה ומוכנה להכנה ולשליחה.",
+        "body_two": "{{formattedCount}} חבילות נשמרו ומוכנות להכנה ולשליחה.",
+        "body_other": "{{formattedCount}} חבילות נשמרו ומוכנות להכנה ולשליחה.",
+        "reused": "השליחה כבר נוצרה בבקשה קודמת. לא נוצרו חבילות כפולות.",
+        "open": "מעבר לשליחה",
+        "another": "שליחה נוספת"
+      },
+      "rowErrors": {
+        "NAME_REQUIRED": "חסר שם",
+        "INVALID_EMAIL": "כתובת האימייל אינה תקינה",
+        "INVALID_PHONE": "מספר הטלפון אינו תקין",
+        "INVALID_CHANNEL": "ערוץ השליחה אינו תקין",
+        "EMAIL_REQUIRED": "לשליחה באימייל נדרשת כתובת אימייל",
+        "PHONE_REQUIRED": "לשליחה ב־SMS נדרש מספר טלפון",
+        "INVALID_LOCALE": "השפה אינה נתמכת",
+        "DUPLICATE_ROW_KEY": "מזהה השורה כבר מופיע בשורה אחרת",
+        "UNSUPPORTED_CELL": "השורה מכילה נוסחה או תא שאינו טקסט. יש להזין ערכים בלבד",
+        "INVALID_ROW": "לא ניתן להכין את המסמכים לשורה הזאת",
+        "TEXT_OVERFLOW": "הטקסט ארוך מהמקום שבמסמך",
+        "DISTINCT_PEOPLE_REQUIRED": "אותו אדם לא יכול למלא שני תפקידים שדורשים חותמים שונים",
+        "CAPACITY_BUDGET_EXCEEDED": "הריצה גדולה מהמותר. אפשר עד 200 שורות"
+      },
+      "errors": {
+        "INVALID_WORKBOOK": "הקובץ אינו קובץ Excel תקין",
+        "WORKBOOK_HEADERS_CHANGED": "כותרות העמודות בקובץ שונו. יש להוריד את הקובץ לדוגמה ולמלא אותו מחדש",
+        "EMPTY_WORKBOOK": "לא נמצאו שורות בקובץ",
+        "WORKBOOK_TOO_LARGE": "אפשר להעלות קובץ Excel עד 2MB",
+        "RUN_NAME_REQUIRED": "יש לתת שם לשליחה",
+        "ROWS_REQUIRED": "יש להוסיף לפחות נמען אחד",
+        "LIMIT_EXCEEDED": "המשרד הגיע למכסת המסמכים החודשית בחבילה הנוכחית",
+        "INVALID_ROWS": "נמצאו שגיאות בנתונים. יש לבדוק שוב",
+        "INVALID_SUBMISSION": "פרטי השליחה אינם תקינים",
+        "PARTICIPANT_NOT_AVAILABLE": "אחד החותמים אינו זמין במשרד הזה",
+        "INVALID_SOURCE": "אחד ממסמכי התבנית אינו זמין. יש לבדוק את התבנית"
+      }
     }
   }
 }

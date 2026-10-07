@@ -18,6 +18,12 @@ const signingPackagesApi = {
     executeAction: (packageId, personId, body, idempotencyKey) => signingRequest('post', `${participant(packageId, personId)}/actions`, body,
         { headers: { 'Idempotency-Key': idempotencyKey } }),
     operation: (id, config) => signingRequest('get', `${root}/operations/${id}`, null, config),
+    templates: config => signingRequest('get', `${root}/templates`, null, config),
+    importLegacy: (id, locale) => signingRequest('post', `${root}/templates/legacy/${id}/import`, { locale }),
+    workbook: (versionId, locale) => signingRequest('get', `${root}/templates/${versionId}/workbook?${query({ locale })}`, null, { responseType: 'blob' }),
+    parseWorkbook: (versionId, base64) => signingRequest('post', `${root}/templates/${versionId}/workbook`, { base64 }),
+    previewCreation: body => signingRequest('post', `${root}/creation/preview`, body),
+    create: (body, idempotencyKey) => signingRequest('post', `${root}/creation`, body, { headers: { 'Idempotency-Key': idempotencyKey } }),
 };
 
 export default signingPackagesApi;

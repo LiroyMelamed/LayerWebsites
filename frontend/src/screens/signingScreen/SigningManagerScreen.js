@@ -48,6 +48,7 @@ import { useFirmPermissions } from "../../providers/FirmPermissionsProvider";
 import "../calendarScreen/CalendarInviteScreen.scss";
 import RequestLoadError from '../../components/ui/RequestLoadError';
 import TemplatesWorkspace from './templates/TemplatesWorkspace';
+import SigningPackagesHub, { useSigningV2Available } from './templates/SigningPackagesHub';
 
 
 export const SigningManagerScreenName = "/SigningManagerScreen";
@@ -65,6 +66,8 @@ export default function SigningManagerScreen() {
     const { isFromApp } = useFromApp();
     const [activeTab, setActiveTab] = useState("pending");
     const [showTemplates, setShowTemplates] = useState(false);
+    const [showRuns, setShowRuns] = useState(false);
+    const signingV2Available = useSigningV2Available();
     const [scope, setScope] = useState("mine");
     useEffect(() => {
         if (!canViewOfficeFiles && scope === 'office') setScope('mine');
@@ -358,6 +361,7 @@ export default function SigningManagerScreen() {
     };
 
     if (showTemplates) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><SimpleScrollView><TemplatesWorkspace canUpload={canSignUpload} canManage={canSignManage} onClose={() => { setShowTemplates(false);reloadFiles(); }} /></SimpleScrollView></SimpleScreen>;
+    if (showRuns) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><SimpleScrollView><SigningPackagesHub canCreate={canSignUpload} onClose={() => { setShowRuns(false);reloadFiles(); }} /></SimpleScrollView></SimpleScreen>;
 
     return (
         <SimpleScreen
@@ -382,6 +386,7 @@ export default function SigningManagerScreen() {
 
                 <SimpleContainer className="lw-signingManagerScreen__topRow">
                     <SecondaryButton onPress={() => setShowTemplates(true)}>{t('signingManager.templatesAndBulk')}</SecondaryButton>
+                    {signingV2Available && <SecondaryButton onPress={() => setShowRuns(true)}>{t('signingManager.signingRuns')}</SecondaryButton>}
                     <SimpleContainer className="lw-signingManagerScreen__searchContainer">
                         <SearchInput
                             onSearch={handleSearch}
