@@ -31,8 +31,14 @@ function signedDocumentOf(view) {
     return null;
 }
 
-function hasWaiting(view) {
-    return (view?.packages || []).some(pkg => (pkg.documents || []).some(document => (document.tasks || []).some(task => task.state === 'waiting')));
+function waitingDocumentOf(view) {
+    for (const pkg of view?.packages || []) {
+        for (const document of pkg.documents || []) {
+            const task = (document.tasks || []).find(item => item.state === 'waiting');
+            if (task) return { pkg, document, task };
+        }
+    }
+    return null;
 }
 
 export default function PublicPackageSigning() {
@@ -63,7 +69,7 @@ export default function PublicPackageSigning() {
     }, []);
 
     const documents = useMemo(() => documentsOf(view), [view]);
-    const current = documents[index] || signedDocumentOf(view);
+    const current = documents[index] || signedDocumentOf(view) || waitingDocumentOf(view);
     const adapter = useMemo(() => (current ? createV2DocumentAdapter({
         token,
         document: current.document,
@@ -93,13 +99,6 @@ export default function PublicPackageSigning() {
             ) : !view ? (
                 <SimpleContainer className="lw-publicSigningScreen__container">
                     <Text14>{t('common.loading')}</Text14>
-                </SimpleContainer>
-            ) : !current && hasWaiting(view) ? (
-                <SimpleContainer className="lw-publicSigningScreen__container">
-                    <SimpleContainer className="lw-publicSigningScreen__stack">
-                        <TextBold24>{t('signing.canvas.waitingForPreviousSigners')}</TextBold24>
-                        <Text14>{t('signing.canvas.waitingForPreviousSignersDesc')}</Text14>
-                    </SimpleContainer>
                 </SimpleContainer>
             ) : !current ? (
                 <SimpleContainer className="lw-publicSigningScreen__container">

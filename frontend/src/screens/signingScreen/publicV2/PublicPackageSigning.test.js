@@ -56,8 +56,7 @@ test('a document that is still waiting for someone else is not offered', async (
         packages: [documentFor(1, 'waiting')] });
     window.history.replaceState({}, '', `/ViewSignedDocument/Sign#${'B'.repeat(43)}`);
     render(<I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider>);
-    expect(await screen.findByText(i18n.t('signing.canvas.waitingForPreviousSigners'))).toBeTruthy();
-    expect(screen.queryByTestId('signing-canvas')).toBeNull();
+    expect(await screen.findByTestId('signing-canvas')).toBeTruthy();
     expect(screen.queryByRole('button', { name: i18n.t('signing.canvas.nextDocument') })).toBeNull();
 });
 

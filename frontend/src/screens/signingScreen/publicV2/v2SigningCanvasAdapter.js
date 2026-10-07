@@ -40,6 +40,7 @@ export function createV2DocumentAdapter({ token, document, task, personName, con
             Status: accepted ? 'signed' : 'pending',
             FileName: document.name,
             OriginalFileName: document.name,
+            FileKey: document.documentId || 'document',
             OtpEnabled: !waiting && !accepted,
             RequireOtp: !waiting && !accepted,
             SigningPolicyVersion: consentVersion,
