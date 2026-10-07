@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { createInstance } from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import signingPublicApi from '../../../api/signingPublicApi';
@@ -49,6 +49,27 @@ test('a package link signs only the document whose turn has arrived', async () =
     fireEvent.click(screen.getByRole('button', { name: i18n.t('signing.canvas.nextDocument') }));
     await waitFor(() => expect(signingPublicApi.describe).toHaveBeenCalledTimes(2));
     expect(screen.getByTestId('signing-canvas')).toBeTruthy();
+});
+
+function LocationProbe() {
+    const location = useLocation();
+    return <div data-testid="location">{location.pathname}</div>;
+}
+
+test.each([
+    ['Admin', '/AdminStack/MainScreen'],
+    ['User', '/ClientStack/ClientMainScreen'],
+])('closing leaves the package for the %s home even when another document is waiting', async (role, home) => {
+    const i18n = await translations();
+    localStorage.setItem('token', 'synthetic-session');
+    localStorage.setItem('role', role);
+    signingPublicApi.describe.mockResolvedValue({ person: { name: 'לירוי' }, locale: 'he', consentVersion: 'consent-v',
+        packages: [documentFor(1, 'ready'), documentFor(2, 'ready')] });
+    window.history.replaceState({}, '', `/ViewSignedDocument/Sign#${'D'.repeat(43)}`);
+    render(<MemoryRouter><I18nextProvider i18n={i18n}><PublicPackageSigning /><LocationProbe /></I18nextProvider></MemoryRouter>);
+    fireEvent.click(await screen.findByRole('button', { name: 'close' }));
+    expect(await screen.findByTestId('location')).toHaveTextContent(home);
+    expect(signingPublicApi.describe).toHaveBeenCalledTimes(1);
 });
 
 test('a document that is still waiting for someone else is not offered', async () => {

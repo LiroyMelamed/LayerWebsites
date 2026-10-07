@@ -118,10 +118,7 @@ export default function PublicPackageSigning() {
                     filesApi={adapter}
                     loadPublicPdf={() => signingPublicApi.document(token, current.document.documentId)}
                     nextDocument={documents.length > 1 && index < documents.length - 1 ? { onPress: openNext, label: t('signing.canvas.nextDocument') } : null}
-                    onClose={() => {
-                        if (documents.length > 1 && index < documents.length - 1) openNext();
-                        else navigate(sessionHomePath(), { replace: true });
-                    }}
+                    onClose={() => navigate(sessionHomePath(), { replace: true })}
                 />
             )}
         </SimpleScreen>
