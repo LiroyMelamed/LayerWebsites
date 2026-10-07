@@ -182,6 +182,7 @@ app.use("/api/Files", filesRoutes);
 app.use("/api/SigningFiles", signingFileRoutes);
 app.use('/api/signing-templates', require('./routes/signingTemplateRoutes'));
 app.use('/api/signing-batches', require('./routes/signingBatchRoutes'));
+app.use('/api/signing-v2', require('./routes/signingV2Routes'));
 app.use("/api/billing", billingRoutes);
 app.use("/api/audit-events", auditEventsRoutes);
 app.use("/api/evidence-documents", evidenceDocumentsRoutes);

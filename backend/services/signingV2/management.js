@@ -5,7 +5,7 @@ const { packageScopeSql, scopeParams } = require('./access');
 const PAGE_SIZE = 25;
 function filters(input = {}) {
     const state = input.state || 'pending';
-    expect(['pending', 'complete', 'cancelled', 'all'].includes(state), 'INVALID_FILTER');
+    expect(['pending', 'attention', 'complete', 'cancelled', 'all'].includes(state), 'INVALID_FILTER');
     const query = String(input.query || '').trim().slice(0, 100);
     const limit = input.limit === undefined ? PAGE_SIZE : Number(input.limit);
     expect(Number.isInteger(limit) && limit >= 1 && limit <= 100, 'INVALID_FILTER');
@@ -53,14 +53,22 @@ function projectionCte(scope) {
             count(*) FILTER (WHERE d.state='failed') AS failed_count
         FROM signing_documents d JOIN authorized a ON a.owner_context_id=d.owner_context_id AND a.active_revision_id=d.revision_id
         GROUP BY d.revision_id
-    ), delivery_counts AS (
-        SELECT p.revision_id,count(*) FILTER (WHERE d.state IN ('provider_accepted','delivered')) AS accepted_messages,
-            count(*) FILTER (WHERE d.state='delivered') AS delivered_messages,
-            count(*) FILTER (WHERE d.state IN ('failed','uncertain')) AS delivery_issues,
-            count(*) FILTER (WHERE d.state='pending') AS pending_messages,
-            max(d.attempted_at) AS last_message_at
+    ), delivery_rows AS (
+        -- Only the latest attempt per person, channel and message kind decides attention:
+        -- a successful resend clears an earlier failure instead of leaving it flagged forever.
+        SELECT p.revision_id,d.state,d.attempted_at,
+            row_number() OVER (PARTITION BY d.profile_id,d.channel,
+                CASE WHEN d.purpose IN ('invitation','reminder','resend') THEN 'invite' ELSE d.purpose END
+                ORDER BY d.created_at DESC,d.id DESC) AS recency
         FROM signing_delivery_profiles p JOIN authorized a ON a.owner_context_id=p.owner_context_id AND a.active_revision_id=p.revision_id
-        JOIN signing_deliveries d ON d.owner_context_id=p.owner_context_id AND d.profile_id=p.id GROUP BY p.revision_id
+        JOIN signing_deliveries d ON d.owner_context_id=p.owner_context_id AND d.profile_id=p.id
+    ), delivery_counts AS (
+        SELECT revision_id,count(*) FILTER (WHERE state IN ('provider_accepted','delivered')) AS accepted_messages,
+            count(*) FILTER (WHERE state='delivered') AS delivered_messages,
+            count(*) FILTER (WHERE recency=1 AND state IN ('failed','uncertain')) AS delivery_issues,
+            count(*) FILTER (WHERE state='pending') AS pending_messages,
+            max(attempted_at) AS last_message_at
+        FROM delivery_rows GROUP BY revision_id
     ), person_search AS (
         SELECT p.revision_id,string_agg(p.identity_snapshot->>'name',' ') AS person_names,
             string_agg(p.identity_snapshot->>'partyName',' ') AS party_names
@@ -91,7 +99,9 @@ function queryMatchesSql(alias = 'p', parameter = 5) {
 function stateMatchesSql(alias, parameter) {
     return `($${parameter}='all' OR ($${parameter}='complete' AND ${alias}.workflow_state='complete')
         OR ($${parameter}='cancelled' AND ${alias}.workflow_state='cancelled')
-        OR ($${parameter}='pending' AND ${alias}.workflow_state NOT IN ('complete','cancelled','superseded')))`;
+        OR ($${parameter}='pending' AND ${alias}.workflow_state NOT IN ('complete','cancelled','superseded'))
+        OR ($${parameter}='attention' AND ${alias}.workflow_state NOT IN ('complete','cancelled','superseded')
+            AND (${alias}.issue_count>0 OR ${alias}.workflow_state IN ('attention','expired'))))`;
 }
 
 function encodeCursor(row) {
