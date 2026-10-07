@@ -2266,5 +2266,123 @@
     "loading": "טוען מסמך...",
     "signedAt": "נחתם בתאריך",
     "download": "הורד מסמך חתום"
+  },
+  "signingV2": {
+    "title": "חתימות ממתינות",
+    "subtitle": "מעקב אחר החבילות, החותמים והמסירה בכל שליחה.",
+    "newPackage": "חבילה חדשה",
+    "backToDocuments": "חזרה למסמכים",
+    "search": "חיפוש לקוח, חותם, חברה, תיק או תבנית",
+    "statusFilter": "מצב החבילות",
+    "refresh": "רענון מצב",
+    "pagination": "עמודי התוצאות",
+    "previousPage": "לעמוד הקודם",
+    "nextPage": "לעמוד הבא",
+    "fraction": "{{accepted}} / {{required}}",
+    "obligations": "דרישות חתימה הושלמו",
+    "openPackage": "פתיחת חבילה",
+    "noMatchingPackages": "אין חבילות התואמות למסנן הזה.",
+    "packageDetails": "פרטי החבילה",
+    "notYet": "טרם בוצע",
+    "preparedFraction": "מסמכים מוכנים: {{ready}} מתוך {{total}}",
+    "informational": "נספח מידע — אינו דורש חתימה",
+    "uncertainHelp": "לא התקבל אישור מהספק. יש לברר את מצב המסירה לפני שליחה חוזרת.",
+    "authorizedSummary": "סיכום השליחה כולל את כל החבילות שבאפשרותך לראות, גם חבילות שהושלמו. הרשימה למטה מוצגת לפי המסננים.",
+    "emptyTitle": "אין שליחות להצגה",
+    "emptyBody": "אפשר לשנות את החיפוש או המסננים. חבילות חדשות יופיעו כאן למעקב.",
+    "needsAttention": "דורשות טיפול: {{formattedCount}}",
+    "completedPackages": "הושלמו: {{formattedCount}}",
+    "cancelledPackages": "בוטלו: {{formattedCount}}",
+    "filter": {
+      "pending": "בטיפול",
+      "complete": "הושלמו",
+      "cancelled": "בוטלו",
+      "all": "הכול"
+    },
+    "tabs": {
+      "people": "חותמים",
+      "documents": "מסמכים",
+      "delivery": "מסירה"
+    },
+    "match": {
+      "person": "נמצאה התאמה בשם החותם",
+      "party": "נמצאה התאמה בשם הצד"
+    },
+    "capacity": {
+      "personal": "בחתימה אישית",
+      "representative": "בשם התאגיד",
+      "professional": "בתפקיד מקצועי"
+    },
+    "channel": {
+      "email": "אימייל",
+      "sms": "SMS",
+      "manual": "מסירה ידנית"
+    },
+    "workflow": {
+      "draft": "טיוטה",
+      "awaiting_approval": "ממתינה לאישור פנימי",
+      "authorized_preparing": "המסמכים בהכנה",
+      "active": "ממתינה לחתימות",
+      "attention": "נדרש טיפול",
+      "complete": "הושלמה",
+      "cancelled": "בוטלה",
+      "superseded": "הוחלפה בגרסה חדשה",
+      "expired": "מועד החתימה חלף"
+    },
+    "task": {
+      "blocked": "טרם זמין לחתימה",
+      "ready": "מוכן לחתימה",
+      "accepted": "החתימה נקלטה",
+      "declined": "החותם סירב",
+      "expired": "מועד החתימה חלף",
+      "cancelled": "בוטל",
+      "preparing": "ממתין להכנת המסמכים",
+      "previousStage": "ממתין לשלב הקודם"
+    },
+    "document": {
+      "pending": "ממתין להכנה",
+      "preparing": "בהכנה",
+      "ready": "מוכן לחתימה",
+      "failed": "ההפקה דורשת תיקון",
+      "finalizing": "מפיקים את העותק החתום",
+      "final": "העותק החתום מוכן"
+    },
+    "delivery": {
+      "pending": "ממתינה לשליחה",
+      "dispatching": "מועברת לספק",
+      "provider_accepted": "הספק אישר קבלה",
+      "delivered": "התקבל אישור מסירה",
+      "failed": "השליחה נכשלה",
+      "uncertain": "מצב המסירה אינו ודאי",
+      "cancelled": "השליחה בוטלה",
+      "skipped_completed": "לא נשלחה — החתימה כבר הושלמה"
+    },
+    "results_zero": "אין שליחות להצגה",
+    "results_one": "שליחה אחת",
+    "results_two": "שתי שליחות",
+    "results_other": "{{formattedCount}} שליחות",
+    "packages_zero": "ללא חבילות",
+    "packages_one": "חבילה אחת",
+    "packages_two": "שתי חבילות",
+    "packages_other": "{{formattedCount}} חבילות",
+    "matchingPackages_zero": "אין חבילות תואמות",
+    "matchingPackages_one": "חבילה אחת תואמת",
+    "matchingPackages_two": "שתי חבילות תואמות",
+    "matchingPackages_other": "{{formattedCount}} חבילות תואמות",
+    "errors": {
+      "REQUEST_FAILED": "הפעולה לא הושלמה. אפשר לרענן ולנסות שוב.",
+      "NOT_FOUND": "הפריט אינו זמין לך. יש לרענן את הרשימה.",
+      "FORBIDDEN": "אין לך הרשאה לפעולה הזאת. יש לפנות למנהל המשרד.",
+      "VERSION_CHANGED": "המידע השתנה בזמן העריכה. יש לטעון את הגרסה העדכנית לפני שמירה.",
+      "PREVIEW_CHANGED": "פרטי החבילה השתנו מאז הבדיקה. יש לעיין בהם ולאשר שוב.",
+      "IDEMPOTENCY_CONFLICT": "הבקשה הזאת כבר נשמרה עם פרטים אחרים. יש לבדוק את מצבה לפני יצירה חדשה.",
+      "TEXT_OVERFLOW": "הטקסט אינו נכנס לשדה. יש להרחיב את השדה או לתקן את התוכן.",
+      "CAPACITY_BUDGET_EXCEEDED": "החבילה חורגת ממגבלת הכמות או הנפח. יש לבדוק את המסמכים לפני המשך.",
+      "AUTHORITY_EXPIRED": "ההרשאה לייצג את התאגיד אינה בתוקף. יש לעדכן את האסמכתה והאישור.",
+      "DISTINCT_PEOPLE_REQUIRED": "יש לבחור שני אנשים שונים כמורשי חתימה.",
+      "SOURCE_CHANGED": "קובץ המקור השתנה. יש לבחור את הקובץ ולבדוק מחדש את התבנית.",
+      "INVALID_FILTER": "המסנן אינו תקין. יש לבחור מסנן מחדש.",
+      "INVALID_CURSOR": "הרשימה השתנתה. יש לחזור לעמוד הראשון."
+    }
   }
 }

@@ -1,0 +1,45 @@
+✔ canonical snapshots are deterministic, reject lossy JSON and keep exact identifiers/decimal amounts (1.474958ms)
+✔ compiler creates immutable personalized snapshots and counts one task per document/participation, not spots (1.470875ms)
+✔ 200 employees support 600, 1200 and 2000 documents; technical budgets apply beyond the UI (110.200292ms)
+✔ unknown people, changed sources, overflow geometry and unknown data keys are blockers (0.366583ms)
+✔ optional role needs an authored inactive treatment; informational annex is never counted signed (0.408791ms)
+✔ two named corporate representatives need distinct verified people and current scoped authority (0.452666ms)
+▶ v2 set-based persistence, isolation, retry and durable worker fences
+  ✔ all 200 packages, 600 docs/tasks and 1200 jobs are durable at response; no sends or source reads (111.949833ms)
+  ✔ lost response retry returns same submission, conflicting payload rejects, new connection sees all children (8.0515ms)
+  ✔ quota failure rolls back everything and immutable versions reject edits (28.168625ms)
+  ✔ foreign office data cannot join a revision even through direct SQL (11.879375ms)
+  ✖ concurrent claims never duplicate a lease; expired worker cannot commit an artifact (4.063125ms)
+  ✔ dependencies block activation; interrupted provider dispatch is uncertain, never blindly retried (5.186667ms)
+✖ v2 set-based persistence, isolation, retry and durable worker fences (198.458417ms)
+ℹ {"workload":"200x3","elapsedMs":109.04691700000001,"queries":20,"representativeInfrastructure":false,"sampleCount":1}
+ℹ tests 13
+ℹ suites 0
+ℹ pass 11
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 300.76575
+
+✖ failing tests:
+
+test at tests/signingV2.persistence.integration.test.js:60:13
+✖ concurrent claims never duplicate a lease; expired worker cannot commit an artifact (4.063125ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 4
+  
+      at TestContext.<anonymous> (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/signing-templates-20261006/backend/tests/signingV2.persistence.integration.test.js:62:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async TestContext.<anonymous> (/Users/liroymelamed/Documents/Codex/2026-10-05/new-chat-2/work/signing-templates-20261006/backend/tests/signingV2.persistence.integration.test.js:60:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

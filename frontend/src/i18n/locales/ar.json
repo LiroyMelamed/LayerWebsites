@@ -1628,5 +1628,129 @@
     "loading": "جاري تحميل المستند...",
     "signedAt": "تم التوقيع بتاريخ",
     "download": "تحميل المستند الموقع"
+  },
+  "signingV2": {
+    "title": "التوقيعات المعلّقة",
+    "subtitle": "متابعة الحزم والموقّعين والتسليم لكل عملية إرسال.",
+    "newPackage": "حزمة جديدة",
+    "backToDocuments": "العودة إلى المستندات",
+    "search": "البحث عن عميل أو موقّع أو شركة أو ملف أو قالب",
+    "statusFilter": "حالة الحزم",
+    "refresh": "تحديث الحالة",
+    "pagination": "صفحات النتائج",
+    "previousPage": "الصفحة السابقة",
+    "nextPage": "الصفحة التالية",
+    "fraction": "{{accepted}} / {{required}}",
+    "obligations": "متطلبات توقيع مكتملة",
+    "openPackage": "فتح الحزمة",
+    "noMatchingPackages": "لا توجد حزم تطابق هذه التصفية.",
+    "packageDetails": "تفاصيل الحزمة",
+    "notYet": "لم يُنفّذ بعد",
+    "preparedFraction": "المستندات الجاهزة: {{ready}} من {{total}}",
+    "informational": "ملحق معلومات — لا يتطلب توقيعًا",
+    "uncertainHelp": "لم يصل تأكيد من المزوّد. يجب التحقق من حالة التسليم قبل إعادة الإرسال.",
+    "authorizedSummary": "يشمل ملخّص الإرسال جميع الحزم التي يمكنك عرضها، بما فيها الحزم المكتملة. القائمة أدناه تخضع للتصفية.",
+    "emptyTitle": "لا توجد عمليات إرسال للعرض",
+    "emptyBody": "يمكنك تغيير البحث أو عوامل التصفية. ستظهر الحزم الجديدة هنا للمتابعة.",
+    "needsAttention": "تحتاج إلى معالجة: {{formattedCount}}",
+    "completedPackages": "مكتملة: {{formattedCount}}",
+    "cancelledPackages": "ملغاة: {{formattedCount}}",
+    "filter": {
+      "pending": "قيد المتابعة",
+      "complete": "مكتملة",
+      "cancelled": "ملغاة",
+      "all": "الكل"
+    },
+    "tabs": {
+      "people": "الموقّعون",
+      "documents": "المستندات",
+      "delivery": "التسليم"
+    },
+    "match": {
+      "person": "تطابق في اسم الموقّع",
+      "party": "تطابق في اسم الطرف"
+    },
+    "capacity": {
+      "personal": "بصفته الشخصية",
+      "representative": "نيابةً عن الشركة",
+      "professional": "بصفته المهنية"
+    },
+    "channel": {
+      "email": "البريد الإلكتروني",
+      "sms": "SMS",
+      "manual": "تسليم يدوي"
+    },
+    "workflow": {
+      "draft": "مسودة",
+      "awaiting_approval": "بانتظار الموافقة الداخلية",
+      "authorized_preparing": "جارٍ تجهيز المستندات",
+      "active": "بانتظار التوقيعات",
+      "attention": "تحتاج إلى معالجة",
+      "complete": "مكتملة",
+      "cancelled": "ملغاة",
+      "superseded": "استُبدلت بإصدار جديد",
+      "expired": "انتهت مهلة التوقيع"
+    },
+    "task": {
+      "blocked": "غير متاح للتوقيع بعد",
+      "ready": "جاهز للتوقيع",
+      "accepted": "تم تسجيل التوقيع",
+      "declined": "رفض الموقّع",
+      "expired": "انتهت مهلة التوقيع",
+      "cancelled": "ملغى",
+      "preparing": "بانتظار تجهيز المستندات",
+      "previousStage": "بانتظار المرحلة السابقة"
+    },
+    "document": {
+      "pending": "بانتظار التجهيز",
+      "preparing": "قيد التجهيز",
+      "ready": "جاهز للتوقيع",
+      "failed": "يتطلب التجهيز تصحيحًا",
+      "finalizing": "جارٍ إنشاء النسخة الموقّعة",
+      "final": "النسخة الموقّعة جاهزة"
+    },
+    "delivery": {
+      "pending": "بانتظار الإرسال",
+      "dispatching": "جارٍ الإرسال إلى المزوّد",
+      "provider_accepted": "أكّد المزوّد الاستلام",
+      "delivered": "تم تأكيد التسليم",
+      "failed": "فشل الإرسال",
+      "uncertain": "حالة التسليم غير مؤكدة",
+      "cancelled": "أُلغي الإرسال",
+      "skipped_completed": "لم تُرسل — اكتمل التوقيع بالفعل"
+    },
+    "results_zero": "لا توجد عمليات إرسال",
+    "results_one": "عملية إرسال واحدة",
+    "results_two": "عمليتا إرسال",
+    "results_few": "{{formattedCount}} عمليات إرسال",
+    "results_many": "{{formattedCount}} عملية إرسال",
+    "results_other": "{{formattedCount}} عملية إرسال",
+    "packages_zero": "لا توجد حزم",
+    "packages_one": "حزمة واحدة",
+    "packages_two": "حزمتان",
+    "packages_few": "{{formattedCount}} حزم",
+    "packages_many": "{{formattedCount}} حزمة",
+    "packages_other": "{{formattedCount}} حزمة",
+    "matchingPackages_zero": "لا توجد حزم مطابقة",
+    "matchingPackages_one": "حزمة واحدة مطابقة",
+    "matchingPackages_two": "حزمتان مطابقتان",
+    "matchingPackages_few": "{{formattedCount}} حزم مطابقة",
+    "matchingPackages_many": "{{formattedCount}} حزمة مطابقة",
+    "matchingPackages_other": "{{formattedCount}} حزمة مطابقة",
+    "errors": {
+      "REQUEST_FAILED": "لم تكتمل العملية. يمكنك التحديث والمحاولة مجددًا.",
+      "NOT_FOUND": "هذا العنصر غير متاح لك. حدّث القائمة.",
+      "FORBIDDEN": "ليست لديك صلاحية لهذا الإجراء. تواصل مع مدير المكتب.",
+      "VERSION_CHANGED": "تغيّرت المعلومات أثناء التحرير. حمّل الإصدار الحالي قبل الحفظ.",
+      "PREVIEW_CHANGED": "تغيّرت تفاصيل الحزمة بعد المراجعة. راجعها ووافق عليها مجددًا.",
+      "IDEMPOTENCY_CONFLICT": "حُفظ هذا الطلب مسبقًا بتفاصيل مختلفة. تحقّق من حالته قبل إنشاء طلب جديد.",
+      "TEXT_OVERFLOW": "النص لا يتّسع في الحقل. وسّع الحقل أو عدّل المحتوى.",
+      "CAPACITY_BUDGET_EXCEEDED": "تتجاوز الحزمة حدّ العدد أو الحجم. راجع المستندات قبل المتابعة.",
+      "AUTHORITY_EXPIRED": "صلاحية تمثيل الشركة غير سارية. حدّث المستند الداعم والموافقة.",
+      "DISTINCT_PEOPLE_REQUIRED": "يجب اختيار شخصين مختلفين كمفوّضين بالتوقيع.",
+      "SOURCE_CHANGED": "تغيّر الملف الأصلي. اختر الملف وراجع القالب مجددًا.",
+      "INVALID_FILTER": "عامل التصفية غير صالح. اختره مجددًا.",
+      "INVALID_CURSOR": "تغيّرت القائمة. عُد إلى الصفحة الأولى."
+    }
   }
 }

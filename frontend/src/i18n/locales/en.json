@@ -1395,5 +1395,120 @@
         "download": "Download"
       }
     }
+  },
+  "signingV2": {
+    "title": "Pending signatures",
+    "subtitle": "Track the packages, signers and delivery for each send.",
+    "newPackage": "New package",
+    "backToDocuments": "Back to documents",
+    "search": "Search client, signer, company, case or template",
+    "statusFilter": "Package status",
+    "refresh": "Refresh status",
+    "pagination": "Result pages",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "fraction": "{{accepted}} / {{required}}",
+    "obligations": "signing obligations completed",
+    "openPackage": "Open package",
+    "noMatchingPackages": "No packages match this filter.",
+    "packageDetails": "Package details",
+    "notYet": "Not yet",
+    "preparedFraction": "Documents ready: {{ready}} of {{total}}",
+    "informational": "Information annex — no signature required",
+    "uncertainHelp": "The provider has not confirmed the outcome. Check delivery before sending again.",
+    "authorizedSummary": "This summary includes all packages you can access, including completed packages. Filters apply to the list below.",
+    "emptyTitle": "No sends to display",
+    "emptyBody": "Try changing your search or filters. New packages will appear here for tracking.",
+    "needsAttention": "Need attention: {{formattedCount}}",
+    "completedPackages": "Completed: {{formattedCount}}",
+    "cancelledPackages": "Cancelled: {{formattedCount}}",
+    "filter": {
+      "pending": "In progress",
+      "complete": "Completed",
+      "cancelled": "Cancelled",
+      "all": "All"
+    },
+    "tabs": {
+      "people": "Signers",
+      "documents": "Documents",
+      "delivery": "Delivery"
+    },
+    "match": {
+      "person": "Matched signer name",
+      "party": "Matched party name"
+    },
+    "capacity": {
+      "personal": "Personal capacity",
+      "representative": "On behalf of the company",
+      "professional": "Professional capacity"
+    },
+    "channel": {
+      "email": "Email",
+      "sms": "SMS",
+      "manual": "Manual delivery"
+    },
+    "workflow": {
+      "draft": "Draft",
+      "awaiting_approval": "Awaiting internal approval",
+      "authorized_preparing": "Preparing documents",
+      "active": "Awaiting signatures",
+      "attention": "Needs attention",
+      "complete": "Completed",
+      "cancelled": "Cancelled",
+      "superseded": "Replaced by a new revision",
+      "expired": "Signing deadline passed"
+    },
+    "task": {
+      "blocked": "Not available to sign yet",
+      "ready": "Ready to sign",
+      "accepted": "Signature accepted",
+      "declined": "Signer declined",
+      "expired": "Signing deadline passed",
+      "cancelled": "Cancelled",
+      "preparing": "Waiting for document preparation",
+      "previousStage": "Waiting for the previous stage"
+    },
+    "document": {
+      "pending": "Waiting for preparation",
+      "preparing": "Preparing",
+      "ready": "Ready to sign",
+      "failed": "Preparation needs correction",
+      "finalizing": "Preparing the signed copy",
+      "final": "Signed copy ready"
+    },
+    "delivery": {
+      "pending": "Waiting to send",
+      "dispatching": "Sending to provider",
+      "provider_accepted": "Accepted by provider",
+      "delivered": "Delivery confirmed",
+      "failed": "Sending failed",
+      "uncertain": "Delivery outcome uncertain",
+      "cancelled": "Sending cancelled",
+      "skipped_completed": "Not sent — signing already completed"
+    },
+    "results_zero": "No sends",
+    "results_one": "1 send",
+    "results_other": "{{formattedCount}} sends",
+    "packages_zero": "No packages",
+    "packages_one": "1 package",
+    "packages_other": "{{formattedCount}} packages",
+    "matchingPackages_zero": "No matching packages",
+    "matchingPackages_one": "1 matching package",
+    "matchingPackages_other": "{{formattedCount}} matching packages",
+    "errors": {
+      "REQUEST_FAILED": "The request did not complete. Refresh and try again.",
+      "NOT_FOUND": "This item is unavailable to you. Refresh the list.",
+      "FORBIDDEN": "You do not have permission for this action. Contact your office administrator.",
+      "VERSION_CHANGED": "This information changed while you were editing. Load the current version before saving.",
+      "PREVIEW_CHANGED": "The package changed after review. Review and approve it again.",
+      "IDEMPOTENCY_CONFLICT": "This request was saved with different details. Check its status before creating another request.",
+      "TEXT_OVERFLOW": "The text does not fit. Enlarge the field or revise its content.",
+      "CAPACITY_BUDGET_EXCEEDED": "This batch exceeds a count or size limit. Review the documents before continuing.",
+      "AUTHORITY_EXPIRED": "Authority to represent the company is no longer valid. Update the evidence and approval.",
+      "DISTINCT_PEOPLE_REQUIRED": "Choose two different people as authorized signers.",
+      "SOURCE_CHANGED": "The source file changed. Select it and review the template again.",
+      "INVALID_FILTER": "This filter is invalid. Select it again.",
+      "INVALID_CURSOR": "The list changed. Return to the first page."
+    }
   }
 }

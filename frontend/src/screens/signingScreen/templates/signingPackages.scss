@@ -1,0 +1,81 @@
+.lw-signingPackages {
+  color: var(--lw-color-text, #2d3748);
+  max-inline-size: 78rem;
+  margin-inline: auto;
+  padding: 1.25rem clamp(.75rem, 2vw, 2rem) 5rem;
+  text-align: start;
+  font-variant-numeric: tabular-nums;
+
+  h1 { font-size: 1.5rem; line-height: 1.4; margin: 0; }
+  h2 { font-size: 1.125rem; margin: 0; }
+  h3 { font-size: 1rem; margin: 0; }
+  p { margin: .375rem 0; line-height: 1.6; max-inline-size: 72ch; }
+  button, input { font: inherit; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--lw-color-primary, #2a4365); outline-offset: 3px; }
+  ::selection { color: #fff; background: var(--lw-color-primary, #2a4365); }
+  input { caret-color: var(--lw-color-primary, #2a4365); }
+}
+.lw-signingPackages__heading, .lw-signingPackages__actions, .lw-signingPackages__toolbar,
+.lw-signingPackages__panelHeader, .lw-signingPackages__pager {
+  display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+}
+.lw-signingPackages__heading { justify-content: space-between; margin-block-end: 1.5rem; }
+.lw-signingPackages__heading p, .lw-signingPackages__caption { color: #4a5568; font-size: .875rem; }
+.lw-signingPackages__toolbar { margin-block-end: 1rem; > :first-child { flex: 1 1 18rem; } }
+.lw-signingPackages__toolbar .lw-simpleInput { inline-size: 100%; min-block-size: 2.75rem; margin-block-start: 0; }
+.lw-signingPackages__resultSummary { min-block-size: 1.75rem; margin-block: .75rem; font-size: .875rem; }
+.lw-signingPackages__list.lw-simpleCard {
+  padding: 0; margin: 0; border-radius: .5rem;
+  box-shadow: 0 2px 5px rgb(45 55 72 / 6%);
+  &:hover { transform: none; box-shadow: 0 2px 5px rgb(45 55 72 / 6%); }
+  > ul { list-style: none; padding: 0; margin: 0; width: 100%; }
+}
+.lw-signingPackages__group { border-block-end: 1px solid #e0e0e0; &:last-child { border-block-end: 0; } }
+.lw-signingPackages__row { display: grid; grid-template-columns: minmax(13rem, 1.4fr) minmax(14rem, 1.5fr) minmax(8rem, .7fr); align-items: center; gap: 1rem; padding: 1rem; }
+.lw-signingPackages__groupTitle {
+  display: flex; align-items: center; gap: .65rem; text-align: start; background: transparent;
+  border: 0; color: inherit; padding: .375rem 0; min-block-size: 2.75rem; cursor: pointer; min-inline-size: 0;
+  svg { flex: none; color: var(--lw-color-primary, #2a4365); }
+  span { min-inline-size: 0; }
+  strong { display: block; font-size: .9375rem; overflow-wrap: anywhere; }
+  time { display: block; font-size: .8125rem; color: #4a5568; margin-block-start: .375rem; }
+}
+.lw-signingPackages__metrics { display: flex; gap: .8rem 1.5rem; flex-wrap: wrap; font-size: .8125rem; align-items: center; }
+.lw-signingPackages__progress { display: flex; flex-wrap: wrap; gap: .35rem; bdi { font-weight: 700; } }
+.lw-signingPackages__rowStatus { display: flex; flex-direction: column; gap: .5rem; font-size: .8125rem; }
+.lw-signingPackages__attention { color: #9b2c2c; font-weight: 700; }
+.lw-signingPackages__caption { margin: .5rem 1rem !important; }
+.lw-signingPackages__children { background: #f7fafc; border-block-start: 1px solid #e2e8f0; padding: .5rem 1rem; }
+.lw-signingPackages__childList, .lw-signingPackages__people, .lw-signingPackages__tasks { list-style: none; padding: 0; margin: 0; }
+.lw-signingPackages__childList > li { display: grid; grid-template-columns: minmax(10rem,1fr) 1fr 1fr auto; gap: .75rem; align-items: center; padding-block: .875rem; border-block-end: 1px solid #e2e8f0; font-size: .875rem; }
+.lw-signingPackages__childName { display: flex; flex-direction: column; gap: .375rem; min-width: 0; }
+.lw-signingPackages__textButton { text-align: start; color: var(--lw-color-primary, #2a4365); background: transparent; border: 0; padding: .25rem 0; font-weight: 700; text-decoration: underline; text-underline-offset: .2em; cursor: pointer; min-height: 2.75rem; overflow-wrap: anywhere; }
+.lw-signingPackages__pager { justify-content: flex-end; margin-block: 1rem; }
+.lw-signingPackages__error { display: flex; gap: 1rem; align-items: center; justify-content: space-between; padding: .875rem; color: #9b2c2c; background: #fff5f5; border: 1px solid #fed7d7; border-radius: .5rem; }
+.lw-signingPackages__empty { padding: 3rem 1.5rem; text-align: center; p { margin-inline: auto; } }
+.lw-signingPackages__panel {
+  position: fixed; inset-block: 0; inset-inline-start: auto; inset-inline-end: 0; margin: 0;
+  inline-size: min(38rem, 100%); max-inline-size: 100%; block-size: 100dvh; max-block-size: 100dvh;
+  border: 0; border-inline-start: 1px solid #e2e8f0; padding: 1.25rem; background: #fff;
+  color: var(--lw-color-text, #2d3748); box-sizing: border-box; text-align: start; overflow: auto;
+  box-shadow: -4px 0 18px rgb(45 55 72 / 12%);
+  &::backdrop { background: rgb(26 54 93 / 25%); }
+  h2 { font-size: 1.25rem; margin: 0; }
+  h3 { font-size: 1rem; margin: 0; }
+  p { line-height: 1.6; margin: .375rem 0; }
+  time, small { font-size: .8125rem; color: #4a5568; }
+}
+.lw-signingPackages__panelHeader { justify-content: space-between; gap: 1rem; margin-block-end: 1.5rem; }
+.lw-signingPackages__panelSummary { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; margin-block-end: 1.5rem; p { flex-basis: 100%; font-size: .875rem; } }
+.lw-signingPackages__people > li { padding-block: 1.25rem; border-block-end: 1px solid #e2e8f0; }
+.lw-signingPackages__tasks > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .5rem; margin-block-start: .75rem; font-size: .875rem; time { grid-column: 1 / -1; } }
+@media (max-width: 48rem) {
+  .lw-signingPackages__row { grid-template-columns: minmax(0,1fr); gap: .75rem; }
+  .lw-signingPackages__metrics, .lw-signingPackages__rowStatus { padding-inline-start: 1.75rem; }
+  .lw-signingPackages__rowStatus { flex-direction: row; flex-wrap: wrap; }
+  .lw-signingPackages__toolbar > * { flex: 1 1 100%; }
+  .lw-signingPackages__childList > li { grid-template-columns: minmax(0,1fr) auto; }
+  .lw-signingPackages__childName { grid-column: 1 / -1; }
+  .lw-signingPackages__children { padding-inline: .75rem; }
+  .lw-signingPackages__panel { padding: 1rem; }
+}

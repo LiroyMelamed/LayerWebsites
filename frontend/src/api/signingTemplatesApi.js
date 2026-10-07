@@ -5,6 +5,9 @@ export async function signingRequest(method, url, data, config) {
     if (!result.success) {
         const error = new Error(result.data?.message || result.data?.error?.message || result.message || 'הפעולה לא הושלמה. אפשר לנסות שוב');
         error.status = result.status;
+        error.code = result.data?.code || result.data?.errorCode;
+        error.messageKey = result.data?.messageKey;
+        error.fieldErrors = result.data?.fieldErrors || [];
         throw error;
     }
     return result.data;
