@@ -2216,7 +2216,7 @@ const SignatureCanvas = ({ signingFileId, publicToken, onClose, variant = "modal
                     <p className="lw-signing-completeSubtitle">
                         {hasMoreFields
                             ? t("signing.canvas.signingCompleteFieldsRemainSubtitle", { count: remainingFieldsForComplete })
-                            : t("signing.canvas.signingCompleteSubtitle")}
+                            : (documentGroup?.completionText || t("signing.canvas.signingCompleteSubtitle"))}
                     </p>
                     <div className="lw-signing-completeActions">
                         {hasMoreFields && (

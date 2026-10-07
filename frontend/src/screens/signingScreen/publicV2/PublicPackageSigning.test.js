@@ -4,7 +4,7 @@ import { MemoryRouter, useLocation } from 'react-router-dom';
 import { createInstance } from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import signingPublicApi from '../../../api/signingPublicApi';
-import PublicPackageSigning, { latinDigits } from './PublicPackageSigning';
+import PublicPackageSigning, { latinDigits, readyDocumentGroup } from './PublicPackageSigning';
 import he from '../../../i18n/locales/he.json';
 import en from '../../../i18n/locales/en.json';
 
@@ -35,6 +35,42 @@ async function translations() {
 const documentFor = (index, state) => ({
     packageId: `p-${index}`,
     documents: [{ documentId: `d-${index}`, name: `Agreement ${index}`, tasks: [{ taskId: `t-${index}`, state, required: true, fields: [] }] }],
+});
+
+test('a bounded group keeps all ready roles of each PDF together and starts with the viewed PDF', () => {
+    const entries = [1, 2, 3].flatMap(id => [1, 2].map(role => ({ document: { documentId: `d${id}` }, task: { taskId: `${id}-${role}` } })));
+    expect(readyDocumentGroup(entries, 3, 'd2').map(item => item.task.taskId)).toEqual(['2-1', '2-2']);
+    expect(readyDocumentGroup(entries, 4, 'd3').map(item => item.task.taskId)).toEqual(['3-1', '3-2', '1-1', '1-2']);
+});
+
+test('600 ready PDFs use explicit 200-document groups, reload between groups and omit waiting stages', async () => {
+    const i18n = await translations();
+    await i18n.changeLanguage('en');
+    const view = { person: { name: 'Synthetic representative' }, consentVersion: 'consent-v', maxTasksPerSession: 200,
+        packages: [...Array.from({ length: 600 }, (_, index) => documentFor(index + 1, 'ready')), documentFor(700, 'waiting')] };
+    signingPublicApi.describe.mockResolvedValueOnce(view);
+    window.history.replaceState({}, '', `/ViewSignedDocument/Sign#${TOKEN}`);
+    render(<MemoryRouter><I18nextProvider i18n={i18n}><PublicPackageSigning /></I18nextProvider></MemoryRouter>);
+    fireEvent.click(await screen.findByRole('button', { name: 'Sign 200 of 600 ready documents' }));
+    expect(screen.getByTestId('group').textContent.split(',')).toHaveLength(200);
+    expect(screen.getByTestId('group')).not.toHaveTextContent('d-201');
+    expect(screen.getByTestId('group')).not.toHaveTextContent('d-700');
+    // Finishing this frozen scope does not authorize the next group automatically.
+    const nextView = JSON.parse(JSON.stringify(view));
+    nextView.packages.slice(0, 200).forEach(pkg => { pkg.documents[0].tasks[0].state = 'accepted'; });
+    signingPublicApi.describe.mockResolvedValueOnce(nextView);
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to 400 remaining documents' }));
+    expect(await screen.findByRole('button', { name: 'Sign 200 of 400 ready documents' })).toBeInTheDocument();
+    expect(screen.queryByTestId('group')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Sign 200 of 400 ready documents' }));
+    expect(screen.getByTestId('group').textContent.split(',')[0]).toBe('d-201');
+    nextView.packages.slice(200, 400).forEach(pkg => { pkg.documents[0].tasks[0].state = 'accepted'; });
+    signingPublicApi.describe.mockResolvedValueOnce(JSON.parse(JSON.stringify(nextView)));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to 200 remaining documents' }));
+    fireEvent.click(await screen.findByRole('button', { name: i18n.t('signingV2.public.group.signAll') }));
+    expect(screen.getByTestId('group').textContent.split(',')).toHaveLength(200);
+    expect(screen.queryByRole('button', { name: /Continue to/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: i18n.t('signing.canvas.nextDocument') })).not.toBeInTheDocument();
 });
 
 test('codes typed on an Arabic keypad stay available as latin digits', () => {

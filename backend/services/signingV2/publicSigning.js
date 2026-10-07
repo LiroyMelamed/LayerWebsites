@@ -389,13 +389,17 @@ function createPublicSigningService({ pool, storage, otpKey, otpTransport = null
             await db.query(`UPDATE signing_tasks SET state='accepted',version=version+1 WHERE owner_context_id=$1 AND id=ANY($2::uuid[])`,
                 [grant.owner_context_id, items.map(item => item.taskId)]);
             await db.query(`UPDATE signing_sessions_v2 SET revoked_at=clock_timestamp() WHERE owner_context_id=$1 AND id=$2`, [grant.owner_context_id, session.id]);
+            const acceptedByRevision = new Map();
+            for (const item of items) {
+                if (!acceptedByRevision.has(item.revisionId)) acceptedByRevision.set(item.revisionId, []);
+                acceptedByRevision.get(item.revisionId).push(item.taskId);
+            }
             await db.query(`INSERT INTO signing_events_v2(owner_context_id,package_id,actor_key,kind,details)
                 SELECT $1,(e->>'packageId')::uuid,$2,'tasks_accepted',e->'details' FROM jsonb_array_elements($3::jsonb) e`,
             [grant.owner_context_id, `person:${grant.person_id}`, JSON.stringify(revisions.map(revision => ({ packageId: revision.package_id,
                 details: { sessionId: session.id, manifestHash: session.manifest_hash,
-                    taskIds: items.filter(item => item.revisionId === revision.id).map(item => item.taskId) } })))]);
-            const progressed = [];
-            for (const revision of revisions) progressed.push(await advance(db, grant.owner_context_id, revision));
+                    taskIds: acceptedByRevision.get(revision.id) } })))]);
+            const progressed = await advanceMany(db, grant.owner_context_id, revisions);
             const result = { operationId: operation.id, state: 'accepted', acceptedAt: now, tasks: items.map(item => ({ taskId: item.taskId, state: 'accepted' })),
                 packages: progressed };
             await db.query(`UPDATE signing_operations SET state='complete',result=$3,completed_at=clock_timestamp() WHERE owner_context_id=$1 AND id=$2`,
@@ -414,21 +418,42 @@ async function currentEndpoints(db, grant, revisionId) {
 
 // Runs inside the accepting transaction. Only one stage is ready at a time; it is done when
 // none of its required tasks are still ready. Optional tasks never hold a package back.
-async function advance(db, contextId, revision) {
-    const open = (await db.query(`SELECT count(*) FILTER (WHERE required AND state='ready')::integer AS ready,
+async function advanceMany(db, contextId, revisions) {
+    if (!revisions.length) return [];
+    const states = new Map((await db.query(`SELECT revision_id,count(*) FILTER (WHERE required AND state='ready')::integer AS ready,
             min(stage) FILTER (WHERE state='blocked') AS next
-        FROM signing_tasks WHERE owner_context_id=$1 AND revision_id=$2`, [contextId, revision.id])).rows[0];
-    if (open.ready) return { packageId: revision.package_id, state: 'waiting_on_others' };
-    if (open.next !== null) {
-        await enqueue(db, contextId, [job('render_stage', revision.id, digest({ revisionHash: revision.revision_hash, next: open.next }))]);
-        return { packageId: revision.package_id, state: 'next_stage', stage: open.next };
+        FROM signing_tasks WHERE owner_context_id=$1 AND revision_id=ANY($2::uuid[]) GROUP BY revision_id`,
+    [contextId, revisions.map(revision => revision.id)])).rows.map(row => [row.revision_id, row]));
+    const finished = revisions.filter(revision => { const state = states.get(revision.id); return !state?.ready && state?.next == null; });
+    const documents = new Map();
+    if (finished.length) for (const row of (await db.query(`SELECT id,revision_id,document_key FROM signing_documents
+        WHERE owner_context_id=$1 AND revision_id=ANY($2::uuid[]) ORDER BY revision_id,document_key`, [contextId, finished.map(revision => revision.id)])).rows) {
+        if (!documents.has(row.revision_id)) documents.set(row.revision_id, []);
+        documents.get(row.revision_id).push(row);
     }
-    const documents = (await db.query(`SELECT id,document_key FROM signing_documents WHERE owner_context_id=$1 AND revision_id=$2 ORDER BY document_key`,
-        [contextId, revision.id])).rows;
-    const finals = documents.map(document => job('finalize_document', document.id, digest({ revisionHash: revision.revision_hash, document: document.document_key, kind: 'final' })));
-    const evidence = job('render_evidence', revision.id, digest({ revisionHash: revision.revision_hash, kind: 'evidence' }));
-    await enqueue(db, contextId, [...finals, evidence], finals.map(item => ({ job_id: evidence.id, depends_on_id: item.id })));
-    return { packageId: revision.package_id, state: 'finalizing' };
+    const jobs = [], dependencies = [];
+    const progressed = revisions.map(revision => {
+        const open = states.get(revision.id);
+        expect(open, 'TASK_UNAVAILABLE');
+        if (open.ready) return { packageId: revision.package_id, state: 'waiting_on_others' };
+        if (open.next !== null) {
+            jobs.push(job('render_stage', revision.id, digest({ revisionHash: revision.revision_hash, next: open.next })));
+            return { packageId: revision.package_id, state: 'next_stage', stage: open.next };
+        }
+        const finals = (documents.get(revision.id) || []).map(document => job('finalize_document', document.id,
+            digest({ revisionHash: revision.revision_hash, document: document.document_key, kind: 'final' })));
+        const evidence = job('render_evidence', revision.id, digest({ revisionHash: revision.revision_hash, kind: 'evidence' }));
+        jobs.push(...finals, evidence);
+        dependencies.push(...finals.map(item => ({ job_id: evidence.id, depends_on_id: item.id })));
+        return { packageId: revision.package_id, state: 'finalizing' };
+    });
+    // One set of reads and durable job writes for the complete frozen selection.
+    await enqueue(db, contextId, jobs, dependencies);
+    return progressed;
 }
 
-module.exports = { createPublicSigningService, CONSENT_VERSION, OTP, advance };
+async function advance(db, contextId, revision) {
+    return (await advanceMany(db, contextId, [revision]))[0];
+}
+
+module.exports = { createPublicSigningService, CONSENT_VERSION, OTP, advance, advanceMany };

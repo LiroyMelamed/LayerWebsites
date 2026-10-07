@@ -9,7 +9,7 @@ import signingPublicApi from '../../../api/signingPublicApi';
 jest.mock('../../../i18n/i18n', () => ({ __esModule: true, default: { t: key => key } }));
 jest.mock('../../../api/apiUtils', () => ({ __esModule: true, default: { defaults: { baseURL: '/api' } } }));
 jest.mock('../../../api/signingFilesApi', () => ({ __esModule: true, default: {} }));
-jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: key => key, i18n: { resolvedLanguage: 'he', language: 'he' } }) }));
+jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: key => key, i18n: { resolvedLanguage: 'he', language: 'he', dir: () => 'rtl' } }) }));
 jest.mock('../../../components/ui/showAppToast', () => ({ showAppToast: jest.fn() }));
 jest.mock('../../../components/styledComponents/buttons/GenericButton', () => ({ children, onPress, disabled }) => <button disabled={disabled} onClick={onPress}>{children}</button>);
 jest.mock('../../../api/signingPublicApi', () => ({ __esModule: true, readGrantToken: () => 'synthetic', default: {
@@ -41,7 +41,7 @@ test('the incumbent screen navigates original PDFs, keeps one OTP, and cannot fi
     const loadPdf = jest.fn(async id => new Blob([`PDF ${id}`]));
     render(<SignatureCanvas variant="screen" publicToken="synthetic" filesApi={api} onClose={() => {}} deferOtpUntilConsent
         documentGroup={{ documents: entries.map(item => ({ id: item.document.documentId, name: item.document.name })), loadPdf,
-            consentText: 'Consent to both PDFs', signAllLabel: 'Sign all documents' }} />);
+            consentText: 'Consent to both PDFs', signAllLabel: 'Sign all documents', completionText: '2 documents signed; 1 remains.' }} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Name a' }));
     expect(signingPublicApi.challenge).not.toHaveBeenCalled();
     fireEvent.click(await screen.findByRole('checkbox', { name: 'Consent to both PDFs' }));
@@ -63,6 +63,7 @@ test('the incumbent screen navigates original PDFs, keeps one OTP, and cannot fi
     expect(signingPublicApi.accept.mock.calls[0][2].values).toEqual({ a: { name: 'Alpha' }, b: { name: 'Beta' } });
     expect(signingPublicApi.session).toHaveBeenCalledTimes(1);
     expect(await screen.findByText('signing.canvas.signingCompleteTitle')).toBeTruthy();
+    expect(screen.getByText('2 documents signed; 1 remains.')).toBeInTheDocument();
 });
 
 

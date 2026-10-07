@@ -25,3 +25,11 @@ Earlier direct-entry/import/audience evidence is in the same ledger. It is not b
 
 ## Remaining release gates
 Full F1 is incomplete: durable editable drafts; multiple people/capacities/authority and mixed stage groups; full frozen bulk management; decline/clarification and signed-copy delivery;600+ PDF signer scope; crash/restart/dedupe; representative creation p95<=5s, PDF readiness and provider acceptance measured separately; exact-candidate local and remote QA. Native checks were waived in favor of responsive browser checks. Real outbound test sends remain prohibited. Never infer public availability or production approval from a local UI pass.
+
+## Bounded consent groups (local checkpoint)
+
+The approved per-session budget remains200 tasks. More than200 ready PDFs now offer explicit counted groups, keeping every ready role of a PDF together. Moving to another group reloads readiness and creates a new consent/OTP session. Future-stage tasks never join a frozen selection. Group completion states how many remain; only Finish appears after the last ready document.
+
+Acceptance advances affected packages with bounded SQL reads/job writes instead of a query loop per package. Progression200-package dedupe and existing real-PDF/later-stage regressions passed (3/3). UI/adapter/real Canvas focused suites28/28. Browser signed201 real PDFs in200+1 with two fresh codes, Arabic digits and separate drawing, and only Finish at the end. The final copy-only adjustment is unit verified; browser copy confirmation remains pending.
+
+Volume proof still open: first600-PDF run reached600 final PDFs/200 complete packages then failed a test's wrong job-state label. Corrected run timed out300s; preparation283s under concurrent local QA/build load. Profiling run in progress. This checkpoint is not production approval. Source/evidence and failures are recorded in the external TEST-LEDGER; no customer deployment.

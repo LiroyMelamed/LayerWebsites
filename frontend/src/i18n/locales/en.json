@@ -1918,8 +1918,14 @@
       "group": {
         "signAll": "Sign all documents",
         "document": "Documents to sign ({{count}})",
-        "consent": "I have read the selected documents and agree to apply my signature to all {{count}} documents. Submission is completed only after all required fields are filled.",
-        "changeScope": "Switch to signing all documents? Unsubmitted values will be cleared and the new signing scope requires your consent."
+        "consent": "I have read the selected documents and agree to apply my signature to all {{documentCount}} documents. Submission is completed only after all required fields are filled.",
+        "changeScope": "Switch to signing all documents? Unsubmitted values will be cleared and the new signing scope requires your consent.",
+        "signBatch": "Sign {{documentCount}} of {{total}} ready documents",
+        "signSelected": "Sign the {{documentCount}} selected documents",
+        "continueRemaining": "Continue to {{documentCount}} remaining documents",
+        "continueRemaining_one": "Continue to the remaining document",
+        "completedPart": "You signed {{signed}} documents. {{remaining}} documents still need a separate signature.",
+        "completedPart_one": "You signed {{signed}} documents. One document still needs a separate signature."
       }
     },
     "builder": {

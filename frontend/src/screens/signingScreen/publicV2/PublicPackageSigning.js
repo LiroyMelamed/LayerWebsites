@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import useSigningLocale from '../templates/useSigningLocale';
 import { useNavigate } from 'react-router-dom';
 import { sessionHomePath } from '../../../navigation/LoginStack';
 import SimpleScreen from '../../../components/simpleComponents/SimpleScreen';
@@ -23,6 +23,26 @@ function documentsOf(view) {
     return items;
 }
 
+// A consent session has a separate task budget from a 200-package submission.
+// Keep every ready role on a PDF together; never split a document across groups.
+export function readyDocumentGroup(entries, maximum, currentDocumentId) {
+    const documents = new Map();
+    for (const entry of entries) {
+        const id = entry.document.documentId;
+        if (!documents.has(id)) documents.set(id, []);
+        documents.get(id).push(entry);
+    }
+    const ordered = [...documents.entries()];
+    const start = ordered.findIndex(([id]) => id === currentDocumentId);
+    const rotated = start > 0 ? [...ordered.slice(start), ...ordered.slice(0, start)] : ordered;
+    const selected = [];
+    for (const [, tasks] of rotated) {
+        if (selected.length + tasks.length > maximum) break;
+        selected.push(...tasks);
+    }
+    return selected;
+}
+
 function signedDocumentOf(view) {
     for (const pkg of view?.packages || []) {
         for (const document of pkg.documents || []) {
@@ -44,7 +64,7 @@ function waitingDocumentOf(view) {
 }
 
 export default function PublicPackageSigning() {
-    const { t, i18n } = useTranslation();
+    const { t, language: locale, number } = useSigningLocale();
     const navigate = useNavigate();
     const [token] = useState(readGrantToken);
     const [view, setView] = useState(null);
@@ -75,7 +95,12 @@ export default function PublicPackageSigning() {
     const documents = useMemo(() => documentsOf(view), [view]);
     const readyDocumentCount = new Set(documents.map(item => item.document.documentId)).size;
     const current = documents[Math.min(index, documents.length - 1)] || signedDocumentOf(view) || waitingDocumentOf(view);
-    const locale = String(i18n.resolvedLanguage || i18n.language || 'he').split('-')[0];
+    const groupCandidate = useMemo(() => readyDocumentGroup(documents, view?.maxTasksPerSession || 200, current?.document.documentId), [documents, view?.maxTasksPerSession, current]);
+    const candidateCount = new Set(groupCandidate.map(item => item.document.documentId)).size;
+    const groupIds = new Set((groupSelection || []).map(item => item.document.documentId));
+    const remainingAfterGroup = new Set(documents.filter(item => !groupIds.has(item.document.documentId)).map(item => item.document.documentId)).size;
+    const groupLabel = candidateCount === readyDocumentCount ? t('signingV2.public.group.signAll')
+        : t('signingV2.public.group.signBatch', { count: candidateCount, documentCount: number(candidateCount), total: number(readyDocumentCount) });
     const adapter = useMemo(() => (current ? createV2DocumentAdapter({
         token, document: current.document, task: current.task, entries: groupSelection || undefined,
         personName: view?.person?.name, consentVersion: view?.consentVersion, locale,
@@ -125,14 +150,18 @@ export default function PublicPackageSigning() {
                     loadPublicPdf={() => signingPublicApi.document(token, current.document.documentId)}
                     documentGroup={groupSelection ? {
                         documents: groupDocuments, loadPdf: loadGroupPdf,
-                        consentText: t('signingV2.public.group.consent', { count: groupDocuments.length }),
-                        signAllLabel: t('signingV2.public.group.signAll'),
+                        completionText: remainingAfterGroup > 0 ? t('signingV2.public.group.completedPart', { count: remainingAfterGroup,
+                            signed: number(groupDocuments.length), remaining: number(remainingAfterGroup) }) : undefined,
+                        consentText: t('signingV2.public.group.consent', { count: groupDocuments.length, documentCount: number(groupDocuments.length) }),
+                        signAllLabel: groupSelection.length < documents.length ? t('signingV2.public.group.signSelected', { count: groupDocuments.length, documentCount: number(groupDocuments.length) }) : t('signingV2.public.group.signAll'),
                     } : null}
-                    multiDocumentAction={!groupSelection && readyDocumentCount > 1 && documents.length <= (view.maxTasksPerSession || 200) ? {
-                        onPress: () => setGroupSelection(documents), label: t('signingV2.public.group.signAll'),
+                    multiDocumentAction={!groupSelection && candidateCount > 1 ? {
+                        onPress: () => setGroupSelection(groupCandidate), label: groupLabel,
                     } : null}
                     deferOtpUntilConsent={readyDocumentCount > 1}
-                    nextDocument={!groupSelection && documents.length > 1 ? { onPress: openNext, label: t('signing.canvas.nextDocument') } : null}
+                    nextDocument={groupSelection ? (remainingAfterGroup > 0 ? { onPress: openNext,
+                        label: t('signingV2.public.group.continueRemaining', { count: remainingAfterGroup, documentCount: number(remainingAfterGroup) }) } : null)
+                        : documents.length > 1 ? { onPress: openNext, label: t('signing.canvas.nextDocument') } : null}
                     onClose={() => navigate(sessionHomePath(), { replace: true })}
                 />
             )}
