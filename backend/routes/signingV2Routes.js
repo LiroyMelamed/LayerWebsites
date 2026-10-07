@@ -6,6 +6,8 @@ const pool = require('../config/db');
 const { actorScope } = require('../services/signingV2/access');
 const management = require('../services/signingV2/management');
 const actions = require('../services/signingV2/actions');
+const creation = require('../services/signingV2/creation');
+const { objectStorage, officeQuota } = require('../services/signingV2/runtime');
 const { createAppError } = require('../utils/appError');
 
 const run = fn => (req, res, next) => Promise.resolve(fn(req, res)).catch(next);
@@ -31,6 +33,21 @@ router.post('/packages/:id/participants/:personId/actions', send, run(async (req
         { ...target(req), previewHash: req.body?.previewHash, idempotencyKey: req.get('Idempotency-Key') });
     // 202 only means the request is durably queued; the operation reports delivery facts.
     res.status(result.reused ? 200 : 202).json(result);
+}));
+router.get('/templates', view, run(async (req, res) => res.json(await creation.listTemplates(pool, await actorScope(pool, req, 'view')))));
+router.post('/templates/legacy/:id/import', send, run(async (req, res) => {
+    const { r2, BUCKET } = require('../utils/r2');
+    const result = await creation.importLegacyTemplate(pool, await actorScope(pool, req, 'upload'), req.params.id, {
+        storage: objectStorage({ client: r2, bucket: BUCKET }), readPdf: require('../services/signingTemplateService').readPdf, locale: req.body?.locale });
+    res.status(result.reused ? 200 : 201).json(result);
+}));
+router.post('/creation/preview', send, run(async (req, res) => res.json(await creation.previewCreation(pool, await actorScope(pool, req, 'upload'), req.body || {}))));
+router.post('/creation', send, run(async (req, res) => {
+    const result = await creation.createFromRows(pool, await actorScope(pool, req, 'upload'),
+        { ...(req.body || {}), idempotencyKey: req.get('Idempotency-Key') },
+        { reserveCapacity: officeQuota({ checkFirmLimits: (...args) => require('../lib/limits/enforceFirmLimits').checkFirmLimitsOrNull(...args) }) });
+    // 201 means every package, document, task and delivery intent is committed; preparation continues in the worker.
+    res.status(result.reused ? 200 : 201).json(result);
 }));
 router.get('/operations/:id', view, run(async (req, res) => res.json(await actions.operationStatus(pool, await actorScope(pool, req, 'view'), req.params.id))));
 

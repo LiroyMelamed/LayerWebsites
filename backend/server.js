@@ -33,6 +33,7 @@ async function getPublicIp() {
     }
 }
 
+let signingV2Runtime = null;
 const server = app.listen(PORT, HOST, async () => {
     console.log(`Server running on ${HOST}:${PORT}`);
     await getPublicIp();
@@ -55,6 +56,11 @@ const server = app.listen(PORT, HOST, async () => {
     startDailyAgendaScheduler();
     startHebcalHolidaysScheduler();
     initBillingRenewalScheduler();
+    try {
+        signingV2Runtime = require('./services/signingV2/runtime').startFromEnvironment({ pool });
+    } catch (e) {
+        console.error('[signing-v2] worker not started:', e?.errorCode || e?.message);
+    }
 });
 
 // Hard timeouts at the Node server layer (useful behind Nginx).
@@ -89,6 +95,7 @@ async function gracefulShutdown(signal) {
     server.close(async (err) => {
         if (err) console.error('[shutdown] server.close error:', err.message);
         try {
+            await signingV2Runtime?.stop();
             await pool.end();
             console.log('[shutdown] database pool closed');
         } catch (e) {
