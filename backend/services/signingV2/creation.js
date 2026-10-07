@@ -267,7 +267,7 @@ async function previewCreation(pool, scope, input) {
         previewHash: plan.errors.length ? null : rowsHash(template, plan),
         packageCount: plan.rows.length,
         documentCount: capacity?.documents ?? null,
-        recipientCount: new Set(plan.rows.flatMap(row => Object.values(row.recipients).map(person => `${person.name}|${person.email}|${person.phone}`))).size,
+        recipientCount: people.size,
         omitted: [...plan.omitted].sort(),
         shared: Object.entries(plan.shared).map(([roleKey, person]) => ({ roleKey, name: person.name, channels: person.channels })),
         sample: plan.rows.slice(0, 5).map(row => ({ key: row.key, recipients: Object.entries(row.recipients).map(([roleKey, person]) => ({ roleKey, name: person.name, channels: person.channels })) })),

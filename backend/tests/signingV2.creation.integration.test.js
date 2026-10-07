@@ -73,6 +73,7 @@ test('v2 creation from the product: explicit legacy import, row validation, appr
     assert.equal(preview.valid, true, JSON.stringify(preview.errors));
     assert.equal(preview.packageCount, 200);
     assert.equal(preview.documentCount, 200);
+    assert.equal(preview.recipientCount, 201, 'shared signer is included in the approval count');
 
     const changed = structuredClone(body); changed.rows[3].recipients.first.name = 'Edited after preview';
     assert.equal((await as(request(f.app).post('/api/signing-v2/creation')).set('Idempotency-Key', randomUUID()).send({ ...changed, previewHash: preview.previewHash })).status, 412,

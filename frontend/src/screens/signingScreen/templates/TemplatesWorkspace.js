@@ -8,7 +8,7 @@ import StatusNotice from '../../../components/ui/StatusNotice';
 import './templates.scss';
 
 const STATUS = { draft: 'טיוטה — טרם פורסם לנמען', ready: 'מפורסם — ממתין לחתימות', sending: 'השליחה מתבצעת', sent: 'ההזמנות נשלחו', partial: 'נדרשת בדיקת מסירה', pending: 'ממתין', uncertain: 'המסירה לא אושרה', signed: 'נחתם', rejected: 'נדחה', cancelled: 'בוטל' };
-export default function TemplatesWorkspace({ onClose, canUpload, canManage }) {
+export default function TemplatesWorkspace({ onClose, canUpload, canManage, onSendTemplate }) {
     const [mode, setMode] = useState('list');const [templates, setTemplates] = useState([]);const [batches, setBatches] = useState([]);
     const [current, setCurrent] = useState(null);const [batch, setBatch] = useState(null);const [busy, setBusy] = useState(false);const [error, setError] = useState('');const [link, setLink] = useState('');const sending = useRef(false);
     async function refresh() { setBusy(true);setError('');try { const [t, b] = await Promise.all([api.list(), api.batches()]);setTemplates(t.templates);setBatches(b.batches); } catch (e) { setError(e.message); } finally { setBusy(false); } }
@@ -27,7 +27,7 @@ export default function TemplatesWorkspace({ onClose, canUpload, canManage }) {
             <div className="lw-templates__toolbar"><h2>התבניות במשרד</h2>{canUpload && <button type="button" className="is-primary" onClick={() => { setCurrent(null);setMode('builder'); }}>תבנית חדשה</button>}</div>
             {!templates.length && !busy && <div className="lw-templates__empty"><h3>מכינים פעם אחת, שולחים שוב ושוב</h3><p>הוסף תבנית עם מסמכי המשרד והגדר היכן כל תפקיד צריך לחתום.</p></div>}
             <ul className="lw-templates__list">{templates.map(template => <li key={template.id}><div><strong>{template.name}</strong><p>{template.document_count} מסמכים · גרסה {template.version}</p></div><div className="lw-templates__actions">
-                {canUpload && <button type="button" className="is-primary" disabled={busy} onClick={() => openTemplate(template.id, 'compose')}>שליחה מהתבנית</button>}
+                {canUpload && <button type="button" className="is-primary" disabled={busy} onClick={() => onSendTemplate ? onSendTemplate(template) : openTemplate(template.id, 'compose')}>שליחה מהתבנית</button>}
                 {canManage && canUpload && <button type="button" disabled={busy} onClick={() => openTemplate(template.id, 'builder')}>עריכה</button>}
                 {canManage && <button type="button" disabled={busy} onClick={async () => { if (!window.confirm(`להעביר את ״${template.name}״ לארכיון? חבילות קיימות לא ישתנו.`)) return;try { await api.archive(template.id, template.version);refresh(); } catch (e) { setError(e.message); } }}>ארכיון</button>}
             </div></li>)}</ul>

@@ -203,3 +203,24 @@ test('requires a run name and at least one recipient before asking the server', 
     fireEvent.click(screen.getByRole('button', { name: 'Remove row 2' }));
     expect(screen.queryByRole('group', { name: 'Row 2' })).not.toBeInTheDocument();
 });
+
+test('sending from an existing template preselects its latest published import', async () => {
+    const i18n = await translations('en'), api = fakeApi();
+    api.templates.mockResolvedValue({ legacy: [], templates: [
+        { ...converted, versionId: 'older', name: 'Older version', origin: { templateId: 'legacy-1', version: 1 } },
+        { ...converted, versionId: 'newer', name: 'Latest version', origin: { templateId: 'legacy-1', version: 2 } },
+    ] });
+    render(<I18nextProvider i18n={i18n}><PackageComposer api={api} initialTemplateId="legacy-1" onBack={jest.fn()} /></I18nextProvider>);
+    await screen.findByRole('button', { name: /Latest version/, pressed: true });
+    expect(api.importLegacy).not.toHaveBeenCalled();
+});
+
+test('a newer unimported version keeps conversion explicit and never sends the older revision', async () => {
+    const i18n = await translations('he'), api = fakeApi();
+    api.templates.mockResolvedValue({ legacy: [{ id: 'legacy-1', name: 'Needs conversion', version: 2, documentCount: 1, roles: [] }],
+        templates: [{ ...converted, origin: { templateId: 'legacy-1', version: 1 } }] });
+    render(<I18nextProvider i18n={i18n}><PackageComposer api={api} initialTemplateId="legacy-1" onBack={jest.fn()} /></I18nextProvider>);
+    await screen.findByRole('button', { name: /Needs conversion/ });
+    expect(screen.queryByRole('button', { pressed: true })).toBeNull();
+    expect(api.importLegacy).not.toHaveBeenCalled();
+});

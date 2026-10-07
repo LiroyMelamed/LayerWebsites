@@ -368,7 +368,9 @@ export default function SigningManagerScreen() {
         );
     };
 
-    if (showTemplates) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><SimpleScrollView><TemplatesWorkspace canUpload={canSignUpload} canManage={canSignManage} onClose={() => { setPanel(null); reloadFiles(); }} /></SimpleScrollView></SimpleScreen>;
+    if (showTemplates) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><SimpleScrollView><TemplatesWorkspace onSendTemplate={signingV2Available ? template => {
+        const next = new URLSearchParams(searchParams); next.set('panel', 'compose'); next.set('template', template.id); setSearchParams(next);
+    } : undefined} canUpload={canSignUpload} canManage={canSignManage} onClose={() => { setPanel(null); reloadFiles(); }} /></SimpleScrollView></SimpleScreen>;
     if (showRuns) return <SimpleScreen imageBackgroundSource={images.Backgrounds.AppBackground}><SimpleScrollView><SigningPackagesHub canCreate={canSignUpload} onClose={() => { setPanel(null); reloadFiles(); }} /></SimpleScrollView></SimpleScreen>;
 
     return (

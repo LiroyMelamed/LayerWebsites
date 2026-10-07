@@ -58,17 +58,20 @@ function SuggestField({ id, label, value, error, errorText, dir, type, inputMode
     const [results, setResults] = useState([]);
     const [busy, setBusy] = useState(false);
     const timer = useRef(null);
-    useEffect(() => () => clearTimeout(timer.current), []);
+    const searchGeneration = useRef(0);
+    useEffect(() => () => { searchGeneration.current += 1; clearTimeout(timer.current); }, []);
     const search = next => {
         onValue(next);
+        const generation = ++searchGeneration.current;
+        setResults([]);
         clearTimeout(timer.current);
         const query = String(next || '').trim();
         timer.current = setTimeout(async () => {
             setBusy(true);
             try {
                 const data = await signingTemplatesApi.contacts(query, suggestLawyers ? 'lawyer' : 'client');
-                setResults(Array.isArray(data?.contacts) ? data.contacts : []);
-            } catch { setResults([]); } finally { setBusy(false); }
+                if (generation === searchGeneration.current) setResults(Array.isArray(data?.contacts) ? data.contacts : []);
+            } catch { if (generation === searchGeneration.current) setResults([]); } finally { if (generation === searchGeneration.current) setBusy(false); }
         }, 150);
     };
     return <div className="lw-signingCompose__field">
@@ -78,7 +81,7 @@ function SuggestField({ id, label, value, error, errorText, dir, type, inputMode
             acceptExternalValueWhileFocused isPerforming={busy} queryResult={results}
             getButtonTextFunction={item => [item.name, item.phone || item.email].filter(Boolean).join(' | ')}
             getSelectValueFunction={item => String(item[type === 'email' ? 'email' : type === 'tel' ? 'phone' : 'name'] || '')}
-            buttonPressFunction={(_text, item) => { onPick(item); setResults([]); }} onSearch={search} />
+            buttonPressFunction={(_text, item) => { searchGeneration.current += 1; clearTimeout(timer.current); onPick(item); setResults([]); setBusy(false); }} onSearch={search} />
         {errorText && <small id={`${id}-error`} className="lw-signingCompose__srError">{errorText}</small>}
     </div>;
 }
@@ -145,17 +148,27 @@ function Stepper({ step }) {
     </ol>;
 }
 
-function TemplateStep({ api, selected, onSelect }) {
+function TemplateStep({ api, selected, onSelect, initialTemplateId }) {
     const { t, number, language, errorMessage } = useSigningLocale();
     const [catalog, setCatalog] = useState(null);
     const [error, setError] = useState(null);
     const [converting, setConverting] = useState(null);
     const [filter, setFilter] = useState('');
+    const seeded = useRef(false);
     const load = useCallback(async () => {
         setError(null);
         try { setCatalog(await api.templates()); } catch (failure) { setError(failure); }
     }, [api]);
     useEffect(() => { load(); }, [load]);
+    useEffect(() => {
+        if (!catalog || !initialTemplateId || seeded.current) return;
+        seeded.current = true;
+        const unpublished = catalog.legacy.find(item => item.id === initialTemplateId);
+        if (unpublished) { setFilter(unpublished.name); return; }
+        const published = catalog.templates.filter(item => item.origin?.templateId === initialTemplateId)
+            .sort((a, b) => (b.origin.version || 0) - (a.origin.version || 0))[0];
+        if (published) onSelect(published);
+    }, [catalog, initialTemplateId, onSelect]);
     const convert = async legacy => {
         setConverting(legacy.id); setError(null);
         try {
@@ -260,7 +273,7 @@ function templateOrder(roles) {
     };
 }
 
-export default function PackageComposer({ api = signingPackagesApi, onBack, onCreated }) {
+export default function PackageComposer({ api = signingPackagesApi, onBack, onCreated, initialTemplateId }) {
     const { t, direction, number, language, errorMessage } = useSigningLocale();
     const heading = useRef(null);
     const errorSummary = useRef(null);
@@ -470,7 +483,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
         {error && <StatusNotice><p>{t(`signingV2.compose.errors.${error.code}`, { defaultValue: errorMessage(error) })}</p></StatusNotice>}
 
         {step === 'template' && <SimpleCard className="lw-signingCompose__card">
-            <TemplateStep api={api} selected={template} onSelect={chooseTemplate} />
+            <TemplateStep api={api} initialTemplateId={initialTemplateId} selected={template} onSelect={chooseTemplate} />
             <footer className="lw-signingCompose__footer">
                 <PrimaryButton onPress={() => setStep('recipients')} disabled={!template}>{t('signingV2.compose.next')}</PrimaryButton>
             </footer>
@@ -483,7 +496,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                     <input value={name} maxLength={300} onChange={event => { setName(event.target.value); invalidate(); }} />
                 </Field>
                 <p className="lw-signingPackages__caption">{t('signingV2.compose.templateSummary', { name: template.name })}</p>
-                <h3>{t('signingV2.compose.signers.heading')}</h3>
+                <details className="lw-signingCompose__optionalRoles"><summary>{t('signingV2.compose.signers.heading')}</summary>
                 <p className="lw-signingCompose__hintLine">{t('signingV2.compose.signers.help')}</p>
                 <ul className="lw-signingCompose__signers">
                     {template.roles.filter(role => !omitted.has(role.key)).map(role => <li key={role.key}>
@@ -504,6 +517,7 @@ export default function PackageComposer({ api = signingPackagesApi, onBack, onCr
                         </li>)}
                     </ul>
                 </div>}
+                </details>
                 <SigningOrderFields mode={orderMode} roles={orderedRoles} onMode={mode => { setOrderMode(mode); invalidate(); }} onMove={moveRole} />
             </SimpleCard>
             {activeShare.length > 0 && <SimpleCard className="lw-signingCompose__card">

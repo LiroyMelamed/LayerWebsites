@@ -3,26 +3,32 @@ import signingPublicApi from '../../../api/signingPublicApi';
 const IMAGE_TYPES = new Set(['signature', 'initials']);
 const ok = (data = {}) => ({ success: true, data });
 
-// One package document, presented in the shape the regular signing screen already understands.
-export function createV2DocumentAdapter({ token, document, task, personName, consentVersion, locale }) {
-    const finished = task.state === 'accepted';
-    const waiting = task.state === 'waiting' || task.state === 'blocked';
-    const fields = task.fields || [];
+// Adapt package tasks to the incumbent SignatureCanvas. The manifest, OTP and
+// acceptance always cover this exact immutable selection, never future tasks.
+export function createV2DocumentAdapter({ token, document, task, entries, personName, consentVersion, locale }) {
+    const selection = entries || [{ document, task }];
+    const finished = selection.every(item => item.task.state === 'accepted');
+    const waiting = selection.some(item => !['ready', 'accepted'].includes(item.task.state));
+    const fields = selection.flatMap(item => (item.task.fields || []).map(field => ({
+        ...field, taskId: item.task.taskId, documentId: item.document.documentId,
+    })));
     const bySpot = new Map(fields.map((field, index) => [index + 1, field]));
     const signed = new Set();
     const textValues = new Map();
     let signatureImage = null;
-    let sessionId = null;
+    let session = null;
+    let sessionPromise = null;
     let accepted = finished;
+    let acceptPromise = null;
+    let frozenBody = null;
+    let mutationPromise = null;
     const idempotencyKey = crypto.randomUUID();
 
     const spots = () => fields.map((field, index) => ({
         SignatureSpotId: index + 1,
+        DocumentId: field.documentId,
         PageNumber: field.pageNum,
-        X: field.x,
-        Y: field.y,
-        Width: field.width,
-        Height: field.height,
+        X: field.x, Y: field.y, Width: field.width, Height: field.height,
         FieldType: field.type,
         FieldLabel: field.label || '',
         IsRequired: field.required !== false,
@@ -31,50 +37,69 @@ export function createV2DocumentAdapter({ token, document, task, personName, con
         SignerName: personName || '',
         CanSign: !waiting && !accepted,
         IsMine: true,
-        FieldValue: textValues.get(index + 1) || '',
+        FieldValue: textValues.get(index + 1) ?? '',
+        SignatureUrl: signed.has(index + 1) && IMAGE_TYPES.has(field.type) ? signatureImage : null,
     }));
 
     const details = () => ok({
         file: {
             SigningFileId: 1,
             Status: accepted ? 'signed' : 'pending',
-            FileName: document.name,
-            OriginalFileName: document.name,
-            FileKey: document.documentId || 'document',
+            FileName: selection[0].document.name,
+            OriginalFileName: selection[0].document.name,
+            FileKey: selection[0].document.documentId,
             OtpEnabled: !waiting && !accepted,
             RequireOtp: !waiting && !accepted,
             SigningPolicyVersion: consentVersion,
             ReadOnly: accepted,
+            DisableFieldValueCache: true,
         },
-        signatureSpots: spots(),
-        signerUserId: 1,
-        signerCompleted: accepted,
-        readOnly: accepted,
-        signingOrder: waiting ? 'sequential' : 'parallel',
+        signatureSpots: spots(), signerUserId: 1, signerCompleted: accepted,
+        readOnly: accepted, signingOrder: waiting ? 'sequential' : 'parallel',
         isMyTurn: !waiting && !accepted,
     });
 
     const requiredDone = () => fields.every((field, index) => field.required === false || signed.has(index + 1));
 
     async function commit() {
-        if (accepted || waiting || !sessionId || !requiredDone()) return;
-        const values = {};
-        textValues.forEach((value, spotId) => {
-            const field = bySpot.get(spotId);
-            if (!field || field.type === 'date' || IMAGE_TYPES.has(field.type)) return;
-            values[field.id] = field.type === 'checkbox' ? value === true : String(value || '').trim();
-        });
-        const body = { consent: true, values: { [task.taskId]: values } };
-        if (signatureImage) body.signature = signatureImage;
-        await signingPublicApi.accept(token, sessionId, body, idempotencyKey);
-        accepted = true;
+        if (accepted || waiting || !session || !requiredDone()) return;
+        if (!frozenBody) {
+            const values = Object.fromEntries(selection.map(item => [item.task.taskId, {}]));
+            textValues.forEach((value, spotId) => {
+                const field = bySpot.get(spotId);
+                if (!field || field.type === 'date' || IMAGE_TYPES.has(field.type)) return;
+                values[field.taskId][field.id] = field.type === 'checkbox'
+                    ? value === true || value === 'true'
+                    : String(value || '').trim();
+            });
+            frozenBody = { consent: true, values, ...(signatureImage ? { signature: signatureImage } : {}) };
+        }
+        // A lost response must retry exactly the same payload and idempotency key.
+        if (!acceptPromise) {
+            acceptPromise = signingPublicApi.accept(token, session.sessionId, frozenBody, idempotencyKey)
+                .then(() => { accepted = true; })
+                .finally(() => { acceptPromise = null; });
+        }
+        await acceptPromise;
     }
 
     function remember(body) {
+        if (frozenBody) return; // do not mutate an acceptance whose response was lost
         const spotId = Number(body.signatureSpotId);
+        if (!bySpot.has(spotId)) throw new Error('Unknown signing field');
         if (body.signatureImage) signatureImage = body.signatureImage;
         if (body.fieldValue !== undefined) textValues.set(spotId, body.fieldValue);
         signed.add(spotId);
+    }
+
+    function applyMarks(mutate) {
+        if (mutationPromise) return mutationPromise;
+        const before = new Set(signed);
+        mutationPromise = (async () => {
+            try { mutate(); await commit(); return ok(); }
+            catch (error) { signed.clear(); before.forEach(id => signed.add(id)); throw error; }
+        })().finally(() => { mutationPromise = null; });
+        return mutationPromise;
     }
 
     return {
@@ -87,33 +112,33 @@ export function createV2DocumentAdapter({ token, document, task, personName, con
         savePublicSavedSignature: async () => ok(),
         savePublicSavedStamp: async () => ok(),
         publicRequestSigningOtp: async () => {
-            const opened = await signingPublicApi.session(token, { taskIds: [task.taskId], consentVersion, locale });
-            sessionId = opened.sessionId;
+            if (!sessionPromise) {
+                sessionPromise = signingPublicApi.session(token, {
+                    taskIds: selection.map(item => item.task.taskId), consentVersion, locale,
+                }).then(opened => { session = opened; return opened; })
+                    .catch(error => { sessionPromise = null; throw error; });
+            }
+            const opened = await sessionPromise;
             const sms = (opened.channels || []).find(item => item.channel === 'sms');
             const channel = sms?.channel || opened.channels?.[0]?.channel;
-            const sent = await signingPublicApi.challenge(token, sessionId, channel);
-            return ok({ channel: sent.channel || channel, delivered: sent.delivery !== 'failed' });
+            const sent = await signingPublicApi.challenge(token, opened.sessionId, channel);
+            return ok({ channel: sent.channel || channel, delivered: sent.delivery === 'sent' });
         },
         publicVerifySigningOtp: async (_token, otp) => {
-            const result = await signingPublicApi.verify(token, sessionId, otp);
+            const result = await signingPublicApi.verify(token, session?.sessionId, otp);
             return ok({ verified: result.verified !== false });
         },
-        publicSignFile: async (_token, body) => {
+        publicSignFile: (_token, body) => applyMarks(() => {
             remember(body);
-            try { await commit(); }
-            catch (error) { signed.delete(Number(body.signatureSpotId)); throw error; }
-            return ok();
-        },
-        publicSignFileBatch: async (_token, body) => {
-            if (body.signatureImage) signatureImage = body.signatureImage;
-            (body.signatureSpotIds || []).forEach(id => signed.add(Number(id)));
-            try { await commit(); }
-            catch (error) {
-                (body.signatureSpotIds || []).forEach(id => signed.delete(Number(id)));
-                throw error;
-            }
-            return ok();
-        },
+            // On a retry, restore the last pending field so requiredDone can commit.
+            if (frozenBody) signed.add(Number(body.signatureSpotId));
+        }),
+        publicSignFileBatch: (_token, body) => applyMarks(() => {
+            const ids = (body.signatureSpotIds || []).map(Number);
+            if (ids.some(id => !IMAGE_TYPES.has(bySpot.get(id)?.type))) throw new Error('Unknown signing field');
+            if (!frozenBody && body.signatureImage) signatureImage = body.signatureImage;
+            ids.forEach(id => signed.add(id));
+        }),
         publicRejectSigning: async () => ({ success: false, data: { message: '' } }),
     };
 }
