@@ -127,3 +127,26 @@ test('two named corporate representatives need distinct verified people and curr
     definition.signingRules[1].type = 'quorum';
     assert.throws(() => validateDefinition(definition), error('WORKFLOW_NOT_ENABLED'));
 });
+
+test('a send can ask everyone to sign together or one role after another without changing the template', () => {
+    const f = compilerFixture();
+    const definition = clone(f.definition);
+    definition.roles.push({ key: 'lawyer', label: 'Lawyer', capacity: 'personal', min: 1, max: 1, stage: 0 });
+    definition.documents[0].fields.push({ ...definition.documents[0].fields[1], id: 'lawyer', roleKey: 'lawyer' });
+    const published = validateDefinition(definition);
+    const lawyerId = randomUUID(), lawyerParty = randomUUID();
+    f.directory.people.set(lawyerId, { id: lawyerId, name: 'Lawyer', identity_key: null });
+    f.directory.parties.set(lawyerParty, { id: lawyerParty, kind: 'person', person_id: lawyerId, name: 'Lawyer' });
+    const input = clone(f.input);
+    input.roles.lawyer = [{ personId: lawyerId, partyId: lawyerParty }];
+    input.delivery[lawyerId] = clone(input.delivery[f.personId]);
+    const together = compilePackage(published, { ...input, signingOrder: { mode: 'parallel' } }, f.directory);
+    assert.equal(together.snapshot.tasks.every(task => task.stage === 0), true);
+    assert.equal(together.snapshot.definitionHash, digest(published));
+    const ordered = compilePackage(published, { ...input, signingOrder: { mode: 'sequential', roles: ['lawyer', 'employee'] } }, f.directory);
+    const stageOf = role => ordered.snapshot.participants.find(person => person.roleKey === role).stage;
+    assert.equal(stageOf('lawyer'), 0);
+    assert.equal(stageOf('employee'), 1);
+    assert.deepEqual(ordered.snapshot.stages.map(stage => stage.label), ['Lawyer', 'Employee']);
+    assert.throws(() => compilePackage(published, { ...input, signingOrder: { mode: 'sequential', roles: ['employee'] } }, f.directory), error('INVALID_WORKFLOW'));
+});

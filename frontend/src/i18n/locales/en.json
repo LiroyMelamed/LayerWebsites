@@ -1619,6 +1619,10 @@
         "aside": "Not in this send",
         "review": "Left out of this send: {{names}}. The template was not changed."
       },
+      "order": {
+        "up": "Move {{name}} earlier",
+        "down": "Move {{name}} later"
+      },
       "shared": {
         "heading": "Shared signer",
         "help": "This signer signs in every package of this run."
@@ -1708,6 +1712,7 @@
       "rowErrors": {
         "NAME_REQUIRED": "Name is missing",
         "ROLE_REQUIRED": "This signer cannot be left out of the send",
+        "INVALID_SIGNING_ORDER": "The signing order does not match the signers",
         "NO_SIGNING_OBLIGATIONS": "Without this signer nobody is left to sign the document",
         "INVALID_EMAIL": "The email address is not valid",
         "INVALID_PHONE": "The phone number is not valid",

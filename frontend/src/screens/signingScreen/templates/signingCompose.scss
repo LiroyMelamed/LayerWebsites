@@ -136,3 +136,41 @@
   .lw-signingCompose__row fieldset { padding-inline: .75rem; }
 }
 @media (prefers-reduced-motion: reduce) { .lw-signingCompose__templateCard { transition: none; } }
+
+.lw-signingCompose__order {
+  margin: 1rem 0 0;
+  padding: .75rem;
+  border: 1px solid #e0e0e0;
+  border-radius: .5rem;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  legend { font-size: .875rem; font-weight: 600; padding: 0; }
+}
+.lw-signingCompose__radio {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .875rem;
+  color: #333;
+}
+.lw-signingCompose__orderList {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  p { margin: .25rem 0 0; font-size: .8125rem; font-weight: 600; color: #555; }
+  ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .25rem; }
+  li {
+    display: flex; align-items: center; gap: .5rem; padding: .5rem .75rem;
+    border: 1px solid #e0e0e0; border-radius: .375rem; background: #fff;
+  }
+  button { margin-inline-start: auto; }
+  button + button { margin-inline-start: 0; }
+}
+.lw-signingCompose__orderHandle { color: #aaa; cursor: grab; user-select: none; }
+.lw-signingCompose__orderNum {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 1.5rem; height: 1.5rem; border-radius: 50%;
+  background: var(--lw-color-primary, #1976d2); color: #fff; font-size: .75rem; font-weight: 600;
+}
+.lw-signingCompose__orderName { font-size: .875rem; color: #333; }

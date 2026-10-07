@@ -184,6 +184,21 @@ function omittedRoles(definition, input, errors) {
     return omitted;
 }
 
+function signingOrder(definition, input, omitted, errors) {
+    if (input.signingOrder == null) return null;
+    const active = definition.roles.filter(role => !omitted.has(role.key)).map(role => role.key);
+    const mode = input.signingOrder?.mode;
+    if (mode !== 'parallel' && mode !== 'sequential') {
+        errors.push({ path: 'signingOrder.mode', code: 'INVALID_SIGNING_ORDER' });
+        return null;
+    }
+    if (mode === 'parallel') return { mode, roles: active };
+    const roles = input.signingOrder.roles;
+    const matches = Array.isArray(roles) && roles.length === active.length && new Set(roles).size === roles.length && roles.every(key => active.includes(key));
+    if (!matches) errors.push({ path: 'signingOrder.roles', code: 'INVALID_SIGNING_ORDER' });
+    return matches ? { mode, roles: [...roles] } : null;
+}
+
 function normalize(definition, input) {
     const errors = [];
     expect(typeof input.name === 'string' && input.name.trim().length > 0 && input.name.length <= 300, 'INVALID_SUBMISSION');
@@ -202,24 +217,27 @@ function normalize(definition, input) {
         keys.add(key);
         return { key, recipients: Object.fromEntries(each.map(role => [role.key, recipient(row?.recipients?.[role.key], definition, `rows.${index}.${role.key}`, errors)])) };
     });
-    return { name: input.name.trim(), shared, rows, omitted, errors };
+    return { name: input.name.trim(), shared, rows, omitted, signingOrder: signingOrder(definition, input, omitted, errors), errors };
 }
 
 function packagesFor(definition, plan, personFor) {
     return plan.rows.map((row, index) => {
         const roles = {}, delivery = {};
         for (const role of definition.roles) {
+            if (plan.omitted.has(role.key)) continue;
             const person = role.audience === 'shared' ? plan.shared[role.key] : row.recipients[role.key];
             const ids = personFor(role, person, index);
             roles[role.key] = [{ personId: ids.personId, partyId: ids.partyId }];
             delivery[ids.personId] = { locale: person.locale, channels: person.channels, ...(person.email ? { email: person.email } : {}), ...(person.phone ? { phone: person.phone } : {}) };
         }
-        return { externalKey: row.key, data: {}, roles, delivery, ...(plan.omitted.size ? { omitRoles: [...plan.omitted].sort() } : {}) };
+        return { externalKey: row.key, data: {}, roles, delivery,
+            ...(plan.signingOrder ? { signingOrder: plan.signingOrder } : {}),
+            ...(plan.omitted.size ? { omitRoles: [...plan.omitted].sort() } : {}) };
     });
 }
 
 function rowsHash(template, plan) {
-    return digest({ templateVersionId: template.id, definitionHash: template.definition_hash, name: plan.name, omitted: [...plan.omitted].sort(), shared: plan.shared, rows: plan.rows });
+    return digest({ templateVersionId: template.id, definitionHash: template.definition_hash, name: plan.name, omitted: [...plan.omitted].sort(), signingOrder: plan.signingOrder, shared: plan.shared, rows: plan.rows });
 }
 
 async function previewCreation(pool, scope, input) {

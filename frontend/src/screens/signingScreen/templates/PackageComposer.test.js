@@ -88,6 +88,7 @@ test.each(['he', 'ar', 'en'])('explicit conversion, field errors linked to their
     await screen.findByRole('heading', { name: i18n.t('signingV2.compose.review.heading') });
     expect(screen.queryByRole('radio', { name: i18n.t('signingV2.compose.locale.template') })).not.toBeInTheDocument();
     expect(api.previewCreation).toHaveBeenLastCalledWith({ templateVersionId: 'v-1', name: 'Employment pack', omittedRoles: [],
+        signingOrder: { mode: 'parallel' },
         shared: { lawyer: { name: 'Synthetic lawyer', email: 'lawyer@example.invalid', phone: '', locale: language } },
         rows: [{ recipients: { first: { name: 'Synthetic employee', email: '', phone: '050-123-4567', channel: 'sms', locale: language } } }] });
 
@@ -120,6 +121,7 @@ test('a signer can be left out of this send and put back without changing the te
     fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.check') }));
     await screen.findByText(i18n.t('signingV2.compose.signers.review', { names: 'Lawyer' }));
     expect(api.previewCreation).toHaveBeenLastCalledWith({ templateVersionId: 'v-1', name: 'Employment pack', omittedRoles: ['lawyer'],
+        signingOrder: { mode: 'parallel' },
         shared: {},
         rows: [{ recipients: { first: { name: 'Synthetic employee', email: 'employee@example.invalid', phone: '', locale: 'he' } } }] });
 });
@@ -161,6 +163,29 @@ test('a change made elsewhere after the preview sends the user back to check aga
     await screen.findByRole('heading', { name: 'Recipients' });
     expect(screen.getByRole('alert')).toHaveTextContent(en.signingV2.errors.PREVIEW_CHANGED);
     expect(api.create).toHaveBeenCalledTimes(1);
+});
+
+test('sequential signing uses the same choice as a regular document and keeps the dragged order', async () => {
+    const i18n = await translations('he'), api = fakeApi();
+    await toRecipients(i18n, api);
+    expect(screen.getByRole('radio', { name: i18n.t('signing.upload.signingOrderParallel') })).toBeChecked();
+    fireEvent.click(screen.getByRole('radio', { name: i18n.t('signing.upload.signingOrderSequential') }));
+    expect(screen.getByText(i18n.t('signing.upload.sequentialOrderTitle'))).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.order.up', { name: 'Lawyer' }) }));
+    const row = screen.getByRole('group', { name: i18n.t('signingV2.compose.rows.row', { number: '1' }) });
+    fireEvent.change(field(row, i18n.t('signingV2.compose.fields.name')), { target: { value: 'Synthetic employee' } });
+    fireEvent.change(field(row, i18n.t('signingV2.compose.fields.phone')), { target: { value: '0501234567' } });
+    fireEvent.click(within(row).getByRole('radio', { name: i18n.t('signingV2.compose.channel.sms') }));
+    const shared = screen.getByRole('group', { name: 'Lawyer' });
+    fireEvent.change(field(shared, i18n.t('signingV2.compose.fields.name')), { target: { value: 'Synthetic lawyer' } });
+    fireEvent.change(field(shared, i18n.t('signingV2.compose.fields.email')), { target: { value: 'lawyer@example.invalid' } });
+    api.previewCreation.mockResolvedValueOnce(validPreview(1));
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('signingV2.compose.check') }));
+    await screen.findByRole('heading', { name: i18n.t('signingV2.compose.review.heading') });
+    expect(api.previewCreation).toHaveBeenLastCalledWith(expect.objectContaining({
+        signingOrder: { mode: 'sequential', roles: ['lawyer', 'first'] },
+    }));
+    expect(screen.getByText(i18n.t('signing.upload.signingOrderSequential'))).toBeInTheDocument();
 });
 
 test('requires a run name and at least one recipient before asking the server', async () => {
